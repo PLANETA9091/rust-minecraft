@@ -1,0 +1,120 @@
+=== onTake (Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/ItemStack;)V ===
+    0 aload_0
+    1 aload_2
+    2 invokevirtual #45  net/minecraft/world/inventory/ResultSlot.checkTakeAchievements (Lnet/minecraft/world/item/ItemStack;)V
+    5 aload_0
+    6 getfield #13  net/minecraft/world/inventory/ResultSlot.craftSlots Lnet/minecraft/world/inventory/CraftingContainer;
+    9 invokeinterface net/minecraft/world/inventory/CraftingContainer.asPositionedCraftInput ()Lnet/minecraft/world/item/crafting/CraftingInput$Positioned;
+   14 astore_3
+   15 aload_3
+   16 invokevirtual #149  net/minecraft/world/item/crafting/CraftingInput$Positioned.input ()Lnet/minecraft/world/item/crafting/CraftingInput;
+   19 astore 4
+   21 aload_3
+   22 invokevirtual #155  net/minecraft/world/item/crafting/CraftingInput$Positioned.left ()I
+   25 istore 5
+   27 aload_3
+   28 invokevirtual #158  net/minecraft/world/item/crafting/CraftingInput$Positioned.top ()I
+   31 istore 6
+   33 aload_0
+   34 aload 4
+   36 aload_1
+   37 invokevirtual #161  net/minecraft/world/entity/player/Player.level ()Lnet/minecraft/world/level/Level;
+   40 invokevirtual #167  net/minecraft/world/inventory/ResultSlot.getRemainingItems (Lnet/minecraft/world/item/crafting/CraftingInput;Lnet/minecraft/world/level/Level;)Lnet/minecraft/core/NonNullList;
+   43 astore 7
+   45 iconst_0
+   46 istore 8
+   48 iload 8
+   50 aload 4
+   52 invokevirtual #171  net/minecraft/world/item/crafting/CraftingInput.height ()I
+   55 if_icmpge #213
+   58 iconst_0
+   59 istore 9
+   61 iload 9
+   63 aload 4
+   65 invokevirtual #174  net/minecraft/world/item/crafting/CraftingInput.width ()I
+   68 if_icmpge #194
+   71 iload 9
+   73 iload 5
+   75 iadd
+   76 iload 8
+   78 iload 6
+   80 iadd
+   81 aload_0
+   82 getfield #13  net/minecraft/world/inventory/ResultSlot.craftSlots Lnet/minecraft/world/inventory/CraftingContainer;
+   85 invokeinterface net/minecraft/world/inventory/CraftingContainer.getWidth ()I
+   90 imul
+   91 iadd
+   92 istore 10
+   94 aload_0
+   95 getfield #13  net/minecraft/world/inventory/ResultSlot.craftSlots Lnet/minecraft/world/inventory/CraftingContainer;
+   98 iload 10
+  100 invokeinterface net/minecraft/world/inventory/CraftingContainer.getItem (I)Lnet/minecraft/world/item/ItemStack;
+  105 astore 11
+  107 aload 7
+  109 iload 9
+  111 iload 8
+  113 aload 4
+  115 invokevirtual #174  net/minecraft/world/item/crafting/CraftingInput.width ()I
+  118 imul
+  119 iadd
+  120 invokevirtual #181  net/minecraft/core/NonNullList.get (I)Ljava/lang/Object;
+  123 checkcast #30  net/minecraft/world/item/ItemStack
+  126 astore 12
+  128 aload 11
+  130 invokevirtual #184  net/minecraft/world/item/ItemStack.isEmpty ()Z
+  133 ifne #29
+  136 aload_0
+  137 getfield #13  net/minecraft/world/inventory/ResultSlot.craftSlots Lnet/minecraft/world/inventory/CraftingContainer;
+  140 iload 10
+  142 iconst_1
+  143 invokeinterface net/minecraft/world/inventory/CraftingContainer.removeItem (II)Lnet/minecraft/world/item/ItemStack;
+  148 pop
+  149 aload_0
+  150 getfield #13  net/minecraft/world/inventory/ResultSlot.craftSlots Lnet/minecraft/world/inventory/CraftingContainer;
+  153 iload 10
+  155 invokeinterface net/minecraft/world/inventory/CraftingContainer.getItem (I)Lnet/minecraft/world/item/ItemStack;
+  160 astore 11
+  162 aload 12
+  164 invokevirtual #184  net/minecraft/world/item/ItemStack.isEmpty ()Z
+  167 ifne #89
+  170 aload 11
+  172 invokevirtual #184  net/minecraft/world/item/ItemStack.isEmpty ()Z
+  175 ifeq #19
+  178 aload_0
+  179 getfield #13  net/minecraft/world/inventory/ResultSlot.craftSlots Lnet/minecraft/world/inventory/CraftingContainer;
+  182 iload 10
+  184 aload 12
+  186 invokeinterface net/minecraft/world/inventory/CraftingContainer.setItem (ILnet/minecraft/world/item/ItemStack;)V
+  191 goto #65
+  194 aload 11
+  196 aload 12
+  198 invokestatic #195  net/minecraft/world/item/ItemStack.isSameItemSameComponents (Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;)Z
+  201 ifeq #29
+  204 aload 12
+  206 aload 11
+  208 invokevirtual #29  net/minecraft/world/item/ItemStack.getCount ()I
+  211 invokevirtual #199  net/minecraft/world/item/ItemStack.grow (I)V
+  214 aload_0
+  215 getfield #13  net/minecraft/world/inventory/ResultSlot.craftSlots Lnet/minecraft/world/inventory/CraftingContainer;
+  218 iload 10
+  220 aload 12
+  222 invokeinterface net/minecraft/world/inventory/CraftingContainer.setItem (ILnet/minecraft/world/item/ItemStack;)V
+  227 goto #29
+  230 aload_0
+  231 getfield #7  net/minecraft/world/inventory/ResultSlot.player Lnet/minecraft/world/entity/player/Player;
+  234 invokevirtual #203  net/minecraft/world/entity/player/Player.getInventory ()Lnet/minecraft/world/entity/player/Inventory;
+  237 aload 12
+  239 invokevirtual #207  net/minecraft/world/entity/player/Inventory.add (Lnet/minecraft/world/item/ItemStack;)Z
+  242 ifne #14
+  245 aload_0
+  246 getfield #7  net/minecraft/world/inventory/ResultSlot.player Lnet/minecraft/world/entity/player/Player;
+  249 aload 12
+  251 iconst_0
+  252 invokevirtual #213  net/minecraft/world/entity/player/Player.drop (Lnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/entity/item/ItemEntity;
+  255 pop
+  256 iinc 9 1
+  259 goto #65338
+  262 iinc 8 1
+  265 goto #65319
+  268 return
+

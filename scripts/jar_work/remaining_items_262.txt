@@ -1,0 +1,25 @@
+=== getRemainingItems (Lnet/minecraft/world/item/crafting/CraftingInput;Lnet/minecraft/world/level/Level;)Lnet/minecraft/core/NonNullList; ===
+    0 aload_2
+    1 instanceof #103  net/minecraft/server/level/ServerLevel
+    4 ifeq #42
+    7 aload_2
+    8 checkcast #103  net/minecraft/server/level/ServerLevel
+   11 astore_3
+   12 aload_3
+   13 invokevirtual #105  net/minecraft/server/level/ServerLevel.recipeAccess ()Lnet/minecraft/world/item/crafting/RecipeManager;
+   16 getstatic #109  net/minecraft/world/item/crafting/RecipeType.CRAFTING Lnet/minecraft/world/item/crafting/RecipeType;
+   19 aload_1
+   20 aload_3
+   21 invokevirtual #115  net/minecraft/world/item/crafting/RecipeManager.getRecipeFor (Lnet/minecraft/world/item/crafting/RecipeType;Lnet/minecraft/world/item/crafting/RecipeInput;Lnet/minecraft/world/level/Level;)Ljava/util/Optional;
+   24 aload_1
+   25 invokedynamic #121
+   30 invokevirtual #125  java/util/Optional.map (Ljava/util/function/Function;)Ljava/util/Optional;
+   33 aload_1
+   34 invokedynamic #131
+   39 invokevirtual #135  java/util/Optional.orElseGet (Ljava/util/function/Supplier;)Ljava/lang/Object;
+   42 checkcast #91  net/minecraft/core/NonNullList
+   45 areturn
+   46 aload_1
+   47 invokestatic #139  net/minecraft/world/item/crafting/CraftingRecipe.defaultCraftingReminder (Lnet/minecraft/world/item/crafting/CraftingInput;)Lnet/minecraft/core/NonNullList;
+   50 areturn
+

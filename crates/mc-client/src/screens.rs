@@ -19879,15 +19879,49 @@ impl App {
     /// positioned 3x3's per-cell removeItem(i, 1)): every non-empty
     /// cell one off, then the slotsChanged recompute the chain fires
     /// (the recipe may fire AGAIN — the three-log planks the real
-    /// game crafts).
+    /// game crafts). THE REMAINDER ARM the walk keeps (pcs 33-255):
+    /// the NonNullList the UNTOUCHED grid answers first
+    /// ([`craft_remainders`] — the milk buckets' own list the cake
+    /// lane speaks), then each cell's own three-way table
+    /// ([`apply_remainder_cell`]) — the emptied milk cell the setItem
+    /// arm wears (the bucket rides the slot whole), the taller stack
+    /// the Inventory.add arm answers (the store takes, the FALSE the
+    /// body drop speaks), the grown pair the same-item arm rides
+    /// back. The HUD row the store's every mutation syncs.
     fn table_on_take(&mut self) {
-        for cell in self.table_grid.iter_mut() {
-            if cell.1 > 0 {
-                cell.1 -= 1;
-                if cell.1 == 0 {
-                    *cell = (0, 0);
+        let remainders = craft_remainders(&self.table_grid);
+        let mut store_touched = false;
+        for (i, rem) in remainders.iter().enumerate() {
+            if self.table_grid[i].1 > 0 {
+                // the cell's own mutation the scoped borrow walks —
+                // the third arm the freed borrow answers (the &mut
+                // self lane the disjoint-fields walk keeps)
+                let rem_item = {
+                    let cell = &mut self.table_grid[i];
+                    cell.1 -= 1;
+                    if cell.1 == 0 {
+                        *cell = (0, 0);
+                    }
+                    apply_remainder_cell(cell, *rem)
+                };
+                if let Some(rem_item) = rem_item {
+                    // THE THIRD ARM (pcs 230-255): the player's own
+                    // store the Inventory.add walk answers, the FALSE
+                    // the player.drop the body drop speaks
+                    let (leftover, _spoke) =
+                        self.inventory
+                            .add(self.selected_hotbar, rem_item, 1, false);
+                    if leftover > 0 {
+                        self.spawn_drop_at_player(rem_item, leftover);
+                    }
+                    store_touched = true;
                 }
             }
+        }
+        if store_touched {
+            // the store rows the add may have landed — the HUD row the
+            // every-mutation law syncs
+            self.hotbar_slots = self.inventory.hotbar();
         }
         self.refresh_table_result();
     }
@@ -20104,6 +20138,7 @@ impl App {
                     sink,
                     &mut self.live_table_slots,
                     &mut self.hotbar_slots,
+                    self.selected_hotbar,
                     self.live_table_carried,
                     button,
                     state_id,
@@ -20113,6 +20148,8 @@ impl App {
                 wire_table_result_take(
                     sink,
                     &mut self.live_table_slots,
+                    &mut self.hotbar_slots,
+                    self.selected_hotbar,
                     &mut self.live_table_carried,
                     button,
                     state_id,
@@ -20263,16 +20300,50 @@ impl App {
     /// removeItem(i, 1) — every non-empty cell one off — then the
     /// slotsChanged recompute the container's own chain fires (the
     /// recipe may fire AGAIN when the ingredients speak — the two-log
-    /// planks the real game crafts). The remainders arm the walk keeps
-    /// (the buckets' NonNullList) — this recipe set carries none.
+    /// planks the real game crafts). THE REMAINDER ARM the walk keeps
+    /// (pcs 33-255): the NonNullList the UNTOUCHED grid answers first
+    /// ([`craft_remainders`] — the Item's own crafting remainder the
+    /// pre-loop ask speaks), then each cell's own three-way table
+    /// ([`apply_remainder_cell`]) — the emptied milk cell the setItem
+    /// arm wears (the bucket rides the slot whole), the taller stack
+    /// the Inventory.add arm answers (the player's own store takes,
+    /// the FALSE the player.drop the body drop speaks), the grown pair
+    /// the same-item arm rides back. The HUD row the store's every
+    /// mutation syncs (the add's own landings the hotbar slice reads).
     fn craft_on_take(&mut self) {
-        for cell in self.craft_grid.iter_mut() {
-            if cell.1 > 0 {
-                cell.1 -= 1;
-                if cell.1 == 0 {
-                    *cell = (0, 0);
+        let remainders = craft_remainders(&self.craft_grid);
+        let mut store_touched = false;
+        for (i, rem) in remainders.iter().enumerate() {
+            if self.craft_grid[i].1 > 0 {
+                // the cell's own mutation the scoped borrow walks —
+                // the third arm the freed borrow answers (the &mut
+                // self lane the disjoint-fields walk keeps)
+                let rem_item = {
+                    let cell = &mut self.craft_grid[i];
+                    cell.1 -= 1;
+                    if cell.1 == 0 {
+                        *cell = (0, 0);
+                    }
+                    apply_remainder_cell(cell, *rem)
+                };
+                if let Some(rem_item) = rem_item {
+                    // THE THIRD ARM (pcs 230-255): the player's own
+                    // store the Inventory.add walk answers, the FALSE
+                    // the player.drop the body drop speaks
+                    let (leftover, _spoke) =
+                        self.inventory
+                            .add(self.selected_hotbar, rem_item, 1, false);
+                    if leftover > 0 {
+                        self.spawn_drop_at_player(rem_item, leftover);
+                    }
+                    store_touched = true;
                 }
             }
+        }
+        if store_touched {
+            // the store rows the add may have landed — the HUD row the
+            // every-mutation law syncs
+            self.hotbar_slots = self.inventory.hotbar();
         }
         self.refresh_craft_result();
     }
@@ -20551,12 +20622,13 @@ impl App {
         // result slot 0, the craft cells 1..4). The PLAIN press on
         // the result rides THE RESULT SLOT'S OWN TAKE (the
         // mayPlace-false walk — the whole/half take, the onTake's
-        // ingredient decrement + the recipe recompute the belief
-        // keeps between the syncs). The SHIFT press rides THE
-        // QUICK-MOVE BATCH (the quickMoveStack loop the offline walk
-        // models — the believed result the store rows take, the
-        // onTake the loop keeps answering, the leftover the SERVER
-        // drops, the sync's truth the belief's walk replaces).
+        // ingredient decrement + the REMAINDER arm + the recipe
+        // recompute the belief keeps between the syncs). The SHIFT
+        // press rides THE QUICK-MOVE BATCH (the quickMoveStack loop
+        // the offline walk models — the believed result the store
+        // rows take, the onTake the loop keeps answering, the
+        // leftover the SERVER drops, the sync's truth the belief's
+        // walk replaces).
         let (rx, ry) = craft_slot_origin(panel, 4);
         if mx >= rx + 1 && mx < rx + 17 && my >= ry + 1 && my < ry + 17 {
             if self.shift_down {
@@ -20564,6 +20636,7 @@ impl App {
                     sink,
                     &mut self.live_inv_slots,
                     &mut self.hotbar_slots,
+                    self.selected_hotbar,
                     self.live_inv_carried,
                     button,
                     state_id,
@@ -20572,6 +20645,8 @@ impl App {
                 wire_craft_result_take(
                     sink,
                     &mut self.live_inv_slots,
+                    &mut self.hotbar_slots,
+                    self.selected_hotbar,
                     &mut self.live_inv_carried,
                     button,
                     state_id,
@@ -48400,6 +48475,66 @@ fn belief_inventory_add(
     }
 }
 
+/// THE BELIEF'S OWN TABLE ADD (the [`belief_inventory_add`] walk the
+/// window-1 CRAFTING MENU's own numbering re-keys — the player rows
+/// the CraftingMenu's slots 10..45 answer: the hotbar 37..45, the main
+/// grid 10..37, the offhand and the armor the menu never wears): the
+/// SELECTED hotbar slot first (menu 37+selected — the
+/// getSlotWithRemainingSpace walk's own head), the merge scan the
+/// hotbar ids 37..45 then the main 10..37 keeps, the first-empty the
+/// same order speaks. The flat-64 space law the model's banked (id,
+/// count) simplification wears. Each landing rides the changed vec
+/// (the repeated slot the map's own put replaces), the leftover the
+/// caller's honest tail (the server's own drop lane).
+fn belief_table_inventory_add(
+    live_slots: &mut [(i32, i32); 46],
+    selected: usize,
+    id: i32,
+    count: i32,
+    changed: &mut Vec<(i16, (i32, i32))>,
+) -> i32 {
+    if count <= 0 {
+        return 0; // the isEmpty gate (pc 0-8) — nothing walks
+    }
+    let has_space = |(sid, sc): (i32, i32)| sc > 0 && sid == id && sc < 64;
+    let candidate = |slots: &[(i32, i32); 46]| {
+        let sel_menu = 37 + selected;
+        if has_space(slots[sel_menu]) {
+            Some(sel_menu)
+        } else {
+            (37..46)
+                .find(|&m| has_space(slots[m]))
+                .or_else(|| (10..37).find(|&m| has_space(slots[m])))
+                .or_else(|| {
+                    (37..46)
+                        .find(|&m| slots[m].1 <= 0)
+                        .or_else(|| (10..37).find(|&m| slots[m].1 <= 0))
+                })
+        }
+    };
+    let mut remaining = count;
+    loop {
+        let before = remaining; // count_in — the loop head's own refresh
+        let Some(slot) = candidate(live_slots) else {
+            return remaining; // the pass stalled — the no-home arm
+        };
+        let (_, cur_count) = live_slots[slot];
+        if cur_count <= 0 {
+            live_slots[slot] = (id, 0);
+        }
+        let space = 64 - live_slots[slot].1;
+        let take = remaining.min(space);
+        if take > 0 {
+            live_slots[slot].1 += take;
+            remaining -= take;
+            note_batch_change(changed, slot as i16, live_slots[slot]);
+        }
+        if remaining <= 0 || remaining >= before {
+            return remaining; // the empty stack's exit / the stalled pass
+        }
+    }
+}
+
 /// THE WINDOW-0 SWAP WIRE ROUND (the doClick SWAP table the offline
 /// [`App::inventory_swap_table`] models, over the LIVE store's belief —
 /// the checkHotbarKeyPressed walk's own ServerboundContainerClickPacket):
@@ -48461,10 +48596,10 @@ fn wire_inventory_swap(
             note_batch_change(&mut changed, row_menu as i16, (hover_id, hover_count));
             if let InventoryHover::Result = hover {
                 // the result seat's own onTake — the ingredient
-                // decrement + the recompute the result's entry the
-                // map's own put replaces (the empty cell the recompute
-                // refills)
-                for (slot, pair) in wire_craft_on_take(live_slots) {
+                // decrement + the REMAINDER arm + the recompute the
+                // result's entry the map's own put replaces (the empty
+                // cell the recompute refills)
+                for (slot, pair) in wire_craft_on_take(live_slots, selected) {
                     note_batch_change(&mut changed, slot, pair);
                 }
             }
@@ -48543,18 +48678,44 @@ fn wire_inventory_swap(
 /// cells (menu 1..5 — the cells the syncs feed), every non-empty cell
 /// one off, then the recompute the slotsChanged chain fires (the
 /// recipe's verdict over the believed cells — the `craft_result_for`
-/// walk the offline grid speaks). The changed entries name the slots
-/// the walk actually mutated (the broadcastChanges diff law — the
-/// untouched cell and the re-spoken verdict no entry names).
+/// walk the offline grid speaks). THE REMAINDER ARM the walk keeps
+/// (pcs 33-255): the NonNullList the UNTOUCHED cells answer first
+/// ([`craft_remainders`]), each cell's own three-way table rides
+/// ([`apply_remainder_cell`]) — the emptied cell the setItem arm
+/// wears, the grown pair the same-item arm rides back, the
+/// DIFFERENT-item cell the BELIEF's own add lane answers
+/// ([`belief_inventory_add`] — the player's store the `Inventory.add`
+/// walk's own scan order keys, the leftover the server's own drop
+/// lane the correction speaks, the client-side drop prediction the
+/// wire's Add Entity lane never duplicates). The changed entries name
+/// the slots the walk actually mutated (the broadcastChanges diff law
+/// — the repeated slot the map's own put replaces, the untouched cell
+/// and the re-spoken verdict no entry names).
 fn wire_craft_on_take(
     live_slots: &mut [(i32, i32); crate::world_view::INVENTORY_MENU_SLOTS],
+    selected: usize,
 ) -> Vec<(i16, (i32, i32))> {
     let mut changed = Vec::new();
-    for cell in 1..5 {
+    let cells: [(i32, i32); 4] = [
+        live_slots[1], live_slots[2], live_slots[3], live_slots[4],
+    ];
+    let remainders = craft_remainders(&cells);
+    for (cell, rem) in (1..5).zip(remainders.iter()) {
         let (cid, ccount) = live_slots[cell];
         if ccount > 0 {
             live_slots[cell] = if ccount > 1 { (cid, ccount - 1) } else { (0, 0) };
-            changed.push((cell as i16, live_slots[cell]));
+            note_batch_change(&mut changed, cell as i16, live_slots[cell]);
+            if let Some(rem_item) = apply_remainder_cell(&mut live_slots[cell], *rem) {
+                // THE THIRD ARM (pcs 230-255): the belief's own store
+                // the add walk answers, the leftover the server's drop
+                // lane speaks
+                belief_inventory_add(live_slots, selected, rem_item, 1, &mut changed);
+            }
+            if *rem != 0 {
+                // the setItem/grow arms the slot's own final pair
+                // re-spoke — the entry the map's own put replaces
+                note_batch_change(&mut changed, cell as i16, live_slots[cell]);
+            }
         }
     }
     let result =
@@ -48570,19 +48731,25 @@ fn wire_craft_on_take(
 /// mayPlace-false slot 0 — the offline [`App::click_craft_result`]
 /// walk the wire belief feeds): the carried-empty arm takes the WHOLE
 /// result (left) or HALF rounded up (right) and rides the onTake
-/// ([`wire_craft_on_take`] — the ingredient decrement + the recipe
-/// recompute the belief keeps between the syncs), the carried-same
-/// arm the 1020 walk's space-capped merge rides (the FULL carried
-/// refuses), and the carried-different arm the isSameItemSameComponents
-/// silence keeps (no swap on the mayPlace-false slot — the place arm
-/// the empty result refuses too, the carried stack the cursor keeps).
-/// The packet ALWAYS rides (the slot click the wire speaks even when
-/// the prediction refuses — the handleInventoryMouseClick call the
-/// mouseClicked walk keeps unconditional) — the changed vec the
-/// walk's actual mutations names.
+/// ([`wire_craft_on_take`] — the ingredient decrement + the REMAINDER
+/// arm + the recipe recompute the belief keeps between the syncs),
+/// the carried-same arm the 1020 walk's space-capped merge rides (the
+/// FULL carried refuses), and the carried-different arm the
+/// isSameItemSameComponents silence keeps (no swap on the
+/// mayPlace-false slot — the place arm the empty result refuses too,
+/// the carried stack the cursor keeps). The remainder's own add may
+/// land in the hotbar rows — the HUD row the every-mutation law
+/// syncs after the walk. The packet ALWAYS rides (the slot click the
+/// wire speaks even when the prediction refuses — the
+/// handleInventoryMouseClick call the mouseClicked walk keeps
+/// unconditional) — the changed vec the walk's actual mutations
+/// names.
+#[allow(clippy::too_many_arguments)]
 fn wire_craft_result_take(
     sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
     live_slots: &mut [(i32, i32); crate::world_view::INVENTORY_MENU_SLOTS],
+    hotbar: &mut [(i32, i32); 9],
+    selected: usize,
     carried: &mut (i32, i32),
     button: i8,
     state_id: i32,
@@ -48593,16 +48760,21 @@ fn wire_craft_result_take(
         // THE PICKUP ARM (the whole or the half-rounded-up take)
         let taken = if button == 0 { count } else { (count + 1) / 2 };
         *carried = (id, taken);
-        changed = wire_craft_on_take(live_slots);
+        changed = wire_craft_on_take(live_slots, selected);
     } else if count > 0 && carried.0 == id {
         // THE MERGE ARM (the carried's own space caps the take, the
         // grow the consumer keeps)
         let space = crate::world_view::item_max_stack(id) - carried.1;
         if space > 0 {
             carried.1 += space.min(count);
-            changed = wire_craft_on_take(live_slots);
+            changed = wire_craft_on_take(live_slots, selected);
         }
     }
+    // the remainder's add may have landed in the hotbar rows — the
+    // HUD row the every-mutation law syncs
+    let mut row = [(0, 0); 9];
+    row.copy_from_slice(&live_slots[36..45]);
+    *hotbar = row;
     // THE REFUSALS (the empty result, the different carried, the full
     // carried): no mutation — the packet still rides the lane
     let _ = sink.send(crate::world_view::ContainerCommand::Click(
@@ -48657,6 +48829,7 @@ fn wire_craft_result_quick_move(
     sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
     live_slots: &mut [(i32, i32); crate::world_view::INVENTORY_MENU_SLOTS],
     hotbar: &mut [(i32, i32); 9],
+    selected: usize,
     carried: (i32, i32),
     button: i8,
     state_id: i32,
@@ -48703,10 +48876,10 @@ fn wire_craft_result_quick_move(
             break; // the nothing-moved EMPTY the loop break keeps
         }
         // the count-changed gate: the onTake's per-cell decrement +
-        // the recompute the loop keeps answering (the recipe's
-        // repeat the same verdict re-speaks, the spent ingredients
-        // the EMPTY verdict breaks)
-        for (slot, pair) in wire_craft_on_take(live_slots) {
+        // the REMAINDER arm + the recompute the loop keeps answering
+        // (the recipe's repeat the same verdict re-speaks, the spent
+        // ingredients the EMPTY verdict breaks)
+        for (slot, pair) in wire_craft_on_take(live_slots, selected) {
             note_batch_change(&mut changed, slot, pair);
         }
         if rest > 0 {
@@ -48783,15 +48956,44 @@ fn wire_craft_cell_pickup(
 /// belief): every non-empty cell one off, then the recipe recompute
 /// the slotsChanged chain speaks (the belief's own preview the sync
 /// corrects — [`craft_result_for_table`] over the cells 1..9 into the
-/// result slot 0). The changed vec the mutations name — one entry per
-/// slot, the pair the final state keeps.
-fn wire_table_on_take(live_slots: &mut [(i32, i32); 46]) -> Vec<(i16, (i32, i32))> {
+/// result slot 0). THE REMAINDER ARM the walk keeps (pcs 33-255):
+/// the NonNullList the UNTOUCHED cells answer first
+/// ([`craft_remainders`] — the milk buckets' own list the cake lane
+/// speaks), each cell's own three-way table rides
+/// ([`apply_remainder_cell`]) — the emptied milk cell the setItem arm
+/// wears, the grown pair the same-item arm rides back, the
+/// DIFFERENT-item cell the BELIEF's own add lane answers
+/// ([`belief_table_inventory_add`] — the CraftingMenu's own row
+/// numbering the scan re-keys, the leftover the server's own drop
+/// lane the correction speaks). The changed vec the mutations name —
+/// one entry per slot, the pair the final state keeps.
+fn wire_table_on_take(
+    live_slots: &mut [(i32, i32); 46],
+    selected: usize,
+) -> Vec<(i16, (i32, i32))> {
     let mut changed = Vec::new();
-    for cell in 1..10 {
+    let cells: [(i32, i32); 9] = [
+        live_slots[1], live_slots[2], live_slots[3],
+        live_slots[4], live_slots[5], live_slots[6],
+        live_slots[7], live_slots[8], live_slots[9],
+    ];
+    let remainders = craft_remainders(&cells);
+    for (cell, rem) in (1..10).zip(remainders.iter()) {
         let (cid, ccount) = live_slots[cell];
         if ccount > 0 {
             live_slots[cell] = if ccount > 1 { (cid, ccount - 1) } else { (0, 0) };
-            changed.push((cell as i16, live_slots[cell]));
+            note_batch_change(&mut changed, cell as i16, live_slots[cell]);
+            if let Some(rem_item) = apply_remainder_cell(&mut live_slots[cell], *rem) {
+                // THE THIRD ARM (pcs 230-255): the belief's own store
+                // the add walk answers, the leftover the server's drop
+                // lane speaks
+                belief_table_inventory_add(live_slots, selected, rem_item, 1, &mut changed);
+            }
+            if *rem != 0 {
+                // the setItem/grow arms the slot's own final pair
+                // re-spoke — the entry the map's own put replaces
+                note_batch_change(&mut changed, cell as i16, live_slots[cell]);
+            }
         }
     }
     let cells: [(i32, i32); 9] = [
@@ -48812,10 +49014,15 @@ fn wire_table_on_take(live_slots: &mut [(i32, i32); 46]) -> Vec<(i16, (i32, i32)
 /// own window speaks): the carried-empty arm takes the WHOLE or the
 /// HALF rounded up, the merge arm the carried's space caps, the
 /// refusals no mutation speak (the packet still rides the lane — the
-/// server's verdict the sync's truth replaces the belief with).
+/// server's verdict the sync's truth replaces the belief with). The
+/// remainder's own add may land in the hotbar rows — the HUD row the
+/// every-mutation law syncs after the walk.
+#[allow(clippy::too_many_arguments)]
 fn wire_table_result_take(
     sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
     live_slots: &mut [(i32, i32); 46],
+    hotbar: &mut [(i32, i32); 9],
+    selected: usize,
     carried: &mut (i32, i32),
     button: i8,
     state_id: i32,
@@ -48826,14 +49033,19 @@ fn wire_table_result_take(
     if count > 0 && carried.1 <= 0 {
         let taken = if button == 0 { count } else { (count + 1) / 2 };
         *carried = (id, taken);
-        changed = wire_table_on_take(live_slots);
+        changed = wire_table_on_take(live_slots, selected);
     } else if count > 0 && carried.0 == id {
         let space = crate::world_view::item_max_stack(id) - carried.1;
         if space > 0 {
             carried.1 += space.min(count);
-            changed = wire_table_on_take(live_slots);
+            changed = wire_table_on_take(live_slots, selected);
         }
     }
+    // the remainder's add may have landed in the hotbar rows — the
+    // HUD row the every-mutation law syncs
+    let mut row = [(0, 0); 9];
+    row.copy_from_slice(&live_slots[37..46]);
+    *hotbar = row;
     let _ = sink.send(crate::world_view::ContainerCommand::Click(
         crate::world_view::ContainerClick {
             window_id,
@@ -48862,6 +49074,7 @@ fn wire_table_result_quick_move(
     sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
     live_slots: &mut [(i32, i32); 46],
     hotbar: &mut [(i32, i32); 9],
+    selected: usize,
     carried: (i32, i32),
     button: i8,
     state_id: i32,
@@ -48903,7 +49116,7 @@ fn wire_table_result_quick_move(
         if rest == count {
             break; // the nothing-moved EMPTY the loop break keeps
         }
-        for (slot, pair) in wire_table_on_take(live_slots) {
+        for (slot, pair) in wire_table_on_take(live_slots, selected) {
             note_batch_change(&mut changed, slot, pair);
         }
     }
@@ -49156,6 +49369,23 @@ fn craft_result_packed(packed: &[i32], w: i32, h: i32) -> (i32, i32) {
     ]; // ["XX", "X#", " #"]
     let shovel_rows = vec![planks, stick_l, stick_l]; // ["X", "#", "#"]
     let sword_rows = vec![planks, planks, stick_l]; // ["X", "X", "#"]
+    // THE CAKE'S OWN INGREDIENTS (the jar's recipe keys — the A/B/C
+    // plain items, the E key the #minecraft:eggs TAG the registry's
+    // own egg/blue_egg/brown_egg trio answers). The zero ids the tag
+    // trio's own filter drops (a 0 the empty-cell test would wrongly
+    // marry — the E seat the honest tag keeps). The list the
+    // patterns' own scope outlives — the borrow the walk keeps.
+    let milk = id("milk_bucket");
+    let sugar = id("sugar");
+    let wheat = id("wheat");
+    let cake = id("cake");
+    let eggs: Vec<i32> = [id("egg"), id("blue_egg"), id("brown_egg")]
+        .into_iter()
+        .filter(|&x| x != 0)
+        .collect();
+    let milk_l: &[i32] = &[milk];
+    let sugar_l: &[i32] = &[sugar];
+    let wheat_l: &[i32] = &[wheat];
     let patterns: Vec<(i32, i32, Vec<&[i32]>, i32, i32)> = {
         let mut v = Vec::new();
         // the sticks ([P, P] — the vertical column the pack law
@@ -49196,6 +49426,23 @@ fn craft_result_packed(packed: &[i32], w: i32, h: i32) -> (i32, i32) {
         if sword != 0 && stick != 0 {
             v.push((1, 3, sword_rows, sword, 1));
         }
+        // THE CAKE (the jar's own data/minecraft/recipe/cake.json —
+        // pattern ["AAA","BEB","CCC"]: the milk buckets' top row, the
+        // sugar-egg-sugar spine, the wheat row; the result count the
+        // JSON's no-count default 1 keeps)
+        if cake != 0 && milk != 0 && sugar != 0 && wheat != 0 && !eggs.is_empty() {
+            v.push((
+                3,
+                3,
+                vec![
+                    milk_l, milk_l, milk_l,
+                    sugar_l, &eggs, sugar_l,
+                    wheat_l, wheat_l, wheat_l,
+                ],
+                cake,
+                1,
+            ));
+        }
         v
     };
     let n = (w * h) as usize;
@@ -49220,6 +49467,75 @@ fn craft_result_packed(packed: &[i32], w: i32, h: i32) -> (i32, i32) {
         }
     }
     (0, 0)
+}
+
+/// THE ITEM'S OWN CRAFTING REMAINDER (javap 26.2 CraftingRecipe
+/// .defaultCraftingReminder — the per-cell `Item.getCraftingRemainder`
+/// ask the NonNullList walk keeps; the recipe's own override the walk
+/// never sees — ShapedRecipe the interface default keeps, the disasm
+/// scripts/jar_work/remaining_items_262.txt + the defaultCraftingReminder
+/// walk banked): the container item the consumed stack leaves. The
+/// cake lane's first speaker — the milk bucket the EMPTY bucket leaves
+/// (the Items clinit's own pairing, the bucket the container item's
+/// own stack 16 keeps); the rest of the recipe set EMPTY answers. The
+/// water/lava lanes ride when their own recipes arrive.
+fn crafting_remainder(id: i32) -> i32 {
+    let milk = mc_registry::item_id_by_name("milk_bucket").unwrap_or(0);
+    let bucket = mc_registry::item_id_by_name("bucket").unwrap_or(0);
+    if bucket != 0 && id != 0 && id == milk {
+        bucket
+    } else {
+        0
+    }
+}
+
+/// THE REMAINDER LIST (javap 26.2 ResultSlot.onTake pcs 33-43 — the
+/// `getRemainingItems` ask the pre-loop walk keeps, the NonNullList
+/// the UNTOUCHED grid answers: `CraftingRecipe.defaultCraftingReminder`
+/// over the positioned input's own cells, the Item's own remainder the
+/// non-empty cell speaks, EMPTY the rest): one entry per cell, 0 the
+/// no-remainder answer.
+fn craft_remainders(cells: &[(i32, i32)]) -> Vec<i32> {
+    cells
+        .iter()
+        .map(|&(id, count)| {
+            if count > 0 {
+                crafting_remainder(id)
+            } else {
+                0
+            }
+        })
+        .collect()
+}
+
+/// THE REMAINDER CELL'S OWN THREE-WAY TABLE (javap 26.2 ResultSlot
+/// .onTake pcs 162-255 — the arms the per-cell walk keeps AFTER its
+/// own decrement): the emptied cell the setItem arm wears (the
+/// remainder rides the slot whole), the same-item cell the grow arm
+/// wears (the remainder the cell's own count grows — the setItem the
+/// grown pair rides back), the DIFFERENT-item cell the caller's own
+/// add lane answers (`player.getInventory().add` — the walk's `Some`
+/// speaks, the FALSE the `player.drop` the caller's drop lane keeps).
+/// The `None` the first two arms speak — the cell the walk already
+/// wears.
+fn apply_remainder_cell(cell: &mut (i32, i32), rem: i32) -> Option<i32> {
+    if rem == 0 {
+        return None;
+    }
+    if cell.0 == 0 {
+        // the setItem arm (pcs 170-186): the emptied slot takes the
+        // remainder whole
+        *cell = (rem, 1);
+        None
+    } else if cell.0 == rem {
+        // the grow arm (pcs 194-222): the remainder grows by the
+        // cell's own count, the setItem rides the grown pair back
+        cell.1 += 1;
+        None
+    } else {
+        // the third arm (pcs 230-255): the caller's own add lane
+        Some(rem)
+    }
 }
 
 /// THE MANNEQUIN'S RECT (javap 26.2 InventoryScreen.extractBackground,
@@ -107200,6 +107516,354 @@ cow_sound_variant: None,
         // a 2x2 input — the pickaxe never speaks there
         let cells: [(i32, i32); 4] = [(oak, 1), (oak, 1), (stick, 1), (stick, 1)];
         assert_eq!(craft_result_for(&cells), (0, 0), "no 2x2 recipe names these");
+    }
+
+    /// THE CAKE'S OWN REMAINDER WALK (the jar's recipe/cake.json the
+    /// table answers + ResultSlot.onTake's remainders arm — the
+    /// NonNullList the UNTOUCHED grid answers, the emptied milk cell
+    /// the setItem arm wears): the cake crafts, the three buckets ride
+    /// the milk cells back WHOLE, the sugar/egg/wheat cells spend to
+    /// empty, the recomputed verdict over the bucket grid the honest
+    /// EMPTY speaks, and the close's clearContainer ride-home the
+    /// whole craft's own leftovers lands.
+    #[test]
+    fn the_cake_recipe_the_buckets_return() {
+        let id = |name: &str| mc_registry::item_id_by_name(name).unwrap();
+        let (milk, sugar, egg, wheat, cake) = (
+            id("milk_bucket"),
+            id("sugar"),
+            id("egg"),
+            id("wheat"),
+            id("cake"),
+        );
+        let (blue, brown) = (id("blue_egg"), id("brown_egg"));
+        let bucket = id("bucket");
+        let zero = (0, 0);
+        // THE RECIPE VERDICTS (["AAA","BEB","CCC"] row-major — the
+        // milk row, the sugar-egg-sugar spine, the wheat row)
+        let grid: [(i32, i32); 9] = [
+            (milk, 1), (milk, 1), (milk, 1),
+            (sugar, 1), (egg, 1), (sugar, 1),
+            (wheat, 1), (wheat, 1), (wheat, 1),
+        ];
+        assert_eq!(craft_result_for_table(&grid), (cake, 1), "the jar's own rows");
+        // THE EGGS TAG (the E seat the #minecraft:eggs ingredient
+        // keeps — the blue and the brown egg the same cake answers)
+        let blue_grid: [(i32, i32); 9] = [
+            (milk, 1), (milk, 1), (milk, 1),
+            (sugar, 1), (blue, 1), (sugar, 1),
+            (wheat, 1), (wheat, 1), (wheat, 1),
+        ];
+        assert_eq!(craft_result_for_table(&blue_grid), (cake, 1), "the blue egg rides");
+        let brown_grid: [(i32, i32); 9] = [
+            (milk, 1), (milk, 1), (milk, 1),
+            (sugar, 1), (brown, 1), (sugar, 1),
+            (wheat, 1), (wheat, 1), (wheat, 1),
+        ];
+        assert_eq!(craft_result_for_table(&brown_grid), (cake, 1), "the brown egg rides");
+        // THE 2x2's OWN BOUND — the cake rows never fit the small grid
+        let cells: [(i32, i32); 4] = [(milk, 1), (milk, 1), (sugar, 1), (egg, 1)];
+        assert_eq!(craft_result_for(&cells), (0, 0), "no 2x2 cake");
+        // THE WALK (the result's own take over the mayPlace-false
+        // slot): the carried receives the cake, the milk cells the
+        // BUCKETS wear, the spent cells empty, the recompute speaks
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_crafting_table();
+        app.table_grid = grid;
+        app.refresh_table_result();
+        assert_eq!(app.table_result, (cake, 1), "the preview speaks");
+        app.click_table_result(0);
+        assert_eq!(app.inv_carried, (cake, 1), "the whole result taken");
+        assert_eq!(app.table_grid[0], (bucket, 1), "the milk cell the bucket wears");
+        assert_eq!(app.table_grid[1], (bucket, 1), "the second bucket rides");
+        assert_eq!(app.table_grid[2], (bucket, 1), "the third bucket rides");
+        assert_eq!(app.table_grid[3], zero, "the sugar spent");
+        assert_eq!(app.table_grid[4], zero, "the egg spent");
+        assert_eq!(app.table_grid[5], zero, "the sugar spent");
+        assert_eq!(app.table_grid[6], zero, "the wheat spent");
+        assert_eq!(app.table_grid[7], zero, "the wheat spent");
+        assert_eq!(app.table_grid[8], zero, "the wheat spent");
+        assert_eq!(
+            app.table_result, (0, 0),
+            "the bucket grid the recipe refuses"
+        );
+        // THE CLOSE (the clearContainer walk): the buckets and the
+        // carried cake ride home — the store keeps the whole craft
+        app.close_crafting_table();
+        let buckets: i32 = app
+            .inventory
+            .items
+            .iter()
+            .filter(|s| s.0 == bucket)
+            .map(|s| s.1)
+            .sum();
+        let cakes: i32 = app
+            .inventory
+            .items
+            .iter()
+            .filter(|s| s.0 == cake)
+            .map(|s| s.1)
+            .sum();
+        assert_eq!(buckets, 3, "the three buckets ride home");
+        assert_eq!(cakes, 1, "the carried cake rides home");
+    }
+
+    /// THE REMAINDER'S OWN THREE-WAY TABLE (javap 26.2 ResultSlot
+    /// .onTake pcs 162-255 — the pure fn the walks share): the
+    /// emptied cell the setItem arm wears, the same-item cell the
+    /// grow arm wears, the different-item cell the caller's own add
+    /// lane answers, the EMPTY remainder no arm rides; the
+    /// pre-loop list the UNTOUCHED grid answers (the milk the bucket
+    /// leaves, the stone and the empty cell nothing).
+    #[test]
+    fn the_remainder_cell_the_three_way_table() {
+        let milk = mc_registry::item_id_by_name("milk_bucket").unwrap();
+        let bucket = mc_registry::item_id_by_name("bucket").unwrap();
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        // the setItem arm (pcs 170-186): the emptied slot takes whole
+        let mut cell = (0, 0);
+        assert_eq!(apply_remainder_cell(&mut cell, bucket), None);
+        assert_eq!(cell, (bucket, 1), "the remainder rides the slot whole");
+        // the grow arm (pcs 194-222): the same item grows by the
+        // cell's own count
+        let mut cell = (bucket, 3);
+        assert_eq!(apply_remainder_cell(&mut cell, bucket), None);
+        assert_eq!(cell, (bucket, 4), "the grown pair rides back");
+        // the third arm (pcs 230-255): the different item the
+        // caller's own add lane answers, the cell untouched
+        let mut cell = (milk, 1);
+        assert_eq!(apply_remainder_cell(&mut cell, bucket), Some(bucket));
+        assert_eq!(cell, (milk, 1), "the cell the walk never wears");
+        // the EMPTY remainder: no arm rides
+        let mut cell = (milk, 2);
+        assert_eq!(apply_remainder_cell(&mut cell, 0), None);
+        assert_eq!(cell, (milk, 2), "the empty remainder the walk never wears");
+        // THE PRE-LOOP LIST (pcs 33-43): the untouched grid's own
+        // per-cell read — the milk the bucket speaks, the stone and
+        // the empty cell the EMPTY answer keeps
+        assert_eq!(
+            craft_remainders(&[(milk, 1), (stone, 3), (0, 0)]),
+            vec![bucket, 0, 0],
+            "the Item's own remainder the list keys"
+        );
+    }
+
+    /// THE REMAINDER'S OWN STORE ARM (javap 26.2 ResultSlot.onTake
+    /// pcs 230-255 — the third way the taller milk stack wears): the
+    /// cell keeps its own milk (the decrement's honest tail), the
+    /// bucket the player's store the Inventory.add walk lands, the
+    /// HUD row the every-mutation law syncs, and the FULL store the
+    /// player.drop the body drops speak (the drops vec the spawn
+    /// names).
+    #[test]
+    fn the_cake_multimilk_the_store_adds_the_buckets() {
+        let id = |name: &str| mc_registry::item_id_by_name(name).unwrap();
+        let (milk, sugar, egg, wheat, cake) = (
+            id("milk_bucket"),
+            id("sugar"),
+            id("egg"),
+            id("wheat"),
+            id("cake"),
+        );
+        let bucket = id("bucket");
+        let stone = id("stone");
+        let zero = (0, 0);
+        // THE TALLER STACKS (2 milk per cell — the third arm the
+        // decremented milk's own tail answers)
+        let grid: [(i32, i32); 9] = [
+            (milk, 2), (milk, 2), (milk, 2),
+            (sugar, 1), (egg, 1), (sugar, 1),
+            (wheat, 1), (wheat, 1), (wheat, 1),
+        ];
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_crafting_table();
+        app.table_grid = grid;
+        app.refresh_table_result();
+        app.click_table_result(0);
+        assert_eq!(app.inv_carried, (cake, 1), "the whole result taken");
+        assert_eq!(app.table_grid[0], (milk, 1), "the cell keeps its own milk");
+        assert_eq!(app.table_grid[1], (milk, 1), "the second cell keeps");
+        assert_eq!(app.table_grid[2], (milk, 1), "the third cell keeps");
+        assert_eq!(
+            app.table_result, (0, 0),
+            "the milk-and-empty grid the recipe refuses"
+        );
+        // THE STORE'S OWN LANDING (the add walk's merge-first law —
+        // the SELECTED hotbar slot's own stack the remaining-space
+        // scan fills first, three calls one stack)
+        assert_eq!(app.inventory.items[0], (bucket, 3), "the three buckets merge");
+        // THE HUD ROW (the every-mutation law syncs)
+        assert_eq!(app.hotbar_slots[0], (bucket, 3), "the row the add syncs");
+        // THE DROP ARM (the FULL store — the add's FALSE the
+        // player.drop the body drops speak): no slot lands, three
+        // bucket drops the spawn names
+        let mut full = App::new(3);
+        full.enter_world();
+        full.spawn_offline_body();
+        full.open_crafting_table();
+        full.inventory.items = [(stone, 64); 36];
+        full.table_grid = grid;
+        full.refresh_table_result();
+        full.click_table_result(0);
+        assert_eq!(full.inv_carried, (cake, 1), "the whole result taken");
+        assert!(
+            full.inventory.items.iter().all(|s| s.0 == stone),
+            "the full store the bucket never lands in"
+        );
+        let dropped = full
+            .drops
+            .iter()
+            .filter(|d| d.item == bucket && d.count == 1)
+            .count();
+        assert_eq!(dropped, 3, "the three buckets the body drops speak");
+        let _ = zero;
+    }
+
+    /// THE CAKE'S OWN WIRE WALK (the window-1 belief the onTake
+    /// answers — the remainders arm the packet's changed map names):
+    /// the emptied milk cells the BUCKET pairs wear (the repeated
+    /// slot the map's own put replaces — one entry per slot, the
+    /// final pair), the spent cells the emptied pairs speak, the
+    /// recomputed verdict the result's own entry names, the taller
+    /// stack's buckets the BELIEF's own rows the add walk lands (the
+    /// selected hotbar head first), the HUD row the sync follows.
+    #[test]
+    fn the_wire_table_cake_the_remainders_rid() {
+        use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+        let id = |name: &str| mc_registry::item_id_by_name(name).unwrap();
+        let (milk, sugar, egg, wheat, cake) = (
+            id("milk_bucket"),
+            id("sugar"),
+            id("egg"),
+            id("wheat"),
+            id("cake"),
+        );
+        let bucket = id("bucket");
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        // THE SINGLES GRID (1 milk per cell — the setItem arm the
+        // cells' own pairs wear, no add the store keeps)
+        let table = LiveContainer {
+            id: 9,
+            menu_type_id: crate::world_model::MENU_TYPE_CRAFTING,
+            slots: {
+                let mut s = vec![(0i32, 0i32); 46];
+                s[0] = (cake, 1); // the belief's own preview
+                s[1] = (milk, 1);
+                s[2] = (milk, 1);
+                s[3] = (milk, 1);
+                s[4] = (sugar, 1);
+                s[5] = (egg, 1);
+                s[6] = (sugar, 1);
+                s[7] = (wheat, 1);
+                s[8] = (wheat, 1);
+                s[9] = (wheat, 1);
+                s
+            },
+            carried: (0, 0),
+            state_id: 3,
+            bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
+        app.table_panel = inventory_panel_origin(640, 360);
+        let (px, py) = inventory_panel_origin(640, 360);
+        app.on_press(px + 124 + 1 + 8, py + 35 + 1 + 8);
+        match click_rx.try_recv().expect("the result click rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 9, "the window's own id");
+                assert_eq!(c.slot, 0, "the result slot's own take");
+                assert_eq!(c.input, ContainerInput::Pickup);
+                assert_eq!(c.carried, (cake, 1), "the whole result taken");
+                assert_eq!(
+                    c.changed,
+                    vec![
+                        (1, (bucket, 1)),
+                        (2, (bucket, 1)),
+                        (3, (bucket, 1)),
+                        (4, (0, 0)),
+                        (5, (0, 0)),
+                        (6, (0, 0)),
+                        (7, (0, 0)),
+                        (8, (0, 0)),
+                        (9, (0, 0)),
+                        (0, (0, 0)),
+                    ],
+                    "the buckets' pairs the map's own put replaces, the \
+                     spent cells the emptied pairs speak, the verdict the \
+                     result's entry names"
+                );
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        assert_eq!(app.live_table_slots[1], (bucket, 1), "the belief's cell wears");
+        assert_eq!(app.live_table_slots[0], (0, 0), "the verdict empty");
+        // THE TALLER STACKS (2 milk per cell — the third arm the
+        // BELIEF's own rows the add walk lands): the cells keep their
+        // milk, the buckets the selected hotbar head takes, the HUD
+        // row the sync follows
+        let table2 = LiveContainer {
+            id: 11,
+            menu_type_id: crate::world_model::MENU_TYPE_CRAFTING,
+            slots: {
+                let mut s = vec![(0i32, 0i32); 46];
+                s[0] = (cake, 1);
+                s[1] = (milk, 2);
+                s[2] = (milk, 2);
+                s[3] = (milk, 2);
+                s[4] = (sugar, 1);
+                s[5] = (egg, 1);
+                s[6] = (sugar, 1);
+                s[7] = (wheat, 1);
+                s[8] = (wheat, 1);
+                s[9] = (wheat, 1);
+                s
+            },
+            carried: (0, 0),
+            state_id: 5,
+            bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
+        };
+        app.live_view_updated(air_net_world(2, 2), None, None, Some(table2));
+        app.on_press(px + 124 + 1 + 8, py + 35 + 1 + 8);
+        match click_rx.try_recv().expect("the second take rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.carried, (cake, 1), "the whole result taken");
+                assert_eq!(
+                    c.changed,
+                    vec![
+                        (1, (milk, 1)),
+                        (37, (bucket, 3)),
+                        (2, (milk, 1)),
+                        (3, (milk, 1)),
+                        (4, (0, 0)),
+                        (5, (0, 0)),
+                        (6, (0, 0)),
+                        (7, (0, 0)),
+                        (8, (0, 0)),
+                        (9, (0, 0)),
+                        (0, (0, 0)),
+                    ],
+                    "the cells keep their milk, the buckets the selected row's \
+                     own stack merges (the CraftingMenu's own hotbar head 37 \
+                     the scan keys — the repeated slot the map's own put \
+                     replaces, the FINAL pair one entry), the verdict the \
+                     result's entry names"
+                );
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        assert_eq!(app.live_table_slots[37], (bucket, 3), "the row's own merge");
+        assert_eq!(app.live_table_slots[1], (milk, 1), "the cell keeps its milk");
+        assert_eq!(app.hotbar_slots[0], (bucket, 3), "the HUD row the sync follows");
     }
 
     /// THE TABLE SCREEN'S OWN LANES (the open's fresh grid, the cell
