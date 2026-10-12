@@ -1,0 +1,21 @@
+net.minecraft.client.gui.Hud
+    cp-ref: net/minecraft/world/item/ItemStack.getPopTime ()I
+    code-walk: extractItemHotbar(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V
+    code-walk: displayScoreboardSidebar(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/world/scores/Objective;)V
+    code-walk: playAirBubblePoppedSound(ILnet/minecraft/world/entity/player/Player;I)V
+    code-walk: extractSpyglassOverlay(Lnet/minecraft/client/gui/GuiGraphicsExtractor;F)V
+    code-walk: extractSlot(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IILnet/minecraft/client/DeltaTracker;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/ItemStack;I)V
+net.minecraft.client.multiplayer.ClientPacketListener
+    cp-ref: net/minecraft/world/item/ItemStack.setPopTime (I)V
+    code-walk: handleSetEntityPassengersPacket(Lnet/minecraft/network/protocol/game/ClientboundSetPassengersPacket;)V
+    code-walk: handleContainerSetSlot(Lnet/minecraft/network/protocol/game/ClientboundContainerSetSlotPacket;)V
+    code-walk: lambda$handleRemoveEntities$0(I)V
+net.minecraft.world.entity.player.Inventory
+    cp-ref: net/minecraft/world/item/ItemStack.setPopTime (I)V
+    code-walk: addResource(ILnet/minecraft/world/item/ItemStack;)I
+    code-walk: add(ILnet/minecraft/world/item/ItemStack;)Z
+net.minecraft.world.item.ItemStack
+    cp-ref: net/minecraft/world/item/ItemStack.getPopTime ()I
+    cp-ref: net/minecraft/world/item/ItemStack.setPopTime (I)V
+    code-walk: postHurtEnemy(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/LivingEntity;)V
+    code-walk: copy()Lnet/minecraft/world/item/ItemStack;

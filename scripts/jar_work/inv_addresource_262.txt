@@ -1,0 +1,70 @@
+=== addResource(Lnet/minecraft/world/item/ItemStack;)I max_stack=3 max_locals=3 ===
+      0: aload_0 
+      1: aload_1 
+      2: invokevirtual #1.getSlotWithRemainingSpace:(Lnet/minecraft/world/item/ItemStack;)I
+      5: istore_2 
+      6: iload_2 
+      7: iconst_m1 
+      8: if_icmpne start+16
+     11: aload_0 
+     12: invokevirtual #1.getFreeSlot:()I
+     15: istore_2 
+     16: iload_2 
+     17: iconst_m1 
+     18: if_icmpne start+26
+     21: aload_1 
+     22: invokevirtual #10.getCount:()I
+     25: ireturn 
+     26: aload_0 
+     27: iload_2 
+     28: aload_1 
+     29: invokevirtual #1.addResource:(ILnet/minecraft/world/item/ItemStack;)I
+     32: ireturn 
+
+=== addResource(ILnet/minecraft/world/item/ItemStack;)I max_stack=3 max_locals=7 ===
+      0: aload_2 
+      1: invokevirtual #10.getCount:()I
+      4: istore_3 
+      5: aload_0 
+      6: iload_1 
+      7: invokevirtual #1.getItem:(I)Lnet/minecraft/world/item/ItemStack;
+     10: astore 4
+     12: aload 4
+     14: invokevirtual #10.isEmpty:()Z
+     17: ifeq start+34
+     20: aload_2 
+     21: iconst_0 
+     22: invokevirtual #10.copyWithCount:(I)Lnet/minecraft/world/item/ItemStack;
+     25: astore 4
+     27: aload_0 
+     28: iload_1 
+     29: aload 4
+     31: invokevirtual #1.setItem:(ILnet/minecraft/world/item/ItemStack;)V
+     34: aload_0 
+     35: aload 4
+     37: invokevirtual #1.getMaxStackSize:(Lnet/minecraft/world/item/ItemStack;)I
+     40: aload 4
+     42: invokevirtual #10.getCount:()I
+     45: isub 
+     46: istore 5
+     48: iload_3 
+     49: iload 5
+     51: invokestatic #156.min:(II)I
+     54: istore 6
+     56: iload 6
+     58: ifne start+63
+     61: iload_3 
+     62: ireturn 
+     63: iload_3 
+     64: iload 6
+     66: isub 
+     67: istore_3 
+     68: aload 4
+     70: iload 6
+     72: invokevirtual #10.grow:(I)V
+     75: aload 4
+     77: iconst_5 
+     78: invokevirtual #10.setPopTime:(I)V
+     81: iload_3 
+     82: ireturn 
+

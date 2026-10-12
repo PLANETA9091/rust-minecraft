@@ -13306,25 +13306,43 @@ impl App {
                 crate::drops::merge_pass(&mut self.drops);
                 if let Some(b) = self.body.as_ref() {
                     let selected = self.selected_hotbar;
+                    // THE MODE THE VOID ARMS (the add's hasInfiniteMaterials
+                    // law — javap Inventory.add pcs 71-87 the creative sweep
+                    // speaks)
+                    let creative = self.game_mode == GameMode::Creative;
                     // THE ROW BEFORE THE TAKE (the broadcastChanges' own
                     // snapshot shape — the diff the vanilla server
                     // speaks, the verdict the client's cpl walk wears)
                     let hotbar_before = self.inventory.hotbar();
-                    let mut picked = false;
+                    // THE TWO VOICES THE TOUCH SPLITS (javap
+                    // ItemEntity.playerTouch + Inventory.add(int, ItemStack)
+                    // pcs 63-101): the tryPickup TRUE the pickup VOICE
+                    // wears (the sound + the whole entity's discard), the
+                    // LANDING the pop wears (addResource's own
+                    // setPopTime(5) the grow arms — the last pass's stall
+                    // the voice refuses, the landed tail the bounce keeps)
+                    let mut voiced = false;
+                    let mut touched = false;
                     for d in self.drops.iter_mut() {
                         if crate::drops::pickup_scan(b, d) {
-                            if let crate::drops::Touch::Picked { .. } =
-                                crate::drops::player_touch(d, &mut self.inventory, selected)
-                            {
-                                picked = true;
+                            match crate::drops::player_touch(
+                                d,
+                                &mut self.inventory,
+                                selected,
+                                creative,
+                            ) {
+                                crate::drops::Touch::Picked { .. } => {
+                                    voiced = true;
+                                    touched = true;
+                                }
+                                crate::drops::Touch::Took { .. } => {
+                                    touched = true;
+                                }
+                                crate::drops::Touch::Idle => {}
                             }
                         }
                     }
-                    if picked {
-                        // the take voice (handleTakeItemEntity's own law —
-                        // the packet's sound beat the offline lane speaks
-                        // directly)
-                        self.sounds.play_pickup(self.frame);
+                    if touched {
                         // THE PICKUP'S OWN POP (javap 26.2
                         // ClientPacketListener.handleContainerSetSlot pcs
                         // 97-148 — the integrated server's own SetSlot
@@ -13338,7 +13356,9 @@ impl App {
                         // sentinel compare carries). The MAIN grid and
                         // the offhand lands the isHotbarSlot gate the
                         // pop never wears, the untouched slots the
-                        // in-flight pops keep decaying.
+                        // in-flight pops keep decaying. The LANDED tail
+                        // the voice's refusal never silences — the
+                        // addResource arm the pop rides.
                         let hotbar_after = self.inventory.hotbar();
                         for (i, (old, new)) in
                             hotbar_before.iter().zip(hotbar_after.iter()).enumerate()
@@ -13349,6 +13369,12 @@ impl App {
                         }
                         // the hotbar's projection refreshes with the take
                         self.hotbar_slots = hotbar_after;
+                    }
+                    if voiced {
+                        // the take voice (handleTakeItemEntity's own law —
+                        // the packet's sound beat the offline lane speaks
+                        // directly)
+                        self.sounds.play_pickup(self.frame);
                     }
                 }
                 self.drops.retain(|d| d.count > 0);
@@ -23131,7 +23157,7 @@ impl App {
                                 // shrink speaks, the shrunken stack the
                                 // hand keeps)
                                 self.inventory.items[sel].1 = held_count - 1;
-                                let leftover = self.inventory.add(sel, milk_id, 1);
+                                let (leftover, _spoke) = self.inventory.add(sel, milk_id, 1, false);
                                 if leftover > 0 {
                                     // THE OVERFLOW'S OWN DROP (the
                                     // `!add` arm the player.drop walk
@@ -38932,7 +38958,7 @@ impl App {
                             *slot = (rem_id, 1);
                         } else {
                             slot.1 -= 1;
-                            let leftover = self.inventory.add(sel, rem_id, 1);
+                            let (leftover, _spoke) = self.inventory.add(sel, rem_id, 1, false);
                             if leftover > 0 {
                                 // the full inventory's honesty: the
                                 // remainder drops at the body (the
@@ -105989,7 +106015,7 @@ cow_sound_variant: None,
         for it in app.inventory.items.iter_mut().skip(9) {
             *it = (cobble, 64);
         }
-        let leftover = app.inventory.add(0, torch, 5);
+        let (leftover, _spoke) = app.inventory.add(0, torch, 5, false);
         assert_eq!(leftover, 0, "the offhand took all five");
         assert_eq!(app.inventory.offhand[0], (torch, 35), "the container-40 fill");
         assert_eq!(app.inventory.items[0], (torch, 64), "the selected untouched");

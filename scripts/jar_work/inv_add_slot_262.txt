@@ -1,0 +1,126 @@
+=== add(ILnet/minecraft/world/item/ItemStack;)Z max_stack=4 max_locals=6 ===
+      0: aload_2 
+      1: invokevirtual #10.isEmpty:()Z
+      4: ifeq start+9
+      7: iconst_0 
+      8: ireturn 
+      9: aload_2 
+     10: invokevirtual #10.isDamaged:()Z
+     13: ifne start+102
+     16: aload_2 
+     17: invokevirtual #10.getCount:()I
+     20: istore_3 
+     21: iload_1 
+     22: iconst_m1 
+     23: if_icmpne start+38
+     26: aload_2 
+     27: aload_0 
+     28: aload_2 
+     29: invokevirtual #1.addResource:(Lnet/minecraft/world/item/ItemStack;)I
+     32: invokevirtual #10.setCount:(I)V
+     35: goto start+48
+     38: aload_2 
+     39: aload_0 
+     40: iload_1 
+     41: aload_2 
+     42: invokevirtual #1.addResource:(ILnet/minecraft/world/item/ItemStack;)I
+     45: invokevirtual #10.setCount:(I)V
+     48: aload_2 
+     49: invokevirtual #10.isEmpty:()Z
+     52: ifne start+63
+     55: aload_2 
+     56: invokevirtual #10.getCount:()I
+     59: iload_3 
+     60: if_icmplt start+16
+     63: aload_2 
+     64: invokevirtual #10.getCount:()I
+     67: iload_3 
+     68: if_icmpne start+88
+     71: aload_0 
+     72: getfield #1.player:Lnet/minecraft/world/entity/player/Player;
+     75: invokevirtual #119.hasInfiniteMaterials:()Z
+     78: ifeq start+88
+     81: aload_2 
+     82: iconst_0 
+     83: invokevirtual #10.setCount:(I)V
+     86: iconst_1 
+     87: ireturn 
+     88: aload_2 
+     89: invokevirtual #10.getCount:()I
+     92: iload_3 
+     93: if_icmpge start+100
+     96: iconst_1 
+     97: goto start+101
+    100: iconst_0 
+    101: ireturn 
+    102: iload_1 
+    103: iconst_m1 
+    104: if_icmpne start+112
+    107: aload_0 
+    108: invokevirtual #1.getFreeSlot:()I
+    111: istore_1 
+    112: iload_1 
+    113: iflt start+146
+    116: aload_0 
+    117: getfield #1.items:Lnet/minecraft/core/NonNullList;
+    120: iload_1 
+    121: aload_2 
+    122: invokevirtual #10.copyAndClear:()Lnet/minecraft/world/item/ItemStack;
+    125: invokevirtual #16.set:(ILjava/lang/Object;)Ljava/lang/Object;
+    128: pop 
+    129: aload_0 
+    130: getfield #1.items:Lnet/minecraft/core/NonNullList;
+    133: iload_1 
+    134: invokevirtual #16.get:(I)Ljava/lang/Object;
+    137: checkcast net/minecraft/world/item/ItemStack
+    140: iconst_5 
+    141: invokevirtual #10.setPopTime:(I)V
+    144: iconst_1 
+    145: ireturn 
+    146: aload_0 
+    147: getfield #1.player:Lnet/minecraft/world/entity/player/Player;
+    150: invokevirtual #119.hasInfiniteMaterials:()Z
+    153: ifeq start+163
+    156: aload_2 
+    157: iconst_0 
+    158: invokevirtual #10.setCount:(I)V
+    161: iconst_1 
+    162: ireturn 
+    163: iconst_0 
+    164: ireturn 
+    165: astore_3 
+    166: aload_3 
+    167: ldc #201
+    169: invokestatic #204.forThrowable:(Ljava/lang/Throwable;Ljava/lang/String;)Lnet/minecraft/CrashReport;
+    172: astore 4
+    174: aload 4
+    176: ldc #209
+    178: invokevirtual #204.addCategory:(Ljava/lang/String;)Lnet/minecraft/CrashReportCategory;
+    181: astore 5
+    183: aload 5
+    185: ldc #215
+    187: aload_2 
+    188: invokevirtual #10.getItem:()Lnet/minecraft/world/item/Item;
+    191: invokestatic #221.getId:(Lnet/minecraft/world/item/Item;)I
+    194: invokestatic #227.valueOf:(I)Ljava/lang/Integer;
+    197: invokevirtual #233.setDetail:(Ljava/lang/String;Ljava/lang/Object;)Lnet/minecraft/CrashReportCategory;
+    200: pop 
+    201: aload 5
+    203: ldc #238
+    205: aload_2 
+    206: invokevirtual #10.getDamageValue:()I
+    209: invokestatic #227.valueOf:(I)Ljava/lang/Integer;
+    212: invokevirtual #233.setDetail:(Ljava/lang/String;Ljava/lang/Object;)Lnet/minecraft/CrashReportCategory;
+    215: pop 
+    216: aload 5
+    218: ldc #243
+    220: aload_2 
+    221: invokedynamic #245
+    226: invokevirtual #233.setDetail:(Ljava/lang/String;Lnet/minecraft/CrashReportDetail;)Lnet/minecraft/CrashReportCategory;
+    229: pop 
+    230: new net/minecraft/ReportedException
+    233: dup 
+    234: aload 4
+    236: invokespecial #252.<init>:(Lnet/minecraft/CrashReport;)V
+    239: athrow 
+

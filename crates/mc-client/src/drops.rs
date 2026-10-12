@@ -606,30 +606,52 @@ impl Inventory {
         incoming - take
     }
 
-    /// `Inventory.add` (javap): the loop re-locates per pass (the merge
-    /// stack fills, the next pass finds the next home) and stops when a
-    /// pass makes no progress. Returns the LEFTOVER count (the caller
-    /// speaks the pickup when it shrinks).
-    pub fn add(&mut self, selected: usize, id: i32, count: i32) -> i32 {
+    /// `Inventory.add(int, ItemStack)` (javap 26.2, sha1 2dc72797 —
+    /// pcs 0-101): the undamaged walk the loop head RE-FRESHES —
+    /// `count_in = stack.getCount()` rides INSIDE the loop (pc 16-20),
+    /// each pass re-locates (the remaining-space scan, the free-slot
+    /// fallback), the pass's take shrinks the stack, the `count <
+    /// count_in` compare (pc 55-62) re-runs ONLY while the LAST pass
+    /// made progress. The EXIT verdict (pcs 63-101): the stalled pass's
+    /// `count == count_in` speaks the VOID arm — `hasInfiniteMaterials`
+    /// zero the stack and return TRUE (the creative sweep: the whole
+    /// touch vanishes the drop, what fits landed, the tail voided) —
+    /// the survival arm returns `count < count_in`: the LAST pass's
+    /// own progress, NOT the walk's overall take (a walk that landed
+    /// 10 then stalled speaks FALSE — tryPickup refuses, the entity
+    /// keeps the leftover, the voice never plays). Returns the
+    /// (leftover, tryPickup) pair — the leftover the caller's honest
+    /// shrink, the bool the vanilla add's own return.
+    pub fn add(&mut self, selected: usize, id: i32, count: i32, creative: bool) -> (i32, bool) {
         if count <= 0 {
-            return 0;
+            return (0, false); // the isEmpty gate (pc 0-8) — nothing walks
         }
         let mut remaining = count;
         loop {
-            let before = remaining;
+            let before = remaining; // count_in — the loop head's own refresh
             let slot = self
                 .get_slot_with_remaining_space(selected, id)
                 .or_else(|| self.get_free_slot());
             let Some(slot) = slot else {
-                return remaining;
+                // addResource's no-home arm (the (ItemStack) overload's
+                // `if (slot == -1) return count`) — the pass stalled
+                if creative {
+                    return (0, true); // the void arm (pcs 71-87)
+                }
+                return (remaining, false); // pc 88-101: count < count_in FALSE
             };
             remaining = self.add_resource(slot, id, remaining);
             if remaining <= 0 {
-                return 0;
+                return (0, true); // the empty stack — pc 48-52's exit, TRUE
             }
             if remaining >= before {
-                return remaining;
+                // the stalled pass (pc 60's compare refuses) — the exit
+                if creative {
+                    return (0, true); // the void arm
+                }
+                return (remaining, false);
             }
+            // the pass spoke (pc 60's `count < count_in`) — re-locate
         }
     }
 
@@ -742,37 +764,57 @@ pub fn roll_wheat_drops(kind: u16, rng: &mut Lcg) -> Vec<(i32, i32)> {
     out
 }
 
-/// The pickup outcome (the caller's own lanes: the sound beat, the hotbar
-/// refresh).
+/// The pickup outcome (the caller's own lanes: the sound beat, the
+/// hotbar refresh).
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Touch {
     /// The delay still holds (or the stack vanished) — nothing spoke.
     Idle,
-    /// The inventory took `added` of the stack (the pickup voice's own
-    /// beat — the ORIGINAL count the take law names).
+    /// The vanilla add returned TRUE — the last pass took (or the
+    /// creative void consumed): the pickup voice's own beat, the
+    /// entity's discard.
     Picked { added: i32 },
+    /// The walk LANDED items but the LAST pass stalled — the vanilla
+    /// add's own FALSE (javap pcs 88-101: `count < count_in` reads the
+    /// last pass, not the walk): tryPickup refuses, the voice never
+    /// plays, the entity keeps the leftover — the landed tail the
+    /// caller's row diff still wears.
+    Took { added: i32 },
 }
 
-/// `ItemEntity.playerTouch`'s own law (javap): the delay gate, the
-/// target gate (the block drops carry none), the inventory add, the
-/// partial count's honest shrink, the empty stack's discard (the
-/// caller's retain).
+/// `ItemEntity.playerTouch`'s own law (javap 26.2 — the tryPickup walk
+/// the inventory add answers): the delay gate, the target gate (the
+/// block drops carry none), the inventory add's (leftover, verdict)
+/// pair, the TRUE verdict's `drop()` + discard (the voice the caller
+/// plays, the whole entity gone), the FALSE verdict's honest keep (the
+/// entity holds the leftover, the landed tail stays taken). The
+/// CREATIVE void (the add's hasInfiniteMaterials arm) returns TRUE
+/// with the leftover zeroed — the touch consumes the whole drop.
 pub fn player_touch(
     drop: &mut ItemDrop,
     inventory: &mut Inventory,
     selected: usize,
+    creative: bool,
 ) -> Touch {
     if drop.pickup_delay != 0 || drop.count <= 0 {
         return Touch::Idle;
     }
     let original = drop.count;
-    let leftover = inventory.add(selected, drop.item, drop.count);
-    if leftover >= original {
+    let (leftover, spoke) = inventory.add(selected, drop.item, drop.count, creative);
+    if leftover < original {
+        drop.count = leftover; // the honest shrink (the void's own zero rides)
+    }
+    if !spoke {
+        if leftover < original {
+            return Touch::Took {
+                added: original - leftover,
+            };
+        }
         return Touch::Idle; // no room — the vanilla's own verdict (no voice)
     }
-    drop.count = leftover;
+    drop.count = 0; // the TRUE verdict discards the whole entity
     Touch::Picked {
-        added: original - leftover,
+        added: original,
     }
 }
 
@@ -1053,7 +1095,7 @@ mod tests {
         inv.items[0] = (7, 30);
         inv.items[5] = (7, 60);
         // 40 dirt: the selected merges to 64, the scan finds slot 5 for the rest
-        let leftover = inv.add(0, 7, 40);
+        let (leftover, spoke) = inv.add(0, 7, 40, false);
         // the honest walk: the selected takes min(40, 34) = 34 -> 64; the
         // next pass scans slot 5 (60): min(6, 4) = 4 -> 64; the third
         // pass finds no merge space and opens the first free slot (1)
@@ -1062,10 +1104,11 @@ mod tests {
         assert_eq!(inv.items[5], (7, 64));
         assert_eq!(inv.items[1], (7, 2), "the overflow opens the first free slot");
         assert_eq!(leftover, 0);
+        assert!(spoke, "the walk's last pass took — the add's TRUE");
         // the whole 64 stack in an empty inventory: getFreeSlot scans from
         // slot 0 (the vanilla's own order — NOT the selected slot)
         let mut inv = Inventory::default();
-        let leftover = inv.add(3, 9, 64);
+        let (leftover, spoke) = inv.add(3, 9, 64, false);
         assert_eq!(leftover, 0);
         assert_eq!(inv.items[0], (9, 64), "the free-slot scan starts at slot 0");
     }
@@ -1076,24 +1119,72 @@ mod tests {
         for slot in inv.items.iter_mut() {
             *slot = (5, 64);
         }
-        let leftover = inv.add(0, 5, 3);
+        let (leftover, spoke) = inv.add(0, 5, 3, false);
         assert_eq!(leftover, 3, "the full inventory returns the whole count");
+        assert!(!spoke, "the stalled pass the add's FALSE speaks");
+        // the CREATIVE void: the same full inventory, the infinite
+        // materials — the add's hasInfiniteMaterials arm zeroes the
+        // stack and returns TRUE (the touch consumes the whole drop)
+        let (leftover, spoke) = inv.add(0, 5, 3, true);
+        assert_eq!(leftover, 0, "the void arm zeroes the leftover");
+        assert!(spoke, "the void arm's own TRUE");
         // a full inventory refuses a DIFFERENT item the same way
-        let leftover = inv.add(0, 6, 1);
+        let (leftover, spoke) = inv.add(0, 6, 1, false);
         assert_eq!(leftover, 1);
+        assert!(!spoke);
     }
 
     #[test]
     fn add_merge_never_exceeds_cap() {
         let mut inv = Inventory::default();
         inv.items[2] = (7, 62);
-        let leftover = inv.add(0, 7, 5);
+        let (leftover, spoke) = inv.add(0, 7, 5, false);
         // the selected (0) is empty — the merge scan finds slot 2: min(5, 2)
         // = 2 -> 64; the leftover 3 opens slot 0 (the selected, the first
         // free in the scan order)
         assert_eq!(inv.items[2], (7, 64));
         assert_eq!(inv.items[0], (7, 3));
         assert_eq!(leftover, 0);
+        assert!(spoke);
+    }
+
+    #[test]
+    fn add_partial_take_the_last_pass_the_verdict_names() {
+        // javap pcs 88-101: the add's return reads the LAST pass's own
+        // `count < count_in`, NOT the walk's overall take — a walk that
+        // landed 10 then stalled speaks FALSE even though items landed
+        let mut inv = Inventory::default();
+        inv.items[1] = (7, 60); // the merge takes 4, then the walk stalls
+        for i in (2..36).step_by(2) {
+            inv.items[i] = (9, 1);
+        }
+        for i in (3..36).step_by(2) {
+            inv.items[i] = (8, 1);
+        }
+        inv.items[0] = (5, 64);
+        let (leftover, spoke) = inv.add(0, 7, 70, false);
+        assert_eq!(leftover, 66, "the merge took 4 (60 -> 64), the walk stalled");
+        assert_eq!(inv.items[1], (7, 64), "the landed tail stays taken");
+        assert!(!spoke, "the LAST pass stalled — the add's own FALSE");
+    }
+
+    #[test]
+    fn add_creative_void_the_partial_tail_the_same_verdict() {
+        // javap pcs 71-87: the stalled pass + hasInfiniteMaterials —
+        // the stack ZEROED and TRUE, whatever the earlier passes took
+        let mut inv = Inventory::default();
+        inv.items[1] = (7, 60);
+        for i in (2..36).step_by(2) {
+            inv.items[i] = (9, 1);
+        }
+        for i in (3..36).step_by(2) {
+            inv.items[i] = (8, 1);
+        }
+        inv.items[0] = (5, 64);
+        let (leftover, spoke) = inv.add(0, 7, 70, true);
+        assert_eq!(leftover, 0, "the void arm zeroes the tail");
+        assert_eq!(inv.items[1], (7, 64), "the landed tail stays taken");
+        assert!(spoke, "the void arm's own TRUE — the touch consumes");
     }
 
     #[test]
@@ -1113,10 +1204,10 @@ mod tests {
     fn pickup_delay_gates_the_touch() {
         let mut inv = Inventory::default();
         let mut d = ItemDrop::spawn(1, 7, 1, 0, 0, 0, &mut Lcg::new(14));
-        assert_eq!(player_touch(&mut d, &mut inv, 0), Touch::Idle, "the 10-tick delay holds");
+        assert_eq!(player_touch(&mut d, &mut inv, 0, false), Touch::Idle, "the 10-tick delay holds");
         d.pickup_delay = 0;
         assert_eq!(
-            player_touch(&mut d, &mut inv, 0),
+            player_touch(&mut d, &mut inv, 0, false),
             Touch::Picked { added: 1 },
             "the delay gone, the inventory speaks"
         );
@@ -1140,14 +1231,57 @@ mod tests {
             inv.items[i] = (8, 1);
         }
         inv.items[0] = (5, 64);
-        let t = player_touch(&mut d, &mut inv, 0);
+        let t = player_touch(&mut d, &mut inv, 0, false);
         match t {
-            Touch::Picked { added } => {
-                assert!(added > 0);
-                assert!(d.count > 0, "the entity keeps the leftover");
+            Touch::Took { added } => {
+                assert_eq!(added, 4, "the merge took 4 (60 -> 64)");
+                assert_eq!(d.count, 66, "the entity keeps the leftover");
             }
-            Touch::Idle => panic!("the pickup must speak"),
+            Touch::Picked { .. } => panic!(
+                "the stalled last pass must NOT speak — the vanilla add's \
+                 own FALSE the tryPickup refuses"
+            ),
+            Touch::Idle => panic!("the landed tail the Took verdict wears"),
         }
+    }
+
+    #[test]
+    fn pickup_creative_void_consumes_the_whole_touch() {
+        // the add's hasInfiniteMaterials arm: whatever the walk landed,
+        // the stalled pass zeroes the stack — the whole drop vanishes
+        // and the voice plays (the creative sweep's own feel)
+        let mut inv = Inventory::default();
+        inv.items[1] = (7, 60);
+        for i in (2..36).step_by(2) {
+            inv.items[i] = (9, 1);
+        }
+        for i in (3..36).step_by(2) {
+            inv.items[i] = (8, 1);
+        }
+        inv.items[0] = (5, 64);
+        let mut d = ItemDrop::spawn(1, 7, 70, 0, 0, 0, &mut Lcg::new(17));
+        d.pickup_delay = 0;
+        assert_eq!(
+            player_touch(&mut d, &mut inv, 0, true),
+            Touch::Picked { added: 70 },
+            "the void arm's TRUE — the whole touch consumed"
+        );
+        assert_eq!(d.count, 0, "the entity discarded");
+        assert_eq!(inv.items[1], (7, 64), "the fit landed before the void");
+        // the never-took arm the same verdict wears (the full inventory
+        // in creative still vanishes the drop — the sweep's own law)
+        let mut full = Inventory::default();
+        for slot in full.items.iter_mut() {
+            *slot = (5, 64);
+        }
+        let mut d2 = ItemDrop::spawn(1, 7, 3, 0, 0, 0, &mut Lcg::new(18));
+        d2.pickup_delay = 0;
+        assert_eq!(
+            player_touch(&mut d2, &mut full, 0, true),
+            Touch::Picked { added: 3 },
+            "the never-took touch the void's TRUE wears"
+        );
+        assert_eq!(d2.count, 0, "the untouched stack zeroed");
     }
 
     #[test]
