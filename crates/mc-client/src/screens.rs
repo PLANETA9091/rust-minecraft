@@ -22985,6 +22985,277 @@ impl App {
         // rides; the container STAYS OPEN (only the close keys close it).
     }
 
+    /// THE SURVIVAL SCREEN'S OWN HOTBAR KEYS (javap 26.2 — the 2dc72797
+    /// jar's own classes speak: AbstractContainerScreen
+    /// .checkHotbarKeyPressed pcs 0-114 the carried-empty +
+    /// hovered-slot gates open (the offhand key FIRST — the
+    /// `slotClicked(hovered, hovered.index, 40, SWAP)` walk rides, the
+    /// keyHotbarSlots loop after — the digit's `slotClicked(hovered,
+    /// hovered.index, i, SWAP)`), AbstractContainerMenu.doClick pcs
+    /// 1079-1382 the ContainerInput.SWAP table answers — the SAME
+    /// table the creative walk's default arm rides). THE GATES:
+    /// - the carried gate (pc 0-10 — `getCarried().isEmpty()`): the
+    ///   cursor's own stack the false verdict keeps — the chain the
+    ///   world's number-key lane answers (the creative walk's own
+    ///   false-return law);
+    /// - the hovered-slot gate (pc 13-17 — `hoveredSlot != null`):
+    ///   the panel the render never spoke, the cursor the frame
+    ///   stream never fed — the null verdict the false return keeps;
+    /// - the wire gate (the store the server owns — the window-0
+    ///   swap lane rides later, the Q-throw lane's own refusal
+    ///   shape).
+    /// THE SEATS (the InventoryMenu's own slot list the ctor speaks —
+    /// the result 0, the craft cells 1..4, the armor 5..8, the store
+    /// rows 9..44, the offhand 45):
+    /// - the RESULT seat: `ResultSlot.mayPlace` the iconst_0 the
+    ///   place arms refuse (the banked click walk's own law), the
+    ///   `mayPickup` the matches verdict the recompute's own answer
+    ///   wears — a non-empty result IS the recipe's own match — so
+    ///   CASE B alone fires (the row empty, the result rides, the
+    ///   [`Self::craft_on_take`] the ingredients' decrement + the
+    ///   recompute speaks — the ResultSlot.onTake walk the click
+    ///   lane shares);
+    /// - the CRAFT cells: the TransientCraftingContainer's plain
+    ///   Slots — mayPickup/mayPlace the unconditional TRUE (Slot
+    ///   .mayPlace the iconst_1), the max the item's own law;
+    /// - the ARMOR cells: the ArmorSlot's own gates (the creative
+    ///   round's law — mayPickup the PREVENT_ARMOR_CHANGE gate the
+    ///   component-less model never wears, mayPlace the
+    ///   isEquippableInSlot verdict the equippable_loop_k table
+    ///   answers), the max `min(64, the piece's own 1)`;
+    /// - the STORE rows: the plain Slots — the unconditional TRUE
+    ///   pair, the max the item's own law;
+    /// - the OFFHAND: the fresh dump `offhand_slot_262.txt` (the
+    ///   ctor's anonymous `InventoryMenu$1`) the mayPlace override
+    ///   NEVER wears — the base slot's unconditional TRUE the 26.2
+    ///   walk keeps, the max the item's own law.
+    /// THE SWAP TABLE (doClick pcs 1130-1382 — the rows the walk
+    /// speaks): the both-empty press (pcs 1130-1146) the consumed
+    /// silence keeps; CASE B (pc 1149-1202) the row empty — the
+    /// hovered stack rides the button row AS-IS, the hovered cell
+    /// EMPTIES (onSwapCraft + setByPlayer(EMPTY) + onTake); CASE C
+    /// (pc 1205-1273) the hovered empty — `mayPlace` the row's stack
+    /// places, the SPLIT law the max wears (`getMaxStackSize(stack)`
+    /// = `min(64, the item's own)` the Slot bytecode speaks: the
+    /// count > max the cell takes max, the row the remainder keeps;
+    /// the count <= max the row EMPTIES, the cell the whole wears);
+    /// CASE D (pc 1276-1379) both filled — `mayPickup && mayPlace`
+    /// the gates answer (the component-less model's mayPickup the
+    /// unconditional TRUE keeps), the count > max arm the split +
+    /// the ORIGINAL hovered stack `Inventory.add` rides (the add's
+    /// own merge-then-first-empty law, the FALSE the player.drop
+    /// speaks — the leftover the body's own drop lane spawns), the
+    /// count <= max arm the straight trade wears.
+    /// The walk's true verdict the digit CONSUMES either way (the
+    /// SWAP arm ran — the refusals the checkHotbarKeyPressed's own
+    /// true-return keep); the false verdicts (the screen's own
+    /// gates) the world chain answers.
+    pub fn on_inventory_swap_key(&mut self, button: usize) -> bool {
+        if self.screen != ScreenKind::Inventory || self.dead {
+            return false;
+        }
+        if self.world_is_network {
+            return false; // the wire's window-0 swap lane rides later
+        }
+        // THE CARRIED GATE (checkHotbarKeyPressed pc 0-10 — the
+        // getCarried().isEmpty() the walk opens with)
+        if self.inv_carried.1 > 0 {
+            return false;
+        }
+        // THE HOVERED-SLOT GATE (pc 13-17 — the hoveredSlot null arm:
+        // the panel the render never spoke, the cursor the frame
+        // stream never fed — the headless scenes track no mouse)
+        if self.inv_panel == (0, 0) {
+            return false;
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return false;
+        };
+        let Some(hover) = self.inventory_hover(mx, my) else {
+            return false;
+        };
+        self.inventory_swap_table(button, hover)
+    }
+
+    /// THE HOVERED SEAT'S OWN WALK (the click lane's own order — the
+    /// menu's slot list the ctor speaks: the result slot 0 at
+    /// (154, 28), the craft cells at (98, 18), the armor 5..8 at
+    /// (8, 8 + k*18), the offhand 45 at (77, 62), the store rows
+    /// last — the same 16x16 rects at the +1 inset the click walk
+    /// speaks). The elsewhere point the hoveredSlot null verdict
+    /// wears.
+    fn inventory_hover(&self, mx: i32, my: i32) -> Option<InventoryHover> {
+        let panel = self.inv_panel;
+        let (rx, ry) = craft_slot_origin(panel, 4);
+        if mx >= rx + 1 && mx < rx + 17 && my >= ry + 1 && my < ry + 17 {
+            return Some(InventoryHover::Result);
+        }
+        for cell in 0..4 {
+            let (cx, cy) = craft_slot_origin(panel, cell);
+            if mx >= cx + 1 && mx < cx + 17 && my >= cy + 1 && my < cy + 17 {
+                return Some(InventoryHover::Craft(cell));
+            }
+        }
+        for k in 0..4 {
+            let (ax, ay) = armor_slot_origin(panel, k);
+            if mx >= ax + 1 && mx < ax + 17 && my >= ay + 1 && my < ay + 17 {
+                return Some(InventoryHover::Armor(k));
+            }
+        }
+        {
+            let (ox, oy) = offhand_slot_origin(panel);
+            if mx >= ox + 1 && mx < ox + 17 && my >= oy + 1 && my < oy + 17 {
+                return Some(InventoryHover::Offhand);
+            }
+        }
+        (0..36)
+            .map(|i| {
+                let (ox, oy) = inventory_slot_origin(panel, i);
+                (ox + 1, oy + 1, i)
+            })
+            .find(|&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+            .map(|(_, _, i)| InventoryHover::Store(i))
+    }
+
+    /// THE SWAP TABLE'S OWN WALK (doClick pcs 1079-1382 — the rows
+    /// the doc block speaks): the seat's stacks the helpers read,
+    /// the table's arms the walk answers, the HUD row the
+    /// every-mutation law syncs.
+    fn inventory_swap_table(&mut self, button: usize, hover: InventoryHover) -> bool {
+        // THE BUTTON GATE (doClick pc 1086-1099): the button 0..8 the
+        // hotbar row answers, the 40 the offhand — the caller's own
+        // chain (the digits + the F) never passes else
+        debug_assert!(button < 9 || button == 40, "the SWAP input's own gate");
+        let (row_id, row_count) = if button == 40 {
+            self.inventory.offhand[0]
+        } else {
+            self.inventory.items[button]
+        };
+        let (hover_id, hover_count) = self.inventory_hover_stack(hover);
+        if row_count <= 0 && hover_count <= 0 {
+            return true; // pc 1130-1146: the both-empty silence
+        }
+        // THE SEAT'S mayPlace (the Slot.mayPlace walk — the base
+        // slots' iconst_1, the armor's matching-piece verdict, the
+        // result's iconst_0 the place arms refuse)
+        let may_place = self.inventory_seat_may_place(hover, row_id);
+        if row_count <= 0 {
+            // CASE B (pc 1149-1202): the hovered stack rides the
+            // button row AS-IS, the hovered cell EMPTIES — the
+            // mayPickup the component-less model's unconditional TRUE
+            // keeps (the PREVENT_ARMOR_CHANGE gate never wears), the
+            // result seat's mayPickup the recompute's own match
+            // verdict speaks
+            self.inventory_set_hover(hover, (0, 0));
+            self.inventory_set_row(button, (hover_id, hover_count));
+            self.inventory_seat_on_take(hover);
+            self.hotbar_slots = self.inventory.hotbar();
+            return true;
+        }
+        if hover_count <= 0 {
+            // CASE C (pc 1205-1273): the row's stack places — the
+            // SPLIT law the max wears (getMaxStackSize(stack) = min(
+            // 64, the item's own))
+            if !may_place {
+                return true; // the mayPlace refusal — the consumed silence
+            }
+            let max = crate::world_view::item_max_stack(row_id);
+            if row_count > max {
+                self.inventory_set_hover(hover, (row_id, max));
+                self.inventory_set_row(button, (row_id, row_count - max));
+            } else {
+                self.inventory_set_row(button, (0, 0));
+                self.inventory_set_hover(hover, (row_id, row_count));
+            }
+            self.hotbar_slots = self.inventory.hotbar();
+            return true;
+        }
+        // CASE D (pc 1276-1379): both filled — only the mayPlace
+        // verdict gates (the mayPickup the component-less model never
+        // refuses)
+        if !may_place {
+            return true; // the gates' refusal — BOTH stay
+        }
+        let max = crate::world_view::item_max_stack(row_id);
+        if row_count > max {
+            // pc 1315-1355: the split(max) — the cell takes max, the
+            // row the remainder keeps, the ORIGINAL hovered stack the
+            // INVENTORY add rides (the add's own merge-then-first-
+            // empty law), the add's FALSE the player.drop speaks
+            self.inventory_set_hover(hover, (row_id, max));
+            self.inventory_set_row(button, (row_id, row_count - max));
+            let (leftover, _spoke) =
+                self.inventory
+                    .add(self.selected_hotbar, hover_id, hover_count, false);
+            if leftover > 0 {
+                self.spawn_drop_at_player(hover_id, leftover);
+            }
+        } else {
+            // pc 1358-1379: the straight trade — the row the hovered
+            // stack takes, the cell the row's stack wears
+            self.inventory_set_row(button, (hover_id, hover_count));
+            self.inventory_set_hover(hover, (row_id, row_count));
+        }
+        self.hotbar_slots = self.inventory.hotbar();
+        true
+    }
+
+    /// The hovered seat's own stack (the menu's slot list the walk
+    /// reads — the result's craft output, the cells' grid, the armor
+    /// column, the store rows, the offhand).
+    fn inventory_hover_stack(&self, hover: InventoryHover) -> (i32, i32) {
+        match hover {
+            InventoryHover::Result => self.craft_result,
+            InventoryHover::Craft(cell) => self.craft_grid[cell],
+            InventoryHover::Armor(k) => self.inventory.armor[k],
+            InventoryHover::Store(i) => self.inventory.items[i],
+            InventoryHover::Offhand => self.inventory.offhand[0],
+        }
+    }
+
+    /// The hovered seat's own set (the menu's slot list the walk
+    /// writes — the same lists the read speaks).
+    fn inventory_set_hover(&mut self, hover: InventoryHover, stack: (i32, i32)) {
+        match hover {
+            InventoryHover::Result => self.craft_result = stack,
+            InventoryHover::Craft(cell) => self.craft_grid[cell] = stack,
+            InventoryHover::Armor(k) => self.inventory.armor[k] = stack,
+            InventoryHover::Store(i) => self.inventory.items[i] = stack,
+            InventoryHover::Offhand => self.inventory.offhand[0] = stack,
+        }
+    }
+
+    /// The button row's own set (doClick's Inventory.setItem walk —
+    /// the button 0..8 the hotbar row answers, the 40 the offhand).
+    fn inventory_set_row(&mut self, button: usize, stack: (i32, i32)) {
+        if button == 40 {
+            self.inventory.offhand[0] = stack;
+        } else {
+            self.inventory.items[button] = stack;
+        }
+    }
+
+    /// The seat's own mayPlace (the Slot.mayPlace walk — the base
+    /// slots' unconditional TRUE, the armor's matching-piece verdict
+    /// the equippable_loop_k table answers, the result's iconst_0
+    /// the place arms refuse).
+    fn inventory_seat_may_place(&self, hover: InventoryHover, row_id: i32) -> bool {
+        match hover {
+            InventoryHover::Result => false,
+            InventoryHover::Craft(_) | InventoryHover::Store(_) | InventoryHover::Offhand => true,
+            InventoryHover::Armor(k) => crate::world_view::equippable_loop_k(row_id) == Some(k),
+        }
+    }
+
+    /// The seat's own onTake (the Slot.onTake walk — the plain
+    /// slots' default silence, the result's craft consume the
+    /// ResultSlot.onTake the click lane shares).
+    fn inventory_seat_on_take(&mut self, hover: InventoryHover) {
+        if let InventoryHover::Result = hover {
+            self.craft_on_take();
+        }
+    }
+
     /// The LEFT press's rising edge (the vanilla MouseHandler's own
     /// press routing): a container screen's press clicks the slot it
     /// landed on (button 0); every other screen falls through to the
@@ -47811,6 +48082,22 @@ fn hotbar_rect(gui_w: i32, gui_h: i32) -> (i32, i32) {
 /// (176x166) centered in the GUI workspace.
 fn chest_panel_origin(gui_w: i32, gui_h: i32) -> (i32, i32) {
     ((gui_w - 176) / 2, (gui_h - 166) / 2)
+}
+
+/// THE SURVIVAL SCREEN'S OWN HOVERED-SEAT KINDS (the InventoryMenu's
+/// own slot list the ctor's add walk speaks — the result 0, the
+/// craft cells 1..4, the armor 5..8, the store rows 9..44, the
+/// offhand 45): the hotbar-keys swap walk's own seat answer. The
+/// STORE kind the walk's own index keeps (the store's 0..35 — the
+/// hotbar row 0..8, the main grid 9..35; the menu ids 36..44/9..35
+/// the walk's reads never speak).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum InventoryHover {
+    Result,
+    Craft(usize),
+    Armor(usize),
+    Store(usize),
+    Offhand,
 }
 
 /// The survival inventory's panel origin — the 26.2's own leftPos /
@@ -107012,6 +107299,315 @@ cow_sound_variant: None,
         app.on_inventory_drop_key(false);
         assert_eq!(app.drops.len(), drops_before, "the wire refusal holds");
         assert_eq!(app.inventory.items[5], (62, 7), "the wire store whole");
+    }
+
+    /// THE SURVIVAL SCREEN'S OWN DIGIT SWAP (the checkHotbarKeyPressed
+    /// walk the InventoryMenu's seats answer — the doClick SWAP table's
+    /// own arms): CASE B the hovered stack rides the empty button row
+    /// AS-IS (the store cell EMPTIES, the HUD row synced), the
+    /// both-empty press the consumed silence keeps, the hoveredSlot
+    /// null the false verdict wears.
+    #[test]
+    fn the_inventory_digits_the_swap_table_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        // CASE B: the hovered store stack rides the EMPTY hotbar row 0
+        app.inventory.items[10] = (62, 7);
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 10);
+        app.mouse_pos = Some((ox + 8, oy + 8));
+        assert!(app.on_inventory_swap_key(0), "the digit consumes");
+        assert_eq!(app.inventory.items[10], (0, 0), "the store empties");
+        assert_eq!(app.inventory.items[0], (62, 7), "the row rides AS-IS");
+        assert_eq!(app.hotbar_slots[0], (62, 7), "the HUD synced");
+        assert_eq!(app.screen, ScreenKind::Inventory, "the screen stays");
+        assert_eq!(app.inv_carried, (0, 0), "the cursor stays empty");
+        // the BOTH-EMPTY press (pcs 1130-1146): the consumed silence —
+        // the row 0's stack rode away, the hover re-armed on store 11
+        // (both empty)
+        let (ox2, oy2) = inventory_slot_origin(app.inv_panel, 11);
+        app.mouse_pos = Some((ox2 + 8, oy2 + 8));
+        assert!(app.on_inventory_swap_key(1), "the silence CONSUMES");
+        assert_eq!(app.inventory.items[1], (0, 0), "the row whole");
+        assert_eq!(app.inventory.items[11], (0, 0), "the cell whole");
+        // the hoveredSlot NULL (the cursor off the slots): the false
+        // verdict the world chain answers
+        app.mouse_pos = Some((332, 157));
+        assert!(!app.on_inventory_swap_key(2), "the null hover refuses");
+    }
+
+    /// THE CASE C'S OWN SPLIT LAW (the getMaxStackSize walk — min(64,
+    /// the item's own)): the row 20 eggs over the EMPTY hovered cell —
+    /// the cell takes the max 16, the row the remainder 4 keeps; the
+    /// count <= max arm the row EMPTIES, the cell the whole stack
+    /// wears.
+    #[test]
+    fn the_inventory_digit_splits_the_max_overflow() {
+        let egg = crate::mob::wire_id("egg").expect("the egg's own id");
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        // the SPLIT arm: the row 20 eggs (the test's own state — the
+        // placement law never carries 20 eggs), the hover the empty
+        // store 12
+        app.inventory.items[0] = (egg, 20);
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 12);
+        app.mouse_pos = Some((ox + 8, oy + 8));
+        assert!(app.on_inventory_swap_key(0), "the digit consumes");
+        assert_eq!(app.inventory.items[12], (egg, 16), "the cell the max takes");
+        assert_eq!(app.inventory.items[0], (egg, 4), "the row the remainder keeps");
+        // the WHOLE arm: the row 12 stone over the empty store 13
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        app.inventory.items[0] = (stone, 12);
+        let (ox2, oy2) = inventory_slot_origin(app.inv_panel, 13);
+        app.mouse_pos = Some((ox2 + 8, oy2 + 8));
+        assert!(app.on_inventory_swap_key(0), "the digit consumes");
+        assert_eq!(app.inventory.items[13], (stone, 12), "the cell the whole wears");
+        assert_eq!(app.inventory.items[0], (0, 0), "the row empties");
+    }
+
+    /// THE CASE D'S OWN TRADE (the count <= max arm — the straight
+    /// swap the pcs 1358-1379 walk speaks): the two stacks trade —
+    /// the row the hovered stack takes, the cell the row's stack
+    /// wears; the hotbar row's own hover the REARRANGE arm answers
+    /// (store 5 hovered, the digit 2 — the items' 5 and 2 trade).
+    #[test]
+    fn the_inventory_digit_the_straight_trade_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        // the main-row trade: the row 5 stone, the hover 3 dirt
+        app.inventory.items[1] = (stone, 5);
+        app.inventory.items[20] = (dirt, 3);
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 20);
+        app.mouse_pos = Some((ox + 8, oy + 8));
+        assert!(app.on_inventory_swap_key(1), "the digit consumes");
+        assert_eq!(app.inventory.items[1], (dirt, 3), "the row the hovered takes");
+        assert_eq!(app.inventory.items[20], (stone, 5), "the cell the row's wears");
+        // THE HOTBAR REARRANGE (the store's own row the hover reads —
+        // menu 36..44 the walk's store index folds): store 5 hovered,
+        // the digit 2 — items[5] and items[2] trade
+        app.inventory.items[5] = (62, 1);
+        app.inventory.items[2] = (63, 2);
+        let (ox2, oy2) = inventory_slot_origin(app.inv_panel, 5);
+        app.mouse_pos = Some((ox2 + 8, oy2 + 8));
+        assert!(app.on_inventory_swap_key(2), "the digit consumes");
+        assert_eq!(app.inventory.items[2], (62, 1), "the row the hover's takes");
+        assert_eq!(app.inventory.items[5], (63, 2), "the cell the row's wears");
+        assert_eq!(app.hotbar_slots[2], (62, 1), "the HUD synced");
+    }
+
+    /// THE CASE D'S OWN SPLIT + ADD (the count > max arm — the pcs
+    /// 1315-1355 walk): the cell takes max, the row the remainder
+    /// keeps, the ORIGINAL hovered stack the Inventory.add rides —
+    /// the add's own merge-then-first-empty law answers, the FALSE
+    /// the player.drop speaks (the leftover the body's own lane
+    /// spawns), the TRUE the silent landing wears.
+    #[test]
+    fn the_inventory_digit_the_split_adds_back_or_drops() {
+        let helmet = mc_registry::item_id_by_name("iron_helmet").unwrap();
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        // THE DROP ARM: the row 3 helmets (the over-max state the
+        // test's own — the count the item's own max 1 exceeds), the
+        // hover 30 stone, the store FULL of stone — the split the cell
+        // takes 1 helmet, the row the remainder 2 keeps; the 30 stone
+        // the add's scan refuses (the stacks the 64-cap fills, the
+        // free slot absent) — the drop speaks
+        for it in app.inventory.items.iter_mut() {
+            *it = (stone, 64);
+        }
+        app.inventory.items[0] = (helmet, 3);
+        app.inventory.items[12] = (stone, 30);
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 12);
+        app.mouse_pos = Some((ox + 8, oy + 8));
+        let drops_before = app.drops.len();
+        assert!(app.on_inventory_swap_key(0), "the digit consumes");
+        assert_eq!(app.inventory.items[12], (helmet, 1), "the cell the max takes");
+        assert_eq!(app.inventory.items[0], (helmet, 2), "the row the remainder keeps");
+        assert_eq!(app.drops.len(), drops_before + 1, "the add's FALSE the drop speaks");
+        let d = app.drops.last().unwrap();
+        assert_eq!(d.item, stone);
+        assert_eq!(d.count, 30, "the ORIGINAL hovered stack the drop wears");
+        // THE LANDING ARM: the store's slot 30 freed — the 30 stone the
+        // first-empty takes whole (the merge finds no stone space — the
+        // 64-stacks full, the helmet cells different-id), no drop
+        app.inventory.items[0] = (helmet, 3);
+        app.inventory.items[12] = (stone, 30);
+        app.inventory.items[30] = (0, 0);
+        let drops_before = app.drops.len();
+        assert!(app.on_inventory_swap_key(0), "the digit consumes");
+        assert_eq!(app.inventory.items[12], (helmet, 1), "the cell the max takes");
+        assert_eq!(app.inventory.items[0], (helmet, 2), "the row the remainder keeps");
+        assert_eq!(app.drops.len(), drops_before, "the add's TRUE the silence keeps");
+        assert_eq!(app.inventory.items[30], (stone, 30), "the stones the first-empty lands");
+    }
+
+    /// THE ARMOR SEAT'S OWN GATES (the ArmorSlot's mayPlace the
+    /// equippable_loop_k verdict answers — the creative round's law
+    /// the survival seat shares): the matching piece places (the max-1
+    /// split the multi-count wears), the mismatch the consumed
+    /// silence keeps (the CASE C refusal AND the CASE D both-stay).
+    #[test]
+    fn the_inventory_digit_the_armor_gates_keep() {
+        let helmet = mc_registry::item_id_by_name("iron_helmet").unwrap();
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        // CASE C the MATCHING piece: the row 2 helmets (the test's own
+        // state), the armor cell 0 EMPTY — the cell takes ONE, the row
+        // keeps 1
+        app.inventory.items[0] = (helmet, 2);
+        let (ax, ay) = armor_slot_origin(app.inv_panel, 0);
+        app.mouse_pos = Some((ax + 8, ay + 8));
+        assert!(app.on_inventory_swap_key(0), "the digit consumes");
+        assert_eq!(app.inventory.armor[0], (helmet, 1), "the piece places");
+        assert_eq!(app.inventory.items[0], (helmet, 1), "the row keeps the rest");
+        // CASE C the MISMATCH: the row stone over the EMPTY armor cell
+        // 1 — the mayPlace refusal, both stay
+        app.inventory.items[0] = (stone, 5);
+        let (ax2, ay2) = armor_slot_origin(app.inv_panel, 1);
+        app.mouse_pos = Some((ax2 + 8, ay2 + 8));
+        assert!(app.on_inventory_swap_key(0), "the refusal CONSUMES");
+        assert_eq!(app.inventory.armor[1], (0, 0), "the cell stays empty");
+        assert_eq!(app.inventory.items[0], (stone, 5), "the row whole");
+        // CASE D the MISMATCH: the row stone over the WORN helmet —
+        // both stay
+        let (ax3, ay3) = armor_slot_origin(app.inv_panel, 0);
+        app.mouse_pos = Some((ax3 + 8, ay3 + 8));
+        assert!(app.on_inventory_swap_key(0), "the refusal CONSUMES");
+        assert_eq!(app.inventory.armor[0], (helmet, 1), "the worn whole");
+        assert_eq!(app.inventory.items[0], (stone, 5), "the row whole");
+        // CASE D the STRAIGHT TRADE: the row 1 helmet over the worn
+        // helmet — the worn rides the row, the cell the row's wears
+        app.inventory.items[0] = (helmet, 1);
+        assert!(app.on_inventory_swap_key(0), "the digit consumes");
+        assert_eq!(app.inventory.armor[0], (helmet, 1), "the cell the row's wears");
+        assert_eq!(app.inventory.items[0], (helmet, 1), "the worn the row rides");
+    }
+
+    /// THE F KEY'S OWN OFFHAND SWAP (checkHotbarKeyPressed's FIRST arm
+    /// — the button 40 the InventoryMenu$1's plain law answers, the
+    /// fresh offhand_slot_262.txt dump the mayPlace override the
+    /// 26.2 walk never wears): CASE B the hovered stack rides the
+    /// EMPTY offhand, the CASE D trade the two stacks swap.
+    #[test]
+    fn the_inventory_f_swaps_the_offhand() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        // CASE B: the hovered store stack rides the EMPTY offhand
+        app.inventory.items[14] = (62, 6);
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 14);
+        app.mouse_pos = Some((ox + 8, oy + 8));
+        assert!(app.on_inventory_swap_key(40), "the F consumes");
+        assert_eq!(app.inventory.offhand[0], (62, 6), "the offhand rides");
+        assert_eq!(app.inventory.items[14], (0, 0), "the store empties");
+        // CASE D: the offhand and the hovered slot trade
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        app.inventory.items[14] = (dirt, 9);
+        let (ox2, oy2) = inventory_slot_origin(app.inv_panel, 14);
+        app.mouse_pos = Some((ox2 + 8, oy2 + 8));
+        assert!(app.on_inventory_swap_key(40), "the F consumes");
+        assert_eq!(app.inventory.offhand[0], (dirt, 9), "the offhand the hover's takes");
+        assert_eq!(app.inventory.items[14], (62, 6), "the store the offhand's wears");
+    }
+
+    /// THE RESULT SEAT'S OWN TAKE (CASE B — the row empty, the
+    /// result's mayPickup the recompute's own match verdict speaks):
+    /// the 1-log planks the row rides, the craft_on_take the
+    /// ingredients' decrement + the recompute answers; the
+    /// mayPlace-false seat the CASE C/D arms the silence keeps (the
+    /// row's stack the result seat never places, the CASE D both
+    /// stay).
+    #[test]
+    fn the_inventory_digit_the_result_take_consumes() {
+        let log = mc_registry::item_id_by_name("oak_log").unwrap();
+        let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        // the grid's 1 log → the result 4 planks (the shapeless single)
+        app.craft_grid[0] = (log, 1);
+        app.refresh_craft_result();
+        assert_eq!(app.craft_result, (planks, 4), "the recipe speaks");
+        let (rx, ry) = craft_slot_origin(app.inv_panel, 4);
+        app.mouse_pos = Some((rx + 8, ry + 8));
+        assert!(app.on_inventory_swap_key(0), "the digit consumes");
+        assert_eq!(app.inventory.items[0], (planks, 4), "the row the result rides");
+        assert_eq!(app.craft_result, (0, 0), "the result empties");
+        assert_eq!(app.craft_grid[0], (0, 0), "the log consumed");
+        // the CASE D refusal: the result refilled, the row filled —
+        // the mayPlace-false seat BOTH stay
+        app.craft_grid[0] = (log, 1);
+        app.refresh_craft_result();
+        assert!(app.on_inventory_swap_key(0), "the refusal CONSUMES");
+        assert_eq!(app.craft_result, (planks, 4), "the result whole");
+        assert_eq!(app.inventory.items[0], (planks, 4), "the row whole");
+        assert_eq!(app.craft_grid[0], (log, 1), "the grid whole");
+        // the CASE C refusal: the result cleared, the row filled — the
+        // mayPlace refusal the place arm never rides
+        app.craft_grid[0] = (0, 0);
+        app.refresh_craft_result();
+        assert!(app.on_inventory_swap_key(0), "the refusal CONSUMES");
+        assert_eq!(app.craft_result, (0, 0), "the result stays empty");
+        assert_eq!(app.inventory.items[0], (planks, 4), "the row whole");
+    }
+
+    /// THE WALK'S OWN GATE CHAIN (the checkHotbarKeyPressed pcs 0-17
+    /// verdicts): the CARRIED cursor the false return keeps, the WIRE
+    /// session the store-server-owned refusal wears, the WORLD screen
+    /// cross the false keeps, the NO-PANEL silence (the render never
+    /// spoke) the false keeps.
+    #[test]
+    fn the_inventory_digit_the_gates_refuse() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        app.inventory.items[10] = (62, 7);
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 10);
+        // the CARRIED gate (pc 0-10)
+        app.mouse_pos = Some((ox + 8, oy + 8));
+        app.inv_carried = (62, 5);
+        assert!(!app.on_inventory_swap_key(0), "the carried refuses");
+        assert_eq!(app.inventory.items[10], (62, 7), "the store whole");
+        // the WIRE gate (the store the server owns)
+        app.inv_carried = (0, 0);
+        app.world_is_network = true;
+        assert!(!app.on_inventory_swap_key(0), "the wire refuses");
+        assert_eq!(app.inventory.items[10], (62, 7), "the wire store whole");
+        app.world_is_network = false;
+        // the WORLD screen cross — the walk the survival screen alone
+        // reads
+        app.screen = ScreenKind::World;
+        assert!(!app.on_inventory_swap_key(0), "the world cross refuses");
+        app.open_inventory();
+        // the NO-PANEL gate (the hoveredSlot null arm — the render
+        // never spoke)
+        app.inv_panel = (0, 0);
+        assert!(!app.on_inventory_swap_key(0), "the no-panel refuses");
+        assert_eq!(app.inventory.items[10], (62, 7), "the store whole");
     }
 
     /// THE RIGHT PRESS'S OWN TABLE (the doClick PICKUP button-1 branch):
