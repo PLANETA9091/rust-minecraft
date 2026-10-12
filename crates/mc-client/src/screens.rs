@@ -18803,6 +18803,116 @@ impl App {
         self.creative_swap_live_words(&[(36 + slot as i32, new_cell)]);
     }
 
+    /// THE ARMOR CELL'S OWN SWAP (the default arm's SWAP table the
+    /// ArmorSlot's own gates answer — javap acm doClick pcs 1149-1379,
+    /// ArmorSlot.mayPlace the isEquippableInSlot verdict the
+    /// equippable_loop_k table answers, mayPickup the
+    /// PREVENT_ARMOR_CHANGE gate the component-less model never wears):
+    /// case B (pcs 1149-1202) the worn piece rides the button row, the
+    /// armor cell empties; case C (pcs 1205-1273) the matching piece
+    /// PLACES — the SPLIT law the max-1 wears (getMaxStackSize =
+    /// min(64, the armor's own 1): the cell takes ONE, the row the
+    /// remainder keeps), the mismatch the consumed silence keeps; case
+    /// D (pcs 1276-1379) only the matching piece trades — the count-1
+    /// stack the straight trade (the row the worn piece takes, the
+    /// cell the hotbar stack wears), the multi-count stack the
+    /// split(1) arm (the cell takes ONE, the row the remainder keeps,
+    /// the worn piece the INVENTORY add rides — the add's FALSE the
+    /// player's-feet drop speaks, the player.drop walk the entity
+    /// spawns). The both-empty press (pcs 1130-1146) the plain silence
+    /// keeps. The walk the key CONSUMES either way (the SWAP arm ran,
+    /// the gates' refusals the checkHotbarKeyPressed's own true-return
+    /// keep). The pop the creative lane never wears — the pop law
+    /// lives in the PACKET handler (the cpl's SetSlot walk), the
+    /// creative screen's own words the CreativeSetSlot walk speaks.
+    fn creative_swap_armor_cell(&mut self, k: usize, button: usize) -> bool {
+        let (hotbar_id, hotbar_count) = if button == 40 {
+            self.inventory.offhand[0]
+        } else {
+            self.inventory.items[button]
+        };
+        let worn = self.inventory.armor[k];
+        if hotbar_count <= 0 && worn.1 <= 0 {
+            return true; // pc 1130-1146: the both-empty silence
+        }
+        let put_row = |app: &mut Self, stack: (i32, i32)| {
+            if button == 40 {
+                app.inventory.offhand[0] = stack;
+            } else {
+                app.inventory.items[button] = stack;
+            }
+        };
+        if hotbar_count <= 0 {
+            // CASE B (pcs 1149-1202): mayPickup the worn piece rides the
+            // button row, the armor cell empties
+            if worn.1 <= 0 || worn.0 == 0 {
+                return true; // the empty cell — nothing rides
+            }
+            put_row(self, worn);
+            self.inventory.armor[k] = (0, 0);
+            return true;
+        }
+        let matches = crate::world_view::equippable_loop_k(hotbar_id) == Some(k);
+        if worn.1 <= 0 || worn.0 == 0 {
+            // CASE C (pcs 1205-1273): the matching piece places — the
+            // split law the max-1 wears, the mismatch the refusal keeps
+            if !matches {
+                return true; // the mayPlace refusal — the consumed silence
+            }
+            self.inventory.armor[k] = (hotbar_id, 1);
+            put_row(
+                self,
+                if hotbar_count > 1 {
+                    (hotbar_id, hotbar_count - 1)
+                } else {
+                    (0, 0)
+                },
+            );
+            return true;
+        }
+        // CASE D (pcs 1276-1379): mayPickup && mayPlace — only the
+        // matching piece trades
+        if !matches {
+            return true; // the mayPlace refusal — both stay
+        }
+        if hotbar_count > 1 {
+            // pc 1315-1355: the split(1) — the cell takes ONE, the row
+            // the remainder keeps, the worn piece the INVENTORY add
+            // rides (the add's own loop the tail finds), the add's
+            // FALSE the drop speaks
+            self.inventory.armor[k] = (hotbar_id, 1);
+            put_row(self, (hotbar_id, hotbar_count - 1));
+            let (leftover, _spoke) = self.inventory.add(self.selected_hotbar, worn.0, worn.1, false);
+            if leftover > 0 {
+                let (px, py, pz) = self
+                    .body
+                    .as_ref()
+                    .map(|b| (b.x, b.y, b.z))
+                    .unwrap_or_else(|| {
+                        let c = self.world_camera();
+                        (c.pos.x as f64, c.pos.y as f64, c.pos.z as f64)
+                    });
+                let id = self.next_drop_id;
+                self.next_drop_id += 1;
+                self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                    id,
+                    worn.0,
+                    leftover,
+                    px,
+                    py,
+                    pz,
+                    &mut self.mob_rng,
+                ));
+            }
+        } else {
+            // pc 1358-1379: the straight trade — the row the worn piece
+            // takes, the armor cell the hotbar stack wears
+            put_row(self, worn);
+            self.inventory.armor[k] = (hotbar_id, 1);
+        }
+        true
+    }
+
     /// THE PICKER'S OWN SWAP (javap 26.2 — the number-key walk the
     /// 2dc72797 jar's own classes speak: CreativeModeInventoryScreen
     /// .keyPressed pcs 54-114 the numeric arm gates (the flag2 =
@@ -18897,18 +19007,21 @@ impl App {
             CREATIVE_TABS[self.creative_tab].kind == CreativeTabKind::Search;
         // THE WRAPPED SEAT'S OWN SWAP (the default arm's
         // InventoryMenu.clicked walk — the Main/Hotbar/Offhand rows
-        // the base Slot's law the table answers, the Armor the
-        // mayPlace gate the follow-up owes — the hover the walk ran,
+        // the base Slot's law the table answers, the Armor the OWN
+        // gates the follow-up answers — the hover the walk ran,
         // the consumed the checkHotbarKeyPressed's own verdict keeps;
         // the BIN the never-a-row slot the silence keeps)
         if let Some(slot) = wrap_slot {
+            if let CreativeWrapSlot::Armor(k) = slot {
+                return self.creative_swap_armor_cell(k, button);
+            }
             let row = match slot {
                 CreativeWrapSlot::Main(i) | CreativeWrapSlot::Hotbar(i) => Some(i),
                 CreativeWrapSlot::Offhand => Some(usize::MAX),
                 CreativeWrapSlot::Armor(_) | CreativeWrapSlot::Bin => None,
             };
             let Some(row) = row else {
-                return true; // the armor's mayPlace / the bin's silence
+                return true; // the bin's silence
             };
             // THE HOVERED CELL'S OWN MENU ID (the default arm's own
             // translation — the SlotWrapper.target.index the walk
@@ -105525,8 +105638,9 @@ cow_sound_variant: None,
         assert!(app.on_creative_swap_key(40), "the F the offhand answers");
         assert_eq!(app.inventory.offhand[0], (stone, 6), "the offhand the take wears");
         assert_eq!(app.inventory.items[10], (0, 0), "the cell the F empties");
-        // THE ARMOR (the mayPlace gate the silence consumes — no
-        // change rides, the walk the run banks)
+        // THE ARMOR (the case D mismatch the gates' refusal wears —
+        // the egg the matching-piece trade refuses, BOTH stay; the
+        // matching piece's own table the dedicated test answers)
         app.inventory.armor[0] = (helmet, 1);
         app.mouse_pos = Some(armor_head);
         assert!(app.on_creative_swap_key(0), "the armor the consume keeps");
@@ -105737,6 +105851,147 @@ cow_sound_variant: None,
             !app.on_creative_drop_key(false),
             "the empty cell the miss wears"
         );
+    }
+
+    /// THE ARMOR SWAP'S OWN TABLE (the ArmorSlot's own gates the
+    /// SWAP arm answers — javap acm doClick pcs 1149-1379 + the fresh
+    /// ArmorSlot disasm: mayPlace the isEquippableInSlot verdict the
+    /// equippable_loop_k table folds, mayPickup the PREVENT_ARMOR_CHANGE
+    /// gate the component-less model never wears): case B the worn
+    /// piece rides the button row, case C the matching piece PLACES
+    /// (the split law the max-1 wears — the cell takes ONE, the row
+    /// the remainder keeps), the mismatch the consumed silence keeps,
+    /// case D only the matching piece trades (the count-1 the straight
+    /// trade, the multi-count the split(1) arm — the cell takes ONE,
+    /// the row the remainder keeps, the worn piece the INVENTORY add
+    /// rides), the both-empty press the plain silence keeps.
+    #[test]
+    fn the_armor_swap_the_gates_the_table_wears() {
+        let helmet = mc_registry::item_id_by_name("iron_helmet").unwrap();
+        let diamond_helmet = mc_registry::item_id_by_name("diamond_helmet").unwrap();
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let egg = mc_registry::item_id_by_name("egg").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.game_mode = GameMode::Creative;
+        app.open_inventory();
+        app.select_creative_tab(13);
+        app.creative_panel = creative_panel_origin(640, 360);
+        let (px, py) = app.creative_panel;
+        let armor_head = (px + 54 + 8, py + 6 + 8);
+        app.mouse_pos = Some(armor_head);
+
+        // CASE B (pcs 1149-1202): the empty hotbar row takes the worn
+        // piece, the armor cell empties (mayPickup the component-less
+        // model always grants)
+        app.inventory.armor[0] = (helmet, 1);
+        assert!(app.on_creative_swap_key(0));
+        assert_eq!(
+            app.inventory.items[0],
+            (helmet, 1),
+            "the worn piece the row rides"
+        );
+        assert_eq!(app.inventory.armor[0], (0, 0), "the cell the take empties");
+
+        // CASE C (pcs 1205-1273) matching: the count-1 stack the head
+        // wears, the row empties
+        app.inventory.items[0] = (helmet, 1);
+        assert!(app.on_creative_swap_key(0));
+        assert_eq!(
+            app.inventory.armor[0],
+            (helmet, 1),
+            "the matching piece the head wears"
+        );
+        assert_eq!(app.inventory.items[0], (0, 0), "the row the place empties");
+
+        // CASE C split: the multi-count stack the ONE rides, the row
+        // the remainder keeps (getMaxStackSize the armor's own 1)
+        app.inventory.armor[0] = (0, 0);
+        app.inventory.items[0] = (helmet, 3);
+        assert!(app.on_creative_swap_key(0));
+        assert_eq!(
+            app.inventory.armor[0],
+            (helmet, 1),
+            "the split the ONE places"
+        );
+        assert_eq!(
+            app.inventory.items[0],
+            (helmet, 2),
+            "the row the remainder keeps"
+        );
+
+        // CASE C mismatch: the stone the mayPlace refusal wears — the
+        // consumed silence, both stay
+        app.inventory.armor[0] = (0, 0);
+        app.inventory.items[0] = (stone, 5);
+        assert!(app.on_creative_swap_key(0));
+        assert_eq!(app.inventory.armor[0], (0, 0), "the refusal the head keeps");
+        assert_eq!(app.inventory.items[0], (stone, 5), "the row the refusal keeps");
+
+        // CASE D (pcs 1276-1379) straight: the count-1 matching piece
+        // trades with the worn (mayPickup && mayPlace both speak)
+        app.inventory.armor[0] = (diamond_helmet, 1);
+        app.inventory.items[0] = (helmet, 1);
+        assert!(app.on_creative_swap_key(0));
+        assert_eq!(
+            app.inventory.armor[0],
+            (helmet, 1),
+            "the head the trade wears"
+        );
+        assert_eq!(
+            app.inventory.items[0],
+            (diamond_helmet, 1),
+            "the row the worn takes"
+        );
+
+        // CASE D split: the multi-count stack the ONE trades, the worn
+        // piece the INVENTORY add rides (the empty tail the first free
+        // slot takes), the row the remainder keeps
+        app.inventory.armor[0] = (diamond_helmet, 1);
+        app.inventory.items[0] = (helmet, 3);
+        assert!(app.on_creative_swap_key(0));
+        assert_eq!(
+            app.inventory.armor[0],
+            (helmet, 1),
+            "the split the ONE wears"
+        );
+        assert_eq!(
+            app.inventory.items[0],
+            (helmet, 2),
+            "the row the remainder keeps"
+        );
+        assert_eq!(
+            app.inventory.items[1],
+            (diamond_helmet, 1),
+            "the worn the add lands"
+        );
+        assert!(
+            app.drops.is_empty(),
+            "the add's TRUE the drop never speaks"
+        );
+
+        // CASE D mismatch: the egg over the worn helmet the refusal
+        // wears — BOTH stay (the mayPlace arm the trade refuses)
+        app.inventory.armor[0] = (diamond_helmet, 1);
+        app.inventory.items[0] = (egg, 2);
+        assert!(app.on_creative_swap_key(0));
+        assert_eq!(
+            app.inventory.armor[0],
+            (diamond_helmet, 1),
+            "the head the mismatch keeps"
+        );
+        assert_eq!(app.inventory.items[0], (egg, 2), "the row the mismatch keeps");
+
+        // the both-empty press (pcs 1130-1146) the plain silence keeps
+        app.inventory.armor[0] = (0, 0);
+        app.inventory.items[0] = (0, 0);
+        assert!(
+            app.on_creative_swap_key(0),
+            "the both-empty the consumed silence keeps"
+        );
+        assert_eq!(app.inventory.armor[0], (0, 0), "the silence the head keeps");
+        assert_eq!(app.inventory.items[0], (0, 0), "the silence the row keeps");
     }
 
     /// THE SCROLLBAR'S OWN DRAG (the 26.2 mouseClicked / mouseDragged /

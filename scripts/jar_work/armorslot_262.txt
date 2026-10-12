@@ -1,0 +1,30 @@
+=== mayPlace(Lnet/minecraft/world/item/ItemStack;)Z max_stack=3 max_locals=2 ===
+      0: aload_0 
+      1: getfield #8.owner:Lnet/minecraft/world/entity/LivingEntity;
+      4: aload_1 
+      5: aload_0 
+      6: getfield #8.slot:Lnet/minecraft/world/entity/EquipmentSlot;
+      9: invokevirtual #22.isEquippableInSlot:(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/EquipmentSlot;)Z
+     12: ireturn 
+
+=== mayPickup(Lnet/minecraft/world/entity/player/Player;)Z max_stack=2 max_locals=3 ===
+      0: aload_0 
+      1: invokevirtual #8.getItem:()Lnet/minecraft/world/item/ItemStack;
+      4: astore_2 
+      5: aload_2 
+      6: invokevirtual #44.isEmpty:()Z
+      9: ifne start+31
+     12: aload_1 
+     13: invokevirtual #50.isCreative:()Z
+     16: ifne start+31
+     19: aload_2 
+     20: getstatic #55.PREVENT_ARMOR_CHANGE:Lnet/minecraft/core/component/DataComponentType;
+     23: invokestatic #61.has:(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/core/component/DataComponentType;)Z
+     26: ifeq start+31
+     29: iconst_0 
+     30: ireturn 
+     31: aload_0 
+     32: aload_1 
+     33: invokespecial #2.mayPickup:(Lnet/minecraft/world/entity/player/Player;)Z
+     36: ireturn 
+
