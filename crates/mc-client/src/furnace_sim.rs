@@ -281,7 +281,7 @@ fn can_burn(result: (i32, i32), assembled: (i32, i32)) -> bool {
     if result.0 != assembled.0 {
         return false;
     }
-    result.1 + assembled.1 <= crate::world_view::ITEM_MAX_STACK_DEFAULT
+    result.1 + assembled.1 <= crate::world_view::item_max_stack(result.0)
 }
 
 /// THE CONSUME FUEL WALK (javap consumeFuel pcs 0-42 — the shrink the

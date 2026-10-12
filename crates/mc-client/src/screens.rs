@@ -17843,8 +17843,8 @@ impl App {
                 if rest == 0 {
                     break;
                 }
-                if it.1 > 0 && it.0 == id && it.1 < crate::world_view::ITEM_MAX_STACK_DEFAULT {
-                    let take = (crate::world_view::ITEM_MAX_STACK_DEFAULT - it.1).min(rest);
+                if it.1 > 0 && it.0 == id && it.1 < crate::world_view::item_max_stack(id) {
+                    let take = (crate::world_view::item_max_stack(id) - it.1).min(rest);
                     it.1 += take;
                     rest -= take;
                 }
@@ -17923,8 +17923,8 @@ impl App {
                 if rest == 0 {
                     break;
                 }
-                if it.1 > 0 && it.0 == id && it.1 < crate::world_view::ITEM_MAX_STACK_DEFAULT {
-                    let take = (crate::world_view::ITEM_MAX_STACK_DEFAULT - it.1).min(rest);
+                if it.1 > 0 && it.0 == id && it.1 < crate::world_view::item_max_stack(id) {
+                    let take = (crate::world_view::item_max_stack(id) - it.1).min(rest);
                     it.1 += take;
                     rest -= take;
                 }
@@ -18193,7 +18193,7 @@ impl App {
         if count <= 0 || id == 0 {
             return;
         }
-        let max = crate::world_view::ITEM_MAX_STACK_DEFAULT;
+        let max = crate::world_view::item_max_stack(id);
         self.inv_carried = (id, max);
     }
 
@@ -18294,10 +18294,9 @@ impl App {
     fn click_creative_palette(&mut self, cell: usize, button: i8) {
         let carried = self.inv_carried;
         let hovered = self.creative_palette[cell];
-        // the sim's id-only stack model the merge walks keep (the
-        // per-item max table the follow-up round owes — the same 64
-        // law the store's own merges speak)
-        let max = crate::world_view::ITEM_MAX_STACK_DEFAULT;
+        // the per-item max the jar's own table speaks (the
+        // item_max_stack walk the merges and takes share)
+        let max = crate::world_view::item_max_stack(if carried.1 > 0 { carried.0 } else { hovered.0 });
         if carried.1 > 0 && hovered.1 > 0 && carried.0 == hovered.0 {
             if button == 0 {
                 if self.shift_down {
@@ -18329,7 +18328,7 @@ impl App {
         // the shift the max)
         if hovered.1 > 0 && hovered.0 != 0 {
             let count = if self.shift_down {
-                crate::world_view::ITEM_MAX_STACK_DEFAULT
+                crate::world_view::item_max_stack(hovered.0)
             } else {
                 hovered.1
             };
@@ -18384,8 +18383,8 @@ impl App {
                 if rest == 0 {
                     break;
                 }
-                if it.1 > 0 && it.0 == id && it.1 < crate::world_view::ITEM_MAX_STACK_DEFAULT {
-                    let take = (crate::world_view::ITEM_MAX_STACK_DEFAULT - it.1).min(rest);
+                if it.1 > 0 && it.0 == id && it.1 < crate::world_view::item_max_stack(id) {
+                    let take = (crate::world_view::item_max_stack(id) - it.1).min(rest);
                     it.1 += take;
                     rest -= take;
                 }
@@ -18546,8 +18545,8 @@ impl App {
                 if rest == 0 {
                     break;
                 }
-                if it.1 > 0 && it.0 == id && it.1 < crate::world_view::ITEM_MAX_STACK_DEFAULT {
-                    let take = (crate::world_view::ITEM_MAX_STACK_DEFAULT - it.1).min(rest);
+                if it.1 > 0 && it.0 == id && it.1 < crate::world_view::item_max_stack(id) {
+                    let take = (crate::world_view::item_max_stack(id) - it.1).min(rest);
                     it.1 += take;
                     rest -= take;
                 }
@@ -18582,8 +18581,8 @@ impl App {
                 if rest == 0 {
                     break;
                 }
-                if it.1 > 0 && it.0 == id && it.1 < crate::world_view::ITEM_MAX_STACK_DEFAULT {
-                    let take = (crate::world_view::ITEM_MAX_STACK_DEFAULT - it.1).min(rest);
+                if it.1 > 0 && it.0 == id && it.1 < crate::world_view::item_max_stack(id) {
+                    let take = (crate::world_view::item_max_stack(id) - it.1).min(rest);
                     it.1 += take;
                     rest -= take;
                 }
@@ -18695,7 +18694,7 @@ impl App {
             self.inv_carried = (id, taken);
             self.table_on_take();
         } else if self.inv_carried.0 == id {
-            let space = crate::world_view::ITEM_MAX_STACK_DEFAULT - self.inv_carried.1;
+            let space = crate::world_view::item_max_stack(id) - self.inv_carried.1;
             if space > 0 {
                 let taken = space.min(count);
                 self.inv_carried.1 += taken;
@@ -19177,7 +19176,7 @@ impl App {
         } else if self.inv_carried.0 == id {
             // THE MERGE ARM (the 1020 walk — the carried's space caps
             // the take, the FULL carried refuses)
-            let space = crate::world_view::ITEM_MAX_STACK_DEFAULT - self.inv_carried.1;
+            let space = crate::world_view::item_max_stack(id) - self.inv_carried.1;
             if space > 0 {
                 let taken = space.min(count);
                 self.inv_carried.1 += taken;
@@ -19241,7 +19240,7 @@ impl App {
     /// max, the room the min speaks), then the first-empty pass (the
     /// same order, 64 the slot's max). Returns the moved count.
     fn move_result_stack_to_store(&mut self, id: i32, count: i32) -> i32 {
-        let max = crate::world_view::ITEM_MAX_STACK_DEFAULT;
+        let max = crate::world_view::item_max_stack(id);
         let order: Vec<usize> = (0..9)
             .rev()
             .chain((9..36).rev())
@@ -46611,7 +46610,7 @@ fn wire_craft_result_take(
     } else if count > 0 && carried.0 == id {
         // THE MERGE ARM (the carried's own space caps the take, the
         // grow the consumer keeps)
-        let space = crate::world_view::ITEM_MAX_STACK_DEFAULT - carried.1;
+        let space = crate::world_view::item_max_stack(id) - carried.1;
         if space > 0 {
             carried.1 += space.min(count);
             changed = wire_craft_on_take(live_slots);
@@ -46675,7 +46674,6 @@ fn wire_craft_result_quick_move(
     button: i8,
     state_id: i32,
 ) {
-    let max = crate::world_view::ITEM_MAX_STACK_DEFAULT;
     // the [9, 45) reverse range the quickMoveStack arm keeps — the
     // hotbar END-first (menu 44..36), the main rows after (35..9):
     // the SAME walk the offline move_result_stack_to_store speaks
@@ -46686,6 +46684,8 @@ fn wire_craft_result_quick_move(
         if count <= 0 {
             break; // the result slot's own emptiness
         }
+        // the result item's own ceiling (the jar's per-item law)
+        let max = crate::world_view::item_max_stack(id);
         // pass 1: the merges (the same-item stacks the range keeps)
         let mut rest = count;
         for &s in &order {
@@ -46841,7 +46841,7 @@ fn wire_table_result_take(
         *carried = (id, taken);
         changed = wire_table_on_take(live_slots);
     } else if count > 0 && carried.0 == id {
-        let space = crate::world_view::ITEM_MAX_STACK_DEFAULT - carried.1;
+        let space = crate::world_view::item_max_stack(id) - carried.1;
         if space > 0 {
             carried.1 += space.min(count);
             changed = wire_table_on_take(live_slots);
@@ -46880,7 +46880,6 @@ fn wire_table_result_quick_move(
     state_id: i32,
     window_id: i32,
 ) {
-    let max = crate::world_view::ITEM_MAX_STACK_DEFAULT;
     let order: Vec<usize> = (37..46).rev().chain((10..37).rev()).collect();
     let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
     loop {
@@ -46888,6 +46887,8 @@ fn wire_table_result_quick_move(
         if count <= 0 {
             break;
         }
+        // the result item's own ceiling (the jar's per-item law)
+        let max = crate::world_view::item_max_stack(id);
         let mut rest = count;
         for &s in &order {
             if rest == 0 {

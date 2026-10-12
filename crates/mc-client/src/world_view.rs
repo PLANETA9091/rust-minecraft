@@ -2593,14 +2593,123 @@ pub fn wire_angles(cam: &crate::camera::Camera) -> (f32, f32) {
     (yaw, pitch)
 }
 
-/// The stack-size ceiling the prediction merges against — the
-/// (item_id, count) store carries no components, so the per-item true
-/// max (the tools' 1, the snowballs' 16) is unknown locally; the
-/// vanilla default 64 is the honest belief for the common cargo, and
-/// the server's authoritative correction repairs any overfill (the
-/// prediction is a BELIEF, never the truth — the container lane's own
-/// contract). The store's future component lanes carry the real maxes.
+/// The stack-size ceiling the prediction merges against — the shared
+/// default the unknown ids keep (the registry's honest `None`), the
+/// per-item truth the [`item_max_stack`] table answers.
 pub const ITEM_MAX_STACK_DEFAULT: i32 = 64;
+
+/// THE JAR'S OWN EXPLICIT ONE-STACK NAMES (javap 26.2 `Items.<clinit>`,
+/// the 2dc72797 jar — the `stacksTo(1)` / `durability(...)` /
+/// `horseArmor` / `nautilusArmor` calls the static init's own blocks
+/// spoke, each paired with its `putstatic` field; the walk
+/// scripts/max_stack_decode.py keeps). Sorted for the binary search.
+pub(crate) const ITEM_MAX_STACK_ONE_NAMES: &[&str] = &[
+    "acacia_boat", "acacia_chest_boat", "air", "axolotl_bucket", "bamboo_chest_raft",
+    "bamboo_raft", "beetroot_soup", "birch_boat", "birch_chest_boat",
+    "bordure_indented_banner_pattern", "bow", "brush", "bundle", "cake", "carrot_on_a_stick",
+    "cherry_boat", "cherry_chest_boat", "chest_minecart", "cod_bucket",
+    "command_block_minecart", "copper_horse_armor", "copper_nautilus_armor",
+    "creeper_banner_pattern", "crossbow", "dark_oak_boat", "dark_oak_chest_boat",
+    "debug_stick", "diamond_horse_armor", "diamond_nautilus_armor", "elytra", "enchanted_book",
+    "field_masoned_banner_pattern", "fishing_rod", "flint_and_steel", "flow_banner_pattern",
+    "flower_banner_pattern", "furnace_minecart", "globe_banner_pattern", "goat_horn",
+    "golden_horse_armor", "golden_nautilus_armor", "guster_banner_pattern", "hopper_minecart",
+    "iron_horse_armor", "iron_nautilus_armor", "jungle_boat", "jungle_chest_boat",
+    "knowledge_book", "lava_bucket", "leather_horse_armor", "lingering_potion", "mace",
+    "mangrove_boat", "mangrove_chest_boat", "milk_bucket", "minecart", "mojang_banner_pattern",
+    "mushroom_stew", "music_disc_11", "music_disc_13", "music_disc_5", "music_disc_blocks",
+    "music_disc_bounce", "music_disc_cat", "music_disc_chirp", "music_disc_creator",
+    "music_disc_creator_music_box", "music_disc_far", "music_disc_lava_chicken",
+    "music_disc_mall", "music_disc_mellohi", "music_disc_otherside", "music_disc_pigstep",
+    "music_disc_precipice", "music_disc_relic", "music_disc_stal", "music_disc_strad",
+    "music_disc_tears", "music_disc_wait", "music_disc_ward", "netherite_horse_armor",
+    "netherite_nautilus_armor", "oak_boat", "oak_chest_boat", "pale_oak_boat",
+    "pale_oak_chest_boat", "piglin_banner_pattern", "potion", "powder_snow_bucket",
+    "pufferfish_bucket", "rabbit_stew", "saddle", "salmon_bucket", "shears", "shield",
+    "shulker_box", "skull_banner_pattern", "splash_potion", "spruce_boat", "spruce_chest_boat",
+    "spyglass", "sulfur_cube_bucket", "suspicious_stew", "tadpole_bucket", "tnt_minecart",
+    "totem_of_undying", "trident", "tropical_fish_bucket", "warped_fungus_on_a_stick",
+    "water_bucket", "writable_book",
+];
+
+/// THE JAR'S OWN EXPLICIT SIXTEEN-STACK NAMES (the same clinit walk —
+/// the `stacksTo(16)` calls: the eggs, the snowball, the ender pearl,
+/// the bucket, the armor stand, the honey bottle, every sign and
+/// hanging sign, the written book). Sorted for the binary search.
+pub(crate) const ITEM_MAX_STACK_SIXTEEN_NAMES: &[&str] = &[
+    "acacia_hanging_sign", "acacia_sign", "armor_stand", "bamboo_hanging_sign", "bamboo_sign",
+    "birch_hanging_sign", "birch_sign", "blue_egg", "brown_egg", "bucket",
+    "cherry_hanging_sign", "cherry_sign", "crimson_hanging_sign", "crimson_sign",
+    "dark_oak_hanging_sign", "dark_oak_sign", "egg", "ender_pearl", "honey_bottle",
+    "jungle_hanging_sign", "jungle_sign", "mangrove_hanging_sign", "mangrove_sign",
+    "oak_hanging_sign", "oak_sign", "pale_oak_hanging_sign", "pale_oak_sign", "snowball",
+    "spruce_hanging_sign", "spruce_sign", "warped_hanging_sign", "warped_sign", "written_book",
+];
+
+/// THE STACK CEILING'S OWN TABLE (javap 26.2 `Item.getMaxStackSize` —
+/// the MAX_STACK_SIZE component default the jar's own static init
+/// carries, the 2dc72797 jar the tools/client.jar walk verified). The
+/// jar's law rides TWO lanes:
+///
+/// 1. THE EXPLICIT BLOCKS — the `stacksTo(N)` and `durability(...)`
+///    calls inside `Items.<clinit>` pair with their `putstatic`
+///    fields: the 111 ONE names ([`ITEM_MAX_STACK_ONE_NAMES`] — the
+///    durability body's own `MAX_STACK_SIZE = iconst_1` the
+///    Properties walk speaks, the buckets and boats and minecarts and
+///    discs and stews and bundles the blocks bank) and the 33 SIXTEEN
+///    names ([`ITEM_MAX_STACK_SIXTEEN_NAMES`] — the eggs and the
+///    snowball and the pearl and the signs and the written book).
+/// 2. THE HELPER FAMILIES — the tool and armor registrations the
+///    clinit builds through `Properties.sword/pickaxe/axe/shovel/hoe`
+///    (the ToolMaterial's `applyToolProperties` walk) and
+///    `Properties.humanoidArmor`/`wolfArmor` (the ArmorType
+///    durability walk) — every one ends in `Properties.durability(int)`
+///    whose body writes `MAX_STACK_SIZE = 1` (the javap the
+///    props.txt dump keeps). The suffixes the families' own names
+///    wear answer them.
+///
+/// EVERYTHING ELSE — the plain block items, the ingots, the foods —
+/// the constructor's own 64 default keeps, the same
+/// [`ITEM_MAX_STACK_DEFAULT`] the unknown ids (the registry's honest
+/// `None`) wear. The merges, the takes, the stores all consult THIS —
+/// the per-item max the dev-30 follow-up owed.
+pub fn item_max_stack(id: i32) -> i32 {
+    let Some(name) = mc_registry::item_name(id) else {
+        return ITEM_MAX_STACK_DEFAULT;
+    };
+    let name = name.strip_prefix("minecraft:").unwrap_or(name);
+    // THE HELPER FAMILIES (the tool and armor registrations the
+    // durability body's own 1 answers — the `applyToolProperties` /
+    // `humanoidArmor` walks the clinit's own shape keeps)
+    if name.ends_with("_pickaxe")
+        || name.ends_with("_axe")
+        || name.ends_with("_shovel")
+        || name.ends_with("_hoe")
+        || name.ends_with("_sword")
+        || name.ends_with("_helmet")
+        || name.ends_with("_chestplate")
+        || name.ends_with("_leggings")
+        || name.ends_with("_boots")
+        || name == "wolf_armor"
+    {
+        return 1;
+    }
+    // THE EXPLICIT BLOCKS (the clinit's own pairing — the binary
+    // search the sorted tables keep)
+    if ITEM_MAX_STACK_ONE_NAMES
+        .binary_search(&name)
+        .is_ok()
+    {
+        return 1;
+    }
+    if ITEM_MAX_STACK_SIXTEEN_NAMES
+        .binary_search(&name)
+        .is_ok()
+    {
+        return 16;
+    }
+    ITEM_MAX_STACK_DEFAULT
+}
 
 /// THE EQUIPPABLE FOLD (javap 26.2 `LivingEntity.isEquippableInSlot` +
 /// `getEquipmentSlotForItem` — the verdict the armor slots' `mayPlace`
@@ -2717,7 +2826,7 @@ pub fn predict_pickup(slot: (i32, i32), carried: (i32, i32)) -> ((i32, i32), (i3
         (false, false) => {
             if slot.0 == carried.0 {
                 // the same item: merge what fits, the remainder rides
-                let room = ITEM_MAX_STACK_DEFAULT - slot.1;
+                let room = item_max_stack(slot.0) - slot.1;
                 if room <= 0 {
                     (slot, carried) // a full slot takes nothing
                 } else {
@@ -2772,7 +2881,7 @@ pub fn predict_pickup_right(slot: (i32, i32), carried: (i32, i32)) -> ((i32, i32
         }
         // both filled
         (false, false) => {
-            if slot.0 == carried.0 && slot.1 < ITEM_MAX_STACK_DEFAULT {
+            if slot.0 == carried.0 && slot.1 < item_max_stack(slot.0) {
                 // the same item with room — move ONE
                 (
                     (slot.0, slot.1 + 1),
@@ -2830,8 +2939,8 @@ pub fn predict_quick_move(slots: &[(i32, i32)], src: usize) -> Vec<(usize, (i32,
             break;
         }
         let d = slots[i];
-        if d.1 > 0 && d.0 == src_item.0 && d.1 < ITEM_MAX_STACK_DEFAULT {
-            let take = (ITEM_MAX_STACK_DEFAULT - d.1).min(remaining);
+        if d.1 > 0 && d.0 == src_item.0 && d.1 < item_max_stack(src_item.0) {
+            let take = (item_max_stack(src_item.0) - d.1).min(remaining);
             slots[i] = (d.0, d.1 + take);
             remaining -= take;
             changed.push((i, slots[i]));
@@ -2844,7 +2953,7 @@ pub fn predict_quick_move(slots: &[(i32, i32)], src: usize) -> Vec<(usize, (i32,
                 break;
             }
             if slots[i].1 <= 0 {
-                let take = remaining.min(ITEM_MAX_STACK_DEFAULT);
+                let take = remaining.min(item_max_stack(src_item.0));
                 slots[i] = (src_item.0, take);
                 remaining -= take;
                 changed.push((i, slots[i]));
@@ -2931,8 +3040,8 @@ pub fn predict_quick_move_inventory(
             break;
         }
         let d = slots[i];
-        if d.1 > 0 && d.0 == src_item.0 && d.1 < ITEM_MAX_STACK_DEFAULT {
-            let take = (ITEM_MAX_STACK_DEFAULT - d.1).min(remaining);
+        if d.1 > 0 && d.0 == src_item.0 && d.1 < item_max_stack(src_item.0) {
+            let take = (item_max_stack(src_item.0) - d.1).min(remaining);
             slots[i] = (d.0, d.1 + take);
             remaining -= take;
             changed.push((i, slots[i]));
@@ -2945,7 +3054,7 @@ pub fn predict_quick_move_inventory(
                 break;
             }
             if slots[i].1 <= 0 {
-                let take = remaining.min(ITEM_MAX_STACK_DEFAULT);
+                let take = remaining.min(item_max_stack(src_item.0));
                 slots[i] = (src_item.0, take);
                 remaining -= take;
                 changed.push((i, slots[i]));
@@ -2983,8 +3092,8 @@ pub fn predict_quick_move_to_store(
             break;
         }
         let d = slots[i];
-        if d.1 > 0 && d.0 == id && d.1 < ITEM_MAX_STACK_DEFAULT {
-            let take = (ITEM_MAX_STACK_DEFAULT - d.1).min(remaining);
+        if d.1 > 0 && d.0 == id && d.1 < item_max_stack(id) {
+            let take = (item_max_stack(id) - d.1).min(remaining);
             slots[i] = (d.0, d.1 + take);
             remaining -= take;
             changed.push((i, slots[i]));
@@ -2997,7 +3106,7 @@ pub fn predict_quick_move_to_store(
                 break;
             }
             if slots[i].1 <= 0 {
-                let take = remaining.min(ITEM_MAX_STACK_DEFAULT);
+                let take = remaining.min(item_max_stack(id));
                 slots[i] = (id, take);
                 remaining -= take;
                 changed.push((i, slots[i]));
@@ -3128,15 +3237,15 @@ fn furnace_move_item_stack_to(
             break;
         }
         let d = rows[i];
-        if d.1 > 0 && d.0 == src_id && d.1 < ITEM_MAX_STACK_DEFAULT {
+        if d.1 > 0 && d.0 == src_id && d.1 < item_max_stack(src_id) {
             let total = d.1 + *remaining;
-            if total <= ITEM_MAX_STACK_DEFAULT {
+            if total <= item_max_stack(src_id) {
                 rows[i] = (d.0, total);
                 *remaining = 0;
             } else {
                 // the partial merge the `target < max` arm speaks
-                rows[i] = (d.0, ITEM_MAX_STACK_DEFAULT);
-                *remaining = total - ITEM_MAX_STACK_DEFAULT;
+                rows[i] = (d.0, item_max_stack(src_id));
+                *remaining = total - item_max_stack(src_id);
             }
             changed.push((i, rows[i]));
             moved = true;
@@ -3149,7 +3258,7 @@ fn furnace_move_item_stack_to(
     if *remaining > 0 {
         for &i in &order {
             if rows[i].1 <= 0 {
-                let take = (*remaining).min(ITEM_MAX_STACK_DEFAULT);
+                let take = (*remaining).min(item_max_stack(src_id));
                 rows[i] = (src_id, take);
                 *remaining -= take;
                 changed.push((i, rows[i]));
@@ -8618,6 +8727,122 @@ mod tests {
         // the ceiling is the default 64 — the component-carried true
         // maxes are the store's future lanes (the doc's own honesty)
         assert_eq!(ITEM_MAX_STACK_DEFAULT, 64);
+    }
+
+    /// THE STACK CEILING'S OWN TABLE (javap 26.2 `Items.<clinit>` —
+    /// the jar's `getMaxStackSize` law the clinit walk banks): the
+    /// eggs and the snowball and the pearl and the signs the SIXTEEN
+    /// keep, the tools and the armor and the filled buckets and the
+    /// boats and the minecarts the ONE speak, the plain cargo the 64
+    /// default wears — and the merges and the quick-moves the
+    /// ceilings obey (the egg the 16 caps).
+    #[test]
+    fn the_stack_ceiling_the_item_law_wears() {
+        // THE SIXTEEN FAMILY (the clinit's own stacksTo(16) pairing)
+        let egg = mc_registry::item_id_by_name("egg").expect("the egg the wire order carries");
+        assert_eq!(item_max_stack(egg), 16);
+        let snowball =
+            mc_registry::item_id_by_name("snowball").expect("the snowball the order carries");
+        assert_eq!(item_max_stack(snowball), 16);
+        let pearl =
+            mc_registry::item_id_by_name("ender_pearl").expect("the pearl the order carries");
+        assert_eq!(item_max_stack(pearl), 16);
+        let bucket =
+            mc_registry::item_id_by_name("bucket").expect("the bucket the order carries");
+        assert_eq!(item_max_stack(bucket), 16);
+        let sign = mc_registry::item_id_by_name("oak_sign").expect("the sign the order carries");
+        assert_eq!(item_max_stack(sign), 16);
+        let hanging = mc_registry::item_id_by_name("oak_hanging_sign")
+            .expect("the hanging sign the order carries");
+        assert_eq!(item_max_stack(hanging), 16);
+        let armor_stand = mc_registry::item_id_by_name("armor_stand")
+            .expect("the stand the order carries");
+        assert_eq!(item_max_stack(armor_stand), 16);
+        let honey = mc_registry::item_id_by_name("honey_bottle")
+            .expect("the bottle the order carries");
+        assert_eq!(item_max_stack(honey), 16);
+        let written = mc_registry::item_id_by_name("written_book")
+            .expect("the book the order carries");
+        assert_eq!(item_max_stack(written), 16);
+
+        // THE ONE FAMILY (the durability body's own 1 + the helper
+        // families the tool and armor walks carry)
+        for name in [
+            "diamond_pickaxe",
+            "netherite_sword",
+            "iron_axe",
+            "stone_shovel",
+            "golden_hoe",
+            "diamond_helmet",
+            "leather_chestplate",
+            "elytra",
+            "shield",
+            "bow",
+            "crossbow",
+            "trident",
+            "mace",
+            "fishing_rod",
+            "shears",
+            "flint_and_steel",
+            "water_bucket",
+            "lava_bucket",
+            "milk_bucket",
+            "minecart",
+            "oak_boat",
+            "potion",
+            "saddle",
+            "cake",
+            "bundle",
+            "totem_of_undying",
+            "writable_book",
+            "enchanted_book",
+        ] {
+            let id = mc_registry::item_id_by_name(name)
+                .unwrap_or_else(|| panic!("{name} the wire order carries"));
+            assert_eq!(item_max_stack(id), 1, "{name} the ONE speaks");
+        }
+
+        // THE 64 DEFAULT (the plain cargo the constructor keeps)
+        for name in ["stone", "dirt", "iron_ingot", "oak_planks", "compass", "bread"] {
+            let id = mc_registry::item_id_by_name(name)
+                .unwrap_or_else(|| panic!("{name} the wire order carries"));
+            assert_eq!(item_max_stack(id), 64, "{name} the default wears");
+        }
+        // the unknown id the honest default keeps (the registry's None)
+        assert_eq!(item_max_stack(-1), 64);
+        assert_eq!(item_max_stack(i32::MAX), 64);
+
+        // THE MERGE OBEYS (the egg the 16 caps — the slot at 10 takes
+        // 6, the rest rides the cursor)
+        assert_eq!(
+            predict_pickup((egg, 10), (egg, 10)),
+            ((egg, 16), (egg, 4)),
+            "the egg merge the ceiling stops"
+        );
+        // the full egg slot takes nothing
+        assert_eq!(
+            predict_pickup((egg, 16), (egg, 5)),
+            ((egg, 16), (egg, 5)),
+            "the full egg slot the refusal wears"
+        );
+        // THE QUICK-MOVE OBEYS (the shift the whole stack moves — the
+        // egg row the 16 caps, the remainder the first empty speaks)
+        let mut slots = vec![(0, 0); 64];
+        slots[0] = (egg, 10);
+        slots[40] = (egg, 12);
+        let changed = predict_quick_move(&slots, 0);
+        assert!(
+            changed.contains(&(40, (egg, 16))),
+            "the egg row the 16 caps: {changed:?}"
+        );
+        assert!(
+            changed.contains(&(0, (0, 0))),
+            "the source emptied: {changed:?}"
+        );
+        assert!(
+            changed.contains(&(62, (egg, 6))),
+            "the remainder the first empty keeps: {changed:?}"
+        );
     }
 
     /// The right-press prediction's semantics table — the doClick

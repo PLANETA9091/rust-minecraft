@@ -294,6 +294,37 @@ pub fn extract_runtime_assets(
                 n += 1;
             }
         }
+        // THE WHOLE-TREE SWEEP (the sandbox-reset round): every
+        // `assets/minecraft/textures/**` entry the jar carries lands in
+        // the flattened cache root (the same prefix-strip the list lane
+        // keeps, the idempotent dest.exists() gate the list loop
+        // speaks). The per-round list above stays the HISTORY lane (the
+        // docs the rounds banked); the sweep makes the cache COMPLETE —
+        // the client's ~200 cache-root reads (the particles, the mob
+        // skins, the container GUIs, the rain) all resolve after ANY
+        // fresh `generate`, the old sandbox's manual-extraction debt
+        // the sweep retires.
+        let names: Vec<String> = archive
+            .file_names()
+            .map(str::to_string)
+            .collect();
+        for entry in &names {
+            let Some(rel) = entry.strip_prefix("assets/minecraft/textures/") else {
+                continue;
+            };
+            if rel.is_empty() || entry.ends_with('/') {
+                continue;
+            }
+            let dest = out_root.join(rel);
+            if dest.exists() {
+                continue;
+            }
+            if let Ok(bytes) = read_entry(archive, entry) {
+                fs::create_dir_all(dest.parent().unwrap())?;
+                fs::write(dest, bytes)?;
+                n += 1;
+            }
+        }
     }
     Ok(n)
 }
