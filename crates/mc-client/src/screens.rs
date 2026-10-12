@@ -24024,6 +24024,7 @@ impl App {
                     let slot = self.selected_hotbar;
                     if self.inventory.items[slot].0 == id && self.inventory.items[slot].1 > 0 {
                         self.inventory.items[slot].1 -= 1;
+                        self.use_consume_kills_pop(slot);
                     }
                 }
             }
@@ -24092,6 +24093,7 @@ impl App {
                 let slot = self.selected_hotbar;
                 if self.inventory.items[slot].0 == id && self.inventory.items[slot].1 > 0 {
                     self.inventory.items[slot].1 -= 1;
+                    self.use_consume_kills_pop(slot);
                 }
             }
             // THE WIRE ECHO (the use-item click the networked lane
@@ -32125,6 +32127,7 @@ impl App {
             if self.inventory.items[slot].1 <= 0 {
                 self.inventory.items[slot] = (0, 0);
             }
+            self.use_consume_kills_pop(slot);
         }
         self.hotbar_slots = self.inventory.hotbar();
     }
@@ -32898,6 +32901,7 @@ impl App {
                             self.inventory.items[sel] = (0, 0);
                         }
                         self.hotbar_slots = self.inventory.hotbar();
+                        self.use_consume_kills_pop(sel);
                     }
                 } else if eat_bite {
                     // THE BITE'S OWN FEED (javap FoodData.eat(2, 0.1F) —
@@ -33451,6 +33455,7 @@ impl App {
                     self.inventory.items[sel] = (0, 0);
                 }
                 self.hotbar_slots = self.inventory.hotbar();
+                self.use_consume_kills_pop(sel);
             }
         }
         // THE PLACE SOUND: BlockItem.place's own fold — the placed block's
@@ -33730,6 +33735,7 @@ impl App {
                         self.inventory.items[sel] = (0, 0);
                     }
                     self.hotbar_slots = self.inventory.hotbar();
+                    self.use_consume_kills_pop(sel);
                 }
             }
         }
@@ -37303,6 +37309,22 @@ impl App {
         );
     }
 
+    /// THE USE-LANE'S OWN POP-KILL (javap 26.2
+    /// ClientPacketListener.handleContainerSetSlot pcs 97-148 — the
+    /// singleplayer consume the integrated server's broadcastChanges
+    /// SetSlot answers: the shrink the old-empty-or-grow compare
+    /// refuses, setPopTime never fires, the unconditional setItem the
+    /// fresh stack's popTime-0 wears — the replaced stack the
+    /// in-flight flash kills). The survival consumes the helper ride —
+    /// the shrink's own slot the verdict speaks, the non-hotbar lands
+    /// (the main grid's 9..35, the offhand's own pair) the
+    /// isHotbarSlot gate the law never rides.
+    fn use_consume_kills_pop(&mut self, slot: usize) {
+        if slot < 9 {
+            self.hotbar_pop[slot] = 0;
+        }
+    }
+
     /// THE STACK'S OWN SHRINK (growCrop's offsets 85-87 — the
     /// `--held-item` stand-in speaks no stack: the consume is the
     /// honest no-op it always was). The crop ladder's advance and the
@@ -37318,6 +37340,7 @@ impl App {
                     self.inventory.items[sel] = (0, 0);
                 }
                 self.hotbar_slots = self.inventory.hotbar();
+                self.use_consume_kills_pop(sel);
             }
         }
     }
@@ -37411,6 +37434,7 @@ impl App {
                         self.inventory.items[sel] = (0, 0);
                     }
                     self.hotbar_slots = self.inventory.hotbar();
+                    self.use_consume_kills_pop(sel);
                 }
             }
         }
@@ -37897,6 +37921,7 @@ impl App {
                     self.inventory.items[sel] = (0, 0);
                 }
                 self.hotbar_slots = self.inventory.hotbar();
+                self.use_consume_kills_pop(sel);
             }
         }
         Some(true)
@@ -38493,6 +38518,7 @@ impl App {
                 self.inventory.items[sel] = (0, 0);
             }
             self.hotbar_slots = self.inventory.hotbar();
+            self.use_consume_kills_pop(sel);
         }
         self.swing.start();
         Some(true)
@@ -38926,6 +38952,7 @@ impl App {
                 }
                 if eat.hand == UseHand::Main {
                     self.hotbar_slots = self.inventory.hotbar();
+                    self.use_consume_kills_pop(sel);
                 }
             }
         }
@@ -89429,6 +89456,74 @@ cow_sound_variant: None,
             app.update();
         }
         assert_eq!(app.hotbar_pop[0], 0, "the five ticks the pop rides");
+    }
+
+    /// THE USE-LANE'S OWN POP-KILL (javap 26.2
+    /// ClientPacketListener.handleContainerSetSlot pcs 97-148 — the
+    /// singleplayer consume the integrated server's SetSlot answers:
+    /// the shrink the old-empty-or-grow compare refuses, the fresh
+    /// stack's popTime-0 the in-flight flash kills): the placement the
+    /// consumed slot's flash kills, the untouched slot's flash the
+    /// decay keeps, the killed slot the silence wears, and the
+    /// helper's own lands (the held consume, the arrow's hotbar arm)
+    /// the same verdict speaks — the offhand arm the hotbar's pops
+    /// never touches.
+    #[test]
+    fn the_use_consume_the_inflight_pop_kills() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let dirt_id = mc_registry::item_id_by_name("dirt").unwrap();
+        // THE STACK SEEDED, THE FLASHES ARMED (the pickup lane's own
+        // verdict the state wears — the take the pop spoke, the
+        // neighbor's the same lane rides)
+        app.inventory.items[0] = (dirt_id, 3);
+        app.hotbar_slots = app.inventory.hotbar();
+        app.hotbar_pop[0] = 5;
+        app.hotbar_pop[2] = 5;
+        // THE AIM (the place test's own shape — the downward look the
+        // placement cell speaks)
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        // THE PLACE: the survival shrink the integrated server's
+        // SetSlot answers — the consumed slot the pop-0 verdict wears,
+        // the untouched slot's flash the plain value keeps
+        assert!(app.on_right_press(0, 0), "the placement spoke");
+        assert_eq!(app.inventory.items[0], (dirt_id, 2), "the shrink rode");
+        assert_eq!(app.hotbar_pop[0], 0, "the consumed slot the pop kills");
+        assert_eq!(app.hotbar_pop[2], 5, "the untouched flash rides");
+        // THE DECAY: the next tick the untouched flash rides down, the
+        // killed slot stays silent (the zero the decay walk keeps)
+        app.update();
+        assert_eq!(app.hotbar_pop[0], 0, "the killed slot stays silent");
+        assert_eq!(app.hotbar_pop[2], 4, "the untouched flash the decay rides");
+        // THE HELPER'S OWN ARM: the held consume the same verdict
+        // speaks (the selected slot's shrink the flash kills)
+        app.selected_hotbar = 1;
+        app.inventory.items[1] = (dirt_id, 4);
+        app.hotbar_pop[1] = 5;
+        app.consume_held_item();
+        assert_eq!(app.inventory.items[1], (dirt_id, 3), "the held consume shrank");
+        assert_eq!(app.hotbar_pop[1], 0, "the held consume the pop kills");
+        // THE ARROW'S OWN ARMS: the hotbar arm the kill wears, the
+        // offhand arm the hotbar's pops never touches (the
+        // isHotbarSlot gate the law keeps)
+        let arrow_id = mc_registry::item_id_by_name("arrow").unwrap();
+        app.inventory.items[3] = (arrow_id, 8);
+        app.inventory.offhand[0] = (arrow_id, 4);
+        app.hotbar_pop[3] = 5;
+        app.hotbar_pop[4] = 5;
+        app.consume_arrow_at(3);
+        assert_eq!(app.inventory.items[3], (arrow_id, 7), "the arrow shrank");
+        assert_eq!(app.hotbar_pop[3], 0, "the arrow's hotbar arm the pop kills");
+        app.consume_arrow_at(crate::drops::OFFHAND_CONTAINER);
+        assert_eq!(app.inventory.offhand[0], (arrow_id, 3), "the offhand arrow shrank");
+        assert_eq!(app.hotbar_pop[4], 5, "the offhand arm the hotbar never touches");
     }
 
     /// THE SURVIVAL CONSUME: the placement rides the selected stack's
