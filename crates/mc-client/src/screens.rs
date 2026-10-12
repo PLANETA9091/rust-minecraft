@@ -18121,6 +18121,27 @@ impl App {
         // the fresh object's false default keeps, the stale arm a
         // mid-drag close the rebuild never inherits)
         self.creative_scroll_drag = false;
+        // THE LIVE BELIEF'S OWN RECONCILE (the wrapped seats the
+        // client's own Inventory object reads — the ONE belief the
+        // vanilla keeps; the sim's live session the window-0 belief
+        // the same slots wear, the open's own sync the offline belief
+        // the live truth wears: the store rows the menu ids 36..44 +
+        // 9..35 speak, the armor the 5..8, the offhand the 45 — the
+        // picker's rows the server's belief display, the clicks' own
+        // diff words the walk speaks keep the two in step after)
+        if self.world_is_network {
+            for i in 0..9 {
+                self.inventory.items[i] = self.live_inv_slots[36 + i];
+            }
+            for i in 9..36 {
+                self.inventory.items[i] = self.live_inv_slots[i];
+            }
+            for k in 0..4 {
+                self.inventory.armor[k] = self.live_inv_slots[5 + k];
+            }
+            self.inventory.offhand[0] = self.live_inv_slots[45];
+            self.hotbar_slots = self.live_hotbar_row();
+        }
         self.open(ScreenKind::Creative);
     }
 
@@ -18417,14 +18438,6 @@ impl App {
     ///   click semantics the real menu answers, the sim the same
     ///   predict_* helpers the survival screen's own lanes speak.
     fn click_creative_wrap(&mut self, mx: i32, my: i32, button: i8) {
-        // THE LIVE REFUSAL (the Q round's own precedent — the wrapped
-        // lanes' wire the follow-up round banks: the armor/BIN/shift
-        // arms the offline beliefs mutate, the live session the
-        // server's belief the stale fill would split — the walk never
-        // serves until the words land)
-        if self.world_is_network {
-            return;
-        }
         let Some(slot) = self.creative_wrap_cell(mx, my) else {
             // THE NULL-SLOT PRESS (the slotClicked's own order — the
             // INVENTORY seat the outside arms NEVER rides: pc 93-115
@@ -18433,13 +18446,21 @@ impl App {
             // arm the InventoryMenu.clicked(-1) silence keeps)
             return;
         };
+        // THE BROADCAST'S OWN SNAPSHOT (the lastSlots copy the diff
+        // walk wears — the arms the mutations serve, the changed
+        // slots the tail speaks)
+        let items_before = self.inventory.items;
+        let armor_before = self.inventory.armor;
+        let offhand_before = self.inventory.offhand;
+        let grid_before = self.craft_grid;
+        let result_before = self.craft_result;
         match slot {
             CreativeWrapSlot::Bin => {
                 if self.shift_down {
                     // THE WHOLE-CLEAR (pc 152-212: every slot the
                     // getItems walk lists the EMPTY wears — the
-                    // handleCreativeModeItemAdd tail the wire the
-                    // follow-up owes)
+                    // changed slots the broadcast's own diff tail
+                    // speaks)
                     for it in self.inventory.items.iter_mut() {
                         *it = (0, 0);
                     }
@@ -18484,21 +18505,60 @@ impl App {
                         }
                     }
                     self.hotbar_slots = self.inventory.hotbar();
-                    return;
-                }
-                // THE PICKUP PAIR (the doClick PICKUP arms the base
-                // Slot's law answers — the same walk the survival
-                // store's rows keep)
-                let believed = self.inventory.items[i];
-                let (new_cell, new_carried) = if button == 0 {
-                    crate::world_view::predict_pickup(believed, self.inv_carried)
                 } else {
-                    crate::world_view::predict_pickup_right(believed, self.inv_carried)
-                };
-                self.inventory.items[i] = new_cell;
-                self.inv_carried = new_carried;
-                self.hotbar_slots = self.inventory.hotbar();
+                    // THE PICKUP PAIR (the doClick PICKUP arms the base
+                    // Slot's law answers — the same walk the survival
+                    // store's rows keep)
+                    let believed = self.inventory.items[i];
+                    let (new_cell, new_carried) = if button == 0 {
+                        crate::world_view::predict_pickup(believed, self.inv_carried)
+                    } else {
+                        crate::world_view::predict_pickup_right(believed, self.inv_carried)
+                    };
+                    self.inventory.items[i] = new_cell;
+                    self.inv_carried = new_carried;
+                    self.hotbar_slots = self.inventory.hotbar();
+                }
             }
+        }
+        // THE BROADCAST'S OWN DIFF (the live session's walk — the
+        // beliefs the snapshot wore, the arms the mutations served,
+        // the CHANGED slots the words speak: the broadcastChanges law
+        // the CreativeInventoryListener answers, ONE packet per
+        // changed slot, the menu ids the InventoryMenu space wears —
+        // the result 0, the craft cells 1..4, the armor 5..8, the
+        // main 9..35, the hotbar 36..44, the offhand 45). THE
+        // CARRIED'S OWN SILENCE (the client-local belief the wire
+        // never learns — the 632 audit's own law the setCarried
+        // walks keep: the palette picks, the CLONE, the pickups, the
+        // BIN's plain destroy the cursor's own lane wears, no word
+        // the wire ever spends on it). The no-change click the diff
+        // silence keeps (the broadcastChanges the identical slots
+        // never speaks — the empty cell's no-op the same verdict).
+        if self.world_is_network {
+            let mut words: Vec<(i32, (i32, i32))> = Vec::new();
+            if self.craft_result != result_before {
+                words.push((0, self.craft_result));
+            }
+            for (c, cell) in self.craft_grid.iter().enumerate() {
+                if *cell != grid_before[c] {
+                    words.push((1 + c as i32, *cell));
+                }
+            }
+            for (k, piece) in self.inventory.armor.iter().enumerate() {
+                if *piece != armor_before[k] {
+                    words.push((5 + k as i32, *piece));
+                }
+            }
+            for (i, it) in self.inventory.items.iter().enumerate() {
+                if *it != items_before[i] {
+                    words.push((store_menu_id(i), *it));
+                }
+            }
+            if self.inventory.offhand[0] != offhand_before[0] {
+                words.push((45, self.inventory.offhand[0]));
+            }
+            self.creative_swap_live_words(&words);
         }
     }
 
@@ -104003,13 +104063,16 @@ cow_sound_variant: None,
     /// the flagship surface the wire lane's own absence hid), the
     /// palette pick the client-local carried fills (the setCarried
     /// walk the wire never spends), the store put-back the cell's ONE
-    /// word rides, the wrapped seat the live refusal keeps (the wrap's
-    /// wire the follow-up banks), the close's add-back the touched
-    /// slots' words speak, the survival E the inventory screen keeps;
-    /// the offline session the same arms the words never spends.
+    /// word rides, the wrapped seat's clicks the live words the
+    /// broadcast's own diff speaks (the armor pickup the ONE word, the
+    /// BIN's plain destroy the carried's own silence, the empty cell's
+    /// no-op the change-only law keeps), the close's add-back the
+    /// touched slots' words speak, the survival E the inventory screen
+    /// keeps; the offline session the same arms the words never spends.
     #[test]
     fn the_creative_picker_the_live_session_the_gate_wears() {
         let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let helmet = mc_registry::item_id_by_name("iron_helmet").unwrap();
         // THE LIVE SESSION (the glide harness's own shape — the sink
         // the attach speaks, the creative gate the E arm reads)
         let mut app = App::new(3);
@@ -104018,6 +104081,9 @@ cow_sound_variant: None,
         let (tx, rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
         app.attach_live_clicks(tx);
         app.game_mode = GameMode::Creative;
+        // THE ARMOR'S OWN SLOT (the server's belief the sync speaks —
+        // the seed the open's reconcile wears)
+        app.live_inv_slots[5] = (helmet, 1);
         // THE GATE (the live creative E the picker opens — the survival
         // screen the wire gate wore the retire speaks)
         app.on_inventory_key();
@@ -104048,14 +104114,39 @@ cow_sound_variant: None,
             }],
             "the cell's word the put rides"
         );
-        // THE WRAPPED SEAT'S REFUSAL (the wrap's wire the follow-up
-        // banks — the beliefs the refusal keeps)
+        // THE WRAPPED SEAT'S OWN WORDS (the refusal retires — the
+        // armor pickup the ONE word rides, the carried the
+        // client-local belief the wire never learns; the BIN's plain
+        // destroy the same silence wears; the empty main cell's no-op
+        // the diff's change-only law keeps)
         app.select_creative_tab(13);
-        app.on_press(px + 9 + 8, py + 54 + 8);
-        assert_eq!(app.inventory.items[0], (0, 0), "the refusal the row keeps");
+        app.on_press(px + 54 + 8, py + 6 + 8);
+        assert_eq!(
+            app.inventory.armor[0],
+            (0, 0),
+            "the head the take empties"
+        );
+        assert_eq!(app.inv_carried, (helmet, 1), "the piece the carried rides");
+        let words: Vec<_> = std::iter::from_fn(|| rx.try_recv().ok()).collect();
+        assert_eq!(
+            words,
+            vec![crate::world_view::ContainerCommand::CreativeSetSlot {
+                slot: 5,
+                item: (0, 0)
+            }],
+            "the armor's word the diff speaks"
+        );
+        app.on_press(px + 173 + 8, py + 112 + 8);
+        assert_eq!(app.inv_carried, (0, 0), "the bin the carried spends");
         assert!(
             rx.try_recv().is_err(),
-            "the wrap the wire never spends"
+            "the destroy the wire never spends"
+        );
+        app.on_press(px + 9 + 8, py + 54 + 8);
+        assert_eq!(app.inventory.items[0], (0, 0), "the rows the no-op keeps");
+        assert!(
+            rx.try_recv().is_err(),
+            "the no-op the diff silence keeps"
         );
         // THE CLOSE'S ADD-BACK (the carried the merges + the first-empty
         // walk serves, the touched slots the words speak — the
@@ -104108,6 +104199,163 @@ cow_sound_variant: None,
         assert!(
             rx.try_recv().is_err(),
             "the offline the words never spends"
+        );
+    }
+
+    /// THE WRAPPED SEAT'S LIVE WORDS (the broadcast's own diff law the
+    /// wrap round speaks — the broadcastChanges the changed slots the
+    /// CreativeInventoryListener answers, ONE packet per changed slot,
+    /// the menu ids the InventoryMenu space wears): the open's own
+    /// reconcile the offline belief the live truth wears (the store
+    /// rows, the armor, the offhand the seed speaks), the offhand
+    /// pickup the ONE word rides, the main cell's place + take the
+    /// pair's words speak, the BIN's SHIFT press the whole-clear's
+    /// changed slots speak (the emptied armor/offhand no words wear),
+    /// the carried the client-local silence the wire never spends.
+    #[test]
+    fn the_creative_wrap_the_live_words_the_diff_wears() {
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let helmet = mc_registry::item_id_by_name("iron_helmet").unwrap();
+        // THE LIVE SESSION (the 632 harness's own shape)
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (tx, rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        app.game_mode = GameMode::Creative;
+        // THE SERVER'S OWN BELIEF (the window-0 slots the sync speaks —
+        // the store rows, the armor head, the offhand the slots wear)
+        app.live_inv_slots[38] = (stone, 5);
+        app.live_inv_slots[39] = (stone, 7);
+        app.live_inv_slots[5] = (helmet, 1);
+        app.live_inv_slots[45] = (stone, 8);
+        // THE SEED (the open's own reconcile — the wrapped seats the
+        // live truth display, the HUD row the same belief reads)
+        app.on_inventory_key();
+        assert_eq!(app.screen, ScreenKind::Creative, "the picker the live E opens");
+        assert_eq!(app.inventory.items[2], (stone, 5), "the store row the seed wears");
+        assert_eq!(app.inventory.items[3], (stone, 7), "the next cell the seed wears");
+        assert_eq!(app.inventory.armor[0], (helmet, 1), "the armor the seed wears");
+        assert_eq!(
+            app.inventory.offhand[0],
+            (stone, 8),
+            "the offhand the seed wears"
+        );
+        assert_eq!(app.hotbar_slots[2], (stone, 5), "the HUD row the seed wears");
+        // THE WRAPPED SEAT
+        app.select_creative_tab(13);
+        app.creative_panel = creative_panel_origin(640, 360);
+        let (px, py) = app.creative_panel;
+        let main9 = (px + 9 + 8, py + 54 + 8);
+        let armor_head = (px + 54 + 8, py + 6 + 8);
+        let offhand = (px + 35 + 8, py + 20 + 8);
+        let bin = (px + 173 + 8, py + 112 + 8);
+        // THE ARMOR PICKUP (the piece the carried rides — the ONE word
+        // the diff speaks, the carried the client-local the wire never
+        // learns)
+        app.on_press(armor_head.0, armor_head.1);
+        assert_eq!(app.inventory.armor[0], (0, 0), "the head the take empties");
+        assert_eq!(app.inv_carried, (helmet, 1), "the piece the carried rides");
+        let words: Vec<_> = std::iter::from_fn(|| rx.try_recv().ok()).collect();
+        assert_eq!(
+            words,
+            vec![crate::world_view::ContainerCommand::CreativeSetSlot {
+                slot: 5,
+                item: (0, 0)
+            }],
+            "the armor's word the diff speaks"
+        );
+        // THE BIN'S PLAIN PRESS (the carried the destroy wears — the
+        // client-local belief the wire never learns, NO word)
+        app.on_press(bin.0, bin.1);
+        assert_eq!(app.inv_carried, (0, 0), "the bin the carried spends");
+        assert!(
+            rx.try_recv().is_err(),
+            "the destroy the wire never spends"
+        );
+        // THE OFFHAND PICKUP (the same ONE-word law the anonymous slot
+        // wears — the menu id 45 the word carries)
+        app.on_press(offhand.0, offhand.1);
+        assert_eq!(app.inventory.offhand[0], (0, 0), "the offhand the take empties");
+        assert_eq!(app.inv_carried, (stone, 8), "the stack the carried rides");
+        let words: Vec<_> = std::iter::from_fn(|| rx.try_recv().ok()).collect();
+        assert_eq!(
+            words,
+            vec![crate::world_view::ContainerCommand::CreativeSetSlot {
+                slot: 45,
+                item: (0, 0)
+            }],
+            "the offhand's word the diff speaks"
+        );
+        // THE MAIN CELL'S PLACE + TAKE (the pair's words the same diff
+        // speaks — the place the carried spends, the take the cell
+        // re-empties, the menu id 9 the store row's own space wears)
+        app.on_press(main9.0, main9.1);
+        assert_eq!(app.inventory.items[9], (stone, 8), "the cell the place wears");
+        assert_eq!(app.inv_carried, (0, 0), "the place the carried drains");
+        app.on_press(main9.0, main9.1);
+        assert_eq!(app.inventory.items[9], (0, 0), "the take the cell empties");
+        assert_eq!(app.inv_carried, (stone, 8), "the take the carried rides");
+        let words: Vec<_> = std::iter::from_fn(|| rx.try_recv().ok()).collect();
+        assert_eq!(
+            words,
+            vec![
+                crate::world_view::ContainerCommand::CreativeSetSlot {
+                    slot: 9,
+                    item: (stone, 8)
+                },
+                crate::world_view::ContainerCommand::CreativeSetSlot {
+                    slot: 9,
+                    item: (0, 0)
+                },
+            ],
+            "the pair's words the place + the take speak"
+        );
+        // THE BIN'S PLAIN PRESS (the carried the destroy wears again —
+        // the store the same press never touches, NO word)
+        app.on_press(bin.0, bin.1);
+        assert_eq!(app.inv_carried, (0, 0), "the bin the carried spends");
+        assert!(
+            rx.try_recv().is_err(),
+            "the destroy the wire never spends"
+        );
+        // THE BIN'S SHIFT PRESS (the WHOLE-CLEAR — the changed slots
+        // the words speak: the store rows 38/39 the (0,0) wear, the
+        // emptied armor/offhand no words the diff never speaks; the
+        // ascending order the BTreeMap keeps)
+        app.shift_down = true;
+        app.on_press(bin.0, bin.1);
+        assert!(
+            app.inventory.items.iter().all(|&s| s == (0, 0)),
+            "the store the shift-clear empties"
+        );
+        assert!(
+            app.inventory.armor.iter().all(|&s| s == (0, 0)),
+            "the armor the shift-clear empties"
+        );
+        assert_eq!(app.inventory.offhand[0], (0, 0), "the offhand the clear takes");
+        let words: Vec<_> = std::iter::from_fn(|| rx.try_recv().ok()).collect();
+        assert_eq!(
+            words,
+            vec![
+                crate::world_view::ContainerCommand::CreativeSetSlot {
+                    slot: 38,
+                    item: (0, 0)
+                },
+                crate::world_view::ContainerCommand::CreativeSetSlot {
+                    slot: 39,
+                    item: (0, 0)
+                },
+            ],
+            "the clear's words the changed slots ride"
+        );
+        app.shift_down = false;
+        // THE EMPTY CELL'S NO-OP (the empty carried over the empty
+        // cell — the no-change click the diff silence keeps)
+        app.on_press(main9.0, main9.1);
+        assert!(
+            rx.try_recv().is_err(),
+            "the no-op the diff silence keeps"
         );
     }
 
