@@ -515,6 +515,22 @@ fn run_join(
                             view.model.set_window_slot(slot, item);
                             session.set_creative_mode_slot(slot, item.1, item.0)
                         }
+                        crate::world_view::ContainerCommand::CreativeDrop {
+                            item,
+                        } => {
+                            // THE DROP'S OWN WIRE (the vanilla
+                            // handleCreativeModeItemDrop walk — the -1
+                            // slotNum the ServerboundSetCreativeModeSlotPacket
+                            // ctor's iconst_m1 speaks, the stack the DROPPED
+                            // count carries). The store-half NOTHING (the
+                            // client's own belief the Q walk already served —
+                            // the local entity the aimed throw spawns, the
+                            // slot the take's own mutation wears; the server
+                            // its own entity from the word spawns, the
+                            // inventory's truth the companion CreativeSetSlot
+                            // words carry)
+                            session.set_creative_mode_slot(-1, item.1, item.0)
+                        }
                         crate::world_view::ContainerCommand::PlayerCommand { action } => {
                             // THE FALL-FLYING START'S OWN WIRE (the
                             // LocalPlayer.aiStep pcs 679-694 walk — the

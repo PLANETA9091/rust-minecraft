@@ -2350,6 +2350,20 @@ pub enum ContainerCommand {
     /// rides after (the server's own creative handler the verdict
     /// accepts).
     CreativeSetSlot { slot: i32, item: (i32, i32) },
+    /// THE DROP'S OWN WIRE (the vanilla
+    /// `gameMode.handleCreativeModeItemDrop`'s echo — the
+    /// ServerboundSetCreativeModeSlotPacket the -1 slotNum the DROP
+    /// signal carries: pc 79-92 the walk's own send, the ctor's
+    /// `iconst_m1` the slot field speaks). The item the DROPPED stack
+    /// rides (the taken copy the Q lane wears — the count the wire's
+    /// stack field carries). The worker's store-half speaks NOTHING
+    /// (the client's own belief the drop walk already served — the
+    /// local entity the aimed throw spawns, the slot the take's own
+    /// mutation wears; the server's verdict the entity's own spawn
+    /// answers, the inventory's truth the companion
+    /// [`ContainerCommand::CreativeSetSlot`] words carry — the
+    /// broadcast diff the slot rows re-sync).
+    CreativeDrop { item: (i32, i32) },
     /// THE FALL-FLYING START's own wire (the vanilla
     /// `LocalPlayer.aiStep` pcs 679-694 walk — the
     /// ServerboundPlayerCommandPacket the tryToStart verdict's own

@@ -19157,6 +19157,38 @@ impl App {
         }
     }
 
+    /// THE DROP'S OWN LIVE WORD (the 26.2 wire law the fresh javap
+    /// banks — `MultiPlayerGameMode.handleCreativeModeItemDrop(ItemStack)`
+    /// pc 0-108: the gates the walk wears (the non-creative container
+    /// screen's own silence — the AbstractContainerScreen instanceof
+    /// && !CreativeModeInventoryScreen instanceof the `bl` verdict
+    /// keeps, the picker the verdict's FALSE arm rides; the
+    /// hasInfiniteMaterials gate; the isEmpty gate; the feature
+    /// gate), then the ONE word the connection.send speaks — the
+    /// ServerboundSetCreativeModeSlotPacket ctor's `iconst_m1` the
+    /// slotNum wears (the DROP signal the negative slot carries, the
+    /// stack the DROPPED count rides), the TickThrottler.increment
+    /// the walk's own tail keeps). The word the store-half NEVER
+    /// serves (the client's own belief the Q walk already served —
+    /// the local entity the aimed throw spawns, the slot the take's
+    /// own mutation wears; the server its own entity from the word
+    /// spawns, the inventory's truth the companion
+    /// [`Self::creative_swap_live_words`] words carry — the wrapped
+    /// seat's pair the `handleCreativeModeItemAdd` walk answers, the
+    /// store row's pair the broadcastChanges diff speaks). The
+    /// offline session the lane never spends (the word the live
+    /// session's connection alone sends).
+    fn creative_drop_live_word(&mut self, taken: (i32, i32)) {
+        if !self.world_is_network || taken.1 <= 0 || taken.0 == 0 {
+            return;
+        }
+        if let Some(sink) = self.live_clicks.as_ref() {
+            let _ = sink.send(crate::world_view::ContainerCommand::CreativeDrop {
+                item: taken,
+            });
+        }
+    }
+
     /// THE PICKER'S OWN Q (the 26.2 CreativeModeInventoryScreen.keyPressed's
     /// super chain — the AbstractContainerScreen.keyPressed keyDrop arm the
     /// container screens share: `hoveredSlot != null && hoveredSlot.hasItem()`
@@ -19189,15 +19221,24 @@ impl App {
     /// search arms precede). The empty cells / the BIN / the elsewhere
     /// the hasItem gate the FALSE verdict keeps — the key unconsumed
     /// (the screens-open gate the world chain never reads, the silence
-    /// honest). The wire sessions refuse (the picker the offline belief
-    /// keeps — the open_inventory's own gate the live session the
-    /// survival screen holds).
+    /// honest). The LIVE LANE the same law the words wear — the Q the
+    /// 633 round the refusal retires: the wrapped cells the PAIR the
+    /// vanilla's own walk speaks (the ItemDrop word the taken stack
+    /// carries FIRST, the ItemAdd word the remainder rides SECOND —
+    /// the slotClicked's own THROW arm pcs 300-347: the drop, the
+    /// handleCreativeModeItemDrop word, the handleCreativeModeItemAdd(
+    /// remaining, target.index) word, NO broadcastChanges the direct
+    /// return keeps), the palette cells the ONE word the COPY drop
+    /// speaks (pcs 695-706 — the copyWithCount the display copy the
+    /// cell keeps, the -1 word the dropped copy carries), the store
+    /// rows the PAIR the default arm's net law wears (the doClick
+    /// THROW's own ItemDrop word acm pc 1533-1538 the safeTake speaks
+    /// + the broadcastChanges diff the listener's ItemAdd word
+    /// answers — the carried-held walk pc 1024-1152 the SAME net law
+    /// the shrink-in-place serves, the carried untouched either way).
     pub fn on_creative_drop_key(&mut self, whole_stack: bool) -> bool {
         if self.screen != ScreenKind::Creative || self.dead {
             return false; // the container Q the world/inventory chains answer
-        }
-        if self.world_is_network {
-            return false; // the picker the offline belief keeps
         }
         // THE SEARCH SEAT (pc 156-184 — the focused box the keys consume
         // before the super chain rides: the keyDrop arm the search tab
@@ -19234,6 +19275,22 @@ impl App {
                 self.drop_item_entity_aimed(id, taken);
                 let left = count - taken;
                 let new = if left > 0 { (id, left) } else { (0, 0) };
+                // THE WRAPPED THROW ARM'S OWN WORD PAIR (pcs 300-347 —
+                // the ItemDrop word the TAKEN stack carries FIRST, the
+                // ItemAdd word the remainder rides SECOND, the menu id
+                // the target.index the SlotWrapper unwraps; the
+                // remainder's own (0,0) the emptied slot's word wears
+                // — the EMPTY stack the add walk's feature gate the
+                // vanilla AIR's all-enabled verdict keeps, the word
+                // the 632 round's law the same shape speaks)
+                let menu_id = match slot {
+                    CreativeWrapSlot::Armor(k) => 5 + k as i32,
+                    CreativeWrapSlot::Offhand => 45,
+                    CreativeWrapSlot::Main(i) | CreativeWrapSlot::Hotbar(i) => {
+                        store_menu_id(i)
+                    }
+                    CreativeWrapSlot::Bin => 0, // the gate's own miss — never rides
+                };
                 match slot {
                     CreativeWrapSlot::Armor(k) => self.inventory.armor[k] = new,
                     CreativeWrapSlot::Offhand => self.inventory.offhand[0] = new,
@@ -19244,6 +19301,10 @@ impl App {
                         self.hotbar_slots = self.inventory.hotbar();
                     }
                     CreativeWrapSlot::Bin => {} // the gate's own miss — never rides
+                }
+                if menu_id != 0 {
+                    self.creative_drop_live_word((id, taken));
+                    self.creative_swap_live_words(&[(menu_id, new)]);
                 }
                 return true;
             }
@@ -19263,6 +19324,11 @@ impl App {
                 1
             };
             self.drop_item_entity_aimed(id, taken);
+            // THE PALETTE'S OWN WORD (pcs 695-706 — the ONE word the
+            // copy drop speaks: the -1 slotNum the dropped COPY
+            // carries, the display copy the cell keeps, NO add word
+            // the client-local palette the wire never learns)
+            self.creative_drop_live_word((id, taken));
             return true;
         }
         if let Some(s) = self.creative_store_cell(mx, my) {
@@ -19277,8 +19343,18 @@ impl App {
             let taken = if whole_stack { count } else { 1 };
             self.drop_item_entity_aimed(id, taken);
             let left = count - taken;
-            self.inventory.items[s] = if left > 0 { (id, left) } else { (0, 0) };
+            let new = if left > 0 { (id, left) } else { (0, 0) };
+            self.inventory.items[s] = new;
             self.hotbar_slots = self.inventory.hotbar();
+            // THE STORE ROW'S OWN WORD PAIR (the default arm's net law
+            // — the doClick THROW's ItemDrop word the taken stack
+            // carries FIRST, the broadcastChanges diff the listener's
+            // ItemAdd word the remainder rides SECOND; the
+            // carried-held walk pc 1024-1152 the SAME net law the
+            // shrink-in-place serves — the carried untouched either
+            // way, the pair the same order speaks)
+            self.creative_drop_live_word((id, taken));
+            self.creative_swap_live_words(&[(store_menu_id(s), new)]);
             return true;
         }
         false // the elsewhere hover — the keyDrop arm never fires
@@ -104356,6 +104432,263 @@ cow_sound_variant: None,
         assert!(
             rx.try_recv().is_err(),
             "the no-op the diff silence keeps"
+        );
+    }
+
+    /// THE Q-TOSS'S OWN LIVE LANE (the 633 round the refusal retires —
+    /// the `handleCreativeModeItemDrop` walk the fresh javap banks:
+    /// the -1 slotNum the ServerboundSetCreativeModeSlotPacket ctor's
+    /// iconst_m1 wears, the stack the DROPPED count carries). THE
+    /// THREE SEATS THE THREE WORD LAWS WEAR: the palette cell the ONE
+    /// word the COPY drop speaks (the display copy the cell keeps, NO
+    /// add word the client-local palette the wire never learns); the
+    /// store row the PAIR the default arm's net law wears (the
+    /// ItemDrop word the taken stack carries FIRST, the
+    /// broadcastChanges diff the listener's ItemAdd word the
+    /// remainder rides SECOND, the menu id the 36+s space wears, the
+    /// HUD row the live belief re-projects); the wrapped cells the
+    /// PAIR the slotClicked's own THROW arm speaks (pcs 300-347 — the
+    /// direct return the broadcast never rides, the armor 5 / the
+    /// offhand 45 / the main 9..35 / the hotbar 36..44 the menu id
+    /// space the pair translates, the remainder's own (0,0) the
+    /// emptied slot's word wears). The search seat the live session
+    /// the same silence keeps (the focused box the keys consume
+    /// BEFORE the super chain rides — no word the gate ever spends).
+    /// The offline session the lane never spends (the helpers the
+    /// world_is_network gate refuses — the drops the same walk rides,
+    /// the wire the silence keeps).
+    #[test]
+    fn the_creative_drop_the_live_words_the_drop_rides() {
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let helmet = mc_registry::item_id_by_name("iron_helmet").unwrap();
+        let egg = mc_registry::item_id_by_name("egg").unwrap();
+        // THE LIVE SESSION (the 632 harness's own shape)
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0));
+        let (tx, rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        app.game_mode = GameMode::Creative;
+        // THE SERVER'S OWN BELIEF (the window-0 slots the sync speaks)
+        app.live_inv_slots[38] = (stone, 5);
+        app.live_inv_slots[10] = (dirt, 3);
+        app.live_inv_slots[5] = (helmet, 1);
+        app.live_inv_slots[45] = (stone, 2);
+        // THE SEED (the open's own reconcile — the picker the live
+        // truth display)
+        app.on_inventory_key();
+        assert_eq!(app.screen, ScreenKind::Creative, "the picker the live E opens");
+        assert_eq!(app.inventory.items[2], (stone, 5), "the hotbar the seed wears");
+        assert_eq!(app.inventory.items[10], (dirt, 3), "the main the seed wears");
+        // THE BUILDING TAB (the palette + the store row the
+        // non-INVENTORY seats ride)
+        app.select_creative_tab(0);
+        app.creative_panel = creative_panel_origin(640, 360);
+        let (px, py) = app.creative_panel;
+        let cell0 = (px + 9 + 8, py + 18 + 8);
+        let store2 = (px + 9 + 2 * 18 + 8, py + 112 + 8);
+        // THE PALETTE Q (the ONE word the copy drop speaks — the cell
+        // the copy keeps, NO add word the wire never learns)
+        app.creative_palette[0] = (stone, 1);
+        app.mouse_pos = Some(cell0);
+        let before = app.drops.len();
+        assert!(app.on_creative_drop_key(false), "the walk the copy answers");
+        assert_eq!(app.drops.len(), before + 1, "the drop rides");
+        assert_eq!(app.creative_palette[0], (stone, 1), "the cell the copy keeps");
+        let words: Vec<_> = std::iter::from_fn(|| rx.try_recv().ok()).collect();
+        assert_eq!(
+            words,
+            vec![crate::world_view::ContainerCommand::CreativeDrop {
+                item: (stone, 1)
+            }],
+            "the palette the ONE word speaks"
+        );
+        // THE PALETTE CTRL Q (the per-item max the copy wears — the
+        // egg the 16 the cell's own ceiling speaks)
+        app.creative_palette[5] = (egg, 1);
+        app.mouse_pos = Some((px + 9 + 5 * 18 + 8, py + 18 + 8));
+        assert!(app.on_creative_drop_key(true), "the walk the max answers");
+        let words: Vec<_> = std::iter::from_fn(|| rx.try_recv().ok()).collect();
+        assert_eq!(
+            words,
+            vec![crate::world_view::ContainerCommand::CreativeDrop {
+                item: (egg, 16)
+            }],
+            "the egg's max the word carries"
+        );
+        // THE STORE ROW Q (the PAIR — the drop word FIRST, the
+        // broadcast's add word the remainder rides SECOND)
+        app.mouse_pos = Some(store2);
+        let before = app.drops.len();
+        assert!(app.on_creative_drop_key(false), "the walk the take answers");
+        assert_eq!(app.inventory.items[2], (stone, 4), "the row the four keeps");
+        assert_eq!(app.drops.len(), before + 1, "the drop rides");
+        let words: Vec<_> = std::iter::from_fn(|| rx.try_recv().ok()).collect();
+        assert_eq!(
+            words,
+            vec![
+                crate::world_view::ContainerCommand::CreativeDrop {
+                    item: (stone, 1)
+                },
+                crate::world_view::ContainerCommand::CreativeSetSlot {
+                    slot: 38,
+                    item: (stone, 4)
+                },
+            ],
+            "the store row the pair speaks"
+        );
+        assert_eq!(app.hotbar_slots[2], (stone, 4), "the HUD row the live re-speaks");
+        // THE STORE ROW CTRL Q (the whole — the (0,0) write the
+        // emptied slot's word wears)
+        assert!(app.on_creative_drop_key(true), "the walk the whole answers");
+        assert_eq!(app.inventory.items[2], (0, 0), "the row the whole spends");
+        let words: Vec<_> = std::iter::from_fn(|| rx.try_recv().ok()).collect();
+        assert_eq!(
+            words,
+            vec![
+                crate::world_view::ContainerCommand::CreativeDrop {
+                    item: (stone, 4)
+                },
+                crate::world_view::ContainerCommand::CreativeSetSlot {
+                    slot: 38,
+                    item: (0, 0)
+                },
+            ],
+            "the whole the pair speaks"
+        );
+        // THE INVENTORY TAB (the wrapped seats the pair the direct
+        // return speaks — NO broadcast the arm's own words carry)
+        app.select_creative_tab(13);
+        let main10 = (px + 9 + 1 * 18 + 8, py + 54 + 8);
+        let armor_head = (px + 54 + 8, py + 6 + 8);
+        let offhand = (px + 35 + 8, py + 20 + 8);
+        let hot7 = (px + 9 + 7 * 18 + 8, py + 112 + 8);
+        // THE MAIN CELL Q (the pair — the menu id 10 the store space wears)
+        app.mouse_pos = Some(main10);
+        assert!(app.on_creative_drop_key(false), "the walk the take answers");
+        assert_eq!(app.inventory.items[10], (dirt, 2), "the cell the two keeps");
+        let words: Vec<_> = std::iter::from_fn(|| rx.try_recv().ok()).collect();
+        assert_eq!(
+            words,
+            vec![
+                crate::world_view::ContainerCommand::CreativeDrop {
+                    item: (dirt, 1)
+                },
+                crate::world_view::ContainerCommand::CreativeSetSlot {
+                    slot: 10,
+                    item: (dirt, 2)
+                },
+            ],
+            "the wrapped cell the pair speaks"
+        );
+        // THE MAIN CELL CTRL Q (the whole — the (0,0) the remainder wears)
+        assert!(app.on_creative_drop_key(true), "the walk the whole answers");
+        assert_eq!(app.inventory.items[10], (0, 0), "the cell the whole spends");
+        let words: Vec<_> = std::iter::from_fn(|| rx.try_recv().ok()).collect();
+        assert_eq!(
+            words,
+            vec![
+                crate::world_view::ContainerCommand::CreativeDrop {
+                    item: (dirt, 2)
+                },
+                crate::world_view::ContainerCommand::CreativeSetSlot {
+                    slot: 10,
+                    item: (0, 0)
+                },
+            ],
+            "the whole the pair speaks"
+        );
+        // THE ARMOR HEAD Q (the piece — the menu id 5 the word wears)
+        app.mouse_pos = Some(armor_head);
+        assert!(app.on_creative_drop_key(false), "the head the piece answers");
+        assert_eq!(app.inventory.armor[0], (0, 0), "the head the piece spends");
+        let words: Vec<_> = std::iter::from_fn(|| rx.try_recv().ok()).collect();
+        assert_eq!(
+            words,
+            vec![
+                crate::world_view::ContainerCommand::CreativeDrop {
+                    item: (helmet, 1)
+                },
+                crate::world_view::ContainerCommand::CreativeSetSlot {
+                    slot: 5,
+                    item: (0, 0)
+                },
+            ],
+            "the armor the pair speaks"
+        );
+        // THE OFFHAND Q (the remainder the same pair keeps — the
+        // anonymous slot's 45 the word carries)
+        app.mouse_pos = Some(offhand);
+        assert!(app.on_creative_drop_key(false), "the offhand the one answers");
+        assert_eq!(app.inventory.offhand[0], (stone, 1), "the offhand the one keeps");
+        let words: Vec<_> = std::iter::from_fn(|| rx.try_recv().ok()).collect();
+        assert_eq!(
+            words,
+            vec![
+                crate::world_view::ContainerCommand::CreativeDrop {
+                    item: (stone, 1)
+                },
+                crate::world_view::ContainerCommand::CreativeSetSlot {
+                    slot: 45,
+                    item: (stone, 1)
+                },
+            ],
+            "the offhand the pair speaks"
+        );
+        // THE WRAPPED HOTBAR CELL (the menu id 43 the same store space
+        // the wrap seat translates — the cell the offline belief the
+        // Q walk reads, the pair the same order speaks)
+        app.inventory.items[7] = (stone, 6);
+        app.mouse_pos = Some(hot7);
+        assert!(app.on_creative_drop_key(false), "the hotbar the one answers");
+        let words: Vec<_> = std::iter::from_fn(|| rx.try_recv().ok()).collect();
+        assert_eq!(
+            words,
+            vec![
+                crate::world_view::ContainerCommand::CreativeDrop {
+                    item: (stone, 1)
+                },
+                crate::world_view::ContainerCommand::CreativeSetSlot {
+                    slot: 43,
+                    item: (stone, 5)
+                },
+            ],
+            "the wrapped hotbar the pair speaks"
+        );
+        // THE SEARCH SEAT (the focused box the keys consume — no word
+        // the gate ever spends, even over a loaded palette cell)
+        app.select_creative_tab(6);
+        app.creative_palette[0] = (stone, 1);
+        app.mouse_pos = Some(cell0);
+        assert!(
+            app.on_creative_drop_key(false),
+            "the search the consume keeps"
+        );
+        assert!(
+            rx.try_recv().is_err(),
+            "the search the wire never spends"
+        );
+        // THE OFFLINE CONTROL ARM (the helpers the world_is_network
+        // gate refuses — the drops the same walk rides, the wire the
+        // silence keeps)
+        let mut off = App::new(3);
+        off.enter_world();
+        off.spawn_offline_body();
+        off.game_mode = GameMode::Creative;
+        off.open_inventory();
+        off.select_creative_tab(0);
+        off.creative_panel = creative_panel_origin(640, 360);
+        let (tx2, rx2) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        off.attach_live_clicks(tx2);
+        off.creative_palette[0] = (stone, 1);
+        off.mouse_pos = Some((off.creative_panel.0 + 9 + 8, off.creative_panel.1 + 18 + 8));
+        assert!(off.on_creative_drop_key(false), "the offline the copy answers");
+        assert_eq!(off.drops.len(), 1, "the offline the drop rides");
+        assert!(
+            rx2.try_recv().is_err(),
+            "the offline the wire never spends"
         );
     }
 
