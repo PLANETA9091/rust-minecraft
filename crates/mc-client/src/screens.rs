@@ -6521,6 +6521,28 @@ pub struct App {
     /// carries no store — the row stays empty and the hotbar renders
     /// its chrome only (the honest shape the goldens pin).
     pub hotbar_slots: [(i32, i32); 9],
+    /// THE HOTBAR'S OWN POP-TIME LANE (javap 26.2 `Hud.extractSlot`
+    /// pcs 9-133 — the render half; the sync half the store's
+    /// pop_flash speaks): per hotbar slot, the remaining pop ticks
+    /// the fresh-pick cue rides (`setPopTime(5)` the grow/empty law
+    /// arms, `ItemStack.inventoryTick`'s opening `--popTime` the
+    /// game tick decays). The vanilla pop curve the render folds:
+    /// `f = pop - partialTick`, `g = 1 + f/5`, the pose
+    /// `translate(x+8, y+12) . scale(1/g, (g+1)/2) . translate back`
+    /// — the icon squashes wide and springs tall from its anchor
+    /// while it settles; the count's own text the pose NEVER rides
+    /// (pc 134-146 the outside draw keeps). The OFFLINE world wears
+    /// none (the lane's own precondition — the live flashes the only
+    /// feeder), the goldens' chrome-only row stays pop-free.
+    pub hotbar_pop: [i32; 9],
+    /// THE POP LANE'S OWN EDGE STATE (the serial+epoch words the
+    /// snapshots carry — the App's edge detector): the last-seen
+    /// per-slot serials (the re-arm rides ONLY the advance, the
+    /// stale verdict the decay already spent never re-rides) and
+    /// the last-seen bulk epoch (the mid-flight pops die on the
+    /// edge — the vanilla instant kill the fresh stacks wear).
+    pub hotbar_pop_seen: [u32; 9],
+    pub hotbar_pop_epoch: u32,
     /// THE HOTBAR MANAGER'S OWN PAGES (javap `HotbarManager` the 26.2
     /// jar — the nine `Hotbar` snapshots the save/load chords bank, the
     /// `"0".."8"` rows the NBT file's own keys speak; the fresh-install
@@ -8478,6 +8500,9 @@ impl App {
             spectator_last_selection: None,
             bundle_contents: std::collections::HashMap::new(),
             hotbar_slots: [(0, 0); 9],
+            hotbar_pop: [0; 9],
+            hotbar_pop_seen: [0; 9],
+            hotbar_pop_epoch: 0,
             hotbar_manager: [[(0, 0); 9]; 9],
             hotbar_options_file: None,
             hotbar_file_loaded: false,
@@ -9141,6 +9166,17 @@ impl App {
             let whole = self.clock_rate_carry.floor();
             self.clock_rate_carry -= whole;
             self.clock_total = self.clock_total.saturating_add(whole as u64);
+        }
+        // THE POP TIME'S OWN DECAY (javap `ItemStack.inventoryTick`'s
+        // opening walk — the `if (popTime > 0) --popTime` the
+        // inventory tick speaks every game tick): the HUD's own
+        // hotbar lane the live flashes arm, the 5-tick ride the
+        // render's pop curve folds (the f = pop - partialTick the
+        // extractSlot walk wears).
+        for pop in &mut self.hotbar_pop {
+            if *pop > 0 {
+                *pop -= 1;
+            }
         }
         // THE FURNACE FAMILY'S OWN OFFLINE TICK (the block entity's
         // serverTick walk the sim module pins — javap 26.2
@@ -39587,6 +39623,32 @@ impl App {
         self.bundle_scroll_acc_y = 0.0;
     }
 
+    /// THE HOTBAR'S OWN POP LANE (the store's packet-time verdicts
+    /// the snapshot carries — [`crate::world_model::HotbarPopFlash`]):
+    /// the per-slot serial advance re-arms the pop (the verdict 5 the
+    /// grow/empty law wore, the 0 the fresh stack's own popTime the
+    /// replace answers), the bulk epoch edge zeroes the mid-flight
+    /// pops (the vanilla instant kill the fresh stacks wear — the
+    /// initializeContents' own law), the decay the game tick's own
+    /// walk rides ([`App::update`]). The live lane's own precondition
+    /// — the offline world the flashes never feed (the lane's only
+    /// feeder is the network pump).
+    pub fn hotbar_pop_flash_updated(&mut self, flash: &crate::world_model::HotbarPopFlash) {
+        if !self.world_is_network {
+            return; // the live lane's own precondition — the offline store is the truth
+        }
+        if flash.epoch != self.hotbar_pop_epoch {
+            self.hotbar_pop_epoch = flash.epoch;
+            self.hotbar_pop = [0; 9];
+        }
+        for (i, slot) in flash.slots.iter().enumerate() {
+            if slot.serial != self.hotbar_pop_seen[i] {
+                self.hotbar_pop_seen[i] = slot.serial;
+                self.hotbar_pop[i] = slot.verdict;
+            }
+        }
+    }
+
     /// The live session ended (a server kick or a transport error) while
     /// the client was IN the network world: the vanilla kick lands on
     /// the DisconnectedScreen and the level unloads exactly like Save
@@ -46515,7 +46577,21 @@ impl App {
                 continue; // the wire's own emptiness sentinel
             }
             let (ix, iy) = (hx + 3 + i as i32 * 20, hy + 3);
-            draw_item_icon(g, id, ix, iy);
+            // THE POP'S OWN CURVE (javap 26.2 Hud.extractSlot pcs 9-133 —
+            // the f = pop - partialTick the fstore 8 walk keeps, the
+            // fcmpl ifle the >0 verdict speaks, the g = 1 + f/5 the
+            // fstore 9 wears): the fresh stack's icon the pop pose
+            // draws (the squash-wide-spring-tall the projection fold
+            // serves), the settled stack the plain draw keeps; the
+            // count's own text the pose NEVER rides (pc 134-146 the
+            // outside draw the block below keeps).
+            let f = self.hotbar_pop[i] as f32 - self.partial_tick;
+            if f > 0.0 {
+                let pop_g = 1.0 + f / 5.0;
+                draw_item_icon_pop(g, id, ix, iy, pop_g);
+            } else {
+                draw_item_icon(g, id, ix, iy);
+            }
             if count > 1 {
                 let s = count.to_string();
                 let tw = g.text_width(&s);
@@ -48829,7 +48905,14 @@ fn icon_tint(tints: &[&str]) -> [f32; 3] {
 /// THE BROKEN-AWARE WALK (the `minecraft:broken` condition's verdict
 /// spoken — the torn elytra's icon the vanilla wear state wears; the
 /// resting arm the plain `broken = false` call keeps).
-fn draw_item_icon_3d_broken(g: &mut Gui, item_id: i32, broken: bool, x: i32, y: i32) -> bool {
+fn draw_item_icon_3d_broken(
+    g: &mut Gui,
+    item_id: i32,
+    broken: bool,
+    x: i32,
+    y: i32,
+    pop_g: f32,
+) -> bool {
     let Some(Ok(layers)) = mc_registry::display::item_gui_quads_broken(item_id, broken) else {
         return false;
     };
@@ -48860,6 +48943,32 @@ fn draw_item_icon_3d_broken(g: &mut Gui, item_id: i32, broken: bool, x: i32, y: 
     proj.0[12] = 2.0 * cx / w_fb - 1.0;
     proj.0[13] = 1.0 - 2.0 * cy / h_fb;
     proj.0[15] = 1.0;
+    // THE POP'S OWN POSE (javap 26.2 Hud.extractSlot pcs 43-106 — the
+    // Matrix3x2fStack the fresh stack rides: push . translate(x+8,
+    // y+12) . scale(1/g, (g+1)/2) . translate back, g = 1 + f/5 with
+    // f = pop - partialTick the walk's own fstore 8/9 pair keeps).
+    // The GUI-space affine composes EXACTLY into this projection's
+    // coefficients (the anchor's NDC maps to itself, the w' row the
+    // pop never touches — the affine law above holds): the x squashes
+    // toward the anchor by 1/g while the y springs tall by (g+1)/2 —
+    // the vanilla boing the fresh pick speaks.
+    if pop_g != 1.0 {
+        let (m00, m03, m11, m13) = pop_projection_coeffs(
+            proj.0[0],
+            proj.0[12],
+            proj.0[5],
+            proj.0[13],
+            pop_g,
+            (x as f32 + 8.0) * scale,
+            (y as f32 + 12.0) * scale,
+            w_fb,
+            h_fb,
+        );
+        proj.0[0] = m00;
+        proj.0[12] = m03;
+        proj.0[5] = m11;
+        proj.0[13] = m13;
+    }
     g.fb.clear_depth();
     let sampled: Vec<crate::raster::SampledQuad> = layers
         .iter()
@@ -48889,8 +48998,101 @@ fn draw_item_icon_3d_broken(g: &mut Gui, item_id: i32, broken: bool, x: i32, y: 
     true
 }
 
+/// THE POP'S OWN PROJECTION FOLD (javap 26.2 Hud.extractSlot pcs
+/// 43-106 — the pose the fresh stack rides, composed into the item
+/// projection's affine coefficients): the GUI-space transform
+/// `translate(ax, ay) . scale(1/g, (g+1)/2) . translate(-ax, -ay)`
+/// with `g = 1 + f/5`, `f = pop - partialTick` the walk's own
+/// fstore 8/9 pair keeps, applied BEFORE the NDC projection
+/// (`x_ndc = 2x/w - 1`, `y_ndc = 1 - 2y/h`). The composed answer:
+/// `m00' = sx·m00`, `m03' = sx·m03 + sx + 2·ax·(1-sx)/w - 1`,
+/// `m11' = sy·m11`, `m13' = sy·m13 + (1-sy) - 2·ay·(1-sy)/h` — the
+/// anchor's NDC maps to itself (the pose's own fixed point, the
+/// tests pin the invariance), the w' row the pop never touches.
+fn pop_projection_coeffs(
+    m00: f32,
+    m03: f32,
+    m11: f32,
+    m13: f32,
+    pop_g: f32,
+    ax: f32,
+    ay: f32,
+    w_fb: f32,
+    h_fb: f32,
+) -> (f32, f32, f32, f32) {
+    let sx = 1.0 / pop_g;
+    let sy = (pop_g + 1.0) / 2.0;
+    (
+        sx * m00,
+        sx * m03 + sx + 2.0 * ax * (1.0 - sx) / w_fb - 1.0,
+        sy * m11,
+        sy * m13 + (1.0 - sy) - 2.0 * ay * (1.0 - sy) / h_fb,
+    )
+}
+
 fn draw_item_icon(g: &mut Gui, item_id: i32, x: i32, y: i32) {
     draw_item_icon_broken(g, item_id, false, x, y)
+}
+
+/// THE POPPING ICON ([`draw_item_icon`] with the vanilla pop curve
+/// riding — javap 26.2 Hud.extractSlot pcs 9-146): the fresh stack's
+/// remaining pop time speaks through `g = 1 + f/5`, the icon the
+/// pop pose wears (the 3D quad path composes the projection, the
+/// flat fallback inverse-maps), and the count's own text the pose
+/// NEVER rides (pc 134-146 the caller's own outside draw keeps).
+fn draw_item_icon_pop(g: &mut Gui, item_id: i32, x: i32, y: i32, pop_g: f32) {
+    if draw_item_icon_3d_broken(g, item_id, false, x, y, pop_g) {
+        return;
+    }
+    draw_item_icon_flat_pop(g, item_id, x, y, pop_g)
+}
+
+/// THE FLAT FALLBACK'S OWN POP (the inverse-map sampler the quad
+/// path's refuse wears): each destination pixel the pose's inverse
+/// `S⁻¹ = diag(g, 2/(g+1))` maps back to the 16x16 source (`src = a
+/// + S⁻¹·(dst - a)`, the anchor `a = (x+8, y+12)` the pose keeps),
+/// the source pixel the nearest-sample law reads — the same squash-
+/// wide-spring-tall the quad path speaks, the transparent source
+/// the skip keeps.
+fn draw_item_icon_flat_pop(g: &mut Gui, item_id: i32, x: i32, y: i32, pop_g: f32) {
+    let Some((rgba, w, h)) = mc_registry::item_icon(item_id) else {
+        return;
+    };
+    let ax = x as f32 + 8.0;
+    let ay = y as f32 + 12.0;
+    let sy = (pop_g + 1.0) / 2.0;
+    // the destination's own reach: the source's corners the transform
+    // moves — x squashes toward the anchor (the 16-wide slot the
+    // 0..=16 span keeps), y stretches (the top climbs 12·(sy-1) above,
+    // the bottom drops 4·(sy-1) below)
+    let y_lo = (ay - 12.0 * sy).ceil() as i32;
+    let y_hi = (ay + 4.0 * sy).floor() as i32;
+    for dy in y_lo..=y_hi {
+        for dx in (ax - 8.0).ceil() as i32..=(ax + 8.0).floor() as i32 {
+            let src_x = ax + pop_g * (dx as f32 - ax);
+            let src_y = ay + (2.0 / (pop_g + 1.0)) * (dy as f32 - ay);
+            if src_x < 0.0 || src_y < 0.0 || src_x >= w as f32 || src_y >= h as f32 {
+                continue;
+            }
+            let o = ((src_y as i32 * w as i32 + src_x as i32) * 4) as usize;
+            let alpha = rgba[o + 3] as f32 / 255.0;
+            if alpha <= 0.0 {
+                continue;
+            }
+            g.fill(
+                dx,
+                dy,
+                1,
+                1,
+                [
+                    rgba[o] as f32 / 255.0,
+                    rgba[o + 1] as f32 / 255.0,
+                    rgba[o + 2] as f32 / 255.0,
+                    alpha,
+                ],
+            );
+        }
+    }
 }
 
 /// THE BROKEN-AWARE ICON ([`draw_item_icon`] with the
@@ -48906,7 +49108,7 @@ fn draw_item_icon_broken(g: &mut Gui, item_id: i32, broken: bool, x: i32, y: i32
     // drawToSlot law (the slot-center translate, the scale(s, -s, s)
     // y-flip, the ortho depth). The flat blit below stays as the
     // defensive fallback for ids the quad path refuses.
-    if draw_item_icon_3d_broken(g, item_id, broken, x, y) {
+    if draw_item_icon_3d_broken(g, item_id, broken, x, y, 1.0) {
         return;
     }
     let Some((rgba, w, h)) = mc_registry::item_icon(item_id) else {
@@ -104854,6 +105056,122 @@ cow_sound_variant: None,
         off.spawn_offline_body();
         off.live_inventory_updated(slots, Vec::new(), 7, (0, 0));
         assert_eq!(off.live_inv_state_id, 0, "the offline the lane refuses");
+    }
+
+    /// THE HOTBAR'S OWN POP LANE (the App's edge state the snapshots
+    /// feed — the store's packet-time verdicts the HUD wears): the
+    /// serial advance re-arms the pop (the verdict 5 the grow law
+    /// wore, the 0 the replace answers), the stale serial the
+    /// decay already spent never re-rides, the bulk epoch edge
+    /// zeroes the mid-flight pops, the game tick's own walk decays
+    /// the lane ([`App::update`]), the offline precondition the
+    /// flash refuses, and the pop curve's projection fold the
+    /// anchor's own invariance keeps (javap 26.2 Hud.extractSlot
+    /// pcs 43-106 — the pose's fixed point the composed
+    /// coefficients wear).
+    #[test]
+    fn the_hotbar_pop_lane_the_edges_and_the_decay_wear() {
+        let mut flash = crate::world_model::HotbarPopFlash::default();
+        flash.slots[0] = crate::world_model::HotbarPopFlashSlot {
+            serial: 1,
+            verdict: 5,
+        };
+        // THE OFFLINE PRECONDITION (the lane's own gate — the flash
+        // the offline world never wears)
+        let mut off = App::new(3);
+        off.hotbar_pop_flash_updated(&flash);
+        assert_eq!(off.hotbar_pop, [0; 9], "the offline the lane refuses");
+        assert_eq!(off.hotbar_pop_seen, [0; 9], "the offline no edge seen");
+        // THE LIVE SESSION (the pop lane the flashes feed)
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // THE FIRST EDGE (the serial advance re-arms the pop — the
+        // verdict 5 the grow law wore)
+        app.hotbar_pop_flash_updated(&flash);
+        assert_eq!(app.hotbar_pop[0], 5, "the fresh pick pops");
+        assert_eq!(app.hotbar_pop_seen[0], 1, "the edge the detector banks");
+        assert_eq!(app.hotbar_pop[1], 0, "the silent slot stays silent");
+        // THE STALE FLASH (the same serial again — no advance, no
+        // re-arm: the decay already spent the verdict)
+        app.update();
+        assert_eq!(app.hotbar_pop[0], 4, "the game tick's own decay");
+        app.hotbar_pop_flash_updated(&flash);
+        assert_eq!(app.hotbar_pop[0], 4, "the stale serial never re-rides");
+        // THE REPLACE EDGE (the serial 2 / verdict 0 — the fresh
+        // stack's own popTime the sync answers, the pop dies)
+        flash.slots[0].serial = 2;
+        flash.slots[0].verdict = 0;
+        app.hotbar_pop_flash_updated(&flash);
+        assert_eq!(app.hotbar_pop[0], 0, "the replace the pop kills");
+        // THE RE-ARM (the second pickup — the grow law's 5 again)
+        flash.slots[0].serial = 3;
+        flash.slots[0].verdict = 5;
+        app.hotbar_pop_flash_updated(&flash);
+        assert_eq!(app.hotbar_pop[0], 5, "the second pickup re-pops");
+        // THE BULK EDGE (the epoch advance — the mid-flight pops the
+        // initializeContents' fresh stacks kill the same instant)
+        flash.epoch += 1;
+        app.hotbar_pop_flash_updated(&flash);
+        assert_eq!(app.hotbar_pop, [0; 9], "the bulk the pops kill");
+        assert_eq!(app.hotbar_pop_epoch, flash.epoch, "the edge the detector banks");
+        // the decay the 5-tick ride wears (the render's f = pop -
+        // partialTick the extractSlot law folds — the settled stack
+        // the plain draw keeps)
+        flash.slots[0].serial = 4;
+        flash.slots[0].verdict = 5;
+        app.hotbar_pop_flash_updated(&flash);
+        for _ in 0..5 {
+            app.update();
+        }
+        assert_eq!(app.hotbar_pop[0], 0, "the five ticks the pop rides");
+        // THE FOLD'S OWN LAWS (javap pcs 43-106 — the pose the
+        // projection coefficients compose): g = 1 the identity, the
+        // anchor's NDC the pose's own fixed point, and the composed
+        // answer the vanilla transform's exact equality wears.
+        let (w_fb, h_fb) = (640.0f32, 360.0);
+        let scale = 2.0f32;
+        let (x, y) = (60i32, 40i32);
+        let cx = (x as f32 + 8.0) * scale;
+        let cy = (y as f32 + 8.0) * scale;
+        let s = 16.0 * scale;
+        let m00 = 2.0 * s / w_fb;
+        let m03 = 2.0 * cx / w_fb - 1.0;
+        let m11 = 2.0 * s / h_fb;
+        let m13 = 1.0 - 2.0 * cy / h_fb;
+        let identity = pop_projection_coeffs(m00, m03, m11, m13, 1.0, 0.0, 0.0, w_fb, h_fb);
+        assert_eq!(identity, (m00, m03, m11, m13), "g = 1 the plain draw");
+        let pop_g = 1.6f32;
+        let ax = (x as f32 + 8.0) * scale;
+        let ay = (y as f32 + 12.0) * scale;
+        let (m00p, m03p, m11p, m13p) =
+            pop_projection_coeffs(m00, m03, m11, m13, pop_g, ax, ay, w_fb, h_fb);
+        // the anchor's vertex space: bx = (ax - cx)/s = 0, by =
+        // (cy - ay)/s = -0.25 (the 12-down anchor the pose keeps)
+        let (bx, by) = (0.0f32, -0.25f32);
+        let x_in = m00 * bx + m03;
+        let y_in = m11 * by + m13;
+        let x_out = m00p * bx + m03p;
+        let y_out = m11p * by + m13p;
+        let x_anchor = 2.0 * ax / w_fb - 1.0;
+        let y_anchor = 1.0 - 2.0 * ay / h_fb;
+        assert!((x_out - x_anchor).abs() < 1e-6, "the x anchor the pose fixes");
+        assert!((y_out - y_anchor).abs() < 1e-6, "the y anchor the pose fixes");
+        // the plain projection's own answer at the anchor never moved
+        assert!((x_in - x_anchor).abs() < 1e-6, "the anchor the pose shares");
+        assert!((y_in - y_anchor).abs() < 1e-6, "the anchor the pose shares");
+        // THE EXACT EQUALITY (a sample corner vertex the vanilla
+        // transform moves): out == ndc(T(pixel(v))) — the composition
+        // the projection fold speaks
+        let (vx, vy) = (0.5f32, 0.5f32);
+        let x_px = cx + vx * s;
+        let y_px = cy - vy * s;
+        let x_px_out = (1.0 / pop_g) * x_px + ax * (1.0 - 1.0 / pop_g);
+        let y_px_out = ((pop_g + 1.0) / 2.0) * y_px + ay * (1.0 - (pop_g + 1.0) / 2.0);
+        let x_expect = 2.0 * x_px_out / w_fb - 1.0;
+        let y_expect = 1.0 - 2.0 * y_px_out / h_fb;
+        assert!((m00p * vx + m03p - x_expect).abs() < 1e-6, "the x fold exact");
+        assert!((m11p * vy + m13p - y_expect).abs() < 1e-6, "the y fold exact");
     }
 
     /// THE WRAPPED SEAT (the selectTab's INVENTORY arm the bytecode

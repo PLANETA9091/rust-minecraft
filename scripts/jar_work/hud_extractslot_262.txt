@@ -1,0 +1,90 @@
+=== extractSlot(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IILnet/minecraft/client/DeltaTracker;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/ItemStack;I)V max_stack=6 max_locals=10 ===
+      0: aload 6
+      2: invokevirtual #33.isEmpty:()Z
+      5: ifeq start+9
+      8: return 
+      9: aload 6
+     11: invokevirtual #33.getPopTime:()I
+     14: i2f 
+     15: aload 4
+     17: iconst_0 
+     18: invokeinterface #299.getGameTimeDeltaPartialTick:(Z)F
+     23: fsub 
+     24: fstore 8
+     26: fload 8
+     28: fconst_0 
+     29: fcmpl 
+     30: ifle start+107
+     33: fconst_1 
+     34: fload 8
+     36: ldc_w #729
+     39: fdiv 
+     40: fadd 
+     41: fstore 9
+     43: aload_1 
+     44: invokevirtual #204.pose:()Lorg/joml/Matrix3x2fStack;
+     47: invokevirtual #482.pushMatrix:()Lorg/joml/Matrix3x2fStack;
+     50: pop 
+     51: aload_1 
+     52: invokevirtual #204.pose:()Lorg/joml/Matrix3x2fStack;
+     55: iload_2 
+     56: bipush 8
+     58: iadd 
+     59: i2f 
+     60: iload_3 
+     61: bipush 12
+     63: iadd 
+     64: i2f 
+     65: invokevirtual #482.translate:(FF)Lorg/joml/Matrix3x2f;
+     68: pop 
+     69: aload_1 
+     70: invokevirtual #204.pose:()Lorg/joml/Matrix3x2fStack;
+     73: fconst_1 
+     74: fload 9
+     76: fdiv 
+     77: fload 9
+     79: fconst_1 
+     80: fadd 
+     81: fconst_2 
+     82: fdiv 
+     83: invokevirtual #482.scale:(FF)Lorg/joml/Matrix3x2f;
+     86: pop 
+     87: aload_1 
+     88: invokevirtual #204.pose:()Lorg/joml/Matrix3x2fStack;
+     91: iload_2 
+     92: bipush 8
+     94: iadd 
+     95: ineg 
+     96: i2f 
+     97: iload_3 
+     98: bipush 12
+    100: iadd 
+    101: ineg 
+    102: i2f 
+    103: invokevirtual #482.translate:(FF)Lorg/joml/Matrix3x2f;
+    106: pop 
+    107: aload_1 
+    108: aload 5
+    110: aload 6
+    112: iload_2 
+    113: iload_3 
+    114: iload 7
+    116: invokevirtual #204.item:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;III)V
+    119: fload 8
+    121: fconst_0 
+    122: fcmpl 
+    123: ifle start+134
+    126: aload_1 
+    127: invokevirtual #204.pose:()Lorg/joml/Matrix3x2fStack;
+    130: invokevirtual #482.popMatrix:()Lorg/joml/Matrix3x2fStack;
+    133: pop 
+    134: aload_1 
+    135: aload_0 
+    136: getfield #3.minecraft:Lnet/minecraft/client/Minecraft;
+    139: getfield #162.font:Lnet/minecraft/client/gui/Font;
+    142: aload 6
+    144: iload_2 
+    145: iload_3 
+    146: invokevirtual #204.itemDecorations:(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;II)V
+    149: return 
+

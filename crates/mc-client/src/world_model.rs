@@ -2136,6 +2136,54 @@ pub struct InventoryState {
     /// container snapshots do NOT touch it (vanilla's
     /// initializeContents sets slots/carried/stateId only).
     pub selected: usize,
+    /// THE HOTBAR'S OWN POP-TIME LANE (the packet-time verdicts the
+    /// single-slot sync speaks — javap 26.2
+    /// `ClientPacketListener.handleContainerSetSlot` pcs 97-148: a
+    /// window-0 hotbar slot's fresh stack the grow/empty law pops,
+    /// `setPopTime(5)` pc 146-148 rides BEFORE the `setItem`): per
+    /// hotbar slot, the sync's own serial (every window-0 hotbar Set
+    /// Slot speaks — the App's edge detector re-arms only on the
+    /// advance, the stale verdict the decay already spent never
+    /// re-rides) and the verdict the packet wore (5 the grow/empty
+    /// law keeps, 0 the fresh stack's own popTime the replace
+    /// answers). The BULK lane (`handleContainerContent`'s
+    /// initializeContents — the fresh javap `cpl_content_262.txt`:
+    /// NO pop law, the fresh stacks deserialize popTime-0) advances
+    /// nothing and ZEROES the verdicts — the epoch speaks so the
+    /// App's mid-flight pops die the same instant the vanilla
+    /// stacks do. The client-authoritative store writes (the
+    /// creative load's setWindowSlot, the offhand swap) touch
+    /// nothing — the pop law lives in the PACKET handler, the
+    /// vanilla local walks never wore it.
+    pub pop_flash: HotbarPopFlash,
+}
+
+/// The pop-time lane's own per-slot word (see
+/// [`InventoryState::pop_flash`]): the serial the App's edge
+/// detector compares and the verdict the latest sync wore.
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct HotbarPopFlashSlot {
+    /// The single-slot sync's own serial — every window-0 hotbar Set
+    /// Slot packet advances it (wrapping), NOTHING else touches it.
+    pub serial: u32,
+    /// The verdict the latest sync wore: 5 the grow/empty law
+    /// (`setPopTime(5)` pc 146-148), 0 the fresh stack's own
+    /// popTime the replace answers.
+    pub verdict: i32,
+}
+
+/// The pop-time lane's own state (see [`InventoryState::pop_flash`]):
+/// the bulk lane's epoch (the App's zeroing edge) and the nine
+/// per-slot serial+verdict words.
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct HotbarPopFlash {
+    /// Every window-0 initializeContents advances it (wrapping) —
+    /// the App zeroes its mid-flight pops on the edge (the fresh
+    /// stacks the pops never ride, the vanilla instant kill).
+    pub epoch: u32,
+    /// The nine hotbar slots' own sync serials + verdicts (the
+    /// single-slot lane's words, the wire's own order 36..45).
+    pub slots: [HotbarPopFlashSlot; 9],
 }
 
 /// The store's own empty: an EMPTY stack is the wire's count-sentinel
@@ -2152,6 +2200,7 @@ impl Default for InventoryState {
                 patch: ComponentPatch::default(),
             },
             selected: 0,
+            pop_flash: HotbarPopFlash::default(),
         }
     }
 }
@@ -3928,11 +3977,27 @@ impl WorldModel {
                     // javap-pinned field list; the selected hotbar slot
                     // survives the snapshot)
                     let selected = self.inventory.selected;
+                    // THE POP LANE'S OWN BULK EDGE (the fresh javap
+                    // cpl_content_262.txt — NO pop law the bulk walk
+                    // ever wears, the fresh stacks deserialize
+                    // popTime-0): the epoch speaks (the App zeroes its
+                    // mid-flight pops the same instant the vanilla
+                    // stacks die), the serials ride (the next single-
+                    // slot sync advances from where the lane stood).
+                    let mut pop_slots = self.inventory.pop_flash.slots;
+                    for slot in &mut pop_slots {
+                        slot.verdict = 0;
+                    }
+                    let pop_flash = HotbarPopFlash {
+                        epoch: self.inventory.pop_flash.epoch.wrapping_add(1),
+                        slots: pop_slots,
+                    };
                     self.inventory = InventoryState {
                         state_id: c.state_id,
                         slots: c.items,
                         carried: c.carried_item,
                         selected,
+                        pop_flash,
                     };
                     true
                 } else if self
@@ -3976,9 +4041,31 @@ impl WorldModel {
                 // retention line), a NEGATIVE slot cannot index
                 // anything and is ignored. Vanilla's pop-time pickup
                 // flash is the GUI's nicety, not store semantics — the
-                // documented non-goal.
+                // store's own lane records the packet-time verdicts
+                // the GUI lane wears (the pop_flash field above), the
+                // store write itself stays the same absolute set.
                 if s.container_id == INVENTORY_WINDOW_ID {
                     self.inventory.state_id = s.state_id;
+                    // THE POP-TIME VERDICT (the cpl walk pcs 97-148 —
+                    // the compare rides BEFORE the setItem, the old
+                    // stack the menu's own belief wears): a hotbar
+                    // slot's sync the serial speaks, the fresh stack
+                    // the grow/empty law pops (`incoming non-empty &&
+                    // (old empty || old.count < incoming.count)` — the
+                    // pc 105/126/134-146 trio; the empty arm folds
+                    // into the count compare, the store's count
+                    // sentinel rides), the other slots' words the
+                    // packet never touches. The foreign windows the
+                    // pc 90-94 gate the pop law NEVER rides.
+                    if (USE_ROW_SLOT_START as i16..USE_ROW_SLOT_END as i16).contains(&s.slot) {
+                        let idx = (s.slot as usize) - USE_ROW_SLOT_START;
+                        let old = self.inventory.slots.get(s.slot as usize);
+                        let grows = s.item.count > 0
+                            && old.is_none_or(|o| o.count < s.item.count);
+                        let slot = &mut self.inventory.pop_flash.slots[idx];
+                        slot.serial = slot.serial.wrapping_add(1);
+                        slot.verdict = if grows { 5 } else { 0 };
+                    }
                     store_slot_write(&mut self.inventory.slots, s.slot, &s.item);
                     true
                 } else if self
@@ -13196,6 +13283,113 @@ mod tests {
         assert!(is_hotbar_slot(36) && is_hotbar_slot(44));
         assert!(is_hotbar_slot(45), "the helper's audited quirk");
         assert!(!is_hotbar_slot(35) && !is_hotbar_slot(46));
+    }
+
+    /// THE POP-TIME VERDICT'S OWN LAW (javap 26.2
+    /// `ClientPacketListener.handleContainerSetSlot` pcs 97-148 — the
+    /// packet-time compare the store's pop_flash records): the
+    /// single-slot window-0 sync the serial speaks per hotbar sync,
+    /// the fresh stack the grow/empty law pops (`incoming non-empty
+    /// && (old empty || old.count < incoming.count)` — the pc
+    /// 105/126/134-146 trio, 5 the verdict wears, 0 the replace
+    /// answers), the identical/shrink sync the fresh stack's
+    /// popTime-0 keeps, the non-hotbar and foreign-window syncs the
+    /// lane never touches, and the BULK lane (initializeContents —
+    /// the fresh javap `cpl_content_262.txt`: NO pop law) the epoch
+    /// advances and the verdicts zero while the serials ride.
+    #[test]
+    fn the_hotbar_pop_verdicts_the_packet_law_wears() {
+        use mc_protocol::play::PlayEvent;
+        let mut m = WorldModel::new();
+        let empty = || ItemStack { count: 0, item_id: 0, patch: ComponentPatch::default() };
+        let stack = |count| ItemStack { count, item_id: 745, patch: ComponentPatch::default() };
+        // THE BULK LAND (the login shape): a window-0 Set Content with
+        // a hotbar stack — NO pop (the bulk lane never wears the
+        // law), the first edge the epoch speaks, the verdicts zero.
+        assert!(m.apply(PlayEvent::ContainerFilled(mc_protocol::play::ContainerContent {
+            container_id: 0,
+            state_id: 7,
+            items: vec![stack(10)],
+            carried_item: empty(),
+        })));
+        assert_eq!(m.inventory().pop_flash.epoch, 1, "the first bulk edge");
+        assert!(
+            m.inventory().pop_flash.slots.iter().all(|s| s.serial == 0 && s.verdict == 0),
+            "the bulk never pops (the initializeContents law)"
+        );
+        // THE FIRST SINGLE-SLOT SYNC on hotbar slot 36: the grow
+        // (10 -> 20) the law pops — the serial speaks, the verdict 5
+        let slot_set = |slot: i16, state: i32, count: i32| {
+            mc_protocol::play::ContainerSetSlot {
+                container_id: 0,
+                state_id: state,
+                slot,
+                item: if count > 0 { stack(count) } else { empty() },
+            }
+        };
+        assert!(m.apply(PlayEvent::ContainerSlotSet(slot_set(36, 8, 20))));
+        assert_eq!(m.inventory().pop_flash.slots[0].serial, 1);
+        assert_eq!(m.inventory().pop_flash.slots[0].verdict, 5, "the grow pops");
+        // THE IDENTICAL SYNC: the fresh stack the replace answers —
+        // the serial speaks, the verdict 0 (the pc 134 if_icmpge
+        // skips — the equal counts the pop never earns)
+        assert!(m.apply(PlayEvent::ContainerSlotSet(slot_set(36, 9, 20))));
+        assert_eq!(m.inventory().pop_flash.slots[0].serial, 2);
+        assert_eq!(m.inventory().pop_flash.slots[0].verdict, 0, "the identical re-sync");
+        // THE SHRINK (the place-block decrement): the verdict 0
+        assert!(m.apply(PlayEvent::ContainerSlotSet(slot_set(36, 10, 3))));
+        assert_eq!(m.inventory().pop_flash.slots[0].serial, 3);
+        assert_eq!(m.inventory().pop_flash.slots[0].verdict, 0, "the shrink replaces");
+        // THE EMPTY->FULL (the pc 126 arm): the store never spoke the
+        // slot — the get None the empty's own truth — the pop 5
+        assert!(m.apply(PlayEvent::ContainerSlotSet(slot_set(38, 11, 1))));
+        assert_eq!(m.inventory().pop_flash.slots[2].serial, 1);
+        assert_eq!(m.inventory().pop_flash.slots[2].verdict, 5, "the empty arm pops");
+        // the OTHER hotbar slots the packet never touched: silent
+        assert_eq!(m.inventory().pop_flash.slots[1].serial, 0, "slot 37 untouched");
+        // THE NON-HOTBAR window-0 sync (the main grid's slot 9): the
+        // lane the packet never rides — nothing moves
+        assert!(m.apply(PlayEvent::ContainerSlotSet(slot_set(9, 12, 4))));
+        assert!(
+            m.inventory().pop_flash.slots.iter().all(|s| s.serial <= 3),
+            "the main grid's sync spoke no serial"
+        );
+        assert_eq!(m.inventory().pop_flash.slots[0].serial, 3);
+        // THE FOREIGN WINDOW: the pc 90-94 gate the pop law NEVER
+        // rides — the open-container lane (no window open: the match
+        // drops), the flash untouched
+        assert!(
+            !m.apply(PlayEvent::ContainerSlotSet(mc_protocol::play::ContainerSetSlot {
+                container_id: 5,
+                state_id: 1,
+                slot: 0,
+                item: stack(9),
+            })),
+            "the mismatched window is dropped"
+        );
+        assert_eq!(m.inventory().pop_flash.slots[0].serial, 3, "the foreign sync silent");
+        assert_eq!(m.inventory().pop_flash.slots[0].verdict, 0);
+        // THE SECOND BULK: the epoch advances (the App's zeroing
+        // edge), the verdicts zero, the SERIALS RIDE (the next
+        // single-slot sync advances from where the lane stood)
+        assert!(m.apply(PlayEvent::ContainerFilled(mc_protocol::play::ContainerContent {
+            container_id: 0,
+            state_id: 13,
+            items: vec![stack(10)],
+            carried_item: empty(),
+        })));
+        assert_eq!(m.inventory().pop_flash.epoch, 2, "the second bulk edge");
+        assert!(
+            m.inventory().pop_flash.slots.iter().all(|s| s.verdict == 0),
+            "the bulk zeroes the verdicts"
+        );
+        assert_eq!(m.inventory().pop_flash.slots[0].serial, 3, "the serials preserved");
+        assert_eq!(m.inventory().pop_flash.slots[2].serial, 1);
+        // and the next single-slot sync advances FROM the preserved
+        // serial — the grow lands its 5 the same law wears
+        assert!(m.apply(PlayEvent::ContainerSlotSet(slot_set(36, 14, 11))));
+        assert_eq!(m.inventory().pop_flash.slots[0].serial, 4, "the ride continues");
+        assert_eq!(m.inventory().pop_flash.slots[0].verdict, 5, "the grow after the bulk");
     }
 
     /// The hotbar's selection — the Set Held Slot packet's audited

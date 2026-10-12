@@ -449,6 +449,11 @@ pub struct SnapshotView {
     /// carriedItem — the stack riding the mouse) — the click lane's
     /// believed cursor the prediction walks speak.
     pub inventory_carried: (i32, i32),
+    /// The window-0 store's pop-time lane (the packet-time verdicts
+    /// the single-slot sync speaks — see [`crate::world_model::
+    /// HotbarPopFlash`]): the bulk epoch + the nine per-slot
+    /// serial+verdict words the App's HUD pop rides.
+    pub inventory_pop_flash: crate::world_model::HotbarPopFlash,
     /// THE GAME-MODE ECHO'S OWN WORD (the model's banked CHANGE_
     /// GAME_MODEL id — the server's own answer the game-event arm
     /// keeps): `None` until the echo speaks (the join snapshot
@@ -3356,6 +3361,7 @@ fn live_inventory_view(
     Vec<(i32, Vec<(i32, i32)>)>,
     i32,
     (i32, i32),
+    crate::world_model::HotbarPopFlash,
 ) {
     let inv = model.inventory();
     let mut slots = [(0i32, 0i32); INVENTORY_MENU_SLOTS];
@@ -3371,7 +3377,13 @@ fn live_inventory_view(
     // Set Content's last word held)
     let state_id = inv.state_id;
     let carried = (inv.carried.item_id, inv.carried.count);
-    (slots, bundles, state_id, carried)
+    (
+        slots,
+        bundles,
+        state_id,
+        carried,
+        inv.pop_flash.clone(),
+    )
 }
 
 /// The store's SELECTED hotbar stack projected for the UI — the
@@ -3640,7 +3652,7 @@ pub fn materialize_snapshot_view(
     // the join's own store — the window-0 lane reads the adopted
     // state the same way the hand's lane does (empty until the wire
     // speaks)
-    let (inventory_slots, inventory_bundles, inventory_state_id, inventory_carried) =
+    let (inventory_slots, inventory_bundles, inventory_state_id, inventory_carried, inventory_pop_flash) =
         live_inventory_view(&model);
     SnapshotView {
         world: materialize(&model, origin, side, y_base, mapper),
@@ -3693,6 +3705,7 @@ pub fn materialize_snapshot_view(
         inventory_bundles,
         inventory_state_id,
         inventory_carried,
+        inventory_pop_flash,
         // the join snapshot carries no mode echo — the CHANGE_GAME_
         // MODEL packets are the only source (the login word the login
         // phase's own lane banks)
@@ -4827,7 +4840,7 @@ impl LiveView {
         // the window-0 store's own projection rides every refresh —
         // the inventory screen follows the store exactly like the
         // hand and the HUD's row do (the pose-less arm included)
-        let (inventory_slots, inventory_bundles, inventory_state_id, inventory_carried) =
+        let (inventory_slots, inventory_bundles, inventory_state_id, inventory_carried, inventory_pop_flash) =
             live_inventory_view(&self.model);
         // the arrows' sync mailbox's own projection (the words in wire
         // order — the worker's drain empties the mailbox after the
@@ -4888,6 +4901,7 @@ impl LiveView {
                 inventory_bundles,
                 inventory_state_id,
                 inventory_carried,
+                inventory_pop_flash,
                 health: health_view(&self.model),
                 mobs,
                 // the boats' belief rides the pose-less arm too — the
@@ -5157,6 +5171,7 @@ impl LiveView {
             inventory_bundles,
             inventory_state_id,
             inventory_carried,
+            inventory_pop_flash,
             // the mode echo rides every refresh — the server's answer
             // the session's own truth (the idempotent re-bank the
             // installer's own acmp keeps silent)

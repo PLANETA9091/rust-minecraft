@@ -162,6 +162,7 @@ fn run_join(
                 Vec<(i32, Vec<(i32, i32)>)>,
                 i32,
                 (i32, i32),
+                crate::world_model::HotbarPopFlash,
                 Vec<i64>,
                 Vec<i64>,
                 Vec<[i64; 4]>,
@@ -1151,6 +1152,12 @@ fn run_join(
                                     // inputs the packets speak
                                     upd.inventory_state_id,
                                     upd.inventory_carried,
+                                    // the pop-time lane's own words ride
+                                    // with them — the packet-time
+                                    // verdicts the single-slot sync
+                                    // speaks (the HUD's fresh-pick cue
+                                    // the App's own timer decays)
+                                    upd.inventory_pop_flash,
                                     // the ping chart's own snapshot rides
                                     // with them — the RTT ring the net
                                     // worker's pong lane logs (idx 0 the
@@ -1681,6 +1688,7 @@ pub fn run_gui_app(
                 Vec<(i32, Vec<(i32, i32)>)>,
                 i32,
                 (i32, i32),
+                crate::world_model::HotbarPopFlash,
                 Vec<i64>,
                 Vec<i64>,
                 Vec<[i64; 4]>,
@@ -2380,6 +2388,7 @@ pub fn run_gui_app(
                     inv_bundles,
                     inv_state_id,
                     inv_carried,
+                    inv_pop_flash,
                     ping_samples,
                     bw_samples,
                     tick_samples,
@@ -2860,6 +2869,11 @@ pub fn run_gui_app(
                         inv_state_id,
                         inv_carried,
                     );
+                    // the pop-time lane's own words beside the store's —
+                    // the packet-time verdicts the single-slot sync spoke
+                    // (the serial edge the HUD's pop re-arms on, the bulk
+                    // epoch the mid-flight pops die on)
+                    app.hotbar_pop_flash_updated(&inv_pop_flash);
                 }
                 Err(reason) => app.live_session_lost(reason),
             }

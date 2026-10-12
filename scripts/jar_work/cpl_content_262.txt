@@ -1,0 +1,41 @@
+=== handleContainerContent(Lnet/minecraft/network/protocol/game/ClientboundContainerSetContentPacket;)V max_stack=4 max_locals=3 ===
+      0: aload_1 
+      1: aload_0 
+      2: aload_0 
+      3: getfield #16.minecraft:Lnet/minecraft/client/Minecraft;
+      6: invokevirtual #247.packetProcessor:()Lnet/minecraft/network/PacketProcessor;
+      9: invokestatic #389.ensureRunningOnSameThread:(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/network/PacketProcessor;)V
+     12: aload_0 
+     13: getfield #16.minecraft:Lnet/minecraft/client/Minecraft;
+     16: getfield #247.player:Lnet/minecraft/client/player/LocalPlayer;
+     19: astore_2 
+     20: aload_1 
+     21: invokevirtual #2346.containerId:()I
+     24: ifne start+49
+     27: aload_2 
+     28: getfield #747.inventoryMenu:Lnet/minecraft/world/inventory/InventoryMenu;
+     31: aload_1 
+     32: invokevirtual #2346.stateId:()I
+     35: aload_1 
+     36: invokevirtual #2346.items:()Ljava/util/List;
+     39: aload_1 
+     40: invokevirtual #2346.carriedItem:()Lnet/minecraft/world/item/ItemStack;
+     43: invokevirtual #2292.initializeContents:(ILjava/util/List;Lnet/minecraft/world/item/ItemStack;)V
+     46: goto start+82
+     49: aload_1 
+     50: invokevirtual #2346.containerId:()I
+     53: aload_2 
+     54: getfield #747.containerMenu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     57: getfield #2319.containerId:I
+     60: if_icmpne start+82
+     63: aload_2 
+     64: getfield #747.containerMenu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     67: aload_1 
+     68: invokevirtual #2346.stateId:()I
+     71: aload_1 
+     72: invokevirtual #2346.items:()Ljava/util/List;
+     75: aload_1 
+     76: invokevirtual #2346.carriedItem:()Lnet/minecraft/world/item/ItemStack;
+     79: invokevirtual #2319.initializeContents:(ILjava/util/List;Lnet/minecraft/world/item/ItemStack;)V
+     82: return 
+

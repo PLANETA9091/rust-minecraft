@@ -1,0 +1,245 @@
+=== extractItemHotbar(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V max_stack=11 max_locals=14 ===
+      0: aload_0 
+      1: invokevirtual #3.getCameraPlayer:()Lnet/minecraft/world/entity/player/Player;
+      4: astore_3 
+      5: aload_3 
+      6: ifnonnull start+10
+      9: return 
+     10: aload_3 
+     11: invokevirtual #443.getOffhandItem:()Lnet/minecraft/world/item/ItemStack;
+     14: astore 4
+     16: aload_3 
+     17: invokevirtual #443.getMainArm:()Lnet/minecraft/world/entity/HumanoidArm;
+     20: invokevirtual #989.getOpposite:()Lnet/minecraft/world/entity/HumanoidArm;
+     23: astore 5
+     25: aload_1 
+     26: invokevirtual #204.guiWidth:()I
+     29: iconst_2 
+     30: idiv 
+     31: istore 6
+     33: sipush 182
+     36: istore 7
+     38: bipush 91
+     40: istore 8
+     42: aload_1 
+     43: getstatic #696.GUI_TEXTURED:Lcom/mojang/blaze3d/pipeline/RenderPipeline;
+     46: getstatic #3.HOTBAR_SPRITE:Lnet/minecraft/resources/Identifier;
+     49: iload 6
+     51: bipush 91
+     53: isub 
+     54: aload_1 
+     55: invokevirtual #204.guiHeight:()I
+     58: bipush 22
+     60: isub 
+     61: sipush 182
+     64: bipush 22
+     66: invokevirtual #204.blitSprite:(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIII)V
+     69: aload_1 
+     70: getstatic #696.GUI_TEXTURED:Lcom/mojang/blaze3d/pipeline/RenderPipeline;
+     73: getstatic #3.HOTBAR_SELECTION_SPRITE:Lnet/minecraft/resources/Identifier;
+     76: iload 6
+     78: bipush 91
+     80: isub 
+     81: iconst_1 
+     82: isub 
+     83: aload_3 
+     84: invokevirtual #443.getInventory:()Lnet/minecraft/world/entity/player/Inventory;
+     87: invokevirtual #1004.getSelectedSlot:()I
+     90: bipush 20
+     92: imul 
+     93: iadd 
+     94: aload_1 
+     95: invokevirtual #204.guiHeight:()I
+     98: bipush 22
+    100: isub 
+    101: iconst_1 
+    102: isub 
+    103: bipush 24
+    105: bipush 23
+    107: invokevirtual #204.blitSprite:(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIII)V
+    110: aload 4
+    112: invokevirtual #33.isEmpty:()Z
+    115: ifne start+184
+    118: aload 5
+    120: getstatic #989.LEFT:Lnet/minecraft/world/entity/HumanoidArm;
+    123: if_acmpne start+158
+    126: aload_1 
+    127: getstatic #696.GUI_TEXTURED:Lcom/mojang/blaze3d/pipeline/RenderPipeline;
+    130: getstatic #3.HOTBAR_OFFHAND_LEFT_SPRITE:Lnet/minecraft/resources/Identifier;
+    133: iload 6
+    135: bipush 91
+    137: isub 
+    138: bipush 29
+    140: isub 
+    141: aload_1 
+    142: invokevirtual #204.guiHeight:()I
+    145: bipush 23
+    147: isub 
+    148: bipush 29
+    150: bipush 24
+    152: invokevirtual #204.blitSprite:(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIII)V
+    155: goto start+184
+    158: aload_1 
+    159: getstatic #696.GUI_TEXTURED:Lcom/mojang/blaze3d/pipeline/RenderPipeline;
+    162: getstatic #3.HOTBAR_OFFHAND_RIGHT_SPRITE:Lnet/minecraft/resources/Identifier;
+    165: iload 6
+    167: bipush 91
+    169: iadd 
+    170: aload_1 
+    171: invokevirtual #204.guiHeight:()I
+    174: bipush 23
+    176: isub 
+    177: bipush 29
+    179: bipush 24
+    181: invokevirtual #204.blitSprite:(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIII)V
+    184: iconst_1 
+    185: istore 9
+    187: iconst_0 
+    188: istore 10
+    190: iload 10
+    192: bipush 9
+    194: if_icmpge start+254
+    197: iload 6
+    199: bipush 90
+    201: isub 
+    202: iload 10
+    204: bipush 20
+    206: imul 
+    207: iadd 
+    208: iconst_2 
+    209: iadd 
+    210: istore 11
+    212: aload_1 
+    213: invokevirtual #204.guiHeight:()I
+    216: bipush 16
+    218: isub 
+    219: iconst_3 
+    220: isub 
+    221: istore 12
+    223: aload_0 
+    224: aload_1 
+    225: iload 11
+    227: iload 12
+    229: aload_2 
+    230: aload_3 
+    231: aload_3 
+    232: invokevirtual #443.getInventory:()Lnet/minecraft/world/entity/player/Inventory;
+    235: iload 10
+    237: invokevirtual #1004.getItem:(I)Lnet/minecraft/world/item/ItemStack;
+    240: iload 9
+    242: iinc #2305
+    245: invokevirtual #3.extractSlot:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IILnet/minecraft/client/DeltaTracker;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/ItemStack;I)V
+    248: iinc #2561
+    251: goto start+190
+    254: aload 4
+    256: invokevirtual #33.isEmpty:()Z
+    259: ifne start+332
+    262: aload_1 
+    263: invokevirtual #204.guiHeight:()I
+    266: bipush 16
+    268: isub 
+    269: iconst_3 
+    270: isub 
+    271: istore 10
+    273: aload 5
+    275: getstatic #989.LEFT:Lnet/minecraft/world/entity/HumanoidArm;
+    278: if_acmpne start+308
+    281: aload_0 
+    282: aload_1 
+    283: iload 6
+    285: bipush 91
+    287: isub 
+    288: bipush 26
+    290: isub 
+    291: iload 10
+    293: aload_2 
+    294: aload_3 
+    295: aload 4
+    297: iload 9
+    299: iinc #2305
+    302: invokevirtual #3.extractSlot:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IILnet/minecraft/client/DeltaTracker;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/ItemStack;I)V
+    305: goto start+332
+    308: aload_0 
+    309: aload_1 
+    310: iload 6
+    312: bipush 91
+    314: iadd 
+    315: bipush 10
+    317: iadd 
+    318: iload 10
+    320: aload_2 
+    321: aload_3 
+    322: aload 4
+    324: iload 9
+    326: iinc #2305
+    329: invokevirtual #3.extractSlot:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IILnet/minecraft/client/DeltaTracker;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/ItemStack;I)V
+    332: aload_0 
+    333: getfield #3.minecraft:Lnet/minecraft/client/Minecraft;
+    336: getfield #162.options:Lnet/minecraft/client/Options;
+    339: invokevirtual #271.attackIndicator:()Lnet/minecraft/client/OptionInstance;
+    342: invokevirtual #277.get:()Ljava/lang/Object;
+    345: getstatic #712.HOTBAR:Lnet/minecraft/client/AttackIndicatorStatus;
+    348: if_acmpne start+469
+    351: aload_0 
+    352: getfield #3.minecraft:Lnet/minecraft/client/Minecraft;
+    355: getfield #162.player:Lnet/minecraft/client/player/LocalPlayer;
+    358: fconst_0 
+    359: invokevirtual #325.getAttackStrengthScale:(F)F
+    362: fstore 10
+    364: fload 10
+    366: fconst_1 
+    367: fcmpg 
+    368: ifge start+469
+    371: aload_1 
+    372: invokevirtual #204.guiHeight:()I
+    375: bipush 20
+    377: isub 
+    378: istore 11
+    380: iload 6
+    382: bipush 91
+    384: iadd 
+    385: bipush 6
+    387: iadd 
+    388: istore 12
+    390: aload 5
+    392: getstatic #989.RIGHT:Lnet/minecraft/world/entity/HumanoidArm;
+    395: if_acmpne start+408
+    398: iload 6
+    400: bipush 91
+    402: isub 
+    403: bipush 22
+    405: isub 
+    406: istore 12
+    408: fload 10
+    410: ldc_w #1033
+    413: fmul 
+    414: f2i 
+    415: istore 13
+    417: aload_1 
+    418: getstatic #696.GUI_TEXTURED:Lcom/mojang/blaze3d/pipeline/RenderPipeline;
+    421: getstatic #3.HOTBAR_ATTACK_INDICATOR_BACKGROUND_SPRITE:Lnet/minecraft/resources/Identifier;
+    424: iload 12
+    426: iload 11
+    428: bipush 18
+    430: bipush 18
+    432: invokevirtual #204.blitSprite:(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIII)V
+    435: aload_1 
+    436: getstatic #696.GUI_TEXTURED:Lcom/mojang/blaze3d/pipeline/RenderPipeline;
+    439: getstatic #3.HOTBAR_ATTACK_INDICATOR_PROGRESS_SPRITE:Lnet/minecraft/resources/Identifier;
+    442: bipush 18
+    444: bipush 18
+    446: iconst_0 
+    447: bipush 18
+    449: iload 13
+    451: isub 
+    452: iload 12
+    454: iload 11
+    456: bipush 18
+    458: iadd 
+    459: iload 13
+    461: isub 
+    462: bipush 18
+    464: iload 13
+    466: invokevirtual #204.blitSprite:(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIIIIIII)V
+    469: return 
+
