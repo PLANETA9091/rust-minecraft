@@ -18869,6 +18869,133 @@ impl App {
         true
     }
 
+    /// THE PICKER'S OWN Q (the 26.2 CreativeModeInventoryScreen.keyPressed's
+    /// super chain — the AbstractContainerScreen.keyPressed keyDrop arm the
+    /// container screens share: `hoveredSlot != null && hoveredSlot.hasItem()`
+    /// then `slotClicked(hoveredSlot, hoveredSlot.index, hasControlDown() ?
+    /// 1 : 0, ContainerInput.THROW)` — the button int the Ctrl boolean
+    /// rides). The creative screen's OWN THROW arms answer (the doClick
+    /// THROW the survival walk rides NEVER — the screen overrides the
+    /// slotClicked walk, the doClick carried gate the arms BYPASS: the Q
+    /// the held stack beside throws):
+    /// - the PALETTE cell (pcs 645-707) the COPY drops — `copyWithCount(
+    ///   button == 0 ? 1 : getMaxStackSize())`, `player.drop(removed,
+    ///   true)` the aimed throw, `handleCreativeModeItemDrop` the wire
+    ///   word — the display copy the cell KEEPS (the palette never
+    ///   depletes), the count the per-item max law answers (the egg the
+    ///   16, the stone the 64);
+    /// - the WRAPPED cell (pcs 254-348) the REAL take wears — `slot.remove(
+    ///   button == 0 ? 1 : slot.getItem().getMaxStackSize())` (the
+    ///   Slot.remove the count's own clamp speaks — the whole stack the
+    ///   Ctrl+Q throws), the remainder the `handleCreativeModeItemAdd`
+    ///   walk the wire re-syncs (the offline sim the store mutation IS
+    ///   the truth) — the armor / offhand / main / hotbar rows the same
+    ///   law answers;
+    /// - the PALETTE-TAB hotbar row (the doClick THROW the empty-carried
+    ///   ride + pcs 1024-1152 the carried arm — the net law the SAME
+    ///   answer wears: 1 or the whole, the carried UNTOUCHED either way).
+    /// The SEARCH seat (keyPressed pc 156-184) the focused box consumes
+    /// BEFORE the super chain rides — Q while typing silence, even over a
+    /// palette cell (the search arms the keyDrop walk PRECEDE; the SWAP
+    /// key's own order the reverse wears — checkHotbarKeyPressed the
+    /// search arms precede). The empty cells / the BIN / the elsewhere
+    /// the hasItem gate the FALSE verdict keeps — the key unconsumed
+    /// (the screens-open gate the world chain never reads, the silence
+    /// honest). The wire sessions refuse (the picker the offline belief
+    /// keeps — the open_inventory's own gate the live session the
+    /// survival screen holds).
+    pub fn on_creative_drop_key(&mut self, whole_stack: bool) -> bool {
+        if self.screen != ScreenKind::Creative || self.dead {
+            return false; // the container Q the world/inventory chains answer
+        }
+        if self.world_is_network {
+            return false; // the picker the offline belief keeps
+        }
+        // THE SEARCH SEAT (pc 156-184 — the focused box the keys consume
+        // before the super chain rides: the keyDrop arm the search tab
+        // never answers, even over a loaded palette cell)
+        if CREATIVE_TABS[self.creative_tab].kind == CreativeTabKind::Search {
+            return true;
+        }
+        if self.creative_panel == (0, 0) {
+            return false; // no render spoke — no hoveredSlot to hover
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return false; // the headless scenes track no mouse — the null gate
+        };
+        // THE HOVERED SLOT (the containers the picker owns — the
+        // wrapped seat's regions the INVENTORY tab rides, the palette
+        // cells after, the bottom rows last)
+        let wrap_seat = CREATIVE_TABS[self.creative_tab].kind == CreativeTabKind::Inventory;
+        if wrap_seat {
+            if let Some(slot) = self.creative_wrap_cell(mx, my) {
+                let (id, count) = match slot {
+                    CreativeWrapSlot::Bin => (0, 0), // the sink never holds
+                    CreativeWrapSlot::Armor(k) => self.inventory.armor[k],
+                    CreativeWrapSlot::Offhand => self.inventory.offhand[0],
+                    CreativeWrapSlot::Main(i) | CreativeWrapSlot::Hotbar(i) => {
+                        self.inventory.items[i]
+                    }
+                };
+                if count <= 0 || id == 0 {
+                    return false; // the hasItem gate — the key unconsumed
+                }
+                // the REAL take (pc 273-292): remove(1 or max) — the
+                // count's own clamp the whole stack speaks
+                let taken = if whole_stack { count } else { 1 };
+                self.drop_item_entity_aimed(id, taken);
+                let left = count - taken;
+                let new = if left > 0 { (id, left) } else { (0, 0) };
+                match slot {
+                    CreativeWrapSlot::Armor(k) => self.inventory.armor[k] = new,
+                    CreativeWrapSlot::Offhand => self.inventory.offhand[0] = new,
+                    CreativeWrapSlot::Main(i) | CreativeWrapSlot::Hotbar(i) => {
+                        self.inventory.items[i] = new;
+                        // the remainder the broadcast walk re-syncs — the
+                        // HUD hotbar row the every-mutation law syncs
+                        self.hotbar_slots = self.inventory.hotbar();
+                    }
+                    CreativeWrapSlot::Bin => {} // the gate's own miss — never rides
+                }
+                return true;
+            }
+            return false; // the wrapped seat's elsewhere — no hoveredSlot
+        }
+        if let Some(cell) = self.creative_palette_cell(mx, my) {
+            let (id, count) = self.creative_palette[cell];
+            if count <= 0 || id == 0 {
+                return false; // the hasItem gate
+            }
+            // THE COPY DROP (pc 661-691): copyWithCount(1 or the
+            // per-item max), the aimed throw, the wire word — the
+            // display copy the cell KEEPS
+            let taken = if whole_stack {
+                crate::world_view::item_max_stack(id)
+            } else {
+                1
+            };
+            self.drop_item_entity_aimed(id, taken);
+            return true;
+        }
+        if let Some(s) = self.creative_store_cell(mx, my) {
+            let (id, count) = self.inventory.items[s];
+            if count <= 0 || id == 0 {
+                return false; // the hasItem gate
+            }
+            // THE HOTBAR ROW'S THROW (the doClick THROW the
+            // empty-carried ride + pcs 1024-1152 the carried arm — the
+            // net law the SAME answer wears: 1 or the whole, the
+            // carried UNTOUCHED either way)
+            let taken = if whole_stack { count } else { 1 };
+            self.drop_item_entity_aimed(id, taken);
+            let left = count - taken;
+            self.inventory.items[s] = if left > 0 { (id, left) } else { (0, 0) };
+            self.hotbar_slots = self.inventory.hotbar();
+            return true;
+        }
+        false // the elsewhere hover — the keyDrop arm never fires
+    }
+
     /// THE OUTSIDE DROP (the slotClicked tail's THROW arms — the
     /// whole-carried drop the LEFT click speaks, the split(1) the
     /// RIGHT keeps; the aimed throw the player.drop(stack, true) walk
@@ -103665,6 +103792,178 @@ cow_sound_variant: None,
         // THE NOWHERE (the miss the world chain answers)
         app.mouse_pos = Some((px - 40, py - 40));
         assert!(!app.on_creative_swap_key(0), "the no-slot miss");
+    }
+
+    /// THE PICKER'S OWN Q (the keyDrop arm's THROW over the picker's
+    /// seats — the palette the COPY drops (the display copy the cell
+    /// keeps, the per-item max the Ctrl wears), the bottom row the real
+    /// take rides, the carried the arms never gate, the search seat the
+    /// focused box consumes, the empty cells / the elsewhere the false
+    /// verdict keeps).
+    #[test]
+    fn the_creative_q_the_palette_the_copy_drops() {
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let egg = mc_registry::item_id_by_name("egg").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.game_mode = GameMode::Creative;
+        app.open_inventory();
+        app.creative_panel = creative_panel_origin(640, 360);
+        let (px, py) = app.creative_panel;
+        let cell0 = (px + 9 + 8, py + 18 + 8);
+        let cell5 = (px + 9 + 5 * 18 + 8, py + 18 + 8);
+        let tail = (px + 9 + 8 * 18 + 8, py + 18 + 4 * 18 + 8);
+        let store8 = (px + 9 + 8 * 18 + 8, py + 112 + 8);
+        // THE COPY DROP (the plain Q — exactly ONE, the display copy
+        // the cell KEEPS)
+        app.creative_palette[0] = (stone, 1);
+        app.mouse_pos = Some(cell0);
+        let before = app.drops.len();
+        assert!(app.on_creative_drop_key(false), "the walk the copy answers");
+        assert_eq!(app.drops.len(), before + 1, "the drop rides");
+        assert_eq!(app.drops.last().unwrap().item, stone, "the stone the copy speaks");
+        assert_eq!(app.drops.last().unwrap().count, 1, "the plain Q the ONE wears");
+        assert_eq!(app.creative_palette[0], (stone, 1), "the cell the copy keeps");
+        // THE CTRL Q (the per-item max the copy wears — the egg the 16)
+        app.creative_palette[5] = (egg, 1);
+        app.mouse_pos = Some(cell5);
+        assert!(app.on_creative_drop_key(true), "the walk the max answers");
+        assert_eq!(app.drops.last().unwrap().item, egg, "the egg the max speaks");
+        assert_eq!(app.drops.last().unwrap().count, 16, "the egg's own 16 wears");
+        assert_eq!(app.creative_palette[5], (egg, 1), "the cell never depletes");
+        // THE CARRIED BESIDE (the keyDrop arm the doClick carried gate
+        // never reads — the Q the held stack beside throws, the held
+        // stack UNTOUCHED)
+        app.inv_carried = (stone, 5);
+        app.mouse_pos = Some(cell0);
+        let before = app.drops.len();
+        assert!(app.on_creative_drop_key(false), "the carried never gates");
+        assert_eq!(app.drops.len(), before + 1, "the drop still rides");
+        assert_eq!(app.inv_carried, (stone, 5), "the held stack untouched");
+        // THE EMPTY CELL (the hasItem gate — the key unconsumed)
+        app.inv_carried = (0, 0);
+        app.creative_palette[44] = (0, 0);
+        app.mouse_pos = Some(tail);
+        let before = app.drops.len();
+        assert!(
+            !app.on_creative_drop_key(false),
+            "the empty cell the miss wears"
+        );
+        assert_eq!(app.drops.len(), before, "no drop rides");
+        // THE BOTTOM ROW'S THROW (the real take — the plain Q ONE off,
+        // the row the remainder keeps)
+        app.inventory.items[8] = (stone, 7);
+        app.mouse_pos = Some(store8);
+        assert!(app.on_creative_drop_key(false), "the row the take answers");
+        assert_eq!(app.inventory.items[8], (stone, 6), "the row the one keeps");
+        assert_eq!(app.drops.last().unwrap().count, 1, "the one the drop wears");
+        // THE CTRL Q (the whole stack — the remove's own clamp the count
+        // speaks, the HUD row the every-mutation law syncs)
+        assert!(app.on_creative_drop_key(true), "the walk the whole answers");
+        assert_eq!(app.inventory.items[8], (0, 0), "the row the whole spends");
+        assert_eq!(app.drops.last().unwrap().count, 6, "the six the drop wears");
+        assert_eq!(
+            app.hotbar_slots[8],
+            (0, 0),
+            "the HUD row the sync law wears"
+        );
+        // THE SEARCH SEAT (the focused box the key consumes — Q while
+        // typing silence, even over a loaded palette cell)
+        app.select_creative_tab(6);
+        app.creative_palette[0] = (stone, 1);
+        app.mouse_pos = Some(cell0);
+        let before = app.drops.len();
+        assert!(app.on_creative_drop_key(false), "the box the key consumes");
+        assert_eq!(app.drops.len(), before, "the search tab no drop wears");
+        assert_eq!(app.creative_palette[0], (stone, 1), "the cell untouched");
+        // THE NOWHERE HOVER (the miss the false verdict keeps)
+        app.select_creative_tab(0);
+        app.mouse_pos = Some((px - 40, py - 40));
+        assert!(!app.on_creative_drop_key(false), "the no-slot miss");
+    }
+
+    /// THE WRAPPED SEAT'S OWN Q (the pc 254-348 THROW arm — the REAL
+    /// take the Slot.remove walk speaks: the plain Q ONE off, the Ctrl
+    /// the whole stack (the remove's own count clamp), the armor /
+    /// offhand / hotbar rows the same law answers, the carried the arm
+    /// BYPASSES (the keyDrop arm the doClick carried gate never reads),
+    /// the BIN the sink never holds, the HUD row the every-mutation
+    /// law syncs).
+    #[test]
+    fn the_creative_q_the_wrap_the_real_take_wears() {
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let helmet = mc_registry::item_id_by_name("iron_helmet").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.game_mode = GameMode::Creative;
+        app.open_inventory();
+        app.select_creative_tab(13);
+        app.creative_panel = creative_panel_origin(640, 360);
+        let (px, py) = app.creative_panel;
+        let main1 = (px + 9 + 1 * 18 + 8, py + 54 + 8); // the store's 10
+        let hot3 = (px + 9 + 3 * 18 + 8, py + 112 + 8); // the store's 3
+        let armor_head = (px + 54 + 8, py + 6 + 8);
+        let offhand = (px + 35 + 8, py + 20 + 8);
+        let bin = (px + 173 + 8, py + 112 + 8);
+        // THE REAL TAKE (the plain Q — ONE off the main row, the
+        // remainder the row keeps)
+        app.inventory.items[10] = (stone, 6);
+        app.mouse_pos = Some(main1);
+        let before = app.drops.len();
+        assert!(app.on_creative_drop_key(false), "the walk the take answers");
+        assert_eq!(app.inventory.items[10], (stone, 5), "the row the five keeps");
+        assert_eq!(app.drops.len(), before + 1, "the drop rides");
+        assert_eq!(app.drops.last().unwrap().count, 1, "the one the drop wears");
+        // THE CTRL Q (the whole stack)
+        assert!(app.on_creative_drop_key(true), "the walk the whole answers");
+        assert_eq!(app.inventory.items[10], (0, 0), "the row the whole spends");
+        assert_eq!(app.drops.last().unwrap().count, 5, "the five the drop wears");
+        // THE CARRIED BESIDE (the wrapped arm the doClick carried gate
+        // BYPASSES — the held stack the take never touches)
+        app.inventory.items[10] = (stone, 6);
+        app.inv_carried = (stone, 5);
+        app.mouse_pos = Some(main1);
+        assert!(app.on_creative_drop_key(false), "the carried never gates");
+        assert_eq!(app.inventory.items[10], (stone, 5), "the row the take wears");
+        assert_eq!(app.inv_carried, (stone, 5), "the held stack untouched");
+        app.inv_carried = (0, 0);
+        // THE ARMOR (the piece the Q throws — the head the slot empties)
+        app.inventory.armor[0] = (helmet, 1);
+        app.mouse_pos = Some(armor_head);
+        let before = app.drops.len();
+        assert!(app.on_creative_drop_key(true), "the head the piece answers");
+        assert_eq!(app.inventory.armor[0], (0, 0), "the head the piece spends");
+        assert_eq!(app.drops.len(), before + 1, "the piece the drop rides");
+        assert_eq!(
+            app.drops.last().unwrap().item,
+            helmet,
+            "the helmet the throw wears"
+        );
+        // THE OFFHAND (the anonymous slot the same law keeps)
+        app.inventory.offhand[0] = (stone, 1);
+        app.mouse_pos = Some(offhand);
+        assert!(app.on_creative_drop_key(false), "the offhand the one answers");
+        assert_eq!(app.inventory.offhand[0], (0, 0), "the offhand the one spends");
+        // THE HOTBAR ROW (the HUD the sync law keeps)
+        app.inventory.items[3] = (stone, 4);
+        app.mouse_pos = Some(hot3);
+        assert!(app.on_creative_drop_key(false), "the hotbar the one answers");
+        assert_eq!(app.inventory.items[3], (stone, 3), "the row the three keeps");
+        assert_eq!(app.hotbar_slots[3], (stone, 3), "the HUD row the sync wears");
+        // THE BIN (the sink never holds — the hasItem gate the miss wears)
+        app.mouse_pos = Some(bin);
+        let before = app.drops.len();
+        assert!(!app.on_creative_drop_key(false), "the bin the miss wears");
+        assert_eq!(app.drops.len(), before, "no drop rides");
+        // THE EMPTY CELL (the same miss)
+        app.inventory.items[10] = (0, 0);
+        app.mouse_pos = Some(main1);
+        assert!(
+            !app.on_creative_drop_key(false),
+            "the empty cell the miss wears"
+        );
     }
 
     /// THE ARMOR COLUMN (the 26.2 ArmorSlot's own mayPlace law — the

@@ -1799,7 +1799,17 @@ pub fn run_gui_app(
         // inventory walk never passes, the container Q the handleKeybinds
         // gate never did)
         if !app.chat_open && window.is_key_pressed(Key::Q, minifb::KeyRepeat::No) {
-            app.on_inventory_drop_key(window.is_key_down(Key::LeftCtrl));
+            // THE PICKER'S OWN Q (the creative keyPressed's super chain
+            // — the keyDrop arm the container screens share, the
+            // creative THROW arms the seats' own walks answer, the
+            // search seat the focused box consumes): the false verdict
+            // the survival chain answers (the screen gates keep the
+            // lanes honest — the world Q the in_world lane below rides,
+            // the screens-open gate it never reads)
+            let q_ctrl = window.is_key_down(Key::LeftCtrl);
+            if !app.on_creative_drop_key(q_ctrl) {
+                app.on_inventory_drop_key(q_ctrl);
+            }
         }
         // THE F KEY'S OWN LANE (the vanilla handleKeybinds's
         // keySwapOffhand arm — scripts/jar_work/handlekeybinds_48.txt
