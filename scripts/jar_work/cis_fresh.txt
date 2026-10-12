@@ -1,0 +1,2866 @@
+Compiled from "CreativeModeInventoryScreen.java"
+public class net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen extends net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen$ItemPickerMenu> {
+  private static final net.minecraft.resources.Identifier SCROLLER_SPRITE;
+
+  private static final net.minecraft.resources.Identifier SCROLLER_DISABLED_SPRITE;
+
+  private static final net.minecraft.resources.Identifier[] UNSELECTED_TOP_TABS;
+
+  private static final net.minecraft.resources.Identifier[] SELECTED_TOP_TABS;
+
+  private static final net.minecraft.resources.Identifier[] UNSELECTED_BOTTOM_TABS;
+
+  private static final net.minecraft.resources.Identifier[] SELECTED_BOTTOM_TABS;
+
+  private static final int NUM_ROWS;
+
+  private static final int NUM_COLS;
+
+  private static final int TAB_WIDTH;
+
+  private static final int TAB_HEIGHT;
+
+  private static final int SCROLLER_WIDTH;
+
+  private static final int SCROLLER_HEIGHT;
+
+  private static final net.minecraft.world.SimpleContainer CONTAINER;
+
+  private static final net.minecraft.network.chat.Component TRASH_SLOT_TOOLTIP;
+
+  private static net.minecraft.world.item.CreativeModeTab selectedTab;
+
+  private float scrollOffs;
+
+  private boolean scrolling;
+
+  private net.minecraft.client.gui.components.EditBox searchBox;
+
+  private java.util.List<net.minecraft.world.inventory.Slot> originalSlots;
+
+  private net.minecraft.world.inventory.Slot destroyItemSlot;
+
+  private net.minecraft.client.gui.screens.inventory.CreativeInventoryListener listener;
+
+  private boolean ignoreTextInput;
+
+  private boolean hasClickedOutside;
+
+  private final java.util.Set<net.minecraft.tags.TagKey<net.minecraft.world.item.Item>> visibleTags;
+
+  private final boolean displayOperatorCreativeTab;
+
+  private final net.minecraft.client.gui.screens.inventory.EffectsInInventory effects;
+
+  public net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen(net.minecraft.client.player.LocalPlayer, net.minecraft.world.flag.FeatureFlagSet, boolean);
+    Code:
+       0: aload_0
+       1: new           #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+       4: dup
+       5: aload_1
+       6: invokespecial #5                  // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu."<init>":(Lnet/minecraft/world/entity/player/Player;)V
+       9: aload_1
+      10: invokevirtual #9                  // Method net/minecraft/client/player/LocalPlayer.getInventory:()Lnet/minecraft/world/entity/player/Inventory;
+      13: getstatic     #15                 // Field net/minecraft/network/chat/CommonComponents.EMPTY:Lnet/minecraft/network/chat/Component;
+      16: sipush        195
+      19: sipush        136
+      22: invokespecial #21                 // Method net/minecraft/client/gui/screens/inventory/AbstractContainerScreen."<init>":(Lnet/minecraft/world/inventory/AbstractContainerMenu;Lnet/minecraft/world/entity/player/Inventory;Lnet/minecraft/network/chat/Component;II)V
+      25: aload_0
+      26: new           #26                 // class java/util/HashSet
+      29: dup
+      30: invokespecial #28                 // Method java/util/HashSet."<init>":()V
+      33: putfield      #31                 // Field visibleTags:Ljava/util/Set;
+      36: aload_1
+      37: aload_0
+      38: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+      41: putfield      #41                 // Field net/minecraft/client/player/LocalPlayer.containerMenu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+      44: aload_0
+      45: iload_3
+      46: putfield      #44                 // Field displayOperatorCreativeTab:Z
+      49: aload_0
+      50: aload_1
+      51: getfield      #48                 // Field net/minecraft/client/player/LocalPlayer.connection:Lnet/minecraft/client/multiplayer/ClientPacketListener;
+      54: invokevirtual #52                 // Method net/minecraft/client/multiplayer/ClientPacketListener.searchTrees:()Lnet/minecraft/client/multiplayer/SessionSearchTrees;
+      57: aload_2
+      58: aload_0
+      59: aload_1
+      60: invokevirtual #58                 // Method hasPermissions:(Lnet/minecraft/world/entity/player/Player;)Z
+      63: aload_1
+      64: invokevirtual #62                 // Method net/minecraft/client/player/LocalPlayer.level:()Lnet/minecraft/world/level/Level;
+      67: invokevirtual #66                 // Method net/minecraft/world/level/Level.registryAccess:()Lnet/minecraft/core/RegistryAccess;
+      70: invokevirtual #72                 // Method tryRebuildTabContents:(Lnet/minecraft/client/multiplayer/SessionSearchTrees;Lnet/minecraft/world/flag/FeatureFlagSet;ZLnet/minecraft/core/HolderLookup$Provider;)Z
+      73: pop
+      74: aload_0
+      75: new           #76                 // class net/minecraft/client/gui/screens/inventory/EffectsInInventory
+      78: dup
+      79: aload_0
+      80: invokespecial #78                 // Method net/minecraft/client/gui/screens/inventory/EffectsInInventory."<init>":(Lnet/minecraft/client/gui/screens/inventory/AbstractContainerScreen;)V
+      83: putfield      #81                 // Field effects:Lnet/minecraft/client/gui/screens/inventory/EffectsInInventory;
+      86: return
+
+  private boolean hasPermissions(net.minecraft.world.entity.player.Player);
+    Code:
+       0: aload_1
+       1: invokevirtual #85                 // Method net/minecraft/world/entity/player/Player.canUseGameMasterBlocks:()Z
+       4: ifeq          18
+       7: aload_0
+       8: getfield      #44                 // Field displayOperatorCreativeTab:Z
+      11: ifeq          18
+      14: iconst_1
+      15: goto          19
+      18: iconst_0
+      19: ireturn
+
+  private void tryRefreshInvalidatedTabs(net.minecraft.world.flag.FeatureFlagSet, boolean, net.minecraft.core.HolderLookup$Provider);
+    Code:
+       0: aload_0
+       1: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+       4: invokevirtual #95                 // Method net/minecraft/client/Minecraft.getConnection:()Lnet/minecraft/client/multiplayer/ClientPacketListener;
+       7: astore        4
+       9: aload_0
+      10: aload         4
+      12: ifnull        23
+      15: aload         4
+      17: invokevirtual #52                 // Method net/minecraft/client/multiplayer/ClientPacketListener.searchTrees:()Lnet/minecraft/client/multiplayer/SessionSearchTrees;
+      20: goto          24
+      23: aconst_null
+      24: aload_1
+      25: iload_2
+      26: aload_3
+      27: invokevirtual #72                 // Method tryRebuildTabContents:(Lnet/minecraft/client/multiplayer/SessionSearchTrees;Lnet/minecraft/world/flag/FeatureFlagSet;ZLnet/minecraft/core/HolderLookup$Provider;)Z
+      30: ifeq          120
+      33: invokestatic  #101                // Method net/minecraft/world/item/CreativeModeTabs.allTabs:()Ljava/util/List;
+      36: invokeinterface #107,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+      41: astore        5
+      43: aload         5
+      45: invokeinterface #113,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      50: ifeq          120
+      53: aload         5
+      55: invokeinterface #118,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      60: checkcast     #122                // class net/minecraft/world/item/CreativeModeTab
+      63: astore        6
+      65: aload         6
+      67: invokevirtual #124                // Method net/minecraft/world/item/CreativeModeTab.getDisplayItems:()Ljava/util/Collection;
+      70: astore        7
+      72: aload         6
+      74: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+      77: if_acmpne     117
+      80: aload         6
+      82: invokevirtual #132                // Method net/minecraft/world/item/CreativeModeTab.getType:()Lnet/minecraft/world/item/CreativeModeTab$Type;
+      85: getstatic     #136                // Field net/minecraft/world/item/CreativeModeTab$Type.CATEGORY:Lnet/minecraft/world/item/CreativeModeTab$Type;
+      88: if_acmpne     111
+      91: aload         7
+      93: invokeinterface #142,  1          // InterfaceMethod java/util/Collection.isEmpty:()Z
+      98: ifeq          111
+     101: aload_0
+     102: invokestatic  #147                // Method net/minecraft/world/item/CreativeModeTabs.getDefaultTab:()Lnet/minecraft/world/item/CreativeModeTab;
+     105: invokevirtual #151                // Method selectTab:(Lnet/minecraft/world/item/CreativeModeTab;)V
+     108: goto          117
+     111: aload_0
+     112: aload         7
+     114: invokevirtual #155                // Method refreshCurrentTabContents:(Ljava/util/Collection;)V
+     117: goto          43
+     120: return
+
+  private boolean tryRebuildTabContents(net.minecraft.client.multiplayer.SessionSearchTrees, net.minecraft.world.flag.FeatureFlagSet, boolean, net.minecraft.core.HolderLookup$Provider);
+    Code:
+       0: aload_2
+       1: iload_3
+       2: aload         4
+       4: invokestatic  #159                // Method net/minecraft/world/item/CreativeModeTabs.tryRebuildTabContents:(Lnet/minecraft/world/flag/FeatureFlagSet;ZLnet/minecraft/core/HolderLookup$Provider;)Z
+       7: ifne          12
+      10: iconst_0
+      11: ireturn
+      12: aload_1
+      13: ifnull        41
+      16: invokestatic  #162                // Method net/minecraft/world/item/CreativeModeTabs.searchTab:()Lnet/minecraft/world/item/CreativeModeTab;
+      19: invokevirtual #124                // Method net/minecraft/world/item/CreativeModeTab.getDisplayItems:()Ljava/util/Collection;
+      22: invokestatic  #165                // InterfaceMethod java/util/List.copyOf:(Ljava/util/Collection;)Ljava/util/List;
+      25: astore        5
+      27: aload_1
+      28: aload         4
+      30: aload         5
+      32: invokevirtual #169                // Method net/minecraft/client/multiplayer/SessionSearchTrees.updateCreativeTooltips:(Lnet/minecraft/core/HolderLookup$Provider;Ljava/util/List;)V
+      35: aload_1
+      36: aload         5
+      38: invokevirtual #175                // Method net/minecraft/client/multiplayer/SessionSearchTrees.updateCreativeTags:(Ljava/util/List;)V
+      41: iconst_1
+      42: ireturn
+
+  private void refreshCurrentTabContents(java.util.Collection<net.minecraft.world.item.ItemStack>);
+    Code:
+       0: aload_0
+       1: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+       4: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+       7: aload_0
+       8: getfield      #179                // Field scrollOffs:F
+      11: invokevirtual #183                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.getRowIndexForScroll:(F)I
+      14: istore_2
+      15: aload_0
+      16: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+      19: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+      22: getfield      #187                // Field net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.items:Lnet/minecraft/core/NonNullList;
+      25: invokevirtual #191                // Method net/minecraft/core/NonNullList.clear:()V
+      28: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+      31: invokevirtual #132                // Method net/minecraft/world/item/CreativeModeTab.getType:()Lnet/minecraft/world/item/CreativeModeTab$Type;
+      34: getstatic     #196                // Field net/minecraft/world/item/CreativeModeTab$Type.SEARCH:Lnet/minecraft/world/item/CreativeModeTab$Type;
+      37: if_acmpne     47
+      40: aload_0
+      41: invokevirtual #199                // Method refreshSearchResults:()V
+      44: goto          62
+      47: aload_0
+      48: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+      51: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+      54: getfield      #187                // Field net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.items:Lnet/minecraft/core/NonNullList;
+      57: aload_1
+      58: invokevirtual #202                // Method net/minecraft/core/NonNullList.addAll:(Ljava/util/Collection;)Z
+      61: pop
+      62: aload_0
+      63: aload_0
+      64: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+      67: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+      70: iload_2
+      71: invokevirtual #206                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.getScrollForRowIndex:(I)F
+      74: putfield      #179                // Field scrollOffs:F
+      77: aload_0
+      78: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+      81: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+      84: aload_0
+      85: getfield      #179                // Field scrollOffs:F
+      88: invokevirtual #210                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.scrollTo:(F)V
+      91: return
+
+  public void containerTick();
+    Code:
+       0: aload_0
+       1: invokespecial #214                // Method net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.containerTick:()V
+       4: aload_0
+       5: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+       8: getfield      #217                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+      11: astore_1
+      12: aload_1
+      13: ifnull        64
+      16: aload_0
+      17: aload_1
+      18: getfield      #48                 // Field net/minecraft/client/player/LocalPlayer.connection:Lnet/minecraft/client/multiplayer/ClientPacketListener;
+      21: invokevirtual #221                // Method net/minecraft/client/multiplayer/ClientPacketListener.enabledFeatures:()Lnet/minecraft/world/flag/FeatureFlagSet;
+      24: aload_0
+      25: aload_1
+      26: invokevirtual #58                 // Method hasPermissions:(Lnet/minecraft/world/entity/player/Player;)Z
+      29: aload_1
+      30: invokevirtual #62                 // Method net/minecraft/client/player/LocalPlayer.level:()Lnet/minecraft/world/level/Level;
+      33: invokevirtual #66                 // Method net/minecraft/world/level/Level.registryAccess:()Lnet/minecraft/core/RegistryAccess;
+      36: invokevirtual #225                // Method tryRefreshInvalidatedTabs:(Lnet/minecraft/world/flag/FeatureFlagSet;ZLnet/minecraft/core/HolderLookup$Provider;)V
+      39: aload_1
+      40: invokevirtual #229                // Method net/minecraft/client/player/LocalPlayer.hasInfiniteMaterials:()Z
+      43: ifne          64
+      46: aload_0
+      47: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+      50: getfield      #232                // Field net/minecraft/client/Minecraft.gui:Lnet/minecraft/client/gui/Gui;
+      53: new           #236                // class net/minecraft/client/gui/screens/inventory/InventoryScreen
+      56: dup
+      57: aload_1
+      58: invokespecial #238                // Method net/minecraft/client/gui/screens/inventory/InventoryScreen."<init>":(Lnet/minecraft/world/entity/player/Player;)V
+      61: invokevirtual #239                // Method net/minecraft/client/gui/Gui.setScreen:(Lnet/minecraft/client/gui/screens/Screen;)V
+      64: return
+
+  protected void slotClicked(net.minecraft.world.inventory.Slot, int, int, net.minecraft.world.inventory.ContainerInput);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: invokevirtual #245                // Method isCreativeSlot:(Lnet/minecraft/world/inventory/Slot;)Z
+       5: ifeq          24
+       8: aload_0
+       9: getfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+      12: iconst_0
+      13: invokevirtual #253                // Method net/minecraft/client/gui/components/EditBox.moveCursorToEnd:(Z)V
+      16: aload_0
+      17: getfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+      20: iconst_0
+      21: invokevirtual #259                // Method net/minecraft/client/gui/components/EditBox.setHighlightPos:(I)V
+      24: aload         4
+      26: getstatic     #263                // Field net/minecraft/world/inventory/ContainerInput.QUICK_MOVE:Lnet/minecraft/world/inventory/ContainerInput;
+      29: if_acmpne     36
+      32: iconst_1
+      33: goto          37
+      36: iconst_0
+      37: istore        5
+      39: iload_2
+      40: sipush        -999
+      43: if_icmpne     60
+      46: aload         4
+      48: getstatic     #269                // Field net/minecraft/world/inventory/ContainerInput.PICKUP:Lnet/minecraft/world/inventory/ContainerInput;
+      51: if_acmpne     60
+      54: getstatic     #272                // Field net/minecraft/world/inventory/ContainerInput.THROW:Lnet/minecraft/world/inventory/ContainerInput;
+      57: goto          62
+      60: aload         4
+      62: astore        4
+      64: aload         4
+      66: getstatic     #272                // Field net/minecraft/world/inventory/ContainerInput.THROW:Lnet/minecraft/world/inventory/ContainerInput;
+      69: if_acmpne     86
+      72: aload_0
+      73: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+      76: getfield      #217                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+      79: invokevirtual #275                // Method net/minecraft/client/player/LocalPlayer.canDropItems:()Z
+      82: ifne          86
+      85: return
+      86: aload_0
+      87: aload_1
+      88: aload         4
+      90: invokevirtual #278                // Method onMouseClickAction:(Lnet/minecraft/world/inventory/Slot;Lnet/minecraft/world/inventory/ContainerInput;)V
+      93: aload_1
+      94: ifnonnull     117
+      97: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+     100: invokevirtual #132                // Method net/minecraft/world/item/CreativeModeTab.getType:()Lnet/minecraft/world/item/CreativeModeTab$Type;
+     103: getstatic     #282                // Field net/minecraft/world/item/CreativeModeTab$Type.INVENTORY:Lnet/minecraft/world/item/CreativeModeTab$Type;
+     106: if_acmpeq     117
+     109: aload         4
+     111: getstatic     #285                // Field net/minecraft/world/inventory/ContainerInput.QUICK_CRAFT:Lnet/minecraft/world/inventory/ContainerInput;
+     114: if_acmpne     1155
+     117: aload_1
+     118: ifnull        136
+     121: aload_1
+     122: aload_0
+     123: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+     126: getfield      #217                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+     129: invokevirtual #288                // Method net/minecraft/world/inventory/Slot.mayPickup:(Lnet/minecraft/world/entity/player/Player;)Z
+     132: ifne          136
+     135: return
+     136: aload_1
+     137: aload_0
+     138: getfield      #293                // Field destroyItemSlot:Lnet/minecraft/world/inventory/Slot;
+     141: if_acmpne     218
+     144: iload         5
+     146: ifeq          218
+     149: iconst_0
+     150: istore        6
+     152: iload         6
+     154: aload_0
+     155: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+     158: getfield      #217                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+     161: getfield      #297                // Field net/minecraft/client/player/LocalPlayer.inventoryMenu:Lnet/minecraft/world/inventory/InventoryMenu;
+     164: invokevirtual #301                // Method net/minecraft/world/inventory/InventoryMenu.getItems:()Lnet/minecraft/core/NonNullList;
+     167: invokevirtual #307                // Method net/minecraft/core/NonNullList.size:()I
+     170: if_icmpge     215
+     173: aload_0
+     174: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+     177: getfield      #217                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+     180: getfield      #297                // Field net/minecraft/client/player/LocalPlayer.inventoryMenu:Lnet/minecraft/world/inventory/InventoryMenu;
+     183: iload         6
+     185: invokevirtual #311                // Method net/minecraft/world/inventory/InventoryMenu.getSlot:(I)Lnet/minecraft/world/inventory/Slot;
+     188: getstatic     #315                // Field net/minecraft/world/item/ItemStack.EMPTY:Lnet/minecraft/world/item/ItemStack;
+     191: invokevirtual #320                // Method net/minecraft/world/inventory/Slot.set:(Lnet/minecraft/world/item/ItemStack;)V
+     194: aload_0
+     195: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+     198: getfield      #324                // Field net/minecraft/client/Minecraft.gameMode:Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;
+     201: getstatic     #315                // Field net/minecraft/world/item/ItemStack.EMPTY:Lnet/minecraft/world/item/ItemStack;
+     204: iload         6
+     206: invokevirtual #328                // Method net/minecraft/client/multiplayer/MultiPlayerGameMode.handleCreativeModeItemAdd:(Lnet/minecraft/world/item/ItemStack;I)V
+     209: iinc          6, 1
+     212: goto          152
+     215: goto          1298
+     218: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+     221: invokevirtual #132                // Method net/minecraft/world/item/CreativeModeTab.getType:()Lnet/minecraft/world/item/CreativeModeTab$Type;
+     224: getstatic     #282                // Field net/minecraft/world/item/CreativeModeTab$Type.INVENTORY:Lnet/minecraft/world/item/CreativeModeTab$Type;
+     227: if_acmpne     497
+     230: aload_1
+     231: aload_0
+     232: getfield      #293                // Field destroyItemSlot:Lnet/minecraft/world/inventory/Slot;
+     235: if_acmpne     254
+     238: aload_0
+     239: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     242: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+     245: getstatic     #315                // Field net/minecraft/world/item/ItemStack.EMPTY:Lnet/minecraft/world/item/ItemStack;
+     248: invokevirtual #334                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.setCarried:(Lnet/minecraft/world/item/ItemStack;)V
+     251: goto          1298
+     254: aload         4
+     256: getstatic     #272                // Field net/minecraft/world/inventory/ContainerInput.THROW:Lnet/minecraft/world/inventory/ContainerInput;
+     259: if_acmpne     351
+     262: aload_1
+     263: ifnull        351
+     266: aload_1
+     267: invokevirtual #337                // Method net/minecraft/world/inventory/Slot.hasItem:()Z
+     270: ifeq          351
+     273: aload_1
+     274: iload_3
+     275: ifne          282
+     278: iconst_1
+     279: goto          289
+     282: aload_1
+     283: invokevirtual #340                // Method net/minecraft/world/inventory/Slot.getItem:()Lnet/minecraft/world/item/ItemStack;
+     286: invokevirtual #344                // Method net/minecraft/world/item/ItemStack.getMaxStackSize:()I
+     289: invokevirtual #347                // Method net/minecraft/world/inventory/Slot.remove:(I)Lnet/minecraft/world/item/ItemStack;
+     292: astore        6
+     294: aload_1
+     295: invokevirtual #340                // Method net/minecraft/world/inventory/Slot.getItem:()Lnet/minecraft/world/item/ItemStack;
+     298: astore        7
+     300: aload_0
+     301: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+     304: getfield      #217                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+     307: aload         6
+     309: iconst_1
+     310: invokevirtual #351                // Method net/minecraft/client/player/LocalPlayer.drop:(Lnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/entity/item/ItemEntity;
+     313: pop
+     314: aload_0
+     315: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+     318: getfield      #324                // Field net/minecraft/client/Minecraft.gameMode:Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;
+     321: aload         6
+     323: invokevirtual #355                // Method net/minecraft/client/multiplayer/MultiPlayerGameMode.handleCreativeModeItemDrop:(Lnet/minecraft/world/item/ItemStack;)V
+     326: aload_0
+     327: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+     330: getfield      #324                // Field net/minecraft/client/Minecraft.gameMode:Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;
+     333: aload         7
+     335: aload_1
+     336: checkcast     #358                // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$SlotWrapper
+     339: getfield      #360                // Field net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$SlotWrapper.target:Lnet/minecraft/world/inventory/Slot;
+     342: getfield      #363                // Field net/minecraft/world/inventory/Slot.index:I
+     345: invokevirtual #328                // Method net/minecraft/client/multiplayer/MultiPlayerGameMode.handleCreativeModeItemAdd:(Lnet/minecraft/world/item/ItemStack;I)V
+     348: goto          1298
+     351: aload         4
+     353: getstatic     #272                // Field net/minecraft/world/inventory/ContainerInput.THROW:Lnet/minecraft/world/inventory/ContainerInput;
+     356: if_acmpne     440
+     359: iload_2
+     360: sipush        -999
+     363: if_icmpne     440
+     366: aload_0
+     367: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     370: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+     373: invokevirtual #367                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.getCarried:()Lnet/minecraft/world/item/ItemStack;
+     376: invokevirtual #370                // Method net/minecraft/world/item/ItemStack.isEmpty:()Z
+     379: ifne          440
+     382: aload_0
+     383: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+     386: getfield      #217                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+     389: aload_0
+     390: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     393: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+     396: invokevirtual #367                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.getCarried:()Lnet/minecraft/world/item/ItemStack;
+     399: iconst_1
+     400: invokevirtual #351                // Method net/minecraft/client/player/LocalPlayer.drop:(Lnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/entity/item/ItemEntity;
+     403: pop
+     404: aload_0
+     405: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+     408: getfield      #324                // Field net/minecraft/client/Minecraft.gameMode:Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;
+     411: aload_0
+     412: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     415: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+     418: invokevirtual #367                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.getCarried:()Lnet/minecraft/world/item/ItemStack;
+     421: invokevirtual #355                // Method net/minecraft/client/multiplayer/MultiPlayerGameMode.handleCreativeModeItemDrop:(Lnet/minecraft/world/item/ItemStack;)V
+     424: aload_0
+     425: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     428: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+     431: getstatic     #315                // Field net/minecraft/world/item/ItemStack.EMPTY:Lnet/minecraft/world/item/ItemStack;
+     434: invokevirtual #334                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.setCarried:(Lnet/minecraft/world/item/ItemStack;)V
+     437: goto          1298
+     440: aload_0
+     441: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+     444: getfield      #217                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+     447: getfield      #297                // Field net/minecraft/client/player/LocalPlayer.inventoryMenu:Lnet/minecraft/world/inventory/InventoryMenu;
+     450: aload_1
+     451: ifnonnull     458
+     454: iload_2
+     455: goto          468
+     458: aload_1
+     459: checkcast     #358                // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$SlotWrapper
+     462: getfield      #360                // Field net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$SlotWrapper.target:Lnet/minecraft/world/inventory/Slot;
+     465: getfield      #363                // Field net/minecraft/world/inventory/Slot.index:I
+     468: iload_3
+     469: aload         4
+     471: aload_0
+     472: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+     475: getfield      #217                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+     478: invokevirtual #371                // Method net/minecraft/world/inventory/InventoryMenu.clicked:(IILnet/minecraft/world/inventory/ContainerInput;Lnet/minecraft/world/entity/player/Player;)V
+     481: aload_0
+     482: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+     485: getfield      #217                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+     488: getfield      #297                // Field net/minecraft/client/player/LocalPlayer.inventoryMenu:Lnet/minecraft/world/inventory/InventoryMenu;
+     491: invokevirtual #375                // Method net/minecraft/world/inventory/InventoryMenu.broadcastChanges:()V
+     494: goto          1298
+     497: aload         4
+     499: getstatic     #285                // Field net/minecraft/world/inventory/ContainerInput.QUICK_CRAFT:Lnet/minecraft/world/inventory/ContainerInput;
+     502: if_acmpeq     896
+     505: aload_1
+     506: getfield      #378                // Field net/minecraft/world/inventory/Slot.container:Lnet/minecraft/world/Container;
+     509: getstatic     #382                // Field CONTAINER:Lnet/minecraft/world/SimpleContainer;
+     512: if_acmpne     896
+     515: aload_0
+     516: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     519: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+     522: invokevirtual #367                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.getCarried:()Lnet/minecraft/world/item/ItemStack;
+     525: astore        6
+     527: aload_1
+     528: invokevirtual #340                // Method net/minecraft/world/inventory/Slot.getItem:()Lnet/minecraft/world/item/ItemStack;
+     531: astore        7
+     533: aload         4
+     535: getstatic     #386                // Field net/minecraft/world/inventory/ContainerInput.SWAP:Lnet/minecraft/world/inventory/ContainerInput;
+     538: if_acmpne     587
+     541: aload         7
+     543: invokevirtual #370                // Method net/minecraft/world/item/ItemStack.isEmpty:()Z
+     546: ifne          586
+     549: aload_0
+     550: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+     553: getfield      #217                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+     556: invokevirtual #9                  // Method net/minecraft/client/player/LocalPlayer.getInventory:()Lnet/minecraft/world/entity/player/Inventory;
+     559: iload_3
+     560: aload         7
+     562: aload         7
+     564: invokevirtual #344                // Method net/minecraft/world/item/ItemStack.getMaxStackSize:()I
+     567: invokevirtual #389                // Method net/minecraft/world/item/ItemStack.copyWithCount:(I)Lnet/minecraft/world/item/ItemStack;
+     570: invokevirtual #392                // Method net/minecraft/world/entity/player/Inventory.setItem:(ILnet/minecraft/world/item/ItemStack;)V
+     573: aload_0
+     574: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+     577: getfield      #217                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+     580: getfield      #297                // Field net/minecraft/client/player/LocalPlayer.inventoryMenu:Lnet/minecraft/world/inventory/InventoryMenu;
+     583: invokevirtual #375                // Method net/minecraft/world/inventory/InventoryMenu.broadcastChanges:()V
+     586: return
+     587: aload         4
+     589: getstatic     #398                // Field net/minecraft/world/inventory/ContainerInput.CLONE:Lnet/minecraft/world/inventory/ContainerInput;
+     592: if_acmpne     645
+     595: aload_0
+     596: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     599: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+     602: invokevirtual #367                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.getCarried:()Lnet/minecraft/world/item/ItemStack;
+     605: invokevirtual #370                // Method net/minecraft/world/item/ItemStack.isEmpty:()Z
+     608: ifeq          644
+     611: aload_1
+     612: invokevirtual #337                // Method net/minecraft/world/inventory/Slot.hasItem:()Z
+     615: ifeq          644
+     618: aload_1
+     619: invokevirtual #340                // Method net/minecraft/world/inventory/Slot.getItem:()Lnet/minecraft/world/item/ItemStack;
+     622: astore        8
+     624: aload_0
+     625: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     628: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+     631: aload         8
+     633: aload         8
+     635: invokevirtual #344                // Method net/minecraft/world/item/ItemStack.getMaxStackSize:()I
+     638: invokevirtual #389                // Method net/minecraft/world/item/ItemStack.copyWithCount:(I)Lnet/minecraft/world/item/ItemStack;
+     641: invokevirtual #334                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.setCarried:(Lnet/minecraft/world/item/ItemStack;)V
+     644: return
+     645: aload         4
+     647: getstatic     #272                // Field net/minecraft/world/inventory/ContainerInput.THROW:Lnet/minecraft/world/inventory/ContainerInput;
+     650: if_acmpne     708
+     653: aload         7
+     655: invokevirtual #370                // Method net/minecraft/world/item/ItemStack.isEmpty:()Z
+     658: ifne          707
+     661: aload         7
+     663: iload_3
+     664: ifne          671
+     667: iconst_1
+     668: goto          676
+     671: aload         7
+     673: invokevirtual #344                // Method net/minecraft/world/item/ItemStack.getMaxStackSize:()I
+     676: invokevirtual #389                // Method net/minecraft/world/item/ItemStack.copyWithCount:(I)Lnet/minecraft/world/item/ItemStack;
+     679: astore        8
+     681: aload_0
+     682: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+     685: getfield      #217                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+     688: aload         8
+     690: iconst_1
+     691: invokevirtual #351                // Method net/minecraft/client/player/LocalPlayer.drop:(Lnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/entity/item/ItemEntity;
+     694: pop
+     695: aload_0
+     696: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+     699: getfield      #324                // Field net/minecraft/client/Minecraft.gameMode:Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;
+     702: aload         8
+     704: invokevirtual #355                // Method net/minecraft/client/multiplayer/MultiPlayerGameMode.handleCreativeModeItemDrop:(Lnet/minecraft/world/item/ItemStack;)V
+     707: return
+     708: aload         6
+     710: invokevirtual #370                // Method net/minecraft/world/item/ItemStack.isEmpty:()Z
+     713: ifne          787
+     716: aload         7
+     718: invokevirtual #370                // Method net/minecraft/world/item/ItemStack.isEmpty:()Z
+     721: ifne          787
+     724: aload         6
+     726: aload         7
+     728: invokestatic  #401                // Method net/minecraft/world/item/ItemStack.isSameItemSameComponents:(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;)Z
+     731: ifeq          787
+     734: iload_3
+     735: ifne          778
+     738: iload         5
+     740: ifeq          756
+     743: aload         6
+     745: aload         6
+     747: invokevirtual #344                // Method net/minecraft/world/item/ItemStack.getMaxStackSize:()I
+     750: invokevirtual #405                // Method net/minecraft/world/item/ItemStack.setCount:(I)V
+     753: goto          893
+     756: aload         6
+     758: invokevirtual #408                // Method net/minecraft/world/item/ItemStack.getCount:()I
+     761: aload         6
+     763: invokevirtual #344                // Method net/minecraft/world/item/ItemStack.getMaxStackSize:()I
+     766: if_icmpge     893
+     769: aload         6
+     771: iconst_1
+     772: invokevirtual #411                // Method net/minecraft/world/item/ItemStack.grow:(I)V
+     775: goto          893
+     778: aload         6
+     780: iconst_1
+     781: invokevirtual #414                // Method net/minecraft/world/item/ItemStack.shrink:(I)V
+     784: goto          893
+     787: aload         7
+     789: invokevirtual #370                // Method net/minecraft/world/item/ItemStack.isEmpty:()Z
+     792: ifne          803
+     795: aload         6
+     797: invokevirtual #370                // Method net/minecraft/world/item/ItemStack.isEmpty:()Z
+     800: ifne          856
+     803: iload_3
+     804: ifne          823
+     807: aload_0
+     808: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     811: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+     814: getstatic     #315                // Field net/minecraft/world/item/ItemStack.EMPTY:Lnet/minecraft/world/item/ItemStack;
+     817: invokevirtual #334                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.setCarried:(Lnet/minecraft/world/item/ItemStack;)V
+     820: goto          893
+     823: aload_0
+     824: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     827: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+     830: invokevirtual #367                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.getCarried:()Lnet/minecraft/world/item/ItemStack;
+     833: invokevirtual #370                // Method net/minecraft/world/item/ItemStack.isEmpty:()Z
+     836: ifne          893
+     839: aload_0
+     840: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     843: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+     846: invokevirtual #367                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.getCarried:()Lnet/minecraft/world/item/ItemStack;
+     849: iconst_1
+     850: invokevirtual #414                // Method net/minecraft/world/item/ItemStack.shrink:(I)V
+     853: goto          893
+     856: iload         5
+     858: ifeq          869
+     861: aload         7
+     863: invokevirtual #344                // Method net/minecraft/world/item/ItemStack.getMaxStackSize:()I
+     866: goto          874
+     869: aload         7
+     871: invokevirtual #408                // Method net/minecraft/world/item/ItemStack.getCount:()I
+     874: istore        8
+     876: aload_0
+     877: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     880: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+     883: aload         7
+     885: iload         8
+     887: invokevirtual #389                // Method net/minecraft/world/item/ItemStack.copyWithCount:(I)Lnet/minecraft/world/item/ItemStack;
+     890: invokevirtual #334                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.setCarried:(Lnet/minecraft/world/item/ItemStack;)V
+     893: goto          1298
+     896: aload_0
+     897: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     900: ifnull        1298
+     903: aload_1
+     904: ifnonnull     913
+     907: getstatic     #315                // Field net/minecraft/world/item/ItemStack.EMPTY:Lnet/minecraft/world/item/ItemStack;
+     910: goto          930
+     913: aload_0
+     914: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     917: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+     920: aload_1
+     921: getfield      #363                // Field net/minecraft/world/inventory/Slot.index:I
+     924: invokevirtual #417                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.getSlot:(I)Lnet/minecraft/world/inventory/Slot;
+     927: invokevirtual #340                // Method net/minecraft/world/inventory/Slot.getItem:()Lnet/minecraft/world/item/ItemStack;
+     930: astore        6
+     932: aload_0
+     933: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     936: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+     939: aload_1
+     940: ifnonnull     947
+     943: iload_2
+     944: goto          951
+     947: aload_1
+     948: getfield      #363                // Field net/minecraft/world/inventory/Slot.index:I
+     951: iload_3
+     952: aload         4
+     954: aload_0
+     955: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+     958: getfield      #217                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+     961: invokevirtual #418                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.clicked:(IILnet/minecraft/world/inventory/ContainerInput;Lnet/minecraft/world/entity/player/Player;)V
+     964: iload_3
+     965: invokestatic  #419                // Method net/minecraft/world/inventory/AbstractContainerMenu.getQuickcraftHeader:(I)I
+     968: iconst_2
+     969: if_icmpne     1024
+     972: iconst_0
+     973: istore        7
+     975: iload         7
+     977: bipush        9
+     979: if_icmpge     1021
+     982: aload_0
+     983: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+     986: getfield      #324                // Field net/minecraft/client/Minecraft.gameMode:Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;
+     989: aload_0
+     990: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     993: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+     996: bipush        45
+     998: iload         7
+    1000: iadd
+    1001: invokevirtual #417                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.getSlot:(I)Lnet/minecraft/world/inventory/Slot;
+    1004: invokevirtual #340                // Method net/minecraft/world/inventory/Slot.getItem:()Lnet/minecraft/world/item/ItemStack;
+    1007: bipush        36
+    1009: iload         7
+    1011: iadd
+    1012: invokevirtual #328                // Method net/minecraft/client/multiplayer/MultiPlayerGameMode.handleCreativeModeItemAdd:(Lnet/minecraft/world/item/ItemStack;I)V
+    1015: iinc          7, 1
+    1018: goto          975
+    1021: goto          1152
+    1024: aload_1
+    1025: ifnull        1152
+    1028: aload_1
+    1029: invokevirtual #423                // Method net/minecraft/world/inventory/Slot.getContainerSlot:()I
+    1032: invokestatic  #426                // Method net/minecraft/world/entity/player/Inventory.isHotbarSlot:(I)Z
+    1035: ifeq          1152
+    1038: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+    1041: invokevirtual #132                // Method net/minecraft/world/item/CreativeModeTab.getType:()Lnet/minecraft/world/item/CreativeModeTab$Type;
+    1044: getstatic     #282                // Field net/minecraft/world/item/CreativeModeTab$Type.INVENTORY:Lnet/minecraft/world/item/CreativeModeTab$Type;
+    1047: if_acmpeq     1152
+    1050: aload         4
+    1052: getstatic     #272                // Field net/minecraft/world/inventory/ContainerInput.THROW:Lnet/minecraft/world/inventory/ContainerInput;
+    1055: if_acmpne     1139
+    1058: aload         6
+    1060: invokevirtual #370                // Method net/minecraft/world/item/ItemStack.isEmpty:()Z
+    1063: ifne          1139
+    1066: aload_0
+    1067: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+    1070: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+    1073: invokevirtual #367                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.getCarried:()Lnet/minecraft/world/item/ItemStack;
+    1076: invokevirtual #370                // Method net/minecraft/world/item/ItemStack.isEmpty:()Z
+    1079: ifne          1139
+    1082: iload_3
+    1083: ifne          1090
+    1086: iconst_1
+    1087: goto          1095
+    1090: aload         6
+    1092: invokevirtual #408                // Method net/minecraft/world/item/ItemStack.getCount:()I
+    1095: istore        7
+    1097: aload         6
+    1099: iload         7
+    1101: invokevirtual #389                // Method net/minecraft/world/item/ItemStack.copyWithCount:(I)Lnet/minecraft/world/item/ItemStack;
+    1104: astore        8
+    1106: aload         6
+    1108: iload         7
+    1110: invokevirtual #414                // Method net/minecraft/world/item/ItemStack.shrink:(I)V
+    1113: aload_0
+    1114: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+    1117: getfield      #217                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+    1120: aload         8
+    1122: iconst_1
+    1123: invokevirtual #351                // Method net/minecraft/client/player/LocalPlayer.drop:(Lnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/entity/item/ItemEntity;
+    1126: pop
+    1127: aload_0
+    1128: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+    1131: getfield      #324                // Field net/minecraft/client/Minecraft.gameMode:Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;
+    1134: aload         8
+    1136: invokevirtual #355                // Method net/minecraft/client/multiplayer/MultiPlayerGameMode.handleCreativeModeItemDrop:(Lnet/minecraft/world/item/ItemStack;)V
+    1139: aload_0
+    1140: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+    1143: getfield      #217                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+    1146: getfield      #297                // Field net/minecraft/client/player/LocalPlayer.inventoryMenu:Lnet/minecraft/world/inventory/InventoryMenu;
+    1149: invokevirtual #375                // Method net/minecraft/world/inventory/InventoryMenu.broadcastChanges:()V
+    1152: goto          1298
+    1155: aload_0
+    1156: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+    1159: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+    1162: invokevirtual #367                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.getCarried:()Lnet/minecraft/world/item/ItemStack;
+    1165: invokevirtual #370                // Method net/minecraft/world/item/ItemStack.isEmpty:()Z
+    1168: ifne          1298
+    1171: aload_0
+    1172: getfield      #430                // Field hasClickedOutside:Z
+    1175: ifeq          1298
+    1178: aload_0
+    1179: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+    1182: getfield      #217                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+    1185: invokevirtual #275                // Method net/minecraft/client/player/LocalPlayer.canDropItems:()Z
+    1188: ifne          1192
+    1191: return
+    1192: iload_3
+    1193: ifne          1251
+    1196: aload_0
+    1197: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+    1200: getfield      #217                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+    1203: aload_0
+    1204: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+    1207: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+    1210: invokevirtual #367                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.getCarried:()Lnet/minecraft/world/item/ItemStack;
+    1213: iconst_1
+    1214: invokevirtual #351                // Method net/minecraft/client/player/LocalPlayer.drop:(Lnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/entity/item/ItemEntity;
+    1217: pop
+    1218: aload_0
+    1219: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+    1222: getfield      #324                // Field net/minecraft/client/Minecraft.gameMode:Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;
+    1225: aload_0
+    1226: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+    1229: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+    1232: invokevirtual #367                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.getCarried:()Lnet/minecraft/world/item/ItemStack;
+    1235: invokevirtual #355                // Method net/minecraft/client/multiplayer/MultiPlayerGameMode.handleCreativeModeItemDrop:(Lnet/minecraft/world/item/ItemStack;)V
+    1238: aload_0
+    1239: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+    1242: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+    1245: getstatic     #315                // Field net/minecraft/world/item/ItemStack.EMPTY:Lnet/minecraft/world/item/ItemStack;
+    1248: invokevirtual #334                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.setCarried:(Lnet/minecraft/world/item/ItemStack;)V
+    1251: iload_3
+    1252: iconst_1
+    1253: if_icmpne     1298
+    1256: aload_0
+    1257: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+    1260: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+    1263: invokevirtual #367                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.getCarried:()Lnet/minecraft/world/item/ItemStack;
+    1266: iconst_1
+    1267: invokevirtual #433                // Method net/minecraft/world/item/ItemStack.split:(I)Lnet/minecraft/world/item/ItemStack;
+    1270: astore        6
+    1272: aload_0
+    1273: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+    1276: getfield      #217                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+    1279: aload         6
+    1281: iconst_1
+    1282: invokevirtual #351                // Method net/minecraft/client/player/LocalPlayer.drop:(Lnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/entity/item/ItemEntity;
+    1285: pop
+    1286: aload_0
+    1287: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+    1290: getfield      #324                // Field net/minecraft/client/Minecraft.gameMode:Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;
+    1293: aload         6
+    1295: invokevirtual #355                // Method net/minecraft/client/multiplayer/MultiPlayerGameMode.handleCreativeModeItemDrop:(Lnet/minecraft/world/item/ItemStack;)V
+    1298: return
+
+  private boolean isCreativeSlot(net.minecraft.world.inventory.Slot);
+    Code:
+       0: aload_1
+       1: ifnull        18
+       4: aload_1
+       5: getfield      #378                // Field net/minecraft/world/inventory/Slot.container:Lnet/minecraft/world/Container;
+       8: getstatic     #382                // Field CONTAINER:Lnet/minecraft/world/SimpleContainer;
+      11: if_acmpne     18
+      14: iconst_1
+      15: goto          19
+      18: iconst_0
+      19: ireturn
+
+  protected void init();
+    Code:
+       0: aload_0
+       1: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+       4: getfield      #217                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+       7: invokevirtual #229                // Method net/minecraft/client/player/LocalPlayer.hasInfiniteMaterials:()Z
+      10: ifeq          197
+      13: aload_0
+      14: invokespecial #436                // Method net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.init:()V
+      17: aload_0
+      18: new           #254                // class net/minecraft/client/gui/components/EditBox
+      21: dup
+      22: aload_0
+      23: getfield      #439                // Field font:Lnet/minecraft/client/gui/Font;
+      26: aload_0
+      27: getfield      #443                // Field leftPos:I
+      30: bipush        82
+      32: iadd
+      33: aload_0
+      34: getfield      #446                // Field topPos:I
+      37: bipush        6
+      39: iadd
+      40: bipush        80
+      42: aload_0
+      43: getfield      #439                // Field font:Lnet/minecraft/client/gui/Font;
+      46: invokestatic  #449                // Method java/util/Objects.requireNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+      49: pop
+      50: bipush        9
+      52: ldc_w         #455                // String itemGroup.search
+      55: invokestatic  #457                // InterfaceMethod net/minecraft/network/chat/Component.translatable:(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+      58: invokespecial #463                // Method net/minecraft/client/gui/components/EditBox."<init>":(Lnet/minecraft/client/gui/Font;IIIILnet/minecraft/network/chat/Component;)V
+      61: putfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+      64: aload_0
+      65: getfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+      68: bipush        50
+      70: invokevirtual #466                // Method net/minecraft/client/gui/components/EditBox.setMaxLength:(I)V
+      73: aload_0
+      74: getfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+      77: iconst_0
+      78: invokevirtual #469                // Method net/minecraft/client/gui/components/EditBox.setBordered:(Z)V
+      81: aload_0
+      82: getfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+      85: iconst_0
+      86: invokevirtual #472                // Method net/minecraft/client/gui/components/EditBox.setVisible:(Z)V
+      89: aload_0
+      90: getfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+      93: iconst_m1
+      94: invokevirtual #477                // Method net/minecraft/client/gui/components/EditBox.setTextColor:(I)V
+      97: aload_0
+      98: getfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+     101: iconst_0
+     102: invokevirtual #480                // Method net/minecraft/client/gui/components/EditBox.setInvertHighlightedTextColor:(Z)V
+     105: aload_0
+     106: aload_0
+     107: getfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+     110: invokevirtual #483                // Method addWidget:(Lnet/minecraft/client/gui/components/events/GuiEventListener;)Lnet/minecraft/client/gui/components/events/GuiEventListener;
+     113: pop
+     114: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+     117: astore_1
+     118: invokestatic  #147                // Method net/minecraft/world/item/CreativeModeTabs.getDefaultTab:()Lnet/minecraft/world/item/CreativeModeTab;
+     121: putstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+     124: aload_0
+     125: aload_1
+     126: invokevirtual #151                // Method selectTab:(Lnet/minecraft/world/item/CreativeModeTab;)V
+     129: aload_0
+     130: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+     133: getfield      #217                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+     136: getfield      #297                // Field net/minecraft/client/player/LocalPlayer.inventoryMenu:Lnet/minecraft/world/inventory/InventoryMenu;
+     139: aload_0
+     140: getfield      #487                // Field listener:Lnet/minecraft/client/gui/screens/inventory/CreativeInventoryListener;
+     143: invokevirtual #491                // Method net/minecraft/world/inventory/InventoryMenu.removeSlotListener:(Lnet/minecraft/world/inventory/ContainerListener;)V
+     146: aload_0
+     147: new           #495                // class net/minecraft/client/gui/screens/inventory/CreativeInventoryListener
+     150: dup
+     151: aload_0
+     152: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+     155: invokespecial #497                // Method net/minecraft/client/gui/screens/inventory/CreativeInventoryListener."<init>":(Lnet/minecraft/client/Minecraft;)V
+     158: putfield      #487                // Field listener:Lnet/minecraft/client/gui/screens/inventory/CreativeInventoryListener;
+     161: aload_0
+     162: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+     165: getfield      #217                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+     168: getfield      #297                // Field net/minecraft/client/player/LocalPlayer.inventoryMenu:Lnet/minecraft/world/inventory/InventoryMenu;
+     171: aload_0
+     172: getfield      #487                // Field listener:Lnet/minecraft/client/gui/screens/inventory/CreativeInventoryListener;
+     175: invokevirtual #500                // Method net/minecraft/world/inventory/InventoryMenu.addSlotListener:(Lnet/minecraft/world/inventory/ContainerListener;)V
+     178: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+     181: invokevirtual #503                // Method net/minecraft/world/item/CreativeModeTab.shouldDisplay:()Z
+     184: ifne          194
+     187: aload_0
+     188: invokestatic  #147                // Method net/minecraft/world/item/CreativeModeTabs.getDefaultTab:()Lnet/minecraft/world/item/CreativeModeTab;
+     191: invokevirtual #151                // Method selectTab:(Lnet/minecraft/world/item/CreativeModeTab;)V
+     194: goto          221
+     197: aload_0
+     198: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+     201: getfield      #232                // Field net/minecraft/client/Minecraft.gui:Lnet/minecraft/client/gui/Gui;
+     204: new           #236                // class net/minecraft/client/gui/screens/inventory/InventoryScreen
+     207: dup
+     208: aload_0
+     209: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+     212: getfield      #217                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+     215: invokespecial #238                // Method net/minecraft/client/gui/screens/inventory/InventoryScreen."<init>":(Lnet/minecraft/world/entity/player/Player;)V
+     218: invokevirtual #239                // Method net/minecraft/client/gui/Gui.setScreen:(Lnet/minecraft/client/gui/screens/Screen;)V
+     221: return
+
+  public void resize(int, int);
+    Code:
+       0: aload_0
+       1: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+       4: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+       7: aload_0
+       8: getfield      #179                // Field scrollOffs:F
+      11: invokevirtual #183                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.getRowIndexForScroll:(F)I
+      14: istore_3
+      15: aload_0
+      16: getfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+      19: invokevirtual #506                // Method net/minecraft/client/gui/components/EditBox.getValue:()Ljava/lang/String;
+      22: astore        4
+      24: aload_0
+      25: iload_1
+      26: iload_2
+      27: invokevirtual #510                // Method init:(II)V
+      30: aload_0
+      31: getfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+      34: aload         4
+      36: invokevirtual #513                // Method net/minecraft/client/gui/components/EditBox.setValue:(Ljava/lang/String;)V
+      39: aload_0
+      40: getfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+      43: invokevirtual #506                // Method net/minecraft/client/gui/components/EditBox.getValue:()Ljava/lang/String;
+      46: invokevirtual #517                // Method java/lang/String.isEmpty:()Z
+      49: ifne          56
+      52: aload_0
+      53: invokevirtual #199                // Method refreshSearchResults:()V
+      56: aload_0
+      57: aload_0
+      58: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+      61: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+      64: iload_3
+      65: invokevirtual #206                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.getScrollForRowIndex:(I)F
+      68: putfield      #179                // Field scrollOffs:F
+      71: aload_0
+      72: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+      75: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+      78: aload_0
+      79: getfield      #179                // Field scrollOffs:F
+      82: invokevirtual #210                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.scrollTo:(F)V
+      85: return
+
+  public void removed();
+    Code:
+       0: aload_0
+       1: invokespecial #520                // Method net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.removed:()V
+       4: aload_0
+       5: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+       8: getfield      #217                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+      11: ifnull        44
+      14: aload_0
+      15: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+      18: getfield      #217                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+      21: invokevirtual #9                  // Method net/minecraft/client/player/LocalPlayer.getInventory:()Lnet/minecraft/world/entity/player/Inventory;
+      24: ifnull        44
+      27: aload_0
+      28: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+      31: getfield      #217                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+      34: getfield      #297                // Field net/minecraft/client/player/LocalPlayer.inventoryMenu:Lnet/minecraft/world/inventory/InventoryMenu;
+      37: aload_0
+      38: getfield      #487                // Field listener:Lnet/minecraft/client/gui/screens/inventory/CreativeInventoryListener;
+      41: invokevirtual #491                // Method net/minecraft/world/inventory/InventoryMenu.removeSlotListener:(Lnet/minecraft/world/inventory/ContainerListener;)V
+      44: return
+
+  public boolean charTyped(net.minecraft.client.input.CharacterEvent);
+    Code:
+       0: aload_0
+       1: getfield      #523                // Field ignoreTextInput:Z
+       4: ifeq          9
+       7: iconst_0
+       8: ireturn
+       9: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+      12: invokevirtual #132                // Method net/minecraft/world/item/CreativeModeTab.getType:()Lnet/minecraft/world/item/CreativeModeTab$Type;
+      15: getstatic     #196                // Field net/minecraft/world/item/CreativeModeTab$Type.SEARCH:Lnet/minecraft/world/item/CreativeModeTab$Type;
+      18: if_acmpeq     23
+      21: iconst_0
+      22: ireturn
+      23: aload_0
+      24: getfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+      27: invokevirtual #506                // Method net/minecraft/client/gui/components/EditBox.getValue:()Ljava/lang/String;
+      30: astore_2
+      31: aload_0
+      32: getfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+      35: aload_1
+      36: invokevirtual #526                // Method net/minecraft/client/gui/components/EditBox.charTyped:(Lnet/minecraft/client/input/CharacterEvent;)Z
+      39: ifeq          62
+      42: aload_2
+      43: aload_0
+      44: getfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+      47: invokevirtual #506                // Method net/minecraft/client/gui/components/EditBox.getValue:()Ljava/lang/String;
+      50: invokestatic  #530                // Method java/util/Objects.equals:(Ljava/lang/Object;Ljava/lang/Object;)Z
+      53: ifne          60
+      56: aload_0
+      57: invokevirtual #199                // Method refreshSearchResults:()V
+      60: iconst_1
+      61: ireturn
+      62: iconst_0
+      63: ireturn
+
+  public boolean preeditUpdated(net.minecraft.client.input.PreeditEvent);
+    Code:
+       0: aload_0
+       1: getfield      #523                // Field ignoreTextInput:Z
+       4: ifeq          9
+       7: iconst_0
+       8: ireturn
+       9: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+      12: invokevirtual #132                // Method net/minecraft/world/item/CreativeModeTab.getType:()Lnet/minecraft/world/item/CreativeModeTab$Type;
+      15: getstatic     #196                // Field net/minecraft/world/item/CreativeModeTab$Type.SEARCH:Lnet/minecraft/world/item/CreativeModeTab$Type;
+      18: if_acmpeq     23
+      21: iconst_0
+      22: ireturn
+      23: aload_0
+      24: getfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+      27: aload_1
+      28: invokevirtual #534                // Method net/minecraft/client/gui/components/EditBox.preeditUpdated:(Lnet/minecraft/client/input/PreeditEvent;)Z
+      31: ireturn
+
+  public boolean keyPressed(net.minecraft.client.input.KeyEvent);
+    Code:
+       0: aload_0
+       1: iconst_0
+       2: putfield      #523                // Field ignoreTextInput:Z
+       5: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+       8: invokevirtual #132                // Method net/minecraft/world/item/CreativeModeTab.getType:()Lnet/minecraft/world/item/CreativeModeTab$Type;
+      11: getstatic     #196                // Field net/minecraft/world/item/CreativeModeTab$Type.SEARCH:Lnet/minecraft/world/item/CreativeModeTab$Type;
+      14: if_acmpeq     54
+      17: aload_0
+      18: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+      21: getfield      #538                // Field net/minecraft/client/Minecraft.options:Lnet/minecraft/client/Options;
+      24: getfield      #542                // Field net/minecraft/client/Options.keyChat:Lnet/minecraft/client/KeyMapping;
+      27: aload_1
+      28: invokevirtual #548                // Method net/minecraft/client/KeyMapping.matches:(Lnet/minecraft/client/input/KeyEvent;)Z
+      31: ifeq          48
+      34: aload_0
+      35: iconst_1
+      36: putfield      #523                // Field ignoreTextInput:Z
+      39: aload_0
+      40: invokestatic  #162                // Method net/minecraft/world/item/CreativeModeTabs.searchTab:()Lnet/minecraft/world/item/CreativeModeTab;
+      43: invokevirtual #151                // Method selectTab:(Lnet/minecraft/world/item/CreativeModeTab;)V
+      46: iconst_1
+      47: ireturn
+      48: aload_0
+      49: aload_1
+      50: invokespecial #554                // Method net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.keyPressed:(Lnet/minecraft/client/input/KeyEvent;)Z
+      53: ireturn
+      54: aload_0
+      55: aload_0
+      56: getfield      #557                // Field hoveredSlot:Lnet/minecraft/world/inventory/Slot;
+      59: invokevirtual #245                // Method isCreativeSlot:(Lnet/minecraft/world/inventory/Slot;)Z
+      62: ifeq          75
+      65: aload_0
+      66: getfield      #557                // Field hoveredSlot:Lnet/minecraft/world/inventory/Slot;
+      69: invokevirtual #337                // Method net/minecraft/world/inventory/Slot.hasItem:()Z
+      72: ifeq          79
+      75: iconst_1
+      76: goto          80
+      79: iconst_0
+      80: istore_2
+      81: aload_1
+      82: invokestatic  #560                // Method com/mojang/blaze3d/platform/InputConstants.getKey:(Lnet/minecraft/client/input/KeyEvent;)Lcom/mojang/blaze3d/platform/InputConstants$Key;
+      85: invokevirtual #566                // Method com/mojang/blaze3d/platform/InputConstants$Key.getNumericKeyValue:()Ljava/util/OptionalInt;
+      88: invokevirtual #572                // Method java/util/OptionalInt.isPresent:()Z
+      91: istore_3
+      92: iload_2
+      93: ifeq          115
+      96: iload_3
+      97: ifeq          115
+     100: aload_0
+     101: aload_1
+     102: invokevirtual #577                // Method checkHotbarKeyPressed:(Lnet/minecraft/client/input/KeyEvent;)Z
+     105: ifeq          115
+     108: aload_0
+     109: iconst_1
+     110: putfield      #523                // Field ignoreTextInput:Z
+     113: iconst_1
+     114: ireturn
+     115: aload_0
+     116: getfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+     119: invokevirtual #506                // Method net/minecraft/client/gui/components/EditBox.getValue:()Ljava/lang/String;
+     122: astore        4
+     124: aload_0
+     125: getfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+     128: aload_1
+     129: invokevirtual #580                // Method net/minecraft/client/gui/components/EditBox.keyPressed:(Lnet/minecraft/client/input/KeyEvent;)Z
+     132: ifeq          156
+     135: aload         4
+     137: aload_0
+     138: getfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+     141: invokevirtual #506                // Method net/minecraft/client/gui/components/EditBox.getValue:()Ljava/lang/String;
+     144: invokestatic  #530                // Method java/util/Objects.equals:(Ljava/lang/Object;Ljava/lang/Object;)Z
+     147: ifne          154
+     150: aload_0
+     151: invokevirtual #199                // Method refreshSearchResults:()V
+     154: iconst_1
+     155: ireturn
+     156: aload_0
+     157: getfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+     160: invokevirtual #581                // Method net/minecraft/client/gui/components/EditBox.isFocused:()Z
+     163: ifeq          185
+     166: aload_0
+     167: getfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+     170: invokevirtual #584                // Method net/minecraft/client/gui/components/EditBox.isVisible:()Z
+     173: ifeq          185
+     176: aload_1
+     177: invokevirtual #587                // Method net/minecraft/client/input/KeyEvent.isEscape:()Z
+     180: ifne          185
+     183: iconst_1
+     184: ireturn
+     185: aload_0
+     186: aload_1
+     187: invokespecial #554                // Method net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.keyPressed:(Lnet/minecraft/client/input/KeyEvent;)Z
+     190: ireturn
+
+  public boolean keyReleased(net.minecraft.client.input.KeyEvent);
+    Code:
+       0: aload_0
+       1: iconst_0
+       2: putfield      #523                // Field ignoreTextInput:Z
+       5: aload_0
+       6: aload_1
+       7: invokespecial #592                // Method net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.keyReleased:(Lnet/minecraft/client/input/KeyEvent;)Z
+      10: ireturn
+
+  private void refreshSearchResults();
+    Code:
+       0: aload_0
+       1: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+       4: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+       7: getfield      #187                // Field net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.items:Lnet/minecraft/core/NonNullList;
+      10: invokevirtual #191                // Method net/minecraft/core/NonNullList.clear:()V
+      13: aload_0
+      14: getfield      #31                 // Field visibleTags:Ljava/util/Set;
+      17: invokeinterface #595,  1          // InterfaceMethod java/util/Set.clear:()V
+      22: aload_0
+      23: getfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+      26: invokevirtual #506                // Method net/minecraft/client/gui/components/EditBox.getValue:()Ljava/lang/String;
+      29: astore_1
+      30: aload_1
+      31: invokevirtual #517                // Method java/lang/String.isEmpty:()Z
+      34: ifeq          60
+      37: aload_0
+      38: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+      41: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+      44: getfield      #187                // Field net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.items:Lnet/minecraft/core/NonNullList;
+      47: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+      50: invokevirtual #124                // Method net/minecraft/world/item/CreativeModeTab.getDisplayItems:()Ljava/util/Collection;
+      53: invokevirtual #202                // Method net/minecraft/core/NonNullList.addAll:(Ljava/util/Collection;)Z
+      56: pop
+      57: goto          141
+      60: aload_0
+      61: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+      64: invokevirtual #95                 // Method net/minecraft/client/Minecraft.getConnection:()Lnet/minecraft/client/multiplayer/ClientPacketListener;
+      67: astore_2
+      68: aload_2
+      69: ifnull        141
+      72: aload_2
+      73: invokevirtual #52                 // Method net/minecraft/client/multiplayer/ClientPacketListener.searchTrees:()Lnet/minecraft/client/multiplayer/SessionSearchTrees;
+      76: astore        4
+      78: aload_1
+      79: ldc_w         #598                // String #
+      82: invokevirtual #600                // Method java/lang/String.startsWith:(Ljava/lang/String;)Z
+      85: ifeq          108
+      88: aload_1
+      89: iconst_1
+      90: invokevirtual #604                // Method java/lang/String.substring:(I)Ljava/lang/String;
+      93: astore_1
+      94: aload         4
+      96: invokevirtual #608                // Method net/minecraft/client/multiplayer/SessionSearchTrees.creativeTagSearch:()Lnet/minecraft/client/searchtree/SearchTree;
+      99: astore_3
+     100: aload_0
+     101: aload_1
+     102: invokevirtual #612                // Method updateVisibleTags:(Ljava/lang/String;)V
+     105: goto          114
+     108: aload         4
+     110: invokevirtual #615                // Method net/minecraft/client/multiplayer/SessionSearchTrees.creativeNameSearch:()Lnet/minecraft/client/searchtree/SearchTree;
+     113: astore_3
+     114: aload_0
+     115: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     118: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+     121: getfield      #187                // Field net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.items:Lnet/minecraft/core/NonNullList;
+     124: aload_3
+     125: aload_1
+     126: getstatic     #618                // Field java/util/Locale.ROOT:Ljava/util/Locale;
+     129: invokevirtual #624                // Method java/lang/String.toLowerCase:(Ljava/util/Locale;)Ljava/lang/String;
+     132: invokeinterface #628,  2          // InterfaceMethod net/minecraft/client/searchtree/SearchTree.search:(Ljava/lang/String;)Ljava/util/List;
+     137: invokevirtual #202                // Method net/minecraft/core/NonNullList.addAll:(Ljava/util/Collection;)Z
+     140: pop
+     141: aload_0
+     142: fconst_0
+     143: putfield      #179                // Field scrollOffs:F
+     146: aload_0
+     147: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     150: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+     153: fconst_0
+     154: invokevirtual #210                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.scrollTo:(F)V
+     157: return
+
+  private void updateVisibleTags(java.lang.String);
+    Code:
+       0: aload_1
+       1: bipush        58
+       3: invokevirtual #634                // Method java/lang/String.indexOf:(I)I
+       6: istore_2
+       7: iload_2
+       8: iconst_m1
+       9: if_icmpne     22
+      12: aload_1
+      13: invokedynamic #637,  0            // InvokeDynamic #0:test:(Ljava/lang/String;)Ljava/util/function/Predicate;
+      18: astore_3
+      19: goto          55
+      22: aload_1
+      23: iconst_0
+      24: iload_2
+      25: invokevirtual #641                // Method java/lang/String.substring:(II)Ljava/lang/String;
+      28: invokevirtual #644                // Method java/lang/String.trim:()Ljava/lang/String;
+      31: astore        4
+      33: aload_1
+      34: iload_2
+      35: iconst_1
+      36: iadd
+      37: invokevirtual #604                // Method java/lang/String.substring:(I)Ljava/lang/String;
+      40: invokevirtual #644                // Method java/lang/String.trim:()Ljava/lang/String;
+      43: astore        5
+      45: aload         4
+      47: aload         5
+      49: invokedynamic #647,  0            // InvokeDynamic #1:test:(Ljava/lang/String;Ljava/lang/String;)Ljava/util/function/Predicate;
+      54: astore_3
+      55: getstatic     #650                // Field net/minecraft/core/registries/BuiltInRegistries.ITEM:Lnet/minecraft/core/DefaultedRegistry;
+      58: invokeinterface #656,  1          // InterfaceMethod net/minecraft/core/DefaultedRegistry.getTags:()Ljava/util/stream/Stream;
+      63: invokedynamic #662,  0            // InvokeDynamic #2:apply:()Ljava/util/function/Function;
+      68: invokeinterface #666,  2          // InterfaceMethod java/util/stream/Stream.map:(Ljava/util/function/Function;)Ljava/util/stream/Stream;
+      73: aload_3
+      74: invokedynamic #672,  0            // InvokeDynamic #3:test:(Ljava/util/function/Predicate;)Ljava/util/function/Predicate;
+      79: invokeinterface #675,  2          // InterfaceMethod java/util/stream/Stream.filter:(Ljava/util/function/Predicate;)Ljava/util/stream/Stream;
+      84: aload_0
+      85: getfield      #31                 // Field visibleTags:Ljava/util/Set;
+      88: dup
+      89: invokestatic  #449                // Method java/util/Objects.requireNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+      92: pop
+      93: invokedynamic #679,  0            // InvokeDynamic #4:accept:(Ljava/util/Set;)Ljava/util/function/Consumer;
+      98: invokeinterface #683,  2          // InterfaceMethod java/util/stream/Stream.forEach:(Ljava/util/function/Consumer;)V
+     103: return
+
+  protected void extractLabels(net.minecraft.client.gui.GuiGraphicsExtractor, int, int);
+    Code:
+       0: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+       3: invokevirtual #687                // Method net/minecraft/world/item/CreativeModeTab.showTitle:()Z
+       6: ifeq          31
+       9: aload_1
+      10: aload_0
+      11: getfield      #439                // Field font:Lnet/minecraft/client/gui/Font;
+      14: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+      17: invokevirtual #690                // Method net/minecraft/world/item/CreativeModeTab.getDisplayName:()Lnet/minecraft/network/chat/Component;
+      20: bipush        8
+      22: bipush        6
+      24: ldc_w         #694                // int -12566464
+      27: iconst_0
+      28: invokevirtual #695                // Method net/minecraft/client/gui/GuiGraphicsExtractor.text:(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Component;IIIZ)V
+      31: return
+
+  public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent, boolean);
+    Code:
+       0: aload_1
+       1: invokevirtual #701                // Method net/minecraft/client/input/MouseButtonEvent.button:()I
+       4: ifne          116
+       7: aload_1
+       8: invokevirtual #706                // Method net/minecraft/client/input/MouseButtonEvent.x:()D
+      11: aload_0
+      12: getfield      #443                // Field leftPos:I
+      15: i2d
+      16: dsub
+      17: dstore_3
+      18: aload_1
+      19: invokevirtual #710                // Method net/minecraft/client/input/MouseButtonEvent.y:()D
+      22: aload_0
+      23: getfield      #446                // Field topPos:I
+      26: i2d
+      27: dsub
+      28: dstore        5
+      30: invokestatic  #713                // Method net/minecraft/world/item/CreativeModeTabs.tabs:()Ljava/util/List;
+      33: invokeinterface #107,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+      38: astore        7
+      40: aload         7
+      42: invokeinterface #113,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      47: ifeq          79
+      50: aload         7
+      52: invokeinterface #118,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      57: checkcast     #122                // class net/minecraft/world/item/CreativeModeTab
+      60: astore        8
+      62: aload_0
+      63: aload         8
+      65: dload_3
+      66: dload         5
+      68: invokevirtual #716                // Method checkTabClicked:(Lnet/minecraft/world/item/CreativeModeTab;DD)Z
+      71: ifeq          76
+      74: iconst_1
+      75: ireturn
+      76: goto          40
+      79: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+      82: invokevirtual #132                // Method net/minecraft/world/item/CreativeModeTab.getType:()Lnet/minecraft/world/item/CreativeModeTab$Type;
+      85: getstatic     #282                // Field net/minecraft/world/item/CreativeModeTab$Type.INVENTORY:Lnet/minecraft/world/item/CreativeModeTab$Type;
+      88: if_acmpeq     116
+      91: aload_0
+      92: aload_1
+      93: invokevirtual #706                // Method net/minecraft/client/input/MouseButtonEvent.x:()D
+      96: aload_1
+      97: invokevirtual #710                // Method net/minecraft/client/input/MouseButtonEvent.y:()D
+     100: invokevirtual #720                // Method insideScrollbar:(DD)Z
+     103: ifeq          116
+     106: aload_0
+     107: aload_0
+     108: invokevirtual #724                // Method canScroll:()Z
+     111: putfield      #727                // Field scrolling:Z
+     114: iconst_1
+     115: ireturn
+     116: aload_0
+     117: aload_1
+     118: iload_2
+     119: invokespecial #730                // Method net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.mouseClicked:(Lnet/minecraft/client/input/MouseButtonEvent;Z)Z
+     122: ireturn
+
+  public boolean mouseReleased(net.minecraft.client.input.MouseButtonEvent);
+    Code:
+       0: aload_1
+       1: invokevirtual #701                // Method net/minecraft/client/input/MouseButtonEvent.button:()I
+       4: ifne          90
+       7: aload_1
+       8: invokevirtual #706                // Method net/minecraft/client/input/MouseButtonEvent.x:()D
+      11: aload_0
+      12: getfield      #443                // Field leftPos:I
+      15: i2d
+      16: dsub
+      17: dstore_2
+      18: aload_1
+      19: invokevirtual #710                // Method net/minecraft/client/input/MouseButtonEvent.y:()D
+      22: aload_0
+      23: getfield      #446                // Field topPos:I
+      26: i2d
+      27: dsub
+      28: dstore        4
+      30: aload_0
+      31: iconst_0
+      32: putfield      #727                // Field scrolling:Z
+      35: invokestatic  #713                // Method net/minecraft/world/item/CreativeModeTabs.tabs:()Ljava/util/List;
+      38: invokeinterface #107,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+      43: astore        6
+      45: aload         6
+      47: invokeinterface #113,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      52: ifeq          90
+      55: aload         6
+      57: invokeinterface #118,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      62: checkcast     #122                // class net/minecraft/world/item/CreativeModeTab
+      65: astore        7
+      67: aload_0
+      68: aload         7
+      70: dload_2
+      71: dload         4
+      73: invokevirtual #716                // Method checkTabClicked:(Lnet/minecraft/world/item/CreativeModeTab;DD)Z
+      76: ifeq          87
+      79: aload_0
+      80: aload         7
+      82: invokevirtual #151                // Method selectTab:(Lnet/minecraft/world/item/CreativeModeTab;)V
+      85: iconst_1
+      86: ireturn
+      87: goto          45
+      90: aload_0
+      91: aload_1
+      92: invokespecial #734                // Method net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.mouseReleased:(Lnet/minecraft/client/input/MouseButtonEvent;)Z
+      95: ireturn
+
+  private boolean canScroll();
+    Code:
+       0: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+       3: invokevirtual #738                // Method net/minecraft/world/item/CreativeModeTab.canScroll:()Z
+       6: ifeq          26
+       9: aload_0
+      10: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+      13: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+      16: invokevirtual #739                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.canScroll:()Z
+      19: ifeq          26
+      22: iconst_1
+      23: goto          27
+      26: iconst_0
+      27: ireturn
+
+  private void selectTab(net.minecraft.world.item.CreativeModeTab);
+    Code:
+       0: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+       3: astore_2
+       4: aload_1
+       5: putstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+       8: aload_0
+       9: getfield      #740                // Field quickCraftSlots:Ljava/util/Set;
+      12: invokeinterface #595,  1          // InterfaceMethod java/util/Set.clear:()V
+      17: aload_0
+      18: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+      21: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+      24: getfield      #187                // Field net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.items:Lnet/minecraft/core/NonNullList;
+      27: invokevirtual #191                // Method net/minecraft/core/NonNullList.clear:()V
+      30: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+      33: invokevirtual #132                // Method net/minecraft/world/item/CreativeModeTab.getType:()Lnet/minecraft/world/item/CreativeModeTab$Type;
+      36: getstatic     #743                // Field net/minecraft/world/item/CreativeModeTab$Type.HOTBAR:Lnet/minecraft/world/item/CreativeModeTab$Type;
+      39: if_acmpne     262
+      42: aload_0
+      43: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+      46: invokevirtual #746                // Method net/minecraft/client/Minecraft.getHotbarManager:()Lnet/minecraft/client/HotbarManager;
+      49: astore_3
+      50: iconst_0
+      51: istore        4
+      53: iload         4
+      55: bipush        9
+      57: if_icmpge     259
+      60: aload_3
+      61: iload         4
+      63: invokevirtual #752                // Method net/minecraft/client/HotbarManager.get:(I)Lnet/minecraft/client/player/inventory/Hotbar;
+      66: astore        5
+      68: aload         5
+      70: invokevirtual #756                // Method net/minecraft/client/player/inventory/Hotbar.isEmpty:()Z
+      73: ifeq          224
+      76: iconst_0
+      77: istore        6
+      79: iload         6
+      81: bipush        9
+      83: if_icmpge     221
+      86: iload         6
+      88: iload         4
+      90: if_icmpne     198
+      93: new           #316                // class net/minecraft/world/item/ItemStack
+      96: dup
+      97: getstatic     #759                // Field net/minecraft/world/item/Items.PAPER:Lnet/minecraft/world/item/Item;
+     100: invokespecial #765                // Method net/minecraft/world/item/ItemStack."<init>":(Lnet/minecraft/world/level/ItemLike;)V
+     103: astore        7
+     105: aload         7
+     107: getstatic     #768                // Field net/minecraft/core/component/DataComponents.CREATIVE_SLOT_LOCK:Lnet/minecraft/core/component/DataComponentType;
+     110: getstatic     #774                // Field net/minecraft/util/Unit.INSTANCE:Lnet/minecraft/util/Unit;
+     113: invokevirtual #780                // Method net/minecraft/world/item/ItemStack.set:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Ljava/lang/Object;
+     116: pop
+     117: aload_0
+     118: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+     121: getfield      #538                // Field net/minecraft/client/Minecraft.options:Lnet/minecraft/client/Options;
+     124: getfield      #783                // Field net/minecraft/client/Options.keyHotbarSlots:[Lnet/minecraft/client/KeyMapping;
+     127: iload         4
+     129: aaload
+     130: invokevirtual #787                // Method net/minecraft/client/KeyMapping.getTranslatedKeyMessage:()Lnet/minecraft/network/chat/Component;
+     133: astore        8
+     135: aload_0
+     136: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+     139: getfield      #538                // Field net/minecraft/client/Minecraft.options:Lnet/minecraft/client/Options;
+     142: getfield      #790                // Field net/minecraft/client/Options.keySaveHotbarActivator:Lnet/minecraft/client/KeyMapping;
+     145: invokevirtual #787                // Method net/minecraft/client/KeyMapping.getTranslatedKeyMessage:()Lnet/minecraft/network/chat/Component;
+     148: astore        9
+     150: aload         7
+     152: getstatic     #793                // Field net/minecraft/core/component/DataComponents.ITEM_NAME:Lnet/minecraft/core/component/DataComponentType;
+     155: ldc_w         #796                // String inventory.hotbarInfo
+     158: iconst_2
+     159: anewarray     #798                // class java/lang/Object
+     162: dup
+     163: iconst_0
+     164: aload         9
+     166: aastore
+     167: dup
+     168: iconst_1
+     169: aload         8
+     171: aastore
+     172: invokestatic  #800                // InterfaceMethod net/minecraft/network/chat/Component.translatable:(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+     175: invokevirtual #780                // Method net/minecraft/world/item/ItemStack.set:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Ljava/lang/Object;
+     178: pop
+     179: aload_0
+     180: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     183: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+     186: getfield      #187                // Field net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.items:Lnet/minecraft/core/NonNullList;
+     189: aload         7
+     191: invokevirtual #803                // Method net/minecraft/core/NonNullList.add:(Ljava/lang/Object;)Z
+     194: pop
+     195: goto          215
+     198: aload_0
+     199: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     202: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+     205: getfield      #187                // Field net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.items:Lnet/minecraft/core/NonNullList;
+     208: getstatic     #315                // Field net/minecraft/world/item/ItemStack.EMPTY:Lnet/minecraft/world/item/ItemStack;
+     211: invokevirtual #803                // Method net/minecraft/core/NonNullList.add:(Ljava/lang/Object;)Z
+     214: pop
+     215: iinc          6, 1
+     218: goto          79
+     221: goto          253
+     224: aload_0
+     225: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     228: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+     231: getfield      #187                // Field net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.items:Lnet/minecraft/core/NonNullList;
+     234: aload         5
+     236: aload_0
+     237: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+     240: getfield      #807                // Field net/minecraft/client/Minecraft.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+     243: invokevirtual #810                // Method net/minecraft/client/multiplayer/ClientLevel.registryAccess:()Lnet/minecraft/core/RegistryAccess;
+     246: invokevirtual #813                // Method net/minecraft/client/player/inventory/Hotbar.load:(Lnet/minecraft/core/HolderLookup$Provider;)Ljava/util/List;
+     249: invokevirtual #202                // Method net/minecraft/core/NonNullList.addAll:(Ljava/util/Collection;)Z
+     252: pop
+     253: iinc          4, 1
+     256: goto          53
+     259: goto          294
+     262: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+     265: invokevirtual #132                // Method net/minecraft/world/item/CreativeModeTab.getType:()Lnet/minecraft/world/item/CreativeModeTab$Type;
+     268: getstatic     #136                // Field net/minecraft/world/item/CreativeModeTab$Type.CATEGORY:Lnet/minecraft/world/item/CreativeModeTab$Type;
+     271: if_acmpne     294
+     274: aload_0
+     275: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     278: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+     281: getfield      #187                // Field net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.items:Lnet/minecraft/core/NonNullList;
+     284: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+     287: invokevirtual #124                // Method net/minecraft/world/item/CreativeModeTab.getDisplayItems:()Ljava/util/Collection;
+     290: invokevirtual #202                // Method net/minecraft/core/NonNullList.addAll:(Ljava/util/Collection;)Z
+     293: pop
+     294: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+     297: invokevirtual #132                // Method net/minecraft/world/item/CreativeModeTab.getType:()Lnet/minecraft/world/item/CreativeModeTab$Type;
+     300: getstatic     #282                // Field net/minecraft/world/item/CreativeModeTab$Type.INVENTORY:Lnet/minecraft/world/item/CreativeModeTab$Type;
+     303: if_acmpne     610
+     306: aload_0
+     307: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+     310: getfield      #217                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+     313: getfield      #297                // Field net/minecraft/client/player/LocalPlayer.inventoryMenu:Lnet/minecraft/world/inventory/InventoryMenu;
+     316: astore_3
+     317: aload_0
+     318: getfield      #817                // Field originalSlots:Ljava/util/List;
+     321: ifnonnull     341
+     324: aload_0
+     325: aload_0
+     326: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     329: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+     332: getfield      #821                // Field net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.slots:Lnet/minecraft/core/NonNullList;
+     335: invokestatic  #824                // Method com/google/common/collect/ImmutableList.copyOf:(Ljava/util/Collection;)Lcom/google/common/collect/ImmutableList;
+     338: putfield      #817                // Field originalSlots:Ljava/util/List;
+     341: aload_0
+     342: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     345: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+     348: getfield      #821                // Field net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.slots:Lnet/minecraft/core/NonNullList;
+     351: invokevirtual #191                // Method net/minecraft/core/NonNullList.clear:()V
+     354: iconst_0
+     355: istore        4
+     357: iload         4
+     359: aload_3
+     360: getfield      #829                // Field net/minecraft/world/inventory/AbstractContainerMenu.slots:Lnet/minecraft/core/NonNullList;
+     363: invokevirtual #307                // Method net/minecraft/core/NonNullList.size:()I
+     366: if_icmpge     569
+     369: iload         4
+     371: iconst_5
+     372: if_icmplt     423
+     375: iload         4
+     377: bipush        9
+     379: if_icmpge     423
+     382: iload         4
+     384: iconst_5
+     385: isub
+     386: istore        7
+     388: iload         7
+     390: iconst_2
+     391: idiv
+     392: istore        8
+     394: iload         7
+     396: iconst_2
+     397: irem
+     398: istore        9
+     400: bipush        54
+     402: iload         8
+     404: bipush        54
+     406: imul
+     407: iadd
+     408: istore        5
+     410: bipush        6
+     412: iload         9
+     414: bipush        27
+     416: imul
+     417: iadd
+     418: istore        6
+     420: goto          520
+     423: iload         4
+     425: iflt          447
+     428: iload         4
+     430: iconst_5
+     431: if_icmpge     447
+     434: sipush        -2000
+     437: istore        5
+     439: sipush        -2000
+     442: istore        6
+     444: goto          520
+     447: iload         4
+     449: bipush        45
+     451: if_icmpne     465
+     454: bipush        35
+     456: istore        5
+     458: bipush        20
+     460: istore        6
+     462: goto          520
+     465: iload         4
+     467: bipush        9
+     469: isub
+     470: istore        7
+     472: iload         7
+     474: bipush        9
+     476: irem
+     477: istore        8
+     479: iload         7
+     481: bipush        9
+     483: idiv
+     484: istore        9
+     486: bipush        9
+     488: iload         8
+     490: bipush        18
+     492: imul
+     493: iadd
+     494: istore        5
+     496: iload         4
+     498: bipush        36
+     500: if_icmplt     510
+     503: bipush        112
+     505: istore        6
+     507: goto          520
+     510: bipush        54
+     512: iload         9
+     514: bipush        18
+     516: imul
+     517: iadd
+     518: istore        6
+     520: new           #358                // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$SlotWrapper
+     523: dup
+     524: aload_3
+     525: getfield      #829                // Field net/minecraft/world/inventory/AbstractContainerMenu.slots:Lnet/minecraft/core/NonNullList;
+     528: iload         4
+     530: invokevirtual #830                // Method net/minecraft/core/NonNullList.get:(I)Ljava/lang/Object;
+     533: checkcast     #289                // class net/minecraft/world/inventory/Slot
+     536: iload         4
+     538: iload         5
+     540: iload         6
+     542: invokespecial #833                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$SlotWrapper."<init>":(Lnet/minecraft/world/inventory/Slot;III)V
+     545: astore        7
+     547: aload_0
+     548: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     551: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+     554: getfield      #821                // Field net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.slots:Lnet/minecraft/core/NonNullList;
+     557: aload         7
+     559: invokevirtual #803                // Method net/minecraft/core/NonNullList.add:(Ljava/lang/Object;)Z
+     562: pop
+     563: iinc          4, 1
+     566: goto          357
+     569: aload_0
+     570: new           #289                // class net/minecraft/world/inventory/Slot
+     573: dup
+     574: getstatic     #382                // Field CONTAINER:Lnet/minecraft/world/SimpleContainer;
+     577: iconst_0
+     578: sipush        173
+     581: bipush        112
+     583: invokespecial #836                // Method net/minecraft/world/inventory/Slot."<init>":(Lnet/minecraft/world/Container;III)V
+     586: putfield      #293                // Field destroyItemSlot:Lnet/minecraft/world/inventory/Slot;
+     589: aload_0
+     590: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     593: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+     596: getfield      #821                // Field net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.slots:Lnet/minecraft/core/NonNullList;
+     599: aload_0
+     600: getfield      #293                // Field destroyItemSlot:Lnet/minecraft/world/inventory/Slot;
+     603: invokevirtual #803                // Method net/minecraft/core/NonNullList.add:(Ljava/lang/Object;)Z
+     606: pop
+     607: goto          656
+     610: aload_2
+     611: invokevirtual #132                // Method net/minecraft/world/item/CreativeModeTab.getType:()Lnet/minecraft/world/item/CreativeModeTab$Type;
+     614: getstatic     #282                // Field net/minecraft/world/item/CreativeModeTab$Type.INVENTORY:Lnet/minecraft/world/item/CreativeModeTab$Type;
+     617: if_acmpne     656
+     620: aload_0
+     621: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     624: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+     627: getfield      #821                // Field net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.slots:Lnet/minecraft/core/NonNullList;
+     630: invokevirtual #191                // Method net/minecraft/core/NonNullList.clear:()V
+     633: aload_0
+     634: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     637: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+     640: getfield      #821                // Field net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.slots:Lnet/minecraft/core/NonNullList;
+     643: aload_0
+     644: getfield      #817                // Field originalSlots:Ljava/util/List;
+     647: invokevirtual #202                // Method net/minecraft/core/NonNullList.addAll:(Ljava/util/Collection;)Z
+     650: pop
+     651: aload_0
+     652: aconst_null
+     653: putfield      #817                // Field originalSlots:Ljava/util/List;
+     656: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+     659: invokevirtual #132                // Method net/minecraft/world/item/CreativeModeTab.getType:()Lnet/minecraft/world/item/CreativeModeTab$Type;
+     662: getstatic     #196                // Field net/minecraft/world/item/CreativeModeTab$Type.SEARCH:Lnet/minecraft/world/item/CreativeModeTab$Type;
+     665: if_acmpne     714
+     668: aload_0
+     669: getfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+     672: iconst_1
+     673: invokevirtual #472                // Method net/minecraft/client/gui/components/EditBox.setVisible:(Z)V
+     676: aload_0
+     677: getfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+     680: iconst_0
+     681: invokevirtual #839                // Method net/minecraft/client/gui/components/EditBox.setCanLoseFocus:(Z)V
+     684: aload_0
+     685: getfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+     688: iconst_1
+     689: invokevirtual #842                // Method net/minecraft/client/gui/components/EditBox.setFocused:(Z)V
+     692: aload_2
+     693: aload_1
+     694: if_acmpeq     707
+     697: aload_0
+     698: getfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+     701: ldc_w         #845                // String
+     704: invokevirtual #513                // Method net/minecraft/client/gui/components/EditBox.setValue:(Ljava/lang/String;)V
+     707: aload_0
+     708: invokevirtual #199                // Method refreshSearchResults:()V
+     711: goto          748
+     714: aload_0
+     715: getfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+     718: iconst_0
+     719: invokevirtual #472                // Method net/minecraft/client/gui/components/EditBox.setVisible:(Z)V
+     722: aload_0
+     723: getfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+     726: iconst_1
+     727: invokevirtual #839                // Method net/minecraft/client/gui/components/EditBox.setCanLoseFocus:(Z)V
+     730: aload_0
+     731: getfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+     734: iconst_0
+     735: invokevirtual #842                // Method net/minecraft/client/gui/components/EditBox.setFocused:(Z)V
+     738: aload_0
+     739: getfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+     742: ldc_w         #845                // String
+     745: invokevirtual #513                // Method net/minecraft/client/gui/components/EditBox.setValue:(Ljava/lang/String;)V
+     748: aload_0
+     749: fconst_0
+     750: putfield      #179                // Field scrollOffs:F
+     753: aload_0
+     754: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+     757: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+     760: fconst_0
+     761: invokevirtual #210                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.scrollTo:(F)V
+     764: return
+
+  public boolean mouseScrolled(double, double, double, double);
+    Code:
+       0: aload_0
+       1: dload_1
+       2: dload_3
+       3: dload         5
+       5: dload         7
+       7: invokespecial #847                // Method net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.mouseScrolled:(DDDD)Z
+      10: ifeq          15
+      13: iconst_1
+      14: ireturn
+      15: aload_0
+      16: invokevirtual #724                // Method canScroll:()Z
+      19: ifne          24
+      22: iconst_0
+      23: ireturn
+      24: aload_0
+      25: aload_0
+      26: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+      29: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+      32: aload_0
+      33: getfield      #179                // Field scrollOffs:F
+      36: dload         7
+      38: invokevirtual #851                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.subtractInputFromScroll:(FD)F
+      41: putfield      #179                // Field scrollOffs:F
+      44: aload_0
+      45: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+      48: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+      51: aload_0
+      52: getfield      #179                // Field scrollOffs:F
+      55: invokevirtual #210                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.scrollTo:(F)V
+      58: iconst_1
+      59: ireturn
+
+  protected boolean hasClickedOutside(double, double, int, int);
+    Code:
+       0: dload_1
+       1: iload         5
+       3: i2d
+       4: dcmpg
+       5: iflt          42
+       8: dload_3
+       9: iload         6
+      11: i2d
+      12: dcmpg
+      13: iflt          42
+      16: dload_1
+      17: iload         5
+      19: aload_0
+      20: getfield      #855                // Field imageWidth:I
+      23: iadd
+      24: i2d
+      25: dcmpl
+      26: ifge          42
+      29: dload_3
+      30: iload         6
+      32: aload_0
+      33: getfield      #858                // Field imageHeight:I
+      36: iadd
+      37: i2d
+      38: dcmpl
+      39: iflt          46
+      42: iconst_1
+      43: goto          47
+      46: iconst_0
+      47: istore        7
+      49: aload_0
+      50: iload         7
+      52: ifeq          71
+      55: aload_0
+      56: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+      59: dload_1
+      60: dload_3
+      61: invokevirtual #716                // Method checkTabClicked:(Lnet/minecraft/world/item/CreativeModeTab;DD)Z
+      64: ifne          71
+      67: iconst_1
+      68: goto          72
+      71: iconst_0
+      72: putfield      #430                // Field hasClickedOutside:Z
+      75: aload_0
+      76: getfield      #430                // Field hasClickedOutside:Z
+      79: ireturn
+
+  protected boolean insideScrollbar(double, double);
+    Code:
+       0: aload_0
+       1: getfield      #443                // Field leftPos:I
+       4: istore        5
+       6: aload_0
+       7: getfield      #446                // Field topPos:I
+      10: istore        6
+      12: iload         5
+      14: sipush        175
+      17: iadd
+      18: istore        7
+      20: iload         6
+      22: bipush        18
+      24: iadd
+      25: istore        8
+      27: iload         7
+      29: bipush        14
+      31: iadd
+      32: istore        9
+      34: iload         8
+      36: bipush        112
+      38: iadd
+      39: istore        10
+      41: dload_1
+      42: iload         7
+      44: i2d
+      45: dcmpl
+      46: iflt          86
+      49: dload_3
+      50: iload         8
+      52: i2d
+      53: dcmpl
+      54: iflt          86
+      57: dload_1
+      58: iload         9
+      60: i2d
+      61: dcmpg
+      62: ifge          86
+      65: dload_3
+      66: iload         10
+      68: i2d
+      69: dcmpg
+      70: ifge          86
+      73: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+      76: invokevirtual #738                // Method net/minecraft/world/item/CreativeModeTab.canScroll:()Z
+      79: ifeq          86
+      82: iconst_1
+      83: goto          87
+      86: iconst_0
+      87: ireturn
+
+  public boolean mouseDragged(net.minecraft.client.input.MouseButtonEvent, double, double);
+    Code:
+       0: aload_0
+       1: getfield      #727                // Field scrolling:Z
+       4: ifeq          80
+       7: aload_0
+       8: getfield      #446                // Field topPos:I
+      11: bipush        18
+      13: iadd
+      14: istore        6
+      16: iload         6
+      18: bipush        112
+      20: iadd
+      21: istore        7
+      23: aload_0
+      24: aload_1
+      25: invokevirtual #710                // Method net/minecraft/client/input/MouseButtonEvent.y:()D
+      28: d2f
+      29: iload         6
+      31: i2f
+      32: fsub
+      33: ldc_w         #861                // float 7.5f
+      36: fsub
+      37: iload         7
+      39: iload         6
+      41: isub
+      42: i2f
+      43: ldc_w         #862                // float 15.0f
+      46: fsub
+      47: fdiv
+      48: putfield      #179                // Field scrollOffs:F
+      51: aload_0
+      52: aload_0
+      53: getfield      #179                // Field scrollOffs:F
+      56: fconst_0
+      57: fconst_1
+      58: invokestatic  #863                // Method net/minecraft/util/Mth.clamp:(FFF)F
+      61: putfield      #179                // Field scrollOffs:F
+      64: aload_0
+      65: getfield      #37                 // Field menu:Lnet/minecraft/world/inventory/AbstractContainerMenu;
+      68: checkcast     #3                  // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu
+      71: aload_0
+      72: getfield      #179                // Field scrollOffs:F
+      75: invokevirtual #210                // Method net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$ItemPickerMenu.scrollTo:(F)V
+      78: iconst_1
+      79: ireturn
+      80: aload_0
+      81: aload_1
+      82: dload_2
+      83: dload         4
+      85: invokespecial #869                // Method net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.mouseDragged:(Lnet/minecraft/client/input/MouseButtonEvent;DD)Z
+      88: ireturn
+
+  public void extractRenderState(net.minecraft.client.gui.GuiGraphicsExtractor, int, int, float);
+    Code:
+       0: aload_0
+       1: getfield      #81                 // Field effects:Lnet/minecraft/client/gui/screens/inventory/EffectsInInventory;
+       4: aload_1
+       5: iload_2
+       6: iload_3
+       7: invokevirtual #873                // Method net/minecraft/client/gui/screens/inventory/EffectsInInventory.extractRenderState:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;II)V
+      10: aload_0
+      11: aload_1
+      12: iload_2
+      13: iload_3
+      14: fload         4
+      16: invokespecial #877                // Method net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.extractRenderState:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V
+      19: invokestatic  #713                // Method net/minecraft/world/item/CreativeModeTabs.tabs:()Ljava/util/List;
+      22: invokeinterface #107,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+      27: astore        5
+      29: aload         5
+      31: invokeinterface #113,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      36: ifeq          69
+      39: aload         5
+      41: invokeinterface #118,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      46: checkcast     #122                // class net/minecraft/world/item/CreativeModeTab
+      49: astore        6
+      51: aload_0
+      52: aload_1
+      53: aload         6
+      55: iload_2
+      56: iload_3
+      57: invokevirtual #880                // Method checkTabHovering:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/world/item/CreativeModeTab;II)Z
+      60: ifeq          66
+      63: goto          69
+      66: goto          29
+      69: aload_0
+      70: getfield      #293                // Field destroyItemSlot:Lnet/minecraft/world/inventory/Slot;
+      73: ifnull        130
+      76: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+      79: invokevirtual #132                // Method net/minecraft/world/item/CreativeModeTab.getType:()Lnet/minecraft/world/item/CreativeModeTab$Type;
+      82: getstatic     #282                // Field net/minecraft/world/item/CreativeModeTab$Type.INVENTORY:Lnet/minecraft/world/item/CreativeModeTab$Type;
+      85: if_acmpne     130
+      88: aload_0
+      89: aload_0
+      90: getfield      #293                // Field destroyItemSlot:Lnet/minecraft/world/inventory/Slot;
+      93: getfield      #884                // Field net/minecraft/world/inventory/Slot.x:I
+      96: aload_0
+      97: getfield      #293                // Field destroyItemSlot:Lnet/minecraft/world/inventory/Slot;
+     100: getfield      #886                // Field net/minecraft/world/inventory/Slot.y:I
+     103: bipush        16
+     105: bipush        16
+     107: iload_2
+     108: i2d
+     109: iload_3
+     110: i2d
+     111: invokevirtual #888                // Method isHovering:(IIIIDD)Z
+     114: ifeq          130
+     117: aload_1
+     118: aload_0
+     119: getfield      #439                // Field font:Lnet/minecraft/client/gui/Font;
+     122: getstatic     #892                // Field TRASH_SLOT_TOOLTIP:Lnet/minecraft/network/chat/Component;
+     125: iload_2
+     126: iload_3
+     127: invokevirtual #895                // Method net/minecraft/client/gui/GuiGraphicsExtractor.setTooltipForNextFrame:(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Component;II)V
+     130: return
+
+  public boolean showsActiveEffects();
+    Code:
+       0: aload_0
+       1: getfield      #81                 // Field effects:Lnet/minecraft/client/gui/screens/inventory/EffectsInInventory;
+       4: invokevirtual #899                // Method net/minecraft/client/gui/screens/inventory/EffectsInInventory.canSeeEffects:()Z
+       7: ireturn
+
+  public java.util.List<net.minecraft.network.chat.Component> getTooltipFromContainerItem(net.minecraft.world.item.ItemStack);
+    Code:
+       0: aload_0
+       1: getfield      #557                // Field hoveredSlot:Lnet/minecraft/world/inventory/Slot;
+       4: ifnull        21
+       7: aload_0
+       8: getfield      #557                // Field hoveredSlot:Lnet/minecraft/world/inventory/Slot;
+      11: instanceof    #902                // class net/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen$CustomCreativeSlot
+      14: ifeq          21
+      17: iconst_1
+      18: goto          22
+      21: iconst_0
+      22: istore_2
+      23: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+      26: invokevirtual #132                // Method net/minecraft/world/item/CreativeModeTab.getType:()Lnet/minecraft/world/item/CreativeModeTab$Type;
+      29: getstatic     #136                // Field net/minecraft/world/item/CreativeModeTab$Type.CATEGORY:Lnet/minecraft/world/item/CreativeModeTab$Type;
+      32: if_acmpne     39
+      35: iconst_1
+      36: goto          40
+      39: iconst_0
+      40: istore_3
+      41: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+      44: invokevirtual #132                // Method net/minecraft/world/item/CreativeModeTab.getType:()Lnet/minecraft/world/item/CreativeModeTab$Type;
+      47: getstatic     #196                // Field net/minecraft/world/item/CreativeModeTab$Type.SEARCH:Lnet/minecraft/world/item/CreativeModeTab$Type;
+      50: if_acmpne     57
+      53: iconst_1
+      54: goto          58
+      57: iconst_0
+      58: istore        4
+      60: aload_0
+      61: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+      64: getfield      #538                // Field net/minecraft/client/Minecraft.options:Lnet/minecraft/client/Options;
+      67: getfield      #904                // Field net/minecraft/client/Options.advancedItemTooltips:Z
+      70: ifeq          79
+      73: getstatic     #907                // Field net/minecraft/world/item/TooltipFlag$Default.ADVANCED:Lnet/minecraft/world/item/TooltipFlag$Default;
+      76: goto          82
+      79: getstatic     #913                // Field net/minecraft/world/item/TooltipFlag$Default.NORMAL:Lnet/minecraft/world/item/TooltipFlag$Default;
+      82: astore        5
+      84: iload_2
+      85: ifeq          96
+      88: aload         5
+      90: invokevirtual #916                // Method net/minecraft/world/item/TooltipFlag$Default.asCreative:()Lnet/minecraft/world/item/TooltipFlag$Default;
+      93: goto          98
+      96: aload         5
+      98: astore        6
+     100: aload_1
+     101: aload_0
+     102: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+     105: getfield      #807                // Field net/minecraft/client/Minecraft.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+     108: invokestatic  #920                // InterfaceMethod net/minecraft/world/item/Item$TooltipContext.of:(Lnet/minecraft/world/level/Level;)Lnet/minecraft/world/item/Item$TooltipContext;
+     111: aload_0
+     112: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+     115: getfield      #217                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+     118: aload         6
+     120: invokevirtual #926                // Method net/minecraft/world/item/ItemStack.getTooltipLines:(Lnet/minecraft/world/item/Item$TooltipContext;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/TooltipFlag;)Ljava/util/List;
+     123: astore        7
+     125: aload         7
+     127: invokeinterface #930,  1          // InterfaceMethod java/util/List.isEmpty:()Z
+     132: ifeq          138
+     135: aload         7
+     137: areturn
+     138: iload_3
+     139: ifeq          146
+     142: iload_2
+     143: ifne          268
+     146: aload         7
+     148: invokestatic  #931                // Method com/google/common/collect/Lists.newArrayList:(Ljava/lang/Iterable;)Ljava/util/ArrayList;
+     151: astore        8
+     153: iload         4
+     155: ifeq          179
+     158: iload_2
+     159: ifeq          179
+     162: aload_0
+     163: getfield      #31                 // Field visibleTags:Ljava/util/Set;
+     166: aload_1
+     167: aload         8
+     169: invokedynamic #937,  0            // InvokeDynamic #5:accept:(Lnet/minecraft/world/item/ItemStack;Ljava/util/List;)Ljava/util/function/Consumer;
+     174: invokeinterface #940,  2          // InterfaceMethod java/util/Set.forEach:(Ljava/util/function/Consumer;)V
+     179: iconst_1
+     180: istore        9
+     182: invokestatic  #713                // Method net/minecraft/world/item/CreativeModeTabs.tabs:()Ljava/util/List;
+     185: invokeinterface #107,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+     190: astore        10
+     192: aload         10
+     194: invokeinterface #113,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+     199: ifeq          265
+     202: aload         10
+     204: invokeinterface #118,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+     209: checkcast     #122                // class net/minecraft/world/item/CreativeModeTab
+     212: astore        11
+     214: aload         11
+     216: invokevirtual #132                // Method net/minecraft/world/item/CreativeModeTab.getType:()Lnet/minecraft/world/item/CreativeModeTab$Type;
+     219: getstatic     #196                // Field net/minecraft/world/item/CreativeModeTab$Type.SEARCH:Lnet/minecraft/world/item/CreativeModeTab$Type;
+     222: if_acmpeq     262
+     225: aload         11
+     227: aload_1
+     228: invokevirtual #941                // Method net/minecraft/world/item/CreativeModeTab.contains:(Lnet/minecraft/world/item/ItemStack;)Z
+     231: ifeq          262
+     234: aload         8
+     236: iload         9
+     238: iinc          9, 1
+     241: aload         11
+     243: invokevirtual #690                // Method net/minecraft/world/item/CreativeModeTab.getDisplayName:()Lnet/minecraft/network/chat/Component;
+     246: invokeinterface #945,  1          // InterfaceMethod net/minecraft/network/chat/Component.copy:()Lnet/minecraft/network/chat/MutableComponent;
+     251: getstatic     #949                // Field net/minecraft/ChatFormatting.BLUE:Lnet/minecraft/ChatFormatting;
+     254: invokevirtual #955                // Method net/minecraft/network/chat/MutableComponent.withStyle:(Lnet/minecraft/ChatFormatting;)Lnet/minecraft/network/chat/MutableComponent;
+     257: invokeinterface #961,  3          // InterfaceMethod java/util/List.add:(ILjava/lang/Object;)V
+     262: goto          192
+     265: aload         8
+     267: areturn
+     268: aload         7
+     270: areturn
+
+  public void extractBackground(net.minecraft.client.gui.GuiGraphicsExtractor, int, int, float);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: iload_2
+       3: iload_3
+       4: fload         4
+       6: invokespecial #964                // Method net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.extractBackground:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V
+       9: invokestatic  #713                // Method net/minecraft/world/item/CreativeModeTabs.tabs:()Ljava/util/List;
+      12: invokeinterface #107,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+      17: astore        5
+      19: aload         5
+      21: invokeinterface #113,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      26: ifeq          61
+      29: aload         5
+      31: invokeinterface #118,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      36: checkcast     #122                // class net/minecraft/world/item/CreativeModeTab
+      39: astore        6
+      41: aload         6
+      43: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+      46: if_acmpeq     58
+      49: aload_0
+      50: aload_1
+      51: iload_2
+      52: iload_3
+      53: aload         6
+      55: invokevirtual #967                // Method extractTabButton:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IILnet/minecraft/world/item/CreativeModeTab;)V
+      58: goto          19
+      61: aload_1
+      62: getstatic     #971                // Field net/minecraft/client/renderer/RenderPipelines.GUI_TEXTURED:Lcom/mojang/blaze3d/pipeline/RenderPipeline;
+      65: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+      68: invokevirtual #977                // Method net/minecraft/world/item/CreativeModeTab.getBackgroundTexture:()Lnet/minecraft/resources/Identifier;
+      71: aload_0
+      72: getfield      #443                // Field leftPos:I
+      75: aload_0
+      76: getfield      #446                // Field topPos:I
+      79: fconst_0
+      80: fconst_0
+      81: aload_0
+      82: getfield      #855                // Field imageWidth:I
+      85: aload_0
+      86: getfield      #858                // Field imageHeight:I
+      89: sipush        256
+      92: sipush        256
+      95: invokevirtual #981                // Method net/minecraft/client/gui/GuiGraphicsExtractor.blit:(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIFFIIII)V
+      98: aload_0
+      99: iload_2
+     100: i2d
+     101: iload_3
+     102: i2d
+     103: invokevirtual #720                // Method insideScrollbar:(DD)Z
+     106: ifeq          146
+     109: aload_0
+     110: invokevirtual #724                // Method canScroll:()Z
+     113: ifeq          139
+     116: aload_1
+     117: aload_0
+     118: getfield      #727                // Field scrolling:Z
+     121: ifeq          130
+     124: getstatic     #985                // Field com/mojang/blaze3d/platform/cursor/CursorTypes.RESIZE_NS:Lcom/mojang/blaze3d/platform/cursor/CursorType;
+     127: goto          133
+     130: getstatic     #991                // Field com/mojang/blaze3d/platform/cursor/CursorTypes.POINTING_HAND:Lcom/mojang/blaze3d/platform/cursor/CursorType;
+     133: invokevirtual #994                // Method net/minecraft/client/gui/GuiGraphicsExtractor.requestCursor:(Lcom/mojang/blaze3d/platform/cursor/CursorType;)V
+     136: goto          146
+     139: aload_1
+     140: getstatic     #998                // Field com/mojang/blaze3d/platform/cursor/CursorTypes.NOT_ALLOWED:Lcom/mojang/blaze3d/platform/cursor/CursorType;
+     143: invokevirtual #994                // Method net/minecraft/client/gui/GuiGraphicsExtractor.requestCursor:(Lcom/mojang/blaze3d/platform/cursor/CursorType;)V
+     146: aload_0
+     147: getfield      #249                // Field searchBox:Lnet/minecraft/client/gui/components/EditBox;
+     150: aload_1
+     151: iload_2
+     152: iload_3
+     153: fload         4
+     155: invokevirtual #1001               // Method net/minecraft/client/gui/components/EditBox.extractRenderState:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V
+     158: aload_0
+     159: getfield      #443                // Field leftPos:I
+     162: sipush        175
+     165: iadd
+     166: istore        5
+     168: aload_0
+     169: getfield      #446                // Field topPos:I
+     172: bipush        18
+     174: iadd
+     175: istore        6
+     177: iload         6
+     179: bipush        112
+     181: iadd
+     182: istore        7
+     184: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+     187: invokevirtual #738                // Method net/minecraft/world/item/CreativeModeTab.canScroll:()Z
+     190: ifeq          244
+     193: aload_0
+     194: invokevirtual #724                // Method canScroll:()Z
+     197: ifeq          206
+     200: getstatic     #1002               // Field SCROLLER_SPRITE:Lnet/minecraft/resources/Identifier;
+     203: goto          209
+     206: getstatic     #1006               // Field SCROLLER_DISABLED_SPRITE:Lnet/minecraft/resources/Identifier;
+     209: astore        8
+     211: aload_1
+     212: getstatic     #971                // Field net/minecraft/client/renderer/RenderPipelines.GUI_TEXTURED:Lcom/mojang/blaze3d/pipeline/RenderPipeline;
+     215: aload         8
+     217: iload         5
+     219: iload         6
+     221: iload         7
+     223: iload         6
+     225: isub
+     226: bipush        17
+     228: isub
+     229: i2f
+     230: aload_0
+     231: getfield      #179                // Field scrollOffs:F
+     234: fmul
+     235: f2i
+     236: iadd
+     237: bipush        12
+     239: bipush        15
+     241: invokevirtual #1009               // Method net/minecraft/client/gui/GuiGraphicsExtractor.blitSprite:(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIII)V
+     244: aload_0
+     245: aload_1
+     246: iload_2
+     247: iload_3
+     248: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+     251: invokevirtual #967                // Method extractTabButton:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IILnet/minecraft/world/item/CreativeModeTab;)V
+     254: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+     257: invokevirtual #132                // Method net/minecraft/world/item/CreativeModeTab.getType:()Lnet/minecraft/world/item/CreativeModeTab$Type;
+     260: getstatic     #282                // Field net/minecraft/world/item/CreativeModeTab$Type.INVENTORY:Lnet/minecraft/world/item/CreativeModeTab$Type;
+     263: if_acmpne     314
+     266: aload_1
+     267: aload_0
+     268: getfield      #443                // Field leftPos:I
+     271: bipush        73
+     273: iadd
+     274: aload_0
+     275: getfield      #446                // Field topPos:I
+     278: bipush        6
+     280: iadd
+     281: aload_0
+     282: getfield      #443                // Field leftPos:I
+     285: bipush        105
+     287: iadd
+     288: aload_0
+     289: getfield      #446                // Field topPos:I
+     292: bipush        49
+     294: iadd
+     295: bipush        20
+     297: ldc_w         #1013               // float 0.0625f
+     300: iload_2
+     301: i2f
+     302: iload_3
+     303: i2f
+     304: aload_0
+     305: getfield      #91                 // Field minecraft:Lnet/minecraft/client/Minecraft;
+     308: getfield      #217                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+     311: invokestatic  #1014               // Method net/minecraft/client/gui/screens/inventory/InventoryScreen.extractEntityInInventoryFollowsMouse:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIIIIFFFLnet/minecraft/world/entity/LivingEntity;)V
+     314: return
+
+  private int getTabX(net.minecraft.world.item.CreativeModeTab);
+    Code:
+       0: aload_1
+       1: invokevirtual #1018               // Method net/minecraft/world/item/CreativeModeTab.column:()I
+       4: istore_2
+       5: bipush        27
+       7: istore_3
+       8: bipush        27
+      10: iload_2
+      11: imul
+      12: istore        4
+      14: aload_1
+      15: invokevirtual #1021               // Method net/minecraft/world/item/CreativeModeTab.isAlignedRight:()Z
+      18: ifeq          37
+      21: aload_0
+      22: getfield      #855                // Field imageWidth:I
+      25: bipush        27
+      27: bipush        7
+      29: iload_2
+      30: isub
+      31: imul
+      32: isub
+      33: iconst_1
+      34: iadd
+      35: istore        4
+      37: iload         4
+      39: ireturn
+
+  private int getTabY(net.minecraft.world.item.CreativeModeTab);
+    Code:
+       0: iconst_0
+       1: istore_2
+       2: aload_1
+       3: invokevirtual #1024               // Method net/minecraft/world/item/CreativeModeTab.row:()Lnet/minecraft/world/item/CreativeModeTab$Row;
+       6: getstatic     #1028               // Field net/minecraft/world/item/CreativeModeTab$Row.TOP:Lnet/minecraft/world/item/CreativeModeTab$Row;
+       9: if_acmpne     18
+      12: iinc          2, -32
+      15: goto          25
+      18: iload_2
+      19: aload_0
+      20: getfield      #858                // Field imageHeight:I
+      23: iadd
+      24: istore_2
+      25: iload_2
+      26: ireturn
+
+  protected boolean checkTabClicked(net.minecraft.world.item.CreativeModeTab, double, double);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: invokevirtual #1034               // Method getTabX:(Lnet/minecraft/world/item/CreativeModeTab;)I
+       5: istore        6
+       7: aload_0
+       8: aload_1
+       9: invokevirtual #1038               // Method getTabY:(Lnet/minecraft/world/item/CreativeModeTab;)I
+      12: istore        7
+      14: dload_2
+      15: iload         6
+      17: i2d
+      18: dcmpl
+      19: iflt          58
+      22: dload_2
+      23: iload         6
+      25: bipush        26
+      27: iadd
+      28: i2d
+      29: dcmpg
+      30: ifgt          58
+      33: dload         4
+      35: iload         7
+      37: i2d
+      38: dcmpl
+      39: iflt          58
+      42: dload         4
+      44: iload         7
+      46: bipush        32
+      48: iadd
+      49: i2d
+      50: dcmpg
+      51: ifgt          58
+      54: iconst_1
+      55: goto          59
+      58: iconst_0
+      59: ireturn
+
+  protected boolean checkTabHovering(net.minecraft.client.gui.GuiGraphicsExtractor, net.minecraft.world.item.CreativeModeTab, int, int);
+    Code:
+       0: aload_0
+       1: aload_2
+       2: invokevirtual #1034               // Method getTabX:(Lnet/minecraft/world/item/CreativeModeTab;)I
+       5: istore        5
+       7: aload_0
+       8: aload_2
+       9: invokevirtual #1038               // Method getTabY:(Lnet/minecraft/world/item/CreativeModeTab;)I
+      12: istore        6
+      14: aload_0
+      15: iload         5
+      17: iconst_3
+      18: iadd
+      19: iload         6
+      21: iconst_3
+      22: iadd
+      23: bipush        21
+      25: bipush        27
+      27: iload_3
+      28: i2d
+      29: iload         4
+      31: i2d
+      32: invokevirtual #888                // Method isHovering:(IIIIDD)Z
+      35: ifeq          55
+      38: aload_1
+      39: aload_0
+      40: getfield      #439                // Field font:Lnet/minecraft/client/gui/Font;
+      43: aload_2
+      44: invokevirtual #690                // Method net/minecraft/world/item/CreativeModeTab.getDisplayName:()Lnet/minecraft/network/chat/Component;
+      47: iload_3
+      48: iload         4
+      50: invokevirtual #895                // Method net/minecraft/client/gui/GuiGraphicsExtractor.setTooltipForNextFrame:(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Component;II)V
+      53: iconst_1
+      54: ireturn
+      55: iconst_0
+      56: ireturn
+
+  protected void extractTabButton(net.minecraft.client.gui.GuiGraphicsExtractor, int, int, net.minecraft.world.item.CreativeModeTab);
+    Code:
+       0: aload         4
+       2: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+       5: if_acmpne     12
+       8: iconst_1
+       9: goto          13
+      12: iconst_0
+      13: istore        5
+      15: aload         4
+      17: invokevirtual #1024               // Method net/minecraft/world/item/CreativeModeTab.row:()Lnet/minecraft/world/item/CreativeModeTab$Row;
+      20: getstatic     #1028               // Field net/minecraft/world/item/CreativeModeTab$Row.TOP:Lnet/minecraft/world/item/CreativeModeTab$Row;
+      23: if_acmpne     30
+      26: iconst_1
+      27: goto          31
+      30: iconst_0
+      31: istore        6
+      33: aload         4
+      35: invokevirtual #1018               // Method net/minecraft/world/item/CreativeModeTab.column:()I
+      38: istore        7
+      40: aload_0
+      41: getfield      #443                // Field leftPos:I
+      44: aload_0
+      45: aload         4
+      47: invokevirtual #1034               // Method getTabX:(Lnet/minecraft/world/item/CreativeModeTab;)I
+      50: iadd
+      51: istore        8
+      53: aload_0
+      54: getfield      #446                // Field topPos:I
+      57: iload         6
+      59: ifeq          67
+      62: bipush        28
+      64: goto          74
+      67: aload_0
+      68: getfield      #858                // Field imageHeight:I
+      71: iconst_4
+      72: isub
+      73: ineg
+      74: isub
+      75: istore        9
+      77: iload         6
+      79: ifeq          101
+      82: iload         5
+      84: ifeq          93
+      87: getstatic     #1041               // Field SELECTED_TOP_TABS:[Lnet/minecraft/resources/Identifier;
+      90: goto          96
+      93: getstatic     #1045               // Field UNSELECTED_TOP_TABS:[Lnet/minecraft/resources/Identifier;
+      96: astore        10
+      98: goto          117
+     101: iload         5
+     103: ifeq          112
+     106: getstatic     #1048               // Field SELECTED_BOTTOM_TABS:[Lnet/minecraft/resources/Identifier;
+     109: goto          115
+     112: getstatic     #1051               // Field UNSELECTED_BOTTOM_TABS:[Lnet/minecraft/resources/Identifier;
+     115: astore        10
+     117: iload         5
+     119: ifne          159
+     122: iload_2
+     123: iload         8
+     125: if_icmple     159
+     128: iload_3
+     129: iload         9
+     131: if_icmple     159
+     134: iload_2
+     135: iload         8
+     137: bipush        26
+     139: iadd
+     140: if_icmpge     159
+     143: iload_3
+     144: iload         9
+     146: bipush        32
+     148: iadd
+     149: if_icmpge     159
+     152: aload_1
+     153: getstatic     #991                // Field com/mojang/blaze3d/platform/cursor/CursorTypes.POINTING_HAND:Lcom/mojang/blaze3d/platform/cursor/CursorType;
+     156: invokevirtual #994                // Method net/minecraft/client/gui/GuiGraphicsExtractor.requestCursor:(Lcom/mojang/blaze3d/platform/cursor/CursorType;)V
+     159: aload_1
+     160: getstatic     #971                // Field net/minecraft/client/renderer/RenderPipelines.GUI_TEXTURED:Lcom/mojang/blaze3d/pipeline/RenderPipeline;
+     163: aload         10
+     165: iload         7
+     167: iconst_0
+     168: aload         10
+     170: arraylength
+     171: invokestatic  #1054               // Method net/minecraft/util/Mth.clamp:(III)I
+     174: aaload
+     175: iload         8
+     177: iload         9
+     179: bipush        26
+     181: bipush        32
+     183: invokevirtual #1009               // Method net/minecraft/client/gui/GuiGraphicsExtractor.blitSprite:(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIII)V
+     186: iload         8
+     188: bipush        13
+     190: iadd
+     191: bipush        8
+     193: isub
+     194: istore        11
+     196: iload         9
+     198: bipush        16
+     200: iadd
+     201: bipush        8
+     203: isub
+     204: iload         6
+     206: ifeq          213
+     209: iconst_1
+     210: goto          214
+     213: iconst_m1
+     214: iadd
+     215: istore        12
+     217: aload_1
+     218: aload         4
+     220: invokevirtual #1057               // Method net/minecraft/world/item/CreativeModeTab.getIconItem:()Lnet/minecraft/world/item/ItemStack;
+     223: iload         11
+     225: iload         12
+     227: invokevirtual #1060               // Method net/minecraft/client/gui/GuiGraphicsExtractor.item:(Lnet/minecraft/world/item/ItemStack;II)V
+     230: return
+
+  public boolean isInventoryOpen();
+    Code:
+       0: getstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+       3: invokevirtual #132                // Method net/minecraft/world/item/CreativeModeTab.getType:()Lnet/minecraft/world/item/CreativeModeTab$Type;
+       6: getstatic     #282                // Field net/minecraft/world/item/CreativeModeTab$Type.INVENTORY:Lnet/minecraft/world/item/CreativeModeTab$Type;
+       9: if_acmpne     16
+      12: iconst_1
+      13: goto          17
+      16: iconst_0
+      17: ireturn
+
+  public static void handleHotbarLoadOrSave(net.minecraft.client.Minecraft, int, boolean, boolean);
+    Code:
+       0: aload_0
+       1: getfield      #217                // Field net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+       4: astore        4
+       6: aload         4
+       8: invokevirtual #62                 // Method net/minecraft/client/player/LocalPlayer.level:()Lnet/minecraft/world/level/Level;
+      11: invokevirtual #66                 // Method net/minecraft/world/level/Level.registryAccess:()Lnet/minecraft/core/RegistryAccess;
+      14: astore        5
+      16: aload_0
+      17: invokevirtual #746                // Method net/minecraft/client/Minecraft.getHotbarManager:()Lnet/minecraft/client/HotbarManager;
+      20: astore        6
+      22: aload         6
+      24: iload_1
+      25: invokevirtual #752                // Method net/minecraft/client/HotbarManager.get:(I)Lnet/minecraft/client/player/inventory/Hotbar;
+      28: astore        7
+      30: iload_2
+      31: ifeq          111
+      34: aload         7
+      36: aload         5
+      38: invokevirtual #813                // Method net/minecraft/client/player/inventory/Hotbar.load:(Lnet/minecraft/core/HolderLookup$Provider;)Ljava/util/List;
+      41: astore        8
+      43: iconst_0
+      44: istore        9
+      46: iload         9
+      48: invokestatic  #1064               // Method net/minecraft/world/entity/player/Inventory.getSelectionSize:()I
+      51: if_icmpge     100
+      54: aload         8
+      56: iload         9
+      58: invokeinterface #1067,  2         // InterfaceMethod java/util/List.get:(I)Ljava/lang/Object;
+      63: checkcast     #316                // class net/minecraft/world/item/ItemStack
+      66: astore        10
+      68: aload         4
+      70: invokevirtual #9                  // Method net/minecraft/client/player/LocalPlayer.getInventory:()Lnet/minecraft/world/entity/player/Inventory;
+      73: iload         9
+      75: aload         10
+      77: invokevirtual #392                // Method net/minecraft/world/entity/player/Inventory.setItem:(ILnet/minecraft/world/item/ItemStack;)V
+      80: aload_0
+      81: getfield      #324                // Field net/minecraft/client/Minecraft.gameMode:Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;
+      84: aload         10
+      86: bipush        36
+      88: iload         9
+      90: iadd
+      91: invokevirtual #328                // Method net/minecraft/client/multiplayer/MultiPlayerGameMode.handleCreativeModeItemAdd:(Lnet/minecraft/world/item/ItemStack;I)V
+      94: iinc          9, 1
+      97: goto          46
+     100: aload         4
+     102: getfield      #297                // Field net/minecraft/client/player/LocalPlayer.inventoryMenu:Lnet/minecraft/world/inventory/InventoryMenu;
+     105: invokevirtual #375                // Method net/minecraft/world/inventory/InventoryMenu.broadcastChanges:()V
+     108: goto          202
+     111: iload_3
+     112: ifeq          202
+     115: aload         7
+     117: aload         4
+     119: invokevirtual #9                  // Method net/minecraft/client/player/LocalPlayer.getInventory:()Lnet/minecraft/world/entity/player/Inventory;
+     122: aload         5
+     124: invokevirtual #1068               // Method net/minecraft/client/player/inventory/Hotbar.storeFrom:(Lnet/minecraft/world/entity/player/Inventory;Lnet/minecraft/core/RegistryAccess;)V
+     127: aload_0
+     128: getfield      #538                // Field net/minecraft/client/Minecraft.options:Lnet/minecraft/client/Options;
+     131: getfield      #783                // Field net/minecraft/client/Options.keyHotbarSlots:[Lnet/minecraft/client/KeyMapping;
+     134: iload_1
+     135: aaload
+     136: invokevirtual #787                // Method net/minecraft/client/KeyMapping.getTranslatedKeyMessage:()Lnet/minecraft/network/chat/Component;
+     139: astore        8
+     141: aload_0
+     142: getfield      #538                // Field net/minecraft/client/Minecraft.options:Lnet/minecraft/client/Options;
+     145: getfield      #1072               // Field net/minecraft/client/Options.keyLoadHotbarActivator:Lnet/minecraft/client/KeyMapping;
+     148: invokevirtual #787                // Method net/minecraft/client/KeyMapping.getTranslatedKeyMessage:()Lnet/minecraft/network/chat/Component;
+     151: astore        9
+     153: ldc_w         #1075               // String inventory.hotbarSaved
+     156: iconst_2
+     157: anewarray     #798                // class java/lang/Object
+     160: dup
+     161: iconst_0
+     162: aload         9
+     164: aastore
+     165: dup
+     166: iconst_1
+     167: aload         8
+     169: aastore
+     170: invokestatic  #800                // InterfaceMethod net/minecraft/network/chat/Component.translatable:(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+     173: astore        10
+     175: aload_0
+     176: getfield      #232                // Field net/minecraft/client/Minecraft.gui:Lnet/minecraft/client/gui/Gui;
+     179: getfield      #1077               // Field net/minecraft/client/gui/Gui.hud:Lnet/minecraft/client/gui/Hud;
+     182: aload         10
+     184: iconst_0
+     185: invokevirtual #1081               // Method net/minecraft/client/gui/Hud.setOverlayMessage:(Lnet/minecraft/network/chat/Component;Z)V
+     188: aload_0
+     189: invokevirtual #1087               // Method net/minecraft/client/Minecraft.getNarrator:()Lnet/minecraft/client/GameNarrator;
+     192: aload         10
+     194: invokevirtual #1091               // Method net/minecraft/client/GameNarrator.saySystemNow:(Lnet/minecraft/network/chat/Component;)V
+     197: aload         6
+     199: invokevirtual #1097               // Method net/minecraft/client/HotbarManager.save:()V
+     202: return
+
+  private static void lambda$getTooltipFromContainerItem$0(net.minecraft.world.item.ItemStack, java.util.List, net.minecraft.tags.TagKey);
+    Code:
+       0: aload_0
+       1: aload_2
+       2: invokevirtual #1100               // Method net/minecraft/world/item/ItemStack.is:(Lnet/minecraft/tags/TagKey;)Z
+       5: ifeq          36
+       8: aload_1
+       9: iconst_1
+      10: aload_2
+      11: invokevirtual #1104               // Method net/minecraft/tags/TagKey.location:()Lnet/minecraft/resources/Identifier;
+      14: invokestatic  #1109               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+      17: invokedynamic #1113,  0           // InvokeDynamic #6:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+      22: invokestatic  #1117               // InterfaceMethod net/minecraft/network/chat/Component.literal:(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+      25: getstatic     #1120               // Field net/minecraft/ChatFormatting.DARK_PURPLE:Lnet/minecraft/ChatFormatting;
+      28: invokevirtual #955                // Method net/minecraft/network/chat/MutableComponent.withStyle:(Lnet/minecraft/ChatFormatting;)Lnet/minecraft/network/chat/MutableComponent;
+      31: invokeinterface #961,  3          // InterfaceMethod java/util/List.add:(ILjava/lang/Object;)V
+      36: return
+
+  private static boolean lambda$updateVisibleTags$2(java.util.function.Predicate, net.minecraft.tags.TagKey);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: invokevirtual #1104               // Method net/minecraft/tags/TagKey.location:()Lnet/minecraft/resources/Identifier;
+       5: invokeinterface #1123,  2         // InterfaceMethod java/util/function/Predicate.test:(Ljava/lang/Object;)Z
+      10: ireturn
+
+  private static boolean lambda$updateVisibleTags$1(java.lang.String, java.lang.String, net.minecraft.resources.Identifier);
+    Code:
+       0: aload_2
+       1: invokevirtual #1127               // Method net/minecraft/resources/Identifier.getNamespace:()Ljava/lang/String;
+       4: aload_0
+       5: invokevirtual #1132               // Method java/lang/String.contains:(Ljava/lang/CharSequence;)Z
+       8: ifeq          26
+      11: aload_2
+      12: invokevirtual #1135               // Method net/minecraft/resources/Identifier.getPath:()Ljava/lang/String;
+      15: aload_1
+      16: invokevirtual #1132               // Method java/lang/String.contains:(Ljava/lang/CharSequence;)Z
+      19: ifeq          26
+      22: iconst_1
+      23: goto          27
+      26: iconst_0
+      27: ireturn
+
+  private static boolean lambda$updateVisibleTags$0(java.lang.String, net.minecraft.resources.Identifier);
+    Code:
+       0: aload_1
+       1: invokevirtual #1135               // Method net/minecraft/resources/Identifier.getPath:()Ljava/lang/String;
+       4: aload_0
+       5: invokevirtual #1132               // Method java/lang/String.contains:(Ljava/lang/CharSequence;)Z
+       8: ireturn
+
+  static {};
+    Code:
+       0: ldc_w         #1138               // String container/creative_inventory/scroller
+       3: invokestatic  #1140               // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+       6: putstatic     #1002               // Field SCROLLER_SPRITE:Lnet/minecraft/resources/Identifier;
+       9: ldc_w         #1144               // String container/creative_inventory/scroller_disabled
+      12: invokestatic  #1140               // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+      15: putstatic     #1006               // Field SCROLLER_DISABLED_SPRITE:Lnet/minecraft/resources/Identifier;
+      18: bipush        7
+      20: anewarray     #1128               // class net/minecraft/resources/Identifier
+      23: dup
+      24: iconst_0
+      25: ldc_w         #1146               // String container/creative_inventory/tab_top_unselected_1
+      28: invokestatic  #1140               // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+      31: aastore
+      32: dup
+      33: iconst_1
+      34: ldc_w         #1148               // String container/creative_inventory/tab_top_unselected_2
+      37: invokestatic  #1140               // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+      40: aastore
+      41: dup
+      42: iconst_2
+      43: ldc_w         #1150               // String container/creative_inventory/tab_top_unselected_3
+      46: invokestatic  #1140               // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+      49: aastore
+      50: dup
+      51: iconst_3
+      52: ldc_w         #1152               // String container/creative_inventory/tab_top_unselected_4
+      55: invokestatic  #1140               // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+      58: aastore
+      59: dup
+      60: iconst_4
+      61: ldc_w         #1154               // String container/creative_inventory/tab_top_unselected_5
+      64: invokestatic  #1140               // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+      67: aastore
+      68: dup
+      69: iconst_5
+      70: ldc_w         #1156               // String container/creative_inventory/tab_top_unselected_6
+      73: invokestatic  #1140               // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+      76: aastore
+      77: dup
+      78: bipush        6
+      80: ldc_w         #1158               // String container/creative_inventory/tab_top_unselected_7
+      83: invokestatic  #1140               // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+      86: aastore
+      87: putstatic     #1045               // Field UNSELECTED_TOP_TABS:[Lnet/minecraft/resources/Identifier;
+      90: bipush        7
+      92: anewarray     #1128               // class net/minecraft/resources/Identifier
+      95: dup
+      96: iconst_0
+      97: ldc_w         #1160               // String container/creative_inventory/tab_top_selected_1
+     100: invokestatic  #1140               // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+     103: aastore
+     104: dup
+     105: iconst_1
+     106: ldc_w         #1162               // String container/creative_inventory/tab_top_selected_2
+     109: invokestatic  #1140               // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+     112: aastore
+     113: dup
+     114: iconst_2
+     115: ldc_w         #1164               // String container/creative_inventory/tab_top_selected_3
+     118: invokestatic  #1140               // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+     121: aastore
+     122: dup
+     123: iconst_3
+     124: ldc_w         #1166               // String container/creative_inventory/tab_top_selected_4
+     127: invokestatic  #1140               // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+     130: aastore
+     131: dup
+     132: iconst_4
+     133: ldc_w         #1168               // String container/creative_inventory/tab_top_selected_5
+     136: invokestatic  #1140               // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+     139: aastore
+     140: dup
+     141: iconst_5
+     142: ldc_w         #1170               // String container/creative_inventory/tab_top_selected_6
+     145: invokestatic  #1140               // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+     148: aastore
+     149: dup
+     150: bipush        6
+     152: ldc_w         #1172               // String container/creative_inventory/tab_top_selected_7
+     155: invokestatic  #1140               // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+     158: aastore
+     159: putstatic     #1041               // Field SELECTED_TOP_TABS:[Lnet/minecraft/resources/Identifier;
+     162: bipush        7
+     164: anewarray     #1128               // class net/minecraft/resources/Identifier
+     167: dup
+     168: iconst_0
+     169: ldc_w         #1174               // String container/creative_inventory/tab_bottom_unselected_1
+     172: invokestatic  #1140               // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+     175: aastore
+     176: dup
+     177: iconst_1
+     178: ldc_w         #1176               // String container/creative_inventory/tab_bottom_unselected_2
+     181: invokestatic  #1140               // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+     184: aastore
+     185: dup
+     186: iconst_2
+     187: ldc_w         #1178               // String container/creative_inventory/tab_bottom_unselected_3
+     190: invokestatic  #1140               // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+     193: aastore
+     194: dup
+     195: iconst_3
+     196: ldc_w         #1180               // String container/creative_inventory/tab_bottom_unselected_4
+     199: invokestatic  #1140               // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+     202: aastore
+     203: dup
+     204: iconst_4
+     205: ldc_w         #1182               // String container/creative_inventory/tab_bottom_unselected_5
+     208: invokestatic  #1140               // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+     211: aastore
+     212: dup
+     213: iconst_5
+     214: ldc_w         #1184               // String container/creative_inventory/tab_bottom_unselected_6
+     217: invokestatic  #1140               // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+     220: aastore
+     221: dup
+     222: bipush        6
+     224: ldc_w         #1186               // String container/creative_inventory/tab_bottom_unselected_7
+     227: invokestatic  #1140               // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+     230: aastore
+     231: putstatic     #1051               // Field UNSELECTED_BOTTOM_TABS:[Lnet/minecraft/resources/Identifier;
+     234: bipush        7
+     236: anewarray     #1128               // class net/minecraft/resources/Identifier
+     239: dup
+     240: iconst_0
+     241: ldc_w         #1188               // String container/creative_inventory/tab_bottom_selected_1
+     244: invokestatic  #1140               // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+     247: aastore
+     248: dup
+     249: iconst_1
+     250: ldc_w         #1190               // String container/creative_inventory/tab_bottom_selected_2
+     253: invokestatic  #1140               // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+     256: aastore
+     257: dup
+     258: iconst_2
+     259: ldc_w         #1192               // String container/creative_inventory/tab_bottom_selected_3
+     262: invokestatic  #1140               // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+     265: aastore
+     266: dup
+     267: iconst_3
+     268: ldc_w         #1194               // String container/creative_inventory/tab_bottom_selected_4
+     271: invokestatic  #1140               // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+     274: aastore
+     275: dup
+     276: iconst_4
+     277: ldc_w         #1196               // String container/creative_inventory/tab_bottom_selected_5
+     280: invokestatic  #1140               // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+     283: aastore
+     284: dup
+     285: iconst_5
+     286: ldc_w         #1198               // String container/creative_inventory/tab_bottom_selected_6
+     289: invokestatic  #1140               // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+     292: aastore
+     293: dup
+     294: bipush        6
+     296: ldc_w         #1200               // String container/creative_inventory/tab_bottom_selected_7
+     299: invokestatic  #1140               // Method net/minecraft/resources/Identifier.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;
+     302: aastore
+     303: putstatic     #1048               // Field SELECTED_BOTTOM_TABS:[Lnet/minecraft/resources/Identifier;
+     306: new           #1202               // class net/minecraft/world/SimpleContainer
+     309: dup
+     310: bipush        45
+     312: invokespecial #1204               // Method net/minecraft/world/SimpleContainer."<init>":(I)V
+     315: putstatic     #382                // Field CONTAINER:Lnet/minecraft/world/SimpleContainer;
+     318: ldc_w         #1206               // String inventory.binSlot
+     321: invokestatic  #457                // InterfaceMethod net/minecraft/network/chat/Component.translatable:(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+     324: putstatic     #892                // Field TRASH_SLOT_TOOLTIP:Lnet/minecraft/network/chat/Component;
+     327: invokestatic  #147                // Method net/minecraft/world/item/CreativeModeTabs.getDefaultTab:()Lnet/minecraft/world/item/CreativeModeTab;
+     330: putstatic     #128                // Field selectedTab:Lnet/minecraft/world/item/CreativeModeTab;
+     333: return
+}

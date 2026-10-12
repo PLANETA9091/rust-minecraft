@@ -18621,13 +18621,21 @@ impl App {
     /// hovered-slot gates the loop answers (the offhand key FIRST —
     /// `slotClicked(hovered, index, 40, SWAP)`), AbstractContainerMenu
     /// .doClick pcs 1079-1382 the ContainerInput.SWAP table rides).
-    /// THE SWAP TABLE (the bytecode's own cases):
+    /// THE SEATS SPLIT (the fresh disasm's own verdict): the PALETTE
+    /// cells the screen's OWN intercept answers (slotClicked
+    /// pcs 505-586 — the slot.container == CONTAINER check the palette
+    /// cells ALONE pass, the SWAP arm the doClick walk BYPASSES: the
+    /// button row the FULL MAX-STACK COPY of the cell's own item
+    /// wears, the cell its display keeps, the empty cell the consumed
+    /// silence speaks); the STORE rows and the WRAPPED cells the
+    /// DEFAULT arm's InventoryMenu.clicked ride (the doClick CASE
+    /// table below — the SlotWrapper.target.index the menu id space
+    /// translates). THE SWAP TABLE (the bytecode's own cases):
     /// - the hotbar slot empty && the hovered slot empty → NOTHING
     ///   (pc 1130-1146);
     /// - CASE B (pc 1149-1202, the hotbar empty): the hovered stack
-    ///   rides the hotbar row AS-IS (the palette's count-1 display
-    ///   law the whole count keeps — never a max), the hovered cell
-    ///   EMPTIES (onSwapCraft + setByPlayer(EMPTY) the walk speaks);
+    ///   rides the hotbar row AS-IS, the hovered cell EMPTIES
+    ///   (onSwapCraft + setByPlayer(EMPTY) the walk speaks);
     /// - CASE C (pc 1205-1273, the hovered empty): the hovered cell
     ///   takes `min(count, getMaxStackSize(stack))` — the base Slot's
     ///   own per-item max the stack's law answers (the egg the 16, the
@@ -18639,6 +18647,15 @@ impl App {
     ///   first-empty order keeps, the NO-room tail the world drop
     ///   speaks) — the count <= max arm the straight SWAP wears (the
     ///   hotbar takes the hovered stack, the cell takes the hotbar's).
+    /// THE LIVE LANE (the CreativeInventoryListener's law — the
+    /// screen's init pc 143-175 registers the listener on the
+    /// inventoryMenu, the broadcastChanges the changed slots speak,
+    /// the listener's slotChanged the handleCreativeModeItemAdd word
+    /// answers, the ServerboundSetCreativeModeSlotPacket per changed
+    /// slot rides): the live session the words speak (the palette's
+    /// ONE write, the CASE walk's button-row + hovered-cell pair),
+    /// the belief the menu ids mirror, the selected slot's ride the
+    /// hand follows; the offline session the lane never spends.
     /// The digit's key the screen CONSUMES whenever the walk answered
     /// or the search seat holds the focus (the world's hotbar-select
     /// keybind the open picker never reads — the keyPressed true the
@@ -18701,6 +18718,16 @@ impl App {
             };
             let Some(row) = row else {
                 return true; // the armor's mayPlace / the bin's silence
+            };
+            // THE HOVERED CELL'S OWN MENU ID (the default arm's own
+            // translation — the SlotWrapper.target.index the walk
+            // reads: the main 9..35, the hotbar 36..44, the offhand
+            // 45; the armor/bin the early return the silence keeps)
+            let hovered_menu = match slot {
+                CreativeWrapSlot::Main(i) => 9 + i as i32,
+                CreativeWrapSlot::Hotbar(i) => 36 + i as i32,
+                CreativeWrapSlot::Offhand => 45,
+                CreativeWrapSlot::Armor(_) | CreativeWrapSlot::Bin => 0,
             };
             let (hotbar_id, hotbar_count) = if button == 40 {
                 self.inventory.offhand[0]
@@ -18800,26 +18827,79 @@ impl App {
                 put_hover(self, (hotbar_id, hotbar_count));
                 put_row(self, hovered);
             }
+            // THE LIVE WORDS (the default arm's own tail — the
+            // broadcastChanges the changed slots speak, the listener
+            // the packet per slot rides: the button row + the hovered
+            // cell, the InventoryMenu's id space the walk translates;
+            // the case-D merge cascade's own words the add-back walk
+            // the NEXT round banks — the primary pair the lane rides)
+            let button_menu = if button == 40 { 45 } else { 36 + button as i32 };
+            let button_stack = if button == 40 {
+                self.inventory.offhand[0]
+            } else {
+                self.inventory.items[button]
+            };
+            let cell_stack = if row == usize::MAX {
+                self.inventory.offhand[0]
+            } else {
+                self.inventory.items[row]
+            };
             self.hotbar_slots = self.inventory.hotbar();
+            self.creative_swap_live_words(&[
+                (hovered_menu, cell_stack),
+                (button_menu, button_stack),
+            ]);
             return true;
         }
-        if palette_cell.is_none() && store_slot.is_none() {
-            return search_seat;
-        }
-        // THE SEARCH SEAT'S OWN VERDICTS (keyPressed pc 54-80 + the
-        // focused-box tail): the palette cell WITHOUT an item the
-        // flag2 keeps (the hasItem gate the walk requires), the
-        // NOTHING-hover the focused box keeps — BOTH consume the key
-        // (the world keybinds the search tab never reads)
-        if search_seat && palette_cell.is_some() {
-            let has_item = palette_cell
-                .and_then(|c| self.creative_palette.get(c))
-                .is_some_and(|&(id, count)| count > 0 && id != 0);
-            if !has_item {
-                return true;
-            }
-        }
         let button = if button == 40 { 40 } else { button.min(8) };
+        // THE PALETTE'S OWN SWAP INTERCEPT (the 26.2 slotClicked's own
+        // arm — javap creative_inv_screen_262_full.txt pcs 505-586: the
+        // slot.container == CONTAINER check the palette cells ALONE
+        // pass — the CustomCreativeSlot the SimpleContainer wraps, the
+        // hotbar row's own Inventory the check refuses — and the SWAP
+        // arm pc 533-586 the doClick CASE walk BYPASSES:
+        // `player.getInventory().setItem(button,
+        // slotItem.copyWithCount(slotItem.getMaxStackSize()))` +
+        // `broadcastChanges()` + return). THE LAW: the button row the
+        // FULL MAX-STACK COPY of the CELL'S OWN ITEM wears (the cell's
+        // per-item max the copy count speaks — the stone the 64, the
+        // egg the 16), the cell its display copy KEEPS (the palette
+        // never depletes), the row's OLD stack the overwrite DISCARDS
+        // (the setItem the add-back walk never reads — the creative
+        // discard the free law keeps), the empty cell the consumed
+        // silence wears (the isEmpty gate pc 541-546 the write skips,
+        // the return pc 586 the verdict keeps). THE MEMORY LAW THE
+        // BYTECODE REFUTED (the dev-30 gotcha's shape a FIFTH time):
+        // the prior round's palette arm the doClick CASE walk rode —
+        // the count-1/whole take + the cell write-back the walk
+        // served; the CONTAINER intercept the CASE walk never
+        // reaches, the max-copy law the fresh disasm speaks. THE
+        // SEARCH SEAT the same palette law wears (the loaded cell the
+        // intercept answers BEFORE the focused box the keyPressed
+        // pcs 92-114 order keeps, the empty cell the consumed silence
+        // the old hasItem gate's verdict preserves)
+        if let Some(cell) = palette_cell {
+            let (id, count) = self.creative_palette[cell];
+            if count <= 0 || id == 0 {
+                return true; // the empty cell the consumed silence keeps
+            }
+            let copy = (id, crate::world_view::item_max_stack(id));
+            let menu_id = if button == 40 { 45 } else { 36 + button as i32 };
+            if button == 40 {
+                self.inventory.offhand[0] = copy;
+            } else {
+                self.inventory.items[button] = copy;
+            }
+            self.hotbar_slots = self.inventory.hotbar();
+            // THE LIVE WORD (the CreativeInventoryListener the
+            // broadcastChanges fires — the ONE changed slot the ONE
+            // packet rides)
+            self.creative_swap_live_words(&[(menu_id, copy)]);
+            return true;
+        }
+        let Some(s) = store_slot else {
+            return search_seat;
+        };
         // THE OFFHAND ROW (the doClick pc 1086-1101 gate — the button
         // 40 the offhand container's own getItem answers, the digits
         // 0..8 the hotbar rows keep)
@@ -18828,13 +18908,10 @@ impl App {
         } else {
             self.inventory.items[button]
         };
-        // THE HOVERED STACK + ITS WRITE-BACK SEAT
-        let hovered = if let Some(cell) = palette_cell {
-            self.creative_palette[cell]
-        } else {
-            let s = store_slot.unwrap();
-            self.inventory.items[s]
-        };
+        // THE HOVERED STACK (the store cell's own seat — the bottom
+        // row the hotbar indices keep, the menu ids 36..44 the wire
+        // lane speaks)
+        let hovered = self.inventory.items[s];
         if hotbar_count <= 0 && hovered.1 <= 0 {
             return true; // pc 1130-1146: the both-empty silence
         }
@@ -18938,14 +19015,64 @@ impl App {
             target = (hotbar_id, hotbar_count);
         }
         // the target lands (the setByPlayer the cell's own seat wears)
-        if let Some(cell) = palette_cell {
-            self.creative_palette[cell] = target;
-        } else {
-            let s = store_slot.unwrap();
-            self.inventory.items[s] = target;
-        }
+        self.inventory.items[s] = target;
         self.hotbar_slots = self.inventory.hotbar();
+        // THE LIVE WORDS (the CreativeInventoryListener's law — the
+        // TWO changed slots the pair speaks: the hovered cell + the
+        // button row, the ascending menu ids the diff loop keeps)
+        let button_menu = if button == 40 { 45 } else { 36 + button as i32 };
+        let button_stack = if button == 40 {
+            self.inventory.offhand[0]
+        } else {
+            self.inventory.items[button]
+        };
+        self.creative_swap_live_words(&[
+            (36 + s as i32, target),
+            (button_menu, button_stack),
+        ]);
         true
+    }
+
+    /// THE SWAP'S OWN LIVE TAIL (the 26.2 wire law the fresh javap
+    /// banks — the screen's init walk pc 143-175 the
+    /// CreativeInventoryListener registers on the inventoryMenu, the
+    /// removed() walk pc 38-41 it lifts; the InventoryMenu's
+    /// broadcastChanges the lastSlots diff per changed slot speaks,
+    /// the listener's slotChanged the `handleCreativeModeItemAdd(
+    /// stack, slotInd)` word answers, the
+    /// ServerboundSetCreativeModeSlotPacket the wire rides — one
+    /// packet per changed slot, the InventoryMenu's id space the
+    /// slotInd keeps): the changed (menuId, stack) pairs the walk
+    /// collected — the live belief the menu ids mirror, the words the
+    /// ascending order speak (the detectAndSendChanges loop the slot
+    /// order keeps), the HUD row the live belief re-projects, the
+    /// selected slot's ride the hand follows (the vanilla's own
+    /// setItem the MainHandItem updates — the load lane's law the
+    /// hotbar chords speak). The offline session the lane never
+    /// spends (the listener the live session's screen registers).
+    fn creative_swap_live_words(&mut self, changed: &[(i32, (i32, i32))]) {
+        if !self.world_is_network || changed.is_empty() {
+            return;
+        }
+        let mut words: std::collections::BTreeMap<i32, (i32, i32)> =
+            std::collections::BTreeMap::new();
+        for (menu_id, stack) in changed {
+            words.insert(*menu_id, *stack);
+        }
+        for (menu_id, stack) in &words {
+            self.live_inv_slots[*menu_id as usize] = *stack;
+            if let Some(sink) = self.live_clicks.as_ref() {
+                let _ = sink.send(crate::world_view::ContainerCommand::CreativeSetSlot {
+                    slot: *menu_id,
+                    item: *stack,
+                });
+            }
+        }
+        self.hotbar_slots = self.live_hotbar_row();
+        let selected = 36 + self.selected_hotbar as i32;
+        if let Some(&stack) = words.get(&selected) {
+            self.live_held_updated(Some(stack));
+        }
     }
 
     /// THE PICKER'S OWN Q (the 26.2 CreativeModeInventoryScreen.keyPressed's
@@ -103587,15 +103714,18 @@ cow_sound_variant: None,
         assert_eq!(app.creative_tab, 13, "the persisted tab the init walk answers");
     }
 
-    /// THE PICKER'S OWN SWAP (the number-key walk the jar's decoded
-    /// table keeps — doClick's ContainerInput.SWAP cases B/C/D): the
-    /// empty row takes the palette's count-1 AS-IS (the cell the take
-    /// empties), the same-item filled row the straight swap wears,
-    /// the egg's 40 the cell's 16 max splits (the row the rest keeps,
-    /// the old stack the add-back keeps), the empty cell takes
-    /// min(count, max), the bottom rows the same table wear, the
-    /// search seat's empty hole the digit consumes (the focused box
-    /// verdict), the carried gate the world chain answers (false).
+    /// THE PICKER'S OWN SWAP (the jar's decoded walk — the seats the
+    /// fresh disasm SPLITS: the PALETTE cells the screen's OWN
+    /// intercept answers — slotClicked pcs 533-586 the button row the
+    /// FULL MAX-STACK COPY of the cell's own item wears, the cell its
+    /// display keeps, the row's old stack the overwrite discards, the
+    /// empty cell the consumed silence speaks — the doClick CASE table
+    /// the intercept NEVER reaches; the bottom STORE rows the CASE
+    /// table ride: the empty hovered cell takes min(count, max), the
+    /// filled pair the straight swap wears, the egg's 40 the cell's
+    /// 16 max splits — the row the rest keeps), the search seat's
+    /// empty hole the digit consumes (the focused box verdict), the
+    /// carried gate the world chain answers (false).
     #[test]
     fn the_creative_swap_the_digit_the_table_wears() {
         let stone = mc_registry::item_id_by_name("stone").unwrap();
@@ -103608,45 +103738,51 @@ cow_sound_variant: None,
         app.creative_panel = creative_panel_origin(640, 360);
         let (px, py) = app.creative_panel;
         let cell0 = (px + 9 + 8, py + 18 + 8);
-        let cell5 = (px + 9 + 5 * 18 + 8, py + 18 + 8);
         let store8 = (px + 9 + 8 * 18 + 8, py + 112 + 8);
         let store9 = (px + 9 + 9 * 18 + 8, py + 112 + 8);
-        // THE EMPTY-ROW TAKE (case B — the palette's count-1 rides
-        // AS-IS, never a max; the cell the take EMPTIES)
+        // THE PALETTE'S MAX-COPY (the intercept's own law — the
+        // cell's count-1 display the FULL max the copy speaks, the
+        // cell the take NEVER depletes)
         app.mouse_pos = Some(cell0);
-        assert!(app.on_creative_swap_key(0), "the walk the take answers");
+        assert!(app.on_creative_swap_key(0), "the intercept the copy answers");
         assert_eq!(
             app.inventory.items[0],
-            (stone, 1),
-            "the count-1 the whole law keeps"
+            (stone, 64),
+            "the full max the cell's own item speaks"
         );
-        assert_eq!(app.creative_palette[0], (0, 0), "the cell the take empties");
-        // THE SAME-ITEM SWAP (case D <= max — the straight swap)
-        app.inventory.items[0] = (stone, 10);
-        app.creative_palette[0] = (stone, 1);
-        app.mouse_pos = Some(cell0);
+        assert_eq!(app.creative_palette[0], (stone, 1), "the cell the copy keeps");
+        // THE CELL'S OWN MAX (the egg's 16 the copy count answers —
+        // the cell's per-item ceiling the law wears, never the row's)
+        app.creative_palette[0] = (egg, 1);
         assert!(app.on_creative_swap_key(0));
-        assert_eq!(app.inventory.items[0], (stone, 1), "the row the hovered took");
-        assert_eq!(app.creative_palette[0], (stone, 10), "the cell the row took");
-        // THE EGG'S OWN SPLIT (case D > max — the cell takes the 16,
-        // the row keeps the rest, the old stack the add-back keeps)
+        assert_eq!(app.inventory.items[0], (egg, 16), "the egg's own max rides");
+        assert_eq!(app.creative_palette[0], (egg, 1), "the cell the copy keeps");
+        // THE OVERWRITE DISCARD (the row's old stack the setItem
+        // never reads — the creative discard the free law keeps, the
+        // add-back walk the intercept never serves)
         app.inventory.items[0] = (egg, 40);
         app.creative_palette[0] = (stone, 1);
-        app.mouse_pos = Some(cell0);
         assert!(app.on_creative_swap_key(0));
-        assert_eq!(app.creative_palette[0], (egg, 16), "the cell the max takes");
-        assert_eq!(app.inventory.items[0], (egg, 24), "the row the rest keeps");
+        assert_eq!(app.inventory.items[0], (stone, 64), "the row the copy takes");
         assert!(
-            app.inventory.items.iter().any(|&s| s == (stone, 1)),
-            "the old stack the add-back keeps"
+            !app.inventory.items.iter().any(|&s| s == (egg, 40)),
+            "the old stack the overwrite discards"
         );
-        // THE EMPTY-CELL MOVE (case C — the cell takes min(count,max))
-        app.inventory.items[1] = (egg, 40);
-        app.creative_palette[5] = (0, 0);
-        app.mouse_pos = Some(cell5);
-        assert!(app.on_creative_swap_key(1));
-        assert_eq!(app.creative_palette[5], (egg, 16), "the cell the min takes");
-        assert_eq!(app.inventory.items[1], (egg, 24), "the row the remainder keeps");
+        // THE EMPTY CELL'S SILENCE (the isEmpty gate the write skips
+        // — the consumed verdict the silence keeps)
+        app.creative_palette[0] = (0, 0);
+        app.inventory.items[0] = (egg, 3);
+        assert!(app.on_creative_swap_key(0), "the empty cell the silence keeps");
+        assert_eq!(app.inventory.items[0], (egg, 3), "the row untouched");
+        // THE STORE ROW'S SPLIT (case C the bottom rows ride — the
+        // filled button row the empty cell's min(count, max) takes,
+        // the row the remainder keeps)
+        app.inventory.items[0] = (egg, 40);
+        app.inventory.items[8] = (0, 0);
+        app.mouse_pos = Some(store8);
+        assert!(app.on_creative_swap_key(0), "the store row the case answers");
+        assert_eq!(app.inventory.items[8], (egg, 16), "the cell the min takes");
+        assert_eq!(app.inventory.items[0], (egg, 24), "the row the rest keeps");
         // THE STORE ROW SWAP (the bottom rows the same table wears —
         // the hotbar tail's real cell 8 the loop's own bound speaks)
         app.inventory.items[0] = (stone, 7);
@@ -103665,16 +103801,22 @@ cow_sound_variant: None,
         assert!(!app.on_creative_swap_key(0), "the phantom the miss wears");
         assert_eq!(app.inventory.items[0], (stone, 7), "the row untouched");
         assert_eq!(app.inventory.items[9], (egg, 3), "the slot untouched");
-        // THE OFFHAND SWAP (button 40 — the F key's own first arm)
+        // THE OFFHAND'S OWN COPY (button 40 — the F key's first arm,
+        // the menu id 45 the wire lane speaks)
         app.inventory.offhand[0] = (0, 0);
         app.creative_palette[0] = (stone, 1);
         app.mouse_pos = Some(cell0);
         assert!(app.on_creative_swap_key(40));
-        assert_eq!(app.inventory.offhand[0], (stone, 1), "the offhand the take wears");
-        assert_eq!(app.creative_palette[0], (0, 0), "the cell the offhand took");
+        assert_eq!(
+            app.inventory.offhand[0],
+            (stone, 64),
+            "the offhand the max wears"
+        );
+        assert_eq!(app.creative_palette[0], (stone, 1), "the cell the copy keeps");
         // THE SEARCH SEAT'S EMPTY HOLE (the digit the box consumes —
         // no change rides)
         app.select_creative_tab(6);
+        app.creative_palette[44] = (0, 0);
         let tail = (px + 9 + 8 * 18 + 8, py + 18 + 4 * 18 + 8);
         app.mouse_pos = Some(tail);
         assert!(app.on_creative_swap_key(0), "the focused box consumes");
@@ -103694,6 +103836,126 @@ cow_sound_variant: None,
         app.select_creative_tab(0);
         app.mouse_pos = Some((px - 40, py - 40));
         assert!(!app.on_creative_swap_key(0), "the no-slot miss");
+    }
+
+    /// THE SWAP'S OWN LIVE LANE (the 26.2 wire law the fresh javap
+    /// banks — the screen's init pc 143-175 the CreativeInventoryListener
+    /// registers, the broadcastChanges the changed slots speak, the
+    /// listener's slotChanged the handleCreativeModeItemAdd(stack,
+    /// slotInd) word answers, the ServerboundSetCreativeModeSlotPacket
+    /// rides): the palette cell's max-copy the ONE word wears (the
+    /// button row's menu id the packet carries), the store rows the
+    /// PAIR speak (the button row + the hovered cell, the ascending
+    /// menu ids the diff loop keeps), the live belief the menu ids
+    /// mirror, the selected slot's ride the hand follows, the HUD row
+    /// the live projection re-speaks; the offline session the words
+    /// never spends (the sink the lane's early return never reads).
+    #[test]
+    fn the_creative_swap_the_live_lane_the_creative_word_rides() {
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let egg = mc_registry::item_id_by_name("egg").unwrap();
+        // THE LIVE SESSION (the net world the wire's own harness keeps
+        // — the glide test's shape the lane wears: the sink the
+        // attach speaks, the creative gate the picker's screen field
+        // the live E-gate the later round banks)
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (tx, rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        app.game_mode = GameMode::Creative;
+        app.screen = ScreenKind::Creative;
+        app.creative_tab = 0;
+        app.creative_panel = creative_panel_origin(640, 360);
+        let (px, py) = app.creative_panel;
+        let cell0 = (px + 9 + 8, py + 18 + 8);
+        let store2 = (px + 9 + 2 * 18 + 8, py + 112 + 8);
+        // THE PALETTE'S ONE WORD (the max-copy the intercept speaks —
+        // the button row's menu id 36 the packet carries, the cell its
+        // display keeps)
+        app.creative_palette[0] = (stone, 1);
+        app.mouse_pos = Some(cell0);
+        assert!(app.on_creative_swap_key(0), "the intercept the live wears");
+        assert_eq!(app.live_inv_slots[36], (stone, 64), "the belief the id mirrors");
+        assert_eq!(app.hotbar_slots[0], (stone, 64), "the HUD the live row speaks");
+        assert_eq!(app.live_held, Some(stone), "the selected slot the hand follows");
+        assert_eq!(app.creative_palette[0], (stone, 1), "the cell the copy keeps");
+        let words: Vec<_> = std::iter::from_fn(|| rx.try_recv().ok()).collect();
+        assert_eq!(
+            words,
+            vec![crate::world_view::ContainerCommand::CreativeSetSlot {
+                slot: 36,
+                item: (stone, 64)
+            }],
+            "the ONE word the ONE changed slot rides"
+        );
+        // THE STORE ROW'S PAIR (the CASE walk the default arm rides —
+        // the button row 5 + the hovered cell 2, the ascending menu
+        // ids the diff loop keeps, the empty write the changed slot
+        // speaks)
+        app.inventory.items[2] = (egg, 40);
+        app.inventory.items[5] = (0, 0);
+        app.mouse_pos = Some(store2);
+        assert!(app.on_creative_swap_key(5), "the store row the live wears");
+        assert_eq!(app.live_inv_slots[38], (0, 0), "the emptied cell the belief keeps");
+        assert_eq!(app.live_inv_slots[41], (egg, 40), "the row the ride mirrors");
+        assert_eq!(app.hotbar_slots[5], (egg, 40), "the HUD the row syncs");
+        let words: Vec<_> = std::iter::from_fn(|| rx.try_recv().ok()).collect();
+        assert_eq!(
+            words,
+            vec![
+                crate::world_view::ContainerCommand::CreativeSetSlot {
+                    slot: 38,
+                    item: (0, 0)
+                },
+                crate::world_view::ContainerCommand::CreativeSetSlot {
+                    slot: 41,
+                    item: (egg, 40)
+                },
+            ],
+            "the pair the ascending ids speak"
+        );
+        // THE OFFHAND'S WORD (button 40 — the menu id 45 the F lane
+        // speaks, the offhand stack the live belief answers)
+        app.creative_palette[0] = (stone, 1);
+        app.mouse_pos = Some(cell0);
+        assert!(app.on_creative_swap_key(40));
+        assert_eq!(app.live_inv_slots[45], (stone, 64), "the offhand the id mirrors");
+        let words: Vec<_> = std::iter::from_fn(|| rx.try_recv().ok()).collect();
+        assert_eq!(
+            words,
+            vec![crate::world_view::ContainerCommand::CreativeSetSlot {
+                slot: 45,
+                item: (stone, 64)
+            }],
+            "the offhand's word the 45 carries"
+        );
+        // THE EMPTY CELL'S SILENCE OVER LIVE (the isEmpty gate the
+        // write skips — NO word the silence speaks)
+        app.creative_palette[0] = (0, 0);
+        assert!(app.on_creative_swap_key(0), "the empty cell the silence keeps");
+        assert!(
+            rx.try_recv().is_err(),
+            "the silence the wire never spends"
+        );
+        // THE OFFLINE CONTROL ARM (the plain world the wire never
+        // spends — the sink the early return never reads, the rows
+        // the offline belief wears)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.game_mode = GameMode::Creative;
+        app.open_inventory();
+        app.creative_panel = creative_panel_origin(640, 360);
+        let (tx, rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        app.creative_palette[0] = (stone, 1);
+        app.mouse_pos = Some((app.creative_panel.0 + 9 + 8, app.creative_panel.1 + 18 + 8));
+        assert!(app.on_creative_swap_key(0), "the offline the copy wears");
+        assert_eq!(app.inventory.items[0], (stone, 64), "the rows the offline keeps");
+        assert!(
+            rx.try_recv().is_err(),
+            "the offline session the words never spends"
+        );
     }
 
     /// THE WRAPPED SEAT (the selectTab's INVENTORY arm the bytecode
