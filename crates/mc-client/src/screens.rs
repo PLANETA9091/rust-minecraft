@@ -13306,6 +13306,10 @@ impl App {
                 crate::drops::merge_pass(&mut self.drops);
                 if let Some(b) = self.body.as_ref() {
                     let selected = self.selected_hotbar;
+                    // THE ROW BEFORE THE TAKE (the broadcastChanges' own
+                    // snapshot shape — the diff the vanilla server
+                    // speaks, the verdict the client's cpl walk wears)
+                    let hotbar_before = self.inventory.hotbar();
                     let mut picked = false;
                     for d in self.drops.iter_mut() {
                         if crate::drops::pickup_scan(b, d) {
@@ -13321,8 +13325,30 @@ impl App {
                         // the packet's sound beat the offline lane speaks
                         // directly)
                         self.sounds.play_pickup(self.frame);
+                        // THE PICKUP'S OWN POP (javap 26.2
+                        // ClientPacketListener.handleContainerSetSlot pcs
+                        // 97-148 — the integrated server's own SetSlot
+                        // words the singleplayer client answers: the
+                        // changed hotbar slot's fresh stack the grow/empty
+                        // law pops, setPopTime(5) the verdict wears, the
+                        // inventoryTick decay the game ticks speak). The
+                        // before/after row the diff reads, the same
+                        // `old.count < incoming.count` fold the live
+                        // lane's model walk records (the empty arm the
+                        // sentinel compare carries). The MAIN grid and
+                        // the offhand lands the isHotbarSlot gate the
+                        // pop never wears, the untouched slots the
+                        // in-flight pops keep decaying.
+                        let hotbar_after = self.inventory.hotbar();
+                        for (i, (old, new)) in
+                            hotbar_before.iter().zip(hotbar_after.iter()).enumerate()
+                        {
+                            if new.1 > 0 && old.1 < new.1 {
+                                self.hotbar_pop[i] = 5;
+                            }
+                        }
                         // the hotbar's projection refreshes with the take
-                        self.hotbar_slots = self.inventory.hotbar();
+                        self.hotbar_slots = hotbar_after;
                     }
                 }
                 self.drops.retain(|d| d.count > 0);
@@ -89334,6 +89360,75 @@ cow_sound_variant: None,
                 "the pickup fold's own volume: {pickup_entry}"
             );
         }
+    }
+
+    /// THE OFFLINE PICKUP'S OWN POP (javap 26.2
+    /// `ClientPacketListener.handleContainerSetSlot` pcs 97-148 — the
+    /// integrated server's own SetSlot words the singleplayer client
+    /// answers: the changed hotbar slot's fresh stack the grow/empty
+    /// law pops, `setPopTime(5)` the verdict wears, the
+    /// `inventoryTick` decay the game ticks ride): the take the
+    /// before/after row diff reads, the grown slot the pop arms, the
+    /// untouched slots the pops they had keep, and the merge into a
+    /// partial stack the same law re-arms.
+    #[test]
+    fn the_offline_pickup_the_hotbar_pops() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let body = app.body.as_ref().unwrap();
+        let (bx, by, bz) = (body.x, body.y, body.z);
+        // THE DROP AT THE BODY (the entity-loot spawn's own shape —
+        // the pickup_delay the test pre-drains, the scan the next
+        // tick speaks)
+        let mut rng = crate::drops::Lcg::new(0x5EED_10CA);
+        app.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+            1,
+            dirt,
+            3,
+            bx,
+            by + 0.5,
+            bz,
+            &mut rng,
+        ));
+        app.drops[0].pickup_delay = 0;
+        // THE FIRST PICKUP: the empty hotbar slot the take lands in —
+        // the grow the pop arms (the empty arm the sentinel compare
+        // carries), the whole stack the single slot absorbs
+        app.update();
+        assert!(app.drops.is_empty(), "the take the whole stack spoke");
+        assert_eq!(app.inventory.items[0], (dirt, 3), "the take the slot holds");
+        assert_eq!(app.hotbar_slots[0], (dirt, 3), "the HUD's projection");
+        assert_eq!(app.hotbar_pop[0], 5, "the fresh pick pops");
+        assert_eq!(app.hotbar_pop[1], 0, "the silent slot stays silent");
+        // THE DECAY: the next game tick the pop rides down (the
+        // update()'s own inventoryTick walk)
+        app.update();
+        assert_eq!(app.hotbar_pop[0], 4, "the tick's own decay");
+        // THE SECOND PICKUP (the merge into the partial stack — the
+        // count the take grows, the same law re-arms): the tick's
+        // head the decay speaks BEFORE the pickup arms, the 5 the
+        // fresh verdict wears
+        app.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+            2,
+            dirt,
+            2,
+            bx,
+            by + 0.5,
+            bz,
+            &mut rng,
+        ));
+        app.drops[0].pickup_delay = 0;
+        app.update();
+        assert_eq!(app.inventory.items[0], (dirt, 5), "the merge the slot grows");
+        assert_eq!(app.hotbar_pop[0], 5, "the grow re-pops");
+        // THE SETTLE: the five ticks the pop rides, the plain draw the
+        // f <= 0 gate keeps
+        for _ in 0..5 {
+            app.update();
+        }
+        assert_eq!(app.hotbar_pop[0], 0, "the five ticks the pop rides");
     }
 
     /// THE SURVIVAL CONSUME: the placement rides the selected stack's
