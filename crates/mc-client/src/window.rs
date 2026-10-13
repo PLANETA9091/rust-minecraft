@@ -1874,9 +1874,18 @@ pub fn run_gui_app(
             // slotClicked(hovered, index, 40, SWAP) walk rides; the
             // survival screen's own seat the InventoryMenu$1's plain
             // mayPlace law answers — the fresh offhand_slot_262.txt dump
-            // the walk banks; the world lane the open screen's
-            // consumption keeps)
-            if !app.on_inventory_swap_key(40) && !app.on_creative_swap_key(40) {
+            // the walk banks; the CHEST/FURNACE/TABLE screens the SAME
+            // base-class walk keeps — the hovered seat's own verdicts
+            // the screens' swap tables speak, the offhand the
+            // `inventory.getItem(40)` walk the player Inventory alone
+            // answers (the outside-menu seat the changed map can't
+            // name); the world lane the open screen's consumption keeps)
+            if !app.on_inventory_swap_key(40)
+                && !app.on_chest_swap_key(40)
+                && !app.on_furnace_swap_key(40)
+                && !app.on_table_swap_key(40)
+                && !app.on_creative_swap_key(40)
+            {
                 app.on_swap_offhand_key();
             }
         }

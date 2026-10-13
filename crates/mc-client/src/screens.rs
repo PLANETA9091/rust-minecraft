@@ -23474,8 +23474,11 @@ impl App {
     ///   Slots — the TRUE pair, the max the item's own law;
     /// - the STORE rows: the plain Slots — the TRUE pair.
     /// THE OFFHAND (button 40) the crafting menu never slots — the F
-    /// arm the later jar round banks (the outside-menu seat the
-    /// changed map can't name); the digits the walk alone wears. The
+    /// arm the SAME walk answers (the checkHotbarKeyPressed's own
+    /// FIRST arm the `slotClicked(hovered, hovered.index, 40, SWAP)`
+    /// walk rides — the outside-menu seat the changed map can't name,
+    /// the player Inventory's own offhand the `inventory.getItem(40)`
+    /// walk answers); the digits the button rows wear. The
     /// true verdict the digit CONSUMES either way (the SWAP arm ran —
     /// the refusals the checkHotbarKeyPressed's own true-return
     /// keep); the false verdicts the world chain answers.
@@ -23541,6 +23544,11 @@ impl App {
             window_id,
             state_id,
             self.live_table_carried,
+            // THE OFFHAND'S OWN BELIEF (the doClick SWAP table's
+            // `inventory.getItem(40)` the player Inventory answers —
+            // the window-0 menu's own slot 45 the HUD rides, the
+            // outside-menu seat the changed map can't name)
+            &mut self.live_inv_slots[45],
         );
         true
     }
@@ -23693,9 +23701,13 @@ impl App {
     /// offline stand-in no window keeps, the swap lane the wire's own
     /// shape the chest/table rounds bank), the CARRIED gate the false
     /// BEFORE the packet lane keeps. THE OFFHAND (button 40) the
-    /// furnace menu never slots — the F arm the later jar round banks
-    /// (the outside-menu seat the changed map can't name); the digits
-    /// the walk alone wears. The true verdict the digit CONSUMES
+    /// furnace menu never slots — the F arm this walk's own bank wears
+    /// (the checkHotbarKeyPressed's own FIRST arm the
+    /// `slotClicked(hovered, hovered.index, 40, SWAP)` walk rides —
+    /// the outside-menu seat the changed map can't name, the player
+    /// Inventory's own offhand the `inventory.getItem(40)` walk
+    /// answers); the digits the button rows wear. The true verdict the
+    /// digit CONSUMES
     /// either way (the SWAP arm ran — the refusals the
     /// checkHotbarKeyPressed's own true-return keep); the false
     /// verdicts the world chain answers.
@@ -23740,6 +23752,11 @@ impl App {
             window_id,
             state_id,
             self.live_furnace_carried,
+            // THE OFFHAND'S OWN BELIEF (the doClick SWAP table's
+            // `inventory.getItem(40)` the player Inventory answers —
+            // the window-0 menu's own slot 45 the HUD rides, the
+            // outside-menu seat the changed map can't name)
+            &mut self.live_inv_slots[45],
         );
         true
     }
@@ -23868,8 +23885,11 @@ impl App {
     /// the doClick SWAP arm's `inventory.getItem(40)` the player
     /// Inventory alone answers, the mutation the chest menu's slot
     /// list never names (the changed map the outside-menu seat can't
-    /// speak) — the F arm the later jar round banks; this walk the
-    /// digits alone wear (the debug_assert the vanilla gate keeps).
+    /// speak) — the F arm the SAME walk answers (the
+    /// checkHotbarKeyPressed's own FIRST arm the `slotClicked(hovered,
+    /// hovered.index, 40, SWAP)` walk rides, the offhand belief the
+    /// window-0 menu's own slot 45 wears); the digits the button rows
+    /// wear (the debug_assert the vanilla gate keeps).
     /// The true verdict the digit CONSUMES either way (the both-empty
     /// press the consumed silence keeps — the packet STILL rides, the
     /// slotClicked call the keyPressed walk keeps unconditional).
@@ -23913,6 +23933,11 @@ impl App {
             window_id,
             state_id,
             self.chest_carried,
+            // THE OFFHAND'S OWN BELIEF (the doClick SWAP table's
+            // `inventory.getItem(40)` the player Inventory answers —
+            // the window-0 menu's own slot 45 the HUD rides, the
+            // outside-menu seat the changed map can't name)
+            &mut self.live_inv_slots[45],
         );
         true
     }
@@ -49751,22 +49776,34 @@ fn wire_chest_swap(
     window_id: i32,
     state_id: i32,
     carried: (i32, i32),
+    offhand: &mut (i32, i32),
 ) {
     debug_assert!(button < 9 || button == 40, "the SWAP input's own gate");
     debug_assert!(menu < 63, "the chest seat's own bounds");
-    let row_idx = 27 + button; // the mirror's hotbar row — menu 54+button
+    // THE ROW SEAT (the doClick SWAP table's `inventory.getItem(button)`
+    // walk): the digits the mirror's hotbar rows speak (menu 54+button),
+    // button 40 the player Inventory's OFFHAND answers (the index 40 the
+    // bytecode keys) — the outside-menu seat the changed map can't name
+    // (the delta the F round banks), the belief the
+    // [`App::live_inv_slots`]'s own slot 45 wears
+    let row_idx = if button == 40 { None } else { Some(27 + button) };
     let (hover_id, hover_count) = if menu < 27 {
         grid[menu]
     } else {
         mirror[menu - 27]
     };
-    let (row_id, row_count) = mirror[row_idx];
+    let (row_id, row_count) = match row_idx {
+        Some(ri) => mirror[ri],
+        None => *offhand,
+    };
     let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
     let fired = !(row_count <= 0 && hover_count <= 0);
     if fired {
-        if menu == 54 + button {
+        if menu >= 27 && Some(menu - 27) == row_idx {
             // THE SAME SEAT — the vanilla walk the identical pair sets
-            // back, no mutation the diff ever names
+            // back, no mutation the diff ever names (the offhand row
+            // the seat's menu id never wears — no same-seat press the
+            // F arm speaks)
         } else if row_count <= 0 {
             // CASE B (pc 1149-1202): the hovered stack rides the
             // button row AS-IS, the hovered cell EMPTIES
@@ -49776,8 +49813,18 @@ fn wire_chest_swap(
                 mirror[menu - 27] = (0, 0);
             }
             note_batch_change(&mut changed, menu as i16, (0, 0));
-            mirror[row_idx] = (hover_id, hover_count);
-            note_batch_change(&mut changed, (27 + row_idx) as i16, (hover_id, hover_count));
+            match row_idx {
+                Some(ri) => {
+                    mirror[ri] = (hover_id, hover_count);
+                    note_batch_change(&mut changed, (27 + ri) as i16, (hover_id, hover_count));
+                }
+                None => {
+                    // THE OFFHAND — the outside-menu seat the changed
+                    // map can't name (the Inventory.setItem the menu's
+                    // slot list never speaks)
+                    *offhand = (hover_id, hover_count);
+                }
+            }
         } else if hover_count <= 0 {
             // CASE C (pc 1205-1273): the row's stack places — the
             // chest's seats the plain TRUE pair keep, the SPLIT law
@@ -49790,15 +49837,29 @@ fn wire_chest_swap(
                     mirror[menu - 27] = (row_id, max);
                 }
                 note_batch_change(&mut changed, menu as i16, (row_id, max));
-                mirror[row_idx] = (row_id, row_count - max);
-                note_batch_change(
-                    &mut changed,
-                    (27 + row_idx) as i16,
-                    (row_id, row_count - max),
-                );
+                match row_idx {
+                    Some(ri) => {
+                        mirror[ri] = (row_id, row_count - max);
+                        note_batch_change(
+                            &mut changed,
+                            (27 + ri) as i16,
+                            (row_id, row_count - max),
+                        );
+                    }
+                    None => {
+                        *offhand = (row_id, row_count - max);
+                    }
+                }
             } else {
-                mirror[row_idx] = (0, 0);
-                note_batch_change(&mut changed, (27 + row_idx) as i16, (0, 0));
+                match row_idx {
+                    Some(ri) => {
+                        mirror[ri] = (0, 0);
+                        note_batch_change(&mut changed, (27 + ri) as i16, (0, 0));
+                    }
+                    None => {
+                        *offhand = (0, 0);
+                    }
+                }
                 if menu < 27 {
                     grid[menu] = (row_id, row_count);
                 } else {
@@ -49821,19 +49882,33 @@ fn wire_chest_swap(
                     mirror[menu - 27] = (row_id, max);
                 }
                 note_batch_change(&mut changed, menu as i16, (row_id, max));
-                mirror[row_idx] = (row_id, row_count - max);
-                note_batch_change(
-                    &mut changed,
-                    (27 + row_idx) as i16,
-                    (row_id, row_count - max),
-                );
+                match row_idx {
+                    Some(ri) => {
+                        mirror[ri] = (row_id, row_count - max);
+                        note_batch_change(
+                            &mut changed,
+                            (27 + ri) as i16,
+                            (row_id, row_count - max),
+                        );
+                    }
+                    None => {
+                        *offhand = (row_id, row_count - max);
+                    }
+                }
                 let _leftover =
                     belief_chest_inventory_add(mirror, selected, hover_id, hover_count, &mut changed);
             } else {
                 // the straight trade — the row the hovered stack
                 // takes, the cell the row's stack wears
-                mirror[row_idx] = (hover_id, hover_count);
-                note_batch_change(&mut changed, (27 + row_idx) as i16, (hover_id, hover_count));
+                match row_idx {
+                    Some(ri) => {
+                        mirror[ri] = (hover_id, hover_count);
+                        note_batch_change(&mut changed, (27 + ri) as i16, (hover_id, hover_count));
+                    }
+                    None => {
+                        *offhand = (hover_id, hover_count);
+                    }
+                }
                 if menu < 27 {
                     grid[menu] = (row_id, row_count);
                 } else {
@@ -50254,19 +50329,31 @@ fn wire_table_swap(
     window_id: i32,
     state_id: i32,
     carried: (i32, i32),
+    offhand: &mut (i32, i32),
 ) {
-    debug_assert!(button < 9, "the digits the walk alone wears — the F arm the menu never slots");
+    debug_assert!(button < 9 || button == 40, "the SWAP input's own gate");
     debug_assert!(menu < 46, "the table seat's own bounds");
-    let row_menu = 37 + button; // the crafting menu's own hotbar rows
+    // THE ROW SEAT (the doClick SWAP table's `inventory.getItem(button)`
+    // walk): the digits the crafting menu's OWN hotbar rows speak (the
+    // menus 37..45), button 40 the player Inventory's OFFHAND answers
+    // (the index 40 the bytecode keys) — the outside-menu seat the
+    // changed map can't name, the belief the [`App::live_inv_slots`]'s
+    // own slot 45 wears
+    let row_menu = if button == 40 { None } else { Some(37 + button) };
     let (hover_id, hover_count) = live_slots[menu];
-    let (row_id, row_count) = live_slots[row_menu];
+    let (row_id, row_count) = match row_menu {
+        Some(rm) => live_slots[rm],
+        None => *offhand,
+    };
     let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
     let fired = !(row_count <= 0 && hover_count <= 0);
     if fired {
         let is_result = menu == 0;
-        if menu == row_menu {
+        if Some(menu) == row_menu {
             // THE SAME SEAT — the vanilla walk the identical pair
-            // sets back, no mutation the diff ever names
+            // sets back, no mutation the diff ever names (the offhand
+            // row the seat's menu id never wears — no same-seat press
+            // the F arm speaks)
         } else if row_count <= 0 {
             // CASE B (pcs 1149-1202): the hovered stack rides the
             // button row AS-IS, the hovered cell EMPTIES — the
@@ -50275,8 +50362,18 @@ fn wire_table_swap(
             // seats the TRUE pair)
             live_slots[menu] = (0, 0);
             note_batch_change(&mut changed, menu as i16, (0, 0));
-            live_slots[row_menu] = (hover_id, hover_count);
-            note_batch_change(&mut changed, row_menu as i16, (hover_id, hover_count));
+            match row_menu {
+                Some(rm) => {
+                    live_slots[rm] = (hover_id, hover_count);
+                    note_batch_change(&mut changed, rm as i16, (hover_id, hover_count));
+                }
+                None => {
+                    // THE OFFHAND — the outside-menu seat the changed
+                    // map can't name (the Inventory.setItem the menu's
+                    // slot list never speaks)
+                    *offhand = (hover_id, hover_count);
+                }
+            }
             if is_result {
                 // the ResultSlot.onTake — the ingredients' decrement
                 // + the remainder arms + the recompute the result
@@ -50296,11 +50393,25 @@ fn wire_table_swap(
                 if row_count > max {
                     live_slots[menu] = (row_id, max);
                     note_batch_change(&mut changed, menu as i16, (row_id, max));
-                    live_slots[row_menu] = (row_id, row_count - max);
-                    note_batch_change(&mut changed, row_menu as i16, (row_id, row_count - max));
+                    match row_menu {
+                        Some(rm) => {
+                            live_slots[rm] = (row_id, row_count - max);
+                            note_batch_change(&mut changed, rm as i16, (row_id, row_count - max));
+                        }
+                        None => {
+                            *offhand = (row_id, row_count - max);
+                        }
+                    }
                 } else {
-                    live_slots[row_menu] = (0, 0);
-                    note_batch_change(&mut changed, row_menu as i16, (0, 0));
+                    match row_menu {
+                        Some(rm) => {
+                            live_slots[rm] = (0, 0);
+                            note_batch_change(&mut changed, rm as i16, (0, 0));
+                        }
+                        None => {
+                            *offhand = (0, 0);
+                        }
+                    }
                     live_slots[menu] = (row_id, row_count);
                     note_batch_change(&mut changed, menu as i16, (row_id, row_count));
                 }
@@ -50318,8 +50429,15 @@ fn wire_table_swap(
                 let rest = row_count - max;
                 live_slots[menu] = (row_id, max);
                 note_batch_change(&mut changed, menu as i16, (row_id, max));
-                live_slots[row_menu] = (row_id, rest);
-                note_batch_change(&mut changed, row_menu as i16, (row_id, rest));
+                match row_menu {
+                    Some(rm) => {
+                        live_slots[rm] = (row_id, rest);
+                        note_batch_change(&mut changed, rm as i16, (row_id, rest));
+                    }
+                    None => {
+                        *offhand = (row_id, rest);
+                    }
+                }
                 let _leftover = belief_table_inventory_add(
                     live_slots,
                     selected,
@@ -50330,8 +50448,15 @@ fn wire_table_swap(
             } else {
                 // the straight trade — the row the hovered stack
                 // takes, the cell the row's stack wears
-                live_slots[row_menu] = (hover_id, hover_count);
-                note_batch_change(&mut changed, row_menu as i16, (hover_id, hover_count));
+                match row_menu {
+                    Some(rm) => {
+                        live_slots[rm] = (hover_id, hover_count);
+                        note_batch_change(&mut changed, rm as i16, (hover_id, hover_count));
+                    }
+                    None => {
+                        *offhand = (hover_id, hover_count);
+                    }
+                }
                 live_slots[menu] = (row_id, row_count);
                 note_batch_change(&mut changed, menu as i16, (row_id, row_count));
             }
@@ -50478,12 +50603,22 @@ fn wire_furnace_swap(
     window_id: i32,
     state_id: i32,
     carried: (i32, i32),
+    offhand: &mut (i32, i32),
 ) {
-    debug_assert!(button < 9, "the digits the walk alone wears — the F arm the menu never slots");
+    debug_assert!(button < 9 || button == 40, "the SWAP input's own gate");
     debug_assert!(menu < live_slots.len(), "the furnace seat's own bounds");
-    let row_menu = 30 + button; // the furnace menu's own hotbar rows
+    // THE ROW SEAT (the doClick SWAP table's `inventory.getItem(button)`
+    // walk): the digits the furnace menu's OWN hotbar rows speak (the
+    // menus 30..38), button 40 the player Inventory's OFFHAND answers
+    // (the index 40 the bytecode keys) — the outside-menu seat the
+    // changed map can't name, the belief the [`App::live_inv_slots`]'s
+    // own slot 45 wears
+    let row_menu = if button == 40 { None } else { Some(30 + button) };
     let (hover_id, hover_count) = live_slots[menu];
-    let (row_id, row_count) = live_slots[row_menu];
+    let (row_id, row_count) = match row_menu {
+        Some(rm) => live_slots[rm],
+        None => *offhand,
+    };
     let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
     let fired = !(row_count <= 0 && hover_count <= 0);
     if fired {
@@ -50496,17 +50631,29 @@ fn wire_furnace_swap(
             2 => false, // the result's mayPlace iconst_0
             _ => true,  // the standard rows' plain pair
         };
-        if menu == row_menu {
+        if Some(menu) == row_menu {
             // THE SAME SEAT — the vanilla walk the identical pair
-            // sets back, no mutation the diff ever names
+            // sets back, no mutation the diff ever names (the offhand
+            // row the seat's menu id never wears — no same-seat press
+            // the F arm speaks)
         } else if row_count <= 0 {
             // CASE B (pcs 1149-1202): the hovered stack rides the
             // button row AS-IS, the hovered cell EMPTIES — the
             // mayPickup gate ALL the furnace seats TRUE keep
             live_slots[menu] = (0, 0);
             note_batch_change(&mut changed, menu as i16, (0, 0));
-            live_slots[row_menu] = (hover_id, hover_count);
-            note_batch_change(&mut changed, row_menu as i16, (hover_id, hover_count));
+            match row_menu {
+                Some(rm) => {
+                    live_slots[rm] = (hover_id, hover_count);
+                    note_batch_change(&mut changed, rm as i16, (hover_id, hover_count));
+                }
+                None => {
+                    // THE OFFHAND — the outside-menu seat the changed
+                    // map can't name (the Inventory.setItem the menu's
+                    // slot list never speaks)
+                    *offhand = (hover_id, hover_count);
+                }
+            }
         } else if hover_count <= 0 {
             // CASE C (pcs 1205-1273): the row's stack places — the
             // mayPlace gate the seat's own verdict keeps, the SPLIT
@@ -50516,11 +50663,25 @@ fn wire_furnace_swap(
                 if row_count > max {
                     live_slots[menu] = (row_id, max);
                     note_batch_change(&mut changed, menu as i16, (row_id, max));
-                    live_slots[row_menu] = (row_id, row_count - max);
-                    note_batch_change(&mut changed, row_menu as i16, (row_id, row_count - max));
+                    match row_menu {
+                        Some(rm) => {
+                            live_slots[rm] = (row_id, row_count - max);
+                            note_batch_change(&mut changed, rm as i16, (row_id, row_count - max));
+                        }
+                        None => {
+                            *offhand = (row_id, row_count - max);
+                        }
+                    }
                 } else {
-                    live_slots[row_menu] = (0, 0);
-                    note_batch_change(&mut changed, row_menu as i16, (0, 0));
+                    match row_menu {
+                        Some(rm) => {
+                            live_slots[rm] = (0, 0);
+                            note_batch_change(&mut changed, rm as i16, (0, 0));
+                        }
+                        None => {
+                            *offhand = (0, 0);
+                        }
+                    }
                     live_slots[menu] = (row_id, row_count);
                     note_batch_change(&mut changed, menu as i16, (row_id, row_count));
                 }
@@ -50537,8 +50698,15 @@ fn wire_furnace_swap(
                 let rest = row_count - max;
                 live_slots[menu] = (row_id, max);
                 note_batch_change(&mut changed, menu as i16, (row_id, max));
-                live_slots[row_menu] = (row_id, rest);
-                note_batch_change(&mut changed, row_menu as i16, (row_id, rest));
+                match row_menu {
+                    Some(rm) => {
+                        live_slots[rm] = (row_id, rest);
+                        note_batch_change(&mut changed, rm as i16, (row_id, rest));
+                    }
+                    None => {
+                        *offhand = (row_id, rest);
+                    }
+                }
                 let _leftover = belief_furnace_inventory_add(
                     live_slots,
                     selected,
@@ -50549,8 +50717,15 @@ fn wire_furnace_swap(
             } else {
                 // the straight trade — the row the hovered stack
                 // takes, the cell the row's stack wears
-                live_slots[row_menu] = (hover_id, hover_count);
-                note_batch_change(&mut changed, row_menu as i16, (hover_id, hover_count));
+                match row_menu {
+                    Some(rm) => {
+                        live_slots[rm] = (hover_id, hover_count);
+                        note_batch_change(&mut changed, rm as i16, (hover_id, hover_count));
+                    }
+                    None => {
+                        *offhand = (hover_id, hover_count);
+                    }
+                }
                 live_slots[menu] = (row_id, row_count);
                 note_batch_change(&mut changed, menu as i16, (row_id, row_count));
             }
@@ -112502,6 +112677,330 @@ cow_sound_variant: None,
         // THE BETWEEN-SLOTS PRESS (the null hoveredSlot): the refusal
         app.mouse_pos = Some((panel.0 + 170, panel.1 + 20));
         assert!(!app.on_chest_swap_key(0), "the null hover refuses");
+        assert!(click_rx.try_recv().is_err(), "still silence");
+    }
+
+    /// THE CONTAINER SCREENS' OWN F ARM (the checkHotbarKeyPressed's
+    /// own FIRST arm — the keySwapOffhand match the
+    /// `slotClicked(hovered, hovered.index, 40, SWAP)` walk rides; the
+    /// doClick SWAP table's `inventory.getItem(40)` the player
+    /// Inventory's OFFHAND answers — the outside-menu seat the changed
+    /// map can't name): CASE B the chest grid's stack rides the
+    /// offhand AS-IS (the cell EMPTIES, the changed map the hovered
+    /// seat ALONE names); the CASE D straight trades the chest mirror
+    /// row and the furnace main store row over the offhand wear.
+    #[test]
+    fn the_container_f_arm_the_offhand_row_and_the_changed_map_wear() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open(ScreenKind::Chest);
+        app.chest_live_window = Some((5, 7));
+        let panel = chest_panel_origin(640, 360);
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        app.chest_slots = vec![(0, 0); 27];
+        app.chest_mirror = vec![(0, 0); 36];
+        app.chest_slots[4] = (dirt, 32);
+        app.chest_slot_rects = (0..27)
+            .map(|i| {
+                let (sx, sy) = chest_container_slot(panel, i);
+                (sx + 1, sy + 1, i as i16)
+            })
+            .chain((0..36).map(|i| {
+                let (sx, sy) = chest_mirror_slot(panel, i);
+                (sx + 1, sy + 1, (27 + i) as i16)
+            }))
+            .collect();
+        assert_eq!(app.live_inv_slots[45], (0, 0), "the offhand starts empty");
+        // CASE B: THE GRID STACK OVER THE EMPTY OFFHAND (button 40)
+        let (gx, gy) = chest_container_slot(panel, 4);
+        app.mouse_pos = Some((gx + 9, gy + 9));
+        assert!(app.on_chest_swap_key(40), "the F arm consumes");
+        assert_eq!(app.chest_slots[4], (0, 0), "the cell emptied");
+        assert_eq!(app.live_inv_slots[45], (dirt, 32), "the offhand rides AS-IS");
+        assert_eq!(app.hotbar_slots[2], (0, 0), "the HUD rows untouched");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 5, "the window's own id");
+                assert_eq!(c.state_id, 7, "the revision rides");
+                assert_eq!(c.slot, 4, "the hovered seat's own menu id");
+                assert_eq!(c.button, 40, "the offhand key the byte keys");
+                assert_eq!(c.input, crate::world_view::ContainerInput::Swap);
+                assert_eq!(
+                    c.changed,
+                    vec![(4, (0, 0))],
+                    "the outside-menu seat the changed map can't name"
+                );
+                assert_eq!(c.carried, (0, 0), "the cursor pair rides unchanged");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE CASE D STRAIGHT TRADE: THE MIRROR MAIN ROW (menu 30)
+        // OVER THE OFFHAND'S PLANKS
+        app.chest_mirror[3] = (stone, 5);
+        app.live_inv_slots[45] = (planks, 7);
+        let (mx2, my2) = chest_mirror_slot(panel, 3);
+        app.mouse_pos = Some((mx2 + 9, my2 + 9));
+        assert!(app.on_chest_swap_key(40));
+        assert_eq!(app.chest_mirror[3], (planks, 7), "the cell wears the offhand's");
+        assert_eq!(app.live_inv_slots[45], (stone, 5), "the offhand takes the hovered's");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 30, "the mirror row's own menu id");
+                assert_eq!(
+                    c.changed,
+                    vec![(30, (planks, 7))],
+                    "the hovered seat alone the map names"
+                );
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE FURNACE'S OWN F ARM: THE MAIN STORE 4 (menu 7) OVER THE
+        // OFFHAND'S STONE
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        let furnace = crate::world_view::LiveContainer {
+            id: 7,
+            menu_type_id: crate::world_model::MENU_TYPE_FURNACE,
+            slots: {
+                let mut s = vec![(0i32, 0i32); 39];
+                s[7] = (stone, 5); // the main store 4 — menu 7
+                s
+            },
+            carried: (0, 0),
+            state_id: 2,
+            bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(furnace));
+        assert_eq!(app.screen, ScreenKind::Furnace, "the window shows");
+        app.live_inv_slots[45] = (planks, 7);
+        app.furnace_slot_rects = vec![(100, 100, 7)];
+        app.mouse_pos = Some((108, 108));
+        assert!(app.on_furnace_swap_key(40), "the F arm consumes");
+        assert_eq!(app.furnace_slots[7], (planks, 7), "the cell wears the offhand's");
+        assert_eq!(app.live_inv_slots[45], (stone, 5), "the offhand takes the hovered's");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 7, "the main store's own menu id");
+                assert_eq!(c.button, 40, "the offhand key the byte keys");
+                assert_eq!(
+                    c.changed,
+                    vec![(7, (planks, 7))],
+                    "the hovered seat alone the map names"
+                );
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+
+    /// THE CONTAINER SCREENS' OWN F ARM, THE VERDICTS AND THE SPLIT
+    /// (the seats' own mayPlace pair the SWAP table keys): the
+    /// furnace INPUT seat the SMELTABLE verdict answers (the 70
+    /// raw_iron the SPLIT law the max 64 wears — the input takes the
+    /// max, the offhand the remainder 6 keeps), the FUEL seat the
+    /// isFuel verdict (the coal places, the offhand empties), the
+    /// RESULT seat's mayPlace iconst_0 the place arms refuse (the
+    /// packet rides, the belief whole); the TABLE's result seat the
+    /// CASE B ride the onTake walk wears (the ingredient decrement +
+    /// the recompute refill, the offhand the result takes).
+    #[test]
+    fn the_container_f_arm_the_verdicts_and_the_split_wear() {
+        use crate::world_view::{ContainerCommand, LiveContainer};
+        let coal = mc_registry::item_id_by_name("coal").unwrap();
+        let raw_iron = mc_registry::item_id_by_name("raw_iron").unwrap();
+        let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+        let log = mc_registry::item_id_by_name("oak_log").unwrap();
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        let furnace = LiveContainer {
+            id: 7,
+            menu_type_id: crate::world_model::MENU_TYPE_FURNACE,
+            slots: {
+                let mut s = vec![(0i32, 0i32); 39];
+                s[2] = (mc_registry::item_id_by_name("raw_iron").unwrap(), 2); // the result seat
+                s
+            },
+            carried: (0, 0),
+            state_id: 2,
+            bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(furnace));
+        app.furnace_slot_rects = vec![(100, 100, 0), (140, 100, 1), (180, 100, 2)];
+        // THE INPUT SEAT'S SPLIT (CASE C): THE OFFHAND'S 70 RAW_IRON —
+        // THE SMELTABLE VERDICT PASSES, THE INPUT TAKES THE MAX 64
+        app.live_inv_slots[45] = (raw_iron, 70);
+        app.mouse_pos = Some((108, 108));
+        assert!(app.on_furnace_swap_key(40));
+        assert_eq!(app.furnace_slots[0], (raw_iron, 64), "the input takes the max");
+        assert_eq!(app.live_inv_slots[45], (raw_iron, 6), "the offhand the remainder keeps");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(
+                    c.changed,
+                    vec![(0, (raw_iron, 64))],
+                    "the offhand's remainder no entry names"
+                );
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE FUEL SEAT (CASE C): THE OFFHAND'S COAL PLACES WHOLE
+        app.live_inv_slots[45] = (coal, 12);
+        app.mouse_pos = Some((148, 108));
+        assert!(app.on_furnace_swap_key(40));
+        assert_eq!(app.furnace_slots[1], (coal, 12), "the fuel takes the whole");
+        assert_eq!(app.live_inv_slots[45], (0, 0), "the offhand empties");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.changed, vec![(1, (coal, 12))], "the fuel's landing named");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE RESULT SEAT (CASE C): THE mayPlace iconst_0 REFUSES —
+        // THE PACKET RIDES, THE BELIEF WHOLE
+        app.live_inv_slots[45] = (coal, 3);
+        app.mouse_pos = Some((188, 108));
+        assert!(app.on_furnace_swap_key(40), "the refusal still consumes");
+        assert_eq!(app.furnace_slots[2].1, 2, "the result whole");
+        assert_eq!(app.live_inv_slots[45], (coal, 3), "the offhand whole");
+        match click_rx.try_recv().expect("the always packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 2, "the result seat's own menu id");
+                assert!(c.changed.is_empty(), "the refusal no mutation names");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE TABLE'S RESULT SEAT (CASE B): THE RESULT RIDES THE
+        // OFFHAND, THE ONTAKE WALK THE RECOMPUTE WEARS (the 2-log
+        // cell the one log keeps, the recipe the refill re-speaks)
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        let table = LiveContainer {
+            id: 9,
+            menu_type_id: crate::world_model::MENU_TYPE_CRAFTING,
+            slots: {
+                let mut s = vec![(0i32, 0i32); 46];
+                s[0] = (planks, 4); // the result — the one-log recipe's own match
+                s[1] = (log, 2); // the craft cell
+                s
+            },
+            carried: (0, 0),
+            state_id: 3,
+            bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
+        assert_eq!(app.screen, ScreenKind::Crafting, "the window shows");
+        app.table_panel = inventory_panel_origin(640, 360);
+        let panel = inventory_panel_origin(640, 360);
+        let (rx, ry) = table_craft_origin(panel, 9);
+        app.mouse_pos = Some((rx + 9, ry + 9));
+        assert!(app.on_table_swap_key(40), "the F arm consumes");
+        assert_eq!(app.live_inv_slots[45], (planks, 4), "the result rides the offhand");
+        assert_eq!(app.live_table_slots[1], (log, 1), "the ingredient the one off keeps");
+        assert_eq!(
+            app.live_table_slots[0],
+            (planks, 4),
+            "the recompute the result refills"
+        );
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 9, "the window's own id");
+                assert_eq!(c.slot, 0, "the result seat's own menu id");
+                assert_eq!(
+                    c.changed,
+                    vec![(0, (planks, 4)), (1, (log, 1))],
+                    "the ride + the decrement + the refill named (the offhand no entry)"
+                );
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+
+    /// THE CONTAINER SCREENS' OWN F ARM, THE GATES AND THE ALWAYS
+    /// PACKET (the checkHotbarKeyPressed walk's own gates the chain
+    /// keeps): the offline stand-in the false keeps (the world lane
+    /// the open screen's silence answers), the both-empty press the
+    /// consumed silence and the EMPTY packet ride, the carried cursor
+    /// the false BEFORE the packet lane keeps, the null hover the
+    /// refusal wears.
+    #[test]
+    fn the_container_f_arm_the_gates_and_the_always_packet_wear() {
+        use crate::world_view::ContainerCommand;
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open(ScreenKind::Chest);
+        let panel = chest_panel_origin(640, 360);
+        app.chest_slots = vec![(0, 0); 27];
+        app.chest_mirror = vec![(0, 0); 36];
+        app.chest_slot_rects = (0..27)
+            .map(|i| {
+                let (sx, sy) = chest_container_slot(panel, i);
+                (sx + 1, sy + 1, i as i16)
+            })
+            .chain((0..36).map(|i| {
+                let (sx, sy) = chest_mirror_slot(panel, i);
+                (sx + 1, sy + 1, (27 + i) as i16)
+            }))
+            .collect();
+        // THE OFFLINE STAND-IN (no window armed): the false — and the
+        // world lane the open screen's gate keeps (the offhand whole)
+        let (gx, gy) = chest_container_slot(panel, 4);
+        app.mouse_pos = Some((gx + 9, gy + 9));
+        assert!(!app.on_chest_swap_key(40), "no window — the false wears");
+        app.on_swap_offhand_key();
+        assert_eq!(app.live_inv_slots[45], (0, 0), "the world lane the screen keeps");
+        assert!(click_rx.try_recv().is_err(), "the offline stand-in is silence");
+        // THE WINDOW ARMS
+        app.chest_live_window = Some((5, 7));
+        // THE BOTH-EMPTY PRESS: the F arm CONSUMES and the packet
+        // rides with the EMPTY changed map
+        let (ex, ey) = chest_container_slot(panel, 20);
+        app.mouse_pos = Some((ex + 9, ey + 9));
+        assert!(app.on_chest_swap_key(40), "the silence still consumes");
+        match click_rx.try_recv().expect("the always packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 20, "the hovered seat's own menu id");
+                assert_eq!(c.button, 40, "the offhand key the byte keys");
+                assert_eq!(c.input, crate::world_view::ContainerInput::Swap);
+                assert!(c.changed.is_empty(), "the untouched state keeps");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE CARRIED CURSOR (the getCarried().isEmpty() gate): the
+        // false BEFORE the packet lane — NO packet
+        app.mouse_pos = Some((gx + 9, gy + 9));
+        app.chest_carried = (dirt, 5);
+        assert!(!app.on_chest_swap_key(40), "the carried gate refuses");
+        assert!(click_rx.try_recv().is_err(), "no packet the gate passes");
+        app.chest_carried = (0, 0);
+        // THE BETWEEN-SLOTS PRESS (the null hoveredSlot): the refusal
+        app.mouse_pos = Some((panel.0 + 170, panel.1 + 20));
+        assert!(!app.on_chest_swap_key(40), "the null hover refuses");
         assert!(click_rx.try_recv().is_err(), "still silence");
     }
 
