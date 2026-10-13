@@ -878,12 +878,17 @@ pub const END_STONE: u16 = 89;
 /// draws — the mesher's sentinel tile the surface quads carry, the
 /// render walk's own pass the shader law serves. THE SEAT THE DOOR
 /// QUARTET'S REGEN DISPLACES (the autopush-655 round): the hand-only
-/// kind the generated palette never carried — N_KINDS the 94 the
-/// quartet's rows bank, the `id < N_KINDS` guards the tile lookups'
+/// kind the generated palette never carried — N_KINDS the quartet
+/// ladder's rows bank, the `id < N_KINDS` guards the tile lookups'
 /// same skip verdict keeps — the kind's own seat the beyond-table
-/// 94 wears, the sentinel tile the mesher's special arm the seat
-/// never consulted)
-pub const END_PORTAL: u16 = 94;
+/// tail wears, the sentinel tile the mesher's special arm the seat
+/// never consulted. THE SEAT THE WOOD LADDER'S REGEN DISPLACES AGAIN
+/// (the dev-43 round): the eleven wooden quartets the 94..137 tail
+/// the palette rows bank, the kind's own seat the beyond-table 138
+/// the same law keeps (the 655 walk's own precedent the ladder
+/// speaks — the one-row growth the one displacement the ladder
+/// every rung wears)
+pub const END_PORTAL: u16 = 138;
 
 /// THE OAK DOOR'S OWN CLOSED LOWER (the autopush-655 round — the
 /// vocabulary's next frontier: the right-click open/close the
@@ -961,6 +966,128 @@ pub const OAK_DOOR_OPEN: u16 = 92;
 /// same "oak_door" NAME_OF row the base-name law keeps, the upper's
 /// element lane the #top master the tile row banks.
 pub const OAK_DOOR_UPPER_OPEN: u16 = 93;
+
+// THE DOOR FAMILY'S WOOD QUARTETS (the dev-43 round — the eleven
+// wooden doors the oak lane's own walk generalizes): javap
+// BlockSetType the 26.2 jar (pinned sha1 2dc72797, javap 21.0.12) —
+// the single-arg ctor `<init>(String)` the OAK/SPRUCE/BIRCH/ACACIA/
+// JUNGLE/DARK_OAK/PALE_OAK/MANGROVE set types delegate (canOpenByHand
+// iconst_1 the PASS speaks, SoundType.WOOD the dig/place rows the
+// wooden SoundType wears, WOODEN_DOOR_CLOSE/OPEN the block.wooden_
+// door.open/close voices the runtime sounds.json carries); the
+// CHERRY set type the full ctor pc 338-380 (CHERRY_WOOD_DOOR_CLOSE/
+// OPEN the block.cherry_wood_door.open/close voices); the CRIMSON/
+// WARPED pair the NETHER_WOOD walk banks (NETHER_WOOD_DOOR_CLOSE/
+// OPEN the block.nether_wood_door.open/close voices); the BAMBOO set
+// type the same full-ctor shape (BAMBOO_WOOD_DOOR_CLOSE/OPEN the
+// block.bamboo_wood_door.open/close voices). Every wood the SAME
+// quartet shape the oak kind ids bank: the blockstate {wood}_door.
+// json the plain 32-variant map, the hinge-LEFT facing=north rows
+// the kind-only palette resolves, the models ONE box element each
+// (the lower's #bottom, the upper's #top — the per-wood masters the
+// mesher's verdict reads), the 3/16 panel the SHAPES clinit's boxZ
+// walk every wood speaks, the strength(3.0f) + no-tool harvest the
+// generated dig rows (3.0, false) every wooden door banks, the loot
+// {wood}_door.json the same block_state_property half=lower
+// condition the conditional pool rolls. The quartet seats the
+// CONTIGUOUS tail the kind ids 94..137 wear — the closed lower +
+// 0, the closed upper + 1, the open lower + 2, the open upper + 3
+// (the upper bit = +1, the open bit = +2, the flip mate = ±2 the
+// helpers' arithmetic speaks — the oak lane's own table the one
+// walk the whole family wears). The COPPER family (the eight
+// oxidization states the COPPER set type shares) and the IRON door
+// (the canOpenByHand iconst_0 the refusal keeps) the next lane's
+// rows bank.
+
+/// THE SPRUCE DOOR'S OWN QUARTET (the wooden family the single-arg
+/// ctor delegates — the block.wooden_door voices the set type's own
+/// pair keeps).
+pub const SPRUCE_DOOR: u16 = 94;
+pub const SPRUCE_DOOR_UPPER: u16 = 95;
+pub const SPRUCE_DOOR_OPEN: u16 = 96;
+pub const SPRUCE_DOOR_UPPER_OPEN: u16 = 97;
+
+/// THE BIRCH DOOR'S OWN QUARTET (the wooden family the single-arg
+/// ctor delegates — the block.wooden_door voices the set type's own
+/// pair keeps).
+pub const BIRCH_DOOR: u16 = 98;
+pub const BIRCH_DOOR_UPPER: u16 = 99;
+pub const BIRCH_DOOR_OPEN: u16 = 100;
+pub const BIRCH_DOOR_UPPER_OPEN: u16 = 101;
+
+/// THE JUNGLE DOOR'S OWN QUARTET (the wooden family the single-arg
+/// ctor delegates — the block.wooden_door voices the set type's own
+/// pair keeps).
+pub const JUNGLE_DOOR: u16 = 102;
+pub const JUNGLE_DOOR_UPPER: u16 = 103;
+pub const JUNGLE_DOOR_OPEN: u16 = 104;
+pub const JUNGLE_DOOR_UPPER_OPEN: u16 = 105;
+
+/// THE ACACIA DOOR'S OWN QUARTET (the wooden family the single-arg
+/// ctor delegates — the block.wooden_door voices the set type's own
+/// pair keeps).
+pub const ACACIA_DOOR: u16 = 106;
+pub const ACACIA_DOOR_UPPER: u16 = 107;
+pub const ACACIA_DOOR_OPEN: u16 = 108;
+pub const ACACIA_DOOR_UPPER_OPEN: u16 = 109;
+
+/// THE DARK OAK DOOR'S OWN QUARTET (the wooden family the single-arg
+/// ctor delegates — the block.wooden_door voices the set type's own
+/// pair keeps).
+pub const DARK_OAK_DOOR: u16 = 110;
+pub const DARK_OAK_DOOR_UPPER: u16 = 111;
+pub const DARK_OAK_DOOR_OPEN: u16 = 112;
+pub const DARK_OAK_DOOR_UPPER_OPEN: u16 = 113;
+
+/// THE MANGROVE DOOR'S OWN QUARTET (the wooden family the single-arg
+/// ctor delegates — the block.wooden_door voices the set type's own
+/// pair keeps).
+pub const MANGROVE_DOOR: u16 = 114;
+pub const MANGROVE_DOOR_UPPER: u16 = 115;
+pub const MANGROVE_DOOR_OPEN: u16 = 116;
+pub const MANGROVE_DOOR_UPPER_OPEN: u16 = 117;
+
+/// THE CHERRY DOOR'S OWN QUARTET (the full-ctor walk the set type's
+/// own CHERRY_WOOD sounds bank — the block.cherry_wood_door voices
+/// the wooden family's own distinct pair wears).
+pub const CHERRY_DOOR: u16 = 118;
+pub const CHERRY_DOOR_UPPER: u16 = 119;
+pub const CHERRY_DOOR_OPEN: u16 = 120;
+pub const CHERRY_DOOR_UPPER_OPEN: u16 = 121;
+
+/// THE PALE OAK DOOR'S OWN QUARTET (the wooden family the single-arg
+/// ctor delegates — the block.wooden_door voices the set type's own
+/// pair keeps; the PALE_OAK set type the sounds.json's own list the
+/// wooden events the delegation speaks — the pale oak door NO
+/// pale-oak door event the runtime table carries).
+pub const PALE_OAK_DOOR: u16 = 122;
+pub const PALE_OAK_DOOR_UPPER: u16 = 123;
+pub const PALE_OAK_DOOR_OPEN: u16 = 124;
+pub const PALE_OAK_DOOR_UPPER_OPEN: u16 = 125;
+
+/// THE BAMBOO DOOR'S OWN QUARTET (the full-ctor walk the set type's
+/// own BAMBOO_WOOD sounds bank — the block.bamboo_wood_door voices
+/// the family's own distinct pair wears).
+pub const BAMBOO_DOOR: u16 = 126;
+pub const BAMBOO_DOOR_UPPER: u16 = 127;
+pub const BAMBOO_DOOR_OPEN: u16 = 128;
+pub const BAMBOO_DOOR_UPPER_OPEN: u16 = 129;
+
+/// THE CRIMSON DOOR'S OWN QUARTET (the full-ctor walk the NETHER_WOOD
+/// set type banks — the block.nether_wood_door voices the family's
+/// own distinct pair wears).
+pub const CRIMSON_DOOR: u16 = 130;
+pub const CRIMSON_DOOR_UPPER: u16 = 131;
+pub const CRIMSON_DOOR_OPEN: u16 = 132;
+pub const CRIMSON_DOOR_UPPER_OPEN: u16 = 133;
+
+/// THE WARPED DOOR'S OWN QUARTET (the full-ctor walk the NETHER_WOOD
+/// set type banks — the block.nether_wood_door voices the family's
+/// own distinct pair wears).
+pub const WARPED_DOOR: u16 = 134;
+pub const WARPED_DOOR_UPPER: u16 = 135;
+pub const WARPED_DOOR_OPEN: u16 = 136;
+pub const WARPED_DOOR_UPPER_OPEN: u16 = 137;
 
 /// THE SCAN'S OWN SHAPE — the PortalShape verdict the walks bank
 /// (javap PortalShape's own fields the ctor pc 0-115 carries): the
@@ -1076,7 +1203,7 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 }
 
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 94] = [
+pub const NAME_OF: [&str; 138] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1289,11 +1416,42 @@ pub const NAME_OF: [&str; 94] = [
     // lower the item places, the flip walk's open swap the other
     // kinds' own verdicts never re-place)). The END_PORTAL's own row
     // the displaced seat the BEYOND-TABLE law keeps (the hand-only
-    // kind the generated palette never carried — N_KINDS the 94 the
-    // quartet's rows bank, the kind's own seat 94 the both tables'
+    // kind the generated palette never carried — N_KINDS the 138 the
+    // quartet ladder's rows bank, the kind's own seat 138 the both tables'
     // indexing never reaches — the dig row's own -1.0 the unbreakable
     // verdict the NAME_OF read the unreachable law keeps).
     "oak_door", "oak_door", "oak_door", "oak_door",
+    // THE DOOR FAMILY'S WOOD ROWS (the dev-43 round): the eleven
+    // wooden quartets the SAME shared-base law the oak rows wear —
+    // all four kinds the BASE "{wood}_door" name (the jar's ONE
+    // registry entry per wood both halves and both open bits the
+    // same name speaks: the dig rows (3.0, false) the generated
+    // table banks for every wooden door, the sounds' rows the set
+    // types' own SoundType walks answer (the WOODEN family the
+    // single-arg ctor delegates, the CHERRY_WOOD/NETHER_WOOD/
+    // BAMBOO_WOOD pairs the full ctors bank), the drops table the
+    // loot's own conditional pool banks and the item id the
+    // placeable lookup the FIRST row's position answers
+    // (BlockItemIds.{WOOD}_DOOR the ITEM FORM every wood has — the
+    // closed lower the item places, the flip walk's open swap the
+    // other kinds' own verdicts never re-place)). The END_PORTAL's
+    // own row the displaced seat the BEYOND-TABLE law keeps (the
+    // hand-only kind the generated palette never carried — N_KINDS
+    // the 138 the quartet ladder's rows bank, the kind's own seat
+    // 138 the both tables' indexing never reaches — the dig row's
+    // own -1.0 the unbreakable verdict the NAME_OF read the
+    // unreachable law keeps).
+    "spruce_door", "spruce_door", "spruce_door", "spruce_door",
+    "birch_door", "birch_door", "birch_door", "birch_door",
+    "jungle_door", "jungle_door", "jungle_door", "jungle_door",
+    "acacia_door", "acacia_door", "acacia_door", "acacia_door",
+    "dark_oak_door", "dark_oak_door", "dark_oak_door", "dark_oak_door",
+    "mangrove_door", "mangrove_door", "mangrove_door", "mangrove_door",
+    "cherry_door", "cherry_door", "cherry_door", "cherry_door",
+    "pale_oak_door", "pale_oak_door", "pale_oak_door", "pale_oak_door",
+    "bamboo_door", "bamboo_door", "bamboo_door", "bamboo_door",
+    "crimson_door", "crimson_door", "crimson_door", "crimson_door",
+    "warped_door", "warped_door", "warped_door", "warped_door",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -1577,12 +1735,81 @@ pub fn furnace_facing_byte(cam_yaw_radians: f32) -> u8 {
     FACING_BY_2D[(look + 2) & 3]
 }
 
-/// THE DOOR FAMILY'S OWN PREDICATE (the autopush-655 round — the four
-/// kinds the two-halves x two-open-bits ladder wears: the closed
-/// lower/upper the placement lands, the open pair the flip walk's
-/// kind swaps wear).
+/// THE DOOR FAMILY'S OWN KIND LADDER (the dev-43 round — the twelve
+/// wooden doors the oak lane's walk generalizes): the 48 kinds the
+/// named consts bank, each wood the CONTIGUOUS four-kind run (the
+/// closed lower, the closed upper, the open lower, the open upper —
+/// the upper bit = +1, the open bit = +2, the flip mate = ±2 the
+/// arithmetic the helpers wear). The ladder the base walk and the
+/// mesher's model-bake walk both read (the copper ladder and the
+/// iron door the next lane's runs bank).
+pub const DOOR_KINDS: [u16; 48] = [
+    OAK_DOOR,
+    OAK_DOOR_UPPER,
+    OAK_DOOR_OPEN,
+    OAK_DOOR_UPPER_OPEN,
+    SPRUCE_DOOR,
+    SPRUCE_DOOR_UPPER,
+    SPRUCE_DOOR_OPEN,
+    SPRUCE_DOOR_UPPER_OPEN,
+    BIRCH_DOOR,
+    BIRCH_DOOR_UPPER,
+    BIRCH_DOOR_OPEN,
+    BIRCH_DOOR_UPPER_OPEN,
+    JUNGLE_DOOR,
+    JUNGLE_DOOR_UPPER,
+    JUNGLE_DOOR_OPEN,
+    JUNGLE_DOOR_UPPER_OPEN,
+    ACACIA_DOOR,
+    ACACIA_DOOR_UPPER,
+    ACACIA_DOOR_OPEN,
+    ACACIA_DOOR_UPPER_OPEN,
+    DARK_OAK_DOOR,
+    DARK_OAK_DOOR_UPPER,
+    DARK_OAK_DOOR_OPEN,
+    DARK_OAK_DOOR_UPPER_OPEN,
+    MANGROVE_DOOR,
+    MANGROVE_DOOR_UPPER,
+    MANGROVE_DOOR_OPEN,
+    MANGROVE_DOOR_UPPER_OPEN,
+    CHERRY_DOOR,
+    CHERRY_DOOR_UPPER,
+    CHERRY_DOOR_OPEN,
+    CHERRY_DOOR_UPPER_OPEN,
+    PALE_OAK_DOOR,
+    PALE_OAK_DOOR_UPPER,
+    PALE_OAK_DOOR_OPEN,
+    PALE_OAK_DOOR_UPPER_OPEN,
+    BAMBOO_DOOR,
+    BAMBOO_DOOR_UPPER,
+    BAMBOO_DOOR_OPEN,
+    BAMBOO_DOOR_UPPER_OPEN,
+    CRIMSON_DOOR,
+    CRIMSON_DOOR_UPPER,
+    CRIMSON_DOOR_OPEN,
+    CRIMSON_DOOR_UPPER_OPEN,
+    WARPED_DOOR,
+    WARPED_DOOR_UPPER,
+    WARPED_DOOR_OPEN,
+    WARPED_DOOR_UPPER_OPEN,
+];
+
+/// THE QUARTET'S OWN BASE (the run the id's seat answers — the walk
+/// every door helper's arithmetic reads): the containing quartet's
+/// closed-lower base the Some wears (the ladder's own position the
+/// %4 floor speaks — the twelve groups the four-rung chunks keep),
+/// the non-door kinds the None the predicates' false keeps.
+pub fn door_quartet_base(id: u16) -> Option<u16> {
+    let pos = DOOR_KINDS.iter().position(|&k| k == id)?;
+    Some(DOOR_KINDS[pos - pos % 4])
+}
+
+/// THE DOOR FAMILY'S OWN PREDICATE (the autopush-655 round, the
+/// dev-43 wood generalization — the twelve quartets the two-halves x
+/// two-open-bits ladder wears: the closed lower/upper the placement
+/// lands, the open pair the flip walk's kind swaps wear).
 pub fn is_door(id: u16) -> bool {
-    (OAK_DOOR..=OAK_DOOR_UPPER_OPEN).contains(&id)
+    door_quartet_base(id).is_some()
 }
 
 /// THE DOOR'S OWN LOWER HALF (javap DoorBlock.getStateForPlacement pc
@@ -1590,10 +1817,10 @@ pub fn is_door(id: u16) -> bool {
 /// clicked cell the item's own place wears, the upper the
 /// setPlacedBy walk's above cell banks). The dig completion's
 /// orphan law the pair reads, the loot's own conditional pool the
-/// LOWER's break alone rolls (the jar's oak_door.json loot the
+/// LOWER's break alone rolls (the jar's {wood}_door.json loot the
 /// block_state_property half=lower condition speaks).
 pub fn is_door_lower(id: u16) -> bool {
-    id == OAK_DOOR || id == OAK_DOOR_OPEN
+    door_quartet_base(id).is_some_and(|b| (id - b) & 1 == 0)
 }
 
 /// THE DOOR'S OWN UPPER HALF (javap DoorBlock.setPlacedBy pc 0-21
@@ -1601,14 +1828,14 @@ pub fn is_door_lower(id: u16) -> bool {
 /// cell speaks, the canSurvive pc 41-47 the below-is-the-door read
 /// the orphan law keeps).
 pub fn is_door_upper(id: u16) -> bool {
-    id == OAK_DOOR_UPPER || id == OAK_DOOR_UPPER_OPEN
+    door_quartet_base(id).is_some_and(|b| (id - b) & 1 == 1)
 }
 
 /// THE DOOR'S OWN OPEN BIT (javap DoorBlock.useWithoutItem pc 14-21
 /// the `state.cycle(OPEN)` walk the flip's own verdict speaks — the
 /// closed kinds the false answer, the open kinds the true).
 pub fn is_door_open(id: u16) -> bool {
-    id == OAK_DOOR_OPEN || id == OAK_DOOR_UPPER_OPEN
+    door_quartet_base(id).is_some_and(|b| (id - b) & 2 != 0)
 }
 
 /// THE DOOR'S OWN FLIP MATE (javap DoorBlock.useWithoutItem the 26.2
@@ -1620,14 +1847,49 @@ pub fn is_door_open(id: u16) -> bool {
 /// two-cell kind swap the same verdict serves). The closed kinds
 /// the open pair answer, the open kinds the closed pair answer —
 /// the half bit the swap never touches (the lower stays the lower,
-/// the upper the upper).
+/// the upper the upper). The quartet arithmetic the ±2 map speaks:
+/// the closed kinds the +2 seats answer, the open kinds the -2
+/// (the offset's open bit the own walk reads — the ^2 word the
+/// mod-4 alignment the quartet seats never speak, the 91 upper the
+/// ^2 map the 89 seat the wrong law wears).
 pub fn door_flip_mate(id: u16) -> Option<u16> {
+    door_quartet_base(id)
+        .map(|b| if (id - b) & 2 == 0 { id + 2 } else { id - 2 })
+}
+
+/// THE DOOR'S OWN UPPER MATE (javap DoorBlock.setPlacedBy pc 0-21 —
+/// the `pos.above()` cell's `setValue(HALF, DoubleBlockHalf.UPPER)`
+/// setBlockAndUpdate walk the placement lane's second beat speaks):
+/// the CLOSED LOWER kind the CLOSED UPPER answer (the quartet's +1
+/// seat the base arithmetic wears), the open kinds the None the
+/// placement-only walk keeps (the item's own place never lands the
+/// open bit — the registerDefaultState pin the closed default
+/// speaks).
+pub fn door_upper_mate(id: u16) -> Option<u16> {
+    if is_door_lower(id) && !is_door_open(id) {
+        Some(id + 1)
+    } else {
+        None
+    }
+}
+
+/// THE DOOR'S OWN VOICE STEM (javap BlockSetType the 26.2 jar — the
+/// doorOpen/doorClose SoundEvent pair the set type carries: the
+/// single-arg ctor's WOODEN_DOOR_CLOSE/OPEN the OAK/SPRUCE/BIRCH/
+/// ACACIA/JUNGLE/DARK_OAK/PALE_OAK/MANGROVE delegations speak, the
+/// CHERRY full ctor's CHERRY_WOOD_DOOR_CLOSE/OPEN the cherry voices
+/// bank, the CRIMSON/WARPED pair the NETHER_WOOD_DOOR_CLOSE/OPEN
+/// the nether voices wear, the BAMBOO full ctor's BAMBOO_WOOD_DOOR_
+/// CLOSE/OPEN the bamboo voices speak). The stem the flip walk's
+/// own `.open`/`.close` suffix wears (the runtime sounds.json the
+/// every event the official table carries).
+pub fn door_voice_stem(id: u16) -> &'static str {
     match id {
-        OAK_DOOR => Some(OAK_DOOR_OPEN),
-        OAK_DOOR_UPPER => Some(OAK_DOOR_UPPER_OPEN),
-        OAK_DOOR_OPEN => Some(OAK_DOOR),
-        OAK_DOOR_UPPER_OPEN => Some(OAK_DOOR_UPPER),
-        _ => None,
+        CHERRY_DOOR..=CHERRY_DOOR_UPPER_OPEN => "block.cherry_wood_door",
+        BAMBOO_DOOR..=BAMBOO_DOOR_UPPER_OPEN => "block.bamboo_wood_door",
+        CRIMSON_DOOR..=CRIMSON_DOOR_UPPER_OPEN
+        | WARPED_DOOR..=WARPED_DOOR_UPPER_OPEN => "block.nether_wood_door",
+        _ => "block.wooden_door",
     }
 }
 
@@ -8696,7 +8958,61 @@ mod tests {
         assert_eq!(OAK_DOOR_UPPER, 91);
         assert_eq!(OAK_DOOR_OPEN, 92);
         assert_eq!(OAK_DOOR_UPPER_OPEN, 93);
-        assert_eq!(END_PORTAL, 94, "the displaced seat the quartet's tail banks");
+        assert_eq!(END_PORTAL, 138, "the displaced seat the wood ladder's tail banks");
+        // THE WOOD LADDER'S OWN SEATS (the dev-43 round — the eleven
+        // quartets the CONTIGUOUS tail the kind ids 94..137 wear: the
+        // closed lower + 0, the closed upper + 1, the open lower + 2,
+        // the open upper + 3 the arithmetic the helpers wear)
+        for (base, name) in [
+            (SPRUCE_DOOR, "spruce"),
+            (BIRCH_DOOR, "birch"),
+            (JUNGLE_DOOR, "jungle"),
+            (ACACIA_DOOR, "acacia"),
+            (DARK_OAK_DOOR, "dark_oak"),
+            (MANGROVE_DOOR, "mangrove"),
+            (CHERRY_DOOR, "cherry"),
+            (PALE_OAK_DOOR, "pale_oak"),
+            (BAMBOO_DOOR, "bamboo"),
+            (CRIMSON_DOOR, "crimson"),
+            (WARPED_DOOR, "warped"),
+        ] {
+            assert_eq!(
+                door_flip_mate(base),
+                Some(base + 2),
+                "the {name} closed lower the open lower flips"
+            );
+            assert_eq!(
+                door_flip_mate(base + 1),
+                Some(base + 3),
+                "the {name} closed upper the open upper flips"
+            );
+            assert!(is_door_lower(base) && is_door_lower(base + 2));
+            assert!(is_door_upper(base + 1) && is_door_upper(base + 3));
+            assert!(!is_door_open(base) && !is_door_open(base + 1));
+            assert!(is_door_open(base + 2) && is_door_open(base + 3));
+            assert_eq!(door_upper_mate(base), Some(base + 1));
+            assert_eq!(door_upper_mate(base + 2), None);
+            assert_eq!(
+                NAME_OF[base as usize],
+                format!("{name}_door"),
+                "the {name} quartet the shared base row wears"
+            );
+            assert_eq!(
+                World::placeable_block(&format!("{name}_door")),
+                Some(base),
+                "the {name} item the closed lower places"
+            );
+        }
+        assert_eq!(DOOR_KINDS.len(), 48, "the twelve quartets the ladder banks");
+        // THE LADDER'S OWN GROUPS (the %4 floor the base walk reads —
+        // each rung the named const the quartet's own seat keeps)
+        for (i, kind) in DOOR_KINDS.iter().enumerate() {
+            assert_eq!(
+                door_quartet_base(*kind),
+                Some(DOOR_KINDS[i - i % 4]),
+                "the rung {i} the own group's base wears"
+            );
+        }
         // THE FAMILY PREDICATES (the halves and the open bit the pair
         // reads: the flip walk's mate the lower's above / the upper's
         // below cells answer)
@@ -8723,7 +9039,7 @@ mod tests {
         for id in [OAK_DOOR, OAK_DOOR_UPPER, OAK_DOOR_OPEN, OAK_DOOR_UPPER_OPEN] {
             assert_eq!(NAME_OF[id as usize], "oak_door", "kind {id} the base row wears");
         }
-        assert_eq!(NAME_OF.len(), 94, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 138, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)

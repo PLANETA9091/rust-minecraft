@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 94] = [
+pub const RUNTIME_PALETTE: [&str; 138] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -575,6 +575,53 @@ pub const RUNTIME_PALETTE: [&str; 94] = [
     // vocabulary's 1..=4 law), the mesher's element lane the real
     // geometry the facing/open theta tables rotate.
     "oak_door", "oak_door_upper", "oak_door_open", "oak_door_upper_open",
+    // THE DOOR FAMILY'S WOOD GENERALIZATION (the dev-43 round): the
+    // eleven wooden quartets the oak lane's own walk speaks — javap
+    // BlockSetType the 26.2 jar (pinned sha1 2dc72797, javap 21.0.12):
+    // the single-arg convenience ctor `<init>(String)` pc 0-38 the
+    // OAK/SPRUCE/BIRCH/ACACIA/JUNGLE/DARK_OAK/PALE_OAK/MANGROVE set
+    // types delegate — canOpenByHand iconst_1 the PASS speaks,
+    // SoundType.WOOD the dig/place rows the wooden SoundType wears,
+    // WOODEN_DOOR_CLOSE/OPEN the doorOpen/doorClose events the
+    // block.wooden_door.open/close voices the runtime sounds.json
+    // carries (the whole classic family the ONE wooden voice wears);
+    // the CHERRY set type the full ctor pc 338-380 speaks —
+    // SoundType.CHERRY_WOOD, CHERRY_WOOD_DOOR_CLOSE/OPEN the
+    // block.cherry_wood_door.open/close voices; the CRIMSON/WARPED
+    // pair the NETHER_WOOD set type's walk banks — NETHER_WOOD_DOOR_
+    // CLOSE/OPEN the block.nether_wood_door.open/close voices (the
+    // full-ctor canOpenByHand iconst_1 the PASS keeps); the BAMBOO
+    // set type the same full-ctor shape — BAMBOO_WOOD_DOOR_CLOSE/
+    // OPEN the block.bamboo_wood_door.open/close voices. The
+    // COPPER family (the eight oxidization-ladder states) and the
+    // IRON door the canOpenByHand law divides (the copper iconst_1
+    // the PASS, the iron iconst_0 the refusal) — the families the
+    // ladder's own round banks (the copper quartets the next lane
+    // wears). Each wood the SAME quartet the oak lane banks: the
+    // blockstate {wood}_door.json the plain 32-variant map (4 facing
+    // x 2 half x 2 hinge x 2 open — the POWERED property never
+    // carried), the hinge-LEFT facing=north rows the kind-only
+    // palette resolves (the closed kinds the open=false rows, the
+    // open kinds the open=true rows), the models ONE box element
+    // [0,0,0]->[3,16,16] each (the lower's #bottom, the upper's
+    // #top — the per-wood masters the mesher's verdict reads), the
+    // 3/16 panel the SHAPES clinit's boxZ walk every wood speaks.
+    // The quartet seats the CONTIGUOUS tail the kind ids bank (the
+    // closed lower/upper, the open lower/upper — the +1 upper bit
+    // the +2 open bit the helpers' arithmetic wears), the END_PORTAL
+    // kind the beyond-table seat the quartet ladder's own growth
+    // displaces (94 -> 138 the dev-43 walk keeps).
+    "spruce_door", "spruce_door_upper", "spruce_door_open", "spruce_door_upper_open",
+    "birch_door", "birch_door_upper", "birch_door_open", "birch_door_upper_open",
+    "jungle_door", "jungle_door_upper", "jungle_door_open", "jungle_door_upper_open",
+    "acacia_door", "acacia_door_upper", "acacia_door_open", "acacia_door_upper_open",
+    "dark_oak_door", "dark_oak_door_upper", "dark_oak_door_open", "dark_oak_door_upper_open",
+    "mangrove_door", "mangrove_door_upper", "mangrove_door_open", "mangrove_door_upper_open",
+    "cherry_door", "cherry_door_upper", "cherry_door_open", "cherry_door_upper_open",
+    "pale_oak_door", "pale_oak_door_upper", "pale_oak_door_open", "pale_oak_door_upper_open",
+    "bamboo_door", "bamboo_door_upper", "bamboo_door_open", "bamboo_door_upper_open",
+    "crimson_door", "crimson_door_upper", "crimson_door_open", "crimson_door_upper_open",
+    "warped_door", "warped_door_upper", "warped_door_open", "warped_door_upper_open",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -793,6 +840,32 @@ fn full_cube_faces(
         out[4].clone(),
         out[5].clone(),
     ])
+}
+
+/// THE DOOR FAMILY'S OWN GATE (the dev-43 round): the palette rows
+/// the twelve wooden quartets wear — the `{wood}_door` base the
+/// row arm's blockstate read keys. The copper ladder (the eight
+/// oxidization states) and the iron door the next lane's rows bank
+/// (the canOpenByHand law the set-type walk already banked). The
+/// list the row arm AND the TILE-const emit both read — the one
+/// table the family's data lanes share.
+const DOOR_FAMILY_BASES: [&str; 12] = [
+    "oak_door", "spruce_door", "birch_door", "jungle_door", "acacia_door",
+    "dark_oak_door", "mangrove_door", "cherry_door", "pale_oak_door",
+    "bamboo_door", "crimson_door", "warped_door",
+];
+
+/// The palette row's `{wood}_door` base the family gate answers (the
+/// `_upper`/`_open` suffixes the strip walk peels — the `_open` FIRST
+/// the both-suffix word the upper-open kind wears), the non-family
+/// rows the None the generic arms serve.
+fn door_family_base(block: &str) -> Option<&'static str> {
+    let stem = block.strip_suffix("_open").unwrap_or(block);
+    let stem = stem.strip_suffix("_upper").unwrap_or(stem);
+    DOOR_FAMILY_BASES
+        .iter()
+        .copied()
+        .find(|b| *b == stem)
 }
 
 fn resolve_flat_stem(stem: &str, tinted: bool) -> [ResolvedFace; 6] {
@@ -1331,42 +1404,45 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             faces.push(resolve_flat_stem(&tex_stem, false));
             continue;
         }
-        if block.starts_with("oak_door") {
+        if let Some(wood_base) = door_family_base(block) {
             // THE DOOR FAMILY'S OWN ROWS (the autopush-655 round, the
-            // official 26.2 jar): the blockstate oak_door.json is a
-            // plain 32-variant map — the kind-only palette the
-            // hinge-LEFT rows resolve (javap DoorBlock's ctor
-            // registerDefaultState walk pc 53-59 the HINGE=LEFT pin
-            // speaks), the closed kinds the open=false rows, the open
-            // kinds the open=true rows, the half property the
-            // upper-word row keys. The EXPLICIT row the walk reads
-            // (the candle_lit arm's own law — the facing=north rows
-            // the orientable vocabulary's default the variant byte's
-            // 0 answers), the model chain's resolved ref the flat
-            // stem keeps: the lower's faces all #bottom (block/
-            // oak_door_bottom), the upper's all #top (block/
-            // oak_door_top) — the two masters the mesher's per-quad
-            // verdict the named consts read, tinted = false (the
-            // pre-colored masters render as authored).
-            let upper = block == "oak_door_upper" || block == "oak_door_upper_open";
-            let open = block == "oak_door_open" || block == "oak_door_upper_open";
+            // dev-43 wood generalization — the official 26.2 jar):
+            // the blockstate {wood}_door.json is a plain 32-variant
+            // map — the kind-only palette the hinge-LEFT rows resolve
+            // (javap DoorBlock's ctor registerDefaultState walk pc
+            // 53-59 the HINGE=LEFT pin speaks), the closed kinds the
+            // open=false rows, the open kinds the open=true rows, the
+            // half property the upper-word row keys. The EXPLICIT row
+            // the walk reads (the candle_lit arm's own law — the
+            // facing=north rows the orientable vocabulary's default
+            // the variant byte's 0 answers), the model chain's
+            // resolved ref the flat stem keeps: the lower's faces all
+            // #bottom (block/{wood}_door_bottom), the upper's all
+            // #top (block/{wood}_door_top) — the per-wood masters the
+            // mesher's per-quad verdict the named consts read, tinted
+            // = false (the pre-colored masters render as authored).
+            // The family walk the twelve woods share (the
+            // DOOR_FAMILY_BASES list the row arms gate — the copper
+            // ladder and the iron door the next lane's rows wear).
+            let upper = block.ends_with("_upper") || block.ends_with("_upper_open");
+            let open = block.ends_with("_open");
             let key = format!("facing=north,half={},hinge=left,open={open}", if upper { "upper" } else { "lower" });
             let bs_bytes = read_jar(
                 &mut archive,
-                "assets/minecraft/blockstates/oak_door.json",
+                &format!("assets/minecraft/blockstates/{wood_base}.json"),
             )?;
             let bs: Value = serde_json::from_slice(&bs_bytes)
-                .with_context(|| "blockstate oak_door: json parse")?;
+                .with_context(|| format!("blockstate {wood_base}: json parse"))?;
             let model_ref = bs
                 .get("variants")
                 .and_then(|v| v.get(&key))
                 .and_then(|v| v.get("model"))
                 .and_then(|m| m.as_str())
-                .with_context(|| format!("blockstate oak_door: no {key} model"))?
+                .with_context(|| format!("blockstate {wood_base}: no {key} model"))?
                 .trim_start_matches("minecraft:")
                 .to_string();
             let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
-                .with_context(|| format!("block oak_door: model chain {model_ref}"))?;
+                .with_context(|| format!("block {wood_base}: model chain {model_ref}"))?;
             let tex = tex_map
                 .get(if upper { "top" } else { "bottom" })
                 .with_context(|| format!("model {model_ref}: no door texture ref"))?;
@@ -2371,24 +2447,34 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             stem, prefix, idx
         ));
     }
-    // THE DOOR MASTERS' OWN CONSTS (the autopush-655 round): the two
-    // door textures the palette's own quartet rows bank (the lower's
-    // #bottom / the upper's #top refs the flat-stem arms resolve) —
-    // the mesher's door lane's per-quad texture verdict the named
-    // consts read.
-    for (stem, prefix) in [
-        ("oak_door_bottom", "TILE_OAK_DOOR_BOTTOM"),
-        ("oak_door_top", "TILE_OAK_DOOR_TOP"),
-    ] {
-        let idx = tile_const(&tile_names, stem)?;
-        src.push_str(&format!(
-            "\n/// The door lane's own {} tile (the autopush-655\n\
-             \x20    /// round — the door element geometry's per-quad\n\
-             \x20    /// texture verdict reads it; the two masters the\n\
-             \x20    /// palette's own quartet rows bank).\n\
-             \x20    pub const {}: u16 = {};\n",
-            stem, prefix, idx
-        ));
+    // THE DOOR MASTERS' OWN CONSTS (the autopush-655 round, the
+    // dev-43 wood generalization): the per-wood door texture pairs
+    // the palette's own quartet rows bank (the lower's #bottom / the
+    // upper's #top refs the flat-stem arms resolve) — the mesher's
+    // door lane's per-quad texture verdict the named consts read.
+    // The twelve wooden bases the DOOR_FAMILY_BASES list the row arm
+    // resolves — the copper ladder and the iron door the next lane's
+    // pairs wear.
+    for base in DOOR_FAMILY_BASES {
+        let prefix_base: String = base
+            .split('_')
+            .map(|w| w.to_uppercase())
+            .collect::<Vec<_>>()
+            .join("_");
+        for (half, prefix_half) in [("bottom", "BOTTOM"), ("top", "TOP")] {
+            let stem = format!("{base}_{half}");
+            let prefix = format!("TILE_{prefix_base}_{prefix_half}");
+            let idx = tile_const(&tile_names, &stem)?;
+            src.push_str(&format!(
+                "\n/// The door lane's own {} tile (the autopush-655\n\
+                 \x20    /// round's family walk, the dev-43 wood\n\
+                 \x20    /// generalization — the door element geometry's\n\
+                 \x20    /// per-quad texture verdict reads it; the two\n\
+                 \x20    /// masters the palette's own quartet rows bank).\n\
+                 \x20    pub const {}: u16 = {};\n",
+                stem, prefix, idx
+            ));
+        }
     }
     src.push_str(&format!(
         "\n/// The destroy_stage_0..9 tile indices (the breaking overlay's own\n\

@@ -35679,7 +35679,11 @@ impl App {
         // oak_door item the LOWER's break spawns (the survives_
         // explosion condition the offline break always answers).
         if crate::world::is_door_lower(kind) {
-            if let Some(item) = mc_registry::item_id_by_name("oak_door") {
+            // THE WOOD WALK THE ITEM NAME WEARS (the dev-43 round —
+            // the shared NAME_OF base row the per-wood item id keys:
+            // the {wood}_door item the conditional pool every wooden
+            // door rolls)
+            if let Some(item) = mc_registry::item_id_by_name(crate::world::NAME_OF[kind as usize]) {
                 let id = self.next_drop_id;
                 self.next_drop_id += 1;
                 self.drops.push(crate::drops::ItemDrop::spawn(
@@ -36270,11 +36274,15 @@ impl App {
                 }
                 self.world_quads = Some(crate::mesher::mesh_world(world, None));
             }
-            // THE WOODEN DOOR'S OWN VOICE (javap playSound pc 0-42 —
+            // THE SET TYPE'S OWN VOICE (javap playSound pc 0-42 —
             // the BlockSetType's doorOpen/doorClose events the
             // `nextFloat() * 0.1F + 0.9F` pitch walk speaks, the
             // Source BLOCKS the positioned walk the cake arm's own
-            // fold wears)
+            // fold wears). THE WOOD WALK THE VOICE STEM WEARS (the
+            // dev-43 round — the door_voice_stem the per-wood set
+            // type's own pair answers: the wooden family the
+            // single-arg ctor's WOODEN pair speaks, the cherry/
+            // bamboo/nether woods the full-ctor pairs bank)
             let pitch = 0.9 + self.drop_rng.next_f32() * 0.1;
             let ear = self
                 .body
@@ -36286,13 +36294,15 @@ impl App {
                 hit.pos.1 as f64 + 0.5,
                 hit.pos.2 as f64 + 0.5,
             );
+            let voice = crate::world::door_voice_stem(kind);
+            let voice_event = if opening {
+                format!("{voice}.open")
+            } else {
+                format!("{voice}.close")
+            };
             self.sounds.play_voice_at_pan(
                 self.frame,
-                if opening {
-                    "block.wooden_door.open"
-                } else {
-                    "block.wooden_door.close"
-                },
+                &voice_event,
                 1.0,
                 pitch,
                 ear_distance(ear, tx, ty, tz),
@@ -36562,8 +36572,12 @@ impl App {
         // table's non-Empty rows keep: the full-cube family the
         // sturdy faces the farmland/path columns' own tops speak]).
         // THE GATES FAIL THE PASS (the vanilla canPlace's own refusal
-        // the press never consumes — the item lanes follow).
-        if block == crate::world::OAK_DOOR {
+        // the press never consumes — the item lanes follow). THE WOOD
+        // WALK THE FAMILY'S OWN PREDICATE WEARS (the dev-43 round —
+        // the is_door_lower the twelve closed lowers gate: the item's
+        // own place the LOWER kind alone lands, the open kinds the
+        // placeable lookup never answers)
+        if crate::world::is_door_lower(block) {
             let above_ok = self.active_world().is_some_and(|w| {
                 let above = w.get(cell.0, cell.1 + 1, cell.2);
                 above == crate::world::AIR
@@ -36779,9 +36793,12 @@ impl App {
             // later lane serves). The gates the verdict branch spoke
             // (the above replaceable, the below sturdy) the walk
             // already banked — the upper cell the same beat claims.
-            if block == crate::world::OAK_DOOR {
+            // THE WOOD WALK THE UPPER MATE WEARS (the dev-43 round —
+            // the door_upper_mate the twelve closed lowers the +1 seat
+            // the whole family banks)
+            if let Some(upper) = crate::world::door_upper_mate(block) {
                 let facing = crate::world::door_facing_byte(cam_yaw);
-                world.set(cell.0, cell.1 + 1, cell.2, crate::world::OAK_DOOR_UPPER);
+                world.set(cell.0, cell.1 + 1, cell.2, upper);
                 world.set_variant(cell.0, cell.1, cell.2, facing);
                 world.set_variant(cell.0, cell.1 + 1, cell.2, facing);
             }
@@ -101409,8 +101426,8 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            94,
-            "the palette the door quartet's own tail rows bank"
+            138,
+            "the palette the wood ladder's own tail rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
         assert_eq!(atlas::KIND_NAMES[wool as usize], "white_wool");
@@ -101490,8 +101507,8 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            94,
-            "the palette the door quartet's own tail rows bank"
+            138,
+            "the palette the wood ladder's own tail rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
         assert_eq!(atlas::REGISTRY_NAMES[sand as usize], "soul_sand");
@@ -101792,8 +101809,8 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            94,
-            "the palette the door quartet's own tail rows bank"
+            138,
+            "the palette the wood ladder's own tail rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
         assert_eq!(atlas::REGISTRY_NAMES[honey as usize], "honey_block");
@@ -105223,6 +105240,183 @@ cow_sound_variant: None,
             app.drops.len(),
             drops_before,
             "the UPPER's break the conditional pool refuses"
+        );
+    }
+
+    #[test]
+    fn the_door_family_the_wood_walk_wears() {
+        // THE WOOD LADDER'S OWN WALK (the dev-43 round — the eleven
+        // wooden quartets the oak lane's own interaction generalizes:
+        // the placement the placeable lookup + the door_upper_mate
+        // the spruce pair banks, the flip the BOTH halves' kind swaps
+        // the quartet arithmetic wears, the voice the per-wood set
+        // type's own pair speaks [the cherry full ctor's
+        // CHERRY_WOOD_DOOR_OPEN the block.cherry_wood_door.open
+        // event carries, the crimson NETHER_WOOD pair the
+        // block.nether_wood_door.open event carries — the wooden
+        // family the single-arg ctor's WOODEN pair keeps], the dig's
+        // conditional pool the {wood}_door item the shared NAME_OF
+        // base row rolls)
+        let spruce_item = mc_registry::item_id_by_name("spruce_door")
+            .expect("the spruce door item the registry banks");
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        // THE SPRUCE PLACEMENT (the item's own place the two halves
+        // wears: the closed lower the clicked cell banks, the UPPER
+        // the setPlacedBy walk's above cell keeps, the facing byte
+        // BOTH cells wear)
+        app.offline_held_updated(Some("item/spruce_door"));
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the spruce placement consumed");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c),
+                crate::world::SPRUCE_DOOR,
+                "the spruce closed lower the item's own place wears"
+            );
+            assert_eq!(
+                w.get(c, top + 1, c),
+                crate::world::SPRUCE_DOOR_UPPER,
+                "the spruce upper the setPlacedBy walk banks"
+            );
+            assert_eq!(
+                w.variant(c, top, c),
+                1,
+                "the spruce lower's facing byte the yaw-0 north wears"
+            );
+        }
+        // THE SPRUCE FLIP (the empty hand's use the quartet arithmetic
+        // the both halves swap, the voice the WOODEN pair the
+        // single-arg ctor's delegation keeps)
+        app.offline_held_updated(None);
+        assert!(app.on_right_press(0, 0), "the spruce flip consumed");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c),
+                crate::world::SPRUCE_DOOR_OPEN,
+                "the spruce lower's own cycle the open kind wears"
+            );
+            assert_eq!(
+                w.get(c, top + 1, c),
+                crate::world::SPRUCE_DOOR_UPPER_OPEN,
+                "the spruce other half's sync the Y-arm answers"
+            );
+        }
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.wooden_door.open")),
+            "the spruce voice the WOODEN pair keeps"
+        );
+        assert!(
+            !app
+                .sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.cherry_wood_door")),
+            "the wooden family the cherry voice never wears"
+        );
+        // THE SPRUCE LOWER'S DIG (the conditional pool the
+        // {wood}_door item rolls — the shared NAME_OF base row the
+        // per-wood drop keys, the upper the mate law clears)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 3.5, top as f32 + 0.5, c as f32 + 0.5),
+            yaw: -std::f32::consts::FRAC_PI_2,
+            pitch: 0.0,
+        });
+        app.on_press(0, 0);
+        let mut ticks = 0;
+        while app.offline_world.as_ref().unwrap().get(c, top, c) != crate::world::AIR {
+            app.update();
+            ticks += 1;
+            assert!(ticks < 400, "the spruce lower's dig completed in time");
+        }
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top + 1, c),
+                crate::world::AIR,
+                "the spruce upper the mate's own law clears"
+            );
+        }
+        assert!(
+            app.drops
+                .iter()
+                .any(|d| d.item == spruce_item && d.count == 1),
+            "the spruce pool the LOWER's break rolls"
+        );
+        // THE PER-WOOD VOICES' OWN STEMS (the cherry pair the full
+        // ctor's CHERRY_WOOD sounds bank, the crimson pair the
+        // NETHER_WOOD sounds keep — the flip walk the same swap the
+        // voices' own events wear)
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c + 2, top, c + 2, crate::world::CHERRY_DOOR);
+            w.set(c + 2, top + 1, c + 2, crate::world::CHERRY_DOOR_UPPER);
+            w.set(c - 2, top, c - 2, crate::world::CRIMSON_DOOR);
+            w.set(c - 2, top + 1, c - 2, crate::world::CRIMSON_DOOR_UPPER);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 2.5, top as f32 + 4.0, c as f32 + 2.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the cherry flip consumed");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 2, top, c + 2),
+                crate::world::CHERRY_DOOR_OPEN,
+                "the cherry lower's own cycle the open kind wears"
+            );
+            assert_eq!(
+                w.get(c + 2, top + 1, c + 2),
+                crate::world::CHERRY_DOOR_UPPER_OPEN,
+                "the cherry upper's sync the Y-arm answers"
+            );
+        }
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.cherry_wood_door.open")),
+            "the cherry voice the CHERRY_WOOD pair speaks"
+        );
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 - 1.5, top as f32 + 4.0, c as f32 - 1.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the crimson flip consumed");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c - 2, top, c - 2),
+                crate::world::CRIMSON_DOOR_OPEN,
+                "the crimson lower's own cycle the open kind wears"
+            );
+            assert_eq!(
+                w.get(c - 2, top + 1, c - 2),
+                crate::world::CRIMSON_DOOR_UPPER_OPEN,
+                "the crimson upper's sync the Y-arm answers"
+            );
+        }
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.nether_wood_door.open")),
+            "the crimson voice the NETHER_WOOD pair speaks"
         );
     }
 

@@ -2271,13 +2271,20 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     // east 90 / south 180 / west 270 -> [0, 1, 2, 3] —
                     // the 90-degree CW walk the blockstate y values
                     // fold; the variant byte's no-opinion answer the
-                    // north default the idx-0 keeps)
-                    let model_id = match id {
-                        crate::world::OAK_DOOR => "block/oak_door_bottom_left",
-                        crate::world::OAK_DOOR_UPPER => "block/oak_door_top_left",
-                        crate::world::OAK_DOOR_OPEN => "block/oak_door_bottom_left_open",
-                        _ => "block/oak_door_top_left_open",
-                    };
+                    // north default the idx-0 keeps). THE WOOD STEM THE
+                    // SHARED NAME ROW WEARS (the dev-43 round — the
+                    // NAME_OF base the per-wood model chain keys: the
+                    // {wood}_door_bottom/top_left[_open] models the
+                    // ONE box element each the derive cache bakes, the
+                    // half/open bits the same word the oak lane's own
+                    // walk speaks)
+                    let door_name = crate::world::NAME_OF[id as usize];
+                    let model_id = format!(
+                        "block/{}_{}_left{}",
+                        door_name,
+                        if crate::world::is_door_upper(id) { "top" } else { "bottom" },
+                        if crate::world::is_door_open(id) { "_open" } else { "" },
+                    );
                     let facing = world.variant(wx, wy, wz);
                     let idx = if facing == 0 {
                         0usize // the unpropertied default: north
@@ -2291,7 +2298,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     } else {
                         closed_steps[idx]
                     };
-                    for q in door_model_quads(model_id) {
+                    for q in door_model_quads(&model_id) {
                         // THE ROTATED CULLFACE VERDICT — the six-
                         // direction law the cake lane wears, the
                         // direction the SAME steps the geometry turns
@@ -2313,22 +2320,26 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         }
                         // THE PER-QUAD TEXTURE VERDICT — the resolved
                         // texture name the tile mapping answers (the
-                        // two door masters the named consts bank, the
-                        // unknown ref the kind's own row serves)
+                        // per-wood door masters the named consts bank,
+                        // the unknown ref the kind's own row serves)
                         let tex_stem = q
                             .texture
                             .trim_start_matches("minecraft:")
                             .trim_start_matches("block/");
+                        // THE PER-QUAD TEXTURE VERDICT — the resolved
+                        // texture name the tile mapping answers (the
+                        // per-wood door masters the named consts bank,
+                        // the unknown ref the kind's own row serves).
+                        // THE WOOD WALK THE STEM'S OWN BASE READS (the
+                        // dev-43 round — the {wood}_door base the
+                        // twelve-pair table keys, the half suffix the
+                        // pair's own bottom/top picks)
                         let fallback_tile = if (id as usize) < atlas::N_KINDS {
                             atlas::FACE_TILES[id as usize][2]
                         } else {
                             atlas::TILE_NONE
                         };
-                        let tile = match tex_stem {
-                            "oak_door_bottom" => atlas::TILE_OAK_DOOR_BOTTOM,
-                            "oak_door_top" => atlas::TILE_OAK_DOOR_TOP,
-                            _ => fallback_tile,
-                        };
+                        let tile = door_master_tile(tex_stem).unwrap_or(fallback_tile);
                         let base = if tile == atlas::TILE_NONE {
                             crate::colors::palette_color(id, 2)
                                 .or_else(|| lut.and_then(|l| l.color(id, 2)))
@@ -3301,38 +3312,94 @@ fn cake_candle_model_quads(model_id: &str) -> &'static [mc_registry::element_qua
     map.get(model_id).map(|v| v.as_slice()).unwrap_or(&[])
 }
 
-/// THE DOOR FAMILY'S OWN MODEL BAKES — the block/oak_door_bottom_left
-/// / top_left / bottom_left_open / top_left_open chains the registry's
-/// derive walk resolves (the cake lane's own cache pattern the four
-/// models walk): each a SINGLE box element [0,0,0]->[3,16,16] (the
-/// base west strip the blockstate's y=0 authoring banks — the panel
-/// edge the theta tables rotate), the lower's faces all #bottom (the
-/// block/oak_door_bottom master the TILE const banks), the upper's
-/// all #top — the per-quad texture names RESOLVED (the parent-chain
-/// merge the texture walk serves). The failed derive the honest empty
-/// slice keeps (the door the nothing renders).
+/// THE DOOR FAMILY'S OWN MODEL BAKES — the block/{wood}_door_bottom
+/// _left / top_left / bottom_left_open / top_left_open chains the
+/// registry's derive walk resolves (the cake lane's own cache pattern
+/// the twelve woods' 48 models walk — the dev-43 round the oak lane's
+/// four the whole family generalizes): each a SINGLE box element
+/// [0,0,0]->[3,16,16] (the base west strip the blockstate's y=0
+/// authoring banks — the panel edge the theta tables rotate), the
+/// lower's faces all #bottom (the block/{wood}_door_bottom master
+/// the TILE consts bank), the upper's all #top — the per-quad
+/// texture names RESOLVED (the parent-chain merge the texture walk
+/// serves). The failed derive the honest empty slice keeps (the door
+/// the nothing renders).
 fn door_model_quads(model_id: &str) -> &'static [mc_registry::element_quads::Quad] {
     static QUADS: std::sync::OnceLock<
         std::collections::HashMap<&'static str, Vec<mc_registry::element_quads::Quad>>,
     > = std::sync::OnceLock::new();
-    let models = [
-        "block/oak_door_bottom_left",
-        "block/oak_door_top_left",
-        "block/oak_door_bottom_left_open",
-        "block/oak_door_top_left_open",
-    ];
     let map = QUADS.get_or_init(|| {
-        models
-            .into_iter()
+        crate::world::DOOR_KINDS
+            .chunks_exact(4)
+            .flat_map(|group| {
+                let name = crate::world::NAME_OF[group[0] as usize];
+                [
+                    format!("block/{name}_bottom_left"),
+                    format!("block/{name}_top_left"),
+                    format!("block/{name}_bottom_left_open"),
+                    format!("block/{name}_top_left_open"),
+                ]
+            })
             .map(|m| {
+                let key: &'static str = Box::leak(m.into_boxed_str());
                 (
-                    m,
-                    mc_registry::element_quads::derive_model_inherited(m).unwrap_or_default(),
+                    key,
+                    mc_registry::element_quads::derive_model_inherited(key).unwrap_or_default(),
                 )
             })
             .collect()
     });
     map.get(model_id).map(|v| v.as_slice()).unwrap_or(&[])
+}
+
+/// THE DOOR MASTERS' OWN TILE PAIRS (the dev-43 round — the twelve
+/// woods' #bottom/#top masters the generated TILE consts bank): the
+/// resolved texture stem the per-wood pair answers (the `_bottom`/
+/// `_top` suffix the pair's own half picks), the non-door stems the
+/// None the caller's fallback keeps.
+fn door_master_tile(tex_stem: &str) -> Option<u16> {
+    const PAIRS: [(&str, u16, u16); 12] = [
+        ("oak_door", atlas::TILE_OAK_DOOR_BOTTOM, atlas::TILE_OAK_DOOR_TOP),
+        ("spruce_door", atlas::TILE_SPRUCE_DOOR_BOTTOM, atlas::TILE_SPRUCE_DOOR_TOP),
+        ("birch_door", atlas::TILE_BIRCH_DOOR_BOTTOM, atlas::TILE_BIRCH_DOOR_TOP),
+        ("jungle_door", atlas::TILE_JUNGLE_DOOR_BOTTOM, atlas::TILE_JUNGLE_DOOR_TOP),
+        ("acacia_door", atlas::TILE_ACACIA_DOOR_BOTTOM, atlas::TILE_ACACIA_DOOR_TOP),
+        (
+            "dark_oak_door",
+            atlas::TILE_DARK_OAK_DOOR_BOTTOM,
+            atlas::TILE_DARK_OAK_DOOR_TOP,
+        ),
+        (
+            "mangrove_door",
+            atlas::TILE_MANGROVE_DOOR_BOTTOM,
+            atlas::TILE_MANGROVE_DOOR_TOP,
+        ),
+        ("cherry_door", atlas::TILE_CHERRY_DOOR_BOTTOM, atlas::TILE_CHERRY_DOOR_TOP),
+        (
+            "pale_oak_door",
+            atlas::TILE_PALE_OAK_DOOR_BOTTOM,
+            atlas::TILE_PALE_OAK_DOOR_TOP,
+        ),
+        ("bamboo_door", atlas::TILE_BAMBOO_DOOR_BOTTOM, atlas::TILE_BAMBOO_DOOR_TOP),
+        (
+            "crimson_door",
+            atlas::TILE_CRIMSON_DOOR_BOTTOM,
+            atlas::TILE_CRIMSON_DOOR_TOP,
+        ),
+        ("warped_door", atlas::TILE_WARPED_DOOR_BOTTOM, atlas::TILE_WARPED_DOOR_TOP),
+    ];
+    let base = tex_stem.strip_suffix("_top").unwrap_or(tex_stem);
+    let base = base.strip_suffix("_bottom").unwrap_or(base);
+    PAIRS
+        .iter()
+        .find(|(name, _, _)| *name == base)
+        .map(|&(_, bottom, top)| {
+            if tex_stem.ends_with("_top") {
+                top
+            } else {
+                bottom
+            }
+        })
 }
 
 /// THE CW QUARTER-TURN'S OWN MAP (the blockstate y rotation's own
