@@ -63,6 +63,12 @@ fn sky_opacity(id: u16) -> u8 {
         || is_double_plant(id)
         || is_wheat(id)
         || id == LEAF_LITTER
+        // THE DOOR FAMILY'S OWN ROW (the autopush-655 round — the
+        // 3/16 panel the light the flood passes: the DoorBlock's own
+        // isTransparent-true registration the vanilla lightBlock 0
+        // speaks, the closed door the light's own cell the flood
+        // never blocks — the neighbors' cells the same reach keeps)
+        || is_door(id)
     {
         0
     } else if id == WATER || id == LEAVES || id == PALE_LEAVES {

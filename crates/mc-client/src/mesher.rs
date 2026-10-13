@@ -170,6 +170,13 @@ fn is_transparent(kind: u16) -> bool {
         // the AO the opaque walk never casts)
         || crate::world::is_bamboo_stalk(kind)
         || crate::world::is_bamboo_sapling(kind)
+        // THE DOOR FAMILY the same verdict keeps (the autopush-655
+        // round — the 3/16 panel the noOcclusion law the DoorBlock's
+        // own isTransparent-true registration speaks: the non-
+        // occluding thin box the neighbors' faces draw against, the
+        // AO the opaque walk never casts, the element geometry the
+        // door arm's own lane renders)
+        || crate::world::is_door(kind)
 }
 
 /// Only opaque blocks cast ambient occlusion (air/water/leaves never darken
@@ -2177,6 +2184,220 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     }
                     continue;
                 }
+                // THE DOOR FAMILY'S OWN ELEMENT LANE (the autopush-655
+                // round — the vocabulary's next frontier the flip walk
+                // renders: the oak door the two-halves x two-open-bits
+                // ladder wears). The blockstates oak_door.json's rows
+                // the four offline kinds resolve (the hinge-LEFT rows
+                // the ctor's registerDefaultState pin speaks — the
+                // closed rows oak_door_bottom_left/top_left with the
+                // y table north 270 / east 0 / south 90 / west 180,
+                // the open rows the _open models with north 0 / east
+                // 90 / south 180 / west 270), each model ONE box
+                // element [0,0,0]->[3,16,16] (the base west strip x
+                // 0..3 — the panel edge the OPPOSITE facing the closed
+                // state wears, the facing's LEFT the left-hinge swing
+                // answers: the SHAPES clinit's boxZ(16.0, 13.0, 16.0)
+                // box(0,0,16,16,16,13) the facing=north panel at z
+                // 13..16 the model's own y-270 rotation the SAME edge
+                // the consistency check answers). The derive walk the
+                // real geometry resolves (`derive_model_inherited` —
+                // the parent chain the #bottom/#top refs the resolved
+                // textures answer, the down/up faces' uv rotation 90
+                // the Quadrant.rotateVertexIndex law bakes,
+                // ambientocclusion false the withoutAO fold keeps —
+                // the cell's own light every corner samples, the
+                // element's shade:true the direction table pays).
+                // THE FACING the variant byte carries (the orientable
+                // vocabulary's 1..=4 law — the placement lane stamps,
+                // the byte's no-opinion answer the north default the
+                // y=0 row the kind resolution banks): the theta tables
+                // the blockstate's own y values fold — the closed
+                // panel's steps CW about the cell center (north 3,
+                // east 0, south 1, west 2), the open's swing (north 0,
+                // east 1, south 2, west 3) — the vertices AND the
+                // face directions rotate together (the west strip
+                // under one CW step the north edge the (x,z)->(-z,x)
+                // map serves, the cullface the same rotation the
+                // neighbor reads keep). THE CULLFACE VERDICT the six-
+                // direction law the cake lane wears (the rotated
+                // direction the neighbor read answers — the vanilla
+                // cullface law the solid render answers), the per-quad
+                // texture verdict the named consts read (the lower's
+                // #bottom / the upper's #top the two door masters
+                // bank).
+                if crate::world::is_door(id) {
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let (cell_sky, cell_block) = match light {
+                        Some(l) => {
+                            let (s, b) = cell_layers(l, world.chunks_per_side, wx, wy, wz);
+                            (s.map(|v| v as f32), b.map(|v| v as f32))
+                        }
+                        None => (None, None),
+                    };
+                    // THE MODEL + STEPS THE KIND ANSWERS (the closed
+                    // y table north 270 / east 0 / south 90 / west 180
+                    // -> the steps [3, 0, 1, 2], the open's north 0 /
+                    // east 90 / south 180 / west 270 -> [0, 1, 2, 3] —
+                    // the 90-degree CW walk the blockstate y values
+                    // fold; the variant byte's no-opinion answer the
+                    // north default the idx-0 keeps)
+                    let model_id = match id {
+                        crate::world::OAK_DOOR => "block/oak_door_bottom_left",
+                        crate::world::OAK_DOOR_UPPER => "block/oak_door_top_left",
+                        crate::world::OAK_DOOR_OPEN => "block/oak_door_bottom_left_open",
+                        _ => "block/oak_door_top_left_open",
+                    };
+                    let facing = world.variant(wx, wy, wz);
+                    let idx = if facing == 0 {
+                        0usize // the unpropertied default: north
+                    } else {
+                        (facing - 1) as usize // 1..=4 the N/E/S/W rows
+                    };
+                    let open_steps = [0usize, 1, 2, 3];
+                    let closed_steps = [3usize, 0, 1, 2];
+                    let steps = if crate::world::is_door_open(id) {
+                        open_steps[idx]
+                    } else {
+                        closed_steps[idx]
+                    };
+                    for q in door_model_quads(model_id) {
+                        // THE ROTATED CULLFACE VERDICT — the six-
+                        // direction law the cake lane wears, the
+                        // direction the SAME steps the geometry turns
+                        // (the west cullface under one CW step the
+                        // north neighbor read answers)
+                        if let Some(dir) = q.cullface {
+                            let rotated = rotate_direction_cw(dir, steps);
+                            let (dx, dy, dz) = match rotated {
+                                mc_registry::element_quads::Direction::Down => (0, -1, 0),
+                                mc_registry::element_quads::Direction::Up => (0, 1, 0),
+                                mc_registry::element_quads::Direction::North => (0, 0, -1),
+                                mc_registry::element_quads::Direction::South => (0, 0, 1),
+                                mc_registry::element_quads::Direction::West => (-1, 0, 0),
+                                mc_registry::element_quads::Direction::East => (1, 0, 0),
+                            };
+                            if !is_transparent(world.get(wx + dx, wy + dy, wz + dz)) {
+                                continue;
+                            }
+                        }
+                        // THE PER-QUAD TEXTURE VERDICT — the resolved
+                        // texture name the tile mapping answers (the
+                        // two door masters the named consts bank, the
+                        // unknown ref the kind's own row serves)
+                        let tex_stem = q
+                            .texture
+                            .trim_start_matches("minecraft:")
+                            .trim_start_matches("block/");
+                        let fallback_tile = if (id as usize) < atlas::N_KINDS {
+                            atlas::FACE_TILES[id as usize][2]
+                        } else {
+                            atlas::TILE_NONE
+                        };
+                        let tile = match tex_stem {
+                            "oak_door_bottom" => atlas::TILE_OAK_DOOR_BOTTOM,
+                            "oak_door_top" => atlas::TILE_OAK_DOOR_TOP,
+                            _ => fallback_tile,
+                        };
+                        let base = if tile == atlas::TILE_NONE {
+                            crate::colors::palette_color(id, 2)
+                                .or_else(|| lut.and_then(|l| l.color(id, 2)))
+                                .unwrap_or_else(|| default_color(id, 2))
+                        } else {
+                            [1.0; 3]
+                        };
+                        // THE SHADE TERM'S OWN READ — the element's
+                        // shade:true the direction table answers (the
+                        // ROTATED direction the world-facing term
+                        // keeps), the never-shaded the 1.0 keeps
+                        let rotated_dir = rotate_direction_cw(q.direction, steps);
+                        let face_shade = if q.shade {
+                            match rotated_dir {
+                                mc_registry::element_quads::Direction::Up => 1.0f32,
+                                mc_registry::element_quads::Direction::Down => 0.5,
+                                mc_registry::element_quads::Direction::North
+                                | mc_registry::element_quads::Direction::South => 0.8,
+                                mc_registry::element_quads::Direction::West
+                                | mc_registry::element_quads::Direction::East => 0.6,
+                            }
+                        } else {
+                            1.0
+                        };
+                        let mut pts = [[0f32; 3]; 4];
+                        let mut colors = [[0f32; 3]; 4];
+                        let mut uvs = [[0f32; 2]; 4];
+                        for (i, v) in q.vertices.iter().enumerate() {
+                            // THE STEPS' OWN TURN (the blockstate y
+                            // values the CW walk folds: each step the
+                            // (x,z)->(-z,x) map about the cell center
+                            // serves — the west strip under one step
+                            // the north edge answers)
+                            let (dx, dz) = (v[0] - 0.5, v[2] - 0.5);
+                            let (rx, rz) = rotate_xz_cw(dx, dz, steps);
+                            pts[i] = [
+                                wx as f32 + 0.5 + rx,
+                                wy as f32 + v[1],
+                                wz as f32 + 0.5 + rz,
+                            ];
+                            uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
+                            let lm = lightmap_combine(
+                                cell_sky,
+                                cell_block,
+                                sky_factor,
+                                sky_tint,
+                                ambient,
+                                block_tint,
+                                night_vision,
+                                world.night_vision_factor,
+                                world.darkness_scale,
+                            );
+                            colors[i] = [
+                                base[0] * lm[0] * face_shade,
+                                base[1] * lm[1] * face_shade,
+                                base[2] * lm[2] * face_shade,
+                            ];
+                        }
+                        out.push(Quad {
+                            pts,
+                            colors,
+                            uvs,
+                            tile,
+                            translucent: false,
+                            per_texel_alpha: false,
+                        });
+                    }
+                    continue;
+                }
                 // THE FIRE KINDS' OWN MULTIPART LANE (the flint's and the
                 // charge's own product finally RENDERS — the honest hole
                 // the glass precedent wore, the fan the vanilla blockstate
@@ -3078,6 +3299,93 @@ fn cake_candle_model_quads(model_id: &str) -> &'static [mc_registry::element_qua
             .collect()
     });
     map.get(model_id).map(|v| v.as_slice()).unwrap_or(&[])
+}
+
+/// THE DOOR FAMILY'S OWN MODEL BAKES — the block/oak_door_bottom_left
+/// / top_left / bottom_left_open / top_left_open chains the registry's
+/// derive walk resolves (the cake lane's own cache pattern the four
+/// models walk): each a SINGLE box element [0,0,0]->[3,16,16] (the
+/// base west strip the blockstate's y=0 authoring banks — the panel
+/// edge the theta tables rotate), the lower's faces all #bottom (the
+/// block/oak_door_bottom master the TILE const banks), the upper's
+/// all #top — the per-quad texture names RESOLVED (the parent-chain
+/// merge the texture walk serves). The failed derive the honest empty
+/// slice keeps (the door the nothing renders).
+fn door_model_quads(model_id: &str) -> &'static [mc_registry::element_quads::Quad] {
+    static QUADS: std::sync::OnceLock<
+        std::collections::HashMap<&'static str, Vec<mc_registry::element_quads::Quad>>,
+    > = std::sync::OnceLock::new();
+    let models = [
+        "block/oak_door_bottom_left",
+        "block/oak_door_top_left",
+        "block/oak_door_bottom_left_open",
+        "block/oak_door_top_left_open",
+    ];
+    let map = QUADS.get_or_init(|| {
+        models
+            .into_iter()
+            .map(|m| {
+                (
+                    m,
+                    mc_registry::element_quads::derive_model_inherited(m).unwrap_or_default(),
+                )
+            })
+            .collect()
+    });
+    map.get(model_id).map(|v| v.as_slice()).unwrap_or(&[])
+}
+
+/// THE CW QUARTER-TURN'S OWN MAP (the blockstate y rotation's own
+/// walk the door lane's theta tables fold): one 90-degree CW step
+/// about the cell center the (x,z)->(-z,x) map serves — the west
+/// strip under one step the north edge answers (the furnace arm's
+/// own face law the same direction order keeps: y=90 the model's
+/// north face at +X). The steps the caller folds (the closed/open
+/// tables the blockstate's own y values bank).
+fn rotate_xz_cw(dx: f32, dz: f32, steps: usize) -> (f32, f32) {
+    match steps % 4 {
+        0 => (dx, dz),
+        1 => (-dz, dx),
+        2 => (-dx, -dz),
+        _ => (dz, -dx),
+    }
+}
+
+/// THE CW DIRECTION'S OWN TURN (the face directions the geometry's
+/// own steps rotate: north->east->south->west->north the same CW
+/// order the vertex map speaks, the up/down axes the turn never
+/// touches). The cullface verdict and the shade table the rotated
+/// direction both read (the world-facing term the turn's own law
+/// keeps).
+fn rotate_direction_cw(
+    dir: mc_registry::element_quads::Direction,
+    steps: usize,
+) -> mc_registry::element_quads::Direction {
+    use mc_registry::element_quads::Direction as D;
+    match steps % 4 {
+        0 => dir,
+        1 => match dir {
+            D::North => D::East,
+            D::East => D::South,
+            D::South => D::West,
+            D::West => D::North,
+            flat => flat,
+        },
+        2 => match dir {
+            D::North => D::South,
+            D::East => D::West,
+            D::South => D::North,
+            D::West => D::East,
+            flat => flat,
+        },
+        _ => match dir {
+            D::North => D::West,
+            D::West => D::South,
+            D::South => D::East,
+            D::East => D::North,
+            flat => flat,
+        },
+    }
 }
 
 /// THE CAKE LADDER'S OWN MODEL BAKES — the block/cake and
@@ -4683,6 +4991,101 @@ mod tests {
         assert!(
             q4.iter().any(|quad| quad.pts[0][2] == 8.0 && quad.tile == side),
             "the vacated north the side tile keeps"
+        );
+    }
+
+    #[test]
+    fn the_door_panel_the_facing_edges_wear() {
+        // THE DOOR'S OWN ELEMENT LANE (the autopush-655 round — the
+        // theta tables the blockstate's own y values fold: the closed
+        // panel edge the OPPOSITE facing speaks [the SHAPES clinit's
+        // boxZ(16.0, 13.0, 16.0) the facing=north panel at z 13..16
+        // the model's own y-270 rotation the SAME edge the consistency
+        // check answers], the open's swing the facing's LEFT the
+        // left-hinge rows speak; the lower the #bottom master the
+        // upper the #top banks)
+        let bottom = atlas::TILE_OAK_DOOR_BOTTOM;
+        let top = atlas::TILE_OAK_DOOR_TOP;
+        let cell = |x: i32, y: i32, z: i32| {
+            (x as usize)
+                + (z as usize) * CHUNK_X
+                + (y as usize) * CHUNK_X * CHUNK_Z
+        };
+        let variants = |v: u8| -> Vec<Vec<u8>> {
+            let mut g = vec![vec![0u8; CHUNK_X * CHUNK_Y * CHUNK_Z]];
+            g[0][cell(8, 8, 8)] = v;
+            g
+        };
+        // THE CLOSED EAST DOOR (the variant byte 2): the base model's
+        // own y=0 authoring — the west strip x 0..3 the panel wears,
+        // five quads the lone panel speaks (down, N, S, W + the
+        // uncullable east)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::OAK_DOOR);
+        w.variants = Some(variants(2));
+        let q = mesh_chunk(&w, 0, 0, None);
+        assert_eq!(
+            q.iter()
+                .filter(|quad| quad.tile == bottom)
+                .count(),
+            5,
+            "the lone closed panel's own five faces"
+        );
+        assert!(
+            q.iter()
+                .all(|quad| quad.tile != bottom || quad.pts.iter().all(|p| p[0] <= 8.1876)),
+            "the closed east door the west strip wears"
+        );
+        // THE CLOSED NORTH DOOR (the variant byte 0 — the unpropertied
+        // default): the y=270 rotation three CW steps speak — the
+        // SOUTH edge z 13..16 the panel wears (the collision SHAPES
+        // row the same edge the consistency check answers)
+        let mut w2 = empty_world();
+        put(&mut w2, 8, 8, 8, crate::world::OAK_DOOR);
+        let q2 = mesh_chunk(&w2, 0, 0, None);
+        assert!(
+            q2.iter()
+                .all(|quad| quad.tile != bottom || quad.pts.iter().all(|p| p[2] >= 8.8124)),
+            "the closed north door the south edge wears"
+        );
+        // THE OPEN EAST DOOR (the variant byte 2): the y=90 rotation
+        // one CW step speaks — the LEFT-of-facing edge the swing
+        // wears (east's left = north, z 0..3)
+        let mut w3 = empty_world();
+        put(&mut w3, 8, 8, 8, crate::world::OAK_DOOR_OPEN);
+        w3.variants = Some(variants(2));
+        let q3 = mesh_chunk(&w3, 0, 0, None);
+        assert!(
+            q3.iter()
+                .all(|quad| quad.tile != bottom || quad.pts.iter().all(|p| p[2] <= 8.1876)),
+            "the open east door the north edge wears"
+        );
+        // THE UPPER'S OWN MASTER (the #top ref the tile row banks —
+        // the lower the #bottom the pair keeps)
+        let mut w4 = empty_world();
+        put(&mut w4, 8, 8, 8, crate::world::OAK_DOOR_UPPER);
+        w4.variants = Some(variants(2));
+        let q4 = mesh_chunk(&w4, 0, 0, None);
+        assert!(
+            q4.iter().any(|quad| quad.tile == top),
+            "the upper half the top master wears"
+        );
+        assert!(
+            !q4.iter().any(|quad| quad.tile == bottom),
+            "the upper half the bottom master never wears"
+        );
+        // THE ROTATED CULLFACE'S OWN VERDICT (the direction the SAME
+        // steps the geometry turns: the closed north panel's south
+        // cullface the solid neighbor culls — the five faces the four
+        // the stone keeps)
+        let mut w5 = empty_world();
+        put(&mut w5, 8, 8, 8, crate::world::OAK_DOOR);
+        put(&mut w5, 8, 8, 9, crate::world::STONE);
+        let q5 = mesh_chunk(&w5, 0, 0, None);
+        assert_eq!(
+            q5.iter().filter(|quad| quad.tile == bottom).count(),
+            4,
+            "the solid south neighbor the rotated cullface serves"
         );
     }
 

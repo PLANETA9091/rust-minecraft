@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 90] = [
+pub const RUNTIME_PALETTE: [&str; 94] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -539,6 +539,42 @@ pub const RUNTIME_PALETTE: [&str; 90] = [
     // sound()/lightLevel call the emission-0 default the light grid
     // keeps.
     "end_stone",
+    // THE DOOR FAMILY'S OWN QUARTET (the autopush-655 round): the oak
+    // door the vocabulary's next frontier — javap Blocks clinit the
+    // 26.2 jar: the DoorBlock register walk the BlockSetType.OAK
+    // sound(WOODEN) pair banks (the wooden open/close voices the
+    // runtime sounds.json carries), strength(3.0f) the dig row's own
+    // 3.0 speaks, NO requiresCorrectToolForDrops the bare-hand
+    // harvest the dig row's false wears. javap DoorBlock the 26.2
+    // jar: the ctor's registerDefaultState walk pc 28-87 pins
+    // FACING=NORTH, OPEN=false, HINGE=LEFT, POWERED=false, HALF=LOWER
+    // — the hinge-left default the first lane's own placement keeps.
+    // The blockstates oak_door.json is a plain 32-variant map (4
+    // facing x 2 half x 2 hinge x 2 open — the 26.2 door the
+    // POWERED property NEVER carries: the 64-state wiki-era ladder
+    // the 32-variant table replaces), the closed rows
+    // oak_door_bottom_left/top_left (y: north 270, east 0, south 90,
+    // west 180 — the panel edge the OPPOSITE facing speaks: closed
+    // facing=east y=0 keeps the base model's west strip x 0..3),
+    // the open rows the _open models (y: north 0, east 90, south
+    // 180, west 270 — the LEFT-hinge swing the edge the facing's
+    // LEFT speaks: open facing=north y=0 keeps the west strip). The
+    // models one box element [0,0,0]->[3,16,16] each (the lower's
+    // faces all #bottom = block/oak_door_bottom, the upper's all
+    // #top = block/oak_door_top — door_bottom_left/door_top_left
+    // the parent chain resolves, ambientocclusion false the
+    // withoutAO fold keeps), the collision SHAPES clinit's
+    // Block.boxZ(16.0, 13.0, 16.0) the 3/16 panel box(0, 0, 16,
+    // 16, 16, 13) speaks — the panel edge the OPPOSITE facing the
+    // closed state wears (SHAPES[NORTH] = z 13..16, the south
+    // edge), the model's own y rotations the SAME edges the
+    // consistency check answers. The kind-only palette the four
+    // offline rows banks: the closed lower/upper the placement
+    // lands, the open pair the flip walk's kind swaps wear; the
+    // facing property the variant byte carries (the orientable
+    // vocabulary's 1..=4 law), the mesher's element lane the real
+    // geometry the facing/open theta tables rotate.
+    "oak_door", "oak_door_upper", "oak_door_open", "oak_door_upper_open",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -1293,6 +1329,52 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
                 .trim_start_matches("block/")
                 .to_string();
             faces.push(resolve_flat_stem(&tex_stem, false));
+            continue;
+        }
+        if block.starts_with("oak_door") {
+            // THE DOOR FAMILY'S OWN ROWS (the autopush-655 round, the
+            // official 26.2 jar): the blockstate oak_door.json is a
+            // plain 32-variant map — the kind-only palette the
+            // hinge-LEFT rows resolve (javap DoorBlock's ctor
+            // registerDefaultState walk pc 53-59 the HINGE=LEFT pin
+            // speaks), the closed kinds the open=false rows, the open
+            // kinds the open=true rows, the half property the
+            // upper-word row keys. The EXPLICIT row the walk reads
+            // (the candle_lit arm's own law — the facing=north rows
+            // the orientable vocabulary's default the variant byte's
+            // 0 answers), the model chain's resolved ref the flat
+            // stem keeps: the lower's faces all #bottom (block/
+            // oak_door_bottom), the upper's all #top (block/
+            // oak_door_top) — the two masters the mesher's per-quad
+            // verdict the named consts read, tinted = false (the
+            // pre-colored masters render as authored).
+            let upper = block == "oak_door_upper" || block == "oak_door_upper_open";
+            let open = block == "oak_door_open" || block == "oak_door_upper_open";
+            let key = format!("facing=north,half={},hinge=left,open={open}", if upper { "upper" } else { "lower" });
+            let bs_bytes = read_jar(
+                &mut archive,
+                "assets/minecraft/blockstates/oak_door.json",
+            )?;
+            let bs: Value = serde_json::from_slice(&bs_bytes)
+                .with_context(|| "blockstate oak_door: json parse")?;
+            let model_ref = bs
+                .get("variants")
+                .and_then(|v| v.get(&key))
+                .and_then(|v| v.get("model"))
+                .and_then(|m| m.as_str())
+                .with_context(|| format!("blockstate oak_door: no {key} model"))?
+                .trim_start_matches("minecraft:")
+                .to_string();
+            let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
+                .with_context(|| format!("block oak_door: model chain {model_ref}"))?;
+            let tex = tex_map
+                .get(if upper { "top" } else { "bottom" })
+                .with_context(|| format!("model {model_ref}: no door texture ref"))?;
+            let stem = tex
+                .trim_start_matches("minecraft:")
+                .trim_start_matches("block/")
+                .to_string();
+            faces.push(resolve_flat_stem(&stem, false));
             continue;
         }
         if block == "wheat" || block.starts_with("wheat_stage") {
@@ -2289,6 +2371,25 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             stem, prefix, idx
         ));
     }
+    // THE DOOR MASTERS' OWN CONSTS (the autopush-655 round): the two
+    // door textures the palette's own quartet rows bank (the lower's
+    // #bottom / the upper's #top refs the flat-stem arms resolve) —
+    // the mesher's door lane's per-quad texture verdict the named
+    // consts read.
+    for (stem, prefix) in [
+        ("oak_door_bottom", "TILE_OAK_DOOR_BOTTOM"),
+        ("oak_door_top", "TILE_OAK_DOOR_TOP"),
+    ] {
+        let idx = tile_const(&tile_names, stem)?;
+        src.push_str(&format!(
+            "\n/// The door lane's own {} tile (the autopush-655\n\
+             \x20    /// round — the door element geometry's per-quad\n\
+             \x20    /// texture verdict reads it; the two masters the\n\
+             \x20    /// palette's own quartet rows bank).\n\
+             \x20    pub const {}: u16 = {};\n",
+            stem, prefix, idx
+        ));
+    }
     src.push_str(&format!(
         "\n/// The destroy_stage_0..9 tile indices (the breaking overlay's own\n\
          \x20    /// crack frames; the vanilla `DestroyStage.getDestructor` law maps\n\
@@ -2462,9 +2563,19 @@ pub fn fallback_source(version: &str) -> String {
 fn registry_names() -> [&'static str; RUNTIME_PALETTE.len()] {
     let mut names = [""; RUNTIME_PALETTE.len()];
     for (i, name) in RUNTIME_PALETTE.iter().enumerate() {
-        names[i] = name
+        // THE DOOR FAMILY'S OWN STRIP (the autopush-655 round): the
+        // open bit the kind-only vocabulary wears — the OPEN suffix
+        // the jar's registry never speaks (the DoorBlock's one
+        // registry entry both states the same "oak_door" name keeps,
+        // the dig row (3.0, false), the sounds' WOODEN row and the
+        // item id the pick lane grants BOTH halves speak), the
+        // half-word the _upper strip the same law answers — the
+        // _open strip FIRST (the upper-open kind the two-suffix
+        // word wears, the both strips the base row banks)
+        let base = name.strip_suffix("_open").unwrap_or(name);
+        names[i] = base
             .strip_suffix("_upper")
-            .or_else(|| name.strip_suffix("_lit"))
+            .or_else(|| base.strip_suffix("_lit"))
             // THE CAKE LADDER'S OWN STRIP (the autopush-524 round): the
             // seven bite stages the BASE "cake" row the shared-row law
             // keeps — the dig row (0.5 hardness), the drops table (the
@@ -2479,7 +2590,7 @@ fn registry_names() -> [&'static str; RUNTIME_PALETTE.len()] {
                     None
                 }
             })
-            .unwrap_or(name);
+            .unwrap_or(base);
     }
     names
 }

@@ -876,8 +876,91 @@ pub const END_STONE: u16 = 89;
 /// end_portal.json's NO-elements model the generic walk never
 /// resolves, the EndPortalRenderer's own cube the starfield shader
 /// draws — the mesher's sentinel tile the surface quads carry, the
-/// render walk's own pass the shader law serves)
-pub const END_PORTAL: u16 = 90;
+/// render walk's own pass the shader law serves. THE SEAT THE DOOR
+/// QUARTET'S REGEN DISPLACES (the autopush-655 round): the hand-only
+/// kind the generated palette never carried — N_KINDS the 94 the
+/// quartet's rows bank, the `id < N_KINDS` guards the tile lookups'
+/// same skip verdict keeps — the kind's own seat the beyond-table
+/// 94 wears, the sentinel tile the mesher's special arm the seat
+/// never consulted)
+pub const END_PORTAL: u16 = 94;
+
+/// THE OAK DOOR'S OWN CLOSED LOWER (the autopush-655 round — the
+/// vocabulary's next frontier: the right-click open/close the
+/// interaction feel the flip walk serves): javap DoorBlock the 26.2
+/// jar — the ctor's registerDefaultState walk pc 28-87 pins
+/// FACING=NORTH, OPEN=false, HINGE=LEFT, POWERED=false, HALF=LOWER,
+/// the register walk the BlockSetType.OAK sound(WOODEN) pair banks
+/// (the wooden open/close voices the runtime sounds.json carries),
+/// strength(3.0f) the dig row's own 3.0 speaks, NO
+/// requiresCorrectToolForDrops the bare-hand harvest the dig row's
+/// false wears (the generated table's own dump banks (3.0, false)).
+/// The HALF=LOWER cell the placement lands (getStateForPlacement pc
+/// 118-127 the LOWER setValue the placement state speaks,
+/// setPlacedBy pc 0-21 the above cell's UPPER setBlockAndUpdate the
+/// two-halves walk serves), the OPEN=false bit the closed kind the
+/// flip walk's own swap answers, the facing property the variant
+/// byte carries (the orientable vocabulary's 1..=4 law — the
+/// [`door_facing_byte`] placement stamps), the mesher's element
+/// lane the real geometry the theta tables rotate (the closed
+/// panel edge the OPPOSITE facing speaks — the SHAPES clinit's
+/// boxZ(16.0, 13.0, 16.0) box(0,0,16,16,16,13) the facing=north
+/// panel at z 13..16, the model's own y-270 rotation the SAME edge
+/// the consistency check answers). The shared "oak_door" NAME_OF
+/// row the dig/drop/sound/item lanes the base-name law keeps, the
+/// placeable lookup the reverse walk the kind's own first row
+/// answers (BlockItemIds.OAK_DOOR the ITEM FORM HAS). The collision
+/// the FULL band the first lane's kind-only table speaks (the 3/16
+/// panel the variant-aware shape lane a later round serves — the
+/// closed door the whole cell blocks, the passage the flip walk
+/// opens); the light the 0-opacity row the flood passes (the
+/// DoorBlock's own isTransparent-true registration the vanilla
+/// lightBlock 0 speaks).
+pub const OAK_DOOR: u16 = 90;
+
+/// THE OAK DOOR'S OWN CLOSED UPPER (the autopush-655 round — the
+/// setPlacedBy walk pc 0-21 the above cell's own product speaks:
+/// `level.setBlockAndUpdate(pos.above(), state.setValue(HALF,
+/// DoubleBlockHalf.UPPER))` the two-halves walk's second beat — the
+/// kind the placement lane's own upper arm banks, the flip walk
+/// the lower's swap the pair wears, the canSurvive pc 41-47 the
+/// below-is-the-door read the orphan law keeps). The same "oak_door"
+/// NAME_OF row the base-name law keeps (the jar's ONE registry
+/// entry both halves the same name speaks — the dig row, the
+/// sounds' WOODEN row and the item id the pick lane grants BOTH
+/// halves), the upper's element lane the #top master the tile row
+/// banks (block/oak_door_top — the model's faces all #top the
+/// door_top_left parent chain resolves).
+pub const OAK_DOOR_UPPER: u16 = 91;
+
+/// THE OAK DOOR'S OWN OPEN LOWER (the autopush-655 round — the flip
+/// walk's own product: javap DoorBlock.useWithoutItem the 26.2 jar
+/// — the canOpenByHand gate pc 0-13 the OAK set type the PASS the
+/// iron door's own refusal keeps, the `state.cycle(OPEN)` pc 14-21
+/// the open bit's own cycle the kind swap answers, the setBlock
+/// flag 10 pc 25-33 the Level.setBlock's shape walk the update
+/// serves (the flag's bit-16 gate the javap Level.setBlock pc
+/// 177-181 speaks — the bit CLEAR the updateNeighbourShapes walk
+/// RUNS), the playSound pc 34-54 the doorOpen/doorClose events the
+/// BlockSetType's own pair carries, the gameEvent pc 55-78 the
+/// BLOCK_OPEN/BLOCK_CLOSE posts the sculk lane hears). The other
+/// half's OPEN the updateShape Y-arm's own return syncs (the
+/// neighbor door's setValue(HALF) the cycled state rides — the
+/// offline walk the two-cell kind swap the same verdict serves).
+/// The EMPTY collision row the open passage the kind-only table
+/// keeps (the panel the swung edge the mesher's theta tables
+/// rotate), the mesher's open lane the _open models the swing
+/// speaks (y: north 0, east 90, south 180, west 270 — the
+/// LEFT-hinge swing the edge the facing's LEFT speaks).
+pub const OAK_DOOR_OPEN: u16 = 92;
+
+/// THE OAK DOOR'S OWN OPEN UPPER (the autopush-655 round — the flip
+/// walk's own pair the lower's swap wears: the updateShape Y-arm's
+/// synced state the offline walk's kind swap answers, the canSurvive
+/// pc 41-47 the below-is-the-door read the orphan law keeps). The
+/// same "oak_door" NAME_OF row the base-name law keeps, the upper's
+/// element lane the #top master the tile row banks.
+pub const OAK_DOOR_UPPER_OPEN: u16 = 93;
 
 /// THE SCAN'S OWN SHAPE — the PortalShape verdict the walks bank
 /// (javap PortalShape's own fields the ctor pc 0-115 carries): the
@@ -993,7 +1076,7 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 }
 
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 90] = [
+pub const NAME_OF: [&str; 94] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1194,6 +1277,23 @@ pub const NAME_OF: [&str; 90] = [
     // placeable lookup answers (BlockItemIds.END_STONE pc 13680 the
     // ITEM FORM HAS — the dug island the pick lane grants)
     "end_stone",
+    // THE DOOR FAMILY'S OWN ROWS (the autopush-655 round): all four
+    // kinds the BASE "oak_door" name the shared-row law keeps (javap
+    // DoorBlock the 26.2 jar — the jar's ONE registry entry both
+    // halves and both open bits the same name speaks: the dig row
+    // (3.0, false) the generated table banks, the sounds' WOODEN row
+    // (BlockSetType.OAK's sound(WOODEN) the ctor pc 3-9 walk
+    // answers), the drops table the loot's own conditional pool banks
+    // and the item id the placeable lookup the FIRST row's position
+    // answers (BlockItemIds.OAK_DOOR the ITEM FORM HAS — the closed
+    // lower the item places, the flip walk's open swap the other
+    // kinds' own verdicts never re-place)). The END_PORTAL's own row
+    // the displaced seat the BEYOND-TABLE law keeps (the hand-only
+    // kind the generated palette never carried — N_KINDS the 94 the
+    // quartet's rows bank, the kind's own seat 94 the both tables'
+    // indexing never reaches — the dig row's own -1.0 the unbreakable
+    // verdict the NAME_OF read the unreachable law keeps).
+    "oak_door", "oak_door", "oak_door", "oak_door",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -1477,6 +1577,79 @@ pub fn furnace_facing_byte(cam_yaw_radians: f32) -> u8 {
     FACING_BY_2D[(look + 2) & 3]
 }
 
+/// THE DOOR FAMILY'S OWN PREDICATE (the autopush-655 round — the four
+/// kinds the two-halves x two-open-bits ladder wears: the closed
+/// lower/upper the placement lands, the open pair the flip walk's
+/// kind swaps wear).
+pub fn is_door(id: u16) -> bool {
+    (OAK_DOOR..=OAK_DOOR_UPPER_OPEN).contains(&id)
+}
+
+/// THE DOOR'S OWN LOWER HALF (javap DoorBlock.getStateForPlacement pc
+/// 118-127 the HALF=LOWER setValue the placement state speaks — the
+/// clicked cell the item's own place wears, the upper the
+/// setPlacedBy walk's above cell banks). The dig completion's
+/// orphan law the pair reads, the loot's own conditional pool the
+/// LOWER's break alone rolls (the jar's oak_door.json loot the
+/// block_state_property half=lower condition speaks).
+pub fn is_door_lower(id: u16) -> bool {
+    id == OAK_DOOR || id == OAK_DOOR_OPEN
+}
+
+/// THE DOOR'S OWN UPPER HALF (javap DoorBlock.setPlacedBy pc 0-21
+/// the `state.setValue(HALF, DoubleBlockHalf.UPPER)` walk the above
+/// cell speaks, the canSurvive pc 41-47 the below-is-the-door read
+/// the orphan law keeps).
+pub fn is_door_upper(id: u16) -> bool {
+    id == OAK_DOOR_UPPER || id == OAK_DOOR_UPPER_OPEN
+}
+
+/// THE DOOR'S OWN OPEN BIT (javap DoorBlock.useWithoutItem pc 14-21
+/// the `state.cycle(OPEN)` walk the flip's own verdict speaks — the
+/// closed kinds the false answer, the open kinds the true).
+pub fn is_door_open(id: u16) -> bool {
+    id == OAK_DOOR_OPEN || id == OAK_DOOR_UPPER_OPEN
+}
+
+/// THE DOOR'S OWN FLIP MATE (javap DoorBlock.useWithoutItem the 26.2
+/// jar — the `state.cycle(OPEN)` pc 14-21 the clicked half's own
+/// swap speaks, the OTHER half's OPEN the updateShape Y-arm's own
+/// return syncs (the neighbor door's setValue(HALF) the cycled
+/// state rides — the javap Level.setBlock pc 177-181 the flag-10's
+/// bit-16 gate the shape walk RUNS speaks); the offline walk the
+/// two-cell kind swap the same verdict serves). The closed kinds
+/// the open pair answer, the open kinds the closed pair answer —
+/// the half bit the swap never touches (the lower stays the lower,
+/// the upper the upper).
+pub fn door_flip_mate(id: u16) -> Option<u16> {
+    match id {
+        OAK_DOOR => Some(OAK_DOOR_OPEN),
+        OAK_DOOR_UPPER => Some(OAK_DOOR_UPPER_OPEN),
+        OAK_DOOR_OPEN => Some(OAK_DOOR),
+        OAK_DOOR_UPPER_OPEN => Some(OAK_DOOR_UPPER),
+        _ => None,
+    }
+}
+
+/// THE DOOR'S OWN PLACEMENT FACING (javap DoorBlock.getStateForPlacement
+/// pcs 62-75 the 26.2 jar: the `defaultBlockState().setValue(FACING,
+/// ctx.getHorizontalDirection())` walk the placement state's own
+/// facing speaks — NO getOpposite the furnace's own chain carries,
+/// the door faces the SAME way the player looks). The client's own
+/// yaw the [`furnace_facing_byte`] walk's decode keeps (the
+/// fromYRot law the shared helper wears): the look the
+/// direction_index decode answers, the NO-flip the look index the
+/// table serves. The byte the variant vocabulary keeps — the
+/// placement lane's own stamp the [`World::set_variant`] layer
+/// banks on BOTH halves (the setPlacedBy walk's upper the same
+/// state speaks), the mesher's door lane the theta tables the byte
+/// consumes.
+pub fn door_facing_byte(cam_yaw_radians: f32) -> u8 {
+    let vanilla_yaw = (cam_yaw_radians - std::f32::consts::PI).to_degrees();
+    let look = direction_index_from_y_rot(f64::from(vanilla_yaw));
+    FACING_BY_2D[look]
+}
+
 /// The plains' own DOUBLE PLANT FAMILY — the two-cell kinds the
 /// decorate pass plants and the placeAt walk pairs (javap the Blocks
 /// clinit pc 17244/17297: the tall_grass/large_fern chains the
@@ -1721,8 +1894,27 @@ pub fn collision_shape(id: u16) -> CollisionShape {
         // flowers' own pass-through keeps, the placement's
         // obstruction the empty shape never refuses)
         || is_bamboo_sapling(id)
+        // THE OPEN DOOR'S OWN ROW (the autopush-655 round — the swung
+        // panel the kind-only table the Empty verdict keeps: the open
+        // door the passage the body walks through, the vanilla's own
+        // SHAPES map the 3/16 panel the swung edge carries — the
+        // thin-slab the variant-aware shape lane a later round
+        // serves, the first lane the honest passage keeps)
+        || is_door_open(id)
     {
         CollisionShape::Empty
+    } else if is_door(id) {
+        // THE CLOSED DOOR'S OWN FULL BAND (the autopush-655 round —
+        // the SHAPES clinit's Block.boxZ(16.0, 13.0, 16.0) the 3/16
+        // panel box(0, 0, 16, 16, 16, 13) speaks, the panel edge the
+        // OPPOSITE facing the variant byte rotates — the kind-only
+        // collision table the variant byte never sees, the whole
+        // cell the first lane's honest band keeps: the closed door
+        // the passage blocks, the placement's own obstruction the
+        // full band the vanilla's own thin-shape never refuses [the
+        // door-in-your-own-cell placement the vanilla allows — the
+        // documented gap the shape lane's own round serves])
+        CollisionShape::Full
     } else if is_bamboo_stalk(id) {
         // THE STALK'S OWN INSET ROW (the autopush-608 round — javap
         // BambooStalkBlock.getCollisionShape pc 0-11 the 26.2 jar: the
@@ -8491,6 +8683,81 @@ mod tests {
             furnace_facing_byte(-5.0 * FRAC_PI_2),
             2,
             "the wrapped west look the east byte wears"
+        );
+    }
+
+    #[test]
+    fn the_door_family_the_mates_and_the_seats_wear() {
+        // THE DOOR QUARTET'S OWN LAW (the autopush-655 round — the
+        // two-halves x two-open-bits ladder the seats wear: the
+        // generated palette's tail rows the N_KINDS guard keeps, the
+        // END_PORTAL the displaced seat the beyond-table law banks)
+        assert_eq!(OAK_DOOR, 90);
+        assert_eq!(OAK_DOOR_UPPER, 91);
+        assert_eq!(OAK_DOOR_OPEN, 92);
+        assert_eq!(OAK_DOOR_UPPER_OPEN, 93);
+        assert_eq!(END_PORTAL, 94, "the displaced seat the quartet's tail banks");
+        // THE FAMILY PREDICATES (the halves and the open bit the pair
+        // reads: the flip walk's mate the lower's above / the upper's
+        // below cells answer)
+        assert!(is_door(OAK_DOOR) && is_door(OAK_DOOR_UPPER));
+        assert!(is_door(OAK_DOOR_OPEN) && is_door(OAK_DOOR_UPPER_OPEN));
+        assert!(!is_door(END_PORTAL) && !is_door(STONE));
+        assert!(is_door_lower(OAK_DOOR) && is_door_lower(OAK_DOOR_OPEN));
+        assert!(!is_door_lower(OAK_DOOR_UPPER));
+        assert!(is_door_upper(OAK_DOOR_UPPER) && is_door_upper(OAK_DOOR_UPPER_OPEN));
+        assert!(!is_door_upper(OAK_DOOR));
+        assert!(!is_door_open(OAK_DOOR) && !is_door_open(OAK_DOOR_UPPER));
+        assert!(is_door_open(OAK_DOOR_OPEN) && is_door_open(OAK_DOOR_UPPER_OPEN));
+        // THE FLIP MATES (javap useWithoutItem pc 14-21 the
+        // `state.cycle(OPEN)` the clicked half's own swap speaks — the
+        // half bit the swap never touches)
+        assert_eq!(door_flip_mate(OAK_DOOR), Some(OAK_DOOR_OPEN));
+        assert_eq!(door_flip_mate(OAK_DOOR_UPPER), Some(OAK_DOOR_UPPER_OPEN));
+        assert_eq!(door_flip_mate(OAK_DOOR_OPEN), Some(OAK_DOOR));
+        assert_eq!(door_flip_mate(OAK_DOOR_UPPER_OPEN), Some(OAK_DOOR_UPPER));
+        assert_eq!(door_flip_mate(STONE), None);
+        // THE SHARED NAME ROW (the jar's ONE registry entry both
+        // halves the same name speaks — the dig row, the sounds'
+        // WOODEN row and the item id the pick lane grants BOTH halves)
+        for id in [OAK_DOOR, OAK_DOOR_UPPER, OAK_DOOR_OPEN, OAK_DOOR_UPPER_OPEN] {
+            assert_eq!(NAME_OF[id as usize], "oak_door", "kind {id} the base row wears");
+        }
+        assert_eq!(NAME_OF.len(), 94, "the palette rows the cross-check keeps");
+        // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
+        // the ITEM FORM HAS — the placeable lookup the FIRST row's
+        // position answers: the closed lower the item places)
+        assert_eq!(World::placeable_block("oak_door"), Some(OAK_DOOR));
+        let door_item = mc_registry::item_id_by_name("oak_door");
+        assert!(door_item.is_some(), "the door item the registry banks");
+        // THE COLLISION ROWS (the closed door the FULL band the
+        // first-lane table keeps — the passage the flip opens; the
+        // open kind the Empty row the body walks through)
+        assert_eq!(collision_shape(OAK_DOOR), CollisionShape::Full);
+        assert_eq!(collision_shape(OAK_DOOR_UPPER), CollisionShape::Full);
+        assert_eq!(collision_shape(OAK_DOOR_OPEN), CollisionShape::Empty);
+        assert_eq!(collision_shape(OAK_DOOR_UPPER_OPEN), CollisionShape::Empty);
+        // THE PLACEMENT FACING (javap getStateForPlacement pcs 62-75
+        // the NO-opposite look the placement state speaks — the door
+        // faces the SAME way the player looks: the yaw 0 the north
+        // byte the FACING_BY_2D's own row wears, the -PI/2 the west
+        // look the byte 4 keeps, the +PI/2 the east look the byte 2)
+        use std::f32::consts::{FRAC_PI_2, PI};
+        assert_eq!(door_facing_byte(0.0), 1, "the yaw-0 look the north byte wears");
+        assert_eq!(
+            door_facing_byte(-FRAC_PI_2),
+            4,
+            "the -PI/2 west look the west byte wears"
+        );
+        assert_eq!(
+            door_facing_byte(FRAC_PI_2),
+            2,
+            "the +PI/2 east look the east byte wears"
+        );
+        assert_eq!(
+            door_facing_byte(PI),
+            3,
+            "the south look the byte 3 the no-flip law keeps"
         );
     }
 

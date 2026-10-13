@@ -35517,6 +35517,43 @@ impl App {
             // answers) the SAME beat douses
             let _ = world.fire_shape_updates((mx, my, mz));
         }
+        // THE DOOR'S OWN MATE LAW (javap DoorBlock the 26.2 jar — the
+        // autopush-655 round): the broken half the OTHER half's
+        // removal wears — the UPPER's dig the
+        // DoublePlantBlock.preventDropFromBottomPart walk speaks (the
+        // playerWillDestroy's own delegation pc 24-29 the javap
+        // banks — the below cell's flag-35 setBlock the dropResources
+        // walk refuses), the LOWER's dig the updateShape Y-arm's own
+        // AIR the silent keep wears (the neighbor read pc 52-96 the
+        // Y-axis pair the flag-3 broadcast serves). The OFFLINE
+        // lane's own authority: the networked world's voxels are the
+        // server's (the mate's removal rides the server's own block
+        // updates — the same split the double-plant law keeps).
+        let door_mate_cell: Option<(i32, i32, i32)> = if self.world_is_network {
+            None
+        } else if crate::world::is_door_lower(kind) {
+            Some((pos.0, pos.1 + 1, pos.2))
+        } else if crate::world::is_door_upper(kind) {
+            Some((pos.0, pos.1 - 1, pos.2))
+        } else {
+            None
+        };
+        if let (Some(world), Some((mx, my, mz))) =
+            (self.offline_world.as_mut(), door_mate_cell)
+        {
+            let mk = world.get(mx, my, mz);
+            // THE OTHER HALF'S OWN GATE (the updateShape Y-arm's own
+            // law: the neighbor must BE the door's other half — the
+            // orphan half the lone removal never hears)
+            let mate_matches = (crate::world::is_door_lower(kind)
+                && crate::world::is_door_upper(mk))
+                || (crate::world::is_door_upper(kind)
+                    && crate::world::is_door_lower(mk));
+            if mate_matches {
+                world.set(mx, my, mz, crate::world::AIR);
+                let _ = world.fire_shape_updates((mx, my, mz));
+            }
+        }
         // THE BLOCK_DESTROY EVENT'S OWN POST (javap the 26.2 jar — the
         // every-dig walk the bytecodes keep: `ServerPlayerGameMode
         // .destroyBlock` pc 104-116 calls `Block.playerWillDestroy`,
@@ -35629,6 +35666,27 @@ impl App {
         // reads the LIVE mainhand the break wears)
         let held = self.held_id();
         self.food_data.add_exhaustion(crate::food::EXHAUSTION_MINE);
+        // THE DOOR'S OWN CONDITIONAL POOL (javap the jar's loot —
+        // data/minecraft/loot_table/blocks/oak_door.json the ONE pool
+        // banks: the `block_state_property` condition the `half=lower`
+        // pair speaks — the LOWER's break alone rolls the pool, the
+        // UPPER's own break the condition refuses [the vanilla's own
+        // either-half asymmetry the silent mate removal the walk
+        // above serves]). The generated drops table the conditional
+        // pool never banks (the requires_tool false the dig row
+        // keeps — the bare-hand harvest the condition's own reach
+        // answers), the hand row the vanilla's own law speaks: one
+        // oak_door item the LOWER's break spawns (the survives_
+        // explosion condition the offline break always answers).
+        if crate::world::is_door_lower(kind) {
+            if let Some(item) = mc_registry::item_id_by_name("oak_door") {
+                let id = self.next_drop_id;
+                self.next_drop_id += 1;
+                self.drops.push(crate::drops::ItemDrop::spawn(
+                    id, item, 1, pos.0, pos.1, pos.2, &mut self.drop_rng,
+                ));
+            }
+        }
         for (item, count) in crate::drops::roll_drops(kind, held, &mut self.drop_rng) {
             let id = self.next_drop_id;
             self.next_drop_id += 1;
@@ -36135,6 +36193,123 @@ impl App {
             }
             return true;
         }
+        // THE DOOR'S OWN FLIP ARM (javap DoorBlock.useWithoutItem the
+        // 26.2 jar — the interactive-block family's next member: the
+        // canOpenByHand gate pc 0-13 the OAK set type the PASS the
+        // iron door's own refusal keeps [the offline palette the oak
+        // item alone places — the gate the palette's own reach
+        // serves], the `state.cycle(OPEN)` pc 14-21 the clicked
+        // half's own swap speaks, the setBlock flag 10 pc 25-33 the
+        // Level.setBlock's shape walk the update serves [the flag's
+        // bit-16 gate the javap Level.setBlock pc 177-181 speaks —
+        // the bit CLEAR the updateNeighbourShapes walk RUNS, the
+        // flag's bit-1 CLEAR the fire/portal chains never hear — the
+        // honest walk the two sets the same beat wears], the
+        // playSound pc 34-54 the doorOpen/doorClose events the
+        // BlockSetType's own pair carries [volume 1.0, the pitch the
+        // `nextFloat() * 0.1F + 0.9F` walk pcs 33-42 speaks], the
+        // gameEvent pc 55-78 the BLOCK_OPEN/BLOCK_CLOSE posts the
+        // sculk lane hears). THE OTHER HALF'S OWN SYNC — the
+        // updateShape Y-arm's return the javap DoorBlock.updateShape
+        // pc 52-96 speaks (the neighbor door's setValue(HALF, own
+        // half) the cycled state rides — the clicked half's NEW open
+        // bit the other cell's own state answers), the offline walk
+        // the two-cell kind swap the same verdict serves. THE SHIFT
+        // GATE THE DOOR NEVER WEARS (javap the use walk's body the
+        // isShiftKeyDown read never speaks — the crafting-table arm's
+        // own skip the door's use lacks: the sneaking press the flip
+        // alone answers, the vanilla's own door nuisance the feel
+        // keeps). THE WIRE SESSION the local flip never makes (the
+        // echo the lane's head already spoke, the server's own block
+        // updates the networked door lands — the crafting-table
+        // arm's own law keeps).
+        let door_cell = if self.world_is_network {
+            None
+        } else {
+            self.active_world()
+                .map(|w| w.get(hit.pos.0, hit.pos.1, hit.pos.2))
+                .filter(|k| crate::world::is_door(*k))
+        };
+        if let Some(kind) = door_cell {
+            let Some(flip) = crate::world::door_flip_mate(kind) else {
+                return false;
+            };
+            // THE OTHER HALF'S OWN CELL (the lower's above / the
+            // upper's below — the updateShape Y-arm's direction the
+            // pair reads; the mate's own kind the same cycle the
+            // cycled state's setValue(HALF) speaks)
+            let mate_cell = if crate::world::is_door_upper(kind) {
+                (hit.pos.0, hit.pos.1 - 1, hit.pos.2)
+            } else {
+                (hit.pos.0, hit.pos.1 + 1, hit.pos.2)
+            };
+            let mate_kind = self
+                .active_world()
+                .map(|w| w.get(mate_cell.0, mate_cell.1, mate_cell.2));
+            // THE VOICE BEFORE THE SETS? THE VANILLA'S OWN ORDER (javap
+            // useWithoutItem pc 25-54: the setBlock FIRST, the
+            // playSound AFTER — the cake-add arm's voice-first beat the
+            // door's walk departs)
+            let opening = crate::world::is_door_open(flip);
+            if let Some(world) = self.offline_world.as_mut() {
+                world.set(hit.pos.0, hit.pos.1, hit.pos.2, flip);
+                if let Some(mk) = mate_kind {
+                    if let Some(mflip) = crate::world::door_flip_mate(mk) {
+                        // THE OTHER HALF'S OWN GATE (the updateShape
+                        // Y-arm's own law: the neighbor must BE the
+                        // door's other half — the orphan half the lone
+                        // flip the silent keep wears)
+                        let mate_matches = (crate::world::is_door_upper(kind)
+                            && crate::world::is_door_lower(mk))
+                            || (crate::world::is_door_lower(kind)
+                                && crate::world::is_door_upper(mk));
+                        if mate_matches {
+                            world.set(mate_cell.0, mate_cell.1, mate_cell.2, mflip);
+                        }
+                    }
+                }
+                self.world_quads = Some(crate::mesher::mesh_world(world, None));
+            }
+            // THE WOODEN DOOR'S OWN VOICE (javap playSound pc 0-42 —
+            // the BlockSetType's doorOpen/doorClose events the
+            // `nextFloat() * 0.1F + 0.9F` pitch walk speaks, the
+            // Source BLOCKS the positioned walk the cake arm's own
+            // fold wears)
+            let pitch = 0.9 + self.drop_rng.next_f32() * 0.1;
+            let ear = self
+                .body
+                .as_ref()
+                .map(|b| (b.x, b.y + b.eye_height(), b.z));
+            let yaw = self.listener_yaw();
+            let (tx, ty, tz) = (
+                hit.pos.0 as f64 + 0.5,
+                hit.pos.1 as f64 + 0.5,
+                hit.pos.2 as f64 + 0.5,
+            );
+            self.sounds.play_voice_at_pan(
+                self.frame,
+                if opening {
+                    "block.wooden_door.open"
+                } else {
+                    "block.wooden_door.close"
+                },
+                1.0,
+                pitch,
+                ear_distance(ear, tx, ty, tz),
+                ear_pan(ear, yaw, tx, ty, tz),
+            );
+            // THE GAME EVENT'S OWN POST (javap useWithoutItem pc 55-78
+            // — the BLOCK_OPEN/BLOCK_CLOSE the vibration frequency
+            // table's own rows answer, the door cell's own center the
+            // dispatch's pos wears)
+            if self.offline_world.is_some() {
+                self.dispatch_vibration_event(
+                    if opening { "block_open" } else { "block_close" },
+                    (tx, ty, tz),
+                );
+            }
+            return true;
+        }
         // THE TOOL ARMS' OWN USE-ON-BLOCK WALK (javap HoeItem.useOn +
         // ShovelItem.useOn — the vanilla's own Item.useOn dispatch the
         // two tool maps the same verdict shape rides, the held suffix
@@ -36376,6 +36551,35 @@ impl App {
         } else {
             block
         };
+        // THE DOOR'S OWN PLACEMENT GATES (javap DoorBlock the 26.2 jar
+        // — the two-halves verdict the getStateForPlacement walk
+        // speaks: pc 21-33 the above cell's canBeReplaced read the
+        // `aconst_null` refusal keeps [the upper half the setPlacedBy
+        // walk lands — the occupied above cell the placement never
+        // arms], the canSurvive pc 29-40 the below's isFaceSturdy(UP)
+        // read the LOWER's own support speaks [the floating door the
+        // placement refuses — the offline equivalence the collision
+        // table's non-Empty rows keep: the full-cube family the
+        // sturdy faces the farmland/path columns' own tops speak]).
+        // THE GATES FAIL THE PASS (the vanilla canPlace's own refusal
+        // the press never consumes — the item lanes follow).
+        if block == crate::world::OAK_DOOR {
+            let above_ok = self.active_world().is_some_and(|w| {
+                let above = w.get(cell.0, cell.1 + 1, cell.2);
+                above == crate::world::AIR
+                    || above == crate::world::WATER
+                    || crate::world::is_replaceable(above)
+            });
+            let below_ok = self.active_world().is_some_and(|w| {
+                !matches!(
+                    crate::world::collision_shape(w.get(cell.0, cell.1 - 1, cell.2)),
+                    crate::world::CollisionShape::Empty
+                )
+            });
+            if !above_ok || !below_ok {
+                return false;
+            }
+        }
         // the replaceable-cell law: the air and the fluid give way (the
         // vanilla state.canBeReplaced's own set for our vocabulary) —
         // the REPLACEABLE PLANT FAMILY the same law keeps (the tuft the
@@ -36560,6 +36764,26 @@ impl App {
                     // placeAt walk's `pos.above()` cell)
                     world.set(cell.0, cell.1 + 1, cell.2, upper);
                 }
+            }
+            // THE DOOR'S OWN TWO HALVES (javap DoorBlock the 26.2 jar —
+            // the setPlacedBy walk pc 0-21 the `pos.above()` cell's
+            // `setValue(HALF, DoubleBlockHalf.UPPER)` setBlockAndUpdate
+            // speaks: the lower the item's own place wore, the UPPER
+            // the same facing state the above cell banks). The facing
+            // byte BOTH cells wear (the getStateForPlacement walk's
+            // own state the setPlacedBy pass-through keeps — the
+            // `door_facing_byte` the NO-opposite look the orientable
+            // vocabulary stamps, the mesher's theta tables the byte
+            // consumes; the hinge the LEFT default the ctor's
+            // registerDefaultState pin speaks — the getHinge census a
+            // later lane serves). The gates the verdict branch spoke
+            // (the above replaceable, the below sturdy) the walk
+            // already banked — the upper cell the same beat claims.
+            if block == crate::world::OAK_DOOR {
+                let facing = crate::world::door_facing_byte(cam_yaw);
+                world.set(cell.0, cell.1 + 1, cell.2, crate::world::OAK_DOOR_UPPER);
+                world.set_variant(cell.0, cell.1, cell.2, facing);
+                world.set_variant(cell.0, cell.1 + 1, cell.2, facing);
             }
             world.ensure_light_current(); // the placed torch's own flood the set walk already spoke — the guard the never-lit world's compute keeps
             self.world_quads = Some(crate::mesher::mesh_world(world, None));
@@ -101185,8 +101409,8 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            90,
-            "the palette the end's own tail row banks"
+            94,
+            "the palette the door quartet's own tail rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
         assert_eq!(atlas::KIND_NAMES[wool as usize], "white_wool");
@@ -101266,8 +101490,8 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            90,
-            "the palette the end's own tail row banks"
+            94,
+            "the palette the door quartet's own tail rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
         assert_eq!(atlas::REGISTRY_NAMES[sand as usize], "soul_sand");
@@ -101568,8 +101792,8 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            90,
-            "the palette the end's own tail row banks"
+            94,
+            "the palette the door quartet's own tail rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
         assert_eq!(atlas::REGISTRY_NAMES[honey as usize], "honey_block");
@@ -104726,6 +104950,280 @@ cow_sound_variant: None,
                 "the dead cell's age entry the chain drops"
             );
         }
+    }
+
+    #[test]
+    fn the_door_the_place_the_two_halves_wear() {
+        // THE DOOR'S OWN TWO HALVES (javap DoorBlock the 26.2 jar —
+        // the setPlacedBy walk pc 0-21 the `pos.above()` cell's
+        // `setValue(HALF, DoubleBlockHalf.UPPER)` setBlockAndUpdate
+        // speaks, the facing byte BOTH cells wear [the
+        // getStateForPlacement walk's own state the setPlacedBy
+        // pass-through keeps — the NO-opposite look the
+        // door_facing_byte stamps]; the yaw 0 the north byte 1 the
+        // FACING_BY_2D's own row answers)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/oak_door"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the door placement consumed the press");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c),
+                crate::world::OAK_DOOR,
+                "the closed lower the item's own place wears"
+            );
+            assert_eq!(
+                w.get(c, top + 1, c),
+                crate::world::OAK_DOOR_UPPER,
+                "the upper half the setPlacedBy walk banks"
+            );
+            assert_eq!(
+                w.variant(c, top, c),
+                1,
+                "the lower's facing byte the yaw-0 north wears"
+            );
+            assert_eq!(
+                w.variant(c, top + 1, c),
+                1,
+                "the upper's facing byte the same state keeps"
+            );
+        }
+        // THE CONSUME (BlockItem.place's own shrink — the held stack
+        // the count rides down)
+        let sel = app.selected_hotbar;
+        assert_eq!(
+            app.inventory.items[sel].0, 0,
+            "the single stack the consume empties"
+        );
+        // THE GATE'S OWN REFUSAL (javap getStateForPlacement pc 21-33
+        // — the occupied above cell the `aconst_null` refusal keeps:
+        // the stone roof the placement never arms, the PASS the item
+        // lanes follow)
+        app.offline_held_updated(Some("item/oak_door"));
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c + 2, top, c, crate::world::AIR);
+            w.set(c + 2, top + 1, c, crate::world::STONE);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 2.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let press = app.on_right_press(0, 0);
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_ne!(
+                w.get(c + 2, top, c),
+                crate::world::OAK_DOOR,
+                "the roofed cell the placement refuses ({press})"
+            );
+        }
+    }
+
+    #[test]
+    fn the_door_the_flip_the_both_halves_and_the_voice_wear() {
+        // THE DOOR'S OWN FLIP WALK (javap DoorBlock.useWithoutItem the
+        // 26.2 jar — the `state.cycle(OPEN)` pc 14-21 the clicked
+        // half's own swap speaks, the OTHER half's OPEN the
+        // updateShape Y-arm's own return syncs, the playSound
+        // pc 34-54 the doorOpen/doorClose events the BlockSetType's
+        // own pair carries, the gameEvent pc 55-78 the
+        // BLOCK_OPEN/BLOCK_CLOSE posts the sculk lane hears; the
+        // shift gate the door never wears — the vanilla's own use
+        // walk the isShiftKeyDown read never speaks)
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(c, top, c, crate::world::OAK_DOOR);
+            w.set(c, top + 1, c, crate::world::OAK_DOOR_UPPER);
+            w.set_variant(c, top, c, 1);
+            w.set_variant(c, top + 1, c, 1);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        // THE EMPTY HAND'S OWN FLIP (the door's use the held stack
+        // never demands — the vanilla's own useWithoutItem walk the
+        // EMPTY main hand answers)
+        assert!(app.on_right_press(0, 0), "the flip consumed the press");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c),
+                crate::world::OAK_DOOR_OPEN,
+                "the clicked lower's own cycle the open kind wears"
+            );
+            assert_eq!(
+                w.get(c, top + 1, c),
+                crate::world::OAK_DOOR_UPPER_OPEN,
+                "the other half's sync the updateShape Y-arm answers"
+            );
+        }
+        // THE VOICE'S OWN LOG (the BlockSetType's doorOpen event the
+        // runtime sounds.json carries — the wooden open the file pick
+        // banks)
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.wooden_door.open")),
+            "the open voice the flip plays"
+        );
+        // THE GAME EVENT'S OWN POST (the BLOCK_OPEN row the vibration
+        // frequency table banks — the door cell's own center speaks)
+        assert!(
+            app.game_events
+                .iter()
+                .any(|l| l.starts_with("block_open @")),
+            "the block_open event the flip posts"
+        );
+        // THE SECOND PRESS THE SWING BACK (the cycle's own tail — the
+        // closed pair the voice's close event answers)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the second flip consumed");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c),
+                crate::world::OAK_DOOR,
+                "the open lower the second cycle closes"
+            );
+            assert_eq!(
+                w.get(c, top + 1, c),
+                crate::world::OAK_DOOR_UPPER,
+                "the open upper the sync closes"
+            );
+        }
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.wooden_door.close")),
+            "the close voice the second flip plays"
+        );
+    }
+
+    #[test]
+    fn the_door_the_dig_the_mate_and_the_lower_drop_wear() {
+        // THE DOOR'S OWN MATE LAW (javap DoorBlock the 26.2 jar — the
+        // broken half the OTHER half's removal wears: the UPPER's dig
+        // the DoublePlantBlock.preventDropFromBottomPart walk speaks,
+        // the LOWER's dig the updateShape Y-arm's own AIR the silent
+        // keep wears; the loot's own conditional pool the LOWER's
+        // break alone rolls — the jar's oak_door.json the
+        // block_state_property half=lower condition speaks, the UPPER's
+        // own break the condition refuses)
+        let door_item = mc_registry::item_id_by_name("oak_door")
+            .expect("the door item the registry banks");
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(c, top, c, crate::world::OAK_DOOR);
+            w.set(c, top + 1, c, crate::world::OAK_DOOR_UPPER);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            // THE LOWER'S OWN AIM (the straight-down ray the UPPER hits
+            // first — the eye at the lower's own band the WEST look the
+            // lower's east face answers: the upper the ray never
+            // touches)
+            pos: crate::math::Vec3::new(c as f32 + 3.5, top as f32 + 0.5, c as f32 + 0.5),
+            yaw: -std::f32::consts::FRAC_PI_2,
+            pitch: 0.0,
+        });
+        // THE LOWER'S DIG (the aim the lower cell the level ray hits,
+        // the ticks mine the hardness 3.0 the bare hand walks)
+        app.on_press(0, 0);
+        let mut ticks = 0;
+        while app.offline_world.as_ref().unwrap().get(c, top, c) != crate::world::AIR {
+            app.update();
+            ticks += 1;
+            assert!(ticks < 400, "the lower's dig completed in time");
+        }
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top + 1, c),
+                crate::world::AIR,
+                "the upper half the mate's own law clears"
+            );
+        }
+        assert!(
+            app.drops
+                .iter()
+                .any(|d| d.item == door_item && d.count == 1),
+            "the conditional pool the LOWER's break rolls"
+        );
+        // THE UPPER'S DIG (the fresh pair the aim's upper cell hits —
+        // the mate's silent removal the walk serves, the drop the
+        // condition refuses)
+        let drops_before = app.drops.len();
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c + 2, top, c + 2, crate::world::OAK_DOOR);
+            w.set(c + 2, top + 1, c + 2, crate::world::OAK_DOOR_UPPER);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 2.5, top as f32 + 5.0, c as f32 + 2.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        app.on_press(0, 0);
+        let mut ticks2 = 0;
+        while app.offline_world.as_ref().unwrap().get(c + 2, top + 1, c + 2)
+            != crate::world::AIR
+        {
+            app.update();
+            ticks2 += 1;
+            assert!(ticks2 < 400, "the upper's dig completed in time");
+        }
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c + 2, top, c + 2),
+            crate::world::AIR,
+            "the lower half the silent mate removal wears"
+        );
+        assert_eq!(
+            app.drops.len(),
+            drops_before,
+            "the UPPER's break the conditional pool refuses"
+        );
     }
 
     #[test]
