@@ -23538,6 +23538,83 @@ impl App {
         ));
     }
 
+    /// THE CHEST'S OWN HOTBAR KEYS (the checkHotbarKeyPressed walk the
+    /// AbstractContainerScreen base class keeps — the SAME walk the
+    /// survival round dev-35 banked for window-0, the chest screen the
+    /// GenericContainerScreen inheritance answers; the banked
+    /// acs_fresh.txt pcs 0-114 the carried-empty + hovered-slot gates
+    /// open, the digit's `slotClicked(hovered, hovered.index, i,
+    /// SWAP)` the keyHotbarSlots loop rides, the banked acm_fresh.txt
+    /// doClick SWAP pcs 1079-1382 the table the BELIEF re-answers).
+    /// THE GATES:
+    /// - the carried gate (pc 0-10 — `getCarried().isEmpty()`): the
+    ///   live cursor's own pair the verdict answers — the false
+    ///   BEFORE the packet lane (the SWAP walk the THROW arm's
+    ///   always-packet law never shares — the gate the packet lane
+    ///   precedes);
+    /// - the hovered-slot gate (pc 13-17 — `hoveredSlot != null`):
+    ///   the rects the render never spoke, the cursor the frame
+    ///   stream never fed — the null verdict the false return keeps;
+    /// - the window gate: the offline stand-in no window keeps (the
+    ///   chest the LIVE session alone wears — the chest Q's own law).
+    /// THE SEATS (the generic_9x3 menu's own slot list the ctor
+    /// speaks — the grid 0..26, the player store mirror 27..62, the
+    /// mirror's hotbar rows 54..62): ALL plain Slots (the chest Q
+    /// round's banked law — mayPickup/mayPlace the unconditional TRUE
+    /// pair the base Slot's iconst_1 keeps), the place arms never
+    /// refuse. THE OFFHAND (button 40) the chest menu NEVER slots —
+    /// the doClick SWAP arm's `inventory.getItem(40)` the player
+    /// Inventory alone answers, the mutation the chest menu's slot
+    /// list never names (the changed map the outside-menu seat can't
+    /// speak) — the F arm the later jar round banks; this walk the
+    /// digits alone wear (the debug_assert the vanilla gate keeps).
+    /// The true verdict the digit CONSUMES either way (the both-empty
+    /// press the consumed silence keeps — the packet STILL rides, the
+    /// slotClicked call the keyPressed walk keeps unconditional).
+    pub fn on_chest_swap_key(&mut self, button: usize) -> bool {
+        if self.screen != ScreenKind::Chest || self.dead {
+            return false;
+        }
+        let Some((window_id, state_id)) = self.chest_live_window else {
+            return false; // the offline stand-in: no window, no click
+        };
+        if self.chest_slot_rects.is_empty() {
+            return false; // no render spoke yet — no geometry to hit
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return false; // no cursor — no hoveredSlot (the null gate's shape)
+        };
+        let Some(&(_, _, slot)) = self
+            .chest_slot_rects
+            .iter()
+            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+        else {
+            return false; // the press landed between the slots — the null hover
+        };
+        // THE CARRIED GATE (pc 0-10 — the getCarried().isEmpty() arm
+        // the walk opens with; the false verdict BEFORE the packet
+        // lane — the chain the world's number-key lane answers)
+        if self.chest_carried.1 > 0 {
+            return false;
+        }
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return false; // no live session — the command dies on the frame thread
+        };
+        wire_chest_swap(
+            sink,
+            &mut self.chest_slots,
+            &mut self.chest_mirror,
+            &mut self.hotbar_slots,
+            self.selected_hotbar,
+            slot as usize,
+            button,
+            window_id,
+            state_id,
+            self.chest_carried,
+        );
+        true
+    }
+
     /// THE SURVIVAL SCREEN'S OWN HOTBAR KEYS (javap 26.2 — the 2dc72797
     /// jar's own classes speak: AbstractContainerScreen
     /// .checkHotbarKeyPressed pcs 0-114 the carried-empty +
@@ -49263,6 +49340,220 @@ fn wire_inventory_drop(
             slot: menu as i16,
             button,
             input: crate::world_view::ContainerInput::Throw,
+            changed,
+            carried,
+        },
+    ));
+}
+
+/// THE CHEST BELIEF'S OWN ADD (the [`belief_inventory_add`] walk the
+/// generic_9x3 mirror's own numbering re-keys — the player rows the
+/// chest menu's mirror slots answer: the hotbar rows 54..62, the main
+/// grid 27..53, the offhand the menu NEVER wears — the offhand pass
+/// the window-0 walk keeps the chest belief can't name, the delta the
+/// later jar round banks): the SELECTED hotbar row first (menu
+/// 54+selected — the getSlotWithRemainingSpace walk's own head), the
+/// merge scan the hotbar rows 54..62 then the main 27..53 keeps, the
+/// first-empty the same order speaks. The flat-64 space law the
+/// model's banked (id, count) simplification wears. Each landing
+/// rides the changed vec (the repeated slot the map's own put
+/// replaces), the leftover the caller's honest tail (the server's
+/// own drop lane).
+fn belief_chest_inventory_add(
+    mirror: &mut [(i32, i32)],
+    selected: usize,
+    id: i32,
+    count: i32,
+    changed: &mut Vec<(i16, (i32, i32))>,
+) -> i32 {
+    if count <= 0 {
+        return 0; // the isEmpty gate (pc 0-8) — nothing walks
+    }
+    let has_space = |(sid, sc): (i32, i32)| sc > 0 && sid == id && sc < 64;
+    let candidate = |slots: &[(i32, i32)]| {
+        let sel_idx = 27 + selected; // the mirror's hotbar row — menu 54+selected
+        if has_space(slots[sel_idx]) {
+            Some(sel_idx)
+        } else {
+            // the merge scan (the menus the mirror indices re-key: 27..36
+            // = the hotbar rows 54..62, 0..27 = the main rows 27..53)
+            (27..36)
+                .find(|&i| has_space(slots[i]))
+                .or_else(|| (0..27).find(|&i| has_space(slots[i])))
+                .or_else(|| (27..36).find(|&i| slots[i].1 <= 0))
+                .or_else(|| (0..27).find(|&i| slots[i].1 <= 0))
+        }
+    };
+    let mut remaining = count;
+    loop {
+        let before = remaining; // count_in — the loop head's own refresh
+        let Some(idx) = candidate(mirror) else {
+            return remaining; // the pass stalled — the no-home arm
+        };
+        let (_, cur_count) = mirror[idx];
+        if cur_count <= 0 {
+            mirror[idx] = (id, 0);
+        }
+        let space = 64 - mirror[idx].1;
+        let take = remaining.min(space);
+        if take > 0 {
+            mirror[idx].1 += take;
+            remaining -= take;
+            note_batch_change(changed, (27 + idx) as i16, mirror[idx]);
+        }
+        if remaining <= 0 || remaining >= before {
+            return remaining; // the empty stack's exit / the stalled pass
+        }
+    }
+}
+
+/// THE CHEST SWAP WIRE ROUND (the doClick SWAP table the offline
+/// walks model, over the generic_9x3's LIVE belief — the
+/// checkHotbarKeyPressed walk's own ServerboundContainerClickPacket
+/// the chest window rides): the hovered seat and the button row the
+/// BELIEF's pairs answer (the row the mirror's hotbar rows 54..62 the
+/// digit keys), the table's arms the walk speaks — the both-empty
+/// press (pcs 1130-1146) the consumed silence keeps (the packet STILL
+/// rides — the slotClicked call the keyPressed walk keeps
+/// unconditional, the changed map the menu's own untouched state
+/// keeps empty), CASE B (pc 1149-1202) the row empty — the hovered
+/// stack rides the button row AS-IS, the hovered cell EMPTIES, CASE C
+/// (pc 1205-1273) the hovered empty — the row's stack places (the
+/// chest's seats ALL plain Slots — the mayPlace gate never refuses),
+/// the SPLIT law the max wears (`getMaxStackSize(stack)` =
+/// min(64, the item's own)), CASE D (pc 1276-1379) both filled — the
+/// count > max arm the split(max) + the ORIGINAL hovered stack the
+/// [`belief_chest_inventory_add`] rides (the add's leftover the
+/// belief's honest tail — the server's own drop lane the correction
+/// speaks), the count <= max arm the straight trade wears. THE SAME
+/// SEAT (the hovered slot IS the button's own row — the vanilla walk
+/// the identical ItemStack pair sets back) no mutation the diff ever
+/// names — the changed map the empty map keeps. The changed vec the
+/// walk's actual mutations names (the broadcastChanges diff law),
+/// the HUD row's belief follows the mirror's hotbar rows (the
+/// every-mutation law), the cursor the SWAP arm NEVER touches (the
+/// carried pair rides unchanged). A free function — the frame
+/// thread's disjoint field borrows (the live_clicks sink stays held
+/// across the walk, the window-0 lane's own shape).
+#[allow(clippy::too_many_arguments)]
+fn wire_chest_swap(
+    sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
+    grid: &mut [(i32, i32)],
+    mirror: &mut [(i32, i32)],
+    hotbar: &mut [(i32, i32); 9],
+    selected: usize,
+    menu: usize,
+    button: usize,
+    window_id: i32,
+    state_id: i32,
+    carried: (i32, i32),
+) {
+    debug_assert!(button < 9 || button == 40, "the SWAP input's own gate");
+    debug_assert!(menu < 63, "the chest seat's own bounds");
+    let row_idx = 27 + button; // the mirror's hotbar row — menu 54+button
+    let (hover_id, hover_count) = if menu < 27 {
+        grid[menu]
+    } else {
+        mirror[menu - 27]
+    };
+    let (row_id, row_count) = mirror[row_idx];
+    let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
+    let fired = !(row_count <= 0 && hover_count <= 0);
+    if fired {
+        if menu == 54 + button {
+            // THE SAME SEAT — the vanilla walk the identical pair sets
+            // back, no mutation the diff ever names
+        } else if row_count <= 0 {
+            // CASE B (pc 1149-1202): the hovered stack rides the
+            // button row AS-IS, the hovered cell EMPTIES
+            if menu < 27 {
+                grid[menu] = (0, 0);
+            } else {
+                mirror[menu - 27] = (0, 0);
+            }
+            note_batch_change(&mut changed, menu as i16, (0, 0));
+            mirror[row_idx] = (hover_id, hover_count);
+            note_batch_change(&mut changed, (27 + row_idx) as i16, (hover_id, hover_count));
+        } else if hover_count <= 0 {
+            // CASE C (pc 1205-1273): the row's stack places — the
+            // chest's seats the plain TRUE pair keep, the SPLIT law
+            // the max wears
+            let max = crate::world_view::item_max_stack(row_id);
+            if row_count > max {
+                if menu < 27 {
+                    grid[menu] = (row_id, max);
+                } else {
+                    mirror[menu - 27] = (row_id, max);
+                }
+                note_batch_change(&mut changed, menu as i16, (row_id, max));
+                mirror[row_idx] = (row_id, row_count - max);
+                note_batch_change(
+                    &mut changed,
+                    (27 + row_idx) as i16,
+                    (row_id, row_count - max),
+                );
+            } else {
+                mirror[row_idx] = (0, 0);
+                note_batch_change(&mut changed, (27 + row_idx) as i16, (0, 0));
+                if menu < 27 {
+                    grid[menu] = (row_id, row_count);
+                } else {
+                    mirror[menu - 27] = (row_id, row_count);
+                }
+                note_batch_change(&mut changed, menu as i16, (row_id, row_count));
+            }
+        } else {
+            // CASE D (pc 1276-1379): both filled — the mayPickup &&
+            // mayPlace gates the plain TRUE pair answers
+            let max = crate::world_view::item_max_stack(row_id);
+            if row_count > max {
+                // the split(max) — the cell takes max, the row the
+                // remainder keeps, the ORIGINAL hovered stack the
+                // add rides (the add's leftover the belief's tail —
+                // the server's drop the wire speaks)
+                if menu < 27 {
+                    grid[menu] = (row_id, max);
+                } else {
+                    mirror[menu - 27] = (row_id, max);
+                }
+                note_batch_change(&mut changed, menu as i16, (row_id, max));
+                mirror[row_idx] = (row_id, row_count - max);
+                note_batch_change(
+                    &mut changed,
+                    (27 + row_idx) as i16,
+                    (row_id, row_count - max),
+                );
+                let _leftover =
+                    belief_chest_inventory_add(mirror, selected, hover_id, hover_count, &mut changed);
+            } else {
+                // the straight trade — the row the hovered stack
+                // takes, the cell the row's stack wears
+                mirror[row_idx] = (hover_id, hover_count);
+                note_batch_change(&mut changed, (27 + row_idx) as i16, (hover_id, hover_count));
+                if menu < 27 {
+                    grid[menu] = (row_id, row_count);
+                } else {
+                    mirror[menu - 27] = (row_id, row_count);
+                }
+                note_batch_change(&mut changed, menu as i16, (row_id, row_count));
+            }
+        }
+        // THE HUD ROW'S BELIEF — the every-mutation law syncs (the
+        // mirror's hotbar rows the slice's own menus 54..62 speak)
+        let mut row = [(0, 0); 9];
+        row.copy_from_slice(&mirror[27..36]);
+        *hotbar = row;
+    }
+    // THE PACKET ALWAYS RIDES (the slotClicked walk the wire speaks
+    // even when the prediction refuses — the changed map the menu's
+    // own state keeps, the cursor the SWAP arm never touches)
+    let _ = sink.send(crate::world_view::ContainerCommand::Click(
+        crate::world_view::ContainerClick {
+            window_id,
+            state_id,
+            slot: menu as i16,
+            button: button as i8,
+            input: crate::world_view::ContainerInput::Swap,
             changed,
             carried,
         },
@@ -110751,6 +111042,246 @@ cow_sound_variant: None,
         // over the panel's spine — the rects never answer
         app.mouse_pos = Some((panel.0 + 170, panel.1 + 20));
         app.on_chest_drop_key(false);
+        assert!(click_rx.try_recv().is_err(), "still silence");
+    }
+
+    /// THE CHEST'S OWN SWAP, THE TABLE (the doClick SWAP walk over the
+    /// generic_9x3's belief): CASE B the hovered grid stack rides the
+    /// empty hotbar row AS-IS (the cell empties, the HUD row synced,
+    /// the packet the window's own identity + the walk's own
+    /// mutations names), the CASE D straight trade the mirror rows
+    /// wears (the row the hovered stack takes, the cell the row's
+    /// stack wears — the changed vec the mutation order speaks).
+    #[test]
+    fn the_chest_swap_key_the_table_the_hud_wear() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open(ScreenKind::Chest);
+        app.chest_live_window = Some((5, 7));
+        let panel = chest_panel_origin(640, 360);
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        app.chest_slots = vec![(0, 0); 27];
+        app.chest_mirror = vec![(0, 0); 36];
+        app.chest_slots[4] = (dirt, 32);
+        app.chest_slot_rects = (0..27)
+            .map(|i| {
+                let (sx, sy) = chest_container_slot(panel, i);
+                (sx + 1, sy + 1, i as i16)
+            })
+            .chain((0..36).map(|i| {
+                let (sx, sy) = chest_mirror_slot(panel, i);
+                (sx + 1, sy + 1, (27 + i) as i16)
+            }))
+            .collect();
+        // CASE B: THE GRID STACK OVER THE EMPTY HOTBAR ROW 2 (menu 56)
+        let (gx, gy) = chest_container_slot(panel, 4);
+        app.mouse_pos = Some((gx + 9, gy + 9));
+        assert!(app.on_chest_swap_key(2), "the digit consumes");
+        assert_eq!(app.chest_slots[4], (0, 0), "the cell emptied");
+        assert_eq!(app.chest_mirror[29], (dirt, 32), "the row rides AS-IS");
+        assert_eq!(app.hotbar_slots[2], (dirt, 32), "the HUD synced");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 5, "the window's own id");
+                assert_eq!(c.state_id, 7, "the revision rides");
+                assert_eq!(c.slot, 4, "the hovered seat's own menu id");
+                assert_eq!(c.button, 2, "the digit the byte keys");
+                assert_eq!(c.input, crate::world_view::ContainerInput::Swap);
+                assert_eq!(
+                    c.changed,
+                    vec![(4, (0, 0)), (56, (dirt, 32))],
+                    "the mutations named"
+                );
+                assert_eq!(c.carried, (0, 0), "the cursor pair rides unchanged");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE CASE D STRAIGHT TRADE: THE MIRROR MAIN ROW (menu 30)
+        // OVER THE HOTBAR ROW 0 (menu 54)
+        app.chest_mirror[3] = (stone, 5);
+        app.chest_mirror[27] = (planks, 7);
+        let (mx2, my2) = chest_mirror_slot(panel, 3);
+        app.mouse_pos = Some((mx2 + 9, my2 + 9));
+        assert!(app.on_chest_swap_key(0));
+        assert_eq!(app.chest_mirror[3], (planks, 7), "the cell wears the row's stack");
+        assert_eq!(app.chest_mirror[27], (stone, 5), "the row takes the hovered's");
+        assert_eq!(app.hotbar_slots[0], (stone, 5), "the HUD synced");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 30, "the mirror row's own menu id");
+                assert_eq!(
+                    c.changed,
+                    vec![(54, (stone, 5)), (30, (planks, 7))],
+                    "the trade's mutations named"
+                );
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+
+    /// THE CHEST'S OWN SWAP, THE SPLIT LAW (the max the SPLIT wears):
+    /// CASE C the row's 20 eggs over the empty cell — the cell takes
+    /// the max 16, the row the remainder 4 keeps; CASE D the row 20
+    /// eggs over the hovered 30 dirt — the cell takes 16, the row
+    /// keeps 4, the ORIGINAL hovered stack the add rides (the chest
+    /// belief's own scan: the selected row refused — the eggs' id —
+    /// the merge scan refuses, the FIRST-EMPTY HOTBAR ROW lands the
+    /// 30 whole — the leftover none).
+    #[test]
+    fn the_chest_swap_key_the_split_law_and_the_add_wear() {
+        use crate::world_view::ContainerCommand;
+        let egg = crate::mob::wire_id("egg").expect("the egg's own id");
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open(ScreenKind::Chest);
+        app.chest_live_window = Some((5, 7));
+        let panel = chest_panel_origin(640, 360);
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        app.chest_slots = vec![(0, 0); 27];
+        app.chest_mirror = vec![(0, 0); 36];
+        app.chest_mirror[30] = (egg, 20); // the hotbar row 3 — menu 57
+        app.chest_slot_rects = (0..27)
+            .map(|i| {
+                let (sx, sy) = chest_container_slot(panel, i);
+                (sx + 1, sy + 1, i as i16)
+            })
+            .chain((0..36).map(|i| {
+                let (sx, sy) = chest_mirror_slot(panel, i);
+                (sx + 1, sy + 1, (27 + i) as i16)
+            }))
+            .collect();
+        // CASE C: THE EMPTY CELL TAKES THE MAX 16
+        let (gx, gy) = chest_container_slot(panel, 9);
+        app.mouse_pos = Some((gx + 9, gy + 9));
+        assert!(app.on_chest_swap_key(3));
+        assert_eq!(app.chest_slots[9], (egg, 16), "the cell takes the max");
+        assert_eq!(app.chest_mirror[30], (egg, 4), "the row the remainder keeps");
+        assert_eq!(app.hotbar_slots[3], (egg, 4), "the HUD synced");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 9, "the hovered cell's own menu id");
+                assert_eq!(
+                    c.changed,
+                    vec![(9, (egg, 16)), (57, (egg, 4))],
+                    "the split's mutations named"
+                );
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // CASE D SPLIT: THE ROW 20 EGGS OVER THE HOVERED 30 DIRT — THE
+        // ADD RIDES (the dirt the FIRST-EMPTY HOTBAR ROW lands — menu 55)
+        app.chest_mirror[27] = (egg, 20);
+        app.chest_slots[12] = (dirt, 30);
+        let (dx, dy) = chest_container_slot(panel, 12);
+        app.mouse_pos = Some((dx + 9, dy + 9));
+        assert!(app.on_chest_swap_key(0));
+        assert_eq!(app.chest_slots[12], (egg, 16), "the cell takes the max");
+        assert_eq!(app.chest_mirror[27], (egg, 4), "the row the remainder keeps");
+        assert_eq!(app.chest_mirror[28], (dirt, 30), "the add the first-empty row lands");
+        assert_eq!(app.hotbar_slots[1], (dirt, 30), "the HUD synced");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(
+                    c.changed,
+                    vec![(12, (egg, 16)), (54, (egg, 4)), (55, (dirt, 30))],
+                    "the split + the add's mutations named"
+                );
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+
+    /// THE CHEST'S OWN SWAP, THE GATES (the checkHotbarKeyPressed
+    /// chain's own shape): the BOTH-EMPTY press the consumed silence
+    /// keeps AND the packet rides (the empty changed map the
+    /// untouched state names), the SAME-SEAT press (the hovered slot
+    /// IS the button's own row) the identical pair sets back — no
+    /// mutation the diff ever names, the carried cursor the false
+    /// BEFORE the packet lane keeps, the offline stand-in and the
+    /// between-slots press the refusals keep.
+    #[test]
+    fn the_chest_swap_key_the_gates_and_the_always_packet_wear() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open(ScreenKind::Chest);
+        let panel = chest_panel_origin(640, 360);
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        app.chest_slots = vec![(0, 0); 27];
+        app.chest_mirror = vec![(0, 0); 36];
+        app.chest_slots[4] = (dirt, 32);
+        app.chest_slot_rects = (0..27)
+            .map(|i| {
+                let (sx, sy) = chest_container_slot(panel, i);
+                (sx + 1, sy + 1, i as i16)
+            })
+            .chain((0..36).map(|i| {
+                let (sx, sy) = chest_mirror_slot(panel, i);
+                (sx + 1, sy + 1, (27 + i) as i16)
+            }))
+            .collect();
+        let (gx, gy) = chest_container_slot(panel, 4);
+        // THE OFFLINE STAND-IN (no window armed): the silence
+        app.mouse_pos = Some((gx + 9, gy + 9));
+        assert!(!app.on_chest_swap_key(0), "no window — the false wears");
+        assert!(click_rx.try_recv().is_err(), "the offline stand-in is silence");
+        // THE WINDOW ARMS
+        app.chest_live_window = Some((5, 7));
+        // THE BOTH-EMPTY PRESS: the digit CONSUMES and the packet
+        // rides with the EMPTY changed map
+        let (ex, ey) = chest_container_slot(panel, 20);
+        app.mouse_pos = Some((ex + 9, ey + 9));
+        assert!(app.on_chest_swap_key(5), "the silence still consumes");
+        match click_rx.try_recv().expect("the always packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 20, "the hovered seat's own menu id");
+                assert_eq!(c.button, 5, "the digit the byte keys");
+                assert_eq!(c.input, crate::world_view::ContainerInput::Swap);
+                assert!(c.changed.is_empty(), "the untouched state keeps");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE SAME-SEAT PRESS (the hotbar row 0 IS menu 54): the
+        // identical pair sets back — no mutation, the belief whole
+        app.chest_mirror[27] = (stone, 7);
+        let (mx2, my2) = chest_mirror_slot(panel, 27);
+        app.mouse_pos = Some((mx2 + 9, my2 + 9));
+        assert!(app.on_chest_swap_key(0), "the same seat still consumes");
+        assert_eq!(app.chest_mirror[27], (stone, 7), "the belief whole");
+        assert_eq!(app.hotbar_slots[0], (stone, 7), "the HUD whole");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 54, "the same seat's own menu id");
+                assert!(c.changed.is_empty(), "no mutation the diff names");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE CARRIED CURSOR (the getCarried().isEmpty() gate): the
+        // false BEFORE the packet lane — NO packet
+        app.mouse_pos = Some((gx + 9, gy + 9));
+        app.chest_carried = (dirt, 5);
+        assert!(!app.on_chest_swap_key(0), "the carried gate refuses");
+        assert!(click_rx.try_recv().is_err(), "no packet the gate passes");
+        app.chest_carried = (0, 0);
+        // THE BETWEEN-SLOTS PRESS (the null hoveredSlot): the refusal
+        app.mouse_pos = Some((panel.0 + 170, panel.1 + 20));
+        assert!(!app.on_chest_swap_key(0), "the null hover refuses");
         assert!(click_rx.try_recv().is_err(), "still silence");
     }
 

@@ -1910,6 +1910,13 @@ pub fn run_gui_app(
                     // hover rides the LAST frame's cursor the stream
                     // keeps — the resting mouse the key press reads)
                     if !app.on_inventory_swap_key(i)
+                        // THE CHEST'S OWN SWAP (the checkHotbarKeyPressed
+                        // walk the AbstractContainerScreen base class
+                        // keeps — the GenericContainerScreen the chest
+                        // screen inherits, the hovered seat's own menu
+                        // id the SWAP table answers; the walk's own
+                        // false the non-answer arms keep)
+                        && !app.on_chest_swap_key(i)
                         // THE PICKER'S OWN SWAP (the creative screen's
                         // own numeric arm — the false the profiler's
                         // own lane keeps)
