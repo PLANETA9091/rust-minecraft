@@ -7910,6 +7910,14 @@ pub struct App {
     /// feeds. The absent row the 0.0 identity keeps (the offline lane
     /// the same silence wears).
     pub mining_efficiency: f64,
+    /// The LOCAL player's computed `block_break_speed` attribute (the
+    /// same packets' row): the dig walk's pc 126-136 multiply the
+    /// value feeds. The absent row the 1.0 default keeps.
+    pub block_break_speed: f64,
+    /// The LOCAL player's computed `submerged_mining_speed` attribute
+    /// (the same packets' row): the dig walk's water-arm multiply the
+    /// value feeds. The absent row the 0.2 default keeps.
+    pub submerged_mining_speed: f64,
     /// The Hurt Animation packet's tilt yaw (the flash-and-lean's own
     /// channel; the camera roll is the future's consumer).
     pub hurt_yaw: f32,
@@ -8829,6 +8837,8 @@ impl App {
             last_bubble_pop_sound_played: 0,
             effects: crate::effects::EffectsStore::new(),
             mining_efficiency: 0.0,
+            block_break_speed: 1.0,
+            submerged_mining_speed: 0.2,
             last_health: 20,
             display_health: 20,
             last_health_time: 0,
@@ -13280,18 +13290,23 @@ impl App {
                             } else {
                                 self.offline_world.as_mut()
                             };
-                            // THE EFFICIENCY ADDEND'S OWN READ (the
-                            // vitals view's mirrored row — the wire's
-                            // mining_efficiency the fold banked, the
-                            // absent row the 0.0 identity keeps)
-                            let efficiency = self.mining_efficiency;
+                            // THE ATTRIBUTE TRIO'S OWN BUILD (the
+                            // vitals view's mirrored rows — the addend
+                            // the efficiency seat names, the multiply
+                            // lanes the block_break/submerged seats; the
+                            // absent rows the vanilla defaults keep)
+                            let attrs = crate::dig::DigAttributes {
+                                efficiency: self.mining_efficiency,
+                                block_break: self.block_break_speed,
+                                submerged: self.submerged_mining_speed,
+                            };
                             let dig = &mut self.dig;
                             if let Some(world) = world_opt {
                                 let was_solid =
                                     world.get(pos.0, pos.1, pos.2) != crate::world::AIR;
                                 let (s, b) = dig.continue_destroy_block(
                                     pos, face, held, world, on_ground, eye_water, instabuild,
-                                    restricted, mining_fatigue, haste, efficiency,
+                                    restricted, mining_fatigue, haste, attrs,
                                 );
                                 sends = s;
                                 beat = b;
@@ -16284,10 +16299,15 @@ impl App {
                 } else {
                     self.offline_world.as_mut()
                 };
-                // THE EFFICIENCY ADDEND'S OWN READ (the vitals view's
-                // mirrored row — the wire's mining_efficiency the fold
-                // banked, the absent row the 0.0 identity keeps)
-                let efficiency = self.mining_efficiency;
+                // THE ATTRIBUTE TRIO'S OWN BUILD (the vitals view's
+                // mirrored rows — the addend the efficiency seat names,
+                // the multiply lanes the block_break/submerged seats;
+                // the absent rows the vanilla defaults keep)
+                let attrs = crate::dig::DigAttributes {
+                    efficiency: self.mining_efficiency,
+                    block_break: self.block_break_speed,
+                    submerged: self.submerged_mining_speed,
+                };
                 let dig = &mut self.dig;
                 if let Some(world) = world_opt {
                     let was_solid = world.get(h.pos.0, h.pos.1, h.pos.2) != crate::world::AIR;
@@ -16302,7 +16322,7 @@ impl App {
                         restricted,
                         mining_fatigue,
                         haste,
-                        efficiency,
+                        attrs,
                     );
                     dug = was_solid
                         && world.get(h.pos.0, h.pos.1, h.pos.2) == crate::world::AIR;
@@ -41820,6 +41840,10 @@ impl App {
         // the computed mining_efficiency the model's fold banked, the
         // dig walk's addend the value feeds)
         self.mining_efficiency = health.mining_efficiency;
+        // THE MULTIPLY LANES' MIRROR (the same vitals view's lifts —
+        // the block_break/submerged the walk's multiply lanes feed)
+        self.block_break_speed = health.block_break_speed;
+        self.submerged_mining_speed = health.submerged_mining_speed;
     }
 
     /// THE FALL DAMAGE PIPELINE (javap `LivingEntity.causeFallDamage`'s
@@ -42491,8 +42515,11 @@ impl App {
         self.effects = crate::effects::EffectsStore::new();
         // THE ATTRIBUTE ROWS' OWN RESET (the same death's removal —
         // the fresh body carries no stat opinions, the server's spawn
-        // stream re-speaks them, the addend the 0.0 identity waits)
+        // stream re-speaks them, the addend the 0.0 identity waits,
+        // the multiply lanes the vanilla defaults wear)
         self.mining_efficiency = 0.0;
+        self.block_break_speed = 1.0;
+        self.submerged_mining_speed = 0.2;
         self.hurt_time = 0;
         self.hurt_duration = 0;
         self.invulnerable_time = 0;
@@ -66859,6 +66886,8 @@ mod tests {
             death_message: None,
             effects: Vec::new(),
         mining_efficiency: 0.0,
+        block_break_speed: 1.0,
+        submerged_mining_speed: 0.2,
         });
         assert!(
             app.chat_open,
@@ -66875,6 +66904,8 @@ mod tests {
             death_message: Some("fell from a high place".to_string()),
             effects: Vec::new(),
         mining_efficiency: 0.0,
+        block_break_speed: 1.0,
+        submerged_mining_speed: 0.2,
         });
         assert!(app.dead, "the kill the death arms");
         assert!(!app.chat_open, "the kill the chat screen folds");
@@ -96251,6 +96282,8 @@ cow_sound_variant: None,
             death_message: None,
             effects: Vec::new(),
         mining_efficiency: 0.0,
+        block_break_speed: 1.0,
+        submerged_mining_speed: 0.2,
         });
         assert_eq!(app.health, 6.5, "the half heart's own float");
         assert_eq!(app.food_data.food_level(), 18);
@@ -96268,6 +96301,8 @@ cow_sound_variant: None,
             death_message: Some("Player fell from a high place".to_string()),
             effects: Vec::new(),
         mining_efficiency: 0.0,
+        block_break_speed: 1.0,
+        submerged_mining_speed: 0.2,
         });
         assert!(app.dead, "the message armed the death gate");
         assert_eq!(
@@ -99971,6 +100006,8 @@ cow_sound_variant: None,
                 },
             ],
         mining_efficiency: 0.0,
+        block_break_speed: 1.0,
+        submerged_mining_speed: 0.2,
         });
         assert!(app.effects.has_effect(crate::effects::MOB_EFFECT_ABSORPTION));
         assert!((app.effects.absorption() - 4.0).abs() < 1e-5);
@@ -99991,6 +100028,8 @@ cow_sound_variant: None,
                 },
             ],
         mining_efficiency: 0.0,
+        block_break_speed: 1.0,
+        submerged_mining_speed: 0.2,
         });
         assert_eq!(
             app.effects.get(crate::effects::MOB_EFFECT_ABSORPTION).unwrap().amplifier,
@@ -100008,6 +100047,8 @@ cow_sound_variant: None,
             death_message: None,
             effects: Vec::new(),
         mining_efficiency: 0.0,
+        block_break_speed: 1.0,
+        submerged_mining_speed: 0.2,
         });
         assert!(app.effects.is_empty());
     }
@@ -100023,6 +100064,14 @@ cow_sound_variant: None,
         let mut app = App::new(3);
         app.enter_world();
         assert_eq!(app.mining_efficiency, 0.0, "the absent row the 0.0 keeps");
+        assert!(
+            (app.block_break_speed - 1.0).abs() < 1e-9,
+            "the absent row the 1.0 default keeps"
+        );
+        assert!(
+            (app.submerged_mining_speed - 0.2).abs() < 1e-9,
+            "the absent row the 0.2 default keeps"
+        );
         app.live_health_updated(crate::world_view::HealthView {
             health: 20.0,
             food: 20,
@@ -100032,13 +100081,25 @@ cow_sound_variant: None,
             death_message: None,
             effects: Vec::new(),
             mining_efficiency: 26.0,
+            block_break_speed: 2.0,
+            submerged_mining_speed: 0.1,
         });
         assert_eq!(
             app.mining_efficiency, 26.0,
             "the E5 row the vitals view's lift wears"
         );
+        assert!(
+            (app.block_break_speed - 2.0).abs() < 1e-9,
+            "the 2.0 row the multiply lane's mirror wears"
+        );
+        assert!(
+            (app.submerged_mining_speed - 0.1).abs() < 1e-9,
+            "the 0.1 row the water arm's mirror wears"
+        );
         // the re-speak REPLACES the value (a lesser enchant the
-        // downgraded row wears, the stale addend never lingers)
+        // downgraded row wears, the stale addend never lingers; the
+        // multiply rows the same wholesale truth speaks — the rows'
+        // absence the defaults' return wears)
         app.live_health_updated(crate::world_view::HealthView {
             health: 20.0,
             food: 20,
@@ -100048,12 +100109,30 @@ cow_sound_variant: None,
             death_message: None,
             effects: Vec::new(),
             mining_efficiency: 2.0,
+            block_break_speed: 1.0,
+            submerged_mining_speed: 0.2,
         });
         assert_eq!(app.mining_efficiency, 2.0, "the E1 row the replace wears");
+        assert!(
+            (app.block_break_speed - 1.0).abs() < 1e-9,
+            "the multiply row the wholesale truth restores"
+        );
+        assert!(
+            (app.submerged_mining_speed - 0.2).abs() < 1e-9,
+            "the water row the wholesale truth restores"
+        );
         // THE RESPAWN'S OWN RESET (the fresh body carries no stat
         // opinions — the server's spawn stream re-speaks them)
         app.respawn();
         assert_eq!(app.mining_efficiency, 0.0, "the respawn's reset the 0.0 wears");
+        assert!(
+            (app.block_break_speed - 1.0).abs() < 1e-9,
+            "the respawn's reset the multiply default wears"
+        );
+        assert!(
+            (app.submerged_mining_speed - 0.2).abs() < 1e-9,
+            "the respawn's reset the water default wears"
+        );
     }
 
     /// THE RESPAWN CLEARS THE STORE (the death's removal — the fresh

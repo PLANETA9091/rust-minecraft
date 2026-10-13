@@ -3679,6 +3679,16 @@ pub struct HealthView {
     /// value feeds. The absent row the 0.0 identity keeps — the
     /// addend's own gate the bare seed refuses.
     pub mining_efficiency: f64,
+    /// The LOCAL player's computed `block_break_speed` attribute (the
+    /// same packets' row — the dig walk's pc 126-136 multiply the
+    /// value feeds). The absent row the 1.0 default keeps (the
+    /// multiply the no-op wears).
+    pub block_break_speed: f64,
+    /// The LOCAL player's computed `submerged_mining_speed` attribute
+    /// (the same packets' row — the dig walk's water-arm multiply the
+    /// value feeds). The absent row the 0.2 default keeps (the water
+    /// arm's own divide-by-five).
+    pub submerged_mining_speed: f64,
 }
 
 impl HealthView {
@@ -3692,6 +3702,8 @@ impl HealthView {
             death_message: None,
             effects: Vec::new(),
             mining_efficiency: 0.0,
+            block_break_speed: 1.0,
+            submerged_mining_speed: 0.2,
         }
     }
 }
@@ -3728,6 +3740,16 @@ fn health_view(model: &WorldModel) -> HealthView {
     v.mining_efficiency = model
         .own_attribute_value(mc_protocol::play::attributes::MINING_EFFICIENCY)
         .unwrap_or(0.0);
+    // THE MULTIPLY LANES' OWN LIFTS (the same packets' rows — the
+    // block_break_speed the fatigue fold's follower, the
+    // submerged_mining_speed the water arm's multiplier; the absent
+    // rows the vanilla attribute defaults keep)
+    v.block_break_speed = model
+        .own_attribute_value(mc_protocol::play::attributes::BLOCK_BREAK_SPEED)
+        .unwrap_or(1.0);
+    v.submerged_mining_speed = model
+        .own_attribute_value(mc_protocol::play::attributes::SUBMERGED_MINING_SPEED)
+        .unwrap_or(0.2);
     v
 }
 

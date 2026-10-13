@@ -28,6 +28,37 @@ pub struct DigSend {
     pub face: u8,
 }
 
+/// THE DIG WALK'S OWN ATTRIBUTE TRIO (the wire's attribute rows the
+/// vitals view mirrors — the seats the
+/// [`mc_protocol::play::attributes`] module names): the
+/// MINING_EFFICIENCY addend (the enchant's levels_squared amount the
+/// server's row speaks — the strict >1.0 seed gate the value rides
+/// behind), the BLOCK_BREAK_SPEED multiply (the pc 126-136 lane, the
+/// 1.0 default the no-op keeps), the SUBMERGED_MINING_SPEED multiply
+/// (the pc 137-160 water arm, the 0.2 default the submerged lane
+/// keeps). The defaults the jar's own attribute rows carry (the
+/// BLOCK_BREAK_SPEED 1.0, the SUBMERGED 0.2) — the absent wire row
+/// the honest default keeps, the walk the vanilla behavior wears.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct DigAttributes {
+    /// The wire's mining_efficiency value (the fold's answer — the
+    /// efficiency enchant's levels_squared amount). The absent row
+    /// the 0.0 identity keeps.
+    pub efficiency: f64,
+    /// The wire's block_break_speed value. The absent row the 1.0
+    /// default keeps (the multiply the no-op wears).
+    pub block_break: f64,
+    /// The wire's submerged_mining_speed value. The absent row the
+    /// 0.2 default keeps (the water arm's own divide-by-five).
+    pub submerged: f64,
+}
+
+impl Default for DigAttributes {
+    fn default() -> Self {
+        DigAttributes { efficiency: 0.0, block_break: 1.0, submerged: 0.2 }
+    }
+}
+
 /// The destroy state machine — the survival lane's own fields, verbatim.
 #[derive(Debug, Clone)]
 pub struct DigState {
@@ -121,10 +152,18 @@ impl DigState {
         haste: Option<i32>,
         mining_fatigue: Option<i32>,
     ) -> f32 {
-        // the efficiency param's honest 0.0 — the enchant lane the
-        // client's stacks never carry (the components round the real
-        // held-stack level feeds)
-        Self::player_dig_speed_seeded(1.0, 0.0, on_ground, eye_in_water, haste, mining_fatigue)
+        // the attribute trio's honest defaults — the absent wire rows
+        // the vanilla attribute defaults keep (the efficiency 0.0 the
+        // enchant lane's own silence, the block_break 1.0 the no-op
+        // multiply, the submerged 0.2 the water arm's own law)
+        Self::player_dig_speed_seeded(
+            1.0,
+            DigAttributes::default(),
+            on_ground,
+            eye_in_water,
+            haste,
+            mining_fatigue,
+        )
     }
 
     /// THE EFFICIENCY ENCHANT'S OWN AMOUNT (the 26.2 jar's own
@@ -160,7 +199,7 @@ impl DigState {
     /// feeds), the f32 order the exact walk preserves.
     pub fn player_dig_speed_seeded(
         seed: f32,
-        efficiency: f32,
+        attrs: DigAttributes,
         on_ground: bool,
         eye_in_water: bool,
         haste: Option<i32>,
@@ -173,7 +212,7 @@ impl DigState {
         // tool's seed the full amount wears; the f32 add the d2f
         // conversion's own fold keeps
         if f > 1.0 {
-            f += efficiency;
+            f += attrs.efficiency as f32;
         }
         if let Some(amp) = haste {
             // the DIG_SPEED product: 1.0 + 0.2 × (amplifier + 1) — the
@@ -188,10 +227,19 @@ impl DigState {
                 _ => 8.1E-4,
             };
         }
-        // the BLOCK_BREAK_SPEED attribute's 1.0 default (the pc 126-136
-        // multiply the vanilla's own no-op keeps)
+        // THE BLOCK_BREAK_SPEED'S OWN LANE (javap Player pcs 126-136
+        // verbatim — the getAttributeValue(BLOCK_BREAK_SPEED) the d2f
+        // conversion the f32 fmul speaks): the multiply the fatigue
+        // fold PRECEDES, the water arm FOLLOWS; the wire's row the
+        // value feeds, the absent row the 1.0 default the no-op keeps
+        f *= attrs.block_break as f32;
+        // THE WATER ARM'S OWN ATTRIBUTE (javap Player pcs 137-160 —
+        // the isEyeInFluid(WATER) gate the getAttribute(SUBMERGED_
+        // MINING_SPEED).getValue() the d2f fmul speaks: the multiplier
+        // the ATTRIBUTE reads, the 0.2 the attribute's own DEFAULT —
+        // the absent row the same 0.2 the walk's honest default keeps)
         if eye_in_water {
-            f *= 0.2; // Attributes.SUBGERGED_MINING_SPEED's default
+            f *= attrs.submerged as f32;
         }
         if !on_ground {
             f /= 5.0; // the airborne mining penalty's own law
@@ -212,11 +260,11 @@ impl DigState {
         mining_fatigue: Option<i32>,
         kind: u16,
         held: Option<i32>,
-        efficiency: f32,
+        attrs: DigAttributes,
     ) -> f32 {
         Self::player_dig_speed_seeded(
             Self::held_destroy_speed(kind, held),
-            efficiency,
+            attrs,
             on_ground,
             eye_in_water,
             haste,
@@ -478,13 +526,13 @@ impl DigState {
         restricted: bool,
         mining_fatigue: Option<i32>,
         haste: Option<i32>,
-        efficiency: f64,
+        attrs: DigAttributes,
     ) -> Vec<DigSend> {
-        // the efficiency param: the wire's mining_efficiency row the
-        // fold computed (the Update Attributes packets' own truth —
-        // the efficiency enchant the server's row names). The absent
-        // row the caller's 0.0 identity keeps — the addend's own gate
-        // the bare seed refuses.
+        // the attrs trio: the wire's attribute rows the fold computed
+        // (the Update Attributes packets' own truth — the efficiency
+        // enchant the server's row names, the block_break/submerged
+        // the multiply lanes' own seats). The absent rows the honest
+        // defaults keep — the addend's own gate the bare seed refuses.
         // THE RESTRICTED HEAD (audited pcs 0-26): the press speaks
         // NOTHING — no break, no send, no arm. The survival machine's
         // retarget tail re-enters HERE (continueDestroyBlock's own tail
@@ -532,9 +580,9 @@ impl DigState {
             // vanilla lambda: getDestroyProgress >= 1.0 -> destroyBlock,
             // the dig state never arms) — the speed the FULL walk
             // speaks (the held tool's own seed the lane feeds)
-            // the wire's mining_efficiency row the caller feeds (the
-            // honest 0.0 the absent row keeps, the enchant lane the
-            // server's row names)
+            // the attrs trio rides — the wire's attribute rows the
+            // caller feeds (the honest defaults the absent rows keep,
+            // the enchant lane the server's row names)
             let speed = Self::player_destroy_speed(
                 on_ground,
                 eye_in_water,
@@ -542,7 +590,7 @@ impl DigState {
                 mining_fatigue,
                 kind,
                 held,
-                efficiency as f32,
+                attrs,
             );
             let (destroy_speed, _) = Self::block_dig_row(kind);
             let progress =
@@ -594,11 +642,11 @@ impl DigState {
         restricted: bool,
         mining_fatigue: Option<i32>,
         haste: Option<i32>,
-        efficiency: f64,
+        attrs: DigAttributes,
     ) -> (Vec<DigSend>, bool) {
-        // the efficiency param: the wire's mining_efficiency row the
-        // fold computed — the same identity the start walk keeps (the
-        // absent row the caller's 0.0 identity keeps)
+        // the attrs trio: the wire's attribute rows the fold computed —
+        // the same identity the start walk keeps (the absent rows the
+        // honest defaults keep)
         // the completion cooldown ticks first (the vanilla's own order)
         if self.delay > 0 {
             self.delay -= 1;
@@ -629,7 +677,7 @@ impl DigState {
             // keeps)
             let sends = self.start_destroy_block(
                 pos, face, held, world, on_ground, eye_in_water, instabuild, restricted,
-                mining_fatigue, haste, efficiency,
+                mining_fatigue, haste, attrs,
             );
             let retargeted = !sends.is_empty();
             return (sends, retargeted);
@@ -644,7 +692,7 @@ impl DigState {
         let (destroy_speed, _) = Self::block_dig_row(kind);
         // the speed the FULL walk speaks (the held tool's own seed the
         // lane feeds, the divisor the held tool's own verdict wears;
-        // the wire's mining_efficiency row the caller feeds)
+        // the attrs trio the caller feeds)
         let speed = Self::player_destroy_speed(
             on_ground,
             eye_in_water,
@@ -652,7 +700,7 @@ impl DigState {
             mining_fatigue,
             kind,
             held,
-            efficiency as f32,
+            attrs,
         );
         self.progress +=
             Self::destroy_progress(speed, destroy_speed, Self::correct_tool(kind, held));
@@ -774,7 +822,7 @@ mod tests {
         // seed a stone cell
         world.set(1, 1, 1, crate::world::STONE);
         let mut d = DigState::new();
-        let sends = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, 0.0);
+        let sends = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, DigAttributes::default());
         assert_eq!(
             sends,
             vec![DigSend {
@@ -786,7 +834,7 @@ mod tests {
         assert!(d.is_destroying);
         assert_eq!(d.progress, 0.0);
         // the same-target re-press: NO second send (the vanilla's no-op)
-        let sends = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, 0.0);
+        let sends = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, DigAttributes::default());
         assert!(sends.is_empty());
     }
 
@@ -795,7 +843,7 @@ mod tests {
         let mut world = small_world();
         world.set(1, 1, 1, crate::world::LEAF_LITTER);
         let mut d = DigState::new();
-        let sends = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, 0.0);
+        let sends = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, DigAttributes::default());
         // the START still speaks (the vanilla lambda's own return) and
         // the cell is ALREADY air — no dig state armed
         assert_eq!(sends.len(), 1);
@@ -810,15 +858,15 @@ mod tests {
         world.set(1, 1, 1, crate::world::STONE);
         world.set(2, 1, 1, crate::world::STONE);
         let mut d = DigState::new();
-        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, 0.0);
+        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, DigAttributes::default());
         // dig a few ticks into the first cell
         for _ in 0..3 {
-            let _ = d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, 0.0);
+            let _ = d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, DigAttributes::default());
         }
         assert!(d.progress > 0.0);
         // the switch to the neighbor: ABORT(old pos, the NEW face) + the
         // fresh START, the progress zeroed (the vanilla's own reset)
-        let sends = d.start_destroy_block((2, 1, 1), 4, None, &mut world, true, false, false, false, None, None, 0.0);
+        let sends = d.start_destroy_block((2, 1, 1), 4, None, &mut world, true, false, false, false, None, None, DigAttributes::default());
         assert_eq!(sends.len(), 2);
         assert_eq!(
             sends[0],
@@ -839,10 +887,10 @@ mod tests {
         let mut world = small_world();
         world.set(1, 1, 1, crate::world::STONE);
         let mut d = DigState::new();
-        let _ = d.start_destroy_block((1, 1, 1), 1, Some(7), &mut world, true, false, false, false, None, None, 0.0);
+        let _ = d.start_destroy_block((1, 1, 1), 1, Some(7), &mut world, true, false, false, false, None, None, DigAttributes::default());
         // the same cell with a DIFFERENT held item: the vanilla's
         // sameDestroyTarget refuses — the abort + the fresh start
-        let sends = d.start_destroy_block((1, 1, 1), 1, Some(9), &mut world, true, false, false, false, None, None, 0.0);
+        let sends = d.start_destroy_block((1, 1, 1), 1, Some(9), &mut world, true, false, false, false, None, None, DigAttributes::default());
         assert_eq!(sends.len(), 2, "the item switch retargets");
         assert_eq!(sends[0].action, ACTION_ABORT);
         assert_eq!(sends[1].action, ACTION_START);
@@ -853,13 +901,13 @@ mod tests {
         let mut world = small_world();
         world.set(1, 1, 1, crate::world::STONE);
         let mut d = DigState::new();
-        let start = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, 0.0);
+        let start = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, DigAttributes::default());
         assert_eq!(start.len(), 1);
         let mut beats = 0;
         let mut stop_seen = false;
         while beats < 400 {
             let (sends, dug) =
-                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, 0.0);
+                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, DigAttributes::default());
             if sends.iter().any(|s| s.action == ACTION_STOP) {
                 stop_seen = true;
                 break;
@@ -879,7 +927,7 @@ mod tests {
         assert!(!d.is_destroying);
         assert_eq!(d.delay, 5);
         // the cooldown: the next continue tick does nothing but tick it
-        let (sends, _) = d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, 0.0);
+        let (sends, _) = d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, DigAttributes::default());
         assert!(sends.is_empty());
         assert_eq!(d.delay, 4);
     }
@@ -1016,10 +1064,10 @@ mod tests {
         world.set(1, 1, 1, crate::world::STONE);
         let mut d = DigState::new();
         let _ = d.start_destroy_block(
-            (1, 1, 1), 1, None, &mut world, true, false, false, false, None, Some(0), 0.0,
+            (1, 1, 1), 1, None, &mut world, true, false, false, false, None, Some(0), DigAttributes::default(),
         );
         let _ = d.continue_destroy_block(
-            (1, 1, 1), 1, None, &mut world, true, false, false, false, None, Some(0), 0.0,
+            (1, 1, 1), 1, None, &mut world, true, false, false, false, None, Some(0), DigAttributes::default(),
         );
         assert!(
             (d.progress - 1.2_f32 / 1.5 / 100.0).abs() < 1e-12,
@@ -1034,12 +1082,12 @@ mod tests {
         world.set(1, 1, 1, crate::world::STONE);
         let mut d = DigState::new();
         let _ = d.start_destroy_block(
-            (1, 1, 1), 1, None, &mut world, true, false, false, false, Some(0), None, 0.0,
+            (1, 1, 1), 1, None, &mut world, true, false, false, false, Some(0), None, DigAttributes::default(),
         );
         // THE FIRST BEAT (the per-tick progress the ×0.3 speed wears —
         // 0.3/1.5/100 the exact f32 the mirror keeps)
         let (sends, _) =
-            d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, Some(0), None, 0.0);
+            d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, Some(0), None, DigAttributes::default());
         assert!(sends.is_empty(), "the hold beat speaks no send");
         assert!(
             (d.progress - 0.3_f32 / 1.5 / 100.0).abs() < 1e-12,
@@ -1053,7 +1101,7 @@ mod tests {
         let mut stop_seen = false;
         while beats < 2000 {
             let (sends, dug) =
-                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, Some(0), None, 0.0);
+                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, Some(0), None, DigAttributes::default());
             if sends.iter().any(|s| s.action == ACTION_STOP) {
                 stop_seen = true;
                 break;
@@ -1076,11 +1124,11 @@ mod tests {
         let mut world = small_world();
         world.set(1, 1, 1, crate::world::DIRT);
         let mut d = DigState::new();
-        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, 0.0);
+        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, DigAttributes::default());
         let mut beats = 0;
         loop {
             let (sends, _) =
-                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, 0.0);
+                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, DigAttributes::default());
             beats += 1;
             if sends.iter().any(|s| s.action == ACTION_STOP) {
                 break;
@@ -1095,11 +1143,11 @@ mod tests {
         let mut world = small_world();
         world.set(1, 1, 1, crate::world::DIRT);
         let mut d = DigState::new();
-        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, 0.0);
+        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, DigAttributes::default());
         let mut beats = 0;
         loop {
             let (sends, _) =
-                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, false, false, false, false, None, None, 0.0);
+                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, false, false, false, false, None, None, DigAttributes::default());
             beats += 1;
             if sends.iter().any(|s| s.action == ACTION_STOP) {
                 break;
@@ -1116,9 +1164,9 @@ mod tests {
         let mut world = small_world();
         world.set(1, 1, 1, crate::world::STONE);
         let mut d = DigState::new();
-        let _ = d.start_destroy_block((1, 1, 1), 4, None, &mut world, true, false, false, false, None, None, 0.0);
+        let _ = d.start_destroy_block((1, 1, 1), 4, None, &mut world, true, false, false, false, None, None, DigAttributes::default());
         for _ in 0..2 {
-            let _ = d.continue_destroy_block((1, 1, 1), 4, None, &mut world, true, false, false, false, None, None, 0.0);
+            let _ = d.continue_destroy_block((1, 1, 1), 4, None, &mut world, true, false, false, false, None, None, DigAttributes::default());
         }
         let sends = d.stop_destroy_block();
         assert_eq!(
@@ -1142,10 +1190,10 @@ mod tests {
         let mut world = small_world();
         world.set(1, 1, 1, crate::world::STONE);
         let mut d = DigState::new();
-        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, 0.0);
+        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, DigAttributes::default());
         // the cell vanishes under the dig (a neighbor's completion)
         world.set(1, 1, 1, crate::world::AIR);
-        let (sends, dug) = d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, 0.0);
+        let (sends, dug) = d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, DigAttributes::default());
         assert!(sends.is_empty());
         assert!(!dug, "the air beat counts nothing");
         assert!(!d.is_destroying);
@@ -1160,7 +1208,7 @@ mod tests {
         // THE PRESS: the cell vanishes the SAME tick, the START rides,
         // the delay arms, isDestroying never speaks (the audited
         // instabuild branch's own shape)
-        let sends = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None, None, 0.0);
+        let sends = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None, None, DigAttributes::default());
         assert_eq!(world.get(1, 1, 1), crate::world::AIR, "the instant break");
         assert_eq!(sends.len(), 1, "the single prediction send");
         assert_eq!(sends[0].action, ACTION_START, "the lambda$0's own action");
@@ -1171,7 +1219,7 @@ mod tests {
         // THE RE-PRESS: the delay never gates the start (the audited
         // pcs 46-136 carry no delay check — the fast click breaks
         // faster than the hold)
-        let sends = d.start_destroy_block((2, 1, 1), 1, None, &mut world, true, false, true, false, None, None, 0.0);
+        let sends = d.start_destroy_block((2, 1, 1), 1, None, &mut world, true, false, true, false, None, None, DigAttributes::default());
         assert_eq!(world.get(2, 1, 1), crate::world::AIR, "the second instant break");
         assert_eq!(sends.len(), 1);
         assert_eq!(d.delay, 5, "the delay re-armed");
@@ -1190,12 +1238,12 @@ mod tests {
         world.set(2, 1, 1, crate::world::STONE);
         let mut d = DigState::new();
         // the press breaks the first cell
-        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None, None, 0.0);
+        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None, None, DigAttributes::default());
         // THE HOLD: five decrement ticks speak nothing (the delay
         // head), each still beating the swing (the TRUE return)
         for t in 0..5 {
             let (sends, dug) =
-                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None, None, 0.0);
+                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None, None, DigAttributes::default());
             assert!(sends.is_empty(), "the decrement tick {t} sends nothing");
             assert!(dug, "the decrement tick still beats the swing");
         }
@@ -1203,7 +1251,7 @@ mod tests {
         // carve walks where the aim walks (the same-target check the
         // hold lane never asks)
         let (sends, dug) =
-            d.continue_destroy_block((2, 1, 1), 1, None, &mut world, true, false, true, false, None, None, 0.0);
+            d.continue_destroy_block((2, 1, 1), 1, None, &mut world, true, false, true, false, None, None, DigAttributes::default());
         assert!(dug);
         assert_eq!(sends.len(), 1);
         assert_eq!(sends[0].action, ACTION_START, "the hold's own START send");
@@ -1219,7 +1267,7 @@ mod tests {
         let mut d = DigState::new();
         // THE RESTRICTED HEAD: the spectator's acmp lane, the
         // adventure's mayBuild/item walk — no break, no send, no arm
-        let sends = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, true, None, None, 0.0);
+        let sends = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, true, None, None, DigAttributes::default());
         assert!(sends.is_empty(), "the press sends nothing");
         assert_eq!(world.get(1, 1, 1), crate::world::STONE, "the block stands");
         assert!(!d.is_destroying, "the dig never arms");
@@ -1227,7 +1275,7 @@ mod tests {
         // THE HOLD after the refused press: the retarget tail re-enters
         // the refused start — the same silence, the beat never counts
         let (sends, dug) =
-            d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, true, None, None, 0.0);
+            d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, true, None, None, DigAttributes::default());
         assert!(sends.is_empty());
         assert!(!dug, "the refused continue never beats");
     }
@@ -1238,7 +1286,7 @@ mod tests {
         world.set(1, 1, 1, crate::world::STONE);
         let mut d = DigState::new();
         // the creative press breaks and arms the delay
-        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None, None, 0.0);
+        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None, None, DigAttributes::default());
         assert_eq!(d.delay, 5);
         // THE FLICK TO SURVIVAL (the F4 switcher's own revoke): the
         // survival machine resumes — the creative press's delay the
@@ -1247,19 +1295,19 @@ mod tests {
         // arms) and the survival start re-arms through the tail
         for i in 0..5 {
             let (sends, dug) =
-                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, 0.0);
+                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, DigAttributes::default());
             assert!(sends.is_empty(), "the spent delay tick {i} sends nothing");
             assert!(dug, "the delay tick {i} still beats");
         }
         let (sends, dug) =
-            d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, 0.0);
+            d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, DigAttributes::default());
         assert!(dug, "the survival re-arm beats");
         assert!(d.is_destroying, "the survival dig armed");
         assert!(!sends.is_empty(), "the survival START rode the re-arm");
         // THE FLICK TO SPECTATOR: the retarget tail the restricted head
         // refuses — the carve stops where the flick lands
         let (sends, dug) =
-            d.continue_destroy_block((2, 1, 1), 1, None, &mut world, true, false, false, true, None, None, 0.0);
+            d.continue_destroy_block((2, 1, 1), 1, None, &mut world, true, false, false, true, None, None, DigAttributes::default());
         assert!(sends.is_empty());
         assert!(!dug, "the refused retarget never beats");
     }
@@ -1287,7 +1335,7 @@ mod tests {
         // THE CREATIVE PRESS: the log breaks, the chain fires, the
         // flame above the SAME beat douses (the stale schedule entry
         // the block-match gate later drops)
-        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None, None, 0.0);
+        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None, None, DigAttributes::default());
         assert_eq!(world.get(1, 1, 1), crate::world::AIR, "the log the press breaks");
         assert_eq!(
             world.get(1, 2, 1),
@@ -1317,7 +1365,7 @@ mod tests {
         world.set(1, 3, 1, crate::world::FIRE);
         world.fire_age.insert((1, 3, 1), 0);
         let mut d = DigState::new();
-        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None, None, 0.0);
+        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None, None, DigAttributes::default());
         assert_eq!(world.get(1, 2, 1), crate::world::AIR, "the bottom flame douses");
         assert_eq!(world.get(1, 3, 1), crate::world::AIR, "the top flame the cascade douses");
         // THE AIR PRESS (the chain's own silence): the fireless dig
@@ -1326,7 +1374,7 @@ mod tests {
         let mut world = small_world();
         world.set(1, 1, 1, crate::world::STONE);
         let mut d = DigState::new();
-        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None, None, 0.0);
+        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None, None, DigAttributes::default());
         assert_eq!(world.get(1, 1, 1), crate::world::AIR, "the stone breaks as ever");
     }
 
@@ -1385,7 +1433,7 @@ mod tests {
             true,
             false,
             None,
-            None, 0.0,
+            None, DigAttributes::default(),
         );
         assert_eq!(
             world.get(8, 12, 4),
@@ -1499,7 +1547,7 @@ mod tests {
         world.set(1, 1, 1, crate::world::LEAVES);
         let mut d = DigState::new();
         let _ = d.start_destroy_block(
-            (1, 1, 1), 1, Some(shears), &mut world, true, false, false, false, None, None, 0.0,
+            (1, 1, 1), 1, Some(shears), &mut world, true, false, false, false, None, None, DigAttributes::default(),
         );
         assert_eq!(
             world.get(1, 1, 1),
@@ -1575,7 +1623,7 @@ mod tests {
         world.set(1, 1, 1, crate::world::LEAVES);
         let mut d = DigState::new();
         let _ = d.start_destroy_block(
-            (1, 1, 1), 1, Some(sword), &mut world, true, false, false, false, None, None, 0.0,
+            (1, 1, 1), 1, Some(sword), &mut world, true, false, false, false, None, None, DigAttributes::default(),
         );
         assert_eq!(
             world.get(1, 1, 1),
@@ -1642,7 +1690,7 @@ mod tests {
         world.set(1, 1, 1, crate::world::BAMBOO);
         let mut d = DigState::new();
         let _ = d.start_destroy_block(
-            (1, 1, 1), 1, Some(sword), &mut world, true, false, false, false, None, None, 0.0,
+            (1, 1, 1), 1, Some(sword), &mut world, true, false, false, false, None, None, DigAttributes::default(),
         );
         assert_eq!(
             world.get(1, 1, 1),
@@ -1653,7 +1701,7 @@ mod tests {
         world.set(1, 1, 1, crate::world::BAMBOO_SAPLING);
         let mut d2 = DigState::new();
         let _ = d2.start_destroy_block(
-            (1, 1, 1), 1, Some(sword), &mut world, true, false, false, false, None, None, 0.0,
+            (1, 1, 1), 1, Some(sword), &mut world, true, false, false, false, None, None, DigAttributes::default(),
         );
         assert_eq!(
             world.get(1, 1, 1),
@@ -1667,7 +1715,7 @@ mod tests {
         world.set(1, 1, 1, crate::world::BAMBOO);
         let mut d3 = DigState::new();
         let _ = d3.start_destroy_block(
-            (1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, 0.0,
+            (1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, DigAttributes::default(),
         );
         assert_eq!(
             world.get(1, 1, 1),
@@ -1736,12 +1784,12 @@ mod tests {
         world.set(1, 1, 1, web);
         let mut d = DigState::new();
         let _ = d.start_destroy_block(
-            (1, 1, 1), 1, Some(sword), &mut world, true, false, false, false, None, None, 0.0,
+            (1, 1, 1), 1, Some(sword), &mut world, true, false, false, false, None, None, DigAttributes::default(),
         );
         assert_eq!(world.get(1, 1, 1), web, "the START the web keeps (the arm at zero)");
         for tick in 0..7 {
             let _ = d.continue_destroy_block(
-                (1, 1, 1), 1, Some(sword), &mut world, true, false, false, false, None, None, 0.0,
+                (1, 1, 1), 1, Some(sword), &mut world, true, false, false, false, None, None, DigAttributes::default(),
             );
             assert_eq!(
                 world.get(1, 1, 1),
@@ -1751,7 +1799,7 @@ mod tests {
             );
         }
         let (sends, _) = d.continue_destroy_block(
-            (1, 1, 1), 1, Some(sword), &mut world, true, false, false, false, None, None, 0.0,
+            (1, 1, 1), 1, Some(sword), &mut world, true, false, false, false, None, None, DigAttributes::default(),
         );
         assert_eq!(world.get(1, 1, 1), crate::world::AIR, "the eighth share the web breaks");
         assert_eq!(sends.len(), 1, "the STOP send the completion wears");
@@ -1875,7 +1923,7 @@ mod tests {
         );
         assert!(DigState::correct_tool(crate::world::DIRT, None), "the undemanding dirt the true arm keeps");
         // the FULL WALK (the seeded lanes: 6.0 × the haste-0 product)
-        let hasty = DigState::player_destroy_speed(true, false, Some(0), None, stone, Some(pick), 0.0);
+        let hasty = DigState::player_destroy_speed(true, false, Some(0), None, stone, Some(pick), DigAttributes::default());
         assert!(
             (hasty - 6.0 * 1.2).abs() < 1e-6,
             "the seeded walk the product wears: {}",
@@ -1895,10 +1943,10 @@ mod tests {
         world.set(1, 1, 1, crate::world::STONE);
         let mut d = DigState::new();
         let _ = d.start_destroy_block(
-            (1, 1, 1), 1, Some(pick), &mut world, true, false, false, false, None, None, 0.0,
+            (1, 1, 1), 1, Some(pick), &mut world, true, false, false, false, None, None, DigAttributes::default(),
         );
         let _ = d.continue_destroy_block(
-            (1, 1, 1), 1, Some(pick), &mut world, true, false, false, false, None, None, 0.0,
+            (1, 1, 1), 1, Some(pick), &mut world, true, false, false, false, None, None, DigAttributes::default(),
         );
         assert!(
             (d.progress - 6.0_f32 / 1.5 / 30.0).abs() < 1e-12,
@@ -1910,10 +1958,10 @@ mod tests {
         world.set(1, 1, 1, crate::world::STONE);
         let mut d = DigState::new();
         let _ = d.start_destroy_block(
-            (1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, 0.0,
+            (1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, DigAttributes::default(),
         );
         let _ = d.continue_destroy_block(
-            (1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, 0.0,
+            (1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, DigAttributes::default(),
         );
         assert!(
             (d.progress - 1.0_f32 / 1.5 / 100.0).abs() < 1e-12,
@@ -1958,7 +2006,7 @@ mod tests {
             None,
             stone,
             Some(pick),
-            DigState::efficiency_amount(1),
+            DigAttributes { efficiency: DigState::efficiency_amount(1) as f64, ..Default::default() },
         );
         assert!(
             (seeded - 8.0).abs() < 1e-6,
@@ -1975,7 +2023,7 @@ mod tests {
             None,
             stone,
             None,
-            DigState::efficiency_amount(5),
+            DigAttributes { efficiency: DigState::efficiency_amount(5) as f64, ..Default::default() },
         );
         assert!(
             (fist - 1.0).abs() < 1e-6,
@@ -1985,7 +2033,7 @@ mod tests {
         // keeps (the 0.5-class seed the addend's silence wears)
         let slow = DigState::player_dig_speed_seeded(
             0.5,
-            DigState::efficiency_amount(3),
+            DigAttributes { efficiency: DigState::efficiency_amount(3) as f64, ..Default::default() },
             true,
             false,
             None,
@@ -2008,7 +2056,7 @@ mod tests {
     fn the_efficiency_addend_the_haste_order_wears() {
         let ordered = DigState::player_dig_speed_seeded(
             6.0,
-            DigState::efficiency_amount(1),
+            DigAttributes { efficiency: DigState::efficiency_amount(1) as f64, ..Default::default() },
             true,
             false,
             Some(0),
@@ -2020,7 +2068,7 @@ mod tests {
         );
         let fatigued = DigState::player_dig_speed_seeded(
             6.0,
-            DigState::efficiency_amount(1),
+            DigAttributes { efficiency: DigState::efficiency_amount(1) as f64, ..Default::default() },
             true,
             false,
             None,
@@ -2032,7 +2080,7 @@ mod tests {
         );
         let airborne = DigState::player_dig_speed_seeded(
             6.0,
-            DigState::efficiency_amount(1),
+            DigAttributes { efficiency: DigState::efficiency_amount(1) as f64, ..Default::default() },
             false,
             false,
             None,
@@ -2047,7 +2095,7 @@ mod tests {
         // 1.0 keeps, the 6.0 seed the addend-less walk the 6.0 keeps
         let absent = DigState::player_dig_speed_seeded(
             6.0,
-            0.0,
+            DigAttributes { efficiency: 0.0, ..Default::default() },
             true,
             false,
             None,
@@ -2089,7 +2137,7 @@ mod tests {
             false,
             None,
             None,
-            26.0,
+            DigAttributes { efficiency: 26.0, ..Default::default() },
         );
         let (_, dug) = d.continue_destroy_block(
             (1, 1, 1),
@@ -2102,7 +2150,7 @@ mod tests {
             false,
             None,
             None,
-            26.0,
+            DigAttributes { efficiency: 26.0, ..Default::default() },
         );
         assert!(dug);
         assert!(
@@ -2116,16 +2164,84 @@ mod tests {
         world.set(1, 1, 1, crate::world::STONE);
         let mut d = DigState::new();
         let _ = d.start_destroy_block(
-            (1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, 26.0,
+            (1, 1, 1), 1, None, &mut world, true, false, false, false, None, None,
+            DigAttributes { efficiency: 26.0, ..Default::default() },
         );
         let (_, dug) = d.continue_destroy_block(
-            (1, 1, 1), 1, None, &mut world, true, false, false, false, None, None, 26.0,
+            (1, 1, 1), 1, None, &mut world, true, false, false, false, None, None,
+            DigAttributes { efficiency: 26.0, ..Default::default() },
         );
         assert!(dug);
         assert!(
             (d.progress - 1.0 / 1.5 / 100.0).abs() < 1e-9,
             "the bare fist's seed the addend silence keeps: {}",
             d.progress
+        );
+    }
+
+    /// THE MULTIPLY LANES' OWN WIRE (the block_break_speed and
+    /// submerged_mining_speed rows the vitals view mirrors — the
+    /// walk's pc 126-136 and pc 137-160 attributes the values feed):
+    /// the 2.0 block_break row the seed's per-tick rate doubles (the
+    /// fatigue fold's follower the lane order keeps), the 0.1
+    /// submerged row the water arm's own fifth the row replaces, the
+    /// absent rows the vanilla defaults keep (the 1.0 no-op, the 0.2
+    /// divide-by-five), and the dry eye the submerged row never reads
+    /// (the water gate the lane's own if keeps).
+    #[test]
+    fn the_multiply_lanes_the_wire_rows_feed() {
+        // the block_break row: the 6.0 pickaxe seed the 12.0 the 2.0
+        // row wears
+        let doubled = DigState::player_dig_speed_seeded(
+            6.0,
+            DigAttributes { block_break: 2.0, ..Default::default() },
+            true,
+            false,
+            None,
+            None,
+        );
+        assert!(
+            (doubled - 12.0).abs() < 1e-6,
+            "the 2.0 row the 12.0 wears: {doubled}"
+        );
+        // the submerged row: the water arm the 0.2 default the row's
+        // own 0.1 replaces
+        let wet = DigState::player_dig_speed_seeded(
+            6.0,
+            DigAttributes::default(),
+            true,
+            true,
+            None,
+            None,
+        );
+        assert!(
+            (wet - 1.2).abs() < 1e-6,
+            "the 0.2 default the 1.2 wears: {wet}"
+        );
+        let wetter = DigState::player_dig_speed_seeded(
+            6.0,
+            DigAttributes { submerged: 0.1, ..Default::default() },
+            true,
+            true,
+            None,
+            None,
+        );
+        assert!(
+            (wetter - 0.6).abs() < 1e-6,
+            "the 0.1 row the 0.6 wears: {wetter}"
+        );
+        // the dry eye the submerged row never reads
+        let dry = DigState::player_dig_speed_seeded(
+            6.0,
+            DigAttributes { submerged: 0.1, ..Default::default() },
+            true,
+            false,
+            None,
+            None,
+        );
+        assert!(
+            (dry - 6.0).abs() < 1e-6,
+            "the dry eye the row never reads: {dry}"
         );
     }
 }
