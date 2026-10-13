@@ -24352,15 +24352,23 @@ impl App {
     // mouseReleased pcs 246-462 + `quickCraftToSlots` serve, the menu's
     // own status machine the doClick QUICK_CRAFT arm pcs 7-545 wears.)
 
-    /// THE DRAG'S OWN ARM (mouseClicked pcs 316-378 — the
-    /// carried-NON-EMPTY press the state sets, NO slot click, NO
-    /// packet): the in-flight drag the arm never re-enters (pc 168-172
-    /// the gate keeps), the hovered seat AND the outside press the arm
-    /// answers (the k == -999 press the same walk enters — the k == -1
-    /// between-slots press the whole arm skips), the type the left
-    /// button's own 0 wears (pc 338-347), the painted set the clear
-    /// starts.
-    fn qc_arm(&mut self, mx: i32, my: i32) {
+    /// THE SURVIVAL DRAG'S OWN ARM (the same mouseClicked pcs 316-378
+    /// walk the chest + table + furnace rounds bank — the survival
+    /// screen the SAME AbstractContainerScreen base class wears): the
+    /// carried-NON-EMPTY press the isQuickCrafting start speaks, NO
+    /// slot click, NO packet. The in-flight drag the arm never
+    /// re-enters (pc 168-172 the gate keeps), the hovered seat AND the
+    /// outside press the arm answers (the k == -999 press the same
+    /// walk enters — the k == -1 between-slots press the whole arm
+    /// skips). THE BUTTON'S OWN TYPE (mouseClicked pcs 338-377): the
+    /// arm answers BOTH presses — the left the type-0 drag arms (pc
+    /// 338-347), the RIGHT press the type-1 drag arms (pc 353-363) —
+    /// the one-each distribution the release's own lane serves, the
+    /// vanilla law the button's own verdict keys. The window-0 belief
+    /// the LIVE session always wears (the player's own menu the
+    /// window never lacks) and the offline sim the drag the local
+    /// lanes answer — no window gate the arm keeps.
+    fn qc_arm_inventory(&mut self, mx: i32, my: i32, button: usize) {
         if self.qc_armed {
             return; // pc 168-172 — the in-flight drag the press never re-arms
         }
@@ -24376,8 +24384,8 @@ impl App {
             return; // pc 162-165 — the k == -1 press the walk skips
         }
         self.qc_armed = true;
-        self.qc_button = 0;
-        self.qc_type = 0; // the left press's own type (pc 338-347)
+        self.qc_button = button as i32;
+        self.qc_type = button as i32; // the button's own type (pc 338-347 the left, pc 353-363 the right)
         self.qc_slots.clear();
         self.qc_remainder = 0;
     }
@@ -25094,27 +25102,28 @@ impl App {
         if on_seat {
             // pc 427-449 — the PICKUP (the shift the QUICK_MOVE names)
             // the click walk's own lanes serve: the placement rides
-            // the RELEASE
-            self.click_inventory_slot(mx, my, 0);
+            // the RELEASE, the armed button the right drag's place-ONE
+            // speaks
+            self.click_inventory_slot(mx, my, self.qc_button as i8);
         } else if outside {
             // doClick pc 599-660 — the -999 PICKUP the carried's drop
-            // speaks (the whole carried the PRIMARY button drops): the
-            // offline sim the local throw IS (the integrated server's
-            // own lane), the LIVE session the packet the belief's
-            // clear rides (the drop entity the server's Add Entity
-            // lane spawns)
+            // speaks (the whole carried the PRIMARY button drops, the
+            // ONE item the right drag's byte wears): the offline sim
+            // the local throw IS (the integrated server's own lane),
+            // the LIVE session the packet the belief's clear rides
+            // (the drop entity the server's Add Entity lane spawns)
             if self.world_is_network {
                 if let Some(sink) = self.live_clicks.as_ref() {
                     wire_throw_outside(
                         sink,
                         &mut self.live_inv_carried,
-                        0,
+                        self.qc_button as i8,
                         0,
                         self.live_inv_state_id,
                     );
                 }
             } else {
-                self.throw_carried_outside(0);
+                self.throw_carried_outside(self.qc_button as i8);
             }
         } else {
             // pc 599's own jump — the -1 PICKUP the wire keeps (the
@@ -25127,7 +25136,7 @@ impl App {
                             window_id: 0,
                             state_id: self.live_inv_state_id,
                             slot: -1,
-                            button: 0,
+                            button: self.qc_button as i8,
                             input: crate::world_view::ContainerInput::Pickup,
                             changed: Vec::new(),
                             carried: self.live_inv_carried,
@@ -25172,7 +25181,9 @@ impl App {
                 continue; // pc 394-416 — the count's own gate
             }
             let cap = crate::world_view::item_max_stack(carried.0);
-            let place_count = carried.1 / painted as i32; // type 0 — floor(count / painted)
+            // getQuickCraftPlaceCount — the type-0 floor(count/painted),
+            // the type-1's own ONE per seat (the right drag's answer)
+            let place_count = if self.qc_type == 1 { 1 } else { carried.1 / painted as i32 };
             let place = std::cmp::min(place_count + seat_count, cap);
             k -= place - seat_count; // pc 495-503 — the net the carried loses
             self.inventory_set_hover(hover, (carried.0, place)); // pc 505-514
@@ -25432,8 +25443,8 @@ impl App {
                 // k == -999 press the same pc 316 walk enters — the
                 // classic outside-drop the release's PICKUP -999 lane
                 // serves); the press BETWEEN the slots (k == -1) the
-                // whole arm skips.
-                self.qc_arm(mx, my);
+                // whole arm skips. The LEFT press the type-0 drag arms.
+                self.qc_arm_inventory(mx, my, 0);
             } else if !self.inv_doubleclick {
                 // THE PLAIN PRESS'S OWN WALK — the carried-empty press
                 // the PICKUP dispatch keeps (the doubled press the
@@ -25542,7 +25553,19 @@ impl App {
             if self.qc_armed {
                 return false;
             }
-            self.click_inventory_slot(mx, my, 1);
+            // THE RIGHT PRESS'S OWN ARM (mouseClicked pcs 316-377 — the
+            // carried-NON-EMPTY press the isQuickCrafting start speaks
+            // for BOTH buttons, the type the button's own verdict keys:
+            // the right press the type-1 drag arms, pc 353-363 — NO
+            // slot click, NO packet, the one-each distribution the
+            // release serves); the carried-empty press the secondary
+            // dispatch keeps (the split-pickup the press lane answers)
+            let held = self.qc_carried().1 > 0;
+            if held {
+                self.qc_arm_inventory(mx, my, 1);
+            } else {
+                self.click_inventory_slot(mx, my, 1);
+            }
             return false;
         }
         if self.screen == ScreenKind::Crafting {
@@ -50988,7 +51011,9 @@ fn wire_quickcraft_distribute(
                 continue; // pc 394-416 — the count's own gate
             }
             let cap = crate::world_view::item_max_stack(carried.0);
-            let place_count = carried.1 / painted as i32; // type 0 — floor(count / painted)
+            // getQuickCraftPlaceCount — the type-0 floor(count/painted),
+            // the type-1's own ONE per seat (the right drag's answer)
+            let place_count = if qc_type == 1 { 1 } else { carried.1 / painted as i32 };
             let place = std::cmp::min(place_count + seat_count, cap);
             k -= place - seat_count; // pc 495-503 — the net the carried loses
             live_slots[menu] = (carried.0, place); // pc 505-514
@@ -109422,6 +109447,251 @@ cow_sound_variant: None,
         }
     }
 
+    /// THE SURVIVAL RIGHT DRAG'S OWN ONE-EACH (the same type-1 drag
+    /// law the chest + table + furnace rounds bank — the window-0
+    /// belief the same release walk answers): the carried press the
+    /// arm speaks (NO place, NO packet), the paint the armor's own
+    /// verdict re-keys (the dirt the armor seats refuse, the store
+    /// rows take), the release the one-each distribution and the
+    /// masked triple — START 4, ADDs 5, END 6 — the changed map names,
+    /// the HUD row the sync follows.
+    #[test]
+    fn the_survival_right_drag_the_one_each_wear() {
+        use crate::world_view::ContainerCommand;
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        let slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        app.live_inventory_updated(slots, Vec::new(), 4, (dirt, 8));
+        // THE ARM: the carried press the state sets — NO place, NO
+        // packet (the isQuickCrafting start the pc 353-363 walk keeps)
+        let (ax, ay) = inventory_slot_origin(app.inv_panel, 0);
+        app.on_right_press(ax + 8, ay + 8);
+        assert!(app.qc_armed, "the carried press the arm speaks");
+        assert_eq!(app.qc_type, 1, "the right button's own type");
+        assert_eq!(app.qc_button, 1, "the right button remembered");
+        assert!(app.qc_slots.is_empty(), "the press paints nothing");
+        assert_eq!(app.live_inv_slots[36], (0, 0), "the press NO place speaks");
+        assert!(click_rx.try_recv().is_err(), "the arm NO packet keeps");
+        // THE PAINT: the press seat the first motion paints, the armor
+        // seat the carried dirt's verdict refuses, the second store
+        // row the paint takes
+        app.on_mouse_move(ax + 8, ay + 8);
+        assert_eq!(app.qc_slots, vec![36], "the press seat the motion paints");
+        let (hx, hy) = armor_slot_origin(app.inv_panel, 0);
+        app.on_mouse_move(hx + 8, hy + 8);
+        assert_eq!(app.qc_slots, vec![36], "the dirt the armor seat refuses");
+        let (bx, by) = inventory_slot_origin(app.inv_panel, 1);
+        app.on_mouse_move(bx + 8, by + 8);
+        assert_eq!(app.qc_slots, vec![36, 37], "the two rows the paint keeps");
+        assert_eq!(app.qc_remainder, 6, "the one-each ghost the cursor keeps");
+        // THE RELEASE: the one-each distribution — each row ONE item,
+        // the remainder the cursor keeps
+        app.on_right_release();
+        assert_eq!(app.live_inv_slots[36], (dirt, 1), "the first row's own one");
+        assert_eq!(app.live_inv_slots[37], (dirt, 1), "the second row's one");
+        assert_eq!(app.live_inv_carried, (dirt, 6), "the six remaining the cursor keeps");
+        assert_eq!(app.hotbar_slots[0], (dirt, 1), "the HUD row the sync speaks");
+        assert!(!app.qc_armed, "the release the arm clears");
+        // THE TRIPLE: the START (the mask(0,1) byte 4), the ADDs (the
+        // mask(1,1) byte 5), the END (the mask(2,1) byte 6) the changed
+        // map the one-each deltas names
+        match click_rx.try_recv().expect("the START rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, -999);
+                assert_eq!(c.button, 4);
+                assert_eq!(c.input, crate::world_view::ContainerInput::QuickCraft);
+                assert_eq!(c.changed, Vec::new());
+                assert_eq!(c.carried, (dirt, 8));
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        for menu in [36, 37] {
+            match click_rx.try_recv().expect("the ADD rode the lane") {
+                ContainerCommand::Click(c) => {
+                    assert_eq!(c.slot, menu);
+                    assert_eq!(c.button, 5);
+                    assert_eq!(c.input, crate::world_view::ContainerInput::QuickCraft);
+                    assert_eq!(c.changed, Vec::new());
+                }
+                other => panic!("expected a container click, got {other:?}"),
+            }
+        }
+        match click_rx.try_recv().expect("the END rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, -999);
+                assert_eq!(c.button, 6);
+                assert_eq!(c.input, crate::world_view::ContainerInput::QuickCraft);
+                assert_eq!(
+                    c.changed,
+                    vec![(36, (dirt, 1)), (37, (dirt, 1))],
+                    "the one-each deltas the END names"
+                );
+                assert_eq!(c.carried, (dirt, 6), "the remainder the packet keeps");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        assert!(click_rx.try_recv().is_err(), "the lane the tail keeps empty");
+    }
+
+    /// THE SURVIVAL RIGHT DRAG'S OWN OFFLINE ONE-EACH AND THE PLACE-ONE
+    /// (the offline sim the drag arms — no window the arm ever needs):
+    /// the store rows the one-each fill, the armor's matching-piece
+    /// gate the paint re-keys (the dirt refuses, the helmet's ONE the
+    /// cap law places), the deferred place the armed button's own byte
+    /// wears.
+    #[test]
+    fn the_survival_right_drag_the_offline_one_each_and_the_place_one_wear() {
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let helmet = mc_registry::item_id_by_name("iron_helmet").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        // THE RIGHT PRESS'S OWN ARM (the offline sim the drag arms)
+        app.inv_carried = (dirt, 5);
+        let (ax, ay) = inventory_slot_origin(app.inv_panel, 20);
+        app.on_right_press(ax + 8, ay + 8);
+        assert!(app.qc_armed, "the offline right press the arm speaks");
+        assert_eq!(app.qc_type, 1, "the right button's own type");
+        assert!(app.qc_slots.is_empty(), "the press paints nothing");
+        // THE PAINT: the pair the motion paints, the release the
+        // one-each distribution answers
+        app.on_mouse_move(ax + 8, ay + 8);
+        let (bx, by) = inventory_slot_origin(app.inv_panel, 21);
+        app.on_mouse_move(bx + 8, by + 8);
+        assert_eq!(app.qc_slots, vec![20, 21], "the pair the motion paints");
+        app.on_right_release();
+        assert_eq!(app.inventory.items[20], (dirt, 1), "the first row's own one");
+        assert_eq!(app.inventory.items[21], (dirt, 1), "the second row's one");
+        assert_eq!(app.inv_carried, (dirt, 3), "the three remaining the cursor keeps");
+        assert!(!app.qc_armed, "the release the arm clears");
+        // THE ARMOR'S OWN GATE: the carried dirt the armor seat refuses
+        // (the empty-painted release the deferred place's mayPlace
+        // silence keeps); the matching helmet the paint takes and the
+        // ONE the cap law places (the empty seat the min(1, 1) speaks)
+        app.inv_carried = (dirt, 2);
+        let (hx, hy) = armor_slot_origin(app.inv_panel, 0);
+        app.on_right_press(hx + 8, hy + 8);
+        app.on_mouse_move(hx + 8, hy + 8);
+        assert!(app.qc_slots.is_empty(), "the dirt the armor seat refuses");
+        app.on_right_release();
+        assert_eq!(app.inventory.armor[0], (0, 0), "the refusal no place speaks");
+        assert_eq!(app.inv_carried, (dirt, 2), "the cursor the refusal keeps");
+        // the preview's own no-seat lane the cursor steps aside (the
+        // moved gate the same-seat re-hover never re-fires)
+        app.on_mouse_move(app.inv_panel.0 + 60, app.inv_panel.1 + 40);
+        app.inv_carried = (helmet, 2);
+        app.on_right_press(hx + 8, hy + 8);
+        app.on_mouse_move(hx + 8, hy + 8);
+        assert_eq!(app.qc_slots, vec![5], "the matching helmet the seat paints");
+        app.on_right_release();
+        assert_eq!(app.inventory.armor[0], (helmet, 1), "the ONE the cap law places");
+        assert_eq!(app.inv_carried, (helmet, 1), "the cursor the one loses");
+        // THE DEFERRED PLACE-ONE: the empty-painted release the armed
+        // button's own byte wears (the pre-press motion the position
+        // speaks, the release the seat's place-ONE serves)
+        app.inv_carried = (dirt, 4);
+        let (px, py) = inventory_slot_origin(app.inv_panel, 25);
+        app.on_mouse_move(px + 8, py + 8);
+        app.on_right_press(px + 8, py + 8);
+        assert!(app.qc_armed, "the right press the arm speaks again");
+        app.on_right_release();
+        assert_eq!(app.inventory.items[25], (dirt, 1), "the deferred place ONE rides");
+        assert_eq!(app.inv_carried, (dirt, 3), "the cursor the one loses");
+        assert!(!app.qc_armed, "the release the arm clears");
+    }
+
+    /// THE SURVIVAL RIGHT DRAG'S OWN GATES AND ABORTS (the in-flight
+    /// gate the other button's press keeps, the mismatch abort BOTH
+    /// ways the packets never send, the survivor drag the type-0 even
+    /// split the release re-keys per drag, the carried-empty press the
+    /// immediate split keeps).
+    #[test]
+    fn the_survival_right_drag_the_gates_and_the_aborts_wear() {
+        use crate::world_view::ContainerCommand;
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        let slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        app.live_inventory_updated(slots, Vec::new(), 7, (dirt, 8));
+        let (ax, ay) = inventory_slot_origin(app.inv_panel, 0);
+        // THE ARMED LEFT DRAG THE RIGHT PRESS SILENCES (the in-flight
+        // gate — no place rides, the type-0 state the press keeps; the
+        // right release the mismatch abort speaks)
+        app.on_press(ax + 8, ay + 8);
+        assert!(app.qc_armed, "the left drag armed");
+        assert_eq!(app.qc_type, 0, "the left press's own type");
+        app.on_right_press(ax + 8, ay + 8);
+        assert!(app.qc_armed, "the right press the in-flight gate keeps");
+        assert_eq!(app.qc_type, 0, "the armed state the press never re-keys");
+        assert_eq!(app.live_inv_slots[36], (0, 0), "no place rode the press");
+        assert!(click_rx.try_recv().is_err(), "the in-flight press NO packet keeps");
+        app.on_right_release();
+        assert!(!app.qc_armed, "the wrong button's release the drag aborts");
+        assert!(app.qc_slots.is_empty(), "the abort the painted set clears");
+        assert!(click_rx.try_recv().is_err(), "the abort NO packet keeps");
+        // THE ARMED RIGHT DRAG THE LEFT RELEASE ABORTS (the mismatch's
+        // own mirror — the abort the packets never send)
+        app.on_right_press(ax + 8, ay + 8);
+        assert!(app.qc_armed, "the right drag armed");
+        assert_eq!(app.qc_type, 1, "the right press's own type");
+        app.on_mouse_move(ax + 8, ay + 8);
+        assert_eq!(app.qc_slots, vec![36], "the motion the press row paints");
+        app.on_left_release();
+        assert!(!app.qc_armed, "the left release the right drag aborts");
+        assert!(app.qc_slots.is_empty(), "the abort the painted set clears");
+        assert_eq!(app.live_inv_slots[36], (0, 0), "the abort NO distribution speaks");
+        assert!(click_rx.try_recv().is_err(), "the abort NO packet keeps");
+        // THE SURVIVOR: the left drag after the aborts the same type-0
+        // even split wears (the lanes never mix, the law the release
+        // re-keys per drag)
+        app.on_press(ax + 8, ay + 8);
+        app.on_mouse_move(ax + 8, ay + 8);
+        app.on_left_release();
+        assert_eq!(app.live_inv_slots[36], (dirt, 8), "the one-seat split the whole keeps");
+        assert_eq!(app.live_inv_carried, (0, 0), "the one-seat split the cursor empties");
+        for _ in 0..3 {
+            let _ = click_rx.try_recv(); // the START, the ADD, the END
+        }
+        assert!(click_rx.try_recv().is_err(), "the lane the drain keeps empty");
+        // THE CARRIED-EMPTY RIGHT PRESS KEEPS THE IMMEDIATE SECONDARY
+        // (the split-pickup the press lane answers — no drag the empty
+        // cursor arms)
+        app.live_inv_slots[37] = (stone, 10);
+        app.live_inv_carried = (0, 0);
+        let (bx, by) = inventory_slot_origin(app.inv_panel, 1);
+        app.on_right_press(bx + 8, by + 8);
+        assert!(!app.qc_armed, "the empty cursor the drag never arms");
+        assert_eq!(app.live_inv_carried, (stone, 5), "the split's own half");
+        assert_eq!(app.live_inv_slots[37], (stone, 5), "the seat the half keeps");
+        match click_rx.try_recv().expect("the split rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 0);
+                assert_eq!(c.slot, 37);
+                assert_eq!(c.button, 1);
+                assert_eq!(c.input, crate::world_view::ContainerInput::Pickup);
+                assert_eq!(c.changed, vec![(37, (stone, 5))]);
+                assert_eq!(c.carried, (stone, 5));
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+
     /// THE CHEST DRAG'S OWN PAINT AND EVEN SPLIT (the same mouseClicked
     /// pcs 316-378 + mouseDragged pcs 0-58 + mouseReleased pcs 246-462
     /// base walk the Inventory round banks — the generic_9x3 screen the
@@ -111557,7 +111827,10 @@ cow_sound_variant: None,
     }
 
     /// THE DROP-OUTSIDE'S RIGHT PRESS (the doClick THROW's split(1)
-    /// arm): ONE item flies, the carry decrements — twice for the count.
+    /// arm — the press->release drive the type-1 arm law wears: the
+    /// carried press the drag arms, the release's own deferred throw
+    /// the ONE split serves): ONE item flies, the carry decrements —
+    /// twice for the count.
     #[test]
     fn the_outside_right_press_throws_one() {
         let mut app = App::new(3);
@@ -111570,15 +111843,21 @@ cow_sound_variant: None,
         app.on_press(ox + 8, oy + 8);
         assert_eq!(app.inv_carried, (63, 5), "the stack rides");
         let drops_before = app.drops.len();
+        // the motion the release position feeds (the press the drag
+        // arms — no drop rides it), the release the outside throw-ONE
+        // serves
+        app.on_mouse_move(4, 4);
         app.on_right_press(4, 4);
+        app.on_right_release();
         assert_eq!(app.inv_carried, (63, 4), "one split off");
         assert_eq!(app.drops.len(), drops_before + 1);
         let d = app.drops.last().unwrap();
         assert_eq!(d.item, 63);
         assert_eq!(d.count, 1, "ONE item");
         assert_eq!(d.pickup_delay, 40);
-        // the second press throws the next one
+        // the second press->release throws the next one
         app.on_right_press(4, 4);
+        app.on_right_release();
         assert_eq!(app.inv_carried, (63, 3), "one more gone");
         assert_eq!(app.drops.len(), drops_before + 2);
         assert_eq!(app.drops.last().unwrap().count, 1);
@@ -114160,29 +114439,42 @@ cow_sound_variant: None,
         app.spawn_offline_body();
         app.open_inventory();
         app.inv_panel = inventory_panel_origin(640, 360);
-        // the RIGHT press takes the ceiling half (4 -> 2 + 2)
+        // the RIGHT press takes the ceiling half (4 -> 2 + 2 — the
+        // empty cursor the immediate secondary keeps)
         app.craft_grid[0] = (planks, 4);
         app.on_right_press(338, 123);
         assert_eq!(app.craft_grid[0], (planks, 2), "half stays");
         assert_eq!(app.inv_carried, (planks, 2), "the ceiling half taken");
-        // the RIGHT press places ONE back
+        // the RIGHT press places ONE back (the press->release drive the
+        // type-1 arm law wears — the pre-press motion the release
+        // position feeds, the release the deferred place-ONE serves)
+        app.on_mouse_move(338, 123);
         app.on_right_press(338, 123);
+        app.on_right_release();
         assert_eq!(app.craft_grid[0], (planks, 3), "one placed back");
         assert_eq!(app.inv_carried, (planks, 1), "the hand one lighter");
         // the LEFT press merges the hand's single back (the same-item
         // walk the store slots speak — the carried press the drag arm
-        // arms, the release's own distribution the merge serves)
+        // arms, the release's own distribution the merge serves; the
+        // cursor the no-seat preview lane steps aside first — the moved
+        // gate the same-seat re-hover never re-fires)
+        app.on_mouse_move(app.inv_panel.0 + 60, app.inv_panel.1 + 40);
         app.on_press(338, 123);
         app.on_mouse_move(338, 123);
         app.on_left_release();
         assert_eq!(app.craft_grid[0], (planks, 4), "the merge-back");
         assert_eq!(app.inv_carried, (0, 0), "the hand emptied");
-        // the SHIFT-click's silence (the quick-move lane rides later)
+        // the SHIFT-click's silence (the quick-move lane rides later —
+        // the carried press the drag arms, no click the silence keeps)
         app.shift_down = true;
         app.inv_carried = (log, 1);
         app.on_press(338, 123);
         assert_eq!(app.craft_grid[0], (planks, 4), "the shift never moved it");
         assert_eq!(app.inv_carried, (log, 1), "the hand whole");
+        // the armed drag the no-seat release silences (the between the
+        // -1 no-op the offline keeps — the drag the shift's arm rode)
+        app.on_mouse_move(app.inv_panel.0 + 60, app.inv_panel.1 + 40);
+        app.on_left_release();
         app.shift_down = false;
         // the WIRE session — the store the server owns (the click
         // lane's own early return the craft region rides too)
@@ -115385,9 +115677,12 @@ cow_sound_variant: None,
         assert_eq!(app.inventory.items[10], (62, 7), "the store whole");
     }
 
-    /// THE RIGHT PRESS'S OWN TABLE (the doClick PICKUP button-1 branch):
-    /// the ceiling-half take (5 -> 3 taken, 2 left), the place-one, and
-    /// the same-item move-one.
+    /// THE RIGHT PRESS'S OWN TABLE (the doClick PICKUP button-1 branch
+    /// — the press->release drive the type-1 arm law wears: the
+    /// carried press the drag arms, the release's own deferred place
+    /// the place-ONE serves): the ceiling-half take (5 -> 3 taken, 2
+    /// left — the EMPTY cursor the immediate secondary keeps), the
+    /// place-one, and the same-item move-one.
     #[test]
     fn the_right_press_places_one() {
         let mut app = App::new(3);
@@ -115396,18 +115691,23 @@ cow_sound_variant: None,
         app.open_inventory();
         app.inv_panel = inventory_panel_origin(640, 360);
         app.inventory.items[0] = (62, 5);
-        // the ceiling-half take
+        // the ceiling-half take (the empty cursor the press lane keeps)
         let (ox, oy) = inventory_slot_origin(app.inv_panel, 0);
         app.on_right_press(ox + 8, oy + 8);
         assert_eq!(app.inventory.items[0], (62, 2), "2 left");
         assert_eq!(app.inv_carried, (62, 3), "3 taken");
-        // the place-one into the empty slot 9
-        let (ox, oy) = inventory_slot_origin(app.inv_panel, 9);
-        app.on_right_press(ox + 8, oy + 8);
+        // the place-one into the empty slot 9 (the press the drag arms,
+        // the release the place-ONE serves — the pre-press motion the
+        // release position feeds)
+        let (px, py) = inventory_slot_origin(app.inv_panel, 9);
+        app.on_mouse_move(px + 8, py + 8);
+        app.on_right_press(px + 8, py + 8);
+        app.on_right_release();
         assert_eq!(app.inventory.items[9], (62, 1), "one placed");
         assert_eq!(app.inv_carried, (62, 2), "two ride");
-        // the same-item move-one on the next press
-        app.on_right_press(ox + 8, oy + 8);
+        // the same-item move-one on the next press->release
+        app.on_right_press(px + 8, py + 8);
+        app.on_right_release();
         assert_eq!(app.inventory.items[9], (62, 2), "one more moved");
         assert_eq!(app.inv_carried, (62, 1), "one rides");
     }
@@ -116214,7 +116514,12 @@ cow_sound_variant: None,
         slots[39] = (0, 0);
         app.live_inventory_updated(slots, Vec::new(), 9, (dirt, 10));
         let (ox, oy) = inventory_slot_origin(app.inv_panel, 3);
+        // the press->release drive (the type-1 arm law the carried
+        // press wears — the release's own deferred place the ONE
+        // speaks; the pre-press motion the release position feeds)
+        app.on_mouse_move(ox + 8, oy + 8);
         app.on_right_press(ox + 8, oy + 8);
+        app.on_right_release();
         assert_eq!(
             app.live_inv_slots[39],
             (dirt, 1),
@@ -118702,10 +119007,13 @@ cow_sound_variant: None,
             }
             other => panic!("expected a container click, got {other:?}"),
         }
-        // THE RIGHT press: the ONE item the split speaks
+        // THE RIGHT press->release: the ONE item the split speaks (the
+        // press the drag arms, the release's own deferred throw the
+        // ONE serves — the motion the left lane fed the position keeps)
         let slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
         app.live_inventory_updated(slots, Vec::new(), 12, (dirt, 5));
         app.on_right_press(app.inv_panel.0 - 12, app.inv_panel.1 + 90);
+        app.on_right_release();
         assert_eq!(app.live_inv_carried, (dirt, 4), "the one the split kept");
         match click_rx.try_recv().expect("the packet rode the lane") {
             ContainerCommand::Click(c) => {
