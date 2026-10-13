@@ -23677,6 +23677,73 @@ impl App {
         );
     }
 
+    /// THE FURNACE'S OWN SWAP KEY (javap 26.2 — the banked
+    /// acs_fresh.txt checkHotbarKeyPressed pcs 0-114 the carried-empty
+    /// + hovered-slot gates the container rounds keep, the digit's
+    /// `slotClicked(hovered, hovered.index, i, SWAP)` the SAME walk
+    /// rides — NO hasItem gate the swap walk keeps, the both-empty
+    /// press the consumed silence and the ALWAYS-PACKET law speak;
+    /// AbstractContainerMenu.doClick SWAP pcs 1079-1382 the table the
+    /// [`wire_furnace_swap`] walk re-keys over the FURNACE MENU's own
+    /// numbering — the input 0, the fuel 1, the result 2, the
+    /// standard rows 3..38, the hotbar rows the menus 30..38 speak).
+    /// THE GATES: the screen/dead, the rects the last render laid,
+    /// the cursor the frame stream fed, the LIVE window (the
+    /// [`Self::furnace_live_window`] the OpenScreen word armed — the
+    /// offline stand-in no window keeps, the swap lane the wire's own
+    /// shape the chest/table rounds bank), the CARRIED gate the false
+    /// BEFORE the packet lane keeps. THE OFFHAND (button 40) the
+    /// furnace menu never slots — the F arm the later jar round banks
+    /// (the outside-menu seat the changed map can't name); the digits
+    /// the walk alone wears. The true verdict the digit CONSUMES
+    /// either way (the SWAP arm ran — the refusals the
+    /// checkHotbarKeyPressed's own true-return keep); the false
+    /// verdicts the world chain answers.
+    pub fn on_furnace_swap_key(&mut self, button: usize) -> bool {
+        if self.screen != ScreenKind::Furnace || self.dead {
+            return false;
+        }
+        if self.furnace_slot_rects.is_empty() {
+            return false; // no render spoke yet — no geometry to hit
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return false; // no cursor — no hoveredSlot (the null gate's shape)
+        };
+        let Some(&(_, _, slot)) = self
+            .furnace_slot_rects
+            .iter()
+            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+        else {
+            return false; // the press landed between the slots — the null hover
+        };
+        let Some((window_id, state_id)) = self.furnace_live_window else {
+            return false; // the offline stand-in: no window, no click
+        };
+        // THE CARRIED GATE (pc 0-10 — the getCarried().isEmpty() arm
+        // the walk opens with; the false verdict BEFORE the packet
+        // lane)
+        if self.live_furnace_carried.1 > 0 {
+            return false;
+        }
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return false; // no live session — the command dies on the frame thread
+        };
+        let kind = self.furnace_sim.kind;
+        wire_furnace_swap(
+            sink,
+            &mut self.furnace_slots,
+            &mut self.hotbar_slots,
+            self.selected_hotbar,
+            slot as usize,
+            button,
+            kind,
+            window_id,
+            state_id,
+            self.live_furnace_carried,
+        );
+        true
+    }
+
     /// THE CHEST'S OWN Q (the SAME keyPressed keyDrop arm — the
     /// GenericContainerScreen the base class inherits, the gate chain
     /// and the doClick THROW table the inventory round v0.3.718 keeps
@@ -50274,6 +50341,225 @@ fn wire_table_swap(
         // speak)
         let mut row = [(0, 0); 9];
         row.copy_from_slice(&live_slots[37..46]);
+        *hotbar = row;
+    }
+    // THE PACKET ALWAYS RIDES (the slotClicked walk the wire speaks
+    // even when the prediction refuses — the changed map the menu's
+    // own state keeps, the cursor the SWAP arm never touches)
+    let _ = sink.send(crate::world_view::ContainerCommand::Click(
+        crate::world_view::ContainerClick {
+            window_id,
+            state_id,
+            slot: menu as i16,
+            button: button as i8,
+            input: crate::world_view::ContainerInput::Swap,
+            changed,
+            carried,
+        },
+    ));
+}
+
+/// THE BELIEF'S OWN FURNACE ADD (the [`belief_table_inventory_add`]
+/// walk the FURNACE MENU's own numbering re-keys — the player rows the
+/// AbstractFurnaceMenu's standard rows answer: the hotbar 30..38, the
+/// main grid 3..29, the offhand and the armor the menu never wears):
+/// the SELECTED hotbar slot first (menu 30+selected — the
+/// getSlotWithRemainingSpace walk's own head), the merge scan the
+/// hotbar ids 30..38 then the main 3..29 keeps, the first-empty the
+/// same order speaks. The flat-64 space law the model's banked (id,
+/// count) simplification wears. Each landing rides the changed vec
+/// (the repeated slot the map's own put replaces), the leftover the
+/// caller's honest tail (the server's own drop lane).
+fn belief_furnace_inventory_add(
+    live_slots: &mut [(i32, i32)],
+    selected: usize,
+    id: i32,
+    count: i32,
+    changed: &mut Vec<(i16, (i32, i32))>,
+) -> i32 {
+    if count <= 0 {
+        return 0; // the isEmpty gate (pc 0-8) — nothing walks
+    }
+    let has_space = |(sid, sc): (i32, i32)| sc > 0 && sid == id && sc < 64;
+    let candidate = |slots: &[(i32, i32)]| {
+        let sel_menu = 30 + selected;
+        if has_space(slots[sel_menu]) {
+            Some(sel_menu)
+        } else {
+            (30..39)
+                .find(|&m| has_space(slots[m]))
+                .or_else(|| (3..30).find(|&m| has_space(slots[m])))
+                .or_else(|| {
+                    (30..39)
+                        .find(|&m| slots[m].1 <= 0)
+                        .or_else(|| (3..30).find(|&m| slots[m].1 <= 0))
+                })
+        }
+    };
+    let mut remaining = count;
+    loop {
+        let before = remaining; // count_in — the loop head's own refresh
+        let Some(slot) = candidate(live_slots) else {
+            return remaining; // the pass stalled — the no-home arm
+        };
+        // addResource's own walk: the empty slot takes the id, the
+        // fill rides the flat-64 space, the leftover returns
+        let (_, cur_count) = live_slots[slot];
+        if cur_count <= 0 {
+            live_slots[slot] = (id, 0);
+        }
+        let space = 64 - live_slots[slot].1;
+        let take = remaining.min(space);
+        if take > 0 {
+            live_slots[slot].1 += take;
+            remaining -= take;
+            note_batch_change(changed, slot as i16, live_slots[slot]);
+        }
+        if remaining <= 0 || remaining >= before {
+            return remaining; // the empty stack's exit / the stalled pass
+        }
+        // the pass spoke (pc 60's `count < count_in`) — re-locate
+    }
+}
+
+/// THE SWAP TABLE OVER THE FURNACE'S OWN BELIEF (javap 26.2 — the
+/// banked acm_fresh.txt doClick SWAP pcs 1079-1382 the FURNACE MENU's
+/// own numbering re-keys, the walk the chest round v0.3.721's
+/// [`wire_chest_swap`] shape keeps): the button row the furnace
+/// menu's OWN hotbar rows speak (menus 30..38 — the standard rows'
+/// hotbar slice the HUD syncs), the hovered seat's menu id the
+/// caller's rects name. THE SEATS' OWN LAWS (the mayPickup/mayPlace
+/// pair the SWAP table keys):
+/// - the RESULT seat (menu 2): the FurnaceResultSlot's mayPlace the
+///   iconst_0 the place arms refuse, the mayPickup the base Slot's
+///   unconditional TRUE keeps — CASE B alone fires (the row empty,
+///   the result rides the button row AS-IS; the onTake the XP grant
+///   the server's own belief wears, the input's decrement the
+///   SMELTING TICK the server keeps — no recompute the furnace walk
+///   ever fires), the CASE C/D presses the refusal and the
+///   always-packet keep;
+/// - the INPUT seat (menu 0): the mayPlace the SMELTABLE verdict
+///   answers (the canSmelt walk — the KIND'S OWN recipe table
+///   [`crate::furnace_sim::FurnaceKind::recipe`] the blast furnace's
+///   BLASTING rows and the smoker's SMOKING rows re-key);
+/// - the FUEL seat (menu 1): the FurnaceFuelSlot's mayPlace the
+///   isFuel verdict answers (the furnace_data table's tick row —
+///   the bucket arm the later jar round banks);
+/// - the STANDARD rows (menus 3..38): the plain Slots — the TRUE
+///   pair.
+/// THE TABLE (the fired law the both-empty press the silence CONSUMES
+/// and the packet keeps): the SAME-SEAT press the identical pair sets
+/// back (the empty changed map); CASE B (pcs 1149-1202) the row empty
+/// — the hovered stack rides AS-IS, the hovered cell EMPTIES (the
+/// mayPickup gate ALL the furnace seats TRUE keep); CASE C
+/// (pcs 1205-1273) the hovered empty — `mayPlace` the row's stack
+/// places, the SPLIT law the max wears; CASE D (pcs 1276-1379) both
+/// filled — `mayPickup && mayPlace` the gates answer, the split(max)
+/// + the ORIGINAL hovered stack the
+/// [`belief_furnace_inventory_add`] rides (the furnace menu's own
+/// numbering the scan keys, the leftover the server's drop lane
+/// speaks) / the straight trade wears. THE HUD ROW'S BELIEF — the
+/// every-mutation law syncs (the furnace menu's hotbar rows the
+/// slice's own menus 30..38 speak). THE PACKET ALWAYS RIDES (the
+/// slotClicked call the keyPressed walk keeps once the hovered gate
+/// passed — the refusals the EMPTY changed map names, the cursor the
+/// SWAP arm never touches). A free function — the frame thread's
+/// disjoint field borrows (the live_clicks sink stays held across the
+/// walk, the chest lane's own shape).
+#[allow(clippy::too_many_arguments)]
+fn wire_furnace_swap(
+    sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
+    live_slots: &mut [(i32, i32)],
+    hotbar: &mut [(i32, i32); 9],
+    selected: usize,
+    menu: usize,
+    button: usize,
+    kind: crate::furnace_sim::FurnaceKind,
+    window_id: i32,
+    state_id: i32,
+    carried: (i32, i32),
+) {
+    debug_assert!(button < 9, "the digits the walk alone wears — the F arm the menu never slots");
+    debug_assert!(menu < live_slots.len(), "the furnace seat's own bounds");
+    let row_menu = 30 + button; // the furnace menu's own hotbar rows
+    let (hover_id, hover_count) = live_slots[menu];
+    let (row_id, row_count) = live_slots[row_menu];
+    let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
+    let fired = !(row_count <= 0 && hover_count <= 0);
+    if fired {
+        // THE SEAT'S mayPlace (the mayPickup the base Slot's
+        // unconditional TRUE keeps — the result's no override wears;
+        // the verdict the CASE C/D arms alone consult)
+        let may_place = match menu {
+            0 => kind.recipe(row_id).is_some(), // the input's smeltable verdict
+            1 => mc_registry::generated::furnace_data::fuel_ticks(row_id) > 0,
+            2 => false, // the result's mayPlace iconst_0
+            _ => true,  // the standard rows' plain pair
+        };
+        if menu == row_menu {
+            // THE SAME SEAT — the vanilla walk the identical pair
+            // sets back, no mutation the diff ever names
+        } else if row_count <= 0 {
+            // CASE B (pcs 1149-1202): the hovered stack rides the
+            // button row AS-IS, the hovered cell EMPTIES — the
+            // mayPickup gate ALL the furnace seats TRUE keep
+            live_slots[menu] = (0, 0);
+            note_batch_change(&mut changed, menu as i16, (0, 0));
+            live_slots[row_menu] = (hover_id, hover_count);
+            note_batch_change(&mut changed, row_menu as i16, (hover_id, hover_count));
+        } else if hover_count <= 0 {
+            // CASE C (pcs 1205-1273): the row's stack places — the
+            // mayPlace gate the seat's own verdict keeps, the SPLIT
+            // law the max wears
+            if may_place {
+                let max = crate::world_view::item_max_stack(row_id);
+                if row_count > max {
+                    live_slots[menu] = (row_id, max);
+                    note_batch_change(&mut changed, menu as i16, (row_id, max));
+                    live_slots[row_menu] = (row_id, row_count - max);
+                    note_batch_change(&mut changed, row_menu as i16, (row_id, row_count - max));
+                } else {
+                    live_slots[row_menu] = (0, 0);
+                    note_batch_change(&mut changed, row_menu as i16, (0, 0));
+                    live_slots[menu] = (row_id, row_count);
+                    note_batch_change(&mut changed, menu as i16, (row_id, row_count));
+                }
+            }
+        } else if may_place {
+            // CASE D (pcs 1276-1379): both filled — the mayPickup &&
+            // mayPlace pair the gates answer
+            let max = crate::world_view::item_max_stack(row_id);
+            if row_count > max {
+                // the split(max) — the cell takes max, the row the
+                // remainder keeps, the ORIGINAL hovered stack the
+                // add rides (the furnace menu's own numbering the
+                // scan keys — the leftover the server's drop lane)
+                let rest = row_count - max;
+                live_slots[menu] = (row_id, max);
+                note_batch_change(&mut changed, menu as i16, (row_id, max));
+                live_slots[row_menu] = (row_id, rest);
+                note_batch_change(&mut changed, row_menu as i16, (row_id, rest));
+                let _leftover = belief_furnace_inventory_add(
+                    live_slots,
+                    selected,
+                    hover_id,
+                    hover_count,
+                    &mut changed,
+                );
+            } else {
+                // the straight trade — the row the hovered stack
+                // takes, the cell the row's stack wears
+                live_slots[row_menu] = (hover_id, hover_count);
+                note_batch_change(&mut changed, row_menu as i16, (hover_id, hover_count));
+                live_slots[menu] = (row_id, row_count);
+                note_batch_change(&mut changed, menu as i16, (row_id, row_count));
+            }
+        }
+        // THE HUD ROW'S BELIEF — the every-mutation law syncs (the
+        // furnace menu's hotbar rows the slice's own menus 30..38
+        // speak)
+        let mut row = [(0, 0); 9];
+        row.copy_from_slice(&live_slots[30..39]);
         *hotbar = row;
     }
     // THE PACKET ALWAYS RIDES (the slotClicked walk the wire speaks
@@ -79330,6 +79616,292 @@ cow_sound_variant: None,
             "the carried the silence keeps (the walk's own three drops the arms spent)"
         );
         app.furnace_carried = (0, 0);
+    }
+
+    /// THE FURNACE'S OWN SWAP, THE TABLE THE HUD WEARS (the doClick
+    /// SWAP table over the 39-slot belief): CASE B the fuel seat's
+    /// stack rides the button row AS-IS (the cell EMPTIES, the HUD row
+    /// the every-mutation law syncs); the CASE D straight trade the
+    /// main store row over the hotbar row wears (the row the
+    /// hovered's takes, the cell the row's stack wears).
+    #[test]
+    fn the_furnace_swap_key_the_table_the_hud_wear() {
+        use crate::world_view::{ContainerCommand, LiveContainer};
+        let coal = mc_registry::item_id_by_name("coal").unwrap();
+        let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        let furnace = LiveContainer {
+            id: 7,
+            menu_type_id: crate::world_model::MENU_TYPE_FURNACE,
+            slots: {
+                let mut s = vec![(0i32, 0i32); 39];
+                s[1] = (coal, 7); // the fuel seat
+                s[7] = (stone, 5); // the main store 4 — menu 7
+                s[30] = (planks, 7); // the hotbar row 0 — menu 30
+                s
+            },
+            carried: (0, 0),
+            state_id: 2,
+            bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(furnace));
+        assert_eq!(app.screen, ScreenKind::Furnace, "the window shows");
+        // CASE B: THE FUEL SEAT'S STACK OVER THE EMPTY HOTBAR ROW 2
+        // (menu 32)
+        app.furnace_slot_rects = vec![(100, 100, 1)];
+        app.mouse_pos = Some((108, 108));
+        assert!(app.on_furnace_swap_key(2), "the digit consumes");
+        assert_eq!(app.furnace_slots[1], (0, 0), "the cell emptied");
+        assert_eq!(app.furnace_slots[32], (coal, 7), "the row rides AS-IS");
+        assert_eq!(app.hotbar_slots[2], (coal, 7), "the HUD synced");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 7, "the window's own id");
+                assert_eq!(c.state_id, 2, "the revision rides");
+                assert_eq!(c.slot, 1, "the fuel seat's own menu id");
+                assert_eq!(c.button, 2, "the digit the byte keys");
+                assert_eq!(c.input, crate::world_view::ContainerInput::Swap);
+                assert_eq!(
+                    c.changed,
+                    vec![(1, (0, 0)), (32, (coal, 7))],
+                    "the mutations named"
+                );
+                assert_eq!(c.carried, (0, 0), "the cursor pair rides unchanged");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE CASE D STRAIGHT TRADE: THE MAIN STORE 4 (menu 7) OVER
+        // THE HOTBAR ROW 0 (menu 30)
+        app.furnace_slot_rects = vec![(100, 100, 7)];
+        app.mouse_pos = Some((108, 108));
+        assert!(app.on_furnace_swap_key(0));
+        assert_eq!(app.furnace_slots[7], (planks, 7), "the cell wears the row's stack");
+        assert_eq!(app.furnace_slots[30], (stone, 5), "the row takes the hovered's");
+        assert_eq!(app.hotbar_slots[0], (stone, 5), "the HUD synced");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 7, "the main store's own menu id");
+                assert_eq!(
+                    c.changed,
+                    vec![(30, (stone, 5)), (7, (planks, 7))],
+                    "the trade's mutations named"
+                );
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+
+    /// THE FURNACE'S OWN SWAP, THE SPLIT LAW AND THE SEAT VERDICTS
+    /// (the mayPickup/mayPlace pair the SWAP table keys): CASE C the
+    /// row's 20 eggs over the empty main store row — the cell takes
+    /// the max 16, the row the remainder 4 keeps; the FUEL seat the
+    /// isFuel verdict answers (the coal places, the row empties), the
+    /// INPUT seat the SMELTABLE verdict answers (the raw_iron places,
+    /// the dirt the refusal the always-packet keeps), the RESULT seat
+    /// the mayPlace iconst_0 the place arms refuse (the packet rides,
+    /// the belief whole).
+    #[test]
+    fn the_furnace_swap_key_the_split_law_and_the_seat_verdicts_wear() {
+        use crate::world_view::{ContainerCommand, LiveContainer};
+        let egg = crate::mob::wire_id("egg").expect("the egg's own id");
+        let coal = mc_registry::item_id_by_name("coal").unwrap();
+        let raw_iron = mc_registry::item_id_by_name("raw_iron").unwrap();
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        let furnace = LiveContainer {
+            id: 7,
+            menu_type_id: crate::world_model::MENU_TYPE_FURNACE,
+            slots: {
+                let mut s = vec![(0i32, 0i32); 39];
+                s[31] = (coal, 5); // the hotbar row 1 — menu 31 (the fuel place arm's own row)
+                s[33] = (egg, 20); // the hotbar row 3 — menu 33
+                s[34] = (raw_iron, 3); // the hotbar row 4 — menu 34
+                s[35] = (dirt, 3); // the hotbar row 5 — menu 35
+                s[36] = (stone, 3); // the hotbar row 6 — menu 36
+                s
+            },
+            carried: (0, 0),
+            state_id: 2,
+            bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(furnace));
+        app.furnace_slot_rects = vec![(100, 100, 12), (140, 100, 1), (180, 100, 0), (220, 100, 2)];
+        // CASE C: THE EMPTY MAIN STORE ROW TAKES THE MAX 16
+        app.mouse_pos = Some((108, 108));
+        assert!(app.on_furnace_swap_key(3));
+        assert_eq!(app.furnace_slots[12], (egg, 16), "the cell takes the max");
+        assert_eq!(app.furnace_slots[33], (egg, 4), "the row the remainder keeps");
+        assert_eq!(app.hotbar_slots[3], (egg, 4), "the HUD synced");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 12, "the main store's own menu id");
+                assert_eq!(
+                    c.changed,
+                    vec![(12, (egg, 16)), (33, (egg, 4))],
+                    "the split's mutations named"
+                );
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE FUEL SEAT'S ISFUEL VERDICT (the coal places, the row
+        // empties)
+        app.mouse_pos = Some((148, 108));
+        assert!(app.on_furnace_swap_key(1));
+        assert_eq!(app.furnace_slots[1], (coal, 5), "the fuel seat the coal takes");
+        assert_eq!(app.furnace_slots[31], (0, 0), "the row emptied");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(
+                    c.changed,
+                    vec![(31, (0, 0)), (1, (coal, 5))],
+                    "the place's mutations named"
+                );
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE INPUT SEAT'S SMELTABLE VERDICT (the raw_iron places)
+        app.mouse_pos = Some((188, 108));
+        assert!(app.on_furnace_swap_key(4));
+        assert_eq!(
+            app.furnace_slots[0], (raw_iron, 3),
+            "the input seat the smeltable takes"
+        );
+        assert_eq!(app.furnace_slots[34], (0, 0), "the row emptied");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(
+                    c.changed,
+                    vec![(34, (0, 0)), (0, (raw_iron, 3))],
+                    "the place's mutations named"
+                );
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE INPUT SEAT'S REFUSAL (the dirt the smeltable verdict
+        // refuses — the always-packet law the empty changed map names)
+        // — the row 5 re-fed first (the prior swap spent it)
+        app.furnace_slots[35] = (dirt, 3);
+        app.mouse_pos = Some((188, 108));
+        assert!(app.on_furnace_swap_key(5), "the refusal still consumes");
+        assert_eq!(app.furnace_slots[0], (raw_iron, 3), "the input whole");
+        assert_eq!(app.furnace_slots[35], (dirt, 3), "the row whole");
+        match click_rx.try_recv().expect("the always packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 0, "the input seat's own menu id");
+                assert_eq!(c.button, 5, "the digit the byte keys");
+                assert!(c.changed.is_empty(), "the refusal no mutation names");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE RESULT SEAT'S MAYPLACE REFUSAL (the iconst_0 the place
+        // arms refuse): the packet rides, the belief whole
+        app.mouse_pos = Some((228, 108));
+        assert!(app.on_furnace_swap_key(6), "the refusal still consumes");
+        assert_eq!(app.furnace_slots[2], (0, 0), "the result whole");
+        assert_eq!(app.furnace_slots[36], (stone, 3), "the row whole");
+        match click_rx.try_recv().expect("the always packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 2, "the result seat's own menu id");
+                assert_eq!(c.button, 6, "the digit the byte keys");
+                assert!(c.changed.is_empty(), "the refusal no mutation names");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+
+    /// THE FURNACE'S OWN SWAP, THE GATES (the checkHotbarKeyPressed
+    /// chain's own shape over the 39-slot belief): the BOTH-EMPTY
+    /// press the consumed silence keeps AND the packet rides (the
+    /// empty changed map the untouched state names), the SAME-SEAT
+    /// press (the hovered hotbar row IS the button's own row) the
+    /// identical pair sets back — no mutation the diff ever names,
+    /// the carried cursor the false BEFORE the packet lane keeps, the
+    /// closed window and the between-slots press the refusals keep.
+    #[test]
+    fn the_furnace_swap_key_the_gates_and_the_always_packet_wear() {
+        use crate::world_view::{ContainerCommand, LiveContainer};
+        let coal = mc_registry::item_id_by_name("coal").unwrap();
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        let furnace = LiveContainer {
+            id: 7,
+            menu_type_id: crate::world_model::MENU_TYPE_FURNACE,
+            slots: {
+                let mut s = vec![(0i32, 0i32); 39];
+                s[31] = (stone, 7); // the hotbar row 1 — menu 31
+                s
+            },
+            carried: (0, 0),
+            state_id: 2,
+            bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(furnace));
+        app.furnace_slot_rects = vec![(100, 100, 12), (140, 100, 31)];
+        // THE CLOSED WINDOW (the identity the sync's close lane died):
+        // the silence
+        app.furnace_live_window = None;
+        app.mouse_pos = Some((108, 108));
+        assert!(!app.on_furnace_swap_key(0), "no window — the false wears");
+        assert!(click_rx.try_recv().is_err(), "the closed window is silence");
+        // THE WINDOW ARMS (the sync's own identity the test restores)
+        app.furnace_live_window = Some((7, 2));
+        // THE BOTH-EMPTY PRESS: the digit CONSUMES and the packet
+        // rides with the EMPTY changed map
+        app.mouse_pos = Some((108, 108));
+        assert!(app.on_furnace_swap_key(0), "the silence still consumes");
+        match click_rx.try_recv().expect("the always packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 12, "the hovered seat's own menu id");
+                assert_eq!(c.button, 0, "the digit the byte keys");
+                assert_eq!(c.input, crate::world_view::ContainerInput::Swap);
+                assert!(c.changed.is_empty(), "the untouched state keeps");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE SAME-SEAT PRESS (the hotbar row 1 IS menu 31): the
+        // identical pair sets back — no mutation, the belief whole
+        app.mouse_pos = Some((148, 108));
+        assert!(app.on_furnace_swap_key(1), "the same seat still consumes");
+        assert_eq!(app.furnace_slots[31], (stone, 7), "the belief whole");
+        assert_eq!(app.hotbar_slots[1], (stone, 7), "the HUD whole");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 31, "the same seat's own menu id");
+                assert!(c.changed.is_empty(), "no mutation the diff names");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE CARRIED CURSOR (the getCarried().isEmpty() gate): the
+        // false BEFORE the packet lane — NO packet
+        app.mouse_pos = Some((108, 108));
+        app.live_furnace_carried = (coal, 5);
+        assert!(!app.on_furnace_swap_key(0), "the carried gate refuses");
+        assert!(click_rx.try_recv().is_err(), "no packet the gate passes");
+        app.live_furnace_carried = (0, 0);
+        // THE BETWEEN-SLOTS PRESS (the null hoveredSlot): the refusal
+        app.mouse_pos = Some((160, 108));
+        assert!(!app.on_furnace_swap_key(0), "the null hover refuses");
+        assert!(click_rx.try_recv().is_err(), "still silence");
     }
 
     /// THE FURNACE'S OWN FORMULA WALK (javap AbstractFurnaceMenu +

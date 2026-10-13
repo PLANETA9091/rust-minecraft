@@ -1924,6 +1924,14 @@ pub fn run_gui_app(
                         // id the SWAP table answers; the walk's own
                         // false the non-answer arms keep)
                         && !app.on_chest_swap_key(i)
+                        // THE FURNACE'S OWN SWAP (the checkHotbarKeyPressed
+                        // walk the AbstractFurnaceScreen the same base
+                        // class keeps — the 39-slot belief the SWAP
+                        // table answers, the input's smeltable + the
+                        // fuel's isFuel + the result's mayPlace-false
+                        // verdicts the walk's refusals speak; the
+                        // walk's own false the non-answer arms keep)
+                        && !app.on_furnace_swap_key(i)
                         // THE TABLE'S OWN SWAP (the checkHotbarKeyPressed
                         // walk the crafting screen the same base class
                         // keeps — the window-1 belief the SWAP table
