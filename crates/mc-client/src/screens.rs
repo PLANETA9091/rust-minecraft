@@ -23545,6 +23545,138 @@ impl App {
         true
     }
 
+    /// THE FURNACE'S OWN Q (javap 26.2 — the SAME keyPressed keyDrop
+    /// arm the container rounds bank, the doClick THROW table the
+    /// inventory round v0.3.718 keeps verbatim; the furnace family's
+    /// own seats the menu's numbering answers — the INPUT 0, the FUEL
+    /// 1, the RESULT 2, the standard rows 3..39 the
+    /// AbstractFurnaceMenu ctor's addStandardInventorySlots(8, 84)
+    /// places — the main 3..29, the hotbar 30..38 the HUD row keys):
+    /// the hovered slot's stack the Q throws. THE RESULT SEAT THE
+    /// PLAIN TAKE ANSWERS (the FurnaceResultSlot's mayPlace the
+    /// iconst_0 the place arms refuse, the mayPickup the base Slot's
+    /// unconditional TRUE keeps — the THROW a take rides, the onTake
+    /// the XP grant the server's own belief wears, the input's
+    /// decrement the SMELTING TICK the server keeps — no recipe
+    /// recompute the furnace walk ever fires), the INPUT + FUEL the
+    /// plain tryRemove law answers, the smeltables the live session's
+    /// feed the Q never disturbs. THE OFFLINE SIM THE LOCAL WALK
+    /// WEARS (the click lane's own gates the shape keeps — the rects
+    /// the last render laid, the hasItem gate the keyPressed chain
+    /// keeps BEFORE the lane, the carried cursor the doClick arm's
+    /// own refusal, the taken the tryRemove law, the drop entity the
+    /// AIMED look spawns, the standard rows the write-through
+    /// projection syncs — the click lane's own law the offline keeps);
+    /// THE LIVE SESSION THE WIRE SPEAKS (the packet the command lane
+    /// carries, the [`wire_inventory_drop`] walk the 39-slot belief
+    /// re-keys, the HUD row the menu 30..39 range syncs, the drop
+    /// entity the SERVER's Add Entity lane spawns — no local
+    /// prediction).
+    pub fn on_furnace_drop_key(&mut self, whole_stack: bool) {
+        if self.screen != ScreenKind::Furnace || self.dead {
+            return; // this lane IS the container screen's own walk
+        }
+        if self.furnace_is_live {
+            // THE WIRE GATE: the live session's Q the BELIEF the same
+            // doClick THROW arm answers, the packet the command lane
+            // speaks — the server's block entity the truth there.
+            self.on_furnace_drop_key_wire(whole_stack);
+            return;
+        }
+        // THE OFFLINE SIM'S OWN WALK (the vanilla doClick THROW the
+        // local lane answers)
+        if self.furnace_slot_rects.is_empty() || self.furnace_panel == (0, 0) {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return; // no cursor — no hoveredSlot (the null gate's shape)
+        };
+        let Some(&(_, _, slot)) = self
+            .furnace_slot_rects
+            .iter()
+            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+        else {
+            return; // the press landed between the slots — the null hover
+        };
+        let slot = slot as usize;
+        let Some(&(id, count)) = self.furnace_slots.get(slot) else {
+            return; // the menu's own bounds the walk never wears
+        };
+        if count <= 0 {
+            return; // hoveredSlot.hasItem()'s own gate — silence
+        }
+        if self.furnace_carried.1 > 0 {
+            return; // THE doClick THROW's getCarried().isEmpty() gate —
+                    // the cursor's own stack the Q never throws
+        }
+        let dropped = if whole_stack { count } else { 1 };
+        self.drop_item_entity_aimed(id, dropped);
+        // safeTake(count, MAX)'s own walk: the whole stack gone or
+        // exactly one off (the tryRemove law the doClick arm speaks)
+        let new = if whole_stack { (0, 0) } else { (id, count - 1) };
+        self.furnace_slots[slot] = new;
+        if slot >= 3 {
+            // THE STANDARD ROW'S OWN WRITE-THROUGH (the projection the
+            // inventory IS — the menu slot the inventory cell answers,
+            // the click lane's own law the walk keeps)
+            let idx = if slot < 30 { 9 + slot - 3 } else { slot - 30 };
+            self.inventory.items[idx] = new;
+            self.hotbar_slots = self.inventory.hotbar();
+        }
+        // NO swing, the container STAYS OPEN (the container walk's own
+        // laws the base class keeps).
+    }
+
+    /// THE WIRE GATE'S OWN WALK (the offline walk's twin — the same
+    /// keyPressed gate chain, the 39-slot belief the doClick THROW arm
+    /// answers): the hovered+hasItem gates the SAME rects walk the
+    /// offline lane keeps, the packet lane the [`wire_inventory_drop`]
+    /// free fn rides (the window id the OpenScreen assigned, the HUD
+    /// row the furnace menu's own 30..39 range syncs — the standard
+    /// rows' hotbar slice speaks). The EMPTY hovered seat the silence
+    /// keeps (NO packet — the hasItem gate lives in the keyPressed
+    /// walk); the carried cursor the ALWAYS-PACKET law names (the EMPTY
+    /// changed map, the cursor pair the THROW arm never touches).
+    fn on_furnace_drop_key_wire(&mut self, whole_stack: bool) {
+        if self.furnace_slot_rects.is_empty() {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return; // no cursor — no hoveredSlot (the null gate's shape)
+        };
+        let Some(&(_, _, slot)) = self
+            .furnace_slot_rects
+            .iter()
+            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+        else {
+            return; // the press landed between the slots — the null hover
+        };
+        let Some((window_id, state_id)) = self.furnace_live_window else {
+            return; // no window — the belief never armed
+        };
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return; // no live session — the command dies on the frame thread
+        };
+        let menu = slot as usize;
+        let Some(&(_, count)) = self.furnace_slots.get(menu) else {
+            return; // the menu's own bounds the walk never wears
+        };
+        if count <= 0 {
+            return; // hoveredSlot.hasItem()'s own gate — silence (NO packet)
+        }
+        wire_inventory_drop(
+            sink,
+            &mut self.furnace_slots,
+            &mut self.hotbar_slots,
+            window_id,
+            menu,
+            if whole_stack { 1 } else { 0 },
+            state_id,
+            self.live_furnace_carried,
+            30..39, // the furnace menu's own hotbar rows the HUD syncs
+        );
+    }
+
     /// THE CHEST'S OWN Q (the SAME keyPressed keyDrop arm — the
     /// GenericContainerScreen the base class inherits, the gate chain
     /// and the doClick THROW table the inventory round v0.3.718 keeps
@@ -49392,13 +49524,15 @@ fn wire_inventory_swap(
 /// THROW arm never touches). The HUD row's belief the every-mutation
 /// law syncs (the hotbar's menu ids the caller's own range names —
 /// the inventory window-0's 36..45, the crafting menu's 37..46 — the
-/// armor/offhand/craft seats the row never wears). A free function —
+/// armor/offhand/craft seats the row never wears). The SLICE the walk
+/// wears (the furnace menu's 39 the same walk re-keys — the window-0
+/// projection's own 46 the unsize coercion keeps). A free function —
 /// the frame thread's disjoint field borrows (the live_clicks sink
 /// stays held across the walk, the chest lane's own shape).
 #[allow(clippy::too_many_arguments)]
 fn wire_inventory_drop(
     sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
-    live_slots: &mut [(i32, i32); crate::world_view::INVENTORY_MENU_SLOTS],
+    live_slots: &mut [(i32, i32)],
     hotbar: &mut [(i32, i32); 9],
     window_id: i32,
     menu: usize,
@@ -49411,7 +49545,7 @@ fn wire_inventory_drop(
         button == 0 || button == 1,
         "the THROW input's own button law"
     );
-    debug_assert!(menu < crate::world_view::INVENTORY_MENU_SLOTS, "the seat");
+    debug_assert!(menu < live_slots.len(), "the seat");
     let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
     if carried.1 == 0 {
         // THE TAKE WALK (the safeArm's own tryRemove law — the whole
@@ -78943,6 +79077,259 @@ cow_sound_variant: None,
             other => panic!("expected a click, got {other:?}"),
         }
         app.on_shift_down(false);
+    }
+
+    /// THE FURNACE'S OWN Q, THE WIRE (the doClick THROW arm over the
+    /// 39-slot belief — the hotbar rows the menu 30..39 range speaks):
+    /// the PLAIN Q the fuel seat's ONE off wears, the Ctrl the WHOLE
+    /// count (the HUD row's belief the every-mutation law syncs), the
+    /// RESULT seat the PLAIN TAKE answers (the mayPickup the base
+    /// Slot's unconditional TRUE keeps — the input's decrement the
+    /// SMELTING TICK the server keeps, no recompute the furnace walk
+    /// ever fires), the input's feed the Q never disturbs.
+    #[test]
+    fn the_wire_furnace_drop_key_the_fuel_the_result_and_the_hud_wear() {
+        use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+        let coal = mc_registry::item_id_by_name("coal").unwrap();
+        let raw_iron = mc_registry::item_id_by_name("raw_iron").unwrap();
+        let iron_ingot = mc_registry::item_id_by_name("iron_ingot").unwrap();
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        let furnace = LiveContainer {
+            id: 7,
+            menu_type_id: crate::world_model::MENU_TYPE_FURNACE,
+            slots: {
+                let mut s = vec![(0i32, 0i32); 39];
+                s[0] = (raw_iron, 5); // the input seat — the smelting's own feed
+                s[1] = (coal, 7); // the fuel seat
+                s[2] = (iron_ingot, 2); // the result seat — the smelting's own yield
+                s[31] = (dirt, 32); // the hotbar row 1 — menu 31
+                s
+            },
+            carried: (0, 0),
+            state_id: 2,
+            bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(furnace));
+        assert_eq!(app.screen, ScreenKind::Furnace, "the window shows");
+        // THE PLAIN Q ON THE FUEL SEAT (menu 1): the ONE off
+        app.furnace_slot_rects = vec![(100, 100, 1)];
+        app.mouse_pos = Some((108, 108));
+        app.on_furnace_drop_key(false);
+        assert_eq!(app.furnace_slots[1], (coal, 6), "the one off rode");
+        assert_eq!(
+            app.furnace_slots[0], (raw_iron, 5),
+            "the input's feed the Q never disturbs"
+        );
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 7, "the window's own id");
+                assert_eq!(c.state_id, 2, "the revision rides");
+                assert_eq!(c.slot, 1, "the fuel seat's own menu id");
+                assert_eq!(c.button, 0, "the plain Q the byte keys");
+                assert_eq!(c.input, ContainerInput::Throw);
+                assert_eq!(c.changed, vec![(1, (coal, 6))], "the mutation named");
+                assert_eq!(c.carried, (0, 0), "the cursor pair rides unchanged");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE CTRL+Q ON THE HOTBAR ROW 1 (menu 31): the whole stack
+        // gone, the HUD row's belief synced
+        app.furnace_slot_rects = vec![(100, 100, 31)];
+        app.mouse_pos = Some((108, 108));
+        app.on_furnace_drop_key(true);
+        assert_eq!(app.furnace_slots[31], (0, 0), "the whole stack gone");
+        assert_eq!(app.hotbar_slots[1], (0, 0), "the HUD belief synced");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 31, "the hotbar row's own menu id");
+                assert_eq!(c.button, 1, "the Ctrl the byte keys");
+                assert_eq!(c.changed, vec![(31, (0, 0))]);
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE PLAIN Q ON THE RESULT SEAT (menu 2): the plain take the
+        // answer wears — the yield the Q throws, the input's decrement
+        // the SMELTING TICK the server keeps (no recompute the furnace
+        // walk ever fires)
+        app.furnace_slot_rects = vec![(100, 100, 2)];
+        app.mouse_pos = Some((108, 108));
+        app.on_furnace_drop_key(false);
+        assert_eq!(
+            app.furnace_slots[2],
+            (iron_ingot, 1),
+            "the one ingot the yield keeps"
+        );
+        assert_eq!(app.furnace_slots[0], (raw_iron, 5), "the input whole");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 2, "the result seat's own menu id");
+                assert_eq!(
+                    c.changed,
+                    vec![(2, (iron_ingot, 1))],
+                    "the take's mutation named"
+                );
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+
+    /// THE FURNACE'S OWN Q, THE WIRE GATES (the keyPressed chain's own
+    /// shape over the 39-slot belief): the EMPTY hovered seat the
+    /// silence keeps (NO packet — the hasItem gate lives in the
+    /// keyPressed walk), the carried cursor the ALWAYS-PACKET law
+    /// names (the EMPTY changed map, the belief whole), the
+    /// between-slots press the null hover the silence speaks, and the
+    /// gates' pass the take walk restores.
+    #[test]
+    fn the_wire_furnace_drop_key_the_gates_and_the_silences_wear() {
+        use crate::world_view::{ContainerCommand, LiveContainer};
+        let coal = mc_registry::item_id_by_name("coal").unwrap();
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        let furnace = LiveContainer {
+            id: 7,
+            menu_type_id: crate::world_model::MENU_TYPE_FURNACE,
+            slots: {
+                let mut s = vec![(0i32, 0i32); 39];
+                s[1] = (coal, 7); // the fuel seat — the Q's own target
+                s
+            },
+            carried: (0, 0),
+            state_id: 2,
+            bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(furnace));
+        app.furnace_slot_rects = vec![(100, 100, 1)];
+        // THE EMPTY HOVERED SEAT (the hasItem gate — the input seat
+        // empty): silence, NO packet
+        app.furnace_slot_rects = vec![(100, 100, 0)];
+        app.mouse_pos = Some((108, 108));
+        app.on_furnace_drop_key(false);
+        assert!(
+            click_rx.try_recv().is_err(),
+            "the hasItem gate the packet lane never passes"
+        );
+        // THE CARRIED CURSOR (the always-packet law): the packet rides,
+        // the EMPTY changed map the untouched state keeps, the belief
+        // whole
+        app.furnace_slot_rects = vec![(100, 100, 1)];
+        app.mouse_pos = Some((108, 108));
+        app.live_furnace_carried = (dirt, 5);
+        app.on_furnace_drop_key(true);
+        assert_eq!(app.furnace_slots[1], (coal, 7), "the belief whole");
+        match click_rx.try_recv().expect("the always packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 1, "the fuel seat's own menu id");
+                assert_eq!(c.button, 1, "the Ctrl the byte keys");
+                assert!(c.changed.is_empty(), "the untouched state keeps");
+                assert_eq!(c.carried, (dirt, 5), "the cursor pair rides unchanged");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        app.live_furnace_carried = (0, 0);
+        // THE BETWEEN-SLOTS PRESS (the null hoveredSlot): the refusal
+        app.mouse_pos = Some((160, 108));
+        app.on_furnace_drop_key(false);
+        assert!(click_rx.try_recv().is_err(), "the null hover is silence");
+        // THE GATES' PASS — the take walk restores (the one off)
+        app.mouse_pos = Some((108, 108));
+        app.on_furnace_drop_key(false);
+        assert_eq!(app.furnace_slots[1], (coal, 6), "the one off rode");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.changed, vec![(1, (coal, 6))]);
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+
+    /// THE FURNACE'S OWN Q, THE OFFLINE SIM (the vanilla doClick THROW
+    /// the local lane answers — the offline world the integrated walk
+    /// IS): the PLAIN Q the fuel seat's ONE off wears, the drop entity
+    /// the AIMED look spawns, the CTRL+Q on the hotbar seat the
+    /// WRITE-THROUGH projection syncs (the menu slot the inventory
+    /// cell answers), the RESULT seat the plain take answers, the
+    /// carried cursor the doClick arm's own refusal keeps.
+    #[test]
+    fn the_offline_furnace_drop_key_the_write_through_and_the_drop_wear() {
+        let coal = mc_registry::item_id_by_name("coal").unwrap();
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let iron_ingot = mc_registry::item_id_by_name("iron_ingot").unwrap();
+        let furnace_id = mc_registry::item_id_by_name("furnace").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.inventory.items[0] = (furnace_id, 1);
+        app.inventory.items[1] = (dirt, 32); // the hotbar row 1 — menu 31
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: std::f32::consts::PI,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the furnace placed");
+        assert!(app.on_right_press(0, 0), "the door opened");
+        assert_eq!(app.screen, ScreenKind::Furnace);
+        app.furnace_panel = (100, 100);
+        app.furnace_slots[1] = (coal, 7);
+        app.furnace_slots[2] = (iron_ingot, 2);
+        app.furnace_slot_rects = vec![(100, 100, 1), (140, 100, 31), (180, 100, 2)];
+        let drops_before = app.drops.len();
+        // THE PLAIN Q ON THE FUEL (menu 1): the ONE off, the drop
+        // entity the AIMED look spawns
+        app.mouse_pos = Some((108, 108));
+        app.on_furnace_drop_key(false);
+        assert_eq!(app.furnace_slots[1], (coal, 6), "the one off rode");
+        assert_eq!(
+            app.drops.len(),
+            drops_before + 1,
+            "the drop entity the aimed look spawned"
+        );
+        // THE CTRL+Q ON THE HOTBAR SEAT (menu 31 — the write-through
+        // the projection is: the menu slot the inventory cell answers)
+        app.mouse_pos = Some((148, 108));
+        app.on_furnace_drop_key(true);
+        assert_eq!(app.furnace_slots[31], (0, 0), "the whole stack gone");
+        assert_eq!(
+            app.inventory.items[1], (0, 0),
+            "the write-through the projection synced"
+        );
+        assert_eq!(app.hotbar_slots[1], (0, 0), "the HUD row synced");
+        // THE PLAIN Q ON THE RESULT SEAT (menu 2): the plain take
+        app.mouse_pos = Some((188, 108));
+        app.on_furnace_drop_key(false);
+        assert_eq!(
+            app.furnace_slots[2],
+            (iron_ingot, 1),
+            "the one ingot the yield keeps"
+        );
+        // THE CARRIED CURSOR (the getCarried().isEmpty() gate): the
+        // silence, the belief whole, no further drop
+        app.mouse_pos = Some((108, 108));
+        app.furnace_carried = (dirt, 5);
+        app.on_furnace_drop_key(false);
+        assert_eq!(app.furnace_slots[1], (coal, 6), "the belief whole");
+        assert_eq!(
+            app.drops.len(),
+            drops_before + 3,
+            "the carried the silence keeps (the walk's own three drops the arms spent)"
+        );
+        app.furnace_carried = (0, 0);
     }
 
     /// THE FURNACE'S OWN FORMULA WALK (javap AbstractFurnaceMenu +

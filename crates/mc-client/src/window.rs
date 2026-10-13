@@ -1853,6 +1853,13 @@ pub fn run_gui_app(
                 // Screen the base class keeps, the live window the lane
                 // alone wears)
                 app.on_chest_drop_key(q_ctrl);
+                // THE FURNACE'S OWN Q (the SAME arm — the
+                // AbstractFurnaceScreen the base class keeps, the
+                // offline sim the local walk the lane wears, the live
+                // session the packet speaks — the result seat the
+                // plain take answers, the input's decrement the
+                // smelting tick the server keeps)
+                app.on_furnace_drop_key(q_ctrl);
             }
         }
         // THE F KEY'S OWN LANE (the vanilla handleKeybinds's
