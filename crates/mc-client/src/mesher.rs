@@ -2271,20 +2271,14 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     // east 90 / south 180 / west 270 -> [0, 1, 2, 3] —
                     // the 90-degree CW walk the blockstate y values
                     // fold; the variant byte's no-opinion answer the
-                    // north default the idx-0 keeps). THE WOOD STEM THE
-                    // SHARED NAME ROW WEARS (the dev-43 round — the
-                    // NAME_OF base the per-wood model chain keys: the
-                    // {wood}_door_bottom/top_left[_open] models the
-                    // ONE box element each the derive cache bakes, the
-                    // half/open bits the same word the oak lane's own
-                    // walk speaks)
-                    let door_name = crate::world::NAME_OF[id as usize];
-                    let model_id = format!(
-                        "block/{}_{}_left{}",
-                        door_name,
-                        if crate::world::is_door_upper(id) { "top" } else { "bottom" },
-                        if crate::world::is_door_open(id) { "_open" } else { "" },
-                    );
+                    // north default the idx-0 keeps). THE MODEL ROW THE
+                    // GENERATED TABLE WEARS (the autopush-656 round —
+                    // the DOOR_MODEL_BY_ROW ref the blockstate's own
+                    // hinge-LEFT facing=north row resolves: the WAXED
+                    // ladder the UNWAXED models the jar's own rows
+                    // serve — the NAME_OF-derived word the waxed kinds
+                    // the absent models never answer, the real chain
+                    // the bake keeps)
                     let facing = world.variant(wx, wy, wz);
                     let idx = if facing == 0 {
                         0usize // the unpropertied default: north
@@ -2298,7 +2292,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     } else {
                         closed_steps[idx]
                     };
-                    for q in door_model_quads(&model_id) {
+                    for q in door_model_quads(id) {
                         // THE ROTATED CULLFACE VERDICT — the six-
                         // direction law the cake lane wears, the
                         // direction the SAME steps the geometry turns
@@ -3312,53 +3306,49 @@ fn cake_candle_model_quads(model_id: &str) -> &'static [mc_registry::element_qua
     map.get(model_id).map(|v| v.as_slice()).unwrap_or(&[])
 }
 
-/// THE DOOR FAMILY'S OWN MODEL BAKES — the block/{wood}_door_bottom
-/// _left / top_left / bottom_left_open / top_left_open chains the
-/// registry's derive walk resolves (the cake lane's own cache pattern
-/// the twelve woods' 48 models walk — the dev-43 round the oak lane's
-/// four the whole family generalizes): each a SINGLE box element
+/// THE DOOR FAMILY'S OWN MODEL BAKES — the per-kind model refs the
+/// generated DOOR_MODEL_BY_ROW table carries (the autopush-656 round
+/// the blockstate's own hinge-LEFT facing=north row the regen
+/// resolved — the WAXED ladder the UNWAXED models the jar's own rows
+/// serve, the dev-43 round's NAME_OF-derived word the waxed kinds
+/// the absent models never answered): each a SINGLE box element
 /// [0,0,0]->[3,16,16] (the base west strip the blockstate's y=0
 /// authoring banks — the panel edge the theta tables rotate), the
-/// lower's faces all #bottom (the block/{wood}_door_bottom master
-/// the TILE consts bank), the upper's all #top — the per-quad
-/// texture names RESOLVED (the parent-chain merge the texture walk
-/// serves). The failed derive the honest empty slice keeps (the door
-/// the nothing renders).
-fn door_model_quads(model_id: &str) -> &'static [mc_registry::element_quads::Quad] {
+/// lower's faces all #bottom (the per-oxidization master the TILE
+/// consts bank), the upper's all #top — the per-quad texture names
+/// RESOLVED (the parent-chain merge the texture walk serves). The
+/// failed derive the honest empty slice keeps (the door the nothing
+/// renders).
+fn door_model_quads(kind: u16) -> &'static [mc_registry::element_quads::Quad] {
     static QUADS: std::sync::OnceLock<
-        std::collections::HashMap<&'static str, Vec<mc_registry::element_quads::Quad>>,
+        std::collections::HashMap<u16, Vec<mc_registry::element_quads::Quad>>,
     > = std::sync::OnceLock::new();
     let map = QUADS.get_or_init(|| {
         crate::world::DOOR_KINDS
-            .chunks_exact(4)
-            .flat_map(|group| {
-                let name = crate::world::NAME_OF[group[0] as usize];
-                [
-                    format!("block/{name}_bottom_left"),
-                    format!("block/{name}_top_left"),
-                    format!("block/{name}_bottom_left_open"),
-                    format!("block/{name}_top_left_open"),
-                ]
-            })
-            .map(|m| {
-                let key: &'static str = Box::leak(m.into_boxed_str());
+            .iter()
+            .map(|&k| {
+                let model = atlas::DOOR_MODEL_BY_ROW[k as usize];
                 (
-                    key,
-                    mc_registry::element_quads::derive_model_inherited(key).unwrap_or_default(),
+                    k,
+                    mc_registry::element_quads::derive_model_inherited(model)
+                        .unwrap_or_default(),
                 )
             })
             .collect()
     });
-    map.get(model_id).map(|v| v.as_slice()).unwrap_or(&[])
+    map.get(&kind).map(|v| v.as_slice()).unwrap_or(&[])
 }
 
-/// THE DOOR MASTERS' OWN TILE PAIRS (the dev-43 round — the twelve
-/// woods' #bottom/#top masters the generated TILE consts bank): the
-/// resolved texture stem the per-wood pair answers (the `_bottom`/
-/// `_top` suffix the pair's own half picks), the non-door stems the
-/// None the caller's fallback keeps.
+/// THE DOOR MASTERS' OWN TILE PAIRS (the dev-43 round, the
+/// autopush-656 round the copper ladder + iron complete — the
+/// seventeen textured bases' #bottom/#top masters the generated
+/// TILE consts bank): the resolved texture stem the per-wood pair
+/// answers (the `_bottom`/`_top` suffix the pair's own half picks;
+/// the WAXED kinds the UNWAXED stems the derived quads carry — the
+/// resolved chain the unwaxed rows the same pairs answer), the
+/// non-door stems the None the caller's fallback keeps.
 fn door_master_tile(tex_stem: &str) -> Option<u16> {
-    const PAIRS: [(&str, u16, u16); 12] = [
+    const PAIRS: [(&str, u16, u16); 17] = [
         ("oak_door", atlas::TILE_OAK_DOOR_BOTTOM, atlas::TILE_OAK_DOOR_TOP),
         ("spruce_door", atlas::TILE_SPRUCE_DOOR_BOTTOM, atlas::TILE_SPRUCE_DOOR_TOP),
         ("birch_door", atlas::TILE_BIRCH_DOOR_BOTTOM, atlas::TILE_BIRCH_DOOR_TOP),
@@ -3387,6 +3377,27 @@ fn door_master_tile(tex_stem: &str) -> Option<u16> {
             atlas::TILE_CRIMSON_DOOR_TOP,
         ),
         ("warped_door", atlas::TILE_WARPED_DOOR_BOTTOM, atlas::TILE_WARPED_DOOR_TOP),
+        (
+            "copper_door",
+            atlas::TILE_COPPER_DOOR_BOTTOM,
+            atlas::TILE_COPPER_DOOR_TOP,
+        ),
+        (
+            "exposed_copper_door",
+            atlas::TILE_EXPOSED_COPPER_DOOR_BOTTOM,
+            atlas::TILE_EXPOSED_COPPER_DOOR_TOP,
+        ),
+        (
+            "weathered_copper_door",
+            atlas::TILE_WEATHERED_COPPER_DOOR_BOTTOM,
+            atlas::TILE_WEATHERED_COPPER_DOOR_TOP,
+        ),
+        (
+            "oxidized_copper_door",
+            atlas::TILE_OXIDIZED_COPPER_DOOR_BOTTOM,
+            atlas::TILE_OXIDIZED_COPPER_DOOR_TOP,
+        ),
+        ("iron_door", atlas::TILE_IRON_DOOR_BOTTOM, atlas::TILE_IRON_DOOR_TOP),
     ];
     let base = tex_stem.strip_suffix("_top").unwrap_or(tex_stem);
     let base = base.strip_suffix("_bottom").unwrap_or(base);
@@ -5153,6 +5164,88 @@ mod tests {
             q5.iter().filter(|quad| quad.tile == bottom).count(),
             4,
             "the solid south neighbor the rotated cullface serves"
+        );
+    }
+
+    #[test]
+    fn the_door_copper_ladder_the_waxed_models_inherit() {
+        // THE COPPER LADDER'S OWN MODEL WALK (the autopush-656 round —
+        // the generated DOOR_MODEL_BY_ROW the blockstate's own rows
+        // resolve: the weathering ladder the OWN per-state models
+        // carries, the WAXED kinds the UNWAXED models the jar's own
+        // rows serve — the waxed_copper_door.json the
+        // block/copper_door_bottom_left model the facing=east row
+        // speaks, the waxed model files NO jar keeps; the per-
+        // oxidization textures the waxed kinds inherit, the mesher's
+        // pair table the resolved stems the unwaxed rows answer)
+        let cell = |x: i32, y: i32, z: i32| {
+            (x as usize)
+                + (z as usize) * CHUNK_X
+                + (y as usize) * CHUNK_X * CHUNK_Z
+        };
+        let variants = |v: u8| -> Vec<Vec<u8>> {
+            let mut g = vec![vec![0u8; CHUNK_X * CHUNK_Y * CHUNK_Z]];
+            g[0][cell(8, 8, 8)] = v;
+            g
+        };
+        // THE OWN MODELS THE WEATHERING LADDER WEARS (the copper
+        // ladder's own per-state masters the TILE consts bank)
+        for (kind, bottom) in [
+            (crate::world::COPPER_DOOR, atlas::TILE_COPPER_DOOR_BOTTOM),
+            (
+                crate::world::EXPOSED_COPPER_DOOR,
+                atlas::TILE_EXPOSED_COPPER_DOOR_BOTTOM,
+            ),
+            (
+                crate::world::WEATHERED_COPPER_DOOR,
+                atlas::TILE_WEATHERED_COPPER_DOOR_BOTTOM,
+            ),
+            (
+                crate::world::OXIDIZED_COPPER_DOOR,
+                atlas::TILE_OXIDIZED_COPPER_DOOR_BOTTOM,
+            ),
+            (crate::world::IRON_DOOR, atlas::TILE_IRON_DOOR_BOTTOM),
+        ] {
+            let mut w = empty_world();
+            put(&mut w, 8, 8, 8, kind);
+            w.variants = Some(variants(0));
+            let q = mesh_chunk(&w, 0, 0, None);
+            assert!(
+                q.iter().any(|quad| quad.tile == bottom),
+                "the kind {kind} the own per-state master wears"
+            );
+        }
+        // THE WAXED KINDS' OWN INHERITANCE (the unwaxed models the
+        // blockstate rows serve — the waxed_copper cell the copper
+        // master meshes, the waxed_oxidized the oxidized master keeps)
+        for (kind, bottom) in [
+            (crate::world::WAXED_COPPER_DOOR, atlas::TILE_COPPER_DOOR_BOTTOM),
+            (
+                crate::world::WAXED_OXIDIZED_COPPER_DOOR,
+                atlas::TILE_OXIDIZED_COPPER_DOOR_BOTTOM,
+            ),
+        ] {
+            let mut w = empty_world();
+            put(&mut w, 8, 8, 8, kind);
+            w.variants = Some(variants(0));
+            let q = mesh_chunk(&w, 0, 0, None);
+            assert!(
+                q.iter().any(|quad| quad.tile == bottom),
+                "the waxed kind {kind} the unwaxed master inherits"
+            );
+        }
+        // THE IRON DOOR'S OWN FACE_TILES ROW (the generated table the
+        // same resolution banks — the kind's own row the fallback
+        // verdict serves)
+        assert_eq!(
+            atlas::FACE_TILES[crate::world::IRON_DOOR as usize][2],
+            atlas::TILE_IRON_DOOR_BOTTOM,
+            "the iron row the own master banks"
+        );
+        assert_eq!(
+            atlas::FACE_TILES[crate::world::WAXED_COPPER_DOOR as usize][2],
+            atlas::TILE_COPPER_DOOR_BOTTOM,
+            "the waxed row the copper master banks"
         );
     }
 

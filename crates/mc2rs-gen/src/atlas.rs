@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 138] = [
+pub const RUNTIME_PALETTE: [&str; 174] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -622,6 +622,45 @@ pub const RUNTIME_PALETTE: [&str; 138] = [
     "bamboo_door", "bamboo_door_upper", "bamboo_door_open", "bamboo_door_upper_open",
     "crimson_door", "crimson_door_upper", "crimson_door_open", "crimson_door_upper_open",
     "warped_door", "warped_door_upper", "warped_door_open", "warped_door_upper_open",
+    // THE DOOR FAMILY'S COPPER LADDER + IRON (the autopush-656 round):
+    // the eight oxidization states the COPPER set type shares — javap
+    // Blocks clinit the 26.2 jar: the four weathering copper doors the
+    // lambda$static$372 factory walks (WeatheringCopperDoorBlock
+    // <init>(BlockSetType.COPPER, weatherState, props) pc 0-9 the
+    // shared set type speaks), the four waxed doors the
+    // lambda$static$371 factory carries (DoorBlock
+    // <init>(BlockSetType.COPPER, props) pc 0-8 — the plain door walk
+    // the weathering the wax the halt wears); the iron door the
+    // BlockSetType.IRON registration banks (canOpenByHand iconst_0
+    // the refusal the set type's own field keeps — the useWithoutItem
+    // walk the PASS the hand press never consumes). The voices the
+    // set types' own pairs speak (the COPPER set type's
+    // COPPER_DOOR_CLOSE/OPEN the block.copper_door.open/close events,
+    // the IRON pair the block.iron_door.open/close events — the hand
+    // never hears the iron's own walk, the wire/redstone echo the
+    // wired lane serves). The blockstates the REAL chain the waxed
+    // ladder serves: the waxed_copper_door.json variants the UNWAXED
+    // models point (waxed_copper_door the block/copper_door_bottom_
+    // left model the facing=east row speaks, the waxed_exposed/
+    // weathered/oxidized the same per-state share wears) — the
+    // per-oxidization textures the waxed kinds inherit, the waxed
+    // models NO jar file keeps (the blockstate's own row the one
+    // resolution the regen and the mesher both walk). The dig rows
+    // the generated table banks (iron_door (5.0, false) the hardness
+    // 5.0 speaks, the copper ladder (3.0, false) the wooden rows the
+    // same shape wears), the loot tables the SAME conditional pool
+    // (survives_explosion + block_state_property half=lower — the
+    // {base}_door item every lower rolls), the items the registry
+    // every door grants.
+    "copper_door", "copper_door_upper", "copper_door_open", "copper_door_upper_open",
+    "exposed_copper_door", "exposed_copper_door_upper", "exposed_copper_door_open", "exposed_copper_door_upper_open",
+    "weathered_copper_door", "weathered_copper_door_upper", "weathered_copper_door_open", "weathered_copper_door_upper_open",
+    "oxidized_copper_door", "oxidized_copper_door_upper", "oxidized_copper_door_open", "oxidized_copper_door_upper_open",
+    "waxed_copper_door", "waxed_copper_door_upper", "waxed_copper_door_open", "waxed_copper_door_upper_open",
+    "waxed_exposed_copper_door", "waxed_exposed_copper_door_upper", "waxed_exposed_copper_door_open", "waxed_exposed_copper_door_upper_open",
+    "waxed_weathered_copper_door", "waxed_weathered_copper_door_upper", "waxed_weathered_copper_door_open", "waxed_weathered_copper_door_upper_open",
+    "waxed_oxidized_copper_door", "waxed_oxidized_copper_door_upper", "waxed_oxidized_copper_door_open", "waxed_oxidized_copper_door_upper_open",
+    "iron_door", "iron_door_upper", "iron_door_open", "iron_door_upper_open",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -849,10 +888,33 @@ fn full_cube_faces(
 /// (the canOpenByHand law the set-type walk already banked). The
 /// list the row arm AND the TILE-const emit both read — the one
 /// table the family's data lanes share.
-const DOOR_FAMILY_BASES: [&str; 12] = [
+const DOOR_FAMILY_BASES: [&str; 21] = [
     "oak_door", "spruce_door", "birch_door", "jungle_door", "acacia_door",
     "dark_oak_door", "mangrove_door", "cherry_door", "pale_oak_door",
     "bamboo_door", "crimson_door", "warped_door",
+    // THE COPPER LADDER + IRON (the autopush-656 round): the eight
+    // oxidization states the COPPER set type shares, the iron door
+    // the canOpenByHand refusal keeps — the blockstate rows the real
+    // chain resolves (the waxed bases the UNWAXED models the jar's
+    // own rows serve).
+    "copper_door", "exposed_copper_door", "weathered_copper_door",
+    "oxidized_copper_door", "waxed_copper_door", "waxed_exposed_copper_door",
+    "waxed_weathered_copper_door", "waxed_oxidized_copper_door", "iron_door",
+];
+
+/// THE DOOR FAMILY'S OWN TEXTURED BASES (the autopush-656 round): the
+/// bases whose #bottom/#top masters exist as jar textures — the
+/// TILE-const emit's walk keys (the WAXED bases the list never
+/// carries: their blockstates the UNWAXED models the real chain
+/// serves, the per-oxidization textures the waxed kinds inherit —
+/// the resolved stem the mesher's pair table the unwaxed rows
+/// answer).
+const DOOR_TEXTURED_BASES: [&str; 17] = [
+    "oak_door", "spruce_door", "birch_door", "jungle_door", "acacia_door",
+    "dark_oak_door", "mangrove_door", "cherry_door", "pale_oak_door",
+    "bamboo_door", "crimson_door", "warped_door",
+    "copper_door", "exposed_copper_door", "weathered_copper_door",
+    "oxidized_copper_door", "iron_door",
 ];
 
 /// The palette row's `{wood}_door` base the family gate answers (the
@@ -866,6 +928,43 @@ fn door_family_base(block: &str) -> Option<&'static str> {
         .iter()
         .copied()
         .find(|b| *b == stem)
+}
+
+/// THE DOOR ROW'S OWN MODEL WALK (the autopush-656 round — the
+/// shared resolution the face arm and the DOOR_MODEL_BY_ROW emit both
+/// read): the blockstate {base}.json's facing=north hinge=LEFT row
+/// the kind-only palette resolves (the ctor's registerDefaultState
+/// pin the hinge-left default speaks), the model ref the
+/// `minecraft:` strip keeps. The WAXED LADDER the UNWAXED models the
+/// jar's own rows serve (waxed_copper_door.json the
+/// block/copper_door_bottom_left model the real chain answers — the
+/// per-oxidization textures the waxed kinds inherit, the waxed model
+/// files NO jar keeps).
+fn door_row_model(
+    archive: &mut zip::ZipArchive<std::io::Cursor<&[u8]>>,
+    base: &str,
+    upper: bool,
+    open: bool,
+) -> Result<String> {
+    let key = format!(
+        "facing=north,half={},hinge=left,open={open}",
+        if upper { "upper" } else { "lower" }
+    );
+    let bs_bytes = read_jar(
+        archive,
+        &format!("assets/minecraft/blockstates/{base}.json"),
+    )?;
+    let bs: Value = serde_json::from_slice(&bs_bytes)
+        .with_context(|| format!("blockstate {base}: json parse"))?;
+    let model_ref = bs
+        .get("variants")
+        .and_then(|v| v.get(&key))
+        .and_then(|v| v.get("model"))
+        .and_then(|m| m.as_str())
+        .with_context(|| format!("blockstate {base}: no {key} model"))?
+        .trim_start_matches("minecraft:")
+        .to_string();
+    Ok(model_ref)
 }
 
 fn resolve_flat_stem(stem: &str, tinted: bool) -> [ResolvedFace; 6] {
@@ -1426,21 +1525,7 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             // ladder and the iron door the next lane's rows wear).
             let upper = block.ends_with("_upper") || block.ends_with("_upper_open");
             let open = block.ends_with("_open");
-            let key = format!("facing=north,half={},hinge=left,open={open}", if upper { "upper" } else { "lower" });
-            let bs_bytes = read_jar(
-                &mut archive,
-                &format!("assets/minecraft/blockstates/{wood_base}.json"),
-            )?;
-            let bs: Value = serde_json::from_slice(&bs_bytes)
-                .with_context(|| format!("blockstate {wood_base}: json parse"))?;
-            let model_ref = bs
-                .get("variants")
-                .and_then(|v| v.get(&key))
-                .and_then(|v| v.get("model"))
-                .and_then(|m| m.as_str())
-                .with_context(|| format!("blockstate {wood_base}: no {key} model"))?
-                .trim_start_matches("minecraft:")
-                .to_string();
+            let model_ref = door_row_model(&mut archive, wood_base, upper, open)?;
             let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
                 .with_context(|| format!("block {wood_base}: model chain {model_ref}"))?;
             let tex = tex_map
@@ -1733,6 +1818,24 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             continue;
         }
         faces.push(resolve_block(&mut archive, block)?);
+    }
+
+    // THE DOOR FAMILY'S OWN MODEL ROWS (the autopush-656 round): the
+    // per-kind model ref the blockstate's own hinge-LEFT facing=north
+    // row speaks — the SECOND pass the same door_row_model walk the
+    // face arm shares (the jar's real chain the waxed ladder the
+    // UNWAXED models serves), the generated table the mesher's bake
+    // reads (the NAME_OF-derived word the waxed kinds the absent
+    // models never answer — the row ref the honest resolution keeps).
+    let mut door_models: Vec<String> = Vec::with_capacity(RUNTIME_PALETTE.len());
+    for block in RUNTIME_PALETTE {
+        if let Some(base) = door_family_base(block) {
+            let upper = block.ends_with("_upper") || block.ends_with("_upper_open");
+            let open = block.ends_with("_open");
+            door_models.push(door_row_model(&mut archive, base, upper, open)?);
+        } else {
+            door_models.push(String::new());
+        }
     }
 
     // Collect unique textures (dedup: dirt is shared by grass bottom etc.)
@@ -2351,6 +2454,22 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         src.push_str(&format!("    [{:#x}, {:#x}, {:#x}, {:#x}, {:#x}, {:#x}],\n", tt[0], tt[1], tt[2], tt[3], tt[4], tt[5]));
     }
     src.push_str("];\n\n");
+    // THE DOOR FAMILY'S OWN MODEL ROWS (the autopush-656 round): the
+    // per-kind model ref the blockstate's hinge-LEFT facing=north row
+    // resolved — the palette-row order the kind ids speak (the
+    // non-door rows the empty string the mesher's door kinds alone
+    // read), the WAXED ladder the UNWAXED models the real chain
+    // serves (the mesher's bake the jar's own resolution keeps — the
+    // NAME_OF-derived word the waxed kinds the absent models never
+    // answer).
+    src.push_str("\n/// The door family's per-kind model refs (the palette-row order the \
+     \x20/// kind ids wear — the non-door rows the empty string keeps; the \
+     \x20/// autopush-656 round the mesher's bake the real chain serves).\n\n");
+    src.push_str("pub const DOOR_MODEL_BY_ROW: [&str; N_KINDS] = [\n");
+    for m in &door_models {
+        src.push_str(&format!("    {:?},\n", m));
+    }
+    src.push_str("];\n\n");
     for (i, bytes) in tile_bytes.iter().enumerate() {
         src.push_str(&format!("static TILE_{}_RGBA: [u8; {}] = [", i, bytes.len()));
         for (j, b) in bytes.iter().enumerate() {
@@ -2452,10 +2571,10 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
     // the palette's own quartet rows bank (the lower's #bottom / the
     // upper's #top refs the flat-stem arms resolve) — the mesher's
     // door lane's per-quad texture verdict the named consts read.
-    // The twelve wooden bases the DOOR_FAMILY_BASES list the row arm
-    // resolves — the copper ladder and the iron door the next lane's
-    // pairs wear.
-    for base in DOOR_FAMILY_BASES {
+    // The seventeen textured bases the DOOR_TEXTURED_BASES list the
+    // emit walks (the waxed bases the unwaxed pairs the resolved
+    // chain shares — no waxed texture the jar keeps).
+    for base in DOOR_TEXTURED_BASES {
         let prefix_base: String = base
             .split('_')
             .map(|w| w.to_uppercase())

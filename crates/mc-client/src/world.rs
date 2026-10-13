@@ -887,8 +887,12 @@ pub const END_STONE: u16 = 89;
 /// the palette rows bank, the kind's own seat the beyond-table 138
 /// the same law keeps (the 655 walk's own precedent the ladder
 /// speaks — the one-row growth the one displacement the ladder
-/// every rung wears)
-pub const END_PORTAL: u16 = 138;
+/// every rung wears). THE SEAT THE COPPER LADDER'S REGEN DISPLACES
+/// AGAIN (the autopush-656 round): the eight copper quartets + the
+/// iron door the 138..173 tail the palette rows bank, the kind's own
+/// seat the beyond-table 174 the same law keeps (the ladder's own
+/// every-rung displacement the growth walk speaks).
+pub const END_PORTAL: u16 = 174;
 
 /// THE OAK DOOR'S OWN CLOSED LOWER (the autopush-655 round — the
 /// vocabulary's next frontier: the right-click open/close the
@@ -1089,6 +1093,97 @@ pub const WARPED_DOOR_UPPER: u16 = 135;
 pub const WARPED_DOOR_OPEN: u16 = 136;
 pub const WARPED_DOOR_UPPER_OPEN: u16 = 137;
 
+// THE DOOR FAMILY'S COPPER LADDER + IRON QUARTETS (the autopush-656
+// round): javap Blocks clinit the 26.2 jar — the four weathering
+// copper doors the lambda$static$372 factory walks
+// (WeatheringCopperDoorBlock <init>(BlockSetType.COPPER,
+// weatherState, props) pc 0-9 the shared set type speaks), the four
+// waxed doors the lambda$static$371 factory carries (DoorBlock
+// <init>(BlockSetType.COPPER, props) pc 0-8 — the plain door walk
+// the weathering the wax the halt wears); the iron door the
+// BlockSetType.IRON registration banks (canOpenByHand iconst_0 the
+// refusal the set type's own field keeps). The blockstates the REAL
+// chain the waxed ladder serves: the waxed_{state}_door.json
+// variants the UNWAXED models point (the waxed kinds the
+// per-oxidization textures inherit — the waxed model files NO jar
+// keeps, the DOOR_MODEL_BY_ROW row the honest resolution carries).
+// The dig rows the generated table banks (iron_door (5.0, false)
+// the hardness 5.0 speaks, the copper ladder (3.0, false) the
+// wooden shape wears), the loot tables the SAME conditional pool
+// (survives_explosion + half=lower — the {base}_door item every
+// lower rolls), the items the registry every door grants.
+
+/// THE COPPER DOOR'S OWN QUARTET (the weathering ladder's base state
+/// — the COPPER set type's block.copper_door voices the family
+/// keeps).
+pub const COPPER_DOOR: u16 = 138;
+pub const COPPER_DOOR_UPPER: u16 = 139;
+pub const COPPER_DOOR_OPEN: u16 = 140;
+pub const COPPER_DOOR_UPPER_OPEN: u16 = 141;
+
+/// THE EXPOSED COPPER DOOR'S OWN QUARTET (the weathering ladder's
+/// first stage — the COPPER set type's voices every state shares).
+pub const EXPOSED_COPPER_DOOR: u16 = 142;
+pub const EXPOSED_COPPER_DOOR_UPPER: u16 = 143;
+pub const EXPOSED_COPPER_DOOR_OPEN: u16 = 144;
+pub const EXPOSED_COPPER_DOOR_UPPER_OPEN: u16 = 145;
+
+/// THE WEATHERED COPPER DOOR'S OWN QUARTET (the weathering ladder's
+/// second stage — the COPPER set type's voices every state shares).
+pub const WEATHERED_COPPER_DOOR: u16 = 146;
+pub const WEATHERED_COPPER_DOOR_UPPER: u16 = 147;
+pub const WEATHERED_COPPER_DOOR_OPEN: u16 = 148;
+pub const WEATHERED_COPPER_DOOR_UPPER_OPEN: u16 = 149;
+
+/// THE OXIDIZED COPPER DOOR'S OWN QUARTET (the weathering ladder's
+/// full stage — the COPPER set type's voices every state shares).
+pub const OXIDIZED_COPPER_DOOR: u16 = 150;
+pub const OXIDIZED_COPPER_DOOR_UPPER: u16 = 151;
+pub const OXIDIZED_COPPER_DOOR_OPEN: u16 = 152;
+pub const OXIDIZED_COPPER_DOOR_UPPER_OPEN: u16 = 153;
+
+/// THE WAXED COPPER DOOR'S OWN QUARTET (the wax the weathering halts
+/// — the blockstate's own row the UNWAXED copper models the real
+/// chain serves, the textures the waxed kinds inherit).
+pub const WAXED_COPPER_DOOR: u16 = 154;
+pub const WAXED_COPPER_DOOR_UPPER: u16 = 155;
+pub const WAXED_COPPER_DOOR_OPEN: u16 = 156;
+pub const WAXED_COPPER_DOOR_UPPER_OPEN: u16 = 157;
+
+/// THE WAXED EXPOSED COPPER DOOR'S OWN QUARTET (the wax the
+/// weathering halts — the exposed state's models the blockstate's
+/// own row serves).
+pub const WAXED_EXPOSED_COPPER_DOOR: u16 = 158;
+pub const WAXED_EXPOSED_COPPER_DOOR_UPPER: u16 = 159;
+pub const WAXED_EXPOSED_COPPER_DOOR_OPEN: u16 = 160;
+pub const WAXED_EXPOSED_COPPER_DOOR_UPPER_OPEN: u16 = 161;
+
+/// THE WAXED WEATHERED COPPER DOOR'S OWN QUARTET (the wax the
+/// weathering halts — the weathered state's models the blockstate's
+/// own row serves).
+pub const WAXED_WEATHERED_COPPER_DOOR: u16 = 162;
+pub const WAXED_WEATHERED_COPPER_DOOR_UPPER: u16 = 163;
+pub const WAXED_WEATHERED_COPPER_DOOR_OPEN: u16 = 164;
+pub const WAXED_WEATHERED_COPPER_DOOR_UPPER_OPEN: u16 = 165;
+
+/// THE WAXED OXIDIZED COPPER DOOR'S OWN QUARTET (the wax the
+/// weathering halts — the oxidized state's models the blockstate's
+/// own row serves).
+pub const WAXED_OXIDIZED_COPPER_DOOR: u16 = 166;
+pub const WAXED_OXIDIZED_COPPER_DOOR_UPPER: u16 = 167;
+pub const WAXED_OXIDIZED_COPPER_DOOR_OPEN: u16 = 168;
+pub const WAXED_OXIDIZED_COPPER_DOOR_UPPER_OPEN: u16 = 169;
+
+/// THE IRON DOOR'S OWN QUARTET (the BlockSetType.IRON registration
+/// the canOpenByHand iconst_0 keeps — the hand press the
+/// useWithoutItem walk the PASS never consumes, the wire/redstone
+/// echo the wired lane the kind swaps serves; the hardness 5.0 the
+/// dig row's own (5.0, false) banks).
+pub const IRON_DOOR: u16 = 170;
+pub const IRON_DOOR_UPPER: u16 = 171;
+pub const IRON_DOOR_OPEN: u16 = 172;
+pub const IRON_DOOR_UPPER_OPEN: u16 = 173;
+
 /// THE SCAN'S OWN SHAPE — the PortalShape verdict the walks bank
 /// (javap PortalShape's own fields the ctor pc 0-115 carries): the
 /// bottom-left interior corner, the width/height the bands answer,
@@ -1203,7 +1298,7 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 }
 
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 138] = [
+pub const NAME_OF: [&str; 174] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1416,8 +1511,8 @@ pub const NAME_OF: [&str; 138] = [
     // lower the item places, the flip walk's open swap the other
     // kinds' own verdicts never re-place)). The END_PORTAL's own row
     // the displaced seat the BEYOND-TABLE law keeps (the hand-only
-    // kind the generated palette never carried — N_KINDS the 138 the
-    // quartet ladder's rows bank, the kind's own seat 138 the both tables'
+    // kind the generated palette never carried — N_KINDS the 174 the
+    // quartet ladder's rows bank, the kind's own seat 174 the both tables'
     // indexing never reaches — the dig row's own -1.0 the unbreakable
     // verdict the NAME_OF read the unreachable law keeps).
     "oak_door", "oak_door", "oak_door", "oak_door",
@@ -1452,6 +1547,26 @@ pub const NAME_OF: [&str; 138] = [
     "bamboo_door", "bamboo_door", "bamboo_door", "bamboo_door",
     "crimson_door", "crimson_door", "crimson_door", "crimson_door",
     "warped_door", "warped_door", "warped_door", "warped_door",
+    // THE COPPER LADDER + IRON'S OWN ROWS (the autopush-656 round):
+    // the same shared-base law every quartet wears — all four kinds
+    // the BASE "{base}_door" name (the jar's ONE registry entry per
+    // door both halves and both open bits the same name speaks: the
+    // dig rows the generated table banks (iron (5.0, false), the
+    // copper ladder (3.0, false)), the sounds' rows the set types'
+    // own pairs answer (the COPPER set type all eight states share,
+    // the IRON pair the refusal keeps), the loot tables the SAME
+    // conditional pool (survives_explosion + half=lower — the
+    // {base}_door item every lower rolls), the item id the
+    // placeable lookup the FIRST row's position answers).
+    "copper_door", "copper_door", "copper_door", "copper_door",
+    "exposed_copper_door", "exposed_copper_door", "exposed_copper_door", "exposed_copper_door",
+    "weathered_copper_door", "weathered_copper_door", "weathered_copper_door", "weathered_copper_door",
+    "oxidized_copper_door", "oxidized_copper_door", "oxidized_copper_door", "oxidized_copper_door",
+    "waxed_copper_door", "waxed_copper_door", "waxed_copper_door", "waxed_copper_door",
+    "waxed_exposed_copper_door", "waxed_exposed_copper_door", "waxed_exposed_copper_door", "waxed_exposed_copper_door",
+    "waxed_weathered_copper_door", "waxed_weathered_copper_door", "waxed_weathered_copper_door", "waxed_weathered_copper_door",
+    "waxed_oxidized_copper_door", "waxed_oxidized_copper_door", "waxed_oxidized_copper_door", "waxed_oxidized_copper_door",
+    "iron_door", "iron_door", "iron_door", "iron_door",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -1735,15 +1850,16 @@ pub fn furnace_facing_byte(cam_yaw_radians: f32) -> u8 {
     FACING_BY_2D[(look + 2) & 3]
 }
 
-/// THE DOOR FAMILY'S OWN KIND LADDER (the dev-43 round — the twelve
-/// wooden doors the oak lane's walk generalizes): the 48 kinds the
-/// named consts bank, each wood the CONTIGUOUS four-kind run (the
-/// closed lower, the closed upper, the open lower, the open upper —
-/// the upper bit = +1, the open bit = +2, the flip mate = ±2 the
-/// arithmetic the helpers wear). The ladder the base walk and the
-/// mesher's model-bake walk both read (the copper ladder and the
-/// iron door the next lane's runs bank).
-pub const DOOR_KINDS: [u16; 48] = [
+/// THE DOOR FAMILY'S OWN KIND LADDER (the dev-43 round, the
+/// autopush-656 round the copper ladder + iron complete — the
+/// twenty-one doors the oak lane's walk generalizes): the 84 kinds
+/// the named consts bank, each door the CONTIGUOUS four-kind run
+/// (the closed lower, the closed upper, the open lower, the open
+/// upper — the upper bit = +1, the open bit = +2, the flip mate =
+/// ±2 the arithmetic the helpers wear). The ladder the base walk
+/// and the mesher's model-bake walk both read (the generated
+/// DOOR_MODEL_BY_ROW the per-kind refs the same ids keep).
+pub const DOOR_KINDS: [u16; 84] = [
     OAK_DOOR,
     OAK_DOOR_UPPER,
     OAK_DOOR_OPEN,
@@ -1792,22 +1908,59 @@ pub const DOOR_KINDS: [u16; 48] = [
     WARPED_DOOR_UPPER,
     WARPED_DOOR_OPEN,
     WARPED_DOOR_UPPER_OPEN,
+    COPPER_DOOR,
+    COPPER_DOOR_UPPER,
+    COPPER_DOOR_OPEN,
+    COPPER_DOOR_UPPER_OPEN,
+    EXPOSED_COPPER_DOOR,
+    EXPOSED_COPPER_DOOR_UPPER,
+    EXPOSED_COPPER_DOOR_OPEN,
+    EXPOSED_COPPER_DOOR_UPPER_OPEN,
+    WEATHERED_COPPER_DOOR,
+    WEATHERED_COPPER_DOOR_UPPER,
+    WEATHERED_COPPER_DOOR_OPEN,
+    WEATHERED_COPPER_DOOR_UPPER_OPEN,
+    OXIDIZED_COPPER_DOOR,
+    OXIDIZED_COPPER_DOOR_UPPER,
+    OXIDIZED_COPPER_DOOR_OPEN,
+    OXIDIZED_COPPER_DOOR_UPPER_OPEN,
+    WAXED_COPPER_DOOR,
+    WAXED_COPPER_DOOR_UPPER,
+    WAXED_COPPER_DOOR_OPEN,
+    WAXED_COPPER_DOOR_UPPER_OPEN,
+    WAXED_EXPOSED_COPPER_DOOR,
+    WAXED_EXPOSED_COPPER_DOOR_UPPER,
+    WAXED_EXPOSED_COPPER_DOOR_OPEN,
+    WAXED_EXPOSED_COPPER_DOOR_UPPER_OPEN,
+    WAXED_WEATHERED_COPPER_DOOR,
+    WAXED_WEATHERED_COPPER_DOOR_UPPER,
+    WAXED_WEATHERED_COPPER_DOOR_OPEN,
+    WAXED_WEATHERED_COPPER_DOOR_UPPER_OPEN,
+    WAXED_OXIDIZED_COPPER_DOOR,
+    WAXED_OXIDIZED_COPPER_DOOR_UPPER,
+    WAXED_OXIDIZED_COPPER_DOOR_OPEN,
+    WAXED_OXIDIZED_COPPER_DOOR_UPPER_OPEN,
+    IRON_DOOR,
+    IRON_DOOR_UPPER,
+    IRON_DOOR_OPEN,
+    IRON_DOOR_UPPER_OPEN,
 ];
 
 /// THE QUARTET'S OWN BASE (the run the id's seat answers — the walk
 /// every door helper's arithmetic reads): the containing quartet's
 /// closed-lower base the Some wears (the ladder's own position the
-/// %4 floor speaks — the twelve groups the four-rung chunks keep),
-/// the non-door kinds the None the predicates' false keeps.
+/// %4 floor speaks — the twenty-one groups the four-rung chunks
+/// keep), the non-door kinds the None the predicates' false keeps.
 pub fn door_quartet_base(id: u16) -> Option<u16> {
     let pos = DOOR_KINDS.iter().position(|&k| k == id)?;
     Some(DOOR_KINDS[pos - pos % 4])
 }
 
 /// THE DOOR FAMILY'S OWN PREDICATE (the autopush-655 round, the
-/// dev-43 wood generalization — the twelve quartets the two-halves x
-/// two-open-bits ladder wears: the closed lower/upper the placement
-/// lands, the open pair the flip walk's kind swaps wear).
+/// dev-43 + autopush-656 generalization — the twenty-one quartets
+/// the two-halves x two-open-bits ladder wears: the closed
+/// lower/upper the placement lands, the open pair the flip walk's
+/// kind swaps wear).
 pub fn is_door(id: u16) -> bool {
     door_quartet_base(id).is_some()
 }
@@ -1889,8 +2042,23 @@ pub fn door_voice_stem(id: u16) -> &'static str {
         BAMBOO_DOOR..=BAMBOO_DOOR_UPPER_OPEN => "block.bamboo_wood_door",
         CRIMSON_DOOR..=CRIMSON_DOOR_UPPER_OPEN
         | WARPED_DOOR..=WARPED_DOOR_UPPER_OPEN => "block.nether_wood_door",
+        COPPER_DOOR..=WAXED_OXIDIZED_COPPER_DOOR_UPPER_OPEN => "block.copper_door",
+        IRON_DOOR..=IRON_DOOR_UPPER_OPEN => "block.iron_door",
         _ => "block.wooden_door",
     }
+}
+
+/// THE DOOR'S OWN HAND GATE (javap DoorBlock.useWithoutItem pc 0-13
+/// over the 26.2 jar — the `canOpenByHand()` read the PASS the iron
+/// door's own refusal keeps: the BlockSetType.IRON the iconst_0
+/// field the ctor's first boolean carries, the BlockSetType.COPPER
+/// the iconst_1 the copper ladder's PASS speaks — the wooden
+/// families the single-arg ctor's iconst_1 the delegations carry).
+/// The offline flip walk the gate reads: the iron pair the false
+/// answer (the press the PASS never consumes — the item lanes
+/// follow), every wooden + copper door the true the swap serves.
+pub fn door_opens_by_hand(id: u16) -> bool {
+    !matches!(id, IRON_DOOR..=IRON_DOOR_UPPER_OPEN)
 }
 
 /// THE DOOR'S OWN PLACEMENT FACING (javap DoorBlock.getStateForPlacement
@@ -8958,7 +9126,7 @@ mod tests {
         assert_eq!(OAK_DOOR_UPPER, 91);
         assert_eq!(OAK_DOOR_OPEN, 92);
         assert_eq!(OAK_DOOR_UPPER_OPEN, 93);
-        assert_eq!(END_PORTAL, 138, "the displaced seat the wood ladder's tail banks");
+        assert_eq!(END_PORTAL, 174, "the displaced seat the copper ladder's tail banks");
         // THE WOOD LADDER'S OWN SEATS (the dev-43 round — the eleven
         // quartets the CONTIGUOUS tail the kind ids 94..137 wear: the
         // closed lower + 0, the closed upper + 1, the open lower + 2,
@@ -8975,6 +9143,15 @@ mod tests {
             (BAMBOO_DOOR, "bamboo"),
             (CRIMSON_DOOR, "crimson"),
             (WARPED_DOOR, "warped"),
+            (COPPER_DOOR, "copper"),
+            (EXPOSED_COPPER_DOOR, "exposed_copper"),
+            (WEATHERED_COPPER_DOOR, "weathered_copper"),
+            (OXIDIZED_COPPER_DOOR, "oxidized_copper"),
+            (WAXED_COPPER_DOOR, "waxed_copper"),
+            (WAXED_EXPOSED_COPPER_DOOR, "waxed_exposed_copper"),
+            (WAXED_WEATHERED_COPPER_DOOR, "waxed_weathered_copper"),
+            (WAXED_OXIDIZED_COPPER_DOOR, "waxed_oxidized_copper"),
+            (IRON_DOOR, "iron"),
         ] {
             assert_eq!(
                 door_flip_mate(base),
@@ -9003,7 +9180,33 @@ mod tests {
                 "the {name} item the closed lower places"
             );
         }
-        assert_eq!(DOOR_KINDS.len(), 48, "the twelve quartets the ladder banks");
+        assert_eq!(DOOR_KINDS.len(), 84, "the twenty-one quartets the ladder banks");
+        // THE HAND GATE'S OWN LAW (javap canOpenByHand the set type's
+        // own field — the iron iconst_0 the refusal, the wooden +
+        // copper families the iconst_1 the delegations and the full
+        // ctors carry)
+        for id in DOOR_KINDS {
+            assert_eq!(
+                crate::world::door_opens_by_hand(id),
+                !matches!(id, IRON_DOOR..=IRON_DOOR_UPPER_OPEN),
+                "the kind {id} the iron refusal alone wears"
+            );
+        }
+        assert_eq!(
+            crate::world::door_voice_stem(COPPER_DOOR),
+            "block.copper_door",
+            "the copper ladder's shared voice the set type speaks"
+        );
+        assert_eq!(
+            crate::world::door_voice_stem(WAXED_OXIDIZED_COPPER_DOOR_UPPER),
+            "block.copper_door",
+            "the waxed kinds the COPPER set type's voice keeps"
+        );
+        assert_eq!(
+            crate::world::door_voice_stem(IRON_DOOR_OPEN),
+            "block.iron_door",
+            "the iron pair's own voice the IRON set type banks"
+        );
         // THE LADDER'S OWN GROUPS (the %4 floor the base walk reads —
         // each rung the named const the quartet's own seat keeps)
         for (i, kind) in DOOR_KINDS.iter().enumerate() {
@@ -9039,7 +9242,7 @@ mod tests {
         for id in [OAK_DOOR, OAK_DOOR_UPPER, OAK_DOOR_OPEN, OAK_DOOR_UPPER_OPEN] {
             assert_eq!(NAME_OF[id as usize], "oak_door", "kind {id} the base row wears");
         }
-        assert_eq!(NAME_OF.len(), 138, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 174, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)

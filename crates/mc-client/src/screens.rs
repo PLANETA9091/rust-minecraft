@@ -36235,6 +36235,16 @@ impl App {
                 .filter(|k| crate::world::is_door(*k))
         };
         if let Some(kind) = door_cell {
+            // THE HAND GATE'S OWN REFUSAL (javap DoorBlock.useWithoutItem
+            // pc 0-13 the 26.2 jar — the canOpenByHand() read the PASS
+            // the iron door's own refusal keeps: the BlockSetType.IRON
+            // the iconst_0 field speaks, the press the PASS the item
+            // lanes follow — the wire/redstone echo the wired lane the
+            // kind swaps serves, the hand the offline walk the gate
+            // never arms)
+            if !crate::world::door_opens_by_hand(kind) {
+                return false;
+            }
             let Some(flip) = crate::world::door_flip_mate(kind) else {
                 return false;
             };
@@ -101426,8 +101436,8 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            138,
-            "the palette the wood ladder's own tail rows bank"
+            174,
+            "the palette the copper ladder's own tail rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
         assert_eq!(atlas::KIND_NAMES[wool as usize], "white_wool");
@@ -101507,8 +101517,8 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            138,
-            "the palette the wood ladder's own tail rows bank"
+            174,
+            "the palette the copper ladder's own tail rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
         assert_eq!(atlas::REGISTRY_NAMES[sand as usize], "soul_sand");
@@ -101809,8 +101819,8 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            138,
-            "the palette the wood ladder's own tail rows bank"
+            174,
+            "the palette the copper ladder's own tail rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
         assert_eq!(atlas::REGISTRY_NAMES[honey as usize], "honey_block");
@@ -105417,6 +105427,101 @@ cow_sound_variant: None,
                 .iter()
                 .any(|e| e.starts_with("block.nether_wood_door.open")),
             "the crimson voice the NETHER_WOOD pair speaks"
+        );
+    }
+
+    #[test]
+    fn the_door_the_iron_refusal_and_the_copper_voice_wear() {
+        // THE IRON DOOR'S OWN REFUSAL (javap DoorBlock.useWithoutItem
+        // pc 0-13 the 26.2 jar — the canOpenByHand() read the PASS the
+        // BlockSetType.IRON's iconst_0 field keeps: the hand press the
+        // flip never arms, both halves the kinds the refusal keeps,
+        // the voice the walk never plays; the wire/redstone echo the
+        // wired lane the kind swaps serves). THE COPPER LADDER'S OWN
+        // PASS (the iconst_1 the set type carries — the hand press
+        // the both-halves swap the block.copper_door.open voice
+        // speaks)
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -3..=3 {
+                for dz in -3..=3 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(c, top, c, crate::world::IRON_DOOR);
+            w.set(c, top + 1, c, crate::world::IRON_DOOR_UPPER);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let consumed = app.on_right_press(0, 0);
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c),
+                crate::world::IRON_DOOR,
+                "the iron lower the refusal keeps ({consumed})"
+            );
+            assert_eq!(
+                w.get(c, top + 1, c),
+                crate::world::IRON_DOOR_UPPER,
+                "the iron upper the refusal keeps"
+            );
+        }
+        assert!(
+            !app
+                .sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.iron_door")),
+            "the iron voice the refusal never plays"
+        );
+        assert!(
+            !app.game_events.iter().any(|l| l.starts_with("block_open @")),
+            "the iron press the vibration never posts"
+        );
+        // THE COPPER DOOR'S OWN FLIP (the iconst_1 the set type
+        // carries — the both halves the quartet arithmetic swaps, the
+        // block.copper_door.open voice the COPPER pair plays)
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c + 2, top, c + 2, crate::world::COPPER_DOOR);
+            w.set(c + 2, top + 1, c + 2, crate::world::COPPER_DOOR_UPPER);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 2.5, top as f32 + 4.0, c as f32 + 2.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the copper flip consumed");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 2, top, c + 2),
+                crate::world::COPPER_DOOR_OPEN,
+                "the copper lower's own cycle the open kind wears"
+            );
+            assert_eq!(
+                w.get(c + 2, top + 1, c + 2),
+                crate::world::COPPER_DOOR_UPPER_OPEN,
+                "the copper upper's sync the Y-arm answers"
+            );
+        }
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.copper_door.open")),
+            "the copper voice the COPPER pair speaks"
         );
     }
 
