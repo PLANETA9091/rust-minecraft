@@ -23140,11 +23140,17 @@ impl App {
     /// ([`Self::click_inventory_slot`]'s geometry — the cursor the Q
     /// reads, not the store index); the headless scenes track no mouse
     /// (`mouse_pos` None — silence, the goldens never see the pass).
-    /// The wire sessions refuse (the store the server owns — the
-    /// inventory window's click lane rides later).
+    /// The wire sessions the [`Self::on_inventory_drop_key_wire`] walk
+    /// answers (the store the server owns — the same geometry the
+    /// BELIEF reads, the ServerboundContainerClickPacket the click
+    /// lane's command channel carries).
     pub fn on_inventory_drop_key(&mut self, whole_stack: bool) {
         if self.world_is_network {
-            return; // the wire's inventory window lane rides later
+            // THE WIRE GATE: the live session's Q the BELIEF the same
+            // doClick THROW arm answers, the packet the command lane
+            // speaks — the offline store NOT the truth there.
+            self.on_inventory_drop_key_wire(whole_stack);
+            return;
         }
         if self.screen != ScreenKind::Inventory {
             return; // this lane IS the container screen's own walk
@@ -23218,6 +23224,52 @@ impl App {
         self.hotbar_slots = self.inventory.hotbar();
         // NO swing — the keyPressed chain the handleKeybinds arm never
         // rides; the container STAYS OPEN (only the close keys close it).
+    }
+
+    /// THE WIRE GATE'S OWN WALK (the offline walk's twin — the same
+    /// keyPressed gate chain, the LIVE store's belief the doClick THROW
+    /// arm answers): the hovered+hasItem gates the SAME geometry walk
+    /// the offline lane keeps — and the packet lane they gate (the
+    /// slotClicked call the keyPressed walk keeps once the gates
+    /// passed, the [`wire_inventory_drop`] free fn rides — the frame
+    /// thread's disjoint field borrows, the swap lane's own shape).
+    /// The null hover, the no-panel and the EMPTY hovered slot the
+    /// silence keeps (the hasItem gate lives in the keyPressed chain —
+    /// the slotClicked call never fires); the CARRIED cursor the
+    /// doClick arm's own refusal the ALWAYS-PACKET law names (the
+    /// empty changed map the menu's untouched state keeps — the
+    /// bytecode 1450-1465 the cursor gate the walk opens with).
+    fn on_inventory_drop_key_wire(&mut self, whole_stack: bool) {
+        // THE HOVERED-SLOT GATES (the keyPressed chain's own shape —
+        // the panel the render never spoke, the cursor the frame
+        // stream never fed, the hover between the slots: the null
+        // verdict the silence keeps)
+        if self.inv_panel == (0, 0) {
+            return;
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return;
+        };
+        let Some(hover) = self.inventory_hover(mx, my) else {
+            return;
+        };
+        let hover_menu = inventory_hover_menu_id(hover);
+        let (_, count) = self.live_inv_slots[hover_menu];
+        if count <= 0 {
+            return; // hoveredSlot.hasItem()'s own gate — silence
+        }
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return; // no live session — the command dies on the frame thread
+        };
+        wire_inventory_drop(
+            sink,
+            &mut self.live_inv_slots,
+            &mut self.hotbar_slots,
+            hover_menu,
+            if whole_stack { 1 } else { 0 },
+            self.live_inv_state_id,
+            self.live_inv_carried,
+        );
     }
 
     /// THE SURVIVAL SCREEN'S OWN HOTBAR KEYS (javap 26.2 — the 2dc72797
@@ -48862,6 +48914,85 @@ fn wire_inventory_swap(
             slot: hover_menu as i16,
             button: button as i8,
             input: crate::world_view::ContainerInput::Swap,
+            changed,
+            carried,
+        },
+    ));
+}
+
+/// THE Q KEY'S OWN WIRE WALK (javap 26.2 — the 2dc72797 jar's own
+/// classes speak: AbstractContainerMenu.doClick THROW pcs 1450-1605
+/// the table the BELIEF answers, over the window-0 projection the
+/// [`App::on_inventory_drop_key_wire`] gate feeds): the carried gate
+/// the walk opens with (`getCarried().isEmpty()` — the bytecode
+/// 1450-1465 the cursor pair answers, the refused gate the EMPTY
+/// changed map the ALWAYS-PACKET law names), the slotIndex >= 0 the
+/// hovered seat's own menu id speaks (the 0..45 seat list the
+/// negative NEVER wears), the COUNT law the button byte keys (`count
+/// = button == 0 ? 1 : slot.getItem().getCount()` — the plain Q
+/// exactly ONE, the Ctrl the slot's WHOLE count), the canDropItems()
+/// survival verdict the game-mode gate keeps (the creative player the
+/// picker screen alone wears — this lane the survival store answers),
+/// the `slot.safeTake(count, Integer.MAX_VALUE, player)` the tryRemove
+/// law answers (`min(count, decrement)` — the whole stack the cell
+/// EMPTIES, the one off the remainder keeps), and the taken the
+/// `player.drop(taken, true)` walk throws — the AIMED look drop the
+/// SERVER's own body speaks (the wire's own Add Entity lane — the
+/// offline stand-in's local spawn never rides, the client-side drop
+/// prediction the wire lane never duplicates). THE PACKET ALWAYS
+/// RIDES (the slotClicked call the keyPressed walk keeps once the
+/// hovered+hasItem gates passed — the carried cursor the doClick
+/// arm's own refusal the EMPTY changed map names, the cursor pair the
+/// THROW arm never touches). The HUD row's belief the every-mutation
+/// law syncs (the hotbar's menu ids 36..44 the row's own slice — the
+/// armor/offhand/craft seats the row never wears). A free function —
+/// the frame thread's disjoint field borrows (the live_clicks sink
+/// stays held across the walk, the chest lane's own shape).
+fn wire_inventory_drop(
+    sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
+    live_slots: &mut [(i32, i32); crate::world_view::INVENTORY_MENU_SLOTS],
+    hotbar: &mut [(i32, i32); 9],
+    menu: usize,
+    button: i8,
+    state_id: i32,
+    carried: (i32, i32),
+) {
+    debug_assert!(
+        button == 0 || button == 1,
+        "the THROW input's own button law"
+    );
+    debug_assert!(menu < crate::world_view::INVENTORY_MENU_SLOTS, "the seat");
+    let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
+    if carried.1 == 0 {
+        // THE TAKE WALK (the safeArm's own tryRemove law — the whole
+        // stack the cell empties, the one off the remainder keeps)
+        let (id, count) = live_slots[menu];
+        debug_assert!(count > 0, "the hasItem gate the caller keeps");
+        let take = if button == 0 { 1 } else { count };
+        let new = if take >= count { (0, 0) } else { (id, count - take) };
+        live_slots[menu] = new;
+        note_batch_change(&mut changed, menu as i16, new);
+        // THE HUD ROW'S BELIEF (the every-mutation law — the hotbar
+        // menu ids 36..44 the row's own slice)
+        if (36..45).contains(&menu) {
+            let mut row = [(0, 0); 9];
+            row.copy_from_slice(&live_slots[36..45]);
+            *hotbar = row;
+        }
+        // THE DROP ENTITY the server spawns (the player.drop walk the
+        // wire's Add Entity lane answers — no local spawn)
+    }
+    // THE PACKET ALWAYS RIDES (the slotClicked call the keyPressed
+    // walk keeps once the hovered+hasItem gates passed — the carried
+    // cursor's refusal the EMPTY changed map names, the cursor pair
+    // the THROW arm never touches)
+    let _ = sink.send(crate::world_view::ContainerCommand::Click(
+        crate::world_view::ContainerClick {
+            window_id: 0,
+            state_id,
+            slot: menu as i16,
+            button,
+            input: crate::world_view::ContainerInput::Throw,
             changed,
             carried,
         },
@@ -109789,6 +109920,193 @@ cow_sound_variant: None,
             }
             other => panic!("expected a container click, got {other:?}"),
         }
+    }
+
+    /// THE DROP KEY'S OWN WIRE (the Q the LIVE session speaks — the
+    /// doClick THROW arm over the belief): the plain Q the ONE item
+    /// takes (the count law the button 0 keys, the remainder the cell
+    /// keeps), the packet the hovered seat's own menu id names, the
+    /// changed map the walk's ACTUAL mutation carries, the offline
+    /// store the wire world never touches, the cursor pair the THROW
+    /// arm never touches, the screen stays.
+    #[test]
+    fn the_wire_drop_key_the_one_off_the_packet_wears() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        // the window-0 sync: store 12 (menu 12) carries 32 dirt, the
+        // revision 7 the packets spoke last, the cursor empty
+        let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        slots[12] = (dirt, 32);
+        app.live_inventory_updated(slots, Vec::new(), 7, (0, 0));
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 12);
+        app.mouse_pos = Some((ox + 8, oy + 8));
+        app.on_inventory_drop_key(false);
+        assert_eq!(app.live_inv_slots[12], (dirt, 31), "the one off rode");
+        assert_eq!(
+            app.inventory.items[12], (0, 0),
+            "the offline store the wire world never touches"
+        );
+        assert_eq!(app.screen, ScreenKind::Inventory, "the screen stays");
+        assert_eq!(app.live_inv_carried, (0, 0), "the cursor never touched");
+        match click_rx.try_recv().expect("the packet rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 0, "the player's OWN menu the ctor pins");
+                assert_eq!(c.state_id, 7, "the revision the feed spoke");
+                assert_eq!(c.slot, 12, "the hovered seat's own menu id");
+                assert_eq!(c.button, 0, "the plain Q the button byte keys");
+                assert_eq!(
+                    c.input,
+                    crate::world_view::ContainerInput::Throw,
+                    "the THROW input the keyPressed walk speaks"
+                );
+                assert_eq!(
+                    c.changed,
+                    vec![(12, (dirt, 31))],
+                    "the walk's own mutation the changed map names"
+                );
+                assert_eq!(c.carried, (0, 0), "the cursor pair rides unchanged");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+
+    /// THE DROP KEY'S OWN WIRE, THE CTRL ARM AND THE HUD ROW (the
+    /// whole-stack law the button 1 keys): the hotbar row's stack the
+    /// Ctrl+Q empties WHOLE (the safeTake(count, MAX) walk), the HUD
+    /// row's belief the every-mutation law syncs, the armor seat the
+    /// same walk answers (the menu 5's own pair the packet names).
+    #[test]
+    fn the_wire_drop_key_the_ctrl_the_hud_and_the_armor_wear() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let helmet = mc_registry::item_id_by_name("iron_helmet").unwrap();
+        let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        slots[40] = (stone, 7); // the hotbar row 4 (store 4 → menu 40)
+        slots[5] = (helmet, 1); // the armor seat k=0 → menu 5
+        app.live_inventory_updated(slots, Vec::new(), 3, (0, 0));
+        // THE CTRL+Q OVER THE HOTBAR ROW: the whole stack gone, the
+        // HUD row's belief synced
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 4);
+        app.mouse_pos = Some((ox + 8, oy + 8));
+        app.on_inventory_drop_key(true);
+        assert_eq!(app.live_inv_slots[40], (0, 0), "the whole stack gone");
+        assert_eq!(app.hotbar_slots[4], (0, 0), "the HUD belief synced");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 40, "the hotbar row's own menu id");
+                assert_eq!(c.button, 1, "the Ctrl the button byte keys");
+                assert_eq!(c.changed, vec![(40, (0, 0))]);
+                assert_eq!(c.carried, (0, 0));
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE ARMOR SEAT (the menu 5): the plain Q the ONE off — the
+        // piece's own count 1 the whole-take arm empties, the HUD row
+        // the armor seat never wears
+        let (ax, ay) = armor_slot_origin(app.inv_panel, 0);
+        app.mouse_pos = Some((ax + 8, ay + 8));
+        app.on_inventory_drop_key(false);
+        assert_eq!(app.live_inv_slots[5], (0, 0), "the piece gone");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 5, "the armor seat's own menu id");
+                assert_eq!(c.button, 0);
+                assert_eq!(c.changed, vec![(5, (0, 0))]);
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+
+    /// THE DROP KEY'S OWN WIRE, THE GATES AND THE ALWAYS PACKET (the
+    /// keyPressed chain's own shape over the belief): the EMPTY hovered
+    /// slot the silence keeps (the hasItem gate lives in the keyPressed
+    /// walk — the slotClicked call never fires, NO packet), the CARRIED
+    /// cursor the doClick arm's own refusal the ALWAYS-PACKET law names
+    /// (the empty changed map the menu's untouched state keeps, the
+    /// belief whole), the null hover and the no-panel the same
+    /// refusals speak.
+    #[test]
+    fn the_wire_drop_key_the_gates_and_the_always_packet_wear() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        slots[20] = (stone, 5);
+        app.live_inventory_updated(slots, Vec::new(), 2, (0, 0));
+        // THE EMPTY HOVERED SLOT (the hasItem gate lives in the
+        // keyPressed chain): store 13 empty — the silence, NO packet
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 13);
+        app.mouse_pos = Some((ox + 8, oy + 8));
+        app.on_inventory_drop_key(false);
+        assert_eq!(app.live_inv_slots[13], (0, 0), "the cell whole");
+        assert!(
+            click_rx.try_recv().is_err(),
+            "the hasItem gate the packet lane never passes"
+        );
+        // THE CARRIED CURSOR (the doClick THROW's own isEmpty gate):
+        // the packet STILL rides (the slotClicked call the keyPressed
+        // walk keeps once the hovered+hasItem gates passed), the EMPTY
+        // changed map the untouched state keeps, the belief whole
+        let (sx, sy) = inventory_slot_origin(app.inv_panel, 20);
+        app.mouse_pos = Some((sx + 8, sy + 8));
+        app.live_inv_carried = (stone, 5);
+        app.on_inventory_drop_key(true);
+        assert_eq!(app.live_inv_slots[20], (stone, 5), "the belief whole");
+        match click_rx.try_recv().expect("the always packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 20, "the hovered seat's own menu id");
+                assert_eq!(c.button, 1, "the Ctrl the byte keeps");
+                assert_eq!(
+                    c.input,
+                    crate::world_view::ContainerInput::Throw
+                );
+                assert!(
+                    c.changed.is_empty(),
+                    "the refused arm the untouched state keeps"
+                );
+                assert_eq!(
+                    c.carried,
+                    (stone, 5),
+                    "the cursor pair rides unchanged"
+                );
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        app.live_inv_carried = (0, 0);
+        // THE NULL HOVER (the hoveredSlot null arm): the cursor between
+        // the slots
+        app.mouse_pos = Some((332, 157));
+        app.on_inventory_drop_key(false);
+        assert!(click_rx.try_recv().is_err(), "still silence");
+        // THE NO-PANEL (the render never spoke): the gate keeps
+        let panel = app.inv_panel;
+        app.inv_panel = (0, 0);
+        app.on_inventory_drop_key(false);
+        assert!(click_rx.try_recv().is_err(), "still silence");
+        app.inv_panel = panel;
     }
 
     /// THE SWAP WIRE'S OWN CASE C (the SPLIT law the max wears): the
