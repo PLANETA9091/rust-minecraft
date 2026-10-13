@@ -3736,9 +3736,16 @@ fn health_view(model: &WorldModel) -> HealthView {
     // THE ATTRIBUTE ROW'S OWN LIFT (the Update Attributes packets'
     // filtered truth — the local player's mining_efficiency seat the
     // model's own store banks, the dig walk's addend the value
-    // feeds; the absent row the 0.0 identity keeps)
+    // feeds; the absent row the 0.0 identity keeps). THE ROW'S OWN
+    // SILENCE the HELD STACK'S OWN FOLD answers (the OFFLINE SIM —
+    // the enchant's levels_squared the client's own held-stack
+    // components lane speaks, the set-slot lane's ENCHANTMENTS
+    // component the store banks, the efficiency seat the level the
+    // fold wears): the server's row the authority keeps, the
+    // neither state the 0.0 identity keeps
     v.mining_efficiency = model
         .own_attribute_value(mc_protocol::play::attributes::MINING_EFFICIENCY)
+        .or_else(|| model.held_stack_efficiency())
         .unwrap_or(0.0);
     // THE MULTIPLY LANES' OWN LIFTS (the same packets' rows — the
     // block_break_speed the fatigue fold's follower, the
@@ -9954,6 +9961,79 @@ mod tests {
             list.names,
             vec!["Alice", "Zed"],
             "the removal the roster drops"
+        );
+    }
+
+    /// THE VITALS VIEW'S OWN OFFLINE SIM (the attribute rows' held
+    /// stack's fold the lift wears): the server's row the authority
+    /// keeps, the row's SILENCE the held stack's own efficiency the
+    /// answer serves (the set-slot lane's ENCHANTMENTS patch the
+    /// store banks), the neither state the 0.0 identity keeps.
+    #[test]
+    fn the_mining_efficiency_the_row_or_the_held_fold_wears() {
+        use mc_protocol::play::data_component_types as d;
+        use mc_protocol::play::enchantments;
+        use mc_protocol::{ComponentPatch, ComponentValue, ContainerSetSlot, ItemStack};
+
+        let mut model = WorldModel::new();
+        // THE NEITHER STATE: no row, no held stack — the 0.0 identity
+        model.apply(PlayEvent::WorldInfo(WorldInfo {
+            entity_id: 17,
+            hardcore: false,
+            dimensions: vec!["minecraft:overworld".to_string()],
+            view_distance: 8,
+            simulation_distance: 8,
+            portal_cooldown: 300,
+            current_dimension: "minecraft:overworld".to_string(),
+        }));
+        let v = health_view(&model);
+        assert!(
+            (v.mining_efficiency - 0.0).abs() < 1e-9,
+            "the neither state the 0.0 keeps"
+        );
+        // THE ROW'S OWN SILENCE, THE HELD STACK'S OWN SPEAK: the
+        // enchanted stack rides the held slot, the lift the fold's
+        // E3 10.0 answers (the server's row never landed)
+        model.apply(PlayEvent::ContainerSlotSet(ContainerSetSlot {
+            container_id: 0,
+            state_id: 1,
+            slot: 36,
+            item: ItemStack {
+                count: 1,
+                item_id: 745,
+                patch: ComponentPatch {
+                    added: vec![(
+                        d::ENCHANTMENTS,
+                        ComponentValue::Enchantments(vec![(enchantments::EFFICIENCY, 3)]),
+                    )],
+                    removed: Vec::new(),
+                },
+            },
+        }));
+        let v = health_view(&model);
+        assert!(
+            (v.mining_efficiency - 10.0).abs() < 1e-9,
+            "the held stack's E3 the fold's 10.0 wears"
+        );
+        // THE ROW'S OWN AUTHORITY: the server's row lands, the lift
+        // the row's 26.0 keeps — the held fold the or_else's law
+        // never fires
+        model.apply(PlayEvent::EntityAttributes(mc_protocol::UpdateAttributes {
+            entity_id: 17,
+            entries: vec![mc_protocol::AttributeSnapshot {
+                attribute_id: mc_protocol::play::attributes::MINING_EFFICIENCY,
+                base: 0.0,
+                modifiers: vec![mc_protocol::play::AttributeModifier {
+                    id: "minecraft:efficiency".to_string(),
+                    amount: 26.0,
+                    operation: 0,
+                }],
+            }],
+        }));
+        let v = health_view(&model);
+        assert!(
+            (v.mining_efficiency - 26.0).abs() < 1e-9,
+            "the row the authority, the held fold the silence keeps"
         );
     }
 }

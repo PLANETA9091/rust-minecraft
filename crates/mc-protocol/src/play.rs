@@ -291,6 +291,78 @@ pub mod attributes {
     pub const SUBMERGED_MINING_SPEED: i32 = 34;
 }
 
+/// THE ENCHANTMENT REGISTRY'S OWN WIRE TABLE (javap the 26.2 jar —
+/// `Enchantments.bootstrap` the register calls' order the seats speak,
+/// the same law the [`attributes`] table's clinit walk banks): the
+/// bootstrap's `register(context, KEY, builder)` invocations run the
+/// field order verbatim (PROTECTION the first call, VANISHING_CURSE
+/// the 43rd), the BuiltInRegistries.ENCHANTMENT boot the registration
+/// order the ids assign — the index IS the wire id the ENCHANTMENTS
+/// component's map keys carry (`ByteBufCodecs.map` the {key VarInt,
+/// value VarInt} pairs the component parse walks). THE DIG WALK'S OWN
+/// SEAT: the EFFICIENCY enchantment (seat 20) — the
+/// mining_efficiency attribute's levels_squared amount the held
+/// stack's own ENCHANTMENTS component speaks (the data-driven
+/// `minecraft:efficiency` row the attribute effect banks), the
+/// offline sim the attribute row's silence answers.
+pub mod enchantments {
+    /// The full 26.2 wire table — the bootstrap's register order
+    /// verbatim, the index IS the wire id (the VarInt the component
+    /// map's keys carry).
+    pub const WIRE_ORDER: [&str; 43] = [
+        "protection",
+        "fire_protection",
+        "feather_falling",
+        "blast_protection",
+        "projectile_protection",
+        "respiration",
+        "aqua_affinity",
+        "thorns",
+        "depth_strider",
+        "frost_walker",
+        "binding_curse",
+        "soul_speed",
+        "swift_sneak",
+        "sharpness",
+        "smite",
+        "bane_of_arthropods",
+        "knockback",
+        "fire_aspect",
+        "looting",
+        "sweeping_edge",
+        "efficiency",
+        "silk_touch",
+        "unbreaking",
+        "fortune",
+        "power",
+        "punch",
+        "flame",
+        "infinity",
+        "luck_of_the_sea",
+        "lure",
+        "loyalty",
+        "impaling",
+        "riptide",
+        "channeling",
+        "multishot",
+        "quick_charge",
+        "piercing",
+        "density",
+        "breach",
+        "wind_burst",
+        "lunge",
+        "mending",
+        "vanishing_curse",
+    ];
+    /// `EFFICIENCY` — the bootstrap's 21st register call (seat 20):
+    /// the mining_efficiency attribute's levels_squared amount the
+    /// held stack's own ENCHANTMENTS component speaks (the
+    /// `level² + 1.0` ladder the dig walk's addend rides — the E1 the
+    /// 2.0, the E5 the 26.0), the server's attribute row the silent
+    /// state the client's own fold answers.
+    pub const EFFICIENCY: i32 = 20;
+}
+
 /// Parse Game Event (clientbound play, `minecraft:game_event` id 38):
 /// u8 event id, f32 param — the FriendlyByteBuf walk the read ctor
 /// keeps (`readUnsignedByte` for the TYPES.get lookup, `readFloat` for
@@ -16044,6 +16116,28 @@ mod tests {
         assert_eq!(attributes::MINING_EFFICIENCY, 24);
         assert_eq!(attributes::BLOCK_BREAK_SPEED, 7);
         assert_eq!(attributes::SUBMERGED_MINING_SPEED, 34);
+    }
+
+    /// THE ENCHANTMENT SEATS' OWN TABLE (the 26.2 Enchantments
+    /// bootstrap's register order — the registry ids the registration
+    /// order assigns, the wire's VarInt the ENCHANTMENTS component's
+    /// map keys carry): the dig walk's own seat pins, the neighbors
+    /// the register-call order banks (sweeping_edge the 20th call,
+    /// silk_touch the 22nd).
+    #[test]
+    fn the_enchantment_seats_the_bootstrap_order_pins() {
+        assert_eq!(
+            enchantments::WIRE_ORDER.len(),
+            43,
+            "the bootstrap's 43 register calls"
+        );
+        assert_eq!(enchantments::WIRE_ORDER[0], "protection");
+        assert_eq!(enchantments::WIRE_ORDER[13], "sharpness");
+        assert_eq!(enchantments::WIRE_ORDER[19], "sweeping_edge");
+        assert_eq!(enchantments::WIRE_ORDER[20], "efficiency");
+        assert_eq!(enchantments::WIRE_ORDER[21], "silk_touch");
+        assert_eq!(enchantments::WIRE_ORDER[42], "vanishing_curse");
+        assert_eq!(enchantments::EFFICIENCY, 20);
     }
 
     /// The Update Attributes' count laws: the 128 cap's ONLY upper

@@ -3229,6 +3229,44 @@ impl WorldModel {
         self.attribute_value_of(id, attribute)
     }
 
+    /// THE HELD STACK'S OWN EFFICIENCY (the attribute rows' OFFLINE
+    /// SIM — the enchant's levels_squared amount the client's own
+    /// held-stack components lane speaks when the server's attribute
+    /// row is silent): the SELECTED hotbar slot's stored patch the
+    /// ENCHANTMENTS component reads (the clientbound set-slot lane's
+    /// real component values the model's store retains — the
+    /// [`mc_protocol::play::data_component_types::ENCHANTMENTS`] type
+    /// id the patch's added lane keys, the map the efficiency seat's
+    /// level answers), the level the
+    /// [`mc_protocol::play::enchantments::EFFICIENCY`] id names, the
+    /// dig walk's own `efficiency_amount` law the value wears (the
+    /// `level² + 1.0` ladder — the E1 the 2.0, the E3 the 10.0, the
+    /// E5 the 26.0). The row's silence the honest states keep — each
+    /// the None answer: no stack in the held slot, no ENCHANTMENTS
+    /// component riding the patch, no efficiency entry in the map,
+    /// the level-0 the no-enchant law keeps (the addend's own gate
+    /// the honest silence wears).
+    pub fn held_stack_efficiency(&self) -> Option<f64> {
+        let slot = USE_ROW_SLOT_START + self.inventory.selected;
+        let stack = self.inventory.slots.get(slot)?;
+        let level = stack
+            .patch
+            .added
+            .iter()
+            .find(|(ty, _)| *ty == mc_protocol::play::data_component_types::ENCHANTMENTS)
+            .and_then(|(_, v)| match v {
+                mc_protocol::play::ComponentValue::Enchantments(entries) => entries
+                    .iter()
+                    .find(|(id, _)| *id == mc_protocol::play::enchantments::EFFICIENCY)
+                    .map(|(_, level)| *level),
+                _ => None,
+            })?;
+        if level <= 0 {
+            return None;
+        }
+        Some(f64::from(crate::dig::DigState::efficiency_amount(level)))
+    }
+
     /// The LOCAL player's inventory window (window 0) — the store the
     /// container packets' `inventoryMenu` lane feeds (the audited
     /// consumer split; see [`InventoryState`]).
@@ -6600,6 +6638,130 @@ mod tests {
             m.attribute_value_of(17, mc_protocol::play::attributes::MINING_EFFICIENCY)
                 .is_none(),
             "the respawn's clear the rows serve"
+        );
+    }
+
+    /// THE HELD STACK'S OWN ENCHANT (the attribute rows' OFFLINE SIM —
+    /// the enchant's levels_squared the client's own held-stack
+    /// components lane speaks when the server's attribute row is
+    /// silent): the set-slot lane's real ENCHANTMENTS patch the store
+    /// retains, the efficiency seat's level the fold's ladder wears,
+    /// the row's silence the honest states keep (no stack, no
+    /// component, no entry, the level-0 the no-enchant law), the
+    /// non-efficiency entries the silence keeps, the selection move
+    /// the fold's own slot the follow serves.
+    #[test]
+    fn the_held_stack_enchant_the_offline_sim_wears() {
+        use mc_protocol::play::data_component_types as d;
+        use mc_protocol::play::enchantments;
+        use mc_protocol::{AttributeSnapshot, UpdateAttributes};
+        let mut m = WorldModel::new();
+        // THE SILENCE'S OWN STATES first: no login, no stack — the
+        // empty store's held slot the None keeps
+        assert!(m.held_stack_efficiency().is_none(), "no stack, no fold");
+        // a PLAIN stack rides the held slot — the component-less patch
+        // the silence keeps (the component-less stacks the honest
+        // absence carries)
+        m.apply(PlayEvent::ContainerSlotSet(mc_protocol::play::ContainerSetSlot {
+            container_id: INVENTORY_WINDOW_ID,
+            state_id: 1,
+            slot: USE_ROW_SLOT_START as i16,
+            item: ItemStack { count: 1, item_id: 745, patch: ComponentPatch::default() },
+        }));
+        assert!(
+            m.held_stack_efficiency().is_none(),
+            "no ENCHANTMENTS component, no fold"
+        );
+        // THE ENCHANTED STACK LANDS — the E3's 10.0 the ladder wears
+        // (the sharpness entry rides the SAME map, the dig's seat the
+        // efficiency id alone answers)
+        m.apply(PlayEvent::ContainerSlotSet(mc_protocol::play::ContainerSetSlot {
+            container_id: INVENTORY_WINDOW_ID,
+            state_id: 2,
+            slot: USE_ROW_SLOT_START as i16,
+            item: ItemStack {
+                count: 1,
+                item_id: 745,
+                patch: mc_protocol::play::ComponentPatch {
+                    added: vec![(
+                        d::ENCHANTMENTS,
+                        mc_protocol::play::ComponentValue::Enchantments(vec![
+                            (13, 1), // the sharpness entry the silence keeps
+                            (enchantments::EFFICIENCY, 3),
+                        ]),
+                    )],
+                    removed: Vec::new(),
+                },
+            },
+        }));
+        assert!(
+            (m.held_stack_efficiency().unwrap() - 10.0).abs() < 1e-9,
+            "the E3 the level²+1.0 law's 10.0 wears"
+        );
+        // THE SELECTION MOVES to the plain slot — the held fold the
+        // follow serves (the held slot the selected seat names)
+        m.select_hotbar(1);
+        assert!(
+            m.held_stack_efficiency().is_none(),
+            "the plain slot the silence keeps"
+        );
+        m.select_hotbar(0);
+        // THE LEVEL-0 LAW: the map speaks the efficiency seat with the
+        // zero level — the no-enchant silence keeps
+        m.apply(PlayEvent::ContainerSlotSet(mc_protocol::play::ContainerSetSlot {
+            container_id: INVENTORY_WINDOW_ID,
+            state_id: 3,
+            slot: USE_ROW_SLOT_START as i16,
+            item: ItemStack {
+                count: 1,
+                item_id: 745,
+                patch: mc_protocol::play::ComponentPatch {
+                    added: vec![(
+                        d::ENCHANTMENTS,
+                        mc_protocol::play::ComponentValue::Enchantments(vec![
+                            (enchantments::EFFICIENCY, 0),
+                        ]),
+                    )],
+                    removed: Vec::new(),
+                },
+            },
+        }));
+        assert!(
+            m.held_stack_efficiency().is_none(),
+            "the level-0 the no-enchant law keeps"
+        );
+        // THE ROW'S OWN PRECEDENCE (the vitals view's lift the same
+        // law wears): the server's row present, the held fold the
+        // silence keeps — the row the authority, the sim the
+        // row-less lane's own answer
+        m.apply(PlayEvent::WorldInfo(WorldInfo {
+            entity_id: 17,
+            hardcore: false,
+            dimensions: vec!["minecraft:overworld".to_string()],
+            view_distance: 8,
+            simulation_distance: 8,
+            portal_cooldown: 300,
+            current_dimension: "minecraft:overworld".to_string(),
+        }));
+        assert!(m.apply(PlayEvent::EntityAttributes(UpdateAttributes {
+            entity_id: 17,
+            entries: vec![AttributeSnapshot {
+                attribute_id: mc_protocol::play::attributes::MINING_EFFICIENCY,
+                base: 0.0,
+                modifiers: vec![mc_protocol::play::AttributeModifier {
+                    id: "minecraft:efficiency".to_string(),
+                    amount: 26.0,
+                    operation: 0,
+                }],
+            }],
+        })));
+        assert!(
+            (m.own_attribute_value(mc_protocol::play::attributes::MINING_EFFICIENCY)
+                .unwrap()
+                - 26.0)
+                .abs()
+                < 1e-9,
+            "the row the store banks"
         );
     }
 
