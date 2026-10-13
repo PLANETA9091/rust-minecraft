@@ -217,6 +217,80 @@ pub mod game_event {
     pub const LEVEL_CHUNKS_LOAD_START: u8 = 13;
 }
 
+/// THE ATTRIBUTE REGISTRY'S OWN SEATS (javap of the real 26.2
+/// `Attributes` clinit — the `register` calls the bytecode's pc order
+/// speaks, 40 of them, the registry's numeric ids the registration
+/// order assigns: the wire's VarInt the `holderRegistry` decode's
+/// `byIdOrThrow` answers). The 26.2 vocabulary the OLD wiki-era order
+/// outgrew — air_drag_modifier, below_name_distance, bounciness,
+/// burning_time, camera_distance, explosion_knockback_resistance and
+/// friction_modifier the new entries the table's head inserts, the
+/// mining_efficiency seat the old 18 the 24 the shifts wear. THE DIG
+/// WALK'S OWN THREE (the lanes the seeded speed fold names): the
+/// MINING_EFFICIENCY addend (the enchant's levels_squared amount the
+/// server's attribute row carries — the efficiency enchant the wire
+/// speaks), the BLOCK_BREAK_SPEED multiply (the 1.0 default the
+/// no-op keeps), the SUBMERGED_MINING_SPEED multiply (the 0.2 default
+/// the water arm keeps).
+pub mod attributes {
+    /// The full 26.2 wire table — the clinit's register order
+    /// verbatim, the index IS the wire id (the VarInt the packet
+    /// rows carry).
+    pub const WIRE_ORDER: [&str; 40] = [
+        "air_drag_modifier",
+        "armor",
+        "armor_toughness",
+        "attack_damage",
+        "attack_knockback",
+        "attack_speed",
+        "below_name_distance",
+        "block_break_speed",
+        "block_interaction_range",
+        "bounciness",
+        "burning_time",
+        "camera_distance",
+        "explosion_knockback_resistance",
+        "entity_interaction_range",
+        "fall_damage_multiplier",
+        "flying_speed",
+        "follow_range",
+        "friction_modifier",
+        "gravity",
+        "jump_strength",
+        "knockback_resistance",
+        "luck",
+        "max_absorption",
+        "max_health",
+        "mining_efficiency",
+        "movement_efficiency",
+        "movement_speed",
+        "name_tag_distance",
+        "oxygen_bonus",
+        "safe_fall_distance",
+        "scale",
+        "sneaking_speed",
+        "spawn_reinforcements",
+        "step_height",
+        "submerged_mining_speed",
+        "sweeping_damage_ratio",
+        "tempt_range",
+        "water_movement_efficiency",
+        "waypoint_transmit_range",
+        "waypoint_receive_range",
+    ];
+    /// `MINING_EFFICIENCY` — the clinit's 25th register call (seat
+    /// 24): the efficiency enchant's own addend row, the dig walk's
+    /// `if f > 1.0: f += MINING_EFFICIENCY` the value feeds.
+    pub const MINING_EFFICIENCY: i32 = 24;
+    /// `BLOCK_BREAK_SPEED` — the clinit's 8th register call (seat 7):
+    /// the dig walk's multiply lane, the 1.0 default the no-op keeps.
+    pub const BLOCK_BREAK_SPEED: i32 = 7;
+    /// `SUBMERGED_MINING_SPEED` — the clinit's 35th register call
+    /// (seat 34): the dig walk's water multiply, the 0.2 default the
+    /// submerged arm keeps.
+    pub const SUBMERGED_MINING_SPEED: i32 = 34;
+}
+
 /// Parse Game Event (clientbound play, `minecraft:game_event` id 38):
 /// u8 event id, f32 param — the FriendlyByteBuf walk the read ctor
 /// keeps (`readUnsignedByte` for the TYPES.get lookup, `readFloat` for
@@ -15947,6 +16021,29 @@ mod tests {
         let u = parse_update_attributes(&p).unwrap();
         assert_eq!(u.entity_id, 7);
         assert!(u.entries.is_empty());
+    }
+
+    /// THE ATTRIBUTE SEATS' OWN TABLE (the 26.2 Attributes clinit's
+    /// register order — the registry ids the registration order
+    /// assigns, the wire's VarInt the packet rows carry): the dig
+    /// walk's own three the seats pin, the mining_efficiency row the
+    /// old wiki-era 18 the 24 the 26.2 head-inserts shift.
+    #[test]
+    fn the_attribute_seats_the_clinit_order_pins() {
+        assert_eq!(
+            attributes::WIRE_ORDER.len(),
+            40,
+            "the clinit's 40 register calls"
+        );
+        assert_eq!(attributes::WIRE_ORDER[0], "air_drag_modifier");
+        assert_eq!(attributes::WIRE_ORDER[7], "block_break_speed");
+        assert_eq!(attributes::WIRE_ORDER[23], "max_health");
+        assert_eq!(attributes::WIRE_ORDER[24], "mining_efficiency");
+        assert_eq!(attributes::WIRE_ORDER[34], "submerged_mining_speed");
+        assert_eq!(attributes::WIRE_ORDER[39], "waypoint_receive_range");
+        assert_eq!(attributes::MINING_EFFICIENCY, 24);
+        assert_eq!(attributes::BLOCK_BREAK_SPEED, 7);
+        assert_eq!(attributes::SUBMERGED_MINING_SPEED, 34);
     }
 
     /// The Update Attributes' count laws: the 128 cap's ONLY upper

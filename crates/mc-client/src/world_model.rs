@@ -239,6 +239,17 @@ pub struct WorldModel {
     /// (the dimension swap's population does not cross).
     pub entity_equipment:
         std::collections::BTreeMap<i32, std::collections::BTreeMap<u8, (i32, i32)>>,
+    /// The entities' ATTRIBUTE ROWS (the Update Attributes packets —
+    /// the server's own stat opinions: entity id → attribute seat →
+    /// the COMPUTED value the [`Self::attribute_value`] fold answers).
+    /// The row the packet's own FULL state speaks (base + the active
+    /// modifier set) — the seat replaces wholesale, the never-spoken
+    /// attribute the honest absence keeps. THE EFFICIENCY ADDEND'S OWN
+    /// SOURCE: the local player's `mining_efficiency` seat the dig
+    /// walk's addend feeds (the enchant the server's row names). Dies
+    /// with the level (the dimension swap's population does not
+    /// cross).
+    pub entity_attributes: std::collections::HashMap<i32, std::collections::HashMap<i32, f64>>,
     /// The mobs' PENDING VOICES (the Entity Sound packets — the
     /// ambient/hurt/death sounds the SERVER plays and broadcasts:
     /// `Mob.baseTick`'s playAmbientSound, `LivingEntity.hurt`'s
@@ -2538,6 +2549,7 @@ impl WorldModel {
             death_message: None,
             entity_hurts: std::collections::BTreeMap::new(),
             entity_equipment: std::collections::BTreeMap::new(),
+            entity_attributes: std::collections::HashMap::new(),
             entity_sounds: Vec::new(),
             arrow_syncs: Vec::new(),
             firework_syncs: Vec::new(),
@@ -3158,6 +3170,65 @@ impl WorldModel {
         self.info.as_ref().map(|i| i.entity_id)
     }
 
+    /// THE ATTRIBUTE'S OWN FOLD (javap `AttributeInstance.calculateValue`
+    /// pcs 0-165 verbatim): the base the wire row speaks, then the
+    /// THREE operation lanes in the walk's own order —
+    /// ADD_VALUE (ordinal 0) `d += amount`, ADD_MULTIPLIED_BASE
+    /// (ordinal 1) `d2 += d * amount` where the multiplier the
+    /// POST-add-value base reads (the dload_1 seat the fold keeps),
+    /// ADD_MULTIPLIED_TOTAL (ordinal 2) `d2 *= 1.0 + amount` per
+    /// modifier in wire order. An ordinal outside the three the
+    /// ZERO-fill the consumer's act keeps (the decode's continuous map
+    /// `byId` never refuses — the wire can never deliver one, the fill
+    /// the ADD_VALUE lane answers). The range's own clamp (pc 149-164
+    /// `sanitizeValue`): this client carries no attribute-range table
+    /// — the unclamped value the honest fold keeps (the server's
+    /// authoritative rows the range never crosses).
+    pub fn attribute_value(base: f64, modifiers: &[mc_protocol::AttributeModifier]) -> f64 {
+        // lane 1 (pcs 5-48): ADD_VALUE — and the unknown ordinal's fill
+        let mut d = base;
+        for m in modifiers {
+            if m.operation == 0 || m.operation < 0 || m.operation > 2 {
+                d += m.amount;
+            }
+        }
+        // lane 2 (pcs 49-99): ADD_MULTIPLIED_BASE — the multiplier the
+        // post-add-value base speaks
+        let mut v = d;
+        for m in modifiers {
+            if m.operation == 1 {
+                v += d * m.amount;
+            }
+        }
+        // lane 3 (pcs 100-148): ADD_MULTIPLIED_TOTAL — each modifier
+        // the (1 + amount) product answers, the wire order kept
+        for m in modifiers {
+            if m.operation == 2 {
+                v *= 1.0 + m.amount;
+            }
+        }
+        v
+    }
+
+    /// ONE entity's computed attribute value for ONE seat (the
+    /// attribute registry id the wire rows carry — the
+    /// [`mc_protocol::play::attributes`] module names the seats). The
+    /// never-spoken row the None identity keeps — the honest "no
+    /// knowledge" state, never a guess.
+    pub fn attribute_value_of(&self, entity: i32, attribute: i32) -> Option<f64> {
+        self.entity_attributes.get(&entity)?.get(&attribute).copied()
+    }
+
+    /// The LOCAL player's computed value for ONE seat — the
+    /// [`Self::attribute_value_of`] read at the own entity id (the
+    /// mining_efficiency seat the vitals view carries, the dig walk's
+    /// addend feeds). The absent row (no packet ever landed, no
+    /// login session) the None identity keeps.
+    pub fn own_attribute_value(&self, attribute: i32) -> Option<f64> {
+        let id = self.own_entity_id()?;
+        self.attribute_value_of(id, attribute)
+    }
+
     /// The LOCAL player's inventory window (window 0) — the store the
     /// container packets' `inventoryMenu` lane feeds (the audited
     /// consumer split; see [`InventoryState`]).
@@ -3374,6 +3445,10 @@ impl WorldModel {
                 // same ids — the new level's entities never wear the
                 // old one's gear)
                 self.entity_equipment.clear();
+                // the attribute rows die with the level too (the same
+                // ids — the new level's entities carry their own stat
+                // opinions, the server's spawn stream re-speaks them)
+                self.entity_attributes.clear();
                 // the voices' mailbox dies with the level too (the same
                 // ids — the new level's population speaks its own)
                 self.entity_sounds.clear();
@@ -5628,13 +5703,25 @@ impl WorldModel {
             // touches, the UI the gate's own false keeps; the tree
             // rides its dedicated channel like the replies do)
             PlayEvent::CommandSuggestions(_) | PlayEvent::Commands(_) => false,
-            // THE ATTRIBUTE ROWS' TRANSPORT (the parse lane the
-            // protocol round banks): the model carries no attribute
-            // store yet — the server's stat rows the honest no-op
-            // keeps, the dig walk's efficiency addend the consumer
-            // round feeds (the local player's mining_efficiency row
-            // the store's own filter answers)
-            PlayEvent::EntityAttributes(_) => false,
+            // THE ATTRIBUTE ROWS' OWN STORE (the Update Attributes
+            // packets — the server's stat opinions the computed fold
+            // answers): each row the attribute's FULL state speaks
+            // (base + the active modifier set) — the seat replaces
+            // wholesale, the OTHER entities' rows the store banks (the
+            // future mob lanes' own reads) while the SHIP verdict the
+            // LOCAL player's rows answer (the vitals view's
+            // mining_efficiency lift the store's own seat names)
+            PlayEvent::EntityAttributes(u) => {
+                let own = self.own_entity_id() == Some(u.entity_id);
+                let slots = self.entity_attributes.entry(u.entity_id).or_default();
+                for row in &u.entries {
+                    slots.insert(
+                        row.attribute_id,
+                        Self::attribute_value(row.base, &row.modifiers),
+                    );
+                }
+                own
+            }
             PlayEvent::Disconnected { .. } | PlayEvent::Skipped => false,
         }
     }
@@ -6364,6 +6451,157 @@ mod tests {
         EntityHeadRot, EntityPositionSync, EntitySpawn, GrassColorModifier, SetEntityDataEntry,
         SetPassengers,
     };
+
+    /// THE ATTRIBUTE ROWS' OWN STORE (the consumer round — the Update
+    /// Attributes packets' truth the fold answers): the fold's THREE
+    /// lanes (the add_value sum, the multiplied_base the POST-add
+    /// base reads, the multiplied_total product), the unknown
+    /// ordinal's ZERO-fill (the consumer's act), the store's
+    /// wholesale seat replace, the OTHER entity's rows banked but the
+    /// ship verdict refused, the accessors' absent None, and the
+    /// Respawn's own clear (the dimension swap's rows never cross).
+    #[test]
+    fn the_attribute_rows_the_store_and_the_fold_wear() {
+        use mc_protocol::{AttributeModifier, AttributeSnapshot, UpdateAttributes};
+        // THE FOLD'S OWN LANES: base 10.0, one of each operation —
+        // add_value +3, multiplied_base ×(the post-add 13.0) +0.1
+        // adds 1.3, multiplied_total ×(1 + 0.5) — 10 + 3 = 13, 13 +
+        // 13×0.1 = 14.3, 14.3 × 1.5 = 21.45
+        let mods = |op: i32, amount: f64| AttributeModifier {
+            id: "minecraft:test".to_string(),
+            amount,
+            operation: op,
+        };
+        let v = WorldModel::attribute_value(
+            10.0,
+            &[mods(0, 3.0), mods(1, 0.1), mods(2, 0.5)],
+        );
+        assert!((v - 21.45).abs() < 1e-9, "the three-lane fold: {v}");
+        // the lane ORDER speaks: a multiplied_base BEFORE an add_value
+        // row answers the same fold (the lanes the ops pick, the wire
+        // order never re-orders them)
+        let v = WorldModel::attribute_value(
+            10.0,
+            &[mods(1, 0.1), mods(0, 3.0), mods(2, 0.5)],
+        );
+        assert!((v - 21.45).abs() < 1e-9, "the order the ops pick: {v}");
+        // the unknown ordinal's ZERO-fill: the consumer's act the
+        // ADD_VALUE lane keeps
+        let v = WorldModel::attribute_value(10.0, &[mods(7, 2.0)]);
+        assert!((v - 12.0).abs() < 1e-9, "the unknown ordinal the fill keeps: {v}");
+        let v = WorldModel::attribute_value(10.0, &[mods(-1, 2.0)]);
+        assert!((v - 12.0).abs() < 1e-9, "the negative ordinal the same fill keeps");
+        // THE STORE'S OWN SEAT: the login pins the own id, the
+        // mining_efficiency row lands (base 0.0 + the E5's 26.0
+        // add_value), the foreign entity's row banks too
+        let mut m = WorldModel::new();
+        assert!(
+            !m.apply(PlayEvent::EntityAttributes(UpdateAttributes {
+                entity_id: 17,
+                entries: vec![AttributeSnapshot {
+                    attribute_id: mc_protocol::play::attributes::MINING_EFFICIENCY,
+                    base: 0.0,
+                    modifiers: vec![mods(0, 26.0)],
+                }],
+            })),
+            "no info pinned, no own verdict"
+        );
+        assert!(m.own_attribute_value(24).is_none(), "no login, no own row");
+        assert!(m.apply(PlayEvent::WorldInfo(WorldInfo {
+            entity_id: 17,
+            hardcore: false,
+            dimensions: vec!["minecraft:overworld".to_string()],
+            view_distance: 8,
+            simulation_distance: 8,
+            portal_cooldown: 300,
+            current_dimension: "minecraft:overworld".to_string(),
+        })));
+        // the OWN packet ships; the row's value the fold answers
+        assert!(m.apply(PlayEvent::EntityAttributes(UpdateAttributes {
+            entity_id: 17,
+            entries: vec![
+                AttributeSnapshot {
+                    attribute_id: mc_protocol::play::attributes::MINING_EFFICIENCY,
+                    base: 0.0,
+                    modifiers: vec![mods(0, 26.0)],
+                },
+                AttributeSnapshot {
+                    // max_health's seat (the clinit's 24th register)
+                    attribute_id: 23,
+                    base: 20.0,
+                    modifiers: Vec::new(),
+                },
+            ],
+        })));
+        assert!(
+            (m.own_attribute_value(mc_protocol::play::attributes::MINING_EFFICIENCY)
+                .unwrap()
+                - 26.0)
+                .abs()
+                < 1e-9,
+            "the E5 row the fold's 26.0 wears"
+        );
+        assert!(
+            (m.attribute_value_of(17, 23).unwrap() - 20.0).abs() < 1e-9,
+            "the max_health row the bare base wears"
+        );
+        // the re-speak REPLACES the seat wholesale (a lesser enchant
+        // the downgraded value wears, the stale modifier never lingers)
+        assert!(m.apply(PlayEvent::EntityAttributes(UpdateAttributes {
+            entity_id: 17,
+            entries: vec![AttributeSnapshot {
+                attribute_id: mc_protocol::play::attributes::MINING_EFFICIENCY,
+                base: 0.0,
+                modifiers: vec![mods(0, 2.0)],
+            }],
+        })));
+        assert!(
+            (m.own_attribute_value(mc_protocol::play::attributes::MINING_EFFICIENCY)
+                .unwrap()
+                - 2.0)
+                .abs()
+                < 1e-9,
+            "the E1 row the replace wears"
+        );
+        // the FOREIGN entity's row banks (the future mob lanes' own
+        // read) but the ship verdict refuses
+        assert!(!m.apply(PlayEvent::EntityAttributes(UpdateAttributes {
+            entity_id: 99,
+            entries: vec![AttributeSnapshot {
+                attribute_id: mc_protocol::play::attributes::MINING_EFFICIENCY,
+                base: 0.0,
+                modifiers: vec![mods(0, 5.0)],
+            }],
+        })));
+        assert!(
+            (m.attribute_value_of(99, mc_protocol::play::attributes::MINING_EFFICIENCY)
+                .unwrap()
+                - 5.0)
+                .abs()
+                < 1e-9,
+            "the foreign row the store banks"
+        );
+        assert!(
+            (m.own_attribute_value(mc_protocol::play::attributes::MINING_EFFICIENCY)
+                .unwrap()
+                - 2.0)
+                .abs()
+                < 1e-9,
+            "the own row the foreign packet never touches"
+        );
+        // THE RESPAWN'S OWN CLEAR (the dimension swap's rows never
+        // cross — the new level's entities carry their own opinions)
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.attribute_value_of(17, mc_protocol::play::attributes::MINING_EFFICIENCY)
+                .is_none(),
+            "the respawn's clear the rows serve"
+        );
+    }
 
     /// One synced biome element under the mock tables — the real
     /// NETWORK_CODEC shape with plains' climate (the name is what the

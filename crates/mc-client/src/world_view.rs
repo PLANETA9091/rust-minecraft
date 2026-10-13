@@ -3672,6 +3672,13 @@ pub struct HealthView {
     /// filtered truth): the (registry id, amplifier, duration, flags)
     /// quads the HUD's effect lane speaks. Empty in every golden scene.
     pub effects: Vec<crate::world_model::MobEffectWireState>,
+    /// The LOCAL player's computed `mining_efficiency` attribute (the
+    /// Update Attributes packets' filtered truth — the row the fold
+    /// answers, the efficiency enchant's levels_squared amount the
+    /// server's own stat opinion speaks): the dig walk's addend the
+    /// value feeds. The absent row the 0.0 identity keeps — the
+    /// addend's own gate the bare seed refuses.
+    pub mining_efficiency: f64,
 }
 
 impl HealthView {
@@ -3684,6 +3691,7 @@ impl HealthView {
             hurt_yaw: 0.0,
             death_message: None,
             effects: Vec::new(),
+            mining_efficiency: 0.0,
         }
     }
 }
@@ -3713,6 +3721,13 @@ fn health_view(model: &WorldModel) -> HealthView {
             flags: state.flags,
         })
         .collect();
+    // THE ATTRIBUTE ROW'S OWN LIFT (the Update Attributes packets'
+    // filtered truth — the local player's mining_efficiency seat the
+    // model's own store banks, the dig walk's addend the value
+    // feeds; the absent row the 0.0 identity keeps)
+    v.mining_efficiency = model
+        .own_attribute_value(mc_protocol::play::attributes::MINING_EFFICIENCY)
+        .unwrap_or(0.0);
     v
 }
 

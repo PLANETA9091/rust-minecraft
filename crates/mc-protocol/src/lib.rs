@@ -45,7 +45,7 @@ pub use play::{
     ParticleValue, PlayerSkinPatch, PlayEvent, PositionSource,
     ProfileProperty, ResolvableProfile, SkinAsset,
     PlaySession, PlayStart, PlayerPosition, PredicateTypeLane, PropertyMatcher, PropertyValue,
-    SetEntityDataEntry, SetHeldSlot, SetHealth, SpawnInfo, TimeSync, WorldInfo, WorldOutcome, WorldSnapshot,
+    SetEntityDataEntry, SetHeldSlot, SetHealth, SpawnInfo, TimeSync, UpdateAttributes, WorldInfo, WorldOutcome, WorldSnapshot,
     ObjectiveUpdate, DisplayObjectiveUpdate, ScoreUpdate, ResetScore,
     SetPassengers, InputFlags,
     flatten_component_text, parse_set_objective, parse_set_display_objective, parse_set_score,

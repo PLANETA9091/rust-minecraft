@@ -7903,6 +7903,13 @@ pub struct App {
     /// store (the wire's Update/Remove Mob Effect packets' filtered
     /// truth) and ticks the client copy's durations the blink law reads.
     pub effects: crate::effects::EffectsStore,
+    /// The LOCAL player's computed `mining_efficiency` attribute (the
+    /// vitals view's own lift — the Update Attributes packets'
+    /// filtered truth, the efficiency enchant's levels_squared amount
+    /// the server's row speaks): the dig walk's addend the value
+    /// feeds. The absent row the 0.0 identity keeps (the offline lane
+    /// the same silence wears).
+    pub mining_efficiency: f64,
     /// The Hurt Animation packet's tilt yaw (the flash-and-lean's own
     /// channel; the camera roll is the future's consumer).
     pub hurt_yaw: f32,
@@ -8821,6 +8828,7 @@ impl App {
             health_blink_time: 0,
             last_bubble_pop_sound_played: 0,
             effects: crate::effects::EffectsStore::new(),
+            mining_efficiency: 0.0,
             last_health: 20,
             display_health: 20,
             last_health_time: 0,
@@ -13272,13 +13280,18 @@ impl App {
                             } else {
                                 self.offline_world.as_mut()
                             };
+                            // THE EFFICIENCY ADDEND'S OWN READ (the
+                            // vitals view's mirrored row — the wire's
+                            // mining_efficiency the fold banked, the
+                            // absent row the 0.0 identity keeps)
+                            let efficiency = self.mining_efficiency;
                             let dig = &mut self.dig;
                             if let Some(world) = world_opt {
                                 let was_solid =
                                     world.get(pos.0, pos.1, pos.2) != crate::world::AIR;
                                 let (s, b) = dig.continue_destroy_block(
                                     pos, face, held, world, on_ground, eye_water, instabuild,
-                                    restricted, mining_fatigue, haste,
+                                    restricted, mining_fatigue, haste, efficiency,
                                 );
                                 sends = s;
                                 beat = b;
@@ -16271,6 +16284,10 @@ impl App {
                 } else {
                     self.offline_world.as_mut()
                 };
+                // THE EFFICIENCY ADDEND'S OWN READ (the vitals view's
+                // mirrored row — the wire's mining_efficiency the fold
+                // banked, the absent row the 0.0 identity keeps)
+                let efficiency = self.mining_efficiency;
                 let dig = &mut self.dig;
                 if let Some(world) = world_opt {
                     let was_solid = world.get(h.pos.0, h.pos.1, h.pos.2) != crate::world::AIR;
@@ -16285,6 +16302,7 @@ impl App {
                         restricted,
                         mining_fatigue,
                         haste,
+                        efficiency,
                     );
                     dug = was_solid
                         && world.get(h.pos.0, h.pos.1, h.pos.2) == crate::world::AIR;
@@ -41798,6 +41816,10 @@ impl App {
                 duration: e.duration,
                 flags: e.flags,
             })).collect::<Vec<_>>());
+        // THE ATTRIBUTE ROW'S MIRROR (the same vitals view's own lift —
+        // the computed mining_efficiency the model's fold banked, the
+        // dig walk's addend the value feeds)
+        self.mining_efficiency = health.mining_efficiency;
     }
 
     /// THE FALL DAMAGE PIPELINE (javap `LivingEntity.causeFallDamage`'s
@@ -42467,6 +42489,10 @@ impl App {
         // body carries none, the absorption value rides the dead
         // body's history)
         self.effects = crate::effects::EffectsStore::new();
+        // THE ATTRIBUTE ROWS' OWN RESET (the same death's removal —
+        // the fresh body carries no stat opinions, the server's spawn
+        // stream re-speaks them, the addend the 0.0 identity waits)
+        self.mining_efficiency = 0.0;
         self.hurt_time = 0;
         self.hurt_duration = 0;
         self.invulnerable_time = 0;
@@ -66832,6 +66858,7 @@ mod tests {
             hurt_yaw: 0.0,
             death_message: None,
             effects: Vec::new(),
+        mining_efficiency: 0.0,
         });
         assert!(
             app.chat_open,
@@ -66847,6 +66874,7 @@ mod tests {
             hurt_yaw: 0.0,
             death_message: Some("fell from a high place".to_string()),
             effects: Vec::new(),
+        mining_efficiency: 0.0,
         });
         assert!(app.dead, "the kill the death arms");
         assert!(!app.chat_open, "the kill the chat screen folds");
@@ -96222,6 +96250,7 @@ cow_sound_variant: None,
             hurt_yaw: -45.5,
             death_message: None,
             effects: Vec::new(),
+        mining_efficiency: 0.0,
         });
         assert_eq!(app.health, 6.5, "the half heart's own float");
         assert_eq!(app.food_data.food_level(), 18);
@@ -96238,6 +96267,7 @@ cow_sound_variant: None,
             hurt_yaw: 0.0,
             death_message: Some("Player fell from a high place".to_string()),
             effects: Vec::new(),
+        mining_efficiency: 0.0,
         });
         assert!(app.dead, "the message armed the death gate");
         assert_eq!(
@@ -99940,6 +99970,7 @@ cow_sound_variant: None,
                     flags: crate::effects::DEFAULT_EFFECT_FLAGS,
                 },
             ],
+        mining_efficiency: 0.0,
         });
         assert!(app.effects.has_effect(crate::effects::MOB_EFFECT_ABSORPTION));
         assert!((app.effects.absorption() - 4.0).abs() < 1e-5);
@@ -99959,6 +99990,7 @@ cow_sound_variant: None,
                     flags: crate::effects::DEFAULT_EFFECT_FLAGS,
                 },
             ],
+        mining_efficiency: 0.0,
         });
         assert_eq!(
             app.effects.get(crate::effects::MOB_EFFECT_ABSORPTION).unwrap().amplifier,
@@ -99975,8 +100007,53 @@ cow_sound_variant: None,
             hurt_yaw: 0.0,
             death_message: None,
             effects: Vec::new(),
+        mining_efficiency: 0.0,
         });
         assert!(app.effects.is_empty());
+    }
+
+    /// THE ATTRIBUTE ROW'S OWN MIRROR (the networked lane): the
+    /// vitals view's mining_efficiency lift lands on the App's own
+    /// field — the dig walk's addend the value feeds (the E5 row the
+    /// 26.0 the fold computed speaks, the absent row the 0.0
+    /// identity keeps), the respawn's own reset the fresh body's
+    /// silence serves.
+    #[test]
+    fn the_mining_efficiency_row_the_mirror_lands() {
+        let mut app = App::new(3);
+        app.enter_world();
+        assert_eq!(app.mining_efficiency, 0.0, "the absent row the 0.0 keeps");
+        app.live_health_updated(crate::world_view::HealthView {
+            health: 20.0,
+            food: 20,
+            saturation: 5.0,
+            hurt_time: 0,
+            hurt_yaw: 0.0,
+            death_message: None,
+            effects: Vec::new(),
+            mining_efficiency: 26.0,
+        });
+        assert_eq!(
+            app.mining_efficiency, 26.0,
+            "the E5 row the vitals view's lift wears"
+        );
+        // the re-speak REPLACES the value (a lesser enchant the
+        // downgraded row wears, the stale addend never lingers)
+        app.live_health_updated(crate::world_view::HealthView {
+            health: 20.0,
+            food: 20,
+            saturation: 5.0,
+            hurt_time: 0,
+            hurt_yaw: 0.0,
+            death_message: None,
+            effects: Vec::new(),
+            mining_efficiency: 2.0,
+        });
+        assert_eq!(app.mining_efficiency, 2.0, "the E1 row the replace wears");
+        // THE RESPAWN'S OWN RESET (the fresh body carries no stat
+        // opinions — the server's spawn stream re-speaks them)
+        app.respawn();
+        assert_eq!(app.mining_efficiency, 0.0, "the respawn's reset the 0.0 wears");
     }
 
     /// THE RESPAWN CLEARS THE STORE (the death's removal — the fresh
