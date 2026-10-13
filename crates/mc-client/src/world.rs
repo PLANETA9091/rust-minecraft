@@ -2265,6 +2265,27 @@ pub enum CollisionShape {
     /// isSlidingDown margin (0.4375 + bbWidth/2) the pressed center
     /// distance (15/16 - 0.5 + 0.3 = 0.7375) the +1e-7 slack admits.
     InsetColumn(u8, u8),
+    /// THE DOOR PANEL'S OWN BAND (the variant-aware lane — the
+    /// autopush-657 round): the 3/16 strip the SHAPES map's own
+    /// rotation wears — javap the 26.2 jar: the DoorBlock clinit's
+    /// `Block.boxZ(16.0d, 13.0d, 16.0d)` the base shape banks (the
+    /// 3-arg walk the 4-arg(width, width, z0, z1) delegation keeps,
+    /// the 5-arg the box(8-w/2, 8-h/2, z0, 8+w/2, 8+h/2, z1) fold
+    /// speaks — the x/y the FULL 16/16 cube, the z the [13,16] band
+    /// the SOUTH edge wears), `Shapes.rotateHorizontal` the
+    /// per-facing map builds (NORTH the IDENTITY arm, EAST the
+    /// Y_90 rotation, SOUTH the Y_180, WEST the Y_270 — the strip
+    /// the OPPOSITE edge every facing wears), getShape pcs 0-74 the
+    /// effective direction reads (the closed state the FACING
+    /// itself, the open state the hinge arm — hinge-RIGHT the
+    /// getCounterClockWise pc 41-46, hinge-LEFT the getClockWise pc
+    /// 49-54; the client's kinds the hinge-LEFT quartets the
+    /// registerDefaultState pin banks). The (edge, thickness) pair
+    /// the variant vocabulary speaks: the edge the vanilla direction
+    /// byte the strip hugs (north 1, east 2, south 3, west 4 — the
+    /// facing byte's own law), the thickness the 3/16 panel every
+    /// rotation keeps.
+    Band(u8, u8),
     /// The full-cube family — the default `Shapes.block()` registration
     /// the collision the body's box intersects refuses.
     Full,
@@ -2422,6 +2443,124 @@ pub fn collision_shape(id: u16) -> CollisionShape {
     } else {
         CollisionShape::Full
     }
+}
+
+/// THE DOOR PANEL'S OWN EDGE TABLES (javap the 26.2 jar — the SHAPES
+/// map the clinit's `Shapes.rotateHorizontal(boxZ(16.0, 13.0, 16.0))`
+/// walk banks: the base shape the SOUTH strip [13,16] the identity
+/// NORTH arm answers, the Y_90 EAST arm the WEST strip the clockwise
+/// from-above rotation wears (the model's own y=90 law the same
+/// direction turns — the mesher's closed-east west-strip verdict the
+/// consistency check banks), the Y_180 SOUTH arm the NORTH strip,
+/// the Y_270 WEST arm the EAST strip). Indexed by the facing byte
+/// (the variant vocabulary north 1, east 2, south 3, west 4 — the
+/// [`FACING_BY_2D`] row's own values speak). The index-0 seat the
+/// no-opinion answer the `World::variant` read keeps — the
+/// registerDefaultState's own FACING=NORTH pin (autopush-655) the
+/// default state's facing wears, the seat the NORTH DEFAULT'S OWN
+/// EDGE carries (the closed south strip, the open west strip — the
+/// first cut's facing-byte seat the own test's Band(3,3) refusal
+/// retires).
+const DOOR_STRIP_CLOSED: [u8; 5] = [3, 3, 4, 1, 2];
+/// THE OPEN SWING'S OWN ROW (getShape pcs 28-54 the hinge arm — the
+/// kinds the hinge-LEFT quartets the registerDefaultState pin banks:
+/// the open state `SHAPES.get(getClockWise())` the strip the
+/// clockwise facing's own opposite edge wears — facing north open
+/// the WEST strip, facing east open the NORTH strip, facing south
+/// open the EAST strip, facing west open the SOUTH strip; the
+/// hinge-RIGHT lane the getCounterClockWise arm a later round
+/// serves).
+const DOOR_STRIP_OPEN: [u8; 5] = [4, 4, 1, 2, 3];
+
+/// THE DOOR PANEL'S OWN STRIP EDGE (the law the two tables bank —
+/// [`DOOR_STRIP_CLOSED`] the closed state's `SHAPES.get(FACING)`
+/// answer, [`DOOR_STRIP_OPEN`] the open state's swung edge). The
+/// byte the edge the strip hugs (the variant vocabulary north 1,
+/// east 2, south 3, west 4), the 3/16 thickness the Band pair's own
+/// second seat keeps. The out-of-vocabulary byte the
+/// registerDefaultState's own FACING=NORTH pin the default wears
+/// (the index-0 seat the tables bank — the honest guard the stray
+/// wire byte the panic never arms).
+pub fn door_strip_edge(facing_byte: u8, open: bool) -> u8 {
+    let f = usize::from(if (1..=4).contains(&facing_byte) {
+        facing_byte
+    } else {
+        0
+    });
+    if open {
+        DOOR_STRIP_OPEN[f]
+    } else {
+        DOOR_STRIP_CLOSED[f]
+    }
+}
+
+/// THE VARIANT-AWARE COLLISION READ (the body's sweep the lane this
+/// round retires from the kind-only table — the variant byte the
+/// door cells carry the shape's own rotation speaks): the non-door
+/// kinds the kind-only table pass through, the door kinds the Band
+/// the strip edge wears (the closed state the facing's own strip,
+/// the open state the swung edge — the [`door_strip_edge`] law the
+/// SHAPES map's own rotation banks). The below-world read the AIR
+/// passable answer the collision lane's own law keeps (the mesher's
+/// STONE culling semantic the render path alone wears — the
+/// [`crate::body`]'s own collision-cell read the same law carried).
+/// The kind-only [`collision_shape`] the OTHER lanes keep (the ray's
+/// per-cell predicate, the sculk occlusion, the mesher's cross-path
+/// mesh read — the per-cell fold the lanes' own precedent wears).
+pub fn collision_shape_at(world: &World, cx: i32, cy: i32, cz: i32) -> CollisionShape {
+    let id = if cy < 0 { AIR } else { world.get(cx, cy, cz) };
+    if !is_door(id) {
+        return collision_shape(id);
+    }
+    CollisionShape::Band(
+        door_strip_edge(world.variant(cx, cy, cz), is_door_open(id)),
+        3,
+    )
+}
+
+/// THE SHAPE'S OWN PER-CELL SLABS (the sweep's decode the ONE walk
+/// serves — the four body walks' inline fold the helper retires):
+/// the Y band the Column/InsetColumn rows' own heights wear, the x/z
+/// footprint the inset column's shrunk band keeps (the honey row's
+/// 1/16 the dev-23 round banks), the Band row the thin strip the
+/// edge's own side speaks (the north strip the z-low band, the east
+/// strip the x-high band, the south strip the z-high band, the west
+/// strip the x-low band — the 3/16 the edge's own side wears, the
+/// other axis the FULL footprint the panel's width keeps).
+/// `None` = the Empty shape — the walk-through skip the sweep's own
+/// continue answers.
+pub fn shape_slabs(
+    shape: CollisionShape,
+    cx: i32,
+    cy: i32,
+    cz: i32,
+) -> Option<(f64, f64, f64, f64, f64, f64)> {
+    if matches!(shape, CollisionShape::Empty) {
+        return None;
+    }
+    let (y_lo, y_hi) = match shape {
+        CollisionShape::Column(h) | CollisionShape::InsetColumn(h, _) => {
+            (cy as f64, cy as f64 + h as f64 / 16.0)
+        }
+        _ => (cy as f64, (cy + 1) as f64),
+    };
+    let inset = match shape {
+        CollisionShape::InsetColumn(_, i) => i as f64 / 16.0,
+        _ => 0.0,
+    };
+    let (mut x_lo, mut x_hi) = (cx as f64 + inset, (cx + 1) as f64 - inset);
+    let (mut z_lo, mut z_hi) = (cz as f64 + inset, (cz + 1) as f64 - inset);
+    if let CollisionShape::Band(edge, th) = shape {
+        let t = th as f64 / 16.0;
+        match edge {
+            1 => z_hi = cz as f64 + t,
+            2 => x_lo = (cx + 1) as f64 - t,
+            3 => z_lo = (cz + 1) as f64 - t,
+            4 => x_hi = cx as f64 + t,
+            _ => {}
+        }
+    }
+    Some((x_lo, x_hi, y_lo, y_hi, z_lo, z_hi))
 }
 
 /// THE FLINT'S OWN BURNABLE SUBSET — javap `FireBlock` over the real
@@ -9278,6 +9417,103 @@ mod tests {
             3,
             "the south look the byte 3 the no-flip law keeps"
         );
+    }
+
+    #[test]
+    fn the_door_panel_the_strip_edges_the_variants_wear() {
+        // THE VARIANT-AWARE LANE'S OWN VERDICTS (javap the SHAPES map
+        // + getShape the two laws the tables bank — the closed state
+        // the opposite edge every facing wears, the open state the
+        // clockwise facing's own opposite the hinge-LEFT arm speaks)
+        let mut w = World::new(1, 42);
+        w.set(5, 1, 5, OAK_DOOR);
+        w.set(5, 2, 5, OAK_DOOR_UPPER);
+        w.set_variant(5, 1, 5, 1);
+        w.set_variant(5, 2, 5, 1);
+        assert_eq!(
+            collision_shape_at(&w, 5, 1, 5),
+            CollisionShape::Band(3, 3),
+            "the closed north the south strip the base shape wears"
+        );
+        assert_eq!(
+            collision_shape_at(&w, 5, 2, 5),
+            CollisionShape::Band(3, 3),
+            "the upper half the same byte the same strip keeps"
+        );
+        // THE OPEN SWING (the kinds flip, the byte stays — the west
+        // strip the clockwise arm wears)
+        w.set(5, 1, 5, OAK_DOOR_OPEN);
+        w.set(5, 2, 5, OAK_DOOR_UPPER_OPEN);
+        assert_eq!(
+            collision_shape_at(&w, 5, 1, 5),
+            CollisionShape::Band(4, 3),
+            "the open north the west strip the swing wears"
+        );
+        // THE FOUR FACINGS' OWN TABLE (the closed rows the opposite
+        // edges, the open rows the swing edges — the SHAPES map's
+        // rotateHorizontal law the bytes speak)
+        for (byte, closed_edge, open_edge) in [(1u8, 3u8, 4u8), (2, 4, 1), (3, 1, 2), (4, 2, 3)] {
+            w.set(6, 1, 6, OAK_DOOR);
+            w.set_variant(6, 1, 6, byte);
+            assert_eq!(
+                collision_shape_at(&w, 6, 1, 6),
+                CollisionShape::Band(closed_edge, 3),
+                "the closed facing {byte} the edge {closed_edge} wears"
+            );
+            w.set(6, 1, 6, OAK_DOOR_OPEN);
+            assert_eq!(
+                collision_shape_at(&w, 6, 1, 6),
+                CollisionShape::Band(open_edge, 3),
+                "the open facing {byte} the edge {open_edge} wears"
+            );
+        }
+        // THE NO-OPINION BYTE (the layerless cell the variant read's
+        // 0 keeps — the registerDefaultState's own FACING=NORTH pin
+        // the default state's facing wears, the closed north the
+        // south strip answers)
+        w.set(7, 1, 7, OAK_DOOR);
+        assert_eq!(
+            collision_shape_at(&w, 7, 1, 7),
+            CollisionShape::Band(3, 3),
+            "the no-opinion byte the north default wears"
+        );
+        // THE OUT-OF-VOCABULARY BYTE (the honest guard the stray
+        // wire byte the panic never arms — the same north default)
+        w.set(9, 1, 9, OAK_DOOR);
+        w.set_variant(9, 1, 9, 9);
+        assert_eq!(
+            collision_shape_at(&w, 9, 1, 9),
+            CollisionShape::Band(3, 3),
+            "the stray byte the north default wears"
+        );
+        // THE NON-DOOR PASS-THROUGH (the kind-only table the other
+        // lanes keep — the stone the full cube, the air the empty,
+        // the farmland the column the variant byte never bends)
+        w.set(8, 1, 8, STONE);
+        assert_eq!(collision_shape_at(&w, 8, 1, 8), CollisionShape::Full);
+        w.set(8, 1, 8, AIR);
+        assert_eq!(collision_shape_at(&w, 8, 1, 8), CollisionShape::Empty);
+        w.set(8, 1, 8, FARMLAND);
+        w.set_variant(8, 1, 8, 2);
+        assert_eq!(
+            collision_shape_at(&w, 8, 1, 8),
+            CollisionShape::Column(15),
+            "the non-door kind the kind-only row keeps"
+        );
+        // THE BELOW-WORLD READ (the collision lane's own AIR law —
+        // the mesher's STONE culling semantic the render path alone
+        // wears)
+        assert_eq!(
+            collision_shape_at(&w, 5, -1, 5),
+            CollisionShape::Empty,
+            "the below-world the passable law keeps"
+        );
+        // THE EDGE TABLES' OWN SEATS (the direct pins the fn wears)
+        assert_eq!(door_strip_edge(0, false), 3);
+        assert_eq!(door_strip_edge(0, true), 4);
+        assert_eq!(door_strip_edge(2, false), 4, "the closed east the west strip");
+        assert_eq!(door_strip_edge(2, true), 1, "the open east the north strip");
+        assert_eq!(door_strip_edge(9, false), 3, "the stray byte the north seat");
     }
 
     #[test]

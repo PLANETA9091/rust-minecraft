@@ -35762,10 +35762,38 @@ impl App {
             _ => 1.0,
         };
         // THE PLACED BOX (the shape moved to the cell): the full
-        // 0..1 footprint, the shape's own height band
-        let (blo, bhi) = (cell.0 as f64, (cell.0 + 1) as f64);
-        let (tlo, thi) = (cell.1 as f64, cell.1 as f64 + top);
-        let (zlo, zhi) = (cell.2 as f64, (cell.2 + 1) as f64);
+        // 0..1 footprint, the shape's own height band — THE DOOR
+        // PANEL'S OWN BAND (the variant-aware lane the sweep banks —
+        // the autopush-657 round): the placed state's facing the
+        // `door_facing_byte` walk the placement lane stamps, the
+        // closed strip the edge table speaks — the thin slab the
+        // body's box the FAR edge never intersects (the
+        // door-in-your-own-cell placement the vanilla's own thin
+        // shape allows, the Full-band refusal the documented gap
+        // retires)
+        let (blo, tlo, zlo, bhi, thi, zhi) = if crate::world::is_door(block) {
+            let edge = crate::world::door_strip_edge(
+                crate::world::door_facing_byte(self.world_camera().yaw),
+                false,
+            );
+            let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) = crate::world::shape_slabs(
+                crate::world::CollisionShape::Band(edge, 3),
+                cell.0,
+                cell.1,
+                cell.2,
+            )
+            .expect("the band shape the slabs never refuse");
+            (x_lo, y_lo, z_lo, x_hi, y_hi, z_hi)
+        } else {
+            (
+                cell.0 as f64,
+                cell.1 as f64,
+                cell.2 as f64,
+                (cell.0 + 1) as f64,
+                cell.1 as f64 + top,
+                (cell.2 + 1) as f64,
+            )
+        };
         let overlaps = |(xlo, ylo, zlo2, xhi, yhi, zhi2): (f64, f64, f64, f64, f64, f64)| {
             xlo < bhi && xhi > blo && ylo < thi && yhi > tlo && zlo2 < zhi && zhi2 > zlo
         };
@@ -87019,6 +87047,54 @@ cow_sound_variant: None,
             app.offline_world.as_ref().unwrap().get(c, top, c),
             crate::world::DANDELION,
             "the flower the player's own cell wears"
+        );
+    }
+
+    // THE DOOR-IN-YOUR-OWN-CELL LAW (the vanilla's thin shape the
+    // placement allows — the Full-band refusal the documented gap the
+    // variant-aware lane retires, the autopush-657 round): the placed
+    // state's facing the `door_facing_byte` walk the lane stamps — the
+    // yaw 0 the north byte the SOUTH strip the far edge banks, the
+    // body's own box the strip never intersects; the yaw pi the south
+    // facing the NORTH strip the near edge wears, the body shifted
+    // into the strip's own band the refusal keeps (the dirt control
+    // the full-cube law the same staging wears).
+    #[test]
+    fn the_door_the_place_the_own_cell_the_band_admits() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        // THE EYE AT THE STANDING CELL'S OWN 1.62 (the feet box the
+        // cell's own ±0.3 wears — the far-edge strip the overlap never
+        // speaks)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 1.62, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            !app.placement_obstructed(crate::world::OAK_DOOR, (c, top, c)),
+            "the far-edge strip the own-cell placement admits"
+        );
+        // THE DIRT CONTROL (the full cube the refusal keeps — the same
+        // staging the flower test's own law wears)
+        assert!(
+            app.placement_obstructed(crate::world::DIRT, (c, top, c)),
+            "the dirt's full box the body intersects"
+        );
+        // THE NEAR EDGE (the yaw pi the south facing the NORTH strip
+        // wears — the eye shifted the strip's own band the body's box
+        // overlaps, the refusal the vanilla's own walk speaks)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 1.62, c as f32 + 0.45),
+            yaw: std::f32::consts::PI,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.placement_obstructed(crate::world::OAK_DOOR, (c, top, c)),
+            "the near-edge strip the body's box the refusal keeps"
         );
     }
 

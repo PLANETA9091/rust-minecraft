@@ -621,40 +621,40 @@ fn clip_axis(world: &World, b: (f64, f64, f64, f64, f64, f64), axis: usize, d: f
                 // 15/16 floor wears, the horizontal sweep the band the
                 // strict overlap reads), the X/Z footprint the full
                 // cell keeps, the full-cube roster the whole cell.
-                let shape = crate::world::collision_shape(collision_cell(world, cx, cy, cz));
-                if matches!(shape, crate::world::CollisionShape::Empty) {
+                // THE SHAPE'S OWN SLABS (the helper the ONE walk
+                // serves — the variant-aware read the door cells'
+                // Band the strip edge wears, the inset column's sides
+                // the dev-23 row banks, the Empty rows the
+                // walk-through skip keeps)
+                let Some((x_lo, x_hi, y_lo, y_hi, z_lo, z_hi)) =
+                    crate::world::shape_slabs(
+                        crate::world::collision_shape_at(world, cx, cy, cz),
+                        cx,
+                        cy,
+                        cz,
+                    )
+                else {
                     continue;
-                }
-                let (y_lo, y_hi) = match shape {
-                    crate::world::CollisionShape::Column(h)
-                    | crate::world::CollisionShape::InsetColumn(h, _) => {
-                        (cy as f64, cy as f64 + h as f64 / 16.0)
-                    }
-                    _ => (cy as f64, (cy + 1) as f64),
                 };
-                // THE INSET COLUMN'S OWN SIDES (the dev-23 round — the
-                // honey row the (15, 1) pair banks): the x/z slabs the
-                // 1/16 inset wears — the pressed body's box the 14/16
-                // collision band stops at, the CELL the 1/16 overlap
-                // the slide's own geometry keeps — the Y band the
-                // inset never touches
-                let inset = match shape {
-                    crate::world::CollisionShape::InsetColumn(_, i) => i as f64 / 16.0,
-                    _ => 0.0,
-                };
-                let (x_lo, x_hi) = (cx as f64 + inset, (cx + 1) as f64 - inset);
-                let (z_lo, z_hi) = (cz as f64 + inset, (cz + 1) as f64 - inset);
-                // the cell's slabs on the other two axes must strictly
-                // overlap the box (the epsilon the vanilla's
-                // findIndex bounds carry) — the Y slab the shape's own
-                // band wears, the X/Z footprint the inset column's
-                // shrunk band wears
+                // THE OTHER TWO AXES' OWN PAIRING (the long-standing
+                // swap the scratch test exposed — the autopush-657
+                // round repairs: the z axis the x/y pairs the x and y
+                // arms' own law wears — the axis-0 walk the y/z pairs
+                // read, the axis-1 the x/z, the axis-2 the x/y the
+                // north-south wall's own band finally speaks; the
+                // pre-fix arms the z sweep the y-band-vs-x-extents
+                // compare wore, the every-cell skip the pass-through
+                // feel kept): the cell's slabs on the other two axes
+                // must strictly overlap the box's own extents (the
+                // epsilon the vanilla's findIndex bounds carry) — the
+                // Y slab the shape's own band wears, the X/Z footprint
+                // the inset column's shrunk band wears
                 let (c1lo, c1hi) = match axis {
-                    1 => (x_lo, x_hi),
-                    _ => (y_lo, y_hi),
+                    0 => (y_lo, y_hi),
+                    _ => (x_lo, x_hi),
                 };
                 let (c2lo, c2hi) = match axis {
-                    2 => (x_lo, x_hi),
+                    2 => (y_lo, y_hi),
                     _ => (z_lo, z_hi),
                 };
                 if !(c1lo < a1hi - COLLISION_SKIN && c1hi > a1lo + COLLISION_SKIN) {
@@ -844,7 +844,7 @@ pub fn collide_stepped(
     for cx in swept.0.floor() as i32..=(swept.3 - 1e-9).floor() as i32 {
         for cy in swept.1.floor() as i32..=(swept.4 - 1e-9).floor() as i32 {
             for cz in swept.2.floor() as i32..=(swept.5 - 1e-9).floor() as i32 {
-                let shape = crate::world::collision_shape(collision_cell(world, cx, cy, cz));
+                let shape = crate::world::collision_shape_at(world, cx, cy, cz);
                 if matches!(shape, crate::world::CollisionShape::Empty) {
                     continue;
                 }
@@ -1915,30 +1915,22 @@ impl PlayerBody {
         for cx in x0.floor() as i32..=((x1 - 1e-9).floor()) as i32 {
             for cy in y0.floor() as i32..=((y1 - 1e-9).floor()) as i32 {
                 for cz in z0.floor() as i32..=((z1 - 1e-9).floor()) as i32 {
-                    let shape = crate::world::collision_shape(collision_cell(world, cx, cy, cz));
-                    if matches!(shape, crate::world::CollisionShape::Empty) {
+                    let Some((x_lo, x_hi, y_lo, y_hi, z_lo, z_hi)) =
+                        crate::world::shape_slabs(
+                            crate::world::collision_shape_at(world, cx, cy, cz),
+                            cx,
+                            cy,
+                            cz,
+                        )
+                    else {
                         continue;
-                    }
-                    let (y_lo, y_hi) = match shape {
-                        crate::world::CollisionShape::Column(h)
-                        | crate::world::CollisionShape::InsetColumn(h, _) => {
-                            (cy as f64, cy as f64 + h as f64 / 16.0)
-                        }
-                        _ => (cy as f64, (cy + 1) as f64),
                     };
-                    // THE INSET COLUMN'S OWN SIDES (the dev-23 round —
-                    // the honey row): the x/z strict overlap the 1/16
-                    // inset wears, the Y band the shape's own top keeps
-                    let inset = match shape {
-                        crate::world::CollisionShape::InsetColumn(_, i) => i as f64 / 16.0,
-                        _ => 0.0,
-                    };
-                    if (cx as f64 + inset) < x1
-                        && ((cx + 1) as f64 - inset) > x0
+                    if x_lo < x1
+                        && x_hi > x0
                         && y_lo < y1
                         && y_hi > y0
-                        && (cz as f64 + inset) < z1
-                        && ((cz + 1) as f64 - inset) > z0
+                        && z_lo < z1
+                        && z_hi > z0
                     {
                         hit = true;
                     }
@@ -3564,31 +3556,25 @@ impl PlayerBody {
         for cy in y_lo..=y_hi {
             for cx in x_lo..=x_hi {
                 for cz in z_lo..=z_hi {
-                    let shape =
-                        crate::world::collision_shape(collision_cell(world, cx, cy, cz));
-                    if matches!(shape, crate::world::CollisionShape::Empty) {
+                    let Some((x_lo, x_hi, y_lo_band, y_hi_band, z_lo, z_hi)) =
+                        crate::world::shape_slabs(
+                            crate::world::collision_shape_at(world, cx, cy, cz),
+                            cx,
+                            cy,
+                            cz,
+                        )
+                    else {
                         continue;
-                    }
-                    let (y_lo_band, y_hi_band) = match shape {
-                        crate::world::CollisionShape::Column(h)
-                        | crate::world::CollisionShape::InsetColumn(h, _) => {
-                            (cy as f64, cy as f64 + h as f64 / 16.0)
-                        }
-                        _ => (cy as f64, (cy + 1) as f64),
-                    };
-                    let inset = match shape {
-                        crate::world::CollisionShape::InsetColumn(_, i) => i as f64 / 16.0,
-                        _ => 0.0,
                     };
                     // THE STRICT OVERLAP (the vanilla AABB intersects the
                     // shape walk — the touching edge the strict compare
                     // admits, the 1e-6 slab the band's own top rides)
-                    if !((cx as f64 + inset) < bx1
-                        && ((cx + 1) as f64 - inset) > bx0
+                    if !(x_lo < bx1
+                        && x_hi > bx0
                         && y_lo_band < by0
                         && y_hi_band > by0 - 1.0e-6
-                        && (cz as f64 + inset) < bz1
-                        && ((cz + 1) as f64 - inset) > bz0)
+                        && z_lo < bz1
+                        && z_hi > bz0)
                     {
                         continue;
                     }
@@ -7532,6 +7518,93 @@ mod tests {
             c.x
         );
         assert!(c.horizontal_collision, "the inset face the flag rides");
+    }
+
+    /// THE Z AXIS'S OWN PAIRING (the long-standing swap the door
+    /// panel's own round exposed — the autopush-657 repair: the
+    /// pre-fix arms the z sweep the y-band-vs-x-extents compare wore,
+    /// the every-cell skip the pass-through kept — the north-south
+    /// wall the body walked through, the stone full cube included):
+    /// the fixed pairs the +z walk the wall's own face stops
+    #[test]
+    fn the_z_axis_the_pairing_the_wall_stops() {
+        let mut w = flat_world();
+        for y in 1..=3 {
+            w.set(8, y, 9, crate::world::STONE);
+        }
+        let mut b = PlayerBody::new(8.5, 1.0, 6.5, 0.0, 0.0);
+        settle(&mut b, &w);
+        b.forward = 1.0;
+        for _ in 0..40 {
+            b.tick(&w, false);
+        }
+        assert!(
+            (b.z - (9.0 - WIDTH / 2.0)).abs() < 1e-9,
+            "the wall the +z walk stops at, got z={}",
+            b.z
+        );
+        assert!(b.horizontal_collision, "the wall the flag rides");
+    }
+
+    /// THE DOOR PANEL'S OWN SWEEP (the variant-aware lane the body's
+    /// walk wears — the autopush-657 round): the closed panel the
+    /// strip the walk stops at, the open swing the passage the
+    /// mid-cell body wears, the west-pressed body the panel stops
+    /// (the SHAPES map's own law the per-axis fold speaks exactly —
+    /// the band the axis-aligned box the slabs wear).
+    #[test]
+    fn the_door_panel_the_sweep_the_band_wears() {
+        // THE CLOSED PANEL'S OWN STRIP (the facing-north door the
+        // south strip [13,16] wears — the +z walk INTO the doorway
+        // stops 13/16 in, the vanilla feel the thin panel keeps)
+        let mut w = flat_world();
+        w.set(8, 1, 8, crate::world::OAK_DOOR);
+        w.set(8, 2, 8, crate::world::OAK_DOOR_UPPER);
+        w.set_variant(8, 1, 8, 1);
+        w.set_variant(8, 2, 8, 1);
+        let mut b = PlayerBody::new(8.5, 1.0, 6.5, 0.0, 0.0);
+        settle(&mut b, &w);
+        b.forward = 1.0;
+        for _ in 0..60 {
+            b.tick(&w, false);
+        }
+        assert!(
+            (b.z - (8.0 + 13.0 / 16.0 - WIDTH / 2.0)).abs() < 1e-9,
+            "the south strip the +z walk stops at, got z={}",
+            b.z
+        );
+        assert!(b.horizontal_collision, "the panel the flag rides");
+        // THE OPEN SWING (the kinds flip, the byte stays — the west
+        // strip x∈[0,3/16] the swing wears): the mid-cell body the
+        // passage keeps
+        w.set(8, 1, 8, crate::world::OAK_DOOR_OPEN);
+        w.set(8, 2, 8, crate::world::OAK_DOOR_UPPER_OPEN);
+        let mut p = PlayerBody::new(8.5, 1.0, 6.5, 0.0, 0.0);
+        settle(&mut p, &w);
+        p.forward = 1.0;
+        for _ in 0..30 {
+            p.tick(&w, false);
+        }
+        assert!(
+            p.z > 9.5,
+            "the open doorway the mid-cell body passes, got z={}",
+            p.z
+        );
+        assert!(!p.horizontal_collision, "the passage the flag never arms");
+        // THE WEST-PRESSED BODY (the strip's own band the overlap
+        // wears — the walk stops at the cell's own north face the
+        // full-z strip keeps)
+        let mut c = PlayerBody::new(8.03, 1.0, 6.5, 0.0, 0.0);
+        settle(&mut c, &w);
+        c.forward = 1.0;
+        for _ in 0..60 {
+            c.tick(&w, false);
+        }
+        assert!(
+            (c.z - (8.0 - WIDTH / 2.0)).abs() < 1e-9,
+            "the west strip the pressed body stops at the cell's face, got z={}",
+            c.z
+        );
     }
 
     /// THE SLIDE'S OWN TERMINAL (the dev-23 round — the whole chain
