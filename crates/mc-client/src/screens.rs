@@ -23265,11 +23265,181 @@ impl App {
             sink,
             &mut self.live_inv_slots,
             &mut self.hotbar_slots,
+            0,
             hover_menu,
             if whole_stack { 1 } else { 0 },
             self.live_inv_state_id,
             self.live_inv_carried,
+            36..45,
         );
+    }
+
+    /// THE TABLE'S OWN Q (the SAME keyPressed keyDrop arm — the
+    /// AbstractContainerScreen base class the CraftingScreen inherits,
+    /// the gate chain and the doClick THROW table the inventory walk's
+    /// doc block keeps verbatim): the hovered CRAFT CELL's or STORE
+    /// ROW's stack the Q throws. The seats this lane answers are the
+    /// menu's plain Slots (the TransientCraftingContainer cells the
+    /// mayPlace/mayPickup unconditional TRUE keeps, the store rows the
+    /// player Inventory's own) — the tryRemove walk the unambiguous
+    /// `min(count, decrement)` law answers. THE RESULT SEAT the
+    /// silence keeps (the ResultSlot's safeTake chain — the tryRemove
+    /// over the craftSlots container + the onTake's ingredient
+    /// decrement + the recompute — the id-only reading the later jar
+    /// round banks; the result's own take lane the click walks
+    /// already speak). The offline walk the model's own lists answer
+    /// (the [`Self::table_grid`] cells, the player's own store rows),
+    /// the cell's mutation the recipe verdict answers (the
+    /// [`Self::refresh_table_result`] walk the cell PICKUP lane
+    /// speaks — the setChanged chain the doClick arm's tryRemove
+    /// fires), the store row the HUD hotbar row syncs.
+    pub fn on_table_drop_key(&mut self, whole_stack: bool) {
+        if self.world_is_network {
+            // THE WIRE GATE: the live session's Q the BELIEF the same
+            // doClick THROW arm answers, the packet the command lane
+            // speaks — the offline store NOT the truth there.
+            self.on_table_drop_key_wire(whole_stack);
+            return;
+        }
+        if self.screen != ScreenKind::Crafting {
+            return; // this lane IS the container screen's own walk
+        }
+        if self.table_panel == (0, 0) {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return; // no cursor — no hoveredSlot (the null gate's shape)
+        };
+        let panel = self.table_panel;
+        // THE CRAFT CELLS (the menu's slots 1..9 the ctor's
+        // addCraftingGridSlots(30, 17) places — the same 16x16 rects
+        // the click lane speaks)
+        let cell = (0..9)
+            .map(|i| {
+                let (cx, cy) = table_craft_origin(panel, i);
+                (cx + 1, cy + 1, i)
+            })
+            .find(|&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+            .map(|(_, _, i)| i);
+        let store = if cell.is_some() {
+            None
+        } else {
+            (0..36)
+                .map(|i| {
+                    let (ox, oy) = inventory_slot_origin(panel, i);
+                    (ox + 1, oy + 1, i)
+                })
+                .find(|&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+                .map(|(_, _, i)| i)
+        };
+        let (id, count) = if let Some(cell) = cell {
+            self.table_grid[cell]
+        } else if let Some(store) = store {
+            self.inventory.items[store]
+        } else {
+            return; // the result seat + the elsewhere point the silence keeps
+        };
+        if count <= 0 {
+            return; // hoveredSlot.hasItem()'s own gate — silence
+        }
+        if self.inv_carried.1 > 0 {
+            return; // THE doClick THROW's getCarried().isEmpty() gate —
+                    // the cursor's own stack the Q never throws
+        }
+        let dropped = if whole_stack { count } else { 1 };
+        self.drop_item_entity_aimed(id, dropped);
+        // safeTake(count, MAX)'s own walk: the whole stack gone or
+        // exactly one off (the tryRemove law the doClick arm speaks)
+        let new = if whole_stack { (0, 0) } else { (id, count - 1) };
+        if let Some(cell) = cell {
+            self.table_grid[cell] = new;
+            // the cell's own setChanged the recipe verdict answers —
+            // the recompute the doClick arm's tryRemove fires
+            self.refresh_table_result();
+        } else if let Some(store) = store {
+            self.inventory.items[store] = new;
+            self.hotbar_slots = self.inventory.hotbar();
+        }
+        // NO swing, the container STAYS OPEN (the inventory walk's own
+        // laws the base class keeps).
+    }
+
+    /// THE WIRE GATE'S OWN WALK (the offline walk's twin — the same
+    /// keyPressed gate chain, the window-1 belief the doClick THROW
+    /// arm answers): the hovered+hasItem gates the SAME geometry walk
+    /// the offline lane keeps, the packet lane the
+    /// [`wire_inventory_drop`] free fn rides (the window id the
+    /// OpenScreen assigned, the HUD row the crafting menu's own
+    /// 37..46 range syncs — the [`Self::table_store_menu_id`] law the
+    /// store rows key). The result seat + the elsewhere point the
+    /// silence keeps (the lane's own scope the offline walk keeps).
+    fn on_table_drop_key_wire(&mut self, whole_stack: bool) {
+        if self.table_panel == (0, 0) {
+            return;
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return;
+        };
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return; // no live session — the command dies on the frame thread
+        };
+        let Some((window_id, state_id)) = self.table_live_window else {
+            return; // no window — the belief never armed
+        };
+        let panel = self.table_panel;
+        // THE CRAFT CELLS (the menu ids 1..9 — the hasItem gate the
+        // keyPressed chain keeps: the EMPTY hovered cell the silence
+        // speaks, the slotClicked call never fires)
+        for cell in 0..9 {
+            let (cx, cy) = table_craft_origin(panel, cell);
+            if mx >= cx + 1 && mx < cx + 17 && my >= cy + 1 && my < cy + 17 {
+                let menu = 1 + cell;
+                let (_, count) = self.live_table_slots[menu];
+                if count <= 0 {
+                    return; // hoveredSlot.hasItem()'s own gate — silence
+                }
+                wire_inventory_drop(
+                    sink,
+                    &mut self.live_table_slots,
+                    &mut self.hotbar_slots,
+                    window_id,
+                    menu,
+                    if whole_stack { 1 } else { 0 },
+                    state_id,
+                    self.live_table_carried,
+                    37..46,
+                );
+                return;
+            }
+        }
+        // THE STORE ROWS (the hotbar store 0..8 rides menu 37..45, the
+        // main grid 9..35 the menu 10..36 speaks — the hasItem gate the
+        // same chain keeps)
+        if let Some(store) = (0..36)
+            .map(|i| {
+                let (ox, oy) = inventory_slot_origin(panel, i);
+                (ox + 1, oy + 1, i)
+            })
+            .find(|&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+            .map(|(_, _, i)| i)
+        {
+            let menu = Self::table_store_menu_id(store) as usize;
+            let (_, count) = self.live_table_slots[menu];
+            if count <= 0 {
+                return; // hoveredSlot.hasItem()'s own gate — silence
+            }
+            wire_inventory_drop(
+                sink,
+                &mut self.live_table_slots,
+                &mut self.hotbar_slots,
+                window_id,
+                menu,
+                if whole_stack { 1 } else { 0 },
+                state_id,
+                self.live_table_carried,
+                37..46,
+            );
+        }
     }
 
     /// THE SURVIVAL SCREEN'S OWN HOTBAR KEYS (javap 26.2 — the 2dc72797
@@ -48944,18 +49114,22 @@ fn wire_inventory_swap(
 /// hovered+hasItem gates passed — the carried cursor the doClick
 /// arm's own refusal the EMPTY changed map names, the cursor pair the
 /// THROW arm never touches). The HUD row's belief the every-mutation
-/// law syncs (the hotbar's menu ids 36..44 the row's own slice — the
+/// law syncs (the hotbar's menu ids the caller's own range names —
+/// the inventory window-0's 36..45, the crafting menu's 37..46 — the
 /// armor/offhand/craft seats the row never wears). A free function —
 /// the frame thread's disjoint field borrows (the live_clicks sink
 /// stays held across the walk, the chest lane's own shape).
+#[allow(clippy::too_many_arguments)]
 fn wire_inventory_drop(
     sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
     live_slots: &mut [(i32, i32); crate::world_view::INVENTORY_MENU_SLOTS],
     hotbar: &mut [(i32, i32); 9],
+    window_id: i32,
     menu: usize,
     button: i8,
     state_id: i32,
     carried: (i32, i32),
+    hud: std::ops::Range<usize>,
 ) {
     debug_assert!(
         button == 0 || button == 1,
@@ -48973,10 +49147,10 @@ fn wire_inventory_drop(
         live_slots[menu] = new;
         note_batch_change(&mut changed, menu as i16, new);
         // THE HUD ROW'S BELIEF (the every-mutation law — the hotbar
-        // menu ids 36..44 the row's own slice)
-        if (36..45).contains(&menu) {
+        // menu ids the caller's own range speaks)
+        if hud.contains(&menu) {
             let mut row = [(0, 0); 9];
-            row.copy_from_slice(&live_slots[36..45]);
+            row.copy_from_slice(&live_slots[hud.start..hud.end]);
             *hotbar = row;
         }
         // THE DROP ENTITY the server spawns (the player.drop walk the
@@ -48988,7 +49162,7 @@ fn wire_inventory_drop(
     // the THROW arm never touches)
     let _ = sink.send(crate::world_view::ContainerCommand::Click(
         crate::world_view::ContainerClick {
-            window_id: 0,
+            window_id,
             state_id,
             slot: menu as i16,
             button,
@@ -110107,6 +110281,232 @@ cow_sound_variant: None,
         app.on_inventory_drop_key(false);
         assert!(click_rx.try_recv().is_err(), "still silence");
         app.inv_panel = panel;
+    }
+
+    /// THE TABLE'S OWN Q, THE OFFLINE WALK (the CraftingScreen's own
+    /// keyDrop arm — the plain Slots the cells + the store rows are):
+    /// the plain Q the ONE off (the recompute the cell's setChanged
+    /// fires — the pattern's verdict the result re-speaks), the Ctrl+Q
+    /// the whole stack (the broken pattern the recompute empties), the
+    /// aimed drop the body throws, the carried cursor and the empty
+    /// hover and the RESULT seat the silences keep.
+    #[test]
+    fn the_table_drop_key_the_cell_the_store_the_silences_wear() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open(ScreenKind::Crafting);
+        app.table_panel = inventory_panel_origin(640, 360);
+        let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+        let stick = mc_registry::item_id_by_name("stick").unwrap();
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        // THE STICKS RECIPE (the column the cells 1 + 4 keep — the
+        // result (stick, 4) the verdict speaks)
+        app.table_grid[1] = (planks, 2);
+        app.table_grid[4] = (planks, 2);
+        app.refresh_table_result();
+        assert_eq!(app.table_result, (stick, 4), "the recipe armed");
+        let drops_before = app.drops.len();
+        // THE PLAIN Q ON CELL 1: the ONE off — the pattern HOLDS, the
+        // recompute the verdict re-speaks, the aimed drop one plank
+        let (cx, cy) = table_craft_origin(app.table_panel, 1);
+        app.mouse_pos = Some((cx + 8, cy + 8));
+        app.on_table_drop_key(false);
+        assert_eq!(app.table_grid[1], (planks, 1), "the one off rode");
+        assert_eq!(app.table_result, (stick, 4), "the pattern holds, the verdict re-spoke");
+        assert_eq!(app.drops.len(), drops_before + 1, "the aimed drop rode");
+        assert_eq!(app.screen, ScreenKind::Crafting, "the screen stays");
+        assert_eq!(app.inv_carried, (0, 0), "the cursor never touched");
+        // THE CTRL+Q ON CELL 4: the whole stack gone — the pattern
+        // BROKEN, the recompute the result empties
+        let (cx2, cy2) = table_craft_origin(app.table_panel, 4);
+        app.mouse_pos = Some((cx2 + 8, cy2 + 8));
+        app.on_table_drop_key(true);
+        assert_eq!(app.table_grid[4], (0, 0), "the whole stack gone");
+        assert_eq!(app.table_result, (0, 0), "the broken pattern the recompute empties");
+        assert_eq!(app.drops.len(), drops_before + 2, "the second drop rode");
+        // THE STORE ROW (the hotbar row 4 — the HUD sync the
+        // every-mutation law keeps)
+        app.inventory.items[4] = (stone, 7);
+        let (ox, oy) = inventory_slot_origin(app.table_panel, 4);
+        app.mouse_pos = Some((ox + 8, oy + 8));
+        app.on_table_drop_key(true);
+        assert_eq!(app.inventory.items[4], (0, 0), "the row emptied");
+        assert_eq!(app.hotbar_slots[4], (0, 0), "the HUD synced");
+        assert_eq!(app.drops.len(), drops_before + 3, "the third drop rode");
+        // THE CARRIED CURSOR (the doClick's own isEmpty gate): the
+        // cell whole, no drop
+        app.inv_carried = (stone, 5);
+        let (cx3, cy3) = table_craft_origin(app.table_panel, 1);
+        app.mouse_pos = Some((cx3 + 8, cy3 + 8));
+        app.on_table_drop_key(false);
+        assert_eq!(app.table_grid[1], (planks, 1), "the cell whole");
+        assert_eq!(app.drops.len(), drops_before + 3, "still three");
+        app.inv_carried = (0, 0);
+        // THE EMPTY HOVER (the null hoveredSlot): the cursor between
+        // the slots
+        app.mouse_pos = Some((332, 157));
+        app.on_table_drop_key(false);
+        assert_eq!(app.drops.len(), drops_before + 3, "still silence");
+        // THE RESULT SEAT (the lane's own scope — the ResultSlot's
+        // safeTake chain the later jar round banks): the silence, the
+        // verdict whole
+        app.table_result = (stick, 4);
+        let (rx, ry) = table_craft_origin(app.table_panel, 9);
+        app.mouse_pos = Some((rx + 8, ry + 8));
+        app.on_table_drop_key(false);
+        app.on_table_drop_key(true);
+        assert_eq!(app.table_result, (stick, 4), "the result seat whole");
+        assert_eq!(app.drops.len(), drops_before + 3, "the result seat is silence");
+    }
+
+    /// THE TABLE'S OWN Q, THE WIRE WALK (the window-1 belief the same
+    /// doClick THROW arm answers): the cell's menu id the packet names
+    /// (the window id the OpenScreen assigned), the store row the
+    /// [`Self::table_store_menu_id`] law keys (the hotbar row 3 the
+    /// menu 40 speaks), the HUD row's belief the every-mutation law
+    /// syncs over the crafting menu's own 37..46 range, the offline
+    /// store the wire world never touches.
+    #[test]
+    fn the_wire_table_drop_key_the_cells_the_store_the_hud_wear() {
+        use crate::world_view::{ContainerCommand, LiveContainer};
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let table = LiveContainer {
+            id: 9,
+            menu_type_id: crate::world_model::MENU_TYPE_CRAFTING,
+            slots: {
+                let mut s = vec![(0i32, 0i32); 46];
+                s[3] = (planks, 8); // the craft cell 2 → menu 3
+                s[40] = (stone, 7); // the hotbar row 3 → menu 40
+                s
+            },
+            carried: (0, 0),
+            state_id: 3,
+            bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
+        assert_eq!(app.screen, ScreenKind::Crafting, "the window shows");
+        app.table_panel = inventory_panel_origin(640, 360);
+        // THE PLAIN Q ON CELL 2 (menu 3): the ONE off, the packet the
+        // window's own identity names
+        let (cx, cy) = table_craft_origin(app.table_panel, 2);
+        app.mouse_pos = Some((cx + 8, cy + 8));
+        app.on_table_drop_key(false);
+        assert_eq!(app.live_table_slots[3], (planks, 7), "the one off rode");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 9, "the window's own id");
+                assert_eq!(c.state_id, 3, "the revision rides");
+                assert_eq!(c.slot, 3, "the cell's own menu id");
+                assert_eq!(c.button, 0, "the plain Q the byte keys");
+                assert_eq!(c.input, crate::world_view::ContainerInput::Throw);
+                assert_eq!(c.changed, vec![(3, (planks, 7))], "the mutation named");
+                assert_eq!(c.carried, (0, 0), "the cursor pair rides unchanged");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE CTRL+Q ON STORE 3 (menu 40): the whole stack gone, the
+        // HUD row's belief synced
+        let (ox, oy) = inventory_slot_origin(app.table_panel, 3);
+        app.mouse_pos = Some((ox + 8, oy + 8));
+        app.on_table_drop_key(true);
+        assert_eq!(app.live_table_slots[40], (0, 0), "the whole stack gone");
+        assert_eq!(app.hotbar_slots[3], (0, 0), "the HUD belief synced");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 40, "the hotbar row's own menu id");
+                assert_eq!(c.button, 1, "the Ctrl the byte keys");
+                assert_eq!(c.changed, vec![(40, (0, 0))]);
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        assert_eq!(
+            app.inventory.items[3], (0, 0),
+            "the offline store the wire world never touches"
+        );
+    }
+
+    /// THE TABLE'S OWN Q, THE WIRE GATES (the keyPressed chain's own
+    /// shape over the window-1 belief): the EMPTY hovered cell the
+    /// silence keeps (NO packet — the hasItem gate lives in the
+    /// keyPressed walk), the carried cursor the doClick arm's own
+    /// refusal the ALWAYS-PACKET law names (the EMPTY changed map, the
+    /// belief whole), the RESULT seat and the no-window the same
+    /// silences speak.
+    #[test]
+    fn the_wire_table_drop_key_the_gates_and_the_silences_wear() {
+        use crate::world_view::{ContainerCommand, LiveContainer};
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+        let table = LiveContainer {
+            id: 9,
+            menu_type_id: crate::world_model::MENU_TYPE_CRAFTING,
+            slots: {
+                let mut s = vec![(0i32, 0i32); 46];
+                s[3] = (planks, 8); // the craft cell 2 → menu 3
+                s
+            },
+            carried: (0, 0),
+            state_id: 3,
+            bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
+        app.table_panel = inventory_panel_origin(640, 360);
+        // THE EMPTY HOVERED CELL (the hasItem gate — cell 5 empty):
+        // silence, NO packet
+        let (ex, ey) = table_craft_origin(app.table_panel, 5);
+        app.mouse_pos = Some((ex + 8, ey + 8));
+        app.on_table_drop_key(false);
+        assert!(
+            click_rx.try_recv().is_err(),
+            "the hasItem gate the packet lane never passes"
+        );
+        // THE CARRIED CURSOR (the doClick THROW's own isEmpty gate):
+        // the packet STILL rides, the EMPTY changed map the untouched
+        // state keeps, the belief whole
+        let (cx, cy) = table_craft_origin(app.table_panel, 2);
+        app.mouse_pos = Some((cx + 8, cy + 8));
+        app.live_table_carried = (planks, 5);
+        app.on_table_drop_key(true);
+        assert_eq!(app.live_table_slots[3], (planks, 8), "the belief whole");
+        match click_rx.try_recv().expect("the always packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 3, "the hovered seat's own menu id");
+                assert_eq!(c.button, 1, "the Ctrl the byte keeps");
+                assert_eq!(c.input, crate::world_view::ContainerInput::Throw);
+                assert!(
+                    c.changed.is_empty(),
+                    "the refused arm the untouched state keeps"
+                );
+                assert_eq!(c.carried, (planks, 5), "the cursor pair unchanged");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        app.live_table_carried = (0, 0);
+        // THE RESULT SEAT (the lane's own scope): the silence
+        let (rx, ry) = table_craft_origin(app.table_panel, 9);
+        app.mouse_pos = Some((rx + 8, ry + 8));
+        app.on_table_drop_key(false);
+        assert!(click_rx.try_recv().is_err(), "the result seat is silence");
+        // THE NO WINDOW (the belief never armed): the gate keeps
+        app.table_live_window = None;
+        app.mouse_pos = Some((cx + 8, cy + 8));
+        app.on_table_drop_key(false);
+        assert!(click_rx.try_recv().is_err(), "still silence");
     }
 
     /// THE SWAP WIRE'S OWN CASE C (the SPLIT law the max wears): the

@@ -1842,6 +1842,13 @@ pub fn run_gui_app(
             let q_ctrl = window.is_key_down(Key::LeftCtrl);
             if !app.on_creative_drop_key(q_ctrl) {
                 app.on_inventory_drop_key(q_ctrl);
+                // THE TABLE'S OWN Q (the SAME keyPressed arm — the
+                // AbstractContainerScreen base class the CraftingScreen
+                // inherits, the keyDrop walk the container screens
+                // share): the screen gates keep the lanes honest (the
+                // inventory lane the non-Inventory screens refuse, the
+                // table lane the non-Crafting screens never pass)
+                app.on_table_drop_key(q_ctrl);
             }
         }
         // THE F KEY'S OWN LANE (the vanilla handleKeybinds's
