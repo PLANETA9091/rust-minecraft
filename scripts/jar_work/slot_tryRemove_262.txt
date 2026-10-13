@@ -1,0 +1,43 @@
+=== tryRemove (IILnet/minecraft/world/entity/player/Player;)Ljava/util/Optional; ===
+    0 aload_0
+    1 aload_3
+    2 invokevirtual #77  net/minecraft/world/inventory/Slot.mayPickup (Lnet/minecraft/world/entity/player/Player;)Z
+    5 ifne #7
+    8 invokestatic #81  java/util/Optional.empty ()Ljava/util/Optional;
+   11 areturn
+   12 aload_0
+   13 aload_3
+   14 invokevirtual #87  net/minecraft/world/inventory/Slot.allowModification (Lnet/minecraft/world/entity/player/Player;)Z
+   17 ifne #18
+   20 iload_2
+   21 aload_0
+   22 invokevirtual #42  net/minecraft/world/inventory/Slot.getItem ()Lnet/minecraft/world/item/ItemStack;
+   25 invokevirtual #23  net/minecraft/world/item/ItemStack.getCount ()I
+   28 if_icmpge #7
+   31 invokestatic #81  java/util/Optional.empty ()Ljava/util/Optional;
+   34 areturn
+   35 iload_1
+   36 iload_2
+   37 invokestatic #67  java/lang/Math.min (II)I
+   40 istore_1
+   41 aload_0
+   42 iload_1
+   43 invokevirtual #90  net/minecraft/world/inventory/Slot.remove (I)Lnet/minecraft/world/item/ItemStack;
+   46 astore 4
+   48 aload 4
+   50 invokevirtual #45  net/minecraft/world/item/ItemStack.isEmpty ()Z
+   53 ifeq #7
+   56 invokestatic #81  java/util/Optional.empty ()Ljava/util/Optional;
+   59 areturn
+   60 aload_0
+   61 invokevirtual #42  net/minecraft/world/inventory/Slot.getItem ()Lnet/minecraft/world/item/ItemStack;
+   64 invokevirtual #45  net/minecraft/world/item/ItemStack.isEmpty ()Z
+   67 ifeq #12
+   70 aload_0
+   71 getstatic #93  net/minecraft/world/item/ItemStack.EMPTY Lnet/minecraft/world/item/ItemStack;
+   74 aload 4
+   76 invokevirtual #49  net/minecraft/world/inventory/Slot.setByPlayer (Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;)V
+   79 aload 4
+   81 invokestatic #97  java/util/Optional.of (Ljava/lang/Object;)Ljava/util/Optional;
+   84 areturn
+

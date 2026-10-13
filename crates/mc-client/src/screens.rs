@@ -7537,6 +7537,31 @@ pub struct App {
     /// per-frame by the windowed loop; the headless scenes never feed
     /// it (the goldens never see the lane).
     pub shift_down: bool,
+    /// THE MOUSE HANDLER'S OWN DOUBLED TAG (the `MouseHandler.onButton`
+    /// walk's own verdict — scripts/jar_work/mouseHandler_onButton_262.txt
+    /// pcs 241-295: the press within 250ms of the last consumed press,
+    /// the SAME screen the `lastClick.screen() == screen` compare keeps,
+    /// the SAME button the `lastClickButton` field answers). The window
+    /// layer owns the clock (the App has none) and feeds the verdict
+    /// per-frame the shift state's own lane rides; the inventory's
+    /// press walk reads it to arm the double-click flag.
+    pub press_doubled: bool,
+    /// THE CONTAINER SCREEN'S OWN DOUBLE-CLICK FLAG (the
+    /// `AbstractContainerScreen.doubleclick` field — the mouseClicked
+    /// walk pcs 61-80 computes it `lastClickSlot == hovered && the
+    /// event's doubled tag`, the mouseReleased walk pcs 64-240 the
+    /// PICKUP_ALL arm speaks through it and the arm's own false
+    /// clears). The inventory press walk arms it, the release walk
+    /// spends it.
+    pub inv_doubleclick: bool,
+    /// THE SCREEN'S OWN LAST-CLICK SEAT (the `lastClickSlot` field —
+    /// the mouseClicked walk pcs 386-389 the hovered slot the press
+    /// remembers, the null the None keeps): the next press's flag
+    /// compute compares it against the new hover. The menu id the
+    /// window-0 numbering keys (the hover walk's own mapping), the
+    /// close the reset speaks (the vanilla screen the removed() walk
+    /// discards whole).
+    pub inv_last_click_slot: Option<usize>,
     /// The live held-item lane's currently-LOADED wire id (the reload
     /// key): the store's selected hotbar stack projects the
     /// first-person hand, and the model reloads only when the id
@@ -8663,6 +8688,9 @@ impl App {
             furnace_sim: crate::furnace_sim::FurnaceSim::default(),
             mouse_pos: None,
             shift_down: false,
+            press_doubled: false,
+            inv_doubleclick: false,
+            inv_last_click_slot: None,
             inv_carried: (0, 0),
             inv_panel: (0, 0),
             craft_grid: [(0, 0); 4],
@@ -17385,6 +17413,14 @@ impl App {
         // press-select the tab lane never rides, the flag the release
         // alone clears)
         self.creative_scroll_drag = false;
+        // THE DOUBLE-CLICK'S OWN RELEASE (the mouseReleased walk pcs
+        // 64-240 — the doubleclick flag the PRESS armed, the PICKUP_ALL
+        // the release speaks: the hovered seat's canTakeItemForPickAll
+        // the gate keeps, the walk the menu's own spread answers, the
+        // flag the arm's own false clears after)
+        if self.screen == ScreenKind::Inventory {
+            self.on_inventory_release_pickup_all();
+        }
         if self.screen != ScreenKind::World || self.paused {
             return;
         }
@@ -18069,7 +18105,131 @@ impl App {
             self.inv_carried = (0, 0);
             self.hotbar_slots = self.inventory.hotbar();
         }
+        // THE DOUBLE-CLICK STATE'S OWN RESET (the vanilla screen the
+        // removed() walk discards whole — the flag and the last-click
+        // seat the NEW screen instance the reopen builds never inherits)
+        self.inv_doubleclick = false;
+        self.inv_last_click_slot = None;
         self.open(ScreenKind::World);
+    }
+
+    /// THE DOUBLE-CLICK'S OWN RELEASE WALK (the mouseReleased walk pcs
+    /// 64-240 — the doubleclick flag the gate opens, the hovered seat
+    /// the null arm keeps, the button-0 the byte gate speaks, the
+    /// canTakeItemForPickAll the result + the craft cells' container
+    /// law refuses — their container IS craftSlots, the 26.2 override
+    /// census the doc block on [`crate::world_view::predict_pickup_all`]
+    /// keeps — and the arm's own `doubleclick = false` the walk
+    /// speaks AFTER the slotClicked call, the refused gate the flag
+    /// never touches). The offline store the belief the spread
+    /// answers, the LIVE session the wire walk rides.
+    fn on_inventory_release_pickup_all(&mut self) {
+        if !self.inv_doubleclick {
+            return; // pcs 64-68 — the flag the gate keeps
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return; // the hoveredSlot null arm — the headless scenes track no mouse
+        };
+        let Some(hover) = self.inventory_hover(mx, my) else {
+            return; // the hoveredSlot null arm — the cursor between the slots
+        };
+        let hovered_menu = inventory_hover_menu_id(hover);
+        // pcs 82-93 — canTakeItemForPickAll(EMPTY, hovered): the result
+        // + the craft cells' container law the arm BEFORE the packet
+        // keeps (the refused gate the flag never clears — pc 93's own
+        // jump lands past the arm)
+        if hovered_menu < 5 {
+            return;
+        }
+        self.inv_doubleclick = false; // pcs 238-240 — the arm's own clear
+        if self.world_is_network {
+            self.on_inventory_pickup_all_wire(hovered_menu);
+        } else {
+            self.on_inventory_pickup_all_offline(hovered_menu);
+        }
+    }
+
+    /// THE OFFLINE SPREAD'S OWN WALK (the doClick PICKUP_ALL arm over
+    /// the offline model — [`crate::world_view::predict_pickup_all`]
+    /// the pure walk keeps, the model's own lists the flat window-0
+    /// projection feeds): the craft cells + the result refuse (menu
+    /// ids 0..5, the craftSlots container law), the armor 5..8, the
+    /// main grid 9..35 (the model's own 9..36 indices), the hotbar
+    /// 36..44 (the model's 0..9), the offhand 45 the spread answers.
+    /// The every-mutation law the HUD row syncs.
+    fn on_inventory_pickup_all_offline(&mut self, hovered_menu: usize) {
+        let mut menu_slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        menu_slots[0] = self.craft_result;
+        menu_slots[1..5].copy_from_slice(&self.craft_grid);
+        menu_slots[5..9].copy_from_slice(&self.inventory.armor);
+        for i in 9..36 {
+            menu_slots[i] = self.inventory.items[i];
+        }
+        for i in 0..9 {
+            menu_slots[36 + i] = self.inventory.items[i];
+        }
+        menu_slots[45] = self.inventory.offhand[0];
+        let Some((carried, changed)) =
+            crate::world_view::predict_pickup_all(&menu_slots, self.inv_carried, hovered_menu, 0)
+        else {
+            return; // the no-op gates — the arm ran, nothing moved
+        };
+        for (menu_id, pair) in changed {
+            match menu_id {
+                5..9 => self.inventory.armor[menu_id - 5] = pair,
+                9..36 => self.inventory.items[menu_id] = pair,
+                36..45 => self.inventory.items[menu_id - 36] = pair,
+                45 => self.inventory.offhand[0] = pair,
+                _ => {} // the craft region the walk never names
+            }
+        }
+        self.inv_carried = carried;
+        self.hotbar_slots = self.inventory.hotbar();
+    }
+
+    /// THE WIRE SPREAD'S OWN WALK (the offline walk's twin over the
+    /// LIVE belief — the flat window-0 array IS the walk's own shape):
+    /// the belief the prediction answers, the packet the command lane
+    /// speaks (`ContainerInput::PickupAll`, the changed map the walk's
+    /// ACTUAL mutations name — the broadcastChanges diff law), and the
+    /// no-op gates the ALWAYS-PACKET law the swap round banked keeps:
+    /// the slotClicked call the release arm keeps unconditional once
+    /// the canTakeItemForPickAll gate passed, the untouched belief the
+    /// empty changed map names, the HUD row the sync follows.
+    fn on_inventory_pickup_all_wire(&mut self, hovered_menu: usize) {
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return; // no live session — the command dies on the frame thread
+        };
+        let (new_carried, changed) = crate::world_view::predict_pickup_all(
+            &self.live_inv_slots,
+            self.live_inv_carried,
+            hovered_menu,
+            0,
+        )
+        .unwrap_or((self.live_inv_carried, Vec::new()));
+        for (menu_id, pair) in &changed {
+            self.live_inv_slots[*menu_id] = *pair;
+        }
+        self.live_inv_carried = new_carried;
+        // the HUD row's own sync (the every-mutation law — the hotbar
+        // menu ids 36..45 the row projection feeds)
+        let mut row = [(0, 0); 9];
+        row.copy_from_slice(&self.live_inv_slots[36..45]);
+        self.hotbar_slots = row;
+        let _ = sink.send(crate::world_view::ContainerCommand::Click(
+            crate::world_view::ContainerClick {
+                window_id: 0,
+                state_id: self.live_inv_state_id,
+                slot: hovered_menu as i16,
+                button: 0,
+                input: crate::world_view::ContainerInput::PickupAll,
+                changed: changed
+                    .into_iter()
+                    .map(|(id, pair)| (id as i16, pair))
+                    .collect(),
+                carried: new_carried,
+            },
+        ));
     }
 
     // ===== THE CREATIVE PICKER'S OWN WALKS (javap 26.2
@@ -23392,7 +23552,33 @@ impl App {
             return;
         }
         if self.screen == ScreenKind::Inventory {
-            self.click_inventory_slot(mx, my, 0);
+            // THE DOUBLE-CLICK FLAG (mouseClicked pcs 61-80 — the
+            // `lastClickSlot == hovered && the event's doubled tag`
+            // compute the click dispatch the arm BEFORE keeps, the
+            // previous press's seat the compare reads)
+            let hovered = self.inventory_hover(mx, my).map(inventory_hover_menu_id);
+            self.inv_doubleclick =
+                self.inv_last_click_slot.is_some() && self.inv_last_click_slot == hovered && self.press_doubled;
+            // THE LANE'S OWN CURSOR (the offline world the `inv_carried`
+            // stack holds, the LIVE session the belief's own projection
+            // `live_inv_carried` carries — the two lanes never mix)
+            let held = if self.world_is_network {
+                self.live_inv_carried.1 > 0
+            } else {
+                self.inv_carried.1 > 0
+            };
+            if !(self.inv_doubleclick && held) {
+                // THE PLAIN PRESS'S OWN WALK — the doubled press with a
+                // held stack the vanilla QUICK_CRAFT arm answers (the
+                // carried non-empty the mouseClicked walk pcs 175-185
+                // the isQuickCrafting start speaks, NO slot click), the
+                // release's own PICKUP_ALL arm the spread serves. The
+                // plain press the PICKUP dispatch keeps.
+                self.click_inventory_slot(mx, my, 0);
+            }
+            // THE LAST-CLICK SEAT (mouseClicked pcs 386-389 — the
+            // hovered slot the press remembers, the null the None keeps)
+            self.inv_last_click_slot = hovered;
             return;
         }
         if self.screen == ScreenKind::Crafting {
@@ -25094,6 +25280,16 @@ impl App {
     /// (the goldens' deterministic scenes).
     pub fn on_shift_down(&mut self, down: bool) {
         self.shift_down = down;
+    }
+
+    /// THE MOUSE HANDLER'S OWN DOUBLED FEED (the windowed loop's
+    /// per-frame feed — the `MouseHandler.onButton` verdict the 250ms
+    /// law speaks, the [`Self::press_doubled`] doc block the full
+    /// decode keeps): the inventory's press walk reads it to arm the
+    /// double-click flag. The headless scenes never feed it — the
+    /// flag stays off (the goldens' deterministic scenes).
+    pub fn on_press_doubled(&mut self, doubled: bool) {
+        self.press_doubled = doubled;
     }
 
     /// The number keys' hotbar selection (the vanilla keyPress's own
@@ -109748,6 +109944,334 @@ cow_sound_variant: None,
             }
             other => panic!("expected a container click, got {other:?}"),
         }
+    }
+
+    /// THE DOUBLE-CLICK'S OWN SPREAD (the offline world — the full
+    /// flow the vanilla law keeps): the FIRST press the stack grabs
+    /// (the plain PICKUP walk), the SECOND press the EMPTIED seat
+    /// re-arms the flag and NEVER walks (the carried non-empty the
+    /// vanilla QUICK_CRAFT arm answers — the place the release's own
+    /// spread serves), the RELEASE the PICKUP_ALL the spread speaks:
+    /// the two passes the menu order walks (the partials drain first,
+    /// the fulls after), the craft cells the craftSlots container law
+    /// never names, the carried the item's own max caps, the HUD row
+    /// the every-mutation law syncs.
+    #[test]
+    fn the_inventory_double_click_the_spread_wears() {
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let cobble = mc_registry::item_id_by_name("cobblestone").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        // the store: main-row model 20 holds 32 dirt (the grab), the
+        // hotbar row 0 (menu 36) 8 dirt (a partial), the main model 12
+        // (menu 12) a FULL 64, the craft cell 0 five dirt (the craft
+        // slots' container the spread never pulls from), a cobble stack
+        // the different-item gate skips
+        app.inventory.items[20] = (dirt, 32);
+        app.inventory.items[0] = (dirt, 8);
+        app.inventory.items[12] = (dirt, 64);
+        app.inventory.items[30] = (cobble, 17);
+        app.craft_grid[0] = (dirt, 5);
+        app.hotbar_slots = app.inventory.hotbar();
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 20);
+        app.mouse_pos = Some((ox + 8, oy + 8));
+        // THE FIRST PRESS (the plain PICKUP): the 32 stack the cursor
+        // grabs, the seat empties, the last-click seat the press stores
+        app.on_press_doubled(false);
+        app.on_press(ox + 8, oy + 8);
+        assert_eq!(app.inv_carried, (dirt, 32), "the grab");
+        assert_eq!(app.inventory.items[20], (0, 0), "the seat empties");
+        assert_eq!(app.inv_last_click_slot, Some(20), "the seat remembered");
+        assert!(!app.inv_doubleclick, "the first press the flag never arms");
+        // THE SECOND PRESS (the doubled tag the window fed, the SAME
+        // seat): the flag arms, the held stack the walk NEVER places
+        // (the vanilla QUICK_CRAFT arm — the carried stays in the cursor)
+        app.on_press_doubled(true);
+        app.on_press(ox + 8, oy + 8);
+        assert!(app.inv_doubleclick, "the same seat the doubled press arms");
+        assert_eq!(app.inv_carried, (dirt, 32), "the held stack the walk keeps");
+        assert_eq!(app.inventory.items[20], (0, 0), "the seat stays empty");
+        // THE RELEASE (the mouseReleased walk's PICKUP_ALL arm): the
+        // spread — pass 1 the partials drain (menu 36's 8 first — the
+        // main grid's empties stay silent, the full 64 skipped, the
+        // cobble refused, the craft cell refused), pass 2 the full
+        // 64's 24 the carried's room takes
+        app.on_left_release();
+        assert_eq!(app.inv_carried, (dirt, 64), "the spread fills the cursor");
+        assert_eq!(app.inventory.items[0], (0, 0), "the hotbar row drained");
+        assert_eq!(app.inventory.items[12], (dirt, 40), "the full stack's remainder");
+        assert_eq!(app.inventory.items[30], (cobble, 17), "the different item whole");
+        assert_eq!(app.craft_grid[0], (dirt, 5), "the craft cell the container law keeps");
+        assert_eq!(app.hotbar_slots[0], (0, 0), "the HUD row synced");
+        assert!(!app.inv_doubleclick, "the arm's own clear");
+        // THE SECOND SPREAD's SILENCE: the release the flag never
+        // re-arms (the plain release the gate keeps)
+        app.on_left_release();
+        assert_eq!(app.inv_carried, (dirt, 64), "the cursor whole");
+    }
+
+    /// THE PURE WALK'S OWN PASSES (the doClick PICKUP_ALL arm's shape
+    /// over the flat window-0 array): the FIRST pass the partial
+    /// stacks drain in the menu order, the FULL stacks skip, the
+    /// SECOND pass the fulls answer; the carried stack the ITEM'S OWN
+    /// max caps (the eggs' 16 the 64-carrying store the gate keeps);
+    /// the backward walk (button != 0) the offhand answers first —
+    /// the direction law the byte keys; the no-op gates (the hovered
+    /// has an item, the carried empty) the `None` speak.
+    #[test]
+    fn the_pickup_all_the_two_pass_the_direction_the_max_wear() {
+        let egg = mc_registry::item_id_by_name("egg").unwrap();
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        // the menu: main grid 9 holds 5 eggs, 10 a FULL 16, the hotbar
+        // 36 three eggs, the offhand 45 two, a stone stack the
+        // different-item gate skips
+        let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        slots[9] = (egg, 5);
+        slots[10] = (egg, 16);
+        slots[36] = (egg, 3);
+        slots[45] = (egg, 2);
+        slots[12] = (stone, 7);
+        // THE FORWARD WALK (button 0), the carried 6: pass 1 the
+        // partials — menu 9 takes 5, menu 36 takes 3, the offhand's 2
+        // fills the 16 — the full 16 at menu 10 skipped; pass 2 silent
+        // (the cursor full)
+        let (carried, changed) =
+            crate::world_view::predict_pickup_all(&slots, (egg, 6), 20, 0)
+                .expect("the spread runs");
+        assert_eq!(carried, (egg, 16), "the item's own max caps");
+        assert_eq!(
+            changed,
+            vec![(9, (0, 0)), (36, (0, 0)), (45, (0, 0))],
+            "the partials drain in the menu order"
+        );
+        assert_eq!(slots[10], (egg, 16), "the full stack the first pass skips");
+        assert_eq!(slots[12], (stone, 7), "the different item whole");
+        // THE PARTIAL CAP: the carried 10 — pass 1 menu 9 fills to 15,
+        // menu 36's room 1 takes one (the remainder 2 stays), the
+        // offhand never walks (the cursor full)
+        let (carried, changed) =
+            crate::world_view::predict_pickup_all(&slots, (egg, 10), 20, 0)
+                .expect("the spread runs");
+        assert_eq!(carried, (egg, 16), "the cap");
+        assert_eq!(
+            changed,
+            vec![(9, (0, 0)), (36, (egg, 2))],
+            "the partial take the remainder keeps"
+        );
+        // THE BACKWARD WALK (button != 0): the offhand first, then the
+        // hotbar, the main grid after — the direction law the byte keys
+        let (carried, changed) =
+            crate::world_view::predict_pickup_all(&slots, (egg, 6), 20, 1)
+                .expect("the spread runs");
+        assert_eq!(carried, (egg, 16), "the cap");
+        assert_eq!(
+            changed,
+            vec![(45, (0, 0)), (36, (0, 0)), (9, (0, 0))],
+            "the backward order the offhand answers first"
+        );
+        // THE FULLS' OWN PASS: the carried 14 over the FULL-only menu —
+        // pass 1 skips the 16s, pass 2 menu 10's room 2 takes
+        let mut fulls = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        fulls[10] = (egg, 16);
+        let (carried, changed) =
+            crate::world_view::predict_pickup_all(&fulls, (egg, 14), 20, 0)
+                .expect("the spread runs");
+        assert_eq!(carried, (egg, 16), "the cap");
+        assert_eq!(changed, vec![(10, (egg, 14))], "the second pass the full answers");
+        // THE NO-OP GATES: the hovered HAS an item — None; the carried
+        // empty — None; the out-of-range id — None
+        assert!(
+            crate::world_view::predict_pickup_all(&slots, (egg, 6), 9, 0).is_none(),
+            "the hovered's own item the arm refuses"
+        );
+        assert!(
+            crate::world_view::predict_pickup_all(&slots, (0, 0), 20, 0).is_none(),
+            "the empty cursor the arm never walks"
+        );
+        assert!(
+            crate::world_view::predict_pickup_all(&slots, (egg, 6), 99, 0).is_none(),
+            "the out-of-range id the same silence keeps"
+        );
+        // THE CRAFT REGION'S OWN REFUSAL (the craftSlots container law):
+        // the craft cells + the result the walk never pulls from, the
+        // hovered RESULT seat empty the spread still answers (the
+        // craft cells' dirt untouched)
+        let mut crafty = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        crafty[1] = (egg, 4);
+        crafty[2] = (egg, 4);
+        let (carried, changed) =
+            crate::world_view::predict_pickup_all(&crafty, (egg, 6), 0, 0)
+                .expect("the empty result seat the spread answers");
+        assert_eq!(carried, (egg, 6), "the cursor whole");
+        assert!(changed.is_empty(), "the craft cells the walk never names");
+    }
+
+    /// THE RELEASE'S OWN GATES (the mouseReleased walk's arm): the
+    /// result + the craft cells' canTakeItemForPickAll refusal the
+    /// flag NEVER clears (pc 93's own jump lands past the arm), the
+    /// hovered-has-item no-op the arm's own clear STILL speaks (the
+    /// slotClicked call unconditional), the null hover the flag keeps.
+    #[test]
+    fn the_inventory_release_the_gates_the_flag_laws_wear() {
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        app.inventory.items[20] = (dirt, 32);
+        // THE RESULT SEAT (menu 0): the armed flag the refusal keeps —
+        // no mutation, the flag stays armed
+        app.inv_doubleclick = true;
+        app.inv_last_click_slot = Some(0);
+        app.inv_carried = (dirt, 32);
+        let (rx, ry) = craft_slot_origin(app.inv_panel, 4);
+        app.mouse_pos = Some((rx + 8, ry + 8));
+        app.on_left_release();
+        assert!(app.inv_doubleclick, "the refused gate the flag never touches");
+        assert_eq!(app.inventory.items[20], (dirt, 32), "the store whole");
+        // THE CRAFT CELL (menu 1): the same refusal
+        let (cx, cy) = craft_slot_origin(app.inv_panel, 0);
+        app.mouse_pos = Some((cx + 8, cy + 8));
+        app.on_left_release();
+        assert!(app.inv_doubleclick, "the craft cell the same law keeps");
+        // THE HOVERED-HAS-ITEM NO-OP: the arm FIRES (the flag clears —
+        // the slotClicked call unconditional) but the store never moves
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 20);
+        app.mouse_pos = Some((ox + 8, oy + 8));
+        app.on_left_release();
+        assert!(!app.inv_doubleclick, "the arm's own clear the no-op keeps");
+        assert_eq!(app.inventory.items[20], (dirt, 32), "the store whole");
+        assert_eq!(app.inv_carried, (dirt, 32), "the cursor whole");
+        // THE NULL HOVER: the flag stays (the hoveredSlot null arm)
+        app.inv_doubleclick = true;
+        app.mouse_pos = Some((332, 157));
+        app.on_left_release();
+        assert!(app.inv_doubleclick, "the null hover the flag keeps");
+    }
+
+    /// THE WIRE SPREAD'S OWN PACKET (the live session — the belief the
+    /// same spread answers, the `ServerboundContainerClickPacket` the
+    /// command lane speaks): the input the PICKUP_ALL names, the
+    /// changed map the walk's ACTUAL mutations carry (the menu ids the
+    /// window-0 numbering keys), the carried the spread's outcome
+    /// rides, the HUD row the sync follows, and the OFFLINE store the
+    /// wire world never touches.
+    #[test]
+    fn the_wire_pickup_all_the_spread_the_packet_wears() {
+        use crate::world_view::ContainerCommand;
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        // the window-0 sync: menu 12 holds 32 dirt (the grab), the
+        // hotbar row 0 (menu 36) 8 dirt (a partial), the revision 7
+        let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        slots[12] = (dirt, 32);
+        slots[36] = (dirt, 8);
+        app.live_inventory_updated(slots, Vec::new(), 7, (0, 0));
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 12);
+        app.mouse_pos = Some((ox + 8, oy + 8));
+        // THE FIRST PRESS (the wire PICKUP): the 32 stack the cursor
+        // grabs, the changed map the seat's own empty names
+        app.on_press_doubled(false);
+        app.on_press(ox + 8, oy + 8);
+        assert_eq!(app.live_inv_carried, (dirt, 32), "the grab");
+        assert_eq!(app.live_inv_slots[12], (0, 0), "the seat empties");
+        click_rx.try_recv().expect("the pickup's packet rode");
+        // THE SECOND PRESS (the doubled tag): the flag arms, no walk
+        app.on_press_doubled(true);
+        app.on_press(ox + 8, oy + 8);
+        assert!(app.inv_doubleclick, "the flag arms");
+        assert_eq!(app.live_inv_carried, (dirt, 32), "the held stack stays");
+        // THE RELEASE: the spread the belief walks, the packet rides
+        app.on_left_release();
+        assert_eq!(app.live_inv_carried, (dirt, 40), "the spread's take");
+        assert_eq!(app.live_inv_slots[36], (0, 0), "the hotbar cell drained");
+        assert_eq!(app.hotbar_slots[0], (0, 0), "the HUD row synced");
+        match click_rx.try_recv().expect("the packet rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 0, "the player's OWN menu the ctor pins");
+                assert_eq!(c.state_id, 7, "the revision the feed spoke");
+                assert_eq!(c.slot, 12, "the hovered seat's own menu id");
+                assert_eq!(c.button, 0, "the left release the byte keys");
+                assert_eq!(
+                    c.input,
+                    crate::world_view::ContainerInput::PickupAll,
+                    "the PICKUP_ALL input the release arm speaks"
+                );
+                assert_eq!(
+                    c.changed,
+                    vec![(36, (0, 0))],
+                    "the walk's own mutations the changed map names"
+                );
+                assert_eq!(c.carried, (dirt, 40), "the spread's outcome rides");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        assert_eq!(
+            app.inventory.items[12], (0, 0),
+            "the offline store the wire world never touches"
+        );
+    }
+
+    /// THE WIRE RELEASE'S OWN ALWAYS-PACKET (the no-op gates the swap
+    /// round's law keeps): the hovered-has-item arm the packet STILL
+    /// rides (the empty changed map the untouched belief names, the
+    /// carried whole), and the result seat's canTakeItemForPickAll
+    /// refusal the packet NEVER rides (the gate the arm BEFORE the
+    /// lane keeps).
+    #[test]
+    fn the_wire_pickup_all_the_noop_and_the_refusal_speak() {
+        use crate::world_view::ContainerCommand;
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        slots[12] = (dirt, 32);
+        app.live_inventory_updated(slots, Vec::new(), 3, (0, 0));
+        // THE HOVERED-HAS-ITEM NO-OP: the armed release over menu 12's
+        // own stack — the packet rides, the belief whole
+        app.inv_doubleclick = true;
+        app.live_inv_carried = (dirt, 32);
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 12);
+        app.mouse_pos = Some((ox + 8, oy + 8));
+        app.on_left_release();
+        assert!(!app.inv_doubleclick, "the arm's own clear");
+        assert_eq!(app.live_inv_slots[12], (dirt, 32), "the belief whole");
+        assert_eq!(app.live_inv_carried, (dirt, 32), "the cursor whole");
+        match click_rx.try_recv().expect("the always packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.input, crate::world_view::ContainerInput::PickupAll);
+                assert!(c.changed.is_empty(), "the untouched state keeps no entry");
+                assert_eq!(c.carried, (dirt, 32));
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE RESULT SEAT (menu 0): the refusal the packet never rides
+        app.inv_doubleclick = true;
+        let (rx, ry) = craft_slot_origin(app.inv_panel, 4);
+        app.mouse_pos = Some((rx + 8, ry + 8));
+        app.on_left_release();
+        assert!(app.inv_doubleclick, "the refused gate the flag keeps");
+        assert!(
+            click_rx.try_recv().is_err(),
+            "the gate's refusal never rides the lane"
+        );
     }
 
     /// THE ARMOR COLUMN'S OWN LANES (the piece slot's click the

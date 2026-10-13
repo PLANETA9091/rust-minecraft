@@ -2296,7 +2296,9 @@ pub enum ContainerInput {
     Throw,
     #[expect(dead_code)] // the 26.2 ClickType set's own line — the menu rounds' lane
     QuickCraft,
-    #[expect(dead_code)] // the 26.2 ClickType set's own line — the menu rounds' lane
+    // THE PICKUP_ALL LANE RIDES (the mouseReleased walk's own wire —
+    // the double-click the live session's ServerboundContainerClickPacket
+    // speaks, the spread the changed map names)
     PickupAll,
 }
 
@@ -2864,6 +2866,119 @@ pub fn predict_pickup(slot: (i32, i32), carried: (i32, i32)) -> ((i32, i32), (i3
             }
         }
     }
+}
+
+/// The vanilla `AbstractContainerMenu.doClick` PICKUP_ALL prediction
+/// (javap 26.2, sha1 2dc72797 — scripts/jar_work/acm_doClick_262.txt
+/// pcs 1611-1873): the DOUBLE-CLICK spread the carried stack wears over
+/// the menu's own slots. The arm's own shape, decoded:
+///
+/// * pcs 1618-1619 — the slotId < 0 the caller's own silence keeps
+///   (the out-of-range menu id the same `None` answers here).
+/// * pcs 1635-1646 — the EMPTY carried the arm never walks (the
+///   spread's own fuel the cursor stack is).
+/// * pcs 1649-1664 — the hovered slot HAS an item the whole arm
+///   refuses (`hovered.hasItem() && hovered.mayPickup(player)` the
+///   compound gate speaks — every survival seat the base mayPickup
+///   TRUE keeps, the ItemPickerMenu's void-world slots aside). The
+///   vanilla use: the FIRST press the stack grabbed, the SECOND
+///   presses the EMPTIED seat — the release's spread then answers.
+/// * pcs 1675-1695 — the direction the button byte keys: button 0 the
+///   forward walk from 0, any other the backward walk from size-1
+///   (`start = button != 0 ? size - 1 : 0; step = button != 0 ? -1 : 1`).
+/// * pcs 1697-1871 — the TWO-PASS loop (`for k in 0..2`): the FIRST
+///   pass the FULL stacks skip (`k == 0 && count == max` the continue
+///   speaks, pcs 1801-1819), the SECOND every same-item stack the
+///   take answers; the inner walk the same four gates each slot
+///   re-answers — hasItem (pcs 1754-1763), canItemQuickReplace(slot,
+///   carried, TRUE) (pcs 1762-1770 — the same item the count <= the
+///   CARRIED stack's own max law keeps), mayPickup (pcs 1773-1780 —
+///   the base seats all TRUE), canTakeItemForPickAll (pcs 1783-1791).
+///   The take rides `slot.safeTake(source.count, carried.max -
+///   carried.count, player)` (pcs 1822-1842) whose tryRemove body
+///   (scripts/jar_work/slot_tryRemove_262.txt) the `min(count,
+///   decrement)` split answers — the remainder the slot keeps, the
+///   drained cell the setByPlayer EMPTY walk speaks; the taken the
+///   `carried.grow(taken.getCount())` absorbs (pcs 1847-1854).
+///
+/// The 26.2 canTakeItemForPickAll law (javap — the override census):
+/// the BASE menu answers TRUE, the MerchantMenu FALSE, and the
+/// InventoryMenu/CraftingMenu/CartographyTableMenu/SmithingMenu/
+/// StonecutterMenu the same `slot.container != this.craftSlots`
+/// compare speak — the RESULT seat and the CRAFT cells (their
+/// container IS craftSlots) the spread never pulls from; the store
+/// rows, the armor and the offhand (the player Inventory's own
+/// container) the whole spread answers. The caller maps the menu's
+/// own slot ids: 0 the result, 1..5 the craft cells, 5..9 the armor,
+/// 9..36 the main grid, 36..45 the hotbar, 45 the offhand.
+///
+/// Returns `Some((carried, changed))` whenever the arm runs past the
+/// no-op gates — `changed` names the walk's ACTUAL mutations (the
+/// broadcastChanges diff law, the menu ids the window-0 numbering
+/// keys, the drained cell the (0, 0) pair speaks); `None` the no-op
+/// gates speak (the hovered has an item, the carried empty, the id
+/// out of range) — the caller's own packet lane the always-law keeps.
+pub fn predict_pickup_all(
+    menu_slots: &[(i32, i32); INVENTORY_MENU_SLOTS],
+    carried: (i32, i32),
+    hovered_menu: usize,
+    button: i32,
+) -> Option<((i32, i32), Vec<(usize, (i32, i32))>)> {
+    if carried.1 <= 0 {
+        return None; // pcs 1641-1646 — the empty cursor the arm never walks
+    }
+    if hovered_menu >= menu_slots.len() {
+        return None; // pcs 1618-1619 — the no-slot press the same silence keeps
+    }
+    // pcs 1649-1664 — the hovered HAS an item (the base mayPickup the
+    // survival seats all keep) the whole arm refuses
+    if menu_slots[hovered_menu].1 > 0 {
+        return None;
+    }
+    // pcs 1675-1695 — the direction the button byte keys
+    let (start, step): (isize, isize) = if button != 0 {
+        (menu_slots.len() as isize - 1, -1)
+    } else {
+        (0, 1)
+    };
+    let mut slots = *menu_slots;
+    let mut carried = carried;
+    let mut changed: Vec<(usize, (i32, i32))> = Vec::new();
+    let carried_max = item_max_stack(carried.0);
+    // pcs 1697-1703 — the two passes; the inner walk the loop head's
+    // own carried-full exit keeps (pcs 1727-1737)
+    for pass in 0..2 {
+        let mut cursor = start;
+        while cursor >= 0 && (cursor as usize) < slots.len() && carried.1 < carried_max {
+            let menu_id = cursor as usize;
+            cursor += step;
+            if menu_id < 5 {
+                // canTakeItemForPickAll FALSE — the result + the craft
+                // cells' container IS craftSlots (the 26.2 override law)
+                continue;
+            }
+            let d = slots[menu_id];
+            if d.1 <= 0 {
+                continue; // pcs 1754-1763 — the hasItem gate
+            }
+            if d.0 != carried.0 || d.1 > carried_max {
+                continue; // pcs 1762-1770 — canItemQuickReplace(slot, carried, TRUE):
+                          // the same item the count <= the carried's own max law keeps
+            }
+            if pass == 0 && d.1 == item_max_stack(d.0) {
+                continue; // pcs 1801-1819 — the FIRST pass the full stacks skip
+            }
+            // pcs 1822-1842 — safeTake(d.1, carriedMax - carried.1):
+            // tryRemove's min law the split speaks, the remainder stays
+            let room = carried_max - carried.1;
+            let take = d.1.min(room);
+            let rest = d.1 - take;
+            slots[menu_id] = if rest > 0 { (d.0, rest) } else { (0, 0) };
+            carried.1 += take; // pcs 1847-1854 — the grow
+            changed.push((menu_id, slots[menu_id]));
+        }
+    }
+    Some((carried, changed))
 }
 
 /// The vanilla `AbstractContainerMenu.doClick` PICKUP prediction for the

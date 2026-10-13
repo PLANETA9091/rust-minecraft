@@ -1,0 +1,4 @@
+=== canTakeItemForPickAll (Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/inventory/Slot;)Z ===
+    0 iconst_1
+    1 ireturn
+

@@ -1,0 +1,235 @@
+=== mouseReleased (Lnet/minecraft/client/input/MouseButtonEvent;)Z ===
+    0 aload_0
+    1 aload_1
+    2 invokevirtual #467  net/minecraft/client/input/MouseButtonEvent.x ()D
+    5 aload_1
+    6 invokevirtual #472  net/minecraft/client/input/MouseButtonEvent.y ()D
+    9 invokevirtual #147  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.getHoveredSlot (DD)Lnet/minecraft/world/inventory/Slot;
+   12 astore_2
+   13 aload_0
+   14 getfield #80  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.leftPos I
+   17 istore_3
+   18 aload_0
+   19 getfield #86  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.topPos I
+   22 istore 4
+   24 aload_0
+   25 aload_1
+   26 invokevirtual #467  net/minecraft/client/input/MouseButtonEvent.x ()D
+   29 aload_1
+   30 invokevirtual #472  net/minecraft/client/input/MouseButtonEvent.y ()D
+   33 iload_3
+   34 iload 4
+   36 invokevirtual #485  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.hasClickedOutside (DDII)Z
+   39 istore 5
+   41 iconst_m1
+   42 istore 6
+   44 aload_2
+   45 ifnull #9
+   48 aload_2
+   49 getfield #255  net/minecraft/world/inventory/Slot.index I
+   52 istore 6
+   54 iload 5
+   56 ifeq #8
+   59 sipush -999
+   62 istore 6
+   64 aload_0
+   65 getfield #477  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.doubleclick Z
+   68 ifeq #178
+   71 aload_2
+   72 ifnull #174
+   75 aload_1
+   76 invokevirtual #480  net/minecraft/client/input/MouseButtonEvent.button ()I
+   79 ifne #167
+   82 aload_0
+   83 getfield #31  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.menu Lnet/minecraft/world/inventory/AbstractContainerMenu;
+   86 getstatic #22  net/minecraft/world/item/ItemStack.EMPTY Lnet/minecraft/world/item/ItemStack;
+   89 aload_2
+   90 invokevirtual #541  net/minecraft/world/inventory/AbstractContainerMenu.canTakeItemForPickAll (Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/inventory/Slot;)Z
+   93 ifeq #153
+   96 aload_1
+   97 invokevirtual #499  net/minecraft/client/input/MouseButtonEvent.hasShiftDown ()Z
+  100 ifeq #124
+  103 aload_0
+  104 getfield #28  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.lastQuickMoved Lnet/minecraft/world/item/ItemStack;
+  107 invokevirtual #174  net/minecraft/world/item/ItemStack.isEmpty ()Z
+  110 ifne #128
+  113 aload_0
+  114 getfield #31  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.menu Lnet/minecraft/world/inventory/AbstractContainerMenu;
+  117 getfield #217  net/minecraft/world/inventory/AbstractContainerMenu.slots Lnet/minecraft/core/NonNullList;
+  120 invokevirtual #221  net/minecraft/core/NonNullList.iterator ()Ljava/util/Iterator;
+  123 astore 7
+  125 aload 7
+  127 invokeinterface java/util/Iterator.hasNext ()Z
+  132 ifeq #89
+  135 aload 7
+  137 invokeinterface java/util/Iterator.next ()Ljava/lang/Object;
+  142 checkcast #236  net/minecraft/world/inventory/Slot
+  145 astore 8
+  147 aload 8
+  149 ifnull #69
+  152 aload 8
+  154 aload_0
+  155 getfield #96  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.minecraft Lnet/minecraft/client/Minecraft;
+  158 getfield #458  net/minecraft/client/Minecraft.player Lnet/minecraft/client/player/LocalPlayer;
+  161 invokevirtual #545  net/minecraft/world/inventory/Slot.mayPickup (Lnet/minecraft/world/entity/player/Player;)Z
+  164 ifeq #54
+  167 aload 8
+  169 invokevirtual #245  net/minecraft/world/inventory/Slot.hasItem ()Z
+  172 ifeq #46
+  175 aload 8
+  177 getfield #549  net/minecraft/world/inventory/Slot.container Lnet/minecraft/world/Container;
+  180 aload_2
+  181 getfield #549  net/minecraft/world/inventory/Slot.container Lnet/minecraft/world/Container;
+  184 if_acmpne #34
+  187 aload 8
+  189 aload_0
+  190 getfield #28  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.lastQuickMoved Lnet/minecraft/world/item/ItemStack;
+  193 iconst_1
+  194 invokestatic #371  net/minecraft/world/inventory/AbstractContainerMenu.canItemQuickReplace (Lnet/minecraft/world/inventory/Slot;Lnet/minecraft/world/item/ItemStack;Z)Z
+  197 ifeq #21
+  200 aload_0
+  201 aload 8
+  203 aload 8
+  205 getfield #255  net/minecraft/world/inventory/Slot.index I
+  208 aload_1
+  209 invokevirtual #480  net/minecraft/client/input/MouseButtonEvent.button ()I
+  212 getstatic #508  net/minecraft/world/inventory/ContainerInput.QUICK_MOVE Lnet/minecraft/world/inventory/ContainerInput;
+  215 invokevirtual #495  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.slotClicked (Lnet/minecraft/world/inventory/Slot;IILnet/minecraft/world/inventory/ContainerInput;)V
+  218 goto #65443
+  221 goto #17
+  224 aload_0
+  225 aload_2
+  226 iload 6
+  228 aload_1
+  229 invokevirtual #480  net/minecraft/client/input/MouseButtonEvent.button ()I
+  232 getstatic #553  net/minecraft/world/inventory/ContainerInput.PICKUP_ALL Lnet/minecraft/world/inventory/ContainerInput;
+  235 invokevirtual #495  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.slotClicked (Lnet/minecraft/world/inventory/Slot;IILnet/minecraft/world/inventory/ContainerInput;)V
+  238 aload_0
+  239 iconst_0
+  240 putfield #477  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.doubleclick Z
+  243 goto #209
+  246 aload_0
+  247 getfield #178  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.isQuickCrafting Z
+  250 ifeq #35
+  253 aload_0
+  254 getfield #514  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.quickCraftingButton I
+  257 aload_1
+  258 invokevirtual #480  net/minecraft/client/input/MouseButtonEvent.button ()I
+  261 if_icmpeq #24
+  264 aload_0
+  265 iconst_0
+  266 putfield #178  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.isQuickCrafting Z
+  269 aload_0
+  270 getfield #18  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.quickCraftSlots Ljava/util/Set;
+  273 invokeinterface java/util/Set.clear ()V
+  278 aload_0
+  279 iconst_1
+  280 putfield #52  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.skipNextRelease Z
+  283 iconst_1
+  284 ireturn
+  285 aload_0
+  286 getfield #52  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.skipNextRelease Z
+  289 ifeq #10
+  292 aload_0
+  293 iconst_0
+  294 putfield #52  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.skipNextRelease Z
+  297 iconst_1
+  298 ireturn
+  299 aload_0
+  300 getfield #178  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.isQuickCrafting Z
+  303 ifeq #22
+  306 aload_0
+  307 getfield #18  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.quickCraftSlots Ljava/util/Set;
+  310 invokeinterface java/util/Set.isEmpty ()Z
+  315 ifne #10
+  318 aload_0
+  319 invokevirtual #557  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.quickCraftToSlots ()V
+  322 goto #130
+  325 aload_0
+  326 getfield #31  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.menu Lnet/minecraft/world/inventory/AbstractContainerMenu;
+  329 invokevirtual #168  net/minecraft/world/inventory/AbstractContainerMenu.getCarried ()Lnet/minecraft/world/item/ItemStack;
+  332 invokevirtual #174  net/minecraft/world/item/ItemStack.isEmpty ()Z
+  335 ifne #117
+  338 aload_0
+  339 getfield #96  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.minecraft Lnet/minecraft/client/Minecraft;
+  342 getfield #440  net/minecraft/client/Minecraft.options Lnet/minecraft/client/Options;
+  345 getfield #446  net/minecraft/client/Options.keyPickItem Lnet/minecraft/client/KeyMapping;
+  348 aload_1
+  349 invokevirtual #452  net/minecraft/client/KeyMapping.matchesMouse (Lnet/minecraft/client/input/MouseButtonEvent;)Z
+  352 ifeq #20
+  355 aload_0
+  356 aload_2
+  357 iload 6
+  359 aload_1
+  360 invokevirtual #480  net/minecraft/client/input/MouseButtonEvent.button ()I
+  363 getstatic #489  net/minecraft/world/inventory/ContainerInput.CLONE Lnet/minecraft/world/inventory/ContainerInput;
+  366 invokevirtual #495  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.slotClicked (Lnet/minecraft/world/inventory/Slot;IILnet/minecraft/world/inventory/ContainerInput;)V
+  369 goto #83
+  372 iload 6
+  374 sipush -999
+  377 if_icmpeq #14
+  380 aload_1
+  381 invokevirtual #499  net/minecraft/client/input/MouseButtonEvent.hasShiftDown ()Z
+  384 ifeq #7
+  387 iconst_1
+  388 goto #4
+  391 iconst_0
+  392 istore 7
+  394 iload 7
+  396 ifeq #31
+  399 aload_0
+  400 aload_2
+  401 ifnull #20
+  404 aload_2
+  405 invokevirtual #245  net/minecraft/world/inventory/Slot.hasItem ()Z
+  408 ifeq #13
+  411 aload_2
+  412 invokevirtual #258  net/minecraft/world/inventory/Slot.getItem ()Lnet/minecraft/world/item/ItemStack;
+  415 invokevirtual #505  net/minecraft/world/item/ItemStack.copy ()Lnet/minecraft/world/item/ItemStack;
+  418 goto #6
+  421 getstatic #22  net/minecraft/world/item/ItemStack.EMPTY Lnet/minecraft/world/item/ItemStack;
+  424 putfield #28  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.lastQuickMoved Lnet/minecraft/world/item/ItemStack;
+  427 aload_0
+  428 aload_2
+  429 iload 6
+  431 aload_1
+  432 invokevirtual #480  net/minecraft/client/input/MouseButtonEvent.button ()I
+  435 iload 7
+  437 ifeq #9
+  440 getstatic #508  net/minecraft/world/inventory/ContainerInput.QUICK_MOVE Lnet/minecraft/world/inventory/ContainerInput;
+  443 goto #6
+  446 getstatic #502  net/minecraft/world/inventory/ContainerInput.PICKUP Lnet/minecraft/world/inventory/ContainerInput;
+  449 invokevirtual #495  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.slotClicked (Lnet/minecraft/world/inventory/Slot;IILnet/minecraft/world/inventory/ContainerInput;)V
+  452 aload_0
+  453 iconst_0
+  454 putfield #178  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.isQuickCrafting Z
+  457 aload_0
+  458 aload_1
+  459 invokespecial #560  net/minecraft/client/gui/screens/Screen.mouseReleased (Lnet/minecraft/client/input/MouseButtonEvent;)Z
+  462 ireturn
+
+=== slotClicked (Lnet/minecraft/world/inventory/Slot;IILnet/minecraft/world/inventory/ContainerInput;)V ===
+    0 aload_1
+    1 ifnull #8
+    4 aload_1
+    5 getfield #255  net/minecraft/world/inventory/Slot.index I
+    8 istore_2
+    9 aload_0
+   10 aload_1
+   11 aload 4
+   13 invokevirtual #567  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.onMouseClickAction (Lnet/minecraft/world/inventory/Slot;Lnet/minecraft/world/inventory/ContainerInput;)V
+   16 aload_0
+   17 getfield #96  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.minecraft Lnet/minecraft/client/Minecraft;
+   20 getfield #571  net/minecraft/client/Minecraft.gameMode Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;
+   23 aload_0
+   24 getfield #31  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.menu Lnet/minecraft/world/inventory/AbstractContainerMenu;
+   27 getfield #575  net/minecraft/world/inventory/AbstractContainerMenu.containerId I
+   30 iload_2
+   31 iload_3
+   32 aload 4
+   34 aload_0
+   35 getfield #96  net/minecraft/client/gui/screens/inventory/AbstractContainerScreen.minecraft Lnet/minecraft/client/Minecraft;
+   38 getfield #458  net/minecraft/client/Minecraft.player Lnet/minecraft/client/player/LocalPlayer;
+   41 invokevirtual #578  net/minecraft/client/multiplayer/MultiPlayerGameMode.handleContainerInput (IIILnet/minecraft/world/inventory/ContainerInput;Lnet/minecraft/world/entity/player/Player;)V
+   44 return
+

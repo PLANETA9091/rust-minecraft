@@ -1628,6 +1628,15 @@ pub fn run_gui_app(
         std::sync::mpsc::channel::<mc_protocol::play::CommandTree>();
     let mut net_seen = 0usize; // cursor into the append-only request log
     let mut was_left_down = false; // the attack edge detector (vanilla left-click = swing)
+    // THE MOUSE HANDLER'S OWN LAST-CLICK (the `MouseHandler.onButton`
+    // walk's own memory — the consumed press the `LastClick(now, screen)`
+    // record stores, the `lastClickButton` the button byte keeps): the
+    // NEXT press's doubled verdict the 250ms window + the SAME screen +
+    // the SAME button the triple compare answers. Only the SCREENS'
+    // presses the record speaks (the in-world press the vanilla walk's
+    // own grabMouse branch answers — the Screen.mouseClicked lane never
+    // runs there).
+    let mut last_press: Option<(std::time::Instant, crate::screens::ScreenKind, i32)> = None;
     let mut was_right_down = false; // the right press's edge detector (the split-stack lane)
     let mut was_middle_down = false; // the middle press's edge detector (the pick lane)
     // THE FIRST-PERSON BODY's per-frame state: the previous raw mouse
@@ -1946,6 +1955,22 @@ pub fn run_gui_app(
         // to the attack swing inside — minifb has no edge API, the
         // previous frame's state is tracked here
         if left_down && !was_left_down && !app.chat_open {
+            // THE DOUBLED VERDICT (MouseHandler.onButton pcs 241-295 —
+            // the press within 250ms of the last consumed press, the
+            // SAME screen the `lastClick.screen() == screen` compare
+            // keeps, the SAME button the `lastClickButton` answers):
+            // the feed the inventory's flag compute reads
+            let now = std::time::Instant::now();
+            let doubled = last_press.as_ref().is_some_and(|(t, s, b)| {
+                now.duration_since(*t).as_millis() < 250 && *s == app.screen && *b == 0
+            });
+            app.on_press_doubled(doubled);
+            if app.screen != crate::screens::ScreenKind::World {
+                // THE LAST-CLICK MEMORY (pcs 307-331 — the consumed
+                // press the record stores; the container screens' own
+                // mouseClicked the TRUE tail speaks for every press)
+                last_press = Some((now, app.screen, 0));
+            }
             app.on_press(gmx, gmy);
         }
         // THE CHAT SUGGESTIONS' OWN CLICK (the SuggestionsList

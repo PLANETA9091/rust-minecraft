@@ -1,0 +1,18 @@
+=== safeTake (IILnet/minecraft/world/entity/player/Player;)Lnet/minecraft/world/item/ItemStack; ===
+    0 aload_0
+    1 iload_1
+    2 iload_2
+    3 aload_3
+    4 invokevirtual #101  net/minecraft/world/inventory/Slot.tryRemove (IILnet/minecraft/world/entity/player/Player;)Ljava/util/Optional;
+    7 astore 4
+    9 aload 4
+   11 aload_0
+   12 aload_3
+   13 invokedynamic #105
+   18 invokevirtual #109  java/util/Optional.ifPresent (Ljava/util/function/Consumer;)V
+   21 aload 4
+   23 getstatic #93  net/minecraft/world/item/ItemStack.EMPTY Lnet/minecraft/world/item/ItemStack;
+   26 invokevirtual #113  java/util/Optional.orElse (Ljava/lang/Object;)Ljava/lang/Object;
+   29 checkcast #24  net/minecraft/world/item/ItemStack
+   32 areturn
+
