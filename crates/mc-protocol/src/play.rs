@@ -113,6 +113,7 @@ pub mod clientbound {
         CB_PLAYER_ABILITIES as PLAYER_ABILITIES,
         CB_CHANGE_DIFFICULTY as CHANGE_DIFFICULTY,
         CB_UPDATE_MOB_EFFECT as UPDATE_MOB_EFFECT,
+        CB_UPDATE_ATTRIBUTES as UPDATE_ATTRIBUTES,
         CB_DEBUG_SAMPLE as DEBUG_SAMPLE,
         CB_SET_HEALTH as SET_HEALTH, CB_HURT_ANIMATION as HURT_ANIMATION,
         CB_PLAYER_COMBAT_KILL as PLAYER_COMBAT_KILL,
@@ -9269,6 +9270,104 @@ pub fn parse_hurt_animation(payload: &[u8]) -> Result<HurtAnimation> {
     Ok(HurtAnimation { entity_id, yaw })
 }
 
+/// Update Attributes (clientbound play, generated id 131 —
+/// `minecraft:update_attributes`). javap of the real 26.2
+/// `ClientboundUpdateAttributesPacket`'s clinit: the STREAM_CODEC's
+/// composite walks `ByteBufCodecs.VAR_INT` (the entityId) and the
+/// `AttributeSnapshot.STREAM_CODEC` list under
+/// `ByteBufCodecs.list(128)` — the readCount cap whose ONLY upper
+/// bound throws (the negative count the never-refuse family passes
+/// as the EMPTY list, the 0..n loop's own zero iterations keep).
+/// THE SNAPSHOT'S OWN THREE LANES (the $AttributeSnapshot clinit
+/// verbatim): the attribute holder = `Attribute.STREAM_CODEC` =
+/// `ByteBufCodecs.holderRegistry(Registries.ATTRIBUTE)` — javap of
+/// the codec's $29 decode body: a PLAIN VarInt registry id (the
+/// `byIdOrThrow` walk, NOT the tagged union the holder(key, codec)
+/// family wears — the direct lane the wire speaks none of; the
+/// negative id the lookup's own throw keeps, the parse refuses), the
+/// base = `ByteBufCodecs.DOUBLE` (BE f64), the modifiers =
+/// `MODIFIER_STREAM_CODEC` under `ByteBufCodecs.collection(...)` (the
+/// bare VarInt count, no cap lane — the same readCount law). The
+/// modifier's own record the item component's lane SHARES —
+/// `AttributeModifier.STREAM_CODEC` = composite(Identifier UTF,
+/// DOUBLE, `Operation.STREAM_CODEC` VarInt ordinal) — the SAME
+/// [`AttributeModifier`] struct the [`AttributeModifierEntry`]
+/// carries (the ordinal retained verbatim, the ZERO-fill the
+/// consumer's act). THIS CLIENT CARRIES NO ATTRIBUTE REGISTRY (the
+/// VILLAGER_DATA line): the snapshot's id retained verbatim, the
+/// name mapping the consumer round's own table feeds. THE EFFICIENCY
+/// ADDEND'S OWN TRANSPORT: the server's `mining_efficiency` row (the
+/// held stack's enchant the base + modifiers speak — the
+/// `levels_squared` amount the dig walk's addend feeds) rides here.
+#[derive(Debug, Clone, PartialEq)]
+pub struct UpdateAttributes {
+    /// The entity whose attribute opinions the server re-states (the
+    /// level's entity registry key).
+    pub entity_id: i32,
+    /// The attribute rows (the readCount cap 128 the
+    /// `ByteBufCodecs.list(128)` guard keeps).
+    pub entries: Vec<AttributeSnapshot>,
+}
+
+/// One attribute row of [`UpdateAttributes`] — the
+/// `$AttributeSnapshot` record's three lanes.
+#[derive(Debug, Clone, PartialEq)]
+pub struct AttributeSnapshot {
+    /// The attribute's registry id (the ATTRIBUTE table's numeric
+    /// seat — retained verbatim, this client carries no attribute
+    /// registry: the name mapping the consumer's own table feeds).
+    pub attribute_id: i32,
+    /// The attribute's base value (BE f64).
+    pub base: f64,
+    /// The active modifiers (the bare VarInt count's collection —
+    /// each the item component's own modifier record).
+    pub modifiers: Vec<AttributeModifier>,
+}
+
+/// Update Attributes' wire walk (see [`UpdateAttributes`] — the VarInt
+/// id + the capped list, the generated-id guard).
+pub fn parse_update_attributes(payload: &[u8]) -> Result<UpdateAttributes> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::UPDATE_ATTRIBUTES,
+        "not an update attributes packet (0x{id:02X})"
+    );
+    let entity_id = read_varint(&mut c)?;
+    let count = read_varint(&mut c)?;
+    anyhow::ensure!(
+        count <= 128,
+        "attribute row count {count} exceeds the 128 cap (readCount's bound)"
+    );
+    let mut entries = Vec::new();
+    for _ in 0..count {
+        // lane 1: holderRegistry(ATTRIBUTE) — the $29 VarInt (the
+        // byIdOrThrow lane: a negative id the lookup's throw keeps)
+        let attribute_id = read_varint(&mut c)?;
+        anyhow::ensure!(
+            attribute_id >= 0,
+            "negative attribute registry id {attribute_id}"
+        );
+        // lane 2: ByteBufCodecs.DOUBLE — the BE f64 base
+        let base = read_f64(&mut c)?;
+        // lane 3: the modifier collection — the bare VarInt count
+        // (readCount's never-refuse law: the negative count the
+        // 0..n loop's zero iterations keeps)
+        let n = read_varint(&mut c)?;
+        let mut modifiers = Vec::new();
+        for _ in 0..n {
+            // composite(Identifier UTF, DOUBLE, ordinal) — the SAME
+            // three lanes the item component's modifier record keeps
+            let mod_id = read_string(&mut c)?;
+            let amount = read_f64(&mut c)?;
+            let operation = read_varint(&mut c)?;
+            modifiers.push(AttributeModifier { id: mod_id, amount, operation });
+        }
+        entries.push(AttributeSnapshot { attribute_id, base, modifiers });
+    }
+    Ok(UpdateAttributes { entity_id, entries })
+}
+
 /// Entity Event (clientbound play, generated id 34 —
 /// `minecraft:entity_event`). javap of the real 26.2
 /// `ClientboundEntityEventPacket`'s buf ctor: `entityId = buf.readInt()`
@@ -10687,6 +10786,14 @@ pub enum PlayEvent {
     MobEffectApplied(MobEffectUpdate),
     /// Remove Mob Effect: ONE entity's effect ended.
     MobEffectRemoved(MobEffectRemove),
+    /// Update Attributes: ONE entity's attribute opinions — the
+    /// server's own stat rows (the base + the active modifiers per
+    /// attribute; the list cap 128). THE EFFICIENCY ADDEND'S OWN
+    /// TRANSPORT: the `mining_efficiency` row the held stack's enchant
+    /// speaks — the dig walk's addend the consumer round feeds from
+    /// the row (see [`UpdateAttributes`]; the model consumes it when
+    /// the attribute store arrives).
+    EntityAttributes(UpdateAttributes),
     /// Set Equipment: ONE entity's gear snapshot — the equipment
     /// state's wire transport (the paired slot/stack walk; an empty
     /// stack is a legal entry — the cleared slot). The model consumes
@@ -10932,6 +11039,9 @@ impl<S: Read + Write> PlaySession<S> {
             }
             clientbound::REMOVE_MOB_EFFECT => {
                 Ok(PlayEvent::MobEffectRemoved(parse_remove_mob_effect(&pkt)?))
+            }
+            clientbound::UPDATE_ATTRIBUTES => {
+                Ok(PlayEvent::EntityAttributes(parse_update_attributes(&pkt)?))
             }
             clientbound::SET_EQUIPMENT => {
                 Ok(PlayEvent::EntityEquipped(parse_set_equipment(&pkt)?))
@@ -15786,6 +15896,157 @@ mod tests {
         write_varint(&mut p, 2);
         write_varint(&mut p, 600);
         assert!(parse_update_mob_effect(&p).is_err());
+    }
+
+    /// The Update Attributes lanes retain the entity's stat rows: the
+    /// generated id pins (131 — the update_mob_effect's own 132 the
+    /// table's neighbour keeps), the snapshot rows' three lanes (the
+    /// holderRegistry VarInt, the BE f64 base, the modifier collection
+    /// riding the SAME [`AttributeModifier`] record the item
+    /// component's lane shares), the empty-modifier row, the
+    /// multi-byte VarInt entity id the wide world's ids wear, and the
+    /// EMPTY list the honest no-opinion body keeps.
+    #[test]
+    fn the_update_attributes_rows_retain_the_entity_stat_rows() {
+        assert_eq!(clientbound::UPDATE_ATTRIBUTES, 131, "minecraft:update_attributes");
+        assert_eq!(clientbound::UPDATE_MOB_EFFECT, 132, "the table's own neighbour");
+        // THE EFFICIENCY ROW (the consumer round's own feed): entity
+        // 300 (a two-byte VarInt), the mining_efficiency seat, base
+        // 0.0, ONE modifier — the levels_squared amount 26.0 the E5
+        // wears, the add_value ordinal 0
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::UPDATE_ATTRIBUTES);
+        write_varint(&mut p, 300);
+        write_varint(&mut p, 2); // two rows
+        write_varint(&mut p, 18); // row A: the attribute registry id
+        p.extend_from_slice(&0.0f64.to_be_bytes());
+        write_varint(&mut p, 1); // one modifier
+        write_string(&mut p, "minecraft:efficiency");
+        p.extend_from_slice(&26.0f64.to_be_bytes());
+        write_varint(&mut p, 0); // ADD_VALUE
+        write_varint(&mut p, 17); // row B: max_health's seat
+        p.extend_from_slice(&20.0f64.to_be_bytes());
+        write_varint(&mut p, 0); // NO modifiers
+        let u = parse_update_attributes(&p).unwrap();
+        assert_eq!(u.entity_id, 300);
+        assert_eq!(u.entries.len(), 2);
+        assert_eq!(u.entries[0].attribute_id, 18);
+        assert_eq!(u.entries[0].base, 0.0);
+        assert_eq!(u.entries[0].modifiers.len(), 1);
+        assert_eq!(u.entries[0].modifiers[0].id, "minecraft:efficiency");
+        assert_eq!(u.entries[0].modifiers[0].amount, 26.0);
+        assert_eq!(u.entries[0].modifiers[0].operation, 0);
+        assert_eq!(u.entries[1].attribute_id, 17);
+        assert_eq!(u.entries[1].base, 20.0);
+        assert!(u.entries[1].modifiers.is_empty());
+        // the EMPTY list: zero rows the honest no-opinion body keeps
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::UPDATE_ATTRIBUTES);
+        write_varint(&mut p, 7);
+        write_varint(&mut p, 0);
+        let u = parse_update_attributes(&p).unwrap();
+        assert_eq!(u.entity_id, 7);
+        assert!(u.entries.is_empty());
+    }
+
+    /// The Update Attributes' count laws: the 128 cap's ONLY upper
+    /// bound throws (readCount's law — the negative count the
+    /// never-refuse family passes as the EMPTY list, the 0..n loop's
+    /// own zero iterations), the negative registry id refuses (the
+    /// byIdOrThrow lane's own throw), the truncated body refuses
+    /// honestly (the row's base the f64 tail demands), and the wrong
+    /// id the generated-id guard refuses.
+    #[test]
+    fn the_update_attributes_the_count_laws_and_the_refusals_wear() {
+        // the cap 129 refuses
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::UPDATE_ATTRIBUTES);
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 129);
+        assert!(parse_update_attributes(&p).is_err());
+        // the negative count passes as the EMPTY list
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::UPDATE_ATTRIBUTES);
+        write_varint(&mut p, 1);
+        write_varint(&mut p, -1);
+        let u = parse_update_attributes(&p).unwrap();
+        assert!(u.entries.is_empty(), "readCount's never-refuse law");
+        // the negative registry id refuses (the byIdOrThrow lane)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::UPDATE_ATTRIBUTES);
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 1);
+        write_varint(&mut p, -3);
+        assert!(parse_update_attributes(&p).is_err());
+        // the truncated body: the id + entity + count alone is not
+        // the packet — the row's base the f64 tail demands
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::UPDATE_ATTRIBUTES);
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 18);
+        assert!(parse_update_attributes(&p).is_err());
+        // the wrong id refuses (the generated-id guard)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::UPDATE_MOB_EFFECT);
+        assert!(parse_update_attributes(&p).is_err());
+    }
+
+    /// The Update Attributes' modifier collection: the bare VarInt
+    /// count's readCount law (the negative count the EMPTY collection
+    /// keeps — the never-refuse family, the collection lane carries
+    /// no cap), the operation ordinal retained verbatim (the
+    /// ZERO-fill the consumer's act), the multi-modifier row's order,
+    /// and the truncated modifier tail the composite demands.
+    #[test]
+    fn the_update_attributes_the_modifier_collection_laws_wear() {
+        // TWO modifiers, the order + the verbatim ordinals: the
+        // add_value 0, the add_multiplied_total 2 (the ordinal the
+        // continuous map's own seat keeps)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::UPDATE_ATTRIBUTES);
+        write_varint(&mut p, 5);
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 18);
+        p.extend_from_slice(&0.0f64.to_be_bytes());
+        write_varint(&mut p, 2);
+        write_string(&mut p, "minecraft:efficiency");
+        p.extend_from_slice(&2.0f64.to_be_bytes());
+        write_varint(&mut p, 0);
+        write_string(&mut p, "minecraft:efficiency_alt");
+        p.extend_from_slice(&5.0f64.to_be_bytes());
+        write_varint(&mut p, 2);
+        let u = parse_update_attributes(&p).unwrap();
+        assert_eq!(u.entries[0].modifiers.len(), 2);
+        assert_eq!(u.entries[0].modifiers[0].id, "minecraft:efficiency");
+        assert_eq!(u.entries[0].modifiers[0].amount, 2.0);
+        assert_eq!(u.entries[0].modifiers[0].operation, 0);
+        assert_eq!(u.entries[0].modifiers[1].id, "minecraft:efficiency_alt");
+        assert_eq!(u.entries[0].modifiers[1].amount, 5.0);
+        assert_eq!(u.entries[0].modifiers[1].operation, 2, "the ordinal verbatim");
+        // the negative modifier count: the EMPTY collection (the
+        // readCount law — only the upper bound throws, and the
+        // collection lane carries none)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::UPDATE_ATTRIBUTES);
+        write_varint(&mut p, 5);
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 18);
+        p.extend_from_slice(&0.0f64.to_be_bytes());
+        write_varint(&mut p, -1);
+        let u = parse_update_attributes(&p).unwrap();
+        assert!(u.entries[0].modifiers.is_empty(), "the never-refuse family");
+        // the truncated modifier: the count wants the identifier +
+        // f64 + ordinal trio
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::UPDATE_ATTRIBUTES);
+        write_varint(&mut p, 5);
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 18);
+        p.extend_from_slice(&0.0f64.to_be_bytes());
+        write_varint(&mut p, 1);
+        write_string(&mut p, "minecraft:efficiency");
+        assert!(parse_update_attributes(&p).is_err());
     }
 
     /// The Set Equipment lanes retain the entity's gear: the paired

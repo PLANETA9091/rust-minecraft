@@ -30,7 +30,8 @@ pub use config::{
 pub use nbt::Nbt;
 pub use play::{
     begin_play, connect_and_join_live, connect_and_join_world, join_world, AttributeDisplay,
-    AttributeModifier, AttributeModifierEntry, BlockPredicate, BlockSet, ChunkColumn, ChunkLight,
+    AttributeModifier, AttributeModifierEntry, AttributeSnapshot, BlockPredicate, BlockSet,
+    ChunkColumn, ChunkLight,
     ChunkSection, ClockUpdate, ComponentPatch, ComponentValue, ConsumeEffect, ConsumableSound,
     ContainerClick, ContainerClose, ContainerContent, ContainerInput, ContainerSetSlot,
     DataComponentMatchers, EffectDetails,

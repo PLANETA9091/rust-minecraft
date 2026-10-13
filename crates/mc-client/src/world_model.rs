@@ -5628,6 +5628,13 @@ impl WorldModel {
             // touches, the UI the gate's own false keeps; the tree
             // rides its dedicated channel like the replies do)
             PlayEvent::CommandSuggestions(_) | PlayEvent::Commands(_) => false,
+            // THE ATTRIBUTE ROWS' TRANSPORT (the parse lane the
+            // protocol round banks): the model carries no attribute
+            // store yet — the server's stat rows the honest no-op
+            // keeps, the dig walk's efficiency addend the consumer
+            // round feeds (the local player's mining_efficiency row
+            // the store's own filter answers)
+            PlayEvent::EntityAttributes(_) => false,
             PlayEvent::Disconnected { .. } | PlayEvent::Skipped => false,
         }
     }
