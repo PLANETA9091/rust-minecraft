@@ -2297,7 +2297,9 @@ pub enum ContainerInput {
     // mutates)
     Clone,
     Throw,
-    #[expect(dead_code)] // the 26.2 ClickType set's own line — the menu rounds' lane
+    // THE QUICKCRAFT LANE RIDES (the quickCraftToSlots walk's own
+    // triple — the drag's release the START/ADDs/END packets speak,
+    // the masked button the (button & 3) | (type << 2) encoding wears)
     QuickCraft,
     // THE PICKUP_ALL LANE RIDES (the mouseReleased walk's own wire —
     // the double-click the live session's ServerboundContainerClickPacket
