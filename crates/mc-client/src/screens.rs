@@ -21447,11 +21447,21 @@ impl App {
         // the pixel goldens never see this pass.
         if self.chest_is_live && self.chest_carried.1 > 0 {
             if let Some((mx, my)) = self.mouse_pos {
-                draw_item_icon(g, self.chest_carried.0, mx - 8, my - 8);
-                if self.chest_carried.1 > 1 {
-                    let s = self.chest_carried.1.to_string();
-                    let tw = g.text_width(&s);
-                    g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
+                // the drag's own ghost (the extractCarriedItem walk): the
+                // 2+-seat arm the remainder projection wears, the drained
+                // remainder the cursor bare keeps
+                if let Some(painted) = floating_ghost_count(
+                    self.qc_armed,
+                    self.qc_slots.len(),
+                    self.qc_remainder,
+                    self.chest_carried.1,
+                ) {
+                    draw_item_icon(g, self.chest_carried.0, mx - 8, my - 8);
+                    if painted > 1 {
+                        let s = painted.to_string();
+                        let tw = g.text_width(&s);
+                        g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
+                    }
                 }
             }
         }
@@ -21983,11 +21993,21 @@ impl App {
         // the LOCAL store's own state)
         if self.inv_carried.1 > 0 {
             if let Some((mx, my)) = self.mouse_pos {
-                draw_item_icon(g, self.inv_carried.0, mx - 8, my - 8);
-                if self.inv_carried.1 > 1 {
-                    let s = self.inv_carried.1.to_string();
-                    let tw = g.text_width(&s);
-                    g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
+                // the drag's own ghost (the extractCarriedItem walk): the
+                // 2+-seat arm the remainder projection wears, the drained
+                // remainder the cursor bare keeps
+                if let Some(painted) = floating_ghost_count(
+                    self.qc_armed,
+                    self.qc_slots.len(),
+                    self.qc_remainder,
+                    self.inv_carried.1,
+                ) {
+                    draw_item_icon(g, self.inv_carried.0, mx - 8, my - 8);
+                    if painted > 1 {
+                        let s = painted.to_string();
+                        let tw = g.text_width(&s);
+                        g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
+                    }
                 }
             }
         }
@@ -22169,11 +22189,21 @@ impl App {
         };
         if carried.1 > 0 {
             if let Some((mx, my)) = self.mouse_pos {
-                draw_item_icon(g, carried.0, mx - 8, my - 8);
-                if carried.1 > 1 {
-                    let s = carried.1.to_string();
-                    let tw = g.text_width(&s);
-                    g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
+                // the drag's own ghost (the extractCarriedItem walk): the
+                // 2+-seat arm the remainder projection wears, the drained
+                // remainder the cursor bare keeps
+                if let Some(painted) = floating_ghost_count(
+                    self.qc_armed,
+                    self.qc_slots.len(),
+                    self.qc_remainder,
+                    carried.1,
+                ) {
+                    draw_item_icon(g, carried.0, mx - 8, my - 8);
+                    if painted > 1 {
+                        let s = painted.to_string();
+                        let tw = g.text_width(&s);
+                        g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
+                    }
                 }
             }
         }
@@ -22559,11 +22589,21 @@ impl App {
         };
         if carried_count > 0 {
             if let Some((mx, my)) = self.mouse_pos {
-                draw_item_icon(g, carried_id, mx - 8, my - 8);
-                if carried_count > 1 {
-                    let s = carried_count.to_string();
-                    let tw = g.text_width(&s);
-                    g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
+                // the drag's own ghost (the extractCarriedItem walk): the
+                // 2+-seat arm the remainder projection wears, the drained
+                // remainder the cursor bare keeps
+                if let Some(painted) = floating_ghost_count(
+                    self.qc_armed,
+                    self.qc_slots.len(),
+                    self.qc_remainder,
+                    carried_count,
+                ) {
+                    draw_item_icon(g, carried_id, mx - 8, my - 8);
+                    if painted > 1 {
+                        let s = painted.to_string();
+                        let tw = g.text_width(&s);
+                        g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
+                    }
                 }
             }
         }
@@ -53974,6 +54014,31 @@ fn pop_projection_coeffs(
 
 fn draw_item_icon(g: &mut Gui, item_id: i32, x: i32, y: i32) {
     draw_item_icon_broken(g, item_id, false, x, y)
+}
+
+/// THE FLOATING CARRIED'S OWN GHOST COUNT (javap 26.2
+/// AbstractContainerScreen.extractCarriedItem pcs 0-101 — the cursor
+/// stack the drag's own projection wears): the unarmed cursor (or the
+/// 1-seat arm — pc 35-45 the `quickCraftSlots.size() > 1` gate) the
+/// real count keeps; the armed drag's 2+-seat paint the
+/// `copyWithCount(quickCraftingRemainder)` ghost wears (pc 48-57 —
+/// the item id the carried's own keeps, the count the projected
+/// leftover speaks); the drained remainder the EMPTY ghost stack the
+/// VANISHED paint keeps (pc 59-64 the isEmpty verdict — the
+/// `graphics.item` and the `itemDecorations`' own empty gate pc 0-7
+/// both bail, so the yellow "?" label the walk banks at pcs 59-78 is
+/// DEAD code in 26.2: the label's only paint path sits BEHIND the
+/// empty gate the `itemDecorations` speaks). `Some(count)` the cursor
+/// paints (the icon centered under the hotspot, the >1 count the same
+/// bottom-right slot the slots ride — the itemCount law x+17-w, y+9);
+/// `None` the cursor stays bare (the carried stack itself untouched —
+/// the paint alone projects).
+fn floating_ghost_count(armed: bool, seats: usize, remainder: i32, count: i32) -> Option<i32> {
+    if armed && seats > 1 {
+        (remainder > 0).then_some(remainder)
+    } else {
+        (count > 0).then_some(count)
+    }
 }
 
 /// THE POPPING ICON ([`draw_item_icon`] with the vanilla pop curve
@@ -111760,6 +111825,207 @@ cow_sound_variant: None,
             }
             other => panic!("expected a container click, got {other:?}"),
         }
+    }
+
+    /// THE FLOATING CARRIED'S OWN GHOST (javap 26.2
+    /// AbstractContainerScreen.extractCarriedItem pcs 0-101 — the paint
+    /// law the QuickCraft family's rounds banked the state for, the
+    /// cursor count the projection re-keys): the wire inventory drag's
+    /// 2+-seat arm the remainder speaks (the `copyWithCount(
+    /// quickCraftingRemainder)` ghost — the count the projected leftover
+    /// wears, NOT the carried's own), the 1-seat arm the REAL count
+    /// keeps (pc 35-45 the `> 1` gate), the unarmed cursor the real
+    /// count keeps, and the release the real (post-distribute) carried
+    /// the cursor restores.
+    #[test]
+    fn the_floating_ghost_the_remainder_projection_wears() {
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // the live session's own sink: the wire release the distribution
+        // rides (the None sink the command dies on the frame thread)
+        let (click_tx, _click_rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        let slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        app.live_inventory_updated(slots, Vec::new(), 4, (dirt, 8));
+        // THE UNARMED CURSOR: the real count the law keeps
+        let law = |app: &App| {
+            floating_ghost_count(
+                app.qc_armed,
+                app.qc_slots.len(),
+                app.qc_remainder,
+                app.live_inv_carried.1,
+            )
+        };
+        assert_eq!(law(&app), Some(8), "the unarmed cursor the real count keeps");
+        // THE ARM: the carried press the drag arms, the first seat the
+        // motion paints — the 1-seat arm the REAL count still keeps
+        // (pc 35-45 the quickCraftSlots.size() > 1 gate)
+        let (ax, ay) = inventory_slot_origin(app.inv_panel, 0);
+        app.on_right_press(ax + 8, ay + 8);
+        app.on_mouse_move(ax + 8, ay + 8);
+        assert!(app.qc_armed && app.qc_slots.len() == 1);
+        assert_eq!(law(&app), Some(8), "the 1-seat arm the real count keeps");
+        // THE SECOND SEAT: the >1 gate opens — the cursor count the
+        // remainder's projection wears (the one-each fold 8-1-1=6, NOT
+        // the carried's own 8)
+        let (bx, by) = inventory_slot_origin(app.inv_panel, 1);
+        app.on_mouse_move(bx + 8, by + 8);
+        assert_eq!(app.qc_slots, vec![36, 37], "the two seats the motion paints");
+        assert_eq!(app.qc_remainder, 6, "the one-each fold the state keeps");
+        assert_eq!(law(&app), Some(6), "the ghost the remainder wears");
+        assert_ne!(law(&app), Some(8), "the real count the ghost REPLACES");
+        // THE RELEASE: the real (post-distribute) carried the cursor
+        // restores — the projection the armed state alone wears
+        app.on_right_release();
+        assert_eq!(app.live_inv_carried, (dirt, 6), "the distribution the real carry keeps");
+        assert_eq!(law(&app), Some(6), "the released cursor the real count keeps");
+    }
+
+    /// THE FLOATING GHOST'S DRAINED VANISH (the extractCarriedItem
+    /// walk's isEmpty arm pc 59-64 — the remainder the fold drains the
+    /// EMPTY ghost stack wears, the cursor paint VANISHES: the
+    /// `graphics.item` and the `itemDecorations`' own empty gate pc 0-7
+    /// both bail, the yellow "?" label the walk banks is DEAD code in
+    /// 26.2): the offline drag's 2-seat paint the count-2 carry fully
+    /// distributes, the remainder 0 the law answers None — the cursor
+    /// bare while the drag rides, the carried stack itself untouched.
+    #[test]
+    fn the_floating_ghost_the_drained_vanish_wears() {
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        // THE ARM: the count-2 carry the drag arms — the offline sim
+        // the arm the local lanes answer (no window the arm needs)
+        app.inv_carried = (dirt, 2);
+        let (ax, ay) = inventory_slot_origin(app.inv_panel, 20);
+        app.on_right_press(ax + 8, ay + 8);
+        app.on_mouse_move(ax + 8, ay + 8);
+        let (bx, by) = inventory_slot_origin(app.inv_panel, 21);
+        app.on_mouse_move(bx + 8, by + 8);
+        assert_eq!(app.qc_slots, vec![20, 21], "the two seats the motion paints");
+        assert_eq!(app.qc_remainder, 0, "the one-each fold the carry drains");
+        // THE VANISH: the 2+-seat arm the ghost wears, the drained
+        // remainder the EMPTY stack answers — None the cursor bare keeps
+        let law = floating_ghost_count(
+            app.qc_armed,
+            app.qc_slots.len(),
+            app.qc_remainder,
+            app.inv_carried.1,
+        );
+        assert!(app.qc_armed && app.qc_slots.len() > 1, "the ghost's own gate rides");
+        assert_eq!(law, None, "the drained ghost the cursor VANISHES");
+        // the carried stack itself untouched — the paint alone projects
+        assert_eq!(app.inv_carried, (dirt, 2), "the real carry the paint never spends");
+        // THE RELEASE: the one-each distribution the last two serves,
+        // the post-release cursor the REAL count 0 keeps (the empty
+        // carry's own gate — the sites' carried.1 > 0 the paint skips)
+        app.on_right_release();
+        assert_eq!(app.inventory.items[20], (dirt, 1), "the first seat's own one");
+        assert_eq!(app.inventory.items[21], (dirt, 1), "the second seat's own one");
+        assert_eq!(app.inv_carried.1, 0, "the release the carry empties");
+        assert_eq!(
+            floating_ghost_count(app.qc_armed, app.qc_slots.len(), app.qc_remainder, app.inv_carried.1),
+            None,
+            "the emptied carry the cursor bare keeps"
+        );
+    }
+
+    /// THE FLOATING GHOST'S OWN LANES (the four screens the same base
+    /// walk answers — the chest the LIVE session alone wears, the table
+    /// and the furnace their live/offline pairs the law both rides):
+    /// the chest drag's ghost the believed carry projects, the table's
+    /// offline drag the local store's own answers, and the CROSS-SCREEN
+    /// safety the setScreen's removed() walk keeps (the armed state the
+    /// screen switch kills — the fresh screen's cursor the real count
+    /// speaks).
+    #[test]
+    fn the_floating_ghost_the_lanes_and_the_screen_death_wear() {
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        // THE CHEST (live): the drag the ghost's projection wears
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, _click_rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open(ScreenKind::Chest);
+        app.chest_is_live = true;
+        app.chest_live_window = Some((9, 3));
+        let panel = chest_panel_origin(640, 360);
+        app.chest_panel = panel;
+        app.chest_slots = vec![(0, 0); 27];
+        app.chest_mirror = vec![(0, 0); 36];
+        app.chest_slot_rects = chest_rects_for(panel);
+        app.chest_carried = (stone, 7);
+        let (ax, ay) = chest_container_slot(panel, 0);
+        app.on_right_press(ax + 8, ay + 8);
+        app.on_mouse_move(ax + 8, ay + 8);
+        let (bx, by) = chest_container_slot(panel, 1);
+        app.on_mouse_move(bx + 8, by + 8);
+        assert_eq!(app.qc_slots, vec![0, 1], "the chest pair the motion paints");
+        assert_eq!(app.qc_remainder, 5, "the one-each fold the state keeps");
+        assert_eq!(
+            floating_ghost_count(
+                app.qc_armed,
+                app.qc_slots.len(),
+                app.qc_remainder,
+                app.chest_carried.1
+            ),
+            Some(5),
+            "the chest ghost the believed carry projects"
+        );
+        // THE SCREEN DEATH: the setScreen walk the armed state kills —
+        // the fresh screen's cursor the real count speaks (the removed()
+        // shape the state's own fields wear)
+        app.open(ScreenKind::Inventory);
+        assert!(!app.qc_armed, "the screen switch the arm kills");
+        assert!(app.qc_slots.is_empty(), "the painted seats the death clears");
+        assert_eq!(app.qc_remainder, 0, "the projection the death zeroes");
+        app.inv_carried = (dirt, 4);
+        assert_eq!(
+            floating_ghost_count(
+                app.qc_armed,
+                app.qc_slots.len(),
+                app.qc_remainder,
+                app.inv_carried.1
+            ),
+            Some(4),
+            "the fresh screen's cursor the real count speaks"
+        );
+        // THE TABLE (offline): the drag the ghost's projection wears —
+        // the fresh offline app the local store's own lanes answer
+        let mut off = App::new(3);
+        off.enter_world();
+        off.spawn_offline_body();
+        off.open(ScreenKind::Crafting);
+        off.table_panel = inventory_panel_origin(640, 360);
+        off.inv_carried = (dirt, 6);
+        let (tx, ty) = table_craft_origin(off.table_panel, 0);
+        off.on_right_press(tx + 9, ty + 9);
+        off.on_mouse_move(tx + 9, ty + 9);
+        let (tx2, ty2) = table_craft_origin(off.table_panel, 1);
+        off.on_mouse_move(tx2 + 9, ty2 + 9);
+        assert_eq!(off.qc_slots, vec![1, 2], "the horizontal pair the motion paints");
+        assert_eq!(off.qc_remainder, 4, "the one-each fold the state keeps");
+        assert_eq!(
+            floating_ghost_count(
+                off.qc_armed,
+                off.qc_slots.len(),
+                off.qc_remainder,
+                off.inv_carried.1
+            ),
+            Some(4),
+            "the table ghost the local carry projects"
+        );
     }
 
     /// THE DROP-OUTSIDE LANE (the 26.2 AbstractContainerScreen's own
