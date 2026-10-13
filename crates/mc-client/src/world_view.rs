@@ -2291,7 +2291,10 @@ pub enum ContainerInput {
     // the digit press the live session's ServerboundContainerClickPacket
     // speaks, the button the hotbar row / the 40 the offhand keys)
     Swap,
-    #[expect(dead_code)] // the 26.2 ClickType set's own line — the menu rounds' lane
+    // THE CLONE LANE RIDES (the mouseClicked walk's own flag arm —
+    // the middle press the creative materials the hovered seat's
+    // full-stack copy answers, the safeClone law the cursor alone
+    // mutates)
     Clone,
     Throw,
     #[expect(dead_code)] // the 26.2 ClickType set's own line — the menu rounds' lane

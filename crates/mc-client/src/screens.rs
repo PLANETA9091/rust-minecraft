@@ -27420,6 +27420,305 @@ impl App {
         ));
     }
 
+    /// THE CONTAINER SCREENS' OWN CLONE (the AbstractContainerScreen
+    /// .mouseClicked walk's own flag arm — the 2dc72797 jar speaks:
+    /// pcs 28-45 the `keyPickItem.matchesMouse(event)` + the
+    /// `player.hasInfiniteMaterials()` verdict the local flag rides,
+    /// pcs 92-104 the button-not-0/1 arm the flag-less verdict SKIPS
+    /// — the middle press without the creative materials the whole
+    /// walk silences (no seat walk, no packet), pcs 188-207 the
+    /// carried-empty arm `slotClicked(hovered, hovered.index, button,
+    /// ContainerInput.CLONE)` the walk rides. THE MENUDOES OWN TABLE
+    /// (AbstractContainerMenu.doClick pcs 1385-1446): the gates
+    /// `hasInfiniteMaterials && carried.isEmpty && slotNum >= 0 &&
+    /// slot.hasItem()` the arm opens, the
+    /// `setCarried(slot.safeClone(player))` the tail serves —
+    /// Slot.safeClone pcs 0-13 `getItem().copyWithCount(getItem()
+    /// .getMaxStackSize())` the FULL max the cursor takes, the
+    /// hovered seat the copy NEVER touches, the changed map the
+    /// slot-mutation silence keeps EMPTY.
+    pub fn on_container_clone_click(&mut self, mx: i32, my: i32) {
+        if !self.game_mode.instabuild() {
+            return; // pcs 92-104 — the flag-less middle press the walk skips
+        }
+        match self.screen {
+            ScreenKind::Inventory => self.clone_inventory_seat(mx, my),
+            ScreenKind::Chest => self.clone_chest_seat(mx, my),
+            ScreenKind::Furnace => self.clone_furnace_seat(mx, my),
+            ScreenKind::Crafting => self.clone_table_seat(mx, my),
+            _ => {} // the world/other screens the container walk never reads
+        }
+    }
+
+    /// THE WINDOW-0 SEAT'S OWN CLONE (the inventory click walk's own
+    /// two lanes the arm wears): the offline store the
+    /// [`Self::inventory_hover_stack`] read answers, the wire lane
+    /// the live belief's own slot speaks — the safeClone law the
+    /// cursor ALONE mutates, the hovered seat the copy never touches.
+    fn clone_inventory_seat(&mut self, mx: i32, my: i32) {
+        if self.inv_panel == (0, 0) {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let Some(hover) = self.inventory_hover(mx, my) else {
+            return; // the press landed between the slots — the null hover
+        };
+        let menu = inventory_hover_menu_id(hover) as i32;
+        if self.world_is_network {
+            // THE WINDOW-0 WIRE LANE (the inventory click walk's own
+            // split the arm wears): the packet the live session speaks,
+            // the belief's cursor the safeClone serves
+            let Some(sink) = self.live_clicks.as_ref() else {
+                return; // no live session — the command dies on the frame thread
+            };
+            if self.live_inv_carried.1 > 0 {
+                return; // doClick pc 1400-1407 — the carried-empty gate
+            }
+            let (id, count) = self.live_inv_slots[menu as usize];
+            if count <= 0 || id == 0 {
+                return; // pc 1427-1432 — the hasItem gate
+            }
+            let carried = (id, crate::world_view::item_max_stack(id));
+            self.live_inv_carried = carried;
+            let _ = sink.send(crate::world_view::ContainerCommand::Click(
+                crate::world_view::ContainerClick {
+                    window_id: 0,
+                    state_id: self.live_inv_state_id,
+                    slot: menu as i16,
+                    button: 2,
+                    input: crate::world_view::ContainerInput::Clone,
+                    changed: Vec::new(), // the hovered seat the copy NEVER touches
+                    carried,
+                },
+            ));
+            return;
+        }
+        if self.inv_carried.1 > 0 {
+            return; // doClick pc 1400-1407 — the carried-empty gate
+        }
+        let (id, count) = self.inventory_hover_stack(hover);
+        if count <= 0 || id == 0 {
+            return; // pc 1427-1432 — the hasItem gate
+        }
+        self.inv_carried = (id, crate::world_view::item_max_stack(id));
+    }
+
+    /// THE CHEST SEAT'S OWN CLONE (the chest click walk's own live-only
+    /// law the arm wears — the offline stand-in no window keeps): the
+    /// grid's 0..27 and the mirror's 27..63 the belief read answers,
+    /// the safeClone law the cursor ALONE mutates, the packet the
+    /// window's own identity names.
+    fn clone_chest_seat(&mut self, mx: i32, my: i32) {
+        if !self.chest_is_live {
+            return; // the offline stand-in: no window, no click
+        }
+        let Some((window_id, state_id)) = self.chest_live_window else {
+            return; // no window identity — nothing to echo against
+        };
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return; // no live session — the command dies on the frame thread
+        };
+        let Some(&(_, _, slot)) = self
+            .chest_slot_rects
+            .iter()
+            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+        else {
+            return; // the press landed between the slots — the null hover
+        };
+        if self.chest_carried.1 > 0 {
+            return; // doClick pc 1400-1407 — the carried-empty gate
+        }
+        let (id, count) = if (slot as usize) < 27 {
+            self.chest_slots[slot as usize]
+        } else {
+            self.chest_mirror[slot as usize - 27]
+        };
+        if count <= 0 || id == 0 {
+            return; // pc 1427-1432 — the hasItem gate
+        }
+        let carried = (id, crate::world_view::item_max_stack(id));
+        self.chest_carried = carried;
+        let _ = sink.send(crate::world_view::ContainerCommand::Click(
+            crate::world_view::ContainerClick {
+                window_id,
+                state_id,
+                slot,
+                button: 2,
+                input: crate::world_view::ContainerInput::Clone,
+                changed: Vec::new(), // the hovered seat the copy NEVER touches
+                carried,
+            },
+        ));
+    }
+
+    /// THE FURNACE SEAT'S OWN CLONE (the furnace click walk's own
+    /// split the arm wears): the OFFLINE sim the seats' own stores
+    /// read — the input/fuel/result the sim array answers, the
+    /// standard rows the write-through projection IS (the row's stack
+    /// the inventory's own cell reads, the pickup walk's own
+    /// convention) —, the WIRE lane the 39-slot belief speaks. The
+    /// safeClone law the cursor ALONE mutates either lane (the row
+    /// never moves, the smelting tick the row's own business keeps).
+    fn clone_furnace_seat(&mut self, mx: i32, my: i32) {
+        if self.furnace_slot_rects.is_empty() {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let Some(&(_, _, slot)) = self
+            .furnace_slot_rects
+            .iter()
+            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+        else {
+            return; // the press landed between the slots — the null hover
+        };
+        if !self.furnace_is_live {
+            // THE OFFLINE SIM'S OWN LANE (the furnace click walk's own
+            // split the arm wears): the fresh stand-in has no window —
+            // the sim's cursor the safeClone serves
+            if self.furnace_carried.1 > 0 {
+                return; // doClick pc 1400-1407 — the carried-empty gate
+            }
+            let (id, count) = if slot >= 3 {
+                // THE STANDARD ROW'S OWN WRITE-THROUGH (the projection
+                // the inventory IS — the row's stack the inventory's
+                // own cell answers)
+                let idx = if slot < 30 {
+                    9 + slot as usize - 3
+                } else {
+                    (slot - 30) as usize
+                };
+                self.inventory.items[idx]
+            } else {
+                self.furnace_slots
+                    .get(slot as usize)
+                    .copied()
+                    .unwrap_or((0, 0))
+            };
+            if count <= 0 || id == 0 {
+                return; // pc 1427-1432 — the hasItem gate
+            }
+            self.furnace_carried = (id, crate::world_view::item_max_stack(id));
+            return;
+        }
+        let Some((window_id, state_id)) = self.furnace_live_window else {
+            return; // no window identity — nothing to echo against
+        };
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return; // no live session — the command dies on the frame thread
+        };
+        if self.live_furnace_carried.1 > 0 {
+            return; // doClick pc 1400-1407 — the carried-empty gate
+        }
+        let (id, count) = self
+            .furnace_slots
+            .get(slot as usize)
+            .copied()
+            .unwrap_or((0, 0));
+        if count <= 0 || id == 0 {
+            return; // pc 1427-1432 — the hasItem gate
+        }
+        let carried = (id, crate::world_view::item_max_stack(id));
+        self.live_furnace_carried = carried;
+        let _ = sink.send(crate::world_view::ContainerCommand::Click(
+            crate::world_view::ContainerClick {
+                window_id,
+                state_id,
+                slot,
+                button: 2,
+                input: crate::world_view::ContainerInput::Clone,
+                changed: Vec::new(), // the hovered seat the copy NEVER touches
+                carried,
+            },
+        ));
+    }
+
+    /// THE TABLE SEAT'S OWN CLONE (the table click walk's own two
+    /// lanes the arm wears): the seat map the result 0 the
+    /// `table_craft_origin(panel, 9)` names, the cells 1..9, the
+    /// store rows the inventory origins speak — the offline store the
+    /// table's own fields answer (the result, the grid, the
+    /// write-through rows), the wire lane the live belief's own slot
+    /// speaks. The safeClone law the cursor ALONE mutates — the
+    /// recipe recompute the clone walk NEVER fires (the recompute the
+    /// onTake's own lane serves, the copy the table's tick keeps).
+    fn clone_table_seat(&mut self, mx: i32, my: i32) {
+        if self.table_panel == (0, 0) {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let panel = self.table_panel;
+        let menu: i32 = if {
+            let (rx, ry) = table_craft_origin(panel, 9);
+            mx >= rx + 1 && mx < rx + 17 && my >= ry + 1 && my < ry + 17
+        } {
+            0 // the result seat — menu 0
+        } else if let Some(cell) = (0..9).find(|&c| {
+            let (cx, cy) = table_craft_origin(panel, c);
+            mx >= cx + 1 && mx < cx + 17 && my >= cy + 1 && my < cy + 17
+        }) {
+            1 + cell as i32 // the craft cells — menus 1..9
+        } else if let Some((_, _, store)) = (0..36)
+            .map(|i| {
+                let (ox, oy) = inventory_slot_origin(panel, i);
+                (ox + 1, oy + 1, i)
+            })
+            .find(|&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+        {
+            Self::table_store_menu_id(store) // the store rows — menus 10..36 / 37..45
+        } else {
+            return; // the press landed between the slots — the null hover
+        };
+        if self.world_is_network {
+            // THE WINDOW-1 WIRE LANE (the table click walk's own split
+            // the arm wears): the packet the live session speaks, the
+            // belief's cursor the safeClone serves
+            let Some(sink) = self.live_clicks.as_ref() else {
+                return; // no live session — the command dies on the frame thread
+            };
+            let Some((window_id, state_id)) = self.table_live_window else {
+                return; // no window — the belief never armed
+            };
+            if self.live_table_carried.1 > 0 {
+                return; // doClick pc 1400-1407 — the carried-empty gate
+            }
+            let (id, count) = self.live_table_slots[menu as usize];
+            if count <= 0 || id == 0 {
+                return; // pc 1427-1432 — the hasItem gate
+            }
+            let carried = (id, crate::world_view::item_max_stack(id));
+            self.live_table_carried = carried;
+            let _ = sink.send(crate::world_view::ContainerCommand::Click(
+                crate::world_view::ContainerClick {
+                    window_id,
+                    state_id,
+                    slot: menu as i16,
+                    button: 2,
+                    input: crate::world_view::ContainerInput::Clone,
+                    changed: Vec::new(), // the hovered seat the copy NEVER touches
+                    carried,
+                },
+            ));
+            return;
+        }
+        if self.inv_carried.1 > 0 {
+            return; // doClick pc 1400-1407 — the carried-empty gate
+        }
+        let (id, count) = if menu == 0 {
+            self.table_result
+        } else if menu <= 9 {
+            self.table_grid[(menu - 1) as usize]
+        } else if menu >= 37 {
+            // THE HOTBAR ROW (menu 37..45 — the store 0..8 the mapping
+            // folds, the write-through projection the inventory IS)
+            self.inventory.items[(menu - 37) as usize]
+        } else {
+            // THE MAIN ROW (menu 10..36 — the store 9..35 the mapping
+            // folds, the write-through projection the inventory IS)
+            self.inventory.items[(menu - 10 + 9) as usize]
+        };
+        if count <= 0 || id == 0 {
+            return; // pc 1427-1432 — the hasItem gate
+        }
+        self.inv_carried = (id, crate::world_view::item_max_stack(id));
+    }
+
     pub fn on_click(&mut self, mx: i32, my: i32) {
         let hit: Vec<&Button> = self.buttons.iter().filter(|b| b.hovered(mx, my)).collect();
         for b in hit {
@@ -112438,6 +112737,307 @@ cow_sound_variant: None,
         app.mouse_pos = Some((panel.0 + 170, panel.1 + 20));
         app.on_chest_drop_key(false);
         assert!(click_rx.try_recv().is_err(), "still silence");
+    }
+
+    /// THE CONTAINER SCREENS' OWN CLONE, THE COPY (the mouseClicked
+    /// walk's flag arm over the window-0 belief — the doClick's own
+    /// table pcs 1385-1446 answers): the safeClone law the FULL max
+    /// the cursor takes (the diamond 64, the egg's own 16), the
+    /// hovered seat the copy NEVER touches, the wire lane the packet
+    /// the EMPTY changed map names — the slot-mutation silence the
+    /// cursor-alone walk speaks.
+    #[test]
+    fn the_container_clone_arm_the_copy_and_the_wire_wear() {
+        use crate::world_view::ContainerCommand;
+        let egg = crate::mob::wire_id("egg").expect("the egg's own id");
+        // THE OFFLINE LANE (the window-0's own store — the local walk
+        // the sim's cursor answers)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        app.game_mode = crate::screens::GameMode::Creative;
+        let diamond = mc_registry::item_id_by_name("diamond").unwrap();
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        app.inventory.items[12] = (diamond, 3);
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 12);
+        app.on_container_clone_click(ox + 8, oy + 8);
+        assert_eq!(app.inv_carried, (diamond, 64), "the FULL max the cursor takes");
+        assert_eq!(app.inventory.items[12], (diamond, 3), "the seat the copy never touches");
+        // THE EGG'S OWN MAX (the copyWithCount the item's own 16 takes
+        // — the flat 64 the split law's own answer never wears)
+        app.inv_carried = (0, 0);
+        app.inventory.items[13] = (egg, 2);
+        let (ox2, oy2) = inventory_slot_origin(app.inv_panel, 13);
+        app.on_container_clone_click(ox2 + 8, oy2 + 8);
+        assert_eq!(app.inv_carried, (egg, 16), "the egg's own max");
+        assert_eq!(app.inventory.items[13], (egg, 2), "the seat whole");
+        // THE WIRE LANE (the window-0 belief — the packet the live
+        // session speaks, the EMPTY changed map the cursor-alone walk
+        // names)
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open(ScreenKind::Inventory);
+        app.inv_panel = inventory_panel_origin(640, 360);
+        app.game_mode = crate::screens::GameMode::Creative;
+        app.live_inv_slots[10] = (stone, 5);
+        app.live_inv_state_id = 4;
+        let (wx, wy) = inventory_slot_origin(app.inv_panel, 10);
+        app.on_container_clone_click(wx + 8, wy + 8);
+        assert_eq!(app.live_inv_carried, (stone, 64), "the belief's cursor rides");
+        assert_eq!(app.live_inv_slots[10], (stone, 5), "the seat whole");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 0, "the window-0's own id");
+                assert_eq!(c.state_id, 4, "the revision rides");
+                assert_eq!(c.slot, 10, "the hovered seat's own menu id");
+                assert_eq!(c.button, 2, "the middle press the byte keys");
+                assert_eq!(c.input, crate::world_view::ContainerInput::Clone);
+                assert!(
+                    c.changed.is_empty(),
+                    "the slot-mutation silence the EMPTY map keeps"
+                );
+                assert_eq!(c.carried, (stone, 64), "the safeClone pair rides");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+
+    /// THE CONTAINER SCREENS' OWN CLONE, THE FOUR MENUS (the route the
+    /// screen match feeds): the furnace's offline sim the seats' own
+    /// stores read (the fuel cell the sim array answers, the standard
+    /// row the write-through projection IS), the wire lanes the packet
+    /// the window's own identity names — the chest's grid seat, the
+    /// table's craft cell — the cursor-alone law every lane wears.
+    #[test]
+    fn the_container_clone_arm_the_furnace_the_chest_the_table_wear() {
+        use crate::world_view::{ContainerCommand, LiveContainer};
+        // THE FURNACE'S OFFLINE SIM (the fresh stand-in's own lane)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open(ScreenKind::Furnace);
+        app.furnace_panel = inventory_panel_origin(640, 360);
+        app.game_mode = crate::screens::GameMode::Creative;
+        let coal = mc_registry::item_id_by_name("coal").unwrap();
+        let raw_iron = mc_registry::item_id_by_name("raw_iron").unwrap();
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        app.furnace_slots = vec![(raw_iron, 7), (coal, 5), (0, 0)];
+        app.furnace_slot_rects = vec![
+            (100, 100, 0),
+            (100, 130, 1),
+            (200, 100, 2),
+            (300, 300, 5), // the standard row menu 5
+        ];
+        // THE FUEL CELL'S CLONE (the sim array's own read)
+        app.on_container_clone_click(108, 138);
+        assert_eq!(app.furnace_carried, (coal, 64), "the fuel's own max");
+        assert_eq!(app.furnace_slots[1], (coal, 5), "the cell whole");
+        app.furnace_carried = (0, 0);
+        // THE STANDARD ROW'S WRITE-THROUGH READ (the projection the
+        // inventory IS — the row's stack the inventory's cell answers)
+        app.inventory.items[11] = (stone, 9);
+        app.on_container_clone_click(308, 308);
+        assert_eq!(app.furnace_carried, (stone, 64), "the row's own read");
+        assert_eq!(app.inventory.items[11], (stone, 9), "the row whole");
+        // THE RESULT SEAT'S EMPTINESS (the hasItem gate): the sim's
+        // result (0, 0) — the silence the cursor keeps
+        app.furnace_carried = (0, 0);
+        app.on_container_clone_click(208, 108);
+        assert_eq!(app.furnace_carried, (0, 0), "the empty seat the silence keeps");
+        // THE FURNACE'S WIRE LANE (the 39-slot belief the packet names)
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open(ScreenKind::Furnace);
+        app.game_mode = crate::screens::GameMode::Creative;
+        app.furnace_is_live = true;
+        app.furnace_live_window = Some((6, 8));
+        app.furnace_slot_rects = vec![(100, 130, 1)];
+        app.furnace_slots = vec![(0, 0), (coal, 5), (0, 0)];
+        app.on_container_clone_click(108, 138);
+        assert_eq!(app.live_furnace_carried, (coal, 64), "the belief's cursor rides");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 6, "the window's own id");
+                assert_eq!(c.state_id, 8, "the revision rides");
+                assert_eq!(c.slot, 1, "the fuel seat's own menu id");
+                assert_eq!(c.button, 2, "the middle press the byte keys");
+                assert_eq!(c.input, crate::world_view::ContainerInput::Clone);
+                assert!(c.changed.is_empty(), "the EMPTY map");
+                assert_eq!(c.carried, (coal, 64), "the safeClone pair");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE CHEST'S WIRE LANE (the grid seat the packet names)
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open(ScreenKind::Chest);
+        app.game_mode = crate::screens::GameMode::Creative;
+        app.chest_is_live = true;
+        app.chest_live_window = Some((5, 7));
+        let panel = chest_panel_origin(640, 360);
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        app.chest_slots = vec![(0, 0); 27];
+        app.chest_mirror = vec![(0, 0); 36];
+        app.chest_slots[4] = (dirt, 32);
+        app.chest_slot_rects = (0..27)
+            .map(|i| {
+                let (sx, sy) = chest_container_slot(panel, i);
+                (sx + 1, sy + 1, i as i16)
+            })
+            .chain((0..36).map(|i| {
+                let (sx, sy) = chest_mirror_slot(panel, i);
+                (sx + 1, sy + 1, (27 + i) as i16)
+            }))
+            .collect();
+        let (gx, gy) = chest_container_slot(panel, 4);
+        app.on_container_clone_click(gx + 9, gy + 9);
+        assert_eq!(app.chest_carried, (dirt, 64), "the cursor rides");
+        assert_eq!(app.chest_slots[4], (dirt, 32), "the seat whole");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 5, "the window's own id");
+                assert_eq!(c.state_id, 7, "the revision rides");
+                assert_eq!(c.slot, 4, "the grid cell's own menu id");
+                assert_eq!(c.button, 2, "the middle press the byte keys");
+                assert_eq!(c.input, crate::world_view::ContainerInput::Clone);
+                assert!(c.changed.is_empty(), "the EMPTY map");
+                assert_eq!(c.carried, (dirt, 64), "the safeClone pair");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE TABLE'S WIRE LANE (the craft cell the window-1 belief
+        // answers — the live view the screen and the window arm)
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        let log = mc_registry::item_id_by_name("oak_log").unwrap();
+        let table = LiveContainer {
+            id: 9,
+            menu_type_id: crate::world_model::MENU_TYPE_CRAFTING,
+            slots: {
+                let mut s = vec![(0i32, 0i32); 46];
+                s[1] = (log, 4); // the craft cell 0 → menu 1
+                s
+            },
+            carried: (0, 0),
+            state_id: 3,
+            bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
+        assert_eq!(app.screen, ScreenKind::Crafting, "the window shows");
+        app.table_panel = inventory_panel_origin(640, 360);
+        app.game_mode = crate::screens::GameMode::Creative;
+        let (cx, cy) = table_craft_origin(app.table_panel, 0);
+        app.on_container_clone_click(cx + 8, cy + 8);
+        assert_eq!(app.live_table_carried, (log, 64), "the cursor rides");
+        assert_eq!(app.live_table_slots[1], (log, 4), "the cell whole");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 9, "the window's own id");
+                assert_eq!(c.state_id, 3, "the revision rides");
+                assert_eq!(c.slot, 1, "the craft cell's own menu id");
+                assert_eq!(c.button, 2, "the middle press the byte keys");
+                assert_eq!(c.input, crate::world_view::ContainerInput::Clone);
+                assert!(c.changed.is_empty(), "the EMPTY map");
+                assert_eq!(c.carried, (log, 64), "the safeClone pair");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+
+    /// THE CONTAINER SCREENS' OWN CLONE, THE GATES (the mouseClicked
+    /// walk's own chain): the flag-less middle press the WHOLE walk
+    /// silences (pcs 92-104 — the survival mode no seat walk, no
+    /// packet), the carried cursor the QuickCraft start the client
+    /// keeps stopped (the silence the cursor pair wears), the empty
+    /// seat and the between-slots press the hasItem / null-hover gates
+    /// keep, the offline chest stand-in and the wire carried gate the
+    /// packet lane never passes.
+    #[test]
+    fn the_container_clone_arm_the_gates_and_the_silences_wear() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        app.inventory.items[12] = (dirt, 3);
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 12);
+        // THE FLAG-LESS MIDDLE PRESS (pcs 92-104): the survival mode
+        // the whole walk skips — no cursor, no mutation
+        app.on_container_clone_click(ox + 8, oy + 8);
+        assert_eq!(app.inv_carried, (0, 0), "the flag-less press the silence keeps");
+        assert_eq!(app.inventory.items[12], (dirt, 3), "the seat whole");
+        // THE CARRIED CURSOR (the QuickCraft start the client keeps
+        // stopped): the walk the silence wears
+        app.game_mode = crate::screens::GameMode::Creative;
+        app.inv_carried = (dirt, 5);
+        app.on_container_clone_click(ox + 8, oy + 8);
+        assert_eq!(app.inv_carried, (dirt, 5), "the cursor whole");
+        assert_eq!(app.inventory.items[12], (dirt, 3), "the seat whole");
+        // THE EMPTY SEAT (the hasItem gate): store 14 empty — silence
+        app.inv_carried = (0, 0);
+        let (ex, ey) = inventory_slot_origin(app.inv_panel, 14);
+        app.on_container_clone_click(ex + 8, ey + 8);
+        assert_eq!(app.inv_carried, (0, 0), "the empty seat the silence keeps");
+        // THE BETWEEN-SLOTS PRESS (the null hover): the panel's spine
+        app.on_container_clone_click(app.inv_panel.0 + 88, app.inv_panel.1 + 3);
+        assert_eq!(app.inv_carried, (0, 0), "still silence");
+        // THE CHEST'S OFFLINE STAND-IN (no window armed): no packet
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open(ScreenKind::Chest);
+        app.game_mode = crate::screens::GameMode::Creative;
+        let panel = chest_panel_origin(640, 360);
+        app.chest_slots = vec![(0, 0); 27];
+        app.chest_mirror = vec![(0, 0); 36];
+        app.chest_slots[4] = (dirt, 32);
+        app.chest_slot_rects = (0..27)
+            .map(|i| {
+                let (sx, sy) = chest_container_slot(panel, i);
+                (sx + 1, sy + 1, i as i16)
+            })
+            .collect();
+        let (gx, gy) = chest_container_slot(panel, 4);
+        app.on_container_clone_click(gx + 9, gy + 9);
+        assert!(
+            click_rx.try_recv().is_err(),
+            "the offline stand-in is silence"
+        );
+        // THE CARRIED GATE (the wire lane): the cursor non-empty — no
+        // packet
+        app.chest_is_live = true;
+        app.chest_live_window = Some((5, 7));
+        app.chest_carried = (dirt, 1);
+        app.on_container_clone_click(gx + 9, gy + 9);
+        assert!(
+            click_rx.try_recv().is_err(),
+            "the carried gate the packet lane never passes"
+        );
+        assert_eq!(app.chest_carried, (dirt, 1), "the cursor whole");
     }
 
     /// THE CHEST'S OWN SWAP, THE TABLE (the doClick SWAP walk over the

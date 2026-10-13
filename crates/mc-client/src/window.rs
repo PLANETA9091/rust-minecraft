@@ -2077,10 +2077,18 @@ pub fn run_gui_app(
         // never reaches — the lane hoisted to the screen level the
         // container screens' own input order keeps)
         let middle_down = window.get_mouse_down(minifb::MouseButton::Middle);
-        if middle_down && !was_middle_down && !app.chat_open
-            && app.screen == crate::screens::ScreenKind::Creative
-        {
-            app.on_creative_clone_click(gmx, gmy);
+        if middle_down && !was_middle_down && !app.chat_open {
+            if app.screen == crate::screens::ScreenKind::Creative {
+                app.on_creative_clone_click(gmx, gmy);
+            } else {
+                // THE CONTAINER SCREENS' OWN CLONE (the AbstractContainer-
+                // Screen.mouseClicked walk's own flag arm — the middle
+                // press the creative materials + the carried-empty gate
+                // the hovered seat's full-stack copy answers; the four
+                // survival menus the route feeds, the other screens the
+                // flag-less verdict and the screen match keep silent)
+                app.on_container_clone_click(gmx, gmy);
+            }
         }
         let in_world =
             app.screen == crate::screens::ScreenKind::World && !app.paused && !app.chat_open;
@@ -2291,8 +2299,15 @@ pub fn run_gui_app(
                     app.on_pick_block(window.is_key_down(Key::LeftCtrl));
                 }
             }
-            was_middle_down = middle_down;
         }
+        // THE MIDDLE PRESS'S EDGE (the tracker the pick lane and the
+        // container screens' own clone lane share — the update the
+        // EVERY frame speaks: the screen lane's honest rising edge the
+        // chat-closed frames the old in-world-only update never
+        // served — the held middle press the once-per-press walk
+        // keeps, the per-frame re-fire the tracker's stale false
+        // never serves)
+        was_middle_down = middle_down;
         // THE DEBUG MODIFIER'S OWN RELEASE (the keyDebugModifier
         // keyReleased law — hoisted out of the in-world block: the open
         // SWITCHER the walk eats first (the apply+close the screen's own
