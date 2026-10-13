@@ -121,29 +121,60 @@ impl DigState {
         haste: Option<i32>,
         mining_fatigue: Option<i32>,
     ) -> f32 {
-        Self::player_dig_speed_seeded(1.0, on_ground, eye_in_water, haste, mining_fatigue)
+        // the efficiency param's honest 0.0 — the enchant lane the
+        // client's stacks never carry (the components round the real
+        // held-stack level feeds)
+        Self::player_dig_speed_seeded(1.0, 0.0, on_ground, eye_in_water, haste, mining_fatigue)
+    }
+
+    /// THE EFFICIENCY ENCHANT'S OWN AMOUNT (the 26.2 jar's own
+    /// data/minecraft/enchantment/efficiency.json the effect row
+    /// speaks verbatim: attribute `minecraft:mining_efficiency`,
+    /// operation `add_value`, amount `type: minecraft:levels_squared,
+    /// added: 1.0`, slots [mainhand], max_level 5): the amount the
+    /// LEVEL-SQUARED law wears — `level² + 1.0` (the E1 the 2.0, the
+    /// E2 the 5.0, the E3 the 10.0, the E4 the 17.0, the E5 the 26.0
+    /// the ladder's own arithmetic every +1 level the rung grows
+    /// wears). The enchant ABSENT the modifier never registers — the
+    /// attribute's own value the 0.0 default keeps (the callers pass
+    /// 0.0, never the level-0 fold: a level-0 enchant is NO enchant,
+    /// the addend's own gate the honest silence wears).
+    pub fn efficiency_amount(level: i32) -> f32 {
+        (level * level) as f32 + 1.0
     }
 
     /// THE SEEDED WALK (the vanilla `getDestroySpeed(BlockState)`'s own
     /// order — javap Player pcs 0-174 verbatim: `f2 = mainhand
     /// .getDestroySpeed(state)` the SEED the item lane speaks, the
-    /// `if f2 > 1.0: f2 += MINING_EFFICIENCY` addend the attribute's
-    /// honest 0.0 default keeps, the haste product, the fatigue
+    /// `if f2 > 1.0: f2 += MINING_EFFICIENCY` addend (pcs 12-28 — the
+    /// `fcmpl; ifle` the STRICT test the seed alone answers — the
+    /// 1.0 seed the addend never rides —, the attribute value's own
+    /// `d2f` conversion the f32 `fadd` speaks, the fold the haste's
+    /// product PRECEDES), the haste product, the fatigue
     /// tableswitch, the BLOCK_BREAK_SPEED multiply the 1.0 default
     /// keeps, the water arm, the air arm): the seed the held tool's
-    /// own destroy speed rides, the f32 order the exact walk
-    /// preserves.
+    /// own destroy speed rides, the efficiency addend the
+    /// [`Self::efficiency_amount`] law's value wears (the enchant
+    /// lane's own source — the client's stacks the 0.0 honest
+    /// absence carry, the server-attribute round the real value
+    /// feeds), the f32 order the exact walk preserves.
     pub fn player_dig_speed_seeded(
         seed: f32,
+        efficiency: f32,
         on_ground: bool,
         eye_in_water: bool,
         haste: Option<i32>,
         mining_fatigue: Option<i32>,
     ) -> f32 {
         let mut f = seed;
-        // the MINING_EFFICIENCY attribute's honest absence (the
-        // `if f2 > 1.0f: f2 += attr` branch the 0.0 default keeps —
-        // the enchantment lane the client's stacks never carry)
+        // THE ADDEND'S OWN BRANCH (pcs 12-28): the seed the STRICT
+        // >1.0 test answers — a bare fist's 1.0 seed (and any
+        // sub-1.0 tool's) the addend NEVER rides, the efficiency
+        // tool's seed the full amount wears; the f32 add the d2f
+        // conversion's own fold keeps
+        if f > 1.0 {
+            f += efficiency;
+        }
         if let Some(amp) = haste {
             // the DIG_SPEED product: 1.0 + 0.2 × (amplifier + 1) — the
             // f32 multiply the vanilla's own `1.0F + f * 0.2F` speaks
@@ -181,9 +212,11 @@ impl DigState {
         mining_fatigue: Option<i32>,
         kind: u16,
         held: Option<i32>,
+        efficiency: f32,
     ) -> f32 {
         Self::player_dig_speed_seeded(
             Self::held_destroy_speed(kind, held),
+            efficiency,
             on_ground,
             eye_in_water,
             haste,
@@ -493,8 +526,19 @@ impl DigState {
             // vanilla lambda: getDestroyProgress >= 1.0 -> destroyBlock,
             // the dig state never arms) — the speed the FULL walk
             // speaks (the held tool's own seed the lane feeds)
-            let speed =
-                Self::player_destroy_speed(on_ground, eye_in_water, haste, mining_fatigue, kind, held);
+            // the efficiency param's honest 0.0 — the enchant lane the
+            // components round feeds (the walks' own chain the 0.0
+            // absence keeps, the pure fn's branch the addend gate
+            // answers)
+            let speed = Self::player_destroy_speed(
+                on_ground,
+                eye_in_water,
+                haste,
+                mining_fatigue,
+                kind,
+                held,
+                0.0,
+            );
             let (destroy_speed, _) = Self::block_dig_row(kind);
             let progress =
                 Self::destroy_progress(speed, destroy_speed, Self::correct_tool(kind, held));
@@ -591,8 +635,15 @@ impl DigState {
         let (destroy_speed, _) = Self::block_dig_row(kind);
         // the speed the FULL walk speaks (the held tool's own seed the
         // lane feeds, the divisor the held tool's own verdict wears)
-        let speed =
-            Self::player_destroy_speed(on_ground, eye_in_water, haste, mining_fatigue, kind, held);
+        let speed = Self::player_destroy_speed(
+            on_ground,
+            eye_in_water,
+            haste,
+            mining_fatigue,
+            kind,
+            held,
+            0.0,
+        );
         self.progress +=
             Self::destroy_progress(speed, destroy_speed, Self::correct_tool(kind, held));
         // the hit-sound beat: every 4th tick (destroyTicks % 4 == 0) —
@@ -1814,7 +1865,7 @@ mod tests {
         );
         assert!(DigState::correct_tool(crate::world::DIRT, None), "the undemanding dirt the true arm keeps");
         // the FULL WALK (the seeded lanes: 6.0 × the haste-0 product)
-        let hasty = DigState::player_destroy_speed(true, false, Some(0), None, stone, Some(pick));
+        let hasty = DigState::player_destroy_speed(true, false, Some(0), None, stone, Some(pick), 0.0);
         assert!(
             (hasty - 6.0 * 1.2).abs() < 1e-6,
             "the seeded walk the product wears: {}",
@@ -1858,6 +1909,147 @@ mod tests {
             (d.progress - 1.0_f32 / 1.5 / 100.0).abs() < 1e-12,
             "the bare hand the 1/1.5/100 rate wears: {}",
             d.progress
+        );
+    }
+
+    /// THE EFFICIENCY ENCHANT'S OWN AMOUNT (the 26.2 jar's
+    /// data/minecraft/enchantment/efficiency.json the effect row
+    /// speaks — attribute mining_efficiency, add_value, the amount
+    /// the `levels_squared, added 1.0` law wears, max_level 5): the
+    /// ladder the SQUARED rows answers — E1 the 2.0, E2 the 5.0,
+    /// E3 the 10.0, E4 the 17.0, E5 the 26.0 (the every-+1 rung the
+    /// arithmetic grows — the +3, +5, +7 gaps the square's own
+    /// derivative speaks).
+    #[test]
+    fn the_efficiency_amount_the_levels_squared_wears() {
+        assert_eq!(DigState::efficiency_amount(1), 2.0, "the E1 the 1²+1 wears");
+        assert_eq!(DigState::efficiency_amount(2), 5.0, "the E2 the 2²+1 wears");
+        assert_eq!(DigState::efficiency_amount(3), 10.0, "the E3 the 3²+1 wears");
+        assert_eq!(DigState::efficiency_amount(4), 17.0, "the E4 the 4²+1 wears");
+        assert_eq!(DigState::efficiency_amount(5), 26.0, "the E5 the cap level wears");
+    }
+
+    /// THE ADDEND'S OWN SEED GATE (javap Player.getDestroySpeed
+    /// pcs 12-28 — the `fcmpl; ifle` the STRICT >1.0 test the seed
+    /// alone answers): the efficiency tool's seed the FULL amount
+    /// wears (the iron pickaxe's 6.0 + the E1's 2.0 the 8.0 speaks),
+    /// the bare fist's 1.0 seed the addend NEVER rides (the strict
+    /// compare the equality refuses — the fist's speed the addend's
+    /// own gate pins), and the sub-1.0 seed the same silence keeps.
+    #[test]
+    fn the_efficiency_addend_the_seed_gate_wears() {
+        let pick = iron_pickaxe_id();
+        let stone = crate::world::STONE;
+        // THE TOOL'S SEED: the 6.0 seed the E1 amount wears — 8.0
+        let seeded = DigState::player_destroy_speed(
+            true,
+            false,
+            None,
+            None,
+            stone,
+            Some(pick),
+            DigState::efficiency_amount(1),
+        );
+        assert!(
+            (seeded - 8.0).abs() < 1e-6,
+            "the 6.0 seed the 2.0 addend wears: {seeded}"
+        );
+        // THE BARE FIST: the 1.0 seed the STRICT gate refuses — the
+        // 26.0 E5 amount the same silence keeps (the fist's own speed
+        // the addend's gate pins — the vanilla's own quirk the exact
+        // walk banks)
+        let fist = DigState::player_destroy_speed(
+            true,
+            false,
+            None,
+            None,
+            stone,
+            None,
+            DigState::efficiency_amount(5),
+        );
+        assert!(
+            (fist - 1.0).abs() < 1e-6,
+            "the 1.0 seed the addend never rides: {fist}"
+        );
+        // THE SUB-1.0 SEED: the shears-class slow row the same gate
+        // keeps (the 0.5-class seed the addend's silence wears)
+        let slow = DigState::player_dig_speed_seeded(
+            0.5,
+            DigState::efficiency_amount(3),
+            true,
+            false,
+            None,
+            None,
+        );
+        assert!(
+            (slow - 0.5).abs() < 1e-6,
+            "the sub-1.0 seed the addend refuses: {slow}"
+        );
+    }
+
+    /// THE ADDEND'S OWN ORDER (the vanilla walk's exact f32 sequence —
+    /// the addend the haste's product PRECEDES, the fatigue the
+    /// tableswitch follows, the water/air arms the tail keeps): the
+    /// seeded 6.0 with the E1 addend and the haste-0 amp the (6.0 +
+    /// 2.0) × 1.2 = 9.6 wears — NOT the 6.0 × 1.2 + 2.0 = 9.2 the
+    /// swapped order speaks; the fatigue-0 product the fold's tail
+    /// rides; the airborne arm the same order keeps.
+    #[test]
+    fn the_efficiency_addend_the_haste_order_wears() {
+        let ordered = DigState::player_dig_speed_seeded(
+            6.0,
+            DigState::efficiency_amount(1),
+            true,
+            false,
+            Some(0),
+            None,
+        );
+        assert!(
+            (ordered - (6.0 + 2.0) * 1.2).abs() < 1e-6,
+            "the addend the product precedes: {ordered}"
+        );
+        let fatigued = DigState::player_dig_speed_seeded(
+            6.0,
+            DigState::efficiency_amount(1),
+            true,
+            false,
+            None,
+            Some(0),
+        );
+        assert!(
+            (fatigued - (6.0 + 2.0) * 0.3).abs() < 1e-6,
+            "the fatigue the addend's tail follows: {fatigued}"
+        );
+        let airborne = DigState::player_dig_speed_seeded(
+            6.0,
+            DigState::efficiency_amount(1),
+            false,
+            false,
+            None,
+            None,
+        );
+        assert!(
+            (airborne - (6.0 + 2.0) / 5.0).abs() < 1e-6,
+            "the air arm the addend's tail keeps: {airborne}"
+        );
+        // THE HONEST ABSENCE: the 0.0 addend the plain walk mirrors —
+        // the 1.0 seed (the bare fist's own) the addend-less walk the
+        // 1.0 keeps, the 6.0 seed the addend-less walk the 6.0 keeps
+        let absent = DigState::player_dig_speed_seeded(
+            6.0,
+            0.0,
+            true,
+            false,
+            None,
+            None,
+        );
+        assert!(
+            (absent - 6.0).abs() < 1e-6,
+            "the 0.0 addend the seed alone keeps: {absent}"
+        );
+        assert!(
+            (DigState::player_dig_speed(true, false, None, None) - 1.0).abs() < 1e-6,
+            "the delegate's own absence the 1.0 seed keeps"
         );
     }
 }
