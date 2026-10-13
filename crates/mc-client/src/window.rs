@@ -1917,6 +1917,13 @@ pub fn run_gui_app(
                         // id the SWAP table answers; the walk's own
                         // false the non-answer arms keep)
                         && !app.on_chest_swap_key(i)
+                        // THE TABLE'S OWN SWAP (the checkHotbarKeyPressed
+                        // walk the crafting screen the same base class
+                        // keeps — the window-1 belief the SWAP table
+                        // answers, the result seat's own mayPlace law
+                        // the walk's refusals speak; the walk's own
+                        // false the non-answer arms keep)
+                        && !app.on_table_swap_key(i)
                         // THE PICKER'S OWN SWAP (the creative screen's
                         // own numeric arm — the false the profiler's
                         // own lane keeps)

@@ -23442,6 +23442,109 @@ impl App {
         }
     }
 
+    /// THE TABLE'S OWN SWAP KEY (javap 26.2 — the 2dc72797 jar's own
+    /// classes speak: AbstractContainerScreen.checkHotbarKeyPressed
+    /// pcs 0-114 the carried-empty + hovered-slot gates the chest
+    /// round v0.3.721 banked, the digit's
+    /// `slotClicked(hovered, hovered.index, i, SWAP)` the SAME walk
+    /// rides — NO hasItem gate the swap walk keeps, the both-empty
+    /// press the consumed silence and the ALWAYS-PACKET law speak;
+    /// AbstractContainerMenu.doClick SWAP pcs 1079-1382 the table the
+    /// BELIEF re-answers over the window-1 CRAFTING MENU's own
+    /// numbering — the result 0, the craft cells 1..9, the store rows
+    /// 10..45, the hotbar rows the menus 37..45 speak). THE GATES:
+    /// the screen/dead, the LIVE window (the
+    /// [`Self::table_live_window`] the OpenScreen word armed — the
+    /// offline stand-in no window keeps), the panel the last render
+    /// spoke, the cursor the frame stream fed, the hovered seat the
+    /// SAME geometry walk the click lane answers (the result rect the
+    /// [`table_craft_origin`] index 9 speaks, the craft cells 0..8,
+    /// the store rows 0..36 the [`Self::table_store_menu_id`] law
+    /// keys), the CARRIED gate the false BEFORE the packet lane
+    /// keeps. THE SEATS' OWN LAWS (the SWAP table the seat's
+    /// mayPickup/mayPlace pair keys):
+    /// - the RESULT seat: mayPickup the matches verdict answers (a
+    ///   non-empty result IS the recipe's own match), mayPlace the
+    ///   iconst_0 the place arms refuse — CASE B alone fires (the row
+    ///   empty, the result rides the button row AS-IS, the
+    ///   [`wire_table_on_take`] the ingredient decrement + the
+    ///   remainder arms + the recompute the result re-speaks), the
+    ///   CASE C/D presses the refusal and the always-packet keep;
+    /// - the CRAFT cells: the TransientCraftingContainer's plain
+    ///   Slots — the TRUE pair, the max the item's own law;
+    /// - the STORE rows: the plain Slots — the TRUE pair.
+    /// THE OFFHAND (button 40) the crafting menu never slots — the F
+    /// arm the later jar round banks (the outside-menu seat the
+    /// changed map can't name); the digits the walk alone wears. The
+    /// true verdict the digit CONSUMES either way (the SWAP arm ran —
+    /// the refusals the checkHotbarKeyPressed's own true-return
+    /// keep); the false verdicts the world chain answers.
+    pub fn on_table_swap_key(&mut self, button: usize) -> bool {
+        if self.screen != ScreenKind::Crafting || self.dead {
+            return false;
+        }
+        let Some((window_id, state_id)) = self.table_live_window else {
+            return false; // the offline stand-in: no window, no click
+        };
+        if self.table_panel == (0, 0) {
+            return false; // no render spoke yet — no geometry to hit
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return false; // no cursor — no hoveredSlot (the null gate's shape)
+        };
+        let panel = self.table_panel;
+        // THE HOVERED SEAT (the click lane's own geometry walk — the
+        // result rect first, the craft cells, the store rows after:
+        // the menu's own slot order the ctor's adds speak)
+        let menu = {
+            let (rx, ry) = table_craft_origin(panel, 9);
+            if mx >= rx + 1 && mx < rx + 17 && my >= ry + 1 && my < ry + 17 {
+                Some(0usize) // the result seat's own menu id
+            } else if let Some(cell) = (0..9)
+                .map(|i| {
+                    let (cx, cy) = table_craft_origin(panel, i);
+                    (cx + 1, cy + 1, i)
+                })
+                .find(|&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+                .map(|(_, _, i)| i)
+            {
+                Some(1 + cell) // the craft cells' own menus 1..9
+            } else {
+                (0..36)
+                    .map(|i| {
+                        let (ox, oy) = inventory_slot_origin(panel, i);
+                        (ox + 1, oy + 1, i)
+                    })
+                    .find(|&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+                    .map(|(_, _, i)| Self::table_store_menu_id(i) as usize)
+            }
+        };
+        let Some(menu) = menu else {
+            return false; // the press landed between the slots — the null hover
+        };
+        // THE CARRIED GATE (pc 0-10 — the getCarried().isEmpty() arm
+        // the walk opens with; the false verdict BEFORE the packet
+        // lane)
+        if self.live_table_carried.1 > 0 {
+            return false;
+        }
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return false; // no live session — the command dies on the frame thread
+        };
+        wire_table_swap(
+            sink,
+            &mut self.live_table_slots,
+            &mut self.hotbar_slots,
+            self.selected_hotbar,
+            menu,
+            button,
+            window_id,
+            state_id,
+            self.live_table_carried,
+        );
+        true
+    }
+
     /// THE CHEST'S OWN Q (the SAME keyPressed keyDrop arm — the
     /// GenericContainerScreen the base class inherits, the gate chain
     /// and the doClick THROW table the inventory round v0.3.718 keeps
@@ -49895,6 +49998,164 @@ fn wire_table_on_take(
         changed.push((0, result));
     }
     changed
+}
+
+/// THE SWAP TABLE OVER THE TABLE'S OWN BELIEF (javap 26.2 — the
+/// banked acm_fresh.txt doClick SWAP pcs 1079-1382 the window-1
+/// CRAFTING MENU's own numbering re-keys, the walk the chest round
+/// v0.3.721's [`wire_chest_swap`] shape keeps): the button row the
+/// crafting menu's OWN hotbar rows speak (menus 37..45 — the
+/// [`Self::table_store_menu_id`] law the store indices 0..8 key),
+/// the hovered seat's menu id the caller's geometry names. THE
+/// SEATS: the result 0 the mayPickup/mayPlace PAIR the verdicts
+/// answer (mayPickup the matches verdict — a non-empty result IS
+/// the recipe's own match; mayPlace the iconst_0 the place arms
+/// refuse), the craft cells 1..9 + the store rows 10..45 the plain
+/// Slots' TRUE pair keeps. THE TABLE (the fired law the both-empty
+/// press the silence CONSUMES and the packet keeps):
+/// - the SAME-SEAT press (the hovered slot IS the button's own row):
+///   the identical ItemStack pair the vanilla walk sets back — no
+///   mutation the diff ever names, the changed map the empty map
+///   keeps;
+/// - CASE B (pcs 1149-1202) the row empty: the hovered stack rides
+///   the button row AS-IS, the hovered cell EMPTIES — the result
+///   seat the [`wire_table_on_take`] walk the onTake's ingredient
+///   decrement + the remainder arms + the recompute answers (the
+///   re-spoken verdict the map's own put replaces);
+/// - CASE C (pcs 1205-1273) the hovered empty: `mayPlace` the
+///   row's stack places — the result seat's iconst_0 the refusal
+///   names, the SPLIT law the max wears (`getMaxStackSize(stack)` =
+///   `min(64, the item's own)` — the count > max the cell takes
+///   max, the row the remainder keeps; the count <= max the row
+///   EMPTIES, the cell the whole wears);
+/// - CASE D (pcs 1276-1379) both filled: `mayPickup && mayPlace`
+///   the gates answer — the count > max arm the split(max) + the
+///   ORIGINAL hovered stack the [`belief_table_inventory_add`]
+///   rides (the crafting menu's own numbering the scan keys, the
+///   leftover the server's drop lane speaks), the count <= max arm
+///   the straight trade wears.
+/// THE HUD ROW'S BELIEF — the every-mutation law syncs (the
+/// crafting menu's hotbar rows the slice's own menus 37..45
+/// speak). THE PACKET ALWAYS RIDES (the slotClicked call the
+/// keyPressed walk keeps once the hovered gate passed — the
+/// refusals the EMPTY changed map names, the cursor the SWAP arm
+/// never touches). A free function — the frame thread's disjoint
+/// field borrows (the live_clicks sink stays held across the walk,
+/// the chest lane's own shape).
+#[allow(clippy::too_many_arguments)]
+fn wire_table_swap(
+    sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
+    live_slots: &mut [(i32, i32); 46],
+    hotbar: &mut [(i32, i32); 9],
+    selected: usize,
+    menu: usize,
+    button: usize,
+    window_id: i32,
+    state_id: i32,
+    carried: (i32, i32),
+) {
+    debug_assert!(button < 9, "the digits the walk alone wears — the F arm the menu never slots");
+    debug_assert!(menu < 46, "the table seat's own bounds");
+    let row_menu = 37 + button; // the crafting menu's own hotbar rows
+    let (hover_id, hover_count) = live_slots[menu];
+    let (row_id, row_count) = live_slots[row_menu];
+    let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
+    let fired = !(row_count <= 0 && hover_count <= 0);
+    if fired {
+        let is_result = menu == 0;
+        if menu == row_menu {
+            // THE SAME SEAT — the vanilla walk the identical pair
+            // sets back, no mutation the diff ever names
+        } else if row_count <= 0 {
+            // CASE B (pcs 1149-1202): the hovered stack rides the
+            // button row AS-IS, the hovered cell EMPTIES — the
+            // mayPickup gate the seat's own verdict keeps (the
+            // result seat the matches verdict answers, the plain
+            // seats the TRUE pair)
+            live_slots[menu] = (0, 0);
+            note_batch_change(&mut changed, menu as i16, (0, 0));
+            live_slots[row_menu] = (hover_id, hover_count);
+            note_batch_change(&mut changed, row_menu as i16, (hover_id, hover_count));
+            if is_result {
+                // the ResultSlot.onTake — the ingredients' decrement
+                // + the remainder arms + the recompute the result
+                // re-speaks (the empty cell the recompute refills —
+                // the entry the map's own put replaces)
+                for (slot, pair) in wire_table_on_take(live_slots, selected) {
+                    note_batch_change(&mut changed, slot, pair);
+                }
+            }
+        } else if hover_count <= 0 {
+            // CASE C (pcs 1205-1273): the row's stack places — the
+            // mayPlace gate the seat's own verdict keeps (the result
+            // seat's iconst_0 the refusal names), the SPLIT law the
+            // max wears
+            if !is_result {
+                let max = crate::world_view::item_max_stack(row_id);
+                if row_count > max {
+                    live_slots[menu] = (row_id, max);
+                    note_batch_change(&mut changed, menu as i16, (row_id, max));
+                    live_slots[row_menu] = (row_id, row_count - max);
+                    note_batch_change(&mut changed, row_menu as i16, (row_id, row_count - max));
+                } else {
+                    live_slots[row_menu] = (0, 0);
+                    note_batch_change(&mut changed, row_menu as i16, (0, 0));
+                    live_slots[menu] = (row_id, row_count);
+                    note_batch_change(&mut changed, menu as i16, (row_id, row_count));
+                }
+            }
+        } else if !is_result {
+            // CASE D (pcs 1276-1379): both filled — the mayPickup &&
+            // mayPlace pair the gates answer (the result's mayPlace
+            // the refusal keeps)
+            let max = crate::world_view::item_max_stack(row_id);
+            if row_count > max {
+                // the split(max) — the cell takes max, the row the
+                // remainder keeps, the ORIGINAL hovered stack the
+                // add rides (the crafting menu's own numbering the
+                // scan keys — the leftover the server's drop lane)
+                let rest = row_count - max;
+                live_slots[menu] = (row_id, max);
+                note_batch_change(&mut changed, menu as i16, (row_id, max));
+                live_slots[row_menu] = (row_id, rest);
+                note_batch_change(&mut changed, row_menu as i16, (row_id, rest));
+                let _leftover = belief_table_inventory_add(
+                    live_slots,
+                    selected,
+                    hover_id,
+                    hover_count,
+                    &mut changed,
+                );
+            } else {
+                // the straight trade — the row the hovered stack
+                // takes, the cell the row's stack wears
+                live_slots[row_menu] = (hover_id, hover_count);
+                note_batch_change(&mut changed, row_menu as i16, (hover_id, hover_count));
+                live_slots[menu] = (row_id, row_count);
+                note_batch_change(&mut changed, menu as i16, (row_id, row_count));
+            }
+        }
+        // THE HUD ROW'S BELIEF — the every-mutation law syncs (the
+        // crafting menu's hotbar rows the slice's own menus 37..45
+        // speak)
+        let mut row = [(0, 0); 9];
+        row.copy_from_slice(&live_slots[37..46]);
+        *hotbar = row;
+    }
+    // THE PACKET ALWAYS RIDES (the slotClicked walk the wire speaks
+    // even when the prediction refuses — the changed map the menu's
+    // own state keeps, the cursor the SWAP arm never touches)
+    let _ = sink.send(crate::world_view::ContainerCommand::Click(
+        crate::world_view::ContainerClick {
+            window_id,
+            state_id,
+            slot: menu as i16,
+            button: button as i8,
+            input: crate::world_view::ContainerInput::Swap,
+            changed,
+            carried,
+        },
+    ));
 }
 
 /// THE TABLE RESULT'S OWN TAKE (the doClick PICKUP arm over the
@@ -111282,6 +111543,269 @@ cow_sound_variant: None,
         // THE BETWEEN-SLOTS PRESS (the null hoveredSlot): the refusal
         app.mouse_pos = Some((panel.0 + 170, panel.1 + 20));
         assert!(!app.on_chest_swap_key(0), "the null hover refuses");
+        assert!(click_rx.try_recv().is_err(), "still silence");
+    }
+
+    /// THE TABLE'S OWN SWAP, THE TABLE THE HUD WEARS (the doClick SWAP
+    /// table over the window-1 belief): CASE B the craft cell's stack
+    /// rides the button row AS-IS (the cell EMPTIES, the HUD row the
+    /// every-mutation law syncs); the CASE D straight trade the main
+    /// store row over the hotbar row wears (the row the hovered's
+    /// takes, the cell the row's stack wears).
+    #[test]
+    fn the_table_swap_key_the_table_the_hud_wear() {
+        use crate::world_view::{ContainerCommand, LiveContainer};
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let table = LiveContainer {
+            id: 9,
+            menu_type_id: crate::world_model::MENU_TYPE_CRAFTING,
+            slots: {
+                let mut s = vec![(0i32, 0i32); 46];
+                s[2] = (dirt, 32); // the craft cell 1 → menu 2
+                s[10] = (stone, 5); // the main store 9 → menu 10
+                s[37] = (planks, 7); // the hotbar row 0 → menu 37
+                s
+            },
+            carried: (0, 0),
+            state_id: 3,
+            bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
+        assert_eq!(app.screen, ScreenKind::Crafting, "the window shows");
+        app.table_panel = inventory_panel_origin(640, 360);
+        // CASE B: THE CRAFT CELL'S STACK OVER THE EMPTY HOTBAR ROW 2
+        // (menu 39)
+        let (cx, cy) = table_craft_origin(app.table_panel, 1);
+        app.mouse_pos = Some((cx + 8, cy + 8));
+        assert!(app.on_table_swap_key(2), "the digit consumes");
+        assert_eq!(app.live_table_slots[2], (0, 0), "the cell emptied");
+        assert_eq!(app.live_table_slots[39], (dirt, 32), "the row rides AS-IS");
+        assert_eq!(app.hotbar_slots[2], (dirt, 32), "the HUD synced");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 9, "the window's own id");
+                assert_eq!(c.state_id, 3, "the revision rides");
+                assert_eq!(c.slot, 2, "the hovered cell's own menu id");
+                assert_eq!(c.button, 2, "the digit the byte keys");
+                assert_eq!(c.input, crate::world_view::ContainerInput::Swap);
+                assert_eq!(
+                    c.changed,
+                    vec![(2, (0, 0)), (39, (dirt, 32))],
+                    "the mutations named"
+                );
+                assert_eq!(c.carried, (0, 0), "the cursor pair rides unchanged");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE CASE D STRAIGHT TRADE: THE MAIN STORE 9 (menu 10) OVER
+        // THE HOTBAR ROW 0 (menu 37)
+        let (ox, oy) = inventory_slot_origin(app.table_panel, 9);
+        app.mouse_pos = Some((ox + 8, oy + 8));
+        assert!(app.on_table_swap_key(0));
+        assert_eq!(app.live_table_slots[10], (planks, 7), "the cell wears the row's stack");
+        assert_eq!(app.live_table_slots[37], (stone, 5), "the row takes the hovered's");
+        assert_eq!(app.hotbar_slots[0], (stone, 5), "the HUD synced");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 10, "the main store's own menu id");
+                assert_eq!(
+                    c.changed,
+                    vec![(37, (stone, 5)), (10, (planks, 7))],
+                    "the trade's mutations named"
+                );
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+
+    /// THE TABLE'S OWN SWAP, THE SPLIT LAW AND THE RESULT'S ON-TAKE
+    /// (the seat's own mayPickup/mayPlace verdicts the table keys):
+    /// CASE C the row's 20 eggs over the empty MAIN STORE row — the
+    /// cell takes the max 16, the row the remainder 4 keeps (the
+    /// store rows the plain Slots answer, the recipe grid the press
+    /// never feeds); the RESULT seat's CASE B the mayPickup matches
+    /// verdict answers (the result rides the row AS-IS, the onTake's
+    /// decrement the ingredient wears, the recompute the result
+    /// REFILLS — the belief the recipe alive keeps); the result's
+    /// mayPlace-false verdict the CASE D press refuses (the packet
+    /// rides, the belief whole).
+    #[test]
+    fn the_table_swap_key_the_split_law_and_the_result_on_take_wear() {
+        use crate::world_view::{ContainerCommand, LiveContainer};
+        let egg = crate::mob::wire_id("egg").expect("the egg's own id");
+        let log = mc_registry::item_id_by_name("oak_log").unwrap();
+        let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        let table = LiveContainer {
+            id: 9,
+            menu_type_id: crate::world_model::MENU_TYPE_CRAFTING,
+            slots: {
+                let mut s = vec![(0i32, 0i32); 46];
+                s[0] = (planks, 4); // the result seat — the recipe's own verdict
+                s[1] = (log, 2); // the craft cell 0 — TWO logs the recompute keeps alive
+                s[40] = (egg, 20); // the hotbar row 3 → menu 40
+                s
+            },
+            carried: (0, 0),
+            state_id: 3,
+            bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
+        app.table_panel = inventory_panel_origin(640, 360);
+        // CASE C: THE EMPTY MAIN STORE ROW TAKES THE MAX 16 (the store
+        // row the press never feeds the recipe grid — the craft cells
+        // the log alone keeps)
+        let (ox, oy) = inventory_slot_origin(app.table_panel, 9);
+        app.mouse_pos = Some((ox + 8, oy + 8));
+        assert!(app.on_table_swap_key(3));
+        assert_eq!(app.live_table_slots[10], (egg, 16), "the cell takes the max");
+        assert_eq!(app.live_table_slots[40], (egg, 4), "the row the remainder keeps");
+        assert_eq!(app.hotbar_slots[3], (egg, 4), "the HUD synced");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 10, "the main store's own menu id");
+                assert_eq!(
+                    c.changed,
+                    vec![(10, (egg, 16)), (40, (egg, 4))],
+                    "the split's mutations named"
+                );
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE RESULT SEAT'S CASE B: THE RESULT RIDES THE ROW AS-IS,
+        // THE ON-TAKE THE INGREDIENT DECREMENTS, THE RECOMPUTE THE
+        // RESULT REFILLS (the one log the recipe keeps alive)
+        let (rx, ry) = table_craft_origin(app.table_panel, 9);
+        app.mouse_pos = Some((rx + 8, ry + 8));
+        assert!(app.on_table_swap_key(0), "the result press consumes");
+        assert_eq!(app.live_table_slots[37], (planks, 4), "the row rides AS-IS");
+        assert_eq!(app.live_table_slots[1], (log, 1), "the ingredient the one off wears");
+        assert_eq!(app.live_table_slots[0], (planks, 4), "the recompute the result refills");
+        assert_eq!(app.hotbar_slots[0], (planks, 4), "the HUD synced");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 0, "the result seat's own menu id");
+                assert_eq!(
+                    c.changed,
+                    vec![(0, (planks, 4)), (37, (planks, 4)), (1, (log, 1))],
+                    "the ride + the refill's mutations named"
+                );
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE RESULT SEAT'S CASE D REFUSAL (the mayPlace iconst_0 the
+        // place arms refuse): the packet rides, the belief whole
+        app.live_table_slots[38] = (stone, 7); // the hotbar row 1 — menu 38
+        app.mouse_pos = Some((rx + 8, ry + 8));
+        assert!(app.on_table_swap_key(1), "the refusal still consumes");
+        assert_eq!(app.live_table_slots[0], (planks, 4), "the result whole");
+        assert_eq!(app.live_table_slots[38], (stone, 7), "the row whole");
+        match click_rx.try_recv().expect("the always packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 0, "the result seat's own menu id");
+                assert_eq!(c.button, 1, "the digit the byte keys");
+                assert!(c.changed.is_empty(), "the refusal no mutation names");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+
+    /// THE TABLE'S OWN SWAP, THE GATES (the checkHotbarKeyPressed
+    /// chain's own shape over the window-1 belief): the BOTH-EMPTY
+    /// press the consumed silence keeps AND the packet rides (the
+    /// empty changed map the untouched state names), the SAME-SEAT
+    /// press (the hovered hotbar row IS the button's own row) the
+    /// identical pair sets back — no mutation the diff ever names,
+    /// the carried cursor the false BEFORE the packet lane keeps, the
+    /// offline stand-in and the between-slots press the refusals
+    /// keep.
+    #[test]
+    fn the_table_swap_key_the_gates_and_the_always_packet_wear() {
+        use crate::world_view::{ContainerCommand, LiveContainer};
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        // THE OFFLINE STAND-IN (no window armed): the silence
+        app.open(ScreenKind::Crafting);
+        app.table_panel = inventory_panel_origin(640, 360);
+        let (cx, cy) = table_craft_origin(app.table_panel, 8);
+        app.mouse_pos = Some((cx + 8, cy + 8));
+        assert!(!app.on_table_swap_key(0), "no window — the false wears");
+        assert!(click_rx.try_recv().is_err(), "the offline stand-in is silence");
+        // THE WINDOW ARMS
+        let table = LiveContainer {
+            id: 9,
+            menu_type_id: crate::world_model::MENU_TYPE_CRAFTING,
+            slots: {
+                let mut s = vec![(0i32, 0i32); 46];
+                s[41] = (stone, 7); // the hotbar row 4 → menu 41
+                s
+            },
+            carried: (0, 0),
+            state_id: 3,
+            bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
+        app.table_panel = inventory_panel_origin(640, 360);
+        // THE BOTH-EMPTY PRESS: the digit CONSUMES and the packet
+        // rides with the EMPTY changed map
+        app.mouse_pos = Some((cx + 8, cy + 8));
+        assert!(app.on_table_swap_key(0), "the silence still consumes");
+        match click_rx.try_recv().expect("the always packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 9, "the hovered cell's own menu id");
+                assert_eq!(c.button, 0, "the digit the byte keys");
+                assert_eq!(c.input, crate::world_view::ContainerInput::Swap);
+                assert!(c.changed.is_empty(), "the untouched state keeps");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE SAME-SEAT PRESS (the hotbar row 4 IS menu 41): the
+        // identical pair sets back — no mutation, the belief whole
+        let (sx, sy) = inventory_slot_origin(app.table_panel, 4);
+        app.mouse_pos = Some((sx + 8, sy + 8));
+        assert!(app.on_table_swap_key(4), "the same seat still consumes");
+        assert_eq!(app.live_table_slots[41], (stone, 7), "the belief whole");
+        assert_eq!(app.hotbar_slots[4], (stone, 7), "the HUD whole");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 41, "the same seat's own menu id");
+                assert!(c.changed.is_empty(), "no mutation the diff names");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE CARRIED CURSOR (the getCarried().isEmpty() gate): the
+        // false BEFORE the packet lane — NO packet
+        app.live_table_carried = (dirt, 5);
+        app.mouse_pos = Some((cx + 8, cy + 8));
+        assert!(!app.on_table_swap_key(0), "the carried gate refuses");
+        assert!(click_rx.try_recv().is_err(), "no packet the gate passes");
+        app.live_table_carried = (0, 0);
+        // THE BETWEEN-SLOTS PRESS (the null hoveredSlot): the refusal
+        app.mouse_pos = Some((app.table_panel.0 + 170, app.table_panel.1 + 20));
+        assert!(!app.on_table_swap_key(0), "the null hover refuses");
         assert!(click_rx.try_recv().is_err(), "still silence");
     }
 
