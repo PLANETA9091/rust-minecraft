@@ -23442,6 +23442,102 @@ impl App {
         }
     }
 
+    /// THE CHEST'S OWN Q (the SAME keyPressed keyDrop arm — the
+    /// GenericContainerScreen the base class inherits, the gate chain
+    /// and the doClick THROW table the inventory round v0.3.718 keeps
+    /// verbatim): the hovered slot's stack the Q throws. THE CHEST THE
+    /// LIVE SESSION ALONE WEARS (the offline stand-in no window
+    /// keeps — the click lane's own gate the chest speaks): the
+    /// window-identity gate the lane opens with (the generic_9x3's
+    /// own `chest_live_window` — the OpenScreen word armed it), the
+    /// 16x16 hit boxes the last render laid the hovered slot answers
+    /// (the [`Self::chest_slot_rects`] walk the click lane speaks —
+    /// the grid's 0..27 the container rows keep, the mirror's 27..63
+    /// the player's own store rides). The seats the PLAIN Slots are —
+    /// no onTake chains the chest carries — the tryRemove walk the
+    /// unambiguous `min(count, decrement)` law answers. The hasItem
+    /// gate the keyPressed chain keeps BEFORE the packet lane (the
+    /// EMPTY hovered slot the silence speaks); the carried cursor the
+    /// doClick arm's own refusal the ALWAYS-PACKET law names (the
+    /// EMPTY changed map the untouched state keeps); the drop entity
+    /// the SERVER's Add Entity lane spawns (no local prediction — the
+    /// wire's own law the throw rounds keep); the mirror's hotbar
+    /// rows (the menu 54..62 the store indices 27..35 speak) the HUD
+    /// row's belief syncs.
+    pub fn on_chest_drop_key(&mut self, whole_stack: bool) {
+        if self.screen != ScreenKind::Chest {
+            return; // this lane IS the container screen's own walk
+        }
+        let Some((window_id, state_id)) = self.chest_live_window else {
+            return; // the offline stand-in: no window, no click
+        };
+        if self.chest_slot_rects.is_empty() {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return; // no cursor — no hoveredSlot (the null gate's shape)
+        };
+        let Some(&(_, _, slot)) = self
+            .chest_slot_rects
+            .iter()
+            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+        else {
+            return; // the press landed between the slots — the null hover
+        };
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return; // no live session — the command dies on the frame thread
+        };
+        let menu = slot as usize;
+        // THE HASITEM GATE (the keyPressed chain's own shape — the
+        // EMPTY hovered slot the silence keeps, the slotClicked call
+        // never fires, NO packet)
+        let (id, count) = if menu < 27 {
+            self.chest_slots[menu]
+        } else {
+            self.chest_mirror[menu - 27]
+        };
+        if count <= 0 {
+            return;
+        }
+        // THE TAKE WALK (the plain Slots the tryRemove law answers —
+        // the whole stack the cell empties, the one off the remainder
+        // keeps) + THE HUD ROW (the mirror's hotbar rows the store
+        // indices 27..35 speak)
+        let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
+        if self.chest_carried.1 == 0 {
+            let new = if whole_stack { (0, 0) } else { (id, count - 1) };
+            if menu < 27 {
+                self.chest_slots[menu] = new;
+            } else {
+                let mi = menu - 27;
+                self.chest_mirror[mi] = new;
+                if mi >= 27 {
+                    let mut row = [(0, 0); 9];
+                    row.copy_from_slice(&self.chest_mirror[27..36]);
+                    self.hotbar_slots = row;
+                }
+            }
+            note_batch_change(&mut changed, slot, new);
+            // the drop entity the SERVER's Add Entity lane spawns —
+            // the player.drop walk the wire never predicts
+        }
+        // THE PACKET ALWAYS RIDES (the slotClicked call the keyPressed
+        // walk keeps once the hovered+hasItem gates passed — the
+        // carried cursor's refusal the EMPTY changed map names, the
+        // cursor pair the THROW arm never touches)
+        let _ = sink.send(crate::world_view::ContainerCommand::Click(
+            crate::world_view::ContainerClick {
+                window_id,
+                state_id,
+                slot,
+                button: if whole_stack { 1 } else { 0 },
+                input: crate::world_view::ContainerInput::Throw,
+                changed,
+                carried: self.chest_carried,
+            },
+        ));
+    }
+
     /// THE SURVIVAL SCREEN'S OWN HOTBAR KEYS (javap 26.2 — the 2dc72797
     /// jar's own classes speak: AbstractContainerScreen
     /// .checkHotbarKeyPressed pcs 0-114 the carried-empty +
@@ -110506,6 +110602,155 @@ cow_sound_variant: None,
         app.table_live_window = None;
         app.mouse_pos = Some((cx + 8, cy + 8));
         app.on_table_drop_key(false);
+        assert!(click_rx.try_recv().is_err(), "still silence");
+    }
+
+    /// THE CHEST'S OWN Q (the GenericContainerScreen's keyDrop arm —
+    /// the live window the lane alone wears): the grid's stack the
+    /// plain-Q ONE off rides (the packet the window's identity names),
+    /// the mirror's hotbar row the Ctrl+Q empties WHOLE (the HUD
+    /// row's belief synced — the menu 54..62 the store indices 27..35
+    /// speak), the cursor pair never touched, the screen stays.
+    #[test]
+    fn the_chest_drop_key_the_grid_the_mirror_the_hud_wear() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open(ScreenKind::Chest);
+        app.chest_live_window = Some((5, 7));
+        let panel = chest_panel_origin(640, 360);
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        app.chest_slots = vec![(0, 0); 27];
+        app.chest_mirror = vec![(0, 0); 36];
+        app.chest_slots[4] = (dirt, 32);
+        app.chest_mirror[27] = (stone, 7); // the hotbar row 0 → menu 54
+        // the rects the render lays: the grid's 0..27, the mirror's
+        // 27..63 — the +1 inset the store's own lane speaks
+        app.chest_slot_rects = (0..27)
+            .map(|i| {
+                let (sx, sy) = chest_container_slot(panel, i);
+                (sx + 1, sy + 1, i as i16)
+            })
+            .chain((0..36).map(|i| {
+                let (sx, sy) = chest_mirror_slot(panel, i);
+                (sx + 1, sy + 1, (27 + i) as i16)
+            }))
+            .collect();
+        // THE PLAIN Q ON GRID CELL 4: the ONE off, the packet the
+        // window's own identity names
+        let (gx, gy) = chest_container_slot(panel, 4);
+        app.mouse_pos = Some((gx + 9, gy + 9));
+        app.on_chest_drop_key(false);
+        assert_eq!(app.chest_slots[4], (dirt, 31), "the one off rode");
+        assert_eq!(app.screen, ScreenKind::Chest, "the screen stays");
+        assert_eq!(app.chest_carried, (0, 0), "the cursor never touched");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 5, "the window's own id");
+                assert_eq!(c.state_id, 7, "the revision rides");
+                assert_eq!(c.slot, 4, "the grid cell's own menu id");
+                assert_eq!(c.button, 0, "the plain Q the byte keys");
+                assert_eq!(c.input, crate::world_view::ContainerInput::Throw);
+                assert_eq!(c.changed, vec![(4, (dirt, 31))], "the mutation named");
+                assert_eq!(c.carried, (0, 0), "the cursor pair rides unchanged");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE CTRL+Q ON THE MIRROR'S HOTBAR ROW 0 (menu 54): the whole
+        // stack gone, the HUD row's belief synced
+        let (mx2, my2) = chest_mirror_slot(panel, 27);
+        app.mouse_pos = Some((mx2 + 9, my2 + 9));
+        app.on_chest_drop_key(true);
+        assert_eq!(app.chest_mirror[27], (0, 0), "the whole stack gone");
+        assert_eq!(app.hotbar_slots[0], (0, 0), "the HUD belief synced");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 54, "the mirror hotbar row's own menu id");
+                assert_eq!(c.button, 1, "the Ctrl the byte keys");
+                assert_eq!(c.changed, vec![(54, (0, 0))]);
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+
+    /// THE CHEST'S OWN Q, THE GATES (the keyPressed chain's own shape
+    /// over the generic_9x3's belief): the EMPTY hovered slot the
+    /// silence keeps (NO packet), the carried cursor the doClick arm's
+    /// own refusal the ALWAYS-PACKET law names (the EMPTY changed map,
+    /// the belief whole), the between-slots press and the offline
+    /// stand-in (no window) the same silences speak.
+    #[test]
+    fn the_chest_drop_key_the_gates_and_the_always_packet_wear() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open(ScreenKind::Chest);
+        let panel = chest_panel_origin(640, 360);
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        app.chest_slots = vec![(0, 0); 27];
+        app.chest_mirror = vec![(0, 0); 36];
+        app.chest_slots[4] = (dirt, 32);
+        app.chest_slot_rects = (0..27)
+            .map(|i| {
+                let (sx, sy) = chest_container_slot(panel, i);
+                (sx + 1, sy + 1, i as i16)
+            })
+            .chain((0..36).map(|i| {
+                let (sx, sy) = chest_mirror_slot(panel, i);
+                (sx + 1, sy + 1, (27 + i) as i16)
+            }))
+            .collect();
+        // THE OFFLINE STAND-IN (no window armed): the silence — the
+        // click lane's own gate the chest speaks
+        let (gx, gy) = chest_container_slot(panel, 4);
+        app.mouse_pos = Some((gx + 9, gy + 9));
+        app.on_chest_drop_key(false);
+        assert!(click_rx.try_recv().is_err(), "the offline stand-in is silence");
+        // THE WINDOW ARMS
+        app.chest_live_window = Some((5, 7));
+        // THE EMPTY HOVERED SLOT (the hasItem gate): grid cell 5 empty —
+        // silence, NO packet
+        let (ex, ey) = chest_container_slot(panel, 5);
+        app.mouse_pos = Some((ex + 9, ey + 9));
+        app.on_chest_drop_key(false);
+        assert!(
+            click_rx.try_recv().is_err(),
+            "the hasItem gate the packet lane never passes"
+        );
+        // THE CARRIED CURSOR (the doClick THROW's own isEmpty gate):
+        // the packet STILL rides, the EMPTY changed map the untouched
+        // state keeps, the belief whole
+        app.mouse_pos = Some((gx + 9, gy + 9));
+        app.chest_carried = (dirt, 5);
+        app.on_chest_drop_key(true);
+        assert_eq!(app.chest_slots[4], (dirt, 32), "the belief whole");
+        match click_rx.try_recv().expect("the always packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 4, "the hovered seat's own menu id");
+                assert_eq!(c.button, 1, "the Ctrl the byte keeps");
+                assert_eq!(c.input, crate::world_view::ContainerInput::Throw);
+                assert!(
+                    c.changed.is_empty(),
+                    "the refused arm the untouched state keeps"
+                );
+                assert_eq!(c.carried, (dirt, 5), "the cursor pair unchanged");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        app.chest_carried = (0, 0);
+        // THE BETWEEN-SLOTS PRESS (the null hoveredSlot): the cursor
+        // over the panel's spine — the rects never answer
+        app.mouse_pos = Some((panel.0 + 170, panel.1 + 20));
+        app.on_chest_drop_key(false);
         assert!(click_rx.try_recv().is_err(), "still silence");
     }
 

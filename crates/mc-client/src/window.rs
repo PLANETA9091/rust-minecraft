@@ -1849,6 +1849,10 @@ pub fn run_gui_app(
                 // inventory lane the non-Inventory screens refuse, the
                 // table lane the non-Crafting screens never pass)
                 app.on_table_drop_key(q_ctrl);
+                // THE CHEST'S OWN Q (the SAME arm — the GenericContainer
+                // Screen the base class keeps, the live window the lane
+                // alone wears)
+                app.on_chest_drop_key(q_ctrl);
             }
         }
         // THE F KEY'S OWN LANE (the vanilla handleKeybinds's
