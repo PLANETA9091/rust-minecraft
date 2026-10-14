@@ -2772,23 +2772,23 @@ pub fn lever_placement_variant(hit_face: u8, cam_yaw_radians: f32) -> u8 {
     lever_variant(face, facing)
 }
 
-/// THE LEVER'S OWN FACE-AWARE SURVIVAL (javap the base canSurvive pc
-/// 0-12 — the `canAttach(level, pos, getConnectedDirection(state)
-/// .getOpposite())` verdict the connected direction's opposite the
-/// support cell reads, the `isFaceSturdy(level, support, toward)`
-/// walk the collision table's non-Empty rows answer: the full-cube
-/// family the sturdy faces keep, the torch's own row the same
-/// verdict the placement's survival gates wear — the floating lever
-/// the refusal keeps). THE CONNECTED DIRECTION'S OWN LAW (javap
-/// FaceAttachedHorizontalDirectionalBlock.getConnectedDirection —
-/// the FLOOR face the UP arm speaks, the CEILING the DOWN, the WALL
-/// the FACING itself): the FLOOR lever the below cell the DOWN
-/// opposite reads, the CEILING the above cell the UP opposite keeps,
-/// the WALL the behind cell the `FACING.getOpposite()` relative —
-/// the FACING points AWAY from the wall (the hit face's outward
-/// normal), so the support the facing's own opposite offset wears.
-pub fn lever_can_survive(world: &World, x: i32, y: i32, z: i32, variant: u8) -> bool {
-    let (dx, dy, dz) = match lever_face_of(variant) {
+/// THE SUPPORT CELL'S OWN OFFSET (javap
+/// FaceAttachedHorizontalDirectionalBlock.getConnectedDirection — the
+/// FLOOR face the UP arm speaks, the CEILING the DOWN, the WALL the
+/// FACING itself; the `.getOpposite()` fold the canSurvive walk pc
+/// 9 the support cell reads): the FLOOR lever the below cell the DOWN
+/// opposite answers, the CEILING the above cell the UP opposite
+/// keeps, the WALL the behind cell the `FACING.getOpposite()`
+/// relative — the FACING points AWAY from the wall (the hit face's
+/// outward normal), so the support the facing's own opposite offset
+/// wears. THE PAIR'S OWN SHARED LAW: the lever and the button the
+/// SAME base both wear (the [`is_lever`]/[`is_button`] families the
+/// two-field variant byte both speak) — the canSurvive walk AND the
+/// support-loss walk [`World::attach_support_updates`] the one
+/// helper both read, the offsets the vanilla's own switch the
+/// bytecode keeps.
+pub fn lever_support_offset(variant: u8) -> (i32, i32, i32) {
+    match lever_face_of(variant) {
         LEVER_FACE_WALL => match lever_facing_of(variant) {
             2 => (-1, 0, 0), // east-facing: the wall west
             3 => (0, 0, -1), // south-facing: the wall north
@@ -2797,7 +2797,21 @@ pub fn lever_can_survive(world: &World, x: i32, y: i32, z: i32, variant: u8) -> 
         },
         LEVER_FACE_CEILING => (0, 1, 0),
         _ => (0, -1, 0),
-    };
+    }
+}
+
+/// THE LEVER'S OWN FACE-AWARE SURVIVAL (javap the base canSurvive pc
+/// 0-12 — the `canAttach(level, pos, getConnectedDirection(state)
+/// .getOpposite())` verdict the connected direction's opposite the
+/// support cell reads, the `isFaceSturdy(level, support, toward)`
+/// walk the collision table's non-Empty rows answer: the full-cube
+/// family the sturdy faces keep, the torch's own row the same
+/// verdict the placement's survival gates wear — the floating lever
+/// the refusal keeps). The support cell the shared offset law
+/// [`lever_support_offset`] reads — the button the same walk the
+/// family law wears.
+pub fn lever_can_survive(world: &World, x: i32, y: i32, z: i32, variant: u8) -> bool {
+    let (dx, dy, dz) = lever_support_offset(variant);
     !matches!(collision_shape(world.get(x + dx, y + dy, z + dz)), CollisionShape::Empty)
 }
 
@@ -5845,6 +5859,101 @@ impl World {
             .into_iter()
             .map(|(_, x, y, z)| (x, y, z))
             .collect()
+    }
+
+    /// THE ATTACHED PAIR'S OWN SUPPORT-LOSS WALK (this round — javap
+    /// FaceAttachedHorizontalDirectionalBlock.updateShape(state, level,
+    /// sched, pos, dir, neighborPos, neighborState, random) over the real
+    /// 26.2 jar, the lever AND the button the SAME base both inherit):
+    /// the pc 0-9 gate the `getConnectedDirection(state).getOpposite()
+    /// == dir` verdict wears — only the changed cell ON the connected
+    /// side the consult fires (the FLOOR face the UP connected the DOWN
+    /// changed answers, the CEILING the DOWN connected the UP keeps, the
+    /// WALL the FACING connected the behind cell reads — the offsets the
+    /// shared [`lever_support_offset`] law speaks), the OTHER five
+    /// directions the pc 29-46 identity default the walk never pops. The
+    /// pc 12-19 `canSurvive` verdict the failed arm pc 22-28 the
+    /// `Blocks.AIR.defaultBlockState()` return serves — the pop the
+    /// vanilla's own chain completes: `NeighborUpdater.executeShapeUpdate`
+    /// pc 50-60 the `Block.updateOrDestroy` walk the AIR state reads, the
+    /// pc 5-44 arm `level.destroyBlock(pos, (flags&32)==0, null, limit)`
+    /// the pop's own drops + the 2001 voice the caller speaks (the dig's
+    /// own flag-3 broadcast the flags keep — the drop the creative's own
+    /// arm the pop lane never gates). THE BROADCAST'S OWN WALK (javap
+    /// `BlockBehaviour$BlockStateBase.updateNeighbourShapes` — the
+    /// UPDATE_SHAPE_ORDER loop the changed cell's six neighbors each the
+    /// `neighborShapeChanged` call serves): the walk the dig's own
+    /// flag-3 beat the six cells answers, the gate the offset compare
+    /// wears (the support cell the variant decodes — the changed cell
+    /// the support equals the gate passes, the lever never attached the
+    /// consult the OTHER arm's identity keeps). THE CASCADE the pop's
+    /// own flag-3 broadcast re-walks (the popped cell's own six the
+    /// queue re-fires — the vanilla's own recursion the fire walk's own
+    /// worklist the same shape wears). The walk the voice lane serves:
+    /// the popped cells (pos + the popped KIND) the return list carries
+    /// — the 2001 voice, the debris burst, the dropResources lane, the
+    /// BLOCK_DESTROY vibration and the powered source's wire re-read
+    /// (`LeverBlock.affectNeighborsAfterRemoval` pc 0-28 the
+    /// `updateNeighbours` walk — the doors the ON source held the
+    /// removal's own broadcast closes) the [`crate::screens`] layer
+    /// speaks, the pure-world walk the state alone sets (the OFFLINE
+    /// lane's own authority: the networked world's voxels are the
+    /// server's own updates — the caller's `world_is_network` gate the
+    /// honest split keeps).
+    pub fn attach_support_updates(
+        &mut self,
+        changed: (i32, i32, i32),
+    ) -> Vec<((i32, i32, i32), u16)> {
+        // the DOWN..EAST seed the Direction.values() walk keeps (the
+        // verdict the order never gates — the gate the offset compare
+        // wears)
+        let (cx, cy, cz) = changed;
+        let mut queue: Vec<(i32, i32, i32)> = vec![
+            (cx, cy - 1, cz),
+            (cx, cy + 1, cz),
+            (cx, cy, cz - 1),
+            (cx, cy, cz + 1),
+            (cx - 1, cy, cz),
+            (cx + 1, cy, cz),
+        ];
+        let mut popped: Vec<((i32, i32, i32), u16)> = Vec::new();
+        while let Some((x, y, z)) = queue.pop() {
+            let kind = self.get(x, y, z);
+            if !is_lever(kind) && !is_button(kind) {
+                continue;
+            }
+            // THE GATE'S OWN OFFSET (the support cell the variant decodes
+            // — the changed cell the support equals the updateShape arm's
+            // dir verdict the walk answers; the OTHER five directions the
+            // identity default keeps)
+            let support = {
+                let (dx, dy, dz) = lever_support_offset(self.variant(x, y, z));
+                (x + dx, y + dy, z + dz)
+            };
+            if support != changed {
+                continue;
+            }
+            if lever_can_survive(self, x, y, z, self.variant(x, y, z)) {
+                continue;
+            }
+            // THE POP'S OWN VERDICT (the updateShape arm's AIR return the
+            // updateOrDestroy chain the destroyBlock walk serves — the
+            // setBlock flag-3 the caller's broadcast the state wears)
+            self.set(x, y, z, AIR);
+            popped.push(((x, y, z), kind));
+            // THE CASCADE (the popped cell's own flag-3 broadcast the
+            // queue re-fires — the vanilla's own recursion the depth the
+            // world's own bounds keep)
+            queue.extend([
+                (x, y - 1, z),
+                (x, y + 1, z),
+                (x, y, z - 1),
+                (x, y, z + 1),
+                (x - 1, y, z),
+                (x + 1, y, z),
+            ]);
+        }
+        popped
     }
 
     /// THE FIRE'S OWN SHAPE UPDATE — javap `FireBlock.updateShape(state,
@@ -9934,6 +10043,164 @@ mod tests {
         assert_eq!(steps(2), 1, "the east row the y=90 step wears");
         assert_eq!(steps(3), 2, "the south row the y=180 step wears");
         assert_eq!(steps(4), 3, "the west row the y=270 step wears");
+    }
+
+    /// THE ATTACHED PAIR'S OWN SUPPORT-LOSS WALK (this round — javap
+    /// FaceAttachedHorizontalDirectionalBlock.updateShape pc 0-28 the
+    /// gate + the canSurvive verdict the AIR the pop speaks, the
+    /// NeighborUpdater.executeShapeUpdate pc 50-60 the updateOrDestroy
+    /// chain the destroyBlock walk serves): the support cell the
+    /// changed cell equals the gate passes, the OTHER five directions
+    /// the identity default keeps, the popped cells the return list
+    /// carries (pos + the popped kind the voice lane reads).
+    #[test]
+    fn the_attach_support_the_gate_and_the_pop_wear() {
+        let mut w = World::new(1, 0x600D);
+        let c = w.size_blocks() / 2;
+        let y = 2;
+        // THE FLOOR LANE (javap the FLOOR face the UP connected — the
+        // DOWN changed the gate answers, the canSurvive's failed
+        // verdict the AIR the pop speaks): the below cell's dig the
+        // pop speaks, the popped kind the list carries
+        w.set(c, y - 1, c, STONE);
+        w.set(c, y, c, LEVER);
+        w.set_variant(c, y, c, lever_variant(LEVER_FACE_FLOOR, 1));
+        // THE DIG'S OWN BEAT (the real walk's order — the cell AIR the
+        // flag-3 broadcast precedes, the walk the emptied support
+        // consults)
+        w.set(c, y - 1, c, AIR);
+        let popped = w.attach_support_updates((c, y - 1, c));
+        assert_eq!(
+            popped,
+            vec![((c, y, c), LEVER)],
+            "the floor lever the below dig pops — the kind the list wears"
+        );
+        assert_eq!(w.get(c, y, c), AIR, "the pop the AIR the walk sets");
+        // THE GATE'S OWN REFUSAL (javap the pc 0-9 compare the OTHER
+        // five directions the pc 29-46 identity keeps): the above
+        // change the floor lever never reads, the side cell the same
+        // refusal wears — the lever the identity keeps
+        w.set(c, y - 1, c, STONE);
+        w.set(c, y, c, LEVER);
+        w.set_variant(c, y, c, lever_variant(LEVER_FACE_FLOOR, 1));
+        assert!(
+            w.attach_support_updates((c, y + 1, c)).is_empty(),
+            "the above change the floor gate refuses"
+        );
+        assert_eq!(w.get(c, y, c), LEVER, "the lever the identity keeps");
+        assert!(
+            w.attach_support_updates((c + 1, y, c)).is_empty(),
+            "the east change the floor gate refuses"
+        );
+        assert_eq!(w.get(c, y, c), LEVER);
+        // THE CEILING LANE (javap the CEILING face the DOWN connected
+        // — the UP changed the gate answers): the support above the
+        // dig the pop speaks
+        w.set(c, y, c, AIR);
+        w.set(c, y - 1, c, AIR);
+        w.set(c, y + 1, c, STONE);
+        w.set(c, y, c, LEVER);
+        w.set_variant(c, y, c, lever_variant(LEVER_FACE_CEILING, 1));
+        w.set(c, y + 1, c, AIR); // the dig the support above empties
+        let popped = w.attach_support_updates((c, y + 1, c));
+        assert_eq!(
+            popped,
+            vec![((c, y, c), LEVER)],
+            "the ceiling lever the above dig pops"
+        );
+        assert_eq!(w.get(c, y, c), AIR);
+        // THE WALL LANE (javap the WALL face the FACING connected —
+        // the behind cell the `FACING.getOpposite()` relative reads):
+        // the east-facing lever's wall west the dig the pop speaks,
+        // the below change the same gate refuses
+        w.set(c - 1, y, c, STONE);
+        w.set(c, y, c, LEVER);
+        w.set_variant(c, y, c, lever_variant(LEVER_FACE_WALL, 2));
+        assert!(
+            w.attach_support_updates((c, y - 1, c)).is_empty(),
+            "the below change the wall lane refuses — the gate the facing's own law wears"
+        );
+        assert_eq!(w.get(c, y, c), LEVER, "the wall lever the identity keeps");
+        w.set(c - 1, y, c, AIR); // the dig the wall cell empties
+        let popped = w.attach_support_updates((c - 1, y, c));
+        assert_eq!(
+            popped,
+            vec![((c, y, c), LEVER)],
+            "the wall lever the behind dig pops"
+        );
+        assert_eq!(w.get(c, y, c), AIR);
+        // THE BUTTON THE SAME WALK WEARS (the shared base law — the
+        // FaceAttachedHorizontalDirectionalBlock parent the two blocks
+        // both wear, the OFF and the ON kinds the same lane speaks)
+        w.set(c - 1, y, c, STONE);
+        w.set(c, y, c, BUTTON);
+        w.set_variant(c, y, c, lever_variant(LEVER_FACE_WALL, 2));
+        w.set(c - 1, y, c, AIR); // the dig the wall cell empties
+        let popped = w.attach_support_updates((c - 1, y, c));
+        assert_eq!(
+            popped,
+            vec![((c, y, c), BUTTON)],
+            "the button the same pop wears"
+        );
+        w.set(c, y, c, BUTTON_ON);
+        w.set_variant(c, y, c, lever_variant(LEVER_FACE_WALL, 2));
+        w.set(c - 1, y, c, STONE); // the wall the button re-leans
+        w.set(c - 1, y, c, AIR); // the dig the support empties
+        let popped = w.attach_support_updates((c - 1, y, c));
+        assert_eq!(
+            popped,
+            vec![((c, y, c), BUTTON_ON)],
+            "the pressed button the same pop wears"
+        );
+        // THE SURVIVING ARM (the support intact the canSurvive verdict
+        // true the identity keeps — the gate the same dig the consult
+        // passes, the sturdy wall the pop never speaks)
+        w.set(c - 1, y, c, STONE);
+        w.set(c, y, c, LEVER);
+        w.set_variant(c, y, c, lever_variant(LEVER_FACE_WALL, 2));
+        assert!(
+            w.attach_support_updates((c - 1, y, c)).is_empty(),
+            "the sturdy wall the survival keeps"
+        );
+        assert_eq!(w.get(c, y, c), LEVER, "the lever the survival keeps");
+        // THE SHARED OFFSET LAW (the lever_support_offset the four
+        // wall facings + the floor/ceiling seats + the byte-0 default
+        // the canSurvive read's own offsets speak)
+        assert_eq!(
+            lever_support_offset(lever_variant(LEVER_FACE_FLOOR, 1)),
+            (0, -1, 0),
+            "the floor face the below offset wears"
+        );
+        assert_eq!(
+            lever_support_offset(lever_variant(LEVER_FACE_CEILING, 1)),
+            (0, 1, 0),
+            "the ceiling face the above offset wears"
+        );
+        assert_eq!(
+            lever_support_offset(lever_variant(LEVER_FACE_WALL, 1)),
+            (0, 0, 1),
+            "the north-facing the wall south wears"
+        );
+        assert_eq!(
+            lever_support_offset(lever_variant(LEVER_FACE_WALL, 2)),
+            (-1, 0, 0),
+            "the east-facing the wall west wears"
+        );
+        assert_eq!(
+            lever_support_offset(lever_variant(LEVER_FACE_WALL, 3)),
+            (0, 0, -1),
+            "the south-facing the wall north wears"
+        );
+        assert_eq!(
+            lever_support_offset(lever_variant(LEVER_FACE_WALL, 4)),
+            (1, 0, 0),
+            "the west-facing the wall east wears"
+        );
+        assert_eq!(
+            lever_support_offset(0),
+            (0, -1, 0),
+            "the byte-0 stamp the floor default wears"
+        );
     }
 
     /// THE GRASS TUFT'S OWN DECORATE WALK (the autopush-412 round — the

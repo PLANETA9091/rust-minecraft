@@ -35824,6 +35824,31 @@ impl App {
         if let Some(world) = self.offline_world.as_mut() {
             let _ = world.bamboo_shape_updates(pos, self.frame + 1);
         }
+        // THE ATTACHED PAIR'S OWN SUPPORT-LOSS WALK (javap the base
+        // FaceAttachedHorizontalDirectionalBlock.updateShape pc 0-28
+        // + NeighborUpdater.executeShapeUpdate pc 50-60 the
+        // updateOrDestroy chain the destroyBlock walk serves — the
+        // dig's own flag-3 broadcast the walk answers, the lever AND
+        // the button the same base both wear): the support cell the
+        // changed cell equals the gate passes, the canSurvive's
+        // failed verdict the AIR the pop speaks — the popped cells
+        // (pos + kind) the list carries, the 2001 voice + the
+        // dropResources + the wire re-read the destroyBlock chain the
+        // caller speaks below. The OFFLINE lane's own authority: the
+        // networked world's voxels are the server's own updates (the
+        // same split the bamboo walk's own gate keeps).
+        let popped = if let Some(world) = self.offline_world.as_mut() {
+            world.attach_support_updates(pos)
+        } else {
+            Vec::new()
+        };
+        // THE POP'S OWN SCHEDULE (the popped cell's own flag-3
+        // broadcast the falling checks the same walk re-arms — the
+        // sand above the popped cell the falling walk's own lane
+        // serves)
+        for ((px, py, pz), _) in &popped {
+            self.schedule_falling_check_block_update(*px, *py, *pz);
+        }
         self.remesh_offline();
         let name = crate::world::NAME_OF[kind as usize];
         self.sounds.play(self.frame, name, crate::sound::Lane::Break);
@@ -35840,6 +35865,62 @@ impl App {
                 self.sounds
                     .play(self.frame, mate_name, crate::sound::Lane::Break);
             }
+        }
+        // THE POP'S OWN 2001 WALK (javap Level.destroyBlock pc 17-45
+        // — the popped cell's own levelEvent the break voice speaks,
+        // pc 48-81 the dropResources the pop's own reward wears, pc
+        // 99-115 the BLOCK_DESTROY gameEvent the sensors hear): the
+        // pop the support's loss the dig's flag-3 broadcast served —
+        // the voice lane the state walk the caller's list carries.
+        // THE DROP'S OWN LAW (the destroyBlock walk's own
+        // dropResources — the pop the dig's own arm never gates: the
+        // instabuild's creative filter the PLAYER's destroyAndDrop
+        // lane rides, the pop lane the drop AFTER the break keeps —
+        // the vanilla's own creative behavior the support's loss the
+        // item drops; the exhaustion the pop never spends — the
+        // playerDestroy's awardStat walk the dug cell alone answers,
+        // the popped cell the support's own loss the walk never
+        // mines)
+        for ((px, py, pz), pk) in &popped {
+            let pop_name = crate::world::NAME_OF[*pk as usize];
+            self.sounds
+                .play(self.frame, pop_name, crate::sound::Lane::Break);
+            let pop_tile = particle_tile(*pk);
+            if pop_tile != mc_registry::generated::atlas::TILE_NONE {
+                let burst = crate::particles::terrain_burst(
+                    pop_tile,
+                    *px,
+                    *py,
+                    *pz,
+                    &mut self.mob_rng,
+                );
+                self.particles.extend(burst);
+            }
+            let held = self.held_id();
+            for (item, count) in
+                crate::drops::roll_drops(*pk, held, &mut self.drop_rng)
+            {
+                let id = self.next_drop_id;
+                self.next_drop_id += 1;
+                self.drops.push(crate::drops::ItemDrop::spawn(
+                    id, item, count, *px, *py, *pz, &mut self.drop_rng,
+                ));
+            }
+            self.dispatch_vibration_event(
+                "block_destroy",
+                (*px as f64 + 0.5, *py as f64 + 0.5, *pz as f64 + 0.5),
+            );
+        }
+        // THE POP'S OWN WIRE RE-READ (javap
+        // LeverBlock.affectNeighborsAfterRemoval pc 0-28 + ButtonBlock
+        // the same walk — the !isMoving gate the POWERED read answers,
+        // the updateNeighbours the popped cell's own twelve-cell scan
+        // serves): the ON source the removal the doors' signal
+        // verdict closes (the AIR cell the signal the walk re-reads —
+        // the lever GONE the verdict the false the doors' setOpen law
+        // wears), the voices the flips the set's own events speak
+        for ((px, py, pz), _) in &popped {
+            self.attach_wire_voice(*px, *py, *pz);
         }
         // THE 2001 EVENT'S OWN BURST (javap
         // `LevelEventHandler` case 2001: the sound rides
@@ -105866,6 +105947,126 @@ cow_sound_variant: None,
                 .iter()
                 .any(|e| e.starts_with("block_open") || e.starts_with("block_close")),
             "the vibration posts the sculk lane hears"
+        );
+    }
+
+    #[test]
+    fn the_support_loss_the_pop_the_voices_and_the_wire_wear() {
+        // THE SUPPORT-LOSS WALK'S OWN LOOP (this round — javap the
+        // base updateShape pc 0-28 the gate + the canSurvive verdict
+        // the AIR the pop serves, NeighborUpdater.executeShapeUpdate
+        // pc 50-60 the updateOrDestroy chain the Level.destroyBlock
+        // walk completes, LeverBlock.affectNeighborsAfterRemoval pc
+        // 0-28 the powered source's wire re-read the doors' silence
+        // speaks): the pedestal's own dig the ON lever pops, the item
+        // the dropResources lane spawns, the doors the signal verdict
+        // the false the setOpen law closes, the voices the walks wear
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -3..=4 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            // THE WALL LEVER'S OWN STATE (the east-facing lever's wall
+            // east the variant byte banks, the ON kind the wire holds —
+            // the iron door the open kinds BOTH halves wear, the door
+            // the lever's own WEST cell the scan reads)
+            w.set(c + 2, top, c, crate::world::STONE);
+            w.set(c + 1, top, c, crate::world::LEVER_ON);
+            w.set_variant(
+                c + 1,
+                top,
+                c,
+                crate::world::lever_variant(crate::world::LEVER_FACE_WALL, 4),
+            );
+            w.set(c, top, c, crate::world::IRON_DOOR_OPEN);
+            w.set(c, top + 1, c, crate::world::IRON_DOOR_UPPER_OPEN);
+        }
+        // THE EAST LOOK'S OWN DIG (the ray the support pillar's EAST
+        // face reads — the lever's own cell the path never crosses,
+        // the dig the support stone mines)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(
+                c as f32 + 4.5,
+                top as f32 + 0.5,
+                c as f32 + 0.5,
+            ),
+            yaw: -std::f32::consts::FRAC_PI_2,
+            pitch: 0.0,
+        });
+        app.on_press(0, 0);
+        assert!(
+            app.dig.is_destroying,
+            "the press armed the support's own dig"
+        );
+        assert_eq!(app.dig.pos, (c + 2, top, c), "the support cell armed");
+        let mut ticks = 0;
+        while app.offline_world.as_ref().unwrap().get(c + 2, top, c)
+            != crate::world::AIR
+        {
+            app.update();
+            ticks += 1;
+            assert!(ticks < 400, "the dig completed in time");
+        }
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            // THE POP'S OWN VERDICT (the updateShape arm's AIR return
+            // the walk the support's loss speaks)
+            assert_eq!(
+                w.get(c + 1, top, c),
+                crate::world::AIR,
+                "the lever the support's loss pops"
+            );
+            // THE WIRE'S OWN RE-READ (the ON source GONE the doors'
+            // signal verdict the false the setOpen law closes — the
+            // both halves the same beat the sync wears)
+            assert_eq!(
+                w.get(c, top, c),
+                crate::world::IRON_DOOR,
+                "the door the wire's silence closes"
+            );
+            assert_eq!(
+                w.get(c, top + 1, c),
+                crate::world::IRON_DOOR_UPPER,
+                "the upper half the sync closes"
+            );
+        }
+        // THE POP'S OWN REWARD (javap Level.destroyBlock pc 48-81 —
+        // the dropResources the pop's own lane wears: the lever item
+        // the entity speaks, the bare hand's stone the dig's own roll
+        // refuses — the ONE drop the pop alone owns)
+        assert_eq!(app.drops.len(), 1, "the pop's own drop spawned");
+        let expected = mc_registry::item_id_by_name("lever").unwrap();
+        assert_eq!(
+            app.drops[0].item, expected,
+            "the lever item the pop's roll wears"
+        );
+        assert_eq!(app.drops[0].count, 1);
+        // THE VOICES' OWN ARCS (the 2001 events: the close voice the
+        // wire re-read plays, the block_destroy posts the stone's own
+        // + the pop's own the two walk both speak)
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.iron_door.close")),
+            "the close voice the wire's own re-read plays"
+        );
+        assert_eq!(
+            app.game_events
+                .iter()
+                .filter(|e| e.starts_with("block_destroy"))
+                .count(),
+            2,
+            "the stone's own + the pop's own the vibration posts wear"
         );
     }
 
