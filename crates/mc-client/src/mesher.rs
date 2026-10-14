@@ -2271,14 +2271,21 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     // east 90 / south 180 / west 270 -> [0, 1, 2, 3] —
                     // the 90-degree CW walk the blockstate y values
                     // fold; the variant byte's no-opinion answer the
-                    // north default the idx-0 keeps). THE MODEL ROW THE
+                    // north default the idx-0 keeps). THE HINGE-RIGHT
+                    // OPEN'S OWN ROW (the autopush-658 round — the
+                    // blockstate hinge=right open rows north 180 /
+                    // east 270 / south 0 / west 90 -> [2, 3, 0, 1] the
+                    // same fold speaks; the closed rows the hinge the
+                    // tables never wear — the LEFT table both hinges
+                    // the closed state serves). THE MODEL ROW THE
                     // GENERATED TABLE WEARS (the autopush-656 round —
                     // the DOOR_MODEL_BY_ROW ref the blockstate's own
-                    // hinge-LEFT facing=north row resolves: the WAXED
-                    // ladder the UNWAXED models the jar's own rows
-                    // serve — the NAME_OF-derived word the waxed kinds
-                    // the absent models never answer, the real chain
-                    // the bake keeps)
+                    // facing=north row resolves: the LEFT quartets the
+                    // hinge=left rows the _left models speak, the
+                    // RIGHT tail the hinge=right rows the _right
+                    // models serve [the autopush-658 round] — the
+                    // WAXED ladder the UNWAXED models the jar's own
+                    // rows answer, the real chain the bake keeps)
                     let facing = world.variant(wx, wy, wz);
                     let idx = if facing == 0 {
                         0usize // the unpropertied default: north
@@ -2286,9 +2293,14 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         (facing - 1) as usize // 1..=4 the N/E/S/W rows
                     };
                     let open_steps = [0usize, 1, 2, 3];
+                    let open_steps_right = [2usize, 3, 0, 1];
                     let closed_steps = [3usize, 0, 1, 2];
                     let steps = if crate::world::is_door_open(id) {
-                        open_steps[idx]
+                        if crate::world::door_hinge_right(id) {
+                            open_steps_right[idx]
+                        } else {
+                            open_steps[idx]
+                        }
                     } else {
                         closed_steps[idx]
                     };

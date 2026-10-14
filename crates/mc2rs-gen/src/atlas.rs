@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 174] = [
+pub const RUNTIME_PALETTE: [&str; 258] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -661,6 +661,54 @@ pub const RUNTIME_PALETTE: [&str; 174] = [
     "waxed_weathered_copper_door", "waxed_weathered_copper_door_upper", "waxed_weathered_copper_door_open", "waxed_weathered_copper_door_upper_open",
     "waxed_oxidized_copper_door", "waxed_oxidized_copper_door_upper", "waxed_oxidized_copper_door_open", "waxed_oxidized_copper_door_upper_open",
     "iron_door", "iron_door_upper", "iron_door_open", "iron_door_upper_open",
+    // THE DOOR FAMILY'S HINGE-RIGHT TAIL (the autopush-658 round): the
+    // twenty-one RIGHT quartets the LEFT ladder's own order mirrors —
+    // javap DoorBlock the 26.2 jar (pinned sha1 2dc72797, javap
+    // 21.0.12): the HINGE property the blockstate's plain 32-variant
+    // map carries (4 facing x 2 half x 2 hinge x 2 open — the LEFT
+    // rows the first lane's default pin banks, the RIGHT rows the
+    // getHinge census's own verdict speaks), the placement's
+    // getHinge(BlockPlaceContext) walk pc 5-108 the four-cell scan
+    // wears (the ccw side cell + the ccw-above cell the LEFT pair
+    // reads, the cw side cell + the cw-above cell the RIGHT pair
+    // reads — the isCollisionShapeFullBlock score the full blocks
+    // ±1 each speak, the LOWER-door presence checks the double-door
+    // seam's own census arms), the click-location walk pcs 281-389 the
+    // score==0 fallback answers (the in-cell x/z the step arms read:
+    // stepX<0 the dz<0.5 RIGHT, stepX>0 the dz>0.5, stepZ<0 the
+    // dx>0.5, stepZ>0 the dx<0.5 — the half-cell boundary the LEFT
+    // verdict keeps), the RIGHT quartets the census's true verdict
+    // lands (the blockstate hinge=right facing=north rows the
+    // {base}_door_bottom_right/_open models resolve — the y tables
+    // the LEFT closed [3,0,1,2] the SAME rows speak, the RIGHT open
+    // north 180 / east 270 / south 0 / west 90 the [2,3,0,1] steps
+    // the mesher's theta tables fold). The RIGHT kinds the LEFT
+    // ladder's CONTIGUOUS tail the kind ids wear (the LEFT quartets
+    // the 90..173 seats never move — the ±84 hinge mate the octet
+    // walk answers), the END_PORTAL kind the beyond-table seat the
+    // ladder's growth displaces (174 -> 258 the 655/643/656
+    // precedent wears).
+    "oak_door_right", "oak_door_upper_right", "oak_door_open_right", "oak_door_upper_open_right",
+    "spruce_door_right", "spruce_door_upper_right", "spruce_door_open_right", "spruce_door_upper_open_right",
+    "birch_door_right", "birch_door_upper_right", "birch_door_open_right", "birch_door_upper_open_right",
+    "jungle_door_right", "jungle_door_upper_right", "jungle_door_open_right", "jungle_door_upper_open_right",
+    "acacia_door_right", "acacia_door_upper_right", "acacia_door_open_right", "acacia_door_upper_open_right",
+    "dark_oak_door_right", "dark_oak_door_upper_right", "dark_oak_door_open_right", "dark_oak_door_upper_open_right",
+    "mangrove_door_right", "mangrove_door_upper_right", "mangrove_door_open_right", "mangrove_door_upper_open_right",
+    "cherry_door_right", "cherry_door_upper_right", "cherry_door_open_right", "cherry_door_upper_open_right",
+    "pale_oak_door_right", "pale_oak_door_upper_right", "pale_oak_door_open_right", "pale_oak_door_upper_open_right",
+    "bamboo_door_right", "bamboo_door_upper_right", "bamboo_door_open_right", "bamboo_door_upper_open_right",
+    "crimson_door_right", "crimson_door_upper_right", "crimson_door_open_right", "crimson_door_upper_open_right",
+    "warped_door_right", "warped_door_upper_right", "warped_door_open_right", "warped_door_upper_open_right",
+    "copper_door_right", "copper_door_upper_right", "copper_door_open_right", "copper_door_upper_open_right",
+    "exposed_copper_door_right", "exposed_copper_door_upper_right", "exposed_copper_door_open_right", "exposed_copper_door_upper_open_right",
+    "weathered_copper_door_right", "weathered_copper_door_upper_right", "weathered_copper_door_open_right", "weathered_copper_door_upper_open_right",
+    "oxidized_copper_door_right", "oxidized_copper_door_upper_right", "oxidized_copper_door_open_right", "oxidized_copper_door_upper_open_right",
+    "waxed_copper_door_right", "waxed_copper_door_upper_right", "waxed_copper_door_open_right", "waxed_copper_door_upper_open_right",
+    "waxed_exposed_copper_door_right", "waxed_exposed_copper_door_upper_right", "waxed_exposed_copper_door_open_right", "waxed_exposed_copper_door_upper_open_right",
+    "waxed_weathered_copper_door_right", "waxed_weathered_copper_door_upper_right", "waxed_weathered_copper_door_open_right", "waxed_weathered_copper_door_upper_open_right",
+    "waxed_oxidized_copper_door_right", "waxed_oxidized_copper_door_upper_right", "waxed_oxidized_copper_door_open_right", "waxed_oxidized_copper_door_upper_open_right",
+    "iron_door_right", "iron_door_upper_right", "iron_door_open_right", "iron_door_upper_open_right",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -919,10 +967,15 @@ const DOOR_TEXTURED_BASES: [&str; 17] = [
 
 /// The palette row's `{wood}_door` base the family gate answers (the
 /// `_upper`/`_open` suffixes the strip walk peels — the `_open` FIRST
-/// the both-suffix word the upper-open kind wears), the non-family
-/// rows the None the generic arms serve.
+/// the both-suffix word the upper-open kind wears, the `_right` tail
+/// the peel's own first word the autopush-658 round serves), the
+/// non-family rows the None the generic arms serve.
 fn door_family_base(block: &str) -> Option<&'static str> {
-    let stem = block.strip_suffix("_open").unwrap_or(block);
+    // THE HINGE-RIGHT SUFFIX THE PEEL FIRST ANSWERS (the autopush-658
+    // round — the RIGHT rows the _right word the both-suffix stems
+    // carry, the strip the upper/open flags' own reads serve)
+    let stem = block.strip_suffix("_right").unwrap_or(block);
+    let stem = stem.strip_suffix("_open").unwrap_or(stem);
     let stem = stem.strip_suffix("_upper").unwrap_or(stem);
     DOOR_FAMILY_BASES
         .iter()
@@ -930,25 +983,31 @@ fn door_family_base(block: &str) -> Option<&'static str> {
         .find(|b| *b == stem)
 }
 
-/// THE DOOR ROW'S OWN MODEL WALK (the autopush-656 round — the
-/// shared resolution the face arm and the DOOR_MODEL_BY_ROW emit both
-/// read): the blockstate {base}.json's facing=north hinge=LEFT row
-/// the kind-only palette resolves (the ctor's registerDefaultState
-/// pin the hinge-left default speaks), the model ref the
-/// `minecraft:` strip keeps. The WAXED LADDER the UNWAXED models the
-/// jar's own rows serve (waxed_copper_door.json the
-/// block/copper_door_bottom_left model the real chain answers — the
-/// per-oxidization textures the waxed kinds inherit, the waxed model
-/// files NO jar keeps).
+/// THE DOOR ROW'S OWN MODEL WALK (the autopush-656 round, the
+/// autopush-658 hinge word — the shared resolution the face arm and
+/// the DOOR_MODEL_BY_ROW emit both read): the blockstate {base}.json's
+/// facing=north row the per-hinge key resolves (the LEFT rows the
+/// ctor's registerDefaultState pin the hinge-left default speaks, the
+/// RIGHT rows the getHinge census's own verdict the `hinge=right` key
+/// answers), the model ref the `minecraft:` strip keeps. The WAXED
+/// LADDER the UNWAXED models the jar's own rows serve
+/// (waxed_copper_door.json the block/copper_door_bottom_left model the
+/// real chain answers — the per-oxidization textures the waxed kinds
+/// inherit, the waxed model files NO jar keeps).
 fn door_row_model(
     archive: &mut zip::ZipArchive<std::io::Cursor<&[u8]>>,
     base: &str,
     upper: bool,
     open: bool,
+    right: bool,
 ) -> Result<String> {
+    // THE HINGE WORD THE KEY SPEAKS (the autopush-658 round — the
+    // LEFT rows the first lane's default pin banks, the RIGHT rows
+    // the getHinge census's own verdict the blockstate resolves)
     let key = format!(
-        "facing=north,half={},hinge=left,open={open}",
-        if upper { "upper" } else { "lower" }
+        "facing=north,half={},hinge={},open={open}",
+        if upper { "upper" } else { "lower" },
+        if right { "right" } else { "left" }
     );
     let bs_bytes = read_jar(
         archive,
@@ -1505,27 +1564,34 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         }
         if let Some(wood_base) = door_family_base(block) {
             // THE DOOR FAMILY'S OWN ROWS (the autopush-655 round, the
-            // dev-43 wood generalization — the official 26.2 jar):
-            // the blockstate {wood}_door.json is a plain 32-variant
-            // map — the kind-only palette the hinge-LEFT rows resolve
-            // (javap DoorBlock's ctor registerDefaultState walk pc
-            // 53-59 the HINGE=LEFT pin speaks), the closed kinds the
-            // open=false rows, the open kinds the open=true rows, the
-            // half property the upper-word row keys. The EXPLICIT row
+            // dev-43 wood generalization, the autopush-658 hinge-right
+            // tail — the official 26.2 jar): the blockstate {wood}_door
+            // .json is a plain 32-variant map — the kind-only palette
+            // the per-hinge rows resolve (javap DoorBlock's ctor
+            // registerDefaultState walk pc 53-59 the HINGE=LEFT pin
+            // speaks, the RIGHT rows the getHinge census's own verdict
+            // the tail rows wear), the closed kinds the open=false
+            // rows, the open kinds the open=true rows, the half
+            // property the upper-word row keys. The _right suffix the
+            // flags' own reads peel FIRST (the tail rows the stem walk
+            // serves), the hinge word the key speaks. The EXPLICIT row
             // the walk reads (the candle_lit arm's own law — the
             // facing=north rows the orientable vocabulary's default
             // the variant byte's 0 answers), the model chain's
             // resolved ref the flat stem keeps: the lower's faces all
-            // #bottom (block/{wood}_door_bottom), the upper's all
-            // #top (block/{wood}_door_top) — the per-wood masters the
-            // mesher's per-quad verdict the named consts read, tinted
-            // = false (the pre-colored masters render as authored).
-            // The family walk the twelve woods share (the
+            // #bottom (block/{wood}_door_bottom — the RIGHT rows the
+            // SAME masters the hinge-independent chain resolves), the
+            // upper's all #top (block/{wood}_door_top), the per-wood
+            // masters the mesher's per-quad verdict the named consts
+            // read, tinted = false (the pre-colored masters render as
+            // authored). The family walk the twelve woods share (the
             // DOOR_FAMILY_BASES list the row arms gate — the copper
-            // ladder and the iron door the next lane's rows wear).
-            let upper = block.ends_with("_upper") || block.ends_with("_upper_open");
-            let open = block.ends_with("_open");
-            let model_ref = door_row_model(&mut archive, wood_base, upper, open)?;
+            // ladder and the iron door the 656 lane's rows wear).
+            let right = block.ends_with("_right");
+            let stem = block.strip_suffix("_right").unwrap_or(block);
+            let upper = stem.ends_with("_upper") || stem.ends_with("_upper_open");
+            let open = stem.ends_with("_open");
+            let model_ref = door_row_model(&mut archive, wood_base, upper, open, right)?;
             let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
                 .with_context(|| format!("block {wood_base}: model chain {model_ref}"))?;
             let tex = tex_map
@@ -1820,19 +1886,24 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         faces.push(resolve_block(&mut archive, block)?);
     }
 
-    // THE DOOR FAMILY'S OWN MODEL ROWS (the autopush-656 round): the
-    // per-kind model ref the blockstate's own hinge-LEFT facing=north
-    // row speaks — the SECOND pass the same door_row_model walk the
-    // face arm shares (the jar's real chain the waxed ladder the
-    // UNWAXED models serves), the generated table the mesher's bake
-    // reads (the NAME_OF-derived word the waxed kinds the absent
-    // models never answer — the row ref the honest resolution keeps).
+    // THE DOOR FAMILY'S OWN MODEL ROWS (the autopush-656 round, the
+    // autopush-658 hinge-right tail): the per-kind model ref the
+    // blockstate's own facing=north row speaks (the LEFT rows the
+    // hinge=left key resolves, the RIGHT tail the hinge=right key —
+    // the blockstate's own per-hinge rows the real chain serves) —
+    // the SECOND pass the same door_row_model walk the face arm
+    // shares (the jar's real chain the waxed ladder the UNWAXED
+    // models serves), the generated table the mesher's bake reads
+    // (the NAME_OF-derived word the waxed kinds the absent models
+    // never answer — the row ref the honest resolution keeps).
     let mut door_models: Vec<String> = Vec::with_capacity(RUNTIME_PALETTE.len());
     for block in RUNTIME_PALETTE {
         if let Some(base) = door_family_base(block) {
-            let upper = block.ends_with("_upper") || block.ends_with("_upper_open");
-            let open = block.ends_with("_open");
-            door_models.push(door_row_model(&mut archive, base, upper, open)?);
+            let right = block.ends_with("_right");
+            let stem = block.strip_suffix("_right").unwrap_or(block);
+            let upper = stem.ends_with("_upper") || stem.ends_with("_upper_open");
+            let open = stem.ends_with("_open");
+            door_models.push(door_row_model(&mut archive, base, upper, open, right)?);
         } else {
             door_models.push(String::new());
         }
@@ -2454,14 +2525,16 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         src.push_str(&format!("    [{:#x}, {:#x}, {:#x}, {:#x}, {:#x}, {:#x}],\n", tt[0], tt[1], tt[2], tt[3], tt[4], tt[5]));
     }
     src.push_str("];\n\n");
-    // THE DOOR FAMILY'S OWN MODEL ROWS (the autopush-656 round): the
-    // per-kind model ref the blockstate's hinge-LEFT facing=north row
-    // resolved — the palette-row order the kind ids speak (the
-    // non-door rows the empty string the mesher's door kinds alone
-    // read), the WAXED ladder the UNWAXED models the real chain
-    // serves (the mesher's bake the jar's own resolution keeps — the
-    // NAME_OF-derived word the waxed kinds the absent models never
-    // answer).
+    // THE DOOR FAMILY'S OWN MODEL ROWS (the autopush-656 round, the
+    // autopush-658 hinge-right tail): the per-kind model ref the
+    // blockstate's facing=north row resolved (the hinge word the per-
+    // hinge row keys — the LEFT rows the first lane's pin banks, the
+    // RIGHT tail the census's verdict rows speak) — the palette-row
+    // order the kind ids speak (the non-door rows the empty string
+    // the mesher's door kinds alone read), the WAXED ladder the
+    // UNWAXED models the real chain serves (the mesher's bake the
+    // jar's own resolution keeps — the NAME_OF-derived word the waxed
+    // kinds the absent models never answer).
     src.push_str("\n/// The door family's per-kind model refs (the palette-row order the \
      \x20/// kind ids wear — the non-door rows the empty string keeps; the \
      \x20/// autopush-656 round the mesher's bake the real chain serves).\n\n");
@@ -2768,16 +2841,21 @@ pub fn fallback_source(version: &str) -> String {
 fn registry_names() -> [&'static str; RUNTIME_PALETTE.len()] {
     let mut names = [""; RUNTIME_PALETTE.len()];
     for (i, name) in RUNTIME_PALETTE.iter().enumerate() {
-        // THE DOOR FAMILY'S OWN STRIP (the autopush-655 round): the
-        // open bit the kind-only vocabulary wears — the OPEN suffix
-        // the jar's registry never speaks (the DoorBlock's one
-        // registry entry both states the same "oak_door" name keeps,
-        // the dig row (3.0, false), the sounds' WOODEN row and the
-        // item id the pick lane grants BOTH halves speak), the
-        // half-word the _upper strip the same law answers — the
-        // _open strip FIRST (the upper-open kind the two-suffix
-        // word wears, the both strips the base row banks)
-        let base = name.strip_suffix("_open").unwrap_or(name);
+        // THE DOOR FAMILY'S OWN STRIP (the autopush-655 round, the
+        // autopush-658 hinge word — the open bit the kind-only
+        // vocabulary wears, the RIGHT tail the hinge the jar's
+        // registry never speaks: the OPEN suffix the jar's registry
+        // never answers, the _right word the same one-entry law the
+        // base row keeps — the DoorBlock's ONE registry entry both
+        // hinges and both states the same "oak_door" name keeps, the
+        // dig row (3.0, false), the sounds' WOODEN row and the item
+        // id the pick lane grants BOTH halves speak), the half-word
+        // the _upper strip the same law answers — the _right strip
+        // FIRST (the tail rows the hinge word the both-suffix kinds
+        // wear), the _open strip NEXT (the upper-open kind the
+        // two-suffix word wears, the both strips the base row banks)
+        let base = name.strip_suffix("_right").unwrap_or(name);
+        let base = base.strip_suffix("_open").unwrap_or(base);
         names[i] = base
             .strip_suffix("_upper")
             .or_else(|| base.strip_suffix("_lit"))

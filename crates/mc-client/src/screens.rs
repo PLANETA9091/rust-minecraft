@@ -35775,6 +35775,7 @@ impl App {
             let edge = crate::world::door_strip_edge(
                 crate::world::door_facing_byte(self.world_camera().yaw),
                 false,
+                false, // the closed state the hinge the table never reads
             );
             let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) = crate::world::shape_slabs(
                 crate::world::CollisionShape::Band(edge, 3),
@@ -36771,7 +36772,43 @@ impl App {
                     let _ = world.fire_shape_updates((mx, my, mz));
                 }
             }
-            world.set(cell.0, cell.1, cell.2, block);
+            // THE DOOR'S OWN HINGE CENSUS (javap DoorBlock.getHinge
+            // over the 26.2 jar — the getHinge(BlockPlaceContext) walk
+            // pc 5-108 + 110-177 + 179-280 + 281-389 the getStateFor
+            // Placement's own HINGE setValue pc 82-87 serves: the four-
+            // cell scan [the ccw/cw side pair at the placed cell AND at
+            // the above cell] the isCollisionShapeFullBlock score ±1
+            // each wears, the LOWER-door presence arms the double-door
+            // seam speaks, the click-location walk the score-0 fallback
+            // answers — the hinge the click's own half the player's
+            // right side wears, the 0.5 boundary the LEFT keeps). The
+            // placed kind the census's true verdict the ±84 hinge mate
+            // wears (the RIGHT tail the LEFT ladder's own order banks —
+            // the door_hinge_mate the LEFT closed lower the RIGHT
+            // closed lower answers), the non-door kinds the item's own
+            // kind the no-census pass keeps. The side cells the census
+            // reads the SET the placed cell never touches (the reads
+            // the pre-set beat the vanilla's own getStateForPlacement
+            // order keeps). The click location the wire hit's own
+            // point wears (the javap UseOnContext.getClickLocation the
+            // hitResult.getLocation areturn speaks — the ABSOLUTE hit
+            // the in-cell dx/dz the placed cell's own origin subtracts).
+            let placed = if crate::world::is_door_lower(block) {
+                let facing = crate::world::door_facing_byte(cam_yaw);
+                let click_dx = hit.location.0 - f64::from(cell.0);
+                let click_dz = hit.location.2 - f64::from(cell.2);
+                let right = crate::world::door_hinge_census(
+                    world, cell.0, cell.1, cell.2, facing, click_dx, click_dz,
+                );
+                if right {
+                    crate::world::door_hinge_mate(block).unwrap_or(block)
+                } else {
+                    block
+                }
+            } else {
+                block
+            };
+            world.set(cell.0, cell.1, cell.2, placed);
             // THE ORIENTABLE TRIO'S OWN PLACEMENT FACING (javap 26.2
             // AbstractFurnaceBlock.getStateForPlacement pcs 0-20 — the
             // FACING the placement state's own setValue wears, the
@@ -36826,15 +36863,19 @@ impl App {
             // own state the setPlacedBy pass-through keeps — the
             // `door_facing_byte` the NO-opposite look the orientable
             // vocabulary stamps, the mesher's theta tables the byte
-            // consumes; the hinge the LEFT default the ctor's
-            // registerDefaultState pin speaks — the getHinge census a
-            // later lane serves). The gates the verdict branch spoke
-            // (the above replaceable, the below sturdy) the walk
-            // already banked — the upper cell the same beat claims.
-            // THE WOOD WALK THE UPPER MATE WEARS (the dev-43 round —
-            // the door_upper_mate the twelve closed lowers the +1 seat
-            // the whole family banks)
-            if let Some(upper) = crate::world::door_upper_mate(block) {
+            // consumes; the hinge the getHinge census's own verdict
+            // the placed kind wears [the autopush-658 round — the
+            // registerDefaultState pin the LEFT default the census's
+            // false verdict keeps, the RIGHT quartet the census's true
+            // verdict the ±84 mate banks]). The gates the verdict
+            // branch spoke (the above replaceable, the below sturdy)
+            // the walk already banked — the upper cell the same beat
+            // claims. THE WOOD WALK THE UPPER MATE WEARS (the dev-43
+            // round — the door_upper_mate the closed lowers the +1
+            // seat the whole family banks), THE PLACED KIND THE MATE
+            // READS (the census's own kind the same-hinge upper the
+            // +1 seat answers)
+            if let Some(upper) = crate::world::door_upper_mate(placed) {
                 let facing = crate::world::door_facing_byte(cam_yaw);
                 world.set(cell.0, cell.1 + 1, cell.2, upper);
                 world.set_variant(cell.0, cell.1, cell.2, facing);
@@ -101512,8 +101553,8 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            174,
-            "the palette the copper ladder's own tail rows bank"
+            258,
+            "the palette the hinge-right tail's own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
         assert_eq!(atlas::KIND_NAMES[wool as usize], "white_wool");
@@ -101593,8 +101634,8 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            174,
-            "the palette the copper ladder's own tail rows bank"
+            258,
+            "the palette the hinge-right tail's own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
         assert_eq!(atlas::REGISTRY_NAMES[sand as usize], "soul_sand");
@@ -101895,8 +101936,8 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            174,
-            "the palette the copper ladder's own tail rows bank"
+            258,
+            "the palette the hinge-right tail's own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
         assert_eq!(atlas::REGISTRY_NAMES[honey as usize], "honey_block");
@@ -105129,6 +105170,87 @@ cow_sound_variant: None,
                 w.get(c + 2, top, c),
                 crate::world::OAK_DOOR,
                 "the roofed cell the placement refuses ({press})"
+            );
+        }
+    }
+
+    #[test]
+    fn the_door_the_hinge_census_the_right_quartet_wears() {
+        // THE DOOR'S OWN HINGE CENSUS (javap DoorBlock.getHinge the
+        // 26.2 jar — the getHinge(BlockPlaceContext) walk the
+        // getStateForPlacement's own HINGE setValue serves: the
+        // LOWER-door presence arms the double-door seam's own verdict
+        // speaks — the LEFT side cell's door the RIGHT hinge banks,
+        // the seam door the pair's own mirrored swing the vanilla's
+        // double-door feel wears; the empty world the score-0 click
+        // walk serves, the center hit the 0.5 boundary the LEFT
+        // keeps). THE RIGHT QUARTET'S OWN FLIP (the mate walk the ±2
+        // arithmetic the same-hinge quartet serves — the open bit the
+        // cycle wears, the hinge bit the flip never touches)
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        // THE FIRST DOOR THE EMPTY CENSUS LANDS (the no-wall no-door
+        // world the click walk answers — the LEFT quartet the
+        // registerDefaultState pin's own default wears)
+        app.offline_held_updated(Some("item/oak_door"));
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the first door the placement consumes");
+        // THE SEAM'S OWN NEIGHBOR (the adjacent east cell the second
+        // door claims — the placed cell's own ccw side read the first
+        // door's closed lower answers, the RIGHT verdict the ±84 mate
+        // the RIGHT quartet banks)
+        app.offline_held_updated(Some("item/oak_door"));
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 1.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the seam door the placement consumes");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 1, top, c),
+                crate::world::OAK_DOOR_RIGHT,
+                "the seam's closed lower the RIGHT quartet wears"
+            );
+            assert_eq!(
+                w.get(c + 1, top + 1, c),
+                crate::world::OAK_DOOR_UPPER_RIGHT,
+                "the seam's upper the same-hinge mate banks"
+            );
+            assert_eq!(
+                w.variant(c + 1, top, c),
+                1,
+                "the right lower's facing byte the yaw-0 north wears"
+            );
+            assert_eq!(
+                w.variant(c + 1, top + 1, c),
+                1,
+                "the right upper's facing byte the same state keeps"
+            );
+        }
+        // THE RIGHT QUARTET'S OWN FLIP (the empty hand's use the same
+        // walk the LEFT quartet speaks — the both halves the one beat
+        // swaps, the voice the set type's own pair wears)
+        assert!(app.on_right_press(0, 0), "the right-hinged door the flip consumes");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 1, top, c),
+                crate::world::OAK_DOOR_OPEN_RIGHT,
+                "the seam's open lower the right quartet's own open kind wears"
+            );
+            assert_eq!(
+                w.get(c + 1, top + 1, c),
+                crate::world::OAK_DOOR_UPPER_OPEN_RIGHT,
+                "the seam's open upper the synced mate wears"
             );
         }
     }

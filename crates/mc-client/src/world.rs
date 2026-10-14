@@ -891,8 +891,15 @@ pub const END_STONE: u16 = 89;
 /// AGAIN (the autopush-656 round): the eight copper quartets + the
 /// iron door the 138..173 tail the palette rows bank, the kind's own
 /// seat the beyond-table 174 the same law keeps (the ladder's own
-/// every-rung displacement the growth walk speaks).
-pub const END_PORTAL: u16 = 174;
+/// every-rung displacement the growth walk speaks). THE SEAT THE
+/// HINGE-RIGHT TAIL'S REGEN DISPLACES AGAIN (the autopush-658 round):
+/// the twenty-one RIGHT quartets the 174..257 tail the palette rows
+/// bank (the LEFT ladder's own order the tail mirrors — the LEFT
+/// quartets the 90..173 seats never move), the kind's own seat the
+/// beyond-table 258 the same law keeps (the every-rung displacement
+/// the ladder's growth speaks — the `id < N_KINDS` guards the tile
+/// lookups' skip verdict the bigger tail keeps).
+pub const END_PORTAL: u16 = 258;
 
 /// THE OAK DOOR'S OWN CLOSED LOWER (the autopush-655 round — the
 /// vocabulary's next frontier: the right-click open/close the
@@ -1184,6 +1191,144 @@ pub const IRON_DOOR_UPPER: u16 = 171;
 pub const IRON_DOOR_OPEN: u16 = 172;
 pub const IRON_DOOR_UPPER_OPEN: u16 = 173;
 
+// THE DOOR FAMILY'S HINGE-RIGHT TAIL (the autopush-658 round): the
+// twenty-one RIGHT quartets the LEFT ladder's own order mirrors — the
+// kind ids the CONTIGUOUS 174..257 tail wear (the LEFT quartets the
+// 90..173 seats never move — the ±84 hinge mate the octet walk
+// answers, the flip/upper/lower/open bits the quartet arithmetic
+// within each 4-run speaks). javap DoorBlock the 26.2 jar (pinned
+// sha1 2dc72797, javap 21.0.12): the HINGE property the blockstate's
+// plain 32-variant map carries (4 facing x 2 half x 2 hinge x 2 open
+// — the hinge-LEFT rows the first lane's default pin banks, the
+// hinge-right rows the getHinge census's own verdict the placement
+// wears), the getHinge(BlockPlaceContext) walk pc 5-108 the
+// four-cell scan speaks (the ccw/cw side cells at the placed cell
+// AND at the above cell — the isCollisionShapeFullBlock score the
+// full blocks -1 LEFT / +1 RIGHT each speak, the LOWER-door presence
+// checks the double-door seam's own arms keep: the LEFT cell's door
+// the RIGHT verdict banks, the RIGHT cell's door the LEFT, the both
+// pair the score's tie-break wears), the click-location walk pcs
+// 281-389 the score==0 fallback answers (the in-cell x/z the step
+// arms read — the hinge the click's own half the player's right side
+// wears: stepX<0 the dz<0.5 RIGHT, stepX>0 the dz>0.5, stepZ<0 the
+// dx>0.5, stepZ>0 the dx<0.5, the 0.5 boundary the LEFT verdict
+// keeps). The blockstate hinge=right facing=north rows the models
+// resolve (the {base}_door_bottom_right chain the LEFT rows' own
+// shape wears — the y tables the closed rows the LEFT tables the
+// SAME speak [3,0,1,2], the RIGHT open north 180 / east 270 / south
+// 0 / west 90 the [2,3,0,1] steps the mesher's theta tables fold),
+// the strip tables the getShape walk's own hinge arm answers (the
+// open state SHAPES.get(hinge-RIGHT the getCounterClockWise pc
+// 41-46, hinge-LEFT the getClockWise pc 49-54) — the swung edge the
+// opposite arm every facing wears). The registry the ONE entry per
+// door both hinges the same name speaks (the NAME_OF rows the
+// shared-base law keeps), the dig rows the loot tables the item ids
+// the whole family the LEFT rows' own values wear.
+pub const OAK_DOOR_RIGHT: u16 = 174;
+pub const OAK_DOOR_UPPER_RIGHT: u16 = 175;
+pub const OAK_DOOR_OPEN_RIGHT: u16 = 176;
+pub const OAK_DOOR_UPPER_OPEN_RIGHT: u16 = 177;
+
+pub const SPRUCE_DOOR_RIGHT: u16 = 178;
+pub const SPRUCE_DOOR_UPPER_RIGHT: u16 = 179;
+pub const SPRUCE_DOOR_OPEN_RIGHT: u16 = 180;
+pub const SPRUCE_DOOR_UPPER_OPEN_RIGHT: u16 = 181;
+
+pub const BIRCH_DOOR_RIGHT: u16 = 182;
+pub const BIRCH_DOOR_UPPER_RIGHT: u16 = 183;
+pub const BIRCH_DOOR_OPEN_RIGHT: u16 = 184;
+pub const BIRCH_DOOR_UPPER_OPEN_RIGHT: u16 = 185;
+
+pub const JUNGLE_DOOR_RIGHT: u16 = 186;
+pub const JUNGLE_DOOR_UPPER_RIGHT: u16 = 187;
+pub const JUNGLE_DOOR_OPEN_RIGHT: u16 = 188;
+pub const JUNGLE_DOOR_UPPER_OPEN_RIGHT: u16 = 189;
+
+pub const ACACIA_DOOR_RIGHT: u16 = 190;
+pub const ACACIA_DOOR_UPPER_RIGHT: u16 = 191;
+pub const ACACIA_DOOR_OPEN_RIGHT: u16 = 192;
+pub const ACACIA_DOOR_UPPER_OPEN_RIGHT: u16 = 193;
+
+pub const DARK_OAK_DOOR_RIGHT: u16 = 194;
+pub const DARK_OAK_DOOR_UPPER_RIGHT: u16 = 195;
+pub const DARK_OAK_DOOR_OPEN_RIGHT: u16 = 196;
+pub const DARK_OAK_DOOR_UPPER_OPEN_RIGHT: u16 = 197;
+
+pub const MANGROVE_DOOR_RIGHT: u16 = 198;
+pub const MANGROVE_DOOR_UPPER_RIGHT: u16 = 199;
+pub const MANGROVE_DOOR_OPEN_RIGHT: u16 = 200;
+pub const MANGROVE_DOOR_UPPER_OPEN_RIGHT: u16 = 201;
+
+pub const CHERRY_DOOR_RIGHT: u16 = 202;
+pub const CHERRY_DOOR_UPPER_RIGHT: u16 = 203;
+pub const CHERRY_DOOR_OPEN_RIGHT: u16 = 204;
+pub const CHERRY_DOOR_UPPER_OPEN_RIGHT: u16 = 205;
+
+pub const PALE_OAK_DOOR_RIGHT: u16 = 206;
+pub const PALE_OAK_DOOR_UPPER_RIGHT: u16 = 207;
+pub const PALE_OAK_DOOR_OPEN_RIGHT: u16 = 208;
+pub const PALE_OAK_DOOR_UPPER_OPEN_RIGHT: u16 = 209;
+
+pub const BAMBOO_DOOR_RIGHT: u16 = 210;
+pub const BAMBOO_DOOR_UPPER_RIGHT: u16 = 211;
+pub const BAMBOO_DOOR_OPEN_RIGHT: u16 = 212;
+pub const BAMBOO_DOOR_UPPER_OPEN_RIGHT: u16 = 213;
+
+pub const CRIMSON_DOOR_RIGHT: u16 = 214;
+pub const CRIMSON_DOOR_UPPER_RIGHT: u16 = 215;
+pub const CRIMSON_DOOR_OPEN_RIGHT: u16 = 216;
+pub const CRIMSON_DOOR_UPPER_OPEN_RIGHT: u16 = 217;
+
+pub const WARPED_DOOR_RIGHT: u16 = 218;
+pub const WARPED_DOOR_UPPER_RIGHT: u16 = 219;
+pub const WARPED_DOOR_OPEN_RIGHT: u16 = 220;
+pub const WARPED_DOOR_UPPER_OPEN_RIGHT: u16 = 221;
+
+pub const COPPER_DOOR_RIGHT: u16 = 222;
+pub const COPPER_DOOR_UPPER_RIGHT: u16 = 223;
+pub const COPPER_DOOR_OPEN_RIGHT: u16 = 224;
+pub const COPPER_DOOR_UPPER_OPEN_RIGHT: u16 = 225;
+
+pub const EXPOSED_COPPER_DOOR_RIGHT: u16 = 226;
+pub const EXPOSED_COPPER_DOOR_UPPER_RIGHT: u16 = 227;
+pub const EXPOSED_COPPER_DOOR_OPEN_RIGHT: u16 = 228;
+pub const EXPOSED_COPPER_DOOR_UPPER_OPEN_RIGHT: u16 = 229;
+
+pub const WEATHERED_COPPER_DOOR_RIGHT: u16 = 230;
+pub const WEATHERED_COPPER_DOOR_UPPER_RIGHT: u16 = 231;
+pub const WEATHERED_COPPER_DOOR_OPEN_RIGHT: u16 = 232;
+pub const WEATHERED_COPPER_DOOR_UPPER_OPEN_RIGHT: u16 = 233;
+
+pub const OXIDIZED_COPPER_DOOR_RIGHT: u16 = 234;
+pub const OXIDIZED_COPPER_DOOR_UPPER_RIGHT: u16 = 235;
+pub const OXIDIZED_COPPER_DOOR_OPEN_RIGHT: u16 = 236;
+pub const OXIDIZED_COPPER_DOOR_UPPER_OPEN_RIGHT: u16 = 237;
+
+pub const WAXED_COPPER_DOOR_RIGHT: u16 = 238;
+pub const WAXED_COPPER_DOOR_UPPER_RIGHT: u16 = 239;
+pub const WAXED_COPPER_DOOR_OPEN_RIGHT: u16 = 240;
+pub const WAXED_COPPER_DOOR_UPPER_OPEN_RIGHT: u16 = 241;
+
+pub const WAXED_EXPOSED_COPPER_DOOR_RIGHT: u16 = 242;
+pub const WAXED_EXPOSED_COPPER_DOOR_UPPER_RIGHT: u16 = 243;
+pub const WAXED_EXPOSED_COPPER_DOOR_OPEN_RIGHT: u16 = 244;
+pub const WAXED_EXPOSED_COPPER_DOOR_UPPER_OPEN_RIGHT: u16 = 245;
+
+pub const WAXED_WEATHERED_COPPER_DOOR_RIGHT: u16 = 246;
+pub const WAXED_WEATHERED_COPPER_DOOR_UPPER_RIGHT: u16 = 247;
+pub const WAXED_WEATHERED_COPPER_DOOR_OPEN_RIGHT: u16 = 248;
+pub const WAXED_WEATHERED_COPPER_DOOR_UPPER_OPEN_RIGHT: u16 = 249;
+
+pub const WAXED_OXIDIZED_COPPER_DOOR_RIGHT: u16 = 250;
+pub const WAXED_OXIDIZED_COPPER_DOOR_UPPER_RIGHT: u16 = 251;
+pub const WAXED_OXIDIZED_COPPER_DOOR_OPEN_RIGHT: u16 = 252;
+pub const WAXED_OXIDIZED_COPPER_DOOR_UPPER_OPEN_RIGHT: u16 = 253;
+
+pub const IRON_DOOR_RIGHT: u16 = 254;
+pub const IRON_DOOR_UPPER_RIGHT: u16 = 255;
+pub const IRON_DOOR_OPEN_RIGHT: u16 = 256;
+pub const IRON_DOOR_UPPER_OPEN_RIGHT: u16 = 257;
+
 /// THE SCAN'S OWN SHAPE — the PortalShape verdict the walks bank
 /// (javap PortalShape's own fields the ctor pc 0-115 carries): the
 /// bottom-left interior corner, the width/height the bands answer,
@@ -1298,7 +1443,7 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 }
 
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 174] = [
+pub const NAME_OF: [&str; 258] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1558,6 +1703,41 @@ pub const NAME_OF: [&str; 174] = [
     // conditional pool (survives_explosion + half=lower — the
     // {base}_door item every lower rolls), the item id the
     // placeable lookup the FIRST row's position answers).
+    "copper_door", "copper_door", "copper_door", "copper_door",
+    "exposed_copper_door", "exposed_copper_door", "exposed_copper_door", "exposed_copper_door",
+    "weathered_copper_door", "weathered_copper_door", "weathered_copper_door", "weathered_copper_door",
+    "oxidized_copper_door", "oxidized_copper_door", "oxidized_copper_door", "oxidized_copper_door",
+    "waxed_copper_door", "waxed_copper_door", "waxed_copper_door", "waxed_copper_door",
+    "waxed_exposed_copper_door", "waxed_exposed_copper_door", "waxed_exposed_copper_door", "waxed_exposed_copper_door",
+    "waxed_weathered_copper_door", "waxed_weathered_copper_door", "waxed_weathered_copper_door", "waxed_weathered_copper_door",
+    "waxed_oxidized_copper_door", "waxed_oxidized_copper_door", "waxed_oxidized_copper_door", "waxed_oxidized_copper_door",
+    "iron_door", "iron_door", "iron_door", "iron_door",
+    // THE DOOR FAMILY'S HINGE-RIGHT ROWS (the autopush-658 round): the
+    // twenty-one RIGHT quartets the SAME shared-base law every quartet
+    // wears — all four kinds the BASE "{base}_door" name (javap the
+    // 26.2 jar: the registry the ONE entry per door both hinges the
+    // same name speaks — the blockstate's hinge property the kind-only
+    // vocabulary's variant byte carries, the registry name the hinge
+    // never speaks: the dig rows the loot tables the item ids the
+    // RIGHT kinds the LEFT rows' own values wear). The END_PORTAL's
+    // own row the displaced seat the BEYOND-TABLE law keeps (the
+    // hand-only kind the generated palette never carried — N_KINDS
+    // the 258 the octet ladder's rows bank, the kind's own seat 258
+    // the both tables' indexing never reaches — the dig row's own
+    // -1.0 the unbreakable verdict the NAME_OF read the unreachable
+    // law keeps).
+    "oak_door", "oak_door", "oak_door", "oak_door",
+    "spruce_door", "spruce_door", "spruce_door", "spruce_door",
+    "birch_door", "birch_door", "birch_door", "birch_door",
+    "jungle_door", "jungle_door", "jungle_door", "jungle_door",
+    "acacia_door", "acacia_door", "acacia_door", "acacia_door",
+    "dark_oak_door", "dark_oak_door", "dark_oak_door", "dark_oak_door",
+    "mangrove_door", "mangrove_door", "mangrove_door", "mangrove_door",
+    "cherry_door", "cherry_door", "cherry_door", "cherry_door",
+    "pale_oak_door", "pale_oak_door", "pale_oak_door", "pale_oak_door",
+    "bamboo_door", "bamboo_door", "bamboo_door", "bamboo_door",
+    "crimson_door", "crimson_door", "crimson_door", "crimson_door",
+    "warped_door", "warped_door", "warped_door", "warped_door",
     "copper_door", "copper_door", "copper_door", "copper_door",
     "exposed_copper_door", "exposed_copper_door", "exposed_copper_door", "exposed_copper_door",
     "weathered_copper_door", "weathered_copper_door", "weathered_copper_door", "weathered_copper_door",
@@ -1852,14 +2032,19 @@ pub fn furnace_facing_byte(cam_yaw_radians: f32) -> u8 {
 
 /// THE DOOR FAMILY'S OWN KIND LADDER (the dev-43 round, the
 /// autopush-656 round the copper ladder + iron complete — the
-/// twenty-one doors the oak lane's walk generalizes): the 84 kinds
-/// the named consts bank, each door the CONTIGUOUS four-kind run
-/// (the closed lower, the closed upper, the open lower, the open
-/// upper — the upper bit = +1, the open bit = +2, the flip mate =
-/// ±2 the arithmetic the helpers wear). The ladder the base walk
-/// and the mesher's model-bake walk both read (the generated
-/// DOOR_MODEL_BY_ROW the per-kind refs the same ids keep).
-pub const DOOR_KINDS: [u16; 84] = [
+/// twenty-one doors the oak lane's walk generalizes, the RIGHT tail
+/// the hinge census's own verdict banks — the autopush-658 round): the
+/// 168 kinds the named consts bank, each door the CONTIGUOUS octet
+/// pair (the LEFT quartet first — the closed lower, the closed
+/// upper, the open lower, the open upper — the RIGHT quartet second,
+/// the same four rungs the hinge mate speaks; the upper bit = +1,
+/// the open bit = +2, the flip mate = ±2 the arithmetic the helpers
+/// wear, the ±84 hinge mate the LEFT quartet's own first seat the
+/// RIGHT quartet answers). The ladder the base walk and the mesher's
+/// model-bake walk both read (the generated DOOR_MODEL_BY_ROW the
+/// per-kind refs the same ids keep — the RIGHT rows the _right
+/// models the blockstate's own hinge=right rows resolve).
+pub const DOOR_KINDS: [u16; 168] = [
     OAK_DOOR,
     OAK_DOOR_UPPER,
     OAK_DOOR_OPEN,
@@ -1944,6 +2129,93 @@ pub const DOOR_KINDS: [u16; 84] = [
     IRON_DOOR_UPPER,
     IRON_DOOR_OPEN,
     IRON_DOOR_UPPER_OPEN,
+    // THE HINGE-RIGHT TAIL (the autopush-658 round): the twenty-one
+    // RIGHT quartets the LEFT ladder's own order mirrors — the
+    // getHinge census's true verdict the placement wears.
+    OAK_DOOR_RIGHT,
+    OAK_DOOR_UPPER_RIGHT,
+    OAK_DOOR_OPEN_RIGHT,
+    OAK_DOOR_UPPER_OPEN_RIGHT,
+    SPRUCE_DOOR_RIGHT,
+    SPRUCE_DOOR_UPPER_RIGHT,
+    SPRUCE_DOOR_OPEN_RIGHT,
+    SPRUCE_DOOR_UPPER_OPEN_RIGHT,
+    BIRCH_DOOR_RIGHT,
+    BIRCH_DOOR_UPPER_RIGHT,
+    BIRCH_DOOR_OPEN_RIGHT,
+    BIRCH_DOOR_UPPER_OPEN_RIGHT,
+    JUNGLE_DOOR_RIGHT,
+    JUNGLE_DOOR_UPPER_RIGHT,
+    JUNGLE_DOOR_OPEN_RIGHT,
+    JUNGLE_DOOR_UPPER_OPEN_RIGHT,
+    ACACIA_DOOR_RIGHT,
+    ACACIA_DOOR_UPPER_RIGHT,
+    ACACIA_DOOR_OPEN_RIGHT,
+    ACACIA_DOOR_UPPER_OPEN_RIGHT,
+    DARK_OAK_DOOR_RIGHT,
+    DARK_OAK_DOOR_UPPER_RIGHT,
+    DARK_OAK_DOOR_OPEN_RIGHT,
+    DARK_OAK_DOOR_UPPER_OPEN_RIGHT,
+    MANGROVE_DOOR_RIGHT,
+    MANGROVE_DOOR_UPPER_RIGHT,
+    MANGROVE_DOOR_OPEN_RIGHT,
+    MANGROVE_DOOR_UPPER_OPEN_RIGHT,
+    CHERRY_DOOR_RIGHT,
+    CHERRY_DOOR_UPPER_RIGHT,
+    CHERRY_DOOR_OPEN_RIGHT,
+    CHERRY_DOOR_UPPER_OPEN_RIGHT,
+    PALE_OAK_DOOR_RIGHT,
+    PALE_OAK_DOOR_UPPER_RIGHT,
+    PALE_OAK_DOOR_OPEN_RIGHT,
+    PALE_OAK_DOOR_UPPER_OPEN_RIGHT,
+    BAMBOO_DOOR_RIGHT,
+    BAMBOO_DOOR_UPPER_RIGHT,
+    BAMBOO_DOOR_OPEN_RIGHT,
+    BAMBOO_DOOR_UPPER_OPEN_RIGHT,
+    CRIMSON_DOOR_RIGHT,
+    CRIMSON_DOOR_UPPER_RIGHT,
+    CRIMSON_DOOR_OPEN_RIGHT,
+    CRIMSON_DOOR_UPPER_OPEN_RIGHT,
+    WARPED_DOOR_RIGHT,
+    WARPED_DOOR_UPPER_RIGHT,
+    WARPED_DOOR_OPEN_RIGHT,
+    WARPED_DOOR_UPPER_OPEN_RIGHT,
+    COPPER_DOOR_RIGHT,
+    COPPER_DOOR_UPPER_RIGHT,
+    COPPER_DOOR_OPEN_RIGHT,
+    COPPER_DOOR_UPPER_OPEN_RIGHT,
+    EXPOSED_COPPER_DOOR_RIGHT,
+    EXPOSED_COPPER_DOOR_UPPER_RIGHT,
+    EXPOSED_COPPER_DOOR_OPEN_RIGHT,
+    EXPOSED_COPPER_DOOR_UPPER_OPEN_RIGHT,
+    WEATHERED_COPPER_DOOR_RIGHT,
+    WEATHERED_COPPER_DOOR_UPPER_RIGHT,
+    WEATHERED_COPPER_DOOR_OPEN_RIGHT,
+    WEATHERED_COPPER_DOOR_UPPER_OPEN_RIGHT,
+    OXIDIZED_COPPER_DOOR_RIGHT,
+    OXIDIZED_COPPER_DOOR_UPPER_RIGHT,
+    OXIDIZED_COPPER_DOOR_OPEN_RIGHT,
+    OXIDIZED_COPPER_DOOR_UPPER_OPEN_RIGHT,
+    WAXED_COPPER_DOOR_RIGHT,
+    WAXED_COPPER_DOOR_UPPER_RIGHT,
+    WAXED_COPPER_DOOR_OPEN_RIGHT,
+    WAXED_COPPER_DOOR_UPPER_OPEN_RIGHT,
+    WAXED_EXPOSED_COPPER_DOOR_RIGHT,
+    WAXED_EXPOSED_COPPER_DOOR_UPPER_RIGHT,
+    WAXED_EXPOSED_COPPER_DOOR_OPEN_RIGHT,
+    WAXED_EXPOSED_COPPER_DOOR_UPPER_OPEN_RIGHT,
+    WAXED_WEATHERED_COPPER_DOOR_RIGHT,
+    WAXED_WEATHERED_COPPER_DOOR_UPPER_RIGHT,
+    WAXED_WEATHERED_COPPER_DOOR_OPEN_RIGHT,
+    WAXED_WEATHERED_COPPER_DOOR_UPPER_OPEN_RIGHT,
+    WAXED_OXIDIZED_COPPER_DOOR_RIGHT,
+    WAXED_OXIDIZED_COPPER_DOOR_UPPER_RIGHT,
+    WAXED_OXIDIZED_COPPER_DOOR_OPEN_RIGHT,
+    WAXED_OXIDIZED_COPPER_DOOR_UPPER_OPEN_RIGHT,
+    IRON_DOOR_RIGHT,
+    IRON_DOOR_UPPER_RIGHT,
+    IRON_DOOR_OPEN_RIGHT,
+    IRON_DOOR_UPPER_OPEN_RIGHT,
 ];
 
 /// THE QUARTET'S OWN BASE (the run the id's seat answers — the walk
@@ -2026,6 +2298,179 @@ pub fn door_upper_mate(id: u16) -> Option<u16> {
     }
 }
 
+/// THE DOOR'S OWN HINGE SEAT (javap DoorBlock the 26.2 jar — the
+/// HINGE property the blockstate's 32-variant map carries: the LEFT
+/// quartets the registerDefaultState pin banks [the first lane's own
+/// default], the RIGHT quartets the getHinge census's true verdict
+/// the placement wears). The RIGHT tail the LEFT ladder's own order
+/// mirrors: the kinds the 84-seat offset the tail's first seat wears
+/// (the OAK_DOOR_RIGHT kind the LEFT ladder's end the tail's start
+/// answers — the ±84 hinge mate the octet walk speaks, the LEFT
+/// quartets the 90..173 seats never move). The predicates the
+/// quartet arithmetic never touches (the lower/upper/open bits the
+/// per-4-run position answers — the hinge the tail's own membership
+/// speaks), the placement's placed kind the ±84 mate the census's
+/// verdict wears, the strip table's own hinge arm the read serves.
+pub fn door_hinge_right(id: u16) -> bool {
+    DOOR_KINDS
+        .iter()
+        .position(|&k| k == id)
+        .is_some_and(|p| p >= DOOR_KINDS.len() / 2)
+}
+
+/// THE DOOR'S OWN HINGE MATE (the autopush-658 round — the LEFT
+/// quartet the RIGHT answer, the RIGHT the LEFT: the ±84 offset the
+/// tail's contiguous order the arithmetic wears — the placement's
+/// census verdict the placed kind the mate banks, the door_upper_mate
+/// walk the same-hinge pair the +1 seat serves). The non-door kinds
+/// the None the predicates' false keeps.
+pub fn door_hinge_mate(id: u16) -> Option<u16> {
+    if is_door(id) {
+        Some(if door_hinge_right(id) { id - 84 } else { id + 84 })
+    } else {
+        None
+    }
+}
+
+/// THE DOOR PLACEMENT'S OWN HINGE CENSUS (javap DoorBlock.getHinge
+/// over the 26.2 jar, pcs 5-108 + 110-177 + 179-280 + 281-389 verbatim
+/// — the getHinge(BlockPlaceContext) walk the getStateForPlacement's
+/// own HINGE setValue pc 82-87 serves). THE FOUR-CELL SCAN (pcs
+/// 22-108): the facing the getHorizontalDirection the context's own
+/// look speaks, the ccw/cw side bytes the Direction.getCounter
+/// ClockWise/getClockWise arms wear (the ccw side the player's LEFT,
+/// the cw the RIGHT), the four reads the placed cell's side pair AND
+/// the above cell's side pair speak — the level.getBlockState
+/// (pos.relative(side)) the LOWER row reads, the (pos.above()
+/// .relative(side)) the UPPER row reads. THE SCORE (pcs 110-177):
+/// each full block the ±1 the isCollisionShapeFullBlock verdicts
+/// speak (the LEFT pair the -1 each, the RIGHT pair the +1 each —
+/// the swing-toward-the-wall law the sign answers), the istore 16
+/// the sum banks. THE DOOR-PRESENCE ARMS (pcs 179-280): the side
+/// cell's own DoorBlock + HALF==LOWER read the leftDoor/rightDoor
+/// istore 17/18 banks. THE VERDICT (pcs 243-280):
+/// leftDoor && !rightDoor → RIGHT; rightDoor && !leftDoor → LEFT;
+/// both doors the score's tie-break wears (score > 0 the RIGHT,
+/// score < 0 the LEFT); neither or both-at-0 the click walk. THE
+/// CLICK WALK (pcs 281-389): the in-cell dx/dz the
+/// getClickLocation (the ABSOLUTE hit point — the javap
+/// UseOnContext.getClickLocation the hitResult.getLocation areturn
+/// speaks) minus the placed cell's own x/z the dsub arms speak, the
+/// four step arms the hinge the click's own half the player's right
+/// side wears (stepX<0 the dz<0.5 RIGHT, stepX>0 the dz>0.5 RIGHT,
+/// stepZ<0 the dx>0.5 RIGHT, stepZ>0 the dx<0.5 RIGHT — the 0.5
+/// boundary the dcmpg/dcmpl arms the LEFT verdict keeps), the
+/// neither-cell default the LEFT answer (the registerDefaultState
+/// pin the first lane's default speaks). The full-block read the
+/// client's own variant-aware collision verdict answers (the
+/// [`collision_shape_at`] walk the Band/Empty rows the 0 score
+/// keeps — the vanilla's isCollisionShapeFullBlock the full-cube
+/// family alone the ±1 speaks), the facing byte's no-opinion seat
+/// the north default the strip tables' own index-0 law keeps.
+/// The census the OFFLINE placement lane alone wears (the networked
+/// world the server's own getHinge answers — the materialize walk
+/// the state id decodes, the client's own census never re-arms).
+pub fn door_hinge_census(
+    world: &World,
+    cx: i32,
+    cy: i32,
+    cz: i32,
+    facing_byte: u8,
+    click_dx: f64,
+    click_dz: f64,
+) -> bool {
+    // the facing byte's no-opinion seat the north default (the
+    // placement always stamps 1..=4 — the strip tables' own law)
+    let f = if (1..=4).contains(&facing_byte) {
+        facing_byte
+    } else {
+        1
+    };
+    // the ccw/cw side bytes (getCounterClockWise/getClockWise) — the
+    // step arms the click walk's own match reads
+    let (ccw, cw) = match f {
+        1 => (4u8, 2u8), // north: ccw west, cw east
+        2 => (1, 3),     // east: ccw north, cw south
+        3 => (2, 4),     // south: ccw east, cw west
+        _ => (3, 1),     // west: ccw south, cw north
+    };
+    let (ccw_dx, ccw_dz) = (
+        if ccw == 2 {
+            1
+        } else if ccw == 4 {
+            -1
+        } else {
+            0
+        },
+        if ccw == 1 {
+            -1
+        } else if ccw == 3 {
+            1
+        } else {
+            0
+        },
+    );
+    let (cw_dx, cw_dz) = (
+        if cw == 2 {
+            1
+        } else if cw == 4 {
+            -1
+        } else {
+            0
+        },
+        if cw == 1 {
+            -1
+        } else if cw == 3 {
+            1
+        } else {
+            0
+        },
+    );
+    // THE SCORE (pcs 110-177): the full blocks -1 LEFT / +1 RIGHT
+    let mut score = 0i32;
+    let full = |x: i32, y: i32, z: i32| {
+        matches!(
+            collision_shape_at(world, x, y, z),
+            CollisionShape::Full
+        )
+    };
+    if full(cx + ccw_dx, cy, cz + ccw_dz) {
+        score -= 1;
+    }
+    if full(cx + ccw_dx, cy + 1, cz + ccw_dz) {
+        score -= 1;
+    }
+    if full(cx + cw_dx, cy, cz + cw_dz) {
+        score += 1;
+    }
+    if full(cx + cw_dx, cy + 1, cz + cw_dz) {
+        score += 1;
+    }
+    // THE DOOR-PRESENCE ARMS (pcs 179-236): the side cell's own
+    // LOWER-door read (any hinge, any open bit — the instanceof +
+    // HALF==LOWER pair the vanilla checks)
+    let left_door = is_door_lower(world.get(cx + ccw_dx, cy, cz + ccw_dz));
+    let right_door = is_door_lower(world.get(cx + cw_dx, cy, cz + cw_dz));
+    // THE VERDICT (pcs 243-280)
+    if left_door != right_door {
+        return left_door; // the lone neighbor door the opposite hinge wears
+    }
+    if score > 0 {
+        return true; // the full wall the RIGHT side carries — the swing-toward wear
+    }
+    if score < 0 {
+        return false;
+    }
+    // THE CLICK WALK (pcs 281-389): the hinge the click's own half
+    // the player's right side wears, the 0.5 boundary the LEFT keeps
+    match f {
+        1 => click_dx > 0.5, // stepZ < 0: the dx arm
+        2 => click_dz > 0.5, // stepX > 0: the dz arm
+        3 => click_dx < 0.5, // stepZ > 0: the dx arm
+        _ => click_dz < 0.5, // stepX < 0: the dz arm
+    }
+}
+
 /// THE DOOR'S OWN VOICE STEM (javap BlockSetType the 26.2 jar — the
 /// doorOpen/doorClose SoundEvent pair the set type carries: the
 /// single-arg ctor's WOODEN_DOOR_CLOSE/OPEN the OAK/SPRUCE/BIRCH/
@@ -2038,12 +2483,18 @@ pub fn door_upper_mate(id: u16) -> Option<u16> {
 /// every event the official table carries).
 pub fn door_voice_stem(id: u16) -> &'static str {
     match id {
-        CHERRY_DOOR..=CHERRY_DOOR_UPPER_OPEN => "block.cherry_wood_door",
-        BAMBOO_DOOR..=BAMBOO_DOOR_UPPER_OPEN => "block.bamboo_wood_door",
+        CHERRY_DOOR..=CHERRY_DOOR_UPPER_OPEN
+        | CHERRY_DOOR_RIGHT..=CHERRY_DOOR_UPPER_OPEN_RIGHT => "block.cherry_wood_door",
+        BAMBOO_DOOR..=BAMBOO_DOOR_UPPER_OPEN
+        | BAMBOO_DOOR_RIGHT..=BAMBOO_DOOR_UPPER_OPEN_RIGHT => "block.bamboo_wood_door",
         CRIMSON_DOOR..=CRIMSON_DOOR_UPPER_OPEN
-        | WARPED_DOOR..=WARPED_DOOR_UPPER_OPEN => "block.nether_wood_door",
-        COPPER_DOOR..=WAXED_OXIDIZED_COPPER_DOOR_UPPER_OPEN => "block.copper_door",
-        IRON_DOOR..=IRON_DOOR_UPPER_OPEN => "block.iron_door",
+        | WARPED_DOOR..=WARPED_DOOR_UPPER_OPEN
+        | CRIMSON_DOOR_RIGHT..=CRIMSON_DOOR_UPPER_OPEN_RIGHT
+        | WARPED_DOOR_RIGHT..=WARPED_DOOR_UPPER_OPEN_RIGHT => "block.nether_wood_door",
+        COPPER_DOOR..=WAXED_OXIDIZED_COPPER_DOOR_UPPER_OPEN
+        | COPPER_DOOR_RIGHT..=WAXED_OXIDIZED_COPPER_DOOR_UPPER_OPEN_RIGHT => "block.copper_door",
+        IRON_DOOR..=IRON_DOOR_UPPER_OPEN
+        | IRON_DOOR_RIGHT..=IRON_DOOR_UPPER_OPEN_RIGHT => "block.iron_door",
         _ => "block.wooden_door",
     }
 }
@@ -2058,7 +2509,10 @@ pub fn door_voice_stem(id: u16) -> &'static str {
 /// answer (the press the PASS never consumes — the item lanes
 /// follow), every wooden + copper door the true the swap serves.
 pub fn door_opens_by_hand(id: u16) -> bool {
-    !matches!(id, IRON_DOOR..=IRON_DOOR_UPPER_OPEN)
+    !matches!(
+        id,
+        IRON_DOOR..=IRON_DOOR_UPPER_OPEN | IRON_DOOR_RIGHT..=IRON_DOOR_UPPER_OPEN_RIGHT
+    )
 }
 
 /// THE DOOR'S OWN PLACEMENT FACING (javap DoorBlock.getStateForPlacement
@@ -2467,28 +2921,43 @@ const DOOR_STRIP_CLOSED: [u8; 5] = [3, 3, 4, 1, 2];
 /// the open state `SHAPES.get(getClockWise())` the strip the
 /// clockwise facing's own opposite edge wears — facing north open
 /// the WEST strip, facing east open the NORTH strip, facing south
-/// open the EAST strip, facing west open the SOUTH strip; the
-/// hinge-RIGHT lane the getCounterClockWise arm a later round
-/// serves).
+/// open the EAST strip, facing west open the SOUTH strip).
 const DOOR_STRIP_OPEN: [u8; 5] = [4, 4, 1, 2, 3];
+/// THE OPEN SWING'S OWN HINGE-RIGHT ROW (the autopush-658 round —
+/// getShape pcs 41-46 the hinge-RIGHT arm the getCounterClockWise
+/// read speaks: the open-right state `SHAPES.get(getCounter
+/// ClockWise())` the strip the counterclockwise facing's own opposite
+/// edge wears — facing north open the EAST strip, facing east open
+/// the SOUTH strip, facing south open the WEST strip, facing west
+/// open the NORTH strip; the index-0 seat the north default's own
+/// east strip the closed tables' own law wears).
+const DOOR_STRIP_OPEN_RIGHT: [u8; 5] = [2, 2, 3, 4, 1];
 
-/// THE DOOR PANEL'S OWN STRIP EDGE (the law the two tables bank —
+/// THE DOOR PANEL'S OWN STRIP EDGE (the law the three tables bank —
 /// [`DOOR_STRIP_CLOSED`] the closed state's `SHAPES.get(FACING)`
-/// answer, [`DOOR_STRIP_OPEN`] the open state's swung edge). The
-/// byte the edge the strip hugs (the variant vocabulary north 1,
-/// east 2, south 3, west 4), the 3/16 thickness the Band pair's own
-/// second seat keeps. The out-of-vocabulary byte the
-/// registerDefaultState's own FACING=NORTH pin the default wears
-/// (the index-0 seat the tables bank — the honest guard the stray
-/// wire byte the panic never arms).
-pub fn door_strip_edge(facing_byte: u8, open: bool) -> u8 {
+/// answer [the hinge the closed shape never wears], [`DOOR_STRIP_OPEN`]
+/// the open-left state's swung edge, [`DOOR_STRIP_OPEN_RIGHT`] the
+/// open-right state's swung edge). The byte the edge the strip hugs
+/// (the variant vocabulary north 1, east 2, south 3, west 4), the
+/// 3/16 thickness the Band pair's own second seat keeps. The
+/// out-of-vocabulary byte the registerDefaultState's own FACING=NORTH
+/// pin the default wears (the index-0 seat the tables bank — the
+/// honest guard the stray wire byte the panic never arms). The
+/// hinge arg the open state's own arm reads (the closed state the
+/// table the hinge never consults — the caller the open kind's own
+/// predicate passes).
+pub fn door_strip_edge(facing_byte: u8, open: bool, hinge_right: bool) -> u8 {
     let f = usize::from(if (1..=4).contains(&facing_byte) {
         facing_byte
     } else {
         0
     });
     if open {
-        DOOR_STRIP_OPEN[f]
+        if hinge_right {
+            DOOR_STRIP_OPEN_RIGHT[f]
+        } else {
+            DOOR_STRIP_OPEN[f]
+        }
     } else {
         DOOR_STRIP_CLOSED[f]
     }
@@ -2513,7 +2982,11 @@ pub fn collision_shape_at(world: &World, cx: i32, cy: i32, cz: i32) -> Collision
         return collision_shape(id);
     }
     CollisionShape::Band(
-        door_strip_edge(world.variant(cx, cy, cz), is_door_open(id)),
+        door_strip_edge(
+            world.variant(cx, cy, cz),
+            is_door_open(id),
+            door_hinge_right(id),
+        ),
         3,
     )
 }
@@ -9265,7 +9738,7 @@ mod tests {
         assert_eq!(OAK_DOOR_UPPER, 91);
         assert_eq!(OAK_DOOR_OPEN, 92);
         assert_eq!(OAK_DOOR_UPPER_OPEN, 93);
-        assert_eq!(END_PORTAL, 174, "the displaced seat the copper ladder's tail banks");
+        assert_eq!(END_PORTAL, 258, "the displaced seat the hinge-right tail banks");
         // THE WOOD LADDER'S OWN SEATS (the dev-43 round — the eleven
         // quartets the CONTIGUOUS tail the kind ids 94..137 wear: the
         // closed lower + 0, the closed upper + 1, the open lower + 2,
@@ -9319,7 +9792,79 @@ mod tests {
                 "the {name} item the closed lower places"
             );
         }
-        assert_eq!(DOOR_KINDS.len(), 84, "the twenty-one quartets the ladder banks");
+        // THE HINGE-RIGHT TAIL'S OWN QUARTETS (the autopush-658 round —
+        // the RIGHT bases the LEFT ladder's own order mirrors, the +84
+        // seat the octet walk banks: the SAME quartet laws the LEFT
+        // quartets wear, the hinge predicate the tail's own membership
+        // answers, the hinge mate the ±84 swap speaks)
+        for (base, name) in [
+            (OAK_DOOR_RIGHT, "oak"),
+            (SPRUCE_DOOR_RIGHT, "spruce"),
+            (BIRCH_DOOR_RIGHT, "birch"),
+            (JUNGLE_DOOR_RIGHT, "jungle"),
+            (ACACIA_DOOR_RIGHT, "acacia"),
+            (DARK_OAK_DOOR_RIGHT, "dark_oak"),
+            (MANGROVE_DOOR_RIGHT, "mangrove"),
+            (CHERRY_DOOR_RIGHT, "cherry"),
+            (PALE_OAK_DOOR_RIGHT, "pale_oak"),
+            (BAMBOO_DOOR_RIGHT, "bamboo"),
+            (CRIMSON_DOOR_RIGHT, "crimson"),
+            (WARPED_DOOR_RIGHT, "warped"),
+            (COPPER_DOOR_RIGHT, "copper"),
+            (EXPOSED_COPPER_DOOR_RIGHT, "exposed_copper"),
+            (WEATHERED_COPPER_DOOR_RIGHT, "weathered_copper"),
+            (OXIDIZED_COPPER_DOOR_RIGHT, "oxidized_copper"),
+            (WAXED_COPPER_DOOR_RIGHT, "waxed_copper"),
+            (WAXED_EXPOSED_COPPER_DOOR_RIGHT, "waxed_exposed_copper"),
+            (WAXED_WEATHERED_COPPER_DOOR_RIGHT, "waxed_weathered_copper"),
+            (WAXED_OXIDIZED_COPPER_DOOR_RIGHT, "waxed_oxidized_copper"),
+            (IRON_DOOR_RIGHT, "iron"),
+        ] {
+            assert_eq!(
+                door_flip_mate(base),
+                Some(base + 2),
+                "the {name} right closed lower the open lower flips"
+            );
+            assert!(is_door_lower(base) && is_door_lower(base + 2));
+            assert!(is_door_upper(base + 1) && is_door_upper(base + 3));
+            assert!(is_door_open(base + 2) && is_door_open(base + 3));
+            assert_eq!(door_upper_mate(base), Some(base + 1));
+            assert!(
+                door_hinge_right(base),
+                "the {name} right kinds the tail's own seat wears"
+            );
+            assert_eq!(
+                NAME_OF[base as usize],
+                format!("{name}_door"),
+                "the {name} right quartet the shared base row wears"
+            );
+        }
+        // THE HINGE PREDICATE'S OWN SEATS (the LEFT quartets the false
+        // answer, the RIGHT tail the true, the non-doors the false)
+        for left in DOOR_KINDS.iter().take(84) {
+            assert!(
+                !door_hinge_right(*left),
+                "the left kind {left} the head's own seat wears"
+            );
+        }
+        for right in DOOR_KINDS.iter().skip(84) {
+            assert!(
+                door_hinge_right(*right),
+                "the right kind {right} the tail's own seat wears"
+            );
+        }
+        assert!(!door_hinge_right(STONE) && !door_hinge_right(END_PORTAL));
+        // THE HINGE MATE (the ±84 swap the placement's census verdict
+        // wears — the LEFT closed lower the RIGHT closed lower answers,
+        // the non-doors the None the predicates keep)
+        assert_eq!(door_hinge_mate(OAK_DOOR), Some(OAK_DOOR_RIGHT));
+        assert_eq!(door_hinge_mate(OAK_DOOR_RIGHT), Some(OAK_DOOR));
+        assert_eq!(
+            door_hinge_mate(IRON_DOOR_UPPER_OPEN),
+            Some(IRON_DOOR_UPPER_OPEN_RIGHT)
+        );
+        assert_eq!(door_hinge_mate(STONE), None);
+        assert_eq!(DOOR_KINDS.len(), 168, "the twenty-one octets the ladder banks");
         // THE HAND GATE'S OWN LAW (javap canOpenByHand the set type's
         // own field — the iron iconst_0 the refusal, the wooden +
         // copper families the iconst_1 the delegations and the full
@@ -9327,7 +9872,11 @@ mod tests {
         for id in DOOR_KINDS {
             assert_eq!(
                 crate::world::door_opens_by_hand(id),
-                !matches!(id, IRON_DOOR..=IRON_DOOR_UPPER_OPEN),
+                !matches!(
+                    id,
+                    IRON_DOOR..=IRON_DOOR_UPPER_OPEN
+                        | IRON_DOOR_RIGHT..=IRON_DOOR_UPPER_OPEN_RIGHT
+                ),
                 "the kind {id} the iron refusal alone wears"
             );
         }
@@ -9381,7 +9930,19 @@ mod tests {
         for id in [OAK_DOOR, OAK_DOOR_UPPER, OAK_DOOR_OPEN, OAK_DOOR_UPPER_OPEN] {
             assert_eq!(NAME_OF[id as usize], "oak_door", "kind {id} the base row wears");
         }
-        assert_eq!(NAME_OF.len(), 174, "the palette rows the cross-check keeps");
+        for id in [
+            OAK_DOOR_RIGHT,
+            OAK_DOOR_UPPER_RIGHT,
+            OAK_DOOR_OPEN_RIGHT,
+            OAK_DOOR_UPPER_OPEN_RIGHT,
+        ] {
+            assert_eq!(
+                NAME_OF[id as usize],
+                "oak_door",
+                "kind {id} the right quartet the base row wears"
+            );
+        }
+        assert_eq!(NAME_OF.len(), 258, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)
@@ -9508,12 +10069,112 @@ mod tests {
             CollisionShape::Empty,
             "the below-world the passable law keeps"
         );
-        // THE EDGE TABLES' OWN SEATS (the direct pins the fn wears)
-        assert_eq!(door_strip_edge(0, false), 3);
-        assert_eq!(door_strip_edge(0, true), 4);
-        assert_eq!(door_strip_edge(2, false), 4, "the closed east the west strip");
-        assert_eq!(door_strip_edge(2, true), 1, "the open east the north strip");
-        assert_eq!(door_strip_edge(9, false), 3, "the stray byte the north seat");
+        // THE EDGE TABLES' OWN SEATS (the direct pins the fn wears —
+        // the closed rows the hinge the table never reads, the open
+        // rows the LEFT quartets the clockWise arm the RIGHT the
+        // counterClockWise arm wear)
+        assert_eq!(door_strip_edge(0, false, false), 3);
+        assert_eq!(door_strip_edge(0, false, true), 3, "the closed the hinge never reads");
+        assert_eq!(door_strip_edge(0, true, false), 4);
+        assert_eq!(door_strip_edge(0, true, true), 2, "the open-right north the east strip");
+        assert_eq!(door_strip_edge(2, false, false), 4, "the closed east the west strip");
+        assert_eq!(door_strip_edge(2, true, false), 1, "the open east the north strip");
+        assert_eq!(door_strip_edge(2, true, true), 3, "the open-right east the south strip");
+        assert_eq!(door_strip_edge(3, true, true), 4, "the open-right south the west strip");
+        assert_eq!(door_strip_edge(4, true, true), 1, "the open-right west the north strip");
+        assert_eq!(door_strip_edge(9, false, false), 3, "the stray byte the north seat");
+    }
+
+    #[test]
+    fn the_hinge_census_the_four_cells_and_the_click_arms_wear() {
+        // THE CENSUS'S OWN WALK (javap DoorBlock.getHinge the 26.2 jar
+        // — the score the isCollisionShapeFullBlock verdicts ±1 each
+        // speak [the LEFT pair the -1, the RIGHT pair the +1], the
+        // LOWER-door presence the both-sides' arms keep, the click
+        // walk the score-0 fallback answers: the four step arms the
+        // in-cell dx/dz the player's own right half read, the 0.5
+        // boundary the LEFT keeps, the no-opinion facing byte the
+        // north default the tables' own law wears)
+        let mut w = World::new(2, 7);
+        let (cx, cy, cz) = (8, 1, 8);
+        // THE SITE'S OWN STAGING (the procedural terrain the fresh
+        // world grows — the four census cells the walk reads the AIR
+        // verdict the score-0 law keeps, the test's own sets the only
+        // voices the site hears)
+        for dx in [-1i32, 1] {
+            for dy in [0i32, 1] {
+                w.set(cx + dx, cy + dy, cz, AIR);
+            }
+        }
+        // THE EMPTY WORLD'S OWN CLICK WALK (facing north: the stepZ<0
+        // arm the dx reads — the east half the RIGHT, the west half
+        // and the boundary the LEFT)
+        assert!(!door_hinge_census(&w, cx, cy, cz, 1, 0.3, 0.9));
+        assert!(door_hinge_census(&w, cx, cy, cz, 1, 0.7, 0.9));
+        assert!(!door_hinge_census(&w, cx, cy, cz, 1, 0.5, 0.9), "the boundary the LEFT keeps");
+        // THE STRAY BYTE THE NORTH DEFAULT (the no-opinion 0 the
+        // facing tables' own seat wears — the north arm the same walk
+        // serves)
+        assert!(!door_hinge_census(&w, cx, cy, cz, 0, 0.3, 0.9));
+        assert!(door_hinge_census(&w, cx, cy, cz, 0, 0.7, 0.9));
+        // THE WALL SCORE (the full blocks the ±1 each speak: the east
+        // wall the +2 the swing-toward verdict banks, the west wall
+        // the -2 the LEFT — the click walk the score's own precedence
+        // never reaches)
+        w.set(cx + 1, cy, cz, STONE);
+        w.set(cx + 1, cy + 1, cz, STONE);
+        assert!(door_hinge_census(&w, cx, cy, cz, 1, 0.3, 0.9), "the east wall the RIGHT wears");
+        w.set(cx + 1, cy, cz, AIR);
+        w.set(cx + 1, cy + 1, cz, AIR);
+        w.set(cx - 1, cy, cz, STONE);
+        w.set(cx - 1, cy + 1, cz, STONE);
+        assert!(!door_hinge_census(&w, cx, cy, cz, 1, 0.7, 0.9), "the west wall the LEFT wears");
+        // THE SINGLE-CELL WALL THE 0 SCORE KEEPS (the one block the
+        // ±1 the tie the click walk answers — the above-row read the
+        // vanilla's own four-cell scan speaks)
+        w.set(cx - 1, cy, cz, AIR);
+        assert!(!door_hinge_census(&w, cx, cy, cz, 1, 0.3, 0.9), "the -1 upper score the LEFT verdict wears");
+        // THE ZERO SCORE'S OWN TIE (the last west block the AIR the
+        // score-0 walk restores — the click arms the boundary law
+        // wears again)
+        w.set(cx - 1, cy + 1, cz, AIR);
+        assert!(door_hinge_census(&w, cx, cy, cz, 1, 0.7, 0.9), "the score-0 the east-half click the RIGHT wears");
+        // THE DOOR-PRESENCE ARMS (the side cell's own LOWER door the
+        // lone-neighbor verdicts bank: the west cell's door the RIGHT
+        // [the double-door seam], the east cell's door the LEFT, the
+        // both pair the score's tie-break wears)
+        w.set(cx + 1, cy, cz, AIR);
+        w.set(cx + 1, cy + 1, cz, AIR);
+        w.set(cx - 1, cy, cz, OAK_DOOR);
+        assert!(door_hinge_census(&w, cx, cy, cz, 1, 0.3, 0.9), "the west door the RIGHT seam wears");
+        w.set(cx - 1, cy, cz, AIR);
+        w.set(cx + 1, cy, cz, OAK_DOOR);
+        assert!(!door_hinge_census(&w, cx, cy, cz, 1, 0.7, 0.9), "the east door the LEFT seam wears");
+        // THE BOTH-DOORS TIE-BREAK (the score the full cells alone
+        // speak — the both-doors zero the click walk serves, the +1
+        // east wall the RIGHT, the -1 west wall the LEFT)
+        w.set(cx - 1, cy, cz, OAK_DOOR);
+        assert!(door_hinge_census(&w, cx, cy, cz, 1, 0.7, 0.9), "the both doors the east-half click the RIGHT wears");
+        assert!(!door_hinge_census(&w, cx, cy, cz, 1, 0.3, 0.9), "the both doors the west-half click the LEFT keeps");
+        w.set(cx + 1, cy + 1, cz, STONE);
+        assert!(door_hinge_census(&w, cx, cy, cz, 1, 0.3, 0.9), "the +1 east wall the both-doors tie the RIGHT banks");
+        w.set(cx + 1, cy + 1, cz, AIR);
+        w.set(cx - 1, cy + 1, cz, STONE);
+        assert!(!door_hinge_census(&w, cx, cy, cz, 1, 0.7, 0.9), "the -1 west wall the both-doors tie the LEFT keeps");
+        // THE EAST FACING'S OWN STEP ARM (the stepX>0 arm the dz reads
+        // — the south half the RIGHT, the boundary the LEFT; the ccw
+        // side the north cell the door presence reads)
+        w.set(cx - 1, cy, cz, AIR);
+        w.set(cx + 1, cy, cz, AIR);
+        w.set(cx - 1, cy + 1, cz, AIR);
+        assert!(door_hinge_census(&w, cx, cy, cz, 2, 0.9, 0.7), "the east facing the south-half click the RIGHT wears");
+        assert!(!door_hinge_census(&w, cx, cy, cz, 2, 0.9, 0.5), "the east facing the boundary the LEFT keeps");
+        // THE SOUTH FACING'S OWN ARM (the stepZ>0 arm the dx<0.5 read
+        // — the west half the RIGHT)
+        assert!(door_hinge_census(&w, cx, cy, cz, 3, 0.3, 0.9), "the south facing the west-half click the RIGHT wears");
+        // THE WEST FACING'S OWN ARM (the stepX<0 arm the dz<0.5 read —
+        // the north half the RIGHT)
+        assert!(door_hinge_census(&w, cx, cy, cz, 4, 0.9, 0.3), "the west facing the north-half click the RIGHT wears");
     }
 
     #[test]
