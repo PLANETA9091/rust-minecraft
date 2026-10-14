@@ -899,7 +899,38 @@ pub const END_STONE: u16 = 89;
 /// beyond-table 258 the same law keeps (the every-rung displacement
 /// the ladder's growth speaks — the `id < N_KINDS` guards the tile
 /// lookups' skip verdict the bigger tail keeps).
-pub const END_PORTAL: u16 = 258;
+pub const END_PORTAL: u16 = 260;
+
+/// THE LEVER'S OWN PAIR (the dev-45 round): the toggle's own block
+/// finally RENDERS, PLACES and SPEAKS — javap the 26.2 jar's
+/// `net.minecraft.world.level.block.LeverBlock` (the
+/// `useWithoutItem` walk pc 0-55 the `state.cycle(POWERED)` flip
+/// speaks, the `playSound` walk pc 0-43 the `SoundEvents.LEVER_CLICK`
+/// BLOCKS voice 0.3 volume carries, the pitch the `powered ? 0.6f :
+/// 0.5f` fold answers, the `updateNeighbours` walk pc 9-65 the lever
+/// pos + `getConnectedDirection(state).getOpposite()` (the FLOOR
+/// face's own DOWN) broadcasts the wire voice rides) + the abstract
+/// base `FaceAttachedHorizontalDirectionalBlock` (the `canSurvive`
+/// walk pc 0-12 the `canAttach(level, pos, getConnectedDirection
+/// (state).getOpposite())` verdict speaks — the FLOOR lever the
+/// below cell's sturdy UP face reads, the offline equivalence the
+/// collision table's non-Empty rows keep; the `getStateForPlacement`
+/// walk pcs 0-139 the `getNearestLookingDirections()` scan the
+/// Y-axis arm's FLOOR verdict + the `getHorizontalDirection()`
+/// FACING answer wears — the raw look the placement stamps, NO
+/// opposite the furnace's own flip wears). The kind pair the OFF/ON
+/// bit alone carries — the facing the variant byte wears (the door's
+/// own raw-look law [`lever_facing_byte`] walks, the mesher's y-rot
+/// steps the byte serves — the blockstate's own FLOOR rows north
+/// y=0 / east y=90 / south y=180 / west y=270 the step fold reads),
+/// the OFF/ON swap the +1/-1 mate the ladder speaks (the kinds
+/// 258/259 the seat pair answers). The beyond-table seat the
+/// END_PORTAL kind the displacement law keeps (the every-rung
+/// displacement the door ladder's growths wear — the kind's own seat
+/// 260 the beyond-table tail now banks, the `id < N_KINDS` guards
+/// the tile lookups' skip verdict the bigger table keeps).
+pub const LEVER: u16 = 258;
+pub const LEVER_ON: u16 = 259;
 
 /// THE OAK DOOR'S OWN CLOSED LOWER (the autopush-655 round — the
 /// vocabulary's next frontier: the right-click open/close the
@@ -1443,7 +1474,7 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 }
 
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 258] = [
+pub const NAME_OF: [&str; 260] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1747,6 +1778,15 @@ pub const NAME_OF: [&str; 258] = [
     "waxed_weathered_copper_door", "waxed_weathered_copper_door", "waxed_weathered_copper_door", "waxed_weathered_copper_door",
     "waxed_oxidized_copper_door", "waxed_oxidized_copper_door", "waxed_oxidized_copper_door", "waxed_oxidized_copper_door",
     "iron_door", "iron_door", "iron_door", "iron_door",
+    // THE LEVER PAIR'S OWN SHARED-BASE ROWS (the dev-45 round): the
+    // registry the ONE "lever" entry both states the same name speaks
+    // (javap Blocks clinit the 26.2 jar — the LEVER register the
+    // single block keeps, the POWERED property the kind-only
+    // vocabulary's own ladder wears), the dig row (0.5 hardness, no
+    // tool demand) / the drops table (the lever item) / the sounds'
+    // WOOD row / the item id the pick lane grants BOTH kinds the
+    // shared name answers.
+    "lever", "lever",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -2571,6 +2611,79 @@ pub fn is_torch(id: u16) -> bool {
     id == TORCH
 }
 
+/// THE LEVER'S OWN FAMILY (the dev-45 round — the two-kind ladder the
+/// OFF/ON bit alone wears, the facing the variant byte carries): the
+/// placement's survival gate, the collision's pass-through row, the
+/// mesher's element lane and the toggle's own walk the family fn
+/// serves (the torch family's own shape the sibling keeps — the two
+/// kinds the POWERED bit the ladder's own seat pair banks).
+pub fn is_lever(id: u16) -> bool {
+    id == LEVER || id == LEVER_ON
+}
+
+/// THE LEVER'S OWN POWERED BIT (javap LeverBlock.useWithoutItem pc
+/// 7-21 — the `state.cycle(POWERED)` walk the toggle's own flip
+/// speaks): the ON kind the powered verdict keeps, the OFF kind the
+/// resting answer wears.
+pub fn lever_powered(id: u16) -> bool {
+    id == LEVER_ON
+}
+
+/// THE LEVER'S OWN OFF/ON MATE (the same `cycle(POWERED)` law the
+/// ladder's ±1 seat speaks — the OFF kind the ON answer, the ON the
+/// OFF keeps; the unknown id the None the honest guard banks).
+pub fn lever_toggled(id: u16) -> Option<u16> {
+    match id {
+        LEVER => Some(LEVER_ON),
+        LEVER_ON => Some(LEVER),
+        _ => None,
+    }
+}
+
+/// THE LEVER'S OWN PLACEMENT FACING (javap the base
+/// FaceAttachedHorizontalDirectionalBlock.getStateForPlacement pcs
+/// 0-139 — the Y-axis arm's FLOOR verdict the `setValue(FACING,
+/// context.getHorizontalDirection())` raw look answers: the
+/// horizontal direction the fromYRot decode wears, NO opposite the
+/// furnace's own flip keeps). The byte the variant layer's own
+/// vocabulary carries (the door's own raw-look byte law
+/// [`door_facing_byte`] walks — the SAME FACING_BY_2D rows the look's
+/// own compass speaks: 1 north / 2 east / 3 south / 4 west).
+pub fn lever_facing_byte(cam_yaw_radians: f32) -> u8 {
+    door_facing_byte(cam_yaw_radians)
+}
+
+/// THE LEVER'S OWN FLOOR SURVIVAL (javap the base canSurvive pc 0-12
+/// — the `canAttach(level, pos, getConnectedDirection(state)
+/// .getOpposite())` verdict the FLOOR face's DOWN arm speaks, the
+/// support cell's `isFaceSturdy(level, below, UP)` read the
+/// collision table's non-Empty rows answer: the full-cube family the
+/// sturdy faces keep, the torch's own row the same verdict the
+/// placement's survival gates wear — the floating lever the refusal
+/// keeps).
+pub fn lever_can_survive(world: &World, x: i32, y: i32, z: i32) -> bool {
+    !matches!(collision_shape(world.get(x, y - 1, z)), CollisionShape::Empty)
+}
+
+/// THE WIRE'S OWN SOURCE WALK (javap Level.hasNeighborSignal pc 0-33
+/// — the `Direction.values()` loop the `getSignal(pos.relative(dir),
+/// dir) != 0` read wears; the lever the loop's own powered source the
+/// client's kind-only vocabulary answers: LeverBlock.getSignal the
+/// `powered ? 15 : 0` fold speaks — the POWERED kind's 15 the loop's
+/// nonzero verdict wears, the OFF kind's 0 the silent keep): the
+/// cell's own six neighbors any POWERED lever holds the signal
+/// verdict — the hasNeighborSignal walk's lever-source subset the
+/// honest client speaks (the other redstone sources the vocabulary
+/// never carries — the source family the later lanes grow).
+pub fn lever_signal_at(world: &World, x: i32, y: i32, z: i32) -> bool {
+    (world.get(x, y + 1, z) == LEVER_ON)
+        || (world.get(x, y - 1, z) == LEVER_ON)
+        || (world.get(x + 1, y, z) == LEVER_ON)
+        || (world.get(x - 1, y, z) == LEVER_ON)
+        || (world.get(x, y, z + 1) == LEVER_ON)
+        || (world.get(x, y, z - 1) == LEVER_ON)
+}
+
 /// THE FALLING FAMILY — the kinds the vanilla's FallingBlock registers
 /// (the sand/gravel pair the falling-block entity's own factory wears;
 /// the white CONCRETE POWDER the palette's own growth banks — the
@@ -2754,6 +2867,16 @@ pub fn collision_shape(id: u16) -> CollisionShape {
         || id == WATER
         || id == LAVA
         || is_torch(id)
+        // THE LEVER'S OWN ROW (the dev-45 round — the blocks clinit's
+        // noCollision() call the lever registration speaks, the
+        // pass-through verdict the torch family's own row the sibling
+        // wears): the body walks THROUGH the lever cell (the base
+        // plate + the tilted stick the collision never banks — the
+        // vanilla's own getShape the lever model's boxes the collision
+        // Shape never adds), the placement's obstruction the empty
+        // shape never refuses, the neighbors' own faces the
+        // non-occluding verdict draws.
+        || is_lever(id)
         || is_flower(id)
         || is_tuft(id)
         || is_double_plant(id)
@@ -9307,6 +9430,109 @@ mod tests {
         assert!(!can_support_torch(TORCH), "the torch the torch never supports");
     }
 
+    #[test]
+    fn the_lever_pair_the_mate_and_the_registry_laws_wear() {
+        // THE LEVER'S OWN FAMILY WALK (the dev-45 round — the two-kind
+        // ladder the OFF/ON bit alone wears, the facing the variant
+        // byte carries, the shared-base registry rows the dig/drops/
+        // sounds/item lanes read): the +1/-1 mate the cycle speaks
+        // (javap LeverBlock.useWithoutItem pc 7-21 the POWERED
+        // property's own flip serves), the unknown id the honest None
+        // the guard banks, the collision's pass-through row the
+        // noCollision() verdict keeps (the body walks THROUGH the
+        // lever cell), the dig row the generated table's own (0.5,
+        // false) speaks, the signal walk the six neighbors the
+        // hasNeighborSignal's lever-source subset answers.
+        assert!(is_lever(LEVER) && is_lever(LEVER_ON));
+        assert!(!is_lever(IRON_DOOR) && !is_lever(END_PORTAL));
+        assert!(!lever_powered(LEVER));
+        assert!(lever_powered(LEVER_ON));
+        assert_eq!(lever_toggled(LEVER), Some(LEVER_ON));
+        assert_eq!(lever_toggled(LEVER_ON), Some(LEVER));
+        assert_eq!(lever_toggled(IRON_DOOR), None);
+        // THE SHARED-BASE ROWS (the registry the ONE "lever" entry
+        // both kinds the same name speaks — the cross-check the
+        // generated rows the walk banks)
+        assert_eq!(NAME_OF[LEVER as usize], "lever");
+        assert_eq!(NAME_OF[LEVER_ON as usize], "lever");
+        assert_eq!(LEVER + 1, LEVER_ON, "the +1 seat the OFF/ON ladder wears");
+        // THE COLLISION'S OWN PASS-THROUGH (the noCollision() row the
+        // Properties chain speaks — the placement's own obstruction
+        // the empty shape never refuses)
+        assert_eq!(collision_shape(LEVER), CollisionShape::Empty);
+        assert_eq!(collision_shape(LEVER_ON), CollisionShape::Empty);
+        // THE DIG'S OWN ROW (the generated table's (0.5, false) the
+        // lever registration's strength(0.5f) + the no-tool demand
+        // the bare hand's harvest keeps)
+        let (hard, tool) = crate::dig::DigState::block_dig_row(LEVER);
+        assert_eq!(hard, 0.5, "the lever's own 0.5 the generated row wears");
+        assert!(!tool, "the bare hand the harvest keeps");
+        // THE SIGNAL'S OWN WALK (the six neighbors the
+        // hasNeighborSignal loop serves — the POWERED kind's 15 the
+        // nonzero verdict wears, the OFF kind's 0 the silent keep)
+        let mut w = World::new(1, 0x600D);
+        let c = w.size_blocks() / 2;
+        let y = 2;
+        w.set(c + 1, y, c, LEVER_ON);
+        assert!(lever_signal_at(&w, c, y, c), "the east seat's powered lever the signal answers");
+        w.set(c + 1, y, c, LEVER);
+        assert!(!lever_signal_at(&w, c, y, c), "the OFF lever the silence keeps");
+        w.set(c, y + 1, c, LEVER_ON);
+        assert!(lever_signal_at(&w, c, y, c), "the above seat the same verdict wears");
+        w.set(c, y + 1, c, AIR);
+        w.set(c, y - 1, c, LEVER_ON);
+        assert!(lever_signal_at(&w, c, y, c), "the below seat the same verdict wears");
+        w.set(c, y - 1, c, AIR);
+        assert!(!lever_signal_at(&w, c, y, c), "the bare cell the silence keeps");
+        // THE SURVIVAL'S OWN LAW (javap the base canSurvive pc 0-12 —
+        // the below cell's sturdy UP face the collision rows answer,
+        // the floating lever the refusal keeps)
+        w.set(c, y - 1, c, STONE);
+        assert!(lever_can_survive(&w, c, y, c), "the stone below the survival answers");
+        w.set(c, y - 1, c, AIR);
+        assert!(!lever_can_survive(&w, c, y, c), "the floating lever the refusal keeps");
+        w.set(c, y - 1, c, TORCH);
+        assert!(!lever_can_survive(&w, c, y, c), "the torch below the empty row refuses");
+    }
+
+    #[test]
+    fn the_lever_facing_byte_the_raw_look_wears() {
+        // THE FACING'S OWN LAW (javap the base
+        // FaceAttachedHorizontalDirectionalBlock.getStateForPlacement
+        // pcs 64-73 — the `setValue(FACING, context
+        // .getHorizontalDirection())` RAW look the FLOOR arm answers,
+        // NO opposite the furnace's own flip wears): the byte the
+        // door's own raw-look rows the same compass speaks (1 north /
+        // 2 east / 3 south / 4 west), the steps the byte-1 fold the
+        // mesher's y-rot walk serves (the blockstate's own FLOOR rows
+        // north y=0 / east y=90 / south y=180 / west y=270 the step
+        // counts bank).
+        let north = lever_facing_byte(0.0);
+        let east = lever_facing_byte(std::f32::consts::FRAC_PI_2);
+        let south = lever_facing_byte(std::f32::consts::PI);
+        let west = lever_facing_byte(-std::f32::consts::FRAC_PI_2);
+        assert_eq!(north, 1, "the north look the byte-1 row wears");
+        assert_eq!(east, 2, "the east look the byte-2 row wears");
+        assert_eq!(south, 3, "the south look the byte-3 row wears");
+        assert_eq!(west, 4, "the west look the byte-4 row wears");
+        // THE PARITY'S OWN PIN (the lever's byte the door's raw-look
+        // walk the same law speaks — the shared rows the two lanes
+        // keep, the furnace's own opposite the lever never wears)
+        assert_eq!(lever_facing_byte(0.7), door_facing_byte(0.7));
+        assert_eq!(lever_facing_byte(-2.3), door_facing_byte(-2.3));
+        // THE STEPS' OWN FOLD (the variant byte the mesher reads —
+        // the door lane's own decode shape: the byte 0 the north
+        // default keeps, the 1..=4 rows the 0..3 indexes the -1 fold
+        // serves)
+        let steps = |byte: u8| {
+            if byte == 0 { 0usize } else { byte as usize - 1 }
+        };
+        assert_eq!(steps(1), 0, "the north row the y=0 step keeps");
+        assert_eq!(steps(2), 1, "the east row the y=90 step wears");
+        assert_eq!(steps(3), 2, "the south row the y=180 step wears");
+        assert_eq!(steps(4), 3, "the west row the y=270 step wears");
+    }
+
     /// THE GRASS TUFT'S OWN DECORATE WALK (the autopush-412 round — the
     /// patch_grass_plain + patch_bush placed features' honest stand-in
     /// — javap the jar's worldgen json the noise machinery the client's
@@ -9738,7 +9964,7 @@ mod tests {
         assert_eq!(OAK_DOOR_UPPER, 91);
         assert_eq!(OAK_DOOR_OPEN, 92);
         assert_eq!(OAK_DOOR_UPPER_OPEN, 93);
-        assert_eq!(END_PORTAL, 258, "the displaced seat the hinge-right tail banks");
+        assert_eq!(END_PORTAL, 260, "the displaced seat the lever pair's own tail banks");
         // THE WOOD LADDER'S OWN SEATS (the dev-43 round — the eleven
         // quartets the CONTIGUOUS tail the kind ids 94..137 wear: the
         // closed lower + 0, the closed upper + 1, the open lower + 2,
@@ -9942,7 +10168,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 258, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 260, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)

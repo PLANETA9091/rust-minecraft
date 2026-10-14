@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 258] = [
+pub const RUNTIME_PALETTE: [&str; 260] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -709,6 +709,21 @@ pub const RUNTIME_PALETTE: [&str; 258] = [
     "waxed_weathered_copper_door_right", "waxed_weathered_copper_door_upper_right", "waxed_weathered_copper_door_open_right", "waxed_weathered_copper_door_upper_open_right",
     "waxed_oxidized_copper_door_right", "waxed_oxidized_copper_door_upper_right", "waxed_oxidized_copper_door_open_right", "waxed_oxidized_copper_door_upper_open_right",
     "iron_door_right", "iron_door_upper_right", "iron_door_open_right", "iron_door_upper_open_right",
+    // THE LEVER'S OWN PAIR (the dev-45 round): the toggle's own block
+    // finally RENDERS and SPEAKS — javap LeverBlock + the
+    // FaceAttachedHorizontalDirectionalBlock base the 26.2 jar (the
+    // useWithoutItem cycle pc 7-21 the POWERED flip speaks, the
+    // playSound walk pc 23-42 the LEVER_CLICK 0.3 volume / the 0.6
+    // powered-true 0.5 false pitch pair banks, the updateNeighbours
+    // walk pc 9-65 the lever pos + the support pos broadcasts the
+    // wire voice rides), the blockstate's own FLOOR rows the two
+    // kinds resolve (powered=false the "block/lever_on" model the
+    // jar's own reversed authoring banks, powered=true the
+    // "block/lever" model — the verbatim rows the resolution speaks),
+    // the facing the variant byte carries (the door's own raw-look
+    // law the placement stamps, the mesher's y-rot steps the byte
+    // serves), the iron door's wire voice the signal walk answers.
+    "lever", "lever_on",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -1883,6 +1898,47 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             faces.push(resolve_flat_stem(&stem, true));
             continue;
         }
+        if block == "lever" || block == "lever_on" {
+            // THE LEVER FAMILY'S OWN ROWS (the dev-45 round): the
+            // blockstate's own FLOOR rows the two kinds wear — the
+            // "face=floor,facing=north,powered={p}" row the jar's own
+            // REVERSED authoring resolves (powered=false the
+            // "block/lever_on" model, powered=true the "block/lever"
+            // model — the verbatim rows the resolution speaks), the
+            // merged texture map's `#lever` ref block/lever the row's
+            // tile banks (all six slots the ONE lever texture — the
+            // mesher's lever lane the per-quad verdict reads, the
+            // cobblestone base the sidecar tile answers), tinted =
+            // false (the faces carry NO tintindex — the pre-colored
+            // masters render as authored).
+            let powered = block == "lever_on";
+            let bs_bytes = read_jar(
+                &mut archive,
+                "assets/minecraft/blockstates/lever.json",
+            )?;
+            let bs: Value = serde_json::from_slice(&bs_bytes)
+                .with_context(|| "blockstate lever: json parse")?;
+            let row_key = format!("face=floor,facing=north,powered={powered}");
+            let model_ref = bs
+                .get("variants")
+                .and_then(|v| v.get(&row_key))
+                .and_then(|v| v.get("model"))
+                .and_then(|m| m.as_str())
+                .with_context(|| format!("blockstate lever: no {row_key} model"))?
+                .trim_start_matches("minecraft:")
+                .to_string();
+            let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
+                .with_context(|| format!("block lever: model chain {model_ref}"))?;
+            let tex = tex_map
+                .get("lever")
+                .with_context(|| format!("model {model_ref}: no lever texture ref"))?;
+            let stem = tex
+                .trim_start_matches("minecraft:")
+                .trim_start_matches("block/")
+                .to_string();
+            faces.push(resolve_flat_stem(&stem, false));
+            continue;
+        }
         faces.push(resolve_block(&mut archive, block)?);
     }
 
@@ -2335,6 +2391,29 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
     // round): cake_inner the bitten cut's own texture the slice
     // models' #inside ref names — the west face the per-quad verdict
     // the TILE_CAKE_INNER const answers.
+    // THE LEVER'S BASE PLATE'S OWN SIDECAR (the dev-45 round): the
+    // cobblestone master the lever model's `#base` ref names — a plain
+    // 16x16 still the mcmeta never animates (the lever base the same
+    // law the cake bank wears). APPENDED after the palette rows — the
+    // block palette's tile indices stay byte-identical (the
+    // deterministic scenes keep their exact pixels). The named tile
+    // the mesher's lever lane's per-quad texture verdict reads (the
+    // TILE_COBBLESTONE const the emit answers).
+    if !tile_names.iter().any(|n| n == "cobblestone") {
+        let raw = read_jar(
+            &mut archive,
+            "assets/minecraft/textures/block/cobblestone.png",
+        )
+        .with_context(|| "texture block/cobblestone.png")?;
+        let (w, h, rgba) = decode_rgba(&raw)?;
+        if w != 16 || h != 16 {
+            bail!("texture cobblestone: expected 16x16, got {w}x{h}");
+        }
+        let mut bytes = rgba;
+        bake_tint(&mut bytes, tint_for_texture("cobblestone"));
+        tile_names.push("cobblestone".to_string());
+        tile_bytes.push(bytes);
+    }
     for stem in ["cake_bottom", "cake_top", "cake_side", "cake_inner"] {
         if tile_names.iter().any(|n| n == stem) {
             continue; // the dedup the walk keeps
@@ -2621,6 +2700,7 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         ));
     }
     for (stem, prefix) in [
+        ("cobblestone", "TILE_COBBLESTONE"),
         ("cake_bottom", "TILE_CAKE_BOTTOM"),
         ("cake_top", "TILE_CAKE_TOP"),
         ("cake_side", "TILE_CAKE_SIDE"),
@@ -2859,6 +2939,7 @@ fn registry_names() -> [&'static str; RUNTIME_PALETTE.len()] {
         names[i] = base
             .strip_suffix("_upper")
             .or_else(|| base.strip_suffix("_lit"))
+            .or_else(|| base.strip_suffix("_on"))
             // THE CAKE LADDER'S OWN STRIP (the autopush-524 round): the
             // seven bite stages the BASE "cake" row the shared-row law
             // keeps — the dig row (0.5 hardness), the drops table (the

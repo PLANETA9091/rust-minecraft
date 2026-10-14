@@ -129,6 +129,10 @@ fn is_transparent(kind: u16) -> bool {
         // stick box the neighbors' faces draw against, the noCollision
         // row the Properties chain speaks)
         || crate::world::is_torch(kind)
+        // THE LEVER the same verdict keeps (the dev-45 round — the
+        // base plate + the tilted stick the neighbors' faces draw
+        // against, the noCollision row the Properties chain speaks)
+        || crate::world::is_lever(kind)
         // THE WEB the same verdict keeps (the dev-22 round — the
         // noCollision() pc 4247 the WebBlock registration speaks, the
         // cross planes non-occluding, no AO, the neighbors' faces the
@@ -1294,6 +1298,192 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                 wz as f32 + v[2],
                             ];
                             // the texel-space uv the /16 fold normalizes
+                            uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
+                            let lm = lightmap_combine(
+                                cell_sky,
+                                cell_block,
+                                sky_factor,
+                                sky_tint,
+                                ambient,
+                                block_tint,
+                                night_vision,
+                                world.night_vision_factor,
+                                world.darkness_scale,
+                            );
+                            colors[i] = [
+                                base[0] * lm[0] * face_shade,
+                                base[1] * lm[1] * face_shade,
+                                base[2] * lm[2] * face_shade,
+                            ];
+                        }
+                        out.push(Quad {
+                            pts,
+                            colors,
+                            uvs,
+                            tile,
+                            translucent: false,
+                            per_texel_alpha: false,
+                        });
+                    }
+                    continue;
+                }
+                // THE LEVER'S OWN ELEMENT LANE (the dev-45 round — the
+                // toggle's own block finally renders): the two kinds
+                // the OFF/ON bit the model pair answers, the facing
+                // the variant byte wears (the placement's raw-look
+                // stamp the wire lane banks — the blockstate's own
+                // FLOOR rows north y=0 / east y=90 / south y=180 /
+                // west y=270 the step fold reads, the SAME y-rot
+                // convention the door lane's steps walk serves), the
+                // per-quad TEXTURE VERDICT the two-tile model demands
+                // (the #lever refs the kind's own row tile — the
+                // FACE_TILES row the lever arm banks, the #base refs
+                // the cobblestone sidecar the TILE_COBBLESTONE const
+                // answers). The DOWN CULLFACE the base plate carries
+                // the below cell the cull verdict reads (the rotated
+                // direction the same turn the vertices take — the
+                // DOWN the y-rot never moves), the non-occluding
+                // verdict the neighbors' own faces the stick never
+                // culls. The cell's own light every corner samples
+                // (no AO diagonals — the element lanes' own fold), the
+                // shade term the rotated direction's table answers
+                // (the shade:true elements the FACE_SHADE walk pays),
+                // the stick's own ±45° tilt the derive walk's rotated
+                // vertices already wear (the Rodrigues fold the
+                // element-rotation lane speaks).
+                if crate::world::is_lever(id) {
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let (cell_sky, cell_block) = match light {
+                        Some(l) => {
+                            let (s, b) = cell_layers(l, world.chunks_per_side, wx, wy, wz);
+                            (s.map(|v| v as f32), b.map(|v| v as f32))
+                        }
+                        None => (None, None),
+                    };
+                    // the kind's own FACE_TILES row — the lever quads'
+                    // no-atlas fallback (the #lever ref the palette row
+                    // banks)
+                    let fallback_tile = if (id as usize) < atlas::N_KINDS {
+                        atlas::FACE_TILES[id as usize][2]
+                    } else {
+                        atlas::TILE_NONE
+                    };
+                    let base = if fallback_tile == atlas::TILE_NONE {
+                        crate::colors::palette_color(id, 2)
+                            .or_else(|| lut.and_then(|l| l.color(id, 2)))
+                            .unwrap_or_else(|| default_color(id, 2))
+                    } else {
+                        [1.0; 3]
+                    };
+                    // THE FACING'S OWN STEPS (the variant byte the
+                    // placement stamps — the door lane's own decode
+                    // shape: the byte 0 the north default keeps, the
+                    // 1..=4 rows the N/E/S/W indexes the -1 fold
+                    // serves, each index the blockstate's own y-rot
+                    // row the step count answers)
+                    let facing = world.variant(wx, wy, wz);
+                    let steps = if facing == 0 { 0usize } else { facing as usize - 1 };
+                    for q in lever_model_quads(crate::world::lever_powered(id)) {
+                        // THE ROTATED CULLFACE VERDICT — the six-
+                        // direction law the candle lane wears, the
+                        // direction the SAME steps the geometry turns
+                        // (the down cullface under every y-rot the
+                        // below neighbor read answers)
+                        if let Some(dir) = q.cullface {
+                            let rotated = rotate_direction_cw(dir, steps);
+                            let (dx, dy, dz) = match rotated {
+                                mc_registry::element_quads::Direction::Down => (0, -1, 0),
+                                mc_registry::element_quads::Direction::Up => (0, 1, 0),
+                                mc_registry::element_quads::Direction::North => (0, 0, -1),
+                                mc_registry::element_quads::Direction::South => (0, 0, 1),
+                                mc_registry::element_quads::Direction::West => (-1, 0, 0),
+                                mc_registry::element_quads::Direction::East => (1, 0, 0),
+                            };
+                            if !is_transparent(world.get(wx + dx, wy + dy, wz + dz)) {
+                                continue;
+                            }
+                        }
+                        // THE PER-QUAD TEXTURE VERDICT — the resolved
+                        // texture name the tile mapping answers (the
+                        // lever's own refs the kind row and the
+                        // sidecar const bank, the unknown ref the
+                        // kind's own row keeps)
+                        let tex_stem = q
+                            .texture
+                            .trim_start_matches("minecraft:")
+                            .trim_start_matches("block/");
+                        let tile = match tex_stem {
+                            "lever" => fallback_tile,
+                            "cobblestone" => atlas::TILE_COBBLESTONE,
+                            _ => fallback_tile,
+                        };
+                        // THE SHADE TERM'S OWN READ — the element's
+                        // shade:true the ROTATED direction's table
+                        // answers (the world-facing term the turn
+                        // keeps), the never-shaded the 1.0 keeps
+                        let rotated_dir = rotate_direction_cw(q.direction, steps);
+                        let face_shade = if q.shade {
+                            match rotated_dir {
+                                mc_registry::element_quads::Direction::Up => 1.0f32,
+                                mc_registry::element_quads::Direction::Down => 0.5,
+                                mc_registry::element_quads::Direction::North
+                                | mc_registry::element_quads::Direction::South => 0.8,
+                                mc_registry::element_quads::Direction::West
+                                | mc_registry::element_quads::Direction::East => 0.6,
+                            }
+                        } else {
+                            1.0
+                        };
+                        let mut pts = [[0f32; 3]; 4];
+                        let mut colors = [[0f32; 3]; 4];
+                        let mut uvs = [[0f32; 2]; 4];
+                        for (i, v) in q.vertices.iter().enumerate() {
+                            // THE STEPS' OWN TURN (the blockstate y
+                            // values the CW walk folds: each step the
+                            // (x,z)->(-z,x) map about the cell center
+                            // serves — the north row the raw model
+                            // keeps, the east row one step wears)
+                            let (dx, dz) = (v[0] - 0.5, v[2] - 0.5);
+                            let (rx, rz) = rotate_xz_cw(dx, dz, steps);
+                            pts[i] = [
+                                wx as f32 + 0.5 + rx,
+                                wy as f32 + v[1],
+                                wz as f32 + 0.5 + rz,
+                            ];
+                            // the texel-space uv the /16 fold
+                            // normalizes (the rotated rows the UVs
+                            // never move — the door lane's own law the
+                            // symmetrical masters keep)
                             uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
                             let lm = lightmap_combine(
                                 cell_sky,
@@ -3205,6 +3395,35 @@ fn candle_model_quads(lit: bool) -> &'static [mc_registry::element_quads::Quad] 
         } else {
             "block/candle_one_candle"
         };
+        mc_registry::element_quads::derive_model_inherited(model).unwrap_or_default()
+    })
+}
+
+/// THE LEVER'S OWN MODEL BAKES (the dev-45 round — the jar's own
+/// REVERSED authoring the resolution wears verbatim): the
+/// blockstates/lever.json's FLOOR rows name the MODELS crosswise
+/// (powered=false the "block/lever_on" row answers, powered=true the
+/// "block/lever" row — the models the LOOK the stick's own tilt
+/// speaks, the blockstate the verdict's own mapping keeps), the two
+/// element boxes the derive walk serves (the cobblestone base plate
+/// [5,-0.02,4] -> [11,2.98,12] + the lever stick [7,1,7] -> [9,11,9]
+/// the ±45° rotX turn the jar's own rotation field banks — the
+/// Rodrigues walk the element-rotation lane serves), the per-quad
+/// texture refs the two-tile verdict the branch reads (#lever the
+/// named row tile, #base the cobblestone sidecar), tinted = false
+/// (no tintindex anywhere). The failed derive the honest empty slice
+/// keeps (the lever the nothing renders).
+fn lever_model_quads(powered: bool) -> &'static [mc_registry::element_quads::Quad] {
+    static OFF: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    static ON: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    // THE JAR'S OWN REVERSED ROWS (the blockstate's verbatim mapping
+    // — powered=false the "_on" model, powered=true the plain): the
+    // names the LOOKS carry, the verdict the blockstate speaks.
+    let model = if powered { "block/lever" } else { "block/lever_on" };
+    let cache = if powered { &ON } else { &OFF };
+    cache.get_or_init(|| {
         mc_registry::element_quads::derive_model_inherited(model).unwrap_or_default()
     })
 }
@@ -5259,6 +5478,92 @@ mod tests {
             atlas::TILE_COPPER_DOOR_BOTTOM,
             "the waxed row the copper master banks"
         );
+    }
+
+    #[test]
+    fn the_lever_rows_the_models_and_the_tile_bank_wear() {
+        // THE LEVER'S OWN ATLAS LAWS (the dev-45 round — the two
+        // palette rows the lever arm resolves, the tile the named
+        // const banks, the jar's own REVERSED model rows the derive
+        // walk wears): the rows the lever tile alone carries (all six
+        // slots the ONE block/lever texture), the cobblestone sidecar
+        // the base plate's #base ref answers, the models' per-quad
+        // texture verdict the two names the branch reads, the stick's
+        // own ±45° tilt the derive walk's rotated vertices wear.
+        let lever_tile = atlas::TILE_NAMES
+            .iter()
+            .position(|n| *n == "lever")
+            .expect("the lever tile the atlas banks") as u16;
+        let cobble_tile = atlas::TILE_COBBLESTONE;
+        assert_eq!(
+            atlas::TILE_NAMES[cobble_tile as usize],
+            "cobblestone",
+            "the sidecar's own name the const banks"
+        );
+        for kind in [crate::world::LEVER, crate::world::LEVER_ON] {
+            for slot in 0..6 {
+                assert_eq!(
+                    atlas::FACE_TILES[kind as usize][slot],
+                    lever_tile,
+                    "the lever row's slot {slot} the one lever tile wears"
+                );
+            }
+        }
+        // THE MODELS' OWN WALK (the derived quads the two element
+        // boxes carry — the base plate's six faces + the stick's five
+        // the down face never defines): the texture verdict the two
+        // names the branch reads, the tilt the rotated stick's own
+        // vertices answer (the straight band the z 7..9/16 the
+        // unrotated box keeps — the tilt's own corners the band
+        // escapes).
+        let off = lever_model_quads(false);
+        let on = lever_model_quads(true);
+        assert!(!off.is_empty() && !on.is_empty(), "the two models derive");
+        for (powered, quads) in [(false, off), (true, on)] {
+            let stems: std::collections::HashSet<&str> = quads
+                .iter()
+                .map(|q| {
+                    q.texture
+                        .trim_start_matches("minecraft:")
+                        .trim_start_matches("block/")
+                })
+                .collect();
+            assert!(
+                stems.contains("lever") && stems.contains("cobblestone"),
+                "the powered={powered} model the two textures wear ({stems:?})"
+            );
+            assert_eq!(
+                quads.len(),
+                11,
+                "the powered={powered} model the six + five faces the jar banks"
+            );
+        }
+        // THE TILT'S OWN SPREAD (the stick's own corners the straight
+        // band escapes — the rotation's ±45° the y-rot never serves)
+        let straight_band = |q: &mc_registry::element_quads::Quad| {
+            q.vertices
+                .iter()
+                .all(|v| v[2] >= 0.4375 && v[2] <= 0.5625)
+        };
+        assert!(
+            off.iter().any(|q| !straight_band(q)),
+            "the off model's tilted stick the band escapes"
+        );
+        assert!(
+            on.iter().any(|q| !straight_band(q)),
+            "the on model's tilted stick the band escapes"
+        );
+        // THE TWO MODELS' OWN DIVERGENCE (the ±45° the sign flips —
+        // the vertex sets the two models never share)
+        let fp: Vec<[f32; 3]> = off
+            .iter()
+            .flat_map(|q| q.vertices.iter().copied())
+            .collect();
+        let tp: Vec<[f32; 3]> = on
+            .iter()
+            .flat_map(|q| q.vertices.iter().copied())
+            .collect();
+        assert_ne!(fp, tp, "the two tilts the vertex sets split");
     }
 
     #[test]

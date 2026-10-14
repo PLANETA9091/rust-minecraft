@@ -36359,6 +36359,197 @@ impl App {
             }
             return true;
         }
+        // THE LEVER'S OWN TOGGLE ARM (the dev-45 round — javap
+        // LeverBlock.useWithoutItem pc 0-55 the 26.2 jar, the
+        // interactive-block family's next member): the
+        // `state.cycle(POWERED)` pc 7-21 the flip speaks, the
+        // setBlock walk pc 47-90 the offline kind swap serves, the
+        // playSound pc 23-42 the LEVER_CLICK BLOCKS voice the 0.3
+        // volume carries, the pitch the NEW state's own bit the
+        // 0.6/0.5 fold answers, the updateNeighbours walk the lever
+        // pos + the support pos broadcasts the wire voice rides. THE
+        // SHIFT GATE THE LEVER NEVER WEARS (the use walk's body the
+        // isShiftKeyDown read never speaks — the sneaking press the
+        // flip alone answers, the vanilla's own lever feel the walk
+        // keeps). THE WIRE SESSION THE LOCAL TOGGLE NEVER LANDS (the
+        // networked world's server-owned state the echo's reply names
+        // — the door arm's own law keeps).
+        if !self.world_is_network {
+            if let Some(flipped) = self
+                .active_world()
+                .map(|w| w.get(hit.pos.0, hit.pos.1, hit.pos.2))
+                .and_then(crate::world::lever_toggled)
+            {
+                let (lx, ly, lz) = hit.pos;
+                // THE CLICK'S OWN VOICE INPUTS (the door arm's own
+                // shape the ear/pan walk keeps — the reads ride
+                // BEFORE the mutable borrow, the immutable-reads law
+                // the flint arm's own discipline keeps)
+                let ear = self
+                    .body
+                    .as_ref()
+                    .map(|b| (b.x, b.y + b.eye_height(), b.z));
+                let yaw = self.listener_yaw();
+                let (cx, cy, cz) = (
+                    lx as f64 + 0.5,
+                    ly as f64 + 0.5,
+                    lz as f64 + 0.5,
+                );
+                let mut door_flips: Vec<((i32, i32, i32), u16)> = Vec::new();
+                if let Some(world) = self.offline_world.as_mut() {
+                    world.set(lx, ly, lz, flipped);
+                    // THE WIRE'S OWN BROADCAST (javap
+                    // LeverBlock.updateNeighbours pc 9-65 — the lever
+                    // pos + the support pos the two updateNeighborsAt
+                    // walks speak, each the region's own six
+                    // neighbors the notify serves): the door cells
+                    // the scan reads answer the signal verdict (the
+                    // door's own six + the mate's own six the powered
+                    // kind reads — the hasNeighborSignal walk's
+                    // lever-source subset the world lane keeps) and
+                    // flip when the verdict differs (javap
+                    // DoorBlock.neighborChanged — the POWERED property
+                    // vs the flag compare the setOpen walk serves;
+                    // the WOODEN and IRON doors the same wire law
+                    // wears — the hand gate the wire never consults,
+                    // the iron door's own refusal the HAND arm keeps,
+                    // the wire the vanilla's own lever loop finally
+                    // speaks). The verdict's own silence the closed
+                    // kinds the flag's false arm keeps (the second
+                    // lever's silence the same walk answers).
+                    {
+                        let read = &*world;
+                        let mut seen = std::collections::HashSet::new();
+                        let mut scan = |cx: i32, cy: i32, cz: i32| {
+                            let kind = read.get(cx, cy, cz);
+                            if !crate::world::is_door(kind) || !seen.insert((cx, cy, cz)) {
+                                return;
+                            }
+                            let open_now = crate::world::is_door_open(kind);
+                            let mate = if crate::world::is_door_upper(kind) {
+                                (cx, cy - 1, cz)
+                            } else {
+                                (cx, cy + 1, cz)
+                            };
+                            let mate_kind = read.get(mate.0, mate.1, mate.2);
+                            let signal = crate::world::lever_signal_at(read, cx, cy, cz)
+                                || (crate::world::is_door(mate_kind)
+                                    && crate::world::lever_signal_at(
+                                        read, mate.0, mate.1, mate.2,
+                                    ));
+                            if signal != open_now {
+                                if let Some(flip) = crate::world::door_flip_mate(kind) {
+                                    door_flips.push(((cx, cy, cz), flip));
+                                }
+                                // THE MATE'S OWN SYNC (javap
+                                // DoorBlock.updateShape the Y-arm's own
+                                // return the cycled OPEN state the
+                                // other cell rides — the flipped half's
+                                // own setBlock broadcast the neighbor
+                                // door's updateShape walk serves, the
+                                // OPEN bit the two cells the same beat
+                                // wears; the hand walk's own both-halves
+                                // beat the wire flips share)
+                                let mate = if crate::world::is_door_upper(kind) {
+                                    (cx, cy - 1, cz)
+                                } else {
+                                    (cx, cy + 1, cz)
+                                };
+                                let mate_kind = read.get(mate.0, mate.1, mate.2);
+                                if crate::world::is_door(mate_kind) {
+                                    if let Some(mate_flip) =
+                                        crate::world::door_flip_mate(mate_kind)
+                                    {
+                                        if seen.insert(mate) {
+                                            door_flips.push((mate, mate_flip));
+                                        }
+                                    }
+                                }
+                            }
+                        };
+                        // the lever pos's own six + the support cell's
+                        // own six (the FLOOR face's DOWN arm the
+                        // getConnectedDirection law speaks) — the same
+                        // offsets the Direction.values() walk serves
+                        for (dx, dy, dz) in [
+                            (0, -1, 0),
+                            (0, 1, 0),
+                            (0, 0, -1),
+                            (0, 0, 1),
+                            (-1, 0, 0),
+                            (1, 0, 0),
+                        ] {
+                            scan(lx + dx, ly + dy, lz + dz);
+                        }
+                        for (dx, dy, dz) in [
+                            (0, -1, 0),
+                            (0, 1, 0),
+                            (0, 0, -1),
+                            (0, 0, 1),
+                            (-1, 0, 0),
+                            (1, 0, 0),
+                        ] {
+                            scan(lx + dx, ly - 1 + dy, lz + dz);
+                        }
+                    }
+                    for ((dx, dy, dz), flip) in door_flips.iter() {
+                        world.set(*dx, *dy, *dz, *flip);
+                    }
+                }
+                // THE CLICK'S OWN VOICE (javap LeverBlock.playSound
+                // pc 0-43 — the SoundEvents.LEVER_CLICK the BLOCKS
+                // source the 0.3 volume carries, the pitch the NEW
+                // state's own bit the 0.6 powered / 0.5 resting fold
+                // answers)
+                self.sounds.play_voice_at_pan(
+                    self.frame,
+                    "block.lever.click",
+                    0.3,
+                    if crate::world::lever_powered(flipped) {
+                        0.6
+                    } else {
+                        0.5
+                    },
+                    ear_distance(ear, cx, cy, cz),
+                    ear_pan(ear, yaw, cx, cy, cz),
+                );
+                // THE WIRE'S OWN VOICE (javap DoorBlock.setOpen — the
+                // playSound walk the open/close events the set's new
+                // bit answers, the pitch the `nextFloat() * 0.1F +
+                // 0.9F` fold speaks; the vibration posts the sculk
+                // lane hears)
+                for ((dx, dy, dz), flip) in door_flips {
+                    let voice = crate::world::door_voice_stem(flip);
+                    let event = if crate::world::is_door_open(flip) {
+                        format!("{voice}.open")
+                    } else {
+                        format!("{voice}.close")
+                    };
+                    let (tx, ty, tz) = (
+                        dx as f64 + 0.5,
+                        dy as f64 + 0.5,
+                        dz as f64 + 0.5,
+                    );
+                    self.sounds.play_voice_at_pan(
+                        self.frame,
+                        &event,
+                        1.0,
+                        0.9 + self.drop_rng.next_f32() * 0.1,
+                        ear_distance(ear, tx, ty, tz),
+                        ear_pan(ear, yaw, tx, ty, tz),
+                    );
+                    self.dispatch_vibration_event(
+                        if crate::world::is_door_open(flip) {
+                            "block_open"
+                        } else {
+                            "block_close"
+                        },
+                        (tx, ty, tz),
+                    );
+                }
+                return true;
+            }
+        }
         // THE TOOL ARMS' OWN USE-ON-BLOCK WALK (javap HoeItem.useOn +
         // ShovelItem.useOn — the vanilla's own Item.useOn dispatch the
         // two tool maps the same verdict shape rides, the held suffix
@@ -36729,6 +36920,28 @@ impl App {
                 return false;
             }
         }
+        // THE LEVER'S OWN PLACEMENT GATES (the dev-45 round — javap
+        // FaceAttachedHorizontalDirectionalBlock the 26.2 jar: the
+        // getStateForPlacement walk pcs 0-139 the Y-axis arm's FLOOR
+        // face the UP hit answers (the wall/ceiling lanes the later
+        // rounds keep — the side-face hit the null refusal the aconst
+        // -null walk banks, the press the PASS carries, the item
+        // lanes follow, nothing consumed), the canSurvive walk
+        // pc 0-12 the support cell's sturdy UP face the below read
+        // speaks — the canAttach walk the offline equivalence the
+        // collision table's non-Empty rows keep, the floating lever
+        // the refusal keeps).
+        if crate::world::is_lever(block) {
+            if hit.face != 1 {
+                return false;
+            }
+            if !self
+                .active_world()
+                .is_some_and(|w| crate::world::lever_can_survive(w, cell.0, cell.1, cell.2))
+            {
+                return false;
+            }
+        }
         // THE FALLING SUPPORT'S OWN SCHEDULE (the block-update walk the
         // placement's setBlock speaks — the placed cell's own dispatch
         // the helper wears, the sand the air-below cell the 2-tick tick
@@ -36832,6 +37045,22 @@ impl App {
                     crate::world::furnace_facing_byte(cam_yaw),
                 );
             }
+            // THE LEVER'S OWN PLACEMENT FACING (the dev-45 round —
+            // javap the base getStateForPlacement pcs 64-73: the
+            // `setValue(FACING, context.getHorizontalDirection())`
+            // RAW look the FLOOR arm answers — the furnace's own
+            // opposite the lever never wears, the stick the look's
+            // own compass leans; the byte the variant layer stamps,
+            // the mesher's y-rot steps the byte reads, the placement
+            // preset's own preset the wire lane answers).
+            if crate::world::is_lever(placed) {
+                world.set_variant(
+                    cell.0,
+                    cell.1,
+                    cell.2,
+                    crate::world::lever_facing_byte(cam_yaw),
+                );
+            }
             // THE PLACEMENT'S OWN CHAIN (javap BlockItem.placeBlock pc
             // 9 `bipush 11` — the setBlock the UPDATE_NEIGHBORS bit the
             // broadcast keeps): the REPLACED cell the placement's own
@@ -36880,6 +37109,27 @@ impl App {
                 world.set(cell.0, cell.1 + 1, cell.2, upper);
                 world.set_variant(cell.0, cell.1, cell.2, facing);
                 world.set_variant(cell.0, cell.1 + 1, cell.2, facing);
+            }
+            // THE DOOR'S OWN WIRE PRESET (the dev-45 round — javap
+            // DoorBlock.getStateForPlacement pcs 38-115 the 26.2 jar:
+            // the `POWERED, flag` + the `OPEN, flag` pair the
+            // hasNeighborSignal walk arms — the signal the placement's
+            // own cell the lever-source walk answers, the armed
+            // verdict the OPEN kinds the quartet's open rung banks
+            // [the door lands SWUNG when a powered lever neighbors —
+            // the vanilla's own preset feel the wire lane keeps]). The
+            // open kinds BOTH halves wear (the +1 seat the quartet's
+            // own upper rung answers — the LEFT ladder's and the RIGHT
+            // tail's rows the same +1 fold keeps), the facing variant
+            // the earlier stamp banks rides, the signal's silence the
+            // closed kinds the item's own kinds keep.
+            if crate::world::is_door_lower(placed)
+                && crate::world::lever_signal_at(world, cell.0, cell.1, cell.2)
+            {
+                if let Some(open_lower) = crate::world::door_flip_mate(placed) {
+                    world.set(cell.0, cell.1, cell.2, open_lower);
+                    world.set(cell.0, cell.1 + 1, cell.2, open_lower + 1);
+                }
             }
             world.ensure_light_current(); // the placed torch's own flood the set walk already spoke — the guard the never-lit world's compute keeps
             self.world_quads = Some(crate::mesher::mesh_world(world, None));
@@ -101553,7 +101803,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            258,
+            260,
             "the palette the hinge-right tail's own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -101634,7 +101884,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            258,
+            260,
             "the palette the hinge-right tail's own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -101936,7 +102186,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            258,
+            260,
             "the palette the hinge-right tail's own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -105255,6 +105505,300 @@ cow_sound_variant: None,
         }
     }
 
+    #[test]
+    fn the_lever_places_toggles_and_the_click_voice_wears() {
+        // THE LEVER'S OWN PLACEMENT + TOGGLE WALK (the dev-45 round —
+        // javap the base getStateForPlacement pcs 0-139 the FLOOR
+        // face's UP hit answers, the LeverBlock.useWithoutItem pc 0-55
+        // the cycle the toggle speaks, the playSound pc 0-43 the
+        // LEVER_CLICK 0.3 volume carries, the pitch the NEW state's
+        // own bit the 0.6/0.5 fold answers): the OFF kind the item
+        // lands, the raw-look north byte the yaw-0 stamp wears, the
+        // ON flip the +1 mate the second press speaks, the two
+        // pitches the two voices wear.
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_held_updated(Some("item/lever"));
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the lever's placement consumes");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c),
+                crate::world::LEVER,
+                "the OFF kind the item's own kind wears"
+            );
+            assert_eq!(
+                w.variant(c, top, c),
+                1,
+                "the raw look's north byte the yaw-0 stamp wears"
+            );
+        }
+        // THE TOGGLE'S OWN BEAT (the same aim the lever cell the ray
+        // answers — the clip's kind law the lever cell the hit speaks)
+        assert!(app.on_right_press(0, 0), "the ON toggle consumes");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::LEVER_ON,
+            "the ON kind the +1 mate wears"
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.lever.click") && e.contains("p0.600000")),
+            "the ON click's 0.6 pitch the walk speaks"
+        );
+        assert!(app.on_right_press(0, 0), "the OFF toggle consumes");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::LEVER,
+            "the OFF kind the -1 mate wears"
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.lever.click") && e.contains("p0.500000")),
+            "the OFF click's 0.5 pitch the walk speaks"
+        );
+    }
+
+    #[test]
+    fn the_lever_wire_the_iron_door_speaks() {
+        // THE WIRE'S OWN VOICE (the dev-45 round — javap
+        // LeverBlock.updateNeighbours pc 9-65 the lever pos + the
+        // support pos broadcasts the scan serves, the
+        // DoorBlock.neighborChanged walk the POWERED vs the flag
+        // compare the setOpen law speaks: the IRON door the hand gate
+        // refuses the wire answers — the lever's ON the both halves
+        // swing, the click's OFF the door closes, the door voices the
+        // set's own events wear, the vibration posts the sculk lane
+        // hears)
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            // THE IRON DOOR'S OWN PAIR + THE OFF LEVER EAST (the door's
+            // lower/upper the closed kinds wear, the lever's own cell
+            // the ground answers — the survival law the stone floor
+            // keeps)
+            w.set(c, top, c, crate::world::IRON_DOOR);
+            w.set(c, top + 1, c, crate::world::IRON_DOOR_UPPER);
+            w.set(c + 1, top, c, crate::world::LEVER);
+            w.set_variant(c + 1, top, c, 1);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(
+                c as f32 + 1.5,
+                top as f32 + 4.0,
+                c as f32 + 0.5,
+            ),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the lever's ON press consumes");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 1, top, c),
+                crate::world::LEVER_ON,
+                "the lever's own kind the ON bit wears"
+            );
+            assert_eq!(
+                w.get(c, top, c),
+                crate::world::IRON_DOOR_OPEN,
+                "the wire the iron door's lower swings"
+            );
+            assert_eq!(
+                w.get(c, top + 1, c),
+                crate::world::IRON_DOOR_UPPER_OPEN,
+                "the wire the upper half syncs"
+            );
+        }
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.lever.click")),
+            "the lever's own click the walk plays"
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.iron_door.open")),
+            "the iron door's wire voice the set plays"
+        );
+        // THE OFF PRESS (the signal's death the door closes — the
+        // second broadcast the scan re-reads, the verdict's silence
+        // the closed kinds the flag's false arm wears)
+        assert!(app.on_right_press(0, 0), "the lever's OFF press consumes");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 1, top, c),
+                crate::world::LEVER,
+                "the lever's own OFF the -1 mate wears"
+            );
+            assert_eq!(
+                w.get(c, top, c),
+                crate::world::IRON_DOOR,
+                "the dead signal the door closes"
+            );
+            assert_eq!(
+                w.get(c, top + 1, c),
+                crate::world::IRON_DOOR_UPPER,
+                "the upper the same beat closes"
+            );
+        }
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.iron_door.close")),
+            "the close voice the second flip plays"
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|e| e.starts_with("block_open") || e.starts_with("block_close")),
+            "the vibration posts the sculk lane hears"
+        );
+    }
+
+    #[test]
+    fn the_lever_gates_and_the_door_preset_wear() {
+        // THE GATES' OWN WALK (the dev-45 round — the side-face hit
+        // the wall lane's refusal the honest null keeps, the floating
+        // lever the canSurvive verdict refuses, the POWERED preset the
+        // getStateForPlacement's own flag arms: the door placed beside
+        // an ON lever lands SWUNG, the silent ground the closed kinds
+        // the item's own kinds wear)
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+        }
+        app.offline_held_updated(Some("item/lever"));
+        // THE SIDE-FACE REFUSAL (the horizontal look the west face of
+        // the east stone answers — the wall lane the later rounds
+        // keep, the press the PASS carries)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 - 2.5, top as f32 + 0.5, c as f32 + 0.5),
+            yaw: std::f32::consts::FRAC_PI_2,
+            pitch: 0.0,
+        });
+        assert!(
+            !app.on_right_press(0, 0),
+            "the wall hit the lever's floor lane refuses"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(w.get(c, top, c), crate::world::AIR, "no lever landed");
+        }
+        // THE FLOOR'S OWN PLACEMENT + THE DOOR'S WIRE PRESET (the ON
+        // lever the stone floor banks, the oak door placed beside the
+        // door's own cell the signal walk reads — the open kinds BOTH
+        // halves wear, the facing byte the stamp keeps)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the floor lever the stone banks");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::LEVER,
+            "the OFF kind the item's own kind lands"
+        );
+        // THE ON BEAT (the same aim the lever cell the ray answers —
+        // the toggle arm the ON kind the +1 mate wears)
+        assert!(app.on_right_press(0, 0), "the ON toggle consumes");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::LEVER_ON,
+            "the ON kind the +1 mate wears"
+        );
+        // THE DOOR'S WIRE PRESET (the held walk the oak item speaks —
+        // the west look the lever's own east cell the placement
+        // claims; the placement's own cell the signal walk reads, the
+        // armed verdict the OPEN kinds BOTH halves wear, the facing
+        // byte the yaw stamp banks)
+        app.offline_held_updated(Some("item/oak_door"));
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 1.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the door's wire preset the placement consumes"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c + 1),
+                crate::world::OAK_DOOR_OPEN,
+                "the armed cell the open kind wears"
+            );
+            assert_eq!(
+                w.get(c, top + 1, c + 1),
+                crate::world::OAK_DOOR_UPPER_OPEN,
+                "the open upper the same +1 seat banks"
+            );
+        }
+        // THE TOGGLE'S OWN CLOSE (the lever OFF the scan re-reads —
+        // the preset's own kinds the walk's verdict the closed kinds
+        // the flag's false arm wears — the same wire law the toggle
+        // test pins, the preset the door's own start keeps)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the OFF toggle consumes");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c + 1),
+                crate::world::OAK_DOOR,
+                "the dead signal the door closes"
+            );
+            assert_eq!(
+                w.get(c, top + 1, c + 1),
+                crate::world::OAK_DOOR_UPPER,
+                "the upper the same beat closes"
+            );
+        }
+    }
     #[test]
     fn the_door_the_flip_the_both_halves_and_the_voice_wear() {
         // THE DOOR'S OWN FLIP WALK (javap DoorBlock.useWithoutItem the
