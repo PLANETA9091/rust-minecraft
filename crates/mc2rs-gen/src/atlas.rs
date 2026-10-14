@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 260] = [
+pub const RUNTIME_PALETTE: [&str; 262] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -724,6 +724,37 @@ pub const RUNTIME_PALETTE: [&str; 260] = [
     // law the placement stamps, the mesher's y-rot steps the byte
     // serves), the iron door's wire voice the signal walk answers.
     "lever", "lever_on",
+    // THE BUTTON'S OWN PAIR (the autopush-660 round): the redstone
+    // pulse's own block the client finally speaks — javap ButtonBlock
+    // the 26.2 jar (pinned sha1 2dc72797): the press walk pc 0-47 the
+    // POWERED=true setBlock flag-3 speaks + the updateNeighbours walk
+    // the wire voice rides + the scheduleTick(pos, ticksToStayPressed)
+    // pc 28-37 the pulse's own clock banks (the STONE lambda
+    // lambda$static$338 the BlockSetType.STONE + bipush 20 ctor args
+    // wear — the 20-tick 1-second pulse the tick serves) + the
+    // playSound walk pc 0-26 the LevelAccessor default fconst_1 pair
+    // banks (the volume 1.0 / pitch 1.0 the lever's own 0.3/0.6/0.5
+    // constants the button never wears), the getSound walk the
+    // BlockSetType's buttonClickOn/buttonClickOff pair speaks (the
+    // block.stone_button.click_on/click_off events the stone set type
+    // carries), the useWithoutItem walk pc 0-19 the already-powered
+    // CONSUME verdict banks (the re-press the pass never flips), the
+    // tick walk pc 0-24 the checkPressed delegate speaks (the
+    // unpress the POWERED=false setBlock flag-3 + the wire voice +
+    // the click-off voice + the BLOCK_DEACTIVATE vibration wears),
+    // the buttonProperties walk the noCollision + strength(0.5f) +
+    // pushReaction(DESTROY) rows banks (the pass-through + the dig
+    // row (0.5, false) the lever's own laws wear). The blockstates
+    // the DIRECT authoring the lever's REVERSED rows never share
+    // (powered=false the block/stone_button model, powered=true the
+    // block/stone_button_pressed — the verbatim rows the resolution
+    // speaks), the face/facing rows the SAME x/y rotation laws the
+    // lever's lanes wear (the floor y-only, the wall x=90 + the y
+    // steps, the ceiling x=180 + the (idx+2)%4 remap), the ONE
+    // #texture ref block/stone the row's tile banks (all six slots
+    // the ONE stone tile — the stone master the palette already
+    // banks, no new tile the regen keeps).
+    "stone_button", "stone_button_pressed",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -1939,6 +1970,49 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             faces.push(resolve_flat_stem(&stem, false));
             continue;
         }
+        if block == "stone_button" || block == "stone_button_pressed" {
+            // THE BUTTON FAMILY'S OWN ROWS (the autopush-660 round):
+            // the blockstate's own FLOOR rows the two kinds wear — the
+            // "face=floor,facing=north,powered={p}" row the jar's
+            // DIRECT authoring resolves (powered=false the
+            // "block/stone_button" model, powered=true the
+            // "block/stone_button_pressed" model — the verbatim rows
+            // the resolution speaks, the lever's REVERSED authoring
+            // the button never wears), the merged texture map's
+            // `#texture` ref block/stone the row's tile banks (all six
+            // slots the ONE stone tile — the stone master the palette
+            // already banks, no new tile the regen keeps; the mesher's
+            // button lane the per-quad verdict reads), tinted = false
+            // (the faces carry NO tintindex — the pre-colored master
+            // renders as authored).
+            let powered = block == "stone_button_pressed";
+            let bs_bytes = read_jar(
+                &mut archive,
+                "assets/minecraft/blockstates/stone_button.json",
+            )?;
+            let bs: Value = serde_json::from_slice(&bs_bytes)
+                .with_context(|| "blockstate stone_button: json parse")?;
+            let row_key = format!("face=floor,facing=north,powered={powered}");
+            let model_ref = bs
+                .get("variants")
+                .and_then(|v| v.get(&row_key))
+                .and_then(|v| v.get("model"))
+                .and_then(|m| m.as_str())
+                .with_context(|| format!("blockstate stone_button: no {row_key} model"))?
+                .trim_start_matches("minecraft:")
+                .to_string();
+            let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
+                .with_context(|| format!("block stone_button: model chain {model_ref}"))?;
+            let tex = tex_map
+                .get("texture")
+                .with_context(|| format!("model {model_ref}: no texture ref"))?;
+            let stem = tex
+                .trim_start_matches("minecraft:")
+                .trim_start_matches("block/")
+                .to_string();
+            faces.push(resolve_flat_stem(&stem, false));
+            continue;
+        }
         faces.push(resolve_block(&mut archive, block)?);
     }
 
@@ -2940,6 +3014,12 @@ fn registry_names() -> [&'static str; RUNTIME_PALETTE.len()] {
             .strip_suffix("_upper")
             .or_else(|| base.strip_suffix("_lit"))
             .or_else(|| base.strip_suffix("_on"))
+            // THE BUTTON'S OWN PRESSED STRIP (the autopush-660 round):
+            // the pressed row the jar's registry never speaks — the
+            // ButtonBlock's ONE "stone_button" entry both states the
+            // same name keeps (the dig row (0.5, false), the item id
+            // the pick lane grants BOTH kinds speak)
+            .or_else(|| base.strip_suffix("_pressed"))
             // THE CAKE LADDER'S OWN STRIP (the autopush-524 round): the
             // seven bite stages the BASE "cake" row the shared-row law
             // keeps — the dig row (0.5 hardness), the drops table (the

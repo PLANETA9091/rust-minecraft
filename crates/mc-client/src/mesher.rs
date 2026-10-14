@@ -133,6 +133,10 @@ fn is_transparent(kind: u16) -> bool {
         // base plate + the tilted stick the neighbors' faces draw
         // against, the noCollision row the Properties chain speaks)
         || crate::world::is_lever(kind)
+        // THE BUTTON the same verdict keeps (the autopush-660 round —
+        // the thin plate the neighbors' faces draw against, the
+        // noCollision row the Properties chain speaks)
+        || crate::world::is_button(kind)
         // THE WEB the same verdict keeps (the dev-22 round — the
         // noCollision() pc 4247 the WebBlock registration speaks, the
         // cross planes non-occluding, no AO, the neighbors' faces the
@@ -1351,7 +1355,13 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                 // the stick's own ±45° tilt the derive walk's rotated
                 // vertices already wear (the Rodrigues fold the
                 // element-rotation lane speaks).
-                if crate::world::is_lever(id) {
+                if crate::world::is_lever(id) || crate::world::is_button(id) {
+                    // (the autopush-660 round the BUTTON the same lane
+                    // wears — the FaceAttachedHorizontalDirectionalBlock
+                    // parent the two families share, the element lane
+                    // the same decode + the same x/y turns the button's
+                    // ONE-plate model rides: derive quads the pair
+                    // answers, the tile verdict the same fold keeps)
                     let sky_factor = world.sky_light_factor.unwrap_or(1.0)
                         * world
                             .day_tick
@@ -1428,7 +1438,11 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         crate::world::LEVER_FACE_CEILING => (2usize, (idx + 2) % 4),
                         _ => (0usize, idx),
                     };
-                    for q in lever_model_quads(crate::world::lever_powered(id)) {
+                    for q in if crate::world::is_button(id) {
+                        button_model_quads(crate::world::button_powered(id))
+                    } else {
+                        lever_model_quads(crate::world::lever_powered(id))
+                    } {
                         // THE ROTATED CULLFACE VERDICT — the six-
                         // direction law the candle lane wears, the
                         // direction the SAME turns the geometry takes
@@ -1460,7 +1474,14 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             .trim_start_matches("minecraft:")
                             .trim_start_matches("block/");
                         let tile = match tex_stem {
-                            "lever" => fallback_tile,
+                            // the lever's own #lever ref the kind row
+                            // banks (the #base sidecar the cobblestone
+                            // const answers); the button's #texture ref
+                            // block/stone the row's own tile banks — the
+                            // stone master the FACE_TILES row already
+                            // banks (the autopush-660 round the same
+                            // single-tile verdict the family wears)
+                            "lever" | "stone" => fallback_tile,
                             "cobblestone" => atlas::TILE_COBBLESTONE,
                             _ => fallback_tile,
                         };
@@ -3455,6 +3476,35 @@ fn lever_model_quads(powered: bool) -> &'static [mc_registry::element_quads::Qua
     // — powered=false the "_on" model, powered=true the plain): the
     // names the LOOKS carry, the verdict the blockstate speaks.
     let model = if powered { "block/lever" } else { "block/lever_on" };
+    let cache = if powered { &ON } else { &OFF };
+    cache.get_or_init(|| {
+        mc_registry::element_quads::derive_model_inherited(model).unwrap_or_default()
+    })
+}
+
+/// THE BUTTON'S OWN MODEL BAKES (the autopush-660 round — the jar's
+/// DIRECT authoring the lever's REVERSED rows never share): the
+/// blockstates/stone_button.json's FLOOR rows name the MODELS straight
+/// (powered=false the "block/stone_button" row answers, powered=true
+/// the "block/stone_button_pressed" row — the verbatim rows the
+/// resolution speaks), the ONE element box the template parent serves
+/// (the unpressed plate [5,0,6] -> [11,2,10] the six faces the down
+/// cullface carries, the pressed [5,0,6] -> [11,1.02,10] the thinner
+/// plate the same six faces wear — the parent chain block/button the
+/// derive walk resolves, the #texture ref block/stone the merged map
+/// banks — the mesher's per-quad verdict the row's own tile reads),
+/// tinted = false (no tintindex anywhere). The failed derive the
+/// honest empty slice keeps (the button the nothing renders).
+fn button_model_quads(powered: bool) -> &'static [mc_registry::element_quads::Quad] {
+    static OFF: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    static ON: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    let model = if powered {
+        "block/stone_button_pressed"
+    } else {
+        "block/stone_button"
+    };
     let cache = if powered { &ON } else { &OFF };
     cache.get_or_init(|| {
         mc_registry::element_quads::derive_model_inherited(model).unwrap_or_default()
@@ -5637,6 +5687,116 @@ mod tests {
         assert_ne!(fp, tp, "the two tilts the vertex sets split");
     }
 
+
+    #[test]
+    fn the_button_models_the_plate_and_the_x_turn_wear() {
+        // THE BUTTON'S OWN MODEL LAWS (the autopush-660 round — the
+        // DIRECT authoring the resolution wears): the one-plate model
+        // both states derive (the six faces the down cullface
+        // carries), the pressed plate the thinner band the 1.02 top
+        // wears, the wall button the plate the supporter's own edge
+        // the x=90 turn presses, the rotated cullface the neighbor
+        // culls (5 faces) / the air restores (6).
+        let off = button_model_quads(false);
+        let on = button_model_quads(true);
+        assert!(!off.is_empty() && !on.is_empty(), "the two models derive");
+        assert_eq!(off.len(), 6, "the unpressed plate the six faces wear");
+        assert_eq!(on.len(), 6, "the pressed plate the six faces wear");
+        for (powered, quads) in [(false, off), (true, on)] {
+            for q in quads {
+                let stem = q
+                    .texture
+                    .trim_start_matches("minecraft:")
+                    .trim_start_matches("block/");
+                assert_eq!(
+                    stem, "stone",
+                    "the powered={powered} quad the one stone texture wears"
+                );
+            }
+        }
+        // THE THICKNESS'S OWN PAIR (the unpressed plate the 2/16 top
+        // wears, the pressed the 1.02/16 top the thinner band keeps)
+        let max_y = |qs: &[mc_registry::element_quads::Quad]| {
+            qs.iter()
+                .flat_map(|q| q.vertices.iter())
+                .map(|v| v[1])
+                .fold(f32::MIN, f32::max)
+        };
+        assert!(
+            (max_y(off) - 0.125).abs() < 1e-3,
+            "the unpressed plate the 2/16 top wears ({})",
+            max_y(off)
+        );
+        assert!(
+            (max_y(on) - 0.0638).abs() < 1e-3,
+            "the pressed plate the 1.02/16 top wears ({})",
+            max_y(on)
+        );
+        // THE WALL BUTTON'S OWN EDGE PRESS (the north-facing button the
+        // dirt south the survival law banks — the plate the cell's
+        // south edge the x=90 turn wears, the rotated cullface the
+        // Down->South turn the neighbor culls; the dirt supporter the
+        // own tile the filter's clean read keeps)
+        let stone_tile = atlas::FACE_TILES[crate::world::BUTTON as usize][2];
+        assert_eq!(atlas::TILE_NAMES[stone_tile as usize], "stone", "the button's own tile the row banks");
+        let mut w = empty_world();
+        let (x, y, z) = (5i32, 3, 5);
+        w.set(x, y, z + 1, DIRT);
+        w.set(x, y, z, BUTTON);
+        w.set_variant(
+            x,
+            y,
+            z,
+            crate::world::lever_variant(crate::world::LEVER_FACE_WALL, 1),
+        );
+        let quads = mesh_world(&w, None);
+        let cell: Vec<&Quad> = quads
+            .iter()
+            .filter(|q| {
+                q.tile == stone_tile
+                    && q.pts.iter().all(|p| {
+                        p[0] >= x as f32 - 0.01
+                            && p[0] <= x as f32 + 1.01
+                            && p[1] >= y as f32 - 0.01
+                            && p[1] <= y as f32 + 1.01
+                            && p[2] >= z as f32 - 0.01
+                            && p[2] <= z as f32 + 1.01
+                    })
+            })
+            .collect();
+        assert_eq!(cell.len(), 5, "the south-culled plate the five faces keep");
+        for q in &cell {
+            for p in q.pts.iter() {
+                assert!(
+                    p[2] >= z as f32 + 0.79,
+                    "the plate the south edge the x-turn wears ({p:?})"
+                );
+                assert!(
+                    p[1] >= y as f32 + 0.36 && p[1] <= y as f32 + 0.64,
+                    "the plate the mid band the horizontal read keeps ({p:?})"
+                );
+            }
+        }
+        // THE AIR'S OWN RESTORE (the south cell the down-culled face
+        // the six faces the verdict returns)
+        w.set(x, y, z + 1, AIR);
+        let quads = mesh_world(&w, None);
+        let cell: Vec<&Quad> = quads
+            .iter()
+            .filter(|q| {
+                q.tile == stone_tile
+                    && q.pts.iter().all(|p| {
+                        p[0] >= x as f32 - 0.01
+                            && p[0] <= x as f32 + 1.01
+                            && p[1] >= y as f32 - 0.01
+                            && p[1] <= y as f32 + 1.01
+                            && p[2] >= z as f32 - 0.01
+                            && p[2] <= z as f32 + 1.01
+                    })
+            })
+            .collect();
+        assert_eq!(cell.len(), 6, "the air south the culled face restores");
+    }
     #[test]
     fn the_lever_wall_ceiling_the_x_turn_lanes_wear() {
         // THE WALL/CEILING LANES' OWN TURNS (this round — the

@@ -13791,9 +13791,30 @@ impl App {
                 if !due.is_empty() {
                     let mut converted: Vec<(u16, i32, i32, i32)> = Vec::new();
                     let mut solidified: Vec<(i32, i32, i32)> = Vec::new();
+                    // THE BUTTON'S OWN RELEASED QUEUE (javap
+                    // ButtonBlock.tick pc 0-24 — the checkPressed
+                    // delegate the ON kind's own beat wears, the OFF
+                    // kind the due beat the silence keeps: the
+                    // unpress's set + the wire voice + the click-off
+                    // voice + the vibration the post-borrow walk
+                    // serves)
+                    let mut released: Vec<(i32, i32, i32)> = Vec::new();
                     if let Some(w) = self.offline_world.as_mut() {
                         for (x, y, z) in &due {
                             let kind = w.get(*x, *y, *z);
+                            // THE BUTTON'S OWN RELEASE ARM (javap
+                            // ButtonBlock.tick pc 0-24 — the checkPressed
+                            // delegate the ON kind's own beat wears, the
+                            // OFF kind the due beat the silence keeps:
+                            // the unpress's set + the wire voice + the
+                            // click-off voice + the vibration the
+                            // post-borrow walk serves)
+                            if crate::world::is_button(kind) {
+                                if kind == crate::world::BUTTON_ON {
+                                    released.push((*x, *y, *z));
+                                }
+                                continue;
+                            }
                             if !crate::world::is_falling_block(kind) {
                                 continue;
                             }
@@ -13846,6 +13867,43 @@ impl App {
                     }
                     if !converted.is_empty() || !solidified.is_empty() {
                         self.remesh_offline();
+                    }
+                    // THE RELEASE'S OWN BEAT (javap checkPressed pc
+                    // 79-123 — the POWERED=false setBlock flag-3 walk +
+                    // the updateNeighbours walk + the click-off voice
+                    // + the BLOCK_DEACTIVATE vibration the walk wears:
+                    // the pulse's end the scheduled store's due beat
+                    // serves, the doors the wire re-read the same beat
+                    // answers — the swinging door the 1-second pulse
+                    // opened the OFF's silence closes)
+                    for (x, y, z) in &released {
+                        if let Some(world) = self.offline_world.as_mut() {
+                            world.set(*x, *y, *z, crate::world::BUTTON);
+                        }
+                        let (cx, cy, cz) = (*x as f64 + 0.5, *y as f64 + 0.5, *z as f64 + 0.5);
+                        let ear = self
+                            .body
+                            .as_ref()
+                            .map(|b| (b.x, b.y + b.eye_height(), b.z));
+                        let yaw = self.listener_yaw();
+                        self.attach_wire_voice(*x, *y, *z);
+                        // THE CLICK-OFF VOICE (javap playSound pc 0-26 —
+                        // the LevelAccessor default fconst_1 pair the
+                        // volume 1.0 / pitch 1.0 banks, the getSound
+                        // walk the buttonClickOff event carries)
+                        self.sounds.play_voice_at_pan(
+                            self.frame,
+                            "block.stone_button.click_off",
+                            1.0,
+                            1.0,
+                            ear_distance(ear, cx, cy, cz),
+                            ear_pan(ear, yaw, cx, cy, cz),
+                        );
+                        // THE DEACTIVATE'S OWN VIBRATION (javap
+                        // checkPressed pc 124-143 — the gameEvent
+                        // BLOCK_DEACTIVATE walk the sculk lane's
+                        // frequency-9 event hears)
+                        self.dispatch_vibration_event("block_deactivate", (cx, cy, cz));
                     }
                 }
                 // THE CROP'S OWN RANDOM TICKS (the ServerLevel walk the
@@ -35476,6 +35534,169 @@ impl App {
         self.schedule_falling_check(x, y, z - 1);
     }
 
+    /// THE BUTTON'S OWN PULSE SCHEDULE (javap ButtonBlock.press pc
+    /// 28-37 — the `scheduleTick(pos, this, ticksToStayPressed)` walk
+    /// the STONE factory's `bipush 20` ctor arg banks: the release
+    /// tick the scheduled store's due walk serves, the set-dedup the
+    /// queue bounded keeps, the networked world the SERVER's own
+    /// scheduler answers)
+    pub fn schedule_button_release(&mut self, x: i32, y: i32, z: i32) {
+        if self.world_is_network || self.offline_world.is_none() {
+            return;
+        }
+        if self
+            .falling_checks
+            .iter()
+            .any(|c| c.0 == x && c.1 == y && c.2 == z)
+        {
+            return;
+        }
+        self.falling_checks
+            .push((x, y, z, self.frame + crate::world::BUTTON_PULSE_TICKS));
+    }
+
+    /// THE WIRE'S OWN VOICE (the attach family's broadcast — javap
+    /// LeverBlock.updateNeighbours pc 9-65 the lever pos + the support
+    /// pos the two updateNeighborsAt walks speak, the ButtonBlock.press
+    /// pc 21-27 walk + the tick's unpress the SAME walk the pulse's
+    /// both beats wear): the changed attach cell's own twelve-cell
+    /// scan the door cells the signal verdict answers (the door's own
+    /// six + the mate's own six the ON source reads — the
+    /// hasNeighborSignal walk's source subset the world lane keeps)
+    /// and the flips the verdict's change the setOpen law speaks (the
+    /// mate's own sync the updateShape Y-arm's cycled state rides,
+    /// the OPEN bit the two cells the same beat wears; the hand gate
+    /// the wire never consults, the iron door's own refusal the HAND
+    /// arm keeps), the voices the set's own events wear, the vibration
+    /// posts the sculk lane hears. THE CALLER'S OWN SET: the changed
+    /// cell's kind the helper never touches (the scan the flipped
+    /// state reads — the press's ON the release's OFF the caller's
+    /// own beat banks), the remesh the changed pixels the single
+    /// re-speak answers.
+    fn attach_wire_voice(&mut self, lx: i32, ly: i32, lz: i32) {
+        // THE CLICK'S OWN VOICE INPUTS (the door arm's own shape the
+        // ear/pan walk keeps — the reads ride BEFORE the mutable
+        // borrow, the immutable-reads law the flint arm's own
+        // discipline keeps)
+        let ear = self
+            .body
+            .as_ref()
+            .map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
+        let mut door_flips: Vec<((i32, i32, i32), u16)> = Vec::new();
+        if let Some(world) = self.offline_world.as_mut() {
+            // THE TWELVE-CELL SCAN (javap the updateNeighbours walk —
+            // the changed cell's own six + the support cell's own six
+            // the Direction.values() loop serves; the FLOOR face's own
+            // DOWN arm the connected-direction law speaks)
+            {
+                let read = &*world;
+                let mut seen = std::collections::HashSet::new();
+                let mut scan = |cx: i32, cy: i32, cz: i32| {
+                    let kind = read.get(cx, cy, cz);
+                    if !crate::world::is_door(kind) || !seen.insert((cx, cy, cz)) {
+                        return;
+                    }
+                    let open_now = crate::world::is_door_open(kind);
+                    let mate = if crate::world::is_door_upper(kind) {
+                        (cx, cy - 1, cz)
+                    } else {
+                        (cx, cy + 1, cz)
+                    };
+                    let mate_kind = read.get(mate.0, mate.1, mate.2);
+                    let signal = crate::world::redstone_signal_at(read, cx, cy, cz)
+                        || (crate::world::is_door(mate_kind)
+                            && crate::world::redstone_signal_at(
+                                read, mate.0, mate.1, mate.2,
+                            ));
+                    if signal != open_now {
+                        if let Some(flip) = crate::world::door_flip_mate(kind) {
+                            door_flips.push(((cx, cy, cz), flip));
+                        }
+                        // THE MATE'S OWN SYNC (javap
+                        // DoorBlock.updateShape the Y-arm's own
+                        // return the cycled OPEN state the
+                        // other cell rides — the flipped half's
+                        // own setBlock broadcast the neighbor
+                        // door's updateShape walk serves, the
+                        // OPEN bit the two cells the same beat
+                        // wears; the hand walk's own both-halves
+                        // beat the wire flips share)
+                        let mate = if crate::world::is_door_upper(kind) {
+                            (cx, cy - 1, cz)
+                        } else {
+                            (cx, cy + 1, cz)
+                        };
+                        let mate_kind = read.get(mate.0, mate.1, mate.2);
+                        if crate::world::is_door(mate_kind) {
+                            if let Some(mate_flip) = crate::world::door_flip_mate(mate_kind) {
+                                if seen.insert(mate) {
+                                    door_flips.push((mate, mate_flip));
+                                }
+                            }
+                        }
+                    }
+                };
+                for (dx, dy, dz) in [
+                    (0, -1, 0),
+                    (0, 1, 0),
+                    (0, 0, -1),
+                    (0, 0, 1),
+                    (-1, 0, 0),
+                    (1, 0, 0),
+                ] {
+                    scan(lx + dx, ly + dy, lz + dz);
+                }
+                for (dx, dy, dz) in [
+                    (0, -1, 0),
+                    (0, 1, 0),
+                    (0, 0, -1),
+                    (0, 0, 1),
+                    (-1, 0, 0),
+                    (1, 0, 0),
+                ] {
+                    scan(lx + dx, ly - 1 + dy, lz + dz);
+                }
+            }
+            for ((dx, dy, dz), flip) in door_flips.iter() {
+                world.set(*dx, *dy, *dz, *flip);
+            }
+        }
+        // THE WIRE'S OWN VOICE (javap DoorBlock.setOpen — the
+        // playSound walk the open/close events the set's new bit
+        // answers, the pitch the `nextFloat() * 0.1F + 0.9F` fold
+        // speaks; the vibration posts the sculk lane hears)
+        for ((dx, dy, dz), flip) in door_flips {
+            let voice = crate::world::door_voice_stem(flip);
+            let event = if crate::world::is_door_open(flip) {
+                format!("{voice}.open")
+            } else {
+                format!("{voice}.close")
+            };
+            let (tx, ty, tz) = (dx as f64 + 0.5, dy as f64 + 0.5, dz as f64 + 0.5);
+            self.sounds.play_voice_at_pan(
+                self.frame,
+                &event,
+                1.0,
+                0.9 + self.drop_rng.next_f32() * 0.1,
+                ear_distance(ear, tx, ty, tz),
+                ear_pan(ear, yaw, tx, ty, tz),
+            );
+            self.dispatch_vibration_event(
+                if crate::world::is_door_open(flip) {
+                    "block_open"
+                } else {
+                    "block_close"
+                },
+                (tx, ty, tz),
+            );
+        }
+        // THE MESH'S OWN RE-SPEAK (the changed pixels the single
+        // re-speak answers — the ON/OFF kinds the plate's own thickness
+        // wears, the door flips the swing the same beat banks)
+        self.remesh_offline();
+    }
+
     fn dig_break_effects(&mut self, kind: u16, pos: (i32, i32, i32)) {
         // THE DOUBLE PLANT'S OWN PAIR LAW (javap DoublePlantBlock over
         // the 26.2 jar — the autopush-413 round): the broken half the
@@ -36359,6 +36580,90 @@ impl App {
             }
             return true;
         }
+        // THE BUTTON'S OWN PRESS ARM (the autopush-660 round — javap
+        // ButtonBlock.useWithoutItem + press the 26.2 jar): the
+        // useWithoutItem walk pc 0-19 the already-powered CONSUME
+        // verdict banks (the re-press the pass never flips, the press
+        // the success wears), the press walk pc 0-47 the POWERED=true
+        // setBlock flag-3 speaks + the updateNeighbours walk pc 21-27
+        // the wire voice rides (the attach helper's own twelve-cell
+        // scan the iron door the wire ALONE swings — the hand gate the
+        // wire never consults) + the scheduleTick(pos,
+        // ticksToStayPressed) pc 28-37 the 20-tick window banks (the
+        // STONE factory's bipush 20 the 1-second pulse the release
+        // tick serves) + the playSound pc 38-46 the click-on voice the
+        // LevelAccessor default fconst_1 pair carries (the volume
+        // 1.0 / pitch 1.0 the lever's own 0.3/0.6/0.5 the button never
+        // wears, the getSound walk the buttonClickOn event speaks) +
+        // the gameEvent BLOCK_ACTIVATE pc 47-56 the vibration post the
+        // sculk lane hears. THE SHIFT GATE THE BUTTON NEVER WEARS (the
+        // use walk's body the isShiftKeyDown read never speaks). THE
+        // WIRE SESSION THE LOCAL PRESS NEVER LANDS (the networked
+        // world's server-owned state the echo's reply names — the door
+        // arm's own law keeps).
+        if !self.world_is_network {
+            let hit_kind = self
+                .active_world()
+                .map(|w| w.get(hit.pos.0, hit.pos.1, hit.pos.2))
+                .unwrap_or(crate::world::AIR);
+            if crate::world::is_button(hit_kind) {
+                let (bx, by, bz) = hit.pos;
+                let (cx, cy, cz) = (
+                    bx as f64 + 0.5,
+                    by as f64 + 0.5,
+                    bz as f64 + 0.5,
+                );
+                // THE CONSUME VERDICT (javap useWithoutItem pc 0-19 —
+                // the POWERED read the already-pressed beat wears: the
+                // re-press the press never flips, the interaction the
+                // success return banks)
+                let already = self
+                    .active_world()
+                    .is_some_and(|w| crate::world::button_powered(w.get(bx, by, bz)));
+                if !already {
+                    // THE CLICK'S OWN VOICE INPUTS (the reads ride
+                    // BEFORE the mutable borrow — the flint arm's own
+                    // discipline keeps)
+                    let ear = self
+                        .body
+                        .as_ref()
+                        .map(|b| (b.x, b.y + b.eye_height(), b.z));
+                    let yaw = self.listener_yaw();
+                    if let Some(world) = self.offline_world.as_mut() {
+                        // THE PRESS'S OWN SET (javap press pc 0-20 —
+                        // the setValue(POWERED, true) setBlock flag-3
+                        // walk the offline kind swap serves)
+                        world.set(bx, by, bz, crate::world::BUTTON_ON);
+                    }
+                    // THE WIRE'S OWN BROADCAST (javap press pc 21-27 —
+                    // the updateNeighbours walk the attach helper's own
+                    // scan serves)
+                    self.attach_wire_voice(bx, by, bz);
+                    // THE CLICK-ON VOICE (javap playSound pc 0-26 — the
+                    // LevelAccessor default fconst_1 pair the volume
+                    // 1.0 / pitch 1.0 banks, the getSound walk the
+                    // buttonClickOn event carries)
+                    self.sounds.play_voice_at_pan(
+                        self.frame,
+                        "block.stone_button.click_on",
+                        1.0,
+                        1.0,
+                        ear_distance(ear, cx, cy, cz),
+                        ear_pan(ear, yaw, cx, cy, cz),
+                    );
+                    // THE ACTIVATE'S OWN VIBRATION (javap press pc
+                    // 47-56 — the gameEvent BLOCK_ACTIVATE walk the
+                    // sculk lane's frequency-10 event hears)
+                    self.dispatch_vibration_event("block_activate", (cx, cy, cz));
+                    // THE PULSE'S OWN CLOCK (javap press pc 28-37 —
+                    // the scheduleTick(pos, this, ticksToStayPressed)
+                    // walk the 20-tick window banks: the release tick
+                    // the scheduled store's due walk serves)
+                    self.schedule_button_release(bx, by, bz);
+                }
+                return true;
+            }
+        }
         // THE LEVER'S OWN TOGGLE ARM (the dev-45 round — javap
         // LeverBlock.useWithoutItem pc 0-55 the 26.2 jar, the
         // interactive-block family's next member): the
@@ -36395,107 +36700,14 @@ impl App {
                     ly as f64 + 0.5,
                     lz as f64 + 0.5,
                 );
-                let mut door_flips: Vec<((i32, i32, i32), u16)> = Vec::new();
                 if let Some(world) = self.offline_world.as_mut() {
                     world.set(lx, ly, lz, flipped);
-                    // THE WIRE'S OWN BROADCAST (javap
-                    // LeverBlock.updateNeighbours pc 9-65 — the lever
-                    // pos + the support pos the two updateNeighborsAt
-                    // walks speak, each the region's own six
-                    // neighbors the notify serves): the door cells
-                    // the scan reads answer the signal verdict (the
-                    // door's own six + the mate's own six the powered
-                    // kind reads — the hasNeighborSignal walk's
-                    // lever-source subset the world lane keeps) and
-                    // flip when the verdict differs (javap
-                    // DoorBlock.neighborChanged — the POWERED property
-                    // vs the flag compare the setOpen walk serves;
-                    // the WOODEN and IRON doors the same wire law
-                    // wears — the hand gate the wire never consults,
-                    // the iron door's own refusal the HAND arm keeps,
-                    // the wire the vanilla's own lever loop finally
-                    // speaks). The verdict's own silence the closed
-                    // kinds the flag's false arm keeps (the second
-                    // lever's silence the same walk answers).
-                    {
-                        let read = &*world;
-                        let mut seen = std::collections::HashSet::new();
-                        let mut scan = |cx: i32, cy: i32, cz: i32| {
-                            let kind = read.get(cx, cy, cz);
-                            if !crate::world::is_door(kind) || !seen.insert((cx, cy, cz)) {
-                                return;
-                            }
-                            let open_now = crate::world::is_door_open(kind);
-                            let mate = if crate::world::is_door_upper(kind) {
-                                (cx, cy - 1, cz)
-                            } else {
-                                (cx, cy + 1, cz)
-                            };
-                            let mate_kind = read.get(mate.0, mate.1, mate.2);
-                            let signal = crate::world::lever_signal_at(read, cx, cy, cz)
-                                || (crate::world::is_door(mate_kind)
-                                    && crate::world::lever_signal_at(
-                                        read, mate.0, mate.1, mate.2,
-                                    ));
-                            if signal != open_now {
-                                if let Some(flip) = crate::world::door_flip_mate(kind) {
-                                    door_flips.push(((cx, cy, cz), flip));
-                                }
-                                // THE MATE'S OWN SYNC (javap
-                                // DoorBlock.updateShape the Y-arm's own
-                                // return the cycled OPEN state the
-                                // other cell rides — the flipped half's
-                                // own setBlock broadcast the neighbor
-                                // door's updateShape walk serves, the
-                                // OPEN bit the two cells the same beat
-                                // wears; the hand walk's own both-halves
-                                // beat the wire flips share)
-                                let mate = if crate::world::is_door_upper(kind) {
-                                    (cx, cy - 1, cz)
-                                } else {
-                                    (cx, cy + 1, cz)
-                                };
-                                let mate_kind = read.get(mate.0, mate.1, mate.2);
-                                if crate::world::is_door(mate_kind) {
-                                    if let Some(mate_flip) =
-                                        crate::world::door_flip_mate(mate_kind)
-                                    {
-                                        if seen.insert(mate) {
-                                            door_flips.push((mate, mate_flip));
-                                        }
-                                    }
-                                }
-                            }
-                        };
-                        // the lever pos's own six + the support cell's
-                        // own six (the FLOOR face's DOWN arm the
-                        // getConnectedDirection law speaks) — the same
-                        // offsets the Direction.values() walk serves
-                        for (dx, dy, dz) in [
-                            (0, -1, 0),
-                            (0, 1, 0),
-                            (0, 0, -1),
-                            (0, 0, 1),
-                            (-1, 0, 0),
-                            (1, 0, 0),
-                        ] {
-                            scan(lx + dx, ly + dy, lz + dz);
-                        }
-                        for (dx, dy, dz) in [
-                            (0, -1, 0),
-                            (0, 1, 0),
-                            (0, 0, -1),
-                            (0, 0, 1),
-                            (-1, 0, 0),
-                            (1, 0, 0),
-                        ] {
-                            scan(lx + dx, ly - 1 + dy, lz + dz);
-                        }
-                    }
-                    for ((dx, dy, dz), flip) in door_flips.iter() {
-                        world.set(*dx, *dy, *dz, *flip);
-                    }
                 }
+                // THE WIRE'S OWN VOICE (javap press pc 21-27 — the
+                // updateNeighbours walk the attach helper's own
+                // twelve-cell scan serves, the flips the setOpen law
+                // speaks, the remesh the changed pixels answers)
+                self.attach_wire_voice(lx, ly, lz);
                 // THE CLICK'S OWN VOICE (javap LeverBlock.playSound
                 // pc 0-43 — the SoundEvents.LEVER_CLICK the BLOCKS
                 // source the 0.3 volume carries, the pitch the NEW
@@ -36513,40 +36725,6 @@ impl App {
                     ear_distance(ear, cx, cy, cz),
                     ear_pan(ear, yaw, cx, cy, cz),
                 );
-                // THE WIRE'S OWN VOICE (javap DoorBlock.setOpen — the
-                // playSound walk the open/close events the set's new
-                // bit answers, the pitch the `nextFloat() * 0.1F +
-                // 0.9F` fold speaks; the vibration posts the sculk
-                // lane hears)
-                for ((dx, dy, dz), flip) in door_flips {
-                    let voice = crate::world::door_voice_stem(flip);
-                    let event = if crate::world::is_door_open(flip) {
-                        format!("{voice}.open")
-                    } else {
-                        format!("{voice}.close")
-                    };
-                    let (tx, ty, tz) = (
-                        dx as f64 + 0.5,
-                        dy as f64 + 0.5,
-                        dz as f64 + 0.5,
-                    );
-                    self.sounds.play_voice_at_pan(
-                        self.frame,
-                        &event,
-                        1.0,
-                        0.9 + self.drop_rng.next_f32() * 0.1,
-                        ear_distance(ear, tx, ty, tz),
-                        ear_pan(ear, yaw, tx, ty, tz),
-                    );
-                    self.dispatch_vibration_event(
-                        if crate::world::is_door_open(flip) {
-                            "block_open"
-                        } else {
-                            "block_close"
-                        },
-                        (tx, ty, tz),
-                    );
-                }
                 return true;
             }
         }
@@ -36942,7 +37120,7 @@ impl App {
         // scan's survive-fails fallback the later arms serve — the
         // single-arm law the collision-backed click supports the
         // vanilla's own verdicts wear).
-        if crate::world::is_lever(block) {
+        if crate::world::is_lever(block) || crate::world::is_button(block) {
             let variant = crate::world::lever_placement_variant(hit.face, cam_yaw);
             if !self.active_world().is_some_and(|w| {
                 crate::world::lever_can_survive(w, cell.0, cell.1, cell.2, variant)
@@ -37060,7 +37238,7 @@ impl App {
             // the LOW keeps — the mesher's x-rot/y-rot lanes the byte
             // read, the placement preset's own preset the wire lane
             // answers).
-            if crate::world::is_lever(placed) {
+            if crate::world::is_lever(placed) || crate::world::is_button(placed) {
                 world.set_variant(
                     cell.0,
                     cell.1,
@@ -37131,7 +37309,7 @@ impl App {
             // the earlier stamp banks rides, the signal's silence the
             // closed kinds the item's own kinds keep.
             if crate::world::is_door_lower(placed)
-                && crate::world::lever_signal_at(world, cell.0, cell.1, cell.2)
+                && crate::world::redstone_signal_at(world, cell.0, cell.1, cell.2)
             {
                 if let Some(open_lower) = crate::world::door_flip_mate(placed) {
                     world.set(cell.0, cell.1, cell.2, open_lower);
@@ -101810,7 +101988,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            260,
+            262,
             "the palette the hinge-right tail's own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -101891,7 +102069,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            260,
+            262,
             "the palette the hinge-right tail's own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -102193,7 +102371,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            260,
+            262,
             "the palette the hinge-right tail's own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -105757,6 +105935,151 @@ cow_sound_variant: None,
         );
     }
 
+
+    #[test]
+    fn the_button_presses_pulses_and_the_wire_speaks() {
+        // THE BUTTON'S OWN PRESS + PULSE WALK (the autopush-660 round
+        // — javap ButtonBlock.useWithoutItem + press + tick the 26.2
+        // jar): the placement the wall lane lands, the press the ON
+        // kind the click-on voice + the wire voice wears (the IRON
+        // door the wire ALONE swings — the hand gate never consults),
+        // the re-press the CONSUME verdict banks, the 20-tick window
+        // the release beat serves (the OFF kind the click-off voice +
+        // the block_deactivate vibration wears, the door the silence
+        // closes).
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            // THE IRON DOOR'S OWN PAIR (the closed kinds the cell pair
+            // wears — the button's own south neighbor the wire scan
+            // reads, the mate's own sync the upper the same beat
+            // wears; the ray's own east lane the door never blocks)
+            w.set(c + 1, top, c + 1, crate::world::IRON_DOOR);
+            w.set(c + 1, top + 1, c + 1, crate::world::IRON_DOOR_UPPER);
+        }
+        app.offline_held_updated(Some("item/stone_button"));
+        // THE WALL LANE'S OWN LANDING (the east look the stone block's
+        // west face the ray reads — the FACING the west byte the
+        // normal banks, the two-field byte the high nibble wears)
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c + 2, top, c, crate::world::STONE);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 - 1.5, top as f32 + 0.5, c as f32 + 0.5),
+            yaw: std::f32::consts::FRAC_PI_2,
+            pitch: 0.0,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the wall hit the button's wall lane lands"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 1, top, c),
+                crate::world::BUTTON,
+                "the OFF kind the wall lane lands"
+            );
+            assert_eq!(
+                w.variant(c + 1, top, c),
+                crate::world::lever_variant(crate::world::LEVER_FACE_WALL, 4),
+                "the west-facing wall byte the stamp wears"
+            );
+        }
+        // THE PRESS'S OWN BEAT (the same aim the button cell the ray
+        // answers — the ON kind the click-on voice + the wire voice
+        // wears: the ON button's 15 the iron door swings)
+        assert!(app.on_right_press(0, 0), "the button's press consumes");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 1, top, c),
+                crate::world::BUTTON_ON,
+                "the ON kind the press wears"
+            );
+            assert_eq!(
+                w.get(c + 1, top, c + 1),
+                crate::world::IRON_DOOR_OPEN,
+                "the ON button's wire the door swings"
+            );
+            assert_eq!(
+                w.get(c + 1, top + 1, c + 1),
+                crate::world::IRON_DOOR_UPPER_OPEN,
+                "the mate's own sync the upper wears"
+            );
+        }
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.stone_button.click_on") && e.contains("p1.000000")),
+            "the click-on voice the 1.0 pitch wears"
+        );
+        assert!(
+            app.game_events.iter().any(|e| e.starts_with("block_activate")),
+            "the vibration post the sculk lane hears"
+        );
+        // THE CONSUME VERDICT (the re-press the ON kind the pass never
+        // flips — the interaction the success return banks)
+        assert!(
+            app.on_right_press(0, 0),
+            "the powered re-press the CONSUME wears"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c + 1, top, c),
+            crate::world::BUTTON_ON,
+            "the re-press the ON keeps"
+        );
+        // THE PULSE'S OWN END (the 20-tick window the release beat
+        // serves — the OFF kind the click-off voice + the door the
+        // silence closes)
+        for _ in 0..22 {
+            app.update();
+        }
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 1, top, c),
+                crate::world::BUTTON,
+                "the OFF kind the release wears"
+            );
+            assert_eq!(
+                w.get(c + 1, top, c + 1),
+                crate::world::IRON_DOOR,
+                "the door the silence closes"
+            );
+            assert_eq!(
+                w.get(c + 1, top + 1, c + 1),
+                crate::world::IRON_DOOR_UPPER,
+                "the mate the silence keeps"
+            );
+        }
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.stone_button.click_off") && e.contains("p1.000000")),
+            "the click-off voice the walk speaks"
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|e| e.starts_with("block_deactivate")),
+            "the deactivate post the sculk lane hears"
+        );
+    }
     #[test]
     fn the_lever_gates_and_the_door_preset_wear() {
         // THE GATES' OWN WALK (the dev-45 round the FLOOR lane banked,

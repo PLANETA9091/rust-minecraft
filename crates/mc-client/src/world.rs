@@ -899,7 +899,47 @@ pub const END_STONE: u16 = 89;
 /// beyond-table 258 the same law keeps (the every-rung displacement
 /// the ladder's growth speaks — the `id < N_KINDS` guards the tile
 /// lookups' skip verdict the bigger tail keeps).
-pub const END_PORTAL: u16 = 260;
+pub const END_PORTAL: u16 = 262;
+
+/// THE BUTTON'S OWN PAIR (the autopush-660 round): the redstone pulse's
+/// own block finally RENDERS, PLACES, PRESSES and PULSES — javap
+/// `net.minecraft.world.level.block.ButtonBlock` the 26.2 jar (pinned
+/// sha1 2dc72797, javap 21.0.12): the class `extends
+/// FaceAttachedHorizontalDirectionalBlock` the attach-face machinery the
+/// lever's lanes verbatim wear, the `useWithoutItem` walk pc 0-19 the
+/// already-powered CONSUME verdict banks (the re-press the pass never
+/// flips), the `press` walk pc 0-47 the `POWERED=true` setBlock flag-3
+/// speaks + the `updateNeighbours` walk the wire voice rides + the
+/// `scheduleTick(pos, ticksToStayPressed)` pc 28-37 the pulse's own
+/// clock banks (the STONE factory lambda the `BlockSetType.STONE` +
+/// `bipush 20` ctor args wear — the 20-tick 1-second pulse), the
+/// `playSound` walk pc 0-26 the LevelAccessor default `fconst_1` pair
+/// banks (the volume 1.0 / pitch 1.0 the lever's own 0.3/0.6/0.5 the
+/// button never wears), the `getSound` walk the BlockSetType's
+/// `buttonClickOn`/`buttonClickOff` pair speaks (the
+/// `block.stone_button.click_on`/`click_off` events the stone set type
+/// carries), the `tick` walk pc 0-24 the `checkPressed` delegate
+/// speaks — the unpress the `POWERED=false` setBlock flag-3 + the wire
+/// voice + the click-off voice + the `BLOCK_DEACTIVATE` vibration
+/// wears, the `buttonProperties` walk the `noCollision()` +
+/// `strength(0.5f)` + `pushReaction(DESTROY)` rows banks (the
+/// pass-through + the dig row (0.5, false) the lever's own laws
+/// wear). The OFF/ON kind pair the POWERED bit the ladder's ±1 mate
+/// wears, the facing + face the variant byte the lever's two-field law
+/// carries (the attach lanes the placement's own law the SAME base
+/// serves). The beyond-table seat the END_PORTAL kind the displacement
+/// law keeps (260 -> 262 the every-rung displacement the lever pair's
+/// 258->260 step wears — the `id < N_KINDS` guards the tile lookups'
+/// skip verdict the bigger table keeps).
+pub const BUTTON: u16 = 260;
+pub const BUTTON_ON: u16 = 261;
+
+/// THE BUTTON'S OWN PULSE CLOCK (javap `press` pc 28-37 the
+/// `scheduleTick(pos, this, ticksToStayPressed)` walk the STONE
+/// factory's `bipush 20` ctor arg banks — the LevelTickScheduler's
+/// 20-tick window the client's scheduled-tick store answers, the
+/// 1-second pulse the release tick serves).
+pub const BUTTON_PULSE_TICKS: u64 = 20;
 
 /// THE LEVER'S OWN PAIR (the dev-45 round): the toggle's own block
 /// finally RENDERS, PLACES and SPEAKS — javap the 26.2 jar's
@@ -1474,7 +1514,7 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 }
 
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 260] = [
+pub const NAME_OF: [&str; 262] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1787,6 +1827,12 @@ pub const NAME_OF: [&str; 260] = [
     // WOOD row / the item id the pick lane grants BOTH kinds the
     // shared name answers.
     "lever", "lever",
+    // THE BUTTON'S OWN ROWS (the autopush-660 round): the ONE
+    // "stone_button" registry entry both kinds the same name speaks —
+    // the dig row (0.5, false), the item id the pick lane grants BOTH
+    // kinds, the sounds' stone set type row the same law keeps (the
+    // _pressed strip the generated rows' registry law wears)
+    "stone_button", "stone_button",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -2755,23 +2801,64 @@ pub fn lever_can_survive(world: &World, x: i32, y: i32, z: i32, variant: u8) -> 
     !matches!(collision_shape(world.get(x + dx, y + dy, z + dz)), CollisionShape::Empty)
 }
 
+/// THE BUTTON'S OWN FAMILY (the autopush-660 round — the two-kind
+/// ladder the OFF/ON bit alone wears, the facing + face the variant
+/// byte carries): the placement's survival gate, the collision's
+/// pass-through row, the mesher's element lane and the press/pulse
+/// walks the family fn serves (the lever family's own shape the
+/// sibling keeps — the FaceAttachedHorizontalDirectionalBlock parent
+/// the two blocks the SAME base shares).
+pub fn is_button(id: u16) -> bool {
+    id == BUTTON || id == BUTTON_ON
+}
+
+/// THE BUTTON'S OWN POWERED BIT (javap ButtonBlock.useWithoutItem pc
+/// 0-19 — the POWERED read the ON kind's own verdict wears, the
+/// already-pressed CONSUME the re-press the pass keeps): the ON kind
+/// the powered verdict keeps, the OFF kind the resting answer wears.
+pub fn button_powered(id: u16) -> bool {
+    id == BUTTON_ON
+}
+
+/// THE BUTTON'S OWN OFF/ON MATE (javap press pc 0-7 the
+/// `setValue(POWERED, true)` walk + the tick's checkPressed unpress
+/// the POWERED=false arm speaks — the ladder's ±1 mate the lever's
+/// own law wears; the unknown id the None the honest guard banks).
+pub fn button_toggled(id: u16) -> Option<u16> {
+    match id {
+        BUTTON => Some(BUTTON_ON),
+        BUTTON_ON => Some(BUTTON),
+        _ => None,
+    }
+}
+
 /// THE WIRE'S OWN SOURCE WALK (javap Level.hasNeighborSignal pc 0-33
 /// — the `Direction.values()` loop the `getSignal(pos.relative(dir),
-/// dir) != 0` read wears; the lever the loop's own powered source the
+/// dir) != 0` read wears; the sources the loop's nonzero verdict the
 /// client's kind-only vocabulary answers: LeverBlock.getSignal the
-/// `powered ? 15 : 0` fold speaks — the POWERED kind's 15 the loop's
-/// nonzero verdict wears, the OFF kind's 0 the silent keep): the
-/// cell's own six neighbors any POWERED lever holds the signal
-/// verdict — the hasNeighborSignal walk's lever-source subset the
-/// honest client speaks (the other redstone sources the vocabulary
-/// never carries — the source family the later lanes grow).
-pub fn lever_signal_at(world: &World, x: i32, y: i32, z: i32) -> bool {
+/// `powered ? 15 : 0` fold speaks (the POWERED kind's 15 the loop's
+/// nonzero verdict wears, the OFF kind's 0 the silent keep) and
+/// ButtonBlock.isSignalSource the same family speaks (the press walk
+/// pc 0-47 the POWERED=true setBlock the ON kind's own 15 arms, the
+/// getDirectSignal walk the connected arm's 15 the direct lane
+/// wears) — the cell's own six neighbors any ON lever or ON button
+/// holds the signal verdict: the hasNeighborSignal walk's source
+/// subset the honest client speaks (the dev-45 round the lever family
+/// alone banked, the autopush-660 round the button's own seats the
+/// same walk wears).
+pub fn redstone_signal_at(world: &World, x: i32, y: i32, z: i32) -> bool {
     (world.get(x, y + 1, z) == LEVER_ON)
         || (world.get(x, y - 1, z) == LEVER_ON)
         || (world.get(x + 1, y, z) == LEVER_ON)
         || (world.get(x - 1, y, z) == LEVER_ON)
         || (world.get(x, y, z + 1) == LEVER_ON)
         || (world.get(x, y, z - 1) == LEVER_ON)
+        || (world.get(x, y + 1, z) == BUTTON_ON)
+        || (world.get(x, y - 1, z) == BUTTON_ON)
+        || (world.get(x + 1, y, z) == BUTTON_ON)
+        || (world.get(x - 1, y, z) == BUTTON_ON)
+        || (world.get(x, y, z + 1) == BUTTON_ON)
+        || (world.get(x, y, z - 1) == BUTTON_ON)
 }
 
 /// THE FALLING FAMILY — the kinds the vanilla's FallingBlock registers
@@ -2967,6 +3054,16 @@ pub fn collision_shape(id: u16) -> CollisionShape {
         // shape never refuses, the neighbors' own faces the
         // non-occluding verdict draws.
         || is_lever(id)
+        // THE BUTTON'S OWN ROW (the autopush-660 round — the
+        // buttonProperties walk's noCollision() call the registration
+        // speaks, the pass-through verdict the lever family's own row
+        // the sibling wears): the body walks THROUGH the button cell
+        // (the thin plate the collision never banks — the vanilla's
+        // own getShape the button model's box the collision Shape
+        // never adds), the placement's obstruction the empty shape
+        // never refuses, the neighbors' own faces the non-occluding
+        // verdict draws.
+        || is_button(id)
         || is_flower(id)
         || is_tuft(id)
         || is_double_plant(id)
@@ -9564,16 +9661,16 @@ mod tests {
         let c = w.size_blocks() / 2;
         let y = 2;
         w.set(c + 1, y, c, LEVER_ON);
-        assert!(lever_signal_at(&w, c, y, c), "the east seat's powered lever the signal answers");
+        assert!(redstone_signal_at(&w, c, y, c), "the east seat's powered lever the signal answers");
         w.set(c + 1, y, c, LEVER);
-        assert!(!lever_signal_at(&w, c, y, c), "the OFF lever the silence keeps");
+        assert!(!redstone_signal_at(&w, c, y, c), "the OFF lever the silence keeps");
         w.set(c, y + 1, c, LEVER_ON);
-        assert!(lever_signal_at(&w, c, y, c), "the above seat the same verdict wears");
+        assert!(redstone_signal_at(&w, c, y, c), "the above seat the same verdict wears");
         w.set(c, y + 1, c, AIR);
         w.set(c, y - 1, c, LEVER_ON);
-        assert!(lever_signal_at(&w, c, y, c), "the below seat the same verdict wears");
+        assert!(redstone_signal_at(&w, c, y, c), "the below seat the same verdict wears");
         w.set(c, y - 1, c, AIR);
-        assert!(!lever_signal_at(&w, c, y, c), "the bare cell the silence keeps");
+        assert!(!redstone_signal_at(&w, c, y, c), "the bare cell the silence keeps");
         // THE SURVIVAL'S OWN LAW (javap the base canSurvive pc 0-12 —
         // the connected direction's opposite the support cell reads,
         // the floating lever the refusal keeps; the FLOOR face the
@@ -9703,6 +9800,104 @@ mod tests {
         );
     }
 
+
+    #[test]
+    fn the_button_pair_the_signal_and_the_pulse_laws_wear() {
+        // THE BUTTON'S OWN LAWS (the autopush-660 round — javap
+        // ButtonBlock the 26.2 jar): the +1 mate the press/unpress
+        // ladders wear, the registry the ONE "stone_button" entry both
+        // kinds speak (the _pressed strip the generated rows' law
+        // keeps), the noCollision row the pass-through keeps, the dig
+        // row (0.5, false) the buttonProperties strength(0.5f) banks,
+        // the pulse clock the 20-tick window banks, the signal walk
+        // the ON kind's own six seats answer (the OFF kind the
+        // silence keeps), the placement/survival the SHARED base law
+        // the lever family speaks (the FaceAttachedHorizontal
+        // DirectionalBlock parent the two blocks wear).
+        assert!(is_button(BUTTON) && is_button(BUTTON_ON));
+        assert!(!is_button(LEVER) && !is_button(IRON_DOOR));
+        assert!(!button_powered(BUTTON));
+        assert!(button_powered(BUTTON_ON));
+        assert_eq!(button_toggled(BUTTON), Some(BUTTON_ON));
+        assert_eq!(button_toggled(BUTTON_ON), Some(BUTTON));
+        assert_eq!(button_toggled(LEVER), None);
+        assert_eq!(NAME_OF[BUTTON as usize], "stone_button");
+        assert_eq!(NAME_OF[BUTTON_ON as usize], "stone_button");
+        assert_eq!(BUTTON + 1, BUTTON_ON, "the +1 seat the OFF/ON ladder wears");
+        assert_eq!(
+            END_PORTAL, 262,
+            "the displaced seat the button pair's own tail banks"
+        );
+        // THE PULSE'S OWN CLOCK (javap press pc 28-37 — the STONE
+        // factory's bipush 20 ctor arg the window banks)
+        assert_eq!(BUTTON_PULSE_TICKS, 20);
+        // THE COLLISION'S OWN PASS-THROUGH (the noCollision() row the
+        // buttonProperties walk speaks — the placement's own
+        // obstruction the empty shape never refuses)
+        assert_eq!(collision_shape(BUTTON), CollisionShape::Empty);
+        assert_eq!(collision_shape(BUTTON_ON), CollisionShape::Empty);
+        // THE DIG'S OWN ROW (the generated table's (0.5, false) the
+        // strength(0.5f) + the no-tool demand the bare hand's harvest
+        // keeps)
+        let (hard, tool) = crate::dig::DigState::block_dig_row(BUTTON);
+        assert_eq!(hard, 0.5, "the button's own 0.5 the generated row wears");
+        assert!(!tool, "the bare hand the harvest keeps");
+        // THE SIGNAL'S OWN WALK (the six neighbors the ON button's 15
+        // answers — the OFF button the silence keeps, the hasNeighbor
+        // Signal walk's source subset the redstone_signal_at fn
+        // speaks)
+        let mut w = World::new(1, 0x600D);
+        let c = w.size_blocks() / 2;
+        let y = 2;
+        w.set(c + 1, y, c, BUTTON_ON);
+        assert!(
+            redstone_signal_at(&w, c, y, c),
+            "the east seat's ON button the signal answers"
+        );
+        w.set(c + 1, y, c, BUTTON);
+        assert!(
+            !redstone_signal_at(&w, c, y, c),
+            "the OFF button the silence keeps"
+        );
+        w.set(c, y + 1, c, BUTTON_ON);
+        assert!(
+            redstone_signal_at(&w, c, y, c),
+            "the above seat the same verdict wears"
+        );
+        w.set(c, y + 1, c, AIR);
+        w.set(c, y - 1, c, BUTTON_ON);
+        assert!(
+            redstone_signal_at(&w, c, y, c),
+            "the below seat the same verdict wears"
+        );
+        w.set(c, y - 1, c, AIR);
+        // THE PLACEMENT'S OWN LAW (the shared base the attach lanes
+        // wear — the UP hit the FLOOR face the raw look banks, the
+        // side hit the WALL face the normal byte answers)
+        assert_eq!(
+            lever_placement_variant(1, 0.0),
+            lever_variant(LEVER_FACE_FLOOR, 1),
+            "the UP hit the floor face the raw look wears"
+        );
+        assert_eq!(
+            lever_placement_variant(4, 0.0),
+            lever_variant(LEVER_FACE_WALL, 4),
+            "the west-normal hit the wall face the byte wears"
+        );
+        // THE SURVIVAL'S OWN LAW (the shared base the face-aware walk
+        // wears — the wall button the stone south the supporter
+        // answers, the air south the floating refusal keeps)
+        w.set(c, y, c + 1, STONE);
+        assert!(
+            lever_can_survive(&w, c, y, c, lever_variant(LEVER_FACE_WALL, 1)),
+            "the stone south the north-facing wall button answers"
+        );
+        w.set(c, y, c + 1, AIR);
+        assert!(
+            !lever_can_survive(&w, c, y, c, lever_variant(LEVER_FACE_WALL, 1)),
+            "the air south the wall button refuses"
+        );
+    }
     #[test]
     fn the_lever_facing_byte_the_raw_look_wears() {
         // THE FACING'S OWN LAW (javap the base
@@ -10172,7 +10367,7 @@ mod tests {
         assert_eq!(OAK_DOOR_UPPER, 91);
         assert_eq!(OAK_DOOR_OPEN, 92);
         assert_eq!(OAK_DOOR_UPPER_OPEN, 93);
-        assert_eq!(END_PORTAL, 260, "the displaced seat the lever pair's own tail banks");
+        assert_eq!(END_PORTAL, 262, "the displaced seat the button pair's own tail banks");
         // THE WOOD LADDER'S OWN SEATS (the dev-43 round — the eleven
         // quartets the CONTIGUOUS tail the kind ids 94..137 wear: the
         // closed lower + 0, the closed upper + 1, the open lower + 2,
@@ -10376,7 +10571,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 260, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 262, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)
