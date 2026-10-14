@@ -36898,6 +36898,12 @@ impl App {
                 return false;
             }
         }
+        // THE PLACEMENT CONTEXT'S OWN LOOK (the furnace facing's own
+        // input — the read rides BEFORE the mutable prediction borrow,
+        // the camera's own yaw the wire_angles conversion's raw form
+        // keeps; the lever's placement variant the same raw form the
+        // Y arms' FACING verdict reads)
+        let cam_yaw = self.world_camera().yaw;
         // THE TORCH'S OWN SURVIVAL GATE (the dev-32 round — javap
         // BaseTorchBlock.canSurvive over the 26.2 jar: the
         // `canSupportCenter(level, pos.below(), Direction.UP)` delegate
@@ -36920,25 +36926,27 @@ impl App {
                 return false;
             }
         }
-        // THE LEVER'S OWN PLACEMENT GATES (the dev-45 round — javap
-        // FaceAttachedHorizontalDirectionalBlock the 26.2 jar: the
-        // getStateForPlacement walk pcs 0-139 the Y-axis arm's FLOOR
-        // face the UP hit answers (the wall/ceiling lanes the later
-        // rounds keep — the side-face hit the null refusal the aconst
-        // -null walk banks, the press the PASS carries, the item
-        // lanes follow, nothing consumed), the canSurvive walk
-        // pc 0-12 the support cell's sturdy UP face the below read
-        // speaks — the canAttach walk the offline equivalence the
-        // collision table's non-Empty rows keep, the floating lever
-        // the refusal keeps).
+        // THE LEVER'S OWN PLACEMENT GATES (the dev-45 round the FLOOR
+        // lane banked, this round the WALL/CEILING lanes the hit faces
+        // serve — javap FaceAttachedHorizontalDirectionalBlock the 26.2
+        // jar: the getStateForPlacement walk pcs 0-139 the ordered
+        // scan's three arms the hit faces answer — the UP hit the
+        // FLOOR face the raw look wears, the DOWN hit the CEILING face
+        // the same raw look keeps, the side hits the WALL face the
+        // normal byte the `direction.getOpposite()` verdict banks (the
+        // placement variant the [`crate::world::lever_placement_variant`]
+        // law speaks), the canSurvive walk pc 0-12 the connected
+        // direction's opposite the support cell reads — the canAttach
+        // walk the offline equivalence the collision table's non-Empty
+        // rows keep, the floating lever the refusal keeps; the ordered
+        // scan's survive-fails fallback the later arms serve — the
+        // single-arm law the collision-backed click supports the
+        // vanilla's own verdicts wear).
         if crate::world::is_lever(block) {
-            if hit.face != 1 {
-                return false;
-            }
-            if !self
-                .active_world()
-                .is_some_and(|w| crate::world::lever_can_survive(w, cell.0, cell.1, cell.2))
-            {
+            let variant = crate::world::lever_placement_variant(hit.face, cam_yaw);
+            if !self.active_world().is_some_and(|w| {
+                crate::world::lever_can_survive(w, cell.0, cell.1, cell.2, variant)
+            }) {
                 return false;
             }
         }
@@ -36949,11 +36957,6 @@ impl App {
         // offline guard the networked world's server-owned scheduler
         // answers)
         self.schedule_falling_check_block_update(cell.0, cell.1, cell.2);
-        // THE PLACEMENT CONTEXT'S OWN LOOK (the furnace facing's own
-        // input — the read rides BEFORE the mutable prediction borrow,
-        // the camera's own yaw the wire_angles conversion's raw form
-        // keeps)
-        let cam_yaw = self.world_camera().yaw;
         // THE OFFLINE PREDICTION: the voxel lands in the App's own
         // terrain and the mesh re-speaks (the networked world's
         // placement rides the server's chunk refresh — no local edit)
@@ -37045,20 +37048,24 @@ impl App {
                     crate::world::furnace_facing_byte(cam_yaw),
                 );
             }
-            // THE LEVER'S OWN PLACEMENT FACING (the dev-45 round —
-            // javap the base getStateForPlacement pcs 64-73: the
+            // THE LEVER'S OWN PLACEMENT VARIANT (the dev-45 round the
+            // raw-look FLOOR stamp banked, this round the two-field
+            // byte the three arms wear — javap the base getStateFor
+            // Placement pcs 34-73 + 82-112: the Y arms the
             // `setValue(FACING, context.getHorizontalDirection())`
-            // RAW look the FLOOR arm answers — the furnace's own
-            // opposite the lever never wears, the stick the look's
-            // own compass leans; the byte the variant layer stamps,
-            // the mesher's y-rot steps the byte reads, the placement
-            // preset's own preset the wire lane answers).
+            // RAW look answer (the furnace's own opposite the Y arms
+            // never wear), the horizontal arm the
+            // `direction.getOpposite()` the hit face's own normal
+            // speaks; the face seat the HIGH nibble banks, the facing
+            // the LOW keeps — the mesher's x-rot/y-rot lanes the byte
+            // read, the placement preset's own preset the wire lane
+            // answers).
             if crate::world::is_lever(placed) {
                 world.set_variant(
                     cell.0,
                     cell.1,
                     cell.2,
-                    crate::world::lever_facing_byte(cam_yaw),
+                    crate::world::lever_placement_variant(hit.face, cam_yaw),
                 );
             }
             // THE PLACEMENT'S OWN CHAIN (javap BlockItem.placeBlock pc
@@ -105685,10 +105692,77 @@ cow_sound_variant: None,
     }
 
     #[test]
+    fn the_lever_ceiling_lane_the_under_hit_wears() {
+        // THE CEILING LANE'S OWN UNDER HIT (this round — javap the
+        // base getStateForPlacement pcs 34-58 the Y-axis arm's UP
+        // verdict the CEILING face answers, the raw look the FACING
+        // wears, the canSurvive the connected DOWN's UP opposite the
+        // above cell reads: the up look the stone slab's underside the
+        // ray hits, the lever the cell below lands, the two-field
+        // byte the high nibble the ceiling face banks)
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 3, c + dz, crate::world::STONE);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 2, c + dz, crate::world::AIR);
+                }
+            }
+        }
+        app.offline_held_updated(Some("item/lever"));
+        // THE UP LOOK'S OWN UNDER HIT (the camera under the slab the
+        // pitch +1/2 the ray carries — the hit face the DOWN ordinal
+        // the underside read wears, the placement cell the hit + the
+        // normal the below cell speaks)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 1.5, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the underside hit the ceiling lane lands");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top + 2, c),
+                crate::world::LEVER,
+                "the OFF kind the below-slab cell lands"
+            );
+            assert_eq!(
+                w.variant(c, top + 2, c),
+                crate::world::lever_variant(crate::world::LEVER_FACE_CEILING, 1),
+                "the ceiling face the raw look's north byte wears"
+            );
+        }
+        // THE TOGGLE'S OWN BEAT (the same aim the lever cell the ray
+        // answers — the flip the kind mate wears, the variant byte
+        // the ceiling face the same stamp keeps)
+        assert!(app.on_right_press(0, 0), "the ON toggle consumes");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top + 2, c),
+            crate::world::LEVER_ON,
+            "the ON kind the +1 mate wears"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().variant(c, top + 2, c),
+            crate::world::lever_variant(crate::world::LEVER_FACE_CEILING, 1),
+            "the variant byte the flip keeps"
+        );
+    }
+
+    #[test]
     fn the_lever_gates_and_the_door_preset_wear() {
-        // THE GATES' OWN WALK (the dev-45 round — the side-face hit
-        // the wall lane's refusal the honest null keeps, the floating
-        // lever the canSurvive verdict refuses, the POWERED preset the
+        // THE GATES' OWN WALK (the dev-45 round the FLOOR lane banked,
+        // this round the WALL lane the side hit serves — the wall hit
+        // the lever's wall lane lands, the floating lever the
+        // canSurvive verdict refuses, the POWERED preset the
         // getStateForPlacement's own flag arms: the door placed beside
         // an ON lever lands SWUNG, the silent ground the closed kinds
         // the item's own kinds wear)
@@ -105708,21 +105782,43 @@ cow_sound_variant: None,
             }
         }
         app.offline_held_updated(Some("item/lever"));
-        // THE SIDE-FACE REFUSAL (the horizontal look the west face of
-        // the east stone answers — the wall lane the later rounds
-        // keep, the press the PASS carries)
+        // THE WALL LANE'S OWN LANDING (this round — javap the base
+        // getStateForPlacement pcs 82-112 the horizontal arm the hit
+        // face's normal answers: the east look the stone pillar's
+        // west face the ray reads, the placement cell the hit + the
+        // normal speaks, the FACING the WEST byte the getOpposite()
+        // verdict banks, the variant the two-field stamp the high
+        // nibble wears, the survival the stone supporter the east
+        // cell answers)
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c + 2, top, c, crate::world::STONE);
+        }
         app.offline_camera_updated(crate::camera::Camera {
-            pos: crate::math::Vec3::new(c as f32 - 2.5, top as f32 + 0.5, c as f32 + 0.5),
+            pos: crate::math::Vec3::new(c as f32 - 1.5, top as f32 + 0.5, c as f32 + 0.5),
             yaw: std::f32::consts::FRAC_PI_2,
             pitch: 0.0,
         });
         assert!(
-            !app.on_right_press(0, 0),
-            "the wall hit the lever's floor lane refuses"
+            app.on_right_press(0, 0),
+            "the wall hit the lever's wall lane lands"
         );
         {
             let w = app.offline_world.as_ref().unwrap();
-            assert_eq!(w.get(c, top, c), crate::world::AIR, "no lever landed");
+            assert_eq!(
+                w.get(c + 1, top, c),
+                crate::world::LEVER,
+                "the OFF kind the wall lane lands"
+            );
+            assert_eq!(
+                w.variant(c + 1, top, c),
+                crate::world::lever_variant(crate::world::LEVER_FACE_WALL, 4),
+                "the west-facing wall byte the stamp wears"
+            );
+        }
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c + 1, top, c, crate::world::AIR);
         }
         // THE FLOOR'S OWN PLACEMENT + THE DOOR'S WIRE PRESET (the ON
         // lever the stone floor banks, the oak door placed beside the

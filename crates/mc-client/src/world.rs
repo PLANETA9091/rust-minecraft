@@ -2653,16 +2653,106 @@ pub fn lever_facing_byte(cam_yaw_radians: f32) -> u8 {
     door_facing_byte(cam_yaw_radians)
 }
 
-/// THE LEVER'S OWN FLOOR SURVIVAL (javap the base canSurvive pc 0-12
-/// — the `canAttach(level, pos, getConnectedDirection(state)
-/// .getOpposite())` verdict the FLOOR face's DOWN arm speaks, the
-/// support cell's `isFaceSturdy(level, below, UP)` read the
-/// collision table's non-Empty rows answer: the full-cube family the
-/// sturdy faces keep, the torch's own row the same verdict the
-/// placement's survival gates wear — the floating lever the refusal
-/// keeps).
-pub fn lever_can_survive(world: &World, x: i32, y: i32, z: i32) -> bool {
-    !matches!(collision_shape(world.get(x, y - 1, z)), CollisionShape::Empty)
+/// THE LEVER'S OWN FACE SEATS (javap the base getStateForPlacement
+/// pcs 34-58 — the Y-axis arm's own verdict the looking direction's
+/// UP/DOWN compare wears: `direction == UP` the CEILING face answers,
+/// the DOWN the FLOOR keeps; the horizontal arm pc 82-112 the WALL
+/// face speaks). The three seats the variant byte's own HIGH nibble
+/// carries (the LOW nibble the facing byte keeps — the two-field
+/// byte the placement's own stamp banks, the pre-face floor stamps
+/// the plain 1..4 rows the nibble-0 decode wears).
+pub const LEVER_FACE_FLOOR: u8 = 0;
+pub const LEVER_FACE_WALL: u8 = 1;
+pub const LEVER_FACE_CEILING: u8 = 2;
+
+/// THE LEVER'S OWN TWO-FIELD VARIANT (the high nibble the face seat
+/// wears, the low the facing byte keeps — the floor stamps the face
+/// 0 the byte the pre-face rows verbatim wear, the encoded rows the
+/// nibble split answers).
+pub fn lever_variant(face: u8, facing_byte: u8) -> u8 {
+    (face << 4) | (facing_byte & 0x0F)
+}
+
+/// THE VARIANT'S OWN FACE SEAT (the high nibble's own decode — the
+/// plain stamps the 0 floor the >>4 fold wears).
+pub fn lever_face_of(variant: u8) -> u8 {
+    variant >> 4
+}
+
+/// THE VARIANT'S OWN FACING SEAT (the low nibble's own decode — the
+/// 1..4 compass the raw stamps keep, the 0 byte the unstamp default
+/// the north row wears).
+pub fn lever_facing_of(variant: u8) -> u8 {
+    variant & 0x0F
+}
+
+/// THE WALL LANE'S OWN FACING (javap the base getStateForPlacement
+/// pcs 98-108 — the horizontal arm's `setValue(FACING, direction
+/// .getOpposite())` the LOOK's own opposite answers: the look the
+/// toward-the-wall direction the hit's own normal opposes, so the
+/// FACING the hit face's outward normal wears — the north face the
+/// byte 1 the raw-look compass keeps, the south 3 / west 4 / east 2
+/// the same vocabulary speaks). The side ordinals alone the walk
+/// serves (0/1 the Y arms the raw-look law keeps), the out-of-range
+/// byte the honest north default wears.
+pub fn lever_hit_face_facing(hit_face: u8) -> u8 {
+    match hit_face {
+        2 => 1, // the NORTH normal the byte-1 row wears
+        3 => 3, // SOUTH
+        4 => 4, // WEST
+        5 => 2, // EAST
+        _ => 1, // the Y arms the north default keeps
+    }
+}
+
+/// THE PLACEMENT'S OWN VARIANT LAW (javap the base getStateForPlace
+/// -ment pcs 0-139 — the ordered scan's three arms the hit-face
+/// lanes answer: the UP hit the FLOOR face the raw look wears, the
+/// DOWN hit the CEILING face the same raw look keeps, the side hits
+/// the WALL face the hit-face's own normal byte answers). The
+/// canSurvive's ordered-scan fallback the later arms serve — the
+/// client's own single arm the hit face speaks, the click-face law
+/// the collision-backed supports the vanilla's own verdicts wear.
+pub fn lever_placement_variant(hit_face: u8, cam_yaw_radians: f32) -> u8 {
+    let facing = match hit_face {
+        2..=5 => lever_hit_face_facing(hit_face),
+        _ => lever_facing_byte(cam_yaw_radians),
+    };
+    let face = match hit_face {
+        1 => LEVER_FACE_FLOOR,
+        0 => LEVER_FACE_CEILING,
+        _ => LEVER_FACE_WALL,
+    };
+    lever_variant(face, facing)
+}
+
+/// THE LEVER'S OWN FACE-AWARE SURVIVAL (javap the base canSurvive pc
+/// 0-12 — the `canAttach(level, pos, getConnectedDirection(state)
+/// .getOpposite())` verdict the connected direction's opposite the
+/// support cell reads, the `isFaceSturdy(level, support, toward)`
+/// walk the collision table's non-Empty rows answer: the full-cube
+/// family the sturdy faces keep, the torch's own row the same
+/// verdict the placement's survival gates wear — the floating lever
+/// the refusal keeps). THE CONNECTED DIRECTION'S OWN LAW (javap
+/// FaceAttachedHorizontalDirectionalBlock.getConnectedDirection —
+/// the FLOOR face the UP arm speaks, the CEILING the DOWN, the WALL
+/// the FACING itself): the FLOOR lever the below cell the DOWN
+/// opposite reads, the CEILING the above cell the UP opposite keeps,
+/// the WALL the behind cell the `FACING.getOpposite()` relative —
+/// the FACING points AWAY from the wall (the hit face's outward
+/// normal), so the support the facing's own opposite offset wears.
+pub fn lever_can_survive(world: &World, x: i32, y: i32, z: i32, variant: u8) -> bool {
+    let (dx, dy, dz) = match lever_face_of(variant) {
+        LEVER_FACE_WALL => match lever_facing_of(variant) {
+            2 => (-1, 0, 0), // east-facing: the wall west
+            3 => (0, 0, -1), // south-facing: the wall north
+            4 => (1, 0, 0),  // west-facing: the wall east
+            _ => (0, 0, 1),  // north-facing + the byte-0 default: the wall south
+        },
+        LEVER_FACE_CEILING => (0, 1, 0),
+        _ => (0, -1, 0),
+    };
+    !matches!(collision_shape(world.get(x + dx, y + dy, z + dz)), CollisionShape::Empty)
 }
 
 /// THE WIRE'S OWN SOURCE WALK (javap Level.hasNeighborSignal pc 0-33
@@ -9485,14 +9575,132 @@ mod tests {
         w.set(c, y - 1, c, AIR);
         assert!(!lever_signal_at(&w, c, y, c), "the bare cell the silence keeps");
         // THE SURVIVAL'S OWN LAW (javap the base canSurvive pc 0-12 —
-        // the below cell's sturdy UP face the collision rows answer,
-        // the floating lever the refusal keeps)
+        // the connected direction's opposite the support cell reads,
+        // the floating lever the refusal keeps; the FLOOR face the
+        // below cell the DOWN opposite answers, the plain 1..4 stamps
+        // the nibble-0 floor the pre-face rows wear)
         w.set(c, y - 1, c, STONE);
-        assert!(lever_can_survive(&w, c, y, c), "the stone below the survival answers");
+        assert!(
+            lever_can_survive(&w, c, y, c, 1),
+            "the stone below the survival answers"
+        );
         w.set(c, y - 1, c, AIR);
-        assert!(!lever_can_survive(&w, c, y, c), "the floating lever the refusal keeps");
+        assert!(
+            !lever_can_survive(&w, c, y, c, 1),
+            "the floating lever the refusal keeps"
+        );
         w.set(c, y - 1, c, TORCH);
-        assert!(!lever_can_survive(&w, c, y, c), "the torch below the empty row refuses");
+        assert!(
+            !lever_can_survive(&w, c, y, c, 1),
+            "the torch below the empty row refuses"
+        );
+    }
+
+    #[test]
+    fn the_lever_face_lanes_the_variant_and_survival_wear() {
+        // THE FACE LANES' OWN LAW (this round — javap the base
+        // getStateForPlacement pcs 0-139 the three arms the hit faces
+        // serve + canSurvive pc 0-12 the connected direction's own
+        // law the survival reads): the two-field byte the nibble
+        // split answers, the UP hit the FLOOR face the raw look
+        // wears, the DOWN hit the CEILING the same look keeps, the
+        // side hits the WALL face the normal byte the getOpposite()
+        // verdict banks, the support the facing's own opposite the
+        // connected law serves — the FACING the hit normal wears, so
+        // the supporter the cell + FACING.opposite holds.
+        let mut w = World::new(1, 0x600D);
+        let c = w.size_blocks() / 2;
+        let y = 2;
+        // THE TWO-FIELD ENCODE'S OWN ROUND (the face the high nibble
+        // banks, the facing the low keeps — the plain stamps the
+        // floor the nibble-0 decode wears)
+        assert_eq!(lever_variant(LEVER_FACE_FLOOR, 3), 3);
+        assert_eq!(lever_variant(LEVER_FACE_WALL, 2), 0x12);
+        assert_eq!(lever_face_of(0x12), LEVER_FACE_WALL);
+        assert_eq!(lever_facing_of(0x12), 2);
+        assert_eq!(
+            lever_face_of(3),
+            LEVER_FACE_FLOOR,
+            "the pre-face stamps the floor keeps"
+        );
+        // THE HIT FACE'S OWN NORMAL (the ordinals the wire speaks —
+        // NORTH 2 the byte-1 row wears, SOUTH 3, WEST 4, EAST 2)
+        assert_eq!(lever_hit_face_facing(2), 1);
+        assert_eq!(lever_hit_face_facing(3), 3);
+        assert_eq!(lever_hit_face_facing(4), 4);
+        assert_eq!(lever_hit_face_facing(5), 2);
+        // THE PLACEMENT'S OWN VARIANT (the UP hit the FLOOR face the
+        // raw look wears — the yaw-0 the north byte banks, the DOWN
+        // hit the CEILING the same look keeps, the side hits the
+        // WALL face the normal answers)
+        assert_eq!(
+            lever_placement_variant(1, 0.0),
+            lever_variant(LEVER_FACE_FLOOR, 1),
+            "the UP hit the floor face the raw look wears"
+        );
+        assert_eq!(
+            lever_placement_variant(0, 0.0),
+            lever_variant(LEVER_FACE_CEILING, 1),
+            "the DOWN hit the ceiling face the same look keeps"
+        );
+        assert_eq!(
+            lever_placement_variant(2, 0.0),
+            lever_variant(LEVER_FACE_WALL, 1),
+            "the north-normal hit the wall face the byte wears"
+        );
+        assert_eq!(
+            lever_placement_variant(5, 0.0),
+            lever_variant(LEVER_FACE_WALL, 2),
+            "the east-normal hit the east byte the wall wears"
+        );
+        // THE WALL SURVIVAL'S OWN OPPOSITE (the FACING the hit normal
+        // wears — the supporter the cell + FACING.opposite holds: the
+        // north-facing lever the stone SOUTH the survival answers,
+        // the air south the floating refusal keeps; the east-facing
+        // the stone WEST the same verdict wears)
+        w.set(c, y, c + 1, STONE);
+        assert!(
+            lever_can_survive(&w, c, y, c, lever_variant(LEVER_FACE_WALL, 1)),
+            "the stone south the north-facing wall lever answers"
+        );
+        w.set(c, y, c + 1, AIR);
+        assert!(
+            !lever_can_survive(&w, c, y, c, lever_variant(LEVER_FACE_WALL, 1)),
+            "the air south the wall lever refuses"
+        );
+        w.set(c, y, c - 1, STONE);
+        assert!(
+            lever_can_survive(&w, c, y, c, lever_variant(LEVER_FACE_WALL, 3)),
+            "the stone north the south-facing wall lever answers"
+        );
+        w.set(c, y, c - 1, AIR);
+        w.set(c - 1, y, c, STONE);
+        assert!(
+            lever_can_survive(&w, c, y, c, lever_variant(LEVER_FACE_WALL, 2)),
+            "the stone west the east-facing wall lever answers"
+        );
+        w.set(c - 1, y, c, AIR);
+        // THE CEILING SURVIVAL'S OWN ABOVE (the connected DOWN the UP
+        // opposite the support reads — the stone above the ceiling
+        // lever answers, the air above the floating refusal keeps)
+        w.set(c, y + 1, c, STONE);
+        assert!(
+            lever_can_survive(&w, c, y, c, lever_variant(LEVER_FACE_CEILING, 1)),
+            "the stone above the ceiling lever answers"
+        );
+        w.set(c, y + 1, c, AIR);
+        assert!(
+            !lever_can_survive(&w, c, y, c, lever_variant(LEVER_FACE_CEILING, 1)),
+            "the air above the ceiling lever refuses"
+        );
+        // THE KINDS' OWN INDIFFERENCE (the survival the variant alone
+        // reads — the floor lane's own below cell the same walk
+        // serves whatever the facing wears)
+        w.set(c, y - 1, c, STONE);
+        assert!(
+            lever_can_survive(&w, c, y, c, lever_variant(LEVER_FACE_FLOOR, 4)),
+            "the west-facing floor lever the below stone answers"
+        );
     }
 
     #[test]

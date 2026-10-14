@@ -1405,22 +1405,39 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     } else {
                         [1.0; 3]
                     };
-                    // THE FACING'S OWN STEPS (the variant byte the
-                    // placement stamps — the door lane's own decode
-                    // shape: the byte 0 the north default keeps, the
-                    // 1..=4 rows the N/E/S/W indexes the -1 fold
-                    // serves, each index the blockstate's own y-rot
-                    // row the step count answers)
-                    let facing = world.variant(wx, wy, wz);
-                    let steps = if facing == 0 { 0usize } else { facing as usize - 1 };
+                    // THE VARIANT'S OWN TWO-FIELD DECODE (the dev-45
+                    // round the facing byte banked, this round the face
+                    // seat the HIGH nibble banks — the placement's
+                    // two-field stamp the decode reads, the plain 1..4
+                    // rows the floor face the nibble-0 wear): the
+                    // blockstate's own rows the step laws speak — the
+                    // FLOOR rows north y=0 / east y=90 / south y=180 /
+                    // west y=270 the index steps keep, the WALL rows
+                    // the x=90 turn + the SAME y steps wear, the
+                    // CEILING rows the x=180 turn + the y-remap the
+                    // south y=0 / west y=90 / north y=180 / east y=270
+                    // rows speak (the (idx+2)%4 fold the +2 offset's
+                    // own law banks — the JOML rotationXYZ the x
+                    // arm the y arm the order keeps)
+                    let variant = world.variant(wx, wy, wz);
+                    let lever_face = crate::world::lever_face_of(variant);
+                    let facing_raw = crate::world::lever_facing_of(variant);
+                    let idx = if facing_raw == 0 { 0usize } else { facing_raw as usize - 1 };
+                    let (x_turns, steps) = match lever_face {
+                        crate::world::LEVER_FACE_WALL => (1usize, idx),
+                        crate::world::LEVER_FACE_CEILING => (2usize, (idx + 2) % 4),
+                        _ => (0usize, idx),
+                    };
                     for q in lever_model_quads(crate::world::lever_powered(id)) {
                         // THE ROTATED CULLFACE VERDICT — the six-
                         // direction law the candle lane wears, the
-                        // direction the SAME steps the geometry turns
-                        // (the down cullface under every y-rot the
-                        // below neighbor read answers)
+                        // direction the SAME turns the geometry takes
+                        // (the x-arm first the wall/ceiling lanes bank,
+                        // the down cullface the y-rot never moves — the
+                        // x-turn the flush face's own verdict rotates)
                         if let Some(dir) = q.cullface {
-                            let rotated = rotate_direction_cw(dir, steps);
+                            let rotated =
+                                rotate_direction_cw(rotate_direction_x(dir, x_turns), steps);
                             let (dx, dy, dz) = match rotated {
                                 mc_registry::element_quads::Direction::Down => (0, -1, 0),
                                 mc_registry::element_quads::Direction::Up => (0, 1, 0),
@@ -1451,7 +1468,8 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         // shade:true the ROTATED direction's table
                         // answers (the world-facing term the turn
                         // keeps), the never-shaded the 1.0 keeps
-                        let rotated_dir = rotate_direction_cw(q.direction, steps);
+                        let rotated_dir =
+                            rotate_direction_cw(rotate_direction_x(q.direction, x_turns), steps);
                         let face_shade = if q.shade {
                             match rotated_dir {
                                 mc_registry::element_quads::Direction::Up => 1.0f32,
@@ -1468,16 +1486,31 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         let mut colors = [[0f32; 3]; 4];
                         let mut uvs = [[0f32; 2]; 4];
                         for (i, v) in q.vertices.iter().enumerate() {
+                            // THE X-TURN'S OWN ARM (the blockstate x
+                            // values the JOML -90° fold serves — each
+                            // turn the (y,z)->(z,1-y) map about the
+                            // cell center answers: one turn the floor
+                            // plate the wall's own flush reads, two
+                            // turns the ceiling's own top keeps — the
+                            // wall row's x=90 the single turn banks,
+                            // the ceiling's x=180 the double wears)
+                            let (mut vy, mut vz) = (v[1], v[2]);
+                            for _ in 0..x_turns {
+                                let ny = 0.5 + (vz - 0.5);
+                                let nz = 1.0 - vy;
+                                vy = ny;
+                                vz = nz;
+                            }
                             // THE STEPS' OWN TURN (the blockstate y
                             // values the CW walk folds: each step the
                             // (x,z)->(-z,x) map about the cell center
                             // serves — the north row the raw model
                             // keeps, the east row one step wears)
-                            let (dx, dz) = (v[0] - 0.5, v[2] - 0.5);
+                            let (dx, dz) = (v[0] - 0.5, vz - 0.5);
                             let (rx, rz) = rotate_xz_cw(dx, dz, steps);
                             pts[i] = [
                                 wx as f32 + 0.5 + rx,
-                                wy as f32 + v[1],
+                                wy as f32 + vy,
                                 wz as f32 + 0.5 + rz,
                             ];
                             // the texel-space uv the /16 fold
@@ -3660,6 +3693,44 @@ fn rotate_xz_cw(dx: f32, dz: f32, steps: usize) -> (f32, f32) {
     }
 }
 
+/// THE X-AXIS'S OWN TURN (the blockstate x values the -90° fold
+/// rotates: down->south->up->north->down the same cycle the
+/// (y,z)->(z,1-y) vertex map speaks, the east/west axes the turn
+/// never touches). The wall lane's single turn the floor plate the
+/// wall's flush reads, the ceiling lane's double the top keeps, the
+/// y-rot steps the turn's own order the JOML rotationXYZ walk banks
+/// (the x arm first, the y steps after).
+fn rotate_direction_x(
+    dir: mc_registry::element_quads::Direction,
+    turns: usize,
+) -> mc_registry::element_quads::Direction {
+    use mc_registry::element_quads::Direction as D;
+    match turns % 4 {
+        0 => dir,
+        1 => match dir {
+            D::Down => D::South,
+            D::South => D::Up,
+            D::Up => D::North,
+            D::North => D::Down,
+            flat => flat,
+        },
+        2 => match dir {
+            D::Down => D::Up,
+            D::Up => D::Down,
+            D::North => D::South,
+            D::South => D::North,
+            flat => flat,
+        },
+        _ => match dir {
+            D::Down => D::North,
+            D::North => D::Up,
+            D::Up => D::South,
+            D::South => D::Down,
+            flat => flat,
+        },
+    }
+}
+
 /// THE CW DIRECTION'S OWN TURN (the face directions the geometry's
 /// own steps rotate: north->east->south->west->north the same CW
 /// order the vertex map speaks, the up/down axes the turn never
@@ -5564,6 +5635,221 @@ mod tests {
             .flat_map(|q| q.vertices.iter().copied())
             .collect();
         assert_ne!(fp, tp, "the two tilts the vertex sets split");
+    }
+
+    #[test]
+    fn the_lever_wall_ceiling_the_x_turn_lanes_wear() {
+        // THE WALL/CEILING LANES' OWN TURNS (this round — the
+        // blockstate's own rows the x/y fold serves: the WALL rows the
+        // x=90 turn + the facing's y steps wear, the CEILING rows the
+        // x=180 turn + the y-remap the (idx+2)%4 fold banks, the
+        // cullface the same turns the flush verdict rotates — the
+        // plate the supporter's own edge the geometry presses, the
+        // cull the rotated direction the neighbor read answers).
+        let lever_tile = atlas::TILE_NAMES
+            .iter()
+            .position(|n| *n == "lever")
+            .expect("the lever tile the atlas banks") as u16;
+        let cobble_tile = atlas::TILE_COBBLESTONE;
+        fn cell_quads<'a>(quads: &'a [Quad], x: i32, y: i32, z: i32) -> Vec<&'a Quad> {
+            quads
+                .iter()
+                .filter(|q| {
+                    q.pts.iter().all(|p| {
+                        p[0] >= x as f32 - 0.01
+                            && p[0] <= x as f32 + 1.01
+                            && p[1] >= y as f32 - 0.01
+                            && p[1] <= y as f32 + 1.01
+                            && p[2] >= z as f32 - 0.01
+                            && p[2] <= z as f32 + 1.01
+                    })
+                })
+                .collect()
+        }
+        // THE WALL LEVER'S OWN SOUTH PRESS (the north-facing lever the
+        // stone south the survival law banks — the plate the cell's
+        // south edge the x=90 turn wears, the rotated cullface the
+        // Down->South turn the stone neighbor culls — the six plate
+        // faces the five the flush verdict keeps)
+        let mut w = empty_world();
+        let (x, y, z) = (5i32, 3, 5);
+        w.set(x, y, z + 1, STONE);
+        w.set(x, y, z, LEVER);
+        w.set_variant(
+            x,
+            y,
+            z,
+            crate::world::lever_variant(crate::world::LEVER_FACE_WALL, 1),
+        );
+        let quads = mesh_world(&w, None);
+        let cell = cell_quads(&quads, x, y, z);
+        let plates: Vec<&&Quad> = cell.iter().filter(|q| q.tile == cobble_tile).collect();
+        let sticks: Vec<&&Quad> = cell.iter().filter(|q| q.tile == lever_tile).collect();
+        assert_eq!(
+            plates.len(),
+            5,
+            "the south-culled plate the five faces the flush verdict keeps"
+        );
+        for q in &plates {
+            for p in q.pts.iter() {
+                assert!(
+                    p[2] >= z as f32 + 0.80,
+                    "the plate the south edge the x-turn wears ({p:?})"
+                );
+                assert!(
+                    p[1] >= y as f32 + 0.24 && p[1] <= y as f32 + 0.76,
+                    "the plate the mid-y band the horizontal read keeps ({p:?})"
+                );
+            }
+        }
+        assert!(!sticks.is_empty(), "the stick the lever tile wears");
+        for q in &sticks {
+            for p in q.pts.iter() {
+                assert!(
+                    p[2] >= z as f32 + 0.44 && p[2] <= z as f32 + 0.99,
+                    "the stick the wall's own reach the x-turn keeps ({p:?})"
+                );
+                assert!(
+                    p[1] > y as f32 && p[1] < y as f32 + 1.0,
+                    "the tilted stick the cell's own interior keeps ({p:?})"
+                );
+            }
+        }
+        assert!(
+            sticks.iter().any(|q| q.pts.iter().any(|p| p[2] < z as f32 + 0.5)),
+            "the stick the cell's own depth the protrude wears"
+        );
+        // THE CULL'S OWN ROTATED DIRECTION (the air south the down-
+        // culled face the six faces the verdict restores — the rotated
+        // cullface the SOUTH neighbor the x-turn banks)
+        w.set(x, y, z + 1, AIR);
+        let quads = mesh_world(&w, None);
+        let cell = cell_quads(&quads, x, y, z);
+        let plates = cell.iter().filter(|q| q.tile == cobble_tile).count();
+        assert_eq!(plates, 6, "the air south the culled face restores");
+        // THE OPPOSITE FACING'S OWN NORTH PRESS (the south-facing
+        // lever the stone north the supporter banks — the plate the
+        // cell's north edge the two y steps wear, the rotated cullface
+        // the Down->South->North turn the stone neighbor culls)
+        w.set(x, y, z - 1, STONE);
+        w.set(x, y, z, LEVER);
+        w.set_variant(
+            x,
+            y,
+            z,
+            crate::world::lever_variant(crate::world::LEVER_FACE_WALL, 3),
+        );
+        let quads = mesh_world(&w, None);
+        let cell = cell_quads(&quads, x, y, z);
+        let plates: Vec<&&Quad> = cell.iter().filter(|q| q.tile == cobble_tile).collect();
+        assert_eq!(
+            plates.len(),
+            5,
+            "the north-culled plate the five faces the verdict keeps"
+        );
+        for q in &plates {
+            for p in q.pts.iter() {
+                assert!(
+                    p[2] <= z as f32 + 0.20,
+                    "the plate the north edge the y steps wear ({p:?})"
+                );
+            }
+        }
+        // THE CEILING'S OWN HANG (the south-facing lever the ceiling
+        // row's y=0 the no-extra-turn keeps — the plate the cell's
+        // top the x=180 wears, the rotated cullface the Down->Up turn
+        // the above stone culls, the stick the hang the upper half
+        // keeps)
+        w.set(x, y, z - 1, AIR);
+        w.set(x, y + 1, z, STONE);
+        w.set(x, y, z, LEVER);
+        w.set_variant(
+            x,
+            y,
+            z,
+            crate::world::lever_variant(crate::world::LEVER_FACE_CEILING, 3),
+        );
+        let quads = mesh_world(&w, None);
+        let cell = cell_quads(&quads, x, y, z);
+        let plates: Vec<&&Quad> = cell.iter().filter(|q| q.tile == cobble_tile).collect();
+        let sticks: Vec<&&Quad> = cell.iter().filter(|q| q.tile == lever_tile).collect();
+        assert_eq!(
+            plates.len(),
+            5,
+            "the up-culled plate the five faces the ceiling verdict keeps"
+        );
+        for q in &plates {
+            for p in q.pts.iter() {
+                assert!(
+                    p[1] >= y as f32 + 0.80,
+                    "the plate the top edge the x=180 wears ({p:?})"
+                );
+            }
+        }
+        assert!(!sticks.is_empty(), "the ceiling stick the lever tile wears");
+        for q in &sticks {
+            for p in q.pts.iter() {
+                assert!(
+                    p[1] >= y as f32 + 0.44 && p[1] <= y as f32 + 0.99,
+                    "the ceiling stick the upper half the hang keeps ({p:?})"
+                );
+            }
+        }
+        // THE Y-REMAP'S OWN 180 (the north-facing ceiling the
+        // (idx+2)%4 fold the two steps wears — the stick's own vertex
+        // set the south row's mirror the remap banks)
+        w.set_variant(
+            x,
+            y,
+            z,
+            crate::world::lever_variant(crate::world::LEVER_FACE_CEILING, 1),
+        );
+        let quads = mesh_world(&w, None);
+        let cell = cell_quads(&quads, x, y, z);
+        let mut north_stick: Vec<[f32; 3]> = cell
+            .iter()
+            .filter(|q| q.tile == lever_tile)
+            .flat_map(|q| q.pts.iter().copied())
+            .collect();
+        w.set_variant(
+            x,
+            y,
+            z,
+            crate::world::lever_variant(crate::world::LEVER_FACE_CEILING, 3),
+        );
+        let quads = mesh_world(&w, None);
+        let cell = cell_quads(&quads, x, y, z);
+        let mut south_stick: Vec<[f32; 3]> = cell
+            .iter()
+            .filter(|q| q.tile == lever_tile)
+            .flat_map(|q| q.pts.iter().copied())
+            .collect();
+        let sort = |pts: &mut Vec<[f32; 3]>| pts.sort_by(|a, b| {
+            a[1].total_cmp(&b[1])
+                .then(a[0].total_cmp(&b[0]))
+                .then(a[2].total_cmp(&b[2]))
+        });
+        sort(&mut north_stick);
+        sort(&mut south_stick);
+        assert_eq!(
+            north_stick.len(),
+            south_stick.len(),
+            "the two rows the same stick geometry wear"
+        );
+        for (n, s) in north_stick.iter().zip(south_stick.iter()) {
+            assert!(
+                (n[1] - s[1]).abs() < 1e-4,
+                "the y the turn never moves ({n:?} vs {s:?})"
+            );
+            assert!(
+                (n[0] - s[0]).abs() < 1e-4,
+                "the x the two steps the same 0.5-symmetric stick wears ({n:?} vs {s:?})"
+            );
+            assert!(
+                ((n[2] - z as f32 - 0.5) + (s[2] - z as f32 - 0.5)).abs() < 1e-4,
+                "the z the 180 remap the mirror wears ({n:?} vs {s:?})"
+            );
+        }
     }
 
     #[test]
