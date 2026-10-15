@@ -904,10 +904,11 @@ pub const END_STONE: u16 = 89;
 /// 292..315 rows bank, the dev-49 round the weighted plates' own
 /// pair-pair the 316..319 tail banks, the autopush-665 round the
 /// REDSTONE WIRE'S OWN PAIR the 320/321 rows the tail banks, the
-/// kind's own seat the beyond-table 322 the same law keeps — the
-/// `id < N_KINDS` guards the tile lookups' skip verdict the bigger
-/// tail keeps).
-pub const END_PORTAL: u16 = 322;
+/// autopush-666 round the REDSTONE TORCH'S OWN PAIR the 322/323 rows
+/// the tail banks, the kind's own seat the beyond-table 324 the same
+/// law keeps — the `id < N_KINDS` guards the tile lookups' skip
+/// verdict the bigger tail keeps).
+pub const END_PORTAL: u16 = 324;
 
 /// THE BUTTON'S OWN PAIR (the autopush-660 round): the redstone pulse's
 /// own block finally RENDERS, PLACES, PRESSES and PULSES — javap
@@ -1208,6 +1209,55 @@ pub const HEAVY_WEIGHTED_PRESSURE_PLATE_ON: u16 = 319;
 pub const REDSTONE_WIRE: u16 = 320;
 pub const REDSTONE_WIRE_ON: u16 = 321;
 
+/// THE REDSTONE TORCH'S OWN PAIR (the autopush-666 round): the
+/// NOT-gate's own source finally RENDERS, PLACES, FEEDS and FLIPS —
+/// javap `net.minecraft.world.level.block.RedstoneTorchBlock` the 26.2
+/// jar (pinned sha1 2dc72797, the python walk scripts/jar_work/
+/// redstone_torch_666.py the javap-absent sandbox keeps): the class
+/// `extends BaseTorchBlock` the survival gate the torch family's own
+/// canSupportCenter delegate wears, the ctor pc 0-32 the
+/// `registerDefaultState(any().setValue(LIT, true))` walk the LIT
+/// default speaks (the placed torch the lit kind the item's own
+/// placement lands), the getSignal walk pc 0-19 the
+/// `direction == UP ? 0 : ownSignal` arms bank (the UP arm the dark
+/// 0 the self-feed loop the exclusion refuses — the below cell's own
+/// read the torch the arms never count), the ownSignal pc 0-22 the
+/// `LIT ? 15 : 0` fold the lit kind's own 15 the bipush arm banks,
+/// the getDirectSignal pc 0-18 the `direction == DOWN ? getSignal :
+/// 0` arms the block ABOVE the torch the strong-power verdict serves,
+/// the isSignalSource pc 0-5 the iconst_1 TRUE the source family's
+/// own verdict wears, the neighborChanged pc 0-44 the
+/// `LIT != hasNeighborSignal` verdict the scheduleTick(2) walk serves
+/// (the tick walk the flip arms wear — the LIT && signal the
+/// setBlock(LIT=false) speaks, the !LIT && !signal the
+/// setBlock(LIT=true) keeps; the hasNeighborSignal pc 0-11 the
+/// `hasSignal(pos.below(), DOWN)` read the below cell's own power
+/// verdict — the client's [`redstone_signal_at`] walk the kind-only
+/// vocabulary answers, the doors' own read the same walk wears; the
+/// RECENT_TOGGLES burnout window the 8-toggle count the documented
+/// follow-up keeps — the immediate verdict the first lane wears).
+/// The blocks clinit row (pc 10070-10107) the registration speaks:
+/// `noCollision().instabreak()` the pass-through + instant-dig pair,
+/// `lightLevel(litBlockEmission(7))` the lit kind's own 7 the bipush
+/// pc 10087 banks (the unlit kind the dark 0 the litBlockEmission's
+/// own verdict keeps), `sound(WOOD)` the wood family's own voices,
+/// `pushReaction(DESTROY)` the piston walk the destruction keeps.
+/// The Items clinit row (pc 7265-7276) the BlockItem pairing speaks —
+/// `Items.REDSTONE_TORCH = registerBlock(BlockItemIds.REDSTONE_TORCH,
+/// Blocks.REDSTONE_TORCH, StandingAndWallBlockItem(REDSTONE_TORCH,
+/// REDSTONE_WALL_TORCH, DOWN, ...))` — the standing torch the item's
+/// own primary block the floor lane answers (the wall torch the
+/// separate block the follow-up round wears). The blockstates/
+/// redstone_torch.json the TWO rows the lit bit wears (lit=true the
+/// block/redstone_torch model answers, lit=false the
+/// block/redstone_torch_off row the template_torch_unlit parent the
+/// stick box alone keeps — the lit parent template_redstone_torch the
+/// stick + the SIX glow planes the 7-element chain banks, the
+/// full-cube finder the FIRST element's six-face box the tile walk
+/// answers).
+pub const REDSTONE_TORCH: u16 = 322;
+pub const REDSTONE_TORCH_OFF: u16 = 323;
+
 /// THE WIRE'S OWN FAMILY VERDICT (the autopush-665 round — the OFF/ON
 /// pair the POWER bit the ±1 mate the lever/button/plate ladders' own
 /// law carries, the NO variant byte the wire reads — the binary kind
@@ -1234,6 +1284,57 @@ pub fn wire_toggled(id: u16) -> u16 {
     } else {
         REDSTONE_WIRE_ON
     }
+}
+
+/// THE REDSTONE TORCH'S OWN FAMILY VERDICT (the autopush-666 round —
+/// the lit/off pair the LIT bit the ±1 mate the lever/button/plate
+/// ladders' own law carries, the NO variant byte the standing torch
+/// reads — the floor-only lane the wall torch the separate block the
+/// follow-up round keeps): the placement's survival gate, the dig's
+/// support-pop arm, the collision's pass-through row, the mesher's
+/// element lane and the NOT-gate's own consult the family fn serves.
+pub fn is_redstone_torch(id: u16) -> bool {
+    id == REDSTONE_TORCH || id == REDSTONE_TORCH_OFF
+}
+
+/// THE REDSTONE TORCH'S OWN LIT BIT (the ctor's default-state law the
+/// LIT=true registration banks — the lit kind the source verdict the
+/// ownSignal walk's own 15 keeps, the off kind the dark 0 the silent
+/// answer wears).
+pub fn redstone_torch_lit(id: u16) -> bool {
+    id == REDSTONE_TORCH
+}
+
+/// THE REDSTONE TORCH'S OWN TOGGLED KIND (the tick walk's setBlock
+/// arms the ±1 mate speaks — the LIT && signal walk the OFF answer,
+/// the !LIT && !signal the ON keeps; the unknown id the None the
+/// honest guard banks).
+pub fn redstone_torch_toggled(id: u16) -> Option<u16> {
+    match id {
+        REDSTONE_TORCH => Some(REDSTONE_TORCH_OFF),
+        REDSTONE_TORCH_OFF => Some(REDSTONE_TORCH),
+        _ => None,
+    }
+}
+
+/// THE TORCH'S OWN SOURCE ARMS (javap `RedStoneTorchBlock.getSignal`
+/// pc 0-19 the 26.2 jar — the `direction == UP ? 0 : ownSignal` walk
+/// the lit kind's own 15 the bipush arm banks): the torch ABOVE the
+/// consumer cell the UP arm the dark 0 keeps (the below cell's own
+/// read the self-feed loop the exclusion refuses — the torch standing
+/// ON a cell the cell's own verdict the torch never arms), the four
+/// horizontals AND the below arm the lit kind answers (the d != UP
+/// verdict the ownSignal 15 wears). THE WIRE'S OWN SOURCE SCAN AND
+/// THE DOOR'S OWN READ the same helper serves (the hasNeighborSignal
+/// loop's `getSignal(pos.relative(dir), dir)` walk the direction
+/// convention keeps — the UP arm the torch the never-counts law the
+/// getSignal walk's own gate banks).
+pub fn torch_sources_near(world: &World, x: i32, y: i32, z: i32) -> bool {
+    redstone_torch_lit(world.get(x, y - 1, z))
+        || redstone_torch_lit(world.get(x + 1, y, z))
+        || redstone_torch_lit(world.get(x - 1, y, z))
+        || redstone_torch_lit(world.get(x, y, z + 1))
+        || redstone_torch_lit(world.get(x, y, z - 1))
 }
 
 /// THE WIRE'S OWN SURVIVAL GATE (javap `RedStoneWireBlock.canSurvive`
@@ -1276,6 +1377,13 @@ pub fn wire_sources_near(world: &World, x: i32, y: i32, z: i32) -> bool {
         || plate_powered(world.get(x - 1, y, z))
         || plate_powered(world.get(x, y, z + 1))
         || plate_powered(world.get(x, y, z - 1))
+        // THE TORCH'S OWN SOURCE ARMS (the autopush-666 round — the
+        // getSignal walk's d != UP verdict the lit kind's own 15 the
+        // five arms wear: the torch ABOVE the wire cell the UP arm the
+        // dark 0 keeps, the four horizontals AND the below arm the lit
+        // kind answers — the [`torch_sources_near`] walk the same
+        // helper the door's own read serves)
+        || torch_sources_near(world, x, y, z)
 }
 
 /// THE WIRE'S OWN COMPONENT WALK (the binary lane the graded POWER
@@ -2000,9 +2108,11 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 /// The dev-48 round the plate pair's rungs the 288..291 tail banks —
 /// the autopush-663 round the plate ladder's own tail the 292..315
 /// rows bank — the dev-49 round the weighted plates' own tail the
-/// 316..319 rows bank — the table the 320 rows the END_PORTAL the
-/// beyond-table seat the displaced law keeps.
-pub const NAME_OF: [&str; 322] = [
+/// 316..319 rows bank — the autopush-665 round the wire's own pair
+/// the 320/321 rows bank — the autopush-666 round the redstone
+/// torch's own pair the 322/323 rows bank — the table the 324 rows
+/// the END_PORTAL the beyond-table seat the displaced law keeps.
+pub const NAME_OF: [&str; 324] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -2399,6 +2509,17 @@ pub const NAME_OF: [&str; 322] = [
     // the placement's placeable lookup the reverse walk the BlockItem
     // pairing serves.
     "redstone_wire", "redstone_wire",
+    // THE REDSTONE TORCH'S OWN ROWS (the autopush-666 round): the
+    // lit/off pair the ONE registry entry the strip law keeps (the
+    // RedstoneTorchBlock's ONE "redstone_torch" registry id both
+    // states the same name answers — the dig row (0.0, false) the
+    // instabreak clinit speaks, the sounds' WOOD row and the drops
+    // table's self-entry the pick lane grants BOTH kinds speak), the
+    // placement's placeable lookup the reverse walk the BlockItem
+    // pairing serves (the standing torch the item's own primary
+    // block the lit default state the ctor's registerDefaultState
+    // law banks).
+    "redstone_torch", "redstone_torch",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -3841,6 +3962,13 @@ pub fn redstone_signal_at(world: &World, x: i32, y: i32, z: i32) -> bool {
         || wire_powered(world.get(x - 1, y, z))
         || wire_powered(world.get(x, y, z + 1))
         || wire_powered(world.get(x, y, z - 1))
+        // THE TORCH'S OWN ARMS (the autopush-666 round — the
+        // getSignal walk's d != UP verdict the lit kind's own 15 the
+        // five arms wear, the [`torch_sources_near`] walk the same
+        // helper the wire's own source scan serves: the torch ABOVE
+        // the read cell the UP arm the dark 0 keeps, the doors the
+        // lit torch's own neighborhood the same walk opens)
+        || torch_sources_near(world, x, y, z)
 }
 
 /// THE BUTTON'S OWN PLATE BOX — javap `ButtonBlock.makeShapes` pc 0-45
@@ -4079,6 +4207,12 @@ pub fn can_support_torch(below: u16) -> bool {
         && !is_tuft(below)
         && !is_double_plant(below)
         && !is_torch(below)
+        // THE REDSTONE TORCH'S OWN REFUSAL (the autopush-666 round —
+        // the BaseTorchBlock parent's canSurvive the redstone torch's
+        // own walk the same canSupportCenter delegate wears: the torch
+        // on torch the stack the verdict refuses, the floating pair
+        // the pop lane's own consult the same fn answers)
+        && !is_redstone_torch(below)
 }
 
 /// THE COLLISION SHAPE'S OWN THREE (the vanilla `getCollisionShape`'s
@@ -4152,6 +4286,14 @@ pub fn collision_shape(id: u16) -> CollisionShape {
         || id == WATER
         || id == LAVA
         || is_torch(id)
+        // THE REDSTONE TORCH'S OWN ROW (the autopush-666 round — the
+        // blocks clinit's REDSTONE_TORCH factory row pc 10070-10107 the
+        // noCollision() call speaks: the pass-through verdict the torch
+        // family's own row the sibling wears — the body walks THROUGH
+        // the stick cell, the placement's obstruction the empty shape
+        // never refuses, the neighbors' own faces the non-occluding
+        // verdict draws)
+        || is_redstone_torch(id)
         // THE LEVER'S OWN ROW (the dev-45 round — the blocks clinit's
         // noCollision() call the lever registration speaks, the
         // pass-through verdict the torch family's own row the sibling
@@ -7059,6 +7201,7 @@ impl World {
                 && !is_button(kind)
                 && !is_pressure_plate(kind)
                 && !is_redstone_wire(kind)
+                && !is_redstone_torch(kind)
             {
                 continue;
             }
@@ -7072,7 +7215,10 @@ impl World {
             // .canSurvive pc 0-26 the canSurviveOn(pos.below()) delegate
             // the below cell's isFaceSturdy(UP) read the autopush-665
             // round speaks, the variant byte the wire never consumes)
-            let support = if is_pressure_plate(kind) || is_redstone_wire(kind) {
+            let support = if is_pressure_plate(kind)
+                || is_redstone_wire(kind)
+                || is_redstone_torch(kind)
+            {
                 (x, y - 1, z)
             } else {
                 let (dx, dy, dz) = lever_support_offset(self.variant(x, y, z));
@@ -7084,9 +7230,14 @@ impl World {
             // THE SURVIVAL'S OWN CONSULT (the failing verdict the AIR
             // the pop speaks — the plate AND the wire the straight-DOWN
             // gate wears, the lever/button the variant decode the
-            // canAttach walk serves)
+            // canAttach walk serves, the torch the canSupportCenter
+            // delegate the [`can_support_torch`] fold answers)
             if is_pressure_plate(kind) || is_redstone_wire(kind) {
                 if plate_can_survive(self, x, y, z) {
+                    continue;
+                }
+            } else if is_redstone_torch(kind) {
+                if can_support_torch(self.get(x, y - 1, z)) {
                     continue;
                 }
             } else if lever_can_survive(self, x, y, z, self.variant(x, y, z)) {
@@ -11186,7 +11337,7 @@ mod tests {
         assert_eq!(NAME_OF[BUTTON_ON as usize], "stone_button");
         assert_eq!(BUTTON + 1, BUTTON_ON, "the +1 seat the OFF/ON ladder wears");
         assert_eq!(
-            END_PORTAL, 322,
+            END_PORTAL, 324,
             "the displaced seat the wire pair's own tail banks"
         );
         // THE PULSE'S OWN CLOCK (javap press pc 28-37 — the STONE
@@ -11903,10 +12054,10 @@ mod tests {
         assert_eq!(REDSTONE_WIRE, 320);
         assert_eq!(REDSTONE_WIRE_ON, 321);
         assert_eq!(
-            END_PORTAL, 322,
+            END_PORTAL, 324,
             "the displaced seat the wire pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 322, "the palette the wire pair banks");
+        assert_eq!(atlas::N_KINDS, 324, "the palette the wire pair banks");
         assert!(is_redstone_wire(REDSTONE_WIRE) && is_redstone_wire(REDSTONE_WIRE_ON));
         assert!(!is_redstone_wire(LEVER) && !is_redstone_wire(OAK_PRESSURE_PLATE));
         assert!(!wire_powered(REDSTONE_WIRE));
@@ -12026,6 +12177,157 @@ mod tests {
     }
 
     #[test]
+    fn the_redstone_torch_the_not_gate_and_the_source_arms_wear() {
+        // THE REDSTONE TORCH'S OWN LAWS (the autopush-666 round — javap
+        // RedstoneTorchBlock the 26.2 jar the probe scripts/jar_work/
+        // redstone_torch_666.py banks): the lit/off pair the 322/323
+        // tail wears (the ctor's LIT=true default the plain-name kind
+        // the blockstate's own mapping keeps), the END_PORTAL the
+        // beyond-table seat the displacement keeps (the 324 the
+        // `id < N_KINDS` guards the bigger tail banks), the ONE
+        // "redstone_torch" registry entry both kinds speak (the _off
+        // strip the generated rows' law keeps — the jar's OWN model
+        // suffix the off row wears), the noCollision row the
+        // pass-through keeps, the dig row (0.0, false) the instabreak
+        // clinit banks, the getSignal walk the d != UP verdict the
+        // five arms wear (the torch ABOVE the read cell the UP arm the
+        // dark 0 keeps — the self-feed loop the exclusion refuses),
+        // the placement the item the lit kind the BlockItem pairing
+        // banks, the survival gate the canSupportCenter delegate the
+        // torch-on-torch stack refuses, the component walk the lit
+        // torch's own neighborhood the run lights.
+        use mc_registry::generated::atlas;
+        assert_eq!(REDSTONE_TORCH, 322);
+        assert_eq!(REDSTONE_TORCH_OFF, 323);
+        assert_eq!(
+            END_PORTAL, 324,
+            "the displaced seat the torch pair's own tail banks"
+        );
+        assert_eq!(atlas::N_KINDS, 324, "the palette the torch pair banks");
+        assert!(is_redstone_torch(REDSTONE_TORCH) && is_redstone_torch(REDSTONE_TORCH_OFF));
+        assert!(!is_redstone_torch(TORCH) && !is_redstone_torch(LEVER));
+        assert!(redstone_torch_lit(REDSTONE_TORCH));
+        assert!(!redstone_torch_lit(REDSTONE_TORCH_OFF));
+        assert_eq!(REDSTONE_TORCH + 1, REDSTONE_TORCH_OFF, "the +1 mate wears");
+        assert_eq!(redstone_torch_toggled(REDSTONE_TORCH), Some(REDSTONE_TORCH_OFF));
+        assert_eq!(redstone_torch_toggled(REDSTONE_TORCH_OFF), Some(REDSTONE_TORCH));
+        assert_eq!(redstone_torch_toggled(TORCH), None, "the unknown id the None keeps");
+        assert_eq!(NAME_OF[REDSTONE_TORCH as usize], "redstone_torch");
+        assert_eq!(NAME_OF[REDSTONE_TORCH_OFF as usize], "redstone_torch");
+        assert_eq!(atlas::KIND_NAMES[REDSTONE_TORCH as usize], "redstone_torch");
+        assert_eq!(
+            atlas::KIND_NAMES[REDSTONE_TORCH_OFF as usize],
+            "redstone_torch_off"
+        );
+        assert_eq!(atlas::REGISTRY_NAMES[REDSTONE_TORCH as usize], "redstone_torch");
+        assert_eq!(
+            atlas::REGISTRY_NAMES[REDSTONE_TORCH_OFF as usize],
+            "redstone_torch"
+        );
+        // THE TILE ROWS' OWN SEATS (the full-cube finder the FIRST
+        // six-face element the lit model's 7-element chain answers —
+        // the stick box the ONE tile the six faces share, the glow
+        // planes the finder's break arm skips; the off model the
+        // template_torch_unlit parent the stick box alone keeps)
+        let lit_tiles = atlas::FACE_TILES[REDSTONE_TORCH as usize];
+        let off_tiles = atlas::FACE_TILES[REDSTONE_TORCH_OFF as usize];
+        assert!(lit_tiles.iter().all(|&t| t == lit_tiles[2]), "the lit kind the ONE tile wears");
+        assert!(off_tiles.iter().all(|&t| t == off_tiles[2]), "the off kind the ONE tile wears");
+        assert_eq!(atlas::tile_name(lit_tiles[2]), "redstone_torch");
+        assert_eq!(atlas::tile_name(off_tiles[2]), "redstone_torch_off");
+        assert_ne!(lit_tiles[2], off_tiles[2], "the two masters the seats differ");
+        // THE COLLISION'S OWN PASS-THROUGH (the noCollision() row the
+        // factory's Properties chain pc 10081 speaks)
+        assert_eq!(collision_shape(REDSTONE_TORCH), CollisionShape::Empty);
+        assert_eq!(collision_shape(REDSTONE_TORCH_OFF), CollisionShape::Empty);
+        // THE DIG'S OWN ROW (the generated table's (0.0, false) the
+        // instabreak clinit the bare hand's harvest keeps)
+        let (hard, tool) = crate::dig::DigState::block_dig_row(REDSTONE_TORCH);
+        assert_eq!(hard, 0.0, "the instabreak row the clinit banks");
+        assert!(!tool, "the no-tool demand the torch never wears");
+        // THE PLACEMENT'S OWN ITEM (javap Items.<clinit> pc 7265-7276 —
+        // the StandingAndWallBlockItem pairing the lit default state
+        // the ctor's registerDefaultState law banks)
+        assert_eq!(World::placeable_block("redstone_torch"), Some(REDSTONE_TORCH));
+        assert_eq!(World::placeable_block("redstone_torch_off"), None);
+        // THE SURVIVAL GATE'S OWN WALK (javap BaseTorchBlock.canSurvive
+        // — the canSupportCenter(below, UP) delegate the sturdy read
+        // keeps: the torch-on-torch stack the refusal wears)
+        assert!(can_support_torch(STONE), "the stone floor the torch holds");
+        assert!(!can_support_torch(AIR), "the air below the refusal keeps");
+        assert!(
+            !can_support_torch(REDSTONE_TORCH),
+            "the torch on torch the stack the verdict refuses"
+        );
+        // THE SOURCE ARMS' OWN WALK (javap getSignal pc 0-19 — the
+        // `direction == UP ? 0 : ownSignal` arms the five arms wear:
+        // the four horizontals AND the below arm the lit kind answers,
+        // the torch ABOVE the read cell the UP arm the dark 0 keeps —
+        // the self-feed loop the exclusion refuses)
+        let mut w = World::new(1, 0x600D);
+        let (y, c) = (1i32, 4i32);
+        w.set(c, y - 1, c, STONE);
+        w.set(c, y, c, REDSTONE_TORCH);
+        assert!(
+            !torch_sources_near(&w, c, y - 1, c),
+            "the torch above its own floor the UP arm never counts"
+        );
+        w.set(c, y, c, AIR);
+        w.set(c + 1, y, c, REDSTONE_TORCH);
+        assert!(torch_sources_near(&w, c, y, c), "the east torch's arm answers");
+        w.set(c + 1, y, c, AIR);
+        w.set(c, y - 1, c, REDSTONE_TORCH);
+        assert!(torch_sources_near(&w, c, y, c), "the below torch's arm answers");
+        w.set(c, y - 1, c, REDSTONE_TORCH_OFF);
+        assert!(
+            !torch_sources_near(&w, c, y, c),
+            "the OFF torch the silence keeps"
+        );
+        w.set(c, y - 1, c, AIR);
+        // THE DOOR'S OWN READ (the same arms the redstone_signal_at
+        // walk wears — the lit torch's own neighborhood the read
+        // answers, the OFF kind the silence keeps)
+        w.set(c + 1, y, c, REDSTONE_TORCH);
+        assert!(redstone_signal_at(&w, c, y, c), "the lit torch's arm answers");
+        w.set(c + 1, y, c, REDSTONE_TORCH_OFF);
+        assert!(
+            !redstone_signal_at(&w, c, y, c),
+            "the OFF torch the silence keeps"
+        );
+        // THE WIRE FEED'S OWN WALK (the component BFS the lit torch's
+        // arms the source-only scan serves — the run the torch's light
+        // carries, the OFF kind the dark keep serves)
+        w.set(c, y, c, REDSTONE_TORCH);
+        w.set(c + 1, y, c, REDSTONE_WIRE);
+        w.set(c + 2, y, c, REDSTONE_WIRE);
+        let flips = wire_component_flips(&w, &[(c + 1, y, c)]);
+        assert_eq!(
+            flips,
+            vec![
+                ((c + 1, y, c), REDSTONE_WIRE_ON),
+                ((c + 2, y, c), REDSTONE_WIRE_ON),
+            ],
+            "the lit torch the run lights"
+        );
+        // THE FLIPS' OWN APPLY (the walk the pure returns the caller's
+        // setBlock arms wear — the ON run the world banks before the
+        // torch's own flip consults)
+        for ((fx, fy, fz), kind) in &flips {
+            w.set(*fx, *fy, *fz, *kind);
+        }
+        w.set(c, y, c, REDSTONE_TORCH_OFF);
+        let flips_off = wire_component_flips(&w, &[(c + 1, y, c)]);
+        assert_eq!(
+            flips_off,
+            vec![
+                ((c + 1, y, c), REDSTONE_WIRE),
+                ((c + 2, y, c), REDSTONE_WIRE),
+            ],
+            "the OFF torch the dark keep serves"
+        );
+    }
+
+    #[test]
     fn the_door_family_the_mates_and_the_seats_wear() {
         // THE DOOR QUARTET'S OWN LAW (the autopush-655 round — the
         // two-halves x two-open-bits ladder the seats wear: the
@@ -12036,7 +12338,7 @@ mod tests {
         assert_eq!(OAK_DOOR_OPEN, 92);
         assert_eq!(OAK_DOOR_UPPER_OPEN, 93);
         assert_eq!(
-            END_PORTAL, 322,
+            END_PORTAL, 324,
             "the displaced seat the wire pair's own tail banks"
         );
         // THE WOOD LADDER'S OWN SEATS (the dev-43 round — the eleven
@@ -12242,7 +12544,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 322, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 324, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)

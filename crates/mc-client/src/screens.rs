@@ -35984,6 +35984,72 @@ impl App {
         let yaw = self.listener_yaw();
         let mut door_flips: Vec<((i32, i32, i32), u16)> = Vec::new();
         if let Some(world) = self.offline_world.as_mut() {
+            // THE TORCH'S OWN NOT-GATE CONSULT (the autopush-666 round —
+            // javap RedstoneTorchBlock.neighborChanged pc 0-44 the 26.2
+            // jar: the `LIT != hasNeighborSignal` verdict the
+            // scheduleTick(2) walk serves, the tick walk the flip arms
+            // wear — the LIT && signal walk the setBlock(LIT=false)
+            // speaks, the !LIT && !signal the setBlock(LIT=true) keeps;
+            // the hasNeighborSignal pc 0-11 the `hasSignal(pos.below(),
+            // DOWN)` read the below cell's own power verdict — the
+            // client's [`crate::world::redstone_signal_at`] walk the
+            // kind-only vocabulary answers, the doors' own read the
+            // same walk wears). THE CONSULT'S OWN SCOPE the changed
+            // cell + its six the seeds wear: the consulted cell's own
+            // torch (the placement/removal arm) AND the torch standing
+            // ON the consulted cell (the floor cell the hasSignal read
+            // consults). THE 2-TICK DELAY AND THE RECENT_TOGGLES
+            // BURNOUT WINDOW the documented follow-up keeps — the
+            // immediate verdict the first lane wears (the placed torch
+            // the powered floor the same beat the dark kind speaks).
+            let mut torch_flips: Vec<((i32, i32, i32), u16)> = Vec::new();
+            {
+                let read = &*world;
+                let mut seen: std::collections::HashSet<(i32, i32, i32)> =
+                    std::collections::HashSet::new();
+                let mut consult: Vec<(i32, i32, i32)> = vec![(lx, ly, lz)];
+                for (dx, dy, dz) in [
+                    (0, -1, 0),
+                    (0, 1, 0),
+                    (0, 0, -1),
+                    (0, 0, 1),
+                    (-1, 0, 0),
+                    (1, 0, 0),
+                ] {
+                    consult.push((lx + dx, ly + dy, lz + dz));
+                }
+                for (cx, cy, cz) in consult {
+                    for (tx, ty, tz) in [(cx, cy, cz), (cx, cy + 1, cz)] {
+                        if !seen.insert((tx, ty, tz)) {
+                            continue;
+                        }
+                        let kind = read.get(tx, ty, tz);
+                        if !crate::world::is_redstone_torch(kind) {
+                            continue;
+                        }
+                        let lit = crate::world::redstone_torch_lit(kind);
+                        let powered = crate::world::redstone_signal_at(read, tx, ty - 1, tz);
+                        let flip = if lit && powered {
+                            Some(crate::world::REDSTONE_TORCH_OFF)
+                        } else if !lit && !powered {
+                            Some(crate::world::REDSTONE_TORCH)
+                        } else {
+                            None
+                        };
+                        if let Some(next) = flip {
+                            torch_flips.push(((tx, ty, tz), next));
+                        }
+                    }
+                }
+            }
+            // THE FLIPS' OWN APPLY (the read borrow's last use the
+            // collect pass keeps — the setBlock arms the tick walk's
+            // own walk the same beat wears)
+            let mut torch_cells: Vec<(i32, i32, i32)> = Vec::with_capacity(torch_flips.len());
+            for ((tx, ty, tz), next) in &torch_flips {
+                world.set(*tx, *ty, *tz, *next);
+                torch_cells.push((*tx, *ty, *tz));
+            }
             // THE WIRE'S OWN RECOMPUTE (javap RedStoneWireBlock
             // .updateNeighborsOfNeighboringWires pc 0-118 the 26.2 jar —
             // the changed cell's own six + the cell itself the adjacent
@@ -36010,6 +36076,25 @@ impl App {
                     (1, 0, 0),
                 ] {
                     seeds.push((lx + dx, ly + dy, lz + dz));
+                }
+                // THE TORCH FLIPS' OWN SEEDS (the flipped torch cells
+                // the wire's re-evaluation the same scope wears — the
+                // torch cell + its own six the notifyNeighbors walk's
+                // updateNeighborsAt broadcast speaks: the lit bit's
+                // own flip the wire cells' verdict the same beat
+                // re-arms)
+                for (tx, ty, tz) in &torch_cells {
+                    seeds.push((*tx, *ty, *tz));
+                    for (dx, dy, dz) in [
+                        (0, -1, 0),
+                        (0, 1, 0),
+                        (0, 0, -1),
+                        (0, 0, 1),
+                        (-1, 0, 0),
+                        (1, 0, 0),
+                    ] {
+                        seeds.push((tx + dx, ty + dy, tz + dz));
+                    }
                 }
                 let wire_flips = crate::world::wire_component_flips(read, &seeds);
                 for ((wx, wy, wz), kind) in wire_flips {
@@ -37654,7 +37739,16 @@ impl App {
         // SAME `canSupportCenter(below, UP)` delegate the 26.2 jar
         // speaks): the shared predicate the floating candle the same
         // refusal keeps.
-        if crate::world::is_torch(block) || crate::world::is_candle(block) {
+        if crate::world::is_torch(block)
+            || crate::world::is_candle(block)
+            // THE REDSTONE TORCH'S OWN ROW (the autopush-666 round —
+            // javap BaseTorchBlock.canSurvive the redstone torch's own
+            // walk the SAME canSupportCenter(below, UP) delegate the
+            // 26.2 jar speaks): the shared predicate the floating
+            // torch the same refusal keeps — the press the PASS
+            // carries, the item lane follows, nothing consumed.
+            || crate::world::is_redstone_torch(block)
+        {
             let below = self
                 .active_world()
                 .map(|w| w.get(cell.0, cell.1 - 1, cell.2));
@@ -102590,7 +102684,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            322,
+            324,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -102671,7 +102765,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            322,
+            324,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -102973,7 +103067,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            322,
+            324,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -106820,7 +106914,7 @@ cow_sound_variant: None,
         assert_eq!(crate::world::OAK_BUTTON_ON, 263);
         assert_eq!(
             crate::world::END_PORTAL,
-            322,
+            324,
             "the displaced seat the weighted plates' own tail keeps"
         );
         for kind in [
@@ -106903,7 +106997,7 @@ cow_sound_variant: None,
         // #texture ref banks)
         assert_eq!(
             atlas::N_KINDS,
-            322,
+            324,
             "the palette the weighted plates' own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
@@ -107118,12 +107212,12 @@ cow_sound_variant: None,
         );
         assert_eq!(
             crate::world::END_PORTAL,
-            322,
+            324,
             "the displaced seat the weighted plates' own tail keeps"
         );
         assert_eq!(
             atlas::N_KINDS,
-            322,
+            324,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
@@ -107395,12 +107489,12 @@ cow_sound_variant: None,
         );
         assert_eq!(
             crate::world::END_PORTAL,
-            322,
+            324,
             "the displaced seat the weighted plates' own tail keeps"
         );
         assert_eq!(
             atlas::N_KINDS,
-            322,
+            324,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
@@ -107515,8 +107609,8 @@ cow_sound_variant: None,
         assert_eq!(w::LIGHT_WEIGHTED_PRESSURE_PLATE_ON, 317);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE, 318);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, 319);
-        assert_eq!(w::END_PORTAL, 322);
-        assert_eq!(atlas::N_KINDS, 322, "the palette the weighted rows bank");
+        assert_eq!(w::END_PORTAL, 324);
+        assert_eq!(atlas::N_KINDS, 324, "the palette the weighted rows bank");
         for (off, on, name) in [
             (
                 w::LIGHT_WEIGHTED_PRESSURE_PLATE,
@@ -107790,6 +107884,81 @@ cow_sound_variant: None,
             "the deactivate vibration the release beat wears"
         );
     }
+
+    #[test]
+    fn the_redstone_torch_the_not_gate_consult_and_the_wire_feed_wear() {
+        // THE TORCH'S OWN APP LANE (the autopush-666 round — the
+        // attach broadcast's NOT-gate consult the offline world wears:
+        // the lit torch the run lights, the powered floor the flip the
+        // dark kind speaks, the quiet floor the lit kind restores —
+        // javap RedstoneTorchBlock.neighborChanged pc 0-44 + the tick
+        // walk the 26.2 jar the probe scripts/jar_work/
+        // redstone_torch_666.py banks)
+        use crate::world as w;
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            world.set(c, top - 1, c, w::STONE);
+            world.set(c, top, c, w::REDSTONE_TORCH);
+            world.set(c + 1, top, c, w::REDSTONE_WIRE);
+            world.set(c + 2, top, c, w::REDSTONE_WIRE);
+        }
+        // THE PLACE BROADCAST'S OWN FEED (the attach walk the wire's
+        // recompute the lit torch's arms serve — the run the torch's
+        // light carries)
+        app.attach_wire_voice(c, top, c);
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c + 1, top, c),
+            w::REDSTONE_WIRE_ON,
+            "the lit torch the run lights"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c + 2, top, c),
+            w::REDSTONE_WIRE_ON,
+            "the far cell the component's light banks"
+        );
+        // THE NOT-GATE'S OWN FLIP (the lever ON beside the floor cell
+        // the floor's own read arms — the consult the OFF kind the
+        // same beat speaks, the wire recompute the dark keep serves)
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            world.set(c - 1, top - 1, c, w::LEVER_ON);
+        }
+        app.attach_wire_voice(c - 1, top - 1, c);
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            w::REDSTONE_TORCH_OFF,
+            "the powered floor the NOT gate flips"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c + 1, top, c),
+            w::REDSTONE_WIRE,
+            "the dark run the flip keeps"
+        );
+        // THE QUIET FLOOR'S OWN RESTORE (the lever OFF the floor's read
+        // silences — the consult the lit kind the same beat restores,
+        // the wire recompute the light re-banks)
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            world.set(c - 1, top - 1, c, w::LEVER);
+        }
+        app.attach_wire_voice(c - 1, top - 1, c);
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            w::REDSTONE_TORCH,
+            "the quiet floor the lit kind restores"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c + 1, top, c),
+            w::REDSTONE_WIRE_ON,
+            "the light the restore re-banks"
+        );
+    }
+
     #[test]
     fn the_pressure_plates_the_sensor_the_sensitivity_and_the_release_wear() {
         // THE PLATES' OWN LAWS (the dev-48 round — javap the 26.2 jar
@@ -107811,10 +107980,10 @@ cow_sound_variant: None,
         assert_eq!(w::OAK_PRESSURE_PLATE_ON, 289);
         assert_eq!(w::STONE_PRESSURE_PLATE, 290);
         assert_eq!(w::STONE_PRESSURE_PLATE_ON, 291);
-        assert_eq!(w::END_PORTAL, 322);
+        assert_eq!(w::END_PORTAL, 324);
         assert_eq!(
             atlas::N_KINDS,
-            322,
+            324,
             "the palette the weighted plates' own rows bank"
         );
         for (off, on, name, wooden) in [

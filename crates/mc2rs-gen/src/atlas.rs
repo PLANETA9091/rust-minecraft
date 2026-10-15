@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 322] = [
+pub const RUNTIME_PALETTE: [&str; 324] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1005,6 +1005,31 @@ pub const RUNTIME_PALETTE: [&str; 322] = [
     // new Item.Properties().trimMaterial(...))` — the "redstone" item
     // the placement lane's own BlockItem walk serves.
     "redstone_wire", "redstone_wire_on",
+    // THE REDSTONE TORCH'S OWN PAIR (the autopush-666 round — javap
+    // RedstoneTorchBlock the 26.2 jar the python walk scripts/
+    // jar_work/redstone_torch_666.py banks): the NOT-gate's own source
+    // the lit/off pair the palette's tail banks — the ctor pc 0-32 the
+    // `registerDefaultState(any().setValue(LIT, true))` walk the LIT
+    // default speaks (the plain-name kind the lit row the blockstate's
+    // own mapping keeps: lit=true the block/redstone_torch model
+    // answers, lit=false the block/redstone_torch_off row the
+    // template_torch_unlit parent the stick box alone keeps — the lit
+    // parent template_redstone_torch the stick + the SIX glow planes
+    // the 7-element chain banks, the full-cube finder the FIRST
+    // element's six-face box the tile walk answers), the getSignal pc
+    // 0-19 the `direction == UP ? 0 : ownSignal` arms the UP exclusion
+    // banks, the ownSignal pc 0-22 the `LIT ? 15 : 0` fold the lit
+    // kind's own 15 banks, the blocks clinit row pc 10070-10107 the
+    // `noCollision().instabreak()` + `lightLevel(litBlockEmission(7))`
+    // + `sound(WOOD)` + `pushReaction(DESTROY)` chain speaks, the
+    // Items clinit row pc 7265-7276 the StandingAndWallBlockItem
+    // pairing the standing torch the item's own primary block keeps
+    // (the wall torch the separate block the follow-up round wears).
+    // The `_off` row the jar's OWN model suffix wears — the
+    // RedstoneTorchBlock's ONE "redstone_torch" registry entry both
+    // states the same name banks (the registry_names walk the _off
+    // strip the plate's _down law keeps).
+    "redstone_torch", "redstone_torch_off",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -1137,6 +1162,40 @@ fn resolve_block(
     // NETHER_PORTAL strip consts answer)
     if block == "nether_portal" {
         return Ok(resolve_flat_stem("nether_portal", false));
+    }
+
+    // THE REDSTONE TORCH'S OWN ROWS (the autopush-666 round — javap
+    // RedstoneTorchBlock the 26.2 jar: the blockstates'
+    // redstone_torch.json the TWO rows the lit bit wears — the lit
+    // kind the "lit=true" row's block/redstone_torch model answers,
+    // the off kind the "lit=false" row's block/redstone_torch_off
+    // model keeps; the per-row arm the candle pair's own walk the
+    // same shape serves, the generic walk's FIRST-variant read the
+    // off model both kinds would wrongly wear). The LIT model's
+    // parent template_redstone_torch the SEVEN-element chain banks
+    // (the stick box [7,0,7]->[9,10,9] the SIX-face row the full-cube
+    // finder answers + the SIX tiny glow planes the finder's break
+    // arm skips — the first six-face element the tile walk keeps),
+    // the OFF model's template_torch_unlit parent the stick box
+    // ALONE banks (the shade field the unlit element never carries —
+    // the model-level ambientocclusion: false the lane's own law
+    // wears).
+    if block == "redstone_torch" || block == "redstone_torch_off" {
+        let lit = block == "redstone_torch";
+        let bs_bytes =
+            read_jar(archive, "assets/minecraft/blockstates/redstone_torch.json")?;
+        let bs: Value = serde_json::from_slice(&bs_bytes)
+            .with_context(|| "blockstate redstone_torch: json parse")?;
+        let model_ref = bs
+            .get("variants")
+            .and_then(|v| v.get(if lit { "lit=true" } else { "lit=false" }))
+            .and_then(|v| v.get("model"))
+            .and_then(|m| m.as_str())
+            .with_context(|| "blockstate redstone_torch: no lit model")?
+            .trim_start_matches("minecraft:")
+            .to_string();
+        return full_cube_faces(archive, &model_ref)
+            .with_context(|| format!("block {block}: model chain {model_ref}"));
     }
 
     let bs_bytes = read_jar(archive, &format!("assets/minecraft/blockstates/{block}.json"))?;
@@ -3541,6 +3600,14 @@ fn registry_names() -> [&'static str; RUNTIME_PALETTE.len()] {
             // states the same name keeps (the dig row (0.5, false),
             // the item id the pick lane grants BOTH kinds speak)
             .or_else(|| base.strip_suffix("_down"))
+            // THE REDSTONE TORCH'S OWN OFF STRIP (the autopush-666
+            // round): the off row the jar's OWN model suffix wears —
+            // the blockstates' lit=false row the redstone_torch_off
+            // model answers, the RedstoneTorchBlock's ONE
+            // "redstone_torch" registry entry both states the same
+            // name keeps (the dig row (0.0, false), the item id the
+            // pick lane grants BOTH kinds speak)
+            .or_else(|| base.strip_suffix("_off"))
             // THE CAKE LADDER'S OWN STRIP (the autopush-524 round): the
             // seven bite stages the BASE "cake" row the shared-row law
             // keeps — the dig row (0.5 hardness), the drops table (the

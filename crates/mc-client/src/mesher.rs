@@ -129,6 +129,11 @@ fn is_transparent(kind: u16) -> bool {
         // stick box the neighbors' faces draw against, the noCollision
         // row the Properties chain speaks)
         || crate::world::is_torch(kind)
+        // THE REDSTONE TORCH the same verdict keeps (the autopush-666
+        // round — the stick box the neighbors' faces draw against, the
+        // noCollision row the blocks clinit's REDSTONE_TORCH factory
+        // pc 10081 speaks)
+        || crate::world::is_redstone_torch(kind)
         // THE LEVER the same verdict keeps (the dev-45 round — the
         // base plate + the tilted stick the neighbors' faces draw
         // against, the noCollision row the Properties chain speaks)
@@ -1298,7 +1303,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                 // up [7,6,9,8], the four sides [7,6,9,16]) — the /16 fold
                 // the tile's 0..1 space wears, the sub-sprite windows the
                 // stick's sides and the flame tip sample.
-                if crate::world::is_torch(id) {
+                if crate::world::is_torch(id) || crate::world::is_redstone_torch(id) {
                     let sky_factor = world.sky_light_factor.unwrap_or(1.0)
                         * world
                             .day_tick
@@ -1356,7 +1361,20 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     // cullface verdict samples (the vanilla cullface law:
                     // the neighbor's face the solid render answers)
                     let below = world.get(wx, wy - 1, wz);
-                    for q in torch_model_quads() {
+                    // THE ELEMENT BAKES' OWN CHOICE (the autopush-666
+                    // round — the redstone torch's own pair the
+                    // per-kind derive wears: the LIT kind the
+                    // template_redstone_torch chain the stick + the SIX
+                    // glow planes the 7-element bake answers, the OFF
+                    // kind the template_torch_unlit parent the stick
+                    // box alone keeps; the regular torch the ONE
+                    // element chain the lane's own bake answers)
+                    let element_quads = if crate::world::is_torch(id) {
+                        torch_model_quads()
+                    } else {
+                        redstone_torch_model_quads(crate::world::redstone_torch_lit(id))
+                    };
+                    for q in element_quads {
                         if q.cullface == Some(mc_registry::element_quads::Direction::Down)
                             && !is_transparent(below)
                         {
@@ -3642,6 +3660,36 @@ fn torch_model_quads() -> &'static [mc_registry::element_quads::Quad] {
     QUADS.get_or_init(|| {
         mc_registry::element_quads::derive_model_inherited("block/torch")
             .unwrap_or_default()
+    })
+}
+
+/// THE REDSTONE TORCH'S OWN MODEL BAKES (the autopush-666 round — the
+/// block/redstone_torch and block/redstone_torch_off chains the
+/// registry's derive walk resolves, the torch lane's own cache
+/// pattern): the LIT kind walks the parent link to
+/// block/template_redstone_torch's SEVEN-element geometry (the stick
+/// box [7,0,7]->[9,10,9] the six-face row the cullface-down read
+/// wears + the SIX tiny glow planes the tip's cross the lit tile's
+/// own windows bank), the OFF kind walks the block/template_torch_
+/// unlit parent the stick box ALONE keeps — the merged texture map's
+/// `#torch` ref the per-quad texture name answers (the
+/// block/redstone_torch and block/redstone_torch_off masters the
+/// kind tiles bank — the lane reads the KIND's own tile, the quads'
+/// texture name the lane never consults). The failed derive the
+/// honest empty slice keeps (the stick the nothing renders).
+fn redstone_torch_model_quads(lit: bool) -> &'static [mc_registry::element_quads::Quad] {
+    static LIT: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    static UNLIT: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    let cache = if lit { &LIT } else { &UNLIT };
+    cache.get_or_init(|| {
+        let model = if lit {
+            "block/redstone_torch"
+        } else {
+            "block/redstone_torch_off"
+        };
+        mc_registry::element_quads::derive_model_inherited(model).unwrap_or_default()
     })
 }
 

@@ -95,6 +95,15 @@ fn emission(id: u16) -> u8 {
         15
     } else if id == SOUL_FIRE {
         10
+    } else if id == REDSTONE_TORCH {
+        // THE LIT REDSTONE TORCH'S OWN ROW (the autopush-666 round —
+        // javap the blocks clinit's REDSTONE_TORCH registration over
+        // the 26.2 jar: the `bipush 7; litBlockEmission(I)` lightLevel
+        // call the putstatic REDSTONE_TORCH walk pc 10087-10092 banks
+        // — the lit-state read the emission's own verdict keeps, the
+        // 7 the lit row's own answer, the OFF kind the dark 0 the
+        // litBlockEmission's own else arm keeps)
+        7
     } else if id == CANDLE_LIT {
         // THE LIT CANDLE'S OWN ROW (the autopush-522 round — javap
         // CandleBlock.lambda$static$0 over the 26.2 jar: the
