@@ -13980,15 +13980,27 @@ impl App {
                     if !due.is_empty() {
                         let mut fire_changed = false;
                         let mut tnt_primed: Vec<(i32, i32, i32)> = Vec::new();
+                        // THE BURN'S OWN POP QUEUE (the attach pair's
+                        // own verdicts the burn's flag-3 broadcast
+                        // served — the support the flame ate the
+                        // lever/button the pop wears, the caller's own
+                        // voice/drop lanes the pos + kind read)
+                        let mut fire_popped: Vec<((i32, i32, i32), u16)> = Vec::new();
                         for (x, y, z) in due {
                             let out = world.fire_tick(self.frame, x, y, z, &mut self.fire_rng);
                             fire_changed |= out.changed;
                             tnt_primed.extend(out.tnt_primed);
+                            fire_popped.extend(out.popped);
                         }
                         if fire_changed {
                             world.relight();
                             self.world_quads = Some(crate::mesher::mesh_world(world, None));
                         }
+                        // THE BURN'S OWN POP WALK (the same attach walk
+                        // the dig lane serves — the falling schedule +
+                        // the 2001 voice + the dropResources + the wire
+                        // re-read the helper banks)
+                        self.speak_attach_pops(&fire_popped);
                         for (x, y, z) in tnt_primed {
                             let id = self.next_mob_id;
                             self.next_mob_id += 1;
@@ -35975,10 +35987,8 @@ impl App {
         // THE POP'S OWN SCHEDULE (the popped cell's own flag-3
         // broadcast the falling checks the same walk re-arms — the
         // sand above the popped cell the falling walk's own lane
-        // serves)
-        for ((px, py, pz), _) in &popped {
-            self.schedule_falling_check_block_update(*px, *py, *pz);
-        }
+        // serves) — the walk the helper below banks, the dig lane AND
+        // the fire lane's burn-out consult the same body speaks
         self.remesh_offline();
         let name = crate::world::NAME_OF[kind as usize];
         self.sounds.play(self.frame, name, crate::sound::Lane::Break);
@@ -35996,22 +36006,71 @@ impl App {
                     .play(self.frame, mate_name, crate::sound::Lane::Break);
             }
         }
-        // THE POP'S OWN 2001 WALK (javap Level.destroyBlock pc 17-45
-        // — the popped cell's own levelEvent the break voice speaks,
-        // pc 48-81 the dropResources the pop's own reward wears, pc
-        // 99-115 the BLOCK_DESTROY gameEvent the sensors hear): the
-        // pop the support's loss the dig's flag-3 broadcast served —
-        // the voice lane the state walk the caller's list carries.
-        // THE DROP'S OWN LAW (the destroyBlock walk's own
-        // dropResources — the pop the dig's own arm never gates: the
-        // instabuild's creative filter the PLAYER's destroyAndDrop
-        // lane rides, the pop lane the drop AFTER the break keeps —
-        // the vanilla's own creative behavior the support's loss the
-        // item drops; the exhaustion the pop never spends — the
-        // playerDestroy's awardStat walk the dug cell alone answers,
-        // the popped cell the support's own loss the walk never
-        // mines)
-        for ((px, py, pz), pk) in &popped {
+        // THE POP'S OWN WALK (javap Level.destroyBlock pc 17-45 — the
+        // popped cell's own levelEvent the break voice speaks, pc 48-81
+        // the dropResources the pop's own reward wears, pc 99-115 the
+        // BLOCK_DESTROY gameEvent the sensors hear): the pop the
+        // support's loss the dig's flag-3 broadcast served — the voice
+        // lane the state walk the caller's list carries. THE DROP'S OWN
+        // LAW (the destroyBlock walk's own dropResources — the pop the
+        // dig's own arm never gates: the instabuild's creative filter
+        // the PLAYER's destroyAndDrop lane rides, the pop lane the drop
+        // AFTER the break keeps — the vanilla's own creative behavior
+        // the support's loss the item drops; the exhaustion the pop
+        // never spends — the playerDestroy's awardStat walk the dug
+        // cell alone answers, the popped cell the support's own loss
+        // the walk never mines)
+        // THE POP'S OWN WIRE RE-READ (javap
+        // LeverBlock.affectNeighborsAfterRemoval pc 0-28 + ButtonBlock
+        // the same walk — the !isMoving gate the POWERED read answers,
+        // the updateNeighbours the popped cell's own twelve-cell scan
+        // serves): the ON source the removal the doors' signal verdict
+        // closes (the AIR cell the signal the walk re-reads — the
+        // lever GONE the verdict the false the doors' setOpen law
+        // wears), the voices the flips the set's own events speak
+        // — the whole walk the [`Self::speak_attach_pops` ] helper
+        // banks, the fire lane's burn-out consult the same body
+        // shares
+        self.speak_attach_pops(&popped);
+        // THE 2001 EVENT'S OWN BURST (javap
+        // `LevelEventHandler` case 2001: the sound rides
+        // FIRST, then `addDestroyBlockEffect` — the 4x4x4
+        // grid the full cube speaks, each debris riding the
+        // block's own particle tile and the outward
+        // velocity)
+        let tile = particle_tile(kind);
+        if tile != mc_registry::generated::atlas::TILE_NONE {
+            let burst =
+                crate::particles::terrain_burst(tile, pos.0, pos.1, pos.2, &mut self.mob_rng);
+            self.particles.extend(burst);
+        }
+        // THE REWARD HALF (the vanilla destroyBlock's own
+        // dropResources): the loot roll, the item entities
+        // spawning by the popResource law
+        self.spawn_drops_for(kind, pos);
+    }
+
+    /// THE ATTACH POP'S OWN WALK — javap `Level.destroyBlock` pc 17-45
+    /// (the popped cell's own 2001 levelEvent the break voice speaks,
+    /// pc 48-81 the dropResources the pop's own reward wears, pc 99-115
+    /// the BLOCK_DESTROY gameEvent the sensors hear), the walk the dig
+    /// lane AND the fire lane's burn-out consult share: the popped
+    /// cells (pos + kind) the support-loss walks carry the falling
+    /// checks the broadcast re-arms, the 2001 voice + the debris burst
+    /// + the loot roll + the vibration each cell wears, the wire
+    /// re-read the ON source's loss the doors' verdict closes (the
+    /// AIR cell the signal the walk re-reads — the lever GONE the
+    /// verdict the false the doors' setOpen law wears, the voices the
+    /// flips the set's own events speak).
+    fn speak_attach_pops(&mut self, popped: &[((i32, i32, i32), u16)]) {
+        // THE POP'S OWN SCHEDULE (the popped cell's own flag-3
+        // broadcast the falling checks the same walk re-arms — the
+        // sand above the popped cell the falling walk's own lane
+        // serves)
+        for ((px, py, pz), _) in popped {
+            self.schedule_falling_check_block_update(*px, *py, *pz);
+        }
+        for ((px, py, pz), pk) in popped {
             let pop_name = crate::world::NAME_OF[*pk as usize];
             self.sounds
                 .play(self.frame, pop_name, crate::sound::Lane::Break);
@@ -36041,33 +36100,9 @@ impl App {
                 (*px as f64 + 0.5, *py as f64 + 0.5, *pz as f64 + 0.5),
             );
         }
-        // THE POP'S OWN WIRE RE-READ (javap
-        // LeverBlock.affectNeighborsAfterRemoval pc 0-28 + ButtonBlock
-        // the same walk — the !isMoving gate the POWERED read answers,
-        // the updateNeighbours the popped cell's own twelve-cell scan
-        // serves): the ON source the removal the doors' signal
-        // verdict closes (the AIR cell the signal the walk re-reads —
-        // the lever GONE the verdict the false the doors' setOpen law
-        // wears), the voices the flips the set's own events speak
-        for ((px, py, pz), _) in &popped {
+        for ((px, py, pz), _) in popped {
             self.attach_wire_voice(*px, *py, *pz);
         }
-        // THE 2001 EVENT'S OWN BURST (javap
-        // `LevelEventHandler` case 2001: the sound rides
-        // FIRST, then `addDestroyBlockEffect` — the 4x4x4
-        // grid the full cube speaks, each debris riding the
-        // block's own particle tile and the outward
-        // velocity)
-        let tile = particle_tile(kind);
-        if tile != mc_registry::generated::atlas::TILE_NONE {
-            let burst =
-                crate::particles::terrain_burst(tile, pos.0, pos.1, pos.2, &mut self.mob_rng);
-            self.particles.extend(burst);
-        }
-        // THE REWARD HALF (the vanilla destroyBlock's own
-        // dropResources): the loot roll, the item entities
-        // spawning by the popResource law
-        self.spawn_drops_for(kind, pos);
     }
 
     /// THE REWARD HALF — `Block.dropResources`'s own call the completion
@@ -106891,6 +106926,82 @@ cow_sound_variant: None,
                 .iter()
                 .any(|e| e.starts_with("block_deactivate")),
             "the deactivate post the release wears"
+        );
+    }
+    #[test]
+    fn the_fire_burnout_the_pop_lanes_speak_wear() {
+        // THE BURN'S OWN POP WALK (javap FireBlock.checkBurnOut the
+        // removeBlock flag-3 broadcast the 26.2 jar keeps — the attach
+        // pair's own verdict the burn arms serve): the leaves the fire
+        // ate the floor lever the support's loss pops, the popped
+        // cells the walk the dig lane's helper shares speaks — the
+        // lever item the dropResources roll grants, the block_destroy
+        // vibration the sensors hear, the AIR cell the remesh speaks.
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        let (fx, fy, fz) = (c, top, c);
+        let (bx, by, bz) = (c + 1, top, c);
+        let (lx, ly, lz) = (c + 1, top + 1, c);
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 2, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(bx, by, bz, crate::world::LEAVES);
+            w.set(lx, ly, lz, crate::world::LEVER);
+            w.set_variant(
+                lx,
+                ly,
+                lz,
+                crate::world::lever_variant(crate::world::LEVER_FACE_FLOOR, 1),
+            );
+            w.set(fx, fy, fz, crate::world::FIRE);
+            w.fire_age.insert((fx, fy, fz), 0);
+            // THE ONPLACE LAW'S OWN FIRST SCHEDULE (the placement arm's
+            // own shape — the age-0 entry + the 30..=39 due)
+            let mut rng = crate::drops::Lcg::new(0xF19E_119);
+            w.schedule_fire_tick(
+                app.frame + crate::world::fire_tick_delay(&mut rng),
+                fx,
+                fy,
+                fz,
+            );
+        }
+        // THE BURN'S OWN LOOP (the leaves the 60-odds roll the fire
+        // eats — the pop the walk's own verdict the frames serve)
+        let mut saw_pop_frame = false;
+        for _ in 0..400 {
+            app.update();
+            if app
+                .offline_world
+                .as_ref()
+                .map(|w| w.get(lx, ly, lz))
+                .unwrap_or(crate::world::LEVER)
+                == crate::world::AIR
+            {
+                saw_pop_frame = true;
+                break;
+            }
+        }
+        assert!(saw_pop_frame, "the lever the burn's pop the walk wears");
+        let lever_item = mc_registry::item_id_by_name("lever").unwrap();
+        assert!(
+            app.drops.iter().any(|d| d.item == lever_item),
+            "the lever item the dropResources roll grants"
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|e| e.starts_with("block_destroy")),
+            "the block_destroy post the sensors hear"
         );
     }
     #[test]

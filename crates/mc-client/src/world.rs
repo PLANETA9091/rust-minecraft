@@ -4368,12 +4368,17 @@ pub const ENTITY_INTERACTION_RANGE: f64 = 3.0;
 /// cells the walk's own schedule already queued (the onPlace law the
 /// placement arms and the burn-out/spread arms share), `tnt_primed`
 /// the burnt TNT cells the caller's own entity lane spawns (the
-/// PrimedTnt the prime walk's own ctor law keeps).
+/// PrimedTnt the prime walk's own ctor law keeps), `popped` the
+/// attached cells the burn's own flag-3 broadcast served (the
+/// support's loss the lever/button the pop wears — the same walk the
+/// dig lane's [`World::attach_support_updates` ] answers, the pos +
+/// kind the caller's own voice/drop lanes read).
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct FireTickOutcome {
     pub changed: bool,
     pub new_fire: Vec<(i32, i32, i32)>,
     pub tnt_primed: Vec<(i32, i32, i32)>,
+    pub popped: Vec<((i32, i32, i32), u16)>,
 }
 
 /// One block-ray hit — the vanilla `BlockHitResult`'s own shape: the hit
@@ -6824,6 +6829,14 @@ impl World {
             // held the scheduleTick lag arms, the sapling the AIR the
             // same beat serves)
             let _ = self.bamboo_shape_updates((x, y, z), now + 1);
+            // THE ATTACH PAIR'S OWN POP (the same flag-3 broadcast the
+            // dig lane's [`World::attach_support_updates` ] walk serves
+            // — the support the flame REPLACED the attached cell the
+            // canSurvive verdict answers: the floor/ceiling/wall seats
+            // the loss the pop wears, the popped cells pos + kind the
+            // outcome carries)
+            let pops = self.attach_support_updates((x, y, z));
+            out.popped.extend(pops);
         } else {
             self.set(x, y, z, AIR);
             self.fire_age.remove(&(x, y, z));
@@ -6837,6 +6850,12 @@ impl World {
             // updateShape serves — the support the fire ate the fall
             // arms)
             let _ = self.bamboo_shape_updates((x, y, z), now + 1);
+            // THE ATTACH PAIR'S OWN POP (the same removal the dig
+            // lane's [`World::attach_support_updates` ] walk serves —
+            // the support the fire ate the canSurvive verdict answers,
+            // the popped cells pos + kind the outcome carries)
+            let pops = self.attach_support_updates((x, y, z));
+            out.popped.extend(pops);
         }
         out.changed = true;
         if pre == TNT {
@@ -8968,6 +8987,88 @@ mod tests {
                 );
             }
         }
+    }
+
+    /// THE FIRE'S OWN ATTACH POP — javap `FireBlock.checkBurnOut` the
+    /// removeBlock/setBlock flag-3 broadcast the 26.2 jar keeps (the
+    /// `Level.removeBlock` pc 12 `iconst_3` walk the chain serves), the
+    /// walk the dig lane's [`World::attach_support_updates` ] consult
+    /// both burn arms answer: the support the flame REPLACED (the
+    /// spread arm's fire seat) or ATE (the removal arm's AIR) the
+    /// attached cell the canSurvive verdict answers — the lever the
+    /// leaves held the pop wears (the pos + kind the outcome
+    /// carries), the stone's own support the refusal the verdict
+    /// never pops.
+    #[test]
+    fn the_fire_burnout_the_attach_pair_pops_wear() {
+        let mut w = World::new(1, 0xF19E);
+        for x in 0..16 {
+            for z in 0..16 {
+                w.set(x, 30, z, GRASS); // the floor the stage keeps
+            }
+        }
+        for y in 31..=38 {
+            for x in 0..16 {
+                for z in 0..16 {
+                    w.set(x, y, z, AIR); // the open box the stage clears
+                }
+            }
+        }
+        let (fx, fy, fz) = (8i32, 31i32, 8i32);
+        let (bx, by, bz) = (9i32, 31i32, 8i32); // the east neighbor the leaves wear
+        let (lx, ly, lz) = (9i32, 32i32, 8i32); // the floor lever the leaves hold
+        let (sx, sy, sz) = (7i32, 31i32, 8i32); // the stone the refusal wears
+        let (vx, vy, vz) = (7i32, 32i32, 8i32); // the stone lever the survival keeps
+        w.set(bx, by, bz, LEAVES);
+        w.set(lx, ly, lz, LEVER);
+        w.set_variant(lx, ly, lz, lever_variant(LEVER_FACE_FLOOR, 1));
+        w.set(sx, sy, sz, STONE);
+        w.set(vx, vy, vz, LEVER);
+        w.set_variant(vx, vy, vz, lever_variant(LEVER_FACE_FLOOR, 1));
+        w.set(fx, fy, fz, FIRE);
+        w.fire_age.insert((fx, fy, fz), 0);
+        // THE ONPLACE LAW'S OWN FIRST SCHEDULE (the placement arm's own
+        // shape — the age-0 entry + the 30..=39 due)
+        let mut rng = crate::drops::Lcg::new(0xF19E_117);
+        w.schedule_fire_tick(1000 + fire_tick_delay(&mut rng), fx, fy, fz);
+        let mut saw_pop = false;
+        let mut steps = 0;
+        while steps < 400 {
+            let Some(min_due) = w.fire_ticks.iter().map(|&(at, _, _, _)| at).min() else {
+                break; // the queue's own silence — the walk's end speaks
+            };
+            let cells = w.drain_due_fire_ticks(min_due);
+            steps += 1;
+            for (x, y, z) in cells {
+                let out = w.fire_tick(min_due, x, y, z, &mut rng);
+                saw_pop |= out
+                    .popped
+                    .iter()
+                    .any(|&(pos, kind)| pos == (lx, ly, lz) && kind == LEVER);
+            }
+            if w.get(lx, ly, lz) == AIR {
+                break; // the pop's own beat the verdict speaks
+            }
+        }
+        // THE POP'S OWN VERDICTS: the leaves the burn consumed, the
+        // lever the support's loss popped (the AIR the walk speaks),
+        // the stone's own lever the survival keeps
+        assert!(saw_pop, "the attach pop the burn's broadcast carried");
+        assert_eq!(
+            w.get(lx, ly, lz),
+            AIR,
+            "the popped lever the support's loss wears"
+        );
+        assert!(
+            w.get(bx, by, bz) != LEAVES,
+            "the leaves the burn's own roll consumed"
+        );
+        assert_eq!(
+            w.get(vx, vy, vz),
+            LEVER,
+            "the stone lever the refusal's survival keeps"
+        );
+        assert_eq!(w.get(sx, sy, sz), STONE, "the stone the fire never eats");
     }
 
     /// THE RAIN'S OWN DOUSE — javap `FireBlock.tick` pc 77-127 the arm
