@@ -896,10 +896,12 @@ pub const END_STONE: u16 = 89;
 /// the twenty-one RIGHT quartets the 174..257 tail the palette rows
 /// bank (the LEFT ladder's own order the tail mirrors — the LEFT
 /// quartets the 90..173 seats never move), the kind's own seat the
-/// beyond-table 258 the same law keeps (the every-rung displacement
-/// the ladder's growth speaks — the `id < N_KINDS` guards the tile
-/// lookups' skip verdict the bigger tail keeps).
-pub const END_PORTAL: u16 = 262;
+/// beyond-table seat the every-rung displacement the ladder's growth
+/// speaks (the dev-47 round the OAK pair the 262/263 rows the tail
+/// banks — the END_PORTAL the 264 beyond-table seat the same law
+/// keeps — the `id < N_KINDS` guards the tile lookups' skip verdict
+/// the bigger tail keeps).
+pub const END_PORTAL: u16 = 264;
 
 /// THE BUTTON'S OWN PAIR (the autopush-660 round): the redstone pulse's
 /// own block finally RENDERS, PLACES, PRESSES and PULSES — javap
@@ -934,12 +936,40 @@ pub const END_PORTAL: u16 = 262;
 pub const BUTTON: u16 = 260;
 pub const BUTTON_ON: u16 = 261;
 
+/// THE WOODEN BUTTON'S OWN RUNG (the dev-47 round — the button
+/// family's wooden ladder the arrows' own activation lane arms): the
+/// OAK pair the palette's 263/264 seats wear — javap the 26.2 jar
+/// `BlockSetType`'s static init the OAK row the String ctor serves
+/// (`BlockSetType("oak")` pc 278-286 → the delegating walk's
+/// `iconst_1, iconst_1, iconst_1` pc 2-4 triple the canOpenByHand +
+/// canOpenByWindCharge + canButtonBeActivatedByArrows flags arm — the
+/// STONE row's full-ctor `iconst_0` pc 186 the arrows' refusal the
+/// stone button keeps), the `SoundType.WOOD` pc 8 row the dig voice
+/// banks, the `WOODEN_BUTTON_CLICK_ON/OFF` pc 29-32 pair the getSound
+/// walk serves (`block.wooden_button.click_on`/`click_off` events the
+/// cache's sounds.json rows carry), the `ticksToStayPressed` the OAK
+/// button factory's 30 ctor arg banks (`Blocks`'s oak_button row the
+/// `BlockSetType.OAK, 30` pair the STONE set's 20 the lambda keeps —
+/// the 30-tick 1.5-second wooden window the tick re-arm serves). The
+/// OFF/ON kind pair the POWERED bit the stone ladder's ±1 mate wears,
+/// the facing + face the variant byte the SAME two-field law carries.
+pub const OAK_BUTTON: u16 = 262;
+pub const OAK_BUTTON_ON: u16 = 263;
+
 /// THE BUTTON'S OWN PULSE CLOCK (javap `press` pc 28-37 the
 /// `scheduleTick(pos, this, ticksToStayPressed)` walk the STONE
 /// factory's `bipush 20` ctor arg banks — the LevelTickScheduler's
 /// 20-tick window the client's scheduled-tick store answers, the
 /// 1-second pulse the release tick serves).
 pub const BUTTON_PULSE_TICKS: u64 = 20;
+
+/// THE WOODEN BUTTON'S OWN PULSE CLOCK (javap `Blocks`'s OAK_BUTTON
+/// factory row the `BlockSetType.OAK, 30` ctor args speak — the
+/// ticksToStayPressed field the 30-tick window banks, the 1.5-second
+/// wooden pulse the stone set's 20 the wooden sets' own law wears;
+/// the scheduled tick's re-arm [`check_pressed`]-shaped walk the
+/// arrow-present verdict re-schedules the same window speaks).
+pub const WOODEN_BUTTON_PULSE_TICKS: u64 = 30;
 
 /// THE LEVER'S OWN PAIR (the dev-45 round): the toggle's own block
 /// finally RENDERS, PLACES and SPEAKS — javap the 26.2 jar's
@@ -1514,7 +1544,7 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 }
 
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 262] = [
+pub const NAME_OF: [&str; 264] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1833,6 +1863,14 @@ pub const NAME_OF: [&str; 262] = [
     // kinds, the sounds' stone set type row the same law keeps (the
     // _pressed strip the generated rows' registry law wears)
     "stone_button", "stone_button",
+    // THE WOODEN BUTTON'S OWN ROWS (the dev-47 round): the ONE
+    // "oak_button" registry entry both kinds the same name speaks —
+    // the dig row (the wooden SoundType's own hardness the jar's
+    // blockstates never override — the no-tool demand the wooden row
+    // keeps), the item id the pick lane grants BOTH kinds, the
+    // sounds' wooden set type row the same law keeps (the _pressed
+    // strip the generated rows' registry law the stone pair wears)
+    "oak_button", "oak_button",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -2817,13 +2855,59 @@ pub fn lever_can_survive(world: &World, x: i32, y: i32, z: i32, variant: u8) -> 
 
 /// THE BUTTON'S OWN FAMILY (the autopush-660 round — the two-kind
 /// ladder the OFF/ON bit alone wears, the facing + face the variant
-/// byte carries): the placement's survival gate, the collision's
-/// pass-through row, the mesher's element lane and the press/pulse
-/// walks the family fn serves (the lever family's own shape the
-/// sibling keeps — the FaceAttachedHorizontalDirectionalBlock parent
-/// the two blocks the SAME base shares).
+/// byte carries; the dev-47 round the OAK rung the family ladder
+/// extends — the stone pair + the oak pair the same base both wear):
+/// the placement's survival gate, the collision's pass-through row,
+/// the mesher's element lane and the press/pulse walks the family fn
+/// serves (the lever family's own shape the sibling keeps — the
+/// FaceAttachedHorizontalDirectionalBlock parent the four kinds the
+/// SAME base shares).
 pub fn is_button(id: u16) -> bool {
-    id == BUTTON || id == BUTTON_ON
+    id == BUTTON || id == BUTTON_ON || id == OAK_BUTTON || id == OAK_BUTTON_ON
+}
+
+/// THE BUTTON'S OWN WOODEN VERDICT (javap BlockSetType's static init
+/// the 26.2 jar — the OAK row the String ctor's `iconst_1,1,1` triple
+/// speaks, the STONE row's full-ctor `iconst_0` the refusal keeps:
+/// the `canButtonBeActivatedByArrows()` field the entityInside gate
+/// pc 7-14 and the checkPressed scan gate pc 0-7 both read — the
+/// wooden set's true the arrows' own press arms, the stone set's
+/// false the entityInside early return the stone button wears). The
+/// OAK pair the wooden verdict keeps, the stone pair the false arm
+/// serves.
+pub fn button_is_wooden(id: u16) -> bool {
+    id == OAK_BUTTON || id == OAK_BUTTON_ON
+}
+
+/// THE BUTTON'S OWN WINDOW (javap the Blocks factory rows — the STONE
+/// lambda the `BlockSetType.STONE, 20` pair banks, the OAK row the
+/// `BlockSetType.OAK, 30` pair speaks: the ticksToStayPressed field
+/// the press walk's scheduleTick arg and the checkPressed re-arm's
+/// same arg both read). The wooden set's 30 the 1.5-second window
+/// wears, the stone set's 20 the 1-second keep.
+pub fn button_pulse_ticks(id: u16) -> u64 {
+    if button_is_wooden(id) {
+        WOODEN_BUTTON_PULSE_TICKS
+    } else {
+        BUTTON_PULSE_TICKS
+    }
+}
+
+/// THE BUTTON'S OWN VOICE (javap getSound pc 0-13 the BlockSetType's
+/// buttonClickOn/buttonClickOff pair serves — the STONE set's
+/// block.stone_button.click_on/off events the stone row banks, the
+/// OAK set's block.wooden_button.click_on/off events the String
+/// ctor's WOODEN_BUTTON_CLICK_ON/OFF rows speak; the cache's
+/// sounds.json the event rows carry the pick lane resolves). The
+/// kind's own set the pair's prefix answers, the on flag the
+/// click_on/click_off word picks.
+pub fn button_click_voice(id: u16, on: bool) -> &'static str {
+    match (button_is_wooden(id), on) {
+        (true, true) => "block.wooden_button.click_on",
+        (true, false) => "block.wooden_button.click_off",
+        (false, true) => "block.stone_button.click_on",
+        (false, false) => "block.stone_button.click_off",
+    }
 }
 
 /// THE BUTTON'S OWN POWERED BIT (javap ButtonBlock.useWithoutItem pc
@@ -2831,7 +2915,7 @@ pub fn is_button(id: u16) -> bool {
 /// already-pressed CONSUME the re-press the pass keeps): the ON kind
 /// the powered verdict keeps, the OFF kind the resting answer wears.
 pub fn button_powered(id: u16) -> bool {
-    id == BUTTON_ON
+    id == BUTTON_ON || id == OAK_BUTTON_ON
 }
 
 /// THE BUTTON'S OWN OFF/ON MATE (javap press pc 0-7 the
@@ -2842,6 +2926,8 @@ pub fn button_toggled(id: u16) -> Option<u16> {
     match id {
         BUTTON => Some(BUTTON_ON),
         BUTTON_ON => Some(BUTTON),
+        OAK_BUTTON => Some(OAK_BUTTON_ON),
+        OAK_BUTTON_ON => Some(OAK_BUTTON),
         _ => None,
     }
 }
@@ -2867,12 +2953,138 @@ pub fn redstone_signal_at(world: &World, x: i32, y: i32, z: i32) -> bool {
         || (world.get(x - 1, y, z) == LEVER_ON)
         || (world.get(x, y, z + 1) == LEVER_ON)
         || (world.get(x, y, z - 1) == LEVER_ON)
-        || (world.get(x, y + 1, z) == BUTTON_ON)
-        || (world.get(x, y - 1, z) == BUTTON_ON)
-        || (world.get(x + 1, y, z) == BUTTON_ON)
-        || (world.get(x - 1, y, z) == BUTTON_ON)
-        || (world.get(x, y, z + 1) == BUTTON_ON)
-        || (world.get(x, y, z - 1) == BUTTON_ON)
+        || button_powered(world.get(x, y + 1, z))
+        || button_powered(world.get(x, y - 1, z))
+        || button_powered(world.get(x + 1, y, z))
+        || button_powered(world.get(x - 1, y, z))
+        || button_powered(world.get(x, y, z + 1))
+        || button_powered(world.get(x, y, z - 1))
+}
+
+/// THE BUTTON'S OWN PLATE BOX — javap `ButtonBlock.makeShapes` pc 0-45
+/// the 26.2 jar: the base `Block.boxZ(6.0, 4.0, 8.0, 16.0)` plate the
+/// bytecode keeps (the 4-arg boxZ walk pc 0-24 the `8.0 ± size/2`
+/// centering math speaks — the base box (5,6,8)-(11,10,16) the
+/// 5-arg's `box(minX, minY, minZ, maxX, maxY, maxZ)` fold answers),
+/// the lambda$makeShapes$0 pc 44-55 the `Shapes.join(plate, powered ?
+/// cube(14) : cube(12), BooleanOp.ONLY_FIRST)` subtraction serves —
+/// the `a && !b` op the plate's own slice keeps (the cube's core the
+/// plate minus wears): the UNPRESSED wall plate the cube(12)'s
+/// (2,2,2)-(14,14,14) core leaves the 2-px slice [(5,6,14)-(11,10,16)]
+/// the base's south-hugging z 14..16 speaks, the PRESSED the
+/// cube(14)'s (1,1,1)-(15,15,15) core the 1-px slice
+/// [(5,6,15)-(11,10,16)] serves; the Shapes.rotateAttachFace walk the
+/// per-face seats answers (the FLOOR the BLOCK_ROT_X_270 group the
+/// model base [5,0,6]-[11,2,10] the block/button element row banks,
+/// the CEILING the Y_180∘X_90 pair the top slice keeps, the WALL the
+/// horizontal rotations the support edge the
+/// [`lever_support_offset`]'s own opposite law names). The scan the
+/// checkPressed walk pc 16-26 serves (`state.getShape(level,
+/// pos).bounds().move(pos)` — the AABB the arrow scan the entity
+/// bbox the getEntitiesOfClass walk tests): the (min, max) f64
+/// six-pack the world-space AABB keeps, the 16-px cell the /16 fold
+/// the f64 law wears.
+pub fn button_plate_box(variant: u8, powered: bool) -> [f64; 6] {
+    let depth: f64 = if powered { 1.0 / 16.0 } else { 2.0 / 16.0 };
+    // the cross-axis plate: x 5..11 = 0.3125..0.6875 (the wall lane),
+    // the 4-px long axis z 6..10 = 0.375..0.625 (the floor/ceiling
+    // lane the model base banks), the wall plate's y 6..10 the same
+    // 4-px long axis the rotated base keeps
+    let (c0, c1) = (5.0 / 16.0, 11.0 / 16.0);
+    let (l0, l1) = (6.0 / 16.0, 10.0 / 16.0);
+    match lever_face_of(variant) {
+        LEVER_FACE_FLOOR => [c0, 0.0, l0, c1, depth, l1],
+        LEVER_FACE_CEILING => [c0, 1.0 - depth, l0, c1, 1.0, l1],
+        _ => match lever_facing_of(variant) {
+            2 => [0.0, l0, c0, depth, l1, c1],
+            3 => [c0, l0, 0.0, c1, l1, depth],
+            4 => [1.0 - depth, l0, c0, 1.0, l1, c1],
+            _ => [c0, l0, 1.0 - depth, c1, l1, 1.0],
+        },
+    }
+}
+
+/// THE ARROW'S OWN BBOX — javap `EntityTypes`'s static init the 26.2
+/// jar the ARROW row pc 249-290 speaks: the `.sized(0.5f, 0.5f)` pair
+/// the Builder's scalable dims keep (the eyeHeight 0.13f the render's
+/// own lane never asks) — the `makeBoundingBox` walk the position the
+/// bbox BASE centers: (x-0.25, y, z-0.25)-(x+0.25, y+0.5, z+0.5) the
+/// getEntitiesOfClass scan's own box wears.
+pub fn arrow_scan_box(x: f64, y: f64, z: f64) -> [f64; 6] {
+    [x - 0.25, y, z - 0.25, x + 0.25, y + 0.5, z + 0.5]
+}
+
+/// THE ARROWS' OWN PLATE SCAN — javap `ButtonBlock.checkPressed` pc
+/// 10-26 the 26.2 jar: the `level.getEntitiesOfClass(AbstractArrow.
+/// class, state.getShape(level, pos).bounds().move(pos))` walk the
+/// arrow's own bbox the plate box intersects — the vanilla
+/// `AABB.intersects` fold the inclusive-overlap law answers (every
+/// axis the `a.max >= b.min && a.min <= b.max` verdict speaks, the
+/// face-touching contact the hit arms). The plate box the CURRENT
+/// state's own shape bounds (`getShape` the POWERED bit the 1-px
+/// pressed slice banks), the arrow box the [`arrow_scan_box`] law
+/// keeps. The false the miss keeps (the arrow in the CELL but off
+/// the plate the vanilla's own verdict serves — the entityInside
+/// walk's own POWERED gate the scan's no-flip keeps).
+pub fn arrow_overlaps_plate(
+    arrow: [f64; 6],
+    variant: u8,
+    powered: bool,
+    x: i32,
+    y: i32,
+    z: i32,
+) -> bool {
+    let plate = button_plate_box(variant, powered);
+    let (fx, fy, fz) = (x as f64, y as f64, z as f64);
+    let origin = [fx, fy, fz];
+    for axis in 0..3 {
+        let (amin, amax) = (arrow[axis], arrow[axis + 3]);
+        let (pmin, pmax) = (plate[axis] + origin[axis], plate[axis + 3] + origin[axis]);
+        if amax < pmin || amin > pmax {
+            return false;
+        }
+    }
+    true
+}
+
+/// THE ARROWS' OWN PRESS VERDICT — javap `ButtonBlock.entityInside`
+/// pc 0-41 + `checkPressed` pc 0-167 the 26.2 jar, the walk the
+/// offline sim lane the arrow tick's own cells answers: the
+/// isClientSide gate pc 0-4 the server walk the offline sim is, the
+/// `type.canButtonBeActivatedByArrows()` gate pc 7-14 the wooden
+/// verdict the STONE set's refusal keeps, the POWERED gate pc 17-30
+/// the already-ON cell the early return serves, the checkPressed
+/// delegate pc 34-41 the scan (`findFirst().orElse(null)` pc 29-43
+/// the ANY-arrow law the first-hit list keeps) + the flip (`flag !=
+/// POWERED` pc 79-83 the setBlock flag-3 speaks) + the
+/// updateNeighbours + the playSound + the gameEvent(BLOCK_ACTIVATE/
+/// DEACTIVATE, arrow) + the `if (flag) scheduleTick(window)` re-arm
+/// pc 145-164 the walk's own verdicts wear. The verdict the caller's
+/// own lanes answer: the press the ON kind + the voices + the
+/// schedule banks, the false the no-touch silence keeps. The STONE
+/// set's refusal the wooden verdict never wears (the arrow the
+/// stone button the scan gate never lets press).
+pub fn arrow_presses_button(
+    world: &World,
+    ax: f64,
+    ay: f64,
+    az: f64,
+    x: i32,
+    y: i32,
+    z: i32,
+) -> bool {
+    let kind = world.get(x, y, z);
+    if !is_button(kind) || !button_is_wooden(kind) || button_powered(kind) {
+        return false;
+    }
+    arrow_overlaps_plate(
+        arrow_scan_box(ax, ay, az),
+        world.variant(x, y, z),
+        false,
+        x,
+        y,
+        z,
+    )
 }
 
 /// THE FALLING FAMILY — the kinds the vanilla's FallingBlock registers
@@ -9934,7 +10146,7 @@ mod tests {
         assert_eq!(NAME_OF[BUTTON_ON as usize], "stone_button");
         assert_eq!(BUTTON + 1, BUTTON_ON, "the +1 seat the OFF/ON ladder wears");
         assert_eq!(
-            END_PORTAL, 262,
+            END_PORTAL, 264,
             "the displaced seat the button pair's own tail banks"
         );
         // THE PULSE'S OWN CLOCK (javap press pc 28-37 — the STONE
@@ -10634,7 +10846,7 @@ mod tests {
         assert_eq!(OAK_DOOR_UPPER, 91);
         assert_eq!(OAK_DOOR_OPEN, 92);
         assert_eq!(OAK_DOOR_UPPER_OPEN, 93);
-        assert_eq!(END_PORTAL, 262, "the displaced seat the button pair's own tail banks");
+        assert_eq!(END_PORTAL, 264, "the displaced seat the oak rung's own tail banks");
         // THE WOOD LADDER'S OWN SEATS (the dev-43 round — the eleven
         // quartets the CONTIGUOUS tail the kind ids 94..137 wear: the
         // closed lower + 0, the closed upper + 1, the open lower + 2,
@@ -10838,7 +11050,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 262, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 264, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)

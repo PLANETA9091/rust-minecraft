@@ -13797,8 +13797,9 @@ impl App {
                     // kind the due beat the silence keeps: the
                     // unpress's set + the wire voice + the click-off
                     // voice + the vibration the post-borrow walk
-                    // serves)
-                    let mut released: Vec<(i32, i32, i32)> = Vec::new();
+                    // serves; the family's own ON verdict the stone
+                    // pair AND the oak rung the same beat serves)
+                    let mut released: Vec<(i32, i32, i32, u16)> = Vec::new();
                     if let Some(w) = self.offline_world.as_mut() {
                         for (x, y, z) in &due {
                             let kind = w.get(*x, *y, *z);
@@ -13810,8 +13811,8 @@ impl App {
                             // click-off voice + the vibration the
                             // post-borrow walk serves)
                             if crate::world::is_button(kind) {
-                                if kind == crate::world::BUTTON_ON {
-                                    released.push((*x, *y, *z));
+                                if crate::world::button_powered(kind) {
+                                    released.push((*x, *y, *z, kind));
                                 }
                                 continue;
                             }
@@ -13876,9 +13877,44 @@ impl App {
                     // serves, the doors the wire re-read the same beat
                     // answers — the swinging door the 1-second pulse
                     // opened the OFF's silence closes)
-                    for (x, y, z) in &released {
+                    // THE RE-ARM'S OWN CONSULT (javap checkPressed pc
+                    // 10-43 + pc 145-164 the 26.2 jar — the tick walk's
+                    // own scan the re-arm wears: the ANY-arrow verdict
+                    // the flag==POWERED fold answers — the stuck arrow
+                    // the ON keeps + the same window the schedule
+                    // re-arms, the empty scan the unpress the walk
+                    // serves. The WOODEN verdict the scan gate reads —
+                    // the STONE set's canButtonBeActivatedByArrows
+                    // refusal the arrow the release never holds, the
+                    // 1-px pressed plate the CURRENT state's own
+                    // bounds the consult tests)
+                    let arrow_boxes: Vec<[f64; 6]> = self
+                        .arrows
+                        .iter()
+                        .map(|a| crate::world::arrow_scan_box(a.x, a.y, a.z))
+                        .collect();
+                    for (x, y, z, kind) in &released {
+                        if crate::world::button_is_wooden(*kind) && !arrow_boxes.is_empty() {
+                            let variant = self
+                                .offline_world
+                                .as_ref()
+                                .map(|w| w.variant(*x, *y, *z))
+                                .unwrap_or(0);
+                            if arrow_boxes.iter().any(|box6| {
+                                crate::world::arrow_overlaps_plate(*box6, variant, true, *x, *y, *z)
+                            }) {
+                                // the stuck arrow the scan holds — the
+                                // ON kind the byte keeps, the same
+                                // window the schedule re-arms (the
+                                // flag==POWERED fold the no-flip keeps)
+                                self.schedule_button_release(*x, *y, *z, *kind);
+                                continue;
+                            }
+                        }
+                        let off_kind = crate::world::button_toggled(*kind)
+                            .unwrap_or(crate::world::BUTTON);
                         if let Some(world) = self.offline_world.as_mut() {
-                            world.set(*x, *y, *z, crate::world::BUTTON);
+                            world.set(*x, *y, *z, off_kind);
                         }
                         let (cx, cy, cz) = (*x as f64 + 0.5, *y as f64 + 0.5, *z as f64 + 0.5);
                         let ear = self
@@ -13890,10 +13926,11 @@ impl App {
                         // THE CLICK-OFF VOICE (javap playSound pc 0-26 —
                         // the LevelAccessor default fconst_1 pair the
                         // volume 1.0 / pitch 1.0 banks, the getSound
-                        // walk the buttonClickOff event carries)
+                        // walk the buttonClickOff event carries — the
+                        // kind's own set the BlockSetType rows answer)
                         self.sounds.play_voice_at_pan(
                             self.frame,
-                            "block.stone_button.click_off",
+                            crate::world::button_click_voice(*kind, false),
                             1.0,
                             1.0,
                             ear_distance(ear, cx, cy, cz),
@@ -14080,6 +14117,13 @@ impl App {
                 // the block's voice the stick's own pitch keeps)
                 let mut arrow_player_hits: Vec<(f64, Option<i32>)> = Vec::new();
                 let mut arrow_block_hits: Vec<(f64, f64, f64, f32)> = Vec::new();
+                // THE ARROWS' OWN PRESS QUEUE (the entityInside walk's
+                // out-edge — the wooden button cells the arrows' own
+                // plate scan pressed, the apply the world-borrow's end
+                // the post-walk beat serves: the ON set + the wire
+                // voice + the click-on voice + the vibration + the
+                // schedule the press arm's own shape wears)
+                let mut arrow_button_presses: Vec<(i32, i32, i32)> = Vec::new();
                 // THE FIREWORK'S OWN OUT-EDGE (the launch word the
                 // flight tick carries — the positioned voice the
                 // caller's lane answers)
@@ -14776,6 +14820,46 @@ impl App {
                             arrow_trails.append(&mut aev.trail);
                         }
                         self.arrows.retain(|a| !a.dead);
+                        // THE ARROWS' OWN INSIDE WALK (javap
+                        // Entity.checkInsideBlocks + ButtonBlock.
+                        // entityInside the 26.2 jar — the movement's own
+                        // cells the bbox overlaps the walk serves: the
+                        // isClientSide gate pc 0-4 the server walk the
+                        // offline sim is, the canButtonBeActivatedByArrows
+                        // gate pc 7-14 the wooden verdict the STONE set's
+                        // refusal keeps, the POWERED gate pc 17-30 the
+                        // already-ON cell the early return serves, the
+                        // checkPressed delegate pc 34-41 the plate scan
+                        // the arrow_presses_button law serves). The
+                        // per-arrow cells the 0.5x0.5 bbox the floor
+                        // folds span (the 2^3 cells the bounds touch),
+                        // the press verdict the offline world the active
+                        // borrow answers — the queue the post-walk beat
+                        // applies (the mutable borrow the flight walk's
+                        // own span refuses)
+                        if !self.world_is_network {
+                            for arrow in self.arrows.iter() {
+                                let bx0 = (arrow.x - 0.25).floor() as i32;
+                                let bx1 = (arrow.x + 0.25).floor() as i32;
+                                let by0 = arrow.y.floor() as i32;
+                                let by1 = (arrow.y + 0.5).floor() as i32;
+                                let bz0 = (arrow.z - 0.25).floor() as i32;
+                                let bz1 = (arrow.z + 0.25).floor() as i32;
+                                for cx in bx0..=bx1 {
+                                    for cy in by0..=by1 {
+                                        for cz in bz0..=bz1 {
+                                            if crate::world::arrow_presses_button(
+                                                world, arrow.x, arrow.y, arrow.z, cx, cy, cz,
+                                            ) && !arrow_button_presses
+                                                .contains(&(cx, cy, cz))
+                                            {
+                                                arrow_button_presses.push((cx, cy, cz));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                         // THE FIREWORK FLIGHTS (javap
                         // `FireworkRocketEntity.tick` the 26.2 walk —
                         // the shotAtAngle lane the crossbow's own shot
@@ -15563,6 +15647,46 @@ impl App {
                         ear_distance(ear, ax, ay, az),
                         ear_pan(ear, yaw, ax, ay, az),
                     );
+                }
+                // THE ARROWS' OWN PRESS BEAT (javap checkPressed pc
+                // 79-143 the 26.2 jar — the flip + the
+                // updateNeighbours + the playSound + the gameEvent
+                // walk the offline queue's own apply serves: the ON
+                // kind the pair's own mate the button_toggled law
+                // banks, the click-on voice the kind's own set the
+                // BlockSetType rows answer (the volume 1.0 / pitch 1.0
+                // the playSound defaults keep), the
+                // BLOCK_ACTIVATE vibration the sculk lane hears, the
+                // scheduleTick(window) re-arm the kind's own window
+                // the wooden law serves)
+                for (x, y, z) in arrow_button_presses {
+                    let kind = self
+                        .active_world()
+                        .map(|w| w.get(x, y, z))
+                        .unwrap_or(crate::world::OAK_BUTTON);
+                    let Some(on_kind) = crate::world::button_toggled(kind) else {
+                        continue; // the popped cell the queue's lag wears
+                    };
+                    let (cx, cy, cz) = (x as f64 + 0.5, y as f64 + 0.5, z as f64 + 0.5);
+                    let ear = self
+                        .body
+                        .as_ref()
+                        .map(|b| (b.x, b.y + b.eye_height(), b.z));
+                    let yaw = self.listener_yaw();
+                    if let Some(world) = self.offline_world.as_mut() {
+                        world.set(x, y, z, on_kind);
+                    }
+                    self.attach_wire_voice(x, y, z);
+                    self.sounds.play_voice_at_pan(
+                        self.frame,
+                        crate::world::button_click_voice(kind, true),
+                        1.0,
+                        1.0,
+                        ear_distance(ear, cx, cy, cz),
+                        ear_pan(ear, yaw, cx, cy, cz),
+                    );
+                    self.dispatch_vibration_event("block_activate", (cx, cy, cz));
+                    self.schedule_button_release(x, y, z, kind);
                 }
                 // THE FIREWORK'S OWN LAUNCH (javap tick's
                 // FIREWORK_ROCKET_LAUNCH walk the flight tick's word
@@ -35536,11 +35660,13 @@ impl App {
 
     /// THE BUTTON'S OWN PULSE SCHEDULE (javap ButtonBlock.press pc
     /// 28-37 — the `scheduleTick(pos, this, ticksToStayPressed)` walk
-    /// the STONE factory's `bipush 20` ctor arg banks: the release
+    /// the STONE factory's `bipush 20` ctor arg banks, the OAK row the
+    /// `BlockSetType.OAK, 30` pair speaks: the kind's own window the
+    /// [`crate::world::button_pulse_ticks`] law reads — the release
     /// tick the scheduled store's due walk serves, the set-dedup the
     /// queue bounded keeps, the networked world the SERVER's own
     /// scheduler answers)
-    pub fn schedule_button_release(&mut self, x: i32, y: i32, z: i32) {
+    pub fn schedule_button_release(&mut self, x: i32, y: i32, z: i32, kind: u16) {
         if self.world_is_network || self.offline_world.is_none() {
             return;
         }
@@ -35551,8 +35677,12 @@ impl App {
         {
             return;
         }
-        self.falling_checks
-            .push((x, y, z, self.frame + crate::world::BUTTON_PULSE_TICKS));
+        self.falling_checks.push((
+            x,
+            y,
+            z,
+            self.frame + crate::world::button_pulse_ticks(kind),
+        ));
     }
 
     /// THE WIRE'S OWN VOICE (the attach family's broadcast — javap
@@ -36710,11 +36840,18 @@ impl App {
                         .as_ref()
                         .map(|b| (b.x, b.y + b.eye_height(), b.z));
                     let yaw = self.listener_yaw();
+                    // THE PAIR'S OWN ON KIND (the button_toggled law —
+                    // the stone pair the BUTTON_ON mate keeps, the oak
+                    // pair the OAK_BUTTON_ON rung serves: the
+                    // setValue(POWERED, true) setBlock flag-3 walk the
+                    // OFF kind's own ON mate the offline swap speaks)
+                    let on_kind = crate::world::button_toggled(hit_kind)
+                        .unwrap_or(crate::world::BUTTON_ON);
                     if let Some(world) = self.offline_world.as_mut() {
                         // THE PRESS'S OWN SET (javap press pc 0-20 —
                         // the setValue(POWERED, true) setBlock flag-3
                         // walk the offline kind swap serves)
-                        world.set(bx, by, bz, crate::world::BUTTON_ON);
+                        world.set(bx, by, bz, on_kind);
                     }
                     // THE WIRE'S OWN BROADCAST (javap press pc 21-27 —
                     // the updateNeighbours walk the attach helper's own
@@ -36723,10 +36860,12 @@ impl App {
                     // THE CLICK-ON VOICE (javap playSound pc 0-26 — the
                     // LevelAccessor default fconst_1 pair the volume
                     // 1.0 / pitch 1.0 banks, the getSound walk the
-                    // buttonClickOn event carries)
+                    // BlockSetType's buttonClickOn event carries — the
+                    // kind's own set the stone/wooden rows the
+                    // button_click_voice law answers)
                     self.sounds.play_voice_at_pan(
                         self.frame,
-                        "block.stone_button.click_on",
+                        crate::world::button_click_voice(hit_kind, true),
                         1.0,
                         1.0,
                         ear_distance(ear, cx, cy, cz),
@@ -36738,9 +36877,10 @@ impl App {
                     self.dispatch_vibration_event("block_activate", (cx, cy, cz));
                     // THE PULSE'S OWN CLOCK (javap press pc 28-37 —
                     // the scheduleTick(pos, this, ticksToStayPressed)
-                    // walk the 20-tick window banks: the release tick
-                    // the scheduled store's due walk serves)
-                    self.schedule_button_release(bx, by, bz);
+                    // walk the kind's own window banks — the stone set
+                    // the 20-tick 1-second pulse, the oak row the
+                    // 30-tick wooden window the release tick serves)
+                    self.schedule_button_release(bx, by, bz, hit_kind);
                 }
                 return true;
             }
@@ -102069,7 +102209,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            262,
+            264,
             "the palette the hinge-right tail's own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -102150,7 +102290,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            262,
+            264,
             "the palette the hinge-right tail's own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -102452,7 +102592,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            262,
+            264,
             "the palette the hinge-right tail's own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -106279,6 +106419,478 @@ cow_sound_variant: None,
                 .iter()
                 .any(|e| e.starts_with("block_deactivate")),
             "the deactivate post the sculk lane hears"
+        );
+    }
+    #[test]
+    fn the_oak_button_kind_laws_the_family_and_the_windows_wear() {
+        // THE WOODEN BUTTON'S OWN LAWS (the dev-47 round — javap
+        // BlockSetType's static init + the Blocks factory rows the
+        // 26.2 jar keeps): the OAK pair the palette's 263/264 seats
+        // wear (the END_PORTAL's 262 the displaced seat the growth
+        // never moves), the family fn the FOUR kinds the same base
+        // serves, the wooden verdict the OAK pair the String ctor's
+        // iconst_1,1,1 triple arms (the STONE pair the iconst_0 the
+        // refusal keeps), the windows the OAK row's 30 the stone set's
+        // 20 the lambda wears, the voices the stone/wooden rows the
+        // getSound walk answers, the NAME_OF rows the ONE registry
+        // entry both kinds the same name speaks.
+        use mc_registry::generated::atlas;
+        assert_eq!(crate::world::OAK_BUTTON, 262);
+        assert_eq!(crate::world::OAK_BUTTON_ON, 263);
+        assert_eq!(crate::world::END_PORTAL, 264, "the displaced seat the growth keeps");
+        for kind in [
+            crate::world::BUTTON,
+            crate::world::BUTTON_ON,
+            crate::world::OAK_BUTTON,
+            crate::world::OAK_BUTTON_ON,
+        ] {
+            assert!(crate::world::is_button(kind), "kind {kind} the family keeps");
+        }
+        assert!(
+            !crate::world::is_button(crate::world::LEVER)
+                && !crate::world::is_button(crate::world::OAK_DOOR),
+            "the siblings the family never wears"
+        );
+        assert!(
+            crate::world::button_is_wooden(crate::world::OAK_BUTTON)
+                && crate::world::button_is_wooden(crate::world::OAK_BUTTON_ON),
+            "the oak pair the wooden verdict wears"
+        );
+        assert!(
+            !crate::world::button_is_wooden(crate::world::BUTTON)
+                && !crate::world::button_is_wooden(crate::world::BUTTON_ON),
+            "the stone pair the refusal keeps"
+        );
+        assert!(
+            crate::world::button_powered(crate::world::OAK_BUTTON_ON)
+                && !crate::world::button_powered(crate::world::OAK_BUTTON),
+            "the oak pair's ON bit the verdict wears"
+        );
+        assert_eq!(
+            crate::world::button_toggled(crate::world::OAK_BUTTON),
+            Some(crate::world::OAK_BUTTON_ON),
+            "the OFF rung's mate the ladder wears"
+        );
+        assert_eq!(
+            crate::world::button_toggled(crate::world::OAK_BUTTON_ON),
+            Some(crate::world::OAK_BUTTON),
+            "the ON rung's mate the unpress wears"
+        );
+        assert_eq!(
+            crate::world::button_pulse_ticks(crate::world::OAK_BUTTON),
+            crate::world::WOODEN_BUTTON_PULSE_TICKS,
+            "the oak row's 30 the window banks"
+        );
+        assert_eq!(
+            crate::world::button_pulse_ticks(crate::world::BUTTON),
+            crate::world::BUTTON_PULSE_TICKS,
+            "the stone set's 20 the lambda keeps"
+        );
+        assert_eq!(
+            crate::world::button_click_voice(crate::world::OAK_BUTTON, true),
+            "block.wooden_button.click_on",
+        );
+        assert_eq!(
+            crate::world::button_click_voice(crate::world::OAK_BUTTON, false),
+            "block.wooden_button.click_off",
+        );
+        assert_eq!(
+            crate::world::button_click_voice(crate::world::BUTTON, true),
+            "block.stone_button.click_on",
+        );
+        assert_eq!(
+            crate::world::button_click_voice(crate::world::BUTTON_ON, false),
+            "block.stone_button.click_off",
+        );
+        // THE NAMES' OWN ROWS (the ONE "oak_button" entry both kinds
+        // the same registry law wears — the pick lane grants BOTH)
+        assert_eq!(
+            crate::world::NAME_OF[crate::world::OAK_BUTTON as usize],
+            "oak_button"
+        );
+        assert_eq!(
+            crate::world::NAME_OF[crate::world::OAK_BUTTON_ON as usize],
+            "oak_button"
+        );
+        // THE PALETTE'S OWN TAIL (the generated rows the regen banks —
+        // the KIND_NAMES the 264 kinds speak, the oak pair the tail
+        // seats wear, the FACE_TILES row the ONE oak-planks tile the
+        // #texture ref banks)
+        assert_eq!(atlas::N_KINDS, 264, "the palette the oak rung banks");
+        assert_eq!(atlas::KIND_NAMES[262], "oak_button");
+        assert_eq!(atlas::KIND_NAMES[263], "oak_button_pressed");
+        assert_eq!(atlas::REGISTRY_NAMES[262], "oak_button");
+        assert_eq!(atlas::REGISTRY_NAMES[263], "oak_button");
+        let tile = atlas::FACE_TILES[263][2];
+        assert_ne!(
+            tile,
+            atlas::TILE_NONE,
+            "the oak pair's tile the #texture ref banks"
+        );
+        assert_eq!(tile, atlas::FACE_TILES[263][0], "the ONE tile all six slots wear");
+        // THE PLATE'S OWN BOX (javap makeShapes pc 0-45 + the
+        // lambda$makeShapes$0 join the 26.2 jar — the UNPRESSED the
+        // 2-px slice the support edge hugs, the PRESSED the 1-px the
+        // thinner plate serves; the seats the rotateAttachFace walk's
+        // own groups answer)
+        let off = crate::world::button_plate_box(
+            crate::world::lever_variant(crate::world::LEVER_FACE_FLOOR, 1),
+            false,
+        );
+        assert_eq!(
+            off,
+            [0.3125, 0.0, 0.375, 0.6875, 0.125, 0.625],
+            "the floor plate the model base's own slice wears"
+        );
+        let on = crate::world::button_plate_box(
+            crate::world::lever_variant(crate::world::LEVER_FACE_FLOOR, 1),
+            true,
+        );
+        assert_eq!(on[4] - on[1], 1.0 / 16.0, "the pressed slice the 1-px keeps");
+        let wall_n = crate::world::button_plate_box(
+            crate::world::lever_variant(crate::world::LEVER_FACE_WALL, 1),
+            false,
+        );
+        assert_eq!(
+            (wall_n[2], wall_n[5]),
+            (14.0 / 16.0, 1.0),
+            "the north-facing wall plate the south edge hugs"
+        );
+        let wall_e = crate::world::button_plate_box(
+            crate::world::lever_variant(crate::world::LEVER_FACE_WALL, 2),
+            false,
+        );
+        assert_eq!(
+            (wall_e[0], wall_e[3]),
+            (0.0, 2.0 / 16.0),
+            "the east-facing wall plate the west edge hugs"
+        );
+        let wall_s = crate::world::button_plate_box(
+            crate::world::lever_variant(crate::world::LEVER_FACE_WALL, 3),
+            false,
+        );
+        assert_eq!(
+            (wall_s[2], wall_s[5]),
+            (0.0, 2.0 / 16.0),
+            "the south-facing wall plate the north edge hugs"
+        );
+        let wall_w = crate::world::button_plate_box(
+            crate::world::lever_variant(crate::world::LEVER_FACE_WALL, 4),
+            false,
+        );
+        assert_eq!(
+            (wall_w[0], wall_w[3]),
+            (14.0 / 16.0, 1.0),
+            "the west-facing wall plate the east edge hugs"
+        );
+        let ceil = crate::world::button_plate_box(
+            crate::world::lever_variant(crate::world::LEVER_FACE_CEILING, 1),
+            false,
+        );
+        assert_eq!(
+            (ceil[1], ceil[4]),
+            (14.0 / 16.0, 1.0),
+            "the ceiling plate the top slice wears"
+        );
+        // THE ARROW'S OWN BBOX (javap EntityTypes the ARROW row's
+        // sized(0.5f, 0.5f) pair — the position the bbox base centers)
+        let ab = crate::world::arrow_scan_box(10.0, 5.0, 20.0);
+        assert_eq!(
+            ab,
+            [9.75, 5.0, 19.75, 10.25, 5.5, 20.5],
+            "the 0.5x0.5 box the base-centered law keeps"
+        );
+    }
+    #[test]
+    fn the_arrow_press_the_verdicts_and_the_refusals_wear() {
+        // THE ARROWS' OWN VERDICTS (javap entityInside pc 0-41 +
+        // checkPressed pc 0-167 the 26.2 jar): the wooden OFF cell the
+        // plate-hit the press verdict arms, the cell-but-off-plate
+        // miss the false keeps, the STONE set the canButtonBeActivated
+        // ByArrows refusal the scan gate never lets press, the ON
+        // cell the POWERED gate the early return serves, the lever
+        // and the non-button cells the family gate refuses.
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        let (bx, by, bz) = (c + 1, top, c);
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            // THE EAST WALL (the west-facing button the support east
+            // hugs — the plate the cell's east edge the scan tests)
+            w.set(bx + 1, by, bz, crate::world::STONE);
+            w.set(bx, by, bz, crate::world::OAK_BUTTON);
+            w.set_variant(
+                bx,
+                by,
+                bz,
+                crate::world::lever_variant(crate::world::LEVER_FACE_WALL, 4),
+            );
+            // THE STONE SIBLING (the same wall the stone pair keeps —
+            // the arrow the refusal the scan gate banks)
+            w.set(bx, by, bz - 1, crate::world::BUTTON);
+            w.set_variant(
+                bx,
+                by,
+                bz - 1,
+                crate::world::lever_variant(crate::world::LEVER_FACE_WALL, 4),
+            );
+        }
+        // THE PLATE-HIT VERDICT (the arrow AT the east face the clip
+        // law freezes — the bbox [bx+0.75, bx+1.25] the 2-px plate
+        // [bx+0.875, bx+1.0] the inclusive-overlap law answers)
+        let (ax, ay, az) = (bx as f64 + 1.0, by as f64 + 0.4, bz as f64 + 0.5);
+        assert!(
+            crate::world::arrow_presses_button(
+                app.offline_world.as_ref().unwrap(),
+                ax,
+                ay,
+                az,
+                bx,
+                by,
+                bz,
+            ),
+            "the plate hit the wooden press arms"
+        );
+        // THE PRESSED STATE'S OWN SCAN (the 1-px plate the stuck
+        // arrow's bbox still answers — the re-arm the due beat serves)
+        assert!(
+            crate::world::arrow_overlaps_plate(
+                crate::world::arrow_scan_box(ax, ay, az),
+                crate::world::lever_variant(crate::world::LEVER_FACE_WALL, 4),
+                true,
+                bx,
+                by,
+                bz,
+            ),
+            "the 1-px plate the stuck arrow's bbox answers"
+        );
+        // THE CELL-BUT-OFF-PLATE MISS (the arrow IN the button's cell
+        // the plate's cross-axis the scan refuses — the vanilla's own
+        // verdict the no-flip keeps)
+        assert!(
+            !crate::world::arrow_presses_button(
+                app.offline_world.as_ref().unwrap(),
+                bx as f64 + 0.2,
+                by as f64 + 0.9,
+                bz as f64 + 0.5,
+                bx,
+                by,
+                bz,
+            ),
+            "the off-plate cell the miss keeps"
+        );
+        // THE STONE SET'S OWN REFUSAL (the same plate hit the stone
+        // sibling wears — the canButtonBeActivatedByArrows gate the
+        // scan never lets pass)
+        assert!(
+            !crate::world::arrow_presses_button(
+                app.offline_world.as_ref().unwrap(),
+                ax,
+                ay,
+                az,
+                bx,
+                by,
+                bz - 1,
+            ),
+            "the stone button the arrow refusal keeps"
+        );
+        // THE POWERED GATE'S OWN EARLY RETURN (the ON cell the scan's
+        // own verdict the re-press the pass keeps)
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(bx, by, bz, crate::world::OAK_BUTTON_ON);
+        }
+        assert!(
+            !crate::world::arrow_presses_button(
+                app.offline_world.as_ref().unwrap(),
+                ax,
+                ay,
+                az,
+                bx,
+                by,
+                bz,
+            ),
+            "the ON cell the powered gate refuses"
+        );
+        // THE FAMILY GATE'S OWN REFUSALS (the lever and the plain
+        // cells the is_button gate never lets the scan speak)
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(bx, by, bz, crate::world::LEVER);
+        }
+        assert!(
+            !crate::world::arrow_presses_button(
+                app.offline_world.as_ref().unwrap(),
+                ax,
+                ay,
+                az,
+                bx,
+                by,
+                bz,
+            ),
+            "the lever cell the family gate refuses"
+        );
+        assert!(
+            !crate::world::arrow_presses_button(
+                app.offline_world.as_ref().unwrap(),
+                ax,
+                ay,
+                az,
+                bx,
+                by + 2,
+                bz,
+            ),
+            "the plain cell the family gate refuses"
+        );
+    }
+    #[test]
+    fn the_arrow_press_the_pulse_and_the_rearm_wear() {
+        // THE PULSE'S OWN WALK (javap checkPressed pc 79-167 the 26.2
+        // jar — the flip + the updateNeighbours + the playSound + the
+        // gameEvent + the scheduleTick re-arm the offline queue's own
+        // beats wear): the stuck arrow the wooden button the inside
+        // walk presses (the 30-tick window the schedule banks), the
+        // due beat the re-arm consult the ON keeps (no flip, no
+        // click-off, the same window re-scheduled), the despawned
+        // arrow the empty scan the OFF release speaks (the click-off
+        // voice + the deactivate post the walk wears).
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        let (bx, by, bz) = (c + 1, top, c);
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(bx + 1, by, bz, crate::world::STONE);
+            w.set(bx, by, bz, crate::world::OAK_BUTTON);
+            w.set_variant(
+                bx,
+                by,
+                bz,
+                crate::world::lever_variant(crate::world::LEVER_FACE_WALL, 4),
+            );
+        }
+        // THE STUCK ARROW'S OWN POSE (the east face the clip law
+        // freezes — the in_ground flag the flight walk's stuck branch
+        // keeps, the zero velocity the gravity the stuck lane never
+        // answers)
+        app.arrows.push(crate::mob::Arrow::from_spawn(&crate::mob::ArrowShot {
+            id: 7001,
+            x: bx as f64 + 1.0,
+            y: by as f64 + 0.4,
+            z: bz as f64 + 0.5,
+            vx: 0.0,
+            vy: 0.0,
+            vz: 0.0,
+            y_rot: 90.0,
+            x_rot: 0.0,
+            crit: false,
+            pitch: 1.0,
+            seed: 3,
+            owner: None,
+        }));
+        if let Some(a) = app.arrows.first_mut() {
+            a.in_ground = true;
+            a.life = 10;
+        }
+        // THE PRESS'S OWN BEAT (the inside walk the plate scan the
+        // ON kind the apply serves — the click-on voice + the wire
+        // voice + the 30-tick window the press arm wears)
+        app.update();
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(bx, by, bz),
+            crate::world::OAK_BUTTON_ON,
+            "the stuck arrow the wooden press arms"
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.wooden_button.click_on")),
+            "the wooden click-on voice the press speaks"
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|e| e.starts_with("block_activate")),
+            "the activate post the press wears"
+        );
+        let seat = app
+            .falling_checks
+            .iter()
+            .find(|s| s.0 == bx && s.1 == by && s.2 == bz)
+            .map(|s| s.3);
+        assert!(seat.is_some(), "the 30-tick window the schedule banks");
+        // THE RE-ARM'S OWN BEAT (the due tick the stuck arrow the
+        // scan answers — the re-schedule the same window wears, the
+        // NO-flip verdict the byte-identical state keeps, no click-off
+        // voice the silence keeps)
+        for _ in 0..31 {
+            app.update();
+        }
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(bx, by, bz),
+            crate::world::OAK_BUTTON_ON,
+            "the stuck arrow the re-arm the ON keeps"
+        );
+        let seat2 = app
+            .falling_checks
+            .iter()
+            .find(|s| s.0 == bx && s.1 == by && s.2 == bz)
+            .map(|s| s.3);
+        assert!(
+            seat2.is_some_and(|due| due > app.frame.saturating_sub(1)),
+            "the re-arm the same window re-schedules"
+        );
+        let click_offs = app
+            .sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("block.wooden_button.click_off"))
+            .count();
+        assert_eq!(click_offs, 0, "the stuck arrow no release speaks");
+        // THE DESPAWN'S OWN SILENCE (the arrow gone the next due beat
+        // the empty scan answers — the OFF kind the click-off voice +
+        // the deactivate post wear)
+        app.arrows.clear();
+        for _ in 0..32 {
+            app.update();
+        }
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(bx, by, bz),
+            crate::world::OAK_BUTTON,
+            "the empty scan the OFF kind wears"
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.wooden_button.click_off")),
+            "the wooden click-off voice the release speaks"
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|e| e.starts_with("block_deactivate")),
+            "the deactivate post the release wears"
         );
     }
     #[test]

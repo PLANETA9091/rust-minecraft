@@ -1439,7 +1439,10 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         _ => (0usize, idx),
                     };
                     for q in if crate::world::is_button(id) {
-                        button_model_quads(crate::world::button_powered(id))
+                        button_model_quads(
+                            crate::world::button_is_wooden(id),
+                            crate::world::button_powered(id),
+                        )
                     } else {
                         lever_model_quads(crate::world::lever_powered(id))
                     } {
@@ -3495,17 +3498,38 @@ fn lever_model_quads(powered: bool) -> &'static [mc_registry::element_quads::Qua
 /// banks — the mesher's per-quad verdict the row's own tile reads),
 /// tinted = false (no tintindex anywhere). The failed derive the
 /// honest empty slice keeps (the button the nothing renders).
-fn button_model_quads(powered: bool) -> &'static [mc_registry::element_quads::Quad] {
-    static OFF: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+fn button_model_quads(
+    wooden: bool,
+    powered: bool,
+) -> &'static [mc_registry::element_quads::Quad] {
+    static STONE_OFF: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
         std::sync::OnceLock::new();
-    static ON: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+    static STONE_ON: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
         std::sync::OnceLock::new();
-    let model = if powered {
-        "block/stone_button_pressed"
-    } else {
-        "block/stone_button"
+    static OAK_OFF: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    static OAK_ON: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    // THE WOODEN RUNG'S OWN MODELS (the dev-47 round — the
+    // blockstates/oak_button.json's FLOOR rows the stone lanes the
+    // SAME template parent serves: powered=false the block/oak_button
+    // row answers, powered=true the block/oak_button_pressed — the
+    // verbatim rows the resolution speaks, the #texture ref
+    // block/oak_planks the merged map banks, the mesher's per-quad
+    // verdict the kind's own FACE_TILES row reads). The failed derive
+    // the honest empty slice keeps (the button the nothing renders).
+    let model = match (wooden, powered) {
+        (true, true) => "block/oak_button_pressed",
+        (true, false) => "block/oak_button",
+        (false, true) => "block/stone_button_pressed",
+        (false, false) => "block/stone_button",
     };
-    let cache = if powered { &ON } else { &OFF };
+    let cache = match (wooden, powered) {
+        (true, true) => &OAK_ON,
+        (true, false) => &OAK_OFF,
+        (false, true) => &STONE_ON,
+        (false, false) => &STONE_OFF,
+    };
     cache.get_or_init(|| {
         mc_registry::element_quads::derive_model_inherited(model).unwrap_or_default()
     })
@@ -5697,8 +5721,8 @@ mod tests {
         // wears, the wall button the plate the supporter's own edge
         // the x=90 turn presses, the rotated cullface the neighbor
         // culls (5 faces) / the air restores (6).
-        let off = button_model_quads(false);
-        let on = button_model_quads(true);
+        let off = button_model_quads(false, false);
+        let on = button_model_quads(false, true);
         assert!(!off.is_empty() && !on.is_empty(), "the two models derive");
         assert_eq!(off.len(), 6, "the unpressed plate the six faces wear");
         assert_eq!(on.len(), 6, "the pressed plate the six faces wear");

@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 262] = [
+pub const RUNTIME_PALETTE: [&str; 264] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -755,6 +755,32 @@ pub const RUNTIME_PALETTE: [&str; 262] = [
     // the ONE stone tile — the stone master the palette already
     // banks, no new tile the regen keeps).
     "stone_button", "stone_button_pressed",
+    // THE WOODEN BUTTON'S OWN RUNG (the dev-47 round — the button
+    // family's wooden ladder the arrows' own activation lane arms):
+    // javap ButtonBlock + BlockSetType the 26.2 jar — the OAK set the
+    // String ctor's iconst_1,1,1 triple speaks (canOpenByHand +
+    // canOpenByWindCharge + canButtonBeActivatedByArrows the wooden
+    // sets' own triple arms — the STONE row's iconst_0 the stone set's
+    // refusal the arrow lane never presses), the SoundType.WOOD row
+    // the dig row (1.0-ish, the wooden SoundType) banks, the
+    // WOODEN_BUTTON_CLICK_ON/OFF events the getSound walk serves (the
+    // block.wooden_button.click_on/click_off events the cache's
+    // sounds.json rows carry), the ticksToStayPressed the OAK
+    // factory's bipush 30 ctor arg banks (the 30-tick 1.5-second
+    // wooden window the stone set's 20 the STONE lambda wears). The
+    // entityInside walk pc 0-41 the isClientSide gate + the
+    // canButtonBeActivatedByArrows gate + the POWERED gate the
+    // checkPressed delegate serves — the arrows' own press the scan
+    // law arms (the getShape bounds the plate box the arrow's
+    // sized(0.5f, 0.5f) bbox the EntityTypes ARROW row speaks
+    // intersects). The blockstates/oak_button.json the SAME DIRECT
+    // authoring the stone rows wear (powered=false the
+    // block/oak_button model, powered=true the block/oak_button_pressed
+    // — the face/facing rotation laws the stone lanes share), the ONE
+    // #texture ref block/oak_planks the row's tile banks (all six
+    // slots the ONE oak-planks tile — the planks master the palette
+    // already banks, no new tile the regen keeps).
+    "oak_button", "oak_button_pressed",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -1970,26 +1996,32 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             faces.push(resolve_flat_stem(&stem, false));
             continue;
         }
-        if block == "stone_button" || block == "stone_button_pressed" {
-            // THE BUTTON FAMILY'S OWN ROWS (the autopush-660 round):
-            // the blockstate's own FLOOR rows the two kinds wear — the
-            // "face=floor,facing=north,powered={p}" row the jar's
-            // DIRECT authoring resolves (powered=false the
-            // "block/stone_button" model, powered=true the
-            // "block/stone_button_pressed" model — the verbatim rows
-            // the resolution speaks, the lever's REVERSED authoring
-            // the button never wears), the merged texture map's
-            // `#texture` ref block/stone the row's tile banks (all six
-            // slots the ONE stone tile — the stone master the palette
-            // already banks, no new tile the regen keeps; the mesher's
-            // button lane the per-quad verdict reads), tinted = false
-            // (the faces carry NO tintindex — the pre-colored master
-            // renders as authored).
-            let powered = block == "stone_button_pressed";
-            let bs_bytes = read_jar(
-                &mut archive,
-                "assets/minecraft/blockstates/stone_button.json",
-            )?;
+        if block == "stone_button"
+            || block == "stone_button_pressed"
+            || block == "oak_button"
+            || block == "oak_button_pressed"
+        {
+            // THE BUTTON FAMILY'S OWN ROWS (the autopush-660 round +
+            // the dev-47 oak rung): the blockstate's own FLOOR rows the
+            // kinds wear — the "face=floor,facing=north,powered={p}"
+            // row the jar's DIRECT authoring resolves (the stone pair
+            // the block/stone_button models, the oak pair the
+            // block/oak_button models — the verbatim rows the
+            // resolution speaks, the lever's REVERSED authoring the
+            // buttons never wear), the merged texture map's `#texture`
+            // ref the row's tile banks (the stone the block/stone
+            // master, the oak the block/oak_planks planks master — the
+            // palette the tiles already bank, no new tile the regen
+            // keeps; the mesher's button lane the per-quad verdict
+            // reads), tinted = false (the faces carry NO tintindex —
+            // the pre-colored masters render as authored).
+            let powered = block.ends_with("_pressed");
+            let bs_path = if block.starts_with("oak_button") {
+                "assets/minecraft/blockstates/oak_button.json"
+            } else {
+                "assets/minecraft/blockstates/stone_button.json"
+            };
+            let bs_bytes = read_jar(&mut archive, bs_path)?;
             let bs: Value = serde_json::from_slice(&bs_bytes)
                 .with_context(|| "blockstate stone_button: json parse")?;
             let row_key = format!("face=floor,facing=north,powered={powered}");
