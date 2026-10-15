@@ -901,10 +901,11 @@ pub const END_STONE: u16 = 89;
 /// banks — the END_PORTAL the 292 beyond-table seat the same law
 /// keeps (the dev-48 round the plate pair's rungs the 288..291 tail
 /// banks — the autopush-663 round the plate ladder's own tail the
-/// 292..315 rows bank, the kind's own seat the beyond-table 316 the
-/// same law keeps — the `id < N_KINDS` guards the tile lookups' skip
-/// verdict the bigger tail keeps).
-pub const END_PORTAL: u16 = 316;
+/// 292..315 rows bank, the dev-49 round the weighted plates' own
+/// pair-pair the 316..319 tail banks, the kind's own seat the
+/// beyond-table 320 the same law keeps — the `id < N_KINDS` guards
+/// the tile lookups' skip verdict the bigger tail keeps).
+pub const END_PORTAL: u16 = 320;
 
 /// THE BUTTON'S OWN PAIR (the autopush-660 round): the redstone pulse's
 /// own block finally RENDERS, PLACES, PRESSES and PULSES — javap
@@ -1110,12 +1111,95 @@ pub const WARPED_PRESSURE_PLATE_ON: u16 = 313;
 pub const POLISHED_BLACKSTONE_PRESSURE_PLATE: u16 = 314;
 pub const POLISHED_BLACKSTONE_PRESSURE_PLATE_ON: u16 = 315;
 
+/// THE WEIGHTED PLATES' OWN FIRST LANE (the dev-49 round — the sensor
+/// family's OWN subclass the gold/iron rungs wear): javap
+/// `WeightedPressurePlateBlock` the 26.2 jar (pinned sha1 2dc72797,
+/// the probe scripts/jar_work/weighted_plate_49.py banks) — the ctor
+/// `(int maxWeight, BlockSetType, Properties)` walk pc 0-38 the
+/// maxWeight field banks, the Blocks clinit the two factory rows
+/// speak: LIGHT pc 15701-15738 the indy bsm[349] → lambda$static$236
+/// body the `bipush 15` + `BlockSetType.GOLD` pair banks (the
+/// Properties window MapColor.GOLD + forceSolidOn + noCollision +
+/// strength(0.5f) + pushReaction DESTROY the plate ladder's own rows
+/// verbatim wear), HEAVY pc 15741-15778 the bsm[350] →
+/// lambda$static$237 body the `sipush 150` + `BlockSetType.IRON`
+/// pair banks (MapColor.METAL the same window wears). The
+/// getSignalStrength walk pc 0-52 the COUNT law serves — the
+/// `getEntityCount(level, TOUCH_AABB.move(pos), Entity.class)` pc
+/// 0-12 the EVERY entity counts (the items/arrows/mobs/player the
+/// weighted walk's own class arg arms — the MOBS row the stone set
+/// wears the weighted rows never speak), the `Math.min(count,
+/// maxWeight)` pc 13-20 fold + the `Mth.ceil((float)min /
+/// (float)maxWeight * 15.0f)` pc 25-50 the graded signal answers
+/// ([`weighted_plate_signal`] the math the pure fold banks — the
+/// power>0 gate the ON bit the entityInside walk's own signal==0
+/// law keeps, the binary pair the OFF/ON kinds the ±1 mate the
+/// ladder's own law wears). The `getPressedTime` walk pc 0-2 the
+/// `bipush 10` the HALF-window banks ([`plate_release_ticks`] the
+/// weighted arm reads — the 20-tick BOTH-sets law the
+/// PressurePlateBlock rows keep). The POWER property the integer
+/// 0..15 the blockstates speak (power=0 the up model, power=1..15
+/// the _down rows the SAME model the whole range answers — the
+/// `power={p}` row keys the weighted files wear, the powered={p}
+/// rows the wooden/stone ladder's own files never share), the ONE
+/// #texture ref block/gold_block / block/iron_block the row's tile
+/// banks (the metal masters the tile table's 144/145 seats the
+/// first-encounter walk gains). The block.metal_pressure_plate
+/// click_on/off events the GOLD/IRON set types' pressurePlateClick
+/// On/Off rows BOTH rungs share (the sounds.json the 0.75/0.65
+/// pitches the 0.3 volume wears). The beyond-table seat the
+/// END_PORTAL kind the displacement law keeps (316 -> 320 the
+/// every-rung displacement the ladder's growths wear).
+pub const LIGHT_WEIGHTED_PRESSURE_PLATE: u16 = 316;
+pub const LIGHT_WEIGHTED_PRESSURE_PLATE_ON: u16 = 317;
+pub const HEAVY_WEIGHTED_PRESSURE_PLATE: u16 = 318;
+pub const HEAVY_WEIGHTED_PRESSURE_PLATE_ON: u16 = 319;
+
 /// THE PLATE'S OWN RELEASE CLOCK (javap `BasePressurePlateBlock.get
 /// PressedTime` pc 0-2 — the `bipush 20` BOTH sets wear: the pressed
 /// plate the scheduled tick re-arms while occupied, the vacated beat
 /// the release serves — the 1-second window the stone AND wooden rows
-/// share).
+/// share; the WEIGHTED subclass the walk OVERRIDES — the dev-49
+/// round the `bipush 10` pc 0-2 the WeightedPressurePlateBlock body
+/// speaks, the half-window the [`plate_release_ticks`] law reads).
 pub const PLATE_PRESSED_TIME: u64 = 20;
+
+/// THE PLATE'S OWN RELEASE WINDOW (javap the two getPressedTime walks
+/// the 26.2 jar — the Base's `bipush 20` pc 0-2 BOTH PressurePlate
+/// Block sets wear, the WeightedPressurePlateBlock OVERRIDE the
+/// `bipush 10` pc 0-2 the gold/iron rows speak: the half-second the
+/// weighted plates release in, the scheduled tick re-arms while ANY
+/// entity sits the same law both subclasses share). The weighted
+/// kinds the 10-tick window the gold/iron verdict arms, the ladder
+/// rungs the 20-tick window the Base's own answer keeps.
+pub fn plate_release_ticks(id: u16) -> u64 {
+    if plate_is_weighted(id) {
+        10
+    } else {
+        PLATE_PRESSED_TIME
+    }
+}
+
+/// THE WEIGHTED PLATE'S OWN SIGNAL MATH (javap `WeightedPressurePlate
+/// Block.getSignalStrength` pc 0-52 the 26.2 jar — the `getEntityCount
+/// (level, TOUCH_AABB.move(pos), Entity.class)` pc 0-12 the EVERY
+/// entity counts, the `Math.min(count, this.maxWeight)` pc 13-20 fold
+/// the `istore_3` banks, the zero gate pc 21-24 the 0 the empty scan
+/// returns, the `Mth.ceil((float)Math.min(maxWeight, i) / (float)
+/// this.maxWeight * ldc 15.0f)` pc 25-50 the graded rung answers):
+/// the LIGHT row the `bipush 15` ctor arg the maxWeight banks (the
+/// count-per-rung law — one entity one rung, fifteen full), the HEAVY
+/// row the `sipush 150` arg banks (the ten-per-rung law — ceil(count
+/// / 10) the rung speaks). The pure fold the client's own vocabulary
+/// banks (the binary press the signal>0 gate the app lane wears —
+/// the graded rung the wire strength a future lane reads).
+pub fn weighted_plate_signal(count: usize, max_weight: u32) -> u32 {
+    if count == 0 {
+        return 0;
+    }
+    let i = count.min(max_weight as usize) as f32;
+    (i / max_weight as f32 * 15.0).ceil() as u32
+}
 
 /// THE BUTTON'S OWN PULSE CLOCK (javap `press` pc 28-37 the
 /// `scheduleTick(pos, this, ticksToStayPressed)` walk the STONE
@@ -1707,9 +1791,10 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 /// Block -> texture-group mapping used by the real-colors LUT.
 /// The dev-48 round the plate pair's rungs the 288..291 tail banks —
 /// the autopush-663 round the plate ladder's own tail the 292..315
-/// rows bank — the table the 316 rows the END_PORTAL the beyond-table
-/// seat the displaced law keeps.
-pub const NAME_OF: [&str; 316] = [
+/// rows bank — the dev-49 round the weighted plates' own tail the
+/// 316..319 rows bank — the table the 320 rows the END_PORTAL the
+/// beyond-table seat the displaced law keeps.
+pub const NAME_OF: [&str; 320] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -2088,6 +2173,15 @@ pub const NAME_OF: [&str; 316] = [
     "crimson_pressure_plate", "crimson_pressure_plate",
     "warped_pressure_plate", "warped_pressure_plate",
     "polished_blackstone_pressure_plate", "polished_blackstone_pressure_plate",
+    // THE WEIGHTED PLATES' OWN ROWS (the dev-49 round): the ONE
+    // registry name BOTH kinds of each pair speak (the `_down` strip
+    // walk the generated rows' registry law wears — the
+    // WeightedPressurePlateBlock's ONE "light_weighted_pressure_plate"
+    // / "heavy_weighted_pressure_plate" entry both states the same
+    // name keeps, the item id the pick lane grants BOTH kinds), the
+    // placement's placeable lookup the reverse walk serves.
+    "light_weighted_pressure_plate", "light_weighted_pressure_plate",
+    "heavy_weighted_pressure_plate", "heavy_weighted_pressure_plate",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -3238,6 +3332,36 @@ pub fn is_pressure_plate(id: u16) -> bool {
         || id == STONE_PRESSURE_PLATE
         || id == STONE_PRESSURE_PLATE_ON
         || (SPRUCE_PRESSURE_PLATE..=POLISHED_BLACKSTONE_PRESSURE_PLATE_ON).contains(&id)
+        || (LIGHT_WEIGHTED_PRESSURE_PLATE..=HEAVY_WEIGHTED_PRESSURE_PLATE_ON).contains(&id)
+}
+
+/// THE WEIGHTED PLATES' OWN FAMILY VERDICT (javap the Blocks clinit
+/// the 26.2 jar — the two factory rows the WeightedPressurePlateBlock
+/// ctor wears: the LIGHT row pc 15701-15738 the `bipush 15` +
+/// `BlockSetType.GOLD` pair banks, the HEAVY row pc 15741-15778 the
+/// `sipush 150` + `BlockSetType.IRON` pair — the gold/iron rungs the
+/// sensor family's OWN subclass serves, the getSignalStrength walk
+/// the Entity.class count the EVERY entity arms, the `bipush 10`
+/// getPressedTime OVERRIDE the half-window speaks). The OFF/ON pairs
+/// the verdict keep — the wooden/stone/weighted verdicts the three
+/// families the sensitivity rows never share (the weighted rows the
+/// [`plate_is_wooden`] verdict never arms — the gold/iron rungs the
+/// false arm keeps).
+pub fn plate_is_weighted(id: u16) -> bool {
+    (LIGHT_WEIGHTED_PRESSURE_PLATE..=HEAVY_WEIGHTED_PRESSURE_PLATE_ON).contains(&id)
+}
+
+/// THE ENTITY.CLASS ROWS' OWN VERDICT (javap the two getSignalStrength
+/// walks the 26.2 jar — the PressurePlateBlock's lookupswitch the
+/// EVERYTHING row the Entity.class count arms (the wooden set's own
+/// sensitivity), the WeightedPressurePlateBlock walk the Entity.class
+/// arg UNCONDITIONALLY passes (the weighted rows the class the ctor's
+/// own law banks — the MOBS row the stone set wears the weighted
+/// never speaks)): the wooden AND weighted kinds the true verdict the
+/// non-living entities (the arrows the client's own vocabulary) arm,
+/// the stone family the living gate keeps.
+pub fn plate_counts_any_entity(id: u16) -> bool {
+    plate_is_wooden(id) || plate_is_weighted(id)
 }
 
 /// THE PLATE'S OWN WOODEN VERDICT (javap the BlockSetType rows the
@@ -3268,10 +3392,17 @@ pub fn plate_powered(id: u16) -> bool {
     // THE LADDER'S OWN PARITY LAW (the OFF kinds the even seats the ON
     // the odd wear — the raw 293..=315 range the even OFF kinds the
     // later rungs bank would wrongly arm, the odd verdict the honest
-    // bit keeps — the button ladder's own law the same shape wears)
+    // bit keeps — the button ladder's own law the same shape wears;
+    // the dev-49 round the weighted tail the same parity wears — the
+    // 316/318 seats the OFF kinds the even rungs bank, the 317/319
+    // seats the ON kinds the odd verdict arms — the POWER property's
+    // power=0 the up row the OFF kind speaks, the power=1..15 rows
+    // the _down model the whole range the ON bit wears)
     id == OAK_PRESSURE_PLATE_ON
         || id == STONE_PRESSURE_PLATE_ON
         || ((SPRUCE_PRESSURE_PLATE..=POLISHED_BLACKSTONE_PRESSURE_PLATE_ON).contains(&id)
+            && id % 2 == 1)
+        || ((LIGHT_WEIGHTED_PRESSURE_PLATE..=HEAVY_WEIGHTED_PRESSURE_PLATE_ON).contains(&id)
             && id % 2 == 1)
 }
 
@@ -3285,14 +3416,19 @@ pub fn plate_toggled(id: u16) -> Option<u16> {
     // kinds the even seats the ON the odd wear, the unknown id the
     // None the honest guard banks): the explicit arms the two older
     // pairs pin, the ladder rungs the +1/-1 arithmetic the range
-    // guard answers
+    // guard answers (the dev-49 round the weighted tail the same
+    // mate wears — the 316/318 seats the OFF kinds the gold/iron
+    // verdict banks)
     match id {
         OAK_PRESSURE_PLATE => Some(OAK_PRESSURE_PLATE_ON),
         OAK_PRESSURE_PLATE_ON => Some(OAK_PRESSURE_PLATE),
         STONE_PRESSURE_PLATE => Some(STONE_PRESSURE_PLATE_ON),
         STONE_PRESSURE_PLATE_ON => Some(STONE_PRESSURE_PLATE),
         _ => {
-            if (SPRUCE_PRESSURE_PLATE..=POLISHED_BLACKSTONE_PRESSURE_PLATE_ON).contains(&id) {
+            if (SPRUCE_PRESSURE_PLATE..=POLISHED_BLACKSTONE_PRESSURE_PLATE_ON).contains(&id)
+                || (LIGHT_WEIGHTED_PRESSURE_PLATE..=HEAVY_WEIGHTED_PRESSURE_PLATE_ON)
+                    .contains(&id)
+            {
                 Some(if id % 2 == 0 { id + 1 } else { id - 1 })
             } else {
                 None
@@ -3376,8 +3512,13 @@ pub fn plate_click_voice(id: u16, on: bool) -> &'static str {
     // stone_pressure_plate.click_on/off events the stone AND
     // polished-blackstone rungs share (the polished rung the
     // POLISHED_BLACKSTONE set type's own fields the STONE rows
-    // byte-equal banks — the shared voices the two set types keep).
-    // The on flag the click_on/click_off word picks.
+    // byte-equal banks — the shared voices the two set types keep);
+    // the dev-49 round the WEIGHTED rows the metal set the GOLD/IRON
+    // rungs share (javap the two ctors the BlockSetType.GOLD/IRON
+    // args the record's pressurePlateClickOn/Off fields bank — the
+    // block.metal_pressure_plate.click_on/off events the sounds.json
+    // rows carry, the random/click event BOTH rungs speak). The on
+    // flag the click_on/click_off word picks.
     let set: &str = if id == CHERRY_PRESSURE_PLATE || id == CHERRY_PRESSURE_PLATE_ON {
         "block.cherry_wood_pressure_plate"
     } else if id == BAMBOO_PRESSURE_PLATE || id == BAMBOO_PRESSURE_PLATE_ON {
@@ -3388,6 +3529,8 @@ pub fn plate_click_voice(id: u16, on: bool) -> &'static str {
         || id == WARPED_PRESSURE_PLATE_ON
     {
         "block.nether_wood_pressure_plate"
+    } else if plate_is_weighted(id) {
+        "block.metal_pressure_plate"
     } else if plate_is_wooden(id) {
         "block.wooden_pressure_plate"
     } else {
@@ -3398,6 +3541,7 @@ pub fn plate_click_voice(id: u16, on: bool) -> &'static str {
             "block.cherry_wood_pressure_plate" => "block.cherry_wood_pressure_plate.click_on",
             "block.bamboo_wood_pressure_plate" => "block.bamboo_wood_pressure_plate.click_on",
             "block.nether_wood_pressure_plate" => "block.nether_wood_pressure_plate.click_on",
+            "block.metal_pressure_plate" => "block.metal_pressure_plate.click_on",
             "block.wooden_pressure_plate" => "block.wooden_pressure_plate.click_on",
             _ => "block.stone_pressure_plate.click_on",
         }
@@ -3406,6 +3550,7 @@ pub fn plate_click_voice(id: u16, on: bool) -> &'static str {
             "block.cherry_wood_pressure_plate" => "block.cherry_wood_pressure_plate.click_off",
             "block.bamboo_wood_pressure_plate" => "block.bamboo_wood_pressure_plate.click_off",
             "block.nether_wood_pressure_plate" => "block.nether_wood_pressure_plate.click_off",
+            "block.metal_pressure_plate" => "block.metal_pressure_plate.click_off",
             "block.wooden_pressure_plate" => "block.wooden_pressure_plate.click_off",
             _ => "block.stone_pressure_plate.click_off",
         }
@@ -3420,8 +3565,18 @@ pub fn plate_click_voice(id: u16, on: bool) -> &'static str {
 /// numbers the rendered output keeps. The ladder's own rows the SAME
 /// numbers wear: the cherry/bamboo/nether_wood_pressure_plate rows the
 /// wooden pair's 0.8/0.7 pitches verbatim bank — the wooden verdict
-/// the five wooden voice sets the same params the flag serves).
+/// the five wooden voice sets the same params the flag serves; the
+/// dev-49 round the WEIGHTED rows the metal pair the 0.75/0.65
+/// pitches bank (javap the sounds.json the block.metal_pressure_
+/// plate rows the click_on 0.75 / click_off 0.65 pair speaks — the
+/// 0.3 volume the row's own column keeps, the random/click event
+/// BOTH weighted rungs share — the GOLD/IRON set types' own fields
+/// the same event rows answer). The metal verdict the weighted arm
+/// reads, the wooden/stone rows the ladder's own arms keep.
 pub fn plate_voice_params(id: u16, on: bool) -> (f32, f32) {
+    if plate_is_weighted(id) {
+        return if on { (0.3, 0.75) } else { (0.3, 0.65) };
+    }
     match (plate_is_wooden(id), on) {
         (true, true) => (0.3, 0.8),
         (true, false) => (0.3, 0.7),
@@ -3804,6 +3959,20 @@ pub fn collision_shape(id: u16) -> CollisionShape {
         // never refuses, the neighbors' own faces the non-occluding
         // verdict draws.
         || is_button(id)
+        // THE PLATE FAMILY'S OWN ROW (the dev-49 round — the family
+        // fn's own pass-through the doc's law the body finally wears:
+        // javap the two factories' Properties chains the 26.2 jar —
+        // the PressurePlateBlock rows the noCollision() call the
+        // buttonProperties-analog windows speak (pc 15721/15761 the
+        // weighted rows the same call wear), the pass-through verdict
+        // the lever family's own row the sibling wears): the body
+        // walks THROUGH the plate cell the feet the touch band's own
+        // floor crosses (the 1-px resting plate the collision never
+        // banks — the vanilla's own getShape the SHAPE column the
+        // noCollision registration never adds), the placement's own
+        // obstruction the empty shape never refuses, the neighbors'
+        // own faces the non-occluding verdict draws.
+        || is_pressure_plate(id)
         || is_flower(id)
         || is_tuft(id)
         || is_double_plant(id)
@@ -10773,8 +10942,8 @@ mod tests {
         assert_eq!(NAME_OF[BUTTON_ON as usize], "stone_button");
         assert_eq!(BUTTON + 1, BUTTON_ON, "the +1 seat the OFF/ON ladder wears");
         assert_eq!(
-            END_PORTAL, 316,
-            "the displaced seat the plate ladder's own tail banks"
+            END_PORTAL, 320,
+            "the displaced seat the weighted plates' own tail banks"
         );
         // THE PULSE'S OWN CLOCK (javap press pc 28-37 — the STONE
         // factory's bipush 20 ctor arg the window banks)
@@ -11473,7 +11642,10 @@ mod tests {
         assert_eq!(OAK_DOOR_UPPER, 91);
         assert_eq!(OAK_DOOR_OPEN, 92);
         assert_eq!(OAK_DOOR_UPPER_OPEN, 93);
-        assert_eq!(END_PORTAL, 316, "the displaced seat the plate ladder's own tail banks");
+        assert_eq!(
+            END_PORTAL, 320,
+            "the displaced seat the weighted plates' own tail banks"
+        );
         // THE WOOD LADDER'S OWN SEATS (the dev-43 round — the eleven
         // quartets the CONTIGUOUS tail the kind ids 94..137 wear: the
         // closed lower + 0, the closed upper + 1, the open lower + 2,
@@ -11677,7 +11849,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 316, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 320, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)

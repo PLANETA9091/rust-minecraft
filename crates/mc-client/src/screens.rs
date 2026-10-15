@@ -13963,12 +13963,16 @@ impl App {
                     // scheduleTick(+getPressedTime) re-arm serves: the
                     // OCCUPIED scan the touch box the entity's own bbox
                     // answers — the player the LIVING class both sets
-                    // count, the arrows the wooden plate's Entity.class
-                    // scan alone arms (the MOBS row the stone set's
-                    // refusal keeps) — the ON kind the byte keeps + the
-                    // same window the schedule re-arms (the no-flip the
-                    // no-voices hold wears), the empty scan the OFF
-                    // release the walk serves)
+                    // count, the arrows the Entity.class rows alone arm
+                    // (the wooden set's EVERYTHING row + the weighted
+                    // rows' own unconditional Entity.class count the
+                    // [`plate_counts_any_entity`] law reads, the MOBS
+                    // row the stone set's refusal keeps) — the ON kind
+                    // the byte keeps + the kind's OWN window the
+                    // schedule re-arms (the no-flip the no-voices hold
+                    // wears, the weighted rungs the 10-tick half-window
+                    // the getPressedTime OVERRIDE banks), the empty
+                    // scan the OFF release the walk serves)
                     let player_box: Option<[f64; 6]> = self.body.as_ref().map(|b| {
                         let hw = crate::body::WIDTH / 2.0;
                         [
@@ -13981,20 +13985,20 @@ impl App {
                         ]
                     });
                     for (x, y, z, kind) in &plate_due {
-                        let wooden = crate::world::plate_is_wooden(*kind);
+                        let arrows_count = crate::world::plate_counts_any_entity(*kind);
                         let touch = crate::world::plate_touch_box(*x, *y, *z);
                         let player_on = player_box
                             .as_ref()
                             .is_some_and(|pb| crate::world::plate_boxes_overlap(pb, &touch));
-                        let arrow_on = wooden
+                        let arrow_on = arrows_count
                             && arrow_boxes
                                 .iter()
                                 .any(|ab| crate::world::plate_boxes_overlap(ab, &touch));
                         if player_on || arrow_on {
-                            // the occupied scan the ON keeps — the same
-                            // window the schedule re-arms (the hold
+                            // the occupied scan the ON keeps — the kind's
+                            // own window the schedule re-arms (the hold
                             // loop's own no-voices beat wears)
-                            self.schedule_plate_release(*x, *y, *z);
+                            self.schedule_plate_release(*x, *y, *z, *kind);
                             continue;
                         }
                         // THE VACATED BEAT (javap checkPressed pc 73-143
@@ -35790,12 +35794,14 @@ impl App {
 
     /// THE PLATE'S OWN RELEASE SCHEDULE (javap checkPressed pc 146-165 —
     /// the `scheduleTick(pos, this, getPressedTime())` walk the pressed
-    /// plate's own beat banks: the 20-tick window the
-    /// [`crate::world::PLATE_PRESSED_TIME`] law reads — the hold loop
+    /// plate's own beat banks: the kind's OWN window the
+    /// [`crate::world::plate_release_ticks`] law reads (the 20-tick
+    /// window the PressurePlateBlock rows wear, the weighted rungs the
+    /// `bipush 10` OVERRIDE the gold/iron verdict banks — the hold loop
     /// the due walk's own consult re-arms while occupied, the vacated
     /// beat the release serves; the set-dedup the queue bounded keeps,
     /// the networked world the SERVER's own scheduler answers).
-    pub fn schedule_plate_release(&mut self, x: i32, y: i32, z: i32) {
+    pub fn schedule_plate_release(&mut self, x: i32, y: i32, z: i32, kind: u16) {
         if self.world_is_network || self.offline_world.is_none() {
             return;
         }
@@ -35807,7 +35813,7 @@ impl App {
             return;
         }
         self.falling_checks
-            .push((x, y, z, self.frame + crate::world::PLATE_PRESSED_TIME));
+            .push((x, y, z, self.frame + crate::world::plate_release_ticks(kind)));
     }
 
     /// THE PLATES' OWN PRESS WALK (javap `BasePressurePlateBlock.entity
@@ -35866,7 +35872,7 @@ impl App {
                     if crate::world::is_pressure_plate(kind)
                         && !crate::world::plate_powered(kind)
                         && crate::world::plate_entity_presses(
-                            crate::world::plate_is_wooden(kind),
+                            crate::world::plate_counts_any_entity(kind),
                             true, // the player the LIVING class wears
                             box6,
                             cx,
@@ -35881,8 +35887,12 @@ impl App {
             }
         }
         // THE ARROWS' OWN CELLS (the flight walk's own span the sensor
-        // reads — the wooden verdict the MOBS row's refusal keeps: the
-        // arrow the LivingEntity.class count never arms)
+        // reads — the Entity.class rows the non-living entities arm,
+        // the MOBS row the stone refusal keeps: the arrow the
+        // LivingEntity.class count never arms, the wooden EVERYTHING
+        // row AND the weighted rows' own unconditional Entity.class
+        // count the same arrow the [`plate_counts_any_entity`] verdict
+        // arms)
         for arrow in self.arrows.iter() {
             let box6 = crate::world::arrow_scan_box(arrow.x, arrow.y, arrow.z);
             let bx0 = (arrow.x - 0.25).floor() as i32;
@@ -35898,7 +35908,7 @@ impl App {
                         if crate::world::is_pressure_plate(kind)
                             && !crate::world::plate_powered(kind)
                             && crate::world::plate_entity_presses(
-                                crate::world::plate_is_wooden(kind),
+                                crate::world::plate_counts_any_entity(kind),
                                 false, // the arrow the non-living entity wears
                                 &box6,
                                 cx,
@@ -35940,7 +35950,7 @@ impl App {
                 ear_pan(ear, yaw, cx, cy, cz),
             );
             self.dispatch_vibration_event("block_activate", (cx, cy, cz));
-            self.schedule_plate_release(x, y, z);
+            self.schedule_plate_release(x, y, z, kind);
         }
     }
 
@@ -102505,8 +102515,8 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            316,
-            "the palette the plate ladder's own tail banks"
+            320,
+            "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
         assert_eq!(atlas::KIND_NAMES[wool as usize], "white_wool");
@@ -102586,8 +102596,8 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            316,
-            "the palette the plate ladder's own tail banks"
+            320,
+            "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
         assert_eq!(atlas::REGISTRY_NAMES[sand as usize], "soul_sand");
@@ -102888,8 +102898,8 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            316,
-            "the palette the plate ladder's own tail banks"
+            320,
+            "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
         assert_eq!(atlas::REGISTRY_NAMES[honey as usize], "honey_block");
@@ -106735,8 +106745,8 @@ cow_sound_variant: None,
         assert_eq!(crate::world::OAK_BUTTON_ON, 263);
         assert_eq!(
             crate::world::END_PORTAL,
-            316,
-            "the displaced seat the ladder's growth keeps"
+            320,
+            "the displaced seat the weighted plates' own tail keeps"
         );
         for kind in [
             crate::world::BUTTON,
@@ -106816,7 +106826,11 @@ cow_sound_variant: None,
         // the KIND_NAMES the 316 kinds speak, the oak pair the mid seats
         // wear, the FACE_TILES row the ONE oak-planks tile the
         // #texture ref banks)
-        assert_eq!(atlas::N_KINDS, 316, "the palette the plate ladder's rows bank");
+        assert_eq!(
+            atlas::N_KINDS,
+            320,
+            "the palette the weighted plates' own rows bank"
+        );
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
         assert_eq!(atlas::KIND_NAMES[263], "oak_button_pressed");
         assert_eq!(atlas::REGISTRY_NAMES[262], "oak_button");
@@ -107029,10 +107043,14 @@ cow_sound_variant: None,
         );
         assert_eq!(
             crate::world::END_PORTAL,
-            316,
-            "the displaced seat the ladder's growth keeps"
+            320,
+            "the displaced seat the weighted plates' own tail keeps"
         );
-        assert_eq!(atlas::N_KINDS, 316, "the palette the plate ladder's rows bank");
+        assert_eq!(
+            atlas::N_KINDS,
+            320,
+            "the palette the weighted plates' own rows bank"
+        );
         // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
         // the getSound walk the buttonClickOn/Off pair serves): the
         // String-ctor woods the WOODEN defaults speak, the CHERRY full
@@ -107298,14 +107316,18 @@ cow_sound_variant: None,
         }
         assert_eq!(
             seat, 316,
-            "the plate ladder's own tail the beyond-table seat succeeds"
+            "the plate ladder's own tail the weighted rungs succeed"
         );
         assert_eq!(
             crate::world::END_PORTAL,
-            316,
-            "the displaced seat the ladder's growth keeps"
+            320,
+            "the displaced seat the weighted plates' own tail keeps"
         );
-        assert_eq!(atlas::N_KINDS, 316, "the palette the plate ladder's rows bank");
+        assert_eq!(
+            atlas::N_KINDS,
+            320,
+            "the palette the weighted plates' own rows bank"
+        );
         // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
         // pressurePlateClickOn/Off fields the record rows bank): the
         // String-ctor woods the WOODEN defaults speak, the CHERRY full
@@ -107387,6 +107409,313 @@ cow_sound_variant: None,
         );
     }
     #[test]
+    fn the_weighted_plates_the_count_law_and_the_metal_voices_wear() {
+        // THE WEIGHTED PLATES' OWN LAWS (the dev-49 round — javap
+        // `WeightedPressurePlateBlock` the 26.2 jar the probe
+        // scripts/jar_work/weighted_plate_49.py banks): the pair-pair
+        // the 316..319 tail wears, the END_PORTAL the beyond-table
+        // seat the displacement keeps (the 320 the `id < N_KINDS`
+        // guards the bigger tail banks), the family fn the weighted
+        // rungs the gold/iron verdict arms (the wooden verdict the
+        // same rungs never wear — the OWN subclass the sensitivity
+        // rows never share), the Entity.class count the EVERY entity
+        // arms (the MOBS row the stone set wears the weighted rows
+        // never speak), the release clock the `bipush 10` OVERRIDE
+        // the half-window banks (the 20-tick BOTH-sets law the
+        // PressurePlateBlock rows keep), the count law the
+        // getSignalStrength walk's own math speaks (the
+        // `Math.min(count, maxWeight)` fold + the `Mth.ceil(min /
+        // maxWeight * 15.0f)` rung — the LIGHT row the `bipush 15`
+        // ctor arg banks, the HEAVY row the `sipush 150`), the metal
+        // voices the block.metal_pressure_plate rows BOTH rungs share
+        // (the 0.75/0.65 pitches the 0.3 volume the sounds.json
+        // carries), the names/atlas rows the ONE registry name both
+        // kinds speak, the per-rung FACE_TILES row the gold_block/
+        // iron_block masters bank, the placement the items the pick
+        // lane grants, the pass-through row the collision's Empty the
+        // noCollision factories speak.
+        use crate::world as w;
+        use mc_registry::generated::atlas;
+        assert_eq!(w::LIGHT_WEIGHTED_PRESSURE_PLATE, 316);
+        assert_eq!(w::LIGHT_WEIGHTED_PRESSURE_PLATE_ON, 317);
+        assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE, 318);
+        assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, 319);
+        assert_eq!(w::END_PORTAL, 320);
+        assert_eq!(atlas::N_KINDS, 320, "the palette the weighted rows bank");
+        for (off, on, name) in [
+            (
+                w::LIGHT_WEIGHTED_PRESSURE_PLATE,
+                w::LIGHT_WEIGHTED_PRESSURE_PLATE_ON,
+                "light_weighted_pressure_plate",
+            ),
+            (
+                w::HEAVY_WEIGHTED_PRESSURE_PLATE,
+                w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON,
+                "heavy_weighted_pressure_plate",
+            ),
+        ] {
+            assert!(
+                w::is_pressure_plate(off) && w::is_pressure_plate(on),
+                "the {name} rung the family keeps"
+            );
+            assert!(
+                w::plate_is_weighted(off) && w::plate_is_weighted(on),
+                "the weighted verdict the gold/iron rungs arm"
+            );
+            assert!(
+                !w::plate_is_wooden(off) && !w::plate_is_wooden(on),
+                "the wooden verdict the weighted rungs never wear"
+            );
+            assert!(
+                w::plate_counts_any_entity(off) && w::plate_counts_any_entity(on),
+                "the Entity.class rows the weighted count wears"
+            );
+            assert!(
+                !w::plate_powered(off),
+                "the OFF kind the resting bit wears"
+            );
+            assert!(w::plate_powered(on), "the ON kind the powered bit keeps");
+            assert_eq!(
+                w::plate_toggled(off),
+                Some(on),
+                "the ±1 mate the weighted pair wears"
+            );
+            assert_eq!(w::plate_toggled(on), Some(off));
+            assert_eq!(w::plate_toggled(w::LEVER), None, "the lever the family gate refuses");
+            assert_eq!(w::NAME_OF[off as usize], name);
+            assert_eq!(w::NAME_OF[on as usize], name);
+            assert_eq!(atlas::KIND_NAMES[off as usize], name);
+            assert_eq!(atlas::KIND_NAMES[on as usize], format!("{name}_down"));
+            assert_eq!(atlas::REGISTRY_NAMES[off as usize], name);
+            assert_eq!(atlas::REGISTRY_NAMES[on as usize], name);
+            let tile = atlas::FACE_TILES[off as usize][2];
+            assert_ne!(
+                tile,
+                atlas::TILE_NONE,
+                "the {name} tile the metal master banks"
+            );
+            assert_eq!(
+                atlas::FACE_TILES[on as usize][2],
+                tile,
+                "the ON kind the same tile keeps"
+            );
+            assert_eq!(
+                w::World::placeable_block(name),
+                Some(off),
+                "the {name} item the placement lane serves"
+            );
+        }
+        assert_ne!(
+            atlas::FACE_TILES[w::LIGHT_WEIGHTED_PRESSURE_PLATE as usize][2],
+            atlas::FACE_TILES[w::HEAVY_WEIGHTED_PRESSURE_PLATE as usize][2],
+            "the gold/iron tiles the two masters wear"
+        );
+        // THE RELEASE WINDOW'S OWN OVERRIDE (javap the two getPressed
+        // Time walks — the Base's `bipush 20` pc 0-2 the ladder rows
+        // wear, the weighted body's `bipush 10` pc 0-2 the OVERRIDE
+        // the gold/iron rows speak)
+        assert_eq!(
+            w::PLATE_PRESSED_TIME, 20,
+            "the Base's own window the ladder rows keep"
+        );
+        assert_eq!(
+            w::plate_release_ticks(w::LIGHT_WEIGHTED_PRESSURE_PLATE),
+            10,
+            "the weighted rungs the half-window wear"
+        );
+        assert_eq!(
+            w::plate_release_ticks(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON),
+            10,
+            "the ON kind the same window reads"
+        );
+        assert_eq!(
+            w::plate_release_ticks(w::OAK_PRESSURE_PLATE),
+            20,
+            "the ladder rungs the Base's window keep"
+        );
+        // THE COUNT LAW'S OWN MATH (javap getSignalStrength pc 0-52 —
+        // the `Math.min(count, maxWeight)` fold the `istore_3` banks,
+        // the zero gate pc 21-24 the 0 the empty scan returns, the
+        // `Mth.ceil((float)min / (float)maxWeight * ldc 15.0f)` pc
+        // 25-50 the graded rung answers)
+        assert_eq!(w::weighted_plate_signal(0, 15), 0, "the empty scan the zero wears");
+        assert_eq!(w::weighted_plate_signal(1, 15), 1, "the LIGHT row one entity one rung");
+        assert_eq!(w::weighted_plate_signal(7, 15), 7, "the LIGHT row the count speaks");
+        assert_eq!(w::weighted_plate_signal(15, 15), 15, "the LIGHT row fifteen full");
+        assert_eq!(
+            w::weighted_plate_signal(200, 15),
+            15,
+            "the min fold the cap keeps"
+        );
+        assert_eq!(w::weighted_plate_signal(1, 150), 1, "the HEAVY row one entity one rung");
+        assert_eq!(
+            w::weighted_plate_signal(10, 150),
+            1,
+            "the HEAVY row ten entities one rung"
+        );
+        assert_eq!(w::weighted_plate_signal(11, 150), 2, "the HEAVY row the ceil answers");
+        assert_eq!(
+            w::weighted_plate_signal(150, 150),
+            15,
+            "the HEAVY row one-fifty full"
+        );
+        // THE METAL VOICES' OWN ROWS (javap the GOLD/IRON set types'
+        // pressurePlateClickOn/Off fields the record rows bank — the
+        // sounds.json the 0.75/0.65 pitches the 0.3 volume wears)
+        assert_eq!(
+            w::plate_click_voice(w::LIGHT_WEIGHTED_PRESSURE_PLATE, true),
+            "block.metal_pressure_plate.click_on"
+        );
+        assert_eq!(
+            w::plate_click_voice(w::LIGHT_WEIGHTED_PRESSURE_PLATE_ON, false),
+            "block.metal_pressure_plate.click_off"
+        );
+        assert_eq!(
+            w::plate_click_voice(w::HEAVY_WEIGHTED_PRESSURE_PLATE, true),
+            "block.metal_pressure_plate.click_on"
+        );
+        assert_eq!(
+            w::plate_click_voice(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, false),
+            "block.metal_pressure_plate.click_off"
+        );
+        assert_eq!(
+            w::plate_voice_params(w::LIGHT_WEIGHTED_PRESSURE_PLATE, true),
+            (0.3, 0.75)
+        );
+        assert_eq!(
+            w::plate_voice_params(w::LIGHT_WEIGHTED_PRESSURE_PLATE_ON, false),
+            (0.3, 0.65)
+        );
+        assert_eq!(
+            w::plate_voice_params(w::HEAVY_WEIGHTED_PRESSURE_PLATE, true),
+            (0.3, 0.75)
+        );
+        assert_eq!(
+            w::plate_voice_params(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, false),
+            (0.3, 0.65)
+        );
+        // THE PASS-THROUGH'S OWN ROW (javap the two factories'
+        // Properties chains — the noCollision() call the weighted
+        // windows pc 15721/15761 speak, the ladder rows the same
+        // call wear)
+        assert_eq!(
+            w::collision_shape(w::LIGHT_WEIGHTED_PRESSURE_PLATE),
+            w::CollisionShape::Empty,
+            "the weighted cell the body walks through"
+        );
+        assert_eq!(
+            w::collision_shape(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON),
+            w::CollisionShape::Empty,
+            "the ON kind the same row keeps"
+        );
+        // THE ENTITY.CLASS ROWS' OWN ARMS (the fn-level verdict the
+        // press walk composes — the arrow the non-living entity the
+        // weighted row counts, the stone row the MOBS refusal keeps)
+        let entity: [f64; 6] = [9.6, 64.0, 9.6, 10.1, 64.5, 10.1];
+        assert!(
+            w::plate_entity_presses(
+                w::plate_counts_any_entity(w::LIGHT_WEIGHTED_PRESSURE_PLATE),
+                false,
+                &entity,
+                10,
+                64,
+                10
+            ),
+            "the weighted row the arrow's own bbox counts"
+        );
+        assert!(
+            !w::plate_entity_presses(
+                w::plate_counts_any_entity(w::STONE_PRESSURE_PLATE),
+                false,
+                &entity,
+                10,
+                64,
+                10
+            ),
+            "the stone row the arrow refuses"
+        );
+        // THE APP'S OWN LANE (javap entityInside pc 0-31 — the
+        // player's feet bbox the touch band the OFF weighted plate
+        // scans, the ON set + the metal click-on voice + the
+        // vibration the apply beat serves, the half-window the
+        // vacated beat the release serves)
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        let (px, py, pz) = (c + 2, top, c);
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    world.set(px + dx, py - 1, pz + dz, crate::world::STONE);
+                    world.set(px + dx, py, pz + dz, crate::world::AIR);
+                    world.set(px + dx, py + 1, pz + dz, crate::world::AIR);
+                }
+            }
+            world.set(px, py, pz, w::LIGHT_WEIGHTED_PRESSURE_PLATE);
+        }
+        app.body = Some(crate::body::PlayerBody::new(
+            px as f64 + 0.5,
+            py as f64,
+            pz as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        app.update();
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(px, py, pz),
+            w::LIGHT_WEIGHTED_PRESSURE_PLATE_ON,
+            "the weighted plate the player's own feet presses"
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.metal_pressure_plate.click_on")),
+            "the metal click-on voice the row's own params wear"
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|e| e.starts_with("block_activate")),
+            "the activate vibration the sculk lane hears"
+        );
+        // THE STEP-OFF'S OWN RELEASE (the vacated beat the OFF set +
+        // the metal click-off voice + the deactivate vibration the
+        // HALF-window serves — the 10 ticks the weighted rows wear)
+        app.body = Some(crate::body::PlayerBody::new(
+            px as f64 + 3.5,
+            py as f64,
+            pz as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        let start_frame = app.frame;
+        while app.frame < start_frame + 10 {
+            app.update();
+        }
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(px, py, pz),
+            w::LIGHT_WEIGHTED_PRESSURE_PLATE,
+            "the vacated beat the half-window release wears"
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.metal_pressure_plate.click_off")),
+            "the metal click-off voice the release beat speaks"
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|e| e.starts_with("block_deactivate")),
+            "the deactivate vibration the release beat wears"
+        );
+    }
+    #[test]
     fn the_pressure_plates_the_sensor_the_sensitivity_and_the_release_wear() {
         // THE PLATES' OWN LAWS (the dev-48 round — javap the 26.2 jar
         // the BasePressurePlateBlock + PressurePlateBlock walks the
@@ -107407,8 +107736,12 @@ cow_sound_variant: None,
         assert_eq!(w::OAK_PRESSURE_PLATE_ON, 289);
         assert_eq!(w::STONE_PRESSURE_PLATE, 290);
         assert_eq!(w::STONE_PRESSURE_PLATE_ON, 291);
-        assert_eq!(w::END_PORTAL, 316);
-        assert_eq!(atlas::N_KINDS, 316, "the palette the plate ladder's rows bank");
+        assert_eq!(w::END_PORTAL, 320);
+        assert_eq!(
+            atlas::N_KINDS,
+            320,
+            "the palette the weighted plates' own rows bank"
+        );
         for (off, on, name, wooden) in [
             (
                 w::OAK_PRESSURE_PLATE,

@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 316] = [
+pub const RUNTIME_PALETTE: [&str; 320] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -906,6 +906,45 @@ pub const RUNTIME_PALETTE: [&str; 316] = [
     "crimson_pressure_plate", "crimson_pressure_plate_down",
     "warped_pressure_plate", "warped_pressure_plate_down",
     "polished_blackstone_pressure_plate", "polished_blackstone_pressure_plate_down",
+    // THE WEIGHTED PLATES' OWN FIRST LANE (the dev-49 round): the gold
+    // and iron rungs the sensor family's OWN subclass serves — javap
+    // the 26.2 jar (pinned sha1 2dc72797) `WeightedPressurePlateBlock`
+    // the probe scripts/jar_work/weighted_plate_49.py banks: the ctor
+    // `(int maxWeight, BlockSetType, Properties)` walk pc 0-38 the
+    // maxWeight field banks, the Blocks clinit the two factory rows
+    // speak — LIGHT pc 15701-15738 bsm[349] → lambda$static$236 the
+    // `bipush 15` + `BlockSetType.GOLD` pair banks (MapColor.GOLD,
+    // forceSolidOn + noCollision + strength(0.5f) + pushReaction
+    // DESTROY the same window the plate ladder's rows wear), HEAVY
+    // pc 15741-15778 bsm[350] → lambda$static$237 the `sipush 150` +
+    // `BlockSetType.IRON` pair banks (MapColor.METAL). The
+    // getSignalStrength walk pc 0-52 the COUNT law serves — the
+    // getEntityCount(level, TOUCH_AABB.move(pos), Entity.class) the
+    // EVERY entity counts (the items/arrows/mobs/player the weighted
+    // walk's own class arg arms — the MOBS row the stone set wears
+    // the weighted rows never speak), the `Math.min(count, maxWeight)`
+    // pc 13-20 fold + the `Mth.ceil(min/maxWeight * 15.0f)` pc 25-50
+    // the graded signal answers (light: 15 entities full — count per
+    // entity; heavy: 150 entities full — ten per rung), the `getPress
+    // edTime` the `bipush 10` pc 0-2 the HALF-window banks (the 10-tick
+    // release the weighted rows wear — the 20-tick BOTH-sets law the
+    // PressurePlateBlock rows keep). The POWER property the integer
+    // 0..15 the blockstates speak — power=0 the up model, power=1..15
+    // the down rows the SAME _down model the whole range answers (the
+    // binary pair the OFF/ON kinds the ±1 mate wears — the power>0
+    // gate the ON bit the checkPressed walk's own signal>0 law keeps).
+    // The blockstates the `power={0..15}` rows the weighted files wear
+    // (the powered={p} rows the plate ladder's own files never share),
+    // the models the ONE #texture ref block/gold_block / block/iron_
+    // block the row's tile banks (the jar's PNGs the first-encounter
+    // walk gains — the two metal masters the tile table's tail seats
+    // bank), the parents pressure_plate_up/down the ladder's own
+    // elements wear. The sounds.json the metal rows carry (block.metal
+    // _pressure_plate.click_on pitch 0.75 / click_off 0.65, volume 0.3
+    // — the random/click event BOTH rungs share — the GOLD/IRON set
+    // types' pressurePlateClickOn/Off fields the record rows bank).
+    "light_weighted_pressure_plate", "light_weighted_pressure_plate_down",
+    "heavy_weighted_pressure_plate", "heavy_weighted_pressure_plate_down",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -2200,7 +2239,18 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             )?;
             let bs: Value = serde_json::from_slice(&bs_bytes)
                 .with_context(|| format!("blockstate {bs_name}: json parse"))?;
-            let row_key = format!("powered={powered}");
+            // THE WEIGHTED PLATES' OWN ROW KEY (the dev-49 round — the
+            // blockstates the jar itself banks the weighted files the
+            // `power={0..15}` rows wear: power=0 the up model, power=1
+            // the down rows' head the whole 1..15 range the same model
+            // answers — the POWER integer property the IntegerProperty
+            // clinit row speaks, the powered={p} rows the wooden/stone
+            // ladder's own files wear)
+            let row_key = if bs_name.ends_with("_weighted_pressure_plate") {
+                format!("power={}", if powered { 1 } else { 0 })
+            } else {
+                format!("powered={powered}")
+            };
             let model_ref = bs
                 .get("variants")
                 .and_then(|v| v.get(&row_key))

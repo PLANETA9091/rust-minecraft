@@ -137,6 +137,15 @@ fn is_transparent(kind: u16) -> bool {
         // the thin plate the neighbors' faces draw against, the
         // noCollision row the Properties chain speaks)
         || crate::world::is_button(kind)
+        // THE PLATE FAMILY the same verdict keeps (the dev-49 round —
+        // the thin floor plate the neighbors' faces draw against, the
+        // noCollision row the two factories' Properties chains speak
+        // (the pressure-plate pc 15721/15761 windows the weighted rows
+        // the same call wear), the non-occluding verdict the vanilla's
+        // own canOcclude=false registration banks): the floor's top
+        // face under ANY plate draws, the plate casts no AO, the
+        // element geometry the attach lane's own walk renders
+        || crate::world::is_pressure_plate(kind)
         // THE WEB the same verdict keeps (the dev-22 round — the
         // noCollision() pc 4247 the WebBlock registration speaks, the
         // cross planes non-occluding, no AO, the neighbors' faces the
@@ -3578,14 +3587,23 @@ fn button_model_quads(id: u16, powered: bool) -> &'static [mc_registry::element_
 /// false (no tintindex anywhere). The (id, powered)-keyed map the
 /// autopush-663 round the FULL LADDER bakes — the FOURTEEN base seats
 /// the TWENTY-EIGHT models once bank (the failed derive the honest
-/// empty slice keeps — the plate the nothing renders).
+/// empty slice keeps — the plate the nothing renders); the dev-49
+/// round the weighted pair-pair the SIXTEEN base seats the THIRTY-TWO
+/// models the same derive walk banks (the gold/iron rungs the block/
+/// light|heavy_weighted_pressure_plate{,_down} chains the generated
+/// MODELS rows already speak, the #texture refs block/gold_block /
+/// block/iron_block the metal masters the tile table's 144/145 seats
+/// bank).
 fn plate_model_quads(id: u16, powered: bool) -> &'static [mc_registry::element_quads::Quad] {
     // THE SENSOR RUNGS' OWN BASE SEATS (the OFF kind every pair wears —
     // the NAME_OF row the ON kind the same name speaks, the model names
     // the {name}/{name}_down pair the jar's blockstates bank; the
     // autopush-663 round the FULL LADDER the fourteen base seats bake —
-    // the twelve ladder rungs the same derive walk wears)
-    const BASE_IDS: [u16; 14] = [
+    // the twelve ladder rungs the same derive walk wears; the dev-49
+    // round the weighted pair-pair the gold/iron seats the same walk
+    // banks — the ONE #texture ref the metal masters the tile table
+    // banks, the per-quad verdict the kind's own FACE_TILES row reads)
+    const BASE_IDS: [u16; 16] = [
         crate::world::OAK_PRESSURE_PLATE,
         crate::world::STONE_PRESSURE_PLATE,
         crate::world::SPRUCE_PRESSURE_PLATE,
@@ -3600,6 +3618,8 @@ fn plate_model_quads(id: u16, powered: bool) -> &'static [mc_registry::element_q
         crate::world::CRIMSON_PRESSURE_PLATE,
         crate::world::WARPED_PRESSURE_PLATE,
         crate::world::POLISHED_BLACKSTONE_PRESSURE_PLATE,
+        crate::world::LIGHT_WEIGHTED_PRESSURE_PLATE,
+        crate::world::HEAVY_WEIGHTED_PRESSURE_PLATE,
     ];
     static QUADS: std::sync::OnceLock<
         std::collections::HashMap<(u16, bool), Vec<mc_registry::element_quads::Quad>>,
