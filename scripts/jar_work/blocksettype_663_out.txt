@@ -1,0 +1,386 @@
+##### net/minecraft/world/level/block/state/properties/BlockSetType.class #####
+  FIELD canButtonBeActivatedByArrows : Z
+  FIELD pressurePlateClickOff : Lnet/minecraft/sounds/SoundEvent;
+  FIELD pressurePlateClickOn : Lnet/minecraft/sounds/SoundEvent;
+  FIELD buttonClickOff : Lnet/minecraft/sounds/SoundEvent;
+  FIELD buttonClickOn : Lnet/minecraft/sounds/SoundEvent;
+  --- <init>(Ljava/lang/String;)V ---
+        0: aload_0 
+        1: aload_1 
+        2: iconst_1 
+        3: iconst_1 
+        4: iconst_1 
+        5: getstatic net/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity.EVERYTHING:Lnet/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity;
+        8: getstatic net/minecraft/world/level/block/SoundType.WOOD:Lnet/minecraft/world/level/block/SoundType;
+       11: getstatic net/minecraft/sounds/SoundEvents.WOODEN_DOOR_CLOSE:Lnet/minecraft/sounds/SoundEvent;
+       14: getstatic net/minecraft/sounds/SoundEvents.WOODEN_DOOR_OPEN:Lnet/minecraft/sounds/SoundEvent;
+       17: getstatic net/minecraft/sounds/SoundEvents.WOODEN_TRAPDOOR_CLOSE:Lnet/minecraft/sounds/SoundEvent;
+       20: getstatic net/minecraft/sounds/SoundEvents.WOODEN_TRAPDOOR_OPEN:Lnet/minecraft/sounds/SoundEvent;
+       23: getstatic net/minecraft/sounds/SoundEvents.WOODEN_PRESSURE_PLATE_CLICK_OFF:Lnet/minecraft/sounds/SoundEvent;
+       26: getstatic net/minecraft/sounds/SoundEvents.WOODEN_PRESSURE_PLATE_CLICK_ON:Lnet/minecraft/sounds/SoundEvent;
+       29: getstatic net/minecraft/sounds/SoundEvents.WOODEN_BUTTON_CLICK_OFF:Lnet/minecraft/sounds/SoundEvent;
+       32: getstatic net/minecraft/sounds/SoundEvents.WOODEN_BUTTON_CLICK_ON:Lnet/minecraft/sounds/SoundEvent;
+       35: invokespecial net/minecraft/world/level/block/state/properties/BlockSetType.<init>:(Ljava/lang/String;ZZZLnet/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity;Lnet/minecraft/world/level/block/SoundType;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;)V
+       38: return 
+  --- <init>(Ljava/lang/String;ZZZLnet/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity;Lnet/minecraft/world/level/block/SoundType;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;)V ---
+        0: aload_0 
+        1: invokespecial java/lang/Record.<init>:()V
+        4: aload_0 
+        5: aload_1 
+        6: putfield net/minecraft/world/level/block/state/properties/BlockSetType.name:Ljava/lang/String;
+        9: aload_0 
+       10: iload_2 
+       11: putfield net/minecraft/world/level/block/state/properties/BlockSetType.canOpenByHand:Z
+       14: aload_0 
+       15: iload_3 
+       16: putfield net/minecraft/world/level/block/state/properties/BlockSetType.canOpenByWindCharge:Z
+       19: aload_0 
+       20: iload 
+       21: iconst_1 
+       22: putfield net/minecraft/world/level/block/state/properties/BlockSetType.canButtonBeActivatedByArrows:Z
+       25: aload_0 
+       26: aload 
+       27: iconst_2 
+       28: putfield net/minecraft/world/level/block/state/properties/BlockSetType.pressurePlateSensitivity:Lnet/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity;
+       31: aload_0 
+       32: aload 
+       33: iconst_3 
+       34: putfield net/minecraft/world/level/block/state/properties/BlockSetType.soundType:Lnet/minecraft/world/level/block/SoundType;
+       37: aload_0 
+       38: aload 
+       39: iconst_4 
+       40: putfield net/minecraft/world/level/block/state/properties/BlockSetType.doorClose:Lnet/minecraft/sounds/SoundEvent;
+       43: aload_0 
+       44: aload 
+       45: iconst_5 
+       46: putfield net/minecraft/world/level/block/state/properties/BlockSetType.doorOpen:Lnet/minecraft/sounds/SoundEvent;
+       49: aload_0 
+       50: aload 
+       51: 0x09 
+       52: putfield net/minecraft/world/level/block/state/properties/BlockSetType.trapdoorClose:Lnet/minecraft/sounds/SoundEvent;
+       55: aload_0 
+       56: aload 
+       57: 0x0a 
+       58: putfield net/minecraft/world/level/block/state/properties/BlockSetType.trapdoorOpen:Lnet/minecraft/sounds/SoundEvent;
+       61: aload_0 
+       62: aload 
+       63: fconst_0 
+       64: putfield net/minecraft/world/level/block/state/properties/BlockSetType.pressurePlateClickOff:Lnet/minecraft/sounds/SoundEvent;
+       67: aload_0 
+       68: aload 
+       69: fconst_1 
+       70: putfield net/minecraft/world/level/block/state/properties/BlockSetType.pressurePlateClickOn:Lnet/minecraft/sounds/SoundEvent;
+       73: aload_0 
+       74: aload 
+       75: fconst_2 
+       76: putfield net/minecraft/world/level/block/state/properties/BlockSetType.buttonClickOff:Lnet/minecraft/sounds/SoundEvent;
+       79: aload_0 
+       80: aload 
+       81: 0x0e 
+       82: putfield net/minecraft/world/level/block/state/properties/BlockSetType.buttonClickOn:Lnet/minecraft/sounds/SoundEvent;
+       85: return 
+  --- <clinit>()V ---
+        0: new cp127
+        3: dup 
+        4: invokespecial it/unimi/dsi/fastutil/objects/Object2ObjectArrayMap.<init>:()V
+        7: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.TYPES:Ljava/util/Map;
+       10: invokedynamic bsm[1]
+       15: getstatic net/minecraft/world/level/block/state/properties/BlockSetType.TYPES:Ljava/util/Map;
+       18: dup 
+       19: invokestatic java/util/Objects.requireNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+       22: pop 
+       23: invokedynamic bsm[2]
+       28: invokestatic com/mojang/serialization/Codec.stringResolver:(Ljava/util/function/Function;Ljava/util/function/Function;)Lcom/mojang/serialization/Codec;
+       31: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.CODEC:Lcom/mojang/serialization/Codec;
+       34: new cp8
+       37: dup 
+       38: ldc "iron"
+       40: iconst_0 
+       41: iconst_0 
+       42: iconst_0 
+       43: getstatic net/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity.EVERYTHING:Lnet/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity;
+       46: getstatic net/minecraft/world/level/block/SoundType.IRON:Lnet/minecraft/world/level/block/SoundType;
+       49: getstatic net/minecraft/sounds/SoundEvents.IRON_DOOR_CLOSE:Lnet/minecraft/sounds/SoundEvent;
+       52: getstatic net/minecraft/sounds/SoundEvents.IRON_DOOR_OPEN:Lnet/minecraft/sounds/SoundEvent;
+       55: getstatic net/minecraft/sounds/SoundEvents.IRON_TRAPDOOR_CLOSE:Lnet/minecraft/sounds/SoundEvent;
+       58: getstatic net/minecraft/sounds/SoundEvents.IRON_TRAPDOOR_OPEN:Lnet/minecraft/sounds/SoundEvent;
+       61: getstatic net/minecraft/sounds/SoundEvents.METAL_PRESSURE_PLATE_CLICK_OFF:Lnet/minecraft/sounds/SoundEvent;
+       64: getstatic net/minecraft/sounds/SoundEvents.METAL_PRESSURE_PLATE_CLICK_ON:Lnet/minecraft/sounds/SoundEvent;
+       67: getstatic net/minecraft/sounds/SoundEvents.STONE_BUTTON_CLICK_OFF:Lnet/minecraft/sounds/SoundEvent;
+       70: getstatic net/minecraft/sounds/SoundEvents.STONE_BUTTON_CLICK_ON:Lnet/minecraft/sounds/SoundEvent;
+       73: invokespecial net/minecraft/world/level/block/state/properties/BlockSetType.<init>:(Ljava/lang/String;ZZZLnet/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity;Lnet/minecraft/world/level/block/SoundType;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;)V
+       76: invokestatic net/minecraft/world/level/block/state/properties/BlockSetType.register:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;)Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+       79: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.IRON:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+       82: new cp8
+       85: dup 
+       86: ldc "copper"
+       88: iconst_1 
+       89: iconst_1 
+       90: iconst_0 
+       91: getstatic net/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity.EVERYTHING:Lnet/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity;
+       94: getstatic net/minecraft/world/level/block/SoundType.COPPER:Lnet/minecraft/world/level/block/SoundType;
+       97: getstatic net/minecraft/sounds/SoundEvents.COPPER_DOOR_CLOSE:Lnet/minecraft/sounds/SoundEvent;
+      100: getstatic net/minecraft/sounds/SoundEvents.COPPER_DOOR_OPEN:Lnet/minecraft/sounds/SoundEvent;
+      103: getstatic net/minecraft/sounds/SoundEvents.COPPER_TRAPDOOR_CLOSE:Lnet/minecraft/sounds/SoundEvent;
+      106: getstatic net/minecraft/sounds/SoundEvents.COPPER_TRAPDOOR_OPEN:Lnet/minecraft/sounds/SoundEvent;
+      109: getstatic net/minecraft/sounds/SoundEvents.METAL_PRESSURE_PLATE_CLICK_OFF:Lnet/minecraft/sounds/SoundEvent;
+      112: getstatic net/minecraft/sounds/SoundEvents.METAL_PRESSURE_PLATE_CLICK_ON:Lnet/minecraft/sounds/SoundEvent;
+      115: getstatic net/minecraft/sounds/SoundEvents.STONE_BUTTON_CLICK_OFF:Lnet/minecraft/sounds/SoundEvent;
+      118: getstatic net/minecraft/sounds/SoundEvents.STONE_BUTTON_CLICK_ON:Lnet/minecraft/sounds/SoundEvent;
+      121: invokespecial net/minecraft/world/level/block/state/properties/BlockSetType.<init>:(Ljava/lang/String;ZZZLnet/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity;Lnet/minecraft/world/level/block/SoundType;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;)V
+      124: invokestatic net/minecraft/world/level/block/state/properties/BlockSetType.register:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;)Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      127: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.COPPER:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      130: new cp8
+      133: dup 
+      134: ldc "gold"
+      136: iconst_0 
+      137: iconst_1 
+      138: iconst_0 
+      139: getstatic net/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity.EVERYTHING:Lnet/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity;
+      142: getstatic net/minecraft/world/level/block/SoundType.METAL:Lnet/minecraft/world/level/block/SoundType;
+      145: getstatic net/minecraft/sounds/SoundEvents.IRON_DOOR_CLOSE:Lnet/minecraft/sounds/SoundEvent;
+      148: getstatic net/minecraft/sounds/SoundEvents.IRON_DOOR_OPEN:Lnet/minecraft/sounds/SoundEvent;
+      151: getstatic net/minecraft/sounds/SoundEvents.IRON_TRAPDOOR_CLOSE:Lnet/minecraft/sounds/SoundEvent;
+      154: getstatic net/minecraft/sounds/SoundEvents.IRON_TRAPDOOR_OPEN:Lnet/minecraft/sounds/SoundEvent;
+      157: getstatic net/minecraft/sounds/SoundEvents.METAL_PRESSURE_PLATE_CLICK_OFF:Lnet/minecraft/sounds/SoundEvent;
+      160: getstatic net/minecraft/sounds/SoundEvents.METAL_PRESSURE_PLATE_CLICK_ON:Lnet/minecraft/sounds/SoundEvent;
+      163: getstatic net/minecraft/sounds/SoundEvents.STONE_BUTTON_CLICK_OFF:Lnet/minecraft/sounds/SoundEvent;
+      166: getstatic net/minecraft/sounds/SoundEvents.STONE_BUTTON_CLICK_ON:Lnet/minecraft/sounds/SoundEvent;
+      169: invokespecial net/minecraft/world/level/block/state/properties/BlockSetType.<init>:(Ljava/lang/String;ZZZLnet/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity;Lnet/minecraft/world/level/block/SoundType;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;)V
+      172: invokestatic net/minecraft/world/level/block/state/properties/BlockSetType.register:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;)Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      175: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.GOLD:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      178: new cp8
+      181: dup 
+      182: ldc "stone"
+      184: iconst_1 
+      185: iconst_1 
+      186: iconst_0 
+      187: getstatic net/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity.MOBS:Lnet/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity;
+      190: getstatic net/minecraft/world/level/block/SoundType.STONE:Lnet/minecraft/world/level/block/SoundType;
+      193: getstatic net/minecraft/sounds/SoundEvents.IRON_DOOR_CLOSE:Lnet/minecraft/sounds/SoundEvent;
+      196: getstatic net/minecraft/sounds/SoundEvents.IRON_DOOR_OPEN:Lnet/minecraft/sounds/SoundEvent;
+      199: getstatic net/minecraft/sounds/SoundEvents.IRON_TRAPDOOR_CLOSE:Lnet/minecraft/sounds/SoundEvent;
+      202: getstatic net/minecraft/sounds/SoundEvents.IRON_TRAPDOOR_OPEN:Lnet/minecraft/sounds/SoundEvent;
+      205: getstatic net/minecraft/sounds/SoundEvents.STONE_PRESSURE_PLATE_CLICK_OFF:Lnet/minecraft/sounds/SoundEvent;
+      208: getstatic net/minecraft/sounds/SoundEvents.STONE_PRESSURE_PLATE_CLICK_ON:Lnet/minecraft/sounds/SoundEvent;
+      211: getstatic net/minecraft/sounds/SoundEvents.STONE_BUTTON_CLICK_OFF:Lnet/minecraft/sounds/SoundEvent;
+      214: getstatic net/minecraft/sounds/SoundEvents.STONE_BUTTON_CLICK_ON:Lnet/minecraft/sounds/SoundEvent;
+      217: invokespecial net/minecraft/world/level/block/state/properties/BlockSetType.<init>:(Ljava/lang/String;ZZZLnet/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity;Lnet/minecraft/world/level/block/SoundType;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;)V
+      220: invokestatic net/minecraft/world/level/block/state/properties/BlockSetType.register:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;)Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      223: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.STONE:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      226: new cp8
+      229: dup 
+      230: ldc "polished_blackstone"
+      232: iconst_1 
+      233: iconst_1 
+      234: iconst_0 
+      235: getstatic net/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity.MOBS:Lnet/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity;
+      238: getstatic net/minecraft/world/level/block/SoundType.STONE:Lnet/minecraft/world/level/block/SoundType;
+      241: getstatic net/minecraft/sounds/SoundEvents.IRON_DOOR_CLOSE:Lnet/minecraft/sounds/SoundEvent;
+      244: getstatic net/minecraft/sounds/SoundEvents.IRON_DOOR_OPEN:Lnet/minecraft/sounds/SoundEvent;
+      247: getstatic net/minecraft/sounds/SoundEvents.IRON_TRAPDOOR_CLOSE:Lnet/minecraft/sounds/SoundEvent;
+      250: getstatic net/minecraft/sounds/SoundEvents.IRON_TRAPDOOR_OPEN:Lnet/minecraft/sounds/SoundEvent;
+      253: getstatic net/minecraft/sounds/SoundEvents.STONE_PRESSURE_PLATE_CLICK_OFF:Lnet/minecraft/sounds/SoundEvent;
+      256: getstatic net/minecraft/sounds/SoundEvents.STONE_PRESSURE_PLATE_CLICK_ON:Lnet/minecraft/sounds/SoundEvent;
+      259: getstatic net/minecraft/sounds/SoundEvents.STONE_BUTTON_CLICK_OFF:Lnet/minecraft/sounds/SoundEvent;
+      262: getstatic net/minecraft/sounds/SoundEvents.STONE_BUTTON_CLICK_ON:Lnet/minecraft/sounds/SoundEvent;
+      265: invokespecial net/minecraft/world/level/block/state/properties/BlockSetType.<init>:(Ljava/lang/String;ZZZLnet/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity;Lnet/minecraft/world/level/block/SoundType;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;)V
+      268: invokestatic net/minecraft/world/level/block/state/properties/BlockSetType.register:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;)Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      271: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.POLISHED_BLACKSTONE:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      274: new cp8
+      277: dup 
+      278: ldc "oak"
+      280: invokespecial net/minecraft/world/level/block/state/properties/BlockSetType.<init>:(Ljava/lang/String;)V
+      283: invokestatic net/minecraft/world/level/block/state/properties/BlockSetType.register:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;)Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      286: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.OAK:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      289: new cp8
+      292: dup 
+      293: ldc "spruce"
+      295: invokespecial net/minecraft/world/level/block/state/properties/BlockSetType.<init>:(Ljava/lang/String;)V
+      298: invokestatic net/minecraft/world/level/block/state/properties/BlockSetType.register:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;)Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      301: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.SPRUCE:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      304: new cp8
+      307: dup 
+      308: ldc "birch"
+      310: invokespecial net/minecraft/world/level/block/state/properties/BlockSetType.<init>:(Ljava/lang/String;)V
+      313: invokestatic net/minecraft/world/level/block/state/properties/BlockSetType.register:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;)Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      316: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.BIRCH:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      319: new cp8
+      322: dup 
+      323: ldc "acacia"
+      325: invokespecial net/minecraft/world/level/block/state/properties/BlockSetType.<init>:(Ljava/lang/String;)V
+      328: invokestatic net/minecraft/world/level/block/state/properties/BlockSetType.register:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;)Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      331: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.ACACIA:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      334: new cp8
+      337: dup 
+      338: ldc2_w 
+      341: iconst_1 
+      342: iconst_1 
+      343: iconst_1 
+      344: getstatic net/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity.EVERYTHING:Lnet/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity;
+      347: getstatic net/minecraft/world/level/block/SoundType.CHERRY_WOOD:Lnet/minecraft/world/level/block/SoundType;
+      350: getstatic net/minecraft/sounds/SoundEvents.CHERRY_WOOD_DOOR_CLOSE:Lnet/minecraft/sounds/SoundEvent;
+      353: getstatic net/minecraft/sounds/SoundEvents.CHERRY_WOOD_DOOR_OPEN:Lnet/minecraft/sounds/SoundEvent;
+      356: getstatic net/minecraft/sounds/SoundEvents.CHERRY_WOOD_TRAPDOOR_CLOSE:Lnet/minecraft/sounds/SoundEvent;
+      359: getstatic net/minecraft/sounds/SoundEvents.CHERRY_WOOD_TRAPDOOR_OPEN:Lnet/minecraft/sounds/SoundEvent;
+      362: getstatic net/minecraft/sounds/SoundEvents.CHERRY_WOOD_PRESSURE_PLATE_CLICK_OFF:Lnet/minecraft/sounds/SoundEvent;
+      365: getstatic net/minecraft/sounds/SoundEvents.CHERRY_WOOD_PRESSURE_PLATE_CLICK_ON:Lnet/minecraft/sounds/SoundEvent;
+      368: getstatic net/minecraft/sounds/SoundEvents.CHERRY_WOOD_BUTTON_CLICK_OFF:Lnet/minecraft/sounds/SoundEvent;
+      371: getstatic net/minecraft/sounds/SoundEvents.CHERRY_WOOD_BUTTON_CLICK_ON:Lnet/minecraft/sounds/SoundEvent;
+      374: invokespecial net/minecraft/world/level/block/state/properties/BlockSetType.<init>:(Ljava/lang/String;ZZZLnet/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity;Lnet/minecraft/world/level/block/SoundType;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;)V
+      377: invokestatic net/minecraft/world/level/block/state/properties/BlockSetType.register:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;)Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      380: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.CHERRY:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      383: new cp8
+      386: dup 
+      387: ldc2_w 
+      390: invokespecial net/minecraft/world/level/block/state/properties/BlockSetType.<init>:(Ljava/lang/String;)V
+      393: invokestatic net/minecraft/world/level/block/state/properties/BlockSetType.register:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;)Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      396: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.JUNGLE:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      399: new cp8
+      402: dup 
+      403: ldc2_w 
+      406: invokespecial net/minecraft/world/level/block/state/properties/BlockSetType.<init>:(Ljava/lang/String;)V
+      409: invokestatic net/minecraft/world/level/block/state/properties/BlockSetType.register:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;)Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      412: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.DARK_OAK:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      415: new cp8
+      418: dup 
+      419: ldc2_w 
+      422: invokespecial net/minecraft/world/level/block/state/properties/BlockSetType.<init>:(Ljava/lang/String;)V
+      425: invokestatic net/minecraft/world/level/block/state/properties/BlockSetType.register:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;)Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      428: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.PALE_OAK:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      431: new cp8
+      434: dup 
+      435: ldc2_w 
+      438: iconst_1 
+      439: iconst_1 
+      440: iconst_1 
+      441: getstatic net/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity.EVERYTHING:Lnet/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity;
+      444: getstatic net/minecraft/world/level/block/SoundType.NETHER_WOOD:Lnet/minecraft/world/level/block/SoundType;
+      447: getstatic net/minecraft/sounds/SoundEvents.NETHER_WOOD_DOOR_CLOSE:Lnet/minecraft/sounds/SoundEvent;
+      450: getstatic net/minecraft/sounds/SoundEvents.NETHER_WOOD_DOOR_OPEN:Lnet/minecraft/sounds/SoundEvent;
+      453: getstatic net/minecraft/sounds/SoundEvents.NETHER_WOOD_TRAPDOOR_CLOSE:Lnet/minecraft/sounds/SoundEvent;
+      456: getstatic net/minecraft/sounds/SoundEvents.NETHER_WOOD_TRAPDOOR_OPEN:Lnet/minecraft/sounds/SoundEvent;
+      459: getstatic net/minecraft/sounds/SoundEvents.NETHER_WOOD_PRESSURE_PLATE_CLICK_OFF:Lnet/minecraft/sounds/SoundEvent;
+      462: getstatic net/minecraft/sounds/SoundEvents.NETHER_WOOD_PRESSURE_PLATE_CLICK_ON:Lnet/minecraft/sounds/SoundEvent;
+      465: getstatic net/minecraft/sounds/SoundEvents.NETHER_WOOD_BUTTON_CLICK_OFF:Lnet/minecraft/sounds/SoundEvent;
+      468: getstatic net/minecraft/sounds/SoundEvents.NETHER_WOOD_BUTTON_CLICK_ON:Lnet/minecraft/sounds/SoundEvent;
+      471: invokespecial net/minecraft/world/level/block/state/properties/BlockSetType.<init>:(Ljava/lang/String;ZZZLnet/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity;Lnet/minecraft/world/level/block/SoundType;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;)V
+      474: invokestatic net/minecraft/world/level/block/state/properties/BlockSetType.register:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;)Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      477: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.CRIMSON:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      480: new cp8
+      483: dup 
+      484: ldc2_w 
+      487: iconst_1 
+      488: iconst_1 
+      489: iconst_1 
+      490: getstatic net/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity.EVERYTHING:Lnet/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity;
+      493: getstatic net/minecraft/world/level/block/SoundType.NETHER_WOOD:Lnet/minecraft/world/level/block/SoundType;
+      496: getstatic net/minecraft/sounds/SoundEvents.NETHER_WOOD_DOOR_CLOSE:Lnet/minecraft/sounds/SoundEvent;
+      499: getstatic net/minecraft/sounds/SoundEvents.NETHER_WOOD_DOOR_OPEN:Lnet/minecraft/sounds/SoundEvent;
+      502: getstatic net/minecraft/sounds/SoundEvents.NETHER_WOOD_TRAPDOOR_CLOSE:Lnet/minecraft/sounds/SoundEvent;
+      505: getstatic net/minecraft/sounds/SoundEvents.NETHER_WOOD_TRAPDOOR_OPEN:Lnet/minecraft/sounds/SoundEvent;
+      508: getstatic net/minecraft/sounds/SoundEvents.NETHER_WOOD_PRESSURE_PLATE_CLICK_OFF:Lnet/minecraft/sounds/SoundEvent;
+      511: getstatic net/minecraft/sounds/SoundEvents.NETHER_WOOD_PRESSURE_PLATE_CLICK_ON:Lnet/minecraft/sounds/SoundEvent;
+      514: getstatic net/minecraft/sounds/SoundEvents.NETHER_WOOD_BUTTON_CLICK_OFF:Lnet/minecraft/sounds/SoundEvent;
+      517: getstatic net/minecraft/sounds/SoundEvents.NETHER_WOOD_BUTTON_CLICK_ON:Lnet/minecraft/sounds/SoundEvent;
+      520: invokespecial net/minecraft/world/level/block/state/properties/BlockSetType.<init>:(Ljava/lang/String;ZZZLnet/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity;Lnet/minecraft/world/level/block/SoundType;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;)V
+      523: invokestatic net/minecraft/world/level/block/state/properties/BlockSetType.register:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;)Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      526: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.WARPED:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      529: new cp8
+      532: dup 
+      533: ldc2_w 
+      536: invokespecial net/minecraft/world/level/block/state/properties/BlockSetType.<init>:(Ljava/lang/String;)V
+      539: invokestatic net/minecraft/world/level/block/state/properties/BlockSetType.register:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;)Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      542: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.MANGROVE:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      545: new cp8
+      548: dup 
+      549: ldc2_w 
+      552: iconst_1 
+      553: iconst_1 
+      554: iconst_1 
+      555: getstatic net/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity.EVERYTHING:Lnet/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity;
+      558: getstatic net/minecraft/world/level/block/SoundType.BAMBOO_WOOD:Lnet/minecraft/world/level/block/SoundType;
+      561: getstatic net/minecraft/sounds/SoundEvents.BAMBOO_WOOD_DOOR_CLOSE:Lnet/minecraft/sounds/SoundEvent;
+      564: getstatic net/minecraft/sounds/SoundEvents.BAMBOO_WOOD_DOOR_OPEN:Lnet/minecraft/sounds/SoundEvent;
+      567: getstatic net/minecraft/sounds/SoundEvents.BAMBOO_WOOD_TRAPDOOR_CLOSE:Lnet/minecraft/sounds/SoundEvent;
+      570: getstatic net/minecraft/sounds/SoundEvents.BAMBOO_WOOD_TRAPDOOR_OPEN:Lnet/minecraft/sounds/SoundEvent;
+      573: getstatic net/minecraft/sounds/SoundEvents.BAMBOO_WOOD_PRESSURE_PLATE_CLICK_OFF:Lnet/minecraft/sounds/SoundEvent;
+      576: getstatic net/minecraft/sounds/SoundEvents.BAMBOO_WOOD_PRESSURE_PLATE_CLICK_ON:Lnet/minecraft/sounds/SoundEvent;
+      579: getstatic net/minecraft/sounds/SoundEvents.BAMBOO_WOOD_BUTTON_CLICK_OFF:Lnet/minecraft/sounds/SoundEvent;
+      582: getstatic net/minecraft/sounds/SoundEvents.BAMBOO_WOOD_BUTTON_CLICK_ON:Lnet/minecraft/sounds/SoundEvent;
+      585: invokespecial net/minecraft/world/level/block/state/properties/BlockSetType.<init>:(Ljava/lang/String;ZZZLnet/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity;Lnet/minecraft/world/level/block/SoundType;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;)V
+      588: invokestatic net/minecraft/world/level/block/state/properties/BlockSetType.register:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;)Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      591: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.BAMBOO:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+      594: return 
+##### net/minecraft/world/level/block/PressurePlateBlock.class #####
+  FIELD static CODEC : Lcom/mojang/serialization/MapCodec;
+  FIELD static POWERED : Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+  --- <init>(Lnet/minecraft/world/level/block/state/properties/BlockSetType;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V ---
+        0: aload_0 
+        1: aload_2 
+        2: aload_1 
+        3: invokespecial net/minecraft/world/level/block/BasePressurePlateBlock.<init>:(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;Lnet/minecraft/world/level/block/state/properties/BlockSetType;)V
+        6: aload_0 
+        7: aload_0 
+        8: getfield net/minecraft/world/level/block/PressurePlateBlock.stateDefinition:Lnet/minecraft/world/level/block/state/StateDefinition;
+       11: invokevirtual net/minecraft/world/level/block/state/StateDefinition.any:()Lnet/minecraft/world/level/block/state/StateHolder;
+       14: checkcast cp23
+       17: getstatic net/minecraft/world/level/block/PressurePlateBlock.POWERED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+       20: iconst_0 
+       21: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+       24: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+       27: checkcast cp23
+       30: invokevirtual net/minecraft/world/level/block/PressurePlateBlock.registerDefaultState:(Lnet/minecraft/world/level/block/state/BlockState;)V
+       33: return 
+  --- getSignalForState(Lnet/minecraft/world/level/block/state/BlockState;)I ---
+        0: aload_1 
+        1: getstatic net/minecraft/world/level/block/PressurePlateBlock.POWERED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+        4: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+        7: checkcast cp30
+       10: invokevirtual java/lang/Boolean.booleanValue:()Z
+       13: ifeq cp8
+       16: bipush 15
+       18: goto cp4
+       21: iconst_0 
+       22: ireturn 
+  --- setSignalForState(Lnet/minecraft/world/level/block/state/BlockState;I)Lnet/minecraft/world/level/block/state/BlockState; ---
+        0: aload_1 
+        1: getstatic net/minecraft/world/level/block/PressurePlateBlock.POWERED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+        4: iload_2 
+        5: ifle cp7
+        8: iconst_1 
+        9: goto cp4
+       12: iconst_0 
+       13: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+       16: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+       19: checkcast cp23
+       22: areturn 
+  --- getSignalStrength(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)I ---
+        0: getstatic net/minecraft/world/level/block/PressurePlateBlock$1.$SwitchMap$net$minecraft$world$level$block$state$properties$BlockSetType$PressurePlateSensitivity:[I
+        3: aload_0 
+        4: getfield net/minecraft/world/level/block/PressurePlateBlock.type:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+        7: invokevirtual net/minecraft/world/level/block/state/properties/BlockSetType.pressurePlateSensitivity:()Lnet/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity;
+       10: invokevirtual net/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity.ordinal:()I
+       13: 0x2e 
+       14: 0xab 
+       40: new cp75
+       43: dup 
+       44: aconst_null 
+       45: aconst_null 
+       46: invokespecial java/lang/MatchException.<init>:(Ljava/lang/String;Ljava/lang/Throwable;)V
+       49: athrow 
+       50: ldc cp80
+       52: goto cp5
+       55: ldc cp82
+       57: astore_3 
+       58: aload_1 
+       59: getstatic net/minecraft/world/level/block/PressurePlateBlock.TOUCH_AABB:Lnet/minecraft/world/phys/AABB;
+       62: aload_2 
+       63: invokevirtual net/minecraft/world/phys/AABB.move:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/phys/AABB;
+       66: aload_3 
+       67: invokestatic net/minecraft/world/level/block/PressurePlateBlock.getEntityCount:(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/phys/AABB;Ljava/lang/Class;)I
+       70: ifle cp8
+       73: bipush 15
+       75: goto cp4
+       78: iconst_0 
+       79: ireturn 

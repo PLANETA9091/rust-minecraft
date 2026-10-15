@@ -1,0 +1,915 @@
+=== spruce_pressure_plate ===
+   9509: getstatic net/minecraft/references/BlockItemIds.SPRUCE_PRESSURE_PLATE:Lnet/minecraft/references/BlockItemId;
+   9512: invokedynamic bsm[183]  -> lambda$static$122
+   9517: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9520: getstatic net/minecraft/world/level/block/Blocks.SPRUCE_PLANKS:Lnet/minecraft/world/level/block/Block;
+   9523: invokevirtual net/minecraft/world/level/block/Block.defaultMapColor:()Lnet/minecraft/world/level/material/MapColor;
+   9526: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9529: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.forceSolidOn:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9532: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASS:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+   9535: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9538: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noCollision:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9541: ldc cp149
+   9543: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9546: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9549: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+   9552: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.pushReaction:(Lnet/minecraft/world/level/material/PushReaction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9555: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+  --- lambda$static$122 body ---
+        0: new cp571
+        3: dup 
+        4: getstatic net/minecraft/world/level/block/state/properties/BlockSetType.SPRUCE:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+        7: aload_0 
+        8: invokespecial net/minecraft/world/level/block/PressurePlateBlock.<init>:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+       11: areturn 
+=== birch_pressure_plate ===
+   9561: getstatic net/minecraft/references/BlockItemIds.BIRCH_PRESSURE_PLATE:Lnet/minecraft/references/BlockItemId;
+   9564: invokedynamic bsm[184]  -> lambda$static$123
+   9569: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9572: getstatic net/minecraft/world/level/block/Blocks.BIRCH_PLANKS:Lnet/minecraft/world/level/block/Block;
+   9575: invokevirtual net/minecraft/world/level/block/Block.defaultMapColor:()Lnet/minecraft/world/level/material/MapColor;
+   9578: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9581: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.forceSolidOn:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9584: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASS:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+   9587: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9590: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noCollision:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9593: ldc cp149
+   9595: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9598: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9601: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+   9604: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.pushReaction:(Lnet/minecraft/world/level/material/PushReaction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9607: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+  --- lambda$static$123 body ---
+        0: new cp571
+        3: dup 
+        4: getstatic net/minecraft/world/level/block/state/properties/BlockSetType.BIRCH:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+        7: aload_0 
+        8: invokespecial net/minecraft/world/level/block/PressurePlateBlock.<init>:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+       11: areturn 
+=== jungle_pressure_plate ===
+   9613: getstatic net/minecraft/references/BlockItemIds.JUNGLE_PRESSURE_PLATE:Lnet/minecraft/references/BlockItemId;
+   9616: invokedynamic bsm[185]  -> lambda$static$124
+   9621: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9624: getstatic net/minecraft/world/level/block/Blocks.JUNGLE_PLANKS:Lnet/minecraft/world/level/block/Block;
+   9627: invokevirtual net/minecraft/world/level/block/Block.defaultMapColor:()Lnet/minecraft/world/level/material/MapColor;
+   9630: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9633: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.forceSolidOn:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9636: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASS:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+   9639: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9642: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noCollision:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9645: ldc cp149
+   9647: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9650: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9653: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+   9656: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.pushReaction:(Lnet/minecraft/world/level/material/PushReaction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9659: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+  --- lambda$static$124 body ---
+        0: new cp571
+        3: dup 
+        4: getstatic net/minecraft/world/level/block/state/properties/BlockSetType.JUNGLE:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+        7: aload_0 
+        8: invokespecial net/minecraft/world/level/block/PressurePlateBlock.<init>:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+       11: areturn 
+=== acacia_pressure_plate ===
+   9665: getstatic net/minecraft/references/BlockItemIds.ACACIA_PRESSURE_PLATE:Lnet/minecraft/references/BlockItemId;
+   9668: invokedynamic bsm[186]  -> lambda$static$125
+   9673: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9676: getstatic net/minecraft/world/level/block/Blocks.ACACIA_PLANKS:Lnet/minecraft/world/level/block/Block;
+   9679: invokevirtual net/minecraft/world/level/block/Block.defaultMapColor:()Lnet/minecraft/world/level/material/MapColor;
+   9682: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9685: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.forceSolidOn:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9688: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASS:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+   9691: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9694: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noCollision:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9697: ldc cp149
+   9699: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9702: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9705: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+   9708: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.pushReaction:(Lnet/minecraft/world/level/material/PushReaction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9711: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+  --- lambda$static$125 body ---
+        0: new cp571
+        3: dup 
+        4: getstatic net/minecraft/world/level/block/state/properties/BlockSetType.ACACIA:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+        7: aload_0 
+        8: invokespecial net/minecraft/world/level/block/PressurePlateBlock.<init>:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+       11: areturn 
+=== dark_oak_pressure_plate ===
+   9769: getstatic net/minecraft/references/BlockItemIds.DARK_OAK_PRESSURE_PLATE:Lnet/minecraft/references/BlockItemId;
+   9772: invokedynamic bsm[188]  -> lambda$static$127
+   9777: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9780: getstatic net/minecraft/world/level/block/Blocks.DARK_OAK_PLANKS:Lnet/minecraft/world/level/block/Block;
+   9783: invokevirtual net/minecraft/world/level/block/Block.defaultMapColor:()Lnet/minecraft/world/level/material/MapColor;
+   9786: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9789: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.forceSolidOn:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9792: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASS:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+   9795: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9798: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noCollision:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9801: ldc cp149
+   9803: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9806: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9809: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+   9812: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.pushReaction:(Lnet/minecraft/world/level/material/PushReaction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9815: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+  --- lambda$static$127 body ---
+        0: new cp571
+        3: dup 
+        4: getstatic net/minecraft/world/level/block/state/properties/BlockSetType.DARK_OAK:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+        7: aload_0 
+        8: invokespecial net/minecraft/world/level/block/PressurePlateBlock.<init>:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+       11: areturn 
+=== mangrove_pressure_plate ===
+   9873: getstatic net/minecraft/references/BlockItemIds.MANGROVE_PRESSURE_PLATE:Lnet/minecraft/references/BlockItemId;
+   9876: invokedynamic bsm[190]  -> lambda$static$129
+   9881: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9884: getstatic net/minecraft/world/level/block/Blocks.MANGROVE_PLANKS:Lnet/minecraft/world/level/block/Block;
+   9887: invokevirtual net/minecraft/world/level/block/Block.defaultMapColor:()Lnet/minecraft/world/level/material/MapColor;
+   9890: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9893: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.forceSolidOn:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9896: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASS:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+   9899: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9902: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noCollision:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9905: ldc cp149
+   9907: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9910: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9913: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+   9916: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.pushReaction:(Lnet/minecraft/world/level/material/PushReaction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9919: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+  --- lambda$static$129 body ---
+        0: new cp571
+        3: dup 
+        4: getstatic net/minecraft/world/level/block/state/properties/BlockSetType.MANGROVE:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+        7: aload_0 
+        8: invokespecial net/minecraft/world/level/block/PressurePlateBlock.<init>:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+       11: areturn 
+=== cherry_pressure_plate ===
+   9717: getstatic net/minecraft/references/BlockItemIds.CHERRY_PRESSURE_PLATE:Lnet/minecraft/references/BlockItemId;
+   9720: invokedynamic bsm[187]  -> lambda$static$126
+   9725: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9728: getstatic net/minecraft/world/level/block/Blocks.CHERRY_PLANKS:Lnet/minecraft/world/level/block/Block;
+   9731: invokevirtual net/minecraft/world/level/block/Block.defaultMapColor:()Lnet/minecraft/world/level/material/MapColor;
+   9734: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9737: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.forceSolidOn:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9740: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASS:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+   9743: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9746: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noCollision:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9749: ldc cp149
+   9751: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9754: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9757: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+   9760: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.pushReaction:(Lnet/minecraft/world/level/material/PushReaction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9763: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+  --- lambda$static$126 body ---
+        0: new cp571
+        3: dup 
+        4: getstatic net/minecraft/world/level/block/state/properties/BlockSetType.CHERRY:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+        7: aload_0 
+        8: invokespecial net/minecraft/world/level/block/PressurePlateBlock.<init>:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+       11: areturn 
+=== pale_oak_pressure_plate ===
+   9821: getstatic net/minecraft/references/BlockItemIds.PALE_OAK_PRESSURE_PLATE:Lnet/minecraft/references/BlockItemId;
+   9824: invokedynamic bsm[189]  -> lambda$static$128
+   9829: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9832: getstatic net/minecraft/world/level/block/Blocks.PALE_OAK_PLANKS:Lnet/minecraft/world/level/block/Block;
+   9835: invokevirtual net/minecraft/world/level/block/Block.defaultMapColor:()Lnet/minecraft/world/level/material/MapColor;
+   9838: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9841: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.forceSolidOn:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9844: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASS:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+   9847: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9850: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noCollision:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9853: ldc cp149
+   9855: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9858: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9861: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+   9864: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.pushReaction:(Lnet/minecraft/world/level/material/PushReaction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9867: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+  --- lambda$static$128 body ---
+        0: new cp571
+        3: dup 
+        4: getstatic net/minecraft/world/level/block/state/properties/BlockSetType.PALE_OAK:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+        7: aload_0 
+        8: invokespecial net/minecraft/world/level/block/PressurePlateBlock.<init>:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+       11: areturn 
+=== bamboo_pressure_plate ===
+   9925: getstatic net/minecraft/references/BlockItemIds.BAMBOO_PRESSURE_PLATE:Lnet/minecraft/references/BlockItemId;
+   9928: invokedynamic bsm[191]  -> lambda$static$130
+   9933: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9936: getstatic net/minecraft/world/level/block/Blocks.BAMBOO_PLANKS:Lnet/minecraft/world/level/block/Block;
+   9939: invokevirtual net/minecraft/world/level/block/Block.defaultMapColor:()Lnet/minecraft/world/level/material/MapColor;
+   9942: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9945: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.forceSolidOn:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9948: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASS:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+   9951: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9954: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noCollision:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9957: ldc cp149
+   9959: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9962: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9965: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+   9968: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.pushReaction:(Lnet/minecraft/world/level/material/PushReaction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+   9971: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+  --- lambda$static$130 body ---
+        0: new cp571
+        3: dup 
+        4: getstatic net/minecraft/world/level/block/state/properties/BlockSetType.BAMBOO:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+        7: aload_0 
+        8: invokespecial net/minecraft/world/level/block/PressurePlateBlock.<init>:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+       11: areturn 
+=== crimson_pressure_plate ===
+  25845: getstatic net/minecraft/references/BlockItemIds.CRIMSON_PRESSURE_PLATE:Lnet/minecraft/references/BlockItemId;
+  25848: invokedynamic bsm[491]  -> lambda$static$317
+  25853: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+  25856: getstatic net/minecraft/world/level/block/Blocks.CRIMSON_PLANKS:Lnet/minecraft/world/level/block/Block;
+  25859: invokevirtual net/minecraft/world/level/block/Block.defaultMapColor:()Lnet/minecraft/world/level/material/MapColor;
+  25862: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+  25865: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.forceSolidOn:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+  25868: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASS:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+  25871: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+  25874: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noCollision:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+  25877: ldc cp149
+  25879: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+  25882: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+  25885: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.pushReaction:(Lnet/minecraft/world/level/material/PushReaction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+  25888: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+  --- lambda$static$317 body ---
+        0: new cp571
+        3: dup 
+        4: getstatic net/minecraft/world/level/block/state/properties/BlockSetType.CRIMSON:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+        7: aload_0 
+        8: invokespecial net/minecraft/world/level/block/PressurePlateBlock.<init>:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+       11: areturn 
+=== warped_pressure_plate ===
+  25894: getstatic net/minecraft/references/BlockItemIds.WARPED_PRESSURE_PLATE:Lnet/minecraft/references/BlockItemId;
+  25897: invokedynamic bsm[492]  -> lambda$static$318
+  25902: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+  25905: getstatic net/minecraft/world/level/block/Blocks.WARPED_PLANKS:Lnet/minecraft/world/level/block/Block;
+  25908: invokevirtual net/minecraft/world/level/block/Block.defaultMapColor:()Lnet/minecraft/world/level/material/MapColor;
+  25911: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+  25914: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.forceSolidOn:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+  25917: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASS:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+  25920: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+  25923: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noCollision:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+  25926: ldc cp149
+  25928: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+  25931: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+  25934: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.pushReaction:(Lnet/minecraft/world/level/material/PushReaction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+  25937: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+  --- lambda$static$318 body ---
+        0: new cp571
+        3: dup 
+        4: getstatic net/minecraft/world/level/block/state/properties/BlockSetType.WARPED:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+        7: aload_0 
+        8: invokespecial net/minecraft/world/level/block/PressurePlateBlock.<init>:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+       11: areturn 
+=== polished_blackstone_pressure_plate ===
+  27505: getstatic net/minecraft/references/BlockItemIds.POLISHED_BLACKSTONE_PRESSURE_PLATE:Lnet/minecraft/references/BlockItemId;
+  27508: invokedynamic bsm[521]  -> lambda$static$337
+  27513: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+  27516: getstatic net/minecraft/world/level/material/MapColor.COLOR_BLACK:Lnet/minecraft/world/level/material/MapColor;
+  27519: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+  27522: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.forceSolidOn:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+  27525: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+  27528: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+  27531: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noCollision:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+  27534: ldc cp149
+  27536: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+  27539: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+  27542: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.pushReaction:(Lnet/minecraft/world/level/material/PushReaction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+  27545: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+  --- lambda$static$337 body ---
+        0: new cp571
+        3: dup 
+        4: getstatic net/minecraft/world/level/block/state/properties/BlockSetType.POLISHED_BLACKSTONE:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+        7: aload_0 
+        8: invokespecial net/minecraft/world/level/block/PressurePlateBlock.<init>:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+       11: areturn 
+=== BOOTSTRAP MAP (indy -> lambda) ===
+  bsm[0]: lambda$litBlockEmission$0
+  bsm[1]: lambda$waterloggedMapColor$0
+  bsm[2]: lambda$logProperties$0
+  bsm[3]: lambda$netherStemProperties$0
+  bsm[4]: ocelotOrParrot
+  bsm[5]: never
+  bsm[6]: lambda$registerLegacyStair$0
+  bsm[7]: lambda$registerStair$0
+  bsm[8]: <init>
+  bsm[9]: <init>
+  bsm[10]: <init>
+  bsm[11]: lambda$static$393
+  bsm[12]: lambda$static$390
+  bsm[13]: lambda$static$388
+  bsm[14]: lambda$static$384
+  bsm[15]: lambda$static$381
+  bsm[16]: never
+  bsm[17]: lambda$static$378
+  bsm[18]: lambda$static$374
+  bsm[19]: lambda$static$309
+  bsm[20]: lambda$static$70
+  bsm[21]: lambda$static$40
+  bsm[22]: lambda$static$0
+  bsm[23]: lambda$static$1
+  bsm[24]: <init>
+  bsm[25]: <init>
+  bsm[26]: <init>
+  bsm[27]: <init>
+  bsm[28]: lambda$static$2
+  bsm[29]: lambda$static$3
+  bsm[30]: lambda$static$4
+  bsm[31]: lambda$static$5
+  bsm[32]: lambda$static$6
+  bsm[33]: lambda$static$7
+  bsm[34]: lambda$static$8
+  bsm[35]: lambda$static$9
+  bsm[36]: lambda$static$10
+  bsm[37]: lambda$static$11
+  bsm[38]: lambda$static$12
+  bsm[39]: lambda$static$13
+  bsm[40]: lambda$static$14
+  bsm[41]: lambda$static$15
+  bsm[42]: lambda$static$16
+  bsm[43]: lambda$static$17
+  bsm[44]: lambda$static$18
+  bsm[45]: lambda$static$19
+  bsm[46]: lambda$static$20
+  bsm[47]: lambda$static$21
+  bsm[48]: lambda$static$22
+  bsm[49]: lambda$static$23
+  bsm[50]: lambda$static$24
+  bsm[51]: lambda$static$25
+  bsm[52]: <init>
+  bsm[53]: lambda$static$26
+  bsm[54]: lambda$static$27
+  bsm[55]: lambda$static$28
+  bsm[56]: lambda$static$29
+  bsm[57]: lambda$static$30
+  bsm[58]: lambda$static$31
+  bsm[59]: lambda$static$32
+  bsm[60]: lambda$static$33
+  bsm[61]: lambda$static$34
+  bsm[62]: lambda$static$35
+  bsm[63]: lambda$static$36
+  bsm[64]: <init>
+  bsm[65]: <init>
+  bsm[66]: <init>
+  bsm[67]: lambda$static$37
+  bsm[68]: lambda$static$38
+  bsm[69]: <init>
+  bsm[70]: <init>
+  bsm[71]: register
+  bsm[72]: <init>
+  bsm[73]: lambda$static$39
+  bsm[74]: <init>
+  bsm[75]: <init>
+  bsm[76]: lambda$static$41
+  bsm[77]: <init>
+  bsm[78]: <init>
+  bsm[79]: <init>
+  bsm[80]: <init>
+  bsm[81]: <init>
+  bsm[82]: <init>
+  bsm[83]: <init>
+  bsm[84]: <init>
+  bsm[85]: lambda$static$42
+  bsm[86]: <init>
+  bsm[87]: lambda$static$43
+  bsm[88]: lambda$static$44
+  bsm[89]: <init>
+  bsm[90]: lambda$static$45
+  bsm[91]: lambda$static$46
+  bsm[92]: lambda$static$47
+  bsm[93]: lambda$static$48
+  bsm[94]: lambda$static$49
+  bsm[95]: lambda$static$50
+  bsm[96]: lambda$static$51
+  bsm[97]: lambda$static$52
+  bsm[98]: lambda$static$53
+  bsm[99]: lambda$static$54
+  bsm[100]: lambda$static$55
+  bsm[101]: lambda$static$56
+  bsm[102]: lambda$static$57
+  bsm[103]: lambda$static$58
+  bsm[104]: lambda$static$59
+  bsm[105]: lambda$static$60
+  bsm[106]: lambda$static$61
+  bsm[107]: postProcessSelf
+  bsm[108]: lambda$static$62
+  bsm[109]: <init>
+  bsm[110]: <init>
+  bsm[111]: <init>
+  bsm[112]: lambda$static$63
+  bsm[113]: lambda$static$64
+  bsm[114]: lambda$static$65
+  bsm[115]: lambda$static$66
+  bsm[116]: <init>
+  bsm[117]: lambda$static$67
+  bsm[118]: <init>
+  bsm[119]: lambda$static$68
+  bsm[120]: <init>
+  bsm[121]: <init>
+  bsm[122]: lambda$static$69
+  bsm[123]: <init>
+  bsm[124]: lambda$static$71
+  bsm[125]: lambda$static$72
+  bsm[126]: <init>
+  bsm[127]: <init>
+  bsm[128]: lambda$static$73
+  bsm[129]: <init>
+  bsm[130]: always
+  bsm[131]: <init>
+  bsm[132]: lambda$static$74
+  bsm[133]: lambda$static$75
+  bsm[134]: lambda$static$76
+  bsm[135]: lambda$static$77
+  bsm[136]: lambda$static$78
+  bsm[137]: lambda$static$79
+  bsm[138]: lambda$static$80
+  bsm[139]: lambda$static$81
+  bsm[140]: lambda$static$82
+  bsm[141]: lambda$static$83
+  bsm[142]: lambda$static$84
+  bsm[143]: <init>
+  bsm[144]: <init>
+  bsm[145]: lambda$static$85
+  bsm[146]: lambda$static$86
+  bsm[147]: lambda$static$87
+  bsm[148]: lambda$static$88
+  bsm[149]: lambda$static$89
+  bsm[150]: lambda$static$90
+  bsm[151]: lambda$static$91
+  bsm[152]: lambda$static$92
+  bsm[153]: lambda$static$93
+  bsm[154]: lambda$static$94
+  bsm[155]: lambda$static$95
+  bsm[156]: lambda$static$96
+  bsm[157]: lambda$static$97
+  bsm[158]: lambda$static$98
+  bsm[159]: lambda$static$99
+  bsm[160]: lambda$static$100
+  bsm[161]: lambda$static$101
+  bsm[162]: lambda$static$102
+  bsm[163]: lambda$static$103
+  bsm[164]: lambda$static$104
+  bsm[165]: lambda$static$105
+  bsm[166]: lambda$static$106
+  bsm[167]: lambda$static$107
+  bsm[168]: lambda$static$108
+  bsm[169]: lambda$static$109
+  bsm[170]: lambda$static$110
+  bsm[171]: lambda$static$111
+  bsm[172]: lambda$static$112
+  bsm[173]: lambda$static$113
+  bsm[174]: lambda$static$114
+  bsm[175]: lambda$static$115
+  bsm[176]: lambda$static$116
+  bsm[177]: lambda$static$117
+  bsm[178]: lambda$static$118
+  bsm[179]: <init>
+  bsm[180]: lambda$static$119
+  bsm[181]: lambda$static$120
+  bsm[182]: lambda$static$121
+  bsm[183]: lambda$static$122
+  bsm[184]: lambda$static$123
+  bsm[185]: lambda$static$124
+  bsm[186]: lambda$static$125
+  bsm[187]: lambda$static$126
+  bsm[188]: lambda$static$127
+  bsm[189]: lambda$static$128
+  bsm[190]: lambda$static$129
+  bsm[191]: lambda$static$130
+  bsm[192]: <init>
+  bsm[193]: <init>
+  bsm[194]: <init>
+  bsm[195]: lambda$static$131
+  bsm[196]: <init>
+  bsm[197]: lambda$static$132
+  bsm[198]: <init>
+  bsm[199]: lambda$static$133
+  bsm[200]: <init>
+  bsm[201]: <init>
+  bsm[202]: <init>
+  bsm[203]: <init>
+  bsm[204]: <init>
+  bsm[205]: <init>
+  bsm[206]: <init>
+  bsm[207]: always
+  bsm[208]: postProcessAbove
+  bsm[209]: lambda$static$134
+  bsm[210]: lambda$static$135
+  bsm[211]: lambda$static$136
+  bsm[212]: lambda$static$137
+  bsm[213]: lambda$static$138
+  bsm[214]: lambda$static$139
+  bsm[215]: lambda$static$140
+  bsm[216]: lambda$static$141
+  bsm[217]: lambda$static$142
+  bsm[218]: <init>
+  bsm[219]: lambda$static$143
+  bsm[220]: <init>
+  bsm[221]: lambda$static$144
+  bsm[222]: <init>
+  bsm[223]: <init>
+  bsm[224]: <init>
+  bsm[225]: lambda$static$145
+  bsm[226]: lambda$static$146
+  bsm[227]: lambda$static$147
+  bsm[228]: lambda$static$148
+  bsm[229]: lambda$static$149
+  bsm[230]: lambda$static$150
+  bsm[231]: lambda$static$151
+  bsm[232]: lambda$static$152
+  bsm[233]: lambda$static$153
+  bsm[234]: lambda$static$154
+  bsm[235]: lambda$static$155
+  bsm[236]: lambda$static$156
+  bsm[237]: lambda$static$157
+  bsm[238]: lambda$static$158
+  bsm[239]: lambda$static$159
+  bsm[240]: lambda$static$160
+  bsm[241]: lambda$static$161
+  bsm[242]: <init>
+  bsm[243]: <init>
+  bsm[244]: lambda$static$162
+  bsm[245]: <init>
+  bsm[246]: lambda$static$163
+  bsm[247]: <init>
+  bsm[248]: lambda$static$164
+  bsm[249]: <init>
+  bsm[250]: lambda$static$165
+  bsm[251]: <init>
+  bsm[252]: lambda$static$166
+  bsm[253]: lambda$static$167
+  bsm[254]: lambda$static$168
+  bsm[255]: lambda$static$169
+  bsm[256]: <init>
+  bsm[257]: <init>
+  bsm[258]: <init>
+  bsm[259]: lambda$static$170
+  bsm[260]: <init>
+  bsm[261]: <init>
+  bsm[262]: lambda$static$171
+  bsm[263]: lambda$static$172
+  bsm[264]: <init>
+  bsm[265]: <init>
+  bsm[266]: lambda$static$173
+  bsm[267]: <init>
+  bsm[268]: lambda$static$174
+  bsm[269]: <init>
+  bsm[270]: lambda$static$175
+  bsm[271]: <init>
+  bsm[272]: lambda$static$176
+  bsm[273]: lambda$static$177
+  bsm[274]: <init>
+  bsm[275]: lambda$static$178
+  bsm[276]: <init>
+  bsm[277]: lambda$static$179
+  bsm[278]: <init>
+  bsm[279]: lambda$static$180
+  bsm[280]: <init>
+  bsm[281]: <init>
+  bsm[282]: lambda$static$181
+  bsm[283]: lambda$static$182
+  bsm[284]: <init>
+  bsm[285]: lambda$static$183
+  bsm[286]: <init>
+  bsm[287]: lambda$static$184
+  bsm[288]: lambda$static$185
+  bsm[289]: <init>
+  bsm[290]: lambda$static$186
+  bsm[291]: lambda$static$187
+  bsm[292]: lambda$static$188
+  bsm[293]: lambda$static$189
+  bsm[294]: lambda$static$190
+  bsm[295]: lambda$static$191
+  bsm[296]: lambda$static$192
+  bsm[297]: lambda$static$193
+  bsm[298]: lambda$static$194
+  bsm[299]: lambda$static$195
+  bsm[300]: lambda$static$196
+  bsm[301]: lambda$static$197
+  bsm[302]: lambda$static$198
+  bsm[303]: lambda$static$199
+  bsm[304]: lambda$static$200
+  bsm[305]: lambda$static$201
+  bsm[306]: lambda$static$202
+  bsm[307]: lambda$static$203
+  bsm[308]: lambda$static$204
+  bsm[309]: lambda$static$205
+  bsm[310]: lambda$static$206
+  bsm[311]: lambda$static$207
+  bsm[312]: lambda$static$208
+  bsm[313]: lambda$static$209
+  bsm[314]: lambda$static$210
+  bsm[315]: lambda$static$211
+  bsm[316]: lambda$static$212
+  bsm[317]: lambda$static$213
+  bsm[318]: lambda$static$214
+  bsm[319]: lambda$static$215
+  bsm[320]: lambda$static$216
+  bsm[321]: <init>
+  bsm[322]: <init>
+  bsm[323]: lambda$static$217
+  bsm[324]: lambda$static$218
+  bsm[325]: lambda$static$219
+  bsm[326]: lambda$static$220
+  bsm[327]: lambda$static$221
+  bsm[328]: lambda$static$222
+  bsm[329]: lambda$static$223
+  bsm[330]: lambda$static$224
+  bsm[331]: lambda$static$225
+  bsm[332]: lambda$static$226
+  bsm[333]: lambda$static$227
+  bsm[334]: lambda$static$228
+  bsm[335]: <init>
+  bsm[336]: <init>
+  bsm[337]: lambda$static$229
+  bsm[338]: lambda$static$230
+  bsm[339]: <init>
+  bsm[340]: <init>
+  bsm[341]: lambda$static$231
+  bsm[342]: lambda$static$232
+  bsm[343]: lambda$static$233
+  bsm[344]: lambda$static$234
+  bsm[345]: lambda$static$235
+  bsm[346]: <init>
+  bsm[347]: <init>
+  bsm[348]: <init>
+  bsm[349]: lambda$static$236
+  bsm[350]: lambda$static$237
+  bsm[351]: <init>
+  bsm[352]: <init>
+  bsm[353]: <init>
+  bsm[354]: lambda$static$238
+  bsm[355]: <init>
+  bsm[356]: <init>
+  bsm[357]: lambda$static$239
+  bsm[358]: lambda$static$240
+  bsm[359]: <init>
+  bsm[360]: lambda$static$241
+  bsm[361]: <init>
+  bsm[362]: <init>
+  bsm[363]: <init>
+  bsm[364]: lambda$static$242
+  bsm[365]: lambda$static$243
+  bsm[366]: <init>
+  bsm[367]: <init>
+  bsm[368]: lambda$static$244
+  bsm[369]: <init>
+  bsm[370]: <init>
+  bsm[371]: <init>
+  bsm[372]: lambda$static$245
+  bsm[373]: register
+  bsm[374]: <init>
+  bsm[375]: lambda$static$246
+  bsm[376]: lambda$static$247
+  bsm[377]: lambda$static$248
+  bsm[378]: lambda$static$249
+  bsm[379]: lambda$static$250
+  bsm[380]: lambda$static$251
+  bsm[381]: lambda$static$252
+  bsm[382]: lambda$static$253
+  bsm[383]: lambda$static$254
+  bsm[384]: lambda$static$255
+  bsm[385]: lambda$static$256
+  bsm[386]: lambda$static$257
+  bsm[387]: lambda$static$258
+  bsm[388]: lambda$static$259
+  bsm[389]: lambda$static$260
+  bsm[390]: lambda$static$261
+  bsm[391]: lambda$static$262
+  bsm[392]: lambda$static$263
+  bsm[393]: lambda$static$264
+  bsm[394]: <init>
+  bsm[395]: lambda$static$265
+  bsm[396]: <init>
+  bsm[397]: lambda$static$266
+  bsm[398]: <init>
+  bsm[399]: <init>
+  bsm[400]: <init>
+  bsm[401]: <init>
+  bsm[402]: <init>
+  bsm[403]: lambda$static$267
+  bsm[404]: lambda$static$268
+  bsm[405]: lambda$static$269
+  bsm[406]: <init>
+  bsm[407]: lambda$static$270
+  bsm[408]: <init>
+  bsm[409]: lambda$static$271
+  bsm[410]: lambda$static$272
+  bsm[411]: lambda$static$273
+  bsm[412]: <init>
+  bsm[413]: <init>
+  bsm[414]: lambda$static$274
+  bsm[415]: <init>
+  bsm[416]: lambda$static$275
+  bsm[417]: lambda$static$276
+  bsm[418]: lambda$static$277
+  bsm[419]: lambda$static$278
+  bsm[420]: lambda$static$279
+  bsm[421]: lambda$static$280
+  bsm[422]: lambda$static$281
+  bsm[423]: <init>
+  bsm[424]: <init>
+  bsm[425]: <init>
+  bsm[426]: <init>
+  bsm[427]: <init>
+  bsm[428]: lambda$static$282
+  bsm[429]: lambda$static$283
+  bsm[430]: lambda$static$284
+  bsm[431]: lambda$static$285
+  bsm[432]: lambda$static$286
+  bsm[433]: <init>
+  bsm[434]: lambda$static$287
+  bsm[435]: lambda$static$288
+  bsm[436]: lambda$static$289
+  bsm[437]: lambda$static$290
+  bsm[438]: lambda$static$291
+  bsm[439]: <init>
+  bsm[440]: lambda$static$292
+  bsm[441]: lambda$static$293
+  bsm[442]: lambda$static$294
+  bsm[443]: lambda$static$295
+  bsm[444]: lambda$static$296
+  bsm[445]: <init>
+  bsm[446]: lambda$static$297
+  bsm[447]: lambda$static$298
+  bsm[448]: lambda$static$299
+  bsm[449]: lambda$static$300
+  bsm[450]: lambda$static$301
+  bsm[451]: <init>
+  bsm[452]: lambda$static$302
+  bsm[453]: <init>
+  bsm[454]: <init>
+  bsm[455]: lambda$static$303
+  bsm[456]: <init>
+  bsm[457]: <init>
+  bsm[458]: lambda$static$304
+  bsm[459]: <init>
+  bsm[460]: <init>
+  bsm[461]: <init>
+  bsm[462]: <init>
+  bsm[463]: <init>
+  bsm[464]: <init>
+  bsm[465]: <init>
+  bsm[466]: <init>
+  bsm[467]: <init>
+  bsm[468]: <init>
+  bsm[469]: <init>
+  bsm[470]: <init>
+  bsm[471]: <init>
+  bsm[472]: lambda$static$305
+  bsm[473]: lambda$static$306
+  bsm[474]: lambda$static$307
+  bsm[475]: <init>
+  bsm[476]: lambda$static$308
+  bsm[477]: lambda$static$310
+  bsm[478]: lambda$static$311
+  bsm[479]: <init>
+  bsm[480]: <init>
+  bsm[481]: lambda$static$312
+  bsm[482]: lambda$static$313
+  bsm[483]: <init>
+  bsm[484]: lambda$static$314
+  bsm[485]: lambda$static$315
+  bsm[486]: <init>
+  bsm[487]: <init>
+  bsm[488]: <init>
+  bsm[489]: <init>
+  bsm[490]: lambda$static$316
+  bsm[491]: lambda$static$317
+  bsm[492]: lambda$static$318
+  bsm[493]: lambda$static$319
+  bsm[494]: lambda$static$320
+  bsm[495]: lambda$static$321
+  bsm[496]: lambda$static$322
+  bsm[497]: lambda$static$323
+  bsm[498]: lambda$static$324
+  bsm[499]: lambda$static$325
+  bsm[500]: lambda$static$326
+  bsm[501]: lambda$static$327
+  bsm[502]: lambda$static$328
+  bsm[503]: lambda$static$329
+  bsm[504]: lambda$static$330
+  bsm[505]: <init>
+  bsm[506]: <init>
+  bsm[507]: <init>
+  bsm[508]: <init>
+  bsm[509]: <init>
+  bsm[510]: <init>
+  bsm[511]: <init>
+  bsm[512]: <init>
+  bsm[513]: <init>
+  bsm[514]: lambda$static$331
+  bsm[515]: <init>
+  bsm[516]: lambda$static$332
+  bsm[517]: lambda$static$333
+  bsm[518]: lambda$static$334
+  bsm[519]: lambda$static$335
+  bsm[520]: lambda$static$336
+  bsm[521]: lambda$static$337
+  bsm[522]: lambda$static$338
+  bsm[523]: <init>
+  bsm[524]: lambda$static$339
+  bsm[525]: lambda$static$340
+  bsm[526]: lambda$static$341
+  bsm[527]: lambda$static$342
+  bsm[528]: lambda$static$343
+  bsm[529]: <init>
+  bsm[530]: <init>
+  bsm[531]: lambda$static$344
+  bsm[532]: lambda$static$345
+  bsm[533]: lambda$static$346
+  bsm[534]: lambda$static$347
+  bsm[535]: lambda$static$348
+  bsm[536]: lambda$static$349
+  bsm[537]: lambda$static$350
+  bsm[538]: lambda$static$351
+  bsm[539]: lambda$static$352
+  bsm[540]: lambda$static$353
+  bsm[541]: lambda$static$354
+  bsm[542]: <init>
+  bsm[543]: <init>
+  bsm[544]: <init>
+  bsm[545]: <init>
+  bsm[546]: lambda$static$355
+  bsm[547]: lambda$static$356
+  bsm[548]: <init>
+  bsm[549]: <init>
+  bsm[550]: <init>
+  bsm[551]: <init>
+  bsm[552]: lambda$static$357
+  bsm[553]: <init>
+  bsm[554]: lambda$static$358
+  bsm[555]: <init>
+  bsm[556]: lambda$static$359
+  bsm[557]: lambda$static$360
+  bsm[558]: lambda$static$361
+  bsm[559]: lambda$static$362
+  bsm[560]: lambda$static$363
+  bsm[561]: lambda$static$364
+  bsm[562]: lambda$static$365
+  bsm[563]: lambda$static$366
+  bsm[564]: lambda$static$367
+  bsm[565]: lambda$static$368
+  bsm[566]: lambda$static$369
+  bsm[567]: <init>
+  bsm[568]: lambda$static$370
+  bsm[569]: lambda$static$371
+  bsm[570]: lambda$static$372
+  bsm[571]: lambda$static$373
+  bsm[572]: lambda$static$375
+  bsm[573]: lambda$static$376
+  bsm[574]: lambda$static$377
+  bsm[575]: lambda$static$379
+  bsm[576]: <init>
+  bsm[577]: lambda$static$380
+  bsm[578]: lambda$static$382
+  bsm[579]: <init>
+  bsm[580]: lambda$static$383
+  bsm[581]: lambda$static$385
+  bsm[582]: lambda$static$386
+  bsm[583]: lambda$static$387
+  bsm[584]: <init>
+  bsm[585]: <init>
+  bsm[586]: lambda$static$389
+  bsm[587]: lambda$static$391
+  bsm[588]: <init>
+  bsm[589]: lambda$static$392
+  bsm[590]: lambda$static$394
+  bsm[591]: lambda$static$395
+  bsm[592]: <init>
+  bsm[593]: <init>
+  bsm[594]: <init>
+  bsm[595]: <init>
+  bsm[596]: <init>
+  bsm[597]: <init>
+  bsm[598]: <init>
+  bsm[599]: lambda$static$396
+  bsm[600]: <init>
+  bsm[601]: <init>
+  bsm[602]: <init>
+  bsm[603]: <init>
+  bsm[604]: <init>
+  bsm[605]: <init>
+  bsm[606]: lambda$static$397
+  bsm[607]: lambda$static$398
+  bsm[608]: lambda$static$399
+  bsm[609]: lambda$static$400
+  bsm[610]: lambda$static$401
+  bsm[611]: lambda$static$402
+  bsm[612]: <init>
+  bsm[613]: <init>
+  bsm[614]: <init>
+  bsm[615]: <init>
+  bsm[616]: lambda$static$403
+  bsm[617]: <init>
+  bsm[618]: lambda$static$404
+  bsm[619]: <init>
+  bsm[620]: lambda$static$405
+  bsm[621]: <init>
+  bsm[622]: <init>
+  bsm[623]: lambda$static$406
+  bsm[624]: lambda$static$407
+  bsm[625]: lambda$static$408
+  bsm[626]: lambda$static$409
+  bsm[627]: <init>
+  bsm[628]: lambda$static$410
+no sounds.json in cache or jar

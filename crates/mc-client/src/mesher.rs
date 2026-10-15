@@ -3576,13 +3576,31 @@ fn button_model_quads(id: u16, powered: bool) -> &'static [mc_registry::element_
 /// the per-set-type planks/stone master the merged map banks — the
 /// mesher's per-quad verdict the row's own tile reads), tinted =
 /// false (no tintindex anywhere). The (id, powered)-keyed map the
-/// FOUR models bakes once (the failed derive the honest empty slice
-/// keeps — the plate the nothing renders).
+/// autopush-663 round the FULL LADDER bakes — the FOURTEEN base seats
+/// the TWENTY-EIGHT models once bank (the failed derive the honest
+/// empty slice keeps — the plate the nothing renders).
 fn plate_model_quads(id: u16, powered: bool) -> &'static [mc_registry::element_quads::Quad] {
     // THE SENSOR RUNGS' OWN BASE SEATS (the OFF kind every pair wears —
     // the NAME_OF row the ON kind the same name speaks, the model names
-    // the {name}/{name}_down pair the jar's blockstates bank)
-    const BASE_IDS: [u16; 2] = [crate::world::OAK_PRESSURE_PLATE, crate::world::STONE_PRESSURE_PLATE];
+    // the {name}/{name}_down pair the jar's blockstates bank; the
+    // autopush-663 round the FULL LADDER the fourteen base seats bake —
+    // the twelve ladder rungs the same derive walk wears)
+    const BASE_IDS: [u16; 14] = [
+        crate::world::OAK_PRESSURE_PLATE,
+        crate::world::STONE_PRESSURE_PLATE,
+        crate::world::SPRUCE_PRESSURE_PLATE,
+        crate::world::BIRCH_PRESSURE_PLATE,
+        crate::world::JUNGLE_PRESSURE_PLATE,
+        crate::world::ACACIA_PRESSURE_PLATE,
+        crate::world::DARK_OAK_PRESSURE_PLATE,
+        crate::world::MANGROVE_PRESSURE_PLATE,
+        crate::world::CHERRY_PRESSURE_PLATE,
+        crate::world::PALE_OAK_PRESSURE_PLATE,
+        crate::world::BAMBOO_PRESSURE_PLATE,
+        crate::world::CRIMSON_PRESSURE_PLATE,
+        crate::world::WARPED_PRESSURE_PLATE,
+        crate::world::POLISHED_BLACKSTONE_PRESSURE_PLATE,
+    ];
     static QUADS: std::sync::OnceLock<
         std::collections::HashMap<(u16, bool), Vec<mc_registry::element_quads::Quad>>,
     > = std::sync::OnceLock::new();

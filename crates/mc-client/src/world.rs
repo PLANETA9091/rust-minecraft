@@ -900,9 +900,11 @@ pub const END_STONE: u16 = 89;
 /// speaks (the dev-47 round the OAK pair the 262/263 rows the tail
 /// banks — the END_PORTAL the 292 beyond-table seat the same law
 /// keeps (the dev-48 round the plate pair's rungs the 288..291 tail
-/// banks — the `id < N_KINDS` guards the tile lookups' skip verdict
-/// the bigger tail keeps).
-pub const END_PORTAL: u16 = 292;
+/// banks — the autopush-663 round the plate ladder's own tail the
+/// 292..315 rows bank, the kind's own seat the beyond-table 316 the
+/// same law keeps — the `id < N_KINDS` guards the tile lookups' skip
+/// verdict the bigger tail keeps).
+pub const END_PORTAL: u16 = 316;
 
 /// THE BUTTON'S OWN PAIR (the autopush-660 round): the redstone pulse's
 /// own block finally RENDERS, PLACES, PRESSES and PULSES — javap
@@ -1045,6 +1047,68 @@ pub const OAK_PRESSURE_PLATE: u16 = 288;
 pub const OAK_PRESSURE_PLATE_ON: u16 = 289;
 pub const STONE_PRESSURE_PLATE: u16 = 290;
 pub const STONE_PRESSURE_PLATE_ON: u16 = 291;
+
+/// THE PLATE FAMILY'S FULL LADDER (the autopush-663 round): the twelve
+/// remaining rungs the oak/stone lane's own walk generalizes — javap
+/// the 26.2 jar (pinned sha1 2dc72797) Blocks clinit the twelve plate
+/// factories the indy constants wear (SPRUCE #window pc 9509-9559
+/// bsm[183] → lambda$static$122, BIRCH 9561 bsm[184] → λ123, JUNGLE
+/// 9613 bsm[185] → λ124, ACACIA bsm[186] → λ125, CHERRY 9717 bsm[187]
+/// → λ126, PALE_OAK 9821 bsm[189] → λ128, MANGROVE bsm[190] → λ127,
+/// BAMBOO 9925 bsm[191] → λ130, CRIMSON 25848 bsm[491] → λ317, WARPED
+/// 25897 bsm[492] → λ318, POLISHED_BLACKSTONE 27508 bsm[521] → λ337)
+/// — every row the ONE two-arg ctor shape serves (`new PressurePlate
+/// Block(BlockSetType.X, props)` — the 26.2 BlockSetType the record
+/// the sensitivity AND the voices carry: `(name, canOpenByHand,
+/// canOpenByWindCharge, canButtonBeActivatedByArrows, PressurePlate
+/// Sensitivity, SoundType, 8×SoundEvent)` the ctor walk pc 0-44 the
+/// fields bank), the wooden woods the String ctor's EVERYTHING default
+/// wear (the delegating walk's `iconst_1,1,1` triple + the EVERYTHING
+/// sensitivity + the WOODEN_PRESSURE_PLATE_CLICK_ON/OFF pair pc 2-5
+/// the String ctor body speaks — the SPRUCE/BIRCH/JUNGLE/ACACIA/
+/// DARK_OAK/MANGROVE/PALE_OAK rows the same shape the clinit windows
+/// answer), the CHERRY/BAMBOO/CRIMSON/WARPED full-ctor rows the
+/// `iconst_1,1,1` triple + the EVERYTHING sensitivity + the per-wood
+/// PRESSURE_PLATE_CLICK_ON/OFF pairs bank (CHERRY pc 334-380 the
+/// CHERRY_WOOD pair pc 362-365, CRIMSON 431-477 the NETHER_WOOD pair
+/// pc 459-462, WARPED 480-526, BAMBOO 545-591 the BAMBOO_WOOD pair pc
+/// 573-576), the STONE row the `iconst_1,1,0` + MOBS pair the arrows'
+/// refusal the same row banks (pc 178-223) — the POLISHED_BLACKSTONE
+/// row pc 226-271 the SAME `iconst_1,1,0` + MOBS + the
+/// STONE_PRESSURE_PLATE_CLICK_ON/OFF pair the stone-family law keeps
+/// (the polished rung the SEPARATE POLISHED_BLACKSTONE set type the
+/// plate's own ctor passes — the STONE row's fields byte-equal the
+/// same voices + sensitivity the two set types answer). The Properties
+/// rows the twelve windows the oak lane's own walk verbatim wear
+/// (mapColor planks + forceSolidOn + instrument BASS + noCollision +
+/// strength(0.5f) + ignitedByLava + pushReaction DESTROY). The wood
+/// order the door family's own ladder (the dev-43 round) wears — the
+/// seats the SAME wooden run the 292..=313 range speaks, the polished
+/// rung the 314/315 tail the stone-family law keeps.
+pub const SPRUCE_PRESSURE_PLATE: u16 = 292;
+pub const SPRUCE_PRESSURE_PLATE_ON: u16 = 293;
+pub const BIRCH_PRESSURE_PLATE: u16 = 294;
+pub const BIRCH_PRESSURE_PLATE_ON: u16 = 295;
+pub const JUNGLE_PRESSURE_PLATE: u16 = 296;
+pub const JUNGLE_PRESSURE_PLATE_ON: u16 = 297;
+pub const ACACIA_PRESSURE_PLATE: u16 = 298;
+pub const ACACIA_PRESSURE_PLATE_ON: u16 = 299;
+pub const DARK_OAK_PRESSURE_PLATE: u16 = 300;
+pub const DARK_OAK_PRESSURE_PLATE_ON: u16 = 301;
+pub const MANGROVE_PRESSURE_PLATE: u16 = 302;
+pub const MANGROVE_PRESSURE_PLATE_ON: u16 = 303;
+pub const CHERRY_PRESSURE_PLATE: u16 = 304;
+pub const CHERRY_PRESSURE_PLATE_ON: u16 = 305;
+pub const PALE_OAK_PRESSURE_PLATE: u16 = 306;
+pub const PALE_OAK_PRESSURE_PLATE_ON: u16 = 307;
+pub const BAMBOO_PRESSURE_PLATE: u16 = 308;
+pub const BAMBOO_PRESSURE_PLATE_ON: u16 = 309;
+pub const CRIMSON_PRESSURE_PLATE: u16 = 310;
+pub const CRIMSON_PRESSURE_PLATE_ON: u16 = 311;
+pub const WARPED_PRESSURE_PLATE: u16 = 312;
+pub const WARPED_PRESSURE_PLATE_ON: u16 = 313;
+pub const POLISHED_BLACKSTONE_PRESSURE_PLATE: u16 = 314;
+pub const POLISHED_BLACKSTONE_PRESSURE_PLATE_ON: u16 = 315;
 
 /// THE PLATE'S OWN RELEASE CLOCK (javap `BasePressurePlateBlock.get
 /// PressedTime` pc 0-2 — the `bipush 20` BOTH sets wear: the pressed
@@ -1642,9 +1706,10 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 
 /// Block -> texture-group mapping used by the real-colors LUT.
 /// The dev-48 round the plate pair's rungs the 288..291 tail banks —
-/// the table the 292 rows the END_PORTAL the beyond-table seat the
-/// displaced law keeps.
-pub const NAME_OF: [&str; 292] = [
+/// the autopush-663 round the plate ladder's own tail the 292..315
+/// rows bank — the table the 316 rows the END_PORTAL the beyond-table
+/// seat the displaced law keeps.
+pub const NAME_OF: [&str; 316] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -2003,6 +2068,26 @@ pub const NAME_OF: [&str; 292] = [
     // pair wears).
     "oak_pressure_plate", "oak_pressure_plate",
     "stone_pressure_plate", "stone_pressure_plate",
+    // THE PLATE FAMILY'S FULL LADDER'S OWN ROWS (the autopush-663
+    // round): the twelve ladder rungs the same ONE-entry law both
+    // kinds speak — the jar's ONE "{wood}_pressure_plate" registry
+    // entry the OFF/ON pair the same name keeps (the _down strip the
+    // generated rows' registry law wears), the item ids the pick lane
+    // grants BOTH kinds (the placement's placeable lookup the reverse
+    // walk serves), the sounds' per-set-type rows the click voices'
+    // own law keeps.
+    "spruce_pressure_plate", "spruce_pressure_plate",
+    "birch_pressure_plate", "birch_pressure_plate",
+    "jungle_pressure_plate", "jungle_pressure_plate",
+    "acacia_pressure_plate", "acacia_pressure_plate",
+    "dark_oak_pressure_plate", "dark_oak_pressure_plate",
+    "mangrove_pressure_plate", "mangrove_pressure_plate",
+    "cherry_pressure_plate", "cherry_pressure_plate",
+    "pale_oak_pressure_plate", "pale_oak_pressure_plate",
+    "bamboo_pressure_plate", "bamboo_pressure_plate",
+    "crimson_pressure_plate", "crimson_pressure_plate",
+    "warped_pressure_plate", "warped_pressure_plate",
+    "polished_blackstone_pressure_plate", "polished_blackstone_pressure_plate",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -3152,6 +3237,7 @@ pub fn is_pressure_plate(id: u16) -> bool {
         || id == OAK_PRESSURE_PLATE_ON
         || id == STONE_PRESSURE_PLATE
         || id == STONE_PRESSURE_PLATE_ON
+        || (SPRUCE_PRESSURE_PLATE..=POLISHED_BLACKSTONE_PRESSURE_PLATE_ON).contains(&id)
 }
 
 /// THE PLATE'S OWN WOODEN VERDICT (javap the BlockSetType rows the
@@ -3160,17 +3246,33 @@ pub fn is_pressure_plate(id: u16) -> bool {
 /// arrows' refusal the same row banks: the getSignalStrength walk pc
 /// 14-55 the lookupswitch the sensitivity serves — the EVERYTHING row
 /// the Entity.class count arms, the MOBS row the LivingEntity.class
-/// count wears). The OAK pair the wooden verdict keeps, the stone pair
-/// the false arm serves.
+/// count wears). The wooden rungs the verdict keep — the OAK pair AND
+/// the eleven ladder woods (the String-ctor rows the EVERYTHING
+/// default answer, the CHERRY/BAMBOO/CRIMSON/WARPED full-ctor rows the
+/// `iconst_1,1,1` triple + the EVERYTHING sensitivity the same verdict
+/// arms — the 292..=313 wooden run the ladder's own order wears), the
+/// stone AND polished-blackstone pairs the false arm serves (the
+/// polished rung the POLISHED_BLACKSTONE set type the plate's own ctor
+/// passes — the STONE row's byte-equal fields the MOBS verdict the two
+/// set types answer).
 pub fn plate_is_wooden(id: u16) -> bool {
-    id == OAK_PRESSURE_PLATE || id == OAK_PRESSURE_PLATE_ON
+    id == OAK_PRESSURE_PLATE
+        || id == OAK_PRESSURE_PLATE_ON
+        || (SPRUCE_PRESSURE_PLATE..=WARPED_PRESSURE_PLATE_ON).contains(&id)
 }
 
 /// THE PLATE'S OWN POWERED BIT (javap getSignalForState pc 0-22 — the
 /// POWERED read the ON kind's own verdict wears): the ON kind the
 /// pressed verdict keeps, the OFF kind the resting answer wears.
 pub fn plate_powered(id: u16) -> bool {
-    id == OAK_PRESSURE_PLATE_ON || id == STONE_PRESSURE_PLATE_ON
+    // THE LADDER'S OWN PARITY LAW (the OFF kinds the even seats the ON
+    // the odd wear — the raw 293..=315 range the even OFF kinds the
+    // later rungs bank would wrongly arm, the odd verdict the honest
+    // bit keeps — the button ladder's own law the same shape wears)
+    id == OAK_PRESSURE_PLATE_ON
+        || id == STONE_PRESSURE_PLATE_ON
+        || ((SPRUCE_PRESSURE_PLATE..=POLISHED_BLACKSTONE_PRESSURE_PLATE_ON).contains(&id)
+            && id % 2 == 1)
 }
 
 /// THE PLATE'S OWN OFF/ON MATE (javap setSignalForState pc 0-22 — the
@@ -3178,12 +3280,24 @@ pub fn plate_powered(id: u16) -> bool {
 /// button's own law wears; the unknown id the None the honest guard
 /// banks).
 pub fn plate_toggled(id: u16) -> Option<u16> {
+    // THE LADDER'S OWN ±1 LAW (the oak and stone pairs' OFF/ON bit
+    // the CONTIGUOUS tail the same mate arithmetic speaks — the OFF
+    // kinds the even seats the ON the odd wear, the unknown id the
+    // None the honest guard banks): the explicit arms the two older
+    // pairs pin, the ladder rungs the +1/-1 arithmetic the range
+    // guard answers
     match id {
         OAK_PRESSURE_PLATE => Some(OAK_PRESSURE_PLATE_ON),
         OAK_PRESSURE_PLATE_ON => Some(OAK_PRESSURE_PLATE),
         STONE_PRESSURE_PLATE => Some(STONE_PRESSURE_PLATE_ON),
         STONE_PRESSURE_PLATE_ON => Some(STONE_PRESSURE_PLATE),
-        _ => None,
+        _ => {
+            if (SPRUCE_PRESSURE_PLATE..=POLISHED_BLACKSTONE_PRESSURE_PLATE_ON).contains(&id) {
+                Some(if id % 2 == 0 { id + 1 } else { id - 1 })
+            } else {
+                None
+            }
+        }
     }
 }
 
@@ -3247,11 +3361,54 @@ pub fn plate_entity_presses(
 /// sounds.json the event rows resolve). The on flag the click_on/
 /// click_off word picks.
 pub fn plate_click_voice(id: u16, on: bool) -> &'static str {
-    match (plate_is_wooden(id), on) {
-        (true, true) => "block.wooden_pressure_plate.click_on",
-        (true, false) => "block.wooden_pressure_plate.click_off",
-        (false, true) => "block.stone_pressure_plate.click_on",
-        (false, false) => "block.stone_pressure_plate.click_off",
+    // THE SET TYPES' OWN VOICE ROWS (javap the BlockSetType clinit the
+    // 26.2 jar — the pressurePlateClickOn/Off fields the record ctor's
+    // per-row args bank): the String-ctor woods the
+    // WOODEN_PRESSURE_PLATE_CLICK_ON/OFF defaults speak (the block.
+    // wooden_pressure_plate.click_on/off events), the CHERRY full ctor
+    // the CHERRY_WOOD_PRESSURE_PLATE_CLICK_ON/OFF pair pc 362-365 (the
+    // block.cherry_wood_pressure_plate.click_on/off events), the
+    // CRIMSON/WARPED rows the NETHER_WOOD_PRESSURE_PLATE_CLICK_ON/OFF
+    // pairs pc 459-462 / 508-511 (the block.nether_wood_pressure_plate
+    // click_on/off events), the BAMBOO row the BAMBOO_WOOD_PRESSURE
+    // _PLATE_CLICK_ON/OFF pair pc 573-576 (the block.bamboo_wood_
+    // pressure_plate.click_on/off events), the STONE set the block.
+    // stone_pressure_plate.click_on/off events the stone AND
+    // polished-blackstone rungs share (the polished rung the
+    // POLISHED_BLACKSTONE set type's own fields the STONE rows
+    // byte-equal banks — the shared voices the two set types keep).
+    // The on flag the click_on/click_off word picks.
+    let set: &str = if id == CHERRY_PRESSURE_PLATE || id == CHERRY_PRESSURE_PLATE_ON {
+        "block.cherry_wood_pressure_plate"
+    } else if id == BAMBOO_PRESSURE_PLATE || id == BAMBOO_PRESSURE_PLATE_ON {
+        "block.bamboo_wood_pressure_plate"
+    } else if id == CRIMSON_PRESSURE_PLATE
+        || id == CRIMSON_PRESSURE_PLATE_ON
+        || id == WARPED_PRESSURE_PLATE
+        || id == WARPED_PRESSURE_PLATE_ON
+    {
+        "block.nether_wood_pressure_plate"
+    } else if plate_is_wooden(id) {
+        "block.wooden_pressure_plate"
+    } else {
+        "block.stone_pressure_plate"
+    };
+    if on {
+        match set {
+            "block.cherry_wood_pressure_plate" => "block.cherry_wood_pressure_plate.click_on",
+            "block.bamboo_wood_pressure_plate" => "block.bamboo_wood_pressure_plate.click_on",
+            "block.nether_wood_pressure_plate" => "block.nether_wood_pressure_plate.click_on",
+            "block.wooden_pressure_plate" => "block.wooden_pressure_plate.click_on",
+            _ => "block.stone_pressure_plate.click_on",
+        }
+    } else {
+        match set {
+            "block.cherry_wood_pressure_plate" => "block.cherry_wood_pressure_plate.click_off",
+            "block.bamboo_wood_pressure_plate" => "block.bamboo_wood_pressure_plate.click_off",
+            "block.nether_wood_pressure_plate" => "block.nether_wood_pressure_plate.click_off",
+            "block.wooden_pressure_plate" => "block.wooden_pressure_plate.click_off",
+            _ => "block.stone_pressure_plate.click_off",
+        }
     }
 }
 
@@ -3260,7 +3417,10 @@ pub fn plate_click_voice(id: u16, on: bool) -> &'static str {
 /// volume 0.3 pair speaks, the wooden off the 0.7/0.3 pair wears, the
 /// stone on the 0.6/0.3 pair, the stone off the 0.5/0.3 pair — the
 /// vanilla engine's own multiply the 1.0 source folds, the row's own
-/// numbers the rendered output keeps).
+/// numbers the rendered output keeps. The ladder's own rows the SAME
+/// numbers wear: the cherry/bamboo/nether_wood_pressure_plate rows the
+/// wooden pair's 0.8/0.7 pitches verbatim bank — the wooden verdict
+/// the five wooden voice sets the same params the flag serves).
 pub fn plate_voice_params(id: u16, on: bool) -> (f32, f32) {
     match (plate_is_wooden(id), on) {
         (true, true) => (0.3, 0.8),
@@ -10613,8 +10773,8 @@ mod tests {
         assert_eq!(NAME_OF[BUTTON_ON as usize], "stone_button");
         assert_eq!(BUTTON + 1, BUTTON_ON, "the +1 seat the OFF/ON ladder wears");
         assert_eq!(
-            END_PORTAL, 292,
-            "the displaced seat the plate rungs' own tail banks"
+            END_PORTAL, 316,
+            "the displaced seat the plate ladder's own tail banks"
         );
         // THE PULSE'S OWN CLOCK (javap press pc 28-37 — the STONE
         // factory's bipush 20 ctor arg the window banks)
@@ -11313,7 +11473,7 @@ mod tests {
         assert_eq!(OAK_DOOR_UPPER, 91);
         assert_eq!(OAK_DOOR_OPEN, 92);
         assert_eq!(OAK_DOOR_UPPER_OPEN, 93);
-        assert_eq!(END_PORTAL, 292, "the displaced seat the plate rungs' own tail banks");
+        assert_eq!(END_PORTAL, 316, "the displaced seat the plate ladder's own tail banks");
         // THE WOOD LADDER'S OWN SEATS (the dev-43 round — the eleven
         // quartets the CONTIGUOUS tail the kind ids 94..137 wear: the
         // closed lower + 0, the closed upper + 1, the open lower + 2,
@@ -11517,7 +11677,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 292, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 316, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)

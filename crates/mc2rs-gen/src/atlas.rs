@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 292] = [
+pub const RUNTIME_PALETTE: [&str; 316] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -859,6 +859,53 @@ pub const RUNTIME_PALETTE: [&str; 292] = [
     // no new tile the regen keeps, the pre-plate rows byte-identical).
     "oak_pressure_plate", "oak_pressure_plate_down",
     "stone_pressure_plate", "stone_pressure_plate_down",
+    // THE PLATE FAMILY'S FULL LADDER (the autopush-663 round): the
+    // twelve remaining rungs the oak/stone lane's own walk generalizes —
+    // javap the 26.2 jar Blocks clinit the twelve plate factories the
+    // indy constants wear (SPRUCE's own window pc 9509-9559 the bsm[183]
+    // → lambda$static$122 body speaks, BIRCH 9561/bsm[184]→λ123, JUNGLE
+    // 9613/bsm[185]→λ124, ACACIA bsm[186]→λ125, CHERRY 9717/bsm[187]→
+    // λ126, PALE_OAK 9821/bsm[189]→λ128, MANGROVE bsm[190]→λ127,
+    // BAMBOO 9925/bsm[191]→λ130, CRIMSON 25848/bsm[491]→λ317, WARPED
+    // 25897/bsm[492]→λ318, POLISHED_BLACKSTONE 27508/bsm[521]→λ337) —
+    // every row the ONE two-arg ctor shape serves (`new PressurePlate
+    // Block(BlockSetType.X, props)` — the set type the sensitivity AND
+    // the voices carry): the wooden woods the BlockSetType rows the
+    // String ctor's EVERYTHING default wear, the CHERRY/BAMBOO/CRIMSON/
+    // WARPED full-ctor rows the iconst_1,1,1 triple + the EVERYTHING
+    // sensitivity + the per-wood PRESSURE_PLATE_CLICK_ON/OFF pairs bank
+    // (pc 334-380 cherry, 431-477 crimson, 480-526 warped, 545-591
+    // bamboo), the STONE row the `iconst_1,1,0` + MOBS pair the arrows'
+    // refusal the same row banks (pc 178-223) — the POLISHED_BLACKSTONE
+    // row pc 226-271 the SAME `iconst_1,1,0` + MOBS + the
+    // STONE_PRESSURE_PLATE_CLICK_ON/OFF pair the stone-family law keeps
+    // (the polished rung the stone set's own voices + refusal the
+    // separate POLISHED_BLACKSTONE set type answers — the plate's own
+    // set the STONE row's fields byte-equal serves). The Properties
+    // rows the twelve windows the SAME walk serves (mapColor planks,
+    // forceSolidOn, instrument BASS, noCollision, strength(0.5f),
+    // ignitedByLava, pushReaction DESTROY — the spruce/birch/jungle/
+    // cherry/pale_oak windows pc-identical speak). The blockstates the
+    // ONE {wood}_pressure_plate.json BOTH states the same variants map
+    // serves (the strip-suffix walk the _down rows the own file never
+    // wears), the ONE #texture ref block/{wood}_planks / block/stone /
+    // block/polished_blackstone the row's tile banks (the palette the
+    // tiles already bank — the planks masters the button ladder's own
+    // walk gains, the polished_blackstone master the lever row's tail
+    // seat wears, no new tile the regen keeps, the pre-ladder rows
+    // byte-identical).
+    "spruce_pressure_plate", "spruce_pressure_plate_down",
+    "birch_pressure_plate", "birch_pressure_plate_down",
+    "jungle_pressure_plate", "jungle_pressure_plate_down",
+    "acacia_pressure_plate", "acacia_pressure_plate_down",
+    "dark_oak_pressure_plate", "dark_oak_pressure_plate_down",
+    "mangrove_pressure_plate", "mangrove_pressure_plate_down",
+    "cherry_pressure_plate", "cherry_pressure_plate_down",
+    "pale_oak_pressure_plate", "pale_oak_pressure_plate_down",
+    "bamboo_pressure_plate", "bamboo_pressure_plate_down",
+    "crimson_pressure_plate", "crimson_pressure_plate_down",
+    "warped_pressure_plate", "warped_pressure_plate_down",
+    "polished_blackstone_pressure_plate", "polished_blackstone_pressure_plate_down",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.

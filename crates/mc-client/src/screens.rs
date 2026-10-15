@@ -102505,8 +102505,8 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            292,
-            "the palette the plate rungs' own tail banks"
+            316,
+            "the palette the plate ladder's own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
         assert_eq!(atlas::KIND_NAMES[wool as usize], "white_wool");
@@ -102586,8 +102586,8 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            292,
-            "the palette the plate rungs' own tail banks"
+            316,
+            "the palette the plate ladder's own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
         assert_eq!(atlas::REGISTRY_NAMES[sand as usize], "soul_sand");
@@ -102888,8 +102888,8 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            292,
-            "the palette the plate rungs' own tail banks"
+            316,
+            "the palette the plate ladder's own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
         assert_eq!(atlas::REGISTRY_NAMES[honey as usize], "honey_block");
@@ -106735,7 +106735,7 @@ cow_sound_variant: None,
         assert_eq!(crate::world::OAK_BUTTON_ON, 263);
         assert_eq!(
             crate::world::END_PORTAL,
-            292,
+            316,
             "the displaced seat the ladder's growth keeps"
         );
         for kind in [
@@ -106813,10 +106813,10 @@ cow_sound_variant: None,
             "oak_button"
         );
         // THE PALETTE'S OWN TAIL (the generated rows the regen banks —
-        // the KIND_NAMES the 292 kinds speak, the oak pair the mid seats
+        // the KIND_NAMES the 316 kinds speak, the oak pair the mid seats
         // wear, the FACE_TILES row the ONE oak-planks tile the
         // #texture ref banks)
-        assert_eq!(atlas::N_KINDS, 292, "the palette the plate rungs banks");
+        assert_eq!(atlas::N_KINDS, 316, "the palette the plate ladder's rows bank");
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
         assert_eq!(atlas::KIND_NAMES[263], "oak_button_pressed");
         assert_eq!(atlas::REGISTRY_NAMES[262], "oak_button");
@@ -106910,9 +106910,10 @@ cow_sound_variant: None,
         // lambda$static$338 row the BlockSetType.STONE + `bipush 20`
         // the stone-family law keeps): the CONTIGUOUS tail the
         // 264..287 seats wear (the OFF kinds the even, the ON the odd
-        // the ±1 mate speaks), the END_PORTAL the 292 beyond-table
-        // seat the displacement law keeps, the family fn the FOURTEEN
-        // pairs the same base serves, the atlas tail the 288 kinds the
+        // the ±1 mate speaks), the END_PORTAL the beyond-table
+        // seat the displacement law keeps (the plate ladder's own tail
+        // the seat the 316 banks), the family fn the FOURTEEN
+        // pairs the same base serves, the atlas tail the 316 kinds the
         // ladder rows bank, the per-rung FACE_TILES row the ONE planks
         // tile all six slots wear (the polished rung the
         // polished_blackstone master), the wood order the door
@@ -107028,10 +107029,10 @@ cow_sound_variant: None,
         );
         assert_eq!(
             crate::world::END_PORTAL,
-            292,
+            316,
             "the displaced seat the ladder's growth keeps"
         );
-        assert_eq!(atlas::N_KINDS, 292, "the palette the plate rungs banks");
+        assert_eq!(atlas::N_KINDS, 316, "the palette the plate ladder's rows bank");
         // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
         // the getSound walk the buttonClickOn/Off pair serves): the
         // String-ctor woods the WOODEN defaults speak, the CHERRY full
@@ -107137,12 +107138,262 @@ cow_sound_variant: None,
         );
     }
     #[test]
+    fn the_plate_ladder_the_full_family_and_the_voice_sets_wear() {
+        // THE LADDER'S OWN SEATS (javap the 26.2 jar Blocks clinit the
+        // twelve plate factories the indy constants wear — the twelve
+        // rungs the bsm[183..191]+$491/$492/$521 rows ALL the ONE
+        // two-arg ctor shape serve (`new PressurePlateBlock(BlockSet
+        // Type.X, props)`), the BlockSetType records the sensitivity
+        // AND the voices carry — the wooden rows the String ctor's
+        // EVERYTHING default + the full-ctor rows the iconst_1,1,1
+        // triple speak, the STONE AND POLISHED_BLACKSTONE rows the
+        // `iconst_1,1,0` + MOBS pair the arrows' refusal bank): the
+        // CONTIGUOUS tail the 292..315 seats wear (the OFF kinds the
+        // even, the ON the odd the ±1 mate speaks), the END_PORTAL the
+        // 316 beyond-table seat the displacement law keeps, the family
+        // fn the FOURTEEN pairs the same base serves, the atlas tail
+        // the 316 kinds the ladder rows bank, the per-rung FACE_TILES
+        // row the ONE planks/blackstone tile all six slots wear, the
+        // wood order the door family's own ladder wears, the release
+        // clock the `bipush 20` BOTH sets share.
+        use crate::world as w;
+        use mc_registry::generated::atlas;
+        let pairs = [
+            (
+                w::SPRUCE_PRESSURE_PLATE,
+                w::SPRUCE_PRESSURE_PLATE_ON,
+                "spruce_pressure_plate",
+                true,
+            ),
+            (
+                w::BIRCH_PRESSURE_PLATE,
+                w::BIRCH_PRESSURE_PLATE_ON,
+                "birch_pressure_plate",
+                true,
+            ),
+            (
+                w::JUNGLE_PRESSURE_PLATE,
+                w::JUNGLE_PRESSURE_PLATE_ON,
+                "jungle_pressure_plate",
+                true,
+            ),
+            (
+                w::ACACIA_PRESSURE_PLATE,
+                w::ACACIA_PRESSURE_PLATE_ON,
+                "acacia_pressure_plate",
+                true,
+            ),
+            (
+                w::DARK_OAK_PRESSURE_PLATE,
+                w::DARK_OAK_PRESSURE_PLATE_ON,
+                "dark_oak_pressure_plate",
+                true,
+            ),
+            (
+                w::MANGROVE_PRESSURE_PLATE,
+                w::MANGROVE_PRESSURE_PLATE_ON,
+                "mangrove_pressure_plate",
+                true,
+            ),
+            (
+                w::CHERRY_PRESSURE_PLATE,
+                w::CHERRY_PRESSURE_PLATE_ON,
+                "cherry_pressure_plate",
+                true,
+            ),
+            (
+                w::PALE_OAK_PRESSURE_PLATE,
+                w::PALE_OAK_PRESSURE_PLATE_ON,
+                "pale_oak_pressure_plate",
+                true,
+            ),
+            (
+                w::BAMBOO_PRESSURE_PLATE,
+                w::BAMBOO_PRESSURE_PLATE_ON,
+                "bamboo_pressure_plate",
+                true,
+            ),
+            (
+                w::CRIMSON_PRESSURE_PLATE,
+                w::CRIMSON_PRESSURE_PLATE_ON,
+                "crimson_pressure_plate",
+                true,
+            ),
+            (
+                w::WARPED_PRESSURE_PLATE,
+                w::WARPED_PRESSURE_PLATE_ON,
+                "warped_pressure_plate",
+                true,
+            ),
+            (
+                w::POLISHED_BLACKSTONE_PRESSURE_PLATE,
+                w::POLISHED_BLACKSTONE_PRESSURE_PLATE_ON,
+                "polished_blackstone_pressure_plate",
+                false,
+            ),
+        ];
+        let mut seat = 292u16;
+        for (off, on, name, wooden) in pairs {
+            assert_eq!(off, seat, "the OFF kind the even seat wears");
+            assert_eq!(on, seat + 1, "the ON kind the +1 mate wears");
+            assert!(
+                w::is_pressure_plate(off) && w::is_pressure_plate(on),
+                "the {name} rung the family keeps"
+            );
+            assert_eq!(
+                w::plate_is_wooden(off),
+                wooden,
+                "the set type's own sensitivity the {name} verdict arms"
+            );
+            assert_eq!(
+                w::plate_is_wooden(on),
+                wooden,
+                "the ON kind the same set type keeps"
+            );
+            assert!(
+                !w::plate_powered(off),
+                "the OFF kind the resting bit wears"
+            );
+            assert!(w::plate_powered(on), "the ON kind the powered bit keeps");
+            assert_eq!(
+                w::plate_toggled(off),
+                Some(on),
+                "the {name} mate the ±1 law speaks"
+            );
+            assert_eq!(w::plate_toggled(on), Some(off));
+            // THE NAMES' OWN ROWS (the ONE "{name}" entry both kinds the
+            // same registry law speaks — the pick lane grants BOTH)
+            assert_eq!(w::NAME_OF[off as usize], name);
+            assert_eq!(w::NAME_OF[on as usize], name);
+            // THE ATLAS'S OWN ROWS (the generated rows the regen banks —
+            // the KIND_NAMES the ladder rows wear, the REGISTRY_NAMES
+            // the ONE registry name both kinds speak, the FACE_TILES
+            // row the ONE planks/blackstone tile all six slots wear)
+            assert_eq!(atlas::KIND_NAMES[off as usize], name);
+            assert_eq!(atlas::KIND_NAMES[on as usize], format!("{name}_down"));
+            assert_eq!(atlas::REGISTRY_NAMES[off as usize], name);
+            assert_eq!(atlas::REGISTRY_NAMES[on as usize], name);
+            let tile = atlas::FACE_TILES[off as usize][2];
+            assert_ne!(tile, atlas::TILE_NONE, "the {name} tile the ref banks");
+            assert_eq!(
+                tile,
+                atlas::FACE_TILES[off as usize][0],
+                "the ONE tile all six slots wear"
+            );
+            assert_eq!(
+                atlas::FACE_TILES[on as usize][2],
+                tile,
+                "the ON kind the same tile keeps"
+            );
+            // THE ITEM FORM THE REGISTRATION CARRIES (the generated
+            // items.rs the jar's BlockItemIds rows the twelve rungs
+            // carry — the placement lane the NAME_OF reverse the same
+            // walk serves)
+            assert_eq!(
+                w::World::placeable_block(name),
+                Some(off),
+                "the {name} item the placement lane serves"
+            );
+            seat += 2;
+        }
+        assert_eq!(
+            seat, 316,
+            "the plate ladder's own tail the beyond-table seat succeeds"
+        );
+        assert_eq!(
+            crate::world::END_PORTAL,
+            316,
+            "the displaced seat the ladder's growth keeps"
+        );
+        assert_eq!(atlas::N_KINDS, 316, "the palette the plate ladder's rows bank");
+        // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
+        // pressurePlateClickOn/Off fields the record rows bank): the
+        // String-ctor woods the WOODEN defaults speak, the CHERRY full
+        // ctor the CHERRY_WOOD pair pc 362-365, the CRIMSON/WARPED rows
+        // the NETHER_WOOD pairs pc 459-462/508-511, the BAMBOO row the
+        // BAMBOO_WOOD pair pc 573-576, the STONE set the stone AND
+        // polished rungs the shared rows wear
+        assert_eq!(
+            w::plate_click_voice(w::SPRUCE_PRESSURE_PLATE, true),
+            "block.wooden_pressure_plate.click_on"
+        );
+        assert_eq!(
+            w::plate_click_voice(w::BIRCH_PRESSURE_PLATE_ON, false),
+            "block.wooden_pressure_plate.click_off"
+        );
+        assert_eq!(
+            w::plate_click_voice(w::CHERRY_PRESSURE_PLATE, true),
+            "block.cherry_wood_pressure_plate.click_on"
+        );
+        assert_eq!(
+            w::plate_click_voice(w::CHERRY_PRESSURE_PLATE_ON, false),
+            "block.cherry_wood_pressure_plate.click_off"
+        );
+        assert_eq!(
+            w::plate_click_voice(w::BAMBOO_PRESSURE_PLATE_ON, true),
+            "block.bamboo_wood_pressure_plate.click_on"
+        );
+        assert_eq!(
+            w::plate_click_voice(w::CRIMSON_PRESSURE_PLATE, false),
+            "block.nether_wood_pressure_plate.click_off"
+        );
+        assert_eq!(
+            w::plate_click_voice(w::WARPED_PRESSURE_PLATE_ON, true),
+            "block.nether_wood_pressure_plate.click_on"
+        );
+        assert_eq!(
+            w::plate_click_voice(w::POLISHED_BLACKSTONE_PRESSURE_PLATE, true),
+            "block.stone_pressure_plate.click_on"
+        );
+        assert_eq!(
+            w::plate_click_voice(w::POLISHED_BLACKSTONE_PRESSURE_PLATE_ON, false),
+            "block.stone_pressure_plate.click_off"
+        );
+        // THE PARAMS' OWN ROWS (the cache's sounds.json the five
+        // wooden-family rows the wooden pair's 0.8/0.7 pitches verbatim
+        // bank, the stone rows the 0.6/0.5 pair the wooden verdict the
+        // flag serves)
+        assert_eq!(w::plate_voice_params(w::CHERRY_PRESSURE_PLATE, true), (0.3, 0.8));
+        assert_eq!(
+            w::plate_voice_params(w::BAMBOO_PRESSURE_PLATE_ON, false),
+            (0.3, 0.7)
+        );
+        assert_eq!(
+            w::plate_voice_params(w::POLISHED_BLACKSTONE_PRESSURE_PLATE, true),
+            (0.3, 0.6)
+        );
+        assert_eq!(
+            w::plate_voice_params(w::POLISHED_BLACKSTONE_PRESSURE_PLATE_ON, false),
+            (0.3, 0.5)
+        );
+        // THE SENSITIVITY'S OWN FAMILY VERDICTS (the getSignalStrength
+        // walk the lookupswitch the classes serve — the EVERYTHING row
+        // the Entity.class count arms, the MOBS row the LivingEntity
+        // .class count wears): the crimson rung the arrow's own bbox
+        // the touch band presses, the polished rung the MOBS row's
+        // refusal the same bbox never counts
+        let entity: [f64; 6] = [9.6, 64.0, 9.6, 10.1, 64.5, 10.1];
+        assert!(
+            w::plate_entity_presses(true, false, &entity, 10, 64, 10),
+            "the crimson rung the EVERYTHING row the arrow counts"
+        );
+        assert!(
+            !w::plate_entity_presses(false, false, &entity, 10, 64, 10),
+            "the polished rung the MOBS row's refusal keeps"
+        );
+        assert!(
+            w::plate_entity_presses(false, true, &entity, 10, 64, 10),
+            "the living entity both rows count"
+        );
+    }
+    #[test]
     fn the_pressure_plates_the_sensor_the_sensitivity_and_the_release_wear() {
         // THE PLATES' OWN LAWS (the dev-48 round — javap the 26.2 jar
         // the BasePressurePlateBlock + PressurePlateBlock walks the
         // seats/the sensor/the sensitivity/the release bank): the pair
-        // seats the 288..291 tail wears, the END_PORTAL the 292
-        // beyond-table seat the displacement keeps, the family fn the
+        // seats the 288..291 tail wears, the END_PORTAL the beyond-table
+        // seat the displacement keeps (the autopush-663 round the plate
+        // ladder's own tail the seat the 316 banks), the family fn the
         // four kinds serves, the wooden verdict the OAK String-ctor's
         // EVERYTHING default speaks (the STONE full-ctor's MOBS row the
         // arrows' refusal keeps), the release clock the `bipush 20`
@@ -107156,8 +107407,8 @@ cow_sound_variant: None,
         assert_eq!(w::OAK_PRESSURE_PLATE_ON, 289);
         assert_eq!(w::STONE_PRESSURE_PLATE, 290);
         assert_eq!(w::STONE_PRESSURE_PLATE_ON, 291);
-        assert_eq!(w::END_PORTAL, 292);
-        assert_eq!(atlas::N_KINDS, 292, "the palette the plate rungs bank");
+        assert_eq!(w::END_PORTAL, 316);
+        assert_eq!(atlas::N_KINDS, 316, "the palette the plate ladder's rows bank");
         for (off, on, name, wooden) in [
             (
                 w::OAK_PRESSURE_PLATE,
