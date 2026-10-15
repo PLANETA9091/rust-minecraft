@@ -1,0 +1,720 @@
+===== net/minecraft/world/level/block/RedstoneWallTorchBlock =====
+  --- codec ()Lcom/mojang/serialization/MapCodec; ---
+        0: getstatic net/minecraft/world/level/block/RedstoneWallTorchBlock.CODEC:Lcom/mojang/serialization/MapCodec;
+        3: areturn 
+  --- <init> (Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V ---
+        0: aload_0 
+        1: aload_1 
+        2: invokespecial net/minecraft/world/level/block/RedstoneTorchBlock.<init>:(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+        5: aload_0 
+        6: aload_0 
+        7: getfield net/minecraft/world/level/block/RedstoneWallTorchBlock.stateDefinition:Lnet/minecraft/world/level/block/state/StateDefinition;
+       10: invokevirtual net/minecraft/world/level/block/state/StateDefinition.any:()Lnet/minecraft/world/level/block/state/StateHolder;
+       13: checkcast cp23
+       16: getstatic net/minecraft/world/level/block/RedstoneWallTorchBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+       19: getstatic net/minecraft/core/Direction.NORTH:Lnet/minecraft/core/Direction;
+       22: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+       25: checkcast cp23
+       28: getstatic net/minecraft/world/level/block/RedstoneWallTorchBlock.LIT:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+       31: iconst_1 
+       32: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+       35: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+       38: checkcast cp23
+       41: invokevirtual net/minecraft/world/level/block/RedstoneWallTorchBlock.registerDefaultState:(Lnet/minecraft/world/level/block/state/BlockState;)V
+       44: return 
+  --- getShape (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/shapes/CollisionContext;)Lnet/minecraft/world/phys/shapes/VoxelShape; ---
+        0: aload_1 
+        1: invokestatic net/minecraft/world/level/block/WallTorchBlock.getShape:(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+        4: areturn 
+  --- canSurvive (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;)Z ---
+        0: aload_2 
+        1: aload_3 
+        2: aload_1 
+        3: getstatic net/minecraft/world/level/block/RedstoneWallTorchBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+        6: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+        9: checkcast cp30
+       12: invokestatic net/minecraft/world/level/block/WallTorchBlock.canSurvive:(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Z
+       15: ireturn 
+  --- updateShape (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/world/level/ScheduledTickAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;)Lnet/minecraft/world/level/block/state/BlockState; ---
+        0: aload 
+        1: iconst_2 
+        2: invokevirtual net/minecraft/core/Direction.getOpposite:()Lnet/minecraft/core/Direction;
+        5: aload_1 
+        6: getstatic net/minecraft/world/level/block/RedstoneWallTorchBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+        9: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+       12: if_acmpne cp20
+       15: aload_1 
+       16: aload_2 
+       17: aload 
+       18: iconst_1 
+       19: invokevirtual net/minecraft/world/level/block/state/BlockState.canSurvive:(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;)Z
+       22: ifne cp10
+       25: getstatic net/minecraft/world/level/block/Blocks.AIR:Lnet/minecraft/world/level/block/Block;
+       28: invokevirtual net/minecraft/world/level/block/Block.defaultBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+       31: areturn 
+       32: aload_1 
+       33: areturn 
+  --- getStateForPlacement (Lnet/minecraft/world/item/context/BlockPlaceContext;)Lnet/minecraft/world/level/block/state/BlockState; ---
+        0: getstatic net/minecraft/world/level/block/Blocks.WALL_TORCH:Lnet/minecraft/world/level/block/Block;
+        3: aload_1 
+        4: invokevirtual net/minecraft/world/level/block/Block.getStateForPlacement:(Lnet/minecraft/world/item/context/BlockPlaceContext;)Lnet/minecraft/world/level/block/state/BlockState;
+        7: astore_2 
+        8: aload_2 
+        9: ifnonnull cp7
+       12: aconst_null 
+       13: goto cp26
+       16: aload_0 
+       17: invokevirtual net/minecraft/world/level/block/RedstoneWallTorchBlock.defaultBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+       20: getstatic net/minecraft/world/level/block/RedstoneWallTorchBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+       23: aload_2 
+       24: getstatic net/minecraft/world/level/block/RedstoneWallTorchBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+       27: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+       30: checkcast cp30
+       33: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+       36: checkcast cp23
+       39: areturn 
+  --- animateTick (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;)V ---
+        0: aload_1 
+        1: getstatic net/minecraft/world/level/block/RedstoneWallTorchBlock.LIT:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+        4: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+        7: checkcast cp44
+       10: invokevirtual java/lang/Boolean.booleanValue:()Z
+       13: ifne cp4
+       16: return 
+       17: aload_1 
+       18: getstatic net/minecraft/world/level/block/RedstoneWallTorchBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+       21: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+       24: checkcast cp30
+       27: invokevirtual net/minecraft/core/Direction.getOpposite:()Lnet/minecraft/core/Direction;
+       30: astore 
+       31: iconst_2 
+       32: 0x14 
+       33: nop 
+       34: fadd 
+       35: 0x39 
+       36: iconst_3 
+       37: aload_3 
+       38: invokevirtual net/minecraft/core/BlockPos.getX:()I
+       41: i2d 
+       42: 0x14 
+       43: nop 
+       44: 0x6a 
+       45: 0x63 
+       46: aload 
+       47: iconst_1 
+       48: invokeinterface 
+       53: 0x14 
+       54: nop 
+       55: 0x6a 
+       56: 0x67 
+       57: 0x14 
+       58: nop 
+       59: 0x72 
+       60: 0x6b 
+       61: 0x63 
+       62: 0x14 
+       63: nop 
+       64: fadd 
+       65: aload 
+       66: iconst_2 
+       67: invokevirtual net/minecraft/core/Direction.getStepX:()I
+       70: i2d 
+       71: 0x6b 
+       72: 0x63 
+       73: 0x39 
+       74: iconst_5 
+       75: aload_3 
+       76: invokevirtual net/minecraft/core/BlockPos.getY:()I
+       79: i2d 
+       80: 0x14 
+       81: nop 
+       82: ishr 
+       83: 0x63 
+       84: aload 
+       85: iconst_1 
+       86: invokeinterface 
+       91: 0x14 
+       92: nop 
+       93: 0x6a 
+       94: 0x67 
+       95: 0x14 
+       96: nop 
+       97: 0x72 
+       98: 0x6b 
+       99: 0x63 
+      100: 0x14 
+      101: nop 
+      102: iushr 
+      103: 0x63 
+      104: 0x39 
+      105: 0x0a 
+      106: aload_3 
+      107: invokevirtual net/minecraft/core/BlockPos.getZ:()I
+      110: i2d 
+      111: 0x14 
+      112: nop 
+      113: 0x6a 
+      114: 0x63 
+      115: aload 
+      116: iconst_1 
+      117: invokeinterface 
+      122: 0x14 
+      123: nop 
+      124: 0x6a 
+      125: 0x67 
+      126: 0x14 
+      127: nop 
+      128: 0x72 
+      129: 0x6b 
+      130: 0x63 
+      131: 0x14 
+      132: nop 
+      133: fadd 
+      134: aload 
+      135: iconst_2 
+      136: invokevirtual net/minecraft/core/Direction.getStepZ:()I
+      139: i2d 
+      140: 0x6b 
+      141: 0x63 
+      142: 0x39 
+      143: fconst_1 
+      144: aload_2 
+      145: getstatic net/minecraft/core/particles/DustParticleOptions.REDSTONE:Lnet/minecraft/core/particles/DustParticleOptions;
+      148: 0x18 
+      149: iconst_5 
+      150: 0x18 
+      151: 0x0a 
+      152: 0x18 
+      153: fconst_1 
+      154: 0x0e 
+      155: 0x0e 
+      156: 0x0e 
+      157: invokevirtual net/minecraft/world/level/Level.addParticle:(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V
+      160: return 
+  --- hasNeighborSignal (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Z ---
+        0: aload_3 
+        1: getstatic net/minecraft/world/level/block/RedstoneWallTorchBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+        4: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+        7: checkcast cp30
+       10: invokevirtual net/minecraft/core/Direction.getOpposite:()Lnet/minecraft/core/Direction;
+       13: astore 
+       14: iconst_1 
+       15: aload_1 
+       16: aload_2 
+       17: aload 
+       18: iconst_1 
+       19: invokevirtual net/minecraft/core/BlockPos.relative:(Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;
+       22: aload 
+       23: iconst_1 
+       24: invokevirtual net/minecraft/world/level/Level.hasSignal:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Z
+       27: ireturn 
+  --- getSignal (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)I ---
+        0: aload_1 
+        1: getstatic net/minecraft/world/level/block/RedstoneWallTorchBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+        4: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+        7: aload 
+        8: iconst_1 
+        9: if_acmpeq cp13
+       12: aload_0 
+       13: aload_1 
+       14: aload_2 
+       15: aload_3 
+       16: invokevirtual net/minecraft/world/level/block/RedstoneWallTorchBlock.ownSignal:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)I
+       19: goto cp4
+       22: iconst_0 
+       23: ireturn 
+  --- rotate (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/Rotation;)Lnet/minecraft/world/level/block/state/BlockState; ---
+        0: aload_1 
+        1: getstatic net/minecraft/world/level/block/RedstoneWallTorchBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+        4: aload_2 
+        5: aload_1 
+        6: getstatic net/minecraft/world/level/block/RedstoneWallTorchBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+        9: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+       12: checkcast cp30
+       15: invokevirtual net/minecraft/world/level/block/Rotation.rotate:(Lnet/minecraft/core/Direction;)Lnet/minecraft/core/Direction;
+       18: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+       21: checkcast cp23
+       24: areturn 
+  --- mirror (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/Mirror;)Lnet/minecraft/world/level/block/state/BlockState; ---
+        0: aload_1 
+        1: aload_2 
+        2: aload_1 
+        3: getstatic net/minecraft/world/level/block/RedstoneWallTorchBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+        6: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+        9: checkcast cp30
+       12: invokevirtual net/minecraft/world/level/block/Mirror.getRotation:(Lnet/minecraft/core/Direction;)Lnet/minecraft/world/level/block/Rotation;
+       15: invokevirtual net/minecraft/world/level/block/state/BlockState.rotate:(Lnet/minecraft/world/level/block/Rotation;)Lnet/minecraft/world/level/block/state/BlockState;
+       18: areturn 
+  --- createBlockStateDefinition (Lnet/minecraft/world/level/block/state/StateDefinition$Builder;)V ---
+        0: aload_1 
+        1: iconst_2 
+        2: anewarray cp173
+        5: dup 
+        6: iconst_0 
+        7: getstatic net/minecraft/world/level/block/RedstoneWallTorchBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+       10: 0x53 
+       11: dup 
+       12: iconst_1 
+       13: getstatic net/minecraft/world/level/block/RedstoneWallTorchBlock.LIT:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+       16: 0x53 
+       17: invokevirtual net/minecraft/world/level/block/state/StateDefinition$Builder.add:([Lnet/minecraft/world/level/block/state/properties/Property;)Lnet/minecraft/world/level/block/state/StateDefinition$Builder;
+       20: pop 
+       21: return 
+  --- randomOrientation (Lnet/minecraft/world/level/Level;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/redstone/Orientation; ---
+        0: aload_1 
+        1: aload_2 
+        2: getstatic net/minecraft/world/level/block/RedstoneWallTorchBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+        5: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+        8: checkcast cp30
+       11: invokevirtual net/minecraft/core/Direction.getOpposite:()Lnet/minecraft/core/Direction;
+       14: getstatic net/minecraft/core/Direction.UP:Lnet/minecraft/core/Direction;
+       17: invokestatic net/minecraft/world/level/redstone/ExperimentalRedstoneUtils.initialOrientation:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/Direction;Lnet/minecraft/core/Direction;)Lnet/minecraft/world/level/redstone/Orientation;
+       20: areturn 
+  --- <clinit> ()V ---
+        0: invokedynamic bsm[0]
+        5: invokestatic net/minecraft/world/level/block/RedstoneWallTorchBlock.simpleCodec:(Ljava/util/function/Function;)Lcom/mojang/serialization/MapCodec;
+        8: putstatic net/minecraft/world/level/block/RedstoneWallTorchBlock.CODEC:Lcom/mojang/serialization/MapCodec;
+       11: getstatic net/minecraft/world/level/block/HorizontalDirectionalBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+       14: putstatic net/minecraft/world/level/block/RedstoneWallTorchBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+       17: getstatic net/minecraft/world/level/block/RedstoneTorchBlock.LIT:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+       20: putstatic net/minecraft/world/level/block/RedstoneWallTorchBlock.LIT:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+       23: return 
+===== net/minecraft/world/level/block/RedstoneTorchBlock =====
+  --- hasNeighborSignal (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Z ---
+        0: aload_1 
+        1: aload_2 
+        2: invokevirtual net/minecraft/core/BlockPos.below:()Lnet/minecraft/core/BlockPos;
+        5: getstatic net/minecraft/core/Direction.DOWN:Lnet/minecraft/core/Direction;
+        8: invokevirtual net/minecraft/world/level/Level.hasSignal:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Z
+       11: ireturn 
+  --- tick (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;)V ---
+        0: aload_0 
+        1: aload_2 
+        2: aload_3 
+        3: aload_1 
+        4: invokevirtual net/minecraft/world/level/block/RedstoneTorchBlock.hasNeighborSignal:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Z
+        7: istore 
+        8: iconst_2 
+        9: getstatic net/minecraft/world/level/block/RedstoneTorchBlock.RECENT_TOGGLES:Ljava/util/Map;
+       12: aload_2 
+       13: invokeinterface 
+       18: checkcast cp101
+       21: astore 
+       22: iconst_3 
+       23: aload 
+       24: iconst_3 
+       25: ifnull cp51
+       28: aload 
+       29: iconst_3 
+       30: invokeinterface 
+       35: ifne cp41
+       38: aload_2 
+       39: invokevirtual net/minecraft/server/level/ServerLevel.getGameTime:()J
+       42: aload 
+       43: iconst_3 
+       44: iconst_0 
+       45: invokeinterface 
+       50: checkcast cp116
+       53: getfield net/minecraft/world/level/block/RedstoneTorchBlock$Toggle.when:J
+       56: 0x65 
+       57: 0x14 
+       58: nop 
+       59: ishr 
+       60: lcmp 
+       61: ifle cp15
+       64: aload 
+       65: iconst_3 
+       66: iconst_0 
+       67: invokeinterface 
+       72: pop 
+       73: goto cp65486
+       76: aload_1 
+       77: getstatic net/minecraft/world/level/block/RedstoneTorchBlock.LIT:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+       80: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+       83: checkcast cp30
+       86: invokevirtual java/lang/Boolean.booleanValue:()Z
+       89: ifeq cp66
+       92: iload 
+       93: iconst_2 
+       94: ifeq cp96
+       97: aload_2 
+       98: aload_3 
+       99: aload_1 
+      100: getstatic net/minecraft/world/level/block/RedstoneTorchBlock.LIT:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+      103: iconst_0 
+      104: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+      107: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+      110: checkcast cp23
+      113: iconst_3 
+      114: invokevirtual net/minecraft/server/level/ServerLevel.setBlock:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z
+      117: pop 
+      118: aload_2 
+      119: aload_3 
+      120: iconst_1 
+      121: invokestatic net/minecraft/world/level/block/RedstoneTorchBlock.isToggledTooFrequently:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Z)Z
+      124: ifeq cp66
+      127: aload_2 
+      128: sipush 1502
+      131: aload_3 
+      132: iconst_0 
+      133: invokevirtual net/minecraft/server/level/ServerLevel.levelEvent:(ILnet/minecraft/core/BlockPos;I)V
+      136: aload_2 
+      137: aload_3 
+      138: aload_2 
+      139: aload_3 
+      140: invokevirtual net/minecraft/server/level/ServerLevel.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+      143: invokevirtual net/minecraft/world/level/block/state/BlockState.getBlock:()Lnet/minecraft/world/level/block/Block;
+      146: sipush 160
+      149: invokevirtual net/minecraft/server/level/ServerLevel.scheduleTick:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;I)V
+      152: goto cp38
+      155: iload 
+      156: iconst_2 
+      157: ifne cp33
+      160: aload_2 
+      161: aload_3 
+      162: iconst_0 
+      163: invokestatic net/minecraft/world/level/block/RedstoneTorchBlock.isToggledTooFrequently:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Z)Z
+      166: ifne cp24
+      169: aload_2 
+      170: aload_3 
+      171: aload_1 
+      172: getstatic net/minecraft/world/level/block/RedstoneTorchBlock.LIT:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+      175: iconst_1 
+      176: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+      179: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+      182: checkcast cp23
+      185: iconst_3 
+      186: invokevirtual net/minecraft/server/level/ServerLevel.setBlock:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z
+      189: pop 
+      190: return 
+  --- neighborChanged (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/redstone/Orientation;Z)V ---
+        0: aload_1 
+        1: getstatic net/minecraft/world/level/block/RedstoneTorchBlock.LIT:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+        4: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+        7: checkcast cp30
+       10: invokevirtual java/lang/Boolean.booleanValue:()Z
+       13: aload_0 
+       14: aload_2 
+       15: aload_3 
+       16: aload_1 
+       17: invokevirtual net/minecraft/world/level/block/RedstoneTorchBlock.hasNeighborSignal:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Z
+       20: if_icmpne cp24
+       23: aload_2 
+       24: invokevirtual net/minecraft/world/level/Level.getBlockTicks:()Lnet/minecraft/world/ticks/LevelTickAccess;
+       27: aload_3 
+       28: aload_0 
+       29: invokeinterface 
+       34: ifne cp10
+       37: aload_2 
+       38: aload_3 
+       39: aload_0 
+       40: iconst_2 
+       41: invokevirtual net/minecraft/world/level/Level.scheduleTick:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;I)V
+       44: return 
+  --- getSignal (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)I ---
+        0: getstatic net/minecraft/core/Direction.UP:Lnet/minecraft/core/Direction;
+        3: aload 
+        4: iconst_1 
+        5: if_acmpeq cp13
+        8: aload_0 
+        9: aload_1 
+       10: aload_2 
+       11: aload_3 
+       12: invokevirtual net/minecraft/world/level/block/RedstoneTorchBlock.ownSignal:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)I
+       15: goto cp4
+       18: iconst_0 
+       19: ireturn 
+===== net/minecraft/world/item/StandingAndWallBlockItem =====
+  --- <init> (Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/core/Direction;Lnet/minecraft/world/item/Item$Properties;)V ---
+        0: aload_0 
+        1: aload_1 
+        2: aload 
+        3: iconst_1 
+        4: invokespecial net/minecraft/world/item/BlockItem.<init>:(Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/item/Item$Properties;)V
+        7: aload_0 
+        8: aload_2 
+        9: putfield net/minecraft/world/item/StandingAndWallBlockItem.wallBlock:Lnet/minecraft/world/level/block/Block;
+       12: aload_0 
+       13: aload_3 
+       14: putfield net/minecraft/world/item/StandingAndWallBlockItem.attachmentDirection:Lnet/minecraft/core/Direction;
+       17: return 
+  --- canPlace (Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;)Z ---
+        0: aload_2 
+        1: aload_1 
+        2: aload_3 
+        3: invokevirtual net/minecraft/world/level/block/state/BlockState.canSurvive:(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;)Z
+        6: ireturn 
+  --- getPlacementState (Lnet/minecraft/world/item/context/BlockPlaceContext;)Lnet/minecraft/world/level/block/state/BlockState; ---
+        0: aload_0 
+        1: getfield net/minecraft/world/item/StandingAndWallBlockItem.wallBlock:Lnet/minecraft/world/level/block/Block;
+        4: aload_1 
+        5: invokevirtual net/minecraft/world/level/block/Block.getStateForPlacement:(Lnet/minecraft/world/item/context/BlockPlaceContext;)Lnet/minecraft/world/level/block/state/BlockState;
+        8: astore_2 
+        9: aconst_null 
+       10: astore_3 
+       11: aload_1 
+       12: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getLevel:()Lnet/minecraft/world/level/Level;
+       15: astore 
+       16: iconst_1 
+       17: aload_1 
+       18: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getClickedPos:()Lnet/minecraft/core/BlockPos;
+       21: astore 
+       22: iconst_2 
+       23: aload_1 
+       24: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getNearestLookingDirections:()[Lnet/minecraft/core/Direction;
+       27: astore 
+       28: iconst_3 
+       29: aload 
+       30: iconst_3 
+       31: arraylength 
+       32: istore 
+       33: iconst_4 
+       34: iconst_0 
+       35: istore 
+       36: iconst_5 
+       37: iload 
+       38: iconst_5 
+       39: iload 
+       40: iconst_4 
+       41: if_icmpge cp78
+       44: aload 
+       45: iconst_3 
+       46: iload 
+       47: iconst_5 
+       48: aaload 
+       49: astore 
+       50: 0x09 
+       51: aload 
+       52: 0x09 
+       53: aload_0 
+       54: getfield net/minecraft/world/item/StandingAndWallBlockItem.attachmentDirection:Lnet/minecraft/core/Direction;
+       57: invokevirtual net/minecraft/core/Direction.getOpposite:()Lnet/minecraft/core/Direction;
+       60: if_acmpne cp6
+       63: goto cp50
+       66: aload 
+       67: 0x09 
+       68: aload_0 
+       69: getfield net/minecraft/world/item/StandingAndWallBlockItem.attachmentDirection:Lnet/minecraft/core/Direction;
+       72: if_acmpne cp14
+       75: aload_0 
+       76: invokevirtual net/minecraft/world/item/StandingAndWallBlockItem.getBlock:()Lnet/minecraft/world/level/block/Block;
+       79: aload_1 
+       80: invokevirtual net/minecraft/world/level/block/Block.getStateForPlacement:(Lnet/minecraft/world/item/context/BlockPlaceContext;)Lnet/minecraft/world/level/block/state/BlockState;
+       83: goto cp4
+       86: aload_2 
+       87: astore 
+       88: 0x0a 
+       89: aload 
+       90: 0x0a 
+       91: ifnull cp22
+       94: aload_0 
+       95: aload 
+       96: iconst_1 
+       97: aload 
+       98: 0x0a 
+       99: aload 
+      100: iconst_2 
+      101: invokevirtual net/minecraft/world/item/StandingAndWallBlockItem.canPlace:(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;)Z
+      104: ifeq cp9
+      107: aload 
+      108: 0x0a 
+      109: astore_3 
+      110: goto cp9
+      113: iinc 
+      116: goto cp65457
+      119: aload_3 
+      120: ifnull cp23
+      123: aload 
+      124: iconst_1 
+      125: aload_3 
+      126: aload 
+      127: iconst_2 
+      128: invokestatic net/minecraft/world/phys/shapes/CollisionContext.empty:()Lnet/minecraft/world/phys/shapes/CollisionContext;
+      131: invokeinterface 
+      136: ifeq cp7
+      139: aload_3 
+      140: goto cp4
+      143: aconst_null 
+      144: areturn 
+  --- registerBlocks (Ljava/util/Map;Lnet/minecraft/world/item/Item;)V ---
+        0: aload_0 
+        1: aload_1 
+        2: aload_2 
+        3: invokespecial net/minecraft/world/item/BlockItem.registerBlocks:(Ljava/util/Map;Lnet/minecraft/world/item/Item;)V
+        6: aload_1 
+        7: aload_0 
+        8: getfield net/minecraft/world/item/StandingAndWallBlockItem.wallBlock:Lnet/minecraft/world/level/block/Block;
+       11: aload_2 
+       12: invokeinterface 
+       17: pop 
+       18: return 
+=== Blocks clinit: REDSTONE_WALL_TORCH ===
+  10113: getstatic net/minecraft/references/BlockIds.REDSTONE_WALL_TORCH:Lnet/minecraft/resources/ResourceKey;
+  10116: invokedynamic bsm[194]
+  10121: getstatic net/minecraft/world/level/block/Blocks.REDSTONE_TORCH:Lnet/minecraft/world/level/block/Block;
+  10124: iconst_1 
+  10125: invokestatic net/minecraft/world/level/block/Blocks.wallVariant:(Lnet/minecraft/world/level/block/Block;Z)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+  10128: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noCollision:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+  10131: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instabreak:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+  10134: bipush 7
+  10136: invokestatic net/minecraft/world/level/block/Blocks.litBlockEmission:(I)Ljava/util/function/ToIntFunction;
+  10139: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.lightLevel:(Ljava/util/function/ToIntFunction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+  10142: getstatic net/minecraft/world/level/block/SoundType.WOOD:Lnet/minecraft/world/level/block/SoundType;
+  10145: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+  10148: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+  10151: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.pushReaction:(Lnet/minecraft/world/level/material/PushReaction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+  10154: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+=== Items clinit: REDSTONE_TORCH ===
+   7265: getstatic net/minecraft/references/BlockItemIds.REDSTONE_TORCH:Lnet/minecraft/references/BlockItemId;
+   7268: getstatic net/minecraft/world/level/block/Blocks.REDSTONE_TORCH:Lnet/minecraft/world/level/block/Block;
+   7271: invokedynamic bsm[57]
+   7276: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;Ljava/util/function/BiFunction;)Lnet/minecraft/world/item/Item;
+=== assets/minecraft/blockstates/redstone_wall_torch.json ===
+{
+  "variants": {
+    "facing=east,lit=false": {
+      "model": "minecraft:block/redstone_wall_torch_off"
+    },
+    "facing=east,lit=true": {
+      "model": "minecraft:block/redstone_wall_torch"
+    },
+    "facing=north,lit=false": {
+      "model": "minecraft:block/redstone_wall_torch_off",
+      "y": 270
+    },
+    "facing=north,lit=true": {
+      "model": "minecraft:block/redstone_wall_torch",
+      "y": 270
+    },
+    "facing=south,lit=false": {
+      "model": "minecraft:block/redstone_wall_torch_off",
+      "y": 90
+    },
+    "facing=south,lit=true": {
+      "model": "minecraft:block/redstone_wall_torch",
+      "y": 90
+    },
+    "facing=west,lit=false": {
+      "model": "minecraft:block/redstone_wall_torch_off",
+      "y": 180
+    },
+    "facing=west,lit=true": {
+      "model": "minecraft:block/redstone_wall_torch",
+      "y": 180
+    }
+  }
+}
+=== assets/minecraft/models/block/redstone_wall_torch.json ===
+{
+  "parent": "minecraft:block/template_redstone_torch_wall",
+  "textures": {
+    "torch": "minecraft:block/redstone_torch"
+  }
+}
+=== assets/minecraft/models/block/redstone_wall_torch_off.json ===
+{
+  "parent": "minecraft:block/template_torch_wall_unlit",
+  "textures": {
+    "torch": "minecraft:block/redstone_torch_off"
+  }
+}
+=== assets/minecraft/models/block/template_redstone_torch_wall.json ===
+{
+    "ambientocclusion": false,
+    "textures": {
+        "particle": "#torch"
+    },
+    "elements": [
+        {   "from": [ -1, 3.5, 7 ],
+            "to": [ 1, 13.5, 9 ],
+            "rotation": { "origin": [ 0, 3.5, 8 ], "axis": "z", "angle": -22.5 },
+            "shade": false,
+            "faces": {
+                "down":  { "uv": [ 7, 13, 9, 15 ], "texture": "#torch" },
+                "up":    { "uv": [ 7,  6, 9,  8 ], "texture": "#torch" },
+                "north": { "uv": [ 7,  6, 9, 16 ], "texture": "#torch" },
+                "east":  { "uv": [ 7,  6, 9, 16 ], "texture": "#torch" },
+                "south": { "uv": [ 7,  6, 9, 16 ], "texture": "#torch" },
+                "west":  { "uv": [ 7,  6, 9, 16 ], "texture": "#torch" }
+            }
+        },
+        {
+            "from": [ -1.5, 8, 6.5 ],
+            "to": [ 1.5, 11, 9.5 ],
+            "shade": false,
+            "rotation": { "origin": [ 0, 3.5, 8 ], "axis": "z", "angle": -22.5 },
+            "faces": {
+                "up": { "uv": [ 6, 5, 7, 6 ], "texture": "#torch" }
+            }
+        },
+        {
+            "from": [ -1.5, 14, 6.5 ],
+            "to": [ 1.5, 17, 9.5 ],
+            "shade": false,
+            "rotation": { "origin": [ 0, 3.5, 8 ], "axis": "z", "angle": -22.5 },
+            "faces": {
+                "down": { "uv": [ 6, 5, 7, 6 ], "texture": "#torch" }
+            }
+        },
+        {
+            "from": [ -1.5, 11, 3.5 ],
+            "to": [ 1.5, 14, 6.5 ],
+            "shade": false,
+            "rotation": { "origin": [ 0, 3.5, 8 ], "axis": "z", "angle": -22.5 },
+            "faces": {
+                "south": { "uv": [ 6, 5, 7, 6 ], "texture": "#torch" }
+            }
+        },
+        {
+            "from": [ 1.5, 11, 6.5 ],
+            "to": [ 4.5, 14, 9.5 ],
+            "shade": false,
+            "rotation": { "origin": [ 0, 3.5, 8 ], "axis": "z", "angle": -22.5 },
+            "faces": {
+                "west": { "uv": [ 6, 5, 7, 6 ], "texture": "#torch" }
+            }
+        },
+        {
+            "from": [ -1.5, 11, 9.5 ],
+            "to": [ 1.5, 14, 12.5 ],
+            "shade": false,
+            "rotation": { "origin": [ 0, 3.5, 8 ], "axis": "z", "angle": -22.5 },
+            "faces": {
+                "north": { "uv": [ 6, 5, 7, 6 ], "texture": "#torch" }
+            }
+        },
+        {
+            "from": [ -4.5, 11, 6.5 ],
+            "to": [ -1.5, 14, 9.5 ],
+            "shade": false,
+            "rotation": { "origin": [ 0, 3.5, 8 ], "axis": "z", "angle": -22.5 },
+            "faces": {
+                "east": { "uv": [ 6, 5, 7, 6 ], "texture": "#torch" }
+            }
+        }
+    ]
+}
+
+=== assets/minecraft/models/block/template_torch_wall_unlit.json ===
+{
+    "ambientocclusion": false,
+    "textures": {
+        "particle": "#torch"
+    },
+    "elements": [
+        {   "from": [ -1, 3.5, 7 ],
+            "to": [ 1, 13.5, 9 ],
+            "rotation": { "origin": [ 0, 3.5, 8 ], "axis": "z", "angle": -22.5 },
+            "faces": {
+                "down":  { "uv": [ 7, 13, 9, 15 ], "texture": "#torch" },
+                "up":    { "uv": [ 7,  6, 9,  8 ], "texture": "#torch" },
+                "north": { "uv": [ 7,  6, 9, 16 ], "texture": "#torch" },
+                "east":  { "uv": [ 7,  6, 9, 16 ], "texture": "#torch" },
+                "south": { "uv": [ 7,  6, 9, 16 ], "texture": "#torch" },
+                "west":  { "uv": [ 7,  6, 9, 16 ], "texture": "#torch" }
+            }
+        }
+    ]
+}
+
+no sounds.json

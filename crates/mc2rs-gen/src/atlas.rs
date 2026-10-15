@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 324] = [
+pub const RUNTIME_PALETTE: [&str; 326] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1030,6 +1030,33 @@ pub const RUNTIME_PALETTE: [&str; 324] = [
     // states the same name banks (the registry_names walk the _off
     // strip the plate's _down law keeps).
     "redstone_torch", "redstone_torch_off",
+    // THE REDSTONE WALL TORCH'S OWN PAIR (the autopush-667 round —
+    // javap RedstoneWallTorchBlock the 26.2 jar the python walk
+    // scripts/jar_work/redstone_wall_torch_667.py banks): the
+    // wall-mounted NOT-gate the lit/off pair the palette's tail banks
+    // — the ctor pc 16-41 the `registerDefaultState(any().setValue
+    // (FACING, NORTH).setValue(LIT, true))` walk the NORTH-facing LIT
+    // default speaks, the blockstates' redstone_wall_torch.json the
+    // 8-variant facing x lit map the y-table banks (facing=east the
+    // base model the NO-y row answers, north 270 / south 90 / west 180
+    // the rotated rows speak), the getSignal pc 0-23 the `direction ==
+    // FACING ? 0 : ownSignal` arms the FACING exclusion banks (the
+    // standing pair's UP arm the wall's own forward arm keeps), the
+    // hasNeighborSignal pc 0-27 the `pos.relative(FACING.getOpposite())`
+    // read the attached cell's own power verdict serves, the canSurvive
+    // pc 0-15 the WallTorchBlock delegate the attached block's
+    // isFaceSturdy read speaks, the blocks clinit row pc 10113-10154
+    // the `wallVariant(REDSTONE_TORCH, true)` + `noCollision()
+    // .instabreak()` + `lightLevel(litBlockEmission(7))` + `sound(WOOD)`
+    // + `pushReaction(DESTROY)` chain banks, the Items clinit row pc
+    // 7265-7276 the StandingAndWallBlockItem pairing the wall torch the
+    // item's own secondary block keeps (the attachmentDirection DOWN
+    // the ctor's own arg banks — the wall state the placement's own
+    // scan arms). The `_off` row the jar's OWN model suffix wears — the
+    // RedstoneWallTorchBlock's ONE "redstone_wall_torch" registry entry
+    // both states the same name banks (the registry_names walk the _off
+    // strip the standing pair's law keeps).
+    "redstone_wall_torch", "redstone_wall_torch_off",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -1192,6 +1219,44 @@ fn resolve_block(
             .and_then(|v| v.get("model"))
             .and_then(|m| m.as_str())
             .with_context(|| "blockstate redstone_torch: no lit model")?
+            .trim_start_matches("minecraft:")
+            .to_string();
+        return full_cube_faces(archive, &model_ref)
+            .with_context(|| format!("block {block}: model chain {model_ref}"));
+    }
+
+    // THE REDSTONE WALL TORCH'S OWN ROWS (the autopush-667 round — the
+    // blockstates' redstone_wall_torch.json the 8-variant map the
+    // facing=east rows resolve (the base model the NO-y row wears —
+    // the per-row arm the standing torch's own walk serves): lit=true
+    // the block/redstone_wall_torch model answers, lit=false the
+    // block/redstone_wall_torch_off row keeps; the lit model's parent
+    // template_redstone_torch_wall the SEVEN-element chain banks (the
+    // tilted stick box [-1,3.5,7]->[1,13.5,9] the -22.5° rotZ the
+    // derive walk bakes + the SIX glow planes), the off model's
+    // template_torch_wall_unlit parent the stick box ALONE keeps — the
+    // full-cube finder the FIRST six-face element the tile walk
+    // answers, the same sprites the standing pair's seats bank (the
+    // #torch ref the redstone_torch / redstone_torch_off masters
+    // answer — the atlas's tile set the wall pair never grows).
+    if block == "redstone_wall_torch" || block == "redstone_wall_torch_off" {
+        let lit = block == "redstone_wall_torch";
+        let bs_bytes =
+            read_jar(archive, "assets/minecraft/blockstates/redstone_wall_torch.json")?;
+        let bs: Value = serde_json::from_slice(&bs_bytes)
+            .with_context(|| "blockstate redstone_wall_torch: json parse")?;
+        let model_ref = bs
+            .get("variants")
+            .and_then(|v| {
+                v.get(if lit {
+                    "facing=east,lit=true"
+                } else {
+                    "facing=east,lit=false"
+                })
+            })
+            .and_then(|v| v.get("model"))
+            .and_then(|m| m.as_str())
+            .with_context(|| "blockstate redstone_wall_torch: no facing=east model")?
             .trim_start_matches("minecraft:")
             .to_string();
         return full_cube_faces(archive, &model_ref)

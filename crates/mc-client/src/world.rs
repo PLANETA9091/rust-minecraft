@@ -905,10 +905,12 @@ pub const END_STONE: u16 = 89;
 /// pair-pair the 316..319 tail banks, the autopush-665 round the
 /// REDSTONE WIRE'S OWN PAIR the 320/321 rows the tail banks, the
 /// autopush-666 round the REDSTONE TORCH'S OWN PAIR the 322/323 rows
-/// the tail banks, the kind's own seat the beyond-table 324 the same
+/// the tail banks, the autopush-667 round the REDSTONE WALL TORCH'S
+/// OWN PAIR the 324/325 rows the tail banks, the kind's own seat the
+/// beyond-table 326 the same
 /// law keeps — the `id < N_KINDS` guards the tile lookups' skip
 /// verdict the bigger tail keeps).
-pub const END_PORTAL: u16 = 324;
+pub const END_PORTAL: u16 = 326;
 
 /// THE BUTTON'S OWN PAIR (the autopush-660 round): the redstone pulse's
 /// own block finally RENDERS, PLACES, PRESSES and PULSES — javap
@@ -1258,6 +1260,32 @@ pub const REDSTONE_WIRE_ON: u16 = 321;
 pub const REDSTONE_TORCH: u16 = 322;
 pub const REDSTONE_TORCH_OFF: u16 = 323;
 
+/// THE REDSTONE WALL TORCH'S OWN PAIR (the autopush-667 round — javap
+/// RedstoneWallTorchBlock the 26.2 jar the python walk scripts/
+/// jar_work/redstone_wall_torch_667.py banks): the wall-mounted
+/// NOT-gate the lit/off pair the palette's tail banks — the ctor pc
+/// 16-41 the `registerDefaultState(any().setValue(FACING, NORTH)
+/// .setValue(LIT, true))` walk the NORTH-facing LIT default speaks,
+/// the +1 mate the standing pair's own law wears, the getSignal pc
+/// 0-23 the `direction == FACING ? 0 : ownSignal` arms the FACING
+/// exclusion banks (the standing pair's UP arm the wall's own forward
+/// arm keeps — the torch never arms the cell its own face points
+/// at), the hasNeighborSignal pc 0-27 the `pos.relative(FACING
+/// .getOpposite())` read the attached cell's own power verdict serves
+/// (the wall BEHIND the torch the consult reads — the standing
+/// pair's floor read the wall's own backing keeps), the canSurvive
+/// pc 0-15 the WallTorchBlock delegate the attached block's
+/// isFaceSturdy read speaks, the blocks clinit row pc 10113-10154
+/// the `wallVariant(REDSTONE_TORCH, true).noCollision().instabreak()
+/// .lightLevel(litBlockEmission(7)).sound(WOOD).pushReaction(DESTROY)`
+/// chain the standing pair's own properties verbatim banks. The
+/// facing byte the variant layer's own seat carries (the blockstate
+/// y-table's own law: north 1, east 2, south 3, west 4 — the 0 byte
+/// the no-opinion seat the sidecar's own law keeps, the default the
+/// ctor's NORTH read banks).
+pub const REDSTONE_WALL_TORCH: u16 = 324;
+pub const REDSTONE_WALL_TORCH_OFF: u16 = 325;
+
 /// THE WIRE'S OWN FAMILY VERDICT (the autopush-665 round — the OFF/ON
 /// pair the POWER bit the ±1 mate the lever/button/plate ladders' own
 /// law carries, the NO variant byte the wire reads — the binary kind
@@ -1290,31 +1318,142 @@ pub fn wire_toggled(id: u16) -> u16 {
 /// the lit/off pair the LIT bit the ±1 mate the lever/button/plate
 /// ladders' own law carries, the NO variant byte the standing torch
 /// reads — the floor-only lane the wall torch the separate block the
-/// follow-up round keeps): the placement's survival gate, the dig's
+/// follow-up round keeps; the autopush-667 round the WALL pair the
+/// same family's tail banks — the four kinds the family fn answers,
+/// the collision's pass-through row and the placement's survival
+/// gate the growth serves): the placement's survival gate, the dig's
 /// support-pop arm, the collision's pass-through row, the mesher's
 /// element lane and the NOT-gate's own consult the family fn serves.
 pub fn is_redstone_torch(id: u16) -> bool {
-    id == REDSTONE_TORCH || id == REDSTONE_TORCH_OFF
+    id == REDSTONE_TORCH
+        || id == REDSTONE_TORCH_OFF
+        || id == REDSTONE_WALL_TORCH
+        || id == REDSTONE_WALL_TORCH_OFF
+}
+
+/// THE WALL TORCH'S OWN FAMILY VERDICT (the autopush-667 round — the
+/// facing-carried lane the standing pair's floor law never wears:
+/// the variant byte the wall kinds alone consume, the survival's
+/// attached-cell read and the signal's FACING arm the walk serves).
+pub fn is_redstone_wall_torch(id: u16) -> bool {
+    id == REDSTONE_WALL_TORCH || id == REDSTONE_WALL_TORCH_OFF
 }
 
 /// THE REDSTONE TORCH'S OWN LIT BIT (the ctor's default-state law the
 /// LIT=true registration banks — the lit kind the source verdict the
 /// ownSignal walk's own 15 keeps, the off kind the dark 0 the silent
-/// answer wears).
+/// answer wears; the wall pair the same LIT bit the lit kinds' own
+/// seats answer).
 pub fn redstone_torch_lit(id: u16) -> bool {
-    id == REDSTONE_TORCH
+    id == REDSTONE_TORCH || id == REDSTONE_WALL_TORCH
 }
 
 /// THE REDSTONE TORCH'S OWN TOGGLED KIND (the tick walk's setBlock
 /// arms the ±1 mate speaks — the LIT && signal walk the OFF answer,
-/// the !LIT && !signal the ON keeps; the unknown id the None the
-/// honest guard banks).
+/// the !LIT && !signal the ON keeps; the wall pair's own ±1 the
+/// same fold wears, the unknown id the None the honest guard banks).
 pub fn redstone_torch_toggled(id: u16) -> Option<u16> {
     match id {
         REDSTONE_TORCH => Some(REDSTONE_TORCH_OFF),
         REDSTONE_TORCH_OFF => Some(REDSTONE_TORCH),
+        REDSTONE_WALL_TORCH => Some(REDSTONE_WALL_TORCH_OFF),
+        REDSTONE_WALL_TORCH_OFF => Some(REDSTONE_WALL_TORCH),
         _ => None,
     }
+}
+
+/// THE WALL TORCH'S OWN FACING BYTE (the blockstate y-table's own
+/// vocabulary the door's facing law keeps — north 1, east 2, south
+/// 3, west 4; the 0 byte the no-opinion seat the variant sidecar's
+/// own law keeps, the read the ctor's NORTH default answers).
+pub const WALL_TORCH_FACING_NORTH: u8 = 1;
+pub const WALL_TORCH_FACING_EAST: u8 = 2;
+pub const WALL_TORCH_FACING_SOUTH: u8 = 3;
+pub const WALL_TORCH_FACING_WEST: u8 = 4;
+
+/// THE FACING'S OWN DECODE (the no-opinion seat the default state's
+/// NORTH read answers — javap RedstoneWallTorchBlock ctor pc 16-22
+/// the `setValue(FACING, Direction.NORTH)` walk the 26.2 jar banks).
+pub fn wall_torch_facing_of(variant: u8) -> u8 {
+    if (WALL_TORCH_FACING_NORTH..=WALL_TORCH_FACING_WEST).contains(&variant) {
+        variant
+    } else {
+        WALL_TORCH_FACING_NORTH
+    }
+}
+
+/// THE FACING'S OWN STEP (the Direction.values()'s own deltas the
+/// vanilla 2D byte order wears — north the -z arm, east the +x,
+/// south the +z, west the -x).
+pub fn wall_torch_facing_delta(facing: u8) -> (i32, i32, i32) {
+    match facing {
+        WALL_TORCH_FACING_EAST => (1, 0, 0),
+        WALL_TORCH_FACING_SOUTH => (0, 0, 1),
+        WALL_TORCH_FACING_WEST => (-1, 0, 0),
+        _ => (0, 0, -1),
+    }
+}
+
+/// THE ATTACHED CELL'S OWN READ (javap RedstoneWallTorchBlock
+/// .hasNeighborSignal pc 0-27 the 26.2 jar — the `pos.relative
+/// (FACING.getOpposite())` walk the wall BEHIND the torch reads;
+/// the canSurvive pc 0-15 the WallTorchBlock delegate the same cell
+/// the `isFaceSturdy(level, attachedPos, FACING)` read serves).
+pub fn wall_torch_attached_offset(facing: u8) -> (i32, i32, i32) {
+    let (dx, dy, dz) = wall_torch_facing_delta(facing);
+    (-dx, -dy, -dz)
+}
+
+/// THE WALL TORCH'S OWN SURVIVAL GATE (javap RedstoneWallTorchBlock
+/// .canSurvive pc 0-15 -> WallTorchBlock.canSurvive(level, pos,
+/// FACING) pc 0-26 the 26.2 jar — the `level.getBlockState(pos
+/// .relative(FACING.getOpposite())).isFaceSturdy(level, attachedPos,
+/// FACING)` read the attached block's own face answers: the offline
+/// equivalence the collision table's non-Empty rows keep [the
+/// plate/wire lanes' own fold — the full-cube and the column rows
+/// the sturdy verdicts speak, the air/fluid/plant rows the Empty
+/// the refusal keeps]). The 0 byte the default NORTH read serves.
+pub fn wall_torch_can_survive(world: &World, x: i32, y: i32, z: i32, variant: u8) -> bool {
+    let (dx, dy, dz) = wall_torch_attached_offset(wall_torch_facing_of(variant));
+    !matches!(
+        collision_shape(world.get(x + dx, y + dy, z + dz)),
+        CollisionShape::Empty
+    )
+}
+
+/// THE WALL TORCH'S OWN PLACEMENT SCAN (javap WallTorchBlock
+/// .getStateForPlacement pc 0-101 the 26.2 jar the redstone wall
+/// torch's own walk delegates pc 0-39 — the `getNearestLooking
+/// Directions()` loop the horizontal arms the survive-first walk
+/// serves: the LOOK direction's own horizontal the FACING the `dir
+/// .getOpposite()` verdict banks (the player looks AT the wall — the
+/// opposite the away-from-the-wall verdict speaks), the canSurvive
+/// fail the NEXT arm the scan's own fallback answers, the vertical
+/// dirs the skip the null return the standing fallback wears). The
+/// four candidates the look's own order ranks: the primary look
+/// horizontal, the two perpendiculars the vanilla's CCW/CW walk
+/// banks, the opposite the scan's tail keeps — the first surviving
+/// facing the Some verdict banks, the all-fail the None the item's
+/// own DOWN arm the standing block answers.
+pub fn wall_torch_facing_candidates(cam_yaw_radians: f32) -> [u8; 4] {
+    let vanilla_yaw = (cam_yaw_radians - std::f32::consts::PI).to_degrees();
+    let look = direction_index_from_y_rot(f64::from(vanilla_yaw));
+    // THE FACING'S OWN OPPOSITE FOLD — the furnace arm's own +2 walk
+    // ([`FACING_BY_2D`]) the `dir.getOpposite()` verdict banks: the
+    // south look the north facing answers, the east look the west.
+    let facing_of = |dir_idx: usize| -> u8 { FACING_BY_2D[dir_idx & 3] };
+    // the scan order the nearest-looking ranking approximates: the
+    // primary look horizontal, the CCW and the CW perpendiculars the
+    // vanilla 2D +1/+3 indices bank, the opposite the tail keeps —
+    // each arm's FACING the opposite fold wears (the look arm the
+    // +2, the ccw arm the +3, the cw arm the +1, the opposite arm
+    // the identity)
+    [
+        facing_of(look + 2),
+        facing_of(look + 3),
+        facing_of(look + 1),
+        facing_of(look),
+    ]
 }
 
 /// THE TORCH'S OWN SOURCE ARMS (javap `RedStoneTorchBlock.getSignal`
@@ -1330,11 +1469,56 @@ pub fn redstone_torch_toggled(id: u16) -> Option<u16> {
 /// convention keeps — the UP arm the torch the never-counts law the
 /// getSignal walk's own gate banks).
 pub fn torch_sources_near(world: &World, x: i32, y: i32, z: i32) -> bool {
-    redstone_torch_lit(world.get(x, y - 1, z))
-        || redstone_torch_lit(world.get(x + 1, y, z))
-        || redstone_torch_lit(world.get(x - 1, y, z))
-        || redstone_torch_lit(world.get(x, y, z + 1))
-        || redstone_torch_lit(world.get(x, y, z - 1))
+    // THE STANDING PAIR'S OWN ARMS (the wall kinds the wall scan
+    // serves — the standing scan the attached-wall self-feed the
+    // family split refuses: the wall torch in the horizontal arm the
+    // standing verdict never reads [the wall kind's own FACING arm
+    // the [`wall_torch_sources_near`] walk answers, the attached cell
+    // the dir == FACING verdict refuses], the standing kinds alone
+    // the five arms wear)
+    world.get(x, y - 1, z) == REDSTONE_TORCH
+        || world.get(x + 1, y, z) == REDSTONE_TORCH
+        || world.get(x - 1, y, z) == REDSTONE_TORCH
+        || world.get(x, y, z + 1) == REDSTONE_TORCH
+        || world.get(x, y, z - 1) == REDSTONE_TORCH
+}
+
+/// THE WALL TORCH'S OWN SOURCE ARMS (the autopush-667 round — javap
+/// RedstoneWallTorchBlock.getSignal pc 0-23 the 26.2 jar: the `direction
+/// == FACING ? 0 : ownSignal` walk the FACING exclusion banks — the
+/// standing pair's UP arm the wall's own forward arm keeps, the torch
+/// at +step never arms the cell its own face points at, the other
+/// five arms the lit kind's own 15 answers [the BELOW arm INCLUDED —
+/// the wall torch powers the cell beneath it, the standing pair's
+/// never-counts-above law the mirrored image wears]). The facing the
+/// variant byte decodes (the [`wall_torch_facing_of`] walk the 0
+/// byte the default NORTH read answers), the step-vs-facing compare
+/// the direction convention keeps — the read cell asks hasSignal
+/// (pos.relative(dir), dir), the dir the step FROM the read cell TO
+/// the source, the getSignal walk the same dir read the FACING arm
+/// refuses. THE WIRE'S OWN SOURCE SCAN AND THE DOOR'S OWN READ the
+/// same helper serves.
+pub fn wall_torch_sources_near(world: &World, x: i32, y: i32, z: i32) -> bool {
+    for (dx, dy, dz) in [
+        (0, -1, 0),
+        (0, 1, 0),
+        (0, 0, -1),
+        (0, 0, 1),
+        (-1, 0, 0),
+        (1, 0, 0),
+    ] {
+        let (nx, ny, nz) = (x + dx, y + dy, z + dz);
+        let kind = world.get(nx, ny, nz);
+        if !is_redstone_wall_torch(kind) || !redstone_torch_lit(kind) {
+            continue;
+        }
+        let facing = wall_torch_facing_of(world.variant(nx, ny, nz));
+        if wall_torch_facing_delta(facing) == (dx, dy, dz) {
+            continue; // the FACING arm the getSignal walk's own gate refuses
+        }
+        return true;
+    }
+    false
 }
 
 /// THE WIRE'S OWN SURVIVAL GATE (javap `RedStoneWireBlock.canSurvive`
@@ -1384,6 +1568,13 @@ pub fn wire_sources_near(world: &World, x: i32, y: i32, z: i32) -> bool {
         // kind answers — the [`torch_sources_near`] walk the same
         // helper the door's own read serves)
         || torch_sources_near(world, x, y, z)
+        // THE WALL TORCH'S OWN SOURCE ARMS (the autopush-667 round —
+        // the getSignal walk's direction == FACING verdict the
+        // per-torch compare the variant decode serves: the torch at
+        // +step the FACING arm refuses, the other five arms the lit
+        // kind answers — the [`wall_torch_sources_near`] walk the
+        // door's own read the same helper serves)
+        || wall_torch_sources_near(world, x, y, z)
 }
 
 /// THE WIRE'S OWN COMPONENT WALK (the binary lane the graded POWER
@@ -2110,9 +2301,11 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 /// rows bank — the dev-49 round the weighted plates' own tail the
 /// 316..319 rows bank — the autopush-665 round the wire's own pair
 /// the 320/321 rows bank — the autopush-666 round the redstone
-/// torch's own pair the 322/323 rows bank — the table the 324 rows
-/// the END_PORTAL the beyond-table seat the displaced law keeps.
-pub const NAME_OF: [&str; 324] = [
+/// torch's own pair the 322/323 rows bank — the autopush-667 round
+/// the wall torch's own pair the 324/325 rows bank — the table the
+/// 326 rows the END_PORTAL the beyond-table seat the displaced law
+/// keeps.
+pub const NAME_OF: [&str; 326] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -2520,6 +2713,17 @@ pub const NAME_OF: [&str; 324] = [
     // block the lit default state the ctor's registerDefaultState
     // law banks).
     "redstone_torch", "redstone_torch",
+    // THE REDSTONE WALL TORCH'S OWN ROWS (the autopush-667 round): the
+    // lit/off pair the ONE registry entry the strip law keeps (the
+    // RedstoneWallTorchBlock's ONE "redstone_wall_torch" registry id
+    // both states the same name answers — the dig row (0.0, false)
+    // the instabreak clinit speaks, the sounds' WOOD row and the
+    // drops table's redstone_torch item the pick lane grants BOTH
+    // kinds speak), the wall kind the placement's own scan arms (the
+    // StandingAndWallBlockItem pairing the wall state the item's own
+    // secondary block banks — no "redstone_wall_torch" item the
+    // registry carries, the placeable lookup the row never answers).
+    "redstone_wall_torch", "redstone_wall_torch",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -3969,6 +4173,14 @@ pub fn redstone_signal_at(world: &World, x: i32, y: i32, z: i32) -> bool {
         // the read cell the UP arm the dark 0 keeps, the doors the
         // lit torch's own neighborhood the same walk opens)
         || torch_sources_near(world, x, y, z)
+        // THE WALL TORCH'S OWN ARMS (the autopush-667 round — the
+        // getSignal walk's direction == FACING verdict the FACING
+        // exclusion banks, the [`wall_torch_sources_near`] walk the
+        // variant decode serves: the torch at +step the FACING arm
+        // refuses, the other five arms the lit kind's own 15 wears —
+        // the below arm INCLUDED, the wall-mounted torch the cell
+        // beneath it powers)
+        || wall_torch_sources_near(world, x, y, z)
 }
 
 /// THE BUTTON'S OWN PLATE BOX — javap `ButtonBlock.makeShapes` pc 0-45
@@ -7214,8 +7426,17 @@ impl World {
             // the same straight-DOWN law keeps — javap RedStoneWireBlock
             // .canSurvive pc 0-26 the canSurviveOn(pos.below()) delegate
             // the below cell's isFaceSturdy(UP) read the autopush-665
-            // round speaks, the variant byte the wire never consumes)
-            let support = if is_pressure_plate(kind)
+            // round speaks, the variant byte the wire never consumes;
+            // THE WALL TORCH the ATTACHED cell the variant decode wears
+            // — javap RedstoneWallTorchBlock.updateShape pc 0-33 the
+            // 26.2 jar the FACING.getOpposite() neighbor the canSurvive
+            // re-read serves, the autopush-667 round the variant byte
+            // the wall kinds alone consume)
+            let support = if is_redstone_wall_torch(kind) {
+                let (dx, dy, dz) =
+                    wall_torch_attached_offset(wall_torch_facing_of(self.variant(x, y, z)));
+                (x + dx, y + dy, z + dz)
+            } else if is_pressure_plate(kind)
                 || is_redstone_wire(kind)
                 || is_redstone_torch(kind)
             {
@@ -7231,9 +7452,16 @@ impl World {
             // the pop speaks — the plate AND the wire the straight-DOWN
             // gate wears, the lever/button the variant decode the
             // canAttach walk serves, the torch the canSupportCenter
-            // delegate the [`can_support_torch`] fold answers)
+            // delegate the [`can_support_torch`] fold answers, the WALL
+            // TORCH the attached cell's own read the [`
+            // wall_torch_can_survive`] walk serves — the updateShape
+            // arm's canSurvive re-read the 26.2 jar's own law keeps)
             if is_pressure_plate(kind) || is_redstone_wire(kind) {
                 if plate_can_survive(self, x, y, z) {
+                    continue;
+                }
+            } else if is_redstone_wall_torch(kind) {
+                if wall_torch_can_survive(self, x, y, z, self.variant(x, y, z)) {
                     continue;
                 }
             } else if is_redstone_torch(kind) {
@@ -11337,7 +11565,7 @@ mod tests {
         assert_eq!(NAME_OF[BUTTON_ON as usize], "stone_button");
         assert_eq!(BUTTON + 1, BUTTON_ON, "the +1 seat the OFF/ON ladder wears");
         assert_eq!(
-            END_PORTAL, 324,
+            END_PORTAL, 326,
             "the displaced seat the wire pair's own tail banks"
         );
         // THE PULSE'S OWN CLOCK (javap press pc 28-37 — the STONE
@@ -12054,10 +12282,10 @@ mod tests {
         assert_eq!(REDSTONE_WIRE, 320);
         assert_eq!(REDSTONE_WIRE_ON, 321);
         assert_eq!(
-            END_PORTAL, 324,
+            END_PORTAL, 326,
             "the displaced seat the wire pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 324, "the palette the wire pair banks");
+        assert_eq!(atlas::N_KINDS, 326, "the palette the wire pair banks");
         assert!(is_redstone_wire(REDSTONE_WIRE) && is_redstone_wire(REDSTONE_WIRE_ON));
         assert!(!is_redstone_wire(LEVER) && !is_redstone_wire(OAK_PRESSURE_PLATE));
         assert!(!wire_powered(REDSTONE_WIRE));
@@ -12200,10 +12428,10 @@ mod tests {
         assert_eq!(REDSTONE_TORCH, 322);
         assert_eq!(REDSTONE_TORCH_OFF, 323);
         assert_eq!(
-            END_PORTAL, 324,
+            END_PORTAL, 326,
             "the displaced seat the torch pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 324, "the palette the torch pair banks");
+        assert_eq!(atlas::N_KINDS, 326, "the palette the torch pair banks");
         assert!(is_redstone_torch(REDSTONE_TORCH) && is_redstone_torch(REDSTONE_TORCH_OFF));
         assert!(!is_redstone_torch(TORCH) && !is_redstone_torch(LEVER));
         assert!(redstone_torch_lit(REDSTONE_TORCH));
@@ -12328,6 +12556,249 @@ mod tests {
     }
 
     #[test]
+    fn the_redstone_wall_torch_the_attached_lane_and_the_facing_arms_wear() {
+        // THE WALL TORCH'S OWN WORLD WALK (the autopush-667 round —
+        // javap RedstoneWallTorchBlock the 26.2 jar the probe scripts/
+        // jar_work/redstone_wall_torch_667.py banks: the seats the
+        // 324/325 tail wears, the END_PORTAL the beyond-table 326 the
+        // displacement keeps, the family/lit/toggled verdicts the ±1
+        // mates speak, the facing byte the blockstate y-table's own
+        // vocabulary banks, the getSignal's FACING arm the exclusion
+        // wears, the canSurvive the attached cell's sturdy read
+        // serves, the support-pop arm the updateShape walk the dig
+        // consults)
+        use mc_registry::generated::atlas;
+        assert_eq!(REDSTONE_WALL_TORCH, 324);
+        assert_eq!(REDSTONE_WALL_TORCH_OFF, 325);
+        assert_eq!(END_PORTAL, 326);
+        assert_eq!(atlas::N_KINDS, 326, "the palette the wall pair banks");
+        assert!(
+            is_redstone_torch(REDSTONE_WALL_TORCH) && is_redstone_torch(REDSTONE_WALL_TORCH_OFF),
+            "the wall pair the family's tail banks"
+        );
+        assert!(
+            !is_redstone_wall_torch(REDSTONE_TORCH) && !is_redstone_wall_torch(REDSTONE_TORCH_OFF),
+            "the standing pair the wall fn refuses"
+        );
+        assert!(redstone_torch_lit(REDSTONE_WALL_TORCH));
+        assert!(!redstone_torch_lit(REDSTONE_WALL_TORCH_OFF));
+        assert_eq!(REDSTONE_WALL_TORCH + 1, REDSTONE_WALL_TORCH_OFF, "the +1 mate wears");
+        assert_eq!(
+            redstone_torch_toggled(REDSTONE_WALL_TORCH),
+            Some(REDSTONE_WALL_TORCH_OFF)
+        );
+        assert_eq!(
+            redstone_torch_toggled(REDSTONE_WALL_TORCH_OFF),
+            Some(REDSTONE_WALL_TORCH)
+        );
+        assert_eq!(redstone_torch_toggled(STONE), None, "the unknown the None keeps");
+        // THE NAMES' OWN ROWS (the ONE registry entry both kinds the
+        // strip law keeps — the dig/sounds/drops lanes the same row
+        // speaks)
+        assert_eq!(NAME_OF[REDSTONE_WALL_TORCH as usize], "redstone_wall_torch");
+        assert_eq!(NAME_OF[REDSTONE_WALL_TORCH_OFF as usize], "redstone_wall_torch");
+        assert_eq!(atlas::KIND_NAMES[REDSTONE_WALL_TORCH as usize], "redstone_wall_torch");
+        assert_eq!(
+            atlas::KIND_NAMES[REDSTONE_WALL_TORCH_OFF as usize],
+            "redstone_wall_torch_off"
+        );
+        assert_eq!(
+            atlas::REGISTRY_NAMES[REDSTONE_WALL_TORCH as usize],
+            "redstone_wall_torch"
+        );
+        assert_eq!(
+            atlas::REGISTRY_NAMES[REDSTONE_WALL_TORCH_OFF as usize],
+            "redstone_wall_torch"
+        );
+        // THE TILE'S OWN IDENTITY (the SAME 149/150 sprites the
+        // standing pair's seats wear — the atlas's tile set the wall
+        // pair never grows)
+        assert_eq!(
+            atlas::FACE_TILES[REDSTONE_WALL_TORCH as usize],
+            atlas::FACE_TILES[REDSTONE_TORCH as usize],
+            "the lit wall kind the lit standing kind's tile wears"
+        );
+        assert_eq!(
+            atlas::FACE_TILES[REDSTONE_WALL_TORCH_OFF as usize],
+            atlas::FACE_TILES[REDSTONE_TORCH_OFF as usize],
+            "the off wall kind the off standing kind's tile wears"
+        );
+        // THE COLLISION'S OWN PASS-THROUGH ROW + THE DIG'S OWN
+        // INSTABREAK (the blocks clinit row pc 10113-10154 the
+        // wallVariant chain speaks — the noCollision the Empty row
+        // wears, the instabreak the (0.0, false) row answers)
+        assert_eq!(collision_shape(REDSTONE_WALL_TORCH), CollisionShape::Empty);
+        assert_eq!(collision_shape(REDSTONE_WALL_TORCH_OFF), CollisionShape::Empty);
+        assert_eq!(
+            crate::dig::DigState::block_dig_row(REDSTONE_WALL_TORCH),
+            crate::dig::DigState::block_dig_row(REDSTONE_TORCH),
+            "the wall kind the standing kind's instabreak row wears"
+        );
+        // THE PLACEABLE'S OWN REFUSAL (no "redstone_wall_torch" item
+        // the registry carries — the StandingAndWallBlockItem pairing
+        // the wall state the item's own scan arms, the placeable
+        // lookup the row never answers)
+        assert_eq!(World::placeable_block("redstone_torch"), Some(REDSTONE_TORCH));
+        assert_eq!(World::placeable_block("redstone_wall_torch"), None);
+        // THE FACING BYTE'S OWN LAW (the blockstate y-table's own
+        // vocabulary — north 1, east 2, south 3, west 4; the 0 byte
+        // the default NORTH read answers, the 5+ the same default)
+        assert_eq!(wall_torch_facing_of(0), WALL_TORCH_FACING_NORTH);
+        assert_eq!(wall_torch_facing_of(WALL_TORCH_FACING_NORTH), WALL_TORCH_FACING_NORTH);
+        assert_eq!(wall_torch_facing_of(WALL_TORCH_FACING_EAST), WALL_TORCH_FACING_EAST);
+        assert_eq!(wall_torch_facing_of(WALL_TORCH_FACING_SOUTH), WALL_TORCH_FACING_SOUTH);
+        assert_eq!(wall_torch_facing_of(WALL_TORCH_FACING_WEST), WALL_TORCH_FACING_WEST);
+        assert_eq!(wall_torch_facing_of(5), WALL_TORCH_FACING_NORTH);
+        // THE DELTA'S OWN STEPS (the vanilla 2D byte order wears —
+        // north the -z arm, east the +x, south the +z, west the -x;
+        // the attached offset the opposite fold answers)
+        assert_eq!(wall_torch_facing_delta(WALL_TORCH_FACING_NORTH), (0, 0, -1));
+        assert_eq!(wall_torch_facing_delta(WALL_TORCH_FACING_EAST), (1, 0, 0));
+        assert_eq!(wall_torch_facing_delta(WALL_TORCH_FACING_SOUTH), (0, 0, 1));
+        assert_eq!(wall_torch_facing_delta(WALL_TORCH_FACING_WEST), (-1, 0, 0));
+        assert_eq!(wall_torch_attached_offset(WALL_TORCH_FACING_NORTH), (0, 0, 1));
+        assert_eq!(wall_torch_attached_offset(WALL_TORCH_FACING_EAST), (-1, 0, 0));
+        // THE CANDIDATES' OWN SCAN (javap WallTorchBlock
+        // .getStateForPlacement pc 0-101 the survive-first walk — the
+        // north look the SOUTH facing the opposite fold answers, the
+        // east look the WEST, the ccw/cw perpendiculars the +1/+3
+        // indices bank, the opposite arm the tail keeps)
+        assert_eq!(
+            wall_torch_facing_candidates(0.0),
+            [
+                WALL_TORCH_FACING_SOUTH,
+                WALL_TORCH_FACING_WEST,
+                WALL_TORCH_FACING_EAST,
+                WALL_TORCH_FACING_NORTH,
+            ],
+            "the north look the south-facing primary wears"
+        );
+        assert_eq!(
+            wall_torch_facing_candidates(std::f32::consts::FRAC_PI_2),
+            [
+                WALL_TORCH_FACING_WEST,
+                WALL_TORCH_FACING_NORTH,
+                WALL_TORCH_FACING_SOUTH,
+                WALL_TORCH_FACING_EAST,
+            ],
+            "the east look the west-facing primary wears"
+        );
+        // THE SURVIVAL'S OWN GATE (javap WallTorchBlock.canSurvive pc
+        // 0-26 — the attached cell's isFaceSturdy read the offline
+        // equivalence the collision table's non-Empty rows keep: the
+        // WEST wall the facing-EAST torch's own accept wears, the east
+        // air the attached cell's Empty read refuses [the facing the
+        // AWAY-from-the-wall law wears — the attached cell the
+        // FACING.getOpposite() fold answers])
+        let mut w = World::new(2, 0x600D);
+        let c = w.size_blocks() / 2;
+        let y = 8;
+        // THE PROCEDURAL TERRAIN'S OWN CLEAR (the y=8 band the hills'
+        // own fill may hold — the explicit AIR the refusal's east cell
+        // answers)
+        w.set(c + 1, y, c, AIR);
+        w.set(c - 1, y, c, STONE);
+        assert!(
+            wall_torch_can_survive(&w, c, y, c, WALL_TORCH_FACING_EAST),
+            "the west wall the attached cell's sturdy read answers"
+        );
+        assert!(
+            !wall_torch_can_survive(&w, c, y, c, WALL_TORCH_FACING_WEST),
+            "the east air the attached cell's Empty read refuses"
+        );
+        // THE FACING ARM'S OWN VERDICT (javap getSignal pc 0-23 the
+        // `direction == FACING ? 0 : ownSignal` walk — the dir the
+        // hasSignal(pos.relative(dir), dir) convention keeps, the
+        // requester the attached cell the dir == FACING fold answers:
+        // the attached wall the self-feed the FACING arm refuses, the
+        // east/side/above/below arms the lit kind's own 15 answers —
+        // the standing pair's never-counts-above law the mirrored
+        // image wears [the wall torch the cell beneath it powers])
+        w.set(c, y, c, REDSTONE_WALL_TORCH);
+        w.set_variant(c, y, c, WALL_TORCH_FACING_EAST);
+        assert!(
+            !wall_torch_sources_near(&w, c - 1, y, c),
+            "the attached wall the FACING arm the self-feed refuses"
+        );
+        assert!(
+            wall_torch_sources_near(&w, c + 1, y, c),
+            "the east neighbor the side arm answers"
+        );
+        assert!(
+            wall_torch_sources_near(&w, c, y - 1, c),
+            "the below cell the lit kind's own 15 answers"
+        );
+        assert!(
+            wall_torch_sources_near(&w, c, y + 1, c),
+            "the above cell the lit kind's own 15 answers"
+        );
+        assert!(
+            !torch_sources_near(&w, c - 1, y, c),
+            "the wall kind the standing scan never reads"
+        );
+        assert!(
+            redstone_signal_at(&w, c + 1, y, c),
+            "the door's own read the side arm answers"
+        );
+        w.set(c, y, c, REDSTONE_WALL_TORCH_OFF);
+        assert!(
+            !redstone_signal_at(&w, c + 1, y, c),
+            "the OFF wall kind the silence keeps"
+        );
+        w.set(c, y, c, REDSTONE_WALL_TORCH);
+        // THE NORTH-FACING SIDE ARM'S OWN VERDICT (the torch at the
+        // read cell's east neighbor facing north the step-vs-facing
+        // compare answers — the side arm the lit kind's own 15 wears,
+        // the OFF kind the silence keeps)
+        w.set(c + 1, y, c, REDSTONE_WALL_TORCH);
+        w.set_variant(c + 1, y, c, WALL_TORCH_FACING_NORTH);
+        assert!(
+            wall_torch_sources_near(&w, c, y, c),
+            "the east wall torch facing north the side arm answers"
+        );
+        w.set_variant(c + 1, y, c, WALL_TORCH_FACING_EAST);
+        assert!(
+            !wall_torch_sources_near(&w, c, y, c),
+            "the east wall torch facing east the attached read refuses"
+        );
+        w.set_variant(c + 1, y, c, WALL_TORCH_FACING_NORTH);
+        assert!(
+            redstone_signal_at(&w, c, y, c),
+            "the door's own read the wall arm answers"
+        );
+        w.set(c + 1, y, c, REDSTONE_WALL_TORCH_OFF);
+        assert!(
+            !redstone_signal_at(&w, c, y, c),
+            "the OFF wall kind the silence keeps"
+        );
+        w.set(c + 1, y, c, REDSTONE_WALL_TORCH);
+        w.set_variant(c + 1, y, c, WALL_TORCH_FACING_NORTH);
+        // THE SUPPORT-POP'S OWN WALK (javap RedstoneWallTorchBlock
+        // .updateShape pc 0-33 the attached-direction neighbor the
+        // canSurvive re-read serves — the wall BEHIND the torch dug
+        // the pop speaks, the floor beneath dug the attached verdict
+        // the torch keeps)
+        w.set(c, y, c, REDSTONE_WALL_TORCH);
+        w.set_variant(c, y, c, WALL_TORCH_FACING_EAST);
+        w.set(c - 1, y, c, STONE);
+        w.set(c, y - 1, c, AIR);
+        let popped = w.attach_support_updates((c, y - 1, c));
+        assert!(
+            popped.is_empty(),
+            "the floor beneath dug the attached verdict keeps"
+        );
+        assert_eq!(w.get(c, y, c), REDSTONE_WALL_TORCH);
+        w.set(c - 1, y, c, AIR);
+        let popped = w.attach_support_updates((c - 1, y, c));
+        assert_eq!(
+            popped,
+            vec![((c, y, c), REDSTONE_WALL_TORCH)],
+            "the wall behind dug the pop speaks"
+        );
+        assert_eq!(w.get(c, y, c), AIR);
+    }
+
+    #[test]
     fn the_door_family_the_mates_and_the_seats_wear() {
         // THE DOOR QUARTET'S OWN LAW (the autopush-655 round — the
         // two-halves x two-open-bits ladder the seats wear: the
@@ -12338,7 +12809,7 @@ mod tests {
         assert_eq!(OAK_DOOR_OPEN, 92);
         assert_eq!(OAK_DOOR_UPPER_OPEN, 93);
         assert_eq!(
-            END_PORTAL, 324,
+            END_PORTAL, 326,
             "the displaced seat the wire pair's own tail banks"
         );
         // THE WOOD LADDER'S OWN SEATS (the dev-43 round — the eleven
@@ -12544,7 +13015,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 324, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 326, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)

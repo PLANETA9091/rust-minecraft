@@ -1,0 +1,123 @@
+===== net/minecraft/world/level/block/WallTorchBlock =====
+  --- canSurvive (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;)Z ---
+        0: aload_2 
+        1: aload_3 
+        2: aload_1 
+        3: getstatic net/minecraft/world/level/block/WallTorchBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+        6: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+        9: checkcast cp30
+       12: invokestatic net/minecraft/world/level/block/WallTorchBlock.canSurvive:(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Z
+       15: ireturn 
+  --- canSurvive (Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Z ---
+        0: aload_1 
+        1: aload_2 
+        2: invokevirtual net/minecraft/core/Direction.getOpposite:()Lnet/minecraft/core/Direction;
+        5: invokevirtual net/minecraft/core/BlockPos.relative:(Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;
+        8: astore_3 
+        9: aload_0 
+       10: aload_3 
+       11: invokeinterface 
+       16: astore 
+       17: iconst_1 
+       18: aload 
+       19: iconst_1 
+       20: aload_0 
+       21: aload_3 
+       22: aload_2 
+       23: invokevirtual net/minecraft/world/level/block/state/BlockState.isFaceSturdy:(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Z
+       26: ireturn 
+  --- getStateForPlacement (Lnet/minecraft/world/item/context/BlockPlaceContext;)Lnet/minecraft/world/level/block/state/BlockState; ---
+        0: aload_0 
+        1: invokevirtual net/minecraft/world/level/block/WallTorchBlock.defaultBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+        4: astore_2 
+        5: aload_1 
+        6: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getLevel:()Lnet/minecraft/world/level/Level;
+        9: astore_3 
+       10: aload_1 
+       11: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getClickedPos:()Lnet/minecraft/core/BlockPos;
+       14: astore 
+       15: iconst_1 
+       16: aload_1 
+       17: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getNearestLookingDirections:()[Lnet/minecraft/core/Direction;
+       20: astore 
+       21: iconst_2 
+       22: aload 
+       23: iconst_2 
+       24: astore 
+       25: iconst_3 
+       26: aload 
+       27: iconst_3 
+       28: arraylength 
+       29: istore 
+       30: iconst_4 
+       31: iconst_0 
+       32: istore 
+       33: iconst_5 
+       34: iload 
+       35: iconst_5 
+       36: iload 
+       37: iconst_4 
+       38: if_icmpge cp62
+       41: aload 
+       42: iconst_3 
+       43: iload 
+       44: iconst_5 
+       45: aaload 
+       46: astore 
+       47: 0x09 
+       48: aload 
+       49: 0x09 
+       50: invokevirtual net/minecraft/core/Direction.getAxis:()Lnet/minecraft/core/Direction$Axis;
+       53: invokevirtual net/minecraft/core/Direction$Axis.isHorizontal:()Z
+       56: ifne cp6
+       59: goto cp35
+       62: aload 
+       63: 0x09 
+       64: invokevirtual net/minecraft/core/Direction.getOpposite:()Lnet/minecraft/core/Direction;
+       67: astore 
+       68: 0x0a 
+       69: aload_2 
+       70: getstatic net/minecraft/world/level/block/WallTorchBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+       73: aload 
+       74: 0x0a 
+       75: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+       78: checkcast cp23
+       81: astore_2 
+       82: aload_2 
+       83: aload_3 
+       84: aload 
+       85: iconst_1 
+       86: invokevirtual net/minecraft/world/level/block/state/BlockState.canSurvive:(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;)Z
+       89: ifeq cp5
+       92: aload_2 
+       93: areturn 
+       94: iinc 
+       97: goto cp65473
+      100: aconst_null 
+      101: areturn 
+  --- updateShape (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/world/level/ScheduledTickAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;)Lnet/minecraft/world/level/block/state/BlockState; ---
+        0: aload 
+        1: iconst_2 
+        2: invokevirtual net/minecraft/core/Direction.getOpposite:()Lnet/minecraft/core/Direction;
+        5: aload_1 
+        6: getstatic net/minecraft/world/level/block/WallTorchBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+        9: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+       12: if_acmpne cp20
+       15: aload_1 
+       16: aload_2 
+       17: aload 
+       18: iconst_1 
+       19: invokevirtual net/minecraft/world/level/block/state/BlockState.canSurvive:(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;)Z
+       22: ifne cp10
+       25: getstatic net/minecraft/world/level/block/Blocks.AIR:Lnet/minecraft/world/level/block/Block;
+       28: invokevirtual net/minecraft/world/level/block/Block.defaultBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+       31: areturn 
+       32: aload_1 
+       33: areturn 
+=== Items bsm[57] target: java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite; args=[9663, 9838, 9665] ===
+        0: new cp578
+        3: dup 
+        4: getstatic net/minecraft/world/entity/EntityTypes.OAK_CHEST_BOAT:Lnet/minecraft/world/entity/EntityType;
+        7: aload_0 
+        8: invokespecial net/minecraft/world/item/BoatItem.<init>:(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/item/Item$Properties;)V
+       11: areturn 

@@ -1368,11 +1368,51 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     // glow planes the 7-element bake answers, the OFF
                     // kind the template_torch_unlit parent the stick
                     // box alone keeps; the regular torch the ONE
-                    // element chain the lane's own bake answers)
+                    // element chain the lane's own bake answers; the
+                    // autopush-667 round the WALL pair the same
+                    // per-kind derive wears — the LIT kind the
+                    // template_redstone_torch_wall chain the tilted
+                    // stick box [-1,3.5,7]->[1,13.5,9] the -22.5° rotZ
+                    // the element-rotation lane bakes + the SIX glow
+                    // planes the 7-element chain keeps, the OFF kind
+                    // the template_torch_wall_unlit parent the stick
+                    // box ALONE answers)
                     let element_quads = if crate::world::is_torch(id) {
                         torch_model_quads()
+                    } else if crate::world::is_redstone_wall_torch(id) {
+                        redstone_wall_torch_model_quads(crate::world::redstone_torch_lit(id))
                     } else {
                         redstone_torch_model_quads(crate::world::redstone_torch_lit(id))
+                    };
+                    // THE WALL TORCH'S OWN FACING ROTATION (the
+                    // autopush-667 round — the blockstates'
+                    // redstone_wall_torch.json the y-table the 8-variant
+                    // map banks: facing=east the base model the NO-y row
+                    // answers, north 270 / south 90 / west 180 the
+                    // rotated rows speak; the facing the variant byte
+                    // decodes, the theta the cell-center rotation the
+                    // leaf_litter lane's own formula wears [rx = 0.5 +
+                    // (x-0.5)·cos - (z-0.5)·sin, rz = 0.5 + (x-0.5)·sin
+                    // + (z-0.5)·cos] — the vanilla model y-rotation the
+                    // same walk answers, the stick's embedded half the
+                    // attached block's own body hides [the wall block's
+                    // opaque faces the depth test answers], the uv the
+                    // rotation never touches — the texture turns WITH
+                    // the element the glued law keeps). The standing
+                    // kinds the identity pair the no-variant lane
+                    // keeps.
+                    let (wall_sn, wall_cs) = if crate::world::is_redstone_wall_torch(id) {
+                        let facing =
+                            crate::world::wall_torch_facing_of(world.variant(wx, wy, wz));
+                        let y_deg = match facing {
+                            crate::world::WALL_TORCH_FACING_EAST => 0.0f32,
+                            crate::world::WALL_TORCH_FACING_SOUTH => 90.0,
+                            crate::world::WALL_TORCH_FACING_WEST => 180.0,
+                            _ => 270.0,
+                        };
+                        y_deg.to_radians().sin_cos()
+                    } else {
+                        (0.0f32, 1.0f32)
                     };
                     for q in element_quads {
                         if q.cullface == Some(mc_registry::element_quads::Direction::Down)
@@ -1384,10 +1424,16 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         let mut colors = [[0f32; 3]; 4];
                         let mut uvs = [[0f32; 2]; 4];
                         for (i, v) in q.vertices.iter().enumerate() {
+                            // THE WALL ROTATION'S OWN FOLD (the facing
+                            // theta the cell-center walk wears — the
+                            // standing kinds the identity walk answers,
+                            // the (sn, cs) pair the (0, 1) no-op keeps)
+                            let rx = 0.5 + (v[0] - 0.5) * wall_cs - (v[2] - 0.5) * wall_sn;
+                            let rz = 0.5 + (v[0] - 0.5) * wall_sn + (v[2] - 0.5) * wall_cs;
                             pts[i] = [
-                                wx as f32 + v[0],
+                                wx as f32 + rx,
                                 wy as f32 + v[1],
-                                wz as f32 + v[2],
+                                wz as f32 + rz,
                             ];
                             // the texel-space uv the /16 fold normalizes
                             uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
@@ -3688,6 +3734,40 @@ fn redstone_torch_model_quads(lit: bool) -> &'static [mc_registry::element_quads
             "block/redstone_torch"
         } else {
             "block/redstone_torch_off"
+        };
+        mc_registry::element_quads::derive_model_inherited(model).unwrap_or_default()
+    })
+}
+
+/// THE REDSTONE WALL TORCH'S OWN MODEL BAKES (the autopush-667 round —
+/// the block/redstone_wall_torch and block/redstone_wall_torch_off
+/// chains the registry's derive walk resolves, the torch lane's own
+/// cache pattern): the LIT kind walks the parent link to
+/// block/template_redstone_torch_wall's SEVEN-element geometry (the
+/// tilted stick box [-1,3.5,7]->[1,13.5,9] the -22.5° rotZ about
+/// origin [0,3.5,8] the element-rotation lane bakes + the SIX tiny
+/// glow planes the lit tile's own windows bank), the OFF kind walks
+/// the block/template_torch_wall_unlit parent the stick box ALONE
+/// keeps — the merged texture map's `#torch` ref the per-quad
+/// texture name answers (the block/redstone_wall_torch and
+/// block/redstone_wall_torch_off masters the kind tiles bank — the
+/// lane reads the KIND's own tile, the quads' texture name the lane
+/// never consults; the SAME 149/150 sprites the standing pair's
+/// seats wear — the atlas's tile set the wall pair never grows). The
+/// per-facing y-rotation the MESHER's own walk wears (the blockstate
+/// y-table the 8-variant map banks). The failed derive the honest
+/// empty slice keeps (the stick the nothing renders).
+fn redstone_wall_torch_model_quads(lit: bool) -> &'static [mc_registry::element_quads::Quad] {
+    static LIT: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    static UNLIT: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    let cache = if lit { &LIT } else { &UNLIT };
+    cache.get_or_init(|| {
+        let model = if lit {
+            "block/redstone_wall_torch"
+        } else {
+            "block/redstone_wall_torch_off"
         };
         mc_registry::element_quads::derive_model_inherited(model).unwrap_or_default()
     })

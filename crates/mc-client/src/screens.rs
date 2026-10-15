@@ -36019,7 +36019,25 @@ impl App {
                     consult.push((lx + dx, ly + dy, lz + dz));
                 }
                 for (cx, cy, cz) in consult {
-                    for (tx, ty, tz) in [(cx, cy, cz), (cx, cy + 1, cz)] {
+                    // THE SEATS' OWN SIX (the autopush-667 round — the
+                    // neighborChanged walk the vanilla notification law
+                    // keeps: the changed cell's own six the direct
+                    // neighbors the consult reaches — the standing pair
+                    // the cell+above seats the floor consult wears, the
+                    // WALL pair the four horizontals the attach lane
+                    // banks [the torch at +step the changed cell the
+                    // attached cell answers]; the read the torch's OWN
+                    // attached cell the variant decode wears — the
+                    // elsewhere-attached torch the fresh verdict the
+                    // same walk keeps)
+                    for (tx, ty, tz) in [
+                        (cx, cy, cz),
+                        (cx, cy + 1, cz),
+                        (cx + 1, cy, cz),
+                        (cx - 1, cy, cz),
+                        (cx, cy, cz + 1),
+                        (cx, cy, cz - 1),
+                    ] {
                         if !seen.insert((tx, ty, tz)) {
                             continue;
                         }
@@ -36028,11 +36046,33 @@ impl App {
                             continue;
                         }
                         let lit = crate::world::redstone_torch_lit(kind);
-                        let powered = crate::world::redstone_signal_at(read, tx, ty - 1, tz);
+                        // THE CONSULT'S OWN CELL (the autopush-667 round —
+                        // the standing pair the floor read wears, the
+                        // WALL pair the attached cell the hasNeighborSignal
+                        // override's own walk serves — javap
+                        // RedstoneWallTorchBlock.hasNeighborSignal pc 0-27
+                        // the 26.2 jar: the `pos.relative(FACING
+                        // .getOpposite())` read the wall BEHIND the torch
+                        // answers, the variant decode the offset wears —
+                        // the wall torch the powered wall the same beat
+                        // the dark kind speaks)
+                        let (px, py, pz) = if crate::world::is_redstone_wall_torch(kind) {
+                            let (dx, dy, dz) = crate::world::wall_torch_attached_offset(
+                                crate::world::wall_torch_facing_of(read.variant(tx, ty, tz)),
+                            );
+                            (tx + dx, ty + dy, tz + dz)
+                        } else {
+                            (tx, ty - 1, tz)
+                        };
+                        let powered = crate::world::redstone_signal_at(read, px, py, pz);
+                        // THE FLIP'S OWN MATE (the ±1 seat the family's
+                        // own law wears — the [`redstone_torch_toggled`]
+                        // walk the wall pair's own mates answers, the
+                        // standing pair the same fold keeps)
                         let flip = if lit && powered {
-                            Some(crate::world::REDSTONE_TORCH_OFF)
+                            crate::world::redstone_torch_toggled(kind)
                         } else if !lit && !powered {
-                            Some(crate::world::REDSTONE_TORCH)
+                            crate::world::redstone_torch_toggled(kind)
                         } else {
                             None
                         };
@@ -37725,6 +37765,42 @@ impl App {
         // keeps; the lever's placement variant the same raw form the
         // Y arms' FACING verdict reads)
         let cam_yaw = self.world_camera().yaw;
+        // THE WALL TORCH'S OWN PLACEMENT CANDIDATE (the autopush-667
+        // round — javap StandingAndWallBlockItem.getPlacementState the
+        // 26.2 jar: the item's own scan the WALL state the horizontal
+        // arms wear — the wall block the item's own secondary block
+        // the ctor's wallBlock field banks, the side hit the wall lane
+        // the collision-backed click answers): the candidates the
+        // look-ordered survive-first scan the WallTorchBlock walk
+        // serves ([`crate::world::wall_torch_facing_candidates`] —
+        // FACING = dir.getOpposite() the pc 62-67 fold banks), the
+        // first attached-cell-sturdy arm the Some verdict banks, the
+        // all-fail the None the standing fallback wears. The side hit
+        // the gate the practical click answers (the vanilla's own
+        // looking-order the DOWN-first floor arm keeps — the floor
+        // click the standing lane wears, the level-look floor corner
+        // the documented follow-up notes keep).
+        let wall_torch_facing: Option<u8> = if block == crate::world::REDSTONE_TORCH
+            && (2..=5).contains(&hit.face)
+        {
+            self.active_world().and_then(|w| {
+                crate::world::wall_torch_facing_candidates(cam_yaw)
+                    .into_iter()
+                    .find(|f| {
+                        let (dx, dy, dz) = crate::world::wall_torch_attached_offset(*f);
+                        !matches!(
+                            crate::world::collision_shape(w.get(
+                                cell.0 + dx,
+                                cell.1 + dy,
+                                cell.2 + dz
+                            )),
+                            crate::world::CollisionShape::Empty
+                        )
+                    })
+            })
+        } else {
+            None
+        };
         // THE TORCH'S OWN SURVIVAL GATE (the dev-32 round — javap
         // BaseTorchBlock.canSurvive over the 26.2 jar: the
         // `canSupportCenter(level, pos.below(), Direction.UP)` delegate
@@ -37738,16 +37814,22 @@ impl App {
         // (the autopush-522 round — javap CandleBlock.canSurvive the
         // SAME `canSupportCenter(below, UP)` delegate the 26.2 jar
         // speaks): the shared predicate the floating candle the same
-        // refusal keeps.
-        if crate::world::is_torch(block)
-            || crate::world::is_candle(block)
-            // THE REDSTONE TORCH'S OWN ROW (the autopush-666 round —
-            // javap BaseTorchBlock.canSurvive the redstone torch's own
-            // walk the SAME canSupportCenter(below, UP) delegate the
-            // 26.2 jar speaks): the shared predicate the floating
-            // torch the same refusal keeps — the press the PASS
-            // carries, the item lane follows, nothing consumed.
-            || crate::world::is_redstone_torch(block)
+        // refusal keeps. THE WALL CANDIDATE'S OWN BRANCH (the
+        // autopush-667 round — the surviving arm the scan's own
+        // canSurvive predicate verified, the attached cell the sturdy
+        // verdict the find's own fold answered — the gate the
+        // standing lane alone re-reads, the wall placement the
+        // candidate's own verdict arms).
+        if wall_torch_facing.is_none()
+            && (crate::world::is_torch(block)
+                || crate::world::is_candle(block)
+                // THE REDSTONE TORCH'S OWN ROW (the autopush-666 round —
+                // javap BaseTorchBlock.canSurvive the redstone torch's own
+                // walk the SAME canSupportCenter(below, UP) delegate the
+                // 26.2 jar speaks): the shared predicate the floating
+                // torch the same refusal keeps — the press the PASS
+                // carries, the item lane follows, nothing consumed.
+                || crate::world::is_redstone_torch(block))
         {
             let below = self
                 .active_world()
@@ -37879,6 +37961,15 @@ impl App {
                 } else {
                     block
                 }
+            // THE WALL TORCH'S OWN KIND SWAP (the autopush-667 round —
+            // the item's own pairing the placement state the scan's
+            // surviving arm answers: the side hit the WALL kind the
+            // candidate wears, the all-fail the STANDING kind the
+            // item's own primary block keeps — the 324 seat the
+            // palette's wall pair banks, the standing fallback the
+            // old kind wears)
+            } else if wall_torch_facing.is_some() {
+                crate::world::REDSTONE_WALL_TORCH
             } else {
                 block
             };
@@ -37925,6 +38016,17 @@ impl App {
                     cell.2,
                     crate::world::lever_placement_variant(hit.face, cam_yaw),
                 );
+            }
+            // THE WALL TORCH'S OWN FACING STAMP (the autopush-667
+            // round — the surviving scan arm's facing byte the variant
+            // layer's own seat banks: the mesher's y-rotation lane the
+            // byte reads, the NOT-gate consult the attached cell the
+            // byte decodes, the support-pop arm the wall BEHIND the
+            // torch the same byte answers; the standing fallback the
+            // no-stamp lane keeps — the variant byte the standing
+            // pair never consumes)
+            if let Some(facing) = wall_torch_facing {
+                world.set_variant(cell.0, cell.1, cell.2, facing);
             }
             // THE PLACEMENT'S OWN CHAIN (javap BlockItem.placeBlock pc
             // 9 `bipush 11` — the setBlock the UPDATE_NEIGHBORS bit the
@@ -102684,7 +102786,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            324,
+            326,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -102765,7 +102867,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            324,
+            326,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -103067,7 +103169,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            324,
+            326,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -106914,7 +107016,7 @@ cow_sound_variant: None,
         assert_eq!(crate::world::OAK_BUTTON_ON, 263);
         assert_eq!(
             crate::world::END_PORTAL,
-            324,
+            326,
             "the displaced seat the weighted plates' own tail keeps"
         );
         for kind in [
@@ -106997,7 +107099,7 @@ cow_sound_variant: None,
         // #texture ref banks)
         assert_eq!(
             atlas::N_KINDS,
-            324,
+            326,
             "the palette the weighted plates' own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
@@ -107212,12 +107314,12 @@ cow_sound_variant: None,
         );
         assert_eq!(
             crate::world::END_PORTAL,
-            324,
+            326,
             "the displaced seat the weighted plates' own tail keeps"
         );
         assert_eq!(
             atlas::N_KINDS,
-            324,
+            326,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
@@ -107489,12 +107591,12 @@ cow_sound_variant: None,
         );
         assert_eq!(
             crate::world::END_PORTAL,
-            324,
+            326,
             "the displaced seat the weighted plates' own tail keeps"
         );
         assert_eq!(
             atlas::N_KINDS,
-            324,
+            326,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
@@ -107609,8 +107711,8 @@ cow_sound_variant: None,
         assert_eq!(w::LIGHT_WEIGHTED_PRESSURE_PLATE_ON, 317);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE, 318);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, 319);
-        assert_eq!(w::END_PORTAL, 324);
-        assert_eq!(atlas::N_KINDS, 324, "the palette the weighted rows bank");
+        assert_eq!(w::END_PORTAL, 326);
+        assert_eq!(atlas::N_KINDS, 326, "the palette the weighted rows bank");
         for (off, on, name) in [
             (
                 w::LIGHT_WEIGHTED_PRESSURE_PLATE,
@@ -107960,6 +108062,103 @@ cow_sound_variant: None,
     }
 
     #[test]
+    fn the_redstone_wall_torch_the_consult_and_the_scan_wear() {
+        // THE WALL TORCH'S OWN APP LANE (the autopush-667 round — the
+        // attach broadcast's NOT-gate consult the attached cell the
+        // variant decode wears: the wall torch the wall BEHIND it the
+        // powered lever's own beat the dark kind speaks, the quiet
+        // wall the lit kind restores — javap RedstoneWallTorchBlock
+        // .hasNeighborSignal pc 0-27 + the tick walk the 26.2 jar the
+        // probe scripts/jar_work/redstone_wall_torch_667.py banks).
+        // THE FACING ARM'S OWN FEED (the getSignal walk's
+        // direction == FACING verdict the wire arms wear — the wire in
+        // the torch's own facing arm the dark keep wears, the side
+        // arm the lit kind's own 15 banks)
+        use crate::world as w;
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            // THE WALL THE TORCH ATTACHES TO (west — the facing the
+            // AWAY-from-the-wall law wears: the torch at (c) faces
+            // EAST, the attached STONE at (c-1)), the lever OFF the
+            // wall's own neighbor cell (the support notification the
+            // consult's own scope wears — the lever's own attached
+            // block the updateNeighboursAt walk serves), the two wires
+            // the SIDE arms' own verdict reads (the south and the north
+            // wires the lit kind's own 15 lights, the attached wall the
+            // FACING arm the self-feed refuses)
+            world.set(c - 1, top, c, w::STONE);
+            world.set(c, top, c, w::REDSTONE_WALL_TORCH);
+            world.set_variant(c, top, c, w::WALL_TORCH_FACING_EAST);
+            world.set(c, top, c + 1, w::REDSTONE_WIRE);
+            world.set(c, top, c - 1, w::REDSTONE_WIRE);
+            world.set(c - 2, top, c, w::LEVER);
+        }
+        // THE PLACE BROADCAST'S OWN VERDICT (the quiet wall the lit
+        // kind keeps — the attached cell the lever OFF the unpowered
+        // read answers, the wires the side arms' own verdict speaks)
+        app.attach_wire_voice(c, top, c);
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            w::REDSTONE_WALL_TORCH,
+            "the quiet wall the lit kind keeps"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c + 1),
+            w::REDSTONE_WIRE_ON,
+            "the south wire the side arm lights"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c - 1),
+            w::REDSTONE_WIRE_ON,
+            "the north wire the side arm lights"
+        );
+        // THE NOT-GATE'S OWN FLIP (the lever ON beside the wall the
+        // wall's own read arms — the lever's own attached block the
+        // wall the notification chain serves, the wall torch's seat
+        // the consult's own scope reaches, the wall pair's own OFF
+        // kind the same beat speaks, the side wire the dark keep
+        // serves)
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            world.set(c - 2, top, c, w::LEVER_ON);
+        }
+        app.attach_wire_voice(c - 2, top, c);
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            w::REDSTONE_WALL_TORCH_OFF,
+            "the powered wall the NOT gate flips"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c + 1),
+            w::REDSTONE_WIRE,
+            "the dark run the flip keeps"
+        );
+        // THE QUIET WALL'S OWN RESTORE (the lever OFF the wall's read
+        // silences — the consult the lit kind the same beat restores,
+        // the wire recompute the light re-banks)
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            world.set(c - 2, top, c, w::LEVER);
+        }
+        app.attach_wire_voice(c - 2, top, c);
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            w::REDSTONE_WALL_TORCH,
+            "the quiet wall the lit kind restores"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c + 1),
+            w::REDSTONE_WIRE_ON,
+            "the light the restore re-banks"
+        );
+    }
+
+    #[test]
     fn the_pressure_plates_the_sensor_the_sensitivity_and_the_release_wear() {
         // THE PLATES' OWN LAWS (the dev-48 round — javap the 26.2 jar
         // the BasePressurePlateBlock + PressurePlateBlock walks the
@@ -107980,10 +108179,10 @@ cow_sound_variant: None,
         assert_eq!(w::OAK_PRESSURE_PLATE_ON, 289);
         assert_eq!(w::STONE_PRESSURE_PLATE, 290);
         assert_eq!(w::STONE_PRESSURE_PLATE_ON, 291);
-        assert_eq!(w::END_PORTAL, 324);
+        assert_eq!(w::END_PORTAL, 326);
         assert_eq!(
             atlas::N_KINDS,
-            324,
+            326,
             "the palette the weighted plates' own rows bank"
         );
         for (off, on, name, wooden) in [
