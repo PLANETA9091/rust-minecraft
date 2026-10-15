@@ -146,6 +146,14 @@ fn is_transparent(kind: u16) -> bool {
         // face under ANY plate draws, the plate casts no AO, the
         // element geometry the attach lane's own walk renders
         || crate::world::is_pressure_plate(kind)
+        // THE REDSTONE WIRE the same verdict keeps (the autopush-665
+        // round — the y=0.25 flat plane the neighbors' faces draw
+        // against, the noCollision row the REDSTONE_WIRE factory's own
+        // Properties chain speaks, the non-occluding verdict the
+        // vanilla's own canOcclude=false registration banks): the
+        // floor's top face under ANY wire draws, the wire casts no AO,
+        // the flat geometry the dust lane's own walk renders
+        || crate::world::is_redstone_wire(kind)
         // THE WEB the same verdict keeps (the dev-22 round — the
         // noCollision() pc 4247 the WebBlock registration speaks, the
         // cross planes non-occluding, no AO, the neighbors' faces the
@@ -607,6 +615,197 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                 // but OPAQUE (the lava_still pixels never ride the
                 // translucent pass the water speaks)
                 let lava_self = id == LAVA;
+                // THE REDSTONE DUST'S OWN FLAT LANE (the autopush-665
+                // round — javap the blockstates/redstone_wire.json
+                // multipart the 9 parts the pixel probes speak): the
+                // zero-thickness plane the y=0.25 quarter-pixel height
+                // the leaf_litter's own FLAT_Y wears, the up+down faces
+                // BOTH the model elements speak (no cullface — both
+                // faces draw unconditionally; the raster backface-culls
+                // each to its own side). THE SHAPE THE PARTS' OWN OR
+                // ARMS BANK: the dot center part[0] the all-none OR the
+                // perpendicular-pair arms serve ((east+north) or
+                // (east+south) or (south+west) or (north+west) — the
+                // corner turn the center the arms' own meeting wears),
+                // the side arms parts[1..4] the connected sides' half
+                // rects serve (north z 0..8 the line0 master's
+                // [0,0,16,8] window u=x/v=z, south z 8..16 the [0,8,16,
+                // 16] window u=x/v=z, east x 8..16 the line1 master's
+                // [0,8,16,16] window u=z/v=x — the y=270 rotation the
+                // transposed map the side_alt1 row wears, west x 0..8
+                // the [0,0,16,8] window u=z/v=x — the same rotation the
+                // side1 row keeps). THE CONNECTION VERDICT (javap
+                // shouldConnectTo pc 0-96: the REDSTONE_WIRE.is() arm +
+                // the isSignalSource arm the lever/button/plate
+                // families the same verdict wears — the arm the
+                // adjacent wire OR source kind answers). The UP
+                // parts[5..8] the climbing wall arms the binary lane
+                // never banks (the same-level run the first lane walks).
+                // The overlay the translucent blend the alpha lane a
+                // later round wears (the dust renders as authored minus
+                // the rim). NO variant byte the wire reads (the state
+                // the kind pair alone banks), ambientocclusion false —
+                // shade and light only, NO AO_CURVE term.
+                if crate::world::is_redstone_wire(id) {
+                    let connected = |dx: i32, dz: i32| -> bool {
+                        let cell = world.get(wx + dx, wy, wz + dz);
+                        crate::world::is_redstone_wire(cell)
+                            || crate::world::is_lever(cell)
+                            || crate::world::is_button(cell)
+                            || crate::world::is_pressure_plate(cell)
+                    };
+                    let (north, south) = (connected(0, -1), connected(0, 1));
+                    let (west, east) = (connected(-1, 0), connected(1, 0));
+                    // THE DOT CENTER'S OWN VERDICT (part[0]'s OR arms —
+                    // the all-none arm OR any perpendicular pair the
+                    // center wears; the straight N-S / E-W runs the
+                    // arms the center never shares)
+                    let perp_pair = (east && north) || (east && south)
+                        || (west && north) || (west && south);
+                    let show_dot = (!north && !south && !west && !east) || perp_pair;
+                    // THE TILES' OWN SLOTS (the kind row's dot/N-S/E-W
+                    // seats the generator's wire bank slots 0..2 carry —
+                    // the OFF row the power-0 colored masters, the ON
+                    // row the power-15 tiles)
+                    let tiles = if (id as usize) < atlas::N_KINDS {
+                        atlas::FACE_TILES[id as usize]
+                    } else {
+                        [atlas::TILE_NONE; 6]
+                    };
+                    let dot_tile = tiles[0];
+                    let ns_tile = tiles[1];
+                    let ew_tile = tiles[2];
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let fy = wy as f32 + FLAT_Y;
+                    // THE PIECES' OWN TABLE (the rect the block units
+                    // speak, the uv window the master's pixels wear,
+                    // the transposed flag the E-W arms' rotation map
+                    // keeps): (x0, z0, x1, z1, u0, v0, u1, v1, tile,
+                    // transposed)
+                    let mut pieces: Vec<(f32, f32, f32, f32, f32, f32, f32, f32, u16, bool)> =
+                        Vec::with_capacity(3);
+                    if show_dot {
+                        pieces.push((0.0, 0.0, 16.0, 16.0, 0.0, 0.0, 16.0, 16.0, dot_tile, false));
+                    }
+                    if north {
+                        pieces.push((0.0, 0.0, 16.0, 8.0, 0.0, 0.0, 16.0, 8.0, ns_tile, false));
+                    }
+                    if south {
+                        pieces.push((0.0, 8.0, 16.0, 16.0, 0.0, 8.0, 16.0, 16.0, ns_tile, false));
+                    }
+                    if east {
+                        pieces.push((8.0, 0.0, 16.0, 16.0, 0.0, 8.0, 16.0, 16.0, ew_tile, true));
+                    }
+                    if west {
+                        pieces.push((0.0, 0.0, 8.0, 16.0, 0.0, 0.0, 16.0, 8.0, ew_tile, true));
+                    }
+                    for face in [2usize, 3] {
+                        // THE TINT CARRIER (the pre-colored pixels the
+                        // TINTS row's zeros keep — the resolved tint the
+                        // no-op law the wire rows never speak)
+                        let base = world
+                            .face_tint(id, face, wx, wy, wz)
+                            .map(tint::unpack)
+                            .unwrap_or([1.0; 3]);
+                        let shade = FACE_SHADE[face];
+                        let clight = light
+                            .map(|l| corner_light(l, world.chunks_per_side, wx, wy, wz, face));
+                        for &(px0, pz0, px1, pz1, u0, v0, u1, v1, tile, transposed) in
+                            pieces.iter()
+                        {
+                            if tile == atlas::TILE_NONE {
+                                continue;
+                            }
+                            let mut pts = [[0f32; 3]; 4];
+                            let mut colors = [[0f32; 3]; 4];
+                            let mut uvs = [[0f32; 2]; 4];
+                            for (i, c) in FACE_CORNERS[face].iter().enumerate() {
+                                // THE CORNER'S OWN POSITION INSIDE THE
+                                // PIECE RECT (block units), the uv the
+                                // WINDOW's own map serves (the N-S arms
+                                // u=x/v=z, the E-W arms the transposed
+                                // u=z/v=x the y=270 rotation's rigid
+                                // ride keeps; the down face the
+                                // vanilla's own flip the mirrored
+                                // within-window v wears)
+                                let bx = px0 + c[0] * (px1 - px0);
+                                let bz = pz0 + c[2] * (pz1 - pz0);
+                                let (mut uu, mut vv) = if transposed {
+                                    (bz, bx)
+                                } else {
+                                    (bx, bz)
+                                };
+                                uu = uu.clamp(u0, u1) / 16.0;
+                                vv = vv.clamp(v0, v1) / 16.0;
+                                uvs[i] = if face == 2 {
+                                    [uu, vv]
+                                } else {
+                                    [uu, (v0 + v1) / 16.0 - vv]
+                                };
+                                pts[i] = [
+                                    wx as f32 + bx / 16.0,
+                                    fy,
+                                    wz as f32 + bz / 16.0,
+                                ];
+                                let lm = match clight.as_ref() {
+                                    Some((sky, block)) => lightmap_combine(
+                                        sky[i],
+                                        block[i],
+                                        sky_factor,
+                                        sky_tint,
+                                        ambient,
+                                        block_tint,
+                                        night_vision,
+                                        world.night_vision_factor,
+                                        world.darkness_scale,
+                                    ),
+                                    None => [1.0; 3], // no light layer — legacy look
+                                };
+                                let m = [shade * lm[0], shade * lm[1], shade * lm[2]];
+                                colors[i] = [base[0] * m[0], base[1] * m[1], base[2] * m[2]];
+                            }
+                            out.push(Quad {
+                                pts,
+                                colors,
+                                uvs,
+                                tile,
+                                translucent: false,
+                                per_texel_alpha: false,
+                            });
+                        }
+                    }
+                    continue;
+                }
                 // The 13th-audit FLAT path: leaf_litter is a zero-thickness
                 // ground cover, not a cube. Its blockstate is a multipart
                 // (leaf_litter_1..4 x facing rotations) and every element

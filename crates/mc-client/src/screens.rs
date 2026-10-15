@@ -35984,6 +35984,38 @@ impl App {
         let yaw = self.listener_yaw();
         let mut door_flips: Vec<((i32, i32, i32), u16)> = Vec::new();
         if let Some(world) = self.offline_world.as_mut() {
+            // THE WIRE'S OWN RECOMPUTE (javap RedStoneWireBlock
+            // .updateNeighborsOfNeighboringWires pc 0-118 the 26.2 jar —
+            // the changed cell's own six + the cell itself the adjacent
+            // wires the re-evaluate arms speak, the updatePowerStrength
+            // walk the component's verdict the setBlock arms serve; the
+            // DEFAULT evaluator's own BFS the binary verdict the
+            // [`crate::world::wire_component_flips`] walk approximates —
+            // the source flips AND the wire placements AND the breaks
+            // the same broadcast the attach walk's own scope wears, the
+            // ON/OFF kinds the component's any-source verdict banks).
+            // THE DOORS' OWN RE-READ the scan below serves (the flipped
+            // wire kinds the redstone_signal_at read answers — the
+            // door's own cell the ON wire's 15 the nonzero verdict
+            // arms).
+            {
+                let read = &*world;
+                let mut seeds: Vec<(i32, i32, i32)> = vec![(lx, ly, lz)];
+                for (dx, dy, dz) in [
+                    (0, -1, 0),
+                    (0, 1, 0),
+                    (0, 0, -1),
+                    (0, 0, 1),
+                    (-1, 0, 0),
+                    (1, 0, 0),
+                ] {
+                    seeds.push((lx + dx, ly + dy, lz + dz));
+                }
+                let wire_flips = crate::world::wire_component_flips(read, &seeds);
+                for ((wx, wy, wz), kind) in wire_flips {
+                    world.set(wx, wy, wz, kind);
+                }
+            }
             // THE TWELVE-CELL SCAN (javap the updateNeighbours walk —
             // the changed cell's own six + the support cell's own six
             // the Direction.values() loop serves; the FLOOR face's own
@@ -36289,6 +36321,19 @@ impl App {
         // banks, the fire lane's burn-out consult the same body
         // shares
         self.speak_attach_pops(&popped);
+        // THE WIRE'S OWN REMOVAL BROADCAST (javap RedStoneWireBlock
+        // .affectNeighborsAfterRemoval pc 0-66 + the flag-3
+        // updateNeighbors broadcast the destroyBlock walk serves — the
+        // dug cell's own re-read the attach helper wears: the run's
+        // cut the far side the dark keep serves [the dug WIRE the
+        // component the neighbors' re-evaluate arms answer], the ON
+        // source's loss the wires' verdict closes, the doors the same
+        // beat the signal's loss the setOpen law wears). The OFFLINE
+        // lane the set's own branch wears (the networked world the
+        // server's own broadcast answers).
+        if !self.world_is_network && self.offline_world.is_some() {
+            self.attach_wire_voice(pos.0, pos.1, pos.2);
+        }
         // THE 2001 EVENT'S OWN BURST (javap
         // `LevelEventHandler` case 2001: the sound rides
         // FIRST, then `addDestroyBlockEffect` — the 4x4x4
@@ -37655,6 +37700,20 @@ impl App {
         {
             return false;
         }
+        // THE WIRE'S OWN SURVIVAL GATE (javap RedStoneWireBlock.canSurvive
+        // pc 0-26 the 26.2 jar — the `canSurviveOn(level, pos.below(),
+        // state)` delegate the straight-DOWN support speaks: the below
+        // cell's isFaceSturdy(UP) read the plate family's own gate the
+        // offline equivalence keeps, the floating wire the refusal
+        // keeps [the NO variant stamp the wire never wears — the OFF
+        // kind the placed power-0 state the canPlace walk serves])
+        if crate::world::is_redstone_wire(block)
+            && !self
+                .active_world()
+                .is_some_and(|w| crate::world::wire_can_survive(w, cell.0, cell.1, cell.2))
+        {
+            return false;
+        }
         // THE FALLING SUPPORT'S OWN SCHEDULE (the block-update walk the
         // placement's setBlock speaks — the placed cell's own dispatch
         // the helper wears, the sand the air-below cell the 2-tick tick
@@ -37867,6 +37926,22 @@ impl App {
         // echo never doubles it — the vanilla's own singleplayer shape).
         let name = crate::world::NAME_OF[block as usize];
         self.sounds.play(self.frame, name, crate::sound::Lane::Place);
+        // THE WIRE'S OWN PLACE BROADCAST (javap RedStoneWireBlock.onPlace
+        // pc 0-80 + updateNeighborsOfNeighboringWires pc 0-118 the 26.2
+        // jar — the placed wire's own setBlock the updatePowerStrength
+        // walk arms: the component's own verdict the placed cell
+        // re-reads [the wire lands LIT when a source neighbors — the
+        // vanilla's own preset feel the door's own wire preset keeps],
+        // the neighbors' re-read the attach walk's own scope wears, the
+        // doors the same beat the ON wire's signal answers). The
+        // OFFLINE lane the set's own branch wears (the networked
+        // placement the server's own updatePowerStrength walk answers).
+        if !self.world_is_network
+            && self.offline_world.is_some()
+            && crate::world::is_redstone_wire(block)
+        {
+            self.attach_wire_voice(cell.0, cell.1, cell.2);
+        }
         // THE BLOCK_PLACE EVENT'S OWN POST (javap BlockItem.place
         // pc 243-257 — the `level.gameEvent(GameEvent.BLOCK_PLACE, pos,
         // GameEvent.Context.of(player, state))` the playSound walk
@@ -102515,7 +102590,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            320,
+            322,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -102596,7 +102671,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            320,
+            322,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -102898,7 +102973,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            320,
+            322,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -106745,7 +106820,7 @@ cow_sound_variant: None,
         assert_eq!(crate::world::OAK_BUTTON_ON, 263);
         assert_eq!(
             crate::world::END_PORTAL,
-            320,
+            322,
             "the displaced seat the weighted plates' own tail keeps"
         );
         for kind in [
@@ -106828,7 +106903,7 @@ cow_sound_variant: None,
         // #texture ref banks)
         assert_eq!(
             atlas::N_KINDS,
-            320,
+            322,
             "the palette the weighted plates' own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
@@ -107043,12 +107118,12 @@ cow_sound_variant: None,
         );
         assert_eq!(
             crate::world::END_PORTAL,
-            320,
+            322,
             "the displaced seat the weighted plates' own tail keeps"
         );
         assert_eq!(
             atlas::N_KINDS,
-            320,
+            322,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
@@ -107320,12 +107395,12 @@ cow_sound_variant: None,
         );
         assert_eq!(
             crate::world::END_PORTAL,
-            320,
+            322,
             "the displaced seat the weighted plates' own tail keeps"
         );
         assert_eq!(
             atlas::N_KINDS,
-            320,
+            322,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
@@ -107440,8 +107515,8 @@ cow_sound_variant: None,
         assert_eq!(w::LIGHT_WEIGHTED_PRESSURE_PLATE_ON, 317);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE, 318);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, 319);
-        assert_eq!(w::END_PORTAL, 320);
-        assert_eq!(atlas::N_KINDS, 320, "the palette the weighted rows bank");
+        assert_eq!(w::END_PORTAL, 322);
+        assert_eq!(atlas::N_KINDS, 322, "the palette the weighted rows bank");
         for (off, on, name) in [
             (
                 w::LIGHT_WEIGHTED_PRESSURE_PLATE,
@@ -107736,10 +107811,10 @@ cow_sound_variant: None,
         assert_eq!(w::OAK_PRESSURE_PLATE_ON, 289);
         assert_eq!(w::STONE_PRESSURE_PLATE, 290);
         assert_eq!(w::STONE_PRESSURE_PLATE_ON, 291);
-        assert_eq!(w::END_PORTAL, 320);
+        assert_eq!(w::END_PORTAL, 322);
         assert_eq!(
             atlas::N_KINDS,
-            320,
+            322,
             "the palette the weighted plates' own rows bank"
         );
         for (off, on, name, wooden) in [

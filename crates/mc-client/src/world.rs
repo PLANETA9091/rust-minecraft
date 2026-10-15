@@ -902,10 +902,12 @@ pub const END_STONE: u16 = 89;
 /// keeps (the dev-48 round the plate pair's rungs the 288..291 tail
 /// banks — the autopush-663 round the plate ladder's own tail the
 /// 292..315 rows bank, the dev-49 round the weighted plates' own
-/// pair-pair the 316..319 tail banks, the kind's own seat the
-/// beyond-table 320 the same law keeps — the `id < N_KINDS` guards
-/// the tile lookups' skip verdict the bigger tail keeps).
-pub const END_PORTAL: u16 = 320;
+/// pair-pair the 316..319 tail banks, the autopush-665 round the
+/// REDSTONE WIRE'S OWN PAIR the 320/321 rows the tail banks, the
+/// kind's own seat the beyond-table 322 the same law keeps — the
+/// `id < N_KINDS` guards the tile lookups' skip verdict the bigger
+/// tail keeps).
+pub const END_PORTAL: u16 = 322;
 
 /// THE BUTTON'S OWN PAIR (the autopush-660 round): the redstone pulse's
 /// own block finally RENDERS, PLACES, PRESSES and PULSES — javap
@@ -1154,6 +1156,212 @@ pub const LIGHT_WEIGHTED_PRESSURE_PLATE: u16 = 316;
 pub const LIGHT_WEIGHTED_PRESSURE_PLATE_ON: u16 = 317;
 pub const HEAVY_WEIGHTED_PRESSURE_PLATE: u16 = 318;
 pub const HEAVY_WEIGHTED_PRESSURE_PLATE_ON: u16 = 319;
+
+/// THE REDSTONE WIRE'S OWN PAIR (the autopush-665 round): the dust's
+/// binary OFF/ON kinds the sensor family's carrier lane wears — javap
+/// `net.minecraft.world.level.block.RedStoneWireBlock` the 26.2 jar
+/// (pinned sha1 2dc72797, the python walk scripts/jar_work/
+/// redstone_wire_665*.py): the clinit's COLORS table the
+/// lambda$static$0 fill banks (the getColorForPower walk pc 0-6 the
+/// `COLORS[power]` row speaks — the lambda's own math the pool floats
+/// answer: `f = power / 15.0f`, `red = f * 0.6f + (f > 0 ? 0.4f :
+/// 0.3f)`, `green = Mth.clamp(f * f * 0.7f - 0.5f, 0, 1)`, `blue =
+/// Mth.clamp(f * f * 0.6f - 0.7f, 0, 1)`, the `ARGB.colorFromFloat(
+/// 1.0f, r, g, b)` wrap — the OFF row the power-0 answer (0.3, 0, 0)
+/// the (77, 0, 0) triple wears, the ON row the power-15 answer (1.0,
+/// 0.2, 0.0) the (255, 51, 0) triple banks). THE BINARY PAIR the
+/// graded ramp the power kinds a future lane wears — the OFF kind the
+/// power-0 state the whole sourceless grid keeps, the ON kind the
+/// power-1..15 range the binary client's own vocabulary answers (the
+/// POWER integer property the blockstates speak — the power={0..15}
+/// rows the multipart's own connection conditions never gate). The
+/// canSurvive walk pc 0-26 the `canSurviveOn(level, pos.below(),
+/// state)` delegate speaks — the below cell's `isFaceSturdy(UP)` read
+/// the straight-DOWN support the plate family's own gate wears (the
+/// hopper row the vocabulary never banks). The getSignal walk pc 0-81
+/// the shouldSignal gate + the DOWN-dir 0 + the UP-dir the raw POWER
+/// + the horizontal dirs the opposite-side connection verdict arms —
+/// the ON kind's 15 the nonzero verdict the door's hasNeighborSignal
+/// read wears. The isSignalSource walk pc 0-5 the shouldSignal field
+/// the connection walks' TRUE keeps. The blockstates/redstone_wire
+/// .json the MULTIPART 9 parts wear — the dot center part[0] the
+/// all-none OR the perpendicular-pair OR arms serve, the side arms
+/// parts[1..4] the side0/side_alt0/side_alt1/side1 models name (the
+/// #line sprites redstone_dust_line0/line1 the N-S/E-W masters bank
+/// — the 16x16 colortype-4 grayscale PNGs the pixel probes speak),
+/// the up parts[5..8] the climbing wall arms the binary lane never
+/// banks (the same-level run the first lane walks — the up-connection
+/// the graded lane's own walk serves). The y=0.25 plane the elements
+/// speak (from [0,0.25,0] to [16,0.25,16] the zero-thickness up+down
+/// pair both faces wear). The Properties row the Blocks clinit banks
+/// (pc 6865-6891): `Properties.of().noCollision().instabreak().
+/// pushReaction(DESTROY)` — NO sound() call the default STONE
+/// SoundType the block_sounds row keeps, the pass-through + the
+/// instant dig the collision table's Empty row wears. The Items
+/// clinit row (pc 7237-7262) the BlockItem pairing speaks —
+/// `Items.REDSTONE = registerItem(BlockItemIds.REDSTONE_DUST,
+/// createBlockItemWithCustomItemName(Blocks.REDSTONE_WIRE), ...)`.
+/// The beyond-table seat the END_PORTAL kind the displacement law
+/// keeps (320 -> 322 the every-rung displacement the ladder's
+/// growths wear — the `id < N_KINDS` guards the tile lookups' skip
+/// verdict the bigger table keeps).
+pub const REDSTONE_WIRE: u16 = 320;
+pub const REDSTONE_WIRE_ON: u16 = 321;
+
+/// THE WIRE'S OWN FAMILY VERDICT (the autopush-665 round — the OFF/ON
+/// pair the POWER bit the ±1 mate the lever/button/plate ladders' own
+/// law carries, the NO variant byte the wire reads — the binary kind
+/// pair the state alone banks, the shape verdict the mesher's own
+/// neighbor walk serves): the placement's survival gate, the dig's
+/// support-pop arm, the collision's pass-through row, the mesher's
+/// flat lane and the attach walks the family fn serves.
+pub fn is_redstone_wire(id: u16) -> bool {
+    id == REDSTONE_WIRE || id == REDSTONE_WIRE_ON
+}
+
+/// THE WIRE'S OWN POWER BIT (the ON kind the nonzero verdict the
+/// getSignal walk's own POWER read speaks — the OFF kind the 0 the
+/// silent keep).
+pub fn wire_powered(id: u16) -> bool {
+    id == REDSTONE_WIRE_ON
+}
+
+/// THE WIRE'S OWN TOGGLED KIND (the ±1 mate the lever pair's own law
+/// wears — the ON/OFF swap the component verdict's setBlock arms).
+pub fn wire_toggled(id: u16) -> u16 {
+    if wire_powered(id) {
+        REDSTONE_WIRE
+    } else {
+        REDSTONE_WIRE_ON
+    }
+}
+
+/// THE WIRE'S OWN SURVIVAL GATE (javap `RedStoneWireBlock.canSurvive`
+/// pc 0-26 the 26.2 jar — the `canSurviveOn(level, pos.below(),
+/// state)` delegate the straight-DOWN support speaks: the below
+/// cell's `isFaceSturdy(UP)` read the plate family's own gate the
+/// offline equivalence the collision table's non-Empty rows keep, the
+/// hopper row the vocabulary never banks — the floating wire the
+/// refusal keeps).
+pub fn wire_can_survive(world: &World, x: i32, y: i32, z: i32) -> bool {
+    plate_can_survive(world, x, y, z)
+}
+
+/// THE WIRE'S OWN SOURCE SCAN (javap `Level.hasNeighborSignal` pc
+/// 0-33 the `Direction.values()` loop the `getSignal(pos.relative
+/// (dir), dir) != 0` read wears — the SOURCES the loop's nonzero
+/// verdict the client's kind-only vocabulary answers: the lever's
+/// `powered ? 15 : 0` fold, the button's press walk the ON kind's
+/// own 15 arms, the plate's powered kinds the sensor rows speak).
+/// THE WIRE'S OWN EXCLUSION (the shouldSignal re-entrancy guard the
+/// getSignal walk's own gate keeps — the wire cell's verdict walk
+/// the OTHER WIRES never reads: the source-only scan the component
+/// BFS consults, the self-feed loop the guard's own law refuses).
+pub fn wire_sources_near(world: &World, x: i32, y: i32, z: i32) -> bool {
+    (world.get(x, y + 1, z) == LEVER_ON)
+        || (world.get(x, y - 1, z) == LEVER_ON)
+        || (world.get(x + 1, y, z) == LEVER_ON)
+        || (world.get(x - 1, y, z) == LEVER_ON)
+        || (world.get(x, y, z + 1) == LEVER_ON)
+        || (world.get(x, y, z - 1) == LEVER_ON)
+        || button_powered(world.get(x, y + 1, z))
+        || button_powered(world.get(x, y - 1, z))
+        || button_powered(world.get(x + 1, y, z))
+        || button_powered(world.get(x - 1, y, z))
+        || button_powered(world.get(x, y, z + 1))
+        || button_powered(world.get(x, y, z - 1))
+        || plate_powered(world.get(x, y + 1, z))
+        || plate_powered(world.get(x, y - 1, z))
+        || plate_powered(world.get(x + 1, y, z))
+        || plate_powered(world.get(x - 1, y, z))
+        || plate_powered(world.get(x, y, z + 1))
+        || plate_powered(world.get(x, y, z - 1))
+}
+
+/// THE WIRE'S OWN COMPONENT WALK (the binary lane the graded POWER
+/// walk a future lane wears — the DEFAULT evaluator's own BFS the
+/// RedStoneWireBlock.updatePowerStrength walk serves: the wire's
+/// power the neighbor graph the same-level run carries — the vanilla
+/// DefaultRedstoneWireEvaluator.calculateTargetChangeset the
+/// connected-components walk the binary verdict approximates: a
+/// component the ANY-source verdict lights, the sourceless run the
+/// dark keep serves). THE SEEDS THE CALLER BANKS (the changed cell +
+/// its six neighbors the attach walk's own scope keeps — the
+/// updateNeighborsOfNeighboringWires walk pc 0-118 the adjacent
+/// wires the re-evaluate arms speak): the BFS the wire cells flood
+/// (the 4-horizontal same-level steps the first lane walks — the
+/// up/down climbing the graded lane's own walk serves), the verdict
+/// the wire_sources_near scan the ANY cell arms, the flip list the
+/// (pos, kind) rows the caller's setBlock wears. THE PURE WALK (no
+/// &mut — the borrow discipline the attach walks' own read-first
+/// law keeps: the caller applies the flips the remesh answers).
+pub fn wire_component_flips(
+    world: &World,
+    seeds: &[(i32, i32, i32)],
+) -> Vec<((i32, i32, i32), u16)> {
+    let mut seen: std::collections::HashSet<(i32, i32, i32)> = std::collections::HashSet::new();
+    let mut queue: std::collections::VecDeque<(i32, i32, i32)> = std::collections::VecDeque::new();
+    for &(x, y, z) in seeds {
+        if is_redstone_wire(world.get(x, y, z)) {
+            queue.push_back((x, y, z));
+        }
+    }
+    let mut out: Vec<((i32, i32, i32), u16)> = Vec::new();
+    let mut component: Vec<(i32, i32, i32)> = Vec::new();
+    while let Some(start) = queue.pop_front() {
+        // THE CONSUMED SEED'S OWN SKIP (the earlier component's flood
+        // the seed already banks — the same-component seeds the ONE
+        // verdict the shared walk keeps: the pop-time insert the
+        // dedupe law wears, the component the flood's own growth
+        // answers)
+        if !seen.insert(start) {
+            continue;
+        }
+        // THE COMPONENT'S OWN FLOOD (the same-level run the 4-horizontal
+        // steps walk — the seen set the re-fire the dedupe keeps)
+        component.clear();
+        component.push(start);
+        let powered = wire_sources_near(world, start.0, start.1, start.2);
+        let mut ci = 0usize;
+        while ci < component.len() {
+            let (x, y, z) = component[ci];
+            ci += 1;
+            for (nx, ny, nz) in
+                [(x + 1, y, z), (x - 1, y, z), (x, y, z + 1), (x, y, z - 1)]
+            {
+                if !is_redstone_wire(world.get(nx, ny, nz)) {
+                    continue;
+                }
+                if !seen.insert((nx, ny, nz)) {
+                    continue;
+                }
+                component.push((nx, ny, nz));
+            }
+        }
+        // THE SHORT-CIRCUIT'S OWN ARM (the scan the flood ride
+        // carries — the powered verdict found mid-flood the any-cell
+        // law keeps): the component the verdict lights, the cells
+        // the current kind the flip list banks (the same-kind rows
+        // the no-op setBlock the honest list keeps — the caller's
+        // own remesh the changed pixels alone answers)
+        let any_source = powered
+            || component
+                .iter()
+                .any(|&(x, y, z)| wire_sources_near(world, x, y, z));
+        let target = if any_source { REDSTONE_WIRE_ON } else { REDSTONE_WIRE };
+        for cell in component.iter() {
+            let kind = world.get(cell.0, cell.1, cell.2);
+            if kind != target {
+                out.push((*cell, target));
+            }
+        }
+        // the unvisited neighbors the NEXT component's seeds keep —
+        // the queue the flood already drained: the seeds the caller
+        // banks only fire once each (the seen set the shared law
+        // keeps)
+    }
+    out
+}
 
 /// THE PLATE'S OWN RELEASE CLOCK (javap `BasePressurePlateBlock.get
 /// PressedTime` pc 0-2 — the `bipush 20` BOTH sets wear: the pressed
@@ -1794,7 +2002,7 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 /// rows bank — the dev-49 round the weighted plates' own tail the
 /// 316..319 rows bank — the table the 320 rows the END_PORTAL the
 /// beyond-table seat the displaced law keeps.
-pub const NAME_OF: [&str; 320] = [
+pub const NAME_OF: [&str; 322] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -2182,6 +2390,15 @@ pub const NAME_OF: [&str; 320] = [
     // placement's placeable lookup the reverse walk serves.
     "light_weighted_pressure_plate", "light_weighted_pressure_plate",
     "heavy_weighted_pressure_plate", "heavy_weighted_pressure_plate",
+    // THE REDSTONE WIRE'S OWN ROWS (the autopush-665 round): the
+    // OFF/ON pair the ONE registry entry the strip law keeps (the
+    // RedStoneWireBlock's ONE "redstone_wire" registry id both states
+    // the same name answers — the dig row (0.0, false) the instabreak
+    // clinit speaks, the sounds' default STONE row and the drops
+    // table's redstone item the pick lane grants BOTH kinds speak),
+    // the placement's placeable lookup the reverse walk the BlockItem
+    // pairing serves.
+    "redstone_wire", "redstone_wire",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -3604,30 +3821,26 @@ pub fn plate_can_survive(world: &World, x: i32, y: i32, z: i32) -> bool {
 /// ButtonBlock.isSignalSource the same family speaks (the press walk
 /// pc 0-47 the POWERED=true setBlock the ON kind's own 15 arms, the
 /// getDirectSignal walk the connected arm's 15 the direct lane
-/// wears) — the cell's own six neighbors any ON lever or ON button
-/// holds the signal verdict: the hasNeighborSignal walk's source
-/// subset the honest client speaks (the dev-45 round the lever family
-/// alone banked, the autopush-660 round the button's own seats the
-/// same walk wears).
+/// wears) — the cell's own six neighbors any ON lever or ON button or
+/// ON plate or ON WIRE holds the signal verdict: the hasNeighborSignal
+/// walk's source subset the honest client speaks (the dev-45 round
+/// the lever family alone banked, the autopush-660 round the button's
+/// own seats the same walk wears, the autopush-665 round the ON
+/// WIRE's own arms the same walk wears — the RedStoneWireBlock
+/// .getSignal walk pc 0-81 the horizontal dirs' opposite-side
+/// connection verdict + the UP-dir the raw POWER read the door's own
+/// cell answers: the ON wire the 15 the nonzero verdict the door's
+/// hasNeighborSignal read arms — the wire's own verdict walk the
+/// [`wire_sources_near`] source-only scan keeps, the self-feed loop
+/// the shouldSignal guard's own law refuses).
 pub fn redstone_signal_at(world: &World, x: i32, y: i32, z: i32) -> bool {
-    (world.get(x, y + 1, z) == LEVER_ON)
-        || (world.get(x, y - 1, z) == LEVER_ON)
-        || (world.get(x + 1, y, z) == LEVER_ON)
-        || (world.get(x - 1, y, z) == LEVER_ON)
-        || (world.get(x, y, z + 1) == LEVER_ON)
-        || (world.get(x, y, z - 1) == LEVER_ON)
-        || button_powered(world.get(x, y + 1, z))
-        || button_powered(world.get(x, y - 1, z))
-        || button_powered(world.get(x + 1, y, z))
-        || button_powered(world.get(x - 1, y, z))
-        || button_powered(world.get(x, y, z + 1))
-        || button_powered(world.get(x, y, z - 1))
-        || plate_powered(world.get(x, y + 1, z))
-        || plate_powered(world.get(x, y - 1, z))
-        || plate_powered(world.get(x + 1, y, z))
-        || plate_powered(world.get(x - 1, y, z))
-        || plate_powered(world.get(x, y, z + 1))
-        || plate_powered(world.get(x, y, z - 1))
+    wire_sources_near(world, x, y, z)
+        || wire_powered(world.get(x, y + 1, z))
+        || wire_powered(world.get(x, y - 1, z))
+        || wire_powered(world.get(x + 1, y, z))
+        || wire_powered(world.get(x - 1, y, z))
+        || wire_powered(world.get(x, y, z + 1))
+        || wire_powered(world.get(x, y, z - 1))
 }
 
 /// THE BUTTON'S OWN PLATE BOX — javap `ButtonBlock.makeShapes` pc 0-45
@@ -3973,6 +4186,15 @@ pub fn collision_shape(id: u16) -> CollisionShape {
         // obstruction the empty shape never refuses, the neighbors'
         // own faces the non-occluding verdict draws.
         || is_pressure_plate(id)
+        // THE REDSTONE WIRE'S OWN ROW (the autopush-665 round — the
+        // Blocks clinit's REDSTONE_WIRE factory row pc 6865-6891 the
+        // noCollision() call speaks: the pass-through verdict the
+        // plate family's own row the sibling wears — the body walks
+        // THROUGH the dust cell the feet the y=0.25 plane's own floor
+        // crosses, the placement's own obstruction the empty shape
+        // never refuses, the neighbors' own faces the non-occluding
+        // verdict draws)
+        || is_redstone_wire(id)
         || is_flower(id)
         || is_tuft(id)
         || is_double_plant(id)
@@ -6035,6 +6257,20 @@ impl World {
         // the vanilla's own registration refuses (the BlockItem
         // pairing the item's own existence demands)
         mc_registry::item_id_by_name(item_name)?;
+        // THE REDSTONE DUST'S OWN BLOCKITEM PAIRING (the autopush-665
+        // round — javap Items.<clinit> pc 7237-7262 the 26.2 jar: the
+        // `Items.REDSTONE = registerItem(BlockItemIds.REDSTONE_DUST,
+        // createBlockItemWithCustomItemName(Blocks.REDSTONE_WIRE),
+        // ...)` row the custom item name the pairing speaks — the
+        // "redstone" item's block the REDSTONE_WIRE kind answers, the
+        // OFF kind the placed power-0 state the canPlace walk serves,
+        // the ON kind the component verdict's own setBlock alone
+        // wears): the name mismatch the reverse lookup's own
+        // exception — the generic walk the dust item never answers
+        // (the NAME_OF row the "redstone_wire" registry id banks).
+        if item_name == "redstone" {
+            return Some(REDSTONE_WIRE);
+        }
         let id = NAME_OF.iter().position(|n| *n == item_name)? as u16;
         if id == AIR || id == WATER {
             return None;
@@ -6819,7 +7055,11 @@ impl World {
         let mut popped: Vec<((i32, i32, i32), u16)> = Vec::new();
         while let Some((x, y, z)) = queue.pop() {
             let kind = self.get(x, y, z);
-            if !is_lever(kind) && !is_button(kind) && !is_pressure_plate(kind) {
+            if !is_lever(kind)
+                && !is_button(kind)
+                && !is_pressure_plate(kind)
+                && !is_redstone_wire(kind)
+            {
                 continue;
             }
             // THE GATE'S OWN OFFSET (the support cell the variant decodes
@@ -6827,8 +7067,12 @@ impl World {
             // dir verdict the walk answers; the OTHER five directions the
             // identity default keeps; the PLATE the straight-DOWN support
             // the canSurvive walk's own pos.below() law wears — the
-            // floor-only plate the variant byte never reads)
-            let support = if is_pressure_plate(kind) {
+            // floor-only plate the variant byte never reads; THE WIRE
+            // the same straight-DOWN law keeps — javap RedStoneWireBlock
+            // .canSurvive pc 0-26 the canSurviveOn(pos.below()) delegate
+            // the below cell's isFaceSturdy(UP) read the autopush-665
+            // round speaks, the variant byte the wire never consumes)
+            let support = if is_pressure_plate(kind) || is_redstone_wire(kind) {
                 (x, y - 1, z)
             } else {
                 let (dx, dy, dz) = lever_support_offset(self.variant(x, y, z));
@@ -6838,10 +7082,10 @@ impl World {
                 continue;
             }
             // THE SURVIVAL'S OWN CONSULT (the failing verdict the AIR
-            // the pop speaks — the plate the straight-DOWN gate wears,
-            // the lever/button the variant decode the canAttach walk
-            // serves)
-            if is_pressure_plate(kind) {
+            // the pop speaks — the plate AND the wire the straight-DOWN
+            // gate wears, the lever/button the variant decode the
+            // canAttach walk serves)
+            if is_pressure_plate(kind) || is_redstone_wire(kind) {
                 if plate_can_survive(self, x, y, z) {
                     continue;
                 }
@@ -10942,8 +11186,8 @@ mod tests {
         assert_eq!(NAME_OF[BUTTON_ON as usize], "stone_button");
         assert_eq!(BUTTON + 1, BUTTON_ON, "the +1 seat the OFF/ON ladder wears");
         assert_eq!(
-            END_PORTAL, 320,
-            "the displaced seat the weighted plates' own tail banks"
+            END_PORTAL, 322,
+            "the displaced seat the wire pair's own tail banks"
         );
         // THE PULSE'S OWN CLOCK (javap press pc 28-37 — the STONE
         // factory's bipush 20 ctor arg the window banks)
@@ -11633,6 +11877,155 @@ mod tests {
     }
 
     #[test]
+    fn the_redstone_dust_the_wire_lane_the_component_and_the_gates_wear() {
+        // THE REDSTONE WIRE'S OWN LAWS (the autopush-665 round — javap
+        // RedStoneWireBlock the 26.2 jar the probe scripts/jar_work/
+        // redstone_wire_665*.py banks): the OFF/ON pair the 320/321
+        // tail wears, the END_PORTAL the beyond-table seat the
+        // displacement keeps (the 322 the `id < N_KINDS` guards the
+        // bigger tail banks), the ONE "redstone_wire" registry entry
+        // both kinds speak (the _on strip the generated rows' law
+        // keeps), the noCollision row the pass-through keeps, the dig
+        // row (0.0, false) the instabreak clinit banks, the source
+        // scan the lever/button/plate arms the hasNeighborSignal
+        // subset answers (the wire's own kinds the re-entrancy guard
+        // never reads), the component walk the ANY-source verdict the
+        // flood arms (the run the source's light carries, the cut the
+        // far side the dark keep serves, the sourceless component the
+        // ON kinds the honest re-evaluate darkens), the door's
+        // redstone_signal_at read the ON wire's own arms answer, the
+        // placement the redstone item the BlockItem pairing banks
+        // (the createBlockItemWithCustomItemName walk the jar's own
+        // clinit row speaks), the survival gate the straight-DOWN
+        // support the canSurviveOn delegate keeps, the tint bank the
+        // OFF/ON rows the power-0/power-15 colors wear.
+        use mc_registry::generated::atlas;
+        assert_eq!(REDSTONE_WIRE, 320);
+        assert_eq!(REDSTONE_WIRE_ON, 321);
+        assert_eq!(
+            END_PORTAL, 322,
+            "the displaced seat the wire pair's own tail banks"
+        );
+        assert_eq!(atlas::N_KINDS, 322, "the palette the wire pair banks");
+        assert!(is_redstone_wire(REDSTONE_WIRE) && is_redstone_wire(REDSTONE_WIRE_ON));
+        assert!(!is_redstone_wire(LEVER) && !is_redstone_wire(OAK_PRESSURE_PLATE));
+        assert!(!wire_powered(REDSTONE_WIRE));
+        assert!(wire_powered(REDSTONE_WIRE_ON));
+        assert_eq!(wire_toggled(REDSTONE_WIRE), REDSTONE_WIRE_ON);
+        assert_eq!(wire_toggled(REDSTONE_WIRE_ON), REDSTONE_WIRE);
+        assert_eq!(REDSTONE_WIRE + 1, REDSTONE_WIRE_ON, "the +1 mate wears");
+        assert_eq!(NAME_OF[REDSTONE_WIRE as usize], "redstone_wire");
+        assert_eq!(NAME_OF[REDSTONE_WIRE_ON as usize], "redstone_wire");
+        assert_eq!(atlas::KIND_NAMES[REDSTONE_WIRE as usize], "redstone_wire");
+        assert_eq!(atlas::KIND_NAMES[REDSTONE_WIRE_ON as usize], "redstone_wire_on");
+        assert_eq!(atlas::REGISTRY_NAMES[REDSTONE_WIRE as usize], "redstone_wire");
+        assert_eq!(atlas::REGISTRY_NAMES[REDSTONE_WIRE_ON as usize], "redstone_wire");
+        // THE COLLISION'S OWN PASS-THROUGH (the noCollision() row the
+        // factory's Properties chain speaks)
+        assert_eq!(collision_shape(REDSTONE_WIRE), CollisionShape::Empty);
+        assert_eq!(collision_shape(REDSTONE_WIRE_ON), CollisionShape::Empty);
+        // THE DIG'S OWN ROW (the generated table's (0.0, false) the
+        // instabreak clinit the bare hand's harvest keeps)
+        let (hard, tool) = crate::dig::DigState::block_dig_row(REDSTONE_WIRE);
+        assert_eq!(hard, 0.0, "the instabreak row the clinit banks");
+        assert!(!tool, "the no-tool demand the wire never wears");
+        // THE TINT BANK'S OWN ROWS (the OFF row the power-0 colored
+        // masters, the ON row the power-15 tiles — the slots the
+        // mesher's flat lane reads)
+        let off_tiles = atlas::FACE_TILES[REDSTONE_WIRE as usize];
+        let on_tiles = atlas::FACE_TILES[REDSTONE_WIRE_ON as usize];
+        assert_ne!(off_tiles[0], on_tiles[0], "the dot tiles differ");
+        assert_ne!(off_tiles[1], on_tiles[1], "the N-S tiles differ");
+        assert_ne!(off_tiles[2], on_tiles[2], "the E-W tiles differ");
+        assert_eq!(atlas::tile_name(off_tiles[0]), "redstone_dust_dot");
+        assert_eq!(atlas::tile_name(off_tiles[1]), "redstone_dust_line0");
+        assert_eq!(atlas::tile_name(off_tiles[2]), "redstone_dust_line1");
+        assert_eq!(atlas::tile_name(on_tiles[0]), "redstone_dust_dot_on");
+        assert_eq!(atlas::tile_name(on_tiles[1]), "redstone_dust_line0_on");
+        assert_eq!(atlas::tile_name(on_tiles[2]), "redstone_dust_line1_on");
+        assert_eq!(atlas::TINTS[REDSTONE_WIRE as usize], [0; 6]);
+        assert_eq!(atlas::TINTS[REDSTONE_WIRE_ON as usize], [0; 6]);
+        // THE PLACEMENT'S OWN ITEM (javap Items.<clinit> pc 7237-7262 —
+        // the BlockItem pairing the custom item name speaks)
+        assert_eq!(World::placeable_block("redstone"), Some(REDSTONE_WIRE));
+        assert_eq!(World::placeable_block("redstone_wire"), None);
+        // THE SURVIVAL GATE'S OWN WALK (javap canSurvive pc 0-26 — the
+        // canSurviveOn(pos.below()) delegate the straight-DOWN
+        // support reads)
+        let mut w = World::new(1, 0x600D);
+        let (y, c) = (1i32, 4i32);
+        w.set(c, 0, c, STONE);
+        assert!(wire_can_survive(&w, c, y, c), "the stone floor the wire holds");
+        w.set(c, 0, c, AIR);
+        assert!(!wire_can_survive(&w, c, y, c), "the air below the refusal keeps");
+        // THE SOURCE SCAN'S OWN ARMS (javap Level.hasNeighborSignal —
+        // the sources the loop's nonzero verdict the kind-only
+        // vocabulary answers; the wire kinds the re-entrancy guard
+        // never reads)
+        w.set(c, 0, c, STONE);
+        w.set(c + 1, y, c, LEVER_ON);
+        assert!(wire_sources_near(&w, c, y, c), "the ON lever's arm answers");
+        w.set(c + 1, y, c, LEVER);
+        assert!(!wire_sources_near(&w, c, y, c), "the OFF lever the silence keeps");
+        w.set(c + 1, y, c, OAK_BUTTON_ON);
+        assert!(wire_sources_near(&w, c, y, c), "the pressed button's arm answers");
+        w.set(c + 1, y, c, OAK_PRESSURE_PLATE_ON);
+        assert!(wire_sources_near(&w, c, y, c), "the ON plate's arm answers");
+        w.set(c + 1, y, c, AIR);
+        assert!(!wire_sources_near(&w, c, y, c), "the bare cell the silence keeps");
+        // THE DOOR'S OWN READ (javap DoorBlock the hasNeighborSignal
+        // consult — the ON wire's own arms the same walk wears, the
+        // OFF wire the silence keeps)
+        w.set(c + 1, y, c, REDSTONE_WIRE_ON);
+        assert!(redstone_signal_at(&w, c, y, c), "the ON wire's arm answers");
+        w.set(c + 1, y, c, REDSTONE_WIRE);
+        assert!(
+            !redstone_signal_at(&w, c, y, c),
+            "the OFF wire the silence keeps"
+        );
+        // THE COMPONENT WALK'S OWN FLOOD (the DEFAULT evaluator's BFS
+        // the binary verdict approximates: the run the source's light
+        // carries, the cut the far side the dark keep serves, the
+        // sourceless ON run the honest re-evaluate darkens)
+        w.set(c + 1, y, c, REDSTONE_WIRE);
+        w.set(c + 2, y, c, REDSTONE_WIRE);
+        w.set(c + 3, y, c, REDSTONE_WIRE);
+        w.set(c + 4, y, c, LEVER_ON);
+        let seeds = vec![(c + 1, y, c), (c + 2, y, c)];
+        let flips = wire_component_flips(&w, &seeds);
+        assert_eq!(
+            flips,
+            vec![((c + 1, y, c), REDSTONE_WIRE_ON), ((c + 2, y, c), REDSTONE_WIRE_ON), ((c + 3, y, c), REDSTONE_WIRE_ON)],
+            "the three OFF cells the light banks"
+        );
+        // THE SOURCELESS ON RUN (the self-feed the re-entrancy guard
+        // refuses — the honest re-evaluate the dark keep serves)
+        let mut w2 = World::new(1, 0x600D);
+        w2.set(c, y, c, REDSTONE_WIRE_ON);
+        w2.set(c + 1, y, c, REDSTONE_WIRE_ON);
+        let flips2 = wire_component_flips(&w2, &[(c, y, c)]);
+        assert_eq!(flips2.len(), 2, "the ON kinds the dark verdict re-banks");
+        assert!(flips2.iter().all(|&(_, k)| k == REDSTONE_WIRE));
+        // THE CUT'S OWN VERDICT (the solid block the run severs — the
+        // source-side the light keeps, the far side the dark wears)
+        let mut w3 = World::new(1, 0x600D);
+        w3.set(c, y, c, LEVER_ON);
+        w3.set(c + 1, y, c, REDSTONE_WIRE);
+        w3.set(c + 2, y, c, REDSTONE_WIRE_ON);
+        w3.set(c + 3, y, c, STONE);
+        w3.set(c + 4, y, c, REDSTONE_WIRE_ON);
+        let flips3 = wire_component_flips(&w3, &[(c + 1, y, c), (c + 4, y, c)]);
+        assert_eq!(
+            flips3,
+            vec![
+                ((c + 1, y, c), REDSTONE_WIRE_ON),
+                ((c + 4, y, c), REDSTONE_WIRE),
+            ],
+            "the two components the verdicts bank"
+        );
+    }
+
+    #[test]
     fn the_door_family_the_mates_and_the_seats_wear() {
         // THE DOOR QUARTET'S OWN LAW (the autopush-655 round — the
         // two-halves x two-open-bits ladder the seats wear: the
@@ -11643,8 +12036,8 @@ mod tests {
         assert_eq!(OAK_DOOR_OPEN, 92);
         assert_eq!(OAK_DOOR_UPPER_OPEN, 93);
         assert_eq!(
-            END_PORTAL, 320,
-            "the displaced seat the weighted plates' own tail banks"
+            END_PORTAL, 322,
+            "the displaced seat the wire pair's own tail banks"
         );
         // THE WOOD LADDER'S OWN SEATS (the dev-43 round — the eleven
         // quartets the CONTIGUOUS tail the kind ids 94..137 wear: the
@@ -11849,7 +12242,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 320, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 322, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)

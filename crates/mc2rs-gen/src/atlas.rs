@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 320] = [
+pub const RUNTIME_PALETTE: [&str; 322] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -945,6 +945,66 @@ pub const RUNTIME_PALETTE: [&str; 320] = [
     // types' pressurePlateClickOn/Off fields the record rows bank).
     "light_weighted_pressure_plate", "light_weighted_pressure_plate_down",
     "heavy_weighted_pressure_plate", "heavy_weighted_pressure_plate_down",
+    // THE REDSTONE DUST'S OWN PAIR (the autopush-665 round): the wire's
+    // binary OFF/ON kinds the sensor family's carrier lane wears —
+    // javap `net.minecraft.world.level.block.RedStoneWireBlock` the 26.2
+    // jar (pinned sha1 2dc72797, the python walk scripts/jar_work/
+    // redstone_wire_665*.py): the clinit's COLORS table the
+    // `bipush 16; newarray; invokedynamic bsm[2]` lambda$static$0 fill
+    // banks (the getColorForPower walk pc 0-6 the `COLORS[power]` row
+    // speaks), the lambda's own math the pool floats answer —
+    // `f = power / 15.0f` (pc 8-14 the i2f/ldc_w 15.0f/fdiv fold),
+    // `red = f * 0.6f + (f > 0.0f ? 0.4f : 0.3f)` (pc 15-36 the
+    // 0.6/0.4/0.3 pool rows the fcmpl/ifle branch arms), `green =
+    // Mth.clamp(f * f * 0.7f - 0.5f, 0, 1)` (pc 37-53), `blue =
+    // Mth.clamp(f * f * 0.6f - 0.7f, 0, 1)` (pc 54-71), the
+    // `ARGB.colorFromFloat(1.0f, r, g, b)` pc 72-84 wrap — the OFF row
+    // the power-0 answer (0.3, 0, 0) the (77, 0, 0) RGB triple wears
+    // (the colorFromFloat byte fold `(int)(f * 255.0 + 0.5)`), the ON
+    // row the power-15 answer (1.0, 0.2, 0.0) the (255, 51, 0) triple
+    // banks. THE BINARY PAIR the graded ramp the power kinds a future
+    // lane wears (the OFF row the power-0 color, the ON row the
+    // power-15 color — the whole 1..15 range the ON kind the binary
+    // client's own vocabulary answers). The canSurvive walk pc 0-26
+    // the `canSurviveOn(level, pos.below(), state)` delegate speaks —
+    // the below cell's `isFaceSturdy(UP)` read the straight-DOWN
+    // support the plate family's own gate wears (the hopper row the
+    // vocabulary never banks). The getSignal walk pc 0-81 the
+    // shouldSignal gate + the DOWN-dir 0 + the UP-dir the raw POWER
+    // + the horizontal dirs the opposite-side connection verdict
+    // arms (the ON kind's 15 the nonzero verdict the door's
+    // hasNeighborSignal read wears), the isSignalSource walk pc 0-5
+    // the shouldSignal field the connection walks' TRUE keeps. The
+    // blockstates/redstone_wire.json the MULTIPART 9 parts wear —
+    // the dot center part[0] the all-none OR the perpendicular-pair
+    // OR arms serve, the side arms parts[1..4] the
+    // side0/side_alt0/side_alt1/side1 models name (the #line sprites
+    // redstone_dust_line0/line1 the N-S/E-W masters bank — the
+    // 16x16 colortype-4 grayscale PNGs the pixel probes speak, the
+    // line the 1-px v-axis strip the dot the 29-px center blob
+    // wears), the up parts[5..8] the climbing wall arms the binary
+    // lane never banks (the same-level run the first lane walks —
+    // the up-connection the graded lane's own walk serves). The y=0.25
+    // plane the elements speak (from [0,0.25,0] to [16,0.25,16] the
+    // zero-thickness up+down pair both faces wear — the FLAT_Y the
+    // leaf_litter's own 0.25 the same quarter-pixel height keeps).
+    // The `redstone_wire_on` kind's row the strip law the lever pair's
+    // _on row keeps (the registry_names walk the _on strip the ONE
+    // "redstone_wire" registry entry both states banks — the dig row
+    // (0.0, false) the instabreak clinit speaks, the item id the
+    // pick lane grants BOTH kinds speak, the drops table the
+    // DROPS_REDSTONE_WIRE row the redstone item answers). The
+    // Properties row the clinit's own walk banks (pc 6865-6891):
+    // `Properties.of().noCollision().instabreak().pushReaction(
+    // DESTROY)` — NO sound() call the default STONE SoundType the
+    // block_sounds row keeps, the pass-through + the instant dig the
+    // collision table's Empty row wears. The Items clinit row
+    // (pc 7237-7262) the BlockItem pairing speaks —
+    // `Items.REDSTONE = registerItem(BlockItemIds.REDSTONE_DUST,
+    // createBlockItemWithCustomItemName(Blocks.REDSTONE_WIRE),
+    // new Item.Properties().trimMaterial(...))` — the "redstone" item
+    // the placement lane's own BlockItem walk serves.
+    "redstone_wire", "redstone_wire_on",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -2218,6 +2278,99 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             faces.push(resolve_flat_stem(&stem, false));
             continue;
         }
+        if block == "redstone_wire" || block == "redstone_wire_on" {
+            // THE REDSTONE DUST'S OWN ROWS (the autopush-665 round): the
+            // multipart's own parts the REAL chain the generator's own
+            // law keeps (blockstates -> multipart apply -> model -> the
+            // #line sprite ref, never a hardcoded name): the DOT stem
+            // the part[0]'s apply model (redstone_dust_dot) its own
+            // `textures.line` sprite ref banks, the N-S master the
+            // part[1]'s apply (redstone_dust_side0) its `textures.line`
+            // sprite ref names (block/redstone_dust_line0), the E-W
+            // master the part[4]'s apply (redstone_dust_side1) the same
+            // walk serves (block/redstone_dust_line1). The sprite ref
+            // the STRING the older models wear OR the `{sprite: ...}`
+            // object the 26.2 force_translucent rows speak — both the
+            // read answers. The faces the THREE stems the six slots
+            // bank (slots 0..2 the dot/N-S/E-W masters the mesher's
+            // wire path reads by slot, slots 3..5 the dot master the
+            // never-rendered faces keep), tinted = false (the models'
+            // tintindex the power ramp the append pass bakes per state
+            // — the OFF row the power-0 color the masters' own bytes
+            // wear, the ON row the power-15 color the _on tiles bank).
+            // NO palette-row tint the tint_for_texture walk answers —
+            // the grayscale masters ride the bake the append pass's
+            // own wire rows carry.
+            let wire_sprite = |archive: &mut ZipArchive<std::io::Cursor<&[u8]>>,
+                               model_ref: &str|
+             -> Result<String> {
+                let bytes = read_jar(
+                    archive,
+                    &format!("assets/minecraft/models/{model_ref}.json"),
+                )?;
+                let json: Value = serde_json::from_slice(&bytes)
+                    .with_context(|| format!("model {model_ref}: json parse"))?;
+                let tex = json
+                    .get("textures")
+                    .with_context(|| format!("model {model_ref}: no textures"))?;
+                let line = tex
+                    .get("line")
+                    .with_context(|| format!("model {model_ref}: no #line ref"))?;
+                let sprite = line
+                    .as_str()
+                    .map(|s| s.to_string())
+                    .or_else(|| {
+                        line.get("sprite")
+                            .and_then(|v| v.as_str())
+                            .map(|s| s.to_string())
+                    })
+                    .with_context(|| format!("model {model_ref}: #line sprite absent"))?;
+                Ok(sprite
+                    .trim_start_matches("minecraft:")
+                    .trim_start_matches("block/")
+                    .to_string())
+            };
+            let bs_bytes = read_jar(
+                &mut archive,
+                "assets/minecraft/blockstates/redstone_wire.json",
+            )?;
+            let bs: Value = serde_json::from_slice(&bs_bytes)
+                .with_context(|| "blockstate redstone_wire: json parse")?;
+            let parts = bs
+                .get("multipart")
+                .and_then(|v| v.as_array())
+                .with_context(|| "blockstate redstone_wire: no multipart")?;
+            let part_model = |part: &Value| -> Result<String> {
+                let apply = part
+                    .get("apply")
+                    .with_context(|| "multipart part: no apply")?;
+                let row = if let Some(first) = apply.as_array().and_then(|a| a.first()) {
+                    first.clone()
+                } else {
+                    apply.clone()
+                };
+                row.get("model")
+                    .and_then(|m| m.as_str())
+                    .map(|s| s.trim_start_matches("minecraft:").to_string())
+                    .with_context(|| "multipart part: no model ref")
+            };
+            let dot_stem = wire_sprite(&mut archive, &part_model(&parts[0])?)?;
+            let ns_stem = wire_sprite(&mut archive, &part_model(&parts[1])?)?;
+            let ew_stem = wire_sprite(&mut archive, &part_model(&parts[4])?)?;
+            let face = |stem: &str| ResolvedFace {
+                texture: format!("block/{stem}"),
+                tinted: false,
+            };
+            faces.push([
+                face(&dot_stem),
+                face(&ns_stem),
+                face(&ew_stem),
+                face(&dot_stem),
+                face(&dot_stem),
+                face(&dot_stem),
+            ]);
+            continue;
+        }
         if block.ends_with("_pressure_plate") || block.ends_with("_pressure_plate_down") {
             // THE PRESSURE PLATES' OWN ROWS (the dev-48 round): the
             // blockstate's own POWERED rows the kinds wear — the
@@ -2765,6 +2918,110 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         tile_names.push(stem.to_string());
         tile_bytes.push(bytes);
         let _ = idx;
+    }
+    // THE REDSTONE DUST'S OWN TINT BANK (the autopush-665 round): the
+    // wire's two states the power ramp the getColorForPower table the
+    // lambda$static$0 fill speaks — the OFF row the power-0 color
+    // (0.3, 0, 0) the (77, 0, 0) RGB triple wears, the ON row the
+    // power-15 color (1.0, 0.2, 0.0) the (255, 51, 0) triple banks
+    // (the colorFromFloat byte fold `(int)(f * 255.0 + 0.5)`). The
+    // grayscale masters the wire arm's resolve walk already banked
+    // (the untinted dot/line0/line1 tiles the palette rows' own slots
+    // carry) — the OFF tint bakes INTO the masters' own bytes (the
+    // tile names the jar stems keep, the tile table's growth the
+    // three ON tiles the tail seats bank — the pre-wire indices stay
+    // byte-identical, the golden safety the append-at-the-end law
+    // keeps). The ON tiles the {stem}_on names bank (the mesher's
+    // wire path the ON kind's own slots read). APPENDED after the
+    // cake masters — the block palette's tile indices stay
+    // byte-identical, the destroy stages the +3 shift the named
+    // consts the emit absorbs.
+    if let Some(dot_off) = tile_names.iter().position(|n| n == "redstone_dust_dot") {
+        let line0_off = tile_names
+            .iter()
+            .position(|n| n == "redstone_dust_line0")
+            .with_context(|| "tile redstone_dust_line0: absent from the banked tiles")?;
+        let line1_off = tile_names
+            .iter()
+            .position(|n| n == "redstone_dust_line1")
+            .with_context(|| "tile redstone_dust_line1: absent from the banked tiles")?;
+        // THE OFF TINT'S OWN BAKE (the masters' own bytes the power-0
+        // color wears — the grayscale 217..254 pixels the dark red the
+        // vanilla's unpowered dust paints)
+        for idx in [dot_off, line0_off, line1_off] {
+            bake_tint(&mut tile_bytes[idx], 0x4D0000);
+        }
+        // THE ON TILES' OWN BANK (the power-15 color the bright red
+        // the powered dust speaks — the three masters the tinted
+        // copies the {stem}_on names carry; the jar's OWN grayscale
+        // the honest source the bake reads — the OFF-tinted bytes the
+        // double-darken never wear)
+        let on_tint = 0xFF3300u32;
+        for stem in [
+            "redstone_dust_dot_on",
+            "redstone_dust_line0_on",
+            "redstone_dust_line1_on",
+        ] {
+            let raw = read_jar(
+                &mut archive,
+                &format!(
+                    "assets/minecraft/textures/block/{}.png",
+                    stem.trim_end_matches("_on")
+                ),
+            )
+            .with_context(|| format!("texture {stem}: master read"))?;
+            let (w, h, rgba) = decode_rgba(&raw)?;
+            if w != 16 || h != 16 {
+                bail!("texture {stem}: expected 16x16 (first frame), got {w}x{h}");
+            }
+            let (_, _, rgba) = first_frame(w, h, &rgba);
+            let mut bytes = rgba;
+            bake_tint(&mut bytes, on_tint);
+            tile_names.push(stem.to_string());
+            tile_bytes.push(bytes);
+        }
+        // THE WIRE ROWS' OWN SLOT WALK (the palette tail's own seats
+        // the index finder banks — the OFF row the dot/N-S/E-W masters
+        // slots 0..2 wear, the ON row the _on tiles the same seats
+        // keep; slots 3..5 the dot master the never-rendered faces
+        // bank)
+        let wire_off_row = RUNTIME_PALETTE
+            .iter()
+            .position(|b| *b == "redstone_wire")
+            .with_context(|| "palette row redstone_wire: absent")?;
+        let wire_on_row = RUNTIME_PALETTE
+            .iter()
+            .position(|b| *b == "redstone_wire_on")
+            .with_context(|| "palette row redstone_wire_on: absent")?;
+        let dot_on_idx = tile_names
+            .iter()
+            .position(|n| n == "redstone_dust_dot_on")
+            .with_context(|| "tile redstone_dust_dot_on: absent")?;
+        let line0_on_idx = tile_names
+            .iter()
+            .position(|n| n == "redstone_dust_line0_on")
+            .with_context(|| "tile redstone_dust_line0_on: absent")?;
+        let line1_on_idx = tile_names
+            .iter()
+            .position(|n| n == "redstone_dust_line1_on")
+            .with_context(|| "tile redstone_dust_line1_on: absent")?;
+        let (dot_idx, line0_idx, line1_idx) = (dot_off as u16, line0_off as u16, line1_off as u16);
+        let (dot_on_idx, line0_on_idx, line1_on_idx) = (
+            dot_on_idx as u16,
+            line0_on_idx as u16,
+            line1_on_idx as u16,
+        );
+        face_tiles[wire_off_row] = [
+            dot_idx, line0_idx, line1_idx, dot_idx, dot_idx, dot_idx,
+        ];
+        face_tiles[wire_on_row] = [
+            dot_on_idx, line0_on_idx, line1_on_idx, dot_on_idx, dot_on_idx, dot_on_idx,
+        ];
+        // THE TINT ROWS' OWN ZEROS (the pre-colored pixels the TINTS
+        // table never re-multiples — the wire rows the same law the
+        // pre-colored masters keep)
+        face_tints[wire_off_row] = [0; 6];
+        face_tints[wire_on_row] = [0; 6];
     }
     // THE HONEY MASTERS' OWN STATIC BANK (the autopush-599 round): the
     // two skin textures the honey model's INSET element names — #up
