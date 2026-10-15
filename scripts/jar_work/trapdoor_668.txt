@@ -1,0 +1,1135 @@
+=== blockstates/oak_trapdoor.json
+{
+  "variants": {
+    "facing=east,half=bottom,open=false": {
+      "model": "minecraft:block/oak_trapdoor_bottom"
+    },
+    "facing=east,half=bottom,open=true": {
+      "model": "minecraft:block/oak_trapdoor_open",
+      "y": 90
+    },
+    "facing=east,half=top,open=false": {
+      "model": "minecraft:block/oak_trapdoor_top"
+    },
+    "facing=east,half=top,open=true": {
+      "model": "minecraft:block/oak_trapdoor_open",
+      "y": 90
+    },
+    "facing=north,half=bottom,open=false": {
+      "model": "minecraft:block/oak_trapdoor_bottom"
+    },
+    "facing=north,half=bottom,open=true": {
+      "model": "minecraft:block/oak_trapdoor_open"
+    },
+    "facing=north,half=top,open=false": {
+      "model": "minecraft:block/oak_trapdoor_top"
+    },
+    "facing=north,half=top,open=true": {
+      "model": "minecraft:block/oak_trapdoor_open"
+    },
+    "facing=south,half=bottom,open=false": {
+      "model": "minecraft:block/oak_trapdoor_bottom"
+    },
+    "facing=south,half=bottom,open=true": {
+      "model": "minecraft:block/oak_trapdoor_open",
+      "y": 180
+    },
+    "facing=south,half=top,open=false": {
+      "model": "minecraft:block/oak_trapdoor_top"
+    },
+    "facing=south,half=top,open=true": {
+      "model": "minecraft:block/oak_trapdoor_open",
+      "y": 180
+    },
+    "facing=west,half=bottom,open=false": {
+      "model": "minecraft:block/oak_trapdoor_bottom"
+    },
+    "facing=west,half=bottom,open=true": {
+      "model": "minecraft:block/oak_trapdoor_open",
+      "y": 270
+    },
+    "facing=west,half=top,open=false": {
+      "model": "minecraft:block/oak_trapdoor_top"
+    },
+    "facing=west,half=top,open=true": {
+      "model": "minecraft:block/oak_trapdoor_open",
+      "y": 270
+    }
+  }
+}
+=== models/block/template_trapdoor_bottom.json
+{
+ "parent": "block/thin_block",
+ "textures": {
+  "particle": "#texture"
+ },
+ "elements": [
+  {
+   "from": [
+    0,
+    0,
+    0
+   ],
+   "to": [
+    16,
+    3,
+    16
+   ],
+   "faces": {
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#texture",
+     "cullface": "down"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#texture"
+    },
+    "north": {
+     "uv": [
+      0,
+      16,
+      16,
+      13
+     ],
+     "texture": "#texture",
+     "cullface": "north"
+    },
+    "south": {
+     "uv": [
+      0,
+      16,
+      16,
+      13
+     ],
+     "texture": "#texture",
+     "cullface": "south"
+    },
+    "west": {
+     "uv": [
+      0,
+      16,
+      16,
+      13
+     ],
+     "texture": "#texture",
+     "cullface": "west"
+    },
+    "east": {
+     "uv": [
+      0,
+      16,
+      16,
+      13
+     ],
+     "texture": "#texture",
+     "cullface": "east"
+    }
+   }
+  }
+ ]
+}
+=== models/block/template_trapdoor_top.json
+{
+ "textures": {
+  "particle": "#texture"
+ },
+ "elements": [
+  {
+   "from": [
+    0,
+    13,
+    0
+   ],
+   "to": [
+    16,
+    16,
+    16
+   ],
+   "faces": {
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#texture"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#texture",
+     "cullface": "up"
+    },
+    "north": {
+     "uv": [
+      0,
+      16,
+      16,
+      13
+     ],
+     "texture": "#texture",
+     "cullface": "north"
+    },
+    "south": {
+     "uv": [
+      0,
+      16,
+      16,
+      13
+     ],
+     "texture": "#texture",
+     "cullface": "south"
+    },
+    "west": {
+     "uv": [
+      0,
+      16,
+      16,
+      13
+     ],
+     "texture": "#texture",
+     "cullface": "west"
+    },
+    "east": {
+     "uv": [
+      0,
+      16,
+      16,
+      13
+     ],
+     "texture": "#texture",
+     "cullface": "east"
+    }
+   }
+  }
+ ]
+}
+=== models/block/template_trapdoor_open.json
+{
+ "textures": {
+  "particle": "#texture"
+ },
+ "elements": [
+  {
+   "from": [
+    0,
+    0,
+    13
+   ],
+   "to": [
+    16,
+    16,
+    16
+   ],
+   "faces": {
+    "down": {
+     "uv": [
+      0,
+      13,
+      16,
+      16
+     ],
+     "texture": "#texture",
+     "cullface": "down"
+    },
+    "up": {
+     "uv": [
+      0,
+      16,
+      16,
+      13
+     ],
+     "texture": "#texture",
+     "cullface": "up"
+    },
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#texture"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#texture",
+     "cullface": "south"
+    },
+    "west": {
+     "uv": [
+      16,
+      0,
+      13,
+      16
+     ],
+     "texture": "#texture",
+     "cullface": "west"
+    },
+    "east": {
+     "uv": [
+      13,
+      0,
+      16,
+      16
+     ],
+     "texture": "#texture",
+     "cullface": "east"
+    }
+   }
+  }
+ ]
+}
+=== models/block/template_orientable_trapdoor_bottom.json
+{
+ "parent": "block/thin_block",
+ "textures": {
+  "particle": "#texture"
+ },
+ "elements": [
+  {
+   "from": [
+    0,
+    0,
+    0
+   ],
+   "to": [
+    16,
+    3,
+    16
+   ],
+   "faces": {
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#texture",
+     "cullface": "down"
+    },
+    "up": {
+     "uv": [
+      0,
+      16,
+      16,
+      0
+     ],
+     "texture": "#texture"
+    },
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      3
+     ],
+     "texture": "#texture",
+     "cullface": "north"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      3
+     ],
+     "texture": "#texture",
+     "cullface": "south"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      3
+     ],
+     "texture": "#texture",
+     "cullface": "west"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      3
+     ],
+     "texture": "#texture",
+     "cullface": "east"
+    }
+   }
+  }
+ ]
+}
+=== models/block/template_orientable_trapdoor_top.json
+{
+ "textures": {
+  "particle": "#texture"
+ },
+ "elements": [
+  {
+   "from": [
+    0,
+    13,
+    0
+   ],
+   "to": [
+    16,
+    16,
+    16
+   ],
+   "faces": {
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ],
+     "texture": "#texture"
+    },
+    "up": {
+     "uv": [
+      0,
+      16,
+      16,
+      0
+     ],
+     "texture": "#texture",
+     "cullface": "up"
+    },
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      3
+     ],
+     "texture": "#texture",
+     "cullface": "north"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      3
+     ],
+     "texture": "#texture",
+     "cullface": "south"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      3
+     ],
+     "texture": "#texture",
+     "cullface": "west"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      16,
+      3
+     ],
+     "texture": "#texture",
+     "cullface": "east"
+    }
+   }
+  }
+ ]
+}
+=== models/block/template_orientable_trapdoor_open.json
+{
+ "textures": {
+  "particle": "#texture"
+ },
+ "elements": [
+  {
+   "from": [
+    0,
+    0,
+    13
+   ],
+   "to": [
+    16,
+    16,
+    16
+   ],
+   "faces": {
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      3
+     ],
+     "texture": "#texture",
+     "cullface": "down"
+    },
+    "up": {
+     "uv": [
+      0,
+      3,
+      16,
+      0
+     ],
+     "texture": "#texture",
+     "cullface": "up"
+    },
+    "north": {
+     "uv": [
+      0,
+      16,
+      16,
+      0
+     ],
+     "texture": "#texture"
+    },
+    "south": {
+     "uv": [
+      0,
+      16,
+      16,
+      0
+     ],
+     "texture": "#texture",
+     "cullface": "south"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      16,
+      3
+     ],
+     "rotation": 90,
+     "texture": "#texture",
+     "cullface": "west"
+    },
+    "east": {
+     "uv": [
+      0,
+      3,
+      16,
+      0
+     ],
+     "rotation": 90,
+     "texture": "#texture",
+     "cullface": "east"
+    }
+   }
+  }
+ ]
+}
+=== model oak_trapdoor_bottom.json
+{
+ "parent": "minecraft:block/template_trapdoor_bottom",
+ "textures": {
+  "texture": "minecraft:block/oak_trapdoor"
+ }
+}
+=== model oak_trapdoor_top.json
+{
+ "parent": "minecraft:block/template_trapdoor_top",
+ "textures": {
+  "texture": "minecraft:block/oak_trapdoor"
+ }
+}
+=== model oak_trapdoor_open.json
+{
+ "parent": "minecraft:block/template_trapdoor_open",
+ "textures": {
+  "texture": "minecraft:block/oak_trapdoor"
+ }
+}
+
+=== TrapDoorBlock walk (net/minecraft/world/level/block/TrapDoorBlock)
+--- net.minecraft.world.level.block.TrapDoorBlock.useWithoutItem(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/phys/BlockHitResult;)Lnet/minecraft/world/InteractionResult;
+0: aload_0
+1: getfield net/minecraft/world/level/block/TrapDoorBlock.type:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+4: invokevirtual net/minecraft/world/level/block/state/properties/BlockSetType.canOpenByHand:()Z
+7: ifne -> 14
+10: getstatic net/minecraft/world/InteractionResult.PASS:Lnet/minecraft/world/InteractionResult$Pass;
+13: areturn
+14: aload_0
+15: aload_1
+16: aload_2
+17: aload_3
+18: aload 4
+20: invokevirtual net/minecraft/world/level/block/TrapDoorBlock.toggle:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/entity/player/Player;)V
+23: getstatic net/minecraft/world/InteractionResult.SUCCESS:Lnet/minecraft/world/InteractionResult$Success;
+26: areturn
+--- net.minecraft.world.level.block.TrapDoorBlock.useWithoutItem(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/phys/BlockHitResult;)Lnet/minecraft/world/InteractionResult;
+0: aload_0
+1: getfield net/minecraft/world/level/block/TrapDoorBlock.type:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+4: invokevirtual net/minecraft/world/level/block/state/properties/BlockSetType.canOpenByHand:()Z
+7: ifne -> 14
+10: getstatic net/minecraft/world/InteractionResult.PASS:Lnet/minecraft/world/InteractionResult$Pass;
+13: areturn
+14: aload_0
+15: aload_1
+16: aload_2
+17: aload_3
+18: aload 4
+20: invokevirtual net/minecraft/world/level/block/TrapDoorBlock.toggle:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/entity/player/Player;)V
+23: getstatic net/minecraft/world/InteractionResult.SUCCESS:Lnet/minecraft/world/InteractionResult$Success;
+26: areturn
+--- net.minecraft.world.level.block.TrapDoorBlock.getStateForPlacement(Lnet/minecraft/world/item/context/BlockPlaceContext;)Lnet/minecraft/world/level/block/state/BlockState;
+0: aload_0
+1: invokevirtual net/minecraft/world/level/block/TrapDoorBlock.defaultBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+4: astore_2
+5: aload_1
+6: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getLevel:()Lnet/minecraft/world/level/Level;
+9: aload_1
+10: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getClickedPos:()Lnet/minecraft/core/BlockPos;
+13: invokevirtual net/minecraft/world/level/Level.getFluidState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/material/FluidState;
+16: astore_3
+17: aload_1
+18: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getClickedFace:()Lnet/minecraft/core/Direction;
+21: astore 4
+23: aload_1
+24: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.replacingClickedOnBlock:()Z
+27: ifne -> 41
+30: aload 4
+32: invokevirtual net/minecraft/core/Direction.getAxis:()Lnet/minecraft/core/Direction$Axis;
+35: invokevirtual net/minecraft/core/Direction$Axis.isHorizontal:()Z
+38: ifne -> 88
+41: aload_2
+42: getstatic net/minecraft/world/level/block/TrapDoorBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+45: aload_1
+46: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getHorizontalDirection:()Lnet/minecraft/core/Direction;
+49: invokevirtual net/minecraft/core/Direction.getOpposite:()Lnet/minecraft/core/Direction;
+52: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+55: checkcast net/minecraft/world/level/block/state/BlockState
+58: getstatic net/minecraft/world/level/block/TrapDoorBlock.HALF:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+61: aload 4
+63: getstatic net/minecraft/core/Direction.UP:Lnet/minecraft/core/Direction;
+66: if_acmpne -> 75
+69: getstatic net/minecraft/world/level/block/state/properties/Half.BOTTOM:Lnet/minecraft/world/level/block/state/properties/Half;
+72: goto -> 78
+75: getstatic net/minecraft/world/level/block/state/properties/Half.TOP:Lnet/minecraft/world/level/block/state/properties/Half;
+78: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+81: checkcast net/minecraft/world/level/block/state/BlockState
+84: astore_2
+85: goto -> 142
+88: aload_2
+89: getstatic net/minecraft/world/level/block/TrapDoorBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+92: aload 4
+94: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+97: checkcast net/minecraft/world/level/block/state/BlockState
+100: getstatic net/minecraft/world/level/block/TrapDoorBlock.HALF:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+103: aload_1
+104: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getClickLocation:()Lnet/minecraft/world/phys/Vec3;
+107: getfield net/minecraft/world/phys/Vec3.y:D
+110: aload_1
+111: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getClickedPos:()Lnet/minecraft/core/BlockPos;
+114: invokevirtual net/minecraft/core/BlockPos.getY:()I
+117: i2d
+118: 0x67
+119: 0x14 ldc2w@289
+122: dcmpl
+123: ifle -> 132
+126: getstatic net/minecraft/world/level/block/state/properties/Half.TOP:Lnet/minecraft/world/level/block/state/properties/Half;
+129: goto -> 135
+132: getstatic net/minecraft/world/level/block/state/properties/Half.BOTTOM:Lnet/minecraft/world/level/block/state/properties/Half;
+135: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+138: checkcast net/minecraft/world/level/block/state/BlockState
+141: astore_2
+142: aload_1
+143: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getLevel:()Lnet/minecraft/world/level/Level;
+146: aload_1
+147: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getClickedPos:()Lnet/minecraft/core/BlockPos;
+150: invokevirtual net/minecraft/world/level/Level.hasNeighborSignal:(Lnet/minecraft/core/BlockPos;)Z
+153: ifeq -> 184
+156: aload_2
+157: getstatic net/minecraft/world/level/block/TrapDoorBlock.OPEN:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+160: iconst_1
+161: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+164: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+167: checkcast net/minecraft/world/level/block/state/BlockState
+170: getstatic net/minecraft/world/level/block/TrapDoorBlock.POWERED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+173: iconst_1
+174: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+177: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+180: checkcast net/minecraft/world/level/block/state/BlockState
+183: astore_2
+184: aload_2
+185: getstatic net/minecraft/world/level/block/TrapDoorBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+188: aload_3
+189: getstatic net/minecraft/world/level/material/Fluids.WATER:Lnet/minecraft/world/level/material/FlowingFluid;
+192: invokevirtual net/minecraft/world/level/material/FluidState.is:(Ljava/lang/Object;)Z
+195: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+198: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+201: checkcast net/minecraft/world/level/block/state/BlockState
+204: areturn
+--- net.minecraft.world.level.block.TrapDoorBlock.getShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/shapes/CollisionContext;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+0: getstatic net/minecraft/world/level/block/TrapDoorBlock.SHAPES:Ljava/util/Map;
+3: aload_1
+4: getstatic net/minecraft/world/level/block/TrapDoorBlock.OPEN:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+7: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+10: checkcast java/lang/Boolean
+13: invokevirtual java/lang/Boolean.booleanValue:()Z
+16: ifeq -> 29
+19: aload_1
+20: getstatic net/minecraft/world/level/block/TrapDoorBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+23: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+26: goto -> 51
+29: aload_1
+30: getstatic net/minecraft/world/level/block/TrapDoorBlock.HALF:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+33: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+36: getstatic net/minecraft/world/level/block/state/properties/Half.TOP:Lnet/minecraft/world/level/block/state/properties/Half;
+39: if_acmpne -> 48
+42: getstatic net/minecraft/core/Direction.DOWN:Lnet/minecraft/core/Direction;
+45: goto -> 51
+48: getstatic net/minecraft/core/Direction.UP:Lnet/minecraft/core/Direction;
+51: invokeinterface java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+54: iconst_m1
+55: nop
+56: checkcast net/minecraft/world/phys/shapes/VoxelShape
+59: areturn
+--- net.minecraft.world.level.block.TrapDoorBlock.updateShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/world/level/ScheduledTickAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;)Lnet/minecraft/world/level/block/state/BlockState;
+0: aload_1
+1: getstatic net/minecraft/world/level/block/TrapDoorBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+4: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+7: checkcast java/lang/Boolean
+10: invokevirtual java/lang/Boolean.booleanValue:()Z
+13: ifeq -> 34
+16: aload_3
+17: aload 4
+19: getstatic net/minecraft/world/level/material/Fluids.WATER:Lnet/minecraft/world/level/material/FlowingFluid;
+22: getstatic net/minecraft/world/level/material/Fluids.WATER:Lnet/minecraft/world/level/material/FlowingFluid;
+25: aload_2
+26: invokevirtual net/minecraft/world/level/material/FlowingFluid.getTickDelay:(Lnet/minecraft/world/level/LevelReader;)I
+29: invokeinterface net/minecraft/world/level/ScheduledTickAccess.scheduleTick:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/material/Fluid;I)V
+32: iconst_1
+33: nop
+34: aload_0
+35: aload_1
+36: aload_2
+37: aload_3
+38: aload 4
+40: aload 5
+42: aload 6
+44: aload 7
+46: aload 8
+48: invokespecial net/minecraft/world/level/block/HorizontalDirectionalBlock.updateShape:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/world/level/ScheduledTickAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;)Lnet/minecraft/world/level/block/state/BlockState;
+51: areturn
+!! net.minecraft.world.level.block.TrapDoorBlock: no method matching propagatesSkylightDown
+!! net.minecraft.world.level.block.TrapDoorBlock: no method matching skipRendering
+!! net.minecraft.world.level.block.TrapDoorBlock: no method matching getLightBlock
+--- net.minecraft.world.level.block.TrapDoorBlock.isPathfindable(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/pathfinder/PathComputationType;)Z
+0: getstatic net/minecraft/world/level/block/TrapDoorBlock$1.$SwitchMap$net$minecraft$world$level$pathfinder$PathComputationType:[I
+3: aload_2
+4: invokevirtual net/minecraft/world/level/pathfinder/PathComputationType.ordinal:()I
+7: 0x2e
+8: 0xaa
+24: nop
+25: nop
+26: nop
+27: iload_2
+28: nop
+29: nop
+30: nop
+31: aload_2
+32: nop
+33: nop
+34: nop
+35: istore_1
+36: aload_1
+37: getstatic net/minecraft/world/level/block/TrapDoorBlock.OPEN:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+40: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+43: checkcast java/lang/Boolean
+46: invokevirtual java/lang/Boolean.booleanValue:()Z
+49: goto -> 85
+52: aload_1
+53: getstatic net/minecraft/world/level/block/TrapDoorBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+56: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+59: checkcast java/lang/Boolean
+62: invokevirtual java/lang/Boolean.booleanValue:()Z
+65: goto -> 85
+68: aload_1
+69: getstatic net/minecraft/world/level/block/TrapDoorBlock.OPEN:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+72: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+75: checkcast java/lang/Boolean
+78: invokevirtual java/lang/Boolean.booleanValue:()Z
+81: goto -> 85
+84: iconst_0
+85: ireturn
+!! net.minecraft.world.level.block.TrapDoorBlock: no method matching canBeReplaced
+--- net.minecraft.world.level.block.TrapDoorBlock.toggle(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/entity/player/Player;)V
+0: aload_1
+1: getstatic net/minecraft/world/level/block/TrapDoorBlock.OPEN:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+4: invokevirtual net/minecraft/world/level/block/state/BlockState.cycle:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Object;
+7: checkcast net/minecraft/world/level/block/state/BlockState
+10: astore 5
+12: aload_2
+13: aload_3
+14: aload 5
+16: iconst_2
+17: invokevirtual net/minecraft/world/level/Level.setBlock:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z
+20: pop
+21: aload 5
+23: getstatic net/minecraft/world/level/block/TrapDoorBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+26: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+29: checkcast java/lang/Boolean
+32: invokevirtual java/lang/Boolean.booleanValue:()Z
+35: ifeq -> 53
+38: aload_2
+39: aload_3
+40: getstatic net/minecraft/world/level/material/Fluids.WATER:Lnet/minecraft/world/level/material/FlowingFluid;
+43: getstatic net/minecraft/world/level/material/Fluids.WATER:Lnet/minecraft/world/level/material/FlowingFluid;
+46: aload_2
+47: invokevirtual net/minecraft/world/level/material/FlowingFluid.getTickDelay:(Lnet/minecraft/world/level/LevelReader;)I
+50: invokevirtual net/minecraft/world/level/Level.scheduleTick:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/material/Fluid;I)V
+53: aload_0
+54: aload 4
+56: aload_2
+57: aload_3
+58: aload 5
+60: getstatic net/minecraft/world/level/block/TrapDoorBlock.OPEN:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+63: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+66: checkcast java/lang/Boolean
+69: invokevirtual java/lang/Boolean.booleanValue:()Z
+72: invokevirtual net/minecraft/world/level/block/TrapDoorBlock.playSound:(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Z)V
+75: return
+--- net.minecraft.world.level.block.TrapDoorBlock.<clinit>()V
+0: invokedynamic indy
+5: invokestatic com/mojang/serialization/codecs/RecordCodecBuilder.mapCodec:(Ljava/util/function/Function;)Lcom/mojang/serialization/MapCodec;
+8: putstatic net/minecraft/world/level/block/TrapDoorBlock.CODEC:Lcom/mojang/serialization/MapCodec;
+11: getstatic net/minecraft/world/level/block/state/properties/BlockStateProperties.OPEN:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+14: putstatic net/minecraft/world/level/block/TrapDoorBlock.OPEN:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+17: getstatic net/minecraft/world/level/block/state/properties/BlockStateProperties.HALF:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+20: putstatic net/minecraft/world/level/block/TrapDoorBlock.HALF:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+23: getstatic net/minecraft/world/level/block/state/properties/BlockStateProperties.POWERED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+26: putstatic net/minecraft/world/level/block/TrapDoorBlock.POWERED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+29: getstatic net/minecraft/world/level/block/state/properties/BlockStateProperties.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+32: putstatic net/minecraft/world/level/block/TrapDoorBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+35: 0x14 ldc2w@371
+38: 0x14 ldc2w@373
+41: 0x14 ldc2w@371
+44: invokestatic net/minecraft/world/level/block/Block.boxZ:(DDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+47: invokestatic net/minecraft/world/phys/shapes/Shapes.rotateAll:(Lnet/minecraft/world/phys/shapes/VoxelShape;)Ljava/util/Map;
+50: putstatic net/minecraft/world/level/block/TrapDoorBlock.SHAPES:Ljava/util/Map;
+53: return
+--- net.minecraft.world.level.block.TrapDoorBlock.neighborChanged(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/redstone/Orientation;Z)V
+0: aload_2
+1: invokevirtual net/minecraft/world/level/Level.isClientSide:()Z
+4: ifeq -> 8
+7: return
+8: aload_2
+9: aload_3
+10: invokevirtual net/minecraft/world/level/Level.hasNeighborSignal:(Lnet/minecraft/core/BlockPos;)Z
+13: istore 7
+15: iload 7
+17: aload_1
+18: getstatic net/minecraft/world/level/block/TrapDoorBlock.POWERED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+21: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+24: checkcast java/lang/Boolean
+27: invokevirtual java/lang/Boolean.booleanValue:()Z
+30: if_icmpeq -> 129
+33: aload_1
+34: getstatic net/minecraft/world/level/block/TrapDoorBlock.OPEN:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+37: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+40: checkcast java/lang/Boolean
+43: invokevirtual java/lang/Boolean.booleanValue:()Z
+46: iload 7
+48: if_icmpeq -> 76
+51: aload_1
+52: getstatic net/minecraft/world/level/block/TrapDoorBlock.OPEN:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+55: iload 7
+57: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+60: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+63: checkcast net/minecraft/world/level/block/state/BlockState
+66: astore_1
+67: aload_0
+68: aconst_null
+69: aload_2
+70: aload_3
+71: iload 7
+73: invokevirtual net/minecraft/world/level/block/TrapDoorBlock.playSound:(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Z)V
+76: aload_2
+77: aload_3
+78: aload_1
+79: getstatic net/minecraft/world/level/block/TrapDoorBlock.POWERED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+82: iload 7
+84: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+87: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+90: checkcast net/minecraft/world/level/block/state/BlockState
+93: iconst_2
+94: invokevirtual net/minecraft/world/level/Level.setBlock:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z
+97: pop
+98: aload_1
+99: getstatic net/minecraft/world/level/block/TrapDoorBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+102: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+105: checkcast java/lang/Boolean
+108: invokevirtual java/lang/Boolean.booleanValue:()Z
+111: ifeq -> 129
+114: aload_2
+115: aload_3
+116: getstatic net/minecraft/world/level/material/Fluids.WATER:Lnet/minecraft/world/level/material/FlowingFluid;
+119: getstatic net/minecraft/world/level/material/Fluids.WATER:Lnet/minecraft/world/level/material/FlowingFluid;
+122: aload_2
+123: invokevirtual net/minecraft/world/level/material/FlowingFluid.getTickDelay:(Lnet/minecraft/world/level/LevelReader;)I
+126: invokevirtual net/minecraft/world/level/Level.scheduleTick:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/material/Fluid;I)V
+129: return
+!! net.minecraft.world.level.block.TrapDoorBlock: no method matching onPlace
+
+=== WeatheringCopperTrapDoorBlock (the sub-class law the oak's direct ctor keeps)
+--- net.minecraft.world.level.block.WeatheringCopperTrapDoorBlock.<init>(Lnet/minecraft/world/level/block/state/properties/BlockSetType;Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+0: aload_0
+1: aload_1
+2: aload_3
+3: invokespecial net/minecraft/world/level/block/TrapDoorBlock.<init>:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+6: aload_0
+7: aload_2
+8: putfield net/minecraft/world/level/block/WeatheringCopperTrapDoorBlock.weatherState:Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;
+11: return
+
+=== TrapDoorBlock ctor (the registerDefaultState walk) + playSound
+--- net.minecraft.world.level.block.TrapDoorBlock.<init>(Lnet/minecraft/world/level/block/state/properties/BlockSetType;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+0: aload_0
+1: aload_2
+2: aload_1
+3: invokevirtual net/minecraft/world/level/block/state/properties/BlockSetType.soundType:()Lnet/minecraft/world/level/block/SoundType;
+6: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+9: invokespecial net/minecraft/world/level/block/HorizontalDirectionalBlock.<init>:(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+12: aload_0
+13: aload_1
+14: putfield net/minecraft/world/level/block/TrapDoorBlock.type:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+17: aload_0
+18: aload_0
+19: getfield net/minecraft/world/level/block/TrapDoorBlock.stateDefinition:Lnet/minecraft/world/level/block/state/StateDefinition;
+22: invokevirtual net/minecraft/world/level/block/state/StateDefinition.any:()Lnet/minecraft/world/level/block/state/StateHolder;
+25: checkcast net/minecraft/world/level/block/state/BlockState
+28: getstatic net/minecraft/world/level/block/TrapDoorBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+31: getstatic net/minecraft/core/Direction.NORTH:Lnet/minecraft/core/Direction;
+34: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+37: checkcast net/minecraft/world/level/block/state/BlockState
+40: getstatic net/minecraft/world/level/block/TrapDoorBlock.OPEN:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+43: iconst_0
+44: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+47: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+50: checkcast net/minecraft/world/level/block/state/BlockState
+53: getstatic net/minecraft/world/level/block/TrapDoorBlock.HALF:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+56: getstatic net/minecraft/world/level/block/state/properties/Half.BOTTOM:Lnet/minecraft/world/level/block/state/properties/Half;
+59: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+62: checkcast net/minecraft/world/level/block/state/BlockState
+65: getstatic net/minecraft/world/level/block/TrapDoorBlock.POWERED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+68: iconst_0
+69: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+72: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+75: checkcast net/minecraft/world/level/block/state/BlockState
+78: getstatic net/minecraft/world/level/block/TrapDoorBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+81: iconst_0
+82: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+85: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+88: checkcast net/minecraft/world/level/block/state/BlockState
+91: invokevirtual net/minecraft/world/level/block/TrapDoorBlock.registerDefaultState:(Lnet/minecraft/world/level/block/state/BlockState;)V
+94: return
+--- net.minecraft.world.level.block.TrapDoorBlock.playSound(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Z)V
+0: aload_2
+1: aload_1
+2: aload_3
+3: iload 4
+5: ifeq -> 18
+8: aload_0
+9: getfield net/minecraft/world/level/block/TrapDoorBlock.type:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+12: invokevirtual net/minecraft/world/level/block/state/properties/BlockSetType.trapdoorOpen:()Lnet/minecraft/sounds/SoundEvent;
+15: goto -> 25
+18: aload_0
+19: getfield net/minecraft/world/level/block/TrapDoorBlock.type:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+22: invokevirtual net/minecraft/world/level/block/state/properties/BlockSetType.trapdoorClose:()Lnet/minecraft/sounds/SoundEvent;
+25: getstatic net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+28: fconst_1
+29: aload_2
+30: invokevirtual net/minecraft/world/level/Level.getRandom:()Lnet/minecraft/util/RandomSource;
+33: invokeinterface net/minecraft/util/RandomSource.nextFloat:()F
+36: aconst_null
+37: nop
+38: ldc ldc@209
+40: 0x6a
+41: ldc ldc@210
+43: fadd
+44: invokevirtual net/minecraft/world/level/Level.playSound:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+47: aload_2
+48: aload_1
+49: iload 4
+51: ifeq -> 60
+54: getstatic net/minecraft/world/level/gameevent/GameEvent.BLOCK_OPEN:Lnet/minecraft/core/Holder$Reference;
+57: goto -> 63
+60: getstatic net/minecraft/world/level/gameevent/GameEvent.BLOCK_CLOSE:Lnet/minecraft/core/Holder$Reference;
+63: aload_3
+64: invokevirtual net/minecraft/world/level/Level.gameEvent:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/Holder;Lnet/minecraft/core/BlockPos;)V
+67: return
+
+=== Block.boxZ + the CP doubles the SHAPES init wears
+--- net.minecraft.world.level.block.Block.boxZ(DDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+0: 0x26
+1: 0x26
+2: 0x28
+3: 0x18 4
+5: invokestatic net/minecraft/world/level/block/Block.boxZ:(DDDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+8: areturn
+--- net.minecraft.world.level.block.Block.boxZ(DDDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+0: 0x28
+1: 0x14 ldc2w@154
+4: 0x6f
+5: lstore 8
+7: 0x26
+8: 0x14 ldc2w@156
+11: 0x18 8
+13: 0x67
+14: 0x14 ldc2w@156
+17: 0x18 8
+19: 0x63
+20: 0x18 4
+22: 0x18 6
+24: invokestatic net/minecraft/world/level/block/Block.boxZ:(DDDDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+27: areturn
+--- net.minecraft.world.level.block.Block.boxZ(DDDDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+0: 0x26
+1: 0x14 ldc2w@154
+4: 0x6f
+5: lstore 10
+7: 0x14 ldc2w@156
+10: 0x18 10
+12: 0x67
+13: 0x28
+14: 0x18 6
+16: 0x14 ldc2w@156
+19: 0x18 10
+21: 0x63
+22: 0x18 4
+24: 0x18 8
+26: invokestatic net/minecraft/world/level/block/Block.box:(DDDDDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+29: areturn
+Block cp@154: tag 6 value 2.0
+Block cp@156: tag 6 value 8.0
+TrapDoorBlock cp@371: tag 6 value 16.0
+TrapDoorBlock cp@373: tag 6 value 13.0
+boxZ raw [boxZ(DDD)Lnet/minecraft/world/phys/shapes/VoxelShape;]: 26 26 28 18 04 b8 00 a3 b0
+boxZ raw [boxZ(DDDD)Lnet/minecraft/world/phys/shapes/VoxelShape;]: 28 14 00 9a 6f 39 08 26 14 00 9c 18 08 67 14 00 9c 18 08 63 18 04 18 06 b8 00 a6 b0
+boxZ raw [boxZ(DDDDD)Lnet/minecraft/world/phys/shapes/VoxelShape;]: 26 14 00 9a 6f 39 0a 14 00 9c 18 0a 67 28 18 06 14 00 9c 18 0a 63 18 04 18 08 b8 00 a2 b0
+
+=== BlockSetType trapdoor voice fields (the canOpenByHand + event rows)
+--- net.minecraft.world.level.block.state.properties.BlockSetType.<init>(Ljava/lang/String;)V
+0: aload_0
+1: aload_1
+2: iconst_1
+3: iconst_1
+4: iconst_1
+5: getstatic net/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity.EVERYTHING:Lnet/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity;
+8: getstatic net/minecraft/world/level/block/SoundType.WOOD:Lnet/minecraft/world/level/block/SoundType;
+11: getstatic net/minecraft/sounds/SoundEvents.WOODEN_DOOR_CLOSE:Lnet/minecraft/sounds/SoundEvent;
+14: getstatic net/minecraft/sounds/SoundEvents.WOODEN_DOOR_OPEN:Lnet/minecraft/sounds/SoundEvent;
+17: getstatic net/minecraft/sounds/SoundEvents.WOODEN_TRAPDOOR_CLOSE:Lnet/minecraft/sounds/SoundEvent;
+--- net.minecraft.world.level.block.state.properties.BlockSetType.<init>(Ljava/lang/String;ZZZLnet/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity;Lnet/minecraft/world/level/block/SoundType;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;)V
+0: aload_0
+1: invokespecial java/lang/Record.<init>:()V
+4: aload_0
+5: aload_1
+6: putfield net/minecraft/world/level/block/state/properties/BlockSetType.name:Ljava/lang/String;
+9: aload_0
+10: iload_2
+11: putfield net/minecraft/world/level/block/state/properties/BlockSetType.canOpenByHand:Z
+14: aload_0
+15: iload_3
+
+=== Blocks clinit OAK_TRAPDOOR row (wide window)
+--- clinit window @ pc 11245..11402 (OAK_TRAPDOOR)
+11245: ldc ldc@149
+11247: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+11250: getstatic net/minecraft/world/level/block/SoundType.WOOL:Lnet/minecraft/world/level/block/SoundType;
+11253: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+11256: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+11259: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.pushReaction:(Lnet/minecraft/world/level/material/PushReaction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+11262: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+11265: putstatic net/minecraft/world/level/block/Blocks.CAKE:Lnet/minecraft/world/level/block/Block;
+11268: getstatic net/minecraft/references/BlockItemIds.REPEATER:Lnet/minecraft/references/BlockItemId;
+11271: invokedynamic indy
+11276: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+11279: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instabreak:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+11282: getstatic net/minecraft/world/level/block/SoundType.STONE:Lnet/minecraft/world/level/block/SoundType;
+11285: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+11288: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+11291: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.pushReaction:(Lnet/minecraft/world/level/material/PushReaction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+11294: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+11297: putstatic net/minecraft/world/level/block/Blocks.REPEATER:Lnet/minecraft/world/level/block/Block;
+11300: getstatic net/minecraft/references/BlockItemIds.STAINED_GLASS:Lnet/minecraft/world/level/block/ColorCollection;
+11303: invokedynamic indy
+11308: invokedynamic indy
+11313: invokedynamic indy
+11318: invokestatic net/minecraft/world/level/block/ColorCollection.registerBlocks:(Lnet/minecraft/world/level/block/ColorCollection;Lorg/apache/commons/lang3/function/TriFunction;Ljava/util/function/BiFunction;Ljava/util/function/Function;)Lnet/minecraft/world/level/block/ColorCollection;
+11321: putstatic net/minecraft/world/level/block/Blocks.STAINED_GLASS:Lnet/minecraft/world/level/block/ColorCollection;
+11324: getstatic net/minecraft/references/BlockItemIds.OAK_TRAPDOOR:Lnet/minecraft/references/BlockItemId;
+11327: invokedynamic indy
+11332: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+11335: getstatic net/minecraft/world/level/material/MapColor.WOOD:Lnet/minecraft/world/level/material/MapColor;
+11338: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+11341: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASS:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+11344: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+11347: ldc2_w ldc2w@339
+11350: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+11353: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noOcclusion:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+11356: invokedynamic indy
+11361: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.isValidSpawn:(Lnet/minecraft/world/level/block/state/BlockBehaviour$StateArgumentPredicate;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+11364: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+11367: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+11370: putstatic net/minecraft/world/level/block/Blocks.OAK_TRAPDOOR:Lnet/minecraft/world/level/block/Block;
+11373: getstatic net/minecraft/references/BlockItemIds.SPRUCE_TRAPDOOR:Lnet/minecraft/references/BlockItemId;
+11376: invokedynamic indy
+11381: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+11384: getstatic net/minecraft/world/level/material/MapColor.PODZOL:Lnet/minecraft/world/level/material/MapColor;
+11387: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+11390: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASS:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+11393: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+11396: ldc2_w ldc2w@339
+11399: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+11402: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noOcclusion:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+
+=== Items clinit oak_trapdoor row
+--- clinit window @ pc 8175..8211 (OAK_TRAPDOOR)
+8175: invokestatic net/minecraft/world/level/block/WeatheringCopperCollection.registerItems:(Lnet/minecraft/world/level/block/WeatheringCopperCollection;Lnet/minecraft/world/level/block/WeatheringCopperCollection;Ljava/util/function/BiFunction;)Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+8178: putstatic net/minecraft/world/item/Items.COPPER_DOOR:Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+8181: getstatic net/minecraft/references/BlockItemIds.IRON_TRAPDOOR:Lnet/minecraft/references/BlockItemId;
+8184: getstatic net/minecraft/world/level/block/Blocks.IRON_TRAPDOOR:Lnet/minecraft/world/level/block/Block;
+8187: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+8190: putstatic net/minecraft/world/item/Items.IRON_TRAPDOOR:Lnet/minecraft/world/item/Item;
+8193: getstatic net/minecraft/references/BlockItemIds.OAK_TRAPDOOR:Lnet/minecraft/references/BlockItemId;
+8196: getstatic net/minecraft/world/level/block/Blocks.OAK_TRAPDOOR:Lnet/minecraft/world/level/block/Block;
+8199: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+8202: putstatic net/minecraft/world/item/Items.OAK_TRAPDOOR:Lnet/minecraft/world/item/Item;
+8205: getstatic net/minecraft/references/BlockItemIds.SPRUCE_TRAPDOOR:Lnet/minecraft/references/BlockItemId;
+8208: getstatic net/minecraft/world/level/block/Blocks.SPRUCE_TRAPDOOR:Lnet/minecraft/world/level/block/Block;
+8211: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+
+=== PNG dims
+oak_trapdoor: 16x16 colortype 3
+spruce_trapdoor: 16x16 colortype 3
+iron_trapdoor: 16x16 colortype 3

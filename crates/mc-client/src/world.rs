@@ -906,11 +906,12 @@ pub const END_STONE: u16 = 89;
 /// REDSTONE WIRE'S OWN PAIR the 320/321 rows the tail banks, the
 /// autopush-666 round the REDSTONE TORCH'S OWN PAIR the 322/323 rows
 /// the tail banks, the autopush-667 round the REDSTONE WALL TORCH'S
-/// OWN PAIR the 324/325 rows the tail banks, the kind's own seat the
-/// beyond-table 326 the same
+/// OWN PAIR the 324/325 rows the tail banks, the autopush-668 round
+/// the OAK TRAPDOOR'S OWN PAIR the 326/327 rows the tail banks, the
+/// kind's own seat the beyond-table 328 the same
 /// law keeps — the `id < N_KINDS` guards the tile lookups' skip
 /// verdict the bigger tail keeps).
-pub const END_PORTAL: u16 = 326;
+pub const END_PORTAL: u16 = 328;
 
 /// THE BUTTON'S OWN PAIR (the autopush-660 round): the redstone pulse's
 /// own block finally RENDERS, PLACES, PRESSES and PULSES — javap
@@ -1454,6 +1455,136 @@ pub fn wall_torch_facing_candidates(cam_yaw_radians: f32) -> [u8; 4] {
         facing_of(look + 1),
         facing_of(look),
     ]
+}
+
+/// THE OAK TRAPDOOR'S OWN CLOSED KIND (the autopush-668 round — the
+/// door family's thin-panel sibling the interactive lane finally
+/// wears). javap `net.minecraft.world.level.block.TrapDoorBlock` the
+/// 26.2 jar (scripts/jar_work/trapdoor_668.txt banks): the ctor
+/// pc 17-95 the `registerDefaultState(any().setValue(FACING, NORTH)
+/// .setValue(OPEN, false).setValue(HALF, BOTTOM).setValue(POWERED,
+/// false).setValue(WATERLOGGED, false))` walk the NORTH-facing
+/// CLOSED BOTTOM default speaks, the blocks clinit row pc 11324-11370
+/// the `mapColor(WOOD).instrument(BASS).strength(3.0f).noOcclusion()
+/// .isValidSpawn(...).ignitedByLava()` chain banks (the WOOD
+/// SoundType the ctor's own `sound(type.soundType())` walk pc 1-6
+/// speaks — the BlockSetType.OAK soundType the WOOD row keeps, the
+/// dig row (3.0, false) the generated table banks, the item the
+/// Items clinit row pc 8193-8202 the registerBlock pairing grants).
+/// The shared "oak_trapdoor" NAME_OF row the ONE registry entry both
+/// states speak (the TrapDoorBlock's own law — the dig row, the
+/// sounds' WOOD row, the place/break voices and the item id the pick
+/// lane grants BOTH kinds answer). The FACING + HALF bits the
+/// variant byte carries (the wall torch's own facing vocabulary the
+/// byte keeps — north 1, east 2, south 3, west 4; the 0 byte the
+/// no-opinion seat the ctor's NORTH default answers; the +8 bit the
+/// HALF=top word the placement's own click-height law stamps — the
+/// [`trapdoor_variant`] fold the two fields bank). The collision the
+/// closed state's own slabs wear (the SHAPES map the X_90/X_270
+/// rotations the UP/DOWN keys bank — the closed bottom [0,0,0,16,3,16]
+/// the HALF=bottom key keeps, the closed top [0,13,0,16,16,16] the
+/// HALF=top key answers — the YSpan rows the shape walk speaks).
+pub const OAK_TRAPDOOR: u16 = 326;
+
+/// THE OAK TRAPDOOR'S OWN OPEN KIND (the autopush-668 round — the
+/// toggle walk's own ±1 seat). javap TrapDoorBlock.useWithoutItem
+/// pc 0-26 the 26.2 jar: the `canOpenByHand` gate the WOODEN set
+/// type the OAK row the PASS never keeps, the toggle pc 0-75 the
+/// `state.cycle(OPEN)` the setBlock flag 2 walk the ±1 mate wears,
+/// the playSound pc 53-75 the trapdoorOpen/trapdoorClose events the
+/// new state's OPEN bit picks (the block.wooden_trapdoor.open/.close
+/// voices the runtime table carries), the gameEvent pc 47-67 the
+/// BLOCK_OPEN/BLOCK_CLOSE posts the sculk lane hears. The open panel
+/// the FACING-opposite edge the 3/16 thickness the SHAPES map's
+/// FACING keys bank (facing north the [0,0,13,16,16,16] south-strip
+/// panel the base shape keeps, east the west strip x 0..3, south the
+/// north strip z 0..3, west the east strip x 13..16 — the blockstate
+/// y table north 0 / east 90 / south 180 / west 270 the model's own
+/// rotation folds — the Band rows the shape walk speaks).
+pub const OAK_TRAPDOOR_OPEN: u16 = 327;
+
+/// THE TRAPDOOR'S OWN FAMILY VERDICT (the autopush-668 round — the
+/// two-kind ladder the OPEN bit the ±1 mate carries): the placement's
+/// survival gate, the toggle's own arm, the consult's OPEN-sync walk,
+/// the collision's variant-aware rows and the mesher's element lane
+/// the family fn serves.
+pub fn is_oak_trapdoor(id: u16) -> bool {
+    id == OAK_TRAPDOOR || id == OAK_TRAPDOOR_OPEN
+}
+
+/// THE TRAPDOOR'S OWN OPEN BIT (the toggle's kind-only verdict — the
+/// OPEN kind the swung-panel state the cycle walk banks, the closed
+/// kind the slab state keeps).
+pub fn trapdoor_open(id: u16) -> bool {
+    id == OAK_TRAPDOOR_OPEN
+}
+
+/// THE TRAPDOOR'S OWN TOGGLED KIND (javap TrapDoorBlock.toggle pc 0-20
+/// the 26.2 jar — the `state.cycle(OPEN)` walk the ±1 mate speaks:
+/// the open kind the cycle's own tail the closed kind answers, the
+/// closed the open wears; the unknown id the None the honest guard
+/// banks).
+pub fn trapdoor_toggled(id: u16) -> Option<u16> {
+    match id {
+        OAK_TRAPDOOR => Some(OAK_TRAPDOOR_OPEN),
+        OAK_TRAPDOOR_OPEN => Some(OAK_TRAPDOOR),
+        _ => None,
+    }
+}
+
+/// THE TRAPDOOR'S OWN HAND GATE (javap TrapDoorBlock.useWithoutItem
+/// pc 0-13 the 26.2 jar — the `canOpenByHand()` read the PASS the
+/// iron set type's own refusal keeps: the BlockSetType.IRON the
+/// iconst_0 field the ctor's first boolean carries, the WOODEN set
+/// type the iconst_1 the oak row's PASS never keeps — the offline
+/// palette the oak item alone places, the gate the palette's own
+/// reach serves; the iron trapdoor the follow-up round's row keeps).
+pub fn trapdoor_opens_by_hand(id: u16) -> bool {
+    is_oak_trapdoor(id)
+}
+
+/// THE TRAPDOOR'S OWN VARIANT FOLD (the two-field byte the wall
+/// torch's own facing vocabulary keeps — the facing the low nibble
+/// north 1, east 2, south 3, west 4 answers, the 0 byte the
+/// no-opinion seat the ctor's NORTH default serves; the +8 bit the
+/// HALF=top word the placement's own click-height law stamps — the
+/// whole byte the variant sidecar's own seat banks).
+pub fn trapdoor_variant(facing: u8, half_top: bool) -> u8 {
+    facing | if half_top { 8 } else { 0 }
+}
+
+/// THE FACING'S OWN DECODE (the wall torch's own walk the low nibble
+/// keeps — the 1..=4 range the N/E/S/W rows answer, the 0 byte the
+/// NORTH default the ctor's registerDefaultState law banks).
+pub fn trapdoor_facing_of(variant: u8) -> u8 {
+    wall_torch_facing_of(variant & 7)
+}
+
+/// THE HALF'S OWN BIT (the placement's click-height law the variant's
+/// +8 seat banks — the 0 byte the BOTTOM default the ctor law keeps).
+pub fn trapdoor_half_top(variant: u8) -> bool {
+    variant & 8 != 0
+}
+
+/// THE OPEN PANEL'S OWN EDGE (the SHAPES map's FACING keys the
+/// opposite-side fold serves — javap Shapes.rotateAll the 26.2 jar
+/// the NORTH key the base [0,0,13,16,16,16] south-strip panel keeps:
+/// the facing north the panel's SOUTH edge the byte 3 answers, the
+/// east the west edge the byte 4, the south the north edge the byte
+/// 1, the west the east edge the byte 2 — the +2 fold the 1..=4 byte
+/// wraps, the Band rows the shape walk speaks).
+pub fn trapdoor_open_edge(facing: u8) -> u8 {
+    ((facing % 4) + 2 - 1) % 4 + 1
+}
+
+/// THE TRAPDOOR'S OWN VOICE STEM (javap TrapDoorBlock.playSound
+/// pc 0-25 the 26.2 jar — the BlockSetType's trapdoorOpen/trapdoorClose
+/// events the set type carries: the single-arg ctor's WOODEN pair the
+/// oak delegation speaks, the stem the toggle walk's own `.open`/
+/// `.close` suffix wears).
+pub fn trapdoor_voice_stem(id: u16) -> &'static str {
+    let _ = id;
+    "block.wooden_trapdoor"
 }
 
 /// THE TORCH'S OWN SOURCE ARMS (javap `RedStoneTorchBlock.getSignal`
@@ -2302,10 +2433,11 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 /// 316..319 rows bank — the autopush-665 round the wire's own pair
 /// the 320/321 rows bank — the autopush-666 round the redstone
 /// torch's own pair the 322/323 rows bank — the autopush-667 round
-/// the wall torch's own pair the 324/325 rows bank — the table the
-/// 326 rows the END_PORTAL the beyond-table seat the displaced law
+/// the wall torch's own pair the 324/325 rows bank — the autopush-668
+/// round the trapdoor's own pair the 326/327 rows bank — the table the
+/// 328 rows the END_PORTAL the beyond-table seat the displaced law
 /// keeps.
-pub const NAME_OF: [&str; 326] = [
+pub const NAME_OF: [&str; 328] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -2724,6 +2856,15 @@ pub const NAME_OF: [&str; 326] = [
     // secondary block banks — no "redstone_wall_torch" item the
     // registry carries, the placeable lookup the row never answers).
     "redstone_wall_torch", "redstone_wall_torch",
+    // THE OAK TRAPDOOR'S OWN ROWS (the autopush-668 round): the
+    // closed/open pair the ONE registry entry the strip law keeps
+    // (the TrapDoorBlock's ONE "oak_trapdoor" registry id both states
+    // the same name answers — the dig row (3.0, false) the strength
+    // clinit speaks, the sounds' WOOD row and the item id the pick
+    // lane grants BOTH kinds speak), the closed kind the item's own
+    // placement lands (the BlockItem pairing the Items clinit row
+    // banks, the generic placeable lookup the closed seat answers).
+    "oak_trapdoor", "oak_trapdoor",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -4484,6 +4625,18 @@ pub enum CollisionShape {
     /// facing byte's own law), the thickness the 3/16 panel every
     /// rotation keeps.
     Band(u8, u8),
+    /// THE TRAPDOOR'S OWN HORIZONTAL SLAB (the autopush-668 round —
+    /// the closed state's own band the SHAPES map's UP/DOWN keys
+    /// speak): javap TrapDoorBlock the 26.2 jar the SHAPES clinit's
+    /// `Shapes.rotateAll(Block.boxZ(16.0, 13.0, 16.0))` walk the
+    /// X_90/X_270 rotations bank — the closed bottom [0,0,0,16,3,16]
+    /// the HALF=bottom key keeps (the (lo, hi) pair the (0, 3) row
+    /// wears), the closed top [0,13,0,16,16,16] the HALF=top key
+    /// answers (the (13, 16) row keeps) — the y band the lo..hi px
+    /// span the FULL 0..1 footprint under the slab's own walk keeps
+    /// (the thin slab the body's feet the sweep band intersects, the
+    /// top-slab head the ceiling the same px law serves).
+    YSpan(u8, u8),
     /// The full-cube family — the default `Shapes.block()` registration
     /// the collision the body's box intersects refuses.
     Full,
@@ -4689,6 +4842,25 @@ pub fn collision_shape(id: u16) -> CollisionShape {
         // (the standing body the 7-px band tops, the walking-in body
         // the overlap brands)
         CollisionShape::Column(7)
+    } else if is_oak_trapdoor(id) {
+        // THE TRAPDOOR'S OWN VARIANT-BLIND DEFAULTS (the autopush-668
+        // round — the kind-only lane the placement's obstruction walk
+        // and the generic predicates read BEFORE the variant byte is
+        // stamped): the CLOSED kind the ctor default's own slab the
+        // YSpan(0, 3) row keeps (the registerDefaultState law the
+        // HALF=bottom default banks — the feet-box intersect the
+        // vanilla's own canPlace refusal speaks), the OPEN kind the
+        // default facing's own panel the Band(3, 3) row wears (the
+        // no-opinion 0 byte the NORTH facing answers — the panel the
+        // FACING-opposite south edge the trapdoor_open_edge fold
+        // serves). The variant-aware verdict the
+        // [`collision_shape_at`] walk serves (the body's own sweep
+        // the per-cell read keeps).
+        if trapdoor_open(id) {
+            CollisionShape::Band(3, 3)
+        } else {
+            CollisionShape::YSpan(0, 3)
+        }
     } else {
         CollisionShape::Full
     }
@@ -4773,6 +4945,25 @@ pub fn door_strip_edge(facing_byte: u8, open: bool, hinge_right: bool) -> u8 {
 /// mesh read — the per-cell fold the lanes' own precedent wears).
 pub fn collision_shape_at(world: &World, cx: i32, cy: i32, cz: i32) -> CollisionShape {
     let id = if cy < 0 { AIR } else { world.get(cx, cy, cz) };
+    // THE TRAPDOOR'S OWN VARIANT-AWARE ROW (the autopush-668 round —
+    // javap TrapDoorBlock.getShape pc 0-59 the 26.2 jar: the SHAPES
+    // map the `OPEN ? FACING : (HALF == TOP ? DOWN : UP)` key fold
+    // speaks — the open panel the FACING-opposite edge the Band rows
+    // wear [the [`trapdoor_open_edge`] fold the facing byte decodes],
+    // the closed slab the HALF bit's own y-span the YSpan rows bank
+    // [the bottom 0..3, the top 13..16]). The variant byte the
+    // sidecar reads, the no-opinion 0 the ctor's NORTH+BOTTOM default
+    // answers.
+    if is_oak_trapdoor(id) {
+        if trapdoor_open(id) {
+            return CollisionShape::Band(trapdoor_open_edge(trapdoor_facing_of(world.variant(cx, cy, cz))), 3);
+        }
+        return if trapdoor_half_top(world.variant(cx, cy, cz)) {
+            CollisionShape::YSpan(13, 16)
+        } else {
+            CollisionShape::YSpan(0, 3)
+        };
+    }
     if !is_door(id) {
         return collision_shape(id);
     }
@@ -4809,6 +5000,14 @@ pub fn shape_slabs(
     let (y_lo, y_hi) = match shape {
         CollisionShape::Column(h) | CollisionShape::InsetColumn(h, _) => {
             (cy as f64, cy as f64 + h as f64 / 16.0)
+        }
+        // THE TRAPDOOR'S OWN SLAB ARM (the autopush-668 round — the
+        // (lo, hi) px span the closed state's own band wears: the
+        // bottom slab the 0..3 band the feet's own sweep keeps, the
+        // top slab the 13..16 band the ceiling answers — the FULL
+        // footprint the slab's own x/z walk keeps)
+        CollisionShape::YSpan(lo, hi) => {
+            (cy as f64 + lo as f64 / 16.0, cy as f64 + hi as f64 / 16.0)
         }
         _ => (cy as f64, (cy + 1) as f64),
     };
@@ -11565,7 +11764,7 @@ mod tests {
         assert_eq!(NAME_OF[BUTTON_ON as usize], "stone_button");
         assert_eq!(BUTTON + 1, BUTTON_ON, "the +1 seat the OFF/ON ladder wears");
         assert_eq!(
-            END_PORTAL, 326,
+            END_PORTAL, 328,
             "the displaced seat the wire pair's own tail banks"
         );
         // THE PULSE'S OWN CLOCK (javap press pc 28-37 — the STONE
@@ -12282,10 +12481,10 @@ mod tests {
         assert_eq!(REDSTONE_WIRE, 320);
         assert_eq!(REDSTONE_WIRE_ON, 321);
         assert_eq!(
-            END_PORTAL, 326,
+            END_PORTAL, 328,
             "the displaced seat the wire pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 326, "the palette the wire pair banks");
+        assert_eq!(atlas::N_KINDS, 328, "the palette the wire pair banks");
         assert!(is_redstone_wire(REDSTONE_WIRE) && is_redstone_wire(REDSTONE_WIRE_ON));
         assert!(!is_redstone_wire(LEVER) && !is_redstone_wire(OAK_PRESSURE_PLATE));
         assert!(!wire_powered(REDSTONE_WIRE));
@@ -12428,10 +12627,10 @@ mod tests {
         assert_eq!(REDSTONE_TORCH, 322);
         assert_eq!(REDSTONE_TORCH_OFF, 323);
         assert_eq!(
-            END_PORTAL, 326,
+            END_PORTAL, 328,
             "the displaced seat the torch pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 326, "the palette the torch pair banks");
+        assert_eq!(atlas::N_KINDS, 328, "the palette the torch pair banks");
         assert!(is_redstone_torch(REDSTONE_TORCH) && is_redstone_torch(REDSTONE_TORCH_OFF));
         assert!(!is_redstone_torch(TORCH) && !is_redstone_torch(LEVER));
         assert!(redstone_torch_lit(REDSTONE_TORCH));
@@ -12570,8 +12769,8 @@ mod tests {
         use mc_registry::generated::atlas;
         assert_eq!(REDSTONE_WALL_TORCH, 324);
         assert_eq!(REDSTONE_WALL_TORCH_OFF, 325);
-        assert_eq!(END_PORTAL, 326);
-        assert_eq!(atlas::N_KINDS, 326, "the palette the wall pair banks");
+        assert_eq!(END_PORTAL, 328);
+        assert_eq!(atlas::N_KINDS, 328, "the palette the wall pair banks");
         assert!(
             is_redstone_torch(REDSTONE_WALL_TORCH) && is_redstone_torch(REDSTONE_WALL_TORCH_OFF),
             "the wall pair the family's tail banks"
@@ -12799,6 +12998,155 @@ mod tests {
     }
 
     #[test]
+    fn the_oak_trapdoor_the_kinds_the_variant_and_the_collision_wear() {
+        // THE TRAPDOOR'S OWN WORLD WALK (the autopush-668 round —
+        // javap TrapDoorBlock the 26.2 jar the probe scripts/
+        // jar_work/trapdoor_668.txt banks: the seats the 326/327 tail
+        // wears, the END_PORTAL the beyond-table 328 the displacement
+        // keeps, the family/open/toggled verdicts the ±1 mate speaks,
+        // the variant byte the facing + half bits the wall torch's own
+        // vocabulary banks, the getShape's SHAPES map the closed
+        // slabs + the open panel's FACING-opposite edge the collision
+        // rows wear, the hand gate the WOODEN set type's own pass
+        // keeps, the voice stem the BlockSetType's trapdoor pair
+        // answers)
+        use mc_registry::generated::atlas;
+        assert_eq!(OAK_TRAPDOOR, 326);
+        assert_eq!(OAK_TRAPDOOR_OPEN, 327);
+        assert_eq!(END_PORTAL, 328);
+        assert_eq!(
+            atlas::N_KINDS, 328,
+            "the palette the trapdoor pair banks"
+        );
+        assert_eq!(OAK_TRAPDOOR + 1, OAK_TRAPDOOR_OPEN, "the +1 mate wears");
+        assert!(is_oak_trapdoor(OAK_TRAPDOOR) && is_oak_trapdoor(OAK_TRAPDOOR_OPEN));
+        assert!(!is_oak_trapdoor(OAK_DOOR), "the door the family fn refuses");
+        assert!(!trapdoor_open(OAK_TRAPDOOR));
+        assert!(trapdoor_open(OAK_TRAPDOOR_OPEN));
+        assert_eq!(trapdoor_toggled(OAK_TRAPDOOR), Some(OAK_TRAPDOOR_OPEN));
+        assert_eq!(trapdoor_toggled(OAK_TRAPDOOR_OPEN), Some(OAK_TRAPDOOR));
+        assert_eq!(trapdoor_toggled(STONE), None, "the unknown the None keeps");
+        assert!(trapdoor_opens_by_hand(OAK_TRAPDOOR));
+        assert!(trapdoor_opens_by_hand(OAK_TRAPDOOR_OPEN));
+        // THE NAMES' OWN ROWS (the ONE registry entry both kinds the
+        // strip law keeps — the dig/sounds/drops/item lanes the same
+        // row speaks)
+        assert_eq!(NAME_OF[OAK_TRAPDOOR as usize], "oak_trapdoor");
+        assert_eq!(NAME_OF[OAK_TRAPDOOR_OPEN as usize], "oak_trapdoor");
+        assert_eq!(atlas::KIND_NAMES[OAK_TRAPDOOR as usize], "oak_trapdoor");
+        assert_eq!(atlas::KIND_NAMES[OAK_TRAPDOOR_OPEN as usize], "oak_trapdoor_open");
+        assert_eq!(atlas::REGISTRY_NAMES[OAK_TRAPDOOR as usize], "oak_trapdoor");
+        assert_eq!(atlas::REGISTRY_NAMES[OAK_TRAPDOOR_OPEN as usize], "oak_trapdoor");
+        // THE TILE'S OWN IDENTITY (the SAME oak_trapdoor sprite both
+        // kinds' seats wear — the atlas's tile set the pair grew by
+        // exactly ONE)
+        assert_eq!(
+            atlas::FACE_TILES[OAK_TRAPDOOR as usize],
+            atlas::FACE_TILES[OAK_TRAPDOOR_OPEN as usize],
+            "the open kind the closed kind's tile wears"
+        );
+        assert_eq!(atlas::TILE_NAMES[atlas::FACE_TILES[OAK_TRAPDOOR as usize][2] as usize], "oak_trapdoor");
+        // THE VOICE'S OWN STEM (the BlockSetType's trapdoorOpen/
+        // trapdoorClose events the WOODEN pair carries)
+        assert_eq!(trapdoor_voice_stem(OAK_TRAPDOOR), "block.wooden_trapdoor");
+        assert_eq!(trapdoor_voice_stem(OAK_TRAPDOOR_OPEN), "block.wooden_trapdoor");
+        // THE VARIANT'S OWN FOLD (the facing the low nibble the wall
+        // torch's own vocabulary keeps, the +8 bit the half word banks:
+        // the 0 byte the NORTH+BOTTOM default the ctor law answers)
+        assert_eq!(trapdoor_facing_of(0), WALL_TORCH_FACING_NORTH);
+        assert_eq!(trapdoor_facing_of(9), WALL_TORCH_FACING_NORTH);
+        assert_eq!(trapdoor_facing_of(WALL_TORCH_FACING_EAST), WALL_TORCH_FACING_EAST);
+        assert_eq!(trapdoor_facing_of(WALL_TORCH_FACING_WEST | 8), WALL_TORCH_FACING_WEST);
+        assert!(!trapdoor_half_top(0));
+        assert!(!trapdoor_half_top(WALL_TORCH_FACING_SOUTH));
+        assert!(trapdoor_half_top(WALL_TORCH_FACING_SOUTH | 8));
+        assert_eq!(trapdoor_variant(WALL_TORCH_FACING_NORTH, false), 1);
+        assert_eq!(trapdoor_variant(WALL_TORCH_FACING_EAST, true), 10);
+        // THE EDGE'S OWN FOLD (the SHAPES map's FACING keys the
+        // opposite-side law — the facing north the panel's south edge
+        // the byte 3 answers, the east the west 4, the south the
+        // north 1, the west the east 2)
+        assert_eq!(trapdoor_open_edge(WALL_TORCH_FACING_NORTH), 3);
+        assert_eq!(trapdoor_open_edge(WALL_TORCH_FACING_EAST), 4);
+        assert_eq!(trapdoor_open_edge(WALL_TORCH_FACING_SOUTH), 1);
+        assert_eq!(trapdoor_open_edge(WALL_TORCH_FACING_WEST), 2);
+        // THE COLLISION'S OWN ROWS (javap getShape pc 0-59 the SHAPES
+        // map the key fold serves: the closed slabs the YSpan rows
+        // bank, the open panel the Band rows wear — the variant-aware
+        // read the collision_shape_at walk keeps, the variant-blind
+        // defaults the ctor law answers)
+        assert_eq!(
+            collision_shape(OAK_TRAPDOOR),
+            CollisionShape::YSpan(0, 3),
+            "the closed kind the bottom-slab default wears"
+        );
+        assert_eq!(
+            collision_shape(OAK_TRAPDOOR_OPEN),
+            CollisionShape::Band(3, 3),
+            "the open kind the north-facing default panel wears"
+        );
+        let mut w = World::new(2, 0x600D);
+        let c = w.size_blocks() / 2;
+        let y = 8;
+        // THE CLOSED KIND'S OWN SLABS (the variant byte the HALF bit
+        // reads — the bottom 0..3 the default keeps, the top 13..16
+        // the +8 stamp answers)
+        w.set(c, y, c, OAK_TRAPDOOR);
+        w.set_variant(c, y, c, trapdoor_variant(WALL_TORCH_FACING_EAST, false));
+        assert_eq!(
+            collision_shape_at(&w, c, y, c),
+            CollisionShape::YSpan(0, 3),
+            "the bottom half the YSpan(0,3) row wears"
+        );
+        w.set_variant(c, y, c, trapdoor_variant(WALL_TORCH_FACING_EAST, true));
+        assert_eq!(
+            collision_shape_at(&w, c, y, c),
+            CollisionShape::YSpan(13, 16),
+            "the top half the YSpan(13,16) row wears"
+        );
+        // THE OPEN KIND'S OWN PANEL (the facing byte the edge fold
+        // reads — the facing north the Band(3, 3) south strip keeps,
+        // the facing west the Band(2, 3) east strip answers)
+        w.set(c, y, c, OAK_TRAPDOOR_OPEN);
+        w.set_variant(c, y, c, trapdoor_variant(WALL_TORCH_FACING_NORTH, false));
+        assert_eq!(
+            collision_shape_at(&w, c, y, c),
+            CollisionShape::Band(3, 3),
+            "the facing north the south-edge panel wears"
+        );
+        w.set_variant(c, y, c, trapdoor_variant(WALL_TORCH_FACING_WEST, true));
+        assert_eq!(
+            collision_shape_at(&w, c, y, c),
+            CollisionShape::Band(2, 3),
+            "the facing west the east-edge panel the half bit rides"
+        );
+        // THE PLACEABLE'S OWN PAIRING (the Items clinit row pc 8193-8202
+        // the registerBlock pairing speaks — the generic lookup the
+        // closed kind answers)
+        assert_eq!(World::placeable_block("oak_trapdoor"), Some(OAK_TRAPDOOR));
+        assert_eq!(World::placeable_block("oak_trapdoor_open"), None);
+        // THE DIG'S OWN ROW (the strength 3.0 clinit row the generated
+        // table banks — the hatchet the mineable row keeps)
+        assert_eq!(
+            crate::dig::DigState::block_dig_row(OAK_TRAPDOOR),
+            crate::dig::DigState::block_dig_row(OAK_TRAPDOOR_OPEN),
+            "the ONE registry row both kinds wear"
+        );
+        // THE NO-POP LAW (javap TrapDoorBlock.updateShape pc 0-51 the
+        // 26.2 jar — the waterlog + parent walk the support arm never
+        // wears: the floor dug the trapdoor KEEPS — the vanilla's own
+        // floating-trapdoor feel the attach walk never refuses)
+        w.set(c, y, c, OAK_TRAPDOOR);
+        w.set_variant(c, y, c, trapdoor_variant(WALL_TORCH_FACING_EAST, false));
+        let popped = w.attach_support_updates((c, y - 1, c));
+        assert!(
+            popped.is_empty(),
+            "the floor dug the trapdoor the updateShape law never pops"
+        );
+        assert_eq!(w.get(c, y, c), OAK_TRAPDOOR);
+    }
+
+    #[test]
     fn the_door_family_the_mates_and_the_seats_wear() {
         // THE DOOR QUARTET'S OWN LAW (the autopush-655 round — the
         // two-halves x two-open-bits ladder the seats wear: the
@@ -12809,7 +13157,7 @@ mod tests {
         assert_eq!(OAK_DOOR_OPEN, 92);
         assert_eq!(OAK_DOOR_UPPER_OPEN, 93);
         assert_eq!(
-            END_PORTAL, 326,
+            END_PORTAL, 328,
             "the displaced seat the wire pair's own tail banks"
         );
         // THE WOOD LADDER'S OWN SEATS (the dev-43 round — the eleven
@@ -13015,7 +13363,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 326, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 328, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)

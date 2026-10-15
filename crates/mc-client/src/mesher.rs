@@ -207,6 +207,13 @@ fn is_transparent(kind: u16) -> bool {
         // AO the opaque walk never casts, the element geometry the
         // door arm's own lane renders)
         || crate::world::is_door(kind)
+        // THE TRAPDOOR FAMILY the same verdict keeps (the autopush-668
+        // round — the 3/16 panel the noOcclusion law the blocks
+        // clinit's own chain speaks: the non-occluding thin box the
+        // neighbors' faces draw against, the AO the opaque walk never
+        // casts, the element geometry the trapdoor arm's own lane
+        // renders)
+        || crate::world::is_oak_trapdoor(kind)
 }
 
 /// Only opaque blocks cast ambient occlusion (air/water/leaves never darken
@@ -2940,6 +2947,190 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     }
                     continue;
                 }
+                // THE TRAPDOOR'S OWN ELEMENT LANE (the autopush-668
+                // round — the door family's thin-panel sibling the
+                // interactive lane finally renders). The blockstates'
+                // oak_trapdoor.json rows the THREE models resolve (the
+                // closed bottom block/oak_trapdoor_bottom the HALF=
+                // bottom state wears, the closed top block/oak_trapdoor_
+                // top the HALF=top state keeps, the open block/oak_
+                // trapdoor_open the swung panel answers), each ONE box
+                // element (the closed bottom [0,0,0]->[16,3,16], the
+                // closed top [0,13,0]->[16,16,16], the open [0,0,13]->
+                // [16,16,16] the north strip the base shape the SHAPES
+                // map's identity arm banks — the facing=east closed rows
+                // the NO-y rows the symmetric slab never turns, the open
+                // rows the y table north 0 / east 90 / south 180 /
+                // west 270 the per-facing steps speak). The derive walk
+                // the real geometry resolves (`derive_model_inherited` —
+                // the parent chain the #texture ref the merged map
+                // answers, the oak_trapdoor master tile the kind's own
+                // seat banks, ambientocclusion default the AO-less fold
+                // the door lane's own law keeps — the cell's own light
+                // every corner samples, the element's shade:true the
+                // direction table pays). THE FACING + HALF bits the
+                // variant byte carries (the wall torch's own vocabulary
+                // the low nibble keeps, the +8 bit the half word banks).
+                // THE OPEN'S OWN STEPS (the blockstate y values the CW
+                // walk folds: north 0, east 1, south 2, west 3 — the
+                // south-strip panel under one step the west edge the
+                // (x,z)->(-z,x) map serves, the panel the OPPOSITE
+                // facing the vanilla's own SHAPES map banks) — the
+                // vertices AND the cullfaces rotate together (the
+                // door lane's own walk shares), the closed models the
+                // identity steps the slab never turns.
+                if crate::world::is_oak_trapdoor(id) {
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let (cell_sky, cell_block) = match light {
+                        Some(l) => {
+                            let (s, b) = cell_layers(l, world.chunks_per_side, wx, wy, wz);
+                            (s.map(|v| v as f32), b.map(|v| v as f32))
+                        }
+                        None => (None, None),
+                    };
+                    let variant = world.variant(wx, wy, wz);
+                    let open = crate::world::trapdoor_open(id);
+                    let half_top = crate::world::trapdoor_half_top(variant);
+                    let facing = crate::world::trapdoor_facing_of(variant);
+                    let element_quads = trapdoor_model_quads(half_top, open);
+                    // THE STEPS' OWN TABLE (the open's swing the
+                    // blockstate y values fold — north 0, east 1, south
+                    // 2, west 3 — the closed slabs the identity the
+                    // symmetric geometry keeps)
+                    let steps = if open {
+                        match facing {
+                            crate::world::WALL_TORCH_FACING_EAST => 1usize,
+                            crate::world::WALL_TORCH_FACING_SOUTH => 2,
+                            crate::world::WALL_TORCH_FACING_WEST => 3,
+                            _ => 0,
+                        }
+                    } else {
+                        0
+                    };
+                    let tile = if (id as usize) < atlas::N_KINDS {
+                        atlas::FACE_TILES[id as usize][2]
+                    } else {
+                        atlas::TILE_NONE
+                    };
+                    // `shade: true` faces the direction table pays —
+                    // the tile's own pixels the white base keeps
+                    let base = if tile == atlas::TILE_NONE {
+                        crate::colors::palette_color(id, 2)
+                            .or_else(|| lut.and_then(|l| l.color(id, 2)))
+                            .unwrap_or_else(|| default_color(id, 2))
+                    } else {
+                        [1.0; 3]
+                    };
+                    for q in element_quads {
+                        // THE ROTATED CULLFACE VERDICT — the six-
+                        // direction law the cake lane wears, the
+                        // direction the SAME steps the geometry turns
+                        if let Some(dir) = q.cullface {
+                            let rotated = rotate_direction_cw(dir, steps);
+                            let (dx, dy, dz) = match rotated {
+                                mc_registry::element_quads::Direction::Down => (0, -1, 0),
+                                mc_registry::element_quads::Direction::Up => (0, 1, 0),
+                                mc_registry::element_quads::Direction::North => (0, 0, -1),
+                                mc_registry::element_quads::Direction::South => (0, 0, 1),
+                                mc_registry::element_quads::Direction::West => (-1, 0, 0),
+                                mc_registry::element_quads::Direction::East => (1, 0, 0),
+                            };
+                            if !is_transparent(world.get(wx + dx, wy + dy, wz + dz)) {
+                                continue;
+                            }
+                        }
+                        // THE SHADE TERM'S OWN READ — the element's
+                        // shade:true the direction table answers (the
+                        // ROTATED direction the world-facing term
+                        // keeps), the never-shaded the 1.0 keeps
+                        let rotated_dir = rotate_direction_cw(q.direction, steps);
+                        let face_shade = if q.shade {
+                            match rotated_dir {
+                                mc_registry::element_quads::Direction::Up => 1.0f32,
+                                mc_registry::element_quads::Direction::Down => 0.5,
+                                mc_registry::element_quads::Direction::North
+                                | mc_registry::element_quads::Direction::South => 0.8,
+                                mc_registry::element_quads::Direction::West
+                                | mc_registry::element_quads::Direction::East => 0.6,
+                            }
+                        } else {
+                            1.0
+                        };
+                        let mut pts = [[0f32; 3]; 4];
+                        let mut colors = [[0f32; 3]; 4];
+                        let mut uvs = [[0f32; 2]; 4];
+                        for (i, v) in q.vertices.iter().enumerate() {
+                            // THE STEPS' OWN TURN (the blockstate y
+                            // values the CW walk folds: each step the
+                            // (x,z)->(-z,x) map about the cell center
+                            // serves — the south strip under one step
+                            // the west edge answers)
+                            let (dx, dz) = (v[0] - 0.5, v[2] - 0.5);
+                            let (rx, rz) = rotate_xz_cw(dx, dz, steps);
+                            pts[i] = [
+                                wx as f32 + 0.5 + rx,
+                                wy as f32 + v[1],
+                                wz as f32 + 0.5 + rz,
+                            ];
+                            uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
+                            let lm = lightmap_combine(
+                                cell_sky,
+                                cell_block,
+                                sky_factor,
+                                sky_tint,
+                                ambient,
+                                block_tint,
+                                night_vision,
+                                world.night_vision_factor,
+                                world.darkness_scale,
+                            );
+                            colors[i] = [
+                                base[0] * lm[0] * face_shade,
+                                base[1] * lm[1] * face_shade,
+                                base[2] * lm[2] * face_shade,
+                            ];
+                        }
+                        out.push(Quad {
+                            pts,
+                            colors,
+                            uvs,
+                            tile,
+                            translucent: false,
+                            per_texel_alpha: false,
+                        });
+                    }
+                    continue;
+                }
                 // THE FIRE KINDS' OWN MULTIPART LANE (the flint's and the
                 // charge's own product finally RENDERS — the honest hole
                 // the glass precedent wore, the fan the vanilla blockstate
@@ -3769,6 +3960,44 @@ fn redstone_wall_torch_model_quads(lit: bool) -> &'static [mc_registry::element_
         } else {
             "block/redstone_wall_torch_off"
         };
+        mc_registry::element_quads::derive_model_inherited(model).unwrap_or_default()
+    })
+}
+
+/// THE TRAPDOOR'S OWN MODEL BAKES (the autopush-668 round — the
+/// block/oak_trapdoor_bottom, block/oak_trapdoor_top and
+/// block/oak_trapdoor_open chains the registry's derive walk
+/// resolves, the torch lane's own cache pattern): the CLOSED kinds
+/// walk the parent links to block/template_trapdoor_bottom's and
+/// block/template_trapdoor_top's ONE-element geometry (the bottom
+/// slab [0,0,0]->[16,3,16] the six-face row the HALF=bottom state
+/// wears, the top slab [0,13,0]->[16,16,16] the HALF=top state
+/// keeps), the OPEN kind walks the block/template_trapdoor_open
+/// parent the [0,0,13]->[16,16,16] north-strip panel answers — the
+/// merged texture map's `#texture` ref the per-quad texture name
+/// answers (the oak_trapdoor master tile the kind's own seat banks —
+/// the lane reads the KIND's own tile, the quads' texture name the
+/// lane never consults; the SAME sprite all three models share, the
+/// atlas's tile set the pair grew by exactly ONE). The open model's
+/// per-facing y-rotation the MESHER's own walk wears (the blockstate
+/// y-table north 0 / east 90 / south 180 / west 270 the rotated rows
+/// bank). The failed derive the honest empty slice keeps (the panel
+/// the nothing renders).
+fn trapdoor_model_quads(half_top: bool, open: bool) -> &'static [mc_registry::element_quads::Quad] {
+    static BOTTOM: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    static TOP: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    static OPEN: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    let (cache, model) = if open {
+        (&OPEN, "block/oak_trapdoor_open")
+    } else if half_top {
+        (&TOP, "block/oak_trapdoor_top")
+    } else {
+        (&BOTTOM, "block/oak_trapdoor_bottom")
+    };
+    cache.get_or_init(|| {
         mc_registry::element_quads::derive_model_inherited(model).unwrap_or_default()
     })
 }

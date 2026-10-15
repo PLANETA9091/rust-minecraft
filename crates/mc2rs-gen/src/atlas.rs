@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 326] = [
+pub const RUNTIME_PALETTE: [&str; 328] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1057,6 +1057,59 @@ pub const RUNTIME_PALETTE: [&str; 326] = [
     // both states the same name banks (the registry_names walk the _off
     // strip the standing pair's law keeps).
     "redstone_wall_torch", "redstone_wall_torch_off",
+    // THE OAK TRAPDOOR'S OWN PAIR (the autopush-668 round — scripts/
+    // jar_work/trapdoor_668.txt banks): the thin-panel door family's
+    // sibling the interactive lane finally wears — the OPEN bit the
+    // ±1 kind pair the lever/button/plate/wire/torch ladders' own law
+    // carries, the FACING + HALF bits the variant byte's spare seats
+    // bank (the facing byte the wall torch's own vocabulary keeps:
+    // north 1, east 2, south 3, west 4 — the 0 byte the no-opinion
+    // seat the ctor's NORTH+BOTTOM default answers; the +8 bit the
+    // HALF=top word the placement's own click-height law stamps).
+    // javap TrapDoorBlock the 26.2 jar: the ctor pc 17-95 the
+    // `registerDefaultState(any().setValue(FACING, NORTH).setValue
+    // (OPEN, false).setValue(HALF, BOTTOM).setValue(POWERED, false)
+    // .setValue(WATERLOGGED, false))` walk the NORTH-facing CLOSED
+    // BOTTOM default speaks, the useWithoutItem pc 0-26 the
+    // `canOpenByHand` gate the toggle walk arms (the WOODEN set type
+    // the OAK row the PASS never keeps), the toggle pc 0-75 the
+    // `state.cycle(OPEN)` the setBlock flag 2 the playSound
+    // trapdoorOpen/trapdoorClose events the BLOCK_OPEN/BLOCK_CLOSE
+    // gameEvents the hand lane wears, the getStateForPlacement
+    // pc 0-204 the side-hit FACING=clickedFace + HALF=clickLocation.y
+    // - pos.y > 0.5 walk the top/bottom-hit FACING=horizontalDirection
+    // .getOpposite() + HALF=UP?BOTTOM:TOP arms the hasNeighborSignal
+    // preset the OPEN+POWERED placement lands, the getShape pc 0-59
+    // the SHAPES map the OPEN ? FACING : (HALF==TOP ? DOWN : UP) key
+    // folds (the Shapes.rotateAll six-key map the base NORTH panel
+    // [0,0,13,16,16,16] the X_90/X_270 rotations the UP/DOWN slabs
+    // bank — the closed bottom [0,0,0,16,3,16], the closed top
+    // [0,13,0,16,16,16], the open panel the FACING-opposite edge the
+    // 3/16 thickness every rotation keeps), the neighborChanged
+    // pc 0-129 the `signal != POWERED` gate the OPEN=signal sync +
+    // the playSound arms (the POWERED tracking bit the wire consult's
+    // own verdict serves), the blocks clinit row pc 11324-11370 the
+    // `mapColor(WOOD).instrument(BASS).strength(3.0f).noOcclusion()
+    // .isValidSpawn(...).ignitedByLava()` chain banks (the WOOD
+    // SoundType the ctor's own `sound(type.soundType())` walk pc 1-6
+    // speaks — the BlockSetType.OAK soundType the WOOD row keeps), the
+    // Items clinit row pc 8193-8202 the `registerBlock
+    // (BlockItemIds.OAK_TRAPDOOR, Blocks.OAK_TRAPDOOR)` the BlockItem
+    // pairing speaks. The blockstates' oak_trapdoor.json the 16-row
+    // facing x half x open map banks (facing=north the base model the
+    // NO-y row answers, east 90 / south 180 / west 270 the rotated
+    // rows speak — the open rows the y table the closed rows never
+    // carry: the slab the facing the symmetric geometry never turns),
+    // the template_trapdoor_bottom/top/open parents the ONE-element
+    // chains bank (the closed bottom [0,0,0]->[16,3,16], the closed
+    // top [0,13,0]->[16,16,16], the open [0,0,13]->[16,16,16] the
+    // north strip the SIX faces the #texture ref every element wears),
+    // the oak_trapdoor.png master the 16x16 colortype-3 tile banks.
+    // The `_open` row the jar's registry never speaks — the
+    // TrapDoorBlock's ONE "oak_trapdoor" registry entry both states
+    // the same name banks (the registry_names walk the _open strip
+    // the door family's own law keeps).
+    "oak_trapdoor", "oak_trapdoor_open",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -1257,6 +1310,49 @@ fn resolve_block(
             .and_then(|v| v.get("model"))
             .and_then(|m| m.as_str())
             .with_context(|| "blockstate redstone_wall_torch: no facing=east model")?
+            .trim_start_matches("minecraft:")
+            .to_string();
+        return full_cube_faces(archive, &model_ref)
+            .with_context(|| format!("block {block}: model chain {model_ref}"));
+    }
+
+    // THE OAK TRAPDOOR'S OWN ROWS (the autopush-668 round — javap
+    // TrapDoorBlock the 26.2 jar, scripts/jar_work/trapdoor_668.txt
+    // banks): the blockstates' oak_trapdoor.json the 16-row facing x
+    // half x open map the per-row arm resolves (the generic walk's
+    // FIRST-variant read the open kind would wrongly wear — the first
+    // row facing=east,half=bottom,open=false the CLOSED model both
+    // kinds would bank). The CLOSED kind the "facing=east,half=bottom,
+    // open=false" row's block/oak_trapdoor_bottom model answers (the
+    // parent template_trapdoor_bottom the ONE-element chain [0,0,0]->
+    // [16,3,16] the six-face row the full-cube finder answers — the
+    // #texture ref the block/oak_trapdoor sprite the tile walk keeps),
+    // the OPEN kind the "facing=north,half=bottom,open=true" row's
+    // block/oak_trapdoor_open model keeps (the parent
+    // template_trapdoor_open the [0,0,13]->[16,16,16] north-strip
+    // element the same #texture ref wears — the SAME sprite both
+    // kinds' tiles bank, the atlas's tile set the pair grows by
+    // exactly ONE). The HALF=top closed state the mesher's own model
+    // choice serves (the block/oak_trapdoor_top parent the [0,13,0]
+    // chain the variant byte's half bit picks — the KIND's tile the
+    // same sprite the three models share).
+    if block == "oak_trapdoor" || block == "oak_trapdoor_open" {
+        let open = block == "oak_trapdoor_open";
+        let key = if open {
+            "facing=north,half=bottom,open=true"
+        } else {
+            "facing=east,half=bottom,open=false"
+        };
+        let bs_bytes =
+            read_jar(archive, "assets/minecraft/blockstates/oak_trapdoor.json")?;
+        let bs: Value = serde_json::from_slice(&bs_bytes)
+            .with_context(|| "blockstate oak_trapdoor: json parse")?;
+        let model_ref = bs
+            .get("variants")
+            .and_then(|v| v.get(key))
+            .and_then(|v| v.get("model"))
+            .and_then(|m| m.as_str())
+            .with_context(|| format!("blockstate oak_trapdoor: no {key} model"))?
             .trim_start_matches("minecraft:")
             .to_string();
         return full_cube_faces(archive, &model_ref)

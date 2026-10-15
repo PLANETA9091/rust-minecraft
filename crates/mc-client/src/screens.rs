@@ -35983,6 +35983,10 @@ impl App {
             .map(|b| (b.x, b.y + b.eye_height(), b.z));
         let yaw = self.listener_yaw();
         let mut door_flips: Vec<((i32, i32, i32), u16)> = Vec::new();
+        // THE TRAPDOOR'S OWN FLIPS (the autopush-668 round — the
+        // OPEN-sync verdicts the scan's own arm pushes, the apply the
+        // door's own law wears)
+        let mut trapdoor_flips: Vec<((i32, i32, i32), u16)> = Vec::new();
         if let Some(world) = self.offline_world.as_mut() {
             // THE TORCH'S OWN NOT-GATE CONSULT (the autopush-666 round —
             // javap RedstoneTorchBlock.neighborChanged pc 0-44 the 26.2
@@ -36150,6 +36154,34 @@ impl App {
                 let mut seen = std::collections::HashSet::new();
                 let mut scan = |cx: i32, cy: i32, cz: i32| {
                     let kind = read.get(cx, cy, cz);
+                    // THE TRAPDOOR'S OWN OPEN-SYNC ARM (the autopush-668
+                    // round — javap TrapDoorBlock.neighborChanged pc 0-129
+                    // the 26.2 jar: the `signal != POWERED` gate the
+                    // consult arms — the signal the trapdoor's own cell
+                    // the lever-source walk answers, the OPEN bit the
+                    // signal's verdict the cycle law syncs [the armed
+                    // floor the open kind speaks, the dead one the
+                    // closed keeps], the playSound pc 51-73 the OPEN
+                    // change alone the voice fires [the POWERED-only
+                    // beats the silent keep wears]). The single cell
+                    // the door's mate-sync law never wears — the
+                    // two-pass scan the changed cell's own six + the
+                    // support cell's own six the trapdoor cells answer
+                    // (the consult the wire flips AND the breaks the
+                    // same broadcast serves).
+                    if crate::world::is_oak_trapdoor(kind) {
+                        if !seen.insert((cx, cy, cz)) {
+                            return;
+                        }
+                        let open_now = crate::world::trapdoor_open(kind);
+                        let signal = crate::world::redstone_signal_at(read, cx, cy, cz);
+                        if signal != open_now {
+                            if let Some(flip) = crate::world::trapdoor_toggled(kind) {
+                                trapdoor_flips.push(((cx, cy, cz), flip));
+                            }
+                        }
+                        return;
+                    }
                     if !crate::world::is_door(kind) || !seen.insert((cx, cy, cz)) {
                         return;
                     }
@@ -36217,6 +36249,12 @@ impl App {
             for ((dx, dy, dz), flip) in door_flips.iter() {
                 world.set(*dx, *dy, *dz, *flip);
             }
+            // THE TRAPDOOR'S OWN APPLY (the OPEN-sync verdicts the
+            // setBlock walk banks — the neighborChanged law the
+            // single-cell flip serves)
+            for ((dx, dy, dz), flip) in trapdoor_flips.iter() {
+                world.set(*dx, *dy, *dz, *flip);
+            }
         }
         // THE WIRE'S OWN VOICE (javap DoorBlock.setOpen — the
         // playSound walk the open/close events the set's new bit
@@ -36240,6 +36278,36 @@ impl App {
             );
             self.dispatch_vibration_event(
                 if crate::world::is_door_open(flip) {
+                    "block_open"
+                } else {
+                    "block_close"
+                },
+                (tx, ty, tz),
+            );
+        }
+        // THE TRAPDOOR'S OWN VOICES (javap TrapDoorBlock.playSound
+        // pc 0-42 the 26.2 jar — the trapdoorOpen/trapdoorClose events
+        // the NEW state's OPEN bit picks, the pitch the
+        // `nextFloat() * 0.1F + 0.9F` fold the door's own law keeps;
+        // the vibration posts the sculk lane hears)
+        for ((dx, dy, dz), flip) in trapdoor_flips {
+            let voice = crate::world::trapdoor_voice_stem(flip);
+            let event = if crate::world::trapdoor_open(flip) {
+                format!("{voice}.open")
+            } else {
+                format!("{voice}.close")
+            };
+            let (tx, ty, tz) = (dx as f64 + 0.5, dy as f64 + 0.5, dz as f64 + 0.5);
+            self.sounds.play_voice_at_pan(
+                self.frame,
+                &event,
+                1.0,
+                0.9 + self.drop_rng.next_f32() * 0.1,
+                ear_distance(ear, tx, ty, tz),
+                ear_pan(ear, yaw, tx, ty, tz),
+            );
+            self.dispatch_vibration_event(
+                if crate::world::trapdoor_open(flip) {
                     "block_open"
                 } else {
                     "block_close"
@@ -37253,6 +37321,91 @@ impl App {
             }
             return true;
         }
+        // THE TRAPDOOR'S OWN FLIP ARM (the autopush-668 round — javap
+        // TrapDoorBlock.useWithoutItem + toggle the 26.2 jar): the
+        // useWithoutItem walk pc 0-26 the canOpenByHand gate the WOODEN
+        // set type the OAK row the PASS never keeps, the toggle
+        // pc 0-75 the `state.cycle(OPEN)` walk the ±1 mate the
+        // [`trapdoor_toggled`] walk serves, the setBlock flag 2
+        // pc 12-20 the Level.setBlock's shape walk the update serves,
+        // the playSound pc 53-75 the trapdoorOpen/trapdoorClose events
+        // the NEW state's OPEN bit picks (volume 1.0, the pitch the
+        // `nextFloat() * 0.1F + 0.9F` walk the door's own fold keeps),
+        // the gameEvent pc 47-67 the BLOCK_OPEN/BLOCK_CLOSE posts the
+        // sculk lane hears. THE SINGLE CELL the door's two-half sync
+        // the trapdoor never wears (the one-cell kind the cycle law
+        // alone answers). THE WIRE SESSION the local flip never makes
+        // (the echo the lane's head already spoke, the server's own
+        // block updates the networked trapdoor lands — the door arm's
+        // own law keeps).
+        let trapdoor_cell = if self.world_is_network {
+            None
+        } else {
+            self.active_world()
+                .map(|w| w.get(hit.pos.0, hit.pos.1, hit.pos.2))
+                .filter(|k| crate::world::is_oak_trapdoor(*k))
+        };
+        if let Some(kind) = trapdoor_cell {
+            // THE HAND GATE'S OWN REFUSAL (javap useWithoutItem pc 0-13
+            // — the canOpenByHand() read the PASS the iron set type's
+            // own refusal keeps: the offline palette the oak item alone
+            // places, the gate the palette's own reach serves)
+            if !crate::world::trapdoor_opens_by_hand(kind) {
+                return false;
+            }
+            let Some(flip) = crate::world::trapdoor_toggled(kind) else {
+                return false;
+            };
+            // THE VANILLA'S OWN ORDER (javap toggle pc 12-75: the
+            // setBlock FIRST, the playSound AFTER — the door arm's own
+            // beat the trapdoor shares)
+            let opening = crate::world::trapdoor_open(flip);
+            if let Some(world) = self.offline_world.as_mut() {
+                world.set(hit.pos.0, hit.pos.1, hit.pos.2, flip);
+                self.world_quads = Some(crate::mesher::mesh_world(world, None));
+            }
+            // THE SET TYPE'S OWN VOICE (javap playSound pc 0-42 — the
+            // BlockSetType's trapdoorOpen/trapdoorClose events the
+            // `nextFloat() * 0.1F + 0.9F` pitch walk speaks, the
+            // Source BLOCKS the positioned walk the door arm's own
+            // fold wears)
+            let pitch = 0.9 + self.drop_rng.next_f32() * 0.1;
+            let ear = self
+                .body
+                .as_ref()
+                .map(|b| (b.x, b.y + b.eye_height(), b.z));
+            let yaw = self.listener_yaw();
+            let (tx, ty, tz) = (
+                hit.pos.0 as f64 + 0.5,
+                hit.pos.1 as f64 + 0.5,
+                hit.pos.2 as f64 + 0.5,
+            );
+            let voice = crate::world::trapdoor_voice_stem(kind);
+            let voice_event = if opening {
+                format!("{voice}.open")
+            } else {
+                format!("{voice}.close")
+            };
+            self.sounds.play_voice_at_pan(
+                self.frame,
+                &voice_event,
+                1.0,
+                pitch,
+                ear_distance(ear, tx, ty, tz),
+                ear_pan(ear, yaw, tx, ty, tz),
+            );
+            // THE GAME EVENT'S OWN POST (javap toggle pc 47-67 — the
+            // BLOCK_OPEN/BLOCK_CLOSE the vibration frequency table's
+            // own rows answer, the trapdoor cell's own center the
+            // dispatch's pos wears)
+            if self.offline_world.is_some() {
+                self.dispatch_vibration_event(
+                    if opening { "block_open" } else { "block_close" },
+                    (tx, ty, tz),
+                );
+            }
+            return true;
+        }
         // THE BUTTON'S OWN PRESS ARM (the autopush-660 round — javap
         // ButtonBlock.useWithoutItem + press the 26.2 jar): the
         // useWithoutItem walk pc 0-19 the already-powered CONSUME
@@ -38096,6 +38249,70 @@ impl App {
                 if let Some(open_lower) = crate::world::door_flip_mate(placed) {
                     world.set(cell.0, cell.1, cell.2, open_lower);
                     world.set(cell.0, cell.1 + 1, cell.2, open_lower + 1);
+                }
+            }
+            // THE TRAPDOOR'S OWN PLACEMENT STAMP (the autopush-668
+            // round — javap TrapDoorBlock.getStateForPlacement pc 0-204
+            // the 26.2 jar: the side-hit arm pc 23-97 the
+            // `!replacingClickedOnBlock && face.getAxis().isHorizontal()`
+            // verdict the FACING=clickedFace + the HALF=
+            // `clickLocation.y - pos.y > 0.5 ? TOP : BOTTOM` walk banks
+            // (the clicked face the trapdoor mounts against — the
+            // panel the OPPOSITE edge the SHAPES map serves, the 0.5
+            // boundary the BOTTOM half the dcmpl/ifle fold keeps), the
+            // top/bottom-hit arm pc 41-78 the FACING=
+            // `getHorizontalDirection().getOpposite()` walk the
+            // furnace arm's own law wears [the look-opposite the
+            // [`furnace_facing_byte`] table serves] + the HALF=
+            // `face == UP ? BOTTOM : TOP` the pc 61-78 fold banks, the
+            // redstone preset pc 142-183 the `hasNeighborSignal` walk
+            // the OPEN=true placement lands [the trapdoor placed
+            // beside a live signal lands SWUNG — the vanilla's own
+            // preset feel the door's own wire preset keeps]). The
+            // variant byte the facing + half bits the
+            // [`trapdoor_variant`] fold banks, the open preset the
+            // kind swap the ±1 seat wears.
+            if crate::world::is_oak_trapdoor(placed) {
+                let (facing, half_top) = match hit.face {
+                    // DOWN=0 / UP=1 the vertical arms: the top face
+                    // the BOTTOM half the pc 61-72 fold keeps, the
+                    // bottom face the TOP half answers (the clicked
+                    // face the HALF the vanilla's own law speaks)
+                    0 | 1 => (
+                        crate::world::furnace_facing_byte(cam_yaw),
+                        hit.face == 0,
+                    ),
+                    // THE SIDE HITS (NORTH=2 / SOUTH=3 / WEST=4 /
+                    // EAST=5 the Direction ordinal the DIRECTION_
+                    // NORMAL table banks): the FACING the clicked
+                    // face itself the pc 88-97 walk keeps, the HALF
+                    // the click height the 0.5 boundary answers
+                    2 => (crate::world::WALL_TORCH_FACING_NORTH, {
+                        hit.location.1 - hit.pos.1 as f64 > 0.5
+                    }),
+                    3 => (crate::world::WALL_TORCH_FACING_SOUTH, {
+                        hit.location.1 - hit.pos.1 as f64 > 0.5
+                    }),
+                    4 => (crate::world::WALL_TORCH_FACING_WEST, {
+                        hit.location.1 - hit.pos.1 as f64 > 0.5
+                    }),
+                    _ => (crate::world::WALL_TORCH_FACING_EAST, {
+                        hit.location.1 - hit.pos.1 as f64 > 0.5
+                    }),
+                };
+                let variant = crate::world::trapdoor_variant(facing, half_top);
+                world.set_variant(cell.0, cell.1, cell.2, variant);
+                // THE TRAPDOOR'S OWN WIRE PRESET (javap
+                // getStateForPlacement pc 142-183 — the
+                // hasNeighborSignal walk the OPEN+POWERED placement
+                // lands: the signal the placement's own cell the
+                // lever-source walk answers, the armed verdict the
+                // OPEN kind the ±1 seat banks, the signal's silence
+                // the closed kind the item's own kind keeps)
+                if crate::world::redstone_signal_at(world, cell.0, cell.1, cell.2) {
+                    if let Some(open_kind) = crate::world::trapdoor_toggled(placed) {
+                        world.set(cell.0, cell.1, cell.2, open_kind);
+                    }
                 }
             }
             world.ensure_light_current(); // the placed torch's own flood the set walk already spoke — the guard the never-lit world's compute keeps
@@ -102786,7 +103003,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            326,
+            328,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -102867,7 +103084,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            326,
+            328,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -103169,7 +103386,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            326,
+            328,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -107016,7 +107233,7 @@ cow_sound_variant: None,
         assert_eq!(crate::world::OAK_BUTTON_ON, 263);
         assert_eq!(
             crate::world::END_PORTAL,
-            326,
+            328,
             "the displaced seat the weighted plates' own tail keeps"
         );
         for kind in [
@@ -107099,7 +107316,7 @@ cow_sound_variant: None,
         // #texture ref banks)
         assert_eq!(
             atlas::N_KINDS,
-            326,
+            328,
             "the palette the weighted plates' own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
@@ -107314,12 +107531,12 @@ cow_sound_variant: None,
         );
         assert_eq!(
             crate::world::END_PORTAL,
-            326,
+            328,
             "the displaced seat the weighted plates' own tail keeps"
         );
         assert_eq!(
             atlas::N_KINDS,
-            326,
+            328,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
@@ -107591,12 +107808,12 @@ cow_sound_variant: None,
         );
         assert_eq!(
             crate::world::END_PORTAL,
-            326,
+            328,
             "the displaced seat the weighted plates' own tail keeps"
         );
         assert_eq!(
             atlas::N_KINDS,
-            326,
+            328,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
@@ -107711,8 +107928,8 @@ cow_sound_variant: None,
         assert_eq!(w::LIGHT_WEIGHTED_PRESSURE_PLATE_ON, 317);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE, 318);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, 319);
-        assert_eq!(w::END_PORTAL, 326);
-        assert_eq!(atlas::N_KINDS, 326, "the palette the weighted rows bank");
+        assert_eq!(w::END_PORTAL, 328);
+        assert_eq!(atlas::N_KINDS, 328, "the palette the weighted rows bank");
         for (off, on, name) in [
             (
                 w::LIGHT_WEIGHTED_PRESSURE_PLATE,
@@ -108159,6 +108376,208 @@ cow_sound_variant: None,
     }
 
     #[test]
+    fn the_oak_trapdoor_the_placement_the_toggle_and_the_consult_wear() {
+        // THE TRAPDOOR'S OWN APP LANE (the autopush-668 round — the
+        // placement's stamp the side-hit/vertical-hit arms the
+        // getStateForPlacement walk serves, the redstone preset the
+        // armed floor the OPEN kind lands, the hand toggle the cycle
+        // law the ±1 seat swings, the wire consult the OPEN-sync
+        // verdict the neighborChanged walk keeps — javap
+        // TrapDoorBlock the 26.2 jar the probe scripts/jar_work/
+        // trapdoor_668.txt banks)
+        use crate::world as w;
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=3 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, w::STONE);
+                    for dy in 0..3 {
+                        w.set(c + dx, top + dy, c + dz, w::AIR);
+                    }
+                }
+            }
+            // THE SIDE-HIT'S OWN WALL (the STONE at (c+2, top+1, c) —
+            // the eye-level east look the west face the ray answers)
+            w.set(c + 2, top + 1, c, w::STONE);
+        }
+        // THE TOP-FACE'S OWN PLACEMENT (the down look the floor's UP
+        // face the ray answers — the placement cell the camera's own
+        // floating body the obstruction never refuses [the feet box
+        // the camera's own altitude the y-span never meets]): the
+        // FACING the look-opposite furnace law wears (yaw 0.0 the
+        // north look the SOUTH byte 3 answers), the HALF the top
+        // face's BOTTOM arm keeps
+        app.offline_held_updated(Some("item/oak_trapdoor"));
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the floor placement consumes"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c),
+                w::OAK_TRAPDOOR,
+                "the closed kind the item's own kind lands"
+            );
+            assert_eq!(
+                w.variant(c, top, c),
+                w::trapdoor_variant(w::WALL_TORCH_FACING_SOUTH, false),
+                "the south-facing bottom slab the vertical arm stamps"
+            );
+        }
+        // THE SIDE-HIT'S OWN PLACEMENT (the east look the wall's west
+        // face the ray answers — the FACING the clicked face itself
+        // the pc 88-97 walk keeps, the HALF the eye-level click the
+        // 0.5 boundary's TOP arm answers)
+        app.offline_held_updated(Some("item/oak_trapdoor"));
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 1.62, c as f32 + 0.5),
+            yaw: std::f32::consts::FRAC_PI_2,
+            pitch: 0.0,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the side placement consumes"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 1, top + 1, c),
+                w::OAK_TRAPDOOR,
+                "the wall-adjacent cell the side hit claims"
+            );
+            assert_eq!(
+                w.variant(c + 1, top + 1, c),
+                w::trapdoor_variant(w::WALL_TORCH_FACING_WEST, true),
+                "the west-facing top half the side-hit arm stamps"
+            );
+        }
+        // THE REDSTONE PRESET'S OWN ARM (the lever ON beside the
+        // placement cell the signal walk answers — the OPEN kind the
+        // ±1 seat the placement lands — javap getStateForPlacement
+        // pc 142-183 the hasNeighborSignal walk banks)
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c + 1, top, c + 1, w::LEVER_ON);
+        }
+        app.offline_held_updated(Some("item/oak_trapdoor"));
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 1.62, c as f32 + 0.5),
+            yaw: std::f32::consts::FRAC_PI_2,
+            pitch: 0.0,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the armed placement consumes"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 1, top + 1, c),
+                w::OAK_TRAPDOOR_OPEN,
+                "the live signal the OPEN kind the preset lands"
+            );
+            assert_eq!(
+                w.variant(c + 1, top + 1, c),
+                w::trapdoor_variant(w::WALL_TORCH_FACING_WEST, true),
+                "the armed kind the variant byte rides"
+            );
+        }
+        // THE HAND'S OWN TOGGLE (the down look the placed trapdoor's
+        // cell the ray answers — the cycle walk the ±1 mate swings,
+        // the wooden_trapdoor voices the set type's own pair carries,
+        // the gameEvents the sculk lane hears — javap toggle pc 0-75
+        // the 26.2 jar the BLOCK_OPEN/BLOCK_CLOSE posts speak)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the flip consumed the press");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c),
+                w::OAK_TRAPDOOR_OPEN,
+                "the clicked closed kind the cycle opens"
+            );
+        }
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.wooden_trapdoor.open")),
+            "the open voice the flip plays"
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|l| l.starts_with("block_open @")),
+            "the block_open event the flip posts"
+        );
+        // THE SECOND PRESS THE SWING BACK (the cycle's own tail — the
+        // closed kind the voice's close event answers)
+        assert!(app.on_right_press(0, 0), "the second flip consumed");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c),
+                w::OAK_TRAPDOOR,
+                "the open kind the second cycle closes"
+            );
+        }
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.wooden_trapdoor.close")),
+            "the close voice the second flip plays"
+        );
+        // THE CONSULT'S OWN ARM (the lever ON beside the closed
+        // trapdoor the attach broadcast arms — the OPEN-sync verdict
+        // the neighborChanged walk serves, the voices the consult's
+        // own loop plays; the lever OFF the dead signal the closed
+        // kind the same beat restores)
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c, top, c + 1, w::LEVER_ON);
+        }
+        app.attach_wire_voice(c, top, c + 1);
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            w::OAK_TRAPDOOR_OPEN,
+            "the armed floor the consult opens"
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.wooden_trapdoor.open")),
+            "the consult's open voice the flip plays"
+        );
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c, top, c + 1, w::LEVER);
+        }
+        app.attach_wire_voice(c, top, c + 1);
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            w::OAK_TRAPDOOR,
+            "the dead signal the consult closes"
+        );
+    }
+
+    #[test]
     fn the_pressure_plates_the_sensor_the_sensitivity_and_the_release_wear() {
         // THE PLATES' OWN LAWS (the dev-48 round — javap the 26.2 jar
         // the BasePressurePlateBlock + PressurePlateBlock walks the
@@ -108179,10 +108598,10 @@ cow_sound_variant: None,
         assert_eq!(w::OAK_PRESSURE_PLATE_ON, 289);
         assert_eq!(w::STONE_PRESSURE_PLATE, 290);
         assert_eq!(w::STONE_PRESSURE_PLATE_ON, 291);
-        assert_eq!(w::END_PORTAL, 326);
+        assert_eq!(w::END_PORTAL, 328);
         assert_eq!(
             atlas::N_KINDS,
-            326,
+            328,
             "the palette the weighted plates' own rows bank"
         );
         for (off, on, name, wooden) in [
