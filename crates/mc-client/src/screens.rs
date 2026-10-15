@@ -102244,8 +102244,8 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            264,
-            "the palette the hinge-right tail's own rows bank"
+            288,
+            "the palette the button ladder's own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
         assert_eq!(atlas::KIND_NAMES[wool as usize], "white_wool");
@@ -102325,8 +102325,8 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            264,
-            "the palette the hinge-right tail's own rows bank"
+            288,
+            "the palette the button ladder's own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
         assert_eq!(atlas::REGISTRY_NAMES[sand as usize], "soul_sand");
@@ -102627,8 +102627,8 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            264,
-            "the palette the hinge-right tail's own rows bank"
+            288,
+            "the palette the button ladder's own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
         assert_eq!(atlas::REGISTRY_NAMES[honey as usize], "honey_block");
@@ -106472,7 +106472,11 @@ cow_sound_variant: None,
         use mc_registry::generated::atlas;
         assert_eq!(crate::world::OAK_BUTTON, 262);
         assert_eq!(crate::world::OAK_BUTTON_ON, 263);
-        assert_eq!(crate::world::END_PORTAL, 264, "the displaced seat the growth keeps");
+        assert_eq!(
+            crate::world::END_PORTAL,
+            288,
+            "the displaced seat the ladder's growth keeps"
+        );
         for kind in [
             crate::world::BUTTON,
             crate::world::BUTTON_ON,
@@ -106548,10 +106552,10 @@ cow_sound_variant: None,
             "oak_button"
         );
         // THE PALETTE'S OWN TAIL (the generated rows the regen banks —
-        // the KIND_NAMES the 264 kinds speak, the oak pair the tail
-        // seats wear, the FACE_TILES row the ONE oak-planks tile the
+        // the KIND_NAMES the 288 kinds speak, the oak pair the mid seats
+        // wear, the FACE_TILES row the ONE oak-planks tile the
         // #texture ref banks)
-        assert_eq!(atlas::N_KINDS, 264, "the palette the oak rung banks");
+        assert_eq!(atlas::N_KINDS, 288, "the palette the button ladder banks");
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
         assert_eq!(atlas::KIND_NAMES[263], "oak_button_pressed");
         assert_eq!(atlas::REGISTRY_NAMES[262], "oak_button");
@@ -106634,6 +106638,237 @@ cow_sound_variant: None,
             ab,
             [9.75, 5.0, 19.75, 10.25, 5.5, 20.5],
             "the 0.5x0.5 box the base-centered law keeps"
+        );
+    }
+    #[test]
+    fn the_button_ladder_the_full_family_and_the_voice_sets_wear() {
+        // THE LADDER'S OWN SEATS (javap the 26.2 jar the clinit's own
+        // indy→bootstrap→lambda walk banks — the twelve rungs the
+        // lambda$static$217..226 + $323/$324 rows ALL `bipush 30` the
+        // wooden window speaks, the POLISHED_BLACKSTONE rung the
+        // lambda$static$338 row the BlockSetType.STONE + `bipush 20`
+        // the stone-family law keeps): the CONTIGUOUS tail the
+        // 264..287 seats wear (the OFF kinds the even, the ON the odd
+        // the ±1 mate speaks), the END_PORTAL the 288 beyond-table
+        // seat the displacement law keeps, the family fn the FOURTEEN
+        // pairs the same base serves, the atlas tail the 288 kinds the
+        // ladder rows bank, the per-rung FACE_TILES row the ONE planks
+        // tile all six slots wear (the polished rung the
+        // polished_blackstone master), the wood order the door
+        // family's own ladder wears.
+        use crate::world as w;
+        use mc_registry::generated::atlas;
+        let pairs = [
+            (w::SPRUCE_BUTTON, w::SPRUCE_BUTTON_ON, "spruce_button", true),
+            (w::BIRCH_BUTTON, w::BIRCH_BUTTON_ON, "birch_button", true),
+            (w::JUNGLE_BUTTON, w::JUNGLE_BUTTON_ON, "jungle_button", true),
+            (w::ACACIA_BUTTON, w::ACACIA_BUTTON_ON, "acacia_button", true),
+            (
+                w::DARK_OAK_BUTTON,
+                w::DARK_OAK_BUTTON_ON,
+                "dark_oak_button",
+                true,
+            ),
+            (
+                w::MANGROVE_BUTTON,
+                w::MANGROVE_BUTTON_ON,
+                "mangrove_button",
+                true,
+            ),
+            (w::CHERRY_BUTTON, w::CHERRY_BUTTON_ON, "cherry_button", true),
+            (
+                w::PALE_OAK_BUTTON,
+                w::PALE_OAK_BUTTON_ON,
+                "pale_oak_button",
+                true,
+            ),
+            (w::BAMBOO_BUTTON, w::BAMBOO_BUTTON_ON, "bamboo_button", true),
+            (
+                w::CRIMSON_BUTTON,
+                w::CRIMSON_BUTTON_ON,
+                "crimson_button",
+                true,
+            ),
+            (w::WARPED_BUTTON, w::WARPED_BUTTON_ON, "warped_button", true),
+            (
+                w::POLISHED_BLACKSTONE_BUTTON,
+                w::POLISHED_BLACKSTONE_BUTTON_ON,
+                "polished_blackstone_button",
+                false,
+            ),
+        ];
+        let mut seat = 264u16;
+        for (off, on, name, wooden) in pairs {
+            assert_eq!(off, seat, "the OFF kind the even seat wears");
+            assert_eq!(on, seat + 1, "the ON kind the +1 mate wears");
+            assert!(
+                w::is_button(off) && w::is_button(on),
+                "the {name} rung the family keeps"
+            );
+            assert_eq!(
+                w::button_is_wooden(off),
+                wooden,
+                "the set type's own triple the {name} verdict arms"
+            );
+            assert_eq!(
+                w::button_pulse_ticks(off),
+                if wooden { 30 } else { 20 },
+                "the factory's own ctor arg the {name} window banks"
+            );
+            assert!(
+                !w::button_powered(off),
+                "the OFF kind the resting bit wears"
+            );
+            assert!(w::button_powered(on), "the ON kind the powered bit keeps");
+            assert_eq!(
+                w::button_toggled(off),
+                Some(on),
+                "the {name} mate the ±1 law speaks"
+            );
+            assert_eq!(w::button_toggled(on), Some(off));
+            // THE NAMES' OWN ROWS (the ONE "{name}" entry both kinds the
+            // same registry law speaks — the pick lane grants BOTH)
+            assert_eq!(w::NAME_OF[off as usize], name);
+            assert_eq!(w::NAME_OF[on as usize], name);
+            // THE ATLAS'S OWN ROWS (the generated rows the regen banks —
+            // the KIND_NAMES the ladder rows wear, the REGISTRY_NAMES
+            // the ONE registry name both kinds speak, the FACE_TILES
+            // row the ONE planks tile all six slots wear)
+            assert_eq!(atlas::KIND_NAMES[off as usize], name);
+            assert_eq!(atlas::KIND_NAMES[on as usize], format!("{name}_pressed"));
+            assert_eq!(atlas::REGISTRY_NAMES[off as usize], name);
+            assert_eq!(atlas::REGISTRY_NAMES[on as usize], name);
+            let tile = atlas::FACE_TILES[off as usize][2];
+            assert_ne!(tile, atlas::TILE_NONE, "the {name} tile the ref banks");
+            assert_eq!(
+                tile,
+                atlas::FACE_TILES[off as usize][0],
+                "the ONE tile all six slots wear"
+            );
+            assert_eq!(
+                atlas::FACE_TILES[on as usize][2],
+                tile,
+                "the ON kind the same tile keeps"
+            );
+            // THE ITEM FORM THE REGISTRATION CARRIES (the generated
+            // items.rs the jar's BlockItemIds rows the twelve rungs
+            // carry — the placement lane the NAME_OF reverse the same
+            // walk serves)
+            assert_eq!(
+                w::World::placeable_block(name),
+                Some(off),
+                "the {name} item the placement lane serves"
+            );
+            seat += 2;
+        }
+        assert_eq!(
+            seat, 288,
+            "the ladder's own tail the END_PORTAL's displaced seat banks"
+        );
+        assert_eq!(w::END_PORTAL, 288, "the displaced seat the growth keeps");
+        assert_eq!(atlas::N_KINDS, 288, "the palette the ladder banks");
+        // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
+        // the getSound walk the buttonClickOn/Off pair serves): the
+        // String-ctor woods the WOODEN defaults speak, the CHERRY full
+        // ctor the CHERRY_WOOD pair, the CRIMSON/WARPED rows the
+        // NETHER_WOOD pairs, the BAMBOO row the BAMBOO_WOOD pair, the
+        // STONE set the stone AND polished rungs the shared rows wear
+        assert_eq!(
+            w::button_click_voice(w::SPRUCE_BUTTON, true),
+            "block.wooden_button.click_on"
+        );
+        assert_eq!(
+            w::button_click_voice(w::CHERRY_BUTTON, true),
+            "block.cherry_wood_button.click_on"
+        );
+        assert_eq!(
+            w::button_click_voice(w::CHERRY_BUTTON, false),
+            "block.cherry_wood_button.click_off"
+        );
+        assert_eq!(
+            w::button_click_voice(w::BAMBOO_BUTTON_ON, true),
+            "block.bamboo_wood_button.click_on"
+        );
+        assert_eq!(
+            w::button_click_voice(w::CRIMSON_BUTTON, false),
+            "block.nether_wood_button.click_off"
+        );
+        assert_eq!(
+            w::button_click_voice(w::WARPED_BUTTON_ON, true),
+            "block.nether_wood_button.click_on"
+        );
+        assert_eq!(
+            w::button_click_voice(w::POLISHED_BLACKSTONE_BUTTON, true),
+            "block.stone_button.click_on"
+        );
+        assert_eq!(
+            w::button_click_voice(w::POLISHED_BLACKSTONE_BUTTON_ON, false),
+            "block.stone_button.click_off"
+        );
+        // THE ARROWS' OWN FAMILY VERDICTS (the entityInside gate the
+        // canButtonBeActivatedByArrows read arms): the wooden rungs the
+        // press keeps, the polished rung the STONE set's refusal the
+        // shared set type speaks
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        let (bx, by, bz) = (c + 1, top, c);
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    world.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    world.set(c + dx, top, c + dz, crate::world::AIR);
+                    world.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            // THE EAST WALL (the west-facing button the support east
+            // hugs — the plate the cell's east edge the scan tests)
+            world.set(bx + 1, by, bz, crate::world::STONE);
+            world.set(bx, by, bz, crate::world::CRIMSON_BUTTON);
+            world.set_variant(
+                bx,
+                by,
+                bz,
+                crate::world::lever_variant(crate::world::LEVER_FACE_WALL, 4),
+            );
+            // THE POLISHED SIBLING (the same wall the stone-family rung
+            // keeps — the arrow the shared set type's refusal never
+            // lets press)
+            world.set(bx, by, bz - 1, crate::world::POLISHED_BLACKSTONE_BUTTON);
+            world.set_variant(
+                bx,
+                by,
+                bz - 1,
+                crate::world::lever_variant(crate::world::LEVER_FACE_WALL, 4),
+            );
+        }
+        let (ax, ay, az) = (bx as f64 + 1.0, by as f64 + 0.4, bz as f64 + 0.5);
+        assert!(
+            crate::world::arrow_presses_button(
+                app.offline_world.as_ref().unwrap(),
+                ax,
+                ay,
+                az,
+                bx,
+                by,
+                bz,
+            ),
+            "the crimson rung the wooden press arms"
+        );
+        assert!(
+            !crate::world::arrow_presses_button(
+                app.offline_world.as_ref().unwrap(),
+                ax,
+                ay,
+                az,
+                bx,
+                by,
+                bz - 1,
+            ),
+            "the polished rung the STONE set's refusal keeps"
         );
     }
     #[test]

@@ -1439,10 +1439,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         _ => (0usize, idx),
                     };
                     for q in if crate::world::is_button(id) {
-                        button_model_quads(
-                            crate::world::button_is_wooden(id),
-                            crate::world::button_powered(id),
-                        )
+                        button_model_quads(id, crate::world::button_powered(id))
                     } else {
                         lever_model_quads(crate::world::lever_powered(id))
                     } {
@@ -3487,52 +3484,74 @@ fn lever_model_quads(powered: bool) -> &'static [mc_registry::element_quads::Qua
 
 /// THE BUTTON'S OWN MODEL BAKES (the autopush-660 round — the jar's
 /// DIRECT authoring the lever's REVERSED rows never share): the
-/// blockstates/stone_button.json's FLOOR rows name the MODELS straight
-/// (powered=false the "block/stone_button" row answers, powered=true
-/// the "block/stone_button_pressed" row — the verbatim rows the
+/// blockstates/{wood}_button.json's FLOOR rows name the MODELS straight
+/// (powered=false the "block/{wood}_button" row answers, powered=true
+/// the "block/{wood}_button_pressed" row — the verbatim rows the
 /// resolution speaks), the ONE element box the template parent serves
 /// (the unpressed plate [5,0,6] -> [11,2,10] the six faces the down
 /// cullface carries, the pressed [5,0,6] -> [11,1.02,10] the thinner
 /// plate the same six faces wear — the parent chain block/button the
-/// derive walk resolves, the #texture ref block/stone the merged map
-/// banks — the mesher's per-quad verdict the row's own tile reads),
-/// tinted = false (no tintindex anywhere). The failed derive the
-/// honest empty slice keeps (the button the nothing renders).
-fn button_model_quads(
-    wooden: bool,
-    powered: bool,
-) -> &'static [mc_registry::element_quads::Quad] {
-    static STONE_OFF: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
-        std::sync::OnceLock::new();
-    static STONE_ON: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
-        std::sync::OnceLock::new();
-    static OAK_OFF: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
-        std::sync::OnceLock::new();
-    static OAK_ON: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
-        std::sync::OnceLock::new();
-    // THE WOODEN RUNG'S OWN MODELS (the dev-47 round — the
-    // blockstates/oak_button.json's FLOOR rows the stone lanes the
-    // SAME template parent serves: powered=false the block/oak_button
-    // row answers, powered=true the block/oak_button_pressed — the
-    // verbatim rows the resolution speaks, the #texture ref
-    // block/oak_planks the merged map banks, the mesher's per-quad
-    // verdict the kind's own FACE_TILES row reads). The failed derive
-    // the honest empty slice keeps (the button the nothing renders).
-    let model = match (wooden, powered) {
-        (true, true) => "block/oak_button_pressed",
-        (true, false) => "block/oak_button",
-        (false, true) => "block/stone_button_pressed",
-        (false, false) => "block/stone_button",
-    };
-    let cache = match (wooden, powered) {
-        (true, true) => &OAK_ON,
-        (true, false) => &OAK_OFF,
-        (false, true) => &STONE_ON,
-        (false, false) => &STONE_OFF,
-    };
-    cache.get_or_init(|| {
-        mc_registry::element_quads::derive_model_inherited(model).unwrap_or_default()
-    })
+/// derive walk resolves, the #texture ref the per-wood planks master
+/// the merged map banks — the mesher's per-quad verdict the row's own
+/// tile reads), tinted = false (no tintindex anywhere). The
+/// autopush-662 round the FULL LADDER the (id, powered)-keyed map
+/// banks — the fourteen base names the OFF kind's NAME_OF row answers,
+/// the 28 models the derive walk bakes once (the failed derive the
+/// honest empty slice keeps — the button the nothing renders).
+fn button_model_quads(id: u16, powered: bool) -> &'static [mc_registry::element_quads::Quad] {
+    // THE LADDER'S OWN BASE SEATS (the OFF kind every pair wears — the
+    // NAME_OF row the ON kind the same name speaks, the model names
+    // the {name}/{name}_pressed pair the jar's blockstates bank)
+    const BASE_IDS: [u16; 14] = [
+        crate::world::BUTTON,
+        crate::world::OAK_BUTTON,
+        crate::world::SPRUCE_BUTTON,
+        crate::world::BIRCH_BUTTON,
+        crate::world::JUNGLE_BUTTON,
+        crate::world::ACACIA_BUTTON,
+        crate::world::DARK_OAK_BUTTON,
+        crate::world::MANGROVE_BUTTON,
+        crate::world::CHERRY_BUTTON,
+        crate::world::PALE_OAK_BUTTON,
+        crate::world::BAMBOO_BUTTON,
+        crate::world::CRIMSON_BUTTON,
+        crate::world::WARPED_BUTTON,
+        crate::world::POLISHED_BLACKSTONE_BUTTON,
+    ];
+    static QUADS: std::sync::OnceLock<
+        std::collections::HashMap<(u16, bool), Vec<mc_registry::element_quads::Quad>>,
+    > = std::sync::OnceLock::new();
+    let map = QUADS.get_or_init(|| {
+        BASE_IDS
+            .iter()
+            .flat_map(|&base| {
+                let name = crate::world::NAME_OF[base as usize];
+                [
+                    (
+                        (base, false),
+                        mc_registry::element_quads::derive_model_inherited(&format!(
+                            "block/{name}"
+                        ))
+                        .unwrap_or_default(),
+                    ),
+                    (
+                        (base, true),
+                        mc_registry::element_quads::derive_model_inherited(&format!(
+                            "block/{name}_pressed"
+                        ))
+                        .unwrap_or_default(),
+                    ),
+                ]
+            })
+            .collect()
+    });
+    // the ON kind's NAME_OF row the same base name speaks — the lookup
+    // the toggled kind's own seat the base key normalizes (the OFF/ON
+    // bit the ±1 mate the ladder's own law wears)
+    let base = if powered { id - 1 } else { id };
+    map.get(&(base, powered))
+        .map(|v| v.as_slice())
+        .unwrap_or(&[])
 }
 
 /// THE HONEY MODEL'S OWN BAKE — the block/honey_block chain the
@@ -5721,8 +5740,8 @@ mod tests {
         // wears, the wall button the plate the supporter's own edge
         // the x=90 turn presses, the rotated cullface the neighbor
         // culls (5 faces) / the air restores (6).
-        let off = button_model_quads(false, false);
-        let on = button_model_quads(false, true);
+        let off = button_model_quads(crate::world::BUTTON, false);
+        let on = button_model_quads(crate::world::BUTTON_ON, true);
         assert!(!off.is_empty() && !on.is_empty(), "the two models derive");
         assert_eq!(off.len(), 6, "the unpressed plate the six faces wear");
         assert_eq!(on.len(), 6, "the pressed plate the six faces wear");

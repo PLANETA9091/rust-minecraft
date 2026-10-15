@@ -898,10 +898,11 @@ pub const END_STONE: u16 = 89;
 /// quartets the 90..173 seats never move), the kind's own seat the
 /// beyond-table seat the every-rung displacement the ladder's growth
 /// speaks (the dev-47 round the OAK pair the 262/263 rows the tail
-/// banks — the END_PORTAL the 264 beyond-table seat the same law
-/// keeps — the `id < N_KINDS` guards the tile lookups' skip verdict
-/// the bigger tail keeps).
-pub const END_PORTAL: u16 = 264;
+/// banks — the END_PORTAL the 288 beyond-table seat the same law
+/// keeps (the autopush-662 round the twelve-button ladder the
+/// 264..287 tail banks — the `id < N_KINDS` guards the tile lookups'
+/// skip verdict the bigger tail keeps).
+pub const END_PORTAL: u16 = 288;
 
 /// THE BUTTON'S OWN PAIR (the autopush-660 round): the redstone pulse's
 /// own block finally RENDERS, PLACES, PRESSES and PULSES — javap
@@ -955,6 +956,64 @@ pub const BUTTON_ON: u16 = 261;
 /// the facing + face the variant byte the SAME two-field law carries.
 pub const OAK_BUTTON: u16 = 262;
 pub const OAK_BUTTON_ON: u16 = 263;
+
+/// THE BUTTON FAMILY'S FULL LADDER (the autopush-662 round — the
+/// twelve remaining rungs the oak lane's own walk generalizes, the
+/// CONTIGUOUS tail the kind ids 264..287 wear — the OFF/ON bit the
+/// ±1 mate the stone and oak pairs' own law the whole ladder speaks,
+/// the facing + face the variant byte the SAME two-field law carries):
+/// javap the 26.2 jar the clinit's own indy→bootstrap→lambda walk
+/// banks — the wooden rungs the lambda$static$217..226 (OAK..BAMBOO)
+/// + lambda$static$323/324 (CRIMSON/WARPED) rows ALL `bipush 30`
+/// ctor args speak (the 30-tick 1.5-second wooden window the oak
+/// rung's own law every wooden rung wears), the POLISHED_BLACKSTONE
+/// rung the lambda$static$338 row the `BlockSetType.STONE, bipush 20`
+/// pair speaks (the stone button's own window + the STONE set's
+/// block.stone_button.click_on/off voices + the arrows' refusal the
+/// STONE row's iconst_0 the shared set type arms — the clinit's own
+/// indy walk the polished rung's #5794 → bootstrap → lambda$static
+/// $338 the stone button's #2916 → bootstrap 195 → lambda$static
+/// $131 shares — javac the identical bodies the two factories the
+/// one ctor-arg shape serves). The wooden verdicts the BlockSetType
+/// rows bank: the String-ctor woods the `iconst_1,1,1` delegating
+/// triple speaks (SPRUCE/BIRCH/JUNGLE/ACACIA/DARK_OAK/PALE_OAK/
+/// MANGROVE — the canButtonBeActivatedByArrows flag the arrows' own
+/// press arms), the CHERRY full ctor the iconst_1 triple pc 343-345
+/// + the CHERRY_WOOD_BUTTON_CLICK_ON/OFF pair pc 368-371, the
+/// CRIMSON/WARPED rows the iconst_1 triples pc 438-440 / 487-489 +
+/// the NETHER_WOOD_BUTTON_CLICK_ON/OFF pairs pc 465-468 / 514-517,
+/// the BAMBOO row the iconst_1 triple pc 552-554 + the
+/// BAMBOO_WOOD_BUTTON_CLICK_ON/OFF pair pc 579-582 — the
+/// block.wooden_button/cherry_wood_button/bamboo_wood_button/
+/// nether_wood_button click_on/off events the cache's sounds.json rows
+/// carry, the ogg files the restored sound lane already banks. The
+/// wood order the door family's own ladder (the dev-43 round) wears
+/// — the seats the SAME wooden run the 264..=285 range speaks, the
+/// polished rung the 286/287 tail the stone-family law keeps.
+pub const SPRUCE_BUTTON: u16 = 264;
+pub const SPRUCE_BUTTON_ON: u16 = 265;
+pub const BIRCH_BUTTON: u16 = 266;
+pub const BIRCH_BUTTON_ON: u16 = 267;
+pub const JUNGLE_BUTTON: u16 = 268;
+pub const JUNGLE_BUTTON_ON: u16 = 269;
+pub const ACACIA_BUTTON: u16 = 270;
+pub const ACACIA_BUTTON_ON: u16 = 271;
+pub const DARK_OAK_BUTTON: u16 = 272;
+pub const DARK_OAK_BUTTON_ON: u16 = 273;
+pub const MANGROVE_BUTTON: u16 = 274;
+pub const MANGROVE_BUTTON_ON: u16 = 275;
+pub const CHERRY_BUTTON: u16 = 276;
+pub const CHERRY_BUTTON_ON: u16 = 277;
+pub const PALE_OAK_BUTTON: u16 = 278;
+pub const PALE_OAK_BUTTON_ON: u16 = 279;
+pub const BAMBOO_BUTTON: u16 = 280;
+pub const BAMBOO_BUTTON_ON: u16 = 281;
+pub const CRIMSON_BUTTON: u16 = 282;
+pub const CRIMSON_BUTTON_ON: u16 = 283;
+pub const WARPED_BUTTON: u16 = 284;
+pub const WARPED_BUTTON_ON: u16 = 285;
+pub const POLISHED_BLACKSTONE_BUTTON: u16 = 286;
+pub const POLISHED_BLACKSTONE_BUTTON_ON: u16 = 287;
 
 /// THE BUTTON'S OWN PULSE CLOCK (javap `press` pc 28-37 the
 /// `scheduleTick(pos, this, ticksToStayPressed)` walk the STONE
@@ -1544,7 +1603,10 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 }
 
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 264] = [
+/// The autopush-662 round the twelve-button ladder the 264..287 tail
+/// banks — the table the 288 rows the END_PORTAL the beyond-table
+/// seat the displaced law keeps.
+pub const NAME_OF: [&str; 288] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1871,6 +1933,28 @@ pub const NAME_OF: [&str; 264] = [
     // sounds' wooden set type row the same law keeps (the _pressed
     // strip the generated rows' registry law the stone pair wears)
     "oak_button", "oak_button",
+    // THE BUTTON FAMILY'S FULL LADDER (the autopush-662 round): the
+    // ONE "{wood}_button" registry entry both kinds the same name
+    // speaks — the dig row (the buttonProperties' strength(0.5f) walk
+    // every rung the jar's own blockstates never override), the item
+    // id the pick lane grants BOTH kinds (the generated items.rs the
+    // jar's BlockItemIds rows the twelve rungs already carry), the
+    // sounds' per-set-type rows the click voices' own law keeps (the
+    // _pressed strip the generated rows' registry law the oak pair
+    // wears) — the wood order the door family's own ladder wears, the
+    // polished rung the stone-family name the shared set type keeps.
+    "spruce_button", "spruce_button",
+    "birch_button", "birch_button",
+    "jungle_button", "jungle_button",
+    "acacia_button", "acacia_button",
+    "dark_oak_button", "dark_oak_button",
+    "mangrove_button", "mangrove_button",
+    "cherry_button", "cherry_button",
+    "pale_oak_button", "pale_oak_button",
+    "bamboo_button", "bamboo_button",
+    "crimson_button", "crimson_button",
+    "warped_button", "warped_button",
+    "polished_blackstone_button", "polished_blackstone_button",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -2856,14 +2940,20 @@ pub fn lever_can_survive(world: &World, x: i32, y: i32, z: i32, variant: u8) -> 
 /// THE BUTTON'S OWN FAMILY (the autopush-660 round — the two-kind
 /// ladder the OFF/ON bit alone wears, the facing + face the variant
 /// byte carries; the dev-47 round the OAK rung the family ladder
-/// extends — the stone pair + the oak pair the same base both wear):
+/// extends; the autopush-662 round the twelve remaining rungs the
+/// CONTIGUOUS 264..287 tail banks — the fourteen pairs the same base
+/// all wear):
 /// the placement's survival gate, the collision's pass-through row,
 /// the mesher's element lane and the press/pulse walks the family fn
 /// serves (the lever family's own shape the sibling keeps — the
-/// FaceAttachedHorizontalDirectionalBlock parent the four kinds the
+/// FaceAttachedHorizontalDirectionalBlock parent the whole family the
 /// SAME base shares).
 pub fn is_button(id: u16) -> bool {
-    id == BUTTON || id == BUTTON_ON || id == OAK_BUTTON || id == OAK_BUTTON_ON
+    id == BUTTON
+        || id == BUTTON_ON
+        || id == OAK_BUTTON
+        || id == OAK_BUTTON_ON
+        || (SPRUCE_BUTTON..=POLISHED_BLACKSTONE_BUTTON_ON).contains(&id)
 }
 
 /// THE BUTTON'S OWN WOODEN VERDICT (javap BlockSetType's static init
@@ -2873,10 +2963,17 @@ pub fn is_button(id: u16) -> bool {
 /// pc 7-14 and the checkPressed scan gate pc 0-7 both read — the
 /// wooden set's true the arrows' own press arms, the stone set's
 /// false the entityInside early return the stone button wears). The
-/// OAK pair the wooden verdict keeps, the stone pair the false arm
-/// serves.
+/// wooden rungs the verdict keep — the OAK pair AND the eleven
+/// String-ctor/full-ctor woods (the CHERRY/BAMBOO full-ctor rows the
+/// iconst_1 triples the same verdict arms, the CRIMSON/WARPED pair
+/// the NETHER_WOOD rows speak) — the stone AND polished-blackstone
+/// pairs the false arm serves (the polished rung the BlockSetType.
+/// STONE the lambda$static$338 row banks, the shared set type the
+/// shared refusal keeps).
 pub fn button_is_wooden(id: u16) -> bool {
-    id == OAK_BUTTON || id == OAK_BUTTON_ON
+    id == OAK_BUTTON
+        || id == OAK_BUTTON_ON
+        || (SPRUCE_BUTTON..=WARPED_BUTTON_ON).contains(&id)
 }
 
 /// THE BUTTON'S OWN WINDOW (javap the Blocks factory rows — the STONE
@@ -2902,11 +2999,55 @@ pub fn button_pulse_ticks(id: u16) -> u64 {
 /// kind's own set the pair's prefix answers, the on flag the
 /// click_on/click_off word picks.
 pub fn button_click_voice(id: u16, on: bool) -> &'static str {
-    match (button_is_wooden(id), on) {
-        (true, true) => "block.wooden_button.click_on",
-        (true, false) => "block.wooden_button.click_off",
-        (false, true) => "block.stone_button.click_on",
-        (false, false) => "block.stone_button.click_off",
+    // THE SET TYPES' OWN VOICE ROWS (javap BlockSetType's static init
+    // the 26.2 jar — the getSound walk pc 0-13 the buttonClickOn/
+    // buttonClickOff pair serves): the String-ctor woods the
+    // WOODEN_BUTTON_CLICK_ON/OFF defaults speak (the block.wooden_
+    // button.click_on/off events), the CHERRY full ctor the
+    // CHERRY_WOOD_BUTTON_CLICK_ON/OFF pair pc 368-371 (the block.
+    // cherry_wood_button.click_on/off events), the CRIMSON/WARPED
+    // rows the NETHER_WOOD_BUTTON_CLICK_ON/OFF pairs pc 465-468 /
+    // 514-517 (the block.nether_wood_button.click_on/off events),
+    // the BAMBOO row the BAMBOO_WOOD_BUTTON_CLICK_ON/OFF pair pc
+    // 579-582 (the block.bamboo_wood_button.click_on/off events),
+    // the STONE set the block.stone_button.click_on/off events the
+    // stone AND polished-blackstone rungs share (the polished rung
+    // the BlockSetType.STONE the lambda$static$338 row banks — the
+    // shared set type the shared voice rows keep). The on flag the
+    // click_on/click_off word picks.
+    let set: &str = if id == CHERRY_BUTTON || id == CHERRY_BUTTON_ON {
+        "block.cherry_wood_button"
+    } else if id == BAMBOO_BUTTON || id == BAMBOO_BUTTON_ON {
+        "block.bamboo_wood_button"
+    } else if id == CRIMSON_BUTTON
+        || id == CRIMSON_BUTTON_ON
+        || id == WARPED_BUTTON
+        || id == WARPED_BUTTON_ON
+    {
+        "block.nether_wood_button"
+    } else if button_is_wooden(id) {
+        "block.wooden_button"
+    } else {
+        "block.stone_button"
+    };
+    if on {
+        // the format! lane the compile-time union the const concat
+        // speaks — the events the match-free fold banks
+        match set {
+            "block.cherry_wood_button" => "block.cherry_wood_button.click_on",
+            "block.bamboo_wood_button" => "block.bamboo_wood_button.click_on",
+            "block.nether_wood_button" => "block.nether_wood_button.click_on",
+            "block.wooden_button" => "block.wooden_button.click_on",
+            _ => "block.stone_button.click_on",
+        }
+    } else {
+        match set {
+            "block.cherry_wood_button" => "block.cherry_wood_button.click_off",
+            "block.bamboo_wood_button" => "block.bamboo_wood_button.click_off",
+            "block.nether_wood_button" => "block.nether_wood_button.click_off",
+            "block.wooden_button" => "block.wooden_button.click_off",
+            _ => "block.stone_button.click_off",
+        }
     }
 }
 
@@ -2915,7 +3056,13 @@ pub fn button_click_voice(id: u16, on: bool) -> &'static str {
 /// already-pressed CONSUME the re-press the pass keeps): the ON kind
 /// the powered verdict keeps, the OFF kind the resting answer wears.
 pub fn button_powered(id: u16) -> bool {
-    id == BUTTON_ON || id == OAK_BUTTON_ON
+    // THE LADDER'S OWN PARITY LAW (the OFF kinds the even seats the ON
+    // the odd wear — the raw 265..=287 range the even OFF kinds the
+    // later rungs bank would wrongly arm, the odd verdict the honest
+    // bit keeps)
+    id == BUTTON_ON
+        || id == OAK_BUTTON_ON
+        || ((SPRUCE_BUTTON..=POLISHED_BLACKSTONE_BUTTON_ON).contains(&id) && id % 2 == 1)
 }
 
 /// THE BUTTON'S OWN OFF/ON MATE (javap press pc 0-7 the
@@ -2923,12 +3070,24 @@ pub fn button_powered(id: u16) -> bool {
 /// the POWERED=false arm speaks — the ladder's ±1 mate the lever's
 /// own law wears; the unknown id the None the honest guard banks).
 pub fn button_toggled(id: u16) -> Option<u16> {
+    // THE LADDER'S OWN ±1 LAW (the stone and oak pairs' OFF/ON bit
+    // the CONTIGUOUS tail the same mate arithmetic speaks — the OFF
+    // kinds the even seats the ON the odd wear, the unknown id the
+    // None the honest guard banks): the explicit arms the two older
+    // pairs pin, the ladder rungs the +1/-1 arithmetic the range
+    // guard answers
     match id {
         BUTTON => Some(BUTTON_ON),
         BUTTON_ON => Some(BUTTON),
         OAK_BUTTON => Some(OAK_BUTTON_ON),
         OAK_BUTTON_ON => Some(OAK_BUTTON),
-        _ => None,
+        _ => {
+            if (SPRUCE_BUTTON..=POLISHED_BLACKSTONE_BUTTON_ON).contains(&id) {
+                Some(if id % 2 == 0 { id + 1 } else { id - 1 })
+            } else {
+                None
+            }
+        }
     }
 }
 
@@ -10247,8 +10406,8 @@ mod tests {
         assert_eq!(NAME_OF[BUTTON_ON as usize], "stone_button");
         assert_eq!(BUTTON + 1, BUTTON_ON, "the +1 seat the OFF/ON ladder wears");
         assert_eq!(
-            END_PORTAL, 264,
-            "the displaced seat the button pair's own tail banks"
+            END_PORTAL, 288,
+            "the displaced seat the button ladder's own tail banks"
         );
         // THE PULSE'S OWN CLOCK (javap press pc 28-37 — the STONE
         // factory's bipush 20 ctor arg the window banks)
@@ -10947,7 +11106,7 @@ mod tests {
         assert_eq!(OAK_DOOR_UPPER, 91);
         assert_eq!(OAK_DOOR_OPEN, 92);
         assert_eq!(OAK_DOOR_UPPER_OPEN, 93);
-        assert_eq!(END_PORTAL, 264, "the displaced seat the oak rung's own tail banks");
+        assert_eq!(END_PORTAL, 288, "the displaced seat the button ladder's own tail banks");
         // THE WOOD LADDER'S OWN SEATS (the dev-43 round — the eleven
         // quartets the CONTIGUOUS tail the kind ids 94..137 wear: the
         // closed lower + 0, the closed upper + 1, the open lower + 2,
@@ -11151,7 +11310,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 264, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 288, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)

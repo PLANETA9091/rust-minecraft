@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 264] = [
+pub const RUNTIME_PALETTE: [&str; 288] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -781,6 +781,55 @@ pub const RUNTIME_PALETTE: [&str; 264] = [
     // slots the ONE oak-planks tile — the planks master the palette
     // already banks, no new tile the regen keeps).
     "oak_button", "oak_button_pressed",
+    // THE BUTTON FAMILY'S FULL LADDER (the autopush-662 round — the
+    // twelve remaining rungs the oak lane's own walk generalizes):
+    // javap the 26.2 jar the clinit's own indy→bootstrap→lambda walk
+    // banks — SPRUCE/BIRCH/JUNGLE/ACACIA/CHERRY/DARK_OAK/PALE_OAK/
+    // MANGROVE/BAMBOO the lambda$static$217..226 rows, the CRIMSON/
+    // WARPED pair the lambda$static$323/324 rows (ALL `bipush 30`
+    // ctor args the ticksToStayPressed field banks — the 30-tick
+    // 1.5-second wooden window the oak rung's own law the whole
+    // ladder wears), the POLISHED_BLACKSTONE rung the lambda$static
+    // $338 row the STONE set type + `bipush 20` pair speaks (the
+    // stone button's own 20-tick window + the STONE set's
+    // block.stone_button.click_on/off voices + the arrows' refusal
+    // the STONE row's full-ctor iconst_0 the shared set type arms —
+    // the indy walk the BLOCKS clinit's #5794 → bootstrap → the SAME
+    // lambda$static$338 body the stone button's #2916 → bootstrap 195
+    // → lambda$static$131 shares — javac the identical-lambda bodies
+    // the two factories the one ctor-arg shape serves). The wooden
+    // sets' own voices the BlockSetType rows bank: the String-ctor
+    // woods (SPRUCE/BIRCH/JUNGLE/ACACIA/DARK_OAK/PALE_OAK/MANGROVE)
+    // the WOODEN_BUTTON_CLICK_ON/OFF defaults speak, the CHERRY full
+    // ctor the CHERRY_WOOD_BUTTON_CLICK_ON/OFF pair (clinit pc 368-371
+    // the iconst_1,1,1 triple pc 343-345 the arrows' verdict wears),
+    // the CRIMSON/WARPED pair the NETHER_WOOD_BUTTON_CLICK_ON/OFF
+    // rows (pc 465-468 / 514-517, the iconst_1 triples pc 438-440 /
+    // 487-489), the BAMBOO row the BAMBOO_WOOD_BUTTON_CLICK_ON/OFF
+    // pair (pc 579-582, the iconst_1 triple pc 552-554) — the
+    // block.cherry_wood_button/bamboo_wood_button/nether_wood_button
+    // click_on/off events the cache's sounds.json rows carry, the
+    // ogg files the restored sound lane already banks. The blockstates
+    // the SAME DIRECT authoring every rung wears (powered=false the
+    // block/{wood}_button model, powered=true the block/{wood}_
+    // button_pressed — the face/facing rotation laws the oak lanes
+    // share), the ONE #texture ref block/{wood}_planks the row's tile
+    // banks (the polished rung the block/polished_blackstone master —
+    // twelve NEW tiles the first-encounter walk gains, the special
+    // walks' later tiles the +12 shift the regenerated sidecar
+    // constants re-bank, the NAME→PIXELS mapping byte-identical).
+    "spruce_button", "spruce_button_pressed",
+    "birch_button", "birch_button_pressed",
+    "jungle_button", "jungle_button_pressed",
+    "acacia_button", "acacia_button_pressed",
+    "dark_oak_button", "dark_oak_button_pressed",
+    "mangrove_button", "mangrove_button_pressed",
+    "cherry_button", "cherry_button_pressed",
+    "pale_oak_button", "pale_oak_button_pressed",
+    "bamboo_button", "bamboo_button_pressed",
+    "crimson_button", "crimson_button_pressed",
+    "warped_button", "warped_button_pressed",
+    "polished_blackstone_button", "polished_blackstone_button_pressed",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -1996,45 +2045,54 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             faces.push(resolve_flat_stem(&stem, false));
             continue;
         }
-        if block == "stone_button"
-            || block == "stone_button_pressed"
-            || block == "oak_button"
-            || block == "oak_button_pressed"
-        {
+        if block.ends_with("_button") || block.ends_with("_button_pressed") {
             // THE BUTTON FAMILY'S OWN ROWS (the autopush-660 round +
-            // the dev-47 oak rung): the blockstate's own FLOOR rows the
-            // kinds wear — the "face=floor,facing=north,powered={p}"
-            // row the jar's DIRECT authoring resolves (the stone pair
-            // the block/stone_button models, the oak pair the
-            // block/oak_button models — the verbatim rows the
+            // the dev-47 oak rung + the autopush-662 full ladder): the
+            // blockstate's own FLOOR rows the kinds wear — the
+            // "face=floor,facing=north,powered={p}" row the jar's
+            // DIRECT authoring resolves (EVERY rung the block's own
+            // name the blockstate path answers — the stone pair the
+            // block/stone_button models, the oak pair the
+            // block/oak_button models, the twelve ladder rungs the
+            // block/{wood}_button models — the verbatim rows the
             // resolution speaks, the lever's REVERSED authoring the
             // buttons never wear), the merged texture map's `#texture`
             // ref the row's tile banks (the stone the block/stone
-            // master, the oak the block/oak_planks planks master — the
-            // palette the tiles already bank, no new tile the regen
-            // keeps; the mesher's button lane the per-quad verdict
-            // reads), tinted = false (the faces carry NO tintindex —
-            // the pre-colored masters render as authored).
+            // master, the wooden rungs the block/{wood}_planks
+            // masters, the polished rung the block/polished_blackstone
+            // master — the stone master the palette already banks, the
+            // twelve planks/blackstone masters the first-encounter walk
+            // gains (the lever row's own tail seat the twelve tiles
+            // bank — the SPECIAL walks' tiles the farmland/bamboo/
+            // destroy/campfire/cake/lava rows the +12 shift the
+            // sidecar constants re-bank, the NAME→PIXELS mapping the
+            // byte-identical law keeps, the rendered scenes the
+            // buttonless frames the same pixels wear); the mesher's
+            // button lane the per-quad verdict reads), tinted = false
+            // (the faces carry NO tintindex — the pre-colored masters
+            // render as authored).
             let powered = block.ends_with("_pressed");
-            let bs_path = if block.starts_with("oak_button") {
-                "assets/minecraft/blockstates/oak_button.json"
-            } else {
-                "assets/minecraft/blockstates/stone_button.json"
-            };
-            let bs_bytes = read_jar(&mut archive, bs_path)?;
+            // the ONE blockstate file BOTH states the same variants map
+            // serves (the stone_button.json the _pressed row the own
+            // file never wears — the row key the powered={p} arm reads)
+            let bs_name = block.strip_suffix("_pressed").unwrap_or(block);
+            let bs_bytes = read_jar(
+                &mut archive,
+                &format!("assets/minecraft/blockstates/{bs_name}.json"),
+            )?;
             let bs: Value = serde_json::from_slice(&bs_bytes)
-                .with_context(|| "blockstate stone_button: json parse")?;
+                .with_context(|| format!("blockstate {bs_name}: json parse"))?;
             let row_key = format!("face=floor,facing=north,powered={powered}");
             let model_ref = bs
                 .get("variants")
                 .and_then(|v| v.get(&row_key))
                 .and_then(|v| v.get("model"))
                 .and_then(|m| m.as_str())
-                .with_context(|| format!("blockstate stone_button: no {row_key} model"))?
+                .with_context(|| format!("blockstate {block}: no {row_key} model"))?
                 .trim_start_matches("minecraft:")
                 .to_string();
             let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
-                .with_context(|| format!("block stone_button: model chain {model_ref}"))?;
+                .with_context(|| format!("block {block}: model chain {model_ref}"))?;
             let tex = tex_map
                 .get("texture")
                 .with_context(|| format!("model {model_ref}: no texture ref"))?;
