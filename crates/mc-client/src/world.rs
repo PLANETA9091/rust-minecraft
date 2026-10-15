@@ -898,11 +898,11 @@ pub const END_STONE: u16 = 89;
 /// quartets the 90..173 seats never move), the kind's own seat the
 /// beyond-table seat the every-rung displacement the ladder's growth
 /// speaks (the dev-47 round the OAK pair the 262/263 rows the tail
-/// banks — the END_PORTAL the 288 beyond-table seat the same law
-/// keeps (the autopush-662 round the twelve-button ladder the
-/// 264..287 tail banks — the `id < N_KINDS` guards the tile lookups'
-/// skip verdict the bigger tail keeps).
-pub const END_PORTAL: u16 = 288;
+/// banks — the END_PORTAL the 292 beyond-table seat the same law
+/// keeps (the dev-48 round the plate pair's rungs the 288..291 tail
+/// banks — the `id < N_KINDS` guards the tile lookups' skip verdict
+/// the bigger tail keeps).
+pub const END_PORTAL: u16 = 292;
 
 /// THE BUTTON'S OWN PAIR (the autopush-660 round): the redstone pulse's
 /// own block finally RENDERS, PLACES, PRESSES and PULSES — javap
@@ -1014,6 +1014,44 @@ pub const WARPED_BUTTON: u16 = 284;
 pub const WARPED_BUTTON_ON: u16 = 285;
 pub const POLISHED_BLACKSTONE_BUTTON: u16 = 286;
 pub const POLISHED_BLACKSTONE_BUTTON_ON: u16 = 287;
+
+/// THE PRESSURE PLATES' OWN FIRST LANE (the dev-48 round — the sensor
+/// family's own rung the attach floor gains): javap `BasePressurePlate
+/// Block` the 26.2 jar (pinned sha1 2dc72797) — the Base clinit the
+/// three shapes bank (SHAPE the `column(14.0, 0.0, 1.0)` the 1-px
+/// resting plate speaks, SHAPE_PRESSED the `column(14.0, 0.0, 0.5)`
+/// the thinner pressed band wears, the TOUCH_AABB the `column(14.0,
+/// 0.0, 4.0).toAabbs().getFirst()` the 14/16-wide × 4/16-tall sensor
+/// slab the cell's floor wears), the getPressedTime the `bipush 20`
+/// the release beat banks (the 20-tick window BOTH sets wear — the
+/// hold loop the scheduleTick(+20) re-arms while occupied, the vacated
+/// beat the release serves), the checkPressed walk pc 0-168 the
+/// flag-**2** setBlock + the updateNeighbours (the pos + the below
+/// cell — the wire's TWO-cell read the button's flag-3 walk the
+/// plate's own law keeps) + the clickOn/clickOff voices + the
+/// BLOCK_ACTIVATE/DEACTIVATE vibrations speak, the getSignalStrength
+/// pc 0-79 the sensitivity switch answers (javap `PressurePlateBlock`
+/// — the EVERYTHING row the Entity.class count arms, the MOBS row the
+/// LivingEntity.class count wears: the OAK set the String-ctor's
+/// EVERYTHING default speaks, the STONE row the `iconst_1,1,0` + MOBS
+/// pair the arrows' refusal the same row banks). The kind pair the
+/// POWERED bit the ±1 mate the button ladder's own law wears — the
+/// plate NO facing/face byte carries (the floor-only plate the
+/// variant byte never reads), the OFF/ON pair the kind seats alone
+/// speak. The beyond-table seat the END_PORTAL kind the displacement
+/// law keeps (288 -> 292 the every-rung displacement the ladder's
+/// growths wear).
+pub const OAK_PRESSURE_PLATE: u16 = 288;
+pub const OAK_PRESSURE_PLATE_ON: u16 = 289;
+pub const STONE_PRESSURE_PLATE: u16 = 290;
+pub const STONE_PRESSURE_PLATE_ON: u16 = 291;
+
+/// THE PLATE'S OWN RELEASE CLOCK (javap `BasePressurePlateBlock.get
+/// PressedTime` pc 0-2 — the `bipush 20` BOTH sets wear: the pressed
+/// plate the scheduled tick re-arms while occupied, the vacated beat
+/// the release serves — the 1-second window the stone AND wooden rows
+/// share).
+pub const PLATE_PRESSED_TIME: u64 = 20;
 
 /// THE BUTTON'S OWN PULSE CLOCK (javap `press` pc 28-37 the
 /// `scheduleTick(pos, this, ticksToStayPressed)` walk the STONE
@@ -1603,10 +1641,10 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 }
 
 /// Block -> texture-group mapping used by the real-colors LUT.
-/// The autopush-662 round the twelve-button ladder the 264..287 tail
-/// banks — the table the 288 rows the END_PORTAL the beyond-table
-/// seat the displaced law keeps.
-pub const NAME_OF: [&str; 288] = [
+/// The dev-48 round the plate pair's rungs the 288..291 tail banks —
+/// the table the 292 rows the END_PORTAL the beyond-table seat the
+/// displaced law keeps.
+pub const NAME_OF: [&str; 292] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1955,6 +1993,16 @@ pub const NAME_OF: [&str; 288] = [
     "crimson_button", "crimson_button",
     "warped_button", "warped_button",
     "polished_blackstone_button", "polished_blackstone_button",
+    // THE PRESSURE PLATES' OWN ROWS (the dev-48 round): the ONE
+    // "{base}_pressure_plate" registry entry both kinds the same name
+    // speaks — the dig row (the factory's strength(0.5f) the stone
+    // row's own clinit walk speaks, the noCollision + DESTROY rows the
+    // same walk banks), the item id the pick lane grants BOTH kinds,
+    // the sounds' per-set-type rows the click voices' own law keeps
+    // (the _down strip the generated rows' registry law the button
+    // pair wears).
+    "oak_pressure_plate", "oak_pressure_plate",
+    "stone_pressure_plate", "stone_pressure_plate",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -3091,6 +3139,147 @@ pub fn button_toggled(id: u16) -> Option<u16> {
     }
 }
 
+/// THE PRESSURE PLATES' OWN FAMILY (the dev-48 round — the four-kind
+/// pair the sensor floor wears, the POWERED bit the ±1 mate the button
+/// ladder's own law carries, the plate NO facing/face byte reads — the
+/// floor-only plate the variant byte never consumes): the placement's
+/// survival gate, the collision's pass-through row (the factory's
+/// `noCollision()` the stone row's own clinit walk speaks), the
+/// mesher's element lane and the press/release walks the family fn
+/// serves.
+pub fn is_pressure_plate(id: u16) -> bool {
+    id == OAK_PRESSURE_PLATE
+        || id == OAK_PRESSURE_PLATE_ON
+        || id == STONE_PRESSURE_PLATE
+        || id == STONE_PRESSURE_PLATE_ON
+}
+
+/// THE PLATE'S OWN WOODEN VERDICT (javap the BlockSetType rows the
+/// 26.2 jar — the OAK row the String ctor's EVERYTHING default speaks,
+/// the STONE row the full-ctor's `iconst_1,1,0` + MOBS pair the
+/// arrows' refusal the same row banks: the getSignalStrength walk pc
+/// 14-55 the lookupswitch the sensitivity serves — the EVERYTHING row
+/// the Entity.class count arms, the MOBS row the LivingEntity.class
+/// count wears). The OAK pair the wooden verdict keeps, the stone pair
+/// the false arm serves.
+pub fn plate_is_wooden(id: u16) -> bool {
+    id == OAK_PRESSURE_PLATE || id == OAK_PRESSURE_PLATE_ON
+}
+
+/// THE PLATE'S OWN POWERED BIT (javap getSignalForState pc 0-22 — the
+/// POWERED read the ON kind's own verdict wears): the ON kind the
+/// pressed verdict keeps, the OFF kind the resting answer wears.
+pub fn plate_powered(id: u16) -> bool {
+    id == OAK_PRESSURE_PLATE_ON || id == STONE_PRESSURE_PLATE_ON
+}
+
+/// THE PLATE'S OWN OFF/ON MATE (javap setSignalForState pc 0-22 — the
+/// `signal > 0` fold the POWERED flip speaks, the ladder's ±1 mate the
+/// button's own law wears; the unknown id the None the honest guard
+/// banks).
+pub fn plate_toggled(id: u16) -> Option<u16> {
+    match id {
+        OAK_PRESSURE_PLATE => Some(OAK_PRESSURE_PLATE_ON),
+        OAK_PRESSURE_PLATE_ON => Some(OAK_PRESSURE_PLATE),
+        STONE_PRESSURE_PLATE => Some(STONE_PRESSURE_PLATE_ON),
+        STONE_PRESSURE_PLATE_ON => Some(STONE_PRESSURE_PLATE),
+        _ => None,
+    }
+}
+
+/// THE PLATE'S OWN TOUCH BOX (javap BasePressurePlateBlock's clinit —
+/// the TOUCH_AABB the `column(14.0, 0.0, 4.0).toAabbs().getFirst()`
+/// walk banks: the 14/16-wide (x/z 1/16..15/16), the 4/16-tall (y
+/// 0..0.25) sensor slab the cell's floor wears — the getEntityCount
+/// walk's `TOUCH_AABB.move(pos)` the same box reads).
+pub fn plate_touch_box(x: i32, y: i32, z: i32) -> [f64; 6] {
+    [
+        x as f64 + 1.0 / 16.0,
+        y as f64,
+        z as f64 + 1.0 / 16.0,
+        x as f64 + 15.0 / 16.0,
+        y as f64 + 4.0 / 16.0,
+        z as f64 + 15.0 / 16.0,
+    ]
+}
+
+/// THE BOXES' OWN INCLUSIVE OVERLAP (javap AABB.intersects — the
+/// min/max comparisons the inclusive law answers, the same law the
+/// arrow's plate scan wears).
+pub fn plate_boxes_overlap(a: &[f64; 6], b: &[f64; 6]) -> bool {
+    a[0] <= b[3] && a[3] >= b[0] && a[1] <= b[4] && a[4] >= b[1] && a[2] <= b[5] && a[5] >= b[2]
+}
+
+/// THE SENSITIVITY'S OWN VERDICT (javap PressurePlateBlock.getSignal
+/// Strength pc 14-55 — the lookupswitch the classes serve: the
+/// EVERYTHING row the Entity.class count arms (any entity — the
+/// player, the arrows, the items), the MOBS row the LivingEntity.class
+/// count wears (the living only — the stone set the arrows never
+/// counts)). The wooden set the true verdict any entity speaks, the
+/// stone set the living gate keeps.
+pub fn plate_accepts(wooden: bool, living: bool) -> bool {
+    wooden || living
+}
+
+/// THE PLATE'S OWN ENTITY VERDICT — the entity's own bbox the touch
+/// box the sensor's law answers (the getEntityCount walk's
+/// `getEntitiesOfClass(class, TOUCH_AABB.move(pos))` the intersects
+/// read speaks): the verdict the sensitivity gate PRECEDES (the
+/// caller's own living law the stone set's refusal keeps — the arrow
+/// the MOBS row never counts).
+pub fn plate_entity_presses(
+    wooden: bool,
+    living: bool,
+    entity: &[f64; 6],
+    x: i32,
+    y: i32,
+    z: i32,
+) -> bool {
+    plate_accepts(wooden, living) && plate_boxes_overlap(entity, &plate_touch_box(x, y, z))
+}
+
+/// THE PLATE'S OWN VOICE (javap checkPressed pc 83-143 — the
+/// playSound walk the BlockSetType's pressurePlateClickOn/Off pair
+/// serves: the OAK set's block.wooden_pressure_plate.click_on/off
+/// events the String ctor's WOODEN_PRESSURE_PLATE_CLICK_ON/OFF rows
+/// speak, the STONE set's block.stone_pressure_plate.click_on/off
+/// events the full-ctor's STONE_PRESSURE_PLATE rows carry; the cache's
+/// sounds.json the event rows resolve). The on flag the click_on/
+/// click_off word picks.
+pub fn plate_click_voice(id: u16, on: bool) -> &'static str {
+    match (plate_is_wooden(id), on) {
+        (true, true) => "block.wooden_pressure_plate.click_on",
+        (true, false) => "block.wooden_pressure_plate.click_off",
+        (false, true) => "block.stone_pressure_plate.click_on",
+        (false, false) => "block.stone_pressure_plate.click_off",
+    }
+}
+
+/// THE PLATE'S OWN VOICE PARAMS (the cache's sounds.json rows the 26.2
+/// jar carries — the wooden on row the `random/click` pitch 0.8 /
+/// volume 0.3 pair speaks, the wooden off the 0.7/0.3 pair wears, the
+/// stone on the 0.6/0.3 pair, the stone off the 0.5/0.3 pair — the
+/// vanilla engine's own multiply the 1.0 source folds, the row's own
+/// numbers the rendered output keeps).
+pub fn plate_voice_params(id: u16, on: bool) -> (f32, f32) {
+    match (plate_is_wooden(id), on) {
+        (true, true) => (0.3, 0.8),
+        (true, false) => (0.3, 0.7),
+        (false, true) => (0.3, 0.6),
+        (false, false) => (0.3, 0.5),
+    }
+}
+
+/// THE PLATE'S OWN SURVIVAL GATE (javap `BasePressurePlateBlock.can
+/// Survive` pc 0-32 — the `canSupportRigidBlock(level, pos.below()) ||
+/// canSupportCenter(level, pos.below(), UP)` verdict the straight-DOWN
+/// support speaks: the floor-only plate the below cell's sturdy face
+/// reads, the offline equivalence the collision table's non-Empty rows
+/// the lever's own canAttach walk keeps).
+pub fn plate_can_survive(world: &World, x: i32, y: i32, z: i32) -> bool {
+    !matches!(collision_shape(world.get(x, y - 1, z)), CollisionShape::Empty)
+}
+
 /// THE WIRE'S OWN SOURCE WALK (javap Level.hasNeighborSignal pc 0-33
 /// — the `Direction.values()` loop the `getSignal(pos.relative(dir),
 /// dir) != 0` read wears; the sources the loop's nonzero verdict the
@@ -3118,6 +3307,12 @@ pub fn redstone_signal_at(world: &World, x: i32, y: i32, z: i32) -> bool {
         || button_powered(world.get(x - 1, y, z))
         || button_powered(world.get(x, y, z + 1))
         || button_powered(world.get(x, y, z - 1))
+        || plate_powered(world.get(x, y + 1, z))
+        || plate_powered(world.get(x, y - 1, z))
+        || plate_powered(world.get(x + 1, y, z))
+        || plate_powered(world.get(x - 1, y, z))
+        || plate_powered(world.get(x, y, z + 1))
+        || plate_powered(world.get(x, y, z - 1))
 }
 
 /// THE BUTTON'S OWN PLATE BOX — javap `ButtonBlock.makeShapes` pc 0-45
@@ -6295,21 +6490,33 @@ impl World {
         let mut popped: Vec<((i32, i32, i32), u16)> = Vec::new();
         while let Some((x, y, z)) = queue.pop() {
             let kind = self.get(x, y, z);
-            if !is_lever(kind) && !is_button(kind) {
+            if !is_lever(kind) && !is_button(kind) && !is_pressure_plate(kind) {
                 continue;
             }
             // THE GATE'S OWN OFFSET (the support cell the variant decodes
             // — the changed cell the support equals the updateShape arm's
             // dir verdict the walk answers; the OTHER five directions the
-            // identity default keeps)
-            let support = {
+            // identity default keeps; the PLATE the straight-DOWN support
+            // the canSurvive walk's own pos.below() law wears — the
+            // floor-only plate the variant byte never reads)
+            let support = if is_pressure_plate(kind) {
+                (x, y - 1, z)
+            } else {
                 let (dx, dy, dz) = lever_support_offset(self.variant(x, y, z));
                 (x + dx, y + dy, z + dz)
             };
             if support != changed {
                 continue;
             }
-            if lever_can_survive(self, x, y, z, self.variant(x, y, z)) {
+            // THE SURVIVAL'S OWN CONSULT (the failing verdict the AIR
+            // the pop speaks — the plate the straight-DOWN gate wears,
+            // the lever/button the variant decode the canAttach walk
+            // serves)
+            if is_pressure_plate(kind) {
+                if plate_can_survive(self, x, y, z) {
+                    continue;
+                }
+            } else if lever_can_survive(self, x, y, z, self.variant(x, y, z)) {
                 continue;
             }
             // THE POP'S OWN VERDICT (the updateShape arm's AIR return the
@@ -10406,8 +10613,8 @@ mod tests {
         assert_eq!(NAME_OF[BUTTON_ON as usize], "stone_button");
         assert_eq!(BUTTON + 1, BUTTON_ON, "the +1 seat the OFF/ON ladder wears");
         assert_eq!(
-            END_PORTAL, 288,
-            "the displaced seat the button ladder's own tail banks"
+            END_PORTAL, 292,
+            "the displaced seat the plate rungs' own tail banks"
         );
         // THE PULSE'S OWN CLOCK (javap press pc 28-37 — the STONE
         // factory's bipush 20 ctor arg the window banks)
@@ -11106,7 +11313,7 @@ mod tests {
         assert_eq!(OAK_DOOR_UPPER, 91);
         assert_eq!(OAK_DOOR_OPEN, 92);
         assert_eq!(OAK_DOOR_UPPER_OPEN, 93);
-        assert_eq!(END_PORTAL, 288, "the displaced seat the button ladder's own tail banks");
+        assert_eq!(END_PORTAL, 292, "the displaced seat the plate rungs' own tail banks");
         // THE WOOD LADDER'S OWN SEATS (the dev-43 round — the eleven
         // quartets the CONTIGUOUS tail the kind ids 94..137 wear: the
         // closed lower + 0, the closed upper + 1, the open lower + 2,
@@ -11310,7 +11517,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 288, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 292, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)

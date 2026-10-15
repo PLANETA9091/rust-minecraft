@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 288] = [
+pub const RUNTIME_PALETTE: [&str; 292] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -830,6 +830,35 @@ pub const RUNTIME_PALETTE: [&str; 288] = [
     "crimson_button", "crimson_button_pressed",
     "warped_button", "warped_button_pressed",
     "polished_blackstone_button", "polished_blackstone_button_pressed",
+    // THE PRESSURE PLATES' OWN FIRST LANE (the dev-48 round — the
+    // sensor family's own rung the attach floor gains): javap the
+    // 26.2 jar PressurePlateBlock + BasePressurePlateBlock — the
+    // Base clinit the three shapes bank (SHAPE the column(14.0, 0.0,
+    // 1.0) the 1-px resting plate speaks, SHAPE_PRESSED the
+    // column(14.0, 0.0, 0.5) the thinner pressed band wears, the
+    // TOUCH_AABB the column(14.0, 0.0, 4.0).toAabbs().getFirst() the
+    // 14/16-wide × 4/16-tall sensor slab the cell's floor wears), the
+    // getPressedTime the `bipush 20` the release beat banks (the
+    // 20-tick window BOTH sets wear), the checkPressed walk pc 0-168
+    // the flag-2 setBlock + the updateNeighbours (the pos + the below
+    // cell the wire's two-cell read) + the clickOn/clickOff voices +
+    // the BLOCK_ACTIVATE/DEACTIVATE vibrations + the scheduleTick(+20)
+    // the hold loop re-arms while occupied speak, the getSignal
+    // Strength pc 0-79 the sensitivity switch answers (the EVERYTHING
+    // row the Entity.class count arms, the MOBS row the
+    // LivingEntity.class count wears — the OAK String-ctor default the
+    // EVERYTHING verdict speaks, the STONE full-ctor row the
+    // `iconst_1,1,0` + MOBS pair the arrows' refusal the same row
+    // banks). The blockstates the ONE file BOTH states serve
+    // (powered=false the block/{base} model — the 1-px element
+    // [1,0,1]-[15,1,15] the pressure_plate_up parent wears, the down
+    // cullface carries; powered=true the block/{base}_down — the
+    // 0.5-px [1,0,1]-[15,0.5,15] band the thinner plate speaks), the
+    // ONE #texture ref block/{wood}_planks / block/stone the row's
+    // tile banks (the palette the tiles already bank — the plate rungs
+    // no new tile the regen keeps, the pre-plate rows byte-identical).
+    "oak_pressure_plate", "oak_pressure_plate_down",
+    "stone_pressure_plate", "stone_pressure_plate_down",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -2103,6 +2132,48 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             faces.push(resolve_flat_stem(&stem, false));
             continue;
         }
+        if block.ends_with("_pressure_plate") || block.ends_with("_pressure_plate_down") {
+            // THE PRESSURE PLATES' OWN ROWS (the dev-48 round): the
+            // blockstate's own POWERED rows the kinds wear — the
+            // "powered={p}" row the jar's DIRECT authoring resolves (the
+            // ONE {base}_pressure_plate.json BOTH states the same
+            // variants map serves — the strip-suffix walk the _down rows
+            // the own file never wears), the merged texture map's
+            // `#texture` ref the row's tile banks (the oak rung the
+            // block/oak_planks planks master, the stone rung the
+            // block/stone master — the palette the tiles already bank,
+            // no new tile the regen keeps, the pre-plate rows
+            // byte-identical), tinted = false (the faces carry NO
+            // tintindex — the pre-colored masters render as authored).
+            let powered = block.ends_with("_down");
+            let bs_name = block.strip_suffix("_down").unwrap_or(block);
+            let bs_bytes = read_jar(
+                &mut archive,
+                &format!("assets/minecraft/blockstates/{bs_name}.json"),
+            )?;
+            let bs: Value = serde_json::from_slice(&bs_bytes)
+                .with_context(|| format!("blockstate {bs_name}: json parse"))?;
+            let row_key = format!("powered={powered}");
+            let model_ref = bs
+                .get("variants")
+                .and_then(|v| v.get(&row_key))
+                .and_then(|v| v.get("model"))
+                .and_then(|m| m.as_str())
+                .with_context(|| format!("blockstate {bs_name}: no {row_key} model"))?
+                .trim_start_matches("minecraft:")
+                .to_string();
+            let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
+                .with_context(|| format!("block {block}: model chain {model_ref}"))?;
+            let tex = tex_map
+                .get("texture")
+                .with_context(|| format!("model {model_ref}: no texture ref"))?;
+            let stem = tex
+                .trim_start_matches("minecraft:")
+                .trim_start_matches("block/")
+                .to_string();
+            faces.push(resolve_flat_stem(&stem, false));
+            continue;
+        }
         faces.push(resolve_block(&mut archive, block)?);
     }
 
@@ -3110,6 +3181,12 @@ fn registry_names() -> [&'static str; RUNTIME_PALETTE.len()] {
             // same name keeps (the dig row (0.5, false), the item id
             // the pick lane grants BOTH kinds speak)
             .or_else(|| base.strip_suffix("_pressed"))
+            // THE PLATE'S OWN DOWN STRIP (the dev-48 round): the down
+            // row the jar's registry never speaks — the
+            // PressurePlateBlock's ONE "oak_pressure_plate" entry both
+            // states the same name keeps (the dig row (0.5, false),
+            // the item id the pick lane grants BOTH kinds speak)
+            .or_else(|| base.strip_suffix("_down"))
             // THE CAKE LADDER'S OWN STRIP (the autopush-524 round): the
             // seven bite stages the BASE "cake" row the shared-row law
             // keeps — the dig row (0.5 hardness), the drops table (the

@@ -1355,7 +1355,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                 // the stick's own ±45° tilt the derive walk's rotated
                 // vertices already wear (the Rodrigues fold the
                 // element-rotation lane speaks).
-                if crate::world::is_lever(id) || crate::world::is_button(id) {
+                if crate::world::is_lever(id) || crate::world::is_button(id) || crate::world::is_pressure_plate(id) {
                     // (the autopush-660 round the BUTTON the same lane
                     // wears — the FaceAttachedHorizontalDirectionalBlock
                     // parent the two families share, the element lane
@@ -1428,18 +1428,27 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     // south y=0 / west y=90 / north y=180 / east y=270
                     // rows speak (the (idx+2)%4 fold the +2 offset's
                     // own law banks — the JOML rotationXYZ the x
-                    // arm the y arm the order keeps)
+                    // arm the y arm the order keeps). The PLATE the
+                    // decode never reads (the floor-only plate the
+                    // variant byte never consumes — the no-turn identity
+                    // the sensor's own floor lane wears).
+                    let (x_turns, steps) = if crate::world::is_pressure_plate(id) {
+                        (0usize, 0usize)
+                    } else {
                     let variant = world.variant(wx, wy, wz);
                     let lever_face = crate::world::lever_face_of(variant);
                     let facing_raw = crate::world::lever_facing_of(variant);
                     let idx = if facing_raw == 0 { 0usize } else { facing_raw as usize - 1 };
-                    let (x_turns, steps) = match lever_face {
+                    match lever_face {
                         crate::world::LEVER_FACE_WALL => (1usize, idx),
                         crate::world::LEVER_FACE_CEILING => (2usize, (idx + 2) % 4),
                         _ => (0usize, idx),
+                    }
                     };
                     for q in if crate::world::is_button(id) {
                         button_model_quads(id, crate::world::button_powered(id))
+                    } else if crate::world::is_pressure_plate(id) {
+                        plate_model_quads(id, crate::world::plate_powered(id))
                     } else {
                         lever_model_quads(crate::world::lever_powered(id))
                     } {
@@ -3538,6 +3547,62 @@ fn button_model_quads(id: u16, powered: bool) -> &'static [mc_registry::element_
                         (base, true),
                         mc_registry::element_quads::derive_model_inherited(&format!(
                             "block/{name}_pressed"
+                        ))
+                        .unwrap_or_default(),
+                    ),
+                ]
+            })
+            .collect()
+    });
+    // the ON kind's NAME_OF row the same base name speaks — the lookup
+    // the toggled kind's own seat the base key normalizes (the OFF/ON
+    // bit the ±1 mate the ladder's own law wears)
+    let base = if powered { id - 1 } else { id };
+    map.get(&(base, powered))
+        .map(|v| v.as_slice())
+        .unwrap_or(&[])
+}
+
+/// THE PRESSURE PLATES' OWN MODEL BAKES (the dev-48 round — the jar's
+/// DIRECT authoring the lever's REVERSED rows never share): the
+/// blockstates/{base}_pressure_plate.json's POWERED rows name the
+/// MODELS straight (powered=false the "block/{base}_pressure_plate"
+/// row answers, powered=true the "block/{base}_pressure_plate_down" —
+/// the verbatim rows the resolution speaks), the ONE element box the
+/// template parent serves (the resting plate [1,0,1] -> [15,1,15] the
+/// six faces the down cullface carries, the pressed [1,0,1] ->
+/// [15,0.5,15] the thinner band the same six faces wear — the parent
+/// chain block/thin_block the derive walk resolves, the #texture ref
+/// the per-set-type planks/stone master the merged map banks — the
+/// mesher's per-quad verdict the row's own tile reads), tinted =
+/// false (no tintindex anywhere). The (id, powered)-keyed map the
+/// FOUR models bakes once (the failed derive the honest empty slice
+/// keeps — the plate the nothing renders).
+fn plate_model_quads(id: u16, powered: bool) -> &'static [mc_registry::element_quads::Quad] {
+    // THE SENSOR RUNGS' OWN BASE SEATS (the OFF kind every pair wears —
+    // the NAME_OF row the ON kind the same name speaks, the model names
+    // the {name}/{name}_down pair the jar's blockstates bank)
+    const BASE_IDS: [u16; 2] = [crate::world::OAK_PRESSURE_PLATE, crate::world::STONE_PRESSURE_PLATE];
+    static QUADS: std::sync::OnceLock<
+        std::collections::HashMap<(u16, bool), Vec<mc_registry::element_quads::Quad>>,
+    > = std::sync::OnceLock::new();
+    let map = QUADS.get_or_init(|| {
+        BASE_IDS
+            .iter()
+            .flat_map(|&base| {
+                let name = crate::world::NAME_OF[base as usize];
+                [
+                    (
+                        (base, false),
+                        mc_registry::element_quads::derive_model_inherited(&format!(
+                            "block/{name}"
+                        ))
+                        .unwrap_or_default(),
+                    ),
+                    (
+                        (base, true),
+                        mc_registry::element_quads::derive_model_inherited(&format!(
+                            "block/{name}_down"
                         ))
                         .unwrap_or_default(),
                     ),
