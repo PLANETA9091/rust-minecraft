@@ -36168,8 +36168,14 @@ impl App {
                     // two-pass scan the changed cell's own six + the
                     // support cell's own six the trapdoor cells answer
                     // (the consult the wire flips AND the breaks the
-                    // same broadcast serves).
-                    if crate::world::is_oak_trapdoor(kind) {
+                    // same broadcast serves). THE FAMILY VERDICT the
+                    // whole ladder the arm serves (the autopush-670
+                    // round — the is_oak_trapdoor check the 669 round's
+                    // wood rungs the consult never answered, the
+                    // is_trapdoor family fn every rung the wire arms —
+                    // the honest in-round fix the spruce..warped AND
+                    // the metal rungs the OPEN-sync walk wears).
+                    if crate::world::is_trapdoor(kind) {
                         if !seen.insert((cx, cy, cz)) {
                             return;
                         }
@@ -103003,7 +103009,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            350,
+            368,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -103084,7 +103090,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            350,
+            368,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -103386,7 +103392,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            350,
+            368,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -107233,7 +107239,7 @@ cow_sound_variant: None,
         assert_eq!(crate::world::OAK_BUTTON_ON, 263);
         assert_eq!(
             crate::world::END_PORTAL,
-            350,
+            368,
             "the displaced seat the weighted plates' own tail keeps"
         );
         for kind in [
@@ -107316,7 +107322,7 @@ cow_sound_variant: None,
         // #texture ref banks)
         assert_eq!(
             atlas::N_KINDS,
-            350,
+            368,
             "the palette the weighted plates' own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
@@ -107531,12 +107537,12 @@ cow_sound_variant: None,
         );
         assert_eq!(
             crate::world::END_PORTAL,
-            350,
+            368,
             "the displaced seat the weighted plates' own tail keeps"
         );
         assert_eq!(
             atlas::N_KINDS,
-            350,
+            368,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
@@ -107808,12 +107814,12 @@ cow_sound_variant: None,
         );
         assert_eq!(
             crate::world::END_PORTAL,
-            350,
+            368,
             "the displaced seat the weighted plates' own tail keeps"
         );
         assert_eq!(
             atlas::N_KINDS,
-            350,
+            368,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
@@ -107928,8 +107934,8 @@ cow_sound_variant: None,
         assert_eq!(w::LIGHT_WEIGHTED_PRESSURE_PLATE_ON, 317);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE, 318);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, 319);
-        assert_eq!(w::END_PORTAL, 350);
-        assert_eq!(atlas::N_KINDS, 350, "the palette the weighted rows bank");
+        assert_eq!(w::END_PORTAL, 368);
+        assert_eq!(atlas::N_KINDS, 368, "the palette the weighted rows bank");
         for (off, on, name) in [
             (
                 w::LIGHT_WEIGHTED_PRESSURE_PLATE,
@@ -108578,6 +108584,135 @@ cow_sound_variant: None,
     }
 
     #[test]
+    fn the_iron_copper_trapdoors_the_hand_refusal_and_the_consult_wear() {
+        // THE METAL RUNGS' OWN APP LANE (the autopush-670 round — the
+        // iron pair the hand gate's refusal keeps [the press the PASS
+        // never consumes, the cycle never swings, the voices never
+        // fire], the copper ladder the hand's PASS the cycle swings,
+        // the consult's OPEN-sync the family verdict the iron rung
+        // arms — javap the BlockSetType clinit the 26.2 jar the probe
+        // scripts/jar_work/iron_copper_trapdoors_670.txt banks: the
+        // IRON row the iconst_0 the refusal speaks, the COPPER row the
+        // iconst_1 the copper ladder's PASS keeps)
+        use crate::world as w;
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=3 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, w::STONE);
+                    for dy in 0..3 {
+                        w.set(c + dx, top + dy, c + dz, w::AIR);
+                    }
+                }
+            }
+        }
+        // THE IRON PAIR'S OWN PLACEMENT (the down look the floor's UP
+        // face the ray answers — the closed kind the item's own kind
+        // lands)
+        app.offline_held_updated(Some("item/iron_trapdoor"));
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the iron floor placement consumes"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            w::IRON_TRAPDOOR,
+            "the closed kind the item's own kind lands"
+        );
+        // THE HAND'S OWN REFUSAL (the canOpenByHand gate the IRON set
+        // type's iconst_0 keeps — the press the PASS never consumes,
+        // the cycle never swings, the voices never fire)
+        let before = app.sounds.events.len();
+        assert!(!app.on_right_press(0, 0), "the iron hand toggle refuses");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            w::IRON_TRAPDOOR,
+            "the closed kind the refusal keeps"
+        );
+        assert_eq!(
+            app.sounds.events.len(),
+            before,
+            "the refusal the silence keeps"
+        );
+        // THE CONSULT'S OWN IRON ARM (the lever ON beside the iron
+        // trapdoor the attach broadcast arms — the family verdict the
+        // OPEN-sync walk serves, the iron voice the set type's pair
+        // speaks; the lever OFF the dead signal the closed kind the
+        // same beat restores)
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c, top, c + 1, w::LEVER_ON);
+        }
+        app.attach_wire_voice(c, top, c + 1);
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            w::IRON_TRAPDOOR_OPEN,
+            "the armed floor the consult opens the iron rung"
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.iron_trapdoor.open")),
+            "the iron open voice the consult plays"
+        );
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c, top, c + 1, w::LEVER);
+        }
+        app.attach_wire_voice(c, top, c + 1);
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            w::IRON_TRAPDOOR,
+            "the dead signal the consult closes"
+        );
+        // THE COPPER RUNG'S OWN HAND PASS (the waxed kind the COPPER
+        // set type's iconst_1 the cycle swings — the copper_trapdoor
+        // voices the set type's own pair carries)
+        app.offline_held_updated(Some("item/waxed_copper_trapdoor"));
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 1.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the waxed copper floor placement consumes"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c + 1, top, c),
+            w::WAXED_COPPER_TRAPDOOR,
+            "the waxed closed kind the item's own kind lands"
+        );
+        assert!(
+            app.on_right_press(0, 0),
+            "the waxed copper hand toggle passes"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c + 1, top, c),
+            w::WAXED_COPPER_TRAPDOOR_OPEN,
+            "the clicked closed kind the cycle opens"
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.copper_trapdoor.open")),
+            "the copper open voice the flip plays"
+        );
+    }
+
+    #[test]
     fn the_pressure_plates_the_sensor_the_sensitivity_and_the_release_wear() {
         // THE PLATES' OWN LAWS (the dev-48 round — javap the 26.2 jar
         // the BasePressurePlateBlock + PressurePlateBlock walks the
@@ -108598,10 +108733,10 @@ cow_sound_variant: None,
         assert_eq!(w::OAK_PRESSURE_PLATE_ON, 289);
         assert_eq!(w::STONE_PRESSURE_PLATE, 290);
         assert_eq!(w::STONE_PRESSURE_PLATE_ON, 291);
-        assert_eq!(w::END_PORTAL, 350);
+        assert_eq!(w::END_PORTAL, 368);
         assert_eq!(
             atlas::N_KINDS,
-            350,
+            368,
             "the palette the weighted plates' own rows bank"
         );
         for (off, on, name, wooden) in [

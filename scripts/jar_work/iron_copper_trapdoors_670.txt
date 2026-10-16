@@ -1,0 +1,75 @@
+=== the iron/copper trapdoor blockstates (the per-row arms read)
+iron_trapdoor: rows=16 closed=minecraft:block/iron_trapdoor_bottom open=minecraft:block/iron_trapdoor_open
+copper_trapdoor: rows=16 closed=minecraft:block/copper_trapdoor_bottom open=minecraft:block/copper_trapdoor_open
+exposed_copper_trapdoor: rows=16 closed=minecraft:block/exposed_copper_trapdoor_bottom open=minecraft:block/exposed_copper_trapdoor_open
+weathered_copper_trapdoor: rows=16 closed=minecraft:block/weathered_copper_trapdoor_bottom open=minecraft:block/weathered_copper_trapdoor_open
+oxidized_copper_trapdoor: rows=16 closed=minecraft:block/oxidized_copper_trapdoor_bottom open=minecraft:block/oxidized_copper_trapdoor_open
+waxed_copper_trapdoor: rows=16 closed=minecraft:block/copper_trapdoor_bottom open=minecraft:block/copper_trapdoor_open
+waxed_exposed_copper_trapdoor: rows=16 closed=minecraft:block/exposed_copper_trapdoor_bottom open=minecraft:block/exposed_copper_trapdoor_open
+waxed_weathered_copper_trapdoor: rows=16 closed=minecraft:block/weathered_copper_trapdoor_bottom open=minecraft:block/weathered_copper_trapdoor_open
+waxed_oxidized_copper_trapdoor: rows=16 closed=minecraft:block/oxidized_copper_trapdoor_bottom open=minecraft:block/oxidized_copper_trapdoor_open
+
+=== the models' parent chains (the per-stem bakes the mesher reads)
+iron_trapdoor: bottom:minecraft:block/template_trapdoor_bottom top:minecraft:block/template_trapdoor_top open:minecraft:block/template_trapdoor_open
+copper_trapdoor: bottom:minecraft:block/template_trapdoor_bottom top:minecraft:block/template_trapdoor_top open:minecraft:block/template_trapdoor_open
+exposed_copper_trapdoor: bottom:minecraft:block/template_trapdoor_bottom top:minecraft:block/template_trapdoor_top open:minecraft:block/template_trapdoor_open
+weathered_copper_trapdoor: bottom:minecraft:block/template_trapdoor_bottom top:minecraft:block/template_trapdoor_top open:minecraft:block/template_trapdoor_open
+oxidized_copper_trapdoor: bottom:minecraft:block/template_trapdoor_bottom top:minecraft:block/template_trapdoor_top open:minecraft:block/template_trapdoor_open
+waxed_copper_trapdoor: bottom:ABSENT top:ABSENT open:ABSENT
+waxed_exposed_copper_trapdoor: bottom:ABSENT top:ABSENT open:ABSENT
+waxed_weathered_copper_trapdoor: bottom:ABSENT top:ABSENT open:ABSENT
+waxed_oxidized_copper_trapdoor: bottom:ABSENT top:ABSENT open:ABSENT
+
+=== the textures' dims (the tile bank's masters)
+iron_trapdoor: 16x16 colortype 3
+copper_trapdoor: 16x16 colortype 3
+exposed_copper_trapdoor: 16x16 colortype 3
+weathered_copper_trapdoor: 16x16 colortype 3
+oxidized_copper_trapdoor: 16x16 colortype 3
+waxed_copper_trapdoor: ABSENT
+waxed_exposed_copper_trapdoor: ABSENT
+waxed_weathered_copper_trapdoor: ABSENT
+waxed_oxidized_copper_trapdoor: ABSENT
+
+=== BlockSetType clinit rows (the ctor split the IRON/COPPER rows wear)
+  ...
+  55: getstatic net/minecraft/sounds/SoundEvents.IRON_TRAPDOOR_CLOSE:Lnet/minecraft/sounds/SoundEvent;
+  58: getstatic net/minecraft/sounds/SoundEvents.IRON_TRAPDOOR_OPEN:Lnet/minecraft/sounds/SoundEvent;
+  61: getstatic net/minecraft/sounds/SoundEvents.METAL_PRESSURE_PLATE_CLICK_OFF:Lnet/minecraft/sounds/SoundEvent;
+  64: getstatic net/minecraft/sounds/SoundEvents.METAL_PRESSURE_PLATE_CLICK_ON:Lnet/minecraft/sounds/SoundEvent;
+  67: getstatic net/minecraft/sounds/SoundEvents.STONE_BUTTON_CLICK_OFF:Lnet/minecraft/sounds/SoundEvent;
+  70: getstatic net/minecraft/sounds/SoundEvents.STONE_BUTTON_CLICK_ON:Lnet/minecraft/sounds/SoundEvent;
+  73: invokespecial net/minecraft/world/level/block/state/properties/BlockSetType.<init>:(Ljava/lang/String;ZZZLnet/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity;Lnet/minecraft/world/level/block/SoundType;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;)V
+  76: invokestatic net/minecraft/world/level/block/state/properties/BlockSetType.register:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;)Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+  79: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.IRON:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+  82: new net/minecraft/world/level/block/state/properties/BlockSetType
+  ...
+  103: getstatic net/minecraft/sounds/SoundEvents.COPPER_TRAPDOOR_CLOSE:Lnet/minecraft/sounds/SoundEvent;
+  106: getstatic net/minecraft/sounds/SoundEvents.COPPER_TRAPDOOR_OPEN:Lnet/minecraft/sounds/SoundEvent;
+  109: getstatic net/minecraft/sounds/SoundEvents.METAL_PRESSURE_PLATE_CLICK_OFF:Lnet/minecraft/sounds/SoundEvent;
+  112: getstatic net/minecraft/sounds/SoundEvents.METAL_PRESSURE_PLATE_CLICK_ON:Lnet/minecraft/sounds/SoundEvent;
+  115: getstatic net/minecraft/sounds/SoundEvents.STONE_BUTTON_CLICK_OFF:Lnet/minecraft/sounds/SoundEvent;
+  118: getstatic net/minecraft/sounds/SoundEvents.STONE_BUTTON_CLICK_ON:Lnet/minecraft/sounds/SoundEvent;
+  121: invokespecial net/minecraft/world/level/block/state/properties/BlockSetType.<init>:(Ljava/lang/String;ZZZLnet/minecraft/world/level/block/state/properties/BlockSetType$PressurePlateSensitivity;Lnet/minecraft/world/level/block/SoundType;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;)V
+  124: invokestatic net/minecraft/world/level/block/state/properties/BlockSetType.register:(Lnet/minecraft/world/level/block/state/properties/BlockSetType;)Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+  127: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.COPPER:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+  130: new net/minecraft/world/level/block/state/properties/BlockSetType
+canOpenByHand bytecode:
+  0: aload_0
+  1: getfield net/minecraft/world/level/block/state/properties/BlockSetType.canOpenByHand:Z
+  4: ireturn
+
+=== sounds.json the trapdoor voice rows (the iron/copper pairs)
+Traceback (most recent call last):
+  File "/home/z/my-project/rust-minecraft/scripts/jar_work/iron_copper_trapdoors_670.py", line 92, in <module>
+    sounds = json.loads(z.read("assets/minecraft/sounds.json"))
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/z/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/lib/python3.12/zipfile/__init__.py", line 1610, in read
+    with self.open(name, "r", pwd) as fp:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/z/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/lib/python3.12/zipfile/__init__.py", line 1647, in open
+    zinfo = self.getinfo(name)
+            ^^^^^^^^^^^^^^^^^^
+  File "/home/z/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/lib/python3.12/zipfile/__init__.py", line 1575, in getinfo
+    raise KeyError(
+KeyError: "There is no item named 'assets/minecraft/sounds.json' in the archive"

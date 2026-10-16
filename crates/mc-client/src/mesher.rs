@@ -3984,7 +3984,9 @@ fn redstone_wall_torch_model_quads(lit: bool) -> &'static [mc_registry::element_
 /// bank (the ten orientable woods the template_orientable_trapdoor_
 /// * chains wear, the oak/dark_oak pair the template_trapdoor_*
 /// chain keeps — the probe scripts/jar_work/trapdoor_woods_669.txt
-/// the census banks). The open models' per-facing y-rotation the
+/// the census banks; the metal rungs the SAME template_trapdoor_*
+/// chain the iron/copper rows wear — the probe
+/// scripts/jar_work/iron_copper_trapdoors_670.txt banks). The open models' per-facing y-rotation the
 /// MESHER's own walk wears. The failed derive the honest empty slice
 /// keeps (the panel the nothing renders).
 fn trapdoor_model_quads(
@@ -4002,10 +4004,12 @@ fn trapdoor_model_quads(
     } else {
         0u8
     };
-    // THE LADDER'S OWN PREBAKE (the 36 derives the ONE init serves —
-    // the twelve stems' three states the {stem}_bottom/{stem}_top/
-    // {stem}_open chains resolve, the absent model the honest skip
-    // keeps, the map the lookup's own answer banks)
+    // THE LADDER'S OWN PREBAKE (the 51 derives the ONE init serves —
+    // the seventeen distinct stems' three states the {stem}_bottom/
+    // {stem}_top/{stem}_open chains resolve [the twenty-one pairs the
+    // waxed aliases the unwaxed stems answer, the map the dedup
+    // keeps], the absent model the honest skip keeps, the map the
+    // lookup's own answer banks)
     let map = QUADS.get_or_init(|| {
         let mut m = std::collections::HashMap::new();
         for (st, suffix) in [(0u8, "bottom"), (1u8, "top"), (2u8, "open")] {

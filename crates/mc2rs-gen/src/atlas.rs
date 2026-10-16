@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 350] = [
+pub const RUNTIME_PALETTE: [&str; 368] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1152,6 +1152,30 @@ pub const RUNTIME_PALETTE: [&str; 350] = [
     "bamboo_trapdoor", "bamboo_trapdoor_open",
     "crimson_trapdoor", "crimson_trapdoor_open",
     "warped_trapdoor", "warped_trapdoor_open",
+    // THE METAL RUNGS' OWN ROWS (the autopush-670 round — the copper
+    // ladder + the iron pair the door family's copper order the tail
+    // wears, scripts/jar_work/iron_copper_trapdoors_670.txt the
+    // 16-row maps bank): the blockstates' {stem}_trapdoor.json the
+    // per-row arms read (the closed facing=east,half=bottom,open=false
+    // rows the block/{stem}_trapdoor_bottom models answer, the open
+    // facing=north,half=bottom,open=true rows the block/{stem}_
+    // trapdoor_open models keep — the waxed rows the UNWAXED models
+    // the same-model law banks, the waxed_copper_trapdoor.json the
+    // block/copper_trapdoor_bottom rows answer, the SAME sprite the
+    // unwaxed tiles wear), the {stem}_trapdoor.png masters the five
+    // metal tiles the bank gains, the COPPER set type's
+    // block.copper_trapdoor pair the ladder voices, the IRON pair the
+    // block.iron_trapdoor events wear, the ONE "{stem}_trapdoor"
+    // registry name both kinds each pair speaks.
+    "copper_trapdoor", "copper_trapdoor_open",
+    "exposed_copper_trapdoor", "exposed_copper_trapdoor_open",
+    "weathered_copper_trapdoor", "weathered_copper_trapdoor_open",
+    "oxidized_copper_trapdoor", "oxidized_copper_trapdoor_open",
+    "waxed_copper_trapdoor", "waxed_copper_trapdoor_open",
+    "waxed_exposed_copper_trapdoor", "waxed_exposed_copper_trapdoor_open",
+    "waxed_weathered_copper_trapdoor", "waxed_weathered_copper_trapdoor_open",
+    "waxed_oxidized_copper_trapdoor", "waxed_oxidized_copper_trapdoor_open",
+    "iron_trapdoor", "iron_trapdoor_open",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -1591,16 +1615,30 @@ fn door_row_model(
 }
 
 /// THE TRAPDOOR FAMILY'S OWN GATE (the autopush-669 round): the
-/// palette rows the twelve wooden rungs wear — the `{wood}_trapdoor`
+/// palette rows the wooden rungs wear — the `{wood}_trapdoor`
 /// base the row arm's blockstate read keys (the `_open` suffix the
 /// strip walk peels — the both-suffix rows the open kinds answer).
 /// The eleven rungs the oak round's own walk generalizes, the probe
 /// scripts/jar_work/trapdoor_woods_669.txt the 16-row maps banks.
-const TRAPDOOR_FAMILY_BASES: [&str; 12] = [
+/// The metal rungs the autopush-670 round the tail wears (the
+/// copper ladder + the iron pair the same walk serves — the waxed
+/// bases the blockstates' own json the UNWAXED models answer, the
+/// SAME sprite the unwaxed tiles keep — the probe
+/// scripts/jar_work/iron_copper_trapdoors_670.txt banks).
+const TRAPDOOR_FAMILY_BASES: [&str; 21] = [
     "oak_trapdoor", "spruce_trapdoor", "birch_trapdoor",
     "jungle_trapdoor", "acacia_trapdoor", "dark_oak_trapdoor",
     "mangrove_trapdoor", "cherry_trapdoor", "pale_oak_trapdoor",
     "bamboo_trapdoor", "crimson_trapdoor", "warped_trapdoor",
+    // THE METAL RUNGS' OWN BASES (the copper ladder the oxidation
+    // order wears, the waxed rows the OWN names the blockstates'
+    // json keys — the json the unwaxed models the alias answers),
+    // the iron pair the tail keeps
+    "copper_trapdoor", "exposed_copper_trapdoor",
+    "weathered_copper_trapdoor", "oxidized_copper_trapdoor",
+    "waxed_copper_trapdoor", "waxed_exposed_copper_trapdoor",
+    "waxed_weathered_copper_trapdoor", "waxed_oxidized_copper_trapdoor",
+    "iron_trapdoor",
 ];
 
 /// The palette row's `{wood}_trapdoor` base the family gate answers

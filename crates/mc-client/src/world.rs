@@ -909,11 +909,12 @@ pub const END_STONE: u16 = 89;
 /// OWN PAIR the 324/325 rows the tail banks, the autopush-668 round
 /// the OAK TRAPDOOR'S OWN PAIR the 326/327 rows the tail banks, the
 /// autopush-669 round the TRAPDOOR LADDER'S OWN WOOD RUNGS the
-/// 328..349 tail banks, the kind's own seat the beyond-table 350 the
+/// 328..349 tail banks, the autopush-670 round the METAL RUNGS the
+/// 350..367 tail banks, the kind's own seat the beyond-table 368 the
 /// same
 /// law keeps — the `id < N_KINDS` guards the tile lookups' skip
 /// verdict the bigger tail keeps).
-pub const END_PORTAL: u16 = 350;
+pub const END_PORTAL: u16 = 368;
 
 /// THE BUTTON'S OWN PAIR (the autopush-660 round): the redstone pulse's
 /// own block finally RENDERS, PLACES, PRESSES and PULSES — javap
@@ -1542,13 +1543,21 @@ pub fn trapdoor_toggled(id: u16) -> Option<u16> {
 
 /// THE TRAPDOOR'S OWN HAND GATE (javap TrapDoorBlock.useWithoutItem
 /// pc 0-13 the 26.2 jar — the `canOpenByHand()` read the PASS the
-/// iron set type's own refusal keeps: the BlockSetType.IRON the
-/// iconst_0 field the ctor's first boolean carries, the WOODEN set
-/// type the iconst_1 the oak row's PASS never keeps — the offline
-/// palette the oak item alone places, the gate the palette's own
-/// reach serves; the iron trapdoor the follow-up round's row keeps).
+/// set type's own first boolean keeps: javap the BlockSetType clinit
+/// the ctor's putfield order name -> canOpenByHand ->
+/// canOpenByWindCharge -> canButtonBeActivatedByArrows the FIRST
+/// boolean the field fills — the IRON row the iconst_0 the refusal
+/// speaks, the COPPER row the iconst_1 the copper ladder's PASS keeps
+/// (the doors' 656 round the same law the hand gates wear), the
+/// wooden set type the iconst_1 the oak row's PASS never keeps — the
+/// offline palette the oak item alone places, the gate the palette's
+/// own reach serves; scripts/jar_work/iron_copper_trapdoors_670.txt
+/// the metal rows bank). The offline flip walk the gate reads: the
+/// iron pair the false answer (the press the PASS never consumes —
+/// the wire consult's own arm the redstone-only opening serves),
+/// every wooden + copper rung the true the swap serves.
 pub fn trapdoor_opens_by_hand(id: u16) -> bool {
-    is_trapdoor(id)
+    is_trapdoor(id) && !matches!(id, IRON_TRAPDOOR..=IRON_TRAPDOOR_OPEN)
 }
 
 /// THE TRAPDOOR'S OWN VARIANT FOLD (the two-field byte the wall
@@ -1589,18 +1598,29 @@ pub fn trapdoor_open_edge(facing: u8) -> u8 {
 /// pc 0-25 the 26.2 jar — the BlockSetType's trapdoorOpen/trapdoorClose
 /// events the set type carries: the single-arg ctor's WOODEN pair the
 /// oak delegation speaks, the stem the toggle walk's own `.open`/
-/// `.close` suffix wears).
+/// `.close` suffix wears). The metal rungs the set types' own rows
+/// answer (the autopush-670 round — javap the BlockSetType clinit
+/// scripts/jar_work/iron_copper_trapdoors_670.txt banks: the COPPER
+/// row the COPPER_TRAPDOOR_CLOSE/OPEN getstatics the whole copper
+/// ladder speaks, the IRON row the IRON_TRAPDOOR_CLOSE/OPEN pair
+/// wears).
 pub fn trapdoor_voice_stem(id: u16) -> &'static str {
-    // THE SET TYPE'S OWN SPLIT (the official sounds.json the four
-    // pairs banks — the plain woods the WOODEN set type's pair
+    // THE SET TYPE'S OWN SPLIT (the official sounds.json the pairs
+    // banks — the plain woods the WOODEN set type's pair
     // speaks, the cherry the CHERRY_WOOD pair wears, the bamboo the
     // BAMBOO_WOOD pair keeps, the crimson/warped the NETHER_WOOD pair
-    // answers; the dev-43 round the door family's own stem law the
-    // trapdoors share)
+    // answers, the copper ladder the COPPER pair wears, the iron pair
+    // the IRON row speaks; the dev-43 round the door family's own stem
+    // law the trapdoors share)
     match trapdoor_stem_of(id) {
         Some("cherry_trapdoor") => "block.cherry_wood_trapdoor",
         Some("bamboo_trapdoor") => "block.bamboo_wood_trapdoor",
         Some("crimson_trapdoor") | Some("warped_trapdoor") => "block.nether_wood_trapdoor",
+        Some("copper_trapdoor")
+        | Some("exposed_copper_trapdoor")
+        | Some("weathered_copper_trapdoor")
+        | Some("oxidized_copper_trapdoor") => "block.copper_trapdoor",
+        Some("iron_trapdoor") => "block.iron_trapdoor",
         _ => "block.wooden_trapdoor",
     }
 }
@@ -1652,11 +1672,57 @@ pub const CRIMSON_TRAPDOOR_OPEN: u16 = 347;
 pub const WARPED_TRAPDOOR: u16 = 348;
 pub const WARPED_TRAPDOOR_OPEN: u16 = 349;
 
+/// THE TRAPDOOR LADDER'S OWN METAL RUNGS (the autopush-670 round —
+/// the copper ladder + the iron pair the oak lane's own walk
+/// generalizes, the door family's copper order the contiguity keeps —
+/// the doors' 656 round's copper/exposed/weathered/oxidized/waxed×4/
+/// iron sequence the rungs wear, each metal the CONTIGUOUS PAIR the
+/// closed kind first, the open the +1 seat answers). javap the
+/// BlockSetType clinit the 26.2 jar (scripts/jar_work/
+/// iron_copper_trapdoors_670.txt banks): the ctor's putfield order
+/// name -> canOpenByHand -> canOpenByWindCharge ->
+/// canButtonBeActivatedByArrows the FIRST boolean the gate field
+/// fills — the IRON row the iconst_0 the hand refusal speaks, the
+/// COPPER row the iconst_1 the copper ladder's PASS keeps (the doors'
+/// 656 round the same law the hand gates wear), the COPPER set type's
+/// trapdoorClose/trapdoorOpen pair the block.copper_trapdoor voices
+/// the whole ladder speaks, the IRON pair the block.iron_trapdoor
+/// events wear. The blockstates' 16-row maps the per-row arms read
+/// (the waxed rows the UNWAXED models the same-model law banks — the
+/// waxed_copper_trapdoor.json the block/copper_trapdoor_bottom models
+/// answer, the SAME sprite the unwaxed tiles keep), the
+/// {stem}_trapdoor.png masters the five metal tiles the bank gains,
+/// the Items clinit rows the registerBlock pairings the placement
+/// lane grants, the ONE "{stem}_trapdoor" registry name both kinds
+/// each pair speaks.
+pub const COPPER_TRAPDOOR: u16 = 350;
+pub const COPPER_TRAPDOOR_OPEN: u16 = 351;
+pub const EXPOSED_COPPER_TRAPDOOR: u16 = 352;
+pub const EXPOSED_COPPER_TRAPDOOR_OPEN: u16 = 353;
+pub const WEATHERED_COPPER_TRAPDOOR: u16 = 354;
+pub const WEATHERED_COPPER_TRAPDOOR_OPEN: u16 = 355;
+pub const OXIDIZED_COPPER_TRAPDOOR: u16 = 356;
+pub const OXIDIZED_COPPER_TRAPDOOR_OPEN: u16 = 357;
+pub const WAXED_COPPER_TRAPDOOR: u16 = 358;
+pub const WAXED_COPPER_TRAPDOOR_OPEN: u16 = 359;
+pub const WAXED_EXPOSED_COPPER_TRAPDOOR: u16 = 360;
+pub const WAXED_EXPOSED_COPPER_TRAPDOOR_OPEN: u16 = 361;
+pub const WAXED_WEATHERED_COPPER_TRAPDOOR: u16 = 362;
+pub const WAXED_WEATHERED_COPPER_TRAPDOOR_OPEN: u16 = 363;
+pub const WAXED_OXIDIZED_COPPER_TRAPDOOR: u16 = 364;
+pub const WAXED_OXIDIZED_COPPER_TRAPDOOR_OPEN: u16 = 365;
+pub const IRON_TRAPDOOR: u16 = 366;
+pub const IRON_TRAPDOOR_OPEN: u16 = 367;
+
 /// THE LADDER'S OWN KIND ARRAY (the contiguity law the mesher's stem
 /// walk and the toggled fold both read — the closed kind the even
 /// index wears, the open the +1 answers, the wood order the door
-/// family's own ladder shares).
-pub const TRAPDOOR_KINDS: [u16; 22] = [
+/// family's own ladder shares). The metal rungs the door family's
+/// copper order the tail wears — the warped pair the [22] count the
+/// 669 round's tail missed the prebake's own walk now bakes (the
+/// honest in-round fix the mesher's warped states never carried), the
+/// forty-two kinds the ONE range the family fn answers.
+pub const TRAPDOOR_KINDS: [u16; 42] = [
     OAK_TRAPDOOR,
     OAK_TRAPDOOR_OPEN,
     SPRUCE_TRAPDOOR,
@@ -1679,14 +1745,34 @@ pub const TRAPDOOR_KINDS: [u16; 22] = [
     BAMBOO_TRAPDOOR_OPEN,
     CRIMSON_TRAPDOOR,
     CRIMSON_TRAPDOOR_OPEN,
+    WARPED_TRAPDOOR,
+    WARPED_TRAPDOOR_OPEN,
+    COPPER_TRAPDOOR,
+    COPPER_TRAPDOOR_OPEN,
+    EXPOSED_COPPER_TRAPDOOR,
+    EXPOSED_COPPER_TRAPDOOR_OPEN,
+    WEATHERED_COPPER_TRAPDOOR,
+    WEATHERED_COPPER_TRAPDOOR_OPEN,
+    OXIDIZED_COPPER_TRAPDOOR,
+    OXIDIZED_COPPER_TRAPDOOR_OPEN,
+    WAXED_COPPER_TRAPDOOR,
+    WAXED_COPPER_TRAPDOOR_OPEN,
+    WAXED_EXPOSED_COPPER_TRAPDOOR,
+    WAXED_EXPOSED_COPPER_TRAPDOOR_OPEN,
+    WAXED_WEATHERED_COPPER_TRAPDOOR,
+    WAXED_WEATHERED_COPPER_TRAPDOOR_OPEN,
+    WAXED_OXIDIZED_COPPER_TRAPDOOR,
+    WAXED_OXIDIZED_COPPER_TRAPDOOR_OPEN,
+    IRON_TRAPDOOR,
+    IRON_TRAPDOOR_OPEN,
 ];
 
-/// THE LADDER'S OWN FAMILY VERDICT (the twenty-two kinds the array
+/// THE LADDER'S OWN FAMILY VERDICT (the forty-two kinds the array
 /// scan answers — the placement's survival gate, the toggle's own
 /// arm, the consult's OPEN-sync walk, the collision's variant-aware
 /// rows and the mesher's element lane the family fn serves).
 pub fn is_trapdoor(id: u16) -> bool {
-    (OAK_TRAPDOOR..=WARPED_TRAPDOOR_OPEN).contains(&id)
+    (OAK_TRAPDOOR..=IRON_TRAPDOOR_OPEN).contains(&id)
 }
 
 /// THE LADDER'S OWN STEM WALK (the kind's own wood the pair's index
@@ -1695,7 +1781,7 @@ pub fn is_trapdoor(id: u16) -> bool {
 /// the SAME stem the pair's own base keeps, the unknown id the None
 /// the honest guard banks).
 pub fn trapdoor_stem_of(id: u16) -> Option<&'static str> {
-    const STEMS: [&str; 12] = [
+    const STEMS: [&str; 21] = [
         "oak_trapdoor",
         "spruce_trapdoor",
         "birch_trapdoor",
@@ -1709,6 +1795,22 @@ pub fn trapdoor_stem_of(id: u16) -> Option<&'static str> {
         "crimson_trapdoor",
         // the warped rung the tail keeps
         "warped_trapdoor",
+        // THE METAL RUNGS' OWN STEMS (the copper ladder the oxidation
+        // order wears, the waxed rows the UNWAXED stems the
+        // blockstates' own model rows alias — the waxed pair's json
+        // the unwaxed {stem}_trapdoor_bottom models answer, the same
+        // law the mesher's bakes and the voice stems read), the iron
+        // pair the tail keeps
+        "copper_trapdoor",
+        "exposed_copper_trapdoor",
+        "weathered_copper_trapdoor",
+        "oxidized_copper_trapdoor",
+        // the waxed aliases the unwaxed stems answer
+        "copper_trapdoor",
+        "exposed_copper_trapdoor",
+        "weathered_copper_trapdoor",
+        "oxidized_copper_trapdoor",
+        "iron_trapdoor",
     ];
     let idx = (id.checked_sub(OAK_TRAPDOOR)? / 2) as usize;
     STEMS.get(idx).copied()
@@ -2562,10 +2664,11 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 /// torch's own pair the 322/323 rows bank — the autopush-667 round
 /// the wall torch's own pair the 324/325 rows bank — the autopush-668
 /// round the trapdoor's own pair the 326/327 rows bank — the
-/// autopush-669 round the ladder's own wood rungs the 328..349 rows
-/// bank — the table the 350 rows the END_PORTAL the beyond-table seat
+/// bank — the autopush-669 round the ladder's own wood rungs the 328..349 rows
+/// bank — the autopush-670 round the metal rungs the 350..367 rows
+/// bank — the table the 368 rows the END_PORTAL the beyond-table seat
 /// the displaced law keeps.
-pub const NAME_OF: [&str; 350] = [
+pub const NAME_OF: [&str; 368] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -3011,6 +3114,25 @@ pub const NAME_OF: [&str; 350] = [
     "bamboo_trapdoor", "bamboo_trapdoor",
     "crimson_trapdoor", "crimson_trapdoor",
     "warped_trapdoor", "warped_trapdoor",
+    // THE METAL RUNGS' OWN ROWS (the autopush-670 round): the nine
+    // pairs the ONE-registry-entry law each keeps (the TrapDoorBlock's
+    // ONE "{stem}_trapdoor" registry id both states the same name
+    // answers — the dig rows the iron pair the strength 5.0 the
+    // generated table banks, the copper ladder the 3.0 rows keep, the
+    // sounds' METAL/COPPER rows and the item ids the pick lane grants
+    // BOTH kinds speak), the closed kinds the items' own placements
+    // land (the generic placeable lookups the closed seats answer),
+    // the waxed rows the waxed names the SAME sprites the unwaxed
+    // tiles wear (the blockstates' own model rows the alias banks)
+    "copper_trapdoor", "copper_trapdoor",
+    "exposed_copper_trapdoor", "exposed_copper_trapdoor",
+    "weathered_copper_trapdoor", "weathered_copper_trapdoor",
+    "oxidized_copper_trapdoor", "oxidized_copper_trapdoor",
+    "waxed_copper_trapdoor", "waxed_copper_trapdoor",
+    "waxed_exposed_copper_trapdoor", "waxed_exposed_copper_trapdoor",
+    "waxed_weathered_copper_trapdoor", "waxed_weathered_copper_trapdoor",
+    "waxed_oxidized_copper_trapdoor", "waxed_oxidized_copper_trapdoor",
+    "iron_trapdoor", "iron_trapdoor",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -11910,7 +12032,7 @@ mod tests {
         assert_eq!(NAME_OF[BUTTON_ON as usize], "stone_button");
         assert_eq!(BUTTON + 1, BUTTON_ON, "the +1 seat the OFF/ON ladder wears");
         assert_eq!(
-            END_PORTAL, 350,
+            END_PORTAL, 368,
             "the displaced seat the wire pair's own tail banks"
         );
         // THE PULSE'S OWN CLOCK (javap press pc 28-37 — the STONE
@@ -12627,10 +12749,10 @@ mod tests {
         assert_eq!(REDSTONE_WIRE, 320);
         assert_eq!(REDSTONE_WIRE_ON, 321);
         assert_eq!(
-            END_PORTAL, 350,
+            END_PORTAL, 368,
             "the displaced seat the wire pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 350, "the palette the wire pair banks");
+        assert_eq!(atlas::N_KINDS, 368, "the palette the wire pair banks");
         assert!(is_redstone_wire(REDSTONE_WIRE) && is_redstone_wire(REDSTONE_WIRE_ON));
         assert!(!is_redstone_wire(LEVER) && !is_redstone_wire(OAK_PRESSURE_PLATE));
         assert!(!wire_powered(REDSTONE_WIRE));
@@ -12773,10 +12895,10 @@ mod tests {
         assert_eq!(REDSTONE_TORCH, 322);
         assert_eq!(REDSTONE_TORCH_OFF, 323);
         assert_eq!(
-            END_PORTAL, 350,
+            END_PORTAL, 368,
             "the displaced seat the torch pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 350, "the palette the torch pair banks");
+        assert_eq!(atlas::N_KINDS, 368, "the palette the torch pair banks");
         assert!(is_redstone_torch(REDSTONE_TORCH) && is_redstone_torch(REDSTONE_TORCH_OFF));
         assert!(!is_redstone_torch(TORCH) && !is_redstone_torch(LEVER));
         assert!(redstone_torch_lit(REDSTONE_TORCH));
@@ -12915,8 +13037,8 @@ mod tests {
         use mc_registry::generated::atlas;
         assert_eq!(REDSTONE_WALL_TORCH, 324);
         assert_eq!(REDSTONE_WALL_TORCH_OFF, 325);
-        assert_eq!(END_PORTAL, 350);
-        assert_eq!(atlas::N_KINDS, 350, "the palette the wall pair banks");
+        assert_eq!(END_PORTAL, 368);
+        assert_eq!(atlas::N_KINDS, 368, "the palette the wall pair banks");
         assert!(
             is_redstone_torch(REDSTONE_WALL_TORCH) && is_redstone_torch(REDSTONE_WALL_TORCH_OFF),
             "the wall pair the family's tail banks"
@@ -13159,9 +13281,9 @@ mod tests {
         use mc_registry::generated::atlas;
         assert_eq!(OAK_TRAPDOOR, 326);
         assert_eq!(OAK_TRAPDOOR_OPEN, 327);
-        assert_eq!(END_PORTAL, 350);
+        assert_eq!(END_PORTAL, 368);
         assert_eq!(
-            atlas::N_KINDS, 350,
+            atlas::N_KINDS, 368,
             "the palette the trapdoor pair banks"
         );
         assert_eq!(OAK_TRAPDOOR + 1, OAK_TRAPDOOR_OPEN, "the +1 mate wears");
@@ -13307,8 +13429,8 @@ mod tests {
         assert_eq!(CHERRY_TRAPDOOR, 340);
         assert_eq!(WARPED_TRAPDOOR, 348);
         assert_eq!(WARPED_TRAPDOOR_OPEN, 349);
-        assert_eq!(END_PORTAL, 350);
-        assert_eq!(atlas::N_KINDS, 350, "the palette the ladder banks");
+        assert_eq!(END_PORTAL, 368);
+        assert_eq!(atlas::N_KINDS, 368, "the palette the ladder banks");
         // THE CONTIGUITY'S OWN LAW (the 22 kinds the range covers —
         // the neighbors the family fn refuses)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -13402,6 +13524,181 @@ mod tests {
     }
 
     #[test]
+    fn the_iron_copper_trapdoors_the_hand_gate_and_the_aliases_wear() {
+        // THE METAL RUNGS' OWN WORLD WALK (the autopush-670 round —
+        // the copper ladder + the iron pair the oak lane's own walk
+        // generalizes, the door family's copper order the contiguity
+        // keeps — javap the BlockSetType clinit the 26.2 jar the probe
+        // scripts/jar_work/iron_copper_trapdoors_670.txt banks: the
+        // ctor's putfield order name -> canOpenByHand ->
+        // canOpenByWindCharge -> canButtonBeActivatedByArrows the
+        // FIRST boolean the gate field fills, the IRON row the
+        // iconst_0 the hand refusal speaks, the COPPER row the
+        // iconst_1 the copper ladder's PASS keeps — the doors' 656
+        // round the same law the hand gates wear)
+        use mc_registry::generated::atlas;
+        assert_eq!(COPPER_TRAPDOOR, 350);
+        assert_eq!(COPPER_TRAPDOOR_OPEN, 351);
+        assert_eq!(OXIDIZED_COPPER_TRAPDOOR, 356);
+        assert_eq!(WAXED_OXIDIZED_COPPER_TRAPDOOR, 364);
+        assert_eq!(IRON_TRAPDOOR, 366);
+        assert_eq!(IRON_TRAPDOOR_OPEN, 367);
+        assert_eq!(END_PORTAL, 368);
+        assert_eq!(atlas::N_KINDS, 368, "the palette the metal rungs bank");
+        // THE CONTIGUITY'S OWN LAW (the 42 kinds the range covers —
+        // the waxed pairs the ±1 mate the parity answers)
+        for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
+            assert!(is_trapdoor(k), "the rung {i} the family fn answers");
+            assert_eq!(
+                trapdoor_toggled(k),
+                Some(k ^ 1),
+                "the rung {i} the ±1 mate the XOR fold wears"
+            );
+            assert_eq!(trapdoor_open(k), k & 1 == 1, "the parity the open bit speaks");
+        }
+        assert!(!is_trapdoor(REDSTONE_WALL_TORCH_OFF), "the wall torch the family refuses");
+        assert!(!is_trapdoor(END_PORTAL), "the beyond-table seat the family refuses");
+        assert_eq!(trapdoor_toggled(STONE), None);
+        assert_eq!(trapdoor_stem_of(END_PORTAL), None, "the unknown the None keeps");
+        // THE HAND GATE'S OWN SPLIT (the set types' first boolean the
+        // clinit rows bank — the iron pair the refusal keeps, the
+        // copper ladder the hand's PASS speaks, the wooden rungs the
+        // pass wears)
+        assert!(!trapdoor_opens_by_hand(IRON_TRAPDOOR));
+        assert!(!trapdoor_opens_by_hand(IRON_TRAPDOOR_OPEN));
+        assert!(trapdoor_opens_by_hand(COPPER_TRAPDOOR));
+        assert!(trapdoor_opens_by_hand(COPPER_TRAPDOOR_OPEN));
+        assert!(trapdoor_opens_by_hand(WAXED_OXIDIZED_COPPER_TRAPDOOR_OPEN));
+        // THE STEMS' OWN WALK (the waxed aliases the unwaxed stems the
+        // blockstates' own model rows wear — the waxed pair the copper
+        // base answers)
+        assert_eq!(trapdoor_stem_of(COPPER_TRAPDOOR), Some("copper_trapdoor"));
+        assert_eq!(
+            trapdoor_stem_of(EXPOSED_COPPER_TRAPDOOR_OPEN),
+            Some("exposed_copper_trapdoor")
+        );
+        assert_eq!(trapdoor_stem_of(WAXED_COPPER_TRAPDOOR), Some("copper_trapdoor"));
+        assert_eq!(
+            trapdoor_stem_of(WAXED_WEATHERED_COPPER_TRAPDOOR_OPEN),
+            Some("weathered_copper_trapdoor")
+        );
+        assert_eq!(trapdoor_stem_of(IRON_TRAPDOOR), Some("iron_trapdoor"));
+        // THE VOICES' OWN METAL STEMS (the COPPER set type's trapdoor
+        // pair the copper ladder speaks, the IRON pair the iron row
+        // wears — the clinit's getstatic rows the events bank)
+        assert_eq!(trapdoor_voice_stem(COPPER_TRAPDOOR), "block.copper_trapdoor");
+        assert_eq!(
+            trapdoor_voice_stem(WAXED_EXPOSED_COPPER_TRAPDOOR_OPEN),
+            "block.copper_trapdoor"
+        );
+        assert_eq!(trapdoor_voice_stem(IRON_TRAPDOOR), "block.iron_trapdoor");
+        assert_eq!(trapdoor_voice_stem(IRON_TRAPDOOR_OPEN), "block.iron_trapdoor");
+        // THE NAMES' OWN ROWS (the ONE registry entry both kinds each
+        // pair wears — the waxed rows the waxed names the ONE entry
+        // keeps)
+        assert_eq!(NAME_OF[COPPER_TRAPDOOR as usize], "copper_trapdoor");
+        assert_eq!(NAME_OF[WAXED_COPPER_TRAPDOOR_OPEN as usize], "waxed_copper_trapdoor");
+        assert_eq!(NAME_OF[IRON_TRAPDOOR as usize], "iron_trapdoor");
+        assert_eq!(
+            atlas::KIND_NAMES[WAXED_COPPER_TRAPDOOR as usize],
+            "waxed_copper_trapdoor"
+        );
+        assert_eq!(atlas::REGISTRY_NAMES[IRON_TRAPDOOR_OPEN as usize], "iron_trapdoor");
+        // THE TILES' OWN ALIAS LAW (the waxed pairs the UNWAXED
+        // sprites the blockstates' own model rows wear — the SAME tile
+        // the unwaxed mate answers, the five metal masters the
+        // DISTINCT tiles the bank grew by ONE each)
+        for pair in TRAPDOOR_KINDS.chunks(2) {
+            assert_eq!(
+                atlas::FACE_TILES[pair[0] as usize],
+                atlas::FACE_TILES[pair[1] as usize],
+                "the open kind the closed kind's tile wears"
+            );
+        }
+        assert_eq!(
+            atlas::FACE_TILES[WAXED_COPPER_TRAPDOOR as usize],
+            atlas::FACE_TILES[COPPER_TRAPDOOR as usize],
+            "the waxed pair the unwaxed sprite wears"
+        );
+        assert_eq!(
+            atlas::FACE_TILES[WAXED_OXIDIZED_COPPER_TRAPDOOR_OPEN as usize],
+            atlas::FACE_TILES[OXIDIZED_COPPER_TRAPDOOR_OPEN as usize],
+            "the waxed open kind the unwaxed sprite wears"
+        );
+        let copper_tile = atlas::FACE_TILES[COPPER_TRAPDOOR as usize][2];
+        let iron_tile = atlas::FACE_TILES[IRON_TRAPDOOR as usize][2];
+        assert_eq!(atlas::TILE_NAMES[copper_tile as usize], "copper_trapdoor");
+        assert_eq!(atlas::TILE_NAMES[iron_tile as usize], "iron_trapdoor");
+        assert_ne!(copper_tile, iron_tile, "the metals the distinct masters wear");
+        assert_ne!(
+            atlas::FACE_TILES[EXPOSED_COPPER_TRAPDOOR as usize][2],
+            copper_tile
+        );
+        assert_ne!(
+            atlas::FACE_TILES[WEATHERED_COPPER_TRAPDOOR as usize][2],
+            copper_tile
+        );
+        assert_ne!(
+            atlas::FACE_TILES[OXIDIZED_COPPER_TRAPDOOR as usize][2],
+            copper_tile
+        );
+        // THE PLACEABLE'S OWN PAIRINGS (the generic lookups the closed
+        // seats answer — the Items clinit rows the nine pairings
+        // speak)
+        assert_eq!(World::placeable_block("copper_trapdoor"), Some(COPPER_TRAPDOOR));
+        assert_eq!(
+            World::placeable_block("waxed_oxidized_copper_trapdoor"),
+            Some(WAXED_OXIDIZED_COPPER_TRAPDOOR)
+        );
+        assert_eq!(World::placeable_block("iron_trapdoor"), Some(IRON_TRAPDOOR));
+        assert_eq!(World::placeable_block("iron_trapdoor_open"), None);
+        // THE COLLISION'S OWN ROWS (the metal rungs the variant-aware
+        // walk the oak lane's own law wears — the closed slabs the
+        // HALF bit reads, the open panel the Band rows the edge fold
+        // serves)
+        let mut w = World::new(2, 0x600D);
+        let c = w.size_blocks() / 2;
+        let y = 8;
+        w.set(c, y, c, IRON_TRAPDOOR);
+        w.set_variant(c, y, c, trapdoor_variant(WALL_TORCH_FACING_EAST, true));
+        assert_eq!(
+            collision_shape_at(&w, c, y, c),
+            CollisionShape::YSpan(13, 16),
+            "the iron top slab the variant-aware read wears"
+        );
+        w.set(c, y, c, COPPER_TRAPDOOR_OPEN);
+        w.set_variant(c, y, c, trapdoor_variant(WALL_TORCH_FACING_NORTH, false));
+        assert_eq!(
+            collision_shape_at(&w, c, y, c),
+            CollisionShape::Band(3, 3),
+            "the copper open panel the edge fold wears"
+        );
+        // THE DIG'S OWN ROWS (the generated tables the metal rows
+        // bank — the ONE registry row both kinds each pair wears, the
+        // waxed rung the copper row the SAME strength keeps)
+        assert_eq!(
+            crate::dig::DigState::block_dig_row(IRON_TRAPDOOR),
+            crate::dig::DigState::block_dig_row(IRON_TRAPDOOR_OPEN),
+        );
+        assert_eq!(
+            crate::dig::DigState::block_dig_row(WAXED_COPPER_TRAPDOOR),
+            crate::dig::DigState::block_dig_row(COPPER_TRAPDOOR),
+            "the waxed rung the copper row wears"
+        );
+        // THE NO-POP LAW (the metal rungs the family verdict the
+        // support arm never wears — the floor dug the iron trapdoor
+        // KEEPS)
+        w.set(c, y, c, IRON_TRAPDOOR);
+        w.set_variant(c, y, c, trapdoor_variant(WALL_TORCH_FACING_EAST, false));
+        let popped = w.attach_support_updates((c, y - 1, c));
+        assert!(
+            popped.is_empty(),
+            "the floor dug the iron trapdoor the updateShape law never pops"
+        );
+        assert_eq!(w.get(c, y, c), IRON_TRAPDOOR);
+    }
+
+    #[test]
     fn the_door_family_the_mates_and_the_seats_wear() {
         // THE DOOR QUARTET'S OWN LAW (the autopush-655 round — the
         // two-halves x two-open-bits ladder the seats wear: the
@@ -13412,7 +13709,7 @@ mod tests {
         assert_eq!(OAK_DOOR_OPEN, 92);
         assert_eq!(OAK_DOOR_UPPER_OPEN, 93);
         assert_eq!(
-            END_PORTAL, 350,
+            END_PORTAL, 368,
             "the displaced seat the wire pair's own tail banks"
         );
         // THE WOOD LADDER'S OWN SEATS (the dev-43 round — the eleven
@@ -13618,7 +13915,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 350, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 368, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)
