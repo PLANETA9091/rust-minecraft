@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 370] = [
+pub const RUNTIME_PALETTE: [&str; 384] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1190,6 +1190,18 @@ pub const RUNTIME_PALETTE: [&str; 370] = [
     // lightLevel 15 the lit registration the emission's own row
     // keeps.
     "redstone_lamp", "redstone_lamp_on",
+    // THE WIRE'S OWN GRADED LADDER (the autopush-673 round): the 14
+    // middle rungs the tail rows wear — the POWER 1..=14 states the
+    // decay's own walk banks, the ONE "redstone_wire" registry id ALL
+    // SIXTEEN rows speak (the _pNN strip the generated rows' law
+    // keeps), the NO jar blockstate the rung rows carry — the wire
+    // special-case arm the same multipart chain the OFF/ON rows read
+    // serves, the per-power tiles the append pass's own bank colors.
+    "redstone_wire_p01", "redstone_wire_p02", "redstone_wire_p03",
+    "redstone_wire_p04", "redstone_wire_p05", "redstone_wire_p06",
+    "redstone_wire_p07", "redstone_wire_p08", "redstone_wire_p09",
+    "redstone_wire_p10", "redstone_wire_p11", "redstone_wire_p12",
+    "redstone_wire_p13", "redstone_wire_p14",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -2653,7 +2665,10 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             faces.push(resolve_flat_stem(&stem, false));
             continue;
         }
-        if block == "redstone_wire" || block == "redstone_wire_on" {
+        if block == "redstone_wire"
+            || block == "redstone_wire_on"
+            || block.starts_with("redstone_wire_p")
+        {
             // THE REDSTONE DUST'S OWN ROWS (the autopush-665 round): the
             // multipart's own parts the REAL chain the generator's own
             // law keeps (blockstates -> multipart apply -> model -> the
@@ -3397,6 +3412,81 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         // pre-colored masters keep)
         face_tints[wire_off_row] = [0; 6];
         face_tints[wire_on_row] = [0; 6];
+        // THE GRADED RUNGS' OWN BANK (the autopush-673 round): the 14
+        // middle powers the per-power tinted copies the tail seats
+        // bank — the getColorForPower ramp the lambda$static$0 fill
+        // speaks (f = power/15; r = f*0.6 + (p > 0 ? 0.4 : 0.3);
+        // g = clamp(f*f*0.7 - 0.5, 0, 1); b = clamp(f*f*0.6 - 0.7, 0,
+        // 1); the colorFromFloat byte fold `(int)(f * 255.0 + 0.5)` —
+        // the power-0 row the (77, 0, 0) OFF bake the masters' own
+        // bytes wear, the power-15 row the (255, 51, 0) ON tint the
+        // same fold banks). The jar's OWN grayscale masters the
+        // honest source each bake reads (the OFF-tinted bytes the
+        // double-darken never wear), the {stem}_pNN names the tail
+        // tiles carry, the ladder rows' slots the same seats the
+        // OFF/ON rows wear (slots 0..2 the dot/N-S/E-W masters, slots
+        // 3..5 the dot master the never-rendered faces keep), the
+        // tint rows the zeros the pre-colored law keeps.
+        let rung_rows: Vec<usize> = RUNTIME_PALETTE
+            .iter()
+            .enumerate()
+            .filter(|(_, n)| n.starts_with("redstone_wire_p"))
+            .map(|(i, _)| i)
+            .collect();
+        if rung_rows.len() != 14 {
+            bail!(
+                "palette rows redstone_wire_pNN: expected 14 rungs, found {}",
+                rung_rows.len()
+            );
+        }
+        for (r, row) in rung_rows.iter().enumerate() {
+            let power = (r + 1) as u8; // the row order the power order wears
+            let f = power as f32 / 15.0;
+            let rr = f * 0.6 + 0.4; // the p > 0 arm the middle rungs wear
+            let gg = (f * f * 0.7 - 0.5).clamp(0.0, 1.0);
+            let bb = (f * f * 0.6 - 0.7).clamp(0.0, 1.0);
+            let color = (((rr * 255.0 + 0.5) as u32) << 16)
+                | (((gg * 255.0 + 0.5) as u32) << 8)
+                | ((bb * 255.0 + 0.5) as u32);
+            let mut rung_tiles = [0u16; 3];
+            for (slot, master_stem) in [
+                "redstone_dust_dot",
+                "redstone_dust_line0",
+                "redstone_dust_line1",
+            ]
+            .iter()
+            .enumerate()
+            {
+                let stem = format!("{}_p{:02}", master_stem, power);
+                let raw = read_jar(
+                    &mut archive,
+                    &format!(
+                        "assets/minecraft/textures/block/{}.png",
+                        master_stem
+                    ),
+                )
+                .with_context(|| format!("texture {stem}: master read"))?;
+                let (w, h, rgba) = decode_rgba(&raw)?;
+                if w != 16 || h != 16 {
+                    bail!("texture {stem}: expected 16x16 (first frame), got {w}x{h}");
+                }
+                let (_, _, rgba) = first_frame(w, h, &rgba);
+                let mut bytes = rgba;
+                bake_tint(&mut bytes, color);
+                tile_names.push(stem.clone());
+                tile_bytes.push(bytes);
+                rung_tiles[slot] = (tile_names.len() - 1) as u16;
+            }
+            face_tiles[*row] = [
+                rung_tiles[0],
+                rung_tiles[1],
+                rung_tiles[2],
+                rung_tiles[0],
+                rung_tiles[0],
+                rung_tiles[0],
+            ];
+            face_tints[*row] = [0; 6];
+        }
     }
     // THE HONEY MASTERS' OWN STATIC BANK (the autopush-599 round): the
     // two skin textures the honey model's INSET element names — #up
@@ -3934,6 +4024,19 @@ fn registry_names() -> [&'static str; RUNTIME_PALETTE.len()] {
             .or_else(|| {
                 if name.starts_with("cake_slice") {
                     Some("cake")
+                } else {
+                    None
+                }
+            })
+            // THE WIRE LADDER'S OWN P-STRIP (the autopush-673 round):
+            // the 14 middle rungs the jar's registry never speaks —
+            // the RedStoneWireBlock's ONE "redstone_wire" entry all
+            // sixteen states the same name keeps (the dig row (0.0,
+            // false), the drops table, the sounds' block row and the
+            // item id the pick lane grants every rung speak)
+            .or_else(|| {
+                if name.starts_with("redstone_wire_p") {
+                    Some("redstone_wire")
                 } else {
                     None
                 }

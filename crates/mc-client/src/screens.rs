@@ -103175,7 +103175,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            370,
+            384,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -103256,7 +103256,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            370,
+            384,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -103558,7 +103558,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            370,
+            384,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -107405,7 +107405,7 @@ cow_sound_variant: None,
         assert_eq!(crate::world::OAK_BUTTON_ON, 263);
         assert_eq!(
             crate::world::END_PORTAL,
-            370,
+            384,
             "the displaced seat the weighted plates' own tail keeps"
         );
         for kind in [
@@ -107488,7 +107488,7 @@ cow_sound_variant: None,
         // #texture ref banks)
         assert_eq!(
             atlas::N_KINDS,
-            370,
+            384,
             "the palette the weighted plates' own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
@@ -107703,12 +107703,12 @@ cow_sound_variant: None,
         );
         assert_eq!(
             crate::world::END_PORTAL,
-            370,
+            384,
             "the displaced seat the weighted plates' own tail keeps"
         );
         assert_eq!(
             atlas::N_KINDS,
-            370,
+            384,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
@@ -107980,12 +107980,12 @@ cow_sound_variant: None,
         );
         assert_eq!(
             crate::world::END_PORTAL,
-            370,
+            384,
             "the displaced seat the weighted plates' own tail keeps"
         );
         assert_eq!(
             atlas::N_KINDS,
-            370,
+            384,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
@@ -108100,8 +108100,8 @@ cow_sound_variant: None,
         assert_eq!(w::LIGHT_WEIGHTED_PRESSURE_PLATE_ON, 317);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE, 318);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, 319);
-        assert_eq!(w::END_PORTAL, 370);
-        assert_eq!(atlas::N_KINDS, 370, "the palette the weighted rows bank");
+        assert_eq!(w::END_PORTAL, 384);
+        assert_eq!(atlas::N_KINDS, 384, "the palette the weighted rows bank");
         for (off, on, name) in [
             (
                 w::LIGHT_WEIGHTED_PRESSURE_PLATE,
@@ -108412,8 +108412,8 @@ cow_sound_variant: None,
         );
         assert_eq!(
             app.offline_world.as_ref().unwrap().get(c + 2, top, c),
-            w::REDSTONE_WIRE_ON,
-            "the far cell the component's light banks"
+            w::REDSTONE_WIRE_P14,
+            "the far cell the decay's own rung banks"
         );
         // THE NOT-GATE'S OWN FLIP (the lever ON beside the floor cell
         // the floor's own read arms — the consult the OFF kind the
@@ -108728,17 +108728,19 @@ cow_sound_variant: None,
             world.set(c + 1, top - 1, c + 2, w::REDSTONE_WIRE);
             world.set(c + 1, top - 1, c + 3, w::LEVER_ON);
         }
-        // THE LEVER'S OWN ATTACH (the wire flood the component's ON
-        // kinds the sets speak, the cascade the B's re-consult the +2
-        // entry the queue banks — the lit B the wire's own verdict the
-        // LIT == hasNeighborSignal verdict arms)
+        // THE LEVER'S OWN ATTACH (the wire flood the component's graded
+        // kinds the sets speak — the source-adjacent cell the ON kind
+        // wears, the run the decay's own rungs the -1 arm answers, the
+        // cascade the B's re-consult the +2 entry the queue banks — the
+        // lit B the wire's own verdict the LIT == hasNeighborSignal
+        // verdict arms)
         app.attach_wire_voice(c + 1, top - 1, c + 3);
         {
             let world = app.offline_world.as_ref().unwrap();
             assert_eq!(
                 world.get(c + 1, top - 1, c),
-                w::REDSTONE_WIRE_ON,
-                "the wire flood the ON kinds the sets speak"
+                w::REDSTONE_WIRE_P13,
+                "the wire flood the graded rungs the sets speak"
             );
             assert_eq!(
                 world.get(c + 1, top, c),
@@ -109210,10 +109212,10 @@ cow_sound_variant: None,
         assert_eq!(w::OAK_PRESSURE_PLATE_ON, 289);
         assert_eq!(w::STONE_PRESSURE_PLATE, 290);
         assert_eq!(w::STONE_PRESSURE_PLATE_ON, 291);
-        assert_eq!(w::END_PORTAL, 370);
+        assert_eq!(w::END_PORTAL, 384);
         assert_eq!(
             atlas::N_KINDS,
-            370,
+            384,
             "the palette the weighted plates' own rows bank"
         );
         for (off, on, name, wooden) in [
