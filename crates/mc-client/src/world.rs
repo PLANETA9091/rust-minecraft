@@ -7855,6 +7855,87 @@ impl World {
         self.torch_ticks.push((due, x, y, z));
     }
 
+    /// THE NOT-GATE'S OWN CASCADE (the dev-51 round — javap
+    /// RedstoneTorchBlock.neighborChanged pc 0-44 the 26.2 jar the
+    /// probe scripts/jar_work/redstone_torch_666.out banks: the
+    /// `LIT == hasNeighborSignal(level, pos, null)` verdict the consult
+    /// arms, the `!willTickThisTick(pos, this)` gate the second
+    /// conjunct the pending re-consult refuses, the
+    /// `level.scheduleTick(pos, this, 2)` walk the due entry serves).
+    /// THE CHANGED CELLS' OWN BROADCAST (javap the
+    /// CollectingNeighborUpdater$MultiNeighborUpdate.runNext walk the
+    /// probe scripts/jar_work/neighbor_updater_51.txt banks — the
+    /// UPDATE_ORDER loop the sourcePos.relative(dir) arm each the
+    /// NeighborUpdater.executeUpdate call serves, the ONE radius the
+    /// BlockState.handleNeighborChanged's own thin dispatch never
+    /// extends): the torch's own flips AND the wire's own flips the
+    /// setBlock flag-3 beat the neighbor torches the consult re-arms —
+    /// the inverter chain the ADJACENT torches the same walk re-arms
+    /// level by level (the +2 entry the pair's own beat banks, the
+    /// next flip the chain's own level the drain's own walk answers).
+    /// THE VERDICT'S OWN READ the [World::redstone_torch_tick]'s own
+    /// consult cell wears (the standing pair the floor read serves,
+    /// the WALL pair the attached cell the variant decode answers),
+    /// the `LIT == hasNeighborSignal` verdict the state-NEEDS-CHANGE
+    /// torches the schedule arms (the lit torch the powered support
+    /// the extinguish-need arms, the dark torch the dead support the
+    /// relight-need keeps — the state-CORRECT pair the quiet keep
+    /// serves, the schedule the re-judgment's own beat the tick walk
+    /// answers). The dedup the [World::schedule_torch_tick]'s own law
+    /// keeps — the pending entry the re-consult refuses, the burnout's
+    /// 160 cooldown retry the same queue the same guard banks.
+    pub fn schedule_torch_consults(&mut self, due: u64, cells: &[(i32, i32, i32)]) {
+        // THE COLLECT PHASE (the immutable reads the verdict walk
+        // serves — the mutable schedule the phase's own tail keeps)
+        let mut pending: Vec<(i32, i32, i32)> = Vec::new();
+        for &(cx, cy, cz) in cells {
+            // THE SIX-NEIGHBOR BROADCAST (the MultiNeighborUpdate
+            // .runNext walk the 26.2 jar the probe
+            // scripts/jar_work/neighbor_updater_51.txt banks — the
+            // UPDATE_ORDER loop the sourcePos.relative(dir) arm each
+            // the executeUpdate call serves, the ONE radius the
+            // handleNeighborChanged walk never extends: the neighbor
+            // torch the direct adjacency alone the consult answers,
+            // the inverter chain the adjacent torches the same walk
+            // re-arms level by level)
+            for (tx, ty, tz) in [
+                (cx, cy - 1, cz),
+                (cx, cy + 1, cz),
+                (cx, cy, cz - 1),
+                (cx, cy, cz + 1),
+                (cx - 1, cy, cz),
+                (cx + 1, cy, cz),
+            ] {
+                let kind = self.get(tx, ty, tz);
+                if !is_redstone_torch(kind) {
+                    continue;
+                }
+                let lit = redstone_torch_lit(kind);
+                // THE CONSULT'S OWN CELL (the standing pair the floor
+                // read wears, the WALL pair the attached cell the
+                // variant decode answers — the same walk the tick's
+                // own verdict banks)
+                let (px, py, pz) = if is_redstone_wall_torch(kind) {
+                    let (dx, dy, dz) = wall_torch_attached_offset(wall_torch_facing_of(
+                        self.variant(tx, ty, tz),
+                    ));
+                    (tx + dx, ty + dy, tz + dz)
+                } else {
+                    (tx, ty - 1, tz)
+                };
+                let powered = redstone_signal_at(self, px, py, pz);
+                if lit == powered {
+                    // the LIT == hasNeighborSignal verdict — the
+                    // state-NEEDS-CHANGE torch the consult arms
+                    pending.push((tx, ty, tz));
+                }
+            }
+        }
+        for (tx, ty, tz) in pending {
+            self.schedule_torch_tick(due, tx, ty, tz); // the dedup the pending re-consult refuses
+        }
+    }
+
     /// THE TORCH QUEUE'S OWN DRAIN (the fire queue's own shape the
     /// update walk's every-tick cadence wears): the due-at-or-before-
     /// `now` entries the queue gives UP, the time order the stable
@@ -11003,6 +11084,114 @@ mod tests {
         );
     }
 
+    /// THE NOT-GATE'S OWN CASCADE — javap RedstoneTorchBlock
+    /// .neighborChanged pc 0-44 the 26.2 jar the probe
+    /// scripts/jar_work/neighbor_updater_51.txt banks: the changed
+    /// cells' own six the neighbor torches the consult re-arms, the
+    /// `LIT == hasNeighborSignal` verdict the state-NEEDS-CHANGE pair
+    /// the schedule arms (the state-correct pair the quiet keep
+    /// serves), the dedup the pending re-consult refuses, the wall
+    /// pair the attached cell the variant decode reads, the relight
+    /// arm's own flip the chain's next consult the same walk re-arms.
+    #[test]
+    fn the_not_gate_the_cascade_the_neighbor_consults_wear() {
+        let mut w = World::new(1, 0x51CA);
+        let (x, y, z) = (4i32, 40i32, 4i32);
+        // THE CHAIN'S OWN SEATS (the adjacent torch pair the inverter
+        // chain's own rungs wear — A the lit head, B the lit mate the
+        // east neighbor speaks)
+        w.set(x, y - 1, z, STONE);
+        w.set(x, y, z, REDSTONE_TORCH);
+        w.set(x + 1, y, z, REDSTONE_TORCH);
+        // THE STATE-NEEDS-CHANGE QUIET (the wire the B's support the
+        // verdict powers — the lit B the powered support the schedule
+        // arms ONLY through the changed cells' own broadcast, the
+        // un-broadcast walk the queue never fills)
+        w.set(x + 1, y - 2, z, REDSTONE_WIRE_ON);
+        assert!(
+            w.torch_ticks.is_empty(),
+            "the needs-change B the un-broadcast walk keeps quiet"
+        );
+        // THE EXTINGUISH'S OWN BROADCAST (the lever the A's support the
+        // consult powers, the tick walk's own flip the changed cell
+        // speaks, the cascade the B's re-consult the +2 entry the
+        // queue banks — the lit B the powered support the
+        // LIT == hasNeighborSignal verdict arms)
+        w.set(x - 1, y - 1, z, LEVER_ON);
+        let out = w.redstone_torch_tick(10, x, y, z);
+        assert!(out.changed, "the powered support the extinguish arms");
+        assert_eq!(out.flipped, Some((x, y, z)));
+        w.schedule_torch_consults(12, &[(x, y, z)]);
+        assert_eq!(
+            w.torch_ticks,
+            vec![(12, x + 1, y, z)],
+            "the lit B the powered support the +2 entry banks"
+        );
+        // THE DEDUP'S OWN LAW (the pending entry the re-consult refuses
+        // — the changed cell's own repeat the same walk keeps)
+        w.schedule_torch_consults(13, &[(x, y, z)]);
+        assert_eq!(w.torch_ticks.len(), 1, "the pending B the re-consult refuses");
+        // THE CHAIN'S OWN BEAT (the drain the due entry gives up, the
+        // tick walk's own flip the extinguish arm serves, the flip's
+        // own broadcast the quiet verdicts the same walk keeps — the
+        // OFF A the powered support the state-correct keep wears)
+        assert_eq!(w.drain_due_torch_ticks(12), vec![(x + 1, y, z)]);
+        let out = w.redstone_torch_tick(12, x + 1, y, z);
+        assert!(out.changed && !out.burnout, "the powered support the flip speaks");
+        assert_eq!(w.get(x + 1, y, z), REDSTONE_TORCH_OFF);
+        w.schedule_torch_consults(14, &[(x + 1, y, z)]);
+        assert!(
+            w.torch_ticks.is_empty(),
+            "the OFF A the powered support the state-correct keep wears"
+        );
+        // THE RELIGHT'S OWN CASCADE (the lever the A's support the walk
+        // retires — the OFF A the dead support the relight-need the +2
+        // entry the cascade banks, the OFF B the wire's own verdict the
+        // state-correct keep wears, the drain the relight the lit kind
+        // restores, the lit pair the fresh verdict the quiet keep wears)
+        w.set(x - 1, y - 1, z, AIR);
+        w.torch_ticks.clear();
+        w.schedule_torch_consults(18, &[(x, y, z), (x + 1, y, z)]);
+        assert_eq!(
+            w.torch_ticks,
+            vec![(18, x, y, z)],
+            "the OFF A the dead support the relight-need arms, the OFF B the wire's verdict the quiet keeps"
+        );
+        assert_eq!(w.drain_due_torch_ticks(18), vec![(x, y, z)]);
+        let out = w.redstone_torch_tick(18, x, y, z);
+        assert!(out.changed, "the dead support the relight arms");
+        assert_eq!(w.get(x, y, z), REDSTONE_TORCH);
+        w.schedule_torch_consults(20, &[(x, y, z)]);
+        assert!(
+            w.torch_ticks.is_empty(),
+            "the lit pair the fresh verdicts the state-correct quiet keeps"
+        );
+        // THE WALL PAIR'S OWN DECODE (the attached cell the variant
+        // decode reads — the FACING_WEST wall torch the east-behind
+        // wall the consult wears, the wire ABOVE the wall the
+        // powered verdict arms, the schedule the decode's own cell
+        // the verdict answers)
+        let (cx, cy, cz) = (x + 5i32, y, z);
+        w.set(cx + 1, cy, cz, STONE);
+        w.set(cx, cy, cz, REDSTONE_WALL_TORCH);
+        w.set_variant(cx, cy, cz, WALL_TORCH_FACING_WEST);
+        w.schedule_torch_consults(20, &[(cx + 1, cy, cz)]);
+        assert!(
+            w.torch_ticks.is_empty(),
+            "the lit wall torch the dead wall the state-correct keep wears"
+        );
+        w.set(cx + 1, cy + 1, cz, REDSTONE_WIRE_ON);
+        w.schedule_torch_consults(22, &[(cx + 1, cy, cz)]);
+        assert_eq!(
+            w.torch_ticks,
+            vec![(22, cx, cy, cz)],
+            "the lit wall torch the powered wall the +2 entry banks"
+        );
+        assert_eq!(w.drain_due_torch_ticks(22), vec![(cx, cy, cz)]);
+        let out = w.redstone_torch_tick(22, cx, cy, cz);
+        assert!(out.changed, "the powered wall the extinguish arms");
+        assert_eq!(w.get(cx, cy, cz), REDSTONE_WALL_TORCH_OFF);
+    }
 
     /// THE FIRE'S OWN LIFE — javap `FireBlock.tick` the spread, the
     /// burn-out and the prime chain the seeded drive answers: the TNT

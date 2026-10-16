@@ -14153,6 +14153,11 @@ impl App {
                         let due = world.drain_due_torch_ticks(self.frame);
                         let mut burnouts: Vec<(i32, i32, i32)> = Vec::new();
                         let mut flip_seeds: Vec<(i32, i32, i32)> = Vec::new();
+                        // THE CASCADE'S OWN CELLS (the dev-51 round — the
+                        // flips' own cells the neighbor torches the
+                        // consult re-arms, the wire's own flips the same
+                        // broadcast wears)
+                        let mut cascade: Vec<(i32, i32, i32)> = Vec::new();
                         let mut torch_changed = false;
                         for (x, y, z) in due {
                             let out = world.redstone_torch_tick(self.frame, x, y, z);
@@ -14172,6 +14177,7 @@ impl App {
                                 ] {
                                     flip_seeds.push((fx + dx, fy + dy, fz + dz));
                                 }
+                                cascade.push((fx, fy, fz));
                             }
                             if out.burnout {
                                 burnouts.push((x, y, z));
@@ -14187,6 +14193,21 @@ impl App {
                                 crate::world::wire_component_flips(read, &flip_seeds);
                             for ((wx, wy, wz), kind) in wire_flips {
                                 world.set(wx, wy, wz, kind);
+                                cascade.push((wx, wy, wz));
+                            }
+                            // THE NOT-GATE'S OWN CASCADE (the dev-51 round
+                            // — javap RedstoneTorchBlock.neighborChanged
+                            // pc 0-44: the flips' own setBlock the flag-3
+                            // beat the neighbor torches the
+                            // neighborChanged call serves, the `LIT ==
+                            // hasNeighborSignal` verdict the +2 entries
+                            // the queue banks — the torch tower the
+                            // inverter chain the same walk re-arms, the
+                            // dedup the pending entry the re-consult
+                            // refuses, the fresh-kind verdict the wire's
+                            // own sets the same beat re-reads)
+                            if !cascade.is_empty() {
+                                world.schedule_torch_consults(self.frame, &cascade);
                             }
                         }
                         if torch_changed {
@@ -36219,8 +36240,23 @@ impl App {
                     seeds.push((lx + dx, ly + dy, lz + dz));
                 }
                 let wire_flips = crate::world::wire_component_flips(read, &seeds);
+                let mut wire_cells: Vec<(i32, i32, i32)> = Vec::new();
                 for ((wx, wy, wz), kind) in wire_flips {
                     world.set(wx, wy, wz, kind);
+                    wire_cells.push((wx, wy, wz));
+                }
+                // THE NOT-GATE'S OWN CASCADE (the dev-51 round — javap
+                // RedstoneTorchBlock.neighborChanged pc 0-44: the wire's
+                // own setBlock the flag-3 beat the neighbor torches the
+                // neighborChanged call serves, the `LIT ==
+                // hasNeighborSignal` verdict the +2 entries the queue
+                // banks — the scan's earlier verdict the OLD wire kind
+                // read, the wire's own flips the re-consult the same
+                // walk re-arms, the dedup the pending entry the scan's
+                // own schedule refuses, the verdict's own re-judgment
+                // the tick walk's due beat answers)
+                if !wire_cells.is_empty() {
+                    world.schedule_torch_consults(now + 2, &wire_cells);
                 }
             }
             // THE TWELVE-CELL SCAN (javap the updateNeighbours walk —
@@ -108619,6 +108655,108 @@ cow_sound_variant: None,
             w::REDSTONE_TORCH,
             "the cooled retry the lit kind restores"
         );
+    }
+
+    #[test]
+    fn the_not_gate_the_cascade_the_wire_flood_and_the_pair_wear() {
+        // THE CASCADE'S OWN APP LANE (the dev-51 round — javap
+        // RedstoneTorchBlock.neighborChanged pc 0-44 the 26.2 jar the
+        // probe scripts/jar_work/neighbor_updater_51.txt banks: the
+        // lever's own attach the wire flood the component's ON kinds
+        // the sets speak, the wire's own flips the neighbor torches
+        // the consult re-arms (the schedule_torch_consults walk the
+        // +2 entries the queue banks), the drain the pair's own beat
+        // the extinguish arms answers, the flip's own broadcast the
+        // pair's second consult the same walk re-arms — the two
+        // torches the wire's own verdict the SAME flood the schedule
+        // wears, the drains the two beats the order the queue's own
+        // sort keeps)
+        use crate::world as w;
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            // THE CHAIN'S OWN SEATS (the two torches the wire run's
+            // own consult the supports wear — the wire the B's
+            // support cell the wire_powered arms answer, the wire the
+            // A's support's east neighbor the same verdict reads)
+            world.set(c, top, c, w::REDSTONE_TORCH);
+            world.set(c + 1, top, c, w::REDSTONE_TORCH);
+            world.set(c + 1, top - 1, c, w::REDSTONE_WIRE);
+            world.set(c + 1, top - 1, c + 1, w::REDSTONE_WIRE);
+            world.set(c + 1, top - 1, c + 2, w::REDSTONE_WIRE);
+            world.set(c + 1, top - 1, c + 3, w::LEVER_ON);
+        }
+        // THE LEVER'S OWN ATTACH (the wire flood the component's ON
+        // kinds the sets speak, the cascade the B's re-consult the +2
+        // entry the queue banks — the lit B the wire's own verdict the
+        // LIT == hasNeighborSignal verdict arms)
+        app.attach_wire_voice(c + 1, top - 1, c + 3);
+        {
+            let world = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                world.get(c + 1, top - 1, c),
+                w::REDSTONE_WIRE_ON,
+                "the wire flood the ON kinds the sets speak"
+            );
+            assert_eq!(
+                world.get(c + 1, top, c),
+                w::REDSTONE_TORCH,
+                "the schedule the lit kind the pending keeps"
+            );
+            assert_eq!(
+                world.torch_ticks.len(),
+                1,
+                "the B's own +2 entry the cascade banks"
+            );
+        }
+        // THE PAIR'S OWN FIRST BEAT (the drain the B's flip the
+        // extinguish arm serves, the flip's own broadcast the A's
+        // re-consult the same walk re-arms — the wire the A's
+        // support's east neighbor the verdict reads)
+        for _ in 0..2 {
+            app.update();
+        }
+        {
+            let world = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                world.get(c + 1, top, c),
+                w::REDSTONE_TORCH_OFF,
+                "the lit B the wire's verdict the OFF kind speaks"
+            );
+            assert_eq!(
+                world.get(c, top, c),
+                w::REDSTONE_TORCH,
+                "the A's own flip the +2 beat the pending keeps"
+            );
+            assert_eq!(
+                world.torch_ticks.len(),
+                1,
+                "the A's own +2 entry the flip's broadcast banks"
+            );
+        }
+        // THE PAIR'S OWN SECOND BEAT (the drain the A's flip the
+        // extinguish arm serves, the flip's own broadcast the OFF
+        // pair the state-correct keep wears — the queue the quiet
+        // walk never fills)
+        for _ in 0..2 {
+            app.update();
+        }
+        {
+            let world = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                world.get(c, top, c),
+                w::REDSTONE_TORCH_OFF,
+                "the lit A the wire's verdict the OFF kind speaks"
+            );
+            assert!(
+                world.torch_ticks.is_empty(),
+                "the OFF pair the state-correct keep the queue never fills"
+            );
+        }
     }
 
     #[test]

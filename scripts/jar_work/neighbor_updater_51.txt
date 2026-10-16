@@ -1,0 +1,607 @@
+=== net/minecraft/world/level/Level.class (this ?1 super ?4) ===
+--- updateNeighborsAt (Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/redstone/Orientation;)V flags 0x0001 ---
+  pc 0: return
+--- updateNeighborsAtExceptFromFacing (Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/core/Direction;Lnet/minecraft/world/level/redstone/Orientation;)V flags 0x0001 ---
+  pc 0: return
+--- neighborChanged (Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/redstone/Orientation;)V flags 0x0001 ---
+  pc 0: return
+--- neighborChanged (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/redstone/Orientation;Z)V flags 0x0001 ---
+  pc 0: return
+=== net/minecraft/world/level/redstone/CollectingNeighborUpdater.class (this ?11 super ?2) ===
+--- neighborChanged (Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/redstone/Orientation;)V flags 0x0001 ---
+  pc 0: aload_0
+  pc 1: aload_1
+  pc 2: new ?list indices must be integers or slices, not str
+  pc 5: dup
+  pc 6: aload_1
+  pc 7: aload_2
+  pc 8: aload_3
+  pc 9: invokespecial net/minecraft/world/level/redstone/CollectingNeighborUpdater$SimpleNeighborUpdate.<init>:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/redstone/Orientation;)V
+  pc 12: invokevirtual net/minecraft/world/level/redstone/CollectingNeighborUpdater.addAndRun:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/redstone/CollectingNeighborUpdater$NeighborUpdates;)V
+  pc 15: return
+--- neighborChanged (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/redstone/Orientation;Z)V flags 0x0001 ---
+  pc 0: aload_0
+  pc 1: aload_2
+  pc 2: new ?list indices must be integers or slices, not str
+  pc 5: dup
+  pc 6: aload_1
+  pc 7: aload_2
+  pc 8: invokevirtual net/minecraft/core/BlockPos.immutable:()Lnet/minecraft/core/BlockPos;
+  pc 11: aload_3
+  pc 12: aload 4
+  pc 14: iload 5
+  pc 16: invokespecial net/minecraft/world/level/redstone/CollectingNeighborUpdater$FullNeighborUpdate.<init>:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/redstone/Orientation;Z)V
+  pc 19: invokevirtual net/minecraft/world/level/redstone/CollectingNeighborUpdater.addAndRun:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/redstone/CollectingNeighborUpdater$NeighborUpdates;)V
+  pc 22: return
+--- updateNeighborsAtExceptFromFacing (Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/core/Direction;Lnet/minecraft/world/level/redstone/Orientation;)V flags 0x0001 ---
+  pc 0: aload_0
+  pc 1: aload_1
+  pc 2: new ?list indices must be integers or slices, not str
+  pc 5: dup
+  pc 6: aload_1
+  pc 7: invokevirtual net/minecraft/core/BlockPos.immutable:()Lnet/minecraft/core/BlockPos;
+  pc 10: aload_2
+  pc 11: aload 4
+  pc 13: aload_3
+  pc 14: invokespecial net/minecraft/world/level/redstone/CollectingNeighborUpdater$MultiNeighborUpdate.<init>:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/redstone/Orientation;Lnet/minecraft/core/Direction;)V
+  pc 17: invokevirtual net/minecraft/world/level/redstone/CollectingNeighborUpdater.addAndRun:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/redstone/CollectingNeighborUpdater$NeighborUpdates;)V
+  pc 20: return
+--- addAndRun (Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/redstone/CollectingNeighborUpdater$NeighborUpdates;)V flags 0x0002 ---
+  pc 0: aload_0
+  pc 1: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater.count:I
+  pc 4: ifle -> 11
+  pc 7: iconst_1
+  pc 8: goto -> 12
+  pc 11: iconst_0
+  pc 12: istore_3
+  pc 13: aload_0
+  pc 14: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater.maxChainedNeighborUpdates:I
+  pc 17: iflt -> 35
+  pc 20: aload_0
+  pc 21: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater.count:I
+  pc 24: aload_0
+  pc 25: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater.maxChainedNeighborUpdates:I
+  pc 28: if_icmplt -> 35
+  pc 31: iconst_1
+  pc 32: goto -> 36
+  pc 35: iconst_0
+  pc 36: istore 4
+  pc 38: aload_0
+  pc 39: dup
+  pc 40: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater.count:I
+  pc 43: iconst_1
+  pc 44: iadd
+  pc 45: putfield net/minecraft/world/level/redstone/CollectingNeighborUpdater.count:I
+  pc 48: iload 4
+  pc 50: ifne -> 82
+  pc 53: iload_3
+  pc 54: ifeq -> 71
+  pc 57: aload_0
+  pc 58: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater.addedThisLayer:Ljava/util/List;
+  pc 61: aload_2
+  pc 62: invokeinterface java/util/List.add:(Ljava/lang/Object;)Z
+  pc 67: pop
+  pc 68: goto -> 109
+  pc 71: aload_0
+  pc 72: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater.stack:Ljava/util/ArrayDeque;
+  pc 75: aload_2
+  pc 76: invokevirtual java/util/ArrayDeque.push:(Ljava/lang/Object;)V
+  pc 79: goto -> 109
+  pc 82: aload_0
+  pc 83: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater.count:I
+  pc 86: iconst_1
+  pc 87: isub
+  pc 88: aload_0
+  pc 89: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater.maxChainedNeighborUpdates:I
+  pc 92: if_icmpne -> 109
+  pc 95: getstatic net/minecraft/world/level/redstone/CollectingNeighborUpdater.LOGGER:Lorg/slf4j/Logger;
+  pc 98: ldc ldc#82
+  pc 100: aload_1
+  pc 101: invokevirtual net/minecraft/core/BlockPos.toShortString:()Ljava/lang/String;
+  pc 104: invokeinterface org/slf4j/Logger.error:(Ljava/lang/String;Ljava/lang/Object;)V
+  pc 109: iload_3
+  pc 110: ifne -> 117
+  pc 113: aload_0
+  pc 114: invokevirtual net/minecraft/world/level/redstone/CollectingNeighborUpdater.runUpdates:()V
+  pc 117: return
+--- runUpdates ()V flags 0x0002 ---
+  pc 0: aload_0
+  pc 1: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater.stack:Ljava/util/ArrayDeque;
+  pc 4: invokevirtual java/util/ArrayDeque.isEmpty:()Z
+  pc 7: ifeq -> 22
+  pc 10: aload_0
+  pc 11: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater.addedThisLayer:Ljava/util/List;
+  pc 14: invokeinterface java/util/List.isEmpty:()Z
+  pc 19: ifne -> 140
+  pc 22: aload_0
+  pc 23: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater.addedThisLayer:Ljava/util/List;
+  pc 26: invokeinterface java/util/List.size:()I
+  pc 31: iconst_1
+  pc 32: isub
+  pc 33: 0x3c
+  pc 34: iload_1
+  pc 35: iflt -> 64
+  pc 38: aload_0
+  pc 39: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater.stack:Ljava/util/ArrayDeque;
+  pc 42: aload_0
+  pc 43: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater.addedThisLayer:Ljava/util/List;
+  pc 46: iload_1
+  pc 47: invokeinterface java/util/List.get:(I)Ljava/lang/Object;
+  pc 52: checkcast ?list indices must be integers or slices, not str
+  pc 55: invokevirtual java/util/ArrayDeque.push:(Ljava/lang/Object;)V
+  pc 58: iinc 1 -1
+  pc 61: goto -> 34
+  pc 64: aload_0
+  pc 65: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater.addedThisLayer:Ljava/util/List;
+  pc 68: invokeinterface java/util/List.clear:()V
+  pc 73: aload_0
+  pc 74: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater.stack:Ljava/util/ArrayDeque;
+  pc 77: invokevirtual java/util/ArrayDeque.peek:()Ljava/lang/Object;
+  pc 80: checkcast ?list indices must be integers or slices, not str
+  pc 83: astore_1
+  pc 84: aload_0
+  pc 85: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater.debugListener:Ljava/util/function/Consumer;
+  pc 88: ifnull -> 101
+  pc 91: aload_1
+  pc 92: aload_0
+  pc 93: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater.debugListener:Ljava/util/function/Consumer;
+  pc 96: invokeinterface net/minecraft/world/level/redstone/CollectingNeighborUpdater$NeighborUpdates.forEachUpdatedPos:(Ljava/util/function/Consumer;)V
+  pc 101: aload_0
+  pc 102: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater.addedThisLayer:Ljava/util/List;
+  pc 105: invokeinterface java/util/List.isEmpty:()Z
+  pc 110: ifeq -> 137
+  pc 113: aload_1
+  pc 114: aload_0
+  pc 115: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater.level:Lnet/minecraft/world/level/Level;
+  pc 118: invokeinterface net/minecraft/world/level/redstone/CollectingNeighborUpdater$NeighborUpdates.runNext:(Lnet/minecraft/world/level/Level;)Z
+  pc 123: ifne -> 101
+  pc 126: aload_0
+  pc 127: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater.stack:Ljava/util/ArrayDeque;
+  pc 130: invokevirtual java/util/ArrayDeque.pop:()Ljava/lang/Object;
+  pc 133: pop
+  pc 134: goto -> 137
+  pc 137: goto -> 0
+  pc 140: aload_0
+  pc 141: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater.stack:Ljava/util/ArrayDeque;
+  pc 144: invokevirtual java/util/ArrayDeque.clear:()V
+  pc 147: aload_0
+  pc 148: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater.addedThisLayer:Ljava/util/List;
+  pc 151: invokeinterface java/util/List.clear:()V
+  pc 156: aload_0
+  pc 157: iconst_0
+  pc 158: putfield net/minecraft/world/level/redstone/CollectingNeighborUpdater.count:I
+  pc 161: goto -> 188
+  pc 164: astore_2
+  pc 165: aload_0
+  pc 166: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater.stack:Ljava/util/ArrayDeque;
+  pc 169: invokevirtual java/util/ArrayDeque.clear:()V
+  pc 172: aload_0
+  pc 173: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater.addedThisLayer:Ljava/util/List;
+  pc 176: invokeinterface java/util/List.clear:()V
+  pc 181: aload_0
+  pc 182: iconst_0
+  pc 183: putfield net/minecraft/world/level/redstone/CollectingNeighborUpdater.count:I
+  pc 186: aload_2
+  pc 187: athrow
+  pc 188: return
+=== net/minecraft/world/level/redstone/CollectingNeighborUpdater$FullNeighborUpdate.class (this ?8 super ?2) ===
+--- <init> (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/redstone/Orientation;Z)V flags 0x0002 ---
+  pc 0: aload_0
+  pc 1: invokespecial java/lang/Record.<init>:()V
+  pc 4: aload_0
+  pc 5: aload_1
+  pc 6: putfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$FullNeighborUpdate.state:Lnet/minecraft/world/level/block/state/BlockState;
+  pc 9: aload_0
+  pc 10: aload_2
+  pc 11: putfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$FullNeighborUpdate.pos:Lnet/minecraft/core/BlockPos;
+  pc 14: aload_0
+  pc 15: aload_3
+  pc 16: putfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$FullNeighborUpdate.block:Lnet/minecraft/world/level/block/Block;
+  pc 19: aload_0
+  pc 20: aload 4
+  pc 22: putfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$FullNeighborUpdate.orientation:Lnet/minecraft/world/level/redstone/Orientation;
+  pc 25: aload_0
+  pc 26: iload 5
+  pc 28: putfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$FullNeighborUpdate.movedByPiston:Z
+  pc 31: return
+--- runNext (Lnet/minecraft/world/level/Level;)Z flags 0x0001 ---
+  pc 0: aload_1
+  pc 1: aload_0
+  pc 2: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$FullNeighborUpdate.state:Lnet/minecraft/world/level/block/state/BlockState;
+  pc 5: aload_0
+  pc 6: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$FullNeighborUpdate.pos:Lnet/minecraft/core/BlockPos;
+  pc 9: aload_0
+  pc 10: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$FullNeighborUpdate.block:Lnet/minecraft/world/level/block/Block;
+  pc 13: aload_0
+  pc 14: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$FullNeighborUpdate.orientation:Lnet/minecraft/world/level/redstone/Orientation;
+  pc 17: aload_0
+  pc 18: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$FullNeighborUpdate.movedByPiston:Z
+  pc 21: invokestatic net/minecraft/world/level/redstone/NeighborUpdater.executeUpdate:(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/redstone/Orientation;Z)V
+  pc 24: iconst_0
+  pc 25: ireturn
+--- forEachUpdatedPos (Ljava/util/function/Consumer;)V flags 0x0001 ---
+  pc 0: aload_1
+  pc 1: aload_0
+  pc 2: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$FullNeighborUpdate.pos:Lnet/minecraft/core/BlockPos;
+  pc 5: invokeinterface java/util/function/Consumer.accept:(Ljava/lang/Object;)V
+  pc 10: return
+--- toString ()Ljava/lang/String; flags 0x0011 ---
+  pc 0: aload_0
+  pc 1: invokedynamic indy#41
+  pc 4: nop
+  pc 5: nop
+  pc 6: areturn
+--- hashCode ()I flags 0x0011 ---
+  pc 0: aload_0
+  pc 1: invokedynamic indy#45
+  pc 4: nop
+  pc 5: nop
+  pc 6: ireturn
+--- equals (Ljava/lang/Object;)Z flags 0x0011 ---
+  pc 0: aload_0
+  pc 1: aload_1
+  pc 2: invokedynamic indy#49
+  pc 5: nop
+  pc 6: nop
+  pc 7: ireturn
+--- state ()Lnet/minecraft/world/level/block/state/BlockState; flags 0x0001 ---
+  pc 0: aload_0
+  pc 1: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$FullNeighborUpdate.state:Lnet/minecraft/world/level/block/state/BlockState;
+  pc 4: areturn
+--- pos ()Lnet/minecraft/core/BlockPos; flags 0x0001 ---
+  pc 0: aload_0
+  pc 1: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$FullNeighborUpdate.pos:Lnet/minecraft/core/BlockPos;
+  pc 4: areturn
+--- block ()Lnet/minecraft/world/level/block/Block; flags 0x0001 ---
+  pc 0: aload_0
+  pc 1: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$FullNeighborUpdate.block:Lnet/minecraft/world/level/block/Block;
+  pc 4: areturn
+--- orientation ()Lnet/minecraft/world/level/redstone/Orientation; flags 0x0001 ---
+  pc 0: aload_0
+  pc 1: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$FullNeighborUpdate.orientation:Lnet/minecraft/world/level/redstone/Orientation;
+  pc 4: areturn
+--- movedByPiston ()Z flags 0x0001 ---
+  pc 0: aload_0
+  pc 1: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$FullNeighborUpdate.movedByPiston:Z
+  pc 4: ireturn
+=== net/minecraft/world/level/redstone/InstantNeighborUpdater.class (this ?8 super ?2) ===
+--- neighborChanged (Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/redstone/Orientation;)V flags 0x0001 ---
+  pc 0: aload_0
+  pc 1: getfield net/minecraft/world/level/redstone/InstantNeighborUpdater.level:Lnet/minecraft/world/level/Level;
+  pc 4: aload_1
+  pc 5: invokevirtual net/minecraft/world/level/Level.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+  pc 8: astore 4
+  pc 10: aload_0
+  pc 11: aload 4
+  pc 13: aload_1
+  pc 14: aload_2
+  pc 15: aload_3
+  pc 16: iconst_0
+  pc 17: invokevirtual net/minecraft/world/level/redstone/InstantNeighborUpdater.neighborChanged:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/redstone/Orientation;Z)V
+  pc 20: return
+--- neighborChanged (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/redstone/Orientation;Z)V flags 0x0001 ---
+  pc 0: aload_0
+  pc 1: getfield net/minecraft/world/level/redstone/InstantNeighborUpdater.level:Lnet/minecraft/world/level/Level;
+  pc 4: aload_1
+  pc 5: aload_2
+  pc 6: aload_3
+  pc 7: aload 4
+  pc 9: iload 5
+  pc 11: invokestatic net/minecraft/world/level/redstone/NeighborUpdater.executeUpdate:(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/redstone/Orientation;Z)V
+  pc 14: return
+=== net/minecraft/world/level/redstone/CollectingNeighborUpdater$MultiNeighborUpdate.class (this ?8 super ?2) ===
+--- <init> (Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/redstone/Orientation;Lnet/minecraft/core/Direction;)V flags 0x0001 ---
+  pc 0: aload_0
+  pc 1: invokespecial java/lang/Object.<init>:()V
+  pc 4: aload_0
+  pc 5: iconst_0
+  pc 6: putfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$MultiNeighborUpdate.idx:I
+  pc 9: aload_0
+  pc 10: aload_1
+  pc 11: putfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$MultiNeighborUpdate.sourcePos:Lnet/minecraft/core/BlockPos;
+  pc 14: aload_0
+  pc 15: aload_2
+  pc 16: putfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$MultiNeighborUpdate.sourceBlock:Lnet/minecraft/world/level/block/Block;
+  pc 19: aload_0
+  pc 20: aload_3
+  pc 21: putfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$MultiNeighborUpdate.orientation:Lnet/minecraft/world/level/redstone/Orientation;
+  pc 24: aload_0
+  pc 25: aload 4
+  pc 27: putfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$MultiNeighborUpdate.skipDirection:Lnet/minecraft/core/Direction;
+  pc 30: getstatic net/minecraft/world/level/redstone/NeighborUpdater.UPDATE_ORDER:[Lnet/minecraft/core/Direction;
+  pc 33: aload_0
+  pc 34: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$MultiNeighborUpdate.idx:I
+  pc 37: aaload
+  pc 38: aload 4
+  pc 40: if_acmpne -> 53
+  pc 43: aload_0
+  pc 44: dup
+  pc 45: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$MultiNeighborUpdate.idx:I
+  pc 48: iconst_1
+  pc 49: iadd
+  pc 50: putfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$MultiNeighborUpdate.idx:I
+  pc 53: return
+--- runNext (Lnet/minecraft/world/level/Level;)Z flags 0x0001 ---
+  pc 0: getstatic net/minecraft/world/level/redstone/NeighborUpdater.UPDATE_ORDER:[Lnet/minecraft/core/Direction;
+  pc 3: aload_0
+  pc 4: dup
+  pc 5: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$MultiNeighborUpdate.idx:I
+  pc 8: 0x5a
+  pc 9: iconst_1
+  pc 10: iadd
+  pc 11: putfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$MultiNeighborUpdate.idx:I
+  pc 14: aaload
+  pc 15: astore_2
+  pc 16: aload_0
+  pc 17: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$MultiNeighborUpdate.sourcePos:Lnet/minecraft/core/BlockPos;
+  pc 20: aload_2
+  pc 21: invokevirtual net/minecraft/core/BlockPos.relative:(Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;
+  pc 24: astore_3
+  pc 25: aload_1
+  pc 26: aload_3
+  pc 27: invokevirtual net/minecraft/world/level/Level.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+  pc 30: astore 4
+  pc 32: aconst_null
+  pc 33: astore 5
+  pc 35: aload_1
+  pc 36: invokevirtual net/minecraft/world/level/Level.enabledFeatures:()Lnet/minecraft/world/flag/FeatureFlagSet;
+  pc 39: getstatic net/minecraft/world/flag/FeatureFlags.REDSTONE_EXPERIMENTS:Lnet/minecraft/world/flag/FeatureFlag;
+  pc 42: invokevirtual net/minecraft/world/flag/FeatureFlagSet.contains:(Lnet/minecraft/world/flag/FeatureFlag;)Z
+  pc 45: ifeq -> 92
+  pc 48: aload_0
+  pc 49: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$MultiNeighborUpdate.orientation:Lnet/minecraft/world/level/redstone/Orientation;
+  pc 52: ifnonnull -> 82
+  pc 55: aload_0
+  pc 56: aload_1
+  pc 57: aload_0
+  pc 58: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$MultiNeighborUpdate.skipDirection:Lnet/minecraft/core/Direction;
+  pc 61: ifnonnull -> 68
+  pc 64: aconst_null
+  pc 65: goto -> 75
+  pc 68: aload_0
+  pc 69: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$MultiNeighborUpdate.skipDirection:Lnet/minecraft/core/Direction;
+  pc 72: invokevirtual net/minecraft/core/Direction.getOpposite:()Lnet/minecraft/core/Direction;
+  pc 75: aconst_null
+  pc 76: invokestatic net/minecraft/world/level/redstone/ExperimentalRedstoneUtils.initialOrientation:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/Direction;Lnet/minecraft/core/Direction;)Lnet/minecraft/world/level/redstone/Orientation;
+  pc 79: putfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$MultiNeighborUpdate.orientation:Lnet/minecraft/world/level/redstone/Orientation;
+  pc 82: aload_0
+  pc 83: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$MultiNeighborUpdate.orientation:Lnet/minecraft/world/level/redstone/Orientation;
+  pc 86: aload_2
+  pc 87: invokevirtual net/minecraft/world/level/redstone/Orientation.withFront:(Lnet/minecraft/core/Direction;)Lnet/minecraft/world/level/redstone/Orientation;
+  pc 90: astore 5
+  pc 92: aload_1
+  pc 93: aload 4
+  pc 95: aload_3
+  pc 96: aload_0
+  pc 97: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$MultiNeighborUpdate.sourceBlock:Lnet/minecraft/world/level/block/Block;
+  pc 100: aload 5
+  pc 102: iconst_0
+  pc 103: invokestatic net/minecraft/world/level/redstone/NeighborUpdater.executeUpdate:(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/redstone/Orientation;Z)V
+  pc 106: aload_0
+  pc 107: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$MultiNeighborUpdate.idx:I
+  pc 110: getstatic net/minecraft/world/level/redstone/NeighborUpdater.UPDATE_ORDER:[Lnet/minecraft/core/Direction;
+  pc 113: arraylength
+  pc 114: if_icmpge -> 142
+  pc 117: getstatic net/minecraft/world/level/redstone/NeighborUpdater.UPDATE_ORDER:[Lnet/minecraft/core/Direction;
+  pc 120: aload_0
+  pc 121: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$MultiNeighborUpdate.idx:I
+  pc 124: aaload
+  pc 125: aload_0
+  pc 126: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$MultiNeighborUpdate.skipDirection:Lnet/minecraft/core/Direction;
+  pc 129: if_acmpne -> 142
+  pc 132: aload_0
+  pc 133: dup
+  pc 134: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$MultiNeighborUpdate.idx:I
+  pc 137: iconst_1
+  pc 138: iadd
+  pc 139: putfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$MultiNeighborUpdate.idx:I
+  pc 142: aload_0
+  pc 143: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$MultiNeighborUpdate.idx:I
+  pc 146: getstatic net/minecraft/world/level/redstone/NeighborUpdater.UPDATE_ORDER:[Lnet/minecraft/core/Direction;
+  pc 149: arraylength
+  pc 150: if_icmpge -> 157
+  pc 153: iconst_1
+  pc 154: goto -> 158
+  pc 157: iconst_0
+  pc 158: ireturn
+--- forEachUpdatedPos (Ljava/util/function/Consumer;)V flags 0x0001 ---
+  pc 0: getstatic net/minecraft/world/level/redstone/NeighborUpdater.UPDATE_ORDER:[Lnet/minecraft/core/Direction;
+  pc 3: astore_2
+  pc 4: aload_2
+  pc 5: arraylength
+  pc 6: istore_3
+  pc 7: iconst_0
+  pc 8: istore 4
+  pc 10: iload 4
+  pc 12: iload_3
+  pc 13: if_icmpge -> 59
+  pc 16: aload_2
+  pc 17: iload 4
+  pc 19: aaload
+  pc 20: astore 5
+  pc 22: aload 5
+  pc 24: aload_0
+  pc 25: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$MultiNeighborUpdate.skipDirection:Lnet/minecraft/core/Direction;
+  pc 28: if_acmpne -> 34
+  pc 31: goto -> 53
+  pc 34: aload_0
+  pc 35: getfield net/minecraft/world/level/redstone/CollectingNeighborUpdater$MultiNeighborUpdate.sourcePos:Lnet/minecraft/core/BlockPos;
+  pc 38: aload 5
+  pc 40: invokevirtual net/minecraft/core/BlockPos.relative:(Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;
+  pc 43: astore 6
+  pc 45: aload_1
+  pc 46: aload 6
+  pc 48: invokeinterface java/util/function/Consumer.accept:(Ljava/lang/Object;)V
+  pc 53: iinc 4 1
+  pc 56: goto -> 10
+  pc 59: return
+=== net/minecraft/world/level/redstone/NeighborUpdater.class (this ?2 super ?103) ===
+--- executeUpdate (Lnet/minecraft/world/level/Level;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/redstone/Orientation;Z)V flags 0x0009 ---
+  pc 0: aload_1
+  pc 1: aload_0
+  pc 2: aload_2
+  pc 3: aload_3
+  pc 4: aload 4
+  pc 6: iload 5
+  pc 8: invokevirtual net/minecraft/world/level/block/state/BlockState.handleNeighborChanged:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/redstone/Orientation;Z)V
+  pc 11: goto -> 66
+  pc 14: astore 6
+  pc 16: aload 6
+  pc 18: ldc ldc#83
+  pc 20: invokestatic net/minecraft/CrashReport.forThrowable:(Ljava/lang/Throwable;Ljava/lang/String;)Lnet/minecraft/CrashReport;
+  pc 23: astore 7
+  pc 25: aload 7
+  pc 27: ldc ldc#59
+  pc 29: invokevirtual net/minecraft/CrashReport.addCategory:(Ljava/lang/String;)Lnet/minecraft/CrashReportCategory;
+  pc 32: astore 8
+  pc 34: aload 8
+  pc 36: ldc ldc#85
+  pc 38: aload_3
+  pc 39: invokedynamic indy#87
+  pc 42: nop
+  pc 43: nop
+  pc 44: invokevirtual net/minecraft/CrashReportCategory.setDetail:(Ljava/lang/String;Lnet/minecraft/CrashReportDetail;)Lnet/minecraft/CrashReportCategory;
+  pc 47: pop
+  pc 48: aload 8
+  pc 50: aload_0
+  pc 51: aload_2
+  pc 52: aload_1
+  pc 53: invokestatic net/minecraft/CrashReportCategory.populateBlockDetails:(Lnet/minecraft/CrashReportCategory;Lnet/minecraft/world/level/LevelHeightAccessor;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V
+  pc 56: new ?list indices must be integers or slices, not str
+  pc 59: dup
+  pc 60: aload 7
+  pc 62: invokespecial net/minecraft/ReportedException.<init>:(Lnet/minecraft/CrashReport;)V
+  pc 65: athrow
+  pc 66: return
+=== net/minecraft/world/level/block/RedstoneTorchBlock.class (this ?2 super ?8) ===
+--- onPlace (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Z)V flags 0x0004 ---
+  pc 0: aload_0
+  pc 1: aload_2
+  pc 2: aload_3
+  pc 3: aload_1
+  pc 4: invokevirtual net/minecraft/world/level/block/RedstoneTorchBlock.notifyNeighbors:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V
+  pc 7: return
+--- hasNeighborSignal (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Z flags 0x0004 ---
+  pc 0: aload_1
+  pc 1: aload_2
+  pc 2: invokevirtual net/minecraft/core/BlockPos.below:()Lnet/minecraft/core/BlockPos;
+  pc 5: getstatic net/minecraft/core/Direction.DOWN:Lnet/minecraft/core/Direction;
+  pc 8: invokevirtual net/minecraft/world/level/Level.hasSignal:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Z
+  pc 11: ireturn
+--- tick (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;)V flags 0x0004 ---
+  pc 0: aload_0
+  pc 1: aload_2
+  pc 2: aload_3
+  pc 3: aload_1
+  pc 4: invokevirtual net/minecraft/world/level/block/RedstoneTorchBlock.hasNeighborSignal:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Z
+  pc 7: istore 5
+  pc 9: getstatic net/minecraft/world/level/block/RedstoneTorchBlock.RECENT_TOGGLES:Ljava/util/Map;
+  pc 12: aload_2
+  pc 13: invokeinterface java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+  pc 18: checkcast ?list indices must be integers or slices, not str
+  pc 21: astore 6
+  pc 23: aload 6
+  pc 25: ifnull -> 76
+  pc 28: aload 6
+  pc 30: invokeinterface java/util/List.isEmpty:()Z
+  pc 35: ifne -> 76
+  pc 38: aload_2
+  pc 39: invokevirtual net/minecraft/server/level/ServerLevel.getGameTime:()J
+  pc 42: aload 6
+  pc 44: iconst_0
+  pc 45: invokeinterface java/util/List.get:(I)Ljava/lang/Object;
+  pc 50: checkcast ?list indices must be integers or slices, not str
+  pc 53: getfield net/minecraft/world/level/block/RedstoneTorchBlock$Toggle.when:J
+  pc 56: 0x65
+  pc 57: 0x14
+  pc 58: nop
+  pc 59: ishr
+  pc 60: lcmp
+  pc 61: ifle -> 76
+  pc 64: aload 6
+  pc 66: iconst_0
+  pc 67: invokeinterface java/util/List.remove:(I)Ljava/lang/Object;
+  pc 72: pop
+  pc 73: goto -> 23
+  pc 76: aload_1
+  pc 77: getstatic net/minecraft/world/level/block/RedstoneTorchBlock.LIT:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+  pc 80: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+  pc 83: checkcast ?list indices must be integers or slices, not str
+  pc 86: invokevirtual java/lang/Boolean.booleanValue:()Z
+  pc 89: ifeq -> 155
+  pc 92: iload 5
+  pc 94: ifeq -> 190
+  pc 97: aload_2
+  pc 98: aload_3
+  pc 99: aload_1
+  pc 100: getstatic net/minecraft/world/level/block/RedstoneTorchBlock.LIT:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+  pc 103: iconst_0
+  pc 104: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+  pc 107: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+  pc 110: checkcast ?list indices must be integers or slices, not str
+  pc 113: iconst_3
+  pc 114: invokevirtual net/minecraft/server/level/ServerLevel.setBlock:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z
+  pc 117: pop
+  pc 118: aload_2
+  pc 119: aload_3
+  pc 120: iconst_1
+  pc 121: invokestatic net/minecraft/world/level/block/RedstoneTorchBlock.isToggledTooFrequently:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Z)Z
+  pc 124: ifeq -> 190
+  pc 127: aload_2
+  pc 128: sipush 1502
+  pc 131: aload_3
+  pc 132: iconst_0
+  pc 133: invokevirtual net/minecraft/server/level/ServerLevel.levelEvent:(ILnet/minecraft/core/BlockPos;I)V
+  pc 136: aload_2
+  pc 137: aload_3
+  pc 138: aload_2
+  pc 139: aload_3
+  pc 140: invokevirtual net/minecraft/server/level/ServerLevel.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+  pc 143: invokevirtual net/minecraft/world/level/block/state/BlockState.getBlock:()Lnet/minecraft/world/level/block/Block;
+  pc 146: sipush 160
+  pc 149: invokevirtual net/minecraft/server/level/ServerLevel.scheduleTick:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;I)V
+  pc 152: goto -> 190
+  pc 155: iload 5
+  pc 157: ifne -> 190
+  pc 160: aload_2
+  pc 161: aload_3
+  pc 162: iconst_0
+  pc 163: invokestatic net/minecraft/world/level/block/RedstoneTorchBlock.isToggledTooFrequently:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Z)Z
+  pc 166: ifne -> 190
+  pc 169: aload_2
+  pc 170: aload_3
+  pc 171: aload_1
+  pc 172: getstatic net/minecraft/world/level/block/RedstoneTorchBlock.LIT:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+  pc 175: iconst_1
+  pc 176: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+  pc 179: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+  pc 182: checkcast ?list indices must be integers or slices, not str
+  pc 185: iconst_3
+  pc 186: invokevirtual net/minecraft/server/level/ServerLevel.setBlock:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z
+  pc 189: pop
+  pc 190: return
+--- neighborChanged (Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/redstone/Orientation;Z)V flags 0x0004 ---
+  pc 0: aload_1
+  pc 1: getstatic net/minecraft/world/level/block/RedstoneTorchBlock.LIT:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+  pc 4: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+  pc 7: checkcast ?list indices must be integers or slices, not str
+  pc 10: invokevirtual java/lang/Boolean.booleanValue:()Z
+  pc 13: aload_0
+  pc 14: aload_2
+  pc 15: aload_3
+  pc 16: aload_1
+  pc 17: invokevirtual net/minecraft/world/level/block/RedstoneTorchBlock.hasNeighborSignal:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Z
+  pc 20: if_icmpne -> 44
+  pc 23: aload_2
+  pc 24: invokevirtual net/minecraft/world/level/Level.getBlockTicks:()Lnet/minecraft/world/ticks/LevelTickAccess;
+  pc 27: aload_3
+  pc 28: aload_0
+  pc 29: invokeinterface net/minecraft/world/ticks/LevelTickAccess.willTickThisTick:(Lnet/minecraft/core/BlockPos;Ljava/lang/Object;)Z
+  pc 34: ifne -> 44
+  pc 37: aload_2
+  pc 38: aload_3
+  pc 39: aload_0
+  pc 40: iconst_2
+  pc 41: invokevirtual net/minecraft/world/level/Level.scheduleTick:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;I)V
+  pc 44: return
+=== net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase.class (this ?20 super ?2) ===
