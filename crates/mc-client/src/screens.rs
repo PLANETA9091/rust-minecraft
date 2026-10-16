@@ -14132,6 +14132,84 @@ impl App {
                         }
                     }
                 }
+                // THE TORCH'S OWN SCHEDULED TICKS (the dev-50 round —
+                // javap RedstoneTorchBlock.tick pc 0-190 the 26.2 jar:
+                // the scheduleTick(pos, this, 2) consult entries AND
+                // the scheduleTick(pos, this, 160) burnout-cooldown
+                // retries the queue gives up, the tick walk the flip
+                // arms wear — the [`World::redstone_torch_tick`] walk
+                // the vanilla arms verbatim answers). The wire's own
+                // re-read the flipped cell + its own six the drain's
+                // own seeds bank (the notifyNeighbors broadcast the
+                // flipped kind's own neighbors the consult lane's own
+                // scope wears), the relight + remesh the changed cells'
+                // own sets speak ONCE (the batched rhythm the fire lane
+                // keeps), the burnout row the levelEvent 1502 walk the
+                // caller's own smoke lane fires. The networked world
+                // the SERVER ticks (the same split the fire lane's own
+                // authority keeps).
+                let torch_burnouts: Vec<(i32, i32, i32)> =
+                    if let Some(world) = self.offline_world.as_mut() {
+                        let due = world.drain_due_torch_ticks(self.frame);
+                        let mut burnouts: Vec<(i32, i32, i32)> = Vec::new();
+                        let mut flip_seeds: Vec<(i32, i32, i32)> = Vec::new();
+                        let mut torch_changed = false;
+                        for (x, y, z) in due {
+                            let out = world.redstone_torch_tick(self.frame, x, y, z);
+                            torch_changed |= out.changed;
+                            if let Some((fx, fy, fz)) = out.flipped {
+                                // THE FLIPPED CELL'S OWN SEEDS (the torch
+                                // cell + its own six the wire's
+                                // re-evaluation the same scope wears)
+                                flip_seeds.push((fx, fy, fz));
+                                for (dx, dy, dz) in [
+                                    (0, -1, 0),
+                                    (0, 1, 0),
+                                    (0, 0, -1),
+                                    (0, 0, 1),
+                                    (-1, 0, 0),
+                                    (1, 0, 0),
+                                ] {
+                                    flip_seeds.push((fx + dx, fy + dy, fz + dz));
+                                }
+                            }
+                            if out.burnout {
+                                burnouts.push((x, y, z));
+                            }
+                        }
+                        // THE WIRE'S OWN RE-READ (the flipped torch cells
+                        // the wire's re-evaluation the same scope wears —
+                        // the lit bit's own flip the wire cells' verdict
+                        // the same beat re-arms)
+                        if !flip_seeds.is_empty() {
+                            let read = &*world;
+                            let wire_flips =
+                                crate::world::wire_component_flips(read, &flip_seeds);
+                            for ((wx, wy, wz), kind) in wire_flips {
+                                world.set(wx, wy, wz, kind);
+                            }
+                        }
+                        if torch_changed {
+                            world.relight();
+                            self.world_quads = Some(crate::mesher::mesh_world(world, None));
+                        }
+                        burnouts
+                    } else {
+                        Vec::new()
+                    };
+                for (x, y, z) in torch_burnouts {
+                    // THE BURNOUT'S OWN SMOKE (the levelEvent 1502 walk
+                    // the client lane wears — the five LARGE_SMOKE puffs
+                    // the shift walk's own provider banks, the
+                    // block.redstone_torch.burnout voice the same row
+                    // speaks)
+                    self.live_smoke_voice_events_updated(vec![crate::world_view::WireSmokeVoiceEvent {
+                        x,
+                        y,
+                        z,
+                        voice: mc_protocol::REDSTONE_TORCH_BURNOUT_EFFECT,
+                    }]);
+                }
                 // THE BAMBOO'S OWN SCHEDULED TICKS (javap
                 // `BambooStalkBlock.tick` the 26.2 jar — the walk the
                 // updateShape's scheduleTick lag the queue feeds: the
@@ -35987,6 +36065,10 @@ impl App {
         // OPEN-sync verdicts the scan's own arm pushes, the apply the
         // door's own law wears)
         let mut trapdoor_flips: Vec<((i32, i32, i32), u16)> = Vec::new();
+        // THE CLOCK'S OWN SNAPSHOT (the schedule walk's due the frame
+        // banks — the read the mutable borrow's opening the discipline
+        // keeps)
+        let now = self.frame;
         if let Some(world) = self.offline_world.as_mut() {
             // THE TORCH'S OWN NOT-GATE CONSULT (the autopush-666 round —
             // javap RedstoneTorchBlock.neighborChanged pc 0-44 the 26.2
@@ -36002,11 +36084,17 @@ impl App {
             // cell + its six the seeds wear: the consulted cell's own
             // torch (the placement/removal arm) AND the torch standing
             // ON the consulted cell (the floor cell the hasSignal read
-            // consults). THE 2-TICK DELAY AND THE RECENT_TOGGLES
-            // BURNOUT WINDOW the documented follow-up keeps — the
-            // immediate verdict the first lane wears (the placed torch
-            // the powered floor the same beat the dark kind speaks).
-            let mut torch_flips: Vec<((i32, i32, i32), u16)> = Vec::new();
+            // consults). THE 2-TICK DELAY THE dev-50 ROUND SERVES (the
+            // dev round's own lane the schedule arm wears — javap
+            // neighborChanged pc 20-44: the `LIT == hasNeighborSignal`
+            // verdict AND the `!hasScheduledTick(pos, this)` gate the
+            // second conjunct the pending re-arm refuses, the
+            // scheduleTick(pos, this, 2) walk the +2 entry serves —
+            // the immediate verdict the tick walk's own lane retires,
+            // the flip the [`World::redstone_torch_tick`] walk the
+            // drain's own due beat answers, the RECENT_TOGGLES
+            // burnout window the tick walk's own verdict keeps).
+            let mut torch_flips: Vec<(i32, i32, i32)> = Vec::new();
             {
                 let read = &*world;
                 let mut seen: std::collections::HashSet<(i32, i32, i32)> =
@@ -36080,19 +36168,22 @@ impl App {
                         } else {
                             None
                         };
-                        if let Some(next) = flip {
-                            torch_flips.push(((tx, ty, tz), next));
+                        if flip.is_some() {
+                            torch_flips.push((tx, ty, tz));
                         }
                     }
                 }
             }
-            // THE FLIPS' OWN APPLY (the read borrow's last use the
-            // collect pass keeps — the setBlock arms the tick walk's
-            // own walk the same beat wears)
-            let mut torch_cells: Vec<(i32, i32, i32)> = Vec::with_capacity(torch_flips.len());
-            for ((tx, ty, tz), next) in &torch_flips {
-                world.set(*tx, *ty, *tz, *next);
-                torch_cells.push((*tx, *ty, *tz));
+            // THE SCHEDULE'S OWN ARM (the dev-50 round — the flips the
+            // +2 entries the queue banks, the hasScheduledTick dedup the
+            // pending re-consult the walk's own law refuses: the
+            // [`World::schedule_torch_tick`] walk the neighborChanged's
+            // second conjunct serves. The flip the tick walk's own
+            // beat answers — the wire's own re-read the drain's own
+            // seeds the flipped cell banks, the 2-tick lag the vanilla
+            // propagation the clock law wears).
+            for (tx, ty, tz) in &torch_flips {
+                world.schedule_torch_tick(now + 2, *tx, *ty, *tz);
             }
             // THE WIRE'S OWN RECOMPUTE (javap RedStoneWireBlock
             // .updateNeighborsOfNeighboringWires pc 0-118 the 26.2 jar —
@@ -36107,7 +36198,13 @@ impl App {
             // THE DOORS' OWN RE-READ the scan below serves (the flipped
             // wire kinds the redstone_signal_at read answers — the
             // door's own cell the ON wire's 15 the nonzero verdict
-            // arms).
+            // arms). THE TORCH'S OWN SEEDS the tick walk's own drain
+            // serves (the dev-50 round — the flip the +2 beat the
+            // queue's own law banks, the wire's re-read the flipped
+            // cell + its own six the drain's own walk the same
+            // broadcast the consult here the flipped cells never
+            // carries: the torch the schedule the consult's own scope
+            // banks, the kind the +2 beat the tick answers).
             {
                 let read = &*world;
                 let mut seeds: Vec<(i32, i32, i32)> = vec![(lx, ly, lz)];
@@ -36120,25 +36217,6 @@ impl App {
                     (1, 0, 0),
                 ] {
                     seeds.push((lx + dx, ly + dy, lz + dz));
-                }
-                // THE TORCH FLIPS' OWN SEEDS (the flipped torch cells
-                // the wire's re-evaluation the same scope wears — the
-                // torch cell + its own six the notifyNeighbors walk's
-                // updateNeighborsAt broadcast speaks: the lit bit's
-                // own flip the wire cells' verdict the same beat
-                // re-arms)
-                for (tx, ty, tz) in &torch_cells {
-                    seeds.push((*tx, *ty, *tz));
-                    for (dx, dy, dz) in [
-                        (0, -1, 0),
-                        (0, 1, 0),
-                        (0, 0, -1),
-                        (0, 0, 1),
-                        (-1, 0, 0),
-                        (1, 0, 0),
-                    ] {
-                        seeds.push((tx + dx, ty + dy, tz + dz));
-                    }
                 }
                 let wire_flips = crate::world::wire_component_flips(read, &seeds);
                 for ((wx, wy, wz), kind) in wire_flips {
@@ -79358,6 +79436,8 @@ mod tests {
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
             has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
+            torch_ticks: Vec::new(), // the torch's own queue: empty
+            torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
@@ -79933,6 +80013,8 @@ mod tests {
                     portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
                     has_skylight: true, // the portal's own axis store: empty
                     campfire_ticks: Vec::new(), // the campfire's own queue: empty
+                    torch_ticks: Vec::new(), // the torch's own queue: empty
+                    torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
                     bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
                     chunks: vec![
                         vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
@@ -80381,6 +80463,8 @@ mod tests {
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
             has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
+            torch_ticks: Vec::new(), // the torch's own queue: empty
+            torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
@@ -80455,6 +80539,8 @@ mod tests {
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
             has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
+            torch_ticks: Vec::new(), // the torch's own queue: empty
+            torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
@@ -80531,6 +80617,8 @@ mod tests {
                     portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
                     has_skylight: true, // the portal's own axis store: empty
                     campfire_ticks: Vec::new(), // the campfire's own queue: empty
+                    torch_ticks: Vec::new(), // the torch's own queue: empty
+                    torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
                     bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
                     chunks: vec![
                         vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
@@ -80584,6 +80672,8 @@ mod tests {
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
             has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
+            torch_ticks: Vec::new(), // the torch's own queue: empty
+            torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
@@ -100528,6 +100618,8 @@ cow_sound_variant: None,
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
             has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
+            torch_ticks: Vec::new(), // the torch's own queue: empty
+            torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
@@ -108218,7 +108310,10 @@ cow_sound_variant: None,
         // dark kind speaks, the quiet floor the lit kind restores —
         // javap RedstoneTorchBlock.neighborChanged pc 0-44 + the tick
         // walk the 26.2 jar the probe scripts/jar_work/
-        // redstone_torch_666.py banks)
+        // redstone_torch_666.py banks). THE 2-TICK DELAY the dev-50
+        // round serves — the consult the +2 entry the queue banks, the
+        // flip the drain's own beat the update walk answers (the
+        // immediate verdict the schedule arm retires).
         use crate::world as w;
         let mut app = App::new(3);
         app.enter_world();
@@ -108254,6 +108349,20 @@ cow_sound_variant: None,
             world.set(c - 1, top - 1, c, w::LEVER_ON);
         }
         app.attach_wire_voice(c - 1, top - 1, c);
+        // THE SCHEDULED FLIP'S OWN LANDING (the dev-50 round — the
+        // consult the +2 entry the queue banks, the lit torch the
+        // schedule the SAME beat keeps [the immediate verdict the
+        // tick walk retires], the drain the two updates the crossing
+        // answers — the tick walk the setBlock(LIT=false) walk the
+        // wire's own re-read the dark keep serves)
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            w::REDSTONE_TORCH,
+            "the pending +2 the lit kind the schedule keeps"
+        );
+        for _ in 0..2 {
+            app.update();
+        }
         assert_eq!(
             app.offline_world.as_ref().unwrap().get(c, top, c),
             w::REDSTONE_TORCH_OFF,
@@ -108272,6 +108381,12 @@ cow_sound_variant: None,
             world.set(c - 1, top - 1, c, w::LEVER);
         }
         app.attach_wire_voice(c - 1, top - 1, c);
+        // THE SCHEDULED RESTORE'S OWN LANDING (the +2 entry the queue
+        // banks, the drain the two updates the crossing answers — the
+        // relight arm the lit kind the quiet floor restores)
+        for _ in 0..2 {
+            app.update();
+        }
         assert_eq!(
             app.offline_world.as_ref().unwrap().get(c, top, c),
             w::REDSTONE_TORCH,
@@ -108351,6 +108466,13 @@ cow_sound_variant: None,
             world.set(c - 2, top, c, w::LEVER_ON);
         }
         app.attach_wire_voice(c - 2, top, c);
+        // THE SCHEDULED FLIP'S OWN LANDING (the dev-50 round — the
+        // consult the +2 entry the queue banks, the drain the two
+        // updates the crossing answers — the tick walk's attached-cell
+        // read the OFF kind the powered wall speaks)
+        for _ in 0..2 {
+            app.update();
+        }
         assert_eq!(
             app.offline_world.as_ref().unwrap().get(c, top, c),
             w::REDSTONE_WALL_TORCH_OFF,
@@ -108369,6 +108491,12 @@ cow_sound_variant: None,
             world.set(c - 2, top, c, w::LEVER);
         }
         app.attach_wire_voice(c - 2, top, c);
+        // THE SCHEDULED RESTORE'S OWN LANDING (the +2 entry the queue
+        // banks, the drain the two updates the crossing answers — the
+        // relight arm the lit kind the quiet wall restores)
+        for _ in 0..2 {
+            app.update();
+        }
         assert_eq!(
             app.offline_world.as_ref().unwrap().get(c, top, c),
             w::REDSTONE_WALL_TORCH,
@@ -108378,6 +108506,118 @@ cow_sound_variant: None,
             app.offline_world.as_ref().unwrap().get(c, top, c + 1),
             w::REDSTONE_WIRE_ON,
             "the light the restore re-banks"
+        );
+    }
+
+    #[test]
+    fn the_redstone_torch_the_burnout_the_voices_and_the_cooldown_wear() {
+        // THE BURNOUT'S OWN APP LANE (the dev-50 round — javap
+        // RedstoneTorchBlock.tick pc 118-149 + isToggledTooFrequently
+        // pc 0-105 the 26.2 jar the probe scripts/jar_work/
+        // redstone_torch_666.out banks: the 7 backfilled rows the
+        // window keeps, the 8th extinguish the consult's +2 entry the
+        // drain's own beat answers, the BURNOUT verdict the
+        // levelEvent 1502 walk the five puffs + the burnout voice
+        // fires, the scheduleTick(pos, this, 160) cooldown retry the
+        // queue banks, the pending cooldown the re-consult's +2 the
+        // dedup refuses — the relight the quiet floor the gate
+        // refuses while the window's rows the burnout keeps)
+        use crate::world as w;
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            world.set(c, top - 1, c, w::STONE);
+            world.set(c, top, c, w::REDSTONE_TORCH);
+            // THE 7 BACKFILLED ROWS (the window the 8th verdict reads —
+            // the same pos the per-pos count arms)
+            for when in 0..7u64 {
+                world.torch_toggles.push((when, c, top, c));
+            }
+        }
+        app.particles.clear();
+        // THE POWERED FLOOR'S OWN CONSULT (the lever ON the +2 entry
+        // the queue banks — the lit torch the schedule the SAME beat
+        // keeps [the immediate verdict the tick walk retires])
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            world.set(c - 1, top - 1, c, w::LEVER_ON);
+        }
+        app.attach_wire_voice(c - 1, top - 1, c);
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            w::REDSTONE_TORCH,
+            "the pending +2 the lit kind the schedule keeps"
+        );
+        // THE BURNOUT'S OWN LANDING (the drain the two updates the
+        // crossing answers — the 8th extinguish the verdict speaks)
+        for _ in 0..2 {
+            app.update();
+        }
+        {
+            let world = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                world.get(c, top, c),
+                w::REDSTONE_TORCH_OFF,
+                "the 8th extinguish the OFF kind speaks"
+            );
+            assert_eq!(world.torch_toggles.len(), 8, "the 7 + the 8th the window banks");
+            assert!(
+                !world.torch_ticks.is_empty(),
+                "the cooldown retry the queue banks"
+            );
+        }
+        // THE FIVE PUFFS' OWN ROW (the levelEvent 1502 walk the
+        // provider banks — the shifted corner bands the SMOKE kind
+        // keeps)
+        assert_eq!(app.particles.len(), 5, "the iconst_5 the burnout loop keeps");
+        for p in &app.particles {
+            assert!(
+                matches!(p.kind, crate::particles::ParticleKind::Smoke),
+                "the SMOKE type the provider answers"
+            );
+        }
+        // THE VOICE'S OWN ROW (the block.redstone_torch.burnout the
+        // pitched walk speaks — the events the table's own rows bank)
+        if sounds_loaded() {
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("block.redstone_torch.burnout ")),
+                "the burnout voice the levelEvent row speaks"
+            );
+        }
+        // THE COOLDOWN'S OWN SILENCE (the pending 160 the re-consult's
+        // +2 the dedup refuses — the lever's own toggle the consult
+        // the queue never re-arms, the relight the quiet floor the
+        // gate keeps)
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            world.set(c - 1, top - 1, c, w::LEVER);
+        }
+        app.attach_wire_voice(c - 1, top - 1, c);
+        for _ in 0..2 {
+            app.update();
+        }
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            w::REDSTONE_TORCH_OFF,
+            "the cooldown the OFF kind the relight gate keeps"
+        );
+        // THE WINDOW'S OWN EXPIRY (the 160-tick retry the trim the
+        // stale rows clears — the relight the quiet floor the lit
+        // kind restores)
+        for _ in 0..165 {
+            app.update();
+        }
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            w::REDSTONE_TORCH,
+            "the cooled retry the lit kind restores"
         );
     }
 

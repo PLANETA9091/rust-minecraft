@@ -6107,6 +6107,19 @@ pub struct FireTickOutcome {
     pub popped: Vec<((i32, i32, i32), u16)>,
 }
 
+/// THE REDSTONE TORCH'S OWN TICK OUTCOME (the dev-50 round — the
+/// [`World::redstone_torch_tick`] walk's own verdict the caller's
+/// lanes read): the `changed` row the relight+remesh the flip arms,
+/// the `flipped` cell the wire recompute's own seeds the caller
+/// banks, the `burnout` row the levelEvent 1502 walk the caller's
+/// own smoke lane fires.
+#[derive(Debug, Clone, PartialEq)]
+pub struct RedstoneTorchTickOutcome {
+    pub changed: bool,
+    pub burnout: bool,
+    pub flipped: Option<(i32, i32, i32)>,
+}
+
 /// One block-ray hit — the vanilla `BlockHitResult`'s own shape: the hit
 /// voxel, the entry face's Direction ordinal, the exact hit location the
 /// wire's cursor floats subtract from (double math, float cast), and the
@@ -6317,6 +6330,40 @@ pub struct World {
     /// SERVER's word rides (the same split the fire lane's own
     /// authority keeps) — the queue the offline world alone fills.
     pub campfire_ticks: Vec<(u64, i32, i32, i32)>,
+    /// THE REDSTONE TORCH'S OWN SCHEDULE (the dev-50 round — the
+    /// neighborChanged walk's `scheduleTick(pos, this, 2)` arm the
+    /// 26.2 jar's own bytecode banks, the burnout arm's
+    /// `scheduleTick(pos, this, 160)` cooldown retry the same queue
+    /// feeds): the (due game tick, x, y, z) entries the consult walk
+    /// arms. THE SET'S OWN LAW the fire queue's walk keeps: ONE live
+    /// entry per pos — the `Level.getBlockTicks().hasScheduledTick(pos,
+    /// this)` gate the neighborChanged walk reads (javap RedstoneTorchBlock
+    /// .neighborChanged pc 23-34 the 26.2 jar: the second conjunct the
+    /// re-consult the pending entry refuses), the re-arms the dedup
+    /// drops. THE DRAIN the update walk's every-tick cadence serves
+    /// (the fire queue's own shape the same drain wears), the tick
+    /// walk [`World::redstone_torch_tick`] the flip arms answer. The
+    /// networked world the SERVER ticks (the same split the fire
+    /// lane's own authority keeps) — the queue the offline world
+    /// alone fills.
+    pub torch_ticks: Vec<(u64, i32, i32, i32)>,
+    /// THE RECENT_TOGGLES WINDOW (the dev-50 round — javap
+    /// RedstoneTorchBlock.isToggledTooFrequently pc 0-105 the 26.2
+    /// jar: the `RECENT_TOGGLES.computeIfAbsent(level, ...)` list the
+    /// `if (isLitNow) list.add(new Toggle(pos.immutable(),
+    /// level.getGameTime()))` row the LIT-true arm alone fills — the
+    /// Toggle the (pos, when) pair the record keeps [the isOn field
+    /// the old Toggle carried the 26.2 row never reads], the
+    /// extinguish flip alone the list gains). The per-pos count the
+    /// same walk reads (`toggle.pos.equals(pos)` the forward loop the
+    /// ++count arms, the `++count >= 8` verdict the BURNOUT row serves), the
+    /// 60-tick trim the tick walk's opening draw serves (javap tick
+    /// pc 23-73: the `gameTime - list.get(0).when > 60L` verdict the
+    /// remove(0) arm the oldest-first order the append law keeps).
+    /// The entries (when, x, y, z) the time order the append law
+    /// banks — the trim the head the oldest reads, the verdict the
+    /// whole list the pos filter answers.
+    pub torch_toggles: Vec<(u64, i32, i32, i32)>,
     /// THE BAMBOO'S OWN FALL QUEUE (the dig-side cascade's scheduled
     /// ticks — the fire queue's own shape the walk's one-tick lag
     /// wears): the (due game tick, x, y, z) entries the UNSUPPORTED
@@ -6691,6 +6738,8 @@ impl World {
             inhabited: Some(vec![0u64; chunks_per_side * chunks_per_side]), // the host world's own dwell clock
             fire_ticks: Vec::new(), // the fire's own queue: no fire, no schedule
             campfire_ticks: Vec::new(), // the campfire's own queue: no lit campfire, no walk
+            torch_ticks: Vec::new(), // the torch's own queue: no consult, no schedule
+            torch_toggles: Vec::new(), // the RECENT_TOGGLES window: no extinguish, no record
             bamboo_ticks: Vec::new(), // the bamboo's own queue: no unsupported stalk, no fall
             fire_age: std::collections::HashMap::new(), // the ladder's store: empty
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
@@ -7780,6 +7829,173 @@ impl World {
             return; // the Set's own verdict — the duplicate the add refuses
         }
         self.campfire_ticks.push((due, x, y, z));
+    }
+
+    /// THE REDSTONE TORCH'S OWN SCHEDULE ARM (the dev-50 round — javap
+    /// RedstoneTorchBlock.neighborChanged pc 0-44 the 26.2 jar, the
+    /// probe scripts/jar_work/redstone_torch_666.out banks: the
+    /// `LIT == hasNeighborSignal(...)` verdict AND the
+    /// `!level.getBlockTicks().hasScheduledTick(pos, this)` gate the
+    /// second conjunct the pending re-arm refuses, the
+    /// `level.scheduleTick(pos, this, 2)` walk the due+2 entry serves).
+    /// THE SET'S OWN LAW the fire queue's walk keeps: ONE live entry
+    /// per pos — the hasScheduledTick read the pending entry the dedup
+    /// answers, the burnout arm's own `scheduleTick(pos, this, 160)`
+    /// cooldown retry the SAME queue the same dedup guards (the
+    /// pending 160 the re-consult's +2 the gate refuses — the vanilla
+    /// cooldown the consult's own law keeps).
+    pub fn schedule_torch_tick(&mut self, due: u64, x: i32, y: i32, z: i32) {
+        if self
+            .torch_ticks
+            .iter()
+            .any(|&(_, px, py, pz)| px == x && py == y && pz == z)
+        {
+            return; // the hasScheduledTick verdict — the pending entry the re-consult refuses
+        }
+        self.torch_ticks.push((due, x, y, z));
+    }
+
+    /// THE TORCH QUEUE'S OWN DRAIN (the fire queue's own shape the
+    /// update walk's every-tick cadence wears): the due-at-or-before-
+    /// `now` entries the queue gives UP, the time order the stable
+    /// sort banks — the caller's own walk
+    /// [`World::redstone_torch_tick`] the flip arms answer.
+    pub fn drain_due_torch_ticks(&mut self, now: u64) -> Vec<(i32, i32, i32)> {
+        let mut due_cells: Vec<(u64, i32, i32, i32)> = Vec::new();
+        self.torch_ticks.retain(|&(at, x, y, z)| {
+            if at <= now {
+                due_cells.push((at, x, y, z));
+                false
+            } else {
+                true
+            }
+        });
+        due_cells.sort_by_key(|&(at, _, _, _)| at);
+        due_cells
+            .into_iter()
+            .map(|(_, x, y, z)| (x, y, z))
+            .collect()
+    }
+
+    /// THE RECENT_TOGGLES' OWN TRIM (javap RedstoneTorchBlock.tick pc
+    /// 23-73 the 26.2 jar: the `while (list != null && !list.isEmpty()
+    /// && level.getGameTime() - list.get(0).when > 60L) list.remove(0)`
+    /// walk the opening draw serves — the head the OLDEST entry the
+    /// append order keeps, the expired rows the window's own law
+    /// drops). The tick walk's own head the trim the every-tick
+    /// cadence claims — the verdict walk reads the trimmed list.
+    pub fn trim_torch_toggles(&mut self, now: u64) {
+        while let Some(&(when, _, _, _)) = self.torch_toggles.first() {
+            if now.saturating_sub(when) > 60 {
+                self.torch_toggles.remove(0);
+            } else {
+                break;
+            }
+        }
+    }
+
+    /// THE BURNOUT'S OWN VERDICT (javap RedstoneTorchBlock
+    /// .isToggledTooFrequently pc 0-105 the 26.2 jar: the
+    /// `RECENT_TOGGLES.computeIfAbsent` list the lambda's own empty
+    /// vec banks, the `if (isLitNow) list.add(new Toggle(pos
+    /// .immutable(), level.getGameTime()))` row the LIT-true arm ALONE
+    /// fills — the relight arm's isLitNow=false the read-only count
+    /// wears, the record the extinguish flip alone gains; the forward
+    /// loop the `toggle.pos.equals(pos)` filter the ++count arms, the
+    /// `++count >= 8` verdict the BURNOUT row serves). The caller's
+    /// own trim the 60-tick window the opening draw keeps — the
+    /// verdict the trimmed list the per-pos count reads.
+    pub fn torch_burnout_verdict(&mut self, now: u64, x: i32, y: i32, z: i32, is_lit_now: bool) -> bool {
+        if is_lit_now {
+            self.torch_toggles.push((now, x, y, z)); // the LIT-true arm the record alone gains
+        }
+        let mut count: usize = 0;
+        for &(when, px, py, pz) in &self.torch_toggles {
+            let _ = when;
+            if px == x && py == y && pz == z {
+                count += 1;
+                if count >= 8 {
+                    return true; // the ++count >= 8 verdict the BURNOUT row speaks
+                }
+            }
+        }
+        false
+    }
+
+    /// THE TORCH'S OWN TICK WALK (the dev-50 round — javap
+    /// RedstoneTorchBlock.tick pc 0-190 the 26.2 jar, the probe
+    /// scripts/jar_work/redstone_torch_666.out banks): the drain's own
+    /// due entries this walk answers, the vanilla arms verbatim —
+    /// the `boolean flag = hasNeighborSignal(level, pos, state)` read
+    /// the consult's own cell wears (the standing pair the floor read
+    /// serves, the WALL pair the attached cell the variant decode
+    /// answers — the [`wall_torch_attached_offset`] walk the consult's
+    /// own lane wears), the 60-tick trim the opening draw claims, the
+    /// LIT arm the `if (flag)` verdict the setBlock(LIT=false) +
+    /// isToggledTooFrequently(level, pos, true) walk serves (the
+    /// levelEvent 1502 the burnout row fires, the scheduleTick(pos,
+    /// this, 160) cooldown retry the same queue the verdict arms), the
+    /// `!LIT && !flag && !isToggledTooFrequently(level, pos, false)`
+    /// conjunct the relight arm serves (the setBlock(LIT=true) the
+    /// quiet floor restores — the verdict the read-only count wears,
+    /// the record the relight never adds). The stale entry the kind
+    /// gate drops (the fire walk's own law the drain shares).
+    pub fn redstone_torch_tick(&mut self, now: u64, x: i32, y: i32, z: i32) -> RedstoneTorchTickOutcome {
+        let mut out = RedstoneTorchTickOutcome {
+            changed: false,
+            burnout: false,
+            flipped: None,
+        };
+        self.trim_torch_toggles(now); // the opening draw the 60-tick window keeps
+        let kind = self.get(x, y, z);
+        if !is_redstone_torch(kind) {
+            return out; // the stale entry the kind gate drops
+        }
+        // THE CONSULT'S OWN CELL (the standing pair the floor read
+        // wears, the WALL pair the attached cell the variant decode
+        // answers — the same walk the consult lane banks)
+        let (px, py, pz) = if is_redstone_wall_torch(kind) {
+            let (dx, dy, dz) = wall_torch_attached_offset(wall_torch_facing_of(self.variant(x, y, z)));
+            (x + dx, y + dy, z + dz)
+        } else {
+            (x, y - 1, z)
+        };
+        let powered = redstone_signal_at(self, px, py, pz);
+        let lit = redstone_torch_lit(kind);
+        if lit {
+            if powered {
+                // THE EXTINGUISH ARM (the setBlock(LIT=false) the flag-3
+                // walk serves — the verdict the hasNeighborSignal read arms)
+                if let Some(next) = redstone_torch_toggled(kind) {
+                    self.set(x, y, z, next);
+                    out.changed = true;
+                    out.flipped = Some((x, y, z));
+                    // THE BURNOUT'S OWN ROW (the
+                    // isToggledTooFrequently(level, pos, true) verdict
+                    // the record the flip banks — the levelEvent 1502
+                    // the caller's own smoke walk fires, the
+                    // scheduleTick(pos, this, 160) cooldown retry the
+                    // same queue the verdict arms)
+                    if self.torch_burnout_verdict(now, x, y, z, true) {
+                        out.burnout = true;
+                        self.schedule_torch_tick(now + 160, x, y, z);
+                    }
+                }
+            }
+        } else if !powered {
+            // THE RELIGHT ARM (the `!flag &&
+            // !isToggledTooFrequently(level, pos, false)` conjunct the
+            // setBlock(LIT=true) walk serves — the read-only verdict
+            // the record the arm never adds)
+            if !self.torch_burnout_verdict(now, x, y, z, false) {
+                if let Some(next) = redstone_torch_toggled(kind) {
+                    self.set(x, y, z, next);
+                    out.changed = true;
+                    out.flipped = Some((x, y, z));
+                }
+            }
+        }
+        out
     }
 
     /// THE SIGNAL FIRE'S OWN VERDICT (javap CampfireBlock.isSmokeSource
@@ -10667,6 +10883,124 @@ mod tests {
         // the not-yet-due entry the drain keeps
         assert!(w.drain_due_campfire_ticks(100).is_empty(), "the future entry the drain keeps");
         assert_eq!(w.drain_due_campfire_ticks(101), vec![(x, y, z)]);
+    }
+
+    #[test]
+    fn the_redstone_torch_the_two_tick_schedule_and_the_burnout_window_wear() {
+        // THE TORCH'S OWN SCHEDULED LANE (the dev-50 round — javap
+        // RedstoneTorchBlock.neighborChanged pc 20-44 + tick pc 0-190 +
+        // isToggledTooFrequently pc 0-105 the 26.2 jar the probe
+        // scripts/jar_work/redstone_torch_666.out banks): the
+        // scheduleTick(pos, this, 2) entry the consult arms, the
+        // hasScheduledTick dedup the re-consult refuses, the drain the
+        // due beat gives up, the tick walk's extinguish arm the
+        // setBlock(LIT=false) + the record the verdict banks, the
+        // per-pos 8-row window the BURNOUT verdict serves (the
+        // levelEvent 1502 + the scheduleTick(pos, this, 160) cooldown
+        // retry the same queue the verdict arms), the relight gate the
+        // burnout rows the window keeps, the 160-tick retry the trim
+        // the window clears, the relight the quiet floor restores, the
+        // per-pos law the OTHER torch's rows the count never reads.
+        let mut w = World::new(1, 0x70B2);
+        let (x, y, z) = (4, 40, 4);
+        w.set(x, y - 1, z, STONE);
+        w.set(x, y, z, REDSTONE_TORCH);
+        // THE SCHEDULE'S OWN DEDUP (the hasScheduledTick gate the
+        // pending re-consult refuses — the ONE live entry per pos the
+        // Set law keeps)
+        w.schedule_torch_tick(10, x, y, z);
+        w.schedule_torch_tick(11, x, y, z);
+        assert_eq!(w.torch_ticks, vec![(10, x, y, z)], "the dedup the re-consult refuses");
+        assert!(
+            w.drain_due_torch_ticks(9).is_empty(),
+            "the future entry the drain keeps"
+        );
+        assert_eq!(w.drain_due_torch_ticks(10), vec![(x, y, z)]);
+        assert!(w.torch_ticks.is_empty(), "the due entry the drain gives up");
+        // THE EXTINGUISH ARM (the powered floor the tick walk's own
+        // verdict wears — the setBlock(LIT=false) walk the record the
+        // verdict banks [the isLitNow=true arm the extinguish alone
+        // fills])
+        w.set(x - 1, y - 1, z, LEVER_ON);
+        let out = w.redstone_torch_tick(10, x, y, z);
+        assert!(out.changed && !out.burnout, "the lit + powered arm the flip speaks");
+        assert_eq!(out.flipped, Some((x, y, z)));
+        assert_eq!(w.get(x, y, z), REDSTONE_TORCH_OFF);
+        assert_eq!(w.torch_toggles, vec![(10, x, y, z)], "the record the extinguish alone gains");
+        // THE BURNOUT'S OWN WINDOW (the first extinguish's own row the
+        // walk already banked, the 6 backfilled rows the window keeps
+        // [1 + 6 = 7 the verdict reads], the 8th extinguish the
+        // verdict serves — the per-pos count the ++count >= 8 row
+        // speaks, the levelEvent 1502 + the scheduleTick(160) cooldown
+        // the same verdict arms)
+        w.set(x, y, z, REDSTONE_TORCH);
+        for when in 0..6u64 {
+            w.torch_toggles.push((when, x, y, z));
+        }
+        let out = w.redstone_torch_tick(12, x, y, z);
+        assert!(
+            out.changed && out.burnout,
+            "the 8th extinguish the BURNOUT verdict speaks"
+        );
+        assert_eq!(w.get(x, y, z), REDSTONE_TORCH_OFF);
+        assert_eq!(w.torch_toggles.len(), 8, "the 7 backfilled + the 8th the window banks");
+        assert_eq!(
+            w.torch_ticks,
+            vec![(12 + 160, x, y, z)],
+            "the cooldown retry the verdict arms"
+        );
+        // THE COOLDOWN'S OWN DEDUP (the pending 160 the re-consult's
+        // +2 the gate refuses — the vanilla cooldown the consult's own
+        // law keeps)
+        w.schedule_torch_tick(14, x, y, z);
+        assert_eq!(w.torch_ticks.len(), 1, "the pending cooldown the re-consult refuses");
+        // THE RELIGHT'S OWN GATE (the quiet floor the relight arm
+        // reads — the burnout rows the window keeps the verdict
+        // refuses [the read-only count the relight never adds])
+        w.set(x - 1, y - 1, z, AIR);
+        let out = w.redstone_torch_tick(14, x, y, z);
+        assert!(
+            !out.changed,
+            "the unexpired burnout rows the relight gate refuses"
+        );
+        assert_eq!(w.get(x, y, z), REDSTONE_TORCH_OFF, "the gated kind the OFF keeps");
+        // THE 160-TICK RETRY (the trim the window's own law the stale
+        // rows clears — the verdict the empty list the relight
+        // restores)
+        let out = w.redstone_torch_tick(12 + 160, x, y, z);
+        assert!(out.changed && !out.burnout, "the cooled retry the relight restores");
+        assert_eq!(w.get(x, y, z), REDSTONE_TORCH, "the quiet floor the lit kind restores");
+        // THE POWERED QUIET (the lit-off pair the powered floor the
+        // relight arm never wears — the two arms' own verdicts keep)
+        w.set(x, y, z, REDSTONE_TORCH_OFF);
+        w.set(x - 1, y - 1, z, LEVER_ON);
+        let out = w.redstone_torch_tick(200, x, y, z);
+        assert!(!out.changed, "the powered floor the OFF kind keeps");
+        assert_eq!(w.get(x, y, z), REDSTONE_TORCH_OFF);
+        // THE TRIM'S OWN LAW (the expired head the window drops — the
+        // fresh row the 60-tick law keeps)
+        w.set(x - 1, y - 1, z, AIR);
+        w.torch_toggles.clear();
+        w.torch_toggles.push((0, x, y, z));
+        w.torch_toggles.push((70, x + 1, y, z));
+        w.trim_torch_toggles(70);
+        assert_eq!(
+            w.torch_toggles,
+            vec![(70, x + 1, y, z)],
+            "the expired head the window drops, the fresh row keeps"
+        );
+        // THE PER-POS LAW (the OTHER torch's rows the count never
+        // reads — the pos filter the equals row serves)
+        w.torch_toggles.clear();
+        for when in 0..9u64 {
+            w.torch_toggles.push((when, x + 5, y, z));
+        }
+        w.trim_torch_toggles(100);
+        assert!(w.torch_toggles.is_empty(), "the stale rows the window clears");
+        assert!(
+            !w.torch_burnout_verdict(100, x, y, z, false),
+            "the other pos's rows the per-pos count refuses"
+        );
     }
 
 
