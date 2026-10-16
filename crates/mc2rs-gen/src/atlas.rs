@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 328] = [
+pub const RUNTIME_PALETTE: [&str; 350] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1110,6 +1110,48 @@ pub const RUNTIME_PALETTE: [&str; 328] = [
     // the same name banks (the registry_names walk the _open strip
     // the door family's own law keeps).
     "oak_trapdoor", "oak_trapdoor_open",
+    // THE TRAPDOOR LADDER'S OWN WOOD RUNGS (the autopush-669 round —
+    // scripts/jar_work/trapdoor_woods_669.txt banks): the eleven
+    // remaining wooden trapdoors the oak lane's own walk generalizes
+    // (the door family's wood order the rungs wear — the dev-43
+    // round's spruce/birch/jungle/acacia/dark_oak/mangrove/cherry/
+    // pale_oak/bamboo/crimson/warped sequence the contiguity law
+    // keeps). Every wood the SAME two-kind pair the OPEN bit the ±1
+    // mate carries, the FACING + HALF bits the variant byte's own
+    // seats bank (the oak round's own vocabulary every rung shares).
+    // The blockstates' {wood}_trapdoor.json the 16-row maps the per-
+    // row arms read (the closed facing=east,half=bottom,open=false
+    // rows the block/{wood}_trapdoor_bottom models answer, the open
+    // facing=north,half=bottom,open=true rows the block/{wood}_
+    // trapdoor_open models keep — the probe's 16-row census the
+    // eleven woods the SAME key shape speaks), the template parents
+    // the ONE-element chains bank (the ten orientable woods the
+    // template_orientable_trapdoor_* parents wear, the dark_oak the
+    // oak's own template_trapdoor_* chain keeps — the same geometry
+    // both template families bank), the {wood}_trapdoor.png masters
+    // the 16x16 tiles the bank gains (the acacia's colortype-6 RGBA
+    // row the tile walk handles), the {wood} clinit rows the
+    // Properties chains the oak's own row speaks (the mapColor/instrument/
+    // strength(3.0f)/noOcclusion chains the per-wood map colors wear),
+    // the Items clinit rows the registerBlock pairings the placement
+    // lane grants. The set types the voice stems split (the official
+    // sounds.json the four pairs banks): the plain woods the WOODEN
+    // set type's block.wooden_trapdoor pair speaks, the cherry the
+    // CHERRY_WOOD set type's block.cherry_wood_trapdoor pair wears,
+    // the bamboo the BAMBOO_WOOD pair keeps, the crimson/warped the
+    // NETHER_WOOD pair answers (the door family's own stem law the
+    // trapdoors share).
+    "spruce_trapdoor", "spruce_trapdoor_open",
+    "birch_trapdoor", "birch_trapdoor_open",
+    "jungle_trapdoor", "jungle_trapdoor_open",
+    "acacia_trapdoor", "acacia_trapdoor_open",
+    "dark_oak_trapdoor", "dark_oak_trapdoor_open",
+    "mangrove_trapdoor", "mangrove_trapdoor_open",
+    "cherry_trapdoor", "cherry_trapdoor_open",
+    "pale_oak_trapdoor", "pale_oak_trapdoor_open",
+    "bamboo_trapdoor", "bamboo_trapdoor_open",
+    "crimson_trapdoor", "crimson_trapdoor_open",
+    "warped_trapdoor", "warped_trapdoor_open",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -1335,24 +1377,30 @@ fn resolve_block(
     // exactly ONE). The HALF=top closed state the mesher's own model
     // choice serves (the block/oak_trapdoor_top parent the [0,13,0]
     // chain the variant byte's half bit picks — the KIND's tile the
-    // same sprite the three models share).
-    if block == "oak_trapdoor" || block == "oak_trapdoor_open" {
-        let open = block == "oak_trapdoor_open";
+    // same sprite the three models share). THE LADDER THE SAME WALK
+    // WEARS (the autopush-669 round — the eleven wooden rungs the
+    // family base scan serves, the {base}_trapdoor.json rows the
+    // per-wood arms read, the probe scripts/jar_work/trapdoor_woods_
+    // 669.txt banks).
+    if let Some(base) = trapdoor_family_base(block) {
+        let open = block.ends_with("_open");
         let key = if open {
             "facing=north,half=bottom,open=true"
         } else {
             "facing=east,half=bottom,open=false"
         };
-        let bs_bytes =
-            read_jar(archive, "assets/minecraft/blockstates/oak_trapdoor.json")?;
+        let bs_bytes = read_jar(
+            archive,
+            &format!("assets/minecraft/blockstates/{base}.json"),
+        )?;
         let bs: Value = serde_json::from_slice(&bs_bytes)
-            .with_context(|| "blockstate oak_trapdoor: json parse")?;
+            .with_context(|| format!("blockstate {base}: json parse"))?;
         let model_ref = bs
             .get("variants")
             .and_then(|v| v.get(key))
             .and_then(|v| v.get("model"))
             .and_then(|m| m.as_str())
-            .with_context(|| format!("blockstate oak_trapdoor: no {key} model"))?
+            .with_context(|| format!("blockstate {base}: no {key} model"))?
             .trim_start_matches("minecraft:")
             .to_string();
         return full_cube_faces(archive, &model_ref)
@@ -1540,6 +1588,30 @@ fn door_row_model(
         .trim_start_matches("minecraft:")
         .to_string();
     Ok(model_ref)
+}
+
+/// THE TRAPDOOR FAMILY'S OWN GATE (the autopush-669 round): the
+/// palette rows the twelve wooden rungs wear — the `{wood}_trapdoor`
+/// base the row arm's blockstate read keys (the `_open` suffix the
+/// strip walk peels — the both-suffix rows the open kinds answer).
+/// The eleven rungs the oak round's own walk generalizes, the probe
+/// scripts/jar_work/trapdoor_woods_669.txt the 16-row maps banks.
+const TRAPDOOR_FAMILY_BASES: [&str; 12] = [
+    "oak_trapdoor", "spruce_trapdoor", "birch_trapdoor",
+    "jungle_trapdoor", "acacia_trapdoor", "dark_oak_trapdoor",
+    "mangrove_trapdoor", "cherry_trapdoor", "pale_oak_trapdoor",
+    "bamboo_trapdoor", "crimson_trapdoor", "warped_trapdoor",
+];
+
+/// The palette row's `{wood}_trapdoor` base the family gate answers
+/// (the `_open` suffix the strip walk peels — the non-family rows the
+/// None the generic arms serve).
+fn trapdoor_family_base(block: &str) -> Option<&'static str> {
+    let stem = block.strip_suffix("_open").unwrap_or(block);
+    TRAPDOOR_FAMILY_BASES
+        .iter()
+        .copied()
+        .find(|b| *b == stem)
 }
 
 fn resolve_flat_stem(stem: &str, tinted: bool) -> [ResolvedFace; 6] {

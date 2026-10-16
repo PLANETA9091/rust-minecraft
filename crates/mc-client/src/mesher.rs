@@ -213,7 +213,7 @@ fn is_transparent(kind: u16) -> bool {
         // neighbors' faces draw against, the AO the opaque walk never
         // casts, the element geometry the trapdoor arm's own lane
         // renders)
-        || crate::world::is_oak_trapdoor(kind)
+        || crate::world::is_trapdoor(kind)
 }
 
 /// Only opaque blocks cast ambient occlusion (air/water/leaves never darken
@@ -2979,7 +2979,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                 // vertices AND the cullfaces rotate together (the
                 // door lane's own walk shares), the closed models the
                 // identity steps the slab never turns.
-                if crate::world::is_oak_trapdoor(id) {
+                if crate::world::is_trapdoor(id) {
                     let sky_factor = world.sky_light_factor.unwrap_or(1.0)
                         * world
                             .day_tick
@@ -3022,7 +3022,11 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     let open = crate::world::trapdoor_open(id);
                     let half_top = crate::world::trapdoor_half_top(variant);
                     let facing = crate::world::trapdoor_facing_of(variant);
-                    let element_quads = trapdoor_model_quads(half_top, open);
+                    // THE LADDER'S OWN STEM (the kind's own wood the
+                    // stem walk answers — the per-wood models the bake
+                    // reads, the unknown id the empty slice keeps)
+                    let stem = crate::world::trapdoor_stem_of(id).unwrap_or("oak_trapdoor");
+                    let element_quads = trapdoor_model_quads(stem, half_top, open);
                     // THE STEPS' OWN TABLE (the open's swing the
                     // blockstate y values fold — north 0, east 1, south
                     // 2, west 3 — the closed slabs the identity the
@@ -3964,42 +3968,79 @@ fn redstone_wall_torch_model_quads(lit: bool) -> &'static [mc_registry::element_
     })
 }
 
-/// THE TRAPDOOR'S OWN MODEL BAKES (the autopush-668 round — the
-/// block/oak_trapdoor_bottom, block/oak_trapdoor_top and
-/// block/oak_trapdoor_open chains the registry's derive walk
-/// resolves, the torch lane's own cache pattern): the CLOSED kinds
-/// walk the parent links to block/template_trapdoor_bottom's and
-/// block/template_trapdoor_top's ONE-element geometry (the bottom
-/// slab [0,0,0]->[16,3,16] the six-face row the HALF=bottom state
-/// wears, the top slab [0,13,0]->[16,16,16] the HALF=top state
-/// keeps), the OPEN kind walks the block/template_trapdoor_open
-/// parent the [0,0,13]->[16,16,16] north-strip panel answers — the
-/// merged texture map's `#texture` ref the per-quad texture name
-/// answers (the oak_trapdoor master tile the kind's own seat banks —
+/// THE TRAPDOOR LADDER'S OWN MODEL BAKES (the autopush-669 round —
+/// the per-stem chains the registry's derive walk resolves, the oak
+/// round's own cache pattern the wood rungs wear): the CLOSED kinds
+/// walk the parent links to block/{stem}_bottom's and block/{stem}_
+/// top's ONE-element geometry (the bottom slab [0,0,0]->[16,3,16]
+/// the HALF=bottom state wears, the top slab [0,13,0]->[16,16,16]
+/// the HALF=top state keeps), the OPEN kinds walk the block/{stem}_
+/// open parents the [0,0,13]->[16,16,16] north-strip panel answers —
+/// the merged texture map's `#texture` ref the per-quad texture name
+/// answers (the per-wood master tiles the kinds' own seats bank —
 /// the lane reads the KIND's own tile, the quads' texture name the
-/// lane never consults; the SAME sprite all three models share, the
-/// atlas's tile set the pair grew by exactly ONE). The open model's
-/// per-facing y-rotation the MESHER's own walk wears (the blockstate
-/// y-table north 0 / east 90 / south 180 / west 270 the rotated rows
-/// bank). The failed derive the honest empty slice keeps (the panel
-/// the nothing renders).
-fn trapdoor_model_quads(half_top: bool, open: bool) -> &'static [mc_registry::element_quads::Quad] {
-    static BOTTOM: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
-        std::sync::OnceLock::new();
-    static TOP: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
-        std::sync::OnceLock::new();
-    static OPEN: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
-        std::sync::OnceLock::new();
-    let (cache, model) = if open {
-        (&OPEN, "block/oak_trapdoor_open")
+/// lane never consults; the SAME sprite the three models of each
+/// wood share). The template parents the SAME geometry both families
+/// bank (the ten orientable woods the template_orientable_trapdoor_
+/// * chains wear, the oak/dark_oak pair the template_trapdoor_*
+/// chain keeps — the probe scripts/jar_work/trapdoor_woods_669.txt
+/// the census banks). The open models' per-facing y-rotation the
+/// MESHER's own walk wears. The failed derive the honest empty slice
+/// keeps (the panel the nothing renders).
+fn trapdoor_model_quads(
+    stem: &'static str,
+    half_top: bool,
+    open: bool,
+) -> &'static [mc_registry::element_quads::Quad] {
+    static QUADS: std::sync::OnceLock<
+        std::collections::HashMap<(&'static str, u8), Vec<mc_registry::element_quads::Quad>>,
+    > = std::sync::OnceLock::new();
+    let state = if open {
+        2u8
     } else if half_top {
-        (&TOP, "block/oak_trapdoor_top")
+        1u8
     } else {
-        (&BOTTOM, "block/oak_trapdoor_bottom")
+        0u8
     };
-    cache.get_or_init(|| {
-        mc_registry::element_quads::derive_model_inherited(model).unwrap_or_default()
-    })
+    // THE LADDER'S OWN PREBAKE (the 36 derives the ONE init serves —
+    // the twelve stems' three states the {stem}_bottom/{stem}_top/
+    // {stem}_open chains resolve, the absent model the honest skip
+    // keeps, the map the lookup's own answer banks)
+    let map = QUADS.get_or_init(|| {
+        let mut m = std::collections::HashMap::new();
+        for (st, suffix) in [(0u8, "bottom"), (1u8, "top"), (2u8, "open")] {
+            for s in crate::world::TRAPDOOR_KINDS.chunks(2).filter_map(|pair| {
+                crate::world::trapdoor_stem_of(pair[0])
+            }) {
+                let Some(wood) = s.strip_suffix("_trapdoor") else {
+                    continue;
+                };
+                let name = format!("block/{wood}_trapdoor_{suffix}");
+                let Some(model) = lookup_model(&name) else {
+                    continue;
+                };
+                m.entry((s, st))
+                    .or_insert_with(|| {
+                        mc_registry::element_quads::derive_model_inherited(model)
+                            .unwrap_or_default()
+                    });
+            }
+        }
+        m
+    });
+    map.get(&(stem, state))
+        .map(|v| v.as_slice())
+        .unwrap_or(&[])
+}
+
+/// THE MODEL REF'S OWN STATIC LIFT (the per-stem names the derive
+/// walk reads — the 'static borrow the table's own rows answer, the
+/// absent name the None the honest keep serves).
+fn lookup_model(name: &str) -> Option<&'static str> {
+    mc_registry::generated::models::MODELS
+        .iter()
+        .find(|(id, ..)| *id == name)
+        .map(|(id, ..)| *id)
 }
 
 /// THE CANDLE PAIR'S OWN MODEL BAKES — the block/candle_one_candle and

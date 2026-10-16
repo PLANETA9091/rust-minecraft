@@ -1,0 +1,72 @@
+=== BlockSetType fields (the sound event rows the clinit banks)
+7: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.TYPES:Ljava/util/Map;
+31: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.CODEC:Lcom/mojang/serialization/Codec;
+79: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.IRON:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+127: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.COPPER:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+175: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.GOLD:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+223: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.STONE:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+271: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.POLISHED_BLACKSTONE:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+286: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.OAK:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+301: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.SPRUCE:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+316: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.BIRCH:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+331: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.ACACIA:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+380: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.CHERRY:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+396: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.JUNGLE:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+412: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.DARK_OAK:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+428: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.PALE_OAK:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+477: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.CRIMSON:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+526: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.WARPED:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+542: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.MANGROVE:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+591: putstatic net/minecraft/world/level/block/state/properties/BlockSetType.BAMBOO:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+
+=== the eleven wooden trapdoor blockstates (the per-row arms read)
+spruce_trapdoor: rows=16 closed=minecraft:block/spruce_trapdoor_bottom open=minecraft:block/spruce_trapdoor_open
+birch_trapdoor: rows=16 closed=minecraft:block/birch_trapdoor_bottom open=minecraft:block/birch_trapdoor_open
+jungle_trapdoor: rows=16 closed=minecraft:block/jungle_trapdoor_bottom open=minecraft:block/jungle_trapdoor_open
+acacia_trapdoor: rows=16 closed=minecraft:block/acacia_trapdoor_bottom open=minecraft:block/acacia_trapdoor_open
+dark_oak_trapdoor: rows=16 closed=minecraft:block/dark_oak_trapdoor_bottom open=minecraft:block/dark_oak_trapdoor_open
+mangrove_trapdoor: rows=16 closed=minecraft:block/mangrove_trapdoor_bottom open=minecraft:block/mangrove_trapdoor_open
+cherry_trapdoor: rows=16 closed=minecraft:block/cherry_trapdoor_bottom open=minecraft:block/cherry_trapdoor_open
+pale_oak_trapdoor: rows=16 closed=minecraft:block/pale_oak_trapdoor_bottom open=minecraft:block/pale_oak_trapdoor_open
+bamboo_trapdoor: rows=16 closed=minecraft:block/bamboo_trapdoor_bottom open=minecraft:block/bamboo_trapdoor_open
+crimson_trapdoor: rows=16 closed=minecraft:block/crimson_trapdoor_bottom open=minecraft:block/crimson_trapdoor_open
+warped_trapdoor: rows=16 closed=minecraft:block/warped_trapdoor_bottom open=minecraft:block/warped_trapdoor_open
+
+=== the models' parent chains (the per-stem bakes the mesher reads)
+spruce_trapdoor: bottom:minecraft:block/template_orientable_trapdoor_bottom top:minecraft:block/template_orientable_trapdoor_top open:minecraft:block/template_orientable_trapdoor_open
+birch_trapdoor: bottom:minecraft:block/template_orientable_trapdoor_bottom top:minecraft:block/template_orientable_trapdoor_top open:minecraft:block/template_orientable_trapdoor_open
+jungle_trapdoor: bottom:minecraft:block/template_orientable_trapdoor_bottom top:minecraft:block/template_orientable_trapdoor_top open:minecraft:block/template_orientable_trapdoor_open
+acacia_trapdoor: bottom:minecraft:block/template_orientable_trapdoor_bottom top:minecraft:block/template_orientable_trapdoor_top open:minecraft:block/template_orientable_trapdoor_open
+dark_oak_trapdoor: bottom:minecraft:block/template_trapdoor_bottom top:minecraft:block/template_trapdoor_top open:minecraft:block/template_trapdoor_open
+mangrove_trapdoor: bottom:minecraft:block/template_orientable_trapdoor_bottom top:minecraft:block/template_orientable_trapdoor_top open:minecraft:block/template_orientable_trapdoor_open
+cherry_trapdoor: bottom:minecraft:block/template_orientable_trapdoor_bottom top:minecraft:block/template_orientable_trapdoor_top open:minecraft:block/template_orientable_trapdoor_open
+pale_oak_trapdoor: bottom:minecraft:block/template_orientable_trapdoor_bottom top:minecraft:block/template_orientable_trapdoor_top open:minecraft:block/template_orientable_trapdoor_open
+bamboo_trapdoor: bottom:minecraft:block/template_orientable_trapdoor_bottom top:minecraft:block/template_orientable_trapdoor_top open:minecraft:block/template_orientable_trapdoor_open
+crimson_trapdoor: bottom:minecraft:block/template_orientable_trapdoor_bottom top:minecraft:block/template_orientable_trapdoor_top open:minecraft:block/template_orientable_trapdoor_open
+warped_trapdoor: bottom:minecraft:block/template_orientable_trapdoor_bottom top:minecraft:block/template_orientable_trapdoor_top open:minecraft:block/template_orientable_trapdoor_open
+
+=== the textures' dims (the tile bank's masters)
+spruce_trapdoor: 16x16 colortype 3
+birch_trapdoor: 16x16 colortype 3
+jungle_trapdoor: 16x16 colortype 3
+acacia_trapdoor: 16x16 colortype 6
+dark_oak_trapdoor: 16x16 colortype 3
+mangrove_trapdoor: 16x16 colortype 3
+cherry_trapdoor: 16x16 colortype 3
+pale_oak_trapdoor: 16x16 colortype 3
+bamboo_trapdoor: 16x16 colortype 3
+crimson_trapdoor: 16x16 colortype 3
+warped_trapdoor: 16x16 colortype 3
+
+=== the Items clinit rows (the registerBlock pairings)
+8214: putstatic net/minecraft/world/item/Items.SPRUCE_TRAPDOOR:Lnet/minecraft/world/item/Item; 8217: getstatic net/minecraft/references/BlockItemIds.BIRCH_TRAPDOOR:Lnet/minecraft/references/BlockItemId; 8220: getstatic net/minecraft/world/level/block/Blocks.BIRCH_TRAPDOOR:Lnet/minecraft/world/level/block/Block; 8223: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+8226: putstatic net/minecraft/world/item/Items.BIRCH_TRAPDOOR:Lnet/minecraft/world/item/Item; 8229: getstatic net/minecraft/references/BlockItemIds.JUNGLE_TRAPDOOR:Lnet/minecraft/references/BlockItemId; 8232: getstatic net/minecraft/world/level/block/Blocks.JUNGLE_TRAPDOOR:Lnet/minecraft/world/level/block/Block; 8235: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+8238: putstatic net/minecraft/world/item/Items.JUNGLE_TRAPDOOR:Lnet/minecraft/world/item/Item; 8241: getstatic net/minecraft/references/BlockItemIds.ACACIA_TRAPDOOR:Lnet/minecraft/references/BlockItemId; 8244: getstatic net/minecraft/world/level/block/Blocks.ACACIA_TRAPDOOR:Lnet/minecraft/world/level/block/Block; 8247: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+8250: putstatic net/minecraft/world/item/Items.ACACIA_TRAPDOOR:Lnet/minecraft/world/item/Item; 8253: getstatic net/minecraft/references/BlockItemIds.CHERRY_TRAPDOOR:Lnet/minecraft/references/BlockItemId; 8256: getstatic net/minecraft/world/level/block/Blocks.CHERRY_TRAPDOOR:Lnet/minecraft/world/level/block/Block; 8259: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+8274: putstatic net/minecraft/world/item/Items.DARK_OAK_TRAPDOOR:Lnet/minecraft/world/item/Item; 8277: getstatic net/minecraft/references/BlockItemIds.PALE_OAK_TRAPDOOR:Lnet/minecraft/references/BlockItemId; 8280: getstatic net/minecraft/world/level/block/Blocks.PALE_OAK_TRAPDOOR:Lnet/minecraft/world/level/block/Block; 8283: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+8298: putstatic net/minecraft/world/item/Items.MANGROVE_TRAPDOOR:Lnet/minecraft/world/item/Item; 8301: getstatic net/minecraft/references/BlockItemIds.BAMBOO_TRAPDOOR:Lnet/minecraft/references/BlockItemId; 8304: getstatic net/minecraft/world/level/block/Blocks.BAMBOO_TRAPDOOR:Lnet/minecraft/world/level/block/Block; 8307: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+8262: putstatic net/minecraft/world/item/Items.CHERRY_TRAPDOOR:Lnet/minecraft/world/item/Item; 8265: getstatic net/minecraft/references/BlockItemIds.DARK_OAK_TRAPDOOR:Lnet/minecraft/references/BlockItemId; 8268: getstatic net/minecraft/world/level/block/Blocks.DARK_OAK_TRAPDOOR:Lnet/minecraft/world/level/block/Block; 8271: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+8286: putstatic net/minecraft/world/item/Items.PALE_OAK_TRAPDOOR:Lnet/minecraft/world/item/Item; 8289: getstatic net/minecraft/references/BlockItemIds.MANGROVE_TRAPDOOR:Lnet/minecraft/references/BlockItemId; 8292: getstatic net/minecraft/world/level/block/Blocks.MANGROVE_TRAPDOOR:Lnet/minecraft/world/level/block/Block; 8295: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+8310: putstatic net/minecraft/world/item/Items.BAMBOO_TRAPDOOR:Lnet/minecraft/world/item/Item; 8313: getstatic net/minecraft/references/BlockItemIds.CRIMSON_TRAPDOOR:Lnet/minecraft/references/BlockItemId; 8316: getstatic net/minecraft/world/level/block/Blocks.CRIMSON_TRAPDOOR:Lnet/minecraft/world/level/block/Block; 8319: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+8322: putstatic net/minecraft/world/item/Items.CRIMSON_TRAPDOOR:Lnet/minecraft/world/item/Item; 8325: getstatic net/minecraft/references/BlockItemIds.WARPED_TRAPDOOR:Lnet/minecraft/references/BlockItemId; 8328: getstatic net/minecraft/world/level/block/Blocks.WARPED_TRAPDOOR:Lnet/minecraft/world/level/block/Block; 8331: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+8334: putstatic net/minecraft/world/item/Items.WARPED_TRAPDOOR:Lnet/minecraft/world/item/Item; 8337: getstatic net/minecraft/references/BlockItemIds.COPPER_TRAPDOOR:Lnet/minecraft/world/level/block/WeatheringCopperCollection; 8340: getstatic net/minecraft/world/level/block/Blocks.COPPER_TRAPDOOR:Lnet/minecraft/world/level/block/WeatheringCopperCollection; 8343: invokedynamic indy
