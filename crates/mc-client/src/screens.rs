@@ -36226,6 +36226,11 @@ impl App {
             // broadcast the consult here the flipped cells never
             // carries: the torch the schedule the consult's own scope
             // banks, the kind the +2 beat the tick answers).
+            // THE LAMP'S OWN SEEDS (the autopush-672 round — the wire
+            // flips' own cells the run's tail lamps the flood's own
+            // reach banks, the changed cell's own six the placement
+            // scan the same set wears)
+            let mut lamp_seeds: Vec<(i32, i32, i32)> = Vec::new();
             {
                 let read = &*world;
                 let mut seeds: Vec<(i32, i32, i32)> = vec![(lx, ly, lz)];
@@ -36245,6 +36250,8 @@ impl App {
                     world.set(wx, wy, wz, kind);
                     wire_cells.push((wx, wy, wz));
                 }
+                // THE LAMP'S OWN SEEDS the wire flips' own cells bank
+                lamp_seeds.extend(wire_cells.iter().copied());
                 // THE NOT-GATE'S OWN CASCADE (the dev-51 round — javap
                 // RedstoneTorchBlock.neighborChanged pc 0-44: the wire's
                 // own setBlock the flag-3 beat the neighbor torches the
@@ -36374,6 +36381,37 @@ impl App {
             // single-cell flip serves)
             for ((dx, dy, dz), flip) in trapdoor_flips.iter() {
                 world.set(*dx, *dy, *dz, *flip);
+            }
+            // THE LAMP'S OWN CONSUMER ARM (the autopush-672 round — the
+            // RedstoneLampBlock's neighborChanged/updateShape walk the
+            // hasNeighborSignal verdict the lit fold serves — the
+            // registration's lightLevel 15 the lit row's own glow
+            // speaks): the placed cell + its own six AND the wire
+            // flips' own cells the seed set banks, the verdict walk
+            // the state-NEEDS-CHANGE lamp the flip banks, the apply
+            // the set walk serves, the relight the lit row's glow the
+            // grid re-paints (the remesh the attach tail's own
+            // re-speak banks)
+            lamp_seeds.push((lx, ly, lz));
+            for (dx, dy, dz) in [
+                (0, -1, 0),
+                (0, 1, 0),
+                (0, 0, -1),
+                (0, 0, 1),
+                (-1, 0, 0),
+                (1, 0, 0),
+            ] {
+                lamp_seeds.push((lx + dx, ly + dy, lz + dz));
+            }
+            let lamp_flips = {
+                let read = &*world;
+                crate::world::redstone_lamp_flips(read, &lamp_seeds)
+            };
+            for ((dx, dy, dz), flip) in lamp_flips.iter() {
+                world.set(*dx, *dy, *dz, *flip);
+            }
+            if !lamp_flips.is_empty() {
+                world.relight();
             }
         }
         // THE WIRE'S OWN VOICE (javap DoorBlock.setOpen — the
@@ -103137,7 +103175,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            368,
+            370,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -103218,7 +103256,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            368,
+            370,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -103520,7 +103558,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            368,
+            370,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -107367,7 +107405,7 @@ cow_sound_variant: None,
         assert_eq!(crate::world::OAK_BUTTON_ON, 263);
         assert_eq!(
             crate::world::END_PORTAL,
-            368,
+            370,
             "the displaced seat the weighted plates' own tail keeps"
         );
         for kind in [
@@ -107450,7 +107488,7 @@ cow_sound_variant: None,
         // #texture ref banks)
         assert_eq!(
             atlas::N_KINDS,
-            368,
+            370,
             "the palette the weighted plates' own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
@@ -107665,12 +107703,12 @@ cow_sound_variant: None,
         );
         assert_eq!(
             crate::world::END_PORTAL,
-            368,
+            370,
             "the displaced seat the weighted plates' own tail keeps"
         );
         assert_eq!(
             atlas::N_KINDS,
-            368,
+            370,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
@@ -107942,12 +107980,12 @@ cow_sound_variant: None,
         );
         assert_eq!(
             crate::world::END_PORTAL,
-            368,
+            370,
             "the displaced seat the weighted plates' own tail keeps"
         );
         assert_eq!(
             atlas::N_KINDS,
-            368,
+            370,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
@@ -108062,8 +108100,8 @@ cow_sound_variant: None,
         assert_eq!(w::LIGHT_WEIGHTED_PRESSURE_PLATE_ON, 317);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE, 318);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, 319);
-        assert_eq!(w::END_PORTAL, 368);
-        assert_eq!(atlas::N_KINDS, 368, "the palette the weighted rows bank");
+        assert_eq!(w::END_PORTAL, 370);
+        assert_eq!(atlas::N_KINDS, 370, "the palette the weighted rows bank");
         for (off, on, name) in [
             (
                 w::LIGHT_WEIGHTED_PRESSURE_PLATE,
@@ -108760,6 +108798,67 @@ cow_sound_variant: None,
     }
 
     #[test]
+    fn the_redstone_lamp_the_consumer_lane_the_wire_and_the_lever_wear() {
+        // THE LAMP'S OWN APP LANE (the autopush-672 round — the
+        // lever's own attach the wire flood the consumer arm the same
+        // walk serves): the wire run the lever's verdict the ON kinds
+        // the sets speak, the lamp the run's own tail the LIT kind the
+        // verdict walk banks (the wire flips' own cells the seed set
+        // wears — the lamp the flood's own reach the tail answers),
+        // the lever's retirement the dead run the dark kind the same
+        // walk restores.
+        use crate::world as w;
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            world.set(c, top - 1, c, w::LEVER_ON);
+            world.set(c - 1, top - 1, c, w::REDSTONE_WIRE);
+            world.set(c - 2, top - 1, c, w::REDSTONE_WIRE);
+            world.set(c - 3, top - 1, c, w::REDSTONE_LAMP);
+        }
+        // THE LEVER'S OWN ATTACH (the wire flood the ON kinds the sets
+        // speak, the lamp the run's own tail the lit kind banks)
+        app.attach_wire_voice(c, top - 1, c);
+        {
+            let world = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                world.get(c - 1, top - 1, c),
+                w::REDSTONE_WIRE_ON,
+                "the wire flood the ON kinds the sets speak"
+            );
+            assert_eq!(
+                world.get(c - 3, top - 1, c),
+                w::REDSTONE_LAMP_LIT,
+                "the powered run the lit kind the consumer arm banks"
+            );
+        }
+        // THE LEVER'S OWN RETIREMENT (the OFF lever the dead run the
+        // dark kind the same walk restores)
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            world.set(c, top - 1, c, w::LEVER);
+        }
+        app.attach_wire_voice(c, top - 1, c);
+        {
+            let world = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                world.get(c - 1, top - 1, c),
+                w::REDSTONE_WIRE,
+                "the dead run the OFF kinds the sets speak"
+            );
+            assert_eq!(
+                world.get(c - 3, top - 1, c),
+                w::REDSTONE_LAMP,
+                "the dead run the dark kind the consumer arm restores"
+            );
+        }
+    }
+
+    #[test]
     fn the_oak_trapdoor_the_placement_the_toggle_and_the_consult_wear() {
         // THE TRAPDOOR'S OWN APP LANE (the autopush-668 round — the
         // placement's stamp the side-hit/vertical-hit arms the
@@ -109111,10 +109210,10 @@ cow_sound_variant: None,
         assert_eq!(w::OAK_PRESSURE_PLATE_ON, 289);
         assert_eq!(w::STONE_PRESSURE_PLATE, 290);
         assert_eq!(w::STONE_PRESSURE_PLATE_ON, 291);
-        assert_eq!(w::END_PORTAL, 368);
+        assert_eq!(w::END_PORTAL, 370);
         assert_eq!(
             atlas::N_KINDS,
-            368,
+            370,
             "the palette the weighted plates' own rows bank"
         );
         for (off, on, name, wooden) in [

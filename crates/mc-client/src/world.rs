@@ -910,11 +910,11 @@ pub const END_STONE: u16 = 89;
 /// the OAK TRAPDOOR'S OWN PAIR the 326/327 rows the tail banks, the
 /// autopush-669 round the TRAPDOOR LADDER'S OWN WOOD RUNGS the
 /// 328..349 tail banks, the autopush-670 round the METAL RUNGS the
-/// 350..367 tail banks, the kind's own seat the beyond-table 368 the
-/// same
-/// law keeps — the `id < N_KINDS` guards the tile lookups' skip
-/// verdict the bigger tail keeps).
-pub const END_PORTAL: u16 = 368;
+/// 350..367 tail banks, the autopush-672 round the REDSTONE LAMP'S
+/// OWN PAIR the 368/369 rows the tail banks, the kind's own seat the
+/// beyond-table 370 the same law keeps — the `id < N_KINDS` guards
+/// the tile lookups' skip verdict the bigger tail keeps).
+pub const END_PORTAL: u16 = 370;
 
 /// THE BUTTON'S OWN PAIR (the autopush-660 round): the redstone pulse's
 /// own block finally RENDERS, PLACES, PRESSES and PULSES — javap
@@ -1366,6 +1366,35 @@ pub fn redstone_torch_toggled(id: u16) -> Option<u16> {
     }
 }
 
+/// THE LAMP'S OWN FAMILY VERDICT (the autopush-672 round — the
+/// off/lit pair the consumer block the ±1 mate the lever pair's own
+/// law wears, the NO variant byte the full cube reads): the attach
+/// lanes' verdict scan and the flip walk the family fn serves, the
+/// collision/solid lanes the full-cube default keeps.
+pub fn is_redstone_lamp(id: u16) -> bool {
+    id == REDSTONE_LAMP || id == REDSTONE_LAMP_LIT
+}
+
+/// THE LAMP'S OWN LIT BIT (the registration's lit=false default the
+/// unlit kind banks — the lit kind the LIT=true arm the amber row
+/// wears, the lightLevel 15 the lit row's own emission speaks, the
+/// unlit kind the dark 0 the else arm keeps).
+pub fn redstone_lamp_lit(id: u16) -> bool {
+    id == REDSTONE_LAMP_LIT
+}
+
+/// THE LAMP'S OWN TOGGLED KIND (the verdict walk's setBlock arms the
+/// ±1 mate speaks — the signal verdict the lit kind banks, the dead
+/// verdict the dark kind restores, the unknown id the None the
+/// honest guard banks).
+pub fn redstone_lamp_toggled(id: u16) -> Option<u16> {
+    match id {
+        REDSTONE_LAMP => Some(REDSTONE_LAMP_LIT),
+        REDSTONE_LAMP_LIT => Some(REDSTONE_LAMP),
+        _ => None,
+    }
+}
+
 /// THE WALL TORCH'S OWN FACING BYTE (the blockstate y-table's own
 /// vocabulary the door's facing law keeps — north 1, east 2, south
 /// 3, west 4; the 0 byte the no-opinion seat the variant sidecar's
@@ -1714,6 +1743,19 @@ pub const WAXED_OXIDIZED_COPPER_TRAPDOOR_OPEN: u16 = 365;
 pub const IRON_TRAPDOOR: u16 = 366;
 pub const IRON_TRAPDOOR_OPEN: u16 = 367;
 
+/// THE REDSTONE LAMP'S OWN PAIR (the autopush-672 round): the wire's
+/// verdict the consumer family's own block finally answers — the
+/// blockstates' redstone_lamp.json the lit bit the TWO rows wear (the
+/// lit kind the "lit=true" row's block/redstone_lamp_on model the
+/// amber tile banks, the unlit kind the "lit=false" row's
+/// block/redstone_lamp model the terracotta-brown row keeps — the
+/// ONE "redstone_lamp" registry name both kinds speak, the _on strip
+/// the generated rows' law keeps), the Items clinit's redstone_lamp
+/// registration the placement lane grants, the registration's
+/// lightLevel 15 the lit row's own glow the emission table banks.
+pub const REDSTONE_LAMP: u16 = 368;
+pub const REDSTONE_LAMP_LIT: u16 = 369;
+
 /// THE LADDER'S OWN KIND ARRAY (the contiguity law the mesher's stem
 /// walk and the toggled fold both read — the closed kind the even
 /// index wears, the open the +1 answers, the wood order the door
@@ -2018,6 +2060,55 @@ pub fn wire_component_flips(
         // the queue the flood already drained: the seeds the caller
         // banks only fire once each (the seen set the shared law
         // keeps)
+    }
+    out
+}
+
+/// THE LAMP'S OWN VERDICT WALK (the autopush-672 round — the consumer
+/// block the attach lanes' own consumer arm serves): the seeds' own
+/// cells AND their six the lamp seats the scan answers (the placed
+/// lamp the seed cell itself the placement verdict reads, the wire
+/// flips' own cells the run's tail lamps the flood's own reach arms
+/// — the vanilla neighborChanged broadcast the changed cell's own
+/// six the radius keeps), the `lit == signal` verdict the
+/// state-NEEDS-CHANGE lamp the flip banks (the state-correct pair
+/// the quiet keep wears), the dedup the seen set the repeat seeds
+/// refuse, the sorted scan the deterministic order the callers'
+/// asserts keep, the PURE read the caller's own set walk the apply
+/// serves (the walk the world never mutates).
+pub fn redstone_lamp_flips(
+    world: &World,
+    seeds: &[(i32, i32, i32)],
+) -> Vec<((i32, i32, i32), u16)> {
+    let mut out: Vec<((i32, i32, i32), u16)> = Vec::new();
+    let mut seen: std::collections::HashSet<(i32, i32, i32)> =
+        std::collections::HashSet::new();
+    for &(sx, sy, sz) in seeds {
+        let mut cells = [
+            (sx, sy, sz),
+            (sx, sy - 1, sz),
+            (sx, sy + 1, sz),
+            (sx, sy, sz - 1),
+            (sx, sy, sz + 1),
+            (sx - 1, sy, sz),
+            (sx + 1, sy, sz),
+        ];
+        cells.sort();
+        for (x, y, z) in cells.iter() {
+            if !seen.insert((*x, *y, *z)) {
+                continue;
+            }
+            let kind = world.get(*x, *y, *z);
+            if !is_redstone_lamp(kind) {
+                continue;
+            }
+            let lit = redstone_lamp_lit(kind);
+            if redstone_signal_at(world, *x, *y, *z) != lit {
+                if let Some(flip) = redstone_lamp_toggled(kind) {
+                    out.push(((*x, *y, *z), flip));
+                }
+            }
+        }
     }
     out
 }
@@ -2666,9 +2757,10 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 /// round the trapdoor's own pair the 326/327 rows bank — the
 /// bank — the autopush-669 round the ladder's own wood rungs the 328..349 rows
 /// bank — the autopush-670 round the metal rungs the 350..367 rows
-/// bank — the table the 368 rows the END_PORTAL the beyond-table seat
+/// bank — the autopush-672 round the lamp's own pair the 368/369 rows
+/// bank — the table the 370 rows the END_PORTAL the beyond-table seat
 /// the displaced law keeps.
-pub const NAME_OF: [&str; 368] = [
+pub const NAME_OF: [&str; 370] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -3133,6 +3225,12 @@ pub const NAME_OF: [&str; 368] = [
     "waxed_weathered_copper_trapdoor", "waxed_weathered_copper_trapdoor",
     "waxed_oxidized_copper_trapdoor", "waxed_oxidized_copper_trapdoor",
     "iron_trapdoor", "iron_trapdoor",
+    // THE LAMP'S OWN PAIR (the autopush-672 round — the ONE
+    // "redstone_lamp" registry id both kinds the lit variant's own
+    // _on strip wears, the dig rows + item id the generated tables
+    // bank, the placement lane the base name the placeable walk
+    // answers)
+    "redstone_lamp", "redstone_lamp",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -12555,7 +12653,7 @@ mod tests {
         assert_eq!(NAME_OF[BUTTON_ON as usize], "stone_button");
         assert_eq!(BUTTON + 1, BUTTON_ON, "the +1 seat the OFF/ON ladder wears");
         assert_eq!(
-            END_PORTAL, 368,
+            END_PORTAL, 370,
             "the displaced seat the wire pair's own tail banks"
         );
         // THE PULSE'S OWN CLOCK (javap press pc 28-37 — the STONE
@@ -13246,6 +13344,95 @@ mod tests {
     }
 
     #[test]
+    fn the_redstone_lamp_the_consumer_lane_and_the_light_wear() {
+        // THE LAMP'S OWN LAWS (the autopush-672 round — the consumer
+        // family's own block the wire's verdict finally answers): the
+        // 368/369 pair the tail wears, the END_PORTAL the displaced
+        // seat the beyond-table law banks (the 370 the `id < N_KINDS`
+        // guards the bigger tail keeps), the ONE "redstone_lamp"
+        // registry entry both kinds speak (the _on strip the
+        // generated rows' law keeps), the placeable walk the base
+        // name the placement lane answers, the verdict walk the
+        // `lit == signal` fold the attach lanes serve (the powered
+        // wire the lit kind the setBlock arms speak, the dead wire
+        // the dark kind the same walk restores, the direct source
+        // arm the lever's own six the verdict reads, the PURE walk
+        // the apply the caller's own set serves).
+        use mc_registry::generated::atlas;
+        assert_eq!(REDSTONE_LAMP, 368);
+        assert_eq!(REDSTONE_LAMP_LIT, 369);
+        assert_eq!(
+            END_PORTAL, 370,
+            "the displaced seat the lamp pair's own tail banks"
+        );
+        assert_eq!(atlas::N_KINDS, 370, "the palette the lamp pair banks");
+        assert!(is_redstone_lamp(REDSTONE_LAMP) && is_redstone_lamp(REDSTONE_LAMP_LIT));
+        assert!(!is_redstone_lamp(REDSTONE_WIRE) && !is_redstone_lamp(STONE));
+        assert!(!redstone_lamp_lit(REDSTONE_LAMP));
+        assert!(redstone_lamp_lit(REDSTONE_LAMP_LIT));
+        assert_eq!(
+            redstone_lamp_toggled(REDSTONE_LAMP),
+            Some(REDSTONE_LAMP_LIT)
+        );
+        assert_eq!(
+            redstone_lamp_toggled(REDSTONE_LAMP_LIT),
+            Some(REDSTONE_LAMP)
+        );
+        assert_eq!(redstone_lamp_toggled(REDSTONE_WIRE), None);
+        assert_eq!(NAME_OF[REDSTONE_LAMP as usize], "redstone_lamp");
+        assert_eq!(NAME_OF[REDSTONE_LAMP_LIT as usize], "redstone_lamp");
+        assert_eq!(atlas::KIND_NAMES[REDSTONE_LAMP as usize], "redstone_lamp");
+        assert_eq!(
+            atlas::KIND_NAMES[REDSTONE_LAMP_LIT as usize],
+            "redstone_lamp_on"
+        );
+        assert_eq!(
+            atlas::REGISTRY_NAMES[REDSTONE_LAMP_LIT as usize],
+            "redstone_lamp"
+        );
+        assert_eq!(World::placeable_block("redstone_lamp"), Some(REDSTONE_LAMP));
+        // THE VERDICT WALK'S OWN ARMS (the wire's own power bit the
+        // lamp's six the read answers)
+        let mut w = World::new(1, 0x600D);
+        let (y, c) = (1i32, 4i32);
+        w.set(c, y, c, REDSTONE_WIRE);
+        w.set(c + 1, y, c, REDSTONE_LAMP);
+        assert!(
+            redstone_lamp_flips(&w, &[(c + 1, y, c), (c, y, c)]).is_empty(),
+            "the dark wire the lamp's quiet keep wears"
+        );
+        w.set(c, y, c, REDSTONE_WIRE_ON);
+        assert_eq!(
+            redstone_lamp_flips(&w, &[(c, y, c)]),
+            vec![((c + 1, y, c), REDSTONE_LAMP_LIT)],
+            "the powered wire the lit kind the walk banks"
+        );
+        w.set(c + 1, y, c, REDSTONE_LAMP_LIT);
+        w.set(c, y, c, REDSTONE_WIRE);
+        assert_eq!(
+            redstone_lamp_flips(&w, &[(c, y, c)]),
+            vec![((c + 1, y, c), REDSTONE_LAMP)],
+            "the dead wire the dark kind the walk restores"
+        );
+        // THE DIRECT SOURCE'S OWN ARM (the lever ON the lamp's own six
+        // the wireless verdict answers — the seed cell itself the
+        // placement verdict reads)
+        let mut w2 = World::new(1, 0x600D);
+        w2.set(c + 1, y, c, LEVER_ON);
+        w2.set(c, y, c, REDSTONE_LAMP);
+        assert_eq!(
+            redstone_lamp_flips(&w2, &[(c, y, c)]),
+            vec![((c, y, c), REDSTONE_LAMP_LIT)],
+            "the lever's own arm the seed cell the verdict answers"
+        );
+        assert_eq!(
+            w2.get(c, y, c),
+            REDSTONE_LAMP,
+            "the pure walk the apply the caller's own set serves"
+        );
+    }
+
+    #[test]
     fn the_redstone_dust_the_wire_lane_the_component_and_the_gates_wear() {
         // THE REDSTONE WIRE'S OWN LAWS (the autopush-665 round — javap
         // RedStoneWireBlock the 26.2 jar the probe scripts/jar_work/
@@ -13272,10 +13459,10 @@ mod tests {
         assert_eq!(REDSTONE_WIRE, 320);
         assert_eq!(REDSTONE_WIRE_ON, 321);
         assert_eq!(
-            END_PORTAL, 368,
+            END_PORTAL, 370,
             "the displaced seat the wire pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 368, "the palette the wire pair banks");
+        assert_eq!(atlas::N_KINDS, 370, "the palette the wire pair banks");
         assert!(is_redstone_wire(REDSTONE_WIRE) && is_redstone_wire(REDSTONE_WIRE_ON));
         assert!(!is_redstone_wire(LEVER) && !is_redstone_wire(OAK_PRESSURE_PLATE));
         assert!(!wire_powered(REDSTONE_WIRE));
@@ -13418,10 +13605,10 @@ mod tests {
         assert_eq!(REDSTONE_TORCH, 322);
         assert_eq!(REDSTONE_TORCH_OFF, 323);
         assert_eq!(
-            END_PORTAL, 368,
+            END_PORTAL, 370,
             "the displaced seat the torch pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 368, "the palette the torch pair banks");
+        assert_eq!(atlas::N_KINDS, 370, "the palette the torch pair banks");
         assert!(is_redstone_torch(REDSTONE_TORCH) && is_redstone_torch(REDSTONE_TORCH_OFF));
         assert!(!is_redstone_torch(TORCH) && !is_redstone_torch(LEVER));
         assert!(redstone_torch_lit(REDSTONE_TORCH));
@@ -13560,8 +13747,8 @@ mod tests {
         use mc_registry::generated::atlas;
         assert_eq!(REDSTONE_WALL_TORCH, 324);
         assert_eq!(REDSTONE_WALL_TORCH_OFF, 325);
-        assert_eq!(END_PORTAL, 368);
-        assert_eq!(atlas::N_KINDS, 368, "the palette the wall pair banks");
+        assert_eq!(END_PORTAL, 370);
+        assert_eq!(atlas::N_KINDS, 370, "the palette the wall pair banks");
         assert!(
             is_redstone_torch(REDSTONE_WALL_TORCH) && is_redstone_torch(REDSTONE_WALL_TORCH_OFF),
             "the wall pair the family's tail banks"
@@ -13804,9 +13991,9 @@ mod tests {
         use mc_registry::generated::atlas;
         assert_eq!(OAK_TRAPDOOR, 326);
         assert_eq!(OAK_TRAPDOOR_OPEN, 327);
-        assert_eq!(END_PORTAL, 368);
+        assert_eq!(END_PORTAL, 370);
         assert_eq!(
-            atlas::N_KINDS, 368,
+            atlas::N_KINDS, 370,
             "the palette the trapdoor pair banks"
         );
         assert_eq!(OAK_TRAPDOOR + 1, OAK_TRAPDOOR_OPEN, "the +1 mate wears");
@@ -13952,8 +14139,8 @@ mod tests {
         assert_eq!(CHERRY_TRAPDOOR, 340);
         assert_eq!(WARPED_TRAPDOOR, 348);
         assert_eq!(WARPED_TRAPDOOR_OPEN, 349);
-        assert_eq!(END_PORTAL, 368);
-        assert_eq!(atlas::N_KINDS, 368, "the palette the ladder banks");
+        assert_eq!(END_PORTAL, 370);
+        assert_eq!(atlas::N_KINDS, 370, "the palette the ladder banks");
         // THE CONTIGUITY'S OWN LAW (the 22 kinds the range covers —
         // the neighbors the family fn refuses)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -14066,8 +14253,8 @@ mod tests {
         assert_eq!(WAXED_OXIDIZED_COPPER_TRAPDOOR, 364);
         assert_eq!(IRON_TRAPDOOR, 366);
         assert_eq!(IRON_TRAPDOOR_OPEN, 367);
-        assert_eq!(END_PORTAL, 368);
-        assert_eq!(atlas::N_KINDS, 368, "the palette the metal rungs bank");
+        assert_eq!(END_PORTAL, 370);
+        assert_eq!(atlas::N_KINDS, 370, "the palette the metal rungs bank");
         // THE CONTIGUITY'S OWN LAW (the 42 kinds the range covers —
         // the waxed pairs the ±1 mate the parity answers)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -14232,7 +14419,7 @@ mod tests {
         assert_eq!(OAK_DOOR_OPEN, 92);
         assert_eq!(OAK_DOOR_UPPER_OPEN, 93);
         assert_eq!(
-            END_PORTAL, 368,
+            END_PORTAL, 370,
             "the displaced seat the wire pair's own tail banks"
         );
         // THE WOOD LADDER'S OWN SEATS (the dev-43 round — the eleven
@@ -14438,7 +14625,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 368, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 370, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)

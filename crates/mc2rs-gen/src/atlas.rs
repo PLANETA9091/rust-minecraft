@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 368] = [
+pub const RUNTIME_PALETTE: [&str; 370] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1176,6 +1176,20 @@ pub const RUNTIME_PALETTE: [&str; 368] = [
     "waxed_weathered_copper_trapdoor", "waxed_weathered_copper_trapdoor_open",
     "waxed_oxidized_copper_trapdoor", "waxed_oxidized_copper_trapdoor_open",
     "iron_trapdoor", "iron_trapdoor_open",
+    // THE LAMP'S OWN PAIR (the autopush-672 round): redstone_lamp the
+    // consumer family's own block the wire's verdict finally answers
+    // — the blockstates/redstone_lamp.json the lit variant's own pair
+    // the SAME DIRECT authoring the torch rows wear (lit=false the
+    // block/redstone_lamp cube_all model, lit=true the
+    // block/redstone_lamp_on arm — the ONE #texture ref each the
+    // row's tile banks, the lit row's own amber tile the regen
+    // banks), the ONE "redstone_lamp" registry name both kinds speak
+    // (the _on strip the generated rows' law keeps), the Items
+    // clinit's redstone_lamp registration the placement lane grants
+    // (the item row the generated table already banks), the
+    // lightLevel 15 the lit registration the emission's own row
+    // keeps.
+    "redstone_lamp", "redstone_lamp_on",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -1338,6 +1352,37 @@ fn resolve_block(
             .and_then(|v| v.get("model"))
             .and_then(|m| m.as_str())
             .with_context(|| "blockstate redstone_torch: no lit model")?
+            .trim_start_matches("minecraft:")
+            .to_string();
+        return full_cube_faces(archive, &model_ref)
+            .with_context(|| format!("block {block}: model chain {model_ref}"));
+    }
+
+    // THE LAMP'S OWN ROWS (the autopush-672 round — the
+    // blockstates' redstone_lamp.json the TWO rows the lit bit wears
+    // — the lit kind the "lit=true" row's block/redstone_lamp_on
+    // model answers, the unlit kind the "lit=false" row's
+    // block/redstone_lamp model keeps; the per-row arm the torch
+    // pair's own walk the same shape serves, the generic walk's
+    // FIRST-variant read the wrong model both kinds would wear — the
+    // vanilla json the lit=true arm the SECOND variant keys, the
+    // alphabetical first read the unlit model both rows would wear).
+    // BOTH models the cube_all template the ONE #all texture each
+    // banks (block/redstone_lamp the terracotta-brown row, the lit
+    // arm the block/redstone_lamp_on amber row the regen tiles), the
+    // full-cube finder the six-face row the plain walk answers.
+    if block == "redstone_lamp" || block == "redstone_lamp_on" {
+        let lit = block == "redstone_lamp_on";
+        let bs_bytes =
+            read_jar(archive, "assets/minecraft/blockstates/redstone_lamp.json")?;
+        let bs: Value = serde_json::from_slice(&bs_bytes)
+            .with_context(|| "blockstate redstone_lamp: json parse")?;
+        let model_ref = bs
+            .get("variants")
+            .and_then(|v| v.get(if lit { "lit=true" } else { "lit=false" }))
+            .and_then(|v| v.get("model"))
+            .and_then(|m| m.as_str())
+            .with_context(|| "blockstate redstone_lamp: no lit model")?
             .trim_start_matches("minecraft:")
             .to_string();
         return full_cube_faces(archive, &model_ref)

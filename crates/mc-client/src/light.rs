@@ -156,6 +156,14 @@ fn emission(id: u16) -> u8 {
         // putstatic SMOKER walk pc 24241-24246 banks, the UNLIT kind
         // the dark 0 the else arm keeps)
         13
+    } else if id == crate::world::REDSTONE_LAMP_LIT {
+        // THE LIT LAMP'S OWN ROW (the autopush-672 round — the
+        // blocks clinit's redstone_lamp registration the lightLevel
+        // `bipush 15; litBlockEmission(I)` fold the lit rows' own
+        // shared law banks, the LIT=true arm the amber row the
+        // full-brightness 15 the verdict keeps, the UNLIT kind the
+        // dark 0 the else arm keeps)
+        15
     } else if id == crate::world::NETHER_PORTAL {
         // THE PORTAL'S OWN ROW (the autopush-605 round — javap the
         // blocks clinit's nether_portal registration over the 26.2
