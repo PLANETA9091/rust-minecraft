@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 442] = [
+pub const RUNTIME_PALETTE: [&str; 444] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1376,6 +1376,58 @@ pub const RUNTIME_PALETTE: [&str; 442] = [
     "cyan_terracotta", "purple_terracotta", "blue_terracotta",
     "brown_terracotta", "green_terracotta", "red_terracotta",
     "black_terracotta", "terracotta",
+    // THE FENCE'S OWN GATE (the dev-53 round): the interactive
+    // vocabulary's next member the oak rung opens — javap
+    // FenceGateBlock the 26.2 jar (pinned sha1 2dc72797, the probe
+    // scripts/jar_work/fence_gate_53.py banks): the ctor's
+    // registerDefaultState walk pc 17-67 pins OPEN=false,
+    // POWERED=false, IN_WALL=false (the FACING the
+    // HorizontalDirectionalBlock default's NORTH pin wears), the
+    // Properties chain the Blocks clinit row pc 12870-12912 banks
+    // (mapColor(OAK_PLANKS.defaultMapColor()) + forceSolidOn() +
+    // instrument(BASS) + strength(2.0, ...) + ignitedByLava() — NO
+    // sound() row the Properties chain carries, the ctor's
+    // `Properties.sound(type.soundType())` pc 2-6 walk the WOOD
+    // SoundType the dig/place rows bank), the useWithoutItem walk
+    // pc 0-189 the RMB toggle serves (the open bit the ±1 seat the
+    // kind pair banks, the closed branch's re-face law pc 43-77
+    // arms — the `FACING == dir.getOpposite()` verdict the
+    // player's own look the FACING byte wears, the setBlock flag
+    // 10 pc 34-98, the playSound pc 117-162 the fenceGateOpen/
+    // fenceGateClose events the `nextFloat() * 0.1F + 0.9F` pitch
+    // walk speaks [cp@244 = 0.1f, cp@245 = 0.9f], the gameEvent
+    // pc 165-183 the BLOCK_OPEN/BLOCK_CLOSE posts), the
+    // getStateForPlacement walk pc 0-170 the FACING=
+    // getHorizontalDirection() + the OPEN/POWERED hasNeighborSignal
+    // preset arms (the IN_WALL the isWall tag verdict the walls the
+    // palette never banks — the pin the false seat keeps), the
+    // getCollisionShape walk pc 0-50 the OPEN state's Shapes.empty()
+    // the pass-through verdict speaks (the OPEN gate even the posts
+    // the collision never banks) and the closed SHAPE_COLLISION
+    // column(16.0, 4.0, 0.0, 24.0) the centered 4/16 strip banks
+    // [the 0..24 y-band the anti-jump the fence family's 1.5-tall
+    // law speaks — the per-cell sweep's vocabulary the over-tall
+    // extension a later round serves]), the SHAPES map
+    // rotateHorizontalAxis(Block.cube(16.0, 16.0, 4.0)) the outline
+    // walk banks. The ONE "oak_fence_gate" registry name its kinds
+    // BOTH speak (the BlockItemIds.OAK_FENCE_GATE the Items clinit
+    // row pc 8354-8363 the registerBlock pairing answers), the
+    // generated dig/drops/sounds/items tables the rows already
+    // bank. The blockstates oak_fence_gate.json the 16-variant map
+    // carries — the facing=south,in_wall=false,open={p} rows the
+    // two kinds resolve (the y table north 180 / east 270 / south
+    // 0 / west 90 the mesher's theta tables fold), the models the
+    // template chain's EIGHT elements speak (the two posts + the
+    // two inner verticals + the four bars — the derive walk the
+    // real geometry resolves), the #texture ref block/oak_planks
+    // the ONE master every face wears (NO new tile — the planks
+    // master the palette already banks, the append-only law the
+    // equivalence proof scripts/verify_atlas_full.py keeps). The
+    // seats the CONTIGUOUS tail the kind ids wear (442/443), the
+    // END_PORTAL kind the beyond-table seat the family's growth
+    // displaces (442 -> 444 the
+    // 658/670/672/673/674/675/676/677/678 precedent wears).
+    "oak_fence_gate", "oak_fence_gate_open",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -2974,6 +3026,50 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
                 .and_then(|v| v.get("model"))
                 .and_then(|m| m.as_str())
                 .with_context(|| format!("blockstate {bs_name}: no {row_key} model"))?
+                .trim_start_matches("minecraft:")
+                .to_string();
+            let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
+                .with_context(|| format!("block {block}: model chain {model_ref}"))?;
+            let tex = tex_map
+                .get("texture")
+                .with_context(|| format!("model {model_ref}: no texture ref"))?;
+            let stem = tex
+                .trim_start_matches("minecraft:")
+                .trim_start_matches("block/")
+                .to_string();
+            faces.push(resolve_flat_stem(&stem, false));
+            continue;
+        }
+        if block == "oak_fence_gate" || block == "oak_fence_gate_open" {
+            // THE FENCE GATE'S OWN ROWS (the dev-53 round): the
+            // blockstate's own facing=south,in_wall=false,open={p}
+            // rows the two kinds wear — the registerDefaultState's
+            // IN_WALL=false pin the row key's own seat keeps (the
+            // isWall tag verdict the walls the palette never banks —
+            // the wall lane's own models the row never resolves), the
+            // south row the y=0 authoring the mesher's theta tables
+            // fold (the closed/open rows the SAME y values the pair
+            // serves), the merged texture map's `#texture` ref the
+            // row's tile banks (the template_fence_gate chain the
+            // #texture = block/oak_planks planks master resolves —
+            // the palette the tile already banks, no new tile the
+            // regen keeps, the pre-gate rows byte-identical),
+            // tinted = false (the faces carry NO tintindex — the
+            // pre-colored master renders as authored).
+            let open = block == "oak_fence_gate_open";
+            let bs_bytes = read_jar(
+                &mut archive,
+                "assets/minecraft/blockstates/oak_fence_gate.json",
+            )?;
+            let bs: Value = serde_json::from_slice(&bs_bytes)
+                .with_context(|| "blockstate oak_fence_gate: json parse")?;
+            let row_key = format!("facing=south,in_wall=false,open={open}");
+            let model_ref = bs
+                .get("variants")
+                .and_then(|v| v.get(&row_key))
+                .and_then(|v| v.get("model"))
+                .and_then(|m| m.as_str())
+                .with_context(|| format!("blockstate oak_fence_gate: no {row_key} model"))?
                 .trim_start_matches("minecraft:")
                 .to_string();
             let (tex_map, _) = load_model_chain(&mut archive, &model_ref)

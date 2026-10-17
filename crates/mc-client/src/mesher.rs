@@ -207,6 +207,14 @@ fn is_transparent(kind: u16) -> bool {
         // AO the opaque walk never casts, the element geometry the
         // door arm's own lane renders)
         || crate::world::is_door(kind)
+        // THE FENCE GATE'S OWN ROW (the dev-53 round — the forceSolidOn
+        // law the blocks clinit row pc 12890-12892 speaks: the gate
+        // the panel the neighbors' faces draw against [the
+        // getOcclusionShape walk pc 0-48 the two-post pair the SHAPE_
+        // OCCLUSION map answers — the panel the occlusion never
+        // banks], the AO the opaque walk never casts, the element
+        // geometry the gate arm's own lane renders)
+        || crate::world::is_fence_gate(kind)
         // THE TRAPDOOR FAMILY the same verdict keeps (the autopush-668
         // round — the 3/16 panel the noOcclusion law the blocks
         // clinit's own chain speaks: the non-occluding thin box the
@@ -2947,6 +2955,193 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     }
                     continue;
                 }
+                // THE FENCE GATE'S OWN ELEMENT LANE (the dev-53 round
+                // — the gate family the derive walk renders: the
+                // blockstates oak_fence_gate.json's facing=south,
+                // in_wall=false rows the two offline kinds resolve —
+                // the closed rows block/oak_fence_gate, the open rows
+                // block/oak_fence_gate_open, each model the template
+                // chain's EIGHT elements speaks (the two posts + the
+                // two inner verticals + the four bars — the derive
+                // walk the real geometry resolves, `derive_model_
+                // inherited` the parent chain the #texture refs the
+                // resolved textures answer — the ONE block/oak_planks
+                // master every face wears, ambientocclusion default
+                // the AO-less fold the door lane's own law keeps —
+                // the cell's own light every corner samples, the
+                // element's shade:true the direction table pays).
+                // THE FACING the variant byte carries (the orientable
+                // vocabulary's 1..=4 law — the placement lane stamps,
+                // the byte's no-opinion answer the north default the
+                // idx-0 row keeps): the theta tables the blockstate's
+                // own y values fold — the closed AND open rows the
+                // SAME y table wear (north 180, east 270, south 0,
+                // west 90 — the 90-degree CW walk the blockstate y
+                // values fold, the vertices AND the face directions
+                // rotate together — the south-facing gate the y=0
+                // authoring the as-is render speaks). THE CULLFACE
+                // VERDICT the six-direction law the door lane wears
+                // (the rotated direction the neighbor read answers —
+                // the vanilla cullface law the solid render answers),
+                // the per-quad texture verdict the ONE planks master
+                // reads (the unknown ref the kind's own row serves).
+                if crate::world::is_fence_gate(id) {
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let (cell_sky, cell_block) = match light {
+                        Some(l) => {
+                            let (s, b) = cell_layers(l, world.chunks_per_side, wx, wy, wz);
+                            (s.map(|v| v as f32), b.map(|v| v as f32))
+                        }
+                        None => (None, None),
+                    };
+                    // THE MODEL + STEPS THE KIND ANSWERS (the y table
+                    // north 180 / east 270 / south 0 / west 90 -> the
+                    // steps [2, 3, 0, 1] — the 90-degree CW walk the
+                    // blockstate y values fold; the variant byte's
+                    // no-opinion answer the north default the idx-0
+                    // keeps. THE MODEL ROW THE KIND'S OWN HALF PICKS
+                    // (the closed rows block/oak_fence_gate, the open
+                    // rows block/oak_fence_gate_open — the derive walk
+                    // the EIGHT-element geometry resolves)
+                    let facing = world.variant(wx, wy, wz);
+                    let idx = if facing == 0 {
+                        0usize // the unpropertied default: north
+                    } else {
+                        (facing - 1) as usize // 1..=4 the N/E/S/W rows
+                    };
+                    let gate_steps = [2usize, 3, 0, 1];
+                    let steps = gate_steps[idx];
+                    for q in gate_model_quads(id) {
+                        // THE ROTATED CULLFACE VERDICT — the six-
+                        // direction law the door lane wears, the
+                        // direction the SAME steps the geometry turns
+                        if let Some(dir) = q.cullface {
+                            let rotated = rotate_direction_cw(dir, steps);
+                            let (dx, dy, dz) = match rotated {
+                                mc_registry::element_quads::Direction::Down => (0, -1, 0),
+                                mc_registry::element_quads::Direction::Up => (0, 1, 0),
+                                mc_registry::element_quads::Direction::North => (0, 0, -1),
+                                mc_registry::element_quads::Direction::South => (0, 0, 1),
+                                mc_registry::element_quads::Direction::West => (-1, 0, 0),
+                                mc_registry::element_quads::Direction::East => (1, 0, 0),
+                            };
+                            if !is_transparent(world.get(wx + dx, wy + dy, wz + dz)) {
+                                continue;
+                            }
+                        }
+                        // THE PER-QUAD TEXTURE VERDICT — the gate's own
+                        // #texture ref block/oak_planks the row's own
+                        // tile banks — the planks master the FACE_TILES
+                        // row already banks (the generator's gate arm
+                        // the six slots the ONE master wears — the
+                        // lever/button lanes' own single-tile verdict
+                        // the family keeps; the derive quads' per-quad
+                        // stems the ONE ref the whole chain resolves,
+                        // the kind's own row the honest mapping keeps)
+                        let fallback_tile = if (id as usize) < atlas::N_KINDS {
+                            atlas::FACE_TILES[id as usize][2]
+                        } else {
+                            atlas::TILE_NONE
+                        };
+                        let tile = fallback_tile;
+                        let base = if tile == atlas::TILE_NONE {
+                            crate::colors::palette_color(id, 2)
+                                .or_else(|| lut.and_then(|l| l.color(id, 2)))
+                                .unwrap_or_else(|| default_color(id, 2))
+                        } else {
+                            [1.0; 3]
+                        };
+                        // THE SHADE TERM'S OWN READ — the element's
+                        // shade:true the direction table answers (the
+                        // ROTATED direction the world-facing term
+                        // keeps), the never-shaded the 1.0 keeps
+                        let rotated_dir = rotate_direction_cw(q.direction, steps);
+                        let face_shade = if q.shade {
+                            match rotated_dir {
+                                mc_registry::element_quads::Direction::Up => 1.0f32,
+                                mc_registry::element_quads::Direction::Down => 0.5,
+                                mc_registry::element_quads::Direction::North
+                                | mc_registry::element_quads::Direction::South => 0.8,
+                                mc_registry::element_quads::Direction::West
+                                | mc_registry::element_quads::Direction::East => 0.6,
+                            }
+                        } else {
+                            1.0
+                        };
+                        let mut pts = [[0f32; 3]; 4];
+                        let mut colors = [[0f32; 3]; 4];
+                        let mut uvs = [[0f32; 2]; 4];
+                        for (i, v) in q.vertices.iter().enumerate() {
+                            // THE STEPS' OWN TURN (the blockstate y
+                            // values the CW walk folds: each step the
+                            // (x,z)->(-z,x) map about the cell center
+                            // serves — the door lane's own walk shares)
+                            let (dx, dz) = (v[0] - 0.5, v[2] - 0.5);
+                            let (rx, rz) = rotate_xz_cw(dx, dz, steps);
+                            pts[i] = [
+                                wx as f32 + 0.5 + rx,
+                                wy as f32 + v[1],
+                                wz as f32 + 0.5 + rz,
+                            ];
+                            uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
+                            let lm = lightmap_combine(
+                                cell_sky,
+                                cell_block,
+                                sky_factor,
+                                sky_tint,
+                                ambient,
+                                block_tint,
+                                night_vision,
+                                world.night_vision_factor,
+                                world.darkness_scale,
+                            );
+                            colors[i] = [
+                                base[0] * lm[0] * face_shade,
+                                base[1] * lm[1] * face_shade,
+                                base[2] * lm[2] * face_shade,
+                            ];
+                        }
+                        out.push(Quad {
+                            pts,
+                            colors,
+                            uvs,
+                            tile,
+                            translucent: false,
+                            per_texel_alpha: false,
+                        });
+                    }
+                    continue;
+                }
                 // THE TRAPDOOR'S OWN ELEMENT LANE (the autopush-668
                 // round — the door family's thin-panel sibling the
                 // interactive lane finally renders). The blockstates'
@@ -4396,6 +4591,43 @@ fn door_model_quads(kind: u16) -> &'static [mc_registry::element_quads::Quad] {
                 )
             })
             .collect()
+    });
+    map.get(&kind).map(|v| v.as_slice()).unwrap_or(&[])
+}
+
+/// THE FENCE GATE'S OWN MODEL BAKES — the two kinds the template
+/// chain's models resolve (the dev-53 round): the closed kind the
+/// block/oak_fence_gate model wears, the open kind the
+/// block/oak_fence_gate_open model keeps — each the template
+/// chain's EIGHT elements speaks (the two posts + the two inner
+/// verticals + the four bars — the derive walk the real geometry
+/// resolves, the #texture ref block/oak_planks the ONE master the
+/// per-quad verdict reads). The failed derive the honest empty
+/// slice keeps (the gate the nothing renders).
+fn gate_model_quads(kind: u16) -> &'static [mc_registry::element_quads::Quad] {
+    static QUADS: std::sync::OnceLock<
+        std::collections::HashMap<u16, Vec<mc_registry::element_quads::Quad>>,
+    > = std::sync::OnceLock::new();
+    let map = QUADS.get_or_init(|| {
+        [
+            (
+                crate::world::OAK_FENCE_GATE,
+                "block/oak_fence_gate",
+            ),
+            (
+                crate::world::OAK_FENCE_GATE_OPEN,
+                "block/oak_fence_gate_open",
+            ),
+        ]
+        .into_iter()
+        .map(|(k, model)| {
+            (
+                k,
+                mc_registry::element_quads::derive_model_inherited(model)
+                    .unwrap_or_default(),
+            )
+        })
+        .collect()
     });
     map.get(&kind).map(|v| v.as_slice()).unwrap_or(&[])
 }

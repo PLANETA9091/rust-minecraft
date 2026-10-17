@@ -36086,6 +36086,10 @@ impl App {
         // OPEN-sync verdicts the scan's own arm pushes, the apply the
         // door's own law wears)
         let mut trapdoor_flips: Vec<((i32, i32, i32), u16)> = Vec::new();
+        // THE FENCE GATE'S OWN FLIPS (the dev-53 round — the
+        // OPEN-sync verdicts the scan's own arm pushes, the apply the
+        // trapdoor's own law wears)
+        let mut gate_flips: Vec<((i32, i32, i32), u16)> = Vec::new();
         // THE CLOCK'S OWN SNAPSHOT (the schedule walk's due the frame
         // banks — the read the mutable borrow's opening the discipline
         // keeps)
@@ -36309,6 +36313,33 @@ impl App {
                         }
                         return;
                     }
+                    // THE FENCE GATE'S OWN ARM (the dev-53 round —
+                    // javap FenceGateBlock.neighborChanged pc 0-154 the
+                    // 26.2 jar: the `hasNeighborSignal(pos)` read
+                    // pc 8-13 the POWERED/OPEN pair's own verdict arms
+                    // [the `POWERED != signal` gate pc 28-30 the
+                    // setBlock(POWERED=signal, OPEN=signal, flag 2)
+                    // walk pc 33-68 serves, the `OPEN != signal` gate
+                    // pc 79-84 the playSound + gameEvent walk
+                    // pc 87-153 wears — the POWERED-only beats the
+                    // silent keep the trapdoor arm's own law wears],
+                    // the OPEN-sync verdict the signal != open_now
+                    // fold the trapdoor arm's own walk keeps). The
+                    // single cell the door's mate-sync law never wears
+                    // — the one-cell kind the scan's own arm answers.
+                    if crate::world::is_fence_gate(kind) {
+                        if !seen.insert((cx, cy, cz)) {
+                            return;
+                        }
+                        let open_now = crate::world::fence_gate_open(kind);
+                        let signal = crate::world::redstone_signal_at(read, cx, cy, cz);
+                        if signal != open_now {
+                            if let Some(flip) = crate::world::fence_gate_toggled(kind) {
+                                gate_flips.push(((cx, cy, cz), flip));
+                            }
+                        }
+                        return;
+                    }
                     if !crate::world::is_door(kind) || !seen.insert((cx, cy, cz)) {
                         return;
                     }
@@ -36380,6 +36411,12 @@ impl App {
             // setBlock walk banks — the neighborChanged law the
             // single-cell flip serves)
             for ((dx, dy, dz), flip) in trapdoor_flips.iter() {
+                world.set(*dx, *dy, *dz, *flip);
+            }
+            // THE FENCE GATE'S OWN APPLY (the OPEN-sync verdicts the
+            // setBlock walk banks — the neighborChanged law the
+            // single-cell flip serves)
+            for ((dx, dy, dz), flip) in gate_flips.iter() {
                 world.set(*dx, *dy, *dz, *flip);
             }
             // THE LAMP'S OWN CONSUMER ARM (the autopush-672 round — the
@@ -36466,6 +36503,37 @@ impl App {
             );
             self.dispatch_vibration_event(
                 if crate::world::trapdoor_open(flip) {
+                    "block_open"
+                } else {
+                    "block_close"
+                },
+                (tx, ty, tz),
+            );
+        }
+        // THE FENCE GATE'S OWN VOICES (javap FenceGateBlock.
+        // neighborChanged pc 87-153 the 26.2 jar — the
+        // fenceGateOpen/fenceGateClose events the NEW state's OPEN
+        // bit picks, the pitch the `nextFloat() * 0.1F + 0.9F` fold
+        // the trapdoor's own law keeps; the vibration posts the
+        // sculk lane hears)
+        for ((dx, dy, dz), flip) in gate_flips {
+            let voice = crate::world::fence_gate_voice(flip);
+            let event = if crate::world::fence_gate_open(flip) {
+                format!("{voice}.open")
+            } else {
+                format!("{voice}.close")
+            };
+            let (tx, ty, tz) = (dx as f64 + 0.5, dy as f64 + 0.5, dz as f64 + 0.5);
+            self.sounds.play_voice_at_pan(
+                self.frame,
+                &event,
+                1.0,
+                0.9 + self.drop_rng.next_f32() * 0.1,
+                ear_distance(ear, tx, ty, tz),
+                ear_pan(ear, yaw, tx, ty, tz),
+            );
+            self.dispatch_vibration_event(
+                if crate::world::fence_gate_open(flip) {
                     "block_open"
                 } else {
                     "block_close"
@@ -37564,6 +37632,105 @@ impl App {
             }
             return true;
         }
+        // THE FENCE GATE'S OWN FLIP ARM (the dev-53 round — javap
+        // FenceGateBlock.useWithoutItem the 26.2 jar, the probe
+        // scripts/jar_work/fence_gate_53.py banks): the OPEN read
+        // pc 0-13 the toggle walk arms — the open branch's setValue(
+        // OPEN=false) pc 16-39 the close beat speaks, the closed
+        // branch's re-face law pc 43-77 arms (`dir = player.
+        // getDirection()`, the `state.getValue(FACING) == dir.
+        // getOpposite()` verdict the re-face speaks, the
+        // `setValue(FACING, dir)` walk the opened gate the player's
+        // own look the FACING byte wears — the
+        // [`crate::world::fence_gate_open_facing`] law serves) + the
+        // setValue(OPEN=true) pc 78-98 the open beat keeps, the
+        // setBlock flag 10 BOTH branches wear (pc 34-98), the
+        // playSound pc 117-162 the fenceGateOpen/fenceGateClose
+        // events the NEW state's OPEN bit picks (volume 1.0, the
+        // pitch the `nextFloat() * 0.1F + 0.9F` walk the door's own
+        // fold keeps [cp@244 = 0.1f, cp@245 = 0.9f]), the gameEvent
+        // pc 165-183 the BLOCK_OPEN/BLOCK_CLOSE posts the sculk lane
+        // hears; NO canOpenByHand gate the walk carries — every
+        // fence gate the hand opens. THE SINGLE CELL the door's
+        // mate-sync law never wears — the one-cell kind the flip law
+        // alone answers. THE WIRE SESSION the local flip never makes
+        // (the echo the lane's head already spoke, the server's own
+        // block updates the networked gate lands — the trapdoor
+        // arm's own law keeps).
+        let gate_cell = if self.world_is_network {
+            None
+        } else {
+            self.active_world()
+                .map(|w| w.get(hit.pos.0, hit.pos.1, hit.pos.2))
+                .filter(|k| crate::world::is_fence_gate(*k))
+        };
+        if let Some(kind) = gate_cell {
+            let Some(flip) = crate::world::fence_gate_toggled(kind) else {
+                return false;
+            };
+            // THE VANILLA'S OWN ORDER (javap useWithoutItem pc 34-98:
+            // the setBlock FIRST, the playSound AFTER — the trapdoor
+            // arm's own beat the gate shares). THE CLOSED BRANCH'S
+            // OWN RE-FACE (the pc 43-77 law the opened gate the look
+            // byte wears — the open branch's close beat the facing
+            // the keep answers). THE LOOK the mutable borrow's
+            // opening the discipline keeps (the camera read rides
+            // BEFORE the world's own borrow)
+            let opening = crate::world::fence_gate_open(flip);
+            let look = crate::world::fence_gate_facing_byte(self.world_camera().yaw);
+            if let Some(world) = self.offline_world.as_mut() {
+                if opening {
+                    let current = world.variant(hit.pos.0, hit.pos.1, hit.pos.2);
+                    let re_faced =
+                        crate::world::fence_gate_open_facing(current, look);
+                    world.set_variant(hit.pos.0, hit.pos.1, hit.pos.2, re_faced);
+                }
+                world.set(hit.pos.0, hit.pos.1, hit.pos.2, flip);
+                self.world_quads = Some(crate::mesher::mesh_world(world, None));
+            }
+            // THE WOOD TYPE'S OWN VOICE (javap playSound pc 117-162 —
+            // the WoodType's fenceGateOpen/fenceGateClose events the
+            // NEW state's OPEN bit picks, the `nextFloat() * 0.1F +
+            // 0.9F` pitch walk the door's own fold keeps, the Source
+            // BLOCKS the positioned walk the cake arm's own fold
+            // wears)
+            let pitch = 0.9 + self.drop_rng.next_f32() * 0.1;
+            let ear = self
+                .body
+                .as_ref()
+                .map(|b| (b.x, b.y + b.eye_height(), b.z));
+            let yaw = self.listener_yaw();
+            let (tx, ty, tz) = (
+                hit.pos.0 as f64 + 0.5,
+                hit.pos.1 as f64 + 0.5,
+                hit.pos.2 as f64 + 0.5,
+            );
+            let voice = crate::world::fence_gate_voice(kind);
+            let voice_event = if opening {
+                format!("{voice}.open")
+            } else {
+                format!("{voice}.close")
+            };
+            self.sounds.play_voice_at_pan(
+                self.frame,
+                &voice_event,
+                1.0,
+                pitch,
+                ear_distance(ear, tx, ty, tz),
+                ear_pan(ear, yaw, tx, ty, tz),
+            );
+            // THE GAME EVENT'S OWN POST (javap useWithoutItem
+            // pc 165-183 — the BLOCK_OPEN/BLOCK_CLOSE the vibration
+            // frequency table's own rows answer, the gate cell's own
+            // center the dispatch's pos wears)
+            if self.offline_world.is_some() {
+                self.dispatch_vibration_event(
+                    if opening { "block_open" } else { "block_close" },
+                    (tx, ty, tz),
+                );
+            }
+            return true;
+        }
         // THE BUTTON'S OWN PRESS ARM (the autopush-660 round — javap
         // ButtonBlock.useWithoutItem + press the 26.2 jar): the
         // useWithoutItem walk pc 0-19 the already-powered CONSUME
@@ -38469,6 +38636,35 @@ impl App {
                 // the closed kind the item's own kind keeps)
                 if crate::world::redstone_signal_at(world, cell.0, cell.1, cell.2) {
                     if let Some(open_kind) = crate::world::trapdoor_toggled(placed) {
+                        world.set(cell.0, cell.1, cell.2, open_kind);
+                    }
+                }
+            }
+            // THE FENCE GATE'S OWN PLACEMENT STAMP (the dev-53 round —
+            // javap FenceGateBlock.getStateForPlacement pc 0-170 the
+            // 26.2 jar: the FACING = ctx.getHorizontalDirection() walk
+            // pc 17-21 + 113-122 the placement state's own facing
+            // speaks (the look byte the [`crate::world::
+            // fence_gate_facing_byte`] table serves — the door's own
+            // NO-getOpposite law the gate shares), the OPEN/POWERED
+            // hasNeighborSignal preset pc 10-15 + 128-153 the signal
+            // the placement's own cell arms (the gate lands SWUNG when
+            // a powered lever neighbors — the vanilla's own preset
+            // feel the trapdoor's own wire preset keeps), the IN_WALL
+            // the isWall tag verdict pc 23-111 the walls the palette
+            // never banks — the pin the false seat the registerDefault
+            // State's own default keeps). The variant byte the facing
+            // the stamp banks, the armed verdict the OPEN kind the ±1
+            // seat wears.
+            if crate::world::is_fence_gate(placed) {
+                world.set_variant(
+                    cell.0,
+                    cell.1,
+                    cell.2,
+                    crate::world::fence_gate_facing_byte(cam_yaw),
+                );
+                if crate::world::redstone_signal_at(world, cell.0, cell.1, cell.2) {
+                    if let Some(open_kind) = crate::world::fence_gate_toggled(placed) {
                         world.set(cell.0, cell.1, cell.2, open_kind);
                     }
                 }
@@ -103175,7 +103371,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            442,
+            444,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -103256,7 +103452,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            442,
+            444,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -103558,7 +103754,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            442,
+            444,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -107405,7 +107601,7 @@ cow_sound_variant: None,
         assert_eq!(crate::world::OAK_BUTTON_ON, 263);
         assert_eq!(
             crate::world::END_PORTAL,
-            442,
+            444,
             "the displaced seat the weighted plates' own tail keeps"
         );
         for kind in [
@@ -107488,7 +107684,7 @@ cow_sound_variant: None,
         // #texture ref banks)
         assert_eq!(
             atlas::N_KINDS,
-            442,
+            444,
             "the palette the weighted plates' own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
@@ -107703,12 +107899,12 @@ cow_sound_variant: None,
         );
         assert_eq!(
             crate::world::END_PORTAL,
-            442,
+            444,
             "the displaced seat the weighted plates' own tail keeps"
         );
         assert_eq!(
             atlas::N_KINDS,
-            442,
+            444,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
@@ -107980,12 +108176,12 @@ cow_sound_variant: None,
         );
         assert_eq!(
             crate::world::END_PORTAL,
-            442,
+            444,
             "the displaced seat the weighted plates' own tail keeps"
         );
         assert_eq!(
             atlas::N_KINDS,
-            442,
+            444,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
@@ -108100,8 +108296,8 @@ cow_sound_variant: None,
         assert_eq!(w::LIGHT_WEIGHTED_PRESSURE_PLATE_ON, 317);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE, 318);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, 319);
-        assert_eq!(w::END_PORTAL, 442);
-        assert_eq!(atlas::N_KINDS, 442, "the palette the weighted rows bank");
+        assert_eq!(w::END_PORTAL, 444);
+        assert_eq!(atlas::N_KINDS, 444, "the palette the weighted rows bank");
         for (off, on, name) in [
             (
                 w::LIGHT_WEIGHTED_PRESSURE_PLATE,
@@ -109212,10 +109408,10 @@ cow_sound_variant: None,
         assert_eq!(w::OAK_PRESSURE_PLATE_ON, 289);
         assert_eq!(w::STONE_PRESSURE_PLATE, 290);
         assert_eq!(w::STONE_PRESSURE_PLATE_ON, 291);
-        assert_eq!(w::END_PORTAL, 442);
+        assert_eq!(w::END_PORTAL, 444);
         assert_eq!(
             atlas::N_KINDS,
-            442,
+            444,
             "the palette the weighted plates' own rows bank"
         );
         for (off, on, name, wooden) in [

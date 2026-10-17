@@ -932,8 +932,11 @@ pub const END_STONE: u16 = 89;
 /// tail rows bank (the dyed rungs the clinit ladder's own order
 /// the tail wears, the PLAIN kind its own register the dyed
 /// walk's follower banks) — the kind's own seat the beyond-table
-/// 442 the same law keeps).
-pub const END_PORTAL: u16 = 442;
+/// 442 the same law keeps, the dev-53 round THE FENCE'S OWN GATE
+/// the oak pair the 442/443 tail rows bank (the closed rung the
+/// open kind's ±1 mate the append-only law banks) — the kind's
+/// own seat the beyond-table 444 the same law keeps).
+pub const END_PORTAL: u16 = 444;
 
 /// THE BUTTON'S OWN PAIR (the autopush-660 round): the redstone pulse's
 /// own block finally RENDERS, PLACES, PRESSES and PULSES — javap
@@ -2568,6 +2571,74 @@ pub const WOODEN_BUTTON_PULSE_TICKS: u64 = 30;
 pub const LEVER: u16 = 258;
 pub const LEVER_ON: u16 = 259;
 
+/// THE FENCE GATE'S OWN CLOSED KIND (the dev-53 round — the
+/// interactive vocabulary's next member the gate rung opens: the
+/// RMB toggle the passage serves, the wire the powered verdict
+/// arms). javap `net.minecraft.world.level.block.FenceGateBlock`
+/// the 26.2 jar (pinned sha1 2dc72797, the probe
+/// scripts/jar_work/fence_gate_53.py banks): the ctor's
+/// registerDefaultState walk pc 17-67 pins OPEN=false, POWERED=
+/// false, IN_WALL=false (the FACING the HorizontalDirectionalBlock
+/// default's NORTH pin wears), the Properties chain the Blocks
+/// clinit row pc 12870-12912 banks — mapColor(OAK_PLANKS.
+/// defaultMapColor()) + forceSolidOn() + instrument(BASS) +
+/// strength(2.0, ...) + ignitedByLava(), NO sound() row the chain
+/// carries (the ctor's `Properties.sound(type.soundType())` pc 2-6
+/// walk the WOOD SoundType the dig/place rows bank — the
+/// generated block_sounds table's row the planks family's own voice
+/// wears). The ONE "oak_fence_gate" registry name its kinds BOTH
+/// speak (the BlockItemIds.OAK_FENCE_GATE the Items clinit row
+/// pc 8354-8363 the registerBlock pairing answers — the NAME_OF
+/// row the dig/drop/sound/item lanes the base-name law keeps, the
+/// placeable lookup the reverse walk the kind's own closed row
+/// answers). The collision the CENTERED PANEL the variant-aware
+/// lane serves (javap getCollisionShape pc 0-50: the OPEN state's
+/// Shapes.empty() the pass-through verdict speaks, the closed
+/// SHAPE_COLLISION column(16.0, 4.0, 0.0, 24.0) the centered 4/16
+/// strip banks — the x/z the FULL 16/16 width the panel's own span
+/// keeps, the facing's own axis the thin axis the rotation wears
+/// [north/south the z 6..10 band, east/west the x 6..10 band —
+/// the [`CenterBand`] variant's own decode answers]; the 0..24
+/// y-band the anti-jump the fence family's 1.5-tall law speaks —
+/// the per-cell sweep's vocabulary the over-tall extension a later
+/// round serves), the SHAPES map rotateHorizontalAxis(Block.cube(
+/// 16.0, 16.0, 4.0)) the outline walk banks. The mesher's element
+/// lane the template chain's EIGHT elements renders (the two posts
+/// + the two inner verticals + the four bars — the #texture ref
+/// block/oak_planks the ONE master every face wears). The
+/// blockstates oak_fence_gate.json the 16-variant map carries —
+/// the facing=south,in_wall=false rows the kinds resolve (the y
+/// table north 180 / east 270 / south 0 / west 90 the theta tables
+/// fold). The IN_WALL the isWall tag verdict the walls the palette
+/// never banks — the pin the false seat keeps.
+pub const OAK_FENCE_GATE: u16 = 442;
+
+/// THE FENCE GATE'S OWN OPEN KIND (the dev-53 round — the flip
+/// walk's own product: javap FenceGateBlock.useWithoutItem the 26.2
+/// jar — the OPEN read pc 0-13 the toggle walk arms, the open
+/// branch's setValue(OPEN=false) pc 16-39 the close beat speaks,
+/// the closed branch's re-face law pc 43-77 arms (the `FACING ==
+/// dir.getOpposite()` verdict the player's own look the FACING
+/// byte wears — the opened gate the look the variant byte banks,
+/// the [`fence_gate_open_facing`] walk serves), the setValue(
+/// OPEN=true) pc 78-98 the open beat keeps, the setBlock flag 10
+/// BOTH branches wear, the playSound pc 117-162 the
+/// fenceGateOpen/fenceGateClose events the NEW state's OPEN bit
+/// picks (volume 1.0, the pitch the `nextFloat() * 0.1F + 0.9F`
+/// walk the door's own fold keeps [cp@244 = 0.1f, cp@245 = 0.9f]),
+/// the gameEvent pc 165-183 the BLOCK_OPEN/BLOCK_CLOSE posts the
+/// sculk lane hears; NO canOpenByHand gate the walk carries —
+/// every fence gate the hand opens). The getCollisionShape pc 0-50
+/// walk the OPEN state's Shapes.empty() the pass-through verdict
+/// speaks — the body walks THROUGH the gate cell (even the posts
+/// the collision never banks — the vanilla's own empty shape the
+/// swung panel's cell carries), the placement's obstruction the
+/// empty shape never refuses. The getStateForPlacement pc 0-170
+/// walk the OPEN/POWERED hasNeighborSignal preset arms (the signal
+/// the placement's own cell the lever-source walk answers — the
+/// gate lands SWUNG when a powered lever neighbors).
+pub const OAK_FENCE_GATE_OPEN: u16 = 443;
+
 /// THE OAK DOOR'S OWN CLOSED LOWER (the autopush-655 round — the
 /// vocabulary's next frontier: the right-click open/close the
 /// interaction feel the flip walk serves): javap DoorBlock the 26.2
@@ -3128,10 +3199,11 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 /// bank — the autopush-677 round the wool's own sixteen cloths the
 /// dyed rungs the 410..424 rows bank (the WHITE kind its clinit
 /// position the 76 row keeps) — the autopush-678 round the potter's
-/// own seventeen kilns the 425..441 rows bank — the table the 442
-/// rows the END_PORTAL the beyond-table seat the displaced law
-/// keeps.
-pub const NAME_OF: [&str; 442] = [
+/// own seventeen kilns the 425..441 rows bank — the dev-53 round the
+/// fence's own gate the oak pair the 442/443 rows bank — the table
+/// the 444 rows the END_PORTAL the beyond-table seat the displaced
+/// law keeps.
+pub const NAME_OF: [&str; 444] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -3647,7 +3719,7 @@ pub const NAME_OF: [&str; 442] = [
     // entry drop pools + the block.wool.break voice the generated
     // tables already bank, the placeable lane the reverse walk the
     // pairing serves (410..424 — the END_PORTAL the beyond-table
-    // 442 the displacement law keeps).
+    // 444 the displacement law keeps).
     "orange_wool", "magenta_wool", "light_blue_wool", "yellow_wool",
     "lime_wool", "pink_wool", "gray_wool", "light_gray_wool",
     "cyan_wool", "purple_wool", "blue_wool", "brown_wool",
@@ -3668,6 +3740,16 @@ pub const NAME_OF: [&str; 442] = [
     "cyan_terracotta", "purple_terracotta", "blue_terracotta",
     "brown_terracotta", "green_terracotta", "red_terracotta",
     "black_terracotta", "terracotta",
+    // THE FENCE'S OWN GATE (the dev-53 round): the oak pair the
+    // tail rows bank — the ONE "oak_fence_gate" registry id BOTH
+    // kinds speak (the BlockItemIds.OAK_FENCE_GATE the Items
+    // clinit row pc 8354-8363 the registerBlock pairing answers —
+    // the dig rows (2.0 + no-tool) + the self-entry drop pool +
+    // the WOOD SoundType voice the generated tables already bank,
+    // the placeable lane the reverse walk the pairing serves —
+    // 442/443, the END_PORTAL the beyond-table 444 the
+    // displacement law keeps).
+    "oak_fence_gate", "oak_fence_gate",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -4453,6 +4535,89 @@ pub fn door_facing_byte(cam_yaw_radians: f32) -> u8 {
     let vanilla_yaw = (cam_yaw_radians - std::f32::consts::PI).to_degrees();
     let look = direction_index_from_y_rot(f64::from(vanilla_yaw));
     FACING_BY_2D[look]
+}
+
+/// THE FENCE GATE'S OWN FAMILY (the dev-53 round — the two-kind
+/// ladder the OPEN bit alone wears, the facing the variant byte
+/// carries): the mesher's element lane the family fn reads, the
+/// collision's centered-panel lane the open verdict arms, the
+/// RMB/wire lanes the flip walk serves.
+#[inline]
+pub fn is_fence_gate(id: u16) -> bool {
+    id == OAK_FENCE_GATE || id == OAK_FENCE_GATE_OPEN
+}
+
+/// THE GATE'S OWN OPEN READ (the ±1 ladder the OFF/ON bit the
+/// pair's own seats wear — the open kind the tail seat banks).
+#[inline]
+pub fn fence_gate_open(id: u16) -> bool {
+    id == OAK_FENCE_GATE_OPEN
+}
+
+/// THE GATE'S OWN FLIP MATE (javap FenceGateBlock.useWithoutItem
+/// pc 0-98 the 26.2 jar — the OPEN read's branches the setValue(
+/// OPEN={false|true}) walk speaks, the setBlock flag 10 the kind
+/// swap banks): the closed kind the open tail seat answers, the
+/// open kind the closed base row wears — the ±1 mate the ladder's
+/// own arithmetic keeps.
+pub fn fence_gate_toggled(id: u16) -> Option<u16> {
+    match id {
+        OAK_FENCE_GATE => Some(OAK_FENCE_GATE_OPEN),
+        OAK_FENCE_GATE_OPEN => Some(OAK_FENCE_GATE),
+        _ => None,
+    }
+}
+
+/// THE GATE'S OWN VOICE STEM (javap WoodType the 26.2 jar — the
+/// ctor's `createVariableRangeEvent("block.fence_gate.open")` /
+/// `("block.fence_gate.close")` pair EVERY wood the same names
+/// wears — the ONE stem the ladder speaks, the caller the .open/
+/// .close suffix the new state's OPEN bit picks; the runtime
+/// sounds.json the events carry).
+pub fn fence_gate_voice(_id: u16) -> &'static str {
+    "block.fence_gate"
+}
+
+/// THE GATE'S OWN PLACEMENT FACING (javap FenceGateBlock.
+/// getStateForPlacement pcs 113-122 the 26.2 jar: the
+/// `defaultBlockState().setValue(FACING, ctx.getHorizontalDirection
+/// ())` walk the placement state's own facing speaks — NO
+/// getOpposite the door's own chain carries, the gate faces the
+/// SAME way the player looks). The client's own yaw the
+/// [`door_facing_byte`] walk's decode keeps (the fromYRot law the
+/// shared helper wears — the look the direction_index decode
+/// answers). The byte the variant vocabulary keeps — the placement
+/// lane's own stamp the [`World::set_variant`] layer banks.
+pub fn fence_gate_facing_byte(cam_yaw_radians: f32) -> u8 {
+    door_facing_byte(cam_yaw_radians)
+}
+
+/// THE GATE'S OWN RE-FACE LAW (javap FenceGateBlock.useWithoutItem
+/// pc 43-77 the 26.2 jar — the closed branch's own arms: `dir =
+/// player.getDirection()`, the `state.getValue(FACING) ==
+/// dir.getOpposite()` verdict the re-face speaks, the
+/// `setValue(FACING, dir)` walk the opened gate the player's own
+/// look wears). The current byte the gate's FACING the variant
+/// table keeps, the look byte the [`fence_gate_facing_byte`] walk
+/// serves; the verdict's PASS the look the answer wears, the FAIL
+/// the current facing the keep answers (the opened gate the
+/// player-facing side the swing never crosses). The no-opinion
+/// bytes the honest guard the panic never arms (the 1..=4 range
+/// the verdict consults).
+pub fn fence_gate_open_facing(current_facing: u8, look_facing: u8) -> u8 {
+    if !(1..=4).contains(&current_facing) || !(1..=4).contains(&look_facing) {
+        return current_facing;
+    }
+    let opposite_of_look = if look_facing <= 2 {
+        look_facing + 2
+    } else {
+        look_facing - 2
+    };
+    if current_facing == opposite_of_look {
+        look_facing
+    } else {
+        current_facing
+    }
 }
 
 /// The plains' own DOUBLE PLANT FAMILY — the two-cell kinds the
@@ -5428,6 +5593,26 @@ pub enum CollisionShape {
     /// facing byte's own law), the thickness the 3/16 panel every
     /// rotation keeps.
     Band(u8, u8),
+    /// THE FENCE GATE'S OWN CENTERED PANEL (the dev-53 round): the
+    /// closed gate's SHAPE_COLLISION the per-axis map banks — javap
+    /// FenceGateBlock the 26.2 jar (the probe
+    /// scripts/jar_work/fence_gate_53.py banks): the clinit's
+    /// `Shapes.rotateHorizontalAxis(Block.column(16.0, 4.0, 0.0,
+    /// 24.0))` walk pc 64-80 the map builds — the column(w, d, y0,
+    /// y1) decode box(8-w/2, y0, 8-d/2, 8+w/2, y1, 8+d/2) the
+    /// [0, 0, 6] -> [16, 24, 10] box speaks (the x the FULL 16/16
+    /// width the panel's own span keeps, the z the CENTERED 4/16
+    /// strip the 8±2 fold banks, the y the 0..24 band the anti-jump
+    /// the fence family's 1.5-tall law speaks [the per-cell sweep's
+    /// vocabulary the over-tall extension a later round serves —
+    /// the cell-height band the honest cut keeps]), the X-axis row
+    /// the rotation the same strip the x axis wears. The (axis,
+    /// thickness) pair the variant vocabulary speaks: the axis the
+    /// strip's own thin axis answers (0 the z band the north/south
+    /// facing rows wear, 1 the x band the east/west rotation keeps
+    /// — the facing byte's own axis the [`collision_shape_at`] walk
+    /// decodes), the thickness the 4/16 panel every row keeps.
+    CenterBand(u8, u8),
     /// THE TRAPDOOR'S OWN HORIZONTAL SLAB (the autopush-668 round —
     /// the closed state's own band the SHAPES map's UP/DOWN keys
     /// speak): javap TrapDoorBlock the 26.2 jar the SHAPES clinit's
@@ -5664,6 +5849,28 @@ pub fn collision_shape(id: u16) -> CollisionShape {
         } else {
             CollisionShape::YSpan(0, 3)
         }
+    } else if is_fence_gate(id) {
+        // THE FENCE GATE'S OWN VARIANT-BLIND DEFAULTS (the dev-53
+        // round — the kind-only lane the placement's obstruction walk
+        // and the generic predicates read BEFORE the variant byte is
+        // stamped): the OPEN kind the vanilla's own Shapes.empty()
+        // the Empty row keeps (javap getCollisionShape pc 15-34 the
+        // `if (OPEN) return Shapes.empty()` walk the pass-through
+        // verdict speaks — the body walks THROUGH the swung gate the
+        // posts the collision never banks, the placement's own
+        // obstruction the empty shape never refuses), the CLOSED kind
+        // the registerDefaultState's own FACING=NORTH default the
+        // CenterBand(0, 4) row wears (the no-opinion 0 byte the Z-axis
+        // answer — the centered 4/16 strip the z 6..10 band the SHAPE_
+        // COLLISION column banks). The variant-aware verdict the
+        // [`collision_shape_at`] walk serves (the body's own sweep
+        // the per-cell read keeps — the facing byte's own axis the
+        // strip's thin axis answers).
+        if fence_gate_open(id) {
+            CollisionShape::Empty
+        } else {
+            CollisionShape::CenterBand(0, 4)
+        }
     } else {
         CollisionShape::Full
     }
@@ -5767,6 +5974,26 @@ pub fn collision_shape_at(world: &World, cx: i32, cy: i32, cz: i32) -> Collision
             CollisionShape::YSpan(0, 3)
         };
     }
+    // THE FENCE GATE'S OWN VARIANT-AWARE ROW (the dev-53 round —
+    // javap FenceGateBlock.getCollisionShape pc 0-50 the 26.2 jar:
+    // the OPEN state's Shapes.empty() the pass-through verdict the
+    // Empty row speaks [the swung gate even the posts the collision
+    // never banks], the closed SHAPE_COLLISION map the per-axis row
+    // the facing's own axis answers — `state.getValue(FACING).
+    // getAxis()` the map key read pc 0-13 speaks: north/south the
+    // Direction.Z axis the z-centered strip wears, east/west the
+    // Direction.X axis the x-centered rotation keeps; the
+    // no-opinion 0 byte the registerDefaultState's own NORTH pin
+    // the Z-axis default answers). The variant byte the sidecar
+    // reads, the [`CenterBand`] decode the strip the sweep serves.
+    if is_fence_gate(id) {
+        if fence_gate_open(id) {
+            return CollisionShape::Empty;
+        }
+        let facing = world.variant(cx, cy, cz);
+        let axis_x = matches!(facing, 2 | 4) as u8;
+        return CollisionShape::CenterBand(axis_x, 4);
+    }
     if !is_door(id) {
         return collision_shape(id);
     }
@@ -5828,6 +6055,23 @@ pub fn shape_slabs(
             3 => z_lo = (cz + 1) as f64 - t,
             4 => x_hi = cx as f64 + t,
             _ => {}
+        }
+    }
+    // THE FENCE GATE'S OWN CENTERED STRIP (the dev-53 round — the
+    // [`CenterBand`] decode the SHAPE_COLLISION column's own box
+    // serves: the axis the thin axis answers [0 the z band the
+    // north/south rows wear, 1 the x band the east/west rotation
+    // keeps], the strip the cell's own CENTER hugs — the z/x the
+    // 0.5 ± t/2 band the 8±2 px fold banks, the OTHER axis the FULL
+    // 0..1 span the panel's width keeps)
+    if let CollisionShape::CenterBand(axis, th) = shape {
+        let t = th as f64 / 16.0;
+        if axis == 0 {
+            z_lo = cz as f64 + 0.5 - t / 2.0;
+            z_hi = cz as f64 + 0.5 + t / 2.0;
+        } else {
+            x_lo = cx as f64 + 0.5 - t / 2.0;
+            x_hi = cx as f64 + 0.5 + t / 2.0;
         }
     }
     Some((x_lo, x_hi, y_lo, y_hi, z_lo, z_hi))
@@ -13109,7 +13353,7 @@ mod tests {
         assert_eq!(NAME_OF[BUTTON_ON as usize], "stone_button");
         assert_eq!(BUTTON + 1, BUTTON_ON, "the +1 seat the OFF/ON ladder wears");
         assert_eq!(
-            END_PORTAL, 442,
+            END_PORTAL, 444,
             "the displaced seat the wire pair's own tail banks"
         );
         // THE PULSE'S OWN CLOCK (javap press pc 28-37 — the STONE
@@ -13818,10 +14062,10 @@ mod tests {
         assert_eq!(REDSTONE_LAMP, 368);
         assert_eq!(REDSTONE_LAMP_LIT, 369);
         assert_eq!(
-            END_PORTAL, 442,
+            END_PORTAL, 444,
             "the displaced seat the lamp pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 442, "the palette the lamp pair banks");
+        assert_eq!(atlas::N_KINDS, 444, "the palette the lamp pair banks");
         assert!(is_redstone_lamp(REDSTONE_LAMP) && is_redstone_lamp(REDSTONE_LAMP_LIT));
         assert!(!is_redstone_lamp(REDSTONE_WIRE) && !is_redstone_lamp(STONE));
         assert!(!redstone_lamp_lit(REDSTONE_LAMP));
@@ -13915,10 +14159,10 @@ mod tests {
         assert_eq!(REDSTONE_WIRE, 320);
         assert_eq!(REDSTONE_WIRE_ON, 321);
         assert_eq!(
-            END_PORTAL, 442,
+            END_PORTAL, 444,
             "the displaced seat the wire pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 442, "the palette the wire pair banks");
+        assert_eq!(atlas::N_KINDS, 444, "the palette the wire pair banks");
         assert!(is_redstone_wire(REDSTONE_WIRE) && is_redstone_wire(REDSTONE_WIRE_ON));
         assert!(!is_redstone_wire(LEVER) && !is_redstone_wire(OAK_PRESSURE_PLATE));
         assert!(!wire_powered(REDSTONE_WIRE));
@@ -14069,10 +14313,10 @@ mod tests {
             "the rungs the contiguous tail banks"
         );
         assert_eq!(
-            END_PORTAL, 442,
+            END_PORTAL, 444,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 442, "the palette the graded ladder banks");
+        assert_eq!(atlas::N_KINDS, 444, "the palette the graded ladder banks");
         // THE POWER READ'S OWN ROUND TRIP (the seat the kind the
         // inverse fold answers, the unknown id the None keeps)
         assert_eq!(wire_power_of(REDSTONE_WIRE), Some(0));
@@ -14218,7 +14462,7 @@ mod tests {
         // seats the contiguous tail the 384..395 rows wear (the
         // door/button family order the same twelve woods keeps), the
         // END_PORTAL the beyond-table seat the displacement keeps (the
-        // 442 the `id < N_KINDS` guards the bigger tail banks), the
+        // 444 the `id < N_KINDS` guards the bigger tail banks), the
         // ONE "{stem}_planks" registry entry its kind ALONE speaks
         // (no strip law the twelve rows never share — the BlockItem
         // pairing the Items clinit's registerBlock rows answer), the
@@ -14247,7 +14491,7 @@ mod tests {
             ("warped_planks", WARPED_PLANKS, "block.nether_wood.break"),
         ];
         // THE SEATS' OWN LADDER (the 384..395 contiguous tail the
-        // family order banks, the END_PORTAL the displaced 442 keeps)
+        // family order banks, the END_PORTAL the displaced 444 keeps)
         assert_eq!(OAK_PLANKS, 384);
         assert_eq!(WARPED_PLANKS, 395);
         assert_eq!(
@@ -14256,10 +14500,10 @@ mod tests {
             "the twelve seats the contiguous tail banks"
         );
         assert_eq!(
-            END_PORTAL, 442,
+            END_PORTAL, 444,
             "the displaced seat the planks' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 442, "the palette the planks' twelve banks");
+        assert_eq!(atlas::N_KINDS, 444, "the palette the planks' twelve banks");
         for (i, (name, kind, voice)) in PLANKS.iter().enumerate() {
             let seat = OAK_PLANKS + i as u16;
             assert_eq!(*kind, seat, "the seat the family order banks");
@@ -14345,13 +14589,13 @@ mod tests {
         );
         // THE UNKNOWN KINDS THE REFUSALS KEEP (the non-plank kinds the
         // lanes never answer — the beyond-table seat the item lane
-        // refuses, the table lengths the same 442 the one law keeps)
+        // refuses, the table lengths the same 444 the one law keeps)
         assert_eq!(
             World::placeable_block("end_portal"),
             None,
             "the portal the item lane refuses"
         );
-        assert_eq!(NAME_OF.len(), 442, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 444, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -14366,7 +14610,7 @@ mod tests {
         // builder's own stone shelf banks): the seats the contiguous
         // tail the 396..401 rows wear (the vanilla stone shelf's own
         // order keeps), the END_PORTAL the beyond-table seat the
-        // displacement keeps (the 442 the `id < N_KINDS` guards the
+        // displacement keeps (the 444 the `id < N_KINDS` guards the
         // bigger tail banks), the ONE "{name}" registry entry its kind
         // ALONE speaks (no strip law the six rows never share — the
         // BlockItem pairing the Items clinit's registerBlock rows
@@ -14392,7 +14636,7 @@ mod tests {
             ("chiseled_stone_bricks", CHISELED_STONE_BRICKS, 1.5),
         ];
         // THE SEATS' OWN LADDER (the 396..401 contiguous tail the
-        // stone shelf order banks, the END_PORTAL the displaced 442
+        // stone shelf order banks, the END_PORTAL the displaced 444
         // keeps)
         assert_eq!(COBBLESTONE, 396);
         assert_eq!(CHISELED_STONE_BRICKS, 401);
@@ -14402,10 +14646,10 @@ mod tests {
             "the six seats the contiguous tail banks"
         );
         assert_eq!(
-            END_PORTAL, 442,
+            END_PORTAL, 444,
             "the displaced seat the kit's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 442, "the palette the kit's six banks");
+        assert_eq!(atlas::N_KINDS, 444, "the palette the kit's six banks");
         for (i, (name, kind, hard)) in KIT.iter().enumerate() {
             let seat = COBBLESTONE + i as u16;
             assert_eq!(*kind, seat, "the seat the stone shelf order banks");
@@ -14494,8 +14738,8 @@ mod tests {
             "the solid cube the bricks' own shape keeps"
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
-        // the same 442 the kit's growth banks)
-        assert_eq!(NAME_OF.len(), 442, "the NAME_OF table the one length keeps");
+        // the same 444 the kit's growth banks)
+        assert_eq!(NAME_OF.len(), 444, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -14510,7 +14754,7 @@ mod tests {
         // banks): the seats the contiguous tail the 402..409 rows wear
         // (the regular quartet the red quartet the door family's own
         // order keeps), the END_PORTAL the beyond-table seat the
-        // displacement keeps (the 442 the `id < N_KINDS` guards the
+        // displacement keeps (the 444 the `id < N_KINDS` guards the
         // bigger tail banks), the ONE "{name}" registry entry its kind
         // ALONE speaks (no strip law the eight rows never share — the
         // BlockItem pairing the Items clinit's registerBlock rows
@@ -14540,7 +14784,7 @@ mod tests {
             ("smooth_red_sandstone", SMOOTH_RED_SANDSTONE, 2.0, "red_sandstone_top", "red_sandstone_top", "red_sandstone_top"),
         ];
         // THE SEATS' OWN LADDER (the 402..409 contiguous tail the
-        // desert order banks, the END_PORTAL the displaced 442 keeps)
+        // desert order banks, the END_PORTAL the displaced 444 keeps)
         assert_eq!(SANDSTONE, 402);
         assert_eq!(SMOOTH_RED_SANDSTONE, 409);
         assert_eq!(
@@ -14549,10 +14793,10 @@ mod tests {
             "the eight seats the contiguous tail banks"
         );
         assert_eq!(
-            END_PORTAL, 442,
+            END_PORTAL, 444,
             "the displaced seat the shelf's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 442, "the palette the shelf's eight banks");
+        assert_eq!(atlas::N_KINDS, 444, "the palette the shelf's eight banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -14649,8 +14893,8 @@ mod tests {
             "the solid cube the smooth red's own shape keeps"
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
-        // the same 442 the shelf's growth banks)
-        assert_eq!(NAME_OF.len(), 442, "the NAME_OF table the one length keeps");
+        // the same 444 the shelf's growth banks)
+        assert_eq!(NAME_OF.len(), 444, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -14669,7 +14913,7 @@ mod tests {
         // (orange, magenta, light_blue, yellow, lime, pink, gray,
         // light_gray, cyan, purple, blue, brown, green, red, black),
         // the END_PORTAL the beyond-table seat the displacement keeps
-        // (the 442 the `id < N_KINDS` guards the bigger tail banks),
+        // (the 444 the `id < N_KINDS` guards the bigger tail banks),
         // the ONE "{name}" registry entry its kind ALONE speaks (no
         // strip law the sixteen rows never share — the BlockItem
         // pairing the Items clinit's registerBlock rows answer), the
@@ -14706,7 +14950,7 @@ mod tests {
         ];
         // THE SEATS' OWN LADDER (the WHITE its clinit position the 76
         // seat keeps, the dyed rungs the 410..424 contiguous tail the
-        // clinit order banks, the END_PORTAL the displaced 442 keeps)
+        // clinit order banks, the END_PORTAL the displaced 444 keeps)
         assert_eq!(WHITE_WOOL, 76, "the clinit seat the first cloth banks");
         assert_eq!(ORANGE_WOOL, 410);
         assert_eq!(BLACK_WOOL, 424);
@@ -14716,10 +14960,10 @@ mod tests {
             "the fifteen rungs the contiguous tail banks"
         );
         assert_eq!(
-            END_PORTAL, 442,
+            END_PORTAL, 444,
             "the displaced seat the cloths' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 442, "the palette the cloths' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 444, "the palette the cloths' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -14832,8 +15076,8 @@ mod tests {
             "the solid cube the black cloth's own shape keeps"
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
-        // the same 442 the cloths' growth banks)
-        assert_eq!(NAME_OF.len(), 442, "the NAME_OF table the one length keeps");
+        // the same 444 the cloths' growth banks)
+        assert_eq!(NAME_OF.len(), 444, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -14905,10 +15149,10 @@ mod tests {
         );
         assert_eq!(TERRACOTTA, 441, "the plain kiln the dyed walk's follower banks");
         assert_eq!(
-            END_PORTAL, 442,
+            END_PORTAL, 444,
             "the displaced seat the kilns' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 442, "the palette the kilns' seventeen banks");
+        assert_eq!(atlas::N_KINDS, 444, "the palette the kilns' seventeen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -15020,7 +15264,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 442 the kilns' growth banks)
-        assert_eq!(NAME_OF.len(), 442, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 444, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -15052,10 +15296,10 @@ mod tests {
         assert_eq!(REDSTONE_TORCH, 322);
         assert_eq!(REDSTONE_TORCH_OFF, 323);
         assert_eq!(
-            END_PORTAL, 442,
+            END_PORTAL, 444,
             "the displaced seat the torch pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 442, "the palette the torch pair banks");
+        assert_eq!(atlas::N_KINDS, 444, "the palette the torch pair banks");
         assert!(is_redstone_torch(REDSTONE_TORCH) && is_redstone_torch(REDSTONE_TORCH_OFF));
         assert!(!is_redstone_torch(TORCH) && !is_redstone_torch(LEVER));
         assert!(redstone_torch_lit(REDSTONE_TORCH));
@@ -15195,8 +15439,8 @@ mod tests {
         use mc_registry::generated::atlas;
         assert_eq!(REDSTONE_WALL_TORCH, 324);
         assert_eq!(REDSTONE_WALL_TORCH_OFF, 325);
-        assert_eq!(END_PORTAL, 442);
-        assert_eq!(atlas::N_KINDS, 442, "the palette the wall pair banks");
+        assert_eq!(END_PORTAL, 444);
+        assert_eq!(atlas::N_KINDS, 444, "the palette the wall pair banks");
         assert!(
             is_redstone_torch(REDSTONE_WALL_TORCH) && is_redstone_torch(REDSTONE_WALL_TORCH_OFF),
             "the wall pair the family's tail banks"
@@ -15439,9 +15683,9 @@ mod tests {
         use mc_registry::generated::atlas;
         assert_eq!(OAK_TRAPDOOR, 326);
         assert_eq!(OAK_TRAPDOOR_OPEN, 327);
-        assert_eq!(END_PORTAL, 442);
+        assert_eq!(END_PORTAL, 444);
         assert_eq!(
-            atlas::N_KINDS, 442,
+            atlas::N_KINDS, 444,
             "the palette the trapdoor pair banks"
         );
         assert_eq!(OAK_TRAPDOOR + 1, OAK_TRAPDOOR_OPEN, "the +1 mate wears");
@@ -15573,6 +15817,228 @@ mod tests {
     }
 
     #[test]
+    fn the_fences_own_gate_the_flip_collision_and_the_lanes_wear() {
+        // THE GATE'S OWN WORLD WALK (the dev-53 round — javap
+        // FenceGateBlock the 26.2 jar the probe scripts/jar_work/
+        // fence_gate_53.out banks: the seats the 442/443 tail wears,
+        // the END_PORTAL the beyond-table 444 the displacement keeps,
+        // the family/open/toggled verdicts the ±1 mate speaks, the
+        // ONE registry name BOTH kinds the strip law keeps, the
+        // getCollisionShape walk the open state's Shapes.empty() the
+        // pass-through verdict speaks, the closed SHAPE_COLLISION
+        // column the centered 4/16 strip banks [the facing's own
+        // axis the thin axis answers], the useWithoutItem walk's
+        // re-face law the look byte wears, the placement's
+        // getHorizontalDirection the look byte serves, the WoodType's
+        // fence_gate voice pair every wood the same names wears, the
+        // template chain's EIGHT elements the derive walk resolves,
+        // the #texture ref block/oak_planks the ONE master wears)
+        use mc_registry::generated::atlas;
+        assert_eq!(OAK_FENCE_GATE, 442);
+        assert_eq!(OAK_FENCE_GATE_OPEN, 443);
+        assert_eq!(END_PORTAL, 444);
+        assert_eq!(
+            atlas::N_KINDS,
+            444,
+            "the palette the gate pair banks"
+        );
+        assert_eq!(OAK_FENCE_GATE + 1, OAK_FENCE_GATE_OPEN, "the +1 mate wears");
+        assert!(is_fence_gate(OAK_FENCE_GATE) && is_fence_gate(OAK_FENCE_GATE_OPEN));
+        assert!(!is_fence_gate(OAK_DOOR), "the door the family fn refuses");
+        assert!(!is_fence_gate(LEVER), "the lever the family fn refuses");
+        assert!(!fence_gate_open(OAK_FENCE_GATE));
+        assert!(fence_gate_open(OAK_FENCE_GATE_OPEN));
+        assert_eq!(fence_gate_toggled(OAK_FENCE_GATE), Some(OAK_FENCE_GATE_OPEN));
+        assert_eq!(fence_gate_toggled(OAK_FENCE_GATE_OPEN), Some(OAK_FENCE_GATE));
+        assert_eq!(fence_gate_toggled(STONE), None, "the unknown the None keeps");
+        // THE NAMES' OWN ROWS (the ONE registry entry both kinds the
+        // strip law keeps — the dig/sounds/drops/item lanes the same
+        // row speaks)
+        assert_eq!(NAME_OF[OAK_FENCE_GATE as usize], "oak_fence_gate");
+        assert_eq!(NAME_OF[OAK_FENCE_GATE_OPEN as usize], "oak_fence_gate");
+        assert_eq!(atlas::KIND_NAMES[OAK_FENCE_GATE as usize], "oak_fence_gate");
+        assert_eq!(
+            atlas::KIND_NAMES[OAK_FENCE_GATE_OPEN as usize],
+            "oak_fence_gate_open"
+        );
+        assert_eq!(atlas::REGISTRY_NAMES[OAK_FENCE_GATE as usize], "oak_fence_gate");
+        assert_eq!(
+            atlas::REGISTRY_NAMES[OAK_FENCE_GATE_OPEN as usize],
+            "oak_fence_gate"
+        );
+        // THE TILE'S OWN IDENTITY (the SAME oak_planks master both
+        // kinds' seats wear — the template chain's #texture ref the
+        // ONE master every face answers, NO new tile the regen keeps)
+        assert_eq!(
+            atlas::FACE_TILES[OAK_FENCE_GATE as usize],
+            atlas::FACE_TILES[OAK_FENCE_GATE_OPEN as usize],
+            "the open kind the closed kind's tile wears"
+        );
+        assert_eq!(
+            atlas::TILE_NAMES[atlas::FACE_TILES[OAK_FENCE_GATE as usize][2] as usize],
+            "oak_planks"
+        );
+        // THE VOICE'S OWN STEM (the WoodType's fenceGateOpen/
+        // fenceGateClose events EVERY wood the same names wears)
+        assert_eq!(fence_gate_voice(OAK_FENCE_GATE), "block.fence_gate");
+        assert_eq!(fence_gate_voice(OAK_FENCE_GATE_OPEN), "block.fence_gate");
+        // THE PLACEMENT'S OWN FACING (javap getStateForPlacement
+        // pcs 113-122 the getHorizontalDirection walk the door's own
+        // NO-getOpposite law keeps — the alias the same table serves)
+        for yaw in [0.0f32, 1.0, 2.5, 4.0, 5.5] {
+            assert_eq!(
+                fence_gate_facing_byte(yaw),
+                door_facing_byte(yaw),
+                "the gate the door's own look-byte law wears (yaw {yaw})"
+            );
+        }
+        // THE RE-FACE'S OWN LAW (javap useWithoutItem pc 43-77 — the
+        // `FACING == dir.getOpposite()` verdict the look the re-face
+        // wears: the south-facing gate + the north look the north
+        // answer keeps, the already-facing gate the keep answers)
+        assert_eq!(fence_gate_open_facing(3, 1), 1, "the south gate the north look re-faces");
+        assert_eq!(fence_gate_open_facing(1, 1), 1, "the facing gate the look the keep answers");
+        assert_eq!(fence_gate_open_facing(2, 1), 2, "the east gate the north look keeps");
+        assert_eq!(fence_gate_open_facing(1, 3), 3, "the north gate the south look re-faces");
+        assert_eq!(fence_gate_open_facing(4, 2), 2, "the west gate the east look re-faces");
+        assert_eq!(fence_gate_open_facing(2, 4), 4, "the east gate the west look re-faces");
+        assert_eq!(fence_gate_open_facing(0, 1), 0, "the no-opinion byte the honest keep wears");
+        assert_eq!(fence_gate_open_facing(3, 0), 3, "the no-opinion look the keep answers");
+        // THE COLLISION'S OWN ROWS (javap getCollisionShape pc 0-50:
+        // the open state's Shapes.empty() the Empty row keeps, the
+        // closed SHAPE_COLLISION column the centered strip banks —
+        // the variant-blind default the NORTH pin the Z-axis row
+        // wears, the variant-aware read the collision_shape_at walk
+        // keeps)
+        assert_eq!(
+            collision_shape(OAK_FENCE_GATE),
+            CollisionShape::CenterBand(0, 4),
+            "the closed kind the Z-axis centered panel wears"
+        );
+        assert_eq!(
+            collision_shape(OAK_FENCE_GATE_OPEN),
+            CollisionShape::Empty,
+            "the open kind the pass-through verdict keeps"
+        );
+        // THE SLABS' OWN DECODE (the shape_slabs walk the CenterBand
+        // box serves: the axis the thin axis answers, the 8±2 px fold
+        // the centered strip banks, the OTHER axis the full span
+        // keeps)
+        let full = shape_slabs(CollisionShape::CenterBand(0, 4), 10, 8, 10).unwrap();
+        assert_eq!((full.0, full.1), (10.0, 11.0), "the x the full span keeps");
+        assert_eq!((full.2, full.3), (8.0, 9.0), "the y the full span keeps");
+        assert_eq!(
+            (full.4, full.5),
+            (10.0 + 6.0 / 16.0, 10.0 + 10.0 / 16.0),
+            "the z the centered 6..10 px strip wears"
+        );
+        let turned = shape_slabs(CollisionShape::CenterBand(1, 4), 10, 8, 10).unwrap();
+        assert_eq!(
+            (turned.0, turned.1),
+            (10.0 + 6.0 / 16.0, 10.0 + 10.0 / 16.0),
+            "the x the centered strip the axis turn wears"
+        );
+        assert_eq!((turned.4, turned.5), (10.0, 11.0), "the z the full span keeps");
+        let mut w = World::new(2, 0x600D);
+        let c = w.size_blocks() / 2;
+        let y = 8;
+        // THE VARIANT-AWARE WALK (the facing byte the axis decodes:
+        // north/south the Z-axis strip keeps, east/west the X-axis
+        // rotation answers, the no-opinion byte the NORTH default
+        // wears, the open kind the Empty row serves)
+        w.set(c, y, c, OAK_FENCE_GATE);
+        w.set_variant(c, y, c, 1);
+        assert_eq!(
+            collision_shape_at(&w, c, y, c),
+            CollisionShape::CenterBand(0, 4),
+            "the facing north the Z-axis strip wears"
+        );
+        w.set_variant(c, y, c, 2);
+        assert_eq!(
+            collision_shape_at(&w, c, y, c),
+            CollisionShape::CenterBand(1, 4),
+            "the facing east the X-axis strip the rotation wears"
+        );
+        w.set_variant(c, y, c, 3);
+        assert_eq!(
+            collision_shape_at(&w, c, y, c),
+            CollisionShape::CenterBand(0, 4),
+            "the facing south the Z-axis strip keeps"
+        );
+        w.set_variant(c, y, c, 4);
+        assert_eq!(
+            collision_shape_at(&w, c, y, c),
+            CollisionShape::CenterBand(1, 4),
+            "the facing west the X-axis strip answers"
+        );
+        w.set_variant(c, y, c, 0);
+        assert_eq!(
+            collision_shape_at(&w, c, y, c),
+            CollisionShape::CenterBand(0, 4),
+            "the no-opinion byte the NORTH default wears"
+        );
+        w.set(c, y, c, OAK_FENCE_GATE_OPEN);
+        w.set_variant(c, y, c, 3);
+        assert_eq!(
+            collision_shape_at(&w, c, y, c),
+            CollisionShape::Empty,
+            "the open kind the pass-through verdict the variant rides"
+        );
+        // THE PLACEABLE'S OWN PAIRING (the Items clinit row pc 8354-8363
+        // the registerBlock pairing speaks — the generic lookup the
+        // closed kind answers)
+        assert_eq!(
+            World::placeable_block("oak_fence_gate"),
+            Some(OAK_FENCE_GATE)
+        );
+        assert_eq!(World::placeable_block("oak_fence_gate_open"), None);
+        // THE DIG'S OWN ROW (the strength 2.0 clinit row the generated
+        // table banks — the ONE registry row both kinds wear)
+        assert_eq!(
+            crate::dig::DigState::block_dig_row(OAK_FENCE_GATE),
+            crate::dig::DigState::block_dig_row(OAK_FENCE_GATE_OPEN),
+            "the ONE registry row both kinds wear"
+        );
+        // THE NO-POP LAW (javap FenceGateBlock the 26.2 jar — NO
+        // canSurvive override the class table speaks: the floor dug
+        // the gate KEEPS — the vanilla's own floating-gate feel the
+        // attach walk never refuses)
+        w.set(c, y, c, OAK_FENCE_GATE);
+        w.set_variant(c, y, c, 2);
+        let popped = w.attach_support_updates((c, y - 1, c));
+        assert!(
+            popped.is_empty(),
+            "the floor dug the gate the no-canSurvive law never pops"
+        );
+        assert_eq!(w.get(c, y, c), OAK_FENCE_GATE);
+        // THE MODEL BAKES' OWN RESOLUTION (the derive walk the
+        // template chain's EIGHT elements resolves — the closed AND
+        // open models the real geometry answers, the #texture ref
+        // block/oak_planks the ONE master every quad wears)
+        let quads = mc_registry::element_quads::derive_model_inherited("block/oak_fence_gate")
+            .expect("the closed model the derive walk resolves");
+        assert!(
+            !quads.is_empty(),
+            "the closed model the elements the quads bank"
+        );
+        assert!(
+            quads.iter().all(|q| q.texture.ends_with("oak_planks")),
+            "the ONE planks master every quad wears"
+        );
+        let open_quads =
+            mc_registry::element_quads::derive_model_inherited("block/oak_fence_gate_open")
+                .expect("the open model the derive walk resolves");
+        assert!(
+            !open_quads.is_empty(),
+            "the open model the swung elements the quads bank"
+        );
+        assert!(
+            open_quads.iter().all(|q| q.texture.ends_with("oak_planks")),
+            "the open model the same master wears"
+        );
+    }
+
+    #[test]
     fn the_trapdoor_ladder_the_wood_rungs_the_stems_and_the_voices_wear() {
         // THE LADDER'S OWN WORLD WALK (the autopush-669 round — the
         // eleven wooden rungs the oak lane's own walk generalizes, the
@@ -15587,8 +16053,8 @@ mod tests {
         assert_eq!(CHERRY_TRAPDOOR, 340);
         assert_eq!(WARPED_TRAPDOOR, 348);
         assert_eq!(WARPED_TRAPDOOR_OPEN, 349);
-        assert_eq!(END_PORTAL, 442);
-        assert_eq!(atlas::N_KINDS, 442, "the palette the ladder banks");
+        assert_eq!(END_PORTAL, 444);
+        assert_eq!(atlas::N_KINDS, 444, "the palette the ladder banks");
         // THE CONTIGUITY'S OWN LAW (the 22 kinds the range covers —
         // the neighbors the family fn refuses)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -15701,8 +16167,8 @@ mod tests {
         assert_eq!(WAXED_OXIDIZED_COPPER_TRAPDOOR, 364);
         assert_eq!(IRON_TRAPDOOR, 366);
         assert_eq!(IRON_TRAPDOOR_OPEN, 367);
-        assert_eq!(END_PORTAL, 442);
-        assert_eq!(atlas::N_KINDS, 442, "the palette the metal rungs bank");
+        assert_eq!(END_PORTAL, 444);
+        assert_eq!(atlas::N_KINDS, 444, "the palette the metal rungs bank");
         // THE CONTIGUITY'S OWN LAW (the 42 kinds the range covers —
         // the waxed pairs the ±1 mate the parity answers)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -15867,7 +16333,7 @@ mod tests {
         assert_eq!(OAK_DOOR_OPEN, 92);
         assert_eq!(OAK_DOOR_UPPER_OPEN, 93);
         assert_eq!(
-            END_PORTAL, 442,
+            END_PORTAL, 444,
             "the displaced seat the wire pair's own tail banks"
         );
         // THE WOOD LADDER'S OWN SEATS (the dev-43 round — the eleven
@@ -16073,7 +16539,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 442, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 444, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)

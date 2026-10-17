@@ -1,0 +1,1766 @@
+=== blockstates/oak_fence_gate.json
+{
+  "variants": {
+    "facing=east,in_wall=false,open=false": {
+      "model": "minecraft:block/oak_fence_gate",
+      "uvlock": true,
+      "y": 270
+    },
+    "facing=east,in_wall=false,open=true": {
+      "model": "minecraft:block/oak_fence_gate_open",
+      "uvlock": true,
+      "y": 270
+    },
+    "facing=east,in_wall=true,open=false": {
+      "model": "minecraft:block/oak_fence_gate_wall",
+      "uvlock": true,
+      "y": 270
+    },
+    "facing=east,in_wall=true,open=true": {
+      "model": "minecraft:block/oak_fence_gate_wall_open",
+      "uvlock": true,
+      "y": 270
+    },
+    "facing=north,in_wall=false,open=false": {
+      "model": "minecraft:block/oak_fence_gate",
+      "uvlock": true,
+      "y": 180
+    },
+    "facing=north,in_wall=false,open=true": {
+      "model": "minecraft:block/oak_fence_gate_open",
+      "uvlock": true,
+      "y": 180
+    },
+    "facing=north,in_wall=true,open=false": {
+      "model": "minecraft:block/oak_fence_gate_wall",
+      "uvlock": true,
+      "y": 180
+    },
+    "facing=north,in_wall=true,open=true": {
+      "model": "minecraft:block/oak_fence_gate_wall_open",
+      "uvlock": true,
+      "y": 180
+    },
+    "facing=south,in_wall=false,open=false": {
+      "model": "minecraft:block/oak_fence_gate",
+      "uvlock": true
+    },
+    "facing=south,in_wall=false,open=true": {
+      "model": "minecraft:block/oak_fence_gate_open",
+      "uvlock": true
+    },
+    "facing=south,in_wall=true,open=false": {
+      "model": "minecraft:block/oak_fence_gate_wall",
+      "uvlock": true
+    },
+    "facing=south,in_wall=true,open=true": {
+      "model": "minecraft:block/oak_fence_gate_wall_open",
+      "uvlock": true
+    },
+    "facing=west,in_wall=false,open=false": {
+      "model": "minecraft:block/oak_fence_gate",
+      "uvlock": true,
+      "y": 90
+    },
+    "facing=west,in_wall=false,open=true": {
+      "model": "minecraft:block/oak_fence_gate_open",
+      "uvlock": true,
+      "y": 90
+    },
+    "facing=west,in_wall=true,open=false": {
+      "model": "minecraft:block/oak_fence_gate_wall",
+      "uvlock": true,
+      "y": 90
+    },
+    "facing=west,in_wall=true,open=true": {
+      "model": "minecraft:block/oak_fence_gate_wall_open",
+      "uvlock": true,
+      "y": 90
+    }
+  }
+}
+=== models/block/template_fence_gate.json
+{
+ "parent": "block/block",
+ "display": {
+  "gui": {
+   "rotation": [
+    30,
+    45,
+    0
+   ],
+   "translation": [
+    0,
+    -1,
+    0
+   ],
+   "scale": [
+    0.8,
+    0.8,
+    0.8
+   ]
+  },
+  "head": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    -3,
+    -6
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ]
+  }
+ },
+ "textures": {
+  "particle": "#texture"
+ },
+ "elements": [
+  {
+   "__comment": "Left-hand post",
+   "from": [
+    0,
+    5,
+    7
+   ],
+   "to": [
+    2,
+    16,
+    9
+   ],
+   "faces": {
+    "down": {
+     "uv": [
+      0,
+      7,
+      2,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "up": {
+     "uv": [
+      0,
+      7,
+      2,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "north": {
+     "uv": [
+      0,
+      0,
+      2,
+      11
+     ],
+     "texture": "#texture"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      2,
+      11
+     ],
+     "texture": "#texture"
+    },
+    "west": {
+     "uv": [
+      7,
+      0,
+      9,
+      11
+     ],
+     "texture": "#texture",
+     "cullface": "west"
+    },
+    "east": {
+     "uv": [
+      7,
+      0,
+      9,
+      11
+     ],
+     "texture": "#texture"
+    }
+   }
+  },
+  {
+   "__comment": "Right-hand post",
+   "from": [
+    14,
+    5,
+    7
+   ],
+   "to": [
+    16,
+    16,
+    9
+   ],
+   "faces": {
+    "down": {
+     "uv": [
+      14,
+      7,
+      16,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "up": {
+     "uv": [
+      14,
+      7,
+      16,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "north": {
+     "uv": [
+      14,
+      0,
+      16,
+      11
+     ],
+     "texture": "#texture"
+    },
+    "south": {
+     "uv": [
+      14,
+      0,
+      16,
+      11
+     ],
+     "texture": "#texture"
+    },
+    "west": {
+     "uv": [
+      7,
+      0,
+      9,
+      11
+     ],
+     "texture": "#texture"
+    },
+    "east": {
+     "uv": [
+      7,
+      0,
+      9,
+      11
+     ],
+     "texture": "#texture",
+     "cullface": "east"
+    }
+   }
+  },
+  {
+   "__comment": "Inner vertical post of left-hand gate door",
+   "from": [
+    6,
+    6,
+    7
+   ],
+   "to": [
+    8,
+    15,
+    9
+   ],
+   "faces": {
+    "down": {
+     "uv": [
+      6,
+      7,
+      8,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "up": {
+     "uv": [
+      6,
+      7,
+      8,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "north": {
+     "uv": [
+      6,
+      1,
+      8,
+      10
+     ],
+     "texture": "#texture"
+    },
+    "south": {
+     "uv": [
+      6,
+      1,
+      8,
+      10
+     ],
+     "texture": "#texture"
+    },
+    "west": {
+     "uv": [
+      7,
+      1,
+      9,
+      10
+     ],
+     "texture": "#texture"
+    },
+    "east": {
+     "uv": [
+      7,
+      1,
+      9,
+      10
+     ],
+     "texture": "#texture"
+    }
+   }
+  },
+  {
+   "__comment": "Inner vertical post of right-hand gate door",
+   "from": [
+    8,
+    6,
+    7
+   ],
+   "to": [
+    10,
+    15,
+    9
+   ],
+   "faces": {
+    "down": {
+     "uv": [
+      8,
+      7,
+      10,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "up": {
+     "uv": [
+      8,
+      7,
+      10,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "north": {
+     "uv": [
+      8,
+      1,
+      10,
+      10
+     ],
+     "texture": "#texture"
+    },
+    "south": {
+     "uv": [
+      8,
+      1,
+      10,
+      10
+     ],
+     "texture": "#texture"
+    },
+    "west": {
+     "uv": [
+      7,
+      1,
+      9,
+      10
+     ],
+     "texture": "#texture"
+    },
+    "east": {
+     "uv": [
+      7,
+      1,
+      9,
+      10
+     ],
+     "texture": "#texture"
+    }
+   }
+  },
+  {
+   "__comment": "Lower horizontal bar of left-hand gate door",
+   "from": [
+    2,
+    6,
+    7
+   ],
+   "to": [
+    6,
+    9,
+    9
+   ],
+   "faces": {
+    "down": {
+     "uv": [
+      2,
+      7,
+      6,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "up": {
+     "uv": [
+      2,
+      7,
+      6,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "north": {
+     "uv": [
+      2,
+      7,
+      6,
+      10
+     ],
+     "texture": "#texture"
+    },
+    "south": {
+     "uv": [
+      2,
+      7,
+      6,
+      10
+     ],
+     "texture": "#texture"
+    }
+   }
+  },
+  {
+   "__comment": "Upper horizontal bar of left-hand gate door",
+   "from": [
+    2,
+    12,
+    7
+   ],
+   "to": [
+    6,
+    15,
+    9
+   ],
+   "faces": {
+    "down": {
+     "uv": [
+      2,
+      7,
+      6,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "up": {
+     "uv": [
+      2,
+      7,
+      6,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "north": {
+     "uv": [
+      2,
+      1,
+      6,
+      4
+     ],
+     "texture": "#texture"
+    },
+    "south": {
+     "uv": [
+      2,
+      1,
+      6,
+      4
+     ],
+     "texture": "#texture"
+    }
+   }
+  },
+  {
+   "__comment": "Lower horizontal bar of right-hand gate door",
+   "from": [
+    10,
+    6,
+    7
+   ],
+   "to": [
+    14,
+    9,
+    9
+   ],
+   "faces": {
+    "down": {
+     "uv": [
+      10,
+      7,
+      14,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "up": {
+     "uv": [
+      10,
+      7,
+      14,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "north": {
+     "uv": [
+      10,
+      7,
+      14,
+      10
+     ],
+     "texture": "#texture"
+    },
+    "south": {
+     "uv": [
+      10,
+      7,
+      14,
+      10
+     ],
+     "texture": "#texture"
+    }
+   }
+  },
+  {
+   "__comment": "Upper horizontal bar of right-hand gate door",
+   "from": [
+    10,
+    12,
+    7
+   ],
+   "to": [
+    14,
+    15,
+    9
+   ],
+   "faces": {
+    "down": {
+     "uv": [
+      10,
+      7,
+      14,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "up": {
+     "uv": [
+      10,
+      7,
+      14,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "north": {
+     "uv": [
+      10,
+      1,
+      14,
+      4
+     ],
+     "texture": "#texture"
+    },
+    "south": {
+     "uv": [
+      10,
+      1,
+      14,
+      4
+     ],
+     "texture": "#texture"
+    }
+   }
+  }
+ ]
+}
+=== models/block/template_fence_gate_wall.json
+{
+ "ambientocclusion": true,
+ "textures": {
+  "particle": "#texture"
+ },
+ "elements": [
+  {
+   "__comment": "Left-hand post",
+   "from": [
+    0,
+    2,
+    7
+   ],
+   "to": [
+    2,
+    13,
+    9
+   ],
+   "faces": {
+    "down": {
+     "uv": [
+      0,
+      7,
+      2,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "up": {
+     "uv": [
+      0,
+      7,
+      2,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "north": {
+     "uv": [
+      0,
+      0,
+      2,
+      11
+     ],
+     "texture": "#texture"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      2,
+      11
+     ],
+     "texture": "#texture"
+    },
+    "west": {
+     "uv": [
+      7,
+      0,
+      9,
+      11
+     ],
+     "texture": "#texture",
+     "cullface": "west"
+    },
+    "east": {
+     "uv": [
+      7,
+      0,
+      9,
+      11
+     ],
+     "texture": "#texture"
+    }
+   }
+  },
+  {
+   "__comment": "Right-hand post",
+   "from": [
+    14,
+    2,
+    7
+   ],
+   "to": [
+    16,
+    13,
+    9
+   ],
+   "faces": {
+    "down": {
+     "uv": [
+      14,
+      7,
+      16,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "up": {
+     "uv": [
+      14,
+      7,
+      16,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "north": {
+     "uv": [
+      14,
+      0,
+      16,
+      11
+     ],
+     "texture": "#texture"
+    },
+    "south": {
+     "uv": [
+      14,
+      0,
+      16,
+      11
+     ],
+     "texture": "#texture"
+    },
+    "west": {
+     "uv": [
+      7,
+      0,
+      9,
+      11
+     ],
+     "texture": "#texture"
+    },
+    "east": {
+     "uv": [
+      7,
+      0,
+      9,
+      11
+     ],
+     "texture": "#texture",
+     "cullface": "east"
+    }
+   }
+  },
+  {
+   "__comment": "Inner vertical post of left-hand gate door",
+   "from": [
+    6,
+    3,
+    7
+   ],
+   "to": [
+    8,
+    12,
+    9
+   ],
+   "faces": {
+    "down": {
+     "uv": [
+      6,
+      7,
+      8,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "up": {
+     "uv": [
+      6,
+      7,
+      8,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "north": {
+     "uv": [
+      6,
+      1,
+      8,
+      10
+     ],
+     "texture": "#texture"
+    },
+    "south": {
+     "uv": [
+      6,
+      1,
+      8,
+      10
+     ],
+     "texture": "#texture"
+    },
+    "west": {
+     "uv": [
+      7,
+      1,
+      9,
+      10
+     ],
+     "texture": "#texture"
+    },
+    "east": {
+     "uv": [
+      7,
+      1,
+      9,
+      10
+     ],
+     "texture": "#texture"
+    }
+   }
+  },
+  {
+   "__comment": "Inner vertical post of right-hand gate door",
+   "from": [
+    8,
+    3,
+    7
+   ],
+   "to": [
+    10,
+    12,
+    9
+   ],
+   "faces": {
+    "down": {
+     "uv": [
+      8,
+      7,
+      10,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "up": {
+     "uv": [
+      8,
+      7,
+      10,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "north": {
+     "uv": [
+      8,
+      1,
+      10,
+      10
+     ],
+     "texture": "#texture"
+    },
+    "south": {
+     "uv": [
+      8,
+      1,
+      10,
+      10
+     ],
+     "texture": "#texture"
+    },
+    "west": {
+     "uv": [
+      7,
+      1,
+      9,
+      10
+     ],
+     "texture": "#texture"
+    },
+    "east": {
+     "uv": [
+      7,
+      1,
+      9,
+      10
+     ],
+     "texture": "#texture"
+    }
+   }
+  },
+  {
+   "__comment": "Lower horizontal bar of left-hand gate door",
+   "from": [
+    2,
+    3,
+    7
+   ],
+   "to": [
+    6,
+    6,
+    9
+   ],
+   "faces": {
+    "down": {
+     "uv": [
+      2,
+      7,
+      6,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "up": {
+     "uv": [
+      2,
+      7,
+      6,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "north": {
+     "uv": [
+      2,
+      7,
+      6,
+      10
+     ],
+     "texture": "#texture"
+    },
+    "south": {
+     "uv": [
+      2,
+      7,
+      6,
+      10
+     ],
+     "texture": "#texture"
+    }
+   }
+  },
+  {
+   "__comment": "Upper horizontal bar of left-hand gate door",
+   "from": [
+    2,
+    9,
+    7
+   ],
+   "to": [
+    6,
+    12,
+    9
+   ],
+   "faces": {
+    "down": {
+     "uv": [
+      2,
+      7,
+      6,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "up": {
+     "uv": [
+      2,
+      7,
+      6,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "north": {
+     "uv": [
+      2,
+      1,
+      6,
+      4
+     ],
+     "texture": "#texture"
+    },
+    "south": {
+     "uv": [
+      2,
+      1,
+      6,
+      4
+     ],
+     "texture": "#texture"
+    }
+   }
+  },
+  {
+   "__comment": "Lower horizontal bar of right-hand gate door",
+   "from": [
+    10,
+    3,
+    7
+   ],
+   "to": [
+    14,
+    6,
+    9
+   ],
+   "faces": {
+    "down": {
+     "uv": [
+      10,
+      7,
+      14,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "up": {
+     "uv": [
+      10,
+      7,
+      14,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "north": {
+     "uv": [
+      10,
+      7,
+      14,
+      10
+     ],
+     "texture": "#texture"
+    },
+    "south": {
+     "uv": [
+      10,
+      7,
+      14,
+      10
+     ],
+     "texture": "#texture"
+    }
+   }
+  },
+  {
+   "__comment": "Upper horizontal bar of right-hand gate door",
+   "from": [
+    10,
+    9,
+    7
+   ],
+   "to": [
+    14,
+    12,
+    9
+   ],
+   "faces": {
+    "down": {
+     "uv": [
+      10,
+      7,
+      14,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "up": {
+     "uv": [
+      10,
+      7,
+      14,
+      9
+     ],
+     "texture": "#texture"
+    },
+    "north": {
+     "uv": [
+      10,
+      1,
+      14,
+      4
+     ],
+     "texture": "#texture"
+    },
+    "south": {
+     "uv": [
+      10,
+      1,
+      14,
+      4
+     ],
+     "texture": "#texture"
+    }
+   }
+  }
+ ]
+}
+=== models/block/oak_fence_gate.json
+{
+ "parent": "minecraft:block/template_fence_gate",
+ "textures": {
+  "texture": "minecraft:block/oak_planks"
+ }
+}
+=== models/block/oak_fence_gate_open.json
+{
+ "parent": "minecraft:block/template_fence_gate_open",
+ "textures": {
+  "texture": "minecraft:block/oak_planks"
+ }
+}
+=== models/block/oak_fence_gate_wall.json
+{
+ "parent": "minecraft:block/template_fence_gate_wall",
+ "textures": {
+  "texture": "minecraft:block/oak_planks"
+ }
+}
+=== models/block/oak_fence_gate_wall_open.json
+{
+ "parent": "minecraft:block/template_fence_gate_wall_open",
+ "textures": {
+  "texture": "minecraft:block/oak_planks"
+ }
+}
+
+=== FenceGateBlock walk (net/minecraft/world/level/block/FenceGateBlock)
+--- net.minecraft.world.level.block.FenceGateBlock.useWithoutItem(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/phys/BlockHitResult;)Lnet/minecraft/world/InteractionResult;
+0: aload_1
+1: getstatic net/minecraft/world/level/block/FenceGateBlock.OPEN:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+4: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+7: checkcast java/lang/Boolean
+10: invokevirtual java/lang/Boolean.booleanValue:()Z
+13: ifeq -> 43
+16: aload_1
+17: getstatic net/minecraft/world/level/block/FenceGateBlock.OPEN:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+20: iconst_0
+21: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+24: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+27: checkcast net/minecraft/world/level/block/state/BlockState
+30: astore_1
+31: aload_2
+32: aload_3
+33: aload_1
+34: bipush 10
+36: invokevirtual net/minecraft/world/level/Level.setBlock:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z
+39: pop
+40: goto -> 102
+43: aload 4
+45: invokevirtual net/minecraft/world/entity/player/Player.getDirection:()Lnet/minecraft/core/Direction;
+48: astore 6
+50: aload_1
+51: getstatic net/minecraft/world/level/block/FenceGateBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+54: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+57: aload 6
+59: invokevirtual net/minecraft/core/Direction.getOpposite:()Lnet/minecraft/core/Direction;
+62: if_acmpne -> 78
+65: aload_1
+66: getstatic net/minecraft/world/level/block/FenceGateBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+69: aload 6
+71: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+74: checkcast net/minecraft/world/level/block/state/BlockState
+77: astore_1
+78: aload_1
+79: getstatic net/minecraft/world/level/block/FenceGateBlock.OPEN:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+82: iconst_1
+83: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+86: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+89: checkcast net/minecraft/world/level/block/state/BlockState
+92: astore_1
+93: aload_2
+94: aload_3
+95: aload_1
+96: bipush 10
+98: invokevirtual net/minecraft/world/level/Level.setBlock:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z
+101: pop
+102: aload_1
+103: getstatic net/minecraft/world/level/block/FenceGateBlock.OPEN:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+106: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+109: checkcast java/lang/Boolean
+112: invokevirtual java/lang/Boolean.booleanValue:()Z
+115: istore 6
+117: aload_2
+118: aload 4
+120: aload_3
+121: iload 6
+123: ifeq -> 136
+126: aload_0
+127: getfield net/minecraft/world/level/block/FenceGateBlock.type:Lnet/minecraft/world/level/block/state/properties/WoodType;
+130: invokevirtual net/minecraft/world/level/block/state/properties/WoodType.fenceGateOpen:()Lnet/minecraft/sounds/SoundEvent;
+133: goto -> 143
+136: aload_0
+137: getfield net/minecraft/world/level/block/FenceGateBlock.type:Lnet/minecraft/world/level/block/state/properties/WoodType;
+140: invokevirtual net/minecraft/world/level/block/state/properties/WoodType.fenceGateClose:()Lnet/minecraft/sounds/SoundEvent;
+143: getstatic net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+146: fconst_1
+147: aload_2
+148: invokevirtual net/minecraft/world/level/Level.getRandom:()Lnet/minecraft/util/RandomSource;
+151: invokeinterface net/minecraft/util/RandomSource.nextFloat:()F
+154: aconst_null
+155: nop
+156: ldc ldc@244
+158: 0x6a
+159: ldc ldc@245
+161: fadd
+162: invokevirtual net/minecraft/world/level/Level.playSound:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+165: aload_2
+166: aload 4
+168: iload 6
+170: ifeq -> 179
+173: getstatic net/minecraft/world/level/gameevent/GameEvent.BLOCK_OPEN:Lnet/minecraft/core/Holder$Reference;
+176: goto -> 182
+179: getstatic net/minecraft/world/level/gameevent/GameEvent.BLOCK_CLOSE:Lnet/minecraft/core/Holder$Reference;
+182: aload_3
+183: invokevirtual net/minecraft/world/level/Level.gameEvent:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/Holder;Lnet/minecraft/core/BlockPos;)V
+186: getstatic net/minecraft/world/InteractionResult.SUCCESS:Lnet/minecraft/world/InteractionResult$Success;
+189: areturn
+--- net.minecraft.world.level.block.FenceGateBlock.useWithoutItem(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/phys/BlockHitResult;)Lnet/minecraft/world/InteractionResult;
+0: aload_1
+1: getstatic net/minecraft/world/level/block/FenceGateBlock.OPEN:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+4: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+7: checkcast java/lang/Boolean
+10: invokevirtual java/lang/Boolean.booleanValue:()Z
+13: ifeq -> 43
+16: aload_1
+17: getstatic net/minecraft/world/level/block/FenceGateBlock.OPEN:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+20: iconst_0
+21: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+24: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+27: checkcast net/minecraft/world/level/block/state/BlockState
+30: astore_1
+31: aload_2
+32: aload_3
+33: aload_1
+34: bipush 10
+36: invokevirtual net/minecraft/world/level/Level.setBlock:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z
+39: pop
+40: goto -> 102
+43: aload 4
+45: invokevirtual net/minecraft/world/entity/player/Player.getDirection:()Lnet/minecraft/core/Direction;
+48: astore 6
+50: aload_1
+51: getstatic net/minecraft/world/level/block/FenceGateBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+54: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+57: aload 6
+59: invokevirtual net/minecraft/core/Direction.getOpposite:()Lnet/minecraft/core/Direction;
+62: if_acmpne -> 78
+65: aload_1
+66: getstatic net/minecraft/world/level/block/FenceGateBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+69: aload 6
+71: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+74: checkcast net/minecraft/world/level/block/state/BlockState
+77: astore_1
+78: aload_1
+79: getstatic net/minecraft/world/level/block/FenceGateBlock.OPEN:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+82: iconst_1
+83: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+86: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+89: checkcast net/minecraft/world/level/block/state/BlockState
+92: astore_1
+93: aload_2
+94: aload_3
+95: aload_1
+96: bipush 10
+98: invokevirtual net/minecraft/world/level/Level.setBlock:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z
+101: pop
+102: aload_1
+103: getstatic net/minecraft/world/level/block/FenceGateBlock.OPEN:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+106: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+109: checkcast java/lang/Boolean
+112: invokevirtual java/lang/Boolean.booleanValue:()Z
+115: istore 6
+117: aload_2
+118: aload 4
+120: aload_3
+121: iload 6
+123: ifeq -> 136
+126: aload_0
+127: getfield net/minecraft/world/level/block/FenceGateBlock.type:Lnet/minecraft/world/level/block/state/properties/WoodType;
+130: invokevirtual net/minecraft/world/level/block/state/properties/WoodType.fenceGateOpen:()Lnet/minecraft/sounds/SoundEvent;
+133: goto -> 143
+136: aload_0
+137: getfield net/minecraft/world/level/block/FenceGateBlock.type:Lnet/minecraft/world/level/block/state/properties/WoodType;
+140: invokevirtual net/minecraft/world/level/block/state/properties/WoodType.fenceGateClose:()Lnet/minecraft/sounds/SoundEvent;
+143: getstatic net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+146: fconst_1
+147: aload_2
+148: invokevirtual net/minecraft/world/level/Level.getRandom:()Lnet/minecraft/util/RandomSource;
+151: invokeinterface net/minecraft/util/RandomSource.nextFloat:()F
+154: aconst_null
+155: nop
+156: ldc ldc@244
+158: 0x6a
+159: ldc ldc@245
+161: fadd
+162: invokevirtual net/minecraft/world/level/Level.playSound:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+165: aload_2
+166: aload 4
+168: iload 6
+170: ifeq -> 179
+173: getstatic net/minecraft/world/level/gameevent/GameEvent.BLOCK_OPEN:Lnet/minecraft/core/Holder$Reference;
+176: goto -> 182
+179: getstatic net/minecraft/world/level/gameevent/GameEvent.BLOCK_CLOSE:Lnet/minecraft/core/Holder$Reference;
+182: aload_3
+183: invokevirtual net/minecraft/world/level/Level.gameEvent:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/Holder;Lnet/minecraft/core/BlockPos;)V
+186: getstatic net/minecraft/world/InteractionResult.SUCCESS:Lnet/minecraft/world/InteractionResult$Success;
+189: areturn
+--- net.minecraft.world.level.block.FenceGateBlock.getStateForPlacement(Lnet/minecraft/world/item/context/BlockPlaceContext;)Lnet/minecraft/world/level/block/state/BlockState;
+0: aload_1
+1: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getLevel:()Lnet/minecraft/world/level/Level;
+4: astore_2
+5: aload_1
+6: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getClickedPos:()Lnet/minecraft/core/BlockPos;
+9: astore_3
+10: aload_2
+11: aload_3
+12: invokevirtual net/minecraft/world/level/Level.hasNeighborSignal:(Lnet/minecraft/core/BlockPos;)Z
+15: istore 4
+17: aload_1
+18: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getHorizontalDirection:()Lnet/minecraft/core/Direction;
+21: astore 5
+23: aload 5
+25: invokevirtual net/minecraft/core/Direction.getAxis:()Lnet/minecraft/core/Direction$Axis;
+28: astore 6
+30: aload 6
+32: getstatic net/minecraft/core/Direction$Axis.Z:Lnet/minecraft/core/Direction$Axis;
+35: if_acmpne -> 68
+38: aload_0
+39: aload_2
+40: aload_3
+41: invokevirtual net/minecraft/core/BlockPos.west:()Lnet/minecraft/core/BlockPos;
+44: invokevirtual net/minecraft/world/level/Level.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+47: invokevirtual net/minecraft/world/level/block/FenceGateBlock.isWall:(Lnet/minecraft/world/level/block/state/BlockState;)Z
+50: ifne -> 106
+53: aload_0
+54: aload_2
+55: aload_3
+56: invokevirtual net/minecraft/core/BlockPos.east:()Lnet/minecraft/core/BlockPos;
+59: invokevirtual net/minecraft/world/level/Level.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+62: invokevirtual net/minecraft/world/level/block/FenceGateBlock.isWall:(Lnet/minecraft/world/level/block/state/BlockState;)Z
+65: ifne -> 106
+68: aload 6
+70: getstatic net/minecraft/core/Direction$Axis.X:Lnet/minecraft/core/Direction$Axis;
+73: if_acmpne -> 110
+76: aload_0
+77: aload_2
+78: aload_3
+79: invokevirtual net/minecraft/core/BlockPos.north:()Lnet/minecraft/core/BlockPos;
+82: invokevirtual net/minecraft/world/level/Level.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+85: invokevirtual net/minecraft/world/level/block/FenceGateBlock.isWall:(Lnet/minecraft/world/level/block/state/BlockState;)Z
+88: ifne -> 106
+91: aload_0
+92: aload_2
+93: aload_3
+94: invokevirtual net/minecraft/core/BlockPos.south:()Lnet/minecraft/core/BlockPos;
+97: invokevirtual net/minecraft/world/level/Level.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+100: invokevirtual net/minecraft/world/level/block/FenceGateBlock.isWall:(Lnet/minecraft/world/level/block/state/BlockState;)Z
+103: ifeq -> 110
+106: iconst_1
+107: goto -> 111
+110: iconst_0
+111: istore 7
+113: aload_0
+114: invokevirtual net/minecraft/world/level/block/FenceGateBlock.defaultBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+117: getstatic net/minecraft/world/level/block/FenceGateBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+120: aload 5
+122: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+125: checkcast net/minecraft/world/level/block/state/BlockState
+128: getstatic net/minecraft/world/level/block/FenceGateBlock.OPEN:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+131: iload 4
+133: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+136: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+139: checkcast net/minecraft/world/level/block/state/BlockState
+142: getstatic net/minecraft/world/level/block/FenceGateBlock.POWERED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+145: iload 4
+147: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+150: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+153: checkcast net/minecraft/world/level/block/state/BlockState
+156: getstatic net/minecraft/world/level/block/FenceGateBlock.IN_WALL:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+159: iload 7
+161: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+164: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+167: checkcast net/minecraft/world/level/block/state/BlockState
+170: areturn
+--- net.minecraft.world.level.block.FenceGateBlock.getShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/shapes/CollisionContext;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+0: aload_1
+1: getstatic net/minecraft/world/level/block/FenceGateBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+4: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+7: checkcast net/minecraft/core/Direction
+10: invokevirtual net/minecraft/core/Direction.getAxis:()Lnet/minecraft/core/Direction$Axis;
+13: astore 5
+15: aload_1
+16: getstatic net/minecraft/world/level/block/FenceGateBlock.IN_WALL:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+19: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+22: checkcast java/lang/Boolean
+25: invokevirtual java/lang/Boolean.booleanValue:()Z
+28: ifeq -> 37
+31: getstatic net/minecraft/world/level/block/FenceGateBlock.SHAPES_WALL:Ljava/util/Map;
+34: goto -> 40
+37: getstatic net/minecraft/world/level/block/FenceGateBlock.SHAPES:Ljava/util/Map;
+40: aload 5
+42: invokeinterface java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+45: iconst_m1
+46: nop
+47: checkcast net/minecraft/world/phys/shapes/VoxelShape
+50: areturn
+!! net.minecraft.world.level.block.FenceGateBlock: no method matching canSurvive
+--- net.minecraft.world.level.block.FenceGateBlock.updateShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/world/level/ScheduledTickAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;)Lnet/minecraft/world/level/block/state/BlockState;
+0: aload 5
+2: invokevirtual net/minecraft/core/Direction.getAxis:()Lnet/minecraft/core/Direction$Axis;
+5: astore 9
+7: aload_1
+8: getstatic net/minecraft/world/level/block/FenceGateBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+11: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+14: checkcast net/minecraft/core/Direction
+17: invokevirtual net/minecraft/core/Direction.getClockWise:()Lnet/minecraft/core/Direction;
+20: invokevirtual net/minecraft/core/Direction.getAxis:()Lnet/minecraft/core/Direction$Axis;
+23: aload 9
+25: if_acmpne -> 83
+28: aload_0
+29: aload 7
+31: invokevirtual net/minecraft/world/level/block/FenceGateBlock.isWall:(Lnet/minecraft/world/level/block/state/BlockState;)Z
+34: ifne -> 60
+37: aload_0
+38: aload_2
+39: aload 4
+41: aload 5
+43: invokevirtual net/minecraft/core/Direction.getOpposite:()Lnet/minecraft/core/Direction;
+46: invokevirtual net/minecraft/core/BlockPos.relative:(Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;
+49: invokeinterface net/minecraft/world/level/LevelReader.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+52: iconst_m1
+53: nop
+54: invokevirtual net/minecraft/world/level/block/FenceGateBlock.isWall:(Lnet/minecraft/world/level/block/state/BlockState;)Z
+57: ifeq -> 64
+60: iconst_1
+61: goto -> 65
+64: iconst_0
+65: istore 10
+67: aload_1
+68: getstatic net/minecraft/world/level/block/FenceGateBlock.IN_WALL:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+71: iload 10
+73: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+76: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+79: checkcast net/minecraft/world/level/block/state/BlockState
+82: areturn
+83: aload_0
+84: aload_1
+85: aload_2
+86: aload_3
+87: aload 4
+89: aload 5
+91: aload 6
+93: aload 7
+95: aload 8
+97: invokespecial net/minecraft/world/level/block/HorizontalDirectionalBlock.updateShape:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/world/level/ScheduledTickAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;)Lnet/minecraft/world/level/block/state/BlockState;
+100: areturn
+--- net.minecraft.world.level.block.FenceGateBlock.neighborChanged(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/redstone/Orientation;Z)V
+0: aload_2
+1: invokevirtual net/minecraft/world/level/Level.isClientSide:()Z
+4: ifeq -> 8
+7: return
+8: aload_2
+9: aload_3
+10: invokevirtual net/minecraft/world/level/Level.hasNeighborSignal:(Lnet/minecraft/core/BlockPos;)Z
+13: istore 7
+15: aload_1
+16: getstatic net/minecraft/world/level/block/FenceGateBlock.POWERED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+19: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+22: checkcast java/lang/Boolean
+25: invokevirtual java/lang/Boolean.booleanValue:()Z
+28: iload 7
+30: if_icmpeq -> 154
+33: aload_2
+34: aload_3
+35: aload_1
+36: getstatic net/minecraft/world/level/block/FenceGateBlock.POWERED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+39: iload 7
+41: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+44: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+47: checkcast net/minecraft/world/level/block/state/BlockState
+50: getstatic net/minecraft/world/level/block/FenceGateBlock.OPEN:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+53: iload 7
+55: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+58: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+61: checkcast net/minecraft/world/level/block/state/BlockState
+64: iconst_2
+65: invokevirtual net/minecraft/world/level/Level.setBlock:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z
+68: pop
+69: aload_1
+70: getstatic net/minecraft/world/level/block/FenceGateBlock.OPEN:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+73: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+76: checkcast java/lang/Boolean
+79: invokevirtual java/lang/Boolean.booleanValue:()Z
+82: iload 7
+84: if_icmpeq -> 154
+87: aload_2
+88: aconst_null
+89: aload_3
+90: iload 7
+92: ifeq -> 105
+95: aload_0
+96: getfield net/minecraft/world/level/block/FenceGateBlock.type:Lnet/minecraft/world/level/block/state/properties/WoodType;
+99: invokevirtual net/minecraft/world/level/block/state/properties/WoodType.fenceGateOpen:()Lnet/minecraft/sounds/SoundEvent;
+102: goto -> 112
+105: aload_0
+106: getfield net/minecraft/world/level/block/FenceGateBlock.type:Lnet/minecraft/world/level/block/state/properties/WoodType;
+109: invokevirtual net/minecraft/world/level/block/state/properties/WoodType.fenceGateClose:()Lnet/minecraft/sounds/SoundEvent;
+112: getstatic net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+115: fconst_1
+116: aload_2
+117: invokevirtual net/minecraft/world/level/Level.getRandom:()Lnet/minecraft/util/RandomSource;
+120: invokeinterface net/minecraft/util/RandomSource.nextFloat:()F
+123: aconst_null
+124: nop
+125: ldc ldc@244
+127: 0x6a
+128: ldc ldc@245
+130: fadd
+131: invokevirtual net/minecraft/world/level/Level.playSound:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+134: aload_2
+135: aconst_null
+136: iload 7
+138: ifeq -> 147
+141: getstatic net/minecraft/world/level/gameevent/GameEvent.BLOCK_OPEN:Lnet/minecraft/core/Holder$Reference;
+144: goto -> 150
+147: getstatic net/minecraft/world/level/gameevent/GameEvent.BLOCK_CLOSE:Lnet/minecraft/core/Holder$Reference;
+150: aload_3
+151: invokevirtual net/minecraft/world/level/Level.gameEvent:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/Holder;Lnet/minecraft/core/BlockPos;)V
+154: return
+!! net.minecraft.world.level.block.FenceGateBlock: no method matching onPlace
+--- net.minecraft.world.level.block.FenceGateBlock.isPathfindable(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/pathfinder/PathComputationType;)Z
+0: getstatic net/minecraft/world/level/block/FenceGateBlock$1.$SwitchMap$net$minecraft$world$level$pathfinder$PathComputationType:[I
+3: aload_2
+4: invokevirtual net/minecraft/world/level/pathfinder/PathComputationType.ordinal:()I
+7: 0x2e
+8: 0xaa
+24: nop
+25: nop
+26: nop
+27: iload_2
+28: nop
+29: nop
+30: nop
+31: aload_2
+32: nop
+33: nop
+34: nop
+35: 0x30
+36: aload_1
+37: getstatic net/minecraft/world/level/block/FenceGateBlock.OPEN:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+40: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+43: checkcast java/lang/Boolean
+46: invokevirtual java/lang/Boolean.booleanValue:()Z
+49: goto -> 73
+52: iconst_0
+53: goto -> 73
+56: aload_1
+57: getstatic net/minecraft/world/level/block/FenceGateBlock.OPEN:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+60: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+63: checkcast java/lang/Boolean
+66: invokevirtual java/lang/Boolean.booleanValue:()Z
+69: goto -> 73
+72: iconst_0
+73: ireturn
+--- net.minecraft.world.level.block.FenceGateBlock.connectsToDirection(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/Direction;)Z
+0: aload_0
+1: getstatic net/minecraft/world/level/block/FenceGateBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+4: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+7: checkcast net/minecraft/core/Direction
+10: invokevirtual net/minecraft/core/Direction.getAxis:()Lnet/minecraft/core/Direction$Axis;
+13: aload_1
+14: invokevirtual net/minecraft/core/Direction.getClockWise:()Lnet/minecraft/core/Direction;
+17: invokevirtual net/minecraft/core/Direction.getAxis:()Lnet/minecraft/core/Direction$Axis;
+20: if_acmpne -> 27
+23: iconst_1
+24: goto -> 28
+27: iconst_0
+28: ireturn
+!! net.minecraft.world.level.block.FenceGateBlock: no method matching isConnected
+!! net.minecraft.world.level.block.FenceGateBlock: no method matching getConnectedDirection
+!! net.minecraft.world.level.block.FenceGateBlock: no method matching playSound
+!! net.minecraft.world.level.block.FenceGateBlock: no method matching open
+--- net.minecraft.world.level.block.FenceGateBlock.<clinit>()V
+0: invokedynamic indy
+5: invokestatic com/mojang/serialization/codecs/RecordCodecBuilder.mapCodec:(Ljava/util/function/Function;)Lcom/mojang/serialization/MapCodec;
+8: putstatic net/minecraft/world/level/block/FenceGateBlock.CODEC:Lcom/mojang/serialization/MapCodec;
+11: getstatic net/minecraft/world/level/block/state/properties/BlockStateProperties.OPEN:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+14: putstatic net/minecraft/world/level/block/FenceGateBlock.OPEN:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+17: getstatic net/minecraft/world/level/block/state/properties/BlockStateProperties.POWERED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+20: putstatic net/minecraft/world/level/block/FenceGateBlock.POWERED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+23: getstatic net/minecraft/world/level/block/state/properties/BlockStateProperties.IN_WALL:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+26: putstatic net/minecraft/world/level/block/FenceGateBlock.IN_WALL:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+29: 0x14 ldc2w@315
+32: 0x14 ldc2w@315
+35: 0x14 ldc2w@383
+38: invokestatic net/minecraft/world/level/block/Block.cube:(DDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+41: invokestatic net/minecraft/world/phys/shapes/Shapes.rotateHorizontalAxis:(Lnet/minecraft/world/phys/shapes/VoxelShape;)Ljava/util/Map;
+44: putstatic net/minecraft/world/level/block/FenceGateBlock.SHAPES:Ljava/util/Map;
+47: getstatic net/minecraft/world/level/block/FenceGateBlock.SHAPES:Ljava/util/Map;
+50: invokedynamic indy
+55: invokestatic net/minecraft/util/Util.mapValues:(Ljava/util/Map;Ljava/util/function/Function;)Ljava/util/Map;
+58: invokestatic com/google/common/collect/Maps.newEnumMap:(Ljava/util/Map;)Ljava/util/EnumMap;
+61: putstatic net/minecraft/world/level/block/FenceGateBlock.SHAPES_WALL:Ljava/util/Map;
+64: 0x14 ldc2w@315
+67: 0x14 ldc2w@383
+70: 0x0e
+71: 0x14 ldc2w@405
+74: invokestatic net/minecraft/world/level/block/Block.column:(DDDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+77: invokestatic net/minecraft/world/phys/shapes/Shapes.rotateHorizontalAxis:(Lnet/minecraft/world/phys/shapes/VoxelShape;)Ljava/util/Map;
+80: putstatic net/minecraft/world/level/block/FenceGateBlock.SHAPE_COLLISION:Ljava/util/Map;
+83: 0x14 ldc2w@315
+86: 0x14 ldc2w@383
+89: 0x14 ldc2w@410
+92: 0x14 ldc2w@405
+95: invokestatic net/minecraft/world/level/block/Block.column:(DDDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+98: invokestatic net/minecraft/world/phys/shapes/Shapes.rotateHorizontalAxis:(Lnet/minecraft/world/phys/shapes/VoxelShape;)Ljava/util/Map;
+101: putstatic net/minecraft/world/level/block/FenceGateBlock.SHAPE_SUPPORT:Ljava/util/Map;
+104: 0x0e
+105: 0x14 ldc2w@410
+108: 0x14 ldc2w@412
+111: 0x14 ldc2w@414
+114: 0x14 ldc2w@315
+117: 0x14 ldc2w@416
+120: invokestatic net/minecraft/world/level/block/Block.box:(DDDDDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+123: 0x14 ldc2w@422
+126: 0x14 ldc2w@410
+129: 0x14 ldc2w@412
+132: 0x14 ldc2w@315
+135: 0x14 ldc2w@315
+138: 0x14 ldc2w@416
+141: invokestatic net/minecraft/world/level/block/Block.box:(DDDDDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+144: invokestatic net/minecraft/world/phys/shapes/Shapes.or:(Lnet/minecraft/world/phys/shapes/VoxelShape;Lnet/minecraft/world/phys/shapes/VoxelShape;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+147: invokestatic net/minecraft/world/phys/shapes/Shapes.rotateHorizontalAxis:(Lnet/minecraft/world/phys/shapes/VoxelShape;)Ljava/util/Map;
+150: putstatic net/minecraft/world/level/block/FenceGateBlock.SHAPE_OCCLUSION:Ljava/util/Map;
+153: getstatic net/minecraft/world/level/block/FenceGateBlock.SHAPE_OCCLUSION:Ljava/util/Map;
+156: invokedynamic indy
+161: invokestatic net/minecraft/util/Util.mapValues:(Ljava/util/Map;Ljava/util/function/Function;)Ljava/util/Map;
+164: invokestatic com/google/common/collect/Maps.newEnumMap:(Ljava/util/Map;)Ljava/util/EnumMap;
+167: putstatic net/minecraft/world/level/block/FenceGateBlock.SHAPE_OCCLUSION_WALL:Ljava/util/Map;
+170: return
+
+=== FenceGateBlock ctor (the registerDefaultState walk)
+--- net.minecraft.world.level.block.FenceGateBlock.<init>(Lnet/minecraft/world/level/block/state/properties/WoodType;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+0: aload_0
+1: aload_2
+2: aload_1
+3: invokevirtual net/minecraft/world/level/block/state/properties/WoodType.soundType:()Lnet/minecraft/world/level/block/SoundType;
+6: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+9: invokespecial net/minecraft/world/level/block/HorizontalDirectionalBlock.<init>:(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+12: aload_0
+13: aload_1
+14: putfield net/minecraft/world/level/block/FenceGateBlock.type:Lnet/minecraft/world/level/block/state/properties/WoodType;
+17: aload_0
+18: aload_0
+19: getfield net/minecraft/world/level/block/FenceGateBlock.stateDefinition:Lnet/minecraft/world/level/block/state/StateDefinition;
+22: invokevirtual net/minecraft/world/level/block/state/StateDefinition.any:()Lnet/minecraft/world/level/block/state/StateHolder;
+25: checkcast net/minecraft/world/level/block/state/BlockState
+28: getstatic net/minecraft/world/level/block/FenceGateBlock.OPEN:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+31: iconst_0
+32: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+35: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+38: checkcast net/minecraft/world/level/block/state/BlockState
+41: getstatic net/minecraft/world/level/block/FenceGateBlock.POWERED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+44: iconst_0
+45: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+48: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+51: checkcast net/minecraft/world/level/block/state/BlockState
+54: getstatic net/minecraft/world/level/block/FenceGateBlock.IN_WALL:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+57: iconst_0
+58: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+61: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+64: checkcast net/minecraft/world/level/block/state/BlockState
+67: invokevirtual net/minecraft/world/level/block/FenceGateBlock.registerDefaultState:(Lnet/minecraft/world/level/block/state/BlockState;)V
+70: return
+
+=== Blocks clinit OAK_FENCE_GATE row (wide window)
+--- clinit window @ pc 12808..12930 (OAK_FENCE_GATE)
+12808: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.lightLevel:(Ljava/util/function/ToIntFunction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12811: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12814: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+12817: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.pushReaction:(Lnet/minecraft/world/level/material/PushReaction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12820: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+12823: putstatic net/minecraft/world/level/block/Blocks.GLOW_LICHEN:Lnet/minecraft/world/level/block/Block;
+12826: getstatic net/minecraft/references/BlockItemIds.RESIN_CLUMP:Lnet/minecraft/references/BlockItemId;
+12829: invokedynamic indy
+12834: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12837: getstatic net/minecraft/world/level/material/MapColor.TERRACOTTA_ORANGE:Lnet/minecraft/world/level/material/MapColor;
+12840: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12843: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.replaceable:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12846: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noCollision:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12849: getstatic net/minecraft/world/level/block/SoundType.RESIN:Lnet/minecraft/world/level/block/SoundType;
+12852: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12855: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12858: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+12861: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.pushReaction:(Lnet/minecraft/world/level/material/PushReaction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12864: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+12867: putstatic net/minecraft/world/level/block/Blocks.RESIN_CLUMP:Lnet/minecraft/world/level/block/Block;
+12870: getstatic net/minecraft/references/BlockItemIds.OAK_FENCE_GATE:Lnet/minecraft/references/BlockItemId;
+12873: invokedynamic indy
+12878: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12881: getstatic net/minecraft/world/level/block/Blocks.OAK_PLANKS:Lnet/minecraft/world/level/block/Block;
+12884: invokevirtual net/minecraft/world/level/block/Block.defaultMapColor:()Lnet/minecraft/world/level/material/MapColor;
+12887: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12890: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.forceSolidOn:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12893: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASS:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+12896: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12899: fconst_2
+12900: ldc2_w ldc2w@339
+12903: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12906: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12909: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+12912: putstatic net/minecraft/world/level/block/Blocks.OAK_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+12915: getstatic net/minecraft/references/BlockItemIds.BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+12918: getstatic net/minecraft/world/level/block/Blocks.BRICKS:Lnet/minecraft/world/level/block/Block;
+12921: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+12924: putstatic net/minecraft/world/level/block/Blocks.BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+12927: getstatic net/minecraft/references/BlockItemIds.STONE_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+12930: getstatic net/minecraft/world/level/block/Blocks.STONE_BRICKS:Lnet/minecraft/world/level/block/Block;
+
+=== Items clinit oak_fence_gate row
+--- clinit window @ pc 8334..8372 (OAK_FENCE_GATE)
+8334: putstatic net/minecraft/world/item/Items.WARPED_TRAPDOOR:Lnet/minecraft/world/item/Item;
+8337: getstatic net/minecraft/references/BlockItemIds.COPPER_TRAPDOOR:Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+8340: getstatic net/minecraft/world/level/block/Blocks.COPPER_TRAPDOOR:Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+8343: invokedynamic indy
+8348: invokestatic net/minecraft/world/level/block/WeatheringCopperCollection.registerItems:(Lnet/minecraft/world/level/block/WeatheringCopperCollection;Lnet/minecraft/world/level/block/WeatheringCopperCollection;Ljava/util/function/BiFunction;)Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+8351: putstatic net/minecraft/world/item/Items.COPPER_TRAPDOOR:Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+8354: getstatic net/minecraft/references/BlockItemIds.OAK_FENCE_GATE:Lnet/minecraft/references/BlockItemId;
+8357: getstatic net/minecraft/world/level/block/Blocks.OAK_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+8360: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+8363: putstatic net/minecraft/world/item/Items.OAK_FENCE_GATE:Lnet/minecraft/world/item/Item;
+8366: getstatic net/minecraft/references/BlockItemIds.SPRUCE_FENCE_GATE:Lnet/minecraft/references/BlockItemId;
+8369: getstatic net/minecraft/world/level/block/Blocks.SPRUCE_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+8372: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+
+=== WoodType OAK row (the sound events the gate's ctor wears)
+--- WoodType clinit @ 40
+37: dup
+38: ldc ldc@111
+40: getstatic net/minecraft/world/level/block/state/properties/BlockSetType.OAK:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+43: invokespecial net/minecraft/world/level/block/state/properties/WoodType.<init>:(Ljava/lang/String;Lnet/minecraft/world/level/block/state/properties/BlockSetType;)V
+46: invokestatic net/minecraft/world/level/block/state/properties/WoodType.register:(Lnet/minecraft/world/level/block/state/properties/WoodType;)Lnet/minecraft/world/level/block/state/properties/WoodType;
+49: putstatic net/minecraft/world/level/block/state/properties/WoodType.OAK:Lnet/minecraft/world/level/block/state/properties/WoodType;
+52: new net/minecraft/world/level/block/state/properties/WoodType
+55: dup
+56: ldc ldc@128
+58: getstatic net/minecraft/world/level/block/state/properties/BlockSetType.SPRUCE:Lnet/minecraft/world/level/block/state/properties/BlockSetType;
+61: invokespecial net/minecraft/world/level/block/state/properties/WoodType.<init>:(Ljava/lang/String;Lnet/minecraft/world/level/block/state/properties/BlockSetType;)V
+64: invokestatic net/minecraft/world/level/block/state/properties/WoodType.register:(Lnet/minecraft/world/level/block/state/properties/WoodType;)Lnet/minecraft/world/level/block/state/properties/WoodType;
+
+=== PNG dims
+Traceback (most recent call last):
+  File "/home/z/my-project/rust-minecraft/scripts/jar_work/fence_gate_53.py", line 301, in <module>
+    d = z.read(f"assets/minecraft/textures/block/{png}.png")
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/z/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/lib/python3.12/zipfile/__init__.py", line 1610, in read
+    with self.open(name, "r", pwd) as fp:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/z/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/lib/python3.12/zipfile/__init__.py", line 1647, in open
+    zinfo = self.getinfo(name)
+            ^^^^^^^^^^^^^^^^^^
+  File "/home/z/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/lib/python3.12/zipfile/__init__.py", line 1575, in getinfo
+    raise KeyError(
+KeyError: "There is no item named 'assets/minecraft/textures/block/oak_fence_gate.png' in the archive"
