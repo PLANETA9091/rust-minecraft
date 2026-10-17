@@ -10965,12 +10965,30 @@ pub fn falling_item_id(block: u16) -> Option<i32> {
 }
 
 /// THE RENDER'S OWN MODEL (the FallingBlockRenderer's blockstate walk —
-/// the carried kind's own block model the derive chain bakes).
+/// the carried kind's own block model the derive chain bakes; the
+/// autopush-680 round the powder family's own fifteen rungs the
+/// falling render the ColorCollection's seats wear — the vanilla's
+/// own blockstate the falling entity's walk reads).
 pub fn falling_model_id(block: u16) -> Option<&'static str> {
     match block {
         crate::world::SAND => Some("block/sand"),
         crate::world::GRAVEL => Some("block/gravel"),
         crate::world::CONCRETE_POWDER => Some("block/white_concrete_powder"),
+        crate::world::ORANGE_CONCRETE_POWDER => Some("block/orange_concrete_powder"),
+        crate::world::MAGENTA_CONCRETE_POWDER => Some("block/magenta_concrete_powder"),
+        crate::world::LIGHT_BLUE_CONCRETE_POWDER => Some("block/light_blue_concrete_powder"),
+        crate::world::YELLOW_CONCRETE_POWDER => Some("block/yellow_concrete_powder"),
+        crate::world::LIME_CONCRETE_POWDER => Some("block/lime_concrete_powder"),
+        crate::world::PINK_CONCRETE_POWDER => Some("block/pink_concrete_powder"),
+        crate::world::GRAY_CONCRETE_POWDER => Some("block/gray_concrete_powder"),
+        crate::world::LIGHT_GRAY_CONCRETE_POWDER => Some("block/light_gray_concrete_powder"),
+        crate::world::CYAN_CONCRETE_POWDER => Some("block/cyan_concrete_powder"),
+        crate::world::PURPLE_CONCRETE_POWDER => Some("block/purple_concrete_powder"),
+        crate::world::BLUE_CONCRETE_POWDER => Some("block/blue_concrete_powder"),
+        crate::world::BROWN_CONCRETE_POWDER => Some("block/brown_concrete_powder"),
+        crate::world::GREEN_CONCRETE_POWDER => Some("block/green_concrete_powder"),
+        crate::world::RED_CONCRETE_POWDER => Some("block/red_concrete_powder"),
+        crate::world::BLACK_CONCRETE_POWDER => Some("block/black_concrete_powder"),
         _ => None,
     }
 }
@@ -11100,7 +11118,7 @@ impl FallingBlock {
             self.y.floor() as i32,
             self.z.floor() as i32,
         );
-        let is_concrete = self.block == crate::world::CONCRETE_POWDER;
+        let is_concrete = crate::world::is_concrete_powder(self.block);
         if is_concrete && world.get(cell.0, cell.1, cell.2) == crate::world::WATER {
             self.convert = true;
         }

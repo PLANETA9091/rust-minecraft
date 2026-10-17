@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 459] = [
+pub const RUNTIME_PALETTE: [&str; 474] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1473,6 +1473,63 @@ pub const RUNTIME_PALETTE: [&str; 459] = [
     "gray_concrete", "light_gray_concrete", "cyan_concrete",
     "purple_concrete", "blue_concrete", "brown_concrete",
     "green_concrete", "red_concrete", "black_concrete",
+    // THE POWDER'S OWN FIFTEEN RUNGS (the autopush-680 round): the
+    // falling builder's fifteen dyed seats the palette's tail banks
+    // — the orange..black rungs the CONCRETE_POWDER collection's own
+    // clinit order the tail wears (the WHITE kind its early seat the
+    // fifty-sixth entry keeps), the END_PORTAL the beyond-table 475
+    // the every-family displacement law keeps. javap Blocks clinit
+    // the 26.2 jar (pinned sha1 2dc72797, the probe scripts/
+    // jar_work/concrete_powder_680.py + .out banks): pc 20990-21011
+    // the getstatic BlockItemIds.CONCRETE_POWDER + the
+    // ColorCollection.registerBlocks(..., TriFunction, BiFunction,
+    // Function) walk the putstatic Blocks.CONCRETE_POWDER row pc
+    // 21011 the sixteen-color collection ONE lambda family speaks
+    // (the CONCRETE collection's own register pc 20979-20987 the
+    // 679 probe banks — the two collections the sibling walks the
+    // same builder banks), the Items clinit row pc 6295-6309 the
+    // registerBlockItems(BlockItemIds.CONCRETE_POWDER,
+    // Blocks.CONCRETE_POWDER, ...) pairing speaks (the putstatic
+    // Items.CONCRETE_POWDER pc 6309), the ConcretePowderBlock's own
+    // ctor the FallingBlock.<init> superclass walk the putfield
+    // .concrete field read banks (the solidify target the ctor's
+    // registry argument carries). The dig rows the generated
+    // block_dig table the jar's REAL bootstrapped registry answers
+    // (the 0.5 + no-tool rows every color wears — the bare hand the
+    // whole family's drop keeps, the shovel's own speed-up the
+    // mineable/shovel tag carries), the block.sand.break voice the
+    // generated block_sounds table every seat banks, the self-entry
+    // drop pool the block_drops table speaks. The blockstates the
+    // jar's own ONE shape carry — the {name}.json the single ""
+    // variant the cube_all model wears, the models the ONE #all ref
+    // (all={name}), the FACE_TILES rows the one-tile lane banks. The
+    // FIFTEEN {name}.png masters the jar's own 16x16 colortype-2
+    // RGB truecolor tiles bank — NEW tiles the append-only tail
+    // seats (732 -> 747: the fifteen {color}_concrete_powder rungs
+    // in clinit order), every pre-existing row the same pixels +
+    // tints + names keeps, the append-only law the equivalence
+    // proof scripts/verify_atlas_full.py banks. The ONE "{name}"
+    // registry name its kind ALONE speaks (no strip law — each seat
+    // its own Block + BlockItem pairing the Items clinit's
+    // registerBlockItems rows answer), the placeable lane the
+    // reverse walk the pairing serves, the FALLING family the
+    // FallingBlock superclass the [`is_falling_block`] growth
+    // banks, the powder->concrete conversion the ctor's own .concrete
+    // field the ±15-offset pairing (the white pair's adjacency the
+    // 55/56 seats keep) the world walk serves, the fire trio the
+    // family's own SILENCE keeps — no setFlammable row the powder
+    // family wears. The seats the CONTIGUOUS tail the kind ids wear
+    // (459..473), the END_PORTAL kind the beyond-table seat the
+    // family's growth displaces (459 -> 475 the
+    // 658/670/672/673/674/675/676/677/678/53/679 precedent wears).
+    "orange_concrete_powder", "magenta_concrete_powder",
+    "light_blue_concrete_powder", "yellow_concrete_powder",
+    "lime_concrete_powder", "pink_concrete_powder",
+    "gray_concrete_powder", "light_gray_concrete_powder",
+    "cyan_concrete_powder", "purple_concrete_powder",
+    "blue_concrete_powder", "brown_concrete_powder",
+    "green_concrete_powder", "red_concrete_powder",
+    "black_concrete_powder",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.

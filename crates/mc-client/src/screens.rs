@@ -13716,7 +13716,8 @@ impl App {
                                 // kills, the water landing the drop
                                 // branch never speaks)
                                 let break_clause = crate::mob::falling_free(w.get(bx, by - 1, bz))
-                                    && (kind != crate::world::CONCRETE_POWDER || !convert);
+                                    && (crate::world::concrete_powder_target(kind).is_none()
+                                        || !convert);
                                 if crate::mob::falling_free(w.get(bx, by, bz)) && !break_clause {
                                     // THE ONLAND'S OWN FOLD (javap pc
                                     // 451-529: the setBlock(3) the
@@ -13726,9 +13727,15 @@ impl App {
                                     // answers — the powder the water
                                     // landing the CONCRETE state speaks:
                                     // the two setBlocks the same net
-                                    // state the fold keeps)
+                                    // state the fold keeps; the
+                                    // autopush-680 round the FIFTEEN
+                                    // DYED RUNGS the same fold the
+                                    // [`crate::world::concrete_powder_target`]
+                                    // pairing serves — the color's own
+                                    // concrete the conversion speaks)
                                     let placed = if convert {
-                                        crate::world::CONCRETE
+                                        crate::world::concrete_powder_target(kind)
+                                            .unwrap_or(kind)
                                     } else {
                                         kind
                                     };
@@ -13850,13 +13857,20 @@ impl App {
                             // (the solidified block the fall never
                             // becomes — the falling family the
                             // [`crate::world::is_falling_block`] law
-                            // refuses)
-                            if kind == crate::world::CONCRETE_POWDER
-                                && crate::world::concrete_touches_liquid(w, *x, *y, *z)
+                            // refuses; the autopush-680 round the
+                            // FIFTEEN DYED RUNGS the same walk the
+                            // [`crate::world::concrete_powder_target`]
+                            // pairing serves — the vanilla's own
+                            // color-pair law the collection's sibling
+                            // walk answers)
+                            if let Some(target) = crate::world::concrete_powder_target(kind)
                             {
-                                w.set(*x, *y, *z, crate::world::CONCRETE);
-                                solidified.push((*x, *y, *z));
-                                continue;
+                                if crate::world::concrete_touches_liquid(w, *x, *y, *z)
+                                {
+                                    w.set(*x, *y, *z, target);
+                                    solidified.push((*x, *y, *z));
+                                    continue;
+                                }
                             }
                             if !crate::mob::falling_free(w.get(*x, *y - 1, *z)) {
                                 continue;
@@ -38071,9 +38085,12 @@ impl App {
         // the powder item into the water cell (the replaceable law the
         // clicked/target cell keeps) the CONCRETE speaks, the dry cell
         // beside the pool the same verdict wears, the vanilla's own
-        // color-pair law the white row answers). The placed kind the
-        // downstream gates, the set and the place voice all read.
-        let block = if block == crate::world::CONCRETE_POWDER {
+        // color-pair law the white row answers — the autopush-680
+        // round the FIFTEEN DYED RUNGS the same verdict the
+        // [`crate::world::concrete_powder_target`] pairing serves (the
+        // color's own concrete the placement speaks)). The placed kind
+        // the downstream gates, the set and the place voice all read.
+        let block = if let Some(target) = crate::world::concrete_powder_target(block) {
             let solidifies = self
                 .active_world()
                 .is_some_and(|w| {
@@ -38081,7 +38098,7 @@ impl App {
                     crate::world::concrete_should_solidify(w, cell.0, cell.1, cell.2, state)
                 });
             if solidifies {
-                crate::world::CONCRETE
+                target
             } else {
                 block
             }
@@ -103371,7 +103388,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            459,
+            474,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -103452,7 +103469,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            459,
+            474,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -103754,7 +103771,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            459,
+            474,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -107601,7 +107618,7 @@ cow_sound_variant: None,
         assert_eq!(crate::world::OAK_BUTTON_ON, 263);
         assert_eq!(
             crate::world::END_PORTAL,
-            460,
+            475,
             "the displaced seat the weighted plates' own tail keeps"
         );
         for kind in [
@@ -107684,7 +107701,7 @@ cow_sound_variant: None,
         // #texture ref banks)
         assert_eq!(
             atlas::N_KINDS,
-            459,
+            474,
             "the palette the weighted plates' own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
@@ -107899,12 +107916,12 @@ cow_sound_variant: None,
         );
         assert_eq!(
             crate::world::END_PORTAL,
-            460,
+            475,
             "the displaced seat the weighted plates' own tail keeps"
         );
         assert_eq!(
             atlas::N_KINDS,
-            459,
+            474,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
@@ -108176,12 +108193,12 @@ cow_sound_variant: None,
         );
         assert_eq!(
             crate::world::END_PORTAL,
-            460,
+            475,
             "the displaced seat the weighted plates' own tail keeps"
         );
         assert_eq!(
             atlas::N_KINDS,
-            459,
+            474,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
@@ -108296,8 +108313,8 @@ cow_sound_variant: None,
         assert_eq!(w::LIGHT_WEIGHTED_PRESSURE_PLATE_ON, 317);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE, 318);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, 319);
-        assert_eq!(w::END_PORTAL, 460);
-        assert_eq!(atlas::N_KINDS, 459, "the palette the weighted rows bank");
+        assert_eq!(w::END_PORTAL, 475);
+        assert_eq!(atlas::N_KINDS, 474, "the palette the weighted rows bank");
         for (off, on, name) in [
             (
                 w::LIGHT_WEIGHTED_PRESSURE_PLATE,
@@ -109408,10 +109425,10 @@ cow_sound_variant: None,
         assert_eq!(w::OAK_PRESSURE_PLATE_ON, 289);
         assert_eq!(w::STONE_PRESSURE_PLATE, 290);
         assert_eq!(w::STONE_PRESSURE_PLATE_ON, 291);
-        assert_eq!(w::END_PORTAL, 460);
+        assert_eq!(w::END_PORTAL, 475);
         assert_eq!(
             atlas::N_KINDS,
-            459,
+            474,
             "the palette the weighted plates' own rows bank"
         );
         for (off, on, name, wooden) in [

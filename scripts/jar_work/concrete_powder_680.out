@@ -1,0 +1,90 @@
+=== jar sha1 2dc72797acbc1b63fc16a11c4ac393605f453754
+=== Blocks clinit the CONCRETE_POWDER collection row (the white pair's walk the dyed rungs' family wears)
+--- clinit window (BlockItemIds.CONCRETE_POWDER) pc 20979..21031
+20979: invokedynamic indy
+20984: invokestatic net/minecraft/world/level/block/ColorCollection.registerBlocks:(Lnet/minecraft/world/level/block/ColorCollection;Lorg/apache/commons/lang3/function/TriFunction;Ljava/util/function/BiFunction;Ljava/util/function/Function;)Lnet/minecraft/world/level/block/ColorCollection;
+20987: putstatic net/minecraft/world/level/block/Blocks.CONCRETE:Lnet/minecraft/world/level/block/ColorCollection;
+20990: getstatic net/minecraft/references/BlockItemIds.CONCRETE_POWDER:Lnet/minecraft/world/level/block/ColorCollection;
+20993: invokedynamic indy
+20998: invokedynamic indy
+21003: invokedynamic indy
+21008: invokestatic net/minecraft/world/level/block/ColorCollection.registerBlocks:(Lnet/minecraft/world/level/block/ColorCollection;Lorg/apache/commons/lang3/function/TriFunction;Ljava/util/function/BiFunction;Ljava/util/function/Function;)Lnet/minecraft/world/level/block/ColorCollection;
+21011: putstatic net/minecraft/world/level/block/Blocks.CONCRETE_POWDER:Lnet/minecraft/world/level/block/ColorCollection;
+21014: getstatic net/minecraft/references/BlockItemIds.KELP:Lnet/minecraft/references/BlockItemId;
+21017: invokedynamic indy
+21022: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+21025: getstatic net/minecraft/world/level/material/MapColor.WATER:Lnet/minecraft/world/level/material/MapColor;
+21028: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+21031: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noCollision:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+=== Items clinit the CONCRETE_POWDER pairing row
+--- clinit window (BlockItemIds.CONCRETE_POWDER) pc 6284..6324
+6284: invokedynamic indy
+6289: invokestatic net/minecraft/world/level/block/ColorCollection.registerBlockItems:(Lnet/minecraft/world/level/block/ColorCollection;Lnet/minecraft/world/level/block/ColorCollection;Lorg/apache/commons/lang3/function/TriFunction;)Lnet/minecraft/world/level/block/ColorCollection;
+6292: putstatic net/minecraft/world/item/Items.CONCRETE:Lnet/minecraft/world/level/block/ColorCollection;
+6295: getstatic net/minecraft/references/BlockItemIds.CONCRETE_POWDER:Lnet/minecraft/world/level/block/ColorCollection;
+6298: getstatic net/minecraft/world/level/block/Blocks.CONCRETE_POWDER:Lnet/minecraft/world/level/block/ColorCollection;
+6301: invokedynamic indy
+6306: invokestatic net/minecraft/world/level/block/ColorCollection.registerBlockItems:(Lnet/minecraft/world/level/block/ColorCollection;Lnet/minecraft/world/level/block/ColorCollection;Lorg/apache/commons/lang3/function/TriFunction;)Lnet/minecraft/world/level/block/ColorCollection;
+6309: putstatic net/minecraft/world/item/Items.CONCRETE_POWDER:Lnet/minecraft/world/level/block/ColorCollection;
+6312: getstatic net/minecraft/references/BlockItemIds.TURTLE_EGG:Lnet/minecraft/references/BlockItemId;
+6315: getstatic net/minecraft/world/level/block/Blocks.TURTLE_EGG:Lnet/minecraft/world/level/block/Block;
+6318: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+6321: putstatic net/minecraft/world/item/Items.TURTLE_EGG:Lnet/minecraft/world/item/Item;
+6324: getstatic net/minecraft/references/BlockItemIds.SNIFFER_EGG:Lnet/minecraft/references/BlockItemId;
+=== the ConcretePowderBlock's own ctor (the concrete field the target read banks)
+0: aload_0
+1: aload_2
+2: invokespecial net/minecraft/world/level/block/FallingBlock.<init>:(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+5: aload_0
+6: aload_1
+7: putfield net/minecraft/world/level/block/ConcretePowderBlock.concrete:Lnet/minecraft/world/level/block/Block;
+10: return
+=== the FIFTEEN blockstates the ONE-shape map banks
+orange_concrete_powder: variants=[''] model=minecraft:block/orange_concrete_powder OK
+magenta_concrete_powder: variants=[''] model=minecraft:block/magenta_concrete_powder OK
+light_blue_concrete_powder: variants=[''] model=minecraft:block/light_blue_concrete_powder OK
+yellow_concrete_powder: variants=[''] model=minecraft:block/yellow_concrete_powder OK
+lime_concrete_powder: variants=[''] model=minecraft:block/lime_concrete_powder OK
+pink_concrete_powder: variants=[''] model=minecraft:block/pink_concrete_powder OK
+gray_concrete_powder: variants=[''] model=minecraft:block/gray_concrete_powder OK
+light_gray_concrete_powder: variants=[''] model=minecraft:block/light_gray_concrete_powder OK
+cyan_concrete_powder: variants=[''] model=minecraft:block/cyan_concrete_powder OK
+purple_concrete_powder: variants=[''] model=minecraft:block/purple_concrete_powder OK
+blue_concrete_powder: variants=[''] model=minecraft:block/blue_concrete_powder OK
+brown_concrete_powder: variants=[''] model=minecraft:block/brown_concrete_powder OK
+green_concrete_powder: variants=[''] model=minecraft:block/green_concrete_powder OK
+red_concrete_powder: variants=[''] model=minecraft:block/red_concrete_powder OK
+black_concrete_powder: variants=[''] model=minecraft:block/black_concrete_powder OK
+=== the FIFTEEN models the cube_all parent wear (the ONE #all ref)
+orange_concrete_powder: parent=minecraft:block/cube_all all=minecraft:block/orange_concrete_powder OK
+magenta_concrete_powder: parent=minecraft:block/cube_all all=minecraft:block/magenta_concrete_powder OK
+light_blue_concrete_powder: parent=minecraft:block/cube_all all=minecraft:block/light_blue_concrete_powder OK
+yellow_concrete_powder: parent=minecraft:block/cube_all all=minecraft:block/yellow_concrete_powder OK
+lime_concrete_powder: parent=minecraft:block/cube_all all=minecraft:block/lime_concrete_powder OK
+pink_concrete_powder: parent=minecraft:block/cube_all all=minecraft:block/pink_concrete_powder OK
+gray_concrete_powder: parent=minecraft:block/cube_all all=minecraft:block/gray_concrete_powder OK
+light_gray_concrete_powder: parent=minecraft:block/cube_all all=minecraft:block/light_gray_concrete_powder OK
+cyan_concrete_powder: parent=minecraft:block/cube_all all=minecraft:block/cyan_concrete_powder OK
+purple_concrete_powder: parent=minecraft:block/cube_all all=minecraft:block/purple_concrete_powder OK
+blue_concrete_powder: parent=minecraft:block/cube_all all=minecraft:block/blue_concrete_powder OK
+brown_concrete_powder: parent=minecraft:block/cube_all all=minecraft:block/brown_concrete_powder OK
+green_concrete_powder: parent=minecraft:block/cube_all all=minecraft:block/green_concrete_powder OK
+red_concrete_powder: parent=minecraft:block/cube_all all=minecraft:block/red_concrete_powder OK
+black_concrete_powder: parent=minecraft:block/cube_all all=minecraft:block/black_concrete_powder OK
+=== the FIFTEEN png masters the 16x16 colortype-2 tiles bank (the powder family's own RGB truecolor tiles the concrete family's palette rungs never wear)
+orange_concrete_powder.png: 16x16 bit=8 colortype=2 bytes=668 OK
+magenta_concrete_powder.png: 16x16 bit=8 colortype=2 bytes=683 OK
+light_blue_concrete_powder.png: 16x16 bit=8 colortype=2 bytes=692 OK
+yellow_concrete_powder.png: 16x16 bit=8 colortype=2 bytes=657 OK
+lime_concrete_powder.png: 16x16 bit=8 colortype=2 bytes=633 OK
+pink_concrete_powder.png: 16x16 bit=8 colortype=2 bytes=714 OK
+gray_concrete_powder.png: 16x16 bit=8 colortype=2 bytes=486 OK
+light_gray_concrete_powder.png: 16x16 bit=8 colortype=2 bytes=563 OK
+cyan_concrete_powder.png: 16x16 bit=8 colortype=2 bytes=585 OK
+purple_concrete_powder.png: 16x16 bit=8 colortype=2 bytes=618 OK
+blue_concrete_powder.png: 16x16 bit=8 colortype=2 bytes=605 OK
+brown_concrete_powder.png: 16x16 bit=8 colortype=2 bytes=609 OK
+green_concrete_powder.png: 16x16 bit=8 colortype=2 bytes=613 OK
+red_concrete_powder.png: 16x16 bit=8 colortype=2 bytes=564 OK
+black_concrete_powder.png: 16x16 bit=8 colortype=2 bytes=476 OK
+=== VERDICT PASS
