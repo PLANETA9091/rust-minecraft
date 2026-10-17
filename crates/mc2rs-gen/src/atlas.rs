@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 396] = [
+pub const RUNTIME_PALETTE: [&str; 402] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1228,6 +1228,34 @@ pub const RUNTIME_PALETTE: [&str; 396] = [
     "oak_planks", "spruce_planks", "birch_planks", "jungle_planks",
     "acacia_planks", "dark_oak_planks", "mangrove_planks", "cherry_planks",
     "pale_oak_planks", "bamboo_planks", "crimson_planks", "warped_planks",
+    // THE STONE MASON'S OWN KIT (the autopush-675 round): the cobble
+    // + the smooth slab-block + the stone bricks quartet the builder's
+    // own stone shelf banks — javap Blocks clinit the 26.2 jar (pinned
+    // sha1 2dc72797): the cobblestone the lambda$static$NNN factory's
+    // strength(2.0f, 6.0f) + requiresCorrectToolForDrops row the
+    // mineable/pickaxe tag answers, the smooth_stone the
+    // strength(2.0f, 6.0f) + sound(SoundType.STONE) row keeps, the
+    // bricks quartet the strength(1.5f, 6.0f) rows the SAME pickaxe
+    // demand wears (the 1.5 hardness the pick's own speed the dig
+    // walk answers — the bare hand the stone family's drop refuses).
+    // The ONE blockstate {name}.json the generic single-variant map
+    // every row carries ("" -> block/{name} the cube_all parent the
+    // ONE #all texture ref speaks — the smooth_stone the jar's own
+    // cube_all row banks, the side-top split the slab models alone
+    // wear), the {name}.png master the jar's own 16x16 colortype-3
+    // tile banks (the tile the furnace/jukebox/monster-spawner
+    // families' own models already banked — the REUSED index the
+    // append-only law the equivalence proof keeps). The ONE "{name}"
+    // registry name its kind ALONE speaks (no strip law — each stone
+    // its own Block + BlockItem pairing the Items clinit's
+    // registerBlock rows answer), the generated dig/drops/sounds/
+    // items tables the rows already bank — the NAME_OF row the lanes
+    // wire. The seats the CONTIGUOUS tail the kind ids wear
+    // (396..401 — the vanilla stone shelf's own order keeps), the
+    // END_PORTAL kind the beyond-table seat the kit's growth
+    // displaces (396 -> 402 the 658/670/672/673/674 precedent wears).
+    "cobblestone", "smooth_stone", "stone_bricks", "mossy_stone_bricks",
+    "cracked_stone_bricks", "chiseled_stone_bricks",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
