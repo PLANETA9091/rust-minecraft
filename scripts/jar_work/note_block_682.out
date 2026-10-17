@@ -1,0 +1,650 @@
+=== blockstates/note_block.json
+{
+  "variants": {
+    "": {
+      "model": "minecraft:block/note_block"
+    }
+  }
+}
+=== models/block/note_block.json
+{
+ "parent": "minecraft:block/cube_all",
+ "textures": {
+  "all": "minecraft:block/note_block"
+ }
+}
+
+=== note_block.png bytes=172 IHDR=4948445200000010000000100803000000282d0f
+bit_depth=8 colortype=3
+
+=== NoteBlock fields
+['CODEC Lcom/mojang/serialization/MapCodec;', 'INSTRUMENT Lnet/minecraft/world/level/block/state/properties/EnumProperty;', 'POWERED Lnet/minecraft/world/level/block/state/properties/BooleanProperty;', 'NOTE Lnet/minecraft/world/level/block/state/properties/IntegerProperty;', 'NOTE_VOLUME I']
+=== NoteBlockEntity fields
+None
+
+=== NoteBlock walk (net/minecraft/world/level/block/NoteBlock) — the 26.2 NOTE: no NoteBlockEntity class, the state properties the whole law carries)
+--- net.minecraft.world.level.block.NoteBlock.useWithoutItem(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/phys/BlockHitResult;)Lnet/minecraft/world/InteractionResult;
+0: aload_2
+1: invokevirtual net/minecraft/world/level/Level.isClientSide:()Z
+4: ifne -> 43
+7: aload_1
+8: getstatic net/minecraft/world/level/block/NoteBlock.NOTE:Lnet/minecraft/world/level/block/state/properties/IntegerProperty;
+11: invokevirtual net/minecraft/world/level/block/state/BlockState.cycle:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Object;
+14: checkcast net/minecraft/world/level/block/state/BlockState
+17: astore_1
+18: aload_2
+19: aload_3
+20: aload_1
+21: iconst_3
+22: invokevirtual net/minecraft/world/level/Level.setBlock:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z
+25: pop
+26: aload_0
+27: aload aload 4
+29: aload_1
+30: aload_2
+31: aload_3
+32: invokevirtual net/minecraft/world/level/block/NoteBlock.playNote:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)V
+35: aload aload 4
+37: getstatic net/minecraft/stats/Stats.TUNE_NOTEBLOCK:Lnet/minecraft/resources/Identifier;
+40: invokevirtual net/minecraft/world/entity/player/Player.awardStat:(Lnet/minecraft/resources/Identifier;)V
+43: getstatic net/minecraft/world/InteractionResult.SUCCESS:Lnet/minecraft/world/InteractionResult$Success;
+46: areturn
+--- net.minecraft.world.level.block.NoteBlock.playNote(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)V
+0: aload_2
+1: getstatic net/minecraft/world/level/block/NoteBlock.INSTRUMENT:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+4: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+7: checkcast net/minecraft/world/level/block/state/properties/NoteBlockInstrument
+10: invokevirtual net/minecraft/world/level/block/state/properties/NoteBlockInstrument.worksAboveNoteBlock:()Z
+13: ifne -> 31
+16: aload_3
+17: aload aload 4
+19: invokevirtual net/minecraft/core/BlockPos.above:()Lnet/minecraft/core/BlockPos;
+22: invokevirtual net/minecraft/world/level/Level.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+25: invokevirtual net/minecraft/world/level/block/state/BlockState.isAir:()Z
+28: ifeq -> 50
+31: aload_3
+32: aload aload 4
+34: aload_0
+35: iconst_0
+36: iconst_0
+37: invokevirtual net/minecraft/world/level/Level.blockEvent:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;II)V
+40: aload_3
+41: aload_1
+42: getstatic net/minecraft/world/level/gameevent/GameEvent.NOTE_BLOCK_PLAY:Lnet/minecraft/core/Holder$Reference;
+45: aload aload 4
+47: invokevirtual net/minecraft/world/level/Level.gameEvent:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/Holder;Lnet/minecraft/core/BlockPos;)V
+50: return
+--- net.minecraft.world.level.block.NoteBlock.triggerEvent(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;II)Z
+0: aload_1
+1: getstatic net/minecraft/world/level/block/NoteBlock.INSTRUMENT:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+4: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+7: checkcast net/minecraft/world/level/block/state/properties/NoteBlockInstrument
+10: astore astore 7
+12: aload aload 7
+14: invokevirtual net/minecraft/world/level/block/state/properties/NoteBlockInstrument.isTunable:()Z
+17: ifeq -> 88
+20: aload_1
+21: getstatic net/minecraft/world/level/block/NoteBlock.NOTE:Lnet/minecraft/world/level/block/state/properties/IntegerProperty;
+24: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+27: checkcast java/lang/Integer
+30: invokevirtual java/lang/Integer.intValue:()I
+33: istore istore 8
+35: iload iload 8
+37: invokestatic net/minecraft/world/level/block/NoteBlock.getPitchFromNote:(I)F
+40: 0x38 0x38 6
+42: aload_2
+43: getstatic net/minecraft/core/particles/ParticleTypes.NOTE:Lnet/minecraft/core/particles/SimpleParticleType;
+46: aload_3
+47: invokevirtual net/minecraft/core/BlockPos.getX:()I
+50: 0x87
+51: 0x14 double 0.5
+54: 0x63
+55: aload_3
+56: invokevirtual net/minecraft/core/BlockPos.getY:()I
+59: 0x87
+60: 0x14 double 1.2
+63: 0x63
+64: aload_3
+65: invokevirtual net/minecraft/core/BlockPos.getZ:()I
+68: 0x87
+69: 0x14 double 0.5
+72: 0x63
+73: iload iload 8
+75: 0x87
+76: 0x14 double 24.0
+79: 0x6f
+80: 0x0e
+81: 0x0e
+82: invokevirtual net/minecraft/world/level/Level.addParticle:(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V
+85: goto -> 91
+88: fconst_1
+89: 0x38 0x38 6
+91: aload aload 7
+93: invokevirtual net/minecraft/world/level/block/state/properties/NoteBlockInstrument.hasCustomSound:()Z
+96: ifeq -> 127
+99: aload_0
+100: aload_2
+101: aload_3
+102: invokevirtual net/minecraft/world/level/block/NoteBlock.getCustomSoundId:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/resources/Identifier;
+105: astore astore 9
+107: aload aload 9
+109: ifnonnull -> 114
+112: iconst_0
+113: ireturn
+114: aload aload 9
+116: invokestatic net/minecraft/sounds/SoundEvent.createVariableRangeEvent:(Lnet/minecraft/resources/Identifier;)Lnet/minecraft/sounds/SoundEvent;
+119: invokestatic net/minecraft/core/Holder.direct:(Ljava/lang/Object;)Lnet/minecraft/core/Holder;
+122: astore astore 8
+124: goto -> 134
+127: aload aload 7
+129: invokevirtual net/minecraft/world/level/block/state/properties/NoteBlockInstrument.getSoundEvent:()Lnet/minecraft/core/Holder;
+132: astore astore 8
+134: aload_2
+135: aconst_null
+136: aload_3
+137: invokevirtual net/minecraft/core/BlockPos.getX:()I
+140: 0x87
+141: 0x14 double 0.5
+144: 0x63
+145: aload_3
+146: invokevirtual net/minecraft/core/BlockPos.getY:()I
+149: 0x87
+150: 0x14 double 0.5
+153: 0x63
+154: aload_3
+155: invokevirtual net/minecraft/core/BlockPos.getZ:()I
+158: 0x87
+159: 0x14 double 0.5
+162: 0x63
+163: aload aload 8
+165: getstatic net/minecraft/sounds/SoundSource.RECORDS:Lnet/minecraft/sounds/SoundSource;
+168: ldc2_w float 3.0
+171: 0x17 0x17 6
+173: aload_2
+174: invokevirtual net/minecraft/world/level/Level.getRandom:()Lnet/minecraft/util/RandomSource;
+177: invokeinterface net/minecraft/util/RandomSource.nextLong:()J
+180: aconst_null
+181: nop
+182: invokevirtual net/minecraft/world/level/Level.playSeededSound:(Lnet/minecraft/world/entity/Entity;DDDLnet/minecraft/core/Holder;Lnet/minecraft/sounds/SoundSource;FFJ)V
+185: iconst_1
+186: ireturn
+--- net.minecraft.world.level.block.NoteBlock.getPitchFromNote(I)F
+0: 0x14 double 2.0
+3: iload_0
+4: bipush 12
+6: isub
+7: 0x87
+8: 0x14 double 12.0
+11: 0x6f
+12: invokestatic java/lang/Math.pow:(DD)D
+15: 0x90
+16: freturn
+--- net.minecraft.world.level.block.NoteBlock.setInstrument(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/block/state/BlockState;
+0: aload_1
+1: aload_2
+2: invokevirtual net/minecraft/core/BlockPos.above:()Lnet/minecraft/core/BlockPos;
+5: invokeinterface net/minecraft/world/level/LevelReader.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+8: iconst_m1
+9: nop
+10: invokevirtual net/minecraft/world/level/block/state/BlockState.instrument:()Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+13: astore astore 4
+15: aload aload 4
+17: invokevirtual net/minecraft/world/level/block/state/properties/NoteBlockInstrument.worksAboveNoteBlock:()Z
+20: ifeq -> 36
+23: aload_3
+24: getstatic net/minecraft/world/level/block/NoteBlock.INSTRUMENT:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+27: aload aload 4
+29: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+32: checkcast net/minecraft/world/level/block/state/BlockState
+35: areturn
+36: aload_1
+37: aload_2
+38: invokevirtual net/minecraft/core/BlockPos.below:()Lnet/minecraft/core/BlockPos;
+41: invokeinterface net/minecraft/world/level/LevelReader.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+44: iconst_m1
+45: nop
+46: invokevirtual net/minecraft/world/level/block/state/BlockState.instrument:()Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+49: astore astore 5
+51: aload aload 5
+53: invokevirtual net/minecraft/world/level/block/state/properties/NoteBlockInstrument.worksAboveNoteBlock:()Z
+56: ifeq -> 65
+59: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.HARP:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+62: goto -> 67
+65: aload aload 5
+67: astore astore 6
+69: aload_3
+70: getstatic net/minecraft/world/level/block/NoteBlock.INSTRUMENT:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+73: aload aload 6
+75: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+78: checkcast net/minecraft/world/level/block/state/BlockState
+81: areturn
+--- net.minecraft.world.level.block.NoteBlock.neighborChanged(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/redstone/Orientation;Z)V
+0: aload_2
+1: aload_3
+2: invokevirtual net/minecraft/world/level/Level.hasNeighborSignal:(Lnet/minecraft/core/BlockPos;)Z
+5: istore istore 7
+7: iload iload 7
+9: aload_1
+10: getstatic net/minecraft/world/level/block/NoteBlock.POWERED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+13: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+16: checkcast java/lang/Boolean
+19: invokevirtual java/lang/Boolean.booleanValue:()Z
+22: if_icmpeq -> 60
+25: iload iload 7
+27: ifeq -> 38
+30: aload_0
+31: aconst_null
+32: aload_1
+33: aload_2
+34: aload_3
+35: invokevirtual net/minecraft/world/level/block/NoteBlock.playNote:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)V
+38: aload_2
+39: aload_3
+40: aload_1
+41: getstatic net/minecraft/world/level/block/NoteBlock.POWERED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+44: iload iload 7
+46: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+49: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+52: checkcast net/minecraft/world/level/block/state/BlockState
+55: iconst_3
+56: invokevirtual net/minecraft/world/level/Level.setBlock:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z
+59: pop
+60: return
+!! net.minecraft.world.level.block.NoteBlock: no method matching onPlace
+--- net.minecraft.world.level.block.NoteBlock.updateShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/world/level/ScheduledTickAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;)Lnet/minecraft/world/level/block/state/BlockState;
+0: aload aload 5
+2: invokevirtual net/minecraft/core/Direction.getAxis:()Lnet/minecraft/core/Direction$Axis;
+5: getstatic net/minecraft/core/Direction$Axis.Y:Lnet/minecraft/core/Direction$Axis;
+8: if_acmpne -> 15
+11: iconst_1
+12: goto -> 16
+15: iconst_0
+16: istore istore 9
+18: iload iload 9
+20: ifeq -> 32
+23: aload_0
+24: aload_2
+25: aload aload 4
+27: aload_1
+28: invokevirtual net/minecraft/world/level/block/NoteBlock.setInstrument:(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/block/state/BlockState;
+31: areturn
+32: aload_0
+33: aload_1
+34: aload_2
+35: aload_3
+36: aload aload 4
+38: aload aload 5
+40: aload aload 6
+42: aload aload 7
+44: aload aload 8
+46: invokespecial net/minecraft/world/level/block/Block.updateShape:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/world/level/ScheduledTickAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;)Lnet/minecraft/world/level/block/state/BlockState;
+49: areturn
+--- net.minecraft.world.level.block.NoteBlock.getStateForPlacement(Lnet/minecraft/world/item/context/BlockPlaceContext;)Lnet/minecraft/world/level/block/state/BlockState;
+0: aload_0
+1: aload_1
+2: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getLevel:()Lnet/minecraft/world/level/Level;
+5: aload_1
+6: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getClickedPos:()Lnet/minecraft/core/BlockPos;
+9: aload_0
+10: invokevirtual net/minecraft/world/level/block/NoteBlock.defaultBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+13: invokevirtual net/minecraft/world/level/block/NoteBlock.setInstrument:(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/block/state/BlockState;
+16: areturn
+!! net.minecraft.world.level.block.NoteBlock: no method matching hasAnalogOutputSignal
+!! net.minecraft.world.level.block.NoteBlock: no method matching spawnAfterBreak
+--- net.minecraft.world.level.block.NoteBlock.<clinit>()V
+0: invokedynamic indy
+5: invokestatic net/minecraft/world/level/block/NoteBlock.simpleCodec:(Ljava/util/function/Function;)Lcom/mojang/serialization/MapCodec;
+8: putstatic net/minecraft/world/level/block/NoteBlock.CODEC:Lcom/mojang/serialization/MapCodec;
+11: getstatic net/minecraft/world/level/block/state/properties/BlockStateProperties.NOTEBLOCK_INSTRUMENT:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+14: putstatic net/minecraft/world/level/block/NoteBlock.INSTRUMENT:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+17: getstatic net/minecraft/world/level/block/state/properties/BlockStateProperties.POWERED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+20: putstatic net/minecraft/world/level/block/NoteBlock.POWERED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+23: getstatic net/minecraft/world/level/block/state/properties/BlockStateProperties.NOTE:Lnet/minecraft/world/level/block/state/properties/IntegerProperty;
+26: putstatic net/minecraft/world/level/block/NoteBlock.NOTE:Lnet/minecraft/world/level/block/state/properties/IntegerProperty;
+29: return
+--- net.minecraft.world.level.block.NoteBlock.<init>(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+0: aload_0
+1: aload_1
+2: invokespecial net/minecraft/world/level/block/Block.<init>:(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+5: aload_0
+6: aload_0
+7: getfield net/minecraft/world/level/block/NoteBlock.stateDefinition:Lnet/minecraft/world/level/block/state/StateDefinition;
+10: invokevirtual net/minecraft/world/level/block/state/StateDefinition.any:()Lnet/minecraft/world/level/block/state/StateHolder;
+13: checkcast net/minecraft/world/level/block/state/BlockState
+16: getstatic net/minecraft/world/level/block/NoteBlock.INSTRUMENT:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+19: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.HARP:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+22: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+25: checkcast net/minecraft/world/level/block/state/BlockState
+28: getstatic net/minecraft/world/level/block/NoteBlock.NOTE:Lnet/minecraft/world/level/block/state/properties/IntegerProperty;
+31: iconst_0
+32: invokestatic java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+35: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+38: checkcast net/minecraft/world/level/block/state/BlockState
+41: getstatic net/minecraft/world/level/block/NoteBlock.POWERED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+44: iconst_0
+45: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+48: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+51: checkcast net/minecraft/world/level/block/state/BlockState
+54: invokevirtual net/minecraft/world/level/block/NoteBlock.registerDefaultState:(Lnet/minecraft/world/level/block/state/BlockState;)V
+57: return
+
+=== NoteBlockEntity walk — the class the 26.2 jar RETIRES (absent = the state-property law the block itself carries)
+ABSENT — the note/instrument/power the BlockState's own NOTE/INSTRUMENT/POWERED properties wear
+
+=== Blocks clinit NOTE_BLOCK row (wide window)
+--- clinit window @ pc 4012..4140 (NOTE_BLOCK)
+4012: getstatic net/minecraft/world/level/material/MapColor.SAND:Lnet/minecraft/world/level/material/MapColor;
+4015: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+4018: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+4021: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+4024: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+4027: ldc2_w float 0.800000011920929
+4030: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+4033: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+4036: putstatic net/minecraft/world/level/block/Blocks.CHISELED_SANDSTONE:Lnet/minecraft/world/level/block/Block;
+4039: getstatic net/minecraft/references/BlockItemIds.CUT_SANDSTONE:Lnet/minecraft/references/BlockItemId;
+4042: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+4045: getstatic net/minecraft/world/level/material/MapColor.SAND:Lnet/minecraft/world/level/material/MapColor;
+4048: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+4051: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+4054: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+4057: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+4060: ldc2_w float 0.800000011920929
+4063: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+4066: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+4069: putstatic net/minecraft/world/level/block/Blocks.CUT_SANDSTONE:Lnet/minecraft/world/level/block/Block;
+4072: getstatic net/minecraft/references/BlockItemIds.NOTE_BLOCK:Lnet/minecraft/references/BlockItemId;
+4075: invokedynamic indy
+4080: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+4083: getstatic net/minecraft/world/level/material/MapColor.WOOD:Lnet/minecraft/world/level/material/MapColor;
+4086: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+4089: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASS:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+4092: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+4095: getstatic net/minecraft/world/level/block/SoundType.WOOD:Lnet/minecraft/world/level/block/SoundType;
+4098: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+4101: ldc2_w float 0.800000011920929
+4104: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+4107: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+4110: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+4113: putstatic net/minecraft/world/level/block/Blocks.NOTE_BLOCK:Lnet/minecraft/world/level/block/Block;
+4116: getstatic net/minecraft/references/BlockItemIds.BED:Lnet/minecraft/world/level/block/ColorCollection;
+4119: invokedynamic indy
+4124: invokedynamic indy
+4129: invokedynamic indy
+4134: invokestatic net/minecraft/world/level/block/ColorCollection.registerBlocks:(Lnet/minecraft/world/level/block/ColorCollection;Lorg/apache/commons/lang3/function/TriFunction;Ljava/util/function/BiFunction;Ljava/util/function/Function;)Lnet/minecraft/world/level/block/ColorCollection;
+4137: putstatic net/minecraft/world/level/block/Blocks.BED:Lnet/minecraft/world/level/block/ColorCollection;
+4140: getstatic net/minecraft/references/BlockItemIds.POWERED_RAIL:Lnet/minecraft/references/BlockItemId;
+
+=== Items clinit NOTE_BLOCK row
+--- clinit window @ pc 7553..7589 (NOTE_BLOCK)
+7553: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+7556: putstatic net/minecraft/world/item/Items.TNT:Lnet/minecraft/world/item/Item;
+7559: getstatic net/minecraft/references/BlockItemIds.REDSTONE_LAMP:Lnet/minecraft/references/BlockItemId;
+7562: getstatic net/minecraft/world/level/block/Blocks.REDSTONE_LAMP:Lnet/minecraft/world/level/block/Block;
+7565: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+7568: putstatic net/minecraft/world/item/Items.REDSTONE_LAMP:Lnet/minecraft/world/item/Item;
+7571: getstatic net/minecraft/references/BlockItemIds.NOTE_BLOCK:Lnet/minecraft/references/BlockItemId;
+7574: getstatic net/minecraft/world/level/block/Blocks.NOTE_BLOCK:Lnet/minecraft/world/level/block/Block;
+7577: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+7580: putstatic net/minecraft/world/item/Items.NOTE_BLOCK:Lnet/minecraft/world/item/Item;
+7583: getstatic net/minecraft/references/BlockItemIds.STONE_BUTTON:Lnet/minecraft/references/BlockItemId;
+7586: getstatic net/minecraft/world/level/block/Blocks.STONE_BUTTON:Lnet/minecraft/world/level/block/Block;
+7589: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+
+=== NoteBlockInstrument (clinit + byBlockBelow mapping law)
+--- NoteBlockInstrument.<init>(Ljava/lang/String;ILjava/lang/String;Lnet/minecraft/core/Holder;Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;)V
+0: aload_0
+1: aload_1
+2: iload_2
+3: invokespecial java/lang/Enum.<init>:(Ljava/lang/String;I)V
+6: aload_0
+7: aload_3
+8: putfield net/minecraft/world/level/block/state/properties/NoteBlockInstrument.name:Ljava/lang/String;
+11: aload_0
+12: aload aload 4
+14: putfield net/minecraft/world/level/block/state/properties/NoteBlockInstrument.soundEvent:Lnet/minecraft/core/Holder;
+17: aload_0
+18: aload aload 5
+20: putfield net/minecraft/world/level/block/state/properties/NoteBlockInstrument.type:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+23: return
+--- NoteBlockInstrument.worksAboveNoteBlock()Z
+0: aload_0
+1: getfield net/minecraft/world/level/block/state/properties/NoteBlockInstrument.type:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+4: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type.BASE_BLOCK:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+7: if_acmpeq -> 14
+10: iconst_1
+11: goto -> 15
+14: iconst_0
+15: ireturn
+--- NoteBlockInstrument.<clinit>()V
+0: new net/minecraft/world/level/block/state/properties/NoteBlockInstrument
+3: dup
+4: ldc ldc@124
+6: iconst_0
+7: ldc ldc@125
+9: getstatic net/minecraft/sounds/SoundEvents.NOTE_BLOCK_HARP:Lnet/minecraft/core/Holder$Reference;
+12: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type.BASE_BLOCK:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+15: invokespecial net/minecraft/world/level/block/state/properties/NoteBlockInstrument.<init>:(Ljava/lang/String;ILjava/lang/String;Lnet/minecraft/core/Holder;Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;)V
+18: putstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.HARP:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+21: new net/minecraft/world/level/block/state/properties/NoteBlockInstrument
+24: dup
+25: ldc ldc@136
+27: iconst_1
+28: ldc ldc@137
+30: getstatic net/minecraft/sounds/SoundEvents.NOTE_BLOCK_BASEDRUM:Lnet/minecraft/core/Holder$Reference;
+33: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type.BASE_BLOCK:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+36: invokespecial net/minecraft/world/level/block/state/properties/NoteBlockInstrument.<init>:(Ljava/lang/String;ILjava/lang/String;Lnet/minecraft/core/Holder;Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;)V
+39: putstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+42: new net/minecraft/world/level/block/state/properties/NoteBlockInstrument
+45: dup
+46: ldc ldc@142
+48: iconst_2
+49: ldc ldc@143
+51: getstatic net/minecraft/sounds/SoundEvents.NOTE_BLOCK_SNARE:Lnet/minecraft/core/Holder$Reference;
+54: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type.BASE_BLOCK:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+57: invokespecial net/minecraft/world/level/block/state/properties/NoteBlockInstrument.<init>:(Ljava/lang/String;ILjava/lang/String;Lnet/minecraft/core/Holder;Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;)V
+60: putstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.SNARE:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+63: new net/minecraft/world/level/block/state/properties/NoteBlockInstrument
+66: dup
+67: ldc ldc@148
+69: iconst_3
+70: ldc ldc@149
+72: getstatic net/minecraft/sounds/SoundEvents.NOTE_BLOCK_HAT:Lnet/minecraft/core/Holder$Reference;
+75: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type.BASE_BLOCK:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+78: invokespecial net/minecraft/world/level/block/state/properties/NoteBlockInstrument.<init>:(Ljava/lang/String;ILjava/lang/String;Lnet/minecraft/core/Holder;Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;)V
+81: putstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.HAT:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+84: new net/minecraft/world/level/block/state/properties/NoteBlockInstrument
+87: dup
+88: ldc ldc@154
+90: iconst_4
+91: ldc ldc@155
+93: getstatic net/minecraft/sounds/SoundEvents.NOTE_BLOCK_BASS:Lnet/minecraft/core/Holder$Reference;
+96: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type.BASE_BLOCK:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+99: invokespecial net/minecraft/world/level/block/state/properties/NoteBlockInstrument.<init>:(Ljava/lang/String;ILjava/lang/String;Lnet/minecraft/core/Holder;Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;)V
+102: putstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASS:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+105: new net/minecraft/world/level/block/state/properties/NoteBlockInstrument
+108: dup
+109: ldc ldc@160
+111: iconst_5
+112: ldc ldc@161
+114: getstatic net/minecraft/sounds/SoundEvents.NOTE_BLOCK_FLUTE:Lnet/minecraft/core/Holder$Reference;
+117: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type.BASE_BLOCK:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+120: invokespecial net/minecraft/world/level/block/state/properties/NoteBlockInstrument.<init>:(Ljava/lang/String;ILjava/lang/String;Lnet/minecraft/core/Holder;Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;)V
+123: putstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.FLUTE:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+126: new net/minecraft/world/level/block/state/properties/NoteBlockInstrument
+129: dup
+130: ldc ldc@166
+132: bipush 6
+134: ldc ldc@167
+136: getstatic net/minecraft/sounds/SoundEvents.NOTE_BLOCK_BELL:Lnet/minecraft/core/Holder$Reference;
+139: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type.BASE_BLOCK:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+142: invokespecial net/minecraft/world/level/block/state/properties/NoteBlockInstrument.<init>:(Ljava/lang/String;ILjava/lang/String;Lnet/minecraft/core/Holder;Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;)V
+145: putstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BELL:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+148: new net/minecraft/world/level/block/state/properties/NoteBlockInstrument
+151: dup
+152: ldc ldc@172
+154: bipush 7
+156: ldc ldc@173
+158: getstatic net/minecraft/sounds/SoundEvents.NOTE_BLOCK_GUITAR:Lnet/minecraft/core/Holder$Reference;
+161: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type.BASE_BLOCK:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+164: invokespecial net/minecraft/world/level/block/state/properties/NoteBlockInstrument.<init>:(Ljava/lang/String;ILjava/lang/String;Lnet/minecraft/core/Holder;Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;)V
+167: putstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.GUITAR:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+170: new net/minecraft/world/level/block/state/properties/NoteBlockInstrument
+173: dup
+174: ldc ldc@178
+176: bipush 8
+178: ldc ldc@179
+180: getstatic net/minecraft/sounds/SoundEvents.NOTE_BLOCK_CHIME:Lnet/minecraft/core/Holder$Reference;
+183: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type.BASE_BLOCK:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+186: invokespecial net/minecraft/world/level/block/state/properties/NoteBlockInstrument.<init>:(Ljava/lang/String;ILjava/lang/String;Lnet/minecraft/core/Holder;Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;)V
+189: putstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.CHIME:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+192: new net/minecraft/world/level/block/state/properties/NoteBlockInstrument
+195: dup
+196: ldc ldc@184
+198: bipush 9
+200: ldc ldc@185
+202: getstatic net/minecraft/sounds/SoundEvents.NOTE_BLOCK_XYLOPHONE:Lnet/minecraft/core/Holder$Reference;
+205: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type.BASE_BLOCK:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+208: invokespecial net/minecraft/world/level/block/state/properties/NoteBlockInstrument.<init>:(Ljava/lang/String;ILjava/lang/String;Lnet/minecraft/core/Holder;Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;)V
+211: putstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.XYLOPHONE:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+214: new net/minecraft/world/level/block/state/properties/NoteBlockInstrument
+217: dup
+218: ldc ldc@190
+220: bipush 10
+222: ldc ldc@191
+224: getstatic net/minecraft/sounds/SoundEvents.NOTE_BLOCK_IRON_XYLOPHONE:Lnet/minecraft/core/Holder$Reference;
+227: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type.BASE_BLOCK:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+230: invokespecial net/minecraft/world/level/block/state/properties/NoteBlockInstrument.<init>:(Ljava/lang/String;ILjava/lang/String;Lnet/minecraft/core/Holder;Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;)V
+233: putstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.IRON_XYLOPHONE:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+236: new net/minecraft/world/level/block/state/properties/NoteBlockInstrument
+239: dup
+240: ldc ldc@196
+242: bipush 11
+244: ldc ldc@197
+246: getstatic net/minecraft/sounds/SoundEvents.NOTE_BLOCK_COW_BELL:Lnet/minecraft/core/Holder$Reference;
+249: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type.BASE_BLOCK:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+252: invokespecial net/minecraft/world/level/block/state/properties/NoteBlockInstrument.<init>:(Ljava/lang/String;ILjava/lang/String;Lnet/minecraft/core/Holder;Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;)V
+255: putstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.COW_BELL:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+258: new net/minecraft/world/level/block/state/properties/NoteBlockInstrument
+261: dup
+262: ldc ldc@202
+264: bipush 12
+266: ldc ldc@203
+268: getstatic net/minecraft/sounds/SoundEvents.NOTE_BLOCK_DIDGERIDOO:Lnet/minecraft/core/Holder$Reference;
+271: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type.BASE_BLOCK:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+274: invokespecial net/minecraft/world/level/block/state/properties/NoteBlockInstrument.<init>:(Ljava/lang/String;ILjava/lang/String;Lnet/minecraft/core/Holder;Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;)V
+277: putstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.DIDGERIDOO:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+280: new net/minecraft/world/level/block/state/properties/NoteBlockInstrument
+283: dup
+284: ldc ldc@208
+286: bipush 13
+288: ldc ldc@209
+290: getstatic net/minecraft/sounds/SoundEvents.NOTE_BLOCK_BIT:Lnet/minecraft/core/Holder$Reference;
+293: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type.BASE_BLOCK:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+296: invokespecial net/minecraft/world/level/block/state/properties/NoteBlockInstrument.<init>:(Ljava/lang/String;ILjava/lang/String;Lnet/minecraft/core/Holder;Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;)V
+299: putstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BIT:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+302: new net/minecraft/world/level/block/state/properties/NoteBlockInstrument
+305: dup
+306: ldc ldc@214
+308: bipush 14
+310: ldc ldc@215
+312: getstatic net/minecraft/sounds/SoundEvents.NOTE_BLOCK_BANJO:Lnet/minecraft/core/Holder$Reference;
+315: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type.BASE_BLOCK:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+318: invokespecial net/minecraft/world/level/block/state/properties/NoteBlockInstrument.<init>:(Ljava/lang/String;ILjava/lang/String;Lnet/minecraft/core/Holder;Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;)V
+321: putstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BANJO:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+324: new net/minecraft/world/level/block/state/properties/NoteBlockInstrument
+327: dup
+328: ldc ldc@220
+330: bipush 15
+332: ldc ldc@221
+334: getstatic net/minecraft/sounds/SoundEvents.NOTE_BLOCK_PLING:Lnet/minecraft/core/Holder$Reference;
+337: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type.BASE_BLOCK:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+340: invokespecial net/minecraft/world/level/block/state/properties/NoteBlockInstrument.<init>:(Ljava/lang/String;ILjava/lang/String;Lnet/minecraft/core/Holder;Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;)V
+343: putstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.PLING:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+346: new net/minecraft/world/level/block/state/properties/NoteBlockInstrument
+349: dup
+350: ldc ldc@226
+352: bipush 16
+354: ldc ldc@227
+356: getstatic net/minecraft/sounds/SoundEvents.NOTE_BLOCK_TRUMPET:Lnet/minecraft/core/Holder$Reference;
+359: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type.BASE_BLOCK:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+362: invokespecial net/minecraft/world/level/block/state/properties/NoteBlockInstrument.<init>:(Ljava/lang/String;ILjava/lang/String;Lnet/minecraft/core/Holder;Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;)V
+365: putstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.TRUMPET:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+368: new net/minecraft/world/level/block/state/properties/NoteBlockInstrument
+371: dup
+372: ldc ldc@232
+374: bipush 17
+376: ldc ldc@233
+378: getstatic net/minecraft/sounds/SoundEvents.NOTE_BLOCK_TRUMPET_EXPOSED:Lnet/minecraft/core/Holder$Reference;
+381: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type.BASE_BLOCK:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+384: invokespecial net/minecraft/world/level/block/state/properties/NoteBlockInstrument.<init>:(Ljava/lang/String;ILjava/lang/String;Lnet/minecraft/core/Holder;Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;)V
+387: putstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.TRUMPET_EXPOSED:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+390: new net/minecraft/world/level/block/state/properties/NoteBlockInstrument
+393: dup
+394: ldc ldc@238
+396: bipush 18
+398: ldc ldc@239
+400: getstatic net/minecraft/sounds/SoundEvents.NOTE_BLOCK_TRUMPET_OXIDIZED:Lnet/minecraft/core/Holder$Reference;
+403: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type.BASE_BLOCK:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+406: invokespecial net/minecraft/world/level/block/state/properties/NoteBlockInstrument.<init>:(Ljava/lang/String;ILjava/lang/String;Lnet/minecraft/core/Holder;Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;)V
+409: putstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.TRUMPET_OXIDIZED:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+412: new net/minecraft/world/level/block/state/properties/NoteBlockInstrument
+415: dup
+416: ldc ldc@244
+418: bipush 19
+420: ldc ldc@245
+422: getstatic net/minecraft/sounds/SoundEvents.NOTE_BLOCK_TRUMPET_WEATHERED:Lnet/minecraft/core/Holder$Reference;
+425: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type.BASE_BLOCK:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+428: invokespecial net/minecraft/world/level/block/state/properties/NoteBlockInstrument.<init>:(Ljava/lang/String;ILjava/lang/String;Lnet/minecraft/core/Holder;Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;)V
+431: putstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.TRUMPET_WEATHERED:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+434: new net/minecraft/world/level/block/state/properties/NoteBlockInstrument
+437: dup
+438: ldc ldc@250
+440: bipush 20
+442: ldc ldc@251
+444: getstatic net/minecraft/sounds/SoundEvents.NOTE_BLOCK_IMITATE_ZOMBIE:Lnet/minecraft/core/Holder$Reference;
+447: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type.MOB_HEAD:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+450: invokespecial net/minecraft/world/level/block/state/properties/NoteBlockInstrument.<init>:(Ljava/lang/String;ILjava/lang/String;Lnet/minecraft/core/Holder;Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;)V
+453: putstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.ZOMBIE:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+456: new net/minecraft/world/level/block/state/properties/NoteBlockInstrument
+459: dup
+460: ldc2_w ldcw@259
+463: bipush 21
+465: ldc2_w ldcw@260
+468: getstatic net/minecraft/sounds/SoundEvents.NOTE_BLOCK_IMITATE_SKELETON:Lnet/minecraft/core/Holder$Reference;
+471: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type.MOB_HEAD:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+474: invokespecial net/minecraft/world/level/block/state/properties/NoteBlockInstrument.<init>:(Ljava/lang/String;ILjava/lang/String;Lnet/minecraft/core/Holder;Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;)V
+477: putstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.SKELETON:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+480: new net/minecraft/world/level/block/state/properties/NoteBlockInstrument
+483: dup
+484: ldc2_w ldcw@265
+487: bipush 22
+489: ldc2_w ldcw@266
+492: getstatic net/minecraft/sounds/SoundEvents.NOTE_BLOCK_IMITATE_CREEPER:Lnet/minecraft/core/Holder$Reference;
+495: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type.MOB_HEAD:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+498: invokespecial net/minecraft/world/level/block/state/properties/NoteBlockInstrument.<init>:(Ljava/lang/String;ILjava/lang/String;Lnet/minecraft/core/Holder;Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;)V
+501: putstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.CREEPER:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+504: new net/minecraft/world/level/block/state/properties/NoteBlockInstrument
+507: dup
+508: ldc2_w ldcw@271
+511: bipush 23
+513: ldc2_w ldcw@272
+516: getstatic net/minecraft/sounds/SoundEvents.NOTE_BLOCK_IMITATE_ENDER_DRAGON:Lnet/minecraft/core/Holder$Reference;
+519: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type.MOB_HEAD:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+522: invokespecial net/minecraft/world/level/block/state/properties/NoteBlockInstrument.<init>:(Ljava/lang/String;ILjava/lang/String;Lnet/minecraft/core/Holder;Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;)V
+525: putstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.DRAGON:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+528: new net/minecraft/world/level/block/state/properties/NoteBlockInstrument
+531: dup
+532: ldc2_w ldcw@277
+535: bipush 24
+--- NoteBlockInstrument ALL method heads:
+    values()[Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+    valueOf(Ljava/lang/String;)Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+    <init>(Ljava/lang/String;ILjava/lang/String;Lnet/minecraft/core/Holder;Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;)V
+    getSerializedName()Ljava/lang/String;
+    getSoundEvent()Lnet/minecraft/core/Holder;
+    isTunable()Z
+    hasCustomSound()Z
+    worksAboveNoteBlock()Z
+    $values()[Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+    <clinit>()V

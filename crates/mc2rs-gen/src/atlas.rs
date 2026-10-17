@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 496] = [
+pub const RUNTIME_PALETTE: [&str; 497] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1598,6 +1598,38 @@ pub const RUNTIME_PALETTE: [&str; 496] = [
     "bamboo_fence_gate", "bamboo_fence_gate_open",
     "crimson_fence_gate", "crimson_fence_gate_open",
     "warped_fence_gate", "warped_fence_gate_open",
+    // THE NOTE BLOCK'S OWN SEAT (the dev-54 round — the musician's
+    // single kind the palette's tail banks, the RMB pitch-ladder
+    // instrument the interactive core serves): javap Blocks clinit
+    // the 26.2 jar (pinned sha1 2dc72797, the probe
+    // scripts/jar_work/note_block_682.py + 682b/682c/682d banks) —
+    // the NOTE_BLOCK register row putstatic pc 4113 (the
+    // Properties.of() + mapColor(MapColor.WOOD) + .instrument(BASS —
+    // the note block's OWN Properties the below-law the wood body
+    // wears: a note block seated UNDER another note block the BASS
+    // stem speaks) + sound(WOOD) + strength(0.8f) + ignitedByLava()
+    // chain the window pc 4072..4113 wears), the Items clinit
+    // pairing row pc 7580 (getstatic BlockItemIds.NOTE_BLOCK +
+    // registerBlock + putstatic Items.NOTE_BLOCK). The NOTE the 26.2 jar the
+    // BLOCK STATE PROPERTY carries — the NoteBlockEntity class the
+    // jar RETIRES (absent from the namelist), the note/instrument/
+    // powered trio the INSTRUMENT/POWERED/NOTE properties the
+    // block's own stateDefinition registers (the ctor's
+    // registerDefaultState walk: INSTRUMENT=HARP, NOTE=0,
+    // POWERED=false). The blockstate note_block.json the ONE-shape
+    // map wears (single "" variant), the model note_block.json the
+    // cube_all parent carries (the ONE #all ref), the note_block.png
+    // master the jar's own 16x16 colortype-3 tile speaks — the ONE
+    // tile NEW the append-only tail seats (748 -> 749), every
+    // pre-existing row the same pixels + tints + names keeps, the
+    // append-only law the equivalence proof scripts/
+    // verify_atlas_full.py banks. The dig row the generated
+    // block_dig table the real bootstrapped registry answers (0.8 +
+    // no-tool — the bare hand the drop keeps), the block_sounds rows
+    // the wood law the family wears (block.wood.break/step/place/
+    // hit/fall — the WOOD SoundType the registration's own chain
+    // banks), the self-entry drop pool the block_drops table speaks.
+    "note_block",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.

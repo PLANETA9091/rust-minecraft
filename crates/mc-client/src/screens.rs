@@ -37646,6 +37646,115 @@ impl App {
             }
             return true;
         }
+        // THE NOTE BLOCK'S OWN PLAY ARM (the dev-54 round — javap
+        // NoteBlock.useWithoutItem + playNote + triggerEvent the 26.2
+        // jar, the probes scripts/jar_work/note_block_682*.py banks):
+        // the useWithoutItem walk pc 0-46 the `!level.isClientSide()`
+        // gate the client's own offline worlds the same verdict keeps
+        // — the `state.cycle(NOTE)` pc 7-14 the increment + the 0..=24
+        // wraparound the [`crate::world::note_next`] arithmetic speaks,
+        // the setBlock(pos, state, 3) pc 18-25 the variant byte the
+        // cell banks, the playNote walk pc 26-34 the sound fires, the
+        // awardStat(TUNE_NOTEBLOCK) pc 35-40 the stat post wears —
+        // NO shift check the walk carries (the sneak+RMB the same
+        // beat plays), NO GUI the block never opens, the SUCCESS
+        // verdict pc 43-46 the placement the same click never lets.
+        // The playNote walk pc 13-28 the air-above law the sound's
+        // own gate answers (`instrument.worksAboveNoteBlock() ||
+        // level.getBlockState(pos.above()).isAir()` — the covered
+        // note block the SAME cycle the silent body wears), the
+        // blockEvent(pos, this, 0, 0) post pc 31-37 the server's own
+        // triggerEvent walk serves, the gameEvent(NOTE_BLOCK_PLAY)
+        // pc 40-47 the sculk lane's frequency-10 row the
+        // dispatch_vibration_event post banks. The triggerEvent walk
+        // pc 0-186 the playSeededSound call the client's own
+        // play_voice_at_pan lane folds: the cell center
+        // (+0.5/+0.5/+0.5) the source wears, the SoundSource.RECORDS
+        // the channel banks, the volume `float 3.0` pc 168 speaks,
+        // the pitch the getPitchFromNote formula pc 37-40 the
+        // [`crate::world::note_pitch`] walk answers, the instrument
+        // stem the setInstrument's two-sided law picks (the ABOVE
+        // consult first — the mob-head imitate family the
+        // [`crate::world::above_imitate`] walk banks; the below
+        // block's own Properties.instrument the
+        // [`crate::world::below_instrument`] table speaks — the
+        // NoteBlockEntity class the 26.2 jar RETIRES, the state
+        // property the whole law carries, the client the DERIVED
+        // stem the below/above kinds' own read banks).
+        let note_cell = if self.world_is_network {
+            None
+        } else {
+            self.active_world()
+                .map(|w| w.get(hit.pos.0, hit.pos.1, hit.pos.2))
+                .filter(|k| *k == crate::world::NOTE_BLOCK)
+        };
+        if note_cell == Some(crate::world::NOTE_BLOCK) {
+            // THE NEIGHBORS' OWN READ (the setInstrument walk the
+            // above/below states consult — the mutable borrow's
+            // opening the discipline keeps, the reads ride BEFORE
+            // the world's own borrow)
+            let (above_kind, below_kind, current_note) = {
+                let world = self.active_world().expect("offline world read");
+                (
+                    world.get(hit.pos.0, hit.pos.1 + 1, hit.pos.2),
+                    world.get(hit.pos.0, hit.pos.1 - 1, hit.pos.2),
+                    world.variant(hit.pos.0, hit.pos.1, hit.pos.2),
+                )
+            };
+            // THE CYCLE'S OWN BEAT (javap useWithoutItem pc 7-25 —
+            // the cycle the setBlock walk banks REGARDLESS of the
+            // sound's own verdict: the covered note block the note
+            // the same click steps, the silent body the wrap keeps)
+            let note = crate::world::note_next(current_note);
+            if let Some(world) = self.offline_world.as_mut() {
+                world.set_variant(hit.pos.0, hit.pos.1, hit.pos.2, note);
+                self.world_quads = Some(crate::mesher::mesh_world(world, None));
+            }
+            // THE INSTRUMENT'S OWN STEM (the setInstrument walk the
+            // above consult first, the below law the default wears)
+            let imitate = crate::world::above_imitate(above_kind);
+            let stem = imitate
+                .unwrap_or_else(|| crate::world::below_instrument(below_kind));
+            // THE AIR-ABOVE LAW'S OWN VERDICT (javap playNote
+            // pc 13-28 — the worksAboveNoteBlock instruments the
+            // imitate family alone wears, every base-block stem the
+            // air-above cell demands; the covered note block the
+            // cycle keeps, the silent body the sound skips)
+            if above_kind == crate::world::AIR || imitate.is_some() {
+                let pitch = crate::world::note_pitch(note);
+                let ear = self
+                    .body
+                    .as_ref()
+                    .map(|b| (b.x, b.y + b.eye_height(), b.z));
+                let yaw = self.listener_yaw();
+                let (tx, ty, tz) = (
+                    hit.pos.0 as f64 + 0.5,
+                    hit.pos.1 as f64 + 0.5,
+                    hit.pos.2 as f64 + 0.5,
+                );
+                let voice_event = crate::world::note_voice(stem);
+                self.sounds.play_voice_at_pan(
+                    self.frame,
+                    &voice_event,
+                    3.0,
+                    pitch,
+                    ear_distance(ear, tx, ty, tz),
+                    ear_pan(ear, yaw, tx, ty, tz),
+                );
+                // THE GAME EVENT'S OWN POST (javap playNote
+                // pc 40-47 — the GameEvent.NOTE_BLOCK_PLAY the sculk
+                // lane's frequency-10 row the vibration table banks,
+                // the note cell's own center the dispatch's pos
+                // wears)
+                if self.offline_world.is_some() {
+                    self.dispatch_vibration_event(
+                        "note_block_play",
+                        (tx, ty, tz),
+                    );
+                }
+            }
+            return true;
+        }
         // THE FENCE GATE'S OWN FLIP ARM (the dev-53 round — javap
         // FenceGateBlock.useWithoutItem the 26.2 jar, the probe
         // scripts/jar_work/fence_gate_53.py banks): the OPEN read
@@ -103388,7 +103497,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            496,
+            497,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -103469,7 +103578,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            496,
+            497,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -103771,7 +103880,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            496,
+            497,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -107618,7 +107727,7 @@ cow_sound_variant: None,
         assert_eq!(crate::world::OAK_BUTTON_ON, 263);
         assert_eq!(
             crate::world::END_PORTAL,
-            497,
+            498,
             "the displaced seat the weighted plates' own tail keeps"
         );
         for kind in [
@@ -107701,7 +107810,7 @@ cow_sound_variant: None,
         // #texture ref banks)
         assert_eq!(
             atlas::N_KINDS,
-            496,
+            497,
             "the palette the weighted plates' own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
@@ -107916,12 +108025,12 @@ cow_sound_variant: None,
         );
         assert_eq!(
             crate::world::END_PORTAL,
-            497,
+            498,
             "the displaced seat the weighted plates' own tail keeps"
         );
         assert_eq!(
             atlas::N_KINDS,
-            496,
+            497,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
@@ -108193,12 +108302,12 @@ cow_sound_variant: None,
         );
         assert_eq!(
             crate::world::END_PORTAL,
-            497,
+            498,
             "the displaced seat the weighted plates' own tail keeps"
         );
         assert_eq!(
             atlas::N_KINDS,
-            496,
+            497,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
@@ -108313,8 +108422,8 @@ cow_sound_variant: None,
         assert_eq!(w::LIGHT_WEIGHTED_PRESSURE_PLATE_ON, 317);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE, 318);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, 319);
-        assert_eq!(w::END_PORTAL, 497);
-        assert_eq!(atlas::N_KINDS, 496, "the palette the weighted rows bank");
+        assert_eq!(w::END_PORTAL, 498);
+        assert_eq!(atlas::N_KINDS, 497, "the palette the weighted rows bank");
         for (off, on, name) in [
             (
                 w::LIGHT_WEIGHTED_PRESSURE_PLATE,
@@ -109425,10 +109534,10 @@ cow_sound_variant: None,
         assert_eq!(w::OAK_PRESSURE_PLATE_ON, 289);
         assert_eq!(w::STONE_PRESSURE_PLATE, 290);
         assert_eq!(w::STONE_PRESSURE_PLATE_ON, 291);
-        assert_eq!(w::END_PORTAL, 497);
+        assert_eq!(w::END_PORTAL, 498);
         assert_eq!(
             atlas::N_KINDS,
-            496,
+            497,
             "the palette the weighted plates' own rows bank"
         );
         for (off, on, name, wooden) in [

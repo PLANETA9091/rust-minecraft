@@ -1,0 +1,103 @@
+--- net.minecraft.world.level.block.state.BlockBehaviour$BlockStateBase.<init>(Lnet/minecraft/world/level/block/Block;[Lnet/minecraft/world/level/block/state/properties/Property;[Ljava/lang/Comparable;)V  (writes .instrument)
+0: aload_0
+1: aload_1
+2: aload_2
+3: aload_3
+4: invokespecial net/minecraft/world/level/block/state/StateHolder.<init>:(Ljava/lang/Object;[Lnet/minecraft/world/level/block/state/properties/Property;[Ljava/lang/Comparable;)V
+7: aload_0
+8: getstatic net/minecraft/world/level/material/Fluids.EMPTY:Lnet/minecraft/world/level/material/Fluid;
+11: invokevirtual net/minecraft/world/level/material/Fluid.defaultFluidState:()Lnet/minecraft/world/level/material/FluidState;
+14: putfield net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase.fluidState:Lnet/minecraft/world/level/material/FluidState;
+17: aload_1
+18: getfield net/minecraft/world/level/block/Block.properties:Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+21: astore astore 4
+23: aload_0
+24: aload aload 4
+26: getfield net/minecraft/world/level/block/state/BlockBehaviour$Properties.lightEmission:Ljava/util/function/ToIntFunction;
+29: aload_0
+30: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase.asState:()Lnet/minecraft/world/level/block/state/BlockState;
+33: invokeinterface java/util/function/ToIntFunction.applyAsInt:(Ljava/lang/Object;)I
+36: iconst_m1
+37: nop
+38: putfield net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase.lightEmission:I
+41: aload_0
+42: aload_1
+43: aload_0
+44: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase.asState:()Lnet/minecraft/world/level/block/state/BlockState;
+47: invokevirtual net/minecraft/world/level/block/Block.useShapeForLightOcclusion:(Lnet/minecraft/world/level/block/state/BlockState;)Z
+50: putfield net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase.useShapeForLightOcclusion:Z
+53: aload_0
+54: aload aload 4
+56: getfield net/minecraft/world/level/block/state/BlockBehaviour$Properties.isAir:Z
+59: putfield net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase.isAir:Z
+62: aload_0
+63: aload aload 4
+65: getfield net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:Z
+68: putfield net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase.ignitedByLava:Z
+71: aload_0
+72: aload aload 4
+74: getfield net/minecraft/world/level/block/state/BlockBehaviour$Properties.liquid:Z
+77: putfield net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase.liquid:Z
+80: aload_0
+81: aload aload 4
+83: getfield net/minecraft/world/level/block/state/BlockBehaviour$Properties.pushReaction:Lnet/minecraft/world/level/material/PushReaction;
+86: putfield net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase.pushReaction:Lnet/minecraft/world/level/material/PushReaction;
+89: aload_0
+90: aload aload 4
+92: getfield net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:Ljava/util/function/Function;
+95: aload_0
+96: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase.asState:()Lnet/minecraft/world/level/block/state/BlockState;
+99: invokeinterface java/util/function/Function.apply:(Ljava/lang/Object;)Ljava/lang/Object;
+102: iconst_m1
+103: nop
+104: checkcast net/minecraft/world/level/material/MapColor
+107: putfield net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase.mapColor:Lnet/minecraft/world/level/material/MapColor;
+110: aload_0
+111: aload aload 4
+113: getfield net/minecraft/world/level/block/state/BlockBehaviour$Properties.destroyTime:F
+116: putfield net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase.destroySpeed:F
+119: aload_0
+120: aload aload 4
+122: getfield net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:Z
+125: putfield net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase.requiresCorrectToolForDrops:Z
+128: aload_0
+129: aload aload 4
+131: getfield net/minecraft/world/level/block/state/BlockBehaviour$Properties.canOcclude:Z
+134: putfield net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase.canOcclude:Z
+137: aload_0
+138: aload aload 4
+140: getfield net/minecraft/world/level/block/state/BlockBehaviour$Properties.isRedstoneConductor:Lnet/minecraft/world/level/block/state/BlockBehaviour$StatePredicate;
+143: putfield net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase.isRedstoneConductor:Lnet/minecraft/world/level/block/state/BlockBehaviour$StatePredicate;
+146: aload_0
+147: aload aload 4
+149: getfield net/minecraft/world/level/block/state/BlockBehaviour$Properties.isSuffocating:Lnet/minecraft/world/level/block/state/BlockBehaviour$StatePredicate;
+152: putfield net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase.isSuffocating:Lnet/minecraft/world/level/block/state/BlockBehaviour$StatePredicate;
+155: aload_0
+156: aload aload 4
+158: getfield net/minecraft/world/level/block/state/BlockBehaviour$Properties.isViewBlocking:Lnet/minecraft/world/level/block/state/BlockBehaviour$StatePredicate;
+161: putfield net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase.isViewBlocking:Lnet/minecraft/world/level/block/state/BlockBehaviour$StatePredicate;
+164: aload_0
+165: aload aload 4
+167: getfield net/minecraft/world/level/block/state/BlockBehaviour$Properties.postProcess:Lnet/minecraft/world/level/block/state/BlockBehaviour$PostProcess;
+170: putfield net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase.postProcess:Lnet/minecraft/world/level/block/state/BlockBehaviour$PostProcess;
+173: aload_0
+174: aload aload 4
+176: getfield net/minecraft/world/level/block/state/BlockBehaviour$Properties.emissiveRendering:Ljava/util/function/Predicate;
+179: putfield net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase.emissiveRendering:Ljava/util/function/Predicate;
+182: aload_0
+183: aload aload 4
+185: getfield net/minecraft/world/level/block/state/BlockBehaviour$Properties.offsetFunction:Lnet/minecraft/world/level/block/state/BlockBehaviour$OffsetFunction;
+188: putfield net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase.offsetFunction:Lnet/minecraft/world/level/block/state/BlockBehaviour$OffsetFunction;
+191: aload_0
+192: aload aload 4
+194: getfield net/minecraft/world/level/block/state/BlockBehaviour$Properties.spawnTerrainParticles:Z
+197: putfield net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase.spawnTerrainParticles:Z
+200: aload_0
+201: aload aload 4
+203: getfield net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+206: putfield net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase.instrument:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+209: aload_0
+210: aload aload 4
+212: getfield net/minecraft/world/level/block/state/BlockBehaviour$Properties.replaceable:Z
+215: putfield net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase.replaceable:Z
+218: return

@@ -1,0 +1,115 @@
+=== BlockBehaviour$BlockStateBase.instrument() — the ABOVE-block mapping law
+--- net.minecraft.world.level.block.state.BlockBehaviour$BlockStateBase.instrument()Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+0: aload_0
+1: getfield net/minecraft/world/level/block/state/BlockBehaviour$BlockStateBase.instrument:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+4: areturn
+
+=== NoteBlockInstrument isTunable / hasCustomSound / getCustomSoundId
+--- NoteBlockInstrument.isTunable()Z
+0: aload_0
+1: getfield net/minecraft/world/level/block/state/properties/NoteBlockInstrument.type:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+4: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type.BASE_BLOCK:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+7: if_acmpne -> 14
+10: iconst_1
+11: goto -> 15
+14: iconst_0
+15: ireturn
+--- NoteBlockInstrument.hasCustomSound()Z
+0: aload_0
+1: getfield net/minecraft/world/level/block/state/properties/NoteBlockInstrument.type:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+4: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type.CUSTOM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument$Type;
+7: if_acmpne -> 14
+10: iconst_1
+11: goto -> 15
+14: iconst_0
+15: ireturn
+
+=== ALL enum rows (putstatic order)
+HARP               NOTE_BLOCK_BASEDRUM
+BASEDRUM           NOTE_BLOCK_SNARE
+SNARE              NOTE_BLOCK_HAT
+HAT                NOTE_BLOCK_BASS
+BASS               NOTE_BLOCK_FLUTE
+FLUTE              NOTE_BLOCK_BELL
+BELL               NOTE_BLOCK_GUITAR
+GUITAR             NOTE_BLOCK_CHIME
+CHIME              NOTE_BLOCK_XYLOPHONE
+XYLOPHONE          NOTE_BLOCK_IRON_XYLOPHONE
+IRON_XYLOPHONE     NOTE_BLOCK_COW_BELL
+COW_BELL           NOTE_BLOCK_DIDGERIDOO
+DIDGERIDOO         NOTE_BLOCK_BIT
+BIT                NOTE_BLOCK_BANJO
+BANJO              NOTE_BLOCK_PLING
+PLING              NOTE_BLOCK_TRUMPET
+TRUMPET            NOTE_BLOCK_TRUMPET_EXPOSED
+TRUMPET_EXPOSED    NOTE_BLOCK_TRUMPET_OXIDIZED
+TRUMPET_OXIDIZED   NOTE_BLOCK_TRUMPET_WEATHERED
+TRUMPET_WEATHERED  NOTE_BLOCK_IMITATE_ZOMBIE
+ZOMBIE             NOTE_BLOCK_IMITATE_SKELETON
+SKELETON           NOTE_BLOCK_IMITATE_CREEPER
+CREEPER            NOTE_BLOCK_IMITATE_ENDER_DRAGON
+DRAGON             NOTE_BLOCK_IMITATE_WITHER_SKELETON
+WITHER_SKELETON    NOTE_BLOCK_IMITATE_PIGLIN
+PIGLIN             ?
+CUSTOM_HEAD        ?
+$VALUES            ?
+
+=== NoteBlock.setInstrument FULL (the harp-keep law)
+--- net.minecraft.world.level.block.NoteBlock.setInstrument(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/block/state/BlockState;
+0: aload_1
+1: aload_2
+2: invokevirtual net/minecraft/core/BlockPos.above:()Lnet/minecraft/core/BlockPos;
+5: invokeinterface net/minecraft/world/level/LevelReader.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+8: iconst_m1
+9: nop
+10: invokevirtual net/minecraft/world/level/block/state/BlockState.instrument:()Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+13: astore astore 4
+15: aload aload 4
+17: invokevirtual net/minecraft/world/level/block/state/properties/NoteBlockInstrument.worksAboveNoteBlock:()Z
+20: ifeq -> 36
+23: aload_3
+24: getstatic net/minecraft/world/level/block/NoteBlock.INSTRUMENT:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+27: aload aload 4
+29: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+32: checkcast net/minecraft/world/level/block/state/BlockState
+35: areturn
+36: aload_1
+37: aload_2
+38: invokevirtual net/minecraft/core/BlockPos.below:()Lnet/minecraft/core/BlockPos;
+41: invokeinterface net/minecraft/world/level/LevelReader.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+44: iconst_m1
+45: nop
+46: invokevirtual net/minecraft/world/level/block/state/BlockState.instrument:()Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+49: astore astore 5
+51: aload aload 5
+53: invokevirtual net/minecraft/world/level/block/state/properties/NoteBlockInstrument.worksAboveNoteBlock:()Z
+56: ifeq -> 65
+59: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.HARP:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+62: goto -> 67
+65: aload aload 5
+67: astore astore 6
+69: aload_3
+70: getstatic net/minecraft/world/level/block/NoteBlock.INSTRUMENT:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+73: aload aload 6
+75: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+78: checkcast net/minecraft/world/level/block/state/BlockState
+81: areturn
+
+=== getCustomSoundId (NoteBlock)
+--- net.minecraft.world.level.block.NoteBlock.getCustomSoundId(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/resources/Identifier;
+0: aload_1
+1: aload_2
+2: invokevirtual net/minecraft/core/BlockPos.above:()Lnet/minecraft/core/BlockPos;
+5: invokevirtual net/minecraft/world/level/Level.getBlockEntity:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/entity/BlockEntity;
+8: astore astore 4
+10: aload aload 4
+12: instanceof net/minecraft/world/level/block/entity/SkullBlockEntity
+15: ifeq -> 29
+18: aload aload 4
+20: checkcast net/minecraft/world/level/block/entity/SkullBlockEntity
+23: astore_3
+24: aload_3
+25: invokevirtual net/minecraft/world/level/block/entity/SkullBlockEntity.getNoteBlockSound:()Lnet/minecraft/resources/Identifier;
+28: areturn
+29: aconst_null
+30: areturn
