@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 410] = [
+pub const RUNTIME_PALETTE: [&str; 425] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1294,6 +1294,45 @@ pub const RUNTIME_PALETTE: [&str; 410] = [
     "sandstone", "chiseled_sandstone", "cut_sandstone", "smooth_sandstone",
     "red_sandstone", "chiseled_red_sandstone", "cut_red_sandstone",
     "smooth_red_sandstone",
+    // THE WOOL'S OWN SIXTEEN CLOTHS (the autopush-677 round): the wool
+    // family's fifteen seats the builder's dyed banks — the orange..
+    // black rungs the tail wears, the WHITE kind its clinit position
+    // the 76 seat the cobweb's own neighbor keeps (the dev-22 round's
+    // row the tail never moves — the append-only law the seat's own
+    // history banks). javap Blocks clinit the 26.2 jar (pinned sha1
+    // 2dc72797): the sixteen colors ONE helper walk banks — pc 4743
+    // the `ColorCollection.registerBlocks(..., BlockItemIds.WOOL)`
+    // row the piston_head register's own follower speaks (the 16
+    // colors one lambda family the white entry's doc already banks),
+    // the per-color rows the generated block_dig table the jar's
+    // REAL bootstrapped registry answers (the 0.8 + no-tool rows
+    // every color wears — the bare hand the whole family's drop
+    // keeps, the vanilla hand-harvest law the sheep's own lane
+    // speaks), the block.wool.break voice the generated block_sounds
+    // table every seat banks, the self-entry drop pool the
+    // block_drops table speaks. The blockstates the jar's own ONE
+    // shape carry — the {color}_wool.json the cube_all parent the
+    // ONE #all ref wears (all={name} — the white master the jar's
+    // own tile re-wears), the FACE_TILES rows the one-tile lane
+    // banks. The FIFTEEN {name}.png masters the jar's own 16x16
+    // colortype-3 tiles bank — NEW tiles the append-only tail seats
+    // (685 -> 700: orange, magenta, light_blue, yellow, lime, pink,
+    // gray, light_gray, cyan, purple, blue, brown, green, red, black
+    // — the clinit ladder's own order the tail wears), every
+    // pre-existing row the same pixels + tints + names keeps, the
+    // white tile the bank's own index re-wears. The ONE "{name}"
+    // registry name its kind ALONE speaks (no strip law — each
+    // color its own Block + BlockItem pairing the Items clinit's
+    // registerBlock rows answer), the generated dig/drops/sounds/
+    // items tables the rows already bank — the NAME_OF row the
+    // lanes wire. The seats the CONTIGUOUS tail the kind ids wear
+    // (410..424), the END_PORTAL kind the beyond-table seat the
+    // family's growth displaces (410 -> 425 the
+    // 658/670/672/673/674/675/676 precedent wears).
+    "orange_wool", "magenta_wool", "light_blue_wool", "yellow_wool",
+    "lime_wool", "pink_wool", "gray_wool", "light_gray_wool",
+    "cyan_wool", "purple_wool", "blue_wool", "brown_wool",
+    "green_wool", "red_wool", "black_wool",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
