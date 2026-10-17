@@ -69,6 +69,14 @@ fn sky_opacity(id: u16) -> u8 {
         // speaks, the closed door the light's own cell the flood
         // never blocks — the neighbors' cells the same reach keeps)
         || is_door(id)
+        // THE GLASS FAMILY'S OWN ROW (the dev-57 round — the 17
+        // kinds the noOcclusion() registration the lightBlock 0 the
+        // vanilla law speaks: the plain glass pc 3782 the clinit
+        // chain banks, the stained ladder the collection lambda's own
+        // chain the same row wears — the window the sky the flood
+        // passes, the interior the daylight the glass never shades,
+        // the vanilla skylight's own law the windows answer)
+        || is_glass(id)
     {
         0
     } else if id == WATER || id == LEAVES || id == PALE_LEAVES {

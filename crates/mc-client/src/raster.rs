@@ -503,7 +503,23 @@ impl Framebuf {
                                     let v = (b0 * va * a_ow + b1 * vb * b_ow + b2 * vc * c_ow)
                                         * dist;
                                     let texel = textures::sample_tile(tile, u, v);
-                                    if texel[3] < 0.5 {
+                                    // THE STAINED CLOTHS' OWN GATE (the dev-57
+                                    // round — the per_texel_alpha quads the
+                                    // texel's own alpha the hole verdict
+                                    // answers: the a<=0 texel the hole the
+                                    // depth never writes, the 0.4 body band
+                                    // (the stained textures' 102/255) the
+                                    // blend serves; the cutout lane the 0.5
+                                    // law the same threshold keeps — the
+                                    // leaves' holes the same verdict speaks,
+                                    // the honey's 129 floor the 0.506 walk
+                                    // the verdict never split)
+                                    let hole = if quad.per_texel_alpha {
+                                        texel[3] <= 0.0
+                                    } else {
+                                        texel[3] < 0.5
+                                    };
+                                    if hole {
                                         continue; // cutout hole (leaves): no color, no depth
                                     }
                                     for ch in 0..3 {

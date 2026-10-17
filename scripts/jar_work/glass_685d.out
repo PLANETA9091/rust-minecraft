@@ -1,0 +1,19 @@
+--- clinit window before STAINED_GLASS putstatic
+11271: invokedynamic indy
+11276: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+11279: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instabreak:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+11282: getstatic net/minecraft/world/level/block/SoundType.STONE:Lnet/minecraft/world/level/block/SoundType;
+11285: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+11288: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+11291: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.pushReaction:(Lnet/minecraft/world/level/material/PushReaction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+11294: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+11297: putstatic net/minecraft/world/level/block/Blocks.REPEATER:Lnet/minecraft/world/level/block/Block;
+11300: getstatic net/minecraft/references/BlockItemIds.STAINED_GLASS:Lnet/minecraft/world/level/block/ColorCollection;
+11303: invokedynamic indy
+11308: invokedynamic indy
+11313: invokedynamic indy
+11318: invokestatic net/minecraft/world/level/block/ColorCollection.registerBlocks:(Lnet/minecraft/world/level/block/ColorCollection;Lorg/apache/commons/lang3/function/TriFunction;Ljava/util/function/BiFunction;Ljava/util/function/Function;)Lnet/minecraft/world/level/block/ColorCollection;
+11321: putstatic net/minecraft/world/level/block/Blocks.STAINED_GLASS:Lnet/minecraft/world/level/block/ColorCollection;
+11324: getstatic net/minecraft/references/BlockItemIds.OAK_TRAPDOOR:Lnet/minecraft/references/BlockItemId;
+
+=== lambda methods mentioning StainedGlassBlock or WHITE_STAINED_GLASS

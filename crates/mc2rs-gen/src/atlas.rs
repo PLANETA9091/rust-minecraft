@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 543] = [
+pub const RUNTIME_PALETTE: [&str; 560] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1790,6 +1790,72 @@ pub const RUNTIME_PALETTE: [&str; 543] = [
     "resin_brick_wall", "cinnabar_wall", "polished_cinnabar_wall",
     "cinnabar_brick_wall", "sulfur_wall", "polished_sulfur_wall",
     "sulfur_brick_wall",
+    // THE GLASS FAMILY'S OWN SEVENTEEN PANES (the dev-57 round): the
+    // window the palette's own transparency frontier — the plain
+    // glass the ONE seat the register row's own chain banks + the
+    // sixteen stained cloths the DyeColor ladder the collection walk
+    // serves. javap Blocks clinit the 26.2 jar (pinned sha1 2dc72797,
+    // the probes scripts/jar_work/glass_685.py + 685b/685c/685d banks):
+    // the GLASS register row pc 3764..3820 the properties chain
+    // speaks — instrument(HAT) pc 3764-3767, strength(0.3f) pc
+    // 3770-3773, sound(SoundType.GLASS) pc 3776-3779, noOcclusion()
+    // pc 3782, the four predicate folds pc 3785-3814 (isValidSpawn/
+    // isRedstoneConductor/isSuffocating/isViewBlocking — the indy
+    // lambdas the transparent family's false verdicts wear), the
+    // register call pc 3817 the putstatic pc 3820 banks. The
+    // GlassBlock class the 26.2 jar RETIRES (absent from the
+    // namelist — the StainedGlassBlock/StainedGlassPaneBlock/
+    // TintedGlassBlock trio the ONLY glass classes the walk carries):
+    // the plain glass the register's Function factory the generic
+    // HalfTransparent chain serves. javap HalfTransparentBlock.
+    // skipRendering pc 0-17 the CULL LAW the mesher's same-kind arm
+    // speaks — the neighborState.is(this) verdict true the shared
+    // face the SAME block never draws (glass|glass the cull keeps,
+    // glass|stained the DIFFERENT blocks the draw wears), the super
+    // fold pc 10-14 the default law keeps. javap StainedGlassBlock
+    // the ctor pc 0-10 the DyeColor field stores (the TransparentBlock
+    // super the HalfTransparent chain extends — the class header the
+    // walk banks), the getColor pc 0-4 the field read keeps; the
+    // STAINED_GLASS ladder the ColorCollection.registerBlocks walk
+    // pc 11300-11321 banks (the three indy lambdas the
+    // TriFunction/BiFunction/Function trio carries — the 16 members
+    // the DyeColor ordinals order, the WHITE seat the ladder's head
+    // wears). The blockstates ALL SEVENTEEN the ONE "" variant the
+    // block/{name} model resolves (the probe's glass/white/orange/
+    // black rows bank), the models the parent minecraft:block/cube_all
+    // the texture ref the OBJECT form carries — {"force_translucent":
+    // true, "sprite": "minecraft:block/{name}"} the 26.2 model
+    // format's own render-layer signal (modelgen.rs's
+    // TEXTURE_OBJECT_KEYS the closed shape validates, the merge walk
+    // the sprite field unwraps). The textures the alpha histograms
+    // the render lanes bank (the probe's png walk speaks): the glass
+    // 16x16 alpha {0: 191, 255: 65} the BINARY cutout (the frame+
+    // streak texels opaque, the panes' interior the discard law
+    // wears), the sixteen stained cloths 16x16 alpha {102: 191,
+    // 155: 5, 163: 60} the UNIFORM map every color wears (the
+    // 0.4 body band the translucent blend serves, the 0.61/0.64
+    // border+streak rungs) — the masters PRE-COLORED per dye (white
+    // 255/255/255, orange 216/127/51, red 153/51/51 the probe's
+    // texel walks speak), NO tintindex the tintless verdict keeps.
+    // The loot tables the SILK-TOUCH-ONLY law bank (the probe's
+    // glass/white rows speak): the one pool the match_tool
+    // silk_touch min-1 condition carries, the bare hand's survival
+    // dig the EMPTY drop answers. The Items clinit the pairing rows
+    // speak (pc 2317-2326: getstatic BlockItemIds.GLASS →
+    // registerBlock(Blocks.GLASS) → putstatic Items.GLASS, the
+    // TINTED_GLASS row pc 2329-2338 the follower keeps), the stained
+    // ladder the collection's own pairing the item walk serves. The
+    // tags the probe's rows bank: mineable/pickaxe the 417 values NO
+    // glass row wears (the bare-hand dig the tool row's false keeps),
+    // the impermeable tag the 17 glassy members the glass+stained
+    // ladder the tinted/barrier companions bank.
+    "glass", "white_stained_glass", "orange_stained_glass",
+    "magenta_stained_glass", "light_blue_stained_glass",
+    "yellow_stained_glass", "lime_stained_glass", "pink_stained_glass",
+    "gray_stained_glass", "light_gray_stained_glass",
+    "cyan_stained_glass", "purple_stained_glass", "blue_stained_glass",
+    "brown_stained_glass", "green_stained_glass", "red_stained_glass",
+    "black_stained_glass",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -2320,6 +2386,17 @@ fn load_model_chain(
             for (k, v) in t {
                 if let Some(s) = v.as_str() {
                     textures.insert(k.clone(), s.to_string());
+                } else if let Some(o) = v.as_object() {
+                    // THE 26.2 OBJECT FORM (the glass family's own refs —
+                    // the closed {sprite, force_translucent} shape the
+                    // modelgen's TEXTURE_OBJECT_KEYS validator banks): the
+                    // sprite field the resolved name the plain strings the
+                    // same map keeps (the force_translucent flag the RENDER
+                    // LAYER's own signal — the mesher's per-kind lanes the
+                    // verdicts own, the tile walk the name alone reads).
+                    if let Some(sp) = o.get("sprite").and_then(|s| s.as_str()) {
+                        textures.insert(k.clone(), sp.to_string());
+                    }
                 }
             }
         }

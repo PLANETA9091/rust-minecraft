@@ -1,0 +1,188 @@
+=== class headers
+--- net.minecraft.world.level.block.GlassBlock: None
+--- net.minecraft.world.level.block.StainedGlassBlock: ('?2', '?8', ['?64'])
+--- net.minecraft.world.level.block.HalfTransparentBlock: ('?2', '?8', [])
+--- net.minecraft.world.level.block.TransparentBlock: ('?8', '?2', [])
+
+=== HalfTransparentBlock methods
+--- net.minecraft.world.level.block.HalfTransparentBlock.<init>(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+0: aload_0
+1: aload_1
+2: invokespecial net/minecraft/world/level/block/Block.<init>:(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+5: return
+--- net.minecraft.world.level.block.HalfTransparentBlock.skipRendering(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/Direction;)Z
+0: aload_2
+1: aload_0
+2: invokevirtual net/minecraft/world/level/block/state/BlockState.is:(Ljava/lang/Object;)Z
+5: ifeq -> 10
+8: iconst_1
+9: ireturn
+10: aload_0
+11: aload_1
+12: aload_2
+13: aload_3
+14: invokespecial net/minecraft/world/level/block/Block.skipRendering:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/Direction;)Z
+17: ireturn
+--- net.minecraft.world.level.block.HalfTransparentBlock.<clinit>()V
+0: invokedynamic indy
+5: invokestatic net/minecraft/world/level/block/HalfTransparentBlock.simpleCodec:(Ljava/util/function/Function;)Lcom/mojang/serialization/MapCodec;
+8: putstatic net/minecraft/world/level/block/HalfTransparentBlock.CODEC:Lcom/mojang/serialization/MapCodec;
+11: return
+
+=== GlassBlock methods
+!! class net.minecraft.world.level.block.GlassBlock not found
+!! class net.minecraft.world.level.block.GlassBlock not found
+!! class net.minecraft.world.level.block.GlassBlock not found
+
+=== StainedGlassBlock methods
+--- net.minecraft.world.level.block.StainedGlassBlock.<init>(Lnet/minecraft/world/item/DyeColor;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+0: aload_0
+1: aload_2
+2: invokespecial net/minecraft/world/level/block/TransparentBlock.<init>:(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+5: aload_0
+6: aload_1
+7: putfield net/minecraft/world/level/block/StainedGlassBlock.color:Lnet/minecraft/world/item/DyeColor;
+10: return
+!! net.minecraft.world.level.block.StainedGlassBlock: no method matching skipRendering
+--- net.minecraft.world.level.block.StainedGlassBlock.getColor()Lnet/minecraft/world/item/DyeColor;
+0: aload_0
+1: getfield net/minecraft/world/level/block/StainedGlassBlock.color:Lnet/minecraft/world/item/DyeColor;
+4: areturn
+
+=== Blocks clinit — the glass register rows
+!! clinit needle not found: GLASS;putstatic
+!! clinit needle not found: WHITE_STAINED_GLASS;putstatic
+
+=== blockstates + models
+--- blockstates/glass.json
+{
+  "variants": {
+    "": {
+      "model": "minecraft:block/glass"
+    }
+  }
+}
+--- models/block/glass.json: {"parent": "minecraft:block/cube_all", "textures": {"all": {"force_translucent": true, "sprite": "minecraft:block/glass"}}}
+--- blockstates/white_stained_glass.json
+{
+  "variants": {
+    "": {
+      "model": "minecraft:block/white_stained_glass"
+    }
+  }
+}
+--- models/block/white_stained_glass.json: {"parent": "minecraft:block/cube_all", "textures": {"all": {"force_translucent": true, "sprite": "minecraft:block/white_stained_glass"}}}
+--- blockstates/orange_stained_glass.json
+{
+  "variants": {
+    "": {
+      "model": "minecraft:block/orange_stained_glass"
+    }
+  }
+}
+--- models/block/orange_stained_glass.json: {"parent": "minecraft:block/cube_all", "textures": {"all": {"force_translucent": true, "sprite": "minecraft:block/orange_stained_glass"}}}
+--- blockstates/black_stained_glass.json
+{
+  "variants": {
+    "": {
+      "model": "minecraft:block/black_stained_glass"
+    }
+  }
+}
+--- models/block/black_stained_glass.json: {"parent": "minecraft:block/cube_all", "textures": {"all": {"force_translucent": true, "sprite": "minecraft:block/black_stained_glass"}}}
+
+=== texture alpha histograms (the cutout/translucent evidence)
+--- glass: 16x16 alpha {0: 191, 255: 65}
+--- white_stained_glass: 16x16 alpha {102: 191, 155: 5, 163: 60}
+--- orange_stained_glass: 16x16 alpha {102: 191, 155: 5, 163: 60}
+--- magenta_stained_glass: 16x16 alpha {102: 191, 155: 5, 163: 60}
+--- light_blue_stained_glass: 16x16 alpha {102: 191, 155: 5, 163: 60}
+--- yellow_stained_glass: 16x16 alpha {102: 191, 155: 5, 163: 60}
+--- lime_stained_glass: 16x16 alpha {102: 191, 155: 5, 163: 60}
+--- pink_stained_glass: 16x16 alpha {102: 191, 155: 5, 163: 60}
+--- gray_stained_glass: 16x16 alpha {102: 191, 155: 5, 163: 60}
+--- light_gray_stained_glass: 16x16 alpha {102: 191, 155: 5, 163: 60}
+--- cyan_stained_glass: 16x16 alpha {102: 191, 155: 5, 163: 60}
+--- purple_stained_glass: 16x16 alpha {102: 191, 155: 5, 163: 60}
+--- blue_stained_glass: 16x16 alpha {102: 191, 155: 5, 163: 60}
+--- brown_stained_glass: 16x16 alpha {102: 191, 155: 5, 163: 60}
+--- green_stained_glass: 16x16 alpha {102: 191, 155: 5, 163: 60}
+--- red_stained_glass: 16x16 alpha {102: 191, 155: 5, 163: 60}
+--- black_stained_glass: 16x16 alpha {102: 191, 155: 5, 163: 60}
+
+=== loot tables (the survival drop law)
+--- glass loot: {
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "conditions": [
+        {
+          "condition": "minecraft:match_tool",
+          "predicate": {
+            "predicates": {
+              "minecraft:enchantments": [
+                {
+                  "enchantments": "minecraft:silk_touch",
+                  "levels": {
+                    "min": 1
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:glass"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "minecraft:blocks/glass"
+}
+--- white_stained_glass loot: {
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "conditions": [
+        {
+          "condition": "minecraft:match_tool",
+          "predicate": {
+            "predicates": {
+              "minecraft:enchantments": [
+                {
+                  "enchantments": "minecraft:silk_touch",
+                  "levels": {
+                    "min": 1
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:white_stained_glass"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "minecraft:blocks/white_stained_glass"
+}
+
+=== sounds.json block.glass.* events
+sounds.json ABSENT
+
+=== tags
+--- tag mineable/pickaxe: 417 values; glassy rows: []
+--- tag glass: ABSENT
+--- tag impermeable: 19 values; glassy rows: ['minecraft:white_stained_glass', 'minecraft:orange_stained_glass', 'minecraft:magenta_stained_glass', 'minecraft:light_blue_stained_glass', 'minecraft:yellow_stained_glass', 'minecraft:lime_stained_glass', 'minecraft:pink_stained_glass', 'minecraft:gray_stained_glass', 'minecraft:light_gray_stained_glass', 'minecraft:cyan_stained_glass', 'minecraft:purple_stained_glass', 'minecraft:blue_stained_glass', 'minecraft:brown_stained_glass', 'minecraft:green_stained_glass', 'minecraft:red_stained_glass', 'minecraft:black_stained_glass', 'minecraft:glass', 'minecraft:tinted_glass', 'minecraft:barrier']
+
+=== Items clinit — the BlockItem pairing rows
+!! clinit needle not found: GLASS;putstatic

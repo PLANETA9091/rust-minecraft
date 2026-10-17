@@ -1,0 +1,53 @@
+=== Blocks clinit GLASS row
+--- clinit window @ Blocks.GLASS: (pc 3782..)
+3782: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noOcclusion:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+3785: invokedynamic indy
+3790: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.isValidSpawn:(Lnet/minecraft/world/level/block/state/BlockBehaviour$StateArgumentPredicate;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+3793: invokedynamic indy
+3798: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.isRedstoneConductor:(Lnet/minecraft/world/level/block/state/BlockBehaviour$StatePredicate;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+3801: invokedynamic indy
+3806: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.isSuffocating:(Lnet/minecraft/world/level/block/state/BlockBehaviour$StatePredicate;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+3809: invokedynamic indy
+3814: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.isViewBlocking:(Lnet/minecraft/world/level/block/state/BlockBehaviour$StatePredicate;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+3817: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+3820: putstatic net/minecraft/world/level/block/Blocks.GLASS:Lnet/minecraft/world/level/block/Block;
+3823: getstatic net/minecraft/references/BlockItemIds.LAPIS_ORE:Lnet/minecraft/references/BlockItemId;
+3826: invokedynamic indy
+3831: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+3834: getstatic net/minecraft/world/level/material/MapColor.STONE:Lnet/minecraft/world/level/material/MapColor;
+3837: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+3840: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+3843: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+3846: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+3849: ldc_w float 3.0
+3852: ldc_w float 3.0
+
+=== Blocks clinit WHITE_STAINED_GLASS row
+!! clinit needle not found: Blocks.WHITE_STAINED_GLASS:
+
+=== Blocks clinit BLACK_STAINED_GLASS row (the ladder tail)
+!! clinit needle not found: Blocks.BLACK_STAINED_GLASS:
+
+=== Items clinit GLASS row
+--- clinit window @ Items.GLASS: (pc 2308..)
+2308: getstatic net/minecraft/world/level/block/Blocks.WET_SPONGE:Lnet/minecraft/world/level/block/Block;
+2311: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+2314: putstatic net/minecraft/world/item/Items.WET_SPONGE:Lnet/minecraft/world/item/Item;
+2317: getstatic net/minecraft/references/BlockItemIds.GLASS:Lnet/minecraft/references/BlockItemId;
+2320: getstatic net/minecraft/world/level/block/Blocks.GLASS:Lnet/minecraft/world/level/block/Block;
+2323: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+2326: putstatic net/minecraft/world/item/Items.GLASS:Lnet/minecraft/world/item/Item;
+2329: getstatic net/minecraft/references/BlockItemIds.TINTED_GLASS:Lnet/minecraft/references/BlockItemId;
+2332: getstatic net/minecraft/world/level/block/Blocks.TINTED_GLASS:Lnet/minecraft/world/level/block/Block;
+2335: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+2338: putstatic net/minecraft/world/item/Items.TINTED_GLASS:Lnet/minecraft/world/item/Item;
+2341: getstatic net/minecraft/references/BlockItemIds.LAPIS_BLOCK:Lnet/minecraft/references/BlockItemId;
+2344: getstatic net/minecraft/world/level/block/Blocks.LAPIS_BLOCK:Lnet/minecraft/world/level/block/Block;
+
+=== TransparentBlock class + ctor
+('?8', '?2', [])
+--- net.minecraft.world.level.block.TransparentBlock.<init>(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+0: aload_0
+1: aload_1
+2: invokespecial net/minecraft/world/level/block/HalfTransparentBlock.<init>:(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+5: return

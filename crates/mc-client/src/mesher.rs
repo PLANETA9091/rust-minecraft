@@ -238,6 +238,16 @@ fn is_transparent(kind: u16) -> bool {
         // casts, the element geometry the trapdoor arm's own lane
         // renders)
         || crate::world::is_trapdoor(kind)
+        // THE GLASS FAMILY the same verdict keeps (the dev-57 round —
+        // the blocks clinit's noOcclusion() pc 3782 the plain glass's
+        // chain speaks, the stained ladder the collection lambda's own
+        // chain the same row wears: the non-occluding cube the
+        // neighbors' faces draw against, the AO the opaque walk never
+        // casts, the full-cube quads the generic lane's cutout /
+        // translucent arms render — the same-kind cull the
+        // HalfTransparentBlock.skipRendering law the face loop's own
+        // glass arm speaks)
+        || crate::world::is_glass(kind)
 }
 
 /// Only opaque blocks cast ambient occlusion (air/water/leaves never darken
@@ -4291,8 +4301,18 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                 for face in 0..6usize {
                     let (dx, dy, dz) = NEIGHBOR[face];
                     let n = world.get(wx + dx, wy + dy, wz + dz);
+                    // THE GLASS FAMILY'S OWN CULL ARM (the dev-57 round —
+                    // javap HalfTransparentBlock.skipRendering pc 0-17 the
+                    // 26.2 jar: the neighborState.is(this) verdict true the
+                    // shared face the SAME block never draws — the
+                    // glass|glass pair the cull keeps, the glass|stained
+                    // pair the DIFFERENT blocks the draw wears, the coplanar
+                    // z-fight the two quads' same plane never speaks)
+                    let glass_self = crate::world::is_glass(id);
                     let draw = if water_self || lava_self {
                         n == AIR // the fluids draw only against air (surface)
+                    } else if glass_self && n == id {
+                        false // the same-block cull the skipRendering law banks
                     } else {
                         is_transparent(n)
                     };
@@ -4506,8 +4526,22 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         colors,
                         uvs,
                         tile,
-                        translucent: water_self,
-                            per_texel_alpha: false, // the lava stays opaque
+                        // THE STAINED HALF'S OWN TRANSLUCENT LANE (the
+                        // dev-57 round — the 26.2 models' own
+                        // force_translucent: true ref the render-layer
+                        // signal the ladder speaks): the 16 dyed cloths the
+                        // translucent pass the per-texel alpha blend
+                        // serves (the textures' {102: 191, 155: 5, 163: 60}
+                        // uniform map the SRC_ALPHA / ONE_MINUS_SRC_ALPHA
+                        // law composites — the honey arm's own machinery
+                        // the water seed keeps), the plain glass the
+                        // OPAQUE pass the binary cutout wears (the
+                        // textures' {0: 191, 255: 65} map the discard law
+                        // answers — the alpha-255 frame texels the depth
+                        // write keeps, the alpha-0 interior the hole never
+                        // occludes)
+                        translucent: water_self || crate::world::is_stained_glass(id),
+                        per_texel_alpha: crate::world::is_stained_glass(id),
                     });
                 }
             }
@@ -9117,6 +9151,119 @@ mod tests {
             honey2.iter().filter(|quad| quad.tile == bottom_tile).count(),
             6,
             "the culled face the outer cube's own #down wears — the inset's down the count keeps"
+        );
+    }
+
+    #[test]
+    fn the_glass_lane_culls_the_same_kind_and_blends_the_stained_half() {
+        // THE GLASS LANE'S OWN LAWS (the dev-57 round — javap
+        // HalfTransparentBlock.skipRendering pc 0-17 the 26.2 jar the
+        // probe scripts/jar_work/glass_685.py banks): the SAME block
+        // the shared face never draws (the neighborState.is(this)
+        // verdict the cull keeps), the DIFFERENT blocks the draw
+        // wears, the stained half the translucent pass the per-texel
+        // alpha blend serves (the models' force_translucent ref the
+        // render-layer signal speaks), the plain glass the OPAQUE
+        // pass the binary cutout wears (the textures' {0: 191,
+        // 255: 65} alpha map the discard law answers)
+        use mc_registry::generated::atlas as gen_atlas;
+        let glass_tile = gen_atlas::FACE_TILES[crate::world::GLASS as usize][2];
+        let white_tile = gen_atlas::FACE_TILES[crate::world::WHITE_STAINED_GLASS as usize][2];
+        let red_tile = gen_atlas::FACE_TILES[crate::world::RED_STAINED_GLASS as usize][2];
+        assert_eq!(gen_atlas::tile_name(glass_tile), "glass");
+        assert_eq!(
+            gen_atlas::tile_name(white_tile),
+            "white_stained_glass"
+        );
+        // THE FREESTANDING CELL (all neighbors air — the six quads
+        // the full cube keeps)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::GLASS);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let glass: Vec<_> = q.iter().filter(|quad| quad.tile == glass_tile).collect();
+        assert_eq!(glass.len(), 6, "the lone window the six faces wear");
+        for quad in &glass {
+            assert!(
+                !quad.translucent,
+                "the plain glass the OPAQUE pass rides (the cutout lane)"
+            );
+            assert!(
+                !quad.per_texel_alpha,
+                "the plain glass the 0.5 cutout gate wears"
+            );
+        }
+        // THE STAINED CLOTH'S OWN FLAGS (the translucent pass the
+        // per-texel alpha blend serves — the honey arm's own
+        // machinery the ladder wears)
+        let mut w2 = empty_world();
+        put(&mut w2, 8, 8, 8, crate::world::WHITE_STAINED_GLASS);
+        put(&mut w2, 10, 8, 8, crate::world::RED_STAINED_GLASS);
+        let q2 = mesh_chunk(&w2, 0, 0, None);
+        let white: Vec<_> = q2.iter().filter(|quad| quad.tile == white_tile).collect();
+        let red: Vec<_> = q2.iter().filter(|quad| quad.tile == red_tile).collect();
+        assert_eq!(white.len(), 6, "the lone white cloth the six faces wear");
+        assert_eq!(red.len(), 6, "the lone red cloth the six faces wear");
+        for quad in white.iter().chain(red.iter()) {
+            assert!(
+                quad.translucent,
+                "the stained quad the translucent pass rides"
+            );
+            assert!(
+                quad.per_texel_alpha,
+                "the stained quad the texel's own alpha composites"
+            );
+        }
+        // THE GLASS|GLASS PAIR THE SHARED FACE CULLS (the
+        // skipRendering law — the ten quads the twelve-minus-two
+        // wears, the coplanar z-fight the same plane never speaks)
+        let mut w3 = empty_world();
+        put(&mut w3, 8, 8, 8, crate::world::GLASS);
+        put(&mut w3, 9, 8, 8, crate::world::GLASS);
+        let q3 = mesh_chunk(&w3, 0, 0, None);
+        let glass3: Vec<_> = q3.iter().filter(|quad| quad.tile == glass_tile).collect();
+        assert_eq!(glass3.len(), 10, "the same-kind pair the shared faces cull");
+        // THE GLASS|STAINED PAIR THE DRAW WEARS (the DIFFERENT blocks
+        // the cull never fires — the twelve quads the full pair
+        // keeps)
+        let mut w4 = empty_world();
+        put(&mut w4, 8, 8, 8, crate::world::GLASS);
+        put(&mut w4, 9, 8, 8, crate::world::WHITE_STAINED_GLASS);
+        let q4 = mesh_chunk(&w4, 0, 0, None);
+        let g4: Vec<_> = q4.iter().filter(|quad| quad.tile == glass_tile).collect();
+        let wh4: Vec<_> = q4.iter().filter(|quad| quad.tile == white_tile).collect();
+        assert_eq!(g4.len(), 6, "the glass half the full six wears");
+        assert_eq!(wh4.len(), 6, "the stained half the full six wears");
+        // THE OPAQUE CULL THE STONE PAIR KEEPS (the glass|stone pair
+        // the glass's shared face culls — the stone the OPAQUE the
+        // is_transparent verdict refuses — and the stone's own face
+        // against the glass DRAWS the non-occluding law wears)
+        let mut w5 = empty_world();
+        put(&mut w5, 8, 8, 8, crate::world::GLASS);
+        put(&mut w5, 9, 8, 8, crate::world::STONE);
+        let q5 = mesh_chunk(&w5, 0, 0, None);
+        let g5: Vec<_> = q5.iter().filter(|quad| quad.tile == glass_tile).collect();
+        assert_eq!(
+            g5.len(),
+            5,
+            "the stone neighbor the glass's shared face culls"
+        );
+        let stone_tile = gen_atlas::FACE_TILES[crate::world::STONE as usize][2];
+        let stones: Vec<_> = q5
+            .iter()
+            .filter(|quad| quad.tile == stone_tile)
+            .collect();
+        assert!(
+            stones.len() >= 1,
+            "the stone's own faces the mesh keeps"
+        );
+        // the stone face AGAINST the glass draws (the +X face at
+        // x=8.0 — the glass cell the non-occluding neighbor the draw
+        // verdict answers): the plane the two cells' seam wears
+        assert!(
+            stones
+                .iter()
+                .any(|quad| quad.pts.iter().all(|p| (p[0] - 9.0).abs() < 1e-6)),
+            "the stone's -X face the glass cell draws against"
         );
     }
 

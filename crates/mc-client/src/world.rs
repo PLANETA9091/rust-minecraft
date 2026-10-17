@@ -3004,6 +3004,99 @@ pub const SULFUR_WALL: u16 = 540;
 pub const POLISHED_SULFUR_WALL: u16 = 541;
 pub const SULFUR_BRICK_WALL: u16 = 542;
 
+/// THE GLASS FAMILY'S OWN SEVENTEEN PANES (the dev-57 round — the
+/// window the palette's own transparency frontier): the plain glass
+/// the ONE seat the register row's own chain banks + the sixteen
+/// stained cloths the DyeColor ladder the collection walk serves.
+/// javap Blocks clinit the 26.2 jar (pinned sha1 2dc72797, the
+/// probes scripts/jar_work/glass_685.py + 685b/685c/685d banks):
+/// the GLASS register row pc 3764..3820 — instrument(HAT) pc
+/// 3764-3767, strength(0.3f) pc 3770-3773, sound(SoundType.GLASS)
+/// pc 3776-3779, noOcclusion() pc 3782, the four predicate folds pc
+/// 3785-3814 (isValidSpawn/isRedstoneConductor/isSuffocating/
+/// isViewBlocking — the transparent family's false verdicts wear),
+/// register + putstatic pc 3817-3820. The GlassBlock class the 26.2
+/// jar RETIRES (absent from the namelist — the
+/// StainedGlassBlock/StainedGlassPaneBlock/TintedGlassBlock trio the
+/// ONLY glass classes the walk carries): the plain glass the
+/// register's Function factory the generic HalfTransparent chain
+/// serves. javap HalfTransparentBlock.skipRendering pc 0-17 the
+/// CULL LAW the mesher's same-kind arm speaks — the
+/// neighborState.is(this) verdict true the shared face the SAME
+/// block never draws (glass|glass the cull keeps, glass|stained the
+/// DIFFERENT blocks the draw wears), the super fold pc 10-14 the
+/// default law keeps. javap StainedGlassBlock the ctor pc 0-10 the
+/// DyeColor field stores (the TransparentBlock super the
+/// HalfTransparent chain extends), the getColor pc 0-4 the field
+/// read keeps; the STAINED_GLASS ladder the
+/// ColorCollection.registerBlocks walk pc 11300-11321 banks (the
+/// three indy lambdas the TriFunction/BiFunction/Function trio
+/// carries — the 16 members the DyeColor ordinals order, the WHITE
+/// seat the ladder's head wears). The dig/sounds/drops rows the
+/// name-keyed generated tables the registry answers (dig 0.3 no
+/// tool the glass/white/black rows speak — idx 101/300/315 the
+/// table walks bank; the loot tables the SILK-TOUCH-ONLY law: the
+/// one pool the match_tool silk_touch min-1 condition carries, the
+/// bare hand's survival dig the EMPTY drop answers), the placeable
+/// lane the Items pairing rows (GLASS pc 2317-2326 the
+/// registerBlock walk, the stained ladder the collection's own
+/// pairing serves). The blockstates ALL SEVENTEEN the ONE ""
+/// variant the block/{name} model resolves, the models the parent
+/// minecraft:block/cube_all the texture ref the OBJECT form carries
+/// — {"force_translucent": true, "sprite": "minecraft:block/{name}"}
+/// the 26.2 model format's own render-layer signal (the merge walk
+/// the sprite field unwraps — atlas regen 773→790 tiles the
+/// seventeen masters the tail banks). The textures the alpha
+/// histograms the render lanes speak: the glass 16x16 alpha {0: 191,
+/// 255: 65} the BINARY cutout, the sixteen stained cloths alpha
+/// {102: 191, 155: 5, 163: 60} the UNIFORM map every color wears —
+/// the masters PRE-COLORED per dye (white 255/255/255, orange
+/// 216/127/51, red 153/51/51 the probe's texel walks bank), NO
+/// tintindex the tintless verdict keeps. The impermeable tag the 17
+/// glassy members the glass+stained ladder banks; mineable/pickaxe
+/// the 417 values NO glass row wears.
+pub const GLASS: u16 = 543;
+pub const WHITE_STAINED_GLASS: u16 = 544;
+pub const ORANGE_STAINED_GLASS: u16 = 545;
+pub const MAGENTA_STAINED_GLASS: u16 = 546;
+pub const LIGHT_BLUE_STAINED_GLASS: u16 = 547;
+pub const YELLOW_STAINED_GLASS: u16 = 548;
+pub const LIME_STAINED_GLASS: u16 = 549;
+pub const PINK_STAINED_GLASS: u16 = 550;
+pub const GRAY_STAINED_GLASS: u16 = 551;
+pub const LIGHT_GRAY_STAINED_GLASS: u16 = 552;
+pub const CYAN_STAINED_GLASS: u16 = 553;
+pub const PURPLE_STAINED_GLASS: u16 = 554;
+pub const BLUE_STAINED_GLASS: u16 = 555;
+pub const BROWN_STAINED_GLASS: u16 = 556;
+pub const GREEN_STAINED_GLASS: u16 = 557;
+pub const RED_STAINED_GLASS: u16 = 558;
+pub const BLACK_STAINED_GLASS: u16 = 559;
+
+/// THE GLASS FAMILY'S OWN SEAT LADDER (the dev-57 round — the 17
+/// kinds the explicit seats the tail banks, the wall tables' own
+/// explicit-seat law the window rung wears): the family fns the
+/// [`is_glass`] range the same run the range law keeps.
+pub const GLASS_KINDS: [u16; 17] = [
+    GLASS,
+    WHITE_STAINED_GLASS,
+    ORANGE_STAINED_GLASS,
+    MAGENTA_STAINED_GLASS,
+    LIGHT_BLUE_STAINED_GLASS,
+    YELLOW_STAINED_GLASS,
+    LIME_STAINED_GLASS,
+    PINK_STAINED_GLASS,
+    GRAY_STAINED_GLASS,
+    LIGHT_GRAY_STAINED_GLASS,
+    CYAN_STAINED_GLASS,
+    PURPLE_STAINED_GLASS,
+    BLUE_STAINED_GLASS,
+    BROWN_STAINED_GLASS,
+    GREEN_STAINED_GLASS,
+    RED_STAINED_GLASS,
+    BLACK_STAINED_GLASS,
+];
+
 /// THE WALL FAMILY'S OWN SEAT LADDER (the dev-56 round — the 32
 /// kinds the explicit seats the tail banks, the fence tables' own
 /// explicit-seat law the rampart rung wears): the mesher's
@@ -3624,7 +3717,7 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 /// generated tables' own rows the names wire) — the
 /// END_PORTAL
 /// the beyond-table seat the displaced law keeps.
-pub const NAME_OF: [&str; 543] = [
+pub const NAME_OF: [&str; 560] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -4278,6 +4371,17 @@ pub const NAME_OF: [&str; 543] = [
     "resin_brick_wall", "cinnabar_wall", "polished_cinnabar_wall",
     "cinnabar_brick_wall", "sulfur_wall", "polished_sulfur_wall",
     "sulfur_brick_wall",
+    // THE GLASS FAMILY'S OWN ROWS (the dev-57 round — the 17 seats
+    // the window rung banks, the ONE registry name each kind alone
+    // speaks, the dig/sound/drop/place lanes the generated tables'
+    // own rows the names wire)
+    "glass", "white_stained_glass", "orange_stained_glass",
+    "magenta_stained_glass", "light_blue_stained_glass",
+    "yellow_stained_glass", "lime_stained_glass", "pink_stained_glass",
+    "gray_stained_glass", "light_gray_stained_glass",
+    "cyan_stained_glass", "purple_stained_glass", "blue_stained_glass",
+    "brown_stained_glass", "green_stained_glass", "red_stained_glass",
+    "black_stained_glass",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -5279,6 +5383,28 @@ pub fn fence_connection_bits(world: &World, x: i32, y: i32, z: i32) -> u8 {
 #[inline]
 pub fn is_wall(id: u16) -> bool {
     (COBBLESTONE_WALL..=SULFUR_BRICK_WALL).contains(&id)
+}
+
+/// THE GLASS FAMILY'S OWN RANGE (the dev-57 round — the 17 kinds the
+/// contiguous tail banks, the wall range's own law the window rung
+/// wears): the WHOLE HalfTransparent family the range answers — the
+/// noOcclusion verdict the mesher's is_transparent lane and the
+/// light's sky-opacity walk the same run reads (javap Blocks clinit
+/// pc 3782 the noOcclusion() row the plain glass's chain speaks, the
+/// stained ladder the collection lambda's own chain the same
+/// noOcclusion row wears — the vanilla lightBlock 0 the BOTH halves'
+/// registration answers, the light the window never blocks).
+pub fn is_glass(id: u16) -> bool {
+    (GLASS..=BLACK_STAINED_GLASS).contains(&id)
+}
+
+/// THE STAINED HALF'S OWN RANGE (the mesher's translucent lane the
+/// ladder read answers — the 16 dyed cloths the collection walk's
+/// members bank, the 0.4-alpha body band the per-texel blend serves;
+/// the plain glass the cutout lane's own member the half never
+/// joins).
+pub fn is_stained_glass(id: u16) -> bool {
+    (WHITE_STAINED_GLASS..=BLACK_STAINED_GLASS).contains(&id)
 }
 
 /// THE WALL CONNECTION'S OWN FOUR-ARM LAW (javap WallBlock.connectsTo
@@ -15498,7 +15624,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the lamp pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 543, "the palette the lamp pair banks");
+        assert_eq!(atlas::N_KINDS, 560, "the palette the lamp pair banks");
         assert!(is_redstone_lamp(REDSTONE_LAMP) && is_redstone_lamp(REDSTONE_LAMP_LIT));
         assert!(!is_redstone_lamp(REDSTONE_WIRE) && !is_redstone_lamp(STONE));
         assert!(!redstone_lamp_lit(REDSTONE_LAMP));
@@ -15595,7 +15721,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the wire pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 543, "the palette the wire pair banks");
+        assert_eq!(atlas::N_KINDS, 560, "the palette the wire pair banks");
         assert!(is_redstone_wire(REDSTONE_WIRE) && is_redstone_wire(REDSTONE_WIRE_ON));
         assert!(!is_redstone_wire(LEVER) && !is_redstone_wire(OAK_PRESSURE_PLATE));
         assert!(!wire_powered(REDSTONE_WIRE));
@@ -15749,7 +15875,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 543, "the palette the graded ladder banks");
+        assert_eq!(atlas::N_KINDS, 560, "the palette the graded ladder banks");
         // THE POWER READ'S OWN ROUND TRIP (the seat the kind the
         // inverse fold answers, the unknown id the None keeps)
         assert_eq!(wire_power_of(REDSTONE_WIRE), Some(0));
@@ -15936,7 +16062,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the planks' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 543, "the palette the planks' twelve banks");
+        assert_eq!(atlas::N_KINDS, 560, "the palette the planks' twelve banks");
         for (i, (name, kind, voice)) in PLANKS.iter().enumerate() {
             let seat = OAK_PLANKS + i as u16;
             assert_eq!(*kind, seat, "the seat the family order banks");
@@ -16028,7 +16154,7 @@ mod tests {
             None,
             "the portal the item lane refuses"
         );
-        assert_eq!(NAME_OF.len(), 543, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 560, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -16082,7 +16208,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kit's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 543, "the palette the kit's six banks");
+        assert_eq!(atlas::N_KINDS, 560, "the palette the kit's six banks");
         for (i, (name, kind, hard)) in KIT.iter().enumerate() {
             let seat = COBBLESTONE + i as u16;
             assert_eq!(*kind, seat, "the seat the stone shelf order banks");
@@ -16172,7 +16298,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kit's growth banks)
-        assert_eq!(NAME_OF.len(), 543, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 560, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -16229,7 +16355,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the shelf's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 543, "the palette the shelf's eight banks");
+        assert_eq!(atlas::N_KINDS, 560, "the palette the shelf's eight banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -16327,7 +16453,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the shelf's growth banks)
-        assert_eq!(NAME_OF.len(), 543, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 560, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -16396,7 +16522,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the cloths' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 543, "the palette the cloths' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 560, "the palette the cloths' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -16510,7 +16636,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the cloths' growth banks)
-        assert_eq!(NAME_OF.len(), 543, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 560, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -16585,7 +16711,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kilns' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 543, "the palette the kilns' seventeen banks");
+        assert_eq!(atlas::N_KINDS, 560, "the palette the kilns' seventeen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -16697,7 +16823,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kilns' growth banks)
-        assert_eq!(NAME_OF.len(), 543, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 560, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -16773,7 +16899,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 543, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 560, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -16890,7 +17016,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 543, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 560, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -16975,7 +17101,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 543, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 560, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -17126,7 +17252,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 543, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 560, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -17200,7 +17326,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 543, "the palette the ladder's twenty-two banks");
+        assert_eq!(atlas::N_KINDS, 560, "the palette the ladder's twenty-two banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -17389,7 +17515,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the ladder's growth banks)
-        assert_eq!(NAME_OF.len(), 543, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 560, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -17450,7 +17576,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the note's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 543, "the palette the note's own banks");
+        assert_eq!(atlas::N_KINDS, 560, "the palette the note's own banks");
         // THE ONE REGISTRY NAME ITS KIND ALONE SPEAKS (the NAME_OF row
         // + the generated KIND_NAMES/REGISTRY_NAMES rows the same
         // entry the three tables keep — no strip law the single kind
@@ -17761,7 +17887,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the note's growth banks)
-        assert_eq!(NAME_OF.len(), 543, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 560, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -17802,8 +17928,8 @@ mod tests {
             "the contiguous run the thirteen seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 543, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 543, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 560, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 560, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in OAK_FENCE..=NETHER_BRICK_FENCE {
@@ -18216,8 +18342,8 @@ mod tests {
             "the contiguous run the thirty-two seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 543, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 543, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 560, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 560, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in COBBLESTONE_WALL..=SULFUR_BRICK_WALL {
@@ -18527,6 +18653,197 @@ mod tests {
     }
 
     #[test]
+    fn the_glass_familys_own_transparency_the_ladder_and_the_silk_law_wear() {
+        // THE GLASS FAMILY'S OWN LAWS (the dev-57 round — javap
+        // Blocks clinit the 26.2 jar the probes scripts/jar_work/
+        // glass_685.py + 685b/685c/685d banks): the SEVENTEEN kinds
+        // the contiguous tail banks (the plain glass the register
+        // row's own chain speaks — pc 3764..3820 instrument(HAT) +
+        // strength(0.3f) + sound(GLASS) + noOcclusion() the four
+        // predicate folds the transparent family's false verdicts
+        // wear, the stained ladder the ColorCollection.registerBlocks
+        // walk pc 11300-11321 the DyeColor ordinals order keeps), the
+        // skipRendering pc 0-17 the SAME-BLOCK cull the mesher's arm
+        // speaks, the loot tables the SILK-TOUCH-ONLY law the empty
+        // bare-hand roll banks, the impermeable tag the 17 glassy
+        // members the tinted/barrier companions bank
+        use mc_registry::generated::atlas;
+        // THE SEVENTEEN SEATS' OWN BANK (the contiguous tail the
+        // append-only law keeps — the walls the predecessor family
+        // answers)
+        assert_eq!(GLASS, 543, "the window pane its tail seat keeps");
+        assert_eq!(
+            BLACK_STAINED_GLASS, 559,
+            "the black cloth the ladder's tail banks"
+        );
+        assert_eq!(
+            (GLASS..=BLACK_STAINED_GLASS).count(),
+            17,
+            "the contiguous run the seventeen seats wear"
+        );
+        assert_eq!(SULFUR_BRICK_WALL, 542, "the wall family the tail answers");
+        assert_eq!(atlas::N_KINDS, 560, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 560, "the NAME_OF table the one length keeps");
+        // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
+        // rows the same entry the three tables keep)
+        for k in GLASS..=BLACK_STAINED_GLASS {
+            assert_eq!(
+                NAME_OF[k as usize],
+                atlas::KIND_NAMES[k as usize],
+                "the KIND_NAMES row the family's kind {} keeps",
+                k
+            );
+            assert_eq!(
+                NAME_OF[k as usize],
+                atlas::REGISTRY_NAMES[k as usize],
+                "the REGISTRY_NAMES row the family's kind {} keeps",
+                k
+            );
+        }
+        assert_eq!(NAME_OF[GLASS as usize], "glass");
+        assert_eq!(
+            NAME_OF[WHITE_STAINED_GLASS as usize],
+            "white_stained_glass"
+        );
+        assert_eq!(
+            NAME_OF[BLACK_STAINED_GLASS as usize],
+            "black_stained_glass"
+        );
+        // THE DYE LADDER'S OWN ORDER (the DyeColor ordinals the
+        // collection walk banks — the wool ladder's own sequence the
+        // window cloths wear)
+        assert_eq!(
+            GLASS_KINDS,
+            [
+                GLASS,
+                WHITE_STAINED_GLASS,
+                ORANGE_STAINED_GLASS,
+                MAGENTA_STAINED_GLASS,
+                LIGHT_BLUE_STAINED_GLASS,
+                YELLOW_STAINED_GLASS,
+                LIME_STAINED_GLASS,
+                PINK_STAINED_GLASS,
+                GRAY_STAINED_GLASS,
+                LIGHT_GRAY_STAINED_GLASS,
+                CYAN_STAINED_GLASS,
+                PURPLE_STAINED_GLASS,
+                BLUE_STAINED_GLASS,
+                BROWN_STAINED_GLASS,
+                GREEN_STAINED_GLASS,
+                RED_STAINED_GLASS,
+                BLACK_STAINED_GLASS,
+            ],
+            "the seat ladder the family's own order banks"
+        );
+        // THE RANGE WALKS (the whole family the is_glass range
+        // answers, the stained half the ladder the translucent lane
+        // reads — the plain glass the cutout lane's own member the
+        // half never joins)
+        assert!(is_glass(GLASS) && is_glass(BLACK_STAINED_GLASS));
+        assert!(is_stained_glass(WHITE_STAINED_GLASS));
+        assert!(is_stained_glass(BLACK_STAINED_GLASS));
+        assert!(!is_stained_glass(GLASS), "the plain glass the half refuses");
+        assert!(!is_glass(SULFUR_BRICK_WALL) && !is_glass(AIR));
+        // THE PLACEABLE LANE (the Items clinit's registerBlock row pc
+        // 2317-2326 the reverse walk answers, the stained ladder the
+        // collection's own pairing serves)
+        assert_eq!(
+            World::placeable_block("glass"),
+            Some(GLASS),
+            "the glass item the placement lane grants"
+        );
+        assert_eq!(
+            World::placeable_block("white_stained_glass"),
+            Some(WHITE_STAINED_GLASS),
+            "the white cloth item the placement lane grants"
+        );
+        assert_eq!(
+            World::placeable_block("red_stained_glass"),
+            Some(RED_STAINED_GLASS),
+            "the red cloth item the placement lane grants"
+        );
+        // THE DIG ROWS (the generated table the REAL bootstrapped
+        // registry banks — the strength(0.3f) pc 3770 the clinit
+        // chain speaks, NO requiresCorrectToolForDrops the bare-hand
+        // harvest the tool row's false keeps: idx 101/300/315 the
+        // glass/white/black rows bank)
+        for k in [GLASS, WHITE_STAINED_GLASS, BLACK_STAINED_GLASS] {
+            let (hard, tool) = crate::dig::DigState::block_dig_row(k);
+            assert!(
+                (hard - 0.3).abs() < 1e-4,
+                "the 0.3 strength the family's kind {} dig row wears, got {}",
+                k,
+                hard
+            );
+            assert!(!tool, "the no-tool demand the family's kind {} keeps", k);
+        }
+        // THE SILK-TOUCH-ONLY LAW (the loot tables' own pools — the
+        // match_tool silk_touch min-1 condition the ONE entry
+        // carries, the bare hand's survival dig the EMPTY roll the
+        // generated table's own absence banks: the drops walk the
+        // None pool the empty vec answers)
+        assert!(
+            mc_registry::generated::block_drops::drops("glass").is_none(),
+            "the glass pool the table's own absence banks"
+        );
+        let mut rng = crate::drops::Lcg::new(0x600B);
+        assert!(
+            crate::drops::roll_drops(GLASS, None, &mut rng).is_empty(),
+            "the bare hand the window digs to nothing — the vanilla law wears"
+        );
+        // THE VOICE LAWS THE FAMILY WEARS (the SoundType.GLASS row
+        // the clinit pc 3776 the chain banks — the break/place/hit/
+        // step/fall family the block.glass.* events carry)
+        for k in [GLASS, WHITE_STAINED_GLASS, RED_STAINED_GLASS] {
+            let name = NAME_OF[k as usize];
+            let idx = mc_registry::generated::block_sounds::sound_index(name)
+                .unwrap_or_else(|| panic!("the {} sound row the table banks", name));
+            assert_eq!(
+                mc_registry::generated::block_sounds::SOUND_BREAK[idx],
+                "block.glass.break",
+                "the glass law the {} break row speaks",
+                name
+            );
+            assert_eq!(
+                mc_registry::generated::block_sounds::SOUND_STEP[idx],
+                "block.glass.step",
+                "the glass law the {} step row speaks",
+                name
+            );
+        }
+        // THE FACE_TILES ROW THE ONE MASTER EVERY FACE BANKS (the
+        // cube_all model the six slots the ONE tile wears — the
+        // seventeen masters the atlas regen's tail banks, 773→790)
+        for k in GLASS..=BLACK_STAINED_GLASS {
+            let row = atlas::FACE_TILES[k as usize];
+            assert!(
+                row.iter().all(|t| t == &row[2]),
+                "the ONE-tile shape the family's kind {} keeps",
+                k
+            );
+            assert_ne!(
+                row[2],
+                atlas::TILE_NONE,
+                "the master the family's kind {} resolves",
+                k
+            );
+        }
+        // THE MASTERS' OWN SEATS (the seventeen NEW tiles the
+        // append-only tail banks — the plain glass the dyed cloths
+        // the distinct masters wear)
+        assert_ne!(
+            atlas::FACE_TILES[GLASS as usize][2],
+            atlas::FACE_TILES[WHITE_STAINED_GLASS as usize][2],
+            "the glass master the white cloth's OWN tile wears"
+        );
+        assert_ne!(
+            atlas::FACE_TILES[WHITE_STAINED_GLASS as usize][2],
+            atlas::FACE_TILES[RED_STAINED_GLASS as usize][2],
+            "the dyed cloths the DISTINCT masters wear"
+        );
+    }
+
+    #[test]
     fn the_redstone_torch_the_not_gate_and_the_source_arms_wear() {
         // THE REDSTONE TORCH'S OWN LAWS (the autopush-666 round — javap
         // RedstoneTorchBlock the 26.2 jar the probe scripts/jar_work/
@@ -18553,7 +18870,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the torch pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 543, "the palette the torch pair banks");
+        assert_eq!(atlas::N_KINDS, 560, "the palette the torch pair banks");
         assert!(is_redstone_torch(REDSTONE_TORCH) && is_redstone_torch(REDSTONE_TORCH_OFF));
         assert!(!is_redstone_torch(TORCH) && !is_redstone_torch(LEVER));
         assert!(redstone_torch_lit(REDSTONE_TORCH));
@@ -18694,7 +19011,7 @@ mod tests {
         assert_eq!(REDSTONE_WALL_TORCH, 324);
         assert_eq!(REDSTONE_WALL_TORCH_OFF, 325);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 543, "the palette the wall pair banks");
+        assert_eq!(atlas::N_KINDS, 560, "the palette the wall pair banks");
         assert!(
             is_redstone_torch(REDSTONE_WALL_TORCH) && is_redstone_torch(REDSTONE_WALL_TORCH_OFF),
             "the wall pair the family's tail banks"
@@ -18939,7 +19256,7 @@ mod tests {
         assert_eq!(OAK_TRAPDOOR_OPEN, 327);
         assert_eq!(END_PORTAL, 510);
         assert_eq!(
-            atlas::N_KINDS, 543,
+            atlas::N_KINDS, 560,
             "the palette the trapdoor pair banks"
         );
         assert_eq!(OAK_TRAPDOOR + 1, OAK_TRAPDOOR_OPEN, "the +1 mate wears");
@@ -19093,7 +19410,7 @@ mod tests {
         assert_eq!(END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-            543,
+            560,
             "the palette the gate pair banks"
         );
         assert_eq!(OAK_FENCE_GATE + 1, OAK_FENCE_GATE_OPEN, "the +1 mate wears");
@@ -19311,7 +19628,7 @@ mod tests {
         assert_eq!(WARPED_TRAPDOOR, 348);
         assert_eq!(WARPED_TRAPDOOR_OPEN, 349);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 543, "the palette the ladder banks");
+        assert_eq!(atlas::N_KINDS, 560, "the palette the ladder banks");
         // THE CONTIGUITY'S OWN LAW (the 22 kinds the range covers —
         // the neighbors the family fn refuses)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -19425,7 +19742,7 @@ mod tests {
         assert_eq!(IRON_TRAPDOOR, 366);
         assert_eq!(IRON_TRAPDOOR_OPEN, 367);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 543, "the palette the metal rungs bank");
+        assert_eq!(atlas::N_KINDS, 560, "the palette the metal rungs bank");
         // THE CONTIGUITY'S OWN LAW (the 42 kinds the range covers —
         // the waxed pairs the ±1 mate the parity answers)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -19796,7 +20113,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 543, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 560, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)

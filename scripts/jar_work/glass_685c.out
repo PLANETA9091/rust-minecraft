@@ -1,0 +1,24 @@
+--- GLASS row full window (pc ..3823)
+3764: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.HAT:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+3767: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+3770: ldc_w float 0.30000001192092896
+3773: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+3776: getstatic net/minecraft/world/level/block/SoundType.GLASS:Lnet/minecraft/world/level/block/SoundType;
+3779: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+3782: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noOcclusion:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+3785: invokedynamic indy
+3790: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.isValidSpawn:(Lnet/minecraft/world/level/block/state/BlockBehaviour$StateArgumentPredicate;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+3793: invokedynamic indy
+3798: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.isRedstoneConductor:(Lnet/minecraft/world/level/block/state/BlockBehaviour$StatePredicate;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+3801: invokedynamic indy
+3806: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.isSuffocating:(Lnet/minecraft/world/level/block/state/BlockBehaviour$StatePredicate;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+3809: invokedynamic indy
+3814: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.isViewBlocking:(Lnet/minecraft/world/level/block/state/BlockBehaviour$StatePredicate;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+3817: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+3820: putstatic net/minecraft/world/level/block/Blocks.GLASS:Lnet/minecraft/world/level/block/Block;
+3823: getstatic net/minecraft/references/BlockItemIds.LAPIS_ORE:Lnet/minecraft/references/BlockItemId;
+
+pc 11300: 11300: getstatic net/minecraft/references/BlockItemIds.STAINED_GLASS:Lnet/minecraft/world/level/block/ColorCollection;
+pc 11321: 11321: putstatic net/minecraft/world/level/block/Blocks.STAINED_GLASS:Lnet/minecraft/world/level/block/ColorCollection;
+pc 16206: 16206: getstatic net/minecraft/references/BlockItemIds.STAINED_GLASS_PANE:Lnet/minecraft/world/level/block/ColorCollection;
+pc 16227: 16227: putstatic net/minecraft/world/level/block/Blocks.STAINED_GLASS_PANE:Lnet/minecraft/world/level/block/ColorCollection;
