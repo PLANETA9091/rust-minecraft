@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 444] = [
+pub const RUNTIME_PALETTE: [&str; 459] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1428,6 +1428,51 @@ pub const RUNTIME_PALETTE: [&str; 444] = [
     // displaces (442 -> 444 the
     // 658/670/672/673/674/675/676/677/678 precedent wears).
     "oak_fence_gate", "oak_fence_gate_open",
+    // THE BUILDER'S OWN FIFTEEN CONCRETE RUNGS (the autopush-679
+    // round): the dyed concrete family's fifteen seats the builder's
+    // color banks — the orange..black rungs the clinit ladder's own
+    // order the tail wears, the WHITE kind its early seat the
+    // fifty-seventh entry keeps, the END_PORTAL the beyond-table 460
+    // the every-family displacement law keeps. javap Blocks clinit
+    // the 26.2 jar (pinned sha1 2dc72797, the probe scripts/
+    // jar_work/concrete_679.py + .out banks): pc 20979-20987 the
+    // ColorCollection.registerBlocks(..., TriFunction, BiFunction,
+    // Function) walk the putstatic Blocks.CONCRETE row pc 20987 the
+    // sixteen-color collection ONE lambda family speaks (the
+    // CONCRETE_POWDER register pc 20990-21011 the white pair's own
+    // walk the 55/56 seats bank), the Items clinit row pc 6275-6292
+    // the registerBlockItems(BlockItemIds.CONCRETE, Blocks.CONCRETE,
+    // ...) pairing speaks (the putstatic Items.CONCRETE pc 6292),
+    // the dig rows the generated block_dig table the jar's REAL
+    // bootstrapped registry answers (the 1.8 + requires-tool rows
+    // every color wears — the pickaxe the whole family's drop
+    // demands, the bare hand the drop refuses), the block.stone.
+    // break voice the generated block_sounds table every seat banks,
+    // the self-entry drop pool the block_drops table speaks. The
+    // blockstates the jar's own ONE shape carry — the {name}.json
+    // the single "" variant the cube_all model wears, the models the
+    // ONE #all ref (all={name}), the FACE_TILES rows the one-tile
+    // lane banks. The FIFTEEN {name}.png masters the jar's own 16x16
+    // colortype-3 tiles bank — NEW tiles the append-only tail seats
+    // (717 -> 732: the fifteen {color}_concrete rungs in clinit
+    // order), every pre-existing row the same pixels + tints + names
+    // keeps, the append-only law the equivalence proof scripts/
+    // verify_atlas_full.py banks. The ONE "{name}" registry name its
+    // kind ALONE speaks (no strip law — each seat its own Block +
+    // BlockItem pairing the Items clinit's registerBlockItems rows
+    // answer), the placeable lane the reverse walk the pairing
+    // serves, the dig rows + the drop pools + the stone voice the
+    // generated tables already bank, the fire trio the family's own
+    // SILENCE keeps — no setFlammable row the concrete family wears.
+    // The seats the CONTIGUOUS tail the kind ids wear (444..458),
+    // the END_PORTAL kind the beyond-table seat the family's growth
+    // displaces (444 -> 460 the
+    // 658/670/672/673/674/675/676/677/678/53 precedent wears).
+    "orange_concrete", "magenta_concrete", "light_blue_concrete",
+    "yellow_concrete", "lime_concrete", "pink_concrete",
+    "gray_concrete", "light_gray_concrete", "cyan_concrete",
+    "purple_concrete", "blue_concrete", "brown_concrete",
+    "green_concrete", "red_concrete", "black_concrete",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.

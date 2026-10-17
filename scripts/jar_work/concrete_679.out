@@ -1,0 +1,268 @@
+=== Blocks clinit the CONCRETE collection row
+--- clinit window (Blocks.CONCRETE:) pc 20979..21046
+20979: invokedynamic indy
+20984: invokestatic net/minecraft/world/level/block/ColorCollection.registerBlocks:(Lnet/minecraft/world/level/block/ColorCollection;Lorg/apache/commons/lang3/function/TriFunction;Ljava/util/function/BiFunction;Ljava/util/function/Function;)Lnet/minecraft/world/level/block/ColorCollection;
+20987: putstatic net/minecraft/world/level/block/Blocks.CONCRETE:Lnet/minecraft/world/level/block/ColorCollection;
+20990: getstatic net/minecraft/references/BlockItemIds.CONCRETE_POWDER:Lnet/minecraft/world/level/block/ColorCollection;
+20993: invokedynamic indy
+20998: invokedynamic indy
+21003: invokedynamic indy
+21008: invokestatic net/minecraft/world/level/block/ColorCollection.registerBlocks:(Lnet/minecraft/world/level/block/ColorCollection;Lorg/apache/commons/lang3/function/TriFunction;Ljava/util/function/BiFunction;Ljava/util/function/Function;)Lnet/minecraft/world/level/block/ColorCollection;
+21011: putstatic net/minecraft/world/level/block/Blocks.CONCRETE_POWDER:Lnet/minecraft/world/level/block/ColorCollection;
+21014: getstatic net/minecraft/references/BlockItemIds.KELP:Lnet/minecraft/references/BlockItemId;
+21017: invokedynamic indy
+21022: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+21025: getstatic net/minecraft/world/level/material/MapColor.WATER:Lnet/minecraft/world/level/material/MapColor;
+21028: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+21031: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noCollision:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+21034: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.randomTicks:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+21037: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instabreak:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+21040: getstatic net/minecraft/world/level/block/SoundType.WET_GRASS:Lnet/minecraft/world/level/block/SoundType;
+21043: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+21046: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+
+=== Blocks clinit the CONCRETE_POWDER row (the white pair's own walk)
+--- clinit window (Blocks.CONCRETE_POWDER:) pc 21003..21046
+21003: invokedynamic indy
+21008: invokestatic net/minecraft/world/level/block/ColorCollection.registerBlocks:(Lnet/minecraft/world/level/block/ColorCollection;Lorg/apache/commons/lang3/function/TriFunction;Ljava/util/function/BiFunction;Ljava/util/function/Function;)Lnet/minecraft/world/level/block/ColorCollection;
+21011: putstatic net/minecraft/world/level/block/Blocks.CONCRETE_POWDER:Lnet/minecraft/world/level/block/ColorCollection;
+21014: getstatic net/minecraft/references/BlockItemIds.KELP:Lnet/minecraft/references/BlockItemId;
+21017: invokedynamic indy
+21022: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+21025: getstatic net/minecraft/world/level/material/MapColor.WATER:Lnet/minecraft/world/level/material/MapColor;
+21028: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+21031: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noCollision:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+21034: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.randomTicks:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+21037: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instabreak:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+21040: getstatic net/minecraft/world/level/block/SoundType.WET_GRASS:Lnet/minecraft/world/level/block/SoundType;
+21043: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+21046: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+
+=== Items clinit the CONCRETE pairing row
+--- clinit window (Blocks.CONCRETE:) pc 6275..6306
+6275: putstatic net/minecraft/world/item/Items.GLAZED_TERRACOTTA:Lnet/minecraft/world/level/block/ColorCollection;
+6278: getstatic net/minecraft/references/BlockItemIds.CONCRETE:Lnet/minecraft/world/level/block/ColorCollection;
+6281: getstatic net/minecraft/world/level/block/Blocks.CONCRETE:Lnet/minecraft/world/level/block/ColorCollection;
+6284: invokedynamic indy
+6289: invokestatic net/minecraft/world/level/block/ColorCollection.registerBlockItems:(Lnet/minecraft/world/level/block/ColorCollection;Lnet/minecraft/world/level/block/ColorCollection;Lorg/apache/commons/lang3/function/TriFunction;)Lnet/minecraft/world/level/block/ColorCollection;
+6292: putstatic net/minecraft/world/item/Items.CONCRETE:Lnet/minecraft/world/level/block/ColorCollection;
+6295: getstatic net/minecraft/references/BlockItemIds.CONCRETE_POWDER:Lnet/minecraft/world/level/block/ColorCollection;
+6298: getstatic net/minecraft/world/level/block/Blocks.CONCRETE_POWDER:Lnet/minecraft/world/level/block/ColorCollection;
+6301: invokedynamic indy
+6306: invokestatic net/minecraft/world/level/block/ColorCollection.registerBlockItems:(Lnet/minecraft/world/level/block/ColorCollection;Lnet/minecraft/world/level/block/ColorCollection;Lorg/apache/commons/lang3/function/TriFunction;)Lnet/minecraft/world/level/block/ColorCollection;
+
+=== blockstates/orange_concrete.json
+{
+  "variants": {
+    "": {
+      "model": "minecraft:block/orange_concrete"
+    }
+  }
+}
+--- models/block/orange_concrete.json parent=minecraft:block/cube_all textures={'all': 'minecraft:block/orange_concrete'}
+--- textures/block/orange_concrete.png 16x16 colortype-3 (222 bytes)
+
+=== blockstates/magenta_concrete.json
+{
+  "variants": {
+    "": {
+      "model": "minecraft:block/magenta_concrete"
+    }
+  }
+}
+--- models/block/magenta_concrete.json parent=minecraft:block/cube_all textures={'all': 'minecraft:block/magenta_concrete'}
+--- textures/block/magenta_concrete.png 16x16 colortype-3 (196 bytes)
+
+=== blockstates/light_blue_concrete.json
+{
+  "variants": {
+    "": {
+      "model": "minecraft:block/light_blue_concrete"
+    }
+  }
+}
+--- models/block/light_blue_concrete.json parent=minecraft:block/cube_all textures={'all': 'minecraft:block/light_blue_concrete'}
+--- textures/block/light_blue_concrete.png 16x16 colortype-3 (219 bytes)
+
+=== blockstates/yellow_concrete.json
+{
+  "variants": {
+    "": {
+      "model": "minecraft:block/yellow_concrete"
+    }
+  }
+}
+--- models/block/yellow_concrete.json parent=minecraft:block/cube_all textures={'all': 'minecraft:block/yellow_concrete'}
+--- textures/block/yellow_concrete.png 16x16 colortype-3 (227 bytes)
+
+=== blockstates/lime_concrete.json
+{
+  "variants": {
+    "": {
+      "model": "minecraft:block/lime_concrete"
+    }
+  }
+}
+--- models/block/lime_concrete.json parent=minecraft:block/cube_all textures={'all': 'minecraft:block/lime_concrete'}
+--- textures/block/lime_concrete.png 16x16 colortype-3 (222 bytes)
+
+=== blockstates/pink_concrete.json
+{
+  "variants": {
+    "": {
+      "model": "minecraft:block/pink_concrete"
+    }
+  }
+}
+--- models/block/pink_concrete.json parent=minecraft:block/cube_all textures={'all': 'minecraft:block/pink_concrete'}
+--- textures/block/pink_concrete.png 16x16 colortype-3 (212 bytes)
+
+=== blockstates/gray_concrete.json
+{
+  "variants": {
+    "": {
+      "model": "minecraft:block/gray_concrete"
+    }
+  }
+}
+--- models/block/gray_concrete.json parent=minecraft:block/cube_all textures={'all': 'minecraft:block/gray_concrete'}
+--- textures/block/gray_concrete.png 16x16 colortype-3 (153 bytes)
+
+=== blockstates/light_gray_concrete.json
+{
+  "variants": {
+    "": {
+      "model": "minecraft:block/light_gray_concrete"
+    }
+  }
+}
+--- models/block/light_gray_concrete.json parent=minecraft:block/cube_all textures={'all': 'minecraft:block/light_gray_concrete'}
+--- textures/block/light_gray_concrete.png 16x16 colortype-3 (167 bytes)
+
+=== blockstates/cyan_concrete.json
+{
+  "variants": {
+    "": {
+      "model": "minecraft:block/cyan_concrete"
+    }
+  }
+}
+--- models/block/cyan_concrete.json parent=minecraft:block/cube_all textures={'all': 'minecraft:block/cyan_concrete'}
+--- textures/block/cyan_concrete.png 16x16 colortype-3 (180 bytes)
+
+=== blockstates/purple_concrete.json
+{
+  "variants": {
+    "": {
+      "model": "minecraft:block/purple_concrete"
+    }
+  }
+}
+--- models/block/purple_concrete.json parent=minecraft:block/cube_all textures={'all': 'minecraft:block/purple_concrete'}
+--- textures/block/purple_concrete.png 16x16 colortype-3 (181 bytes)
+
+=== blockstates/blue_concrete.json
+{
+  "variants": {
+    "": {
+      "model": "minecraft:block/blue_concrete"
+    }
+  }
+}
+--- models/block/blue_concrete.json parent=minecraft:block/cube_all textures={'all': 'minecraft:block/blue_concrete'}
+--- textures/block/blue_concrete.png 16x16 colortype-3 (171 bytes)
+
+=== blockstates/brown_concrete.json
+{
+  "variants": {
+    "": {
+      "model": "minecraft:block/brown_concrete"
+    }
+  }
+}
+--- models/block/brown_concrete.json parent=minecraft:block/cube_all textures={'all': 'minecraft:block/brown_concrete'}
+--- textures/block/brown_concrete.png 16x16 colortype-3 (173 bytes)
+
+=== blockstates/green_concrete.json
+{
+  "variants": {
+    "": {
+      "model": "minecraft:block/green_concrete"
+    }
+  }
+}
+--- models/block/green_concrete.json parent=minecraft:block/cube_all textures={'all': 'minecraft:block/green_concrete'}
+--- textures/block/green_concrete.png 16x16 colortype-3 (174 bytes)
+
+=== blockstates/red_concrete.json
+{
+  "variants": {
+    "": {
+      "model": "minecraft:block/red_concrete"
+    }
+  }
+}
+--- models/block/red_concrete.json parent=minecraft:block/cube_all textures={'all': 'minecraft:block/red_concrete'}
+--- textures/block/red_concrete.png 16x16 colortype-3 (195 bytes)
+
+=== blockstates/black_concrete.json
+{
+  "variants": {
+    "": {
+      "model": "minecraft:block/black_concrete"
+    }
+  }
+}
+--- models/block/black_concrete.json parent=minecraft:block/cube_all textures={'all': 'minecraft:block/black_concrete'}
+--- textures/block/black_concrete.png 16x16 colortype-3 (172 bytes)
+
+=== the generated block_dig rows (the REAL registry's own verdict)
+  orange_concrete: destroy_speed=1.8 requires_tool=True
+  magenta_concrete: destroy_speed=1.8 requires_tool=True
+  light_blue_concrete: destroy_speed=1.8 requires_tool=True
+  yellow_concrete: destroy_speed=1.8 requires_tool=True
+  lime_concrete: destroy_speed=1.8 requires_tool=True
+  pink_concrete: destroy_speed=1.8 requires_tool=True
+  gray_concrete: destroy_speed=1.8 requires_tool=True
+  light_gray_concrete: destroy_speed=1.8 requires_tool=True
+  cyan_concrete: destroy_speed=1.8 requires_tool=True
+  purple_concrete: destroy_speed=1.8 requires_tool=True
+  blue_concrete: destroy_speed=1.8 requires_tool=True
+  brown_concrete: destroy_speed=1.8 requires_tool=True
+  green_concrete: destroy_speed=1.8 requires_tool=True
+  red_concrete: destroy_speed=1.8 requires_tool=True
+  black_concrete: destroy_speed=1.8 requires_tool=True
+
+=== the generated block_sounds rows (SOUND_BREAK column)
+  orange_concrete: block.stone.break
+  magenta_concrete: block.stone.break
+  light_blue_concrete: block.stone.break
+  yellow_concrete: block.stone.break
+  lime_concrete: block.stone.break
+  pink_concrete: block.stone.break
+  gray_concrete: block.stone.break
+  light_gray_concrete: block.stone.break
+  cyan_concrete: block.stone.break
+  purple_concrete: block.stone.break
+  blue_concrete: block.stone.break
+  brown_concrete: block.stone.break
+  green_concrete: block.stone.break
+  red_concrete: block.stone.break
+  black_concrete: block.stone.break
+
+=== the generated block_drops rows (self-entry pools)
+  orange_concrete -> drops orange_concrete
+  magenta_concrete -> drops magenta_concrete
+  light_blue_concrete -> drops light_blue_concrete
+  yellow_concrete -> drops yellow_concrete
+  lime_concrete -> drops lime_concrete
+  pink_concrete -> drops pink_concrete
+  gray_concrete -> drops gray_concrete
+  light_gray_concrete -> drops light_gray_concrete
+  cyan_concrete -> drops cyan_concrete
+  purple_concrete -> drops purple_concrete
+  blue_concrete -> drops blue_concrete
+  brown_concrete -> drops brown_concrete
+  green_concrete -> drops green_concrete
+  red_concrete -> drops red_concrete
+  black_concrete -> drops black_concrete
