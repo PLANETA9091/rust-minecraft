@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 402] = [
+pub const RUNTIME_PALETTE: [&str; 410] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1256,6 +1256,44 @@ pub const RUNTIME_PALETTE: [&str; 402] = [
     // displaces (396 -> 402 the 658/670/672/673/674 precedent wears).
     "cobblestone", "smooth_stone", "stone_bricks", "mossy_stone_bricks",
     "cracked_stone_bricks", "chiseled_stone_bricks",
+    // THE DESERT'S OWN SHELF (the autopush-676 round): the sandstone
+    // family's eight seats the builder's desert banks — the regular
+    // quartet the red quartet the door family's own order the tail
+    // wears. javap Blocks clinit the 26.2 jar (pinned sha1 2dc72797):
+    // the sandstone the lambda$static$NNN factory's Properties.of().
+    // mapColor(MaterialColor.SAND).instrument(NoteBlockInstrument.
+    // SNARE).requiresCorrectToolForDrops().strength(0.8f, 0.8f).sound(
+    // SoundType.STONE) row the mineable/pickaxe tag answers (the
+    // generated block_dig table the 0.8 + requires-tool rows the
+    // jar's REAL bootstrapped registry banks — the chiseled/cut trio
+    // the SAME 0.8 row wears, the smooth pair the 2.0 row keeps, the
+    // bare hand the whole family's drop refuses), the block.stone.
+    // break voice the generated block_sounds table every row banks,
+    // the self-entry drop pool the block_drops table speaks. The
+    // blockstates the jar's own three shapes carry — the sandstone/
+    // red_sandstone.json the cube_bottom_top parent the THREE refs
+    // speak (top={name}_top, bottom={name}_bottom, side={name} —
+    // the TNT precedent the per-face lane wears), the cut/chiseled
+    // pair the cube_column parent the end/side refs keep (end={name}_
+    // top the chiseled pair's own cut rows answer), the smooth pair
+    // the cube_all parent the ONE #all ref wears (all={name}_top —
+    // the smooth master the jar's own top tile re-wears). The ten
+    // {name}.png masters the jar's own 16x16 colortype-3 tiles bank
+    // (sandstone/_top/_bottom + red_sandstone/_top/_bottom + the
+    // cut/chiseled pair each — NEW tiles the append-only tail seats,
+    // every pre-existing row the same pixels + tints + names keeps).
+    // The ONE "{name}" registry name its kind ALONE speaks (no strip
+    // law — each sandstone its own Block + BlockItem pairing the
+    // Items clinit's registerBlock rows answer), the generated dig/
+    // drops/sounds/items tables the rows already bank — the NAME_OF
+    // row the lanes wire. The seats the CONTIGUOUS tail the kind ids
+    // wear (402..409 — the family order the quartets keep), the
+    // END_PORTAL kind the beyond-table seat the family's growth
+    // displaces (402 -> 410 the 658/670/672/673/674/675 precedent
+    // wears).
+    "sandstone", "chiseled_sandstone", "cut_sandstone", "smooth_sandstone",
+    "red_sandstone", "chiseled_red_sandstone", "cut_red_sandstone",
+    "smooth_red_sandstone",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
