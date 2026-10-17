@@ -915,8 +915,10 @@ pub const END_STONE: u16 = 89;
 /// beyond-table 384 the same law keeps — the `id < N_KINDS` guards
 /// the tile lookups' skip verdict the bigger tail keeps — the
 /// autopush-673 round the graded ladder's own 14 rungs the tail
-/// banks).
-pub const END_PORTAL: u16 = 384;
+/// banks, the autopush-674 round the PLANKS' OWN TWELVE SEATS the
+/// 384..395 tail rows bank — the kind's own seat the beyond-table
+/// 396 the same law keeps).
+pub const END_PORTAL: u16 = 396;
 
 /// THE BUTTON'S OWN PAIR (the autopush-660 round): the redstone pulse's
 /// own block finally RENDERS, PLACES, PRESSES and PULSES — javap
@@ -1242,6 +1244,50 @@ pub const REDSTONE_WIRE_P11: u16 = 380;
 pub const REDSTONE_WIRE_P12: u16 = 381;
 pub const REDSTONE_WIRE_P13: u16 = 382;
 pub const REDSTONE_WIRE_P14: u16 = 383;
+
+/// THE PLANKS' OWN TWELVE SEATS (the autopush-674 round): the twelve
+/// wood families' build material the world never carried — javap
+/// `Blocks` clinit the 26.2 jar (pinned sha1 2dc72797, javap
+/// 21.0.12): each plank the lambda$static$NNN factory's
+/// `Properties.of().mapColor(MaterialColor.{WOOD..}).strength(2.0f,
+/// 3.0f).sound(SoundType.WOOD).ignitedByLava()` row banks (the
+/// hardness 2.0 the axe's own speed the dig walk answers, the
+/// resistance 3.0 the blast rows the same strength pair speaks, the
+/// WOOD SoundType the block.wood.{break,step,place,hit,fall} events
+/// the generated sounds table carries, the mapColor the planks' own
+/// hue the per-wood MaterialColor row keeps). The ONE blockstate
+/// {stem}_planks.json the generic single-variant map carries ("") —
+/// the block/{stem}_planks cube_all model the ONE #all texture ref
+/// speaks — the {stem}_planks.png master the jar's own 16x16
+/// colortype-3 tile banks (the tile the button/plate families' own
+/// models already banked — the reused index the append-only law the
+/// equivalence proof scripts/verify_atlas_full.py keeps). The ONE
+/// "{stem}_planks" registry name its kind ALONE speaks (no strip
+/// law — each plank its own Block + BlockItem pairing the Items
+/// clinit's registerBlock rows answer, the generated items table
+/// the item ids already banks, the mineable/axe tag + the block_dig
+/// (2.0, false) rows + the block_sounds wood family + the
+/// block_drops self-item pool the generated tables carry — the
+/// NAME_OF row the dig/drop/sound/place lanes wire). The full-cube
+/// verdict the DEFAULT lane answers (no special family — the solid
+/// collision the cube's own boxes bank, the six faces the ONE tile
+/// every face wears). The seats the CONTIGUOUS tail the kind ids
+/// wear (384..395 — the door/button family order the same twelve
+/// woods keeps), the END_PORTAL kind the beyond-table seat the
+/// family's growth displaces (384 -> 396 the 658/670/672/673
+/// precedent wears).
+pub const OAK_PLANKS: u16 = 384;
+pub const SPRUCE_PLANKS: u16 = 385;
+pub const BIRCH_PLANKS: u16 = 386;
+pub const JUNGLE_PLANKS: u16 = 387;
+pub const ACACIA_PLANKS: u16 = 388;
+pub const DARK_OAK_PLANKS: u16 = 389;
+pub const MANGROVE_PLANKS: u16 = 390;
+pub const CHERRY_PLANKS: u16 = 391;
+pub const PALE_OAK_PLANKS: u16 = 392;
+pub const BAMBOO_PLANKS: u16 = 393;
+pub const CRIMSON_PLANKS: u16 = 394;
+pub const WARPED_PLANKS: u16 = 395;
 
 /// THE LADDER'S OWN FAMILY SEATS (the rung order the power order
 /// wears — the index-0 row the power-1 kind banks, the [p - 1] seat
@@ -2882,9 +2928,10 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 /// bank — the autopush-669 round the ladder's own wood rungs the 328..349 rows
 /// bank — the autopush-670 round the metal rungs the 350..367 rows
 /// bank — the autopush-672 round the lamp's own pair the 368/369 rows
-/// bank — the table the 370 rows the END_PORTAL the beyond-table seat
-/// the displaced law keeps.
-pub const NAME_OF: [&str; 384] = [
+/// bank — the autopush-674 round the planks' own twelve seats the
+/// 384..395 rows bank — the table the 396 rows the END_PORTAL the
+/// beyond-table seat the displaced law keeps.
+pub const NAME_OF: [&str; 396] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -3364,6 +3411,16 @@ pub const NAME_OF: [&str; 384] = [
     "redstone_wire", "redstone_wire", "redstone_wire", "redstone_wire",
     "redstone_wire", "redstone_wire", "redstone_wire", "redstone_wire",
     "redstone_wire", "redstone_wire",
+    // THE PLANKS' OWN TWELVE ROWS (the autopush-674 round — each plank
+    // its OWN "{stem}_planks" registry name the ONE kind speaks: the
+    // BlockItem pairing the Items clinit's registerBlock rows answer,
+    // the dig row (2.0, false) the mineable/axe tag the generated
+    // tables bank, the block.wood sound family and the self-item drop
+    // pool the lanes keep, the placement lane the ONE name the reverse
+    // walk answers — no strip law the twelve rows never share)
+    "oak_planks", "spruce_planks", "birch_planks", "jungle_planks",
+    "acacia_planks", "dark_oak_planks", "mangrove_planks", "cherry_planks",
+    "pale_oak_planks", "bamboo_planks", "crimson_planks", "warped_planks",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -12786,7 +12843,7 @@ mod tests {
         assert_eq!(NAME_OF[BUTTON_ON as usize], "stone_button");
         assert_eq!(BUTTON + 1, BUTTON_ON, "the +1 seat the OFF/ON ladder wears");
         assert_eq!(
-            END_PORTAL, 384,
+            END_PORTAL, 396,
             "the displaced seat the wire pair's own tail banks"
         );
         // THE PULSE'S OWN CLOCK (javap press pc 28-37 — the STONE
@@ -13495,10 +13552,10 @@ mod tests {
         assert_eq!(REDSTONE_LAMP, 368);
         assert_eq!(REDSTONE_LAMP_LIT, 369);
         assert_eq!(
-            END_PORTAL, 384,
+            END_PORTAL, 396,
             "the displaced seat the lamp pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 384, "the palette the lamp pair banks");
+        assert_eq!(atlas::N_KINDS, 396, "the palette the lamp pair banks");
         assert!(is_redstone_lamp(REDSTONE_LAMP) && is_redstone_lamp(REDSTONE_LAMP_LIT));
         assert!(!is_redstone_lamp(REDSTONE_WIRE) && !is_redstone_lamp(STONE));
         assert!(!redstone_lamp_lit(REDSTONE_LAMP));
@@ -13592,10 +13649,10 @@ mod tests {
         assert_eq!(REDSTONE_WIRE, 320);
         assert_eq!(REDSTONE_WIRE_ON, 321);
         assert_eq!(
-            END_PORTAL, 384,
+            END_PORTAL, 396,
             "the displaced seat the wire pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 384, "the palette the wire pair banks");
+        assert_eq!(atlas::N_KINDS, 396, "the palette the wire pair banks");
         assert!(is_redstone_wire(REDSTONE_WIRE) && is_redstone_wire(REDSTONE_WIRE_ON));
         assert!(!is_redstone_wire(LEVER) && !is_redstone_wire(OAK_PRESSURE_PLATE));
         assert!(!wire_powered(REDSTONE_WIRE));
@@ -13746,10 +13803,10 @@ mod tests {
             "the rungs the contiguous tail banks"
         );
         assert_eq!(
-            END_PORTAL, 384,
+            END_PORTAL, 396,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 384, "the palette the graded ladder banks");
+        assert_eq!(atlas::N_KINDS, 396, "the palette the graded ladder banks");
         // THE POWER READ'S OWN ROUND TRIP (the seat the kind the
         // inverse fold answers, the unknown id the None keeps)
         assert_eq!(wire_power_of(REDSTONE_WIRE), Some(0));
@@ -13889,6 +13946,154 @@ mod tests {
     }
 
     #[test]
+    fn the_planks_the_twelve_seats_the_registry_and_the_lanes_wear() {
+        // THE PLANKS' OWN LAWS (the autopush-674 round — the twelve
+        // wood families' build material the world never carried): the
+        // seats the contiguous tail the 384..395 rows wear (the
+        // door/button family order the same twelve woods keeps), the
+        // END_PORTAL the beyond-table seat the displacement keeps (the
+        // 396 the `id < N_KINDS` guards the bigger tail banks), the
+        // ONE "{stem}_planks" registry entry its kind ALONE speaks
+        // (no strip law the twelve rows never share — the BlockItem
+        // pairing the Items clinit's registerBlock rows answer), the
+        // dig row (2.0, false) the strength(2.0f, 3.0f) ctor arg
+        // banks, the block.wood sound family the generated table
+        // carries, the self-entry the drops table banks, the
+        // full-cube verdict the default collision lane answers, the
+        // six faces the ONE tile every face wears (the tile the
+        // button/plate families' own models already banked — the
+        // reused index the append-only law the equivalence proof
+        // scripts/verify_atlas_full.py keeps), the placement lane the
+        // ONE name the reverse walk answers.
+        use mc_registry::generated::atlas;
+        const PLANKS: [(&str, u16, &str); 12] = [
+            ("oak_planks", OAK_PLANKS, "block.wood.break"),
+            ("spruce_planks", SPRUCE_PLANKS, "block.wood.break"),
+            ("birch_planks", BIRCH_PLANKS, "block.wood.break"),
+            ("jungle_planks", JUNGLE_PLANKS, "block.wood.break"),
+            ("acacia_planks", ACACIA_PLANKS, "block.wood.break"),
+            ("dark_oak_planks", DARK_OAK_PLANKS, "block.wood.break"),
+            ("mangrove_planks", MANGROVE_PLANKS, "block.wood.break"),
+            ("cherry_planks", CHERRY_PLANKS, "block.cherry_wood.break"),
+            ("pale_oak_planks", PALE_OAK_PLANKS, "block.wood.break"),
+            ("bamboo_planks", BAMBOO_PLANKS, "block.bamboo_wood.break"),
+            ("crimson_planks", CRIMSON_PLANKS, "block.nether_wood.break"),
+            ("warped_planks", WARPED_PLANKS, "block.nether_wood.break"),
+        ];
+        // THE SEATS' OWN LADDER (the 384..395 contiguous tail the
+        // family order banks, the END_PORTAL the displaced 396 keeps)
+        assert_eq!(OAK_PLANKS, 384);
+        assert_eq!(WARPED_PLANKS, 395);
+        assert_eq!(
+            OAK_PLANKS + 11,
+            WARPED_PLANKS,
+            "the twelve seats the contiguous tail banks"
+        );
+        assert_eq!(
+            END_PORTAL, 396,
+            "the displaced seat the planks' own tail banks"
+        );
+        assert_eq!(atlas::N_KINDS, 396, "the palette the planks' twelve banks");
+        for (i, (name, kind, voice)) in PLANKS.iter().enumerate() {
+            let seat = OAK_PLANKS + i as u16;
+            assert_eq!(*kind, seat, "the seat the family order banks");
+            // THE ONE REGISTRY NAME ITS KIND ALONE SPEAKS (the
+            // NAME_OF row + the generated KIND_NAMES/REGISTRY_NAMES
+            // rows the same entry the three tables keep)
+            assert_eq!(NAME_OF[*kind as usize], *name, "the NAME_OF row the kind banks");
+            assert_eq!(
+                atlas::KIND_NAMES[*kind as usize],
+                *name,
+                "the palette kind name the regen banks"
+            );
+            assert_eq!(
+                atlas::REGISTRY_NAMES[*kind as usize],
+                *name,
+                "the registry id the ONE name answers"
+            );
+            // THE PLACEABLE LANE (the BlockItem pairing the reverse
+            // walk serves — the item id the generated table banks)
+            assert_eq!(
+                World::placeable_block(name),
+                Some(*kind),
+                "the plank item the placement lane grants"
+            );
+            assert!(
+                mc_registry::item_id_by_name(name).is_some(),
+                "the item id the registry banks"
+            );
+            // THE DIG ROW (javap the strength(2.0f, 3.0f) ctor arg —
+            // the 2.0 hardness the axe's own speed the mineable/axe
+            // tag answers, the requires-correct-tool bit the false
+            // keeps — the bare hand the planks still drop)
+            let (hard, tool) = crate::dig::DigState::block_dig_row(*kind);
+            assert!(
+                (hard - 2.0).abs() < 1e-4,
+                "the 2.0 strength the {name} dig row wears"
+            );
+            assert!(!tool, "the no-correct-tool gate the wood family keeps");
+            // THE SELF-ENTRY THE DROPS TABLE BANKS (the loot table's
+            // own pool the planks item every dig rolls)
+            assert!(
+                mc_registry::generated::block_drops::drops(name).is_some(),
+                "the self-entry the {name} drops table banks"
+            );
+            // THE SOUND FAMILY (javap SoundType.WOOD the standard
+            // woods speaks, the CHERRY_WOOD/BAMBOO_WOOD/NETHER_WOOD
+            // set types the cherry/bamboo/crimson/warped rungs wear —
+            // the per-wood break event the generated table carries)
+            let idx = mc_registry::generated::block_sounds::sound_index(name)
+                .expect("the sound row the table banks");
+            let break_evt = mc_registry::generated::block_sounds::SOUND_BREAK[idx];
+            assert_eq!(
+                break_evt, *voice,
+                "the SoundType the {name} break row speaks"
+            );
+            // THE SIX FACES THE ONE TILE EVERY FACE WEARS (the
+            // cube_all model the ONE #all ref the generic lane
+            // resolves, the tile the pre-existing bank's own index
+            // keeps — the button/plate families' models the same
+            // texture path banked)
+            let row = atlas::FACE_TILES[*kind as usize];
+            assert!(
+                row.iter().all(|t| *t == row[0]),
+                "the six faces the ONE tile the cube_all keeps"
+            );
+            assert!(
+                (row[0] as usize) < atlas::TILE_NAMES.len(),
+                "the tile seat the bank's own index keeps"
+            );
+            assert!(
+                atlas::TILE_NAMES[row[0] as usize].ends_with(name),
+                "the tile the {name} master answers"
+            );
+        }
+        // THE FULL-CUBE VERDICT THE DEFAULT COLLISION LANE ANSWERS
+        // (javap the planks' Properties the no noCollision arm carries
+        // — the solid box the cube's own shape banks, the wire's
+        // pass-through the planks never wear)
+        assert_eq!(
+            collision_shape(OAK_PLANKS),
+            collision_shape(STONE),
+            "the solid cube the planks' own shape keeps"
+        );
+        // THE UNKNOWN KINDS THE REFUSALS KEEP (the non-plank kinds the
+        // lanes never answer — the beyond-table seat the item lane
+        // refuses, the table lengths the same 396 the one law keeps)
+        assert_eq!(
+            World::placeable_block("end_portal"),
+            None,
+            "the portal the item lane refuses"
+        );
+        assert_eq!(NAME_OF.len(), 396, "the NAME_OF table the one length keeps");
+        assert_eq!(
+            NAME_OF.len(),
+            atlas::N_KINDS,
+            "the palette rows the NAME_OF rows the one count banks"
+        );
+    }
+
+    #[test]
     fn the_redstone_torch_the_not_gate_and_the_source_arms_wear() {
         // THE REDSTONE TORCH'S OWN LAWS (the autopush-666 round — javap
         // RedstoneTorchBlock the 26.2 jar the probe scripts/jar_work/
@@ -13912,10 +14117,10 @@ mod tests {
         assert_eq!(REDSTONE_TORCH, 322);
         assert_eq!(REDSTONE_TORCH_OFF, 323);
         assert_eq!(
-            END_PORTAL, 384,
+            END_PORTAL, 396,
             "the displaced seat the torch pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 384, "the palette the torch pair banks");
+        assert_eq!(atlas::N_KINDS, 396, "the palette the torch pair banks");
         assert!(is_redstone_torch(REDSTONE_TORCH) && is_redstone_torch(REDSTONE_TORCH_OFF));
         assert!(!is_redstone_torch(TORCH) && !is_redstone_torch(LEVER));
         assert!(redstone_torch_lit(REDSTONE_TORCH));
@@ -14055,8 +14260,8 @@ mod tests {
         use mc_registry::generated::atlas;
         assert_eq!(REDSTONE_WALL_TORCH, 324);
         assert_eq!(REDSTONE_WALL_TORCH_OFF, 325);
-        assert_eq!(END_PORTAL, 384);
-        assert_eq!(atlas::N_KINDS, 384, "the palette the wall pair banks");
+        assert_eq!(END_PORTAL, 396);
+        assert_eq!(atlas::N_KINDS, 396, "the palette the wall pair banks");
         assert!(
             is_redstone_torch(REDSTONE_WALL_TORCH) && is_redstone_torch(REDSTONE_WALL_TORCH_OFF),
             "the wall pair the family's tail banks"
@@ -14299,9 +14504,9 @@ mod tests {
         use mc_registry::generated::atlas;
         assert_eq!(OAK_TRAPDOOR, 326);
         assert_eq!(OAK_TRAPDOOR_OPEN, 327);
-        assert_eq!(END_PORTAL, 384);
+        assert_eq!(END_PORTAL, 396);
         assert_eq!(
-            atlas::N_KINDS, 384,
+            atlas::N_KINDS, 396,
             "the palette the trapdoor pair banks"
         );
         assert_eq!(OAK_TRAPDOOR + 1, OAK_TRAPDOOR_OPEN, "the +1 mate wears");
@@ -14447,8 +14652,8 @@ mod tests {
         assert_eq!(CHERRY_TRAPDOOR, 340);
         assert_eq!(WARPED_TRAPDOOR, 348);
         assert_eq!(WARPED_TRAPDOOR_OPEN, 349);
-        assert_eq!(END_PORTAL, 384);
-        assert_eq!(atlas::N_KINDS, 384, "the palette the ladder banks");
+        assert_eq!(END_PORTAL, 396);
+        assert_eq!(atlas::N_KINDS, 396, "the palette the ladder banks");
         // THE CONTIGUITY'S OWN LAW (the 22 kinds the range covers —
         // the neighbors the family fn refuses)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -14561,8 +14766,8 @@ mod tests {
         assert_eq!(WAXED_OXIDIZED_COPPER_TRAPDOOR, 364);
         assert_eq!(IRON_TRAPDOOR, 366);
         assert_eq!(IRON_TRAPDOOR_OPEN, 367);
-        assert_eq!(END_PORTAL, 384);
-        assert_eq!(atlas::N_KINDS, 384, "the palette the metal rungs bank");
+        assert_eq!(END_PORTAL, 396);
+        assert_eq!(atlas::N_KINDS, 396, "the palette the metal rungs bank");
         // THE CONTIGUITY'S OWN LAW (the 42 kinds the range covers —
         // the waxed pairs the ±1 mate the parity answers)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -14727,7 +14932,7 @@ mod tests {
         assert_eq!(OAK_DOOR_OPEN, 92);
         assert_eq!(OAK_DOOR_UPPER_OPEN, 93);
         assert_eq!(
-            END_PORTAL, 384,
+            END_PORTAL, 396,
             "the displaced seat the wire pair's own tail banks"
         );
         // THE WOOD LADDER'S OWN SEATS (the dev-43 round — the eleven
@@ -14933,7 +15138,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 384, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 396, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)

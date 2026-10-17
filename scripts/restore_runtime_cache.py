@@ -96,7 +96,19 @@ def main():
     # `jar/<rest>` (the bare law, only-if-absent — the generated table's
     # own sha1 pins keep the copies honest).
     with zipfile.ZipFile(jar_path) as z:
-        for name in ("assets/minecraft/sounds.json",):
+        for name in (
+            "assets/minecraft/sounds.json",
+            # the 26.x asset index no longer ships the en_us table — the
+            # jar copy the lang lane's parse walk reads (the wiped-sandbox
+            # restore the death/give/chat lanes' translated rows demand)
+            "assets/minecraft/lang/en_us.json",
+            # the 26.x texts/ lane — the splash/boot texts the title
+            # screen's own golden the splash picker reads
+            "assets/minecraft/texts/splashes.txt",
+            "assets/minecraft/texts/end.txt",
+            "assets/minecraft/texts/postcredits.txt",
+            "assets/minecraft/texts/credits.json",
+        ):
             try:
                 data = z.read(name)
             except KeyError:

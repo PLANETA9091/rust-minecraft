@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 384] = [
+pub const RUNTIME_PALETTE: [&str; 396] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1202,6 +1202,32 @@ pub const RUNTIME_PALETTE: [&str; 384] = [
     "redstone_wire_p07", "redstone_wire_p08", "redstone_wire_p09",
     "redstone_wire_p10", "redstone_wire_p11", "redstone_wire_p12",
     "redstone_wire_p13", "redstone_wire_p14",
+    // THE PLANKS' OWN TWELVE SEATS (the autopush-674 round): the twelve
+    // wood families' build material the world never carried — the
+    // simplest full-cube family the palette's append-only law banks.
+    // javap Blocks clinit the 26.2 jar (pinned sha1 2dc72797): each
+    // plank the BlockBehaviour.Properties.of().mapColor(MaterialColor.
+    // WOOD..).strength(2.0f, 3.0f).sound(SoundType.WOOD).ignitedByLava()
+    // row the lambda$static$NNN factory answers (oak_planks the
+    // mapColor planks row 148 the comment law wears — the per-wood
+    // mapColor the SAME MaterialColor family the planks' own hue
+    // keeps), the ONE blockstate {stem}_planks.json the generic
+    // single-variant map carries ("" -> block/{stem}_planks the
+    // cube_all parent the ONE #all texture ref speaks), the
+    // {stem}_planks.png master the jar's own 16x16 colortype-3 tile
+    // banks, the ONE "{stem}_planks" registry name its kind alone
+    // speaks (no strip law — each plank its own Block + BlockItem
+    // pairing the Items clinit's registerBlock rows answer), the
+    // mineable/axe tag + the block_dig (2.0, false) rows + the
+    // block_sounds wood family + the block_drops self-item pool the
+    // generated tables already bank — the NAME_OF row the lanes wire.
+    // The seats the CONTIGUOUS tail the kind ids wear (385..396 — the
+    // door/button family order the same twelve woods keeps), the
+    // END_PORTAL kind the beyond-table seat the family's growth
+    // displaces (384 -> 396 the 658/670/672/673 precedent wears).
+    "oak_planks", "spruce_planks", "birch_planks", "jungle_planks",
+    "acacia_planks", "dark_oak_planks", "mangrove_planks", "cherry_planks",
+    "pale_oak_planks", "bamboo_planks", "crimson_planks", "warped_planks",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
