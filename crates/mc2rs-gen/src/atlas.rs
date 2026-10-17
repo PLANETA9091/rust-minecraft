@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 425] = [
+pub const RUNTIME_PALETTE: [&str; 442] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1333,6 +1333,49 @@ pub const RUNTIME_PALETTE: [&str; 425] = [
     "lime_wool", "pink_wool", "gray_wool", "light_gray_wool",
     "cyan_wool", "purple_wool", "blue_wool", "brown_wool",
     "green_wool", "red_wool", "black_wool",
+    // THE POTTER'S OWN SEVENTEEN KILNS (the autopush-678 round): the
+    // terracotta family's seventeen seats the builder's kiln banks —
+    // the sixteen dyed rungs the clinit ladder's own order the tail
+    // wears, the PLAIN kind its own register the dyed walk's follower
+    // banks (javap Blocks clinit the 26.2 jar, pinned sha1 2dc72797:
+    // pc 16200 the `ColorCollection.registerBlocks(...,
+    // BlockItemIds.DYED_TERRACOTTA)` row the sixteen colors one
+    // lambda family speaks, pc 16914 the plain
+    // `register(BlockItemIds.TERRACOTTA, ...mapColor(COLOR_ORANGE).
+    // instrument(BASEDRUM).requiresCorrectToolForDrops().strength(
+    // 1.25, 4.2))` row the dyed walk's own follower wears — the
+    // clinit order the dyed rungs FIRST the plain seat the tail
+    // keeps, the DIG table's own ladder answers: the colored
+    // 484..499 rows the plain 554 row the same 1.25 + requires-tool
+    // law every seat banks — the pickaxe the whole family's drop
+    // demands, the bare hand the drop refuses), the block.stone.
+    // break voice the generated block_sounds table every seat banks
+    // (the STONE SoundType the SoundType.TERRACOTTA alias wears —
+    // the ONE block.stone row the plain + dyed seats share), the
+    // self-entry drop pool the block_drops table speaks. The
+    // blockstates the jar's own ONE shape carry — the {name}.json
+    // the cube_all parent the ONE #all ref wears (all={name}), the
+    // FACE_TILES rows the one-tile lane banks. The SEVENTEEN {name}.
+    // png masters the jar's own 16x16 colortype-3 tiles bank — NEW
+    // tiles the append-only tail seats (700 -> 717: the sixteen
+    // {color}_terracotta rungs + the plain terracotta master — the
+    // clinit ladder's own order the tail wears), every pre-existing
+    // row the same pixels + tints + names keeps. The ONE "{name}"
+    // registry name its kind ALONE speaks (no strip law — each
+    // seat its own Block + BlockItem pairing the Items clinit's
+    // registerBlock rows answer), the generated dig/drops/sounds/
+    // items tables the rows already bank — the NAME_OF row the
+    // lanes wire. The seats the CONTIGUOUS tail the kind ids wear
+    // (425..441 — the dyed rungs 425..440 the plain kiln the 441
+    // seat keeps), the END_PORTAL kind the beyond-table seat the
+    // family's growth displaces (425 -> 442 the
+    // 658/670/672/673/674/675/676/677 precedent wears).
+    "white_terracotta", "orange_terracotta", "magenta_terracotta",
+    "light_blue_terracotta", "yellow_terracotta", "lime_terracotta",
+    "pink_terracotta", "gray_terracotta", "light_gray_terracotta",
+    "cyan_terracotta", "purple_terracotta", "blue_terracotta",
+    "brown_terracotta", "green_terracotta", "red_terracotta",
+    "black_terracotta", "terracotta",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.

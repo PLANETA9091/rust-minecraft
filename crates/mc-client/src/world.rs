@@ -927,8 +927,13 @@ pub const END_STONE: u16 = 89;
 /// 410..424 tail rows bank (the WHITE kind its clinit position the
 /// 76 seat keeps — the tail the orange..black rungs the append-only
 /// law banks) — the kind's own seat the beyond-table 425 the same
-/// law keeps).
-pub const END_PORTAL: u16 = 425;
+/// law keeps, the autopush-678 round the POTTER'S OWN SEVENTEEN
+/// KILNS the terracotta family's seventeen seats the 425..441
+/// tail rows bank (the dyed rungs the clinit ladder's own order
+/// the tail wears, the PLAIN kind its own register the dyed
+/// walk's follower banks) — the kind's own seat the beyond-table
+/// 442 the same law keeps).
+pub const END_PORTAL: u16 = 442;
 
 /// THE BUTTON'S OWN PAIR (the autopush-660 round): the redstone pulse's
 /// own block finally RENDERS, PLACES, PRESSES and PULSES — javap
@@ -1423,6 +1428,59 @@ pub const BROWN_WOOL: u16 = 421;
 pub const GREEN_WOOL: u16 = 422;
 pub const RED_WOOL: u16 = 423;
 pub const BLACK_WOOL: u16 = 424;
+
+/// THE POTTER'S OWN SEVENTEEN KILNS (the autopush-678 round): the
+/// terracotta family's seventeen seats the builder's kiln banks —
+/// javap Blocks clinit the 26.2 jar (pinned sha1 2dc72797): the
+/// sixteen dyed rungs ONE helper walk banks — pc 16200 the
+/// `ColorCollection.registerBlocks(..., BlockItemIds.DYED_
+/// TERRACOTTA)` row the sixteen colors one lambda family speaks,
+/// the PLAIN kind its own register the dyed walk's follower wears
+/// (pc 16914 the `register(BlockItemIds.TERRACOTTA, ...mapColor(
+/// COLOR_ORANGE).instrument(BASEDRUM).requiresCorrectToolForDrops()
+/// .strength(1.25, 4.2))` row the carpet collection's own follower
+/// speaks — the clinit order the dyed rungs FIRST the plain seat
+/// the tail keeps), the per-seat rows the generated block_dig
+/// table the jar's REAL bootstrapped registry answers (the 1.25 +
+/// requires-tool rows every seat wears — the DIG ladder the dyed
+/// 484..499 rows the plain 554 row the same law banks, the
+/// pickaxe the whole family's drop demands, the bare hand the
+/// drop refuses), the block.stone.break voice the generated
+/// block_sounds table every seat banks (the STONE SoundType the
+/// SoundType.TERRACOTTA alias wears — the ONE block.stone row the
+/// plain + dyed seats share), the self-entry drop pool the
+/// block_drops table speaks. The blockstates the jar's own ONE
+/// shape carry — the {name}.json the cube_all parent the ONE #all
+/// ref wears (all={name} — the FACE_TILES rows the one-tile lane
+/// banks), the fire trio the family's own SILENCE keeps (no
+/// setFlammable row the kiln family wears — the furnace-baked
+/// clay the flame never feeds). The ONE "{name}" registry name its
+/// kind ALONE speaks (no strip law — each seat its own Block +
+/// BlockItem pairing the Items clinit's registerBlock rows
+/// answer), the placeable lane the reverse walk the pairing
+/// serves, the dig rows + the drop pools + the stone voice the
+/// generated tables already bank. The seats the CONTIGUOUS tail
+/// the kind ids wear (425..441 — the dyed rungs 425..440 the
+/// plain kiln the 441 seat keeps), the END_PORTAL kind the
+/// beyond-table seat the family's growth displaces (425 -> 442
+/// the 658/670/672/673/674/675/676/677 precedent wears).
+pub const WHITE_TERRACOTTA: u16 = 425;
+pub const ORANGE_TERRACOTTA: u16 = 426;
+pub const MAGENTA_TERRACOTTA: u16 = 427;
+pub const LIGHT_BLUE_TERRACOTTA: u16 = 428;
+pub const YELLOW_TERRACOTTA: u16 = 429;
+pub const LIME_TERRACOTTA: u16 = 430;
+pub const PINK_TERRACOTTA: u16 = 431;
+pub const GRAY_TERRACOTTA: u16 = 432;
+pub const LIGHT_GRAY_TERRACOTTA: u16 = 433;
+pub const CYAN_TERRACOTTA: u16 = 434;
+pub const PURPLE_TERRACOTTA: u16 = 435;
+pub const BLUE_TERRACOTTA: u16 = 436;
+pub const BROWN_TERRACOTTA: u16 = 437;
+pub const GREEN_TERRACOTTA: u16 = 438;
+pub const RED_TERRACOTTA: u16 = 439;
+pub const BLACK_TERRACOTTA: u16 = 440;
+pub const TERRACOTTA: u16 = 441;
 
 /// THE LADDER'S OWN FAMILY SEATS (the rung order the power order
 /// wears — the index-0 row the power-1 kind banks, the [p - 1] seat
@@ -3069,9 +3127,11 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 /// shelf the sandstone family's eight seats the 402..409 rows
 /// bank — the autopush-677 round the wool's own sixteen cloths the
 /// dyed rungs the 410..424 rows bank (the WHITE kind its clinit
-/// position the 76 row keeps) — the table the 425 rows the
-/// END_PORTAL the beyond-table seat the displaced law keeps.
-pub const NAME_OF: [&str; 425] = [
+/// position the 76 row keeps) — the autopush-678 round the potter's
+/// own seventeen kilns the 425..441 rows bank — the table the 442
+/// rows the END_PORTAL the beyond-table seat the displaced law
+/// keeps.
+pub const NAME_OF: [&str; 442] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -3587,11 +3647,27 @@ pub const NAME_OF: [&str; 425] = [
     // entry drop pools + the block.wool.break voice the generated
     // tables already bank, the placeable lane the reverse walk the
     // pairing serves (410..424 — the END_PORTAL the beyond-table
-    // 425 the displacement law keeps).
+    // 442 the displacement law keeps).
     "orange_wool", "magenta_wool", "light_blue_wool", "yellow_wool",
     "lime_wool", "pink_wool", "gray_wool", "light_gray_wool",
     "cyan_wool", "purple_wool", "blue_wool", "brown_wool",
     "green_wool", "red_wool", "black_wool",
+    // THE POTTER'S OWN SEVENTEEN KILNS (the autopush-678 round): the
+    // terracotta family's seventeen seats the tail rows bank — the
+    // ONE "{name}" registry id each kind ALONE speaks (no strip
+    // law the seventeen rows never share — the BlockItem pairing
+    // the Items clinit's registerBlock rows answer), the dig rows
+    // (1.25 + requires-tool) + the self-entry drop pools + the
+    // block.stone.break voice the generated tables already bank,
+    // the placeable lane the reverse walk the pairing serves (the
+    // dyed rungs 425..440 the plain kiln the 441 seat keeps — the
+    // END_PORTAL the beyond-table 442 the displacement law keeps).
+    "white_terracotta", "orange_terracotta", "magenta_terracotta",
+    "light_blue_terracotta", "yellow_terracotta", "lime_terracotta",
+    "pink_terracotta", "gray_terracotta", "light_gray_terracotta",
+    "cyan_terracotta", "purple_terracotta", "blue_terracotta",
+    "brown_terracotta", "green_terracotta", "red_terracotta",
+    "black_terracotta", "terracotta",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -13033,7 +13109,7 @@ mod tests {
         assert_eq!(NAME_OF[BUTTON_ON as usize], "stone_button");
         assert_eq!(BUTTON + 1, BUTTON_ON, "the +1 seat the OFF/ON ladder wears");
         assert_eq!(
-            END_PORTAL, 425,
+            END_PORTAL, 442,
             "the displaced seat the wire pair's own tail banks"
         );
         // THE PULSE'S OWN CLOCK (javap press pc 28-37 — the STONE
@@ -13742,10 +13818,10 @@ mod tests {
         assert_eq!(REDSTONE_LAMP, 368);
         assert_eq!(REDSTONE_LAMP_LIT, 369);
         assert_eq!(
-            END_PORTAL, 425,
+            END_PORTAL, 442,
             "the displaced seat the lamp pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 425, "the palette the lamp pair banks");
+        assert_eq!(atlas::N_KINDS, 442, "the palette the lamp pair banks");
         assert!(is_redstone_lamp(REDSTONE_LAMP) && is_redstone_lamp(REDSTONE_LAMP_LIT));
         assert!(!is_redstone_lamp(REDSTONE_WIRE) && !is_redstone_lamp(STONE));
         assert!(!redstone_lamp_lit(REDSTONE_LAMP));
@@ -13839,10 +13915,10 @@ mod tests {
         assert_eq!(REDSTONE_WIRE, 320);
         assert_eq!(REDSTONE_WIRE_ON, 321);
         assert_eq!(
-            END_PORTAL, 425,
+            END_PORTAL, 442,
             "the displaced seat the wire pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 425, "the palette the wire pair banks");
+        assert_eq!(atlas::N_KINDS, 442, "the palette the wire pair banks");
         assert!(is_redstone_wire(REDSTONE_WIRE) && is_redstone_wire(REDSTONE_WIRE_ON));
         assert!(!is_redstone_wire(LEVER) && !is_redstone_wire(OAK_PRESSURE_PLATE));
         assert!(!wire_powered(REDSTONE_WIRE));
@@ -13993,10 +14069,10 @@ mod tests {
             "the rungs the contiguous tail banks"
         );
         assert_eq!(
-            END_PORTAL, 425,
+            END_PORTAL, 442,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 425, "the palette the graded ladder banks");
+        assert_eq!(atlas::N_KINDS, 442, "the palette the graded ladder banks");
         // THE POWER READ'S OWN ROUND TRIP (the seat the kind the
         // inverse fold answers, the unknown id the None keeps)
         assert_eq!(wire_power_of(REDSTONE_WIRE), Some(0));
@@ -14142,7 +14218,7 @@ mod tests {
         // seats the contiguous tail the 384..395 rows wear (the
         // door/button family order the same twelve woods keeps), the
         // END_PORTAL the beyond-table seat the displacement keeps (the
-        // 425 the `id < N_KINDS` guards the bigger tail banks), the
+        // 442 the `id < N_KINDS` guards the bigger tail banks), the
         // ONE "{stem}_planks" registry entry its kind ALONE speaks
         // (no strip law the twelve rows never share — the BlockItem
         // pairing the Items clinit's registerBlock rows answer), the
@@ -14171,7 +14247,7 @@ mod tests {
             ("warped_planks", WARPED_PLANKS, "block.nether_wood.break"),
         ];
         // THE SEATS' OWN LADDER (the 384..395 contiguous tail the
-        // family order banks, the END_PORTAL the displaced 425 keeps)
+        // family order banks, the END_PORTAL the displaced 442 keeps)
         assert_eq!(OAK_PLANKS, 384);
         assert_eq!(WARPED_PLANKS, 395);
         assert_eq!(
@@ -14180,10 +14256,10 @@ mod tests {
             "the twelve seats the contiguous tail banks"
         );
         assert_eq!(
-            END_PORTAL, 425,
+            END_PORTAL, 442,
             "the displaced seat the planks' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 425, "the palette the planks' twelve banks");
+        assert_eq!(atlas::N_KINDS, 442, "the palette the planks' twelve banks");
         for (i, (name, kind, voice)) in PLANKS.iter().enumerate() {
             let seat = OAK_PLANKS + i as u16;
             assert_eq!(*kind, seat, "the seat the family order banks");
@@ -14269,13 +14345,13 @@ mod tests {
         );
         // THE UNKNOWN KINDS THE REFUSALS KEEP (the non-plank kinds the
         // lanes never answer — the beyond-table seat the item lane
-        // refuses, the table lengths the same 425 the one law keeps)
+        // refuses, the table lengths the same 442 the one law keeps)
         assert_eq!(
             World::placeable_block("end_portal"),
             None,
             "the portal the item lane refuses"
         );
-        assert_eq!(NAME_OF.len(), 425, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 442, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -14290,7 +14366,7 @@ mod tests {
         // builder's own stone shelf banks): the seats the contiguous
         // tail the 396..401 rows wear (the vanilla stone shelf's own
         // order keeps), the END_PORTAL the beyond-table seat the
-        // displacement keeps (the 425 the `id < N_KINDS` guards the
+        // displacement keeps (the 442 the `id < N_KINDS` guards the
         // bigger tail banks), the ONE "{name}" registry entry its kind
         // ALONE speaks (no strip law the six rows never share — the
         // BlockItem pairing the Items clinit's registerBlock rows
@@ -14316,7 +14392,7 @@ mod tests {
             ("chiseled_stone_bricks", CHISELED_STONE_BRICKS, 1.5),
         ];
         // THE SEATS' OWN LADDER (the 396..401 contiguous tail the
-        // stone shelf order banks, the END_PORTAL the displaced 425
+        // stone shelf order banks, the END_PORTAL the displaced 442
         // keeps)
         assert_eq!(COBBLESTONE, 396);
         assert_eq!(CHISELED_STONE_BRICKS, 401);
@@ -14326,10 +14402,10 @@ mod tests {
             "the six seats the contiguous tail banks"
         );
         assert_eq!(
-            END_PORTAL, 425,
+            END_PORTAL, 442,
             "the displaced seat the kit's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 425, "the palette the kit's six banks");
+        assert_eq!(atlas::N_KINDS, 442, "the palette the kit's six banks");
         for (i, (name, kind, hard)) in KIT.iter().enumerate() {
             let seat = COBBLESTONE + i as u16;
             assert_eq!(*kind, seat, "the seat the stone shelf order banks");
@@ -14418,8 +14494,8 @@ mod tests {
             "the solid cube the bricks' own shape keeps"
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
-        // the same 425 the kit's growth banks)
-        assert_eq!(NAME_OF.len(), 425, "the NAME_OF table the one length keeps");
+        // the same 442 the kit's growth banks)
+        assert_eq!(NAME_OF.len(), 442, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -14434,7 +14510,7 @@ mod tests {
         // banks): the seats the contiguous tail the 402..409 rows wear
         // (the regular quartet the red quartet the door family's own
         // order keeps), the END_PORTAL the beyond-table seat the
-        // displacement keeps (the 425 the `id < N_KINDS` guards the
+        // displacement keeps (the 442 the `id < N_KINDS` guards the
         // bigger tail banks), the ONE "{name}" registry entry its kind
         // ALONE speaks (no strip law the eight rows never share — the
         // BlockItem pairing the Items clinit's registerBlock rows
@@ -14464,7 +14540,7 @@ mod tests {
             ("smooth_red_sandstone", SMOOTH_RED_SANDSTONE, 2.0, "red_sandstone_top", "red_sandstone_top", "red_sandstone_top"),
         ];
         // THE SEATS' OWN LADDER (the 402..409 contiguous tail the
-        // desert order banks, the END_PORTAL the displaced 425 keeps)
+        // desert order banks, the END_PORTAL the displaced 442 keeps)
         assert_eq!(SANDSTONE, 402);
         assert_eq!(SMOOTH_RED_SANDSTONE, 409);
         assert_eq!(
@@ -14473,10 +14549,10 @@ mod tests {
             "the eight seats the contiguous tail banks"
         );
         assert_eq!(
-            END_PORTAL, 425,
+            END_PORTAL, 442,
             "the displaced seat the shelf's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 425, "the palette the shelf's eight banks");
+        assert_eq!(atlas::N_KINDS, 442, "the palette the shelf's eight banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -14573,8 +14649,8 @@ mod tests {
             "the solid cube the smooth red's own shape keeps"
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
-        // the same 425 the shelf's growth banks)
-        assert_eq!(NAME_OF.len(), 425, "the NAME_OF table the one length keeps");
+        // the same 442 the shelf's growth banks)
+        assert_eq!(NAME_OF.len(), 442, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -14593,7 +14669,7 @@ mod tests {
         // (orange, magenta, light_blue, yellow, lime, pink, gray,
         // light_gray, cyan, purple, blue, brown, green, red, black),
         // the END_PORTAL the beyond-table seat the displacement keeps
-        // (the 425 the `id < N_KINDS` guards the bigger tail banks),
+        // (the 442 the `id < N_KINDS` guards the bigger tail banks),
         // the ONE "{name}" registry entry its kind ALONE speaks (no
         // strip law the sixteen rows never share — the BlockItem
         // pairing the Items clinit's registerBlock rows answer), the
@@ -14630,7 +14706,7 @@ mod tests {
         ];
         // THE SEATS' OWN LADDER (the WHITE its clinit position the 76
         // seat keeps, the dyed rungs the 410..424 contiguous tail the
-        // clinit order banks, the END_PORTAL the displaced 425 keeps)
+        // clinit order banks, the END_PORTAL the displaced 442 keeps)
         assert_eq!(WHITE_WOOL, 76, "the clinit seat the first cloth banks");
         assert_eq!(ORANGE_WOOL, 410);
         assert_eq!(BLACK_WOOL, 424);
@@ -14640,10 +14716,10 @@ mod tests {
             "the fifteen rungs the contiguous tail banks"
         );
         assert_eq!(
-            END_PORTAL, 425,
+            END_PORTAL, 442,
             "the displaced seat the cloths' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 425, "the palette the cloths' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 442, "the palette the cloths' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -14756,8 +14832,195 @@ mod tests {
             "the solid cube the black cloth's own shape keeps"
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
-        // the same 425 the cloths' growth banks)
-        assert_eq!(NAME_OF.len(), 425, "the NAME_OF table the one length keeps");
+        // the same 442 the cloths' growth banks)
+        assert_eq!(NAME_OF.len(), 442, "the NAME_OF table the one length keeps");
+        assert_eq!(
+            NAME_OF.len(),
+            atlas::N_KINDS,
+            "the palette rows the NAME_OF rows the one count banks"
+        );
+    }
+
+    #[test]
+    fn the_potters_own_seventeen_kilns_the_seats_and_the_lanes_wear() {
+        // THE POTTER'S OWN LAWS (the autopush-678 round — javap Blocks
+        // clinit the 26.2 jar the pc 16200
+        // `ColorCollection.registerBlocks(..., BlockItemIds.DYED_
+        // TERRACOTTA)` row + the pc 16914 plain
+        // `register(BlockItemIds.TERRACOTTA, ...strength(1.25, 4.2))`
+        // follower banks): the sixteen dyed rungs the 425..440
+        // contiguous tail the clinit ladder's own order wears (white,
+        // orange, magenta, light_blue, yellow, lime, pink, gray,
+        // light_gray, cyan, purple, blue, brown, green, red, black),
+        // the PLAIN kind its own register the dyed walk's follower
+        // the 441 seat banks, the END_PORTAL the beyond-table seat
+        // the displacement keeps (the 442 the `id < N_KINDS` guards
+        // the bigger tail banks), the ONE "{name}" registry entry its
+        // kind ALONE speaks (no strip law the seventeen rows never
+        // share — the BlockItem pairing the Items clinit's
+        // registerBlock rows answer), the dig rows the pickaxe's own
+        // law banks (the 1.25 strength the requires-correct-tool bit
+        // the whole family wears — the bare hand the drop refuses),
+        // the block.stone break row the ONE voice every seat wears,
+        // the self-entry the drops table banks, the fire trio the
+        // family's own SILENCE keeps (no setFlammable row the kiln
+        // family wears — the canBurn refusal the flame's walk banks),
+        // the full-cube verdict the default collision lane answers,
+        // the FACE_TILES rows the cube_all ONE-tile shape speaks (the
+        // six faces the ONE master the jar's own tiles bank), the
+        // placement lane the ONE name the reverse walk answers.
+        use mc_registry::generated::atlas;
+        const KILNS: [(&str, u16); 17] = [
+            // (name, kind) — the explicit pairs the const-uses law
+            // banks (the dead-code lint the every-const reference
+            // answers — the sandstone shelf's own table the precedent
+            // wears)
+            ("white_terracotta", WHITE_TERRACOTTA),
+            ("orange_terracotta", ORANGE_TERRACOTTA),
+            ("magenta_terracotta", MAGENTA_TERRACOTTA),
+            ("light_blue_terracotta", LIGHT_BLUE_TERRACOTTA),
+            ("yellow_terracotta", YELLOW_TERRACOTTA),
+            ("lime_terracotta", LIME_TERRACOTTA),
+            ("pink_terracotta", PINK_TERRACOTTA),
+            ("gray_terracotta", GRAY_TERRACOTTA),
+            ("light_gray_terracotta", LIGHT_GRAY_TERRACOTTA),
+            ("cyan_terracotta", CYAN_TERRACOTTA),
+            ("purple_terracotta", PURPLE_TERRACOTTA),
+            ("blue_terracotta", BLUE_TERRACOTTA),
+            ("brown_terracotta", BROWN_TERRACOTTA),
+            ("green_terracotta", GREEN_TERRACOTTA),
+            ("red_terracotta", RED_TERRACOTTA),
+            ("black_terracotta", BLACK_TERRACOTTA),
+            ("terracotta", TERRACOTTA),
+        ];
+        // THE SEATS' OWN LADDER (the dyed rungs the 425..440
+        // contiguous tail the clinit order banks, the plain kiln the
+        // 441 seat keeps, the END_PORTAL the displaced 442 keeps)
+        assert_eq!(WHITE_TERRACOTTA, 425);
+        assert_eq!(BLACK_TERRACOTTA, 440);
+        assert_eq!(
+            WHITE_TERRACOTTA + 15,
+            BLACK_TERRACOTTA,
+            "the sixteen rungs the contiguous tail banks"
+        );
+        assert_eq!(TERRACOTTA, 441, "the plain kiln the dyed walk's follower banks");
+        assert_eq!(
+            END_PORTAL, 442,
+            "the displaced seat the kilns' own tail banks"
+        );
+        assert_eq!(atlas::N_KINDS, 442, "the palette the kilns' seventeen banks");
+        let tile_id = |name: &str| -> u16 {
+            atlas::TILE_NAMES
+                .iter()
+                .position(|t| *t == name)
+                .expect("the tile the jar's own bank seats") as u16
+        };
+        for (i, (name, kind)) in KILNS.iter().enumerate() {
+            let seat = WHITE_TERRACOTTA + i as u16;
+            assert_eq!(*kind, seat, "the seat the clinit order banks");
+            let kind = *kind;
+            // THE ONE REGISTRY NAME ITS KIND ALONE SPEAKS (the
+            // NAME_OF row + the generated KIND_NAMES/REGISTRY_NAMES
+            // rows the same entry the three tables keep)
+            assert_eq!(NAME_OF[kind as usize], *name, "the NAME_OF row the kind banks");
+            assert_eq!(
+                atlas::KIND_NAMES[kind as usize],
+                *name,
+                "the palette kind name the regen banks"
+            );
+            assert_eq!(
+                atlas::REGISTRY_NAMES[kind as usize],
+                *name,
+                "the registry id the ONE name answers"
+            );
+            // THE PLACEABLE LANE (the BlockItem pairing the reverse
+            // walk serves — the item id the generated table banks)
+            assert_eq!(
+                World::placeable_block(name),
+                Some(kind),
+                "the {name} item the placement lane grants"
+            );
+            assert!(
+                mc_registry::item_id_by_name(name).is_some(),
+                "the item id the registry banks"
+            );
+            // THE DIG ROW (the generated table the jar's REAL
+            // bootstrapped registry banks — the 1.25 strength the
+            // requires-correct-tool bit the pickaxe's own law keeps —
+            // the bare hand the whole family's drop refuses)
+            let (hard, tool) = crate::dig::DigState::block_dig_row(kind);
+            assert!(
+                (hard - 1.25).abs() < 1e-4,
+                "the 1.25 strength the {name} dig row wears"
+            );
+            assert!(tool, "the pickaxe demand the {name} row keeps");
+            // THE SELF-ENTRY THE DROPS TABLE BANKS (the loot table's
+            // own pool the terracotta item every pick-qualified dig
+            // rolls)
+            assert!(
+                mc_registry::generated::block_drops::drops(name).is_some(),
+                "the self-entry the {name} drops table banks"
+            );
+            // THE SOUND FAMILY (javap SoundType.TERRACOTTA — the
+            // block.stone.break event the generated table carries, the
+            // ONE row every kiln seat wears)
+            let idx = mc_registry::generated::block_sounds::sound_index(name)
+                .expect("the sound row the table banks");
+            let break_evt = mc_registry::generated::block_sounds::SOUND_BREAK[idx];
+            assert_eq!(
+                break_evt, "block.stone.break",
+                "the TERRACOTTA SoundType the {name} break row speaks"
+            );
+            // THE FACE TILES THE CUBE_ALL ONE-TILE SHAPE SPEAKS (the
+            // face order 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z the renderer's
+            // own law keeps — the six faces the ONE master the model's
+            // #all ref banks)
+            let row = atlas::FACE_TILES[kind as usize];
+            let expect = [tile_id(name); 6];
+            assert!(
+                (0..6).all(|f| row[f] == expect[f]),
+                "the six faces the {name} model's own ref banks"
+            );
+            assert!(
+                (row[0] as usize) < atlas::TILE_NAMES.len(),
+                "the tile seat the bank's own index keeps"
+            );
+            // THE FIRE TRIO THE FAMILY'S OWN SILENCE KEEPS (javap
+            // FireBlock bootStrap the terracotta collection no
+            // setFlammable row wears — the canBurn refusal the
+            // zero-odds rows the flame's walk banks)
+            assert!(
+                !fire_can_burn(kind),
+                "the non-flammable verdict the {name} row keeps"
+            );
+            assert_eq!(
+                fire_ignite_odds(kind),
+                0,
+                "the zero encourage the {name} row speaks"
+            );
+            assert_eq!(
+                fire_burn_odds(kind),
+                0,
+                "the zero burn odds the {name} row speaks"
+            );
+        }
+        // THE FULL-CUBE VERDICT THE DEFAULT COLLISION LANE ANSWERS
+        // (javap the collection walk's Properties the no noCollision
+        // arm carries — the solid box the cube's own shape banks, the
+        // pass-through the kiln never wears)
+        assert_eq!(
+            collision_shape(WHITE_TERRACOTTA),
+            collision_shape(STONE),
+            "the solid cube the white kiln's own shape keeps"
+        );
+        assert_eq!(
+            collision_shape(TERRACOTTA),
+            collision_shape(STONE),
+            "the solid cube the plain kiln's own shape keeps"
+        );
+        // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
+        // the same 442 the kilns' growth banks)
+        assert_eq!(NAME_OF.len(), 442, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -14789,10 +15052,10 @@ mod tests {
         assert_eq!(REDSTONE_TORCH, 322);
         assert_eq!(REDSTONE_TORCH_OFF, 323);
         assert_eq!(
-            END_PORTAL, 425,
+            END_PORTAL, 442,
             "the displaced seat the torch pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 425, "the palette the torch pair banks");
+        assert_eq!(atlas::N_KINDS, 442, "the palette the torch pair banks");
         assert!(is_redstone_torch(REDSTONE_TORCH) && is_redstone_torch(REDSTONE_TORCH_OFF));
         assert!(!is_redstone_torch(TORCH) && !is_redstone_torch(LEVER));
         assert!(redstone_torch_lit(REDSTONE_TORCH));
@@ -14932,8 +15195,8 @@ mod tests {
         use mc_registry::generated::atlas;
         assert_eq!(REDSTONE_WALL_TORCH, 324);
         assert_eq!(REDSTONE_WALL_TORCH_OFF, 325);
-        assert_eq!(END_PORTAL, 425);
-        assert_eq!(atlas::N_KINDS, 425, "the palette the wall pair banks");
+        assert_eq!(END_PORTAL, 442);
+        assert_eq!(atlas::N_KINDS, 442, "the palette the wall pair banks");
         assert!(
             is_redstone_torch(REDSTONE_WALL_TORCH) && is_redstone_torch(REDSTONE_WALL_TORCH_OFF),
             "the wall pair the family's tail banks"
@@ -15176,9 +15439,9 @@ mod tests {
         use mc_registry::generated::atlas;
         assert_eq!(OAK_TRAPDOOR, 326);
         assert_eq!(OAK_TRAPDOOR_OPEN, 327);
-        assert_eq!(END_PORTAL, 425);
+        assert_eq!(END_PORTAL, 442);
         assert_eq!(
-            atlas::N_KINDS, 425,
+            atlas::N_KINDS, 442,
             "the palette the trapdoor pair banks"
         );
         assert_eq!(OAK_TRAPDOOR + 1, OAK_TRAPDOOR_OPEN, "the +1 mate wears");
@@ -15324,8 +15587,8 @@ mod tests {
         assert_eq!(CHERRY_TRAPDOOR, 340);
         assert_eq!(WARPED_TRAPDOOR, 348);
         assert_eq!(WARPED_TRAPDOOR_OPEN, 349);
-        assert_eq!(END_PORTAL, 425);
-        assert_eq!(atlas::N_KINDS, 425, "the palette the ladder banks");
+        assert_eq!(END_PORTAL, 442);
+        assert_eq!(atlas::N_KINDS, 442, "the palette the ladder banks");
         // THE CONTIGUITY'S OWN LAW (the 22 kinds the range covers —
         // the neighbors the family fn refuses)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -15438,8 +15701,8 @@ mod tests {
         assert_eq!(WAXED_OXIDIZED_COPPER_TRAPDOOR, 364);
         assert_eq!(IRON_TRAPDOOR, 366);
         assert_eq!(IRON_TRAPDOOR_OPEN, 367);
-        assert_eq!(END_PORTAL, 425);
-        assert_eq!(atlas::N_KINDS, 425, "the palette the metal rungs bank");
+        assert_eq!(END_PORTAL, 442);
+        assert_eq!(atlas::N_KINDS, 442, "the palette the metal rungs bank");
         // THE CONTIGUITY'S OWN LAW (the 42 kinds the range covers —
         // the waxed pairs the ±1 mate the parity answers)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -15604,7 +15867,7 @@ mod tests {
         assert_eq!(OAK_DOOR_OPEN, 92);
         assert_eq!(OAK_DOOR_UPPER_OPEN, 93);
         assert_eq!(
-            END_PORTAL, 425,
+            END_PORTAL, 442,
             "the displaced seat the wire pair's own tail banks"
         );
         // THE WOOD LADDER'S OWN SEATS (the dev-43 round — the eleven
@@ -15810,7 +16073,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 425, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 442, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)
