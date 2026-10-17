@@ -36987,6 +36987,45 @@ impl App {
             )
             .expect("the band shape the slabs never refuse");
             (x_lo, y_lo, z_lo, x_hi, y_hi, z_hi)
+        } else if crate::world::is_fence(block) {
+            // THE FENCE'S OWN THIN POST (the dev-55 round — the
+            // vanilla canPlace the PLACED state's own collision shape
+            // reads: the post-only kind law the conservative subset
+            // keeps [the connection arms the neighbor reads the
+            // placement walk never consults], the [6,0,6]->[10,24,10]
+            // band the 0.5±2/16 footprint + the 0..24 y-band the
+            // shape_slabs decode answers — the fence-in-your-own-cell
+            // placement the thin post the player's box misses the
+            // vanilla's own thin-shape law allows)
+            let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) = crate::world::shape_slabs(
+                shape,
+                cell.0,
+                cell.1,
+                cell.2,
+            )
+            .expect("the fence post shape the slabs never refuse");
+            (x_lo, y_lo, z_lo, x_hi, y_hi, z_hi)
+        } else if crate::world::is_fence_gate(block) {
+            // THE CLOSED GATE'S OWN THIN PANEL (the dev-55 round — the
+            // vanilla canPlace the SHAPE_COLLISION column(16.0, 4.0,
+            // 0.0, 24.0) the thin 4/16 strip reads: the full-footprint
+            // refusal the documented gap the door arm's own walk
+            // retired, the gate-in-your-own-cell placement the thin
+            // band the player's box misses the vanilla's own thin-
+            // shape law allows, the 0..24 y-band the over-tall law
+            // the honest cut retires)
+            let axis_x = matches!(
+                crate::world::fence_gate_facing_byte(self.world_camera().yaw),
+                2 | 4
+            ) as u8;
+            let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) = crate::world::shape_slabs(
+                crate::world::CollisionShape::CenterBand(axis_x, 4),
+                cell.0,
+                cell.1,
+                cell.2,
+            )
+            .expect("the gate panel shape the slabs never refuse");
+            (x_lo, y_lo, z_lo, x_hi, y_hi, z_hi)
         } else {
             (
                 cell.0 as f64,
@@ -103497,7 +103536,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            497,
+            510,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -103578,7 +103617,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            497,
+            510,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -103880,7 +103919,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            497,
+            510,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -107727,7 +107766,7 @@ cow_sound_variant: None,
         assert_eq!(crate::world::OAK_BUTTON_ON, 263);
         assert_eq!(
             crate::world::END_PORTAL,
-            498,
+            510,
             "the displaced seat the weighted plates' own tail keeps"
         );
         for kind in [
@@ -107810,7 +107849,7 @@ cow_sound_variant: None,
         // #texture ref banks)
         assert_eq!(
             atlas::N_KINDS,
-            497,
+            510,
             "the palette the weighted plates' own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
@@ -108025,12 +108064,12 @@ cow_sound_variant: None,
         );
         assert_eq!(
             crate::world::END_PORTAL,
-            498,
+            510,
             "the displaced seat the weighted plates' own tail keeps"
         );
         assert_eq!(
             atlas::N_KINDS,
-            497,
+            510,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
@@ -108302,12 +108341,12 @@ cow_sound_variant: None,
         );
         assert_eq!(
             crate::world::END_PORTAL,
-            498,
+            510,
             "the displaced seat the weighted plates' own tail keeps"
         );
         assert_eq!(
             atlas::N_KINDS,
-            497,
+            510,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
@@ -108422,8 +108461,8 @@ cow_sound_variant: None,
         assert_eq!(w::LIGHT_WEIGHTED_PRESSURE_PLATE_ON, 317);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE, 318);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, 319);
-        assert_eq!(w::END_PORTAL, 498);
-        assert_eq!(atlas::N_KINDS, 497, "the palette the weighted rows bank");
+        assert_eq!(w::END_PORTAL, 510);
+        assert_eq!(atlas::N_KINDS, 510, "the palette the weighted rows bank");
         for (off, on, name) in [
             (
                 w::LIGHT_WEIGHTED_PRESSURE_PLATE,
@@ -109534,10 +109573,10 @@ cow_sound_variant: None,
         assert_eq!(w::OAK_PRESSURE_PLATE_ON, 289);
         assert_eq!(w::STONE_PRESSURE_PLATE, 290);
         assert_eq!(w::STONE_PRESSURE_PLATE_ON, 291);
-        assert_eq!(w::END_PORTAL, 498);
+        assert_eq!(w::END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-            497,
+            510,
             "the palette the weighted plates' own rows bank"
         );
         for (off, on, name, wooden) in [

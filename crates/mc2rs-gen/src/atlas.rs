@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 497] = [
+pub const RUNTIME_PALETTE: [&str; 510] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1630,6 +1630,77 @@ pub const RUNTIME_PALETTE: [&str; 497] = [
     // hit/fall — the WOOD SoundType the registration's own chain
     // banks), the self-entry drop pool the block_drops table speaks.
     "note_block",
+    // THE FENCE FAMILY'S OWN THIRTEEN SEATS (the dev-55 round — the
+    // enclosure vocabulary the gate's documented gap closes, the
+    // twelve wooden fences + the nether brick fence the palette's
+    // tail banks): javap `net.minecraft.world.level.block.FenceBlock`
+    // the 26.2 jar (pinned sha1 2dc72797, the probes
+    // scripts/jar_work/fence_683.py + fence_683b.py banks) — the
+    // ONE FenceBlock class EVERY wood pair registers (the
+    // CrossCollisionBlock super the ctor's (4.0F, 16.0F, 4.0F,
+    // 16.0F, 24.0F) arg walk carries), the register rows the Blocks
+    // clinit pc 10589 (oak) .. 26030 (warped) + 13328 (nether brick)
+    // putstatic walk banks — the wood rows the Properties chain
+    // mapColor(planks.defaultMapColor()) + instrument(BASS — the
+    // note law the family joins) + strength(2.0, 3.0) +
+    // ignitedByLava() + sound(WOOD | BAMBOO_WOOD for bamboo,
+    // NETHER_WOOD for the crimson/warped pair) wears, the nether
+    // brick row the BASEDRUM instrument + requiresCorrectToolForDrops
+    // + strength(2.0, 6.0) + sound(NETHER_BRICKS) chain speaks (NO
+    // ignitedByLava — the stone family the nether seam keeps), the
+    // Items clinit the pairing rows pc 4062..(oak..warped) +
+    // 4923 (nether brick) bank. THE CONNECTION LAW the
+    // connectsTo(state, sideSolid, dir) walk pc 0-62 speaks — the
+    // THREE arms: `!isExceptionForConnection(state) && sideSolid`
+    // (the sturdy-face arm the neighbor's isFaceSturdy(opp) read
+    // pc 72 feeds — the exception list Block.isExceptionForConnection
+    // pc 0-75 banks: LeavesBlock + barrier/carved_pumpkin/jack_o_
+    // lantern/melon/pumpkin + the SHULKER_BOXES tag — the client's
+    // palette the leaves pair alone seats), `isSameFence(state)`
+    // (pc 8 the FENCES-tag read && the WOODEN_FENCES parity pc 10-27
+    // wears — the wooden seam the nether brick fence REFUSES: the
+    // wood fences connect EVERY wood fence, the nether brick fence
+    // the nether brick fence alone), the gate arm pc 13-34 the
+    // `block instanceof FenceGateBlock &&
+    // FenceGateBlock.connectsToDirection(state, dir)` verdict keeps
+    // (the perpendicular law pc 0-28 the gate's own FACING axis the
+    // dir.getClockWise().getAxis() equality banks — the fence line
+    // THROUGH the gate the panel-axis sides connect, the gate's
+    // facing axis the fence never touches). THE COLLISION LAW the
+    // CrossCollisionBlock.makeShapes(nodeWidth, height, armWidth,
+    // armMinY, armMaxY) walk pc 0-53 speaks: the post
+    // Block.column(nodeWidth=4.0, 0.0, height=24.0) — the 4/16-wide
+    // 0..24 band the ANTI-JUMP the 1.5-tall law serves (the CenterBand
+    // doc's over-tall extension the honest cut retires), the arm
+    // Block.boxZ(4.0, 0.0, 24.0, 0.0, 8.0) rotateHorizontal the four
+    // when-rows bank — the 4/16-wide 0..24-tall members the cell
+    // edge the post band reach. The isPathfindable pc 0-1 the false
+    // verdict keeps (the mobs the fence never paths through), the
+    // WATERLOGGED the fifth property the ctor's registerDefaultState
+    // walk pc 78-85 pins (the variant-less palette the waterlogged
+    // half never seats). The blockstates {wood}_fence.json the
+    // MULTIPART carry — the UNCONDITIONAL post apply
+    // block/{wood}_fence_post + the four side arms the
+    // north/east/south/west when-rows (uvlock: true, the y table
+    // north 0 / east 90 / south 180 / west 270 the quarter turns
+    // speak), the models the template fence_post/fence_side parents
+    // resolve (the ONE #texture ref the per-wood planks master
+    // banks — the post element [6,0,6]->[10,16,10] the center post
+    // walk wears, the side's TWO bar elements the [7,12,0]->
+    // [9,15,9] top + [7,6,0]->[9,9,9] lower pair speak). The palette
+    // rows the FACE_TILES row the ONE planks master every face
+    // banks (the gate arm's law the family keeps), the atlas tile
+    // count the ZERO new tiles keeps (the planks + nether_bricks
+    // masters the palette already seats — 749 tiles the family
+    // rides), the append-only law the equivalence proof scripts/
+    // verify_atlas_full.py banks. The dig/sounds/drops rows the
+    // name-keyed generated tables the registry answers (the wood
+    // rows 2.0 + no-tool + block.wood.* voices, the nether brick row
+    // 2.0 + requires-correct-tool + block.nether_bricks.* voices).
+    "oak_fence", "spruce_fence", "birch_fence", "jungle_fence",
+    "acacia_fence", "cherry_fence", "dark_oak_fence", "pale_oak_fence",
+    "mangrove_fence", "bamboo_fence", "crimson_fence", "warped_fence",
+    "nether_brick_fence",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -2435,6 +2506,58 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             let tex = tex_map
                 .get("all")
                 .with_context(|| format!("model {model_ref}: no all texture ref"))?;
+            let stem = tex
+                .trim_start_matches("minecraft:")
+                .trim_start_matches("block/")
+                .to_string();
+            faces.push(resolve_flat_stem(&stem, false));
+            continue;
+        }
+        if block.ends_with("_fence") {
+            // THE FENCE FAMILY'S OWN PALETTE ARM (the dev-55 round,
+            // the official 26.2 jar): the blockstate is a MULTIPART —
+            // the UNCONDITIONAL post apply (block/{wood}_fence_post —
+            // the declaration order's own head) + the four side arms
+            // the north/east/south/west when-rows — resolve_block's
+            // full-cube six-face requirement cannot apply, and the
+            // generic multipart walk the fire/bamboo arms serve picks
+            // a SINGLE canonical model. The FIRST apply (the post —
+            // the fence's every connection state wears it) is the
+            // canonical model: its merged texture map's `texture` ref
+            // (block/{wood}_planks for the twelve wooden rows,
+            // block/nether_bricks the nether seam's master) is the
+            // palette row — the ONE master EVERY element face wears
+            // (the post's six + the side bars' faces the same ref
+            // resolve), the FACE_TILES row the ONE tile the six slots
+            // bank (the gate arm's law the family keeps), tinted =
+            // false (the planks masters carry NO tintindex). The
+            // atlas tile count the ZERO new tiles keeps — the planks
+            // and nether_bricks masters the palette already seats.
+            let bs_bytes = read_jar(
+                &mut archive,
+                &format!("assets/minecraft/blockstates/{block}.json"),
+            )?;
+            let bs: Value = serde_json::from_slice(&bs_bytes)
+                .with_context(|| format!("blockstate {block}: json parse"))?;
+            let parts = bs
+                .get("multipart")
+                .and_then(|v| v.as_array())
+                .with_context(|| format!("blockstate {block}: no multipart"))?;
+            // the FIRST apply (the unconditional post — the fence's
+            // every connection state wears it)
+            let model_ref = parts
+                .first()
+                .and_then(|p| p.get("apply"))
+                .and_then(|a| if a.is_array() { a.get(0) } else { Some(a) })
+                .and_then(|a| a.get("model"))
+                .and_then(|m| m.as_str())
+                .map(|m| m.trim_start_matches("minecraft:").to_string())
+                .with_context(|| format!("blockstate {block}: no post apply"))?;
+            let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
+                .with_context(|| format!("block {block}: model chain {model_ref}"))?;
+            let tex = tex_map
+                .get("texture")
+                .with_context(|| format!("model {model_ref}: no texture ref"))?;
             let stem = tex
                 .trim_start_matches("minecraft:")
                 .trim_start_matches("block/")

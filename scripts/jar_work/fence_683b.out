@@ -1,0 +1,358 @@
+=== FenceBlock.isSameFence — the family law
+--- isSameFence(Lnet/minecraft/world/level/block/state/BlockState;)Z
+0: aload_1
+1: getstatic net/minecraft/tags/BlockTags.FENCES:Lnet/minecraft/tags/TagKey;
+4: invokevirtual net/minecraft/world/level/block/state/BlockState.is:(Lnet/minecraft/tags/TagKey;)Z
+7: ifeq -> 34
+10: aload_1
+11: getstatic net/minecraft/tags/BlockTags.WOODEN_FENCES:Lnet/minecraft/tags/TagKey;
+14: invokevirtual net/minecraft/world/level/block/state/BlockState.is:(Lnet/minecraft/tags/TagKey;)Z
+17: aload_0
+18: invokevirtual net/minecraft/world/level/block/FenceBlock.defaultBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+21: getstatic net/minecraft/tags/BlockTags.WOODEN_FENCES:Lnet/minecraft/tags/TagKey;
+24: invokevirtual net/minecraft/world/level/block/state/BlockState.is:(Lnet/minecraft/tags/TagKey;)Z
+27: if_icmpne -> 34
+30: iconst_1
+31: goto -> 35
+34: iconst_0
+35: ireturn
+
+=== FenceGateBlock.connectsToDirection — the gate's axis law
+--- connectsToDirection(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/Direction;)Z
+0: aload_0
+1: getstatic net/minecraft/world/level/block/FenceGateBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+4: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+7: checkcast net/minecraft/core/Direction
+10: invokevirtual net/minecraft/core/Direction.getAxis:()Lnet/minecraft/core/Direction$Axis;
+13: aload_1
+14: invokevirtual net/minecraft/core/Direction.getClockWise:()Lnet/minecraft/core/Direction;
+17: invokevirtual net/minecraft/core/Direction.getAxis:()Lnet/minecraft/core/Direction$Axis;
+20: if_acmpne -> 27
+23: iconst_1
+24: goto -> 28
+27: iconst_0
+28: ireturn
+
+=== CrossCollisionBlock — ctor + makeShapes + fields (the post/arm boxes)
+--- net.minecraft.world.level.block.CrossCollisionBlock.<init>(FFFFFLnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+0: aload_0
+1: aload aload 6
+3: invokespecial net/minecraft/world/level/block/Block.<init>:(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+6: aload_0
+7: aload_0
+8: 0x23 0x23 23
+10: iconst_2
+11: 0x25 0x25 11
+13: 0x17 0x17 5
+15: invokevirtual net/minecraft/world/level/block/CrossCollisionBlock.makeShapes:(FFFFF)Ljava/util/function/Function;
+18: putfield net/minecraft/world/level/block/CrossCollisionBlock.collisionShapes:Ljava/util/function/Function;
+21: aload_0
+22: aload_0
+23: 0x23 0x23 36
+25: 0x25 0x25 11
+27: 0x17 0x17 4
+29: invokevirtual net/minecraft/world/level/block/CrossCollisionBlock.makeShapes:(FFFFF)Ljava/util/function/Function;
+32: putfield net/minecraft/world/level/block/CrossCollisionBlock.shapes:Ljava/util/function/Function;
+35: return
+--- net.minecraft.world.level.block.CrossCollisionBlock.makeShapes(FFFFF)Ljava/util/function/Function;
+0: 0x23 0x23 141
+2: 0x0e
+3: 0x24
+4: 0x8d
+5: invokestatic net/minecraft/world/level/block/Block.column:(DDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+8: astore astore 6
+10: 0x25 0x25 141
+12: 0x17 0x17 4
+14: 0x8d
+15: 0x17 0x17 5
+17: 0x8d
+18: 0x0e
+19: ldc2_w double 8.0
+22: invokestatic net/minecraft/world/level/block/Block.boxZ:(DDDDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+25: invokestatic net/minecraft/world/phys/shapes/Shapes.rotateHorizontal:(Lnet/minecraft/world/phys/shapes/VoxelShape;)Ljava/util/Map;
+28: astore astore 7
+30: aload_0
+31: aload aload 6
+33: aload aload 7
+35: invokedynamic indy
+40: iconst_1
+41: anewarray net/minecraft/world/level/block/state/properties/Property
+44: dup
+45: iconst_0
+46: getstatic net/minecraft/world/level/block/CrossCollisionBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+49: 0x53
+50: invokevirtual net/minecraft/world/level/block/CrossCollisionBlock.getShapeForEachState:(Ljava/util/function/Function;[Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/util/function/Function;
+53: areturn
+--- net.minecraft.world.level.block.CrossCollisionBlock.lambda$makeShapes$0(Lnet/minecraft/world/phys/shapes/VoxelShape;Ljava/util/Map;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+0: aload_0
+1: astore_3
+2: getstatic net/minecraft/world/level/block/CrossCollisionBlock.PROPERTY_BY_DIRECTION:Ljava/util/Map;
+5: invokeinterface java/util/Map.entrySet:()Ljava/util/Set;
+8: aconst_null
+9: nop
+10: invokeinterface java/util/Set.iterator:()Ljava/util/Iterator;
+13: aconst_null
+14: nop
+15: astore astore 4
+17: aload aload 4
+19: invokeinterface java/util/Iterator.hasNext:()Z
+22: aconst_null
+23: nop
+24: ifeq -> 86
+27: aload aload 4
+29: invokeinterface java/util/Iterator.next:()Ljava/lang/Object;
+32: aconst_null
+33: nop
+34: checkcast java/util/Map$Entry
+37: astore astore 5
+39: aload_2
+40: aload aload 5
+42: invokeinterface java/util/Map$Entry.getValue:()Ljava/lang/Object;
+45: aconst_null
+46: nop
+47: checkcast net/minecraft/world/level/block/state/properties/Property
+50: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+53: checkcast java/lang/Boolean
+56: invokevirtual java/lang/Boolean.booleanValue:()Z
+59: ifeq -> 83
+62: aload_3
+63: aload_1
+64: aload aload 5
+66: invokeinterface java/util/Map$Entry.getKey:()Ljava/lang/Object;
+69: aconst_null
+70: nop
+71: invokeinterface java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+74: iconst_m1
+75: nop
+76: checkcast net/minecraft/world/phys/shapes/VoxelShape
+79: invokestatic net/minecraft/world/phys/shapes/Shapes.or:(Lnet/minecraft/world/phys/shapes/VoxelShape;Lnet/minecraft/world/phys/shapes/VoxelShape;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+82: astore_3
+83: goto -> 17
+86: aload_3
+87: areturn
+--- net.minecraft.world.level.block.CrossCollisionBlock.makeShapes(FFFFF)Ljava/util/function/Function;
+0: 0x23 0x23 141
+2: 0x0e
+3: 0x24
+4: 0x8d
+5: invokestatic net/minecraft/world/level/block/Block.column:(DDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+8: astore astore 6
+10: 0x25 0x25 141
+12: 0x17 0x17 4
+14: 0x8d
+15: 0x17 0x17 5
+17: 0x8d
+18: 0x0e
+19: ldc2_w double 8.0
+22: invokestatic net/minecraft/world/level/block/Block.boxZ:(DDDDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+25: invokestatic net/minecraft/world/phys/shapes/Shapes.rotateHorizontal:(Lnet/minecraft/world/phys/shapes/VoxelShape;)Ljava/util/Map;
+28: astore astore 7
+30: aload_0
+31: aload aload 6
+33: aload aload 7
+35: invokedynamic indy
+40: iconst_1
+41: anewarray net/minecraft/world/level/block/state/properties/Property
+44: dup
+45: iconst_0
+46: getstatic net/minecraft/world/level/block/CrossCollisionBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+49: 0x53
+50: invokevirtual net/minecraft/world/level/block/CrossCollisionBlock.getShapeForEachState:(Ljava/util/function/Function;[Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/util/function/Function;
+53: areturn
+--- net.minecraft.world.level.block.CrossCollisionBlock.lambda$makeShapes$0(Lnet/minecraft/world/phys/shapes/VoxelShape;Ljava/util/Map;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+0: aload_0
+1: astore_3
+2: getstatic net/minecraft/world/level/block/CrossCollisionBlock.PROPERTY_BY_DIRECTION:Ljava/util/Map;
+5: invokeinterface java/util/Map.entrySet:()Ljava/util/Set;
+8: aconst_null
+9: nop
+10: invokeinterface java/util/Set.iterator:()Ljava/util/Iterator;
+13: aconst_null
+14: nop
+15: astore astore 4
+17: aload aload 4
+19: invokeinterface java/util/Iterator.hasNext:()Z
+22: aconst_null
+23: nop
+24: ifeq -> 86
+27: aload aload 4
+29: invokeinterface java/util/Iterator.next:()Ljava/lang/Object;
+32: aconst_null
+33: nop
+34: checkcast java/util/Map$Entry
+37: astore astore 5
+39: aload_2
+40: aload aload 5
+42: invokeinterface java/util/Map$Entry.getValue:()Ljava/lang/Object;
+45: aconst_null
+46: nop
+47: checkcast net/minecraft/world/level/block/state/properties/Property
+50: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+53: checkcast java/lang/Boolean
+56: invokevirtual java/lang/Boolean.booleanValue:()Z
+59: ifeq -> 83
+62: aload_3
+63: aload_1
+64: aload aload 5
+66: invokeinterface java/util/Map$Entry.getKey:()Ljava/lang/Object;
+69: aconst_null
+70: nop
+71: invokeinterface java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+74: iconst_m1
+75: nop
+76: checkcast net/minecraft/world/phys/shapes/VoxelShape
+79: invokestatic net/minecraft/world/phys/shapes/Shapes.or:(Lnet/minecraft/world/phys/shapes/VoxelShape;Lnet/minecraft/world/phys/shapes/VoxelShape;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+82: astore_3
+83: goto -> 17
+86: aload_3
+87: areturn
+--- net.minecraft.world.level.block.CrossCollisionBlock.<clinit>()V
+0: getstatic net/minecraft/world/level/block/PipeBlock.NORTH:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+3: putstatic net/minecraft/world/level/block/CrossCollisionBlock.NORTH:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+6: getstatic net/minecraft/world/level/block/PipeBlock.EAST:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+9: putstatic net/minecraft/world/level/block/CrossCollisionBlock.EAST:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+12: getstatic net/minecraft/world/level/block/PipeBlock.SOUTH:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+15: putstatic net/minecraft/world/level/block/CrossCollisionBlock.SOUTH:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+18: getstatic net/minecraft/world/level/block/PipeBlock.WEST:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+21: putstatic net/minecraft/world/level/block/CrossCollisionBlock.WEST:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+24: getstatic net/minecraft/world/level/block/state/properties/BlockStateProperties.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+27: putstatic net/minecraft/world/level/block/CrossCollisionBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+30: getstatic net/minecraft/world/level/block/PipeBlock.PROPERTY_BY_DIRECTION:Ljava/util/Map;
+33: invokeinterface java/util/Map.entrySet:()Ljava/util/Set;
+36: aconst_null
+37: nop
+38: invokeinterface java/util/Set.stream:()Ljava/util/stream/Stream;
+41: aconst_null
+42: nop
+43: invokedynamic indy
+48: invokeinterface java/util/stream/Stream.filter:(Ljava/util/function/Predicate;)Ljava/util/stream/Stream;
+51: iconst_m1
+52: nop
+53: invokestatic net/minecraft/util/Util.toMap:()Ljava/util/stream/Collector;
+56: invokeinterface java/util/stream/Stream.collect:(Ljava/util/stream/Collector;)Ljava/lang/Object;
+59: iconst_m1
+60: nop
+61: checkcast java/util/Map
+64: putstatic net/minecraft/world/level/block/CrossCollisionBlock.PROPERTY_BY_DIRECTION:Ljava/util/Map;
+67: return
+--- fields
+    NORTH Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+    EAST Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+    SOUTH Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+    WEST Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+    WATERLOGGED Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+    PROPERTY_BY_DIRECTION Ljava/util/Map;
+    collisionShapes Ljava/util/function/Function;
+    shapes Ljava/util/function/Function;
+
+=== Blocks clinit — the fence register rows (putstatic windows)
+--- clinit window @ pc 10564..10624 (Blocks.OAK_FENCE:)
+10564: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.forceSolidOn:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+10567: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASS:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+10570: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+10573: fconst_2
+10574: ldc_w float 3.0
+10577: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+10580: getstatic net/minecraft/world/level/block/SoundType.WOOD:Lnet/minecraft/world/level/block/SoundType;
+10583: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+10586: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+10589: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+10592: putstatic net/minecraft/world/level/block/Blocks.OAK_FENCE:Lnet/minecraft/world/level/block/Block;
+10595: getstatic net/minecraft/references/BlockItemIds.NETHERRACK:Lnet/minecraft/references/BlockItemId;
+10598: invokedynamic indy
+10603: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+10606: getstatic net/minecraft/world/level/material/MapColor.NETHER:Lnet/minecraft/world/level/material/MapColor;
+10609: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+10612: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+10615: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+10618: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+10621: ldc_w float 0.4000000059604645
+10624: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+--- clinit window @ pc 19077..19135 (Blocks.SPRUCE_FENCE:)
+19077: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+19080: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASS:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+19083: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+19086: fconst_2
+19087: ldc_w float 3.0
+19090: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+19093: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+19096: getstatic net/minecraft/world/level/block/SoundType.WOOD:Lnet/minecraft/world/level/block/SoundType;
+19099: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+19102: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+19105: putstatic net/minecraft/world/level/block/Blocks.SPRUCE_FENCE:Lnet/minecraft/world/level/block/Block;
+19108: getstatic net/minecraft/references/BlockItemIds.BIRCH_FENCE:Lnet/minecraft/references/BlockItemId;
+19111: invokedynamic indy
+19116: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+19119: getstatic net/minecraft/world/level/block/Blocks.BIRCH_PLANKS:Lnet/minecraft/world/level/block/Block;
+19122: invokevirtual net/minecraft/world/level/block/Block.defaultMapColor:()Lnet/minecraft/world/level/material/MapColor;
+19125: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+19128: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASS:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+19131: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+19134: fconst_2
+19135: ldc_w float 3.0
+--- clinit window @ pc 26002..26062 (Blocks.WARPED_FENCE:)
+26002: invokevirtual net/minecraft/world/level/block/Block.defaultMapColor:()Lnet/minecraft/world/level/material/MapColor;
+26005: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+26008: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASS:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+26011: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+26014: fconst_2
+26015: ldc_w float 3.0
+26018: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+26021: getstatic net/minecraft/world/level/block/SoundType.NETHER_WOOD:Lnet/minecraft/world/level/block/SoundType;
+26024: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+26027: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+26030: putstatic net/minecraft/world/level/block/Blocks.WARPED_FENCE:Lnet/minecraft/world/level/block/Block;
+26033: getstatic net/minecraft/references/BlockItemIds.CRIMSON_TRAPDOOR:Lnet/minecraft/references/BlockItemId;
+26036: invokedynamic indy
+26041: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+26044: getstatic net/minecraft/world/level/block/Blocks.CRIMSON_PLANKS:Lnet/minecraft/world/level/block/Block;
+26047: invokevirtual net/minecraft/world/level/block/Block.defaultMapColor:()Lnet/minecraft/world/level/material/MapColor;
+26050: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+26053: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASS:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+26056: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+26059: ldc_w float 3.0
+26062: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+--- clinit window @ pc 19461..19521 (Blocks.BAMBOO_FENCE:)
+19461: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+19464: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASS:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+19467: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+19470: fconst_2
+19471: ldc_w float 3.0
+19474: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+19477: getstatic net/minecraft/world/level/block/SoundType.BAMBOO_WOOD:Lnet/minecraft/world/level/block/SoundType;
+19480: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+19483: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+19486: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+19489: putstatic net/minecraft/world/level/block/Blocks.BAMBOO_FENCE:Lnet/minecraft/world/level/block/Block;
+19492: getstatic net/minecraft/references/BlockItemIds.SPRUCE_DOOR:Lnet/minecraft/references/BlockItemId;
+19495: invokedynamic indy
+19500: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+19503: getstatic net/minecraft/world/level/block/Blocks.SPRUCE_PLANKS:Lnet/minecraft/world/level/block/Block;
+19506: invokevirtual net/minecraft/world/level/block/Block.defaultMapColor:()Lnet/minecraft/world/level/material/MapColor;
+19509: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+19512: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASS:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+19515: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+19518: ldc_w float 3.0
+19521: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+--- clinit window @ pc 13300..13360 (Blocks.NETHER_BRICK_FENCE:)
+13300: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+13303: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+13306: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+13309: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+13312: fconst_2
+13313: ldc_w float 6.0
+13316: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+13319: getstatic net/minecraft/world/level/block/SoundType.NETHER_BRICKS:Lnet/minecraft/world/level/block/SoundType;
+13322: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+13325: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+13328: putstatic net/minecraft/world/level/block/Blocks.NETHER_BRICK_FENCE:Lnet/minecraft/world/level/block/Block;
+13331: getstatic net/minecraft/references/BlockItemIds.NETHER_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+13334: getstatic net/minecraft/world/level/block/Blocks.NETHER_BRICKS:Lnet/minecraft/world/level/block/Block;
+13337: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+13340: putstatic net/minecraft/world/level/block/Blocks.NETHER_BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+13343: getstatic net/minecraft/references/BlockItemIds.NETHER_WART:Lnet/minecraft/references/BlockItemId;
+13346: invokedynamic indy
+13351: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+13354: getstatic net/minecraft/world/level/material/MapColor.COLOR_RED:Lnet/minecraft/world/level/material/MapColor;
+13357: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+13360: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noCollision:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;

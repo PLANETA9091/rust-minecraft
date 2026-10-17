@@ -626,14 +626,57 @@ fn clip_axis(world: &World, b: (f64, f64, f64, f64, f64, f64), axis: usize, d: f
                 // Band the strip edge wears, the inset column's sides
                 // the dev-23 row banks, the Empty rows the
                 // walk-through skip keeps)
-                let Some((x_lo, x_hi, y_lo, y_hi, z_lo, z_hi)) =
-                    crate::world::shape_slabs(
-                        crate::world::collision_shape_at(world, cx, cy, cz),
-                        cx,
-                        cy,
-                        cz,
-                    )
-                else {
+                // THE CELL'S OWN BOXES + THE OVER-TALL BAND THE CELL
+                // BELOW WEARS (the dev-55 round — the fence family's
+                // compound the [.., 24, ..] px law the sweep's
+                // per-cell enumeration the upper band misses: the
+                // cell's own slabs the post box answers, the arms the
+                // connected bits serve, the BELOW cell's over-tall
+                // boxes the [`world::is_over_tall`] predicate arms —
+                // the fence/gate band poking into THIS cell the
+                // below-consult catches, the horizontal walk into the
+                // upper half-band the same verdict refuses, the fast
+                // fall the band's top the landing keeps). The own
+                // Empty cells the below-consult STILL answers (the
+                // air cell above the fence the band's upper half
+                // occupies — the continue the below consult never
+                // pre-empts).
+                let cell_shape = crate::world::collision_shape_at(world, cx, cy, cz);
+                let mut boxes: [Option<(f64, f64, f64, f64, f64, f64)>; 10] = [None; 10];
+                let mut nb = 0usize;
+                if let Some(b) = crate::world::shape_slabs(cell_shape, cx, cy, cz) {
+                    boxes[nb] = Some(b);
+                    nb += 1;
+                }
+                for arm in crate::world::fence_arm_slabs(cell_shape, cx, cy, cz) {
+                    if let Some(b) = arm {
+                        if nb < 10 {
+                            boxes[nb] = Some(b);
+                            nb += 1;
+                        }
+                    }
+                }
+                if cy > 0 {
+                    let below_shape = crate::world::collision_shape_at(world, cx, cy - 1, cz);
+                    if crate::world::is_over_tall(below_shape) {
+                        if let Some(b) = crate::world::shape_slabs(below_shape, cx, cy - 1, cz) {
+                            if nb < 10 {
+                                boxes[nb] = Some(b);
+                                nb += 1;
+                            }
+                        }
+                        for arm in crate::world::fence_arm_slabs(below_shape, cx, cy - 1, cz) {
+                            if let Some(b) = arm {
+                                if nb < 10 {
+                                    boxes[nb] = Some(b);
+                                    nb += 1;
+                                }
+                            }
+                        }
+                    }
+                }
+                for box_idx in 0..nb {
+                let Some((x_lo, x_hi, y_lo, y_hi, z_lo, z_hi)) = boxes[box_idx] else {
                     continue;
                 };
                 // THE OTHER TWO AXES' OWN PAIRING (the long-standing
@@ -690,6 +733,7 @@ fn clip_axis(world: &World, b: (f64, f64, f64, f64, f64, f64), axis: usize, d: f
                         }
                     }
                 }
+                } // the per-box loop the compound's own + the below's over-tall boxes serve
             }
         }
     }
@@ -851,6 +895,14 @@ pub fn collide_stepped(
                 let top = match shape {
                     crate::world::CollisionShape::Column(h)
                     | crate::world::CollisionShape::InsetColumn(h, _) => h as f64 / 16.0,
+                    // THE OVER-TALL FAMILY'S OWN TOP (the dev-55 round
+                    // — the fence post/arms + the closed gate panel
+                    // the 24-px band the candidate heights the vanilla
+                    // SHAPE top answers: the step-up the 1.5 top the
+                    // maxUpStep's 0.6 the same skip keeps, the
+                    // break-point the honest band speaks)
+                    crate::world::CollisionShape::Fence(_)
+                    | crate::world::CollisionShape::CenterBand(_, _) => 1.5,
                     _ => 1.0,
                 };
                 for f in [cy as f64 - ly0, cy as f64 + top - ly0] {
@@ -1915,24 +1967,65 @@ impl PlayerBody {
         for cx in x0.floor() as i32..=((x1 - 1e-9).floor()) as i32 {
             for cy in y0.floor() as i32..=((y1 - 1e-9).floor()) as i32 {
                 for cz in z0.floor() as i32..=((z1 - 1e-9).floor()) as i32 {
-                    let Some((x_lo, x_hi, y_lo, y_hi, z_lo, z_hi)) =
-                        crate::world::shape_slabs(
-                            crate::world::collision_shape_at(world, cx, cy, cz),
-                            cx,
-                            cy,
-                            cz,
-                        )
-                    else {
-                        continue;
-                    };
-                    if x_lo < x1
-                        && x_hi > x0
-                        && y_lo < y1
-                        && y_hi > y0
-                        && z_lo < z1
-                        && z_hi > z0
-                    {
-                        hit = true;
+                    // THE CELL'S OWN + THE OVER-TALL BAND THE CELL
+                    // BELOW WEARS (the dev-55 round — the fence/gate
+                    // band the sunk box the upper half the same
+                    // below-consult the sweep keeps: the skirt the
+                    // fence's 1.5-tall band the standing verdict the
+                    // ledge law keeps)
+                    let cell_shape = crate::world::collision_shape_at(world, cx, cy, cz);
+                    let mut boxes: [Option<(f64, f64, f64, f64, f64, f64)>; 10] = [None; 10];
+                    let mut nb = 0usize;
+                    if let Some(b) = crate::world::shape_slabs(cell_shape, cx, cy, cz) {
+                        boxes[nb] = Some(b);
+                        nb += 1;
+                    }
+                    for arm in crate::world::fence_arm_slabs(cell_shape, cx, cy, cz) {
+                        if let Some(b) = arm {
+                            if nb < 10 {
+                                boxes[nb] = Some(b);
+                                nb += 1;
+                            }
+                        }
+                    }
+                    if cy > 0 {
+                        let below_shape =
+                            crate::world::collision_shape_at(world, cx, cy - 1, cz);
+                        if crate::world::is_over_tall(below_shape) {
+                            if let Some(b) =
+                                crate::world::shape_slabs(below_shape, cx, cy - 1, cz)
+                            {
+                                if nb < 10 {
+                                    boxes[nb] = Some(b);
+                                    nb += 1;
+                                }
+                            }
+                            for arm in
+                                crate::world::fence_arm_slabs(below_shape, cx, cy - 1, cz)
+                            {
+                                if let Some(b) = arm {
+                                    if nb < 10 {
+                                        boxes[nb] = Some(b);
+                                        nb += 1;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    for box_idx in 0..nb {
+                        let Some((x_lo, x_hi, y_lo, y_hi, z_lo, z_hi)) = boxes[box_idx]
+                        else {
+                            continue;
+                        };
+                        if x_lo < x1
+                            && x_hi > x0
+                            && y_lo < y1
+                            && y_hi > y0
+                            && z_lo < z1
+                            && z_hi > z0
+                        {
+                            hit = true;
+                        }
                     }
                 }
             }
