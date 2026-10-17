@@ -4618,6 +4618,101 @@ fn gate_model_quads(kind: u16) -> &'static [mc_registry::element_quads::Quad] {
                 crate::world::OAK_FENCE_GATE_OPEN,
                 "block/oak_fence_gate_open",
             ),
+            // THE LADDER'S OWN MODEL ROWS (the autopush-681 round): the
+            // eleven wooden pairs the derive walk every wood serves —
+            // the template_fence_gate parents the ten planks masters
+            // resolve, the BAMBOO pair the template_custom_fence_gate
+            // parents its OWN bamboo_fence_gate master wears (the
+            // jar's own per-wood models the generated MODELS rows
+            // bank — the parent chain the derive resolves).
+            (
+                crate::world::SPRUCE_FENCE_GATE,
+                "block/spruce_fence_gate",
+            ),
+            (
+                crate::world::SPRUCE_FENCE_GATE_OPEN,
+                "block/spruce_fence_gate_open",
+            ),
+            (
+                crate::world::BIRCH_FENCE_GATE,
+                "block/birch_fence_gate",
+            ),
+            (
+                crate::world::BIRCH_FENCE_GATE_OPEN,
+                "block/birch_fence_gate_open",
+            ),
+            (
+                crate::world::JUNGLE_FENCE_GATE,
+                "block/jungle_fence_gate",
+            ),
+            (
+                crate::world::JUNGLE_FENCE_GATE_OPEN,
+                "block/jungle_fence_gate_open",
+            ),
+            (
+                crate::world::ACACIA_FENCE_GATE,
+                "block/acacia_fence_gate",
+            ),
+            (
+                crate::world::ACACIA_FENCE_GATE_OPEN,
+                "block/acacia_fence_gate_open",
+            ),
+            (
+                crate::world::CHERRY_FENCE_GATE,
+                "block/cherry_fence_gate",
+            ),
+            (
+                crate::world::CHERRY_FENCE_GATE_OPEN,
+                "block/cherry_fence_gate_open",
+            ),
+            (
+                crate::world::DARK_OAK_FENCE_GATE,
+                "block/dark_oak_fence_gate",
+            ),
+            (
+                crate::world::DARK_OAK_FENCE_GATE_OPEN,
+                "block/dark_oak_fence_gate_open",
+            ),
+            (
+                crate::world::PALE_OAK_FENCE_GATE,
+                "block/pale_oak_fence_gate",
+            ),
+            (
+                crate::world::PALE_OAK_FENCE_GATE_OPEN,
+                "block/pale_oak_fence_gate_open",
+            ),
+            (
+                crate::world::MANGROVE_FENCE_GATE,
+                "block/mangrove_fence_gate",
+            ),
+            (
+                crate::world::MANGROVE_FENCE_GATE_OPEN,
+                "block/mangrove_fence_gate_open",
+            ),
+            (
+                crate::world::BAMBOO_FENCE_GATE,
+                "block/bamboo_fence_gate",
+            ),
+            (
+                crate::world::BAMBOO_FENCE_GATE_OPEN,
+                "block/bamboo_fence_gate_open",
+            ),
+            (
+                crate::world::CRIMSON_FENCE_GATE,
+                "block/crimson_fence_gate",
+            ),
+            (
+                crate::world::CRIMSON_FENCE_GATE_OPEN,
+                "block/crimson_fence_gate_open",
+            ),
+            (
+                crate::world::WARPED_FENCE_GATE,
+                "block/warped_fence_gate",
+            ),
+            (
+                crate::world::WARPED_FENCE_GATE_OPEN,
+                "block/warped_fence_gate_open",
+            ),
         ]
         .into_iter()
         .map(|(k, model)| {

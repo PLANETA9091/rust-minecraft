@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 474] = [
+pub const RUNTIME_PALETTE: [&str; 496] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1530,6 +1530,74 @@ pub const RUNTIME_PALETTE: [&str; 474] = [
     "blue_concrete_powder", "brown_concrete_powder",
     "green_concrete_powder", "red_concrete_powder",
     "black_concrete_powder",
+    // THE GATE'S OWN LADDER (the autopush-681 round): the fence
+    // gate's eleven wooden rungs the ladder's tail banks — the
+    // spruce..warped pairs the Blocks/Items clinit ladder's own
+    // order the tail wears (the OAK pair its early seat the 442/443
+    // seats keep), each wood the closed/open ±1 pair the OPEN bit
+    // banks, the END_PORTAL the beyond-table 497 the every-family
+    // displacement law keeps (the +1 gap id the 679/680 rounds' own
+    // seat law wears — the old 475 seat the spruce open kind's own
+    // rung re-banks). javap Blocks clinit the 26.2 jar
+    // (pinned sha1 2dc72797, the probe scripts/jar_work/
+    // gate_ladder_681.py + .out banks): the TWELVE putstatic rows
+    // the register(BlockItemId, Function, Properties) walks speak —
+    // oak pc 12912, spruce 18697, birch 18742, jungle 18787, acacia
+    // 18832, cherry 18877, dark_oak 18922, pale_oak 18967, mangrove
+    // 19012, bamboo 19057, crimson 26170 (the nether pair the
+    // NO-ignitedByLava arm wears — the Properties chain the fconst_2
+    // strength row alone keeps), warped 26212 — the tail order the
+    // Items clinit's registerBlock pairing rows the same ladder
+    // banks (oak 8363, spruce 8375, birch 8387, jungle 8399, acacia
+    // 8411, cherry 8423, dark_oak 8435, pale_oak 8447, mangrove
+    // 8459, bamboo 8471, crimson 8483, warped 8495), the WoodType
+    // clinit the per-wood `new WoodType(name, BlockSetType)` rows
+    // the fence_gate.open/close voice pair every wood the SAME
+    // createVariableRangeEvent names speaks. The dig rows the
+    // generated block_dig table the jar's REAL bootstrapped
+    // registry answers (the 2.0 + no-tool rows every wood wears —
+    // the bare hand the whole ladder's drop keeps), the block_sounds
+    // rows the plank-sound law the family carries (block.wood.break
+    // the ten woods wear, cherry the block.cherry_wood.break stem,
+    // bamboo the block.bamboo_wood, crimson/warped the
+    // block.nether_wood pair — the planks' own law the gates wear),
+    // the self-entry drop pool the block_drops table speaks. The
+    // blockstates the jar's own 16-variant maps carry — the facing x
+    // in_wall x open rows the facing=south,in_wall=false,open={p}
+    // keys resolve, the models the template_fence_gate parents wear
+    // (the ONE #texture ref block/{wood}_planks the planks-master
+    // chain resolves), the BAMBOO pair the template_custom_fence
+    // gate parents its OWN bamboo_fence_gate master speaks (the
+    // particle ref the chain never banks). The ONE tile NEW the
+    // append-only tail seats (747 -> 748: the bamboo_fence_gate
+    // master the planks-masters the ten woods re-wear), every
+    // pre-existing row the same pixels + tints + names keeps, the
+    // append-only law the equivalence proof scripts/
+    // verify_atlas_full.py banks. The ONE "{wood}_fence_gate"
+    // registry name BOTH kinds the strip law speaks (the _open
+    // suffix the registry never answers — the DoorBlock's own law
+    // the gate family wears), the placeable lane the reverse walk
+    // the pairing serves, the RMB flip / wire open / re-face /
+    // collision lanes the dev-53 family fns every wood the same
+    // laws serve, the fire trio the family's own SILENCE keeps —
+    // no setFlammable row the gate class wears (the ignitedByLava
+    // the flint's own law the place-lane banks). The seats the
+    // CONTIGUOUS tail the kind ids wear (474..495), the END_PORTAL
+    // kind the beyond-table seat the family's growth displaces
+    // (475 -> 497 the
+    // 658/670/672/673/674/675/676/677/678/53/679/680 precedent
+    // wears).
+    "spruce_fence_gate", "spruce_fence_gate_open",
+    "birch_fence_gate", "birch_fence_gate_open",
+    "jungle_fence_gate", "jungle_fence_gate_open",
+    "acacia_fence_gate", "acacia_fence_gate_open",
+    "cherry_fence_gate", "cherry_fence_gate_open",
+    "dark_oak_fence_gate", "dark_oak_fence_gate_open",
+    "pale_oak_fence_gate", "pale_oak_fence_gate_open",
+    "mangrove_fence_gate", "mangrove_fence_gate_open",
+    "bamboo_fence_gate", "bamboo_fence_gate_open",
+    "crimson_fence_gate", "crimson_fence_gate_open",
+    "warped_fence_gate", "warped_fence_gate_open",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -3142,10 +3210,13 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             faces.push(resolve_flat_stem(&stem, false));
             continue;
         }
-        if block == "oak_fence_gate" || block == "oak_fence_gate_open" {
-            // THE FENCE GATE'S OWN ROWS (the dev-53 round): the
-            // blockstate's own facing=south,in_wall=false,open={p}
-            // rows the two kinds wear — the registerDefaultState's
+        let gate_open = block.ends_with("_fence_gate_open");
+        if gate_open || block.ends_with("_fence_gate") {
+            // THE FENCE GATE FAMILY'S OWN ROWS (the dev-53 round, the
+            // autopush-681 round the ladder's ELEVEN wooden rungs the
+            // same walk every wood serves): the blockstate's own
+            // facing=south,in_wall=false,open={p} rows the two kinds
+            // each wood wears — the registerDefaultState's
             // IN_WALL=false pin the row key's own seat keeps (the
             // isWall tag verdict the walls the palette never banks —
             // the wall lane's own models the row never resolves), the
@@ -3153,25 +3224,32 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             // fold (the closed/open rows the SAME y values the pair
             // serves), the merged texture map's `#texture` ref the
             // row's tile banks (the template_fence_gate chain the
-            // #texture = block/oak_planks planks master resolves —
-            // the palette the tile already banks, no new tile the
-            // regen keeps, the pre-gate rows byte-identical),
-            // tinted = false (the faces carry NO tintindex — the
-            // pre-colored master renders as authored).
-            let open = block == "oak_fence_gate_open";
+            // #texture = block/{wood}_planks planks master resolves —
+            // the BAMBOO pair the template_custom_fence_gate parents
+            // its OWN bamboo_fence_gate master speaks — the palette
+            // the tile banks or the planks masters the ten woods
+            // re-wear, the one NEW tile the bamboo master seats, the
+            // pre-gate rows byte-identical), tinted = false (the
+            // faces carry NO tintindex — the pre-colored masters
+            // render as authored).
+            let wood = block
+                .trim_end_matches("_open")
+                .strip_suffix("_fence_gate")
+                .with_context(|| format!("block {block}: gate stem decode"))?;
+            let open = gate_open;
             let bs_bytes = read_jar(
                 &mut archive,
-                "assets/minecraft/blockstates/oak_fence_gate.json",
+                &format!("assets/minecraft/blockstates/{wood}_fence_gate.json"),
             )?;
             let bs: Value = serde_json::from_slice(&bs_bytes)
-                .with_context(|| "blockstate oak_fence_gate: json parse")?;
+                .with_context(|| format!("blockstate {wood}_fence_gate: json parse"))?;
             let row_key = format!("facing=south,in_wall=false,open={open}");
             let model_ref = bs
                 .get("variants")
                 .and_then(|v| v.get(&row_key))
                 .and_then(|v| v.get("model"))
                 .and_then(|m| m.as_str())
-                .with_context(|| format!("blockstate oak_fence_gate: no {row_key} model"))?
+                .with_context(|| format!("blockstate {wood}_fence_gate: no {row_key} model"))?
                 .trim_start_matches("minecraft:")
                 .to_string();
             let (tex_map, _) = load_model_chain(&mut archive, &model_ref)

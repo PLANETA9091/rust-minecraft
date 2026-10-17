@@ -1,0 +1,210 @@
+=== jar sha1 2dc72797acbc1b63fc16a11c4ac393605f453754
+=== Blocks clinit the TWELVE gate putstatic rows (the ladder's own order)
+12900: ldc2_w ldc2w@339
+12903: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12906: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12909: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+12912: putstatic net/minecraft/world/level/block/Blocks.OAK_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+  ---
+18685: ldc2_w ldc2w@339
+18688: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+18691: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+18694: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+18697: putstatic net/minecraft/world/level/block/Blocks.SPRUCE_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+  ---
+18730: ldc2_w ldc2w@339
+18733: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+18736: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+18739: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+18742: putstatic net/minecraft/world/level/block/Blocks.BIRCH_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+  ---
+18775: ldc2_w ldc2w@339
+18778: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+18781: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+18784: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+18787: putstatic net/minecraft/world/level/block/Blocks.JUNGLE_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+  ---
+18820: ldc2_w ldc2w@339
+18823: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+18826: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+18829: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+18832: putstatic net/minecraft/world/level/block/Blocks.ACACIA_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+  ---
+18910: ldc2_w ldc2w@339
+18913: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+18916: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+18919: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+18922: putstatic net/minecraft/world/level/block/Blocks.DARK_OAK_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+  ---
+19000: ldc2_w ldc2w@339
+19003: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+19006: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+19009: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+19012: putstatic net/minecraft/world/level/block/Blocks.MANGROVE_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+  ---
+18865: ldc2_w ldc2w@339
+18868: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+18871: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+18874: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+18877: putstatic net/minecraft/world/level/block/Blocks.CHERRY_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+  ---
+18955: ldc2_w ldc2w@339
+18958: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+18961: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+18964: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+18967: putstatic net/minecraft/world/level/block/Blocks.PALE_OAK_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+  ---
+19045: ldc2_w ldc2w@339
+19048: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+19051: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+19054: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+19057: putstatic net/minecraft/world/level/block/Blocks.BAMBOO_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+  ---
+26160: fconst_2
+26161: ldc2_w ldc2w@339
+26164: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+26167: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+26170: putstatic net/minecraft/world/level/block/Blocks.CRIMSON_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+  ---
+26202: fconst_2
+26203: ldc2_w ldc2w@339
+26206: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+26209: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+26212: putstatic net/minecraft/world/level/block/Blocks.WARPED_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+  ---
+=== WoodType clinit the per-wood rows
+7: putstatic net/minecraft/world/level/block/state/properties/WoodType.TYPES:Ljava/util/Map;
+31: putstatic net/minecraft/world/level/block/state/properties/WoodType.CODEC:Lcom/mojang/serialization/Codec;
+34: new net/minecraft/world/level/block/state/properties/WoodType
+49: putstatic net/minecraft/world/level/block/state/properties/WoodType.OAK:Lnet/minecraft/world/level/block/state/properties/WoodType;
+52: new net/minecraft/world/level/block/state/properties/WoodType
+67: putstatic net/minecraft/world/level/block/state/properties/WoodType.SPRUCE:Lnet/minecraft/world/level/block/state/properties/WoodType;
+70: new net/minecraft/world/level/block/state/properties/WoodType
+85: putstatic net/minecraft/world/level/block/state/properties/WoodType.BIRCH:Lnet/minecraft/world/level/block/state/properties/WoodType;
+88: new net/minecraft/world/level/block/state/properties/WoodType
+103: putstatic net/minecraft/world/level/block/state/properties/WoodType.ACACIA:Lnet/minecraft/world/level/block/state/properties/WoodType;
+106: new net/minecraft/world/level/block/state/properties/WoodType
+133: putstatic net/minecraft/world/level/block/state/properties/WoodType.CHERRY:Lnet/minecraft/world/level/block/state/properties/WoodType;
+136: new net/minecraft/world/level/block/state/properties/WoodType
+151: putstatic net/minecraft/world/level/block/state/properties/WoodType.JUNGLE:Lnet/minecraft/world/level/block/state/properties/WoodType;
+154: new net/minecraft/world/level/block/state/properties/WoodType
+169: putstatic net/minecraft/world/level/block/state/properties/WoodType.DARK_OAK:Lnet/minecraft/world/level/block/state/properties/WoodType;
+172: new net/minecraft/world/level/block/state/properties/WoodType
+187: putstatic net/minecraft/world/level/block/state/properties/WoodType.PALE_OAK:Lnet/minecraft/world/level/block/state/properties/WoodType;
+190: new net/minecraft/world/level/block/state/properties/WoodType
+217: putstatic net/minecraft/world/level/block/state/properties/WoodType.CRIMSON:Lnet/minecraft/world/level/block/state/properties/WoodType;
+220: new net/minecraft/world/level/block/state/properties/WoodType
+247: putstatic net/minecraft/world/level/block/state/properties/WoodType.WARPED:Lnet/minecraft/world/level/block/state/properties/WoodType;
+250: new net/minecraft/world/level/block/state/properties/WoodType
+265: putstatic net/minecraft/world/level/block/state/properties/WoodType.MANGROVE:Lnet/minecraft/world/level/block/state/properties/WoodType;
+268: new net/minecraft/world/level/block/state/properties/WoodType
+295: putstatic net/minecraft/world/level/block/state/properties/WoodType.BAMBOO:Lnet/minecraft/world/level/block/state/properties/WoodType;
+=== Items clinit the gate pairing rows
+8354: getstatic net/minecraft/references/BlockItemIds.OAK_FENCE_GATE:Lnet/minecraft/references/BlockItemId;
+8357: getstatic net/minecraft/world/level/block/Blocks.OAK_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+8360: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+8363: putstatic net/minecraft/world/item/Items.OAK_FENCE_GATE:Lnet/minecraft/world/item/Item;
+8366: getstatic net/minecraft/references/BlockItemIds.SPRUCE_FENCE_GATE:Lnet/minecraft/references/BlockItemId;
+  ---
+8366: getstatic net/minecraft/references/BlockItemIds.SPRUCE_FENCE_GATE:Lnet/minecraft/references/BlockItemId;
+8369: getstatic net/minecraft/world/level/block/Blocks.SPRUCE_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+8372: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+8375: putstatic net/minecraft/world/item/Items.SPRUCE_FENCE_GATE:Lnet/minecraft/world/item/Item;
+8378: getstatic net/minecraft/references/BlockItemIds.BIRCH_FENCE_GATE:Lnet/minecraft/references/BlockItemId;
+  ---
+8378: getstatic net/minecraft/references/BlockItemIds.BIRCH_FENCE_GATE:Lnet/minecraft/references/BlockItemId;
+8381: getstatic net/minecraft/world/level/block/Blocks.BIRCH_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+8384: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+8387: putstatic net/minecraft/world/item/Items.BIRCH_FENCE_GATE:Lnet/minecraft/world/item/Item;
+8390: getstatic net/minecraft/references/BlockItemIds.JUNGLE_FENCE_GATE:Lnet/minecraft/references/BlockItemId;
+  ---
+8390: getstatic net/minecraft/references/BlockItemIds.JUNGLE_FENCE_GATE:Lnet/minecraft/references/BlockItemId;
+8393: getstatic net/minecraft/world/level/block/Blocks.JUNGLE_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+8396: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+8399: putstatic net/minecraft/world/item/Items.JUNGLE_FENCE_GATE:Lnet/minecraft/world/item/Item;
+8402: getstatic net/minecraft/references/BlockItemIds.ACACIA_FENCE_GATE:Lnet/minecraft/references/BlockItemId;
+  ---
+8402: getstatic net/minecraft/references/BlockItemIds.ACACIA_FENCE_GATE:Lnet/minecraft/references/BlockItemId;
+8405: getstatic net/minecraft/world/level/block/Blocks.ACACIA_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+8408: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+8411: putstatic net/minecraft/world/item/Items.ACACIA_FENCE_GATE:Lnet/minecraft/world/item/Item;
+8414: getstatic net/minecraft/references/BlockItemIds.CHERRY_FENCE_GATE:Lnet/minecraft/references/BlockItemId;
+  ---
+8426: getstatic net/minecraft/references/BlockItemIds.DARK_OAK_FENCE_GATE:Lnet/minecraft/references/BlockItemId;
+8429: getstatic net/minecraft/world/level/block/Blocks.DARK_OAK_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+8432: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+8435: putstatic net/minecraft/world/item/Items.DARK_OAK_FENCE_GATE:Lnet/minecraft/world/item/Item;
+8438: getstatic net/minecraft/references/BlockItemIds.PALE_OAK_FENCE_GATE:Lnet/minecraft/references/BlockItemId;
+  ---
+8450: getstatic net/minecraft/references/BlockItemIds.MANGROVE_FENCE_GATE:Lnet/minecraft/references/BlockItemId;
+8453: getstatic net/minecraft/world/level/block/Blocks.MANGROVE_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+8456: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+8459: putstatic net/minecraft/world/item/Items.MANGROVE_FENCE_GATE:Lnet/minecraft/world/item/Item;
+8462: getstatic net/minecraft/references/BlockItemIds.BAMBOO_FENCE_GATE:Lnet/minecraft/references/BlockItemId;
+  ---
+8414: getstatic net/minecraft/references/BlockItemIds.CHERRY_FENCE_GATE:Lnet/minecraft/references/BlockItemId;
+8417: getstatic net/minecraft/world/level/block/Blocks.CHERRY_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+8420: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+8423: putstatic net/minecraft/world/item/Items.CHERRY_FENCE_GATE:Lnet/minecraft/world/item/Item;
+8426: getstatic net/minecraft/references/BlockItemIds.DARK_OAK_FENCE_GATE:Lnet/minecraft/references/BlockItemId;
+  ---
+8438: getstatic net/minecraft/references/BlockItemIds.PALE_OAK_FENCE_GATE:Lnet/minecraft/references/BlockItemId;
+8441: getstatic net/minecraft/world/level/block/Blocks.PALE_OAK_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+8444: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+8447: putstatic net/minecraft/world/item/Items.PALE_OAK_FENCE_GATE:Lnet/minecraft/world/item/Item;
+8450: getstatic net/minecraft/references/BlockItemIds.MANGROVE_FENCE_GATE:Lnet/minecraft/references/BlockItemId;
+  ---
+8462: getstatic net/minecraft/references/BlockItemIds.BAMBOO_FENCE_GATE:Lnet/minecraft/references/BlockItemId;
+8465: getstatic net/minecraft/world/level/block/Blocks.BAMBOO_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+8468: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+8471: putstatic net/minecraft/world/item/Items.BAMBOO_FENCE_GATE:Lnet/minecraft/world/item/Item;
+8474: getstatic net/minecraft/references/BlockItemIds.CRIMSON_FENCE_GATE:Lnet/minecraft/references/BlockItemId;
+  ---
+8474: getstatic net/minecraft/references/BlockItemIds.CRIMSON_FENCE_GATE:Lnet/minecraft/references/BlockItemId;
+8477: getstatic net/minecraft/world/level/block/Blocks.CRIMSON_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+8480: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+8483: putstatic net/minecraft/world/item/Items.CRIMSON_FENCE_GATE:Lnet/minecraft/world/item/Item;
+8486: getstatic net/minecraft/references/BlockItemIds.WARPED_FENCE_GATE:Lnet/minecraft/references/BlockItemId;
+  ---
+8486: getstatic net/minecraft/references/BlockItemIds.WARPED_FENCE_GATE:Lnet/minecraft/references/BlockItemId;
+8489: getstatic net/minecraft/world/level/block/Blocks.WARPED_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+8492: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+8495: putstatic net/minecraft/world/item/Items.WARPED_FENCE_GATE:Lnet/minecraft/world/item/Item;
+8498: getstatic net/minecraft/references/BlockItemIds.POWERED_RAIL:Lnet/minecraft/references/BlockItemId;
+  ---
+=== the ELEVEN blockstates the 16-variant maps bank
+spruce_fence_gate: 16 variants closed=minecraft:block/spruce_fence_gate open=minecraft:block/spruce_fence_gate_open OK
+birch_fence_gate: 16 variants closed=minecraft:block/birch_fence_gate open=minecraft:block/birch_fence_gate_open OK
+jungle_fence_gate: 16 variants closed=minecraft:block/jungle_fence_gate open=minecraft:block/jungle_fence_gate_open OK
+acacia_fence_gate: 16 variants closed=minecraft:block/acacia_fence_gate open=minecraft:block/acacia_fence_gate_open OK
+dark_oak_fence_gate: 16 variants closed=minecraft:block/dark_oak_fence_gate open=minecraft:block/dark_oak_fence_gate_open OK
+mangrove_fence_gate: 16 variants closed=minecraft:block/mangrove_fence_gate open=minecraft:block/mangrove_fence_gate_open OK
+cherry_fence_gate: 16 variants closed=minecraft:block/cherry_fence_gate open=minecraft:block/cherry_fence_gate_open OK
+pale_oak_fence_gate: 16 variants closed=minecraft:block/pale_oak_fence_gate open=minecraft:block/pale_oak_fence_gate_open OK
+bamboo_fence_gate: 16 variants closed=minecraft:block/bamboo_fence_gate open=minecraft:block/bamboo_fence_gate_open OK
+crimson_fence_gate: 16 variants closed=minecraft:block/crimson_fence_gate open=minecraft:block/crimson_fence_gate_open OK
+warped_fence_gate: 16 variants closed=minecraft:block/warped_fence_gate open=minecraft:block/warped_fence_gate_open OK
+=== the models the template parents wear (the ONE #texture ref; bamboo the CUSTOM template the own master speaks)
+spruce_fence_gate: parent=block/template_fence_gate texture=minecraft:block/spruce_planks OK
+spruce_fence_gate_open: parent=block/template_fence_gate_open texture=minecraft:block/spruce_planks OK
+birch_fence_gate: parent=block/template_fence_gate texture=minecraft:block/birch_planks OK
+birch_fence_gate_open: parent=block/template_fence_gate_open texture=minecraft:block/birch_planks OK
+jungle_fence_gate: parent=block/template_fence_gate texture=minecraft:block/jungle_planks OK
+jungle_fence_gate_open: parent=block/template_fence_gate_open texture=minecraft:block/jungle_planks OK
+acacia_fence_gate: parent=block/template_fence_gate texture=minecraft:block/acacia_planks OK
+acacia_fence_gate_open: parent=block/template_fence_gate_open texture=minecraft:block/acacia_planks OK
+dark_oak_fence_gate: parent=block/template_fence_gate texture=minecraft:block/dark_oak_planks OK
+dark_oak_fence_gate_open: parent=block/template_fence_gate_open texture=minecraft:block/dark_oak_planks OK
+mangrove_fence_gate: parent=block/template_fence_gate texture=minecraft:block/mangrove_planks OK
+mangrove_fence_gate_open: parent=block/template_fence_gate_open texture=minecraft:block/mangrove_planks OK
+cherry_fence_gate: parent=block/template_fence_gate texture=minecraft:block/cherry_planks OK
+cherry_fence_gate_open: parent=block/template_fence_gate_open texture=minecraft:block/cherry_planks OK
+pale_oak_fence_gate: parent=block/template_fence_gate texture=minecraft:block/pale_oak_planks OK
+pale_oak_fence_gate_open: parent=block/template_fence_gate_open texture=minecraft:block/pale_oak_planks OK
+bamboo_fence_gate: parent=block/template_custom_fence_gate texture=minecraft:block/bamboo_fence_gate OK
+bamboo_fence_gate_open: parent=block/template_custom_fence_gate_open texture=minecraft:block/bamboo_fence_gate OK
+crimson_fence_gate: parent=block/template_fence_gate texture=minecraft:block/crimson_planks OK
+crimson_fence_gate_open: parent=block/template_fence_gate_open texture=minecraft:block/crimson_planks OK
+warped_fence_gate: parent=block/template_fence_gate texture=minecraft:block/warped_planks OK
+warped_fence_gate_open: parent=block/template_fence_gate_open texture=minecraft:block/warped_planks OK
+=== VERDICT PASS
