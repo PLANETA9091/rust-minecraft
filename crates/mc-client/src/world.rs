@@ -2938,6 +2938,112 @@ pub const WARPED_FENCE: u16 = 508;
 /// block/nether_bricks master the ONE #texture ref wears.
 pub const NETHER_BRICK_FENCE: u16 = 509;
 
+/// THE WALL FAMILY'S OWN THIRTY-TWO SEATS (the dev-56 round — the
+/// rampart rung the WALLS tag the palette tail banks): javap
+/// `net.minecraft.world.level.block.WallBlock` the 26.2 jar
+/// (pinned sha1 2dc72797, the probes scripts/jar_work/wall_684.py +
+/// wall_684b.py banks) — the ONE WallBlock class EVERY row
+/// registers, the ctor's registerDefaultState walk the UP=true +
+/// NORTH/EAST/SOUTH/WEST=WallSide.NONE pin speaks, the makeShapes
+/// (FF) pair the two shape maps bank — the VISUAL call
+/// makeShapes(16.0F, 14.0F) the POST Block.column(8.0, 0.0, 16.0)
+/// box(4,0,4,12,16,12) + the LOW side boxZ(6.0, 0.0, 14.0, 0.0,
+/// 11.0) box(5,0,0,11,14,11) + the TALL side boxZ(6.0, 0.0, 16.0,
+/// 0.0, 11.0) box(5,0,0,11,16,11) the models' own geometry echoes
+/// (template_wall_post [4,0,4]->[12,16,12], template_wall_side
+/// [5,0,0]->[11,14,8], template_wall_side_tall [5,0,0]->[11,16,8]),
+/// the COLLISION call makeShapes(24.0F, 24.0F) the post
+/// column(8.0, 0.0, 24.0) box(4,0,4,12,24,12) + the side strips
+/// box(5,0,0,11,24,11) BOTH heights the SAME 0..24 band wear — the
+/// ANTI-JUMP the 1.5-tall law the fence family's own rung shares
+/// (the wall the vanilla jump NEVER clears, the top the stand-on
+/// 1.5 the fence law keeps). The register rows the Blocks clinit
+/// pc 14233 (cobblestone) putstatic walk banks — the
+/// Properties.ofLegacyCopy(BASE) + forceSolidOn() chain EVERY row
+/// wears (the cobblestone/mossy pair the COBBLESTONE copy speaks,
+/// the brick rows their own bases the same legacy law keeps), the
+/// dig/sounds/drops rows the name-keyed generated tables the
+/// registry answers (each wall row its BASE block's material the
+/// legacy copy wears), the ONE registry name each kind alone
+/// speaks, the blockstates {base}_wall.json the MULTIPART carry —
+/// the up=true conditional post apply + the four side arms the
+/// LOW/TALL when-rows (the mesher's multipart lane the connection
+/// state the mesh-time law reads), the models the template
+/// wall_post/wall_side/wall_side_tall parents resolve (the ONE
+/// #texture ref the per-wall BASE master every face banks).
+pub const COBBLESTONE_WALL: u16 = 511;
+pub const MOSSY_COBBLESTONE_WALL: u16 = 512;
+pub const BRICK_WALL: u16 = 513;
+pub const PRISMARINE_WALL: u16 = 514;
+pub const RED_SANDSTONE_WALL: u16 = 515;
+pub const MOSSY_STONE_BRICK_WALL: u16 = 516;
+pub const GRANITE_WALL: u16 = 517;
+pub const STONE_BRICK_WALL: u16 = 518;
+pub const NETHER_BRICK_WALL: u16 = 519;
+pub const ANDESITE_WALL: u16 = 520;
+pub const RED_NETHER_BRICK_WALL: u16 = 521;
+pub const SANDSTONE_WALL: u16 = 522;
+pub const END_STONE_BRICK_WALL: u16 = 523;
+pub const DIORITE_WALL: u16 = 524;
+pub const BLACKSTONE_WALL: u16 = 525;
+pub const POLISHED_BLACKSTONE_BRICK_WALL: u16 = 526;
+pub const POLISHED_BLACKSTONE_WALL: u16 = 527;
+pub const COBBLED_DEEPSLATE_WALL: u16 = 528;
+pub const POLISHED_DEEPSLATE_WALL: u16 = 529;
+pub const DEEPSLATE_TILE_WALL: u16 = 530;
+pub const DEEPSLATE_BRICK_WALL: u16 = 531;
+pub const MUD_BRICK_WALL: u16 = 532;
+pub const TUFF_WALL: u16 = 533;
+pub const POLISHED_TUFF_WALL: u16 = 534;
+pub const TUFF_BRICK_WALL: u16 = 535;
+pub const RESIN_BRICK_WALL: u16 = 536;
+pub const CINNABAR_WALL: u16 = 537;
+pub const POLISHED_CINNABAR_WALL: u16 = 538;
+pub const CINNABAR_BRICK_WALL: u16 = 539;
+pub const SULFUR_WALL: u16 = 540;
+pub const POLISHED_SULFUR_WALL: u16 = 541;
+pub const SULFUR_BRICK_WALL: u16 = 542;
+
+/// THE WALL FAMILY'S OWN SEAT LADDER (the dev-56 round — the 32
+/// kinds the explicit seats the tail banks, the fence tables' own
+/// explicit-seat law the rampart rung wears): the mesher's
+/// wall_parts/wall_models walks the ladder read, the
+/// [`is_wall`] range the same run the range law keeps.
+pub const WALL_KINDS: [u16; 32] = [
+    COBBLESTONE_WALL,
+    MOSSY_COBBLESTONE_WALL,
+    BRICK_WALL,
+    PRISMARINE_WALL,
+    RED_SANDSTONE_WALL,
+    MOSSY_STONE_BRICK_WALL,
+    GRANITE_WALL,
+    STONE_BRICK_WALL,
+    NETHER_BRICK_WALL,
+    ANDESITE_WALL,
+    RED_NETHER_BRICK_WALL,
+    SANDSTONE_WALL,
+    END_STONE_BRICK_WALL,
+    DIORITE_WALL,
+    BLACKSTONE_WALL,
+    POLISHED_BLACKSTONE_BRICK_WALL,
+    POLISHED_BLACKSTONE_WALL,
+    COBBLED_DEEPSLATE_WALL,
+    POLISHED_DEEPSLATE_WALL,
+    DEEPSLATE_TILE_WALL,
+    DEEPSLATE_BRICK_WALL,
+    MUD_BRICK_WALL,
+    TUFF_WALL,
+    POLISHED_TUFF_WALL,
+    TUFF_BRICK_WALL,
+    RESIN_BRICK_WALL,
+    CINNABAR_WALL,
+    POLISHED_CINNABAR_WALL,
+    CINNABAR_BRICK_WALL,
+    SULFUR_WALL,
+    POLISHED_SULFUR_WALL,
+    SULFUR_BRICK_WALL,
+];
+
 /// THE OAK DOOR'S OWN CLOSED LOWER (the autopush-655 round — the
 /// vocabulary's next frontier: the right-click open/close the
 /// interaction feel the flip walk serves): javap DoorBlock the 26.2
@@ -3518,7 +3624,7 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 /// generated tables' own rows the names wire) — the
 /// END_PORTAL
 /// the beyond-table seat the displaced law keeps.
-pub const NAME_OF: [&str; 510] = [
+pub const NAME_OF: [&str; 543] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -4141,6 +4247,37 @@ pub const NAME_OF: [&str; 510] = [
     "acacia_fence", "cherry_fence", "dark_oak_fence", "pale_oak_fence",
     "mangrove_fence", "bamboo_fence", "crimson_fence", "warped_fence",
     "nether_brick_fence",
+    // THE PORTAL'S OWN ROW (the dev-56 round — the beyond-table 510
+    // the palette's own row the walls' contiguous run the tail
+    // requires: the END_PORTAL kind the id the displacement law
+    // keeps, the row the inert seat the starry-plane lane banks —
+    // the item lane the refusal keeps [no BlockItem the vanilla
+    // pairs], the mesher's own lane the portal renders).
+    "end_portal",
+    // THE WALL FAMILY'S OWN THIRTY-TWO ROWS (the dev-56 round — the
+    // rampart rung the tail banks): the 32 WALLS-tag rows the tag
+    // file's own order wears (the cobblestone/mossy pair the stone
+    // seam the tail opens, the brick/prismarine/sandstone rungs the
+    // material ladder banks, the deepslate/tuff/cinnabar/sulfur
+    // tails the 26.x vocabulary the tag keeps). The ONE registry
+    // name each kind alone speaks (the NAME_OF row the
+    // dig/drop/sound/item lanes the base-name law keeps — the
+    // generated tables' name-keyed rows the names wire), the
+    // placeable lookup the reverse walk the kind's own row answers
+    // (511..542 — the END_PORTAL the beyond-table 510 the
+    // displacement law keeps).
+    "cobblestone_wall", "mossy_cobblestone_wall", "brick_wall",
+    "prismarine_wall", "red_sandstone_wall", "mossy_stone_brick_wall",
+    "granite_wall", "stone_brick_wall", "nether_brick_wall",
+    "andesite_wall", "red_nether_brick_wall", "sandstone_wall",
+    "end_stone_brick_wall", "diorite_wall", "blackstone_wall",
+    "polished_blackstone_brick_wall", "polished_blackstone_wall",
+    "cobbled_deepslate_wall", "polished_deepslate_wall",
+    "deepslate_tile_wall", "deepslate_brick_wall", "mud_brick_wall",
+    "tuff_wall", "polished_tuff_wall", "tuff_brick_wall",
+    "resin_brick_wall", "cinnabar_wall", "polished_cinnabar_wall",
+    "cinnabar_brick_wall", "sulfur_wall", "polished_sulfur_wall",
+    "sulfur_brick_wall",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -5133,6 +5270,322 @@ pub fn fence_connection_bits(world: &World, x: i32, y: i32, z: i32) -> u8 {
         bits |= 0b1000;
     }
     bits
+}
+
+/// THE WALL FAMILY'S OWN SEATS (the dev-56 round — the 32 kinds the
+/// rampart rung banks): the mesher's multipart lane the family fn
+/// reads, the collision's compound lane the bits law arms, the
+/// connection walk the neighbors' verdicts serve.
+#[inline]
+pub fn is_wall(id: u16) -> bool {
+    (COBBLESTONE_WALL..=SULFUR_BRICK_WALL).contains(&id)
+}
+
+/// THE WALL CONNECTION'S OWN FOUR-ARM LAW (javap WallBlock.connectsTo
+/// (state, sideSolid, dir) pc 0-68 the 26.2 jar — the sideUpdate pc
+/// 15-30 walk the per-direction verdict feeds: `PROPERTY_BY_DIRECTION
+/// [dir] = connectsTo(neighbor, neighbor.isFaceSturdy(level,
+/// neighborPos, dir.getOpposite()), dir.getOpposite())`. The FOUR
+/// arms the bytecode banks:
+/// (1) `state.is(BlockTags.WALLS)` — the wall-to-wall arm EVERY wall
+///     kind connects (the WALLS tag the whole family reads — NO
+///     wood/stone parity the fence's isSameFence law wears, the
+///     cobblestone row the brick wall the SAME verdict answers);
+/// (2) `!isExceptionForConnection(state) && sideSolid` — the
+///     sturdy-face arm the solid block speaks (the exception list
+///     the fence's own law the same inherited static banks — the
+///     leaves pair ALONE seats, the sturdy verdict the collision
+///     vocabulary's Full/Column family the full-side faces the
+///     honest mapping keeps);
+/// (3) `block instanceof IronBarsBlock` — the bars arm the pane
+///     family the connection keeps (the client's palette the pane
+///     kinds the vocabulary never banks — the arm the palette's own
+///     reach the honest empty answer wears);
+/// (4) `block instanceof FenceGateBlock &&
+///     FenceGateBlock.connectsToDirection(state, dir)` — the gate
+///     arm the perpendicular law speaks (the [`fence_connects`]
+///     walk's own decode the panel-axis verdict serves — the dir
+///     the sideUpdate's getOpposite the gate's frame the axis-
+///     invariant flip keeps).
+/// `dir`: 1 north (-z), 2 east (+x), 3 south (+z), 4 west (-x) —
+/// the [`door_facing_byte`] vocabulary the horizontal law keeps.
+pub fn wall_connects(
+    world: &World,
+    self_kind: u16,
+    nx: i32,
+    ny: i32,
+    nz: i32,
+    dir: u8,
+) -> bool {
+    let _ = self_kind;
+    let other = world.get(nx, ny, nz);
+    if other == AIR {
+        return false;
+    }
+    // THE WALL-TO-WALL ARM (the WALLS tag): every wall kind the
+    // every wall kind connects
+    if is_wall(other) {
+        return true;
+    }
+    // THE GATE ARM (the instanceof + the perpendicular law): the
+    // [`fence_connects`] walk's own decode the axis verdict serves
+    // (the sideUpdate's getOpposite the dir the gate's frame wears —
+    // the axis the flip never moves)
+    if is_fence_gate(other) {
+        let facing = world.variant(nx, ny, nz);
+        let dir_cw = match dir {
+            1 => 2u8, // north → clockwise east
+            2 => 3,   // east → clockwise south
+            3 => 4,   // south → clockwise west
+            _ => 1,   // west → clockwise north
+        };
+        let facing_dir = match facing {
+            0 => 1u8, // the no-opinion byte the north pin wears
+            f => f,
+        };
+        let axis_of = |d: u8| if d == 1 || d == 3 { 0u8 } else { 1u8 };
+        return axis_of(dir_cw) == axis_of(facing_dir);
+    }
+    // THE STURDY-FACE ARM (the exception list + the sturdy read):
+    // the leaves pair the exception verdict keeps (the fence's own
+    // walk the same list banks), the collision vocabulary's full-side
+    // family the sturdy verdict keeps
+    if other == LEAVES || other == PALE_LEAVES {
+        return false;
+    }
+    matches!(
+        collision_shape(other),
+        CollisionShape::Full
+            | CollisionShape::Column(_)
+            | CollisionShape::InsetColumn(_, _)
+    )
+    // THE BARS ARM (the IronBarsBlock instanceof): the client's
+    // palette the pane family the vocabulary never banks — the arm
+    // the empty reach the honest answer keeps
+}
+
+/// THE CONNECTION BITS' OWN MESH-TIME WALK (the variant-less law —
+/// the [`fence_connection_bits`] walk the same four neighbor reads
+/// serves: bit 0 north, bit 1 east, bit 2 south, bit 3 west — the
+/// N/E/S/W property order the vanilla registerDefaultState walk
+/// banks).
+pub fn wall_connection_bits(world: &World, x: i32, y: i32, z: i32) -> u8 {
+    let kind = world.get(x, y, z);
+    let mut bits = 0u8;
+    if wall_connects(world, kind, x, y, z - 1, 1) {
+        bits |= 0b0001;
+    }
+    if wall_connects(world, kind, x + 1, y, z, 2) {
+        bits |= 0b0010;
+    }
+    if wall_connects(world, kind, x, y, z + 1, 3) {
+        bits |= 0b0100;
+    }
+    if wall_connects(world, kind, x - 1, y, z, 4) {
+        bits |= 0b1000;
+    }
+    bits
+}
+
+/// THE DOWN-FACE FOOTPRINT'S OWN COVER READ (javap WallBlock.isCovered
+/// pc 0-16 the 26.2 jar — the `!joinIsNotEmpty(test, face, ONLY_FIRST)`
+/// fold the TALL verdict arms: the block ABOVE's collision DOWN-face
+/// the test strip covers — no part the test sticks out the covered
+/// verdict keeps). The client's own collision vocabulary the face
+/// footprint the honest mapping keeps: the Full/Column/YSpan rows the
+/// full 0..1 square speaks, the InsetColumn the shrunk square, the
+/// Band/CenterBand rows the thin strips, the Fence/Wall compounds the
+/// post+arm unions the bit law carries, the Empty row the
+/// never-covered refusal. `dir`: the test strip's own side (1 north,
+/// 2 east, 3 south, 4 west) — the Wall compound's connected strip the
+/// per-dir footprint speaks, the post-only square the unconnected
+/// arm keeps. The (lo, hi) pairs the 16-px vocabulary the tests
+/// read. Returns `(x_lo, x_hi, z_lo, z_hi)` in 16ths, `None` =
+/// nothing.
+fn collision_face_footprint(
+    world: &World,
+    ax: i32,
+    ay: i32,
+    az: i32,
+    dir: Option<u8>,
+) -> Option<(f64, f64, f64, f64)> {
+    let shape = collision_shape_at(world, ax, ay, az);
+    let full = (0.0f64, 1.0f64, 0.0f64, 1.0f64);
+    match shape {
+        CollisionShape::Empty => None,
+        CollisionShape::Full | CollisionShape::Column(_) | CollisionShape::YSpan(_, _) => {
+            Some(full)
+        }
+        CollisionShape::InsetColumn(_, i) => {
+            let t = i as f64 / 16.0;
+            Some((t, 1.0 - t, t, 1.0 - t))
+        }
+        CollisionShape::Band(edge, th) => {
+            let t = th as f64 / 16.0;
+            match edge {
+                1 => Some((0.0, 1.0, 0.0, t)),       // north: z 0..t
+                2 => Some((1.0 - t, 1.0, 0.0, 1.0)), // east: x hi strip
+                3 => Some((0.0, 1.0, 1.0 - t, 1.0)), // south: z hi strip
+                4 => Some((0.0, t, 0.0, 1.0)),       // west: x lo strip
+                _ => Some(full),
+            }
+        }
+        CollisionShape::CenterBand(axis, th) => {
+            let t = th as f64 / 16.0;
+            if axis == 0 {
+                Some((0.0, 1.0, 0.5 - t / 2.0, 0.5 + t / 2.0))
+            } else {
+                Some((0.5 - t / 2.0, 0.5 + t / 2.0, 0.0, 1.0))
+            }
+        }
+        CollisionShape::Fence(_) => {
+            // THE FENCE COMPOUND'S OWN FACE (the post box(6,0,6,10,24,10)
+            // + the arms the bits carry): the DOWN face the y0=0
+            // footprints the union speaks — the post 6..10 square, the
+            // arms the edge..8-deep bands. The tests the post square
+            // ALONE the conservative answer keeps (the TEST_WALL strips
+            // the 0..9 span the arm's 0..8 the cover verdict never
+            // grants — the fence-above the LOW sides the vanilla law
+            // wears, the TEST_POST square the post's own 6..10 the
+            // covered verdict banks).
+            Some((6.0 / 16.0, 10.0 / 16.0, 6.0 / 16.0, 10.0 / 16.0))
+        }
+        CollisionShape::Wall(bits, _) => {
+            // THE WALL COMPOUND'S OWN FACE (the post box(4,0,4,12,24,12)
+            // + the side strips box(5,0,0,11,24,11) the bits carry): the
+            // CONNECTED dir the strip footprint speaks (the box(5,0,0,
+            // 11,24,11) north base the quarter turns rotate — the strip
+            // the test's own side the wall-above TALL chain serves),
+            // the post-only square the unconnected dir keeps.
+            let strip_covers = |bit: u8| bits & bit != 0;
+            match dir {
+                Some(1) if strip_covers(0b0001) => {
+                    Some((5.0 / 16.0, 11.0 / 16.0, 0.0, 11.0 / 16.0))
+                }
+                Some(2) if strip_covers(0b0010) => {
+                    Some((11.0 / 16.0, 1.0, 5.0 / 16.0, 11.0 / 16.0))
+                }
+                Some(3) if strip_covers(0b0100) => {
+                    Some((5.0 / 16.0, 11.0 / 16.0, 5.0 / 16.0, 1.0))
+                }
+                Some(4) if strip_covers(0b1000) => {
+                    Some((0.0, 5.0 / 16.0, 5.0 / 16.0, 11.0 / 16.0))
+                }
+                _ => Some((4.0 / 16.0, 12.0 / 16.0, 4.0 / 16.0, 12.0 / 16.0)),
+            }
+        }
+    }
+}
+
+/// THE TALL SIDE'S OWN COVER VERDICT (javap WallBlock.makeWallState
+/// the `isCovered(faceShape, TEST_SHAPES_WALL[dir])` walk the 26.2
+/// jar speaks — the TEST_SHAPES_WALL clinit bank: boxZ(2.0, 16.0,
+/// 0.0, 9.0) box(7,0,0,9,16,9) rotateHorizontal the four strips —
+/// the north (7..9, 0..9), the east (7..16, 7..9), the south
+/// (7..9, 7..16), the west (0..7, 7..9) the quarter turns wear). The
+/// connected side TALL the covered verdict keeps, LOW the uncovered
+/// answers — the block ABOVE's collision DOWN-face the strip the
+/// [`collision_face_footprint`] walk reads (the wall-above the
+/// connected arm the TALL chain serves, the fence-above the LOW
+/// sides the arm's 8-deep band the 9-deep test never grants).
+pub fn wall_above_covers(world: &World, ax: i32, ay: i32, az: i32, dir: u8) -> bool {
+    let Some((x0, x1, z0, z1)) = collision_face_footprint(world, ax, ay, az, Some(dir)) else {
+        return false;
+    };
+    // the test strip per dir (the rotateHorizontal quarter turns the
+    // north base wears) — the box(7,0,0,9,16,9) footprint the 16ths
+    // px vocabulary keeps
+    let (tx0, tx1, tz0, tz1) = match dir {
+        1 => (7.0 / 16.0, 9.0 / 16.0, 0.0, 9.0 / 16.0),
+        2 => (7.0 / 16.0, 1.0, 7.0 / 16.0, 9.0 / 16.0),
+        3 => (7.0 / 16.0, 9.0 / 16.0, 7.0 / 16.0, 1.0),
+        _ => (0.0, 7.0 / 16.0, 7.0 / 16.0, 9.0 / 16.0),
+    };
+    x0 <= tx0 && tx1 <= x1 && z0 <= tz0 && tz1 <= z1
+}
+
+/// THE WALL POST OVERRIDE'S OWN TAG READ (the WALL_POST_OVERRIDE tag
+/// file the 26.2 jar banks — torch, soul_torch, redstone_torch,
+/// copper_torch, tripwire, #signs, #banners, #pressure_plates,
+/// cactus_flower): the client's palette the members the vocabulary
+/// seats (the torch kind, the redstone torch pair, the plate family
+/// — the soul_torch/copper_torch/tripwire/signs/banners/cactus_flower
+/// rows the palette never banks), the absent rows the honest refusal
+/// the empty reach keeps.
+#[inline]
+pub fn is_wall_post_override(id: u16) -> bool {
+    id == TORCH || id == REDSTONE_TORCH || id == REDSTONE_TORCH_OFF || is_pressure_plate(id)
+}
+
+/// THE POST'S OWN RAISE LAW (javap WallBlock.shouldRaisePost(state,
+/// aboveState, faceShape) pc 0-267 the 26.2 jar — the FIVE arms the
+/// bytecode banks, the verdict the UP property the updateShape walk
+/// wears:
+/// (1) the above wall's own UP=true read — the `above.getBlock()
+///     instanceof WallBlock && above.getValue(UP)` walk the column
+///     stack the raised chain serves;
+/// (2) the flag13 walk: ALL FOUR sides NONE (the lone post raises)
+///     || the nNone != sNone || eNone != wNone asymmetric walk (the
+///     corner/T-junction the raised center keeps — the straight line
+///     n==s && e==w the verdict REFUSES);
+/// (3) the flag14 refusal: (north==TALL && south==TALL) ||
+///     (east==TALL && west==TALL) — the straight wall line the flat
+///     top wears;
+/// (4) the above block the WALL_POST_OVERRIDE tag answers
+///     ([`is_wall_post_override`]) — the torch/plate roof the raised
+///     post keeps;
+/// (5) isCovered(faceShape, TEST_SHAPE_POST) — the
+///     `Block.column(2.0, 0.0, 16.0)` box(7,0,7,9,16,9) test the
+///     above face's footprint covers (the solid roof the raised
+///     post keeps — the [`collision_face_footprint`] walk the face
+///     the [`wall_above_covers`] dir-agnostic read serves — the
+///     TEST_POST footprint (7..9, 7..9) the center square the full
+///     and centered-band faces cover).
+/// The UP verdict the mesher's post apply + the collision's post box
+/// the same walk answers — the vanilla stores the property the
+/// updateShape propagation re-arms, the client's own walk the SAME
+/// verdict every frame recomputes).
+pub fn wall_up(world: &World, x: i32, y: i32, z: i32) -> bool {
+    let bits = wall_connection_bits(world, x, y, z);
+    let n = bits & 0b0001 != 0;
+    let e = bits & 0b0010 != 0;
+    let s = bits & 0b0100 != 0;
+    let w = bits & 0b1000 != 0;
+    let tall = |d: u8| wall_above_covers(world, x, y + 1, z, d);
+    let above = world.get(x, y + 1, z);
+    // ARM 1: the above wall's own raise (the recursion the air the
+    // column top terminates — the stack the height the bound keeps)
+    if is_wall(above) && wall_up(world, x, y + 1, z) {
+        return true;
+    }
+    // ARM 2a: ALL FOUR sides NONE — the lone post raises
+    if bits == 0 {
+        return true;
+    }
+    // ARM 2b: the asymmetric walk — exactly one of north/south or
+    // east/west connected
+    if n != s || e != w {
+        return true;
+    }
+    // ARM 3: the both-TALL pair refusal — the straight line the flat
+    // top wears
+    if (n && s && tall(1) && tall(3)) || (e && w && tall(2) && tall(4)) {
+        return false;
+    }
+    // ARM 4: the override tag — the torch/plate roof the raise keeps
+    if is_wall_post_override(above) {
+        return true;
+    }
+    // ARM 5: the covered TEST_POST read — the solid roof the raise
+    // keeps (the column(2.0, 0.0, 16.0) box(7,0,7,9,16,9) footprint
+    // (7..9, 7..9) the face covers)
+    if let Some((x0, x1, z0, z1)) = collision_face_footprint(world, x, y + 1, z, None) {
+        let (tx0, tx1, tz0, tz1) = (7.0 / 16.0, 9.0 / 16.0, 7.0 / 16.0, 9.0 / 16.0);
+        if x0 <= tx0 && tx1 <= x1 && z0 <= tz0 && tz1 <= z1 {
+            return true;
+        }
+    }
+    false
 }
 
 /// THE GATE'S OWN PLACEMENT FACING (javap FenceGateBlock.
@@ -6366,6 +6819,22 @@ pub enum CollisionShape {
     /// kind-only law keeps (the placement's obstruction walk the
     /// post-only conservative subset reads).
     Fence(u8),
+    /// THE WALL COMPOUND'S OWN VARIANT-AWARE LANE (the dev-56 round —
+    /// the connection bits + the tall bits the pair the mesh-time law
+    /// computes: the vanilla stores the UP BooleanProperty + the four
+    /// WallSide EnumProperties the updateShape walk re-arms, the
+    /// client's own walk the [`wall_connection_bits`] +
+    /// [`wall_above_covers`] + [`wall_up`] reads the SAME verdict
+    /// every frame recomputes). The post box(4,0,4,12,24,12) the UP
+    /// verdict arms ([`shape_slabs`]'s centered 8/16 band), the side
+    /// strips box(5,0,0,11,24,11) the connected bits arm
+    /// ([`wall_arm_slabs`]) — BOTH heights the SAME 0..24 band the
+    /// collision makeShapes(24.0F, 24.0F) walk banks (the LOW/TALL
+    /// distinction the collision NEVER wears — the visual 16/14 the
+    /// models render, the anti-jump the 1.5-tall law keeps). The tall
+    /// byte the visual law's own verdict the mesher's when-rows
+    /// read — the collision the bits alone banks.
+    Wall(u8, u8),
     /// THE TRAPDOOR'S OWN HORIZONTAL SLAB (the autopush-668 round —
     /// the closed state's own band the SHAPES map's UP/DOWN keys
     /// speak): javap TrapDoorBlock the 26.2 jar the SHAPES clinit's
@@ -6519,6 +6988,17 @@ pub fn collision_shape(id: u16) -> CollisionShape {
         // byte the empty-connection default wears — the post alone
         // the kind-only verdict answers.
         CollisionShape::Fence(0)
+    } else if is_wall(id) {
+        // THE WALL FAMILY'S OWN KIND-ONLY ROW (the dev-56 round —
+        // the connection bits the neighbor reads the kind-only table
+        // never sees, the POST box the conservative subset keeps:
+        // the [4, 0, 4] -> [12, 24, 12] band the placement's
+        // obstruction walk consumes, the strips the connected bits
+        // the variant-aware lane serves). The bits the 0 the
+        // no-opinion byte the empty-connection default wears — the
+        // post alone the kind-only verdict answers (the UP verdict
+        // the raise law the variant-aware lane computes).
+        CollisionShape::Wall(0, 0)
     } else if is_bamboo_stalk(id) {
         // THE STALK'S OWN INSET ROW (the autopush-608 round — javap
         // BambooStalkBlock.getCollisionShape pc 0-11 the 26.2 jar: the
@@ -6769,6 +7249,32 @@ pub fn collision_shape_at(world: &World, cx: i32, cy: i32, cz: i32) -> Collision
     if is_fence(id) {
         return CollisionShape::Fence(fence_connection_bits(world, cx, cy, cz));
     }
+    // THE WALL FAMILY'S OWN VARIANT-AWARE ROW (the dev-56 round —
+    // the bits + the tall pair the mesh-time law computes: the
+    // [`wall_connection_bits`] walk the four neighbor reads the
+    // connection state answers, the [`wall_above_covers`] walk the
+    // TALL verdict the above face's own cover read serves, the
+    // [`wall_up`] walk the post the raise law arms — the placement/
+    // break updates the propagation never needs, the bits the
+    // world's own state recompute). The tall byte the strips the
+    // visual law reads — the collision the bits alone banks.
+    if is_wall(id) {
+        let bits = wall_connection_bits(world, cx, cy, cz);
+        let mut tall = 0u8;
+        if bits & 0b0001 != 0 && wall_above_covers(world, cx, cy + 1, cz, 1) {
+            tall |= 0b0001;
+        }
+        if bits & 0b0010 != 0 && wall_above_covers(world, cx, cy + 1, cz, 2) {
+            tall |= 0b0010;
+        }
+        if bits & 0b0100 != 0 && wall_above_covers(world, cx, cy + 1, cz, 3) {
+            tall |= 0b0100;
+        }
+        if bits & 0b1000 != 0 && wall_above_covers(world, cx, cy + 1, cz, 4) {
+            tall |= 0b1000;
+        }
+        return CollisionShape::Wall(bits, tall);
+    }
     if !is_door(id) {
         return collision_shape(id);
     }
@@ -6826,7 +7332,9 @@ pub fn shape_slabs(
         // [`body::clip_axis`]'s own below-consult answers — the
         // over-tall predicate [`collision_shape::is_over_tall`] the
         // consult arms)
-        CollisionShape::Fence(_) | CollisionShape::CenterBand(_, _) => {
+        CollisionShape::Fence(_)
+        | CollisionShape::CenterBand(_, _)
+        | CollisionShape::Wall(_, _) => {
             (cy as f64, cy as f64 + 1.5)
         }
         _ => (cy as f64, (cy + 1) as f64),
@@ -6877,6 +7385,21 @@ pub fn shape_slabs(
         z_lo = cz as f64 + 0.5 - t;
         z_hi = cz as f64 + 0.5 + t;
     }
+    // THE WALL POST'S OWN CENTERED COLUMN (the dev-56 round — the
+    // [`Wall`] decode the SHAPE law's Block.column(8.0, 0.0, 24.0)
+    // box serves: the x/z the 0.5 ± 4/16 band the 8±4 px post banks
+    // (the box(4,0,4,12,24,12) row the collision makeShapes(24.0F,
+    // 24.0F) call speaks — the WIDER post the fence's 4/16 the 8/16
+    // rampart keeps), the y the 0..24 band the anti-jump the
+    // over-tall arm keeps — the strips the [`wall_arm_slabs`] walk
+    // the compound serves)
+    if let CollisionShape::Wall(_, _) = shape {
+        let t = 4.0f64 / 16.0;
+        x_lo = cx as f64 + 0.5 - t;
+        x_hi = cx as f64 + 0.5 + t;
+        z_lo = cz as f64 + 0.5 - t;
+        z_hi = cz as f64 + 0.5 + t;
+    }
     Some((x_lo, x_hi, y_lo, y_hi, z_lo, z_hi))
 }
 
@@ -6921,6 +7444,56 @@ pub fn fence_arm_slabs(
     ]
 }
 
+/// THE WALL SIDES' OWN SLABS (the dev-56 round — the compound's
+/// connected members the ONE walk serves: javap WallBlock.makeShapes
+/// the 26.2 jar the side boxZ(6.0, 0.0, 24.0, 0.0, 11.0)
+/// rotateHorizontal the four when-rows banks — the north strip
+/// [5, 0, 0] -> [11, 24, 11] the base row wears (the x the centered
+/// 6/16 band keeps, the z the edge..11/16 span speaks), the east
+/// [11, 0, 5] -> [16, 24, 11], the south [5, 0, 5] -> [11, 24, 16],
+/// the west [0, 0, 5] -> [5, 24, 11] the quarter turns answer — the
+/// 0..24 px band the over-tall law every strip wears, the LOW/TALL
+/// distinction the collision NEVER wears (the makeShapes(24.0F,
+/// 24.0F) call BOTH heights the same band banks)). The bits the
+/// N/E/S/W order the vanilla registerDefaultState walk banks; the
+/// non-wall shape the four Nones the empty answer keeps.
+pub fn wall_arm_slabs(
+    shape: CollisionShape,
+    cx: i32,
+    cy: i32,
+    cz: i32,
+) -> [Option<(f64, f64, f64, f64, f64, f64)>; 4] {
+    let CollisionShape::Wall(bits, _) = shape else {
+        return [None, None, None, None];
+    };
+    let c = cx as f64;
+    let y0 = cy as f64;
+    let y1 = cy as f64 + 1.5;
+    let d = cz as f64;
+    // the centered 6/16 band the side's own width keeps (boxZ w=6.0
+    // → x 8±3 px — the 5..11 px band the base row wears)
+    let band = |a: f64| (a + 0.5 - 3.0 / 16.0, a + 0.5 + 3.0 / 16.0);
+    let (xn_lo, xn_hi) = band(c);
+    let (zn_lo, zn_hi) = band(d);
+    [
+        // north: x 5..11 centered band, z 0..11 — the cell edge the
+        // strip reaches (the box(5,0,0,11,24,11) base row wears)
+        (bits & 0b0001 != 0).then(|| (xn_lo, xn_hi, y0, y1, d, d + 11.0 / 16.0)),
+        // east: x 5..16, z 5..11 centered band — the Y_90 quarter the
+        // (x,z)->(16-z,x) map wears (the fence's own east arm the
+        // [8,0,6]->[16,24,10] row the same walk banks — the strip the
+        // post's edge the cell's east rim the 11-deep span keeps)
+        (bits & 0b0010 != 0).then(|| (c + 5.0 / 16.0, c + 1.0, y0, y1, zn_lo, zn_hi)),
+        // south: x 5..11 centered band, z 5..16 — the Y_180 quarter
+        // the mirrored band keeps (the box(5,0,5,11,24,16) row speaks)
+        (bits & 0b0100 != 0).then(|| (xn_lo, xn_hi, y0, y1, d + 5.0 / 16.0, d + 1.0)),
+        // west: x 0..11, z 5..11 centered band — the Y_270 quarter
+        // the (x,z)->(z,16-x) map wears (the box(0,0,5,11,24,11) row
+        // speaks)
+        (bits & 0b1000 != 0).then(|| (c, c + 11.0 / 16.0, y0, y1, zn_lo, zn_hi)),
+    ]
+}
+
 /// THE OVER-TALL FAMILY'S OWN PREDICATE (the dev-55 round — the
 /// shapes the 24-px band the cell's own 16-px height EXCEEDS: the
 /// fence post/arms + the closed gate panel the [.., 24, ..] boxes
@@ -6929,7 +7502,12 @@ pub fn fence_arm_slabs(
 /// below-consult the predicate arms). The [`fence_arm_slabs`] +
 /// [`shape_slabs`] pair the over-tall boxes answer.
 pub fn is_over_tall(shape: CollisionShape) -> bool {
-    matches!(shape, CollisionShape::Fence(_) | CollisionShape::CenterBand(_, _))
+    matches!(
+        shape,
+        CollisionShape::Fence(_)
+            | CollisionShape::CenterBand(_, _)
+            | CollisionShape::Wall(_, _)
+    )
 }
 
 /// THE FLINT'S OWN BURNABLE SUBSET — javap `FireBlock` over the real
@@ -14920,7 +15498,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the lamp pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 510, "the palette the lamp pair banks");
+        assert_eq!(atlas::N_KINDS, 543, "the palette the lamp pair banks");
         assert!(is_redstone_lamp(REDSTONE_LAMP) && is_redstone_lamp(REDSTONE_LAMP_LIT));
         assert!(!is_redstone_lamp(REDSTONE_WIRE) && !is_redstone_lamp(STONE));
         assert!(!redstone_lamp_lit(REDSTONE_LAMP));
@@ -15017,7 +15595,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the wire pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 510, "the palette the wire pair banks");
+        assert_eq!(atlas::N_KINDS, 543, "the palette the wire pair banks");
         assert!(is_redstone_wire(REDSTONE_WIRE) && is_redstone_wire(REDSTONE_WIRE_ON));
         assert!(!is_redstone_wire(LEVER) && !is_redstone_wire(OAK_PRESSURE_PLATE));
         assert!(!wire_powered(REDSTONE_WIRE));
@@ -15171,7 +15749,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 510, "the palette the graded ladder banks");
+        assert_eq!(atlas::N_KINDS, 543, "the palette the graded ladder banks");
         // THE POWER READ'S OWN ROUND TRIP (the seat the kind the
         // inverse fold answers, the unknown id the None keeps)
         assert_eq!(wire_power_of(REDSTONE_WIRE), Some(0));
@@ -15358,7 +15936,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the planks' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 510, "the palette the planks' twelve banks");
+        assert_eq!(atlas::N_KINDS, 543, "the palette the planks' twelve banks");
         for (i, (name, kind, voice)) in PLANKS.iter().enumerate() {
             let seat = OAK_PLANKS + i as u16;
             assert_eq!(*kind, seat, "the seat the family order banks");
@@ -15450,7 +16028,7 @@ mod tests {
             None,
             "the portal the item lane refuses"
         );
-        assert_eq!(NAME_OF.len(), 510, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 543, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -15504,7 +16082,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kit's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 510, "the palette the kit's six banks");
+        assert_eq!(atlas::N_KINDS, 543, "the palette the kit's six banks");
         for (i, (name, kind, hard)) in KIT.iter().enumerate() {
             let seat = COBBLESTONE + i as u16;
             assert_eq!(*kind, seat, "the seat the stone shelf order banks");
@@ -15594,7 +16172,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kit's growth banks)
-        assert_eq!(NAME_OF.len(), 510, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 543, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -15651,7 +16229,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the shelf's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 510, "the palette the shelf's eight banks");
+        assert_eq!(atlas::N_KINDS, 543, "the palette the shelf's eight banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -15749,7 +16327,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the shelf's growth banks)
-        assert_eq!(NAME_OF.len(), 510, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 543, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -15818,7 +16396,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the cloths' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 510, "the palette the cloths' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 543, "the palette the cloths' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -15932,7 +16510,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the cloths' growth banks)
-        assert_eq!(NAME_OF.len(), 510, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 543, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -16007,7 +16585,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kilns' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 510, "the palette the kilns' seventeen banks");
+        assert_eq!(atlas::N_KINDS, 543, "the palette the kilns' seventeen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -16119,7 +16697,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kilns' growth banks)
-        assert_eq!(NAME_OF.len(), 510, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 543, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -16195,7 +16773,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 510, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 543, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -16312,7 +16890,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 510, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 543, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -16397,7 +16975,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 510, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 543, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -16548,7 +17126,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 510, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 543, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -16622,7 +17200,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 510, "the palette the ladder's twenty-two banks");
+        assert_eq!(atlas::N_KINDS, 543, "the palette the ladder's twenty-two banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -16811,7 +17389,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the ladder's growth banks)
-        assert_eq!(NAME_OF.len(), 510, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 543, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -16872,7 +17450,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the note's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 510, "the palette the note's own banks");
+        assert_eq!(atlas::N_KINDS, 543, "the palette the note's own banks");
         // THE ONE REGISTRY NAME ITS KIND ALONE SPEAKS (the NAME_OF row
         // + the generated KIND_NAMES/REGISTRY_NAMES rows the same
         // entry the three tables keep — no strip law the single kind
@@ -17183,7 +17761,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the note's growth banks)
-        assert_eq!(NAME_OF.len(), 510, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 543, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -17224,8 +17802,8 @@ mod tests {
             "the contiguous run the thirteen seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 510, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 510, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 543, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 543, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in OAK_FENCE..=NETHER_BRICK_FENCE {
@@ -17602,6 +18180,353 @@ mod tests {
     }
 
     #[test]
+    fn the_walls_own_connections_the_bits_the_cover_and_the_flat_top_wear() {
+        // THE WALL FAMILY'S OWN LAWS (the dev-56 round — javap
+        // WallBlock the 26.2 jar the probes scripts/jar_work/
+        // wall_684.py + wall_684b.py banks): the THIRTY-TWO kinds the
+        // contiguous tail banks (the WALLS tag the tag file's own
+        // order wears), the connectsTo walk pc 0-68 the FOUR arms
+        // speaks (the WALLS-tag arm every wall kind connects — NO
+        // wood/stone parity the fence's isSameFence law wears — the
+        // sturdy-face arm the exception list the leaves pair alone
+        // trips, the gate arm the connectsToDirection perpendicular
+        // law the panel-axis sides connect), the makeShapes(FF) pair
+        // the compound banks (the VISUAL call makeShapes(16.0F,
+        // 14.0F), the COLLISION call makeShapes(24.0F, 24.0F) — the
+        // post Block.column(8.0, 0.0, 24.0) the [4,0,4]->[12,24,12]
+        // band, the side strip boxZ(6.0, 0.0, 24.0, 0.0, 11.0)
+        // rotateHorizontal the four members — the 0..24 px band the
+        // ANTI-JUMP the 1.5-tall law wears BOTH heights the same
+        // collision keeps), the shouldRaisePost walk the FIVE arms
+        // banks (the lone post raises, the straight line the flat
+        // top wears, the corner the raised center keeps, the column
+        // stack the raised chain serves)
+        use mc_registry::generated::atlas;
+        // THE THIRTY-TWO SEATS' OWN BANK (the contiguous tail the
+        // append-only law keeps, the END_PORTAL the displaced seat
+        // answers)
+        assert_eq!(COBBLESTONE_WALL, 511, "the rampart rung its tail seat keeps");
+        assert_eq!(
+            SULFUR_BRICK_WALL, 542,
+            "the sulfur seam the thirty-second seat banks"
+        );
+        assert_eq!(
+            (COBBLESTONE_WALL..=SULFUR_BRICK_WALL).count(),
+            32,
+            "the contiguous run the thirty-two seats wear"
+        );
+        assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
+        assert_eq!(atlas::N_KINDS, 543, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 543, "the NAME_OF table the one length keeps");
+        // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
+        // rows the same entry the three tables keep)
+        for k in COBBLESTONE_WALL..=SULFUR_BRICK_WALL {
+            assert_eq!(
+                NAME_OF[k as usize],
+                atlas::KIND_NAMES[k as usize],
+                "the KIND_NAMES row the family's kind {} keeps",
+                k
+            );
+            assert_eq!(
+                NAME_OF[k as usize],
+                atlas::REGISTRY_NAMES[k as usize],
+                "the REGISTRY_NAMES row the family's kind {} keeps",
+                k
+            );
+        }
+        assert_eq!(NAME_OF[COBBLESTONE_WALL as usize], "cobblestone_wall");
+        assert_eq!(NAME_OF[SULFUR_BRICK_WALL as usize], "sulfur_brick_wall");
+        // THE PLACEABLE LANE (the Items clinit's registerBlock rows
+        // the reverse walk answers)
+        assert_eq!(
+            World::placeable_block("cobblestone_wall"),
+            Some(COBBLESTONE_WALL),
+            "the cobblestone wall item the placement lane grants"
+        );
+        assert_eq!(
+            World::placeable_block("sulfur_brick_wall"),
+            Some(SULFUR_BRICK_WALL),
+            "the sulfur brick item the placement lane grants"
+        );
+        // THE DIG ROWS (the generated table the REAL bootstrapped
+        // registry banks — the ofLegacyCopy(BASE) chain the base
+        // block's own strength the cobblestone copy wears: 2.0 +
+        // requiresCorrectToolForDrops the pickaxe the drop law keeps)
+        let (hard, tool) = crate::dig::DigState::block_dig_row(COBBLESTONE_WALL);
+        assert!(
+            (hard - 2.0).abs() < 1e-4,
+            "the 2.0 strength the cobblestone wall dig row wears, got {}",
+            hard
+        );
+        assert!(tool, "the requiresCorrectToolForDrops the stone law wears");
+        // THE SELF-ENTRIES THE DROPS TABLE BANKS (the loot tables'
+        // own pools)
+        assert!(
+            mc_registry::generated::block_drops::drops("cobblestone_wall").is_some(),
+            "the self-entry the cobblestone wall drops table banks"
+        );
+        // THE VOICE LAWS THE FAMILY WEARS (the ofLegacyCopy(COBBLESTONE)
+        // the stone SoundType every lane carries)
+        let idx = mc_registry::generated::block_sounds::sound_index("cobblestone_wall")
+            .expect("the cobblestone wall sound row the table banks");
+        assert_eq!(
+            mc_registry::generated::block_sounds::SOUND_BREAK[idx],
+            "block.stone.break",
+            "the stone law the cobblestone wall break row speaks"
+        );
+        // THE FACE_TILES ROW THE ONE BASE MASTER EVERY FACE BANKS
+        // (the gate arm's law the family keeps — the six slots the
+        // ONE tile the whole model chain wears)
+        for k in COBBLESTONE_WALL..=SULFUR_BRICK_WALL {
+            let row = atlas::FACE_TILES[k as usize];
+            assert!(
+                row.iter().all(|t| t == &row[2]),
+                "the ONE-tile shape the family's kind {} keeps",
+                k
+            );
+            assert_ne!(
+                row[2],
+                atlas::TILE_NONE,
+                "the base master the family's kind {} resolves",
+                k
+            );
+        }
+        assert_eq!(
+            atlas::FACE_TILES[COBBLESTONE_WALL as usize][2],
+            atlas::FACE_TILES[COBBLESTONE as usize][2],
+            "the cobblestone wall the cobblestone master wears"
+        );
+        // THE CONNECTION LAW'S OWN WALK (the mesh-time bits the four
+        // neighbor reads answer; the BLANK world the air neighbors
+        // the terrain-free verdict keeps)
+        let mut w = World::blank(3, 0xBA11);
+        let c = w.size_blocks() / 2;
+        let y = 8;
+        // THE WALL-TO-WALL ARM (the WALLS tag): the cobblestone rung
+        // the BRICK rung CONNECTS (every wall kind the every wall
+        // kind the tag law banks — NO parity the fence's own seam
+        // wears)
+        w.set(c, y, c, COBBLESTONE_WALL);
+        assert_eq!(
+            wall_connection_bits(&w, c, y, c),
+            0b0000,
+            "the lone wall the empty connections wears"
+        );
+        w.set(c, y, c - 1, BRICK_WALL);
+        assert_eq!(
+            wall_connection_bits(&w, c, y, c),
+            0b0001,
+            "the brick neighbor the north bit banks"
+        );
+        assert_eq!(
+            wall_connection_bits(&w, c, y, c - 1),
+            0b0100,
+            "the cobblestone neighbor the south bit the mirror keeps"
+        );
+        // THE STURDY-FACE ARM (the full-cube family the connect
+        // verdict keeps)
+        w.set(c + 1, y, c, STONE);
+        assert_eq!(
+            wall_connection_bits(&w, c, y, c),
+            0b0011,
+            "the stone neighbor the east bit the sturdy arm banks"
+        );
+        // THE EXCEPTION LIST (the isExceptionForConnection's
+        // LeavesBlock row the leaves pair the connect REFUSES)
+        w.set(c, y, c + 4, COBBLESTONE_WALL);
+        w.set(c + 1, y, c + 4, LEAVES);
+        assert_eq!(
+            wall_connection_bits(&w, c, y, c + 4),
+            0b0000,
+            "the leaves exception the wall beside never connects"
+        );
+        // THE GATE ARM (the connectsToDirection perpendicular law:
+        // the panel-axis side the connect verdict keeps) — the FRESH
+        // COLUMN the earlier walls' own bits the mirror never
+        // pollutes
+        w.set(c + 4, y, c - 3, OAK_FENCE_GATE);
+        w.set_variant(c + 4, y, c - 3, 2);
+        w.set(c + 4, y, c - 2, COBBLESTONE_WALL);
+        assert_eq!(
+            wall_connection_bits(&w, c + 4, y, c - 2),
+            0b0001,
+            "the east-facing gate the north wall the panel-axis law connects"
+        );
+        w.set(c + 8, y, c - 5, OAK_FENCE_GATE);
+        w.set_variant(c + 8, y, c - 5, 1);
+        w.set(c + 8, y, c - 4, COBBLESTONE_WALL);
+        assert_eq!(
+            wall_connection_bits(&w, c + 8, y, c - 4),
+            0b0000,
+            "the north-facing gate the north wall the perpendicular law refuses"
+        );
+        // THE COMPOUND'S OWN COLLISION (the post + the strips the
+        // bits vocabulary banks, the tall byte the cover verdicts
+        // carry)
+        let fc = w.size_blocks() / 2 - 6;
+        w.set(fc, y, fc, COBBLESTONE_WALL);
+        w.set(fc, y, fc - 1, BRICK_WALL);
+        assert_eq!(
+            collision_shape_at(&w, fc, y, fc),
+            CollisionShape::Wall(0b0001, 0b0000),
+            "the wall cell the bits compound wears (the air-above the LOW strips keeps)"
+        );
+        w.set(fc, y + 1, fc, STONE);
+        assert_eq!(
+            collision_shape_at(&w, fc, y, fc),
+            CollisionShape::Wall(0b0001, 0b0001),
+            "the solid roof the north strip the TALL verdict banks"
+        );
+        // THE LONE POST the fresh air the empty bits keeps
+        w.set(fc, y, fc - 1, AIR);
+        w.set(fc, y + 1, fc - 1, AIR);
+        assert_eq!(
+            collision_shape_at(&w, fc, y, fc),
+            CollisionShape::Wall(0b0000, 0b0000),
+            "the lone wall the empty bits the fresh air answers"
+        );
+        // THE POST BOX (the Block.column(8.0, 0.0, 24.0) the
+        // shape_slabs decode answers — the 0.5±4/16 footprint, the
+        // 0..24 px band the over-tall law keeps)
+        let (px_lo, px_hi, py_lo, py_hi, pz_lo, pz_hi) =
+            shape_slabs(CollisionShape::Wall(0, 0), fc, y, fc)
+                .expect("the wall post the slabs never refuse");
+        assert!(
+            (px_lo - (fc as f64 + 0.25)).abs() < 1e-9
+                && (px_hi - (fc as f64 + 0.75)).abs() < 1e-9,
+            "the post's centered 8/16 x band the column law banks"
+        );
+        assert!(
+            (pz_lo - (fc as f64 + 0.25)).abs() < 1e-9
+                && (pz_hi - (fc as f64 + 0.75)).abs() < 1e-9,
+            "the post's centered 8/16 z band the column law banks"
+        );
+        assert!(
+            (py_lo - y as f64).abs() < 1e-9 && (py_hi - (y as f64 + 1.5)).abs() < 1e-9,
+            "the 0..24 px band the anti-jump law wears"
+        );
+        // THE STRIPS (the boxZ(6.0, 0.0, 24.0, 0.0, 11.0) the four
+        // when-rows bank — the north strip the cell edge the post
+        // band reaches [x 5..11, z 0..11], the quarter turns the
+        // other three wear [east x 5..16 z 5..11, south x 5..11
+        // z 5..16, west x 0..11 z 5..11])
+        let strips = wall_arm_slabs(CollisionShape::Wall(0b1111, 0), fc, y, fc);
+        let (nx_lo, nx_hi, _, ny_hi, nz_lo, nz_hi) = strips[0]
+            .expect("the north strip the connected bit banks");
+        assert!(
+            (nx_lo - (fc as f64 + 5.0 / 16.0)).abs() < 1e-9
+                && (nx_hi - (fc as f64 + 11.0 / 16.0)).abs() < 1e-9,
+            "the north strip the centered 6/16 x band keeps"
+        );
+        assert!(
+            (nz_lo - fc as f64).abs() < 1e-9
+                && (nz_hi - (fc as f64 + 11.0 / 16.0)).abs() < 1e-9,
+            "the north strip the edge..11/16 z span banks"
+        );
+        assert!(
+            (ny_hi - (y as f64 + 1.5)).abs() < 1e-9,
+            "the strip's 0..24 band the over-tall law wears"
+        );
+        let (ex_lo, ex_hi, _, _, ez_lo, ez_hi) =
+            strips[1].expect("the east strip the connected bit banks");
+        assert!(
+            (ex_lo - (fc as f64 + 5.0 / 16.0)).abs() < 1e-9
+                && (ex_hi - (fc as f64 + 1.0)).abs() < 1e-9,
+            "the east strip the post..edge x span 5..16 banks"
+        );
+        assert!(
+            (ez_lo - (fc as f64 + 5.0 / 16.0)).abs() < 1e-9
+                && (ez_hi - (fc as f64 + 11.0 / 16.0)).abs() < 1e-9,
+            "the east strip the centered 6/16 z band the Y_90 quarter wears"
+        );
+        let (_, _, _, _, sz_lo, sz_hi) =
+            strips[2].expect("the south strip the connected bit banks");
+        assert!(
+            (sz_lo - (fc as f64 + 5.0 / 16.0)).abs() < 1e-9
+                && (sz_hi - (fc as f64 + 1.0)).abs() < 1e-9,
+            "the south strip the post..edge z span 5..16 banks"
+        );
+        let (wx_lo, wx_hi, _, _, _, _) =
+            strips[3].expect("the west strip the connected bit banks");
+        assert!(
+            (wx_lo - fc as f64).abs() < 1e-9 && (wx_hi - (fc as f64 + 11.0 / 16.0)).abs() < 1e-9,
+            "the west strip the edge..post x span 0..11 banks"
+        );
+        assert!(
+            wall_arm_slabs(CollisionShape::Wall(0, 0), fc, y, fc)
+                .iter()
+                .all(|a| a.is_none()),
+            "the lone post the empty strips wears"
+        );
+        assert!(
+            wall_arm_slabs(CollisionShape::Full, fc, y, fc)
+                .iter()
+                .all(|a| a.is_none()),
+            "the non-wall shape the empty strips keeps"
+        );
+        assert!(
+            crate::world::is_over_tall(CollisionShape::Wall(0b0000, 0)),
+            "the wall post the over-tall predicate banks"
+        );
+        // THE RAISE LAW'S OWN WALK (the shouldRaisePost FIVE arms —
+        // the FRESH AREA the earlier walls' own verdicts the mirror
+        // never pollutes)
+        let g = w.size_blocks() / 2 - 12;
+        // ARM 2a: the LONE POST raises (the all-NONE verdict)
+        w.set(g, y, g, COBBLESTONE_WALL);
+        assert!(
+            wall_up(&w, g, y, g),
+            "the lone wall the raised post wears"
+        );
+        // THE STRAIGHT LINE the FLAT TOP wears (the n&s connection
+        // the symmetric verdict + the TALL pair the refusal arms —
+        // the wall line the raised post NEVER wears)
+        w.set(g, y, g - 1, COBBLESTONE_WALL);
+        w.set(g, y, g + 1, COBBLESTONE_WALL);
+        assert!(
+            !wall_up(&w, g, y, g),
+            "the straight line the flat top wears (the TALL pair the refusal arms)"
+        );
+        // the line's ENDS the raised posts keep (the asymmetric walk —
+        // one side connected, the other NONE)
+        assert!(
+            wall_up(&w, g, y, g - 1),
+            "the line's end the raised post the asymmetric arm banks"
+        );
+        // THE CORNER the raised center keeps (the n&e pair the
+        // asymmetric arms — the corner cell the s&e connections the
+        // n/w NONE the n!=s walk banks)
+        w.set(g + 4, y, g, COBBLESTONE_WALL);
+        w.set(g + 4, y, g + 1, COBBLESTONE_WALL);
+        w.set(g + 5, y, g, COBBLESTONE_WALL);
+        assert!(
+            wall_up(&w, g + 4, y, g),
+            "the corner the raised post the asymmetric arm banks"
+        );
+        // ARM 1: the COLUMN STACK the raised chain serves (the wall
+        // ABOVE the raise the own up verdict banks — the two-tall
+        // column the top the lone-post law wears, the bottom the
+        // above-wall arm answers)
+        w.set(g + 8, y + 1, g, COBBLESTONE_WALL);
+        w.set(g + 8, y, g, COBBLESTONE_WALL);
+        assert!(
+            wall_up(&w, g + 8, y + 1, g),
+            "the column's top the lone-post arm raises"
+        );
+        assert!(
+            wall_up(&w, g + 8, y, g),
+            "the column's base the above-wall arm raises"
+        );
+        // ARM 4: the override tag — the torch ABOVE the raise keeps
+        w.set(g + 12, y, g, COBBLESTONE_WALL);
+        w.set(g + 12, y + 1, g, TORCH);
+        assert!(
+            wall_up(&w, g + 12, y, g),
+            "the torch roof the override arm raises"
+        );
+    }
+
+    #[test]
     fn the_redstone_torch_the_not_gate_and_the_source_arms_wear() {
         // THE REDSTONE TORCH'S OWN LAWS (the autopush-666 round — javap
         // RedstoneTorchBlock the 26.2 jar the probe scripts/jar_work/
@@ -17628,7 +18553,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the torch pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 510, "the palette the torch pair banks");
+        assert_eq!(atlas::N_KINDS, 543, "the palette the torch pair banks");
         assert!(is_redstone_torch(REDSTONE_TORCH) && is_redstone_torch(REDSTONE_TORCH_OFF));
         assert!(!is_redstone_torch(TORCH) && !is_redstone_torch(LEVER));
         assert!(redstone_torch_lit(REDSTONE_TORCH));
@@ -17769,7 +18694,7 @@ mod tests {
         assert_eq!(REDSTONE_WALL_TORCH, 324);
         assert_eq!(REDSTONE_WALL_TORCH_OFF, 325);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 510, "the palette the wall pair banks");
+        assert_eq!(atlas::N_KINDS, 543, "the palette the wall pair banks");
         assert!(
             is_redstone_torch(REDSTONE_WALL_TORCH) && is_redstone_torch(REDSTONE_WALL_TORCH_OFF),
             "the wall pair the family's tail banks"
@@ -18014,7 +18939,7 @@ mod tests {
         assert_eq!(OAK_TRAPDOOR_OPEN, 327);
         assert_eq!(END_PORTAL, 510);
         assert_eq!(
-            atlas::N_KINDS, 510,
+            atlas::N_KINDS, 543,
             "the palette the trapdoor pair banks"
         );
         assert_eq!(OAK_TRAPDOOR + 1, OAK_TRAPDOOR_OPEN, "the +1 mate wears");
@@ -18168,7 +19093,7 @@ mod tests {
         assert_eq!(END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-            510,
+            543,
             "the palette the gate pair banks"
         );
         assert_eq!(OAK_FENCE_GATE + 1, OAK_FENCE_GATE_OPEN, "the +1 mate wears");
@@ -18386,7 +19311,7 @@ mod tests {
         assert_eq!(WARPED_TRAPDOOR, 348);
         assert_eq!(WARPED_TRAPDOOR_OPEN, 349);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 510, "the palette the ladder banks");
+        assert_eq!(atlas::N_KINDS, 543, "the palette the ladder banks");
         // THE CONTIGUITY'S OWN LAW (the 22 kinds the range covers —
         // the neighbors the family fn refuses)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -18500,7 +19425,7 @@ mod tests {
         assert_eq!(IRON_TRAPDOOR, 366);
         assert_eq!(IRON_TRAPDOOR_OPEN, 367);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 510, "the palette the metal rungs bank");
+        assert_eq!(atlas::N_KINDS, 543, "the palette the metal rungs bank");
         // THE CONTIGUITY'S OWN LAW (the 42 kinds the range covers —
         // the waxed pairs the ±1 mate the parity answers)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -18871,7 +19796,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 510, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 543, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)

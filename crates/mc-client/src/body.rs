@@ -642,7 +642,7 @@ fn clip_axis(world: &World, b: (f64, f64, f64, f64, f64, f64), axis: usize, d: f
                 // occupies — the continue the below consult never
                 // pre-empts).
                 let cell_shape = crate::world::collision_shape_at(world, cx, cy, cz);
-                let mut boxes: [Option<(f64, f64, f64, f64, f64, f64)>; 10] = [None; 10];
+                let mut boxes: [Option<(f64, f64, f64, f64, f64, f64)>; 14] = [None; 14];
                 let mut nb = 0usize;
                 if let Some(b) = crate::world::shape_slabs(cell_shape, cx, cy, cz) {
                     boxes[nb] = Some(b);
@@ -650,7 +650,15 @@ fn clip_axis(world: &World, b: (f64, f64, f64, f64, f64, f64), axis: usize, d: f
                 }
                 for arm in crate::world::fence_arm_slabs(cell_shape, cx, cy, cz) {
                     if let Some(b) = arm {
-                        if nb < 10 {
+                        if nb < 14 {
+                            boxes[nb] = Some(b);
+                            nb += 1;
+                        }
+                    }
+                }
+                for arm in crate::world::wall_arm_slabs(cell_shape, cx, cy, cz) {
+                    if let Some(b) = arm {
+                        if nb < 14 {
                             boxes[nb] = Some(b);
                             nb += 1;
                         }
@@ -660,14 +668,22 @@ fn clip_axis(world: &World, b: (f64, f64, f64, f64, f64, f64), axis: usize, d: f
                     let below_shape = crate::world::collision_shape_at(world, cx, cy - 1, cz);
                     if crate::world::is_over_tall(below_shape) {
                         if let Some(b) = crate::world::shape_slabs(below_shape, cx, cy - 1, cz) {
-                            if nb < 10 {
+                            if nb < 14 {
                                 boxes[nb] = Some(b);
                                 nb += 1;
                             }
                         }
                         for arm in crate::world::fence_arm_slabs(below_shape, cx, cy - 1, cz) {
                             if let Some(b) = arm {
-                                if nb < 10 {
+                                if nb < 14 {
+                                    boxes[nb] = Some(b);
+                                    nb += 1;
+                                }
+                            }
+                        }
+                        for arm in crate::world::wall_arm_slabs(below_shape, cx, cy - 1, cz) {
+                            if let Some(b) = arm {
+                                if nb < 14 {
                                     boxes[nb] = Some(b);
                                     nb += 1;
                                 }
@@ -902,7 +918,8 @@ pub fn collide_stepped(
                     // maxUpStep's 0.6 the same skip keeps, the
                     // break-point the honest band speaks)
                     crate::world::CollisionShape::Fence(_)
-                    | crate::world::CollisionShape::CenterBand(_, _) => 1.5,
+                    | crate::world::CollisionShape::CenterBand(_, _)
+                    | crate::world::CollisionShape::Wall(_, _) => 1.5,
                     _ => 1.0,
                 };
                 for f in [cy as f64 - ly0, cy as f64 + top - ly0] {
@@ -1974,7 +1991,7 @@ impl PlayerBody {
                     // fence's 1.5-tall band the standing verdict the
                     // ledge law keeps)
                     let cell_shape = crate::world::collision_shape_at(world, cx, cy, cz);
-                    let mut boxes: [Option<(f64, f64, f64, f64, f64, f64)>; 10] = [None; 10];
+                    let mut boxes: [Option<(f64, f64, f64, f64, f64, f64)>; 14] = [None; 14];
                     let mut nb = 0usize;
                     if let Some(b) = crate::world::shape_slabs(cell_shape, cx, cy, cz) {
                         boxes[nb] = Some(b);
@@ -1982,7 +1999,15 @@ impl PlayerBody {
                     }
                     for arm in crate::world::fence_arm_slabs(cell_shape, cx, cy, cz) {
                         if let Some(b) = arm {
-                            if nb < 10 {
+                            if nb < 14 {
+                                boxes[nb] = Some(b);
+                                nb += 1;
+                            }
+                        }
+                    }
+                    for arm in crate::world::wall_arm_slabs(cell_shape, cx, cy, cz) {
+                        if let Some(b) = arm {
+                            if nb < 14 {
                                 boxes[nb] = Some(b);
                                 nb += 1;
                             }
@@ -1995,7 +2020,7 @@ impl PlayerBody {
                             if let Some(b) =
                                 crate::world::shape_slabs(below_shape, cx, cy - 1, cz)
                             {
-                                if nb < 10 {
+                                if nb < 14 {
                                     boxes[nb] = Some(b);
                                     nb += 1;
                                 }
@@ -2004,7 +2029,17 @@ impl PlayerBody {
                                 crate::world::fence_arm_slabs(below_shape, cx, cy - 1, cz)
                             {
                                 if let Some(b) = arm {
-                                    if nb < 10 {
+                                    if nb < 14 {
+                                        boxes[nb] = Some(b);
+                                        nb += 1;
+                                    }
+                                }
+                            }
+                            for arm in
+                                crate::world::wall_arm_slabs(below_shape, cx, cy - 1, cz)
+                            {
+                                if let Some(b) = arm {
+                                    if nb < 14 {
                                         boxes[nb] = Some(b);
                                         nb += 1;
                                     }

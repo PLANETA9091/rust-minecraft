@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 510] = [
+pub const RUNTIME_PALETTE: [&str; 543] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1701,6 +1701,95 @@ pub const RUNTIME_PALETTE: [&str; 510] = [
     "acacia_fence", "cherry_fence", "dark_oak_fence", "pale_oak_fence",
     "mangrove_fence", "bamboo_fence", "crimson_fence", "warped_fence",
     "nether_brick_fence",
+    // THE PORTAL'S OWN SEAT (the dev-56 round — the beyond-table 510
+    // the palette's own row the walls' contiguous run the tail
+    // requires: the END_PORTAL kind the id the displacement law
+    // keeps, the row the inert seat the starry-plane lane banks —
+    // the mesher's own lane the portal renders, the FACE_TILES row
+    // the lane never reads, the filler arm the atlas builder's own
+    // walk banks)
+    "end_portal",
+    // THE WALL FAMILY'S OWN THIRTY-TWO SEATS (the dev-56 round — the
+    // rampart vocabulary the WALLS tag the palette's tail banks, the
+    // 32 rows the tags/block/walls.json file the probe
+    // scripts/jar_work/wall_684.py + wall_684b.py banks): javap
+    // `net.minecraft.world.level.block.WallBlock` the 26.2 jar
+    // (pinned sha1 2dc72797) — the ONE WallBlock class EVERY row
+    // registers, the ctor's registerDefaultState walk the UP=true +
+    // NORTH/EAST/SOUTH/WEST=WallSide.NONE + WATERLOGGED=false pin
+    // speaks, the makeShapes(FF) pair the two shape maps bank — the
+    // VISUAL call makeShapes(16.0F, 14.0F) the POST
+    // Block.column(8.0, 0.0, 16.0) box(4,0,4,12,16,12) + the LOW side
+    // boxZ(6.0, 0.0, 14.0, 0.0, 11.0) box(5,0,0,11,14,11) + the TALL
+    // side boxZ(6.0, 0.0, 16.0, 0.0, 11.0) box(5,0,0,11,16,11) the
+    // models' own geometry echoes (template_wall_post [4,0,4]->
+    // [12,16,12], template_wall_side [5,0,0]->[11,14,8],
+    // template_wall_side_tall [5,0,0]->[11,16,8]), the COLLISION call
+    // makeShapes(24.0F, 24.0F) the post column(8.0,0.0,24.0) box(4,0,
+    // 4,12,24,12) + the side strips box(5,0,0,11,24,11) BOTH heights
+    // the SAME 0..24 band wear — the ANTI-JUMP the 1.5-tall law the
+    // fence family's own rung shares. The CONNECTION LAW the
+    // connectsTo(state, sideSolid, dir) walk pc 0-68 speaks — the
+    // FOUR arms: `state.is(BlockTags.WALLS)` (the wall-to-wall arm
+    // EVERY wall kind connects — NO wood/stone parity the fence's
+    // isSameFence law wears), `!isExceptionForConnection(state) &&
+    // sideSolid` (the sturdy-face arm the fence's own law the same
+    // exception list banks), `block instanceof IronBarsBlock` (the
+    // bars arm the pane family the connection keeps), the
+    // FenceGateBlock.connectsToDirection gate arm (the perpendicular
+    // law the fence's own walk verbatim wears). The LOW/TALL verdict
+    // the makeWallState(connected, faceShape, TEST_SHAPES_WALL[dir])
+    // walk speaks — isCovered(aboveFaceShape, testShape) the
+    // `!joinIsNotEmpty(test, face, ONLY_FIRST)` fold pc 0-16 banks
+    // (the block ABOVE's collision DOWN-face the test strip covers —
+    // the TEST_SHAPES_WALL boxZ(2.0, 16.0, 0.0, 9.0) box(7,0,0,9,16,9)
+    // rotateHorizontal the four strips bank), the connected verdict
+    // TALL the covered read wears, LOW the uncovered keeps. The UP
+    // verdict the shouldRaisePost(state, aboveState, faceShape) walk
+    // pc 0-267 banks — the FIVE arms: (1) the above wall's own UP=true
+    // read (the column stack the raised chain serves), (2) ALL FOUR
+    // sides NONE (the lone post raises), (3) the nNone!=sNone ||
+    // eNone!=wNone asymmetric walk (the corner/T-junction the raised
+    // center keeps — the straight line n==s && e==w the verdict
+    // REFUSES), (4) (north==TALL && south==TALL) ||
+    // (east==TALL && west==TALL) the refusal arms (the straight
+    // wall line the flat top wears), (5) the above block the
+    // WALL_POST_OVERRIDE tag answers (torch/soul_torch/redstone_torch/
+    // copper_torch/tripwire/#signs/#banners/#pressure_plates/
+    // cactus_flower the tag file banks) || isCovered(faceShape,
+    // TEST_SHAPE_POST column(2.0, 0.0, 16.0)) — the covered read the
+    // solid roof the raised post keeps. The register rows the Blocks
+    // clinit pc 14233 (cobblestone) putstatic walk banks — the
+    // Properties.ofLegacyCopy(BASE) + forceSolidOn() chain EVERY row
+    // wears (the cobblestone/mossy pair the COBBLESTONE copy speaks,
+    // the brick rows their own bases the same legacy law keeps — the
+    // is_transparent forceSolidOn verdict the fence's own row the
+    // family joins), the dig/sounds/drops rows the name-keyed
+    // generated tables the registry answers (each wall row its BASE
+    // block's material the legacy copy wears), the blockstates
+    // {base}_wall.json the MULTIPART carry — the up=true conditional
+    // post apply block/{base}_wall_post + the four side arms the
+    // north/east/south/west LOW/TALL when-rows (uvlock: true, the y
+    // table north 0 / east 90 / south 180 / west 270 the quarter
+    // turns speak), the models the template wall_post/wall_side/
+    // wall_side_tall parents resolve (the ONE #texture ref the
+    // per-wall BASE master every face banks — the atlas tile count
+    // the ZERO new tiles keeps (the cobblestone/brick/sandstone/...
+    // masters the palette already seats — 749 tiles the family
+    // rides), the append-only law the equivalence proof scripts/
+    // verify_atlas_full.py banks).
+    "cobblestone_wall", "mossy_cobblestone_wall", "brick_wall",
+    "prismarine_wall", "red_sandstone_wall", "mossy_stone_brick_wall",
+    "granite_wall", "stone_brick_wall", "nether_brick_wall",
+    "andesite_wall", "red_nether_brick_wall", "sandstone_wall",
+    "end_stone_brick_wall", "diorite_wall", "blackstone_wall",
+    "polished_blackstone_brick_wall", "polished_blackstone_wall",
+    "cobbled_deepslate_wall", "polished_deepslate_wall",
+    "deepslate_tile_wall", "deepslate_brick_wall", "mud_brick_wall",
+    "tuff_wall", "polished_tuff_wall", "tuff_brick_wall",
+    "resin_brick_wall", "cinnabar_wall", "polished_cinnabar_wall",
+    "cinnabar_brick_wall", "sulfur_wall", "polished_sulfur_wall",
+    "sulfur_brick_wall",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -2513,6 +2602,44 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             faces.push(resolve_flat_stem(&stem, false));
             continue;
         }
+        if block == "end_portal" {
+            // THE PORTAL'S OWN FILLER ROW (the dev-56 round — the
+            // beyond-table seat the palette's own row FINALLY banks:
+            // the END_PORTAL kind the 510 id the walls' contiguous
+            // run the seat the tail requires — the row the inert seat
+            // keeps [the mesher's own starry-plane lane the portal
+            // renders, the FACE_TILES row the lane never reads]). The
+            // blockstate's ONE variant the block/end_portal model
+            // resolves (the jar's own chain), the merged texture
+            // map's `particle` ref (block/obsidian — the model's OWN
+            // texture map the jar banks: the portal the particle
+            // master carries, NO face refs the element-less model
+            // wears), the tile the six slots bank, tinted = false.
+            let bs_bytes = read_jar(
+                &mut archive,
+                "assets/minecraft/blockstates/end_portal.json",
+            )?;
+            let bs: Value = serde_json::from_slice(&bs_bytes)
+                .with_context(|| "blockstate end_portal: json parse")?;
+            let model_ref = bs
+                .get("variants")
+                .and_then(|v| v.get(""))
+                .and_then(|v| v.get("model"))
+                .and_then(|m| m.as_str())
+                .map(|m| m.trim_start_matches("minecraft:").to_string())
+                .with_context(|| "blockstate end_portal: no model")?;
+            let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
+                .with_context(|| format!("block end_portal: model chain {model_ref}"))?;
+            let tex = tex_map
+                .get("particle")
+                .with_context(|| format!("model {model_ref}: no particle texture ref"))?;
+            let stem = tex
+                .trim_start_matches("minecraft:")
+                .trim_start_matches("block/")
+                .to_string();
+            faces.push(resolve_flat_stem(&stem, false));
+            continue;
+        }
         if block.ends_with("_fence") {
             // THE FENCE FAMILY'S OWN PALETTE ARM (the dev-55 round,
             // the official 26.2 jar): the blockstate is a MULTIPART —
@@ -2558,6 +2685,61 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             let tex = tex_map
                 .get("texture")
                 .with_context(|| format!("model {model_ref}: no texture ref"))?;
+            let stem = tex
+                .trim_start_matches("minecraft:")
+                .trim_start_matches("block/")
+                .to_string();
+            faces.push(resolve_flat_stem(&stem, false));
+            continue;
+        }
+        if block.ends_with("_wall") {
+            // THE WALL FAMILY'S OWN PALETTE ARM (the dev-56 round,
+            // the official 26.2 jar): the blockstate is a MULTIPART —
+            // the up=true CONDITIONAL post apply (block/{base}_wall_post
+            // — the declaration order's own head, the up bit the
+            // vanilla default true wears) + the four side arms the
+            // north/east/south/west LOW/TALL when-rows — resolve_block's
+            // full-cube six-face requirement cannot apply. The FIRST
+            // apply (the post — the wall's up default every lone row
+            // wears) is the canonical model: its merged texture map's
+            // `wall` ref (block/cobblestone the cobblestone row's
+            // master, block/brick the brick row's — the ONE #texture
+            // ref the template_wall_post parent chain resolves) is the
+            // palette row — the ONE master EVERY element face wears
+            // (the post's six + the side arms' faces the same ref
+            // resolve), the FACE_TILES row the ONE tile the six slots
+            // bank (the fence arm's law the family keeps), tinted =
+            // false (the stone masters carry NO tintindex). The atlas
+            // tile count the ZERO-or-append tail keeps — the
+            // cobblestone/brick/sandstone/... masters the palette
+            // already seats (the cinnabar/sulfur/resin/tuff rows the
+            // NEW masters the append-only tail banks — the note_block
+            // 748->749 precedent the same law wears).
+            let bs_bytes = read_jar(
+                &mut archive,
+                &format!("assets/minecraft/blockstates/{block}.json"),
+            )?;
+            let bs: Value = serde_json::from_slice(&bs_bytes)
+                .with_context(|| format!("blockstate {block}: json parse"))?;
+            let parts = bs
+                .get("multipart")
+                .and_then(|v| v.as_array())
+                .with_context(|| format!("blockstate {block}: no multipart"))?;
+            // the FIRST apply (the up=true post — the wall's default
+            // state every lone row wears)
+            let model_ref = parts
+                .first()
+                .and_then(|p| p.get("apply"))
+                .and_then(|a| if a.is_array() { a.get(0) } else { Some(a) })
+                .and_then(|a| a.get("model"))
+                .and_then(|m| m.as_str())
+                .map(|m| m.trim_start_matches("minecraft:").to_string())
+                .with_context(|| format!("blockstate {block}: no post apply"))?;
+            let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
+                .with_context(|| format!("block {block}: model chain {model_ref}"))?;
+            let tex = tex_map
+                .get("wall")
+                .with_context(|| format!("model {model_ref}: no wall texture ref"))?;
             let stem = tex
                 .trim_start_matches("minecraft:")
                 .trim_start_matches("block/")

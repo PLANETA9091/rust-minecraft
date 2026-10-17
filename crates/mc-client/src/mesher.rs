@@ -184,6 +184,14 @@ fn is_transparent(kind: u16) -> bool {
         // multipart lane renders — the ground's top face under ANY
         // fence draws, the wall behind the connected arms shows)
         || crate::world::is_fence(kind)
+        // THE WALL FAMILY the same verdict keeps (the dev-56 round —
+        // the blocks clinit's forceSolidOn() row the 32 registrations
+        // speak: the non-occluding compound the neighbors' faces draw
+        // against, the AO the opaque walk never casts, the post + the
+        // side strips the cell's own multipart lane renders — the
+        // ground's top face under ANY wall draws, the wall behind the
+        // connected strips shows)
+        || crate::world::is_wall(kind)
         // THE HONEY BLOCK the same verdict keeps (the autopush-599
         // round — the blocks clinit's noOcclusion() pc 26888 the
         // registration speaks: the non-occluding cube the neighbors'
@@ -3342,6 +3350,230 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     }
                     continue;
                 }
+                // THE WALL FAMILY'S OWN MULTIPART LANE (the dev-56
+                // round — the rampart rung the palette finally
+                // renders: the blockstates {base}_wall.json's
+                // MULTIPART the up=true CONDITIONAL post apply + the
+                // four side arms the when-rows wear, the select_parts
+                // walk the CONNECTION STATE the mesh-time law computes
+                // the props answer — the variant byte the no-opinion 0
+                // keeps, the four neighbor reads + the above-face
+                // cover reads + the raise law the same verdict every
+                // frame answers, the placement/break updates the
+                // propagation never needs). The models the template
+                // wall_post/wall_side/wall_side_tall parents the
+                // derive walk resolves (the post element [4,0,4]->
+                // [12,16,12] the center post speaks, the side's ONE
+                // bar element the [5,0,0]->[11,14,8] low band wears,
+                // the tall's [5,0,0]->[11,16,8] the full-height bar
+                // answers), the ONE #texture ref the per-wall BASE
+                // master every face banks (the FACE_TILES row the
+                // same master the tile keeps). THE UVLOCK the side
+                // arms' y quarter the rotation ride — the uvs the
+                // master's own grain the as-authored orientation
+                // keeps (the fence lane's own precedent the same
+                // rotation walk wears — the uniform stone grain the
+                // quarter-turn delta the honest deviation notes). THE
+                // CULLFACE VERDICT the six-direction law the fence
+                // lane wears (the rotated direction the neighbor read
+                // answers — the post's up/down cullfaces the solid
+                // roof/floor the culled verdict keeps), the shade:true
+                // faces the direction table the fence's own walk pays.
+                if crate::world::is_wall(id) {
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let (cell_sky, cell_block) = match light {
+                        Some(l) => {
+                            let (s, b) = cell_layers(l, world.chunks_per_side, wx, wy, wz);
+                            (s.map(|v| v as f32), b.map(|v| v as f32))
+                        }
+                        None => (None, None),
+                    };
+                    // THE CONNECTION STATE the mesh-time law computes —
+                    // the N/E/S/W when-rows the LOW/TALL verdicts the
+                    // props answer, the UP row the post apply's own
+                    // gate wears
+                    let bits = crate::world::wall_connection_bits(world, wx, wy, wz);
+                    let dir_of = |d: u8| match d {
+                        0b0001 => 1u8,
+                        0b0010 => 2,
+                        0b0100 => 3,
+                        _ => 4,
+                    };
+                    let tall_for = |d: u8| {
+                        bits & d != 0
+                            && crate::world::wall_above_covers(
+                                world,
+                                wx,
+                                wy + 1,
+                                wz,
+                                dir_of(d),
+                            )
+                    };
+                    let side_word = |d: u8| {
+                        if bits & d == 0 {
+                            "none"
+                        } else if tall_for(d) {
+                            "tall"
+                        } else {
+                            "low"
+                        }
+                    };
+                    let up = crate::world::wall_up(world, wx, wy, wz);
+                    let props = [
+                        ("north", side_word(0b0001)),
+                        ("east", side_word(0b0010)),
+                        ("south", side_word(0b0100)),
+                        ("west", side_word(0b1000)),
+                        ("up", if up { "true" } else { "false" }),
+                    ];
+                    // THE ONE BASE MASTER the FACE_TILES row the tile
+                    // banks (the fence lane's own fallback law the
+                    // family keeps)
+                    let tile = if (id as usize) < atlas::N_KINDS {
+                        atlas::FACE_TILES[id as usize][2]
+                    } else {
+                        atlas::TILE_NONE
+                    };
+                    let base = if tile == atlas::TILE_NONE {
+                        crate::colors::palette_color(id, 2)
+                            .or_else(|| lut.and_then(|l| l.color(id, 2)))
+                            .unwrap_or_else(|| default_color(id, 2))
+                    } else {
+                        [1.0; 3]
+                    };
+                    let (post_quads, side_quads, tall_quads) = wall_models(id);
+                    for apply in select_parts(wall_parts(id), &props) {
+                        let model_id = apply.model.strip_prefix("minecraft:").unwrap_or(&apply.model);
+                        // the side model's y quarter the blockstate's
+                        // own y values speak (north 0 / east 90 /
+                        // south 180 / west 270 — the steps the CW
+                        // count answers); the post the y=0 row the
+                        // conditional apply wears
+                        let (steps, model) = if model_id.ends_with("_post") {
+                            (0usize, post_quads)
+                        } else if model_id.ends_with("_side_tall") {
+                            (((apply.y as usize) / 90) % 4, tall_quads)
+                        } else if model_id.ends_with("_side") {
+                            (((apply.y as usize) / 90) % 4, side_quads)
+                        } else {
+                            (((apply.y as usize) / 90) % 4, post_quads)
+                        };
+                        for q in model {
+                            // THE ROTATED CULLFACE VERDICT — the six-
+                            // direction law the fence lane wears, the
+                            // direction the SAME steps the geometry
+                            // turns
+                            if let Some(dir) = q.cullface {
+                                let rotated = rotate_direction_cw(dir, steps);
+                                let (dx, dy, dz) = match rotated {
+                                    mc_registry::element_quads::Direction::Down => (0, -1, 0),
+                                    mc_registry::element_quads::Direction::Up => (0, 1, 0),
+                                    mc_registry::element_quads::Direction::North => (0, 0, -1),
+                                    mc_registry::element_quads::Direction::South => (0, 0, 1),
+                                    mc_registry::element_quads::Direction::West => (-1, 0, 0),
+                                    mc_registry::element_quads::Direction::East => (1, 0, 0),
+                                };
+                                if !is_transparent(world.get(wx + dx, wy + dy, wz + dz)) {
+                                    continue;
+                                }
+                            }
+                            // THE SHADE TERM'S OWN READ — the element's
+                            // shade:true the direction table answers
+                            // (the ROTATED direction the world-facing
+                            // term keeps), the never-shaded the 1.0
+                            // keeps
+                            let rotated_dir = rotate_direction_cw(q.direction, steps);
+                            let face_shade = if q.shade {
+                                match rotated_dir {
+                                    mc_registry::element_quads::Direction::Up => 1.0f32,
+                                    mc_registry::element_quads::Direction::Down => 0.5,
+                                    mc_registry::element_quads::Direction::North
+                                    | mc_registry::element_quads::Direction::South => 0.8,
+                                    mc_registry::element_quads::Direction::West
+                                    | mc_registry::element_quads::Direction::East => 0.6,
+                                }
+                            } else {
+                                1.0
+                            };
+                            let mut pts = [[0f32; 3]; 4];
+                            let mut colors = [[0f32; 3]; 4];
+                            let mut uvs = [[0f32; 2]; 4];
+                            for (i, v) in q.vertices.iter().enumerate() {
+                                // THE STEPS' OWN TURN (the blockstate y
+                                // values the CW walk folds — the fence
+                                // lane's own quarter walk the same map
+                                // wears)
+                                let (vx, vz) = match steps {
+                                    1 => (1.0 - v[2], v[0]),
+                                    2 => (1.0 - v[0], 1.0 - v[2]),
+                                    3 => (v[2], 1.0 - v[0]),
+                                    _ => (v[0], v[2]),
+                                };
+                                pts[i] = [
+                                    wx as f32 + vx,
+                                    wy as f32 + v[1],
+                                    wz as f32 + vz,
+                                ];
+                                uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
+                                let lm = lightmap_combine(
+                                    cell_sky,
+                                    cell_block,
+                                    sky_factor,
+                                    sky_tint,
+                                    ambient,
+                                    block_tint,
+                                    night_vision,
+                                    world.night_vision_factor,
+                                    world.darkness_scale,
+                                );
+                                colors[i] = [
+                                    base[0] * lm[0] * face_shade,
+                                    base[1] * lm[1] * face_shade,
+                                    base[2] * lm[2] * face_shade,
+                                ];
+                            }
+                            out.push(Quad {
+                                pts,
+                                colors,
+                                uvs,
+                                tile,
+                                translucent: false,
+                                per_texel_alpha: false,
+                            });
+                        }
+                    }
+                    continue;
+                }
                 // THE TRAPDOOR'S OWN ELEMENT LANE (the autopush-668
                 // round — the door family's thin-panel sibling the
                 // interactive lane finally renders). The blockstates'
@@ -5294,6 +5526,77 @@ fn fence_models(
 }
 
 static EMPTY_FENCE_MODELS: (Vec<DerivedQuad>, Vec<DerivedQuad>) = (Vec::new(), Vec::new());
+
+/// THE WALL FAMILY'S OWN CACHED PARTS (the dev-56 round — the parsed
+/// blockstate definition the selection rides, the fence lane's own
+/// cache pattern): the blockstates/{base}_wall.json's MULTIPART the
+/// generated BLOCKSTATES row banks (the up=true CONDITIONAL post
+/// apply + the four side arms the north/east/south/west LOW/TALL
+/// when-rows — the jar's own when-conditions the select_parts walk
+/// the fire/bamboo/fence tests pin), the 32 kinds the contiguous
+/// run the palette tail banks.
+fn wall_parts(kind: u16) -> &'static [Part<'static>] {
+    static PARTS: std::sync::OnceLock<std::collections::HashMap<u16, Vec<Part<'static>>>> =
+        std::sync::OnceLock::new();
+    PARTS.get_or_init(|| {
+        let mut map = std::collections::HashMap::new();
+        // THE THIRTY-TWO KINDS the explicit seats the palette tail
+        // banks (the seat ladder the [`crate::world::WALL_KINDS`]
+        // rows wear — the fence tables' own explicit-seat law keeps)
+        for k in crate::world::WALL_KINDS {
+            if let Some(Ok(mc_registry::blockstate_lookup::Definition::Multipart(parts))) =
+                mc_registry::blockstate_lookup::parse(crate::world::NAME_OF[k as usize])
+            {
+                map.insert(k, parts.to_vec());
+            }
+        }
+        map
+    })
+    .get(&kind)
+    .map(|v| v.as_slice())
+    .unwrap_or(&[])
+}
+
+/// THE WALL MODELS' OWN CACHED BAKES — the derive walk's quads per
+/// kind, derived ONCE for the 32-kind set (the post pair the
+/// template wall_post parent resolves, the side pair the wall_side
+/// parent's ONE bar element wears, the tall pair the wall_side_tall
+/// parent's full-height bar the y16..24 extension banks; the ONE
+/// #texture ref the per-wall BASE master the per-quad verdict reads —
+/// the FACE_TILES row the same master the tile banks).
+fn wall_models(
+    kind: u16,
+) -> &'static (Vec<DerivedQuad>, Vec<DerivedQuad>, Vec<DerivedQuad>) {
+    static MODELS: std::sync::OnceLock<
+        std::collections::HashMap<u16, (Vec<DerivedQuad>, Vec<DerivedQuad>, Vec<DerivedQuad>)>,
+    > = std::sync::OnceLock::new();
+    MODELS.get_or_init(|| {
+        let mut map = std::collections::HashMap::new();
+        // THE THIRTY-TWO KINDS the explicit seats the palette tail
+        // banks (the seat ladder the [`crate::world::WALL_KINDS`]
+        // rows wear — the fence tables' own explicit-seat law keeps)
+        for k in crate::world::WALL_KINDS {
+            let name = crate::world::NAME_OF[k as usize];
+            let post = format!("block/{name}_post");
+            let side = format!("block/{name}_side");
+            let tall = format!("block/{name}_side_tall");
+            map.insert(
+                k,
+                (
+                    derive_model_inherited(&post).unwrap_or_default(),
+                    derive_model_inherited(&side).unwrap_or_default(),
+                    derive_model_inherited(&tall).unwrap_or_default(),
+                ),
+            );
+        }
+        map
+    })
+    .get(&kind)
+    .unwrap_or(&EMPTY_WALL_MODELS)
+}
+
+static EMPTY_WALL_MODELS: (Vec<DerivedQuad>, Vec<DerivedQuad>, Vec<DerivedQuad>) =
+    (Vec::new(), Vec::new(), Vec::new());
 
 /// THE BAMBOO MODELS' OWN CACHED BAKES — the derive walk's quads per
 /// model id, derived ONCE for the ten-model set (the four thin age0
@@ -7724,6 +8027,197 @@ mod tests {
         assert!(
             xs.iter().all(|x| (x - 0.375).abs() < 1e-6 || (x - 0.625).abs() < 1e-6),
             "the post's 4/16 centered x band the element banks"
+        );
+    }
+
+    #[test]
+    fn the_wall_lane_selects_the_post_and_the_connected_sides() {
+        // THE WALL LANE'S OWN SELECTION (the dev-56 round — the
+        // blockstates {base}_wall.json's multipart the wall_parts
+        // walk parses, the same select_parts walk the fire/bamboo/
+        // fence tests pin): the lone state the up=true post alone
+        // speaks, the connected state the post + the side arms the
+        // when-rows answer, the LOW/TALL words the side vs side_tall
+        // models the when-rows pick, the y quarters the four groups
+        // carry (north 0 / east 90 / south 180 / west 270), the
+        // derive walk the post [4,0,4]->[12,16,12] element the
+        // side's ONE bar element resolves.
+        let lone: Vec<_> = select_parts(
+            wall_parts(crate::world::COBBLESTONE_WALL),
+            &[
+                ("north", "none"),
+                ("east", "none"),
+                ("south", "none"),
+                ("west", "none"),
+                ("up", "true"),
+            ],
+        );
+        assert_eq!(lone.len(), 1, "the lone state the post alone wears");
+        assert!(
+            lone[0].model.contains("cobblestone_wall_post"),
+            "the post the up=true apply banks"
+        );
+        assert_eq!(lone[0].y, 0, "the post the no-rotation row wears");
+        // the up=false state the NOTHING wears (the post the
+        // conditional apply the verdict refuses)
+        let flat: Vec<_> = select_parts(
+            wall_parts(crate::world::COBBLESTONE_WALL),
+            &[
+                ("north", "none"),
+                ("east", "none"),
+                ("south", "none"),
+                ("west", "none"),
+                ("up", "false"),
+            ],
+        );
+        assert_eq!(flat.len(), 0, "the up=false state the empty fan wears");
+        // THE LOW NORTH ARM the side model picks (the when-row the
+        // "low" word answers)
+        let north_low: Vec<_> = select_parts(
+            wall_parts(crate::world::COBBLESTONE_WALL),
+            &[
+                ("north", "low"),
+                ("east", "none"),
+                ("south", "none"),
+                ("west", "none"),
+                ("up", "false"),
+            ],
+        );
+        assert_eq!(
+            north_low.len(),
+            1,
+            "the north-low state the side arm alone wears"
+        );
+        assert!(
+            north_low[0].model.contains("cobblestone_wall_side"),
+            "the side arm the low when-row banks"
+        );
+        assert!(
+            !north_low[0].model.contains("tall"),
+            "the low word the tall model never picks"
+        );
+        assert_eq!(north_low[0].y, 0, "the north arm the y=0 row wears");
+        // THE TALL NORTH ARM the side_tall model picks
+        let north_tall: Vec<_> = select_parts(
+            wall_parts(crate::world::COBBLESTONE_WALL),
+            &[
+                ("north", "tall"),
+                ("east", "none"),
+                ("south", "none"),
+                ("west", "none"),
+                ("up", "false"),
+            ],
+        );
+        assert_eq!(
+            north_tall.len(),
+            1,
+            "the north-tall state the tall arm alone wears"
+        );
+        assert!(
+            north_tall[0].model.contains("cobblestone_wall_side_tall"),
+            "the tall arm the tall when-row banks"
+        );
+        // THE FULL CROSS the post + the four arms wears (the all-low
+        // state the five applies the when-rows answer)
+        let all: Vec<_> = select_parts(
+            wall_parts(crate::world::COBBLESTONE_WALL),
+            &[
+                ("north", "low"),
+                ("east", "low"),
+                ("south", "low"),
+                ("west", "low"),
+                ("up", "true"),
+            ],
+        );
+        assert_eq!(
+            all.len(),
+            5,
+            "the full connection the post + the four strips wears"
+        );
+        // THE FOUR QUARTERS the side arms carry (the jar's own y
+        // table: north 0 / east 90 / south 180 / west 270)
+        for (y, dir, word) in [
+            (0u32, "north", "low"),
+            (90, "east", "tall"),
+            (180, "south", "low"),
+            (270, "west", "tall"),
+        ] {
+            let state = [
+                ("north", if dir == "north" { word } else { "none" }),
+                ("east", if dir == "east" { word } else { "none" }),
+                ("south", if dir == "south" { word } else { "none" }),
+                ("west", if dir == "west" { word } else { "none" }),
+                ("up", "false"),
+            ];
+            let one: Vec<_> = select_parts(wall_parts(crate::world::COBBLESTONE_WALL), &state);
+            assert_eq!(one.len(), 1, "the {dir} arm the when-row alone answers");
+            assert_eq!(one[0].y, y, "the {dir} arm the y={y} quarter wears");
+        }
+        // THE MIXED ARMS the low and tall pairs together wear (the
+        // two-word vocabulary the when-rows independently answer)
+        let mixed: Vec<_> = select_parts(
+            wall_parts(crate::world::COBBLESTONE_WALL),
+            &[
+                ("north", "low"),
+                ("east", "tall"),
+                ("south", "low"),
+                ("west", "tall"),
+                ("up", "true"),
+            ],
+        );
+        assert_eq!(
+            mixed.len(),
+            5,
+            "the mixed state the post + the two low + the two tall wears"
+        );
+        assert_eq!(
+            mixed.iter().filter(|a| a.model.contains("_side_tall")).count(),
+            2,
+            "the tall pair the east/west rows wear"
+        );
+        // THE MOSSY SIBLING'S OWN COLUMN (the second kind the SAME
+        // multipart shape the mossy_cobblestone master wears)
+        let mossy: Vec<_> = select_parts(
+            wall_parts(crate::world::MOSSY_COBBLESTONE_WALL),
+            &[
+                ("north", "tall"),
+                ("east", "none"),
+                ("south", "none"),
+                ("west", "none"),
+                ("up", "true"),
+            ],
+        );
+        assert_eq!(mossy.len(), 2, "the mossy wall the same post + arm shape wears");
+        assert!(
+            mossy.iter().all(|a| a.model.contains("mossy_cobblestone_wall")),
+            "the mossy models the own column banks"
+        );
+        // THE DERIVE WALK'S OWN GEOMETRY (the wall_models triple the
+        // template parents resolve — the post's ONE element SIX
+        // faces, the side's ONE bar element FIVE faces [the south
+        // face the element never defines — the cullface law the
+        // connection edge keeps], the tall's same five)
+        let (post, side, tall) = wall_models(crate::world::COBBLESTONE_WALL);
+        assert_eq!(post.len(), 6, "the post's six faces the ONE element wears");
+        assert_eq!(side.len(), 5, "the side's ONE bar element the five faces wear");
+        assert_eq!(tall.len(), 5, "the tall's ONE bar element the five faces wear");
+        // the post's x/z band the [4,0,4]->[12,16,12] element speaks
+        let xs: Vec<f32> = post.iter().flat_map(|q| q.vertices.iter().map(|v| v[0])).collect();
+        assert!(
+            xs.iter().all(|x| (x - 0.25).abs() < 1e-6 || (x - 0.75).abs() < 1e-6),
+            "the post's 8/16 centered x band the element banks"
+        );
+        // the tall bar the y 0..16 band the full-height element banks
+        // (the side bar the y 0..14 the low element wears)
+        let tall_ys: Vec<f32> = tall.iter().flat_map(|q| q.vertices.iter().map(|v| v[1])).collect();
+        assert!(
+            tall_ys.iter().all(|y| (*y - 0.0).abs() < 1e-6 || (*y - 1.0).abs() < 1e-6),
+            "the tall bar the 0..16 y band the element banks"
+        );
+        let side_ys: Vec<f32> = side.iter().flat_map(|q| q.vertices.iter().map(|v| v[1])).collect();
+        assert!(
+            side_ys.iter().all(|y| (*y - 0.0).abs() < 1e-6 || (*y - 0.875).abs() < 1e-6),
+            "the low bar the 0..14 y band the element banks"
         );
     }
 
