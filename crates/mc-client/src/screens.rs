@@ -7371,6 +7371,24 @@ pub struct App {
     /// walk the bit the barrel_lid_released release clears; the None
     /// the chest kinds and the closed screens keep).
     pub chest_open_cell: Option<(i32, i32, i32)>,
+    /// THE CONTAINERS' OWN PER-CELL STORES (the dev-66 round — the
+    /// placed chest family and barrel cells the 27-slot contents the
+    /// vanilla RandomizableContainer BlockEntity speaks: the cell the
+    /// map's own key wears, the 27 slots the value the GUI's edits
+    /// ride home to). open_chest_for LOADS the cell's entry (the
+    /// fresh 27-slot grid the first open inserts), the close arms
+    /// FLUSH the edited chest_slots back (container_store_flush —
+    /// the vanilla removed() walk's own persist law), the break lane
+    /// CLEARS the entry (container_store_cleared — the contents the
+    /// broken container spills, the vanilla drop-contents law's own
+    /// v1 shape: the store dies with the cell). The keyed emptiness
+    /// the fresh open keeps — the (0,0) stacks the empty slots wear.
+    pub container_stores: std::collections::HashMap<(i32, i32, i32), Vec<(i32, i32)>>,
+    /// THE STORED CONTAINER'S OWN CELL (the open the key banks, the
+    /// flush the key takes home — the None the chest kinds' closed
+    /// screens keep; the chest_open_cell lid lane the barrel's own
+    /// bit wears stays the separate walk).
+    pub container_open_cell: Option<(i32, i32, i32)>,
     /// THE FURNACE'S OWN LIVE SHAPE (the menu type 14 lane's own
     /// projection — the menu's 39 slots as (item_id, count) pairs:
     /// input 0, fuel 1, result 2, the standard rows 3..39 the
@@ -8738,6 +8756,8 @@ impl App {
             chest_panel: (0, 0),
             chest_carried: (0, 0),
             chest_open_cell: None,
+            container_stores: std::collections::HashMap::new(),
+            container_open_cell: None,
             furnace_slots: vec![(0, 0); 39],
             furnace_is_live: false,
             furnace_live_window: None,
@@ -13368,6 +13388,11 @@ impl App {
                         // break sound, the debris burst, the reward
                         // half's creative gate)
                         self.dig_break_effects(broke_kind, pos);
+                        // THE STORE'S OWN BREAK (the dev-66 round — the
+                        // broken container cell the per-cell entry dies
+                        // with, the vanilla drop-contents law's own v1
+                        // shape the spill lane serves)
+                        self.container_store_cleared(pos);
                     }
                 }
                 if beat {
@@ -18447,6 +18472,10 @@ impl App {
         // two flows stay separate (the golden pins this scene's pixels)
         self.chest_is_live = false;
         self.chest_mirror.clear();
+        // the deterministic scene the fresh grid keeps — the flush key
+        // the scene NEVER wears (the per-cell stores the right-click
+        // lane's own cells serve)
+        self.container_open_cell = None;
         const LOADOUT: [(usize, i32, i32); 8] = [
             (4, 926, 12),  // diamond
             (13, 932, 64), // iron_ingot
@@ -18543,6 +18572,7 @@ impl App {
             ScreenKind::Inventory => self.close_inventory(),
             ScreenKind::Creative => self.close_creative_picker(),
             ScreenKind::Crafting => self.close_crafting_table(),
+            ScreenKind::Chest => self.close_chest_container(),
             ScreenKind::Furnace => self.close_furnace(),
             _ => {}
         }
@@ -20448,18 +20478,35 @@ impl App {
     /// test's own scene serves (the deterministic loadout the golden
     /// pins) — THIS fn the live right-click lane answers (the two
     /// flows the chest_is_live flag keeps apart).
+    /// THE CHEST'S OWN PER-CELL STORE (the dev-66 round — javap 26.2
+    /// RandomizableContainer the BlockEntity's own 27-slot contents
+    /// the cell speaks: the map entry the open LOADS, the fresh grid
+    /// the first open inserts, the GUI's edits the close arms ride
+    /// home — the placed chest's contents the session's own lifetime
+    /// OUTLIVES, the reopen the same stacks banks). The barrel cell
+    /// the same lane serves (the 27 the barrel's EXACT count the
+    /// vanilla menu wears).
     pub fn open_chest_for(&mut self, pos: (i32, i32, i32)) {
         self.enter_world();
         // the OFFLINE stand-in: the live lane's flag stays down (the
         // open_chest scene's own verdict the same law keeps)
         self.chest_is_live = false;
         self.chest_mirror.clear();
-        // the cell's own empty store (the fresh container the
-        // ChestMenu.threeRows ctor speaks — the 27 slots the menu's
-        // own addSlot walk places, the v1 round the contents the
-        // session's own lifetime keeps)
-        self.chest_slots = vec![(0i32, 0i32); 27];
+        // THE CELL'S OWN STORE (the RandomizableContainer contents the
+        // map key keeps — the first open the fresh 27-slot grid
+        // inserts, the reopen the stored stacks load)
+        let store = self
+            .container_stores
+            .entry(pos)
+            .or_insert_with(|| vec![(0i32, 0i32); 27]);
+        self.chest_slots = store.clone();
+        self.container_open_cell = Some(pos);
         self.chest_carried = (0, 0);
+        // the player's own rows the REAL inventory projects (the menu
+        // 27..63 the main grid + hotbar the sync speaks — the GUI the
+        // player's own stock shows, the transfer clicks the real rows
+        // mutate)
+        self.chest_mirror_sync_from_inventory();
         // THE BARREL'S OWN LID (the dev-65 round — javap BarrelBlock.
         // useWithoutItem the openMenu walk the barrel_open model the
         // OPEN bit swaps: the opened cell the bit sets [the variant
@@ -20491,6 +20538,50 @@ impl App {
                 let v = w.variant(pos.0, pos.1, pos.2);
                 w.set_variant(pos.0, pos.1, pos.2, v & !crate::world::BARREL_OPEN_BIT);
             }
+        }
+    }
+
+    /// THE STORE'S OWN FLUSH (the dev-66 round — the vanilla
+    /// AbstractContainerMenu.removed walk's own persist law the
+    /// per-cell store serves: the open the container_open_cell key
+    /// banks, the close the edited chest_slots the map entry rides
+    /// home to, the None the live-lane opens and the closed screens
+    /// keep — the networked store the server's own authority owns,
+    /// the local map the key never wears).
+    pub fn container_store_flush(&mut self) {
+        if let Some(pos) = self.container_open_cell.take() {
+            self.container_stores.insert(pos, self.chest_slots.clone());
+        }
+    }
+
+    /// THE CARRIED'S OWN HOME RIDE (the vanilla AbstractContainerMenu.
+    /// removed walk's own head — `player.getInventory().
+    /// placeItemBackInInventory(this.carried)` the OFFLINE world's
+    /// own inventory answers: the cursor's held stack the close
+    /// returns through the add walk (the selected-first + free-slot
+    /// order the Inventory.add speaks), the HUD row the same refresh
+    /// the pickup lane rides. The LIVE lane the server's own close
+    /// law wears — the local belief the zero keeps, the add-back the
+    /// wire's authoritative window speaks).
+    pub fn container_carried_returned(&mut self, live: bool) {
+        if live || self.chest_carried.1 <= 0 {
+            return;
+        }
+        let (id, count) = self.chest_carried;
+        let selected = self.selected_hotbar;
+        let creative = self.game_mode == GameMode::Creative;
+        let _ = self.inventory.add(selected, id, count, creative);
+        self.hotbar_slots = self.inventory.hotbar();
+    }
+
+    /// THE STORE'S OWN BREAK (the vanilla drop-contents law's own v1
+    /// shape — the broken container cell the store entry dies with,
+    /// the contents the spill the item entities' later rounds speak;
+    /// the misses the map's own absence the no-op keeps).
+    pub fn container_store_cleared(&mut self, pos: (i32, i32, i32)) {
+        self.container_stores.remove(&pos);
+        if self.container_open_cell == Some(pos) {
+            self.container_open_cell = None;
         }
     }
 
@@ -23474,6 +23565,32 @@ impl App {
         self.open(ScreenKind::World);
     }
 
+    /// THE CHEST SCREEN'S OWN CLOSE (the vanilla closeContainer walk
+    /// the three dismiss lanes share — Escape, the E key, the portal's
+    /// screen gate): the LIVE session's echo the serverbound
+    /// ContainerClose packet rides, the OFFLINE carried stack the
+    /// home ride returns (container_carried_returned — the vanilla
+    /// removed()'s placeItemBackInInventory law), the per-cell store
+    /// the edited chest_slots the flush banks, the barrel lid the
+    /// OPEN bit the release clears, the screen the world returns.
+    pub fn close_chest_container(&mut self) {
+        let was_live = self.chest_is_live;
+        if was_live {
+            if let (Some((window_id, _)), Some(sink)) =
+                (self.chest_live_window, self.live_clicks.as_ref())
+            {
+                let _ = sink.send(crate::world_view::ContainerCommand::Close { window_id });
+            }
+        }
+        self.chest_is_live = false;
+        self.chest_live_window = None;
+        self.container_carried_returned(was_live);
+        self.chest_carried = (0, 0);
+        self.container_store_flush();
+        self.barrel_lid_released();
+        self.open(ScreenKind::World);
+    }
+
     /// Escape: toggles the pause menu while in game (vanilla behavior);
     /// leaves the connecting/outcome screens back to the server list
     /// (in-flight logins keep running: a late success after Escape is
@@ -23490,29 +23607,9 @@ impl App {
             self.buttons.clear();
         } else if self.screen == ScreenKind::Chest {
             // the container's own close (vanilla Escape/E on a container
-            // screen): back to the world. The player's OWN close echoes
-            // the serverbound Container Close packet through the live
-            // session's send lane (the offline stand-in has no window
-            // and no session — its close stays a local act); the
-            // server's OWN close (the clientbound packet) closes the
-            // live screen through the container lane regardless.
-            if self.chest_is_live {
-                if let (Some((window_id, _)), Some(sink)) =
-                    (self.chest_live_window, self.live_clicks.as_ref())
-                {
-                    let _ = sink.send(crate::world_view::ContainerCommand::Close { window_id });
-                }
-            }
-            self.chest_is_live = false;
-            self.chest_live_window = None;
-            // the player's OWN close returns the held stack to the
-            // inventory server-side (vanilla containerClose): the local
-            // belief resets with the window; the BARREL LID the open
-            // bit the close releases (the dev-65 round — the opened
-            // cell the barrel_lid_released walk clears)
-            self.chest_carried = (0, 0);
-            self.barrel_lid_released();
-            self.open(ScreenKind::World);
+            // screen): back to the world — the shared walk the echo, the
+            // carried return, the store flush and the lid release speak
+            self.close_chest_container();
         } else if self.screen == ScreenKind::Furnace {
             // THE FURNACE'S OWN CLOSE (the vanilla Escape/E on the
             // furnace's screen — the chest's own close walk the menu
@@ -28972,10 +29069,102 @@ impl App {
         }
     }
 
-    /// The chest screen's slot click (the button byte's own lane: 0 =
-    /// the left table, 1 = the right table; the SHIFT state overrides
-    /// either table with the QUICK_MOVE lane — the vanilla
-    /// `hasShiftDown()`'s own routing): the press finds the 16x16
+    /// THE MIRROR'S OWN OFFLINE SYNC (the projection law — the menu's
+    /// player rows the REAL inventory speaks: 0..27 the main grid the
+    /// items 9..36 wear, 27..36 the hotbar row the items 0..9 keep;
+    /// the HUD's own row the same refresh the pickup lane rides. The
+    /// 36-slot shape the resize keeps — the fresh stand-in the cleared
+    /// vec the projection pads).
+    fn chest_mirror_sync_from_inventory(&mut self) {
+        if self.chest_mirror.len() != 36 {
+            self.chest_mirror.resize(36, (0, 0));
+        }
+        for i in 0..27 {
+            self.chest_mirror[i] = self.inventory.items[9 + i];
+        }
+        for i in 0..9 {
+            self.chest_mirror[27 + i] = self.inventory.items[i];
+        }
+        self.hotbar_slots = self.inventory.hotbar();
+    }
+
+    /// THE OFFLINE CHEST CLICK'S OWN WALK (the dev-66 round — javap
+    /// 26.2 AbstractContainerScreen.slotClicked the GENERIC
+    /// container's own dispatch, the offline stand-in the LOCAL
+    /// belief answers): the press finds the 16x16 hit box the last
+    /// render laid out, the QUICK-MOVE shift override the combined
+    /// 63-slot snapshot feeds (the grid + the REAL inventory rows the
+    /// menu numbering wears — 27 main the items 9..36 keep, 54..62
+    /// the hotbar the items 0..9 speak), the PICKUP tables the same
+    /// [`crate::world_view::predict_pickup`] folds the live lane
+    /// wears (the left the whole-stack take, the right the half —
+    /// the believed cursor the honest pairs answer). NO packet: the
+    /// offline world its own authority keeps, the mutations land
+    /// DIRECTLY — the grid the per-cell store's own lane rides, the
+    /// mirror rows the REAL inventory mutates (the close arms the
+    /// carried stack home return, the flush the edits bank).
+    fn click_chest_slot_offline(&mut self, mx: i32, my: i32, button: i8) {
+        if self.chest_slot_rects.is_empty() {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let Some(&(_, _, slot)) = self
+            .chest_slot_rects
+            .iter()
+            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+        else {
+            return; // the press landed between the slots — no click
+        };
+        let menu = slot as usize;
+        // THE QUICK_MOVE LANE (the shift-click): the whole stack moves
+        // to the OTHER section — the vanilla doClick's third branch
+        // (`hasShiftDown()` overrides the click type for the left AND
+        // the right press). The combined snapshot the REAL inventory
+        // wears (the grid 0..27, the main 27..54, the hotbar 54..63),
+        // the multi-slot deltas the grid AND the items mutate.
+        if self.shift_down {
+            let mut snapshot: Vec<(i32, i32)> = Vec::with_capacity(63);
+            snapshot.extend_from_slice(&self.chest_slots);
+            snapshot.extend_from_slice(&self.inventory.items[9..36]);
+            snapshot.extend_from_slice(&self.inventory.items[0..9]);
+            let changed = crate::world_view::predict_quick_move(&snapshot, slot as usize);
+            for (i, pair) in &changed {
+                if *i < 27 {
+                    self.chest_slots[*i] = *pair;
+                } else if *i < 54 {
+                    self.inventory.items[9 + *i - 27] = *pair;
+                } else {
+                    self.inventory.items[*i - 54] = *pair;
+                }
+            }
+            self.chest_mirror_sync_from_inventory();
+            return;
+        }
+        // the believed slot value: the grid's 0..27, the REAL
+        // inventory's rows the menu numbering speaks (27..54 the main
+        // grid, 54..63 the hotbar)
+        let believed = if menu < 27 {
+            self.chest_slots[menu]
+        } else if menu < 54 {
+            self.inventory.items[9 + menu - 27]
+        } else {
+            self.inventory.items[menu - 54]
+        };
+        let (new_slot, new_carried) = if button == 0 {
+            crate::world_view::predict_pickup(believed, self.chest_carried)
+        } else {
+            crate::world_view::predict_pickup_right(believed, self.chest_carried)
+        };
+        if menu < 27 {
+            self.chest_slots[menu] = new_slot;
+        } else if menu < 54 {
+            self.inventory.items[9 + menu - 27] = new_slot;
+        } else {
+            self.inventory.items[menu - 54] = new_slot;
+        }
+        self.chest_carried = new_carried;
+        self.chest_mirror_sync_from_inventory();
+    }
+
     /// hit box the last render laid out (the vanilla Slot's own hit
     /// shape), and the LIVE window's identity (id + revision) rides the
     /// command to the session's send lane. THE LOCAL PREDICTION runs
@@ -28986,12 +29175,16 @@ impl App {
     /// (the server's authoritative update replaces them wholesale — the
     /// correction is the next projection), and the post-click belief
     /// rides the command as the changed-slot delta + the carried cursor
-    /// (the wire lanes `HashedStack::item` speaks). The OFFLINE
-    /// stand-in has no window and no session: its presses are the
-    /// honest no-op (the golden's deterministic scene).
+    /// (the wire lanes `HashedStack::item` speaks). THE OFFLINE
+    /// stand-in (the dev-66 round) its OWN walk keeps — the per-cell
+    /// store lane the LOCAL belief answers, the grid the REAL
+    /// inventory the mirror rows speak, no packet the offline world
+    /// never wears (the golden's deterministic scene the no-window
+    /// lane never reaches — open_chest's own flow the flag keeps).
     fn click_chest_slot(&mut self, mx: i32, my: i32, button: i8) {
         if !self.chest_is_live {
-            return; // the offline stand-in: no window, no click
+            self.click_chest_slot_offline(mx, my, button);
+            return; // the offline stand-in: no window, no packet
         }
         let Some((window_id, state_id)) = self.chest_live_window else {
             return; // no window identity — nothing to echo against
@@ -42933,22 +43126,10 @@ impl App {
     fn portal_screen_dismiss(&mut self) {
         match self.screen {
             ScreenKind::Chest => {
-                // the container's own close (the Escape lane's walk
-                // the chest arm keeps — the same echo the serverbound
-                // Container Close packet speaks)
-                if self.chest_is_live {
-                    if let (Some((window_id, _)), Some(sink)) =
-                        (self.chest_live_window, self.live_clicks.as_ref())
-                    {
-                        let _ =
-                            sink.send(crate::world_view::ContainerCommand::Close { window_id });
-                    }
-                }
-                self.chest_is_live = false;
-                self.chest_live_window = None;
-                self.chest_carried = (0, 0);
-                self.barrel_lid_released();
-                self.open(ScreenKind::World);
+                // the container's own close (the Escape lane's walk the
+                // shared close speaks — the echo, the carried return,
+                // the store flush, the lid release)
+                self.close_chest_container();
             }
             ScreenKind::Furnace => self.close_furnace(),
             ScreenKind::Inventory => self.close_inventory(),
@@ -57203,6 +57384,184 @@ mod tests {
         assert_eq!(mc_registry::item_name(932), Some("iron_ingot"));
         let filled = app.chest_slots.iter().filter(|(_, c)| *c > 0).count();
         assert_eq!(filled, 8);
+    }
+
+    /// THE CHEST'S OWN PER-CELL STORE (the dev-66 round — the placed
+    /// chest the 27-slot contents the session OUTLIVES: the open the
+    /// entry banks, the edits the close arms the flush ride home, the
+    /// reopen the same stacks load; the DIFFERENT cell the fresh grid
+    /// keeps — the vanilla RandomizableContainer BlockEntity's own
+    /// per-position law the map key wears).
+    #[test]
+    fn the_chests_own_store_the_edits_the_reopen_the_same_stacks_bank() {
+        let mut app = App::new(11);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        let cell = (c, surface + 1, c);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(cell.0, cell.1, cell.2, crate::world::CHEST);
+        // THE FIRST OPEN the fresh grid inserts (the empty 27 the
+        // ChestMenu.threeRows ctor speaks)
+        app.open_chest_for(cell);
+        assert_eq!(app.screen, ScreenKind::Chest);
+        assert_eq!(app.chest_slots, vec![(0, 0); 27]);
+        assert!(app.container_stores.contains_key(&cell));
+        // THE EDITS: a grid stack + the real inventory's hotbar row
+        app.chest_slots[5] = (926, 12); // diamond x12
+        app.inventory.items[0] = (62, 27); // cobblestone on the hotbar
+        app.chest_mirror_sync_from_inventory();
+        assert_eq!(app.chest_mirror[27], (62, 27), "the hotbar row speaks");
+        // THE CLOSE the flush banks
+        app.on_escape();
+        assert_eq!(app.screen, ScreenKind::World);
+        assert_eq!(app.container_stores[&cell][5], (926, 12));
+        // THE REOPEN the same stacks load
+        app.open_chest_for(cell);
+        assert_eq!(app.chest_slots[5], (926, 12));
+        assert_eq!(app.chest_mirror[27], (62, 27), "the real rows persist");
+        app.on_escape();
+        // A DIFFERENT CELL the fresh grid keeps (the barrel the same
+        // lane serves — the 27 the barrel's EXACT count the vanilla
+        // menu wears)
+        let cell2 = (c + 2, surface + 1, c);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(cell2.0, cell2.1, cell2.2, crate::world::BARREL);
+        app.open_chest_for(cell2);
+        assert_eq!(app.chest_slots[5], (0, 0), "the fresh cell empty");
+        assert!(app.container_stores.contains_key(&cell2));
+        assert!(app.container_stores[&cell].iter().any(|&p| p == (926, 12)));
+        app.on_escape();
+        assert_eq!(app.container_stores[&cell][5], (926, 12), "the barrel's close the chest's store never touches");
+    }
+
+    /// THE OFFLINE CHEST CLICK'S OWN WALK (the dev-66 round — the
+    /// transfer clicks the REAL inventory mutates: the hotbar row the
+    /// cursor takes, the grid seat the stack lands, the shift-click
+    /// the quick-move home rides; the flush the close banks — the
+    /// vanilla doClick's own tables the offline belief answers).
+    #[test]
+    fn the_offline_chest_click_the_transfer_the_real_inventory_mutates() {
+        let mut app = App::new(11);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        let cell = (c, surface + 1, c);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(cell.0, cell.1, cell.2, crate::world::CHEST);
+        app.open_chest_for(cell);
+        // the player's own stock: the hotbar row's cobblestone
+        app.inventory.items[0] = (62, 27);
+        app.chest_mirror_sync_from_inventory();
+        // THE CLICK ON THE HOTBAR ROW (menu 54): the stack rides the
+        // cursor, the REAL inventory empties, the HUD row syncs
+        app.chest_slot_rects = vec![(100, 100, 54)];
+        app.mouse_pos = Some((108, 108));
+        app.click_chest_slot(100, 100, 0);
+        assert_eq!(app.chest_carried, (62, 27), "the take rides");
+        assert_eq!(app.inventory.items[0], (0, 0), "the real row emptied");
+        assert_eq!(app.hotbar_slots[0], (0, 0), "the HUD row synced");
+        assert_eq!(app.chest_mirror[27], (0, 0), "the mirror row follows");
+        // THE CLICK ON THE GRID SEAT (menu 3): the stack lands
+        app.chest_slot_rects = vec![(160, 100, 3)];
+        app.mouse_pos = Some((168, 108));
+        app.click_chest_slot(160, 100, 0);
+        assert_eq!(app.chest_slots[3], (62, 27), "the stack landed");
+        assert_eq!(app.chest_carried, (0, 0), "the cursor emptied");
+        // THE CLOSE the flush banks — the inventory the honest shape
+        // keeps (the cobblestone the CHEST holds now)
+        app.on_escape();
+        assert_eq!(app.container_stores[&cell][3], (62, 27));
+        assert_eq!(app.inventory.items[0], (0, 0));
+        // THE REOPEN + THE SHIFT-CLICK HOME: the quick-move the REAL
+        // rows speak (the whole stack the OTHER section takes — the
+        // grid->mirror order the rev scan keeps, the HOTBAR row the
+        // first free seat the walk answers: menu 62 the items[8] wears)
+        app.open_chest_for(cell);
+        assert_eq!(app.chest_slots[3], (62, 27), "the store remembered");
+        app.chest_slot_rects = vec![(160, 100, 3)];
+        app.mouse_pos = Some((168, 108));
+        app.shift_down = true;
+        app.click_chest_slot(160, 100, 0);
+        assert_eq!(app.chest_slots[3], (0, 0), "the grid emptied");
+        assert_eq!(app.inventory.items[8], (62, 27), "the home ride");
+        assert_eq!(app.inventory.items[0], (0, 0), "the main scan never ran");
+        app.shift_down = false;
+        app.on_escape();
+        assert_eq!(app.container_stores[&cell][3], (0, 0));
+        assert_eq!(app.inventory.items[8], (62, 27));
+        // THE CARRIED'S OWN HOME RIDE (the vanilla removed()'s
+        // placeItemBackInInventory): the cursor's held stack the close
+        // returns through the add walk (the free-slot scan the items[0]
+        // the first empty wears)
+        app.open_chest_for(cell);
+        app.chest_slot_rects = vec![(100, 100, 62)];
+        app.mouse_pos = Some((108, 108));
+        app.click_chest_slot(100, 100, 0); // the hotbar stack back on the cursor
+        assert_eq!(app.chest_carried, (62, 27));
+        app.on_escape();
+        assert_eq!(app.inventory.items[0], (62, 27), "the carried rode home");
+        assert_eq!(app.chest_carried, (0, 0), "the cursor the close clears");
+        assert_eq!(app.container_stores[&cell][3], (0, 0), "the grid the take emptied");
+    }
+
+    /// THE BROKEN CONTAINER'S OWN STORE DEATH (the dev-66 round — the
+    /// vanilla drop-contents law's own v1 shape: the dug chest cell
+    /// the per-cell entry dies with, the reopen the fresh grid keeps;
+    /// the DIG lane's own completion the break speaks).
+    #[test]
+    fn the_broken_container_the_store_dies_with_the_cell() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, surface, c, crate::world::CHEST);
+        let cell = (c, surface, c);
+        // THE PRE-SEEDED STORE (the first open + the stack + the close)
+        app.open_chest_for(cell);
+        app.chest_slots[1] = (926, 5);
+        app.on_escape();
+        assert_eq!(app.container_stores[&cell][1], (926, 5));
+        // THE DIG: the hold mines the chest cell to air
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        app.on_press(0, 0);
+        let mut ticks = 0;
+        while app.offline_world.as_ref().unwrap().get(c, surface, c) != crate::world::AIR {
+            app.update();
+            ticks += 1;
+            assert!(ticks < 400, "the dig completed in time");
+        }
+        // THE STORE DIED WITH THE CELL
+        assert!(
+            !app.container_stores.contains_key(&cell),
+            "the broken container the store never keeps"
+        );
+        app.on_left_release();
+        // THE REBUILD + THE REOPEN: the fresh grid the new container
+        // wears (the old stacks the break spent)
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, surface, c, crate::world::CHEST);
+        app.open_chest_for(cell);
+        assert_eq!(app.chest_slots[1], (0, 0), "the fresh store empty");
+        app.on_escape();
     }
 
     #[test]
@@ -85344,8 +85703,9 @@ cow_sound_variant: None,
         app.on_press(0, 0);
         assert!(click_rx.try_recv().is_err(), "no slot, no click");
 
-        // the OFFLINE stand-in: the same screen, no window, no session
-        // — its presses are the honest no-op (the golden's scene)
+        // the OFFLINE stand-in (the dev-66 round): the same screen, no
+        // window, no session — the press the LOCAL walk answers (the
+        // grid's diamond the cursor takes), the wire never speaks
         app.live_view_updated(air_net_world(2, 2), None, None, None);
         assert_eq!(app.screen, ScreenKind::World, "the live chest closed");
         app.open_chest();
@@ -85360,6 +85720,7 @@ cow_sound_variant: None,
             .expect("the offline grid's own slot 4 box");
         app.on_press(ox + 8, oy + 8);
         assert!(click_rx.try_recv().is_err(), "the offline chest never speaks");
+        assert_eq!(app.chest_carried, (926, 12), "the LOCAL take the walk answers");
     }
 
     /// The player's OWN close echoes the serverbound Container Close
@@ -85601,7 +85962,8 @@ cow_sound_variant: None,
             other => panic!("expected a click, got {other:?}"),
         }
 
-        // the offline stand-in: the right press never speaks
+        // the offline stand-in (the dev-66 round): the right press the
+        // LOCAL walk answers, the wire stays silent
         app.on_escape();
         let _ = click_rx.try_recv(); // the close echo
         app.open_chest();
