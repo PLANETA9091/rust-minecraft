@@ -259,6 +259,14 @@ fn is_transparent(kind: u16) -> bool {
         // skipRendering law the lane's own arm speaks)
         || crate::world::is_glass_pane(kind)
         || kind == crate::world::IRON_BARS
+        // THE COPPER BARS FAMILY the same verdict keeps (the dev-59
+        // round — javap lambda$static$163 the Properties chain the
+        // noOcclusion() row pc 21 speaks: the eight oxidization rungs
+        // the non-occluding thin strip the neighbors' faces draw
+        // against, the AO the opaque walk never casts, the multipart
+        // quads the pane lane's own arms render — the iron seam's own
+        // law the copper rungs the class instances bank)
+        || crate::world::is_copper_bars(kind)
 }
 
 /// Only opaque blocks cast ambient occlusion (air/water/leaves never darken
@@ -4279,7 +4287,13 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                 // [`pane_connection_bits`] walk the four neighbor reads
                 // the SAME verdict every frame answers, the
                 // placement/break updates the propagation never
-                // needs). The models the pane templates the derive
+                // needs). The dev-59 round the COPPER BARS the lane
+                // JOINS — the eight oxidization rungs the SAME lane
+                // the class law renders (javap lambda$static$162 the
+                // plain IronBarsBlock instances the collection walk
+                // fabricates, the entry condition the
+                // [`is_iron_bars_class`] range the whole thin-strip
+                // family answers). The models the pane templates the derive
                 // walk resolves (the post's down/up cap pair + the
                 // side's END face the cullface row carries + the
                 // west/east #pane long faces — the ZERO-inner-face law
@@ -4313,7 +4327,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                 // force_translucent: true refs the render-layer
                 // signal speaks), the plain pane and the bars the
                 // cutout lane's binary alphas wear.
-                if crate::world::is_glass_pane(id) || id == crate::world::IRON_BARS {
+                if crate::world::is_iron_bars_class(id) {
                     let sky_factor = world.sky_light_factor.unwrap_or(1.0)
                         * world
                             .day_tick
@@ -4398,7 +4412,21 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             // ALWAYS-mutual verdict wears [the
                             // attachsTo instance arm every pane pair
                             // connects], the different-color pair the
-                            // DIFFERENT blocks the draw keeps)
+                            // DIFFERENT blocks the draw keeps). THE
+                            // BARS-TAG PAIR ARM the dev-59 round the
+                            // palette ARMS — javap pc 8-47 the tag
+                            // pair the TRUE verdict the crossing
+                            // planes' shared faces culls (the neighbor
+                            // AND the state BOTH in the BARS tag —
+                            // iron_bars + the eight copper rungs the
+                            // probe's tags/block/bars.json banks, the
+                            // panes NEVER in): the iron|copper pair
+                            // the DIFFERENT blocks the tag law culls,
+                            // the copper|exposed pair the ladder
+                            // neighbors the same law culls — the
+                            // connected bars lattice the ONE
+                            // continuous band renders, the z-fight the
+                            // cull never banks.
                             {
                                 let (dx, dy, dz) = match rotated_dir {
                                     mc_registry::element_quads::Direction::Down => (0, -1, 0),
@@ -4408,7 +4436,11 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                     mc_registry::element_quads::Direction::West => (-1, 0, 0),
                                     mc_registry::element_quads::Direction::East => (1, 0, 0),
                                 };
-                                if world.get(wx + dx, wy + dy, wz + dz) == id {
+                                let neighbor = world.get(wx + dx, wy + dy, wz + dz);
+                                if neighbor == id
+                                    || (crate::world::is_bars_tag(id)
+                                        && crate::world::is_bars_tag(neighbor))
+                                {
                                     continue;
                                 }
                             }
@@ -5906,18 +5938,25 @@ static EMPTY_WALL_MODELS: (Vec<DerivedQuad>, Vec<DerivedQuad>, Vec<DerivedQuad>)
 /// cache pattern): the blockstates/{name}.json's MULTIPART the
 /// generated BLOCKSTATES row banks (the UNCONDITIONAL post apply +
 /// the side/noside arms the panes wear, the post_ends/post/cap/side
-/// arms the iron_bars carries — the jar's own when-conditions the
-/// select_parts walk the fire/bamboo/fence/wall tests pin), the 18
-/// kinds the contiguous run the palette tail banks.
+/// arms the iron_bars and the eight copper rungs carry — the jar's
+/// own when-conditions the select_parts walk the fire/bamboo/fence/
+/// wall tests pin), the 26 kinds the pane + copper-bars ladders the
+/// palette tail bank.
 fn pane_parts(kind: u16) -> &'static [Part<'static>] {
     static PARTS: std::sync::OnceLock<std::collections::HashMap<u16, Vec<Part<'static>>>> =
         std::sync::OnceLock::new();
     PARTS.get_or_init(|| {
         let mut map = std::collections::HashMap::new();
-        // THE EIGHTEEN KINDS the explicit seats the palette tail
+        // THE TWENTY-SIX KINDS the explicit seats the palette tail
         // banks (the constant rows the range law reads — the seat
-        // ladder the windows' own walk keeps)
-        for k in crate::world::PANE_KINDS {
+        // ladders the windows' own walk keeps: the dev-58 eighteen +
+        // the dev-59 eight copper rungs)
+        let kinds: Vec<u16> = crate::world::PANE_KINDS
+            .iter()
+            .chain(crate::world::COPPER_BARS_KINDS.iter())
+            .copied()
+            .collect();
+        for k in kinds {
             if let Some(Ok(mc_registry::blockstate_lookup::Definition::Multipart(parts))) =
                 mc_registry::blockstate_lookup::parse(crate::world::NAME_OF[k as usize])
             {
@@ -5932,13 +5971,18 @@ fn pane_parts(kind: u16) -> &'static [Part<'static>] {
 }
 
 /// THE PANE MODELS' OWN CACHED BAKES — the derive walk's quads per
-/// kind, derived ONCE for the eighteen-kind set (the panes the
+/// kind, derived ONCE for the twenty-six-kind set (the panes the
 /// post/side/side_alt/noside/noside_alt five-model set the
-/// template_glass_pane_* parents resolve, the iron_bars the
-/// post_ends/post/cap/cap_alt/side/side_alt six-model set the
-/// template_bars_* parents wear; the derived quads' texture refs the
-/// resolve_ref walk the sprite stems answers — the per-quad tile
-/// verdict the lane's own stem map reads).
+/// template_glass_pane_* parents resolve, the iron_bars and the
+/// eight copper rungs the post_ends/post/cap/cap_alt/side/side_alt
+/// six-model sets the template_bars_* parents wear — the WAXED twins
+/// the BASE models the blockstate references re-wear [the
+/// texture-sharing law the vanilla waxed look keeps], the derived
+/// quads' texture refs the resolve_ref walk the sprite stems answers
+/// — the per-quad tile verdict the lane's own stem map reads). THE
+/// MODEL IDS THE KIND'S OWN BLOCKSTATE the parts walk speaks — the
+/// jar-driven walk the hardcoded name lists retires (the dev-59
+/// round the copper rungs the same law serves).
 fn pane_models(
     kind: u16,
 ) -> &'static std::collections::HashMap<&'static str, Vec<DerivedQuad>> {
@@ -5946,35 +5990,35 @@ fn pane_models(
         std::sync::OnceLock::new();
     MODELS.get_or_init(|| {
         let mut map = std::collections::HashMap::new();
-        // THE EIGHTEEN KINDS the explicit seats the palette tail
+        // THE TWENTY-SIX KINDS the explicit seats the palette tail
         // banks (the constant rows the derive walk reads — the seat
-        // ladder the windows' own walk keeps)
-        for k in crate::world::PANE_KINDS {
-            let name = crate::world::NAME_OF[k as usize];
-            let ids: Vec<String> = if k == crate::world::IRON_BARS {
-                [
-                    "iron_bars_post_ends",
-                    "iron_bars_post",
-                    "iron_bars_cap",
-                    "iron_bars_cap_alt",
-                    "iron_bars_side",
-                    "iron_bars_side_alt",
-                ]
-                .iter()
-                .map(|m| format!("block/{m}"))
-                .collect()
-            } else {
-                [
-                    "post",
-                    "side",
-                    "side_alt",
-                    "noside",
-                    "noside_alt",
-                ]
-                .iter()
-                .map(|suffix| format!("block/{name}_{suffix}"))
-                .collect()
-            };
+        // ladders the windows' own walk keeps)
+        let kinds: Vec<u16> = crate::world::PANE_KINDS
+            .iter()
+            .chain(crate::world::COPPER_BARS_KINDS.iter())
+            .copied()
+            .collect();
+        for k in kinds {
+            // THE MODEL IDS THE KIND'S OWN BLOCKSTATE the parts walk
+            // speaks: every apply's model ref the multipart carries
+            // (the strip_prefix walk the minecraft: namespace sheds,
+            // the dedup the order the first-wear keeps — the copper
+            // rungs' cap/cap_alt pair the same model twice the
+            // when-rows reference, the derive walk the ONE bake
+            // serves)
+            let mut ids: Vec<String> = Vec::new();
+            for part in pane_parts(k) {
+                let apply = &part.apply;
+                for a in apply.iter() {
+                    let model = a
+                        .model
+                        .trim_start_matches("minecraft:")
+                        .to_string();
+                    if !ids.contains(&model) {
+                        ids.push(model);
+                    }
+                }
+            }
             let mut kind_models = std::collections::HashMap::new();
             for id in ids {
                 let quads = derive_model_inherited(&id).unwrap_or_default();
@@ -9799,6 +9843,146 @@ mod tests {
             bars.iter()
                 .any(|quad| quad.pts.iter().all(|p| (p[2] - 8.5).abs() < 1e-6)),
             "the z=8.5 plane the post's zero-width element wears"
+        );
+    }
+
+    #[test]
+    fn the_copper_bars_lane_shares_the_bars_law_and_the_tag_pairs_cull_wear() {
+        // THE COPPER BARS LANE'S OWN LAWS (the dev-59 round — javap
+        // lambda$static$162 the plain IronBarsBlock instances the
+        // collection walk fabricates, the SAME pane lane the eight
+        // oxidization rungs the entry condition renders, the
+        // template_bars_* geometry the crossed planes wear, the BARS
+        // TAG the pair-cull arm the palette ARMS — the probe
+        // scripts/jar_work/copper_687.py banks): the bare rungs the
+        // OWN masters wear, the waxed twins the BASE rows re-wear,
+        // the iron|copper pair the DIFFERENT blocks the tag law
+        // culls, the copper|exposed pair the ladder neighbors the
+        // same law culls
+        use mc_registry::generated::atlas as gen_atlas;
+        let copper_tile = gen_atlas::FACE_TILES[crate::world::COPPER_BARS as usize][2];
+        let exposed_tile =
+            gen_atlas::FACE_TILES[crate::world::EXPOSED_COPPER_BARS as usize][2];
+        let iron_tile = gen_atlas::FACE_TILES[crate::world::IRON_BARS as usize][2];
+        assert_eq!(gen_atlas::tile_name(copper_tile), "copper_bars");
+        assert_eq!(gen_atlas::tile_name(exposed_tile), "exposed_copper_bars");
+        assert_ne!(
+            copper_tile, exposed_tile,
+            "the bare rungs the DISTINCT masters wear"
+        );
+        assert_ne!(copper_tile, iron_tile, "the copper voice its own master wears");
+        // THE WAXED TWIN THE BASE MASTER RE-WEARS (the texture-
+        // sharing law the vanilla waxed look keeps)
+        assert_eq!(
+            gen_atlas::FACE_TILES[crate::world::WAXED_COPPER_BARS as usize][2],
+            copper_tile,
+            "the waxed head the bare master re-wears"
+        );
+        assert_eq!(
+            gen_atlas::FACE_TILES[crate::world::WAXED_OXIDIZED_COPPER_BARS as usize][2],
+            gen_atlas::FACE_TILES[crate::world::OXIDIZED_COPPER_BARS as usize][2],
+            "the waxed oxidized twin the base row re-wears"
+        );
+        // THE LONE RUNG (the crossed planes the template_bars_post
+        // geometry wears — the x=8.5/z=8.5 planes the iron seam's own
+        // law speaks, the OPAQUE pass the binary cutout rides)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::COPPER_BARS);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let lone: Vec<_> = q.iter().filter(|quad| quad.tile == copper_tile).collect();
+        assert!(!lone.is_empty(), "the lone rung the crossed-plane quads wear");
+        for quad in &lone {
+            assert!(!quad.translucent, "the rung the OPAQUE pass rides");
+            assert!(!quad.per_texel_alpha, "the rung the binary cutout wears");
+        }
+        assert!(
+            lone.iter()
+                .any(|quad| quad.pts.iter().all(|p| (p[0] - 8.5).abs() < 1e-6)),
+            "the x=8.5 plane the post's zero-width element wears"
+        );
+        assert!(
+            lone.iter()
+                .any(|quad| quad.pts.iter().all(|p| (p[2] - 8.5).abs() < 1e-6)),
+            "the z=8.5 plane the post's zero-width element wears"
+        );
+        // THE IRON|COPPER PAIR THE TAG ARM CULLS (the seam plane
+        // x=9.0 the two cells' boundary — the skipRendering pc 8-47
+        // the DIFFERENT blocks the BARS-tag pair arm the shared faces
+        // culls: the crossing planes' boundary quads the seam plane
+        // NEVER carries, the connected arms the when-rows still
+        // render; the pair the SAME-KIND count the iron|iron pair the
+        // reference wears — the tag law the different-kind pair the
+        // same-kind look renders)
+        let mut w2 = empty_world();
+        put(&mut w2, 8, 8, 8, crate::world::IRON_BARS);
+        put(&mut w2, 9, 8, 8, crate::world::COPPER_BARS);
+        let q2 = mesh_chunk(&w2, 0, 0, None);
+        let pair: Vec<_> = q2
+            .iter()
+            .filter(|quad| quad.tile == copper_tile || quad.tile == iron_tile)
+            .collect();
+        let mut w_ref = empty_world();
+        put(&mut w_ref, 8, 8, 8, crate::world::IRON_BARS);
+        put(&mut w_ref, 9, 8, 8, crate::world::IRON_BARS);
+        let q_ref = mesh_chunk(&w_ref, 0, 0, None);
+        let same: Vec<_> = q_ref.iter().filter(|quad| quad.tile == iron_tile).collect();
+        assert_eq!(
+            pair.len(),
+            same.len(),
+            "the iron|copper pair the same-kind count the tag law wears"
+        );
+        let seam_quads = pair
+            .iter()
+            .filter(|quad| quad.pts.iter().all(|p| (p[0] - 9.0).abs() < 1e-6))
+            .count();
+        assert_eq!(
+            seam_quads, 0,
+            "the iron|copper seam the BARS-tag pair arm culls (the skipRendering law wears)"
+        );
+        // THE COPPER|EXPOSED PAIR THE LADDER LAW CULLS (the ladder
+        // neighbors the DIFFERENT kinds the same tag arm the seam
+        // culls — the connected lattice the ONE continuous band
+        // renders, the count the same-kind reference wears)
+        let mut w3 = empty_world();
+        put(&mut w3, 8, 8, 8, crate::world::COPPER_BARS);
+        put(&mut w3, 9, 8, 8, crate::world::EXPOSED_COPPER_BARS);
+        let q3 = mesh_chunk(&w3, 0, 0, None);
+        let ladder_pair: Vec<_> = q3
+            .iter()
+            .filter(|quad| quad.tile == copper_tile || quad.tile == exposed_tile)
+            .collect();
+        let mut w_ref2 = empty_world();
+        put(&mut w_ref2, 8, 8, 8, crate::world::COPPER_BARS);
+        put(&mut w_ref2, 9, 8, 8, crate::world::COPPER_BARS);
+        let q_ref2 = mesh_chunk(&w_ref2, 0, 0, None);
+        let same2: Vec<_> = q_ref2
+            .iter()
+            .filter(|quad| quad.tile == copper_tile)
+            .collect();
+        assert_eq!(
+            ladder_pair.len(),
+            same2.len(),
+            "the copper|exposed pair the same-kind count wears"
+        );
+        let ladder_seam = ladder_pair
+            .iter()
+            .filter(|quad| quad.pts.iter().all(|p| (p[0] - 9.0).abs() < 1e-6))
+            .count();
+        assert_eq!(
+            ladder_seam, 0,
+            "the copper|exposed seam the tag arm culls (the ladder neighbors the one band render)"
+        );
+        // THE WAXED TWIN THE BASE GEOMETRY RENDERS (the blockstate
+        // the BASE models the references wear — the waxed kind's own
+        // quads the bare master's tile the same lane banks)
+        let mut w4 = empty_world();
+        put(&mut w4, 8, 8, 8, crate::world::WAXED_COPPER_BARS);
+        let q4 = mesh_chunk(&w4, 0, 0, None);
+        let waxed: Vec<_> = q4.iter().filter(|quad| quad.tile == copper_tile).collect();
+        assert_eq!(
+            waxed.len(),
+            lone.len(),
+            "the waxed twin the BASE models the blockstate references render"
         );
     }
 

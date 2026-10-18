@@ -1,0 +1,69 @@
+=== class headers
+--- net.minecraft.world.level.block.CopperBarsBlock: None
+--- net.minecraft.world.level.block.IronBarsBlock: ('?2', '?9', [])
+
+=== CopperBarsBlock methods
+!! class net.minecraft.world.level.block.CopperBarsBlock not found
+!! class net.minecraft.world.level.block.CopperBarsBlock not found
+!! class net.minecraft.world.level.block.CopperBarsBlock not found
+
+=== BARS tag membership
+tags/block/bars.json: {
+ "values": [
+  "minecraft:iron_bars",
+  "minecraft:copper_bars",
+  "minecraft:exposed_copper_bars",
+  "minecraft:weathered_copper_bars",
+  "minecraft:oxidized_copper_bars",
+  "minecraft:waxed_copper_bars",
+  "minecraft:waxed_exposed_copper_bars",
+  "minecraft:waxed_weathered_copper_bars",
+  "minecraft:waxed_oxidized_copper_bars"
+ ]
+}
+
+=== Blocks clinit: the COPPER_BARS..WAXED_OXIDIZED_COPPER_BARS rows
+12325: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+12328: putstatic net/minecraft/world/level/block/Blocks.IRON_BARS:Lnet/minecraft/world/level/block/Block;
+12331: getstatic net/minecraft/references/BlockItemIds.COPPER_BARS:Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+12334: invokedynamic indy
+12339: invokedynamic indy
+12344: invokedynamic indy
+12349: invokedynamic indy
+12354: invokestatic net/minecraft/world/level/block/WeatheringCopperCollection.registerBlocks:(Lnet/minecraft/world/level/block/WeatheringCopperCollection;Lorg/apache/commons/lang3/function/TriFunction;Ljava/util/function/BiFunction;Ljava/util/function/BiFunction;Ljava/util/function/Function;)Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+12357: putstatic net/minecraft/world/level/block/Blocks.COPPER_BARS:Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+12360: getstatic net/minecraft/references/BlockItemIds.IRON_CHAIN:Lnet/minecraft/references/BlockItemId;
+  (IRON_BARS row pc for the ordering walk:)
+12293: getstatic net/minecraft/references/BlockItemIds.IRON_BARS:Lnet/minecraft/references/BlockItemId;
+
+=== blockstates: the waxed kinds' model refs (the BASE re-wear law)
+  copper_bars: ['copper_bars_cap', 'copper_bars_cap_alt', 'copper_bars_post', 'copper_bars_post_ends', 'copper_bars_side', 'copper_bars_side_alt']
+  exposed_copper_bars: ['exposed_copper_bars_cap', 'exposed_copper_bars_cap_alt', 'exposed_copper_bars_post', 'exposed_copper_bars_post_ends', 'exposed_copper_bars_side', 'exposed_copper_bars_side_alt']
+  weathered_copper_bars: ['weathered_copper_bars_cap', 'weathered_copper_bars_cap_alt', 'weathered_copper_bars_post', 'weathered_copper_bars_post_ends', 'weathered_copper_bars_side', 'weathered_copper_bars_side_alt']
+  oxidized_copper_bars: ['oxidized_copper_bars_cap', 'oxidized_copper_bars_cap_alt', 'oxidized_copper_bars_post', 'oxidized_copper_bars_post_ends', 'oxidized_copper_bars_side', 'oxidized_copper_bars_side_alt']
+  waxed_copper_bars: ['copper_bars_cap', 'copper_bars_cap_alt', 'copper_bars_post', 'copper_bars_post_ends', 'copper_bars_side', 'copper_bars_side_alt']
+  waxed_exposed_copper_bars: ['exposed_copper_bars_cap', 'exposed_copper_bars_cap_alt', 'exposed_copper_bars_post', 'exposed_copper_bars_post_ends', 'exposed_copper_bars_side', 'exposed_copper_bars_side_alt']
+  waxed_weathered_copper_bars: ['weathered_copper_bars_cap', 'weathered_copper_bars_cap_alt', 'weathered_copper_bars_post', 'weathered_copper_bars_post_ends', 'weathered_copper_bars_side', 'weathered_copper_bars_side_alt']
+  waxed_oxidized_copper_bars: ['oxidized_copper_bars_cap', 'oxidized_copper_bars_cap_alt', 'oxidized_copper_bars_post', 'oxidized_copper_bars_post_ends', 'oxidized_copper_bars_side', 'oxidized_copper_bars_side_alt']
+
+=== textures: alpha histograms of the four masters
+  copper_bars: ERR 'int' object is not subscriptable
+  exposed_copper_bars: ERR 'int' object is not subscriptable
+  weathered_copper_bars: ERR 'int' object is not subscriptable
+  oxidized_copper_bars: ERR 'int' object is not subscriptable
+  copper_bars_cap: ERR "There is no item named 'assets/minecraft/textures/block/copper_bars_cap.png' in the archive"
+
+=== sounds.json: the block.copper.* + block.iron_bars.* events
+Traceback (most recent call last):
+  File "/home/z/my-project/rust-minecraft/scripts/jar_work/copper_687.py", line 100, in <module>
+    snd = json.loads(z.read("assets/minecraft/sounds.json"))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/z/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/lib/python3.12/zipfile/__init__.py", line 1610, in read
+    with self.open(name, "r", pwd) as fp:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/z/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/lib/python3.12/zipfile/__init__.py", line 1647, in open
+    zinfo = self.getinfo(name)
+            ^^^^^^^^^^^^^^^^^^
+  File "/home/z/.local/share/uv/python/cpython-3.12.15-linux-x86_64-gnu/lib/python3.12/zipfile/__init__.py", line 1575, in getinfo
+    raise KeyError(
+KeyError: "There is no item named 'assets/minecraft/sounds.json' in the archive"

@@ -87,6 +87,12 @@ fn sky_opacity(id: u16) -> u8 {
         // verdict keeps)
         || is_glass_pane(id)
         || id == IRON_BARS
+        // THE COPPER BARS FAMILY'S OWN ROW (the dev-59 round — javap
+        // lambda$static$163 the Properties chain the noOcclusion()
+        // row pc 21 the eight oxidization rungs speak: the thin strip
+        // the light the flood passes, the propagatesSkylightDown law
+        // the vanilla skylight's own verdict keeps)
+        || is_copper_bars(id)
     {
         0
     } else if id == WATER || id == LEAVES || id == PALE_LEAVES {

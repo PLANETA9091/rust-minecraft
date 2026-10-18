@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 578] = [
+pub const RUNTIME_PALETTE: [&str; 586] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1952,6 +1952,54 @@ pub const RUNTIME_PALETTE: [&str; 578] = [
     "brown_stained_glass_pane", "green_stained_glass_pane",
     "red_stained_glass_pane", "black_stained_glass_pane",
     "iron_bars",
+    // THE COPPER BARS FAMILY'S OWN EIGHT OXIDIZATION RUNGS (the
+    // dev-59 round): the WeatheringCopper walk the pane family's own
+    // lane wears — the four bare rungs + the four waxed twins the
+    // PREFIXES ladder banks. javap Blocks clinit the 26.2 jar (pinned
+    // sha1 2dc72797, the probes scripts/jar_work/copper_687.py
+    // banks): the COPPER_BARS row pc 12331-12357 the
+    // WeatheringCopperCollection.registerBlocks walk the FOUR indy
+    // lambdas carry (putstatic pc 12357 the ONE clinit row ALL EIGHT
+    // kinds registers — the WAXED_COPPER_BARS putstatic rows the
+    // clinit RETIRES), the WeatheringCopperCollection clinit pc 0-62
+    // the PREFIXES ladder speaks (the UNAFFECTED/EXPOSED/WEATHERED/
+    // OXIDIZED states the ByState pc 4-13 banks, the prefixes the
+    // ByState pc 29-53 carries — "" the bare head, "exposed_",
+    // "weathered_", "oxidized_", then the waxed twins "waxed_",
+    // "waxed_exposed_", "waxed_weathered_", "waxed_oxidized_" — the
+    // EIGHT rungs the ladder order the palette tail banks). javap
+    // lambda$static$162 the FACTORY lambda speaks — `new
+    // IronBarsBlock(properties)` the PLAIN class every rung wears
+    // (the instanceof IronBarsBlock arm EVERY copper rung the class
+    // check connects, the skipRendering/attachsTo overrides the
+    // subclasses never add), javap lambda$static$163 the PROPERTIES
+    // lambda — requiresCorrectToolForDrops() pc 3, strength(5.0f,
+    // 6.0f) pc 6-12, sound(SoundType.COPPER) pc 15-18, noOcclusion()
+    // pc 21. The BARS TAG the pair-cull arm the palette ARMS (the
+    // probe's tags/block/bars.json walk the NINE members banks —
+    // iron_bars + the eight copper rungs, the panes NEVER in). The
+    // blockstates the EIGHT the multipart carry — the four bare rungs
+    // the OWN 6-model sets wear ({name}_post_ends/_post/_cap/_cap_
+    // alt/_side/_side_alt), the four waxed twins the BASE models
+    // RE-WEAR (waxed_copper_bars the copper_bars_* models the
+    // blockstate references — the texture-sharing law the vanilla
+    // waxed look keeps). The models the template_bars_* parents
+    // wear, the edge+bars refs the kind's own master the bare rungs
+    // resolve (copper_bars/exposed/weathered/oxidized the FOUR
+    // masters the on-demand collection the append-only tail banks:
+    // 807 -> 811), the alpha histograms the iron seam's own law
+    // answers — {0: 140, 255: 116} the BINARY cutout every rung
+    // wears. The dig/sounds/drops rows the name-keyed generated
+    // tables the registry answers (the eight rows (5.0, true) the
+    // pickaxe demand keeps, the copper voices block.copper.* the
+    // SoundType.COPPER row banks, the drop pools the SELF-entry 1.0
+    // the iron law wears — the SILK-TOUCH-ONLY law the glass family
+    // keeps the copper rungs NEVER wear), the placeable lane the
+    // Items pairing rows the generated items table banks.
+    "copper_bars", "exposed_copper_bars", "weathered_copper_bars",
+    "oxidized_copper_bars", "waxed_copper_bars",
+    "waxed_exposed_copper_bars", "waxed_weathered_copper_bars",
+    "waxed_oxidized_copper_bars",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -2920,7 +2968,7 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             faces.push(resolve_flat_stem(&stem, false));
             continue;
         }
-        if block.ends_with("glass_pane") || block == "iron_bars" {
+        if block.ends_with("glass_pane") || block == "iron_bars" || block.ends_with("copper_bars") {
             // THE PANE FAMILY'S OWN PALETTE ARM (the dev-58 round, the
             // official 26.2 jar): the blockstate is a MULTIPART — the
             // UNCONDITIONAL post apply (block/{name}_post for the

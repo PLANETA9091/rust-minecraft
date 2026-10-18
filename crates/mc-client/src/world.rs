@@ -3148,6 +3148,94 @@ pub const RED_STAINED_GLASS_PANE: u16 = 575;
 pub const BLACK_STAINED_GLASS_PANE: u16 = 576;
 pub const IRON_BARS: u16 = 577;
 
+/// THE COPPER BARS FAMILY'S OWN EIGHT OXIDIZATION RUNGS (the dev-59
+/// round — the WeatheringCopper walk the pane family's own lane
+/// wears): the four bare rungs the collection ladder banks + the
+/// four waxed twins the SAME walk serves. javap Blocks clinit the
+/// 26.2 jar (pinned sha1 2dc72797, the probes scripts/jar_work/
+/// copper_687.py banks): the COPPER_BARS row pc 12331-12357 — the
+/// WeatheringCopperCollection.registerBlocks walk the FOUR indy
+/// lambdas pc 12334-12349 carry, putstatic pc 12357 the
+/// WeatheringCopperCollection field the row banks (the ONE clinit
+/// row ALL EIGHT kinds the collection walk registers — the
+/// WAXED_COPPER_BARS putstatic rows the clinit RETIRES, absent).
+/// javap WeatheringCopperCollection the clinit pc 0-62 the PREFIXES
+/// ladder speaks — the UNAFFECTED/EXPOSED/WEATHERED/OXIDIZED states
+/// the ByState pc 4-13 banks, the prefixes the ByState pc 29-53
+/// carries ("" the bare head wears, "exposed_" pc 32, "weathered_"
+/// pc 34, "oxidized_" pc 36, "waxed_" pc 45, "waxed_exposed_" pc
+/// 47, "waxed_weathered_" pc 49, "waxed_oxidized_" pc 51 — the
+/// EIGHT rungs the ladder order the palette tail banks: bare
+/// UNAFFECTED..OXIDIZED then the waxed twins the SAME order wears).
+/// javap lambda$static$162 the Blocks class the FACTORY lambda
+/// speaks — `new IronBarsBlock(properties)` the PLAIN class every
+/// rung wears (the WeatheringCopperBarsBlock class the jar carries,
+/// the bars collection the plain IronBarsBlock the instances bank —
+/// the instanceof IronBarsBlock arm EVERY copper rung the class
+/// check connects, the skipRendering/attachsTo overrides the
+/// subclasses never add — the IronBarsBlock law every rung
+/// inherits). javap lambda$static$163 the PROPERTIES lambda speaks —
+/// Properties.of() pc 0, requiresCorrectToolForDrops() pc 3, strength
+/// (5.0f, 6.0f) pc 6-12, sound(SoundType.COPPER) pc 15-18,
+/// noOcclusion() pc 21 (the copper voice the iron strength the same
+/// (5.0, 6.0) pair keeps, the noOcclusion verdict the mesher's
+/// is_transparent lane and the light's sky-opacity walk read). The
+/// BARS TAG the pair-cull arm the palette ARMS (the probe's
+/// tags/block/bars.json walk speaks): the NINE members — iron_bars
+/// + the eight copper rungs (the panes NEVER in) — javap
+/// IronBarsBlock.skipRendering pc 8-47 the BARS-tag pair arm the
+/// dev-58 walk banked (the neighbor AND the state BOTH in the tag
+/// the TRUE verdict the crossing planes' shared faces cull: the
+/// iron|copper pair the DIFFERENT blocks the tag law culls, the
+/// copper|exposed pair the ladder neighbors the same law culls —
+/// the connected bars lattice the ONE continuous band renders, the
+/// z-fight the cull never banks). The blockstates the EIGHT the
+/// multipart carry — the four bare rungs the OWN 6-model sets wear
+/// ({name}_post_ends/_post/_cap/_cap_alt/_side/_side_alt), the four
+/// waxed twins the BASE models RE-WEAR (the probe's blockstate walk
+/// speaks: waxed_copper_bars the copper_bars_* models the
+/// blockstate references — the texture-sharing law the vanilla waxed
+/// look keeps, the atlas tile count the FOUR new masters the
+/// append-only tail banks). The models the template_bars_* parents
+/// wear, the textures the edge+bars refs the kind's own master the
+/// bare rungs resolve (copper_bars/exposed/weathered/oxidized the
+/// FOUR masters the atlas banks), the alpha histograms the iron
+/// seam's own law answers — {0: 140, 255: 116} the BINARY cutout
+/// every rung wears (the bars' gaps the discard law serves). The
+/// dig/sounds/drops rows the name-keyed generated tables the
+/// registry answers (the eight rows (5.0, true) the pickaxe demand
+/// the requiresCorrectToolForDrops chain keeps, the copper voices
+/// block.copper.* the SoundType.COPPER row banks, the drop pools the
+/// SELF-entry 1.0 the iron bars law wears — the copper rungs the
+/// SILK-TOUCH-ONLY law the glass family keeps NEVER wear), the
+/// placeable lane the Items pairing rows (the generated items table
+/// the eight names bank), the mineable/pickaxe tag the nine bars
+/// members the dig walk reads.
+pub const COPPER_BARS: u16 = 578;
+pub const EXPOSED_COPPER_BARS: u16 = 579;
+pub const WEATHERED_COPPER_BARS: u16 = 580;
+pub const OXIDIZED_COPPER_BARS: u16 = 581;
+pub const WAXED_COPPER_BARS: u16 = 582;
+pub const WAXED_EXPOSED_COPPER_BARS: u16 = 583;
+pub const WAXED_WEATHERED_COPPER_BARS: u16 = 584;
+pub const WAXED_OXIDIZED_COPPER_BARS: u16 = 585;
+
+/// THE COPPER BARS FAMILY'S OWN SEAT LADDER (the dev-59 round — the
+/// 8 kinds the explicit seats the tail banks, the PREFIXES order the
+/// collection walk speaks): the mesher's pane lane and the family
+/// fns the ladder read (the PANE_KINDS walk the chain the mesh-time
+/// cache serves).
+pub const COPPER_BARS_KINDS: [u16; 8] = [
+    COPPER_BARS,
+    EXPOSED_COPPER_BARS,
+    WEATHERED_COPPER_BARS,
+    OXIDIZED_COPPER_BARS,
+    WAXED_COPPER_BARS,
+    WAXED_EXPOSED_COPPER_BARS,
+    WAXED_WEATHERED_COPPER_BARS,
+    WAXED_OXIDIZED_COPPER_BARS,
+];
+
 /// THE PANE FAMILY'S OWN SEAT LADDER (the dev-58 round — the 18
 /// kinds the explicit seats the tail banks, the wall tables' own
 /// explicit-seat law the window rung wears): the mesher's pane lane
@@ -3817,7 +3905,7 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 /// generated tables' own rows the names wire) — the
 /// END_PORTAL
 /// the beyond-table seat the displaced law keeps.
-pub const NAME_OF: [&str; 578] = [
+pub const NAME_OF: [&str; 586] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -4495,6 +4583,14 @@ pub const NAME_OF: [&str; 578] = [
     "brown_stained_glass_pane", "green_stained_glass_pane",
     "red_stained_glass_pane", "black_stained_glass_pane",
     "iron_bars",
+    // THE COPPER BARS FAMILY'S OWN ROWS (the dev-59 round — the 8
+    // seats the PREFIXES order the collection walk banks, the ONE
+    // registry name each kind alone speaks, the dig/sound/drop/place
+    // lanes the generated tables' own rows the names wire)
+    "copper_bars", "exposed_copper_bars", "weathered_copper_bars",
+    "oxidized_copper_bars", "waxed_copper_bars",
+    "waxed_exposed_copper_bars", "waxed_weathered_copper_bars",
+    "waxed_oxidized_copper_bars",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -5609,10 +5705,39 @@ pub fn is_glass_pane(id: u16) -> bool {
 /// THE IRON-BARS CLASS'S OWN ARM (the attachsTo instanceof check's
 /// own verdict — the pane family + the bars the ONE class law
 /// banks): the connection walk and the mesher's family fn the arm
-/// read.
+/// read. The COPPER BARS the dev-59 round the class law JOINS —
+/// javap lambda$static$162 the 26.2 jar the plain IronBarsBlock
+/// instances the collection walk fabricates (the instanceof check
+/// every rung the class verdict connects).
 #[inline]
 pub fn is_iron_bars_class(id: u16) -> bool {
-    is_glass_pane(id) || id == IRON_BARS
+    is_glass_pane(id) || is_bars_tag(id)
+}
+
+/// THE BARS TAG'S OWN NINE MEMBERS (the dev-59 round — the vanilla
+/// BlockTags.BARS the pair-cull arm the palette ARMS: the probe's
+/// tags/block/bars.json walk the NINE values banks — iron_bars + the
+/// eight copper rungs, the panes NEVER in): the mesher's same-kind
+/// cull walk the tag pair the shared faces culls (javap
+/// IronBarsBlock.skipRendering pc 8-47: the neighbor AND the state
+/// BOTH in the tag the TRUE verdict — the iron|copper pair the
+/// DIFFERENT blocks the tag law culls, the copper|exposed pair the
+/// ladder neighbors the same law culls), the connection walk the
+/// instance arm the class law keeps separate.
+#[inline]
+pub fn is_bars_tag(id: u16) -> bool {
+    id == IRON_BARS || is_copper_bars(id)
+}
+
+/// THE COPPER BARS FAMILY'S OWN RANGE (the dev-59 round — the 8 rungs
+/// the contiguous tail banks, the PREFIXES order the collection walk
+/// speaks): the WHOLE IronBarsBlock-instances family the range
+/// answers — the copper voices the SoundType.COPPER chain keeps, the
+/// noOcclusion verdict the mesher's is_transparent lane and the
+/// light's sky-opacity walk the same run reads.
+#[inline]
+pub fn is_copper_bars(id: u16) -> bool {
+    (COPPER_BARS..=WAXED_OXIDIZED_COPPER_BARS).contains(&id)
 }
 
 /// THE STAINED PANE HALF'S OWN RANGE (the mesher's translucent lane
@@ -7365,7 +7490,7 @@ pub fn collision_shape(id: u16) -> CollisionShape {
         // post alone the kind-only verdict answers (the UP verdict
         // the raise law the variant-aware lane computes).
         CollisionShape::Wall(0, 0)
-    } else if is_glass_pane(id) || id == IRON_BARS {
+    } else if is_iron_bars_class(id) {
         // THE PANE FAMILY'S OWN KIND-ONLY ROW (the dev-58 round —
         // the connection bits the neighbor reads the kind-only table
         // never sees, the POST box the conservative subset keeps:
@@ -7659,7 +7784,7 @@ pub fn collision_shape_at(world: &World, cx: i32, cy: i32, cz: i32) -> Collision
     // the placement/break updates the propagation never needs). The
     // bits the compound's own arms the [`pane_arm_slabs`] walk
     // serves, the post the [`shape_slabs`] decode banks.
-    if is_glass_pane(id) || id == IRON_BARS {
+    if is_iron_bars_class(id) {
         return CollisionShape::Pane(pane_connection_bits(world, cx, cy, cz));
     }
     if !is_door(id) {
@@ -15951,7 +16076,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the lamp pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 578, "the palette the lamp pair banks");
+        assert_eq!(atlas::N_KINDS, 586, "the palette the lamp pair banks");
         assert!(is_redstone_lamp(REDSTONE_LAMP) && is_redstone_lamp(REDSTONE_LAMP_LIT));
         assert!(!is_redstone_lamp(REDSTONE_WIRE) && !is_redstone_lamp(STONE));
         assert!(!redstone_lamp_lit(REDSTONE_LAMP));
@@ -16048,7 +16173,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the wire pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 578, "the palette the wire pair banks");
+        assert_eq!(atlas::N_KINDS, 586, "the palette the wire pair banks");
         assert!(is_redstone_wire(REDSTONE_WIRE) && is_redstone_wire(REDSTONE_WIRE_ON));
         assert!(!is_redstone_wire(LEVER) && !is_redstone_wire(OAK_PRESSURE_PLATE));
         assert!(!wire_powered(REDSTONE_WIRE));
@@ -16202,7 +16327,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 578, "the palette the graded ladder banks");
+        assert_eq!(atlas::N_KINDS, 586, "the palette the graded ladder banks");
         // THE POWER READ'S OWN ROUND TRIP (the seat the kind the
         // inverse fold answers, the unknown id the None keeps)
         assert_eq!(wire_power_of(REDSTONE_WIRE), Some(0));
@@ -16389,7 +16514,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the planks' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 578, "the palette the planks' twelve banks");
+        assert_eq!(atlas::N_KINDS, 586, "the palette the planks' twelve banks");
         for (i, (name, kind, voice)) in PLANKS.iter().enumerate() {
             let seat = OAK_PLANKS + i as u16;
             assert_eq!(*kind, seat, "the seat the family order banks");
@@ -16481,7 +16606,7 @@ mod tests {
             None,
             "the portal the item lane refuses"
         );
-        assert_eq!(NAME_OF.len(), 578, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 586, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -16535,7 +16660,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kit's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 578, "the palette the kit's six banks");
+        assert_eq!(atlas::N_KINDS, 586, "the palette the kit's six banks");
         for (i, (name, kind, hard)) in KIT.iter().enumerate() {
             let seat = COBBLESTONE + i as u16;
             assert_eq!(*kind, seat, "the seat the stone shelf order banks");
@@ -16625,7 +16750,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kit's growth banks)
-        assert_eq!(NAME_OF.len(), 578, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 586, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -16682,7 +16807,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the shelf's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 578, "the palette the shelf's eight banks");
+        assert_eq!(atlas::N_KINDS, 586, "the palette the shelf's eight banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -16780,7 +16905,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the shelf's growth banks)
-        assert_eq!(NAME_OF.len(), 578, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 586, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -16849,7 +16974,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the cloths' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 578, "the palette the cloths' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 586, "the palette the cloths' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -16963,7 +17088,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the cloths' growth banks)
-        assert_eq!(NAME_OF.len(), 578, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 586, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -17038,7 +17163,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kilns' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 578, "the palette the kilns' seventeen banks");
+        assert_eq!(atlas::N_KINDS, 586, "the palette the kilns' seventeen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -17150,7 +17275,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kilns' growth banks)
-        assert_eq!(NAME_OF.len(), 578, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 586, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -17226,7 +17351,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 578, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 586, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -17343,7 +17468,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 578, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 586, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -17428,7 +17553,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 578, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 586, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -17579,7 +17704,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 578, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 586, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -17653,7 +17778,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 578, "the palette the ladder's twenty-two banks");
+        assert_eq!(atlas::N_KINDS, 586, "the palette the ladder's twenty-two banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -17842,7 +17967,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the ladder's growth banks)
-        assert_eq!(NAME_OF.len(), 578, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 586, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -17903,7 +18028,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the note's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 578, "the palette the note's own banks");
+        assert_eq!(atlas::N_KINDS, 586, "the palette the note's own banks");
         // THE ONE REGISTRY NAME ITS KIND ALONE SPEAKS (the NAME_OF row
         // + the generated KIND_NAMES/REGISTRY_NAMES rows the same
         // entry the three tables keep — no strip law the single kind
@@ -18214,7 +18339,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the note's growth banks)
-        assert_eq!(NAME_OF.len(), 578, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 586, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -18255,8 +18380,8 @@ mod tests {
             "the contiguous run the thirteen seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 578, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 578, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 586, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 586, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in OAK_FENCE..=NETHER_BRICK_FENCE {
@@ -18669,8 +18794,8 @@ mod tests {
             "the contiguous run the thirty-two seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 578, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 578, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 586, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 586, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in COBBLESTONE_WALL..=SULFUR_BRICK_WALL {
@@ -19009,8 +19134,8 @@ mod tests {
             "the contiguous run the seventeen seats wear"
         );
         assert_eq!(SULFUR_BRICK_WALL, 542, "the wall family the tail answers");
-        assert_eq!(atlas::N_KINDS, 578, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 578, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 586, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 586, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in GLASS..=BLACK_STAINED_GLASS {
@@ -19205,8 +19330,8 @@ mod tests {
             "the pane run the seventeen seats wear"
         );
         assert_eq!(BLACK_STAINED_GLASS, 559, "the glass family the tail answers");
-        assert_eq!(atlas::N_KINDS, 578, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 578, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 586, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 586, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in GLASS_PANE..=IRON_BARS {
@@ -19470,6 +19595,326 @@ mod tests {
     }
 
     #[test]
+    fn the_copper_bars_familys_own_ladder_the_bars_tag_and_the_copper_voices_wear() {
+        // THE COPPER BARS FAMILY'S OWN LAWS (the dev-59 round — javap
+        // the 26.2 jar the probe scripts/jar_work/copper_687.py
+        // banks): the WeatheringCopperCollection row pc 12331-12357
+        // the ONE clinit walk ALL EIGHT kinds registers (the PREFIXES
+        // ladder the bare UNAFFECTED..OXIDIZED rungs + the waxed
+        // twins the same order wears), the lambda$static$162 factory
+        // the plain IronBarsBlock instances every rung wears (the
+        // instanceof arm EVERY copper rung the class check connects),
+        // the lambda$static$163 properties — requiresCorrectToolForDrops
+        // + strength(5.0f, 6.0f) + sound(SoundType.COPPER) +
+        // noOcclusion() — the dig/voice/opacity rows the tables bank,
+        // the BARS TAG the NINE members the pair-cull arm the palette
+        // arms (iron_bars + the eight rungs, the panes NEVER in),
+        // the blockstates the waxed twins the BASE models re-wear
+        // (the texture-sharing law the vanilla waxed look keeps)
+        use mc_registry::generated::atlas;
+        // THE EIGHT SEATS' OWN BANK (the contiguous tail the
+        // append-only law keeps — the pane family the predecessor
+        // answers, the PREFIXES order the ladder banks)
+        assert_eq!(COPPER_BARS, 578, "the bare rung its tail seat keeps");
+        assert_eq!(EXPOSED_COPPER_BARS, 579, "the exposed rung the ladder banks");
+        assert_eq!(WEATHERED_COPPER_BARS, 580, "the weathered rung the ladder banks");
+        assert_eq!(OXIDIZED_COPPER_BARS, 581, "the oxidized rung the ladder banks");
+        assert_eq!(WAXED_COPPER_BARS, 582, "the waxed head the twins' tail keeps");
+        assert_eq!(
+            WAXED_EXPOSED_COPPER_BARS, 583,
+            "the waxed exposed rung the ladder banks"
+        );
+        assert_eq!(
+            WAXED_WEATHERED_COPPER_BARS, 584,
+            "the waxed weathered rung the ladder banks"
+        );
+        assert_eq!(
+            WAXED_OXIDIZED_COPPER_BARS, 585,
+            "the waxed tail the family's last rung keeps"
+        );
+        assert_eq!(atlas::N_KINDS, 586, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 586, "the NAME_OF table the one length keeps");
+        // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
+        // rows the same entry the three tables keep)
+        for k in COPPER_BARS..=WAXED_OXIDIZED_COPPER_BARS {
+            assert_eq!(
+                NAME_OF[k as usize],
+                atlas::KIND_NAMES[k as usize],
+                "the KIND_NAMES row the family's kind {} keeps",
+                k
+            );
+            assert_eq!(
+                NAME_OF[k as usize],
+                atlas::REGISTRY_NAMES[k as usize],
+                "the REGISTRY_NAMES row the family's kind {} keeps",
+                k
+            );
+        }
+        assert_eq!(NAME_OF[COPPER_BARS as usize], "copper_bars");
+        assert_eq!(NAME_OF[EXPOSED_COPPER_BARS as usize], "exposed_copper_bars");
+        assert_eq!(NAME_OF[OXIDIZED_COPPER_BARS as usize], "oxidized_copper_bars");
+        assert_eq!(
+            NAME_OF[WAXED_OXIDIZED_COPPER_BARS as usize],
+            "waxed_oxidized_copper_bars"
+        );
+        // THE SEAT LADDER THE PREFIXES ORDER BANKS (the bare rungs
+        // the head wears, the waxed twins the tail keeps)
+        for (i, k) in COPPER_BARS_KINDS.iter().enumerate() {
+            assert_eq!(
+                *k,
+                COPPER_BARS + i as u16,
+                "the ladder the PREFIXES order the kind {} keeps",
+                i
+            );
+        }
+        // THE RANGE WALKS (the whole family the range fn answers —
+        // the class law the IronBarsBlock instances bank)
+        for k in COPPER_BARS..=WAXED_OXIDIZED_COPPER_BARS {
+            assert!(is_copper_bars(k), "the rung {} the range banks", k);
+            assert!(
+                is_iron_bars_class(k),
+                "the plain IronBarsBlock instance the class arm connects (kind {})",
+                k
+            );
+            assert!(
+                is_bars_tag(k),
+                "the rung {} the BARS tag the NINE members bank",
+                k
+            );
+        }
+        assert!(is_bars_tag(IRON_BARS), "the iron seam the tag's head wears");
+        assert!(
+            !is_bars_tag(GLASS_PANE) && !is_bars_tag(WHITE_STAINED_GLASS_PANE),
+            "the panes NEVER in the BARS tag (the pair arm the panes the law refuses)"
+        );
+        assert!(
+            !is_copper_bars(IRON_BARS) && !is_copper_bars(GLASS_PANE),
+            "the neighbors the copper range refuses"
+        );
+        assert!(
+            is_iron_bars_class(GLASS_PANE) && is_iron_bars_class(IRON_BARS),
+            "the dev-58 family the class arm keeps"
+        );
+        // THE PLACEABLE LANE (the Items pairing rows the reverse walk
+        // answers — the eight item forms the placement grants)
+        for name in [
+            "copper_bars",
+            "exposed_copper_bars",
+            "weathered_copper_bars",
+            "oxidized_copper_bars",
+            "waxed_copper_bars",
+            "waxed_exposed_copper_bars",
+            "waxed_weathered_copper_bars",
+            "waxed_oxidized_copper_bars",
+        ] {
+            assert_eq!(
+                World::placeable_block(name),
+                Some(
+                    COPPER_BARS
+                        + COPPER_BARS_KINDS
+                            .iter()
+                            .position(|k| NAME_OF[*k as usize] == name)
+                            .expect("the ladder the name banks") as u16
+                ),
+                "the {} item the placement lane grants",
+                name
+            );
+        }
+        // THE DIG ROWS (the generated table the REAL bootstrapped
+        // registry banks — the (5.0, true) pair the pickaxe demand
+        // the requiresCorrectToolForDrops chain keeps, the copper
+        // voice the iron strength the SAME pair every rung wears)
+        for k in COPPER_BARS..=WAXED_OXIDIZED_COPPER_BARS {
+            let (hard, tool) = crate::dig::DigState::block_dig_row(k);
+            assert!(
+                (hard - 5.0).abs() < 1e-4,
+                "the 5.0 strength the rung {} dig row wears, got {}",
+                k,
+                hard
+            );
+            assert!(
+                tool,
+                "the pickaxe demand the rung {} the law wears",
+                k
+            );
+        }
+        // THE VOICE LAWS THE FAMILY WEARS (the SoundType.COPPER row
+        // the lambda$static$163 chain banks — the block.copper.*
+        // events every rung speaks, the waxed twins the SAME voice
+        // the vanilla waxed look keeps)
+        for k in COPPER_BARS..=WAXED_OXIDIZED_COPPER_BARS {
+            let idx = mc_registry::generated::block_sounds::sound_index(NAME_OF[k as usize])
+                .unwrap_or_else(|| panic!("the {} sound row the table banks", NAME_OF[k as usize]));
+            assert_eq!(
+                mc_registry::generated::block_sounds::SOUND_BREAK[idx],
+                "block.copper.break",
+                "the copper law the rung {} break row speaks",
+                k
+            );
+        }
+        // THE DROP POOLS THE SELF-ENTRY LAW BANKS (the copper rungs
+        // the SILK-TOUCH-ONLY law the glass family keeps NEVER wear
+        // — the bare hand the drop keeps, the iron bars law wears)
+        for k in COPPER_BARS..=WAXED_OXIDIZED_COPPER_BARS {
+            let name = NAME_OF[k as usize];
+            let pools = mc_registry::generated::block_drops::drops(name)
+                .unwrap_or_else(|| panic!("the {} drop pool the table banks", name));
+            assert_eq!(
+                pools.len(),
+                1,
+                "the {} the one-pool drop the self-entry law wears",
+                name
+            );
+            assert_eq!(
+                pools[0].entries.len(),
+                1,
+                "the {} the self-entry the one item wears",
+                name
+            );
+            assert_eq!(
+                pools[0].entries[0].item, name,
+                "the {} drop the SELF-entry the iron law wears",
+                name
+            );
+        }
+        // THE CONNECTION LAW'S OWN WALK (the class arm EVERY rung the
+        // instanceof check connects — the iron|copper pair the
+        // DIFFERENT blocks the class law connects, the waxed|bare
+        // pair the same walk banks, the wall the WALLS arm connects,
+        // the leaves the exception refuses)
+        let mut w = World::blank(3, 0x5C0F);
+        let c = w.size_blocks() / 2;
+        let y = 8;
+        w.set(c, y, c, COPPER_BARS);
+        assert_eq!(
+            pane_connection_bits(&w, c, y, c),
+            0b0000,
+            "the lone rung the empty connections wears"
+        );
+        w.set(c, y, c - 1, COPPER_BARS);
+        assert_eq!(
+            pane_connection_bits(&w, c, y, c),
+            0b0001,
+            "the same-rung neighbor the north bit banks"
+        );
+        w.set(c, y, c - 1, EXPOSED_COPPER_BARS);
+        assert_eq!(
+            pane_connection_bits(&w, c, y, c),
+            0b0001,
+            "the ladder neighbor the class arm connects (the instanceof law wears)"
+        );
+        w.set(c, y, c - 1, WAXED_OXIDIZED_COPPER_BARS);
+        assert_eq!(
+            pane_connection_bits(&w, c, y, c),
+            0b0001,
+            "the waxed twin the class arm connects"
+        );
+        w.set(c, y, c - 1, IRON_BARS);
+        assert_eq!(
+            pane_connection_bits(&w, c, y, c),
+            0b0001,
+            "the iron seam the class arm connects (iron|copper the ONE class law banks)"
+        );
+        w.set(c, y, c - 1, COBBLESTONE_WALL);
+        assert_eq!(
+            pane_connection_bits(&w, c, y, c),
+            0b0001,
+            "the wall the WALLS arm connects"
+        );
+        w.set(c, y, c - 1, LEAVES);
+        assert_eq!(
+            pane_connection_bits(&w, c, y, c),
+            0b0000,
+            "the leaves the exception verdict refuses"
+        );
+        // THE COLLISION'S OWN COMPOUND (the post [7,0,7]->[9,16,9]
+        // the 0.5±1/16 band the shape_slabs decode answers — the
+        // FULL 0..1 y the standard-height law keeps, the copper rungs
+        // the SAME CrossCollision band the iron seam wears)
+        w.set(c, y, c, COPPER_BARS);
+        w.set(c, y, c - 1, IRON_BARS);
+        let shape = collision_shape_at(&w, c, y, c);
+        let CollisionShape::Pane(bits) = shape else {
+            panic!("the rung shape the compound lane banks");
+        };
+        assert_eq!(bits, 0b0001, "the iron neighbor the bits bank");
+        let (x_lo, x_hi, _y_lo, y_hi, z_lo, z_hi) =
+            shape_slabs(shape, c, y, c).expect("the post shape the slabs never refuse");
+        assert!(
+            ((x_lo - (c as f64 + 7.0 / 16.0)).abs() < 1e-9)
+                && ((x_hi - (c as f64 + 9.0 / 16.0)).abs() < 1e-9),
+            "the 0.5±1/16 post band the x walk keeps, got {x_lo}..{x_hi}"
+        );
+        assert!(
+            ((z_lo - (c as f64 + 7.0 / 16.0)).abs() < 1e-9)
+                && ((z_hi - (c as f64 + 9.0 / 16.0)).abs() < 1e-9),
+            "the 0.5±1/16 post band the z walk keeps, got {z_lo}..{z_hi}"
+        );
+        assert!(
+            ((y_hi - (y as f64 + 1.0)).abs() < 1e-9),
+            "the FULL 1.0-tall band the standard-height law keeps, got {y_hi}"
+        );
+        // THE FACE_TILES ROWS THE BARE MASTERS BANK (the four bare
+        // rungs the OWN masters wear, the four waxed twins the BASE
+        // rows RE-WEAR — the texture-sharing law the vanilla waxed
+        // look keeps; the ONE-tile shape the bars family wears)
+        assert_eq!(
+            atlas::tile_name(atlas::FACE_TILES[COPPER_BARS as usize][2]),
+            "copper_bars",
+            "the bare head its own master wears"
+        );
+        assert_eq!(
+            atlas::tile_name(atlas::FACE_TILES[EXPOSED_COPPER_BARS as usize][2]),
+            "exposed_copper_bars",
+            "the exposed rung its own master wears"
+        );
+        assert_eq!(
+            atlas::tile_name(atlas::FACE_TILES[WEATHERED_COPPER_BARS as usize][2]),
+            "weathered_copper_bars",
+            "the weathered rung its own master wears"
+        );
+        assert_eq!(
+            atlas::tile_name(atlas::FACE_TILES[OXIDIZED_COPPER_BARS as usize][2]),
+            "oxidized_copper_bars",
+            "the oxidized rung its own master wears"
+        );
+        assert_eq!(
+            atlas::FACE_TILES[WAXED_COPPER_BARS as usize][2],
+            atlas::FACE_TILES[COPPER_BARS as usize][2],
+            "the waxed twin the BASE master re-wears"
+        );
+        assert_eq!(
+            atlas::FACE_TILES[WAXED_EXPOSED_COPPER_BARS as usize][2],
+            atlas::FACE_TILES[EXPOSED_COPPER_BARS as usize][2],
+            "the waxed exposed twin the base row re-wears"
+        );
+        assert_eq!(
+            atlas::FACE_TILES[WAXED_WEATHERED_COPPER_BARS as usize][2],
+            atlas::FACE_TILES[WEATHERED_COPPER_BARS as usize][2],
+            "the waxed weathered twin the base row re-wears"
+        );
+        assert_eq!(
+            atlas::FACE_TILES[WAXED_OXIDIZED_COPPER_BARS as usize][2],
+            atlas::FACE_TILES[OXIDIZED_COPPER_BARS as usize][2],
+            "the waxed oxidized twin the base row re-wears"
+        );
+        for k in COPPER_BARS..=WAXED_OXIDIZED_COPPER_BARS {
+            let row = atlas::FACE_TILES[k as usize];
+            assert!(
+                row.iter().all(|t| t == &row[2]),
+                "the ONE-tile shape the family's kind {} keeps",
+                k
+            );
+            assert_ne!(
+                row[2],
+                atlas::TILE_NONE,
+                "the master the kind {} resolves",
+                k
+            );
+        }
+    }
+
+    #[test]
     fn the_redstone_torch_the_not_gate_and_the_source_arms_wear() {
         // THE REDSTONE TORCH'S OWN LAWS (the autopush-666 round — javap
         // RedstoneTorchBlock the 26.2 jar the probe scripts/jar_work/
@@ -19496,7 +19941,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the torch pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 578, "the palette the torch pair banks");
+        assert_eq!(atlas::N_KINDS, 586, "the palette the torch pair banks");
         assert!(is_redstone_torch(REDSTONE_TORCH) && is_redstone_torch(REDSTONE_TORCH_OFF));
         assert!(!is_redstone_torch(TORCH) && !is_redstone_torch(LEVER));
         assert!(redstone_torch_lit(REDSTONE_TORCH));
@@ -19637,7 +20082,7 @@ mod tests {
         assert_eq!(REDSTONE_WALL_TORCH, 324);
         assert_eq!(REDSTONE_WALL_TORCH_OFF, 325);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 578, "the palette the wall pair banks");
+        assert_eq!(atlas::N_KINDS, 586, "the palette the wall pair banks");
         assert!(
             is_redstone_torch(REDSTONE_WALL_TORCH) && is_redstone_torch(REDSTONE_WALL_TORCH_OFF),
             "the wall pair the family's tail banks"
@@ -19882,7 +20327,7 @@ mod tests {
         assert_eq!(OAK_TRAPDOOR_OPEN, 327);
         assert_eq!(END_PORTAL, 510);
         assert_eq!(
-            atlas::N_KINDS, 578,
+            atlas::N_KINDS, 586,
             "the palette the trapdoor pair banks"
         );
         assert_eq!(OAK_TRAPDOOR + 1, OAK_TRAPDOOR_OPEN, "the +1 mate wears");
@@ -20036,7 +20481,7 @@ mod tests {
         assert_eq!(END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-            578,
+            586,
             "the palette the gate pair banks"
         );
         assert_eq!(OAK_FENCE_GATE + 1, OAK_FENCE_GATE_OPEN, "the +1 mate wears");
@@ -20254,7 +20699,7 @@ mod tests {
         assert_eq!(WARPED_TRAPDOOR, 348);
         assert_eq!(WARPED_TRAPDOOR_OPEN, 349);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 578, "the palette the ladder banks");
+        assert_eq!(atlas::N_KINDS, 586, "the palette the ladder banks");
         // THE CONTIGUITY'S OWN LAW (the 22 kinds the range covers —
         // the neighbors the family fn refuses)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -20368,7 +20813,7 @@ mod tests {
         assert_eq!(IRON_TRAPDOOR, 366);
         assert_eq!(IRON_TRAPDOOR_OPEN, 367);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 578, "the palette the metal rungs bank");
+        assert_eq!(atlas::N_KINDS, 586, "the palette the metal rungs bank");
         // THE CONTIGUITY'S OWN LAW (the 42 kinds the range covers —
         // the waxed pairs the ±1 mate the parity answers)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -20739,7 +21184,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 578, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 586, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)
