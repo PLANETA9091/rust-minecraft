@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 748] = [
+pub const RUNTIME_PALETTE: [&str; 749] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -2257,6 +2257,15 @@ pub const RUNTIME_PALETTE: [&str; 748] = [
     "copper_chest", "exposed_copper_chest", "weathered_copper_chest",
     "oxidized_copper_chest", "waxed_copper_chest", "waxed_exposed_copper_chest",
     "waxed_weathered_copper_chest", "waxed_oxidized_copper_chest",
+    // THE BARREL'S OWN SEAT (the dev-65 round — the ONE kind the
+    // Blocks clinit's BARREL row banks: mapColor+instrument(BASS).
+    // strength(2.5).sound(WOOD).ignitedByLava the chain speaks, the
+    // FACING(6)+OPEN(2) blockstate the 12-key map carries — the
+    // full-cube family the generic walk's first-variant read
+    // resolves [the closed model block/barrel the cube_bottom_top
+    // parent wears — the x/y turns the apply's own rotations bank,
+    // the faces the ONE model every state shares]).
+    "barrel",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -4654,6 +4663,56 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         face_tiles[ki] = [idx[1], idx[1], idx[2], idx[3], idx[1], idx[0]];
     }
 
+    // THE BARREL'S OWN OPEN LID TILE (the dev-65 round — the OPEN
+    // property's own model the blockstates/barrel.json's open=true
+    // arm carries: the block/barrel_open model the cube_bottom_top
+    // parent wears, the `top` ref the barrel_top_open master the
+    // closed walk never banks — the mesher's barrel lane the OPEN
+    // bit's own tile the named const reads). The append law the
+    // banked-row dedup keeps (the FACE_TILES row the CLOSED state
+    // the generic walk resolves — the FIRST-variant read the
+    // block/barrel model the six faces answers).
+    {
+        let bs_bytes = read_jar(
+            &mut archive,
+            "assets/minecraft/blockstates/barrel.json",
+        )
+        .with_context(|| "blockstate barrel: json read")?;
+        let bs: Value = serde_json::from_slice(&bs_bytes)
+            .with_context(|| "blockstate barrel: json parse")?;
+        let model_ref = bs
+            .get("variants")
+            .and_then(|v| v.get("facing=up,open=true"))
+            .and_then(|v| v.get("model"))
+            .and_then(|m| m.as_str())
+            .with_context(|| "blockstate barrel: no open model")?
+            .trim_start_matches("minecraft:")
+            .to_string();
+        let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
+            .with_context(|| format!("barrel open: model chain {model_ref}"))?;
+        let tex = tex_map
+            .get("top")
+            .with_context(|| format!("model {model_ref}: no top ref"))?;
+        let stem = tex
+            .trim_start_matches("minecraft:")
+            .trim_start_matches("block/")
+            .to_string();
+        if !tile_names.iter().any(|n| *n == stem) {
+            let raw = read_jar(
+                &mut archive,
+                &format!("assets/minecraft/textures/block/{stem}.png"),
+            )
+            .with_context(|| format!("texture block/{stem}.png"))?;
+            let (w, h, rgba) = decode_rgba(&raw)?;
+            let (w, h, rgba) = first_frame(w, h, &rgba);
+            if w != 16 || h != 16 {
+                bail!("texture {stem}: expected 16x16 (first frame), got {w}x{h}");
+            }
+            tile_names.push(stem.clone());
+            tile_bytes.push(rgba);
+        }
+    }
+
     // THE SLAB FAMILY'S OWN SPLIT REFS (the dev-63 round — the
     // bottom/top models' split texture refs the mesher's per-quad
     // verdict reads: the blackstone_slab walk the blackstone_top
@@ -5601,6 +5660,7 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         ));
     }
     for (stem, prefix) in [
+        ("barrel_top_open", "TILE_BARREL_TOP_OPEN"),
         ("cobblestone", "TILE_COBBLESTONE"),
         ("cake_bottom", "TILE_CAKE_BOTTOM"),
         ("cake_top", "TILE_CAKE_TOP"),

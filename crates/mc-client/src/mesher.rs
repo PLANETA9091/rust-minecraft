@@ -5505,6 +5505,48 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             } else {
                                 atlas::LAVA_FLOW_FRAME0
                             }
+                        } else if crate::world::is_barrel(id) {
+                            // THE BARREL'S OWN LID TRAVEL (the dev-65
+                            // round — the FACING(6)+OPEN blockstate the
+                            // x/y turns the model law speaks: the lid
+                            // tile (the FACE_TILES row's UP entry — the
+                            // cube_bottom_top's own #top authoring)
+                            // MOVES to the facing direction's face
+                            // index [the blockstate's x=90/x=180 turns
+                            // the up face the model law rotates — the
+                            // [`world::barrel_lid_face`] table the byte
+                            // answers], the OPPOSITE face the BOTTOM
+                            // master wears, the REST the side tile
+                            // keeps; the OPEN bit the lid tile the
+                            // barrel_top_open master swaps [the
+                            // open=true arm's own model the atlas's
+                            // named const banks]). The furnace trio's
+                            // own front-travel law the family wears.
+                            let v = world.variant(wx, wy, wz);
+                            let facing = crate::world::barrel_variant_facing(v);
+                            let open = crate::world::barrel_variant_open(v);
+                            let row = atlas::FACE_TILES[id as usize];
+                            let lid = if open {
+                                atlas::TILE_BARREL_TOP_OPEN
+                            } else {
+                                row[2]
+                            };
+                            let lid_face = crate::world::barrel_lid_face(facing);
+                            let base_face = match lid_face {
+                                2 => 3,
+                                3 => 2,
+                                5 => 4,
+                                4 => 5,
+                                1 => 0,
+                                _ => 1,
+                            };
+                            if face == lid_face {
+                                lid
+                            } else if face == base_face {
+                                row[3]
+                            } else {
+                                row[0]
+                            }
                         } else if crate::world::is_orientable_furnace(id) {
                             // THE ORIENTABLE TRIO'S OWN FRONT-TILE SWAP
                             // (the autopush-601 furnace arm, the dev-26
@@ -12360,6 +12402,134 @@ mod tests {
         assert!(
             cellw.iter().all(|quad| waxed_tiles.contains(&quad.tile)),
             "the waxed twin the bare copper tiles wears"
+        );
+    }
+
+    #[test]
+    fn the_barrel_lane_renders_the_lid_travel_and_the_open_speaks() {
+        // THE BARREL LANE'S OWN LAWS (the dev-65 round — the FACING
+        // x/y turns the blockstate's model law speaks): the full cube
+        // the six quads every state wears, the lid tile the facing
+        // face travels (up the UP face keeps, down the DOWN face
+        // wears, north the north face banks — the blockstate's x=90/
+        // x=180 turns the same rotation the model law speaks), the
+        // OPEN bit the lid tile the barrel_top_open master swaps
+        use mc_registry::generated::atlas as gen_atlas;
+        let row = gen_atlas::FACE_TILES[crate::world::BARREL as usize];
+        let top_tile = row[2];
+        let bottom_tile = row[3];
+        let side_tile = row[0];
+        let open_tile = gen_atlas::TILE_BARREL_TOP_OPEN;
+        assert_ne!(top_tile, gen_atlas::TILE_NONE, "the tile the regen banks");
+        let in_cell = |quad: &crate::mesher::Quad| {
+            quad.pts.iter().all(|p| {
+                p[0] >= 8.0 - 1e-4
+                    && p[0] <= 9.0 + 1e-4
+                    && p[1] >= 8.0 - 1e-4
+                    && p[1] <= 9.0 + 1e-4
+                    && p[2] >= 8.0 - 1e-4
+                    && p[2] <= 9.0 + 1e-4
+            })
+        };
+        let face_of = |quad: &crate::mesher::Quad| -> Option<(f32, f32, f32)> {
+            // the face's own constant axis (the plane the four
+            // vertices share)
+            let xs = quad.pts.iter().map(|p| p[0]).collect::<Vec<_>>();
+            let ys = quad.pts.iter().map(|p| p[1]).collect::<Vec<_>>();
+            let zs = quad.pts.iter().map(|p| p[2]).collect::<Vec<_>>();
+            if xs.iter().all(|v| (*v - xs[0]).abs() < 1e-5) {
+                Some((xs[0], -1.0, -1.0))
+            } else if ys.iter().all(|v| (*v - ys[0]).abs() < 1e-5) {
+                Some((-1.0, ys[0], -1.0))
+            } else if zs.iter().all(|v| (*v - zs[0]).abs() < 1e-5) {
+                Some((-1.0, -1.0, zs[0]))
+            } else {
+                None
+            }
+        };
+        let tile_at = |quads: &[&crate::mesher::Quad], plane: (f32, f32, f32)| -> Option<u16> {
+            quads
+                .iter()
+                .find(|quad| {
+                    face_of(quad)
+                        .map(|c| {
+                            (c.0 >= 0.0 && (c.0 - plane.0).abs() < 1e-5)
+                                || (c.1 >= 0.0 && (c.1 - plane.1).abs() < 1e-5)
+                                || (c.2 >= 0.0 && (c.2 - plane.2).abs() < 1e-5)
+                        })
+                        .unwrap_or(false)
+                })
+                .map(|quad| quad.tile)
+        };
+        // THE UP LID (the unstamped default the registerDefault pin
+        // wears — the top tile the UP face keeps, the bottom the
+        // DOWN face wears)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::BARREL);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let cell: Vec<_> = q.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(cell.len(), 6, "the barrel the 6 quads bakes, got {}", cell.len());
+        assert_eq!(
+            tile_at(&cell, (-1.0, 9.0, -1.0)),
+            Some(top_tile),
+            "the up lid the UP face keeps"
+        );
+        assert_eq!(
+            tile_at(&cell, (-1.0, 8.0, -1.0)),
+            Some(bottom_tile),
+            "the bottom the DOWN face wears"
+        );
+        // THE NORTH LID (the facing=2 the x=90 turn the north face
+        // the lid wears — the south face the bottom master carries)
+        let mut wn = empty_world();
+        put(&mut wn, 8, 8, 8, crate::world::BARREL);
+        wn.set_variant(
+            8,
+            8,
+            8,
+            crate::world::barrel_variant(crate::world::BARREL_FACING_NORTH, false),
+        );
+        let qn = mesh_chunk(&wn, 0, 0, None);
+        let celln: Vec<_> = qn.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(celln.len(), 6, "the north barrel the 6 quads bakes");
+        assert_eq!(
+            tile_at(&celln, (-1.0, -1.0, 8.0)),
+            Some(top_tile),
+            "the north lid the north face banks"
+        );
+        assert_eq!(
+            tile_at(&celln, (-1.0, -1.0, 9.0)),
+            Some(bottom_tile),
+            "the south face the bottom master carries"
+        );
+        // THE OPEN LID (the OPEN bit the barrel_top_open master the
+        // lid face swaps — the rest the closed law keeps)
+        let mut wo = empty_world();
+        put(&mut wo, 8, 8, 8, crate::world::BARREL);
+        wo.set_variant(
+            8,
+            8,
+            8,
+            crate::world::barrel_variant(crate::world::BARREL_FACING_UP, true),
+        );
+        let qo = mesh_chunk(&wo, 0, 0, None);
+        let cello: Vec<_> = qo.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(cello.len(), 6, "the open barrel the 6 quads bakes");
+        assert_eq!(
+            tile_at(&cello, (-1.0, 9.0, -1.0)),
+            Some(open_tile),
+            "the open lid the barrel_top_open master swaps"
+        );
+        assert_eq!(
+            tile_at(&cello, (-1.0, 8.0, -1.0)),
+            Some(bottom_tile),
+            "the bottom the open state keeps"
+        );
+        // THE SIDES THE OPEN STATE KEEPS (the four vertical faces
+        // the side tile wears — the open arm the sides never swaps)
+        assert!(
+            cello.iter().filter(|quad| quad.tile == side_tile).count() >= 4,
+            "the sides the open state keeps"
         );
     }
 

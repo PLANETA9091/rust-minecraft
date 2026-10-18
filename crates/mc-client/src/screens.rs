@@ -7366,6 +7366,11 @@ pub struct App {
     /// pickup prediction — see [`crate::world_view::predict_pickup`]);
     /// the close/drop resets it. The (0, 0) sentinel is the emptiness.
     pub chest_carried: (i32, i32),
+    /// THE BARREL LID'S OWN CELL (the dev-65 round — the opened
+    /// barrel the OPEN bit the open_chest_for walk sets, the close
+    /// walk the bit the barrel_lid_released release clears; the None
+    /// the chest kinds and the closed screens keep).
+    pub chest_open_cell: Option<(i32, i32, i32)>,
     /// THE FURNACE'S OWN LIVE SHAPE (the menu type 14 lane's own
     /// projection — the menu's 39 slots as (item_id, count) pairs:
     /// input 0, fuel 1, result 2, the standard rows 3..39 the
@@ -8732,6 +8737,7 @@ impl App {
             chest_slot_rects: Vec::new(),
             chest_panel: (0, 0),
             chest_carried: (0, 0),
+            chest_open_cell: None,
             furnace_slots: vec![(0, 0); 39],
             furnace_is_live: false,
             furnace_live_window: None,
@@ -20452,10 +20458,40 @@ impl App {
         // ChestMenu.threeRows ctor speaks — the 27 slots the menu's
         // own addSlot walk places, the v1 round the contents the
         // session's own lifetime keeps)
-        let _ = pos;
         self.chest_slots = vec![(0i32, 0i32); 27];
         self.chest_carried = (0, 0);
+        // THE BARREL'S OWN LID (the dev-65 round — javap BarrelBlock.
+        // useWithoutItem the openMenu walk the barrel_open model the
+        // OPEN bit swaps: the opened cell the bit sets [the variant
+        // byte the facing the open bit rides], the close walk the bit
+        // releases — the lid the player watches swing the vanilla's
+        // own container law keeps). The chest kinds the lid never
+        // wears (the BE-rendered pair the animation the renderer's
+        // own openness walk drives — the client's static-box law the
+        // v1 round keeps).
+        self.chest_open_cell = None;
+        if let Some(w) = self.offline_world.as_mut() {
+            if crate::world::is_barrel(w.get(pos.0, pos.1, pos.2)) {
+                let v = w.variant(pos.0, pos.1, pos.2);
+                w.set_variant(pos.0, pos.1, pos.2, v | crate::world::BARREL_OPEN_BIT);
+                self.chest_open_cell = Some(pos);
+            }
+        }
         self.open(ScreenKind::Chest);
+    }
+
+    /// THE BARREL LID'S OWN RELEASE (the close walk's own law — the
+    /// OPEN bit the opened cell the close clears, the variant byte
+    /// the facing the lid law keeps; the no-cell arm the offline
+    /// guard the chest kinds never bank).
+    pub fn barrel_lid_released(&mut self) {
+        if let (Some(pos), Some(w)) = (self.chest_open_cell.take(), self.offline_world.as_mut())
+        {
+            if crate::world::is_barrel(w.get(pos.0, pos.1, pos.2)) {
+                let v = w.variant(pos.0, pos.1, pos.2);
+                w.set_variant(pos.0, pos.1, pos.2, v & !crate::world::BARREL_OPEN_BIT);
+            }
+        }
     }
 
     /// THE TABLE'S OWN CLOSE (the vanilla CraftingMenu.removed walk —
@@ -23471,8 +23507,11 @@ impl App {
             self.chest_live_window = None;
             // the player's OWN close returns the held stack to the
             // inventory server-side (vanilla containerClose): the local
-            // belief resets with the window
+            // belief resets with the window; the BARREL LID the open
+            // bit the close releases (the dev-65 round — the opened
+            // cell the barrel_lid_released walk clears)
             self.chest_carried = (0, 0);
+            self.barrel_lid_released();
             self.open(ScreenKind::World);
         } else if self.screen == ScreenKind::Furnace {
             // THE FURNACE'S OWN CLOSE (the vanilla Escape/E on the
@@ -37305,9 +37344,10 @@ impl App {
         // item lanes follow).
         if !self.shift_down
             && !self.world_is_network
-            && self
-                .active_world()
-                .is_some_and(|w| crate::world::is_chest(w.get(hit.pos.0, hit.pos.1, hit.pos.2)))
+            && self.active_world().is_some_and(|w| {
+                crate::world::is_chest(w.get(hit.pos.0, hit.pos.1, hit.pos.2))
+                    || crate::world::is_barrel(w.get(hit.pos.0, hit.pos.1, hit.pos.2))
+            })
         {
             self.open_chest_for(hit.pos);
             return true;
@@ -38607,6 +38647,7 @@ impl App {
         // keeps; the lever's placement variant the same raw form the
         // Y arms' FACING verdict reads)
         let cam_yaw = self.world_camera().yaw;
+        let cam_pitch = self.world_camera().pitch;
         // THE WALL TORCH'S OWN PLACEMENT CANDIDATE (the autopush-667
         // round — javap StandingAndWallBlockItem.getPlacementState the
         // 26.2 jar: the item's own scan the WALL state the horizontal
@@ -38975,6 +39016,30 @@ impl App {
                     placed,
                 );
                 world.set_variant(cell.0, cell.1, cell.2, v);
+            }
+            // THE BARREL'S OWN FACING STAMP (the dev-65 round — javap
+            // BarrelBlock.getStateForPlacement pc 0-20 the 26.2 jar the
+            // getNearestLookingDirection().getOpposite() walk the
+            // SIX-direction byte speaks: the look vector's dominant
+            // axis the nearest direction answers, the opposite the
+            // lid faces the player keeps — the floor click the UP lid
+            // banks [the pitch quarter the vertical gate reads], the
+            // ceiling click the DOWN lid wears, the horizontal looks
+            // the look-opposite byte the furnace arm's own law
+            // serves; the OPEN bit the fresh placement never sets —
+            // the closed default the registerDefaultState pin keeps).
+            if crate::world::is_barrel(placed) {
+                let look_opposite = crate::world::furnace_facing_byte(cam_yaw);
+                let facing = crate::world::barrel_placement_facing(
+                    cam_pitch as f64,
+                    look_opposite,
+                );
+                world.set_variant(
+                    cell.0,
+                    cell.1,
+                    cell.2,
+                    crate::world::barrel_variant(facing, false),
+                );
             }
             // THE PLACEMENT'S OWN CHAIN (javap BlockItem.placeBlock pc
             // 9 `bipush 11` — the setBlock the UPDATE_NEIGHBORS bit the
@@ -42882,6 +42947,7 @@ impl App {
                 self.chest_is_live = false;
                 self.chest_live_window = None;
                 self.chest_carried = (0, 0);
+                self.barrel_lid_released();
                 self.open(ScreenKind::World);
             }
             ScreenKind::Furnace => self.close_furnace(),
@@ -103899,7 +103965,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            748,
+            749,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -103980,7 +104046,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            748,
+            749,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -104282,7 +104348,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            748,
+            749,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -108212,7 +108278,7 @@ cow_sound_variant: None,
         // #texture ref banks)
         assert_eq!(
             atlas::N_KINDS,
-            748,
+            749,
             "the palette the weighted plates' own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
@@ -108432,7 +108498,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            748,
+            749,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
@@ -108709,7 +108775,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            748,
+            749,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
@@ -108825,7 +108891,7 @@ cow_sound_variant: None,
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE, 318);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, 319);
         assert_eq!(w::END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 748, "the palette the weighted rows bank");
+        assert_eq!(atlas::N_KINDS, 749, "the palette the weighted rows bank");
         for (off, on, name) in [
             (
                 w::LIGHT_WEIGHTED_PRESSURE_PLATE,
@@ -109939,7 +110005,7 @@ cow_sound_variant: None,
         assert_eq!(w::END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-            748,
+            749,
             "the palette the weighted plates' own rows bank"
         );
         for (off, on, name, wooden) in [
