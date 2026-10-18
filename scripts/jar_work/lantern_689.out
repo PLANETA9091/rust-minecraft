@@ -1,0 +1,365 @@
+=== class headers
+--- net.minecraft.world.level.block.LanternBlock: ('?2', '?8', ['?217'])
+--- net.minecraft.world.level.block.BaseTorchBlock: ('?8', '?2', [])
+--- net.minecraft.world.level.block.Block: ('?1', '?214', ['?1013'])
+
+=== LanternBlock fields + methods
+  <clinit>()V
+  <init>(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+  canSurvive(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;)Z
+  codec()Lcom/mojang/serialization/MapCodec;
+  createBlockStateDefinition(Lnet/minecraft/world/level/block/state/StateDefinition$Builder;)V
+  getConnectedDirection(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/core/Direction;
+  getFluidState(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/material/FluidState;
+  getShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/shapes/CollisionContext;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+  getStateForPlacement(Lnet/minecraft/world/item/context/BlockPlaceContext;)Lnet/minecraft/world/level/block/state/BlockState;
+  isPathfindable(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/pathfinder/PathComputationType;)Z
+  updateShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/world/level/ScheduledTickAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;)Lnet/minecraft/world/level/block/state/BlockState;
+
+=== LanternBlock methods of interest
+--- net.minecraft.world.level.block.LanternBlock.<init>(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+0: aload_0
+1: aload_1
+2: invokespecial net/minecraft/world/level/block/Block.<init>:(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+5: aload_0
+6: aload_0
+7: getfield net/minecraft/world/level/block/LanternBlock.stateDefinition:Lnet/minecraft/world/level/block/state/StateDefinition;
+10: invokevirtual net/minecraft/world/level/block/state/StateDefinition.any:()Lnet/minecraft/world/level/block/state/StateHolder;
+13: checkcast net/minecraft/world/level/block/state/BlockState
+16: getstatic net/minecraft/world/level/block/LanternBlock.HANGING:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+19: iconst_0
+20: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+23: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+26: checkcast net/minecraft/world/level/block/state/BlockState
+29: getstatic net/minecraft/world/level/block/LanternBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+32: iconst_0
+33: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+36: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+39: checkcast net/minecraft/world/level/block/state/BlockState
+42: invokevirtual net/minecraft/world/level/block/LanternBlock.registerDefaultState:(Lnet/minecraft/world/level/block/state/BlockState;)V
+45: return
+--- net.minecraft.world.level.block.LanternBlock.getShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/shapes/CollisionContext;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+0: aload_1
+1: getstatic net/minecraft/world/level/block/LanternBlock.HANGING:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+4: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+7: checkcast java/lang/Boolean
+10: invokevirtual java/lang/Boolean.booleanValue:()Z
+13: ifeq -> 22
+16: getstatic net/minecraft/world/level/block/LanternBlock.SHAPE_HANGING:Lnet/minecraft/world/phys/shapes/VoxelShape;
+19: goto -> 25
+22: getstatic net/minecraft/world/level/block/LanternBlock.SHAPE_STANDING:Lnet/minecraft/world/phys/shapes/VoxelShape;
+25: areturn
+--- net.minecraft.world.level.block.LanternBlock.getStateForPlacement(Lnet/minecraft/world/item/context/BlockPlaceContext;)Lnet/minecraft/world/level/block/state/BlockState;
+0: aload_1
+1: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getLevel:()Lnet/minecraft/world/level/Level;
+4: aload_1
+5: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getClickedPos:()Lnet/minecraft/core/BlockPos;
+8: invokevirtual net/minecraft/world/level/Level.getFluidState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/material/FluidState;
+11: astore_2
+12: aload_1
+13: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getNearestLookingDirections:()[Lnet/minecraft/core/Direction;
+16: astore_3
+17: aload_3
+18: arraylength
+19: istore istore 4
+21: iconst_0
+22: istore istore 5
+24: iload iload 5
+26: iload iload 4
+28: if_icmpge -> 123
+31: aload_3
+32: iload iload 5
+34: aaload
+35: astore astore 6
+37: aload aload 6
+39: invokevirtual net/minecraft/core/Direction.getAxis:()Lnet/minecraft/core/Direction$Axis;
+42: getstatic net/minecraft/core/Direction$Axis.Y:Lnet/minecraft/core/Direction$Axis;
+45: if_acmpne -> 117
+48: aload_0
+49: invokevirtual net/minecraft/world/level/block/LanternBlock.defaultBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+52: getstatic net/minecraft/world/level/block/LanternBlock.HANGING:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+55: aload aload 6
+57: getstatic net/minecraft/core/Direction.UP:Lnet/minecraft/core/Direction;
+60: if_acmpne -> 67
+63: iconst_1
+64: goto -> 68
+67: iconst_0
+68: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+71: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+74: checkcast net/minecraft/world/level/block/state/BlockState
+77: astore astore 7
+79: aload aload 7
+81: aload_1
+82: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getLevel:()Lnet/minecraft/world/level/Level;
+85: aload_1
+86: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getClickedPos:()Lnet/minecraft/core/BlockPos;
+89: invokevirtual net/minecraft/world/level/block/state/BlockState.canSurvive:(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;)Z
+92: ifeq -> 117
+95: aload aload 7
+97: getstatic net/minecraft/world/level/block/LanternBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+100: aload_2
+101: getstatic net/minecraft/world/level/material/Fluids.WATER:Lnet/minecraft/world/level/material/FlowingFluid;
+104: invokevirtual net/minecraft/world/level/material/FluidState.is:(Ljava/lang/Object;)Z
+107: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+110: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+113: checkcast net/minecraft/world/level/block/state/BlockState
+116: areturn
+117: iinc 5 1
+120: goto -> 24
+123: aconst_null
+124: areturn
+--- net.minecraft.world.level.block.LanternBlock.getConnectedDirection(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/core/Direction;
+0: aload_0
+1: getstatic net/minecraft/world/level/block/LanternBlock.HANGING:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+4: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+7: checkcast java/lang/Boolean
+10: invokevirtual java/lang/Boolean.booleanValue:()Z
+13: ifeq -> 22
+16: getstatic net/minecraft/core/Direction.DOWN:Lnet/minecraft/core/Direction;
+19: goto -> 25
+22: getstatic net/minecraft/core/Direction.UP:Lnet/minecraft/core/Direction;
+25: areturn
+--- net.minecraft.world.level.block.LanternBlock.<clinit>()V
+0: invokedynamic indy
+5: invokestatic net/minecraft/world/level/block/LanternBlock.simpleCodec:(Ljava/util/function/Function;)Lcom/mojang/serialization/MapCodec;
+8: putstatic net/minecraft/world/level/block/LanternBlock.CODEC:Lcom/mojang/serialization/MapCodec;
+11: getstatic net/minecraft/world/level/block/state/properties/BlockStateProperties.HANGING:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+14: putstatic net/minecraft/world/level/block/LanternBlock.HANGING:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+17: getstatic net/minecraft/world/level/block/state/properties/BlockStateProperties.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+20: putstatic net/minecraft/world/level/block/LanternBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+23: ldc2_w double 4.0
+26: ldc2_w double 7.0
+29: ldc2_w double 9.0
+32: invokestatic net/minecraft/world/level/block/Block.column:(DDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+35: ldc2_w double 6.0
+38: dconst_0
+39: ldc2_w double 7.0
+42: invokestatic net/minecraft/world/level/block/Block.column:(DDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+45: invokestatic net/minecraft/world/phys/shapes/Shapes.or:(Lnet/minecraft/world/phys/shapes/VoxelShape;Lnet/minecraft/world/phys/shapes/VoxelShape;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+48: putstatic net/minecraft/world/level/block/LanternBlock.SHAPE_STANDING:Lnet/minecraft/world/phys/shapes/VoxelShape;
+51: getstatic net/minecraft/world/level/block/LanternBlock.SHAPE_STANDING:Lnet/minecraft/world/phys/shapes/VoxelShape;
+54: dconst_0
+55: ldc2_w double 0.0625
+58: dconst_0
+59: invokevirtual net/minecraft/world/phys/shapes/VoxelShape.move:(DDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+62: invokevirtual net/minecraft/world/phys/shapes/VoxelShape.optimize:()Lnet/minecraft/world/phys/shapes/VoxelShape;
+65: putstatic net/minecraft/world/level/block/LanternBlock.SHAPE_HANGING:Lnet/minecraft/world/phys/shapes/VoxelShape;
+68: return
+
+=== Blocks clinit: LANTERN row
+!! clinit needle not found: LANTERN;putstatic
+
+=== Blocks clinit: SOUL_LANTERN row
+!! clinit needle not found: SOUL_LANTERN;putstatic
+
+=== the lantern lambdas' own bodies (lightLevel + properties)
+--- lambda$static$134(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    0: new net/minecraft/world/level/block/TorchBlock
+    3: dup
+    4: getstatic net/minecraft/core/particles/ParticleTypes.SOUL_FIRE_FLAME:Lnet/minecraft/core/particles/SimpleParticleType;
+    7: aload_0
+    8: invokespecial net/minecraft/world/level/block/TorchBlock.<init>:(Lnet/minecraft/core/particles/SimpleParticleType;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+    11: areturn
+
+--- lambda$static$136(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    0: new net/minecraft/world/level/block/WallTorchBlock
+    3: dup
+    4: getstatic net/minecraft/core/particles/ParticleTypes.SOUL_FIRE_FLAME:Lnet/minecraft/core/particles/SimpleParticleType;
+    7: aload_0
+    8: invokespecial net/minecraft/world/level/block/WallTorchBlock.<init>:(Lnet/minecraft/core/particles/SimpleParticleType;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+    11: areturn
+
+--- lambda$static$307(Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/LanternBlock;
+    0: new net/minecraft/world/level/block/LanternBlock
+    3: dup
+    4: aload_1
+    5: invokespecial net/minecraft/world/level/block/LanternBlock.<init>:(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+    8: areturn
+
+--- lambda$static$308(Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    0: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    3: getstatic net/minecraft/world/level/material/MapColor.METAL:Lnet/minecraft/world/level/material/MapColor;
+    6: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    9: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.forceSolidOn:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    12: ldc_w float 3.5
+    15: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18: getstatic net/minecraft/world/level/block/SoundType.LANTERN:Lnet/minecraft/world/level/block/SoundType;
+    21: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24: invokedynamic indy
+    29: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.lightLevel:(Ljava/util/function/ToIntFunction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    32: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noOcclusion:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    35: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+    38: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.pushReaction:(Lnet/minecraft/world/level/material/PushReaction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    41: areturn
+
+
+=== blockstates: the ten kinds' hanging variants
+  lantern: {"hanging=false": ["minecraft:block/lantern x=0 y=0"], "hanging=true": ["minecraft:block/lantern_hanging x=0 y=0"]}
+  soul_lantern: {"hanging=false": ["minecraft:block/soul_lantern x=0 y=0"], "hanging=true": ["minecraft:block/soul_lantern_hanging x=0 y=0"]}
+  copper_lantern: {"hanging=false": ["minecraft:block/copper_lantern x=0 y=0"], "hanging=true": ["minecraft:block/copper_lantern_hanging x=0 y=0"]}
+  exposed_copper_lantern: {"hanging=false": ["minecraft:block/exposed_copper_lantern x=0 y=0"], "hanging=true": ["minecraft:block/exposed_copper_lantern_hanging x=0 y=0"]}
+  weathered_copper_lantern: {"hanging=false": ["minecraft:block/weathered_copper_lantern x=0 y=0"], "hanging=true": ["minecraft:block/weathered_copper_lantern_hanging x=0 y=0"]}
+  oxidized_copper_lantern: {"hanging=false": ["minecraft:block/oxidized_copper_lantern x=0 y=0"], "hanging=true": ["minecraft:block/oxidized_copper_lantern_hanging x=0 y=0"]}
+  waxed_copper_lantern: {"hanging=false": ["minecraft:block/copper_lantern x=0 y=0"], "hanging=true": ["minecraft:block/copper_lantern_hanging x=0 y=0"]}
+  waxed_exposed_copper_lantern: {"hanging=false": ["minecraft:block/exposed_copper_lantern x=0 y=0"], "hanging=true": ["minecraft:block/exposed_copper_lantern_hanging x=0 y=0"]}
+  waxed_weathered_copper_lantern: {"hanging=false": ["minecraft:block/weathered_copper_lantern x=0 y=0"], "hanging=true": ["minecraft:block/weathered_copper_lantern_hanging x=0 y=0"]}
+  waxed_oxidized_copper_lantern: {"hanging=false": ["minecraft:block/oxidized_copper_lantern x=0 y=0"], "hanging=true": ["minecraft:block/oxidized_copper_lantern_hanging x=0 y=0"]}
+
+=== models: the template pair + the copper masters
+--- block/template_lantern.json
+{
+    "parent": "block/block",
+    "textures": {
+        "particle": "#lantern"
+    },
+    "elements": [
+        {   "from": [ 5, 0, 5 ],
+            "to": [ 11, 7, 11 ],
+            "faces": {
+                "down":  { "uv": [  0, 9,  6, 15 ], "texture": "#lantern", "cullface": "down" },
+                "up":    { "uv": [  0, 9,  6, 15 ], "texture": "#lantern" },
+                "north": { "uv": [ 0, 2, 6,  9 ], "texture": "#lantern" },
+                "south": { "uv": [ 0, 2, 6,  9 ], "texture": "#lantern" },
+                "west":  { "uv": [ 0, 2, 6,  9 ], "texture": "#lantern" },
+                "east":  { "uv": [ 0, 2, 6,  9 ], "texture": "#lantern" }
+            }
+        },
+        {   "from": [ 6, 7, 6 ],
+            "to": [ 10, 9, 10 ],
+            "faces": {
+                "up":    { "uv": [  1, 10,  5, 14 ], "texture": "#lantern" },
+                "north": { "uv": [ 1, 0, 5,  2 ], "texture": "#lantern" },
+                "south": { "uv": [ 1, 0, 5,  2 ], "texture": "#lantern" },
+                "west":  { "uv": [ 1, 0, 5,  2 ], "texture": "#lantern" },
+                "east":  { "uv": [ 1, 0, 5,  2 ], "texture": "#lantern" }
+            }
+        },
+        {
+            "from": [ 6.5, 9, 8 ],
+            "to": [ 9.5, 11, 8 ],
+            "rotation": { "origin": [ 8, 8, 8 ], "axis": "y", "angle": 45},
+            "shade": false,
+            "faces": {
+                "north": { "uv": [ 14, 1, 11, 3 ], "texture": "#lantern" },
+                "south": { "uv": [ 11, 1, 14, 3 ], "texture": "#lantern" }
+            }
+        },
+        {
+            "from": [ 8, 9, 6.5 ],
+            "to": [ 8, 11, 9.5 ],
+            "rotation": { "origin": [ 8, 8, 8 ], "axis": "y", "angle": 45},
+            "shade": false,
+            "faces": {
+                "west": { "uv": [ 14, 10, 11, 12 ], "texture": "#lantern" },
+                "east": { "uv": [ 11, 10, 14, 12 ], "texture": "#lantern" }
+            }
+        }
+    ]
+}
+
+--- block/template_hanging_lantern.json
+{
+    "parent": "block/block",
+    "textures": {
+        "particle": "#lantern"
+    },
+    "elements": [
+        {   "from": [ 5, 1, 5 ],
+            "to": [ 11, 8, 11 ],
+            "faces": {
+                "down":  { "uv": [  0, 9,  6, 15 ], "texture": "#lantern"},
+                "up":    { "uv": [  0, 9,  6, 15 ], "texture": "#lantern" },
+                "north": { "uv": [ 0, 2, 6,  9 ], "texture": "#lantern" },
+                "south": { "uv": [ 0, 2, 6,  9 ], "texture": "#lantern" },
+                "west":  { "uv": [ 0, 2, 6,  9 ], "texture": "#lantern" },
+                "east":  { "uv": [ 0, 2, 6,  9 ], "texture": "#lantern" }
+            }
+        },
+        {   "from": [ 6, 8, 6 ],
+            "to": [ 10, 10, 10 ],
+            "faces": {
+                "down":  { "uv": [  1, 10,  5, 14 ], "texture": "#lantern"},
+                "up":    { "uv": [  1, 10,  5, 14 ], "texture": "#lantern" },
+                "north": { "uv": [ 1, 0, 5,  2 ], "texture": "#lantern" },
+                "south": { "uv": [ 1, 0, 5,  2 ], "texture": "#lantern" },
+                "west":  { "uv": [ 1, 0, 5,  2 ], "texture": "#lantern" },
+                "east":  { "uv": [ 1, 0, 5,  2 ], "texture": "#lantern" }
+            }
+        },
+        {
+            "from": [ 6.5, 11, 8 ],
+            "to": [ 9.5, 15, 8 ],
+            "rotation": { "origin": [ 8, 8, 8 ], "axis": "y", "angle": 45},
+            "shade": false,
+            "faces": {
+                "north": { "uv": [ 14, 1, 11, 5 ], "texture": "#lantern" },
+                "south": { "uv": [ 11, 1, 14, 5 ], "texture": "#lantern" }
+            }
+        },
+        {
+            "from": [ 8, 10, 6.5 ],
+            "to": [ 8, 16, 9.5 ],
+            "rotation": { "origin": [ 8, 8, 8 ], "axis": "y", "angle": 45},
+            "shade": false,
+            "faces": {
+                "west": { "uv": [ 14, 6, 11, 12 ], "texture": "#lantern" },
+                "east": { "uv": [ 11, 6, 14, 12 ], "texture": "#lantern" }
+            }
+        }
+    ]
+}
+
+--- block/lantern.json
+{
+  "parent": "minecraft:block/template_lantern",
+  "textures": {
+    "lantern": "minecraft:block/lantern"
+  }
+}
+--- block/soul_lantern.json
+{
+  "parent": "minecraft:block/template_lantern",
+  "textures": {
+    "lantern": "minecraft:block/soul_lantern"
+  }
+}
+--- block/copper_lantern.json
+{
+  "parent": "minecraft:block/template_lantern",
+  "textures": {
+    "lantern": "minecraft:block/copper_lantern"
+  }
+}
+--- block/exposed_copper_lantern.json
+{
+  "parent": "minecraft:block/template_lantern",
+  "textures": {
+    "lantern": "minecraft:block/exposed_copper_lantern"
+  }
+}
+
+=== textures: alpha histograms
+  lantern: 16x48 alpha {0: 450, 255: 318}
+  soul_lantern: 16x48 alpha {0: 450, 255: 318}
+  copper_lantern: 16x48 alpha {0: 450, 255: 318}
+  exposed_copper_lantern: 16x48 alpha {0: 450, 255: 318}
+  weathered_copper_lantern: 16x48 alpha {0: 450, 255: 318}
+  oxidized_copper_lantern: 16x48 alpha {0: 450, 255: 318}
+
+=== sounds.json: the block.lantern.* events
+ERR "There is no item named 'assets/minecraft/sounds.json' in the archive"
+
+=== loot tables: the survival drops
+  lantern: entries=['minecraft:lantern']
+  soul_lantern: entries=['minecraft:soul_lantern']
+  copper_lantern: entries=['minecraft:copper_lantern']
+  exposed_copper_lantern: entries=['minecraft:exposed_copper_lantern']
+  weathered_copper_lantern: entries=['minecraft:weathered_copper_lantern']
+  oxidized_copper_lantern: entries=['minecraft:oxidized_copper_lantern']
+  waxed_copper_lantern: entries=['minecraft:waxed_copper_lantern']
+  waxed_exposed_copper_lantern: entries=['minecraft:waxed_exposed_copper_lantern']
+  waxed_weathered_copper_lantern: entries=['minecraft:waxed_weathered_copper_lantern']
+  waxed_oxidized_copper_lantern: entries=['minecraft:waxed_oxidized_copper_lantern']
+
+=== tags: mineable/pickaxe membership
+  pickaxe lantern rows: ['#lanterns']

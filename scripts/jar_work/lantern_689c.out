@@ -1,0 +1,142 @@
+=== Blocks$1 (the lightLevel bootstrap holder) — every method
+--- <clinit>()V
+    0: invokestatic net/minecraft/world/level/block/WeatheringCopper$WeatherState.values:()[Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;
+    3: arraylength
+    4: 0xbc
+    6: putstatic net/minecraft/world/level/block/Blocks$1.$SwitchMap$net$minecraft$world$level$block$WeatheringCopper$WeatherState:[I
+    9: getstatic net/minecraft/world/level/block/Blocks$1.$SwitchMap$net$minecraft$world$level$block$WeatheringCopper$WeatherState:[I
+    12: getstatic net/minecraft/world/level/block/WeatheringCopper$WeatherState.UNAFFECTED:Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;
+    15: invokevirtual net/minecraft/world/level/block/WeatheringCopper$WeatherState.ordinal:()I
+    18: iconst_1
+    19: 0x4f
+    20: goto -> 24
+    23: astore_0
+    24: getstatic net/minecraft/world/level/block/Blocks$1.$SwitchMap$net$minecraft$world$level$block$WeatheringCopper$WeatherState:[I
+    27: getstatic net/minecraft/world/level/block/WeatheringCopper$WeatherState.EXPOSED:Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;
+    30: invokevirtual net/minecraft/world/level/block/WeatheringCopper$WeatherState.ordinal:()I
+    33: iconst_2
+    34: 0x4f
+    35: goto -> 39
+    38: astore_0
+    39: getstatic net/minecraft/world/level/block/Blocks$1.$SwitchMap$net$minecraft$world$level$block$WeatheringCopper$WeatherState:[I
+    42: getstatic net/minecraft/world/level/block/WeatheringCopper$WeatherState.WEATHERED:Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;
+
+=== every Blocks lambda with an I return and a tiny body (the light walk)
+--- lambda$static$13(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: bipush 15 | 2: ireturn
+--- lambda$static$135(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: bipush 10 | 2: ireturn
+--- lambda$static$137(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: bipush 10 | 2: ireturn
+--- lambda$static$139(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: bipush 14 | 2: ireturn
+--- lambda$static$141(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: bipush 14 | 2: ireturn
+--- lambda$static$142(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: bipush 15 | 2: ireturn
+--- lambda$static$143(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: bipush 11 | 2: ireturn
+--- lambda$static$144(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: bipush 15 | 2: ireturn
+--- lambda$static$173(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: bipush 7 | 2: ireturn
+--- lambda$static$174(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: iconst_1 | 1: ireturn
+--- lambda$static$176(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: bipush 15 | 2: ireturn
+--- lambda$static$178(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: bipush 15 | 2: ireturn
+--- lambda$static$179(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: iconst_1 | 1: ireturn
+--- lambda$static$180(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: iconst_1 | 1: ireturn
+--- lambda$static$183(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: bipush 7 | 2: ireturn
+--- lambda$static$186(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: bipush 15 | 2: ireturn
+--- lambda$static$243(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: bipush 15 | 2: ireturn
+--- lambda$static$265(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: bipush 14 | 2: ireturn
+--- lambda$static$267(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: bipush 15 | 2: ireturn
+--- lambda$static$271(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: iconst_3 | 1: ireturn
+--- lambda$static$272(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/entity/EntityType;)Z: 0: aload_3 | 1: invokevirtual net/minecraft/world/entity/EntityType.fireImmune:()Z | 4: ireturn
+--- lambda$static$273(Lnet/minecraft/world/level/block/state/BlockState;)Z: 0: iconst_1 | 1: ireturn
+--- lambda$static$303(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: bipush 15 | 2: ireturn
+--- lambda$static$305(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: bipush 15 | 2: ireturn
+--- lambda$static$306(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: bipush 10 | 2: ireturn
+--- lambda$static$309(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: bipush 15 | 2: ireturn
+--- lambda$static$315(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: bipush 15 | 2: ireturn
+--- lambda$static$331(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: bipush 10 | 2: ireturn
+--- lambda$static$332(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: aload_0 | 1: bipush 15 | 3: invokestatic net/minecraft/world/level/block/RespawnAnchorBlock.getScaledChargeLevel:(Lnet/minecraft/world/level/block/state/BlockState;I)I | 6: ireturn
+--- lambda$static$345(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: iconst_5 | 1: ireturn
+--- lambda$static$347(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: iconst_4 | 1: ireturn
+--- lambda$static$349(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: iconst_2 | 1: ireturn
+--- lambda$static$351(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: iconst_1 | 1: ireturn
+--- lambda$static$355(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: iconst_1 | 1: ireturn
+--- lambda$static$357(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: bipush 6 | 2: ireturn
+--- lambda$static$400(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: bipush 15 | 2: ireturn
+--- lambda$static$401(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: bipush 15 | 2: ireturn
+--- lambda$static$402(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: bipush 15 | 2: ireturn
+--- lambda$static$410(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: iconst_2 | 1: ireturn
+--- lambda$static$61(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: iconst_1 | 1: ireturn
+--- lambda$static$64(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: bipush 14 | 2: ireturn
+--- lambda$static$66(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: bipush 14 | 2: ireturn
+--- lambda$static$67(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: bipush 15 | 2: ireturn
+--- lambda$static$68(Lnet/minecraft/world/level/block/state/BlockState;)I: 0: bipush 10 | 2: ireturn
+
+=== WeatheringCopperCollection clinit (the lantern PREFIXES)
+    0: new net/minecraft/world/level/block/WeatheringCopperCollection$ByState
+    3: dup
+    4: getstatic net/minecraft/world/level/block/WeatheringCopper$WeatherState.UNAFFECTED:Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;
+    7: getstatic net/minecraft/world/level/block/WeatheringCopper$WeatherState.EXPOSED:Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;
+    10: getstatic net/minecraft/world/level/block/WeatheringCopper$WeatherState.WEATHERED:Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;
+    13: getstatic net/minecraft/world/level/block/WeatheringCopper$WeatherState.OXIDIZED:Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;
+    16: invokespecial net/minecraft/world/level/block/WeatheringCopperCollection$ByState.<init>:(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
+    19: putstatic net/minecraft/world/level/block/WeatheringCopperCollection.STATES:Lnet/minecraft/world/level/block/WeatheringCopperCollection$ByState;
+    22: new net/minecraft/world/level/block/WeatheringCopperCollection
+    25: dup
+    26: new net/minecraft/world/level/block/WeatheringCopperCollection$ByState
+    29: dup
+    30: ldc
+    32: ldc exposed_
+    34: ldc weathered_
+    36: ldc oxidized_
+    38: invokespecial net/minecraft/world/level/block/WeatheringCopperCollection$ByState.<init>:(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
+    41: new net/minecraft/world/level/block/WeatheringCopperCollection$ByState
+    44: dup
+    45: ldc waxed_
+    47: ldc waxed_exposed_
+    49: ldc waxed_weathered_
+    51: ldc waxed_oxidized_
+    53: invokespecial net/minecraft/world/level/block/WeatheringCopperCollection$ByState.<init>:(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V
+    56: invokespecial net/minecraft/world/level/block/WeatheringCopperCollection.<init>:(Lnet/minecraft/world/level/block/WeatheringCopperCollection$ByState;Lnet/minecraft/world/level/block/WeatheringCopperCollection$ByState;)V
+    59: putstatic net/minecraft/world/level/block/WeatheringCopperCollection.PREFIXES:Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+    62: return
+
+=== the copper lantern indy chain: Blocks clinit pc 24709-24740 full window
+    24709: getstatic net/minecraft/references/BlockItemIds.COPPER_LANTERN:Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+    24712: invokedynamic indy
+    24717: invokedynamic indy
+    24722: invokedynamic indy
+    24727: invokedynamic indy
+    24732: invokestatic net/minecraft/world/level/block/WeatheringCopperCollection.registerBlocks:(Lnet/minecraft/world/level/block/WeatheringCopperCollection;Lorg/apache/commons/lang3/function/TriFunction;Ljava/util/function/BiFunction;Ljava/util/function/BiFunction;Ljava/util/function/Function;)Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+    24735: putstatic net/minecraft/world/level/block/Blocks.COPPER_LANTERN:Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+    24738: getstatic net/minecraft/references/BlockItemIds.CAMPFIRE:Lnet/minecraft/references/BlockItemId;
+    24741: invokedynamic indy
+    24746: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24749: getstatic net/minecraft/world/level/material/MapColor.PODZOL:Lnet/minecraft/world/level/material/MapColor;
+    24752: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24755: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASS:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+    24758: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+
+=== BlockBehaviour$Properties.lightLevel indy bootstraps — the lambda NAMES
+
+=== LanternBlock.SHAPE_* constants cross-check (the collision walk)
+    0: invokedynamic indy
+    5: invokestatic net/minecraft/world/level/block/LanternBlock.simpleCodec:(Ljava/util/function/Function;)Lcom/mojang/serialization/MapCodec;
+    8: putstatic net/minecraft/world/level/block/LanternBlock.CODEC:Lcom/mojang/serialization/MapCodec;
+    11: getstatic net/minecraft/world/level/block/state/properties/BlockStateProperties.HANGING:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+    14: putstatic net/minecraft/world/level/block/LanternBlock.HANGING:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+    17: getstatic net/minecraft/world/level/block/state/properties/BlockStateProperties.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+    20: putstatic net/minecraft/world/level/block/LanternBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+    23: ldc2_w double 4.0
+    26: ldc2_w double 7.0
+    29: ldc2_w double 9.0
+    32: invokestatic net/minecraft/world/level/block/Block.column:(DDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+    35: ldc2_w double 6.0
+    38: dconst_0
+    39: ldc2_w double 7.0
+    42: invokestatic net/minecraft/world/level/block/Block.column:(DDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+    45: invokestatic net/minecraft/world/phys/shapes/Shapes.or:(Lnet/minecraft/world/phys/shapes/VoxelShape;Lnet/minecraft/world/phys/shapes/VoxelShape;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+    48: putstatic net/minecraft/world/level/block/LanternBlock.SHAPE_STANDING:Lnet/minecraft/world/phys/shapes/VoxelShape;
+    51: getstatic net/minecraft/world/level/block/LanternBlock.SHAPE_STANDING:Lnet/minecraft/world/phys/shapes/VoxelShape;
+    54: dconst_0
+    55: ldc2_w double 0.0625
+    58: dconst_0
+    59: invokevirtual net/minecraft/world/phys/shapes/VoxelShape.move:(DDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+    62: invokevirtual net/minecraft/world/phys/shapes/VoxelShape.optimize:()Lnet/minecraft/world/phys/shapes/VoxelShape;
+    65: putstatic net/minecraft/world/level/block/LanternBlock.SHAPE_HANGING:Lnet/minecraft/world/phys/shapes/VoxelShape;
+    68: return

@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 595] = [
+pub const RUNTIME_PALETTE: [&str; 605] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -2046,6 +2046,60 @@ pub const RUNTIME_PALETTE: [&str; 595] = [
     "weathered_copper_chain", "oxidized_copper_chain",
     "waxed_copper_chain", "waxed_exposed_copper_chain",
     "waxed_weathered_copper_chain", "waxed_oxidized_copper_chain",
+    // THE LANTERN FAMILY'S OWN ROWS (the dev-61 round, the official
+    // 26.2 jar): javap LanternBlock the class header the plain Block
+    // super the HANGING + WATERLOGGED properties bank — the
+    // registerDefaultState pc 0-41 pins HANGING=false +
+    // WATERLOGGED=false, the <clinit> pc 23-65 the SHAPES map speaks
+    // (Block.column(4.0, 7.0, 9.0) ∪ Block.column(6.0, 0.0, 7.0) the
+    // standing body [5,0,5]->[11,7,11] + top [6,7,6]->[10,9,10] pair
+    // banks, SHAPE_HANGING the move(0, 1/16, 0).optimize() the same
+    // pair one pixel up wears), getShape pc 0-25 the HANGING read
+    // answers, getStateForPlacement pc 12-123 the nearest-looking Y
+    // walk the canSurvive fall-through speaks (the first Y direction
+    // the HANGING bit arms — dir == UP — the canSurvive walk the
+    // candidate verdict gates, the OTHER Y direction the loop's next
+    // arm serves, the both-fail walk the aconst_null refusal keeps),
+    // canSurvive pc 0-24 the connected direction's opposite the
+    // canSupportCenter verdict reads. javap the Blocks clinit the
+    // LANTERN row pc 24599-24651 — Properties.of().mapColor(METAL)
+    // .forceSolidOn().strength(3.5f).sound(SoundType.LANTERN)
+    // .lightLevel(indy).noOcclusion().pushReaction(DESTROY) the chain
+    // speaks (putstatic pc 24651, the lightLevel indy the
+    // lambda$static$305 `bipush 15` body banks), the SOUL_LANTERN row
+    // pc 24654-24706 the SAME chain the soul row wears (putstatic pc
+    // 24706, lambda$static$306 the `bipush 10` the dimmer flame
+    // banks), the COPPER_LANTERN collection pc 24709-24735 the
+    // WeatheringCopperCollection.registerBlocks walk ALL EIGHT rungs
+    // registers (putstatic pc 24735, lambda$static$307 the LanternBlock
+    // ctor lambda, lambda$static$308 the properties chain — the SAME
+    // METAL/forceSolidOn/3.5/LANTERN-sound/noOcclusion/DESTROY rows,
+    // lambda$static$309 the `bipush 15` lightLevel the bare and the
+    // waxed rungs ALIKE wear). The blockstates the TEN the hanging
+    // pair carry — hanging=false the block/{name} model banks,
+    // hanging=true the block/{name}_hanging wears, the WAXED twins
+    // the BASE models RE-WEAR (the texture-sharing law the vanilla
+    // waxed look keeps). The models the template parents wear — the
+    // STANDING body [5,0,5]->[11,7,11] + top [6,7,6]->[10,9,10] the
+    // SHAPE mirrors, the two hook planes the ±45° y-axis rotations
+    // (shade: false every hook face keeps), the HANGING pair one
+    // pixel up rides. The textures the alpha histograms answer —
+    // 16x48 strips the atlas's own first-frame read the top 16x16
+    // sprite the tile banks (the model UVs the v<=15 band the frame
+    // never leaves), {0: 450, 255: 318} the binary cutout every
+    // lantern wears. The dig/sounds/drops rows the name-keyed
+    // generated tables the registry answers (the ten rows (3.5,
+    // false) the NO-tool demand keeps — forceSolidOn the
+    // requiresCorrectToolForDrops call never wears, the
+    // block.lantern.break/step/place/hit events the SoundType.LANTERN
+    // row banks, the drop pools the SELF-entry the ten names bank),
+    // the placeable lane the Items pairing rows the generated items
+    // table banks.
+    "lantern", "soul_lantern",
+    "copper_lantern", "exposed_copper_lantern",
+    "weathered_copper_lantern", "oxidized_copper_lantern",
+    "waxed_copper_lantern", "waxed_exposed_copper_lantern",
+    "waxed_weathered_copper_lantern", "waxed_oxidized_copper_lantern",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -3064,6 +3118,68 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
                 .get("all")
                 .or_else(|| tex_map.get("texture"))
                 .with_context(|| format!("model {model_ref}: no all/texture ref"))?;
+            let stem = tex
+                .trim_start_matches("minecraft:")
+                .trim_start_matches("block/")
+                .to_string();
+            faces.push(resolve_flat_stem(&stem, false));
+            continue;
+        }
+        if block.ends_with("lantern") && block != "jack_o_lantern" {
+            // THE LANTERN FAMILY'S OWN PALETTE ARM (the dev-61 round,
+            // the official 26.2 jar): the blockstate is a VARIANTS map
+            // — the hanging=false entry the STANDING model wears
+            // (block/{name} the x=0 y=0 row keeps), the hanging=true
+            // the block/{name}_hanging banks, the waxed twins the BASE
+            // models re-wear — resolve_block's full-cube six-face
+            // requirement cannot apply (the body + top + hook-plane
+            // elements the full-cube finder never banks; the plain
+            // jack_o_lantern the pumpkin family's full-cube row the
+            // exclusion keeps). The hanging=false entry's model (the
+            // standing lantern every unstamped cell wears) is the
+            // canonical: its merged texture map's `lantern` ref
+            // (block/lantern the iron seam, block/soul_lantern the
+            // nether flame, block/{prefix}copper_lantern the bare
+            // rungs wear — the ONE ref the template parent resolves)
+            // is the palette row — the ONE master the six slots bank
+            // (the fence arm's law the family keeps), tinted = false
+            // (the pre-colored masters carry NO tintindex). The atlas
+            // tile count the ZERO-or-append tail keeps — the SIX
+            // masters (lantern + soul_lantern + 4 bare copper rungs)
+            // the NEW tiles the append-only tail banks (817 -> 823),
+            // the waxed twins the base rows re-wear. The 16x48 strip
+            // the first-frame read the top 16x16 sprite the tile
+            // banks — the model UVs the v<=15 band the frame never
+            // leaves (the {0, 48} walk the alpha histogram the probe
+            // banks), the {0: 450, 255: 318} the binary cutout the
+            // OPAQUE pass rides.
+            let bs_bytes = read_jar(
+                &mut archive,
+                &format!("assets/minecraft/blockstates/{block}.json"),
+            )?;
+            let bs: Value = serde_json::from_slice(&bs_bytes)
+                .with_context(|| format!("blockstate {block}: json parse"))?;
+            let variants = bs
+                .get("variants")
+                .and_then(|v| v.as_object())
+                .with_context(|| format!("blockstate {block}: no variants"))?;
+            let stand_entry = variants
+                .get("hanging=false")
+                .with_context(|| format!("blockstate {block}: no hanging=false variant"))?;
+            let model_ref = (if stand_entry.is_array() {
+                stand_entry.get(0)
+            } else {
+                Some(stand_entry)
+            })
+            .and_then(|a| a.get("model"))
+            .and_then(|m| m.as_str())
+            .map(|m| m.trim_start_matches("minecraft:").to_string())
+            .with_context(|| format!("blockstate {block}: no standing model"))?;
+            let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
+                .with_context(|| format!("block {block}: model chain {model_ref}"))?;
+            let tex = tex_map
+                .get("lantern")
+                .with_context(|| format!("model {model_ref}: no lantern ref"))?;
             let stem = tex
                 .trim_start_matches("minecraft:")
                 .trim_start_matches("block/")

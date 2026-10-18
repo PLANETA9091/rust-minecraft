@@ -37062,6 +37062,29 @@ impl App {
             )
             .expect("the chain band shape the slabs never refuse");
             (x_lo, y_lo, z_lo, x_hi, y_hi, z_hi)
+        } else if crate::world::is_lantern(block) {
+            // THE LANTERN'S OWN COMPOUND BODY (the dev-61 round — the
+            // vanilla canPlace the PLACED state's own collision shape
+            // reads: the body box the [5,0,5]->[11,7,11] footprint
+            // + the 0..7/16 y-band the shape_slabs decode answers
+            // [the standing default the kind-only conservative subset
+            // keeps — the placed hanging byte the pre-check walk
+            // never consults, the chain arm's own kind-only law the
+            // floor lantern wears; the top box the
+            // [`crate::world::lantern_cap_slabs`] walk the compound's
+            // union serves — the obstruction walk the BODY alone the
+            // conservative subset reads, the cap the body's own
+            // footprint the inset keeps], the lantern-in-your-own-cell
+            // placement the small body the player's box misses the
+            // vanilla's own small-shape law allows)
+            let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) = crate::world::shape_slabs(
+                shape,
+                cell.0,
+                cell.1,
+                cell.2,
+            )
+            .expect("the lantern body shape the slabs never refuse");
+            (x_lo, y_lo, z_lo, x_hi, y_hi, z_hi)
         } else if crate::world::is_fence_gate(block) {
             // THE CLOSED GATE'S OWN THIN PANEL (the dev-55 round — the
             // vanilla canPlace the SHAPE_COLLISION column(16.0, 4.0,
@@ -38538,6 +38561,36 @@ impl App {
                 return false;
             }
         }
+        // THE LANTERN'S OWN SURVIVAL GATE (the dev-61 round — javap
+        // LanternBlock.getStateForPlacement pc 12-123 the 26.2 jar:
+        // the getNearestLookingDirections walk the first Y direction
+        // the HANGING bit arms, the canSurvive walk pc 0-24 the
+        // connected direction's opposite the canSupportCenter verdict
+        // reads, the OTHER Y direction the loop's next arm serves,
+        // the both-fail walk the aconst_null refusal keeps): the
+        // client's own fold the hit face the look direction answers
+        // [the DOWN face the ceiling click the hanging candidate
+        // first, the up/side hits the standing first — the pitch-0
+        // nearest-looking order the DOWN-first fold the vanilla array
+        // banks], the support verdict the [`crate::world::
+        // can_support_lantern`] walk the two candidates' own cells
+        // reads [the hanging the ABOVE cell, the standing the BELOW],
+        // the floating lantern the refusal keeps — the press the PASS
+        // carries, the item lanes follow, nothing consumed.
+        if crate::world::is_lantern(block) {
+            let w = self.active_world();
+            let below_supports = w
+                .map(|w| w.get(cell.0, cell.1 - 1, cell.2))
+                .is_some_and(crate::world::can_support_lantern);
+            let above_supports = w
+                .map(|w| w.get(cell.0, cell.1 + 1, cell.2))
+                .is_some_and(crate::world::can_support_lantern);
+            if crate::world::lantern_placement_variant(hit.face, below_supports, above_supports)
+                .is_none()
+            {
+                return false;
+            }
+        }
         // THE LEVER'S OWN PLACEMENT GATES (the dev-45 round the FLOOR
         // lane banked, this round the WALL/CEILING lanes the hit faces
         // serve — javap FaceAttachedHorizontalDirectionalBlock the 26.2
@@ -38745,6 +38798,35 @@ impl App {
                     cell.2,
                     crate::world::chain_placement_variant(hit.face),
                 );
+            }
+            // THE LANTERN'S OWN HANGING STAMP (the dev-61 round — javap
+            // LanternBlock.getStateForPlacement the 26.2 jar the
+            // nearest-looking Y walk the canSurvive fall-through
+            // speaks: the HANGING bit the support verdict arms [the
+            // DOWN face the ceiling click the hanging candidate
+            // first, the up/side hits the standing first], the placed
+            // byte the [`crate::world::lantern_placement_variant`]
+            // walk the same fold answers — the mesher's model lane the
+            // byte the blockstate key reads, the collision the SHAPE
+            // pair the same byte serves)
+            if crate::world::is_lantern(placed) {
+                let below_supports = crate::world::can_support_lantern(world.get(
+                    cell.0,
+                    cell.1 - 1,
+                    cell.2,
+                ));
+                let above_supports = crate::world::can_support_lantern(world.get(
+                    cell.0,
+                    cell.1 + 1,
+                    cell.2,
+                ));
+                if let Some(hanging) = crate::world::lantern_placement_variant(
+                    hit.face,
+                    below_supports,
+                    above_supports,
+                ) {
+                    world.set_variant(cell.0, cell.1, cell.2, hanging);
+                }
             }
             // THE PLACEMENT'S OWN CHAIN (javap BlockItem.placeBlock pc
             // 9 `bipush 11` — the setBlock the UPDATE_NEIGHBORS bit the
@@ -103611,7 +103693,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            595,
+            605,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -103692,7 +103774,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            595,
+            605,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -103994,7 +104076,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            595,
+            605,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -107924,7 +108006,7 @@ cow_sound_variant: None,
         // #texture ref banks)
         assert_eq!(
             atlas::N_KINDS,
-            595,
+            605,
             "the palette the weighted plates' own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
@@ -108144,7 +108226,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            595,
+            605,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
@@ -108421,7 +108503,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            595,
+            605,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
@@ -108537,7 +108619,7 @@ cow_sound_variant: None,
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE, 318);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, 319);
         assert_eq!(w::END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 595, "the palette the weighted rows bank");
+        assert_eq!(atlas::N_KINDS, 605, "the palette the weighted rows bank");
         for (off, on, name) in [
             (
                 w::LIGHT_WEIGHTED_PRESSURE_PLATE,
@@ -109651,7 +109733,7 @@ cow_sound_variant: None,
         assert_eq!(w::END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-            595,
+            605,
             "the palette the weighted plates' own rows bank"
         );
         for (off, on, name, wooden) in [

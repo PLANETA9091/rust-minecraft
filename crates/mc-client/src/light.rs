@@ -98,6 +98,16 @@ fn sky_opacity(id: u16) -> u8 {
         // row pc 24 the nine links speak: the thin band the light the
         // flood passes, the hanging link the sky the same law keeps)
         || is_chain(id)
+        // THE LANTERN FAMILY'S OWN ROW (the dev-61 round — javap the
+        // Blocks clinit the LANTERN row pc 24639 the noOcclusion()
+        // call the chain speaks [the SOUL_LANTERN row pc 24694 the
+        // same call wears, the copper collection the
+        // lambda$static$308 chain pc 32 the same row banks]: the ten
+        // kinds the compound the light the flood passes — the body
+        // + top + hooks the cell the sky the same law keeps, the
+        // vanilla skylight's own verdict the non-occluding compound
+        // answers)
+        || is_lantern(id)
     {
         0
     } else if id == WATER || id == LEAVES || id == PALE_LEAVES {
@@ -202,6 +212,28 @@ fn emission(id: u16) -> u8 {
         // unbreakable gate's own purple glow the light grid paints,
         // the axis property the emission never reads)
         11
+    } else if id == crate::world::LANTERN
+        || id == crate::world::COPPER_LANTERN
+        || crate::world::is_copper_lantern(id)
+    {
+        // THE LANTERN'S OWN ROW (the dev-61 round — javap the Blocks
+        // clinit the LANTERN registration's lightLevel indy pc 24631
+        // the lambda$static$305 `bipush 15` body banks, the
+        // COPPER_LANTERN collection's lambda$static$308 properties
+        // chain the lightLevel indy pc 24 the lambda$static$309
+        // `bipush 15` body the copper rungs speak — the bare and the
+        // waxed rungs ALIKE the same lightLevel lambda wear: the ONE
+        // properties chain the eight kinds banks, the 15 the flame
+        // row's own answer)
+        15
+    } else if id == crate::world::SOUL_LANTERN {
+        // THE SOUL LANTERN'S OWN ROW (the dev-61 round — javap the
+        // blocks clinit's SOUL_LANTERN registration the lightLevel
+        // indy pc 24686 the lambda$static$306 `bipush 10` body banks
+        // — the soul flame the dimmer row the vanilla's own two
+        // registrations speak, the LANTERN row's 15 the sibling
+        // keeps)
+        10
     } else if id == crate::world::END_PORTAL {
         // THE END PORTAL'S OWN ROW (the dev-29 round — the blocks
         // clinit's end_portal registration the lightLevel lambda
@@ -799,6 +831,49 @@ mod tests {
         assert_eq!(light_at(&w, 3, 6, 3).1, Some(15), "the lava's own cell");
         assert_eq!(light_at(&w, 4, 6, 3).1, Some(14), "one east");
         assert_eq!(light_at(&w, 3, 7, 3).1, Some(14), "one above");
+    }
+
+    #[test]
+    fn the_lantern_family_speaks_the_lightlevel_lambdas() {
+        // THE LANTERN FAMILY'S OWN ROWS (the dev-61 round — javap the
+        // blocks clinit the LANTERN registration's lightLevel indy pc
+        // 24631 the lambda$static$305 `bipush 15` body banks, the
+        // SOUL_LANTERN row pc 24686 the lambda$static$306 `bipush 10`
+        // the dimmer soul flame banks, the COPPER_LANTERN collection's
+        // lambda$static$308 properties chain the lightLevel indy pc 24
+        // the lambda$static$309 `bipush 15` the copper rungs speak —
+        // the bare and the waxed rungs ALIKE the same lambda wear: the
+        // ONE properties chain the eight kinds banks, the flood the
+        // relight answers, the noOcclusion verdict the light the
+        // neighbors' cells the same reach serves)
+        let mut w = empty_world();
+        w.set(3, 6, 3, LANTERN);
+        w.set(8, 6, 3, SOUL_LANTERN);
+        w.relight();
+        assert_eq!(light_at(&w, 3, 6, 3).1, Some(15), "the lantern's own cell");
+        assert_eq!(light_at(&w, 4, 6, 3).1, Some(14), "one east of the lantern");
+        assert_eq!(light_at(&w, 3, 7, 3).1, Some(14), "one above the lantern");
+        assert_eq!(light_at(&w, 8, 6, 3).1, Some(10), "the soul flame the dimmer row wears");
+        assert_eq!(light_at(&w, 9, 6, 3).1, Some(9), "one east of the soul flame");
+        // the copper rungs the SECOND world the cross-flood the
+        // clean cells wear (the bare + the waxed rungs ALIKE the
+        // same lambda banks)
+        let mut w2 = empty_world();
+        w2.set(4, 6, 3, COPPER_LANTERN);
+        w2.set(4, 8, 3, WAXED_OXIDIZED_COPPER_LANTERN);
+        w2.relight();
+        assert_eq!(light_at(&w2, 4, 6, 3).1, Some(15), "the copper rung the same 15 wears");
+        assert_eq!(light_at(&w2, 5, 6, 3).1, Some(14), "one east of the copper rung");
+        assert_eq!(
+            light_at(&w2, 4, 8, 3).1,
+            Some(15),
+            "the waxed oxidized twin the same lambda wears"
+        );
+        assert_eq!(
+            light_at(&w2, 5, 8, 3).1,
+            Some(14),
+            "one east of the waxed twin"
+        );
     }
 
     #[test]

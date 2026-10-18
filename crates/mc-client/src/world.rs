@@ -3314,6 +3314,52 @@ pub const CHAIN_AXIS_Y: u8 = 0;
 pub const CHAIN_AXIS_X: u8 = 1;
 pub const CHAIN_AXIS_Z: u8 = 2;
 
+/// THE LANTERN FAMILY'S OWN SEATS (the dev-61 round — the 10 kinds the
+/// palette tail banks, the registration order the clinit rows speak:
+/// the LANTERN row pc 24599-24651 the head wears, the SOUL_LANTERN row
+/// pc 24654-24706 the nether flame keeps, the copper rungs the
+/// collection walk pc 24709-24735 the PREFIXES order banks): the
+/// mesher's lantern lane and the family fns the seats read.
+pub const LANTERN: u16 = 595;
+pub const SOUL_LANTERN: u16 = 596;
+pub const COPPER_LANTERN: u16 = 597;
+pub const EXPOSED_COPPER_LANTERN: u16 = 598;
+pub const WEATHERED_COPPER_LANTERN: u16 = 599;
+pub const OXIDIZED_COPPER_LANTERN: u16 = 600;
+pub const WAXED_COPPER_LANTERN: u16 = 601;
+pub const WAXED_EXPOSED_COPPER_LANTERN: u16 = 602;
+pub const WAXED_WEATHERED_COPPER_LANTERN: u16 = 603;
+pub const WAXED_OXIDIZED_COPPER_LANTERN: u16 = 604;
+
+/// THE LANTERN FAMILY'S OWN SEAT LADDER (the dev-61 round — the 10
+/// kinds the explicit seats the tail banks, the registration order the
+/// clinit rows speak: the vanilla pair the head wears, the copper
+/// rungs the PREFIXES order the collection walk banks): the mesher's
+/// lantern lane and the family fns the ladder read.
+pub const LANTERN_KINDS: [u16; 10] = [
+    LANTERN,
+    SOUL_LANTERN,
+    COPPER_LANTERN,
+    EXPOSED_COPPER_LANTERN,
+    WEATHERED_COPPER_LANTERN,
+    OXIDIZED_COPPER_LANTERN,
+    WAXED_COPPER_LANTERN,
+    WAXED_EXPOSED_COPPER_LANTERN,
+    WAXED_WEATHERED_COPPER_LANTERN,
+    WAXED_OXIDIZED_COPPER_LANTERN,
+];
+
+/// THE LANTERN HANGING'S OWN VARIANT VOCABULARY (the dev-61 round —
+/// the LanternBlock HANGING BooleanProperty the client's own byte
+/// wears: 0 the standing lantern the floor cell keeps [the
+/// registerDefaultState's HANGING=false pin the unstamped default
+/// answers], 1 the hanging lantern the ceiling cell wears — the
+/// placement walk the support verdict the byte stamps, the mesher's
+/// model lane the byte the blockstate key selects, the collision the
+/// SHAPE pair the same byte serves).
+pub const LANTERN_STANDING: u8 = 0;
+pub const LANTERN_HANGING: u8 = 1;
+
 /// THE COPPER BARS FAMILY'S OWN SEAT LADDER (the dev-59 round — the
 /// 8 kinds the explicit seats the tail banks, the PREFIXES order the
 /// collection walk speaks): the mesher's pane lane and the family
@@ -3999,7 +4045,7 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 /// generated tables' own rows the names wire) — the
 /// END_PORTAL
 /// the beyond-table seat the displaced law keeps.
-pub const NAME_OF: [&str; 595] = [
+pub const NAME_OF: [&str; 605] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -4693,6 +4739,15 @@ pub const NAME_OF: [&str; 595] = [
     "weathered_copper_chain", "oxidized_copper_chain",
     "waxed_copper_chain", "waxed_exposed_copper_chain",
     "waxed_weathered_copper_chain", "waxed_oxidized_copper_chain",
+    // THE LANTERN FAMILY'S OWN ROWS (the dev-61 round — the 10 seats
+    // the registration order the clinit rows bank, the ONE registry
+    // name each kind alone speaks, the dig/sound/drop/place lanes the
+    // generated tables' own rows the names wire)
+    "lantern", "soul_lantern",
+    "copper_lantern", "exposed_copper_lantern",
+    "weathered_copper_lantern", "oxidized_copper_lantern",
+    "waxed_copper_lantern", "waxed_exposed_copper_lantern",
+    "waxed_weathered_copper_lantern", "waxed_oxidized_copper_lantern",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -5889,6 +5944,73 @@ pub fn is_stained_glass_pane(id: u16) -> bool {
     (WHITE_STAINED_GLASS_PANE..=BLACK_STAINED_GLASS_PANE).contains(&id)
 }
 
+/// THE LANTERN FAMILY'S OWN RANGE (the dev-61 round — the 10 kinds the
+/// contiguous tail banks, the registration order the clinit rows
+/// speak: the vanilla pair the head wears, the copper rungs the
+/// collection ladder serves): the WHOLE LanternBlock family the range
+/// answers — the lantern voices the block.lantern.* events every kind
+/// speaks, the noOcclusion verdict the mesher's is_transparent lane
+/// and the light's sky-opacity walk the same run reads.
+#[inline]
+pub fn is_lantern(id: u16) -> bool {
+    (LANTERN..=WAXED_OXIDIZED_COPPER_LANTERN).contains(&id)
+}
+
+/// THE COPPER LANTERN HALF'S OWN RANGE (the vanilla pair the head the
+/// range NEVER wears — the copper rungs the collection ladder banks,
+/// the waxed twins the tail keeps).
+#[inline]
+pub fn is_copper_lantern(id: u16) -> bool {
+    (COPPER_LANTERN..=WAXED_OXIDIZED_COPPER_LANTERN).contains(&id)
+}
+
+/// THE LANTERN HANGING'S OWN PLACEMENT STAMP (javap LanternBlock.
+/// getStateForPlacement the 26.2 jar pc 12-123 — the
+/// getNearestLookingDirections walk the FIRST Y direction the
+/// `setValue(HANGING, dir == UP)` arms, the canSurvive walk the
+/// candidate verdict gates, the OTHER Y direction the loop's next arm
+/// serves, the both-fail walk the aconst_null refusal keeps): the
+/// client's own fold the hit face the look direction answers — the
+/// DOWN-face hit (the ceiling click) the HANGING candidate the first
+/// arm wears, the up/side hits the standing candidate the first arm
+/// keeps (the pitch-0 nearest-looking order the DOWN-first fold the
+/// vanilla array banks). The support verdict the canSurvive walk's
+/// own law the [`can_support_lantern`] fold answers: the hanging
+/// candidate the ABOVE cell reads, the standing the BELOW cell — the
+/// fall-through the loop's own second arm serves, the None the
+/// placement's refusal keeps (the vanilla null verdict the press the
+/// PASS carries).
+#[inline]
+pub fn lantern_placement_variant(
+    hit_face: u8,
+    below_supports: bool,
+    above_supports: bool,
+) -> Option<u8> {
+    if hit_face == 0 {
+        // THE CEILING CLICK'S OWN ORDER (the look-up nearest the UP
+        // direction the first Y arm wears — the HANGING candidate
+        // first, the standing fall-through the loop keeps)
+        if above_supports {
+            Some(LANTERN_HANGING)
+        } else if below_supports {
+            Some(LANTERN_STANDING)
+        } else {
+            None
+        }
+    } else {
+        // THE FLOOR/SIDE CLICK'S OWN ORDER (the pitch-0 nearest the
+        // DOWN direction the first Y arm wears — the standing
+        // candidate first, the hanging fall-through the loop keeps)
+        if below_supports {
+            Some(LANTERN_STANDING)
+        } else if above_supports {
+            Some(LANTERN_HANGING)
+        } else {
+            None
+        }
+    }
+}
+
 /// THE WALL CONNECTION'S OWN FOUR-ARM LAW (javap WallBlock.connectsTo
 /// (state, sideSolid, dir) pc 0-68 the 26.2 jar — the sideUpdate pc
 /// 15-30 walk the per-direction verdict feeds: `PROPERTY_BY_DIRECTION
@@ -6080,6 +6202,16 @@ fn collision_face_footprint(
                 2 => Some((6.5 / 16.0, 9.5 / 16.0, 0.0, 1.0)),
                 _ => Some((6.5 / 16.0, 9.5 / 16.0, 6.5 / 16.0, 9.5 / 16.0)),
             }
+        }
+        CollisionShape::Lantern(_) => {
+            // THE LANTERN'S OWN FACE (the dev-61 round — the body box
+            // [5,0,5]->[11,7,11] the DOWN face the projection
+            // answers, the SHAPE_HANGING the same x/z footprint the
+            // one-pixel lift keeps): the body square the conservative
+            // answer banks (the cap box the [6..10] inset the cover
+            // verdict never grants — the narrower rim the body's
+            // wider shoulders the union dominates)
+            Some((5.0 / 16.0, 11.0 / 16.0, 5.0 / 16.0, 11.0 / 16.0))
         }
         CollisionShape::Wall(bits, _) => {
             // THE WALL COMPOUND'S OWN FACE (the post box(4,0,4,12,24,12)
@@ -7347,6 +7479,25 @@ pub fn can_support_torch(below: u16) -> bool {
         && !is_redstone_torch(below)
 }
 
+/// THE LANTERN'S OWN SUPPORT FOLD (the dev-61 round — javap
+/// LanternBlock.canSurvive pc 0-24 the 26.2 jar: the connected
+/// direction's opposite the `canSupportCenter(level, pos.relative(dir),
+/// dir.getOpposite())` verdict reads — the support cell the sturdy
+/// face the lantern hangs from [the chains the STURDY default the
+/// classic lamp post keeps] or stands on, the UNSTABLE_BOTTOM_CENTER
+/// tag the fence-gate family the verdict refuses): the client's own
+/// coarse fold the torch's shared predicate the same family rows
+/// wears — the fluids, the crops, the flowers, the tufts, the
+/// double plants, the torch kinds the sturdy-face verdict never
+/// banks. The hanging candidate the ABOVE cell reads (the lantern
+/// hangs from the ceiling), the standing the BELOW cell — the same
+/// fold both sides serves (the [`lantern_placement_variant`] walk the
+/// two candidates' own verdicts banks).
+#[inline]
+pub fn can_support_lantern(support: u16) -> bool {
+    can_support_torch(support)
+}
+
 /// THE COLLISION SHAPE'S OWN THREE (the vanilla `getCollisionShape`'s
 /// own answers over the client's palette — javap the 26.2 jar: the
 /// `BlockBehaviour.getCollisionShape` walk returns `hasCollision ?
@@ -7492,6 +7643,22 @@ pub enum CollisionShape {
     /// the placement stamp the hit face's own axis banks, the
     /// [`shape_slabs`] decode the per-axis bands serves).
     Chain(u8),
+    /// THE LANTERN'S OWN COMPOUND PAIR (the dev-61 round — javap
+    /// LanternBlock the 26.2 jar the <clinit> pc 23-65 the SHAPES
+    /// speaks: `Block.column(6.0, 0.0, 7.0)` the body box
+    /// [5, 0, 5] -> [11, 7, 11] banks (the 6/16-wide 0..7 band the
+    /// standing lantern keeps), `Block.column(4.0, 7.0, 9.0)` the top
+    /// box [6, 7, 6] -> [10, 9, 10] the OR-union wears — the
+    /// SHAPE_HANGING the move(0, 1/16, 0).optimize() the same pair
+    /// one pixel up banks (the body [5, 1, 5] -> [11, 8, 11], the top
+    /// [6, 8, 6] -> [10, 10, 10]). The hanging byte the
+    /// [`LANTERN_STANDING`]/[`LANTERN_HANGING`] vocabulary speaks (the
+    /// placement stamp the support verdict banks, the [`shape_slabs`]
+    /// decode the body box answers, the [`lantern_cap_slabs`] walk
+    /// the top box the body walks' roster serves — the
+    /// [`collision_face_footprint`] arm the standing body's own
+    /// footprint banks).
+    Lantern(u8),
     /// THE TRAPDOOR'S OWN HORIZONTAL SLAB (the autopush-668 round —
     /// the closed state's own band the SHAPES map's UP/DOWN keys
     /// speak): javap TrapDoorBlock the 26.2 jar the SHAPES clinit's
@@ -7676,6 +7843,17 @@ pub fn collision_shape(id: u16) -> CollisionShape {
         // wears). The axis the variant-aware lane the placed byte
         // answers.
         CollisionShape::Chain(0)
+    } else if is_lantern(id) {
+        // THE LANTERN FAMILY'S OWN KIND-ONLY ROW (the dev-61 round —
+        // the HANGING property the neighbor reads the kind-only table
+        // never sees, the STANDING body box the conservative subset
+        // keeps: the [5, 0, 5] -> [11, 7, 11] band the placement's
+        // obstruction walk consumes — the SHAPE_STANDING's
+        // column(6.0, 0.0, 7.0) fold the floor default the kind-only
+        // row wears). The hanging the variant-aware lane the placed
+        // byte answers, the top box the [`lantern_cap_slabs`] walk
+        // the roster serves.
+        CollisionShape::Lantern(0)
     } else if is_bamboo_stalk(id) {
         // THE STALK'S OWN INSET ROW (the autopush-608 round — javap
         // BambooStalkBlock.getCollisionShape pc 0-11 the 26.2 jar: the
@@ -7972,6 +8150,17 @@ pub fn collision_shape_at(world: &World, cx: i32, cy: i32, cz: i32) -> Collision
     if is_chain(id) {
         return CollisionShape::Chain(world.variant(cx, cy, cz));
     }
+    // THE LANTERN FAMILY'S OWN VARIANT-AWARE ROW (the dev-61 round —
+    // the HANGING property the placed byte carries, the SHAPE pair
+    // the getShape read answers — javap LanternBlock.getShape pc 0-25
+    // the 26.2 jar the map walk speaks: the HANGING=false state the
+    // SHAPE_STANDING pair banks, the HANGING=true the
+    // move(0, 1/16, 0).optimize() the same pair one pixel up wears —
+    // the body box the [`shape_slabs`] decode banks, the top box the
+    // [`lantern_cap_slabs`] walk the body walks' roster serves)
+    if is_lantern(id) {
+        return CollisionShape::Lantern(world.variant(cx, cy, cz));
+    }
     if !is_door(id) {
         return collision_shape(id);
     }
@@ -8135,6 +8324,27 @@ pub fn shape_slabs(
             }
         }
     }
+    // THE LANTERN'S OWN COMPOUND PAIR (the dev-61 round — the
+    // [`Lantern`] decode the SHAPES law's Block.column(6.0, 0.0, 7.0)
+    // body box serves: the x/z the 0.5 ± 3/16 band the [5,0,5]->
+    // [11,7,11] footprint banks, the y the 0..7/16 band the standing
+    // body keeps — the HANGING byte the move(0, 1/16, 0) the whole
+    // pair one pixel up banks (the body y the 1..8/16 band, the top
+    // box the [`lantern_cap_slabs`] walk the compound serves — the
+    // body alone the one-box contract the main walk answers)
+    if let CollisionShape::Lantern(hanging) = shape {
+        let t = 3.0f64 / 16.0;
+        x_lo = cx as f64 + 0.5 - t;
+        x_hi = cx as f64 + 0.5 + t;
+        z_lo = cz as f64 + 0.5 - t;
+        z_hi = cz as f64 + 0.5 + t;
+        let (y0, y1) = if hanging != 0 {
+            (1.0f64 / 16.0, 8.0f64 / 16.0)
+        } else {
+            (0.0f64, 7.0f64 / 16.0)
+        };
+        return Some((x_lo, x_hi, cy as f64 + y0, cy as f64 + y1, z_lo, z_hi));
+    }
     // THE WALL POST'S OWN CENTERED COLUMN (the dev-56 round — the
     // [`Wall`] decode the SHAPE law's Block.column(8.0, 0.0, 24.0)
     // box serves: the x/z the 0.5 ± 4/16 band the 8±4 px post banks
@@ -8292,6 +8502,37 @@ pub fn pane_arm_slabs(
         // the (x,z)->(z,16-x) map wears
         (bits & 0b1000 != 0).then(|| (c, c + 8.0 / 16.0, y0, y1, zn_lo, zn_hi)),
     ]
+}
+
+/// THE LANTERN CAP'S OWN SLABS (the dev-61 round — the compound's top
+/// box the ONE walk serves: javap LanternBlock the 26.2 jar the
+/// <clinit> pc 23-45 the SHAPE_STANDING `Block.column(4.0, 7.0, 9.0)`
+/// the top box [6, 7, 6] -> [10, 9, 10] banks — the x/z the 0.5 ±
+/// 2/16 band the body's 3/16 the INSET keeps (the cap the narrower
+/// rim the body shoulders wear), the y the 7..9/16 band the body
+/// stack serves; the SHAPE_HANGING the move(0, 1/16, 0) the whole
+/// pair one pixel up banks — the cap y the 8..10/16 band the hanging
+/// pair wears). The non-lantern shape the None the empty answer
+/// keeps — the body walks' own roster the [Some, None] tail the
+/// compound's two boxes serve.
+pub fn lantern_cap_slabs(
+    shape: CollisionShape,
+    cx: i32,
+    cy: i32,
+    cz: i32,
+) -> [Option<(f64, f64, f64, f64, f64, f64)>; 1] {
+    let CollisionShape::Lantern(hanging) = shape else {
+        return [None];
+    };
+    let t = 2.0f64 / 16.0;
+    let (x_lo, x_hi) = (cx as f64 + 0.5 - t, cx as f64 + 0.5 + t);
+    let (z_lo, z_hi) = (cz as f64 + 0.5 - t, cz as f64 + 0.5 + t);
+    let (y0, y1) = if hanging != 0 {
+        (8.0f64 / 16.0, 10.0f64 / 16.0)
+    } else {
+        (7.0f64 / 16.0, 9.0f64 / 16.0)
+    };
+    [Some((x_lo, x_hi, cy as f64 + y0, cy as f64 + y1, z_lo, z_hi))]
 }
 
 /// THE OVER-TALL FAMILY'S OWN PREDICATE (the dev-55 round — the
@@ -16298,7 +16539,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the lamp pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 595, "the palette the lamp pair banks");
+        assert_eq!(atlas::N_KINDS, 605, "the palette the lamp pair banks");
         assert!(is_redstone_lamp(REDSTONE_LAMP) && is_redstone_lamp(REDSTONE_LAMP_LIT));
         assert!(!is_redstone_lamp(REDSTONE_WIRE) && !is_redstone_lamp(STONE));
         assert!(!redstone_lamp_lit(REDSTONE_LAMP));
@@ -16395,7 +16636,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the wire pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 595, "the palette the wire pair banks");
+        assert_eq!(atlas::N_KINDS, 605, "the palette the wire pair banks");
         assert!(is_redstone_wire(REDSTONE_WIRE) && is_redstone_wire(REDSTONE_WIRE_ON));
         assert!(!is_redstone_wire(LEVER) && !is_redstone_wire(OAK_PRESSURE_PLATE));
         assert!(!wire_powered(REDSTONE_WIRE));
@@ -16549,7 +16790,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 595, "the palette the graded ladder banks");
+        assert_eq!(atlas::N_KINDS, 605, "the palette the graded ladder banks");
         // THE POWER READ'S OWN ROUND TRIP (the seat the kind the
         // inverse fold answers, the unknown id the None keeps)
         assert_eq!(wire_power_of(REDSTONE_WIRE), Some(0));
@@ -16736,7 +16977,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the planks' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 595, "the palette the planks' twelve banks");
+        assert_eq!(atlas::N_KINDS, 605, "the palette the planks' twelve banks");
         for (i, (name, kind, voice)) in PLANKS.iter().enumerate() {
             let seat = OAK_PLANKS + i as u16;
             assert_eq!(*kind, seat, "the seat the family order banks");
@@ -16828,7 +17069,7 @@ mod tests {
             None,
             "the portal the item lane refuses"
         );
-        assert_eq!(NAME_OF.len(), 595, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -16882,7 +17123,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kit's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 595, "the palette the kit's six banks");
+        assert_eq!(atlas::N_KINDS, 605, "the palette the kit's six banks");
         for (i, (name, kind, hard)) in KIT.iter().enumerate() {
             let seat = COBBLESTONE + i as u16;
             assert_eq!(*kind, seat, "the seat the stone shelf order banks");
@@ -16972,7 +17213,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kit's growth banks)
-        assert_eq!(NAME_OF.len(), 595, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -17029,7 +17270,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the shelf's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 595, "the palette the shelf's eight banks");
+        assert_eq!(atlas::N_KINDS, 605, "the palette the shelf's eight banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -17127,7 +17368,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the shelf's growth banks)
-        assert_eq!(NAME_OF.len(), 595, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -17196,7 +17437,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the cloths' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 595, "the palette the cloths' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 605, "the palette the cloths' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -17310,7 +17551,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the cloths' growth banks)
-        assert_eq!(NAME_OF.len(), 595, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -17385,7 +17626,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kilns' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 595, "the palette the kilns' seventeen banks");
+        assert_eq!(atlas::N_KINDS, 605, "the palette the kilns' seventeen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -17497,7 +17738,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kilns' growth banks)
-        assert_eq!(NAME_OF.len(), 595, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -17573,7 +17814,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 595, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 605, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -17690,7 +17931,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 595, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -17775,7 +18016,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 595, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 605, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -17926,7 +18167,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 595, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -18000,7 +18241,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 595, "the palette the ladder's twenty-two banks");
+        assert_eq!(atlas::N_KINDS, 605, "the palette the ladder's twenty-two banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -18189,7 +18430,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the ladder's growth banks)
-        assert_eq!(NAME_OF.len(), 595, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -18250,7 +18491,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the note's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 595, "the palette the note's own banks");
+        assert_eq!(atlas::N_KINDS, 605, "the palette the note's own banks");
         // THE ONE REGISTRY NAME ITS KIND ALONE SPEAKS (the NAME_OF row
         // + the generated KIND_NAMES/REGISTRY_NAMES rows the same
         // entry the three tables keep — no strip law the single kind
@@ -18561,7 +18802,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the note's growth banks)
-        assert_eq!(NAME_OF.len(), 595, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -18602,8 +18843,8 @@ mod tests {
             "the contiguous run the thirteen seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 595, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 595, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 605, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in OAK_FENCE..=NETHER_BRICK_FENCE {
@@ -19016,8 +19257,8 @@ mod tests {
             "the contiguous run the thirty-two seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 595, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 595, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 605, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in COBBLESTONE_WALL..=SULFUR_BRICK_WALL {
@@ -19356,8 +19597,8 @@ mod tests {
             "the contiguous run the seventeen seats wear"
         );
         assert_eq!(SULFUR_BRICK_WALL, 542, "the wall family the tail answers");
-        assert_eq!(atlas::N_KINDS, 595, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 595, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 605, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in GLASS..=BLACK_STAINED_GLASS {
@@ -19552,8 +19793,8 @@ mod tests {
             "the pane run the seventeen seats wear"
         );
         assert_eq!(BLACK_STAINED_GLASS, 559, "the glass family the tail answers");
-        assert_eq!(atlas::N_KINDS, 595, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 595, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 605, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in GLASS_PANE..=IRON_BARS {
@@ -19854,8 +20095,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_BARS, 585,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 595, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 595, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 605, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in COPPER_BARS..=WAXED_OXIDIZED_COPPER_BARS {
@@ -20175,8 +20416,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_CHAIN, 594,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 595, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 595, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 605, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in IRON_CHAIN..=WAXED_OXIDIZED_COPPER_CHAIN {
@@ -20433,6 +20674,368 @@ mod tests {
     }
 
     #[test]
+    fn the_lantern_familys_own_hanging_pair_the_support_walk_and_the_lantern_voices_wear() {
+        // THE LANTERN FAMILY'S OWN LAWS (the dev-61 round — javap the
+        // 26.2 jar the probe scripts/jar_work/lantern_689.py banks):
+        // the LANTERN row pc 24599-24651 + the SOUL_LANTERN row
+        // pc 24654-24706 the SAME properties chain wears (METAL +
+        // forceSolidOn + strength(3.5f) + SoundType.LANTERN +
+        // lightLevel + noOcclusion + pushReaction(DESTROY)), the
+        // COPPER_LANTERN collection pc 24709-24735 the ONE clinit
+        // walk ALL EIGHT copper kinds registers (the PREFIXES ladder
+        // the bare UNAFFECTED..OXIDIZED rungs + the waxed twins the
+        // same order wears — the lambda$static$308 chain the copper
+        // kinds the SAME rows banks, the lightLevel indy the
+        // lambda$static$309 `bipush 15` the vanilla pair's own flame
+        // answer the copper rungs keep), the LanternBlock HANGING +
+        // WATERLOGGED properties the registerDefaultState pins
+        // (HANGING=false the standing default wears), the SHAPES map
+        // the column(4.0, 7.0, 9.0) ∪ column(6.0, 0.0, 7.0) fold the
+        // [5,0,5]->[11,7,11] body + [6,7,6]->[10,9,10] top pair the
+        // per-hanging decode answers
+        use mc_registry::generated::atlas;
+        // THE TEN SEATS' OWN BANK (the contiguous tail the append-only
+        // law keeps — the chain family the predecessor answers)
+        assert_eq!(LANTERN, 595, "the iron seam its tail seat keeps");
+        assert_eq!(SOUL_LANTERN, 596, "the soul flame the ladder banks");
+        assert_eq!(COPPER_LANTERN, 597, "the bare copper rung the ladder banks");
+        assert_eq!(EXPOSED_COPPER_LANTERN, 598, "the exposed rung the ladder banks");
+        assert_eq!(WEATHERED_COPPER_LANTERN, 599, "the weathered rung the ladder banks");
+        assert_eq!(OXIDIZED_COPPER_LANTERN, 600, "the oxidized rung the ladder banks");
+        assert_eq!(WAXED_COPPER_LANTERN, 601, "the waxed head the twins' tail keeps");
+        assert_eq!(
+            WAXED_EXPOSED_COPPER_LANTERN, 602,
+            "the waxed exposed rung the ladder banks"
+        );
+        assert_eq!(
+            WAXED_WEATHERED_COPPER_LANTERN, 603,
+            "the waxed weathered rung the ladder banks"
+        );
+        assert_eq!(
+            WAXED_OXIDIZED_COPPER_LANTERN, 604,
+            "the waxed tail the family's last rung keeps"
+        );
+        assert_eq!(atlas::N_KINDS, 605, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
+        // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
+        // rows the same entry the three tables keep)
+        for k in LANTERN..=WAXED_OXIDIZED_COPPER_LANTERN {
+            assert_eq!(
+                NAME_OF[k as usize],
+                atlas::KIND_NAMES[k as usize],
+                "the KIND_NAMES row the family's kind {} keeps",
+                k
+            );
+            assert_eq!(
+                NAME_OF[k as usize],
+                atlas::REGISTRY_NAMES[k as usize],
+                "the REGISTRY_NAMES row the family's kind {} keeps",
+                k
+            );
+        }
+        assert_eq!(NAME_OF[LANTERN as usize], "lantern");
+        assert_eq!(NAME_OF[SOUL_LANTERN as usize], "soul_lantern");
+        assert_eq!(NAME_OF[OXIDIZED_COPPER_LANTERN as usize], "oxidized_copper_lantern");
+        assert_eq!(
+            NAME_OF[WAXED_OXIDIZED_COPPER_LANTERN as usize],
+            "waxed_oxidized_copper_lantern"
+        );
+        // THE SEAT LADDER THE REGISTRATION ORDER BANKS (the vanilla
+        // pair the head wears, the copper rungs the PREFIXES order
+        // keeps)
+        for (i, k) in LANTERN_KINDS.iter().enumerate() {
+            assert_eq!(
+                *k,
+                LANTERN + i as u16,
+                "the ladder the registration order the kind {} keeps",
+                i
+            );
+        }
+        // THE RANGE WALKS (the whole family the range fn answers —
+        // the vanilla pair the copper half the range NEVER wears)
+        for k in LANTERN..=WAXED_OXIDIZED_COPPER_LANTERN {
+            assert!(is_lantern(k), "the lantern {} the range banks", k);
+        }
+        assert!(is_copper_lantern(COPPER_LANTERN) && is_copper_lantern(WAXED_OXIDIZED_COPPER_LANTERN));
+        assert!(
+            !is_copper_lantern(LANTERN) && !is_copper_lantern(SOUL_LANTERN),
+            "the vanilla pair the copper half the range refuses"
+        );
+        assert!(
+            !is_lantern(IRON_CHAIN) && !is_lantern(IRON_BARS) && !is_lantern(GLASS_PANE),
+            "the sibling families the lantern range refuses"
+        );
+        // THE PLACEMENT STAMP'S OWN SUPPORT WALK (javap LanternBlock
+        // getStateForPlacement pc 12-123 — the nearest-looking Y walk
+        // the FIRST Y direction the HANGING bit arms, the canSurvive
+        // walk the candidate verdict gates, the OTHER Y direction the
+        // loop's next arm serves, the both-fail walk the aconst_null
+        // refusal keeps: the DOWN face the ceiling click the hanging
+        // candidate first, the up/side hits the standing first)
+        assert_eq!(
+            lantern_placement_variant(0, true, true),
+            Some(LANTERN_HANGING),
+            "the ceiling hit the hanging candidate first wears"
+        );
+        assert_eq!(
+            lantern_placement_variant(0, true, false),
+            Some(LANTERN_STANDING),
+            "the no-ceiling click the standing fall-through serves"
+        );
+        assert_eq!(
+            lantern_placement_variant(0, false, false),
+            None,
+            "the floating cell the aconst_null refusal keeps"
+        );
+        assert_eq!(
+            lantern_placement_variant(1, true, true),
+            Some(LANTERN_STANDING),
+            "the floor hit the standing candidate first keeps"
+        );
+        assert_eq!(
+            lantern_placement_variant(1, false, true),
+            Some(LANTERN_HANGING),
+            "the no-floor click the hanging fall-through serves"
+        );
+        assert_eq!(
+            lantern_placement_variant(1, false, false),
+            None,
+            "the floating cell the floor walk refuses"
+        );
+        assert_eq!(
+            lantern_placement_variant(4, true, false),
+            Some(LANTERN_STANDING),
+            "the side hit the pitch-0 DOWN-first fold the standing wears"
+        );
+        // THE SUPPORT FOLD THE CAN-SURVIVE LAW WEARS (the canSupportCenter
+        // delegate the can_support_lantern fold answers — the chains
+        // the sturdy default the classic lamp post keeps, the fluids
+        // and the plants the verdict refuses)
+        assert!(can_support_lantern(IRON_CHAIN), "the chain the sturdy default keeps");
+        assert!(can_support_lantern(STONE), "the stone the sturdy face keeps");
+        assert!(
+            !can_support_lantern(AIR) && !can_support_lantern(WATER) && !can_support_lantern(LAVA),
+            "the fluids the support verdict refuses"
+        );
+        assert!(
+            !can_support_lantern(TORCH) && !can_support_lantern(REDSTONE_TORCH),
+            "the torch kinds the coarse fold refuses"
+        );
+        // THE HANGING VOCABULARY (the registerDefaultState pin the
+        // standing default keeps)
+        assert_eq!(LANTERN_STANDING, 0, "the unstamped byte the standing wears");
+        assert_ne!(LANTERN_HANGING, LANTERN_STANDING, "the pair the distinct bytes bank");
+        // THE PLACEABLE LANE (the Items pairing rows the reverse walk
+        // answers — the ten item forms the placement grants)
+        for (i, name) in [
+            "lantern",
+            "soul_lantern",
+            "copper_lantern",
+            "exposed_copper_lantern",
+            "weathered_copper_lantern",
+            "oxidized_copper_lantern",
+            "waxed_copper_lantern",
+            "waxed_exposed_copper_lantern",
+            "waxed_weathered_copper_lantern",
+            "waxed_oxidized_copper_lantern",
+        ]
+        .iter()
+        .enumerate()
+        {
+            assert_eq!(
+                World::placeable_block(name),
+                Some(LANTERN + i as u16),
+                "the {} item the placement lane grants",
+                name
+            );
+        }
+        // THE DIG ROWS (the generated table the REAL bootstrapped
+        // registry banks — the (3.5, false) pair the NO-tool demand
+        // the forceSolidOn chain keeps: the requiresCorrectToolForDrops
+        // call the LANTERN row pc 24599-24651 the chain never wears)
+        for k in LANTERN..=WAXED_OXIDIZED_COPPER_LANTERN {
+            let (hard, tool) = crate::dig::DigState::block_dig_row(k);
+            assert!(
+                (hard - 3.5).abs() < 1e-4,
+                "the 3.5 strength the lantern {} dig row wears, got {}",
+                k,
+                hard
+            );
+            assert!(
+                !tool,
+                "the no-tool demand the lantern {} the law wears",
+                k
+            );
+        }
+        // THE VOICE LAWS THE FAMILY WEARS (the SoundType.LANTERN row
+        // the lambda$static$308 chain banks — the block.lantern.*
+        // events every kind speaks, the copper rungs the SAME voice
+        // the vanilla pair keeps)
+        for k in LANTERN..=WAXED_OXIDIZED_COPPER_LANTERN {
+            let idx = mc_registry::generated::block_sounds::sound_index(NAME_OF[k as usize])
+                .unwrap_or_else(|| panic!("the {} sound row the table banks", NAME_OF[k as usize]));
+            assert_eq!(
+                mc_registry::generated::block_sounds::SOUND_BREAK[idx],
+                "block.lantern.break",
+                "the lantern law the kind {} break row speaks",
+                k
+            );
+        }
+        // THE DROP POOLS THE SELF-ENTRY LAW BANKS (the ten kinds the
+        // one-pool drop the self-entry law wears)
+        for k in LANTERN..=WAXED_OXIDIZED_COPPER_LANTERN {
+            let name = NAME_OF[k as usize];
+            let pools = mc_registry::generated::block_drops::drops(name)
+                .unwrap_or_else(|| panic!("the {} drop pool the table banks", name));
+            assert_eq!(pools.len(), 1, "the {} the one-pool drop wears", name);
+            assert_eq!(
+                pools[0].entries[0].item, name,
+                "the {} drop the SELF-entry the iron law wears",
+                name
+            );
+        }
+        // THE COLLISION'S OWN COMPOUND PAIR (the SHAPES map the
+        // getShape walk answers: the standing the [5,0,5]->[11,7,11]
+        // body + the [6,7,6]->[10,9,10] top the column fold banks,
+        // the hanging the move(0, 1/16, 0) the whole pair one pixel
+        // up wears — the placed byte the variant-aware lane the pair
+        // serves, the cap the [`lantern_cap_slabs`] walk the roster
+        // serves)
+        let mut w = World::blank(3, 0x6C40);
+        let c = w.size_blocks() / 2;
+        let y = 8;
+        // the kind-only row (the standing default the conservative
+        // subset keeps)
+        w.set(c, y, c, LANTERN);
+        assert!(
+            matches!(collision_shape(LANTERN), CollisionShape::Lantern(0)),
+            "the kind-only row the standing default wears"
+        );
+        // the standing body box (the column(6.0, 0.0, 7.0) fold the
+        // [5,0,5]->[11,7,11] band banks)
+        let shape = collision_shape_at(&w, c, y, c);
+        let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) =
+            shape_slabs(shape, c, y, c).expect("the lantern shape the slabs never refuse");
+        assert!(
+            ((x_lo - (c as f64 + 5.0 / 16.0)).abs() < 1e-9)
+                && ((x_hi - (c as f64 + 11.0 / 16.0)).abs() < 1e-9),
+            "the 0.5±3/16 band the body's x walk keeps, got {x_lo}..{x_hi}"
+        );
+        assert!(
+            ((z_lo - (c as f64 + 5.0 / 16.0)).abs() < 1e-9)
+                && ((z_hi - (c as f64 + 11.0 / 16.0)).abs() < 1e-9),
+            "the 0.5±3/16 band the body's z walk keeps, got {z_lo}..{z_hi}"
+        );
+        assert!(
+            ((y_lo - y as f64).abs() < 1e-9)
+                && ((y_hi - (y as f64 + 7.0 / 16.0)).abs() < 1e-9),
+            "the 0..7/16 y band the standing body keeps, got {y_lo}..{y_hi}"
+        );
+        // the standing cap box (the column(4.0, 7.0, 9.0) fold the
+        // [6,7,6]->[10,9,10] band banks — the cap the body's own
+        // footprint the inset keeps)
+        let [cap] = lantern_cap_slabs(shape, c, y, c);
+        let (x_lo, x_hi, y_lo, y_hi, _z_lo, _z_hi) =
+            cap.expect("the standing cap the slabs never refuse");
+        assert!(
+            ((x_lo - (c as f64 + 6.0 / 16.0)).abs() < 1e-9)
+                && ((x_hi - (c as f64 + 10.0 / 16.0)).abs() < 1e-9),
+            "the 0.5±2/16 band the cap's x walk keeps, got {x_lo}..{x_hi}"
+        );
+        assert!(
+            ((y_lo - (y as f64 + 7.0 / 16.0)).abs() < 1e-9)
+                && ((y_hi - (y as f64 + 9.0 / 16.0)).abs() < 1e-9),
+            "the 7..9/16 y band the standing cap keeps, got {y_lo}..{y_hi}"
+        );
+        // the hanging pair (the move(0, 1/16, 0) the whole pair one
+        // pixel up wears)
+        w.set_variant(c, y, c, LANTERN_HANGING);
+        let shape = collision_shape_at(&w, c, y, c);
+        let CollisionShape::Lantern(hanging) = shape else {
+            panic!("the lantern shape the variant-aware lane banks");
+        };
+        assert_eq!(hanging, LANTERN_HANGING, "the placed byte the hanging wears");
+        let (_x_lo, _x_hi, y_lo, y_hi, _z_lo, _z_hi) =
+            shape_slabs(shape, c, y, c).expect("the lantern shape the slabs never refuse");
+        assert!(
+            ((y_lo - (y as f64 + 1.0 / 16.0)).abs() < 1e-9)
+                && ((y_hi - (y as f64 + 8.0 / 16.0)).abs() < 1e-9),
+            "the 1..8/16 y band the hanging body keeps, got {y_lo}..{y_hi}"
+        );
+        let [cap] = lantern_cap_slabs(shape, c, y, c);
+        let (_x_lo, _x_hi, y_lo, y_hi, _z_lo, _z_hi) =
+            cap.expect("the hanging cap the slabs never refuse");
+        assert!(
+            ((y_lo - (y as f64 + 8.0 / 16.0)).abs() < 1e-9)
+                && ((y_hi - (y as f64 + 10.0 / 16.0)).abs() < 1e-9),
+            "the 8..10/16 y band the hanging cap keeps, got {y_lo}..{y_hi}"
+        );
+        // THE FACE_TILES ROWS THE BARE MASTERS BANK (the six bare
+        // kinds the OWN masters wear, the four waxed twins the BASE
+        // rows RE-WEAR — the texture-sharing law the vanilla waxed
+        // look keeps; the ONE-tile shape the lantern family wears)
+        assert_eq!(
+            atlas::tile_name(atlas::FACE_TILES[LANTERN as usize][2]),
+            "lantern",
+            "the iron seam its own master wears"
+        );
+        assert_eq!(
+            atlas::tile_name(atlas::FACE_TILES[SOUL_LANTERN as usize][2]),
+            "soul_lantern",
+            "the soul flame its own master wears"
+        );
+        assert_eq!(
+            atlas::tile_name(atlas::FACE_TILES[COPPER_LANTERN as usize][2]),
+            "copper_lantern",
+            "the bare copper rung its own master wears"
+        );
+        assert_eq!(
+            atlas::tile_name(atlas::FACE_TILES[EXPOSED_COPPER_LANTERN as usize][2]),
+            "exposed_copper_lantern",
+            "the exposed rung its own master wears"
+        );
+        assert_eq!(
+            atlas::tile_name(atlas::FACE_TILES[WEATHERED_COPPER_LANTERN as usize][2]),
+            "weathered_copper_lantern",
+            "the weathered rung its own master wears"
+        );
+        assert_eq!(
+            atlas::tile_name(atlas::FACE_TILES[OXIDIZED_COPPER_LANTERN as usize][2]),
+            "oxidized_copper_lantern",
+            "the oxidized rung its own master wears"
+        );
+        assert_eq!(
+            atlas::FACE_TILES[WAXED_COPPER_LANTERN as usize][2],
+            atlas::FACE_TILES[COPPER_LANTERN as usize][2],
+            "the waxed twin the BASE master re-wears"
+        );
+        assert_eq!(
+            atlas::FACE_TILES[WAXED_EXPOSED_COPPER_LANTERN as usize][2],
+            atlas::FACE_TILES[EXPOSED_COPPER_LANTERN as usize][2],
+            "the waxed exposed twin the base row re-wears"
+        );
+        assert_eq!(
+            atlas::FACE_TILES[WAXED_WEATHERED_COPPER_LANTERN as usize][2],
+            atlas::FACE_TILES[WEATHERED_COPPER_LANTERN as usize][2],
+            "the waxed weathered twin the base row re-wears"
+        );
+        assert_eq!(
+            atlas::FACE_TILES[WAXED_OXIDIZED_COPPER_LANTERN as usize][2],
+            atlas::FACE_TILES[OXIDIZED_COPPER_LANTERN as usize][2],
+            "the waxed oxidized twin the base row re-wears"
+        );
+        for k in LANTERN..=WAXED_OXIDIZED_COPPER_LANTERN {
+            let row = atlas::FACE_TILES[k as usize];
+            assert!(
+                row.iter().all(|t| t == &row[2]),
+                "the ONE-tile shape the family's kind {} keeps",
+                k
+            );
+            assert_ne!(row[2], atlas::TILE_NONE, "the master the kind {} resolves", k);
+        }
+    }
+
+    #[test]
     fn the_redstone_torch_the_not_gate_and_the_source_arms_wear() {
         // THE REDSTONE TORCH'S OWN LAWS (the autopush-666 round — javap
         // RedstoneTorchBlock the 26.2 jar the probe scripts/jar_work/
@@ -20459,7 +21062,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the torch pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 595, "the palette the torch pair banks");
+        assert_eq!(atlas::N_KINDS, 605, "the palette the torch pair banks");
         assert!(is_redstone_torch(REDSTONE_TORCH) && is_redstone_torch(REDSTONE_TORCH_OFF));
         assert!(!is_redstone_torch(TORCH) && !is_redstone_torch(LEVER));
         assert!(redstone_torch_lit(REDSTONE_TORCH));
@@ -20600,7 +21203,7 @@ mod tests {
         assert_eq!(REDSTONE_WALL_TORCH, 324);
         assert_eq!(REDSTONE_WALL_TORCH_OFF, 325);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 595, "the palette the wall pair banks");
+        assert_eq!(atlas::N_KINDS, 605, "the palette the wall pair banks");
         assert!(
             is_redstone_torch(REDSTONE_WALL_TORCH) && is_redstone_torch(REDSTONE_WALL_TORCH_OFF),
             "the wall pair the family's tail banks"
@@ -20845,7 +21448,7 @@ mod tests {
         assert_eq!(OAK_TRAPDOOR_OPEN, 327);
         assert_eq!(END_PORTAL, 510);
         assert_eq!(
-            atlas::N_KINDS, 595,
+            atlas::N_KINDS, 605,
             "the palette the trapdoor pair banks"
         );
         assert_eq!(OAK_TRAPDOOR + 1, OAK_TRAPDOOR_OPEN, "the +1 mate wears");
@@ -20999,7 +21602,7 @@ mod tests {
         assert_eq!(END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-            595,
+            605,
             "the palette the gate pair banks"
         );
         assert_eq!(OAK_FENCE_GATE + 1, OAK_FENCE_GATE_OPEN, "the +1 mate wears");
@@ -21217,7 +21820,7 @@ mod tests {
         assert_eq!(WARPED_TRAPDOOR, 348);
         assert_eq!(WARPED_TRAPDOOR_OPEN, 349);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 595, "the palette the ladder banks");
+        assert_eq!(atlas::N_KINDS, 605, "the palette the ladder banks");
         // THE CONTIGUITY'S OWN LAW (the 22 kinds the range covers —
         // the neighbors the family fn refuses)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -21331,7 +21934,7 @@ mod tests {
         assert_eq!(IRON_TRAPDOOR, 366);
         assert_eq!(IRON_TRAPDOOR_OPEN, 367);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 595, "the palette the metal rungs bank");
+        assert_eq!(atlas::N_KINDS, 605, "the palette the metal rungs bank");
         // THE CONTIGUITY'S OWN LAW (the 42 kinds the range covers —
         // the waxed pairs the ±1 mate the parity answers)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -21702,7 +22305,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 595, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 605, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)

@@ -1,0 +1,263 @@
+=== Blocks clinit: every LANTERN-bearing line with windows
+--- window @ line 3628
+    11156: invokedynamic indy
+    11161: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.isValidSpawn:(Lnet/minecraft/world/level/block/state/BlockBehaviour$StateArgumentPredicate;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    11164: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+    11167: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.pushReaction:(Lnet/minecraft/world/level/material/PushReaction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    11170: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    11173: putstatic net/minecraft/world/level/block/Blocks.CARVED_PUMPKIN:Lnet/minecraft/world/level/block/Block;
+    11176: getstatic net/minecraft/references/BlockItemIds.JACK_O_LANTERN:Lnet/minecraft/references/BlockItemId;
+    11179: invokedynamic indy
+    11184: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    11187: getstatic net/minecraft/world/level/material/MapColor.COLOR_ORANGE:Lnet/minecraft/world/level/material/MapColor;
+
+--- window @ line 3644
+    11208: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.lightLevel:(Ljava/util/function/ToIntFunction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    11211: invokedynamic indy
+    11216: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.isValidSpawn:(Lnet/minecraft/world/level/block/state/BlockBehaviour$StateArgumentPredicate;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    11219: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+    11222: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.pushReaction:(Lnet/minecraft/world/level/material/PushReaction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    11225: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    11228: putstatic net/minecraft/world/level/block/Blocks.JACK_O_LANTERN:Lnet/minecraft/world/level/block/Block;
+    11231: getstatic net/minecraft/references/BlockItemIds.CAKE:Lnet/minecraft/references/BlockItemId;
+    11234: invokedynamic indy
+    11239: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+
+--- window @ line 5402
+    16751: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    16754: ldc float 1.5
+    16756: ldc_w float 6.0
+    16759: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    16762: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    16765: putstatic net/minecraft/world/level/block/Blocks.DARK_PRISMARINE_SLAB:Lnet/minecraft/world/level/block/Block;
+    16768: getstatic net/minecraft/references/BlockItemIds.SEA_LANTERN:Lnet/minecraft/references/BlockItemId;
+    16771: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    16774: getstatic net/minecraft/world/level/material/MapColor.QUARTZ:Lnet/minecraft/world/level/material/MapColor;
+    16777: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+
+--- window @ line 5417
+    16795: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    16798: invokedynamic indy
+    16803: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.lightLevel:(Ljava/util/function/ToIntFunction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    16806: invokedynamic indy
+    16811: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.isRedstoneConductor:(Lnet/minecraft/world/level/block/state/BlockBehaviour$StatePredicate;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    16814: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    16817: putstatic net/minecraft/world/level/block/Blocks.SEA_LANTERN:Lnet/minecraft/world/level/block/Block;
+    16820: getstatic net/minecraft/references/BlockItemIds.HAY_BLOCK:Lnet/minecraft/references/BlockItemId;
+    16823: invokedynamic indy
+    16828: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+
+--- window @ line 7925
+    24581: getstatic net/minecraft/world/level/block/SoundType.ANVIL:Lnet/minecraft/world/level/block/SoundType;
+    24584: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24587: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+    24590: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.pushReaction:(Lnet/minecraft/world/level/material/PushReaction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24593: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    24596: putstatic net/minecraft/world/level/block/Blocks.BELL:Lnet/minecraft/world/level/block/Block;
+    24599: getstatic net/minecraft/references/BlockItemIds.LANTERN:Lnet/minecraft/references/BlockItemId;
+    24602: invokedynamic indy
+    24607: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24610: getstatic net/minecraft/world/level/material/MapColor.METAL:Lnet/minecraft/world/level/material/MapColor;
+
+--- window @ line 7933
+    24607: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24610: getstatic net/minecraft/world/level/material/MapColor.METAL:Lnet/minecraft/world/level/material/MapColor;
+    24613: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24616: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.forceSolidOn:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24619: ldc_w float 3.5
+    24622: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24625: getstatic net/minecraft/world/level/block/SoundType.LANTERN:Lnet/minecraft/world/level/block/SoundType;
+    24628: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24631: invokedynamic indy
+    24636: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.lightLevel:(Ljava/util/function/ToIntFunction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+
+--- window @ line 7941
+    24631: invokedynamic indy
+    24636: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.lightLevel:(Ljava/util/function/ToIntFunction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24639: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noOcclusion:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24642: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+    24645: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.pushReaction:(Lnet/minecraft/world/level/material/PushReaction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24648: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    24651: putstatic net/minecraft/world/level/block/Blocks.LANTERN:Lnet/minecraft/world/level/block/Block;
+    24654: getstatic net/minecraft/references/BlockItemIds.SOUL_LANTERN:Lnet/minecraft/references/BlockItemId;
+    24657: invokedynamic indy
+    24662: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+
+--- window @ line 7942
+    24636: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.lightLevel:(Ljava/util/function/ToIntFunction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24639: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noOcclusion:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24642: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+    24645: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.pushReaction:(Lnet/minecraft/world/level/material/PushReaction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24648: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    24651: putstatic net/minecraft/world/level/block/Blocks.LANTERN:Lnet/minecraft/world/level/block/Block;
+    24654: getstatic net/minecraft/references/BlockItemIds.SOUL_LANTERN:Lnet/minecraft/references/BlockItemId;
+    24657: invokedynamic indy
+    24662: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24665: getstatic net/minecraft/world/level/material/MapColor.METAL:Lnet/minecraft/world/level/material/MapColor;
+
+--- window @ line 7950
+    24662: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24665: getstatic net/minecraft/world/level/material/MapColor.METAL:Lnet/minecraft/world/level/material/MapColor;
+    24668: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24671: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.forceSolidOn:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24674: ldc_w float 3.5
+    24677: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24680: getstatic net/minecraft/world/level/block/SoundType.LANTERN:Lnet/minecraft/world/level/block/SoundType;
+    24683: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24686: invokedynamic indy
+    24691: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.lightLevel:(Ljava/util/function/ToIntFunction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+
+--- window @ line 7958
+    24686: invokedynamic indy
+    24691: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.lightLevel:(Ljava/util/function/ToIntFunction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24694: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noOcclusion:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24697: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+    24700: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.pushReaction:(Lnet/minecraft/world/level/material/PushReaction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24703: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    24706: putstatic net/minecraft/world/level/block/Blocks.SOUL_LANTERN:Lnet/minecraft/world/level/block/Block;
+    24709: getstatic net/minecraft/references/BlockItemIds.COPPER_LANTERN:Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+    24712: invokedynamic indy
+    24717: invokedynamic indy
+
+--- window @ line 7959
+    24691: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.lightLevel:(Ljava/util/function/ToIntFunction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24694: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noOcclusion:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24697: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+    24700: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.pushReaction:(Lnet/minecraft/world/level/material/PushReaction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24703: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    24706: putstatic net/minecraft/world/level/block/Blocks.SOUL_LANTERN:Lnet/minecraft/world/level/block/Block;
+    24709: getstatic net/minecraft/references/BlockItemIds.COPPER_LANTERN:Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+    24712: invokedynamic indy
+    24717: invokedynamic indy
+    24722: invokedynamic indy
+
+--- window @ line 7965
+    24709: getstatic net/minecraft/references/BlockItemIds.COPPER_LANTERN:Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+    24712: invokedynamic indy
+    24717: invokedynamic indy
+    24722: invokedynamic indy
+    24727: invokedynamic indy
+    24732: invokestatic net/minecraft/world/level/block/WeatheringCopperCollection.registerBlocks:(Lnet/minecraft/world/level/block/WeatheringCopperCollection;Lorg/apache/commons/lang3/function/TriFunction;Ljava/util/function/BiFunction;Ljava/util/function/BiFunction;Ljava/util/function/Function;)Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+    24735: putstatic net/minecraft/world/level/block/Blocks.COPPER_LANTERN:Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+    24738: getstatic net/minecraft/references/BlockItemIds.CAMPFIRE:Lnet/minecraft/references/BlockItemId;
+    24741: invokedynamic indy
+    24746: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+
+
+=== LanternBlock: canSurvive + updateShape + isPathfindable
+--- net.minecraft.world.level.block.LanternBlock.canSurvive(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;)Z
+0: aload_1
+1: invokestatic net/minecraft/world/level/block/LanternBlock.getConnectedDirection:(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/core/Direction;
+4: invokevirtual net/minecraft/core/Direction.getOpposite:()Lnet/minecraft/core/Direction;
+7: astore astore 4
+9: aload_2
+10: aload_3
+11: aload aload 4
+13: invokevirtual net/minecraft/core/BlockPos.relative:(Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;
+16: aload aload 4
+18: invokevirtual net/minecraft/core/Direction.getOpposite:()Lnet/minecraft/core/Direction;
+21: invokestatic net/minecraft/world/level/block/Block.canSupportCenter:(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Z
+24: ireturn
+--- net.minecraft.world.level.block.LanternBlock.updateShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/world/level/ScheduledTickAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;)Lnet/minecraft/world/level/block/state/BlockState;
+0: aload_1
+1: getstatic net/minecraft/world/level/block/LanternBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+4: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+7: checkcast java/lang/Boolean
+10: invokevirtual java/lang/Boolean.booleanValue:()Z
+13: ifeq -> 34
+16: aload_3
+17: aload aload 4
+19: getstatic net/minecraft/world/level/material/Fluids.WATER:Lnet/minecraft/world/level/material/FlowingFluid;
+22: getstatic net/minecraft/world/level/material/Fluids.WATER:Lnet/minecraft/world/level/material/FlowingFluid;
+25: aload_2
+26: invokevirtual net/minecraft/world/level/material/FlowingFluid.getTickDelay:(Lnet/minecraft/world/level/LevelReader;)I
+29: invokeinterface net/minecraft/world/level/ScheduledTickAccess.scheduleTick:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/material/Fluid;I)V
+32: iconst_1
+33: nop
+34: aload_1
+35: invokestatic net/minecraft/world/level/block/LanternBlock.getConnectedDirection:(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/core/Direction;
+38: invokevirtual net/minecraft/core/Direction.getOpposite:()Lnet/minecraft/core/Direction;
+41: aload aload 5
+43: if_acmpne -> 63
+46: aload_1
+47: aload_2
+48: aload aload 4
+50: invokevirtual net/minecraft/world/level/block/state/BlockState.canSurvive:(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;)Z
+53: ifne -> 63
+56: getstatic net/minecraft/world/level/block/Blocks.AIR:Lnet/minecraft/world/level/block/Block;
+59: invokevirtual net/minecraft/world/level/block/Block.defaultBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+62: areturn
+63: aload_0
+64: aload_1
+65: aload_2
+66: aload_3
+67: aload aload 4
+69: aload aload 5
+71: aload aload 6
+73: aload aload 7
+75: aload aload 8
+77: invokespecial net/minecraft/world/level/block/Block.updateShape:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/world/level/ScheduledTickAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;)Lnet/minecraft/world/level/block/state/BlockState;
+80: areturn
+--- net.minecraft.world.level.block.LanternBlock.isPathfindable(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/pathfinder/PathComputationType;)Z
+0: iconst_0
+1: ireturn
+--- net.minecraft.world.level.block.LanternBlock.getFluidState(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/material/FluidState;
+0: aload_1
+1: getstatic net/minecraft/world/level/block/LanternBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+4: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+7: checkcast java/lang/Boolean
+10: invokevirtual java/lang/Boolean.booleanValue:()Z
+13: ifeq -> 24
+16: getstatic net/minecraft/world/level/material/Fluids.WATER:Lnet/minecraft/world/level/material/FlowingFluid;
+19: iconst_0
+20: invokevirtual net/minecraft/world/level/material/FlowingFluid.getSource:(Z)Lnet/minecraft/world/level/material/FluidState;
+23: areturn
+24: aload_0
+25: aload_1
+26: invokespecial net/minecraft/world/level/block/Block.getFluidState:(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/material/FluidState;
+29: areturn
+
+=== the lightLevel lambdas: (BlockState)I bodies near the lantern rows
+  plain-constant light lambdas: 0
+
+=== bootstrap lambdas the lightLevel indy calls (lantern rows)
+  net.minecraft.world.level.block.Blocks$1 exists (1044 bytes)
+  net.minecraft.world.level.block.state.BlockBehaviour$Properties$1 ABSENT
+
+=== the lanterns tag + the copper collection registration window
+  block/lanterns: {"values": ["minecraft:lantern", "minecraft:soul_lantern", "minecraft:copper_lantern", "minecraft:exposed_copper_lantern", "minecraft:weathered_copper_lantern", "minecraft:oxidized_copper_lantern", "minecraft:waxed_copper_lantern", "minecraft:waxed_exposed_copper_lantern", "minecraft:waxed_weathered_copper_lantern", "minecraft:waxed_oxidized_copper_lantern"]}
+
+=== sounds archive entries
+   data/minecraft/tags/block/triggers_ambient_desert_dry_vegetation_block_sounds.json
+   data/minecraft/tags/block/triggers_ambient_desert_sand_block_sounds.json
+   data/minecraft/tags/block/triggers_ambient_dried_ghast_block_sounds.json
+  sounds.njb ERR "There is no item named 'assets/minecraft/sounds.njb' in the archive"
+
+=== SoundType.LANTERN row (the pitch/volume constants the client's voices wear)
+--- net.minecraft.world.level.block.SoundType.<clinit>()V
+--- SoundType clinit window @ LANTERN (line 296)
+    720: getstatic net/minecraft/sounds/SoundEvents.LANTERN_HIT:Lnet/minecraft/sounds/SoundEvent;
+    723: getstatic net/minecraft/sounds/SoundEvents.LANTERN_FALL:Lnet/minecraft/sounds/SoundEvent;
+    726: invokespecial net/minecraft/world/level/block/SoundType.<init>:(FFLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;)V
+    729: putstatic net/minecraft/world/level/block/SoundType.LANTERN:Lnet/minecraft/world/level/block/SoundType;
+    732: new net/minecraft/world/level/block/SoundType
+    735: dup
+    736: fconst_1
+    737: fconst_1
+    738: getstatic net/minecraft/sounds/SoundEvents.STEM_BREAK:Lnet/minecraft/sounds/SoundEvent;
+    741: getstatic net/minecraft/sounds/SoundEvents.STEM_STEP:Lnet/minecraft/sounds/SoundEvent;
+    744: getstatic net/minecraft/sounds/SoundEvents.STEM_PLACE:Lnet/minecraft/sounds/SoundEvent;
+    747: getstatic net/minecraft/sounds/SoundEvents.STEM_HIT:Lnet/minecraft/sounds/SoundEvent;
+    750: getstatic net/minecraft/sounds/SoundEvents.STEM_FALL:Lnet/minecraft/sounds/SoundEvent;
+    753: invokespecial net/minecraft/world/level/block/SoundType.<init>:(FFLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;)V
+    756: putstatic net/minecraft/world/level/block/SoundType.STEM:Lnet/minecraft/world/level/block/SoundType;
+    759: new net/minecraft/world/level/block/SoundType
+    762: dup
+
+=== weathering copper: the collection registration walk (LANTERN window)
+
+=== lantern_hanging + copper models the waxed twins re-wear
+--- block/lantern_hanging: parent=minecraft:block/template_hanging_lantern textures={'lantern': 'minecraft:block/lantern'}
+--- block/soul_lantern_hanging: parent=minecraft:block/template_hanging_lantern textures={'lantern': 'minecraft:block/soul_lantern'}
+--- block/weathered_copper_lantern: parent=minecraft:block/template_lantern textures={'lantern': 'minecraft:block/weathered_copper_lantern'}
+--- block/oxidized_copper_lantern: parent=minecraft:block/template_lantern textures={'lantern': 'minecraft:block/oxidized_copper_lantern'}

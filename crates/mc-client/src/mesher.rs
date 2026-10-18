@@ -275,6 +275,16 @@ fn is_transparent(kind: u16) -> bool {
         // chain lane's own walk renders — the hanging link the light
         // passes through)
         || crate::world::is_chain(kind)
+        // THE LANTERN FAMILY the same verdict keeps (the dev-61 round
+        // — javap the Blocks clinit the LANTERN row pc 24639 the
+        // noOcclusion() call the chain speaks [the SOUL_LANTERN row
+        // pc 24694 the same call wears, the copper collection the
+        // lambda$static$308 chain pc 32 the same row banks]: the ten
+        // kinds the non-occluding compound the neighbors' faces draw
+        // against, the AO the opaque walk never casts, the element
+        // quads the lantern lane's own walk renders — the standing
+        // body + top + hooks the cell's own light serves)
+        || crate::world::is_lantern(kind)
 }
 
 /// Only opaque blocks cast ambient occlusion (air/water/leaves never darken
@@ -4718,6 +4728,158 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     }
                     continue;
                 }
+                // THE LANTERN'S OWN ELEMENT LANE (the dev-61 round —
+                // javap LanternBlock the 26.2 jar the probe
+                // scripts/jar_work/lantern_689.py banks): the
+                // blockstate the hanging pair carries (hanging=false
+                // the block/{name} standing model banks, hanging=true
+                // the block/{name}_hanging the ceiling model wears,
+                // the waxed twins the BASE models the references
+                // re-wear), the template pair the body [5,0,5]->
+                // [11,7,11] + top [6,7,6]->[10,9,10] boxes the SHAPE
+                // pair mirrors + the two hook planes the ±45° y-axis
+                // rotations speak (shade: false every hook face
+                // keeps), the derive walk the element quads bakes.
+                // The lightmap the cell's own answer the chain lane's
+                // own setup serves, the per-quad tile the resolved
+                // stem the kind's own master banks (the waxed twins
+                // the BASE masters re-wear — the texture-sharing law
+                // the vanilla waxed look keeps), the OPAQUE flags the
+                // binary cutout rides (the {0: 450, 255: 318} alpha
+                // every lantern wears), the DOWN CULLFACE the body's
+                // bottom face carries the below cell the cull verdict
+                // reads (the candle lane's own law the ground seam
+                // keeps).
+                if crate::world::is_lantern(id) {
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let (cell_sky, cell_block) = match light {
+                        Some(l) => {
+                            let (s, b) = cell_layers(l, world.chunks_per_side, wx, wy, wz);
+                            (s.map(|v| v as f32), b.map(|v| v as f32))
+                        }
+                        None => (None, None),
+                    };
+                    // THE HANGING BYTE'S OWN VARIANT (the placed byte
+                    // the HANGING vocabulary wears — the default 0 the
+                    // registerDefaultState's HANGING=false pin keeps)
+                    let hanging = world.variant(wx, wy, wz);
+                    let lantern_quads = lantern_model_quads(id, hanging);
+                    // the no-atlas boot's own default — the tile's own
+                    // pixels speak, the flat palette the missing row
+                    // keeps (the candle path's own verdict)
+                    let tile = if (id as usize) < atlas::N_KINDS {
+                        atlas::FACE_TILES[id as usize][2]
+                    } else {
+                        atlas::TILE_NONE
+                    };
+                    let base = if tile == atlas::TILE_NONE {
+                        crate::colors::palette_color(id, 2)
+                            .or_else(|| lut.and_then(|l| l.color(id, 2)))
+                            .unwrap_or_else(|| default_color(id, 2))
+                    } else {
+                        [1.0; 3]
+                    };
+                    // THE DOWN CULL'S OWN READ — the below cell the
+                    // cullface verdict samples (the vanilla cullface
+                    // law: the neighbor's face the solid render
+                    // answers)
+                    let below = world.get(wx, wy - 1, wz);
+                    for q in lantern_quads {
+                        if q.cullface == Some(mc_registry::element_quads::Direction::Down)
+                            && !is_transparent(below)
+                        {
+                            continue; // the body's bottom the solid ground never shows
+                        }
+                        // THE SHADE TERM'S OWN READ — the body
+                        // elements' shade:true the vanilla tesselation's
+                        // direction table answers (the FACE_SHADE
+                        // constants the cube path wears; the hooks'
+                        // shade:false the flat light keeps — the
+                        // template's own law the rotated plane wears)
+                        let face_shade = if q.shade {
+                            match q.direction {
+                                mc_registry::element_quads::Direction::Up => 1.0f32,
+                                mc_registry::element_quads::Direction::Down => 0.5,
+                                mc_registry::element_quads::Direction::North
+                                | mc_registry::element_quads::Direction::South => 0.8,
+                                mc_registry::element_quads::Direction::West
+                                | mc_registry::element_quads::Direction::East => 0.6,
+                            }
+                        } else {
+                            1.0
+                        };
+                        let mut pts = [[0f32; 3]; 4];
+                        let mut colors = [[0f32; 3]; 4];
+                        let mut uvs = [[0f32; 2]; 4];
+                        for (i, v) in q.vertices.iter().enumerate() {
+                            pts[i] = [
+                                wx as f32 + v[0],
+                                wy as f32 + v[1],
+                                wz as f32 + v[2],
+                            ];
+                            // the texel-space uv the /16 fold normalizes
+                            // (the atlas tile the top 16x16 frame the
+                            // first-frame read banks — the model UVs
+                            // the v<=15 band the frame never leaves)
+                            uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
+                            let lm = lightmap_combine(
+                                cell_sky,
+                                cell_block,
+                                sky_factor,
+                                sky_tint,
+                                ambient,
+                                block_tint,
+                                night_vision,
+                                world.night_vision_factor,
+                                world.darkness_scale,
+                            );
+                            colors[i] = [
+                                base[0] * lm[0] * face_shade,
+                                base[1] * lm[1] * face_shade,
+                                base[2] * lm[2] * face_shade,
+                            ];
+                        }
+                        out.push(Quad {
+                            pts,
+                            colors,
+                            uvs,
+                            tile,
+                            translucent: false,
+                            per_texel_alpha: false,
+                        });
+                    }
+                    continue;
+                }
                 // THE END PORTAL'S OWN ARM (the dev-29 round — the
                 // starry volume the special pass draws: the
                 // EndPortalRenderer's own cube the shader law serves,
@@ -6200,6 +6362,60 @@ fn empty_pane_models() -> &'static std::collections::HashMap<&'static str, Vec<D
     static EMPTY: std::sync::OnceLock<std::collections::HashMap<&'static str, Vec<DerivedQuad>>> =
         std::sync::OnceLock::new();
     EMPTY.get_or_init(std::collections::HashMap::new)
+}
+
+/// THE LANTERN MODELS' OWN CACHED BAKES (the dev-61 round — the
+/// kind's own blockstate the VARIANTS walk parses, the hanging entry
+/// the placed byte selects, the derive walk the element quads bakes
+/// ONCE per (kind, hanging)): the jar-driven walk the hardcoded model
+/// lists retires — the blockstate row's OWN variants the entry list
+/// carries (the hanging=false identity + the hanging=true pair the
+/// probe's blockstate walk speaks, the waxed twins the BASE models
+/// the blockstate references wear), the derived quads the
+/// element_quads walk bakes (the template's body + top boxes the
+/// shade:true table shades, the hook planes' ±45° y rotations the
+/// Rodrigues fold answers, the zero-width plane geometry the
+/// chain lane's own law serves). The unknown (kind, hanging) the
+/// empty slice keeps (the honest not-our-domain).
+fn lantern_model_quads(kind: u16, hanging: u8) -> &'static [mc_registry::element_quads::Quad] {
+    static BAKES: std::sync::OnceLock<
+        std::collections::HashMap<(u16, u8), Vec<mc_registry::element_quads::Quad>>,
+    > = std::sync::OnceLock::new();
+    BAKES.get_or_init(|| {
+        let mut map = std::collections::HashMap::new();
+        // THE TEN KINDS the explicit seats the palette tail banks
+        // (the constant rows the blockstate parse reads — the seat
+        // ladder the hanging pair's own walk keeps)
+        for k in crate::world::LANTERN_KINDS {
+            let name = crate::world::NAME_OF[k as usize];
+            let Some(Ok(mc_registry::blockstate_lookup::Definition::Variants(entries))) =
+                mc_registry::blockstate_lookup::parse(name)
+            else {
+                continue;
+            };
+            for (key, applies) in entries {
+                // THE HANGING KEY'S OWN SEAT (the "hanging=false"/
+                // "hanging=true" entries the variant byte maps: 0 the
+                // standing pair keeps, 1 the hanging pair wears)
+                let hanging = match key {
+                    "hanging=false" => crate::world::LANTERN_STANDING,
+                    "hanging=true" => crate::world::LANTERN_HANGING,
+                    _ => continue,
+                };
+                let Some(apply) = applies.first() else {
+                    continue;
+                };
+                let model_id = apply.model.trim_start_matches("minecraft:");
+                let quads = mc_registry::element_quads::derive_model_inherited(model_id)
+                    .unwrap_or_default();
+                map.insert((k, hanging), quads);
+            }
+        }
+        map
+    })
+    .get(&(kind, hanging))
+    .map(Vec::as_slice)
+    .unwrap_or(&[])
 }
 
 /// THE CHAIN MODELS' OWN CACHED BAKES (the dev-60 round — the kind's
@@ -10376,6 +10592,167 @@ mod tests {
         assert_eq!(
             waxed.len(),
             lone.len(),
+            "the waxed twin the BASE models the blockstate references render"
+        );
+    }
+
+    #[test]
+    fn the_lantern_lane_renders_the_boxes_the_hooks_and_the_hanging_pair_wear() {
+        // THE LANTERN LANE'S OWN LAWS (the dev-61 round — javap
+        // LanternBlock the 26.2 jar the probe scripts/jar_work/
+        // lantern_689.py banks): the blockstates the TEN the hanging
+        // pair carry (the hanging=false identity + the hanging=true
+        // pair), the template pair the body [5,0,5]->[11,7,11] +
+        // top [6,7,6]->[10,9,10] boxes the SHAPE mirrors + the two
+        // hook planes the ±45° y-axis rotations speak (shade:false
+        // every hook face keeps), the waxed twins the BASE models
+        // the references re-wear, the DOWN CULLFACE the body's
+        // bottom face carries the below cell the cull verdict reads
+        use mc_registry::generated::atlas as gen_atlas;
+        let lantern_tile = gen_atlas::FACE_TILES[crate::world::LANTERN as usize][2];
+        let soul_tile = gen_atlas::FACE_TILES[crate::world::SOUL_LANTERN as usize][2];
+        let copper_tile = gen_atlas::FACE_TILES[crate::world::COPPER_LANTERN as usize][2];
+        assert_eq!(gen_atlas::tile_name(lantern_tile), "lantern");
+        assert_eq!(gen_atlas::tile_name(soul_tile), "soul_lantern");
+        assert_ne!(lantern_tile, soul_tile, "the two voices the DISTINCT masters wear");
+        assert_ne!(
+            copper_tile, lantern_tile,
+            "the bare copper rung the DISTINCT master wears"
+        );
+        // THE WAXED TWIN THE BASE MASTER RE-WEARS (the texture-
+        // sharing law the vanilla waxed look keeps)
+        assert_eq!(
+            gen_atlas::FACE_TILES[crate::world::WAXED_COPPER_LANTERN as usize][2],
+            copper_tile,
+            "the waxed head the bare master re-wears"
+        );
+        // THE STANDING LANTERN (the hanging=false default the
+        // unstamped cell wears — the body's five faces the DOWN
+        // CULLFACE the solid ground culls, the top box's five faces
+        // + the two hook planes' four quads the element walk bakes:
+        // 5 + 5 + 4 = 14 quads on the solid floor)
+        let mut w = empty_world();
+        put(&mut w, 8, 7, 8, crate::world::STONE); // the support the body's down face culls against
+        put(&mut w, 8, 8, 8, crate::world::LANTERN);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let standing: Vec<_> = q
+            .iter()
+            .filter(|quad| quad.tile == lantern_tile)
+            .collect();
+        assert_eq!(
+            standing.len(),
+            14,
+            "the standing lantern the body+top+hooks census wears, got {}",
+            standing.len()
+        );
+        for quad in &standing {
+            assert!(!quad.translucent, "the lantern the OPAQUE pass rides");
+            assert!(!quad.per_texel_alpha, "the lantern the binary cutout wears");
+        }
+        // THE BODY + TOP BOXES' OWN SPANS (the SHAPE pair the
+        // template mirrors: the body y 0..7/16, the top y 7..9/16 —
+        // the x/z the body's 5..11/16 band the center hug keeps)
+        let mut y_min = f32::MAX;
+        let mut y_max = f32::MIN;
+        for quad in &standing {
+            for p in quad.pts.iter() {
+                y_min = y_min.min(p[1]);
+                y_max = y_max.max(p[1]);
+            }
+        }
+        assert!(
+            ((y_min - 8.0).abs() < 1e-5) && ((y_max - (8.0 + 11.0 / 16.0)).abs() < 1e-5),
+            "the standing pair the 0..11/16 y span the body+top+hooks union keeps, got {y_min}..{y_max}"
+        );
+        let mut x_min = f32::MAX;
+        let mut x_max = f32::MIN;
+        for quad in &standing {
+            for p in quad.pts.iter() {
+                x_min = x_min.min(p[0]);
+                x_max = x_max.max(p[0]);
+            }
+        }
+        assert!(
+            ((x_min - (8.0 + 5.0 / 16.0)).abs() < 1e-5)
+                && ((x_max - (8.0 + 11.0 / 16.0)).abs() < 1e-5),
+            "the body band the 5..11/16 x span keeps, got {x_min}..{x_max}"
+        );
+        // THE FLOATING LANTERN THE DOWN FACE SHOWS (the cullface the
+        // transparent-below verdict the sixth face draws: 15 quads
+        // the census wears)
+        let mut wf = empty_world();
+        put(&mut wf, 8, 8, 8, crate::world::LANTERN);
+        let qf = mesh_chunk(&wf, 0, 0, None);
+        let floating: Vec<_> = qf
+            .iter()
+            .filter(|quad| quad.tile == lantern_tile)
+            .collect();
+        assert_eq!(
+            floating.len(),
+            15,
+            "the floating lantern the down face the sixth face draws, got {}",
+            floating.len()
+        );
+        // THE HANGING PAIR THE ONE-PIXEL LIFT WEARS (the hanging=true
+        // variant the placed byte wears — the body y 1..8/16 band
+        // + the top 8..10/16 [the template's own DOWN face the
+        // body's neck the ceiling lamp renders] + the hooks the
+        // 10..16 span the template pair serves: 6 + 6 + 2 + 2 = 16
+        // quads the census keeps [the below air the BOTH down faces
+        // draw], the y span the 1..16/16 band the ceiling lamp rides)
+        let mut wh = empty_world();
+        put(&mut wh, 8, 8, 8, crate::world::LANTERN);
+        wh.set_variant(8, 8, 8, crate::world::LANTERN_HANGING);
+        let qh = mesh_chunk(&wh, 0, 0, None);
+        let hanging: Vec<_> = qh
+            .iter()
+            .filter(|quad| quad.tile == lantern_tile)
+            .collect();
+        assert_eq!(
+            hanging.len(),
+            16,
+            "the hanging lantern the template's own census the lifted pair wears, got {}",
+            hanging.len()
+        );
+        let mut hy_min = f32::MAX;
+        let mut hy_max = f32::MIN;
+        for quad in &hanging {
+            for p in quad.pts.iter() {
+                hy_min = hy_min.min(p[1]);
+                hy_max = hy_max.max(p[1]);
+            }
+        }
+        assert!(
+            ((hy_min - (8.0 + 1.0 / 16.0)).abs() < 1e-5) && ((hy_max - 9.0).abs() < 1e-5),
+            "the hanging pair the 1..16/16 y span the ceiling lamp keeps, got {hy_min}..{hy_max}"
+        );
+        // THE SOUL + COPPER KINDS THEIR OWN MASTERS RENDER (the iron
+        // seam the soul flame the bare rung the distinct tiles wear)
+        let mut w2 = empty_world();
+        put(&mut w2, 8, 8, 8, crate::world::SOUL_LANTERN);
+        let q2 = mesh_chunk(&w2, 0, 0, None);
+        assert_eq!(
+            q2.iter().filter(|quad| quad.tile == soul_tile).count(),
+            15,
+            "the soul lantern its own master renders"
+        );
+        let mut w3 = empty_world();
+        put(&mut w3, 8, 8, 8, crate::world::COPPER_LANTERN);
+        let q3 = mesh_chunk(&w3, 0, 0, None);
+        assert_eq!(
+            q3.iter().filter(|quad| quad.tile == copper_tile).count(),
+            15,
+            "the copper lantern its own master renders"
+        );
+        // THE WAXED TWIN THE BASE GEOMETRY RENDERS (the BASE models
+        // the blockstate references wear — the waxed head the same
+        // count the bare rung keeps)
+        let mut w4 = empty_world();
+        put(&mut w4, 8, 8, 8, crate::world::WAXED_COPPER_LANTERN);
+        let q4 = mesh_chunk(&w4, 0, 0, None);
+        assert_eq!(
+            q4.iter().filter(|quad| quad.tile == copper_tile).count(),
+            15,
             "the waxed twin the BASE models the blockstate references render"
         );
     }
