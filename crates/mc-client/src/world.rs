@@ -3559,6 +3559,262 @@ pub fn stairs_variant_half(v: u8) -> bool {
     (v >> 2) & 0b1 != 0
 }
 
+// THE SLAB FAMILY'S OWN SEATS (the dev-63 round — the 68 kinds the
+// vanilla registration order the clinit rows speak: the head walk the
+// resin/prismarine rows bank, the wooden ladder the oak..warped rows
+// wear, the stone walk the stone..cinnabar rows keep, the copper
+// ladder the collection walk registers, the deepslate quartet the
+// tail wears).
+pub const RESIN_BRICK_SLAB: u16 = 669;
+pub const PRISMARINE_SLAB: u16 = 670;
+pub const PRISMARINE_BRICK_SLAB: u16 = 671;
+pub const DARK_PRISMARINE_SLAB: u16 = 672;
+pub const OAK_SLAB: u16 = 673;
+pub const SPRUCE_SLAB: u16 = 674;
+pub const BIRCH_SLAB: u16 = 675;
+pub const JUNGLE_SLAB: u16 = 676;
+pub const ACACIA_SLAB: u16 = 677;
+pub const CHERRY_SLAB: u16 = 678;
+pub const DARK_OAK_SLAB: u16 = 679;
+pub const PALE_OAK_SLAB: u16 = 680;
+pub const MANGROVE_SLAB: u16 = 681;
+pub const BAMBOO_SLAB: u16 = 682;
+pub const BAMBOO_MOSAIC_SLAB: u16 = 683;
+pub const STONE_SLAB: u16 = 684;
+pub const SMOOTH_STONE_SLAB: u16 = 685;
+pub const SANDSTONE_SLAB: u16 = 686;
+pub const CUT_SANDSTONE_SLAB: u16 = 687;
+pub const PETRIFIED_OAK_SLAB: u16 = 688;
+pub const COBBLESTONE_SLAB: u16 = 689;
+pub const BRICK_SLAB: u16 = 690;
+pub const STONE_BRICK_SLAB: u16 = 691;
+pub const MUD_BRICK_SLAB: u16 = 692;
+pub const NETHER_BRICK_SLAB: u16 = 693;
+pub const QUARTZ_SLAB: u16 = 694;
+pub const RED_SANDSTONE_SLAB: u16 = 695;
+pub const CUT_RED_SANDSTONE_SLAB: u16 = 696;
+pub const PURPUR_SLAB: u16 = 697;
+pub const POLISHED_GRANITE_SLAB: u16 = 698;
+pub const SMOOTH_RED_SANDSTONE_SLAB: u16 = 699;
+pub const MOSSY_STONE_BRICK_SLAB: u16 = 700;
+pub const POLISHED_DIORITE_SLAB: u16 = 701;
+pub const MOSSY_COBBLESTONE_SLAB: u16 = 702;
+pub const END_STONE_BRICK_SLAB: u16 = 703;
+pub const SMOOTH_SANDSTONE_SLAB: u16 = 704;
+pub const SMOOTH_QUARTZ_SLAB: u16 = 705;
+pub const GRANITE_SLAB: u16 = 706;
+pub const ANDESITE_SLAB: u16 = 707;
+pub const RED_NETHER_BRICK_SLAB: u16 = 708;
+pub const POLISHED_ANDESITE_SLAB: u16 = 709;
+pub const DIORITE_SLAB: u16 = 710;
+pub const CRIMSON_SLAB: u16 = 711;
+pub const WARPED_SLAB: u16 = 712;
+pub const BLACKSTONE_SLAB: u16 = 713;
+pub const POLISHED_BLACKSTONE_BRICK_SLAB: u16 = 714;
+pub const POLISHED_BLACKSTONE_SLAB: u16 = 715;
+pub const TUFF_SLAB: u16 = 716;
+pub const POLISHED_TUFF_SLAB: u16 = 717;
+pub const TUFF_BRICK_SLAB: u16 = 718;
+pub const SULFUR_SLAB: u16 = 719;
+pub const POLISHED_SULFUR_SLAB: u16 = 720;
+pub const SULFUR_BRICK_SLAB: u16 = 721;
+pub const CINNABAR_SLAB: u16 = 722;
+pub const POLISHED_CINNABAR_SLAB: u16 = 723;
+pub const CINNABAR_BRICK_SLAB: u16 = 724;
+pub const CUT_COPPER_SLAB: u16 = 725;
+pub const EXPOSED_CUT_COPPER_SLAB: u16 = 726;
+pub const WEATHERED_CUT_COPPER_SLAB: u16 = 727;
+pub const OXIDIZED_CUT_COPPER_SLAB: u16 = 728;
+pub const WAXED_CUT_COPPER_SLAB: u16 = 729;
+pub const WAXED_EXPOSED_CUT_COPPER_SLAB: u16 = 730;
+pub const WAXED_WEATHERED_CUT_COPPER_SLAB: u16 = 731;
+pub const WAXED_OXIDIZED_CUT_COPPER_SLAB: u16 = 732;
+pub const COBBLED_DEEPSLATE_SLAB: u16 = 733;
+pub const POLISHED_DEEPSLATE_SLAB: u16 = 734;
+pub const DEEPSLATE_TILE_SLAB: u16 = 735;
+pub const DEEPSLATE_BRICK_SLAB: u16 = 736;
+
+/// THE SLAB FAMILY'S OWN SEAT LADDER (the dev-63 round — the 68 kinds
+/// the explicit seats the tail banks, the vanilla registration order
+/// the clinit rows speak: the head walk the resin/prismarine rows
+/// bank, the copper ladder the collection walk registers, the
+/// deepslate quartet the tail wears): the mesher's slab lane and the
+/// family fns the ladder read.
+pub const SLAB_KINDS: [u16; 68] = [
+    RESIN_BRICK_SLAB,
+    PRISMARINE_SLAB,
+    PRISMARINE_BRICK_SLAB,
+    DARK_PRISMARINE_SLAB,
+    OAK_SLAB,
+    SPRUCE_SLAB,
+    BIRCH_SLAB,
+    JUNGLE_SLAB,
+    ACACIA_SLAB,
+    CHERRY_SLAB,
+    DARK_OAK_SLAB,
+    PALE_OAK_SLAB,
+    MANGROVE_SLAB,
+    BAMBOO_SLAB,
+    BAMBOO_MOSAIC_SLAB,
+    STONE_SLAB,
+    SMOOTH_STONE_SLAB,
+    SANDSTONE_SLAB,
+    CUT_SANDSTONE_SLAB,
+    PETRIFIED_OAK_SLAB,
+    COBBLESTONE_SLAB,
+    BRICK_SLAB,
+    STONE_BRICK_SLAB,
+    MUD_BRICK_SLAB,
+    NETHER_BRICK_SLAB,
+    QUARTZ_SLAB,
+    RED_SANDSTONE_SLAB,
+    CUT_RED_SANDSTONE_SLAB,
+    PURPUR_SLAB,
+    POLISHED_GRANITE_SLAB,
+    SMOOTH_RED_SANDSTONE_SLAB,
+    MOSSY_STONE_BRICK_SLAB,
+    POLISHED_DIORITE_SLAB,
+    MOSSY_COBBLESTONE_SLAB,
+    END_STONE_BRICK_SLAB,
+    SMOOTH_SANDSTONE_SLAB,
+    SMOOTH_QUARTZ_SLAB,
+    GRANITE_SLAB,
+    ANDESITE_SLAB,
+    RED_NETHER_BRICK_SLAB,
+    POLISHED_ANDESITE_SLAB,
+    DIORITE_SLAB,
+    CRIMSON_SLAB,
+    WARPED_SLAB,
+    BLACKSTONE_SLAB,
+    POLISHED_BLACKSTONE_BRICK_SLAB,
+    POLISHED_BLACKSTONE_SLAB,
+    TUFF_SLAB,
+    POLISHED_TUFF_SLAB,
+    TUFF_BRICK_SLAB,
+    SULFUR_SLAB,
+    POLISHED_SULFUR_SLAB,
+    SULFUR_BRICK_SLAB,
+    CINNABAR_SLAB,
+    POLISHED_CINNABAR_SLAB,
+    CINNABAR_BRICK_SLAB,
+    CUT_COPPER_SLAB,
+    EXPOSED_CUT_COPPER_SLAB,
+    WEATHERED_CUT_COPPER_SLAB,
+    OXIDIZED_CUT_COPPER_SLAB,
+    WAXED_CUT_COPPER_SLAB,
+    WAXED_EXPOSED_CUT_COPPER_SLAB,
+    WAXED_WEATHERED_CUT_COPPER_SLAB,
+    WAXED_OXIDIZED_CUT_COPPER_SLAB,
+    COBBLED_DEEPSLATE_SLAB,
+    POLISHED_DEEPSLATE_SLAB,
+    DEEPSLATE_TILE_SLAB,
+    DEEPSLATE_BRICK_SLAB,
+];
+
+/// THE SLAB TYPE'S OWN VARIANT VOCABULARY (the dev-63 round — the
+/// SlabType enum the client's own byte wears: the enum constants' own
+/// ordinals the clinit walk banks — TOP the 0 ordinal keeps, BOTTOM
+/// the 1, DOUBLE the 2 — the client's own byte the PLACEMENT walk's
+/// semantic answer: 0 the bottom slab the registerDefaultState pin
+/// keeps [the vanilla's own TOP/BOTTOM/DOUBLE enum order the
+/// blockstate keys never wear — the client's byte the bottom-first
+/// default the placement walk stamps], 1 the top slab the
+/// clicked-ceiling arm banks, 2 the double slab the same-kind pair
+/// completion wears).
+pub const SLAB_TYPE_BOTTOM: u8 = 0;
+pub const SLAB_TYPE_TOP: u8 = 1;
+pub const SLAB_TYPE_DOUBLE: u8 = 2;
+
+/// THE SLAB VARIANT'S OWN PACK (the type byte the whole variant the
+/// placement walk stamps — the WATERLOGGED property the client's own
+/// vocabulary never carries: the blockstate's own three-key map the
+/// variants JSON banks [type=bottom/top/double, no waterlogged keys
+/// the generated table speaks]). The no-opinion 0 byte the
+/// registerDefaultState's BOTTOM pin wears.
+#[inline]
+pub fn slab_variant(slab_type: u8) -> u8 {
+    slab_type
+}
+
+/// THE SLAB VARIANT'S OWN TYPE READ (the byte the identity unpack
+/// answers — the no-opinion 0 the BOTTOM default keeps).
+#[inline]
+pub fn slab_variant_type(v: u8) -> u8 {
+    v & 0b11
+}
+
+/// THE SLAB FAMILY'S OWN RANGE (the 68 seats the registration walk
+/// the ladder answers — the kind-only predicates the range reads).
+#[inline]
+pub fn is_slab(id: u16) -> bool {
+    (RESIN_BRICK_SLAB..=DEEPSLATE_BRICK_SLAB).contains(&id)
+}
+
+/// THE COPPER SLAB FAMILY'S OWN RUNGS (the 8 seats the collection
+/// walk registers — the waxed pair the base rows the waxed law
+/// wears, the dig/voice rows the parent's own copper answer keeps).
+#[inline]
+pub fn is_copper_slab(id: u16) -> bool {
+    (CUT_COPPER_SLAB..=WAXED_OXIDIZED_CUT_COPPER_SLAB).contains(&id)
+}
+
+/// THE SLAB PLACEMENT'S OWN TYPE WALK (the dev-63 round — javap
+/// SlabBlock.getStateForPlacement pc 0-156 the 26.2 jar the
+/// clicked-face walk speaks: face DOWN the TOP arm pc 103-139 banks,
+/// face UP the BOTTOM fall pc 111-116 keeps, the side faces the
+/// `clickLocation.y - pos.getY() > 0.5` boundary pc 119-136 the
+/// dcmpl/ifle fold answers — the trapdoor arm's own hit walk the
+/// same law keeps [the face byte the 0=down/1=up/2..5 horizontal
+/// vocabulary the stairs half walk shares, the y-frac the clicked
+/// block's own span the side faces speak]). The FIRST branch pc
+/// 14-48 the same-slab cell the DOUBLE completion serves — the
+/// canBeReplaced verdict the [`slab_can_replace`] walk gates, the
+/// same cell the stamp the DOUBLE byte banks.
+#[inline]
+pub fn slab_placement_type(face: u8, y_frac_in_cell: f64) -> u8 {
+    match face {
+        0 => SLAB_TYPE_TOP,    // the ceiling click the TOP half answers
+        1 => SLAB_TYPE_BOTTOM, // the floor click the BOTTOM half keeps
+        _ => {
+            if y_frac_in_cell > 0.5 {
+                SLAB_TYPE_TOP
+            } else {
+                SLAB_TYPE_BOTTOM
+            }
+        }
+    }
+}
+
+/// THE SLAB CAN-BE-REPLACED WALK (the dev-63 round — javap
+/// SlabBlock.canBeReplaced pc 0-150 the 26.2 jar the doubling walk
+/// verbatim: the type != DOUBLE gate pc 17-22 the pair completion
+/// keeps [the double slab the vanilla's own refusal the fresh-cell
+/// placement answers], the same-kind item gate pc 25-33 the held
+/// slab verdict reads, the BOTTOM arm pc 86-118 the face==UP OR the
+/// upper-half side-click true verdict banks [the y-frac flag pc
+/// 45-73 the click location's own span answers, the horizontal-axis
+/// gate pc 102-110 the side faces the upper half walks], the TOP
+/// arm pc 119-148 the face==DOWN OR the lower-half side-click
+/// mirrors — the completing click the pair the same cell the
+/// vanilla's own replaceClicked law keeps, the fresh-cell
+/// placement the adjacent cell the type walk banks).
+#[inline]
+pub fn slab_can_replace(
+    clicked_type: u8,
+    held_is_same_slab: bool,
+    face: u8,
+    y_frac_in_clicked_cell: f64,
+) -> bool {
+    if clicked_type == SLAB_TYPE_DOUBLE || !held_is_same_slab {
+        return false;
+    }
+    let upper_half = y_frac_in_clicked_cell > 0.5;
+    match clicked_type {
+        SLAB_TYPE_BOTTOM => face == 1 || (face >= 2 && upper_half),
+        _ => face == 0 || (face >= 2 && !upper_half),
+    }
+}
+
 /// THE COPPER BARS FAMILY'S OWN SEAT LADDER (the dev-59 round — the
 /// 8 kinds the explicit seats the tail banks, the PREFIXES order the
 /// collection walk speaks): the mesher's pane lane and the family
@@ -4244,7 +4500,7 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 /// generated tables' own rows the names wire) — the
 /// END_PORTAL
 /// the beyond-table seat the displaced law keeps.
-pub const NAME_OF: [&str; 669] = [
+pub const NAME_OF: [&str; 737] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -4977,6 +5233,35 @@ pub const NAME_OF: [&str; 669] = [
     "waxed_oxidized_cut_copper_stairs", "cobbled_deepslate_stairs",
     "polished_deepslate_stairs", "deepslate_tile_stairs",
     "deepslate_brick_stairs",
+    // THE SLAB FAMILY'S OWN NAMES (the dev-63 round — the 68 rows
+    // the vanilla registration order the palette tail banks, the
+    // dig/sound/drop/place lanes the generated tables' own rows the
+    // names wire)
+    "resin_brick_slab", "prismarine_slab", "prismarine_brick_slab",
+    "dark_prismarine_slab", "oak_slab", "spruce_slab", "birch_slab",
+    "jungle_slab", "acacia_slab", "cherry_slab", "dark_oak_slab",
+    "pale_oak_slab", "mangrove_slab", "bamboo_slab", "bamboo_mosaic_slab",
+    "stone_slab", "smooth_stone_slab", "sandstone_slab",
+    "cut_sandstone_slab", "petrified_oak_slab", "cobblestone_slab",
+    "brick_slab", "stone_brick_slab", "mud_brick_slab",
+    "nether_brick_slab", "quartz_slab", "red_sandstone_slab",
+    "cut_red_sandstone_slab", "purpur_slab", "polished_granite_slab",
+    "smooth_red_sandstone_slab", "mossy_stone_brick_slab",
+    "polished_diorite_slab", "mossy_cobblestone_slab",
+    "end_stone_brick_slab", "smooth_sandstone_slab",
+    "smooth_quartz_slab", "granite_slab", "andesite_slab",
+    "red_nether_brick_slab", "polished_andesite_slab", "diorite_slab",
+    "crimson_slab", "warped_slab", "blackstone_slab",
+    "polished_blackstone_brick_slab", "polished_blackstone_slab",
+    "tuff_slab", "polished_tuff_slab", "tuff_brick_slab",
+    "sulfur_slab", "polished_sulfur_slab", "sulfur_brick_slab",
+    "cinnabar_slab", "polished_cinnabar_slab", "cinnabar_brick_slab",
+    "cut_copper_slab", "exposed_cut_copper_slab",
+    "weathered_cut_copper_slab", "oxidized_cut_copper_slab",
+    "waxed_cut_copper_slab", "waxed_exposed_cut_copper_slab",
+    "waxed_weathered_cut_copper_slab", "waxed_oxidized_cut_copper_slab",
+    "cobbled_deepslate_slab", "polished_deepslate_slab",
+    "deepslate_tile_slab", "deepslate_brick_slab",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -8362,6 +8647,17 @@ pub fn collision_shape(id: u16) -> CollisionShape {
         // [`stairs_shape_of`] walk the compound answers, the steps
         // the [`stairs_step_slabs`] walk the roster serves.
         CollisionShape::Stairs(0)
+    } else if is_slab(id) {
+        // THE SLAB FAMILY'S OWN KIND-ONLY ROW (the dev-63 round —
+        // the TYPE property the placement stamps the kind-only table
+        // never sees, the BOTTOM slab the conservative subset keeps:
+        // the full-footprint 0..8 band the placement's obstruction
+        // walk consumes — the registerDefaultState's own BOTTOM pin
+        // the default state answers, the SHAPE_BOTTOM's
+        // column(16.0, 0.0, 8.0) fold the band speaks). The placed
+        // state the variant-aware lane the variant byte the
+        // TOP/DOUBLE arms answer.
+        CollisionShape::YSpan(0, 8)
     } else if is_bamboo_stalk(id) {
         // THE STALK'S OWN INSET ROW (the autopush-608 round — javap
         // BambooStalkBlock.getCollisionShape pc 0-11 the 26.2 jar: the
@@ -8684,6 +8980,27 @@ pub fn collision_shape_at(world: &World, cx: i32, cy: i32, cz: i32) -> Collision
         let half_top = stairs_variant_half(sv);
         let shape = stairs_shape_of(world, cx, cy, cz, facing, half_top);
         return CollisionShape::Stairs(facing | ((half_top as u8) << 2) | (shape << 3));
+    }
+    // THE SLAB FAMILY'S OWN VARIANT-AWARE ROW (the dev-63 round —
+    // javap SlabBlock.getShape pc 0-69 the 26.2 jar the tableswitch
+    // the TYPE ordinal answers: the BOTTOM state the SHAPE_BOTTOM
+    // column(16.0, 0.0, 8.0) the 0..8 band banks, the TOP the
+    // SHAPE_TOP column(16.0, 8.0, 16.0) the 8..16 band wears, the
+    // DOUBLE the Shapes.block() the full cube answers — the collision
+    // the getShape's own trio serves [no getCollisionShape override
+    // the class speaks, the visual shape the collision the same walk
+    // banks]). The variant byte the sidecar reads, the
+    // [`shape_slabs`] YSpan decode the bands serve, the DOUBLE the
+    // default full-cube arm the kind-only row never reaches.
+    if is_slab(id) {
+        return match slab_variant_type(world.variant(cx, cy, cz)) {
+            SLAB_TYPE_TOP => CollisionShape::YSpan(8, 16),
+            // the DOUBLE the Shapes.block() the full cube the
+            // getShape's own third arm banks — the kind-only row the
+            // variant-blind default never consults
+            SLAB_TYPE_DOUBLE => CollisionShape::Full,
+            _ => CollisionShape::YSpan(0, 8),
+        };
     }
     if !is_door(id) {
         return collision_shape(id);
@@ -17118,7 +17435,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the lamp pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 669, "the palette the lamp pair banks");
+        assert_eq!(atlas::N_KINDS, 737, "the palette the lamp pair banks");
         assert!(is_redstone_lamp(REDSTONE_LAMP) && is_redstone_lamp(REDSTONE_LAMP_LIT));
         assert!(!is_redstone_lamp(REDSTONE_WIRE) && !is_redstone_lamp(STONE));
         assert!(!redstone_lamp_lit(REDSTONE_LAMP));
@@ -17215,7 +17532,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the wire pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 669, "the palette the wire pair banks");
+        assert_eq!(atlas::N_KINDS, 737, "the palette the wire pair banks");
         assert!(is_redstone_wire(REDSTONE_WIRE) && is_redstone_wire(REDSTONE_WIRE_ON));
         assert!(!is_redstone_wire(LEVER) && !is_redstone_wire(OAK_PRESSURE_PLATE));
         assert!(!wire_powered(REDSTONE_WIRE));
@@ -17369,7 +17686,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 669, "the palette the graded ladder banks");
+        assert_eq!(atlas::N_KINDS, 737, "the palette the graded ladder banks");
         // THE POWER READ'S OWN ROUND TRIP (the seat the kind the
         // inverse fold answers, the unknown id the None keeps)
         assert_eq!(wire_power_of(REDSTONE_WIRE), Some(0));
@@ -17556,7 +17873,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the planks' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 669, "the palette the planks' twelve banks");
+        assert_eq!(atlas::N_KINDS, 737, "the palette the planks' twelve banks");
         for (i, (name, kind, voice)) in PLANKS.iter().enumerate() {
             let seat = OAK_PLANKS + i as u16;
             assert_eq!(*kind, seat, "the seat the family order banks");
@@ -17648,7 +17965,7 @@ mod tests {
             None,
             "the portal the item lane refuses"
         );
-        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -17702,7 +18019,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kit's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 669, "the palette the kit's six banks");
+        assert_eq!(atlas::N_KINDS, 737, "the palette the kit's six banks");
         for (i, (name, kind, hard)) in KIT.iter().enumerate() {
             let seat = COBBLESTONE + i as u16;
             assert_eq!(*kind, seat, "the seat the stone shelf order banks");
@@ -17792,7 +18109,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kit's growth banks)
-        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -17849,7 +18166,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the shelf's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 669, "the palette the shelf's eight banks");
+        assert_eq!(atlas::N_KINDS, 737, "the palette the shelf's eight banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -17947,7 +18264,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the shelf's growth banks)
-        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -18016,7 +18333,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the cloths' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 669, "the palette the cloths' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 737, "the palette the cloths' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -18130,7 +18447,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the cloths' growth banks)
-        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -18205,7 +18522,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kilns' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 669, "the palette the kilns' seventeen banks");
+        assert_eq!(atlas::N_KINDS, 737, "the palette the kilns' seventeen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -18317,7 +18634,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kilns' growth banks)
-        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -18393,7 +18710,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 669, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 737, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -18510,7 +18827,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -18595,7 +18912,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 669, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 737, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -18746,7 +19063,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -18820,7 +19137,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 669, "the palette the ladder's twenty-two banks");
+        assert_eq!(atlas::N_KINDS, 737, "the palette the ladder's twenty-two banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -19009,7 +19326,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the ladder's growth banks)
-        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -19070,7 +19387,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the note's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 669, "the palette the note's own banks");
+        assert_eq!(atlas::N_KINDS, 737, "the palette the note's own banks");
         // THE ONE REGISTRY NAME ITS KIND ALONE SPEAKS (the NAME_OF row
         // + the generated KIND_NAMES/REGISTRY_NAMES rows the same
         // entry the three tables keep — no strip law the single kind
@@ -19381,7 +19698,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the note's growth banks)
-        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -19422,8 +19739,8 @@ mod tests {
             "the contiguous run the thirteen seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 669, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 737, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in OAK_FENCE..=NETHER_BRICK_FENCE {
@@ -19836,8 +20153,8 @@ mod tests {
             "the contiguous run the thirty-two seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 669, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 737, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in COBBLESTONE_WALL..=SULFUR_BRICK_WALL {
@@ -20176,8 +20493,8 @@ mod tests {
             "the contiguous run the seventeen seats wear"
         );
         assert_eq!(SULFUR_BRICK_WALL, 542, "the wall family the tail answers");
-        assert_eq!(atlas::N_KINDS, 669, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 737, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in GLASS..=BLACK_STAINED_GLASS {
@@ -20372,8 +20689,8 @@ mod tests {
             "the pane run the seventeen seats wear"
         );
         assert_eq!(BLACK_STAINED_GLASS, 559, "the glass family the tail answers");
-        assert_eq!(atlas::N_KINDS, 669, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 737, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in GLASS_PANE..=IRON_BARS {
@@ -20674,8 +20991,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_BARS, 585,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 669, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 737, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in COPPER_BARS..=WAXED_OXIDIZED_COPPER_BARS {
@@ -20995,8 +21312,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_CHAIN, 594,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 669, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 737, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in IRON_CHAIN..=WAXED_OXIDIZED_COPPER_CHAIN {
@@ -21294,8 +21611,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_LANTERN, 604,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 669, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 737, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in LANTERN..=WAXED_OXIDIZED_COPPER_LANTERN {
@@ -21774,8 +22091,8 @@ mod tests {
             DEEPSLATE_BRICK_STAIRS, 668,
             "the deepslate brick row the family's last seat keeps"
         );
-        assert_eq!(atlas::N_KINDS, 669, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 737, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in OAK_STAIRS..=DEEPSLATE_BRICK_STAIRS {
@@ -22106,6 +22423,422 @@ mod tests {
     }
 
     #[test]
+    fn the_slab_familys_own_types_the_pair_walk_and_the_slab_voices_wear() {
+        // THE SLAB FAMILY'S OWN LAWS (the dev-63 round — javap
+        // SlabBlock the 26.2 jar the probe scripts/jar_work/
+        // slab_691.py banks): the TYPE + WATERLOGGED properties the
+        // registerDefaultState pins (BOTTOM the default state wears),
+        // the <clinit> pc 23-48 the SHAPE pair speaks (SHAPE_BOTTOM
+        // = column(16.0, 0.0, 8.0) the 0..8 band banks, SHAPE_TOP =
+        // column(16.0, 8.0, 16.0) the upper half wears, the DOUBLE
+        // Shapes.block() the full cube answers), getStateForPlacement
+        // pc 0-156 the clicked-face walk banks (face DOWN the TOP
+        // arm, face UP the BOTTOM fall, the side faces the
+        // `clickLocation.y - pos.getY() > 0.5` boundary, the FIRST
+        // branch the same-slab cell the DOUBLE completion speaks),
+        // canBeReplaced pc 0-150 the doubling walk verbatim, useShape
+        // ForLightOcclusion the type!=DOUBLE verdict, the 61 clinit
+        // rows + the copper collection the 68 kinds register — the
+        // vanilla registration order the palette tail banks
+        use mc_registry::generated::atlas;
+        // THE SIXTY-EIGHT SEATS' OWN BANK (the contiguous tail the
+        // append-only law keeps — the stairs family the predecessor
+        // answers)
+        assert_eq!(RESIN_BRICK_SLAB, 669, "the resin head its tail seat keeps");
+        assert_eq!(PRISMARINE_SLAB, 670, "the prismarine row the ladder banks");
+        assert_eq!(PRISMARINE_BRICK_SLAB, 671, "the prismarine brick row the ladder banks");
+        assert_eq!(DARK_PRISMARINE_SLAB, 672, "the dark prismarine row the ladder banks");
+        assert_eq!(OAK_SLAB, 673, "the wooden head its seat keeps");
+        assert_eq!(SPRUCE_SLAB, 674, "the spruce row the ladder banks");
+        assert_eq!(BIRCH_SLAB, 675, "the birch row the ladder banks");
+        assert_eq!(JUNGLE_SLAB, 676, "the jungle row the ladder banks");
+        assert_eq!(ACACIA_SLAB, 677, "the acacia row the ladder banks");
+        assert_eq!(CHERRY_SLAB, 678, "the cherry row the ladder banks");
+        assert_eq!(DARK_OAK_SLAB, 679, "the dark oak row the ladder banks");
+        assert_eq!(PALE_OAK_SLAB, 680, "the pale oak row the ladder banks");
+        assert_eq!(MANGROVE_SLAB, 681, "the mangrove row the ladder banks");
+        assert_eq!(BAMBOO_SLAB, 682, "the bamboo row the ladder banks");
+        assert_eq!(BAMBOO_MOSAIC_SLAB, 683, "the mosaic row the ladder banks");
+        assert_eq!(STONE_SLAB, 684, "the stone row the ladder banks");
+        assert_eq!(SMOOTH_STONE_SLAB, 685, "the smooth stone row the ladder banks");
+        assert_eq!(SANDSTONE_SLAB, 686, "the sandstone row the ladder banks");
+        assert_eq!(CUT_SANDSTONE_SLAB, 687, "the cut sandstone row the ladder banks");
+        assert_eq!(PETRIFIED_OAK_SLAB, 688, "the petrified row the ladder banks");
+        assert_eq!(COBBLESTONE_SLAB, 689, "the cobblestone row the ladder banks");
+        assert_eq!(BRICK_SLAB, 690, "the brick row the ladder banks");
+        assert_eq!(STONE_BRICK_SLAB, 691, "the stone brick row the ladder banks");
+        assert_eq!(MUD_BRICK_SLAB, 692, "the mud brick row the ladder banks");
+        assert_eq!(NETHER_BRICK_SLAB, 693, "the nether brick row the ladder banks");
+        assert_eq!(QUARTZ_SLAB, 694, "the quartz row the ladder banks");
+        assert_eq!(RED_SANDSTONE_SLAB, 695, "the red sandstone row the ladder banks");
+        assert_eq!(CUT_RED_SANDSTONE_SLAB, 696, "the cut red sandstone row the ladder banks");
+        assert_eq!(PURPUR_SLAB, 697, "the purpur row the ladder banks");
+        assert_eq!(POLISHED_GRANITE_SLAB, 698, "the polished granite row the ladder banks");
+        assert_eq!(
+            SMOOTH_RED_SANDSTONE_SLAB, 699,
+            "the smooth red sandstone row the ladder banks"
+        );
+        assert_eq!(
+            MOSSY_STONE_BRICK_SLAB, 700,
+            "the mossy stone brick row the ladder banks"
+        );
+        assert_eq!(
+            POLISHED_DIORITE_SLAB, 701,
+            "the polished diorite row the ladder banks"
+        );
+        assert_eq!(
+            MOSSY_COBBLESTONE_SLAB, 702,
+            "the mossy cobblestone row the ladder banks"
+        );
+        assert_eq!(
+            END_STONE_BRICK_SLAB, 703,
+            "the end stone brick row the ladder banks"
+        );
+        assert_eq!(
+            SMOOTH_SANDSTONE_SLAB, 704,
+            "the smooth sandstone row the ladder banks"
+        );
+        assert_eq!(
+            SMOOTH_QUARTZ_SLAB, 705,
+            "the smooth quartz row the ladder banks"
+        );
+        assert_eq!(GRANITE_SLAB, 706, "the granite row the ladder banks");
+        assert_eq!(ANDESITE_SLAB, 707, "the andesite row the ladder banks");
+        assert_eq!(
+            RED_NETHER_BRICK_SLAB, 708,
+            "the red nether brick row the ladder banks"
+        );
+        assert_eq!(
+            POLISHED_ANDESITE_SLAB, 709,
+            "the polished andesite row the ladder banks"
+        );
+        assert_eq!(DIORITE_SLAB, 710, "the diorite row the ladder banks");
+        assert_eq!(CRIMSON_SLAB, 711, "the crimson row the ladder banks");
+        assert_eq!(WARPED_SLAB, 712, "the warped row the ladder banks");
+        assert_eq!(BLACKSTONE_SLAB, 713, "the blackstone row the ladder banks");
+        assert_eq!(
+            POLISHED_BLACKSTONE_BRICK_SLAB, 714,
+            "the polished blackstone brick row the ladder banks"
+        );
+        assert_eq!(
+            POLISHED_BLACKSTONE_SLAB, 715,
+            "the polished blackstone row the ladder banks"
+        );
+        assert_eq!(TUFF_SLAB, 716, "the tuff row the ladder banks");
+        assert_eq!(
+            POLISHED_TUFF_SLAB, 717,
+            "the polished tuff row the ladder banks"
+        );
+        assert_eq!(TUFF_BRICK_SLAB, 718, "the tuff brick row the ladder banks");
+        assert_eq!(SULFUR_SLAB, 719, "the sulfur row the ladder banks");
+        assert_eq!(
+            POLISHED_SULFUR_SLAB, 720,
+            "the polished sulfur row the ladder banks"
+        );
+        assert_eq!(SULFUR_BRICK_SLAB, 721, "the sulfur brick row the ladder banks");
+        assert_eq!(CINNABAR_SLAB, 722, "the cinnabar row the ladder banks");
+        assert_eq!(
+            POLISHED_CINNABAR_SLAB, 723,
+            "the polished cinnabar row the ladder banks"
+        );
+        assert_eq!(
+            CINNABAR_BRICK_SLAB, 724,
+            "the cinnabar brick row the ladder banks"
+        );
+        assert_eq!(CUT_COPPER_SLAB, 725, "the copper head its seat keeps");
+        assert_eq!(
+            EXPOSED_CUT_COPPER_SLAB, 726,
+            "the exposed rung the collection banks"
+        );
+        assert_eq!(
+            WEATHERED_CUT_COPPER_SLAB, 727,
+            "the weathered rung the collection banks"
+        );
+        assert_eq!(
+            OXIDIZED_CUT_COPPER_SLAB, 728,
+            "the oxidized rung the collection banks"
+        );
+        assert_eq!(WAXED_CUT_COPPER_SLAB, 729, "the waxed rung the collection banks");
+        assert_eq!(
+            WAXED_EXPOSED_CUT_COPPER_SLAB, 730,
+            "the waxed exposed rung the collection banks"
+        );
+        assert_eq!(
+            WAXED_WEATHERED_CUT_COPPER_SLAB, 731,
+            "the waxed weathered rung the collection banks"
+        );
+        assert_eq!(
+            WAXED_OXIDIZED_CUT_COPPER_SLAB, 732,
+            "the waxed oxidized rung the collection banks"
+        );
+        assert_eq!(
+            COBBLED_DEEPSLATE_SLAB, 733,
+            "the cobbled deepslate row the ladder banks"
+        );
+        assert_eq!(
+            POLISHED_DEEPSLATE_SLAB, 734,
+            "the polished deepslate row the ladder banks"
+        );
+        assert_eq!(
+            DEEPSLATE_TILE_SLAB, 735,
+            "the deepslate tile row the ladder banks"
+        );
+        assert_eq!(
+            DEEPSLATE_BRICK_SLAB, 736,
+            "the deepslate brick row the family's last seat keeps"
+        );
+        assert_eq!(atlas::N_KINDS, 737, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
+        // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
+        // rows the same entry the three tables keep)
+        for k in RESIN_BRICK_SLAB..=DEEPSLATE_BRICK_SLAB {
+            assert_eq!(
+                NAME_OF[k as usize],
+                atlas::KIND_NAMES[k as usize],
+                "the KIND_NAMES row the family's kind {} keeps",
+                k
+            );
+            assert_eq!(
+                NAME_OF[k as usize],
+                atlas::REGISTRY_NAMES[k as usize],
+                "the REGISTRY_NAMES row the family's kind {} keeps",
+                k
+            );
+        }
+        // THE LADDER'S OWN CONTIGUITY (the SLAB_KINDS walk the
+        // 669..737 range the same order banks)
+        for (i, k) in SLAB_KINDS.iter().enumerate() {
+            assert_eq!(
+                *k,
+                RESIN_BRICK_SLAB + i as u16,
+                "the ladder seat {} the walk keeps",
+                i
+            );
+        }
+        assert!(is_slab(RESIN_BRICK_SLAB), "the head the kind read answers");
+        assert!(is_slab(DEEPSLATE_BRICK_SLAB), "the tail the kind read answers");
+        assert!(!is_slab(RESIN_BRICK_SLAB - 1), "the stairs tail the read refuses");
+        assert!(!is_slab(DEEPSLATE_BRICK_SLAB + 1), "beyond the tail the read refuses");
+        assert!(is_copper_slab(CUT_COPPER_SLAB));
+        assert!(is_copper_slab(WAXED_OXIDIZED_CUT_COPPER_SLAB));
+        assert!(
+            !is_copper_slab(CINNABAR_BRICK_SLAB),
+            "the non-copper the read refuses"
+        );
+        // THE VARIANT'S OWN PACK/UNPACK (the type byte the identity
+        // roundtrip keeps, the default state's BOTTOM pin the zero
+        // byte wears — the TYPE vocabulary the consts bank)
+        assert_eq!(SLAB_TYPE_BOTTOM, 0, "the bottom byte the default keeps");
+        assert_eq!(SLAB_TYPE_TOP, 1, "the top byte the ceiling arm wears");
+        assert_eq!(
+            SLAB_TYPE_DOUBLE, 2,
+            "the double byte the pair completion wears"
+        );
+        for t in [SLAB_TYPE_BOTTOM, SLAB_TYPE_TOP, SLAB_TYPE_DOUBLE] {
+            assert_eq!(
+                slab_variant_type(slab_variant(t)),
+                t,
+                "the type the roundtrip keeps"
+            );
+        }
+        // THE PLACEABLE LANES THE ITEMS TABLE BANKS (the 68 pairing
+        // rows the same names the placement walk grants)
+        for k in RESIN_BRICK_SLAB..=DEEPSLATE_BRICK_SLAB {
+            assert_eq!(
+                World::placeable_block(NAME_OF[k as usize]),
+                Some(k),
+                "the {} item the placement lane grants",
+                NAME_OF[k as usize]
+            );
+        }
+        // THE DIG ROWS (the generated table the REAL bootstrapped
+        // registry banks — the wooden rows the no-tool demand keeps,
+        // the stone walk the tool-required verdicts wear, the
+        // prismarine trio the 1.5 softness the rows speak, the copper
+        // ladder the ofFullCopy parent's own 3.0 the collection walk
+        // wears, the petrified the wood-hardness pickaxe row keeps)
+        let dig_expect: [(u16, f32, bool); 10] = [
+            (OAK_SLAB, 2.0, false),
+            (BAMBOO_SLAB, 2.0, false),
+            (CRIMSON_SLAB, 2.0, false),
+            (COBBLESTONE_SLAB, 2.0, true),
+            (STONE_SLAB, 2.0, true),
+            (PRISMARINE_SLAB, 1.5, true),
+            (CUT_COPPER_SLAB, 3.0, true),
+            (WAXED_OXIDIZED_CUT_COPPER_SLAB, 3.0, true),
+            (PETRIFIED_OAK_SLAB, 2.0, true),
+            (BLACKSTONE_SLAB, 2.0, true),
+        ];
+        for (k, hard, tool) in dig_expect {
+            let (h, t) = crate::dig::DigState::block_dig_row(k);
+            assert!(
+                (h - hard).abs() < 1e-4,
+                "the {} dig row the {} hardness wears, got {}",
+                NAME_OF[k as usize],
+                hard,
+                h
+            );
+            assert_eq!(
+                t, tool,
+                "the tool demand the {} row keeps",
+                NAME_OF[k as usize]
+            );
+        }
+        // THE VOICE LAWS THE FAMILY WEARS (the SoundType rows the
+        // generated table banks — the wooden rows block.wood.*, the
+        // bamboo pair block.bamboo_wood.*, the nether pair
+        // block.nether_wood.*, the cherry the cherry_wood row keeps,
+        // the mud/nether/resin brick rows the SoundType rows speak,
+        // the copper ladder block.copper.* the ofFullCopy parent's
+        // own voice wears, the no-sound stone rows the default
+        // block.stone voice keeps)
+        let voice_expect: [(u16, &str); 12] = [
+            (OAK_SLAB, "block.wood.break"),
+            (SPRUCE_SLAB, "block.wood.break"),
+            (BAMBOO_MOSAIC_SLAB, "block.bamboo_wood.break"),
+            (CRIMSON_SLAB, "block.nether_wood.break"),
+            (CHERRY_SLAB, "block.cherry_wood.break"),
+            (MUD_BRICK_SLAB, "block.mud_bricks.break"),
+            (NETHER_BRICK_SLAB, "block.nether_bricks.break"),
+            (RESIN_BRICK_SLAB, "block.resin_bricks.break"),
+            (CUT_COPPER_SLAB, "block.copper.break"),
+            (WAXED_CUT_COPPER_SLAB, "block.copper.break"),
+            (STONE_SLAB, "block.stone.break"),
+            (PRISMARINE_SLAB, "block.stone.break"),
+        ];
+        for (k, voice) in voice_expect {
+            let idx = mc_registry::generated::block_sounds::sound_index(NAME_OF[k as usize])
+                .unwrap_or_else(|| panic!("the {} sound row the table banks", NAME_OF[k as usize]));
+            assert_eq!(
+                mc_registry::generated::block_sounds::SOUND_BREAK[idx],
+                voice,
+                "the voice the kind {} break row speaks",
+                k
+            );
+        }
+        // THE DROP POOLS THE SELF-ENTRY LAW BANKS (the 68 kinds the
+        // one-pool drop the self-entry law wears)
+        for k in RESIN_BRICK_SLAB..=DEEPSLATE_BRICK_SLAB {
+            let name = NAME_OF[k as usize];
+            let pools = mc_registry::generated::block_drops::drops(name)
+                .unwrap_or_else(|| panic!("the {} drop pool the table banks", name));
+            assert_eq!(pools.len(), 1, "the {} the one-pool drop wears", name);
+            assert_eq!(
+                pools[0].entries[0].item, name,
+                "the {} drop the SELF-entry the slab law wears",
+                name
+            );
+        }
+        // THE COLLISION'S OWN TRIO (the SHAPE walk the getShape read
+        // answers: the kind-only row the BOTTOM band the conservative
+        // subset keeps, the variant-aware lane the BOTTOM the 0..8
+        // band banks, the TOP the 8..16 band wears, the DOUBLE the
+        // full cube answers — the full footprint every YSpan row
+        // keeps)
+        assert_eq!(collision_shape(OAK_SLAB), CollisionShape::YSpan(0, 8));
+        let mut w = World::blank(3, 0x6D42);
+        let c = w.size_blocks() / 2;
+        let y = 8;
+        w.set(c, y, c, OAK_SLAB);
+        w.set_variant(c, y, c, slab_variant(SLAB_TYPE_BOTTOM));
+        let shape = collision_shape_at(&w, c, y, c);
+        let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) =
+            shape_slabs(shape, c, y, c).expect("the bottom slab the slabs never refuse");
+        assert!(
+            ((x_lo - c as f64).abs() < 1e-9)
+                && ((x_hi - (c + 1) as f64).abs() < 1e-9)
+                && ((z_lo - c as f64).abs() < 1e-9)
+                && ((z_hi - (c + 1) as f64).abs() < 1e-9),
+            "the full footprint the bottom slab keeps, got {x_lo}..{x_hi}"
+        );
+        assert!(
+            ((y_lo - y as f64).abs() < 1e-9) && ((y_hi - (y as f64 + 0.5)).abs() < 1e-9),
+            "the 0..8 band the bottom slab keeps, got {y_lo}..{y_hi}"
+        );
+        w.set_variant(c, y, c, slab_variant(SLAB_TYPE_TOP));
+        let shape = collision_shape_at(&w, c, y, c);
+        assert_eq!(
+            shape,
+            CollisionShape::YSpan(8, 16),
+            "the top band the variant lane banks"
+        );
+        let (_x_lo, _x_hi, y_lo, y_hi, _z_lo, _z_hi) =
+            shape_slabs(shape, c, y, c).expect("the top slab the slabs never refuse");
+        assert!(
+            ((y_lo - (y as f64 + 0.5)).abs() < 1e-9)
+                && ((y_hi - (y as f64 + 1.0)).abs() < 1e-9),
+            "the 8..16 band the top slab keeps, got {y_lo}..{y_hi}"
+        );
+        w.set_variant(c, y, c, slab_variant(SLAB_TYPE_DOUBLE));
+        assert_eq!(
+            collision_shape_at(&w, c, y, c),
+            CollisionShape::Full,
+            "the double the full cube the variant lane banks"
+        );
+        // THE FACE FOOTPRINT THE FULL SPAN KEEPS (the YSpan rows the
+        // collision_face_footprint walk answers — the neighbor cull
+        // consult the full x/z footprint reads)
+        let fp = collision_face_footprint(&w, c, y, c, None);
+        assert_eq!(
+            fp,
+            Some((0.0, 1.0, 0.0, 1.0)),
+            "the full footprint the YSpan row keeps"
+        );
+        // THE TILE ROWS' OWN SEATS (the palette arm's side ref the ONE
+        // master the six slots bank — the oak the parent planks row
+        // wears, the smooth stone the slab_side special master banks,
+        // the sandstone the side arm keeps, the copper ladder the
+        // cut_copper rows the bare masters wear)
+        assert_eq!(
+            atlas::tile_name(atlas::FACE_TILES[OAK_SLAB as usize][2]),
+            "oak_planks",
+            "the oak slab the parent master banks"
+        );
+        assert_eq!(
+            atlas::tile_name(atlas::FACE_TILES[SMOOTH_STONE_SLAB as usize][2]),
+            "smooth_stone_slab_side",
+            "the smooth stone slab the OWN png the special master keeps"
+        );
+        assert_eq!(
+            atlas::tile_name(atlas::FACE_TILES[SANDSTONE_SLAB as usize][2]),
+            "sandstone",
+            "the sandstone slab the side arm keeps"
+        );
+        assert_eq!(
+            atlas::tile_name(atlas::FACE_TILES[CUT_COPPER_SLAB as usize][2]),
+            "cut_copper",
+            "the copper rung its bare master wears"
+        );
+        assert_eq!(
+            atlas::tile_name(atlas::FACE_TILES[WAXED_CUT_COPPER_SLAB as usize][2]),
+            "cut_copper",
+            "the waxed twin the bare master re-wears"
+        );
+        // THE SPLIT REFS' OWN TILES (the masters the split walk banks
+        // — the mesher's per-quad verdict the exact tiles reads)
+        assert!(
+            atlas::TILE_NAMES.iter().any(|n| *n == "sandstone_bottom"),
+            "the sandstone bottom split the walk banks"
+        );
+        assert!(
+            atlas::TILE_NAMES.iter().any(|n| *n == "sandstone_top"),
+            "the sandstone top split the walk banks"
+        );
+        assert!(
+            atlas::TILE_NAMES.iter().any(|n| *n == "quartz_block_bottom"),
+            "the quartz bottom split the walk banks"
+        );
+        assert!(
+            atlas::TILE_NAMES.iter().any(|n| *n == "quartz_block_top"),
+            "the quartz top split the walk banks"
+        );
+        assert!(
+            atlas::TILE_NAMES.iter().any(|n| *n == "blackstone_top"),
+            "the blackstone top split the walk banks"
+        );
+    }
+
+    #[test]
     fn the_redstone_torch_the_not_gate_and_the_source_arms_wear() {
         // THE REDSTONE TORCH'S OWN LAWS (the autopush-666 round — javap
         // RedstoneTorchBlock the 26.2 jar the probe scripts/jar_work/
@@ -22132,7 +22865,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the torch pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 669, "the palette the torch pair banks");
+        assert_eq!(atlas::N_KINDS, 737, "the palette the torch pair banks");
         assert!(is_redstone_torch(REDSTONE_TORCH) && is_redstone_torch(REDSTONE_TORCH_OFF));
         assert!(!is_redstone_torch(TORCH) && !is_redstone_torch(LEVER));
         assert!(redstone_torch_lit(REDSTONE_TORCH));
@@ -22273,7 +23006,7 @@ mod tests {
         assert_eq!(REDSTONE_WALL_TORCH, 324);
         assert_eq!(REDSTONE_WALL_TORCH_OFF, 325);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 669, "the palette the wall pair banks");
+        assert_eq!(atlas::N_KINDS, 737, "the palette the wall pair banks");
         assert!(
             is_redstone_torch(REDSTONE_WALL_TORCH) && is_redstone_torch(REDSTONE_WALL_TORCH_OFF),
             "the wall pair the family's tail banks"
@@ -22518,7 +23251,7 @@ mod tests {
         assert_eq!(OAK_TRAPDOOR_OPEN, 327);
         assert_eq!(END_PORTAL, 510);
         assert_eq!(
-            atlas::N_KINDS, 669,
+            atlas::N_KINDS, 737,
             "the palette the trapdoor pair banks"
         );
         assert_eq!(OAK_TRAPDOOR + 1, OAK_TRAPDOOR_OPEN, "the +1 mate wears");
@@ -22672,7 +23405,7 @@ mod tests {
         assert_eq!(END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-            669,
+            737,
             "the palette the gate pair banks"
         );
         assert_eq!(OAK_FENCE_GATE + 1, OAK_FENCE_GATE_OPEN, "the +1 mate wears");
@@ -22890,7 +23623,7 @@ mod tests {
         assert_eq!(WARPED_TRAPDOOR, 348);
         assert_eq!(WARPED_TRAPDOOR_OPEN, 349);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 669, "the palette the ladder banks");
+        assert_eq!(atlas::N_KINDS, 737, "the palette the ladder banks");
         // THE CONTIGUITY'S OWN LAW (the 22 kinds the range covers —
         // the neighbors the family fn refuses)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -23004,7 +23737,7 @@ mod tests {
         assert_eq!(IRON_TRAPDOOR, 366);
         assert_eq!(IRON_TRAPDOOR_OPEN, 367);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 669, "the palette the metal rungs bank");
+        assert_eq!(atlas::N_KINDS, 737, "the palette the metal rungs bank");
         // THE CONTIGUITY'S OWN LAW (the 42 kinds the range covers —
         // the waxed pairs the ±1 mate the parity answers)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -23375,7 +24108,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 669, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 737, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)

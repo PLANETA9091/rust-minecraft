@@ -37106,6 +37106,25 @@ impl App {
             )
             .expect("the stairs slab shape the slabs never refuse");
             (x_lo, y_lo, z_lo, x_hi, y_hi, z_hi)
+        } else if crate::world::is_slab(block) {
+            // THE SLAB'S OWN HALF BAND (the dev-63 round — the vanilla
+            // canPlace the PLACED state's own collision shape reads:
+            // the BOTTOM slab the conservative subset keeps [the TYPE
+            // property the pre-check walk never consults, the
+            // registerDefaultState's own BOTTOM pin the
+            // SHAPE_BOTTOM's column(16.0, 0.0, 8.0) the full-footprint
+            // 0..8 band banks — the slab-in-your-own-cell placement
+            // the half-cube band the player's box misses the vanilla's
+            // own half-height law allows, the stairs arm's own
+            // kind-only law the family wears])
+            let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) = crate::world::shape_slabs(
+                shape,
+                cell.0,
+                cell.1,
+                cell.2,
+            )
+            .expect("the slab band shape the slabs never refuse");
+            (x_lo, y_lo, z_lo, x_hi, y_hi, z_hi)
         } else if crate::world::is_fence_gate(block) {
             // THE CLOSED GATE'S OWN THIN PANEL (the dev-55 round — the
             // vanilla canPlace the SHAPE_COLLISION column(16.0, 4.0,
@@ -38310,11 +38329,36 @@ impl App {
         // rows never ride this arm (the NO-replaceable chains the
         // clinit speaks) — the tuft family the autopush-412 round
         // brings is the first consumer.
+        // THE SLAB'S OWN DOUBLING VERDICT (the dev-63 round — javap
+        // SlabBlock.canBeReplaced pc 0-150 the 26.2 jar the same-kind
+        // pair walk speaks: the clicked cell the SAME slab kind the
+        // held item wears, the type != DOUBLE gate the pair
+        // completion keeps, the BOTTOM arm the face==UP OR the
+        // upper-half side-click true verdict banks, the TOP arm the
+        // face==DOWN OR the lower-half side-click mirrors — the
+        // completing click the slab cell the vanilla's own
+        // replaceClicked law the placement target keeps [the
+        // getStateForPlacement's FIRST branch pc 14-48 the same cell
+        // the DOUBLE + WATERLOGGED=false state speaks], the
+        // non-completing click the adjacent cell the type walk
+        // banks). The verdict the cell walk + the stamp the DOUBLE
+        // byte the pair completion banks.
+        let slab_double_cell = self.active_world().is_some_and(|w| {
+            let clicked = w.get(hit.pos.0, hit.pos.1, hit.pos.2);
+            crate::world::is_slab(clicked)
+                && crate::world::slab_can_replace(
+                    crate::world::slab_variant_type(w.variant(hit.pos.0, hit.pos.1, hit.pos.2)),
+                    clicked == block,
+                    hit.face,
+                    hit.location.1 - hit.pos.1 as f64,
+                )
+        });
         let clicked_replaceable = self
             .active_world()
             .is_some_and(|w| {
                 crate::world::is_replaceable(w.get(hit.pos.0, hit.pos.1, hit.pos.2))
-            });
+            })
+            || slab_double_cell;
         let cell = if clicked_replaceable {
             hit.pos
         } else {
@@ -39037,6 +39081,38 @@ impl App {
                 };
                 let variant = crate::world::stairs_variant(facing, half_top);
                 world.set_variant(cell.0, cell.1, cell.2, variant);
+            }
+            // THE SLAB'S OWN PLACEMENT STAMP (the dev-63 round — javap
+            // SlabBlock.getStateForPlacement pc 0-156 the 26.2 jar the
+            // clicked-face walk speaks: the FIRST branch pc 14-48 the
+            // same-slab cell the DOUBLE + WATERLOGGED=false state
+            // serves [the canBeReplaced verdict the slab cell the
+            // placement target keeps — the pair completion the
+            // [`slab_double_cell`] verdict banks], the second walk pc
+            // 49-156 the fresh cell the TYPE by face banks (face DOWN
+            // the TOP arm pc 103-139, face UP the BOTTOM fall pc
+            // 111-116, the side faces the `clickLocation.y -
+            // pos.getY() > 0.5` boundary pc 119-136 — the TARGET cell's
+            // own span the side faces speak [the vanilla's own
+            // getClickedPos the placement pos reads], the y-frac the
+            // shared-face law the uniform walk keeps)). The variant
+            // byte the stamp banks, the mesher's type lane the byte
+            // selects, the collision's YSpan row the same byte serves.
+            if crate::world::is_slab(placed) {
+                if slab_double_cell {
+                    world.set_variant(
+                        cell.0,
+                        cell.1,
+                        cell.2,
+                        crate::world::slab_variant(crate::world::SLAB_TYPE_DOUBLE),
+                    );
+                } else {
+                    let slab_type = crate::world::slab_placement_type(
+                        hit.face,
+                        hit.location.1 - cell.1 as f64,
+                    );
+                    world.set_variant(cell.0, cell.1, cell.2, crate::world::slab_variant(slab_type));
+                }
             }
             world.ensure_light_current(); // the placed torch's own flood the set walk already spoke — the guard the never-lit world's compute keeps
             self.world_quads = Some(crate::mesher::mesh_world(world, None));
@@ -103740,7 +103816,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            669,
+            737,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -103821,7 +103897,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            669,
+            737,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -104123,7 +104199,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            669,
+            737,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -108053,7 +108129,7 @@ cow_sound_variant: None,
         // #texture ref banks)
         assert_eq!(
             atlas::N_KINDS,
-            669,
+            737,
             "the palette the weighted plates' own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
@@ -108273,7 +108349,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            669,
+            737,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
@@ -108550,7 +108626,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            669,
+            737,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
@@ -108666,7 +108742,7 @@ cow_sound_variant: None,
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE, 318);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, 319);
         assert_eq!(w::END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 669, "the palette the weighted rows bank");
+        assert_eq!(atlas::N_KINDS, 737, "the palette the weighted rows bank");
         for (off, on, name) in [
             (
                 w::LIGHT_WEIGHTED_PRESSURE_PLATE,
@@ -109780,7 +109856,7 @@ cow_sound_variant: None,
         assert_eq!(w::END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-            669,
+            737,
             "the palette the weighted plates' own rows bank"
         );
         for (off, on, name, wooden) in [

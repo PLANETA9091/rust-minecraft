@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 669] = [
+pub const RUNTIME_PALETTE: [&str; 737] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -2176,6 +2176,75 @@ pub const RUNTIME_PALETTE: [&str; 669] = [
     "waxed_oxidized_cut_copper_stairs", "cobbled_deepslate_stairs",
     "polished_deepslate_stairs", "deepslate_tile_stairs",
     "deepslate_brick_stairs",
+    // THE SLAB FAMILY'S OWN ROWS (the dev-63 round, the official
+    // 26.2 jar): javap SlabBlock the class header the TYPE +
+    // WATERLOGGED properties bank — the registerDefaultState pins
+    // TYPE=BOTTOM, the <clinit> pc 23-48 the SHAPE pair speaks
+    // (SHAPE_BOTTOM = column(16.0, 0.0, 8.0) the 0..8/16 band the
+    // bottom half banks, SHAPE_TOP = column(16.0, 8.0, 16.0) the
+    // upper half wears, the DOUBLE state Shapes.block() the full
+    // cube answers), getStateForPlacement pc 0-156 the clicked-face
+    // walk banks (face DOWN the TOP arm, face UP the BOTTOM fall,
+    // the side faces the `clickLocation.y - pos.y > 0.5` boundary —
+    // the FIRST branch the same-slab cell the DOUBLE completion
+    // speaks + WATERLOGGED=false pin), canBeReplaced pc 0-150 the
+    // doubling walk answers (the BOTTOM arm the face==UP OR the
+    // upper-half side-click true verdict, the TOP arm the face==DOWN
+    // OR the lower-half side-click — the same-kind item gate the
+    // pair completion keeps), useShapeForLightOcclusion the
+    // type!=DOUBLE verdict the half slabs the light the flood
+    // passes. javap the Blocks clinit the 61 slab rows the
+    // strength/sound chains speak (the wooden rows (2.0, 3.0) the
+    // WOOD/BAMBOO_WOOD/CHERRY_WOOD/NETHER_WOOD voices the
+    // ignitedByLava row keeps, the stone rows (2.0, 6.0) the
+    // requiresCorrectToolForDrops pickaxe verdicts bank, the
+    // prismarine trio (1.5, 6.0), the legacy rows the
+    // ofLegacyCopy/registerSlab parent copies wear), the
+    // CUT_COPPER_SLAB collection row pc 29302-29328 the
+    // WeatheringCopperSlabBlock walk registers (lambda$static$370
+    // the ofFullCopy(CUT_COPPER.weathering().pick(state)) the
+    // copper slab rows the parent's own (3.0, 6.0) + COPPER voice
+    // wears, the four waxed rungs the plain SlabBlock ctor the
+    // lambda$static$369 banks), the blockstates the 68 the SAME
+    // three-key type map carry (type=bottom/top/double — the waxed
+    // twins the BASE copper models re-wear, the smooth_stone_slab
+    // double the block/smooth_stone_slab_double special model
+    // wears, the petrified twin the block/oak_planks parent
+    // answers), the models block/slab + block/slab_top the element
+    // pair speak (the bottom [0,0,0]->[16,8,16] the down/up
+    // cullfaces the band banks, the top [0,8,0]->[16,16,16] the
+    // mirrored pair wears — the sandstone walk the bottom/side/top
+    // split rows keep, the smooth_stone_slab the slab_side special
+    // master the ONLY own png banks), the dig/sounds/drops rows the
+    // name-keyed generated tables the registry answers (the FULL
+    // 1196-block runtime dump the slab rows already bank), the
+    // placeable lane the Items pairing rows the generated items
+    // table banks.
+    "resin_brick_slab", "prismarine_slab", "prismarine_brick_slab",
+    "dark_prismarine_slab", "oak_slab", "spruce_slab", "birch_slab",
+    "jungle_slab", "acacia_slab", "cherry_slab", "dark_oak_slab",
+    "pale_oak_slab", "mangrove_slab", "bamboo_slab", "bamboo_mosaic_slab",
+    "stone_slab", "smooth_stone_slab", "sandstone_slab",
+    "cut_sandstone_slab", "petrified_oak_slab", "cobblestone_slab",
+    "brick_slab", "stone_brick_slab", "mud_brick_slab",
+    "nether_brick_slab", "quartz_slab", "red_sandstone_slab",
+    "cut_red_sandstone_slab", "purpur_slab", "polished_granite_slab",
+    "smooth_red_sandstone_slab", "mossy_stone_brick_slab",
+    "polished_diorite_slab", "mossy_cobblestone_slab",
+    "end_stone_brick_slab", "smooth_sandstone_slab",
+    "smooth_quartz_slab", "granite_slab", "andesite_slab",
+    "red_nether_brick_slab", "polished_andesite_slab", "diorite_slab",
+    "crimson_slab", "warped_slab", "blackstone_slab",
+    "polished_blackstone_brick_slab", "polished_blackstone_slab",
+    "tuff_slab", "polished_tuff_slab", "tuff_brick_slab",
+    "sulfur_slab", "polished_sulfur_slab", "sulfur_brick_slab",
+    "cinnabar_slab", "polished_cinnabar_slab", "cinnabar_brick_slab",
+    "cut_copper_slab", "exposed_cut_copper_slab",
+    "weathered_cut_copper_slab", "oxidized_cut_copper_slab",
+    "waxed_cut_copper_slab", "waxed_exposed_cut_copper_slab",
+    "waxed_weathered_cut_copper_slab", "waxed_oxidized_cut_copper_slab",
+    "cobbled_deepslate_slab", "polished_deepslate_slab",
+    "deepslate_tile_slab", "deepslate_brick_slab",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -3263,6 +3332,66 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             faces.push(resolve_flat_stem(&stem, false));
             continue;
         }
+        if block.ends_with("_slab") {
+            // THE SLAB FAMILY'S OWN PALETTE ARM (the dev-63 round,
+            // the official 26.2 jar): the blockstate is a VARIANTS
+            // map — the "type=bottom" entry the BASE model wears
+            // (block/{name} the parent-texture refs keep, the waxed
+            // twins the BASE copper models re-wear, the petrified
+            // twin the block/oak_planks parent answers) —
+            // resolve_block's full-cube six-face requirement cannot
+            // apply (the slab band element the half-height geometry
+            // never banks). The canonical entry's model is the
+            // palette row: its merged texture map's `side` ref
+            // (block/oak_planks the wooden rungs, block/stone the
+            // stone walk, block/cut_copper the copper ladder, the
+            // sandstone walk the side arm, block/smooth_stone_slab_
+            // side the ONE own png the special master keeps) is the
+            // palette row — the ONE master the six slots bank (the
+            // stairs arm's law the family keeps; the `bottom`/`top`
+            // split refs the mesher's per-quad verdict the exact
+            // tiles reads), tinted = false (the pre-colored masters
+            // carry NO tintindex). The atlas tile count the
+            // ZERO-or-append tail keeps — the slab's own pngs the
+            // jar banks ONE (smooth_stone_slab_side), the PARENT
+            // masters the existing tiles the rows re-wear, the kinds
+            // the palette tail banks (669 -> 737).
+            let bs_bytes = read_jar(
+                &mut archive,
+                &format!("assets/minecraft/blockstates/{block}.json"),
+            )?;
+            let bs: Value = serde_json::from_slice(&bs_bytes)
+                .with_context(|| format!("blockstate {block}: json parse"))?;
+            let variants = bs
+                .get("variants")
+                .and_then(|v| v.as_object())
+                .with_context(|| format!("blockstate {block}: no variants"))?;
+            let canon_entry = variants
+                .get("type=bottom")
+                .with_context(|| format!("blockstate {block}: no type=bottom variant"))?;
+            let model_ref = (if canon_entry.is_array() {
+                canon_entry.get(0)
+            } else {
+                Some(canon_entry)
+            })
+            .and_then(|a| a.get("model"))
+            .and_then(|m| m.as_str())
+            .map(|m| m.trim_start_matches("minecraft:").to_string())
+            .with_context(|| format!("blockstate {block}: no canonical model"))?;
+            let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
+                .with_context(|| format!("block {block}: model chain {model_ref}"))?;
+            let tex = tex_map
+                .get("side")
+                .or_else(|| tex_map.get("top"))
+                .or_else(|| tex_map.get("bottom"))
+                .with_context(|| format!("model {model_ref}: no side/top/bottom ref"))?;
+            let stem = tex
+                .trim_start_matches("minecraft:")
+                .trim_start_matches("block/")
+                .to_string();
+            faces.push(resolve_flat_stem(&stem, false));
+            continue;
+        }
         if block.ends_with("_stairs") {
             // THE STAIRS FAMILY'S OWN PALETTE ARM (the dev-62 round,
             // the official 26.2 jar): the blockstate is a VARIANTS map
@@ -4308,6 +4437,85 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         }
         face_tiles.push(ft);
         face_tints.push(tt);
+    }
+
+    // THE SLAB FAMILY'S OWN SPLIT REFS (the dev-63 round — the
+    // bottom/top models' split texture refs the mesher's per-quad
+    // verdict reads: the blackstone_slab walk the blackstone_top
+    // top/bottom pair banks, the quartz_slab the quartz_block_top
+    // top ref keeps, the sandstone/red_sandstone walks the
+    // bottom/top arms the earlier rounds' full-cube rows already
+    // bank, the smooth_stone_slab the slab_side special master the
+    // palette row's own stem answers). The palette arm's side row
+    // the ONE master banks, the OTHER refs the exact-tile law the
+    // mesher's stem walk serves — the jar-driven walk the
+    // blockstates -> models chain the real refs collects (never a
+    // hardcoded name): any stem the tile census misses APPENDS here
+    // (the palette order the walk speaks, the merged map's sorted
+    // keys the per-kind order keeps — the deterministic scenes the
+    // stable order banks), the existing indices stay byte-identical
+    // (the golden safety the append law keeps), the pre-colored
+    // masters ride no tint (the split refs NO tintindex carry).
+    for block in RUNTIME_PALETTE {
+        if !block.ends_with("_slab") {
+            continue;
+        }
+        let bs_bytes = read_jar(
+            &mut archive,
+            &format!("assets/minecraft/blockstates/{block}.json"),
+        )?;
+        let bs: Value = serde_json::from_slice(&bs_bytes)
+            .with_context(|| format!("blockstate {block}: json parse"))?;
+        let Some(variants) = bs.get("variants").and_then(|v| v.as_object()) else {
+            continue;
+        };
+        for key in ["type=top", "type=double"] {
+            let Some(entry) = variants.get(key) else {
+                continue;
+            };
+            let Some(model_ref) = (if entry.is_array() {
+                entry.get(0)
+            } else {
+                Some(entry)
+            })
+            .and_then(|a| a.get("model"))
+            .and_then(|m| m.as_str())
+            .map(|m| m.trim_start_matches("minecraft:").to_string())
+            else {
+                continue;
+            };
+            let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
+                .with_context(|| format!("block {block}: split model chain {model_ref}"))?;
+            let mut stems: Vec<String> = tex_map
+                .values()
+                .map(|tex| {
+                    tex.trim_start_matches("minecraft:")
+                        .trim_start_matches("block/")
+                        .to_string()
+                })
+                .collect();
+            stems.sort();
+            stems.dedup(); // the bottom/top split keys the SAME master the pair wears — the one-tile bank the dedup keeps
+            for stem in stems {
+                if tile_names.iter().any(|n| *n == stem) {
+                    continue; // the banked row the dedup the walk keeps
+                }
+                let raw = read_jar(
+                    &mut archive,
+                    &format!("assets/minecraft/textures/block/{stem}.png"),
+                )
+                .with_context(|| format!("texture block/{stem}.png (slab {block} {key})"))?;
+                let (w, h, rgba) = decode_rgba(&raw)?;
+                let (w, h, rgba) = first_frame(w, h, &rgba);
+                if w != 16 || h != 16 {
+                    bail!("texture {stem}: expected 16x16 (first frame), got {w}x{h}");
+                }
+                let mut bytes = rgba;
+                bake_tint(&mut bytes, tint_for_texture(&stem));
+                tile_names.push(stem.clone());
+                tile_bytes.push(bytes);
+            }
+        }
     }
 
     // THE FARMLAND'S WET FACE — the moisture=7 variant's own model the

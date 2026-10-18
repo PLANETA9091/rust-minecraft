@@ -1,0 +1,911 @@
+=== SlabBlock.canBeReplaced (the doubling walk)
+--- net.minecraft.world.level.block.SlabBlock.canBeReplaced(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/item/context/BlockPlaceContext;)Z
+0: aload_2
+1: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getItemInHand:()Lnet/minecraft/world/item/ItemStack;
+4: astore_3
+5: aload_1
+6: getstatic net/minecraft/world/level/block/SlabBlock.TYPE:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+9: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+12: checkcast net/minecraft/world/level/block/state/properties/SlabType
+15: astore astore 4
+17: aload aload 4
+19: getstatic net/minecraft/world/level/block/state/properties/SlabType.DOUBLE:Lnet/minecraft/world/level/block/state/properties/SlabType;
+22: if_acmpeq -> 36
+25: aload_3
+26: aload_0
+27: invokevirtual net/minecraft/world/level/block/SlabBlock.asItem:()Lnet/minecraft/world/item/Item;
+30: invokevirtual net/minecraft/world/item/ItemStack.is:(Ljava/lang/Object;)Z
+33: ifne -> 38
+36: iconst_0
+37: ireturn
+38: aload_2
+39: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.replacingClickedOnBlock:()Z
+42: ifeq -> 149
+45: aload_2
+46: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getClickLocation:()Lnet/minecraft/world/phys/Vec3;
+49: getfield net/minecraft/world/phys/Vec3.y:D
+52: aload_2
+53: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getClickedPos:()Lnet/minecraft/core/BlockPos;
+56: invokevirtual net/minecraft/core/BlockPos.getY:()I
+59: 0x87
+60: 0x67
+61: ldc2_w double 0.5
+64: 0x97
+65: ifle -> 72
+68: iconst_1
+69: goto -> 73
+72: iconst_0
+73: istore istore 5
+75: aload_2
+76: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getClickedFace:()Lnet/minecraft/core/Direction;
+79: astore astore 6
+81: aload aload 4
+83: getstatic net/minecraft/world/level/block/state/properties/SlabType.BOTTOM:Lnet/minecraft/world/level/block/state/properties/SlabType;
+86: if_acmpne -> 119
+89: aload aload 6
+91: getstatic net/minecraft/core/Direction.UP:Lnet/minecraft/core/Direction;
+94: if_acmpeq -> 113
+97: iload iload 5
+99: ifeq -> 117
+102: aload aload 6
+104: invokevirtual net/minecraft/core/Direction.getAxis:()Lnet/minecraft/core/Direction$Axis;
+107: invokevirtual net/minecraft/core/Direction$Axis.isHorizontal:()Z
+110: ifeq -> 117
+113: iconst_1
+114: goto -> 118
+117: iconst_0
+118: ireturn
+119: aload aload 6
+121: getstatic net/minecraft/core/Direction.DOWN:Lnet/minecraft/core/Direction;
+124: if_acmpeq -> 143
+127: iload iload 5
+129: ifne -> 147
+132: aload aload 6
+134: invokevirtual net/minecraft/core/Direction.getAxis:()Lnet/minecraft/core/Direction$Axis;
+137: invokevirtual net/minecraft/core/Direction$Axis.isHorizontal:()Z
+140: ifeq -> 147
+143: iconst_1
+144: goto -> 148
+147: iconst_0
+148: ireturn
+149: iconst_1
+150: ireturn
+
+=== Blocks clinit: all register method names mentioned (census)
+  register: 787
+  registerLegacyStair: 47
+  registerSlab: 6
+  registerStair: 6
+  registerWall: 6
+
+=== Blocks clinit: the SLAB rows (windows around each putstatic)
+  slab constants: 61
+--- ACACIA_SLAB @ line 5696
+    17665: fconst_2
+    17666: ldc_w float 3.0
+    17669: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17672: getstatic net/minecraft/world/level/block/SoundType.WOOD:Lnet/minecraft/world/level/block/SoundType;
+    17675: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17678: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17681: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    17684: putstatic net/minecraft/world/level/block/Blocks.ACACIA_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- ANDESITE_SLAB @ line 7644
+    23679: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    23682: putstatic net/minecraft/world/level/block/Blocks.GRANITE_SLAB:Lnet/minecraft/world/level/block/Block;
+    23685: getstatic net/minecraft/references/BlockItemIds.ANDESITE_SLAB:Lnet/minecraft/references/BlockItemId;
+    23688: invokedynamic indy
+    23693: getstatic net/minecraft/world/level/block/Blocks.ANDESITE:Lnet/minecraft/world/level/block/Block;
+    23696: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    23699: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    23702: putstatic net/minecraft/world/level/block/Blocks.ANDESITE_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- BAMBOO_MOSAIC_SLAB @ line 5787
+    17938: fconst_2
+    17939: ldc_w float 3.0
+    17942: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17945: getstatic net/minecraft/world/level/block/SoundType.BAMBOO_WOOD:Lnet/minecraft/world/level/block/SoundType;
+    17948: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17951: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17954: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    17957: putstatic net/minecraft/world/level/block/Blocks.BAMBOO_MOSAIC_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- BAMBOO_SLAB @ line 5772
+    17893: fconst_2
+    17894: ldc_w float 3.0
+    17897: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17900: getstatic net/minecraft/world/level/block/SoundType.BAMBOO_WOOD:Lnet/minecraft/world/level/block/SoundType;
+    17903: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17906: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17909: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    17912: putstatic net/minecraft/world/level/block/Blocks.BAMBOO_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- BIRCH_SLAB @ line 5666
+    17575: fconst_2
+    17576: ldc_w float 3.0
+    17579: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17582: getstatic net/minecraft/world/level/block/SoundType.WOOD:Lnet/minecraft/world/level/block/SoundType;
+    17585: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17588: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17591: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    17594: putstatic net/minecraft/world/level/block/Blocks.BIRCH_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- BLACKSTONE_SLAB @ line 8797
+    27283: invokedynamic indy
+    27288: getstatic net/minecraft/world/level/block/Blocks.BLACKSTONE:Lnet/minecraft/world/level/block/Block;
+    27291: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    27294: fconst_2
+    27295: ldc_w float 6.0
+    27298: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    27301: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    27304: putstatic net/minecraft/world/level/block/Blocks.BLACKSTONE_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- BRICK_SLAB @ line 5878
+    18211: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+    18214: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18217: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18220: fconst_2
+    18221: ldc_w float 6.0
+    18224: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18227: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    18230: putstatic net/minecraft/world/level/block/Blocks.BRICK_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- CHERRY_SLAB @ line 5711
+    17710: fconst_2
+    17711: ldc_w float 3.0
+    17714: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17717: getstatic net/minecraft/world/level/block/SoundType.CHERRY_WOOD:Lnet/minecraft/world/level/block/SoundType;
+    17720: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17723: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17726: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    17729: putstatic net/minecraft/world/level/block/Blocks.CHERRY_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- CINNABAR_BRICK_SLAB @ line 9246
+    28679: getstatic net/minecraft/world/level/block/Blocks.CINNABAR:Lnet/minecraft/world/level/block/Block;
+    28682: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    28685: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    28688: putstatic net/minecraft/world/level/block/Blocks.CINNABAR_BRICKS:Lnet/minecraft/world/level/block/Block;
+    28691: getstatic net/minecraft/references/BlockItemIds.CINNABAR_BRICK_SLAB:Lnet/minecraft/references/BlockItemId;
+    28694: getstatic net/minecraft/world/level/block/Blocks.CINNABAR_BRICKS:Lnet/minecraft/world/level/block/Block;
+    28697: invokestatic net/minecraft/world/level/block/Blocks.registerSlab:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    28700: putstatic net/minecraft/world/level/block/Blocks.CINNABAR_BRICK_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- CINNABAR_SLAB @ line 9212
+    28577: ldc_w float 6.0
+    28580: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    28583: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    28586: putstatic net/minecraft/world/level/block/Blocks.CINNABAR:Lnet/minecraft/world/level/block/Block;
+    28589: getstatic net/minecraft/references/BlockItemIds.CINNABAR_SLAB:Lnet/minecraft/references/BlockItemId;
+    28592: getstatic net/minecraft/world/level/block/Blocks.CINNABAR:Lnet/minecraft/world/level/block/Block;
+    28595: invokestatic net/minecraft/world/level/block/Blocks.registerSlab:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    28598: putstatic net/minecraft/world/level/block/Blocks.CINNABAR_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- COBBLED_DEEPSLATE_SLAB @ line 9803
+    30517: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    30520: putstatic net/minecraft/world/level/block/Blocks.COBBLED_DEEPSLATE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    30523: getstatic net/minecraft/references/BlockItemIds.COBBLED_DEEPSLATE_SLAB:Lnet/minecraft/references/BlockItemId;
+    30526: invokedynamic indy
+    30531: getstatic net/minecraft/world/level/block/Blocks.COBBLED_DEEPSLATE:Lnet/minecraft/world/level/block/Block;
+    30534: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    30537: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    30540: putstatic net/minecraft/world/level/block/Blocks.COBBLED_DEEPSLATE_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- COBBLESTONE_SLAB @ line 5865
+    18172: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+    18175: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18178: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18181: fconst_2
+    18182: ldc_w float 6.0
+    18185: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18188: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    18191: putstatic net/minecraft/world/level/block/Blocks.COBBLESTONE_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- CRIMSON_SLAB @ line 8311
+    25778: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    25781: fconst_2
+    25782: ldc_w float 3.0
+    25785: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    25788: getstatic net/minecraft/world/level/block/SoundType.NETHER_WOOD:Lnet/minecraft/world/level/block/SoundType;
+    25791: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    25794: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    25797: putstatic net/minecraft/world/level/block/Blocks.CRIMSON_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- CUT_COPPER_SLAB @ line 9431
+    29299: putstatic net/minecraft/world/level/block/Blocks.CUT_COPPER_STAIRS:Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+    29302: getstatic net/minecraft/references/BlockItemIds.CUT_COPPER_SLAB:Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+    29305: invokedynamic indy
+    29310: invokedynamic indy
+    29315: invokedynamic indy
+    29320: invokedynamic indy
+    29325: invokestatic net/minecraft/world/level/block/WeatheringCopperCollection.registerBlocks:(Lnet/minecraft/world/level/block/WeatheringCopperCollection;Lorg/apache/commons/lang3/function/TriFunction;Ljava/util/function/BiFunction;Ljava/util/function/BiFunction;Ljava/util/function/Function;)Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+    29328: putstatic net/minecraft/world/level/block/Blocks.CUT_COPPER_SLAB:Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+
+--- CUT_RED_SANDSTONE_SLAB @ line 5960
+    18458: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+    18461: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18464: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18467: fconst_2
+    18468: ldc_w float 6.0
+    18471: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18474: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    18477: putstatic net/minecraft/world/level/block/Blocks.CUT_RED_SANDSTONE_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- CUT_SANDSTONE_SLAB @ line 5839
+    18094: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+    18097: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18100: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18103: fconst_2
+    18104: ldc_w float 6.0
+    18107: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18110: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    18113: putstatic net/minecraft/world/level/block/Blocks.CUT_SANDSTONE_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- DARK_OAK_SLAB @ line 5726
+    17755: fconst_2
+    17756: ldc_w float 3.0
+    17759: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17762: getstatic net/minecraft/world/level/block/SoundType.WOOD:Lnet/minecraft/world/level/block/SoundType;
+    17765: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17768: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17771: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    17774: putstatic net/minecraft/world/level/block/Blocks.DARK_OAK_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- DARK_PRISMARINE_SLAB @ line 5401
+    16745: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+    16748: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    16751: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    16754: ldc float 1.5
+    16756: ldc_w float 6.0
+    16759: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    16762: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    16765: putstatic net/minecraft/world/level/block/Blocks.DARK_PRISMARINE_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- DEEPSLATE_BRICK_SLAB @ line 9875
+    30745: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    30748: putstatic net/minecraft/world/level/block/Blocks.DEEPSLATE_BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    30751: getstatic net/minecraft/references/BlockItemIds.DEEPSLATE_BRICK_SLAB:Lnet/minecraft/references/BlockItemId;
+    30754: invokedynamic indy
+    30759: getstatic net/minecraft/world/level/block/Blocks.DEEPSLATE_BRICKS:Lnet/minecraft/world/level/block/Block;
+    30762: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    30765: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    30768: putstatic net/minecraft/world/level/block/Blocks.DEEPSLATE_BRICK_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- DEEPSLATE_TILE_SLAB @ line 9851
+    30669: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    30672: putstatic net/minecraft/world/level/block/Blocks.DEEPSLATE_TILE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    30675: getstatic net/minecraft/references/BlockItemIds.DEEPSLATE_TILE_SLAB:Lnet/minecraft/references/BlockItemId;
+    30678: invokedynamic indy
+    30683: getstatic net/minecraft/world/level/block/Blocks.DEEPSLATE_TILES:Lnet/minecraft/world/level/block/Block;
+    30686: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    30689: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    30692: putstatic net/minecraft/world/level/block/Blocks.DEEPSLATE_TILE_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- DIORITE_SLAB @ line 7662
+    23739: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    23742: putstatic net/minecraft/world/level/block/Blocks.POLISHED_ANDESITE_SLAB:Lnet/minecraft/world/level/block/Block;
+    23745: getstatic net/minecraft/references/BlockItemIds.DIORITE_SLAB:Lnet/minecraft/references/BlockItemId;
+    23748: invokedynamic indy
+    23753: getstatic net/minecraft/world/level/block/Blocks.DIORITE:Lnet/minecraft/world/level/block/Block;
+    23756: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    23759: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    23762: putstatic net/minecraft/world/level/block/Blocks.DIORITE_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- END_STONE_BRICK_SLAB @ line 7620
+    23599: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    23602: putstatic net/minecraft/world/level/block/Blocks.MOSSY_COBBLESTONE_SLAB:Lnet/minecraft/world/level/block/Block;
+    23605: getstatic net/minecraft/references/BlockItemIds.END_STONE_BRICK_SLAB:Lnet/minecraft/references/BlockItemId;
+    23608: invokedynamic indy
+    23613: getstatic net/minecraft/world/level/block/Blocks.END_STONE_BRICKS:Lnet/minecraft/world/level/block/Block;
+    23616: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    23619: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    23622: putstatic net/minecraft/world/level/block/Blocks.END_STONE_BRICK_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- GRANITE_SLAB @ line 7638
+    23659: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    23662: putstatic net/minecraft/world/level/block/Blocks.SMOOTH_QUARTZ_SLAB:Lnet/minecraft/world/level/block/Block;
+    23665: getstatic net/minecraft/references/BlockItemIds.GRANITE_SLAB:Lnet/minecraft/references/BlockItemId;
+    23668: invokedynamic indy
+    23673: getstatic net/minecraft/world/level/block/Blocks.GRANITE:Lnet/minecraft/world/level/block/Block;
+    23676: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    23679: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    23682: putstatic net/minecraft/world/level/block/Blocks.GRANITE_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- JUNGLE_SLAB @ line 5681
+    17620: fconst_2
+    17621: ldc_w float 3.0
+    17624: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17627: getstatic net/minecraft/world/level/block/SoundType.WOOD:Lnet/minecraft/world/level/block/SoundType;
+    17630: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17633: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17636: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    17639: putstatic net/minecraft/world/level/block/Blocks.JUNGLE_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- MANGROVE_SLAB @ line 5757
+    17848: fconst_2
+    17849: ldc_w float 3.0
+    17852: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17855: getstatic net/minecraft/world/level/block/SoundType.WOOD:Lnet/minecraft/world/level/block/SoundType;
+    17858: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17861: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17864: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    17867: putstatic net/minecraft/world/level/block/Blocks.MANGROVE_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- MOSSY_COBBLESTONE_SLAB @ line 7614
+    23579: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    23582: putstatic net/minecraft/world/level/block/Blocks.POLISHED_DIORITE_SLAB:Lnet/minecraft/world/level/block/Block;
+    23585: getstatic net/minecraft/references/BlockItemIds.MOSSY_COBBLESTONE_SLAB:Lnet/minecraft/references/BlockItemId;
+    23588: invokedynamic indy
+    23593: getstatic net/minecraft/world/level/block/Blocks.MOSSY_COBBLESTONE:Lnet/minecraft/world/level/block/Block;
+    23596: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    23599: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    23602: putstatic net/minecraft/world/level/block/Blocks.MOSSY_COBBLESTONE_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- MOSSY_STONE_BRICK_SLAB @ line 7602
+    23539: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    23542: putstatic net/minecraft/world/level/block/Blocks.SMOOTH_RED_SANDSTONE_SLAB:Lnet/minecraft/world/level/block/Block;
+    23545: getstatic net/minecraft/references/BlockItemIds.MOSSY_STONE_BRICK_SLAB:Lnet/minecraft/references/BlockItemId;
+    23548: invokedynamic indy
+    23553: getstatic net/minecraft/world/level/block/Blocks.MOSSY_STONE_BRICKS:Lnet/minecraft/world/level/block/Block;
+    23556: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    23559: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    23562: putstatic net/minecraft/world/level/block/Blocks.MOSSY_STONE_BRICK_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- MUD_BRICK_SLAB @ line 5906
+    18295: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18298: ldc float 1.5
+    18300: ldc_w float 3.0
+    18303: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18306: getstatic net/minecraft/world/level/block/SoundType.MUD_BRICKS:Lnet/minecraft/world/level/block/SoundType;
+    18309: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18312: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    18315: putstatic net/minecraft/world/level/block/Blocks.MUD_BRICK_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- NETHER_BRICK_SLAB @ line 5921
+    18341: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18344: fconst_2
+    18345: ldc_w float 6.0
+    18348: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18351: getstatic net/minecraft/world/level/block/SoundType.NETHER_BRICKS:Lnet/minecraft/world/level/block/SoundType;
+    18354: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18357: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    18360: putstatic net/minecraft/world/level/block/Blocks.NETHER_BRICK_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- OAK_SLAB @ line 5636
+    17485: fconst_2
+    17486: ldc_w float 3.0
+    17489: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17492: getstatic net/minecraft/world/level/block/SoundType.WOOD:Lnet/minecraft/world/level/block/SoundType;
+    17495: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17498: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17501: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    17504: putstatic net/minecraft/world/level/block/Blocks.OAK_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- PALE_OAK_SLAB @ line 5742
+    17803: fconst_2
+    17804: ldc_w float 3.0
+    17807: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17810: getstatic net/minecraft/world/level/block/SoundType.WOOD:Lnet/minecraft/world/level/block/SoundType;
+    17813: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17816: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17819: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    17822: putstatic net/minecraft/world/level/block/Blocks.PALE_OAK_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- PETRIFIED_OAK_SLAB @ line 5852
+    18133: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+    18136: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18139: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18142: fconst_2
+    18143: ldc_w float 6.0
+    18146: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18149: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    18152: putstatic net/minecraft/world/level/block/Blocks.PETRIFIED_OAK_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- POLISHED_ANDESITE_SLAB @ line 7656
+    23719: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    23722: putstatic net/minecraft/world/level/block/Blocks.RED_NETHER_BRICK_SLAB:Lnet/minecraft/world/level/block/Block;
+    23725: getstatic net/minecraft/references/BlockItemIds.POLISHED_ANDESITE_SLAB:Lnet/minecraft/references/BlockItemId;
+    23728: invokedynamic indy
+    23733: getstatic net/minecraft/world/level/block/Blocks.POLISHED_ANDESITE:Lnet/minecraft/world/level/block/Block;
+    23736: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    23739: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    23742: putstatic net/minecraft/world/level/block/Blocks.POLISHED_ANDESITE_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- POLISHED_BLACKSTONE_BRICK_SLAB @ line 8835
+    27393: invokedynamic indy
+    27398: getstatic net/minecraft/world/level/block/Blocks.POLISHED_BLACKSTONE_BRICKS:Lnet/minecraft/world/level/block/Block;
+    27401: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    27404: fconst_2
+    27405: ldc_w float 6.0
+    27408: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    27411: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    27414: putstatic net/minecraft/world/level/block/Blocks.POLISHED_BLACKSTONE_BRICK_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- POLISHED_BLACKSTONE_SLAB @ line 8863
+    27479: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    27482: putstatic net/minecraft/world/level/block/Blocks.POLISHED_BLACKSTONE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    27485: getstatic net/minecraft/references/BlockItemIds.POLISHED_BLACKSTONE_SLAB:Lnet/minecraft/references/BlockItemId;
+    27488: invokedynamic indy
+    27493: getstatic net/minecraft/world/level/block/Blocks.POLISHED_BLACKSTONE:Lnet/minecraft/world/level/block/Block;
+    27496: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    27499: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    27502: putstatic net/minecraft/world/level/block/Blocks.POLISHED_BLACKSTONE_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- POLISHED_CINNABAR_SLAB @ line 9229
+    28628: getstatic net/minecraft/world/level/block/Blocks.CINNABAR:Lnet/minecraft/world/level/block/Block;
+    28631: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    28634: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    28637: putstatic net/minecraft/world/level/block/Blocks.POLISHED_CINNABAR:Lnet/minecraft/world/level/block/Block;
+    28640: getstatic net/minecraft/references/BlockItemIds.POLISHED_CINNABAR_SLAB:Lnet/minecraft/references/BlockItemId;
+    28643: getstatic net/minecraft/world/level/block/Blocks.POLISHED_CINNABAR:Lnet/minecraft/world/level/block/Block;
+    28646: invokestatic net/minecraft/world/level/block/Blocks.registerSlab:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    28649: putstatic net/minecraft/world/level/block/Blocks.POLISHED_CINNABAR_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- POLISHED_DEEPSLATE_SLAB @ line 9827
+    30593: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    30596: putstatic net/minecraft/world/level/block/Blocks.POLISHED_DEEPSLATE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    30599: getstatic net/minecraft/references/BlockItemIds.POLISHED_DEEPSLATE_SLAB:Lnet/minecraft/references/BlockItemId;
+    30602: invokedynamic indy
+    30607: getstatic net/minecraft/world/level/block/Blocks.POLISHED_DEEPSLATE:Lnet/minecraft/world/level/block/Block;
+    30610: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    30613: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    30616: putstatic net/minecraft/world/level/block/Blocks.POLISHED_DEEPSLATE_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- POLISHED_DIORITE_SLAB @ line 7608
+    23559: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    23562: putstatic net/minecraft/world/level/block/Blocks.MOSSY_STONE_BRICK_SLAB:Lnet/minecraft/world/level/block/Block;
+    23565: getstatic net/minecraft/references/BlockItemIds.POLISHED_DIORITE_SLAB:Lnet/minecraft/references/BlockItemId;
+    23568: invokedynamic indy
+    23573: getstatic net/minecraft/world/level/block/Blocks.POLISHED_DIORITE:Lnet/minecraft/world/level/block/Block;
+    23576: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    23579: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    23582: putstatic net/minecraft/world/level/block/Blocks.POLISHED_DIORITE_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- POLISHED_GRANITE_SLAB @ line 7590
+    23499: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23502: putstatic net/minecraft/world/level/block/Blocks.DIORITE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23505: getstatic net/minecraft/references/BlockItemIds.POLISHED_GRANITE_SLAB:Lnet/minecraft/references/BlockItemId;
+    23508: invokedynamic indy
+    23513: getstatic net/minecraft/world/level/block/Blocks.POLISHED_GRANITE:Lnet/minecraft/world/level/block/Block;
+    23516: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    23519: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    23522: putstatic net/minecraft/world/level/block/Blocks.POLISHED_GRANITE_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- POLISHED_SULFUR_SLAB @ line 9164
+    28434: getstatic net/minecraft/world/level/block/Blocks.SULFUR:Lnet/minecraft/world/level/block/Block;
+    28437: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    28440: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    28443: putstatic net/minecraft/world/level/block/Blocks.POLISHED_SULFUR:Lnet/minecraft/world/level/block/Block;
+    28446: getstatic net/minecraft/references/BlockItemIds.POLISHED_SULFUR_SLAB:Lnet/minecraft/references/BlockItemId;
+    28449: getstatic net/minecraft/world/level/block/Blocks.POLISHED_SULFUR:Lnet/minecraft/world/level/block/Block;
+    28452: invokestatic net/minecraft/world/level/block/Blocks.registerSlab:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    28455: putstatic net/minecraft/world/level/block/Blocks.POLISHED_SULFUR_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- POLISHED_TUFF_SLAB @ line 9070
+    28139: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    28142: putstatic net/minecraft/world/level/block/Blocks.POLISHED_TUFF:Lnet/minecraft/world/level/block/Block;
+    28145: getstatic net/minecraft/references/BlockItemIds.POLISHED_TUFF_SLAB:Lnet/minecraft/references/BlockItemId;
+    28148: invokedynamic indy
+    28153: getstatic net/minecraft/world/level/block/Blocks.POLISHED_TUFF:Lnet/minecraft/world/level/block/Block;
+    28156: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    28159: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    28162: putstatic net/minecraft/world/level/block/Blocks.POLISHED_TUFF_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- PRISMARINE_BRICK_SLAB @ line 5388
+    16705: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+    16708: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    16711: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    16714: ldc float 1.5
+    16716: ldc_w float 6.0
+    16719: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    16722: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    16725: putstatic net/minecraft/world/level/block/Blocks.PRISMARINE_BRICK_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- PRISMARINE_SLAB @ line 5375
+    16665: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+    16668: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    16671: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    16674: ldc float 1.5
+    16676: ldc_w float 6.0
+    16679: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    16682: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    16685: putstatic net/minecraft/world/level/block/Blocks.PRISMARINE_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- PURPUR_SLAB @ line 5973
+    18497: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+    18500: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18503: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18506: fconst_2
+    18507: ldc_w float 6.0
+    18510: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18513: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    18516: putstatic net/minecraft/world/level/block/Blocks.PURPUR_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- QUARTZ_SLAB @ line 5934
+    18380: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+    18383: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18386: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18389: fconst_2
+    18390: ldc_w float 6.0
+    18393: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18396: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    18399: putstatic net/minecraft/world/level/block/Blocks.QUARTZ_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- RED_NETHER_BRICK_SLAB @ line 7650
+    23699: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    23702: putstatic net/minecraft/world/level/block/Blocks.ANDESITE_SLAB:Lnet/minecraft/world/level/block/Block;
+    23705: getstatic net/minecraft/references/BlockItemIds.RED_NETHER_BRICK_SLAB:Lnet/minecraft/references/BlockItemId;
+    23708: invokedynamic indy
+    23713: getstatic net/minecraft/world/level/block/Blocks.RED_NETHER_BRICKS:Lnet/minecraft/world/level/block/Block;
+    23716: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    23719: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    23722: putstatic net/minecraft/world/level/block/Blocks.RED_NETHER_BRICK_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- RED_SANDSTONE_SLAB @ line 5947
+    18419: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+    18422: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18425: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18428: fconst_2
+    18429: ldc_w float 6.0
+    18432: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18435: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    18438: putstatic net/minecraft/world/level/block/Blocks.RED_SANDSTONE_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- RESIN_BRICK_SLAB @ line 4256
+    13136: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13139: getstatic net/minecraft/world/level/block/SoundType.RESIN_BRICKS:Lnet/minecraft/world/level/block/SoundType;
+    13142: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13145: ldc float 1.5
+    13147: ldc_w float 6.0
+    13150: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13153: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    13156: putstatic net/minecraft/world/level/block/Blocks.RESIN_BRICK_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- SANDSTONE_SLAB @ line 5826
+    18055: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+    18058: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18061: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18064: fconst_2
+    18065: ldc_w float 6.0
+    18068: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18071: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    18074: putstatic net/minecraft/world/level/block/Blocks.SANDSTONE_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- SMOOTH_QUARTZ_SLAB @ line 7632
+    23639: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    23642: putstatic net/minecraft/world/level/block/Blocks.SMOOTH_SANDSTONE_SLAB:Lnet/minecraft/world/level/block/Block;
+    23645: getstatic net/minecraft/references/BlockItemIds.SMOOTH_QUARTZ_SLAB:Lnet/minecraft/references/BlockItemId;
+    23648: invokedynamic indy
+    23653: getstatic net/minecraft/world/level/block/Blocks.SMOOTH_QUARTZ:Lnet/minecraft/world/level/block/Block;
+    23656: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    23659: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    23662: putstatic net/minecraft/world/level/block/Blocks.SMOOTH_QUARTZ_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- SMOOTH_RED_SANDSTONE_SLAB @ line 7596
+    23519: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    23522: putstatic net/minecraft/world/level/block/Blocks.POLISHED_GRANITE_SLAB:Lnet/minecraft/world/level/block/Block;
+    23525: getstatic net/minecraft/references/BlockItemIds.SMOOTH_RED_SANDSTONE_SLAB:Lnet/minecraft/references/BlockItemId;
+    23528: invokedynamic indy
+    23533: getstatic net/minecraft/world/level/block/Blocks.SMOOTH_RED_SANDSTONE:Lnet/minecraft/world/level/block/Block;
+    23536: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    23539: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    23542: putstatic net/minecraft/world/level/block/Blocks.SMOOTH_RED_SANDSTONE_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- SMOOTH_SANDSTONE_SLAB @ line 7626
+    23619: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    23622: putstatic net/minecraft/world/level/block/Blocks.END_STONE_BRICK_SLAB:Lnet/minecraft/world/level/block/Block;
+    23625: getstatic net/minecraft/references/BlockItemIds.SMOOTH_SANDSTONE_SLAB:Lnet/minecraft/references/BlockItemId;
+    23628: invokedynamic indy
+    23633: getstatic net/minecraft/world/level/block/Blocks.SMOOTH_SANDSTONE:Lnet/minecraft/world/level/block/Block;
+    23636: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    23639: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    23642: putstatic net/minecraft/world/level/block/Blocks.SMOOTH_SANDSTONE_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- SMOOTH_STONE_SLAB @ line 5813
+    18016: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+    18019: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18022: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18025: fconst_2
+    18026: ldc_w float 6.0
+    18029: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18032: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    18035: putstatic net/minecraft/world/level/block/Blocks.SMOOTH_STONE_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- SPRUCE_SLAB @ line 5651
+    17530: fconst_2
+    17531: ldc_w float 3.0
+    17534: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17537: getstatic net/minecraft/world/level/block/SoundType.WOOD:Lnet/minecraft/world/level/block/SoundType;
+    17540: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17543: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17546: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    17549: putstatic net/minecraft/world/level/block/Blocks.SPRUCE_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- STONE_BRICK_SLAB @ line 5891
+    18250: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+    18253: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18256: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18259: fconst_2
+    18260: ldc_w float 6.0
+    18263: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18266: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    18269: putstatic net/minecraft/world/level/block/Blocks.STONE_BRICK_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- STONE_SLAB @ line 5800
+    17977: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+    17980: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17983: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17986: fconst_2
+    17987: ldc_w float 6.0
+    17990: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17993: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    17996: putstatic net/minecraft/world/level/block/Blocks.STONE_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- SULFUR_BRICK_SLAB @ line 9181
+    28485: getstatic net/minecraft/world/level/block/Blocks.SULFUR:Lnet/minecraft/world/level/block/Block;
+    28488: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    28491: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    28494: putstatic net/minecraft/world/level/block/Blocks.SULFUR_BRICKS:Lnet/minecraft/world/level/block/Block;
+    28497: getstatic net/minecraft/references/BlockItemIds.SULFUR_BRICK_SLAB:Lnet/minecraft/references/BlockItemId;
+    28500: getstatic net/minecraft/world/level/block/Blocks.SULFUR_BRICKS:Lnet/minecraft/world/level/block/Block;
+    28503: invokestatic net/minecraft/world/level/block/Blocks.registerSlab:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    28506: putstatic net/minecraft/world/level/block/Blocks.SULFUR_BRICK_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- SULFUR_SLAB @ line 9147
+    28383: getstatic net/minecraft/world/level/material/MapColor.GOLD:Lnet/minecraft/world/level/material/MapColor;
+    28386: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    28389: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    28392: putstatic net/minecraft/world/level/block/Blocks.POTENT_SULFUR:Lnet/minecraft/world/level/block/Block;
+    28395: getstatic net/minecraft/references/BlockItemIds.SULFUR_SLAB:Lnet/minecraft/references/BlockItemId;
+    28398: getstatic net/minecraft/world/level/block/Blocks.SULFUR:Lnet/minecraft/world/level/block/Block;
+    28401: invokestatic net/minecraft/world/level/block/Blocks.registerSlab:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    28404: putstatic net/minecraft/world/level/block/Blocks.SULFUR_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- TUFF_BRICK_SLAB @ line 9101
+    28238: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    28241: putstatic net/minecraft/world/level/block/Blocks.TUFF_BRICKS:Lnet/minecraft/world/level/block/Block;
+    28244: getstatic net/minecraft/references/BlockItemIds.TUFF_BRICK_SLAB:Lnet/minecraft/references/BlockItemId;
+    28247: invokedynamic indy
+    28252: getstatic net/minecraft/world/level/block/Blocks.TUFF_BRICKS:Lnet/minecraft/world/level/block/Block;
+    28255: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    28258: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    28261: putstatic net/minecraft/world/level/block/Blocks.TUFF_BRICK_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- TUFF_SLAB @ line 9044
+    28055: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    28058: putstatic net/minecraft/world/level/block/Blocks.TUFF:Lnet/minecraft/world/level/block/Block;
+    28061: getstatic net/minecraft/references/BlockItemIds.TUFF_SLAB:Lnet/minecraft/references/BlockItemId;
+    28064: invokedynamic indy
+    28069: getstatic net/minecraft/world/level/block/Blocks.TUFF:Lnet/minecraft/world/level/block/Block;
+    28072: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    28075: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    28078: putstatic net/minecraft/world/level/block/Blocks.TUFF_SLAB:Lnet/minecraft/world/level/block/Block;
+
+--- WARPED_SLAB @ line 8326
+    25823: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    25826: fconst_2
+    25827: ldc_w float 3.0
+    25830: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    25833: getstatic net/minecraft/world/level/block/SoundType.NETHER_WOOD:Lnet/minecraft/world/level/block/SoundType;
+    25836: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    25839: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    25842: putstatic net/minecraft/world/level/block/Blocks.WARPED_SLAB:Lnet/minecraft/world/level/block/Block;
+
+
+=== the slab lambdas (property chains): every lambda the SlabBlock news
+  TOTAL slab lambdas: 2
+--- lambda$static$171(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    0: new net/minecraft/world/level/block/SlabBlock
+    3: dup
+    4: aload_0
+    5: invokespecial net/minecraft/world/level/block/SlabBlock.<init>:(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+    8: areturn
+
+--- lambda$static$369(Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/SlabBlock;
+    0: new net/minecraft/world/level/block/SlabBlock
+    3: dup
+    4: aload_1
+    5: invokespecial net/minecraft/world/level/block/SlabBlock.<init>:(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+    8: areturn
+
+
+=== the FULL 68-kind model census (bottom model -> json)
+kind                               | parentB | bottom/side/top | double-model | parentD
+acacia_slab                        | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/acacia_slab.json' in the archive" | minecraft:block/acacia_planks                | ERR "There is no item named 'assets/minecraft/models/minecraft:block/acacia_planks.json' in the archive"
+andesite_slab                      | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/andesite_slab.json' in the archive" | minecraft:block/andesite                     | ERR "There is no item named 'assets/minecraft/models/minecraft:block/andesite.json' in the archive"
+bamboo_mosaic_slab                 | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/bamboo_mosaic_slab.json' in the archive" | minecraft:block/bamboo_mosaic                | ERR "There is no item named 'assets/minecraft/models/minecraft:block/bamboo_mosaic.json' in the archive"
+bamboo_slab                        | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/bamboo_slab.json' in the archive" | minecraft:block/bamboo_planks                | ERR "There is no item named 'assets/minecraft/models/minecraft:block/bamboo_planks.json' in the archive"
+birch_slab                         | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/birch_slab.json' in the archive" | minecraft:block/birch_planks                 | ERR "There is no item named 'assets/minecraft/models/minecraft:block/birch_planks.json' in the archive"
+blackstone_slab                    | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/blackstone_slab.json' in the archive" | minecraft:block/blackstone                   | ERR "There is no item named 'assets/minecraft/models/minecraft:block/blackstone.json' in the archive"
+brick_slab                         | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/brick_slab.json' in the archive" | minecraft:block/bricks                       | ERR "There is no item named 'assets/minecraft/models/minecraft:block/bricks.json' in the archive"
+cherry_slab                        | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/cherry_slab.json' in the archive" | minecraft:block/cherry_planks                | ERR "There is no item named 'assets/minecraft/models/minecraft:block/cherry_planks.json' in the archive"
+cinnabar_brick_slab                | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/cinnabar_brick_slab.json' in the archive" | minecraft:block/cinnabar_bricks              | ERR "There is no item named 'assets/minecraft/models/minecraft:block/cinnabar_bricks.json' in the archive"
+cinnabar_slab                      | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/cinnabar_slab.json' in the archive" | minecraft:block/cinnabar                     | ERR "There is no item named 'assets/minecraft/models/minecraft:block/cinnabar.json' in the archive"
+cobbled_deepslate_slab             | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/cobbled_deepslate_slab.json' in the archive" | minecraft:block/cobbled_deepslate            | ERR "There is no item named 'assets/minecraft/models/minecraft:block/cobbled_deepslate.json' in the archive"
+cobblestone_slab                   | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/cobblestone_slab.json' in the archive" | minecraft:block/cobblestone                  | ERR "There is no item named 'assets/minecraft/models/minecraft:block/cobblestone.json' in the archive"
+crimson_slab                       | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/crimson_slab.json' in the archive" | minecraft:block/crimson_planks               | ERR "There is no item named 'assets/minecraft/models/minecraft:block/crimson_planks.json' in the archive"
+cut_copper_slab                    | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/cut_copper_slab.json' in the archive" | minecraft:block/cut_copper                   | ERR "There is no item named 'assets/minecraft/models/minecraft:block/cut_copper.json' in the archive"
+cut_red_sandstone_slab             | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/cut_red_sandstone_slab.json' in the archive" | minecraft:block/cut_red_sandstone            | ERR "There is no item named 'assets/minecraft/models/minecraft:block/cut_red_sandstone.json' in the archive"
+cut_sandstone_slab                 | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/cut_sandstone_slab.json' in the archive" | minecraft:block/cut_sandstone                | ERR "There is no item named 'assets/minecraft/models/minecraft:block/cut_sandstone.json' in the archive"
+dark_oak_slab                      | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/dark_oak_slab.json' in the archive" | minecraft:block/dark_oak_planks              | ERR "There is no item named 'assets/minecraft/models/minecraft:block/dark_oak_planks.json' in the archive"
+dark_prismarine_slab               | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/dark_prismarine_slab.json' in the archive" | minecraft:block/dark_prismarine              | ERR "There is no item named 'assets/minecraft/models/minecraft:block/dark_prismarine.json' in the archive"
+deepslate_brick_slab               | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/deepslate_brick_slab.json' in the archive" | minecraft:block/deepslate_bricks             | ERR "There is no item named 'assets/minecraft/models/minecraft:block/deepslate_bricks.json' in the archive"
+deepslate_tile_slab                | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/deepslate_tile_slab.json' in the archive" | minecraft:block/deepslate_tiles              | ERR "There is no item named 'assets/minecraft/models/minecraft:block/deepslate_tiles.json' in the archive"
+diorite_slab                       | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/diorite_slab.json' in the archive" | minecraft:block/diorite                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/diorite.json' in the archive"
+end_stone_brick_slab               | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/end_stone_brick_slab.json' in the archive" | minecraft:block/end_stone_bricks             | ERR "There is no item named 'assets/minecraft/models/minecraft:block/end_stone_bricks.json' in the archive"
+exposed_cut_copper_slab            | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/exposed_cut_copper_slab.json' in the archive" | minecraft:block/exposed_cut_copper           | ERR "There is no item named 'assets/minecraft/models/minecraft:block/exposed_cut_copper.json' in the archive"
+granite_slab                       | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/granite_slab.json' in the archive" | minecraft:block/granite                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/granite.json' in the archive"
+jungle_slab                        | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/jungle_slab.json' in the archive" | minecraft:block/jungle_planks                | ERR "There is no item named 'assets/minecraft/models/minecraft:block/jungle_planks.json' in the archive"
+mangrove_slab                      | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/mangrove_slab.json' in the archive" | minecraft:block/mangrove_planks              | ERR "There is no item named 'assets/minecraft/models/minecraft:block/mangrove_planks.json' in the archive"
+mossy_cobblestone_slab             | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/mossy_cobblestone_slab.json' in the archive" | minecraft:block/mossy_cobblestone            | ERR "There is no item named 'assets/minecraft/models/minecraft:block/mossy_cobblestone.json' in the archive"
+mossy_stone_brick_slab             | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/mossy_stone_brick_slab.json' in the archive" | minecraft:block/mossy_stone_bricks           | ERR "There is no item named 'assets/minecraft/models/minecraft:block/mossy_stone_bricks.json' in the archive"
+mud_brick_slab                     | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/mud_brick_slab.json' in the archive" | minecraft:block/mud_bricks                   | ERR "There is no item named 'assets/minecraft/models/minecraft:block/mud_bricks.json' in the archive"
+nether_brick_slab                  | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/nether_brick_slab.json' in the archive" | minecraft:block/nether_bricks                | ERR "There is no item named 'assets/minecraft/models/minecraft:block/nether_bricks.json' in the archive"
+oak_slab                           | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/oak_slab.json' in the archive" | minecraft:block/oak_planks                   | ERR "There is no item named 'assets/minecraft/models/minecraft:block/oak_planks.json' in the archive"
+oxidized_cut_copper_slab           | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/oxidized_cut_copper_slab.json' in the archive" | minecraft:block/oxidized_cut_copper          | ERR "There is no item named 'assets/minecraft/models/minecraft:block/oxidized_cut_copper.json' in the archive"
+pale_oak_slab                      | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/pale_oak_slab.json' in the archive" | minecraft:block/pale_oak_planks              | ERR "There is no item named 'assets/minecraft/models/minecraft:block/pale_oak_planks.json' in the archive"
+petrified_oak_slab                 | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/petrified_oak_slab.json' in the archive" | minecraft:block/oak_planks                   | ERR "There is no item named 'assets/minecraft/models/minecraft:block/oak_planks.json' in the archive"
+polished_andesite_slab             | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/polished_andesite_slab.json' in the archive" | minecraft:block/polished_andesite            | ERR "There is no item named 'assets/minecraft/models/minecraft:block/polished_andesite.json' in the archive"
+polished_blackstone_brick_slab     | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/polished_blackstone_brick_slab.json' in the archive" | minecraft:block/polished_blackstone_bricks   | ERR "There is no item named 'assets/minecraft/models/minecraft:block/polished_blackstone_bricks.json' in the archive"
+polished_blackstone_slab           | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/polished_blackstone_slab.json' in the archive" | minecraft:block/polished_blackstone          | ERR "There is no item named 'assets/minecraft/models/minecraft:block/polished_blackstone.json' in the archive"
+polished_cinnabar_slab             | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/polished_cinnabar_slab.json' in the archive" | minecraft:block/polished_cinnabar            | ERR "There is no item named 'assets/minecraft/models/minecraft:block/polished_cinnabar.json' in the archive"
+polished_deepslate_slab            | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/polished_deepslate_slab.json' in the archive" | minecraft:block/polished_deepslate           | ERR "There is no item named 'assets/minecraft/models/minecraft:block/polished_deepslate.json' in the archive"
+polished_diorite_slab              | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/polished_diorite_slab.json' in the archive" | minecraft:block/polished_diorite             | ERR "There is no item named 'assets/minecraft/models/minecraft:block/polished_diorite.json' in the archive"
+polished_granite_slab              | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/polished_granite_slab.json' in the archive" | minecraft:block/polished_granite             | ERR "There is no item named 'assets/minecraft/models/minecraft:block/polished_granite.json' in the archive"
+polished_sulfur_slab               | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/polished_sulfur_slab.json' in the archive" | minecraft:block/polished_sulfur              | ERR "There is no item named 'assets/minecraft/models/minecraft:block/polished_sulfur.json' in the archive"
+polished_tuff_slab                 | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/polished_tuff_slab.json' in the archive" | minecraft:block/polished_tuff                | ERR "There is no item named 'assets/minecraft/models/minecraft:block/polished_tuff.json' in the archive"
+prismarine_brick_slab              | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/prismarine_brick_slab.json' in the archive" | minecraft:block/prismarine_bricks            | ERR "There is no item named 'assets/minecraft/models/minecraft:block/prismarine_bricks.json' in the archive"
+prismarine_slab                    | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/prismarine_slab.json' in the archive" | minecraft:block/prismarine                   | ERR "There is no item named 'assets/minecraft/models/minecraft:block/prismarine.json' in the archive"
+purpur_slab                        | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/purpur_slab.json' in the archive" | minecraft:block/purpur_block                 | ERR "There is no item named 'assets/minecraft/models/minecraft:block/purpur_block.json' in the archive"
+quartz_slab                        | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/quartz_slab.json' in the archive" | minecraft:block/quartz_block                 | ERR "There is no item named 'assets/minecraft/models/minecraft:block/quartz_block.json' in the archive"
+red_nether_brick_slab              | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/red_nether_brick_slab.json' in the archive" | minecraft:block/red_nether_bricks            | ERR "There is no item named 'assets/minecraft/models/minecraft:block/red_nether_bricks.json' in the archive"
+red_sandstone_slab                 | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/red_sandstone_slab.json' in the archive" | minecraft:block/red_sandstone                | ERR "There is no item named 'assets/minecraft/models/minecraft:block/red_sandstone.json' in the archive"
+resin_brick_slab                   | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/resin_brick_slab.json' in the archive" | minecraft:block/resin_bricks                 | ERR "There is no item named 'assets/minecraft/models/minecraft:block/resin_bricks.json' in the archive"
+sandstone_slab                     | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/sandstone_slab.json' in the archive" | minecraft:block/sandstone                    | ERR "There is no item named 'assets/minecraft/models/minecraft:block/sandstone.json' in the archive"
+smooth_quartz_slab                 | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/smooth_quartz_slab.json' in the archive" | minecraft:block/smooth_quartz                | ERR "There is no item named 'assets/minecraft/models/minecraft:block/smooth_quartz.json' in the archive"
+smooth_red_sandstone_slab          | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/smooth_red_sandstone_slab.json' in the archive" | minecraft:block/smooth_red_sandstone         | ERR "There is no item named 'assets/minecraft/models/minecraft:block/smooth_red_sandstone.json' in the archive"
+smooth_sandstone_slab              | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/smooth_sandstone_slab.json' in the archive" | minecraft:block/smooth_sandstone             | ERR "There is no item named 'assets/minecraft/models/minecraft:block/smooth_sandstone.json' in the archive"
+smooth_stone_slab                  | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/smooth_stone_slab.json' in the archive" | minecraft:block/smooth_stone_slab_double     | ERR "There is no item named 'assets/minecraft/models/minecraft:block/smooth_stone_slab_double.json' in the archive"
+spruce_slab                        | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/spruce_slab.json' in the archive" | minecraft:block/spruce_planks                | ERR "There is no item named 'assets/minecraft/models/minecraft:block/spruce_planks.json' in the archive"
+stone_brick_slab                   | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/stone_brick_slab.json' in the archive" | minecraft:block/stone_bricks                 | ERR "There is no item named 'assets/minecraft/models/minecraft:block/stone_bricks.json' in the archive"
+stone_slab                         | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/stone_slab.json' in the archive" | minecraft:block/stone                        | ERR "There is no item named 'assets/minecraft/models/minecraft:block/stone.json' in the archive"
+sulfur_brick_slab                  | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/sulfur_brick_slab.json' in the archive" | minecraft:block/sulfur_bricks                | ERR "There is no item named 'assets/minecraft/models/minecraft:block/sulfur_bricks.json' in the archive"
+sulfur_slab                        | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/sulfur_slab.json' in the archive" | minecraft:block/sulfur                       | ERR "There is no item named 'assets/minecraft/models/minecraft:block/sulfur.json' in the archive"
+tuff_brick_slab                    | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/tuff_brick_slab.json' in the archive" | minecraft:block/tuff_bricks                  | ERR "There is no item named 'assets/minecraft/models/minecraft:block/tuff_bricks.json' in the archive"
+tuff_slab                          | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/tuff_slab.json' in the archive" | minecraft:block/tuff                         | ERR "There is no item named 'assets/minecraft/models/minecraft:block/tuff.json' in the archive"
+warped_slab                        | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/warped_slab.json' in the archive" | minecraft:block/warped_planks                | ERR "There is no item named 'assets/minecraft/models/minecraft:block/warped_planks.json' in the archive"
+waxed_cut_copper_slab              | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/cut_copper_slab.json' in the archive" | minecraft:block/cut_copper                   | ERR "There is no item named 'assets/minecraft/models/minecraft:block/cut_copper.json' in the archive"
+waxed_exposed_cut_copper_slab      | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/exposed_cut_copper_slab.json' in the archive" | minecraft:block/exposed_cut_copper           | ERR "There is no item named 'assets/minecraft/models/minecraft:block/exposed_cut_copper.json' in the archive"
+waxed_oxidized_cut_copper_slab     | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/oxidized_cut_copper_slab.json' in the archive" | minecraft:block/oxidized_cut_copper          | ERR "There is no item named 'assets/minecraft/models/minecraft:block/oxidized_cut_copper.json' in the archive"
+waxed_weathered_cut_copper_slab    | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/weathered_cut_copper_slab.json' in the archive" | minecraft:block/weathered_cut_copper         | ERR "There is no item named 'assets/minecraft/models/minecraft:block/weathered_cut_copper.json' in the archive"
+weathered_cut_copper_slab          | ?                      | ERR "There is no item named 'assets/minecraft/models/minecraft:block/weathered_cut_copper_slab.json' in the archive" | minecraft:block/weathered_cut_copper         | ERR "There is no item named 'assets/minecraft/models/minecraft:block/weathered_cut_copper.json' in the archive"
+
+=== rotation/ref identity: bottom vs top model texture sets equal?
+  kinds where top-model textures differ from bottom: NONE
+
+=== double-model census (group by)
+  double=minecraft:block/acacia_planks: 1 kinds
+    ['acacia_slab']
+  double=minecraft:block/andesite: 1 kinds
+    ['andesite_slab']
+  double=minecraft:block/bamboo_mosaic: 1 kinds
+    ['bamboo_mosaic_slab']
+  double=minecraft:block/bamboo_planks: 1 kinds
+    ['bamboo_slab']
+  double=minecraft:block/birch_planks: 1 kinds
+    ['birch_slab']
+  double=minecraft:block/blackstone: 1 kinds
+    ['blackstone_slab']
+  double=minecraft:block/bricks: 1 kinds
+    ['brick_slab']
+  double=minecraft:block/cherry_planks: 1 kinds
+    ['cherry_slab']
+  double=minecraft:block/cinnabar: 1 kinds
+    ['cinnabar_slab']
+  double=minecraft:block/cinnabar_bricks: 1 kinds
+    ['cinnabar_brick_slab']
+  double=minecraft:block/cobbled_deepslate: 1 kinds
+    ['cobbled_deepslate_slab']
+  double=minecraft:block/cobblestone: 1 kinds
+    ['cobblestone_slab']
+  double=minecraft:block/crimson_planks: 1 kinds
+    ['crimson_slab']
+  double=minecraft:block/cut_copper: 2 kinds
+    ['cut_copper_slab', 'waxed_cut_copper_slab']
+  double=minecraft:block/cut_red_sandstone: 1 kinds
+    ['cut_red_sandstone_slab']
+  double=minecraft:block/cut_sandstone: 1 kinds
+    ['cut_sandstone_slab']
+  double=minecraft:block/dark_oak_planks: 1 kinds
+    ['dark_oak_slab']
+  double=minecraft:block/dark_prismarine: 1 kinds
+    ['dark_prismarine_slab']
+  double=minecraft:block/deepslate_bricks: 1 kinds
+    ['deepslate_brick_slab']
+  double=minecraft:block/deepslate_tiles: 1 kinds
+    ['deepslate_tile_slab']
+  double=minecraft:block/diorite: 1 kinds
+    ['diorite_slab']
+  double=minecraft:block/end_stone_bricks: 1 kinds
+    ['end_stone_brick_slab']
+  double=minecraft:block/exposed_cut_copper: 2 kinds
+    ['exposed_cut_copper_slab', 'waxed_exposed_cut_copper_slab']
+  double=minecraft:block/granite: 1 kinds
+    ['granite_slab']
+  double=minecraft:block/jungle_planks: 1 kinds
+    ['jungle_slab']
+  double=minecraft:block/mangrove_planks: 1 kinds
+    ['mangrove_slab']
+  double=minecraft:block/mossy_cobblestone: 1 kinds
+    ['mossy_cobblestone_slab']
+  double=minecraft:block/mossy_stone_bricks: 1 kinds
+    ['mossy_stone_brick_slab']
+  double=minecraft:block/mud_bricks: 1 kinds
+    ['mud_brick_slab']
+  double=minecraft:block/nether_bricks: 1 kinds
+    ['nether_brick_slab']
+  double=minecraft:block/oak_planks: 2 kinds
+    ['oak_slab', 'petrified_oak_slab']
+  double=minecraft:block/oxidized_cut_copper: 2 kinds
+    ['oxidized_cut_copper_slab', 'waxed_oxidized_cut_copper_slab']
+  double=minecraft:block/pale_oak_planks: 1 kinds
+    ['pale_oak_slab']
+  double=minecraft:block/polished_andesite: 1 kinds
+    ['polished_andesite_slab']
+  double=minecraft:block/polished_blackstone: 1 kinds
+    ['polished_blackstone_slab']
+  double=minecraft:block/polished_blackstone_bricks: 1 kinds
+    ['polished_blackstone_brick_slab']
+  double=minecraft:block/polished_cinnabar: 1 kinds
+    ['polished_cinnabar_slab']
+  double=minecraft:block/polished_deepslate: 1 kinds
+    ['polished_deepslate_slab']
+  double=minecraft:block/polished_diorite: 1 kinds
+    ['polished_diorite_slab']
+  double=minecraft:block/polished_granite: 1 kinds
+    ['polished_granite_slab']
+  double=minecraft:block/polished_sulfur: 1 kinds
+    ['polished_sulfur_slab']
+  double=minecraft:block/polished_tuff: 1 kinds
+    ['polished_tuff_slab']
+  double=minecraft:block/prismarine: 1 kinds
+    ['prismarine_slab']
+  double=minecraft:block/prismarine_bricks: 1 kinds
+    ['prismarine_brick_slab']
+  double=minecraft:block/purpur_block: 1 kinds
+    ['purpur_slab']
+  double=minecraft:block/quartz_block: 1 kinds
+    ['quartz_slab']
+  double=minecraft:block/red_nether_bricks: 1 kinds
+    ['red_nether_brick_slab']
+  double=minecraft:block/red_sandstone: 1 kinds
+    ['red_sandstone_slab']
+  double=minecraft:block/resin_bricks: 1 kinds
+    ['resin_brick_slab']
+  double=minecraft:block/sandstone: 1 kinds
+    ['sandstone_slab']
+  double=minecraft:block/smooth_quartz: 1 kinds
+    ['smooth_quartz_slab']
+  double=minecraft:block/smooth_red_sandstone: 1 kinds
+    ['smooth_red_sandstone_slab']
+  double=minecraft:block/smooth_sandstone: 1 kinds
+    ['smooth_sandstone_slab']
+  double=minecraft:block/smooth_stone_slab_double: 1 kinds
+    ['smooth_stone_slab']
+  double=minecraft:block/spruce_planks: 1 kinds
+    ['spruce_slab']
+  double=minecraft:block/stone: 1 kinds
+    ['stone_slab']
+  double=minecraft:block/stone_bricks: 1 kinds
+    ['stone_brick_slab']
+  double=minecraft:block/sulfur: 1 kinds
+    ['sulfur_slab']
+  double=minecraft:block/sulfur_bricks: 1 kinds
+    ['sulfur_brick_slab']
+  double=minecraft:block/tuff: 1 kinds
+    ['tuff_slab']
+  double=minecraft:block/tuff_bricks: 1 kinds
+    ['tuff_brick_slab']
+  double=minecraft:block/warped_planks: 1 kinds
+    ['warped_slab']
+  double=minecraft:block/weathered_cut_copper: 2 kinds
+    ['waxed_weathered_cut_copper_slab', 'weathered_cut_copper_slab']

@@ -295,6 +295,19 @@ fn is_transparent(kind: u16) -> bool {
         // AO the opaque walk never casts, the element quads the stairs
         // lane's own walk renders)
         || crate::world::is_stairs(kind)
+        // THE SLAB FAMILY the same verdict keeps (the dev-63 round —
+        // the 68 kinds the useShapeForLightOcclusion law the vanilla
+        // light speaks: the BOTTOM/TOP states the shape the FULL cube
+        // never is (`isShapeFullBlock` the canOcclude verdict reads —
+        // the half band the false answer gives), the propagatesSkylight
+        // Down law the same verdict keeps: the half-open slab cell the
+        // neighbors' faces draw against, the AO the opaque walk never
+        // casts, the element quads the slab lane's own walk renders —
+        // the DOUBLE state the full cube the same verdict the mesher's
+        // is_transparent kind-only vocabulary keeps, the exact light
+        // verdict the [`crate::light::sky_opacity_at`] variant-aware
+        // walk serves)
+        || crate::world::is_slab(kind)
 }
 
 /// Only opaque blocks cast ambient occlusion (air/water/leaves never darken
@@ -5064,6 +5077,183 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     }
                     continue;
                 }
+                // THE SLAB'S OWN ELEMENT LANE (the dev-63 round —
+                // javap SlabBlock the 26.2 jar the probe
+                // scripts/jar_work/slab_691.py banks): the blockstate
+                // the THREE-key type map carries (type=bottom/top/
+                // double — the waxed twins the BASE copper models the
+                // references re-wear, the smooth_stone_slab double the
+                // block/smooth_stone_slab_double special model wears),
+                // the template pair the band boxes speak (block/slab
+                // the [0,0,0]->[16,8,16] bottom band the down/up +
+                // four side cullfaces banks, block/slab_top the
+                // [0,8,0]->[16,16,16] mirrored pair wears — the uv
+                // bands the v 8..16 bottom / v 0..8 top rows keep),
+                // the DOUBLE the parent's full-cube model the same
+                // lane renders (the parent textures the same stem
+                // walk serves, the cullfaces the six directions the
+                // full cube banks). The lightmap the cell's own
+                // answer the stairs lane's own setup serves, the
+                // per-quad tile the resolved stem the TILE_NAMES
+                // census the reverse index answers (the sandstone/
+                // quartz/blackstone walks the split rows keep, the
+                // smooth_stone_slab the slab_side special master
+                // banks), the shade term the direction table answers
+                // (the slab template's shade:true elements the same
+                // vanilla tesselation walk keeps), the cullfaces the
+                // vanilla cullface law the neighbor's solid-render
+                // verdict reads (the down face the below cell culls,
+                // the up face the above answers, the four sides the
+                // same law speaks), the OPAQUE flags the binary
+                // cutout rides (the parent masters' alpha every slab
+                // wears).
+                if crate::world::is_slab(id) {
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let (cell_sky, cell_block) = match light {
+                        Some(l) => {
+                            let (s, b) = cell_layers(l, world.chunks_per_side, wx, wy, wz);
+                            (s.map(|v| v as f32), b.map(|v| v as f32))
+                        }
+                        None => (None, None),
+                    };
+                    // THE VARIANT'S OWN READ (the type byte the
+                    // placement walk stamps — the double the parent
+                    // model the same lane serves)
+                    let slab_type = crate::world::slab_variant_type(world.variant(wx, wy, wz));
+                    let slab_quads = slab_model_quads(id, slab_type);
+                    // the no-atlas boot's own default — the tile's own
+                    // pixels speak, the flat palette the missing row
+                    // keeps (the stairs path's own verdict)
+                    let fallback_tile = if (id as usize) < atlas::N_KINDS {
+                        atlas::FACE_TILES[id as usize][2]
+                    } else {
+                        atlas::TILE_NONE
+                    };
+                    // THE CULLFACE'S OWN NEIGHBOR READ (the vanilla
+                    // cullface law the six directions the verdict
+                    // keeps — the solid-render neighbor the face
+                    // culls, the non-occluding the same face draws)
+                    let cull_solid = |dir: mc_registry::element_quads::Direction| -> bool {
+                        let (dx, dy, dz) = match dir {
+                            mc_registry::element_quads::Direction::Down => (0, -1, 0),
+                            mc_registry::element_quads::Direction::Up => (0, 1, 0),
+                            mc_registry::element_quads::Direction::North => (0, 0, -1),
+                            mc_registry::element_quads::Direction::South => (0, 0, 1),
+                            mc_registry::element_quads::Direction::West => (-1, 0, 0),
+                            mc_registry::element_quads::Direction::East => (1, 0, 0),
+                        };
+                        let nb = world.get(wx + dx, wy + dy, wz + dz);
+                        !is_transparent(nb)
+                    };
+                    for q in slab_quads {
+                        // THE CULLFACE'S OWN SKIP (the neighbor's
+                        // solid-render verdict the face never draws)
+                        if let Some(dir) = q.cullface {
+                            if cull_solid(dir) {
+                                continue;
+                            }
+                        }
+                        let mut pts = [[0f32; 3]; 4];
+                        let mut colors = [[0f32; 3]; 4];
+                        let mut uvs = [[0f32; 2]; 4];
+                        for (i, v) in q.vertices.iter().enumerate() {
+                            // THE NO-TURN'S OWN IDENTITY (the slab
+                            // blockstates the x=0 y=0 rows carry — the
+                            // quads the cell's own frame the identity
+                            // walk serves, the y the band's own span
+                            // the template pair banks)
+                            pts[i] = [
+                                wx as f32 + v[0],
+                                wy as f32 + v[1],
+                                wz as f32 + v[2],
+                            ];
+                            uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
+                            let lm = lightmap_combine(
+                                cell_sky,
+                                cell_block,
+                                sky_factor,
+                                sky_tint,
+                                ambient,
+                                block_tint,
+                                night_vision,
+                                world.night_vision_factor,
+                                world.darkness_scale,
+                            );
+                            // THE SHADE TERM'S OWN READ — the
+                            // elements' shade:true the vanilla
+                            // tesselation's direction table answers
+                            // (the unturned quads the identity
+                            // direction the same walk keeps)
+                            let face_shade = if q.shade {
+                                match q.direction {
+                                    mc_registry::element_quads::Direction::Up => 1.0f32,
+                                    mc_registry::element_quads::Direction::Down => 0.5,
+                                    mc_registry::element_quads::Direction::North
+                                    | mc_registry::element_quads::Direction::South => 0.8,
+                                    mc_registry::element_quads::Direction::West
+                                    | mc_registry::element_quads::Direction::East => 0.6,
+                                }
+                            } else {
+                                1.0
+                            };
+                            colors[i] = [
+                                lm[0] * face_shade,
+                                lm[1] * face_shade,
+                                lm[2] * face_shade,
+                            ];
+                        }
+                        // THE PER-QUAD TILE VERDICT — the resolved stem
+                        // the kind's own master answers (the #top/#side/
+                        // #bottom refs the parent masters name — the
+                        // sandstone/quartz/blackstone walks the split
+                        // rows keep, the unknown stem the fallback row
+                        // serves)
+                        let tex_stem = q
+                            .texture
+                            .trim_start_matches("minecraft:")
+                            .trim_start_matches("block/");
+                        let slab_tile = slab_stem_tile(tex_stem).unwrap_or(fallback_tile);
+                        out.push(Quad {
+                            pts,
+                            colors,
+                            uvs,
+                            tile: slab_tile,
+                            translucent: false,
+                            per_texel_alpha: false,
+                        });
+                    }
+                    continue;
+                }
                 // THE END PORTAL'S OWN ARM (the dev-29 round — the
                 // starry volume the special pass draws: the
                 // EndPortalRenderer's own cube the shader law serves,
@@ -6772,6 +6962,79 @@ fn stairs_model_quads(
 /// TILE_NAMES census the once-built reverse index answers, the
 /// unknown stem the None the fallback row serves).
 fn stairs_stem_tile(stem: &str) -> Option<u16> {
+    static TILES: std::sync::OnceLock<std::collections::HashMap<&'static str, u16>> =
+        std::sync::OnceLock::new();
+    let m = TILES.get_or_init(|| {
+        atlas::TILE_NAMES
+            .iter()
+            .enumerate()
+            .map(|(i, name)| (*name, i as u16))
+            .collect()
+    });
+    m.get(stem).copied()
+}
+
+/// THE SLAB MODELS' OWN CACHED BAKES (the dev-63 round — the kind's
+/// own blockstate the VARIANTS walk parses, the "type=bottom/top/
+/// double" key the placed byte selects, the derived quads the element
+/// walk bakes ONCE per model id (the Arc the dedup shares), the
+/// blockstates the x=0 y=0 rows the NO-turn identity carries). The
+/// unknown (kind, state) the empty slice keeps (the unstamped default
+/// the bottom band wears).
+fn slab_model_quads(kind: u16, slab_type: u8) -> &'static [DerivedQuad] {
+    static BAKES: std::sync::OnceLock<
+        std::collections::HashMap<(u16, u8), std::sync::Arc<Vec<DerivedQuad>>>,
+    > = std::sync::OnceLock::new();
+    BAKES.get_or_init(|| {
+        // THE MODEL DEDUP (the bottom/top models the bare+copper pairs
+        // share, the doubles the parent's full-cube model the waxed
+        // twins re-wear — the Arc the entries share)
+        let mut models: std::collections::HashMap<String, std::sync::Arc<Vec<DerivedQuad>>> =
+            std::collections::HashMap::new();
+        let mut map = std::collections::HashMap::new();
+        for k in crate::world::SLAB_KINDS {
+            let name = crate::world::NAME_OF[k as usize];
+            let Some(Ok(mc_registry::blockstate_lookup::Definition::Variants(entries))) =
+                mc_registry::blockstate_lookup::parse(name)
+            else {
+                continue;
+            };
+            for (key, applies) in entries {
+                let want = match key {
+                    "type=bottom" => crate::world::SLAB_TYPE_BOTTOM,
+                    "type=top" => crate::world::SLAB_TYPE_TOP,
+                    "type=double" => crate::world::SLAB_TYPE_DOUBLE,
+                    _ => continue,
+                };
+                let Some(apply) = applies.first() else {
+                    continue;
+                };
+                let model_id = apply.model.trim_start_matches("minecraft:").to_string();
+                let quads = models
+                    .entry(model_id.clone())
+                    .or_insert_with(|| {
+                        std::sync::Arc::new(
+                            derive_model_inherited(&model_id).unwrap_or_default(),
+                        )
+                    })
+                    .clone();
+                map.insert((k, want), quads);
+            }
+        }
+        map
+    })
+    .get(&(kind, slab_type))
+    .map(|quads| quads.as_slice())
+    .unwrap_or(&[])
+}
+
+/// THE SLAB STEMS' OWN TILE INDEX (the parent masters the per-quad
+/// texture refs name — block/oak_planks the wooden rungs, block/stone
+/// the stone walk, block/cut_copper the copper ladder, the
+/// sandstone/quartz/blackstone walks the split rows keep: the
+/// TILE_NAMES census the once-built reverse index answers, the
+/// unknown stem the None the fallback row serves).
+fn slab_stem_tile(stem: &str) -> Option<u16> {
     static TILES: std::sync::OnceLock<std::collections::HashMap<&'static str, u16>> =
         std::sync::OnceLock::new();
     let m = TILES.get_or_init(|| {
@@ -11373,6 +11636,250 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    #[test]
+    fn the_slab_lane_renders_the_bands_the_cullfaces_and_the_double_wears() {
+        // THE SLAB LANE'S OWN LAWS (the dev-63 round — javap
+        // SlabBlock the 26.2 jar the probe scripts/jar_work/
+        // slab_691.py banks): the blockstates the three-key type map
+        // carry (type=bottom/top/double — the waxed twins the BASE
+        // copper models re-wear), the template pair the band boxes
+        // speak (block/slab the [0,0,0]->[16,8,16] bottom band, the
+        // cullfaces the six-direction pair banks, block/slab_top the
+        // mirrored pair wears), the DOUBLE the parent's full-cube
+        // model the same lane renders, the per-quad tile the parent
+        // masters the stem census resolves (the sandstone walk the
+        // bottom/side/top split rows keep, the smooth stone the
+        // slab_side special master banks)
+        use mc_registry::generated::atlas as gen_atlas;
+        let oak_tile = gen_atlas::FACE_TILES[crate::world::OAK_SLAB as usize][2];
+        assert_eq!(gen_atlas::tile_name(oak_tile), "oak_planks");
+        let in_cell = |quad: &crate::mesher::Quad| {
+            quad.pts.iter().all(|p| {
+                p[0] >= 8.0 - 1e-4
+                    && p[0] <= 9.0 + 1e-4
+                    && p[1] >= 8.0 - 1e-4
+                    && p[1] <= 9.0 + 1e-4
+                    && p[2] >= 8.0 - 1e-4
+                    && p[2] <= 9.0 + 1e-4
+            })
+        };
+        let y_min_of = |quad: &crate::mesher::Quad| {
+            quad.pts.iter().map(|p| p[1]).fold(f32::MAX, f32::min)
+        };
+        let y_max_of = |quad: &crate::mesher::Quad| {
+            quad.pts.iter().map(|p| p[1]).fold(f32::MIN, f32::max)
+        };
+        // THE BOTTOM BAND (the unstamped default the registerDefault
+        // pin wears — the SIX faces the band bakes: the down + the up
+        // + the four sides the open cell draws)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::OAK_SLAB);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let bottom: Vec<_> = q.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(
+            bottom.len(),
+            6,
+            "the bottom band the 6 quads bakes, got {}",
+            bottom.len()
+        );
+        for quad in &bottom {
+            let y_min = y_min_of(quad);
+            let y_max = y_max_of(quad);
+            assert!(
+                y_min >= 8.0 - 1e-5 && y_max <= 8.5 + 1e-5,
+                "the 0..8 band the bottom slab keeps, got {y_min}..{y_max}"
+            );
+        }
+        // THE DOWN FACE + THE UP FACE THE BAND'S OWN PLANES WEAR (the
+        // one quad each the flat pair answers)
+        let down_faces = bottom.iter().filter(|quad| {
+            quad.pts.iter().all(|p| (p[1] - 8.0).abs() < 1e-5)
+        }).count();
+        let up_faces = bottom.iter().filter(|quad| {
+            quad.pts.iter().all(|p| (p[1] - 8.5).abs() < 1e-5)
+        }).count();
+        assert_eq!(down_faces, 1, "the down face the band's floor banks");
+        assert_eq!(up_faces, 1, "the up face the band's ceiling banks");
+        // THE TOP BAND (the type=1 the mirrored pair the upper half
+        // banks — the same 6 quads the y 0.5..1.0 span wears)
+        let mut wt = empty_world();
+        put(&mut wt, 8, 8, 8, crate::world::OAK_SLAB);
+        wt.set_variant(8, 8, 8, crate::world::slab_variant(crate::world::SLAB_TYPE_TOP));
+        let qt = mesh_chunk(&wt, 0, 0, None);
+        let top: Vec<_> = qt.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(top.len(), 6, "the top band the same 6 quads bakes");
+        for quad in &top {
+            let y_min = y_min_of(quad);
+            let y_max = y_max_of(quad);
+            assert!(
+                y_min >= 8.5 - 1e-5 && y_max <= 9.0 + 1e-5,
+                "the 8..16 band the top slab keeps, got {y_min}..{y_max}"
+            );
+        }
+        // THE DOUBLE (the type=2 the parent's full-cube model the same
+        // lane renders — the SIX faces the 0..1 span the cube wears)
+        let mut wd = empty_world();
+        put(&mut wd, 8, 8, 8, crate::world::OAK_SLAB);
+        wd.set_variant(8, 8, 8, crate::world::slab_variant(crate::world::SLAB_TYPE_DOUBLE));
+        let qd = mesh_chunk(&wd, 0, 0, None);
+        let dbl: Vec<_> = qd.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(dbl.len(), 6, "the double the full cube the 6 quads bakes");
+        for quad in &dbl {
+            let y_min = y_min_of(quad);
+            let y_max = y_max_of(quad);
+            assert!(
+                y_min >= 8.0 - 1e-5 && y_max <= 9.0 + 1e-5,
+                "the full span the double keeps, got {y_min}..{y_max}"
+            );
+        }
+        // THE DOWN CULLFACE'S OWN VERDICT (the stone below the
+        // solid-render neighbor the floor face culls — the 5 quads the
+        // band keeps)
+        let mut wb = empty_world();
+        put(&mut wb, 8, 8, 8, crate::world::OAK_SLAB);
+        put(&mut wb, 8, 7, 8, crate::world::STONE);
+        let qb = mesh_chunk(&wb, 0, 0, None);
+        let culled_bottom: Vec<_> = qb
+            .iter()
+            .filter(|quad| quad.tile == oak_tile && in_cell(quad))
+            .collect();
+        assert_eq!(
+            culled_bottom.len(),
+            5,
+            "the stone below the down face culls, got {}",
+            culled_bottom.len()
+        );
+        assert!(
+            culled_bottom
+                .iter()
+                .all(|quad| !quad.pts.iter().all(|p| (p[1] - 8.0).abs() < 1e-5)),
+            "the floor face the solid ground never draws"
+        );
+        // THE SIDE CULLFACE'S OWN VERDICT (the stone north the
+        // north-facing side face culls — the four sides the open
+        // three + the up + the down the count keeps)
+        let mut wsn = empty_world();
+        put(&mut wsn, 8, 8, 8, crate::world::OAK_SLAB);
+        put(&mut wsn, 8, 8, 7, crate::world::STONE);
+        let qsn = mesh_chunk(&wsn, 0, 0, None);
+        let side_culled: Vec<_> = qsn
+            .iter()
+            .filter(|quad| quad.tile == oak_tile && in_cell(quad))
+            .collect();
+        assert_eq!(
+            side_culled.len(),
+            5,
+            "the stone north the north face culls, got {}",
+            side_culled.len()
+        );
+        // THE UP CULLFACE'S OWN VERDICT (the top slab the stone above
+        // the ceiling face culls — the 5 quads the band keeps)
+        let mut wu = empty_world();
+        put(&mut wu, 8, 8, 8, crate::world::OAK_SLAB);
+        wu.set_variant(8, 8, 8, crate::world::slab_variant(crate::world::SLAB_TYPE_TOP));
+        put(&mut wu, 8, 9, 8, crate::world::STONE);
+        let qu = mesh_chunk(&wu, 0, 0, None);
+        let up_culled: Vec<_> = qu
+            .iter()
+            .filter(|quad| quad.tile == oak_tile && in_cell(quad))
+            .collect();
+        assert_eq!(
+            up_culled.len(),
+            5,
+            "the stone above the up face culls, got {}",
+            up_culled.len()
+        );
+        assert!(
+            up_culled
+                .iter()
+                .all(|quad| !quad.pts.iter().all(|p| (p[1] - 9.0).abs() < 1e-5)),
+            "the ceiling face the solid roof never draws"
+        );
+        // THE SANDSTONE WALK THE SPLIT ROWS KEEP (the #bottom/#side/
+        // #top refs the three masters answer — the down face the
+        // sandstone_bottom tile wears, the up the sandstone_top, the
+        // four sides the sandstone side keeps)
+        let sand_side = gen_atlas::TILE_NAMES
+            .iter()
+            .position(|n| *n == "sandstone")
+            .expect("the sandstone side master the census banks") as u16;
+        let sand_bottom = gen_atlas::TILE_NAMES
+            .iter()
+            .position(|n| *n == "sandstone_bottom")
+            .expect("the sandstone bottom master the split walk banks") as u16;
+        let sand_top = gen_atlas::TILE_NAMES
+            .iter()
+            .position(|n| *n == "sandstone_top")
+            .expect("the sandstone top master the split walk banks") as u16;
+        let mut ws = empty_world();
+        put(&mut ws, 8, 8, 8, crate::world::SANDSTONE_SLAB);
+        let qs = mesh_chunk(&ws, 0, 0, None);
+        let sand: Vec<_> = qs.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(sand.len(), 6, "the sandstone slab the 6 quads bakes");
+        for quad in &sand {
+            if quad.pts.iter().all(|p| (p[1] - 8.0).abs() < 1e-5) {
+                assert_eq!(quad.tile, sand_bottom, "the down face the bottom split wears");
+            } else if quad.pts.iter().all(|p| (p[1] - 8.5).abs() < 1e-5) {
+                assert_eq!(quad.tile, sand_top, "the up face the top split wears");
+            } else {
+                assert_eq!(quad.tile, sand_side, "the side faces the side master wears");
+            }
+        }
+        // THE SMOOTH STONE'S OWN SPECIAL MASTER (the #side ref the
+        // slab_side png the ONLY own tile the family banks — the four
+        // sides the special master wears, the up/down the smooth_stone
+        // pair keeps)
+        let smooth_side = gen_atlas::TILE_NAMES
+            .iter()
+            .position(|n| *n == "smooth_stone_slab_side")
+            .expect("the slab_side master the split walk banks") as u16;
+        let smooth = gen_atlas::TILE_NAMES
+            .iter()
+            .position(|n| *n == "smooth_stone")
+            .expect("the smooth_stone master the census banks") as u16;
+        let mut wm = empty_world();
+        put(&mut wm, 8, 8, 8, crate::world::SMOOTH_STONE_SLAB);
+        let qm = mesh_chunk(&wm, 0, 0, None);
+        let smooths: Vec<_> = qm.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(smooths.len(), 6, "the smooth stone slab the 6 quads bakes");
+        for quad in &smooths {
+            if quad.pts.iter().all(|p| (p[1] - 8.0).abs() < 1e-5)
+                || quad.pts.iter().all(|p| (p[1] - 8.5).abs() < 1e-5)
+            {
+                assert_eq!(quad.tile, smooth, "the flat pair the smooth_stone master wears");
+            } else {
+                assert_eq!(
+                    quad.tile, smooth_side,
+                    "the side faces the OWN slab_side master wears"
+                );
+            }
+        }
+        // THE WAXED TWIN THE BASE GEOMETRY THE COPPER MASTER WEARS
+        // (the blockstate's own bare-model refs the same quads bake)
+        let copper_tile = gen_atlas::FACE_TILES[crate::world::CUT_COPPER_SLAB as usize][2];
+        assert_eq!(gen_atlas::tile_name(copper_tile), "cut_copper");
+        let mut ww = empty_world();
+        put(&mut ww, 8, 8, 8, crate::world::WAXED_CUT_COPPER_SLAB);
+        let qw = mesh_chunk(&ww, 0, 0, None);
+        let waxed: Vec<_> = qw.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(
+            waxed.len(),
+            6,
+            "the waxed twin the base geometry the 6 quads bakes"
+        );
+        assert!(
+            waxed.iter().all(|quad| quad.tile == copper_tile),
+            "the waxed twin the bare copper master re-wears"
+        );
+        // THE OAK DOUBLE THE SAME PARENT MASTER WEARS (the parent's
+        // full-cube model the oak_planks tile the six faces keep)
+        assert!(
+            dbl.iter().all(|quad| quad.tile == oak_tile),
+            "the double the parent master re-wears"
+        );
     }
 
     #[test]

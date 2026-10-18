@@ -1,0 +1,431 @@
+=== the full slab census from blockstates dir
+  68 slabs:
+   ['acacia_slab', 'andesite_slab', 'bamboo_mosaic_slab', 'bamboo_slab', 'birch_slab', 'blackstone_slab', 'brick_slab', 'cherry_slab', 'cinnabar_brick_slab', 'cinnabar_slab', 'cobbled_deepslate_slab', 'cobblestone_slab', 'crimson_slab', 'cut_copper_slab', 'cut_red_sandstone_slab', 'cut_sandstone_slab', 'dark_oak_slab', 'dark_prismarine_slab', 'deepslate_brick_slab', 'deepslate_tile_slab', 'diorite_slab', 'end_stone_brick_slab', 'exposed_cut_copper_slab', 'granite_slab', 'jungle_slab', 'mangrove_slab', 'mossy_cobblestone_slab', 'mossy_stone_brick_slab', 'mud_brick_slab', 'nether_brick_slab', 'oak_slab', 'oxidized_cut_copper_slab', 'pale_oak_slab', 'petrified_oak_slab', 'polished_andesite_slab', 'polished_blackstone_brick_slab', 'polished_blackstone_slab', 'polished_cinnabar_slab', 'polished_deepslate_slab', 'polished_diorite_slab', 'polished_granite_slab', 'polished_sulfur_slab', 'polished_tuff_slab', 'prismarine_brick_slab', 'prismarine_slab', 'purpur_slab', 'quartz_slab', 'red_nether_brick_slab', 'red_sandstone_slab', 'resin_brick_slab', 'sandstone_slab', 'smooth_quartz_slab', 'smooth_red_sandstone_slab', 'smooth_sandstone_slab', 'smooth_stone_slab', 'spruce_slab', 'stone_brick_slab', 'stone_slab', 'sulfur_brick_slab', 'sulfur_slab', 'tuff_brick_slab', 'tuff_slab', 'warped_slab', 'waxed_cut_copper_slab', 'waxed_exposed_cut_copper_slab', 'waxed_oxidized_cut_copper_slab', 'waxed_weathered_cut_copper_slab', 'weathered_cut_copper_slab']
+
+=== class headers
+--- net.minecraft.world.level.block.SlabBlock: ('?2', '?8', ['?193'])
+--- net.minecraft.world.level.block.WeatheringCopperSlabBlock: ('?2', '?8', ['?28'])
+--- net.minecraft.world.level.block.state.properties.SlabType: ('?1', '?23', ['?52'])
+--- net.minecraft.world.level.block.state.properties.BlockStateProperties: ('?37', '?2', [])
+
+=== SlabBlock fields + methods
+  <clinit>()V
+  <init>(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+  canBeReplaced(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/item/context/BlockPlaceContext;)Z
+  canPlaceLiquid(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/material/Fluid;)Z
+  codec()Lcom/mojang/serialization/MapCodec;
+  createBlockStateDefinition(Lnet/minecraft/world/level/block/state/StateDefinition$Builder;)V
+  getFluidState(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/material/FluidState;
+  getShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/shapes/CollisionContext;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+  getStateForPlacement(Lnet/minecraft/world/item/context/BlockPlaceContext;)Lnet/minecraft/world/level/block/state/BlockState;
+  isPathfindable(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/pathfinder/PathComputationType;)Z
+  placeLiquid(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/material/FluidState;)Z
+  updateShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/world/level/ScheduledTickAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;)Lnet/minecraft/world/level/block/state/BlockState;
+  useShapeForLightOcclusion(Lnet/minecraft/world/level/block/state/BlockState;)Z
+
+=== SlabBlock methods of interest
+--- net.minecraft.world.level.block.SlabBlock.getShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/shapes/CollisionContext;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+0: getstatic net/minecraft/world/level/block/SlabBlock$1.$SwitchMap$net$minecraft$world$level$block$state$properties$SlabType:[I
+3: aload_1
+4: getstatic net/minecraft/world/level/block/SlabBlock.TYPE:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+7: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+10: checkcast net/minecraft/world/level/block/state/properties/SlabType
+13: invokevirtual net/minecraft/world/level/block/state/properties/SlabType.ordinal:()I
+16: 0x2e
+17: 0xaa tableswitch lo=1 hi=3 default=27
+44: new java/lang/MatchException
+47: dup
+48: aconst_null
+49: aconst_null
+50: invokespecial java/lang/MatchException.<init>:(Ljava/lang/String;Ljava/lang/Throwable;)V
+53: athrow
+54: getstatic net/minecraft/world/level/block/SlabBlock.SHAPE_TOP:Lnet/minecraft/world/phys/shapes/VoxelShape;
+57: goto -> 69
+60: getstatic net/minecraft/world/level/block/SlabBlock.SHAPE_BOTTOM:Lnet/minecraft/world/phys/shapes/VoxelShape;
+63: goto -> 69
+66: invokestatic net/minecraft/world/phys/shapes/Shapes.block:()Lnet/minecraft/world/phys/shapes/VoxelShape;
+69: areturn
+--- net.minecraft.world.level.block.SlabBlock.getStateForPlacement(Lnet/minecraft/world/item/context/BlockPlaceContext;)Lnet/minecraft/world/level/block/state/BlockState;
+0: aload_1
+1: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getClickedPos:()Lnet/minecraft/core/BlockPos;
+4: astore_2
+5: aload_1
+6: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getLevel:()Lnet/minecraft/world/level/Level;
+9: aload_2
+10: invokevirtual net/minecraft/world/level/Level.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+13: astore_3
+14: aload_3
+15: aload_0
+16: invokevirtual net/minecraft/world/level/block/state/BlockState.is:(Ljava/lang/Object;)Z
+19: ifeq -> 49
+22: aload_3
+23: getstatic net/minecraft/world/level/block/SlabBlock.TYPE:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+26: getstatic net/minecraft/world/level/block/state/properties/SlabType.DOUBLE:Lnet/minecraft/world/level/block/state/properties/SlabType;
+29: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+32: checkcast net/minecraft/world/level/block/state/BlockState
+35: getstatic net/minecraft/world/level/block/SlabBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+38: iconst_0
+39: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+42: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+45: checkcast net/minecraft/world/level/block/state/BlockState
+48: areturn
+49: aload_1
+50: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getLevel:()Lnet/minecraft/world/level/Level;
+53: aload_2
+54: invokevirtual net/minecraft/world/level/Level.getFluidState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/material/FluidState;
+57: astore astore 4
+59: aload_0
+60: invokevirtual net/minecraft/world/level/block/SlabBlock.defaultBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+63: getstatic net/minecraft/world/level/block/SlabBlock.TYPE:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+66: getstatic net/minecraft/world/level/block/state/properties/SlabType.BOTTOM:Lnet/minecraft/world/level/block/state/properties/SlabType;
+69: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+72: checkcast net/minecraft/world/level/block/state/BlockState
+75: getstatic net/minecraft/world/level/block/SlabBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+78: aload aload 4
+80: getstatic net/minecraft/world/level/material/Fluids.WATER:Lnet/minecraft/world/level/material/FlowingFluid;
+83: invokevirtual net/minecraft/world/level/material/FluidState.is:(Ljava/lang/Object;)Z
+86: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+89: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+92: checkcast net/minecraft/world/level/block/state/BlockState
+95: astore astore 5
+97: aload_1
+98: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getClickedFace:()Lnet/minecraft/core/Direction;
+101: astore astore 6
+103: aload aload 6
+105: getstatic net/minecraft/core/Direction.DOWN:Lnet/minecraft/core/Direction;
+108: if_acmpeq -> 139
+111: aload aload 6
+113: getstatic net/minecraft/core/Direction.UP:Lnet/minecraft/core/Direction;
+116: if_acmpeq -> 154
+119: aload_1
+120: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getClickLocation:()Lnet/minecraft/world/phys/Vec3;
+123: getfield net/minecraft/world/phys/Vec3.y:D
+126: aload_2
+127: invokevirtual net/minecraft/core/BlockPos.getY:()I
+130: 0x87
+131: 0x67
+132: ldc2_w double 0.5
+135: 0x97
+136: ifle -> 154
+139: aload aload 5
+141: getstatic net/minecraft/world/level/block/SlabBlock.TYPE:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+144: getstatic net/minecraft/world/level/block/state/properties/SlabType.TOP:Lnet/minecraft/world/level/block/state/properties/SlabType;
+147: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+150: checkcast net/minecraft/world/level/block/state/BlockState
+153: areturn
+154: aload aload 5
+156: areturn
+--- net.minecraft.world.level.block.SlabBlock.updateShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/world/level/ScheduledTickAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;)Lnet/minecraft/world/level/block/state/BlockState;
+0: aload_1
+1: getstatic net/minecraft/world/level/block/SlabBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+4: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+7: checkcast java/lang/Boolean
+10: invokevirtual java/lang/Boolean.booleanValue:()Z
+13: ifeq -> 34
+16: aload_3
+17: aload aload 4
+19: getstatic net/minecraft/world/level/material/Fluids.WATER:Lnet/minecraft/world/level/material/FlowingFluid;
+22: getstatic net/minecraft/world/level/material/Fluids.WATER:Lnet/minecraft/world/level/material/FlowingFluid;
+25: aload_2
+26: invokevirtual net/minecraft/world/level/material/FlowingFluid.getTickDelay:(Lnet/minecraft/world/level/LevelReader;)I
+29: invokeinterface net/minecraft/world/level/ScheduledTickAccess.scheduleTick:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/material/Fluid;I)V
+32: iconst_1
+33: nop
+34: aload_0
+35: aload_1
+36: aload_2
+37: aload_3
+38: aload aload 4
+40: aload aload 5
+42: aload aload 6
+44: aload aload 7
+46: aload aload 8
+48: invokespecial net/minecraft/world/level/block/Block.updateShape:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/world/level/ScheduledTickAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;)Lnet/minecraft/world/level/block/state/BlockState;
+51: areturn
+--- net.minecraft.world.level.block.SlabBlock.useShapeForLightOcclusion(Lnet/minecraft/world/level/block/state/BlockState;)Z
+0: aload_1
+1: getstatic net/minecraft/world/level/block/SlabBlock.TYPE:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+4: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+7: getstatic net/minecraft/world/level/block/state/properties/SlabType.DOUBLE:Lnet/minecraft/world/level/block/state/properties/SlabType;
+10: if_acmpeq -> 17
+13: iconst_1
+14: goto -> 18
+17: iconst_0
+18: ireturn
+--- net.minecraft.world.level.block.SlabBlock.<clinit>()V
+0: invokedynamic indy
+5: invokestatic net/minecraft/world/level/block/SlabBlock.simpleCodec:(Ljava/util/function/Function;)Lcom/mojang/serialization/MapCodec;
+8: putstatic net/minecraft/world/level/block/SlabBlock.CODEC:Lcom/mojang/serialization/MapCodec;
+11: getstatic net/minecraft/world/level/block/state/properties/BlockStateProperties.SLAB_TYPE:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+14: putstatic net/minecraft/world/level/block/SlabBlock.TYPE:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+17: getstatic net/minecraft/world/level/block/state/properties/BlockStateProperties.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+20: putstatic net/minecraft/world/level/block/SlabBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+23: ldc2_w double 16.0
+26: dconst_0
+27: ldc2_w double 8.0
+30: invokestatic net/minecraft/world/level/block/Block.column:(DDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+33: putstatic net/minecraft/world/level/block/SlabBlock.SHAPE_BOTTOM:Lnet/minecraft/world/phys/shapes/VoxelShape;
+36: ldc2_w double 16.0
+39: ldc2_w double 8.0
+42: ldc2_w double 16.0
+45: invokestatic net/minecraft/world/level/block/Block.column:(DDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+48: putstatic net/minecraft/world/level/block/SlabBlock.SHAPE_TOP:Lnet/minecraft/world/phys/shapes/VoxelShape;
+51: return
+!! net.minecraft.world.level.block.SlabBlock: no method matching getCollisionShape
+--- net.minecraft.world.level.block.SlabBlock.canPlaceLiquid(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/material/Fluid;)Z
+0: aload aload 4
+2: getstatic net/minecraft/world/level/block/SlabBlock.TYPE:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+5: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+8: getstatic net/minecraft/world/level/block/state/properties/SlabType.DOUBLE:Lnet/minecraft/world/level/block/state/properties/SlabType;
+11: if_acmpeq -> 26
+14: aload_0
+15: aload_1
+16: aload_2
+17: aload_3
+18: aload aload 4
+20: aload aload 5
+22: invokespecial net/minecraft/world/level/block/SimpleWaterloggedBlock.canPlaceLiquid:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/material/Fluid;)Z
+25: ireturn
+26: iconst_0
+27: ireturn
+
+=== SlabType enum constants
+    0: new net/minecraft/world/level/block/state/properties/SlabType
+    3: dup
+    4: ldc TOP
+    6: iconst_0
+    7: ldc top
+    9: invokespecial net/minecraft/world/level/block/state/properties/SlabType.<init>:(Ljava/lang/String;ILjava/lang/String;)V
+    12: putstatic net/minecraft/world/level/block/state/properties/SlabType.TOP:Lnet/minecraft/world/level/block/state/properties/SlabType;
+    15: new net/minecraft/world/level/block/state/properties/SlabType
+    18: dup
+    19: ldc BOTTOM
+    21: iconst_1
+    22: ldc bottom
+    24: invokespecial net/minecraft/world/level/block/state/properties/SlabType.<init>:(Ljava/lang/String;ILjava/lang/String;)V
+    27: putstatic net/minecraft/world/level/block/state/properties/SlabType.BOTTOM:Lnet/minecraft/world/level/block/state/properties/SlabType;
+    30: new net/minecraft/world/level/block/state/properties/SlabType
+    33: dup
+    34: ldc DOUBLE
+    36: iconst_2
+    37: ldc double
+    39: invokespecial net/minecraft/world/level/block/state/properties/SlabType.<init>:(Ljava/lang/String;ILjava/lang/String;)V
+    42: putstatic net/minecraft/world/level/block/state/properties/SlabType.DOUBLE:Lnet/minecraft/world/level/block/state/properties/SlabType;
+    45: invokestatic net/minecraft/world/level/block/state/properties/SlabType.$values:()[Lnet/minecraft/world/level/block/state/properties/SlabType;
+    48: putstatic net/minecraft/world/level/block/state/properties/SlabType.$VALUES:[Lnet/minecraft/world/level/block/state/properties/SlabType;
+    51: return
+
+=== Blocks clinit: OAK_SLAB row
+!! clinit needle not found: OAK_SLAB;putstatic
+
+=== Blocks clinit: STONE_SLAB row
+!! clinit needle not found: STONE_SLAB;putstatic
+
+=== Blocks clinit: CUT_COPPER_SLAB row
+!! clinit needle not found: CUT_COPPER_SLAB;putstatic
+
+=== Blocks clinit: COBBLESTONE_SLAB row
+!! clinit needle not found: COBBLESTONE_SLAB;putstatic
+
+=== the slab lambdas' own bodies (properties)
+--- lambda$static$171(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    0: new net/minecraft/world/level/block/SlabBlock
+    3: dup
+    4: aload_0
+    5: invokespecial net/minecraft/world/level/block/SlabBlock.<init>:(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+    8: areturn
+
+--- lambda$static$369(Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/SlabBlock;
+    0: new net/minecraft/world/level/block/SlabBlock
+    3: dup
+    4: aload_1
+    5: invokespecial net/minecraft/world/level/block/SlabBlock.<init>:(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+    8: areturn
+
+
+=== blockstates: variant-key census (sample)
+--- oak_slab: 3 variants
+    type=bottom -> {'model': 'minecraft:block/oak_slab'}
+    type=double -> {'model': 'minecraft:block/oak_planks'}
+    type=top -> {'model': 'minecraft:block/oak_slab_top'}
+--- stone_slab: 3 variants
+    type=bottom -> {'model': 'minecraft:block/stone_slab'}
+    type=double -> {'model': 'minecraft:block/stone'}
+    type=top -> {'model': 'minecraft:block/stone_slab_top'}
+--- cobblestone_slab: 3 variants
+    type=bottom -> {'model': 'minecraft:block/cobblestone_slab'}
+    type=double -> {'model': 'minecraft:block/cobblestone'}
+    type=top -> {'model': 'minecraft:block/cobblestone_slab_top'}
+--- cut_copper_slab: 3 variants
+    type=bottom -> {'model': 'minecraft:block/cut_copper_slab'}
+    type=double -> {'model': 'minecraft:block/cut_copper'}
+    type=top -> {'model': 'minecraft:block/cut_copper_slab_top'}
+--- waxed_cut_copper_slab: 3 variants
+    type=bottom -> {'model': 'minecraft:block/cut_copper_slab'}
+    type=double -> {'model': 'minecraft:block/cut_copper'}
+    type=top -> {'model': 'minecraft:block/cut_copper_slab_top'}
+--- deepslate_tile_slab: 3 variants
+    type=bottom -> {'model': 'minecraft:block/deepslate_tile_slab'}
+    type=double -> {'model': 'minecraft:block/deepslate_tiles'}
+    type=top -> {'model': 'minecraft:block/deepslate_tile_slab_top'}
+--- cinnabar_slab: 3 variants
+    type=bottom -> {'model': 'minecraft:block/cinnabar_slab'}
+    type=double -> {'model': 'minecraft:block/cinnabar'}
+    type=top -> {'model': 'minecraft:block/cinnabar_slab_top'}
+--- resin_brick_slab: 3 variants
+    type=bottom -> {'model': 'minecraft:block/resin_brick_slab'}
+    type=double -> {'model': 'minecraft:block/resin_bricks'}
+    type=top -> {'model': 'minecraft:block/resin_brick_slab_top'}
+--- smooth_quartz_slab: 3 variants
+    type=bottom -> {'model': 'minecraft:block/smooth_quartz_slab'}
+    type=double -> {'model': 'minecraft:block/smooth_quartz'}
+    type=top -> {'model': 'minecraft:block/smooth_quartz_slab_top'}
+--- sandstone_slab: 3 variants
+    type=bottom -> {'model': 'minecraft:block/sandstone_slab'}
+    type=double -> {'model': 'minecraft:block/sandstone'}
+    type=top -> {'model': 'minecraft:block/sandstone_slab_top'}
+--- crimson_slab: 3 variants
+    type=bottom -> {'model': 'minecraft:block/crimson_slab'}
+    type=double -> {'model': 'minecraft:block/crimson_planks'}
+    type=top -> {'model': 'minecraft:block/crimson_slab_top'}
+--- bamboo_mosaic_slab: 3 variants
+    type=bottom -> {'model': 'minecraft:block/bamboo_mosaic_slab'}
+    type=double -> {'model': 'minecraft:block/bamboo_mosaic'}
+    type=top -> {'model': 'minecraft:block/bamboo_mosaic_slab_top'}
+--- smooth_stone_slab: 3 variants
+    type=bottom -> {'model': 'minecraft:block/smooth_stone_slab'}
+    type=double -> {'model': 'minecraft:block/smooth_stone_slab_double'}
+    type=top -> {'model': 'minecraft:block/smooth_stone_slab_top'}
+
+=== models: the slab trio + masters
+--- block/slab.json
+{   "parent": "block/block",
+    "textures": {
+        "particle": "#side"
+    },
+    "elements": [
+        {   "from": [ 0, 0, 0 ],
+            "to": [ 16, 8, 16 ],
+            "faces": {
+                "down":  { "uv": [ 0, 0, 16, 16 ], "texture": "#bottom", "cullface": "down" },
+                "up":    { "uv": [ 0, 0, 16, 16 ], "texture": "#top" },
+                "north": { "uv": [ 0, 8, 16, 16 ], "texture": "#side", "cullface": "north" },
+                "south": { "uv": [ 0, 8, 16, 16 ], "texture": "#side", "cullface": "south" },
+                "west":  { "uv": [ 0, 8, 16, 16 ], "texture": "#side", "cullface": "west" },
+                "east":  { "uv": [ 0, 8, 16, 16 ], "texture": "#side", "cullface": "east" }
+            }
+        }
+    ]
+}
+
+--- block/slab_top.json
+{
+    "textures": {
+        "particle": "#side"
+    },
+    "elements": [
+        {   "from": [ 0, 8, 0 ],
+            "to": [ 16, 16, 16 ],
+            "faces": {
+                "down":  { "uv": [ 0, 0, 16, 16 ], "texture": "#bottom" },
+                "up":    { "uv": [ 0, 0, 16, 16 ], "texture": "#top", "cullface": "up" },
+                "north": { "uv": [ 0, 0, 16,  8 ], "texture": "#side", "cullface": "north" },
+                "south": { "uv": [ 0, 0, 16,  8 ], "texture": "#side", "cullface": "south" },
+                "west":  { "uv": [ 0, 0, 16,  8 ], "texture": "#side", "cullface": "west" },
+                "east":  { "uv": [ 0, 0, 16,  8 ], "texture": "#side", "cullface": "east" }
+            }
+        }
+    ]
+}
+
+--- block/oak_slab.json
+{
+  "parent": "minecraft:block/slab",
+  "textures": {
+    "bottom": "minecraft:block/oak_planks",
+    "side": "minecraft:block/oak_planks",
+    "top": "minecraft:block/oak_planks"
+  }
+}
+--- block/stone_slab.json
+{
+  "parent": "minecraft:block/slab",
+  "textures": {
+    "bottom": "minecraft:block/stone",
+    "side": "minecraft:block/stone",
+    "top": "minecraft:block/stone"
+  }
+}
+--- block/cut_copper_slab.json
+{
+  "parent": "minecraft:block/slab",
+  "textures": {
+    "bottom": "minecraft:block/cut_copper",
+    "side": "minecraft:block/cut_copper",
+    "top": "minecraft:block/cut_copper"
+  }
+}
+--- block/waxed_cut_copper_slab.json
+  ERR "There is no item named 'assets/minecraft/models/block/waxed_cut_copper_slab.json' in the archive"
+--- block/sandstone_slab.json
+{
+  "parent": "minecraft:block/slab",
+  "textures": {
+    "bottom": "minecraft:block/sandstone_bottom",
+    "side": "minecraft:block/sandstone",
+    "top": "minecraft:block/sandstone_top"
+  }
+}
+--- block/smooth_stone_slab.json
+{
+  "parent": "minecraft:block/slab",
+  "textures": {
+    "bottom": "minecraft:block/smooth_stone",
+    "side": "minecraft:block/smooth_stone_slab_side",
+    "top": "minecraft:block/smooth_stone"
+  }
+}
+--- block/cobblestone_slab.json
+{
+  "parent": "minecraft:block/slab",
+  "textures": {
+    "bottom": "minecraft:block/cobblestone",
+    "side": "minecraft:block/cobblestone",
+    "top": "minecraft:block/cobblestone"
+  }
+}
+--- block/deepslate_tile_slab.json
+{
+  "parent": "minecraft:block/slab",
+  "textures": {
+    "bottom": "minecraft:block/deepslate_tiles",
+    "side": "minecraft:block/deepslate_tiles",
+    "top": "minecraft:block/deepslate_tiles"
+  }
+}
+
+=== textures: slab own pngs? (should be none)
+  slab textures: ['assets/minecraft/textures/block/smooth_stone_slab_side.png']
+
+=== loot tables: the drops
+  oak_slab: entries=['minecraft:oak_slab'] conds=[]
+  stone_slab: entries=['minecraft:stone_slab'] conds=[]
+  cut_copper_slab: entries=['minecraft:cut_copper_slab'] conds=[]
+  waxed_cut_copper_slab: entries=['minecraft:waxed_cut_copper_slab'] conds=[]
+  cobblestone_slab: entries=['minecraft:cobblestone_slab'] conds=[]
+  sandstone_slab: entries=['minecraft:sandstone_slab'] conds=[]
+  deepslate_tile_slab: entries=['minecraft:deepslate_tile_slab'] conds=[]
+  cinnabar_slab: entries=['minecraft:cinnabar_slab'] conds=[]
+  resin_brick_slab: entries=['minecraft:resin_brick_slab'] conds=[]
+  smooth_stone_slab: entries=['minecraft:smooth_stone_slab'] conds=[]
+
+=== tags: mineable axe/pickaxe/shovel membership
+  axe: 1 slabs
+    ['bamboo_mosaic_slab']
+  pickaxe: 55 slabs
+    ['prismarine_slab', 'prismarine_brick_slab', 'dark_prismarine_slab', 'stone_slab', 'smooth_stone_slab', 'sandstone_slab', 'cut_sandstone_slab', 'petrified_oak_slab', 'cobblestone_slab', 'brick_slab', 'stone_brick_slab', 'nether_brick_slab', 'quartz_slab', 'red_sandstone_slab', 'cut_red_sandstone_slab', 'purpur_slab', 'polished_granite_slab', 'smooth_red_sandstone_slab', 'mossy_stone_brick_slab', 'polished_diorite_slab', 'mossy_cobblestone_slab', 'end_stone_brick_slab', 'smooth_sandstone_slab', 'smooth_quartz_slab', 'granite_slab', 'andesite_slab', 'red_nether_brick_slab', 'polished_andesite_slab', 'diorite_slab', 'blackstone_slab', 'polished_blackstone_brick_slab', 'polished_blackstone_slab', 'cobbled_deepslate_slab', 'polished_deepslate_slab', 'deepslate_tile_slab', 'deepslate_brick_slab', 'mud_brick_slab', 'tuff_slab', 'polished_tuff_slab', 'tuff_brick_slab', 'resin_brick_slab', 'cinnabar_slab', 'polished_cinnabar_slab', 'cinnabar_brick_slab', 'sulfur_slab', 'polished_sulfur_slab', 'sulfur_brick_slab', 'cut_copper_slab', 'exposed_cut_copper_slab', 'weathered_cut_copper_slab', 'oxidized_cut_copper_slab', 'waxed_cut_copper_slab', 'waxed_exposed_cut_copper_slab', 'waxed_weathered_cut_copper_slab', 'waxed_oxidized_cut_copper_slab']
+  shovel: 0 slabs
+    []
+
+=== requiresCorrectToolForDrops: which slab rows carry it
+  (see the clinit windows above — the pickaxe rows the tool gate keeps)

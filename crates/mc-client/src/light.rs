@@ -119,6 +119,16 @@ fn sky_opacity(id: u16) -> u8 {
         // the useShapeForLightOcclusion walk the shape the local shade
         // serves)
         || is_stairs(id)
+        // THE SLAB FAMILY'S OWN ROW (the dev-63 round — javap
+        // SlabBlock.useShapeForLightOcclusion pc 0-18 the 26.2 jar the
+        // type!=DOUBLE verdict speaks: the BOTTOM/TOP states the
+        // `canOcclude` walk the `isShapeFullBlock` false answer gives
+        // [the half band the full-cube test never passes — the vanilla
+        // lightBlock 0 the flood passes], the lightBlock 0 the same
+        // rows the transparent-family law keeps; the DOUBLE state the
+        // full cube the canOcclude TRUE verdict banks — the exact
+        // split the [`sky_opacity_at`] variant-aware walk serves)
+        || is_slab(id)
     {
         0
     } else if id == WATER || id == LEAVES || id == PALE_LEAVES {
@@ -126,6 +136,25 @@ fn sky_opacity(id: u16) -> u8 {
     } else {
         15
     }
+}
+
+/// THE VARIANT-AWARE OPACITY WRAPPER (the dev-63 round — the DOUBLE
+/// slab the full-cube opacity the vanilla lightBlock law speaks: the
+/// kind-only [`sky_opacity`] the half slabs the 0 rows answer, the
+/// DOUBLE state the canOcclude TRUE verdict the 15 rows bank — javap
+/// SlabBlock.useShapeForLightOcclusion the type!=DOUBLE walk the
+/// same split keeps, the roof cell the sky the double shades). The
+/// flood walk the wrapper the per-cell verdict reads — the kind-only
+/// rows the non-slab families the same answer keeps.
+fn sky_opacity_at(world: &crate::world::World, x: i32, y: i32, z: i32) -> u8 {
+    let id = world.get(x, y, z);
+    if crate::world::is_slab(id)
+        && crate::world::slab_variant_type(world.variant(x, y, z))
+            == crate::world::SLAB_TYPE_DOUBLE
+    {
+        return 15;
+    }
+    sky_opacity(id)
 }
 
 /// The cell's own emission — `BlockState.lightEmission` over the
@@ -313,7 +342,7 @@ pub fn compute(world: &World) -> LightGrid {
         for z in 0..n {
             for x in 0..n {
                 for y in (0..h).rev() {
-                    if sky_opacity(world.get(x, y, z)) != 0 {
+                    if sky_opacity_at(world, x, y, z) != 0 {
                         break;
                     }
                     sky[idx(x, y, z)] = 15;
@@ -334,7 +363,7 @@ pub fn compute(world: &World) -> LightGrid {
             if nx < 0 || nz < 0 || nx >= n || nz >= n || ny < 0 || ny >= h {
                 continue;
             }
-            let op = sky_opacity(world.get(nx, ny, nz));
+            let op = sky_opacity_at(world, nx, ny, nz);
             if op >= 15 {
                 continue;
             }
@@ -374,7 +403,7 @@ pub fn compute(world: &World) -> LightGrid {
             if nx < 0 || nz < 0 || nx >= n || nz >= n || ny < 0 || ny >= h {
                 continue;
             }
-            let op = sky_opacity(world.get(nx, ny, nz));
+            let op = sky_opacity_at(world, nx, ny, nz);
             if op >= 15 {
                 continue;
             }
@@ -487,7 +516,7 @@ pub fn update_cell(world: &World, grid: &mut LightGrid, x: i32, y: i32, z: i32) 
     {
         return;
     }
-    let op_here = sky_opacity(world.get(x, y, z));
+    let op_here = sky_opacity_at(world, x, y, z);
 
     // ================= THE SKY CHANNEL =================
     // THE REMOVAL PASS: the cell's old level seeds the darkening BFS —
@@ -515,7 +544,7 @@ pub fn update_cell(world: &World, grid: &mut LightGrid, x: i32, y: i32, z: i32) 
             if nl == 0 {
                 continue;
             }
-            let op = sky_opacity(world.get(nx, ny, nz));
+            let op = sky_opacity_at(world, nx, ny, nz);
             if op >= 15 {
                 continue;
             }
@@ -571,7 +600,7 @@ pub fn update_cell(world: &World, grid: &mut LightGrid, x: i32, y: i32, z: i32) 
             let Some(cur) = level_at(&grid.sky, side, nx, ny, nz) else {
                 continue;
             };
-            let op = sky_opacity(world.get(nx, ny, nz));
+            let op = sky_opacity_at(world, nx, ny, nz);
             if op >= 15 {
                 continue;
             }
@@ -610,7 +639,7 @@ pub fn update_cell(world: &World, grid: &mut LightGrid, x: i32, y: i32, z: i32) 
             if nl == 0 {
                 continue;
             }
-            let op = sky_opacity(world.get(nx, ny, nz));
+            let op = sky_opacity_at(world, nx, ny, nz);
             if op >= 15 {
                 continue;
             }
@@ -659,7 +688,7 @@ pub fn update_cell(world: &World, grid: &mut LightGrid, x: i32, y: i32, z: i32) 
             let Some(cur) = level_at(&grid.block, side, nx, ny, nz) else {
                 continue;
             };
-            let op = sky_opacity(world.get(nx, ny, nz));
+            let op = sky_opacity_at(world, nx, ny, nz);
             if op >= 15 {
                 continue;
             }
