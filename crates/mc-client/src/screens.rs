@@ -37085,6 +37085,27 @@ impl App {
             )
             .expect("the lantern body shape the slabs never refuse");
             (x_lo, y_lo, z_lo, x_hi, y_hi, z_hi)
+        } else if crate::world::is_stairs(block) {
+            // THE STAIRS' OWN SLAB BAND (the dev-62 round — the vanilla
+            // canPlace the PLACED state's own collision shape reads:
+            // the slab the dominant member the conservative subset
+            // keeps [the facing/half/shape the neighbor reads the
+            // pre-check walk never consults, the registerDefaultState's
+            // own NORTH+BOTTOM+STRAIGHT pin the bottom slab the
+            // full-footprint 0..8 band banks, the steps the
+            // [`crate::world::stairs_step_slabs`] walk the compound's
+            // roster serves — the stair-in-your-own-cell placement the
+            // half-cube band the player's box misses the vanilla's own
+            // half-height law allows, the lantern arm's own kind-only
+            // law the family wears])
+            let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) = crate::world::shape_slabs(
+                shape,
+                cell.0,
+                cell.1,
+                cell.2,
+            )
+            .expect("the stairs slab shape the slabs never refuse");
+            (x_lo, y_lo, z_lo, x_hi, y_hi, z_hi)
         } else if crate::world::is_fence_gate(block) {
             // THE CLOSED GATE'S OWN THIN PANEL (the dev-55 round — the
             // vanilla canPlace the SHAPE_COLLISION column(16.0, 4.0,
@@ -38990,6 +39011,32 @@ impl App {
                         world.set(cell.0, cell.1, cell.2, open_kind);
                     }
                 }
+            }
+            // THE STAIRS' OWN PLACEMENT STAMP (the dev-62 round — javap
+            // StairBlock.getStateForPlacement pc 0-132 the 26.2 jar:
+            // the FACING = ctx.getHorizontalDirection() walk pc 20-34
+            // the player-look byte speaks (the door's own NO-getOpposite
+            // law the stairs share — the [`crate::world::
+            // door_facing_byte`] table serves, the 1..4 byte law the
+            // -1 fold the 0..3 index answers), the HALF the
+            // clicked-face walk pc 37-83 banks (face == DOWN the TOP
+            // arm, face == UP the BOTTOM arm, the side faces the
+            // `clickLocation.y - pos.y > 0.5` boundary the
+            // dcmpl/ifle fold answers — the trapdoor arm's own hit
+            // walk the same law keeps), the SHAPE the getStairsShape
+            // pre-compute pc 111-132 the same walk the placed state
+            // wears — the mesh-time/collision-time law the neighbors
+            // answer, the variant byte the stamp the facing + half
+            // bits banks).
+            if crate::world::is_stairs(placed) {
+                let facing = crate::world::door_facing_byte(cam_yaw) - 1;
+                let half_top = match hit.face {
+                    0 => true,  // the ceiling click the TOP half answers
+                    1 => false, // the floor click the BOTTOM half keeps
+                    _ => hit.location.1 - hit.pos.1 as f64 > 0.5,
+                };
+                let variant = crate::world::stairs_variant(facing, half_top);
+                world.set_variant(cell.0, cell.1, cell.2, variant);
             }
             world.ensure_light_current(); // the placed torch's own flood the set walk already spoke — the guard the never-lit world's compute keeps
             self.world_quads = Some(crate::mesher::mesh_world(world, None));
@@ -103693,7 +103740,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            605,
+            669,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -103774,7 +103821,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            605,
+            669,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -104076,7 +104123,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            605,
+            669,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -108006,7 +108053,7 @@ cow_sound_variant: None,
         // #texture ref banks)
         assert_eq!(
             atlas::N_KINDS,
-            605,
+            669,
             "the palette the weighted plates' own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
@@ -108226,7 +108273,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            605,
+            669,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
@@ -108503,7 +108550,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            605,
+            669,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
@@ -108619,7 +108666,7 @@ cow_sound_variant: None,
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE, 318);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, 319);
         assert_eq!(w::END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 605, "the palette the weighted rows bank");
+        assert_eq!(atlas::N_KINDS, 669, "the palette the weighted rows bank");
         for (off, on, name) in [
             (
                 w::LIGHT_WEIGHTED_PRESSURE_PLATE,
@@ -109733,7 +109780,7 @@ cow_sound_variant: None,
         assert_eq!(w::END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-            605,
+            669,
             "the palette the weighted plates' own rows bank"
         );
         for (off, on, name, wooden) in [

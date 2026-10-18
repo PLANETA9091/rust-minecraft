@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 605] = [
+pub const RUNTIME_PALETTE: [&str; 669] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -2100,6 +2100,82 @@ pub const RUNTIME_PALETTE: [&str; 605] = [
     "weathered_copper_lantern", "oxidized_copper_lantern",
     "waxed_copper_lantern", "waxed_exposed_copper_lantern",
     "waxed_weathered_copper_lantern", "waxed_oxidized_copper_lantern",
+    // THE STAIRS FAMILY'S OWN ROWS (the dev-62 round, the official
+    // 26.2 jar): javap StairBlock the class header the plain Block
+    // super the FACING + HALF + SHAPE + WATERLOGGED properties bank —
+    // the registerDefaultState pc 0-65 pins FACING=NORTH + HALF=BOTTOM
+    // + SHAPE=STRAIGHT + WATERLOGGED=false, the <clinit> pc 35-164 the
+    // SHAPE walk speaks (SHAPE_OUTER = column(16.0, 0.0, 8.0) ∪
+    // box(0, 8, 0, 8, 16, 8) the slab + NW-corner pair banks,
+    // SHAPE_STRAIGHT the ∪ rotate(BLOCK_ROT_Y_90) the north-half step
+    // completes, SHAPE_INNER the ∪ rotate the east-half arm adds, the
+    // SIX map pairs the rotateHorizontal / rotateHorizontal(INVERT_Y)
+    // walk banks), getShape pc 0-228 the (shape, half) map pair the
+    // direction key answers (STRAIGHT the facing itself, OUTER_LEFT
+    // the facing arm, OUTER_RIGHT the getClockWise arm, INNER the
+    // facing-key walk the INNER maps serve), getStairsShape pc 0-222
+    // the neighbor walk answers (the front walk pos.relative(FACING)
+    // the same-half + cross-axis + canTakeShape(gate) verdicts the
+    // OUTER_LEFT (bf == facing.getCounterClockWise) / OUTER_RIGHT
+    // arms bank, the back walk pos.relative(FACING.getOpposite()) the
+    // INNER pair arms), canTakeShape pc 0-62 the no-stairs-OR-
+    // different-facing-OR-different-half true verdict keeps,
+    // getStateForPlacement pc 0-132 the FACING=
+    // getHorizontalDirection() + the HALF clicked-face walk banks
+    // (face == DOWN the TOP arm, face == UP the BOTTOM arm, the side
+    // faces the `clickLocation.y - pos.y > 0.5` boundary answers) +
+    // the SHAPE the getStairsShape pre-compute the same walk banks,
+    // updateShape pc 34-62 the horizontal-neighbor walk the SHAPE
+    // recompute speaks. javap the Blocks clinit the OAK_STAIRS row +
+    // the stone walk + the CUT_COPPER_STAIRS row the
+    // WeatheringCopperStairBlock collection the 64 rows register (the
+    // four waxed rungs the waxed() picker the base states wear). The
+    // blockstates the 64 the SAME 40-key rotation table carry (the
+    // probe's identity walk: 60 kinds byte-identical, the four waxed
+    // twins the BASE copper models re-wear — the x/y turns the same
+    // table keeps) — the base model the facing=east orientation wears
+    // (the step the x 8..16 half the template parent banks), the
+    // template trio the element boxes speak (block/stairs the slab
+    // [0,0,0]->[16,8,16] + the east-half step [8,8,0]->[16,16,16]
+    // pair, block/inner_stairs the + [0,8,8]->[8,16,16] SW-quarter
+    // arm, block/outer_stairs the [8,8,8]->[16,16,16] SE-quarter
+    // step — the shade:true every element keeps). The textures the
+    // PARENT masters re-wear (the stairs' own pngs the jar never
+    // banks — the bottom/side/top refs the planks/stone/copper rows
+    // resolve, the sandstone walk the top/side split keeps), the dig/
+    // sounds/drops rows the name-keyed generated tables the registry
+    // answers (the wooden rows (2.0, false) the no-tool demand keeps,
+    // the stone rows the tool-required verdicts bank, the block.wood/
+    // stone/copper/deepslate_tiles break events the SoundType rows
+    // speak, the drop pools the SELF-entry the 64 names bank), the
+    // placeable lane the Items pairing rows the generated items table
+    // banks.
+    "oak_stairs", "cobblestone_stairs", "brick_stairs",
+    "stone_brick_stairs", "mud_brick_stairs", "resin_brick_stairs",
+    "nether_brick_stairs", "sandstone_stairs", "spruce_stairs",
+    "birch_stairs", "jungle_stairs", "quartz_stairs", "acacia_stairs",
+    "cherry_stairs", "dark_oak_stairs", "pale_oak_stairs",
+    "mangrove_stairs", "bamboo_stairs", "bamboo_mosaic_stairs",
+    "prismarine_stairs", "prismarine_brick_stairs",
+    "dark_prismarine_stairs", "red_sandstone_stairs", "purpur_stairs",
+    "polished_granite_stairs", "smooth_red_sandstone_stairs",
+    "mossy_stone_brick_stairs", "polished_diorite_stairs",
+    "mossy_cobblestone_stairs", "end_stone_brick_stairs", "stone_stairs",
+    "smooth_sandstone_stairs", "smooth_quartz_stairs", "granite_stairs",
+    "andesite_stairs", "red_nether_brick_stairs",
+    "polished_andesite_stairs", "diorite_stairs", "crimson_stairs",
+    "warped_stairs", "blackstone_stairs",
+    "polished_blackstone_brick_stairs", "polished_blackstone_stairs",
+    "tuff_stairs", "polished_tuff_stairs", "tuff_brick_stairs",
+    "sulfur_stairs", "polished_sulfur_stairs", "sulfur_brick_stairs",
+    "cinnabar_stairs", "polished_cinnabar_stairs",
+    "cinnabar_brick_stairs", "cut_copper_stairs",
+    "exposed_cut_copper_stairs", "weathered_cut_copper_stairs",
+    "oxidized_cut_copper_stairs", "waxed_cut_copper_stairs",
+    "waxed_exposed_cut_copper_stairs", "waxed_weathered_cut_copper_stairs",
+    "waxed_oxidized_cut_copper_stairs", "cobbled_deepslate_stairs",
+    "polished_deepslate_stairs", "deepslate_tile_stairs",
+    "deepslate_brick_stairs",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -3180,6 +3256,69 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             let tex = tex_map
                 .get("lantern")
                 .with_context(|| format!("model {model_ref}: no lantern ref"))?;
+            let stem = tex
+                .trim_start_matches("minecraft:")
+                .trim_start_matches("block/")
+                .to_string();
+            faces.push(resolve_flat_stem(&stem, false));
+            continue;
+        }
+        if block.ends_with("_stairs") {
+            // THE STAIRS FAMILY'S OWN PALETTE ARM (the dev-62 round,
+            // the official 26.2 jar): the blockstate is a VARIANTS map
+            // — the "facing=east,half=bottom,shape=straight" entry the
+            // BASE model wears (block/{name} the x=0 y=0 row keeps —
+            // the base model the EAST orientation the template parent
+            // banks, the step the x 8..16 half speaks; the waxed twins
+            // the BASE copper models re-wear) — resolve_block's
+            // full-cube six-face requirement cannot apply (the slab +
+            // step elements the full-cube finder never banks). The
+            // canonical entry's model is the palette row: its merged
+            // texture map's `side` ref (block/oak_planks the wooden
+            // rungs, block/stone the stone walk, block/cut_copper the
+            // copper ladder, block/sandstone the sandstone stair's
+            // side — the ONE ref the template parent resolves; the
+            // `top`/`bottom` refs the sandstone walk the split rows
+            // wear, the mesher's per-quad verdict the exact tiles
+            // reads) is the palette row — the ONE master the six slots
+            // bank (the lantern arm's law the family keeps), tinted =
+            // false (the pre-colored masters carry NO tintindex). The
+            // atlas tile count the ZERO-or-append tail keeps — the
+            // stairs' own pngs the jar never banks, the PARENT masters
+            // the existing tiles the rows re-wear (823 -> 823 the tile
+            // count never moves), the kinds the palette tail banks
+            // (605 -> 669).
+            let bs_bytes = read_jar(
+                &mut archive,
+                &format!("assets/minecraft/blockstates/{block}.json"),
+            )?;
+            let bs: Value = serde_json::from_slice(&bs_bytes)
+                .with_context(|| format!("blockstate {block}: json parse"))?;
+            let variants = bs
+                .get("variants")
+                .and_then(|v| v.as_object())
+                .with_context(|| format!("blockstate {block}: no variants"))?;
+            let canon_entry = variants
+                .get("facing=east,half=bottom,shape=straight")
+                .with_context(|| {
+                    format!("blockstate {block}: no canonical straight variant")
+                })?;
+            let model_ref = (if canon_entry.is_array() {
+                canon_entry.get(0)
+            } else {
+                Some(canon_entry)
+            })
+            .and_then(|a| a.get("model"))
+            .and_then(|m| m.as_str())
+            .map(|m| m.trim_start_matches("minecraft:").to_string())
+            .with_context(|| format!("blockstate {block}: no canonical model"))?;
+            let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
+                .with_context(|| format!("block {block}: model chain {model_ref}"))?;
+            let tex = tex_map
+                .get("side")
+                .or_else(|| tex_map.get("top"))
+                .or_else(|| tex_map.get("bottom"))
+                .with_context(|| format!("model {model_ref}: no side/top/bottom ref"))?;
             let stem = tex
                 .trim_start_matches("minecraft:")
                 .trim_start_matches("block/")

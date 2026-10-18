@@ -285,6 +285,16 @@ fn is_transparent(kind: u16) -> bool {
         // quads the lantern lane's own walk renders — the standing
         // body + top + hooks the cell's own light serves)
         || crate::world::is_lantern(kind)
+        // THE STAIRS FAMILY the same verdict keeps (the dev-62 round —
+        // the 64 kinds the canOcclude refusal the vanilla light law
+        // speaks: the StairBlock rows the shape the FULL cube never is
+        // (`isShapeFullBlock` the canOcclude verdict reads — the
+        // slab + step union the false answer gives), the
+        // propagatesSkylightDown law the same verdict keeps: the
+        // half-open stair cell the neighbors' faces draw against, the
+        // AO the opaque walk never casts, the element quads the stairs
+        // lane's own walk renders)
+        || crate::world::is_stairs(kind)
 }
 
 /// Only opaque blocks cast ambient occlusion (air/water/leaves never darken
@@ -4880,6 +4890,180 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     }
                     continue;
                 }
+                // THE STAIRS' OWN ELEMENT LANE (the dev-62 round —
+                // javap StairBlock the 26.2 jar the probe
+                // scripts/jar_work/stairs_690.py banks): the
+                // blockstate the 40-key facing/half/shape map carries
+                // (the SAME rotation table every kind wears — the waxed
+                // twins the BASE copper models the references re-wear),
+                // the template trio the slab + step boxes speak (the
+                // straight the [0,0,0]->[16,8,16] + [8,8,0]->[16,16,16]
+                // pair keeps, the inner the SW-quarter arm adds, the
+                // outer the SE-quarter step wears), the SHAPE the
+                // [`world::stairs_shape_of`] walk the neighbors answer
+                // (the vanilla's updateShape-maintained state the same
+                // verdict the mesh-time walk keeps — the fence's
+                // connection-bits precedent the lane wears). The
+                // lightmap the cell's own answer the chain lane's own
+                // setup serves, the per-quad tile the resolved stem the
+                // kind's own master banks (the parent masters the
+                // TILE_NAMES census the reverse index answers — the
+                // sandstone walk the top/side split keeps), the shade
+                // term the ROTATED direction's table answers (the x=180
+                // top-half pair the Up/Down flip the turn keeps, the
+                // y-steps the quarter rotation the cw walk serves — the
+                // lever lane's own composition the fold wears), the
+                // OPAQUE flags the binary cutout rides (the parent
+                // masters' alpha every stair wears).
+                if crate::world::is_stairs(id) {
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let (cell_sky, cell_block) = match light {
+                        Some(l) => {
+                            let (s, b) = cell_layers(l, world.chunks_per_side, wx, wy, wz);
+                            (s.map(|v| v as f32), b.map(|v| v as f32))
+                        }
+                        None => (None, None),
+                    };
+                    // THE VARIANT'S OWN READ (the facing byte + the half
+                    // bit the placement walk stamps, the SHAPE the
+                    // neighbor walk the same verdict the collision
+                    // answers)
+                    let sv = world.variant(wx, wy, wz);
+                    let facing = crate::world::stairs_variant_facing(sv);
+                    let half_top = crate::world::stairs_variant_half(sv);
+                    let shape = crate::world::stairs_shape_of(world, wx, wy, wz, facing, half_top);
+                    let (stairs_quads, bs_x_turns, bs_y_steps) =
+                        stairs_model_quads(id, facing, half_top, shape);
+                    // the no-atlas boot's own default — the tile's own
+                    // pixels speak, the flat palette the missing row
+                    // keeps (the lantern path's own verdict)
+                    let fallback_tile = if (id as usize) < atlas::N_KINDS {
+                        atlas::FACE_TILES[id as usize][2]
+                    } else {
+                        atlas::TILE_NONE
+                    };
+                    for q in stairs_quads {
+                        let mut pts = [[0f32; 3]; 4];
+                        let mut colors = [[0f32; 3]; 4];
+                        let mut uvs = [[0f32; 2]; 4];
+                        for (i, v) in q.vertices.iter().enumerate() {
+                            // THE X-FOLD'S OWN HALF TURN (the top-half
+                            // entries the x=180 turn the blockstate
+                            // carries: the (y, z) -> (1-y, 1-z) fold the
+                            // slab the upper band flips — the chain
+                            // lane's own x=90 quarter the walk family
+                            // keeps)
+                            let (fx, fy, fz) = if bs_x_turns == 2 {
+                                (v[0], 1.0 - v[1], 1.0 - v[2])
+                            } else {
+                                (v[0], v[1], v[2])
+                            };
+                            // THE Y-STEPS' OWN TURN (the facing quarter
+                            // the y=90..270 walk the CW cycle speaks —
+                            // the chain lane's own table the folded pair
+                            // wears)
+                            let (vx, vz) = match bs_y_steps % 4 {
+                                1 => (1.0 - fz, fx),
+                                2 => (1.0 - fx, 1.0 - fz),
+                                3 => (fz, 1.0 - fx),
+                                _ => (fx, fz),
+                            };
+                            pts[i] = [
+                                wx as f32 + vx,
+                                wy as f32 + fy,
+                                wz as f32 + vz,
+                            ];
+                            uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
+                            let lm = lightmap_combine(
+                                cell_sky,
+                                cell_block,
+                                sky_factor,
+                                sky_tint,
+                                ambient,
+                                block_tint,
+                                night_vision,
+                                world.night_vision_factor,
+                                world.darkness_scale,
+                            );
+                            // THE SHADE TERM'S OWN READ — the elements'
+                            // shade:true the vanilla tesselation's
+                            // direction table answers (the ROTATED
+                            // direction the x=180 + the y-steps the
+                            // composition serves — the lever lane's own
+                            // pair the fold wears)
+                            let rotated_dir = rotate_direction_cw(
+                                rotate_direction_x(q.direction, bs_x_turns),
+                                bs_y_steps,
+                            );
+                            let face_shade = if q.shade {
+                                match rotated_dir {
+                                    mc_registry::element_quads::Direction::Up => 1.0f32,
+                                    mc_registry::element_quads::Direction::Down => 0.5,
+                                    mc_registry::element_quads::Direction::North
+                                    | mc_registry::element_quads::Direction::South => 0.8,
+                                    mc_registry::element_quads::Direction::West
+                                    | mc_registry::element_quads::Direction::East => 0.6,
+                                }
+                            } else {
+                                1.0
+                            };
+                            colors[i] = [
+                                lm[0] * face_shade,
+                                lm[1] * face_shade,
+                                lm[2] * face_shade,
+                            ];
+                        }
+                        // THE PER-QUAD TILE VERDICT — the resolved stem
+                        // the kind's own master answers (the #top/#side/
+                        // #bottom refs the parent masters name — the
+                        // sandstone walk the split rows keep, the
+                        // unknown stem the fallback row serves)
+                        let tex_stem = q
+                            .texture
+                            .trim_start_matches("minecraft:")
+                            .trim_start_matches("block/");
+                        let stair_tile = stairs_stem_tile(tex_stem).unwrap_or(fallback_tile);
+                        out.push(Quad {
+                            pts,
+                            colors,
+                            uvs,
+                            tile: stair_tile,
+                            translucent: false,
+                            per_texel_alpha: false,
+                        });
+                    }
+                    continue;
+                }
                 // THE END PORTAL'S OWN ARM (the dev-29 round — the
                 // starry volume the special pass draws: the
                 // EndPortalRenderer's own cube the shader law serves,
@@ -6469,6 +6653,135 @@ fn chain_model_quads(kind: u16, axis: u8) -> (&'static [DerivedQuad], u32, u32) 
     .get(&(kind, axis))
     .map(|(quads, x, y)| (quads.as_slice(), *x, *y))
     .unwrap_or((&[], 0, 0))
+}
+
+/// THE STAIRS KEY'S OWN PARSE (the blockstate's "facing=X,half=Y,
+/// shape=Z" triple the variant vocabulary unpacks: the facing the
+/// north/east/south/west string the byte order keeps, the half the
+/// bottom/top string the bit answers, the shape the five-name
+/// vocabulary the StairsShape enum banks — the unknown key the None
+/// the walk skips).
+fn stairs_key_parts(key: &str) -> Option<(u8, bool, u8)> {
+    let mut facing = None;
+    let mut half = false;
+    let mut shape = crate::world::STAIRS_SHAPE_STRAIGHT;
+    for part in key.split(',') {
+        let (k, v) = part.split_once('=')?;
+        match k {
+            "facing" => {
+                facing = match v {
+                    "north" => Some(crate::world::STAIRS_FACING_NORTH),
+                    "east" => Some(crate::world::STAIRS_FACING_EAST),
+                    "south" => Some(crate::world::STAIRS_FACING_SOUTH),
+                    "west" => Some(crate::world::STAIRS_FACING_WEST),
+                    _ => None,
+                };
+            }
+            "half" => half = v == "top",
+            "shape" => {
+                shape = match v {
+                    "straight" => crate::world::STAIRS_SHAPE_STRAIGHT,
+                    "outer_left" => crate::world::STAIRS_SHAPE_OUTER_LEFT,
+                    "outer_right" => crate::world::STAIRS_SHAPE_OUTER_RIGHT,
+                    "inner_left" => crate::world::STAIRS_SHAPE_INNER_LEFT,
+                    "inner_right" => crate::world::STAIRS_SHAPE_INNER_RIGHT,
+                    _ => return None,
+                };
+            }
+            _ => {}
+        }
+    }
+    Some((facing?, half, shape))
+}
+
+#[inline]
+fn stairs_state_index(facing: u8, half_top: bool, shape: u8) -> u8 {
+    facing | ((half_top as u8) << 2) | (shape << 3)
+}
+
+/// THE STAIRS MODELS' OWN CACHED BAKES (the dev-62 round — the kind's
+/// own blockstate the VARIANTS walk parses, the "facing/half/shape"
+/// key the placed byte + the shape walk selects, the apply's x/y
+/// turns the fold walk answers): the jar-driven walk the hardcoded
+/// model lists retires — the blockstate's 40 keys the SAME rotation
+/// table every kind carries (the probe's identity walk: 60 kinds
+/// byte-identical, the waxed twins the BASE copper models the
+/// references re-wear), the derived quads the element walk bakes ONCE
+/// per model id (the 192-distinct-model dedup the Arc shares), the
+/// (x, y) turns the blockstate apply carries (the x the 0/180 top
+/// pair, the y the quarter-turns the facing speaks). The unknown
+/// (kind, state) the empty slice + the identity turns keep (the
+/// unstamped default the straight north-bottom pair wears).
+fn stairs_model_quads(
+    kind: u16,
+    facing: u8,
+    half_top: bool,
+    shape: u8,
+) -> (&'static [DerivedQuad], usize, usize) {
+    static BAKES: std::sync::OnceLock<
+        std::collections::HashMap<(u16, u8), (std::sync::Arc<Vec<DerivedQuad>>, usize, usize)>,
+    > = std::sync::OnceLock::new();
+    let idx = stairs_state_index(facing, half_top, shape);
+    BAKES.get_or_init(|| {
+        // THE MODEL DEDUP (the 192 distinct models the whole family
+        // banks — the waxed twins the BASE ids re-wear — the Arc the
+        // 2560 entries share)
+        let mut models: std::collections::HashMap<String, std::sync::Arc<Vec<DerivedQuad>>> =
+            std::collections::HashMap::new();
+        let mut map = std::collections::HashMap::new();
+        for k in crate::world::STAIRS_KINDS {
+            let name = crate::world::NAME_OF[k as usize];
+            let Some(Ok(mc_registry::blockstate_lookup::Definition::Variants(entries))) =
+                mc_registry::blockstate_lookup::parse(name)
+            else {
+                continue;
+            };
+            for (key, applies) in entries {
+                let Some((facing, half_top, shape)) = stairs_key_parts(&key) else {
+                    continue;
+                };
+                let Some(apply) = applies.first() else {
+                    continue;
+                };
+                let model_id = apply.model.trim_start_matches("minecraft:").to_string();
+                let quads = models
+                    .entry(model_id.clone())
+                    .or_insert_with(|| {
+                        std::sync::Arc::new(
+                            derive_model_inherited(&model_id).unwrap_or_default(),
+                        )
+                    })
+                    .clone();
+                map.insert(
+                    (k, stairs_state_index(facing, half_top, shape)),
+                    (quads, apply.x as usize / 90, apply.y as usize / 90),
+                );
+            }
+        }
+        map
+    })
+    .get(&(kind, idx))
+    .map(|(quads, x, y)| (quads.as_slice(), *x, *y))
+    .unwrap_or((&[], 0, 0))
+}
+
+/// THE STAIRS STEMS' OWN TILE INDEX (the parent masters the per-quad
+/// texture refs name — block/oak_planks the wooden rungs, block/stone
+/// the stone walk, block/cut_copper the copper ladder, the
+/// sandstone/tuff/cinnabar/sulfur/resin walk the split rows keep: the
+/// TILE_NAMES census the once-built reverse index answers, the
+/// unknown stem the None the fallback row serves).
+fn stairs_stem_tile(stem: &str) -> Option<u16> {
+    static TILES: std::sync::OnceLock<std::collections::HashMap<&'static str, u16>> =
+        std::sync::OnceLock::new();
+    let m = TILES.get_or_init(|| {
+        atlas::TILE_NAMES
+            .iter()
+            .enumerate()
+            .map(|(i, name)| (*name, i as u16))
+            .collect()
+    });
+    m.get(stem).copied()
 }
 
 /// THE BAMBOO MODELS' OWN CACHED BAKES — the derive walk's quads per
@@ -10755,6 +11068,311 @@ mod tests {
             15,
             "the waxed twin the BASE models the blockstate references render"
         );
+    }
+
+    #[test]
+    fn the_stairs_lane_renders_the_slab_the_steps_and_the_turns_wear() {
+        // THE STAIRS LANE'S OWN LAWS (the dev-62 round — javap
+        // StairBlock the 26.2 jar the probe scripts/jar_work/
+        // stairs_690.py banks): the blockstates the 40-key
+        // facing/half/shape map the SAME rotation table every kind
+        // carries (the waxed twins the BASE copper models re-wear),
+        // the template trio the slab + step boxes speak (the straight
+        // the slab 6 + the step 5 quads the element walk bakes, the
+        // inner the second arm the L completes, the outer the quarter
+        // step the corner alone keeps), the SHAPE the mesh-time walk
+        // the neighbors answer, the per-quad tile the parent masters
+        // the stem census resolves
+        use mc_registry::generated::atlas as gen_atlas;
+        let oak_tile = gen_atlas::FACE_TILES[crate::world::OAK_STAIRS as usize][2];
+        let stone_tile = gen_atlas::FACE_TILES[crate::world::STONE_STAIRS as usize][2];
+        let copper_tile = gen_atlas::FACE_TILES[crate::world::CUT_COPPER_STAIRS as usize][2];
+        assert_eq!(gen_atlas::tile_name(oak_tile), "oak_planks");
+        assert_eq!(gen_atlas::tile_name(stone_tile), "stone");
+        assert_eq!(gen_atlas::tile_name(copper_tile), "cut_copper");
+        assert_ne!(oak_tile, stone_tile, "the two voices the DISTINCT masters wear");
+        assert_ne!(copper_tile, oak_tile, "the copper rung the DISTINCT master wears");
+        // THE WAXED TWIN THE BASE MASTER RE-WEARS (the texture-sharing
+        // law the vanilla waxed look keeps)
+        assert_eq!(
+            gen_atlas::FACE_TILES[crate::world::WAXED_CUT_COPPER_STAIRS as usize][2],
+            copper_tile,
+            "the waxed twin the bare master re-wears"
+        );
+        // THE SANDSTONE WALK THE SPLIT ROW KEEPS (the side ref the
+        // canonical palette row banks)
+        assert_eq!(
+            gen_atlas::tile_name(gen_atlas::FACE_TILES[crate::world::SANDSTONE_STAIRS as usize][2]),
+            "sandstone",
+            "the sandstone side the palette row banks"
+        );
+        // THE SINGLE STAIR (the bottom-east straight the unstamped
+        // default wears — the slab's 6 + the step's 5 faces the 11
+        // quads the element walk bakes)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::OAK_STAIRS);
+        w.set_variant(
+            8,
+            8,
+            8,
+            crate::world::stairs_variant(crate::world::STAIRS_FACING_EAST, false),
+        );
+        let q = mesh_chunk(&w, 0, 0, None);
+        // THE TEST CELL'S OWN QUADS (the (8,8,8) span filter the
+        // terrain's own planks quads the count never banks — the
+        // generated world the same tile the scenery wears)
+        let in_cell = |quad: &crate::mesher::Quad| {
+            quad.pts.iter().all(|p| {
+                p[0] >= 8.0 - 1e-4
+                    && p[0] <= 9.0 + 1e-4
+                    && p[1] >= 8.0 - 1e-4
+                    && p[1] <= 9.0 + 1e-4
+                    && p[2] >= 8.0 - 1e-4
+                    && p[2] <= 9.0 + 1e-4
+            })
+        };
+        let straight: Vec<_> = q
+            .iter()
+            .filter(|quad| quad.tile == oak_tile && in_cell(quad))
+            .collect();
+        assert_eq!(
+            straight.len(),
+            11,
+            "the straight template the 11 quads bakes, got {}",
+            straight.len()
+        );
+        // THE STEP BAND'S OWN SPAN (the y >= 0.5 quads the EAST half
+        // the x 0.5..1.0 band keeps, the slab band the FULL footprint
+        // the x 0..1 span wears)
+        for quad in &straight {
+            let y_min = quad.pts.iter().map(|p| p[1]).fold(f32::MAX, f32::min);
+            let y_max = quad.pts.iter().map(|p| p[1]).fold(f32::MIN, f32::max);
+            let x_min = quad.pts.iter().map(|p| p[0]).fold(f32::MAX, f32::min);
+            let x_max = quad.pts.iter().map(|p| p[0]).fold(f32::MIN, f32::max);
+            if y_min >= 8.5 - 1e-5 && y_max > 8.5 + 1e-5 {
+                assert!(
+                    x_min >= 8.5 - 1e-5 && x_max <= 9.0 + 1e-5,
+                    "the east half the step band keeps, got x {x_min}..{x_max}"
+                );
+            }
+        }
+        let slab_x_max = straight
+            .iter()
+            .filter(|quad| quad.pts.iter().map(|p| p[1]).fold(f32::MAX, f32::min) < 8.5 - 1e-5)
+            .map(|quad| quad.pts.iter().map(|p| p[0]).fold(f32::MIN, f32::max))
+            .fold(f32::MIN, f32::max);
+        assert!(
+            slab_x_max >= 9.0 - 1e-5,
+            "the full footprint the slab band keeps, got {slab_x_max}"
+        );
+        // THE NORTH TURN (the y=270 the three CW quarters the step the
+        // z 0..0.5 half banks — the facing byte the variant wears)
+        let mut wn = empty_world();
+        put(&mut wn, 8, 8, 8, crate::world::OAK_STAIRS);
+        wn.set_variant(
+            8,
+            8,
+            8,
+            crate::world::stairs_variant(crate::world::STAIRS_FACING_NORTH, false),
+        );
+        let qn = mesh_chunk(&wn, 0, 0, None);
+        let north: Vec<_> = qn
+            .iter()
+            .filter(|quad| quad.tile == oak_tile && in_cell(quad))
+            .collect();
+        assert_eq!(north.len(), 11, "the north turn the same 11 quads bakes");
+        for quad in &north {
+            let y_min = quad.pts.iter().map(|p| p[1]).fold(f32::MAX, f32::min);
+            let y_max = quad.pts.iter().map(|p| p[1]).fold(f32::MIN, f32::max);
+            if y_min >= 8.5 - 1e-5 && y_max > 8.5 + 1e-5 {
+                let z_min = quad.pts.iter().map(|p| p[2]).fold(f32::MAX, f32::min);
+                let z_max = quad.pts.iter().map(|p| p[2]).fold(f32::MIN, f32::max);
+                assert!(
+                    z_min >= 8.0 - 1e-5 && z_max <= 8.5 + 1e-5,
+                    "the north half the step band keeps, got z {z_min}..{z_max}"
+                );
+            }
+        }
+        // THE TOP HALF (the x=180 the slab the upper band + the step
+        // the lower band the east half keeps)
+        let mut wt = empty_world();
+        put(&mut wt, 8, 8, 8, crate::world::OAK_STAIRS);
+        wt.set_variant(
+            8,
+            8,
+            8,
+            crate::world::stairs_variant(crate::world::STAIRS_FACING_EAST, true),
+        );
+        let qt = mesh_chunk(&wt, 0, 0, None);
+        let top: Vec<_> = qt
+            .iter()
+            .filter(|quad| quad.tile == oak_tile && in_cell(quad))
+            .collect();
+        assert_eq!(top.len(), 11, "the top half the same 11 quads bakes");
+        for quad in &top {
+            let y_min = quad.pts.iter().map(|p| p[1]).fold(f32::MAX, f32::min);
+            if y_min < 8.5 - 1e-5 {
+                let x_min = quad.pts.iter().map(|p| p[0]).fold(f32::MAX, f32::min);
+                assert!(
+                    x_min >= 8.5 - 1e-5,
+                    "the lower band the step the east half keeps, got x {x_min}"
+                );
+            }
+        }
+        // THE OUTER CORNER (the front neighbor the perpendicular
+        // flight turns — the SE quarter the step the corner keeps: the
+        // y >= 0.5 band the x >= 0.5 AND z >= 0.5 spans)
+        let mut wo = empty_world();
+        put(&mut wo, 8, 8, 8, crate::world::OAK_STAIRS);
+        wo.set_variant(
+            8,
+            8,
+            8,
+            crate::world::stairs_variant(crate::world::STAIRS_FACING_EAST, false),
+        );
+        put(&mut wo, 9, 8, 8, crate::world::OAK_STAIRS);
+        wo.set_variant(
+            9,
+            8,
+            8,
+            crate::world::stairs_variant(crate::world::STAIRS_FACING_SOUTH, false),
+        );
+        let qo = mesh_chunk(&wo, 0, 0, None);
+        // THE TEST CELL'S OWN QUADS (the east-PLANE quads the shared
+        // face never banks — the all-pts-x=9.0 faces the my east pair
+        // + the neighbor's west pair wear, the 11-2=9 the count
+        // keeps)
+        let outer: Vec<_> = qo
+            .iter()
+            .filter(|quad| quad.tile == oak_tile && in_cell(quad))
+            .filter(|quad| !quad.pts.iter().all(|p| p[0] >= 9.0 - 1e-4))
+            .collect();
+        assert_eq!(
+            outer.len(),
+            9,
+            "the outer template the 9 interior quads bakes, got {}",
+            outer.len()
+        );
+        let mut outer_quarter = false;
+        for quad in &outer {
+            let y_min = quad.pts.iter().map(|p| p[1]).fold(f32::MAX, f32::min);
+            let y_max = quad.pts.iter().map(|p| p[1]).fold(f32::MIN, f32::max);
+            if y_min >= 8.5 - 1e-5 && y_max > 8.5 + 1e-5 {
+                let x_min = quad.pts.iter().map(|p| p[0]).fold(f32::MAX, f32::min);
+                let z_min = quad.pts.iter().map(|p| p[2]).fold(f32::MAX, f32::min);
+                if x_min >= 8.5 - 1e-5 && z_min >= 8.5 - 1e-5 {
+                    outer_quarter = true;
+                } else {
+                    assert!(
+                        x_min >= 8.5 - 1e-5,
+                        "the east half the outer's step band keeps, got x {x_min} z {z_min}"
+                    );
+                }
+            }
+        }
+        assert!(
+            outer_quarter,
+            "the SE quarter the outer's step the corner keeps"
+        );
+        // THE INNER CORNER (the back neighbor the perpendicular flight
+        // wraps — the two arms the L completes: the 16 quads the slab
+        // + the two steps bakes)
+        let mut wi = empty_world();
+        put(&mut wi, 8, 8, 8, crate::world::OAK_STAIRS);
+        wi.set_variant(
+            8,
+            8,
+            8,
+            crate::world::stairs_variant(crate::world::STAIRS_FACING_EAST, false),
+        );
+        put(&mut wi, 7, 8, 8, crate::world::OAK_STAIRS);
+        wi.set_variant(
+            7,
+            8,
+            8,
+            crate::world::stairs_variant(crate::world::STAIRS_FACING_SOUTH, false),
+        );
+        let qi = mesh_chunk(&wi, 0, 0, None);
+        // THE TEST CELL'S OWN QUADS (the west-PLANE quads the shared
+        // face never banks — the all-pts-x=8.0 faces the my west pair
+        // + the neighbor's east pair wear, the 15-2=13 the count
+        // keeps [the inner template the slab 6 + the east step 5 +
+        // the SW quarter's 4 faces the no-east no-down pair speaks])
+        let inner: Vec<_> = qi
+            .iter()
+            .filter(|quad| quad.tile == oak_tile && in_cell(quad))
+            .filter(|quad| !quad.pts.iter().all(|p| p[0] <= 8.0 + 1e-4))
+            .collect();
+        assert_eq!(
+            inner.len(),
+            13,
+            "the inner template the 13 interior quads bakes, got {}",
+            inner.len()
+        );
+        // THE STONE WALK ITS OWN MASTER WEARS (the per-quad tile the
+        // stem census resolves — the stone stairs the stone master
+        // banks)
+        let mut ws = empty_world();
+        put(&mut ws, 8, 8, 8, crate::world::STONE_STAIRS);
+        ws.set_variant(
+            8,
+            8,
+            8,
+            crate::world::stairs_variant(crate::world::STAIRS_FACING_EAST, false),
+        );
+        let qs = mesh_chunk(&ws, 0, 0, None);
+        let stone_quads: Vec<_> = qs
+            .iter()
+            .filter(|quad| quad.tile == stone_tile && in_cell(quad))
+            .collect();
+        assert_eq!(
+            stone_quads.len(),
+            11,
+            "the stone stairs its own master the 11 quads wear"
+        );
+        // THE WAXED TWIN THE BASE GEOMETRY WEARS (the texture-sharing
+        // law the vanilla waxed look keeps — the copper quads the base
+        // model banks)
+        let mut ww = empty_world();
+        put(&mut ww, 8, 8, 8, crate::world::WAXED_CUT_COPPER_STAIRS);
+        ww.set_variant(
+            8,
+            8,
+            8,
+            crate::world::stairs_variant(crate::world::STAIRS_FACING_EAST, false),
+        );
+        let qw = mesh_chunk(&ww, 0, 0, None);
+        let waxed: usize = qw
+            .iter()
+            .filter(|quad| quad.tile == copper_tile && in_cell(quad))
+            .count();
+        assert_eq!(
+            waxed, 11,
+            "the waxed twin the BASE geometry the copper master wears"
+        );
+        // THE TURNS TABLE'S OWN CROSS-CHECK (the jar's 40-key parse the
+        // world's hand table the same turns every state keeps — the
+        // x the 0/180 the half pair wears, the y the quarter turns the
+        // facing speaks)
+        for facing in 0..4u8 {
+            for half_top in [false, true] {
+                for shape in 0..5u8 {
+                    let (_, mx, my) = stairs_model_quads(
+                        crate::world::OAK_STAIRS,
+                        facing,
+                        half_top,
+                        shape,
+                    );
+                    let (wx, wy) =
+                        crate::world::stairs_state_turns(facing, half_top, shape);
+                    assert_eq!(
+                        (mx, my),
+                        (wx, wy),
+                        "the turns the state (facing {facing}, half {half_top}, shape {shape}) the parse + the table agree"
+                    );
+                }
+            }
+        }
     }
 
     #[test]

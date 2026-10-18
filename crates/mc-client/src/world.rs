@@ -3360,6 +3360,205 @@ pub const LANTERN_KINDS: [u16; 10] = [
 pub const LANTERN_STANDING: u8 = 0;
 pub const LANTERN_HANGING: u8 = 1;
 
+// THE STAIRS FAMILY'S OWN SEATS (the dev-62 round — the 64 kinds the
+// vanilla registration order the clinit rows speak: the head walk the
+// oak..cinnabar rows bank, the copper ladder the collection walk
+// registers, the deepslate quartet the tail wears).
+pub const OAK_STAIRS: u16 = 605;
+pub const COBBLESTONE_STAIRS: u16 = 606;
+pub const BRICK_STAIRS: u16 = 607;
+pub const STONE_BRICK_STAIRS: u16 = 608;
+pub const MUD_BRICK_STAIRS: u16 = 609;
+pub const RESIN_BRICK_STAIRS: u16 = 610;
+pub const NETHER_BRICK_STAIRS: u16 = 611;
+pub const SANDSTONE_STAIRS: u16 = 612;
+pub const SPRUCE_STAIRS: u16 = 613;
+pub const BIRCH_STAIRS: u16 = 614;
+pub const JUNGLE_STAIRS: u16 = 615;
+pub const QUARTZ_STAIRS: u16 = 616;
+pub const ACACIA_STAIRS: u16 = 617;
+pub const CHERRY_STAIRS: u16 = 618;
+pub const DARK_OAK_STAIRS: u16 = 619;
+pub const PALE_OAK_STAIRS: u16 = 620;
+pub const MANGROVE_STAIRS: u16 = 621;
+pub const BAMBOO_STAIRS: u16 = 622;
+pub const BAMBOO_MOSAIC_STAIRS: u16 = 623;
+pub const PRISMARINE_STAIRS: u16 = 624;
+pub const PRISMARINE_BRICK_STAIRS: u16 = 625;
+pub const DARK_PRISMARINE_STAIRS: u16 = 626;
+pub const RED_SANDSTONE_STAIRS: u16 = 627;
+pub const PURPUR_STAIRS: u16 = 628;
+pub const POLISHED_GRANITE_STAIRS: u16 = 629;
+pub const SMOOTH_RED_SANDSTONE_STAIRS: u16 = 630;
+pub const MOSSY_STONE_BRICK_STAIRS: u16 = 631;
+pub const POLISHED_DIORITE_STAIRS: u16 = 632;
+pub const MOSSY_COBBLESTONE_STAIRS: u16 = 633;
+pub const END_STONE_BRICK_STAIRS: u16 = 634;
+pub const STONE_STAIRS: u16 = 635;
+pub const SMOOTH_SANDSTONE_STAIRS: u16 = 636;
+pub const SMOOTH_QUARTZ_STAIRS: u16 = 637;
+pub const GRANITE_STAIRS: u16 = 638;
+pub const ANDESITE_STAIRS: u16 = 639;
+pub const RED_NETHER_BRICK_STAIRS: u16 = 640;
+pub const POLISHED_ANDESITE_STAIRS: u16 = 641;
+pub const DIORITE_STAIRS: u16 = 642;
+pub const CRIMSON_STAIRS: u16 = 643;
+pub const WARPED_STAIRS: u16 = 644;
+pub const BLACKSTONE_STAIRS: u16 = 645;
+pub const POLISHED_BLACKSTONE_BRICK_STAIRS: u16 = 646;
+pub const POLISHED_BLACKSTONE_STAIRS: u16 = 647;
+pub const TUFF_STAIRS: u16 = 648;
+pub const POLISHED_TUFF_STAIRS: u16 = 649;
+pub const TUFF_BRICK_STAIRS: u16 = 650;
+pub const SULFUR_STAIRS: u16 = 651;
+pub const POLISHED_SULFUR_STAIRS: u16 = 652;
+pub const SULFUR_BRICK_STAIRS: u16 = 653;
+pub const CINNABAR_STAIRS: u16 = 654;
+pub const POLISHED_CINNABAR_STAIRS: u16 = 655;
+pub const CINNABAR_BRICK_STAIRS: u16 = 656;
+pub const CUT_COPPER_STAIRS: u16 = 657;
+pub const EXPOSED_CUT_COPPER_STAIRS: u16 = 658;
+pub const WEATHERED_CUT_COPPER_STAIRS: u16 = 659;
+pub const OXIDIZED_CUT_COPPER_STAIRS: u16 = 660;
+pub const WAXED_CUT_COPPER_STAIRS: u16 = 661;
+pub const WAXED_EXPOSED_CUT_COPPER_STAIRS: u16 = 662;
+pub const WAXED_WEATHERED_CUT_COPPER_STAIRS: u16 = 663;
+pub const WAXED_OXIDIZED_CUT_COPPER_STAIRS: u16 = 664;
+pub const COBBLED_DEEPSLATE_STAIRS: u16 = 665;
+pub const POLISHED_DEEPSLATE_STAIRS: u16 = 666;
+pub const DEEPSLATE_TILE_STAIRS: u16 = 667;
+pub const DEEPSLATE_BRICK_STAIRS: u16 = 668;
+
+/// THE STAIRS FAMILY'S OWN SEAT LADDER (the dev-62 round — the 64
+/// kinds the explicit seats the tail banks, the vanilla registration
+/// order the clinit rows speak: the head walk the oak..cinnabar rows
+/// bank, the copper ladder the collection walk registers, the
+/// deepslate quartet the tail wears): the mesher's stairs lane and
+/// the family fns the ladder read.
+pub const STAIRS_KINDS: [u16; 64] = [
+    OAK_STAIRS,
+    COBBLESTONE_STAIRS,
+    BRICK_STAIRS,
+    STONE_BRICK_STAIRS,
+    MUD_BRICK_STAIRS,
+    RESIN_BRICK_STAIRS,
+    NETHER_BRICK_STAIRS,
+    SANDSTONE_STAIRS,
+    SPRUCE_STAIRS,
+    BIRCH_STAIRS,
+    JUNGLE_STAIRS,
+    QUARTZ_STAIRS,
+    ACACIA_STAIRS,
+    CHERRY_STAIRS,
+    DARK_OAK_STAIRS,
+    PALE_OAK_STAIRS,
+    MANGROVE_STAIRS,
+    BAMBOO_STAIRS,
+    BAMBOO_MOSAIC_STAIRS,
+    PRISMARINE_STAIRS,
+    PRISMARINE_BRICK_STAIRS,
+    DARK_PRISMARINE_STAIRS,
+    RED_SANDSTONE_STAIRS,
+    PURPUR_STAIRS,
+    POLISHED_GRANITE_STAIRS,
+    SMOOTH_RED_SANDSTONE_STAIRS,
+    MOSSY_STONE_BRICK_STAIRS,
+    POLISHED_DIORITE_STAIRS,
+    MOSSY_COBBLESTONE_STAIRS,
+    END_STONE_BRICK_STAIRS,
+    STONE_STAIRS,
+    SMOOTH_SANDSTONE_STAIRS,
+    SMOOTH_QUARTZ_STAIRS,
+    GRANITE_STAIRS,
+    ANDESITE_STAIRS,
+    RED_NETHER_BRICK_STAIRS,
+    POLISHED_ANDESITE_STAIRS,
+    DIORITE_STAIRS,
+    CRIMSON_STAIRS,
+    WARPED_STAIRS,
+    BLACKSTONE_STAIRS,
+    POLISHED_BLACKSTONE_BRICK_STAIRS,
+    POLISHED_BLACKSTONE_STAIRS,
+    TUFF_STAIRS,
+    POLISHED_TUFF_STAIRS,
+    TUFF_BRICK_STAIRS,
+    SULFUR_STAIRS,
+    POLISHED_SULFUR_STAIRS,
+    SULFUR_BRICK_STAIRS,
+    CINNABAR_STAIRS,
+    POLISHED_CINNABAR_STAIRS,
+    CINNABAR_BRICK_STAIRS,
+    CUT_COPPER_STAIRS,
+    EXPOSED_CUT_COPPER_STAIRS,
+    WEATHERED_CUT_COPPER_STAIRS,
+    OXIDIZED_CUT_COPPER_STAIRS,
+    WAXED_CUT_COPPER_STAIRS,
+    WAXED_EXPOSED_CUT_COPPER_STAIRS,
+    WAXED_WEATHERED_CUT_COPPER_STAIRS,
+    WAXED_OXIDIZED_CUT_COPPER_STAIRS,
+    COBBLED_DEEPSLATE_STAIRS,
+    POLISHED_DEEPSLATE_STAIRS,
+    DEEPSLATE_TILE_STAIRS,
+    DEEPSLATE_BRICK_STAIRS,
+];
+
+/// THE STAIRS FACING'S OWN VARIANT VOCABULARY (the dev-62 round — the
+/// StairBlock FACING EnumProperty the client's own byte wears: 0 the
+/// north ascent keeps, 1 the east, 2 the south, 3 the west — the
+/// getStateForPlacement's `getHorizontalDirection()` the player-look
+/// byte the placement walk stamps, the mesher's blockstate key the
+/// byte the facing string selects, the neighbor walk the axis the
+/// bit answers).
+pub const STAIRS_FACING_NORTH: u8 = 0;
+pub const STAIRS_FACING_EAST: u8 = 1;
+pub const STAIRS_FACING_SOUTH: u8 = 2;
+pub const STAIRS_FACING_WEST: u8 = 3;
+
+/// THE STAIRS HALF'S OWN VARIANT BIT (the StairBlock HALF EnumProperty
+/// the client's own bit wears: 0 the bottom slab the registerDefault
+/// pin keeps, 1 the top slab the clicked-ceiling arm wears — the
+/// getStateForPlacement's face walk the bit stamps, the SHAPE walk
+/// the same-half verdict the bit gates).
+pub const STAIRS_HALF_BOTTOM: u8 = 0;
+pub const STAIRS_HALF_TOP: u8 = 1;
+
+/// THE STAIRS SHAPE'S OWN VOCABULARY (the StairsShape enum the
+/// client's own byte wears: 0 the straight flight keeps, 1 the outer
+/// left / 2 the outer right the front-walk arms bank, 3 the inner
+/// left / 4 the inner right the back-walk arms — the getStairsShape
+/// walk the byte answers, the mesher's model key the byte selects).
+pub const STAIRS_SHAPE_STRAIGHT: u8 = 0;
+pub const STAIRS_SHAPE_OUTER_LEFT: u8 = 1;
+pub const STAIRS_SHAPE_OUTER_RIGHT: u8 = 2;
+pub const STAIRS_SHAPE_INNER_LEFT: u8 = 3;
+pub const STAIRS_SHAPE_INNER_RIGHT: u8 = 4;
+
+/// THE STAIRS VARIANT'S OWN PACK (the facing byte the low pair keeps,
+/// the half bit the third carries — the placement walk the byte
+/// stamps, the mesher + collision the same unpack walk the state
+/// serves: the SHAPE the mesh-time/collision-time walk computes, the
+/// vanilla's updateShape-maintained state the same verdict the
+/// neighbors answer).
+#[inline]
+pub fn stairs_variant(facing: u8, half_top: bool) -> u8 {
+    (facing & 0b11) | ((half_top as u8) << 2)
+}
+
+/// THE STAIRS VARIANT'S OWN FACING READ (the low pair the unpack
+/// answers — the no-opinion 0 byte the registerDefaultState's
+/// NORTH pin wears).
+#[inline]
+pub fn stairs_variant_facing(v: u8) -> u8 {
+    v & 0b11
+}
+
+/// THE STAIRS VARIANT'S OWN HALF READ (the third bit the unpack
+/// answers — the no-opinion false the BOTTOM default keeps).
+#[inline]
+pub fn stairs_variant_half(v: u8) -> bool {
+    (v >> 2) & 0b1 != 0
+}
+
 /// THE COPPER BARS FAMILY'S OWN SEAT LADDER (the dev-59 round — the
 /// 8 kinds the explicit seats the tail banks, the PREFIXES order the
 /// collection walk speaks): the mesher's pane lane and the family
@@ -4045,7 +4244,7 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 /// generated tables' own rows the names wire) — the
 /// END_PORTAL
 /// the beyond-table seat the displaced law keeps.
-pub const NAME_OF: [&str; 605] = [
+pub const NAME_OF: [&str; 669] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -4748,6 +4947,36 @@ pub const NAME_OF: [&str; 605] = [
     "weathered_copper_lantern", "oxidized_copper_lantern",
     "waxed_copper_lantern", "waxed_exposed_copper_lantern",
     "waxed_weathered_copper_lantern", "waxed_oxidized_copper_lantern",
+    // THE STAIRS FAMILY'S OWN NAMES (the dev-62 round — the 64 rows
+    // the vanilla registration order the palette tail banks, the
+    // dig/sound/drop/place lanes the generated tables' own rows the
+    // names wire)
+    "oak_stairs", "cobblestone_stairs", "brick_stairs",
+    "stone_brick_stairs", "mud_brick_stairs", "resin_brick_stairs",
+    "nether_brick_stairs", "sandstone_stairs", "spruce_stairs",
+    "birch_stairs", "jungle_stairs", "quartz_stairs", "acacia_stairs",
+    "cherry_stairs", "dark_oak_stairs", "pale_oak_stairs",
+    "mangrove_stairs", "bamboo_stairs", "bamboo_mosaic_stairs",
+    "prismarine_stairs", "prismarine_brick_stairs",
+    "dark_prismarine_stairs", "red_sandstone_stairs", "purpur_stairs",
+    "polished_granite_stairs", "smooth_red_sandstone_stairs",
+    "mossy_stone_brick_stairs", "polished_diorite_stairs",
+    "mossy_cobblestone_stairs", "end_stone_brick_stairs", "stone_stairs",
+    "smooth_sandstone_stairs", "smooth_quartz_stairs", "granite_stairs",
+    "andesite_stairs", "red_nether_brick_stairs",
+    "polished_andesite_stairs", "diorite_stairs", "crimson_stairs",
+    "warped_stairs", "blackstone_stairs",
+    "polished_blackstone_brick_stairs", "polished_blackstone_stairs",
+    "tuff_stairs", "polished_tuff_stairs", "tuff_brick_stairs",
+    "sulfur_stairs", "polished_sulfur_stairs", "sulfur_brick_stairs",
+    "cinnabar_stairs", "polished_cinnabar_stairs",
+    "cinnabar_brick_stairs", "cut_copper_stairs",
+    "exposed_cut_copper_stairs", "weathered_cut_copper_stairs",
+    "oxidized_cut_copper_stairs", "waxed_cut_copper_stairs",
+    "waxed_exposed_cut_copper_stairs", "waxed_weathered_cut_copper_stairs",
+    "waxed_oxidized_cut_copper_stairs", "cobbled_deepslate_stairs",
+    "polished_deepslate_stairs", "deepslate_tile_stairs",
+    "deepslate_brick_stairs",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -6011,6 +6240,248 @@ pub fn lantern_placement_variant(
     }
 }
 
+/// THE STAIRS FAMILY'S OWN KIND READS (the dev-62 round — the 64-kind
+/// ladder the continuous range the tail banks, the copper ladder the
+/// weathering walk's own four rungs the waxed pair the tail wears).
+#[inline]
+pub fn is_stairs(id: u16) -> bool {
+    (OAK_STAIRS..=DEEPSLATE_BRICK_STAIRS).contains(&id)
+}
+
+#[inline]
+pub fn is_copper_stairs(id: u16) -> bool {
+    (CUT_COPPER_STAIRS..=WAXED_OXIDIZED_CUT_COPPER_STAIRS).contains(&id)
+}
+
+/// THE STAIRS FACING'S OWN AXIS (the facing byte's own axis the
+/// neighbor walk's cross-axis verdict reads: north/south the z-axis 0
+/// pair, east/west the x-axis 1 pair — the getStairsShape walk's
+/// `direction1.getAxis() != state.getValue(FACING).getAxis()` the
+/// same fold answers).
+#[inline]
+pub fn stairs_facing_axis(facing: u8) -> u8 {
+    facing & 0b1
+}
+
+/// THE STAIRS FACING'S OWN DELTA (the ascent direction the walk the
+/// facing byte serves: north the (0, -1) step keeps, east the (1, 0),
+/// south the (0, 1), west the (-1, 0) — the vanilla Direction table's
+/// own normal law the byte order answers).
+#[inline]
+pub fn stairs_facing_delta(facing: u8) -> (i32, i32) {
+    match facing & 0b11 {
+        STAIRS_FACING_EAST => (1, 0),
+        STAIRS_FACING_SOUTH => (0, 1),
+        STAIRS_FACING_WEST => (-1, 0),
+        _ => (0, -1),
+    }
+}
+
+/// THE STAIRS FACING'S OWN QUARTER TURNS (the counter-clockwise and
+/// the clockwise walk the neighbor verdicts the keys serve — the
+/// vanilla getCounterClockWise/getClockWise law the north->west->south
+/// ->east cycle speaks: ccw(N)=W, cw(N)=E).
+#[inline]
+pub fn stairs_facing_ccw(facing: u8) -> u8 {
+    (facing + 3) & 0b11
+}
+
+#[inline]
+pub fn stairs_facing_cw(facing: u8) -> u8 {
+    (facing + 1) & 0b11
+}
+
+#[inline]
+pub fn stairs_facing_opposite(facing: u8) -> u8 {
+    (facing + 2) & 0b11
+}
+
+/// THE STAIRS NEIGHBOR'S OWN TAKE-GATE (javap StairBlock.canTakeShape
+/// pc 0-62 the 26.2 jar): the face's own cell the walk reads — the
+/// no-stairs neighbor the TRUE verdict keeps, the stairs neighbor the
+/// different-facing-OR-different-half answer gives (the same-facing
+/// same-half pair the gate refuses — the straight flight the corner
+/// shape never becomes).
+fn stairs_can_take_shape(
+    world: &World,
+    x: i32,
+    y: i32,
+    z: i32,
+    fx: i32,
+    fz: i32,
+    my_facing: u8,
+    my_half: bool,
+) -> bool {
+    let nb = world.get(x + fx, y, z + fz);
+    if !is_stairs(nb) {
+        return true;
+    }
+    let nv = world.variant(x + fx, y, z + fz);
+    stairs_variant_facing(nv) != my_facing || stairs_variant_half(nv) != my_half
+}
+
+/// THE STAIRS SHAPE'S OWN NEIGHBOR WALK (javap StairBlock.getStairsShape
+/// pc 0-222 the 26.2 jar verbatim): the FRONT walk pos.relative(FACING)
+/// first — the same-half + cross-axis + canTakeShape(opposite) gates
+/// the `bf == facing.getCounterClockWise()` verdict arms (OUTER_LEFT
+/// the ccw answer keeps, OUTER_RIGHT the else arm banks), the BACK
+/// walk pos.relative(FACING.getOpposite()) the same gates the INNER
+/// pair arms (INNER_LEFT the ccw answer keeps, INNER_RIGHT the else),
+/// the straight flight the both-walks silence keeps. The mesh-time/
+/// collision-time walk the vanilla's updateShape-maintained state the
+/// same verdict the neighbors answer (the placement walk the SAME fn
+/// the getStateForPlacement's own SHAPE pre-compute wears — the
+/// fence's connection-bits precedent the lane keeps).
+pub fn stairs_shape_of(
+    world: &World,
+    x: i32,
+    y: i32,
+    z: i32,
+    facing: u8,
+    half_top: bool,
+) -> u8 {
+    let (fx, fz) = stairs_facing_delta(facing);
+    // THE FRONT WALK (pos.relative(FACING) — the ascent direction)
+    let front = world.get(x + fx, y, z + fz);
+    if is_stairs(front) {
+        let fv = world.variant(x + fx, y, z + fz);
+        if stairs_variant_half(fv) == half_top {
+            let bf = stairs_variant_facing(fv);
+            if stairs_facing_axis(bf) != stairs_facing_axis(facing) {
+                let (gx, gz) = stairs_facing_delta(stairs_facing_opposite(bf));
+                if stairs_can_take_shape(world, x, y, z, gx, gz, facing, half_top) {
+                    return if bf == stairs_facing_ccw(facing) {
+                        STAIRS_SHAPE_OUTER_LEFT
+                    } else {
+                        STAIRS_SHAPE_OUTER_RIGHT
+                    };
+                }
+            }
+        }
+    }
+    // THE BACK WALK (pos.relative(FACING.getOpposite()) — the descent)
+    let back = world.get(x - fx, y, z - fz);
+    if is_stairs(back) {
+        let bv = world.variant(x - fx, y, z - fz);
+        if stairs_variant_half(bv) == half_top {
+            let b2f = stairs_variant_facing(bv);
+            if stairs_facing_axis(b2f) != stairs_facing_axis(facing) {
+                let (gx, gz) = stairs_facing_delta(b2f);
+                if stairs_can_take_shape(world, x, y, z, gx, gz, facing, half_top) {
+                    return if b2f == stairs_facing_ccw(facing) {
+                        STAIRS_SHAPE_INNER_LEFT
+                    } else {
+                        STAIRS_SHAPE_INNER_RIGHT
+                    };
+                }
+            }
+        }
+    }
+    STAIRS_SHAPE_STRAIGHT
+}
+
+/// THE STAIRS STATE'S OWN TURN TABLE (the jar's 40-key blockstate
+/// rotation the 60-kind identity walk verifies — the x=180 top-half
+/// pair the y quarter-turns the base east orientation wears: bottom
+/// straight/inner_right/outer_right the straight y's the facing
+/// speaks (east 0 / south 90 / west 180 / north 270), bottom
+/// inner_left/outer_left the +270 row banks, top the x=180 the same
+/// rows keep with the inner_right/outer_right pair the +90 row
+/// wears — the mesher's parse-driven turns the same table the test's
+/// own cross-check banks).
+pub fn stairs_state_turns(facing: u8, half_top: bool, shape: u8) -> (usize, usize) {
+    // the y quarter-turns per facing (east 0, south 1, west 2, north 3)
+    let straight_steps = match facing & 0b11 {
+        1 => 0, // east
+        2 => 1, // south
+        3 => 2, // west
+        _ => 3, // north
+    };
+    match (half_top, shape) {
+        (false, STAIRS_SHAPE_STRAIGHT) => (0, straight_steps),
+        (false, STAIRS_SHAPE_OUTER_LEFT) | (false, STAIRS_SHAPE_INNER_LEFT) => {
+            (0, (straight_steps + 3) % 4)
+        }
+        (false, STAIRS_SHAPE_OUTER_RIGHT) | (false, STAIRS_SHAPE_INNER_RIGHT) => {
+            (0, straight_steps)
+        }
+        (true, STAIRS_SHAPE_STRAIGHT)
+        | (true, STAIRS_SHAPE_OUTER_LEFT)
+        | (true, STAIRS_SHAPE_INNER_LEFT) => (2, straight_steps),
+        (true, STAIRS_SHAPE_OUTER_RIGHT) | (true, STAIRS_SHAPE_INNER_RIGHT) => {
+            (2, (straight_steps + 1) % 4)
+        }
+        _ => (0, straight_steps),
+    }
+}
+
+/// THE STAIRS STATE'S OWN BOXES (the px-unit triple the collision the
+/// template trio + the turns serve: box 0 the SLAB the every state
+/// wears (full footprint x/z, the y band the half bit speaks), box 1
+/// the STRAIGHT/OUTER step the quarter the template answers, box 2
+/// the INNER's second arm the L completes — the x=180 fold the top
+/// pair the (y, z) -> (16 - y, 16 - z) walk banks, the y-steps the
+/// CW quarter the (x, z) -> (16 - z, x) fold answers).
+pub fn stairs_state_boxes(v: u8) -> [Option<(i32, i32, i32, i32, i32, i32)>; 3] {
+    let facing = stairs_variant_facing(v);
+    let half_top = stairs_variant_half(v);
+    let shape = (v >> 3) & 0b111;
+    let (x_turns, y_steps) = stairs_state_turns(facing, half_top, shape);
+    // THE TEMPLATE TRIO'S OWN BASE BOXES (the y=0 east orientation the
+    // parent models bank): the slab + the east-half step pair every
+    // template wears, the inner's SW-quarter arm the L completes, the
+    // outer's SE-quarter step the corner alone keeps.
+    let slab = (0i32, 0i32, 0i32, 16i32, 8i32, 16i32);
+    let step_e = (8i32, 8i32, 0i32, 16i32, 16i32, 16i32);
+    let step_sw = (0i32, 8i32, 8i32, 8i32, 16i32, 16i32);
+    let step_se = (8i32, 8i32, 8i32, 16i32, 16i32, 16i32);
+    let fold = |(x0, y0, z0, x1, y1, z1): (i32, i32, i32, i32, i32, i32)| {
+        // THE X-FOLD (the top-half x=180 the (y, z) -> (16-y, 16-z)
+        // quarter speaks)
+        let (y0, z0, y1, z1) = if x_turns == 2 {
+            (16 - y1, 16 - z1, 16 - y0, 16 - z0)
+        } else {
+            (y0, z0, y1, z1)
+        };
+        // THE Y-STEPS (the CW quarter-turn walk the mesher's own table
+        // the pane lane wears: step 1 the (x, z) -> (16 - z, x) fold)
+        let mut corners = [(x0, z0), (x1, z1)];
+        for (cx, cz) in corners.iter_mut() {
+            let (mut px, mut pz) = (*cx, *cz);
+            for _ in 0..y_steps {
+                let (nx, nz) = (16 - pz, px);
+                px = nx;
+                pz = nz;
+            }
+            *cx = px;
+            *cz = pz;
+        }
+        let ((x0, z0), (x1, z1)) = (corners[0], corners[1]);
+        (
+            x0.min(x1),
+            y0.min(y1),
+            z0.min(z1),
+            x0.max(x1),
+            y0.max(y1),
+            z0.max(z1),
+        )
+    };
+    let steps: [(i32, i32, i32, i32, i32, i32); 2] = match shape {
+        STAIRS_SHAPE_OUTER_LEFT | STAIRS_SHAPE_OUTER_RIGHT => [fold(step_se), slab],
+        STAIRS_SHAPE_INNER_LEFT | STAIRS_SHAPE_INNER_RIGHT => [fold(step_e), fold(step_sw)],
+        _ => [fold(step_e), slab],
+    };
+    [
+        Some(fold(slab)),
+        Some(steps[0]),
+        if shape >= STAIRS_SHAPE_INNER_LEFT {
+            Some(steps[1])
+        } else {
+            None
+        },
+    ]
+}
+
 /// THE WALL CONNECTION'S OWN FOUR-ARM LAW (javap WallBlock.connectsTo
 /// (state, sideSolid, dir) pc 0-68 the 26.2 jar — the sideUpdate pc
 /// 15-30 walk the per-direction verdict feeds: `PROPERTY_BY_DIRECTION
@@ -6212,6 +6683,14 @@ fn collision_face_footprint(
             // verdict never grants — the narrower rim the body's
             // wider shoulders the union dominates)
             Some((5.0 / 16.0, 11.0 / 16.0, 5.0 / 16.0, 11.0 / 16.0))
+        }
+        CollisionShape::Stairs(_) => {
+            // THE STAIRS' OWN FACE (the dev-62 round — the slab box
+            // the full 0..1 footprint every state wears: the DOWN
+            // face the slab square the projection answers [the step
+            // boxes the same footprint the upper band serves], the
+            // Full arm's own law the half-cube family keeps)
+            Some(full)
         }
         CollisionShape::Wall(bits, _) => {
             // THE WALL COMPOUND'S OWN FACE (the post box(4,0,4,12,24,12)
@@ -7659,6 +8138,24 @@ pub enum CollisionShape {
     /// [`collision_face_footprint`] arm the standing body's own
     /// footprint banks).
     Lantern(u8),
+    /// THE STAIRS FAMILY'S OWN STATE PACK (the dev-62 round — javap
+    /// StairBlock.getShape pc 0-228 the 26.2 jar the (shape, half)
+    /// map pair the direction key answers: the SHAPE_OUTER the
+    /// column(16.0, 0.0, 8.0) ∪ box(0, 8, 0, 8, 16, 8) walk banks
+    /// (the slab + the NW-corner pair the base keeps), the
+    /// SHAPE_STRAIGHT the ∪ rotate(BLOCK_ROT_Y_90) the north-half
+    /// step completes, the SHAPE_INNER the east-half arm adds — the
+    /// rotated unions the per-direction maps the getShape read
+    /// serves). The pack the (facing 2 bits, half 1 bit, shape 3
+    /// bits) triple the collision walk banks: the facing/half the
+    /// placed variant byte carries, the shape the
+    /// [`stairs_shape_of`] walk the same verdict the neighbors
+    /// answer (the vanilla's updateShape-maintained state the same
+    /// law the mesh-time walk keeps — the fence's connection-bits
+    /// precedent the lane wears). The boxes the [`shape_slabs`]
+    /// decode the SLAB member answers, the steps the
+    /// [`stairs_step_slabs`] walk the body walks' roster serves).
+    Stairs(u8),
     /// THE TRAPDOOR'S OWN HORIZONTAL SLAB (the autopush-668 round —
     /// the closed state's own band the SHAPES map's UP/DOWN keys
     /// speak): javap TrapDoorBlock the 26.2 jar the SHAPES clinit's
@@ -7854,6 +8351,17 @@ pub fn collision_shape(id: u16) -> CollisionShape {
         // byte answers, the top box the [`lantern_cap_slabs`] walk
         // the roster serves.
         CollisionShape::Lantern(0)
+    } else if is_stairs(id) {
+        // THE STAIRS FAMILY'S OWN KIND-ONLY ROW (the dev-62 round —
+        // the facing/half/shape the neighbor reads the kind-only
+        // table never sees, the BOTTOM STRAIGHT slab the conservative
+        // subset keeps: the full-footprint 0..8 band the placement's
+        // obstruction walk consumes — the registerDefaultState's own
+        // NORTH+BOTTOM+STRAIGHT pin the default state answers). The
+        // placed state the variant-aware lane the variant byte +
+        // [`stairs_shape_of`] walk the compound answers, the steps
+        // the [`stairs_step_slabs`] walk the roster serves.
+        CollisionShape::Stairs(0)
     } else if is_bamboo_stalk(id) {
         // THE STALK'S OWN INSET ROW (the autopush-608 round — javap
         // BambooStalkBlock.getCollisionShape pc 0-11 the 26.2 jar: the
@@ -8161,6 +8669,22 @@ pub fn collision_shape_at(world: &World, cx: i32, cy: i32, cz: i32) -> Collision
     if is_lantern(id) {
         return CollisionShape::Lantern(world.variant(cx, cy, cz));
     }
+    // THE STAIRS FAMILY'S OWN VARIANT-AWARE ROW (the dev-62 round —
+    // the facing/half the placed variant byte carries, the SHAPE the
+    // mesh-time law computes: the vanilla stores the SHAPE property
+    // the updateShape walk re-arms, the client's own
+    // [`stairs_shape_of`] walk the neighbor reads the SAME verdict
+    // every frame answers — the placement/break updates the
+    // propagation never needs). The pack the compound's own members
+    // the [`stairs_step_slabs`] walk serves, the slab the
+    // [`shape_slabs`] decode banks.
+    if is_stairs(id) {
+        let sv = world.variant(cx, cy, cz);
+        let facing = stairs_variant_facing(sv);
+        let half_top = stairs_variant_half(sv);
+        let shape = stairs_shape_of(world, cx, cy, cz, facing, half_top);
+        return CollisionShape::Stairs(facing | ((half_top as u8) << 2) | (shape << 3));
+    }
     if !is_door(id) {
         return collision_shape(id);
     }
@@ -8230,6 +8754,22 @@ pub fn shape_slabs(
         // 0..1 band the default arm keeps)
         CollisionShape::Chain(1) | CollisionShape::Chain(2) => {
             (cy as f64 + 6.5 / 16.0, cy as f64 + 9.5 / 16.0)
+        }
+        // THE STAIRS FAMILY'S OWN SLAB ARM (the dev-62 round — the
+        // half bit the y band the registerDefaultState's BOTTOM pin
+        // keeps: the bottom slab the 0..8 band the feet's own sweep
+        // answers, the top slab the 8..16 band the ceiling wears —
+        // the FULL footprint the slab's own x/z walk keeps, the step
+        // boxes the [`stairs_step_slabs`] walk the compound's roster
+        // serves — the vanilla SHAPE the slab ∪ step union the
+        // per-state walk banks)
+        CollisionShape::Stairs(v) => {
+            let half_top = (v >> 2) & 0b1 != 0;
+            if half_top {
+                (cy as f64 + 8.0 / 16.0, (cy + 1) as f64)
+            } else {
+                (cy as f64, cy as f64 + 8.0 / 16.0)
+            }
         }
         _ => (cy as f64, (cy + 1) as f64),
     };
@@ -8533,6 +9073,45 @@ pub fn lantern_cap_slabs(
         (7.0f64 / 16.0, 9.0f64 / 16.0)
     };
     [Some((x_lo, x_hi, cy as f64 + y0, cy as f64 + y1, z_lo, z_hi))]
+}
+
+/// THE STAIRS STEPS' OWN SLABS (the dev-62 round — the compound's
+/// step members the template trio + the turns table serve: the
+/// [`stairs_state_boxes`] walk the (slab, step, inner-arm) triple
+/// answers, the box 0 the SLAB the [`shape_slabs`] decode banks, the
+/// boxes 1..2 the steps the body walks' roster serves — the straight
+/// flight the one step keeps, the outer corner the quarter step, the
+/// inner corner the two arms the L completes).
+pub fn stairs_step_slabs(
+    shape: CollisionShape,
+    cx: i32,
+    cy: i32,
+    cz: i32,
+) -> [Option<(f64, f64, f64, f64, f64, f64)>; 2] {
+    let CollisionShape::Stairs(v) = shape else {
+        return [None, None];
+    };
+    let boxes = stairs_state_boxes(v);
+    let to_slab = |b: Option<(i32, i32, i32, i32, i32, i32)>| {
+        b.map(|(x0, y0, z0, x1, y1, z1)| {
+            (
+                cx as f64 + x0 as f64 / 16.0,
+                cx as f64 + x1 as f64 / 16.0,
+                cy as f64 + y0 as f64 / 16.0,
+                cy as f64 + y1 as f64 / 16.0,
+                cz as f64 + z0 as f64 / 16.0,
+                cz as f64 + z1 as f64 / 16.0,
+            )
+        })
+    };
+    // THE RETURN ORDER (the body walks' (x_lo, x_hi, y_lo, y_hi,
+    // z_lo, z_hi) tuple the [`shape_slabs`] decode keeps — the
+    // [`stairs_state_boxes`] px triple the same six-pack the /16
+    // fold answers)
+    [
+        to_slab(boxes[1]),
+        to_slab(boxes[2]),
+    ]
 }
 
 /// THE OVER-TALL FAMILY'S OWN PREDICATE (the dev-55 round — the
@@ -16539,7 +17118,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the lamp pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 605, "the palette the lamp pair banks");
+        assert_eq!(atlas::N_KINDS, 669, "the palette the lamp pair banks");
         assert!(is_redstone_lamp(REDSTONE_LAMP) && is_redstone_lamp(REDSTONE_LAMP_LIT));
         assert!(!is_redstone_lamp(REDSTONE_WIRE) && !is_redstone_lamp(STONE));
         assert!(!redstone_lamp_lit(REDSTONE_LAMP));
@@ -16636,7 +17215,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the wire pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 605, "the palette the wire pair banks");
+        assert_eq!(atlas::N_KINDS, 669, "the palette the wire pair banks");
         assert!(is_redstone_wire(REDSTONE_WIRE) && is_redstone_wire(REDSTONE_WIRE_ON));
         assert!(!is_redstone_wire(LEVER) && !is_redstone_wire(OAK_PRESSURE_PLATE));
         assert!(!wire_powered(REDSTONE_WIRE));
@@ -16790,7 +17369,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 605, "the palette the graded ladder banks");
+        assert_eq!(atlas::N_KINDS, 669, "the palette the graded ladder banks");
         // THE POWER READ'S OWN ROUND TRIP (the seat the kind the
         // inverse fold answers, the unknown id the None keeps)
         assert_eq!(wire_power_of(REDSTONE_WIRE), Some(0));
@@ -16977,7 +17556,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the planks' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 605, "the palette the planks' twelve banks");
+        assert_eq!(atlas::N_KINDS, 669, "the palette the planks' twelve banks");
         for (i, (name, kind, voice)) in PLANKS.iter().enumerate() {
             let seat = OAK_PLANKS + i as u16;
             assert_eq!(*kind, seat, "the seat the family order banks");
@@ -17069,7 +17648,7 @@ mod tests {
             None,
             "the portal the item lane refuses"
         );
-        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -17123,7 +17702,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kit's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 605, "the palette the kit's six banks");
+        assert_eq!(atlas::N_KINDS, 669, "the palette the kit's six banks");
         for (i, (name, kind, hard)) in KIT.iter().enumerate() {
             let seat = COBBLESTONE + i as u16;
             assert_eq!(*kind, seat, "the seat the stone shelf order banks");
@@ -17213,7 +17792,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kit's growth banks)
-        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -17270,7 +17849,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the shelf's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 605, "the palette the shelf's eight banks");
+        assert_eq!(atlas::N_KINDS, 669, "the palette the shelf's eight banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -17368,7 +17947,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the shelf's growth banks)
-        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -17437,7 +18016,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the cloths' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 605, "the palette the cloths' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 669, "the palette the cloths' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -17551,7 +18130,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the cloths' growth banks)
-        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -17626,7 +18205,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kilns' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 605, "the palette the kilns' seventeen banks");
+        assert_eq!(atlas::N_KINDS, 669, "the palette the kilns' seventeen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -17738,7 +18317,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kilns' growth banks)
-        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -17814,7 +18393,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 605, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 669, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -17931,7 +18510,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -18016,7 +18595,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 605, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 669, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -18167,7 +18746,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -18241,7 +18820,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 605, "the palette the ladder's twenty-two banks");
+        assert_eq!(atlas::N_KINDS, 669, "the palette the ladder's twenty-two banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -18430,7 +19009,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the ladder's growth banks)
-        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -18491,7 +19070,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the note's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 605, "the palette the note's own banks");
+        assert_eq!(atlas::N_KINDS, 669, "the palette the note's own banks");
         // THE ONE REGISTRY NAME ITS KIND ALONE SPEAKS (the NAME_OF row
         // + the generated KIND_NAMES/REGISTRY_NAMES rows the same
         // entry the three tables keep — no strip law the single kind
@@ -18802,7 +19381,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the note's growth banks)
-        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -18843,8 +19422,8 @@ mod tests {
             "the contiguous run the thirteen seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 605, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 669, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in OAK_FENCE..=NETHER_BRICK_FENCE {
@@ -19257,8 +19836,8 @@ mod tests {
             "the contiguous run the thirty-two seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 605, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 669, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in COBBLESTONE_WALL..=SULFUR_BRICK_WALL {
@@ -19597,8 +20176,8 @@ mod tests {
             "the contiguous run the seventeen seats wear"
         );
         assert_eq!(SULFUR_BRICK_WALL, 542, "the wall family the tail answers");
-        assert_eq!(atlas::N_KINDS, 605, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 669, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in GLASS..=BLACK_STAINED_GLASS {
@@ -19793,8 +20372,8 @@ mod tests {
             "the pane run the seventeen seats wear"
         );
         assert_eq!(BLACK_STAINED_GLASS, 559, "the glass family the tail answers");
-        assert_eq!(atlas::N_KINDS, 605, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 669, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in GLASS_PANE..=IRON_BARS {
@@ -20095,8 +20674,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_BARS, 585,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 605, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 669, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in COPPER_BARS..=WAXED_OXIDIZED_COPPER_BARS {
@@ -20416,8 +20995,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_CHAIN, 594,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 605, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 669, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in IRON_CHAIN..=WAXED_OXIDIZED_COPPER_CHAIN {
@@ -20715,8 +21294,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_LANTERN, 604,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 605, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 605, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 669, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in LANTERN..=WAXED_OXIDIZED_COPPER_LANTERN {
@@ -21036,6 +21615,497 @@ mod tests {
     }
 
     #[test]
+    fn the_stairs_familys_own_states_the_neighbor_walk_and_the_stair_voices_wear() {
+        // THE STAIRS FAMILY'S OWN LAWS (the dev-62 round — javap
+        // StairBlock the 26.2 jar the probe scripts/jar_work/
+        // stairs_690.py banks): the FACING + HALF + SHAPE +
+        // WATERLOGGED properties the registerDefaultState pins
+        // (NORTH + BOTTOM + STRAIGHT the default state wears), the
+        // <clinit> pc 35-164 the SHAPE walk speaks (SHAPE_OUTER the
+        // slab + NW-corner pair banks, SHAPE_STRAIGHT the
+        // ∪ rotate(BLOCK_ROT_Y_90) the north-half step completes,
+        // SHAPE_INNER the east-half arm adds), getStairsShape pc
+        // 0-222 the neighbor walk answers (the front walk the
+        // OUTER pair arms, the back walk the INNER pair — the
+        // canTakeShape gates the same-facing refusal keeps), the
+        // getStateForPlacement the getHorizontalDirection() +
+        // clicked-face HALF walk banks, the 64 clinit rows the
+        // vanilla registration order the palette tail banks
+        use mc_registry::generated::atlas;
+        // THE SIXTY-FOUR SEATS' OWN BANK (the contiguous tail the
+        // append-only law keeps — the lantern family the predecessor
+        // answers)
+        assert_eq!(OAK_STAIRS, 605, "the wooden head its tail seat keeps");
+        assert_eq!(COBBLESTONE_STAIRS, 606, "the cobble row the ladder banks");
+        assert_eq!(BRICK_STAIRS, 607, "the brick row the ladder banks");
+        assert_eq!(STONE_BRICK_STAIRS, 608, "the stone brick row the ladder banks");
+        assert_eq!(MUD_BRICK_STAIRS, 609, "the mud brick row the ladder banks");
+        assert_eq!(RESIN_BRICK_STAIRS, 610, "the resin brick row the ladder banks");
+        assert_eq!(NETHER_BRICK_STAIRS, 611, "the nether brick row the ladder banks");
+        assert_eq!(SANDSTONE_STAIRS, 612, "the sandstone row the ladder banks");
+        assert_eq!(SPRUCE_STAIRS, 613, "the spruce row the ladder banks");
+        assert_eq!(BIRCH_STAIRS, 614, "the birch row the ladder banks");
+        assert_eq!(JUNGLE_STAIRS, 615, "the jungle row the ladder banks");
+        assert_eq!(QUARTZ_STAIRS, 616, "the quartz row the ladder banks");
+        assert_eq!(ACACIA_STAIRS, 617, "the acacia row the ladder banks");
+        assert_eq!(CHERRY_STAIRS, 618, "the cherry row the ladder banks");
+        assert_eq!(DARK_OAK_STAIRS, 619, "the dark oak row the ladder banks");
+        assert_eq!(PALE_OAK_STAIRS, 620, "the pale oak row the ladder banks");
+        assert_eq!(MANGROVE_STAIRS, 621, "the mangrove row the ladder banks");
+        assert_eq!(BAMBOO_STAIRS, 622, "the bamboo row the ladder banks");
+        assert_eq!(BAMBOO_MOSAIC_STAIRS, 623, "the mosaic row the ladder banks");
+        assert_eq!(PRISMARINE_STAIRS, 624, "the prismarine row the ladder banks");
+        assert_eq!(
+            PRISMARINE_BRICK_STAIRS, 625,
+            "the prismarine brick row the ladder banks"
+        );
+        assert_eq!(
+            DARK_PRISMARINE_STAIRS, 626,
+            "the dark prismarine row the ladder banks"
+        );
+        assert_eq!(RED_SANDSTONE_STAIRS, 627, "the red sandstone row the ladder banks");
+        assert_eq!(PURPUR_STAIRS, 628, "the purpur row the ladder banks");
+        assert_eq!(
+            POLISHED_GRANITE_STAIRS, 629,
+            "the polished granite row the ladder banks"
+        );
+        assert_eq!(
+            SMOOTH_RED_SANDSTONE_STAIRS, 630,
+            "the smooth red sandstone row the ladder banks"
+        );
+        assert_eq!(
+            MOSSY_STONE_BRICK_STAIRS, 631,
+            "the mossy stone brick row the ladder banks"
+        );
+        assert_eq!(
+            POLISHED_DIORITE_STAIRS, 632,
+            "the polished diorite row the ladder banks"
+        );
+        assert_eq!(
+            MOSSY_COBBLESTONE_STAIRS, 633,
+            "the mossy cobblestone row the ladder banks"
+        );
+        assert_eq!(
+            END_STONE_BRICK_STAIRS, 634,
+            "the end stone brick row the ladder banks"
+        );
+        assert_eq!(STONE_STAIRS, 635, "the stone row the ladder banks");
+        assert_eq!(
+            SMOOTH_SANDSTONE_STAIRS, 636,
+            "the smooth sandstone row the ladder banks"
+        );
+        assert_eq!(
+            SMOOTH_QUARTZ_STAIRS, 637,
+            "the smooth quartz row the ladder banks"
+        );
+        assert_eq!(GRANITE_STAIRS, 638, "the granite row the ladder banks");
+        assert_eq!(ANDESITE_STAIRS, 639, "the andesite row the ladder banks");
+        assert_eq!(
+            RED_NETHER_BRICK_STAIRS, 640,
+            "the red nether brick row the ladder banks"
+        );
+        assert_eq!(
+            POLISHED_ANDESITE_STAIRS, 641,
+            "the polished andesite row the ladder banks"
+        );
+        assert_eq!(DIORITE_STAIRS, 642, "the diorite row the ladder banks");
+        assert_eq!(CRIMSON_STAIRS, 643, "the crimson row the ladder banks");
+        assert_eq!(WARPED_STAIRS, 644, "the warped row the ladder banks");
+        assert_eq!(BLACKSTONE_STAIRS, 645, "the blackstone row the ladder banks");
+        assert_eq!(
+            POLISHED_BLACKSTONE_BRICK_STAIRS, 646,
+            "the polished blackstone brick row the ladder banks"
+        );
+        assert_eq!(
+            POLISHED_BLACKSTONE_STAIRS, 647,
+            "the polished blackstone row the ladder banks"
+        );
+        assert_eq!(TUFF_STAIRS, 648, "the tuff row the ladder banks");
+        assert_eq!(
+            POLISHED_TUFF_STAIRS, 649,
+            "the polished tuff row the ladder banks"
+        );
+        assert_eq!(TUFF_BRICK_STAIRS, 650, "the tuff brick row the ladder banks");
+        assert_eq!(SULFUR_STAIRS, 651, "the sulfur row the ladder banks");
+        assert_eq!(
+            POLISHED_SULFUR_STAIRS, 652,
+            "the polished sulfur row the ladder banks"
+        );
+        assert_eq!(SULFUR_BRICK_STAIRS, 653, "the sulfur brick row the ladder banks");
+        assert_eq!(CINNABAR_STAIRS, 654, "the cinnabar row the ladder banks");
+        assert_eq!(
+            POLISHED_CINNABAR_STAIRS, 655,
+            "the polished cinnabar row the ladder banks"
+        );
+        assert_eq!(
+            CINNABAR_BRICK_STAIRS, 656,
+            "the cinnabar brick row the ladder banks"
+        );
+        assert_eq!(CUT_COPPER_STAIRS, 657, "the copper head its tail seat keeps");
+        assert_eq!(EXPOSED_CUT_COPPER_STAIRS, 658, "the exposed rung the ladder banks");
+        assert_eq!(WEATHERED_CUT_COPPER_STAIRS, 659, "the weathered rung the ladder banks");
+        assert_eq!(OXIDIZED_CUT_COPPER_STAIRS, 660, "the oxidized rung the ladder banks");
+        assert_eq!(WAXED_CUT_COPPER_STAIRS, 661, "the waxed head the twins' tail keeps");
+        assert_eq!(
+            WAXED_EXPOSED_CUT_COPPER_STAIRS, 662,
+            "the waxed exposed rung the ladder banks"
+        );
+        assert_eq!(
+            WAXED_WEATHERED_CUT_COPPER_STAIRS, 663,
+            "the waxed weathered rung the ladder banks"
+        );
+        assert_eq!(
+            WAXED_OXIDIZED_CUT_COPPER_STAIRS, 664,
+            "the waxed oxidized rung the ladder banks"
+        );
+        assert_eq!(
+            COBBLED_DEEPSLATE_STAIRS, 665,
+            "the cobbled deepslate row the ladder banks"
+        );
+        assert_eq!(
+            POLISHED_DEEPSLATE_STAIRS, 666,
+            "the polished deepslate row the ladder banks"
+        );
+        assert_eq!(
+            DEEPSLATE_TILE_STAIRS, 667,
+            "the deepslate tile row the ladder banks"
+        );
+        assert_eq!(
+            DEEPSLATE_BRICK_STAIRS, 668,
+            "the deepslate brick row the family's last seat keeps"
+        );
+        assert_eq!(atlas::N_KINDS, 669, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 669, "the NAME_OF table the one length keeps");
+        // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
+        // rows the same entry the three tables keep)
+        for k in OAK_STAIRS..=DEEPSLATE_BRICK_STAIRS {
+            assert_eq!(
+                NAME_OF[k as usize],
+                atlas::KIND_NAMES[k as usize],
+                "the KIND_NAMES row the family's kind {} keeps",
+                k
+            );
+            assert_eq!(
+                NAME_OF[k as usize],
+                atlas::REGISTRY_NAMES[k as usize],
+                "the REGISTRY_NAMES row the family's kind {} keeps",
+                k
+            );
+        }
+        // THE LADDER'S OWN CONTIGUITY (the STAIRS_KINDS walk the
+        // 605..669 range the same order banks)
+        for (i, k) in STAIRS_KINDS.iter().enumerate() {
+            assert_eq!(*k, OAK_STAIRS + i as u16, "the ladder seat {} the walk keeps", i);
+        }
+        assert!(is_stairs(OAK_STAIRS), "the head the kind read answers");
+        assert!(is_stairs(DEEPSLATE_BRICK_STAIRS), "the tail the kind read answers");
+        assert!(!is_stairs(OAK_STAIRS - 1), "the lantern tail the read refuses");
+        assert!(!is_stairs(DEEPSLATE_BRICK_STAIRS + 1), "beyond the tail the read refuses");
+        assert!(is_copper_stairs(CUT_COPPER_STAIRS));
+        assert!(is_copper_stairs(WAXED_OXIDIZED_CUT_COPPER_STAIRS));
+        assert!(!is_copper_stairs(CINNABAR_BRICK_STAIRS), "the non-copper the read refuses");
+        // THE VARIANT'S OWN PACK/UNPACK (the facing pair + the half bit
+        // the roundtrip keeps, the default state's NORTH+BOTTOM pin the
+        // zero byte wears — the HALF vocabulary the bits the consts
+        // bank)
+        assert_eq!(STAIRS_HALF_BOTTOM, 0, "the bottom bit the default keeps");
+        assert_eq!(STAIRS_HALF_TOP, 1, "the top bit the ceiling arm wears");
+        assert_eq!(stairs_variant(STAIRS_FACING_NORTH, false), 0);
+        assert_eq!(stairs_variant(STAIRS_FACING_WEST, true), 0b111);
+        // THE QUARTER TURNS' OWN CYCLE (the ccw/cw walk the north->
+        // west->south->east->north cycle the vanilla law speaks — the
+        // cw the clockwise cycle the neighbor verdicts keep)
+        assert_eq!(
+            stairs_facing_cw(STAIRS_FACING_NORTH),
+            STAIRS_FACING_EAST,
+            "the clockwise step the north->east quarter keeps"
+        );
+        assert_eq!(
+            stairs_facing_cw(STAIRS_FACING_EAST),
+            STAIRS_FACING_SOUTH,
+            "the clockwise step the east->south quarter keeps"
+        );
+        for facing in 0..4u8 {
+            for half_top in [false, true] {
+                let v = stairs_variant(facing, half_top);
+                assert_eq!(stairs_variant_facing(v), facing, "the facing the unpack keeps");
+                assert_eq!(stairs_variant_half(v), half_top, "the half the unpack keeps");
+            }
+        }
+        // THE PLACEABLE LANES THE ITEMS TABLE BANKS (the 64 pairing
+        // rows the same names the placement walk grants)
+        for k in OAK_STAIRS..=DEEPSLATE_BRICK_STAIRS {
+            assert_eq!(
+                World::placeable_block(NAME_OF[k as usize]),
+                Some(k),
+                "the {} item the placement lane grants",
+                NAME_OF[k as usize]
+            );
+        }
+        // THE DIG ROWS (the generated table the REAL bootstrapped
+        // registry banks — the wooden rows the no-tool demand keeps,
+        // the stone/copper/deepslate walk the tool-required verdicts
+        // wear, the quartz the 0.8 softness the row speaks)
+        let dig_expect: [(u16, f32, bool); 7] = [
+            (OAK_STAIRS, 2.0, false),
+            (COBBLESTONE_STAIRS, 2.0, true),
+            (STONE_STAIRS, 1.5, true),
+            (CUT_COPPER_STAIRS, 3.0, true),
+            (DEEPSLATE_TILE_STAIRS, 3.5, true),
+            (CRIMSON_STAIRS, 2.0, false),
+            (QUARTZ_STAIRS, 0.8, true),
+        ];
+        for (k, hard, tool) in dig_expect {
+            let (h, t) = crate::dig::DigState::block_dig_row(k);
+            assert!(
+                (h - hard).abs() < 1e-4,
+                "the {} dig row the {} hardness wears, got {}",
+                NAME_OF[k as usize],
+                hard,
+                h
+            );
+            assert_eq!(t, tool, "the tool demand the {} row keeps", NAME_OF[k as usize]);
+        }
+        // THE VOICE LAWS THE FAMILY WEARS (the SoundType rows the
+        // generated table banks — the wooden rows block.wood.*, the
+        // nether pair block.nether_wood.*, the bamboo pair
+        // block.bamboo_wood.*, the copper ladder block.copper.*, the
+        // deepslate quartet block.deepslate_tiles.* the tile row
+        // keeps)
+        let voice_expect: [(u16, &str); 6] = [
+            (OAK_STAIRS, "block.wood.break"),
+            (SPRUCE_STAIRS, "block.wood.break"),
+            (CRIMSON_STAIRS, "block.nether_wood.break"),
+            (BAMBOO_MOSAIC_STAIRS, "block.bamboo_wood.break"),
+            (CUT_COPPER_STAIRS, "block.copper.break"),
+            (DEEPSLATE_TILE_STAIRS, "block.deepslate_tiles.break"),
+        ];
+        for (k, voice) in voice_expect {
+            let idx = mc_registry::generated::block_sounds::sound_index(NAME_OF[k as usize])
+                .unwrap_or_else(|| panic!("the {} sound row the table banks", NAME_OF[k as usize]));
+            assert_eq!(
+                mc_registry::generated::block_sounds::SOUND_BREAK[idx],
+                voice,
+                "the voice the kind {} break row speaks",
+                k
+            );
+        }
+        // THE WAXED TWIN THE SAME COPPER VOICE WEARS (the collection
+        // walk's own lambda the vanilla law keeps)
+        let idx = mc_registry::generated::block_sounds::sound_index(
+            NAME_OF[WAXED_CUT_COPPER_STAIRS as usize],
+        )
+        .expect("the waxed sound row the table banks");
+        assert_eq!(
+            mc_registry::generated::block_sounds::SOUND_BREAK[idx],
+            "block.copper.break",
+            "the waxed twin the copper voice re-wears"
+        );
+        // THE DROP POOLS THE SELF-ENTRY LAW BANKS (the 64 kinds the
+        // one-pool drop the self-entry law wears)
+        for k in OAK_STAIRS..=DEEPSLATE_BRICK_STAIRS {
+            let name = NAME_OF[k as usize];
+            let pools = mc_registry::generated::block_drops::drops(name)
+                .unwrap_or_else(|| panic!("the {} drop pool the table banks", name));
+            assert_eq!(pools.len(), 1, "the {} the one-pool drop wears", name);
+            assert_eq!(
+                pools[0].entries[0].item, name,
+                "the {} drop the SELF-entry the stairs law wears",
+                name
+            );
+        }
+        // THE NEIGHBOR WALK'S OWN VERDICTS (javap getStairsShape pc
+        // 0-222: the FRONT walk the same-half + cross-axis +
+        // canTakeShape gates the OUTER pair arms — the ccw answer the
+        // OUTER_LEFT keeps, the OUTER_RIGHT the else banks, the BACK
+        // walk the INNER pair arms — the canTakeShape gate the
+        // same-facing refusal keeps, the straight flight the silence
+        // wears)
+        let mut w = World::blank(5, 0x5E2A);
+        let c = w.size_blocks() / 2;
+        let y = 8;
+        // the lone stair the straight flight keeps
+        w.set(c, y, c, OAK_STAIRS);
+        w.set_variant(c, y, c, stairs_variant(STAIRS_FACING_EAST, false));
+        assert_eq!(
+            stairs_shape_of(&w, c, y, c, STAIRS_FACING_EAST, false),
+            STAIRS_SHAPE_STRAIGHT,
+            "the lone stair the straight flight keeps"
+        );
+        // THE OUTER PAIR (the front neighbor the perpendicular flight
+        // turns): the south-facing front the OUTER_RIGHT answers (the
+        // right-hand turn the ccw refusal keeps), the north-facing
+        // front the OUTER_LEFT
+        w.set(c + 1, y, c, OAK_STAIRS);
+        w.set_variant(c + 1, y, c, stairs_variant(STAIRS_FACING_SOUTH, false));
+        assert_eq!(
+            stairs_shape_of(&w, c, y, c, STAIRS_FACING_EAST, false),
+            STAIRS_SHAPE_OUTER_RIGHT,
+            "the right turn the front walk's else arm keeps"
+        );
+        w.set_variant(c + 1, y, c, stairs_variant(STAIRS_FACING_NORTH, false));
+        assert_eq!(
+            stairs_shape_of(&w, c, y, c, STAIRS_FACING_EAST, false),
+            STAIRS_SHAPE_OUTER_LEFT,
+            "the left turn the front walk's ccw arm keeps"
+        );
+        // THE CAN-TAKE GATE'S OWN REFUSAL (the same-facing front the
+        // straight flight keeps — the canTakeShape verdict false)
+        w.set_variant(c + 1, y, c, stairs_variant(STAIRS_FACING_EAST, false));
+        assert_eq!(
+            stairs_shape_of(&w, c, y, c, STAIRS_FACING_EAST, false),
+            STAIRS_SHAPE_STRAIGHT,
+            "the straight flight the same-facing gate keeps"
+        );
+        // THE AXIS GATE'S OWN REFUSAL (the west-facing front the SAME
+        // axis the straight flight keeps)
+        w.set_variant(c + 1, y, c, stairs_variant(STAIRS_FACING_WEST, false));
+        assert_eq!(
+            stairs_shape_of(&w, c, y, c, STAIRS_FACING_EAST, false),
+            STAIRS_SHAPE_STRAIGHT,
+            "the same-axis neighbor the gate refuses"
+        );
+        // THE HALF GATE'S OWN REFUSAL (the top-half front the
+        // bottom-half walk the same-half verdict refuses)
+        w.set_variant(c + 1, y, c, stairs_variant(STAIRS_FACING_SOUTH, true));
+        assert_eq!(
+            stairs_shape_of(&w, c, y, c, STAIRS_FACING_EAST, false),
+            STAIRS_SHAPE_STRAIGHT,
+            "the half mismatch the walk refuses"
+        );
+        // THE INNER PAIR (the back neighbor the perpendicular flight
+        // wraps): the south-facing back the INNER_RIGHT answers, the
+        // north-facing back the INNER_LEFT
+        w.set(c + 1, y, c, AIR); // the front neighbor's seat clears
+        w.set(c - 1, y, c, OAK_STAIRS);
+        w.set_variant(c - 1, y, c, stairs_variant(STAIRS_FACING_SOUTH, false));
+        assert_eq!(
+            stairs_shape_of(&w, c, y, c, STAIRS_FACING_EAST, false),
+            STAIRS_SHAPE_INNER_RIGHT,
+            "the right wrap the back walk's else arm keeps"
+        );
+        w.set_variant(c - 1, y, c, stairs_variant(STAIRS_FACING_NORTH, false));
+        assert_eq!(
+            stairs_shape_of(&w, c, y, c, STAIRS_FACING_EAST, false),
+            STAIRS_SHAPE_INNER_LEFT,
+            "the left wrap the back walk's ccw arm keeps"
+        );
+        // THE THIRD-STAIR GATE (javap canTakeShape pc 0-62: the
+        // same-facing same-half third stair the gate refuses — the
+        // back neighbor facing south + the south cell the SAME
+        // east-facing stair the inner wrap the straight flight
+        // answers)
+        w.set_variant(c - 1, y, c, stairs_variant(STAIRS_FACING_SOUTH, false));
+        w.set(c, y, c + 1, OAK_STAIRS);
+        w.set_variant(c, y, c + 1, stairs_variant(STAIRS_FACING_EAST, false));
+        assert_eq!(
+            stairs_shape_of(&w, c, y, c, STAIRS_FACING_EAST, false),
+            STAIRS_SHAPE_STRAIGHT,
+            "the third stair the canTake gate refuses"
+        );
+        // THE COLLISION'S OWN SLAB PAIR + STEPS (the SHAPE walk the
+        // getShape read answers: the bottom slab the 0..8 band the
+        // feet's sweep keeps, the top slab the 8..16 band the ceiling
+        // wears, the straight north step the [0,8,0]->[16,16,8]
+        // quarter the turns table banks, the inner the two arms the L
+        // completes, the outer the quarter step the corner alone
+        // keeps)
+        let mut wc = World::blank(3, 0x6D41);
+        let cc = wc.size_blocks() / 2;
+        let yy = 8;
+        wc.set(cc, yy, cc, OAK_STAIRS);
+        wc.set_variant(cc, yy, cc, stairs_variant(STAIRS_FACING_EAST, false));
+        let shape = collision_shape_at(&wc, cc, yy, cc);
+        let CollisionShape::Stairs(v) = shape else {
+            panic!("the stairs shape the variant-aware lane banks");
+        };
+        assert_eq!(
+            v,
+            stairs_variant(STAIRS_FACING_EAST, false),
+            "the lone stair the straight shape the pack keeps"
+        );
+        let (x_lo, _x_hi, y_lo, y_hi, _z_lo, _z_hi) =
+            shape_slabs(shape, cc, yy, cc).expect("the stairs slab the slabs never refuse");
+        assert!(
+            ((x_lo - cc as f64).abs() < 1e-9) && ((y_lo - yy as f64).abs() < 1e-9),
+            "the full footprint the bottom slab keeps, got {x_lo}"
+        );
+        assert!(
+            ((y_hi - (yy as f64 + 0.5)).abs() < 1e-9),
+            "the 0..8 band the bottom slab keeps, got {y_hi}"
+        );
+        // the east-bottom straight's step (the [8,8,0]->[16,16,16]
+        // half the turns table banks)
+        let boxes = stairs_state_boxes(
+            stairs_variant(STAIRS_FACING_EAST, false) | (STAIRS_SHAPE_STRAIGHT << 3),
+        );
+        let (x0, y0, _z0, x1, y1, _z1) =
+            boxes[1].expect("the straight step the boxes never refuse");
+        assert_eq!((x0, y0, x1, y1), (8, 8, 16, 16), "the east step the straight keeps");
+        // the top-half flip (the x=180 the slab the upper band + the
+        // step the lower band wears)
+        let boxes = stairs_state_boxes(
+            stairs_variant(STAIRS_FACING_EAST, true) | (STAIRS_SHAPE_STRAIGHT << 3),
+        );
+        let (x0, y0, _z0, x1, y1, _z1) = boxes[0].expect("the top slab never refuses");
+        assert_eq!((x0, y0, x1, y1), (0, 8, 16, 16), "the top slab the x=180 flip keeps");
+        let (x0, y0, _z0, x1, y1, _z1) = boxes[1].expect("the top step never refuses");
+        assert_eq!((x0, y0, x1, y1), (8, 0, 16, 8), "the top step the lower band wears");
+        // the north-bottom straight's step (the y=270 the three CW
+        // quarters the north half banks)
+        let boxes = stairs_state_boxes(
+            stairs_variant(STAIRS_FACING_NORTH, false) | (STAIRS_SHAPE_STRAIGHT << 3),
+        );
+        let (x0, y0, z0, x1, y1, z1) =
+            boxes[1].expect("the north step never refuses");
+        assert_eq!(
+            (x0, y0, z0, x1, y1, z1),
+            (0, 8, 0, 16, 16, 8),
+            "the north step the three quarters banks"
+        );
+        // the inner's two arms (the east-bottom inner the east step +
+        // the SW quarter the L completes)
+        let boxes = stairs_state_boxes(
+            stairs_variant(STAIRS_FACING_EAST, false) | (STAIRS_SHAPE_INNER_RIGHT << 3),
+        );
+        let (x0, _y0, _z0, x1, _y1, _z1) = boxes[1].expect("the inner east arm never refuses");
+        assert_eq!((x0, x1), (8, 16), "the east arm the inner keeps");
+        let (x0, _y0, z0, x1, _y1, z1) = boxes[2].expect("the inner SW arm never refuses");
+        assert_eq!((x0, z0, x1, z1), (0, 8, 8, 16), "the SW quarter the inner keeps");
+        // the outer's quarter step (the east-bottom outer-right the
+        // SE quarter the corner keeps)
+        let boxes = stairs_state_boxes(
+            stairs_variant(STAIRS_FACING_EAST, false) | (STAIRS_SHAPE_OUTER_RIGHT << 3),
+        );
+        let (x0, _y0, z0, x1, _y1, z1) = boxes[1].expect("the outer quarter never refuses");
+        assert_eq!((x0, z0, x1, z1), (8, 8, 16, 16), "the SE quarter the outer keeps");
+        // the straight flight the third box NEVER wears
+        let boxes = stairs_state_boxes(
+            stairs_variant(STAIRS_FACING_EAST, false) | (STAIRS_SHAPE_STRAIGHT << 3),
+        );
+        assert!(boxes[2].is_none(), "the straight flight the third box refuses");
+        // THE STEPS' OWN ROSTER (the body walks the 2-slot walk the
+        // compound serves — the world-space tuple the /16 fold
+        // answers)
+        let shape = CollisionShape::Stairs(
+            stairs_variant(STAIRS_FACING_EAST, false) | (STAIRS_SHAPE_INNER_RIGHT << 3),
+        );
+        let [step0, step1] = stairs_step_slabs(shape, cc, yy, cc);
+        let (x_lo, x_hi, _y_lo, _y_hi, _z_lo, _z_hi) =
+            step0.expect("the inner step the roster never refuses");
+        assert!(
+            ((x_lo - (cc as f64 + 0.5)).abs() < 1e-9)
+                && ((x_hi - (cc as f64 + 1.0)).abs() < 1e-9),
+            "the east arm the roster's x walk keeps, got {x_lo}..{x_hi}"
+        );
+        assert!(step1.is_some(), "the inner the second arm the roster banks");
+        let shape = CollisionShape::Stairs(stairs_variant(STAIRS_FACING_EAST, false));
+        let [step0, step1] = stairs_step_slabs(shape, cc, yy, cc);
+        assert!(step0.is_some(), "the straight the one step the roster banks");
+        assert!(step1.is_none(), "the straight the second slot refuses");
+    }
+
+    #[test]
     fn the_redstone_torch_the_not_gate_and_the_source_arms_wear() {
         // THE REDSTONE TORCH'S OWN LAWS (the autopush-666 round — javap
         // RedstoneTorchBlock the 26.2 jar the probe scripts/jar_work/
@@ -21062,7 +22132,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the torch pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 605, "the palette the torch pair banks");
+        assert_eq!(atlas::N_KINDS, 669, "the palette the torch pair banks");
         assert!(is_redstone_torch(REDSTONE_TORCH) && is_redstone_torch(REDSTONE_TORCH_OFF));
         assert!(!is_redstone_torch(TORCH) && !is_redstone_torch(LEVER));
         assert!(redstone_torch_lit(REDSTONE_TORCH));
@@ -21203,7 +22273,7 @@ mod tests {
         assert_eq!(REDSTONE_WALL_TORCH, 324);
         assert_eq!(REDSTONE_WALL_TORCH_OFF, 325);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 605, "the palette the wall pair banks");
+        assert_eq!(atlas::N_KINDS, 669, "the palette the wall pair banks");
         assert!(
             is_redstone_torch(REDSTONE_WALL_TORCH) && is_redstone_torch(REDSTONE_WALL_TORCH_OFF),
             "the wall pair the family's tail banks"
@@ -21448,7 +22518,7 @@ mod tests {
         assert_eq!(OAK_TRAPDOOR_OPEN, 327);
         assert_eq!(END_PORTAL, 510);
         assert_eq!(
-            atlas::N_KINDS, 605,
+            atlas::N_KINDS, 669,
             "the palette the trapdoor pair banks"
         );
         assert_eq!(OAK_TRAPDOOR + 1, OAK_TRAPDOOR_OPEN, "the +1 mate wears");
@@ -21602,7 +22672,7 @@ mod tests {
         assert_eq!(END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-            605,
+            669,
             "the palette the gate pair banks"
         );
         assert_eq!(OAK_FENCE_GATE + 1, OAK_FENCE_GATE_OPEN, "the +1 mate wears");
@@ -21820,7 +22890,7 @@ mod tests {
         assert_eq!(WARPED_TRAPDOOR, 348);
         assert_eq!(WARPED_TRAPDOOR_OPEN, 349);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 605, "the palette the ladder banks");
+        assert_eq!(atlas::N_KINDS, 669, "the palette the ladder banks");
         // THE CONTIGUITY'S OWN LAW (the 22 kinds the range covers —
         // the neighbors the family fn refuses)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -21934,7 +23004,7 @@ mod tests {
         assert_eq!(IRON_TRAPDOOR, 366);
         assert_eq!(IRON_TRAPDOOR_OPEN, 367);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 605, "the palette the metal rungs bank");
+        assert_eq!(atlas::N_KINDS, 669, "the palette the metal rungs bank");
         // THE CONTIGUITY'S OWN LAW (the 42 kinds the range covers —
         // the waxed pairs the ±1 mate the parity answers)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -22305,7 +23375,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 605, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 669, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)

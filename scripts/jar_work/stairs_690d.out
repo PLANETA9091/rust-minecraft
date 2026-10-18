@@ -1,0 +1,58 @@
+rows found: 57
+OAK_STAIRS: indy | mapColor | strength()
+COBBLESTONE_STAIRS: indy | strength()
+BRICK_STAIRS: indy | mapColor | forceSolidOn | strength() | ignitedByLava
+STONE_BRICK_STAIRS: indy | mapColor | forceSolidOn | strength() | ignitedByLava
+MUD_BRICK_STAIRS: 
+RESIN_BRICK_STAIRS: mapColor | requiresCorrectTool | strength()
+NETHER_BRICK_STAIRS: indy | mapColor | requiresCorrectTool | strength()
+SANDSTONE_STAIRS: indy | mapColor | randomTicks | strength() | noOcclusion | pushReaction
+SPRUCE_STAIRS: mapColor | requiresCorrectTool | strength()
+BIRCH_STAIRS: mapColor | requiresCorrectTool | strength()
+JUNGLE_STAIRS: 
+QUARTZ_STAIRS: indy | mapColor | requiresCorrectTool | strength()
+ACACIA_STAIRS: indy | indy | indy | indy | indy | indy
+CHERRY_STAIRS: indy | indy | indy
+DARK_OAK_STAIRS: 
+PALE_OAK_STAIRS: 
+MANGROVE_STAIRS: 
+BAMBOO_STAIRS: 
+BAMBOO_MOSAIC_STAIRS: 
+PRISMARINE_STAIRS: mapColor | requiresCorrectTool | strength()
+PRISMARINE_BRICK_STAIRS: mapColor | requiresCorrectTool | strength()
+DARK_PRISMARINE_STAIRS: 
+RED_SANDSTONE_STAIRS: mapColor | requiresCorrectTool | strength()
+PURPUR_STAIRS: indy | mapColor | requiresCorrectTool | strength()
+POLISHED_GRANITE_STAIRS: indy | mapColor | pushReaction
+SMOOTH_RED_SANDSTONE_STAIRS: indy | mapColor | pushReaction
+MOSSY_STONE_BRICK_STAIRS: 
+POLISHED_DIORITE_STAIRS: 
+MOSSY_COBBLESTONE_STAIRS: 
+END_STONE_BRICK_STAIRS: 
+STONE_STAIRS: 
+SMOOTH_SANDSTONE_STAIRS: 
+SMOOTH_QUARTZ_STAIRS: 
+GRANITE_STAIRS: 
+ANDESITE_STAIRS: 
+RED_NETHER_BRICK_STAIRS: 
+POLISHED_ANDESITE_STAIRS: 
+DIORITE_STAIRS: 
+CRIMSON_STAIRS: indy | mapColor | forceSolidOn | strength()
+WARPED_STAIRS: indy | mapColor | forceSolidOn | strength()
+BLACKSTONE_STAIRS: mapColor | requiresCorrectTool | strength()
+POLISHED_BLACKSTONE_BRICK_STAIRS: indy | strength()
+POLISHED_BLACKSTONE_STAIRS: 
+TUFF_STAIRS: mapColor | requiresCorrectTool | strength() | indy | indy
+POLISHED_TUFF_STAIRS: indy | indy
+TUFF_BRICK_STAIRS: indy | indy
+SULFUR_STAIRS: indy | mapColor
+POLISHED_SULFUR_STAIRS: 
+SULFUR_BRICK_STAIRS: 
+CINNABAR_STAIRS: mapColor | requiresCorrectTool | strength()
+POLISHED_CINNABAR_STAIRS: 
+CINNABAR_BRICK_STAIRS: 
+CUT_COPPER_STAIRS: indy | indy | indy | indy | indy | indy | indy | indy | indy
+COBBLED_DEEPSLATE_STAIRS: strength()
+POLISHED_DEEPSLATE_STAIRS: 
+DEEPSLATE_TILE_STAIRS: 
+DEEPSLATE_BRICK_STAIRS: 

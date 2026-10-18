@@ -108,6 +108,17 @@ fn sky_opacity(id: u16) -> u8 {
         // vanilla skylight's own verdict the non-occluding compound
         // answers)
         || is_lantern(id)
+        // THE STAIRS FAMILY'S OWN ROW (the dev-62 round — the 64 kinds
+        // the canOcclude refusal the vanilla light law speaks: the
+        // StairBlock rows register with NO noOcclusion call but the
+        // shape the FULL cube never is — `isShapeFullBlock(state)` the
+        // canOcclude verdict reads (the default `!noOcclusion &&
+        // isShapeFullBlock` fold the slab+step union the false answer
+        // gives), the propagatesSkylightDown law the same verdict
+        // keeps — the half-open stair cell the sky the flood passes,
+        // the useShapeForLightOcclusion walk the shape the local shade
+        // serves)
+        || is_stairs(id)
     {
         0
     } else if id == WATER || id == LEAVES || id == PALE_LEAVES {

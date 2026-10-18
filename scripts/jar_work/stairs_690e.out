@@ -1,0 +1,27 @@
+register calls: 787
+OAK_STAIRS: sound=['WOOD'] strength=[(2.5,)] ctor=? x0 flags=['ignitedByLava']
+COBBLESTONE_STAIRS: sound=[] strength=[(1.0,)] ctor=? x0 flags=['forceSolidOn', 'ignitedByLava']
+BRICK_STAIRS: sound=['GRASS'] strength=[(0.6000000238418579,)] ctor=? x0 flags=['randomTicks']
+RESIN_BRICK_STAIRS: sound=['RESIN_BRICKS'] strength=[(6.0,)] ctor=? x0 flags=['requiresCorrectToolForDrops']
+NETHER_BRICK_STAIRS: sound=['NETHER_WART'] strength=[] ctor=? x0 flags=['pushReaction', 'randomTicks']
+SANDSTONE_STAIRS: sound=[] strength=[(3.0, 3.0)] ctor=? x0 flags=['requiresCorrectToolForDrops']
+SPRUCE_STAIRS: sound=[] strength=[(-1.0, 3600000.0)] ctor=? x0 flags=['requiresCorrectToolForDrops', 'noLootTable']
+QUARTZ_STAIRS: sound=['METAL'] strength=[(0.699999988079071,)] ctor=? x0 flags=[]
+PRISMARINE_STAIRS: sound=[] strength=[(6.0,)] ctor=? x0 flags=['requiresCorrectToolForDrops']
+RED_SANDSTONE_STAIRS: sound=['WOOD'] strength=[(2.0, 3.0)] ctor=? x0 flags=['ignitedByLava']
+PURPUR_STAIRS: sound=[] strength=[(3.0, 9.0)] ctor=? x0 flags=['requiresCorrectToolForDrops']
+POLISHED_GRANITE_STAIRS: sound=[] strength=[] ctor=? x0 flags=[]
+CRIMSON_STAIRS: sound=[] strength=[] ctor=? x0 flags=[]
+BLACKSTONE_STAIRS: sound=[] strength=[] ctor=? x0 flags=['forceSolidOn']
+POLISHED_BLACKSTONE_BRICK_STAIRS: sound=[] strength=[] ctor=? x0 flags=['forceSolidOn']
+POLISHED_BLACKSTONE_STAIRS: sound=[] strength=[] ctor=? x0 flags=[]
+TUFF_STAIRS: sound=[] strength=[] ctor=? x0 flags=[]
+POLISHED_TUFF_STAIRS: sound=[] strength=[] ctor=? x0 flags=[]
+TUFF_BRICK_STAIRS: sound=[] strength=[] ctor=? x0 flags=[]
+COBBLED_DEEPSLATE_STAIRS: sound=[] strength=[] ctor=? x0 flags=[]
+POLISHED_DEEPSLATE_STAIRS: sound=[] strength=[] ctor=? x0 flags=[]
+DEEPSLATE_TILE_STAIRS: sound=[] strength=[] ctor=? x0 flags=[]
+DEEPSLATE_BRICK_STAIRS: sound=[] strength=[] ctor=? x0 flags=[]
+TOTAL stairs rows: 23
+
+=== copper collection row (CUT_COPPER_STAIRS walk) ===

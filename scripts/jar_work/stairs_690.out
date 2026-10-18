@@ -1,0 +1,1039 @@
+=== class headers
+--- net.minecraft.world.level.block.StairBlock: ('?2', '?8', ['?418'])
+--- net.minecraft.world.level.block.WeatheringCopperStairBlock: ('?2', '?8', ['?28'])
+--- net.minecraft.world.level.block.state.properties.StairsShape: ('?1', '?29', ['?64'])
+--- net.minecraft.world.level.block.Block: ('?1', '?214', ['?1013'])
+
+=== StairBlock fields + methods
+  <clinit>()V
+  <init>(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+  canTakeShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Z
+  codec()Lcom/mojang/serialization/MapCodec;
+  createBlockStateDefinition(Lnet/minecraft/world/level/block/state/StateDefinition$Builder;)V
+  getExplosionResistance()F
+  getFluidState(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/material/FluidState;
+  getShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/shapes/CollisionContext;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+  getStairsShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/properties/StairsShape;
+  getStateForPlacement(Lnet/minecraft/world/item/context/BlockPlaceContext;)Lnet/minecraft/world/level/block/state/BlockState;
+  isPathfindable(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/pathfinder/PathComputationType;)Z
+  isStairs(Lnet/minecraft/world/level/block/state/BlockState;)Z
+  lambda$static$0(Lcom/mojang/serialization/codecs/RecordCodecBuilder$Instance;)Lcom/mojang/datafixers/kinds/App;
+  lambda$static$1(Lnet/minecraft/world/level/block/StairBlock;)Lnet/minecraft/world/level/block/state/BlockState;
+  mirror(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/Mirror;)Lnet/minecraft/world/level/block/state/BlockState;
+  rotate(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/Rotation;)Lnet/minecraft/world/level/block/state/BlockState;
+  updateShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/world/level/ScheduledTickAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;)Lnet/minecraft/world/level/block/state/BlockState;
+  useShapeForLightOcclusion(Lnet/minecraft/world/level/block/state/BlockState;)Z
+
+=== StairBlock methods of interest
+--- net.minecraft.world.level.block.StairBlock.<init>(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+0: aload_0
+1: aload_2
+2: invokespecial net/minecraft/world/level/block/Block.<init>:(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+5: aload_0
+6: aload_0
+7: getfield net/minecraft/world/level/block/StairBlock.stateDefinition:Lnet/minecraft/world/level/block/state/StateDefinition;
+10: invokevirtual net/minecraft/world/level/block/state/StateDefinition.any:()Lnet/minecraft/world/level/block/state/StateHolder;
+13: checkcast net/minecraft/world/level/block/state/BlockState
+16: getstatic net/minecraft/world/level/block/StairBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+19: getstatic net/minecraft/core/Direction.NORTH:Lnet/minecraft/core/Direction;
+22: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+25: checkcast net/minecraft/world/level/block/state/BlockState
+28: getstatic net/minecraft/world/level/block/StairBlock.HALF:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+31: getstatic net/minecraft/world/level/block/state/properties/Half.BOTTOM:Lnet/minecraft/world/level/block/state/properties/Half;
+34: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+37: checkcast net/minecraft/world/level/block/state/BlockState
+40: getstatic net/minecraft/world/level/block/StairBlock.SHAPE:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+43: getstatic net/minecraft/world/level/block/state/properties/StairsShape.STRAIGHT:Lnet/minecraft/world/level/block/state/properties/StairsShape;
+46: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+49: checkcast net/minecraft/world/level/block/state/BlockState
+52: getstatic net/minecraft/world/level/block/StairBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+55: iconst_0
+56: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+59: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+62: checkcast net/minecraft/world/level/block/state/BlockState
+65: invokevirtual net/minecraft/world/level/block/StairBlock.registerDefaultState:(Lnet/minecraft/world/level/block/state/BlockState;)V
+68: aload_0
+69: aload_1
+70: invokevirtual net/minecraft/world/level/block/state/BlockState.getBlock:()Lnet/minecraft/world/level/block/Block;
+73: putfield net/minecraft/world/level/block/StairBlock.base:Lnet/minecraft/world/level/block/Block;
+76: aload_0
+77: aload_1
+78: putfield net/minecraft/world/level/block/StairBlock.baseState:Lnet/minecraft/world/level/block/state/BlockState;
+81: return
+--- net.minecraft.world.level.block.StairBlock.getShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/shapes/CollisionContext;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+0: aload_1
+1: getstatic net/minecraft/world/level/block/StairBlock.HALF:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+4: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+7: getstatic net/minecraft/world/level/block/state/properties/Half.BOTTOM:Lnet/minecraft/world/level/block/state/properties/Half;
+10: if_acmpne -> 17
+13: iconst_1
+14: goto -> 18
+17: iconst_0
+18: istore istore 5
+20: aload_1
+21: getstatic net/minecraft/world/level/block/StairBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+24: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+27: checkcast net/minecraft/core/Direction
+30: astore astore 6
+32: getstatic net/minecraft/world/level/block/StairBlock$1.$SwitchMap$net$minecraft$world$level$block$state$properties$StairsShape:[I
+35: aload_1
+36: getstatic net/minecraft/world/level/block/StairBlock.SHAPE:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+39: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+42: checkcast net/minecraft/world/level/block/state/properties/StairsShape
+45: invokevirtual net/minecraft/world/level/block/state/properties/StairsShape.ordinal:()I
+48: 0x2e
+49: 0xaa tableswitch lo=1 hi=5 default=35
+84: new java/lang/MatchException
+87: dup
+88: aconst_null
+89: aconst_null
+90: invokespecial java/lang/MatchException.<init>:(Ljava/lang/String;Ljava/lang/Throwable;)V
+93: athrow
+94: iload iload 5
+96: ifeq -> 105
+99: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_BOTTOM_STRAIGHT:Ljava/util/Map;
+102: goto -> 142
+105: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_TOP_STRAIGHT:Ljava/util/Map;
+108: goto -> 142
+111: iload iload 5
+113: ifeq -> 122
+116: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_BOTTOM_INNER:Ljava/util/Map;
+119: goto -> 142
+122: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_TOP_INNER:Ljava/util/Map;
+125: goto -> 142
+128: iload iload 5
+130: ifeq -> 139
+133: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_BOTTOM_OUTER:Ljava/util/Map;
+136: goto -> 142
+139: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_TOP_OUTER:Ljava/util/Map;
+142: getstatic net/minecraft/world/level/block/StairBlock$1.$SwitchMap$net$minecraft$world$level$block$state$properties$StairsShape:[I
+145: aload_1
+146: getstatic net/minecraft/world/level/block/StairBlock.SHAPE:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+149: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+152: checkcast net/minecraft/world/level/block/state/properties/StairsShape
+155: invokevirtual net/minecraft/world/level/block/state/properties/StairsShape.ordinal:()I
+158: 0x2e
+159: 0xaa tableswitch lo=1 hi=5 default=33
+192: new java/lang/MatchException
+195: dup
+196: aconst_null
+197: aconst_null
+198: invokespecial java/lang/MatchException.<init>:(Ljava/lang/String;Ljava/lang/Throwable;)V
+201: athrow
+202: aload aload 6
+204: goto -> 220
+207: aload aload 6
+209: invokevirtual net/minecraft/core/Direction.getCounterClockWise:()Lnet/minecraft/core/Direction;
+212: goto -> 220
+215: aload aload 6
+217: invokevirtual net/minecraft/core/Direction.getClockWise:()Lnet/minecraft/core/Direction;
+220: invokeinterface java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+223: iconst_m1
+224: nop
+225: checkcast net/minecraft/world/phys/shapes/VoxelShape
+228: areturn
+--- net.minecraft.world.level.block.StairBlock.getStateForPlacement(Lnet/minecraft/world/item/context/BlockPlaceContext;)Lnet/minecraft/world/level/block/state/BlockState;
+0: aload_1
+1: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getClickedFace:()Lnet/minecraft/core/Direction;
+4: astore_2
+5: aload_1
+6: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getClickedPos:()Lnet/minecraft/core/BlockPos;
+9: astore_3
+10: aload_1
+11: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getLevel:()Lnet/minecraft/world/level/Level;
+14: aload_3
+15: invokevirtual net/minecraft/world/level/Level.getFluidState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/material/FluidState;
+18: astore astore 4
+20: aload_0
+21: invokevirtual net/minecraft/world/level/block/StairBlock.defaultBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+24: getstatic net/minecraft/world/level/block/StairBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+27: aload_1
+28: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getHorizontalDirection:()Lnet/minecraft/core/Direction;
+31: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+34: checkcast net/minecraft/world/level/block/state/BlockState
+37: getstatic net/minecraft/world/level/block/StairBlock.HALF:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+40: aload_2
+41: getstatic net/minecraft/core/Direction.DOWN:Lnet/minecraft/core/Direction;
+44: if_acmpeq -> 74
+47: aload_2
+48: getstatic net/minecraft/core/Direction.UP:Lnet/minecraft/core/Direction;
+51: if_acmpeq -> 80
+54: aload_1
+55: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getClickLocation:()Lnet/minecraft/world/phys/Vec3;
+58: getfield net/minecraft/world/phys/Vec3.y:D
+61: aload_3
+62: invokevirtual net/minecraft/core/BlockPos.getY:()I
+65: 0x87
+66: 0x67
+67: ldc2_w double 0.5
+70: 0x97
+71: ifle -> 80
+74: getstatic net/minecraft/world/level/block/state/properties/Half.TOP:Lnet/minecraft/world/level/block/state/properties/Half;
+77: goto -> 83
+80: getstatic net/minecraft/world/level/block/state/properties/Half.BOTTOM:Lnet/minecraft/world/level/block/state/properties/Half;
+83: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+86: checkcast net/minecraft/world/level/block/state/BlockState
+89: getstatic net/minecraft/world/level/block/StairBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+92: aload aload 4
+94: getstatic net/minecraft/world/level/material/Fluids.WATER:Lnet/minecraft/world/level/material/FlowingFluid;
+97: invokevirtual net/minecraft/world/level/material/FluidState.is:(Ljava/lang/Object;)Z
+100: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+103: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+106: checkcast net/minecraft/world/level/block/state/BlockState
+109: astore astore 5
+111: aload aload 5
+113: getstatic net/minecraft/world/level/block/StairBlock.SHAPE:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+116: aload aload 5
+118: aload_1
+119: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getLevel:()Lnet/minecraft/world/level/Level;
+122: aload_3
+123: invokestatic net/minecraft/world/level/block/StairBlock.getStairsShape:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/properties/StairsShape;
+126: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+129: checkcast net/minecraft/world/level/block/state/BlockState
+132: areturn
+--- net.minecraft.world.level.block.StairBlock.updateShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/world/level/ScheduledTickAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;)Lnet/minecraft/world/level/block/state/BlockState;
+0: aload_1
+1: getstatic net/minecraft/world/level/block/StairBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+4: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+7: checkcast java/lang/Boolean
+10: invokevirtual java/lang/Boolean.booleanValue:()Z
+13: ifeq -> 34
+16: aload_3
+17: aload aload 4
+19: getstatic net/minecraft/world/level/material/Fluids.WATER:Lnet/minecraft/world/level/material/FlowingFluid;
+22: getstatic net/minecraft/world/level/material/Fluids.WATER:Lnet/minecraft/world/level/material/FlowingFluid;
+25: aload_2
+26: invokevirtual net/minecraft/world/level/material/FlowingFluid.getTickDelay:(Lnet/minecraft/world/level/LevelReader;)I
+29: invokeinterface net/minecraft/world/level/ScheduledTickAccess.scheduleTick:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/material/Fluid;I)V
+32: iconst_1
+33: nop
+34: aload aload 5
+36: invokevirtual net/minecraft/core/Direction.getAxis:()Lnet/minecraft/core/Direction$Axis;
+39: invokevirtual net/minecraft/core/Direction$Axis.isHorizontal:()Z
+42: ifeq -> 63
+45: aload_1
+46: getstatic net/minecraft/world/level/block/StairBlock.SHAPE:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+49: aload_1
+50: aload_2
+51: aload aload 4
+53: invokestatic net/minecraft/world/level/block/StairBlock.getStairsShape:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/properties/StairsShape;
+56: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+59: checkcast net/minecraft/world/level/block/state/BlockState
+62: areturn
+63: aload_0
+64: aload_1
+65: aload_2
+66: aload_3
+67: aload aload 4
+69: aload aload 5
+71: aload aload 6
+73: aload aload 7
+75: aload aload 8
+77: invokespecial net/minecraft/world/level/block/Block.updateShape:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/world/level/ScheduledTickAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;)Lnet/minecraft/world/level/block/state/BlockState;
+80: areturn
+--- net.minecraft.world.level.block.StairBlock.<clinit>()V
+0: invokedynamic indy
+5: invokestatic com/mojang/serialization/codecs/RecordCodecBuilder.mapCodec:(Ljava/util/function/Function;)Lcom/mojang/serialization/MapCodec;
+8: putstatic net/minecraft/world/level/block/StairBlock.CODEC:Lcom/mojang/serialization/MapCodec;
+11: getstatic net/minecraft/world/level/block/HorizontalDirectionalBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+14: putstatic net/minecraft/world/level/block/StairBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+17: getstatic net/minecraft/world/level/block/state/properties/BlockStateProperties.HALF:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+20: putstatic net/minecraft/world/level/block/StairBlock.HALF:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+23: getstatic net/minecraft/world/level/block/state/properties/BlockStateProperties.STAIRS_SHAPE:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+26: putstatic net/minecraft/world/level/block/StairBlock.SHAPE:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+29: getstatic net/minecraft/world/level/block/state/properties/BlockStateProperties.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+32: putstatic net/minecraft/world/level/block/StairBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+35: ldc2_w double 16.0
+38: dconst_0
+39: ldc2_w double 8.0
+42: invokestatic net/minecraft/world/level/block/Block.column:(DDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+45: dconst_0
+46: ldc2_w double 8.0
+49: dconst_0
+50: ldc2_w double 8.0
+53: ldc2_w double 16.0
+56: ldc2_w double 8.0
+59: invokestatic net/minecraft/world/level/block/Block.box:(DDDDDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+62: invokestatic net/minecraft/world/phys/shapes/Shapes.or:(Lnet/minecraft/world/phys/shapes/VoxelShape;Lnet/minecraft/world/phys/shapes/VoxelShape;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+65: putstatic net/minecraft/world/level/block/StairBlock.SHAPE_OUTER:Lnet/minecraft/world/phys/shapes/VoxelShape;
+68: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_OUTER:Lnet/minecraft/world/phys/shapes/VoxelShape;
+71: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_OUTER:Lnet/minecraft/world/phys/shapes/VoxelShape;
+74: getstatic com/mojang/math/OctahedralGroup.BLOCK_ROT_Y_90:Lcom/mojang/math/OctahedralGroup;
+77: invokestatic net/minecraft/world/phys/shapes/Shapes.rotate:(Lnet/minecraft/world/phys/shapes/VoxelShape;Lcom/mojang/math/OctahedralGroup;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+80: invokestatic net/minecraft/world/phys/shapes/Shapes.or:(Lnet/minecraft/world/phys/shapes/VoxelShape;Lnet/minecraft/world/phys/shapes/VoxelShape;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+83: putstatic net/minecraft/world/level/block/StairBlock.SHAPE_STRAIGHT:Lnet/minecraft/world/phys/shapes/VoxelShape;
+86: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_STRAIGHT:Lnet/minecraft/world/phys/shapes/VoxelShape;
+89: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_STRAIGHT:Lnet/minecraft/world/phys/shapes/VoxelShape;
+92: getstatic com/mojang/math/OctahedralGroup.BLOCK_ROT_Y_90:Lcom/mojang/math/OctahedralGroup;
+95: invokestatic net/minecraft/world/phys/shapes/Shapes.rotate:(Lnet/minecraft/world/phys/shapes/VoxelShape;Lcom/mojang/math/OctahedralGroup;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+98: invokestatic net/minecraft/world/phys/shapes/Shapes.or:(Lnet/minecraft/world/phys/shapes/VoxelShape;Lnet/minecraft/world/phys/shapes/VoxelShape;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+101: putstatic net/minecraft/world/level/block/StairBlock.SHAPE_INNER:Lnet/minecraft/world/phys/shapes/VoxelShape;
+104: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_OUTER:Lnet/minecraft/world/phys/shapes/VoxelShape;
+107: invokestatic net/minecraft/world/phys/shapes/Shapes.rotateHorizontal:(Lnet/minecraft/world/phys/shapes/VoxelShape;)Ljava/util/Map;
+110: putstatic net/minecraft/world/level/block/StairBlock.SHAPE_BOTTOM_OUTER:Ljava/util/Map;
+113: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_STRAIGHT:Lnet/minecraft/world/phys/shapes/VoxelShape;
+116: invokestatic net/minecraft/world/phys/shapes/Shapes.rotateHorizontal:(Lnet/minecraft/world/phys/shapes/VoxelShape;)Ljava/util/Map;
+119: putstatic net/minecraft/world/level/block/StairBlock.SHAPE_BOTTOM_STRAIGHT:Ljava/util/Map;
+122: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_INNER:Lnet/minecraft/world/phys/shapes/VoxelShape;
+125: invokestatic net/minecraft/world/phys/shapes/Shapes.rotateHorizontal:(Lnet/minecraft/world/phys/shapes/VoxelShape;)Ljava/util/Map;
+128: putstatic net/minecraft/world/level/block/StairBlock.SHAPE_BOTTOM_INNER:Ljava/util/Map;
+131: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_OUTER:Lnet/minecraft/world/phys/shapes/VoxelShape;
+134: getstatic com/mojang/math/OctahedralGroup.INVERT_Y:Lcom/mojang/math/OctahedralGroup;
+137: invokestatic net/minecraft/world/phys/shapes/Shapes.rotateHorizontal:(Lnet/minecraft/world/phys/shapes/VoxelShape;Lcom/mojang/math/OctahedralGroup;)Ljava/util/Map;
+140: putstatic net/minecraft/world/level/block/StairBlock.SHAPE_TOP_OUTER:Ljava/util/Map;
+143: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_STRAIGHT:Lnet/minecraft/world/phys/shapes/VoxelShape;
+146: getstatic com/mojang/math/OctahedralGroup.INVERT_Y:Lcom/mojang/math/OctahedralGroup;
+149: invokestatic net/minecraft/world/phys/shapes/Shapes.rotateHorizontal:(Lnet/minecraft/world/phys/shapes/VoxelShape;Lcom/mojang/math/OctahedralGroup;)Ljava/util/Map;
+152: putstatic net/minecraft/world/level/block/StairBlock.SHAPE_TOP_STRAIGHT:Ljava/util/Map;
+155: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_INNER:Lnet/minecraft/world/phys/shapes/VoxelShape;
+158: getstatic com/mojang/math/OctahedralGroup.INVERT_Y:Lcom/mojang/math/OctahedralGroup;
+161: invokestatic net/minecraft/world/phys/shapes/Shapes.rotateHorizontal:(Lnet/minecraft/world/phys/shapes/VoxelShape;Lcom/mojang/math/OctahedralGroup;)Ljava/util/Map;
+164: putstatic net/minecraft/world/level/block/StairBlock.SHAPE_TOP_INNER:Ljava/util/Map;
+167: return
+--- net.minecraft.world.level.block.StairBlock.<clinit>()V
+0: invokedynamic indy
+5: invokestatic com/mojang/serialization/codecs/RecordCodecBuilder.mapCodec:(Ljava/util/function/Function;)Lcom/mojang/serialization/MapCodec;
+8: putstatic net/minecraft/world/level/block/StairBlock.CODEC:Lcom/mojang/serialization/MapCodec;
+11: getstatic net/minecraft/world/level/block/HorizontalDirectionalBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+14: putstatic net/minecraft/world/level/block/StairBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+17: getstatic net/minecraft/world/level/block/state/properties/BlockStateProperties.HALF:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+20: putstatic net/minecraft/world/level/block/StairBlock.HALF:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+23: getstatic net/minecraft/world/level/block/state/properties/BlockStateProperties.STAIRS_SHAPE:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+26: putstatic net/minecraft/world/level/block/StairBlock.SHAPE:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+29: getstatic net/minecraft/world/level/block/state/properties/BlockStateProperties.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+32: putstatic net/minecraft/world/level/block/StairBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+35: ldc2_w double 16.0
+38: dconst_0
+39: ldc2_w double 8.0
+42: invokestatic net/minecraft/world/level/block/Block.column:(DDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+45: dconst_0
+46: ldc2_w double 8.0
+49: dconst_0
+50: ldc2_w double 8.0
+53: ldc2_w double 16.0
+56: ldc2_w double 8.0
+59: invokestatic net/minecraft/world/level/block/Block.box:(DDDDDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+62: invokestatic net/minecraft/world/phys/shapes/Shapes.or:(Lnet/minecraft/world/phys/shapes/VoxelShape;Lnet/minecraft/world/phys/shapes/VoxelShape;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+65: putstatic net/minecraft/world/level/block/StairBlock.SHAPE_OUTER:Lnet/minecraft/world/phys/shapes/VoxelShape;
+68: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_OUTER:Lnet/minecraft/world/phys/shapes/VoxelShape;
+71: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_OUTER:Lnet/minecraft/world/phys/shapes/VoxelShape;
+74: getstatic com/mojang/math/OctahedralGroup.BLOCK_ROT_Y_90:Lcom/mojang/math/OctahedralGroup;
+77: invokestatic net/minecraft/world/phys/shapes/Shapes.rotate:(Lnet/minecraft/world/phys/shapes/VoxelShape;Lcom/mojang/math/OctahedralGroup;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+80: invokestatic net/minecraft/world/phys/shapes/Shapes.or:(Lnet/minecraft/world/phys/shapes/VoxelShape;Lnet/minecraft/world/phys/shapes/VoxelShape;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+83: putstatic net/minecraft/world/level/block/StairBlock.SHAPE_STRAIGHT:Lnet/minecraft/world/phys/shapes/VoxelShape;
+86: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_STRAIGHT:Lnet/minecraft/world/phys/shapes/VoxelShape;
+89: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_STRAIGHT:Lnet/minecraft/world/phys/shapes/VoxelShape;
+92: getstatic com/mojang/math/OctahedralGroup.BLOCK_ROT_Y_90:Lcom/mojang/math/OctahedralGroup;
+95: invokestatic net/minecraft/world/phys/shapes/Shapes.rotate:(Lnet/minecraft/world/phys/shapes/VoxelShape;Lcom/mojang/math/OctahedralGroup;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+98: invokestatic net/minecraft/world/phys/shapes/Shapes.or:(Lnet/minecraft/world/phys/shapes/VoxelShape;Lnet/minecraft/world/phys/shapes/VoxelShape;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+101: putstatic net/minecraft/world/level/block/StairBlock.SHAPE_INNER:Lnet/minecraft/world/phys/shapes/VoxelShape;
+104: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_OUTER:Lnet/minecraft/world/phys/shapes/VoxelShape;
+107: invokestatic net/minecraft/world/phys/shapes/Shapes.rotateHorizontal:(Lnet/minecraft/world/phys/shapes/VoxelShape;)Ljava/util/Map;
+110: putstatic net/minecraft/world/level/block/StairBlock.SHAPE_BOTTOM_OUTER:Ljava/util/Map;
+113: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_STRAIGHT:Lnet/minecraft/world/phys/shapes/VoxelShape;
+116: invokestatic net/minecraft/world/phys/shapes/Shapes.rotateHorizontal:(Lnet/minecraft/world/phys/shapes/VoxelShape;)Ljava/util/Map;
+119: putstatic net/minecraft/world/level/block/StairBlock.SHAPE_BOTTOM_STRAIGHT:Ljava/util/Map;
+122: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_INNER:Lnet/minecraft/world/phys/shapes/VoxelShape;
+125: invokestatic net/minecraft/world/phys/shapes/Shapes.rotateHorizontal:(Lnet/minecraft/world/phys/shapes/VoxelShape;)Ljava/util/Map;
+128: putstatic net/minecraft/world/level/block/StairBlock.SHAPE_BOTTOM_INNER:Ljava/util/Map;
+131: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_OUTER:Lnet/minecraft/world/phys/shapes/VoxelShape;
+134: getstatic com/mojang/math/OctahedralGroup.INVERT_Y:Lcom/mojang/math/OctahedralGroup;
+137: invokestatic net/minecraft/world/phys/shapes/Shapes.rotateHorizontal:(Lnet/minecraft/world/phys/shapes/VoxelShape;Lcom/mojang/math/OctahedralGroup;)Ljava/util/Map;
+140: putstatic net/minecraft/world/level/block/StairBlock.SHAPE_TOP_OUTER:Ljava/util/Map;
+143: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_STRAIGHT:Lnet/minecraft/world/phys/shapes/VoxelShape;
+146: getstatic com/mojang/math/OctahedralGroup.INVERT_Y:Lcom/mojang/math/OctahedralGroup;
+149: invokestatic net/minecraft/world/phys/shapes/Shapes.rotateHorizontal:(Lnet/minecraft/world/phys/shapes/VoxelShape;Lcom/mojang/math/OctahedralGroup;)Ljava/util/Map;
+152: putstatic net/minecraft/world/level/block/StairBlock.SHAPE_TOP_STRAIGHT:Ljava/util/Map;
+155: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_INNER:Lnet/minecraft/world/phys/shapes/VoxelShape;
+158: getstatic com/mojang/math/OctahedralGroup.INVERT_Y:Lcom/mojang/math/OctahedralGroup;
+161: invokestatic net/minecraft/world/phys/shapes/Shapes.rotateHorizontal:(Lnet/minecraft/world/phys/shapes/VoxelShape;Lcom/mojang/math/OctahedralGroup;)Ljava/util/Map;
+164: putstatic net/minecraft/world/level/block/StairBlock.SHAPE_TOP_INNER:Ljava/util/Map;
+167: return
+
+=== the static initializer shapes (clinit fields)
+    0: invokedynamic indy
+    5: invokestatic com/mojang/serialization/codecs/RecordCodecBuilder.mapCodec:(Ljava/util/function/Function;)Lcom/mojang/serialization/MapCodec;
+    8: putstatic net/minecraft/world/level/block/StairBlock.CODEC:Lcom/mojang/serialization/MapCodec;
+    11: getstatic net/minecraft/world/level/block/HorizontalDirectionalBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+    14: putstatic net/minecraft/world/level/block/StairBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+    17: getstatic net/minecraft/world/level/block/state/properties/BlockStateProperties.HALF:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+    20: putstatic net/minecraft/world/level/block/StairBlock.HALF:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+    23: getstatic net/minecraft/world/level/block/state/properties/BlockStateProperties.STAIRS_SHAPE:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+    26: putstatic net/minecraft/world/level/block/StairBlock.SHAPE:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+    29: getstatic net/minecraft/world/level/block/state/properties/BlockStateProperties.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+    32: putstatic net/minecraft/world/level/block/StairBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+    35: ldc2_w double 16.0
+    38: dconst_0
+    39: ldc2_w double 8.0
+    42: invokestatic net/minecraft/world/level/block/Block.column:(DDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+    45: dconst_0
+    46: ldc2_w double 8.0
+    49: dconst_0
+    50: ldc2_w double 8.0
+    53: ldc2_w double 16.0
+    56: ldc2_w double 8.0
+    59: invokestatic net/minecraft/world/level/block/Block.box:(DDDDDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+    62: invokestatic net/minecraft/world/phys/shapes/Shapes.or:(Lnet/minecraft/world/phys/shapes/VoxelShape;Lnet/minecraft/world/phys/shapes/VoxelShape;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+    65: putstatic net/minecraft/world/level/block/StairBlock.SHAPE_OUTER:Lnet/minecraft/world/phys/shapes/VoxelShape;
+    68: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_OUTER:Lnet/minecraft/world/phys/shapes/VoxelShape;
+    71: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_OUTER:Lnet/minecraft/world/phys/shapes/VoxelShape;
+    74: getstatic com/mojang/math/OctahedralGroup.BLOCK_ROT_Y_90:Lcom/mojang/math/OctahedralGroup;
+    77: invokestatic net/minecraft/world/phys/shapes/Shapes.rotate:(Lnet/minecraft/world/phys/shapes/VoxelShape;Lcom/mojang/math/OctahedralGroup;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+    80: invokestatic net/minecraft/world/phys/shapes/Shapes.or:(Lnet/minecraft/world/phys/shapes/VoxelShape;Lnet/minecraft/world/phys/shapes/VoxelShape;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+    83: putstatic net/minecraft/world/level/block/StairBlock.SHAPE_STRAIGHT:Lnet/minecraft/world/phys/shapes/VoxelShape;
+    86: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_STRAIGHT:Lnet/minecraft/world/phys/shapes/VoxelShape;
+    89: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_STRAIGHT:Lnet/minecraft/world/phys/shapes/VoxelShape;
+    92: getstatic com/mojang/math/OctahedralGroup.BLOCK_ROT_Y_90:Lcom/mojang/math/OctahedralGroup;
+    95: invokestatic net/minecraft/world/phys/shapes/Shapes.rotate:(Lnet/minecraft/world/phys/shapes/VoxelShape;Lcom/mojang/math/OctahedralGroup;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+    98: invokestatic net/minecraft/world/phys/shapes/Shapes.or:(Lnet/minecraft/world/phys/shapes/VoxelShape;Lnet/minecraft/world/phys/shapes/VoxelShape;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+    101: putstatic net/minecraft/world/level/block/StairBlock.SHAPE_INNER:Lnet/minecraft/world/phys/shapes/VoxelShape;
+    104: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_OUTER:Lnet/minecraft/world/phys/shapes/VoxelShape;
+    107: invokestatic net/minecraft/world/phys/shapes/Shapes.rotateHorizontal:(Lnet/minecraft/world/phys/shapes/VoxelShape;)Ljava/util/Map;
+    110: putstatic net/minecraft/world/level/block/StairBlock.SHAPE_BOTTOM_OUTER:Ljava/util/Map;
+    113: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_STRAIGHT:Lnet/minecraft/world/phys/shapes/VoxelShape;
+    116: invokestatic net/minecraft/world/phys/shapes/Shapes.rotateHorizontal:(Lnet/minecraft/world/phys/shapes/VoxelShape;)Ljava/util/Map;
+    119: putstatic net/minecraft/world/level/block/StairBlock.SHAPE_BOTTOM_STRAIGHT:Ljava/util/Map;
+    122: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_INNER:Lnet/minecraft/world/phys/shapes/VoxelShape;
+    125: invokestatic net/minecraft/world/phys/shapes/Shapes.rotateHorizontal:(Lnet/minecraft/world/phys/shapes/VoxelShape;)Ljava/util/Map;
+    128: putstatic net/minecraft/world/level/block/StairBlock.SHAPE_BOTTOM_INNER:Ljava/util/Map;
+    131: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_OUTER:Lnet/minecraft/world/phys/shapes/VoxelShape;
+    134: getstatic com/mojang/math/OctahedralGroup.INVERT_Y:Lcom/mojang/math/OctahedralGroup;
+    137: invokestatic net/minecraft/world/phys/shapes/Shapes.rotateHorizontal:(Lnet/minecraft/world/phys/shapes/VoxelShape;Lcom/mojang/math/OctahedralGroup;)Ljava/util/Map;
+    140: putstatic net/minecraft/world/level/block/StairBlock.SHAPE_TOP_OUTER:Ljava/util/Map;
+    143: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_STRAIGHT:Lnet/minecraft/world/phys/shapes/VoxelShape;
+    146: getstatic com/mojang/math/OctahedralGroup.INVERT_Y:Lcom/mojang/math/OctahedralGroup;
+    149: invokestatic net/minecraft/world/phys/shapes/Shapes.rotateHorizontal:(Lnet/minecraft/world/phys/shapes/VoxelShape;Lcom/mojang/math/OctahedralGroup;)Ljava/util/Map;
+    152: putstatic net/minecraft/world/level/block/StairBlock.SHAPE_TOP_STRAIGHT:Ljava/util/Map;
+    155: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_INNER:Lnet/minecraft/world/phys/shapes/VoxelShape;
+    158: getstatic com/mojang/math/OctahedralGroup.INVERT_Y:Lcom/mojang/math/OctahedralGroup;
+    161: invokestatic net/minecraft/world/phys/shapes/Shapes.rotateHorizontal:(Lnet/minecraft/world/phys/shapes/VoxelShape;Lcom/mojang/math/OctahedralGroup;)Ljava/util/Map;
+    164: putstatic net/minecraft/world/level/block/StairBlock.SHAPE_TOP_INNER:Ljava/util/Map;
+    167: return
+
+=== StairsShape enum constants
+    0: new net/minecraft/world/level/block/state/properties/StairsShape
+    3: dup
+    4: ldc STRAIGHT
+    6: iconst_0
+    7: ldc straight
+    9: invokespecial net/minecraft/world/level/block/state/properties/StairsShape.<init>:(Ljava/lang/String;ILjava/lang/String;)V
+    12: putstatic net/minecraft/world/level/block/state/properties/StairsShape.STRAIGHT:Lnet/minecraft/world/level/block/state/properties/StairsShape;
+    15: new net/minecraft/world/level/block/state/properties/StairsShape
+    18: dup
+    19: ldc INNER_LEFT
+    21: iconst_1
+    22: ldc inner_left
+    24: invokespecial net/minecraft/world/level/block/state/properties/StairsShape.<init>:(Ljava/lang/String;ILjava/lang/String;)V
+    27: putstatic net/minecraft/world/level/block/state/properties/StairsShape.INNER_LEFT:Lnet/minecraft/world/level/block/state/properties/StairsShape;
+    30: new net/minecraft/world/level/block/state/properties/StairsShape
+    33: dup
+    34: ldc INNER_RIGHT
+    36: iconst_2
+    37: ldc inner_right
+    39: invokespecial net/minecraft/world/level/block/state/properties/StairsShape.<init>:(Ljava/lang/String;ILjava/lang/String;)V
+    42: putstatic net/minecraft/world/level/block/state/properties/StairsShape.INNER_RIGHT:Lnet/minecraft/world/level/block/state/properties/StairsShape;
+    45: new net/minecraft/world/level/block/state/properties/StairsShape
+    48: dup
+    49: ldc OUTER_LEFT
+    51: iconst_3
+    52: ldc outer_left
+    54: invokespecial net/minecraft/world/level/block/state/properties/StairsShape.<init>:(Ljava/lang/String;ILjava/lang/String;)V
+    57: putstatic net/minecraft/world/level/block/state/properties/StairsShape.OUTER_LEFT:Lnet/minecraft/world/level/block/state/properties/StairsShape;
+    60: new net/minecraft/world/level/block/state/properties/StairsShape
+    63: dup
+    64: ldc OUTER_RIGHT
+    66: iconst_4
+    67: ldc outer_right
+    69: invokespecial net/minecraft/world/level/block/state/properties/StairsShape.<init>:(Ljava/lang/String;ILjava/lang/String;)V
+    72: putstatic net/minecraft/world/level/block/state/properties/StairsShape.OUTER_RIGHT:Lnet/minecraft/world/level/block/state/properties/StairsShape;
+    75: invokestatic net/minecraft/world/level/block/state/properties/StairsShape.$values:()[Lnet/minecraft/world/level/block/state/properties/StairsShape;
+    78: putstatic net/minecraft/world/level/block/state/properties/StairsShape.$VALUES:[Lnet/minecraft/world/level/block/state/properties/StairsShape;
+    81: return
+
+=== Blocks clinit: OAK_STAIRS row
+!! clinit needle not found: OAK_STAIRS;putstatic
+
+=== Blocks clinit: STONE_STAIRS row
+!! clinit needle not found: STONE_STAIRS;putstatic
+
+=== Blocks clinit: CUT_COPPER_STAIRS row
+!! clinit needle not found: CUT_COPPER_STAIRS;putstatic
+
+=== the stairs lambdas' own bodies (properties)
+--- lambda$static$352(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    0: new net/minecraft/world/level/block/StairBlock
+    3: dup
+    4: getstatic net/minecraft/world/level/block/Blocks.TUFF:Lnet/minecraft/world/level/block/Block;
+    7: invokevirtual net/minecraft/world/level/block/Block.defaultBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+    10: aload_0
+    11: invokespecial net/minecraft/world/level/block/StairBlock.<init>:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+    14: areturn
+
+--- lambda$static$353(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    0: new net/minecraft/world/level/block/StairBlock
+    3: dup
+    4: getstatic net/minecraft/world/level/block/Blocks.POLISHED_TUFF:Lnet/minecraft/world/level/block/Block;
+    7: invokevirtual net/minecraft/world/level/block/Block.defaultBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+    10: aload_0
+    11: invokespecial net/minecraft/world/level/block/StairBlock.<init>:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+    14: areturn
+
+--- lambda$static$354(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    0: new net/minecraft/world/level/block/StairBlock
+    3: dup
+    4: getstatic net/minecraft/world/level/block/Blocks.TUFF_BRICKS:Lnet/minecraft/world/level/block/Block;
+    7: invokevirtual net/minecraft/world/level/block/Block.defaultBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+    10: aload_0
+    11: invokespecial net/minecraft/world/level/block/StairBlock.<init>:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+    14: areturn
+
+--- lambda$static$366(Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/StairBlock;
+    0: new net/minecraft/world/level/block/StairBlock
+    3: dup
+    4: getstatic net/minecraft/world/level/block/Blocks.CUT_COPPER:Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+    7: invokevirtual net/minecraft/world/level/block/WeatheringCopperCollection.waxed:()Lnet/minecraft/world/level/block/WeatheringCopperCollection$ByState;
+    10: aload_0
+    11: invokevirtual net/minecraft/world/level/block/WeatheringCopperCollection$ByState.pick:(Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;)Ljava/lang/Object;
+    14: checkcast net/minecraft/world/level/block/Block
+    17: invokevirtual net/minecraft/world/level/block/Block.defaultBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+    20: aload_1
+    21: invokespecial net/minecraft/world/level/block/StairBlock.<init>:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+    24: areturn
+
+
+=== blockstates: variant-key census (sample of families)
+--- oak_stairs: 40 variants
+    facing=east,half=bottom,shape=inner_left -> {'model': 'minecraft:block/oak_stairs_inner', 'uvlock': True, 'y': 270}
+    facing=east,half=bottom,shape=inner_right -> {'model': 'minecraft:block/oak_stairs_inner'}
+    facing=east,half=bottom,shape=outer_left -> {'model': 'minecraft:block/oak_stairs_outer', 'uvlock': True, 'y': 270}
+    facing=east,half=bottom,shape=outer_right -> {'model': 'minecraft:block/oak_stairs_outer'}
+    facing=east,half=bottom,shape=straight -> {'model': 'minecraft:block/oak_stairs'}
+    facing=east,half=top,shape=inner_left -> {'model': 'minecraft:block/oak_stairs_inner', 'uvlock': True, 'x': 180}
+    facing=east,half=top,shape=inner_right -> {'model': 'minecraft:block/oak_stairs_inner', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=east,half=top,shape=outer_left -> {'model': 'minecraft:block/oak_stairs_outer', 'uvlock': True, 'x': 180}
+    facing=east,half=top,shape=outer_right -> {'model': 'minecraft:block/oak_stairs_outer', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=east,half=top,shape=straight -> {'model': 'minecraft:block/oak_stairs', 'uvlock': True, 'x': 180}
+    facing=north,half=bottom,shape=inner_left -> {'model': 'minecraft:block/oak_stairs_inner', 'uvlock': True, 'y': 180}
+    facing=north,half=bottom,shape=inner_right -> {'model': 'minecraft:block/oak_stairs_inner', 'uvlock': True, 'y': 270}
+    facing=north,half=bottom,shape=outer_left -> {'model': 'minecraft:block/oak_stairs_outer', 'uvlock': True, 'y': 180}
+    facing=north,half=bottom,shape=outer_right -> {'model': 'minecraft:block/oak_stairs_outer', 'uvlock': True, 'y': 270}
+    facing=north,half=bottom,shape=straight -> {'model': 'minecraft:block/oak_stairs', 'uvlock': True, 'y': 270}
+    facing=north,half=top,shape=inner_left -> {'model': 'minecraft:block/oak_stairs_inner', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=north,half=top,shape=inner_right -> {'model': 'minecraft:block/oak_stairs_inner', 'uvlock': True, 'x': 180}
+    facing=north,half=top,shape=outer_left -> {'model': 'minecraft:block/oak_stairs_outer', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=north,half=top,shape=outer_right -> {'model': 'minecraft:block/oak_stairs_outer', 'uvlock': True, 'x': 180}
+    facing=north,half=top,shape=straight -> {'model': 'minecraft:block/oak_stairs', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=south,half=bottom,shape=inner_left -> {'model': 'minecraft:block/oak_stairs_inner'}
+    facing=south,half=bottom,shape=inner_right -> {'model': 'minecraft:block/oak_stairs_inner', 'uvlock': True, 'y': 90}
+    facing=south,half=bottom,shape=outer_left -> {'model': 'minecraft:block/oak_stairs_outer'}
+    facing=south,half=bottom,shape=outer_right -> {'model': 'minecraft:block/oak_stairs_outer', 'uvlock': True, 'y': 90}
+    facing=south,half=bottom,shape=straight -> {'model': 'minecraft:block/oak_stairs', 'uvlock': True, 'y': 90}
+    facing=south,half=top,shape=inner_left -> {'model': 'minecraft:block/oak_stairs_inner', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=south,half=top,shape=inner_right -> {'model': 'minecraft:block/oak_stairs_inner', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=south,half=top,shape=outer_left -> {'model': 'minecraft:block/oak_stairs_outer', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=south,half=top,shape=outer_right -> {'model': 'minecraft:block/oak_stairs_outer', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=south,half=top,shape=straight -> {'model': 'minecraft:block/oak_stairs', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=west,half=bottom,shape=inner_left -> {'model': 'minecraft:block/oak_stairs_inner', 'uvlock': True, 'y': 90}
+    facing=west,half=bottom,shape=inner_right -> {'model': 'minecraft:block/oak_stairs_inner', 'uvlock': True, 'y': 180}
+    facing=west,half=bottom,shape=outer_left -> {'model': 'minecraft:block/oak_stairs_outer', 'uvlock': True, 'y': 90}
+    facing=west,half=bottom,shape=outer_right -> {'model': 'minecraft:block/oak_stairs_outer', 'uvlock': True, 'y': 180}
+    facing=west,half=bottom,shape=straight -> {'model': 'minecraft:block/oak_stairs', 'uvlock': True, 'y': 180}
+    facing=west,half=top,shape=inner_left -> {'model': 'minecraft:block/oak_stairs_inner', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=west,half=top,shape=inner_right -> {'model': 'minecraft:block/oak_stairs_inner', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=west,half=top,shape=outer_left -> {'model': 'minecraft:block/oak_stairs_outer', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=west,half=top,shape=outer_right -> {'model': 'minecraft:block/oak_stairs_outer', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=west,half=top,shape=straight -> {'model': 'minecraft:block/oak_stairs', 'uvlock': True, 'x': 180, 'y': 180}
+--- stone_stairs: 40 variants
+    facing=east,half=bottom,shape=inner_left -> {'model': 'minecraft:block/stone_stairs_inner', 'uvlock': True, 'y': 270}
+    facing=east,half=bottom,shape=inner_right -> {'model': 'minecraft:block/stone_stairs_inner'}
+    facing=east,half=bottom,shape=outer_left -> {'model': 'minecraft:block/stone_stairs_outer', 'uvlock': True, 'y': 270}
+    facing=east,half=bottom,shape=outer_right -> {'model': 'minecraft:block/stone_stairs_outer'}
+    facing=east,half=bottom,shape=straight -> {'model': 'minecraft:block/stone_stairs'}
+    facing=east,half=top,shape=inner_left -> {'model': 'minecraft:block/stone_stairs_inner', 'uvlock': True, 'x': 180}
+    facing=east,half=top,shape=inner_right -> {'model': 'minecraft:block/stone_stairs_inner', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=east,half=top,shape=outer_left -> {'model': 'minecraft:block/stone_stairs_outer', 'uvlock': True, 'x': 180}
+    facing=east,half=top,shape=outer_right -> {'model': 'minecraft:block/stone_stairs_outer', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=east,half=top,shape=straight -> {'model': 'minecraft:block/stone_stairs', 'uvlock': True, 'x': 180}
+    facing=north,half=bottom,shape=inner_left -> {'model': 'minecraft:block/stone_stairs_inner', 'uvlock': True, 'y': 180}
+    facing=north,half=bottom,shape=inner_right -> {'model': 'minecraft:block/stone_stairs_inner', 'uvlock': True, 'y': 270}
+    facing=north,half=bottom,shape=outer_left -> {'model': 'minecraft:block/stone_stairs_outer', 'uvlock': True, 'y': 180}
+    facing=north,half=bottom,shape=outer_right -> {'model': 'minecraft:block/stone_stairs_outer', 'uvlock': True, 'y': 270}
+    facing=north,half=bottom,shape=straight -> {'model': 'minecraft:block/stone_stairs', 'uvlock': True, 'y': 270}
+    facing=north,half=top,shape=inner_left -> {'model': 'minecraft:block/stone_stairs_inner', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=north,half=top,shape=inner_right -> {'model': 'minecraft:block/stone_stairs_inner', 'uvlock': True, 'x': 180}
+    facing=north,half=top,shape=outer_left -> {'model': 'minecraft:block/stone_stairs_outer', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=north,half=top,shape=outer_right -> {'model': 'minecraft:block/stone_stairs_outer', 'uvlock': True, 'x': 180}
+    facing=north,half=top,shape=straight -> {'model': 'minecraft:block/stone_stairs', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=south,half=bottom,shape=inner_left -> {'model': 'minecraft:block/stone_stairs_inner'}
+    facing=south,half=bottom,shape=inner_right -> {'model': 'minecraft:block/stone_stairs_inner', 'uvlock': True, 'y': 90}
+    facing=south,half=bottom,shape=outer_left -> {'model': 'minecraft:block/stone_stairs_outer'}
+    facing=south,half=bottom,shape=outer_right -> {'model': 'minecraft:block/stone_stairs_outer', 'uvlock': True, 'y': 90}
+    facing=south,half=bottom,shape=straight -> {'model': 'minecraft:block/stone_stairs', 'uvlock': True, 'y': 90}
+    facing=south,half=top,shape=inner_left -> {'model': 'minecraft:block/stone_stairs_inner', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=south,half=top,shape=inner_right -> {'model': 'minecraft:block/stone_stairs_inner', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=south,half=top,shape=outer_left -> {'model': 'minecraft:block/stone_stairs_outer', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=south,half=top,shape=outer_right -> {'model': 'minecraft:block/stone_stairs_outer', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=south,half=top,shape=straight -> {'model': 'minecraft:block/stone_stairs', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=west,half=bottom,shape=inner_left -> {'model': 'minecraft:block/stone_stairs_inner', 'uvlock': True, 'y': 90}
+    facing=west,half=bottom,shape=inner_right -> {'model': 'minecraft:block/stone_stairs_inner', 'uvlock': True, 'y': 180}
+    facing=west,half=bottom,shape=outer_left -> {'model': 'minecraft:block/stone_stairs_outer', 'uvlock': True, 'y': 90}
+    facing=west,half=bottom,shape=outer_right -> {'model': 'minecraft:block/stone_stairs_outer', 'uvlock': True, 'y': 180}
+    facing=west,half=bottom,shape=straight -> {'model': 'minecraft:block/stone_stairs', 'uvlock': True, 'y': 180}
+    facing=west,half=top,shape=inner_left -> {'model': 'minecraft:block/stone_stairs_inner', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=west,half=top,shape=inner_right -> {'model': 'minecraft:block/stone_stairs_inner', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=west,half=top,shape=outer_left -> {'model': 'minecraft:block/stone_stairs_outer', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=west,half=top,shape=outer_right -> {'model': 'minecraft:block/stone_stairs_outer', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=west,half=top,shape=straight -> {'model': 'minecraft:block/stone_stairs', 'uvlock': True, 'x': 180, 'y': 180}
+--- cut_copper_stairs: 40 variants
+    facing=east,half=bottom,shape=inner_left -> {'model': 'minecraft:block/cut_copper_stairs_inner', 'uvlock': True, 'y': 270}
+    facing=east,half=bottom,shape=inner_right -> {'model': 'minecraft:block/cut_copper_stairs_inner'}
+    facing=east,half=bottom,shape=outer_left -> {'model': 'minecraft:block/cut_copper_stairs_outer', 'uvlock': True, 'y': 270}
+    facing=east,half=bottom,shape=outer_right -> {'model': 'minecraft:block/cut_copper_stairs_outer'}
+    facing=east,half=bottom,shape=straight -> {'model': 'minecraft:block/cut_copper_stairs'}
+    facing=east,half=top,shape=inner_left -> {'model': 'minecraft:block/cut_copper_stairs_inner', 'uvlock': True, 'x': 180}
+    facing=east,half=top,shape=inner_right -> {'model': 'minecraft:block/cut_copper_stairs_inner', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=east,half=top,shape=outer_left -> {'model': 'minecraft:block/cut_copper_stairs_outer', 'uvlock': True, 'x': 180}
+    facing=east,half=top,shape=outer_right -> {'model': 'minecraft:block/cut_copper_stairs_outer', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=east,half=top,shape=straight -> {'model': 'minecraft:block/cut_copper_stairs', 'uvlock': True, 'x': 180}
+    facing=north,half=bottom,shape=inner_left -> {'model': 'minecraft:block/cut_copper_stairs_inner', 'uvlock': True, 'y': 180}
+    facing=north,half=bottom,shape=inner_right -> {'model': 'minecraft:block/cut_copper_stairs_inner', 'uvlock': True, 'y': 270}
+    facing=north,half=bottom,shape=outer_left -> {'model': 'minecraft:block/cut_copper_stairs_outer', 'uvlock': True, 'y': 180}
+    facing=north,half=bottom,shape=outer_right -> {'model': 'minecraft:block/cut_copper_stairs_outer', 'uvlock': True, 'y': 270}
+    facing=north,half=bottom,shape=straight -> {'model': 'minecraft:block/cut_copper_stairs', 'uvlock': True, 'y': 270}
+    facing=north,half=top,shape=inner_left -> {'model': 'minecraft:block/cut_copper_stairs_inner', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=north,half=top,shape=inner_right -> {'model': 'minecraft:block/cut_copper_stairs_inner', 'uvlock': True, 'x': 180}
+    facing=north,half=top,shape=outer_left -> {'model': 'minecraft:block/cut_copper_stairs_outer', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=north,half=top,shape=outer_right -> {'model': 'minecraft:block/cut_copper_stairs_outer', 'uvlock': True, 'x': 180}
+    facing=north,half=top,shape=straight -> {'model': 'minecraft:block/cut_copper_stairs', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=south,half=bottom,shape=inner_left -> {'model': 'minecraft:block/cut_copper_stairs_inner'}
+    facing=south,half=bottom,shape=inner_right -> {'model': 'minecraft:block/cut_copper_stairs_inner', 'uvlock': True, 'y': 90}
+    facing=south,half=bottom,shape=outer_left -> {'model': 'minecraft:block/cut_copper_stairs_outer'}
+    facing=south,half=bottom,shape=outer_right -> {'model': 'minecraft:block/cut_copper_stairs_outer', 'uvlock': True, 'y': 90}
+    facing=south,half=bottom,shape=straight -> {'model': 'minecraft:block/cut_copper_stairs', 'uvlock': True, 'y': 90}
+    facing=south,half=top,shape=inner_left -> {'model': 'minecraft:block/cut_copper_stairs_inner', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=south,half=top,shape=inner_right -> {'model': 'minecraft:block/cut_copper_stairs_inner', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=south,half=top,shape=outer_left -> {'model': 'minecraft:block/cut_copper_stairs_outer', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=south,half=top,shape=outer_right -> {'model': 'minecraft:block/cut_copper_stairs_outer', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=south,half=top,shape=straight -> {'model': 'minecraft:block/cut_copper_stairs', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=west,half=bottom,shape=inner_left -> {'model': 'minecraft:block/cut_copper_stairs_inner', 'uvlock': True, 'y': 90}
+    facing=west,half=bottom,shape=inner_right -> {'model': 'minecraft:block/cut_copper_stairs_inner', 'uvlock': True, 'y': 180}
+    facing=west,half=bottom,shape=outer_left -> {'model': 'minecraft:block/cut_copper_stairs_outer', 'uvlock': True, 'y': 90}
+    facing=west,half=bottom,shape=outer_right -> {'model': 'minecraft:block/cut_copper_stairs_outer', 'uvlock': True, 'y': 180}
+    facing=west,half=bottom,shape=straight -> {'model': 'minecraft:block/cut_copper_stairs', 'uvlock': True, 'y': 180}
+    facing=west,half=top,shape=inner_left -> {'model': 'minecraft:block/cut_copper_stairs_inner', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=west,half=top,shape=inner_right -> {'model': 'minecraft:block/cut_copper_stairs_inner', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=west,half=top,shape=outer_left -> {'model': 'minecraft:block/cut_copper_stairs_outer', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=west,half=top,shape=outer_right -> {'model': 'minecraft:block/cut_copper_stairs_outer', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=west,half=top,shape=straight -> {'model': 'minecraft:block/cut_copper_stairs', 'uvlock': True, 'x': 180, 'y': 180}
+--- waxed_cut_copper_stairs: 40 variants
+    facing=east,half=bottom,shape=inner_left -> {'model': 'minecraft:block/cut_copper_stairs_inner', 'uvlock': True, 'y': 270}
+    facing=east,half=bottom,shape=inner_right -> {'model': 'minecraft:block/cut_copper_stairs_inner'}
+    facing=east,half=bottom,shape=outer_left -> {'model': 'minecraft:block/cut_copper_stairs_outer', 'uvlock': True, 'y': 270}
+    facing=east,half=bottom,shape=outer_right -> {'model': 'minecraft:block/cut_copper_stairs_outer'}
+    facing=east,half=bottom,shape=straight -> {'model': 'minecraft:block/cut_copper_stairs'}
+    facing=east,half=top,shape=inner_left -> {'model': 'minecraft:block/cut_copper_stairs_inner', 'uvlock': True, 'x': 180}
+    facing=east,half=top,shape=inner_right -> {'model': 'minecraft:block/cut_copper_stairs_inner', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=east,half=top,shape=outer_left -> {'model': 'minecraft:block/cut_copper_stairs_outer', 'uvlock': True, 'x': 180}
+    facing=east,half=top,shape=outer_right -> {'model': 'minecraft:block/cut_copper_stairs_outer', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=east,half=top,shape=straight -> {'model': 'minecraft:block/cut_copper_stairs', 'uvlock': True, 'x': 180}
+    facing=north,half=bottom,shape=inner_left -> {'model': 'minecraft:block/cut_copper_stairs_inner', 'uvlock': True, 'y': 180}
+    facing=north,half=bottom,shape=inner_right -> {'model': 'minecraft:block/cut_copper_stairs_inner', 'uvlock': True, 'y': 270}
+    facing=north,half=bottom,shape=outer_left -> {'model': 'minecraft:block/cut_copper_stairs_outer', 'uvlock': True, 'y': 180}
+    facing=north,half=bottom,shape=outer_right -> {'model': 'minecraft:block/cut_copper_stairs_outer', 'uvlock': True, 'y': 270}
+    facing=north,half=bottom,shape=straight -> {'model': 'minecraft:block/cut_copper_stairs', 'uvlock': True, 'y': 270}
+    facing=north,half=top,shape=inner_left -> {'model': 'minecraft:block/cut_copper_stairs_inner', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=north,half=top,shape=inner_right -> {'model': 'minecraft:block/cut_copper_stairs_inner', 'uvlock': True, 'x': 180}
+    facing=north,half=top,shape=outer_left -> {'model': 'minecraft:block/cut_copper_stairs_outer', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=north,half=top,shape=outer_right -> {'model': 'minecraft:block/cut_copper_stairs_outer', 'uvlock': True, 'x': 180}
+    facing=north,half=top,shape=straight -> {'model': 'minecraft:block/cut_copper_stairs', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=south,half=bottom,shape=inner_left -> {'model': 'minecraft:block/cut_copper_stairs_inner'}
+    facing=south,half=bottom,shape=inner_right -> {'model': 'minecraft:block/cut_copper_stairs_inner', 'uvlock': True, 'y': 90}
+    facing=south,half=bottom,shape=outer_left -> {'model': 'minecraft:block/cut_copper_stairs_outer'}
+    facing=south,half=bottom,shape=outer_right -> {'model': 'minecraft:block/cut_copper_stairs_outer', 'uvlock': True, 'y': 90}
+    facing=south,half=bottom,shape=straight -> {'model': 'minecraft:block/cut_copper_stairs', 'uvlock': True, 'y': 90}
+    facing=south,half=top,shape=inner_left -> {'model': 'minecraft:block/cut_copper_stairs_inner', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=south,half=top,shape=inner_right -> {'model': 'minecraft:block/cut_copper_stairs_inner', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=south,half=top,shape=outer_left -> {'model': 'minecraft:block/cut_copper_stairs_outer', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=south,half=top,shape=outer_right -> {'model': 'minecraft:block/cut_copper_stairs_outer', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=south,half=top,shape=straight -> {'model': 'minecraft:block/cut_copper_stairs', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=west,half=bottom,shape=inner_left -> {'model': 'minecraft:block/cut_copper_stairs_inner', 'uvlock': True, 'y': 90}
+    facing=west,half=bottom,shape=inner_right -> {'model': 'minecraft:block/cut_copper_stairs_inner', 'uvlock': True, 'y': 180}
+    facing=west,half=bottom,shape=outer_left -> {'model': 'minecraft:block/cut_copper_stairs_outer', 'uvlock': True, 'y': 90}
+    facing=west,half=bottom,shape=outer_right -> {'model': 'minecraft:block/cut_copper_stairs_outer', 'uvlock': True, 'y': 180}
+    facing=west,half=bottom,shape=straight -> {'model': 'minecraft:block/cut_copper_stairs', 'uvlock': True, 'y': 180}
+    facing=west,half=top,shape=inner_left -> {'model': 'minecraft:block/cut_copper_stairs_inner', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=west,half=top,shape=inner_right -> {'model': 'minecraft:block/cut_copper_stairs_inner', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=west,half=top,shape=outer_left -> {'model': 'minecraft:block/cut_copper_stairs_outer', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=west,half=top,shape=outer_right -> {'model': 'minecraft:block/cut_copper_stairs_outer', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=west,half=top,shape=straight -> {'model': 'minecraft:block/cut_copper_stairs', 'uvlock': True, 'x': 180, 'y': 180}
+--- deepslate_tile_stairs: 40 variants
+    facing=east,half=bottom,shape=inner_left -> {'model': 'minecraft:block/deepslate_tile_stairs_inner', 'uvlock': True, 'y': 270}
+    facing=east,half=bottom,shape=inner_right -> {'model': 'minecraft:block/deepslate_tile_stairs_inner'}
+    facing=east,half=bottom,shape=outer_left -> {'model': 'minecraft:block/deepslate_tile_stairs_outer', 'uvlock': True, 'y': 270}
+    facing=east,half=bottom,shape=outer_right -> {'model': 'minecraft:block/deepslate_tile_stairs_outer'}
+    facing=east,half=bottom,shape=straight -> {'model': 'minecraft:block/deepslate_tile_stairs'}
+    facing=east,half=top,shape=inner_left -> {'model': 'minecraft:block/deepslate_tile_stairs_inner', 'uvlock': True, 'x': 180}
+    facing=east,half=top,shape=inner_right -> {'model': 'minecraft:block/deepslate_tile_stairs_inner', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=east,half=top,shape=outer_left -> {'model': 'minecraft:block/deepslate_tile_stairs_outer', 'uvlock': True, 'x': 180}
+    facing=east,half=top,shape=outer_right -> {'model': 'minecraft:block/deepslate_tile_stairs_outer', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=east,half=top,shape=straight -> {'model': 'minecraft:block/deepslate_tile_stairs', 'uvlock': True, 'x': 180}
+    facing=north,half=bottom,shape=inner_left -> {'model': 'minecraft:block/deepslate_tile_stairs_inner', 'uvlock': True, 'y': 180}
+    facing=north,half=bottom,shape=inner_right -> {'model': 'minecraft:block/deepslate_tile_stairs_inner', 'uvlock': True, 'y': 270}
+    facing=north,half=bottom,shape=outer_left -> {'model': 'minecraft:block/deepslate_tile_stairs_outer', 'uvlock': True, 'y': 180}
+    facing=north,half=bottom,shape=outer_right -> {'model': 'minecraft:block/deepslate_tile_stairs_outer', 'uvlock': True, 'y': 270}
+    facing=north,half=bottom,shape=straight -> {'model': 'minecraft:block/deepslate_tile_stairs', 'uvlock': True, 'y': 270}
+    facing=north,half=top,shape=inner_left -> {'model': 'minecraft:block/deepslate_tile_stairs_inner', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=north,half=top,shape=inner_right -> {'model': 'minecraft:block/deepslate_tile_stairs_inner', 'uvlock': True, 'x': 180}
+    facing=north,half=top,shape=outer_left -> {'model': 'minecraft:block/deepslate_tile_stairs_outer', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=north,half=top,shape=outer_right -> {'model': 'minecraft:block/deepslate_tile_stairs_outer', 'uvlock': True, 'x': 180}
+    facing=north,half=top,shape=straight -> {'model': 'minecraft:block/deepslate_tile_stairs', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=south,half=bottom,shape=inner_left -> {'model': 'minecraft:block/deepslate_tile_stairs_inner'}
+    facing=south,half=bottom,shape=inner_right -> {'model': 'minecraft:block/deepslate_tile_stairs_inner', 'uvlock': True, 'y': 90}
+    facing=south,half=bottom,shape=outer_left -> {'model': 'minecraft:block/deepslate_tile_stairs_outer'}
+    facing=south,half=bottom,shape=outer_right -> {'model': 'minecraft:block/deepslate_tile_stairs_outer', 'uvlock': True, 'y': 90}
+    facing=south,half=bottom,shape=straight -> {'model': 'minecraft:block/deepslate_tile_stairs', 'uvlock': True, 'y': 90}
+    facing=south,half=top,shape=inner_left -> {'model': 'minecraft:block/deepslate_tile_stairs_inner', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=south,half=top,shape=inner_right -> {'model': 'minecraft:block/deepslate_tile_stairs_inner', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=south,half=top,shape=outer_left -> {'model': 'minecraft:block/deepslate_tile_stairs_outer', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=south,half=top,shape=outer_right -> {'model': 'minecraft:block/deepslate_tile_stairs_outer', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=south,half=top,shape=straight -> {'model': 'minecraft:block/deepslate_tile_stairs', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=west,half=bottom,shape=inner_left -> {'model': 'minecraft:block/deepslate_tile_stairs_inner', 'uvlock': True, 'y': 90}
+    facing=west,half=bottom,shape=inner_right -> {'model': 'minecraft:block/deepslate_tile_stairs_inner', 'uvlock': True, 'y': 180}
+    facing=west,half=bottom,shape=outer_left -> {'model': 'minecraft:block/deepslate_tile_stairs_outer', 'uvlock': True, 'y': 90}
+    facing=west,half=bottom,shape=outer_right -> {'model': 'minecraft:block/deepslate_tile_stairs_outer', 'uvlock': True, 'y': 180}
+    facing=west,half=bottom,shape=straight -> {'model': 'minecraft:block/deepslate_tile_stairs', 'uvlock': True, 'y': 180}
+    facing=west,half=top,shape=inner_left -> {'model': 'minecraft:block/deepslate_tile_stairs_inner', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=west,half=top,shape=inner_right -> {'model': 'minecraft:block/deepslate_tile_stairs_inner', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=west,half=top,shape=outer_left -> {'model': 'minecraft:block/deepslate_tile_stairs_outer', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=west,half=top,shape=outer_right -> {'model': 'minecraft:block/deepslate_tile_stairs_outer', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=west,half=top,shape=straight -> {'model': 'minecraft:block/deepslate_tile_stairs', 'uvlock': True, 'x': 180, 'y': 180}
+--- cinnabar_stairs: 40 variants
+    facing=east,half=bottom,shape=inner_left -> {'model': 'minecraft:block/cinnabar_stairs_inner', 'uvlock': True, 'y': 270}
+    facing=east,half=bottom,shape=inner_right -> {'model': 'minecraft:block/cinnabar_stairs_inner'}
+    facing=east,half=bottom,shape=outer_left -> {'model': 'minecraft:block/cinnabar_stairs_outer', 'uvlock': True, 'y': 270}
+    facing=east,half=bottom,shape=outer_right -> {'model': 'minecraft:block/cinnabar_stairs_outer'}
+    facing=east,half=bottom,shape=straight -> {'model': 'minecraft:block/cinnabar_stairs'}
+    facing=east,half=top,shape=inner_left -> {'model': 'minecraft:block/cinnabar_stairs_inner', 'uvlock': True, 'x': 180}
+    facing=east,half=top,shape=inner_right -> {'model': 'minecraft:block/cinnabar_stairs_inner', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=east,half=top,shape=outer_left -> {'model': 'minecraft:block/cinnabar_stairs_outer', 'uvlock': True, 'x': 180}
+    facing=east,half=top,shape=outer_right -> {'model': 'minecraft:block/cinnabar_stairs_outer', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=east,half=top,shape=straight -> {'model': 'minecraft:block/cinnabar_stairs', 'uvlock': True, 'x': 180}
+    facing=north,half=bottom,shape=inner_left -> {'model': 'minecraft:block/cinnabar_stairs_inner', 'uvlock': True, 'y': 180}
+    facing=north,half=bottom,shape=inner_right -> {'model': 'minecraft:block/cinnabar_stairs_inner', 'uvlock': True, 'y': 270}
+    facing=north,half=bottom,shape=outer_left -> {'model': 'minecraft:block/cinnabar_stairs_outer', 'uvlock': True, 'y': 180}
+    facing=north,half=bottom,shape=outer_right -> {'model': 'minecraft:block/cinnabar_stairs_outer', 'uvlock': True, 'y': 270}
+    facing=north,half=bottom,shape=straight -> {'model': 'minecraft:block/cinnabar_stairs', 'uvlock': True, 'y': 270}
+    facing=north,half=top,shape=inner_left -> {'model': 'minecraft:block/cinnabar_stairs_inner', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=north,half=top,shape=inner_right -> {'model': 'minecraft:block/cinnabar_stairs_inner', 'uvlock': True, 'x': 180}
+    facing=north,half=top,shape=outer_left -> {'model': 'minecraft:block/cinnabar_stairs_outer', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=north,half=top,shape=outer_right -> {'model': 'minecraft:block/cinnabar_stairs_outer', 'uvlock': True, 'x': 180}
+    facing=north,half=top,shape=straight -> {'model': 'minecraft:block/cinnabar_stairs', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=south,half=bottom,shape=inner_left -> {'model': 'minecraft:block/cinnabar_stairs_inner'}
+    facing=south,half=bottom,shape=inner_right -> {'model': 'minecraft:block/cinnabar_stairs_inner', 'uvlock': True, 'y': 90}
+    facing=south,half=bottom,shape=outer_left -> {'model': 'minecraft:block/cinnabar_stairs_outer'}
+    facing=south,half=bottom,shape=outer_right -> {'model': 'minecraft:block/cinnabar_stairs_outer', 'uvlock': True, 'y': 90}
+    facing=south,half=bottom,shape=straight -> {'model': 'minecraft:block/cinnabar_stairs', 'uvlock': True, 'y': 90}
+    facing=south,half=top,shape=inner_left -> {'model': 'minecraft:block/cinnabar_stairs_inner', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=south,half=top,shape=inner_right -> {'model': 'minecraft:block/cinnabar_stairs_inner', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=south,half=top,shape=outer_left -> {'model': 'minecraft:block/cinnabar_stairs_outer', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=south,half=top,shape=outer_right -> {'model': 'minecraft:block/cinnabar_stairs_outer', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=south,half=top,shape=straight -> {'model': 'minecraft:block/cinnabar_stairs', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=west,half=bottom,shape=inner_left -> {'model': 'minecraft:block/cinnabar_stairs_inner', 'uvlock': True, 'y': 90}
+    facing=west,half=bottom,shape=inner_right -> {'model': 'minecraft:block/cinnabar_stairs_inner', 'uvlock': True, 'y': 180}
+    facing=west,half=bottom,shape=outer_left -> {'model': 'minecraft:block/cinnabar_stairs_outer', 'uvlock': True, 'y': 90}
+    facing=west,half=bottom,shape=outer_right -> {'model': 'minecraft:block/cinnabar_stairs_outer', 'uvlock': True, 'y': 180}
+    facing=west,half=bottom,shape=straight -> {'model': 'minecraft:block/cinnabar_stairs', 'uvlock': True, 'y': 180}
+    facing=west,half=top,shape=inner_left -> {'model': 'minecraft:block/cinnabar_stairs_inner', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=west,half=top,shape=inner_right -> {'model': 'minecraft:block/cinnabar_stairs_inner', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=west,half=top,shape=outer_left -> {'model': 'minecraft:block/cinnabar_stairs_outer', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=west,half=top,shape=outer_right -> {'model': 'minecraft:block/cinnabar_stairs_outer', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=west,half=top,shape=straight -> {'model': 'minecraft:block/cinnabar_stairs', 'uvlock': True, 'x': 180, 'y': 180}
+--- resin_brick_stairs: 40 variants
+    facing=east,half=bottom,shape=inner_left -> {'model': 'minecraft:block/resin_brick_stairs_inner', 'uvlock': True, 'y': 270}
+    facing=east,half=bottom,shape=inner_right -> {'model': 'minecraft:block/resin_brick_stairs_inner'}
+    facing=east,half=bottom,shape=outer_left -> {'model': 'minecraft:block/resin_brick_stairs_outer', 'uvlock': True, 'y': 270}
+    facing=east,half=bottom,shape=outer_right -> {'model': 'minecraft:block/resin_brick_stairs_outer'}
+    facing=east,half=bottom,shape=straight -> {'model': 'minecraft:block/resin_brick_stairs'}
+    facing=east,half=top,shape=inner_left -> {'model': 'minecraft:block/resin_brick_stairs_inner', 'uvlock': True, 'x': 180}
+    facing=east,half=top,shape=inner_right -> {'model': 'minecraft:block/resin_brick_stairs_inner', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=east,half=top,shape=outer_left -> {'model': 'minecraft:block/resin_brick_stairs_outer', 'uvlock': True, 'x': 180}
+    facing=east,half=top,shape=outer_right -> {'model': 'minecraft:block/resin_brick_stairs_outer', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=east,half=top,shape=straight -> {'model': 'minecraft:block/resin_brick_stairs', 'uvlock': True, 'x': 180}
+    facing=north,half=bottom,shape=inner_left -> {'model': 'minecraft:block/resin_brick_stairs_inner', 'uvlock': True, 'y': 180}
+    facing=north,half=bottom,shape=inner_right -> {'model': 'minecraft:block/resin_brick_stairs_inner', 'uvlock': True, 'y': 270}
+    facing=north,half=bottom,shape=outer_left -> {'model': 'minecraft:block/resin_brick_stairs_outer', 'uvlock': True, 'y': 180}
+    facing=north,half=bottom,shape=outer_right -> {'model': 'minecraft:block/resin_brick_stairs_outer', 'uvlock': True, 'y': 270}
+    facing=north,half=bottom,shape=straight -> {'model': 'minecraft:block/resin_brick_stairs', 'uvlock': True, 'y': 270}
+    facing=north,half=top,shape=inner_left -> {'model': 'minecraft:block/resin_brick_stairs_inner', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=north,half=top,shape=inner_right -> {'model': 'minecraft:block/resin_brick_stairs_inner', 'uvlock': True, 'x': 180}
+    facing=north,half=top,shape=outer_left -> {'model': 'minecraft:block/resin_brick_stairs_outer', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=north,half=top,shape=outer_right -> {'model': 'minecraft:block/resin_brick_stairs_outer', 'uvlock': True, 'x': 180}
+    facing=north,half=top,shape=straight -> {'model': 'minecraft:block/resin_brick_stairs', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=south,half=bottom,shape=inner_left -> {'model': 'minecraft:block/resin_brick_stairs_inner'}
+    facing=south,half=bottom,shape=inner_right -> {'model': 'minecraft:block/resin_brick_stairs_inner', 'uvlock': True, 'y': 90}
+    facing=south,half=bottom,shape=outer_left -> {'model': 'minecraft:block/resin_brick_stairs_outer'}
+    facing=south,half=bottom,shape=outer_right -> {'model': 'minecraft:block/resin_brick_stairs_outer', 'uvlock': True, 'y': 90}
+    facing=south,half=bottom,shape=straight -> {'model': 'minecraft:block/resin_brick_stairs', 'uvlock': True, 'y': 90}
+    facing=south,half=top,shape=inner_left -> {'model': 'minecraft:block/resin_brick_stairs_inner', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=south,half=top,shape=inner_right -> {'model': 'minecraft:block/resin_brick_stairs_inner', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=south,half=top,shape=outer_left -> {'model': 'minecraft:block/resin_brick_stairs_outer', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=south,half=top,shape=outer_right -> {'model': 'minecraft:block/resin_brick_stairs_outer', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=south,half=top,shape=straight -> {'model': 'minecraft:block/resin_brick_stairs', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=west,half=bottom,shape=inner_left -> {'model': 'minecraft:block/resin_brick_stairs_inner', 'uvlock': True, 'y': 90}
+    facing=west,half=bottom,shape=inner_right -> {'model': 'minecraft:block/resin_brick_stairs_inner', 'uvlock': True, 'y': 180}
+    facing=west,half=bottom,shape=outer_left -> {'model': 'minecraft:block/resin_brick_stairs_outer', 'uvlock': True, 'y': 90}
+    facing=west,half=bottom,shape=outer_right -> {'model': 'minecraft:block/resin_brick_stairs_outer', 'uvlock': True, 'y': 180}
+    facing=west,half=bottom,shape=straight -> {'model': 'minecraft:block/resin_brick_stairs', 'uvlock': True, 'y': 180}
+    facing=west,half=top,shape=inner_left -> {'model': 'minecraft:block/resin_brick_stairs_inner', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=west,half=top,shape=inner_right -> {'model': 'minecraft:block/resin_brick_stairs_inner', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=west,half=top,shape=outer_left -> {'model': 'minecraft:block/resin_brick_stairs_outer', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=west,half=top,shape=outer_right -> {'model': 'minecraft:block/resin_brick_stairs_outer', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=west,half=top,shape=straight -> {'model': 'minecraft:block/resin_brick_stairs', 'uvlock': True, 'x': 180, 'y': 180}
+--- smooth_quartz_stairs: 40 variants
+    facing=east,half=bottom,shape=inner_left -> {'model': 'minecraft:block/smooth_quartz_stairs_inner', 'uvlock': True, 'y': 270}
+    facing=east,half=bottom,shape=inner_right -> {'model': 'minecraft:block/smooth_quartz_stairs_inner'}
+    facing=east,half=bottom,shape=outer_left -> {'model': 'minecraft:block/smooth_quartz_stairs_outer', 'uvlock': True, 'y': 270}
+    facing=east,half=bottom,shape=outer_right -> {'model': 'minecraft:block/smooth_quartz_stairs_outer'}
+    facing=east,half=bottom,shape=straight -> {'model': 'minecraft:block/smooth_quartz_stairs'}
+    facing=east,half=top,shape=inner_left -> {'model': 'minecraft:block/smooth_quartz_stairs_inner', 'uvlock': True, 'x': 180}
+    facing=east,half=top,shape=inner_right -> {'model': 'minecraft:block/smooth_quartz_stairs_inner', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=east,half=top,shape=outer_left -> {'model': 'minecraft:block/smooth_quartz_stairs_outer', 'uvlock': True, 'x': 180}
+    facing=east,half=top,shape=outer_right -> {'model': 'minecraft:block/smooth_quartz_stairs_outer', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=east,half=top,shape=straight -> {'model': 'minecraft:block/smooth_quartz_stairs', 'uvlock': True, 'x': 180}
+    facing=north,half=bottom,shape=inner_left -> {'model': 'minecraft:block/smooth_quartz_stairs_inner', 'uvlock': True, 'y': 180}
+    facing=north,half=bottom,shape=inner_right -> {'model': 'minecraft:block/smooth_quartz_stairs_inner', 'uvlock': True, 'y': 270}
+    facing=north,half=bottom,shape=outer_left -> {'model': 'minecraft:block/smooth_quartz_stairs_outer', 'uvlock': True, 'y': 180}
+    facing=north,half=bottom,shape=outer_right -> {'model': 'minecraft:block/smooth_quartz_stairs_outer', 'uvlock': True, 'y': 270}
+    facing=north,half=bottom,shape=straight -> {'model': 'minecraft:block/smooth_quartz_stairs', 'uvlock': True, 'y': 270}
+    facing=north,half=top,shape=inner_left -> {'model': 'minecraft:block/smooth_quartz_stairs_inner', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=north,half=top,shape=inner_right -> {'model': 'minecraft:block/smooth_quartz_stairs_inner', 'uvlock': True, 'x': 180}
+    facing=north,half=top,shape=outer_left -> {'model': 'minecraft:block/smooth_quartz_stairs_outer', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=north,half=top,shape=outer_right -> {'model': 'minecraft:block/smooth_quartz_stairs_outer', 'uvlock': True, 'x': 180}
+    facing=north,half=top,shape=straight -> {'model': 'minecraft:block/smooth_quartz_stairs', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=south,half=bottom,shape=inner_left -> {'model': 'minecraft:block/smooth_quartz_stairs_inner'}
+    facing=south,half=bottom,shape=inner_right -> {'model': 'minecraft:block/smooth_quartz_stairs_inner', 'uvlock': True, 'y': 90}
+    facing=south,half=bottom,shape=outer_left -> {'model': 'minecraft:block/smooth_quartz_stairs_outer'}
+    facing=south,half=bottom,shape=outer_right -> {'model': 'minecraft:block/smooth_quartz_stairs_outer', 'uvlock': True, 'y': 90}
+    facing=south,half=bottom,shape=straight -> {'model': 'minecraft:block/smooth_quartz_stairs', 'uvlock': True, 'y': 90}
+    facing=south,half=top,shape=inner_left -> {'model': 'minecraft:block/smooth_quartz_stairs_inner', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=south,half=top,shape=inner_right -> {'model': 'minecraft:block/smooth_quartz_stairs_inner', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=south,half=top,shape=outer_left -> {'model': 'minecraft:block/smooth_quartz_stairs_outer', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=south,half=top,shape=outer_right -> {'model': 'minecraft:block/smooth_quartz_stairs_outer', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=south,half=top,shape=straight -> {'model': 'minecraft:block/smooth_quartz_stairs', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=west,half=bottom,shape=inner_left -> {'model': 'minecraft:block/smooth_quartz_stairs_inner', 'uvlock': True, 'y': 90}
+    facing=west,half=bottom,shape=inner_right -> {'model': 'minecraft:block/smooth_quartz_stairs_inner', 'uvlock': True, 'y': 180}
+    facing=west,half=bottom,shape=outer_left -> {'model': 'minecraft:block/smooth_quartz_stairs_outer', 'uvlock': True, 'y': 90}
+    facing=west,half=bottom,shape=outer_right -> {'model': 'minecraft:block/smooth_quartz_stairs_outer', 'uvlock': True, 'y': 180}
+    facing=west,half=bottom,shape=straight -> {'model': 'minecraft:block/smooth_quartz_stairs', 'uvlock': True, 'y': 180}
+    facing=west,half=top,shape=inner_left -> {'model': 'minecraft:block/smooth_quartz_stairs_inner', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=west,half=top,shape=inner_right -> {'model': 'minecraft:block/smooth_quartz_stairs_inner', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=west,half=top,shape=outer_left -> {'model': 'minecraft:block/smooth_quartz_stairs_outer', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=west,half=top,shape=outer_right -> {'model': 'minecraft:block/smooth_quartz_stairs_outer', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=west,half=top,shape=straight -> {'model': 'minecraft:block/smooth_quartz_stairs', 'uvlock': True, 'x': 180, 'y': 180}
+--- sandstone_stairs: 40 variants
+    facing=east,half=bottom,shape=inner_left -> {'model': 'minecraft:block/sandstone_stairs_inner', 'uvlock': True, 'y': 270}
+    facing=east,half=bottom,shape=inner_right -> {'model': 'minecraft:block/sandstone_stairs_inner'}
+    facing=east,half=bottom,shape=outer_left -> {'model': 'minecraft:block/sandstone_stairs_outer', 'uvlock': True, 'y': 270}
+    facing=east,half=bottom,shape=outer_right -> {'model': 'minecraft:block/sandstone_stairs_outer'}
+    facing=east,half=bottom,shape=straight -> {'model': 'minecraft:block/sandstone_stairs'}
+    facing=east,half=top,shape=inner_left -> {'model': 'minecraft:block/sandstone_stairs_inner', 'uvlock': True, 'x': 180}
+    facing=east,half=top,shape=inner_right -> {'model': 'minecraft:block/sandstone_stairs_inner', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=east,half=top,shape=outer_left -> {'model': 'minecraft:block/sandstone_stairs_outer', 'uvlock': True, 'x': 180}
+    facing=east,half=top,shape=outer_right -> {'model': 'minecraft:block/sandstone_stairs_outer', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=east,half=top,shape=straight -> {'model': 'minecraft:block/sandstone_stairs', 'uvlock': True, 'x': 180}
+    facing=north,half=bottom,shape=inner_left -> {'model': 'minecraft:block/sandstone_stairs_inner', 'uvlock': True, 'y': 180}
+    facing=north,half=bottom,shape=inner_right -> {'model': 'minecraft:block/sandstone_stairs_inner', 'uvlock': True, 'y': 270}
+    facing=north,half=bottom,shape=outer_left -> {'model': 'minecraft:block/sandstone_stairs_outer', 'uvlock': True, 'y': 180}
+    facing=north,half=bottom,shape=outer_right -> {'model': 'minecraft:block/sandstone_stairs_outer', 'uvlock': True, 'y': 270}
+    facing=north,half=bottom,shape=straight -> {'model': 'minecraft:block/sandstone_stairs', 'uvlock': True, 'y': 270}
+    facing=north,half=top,shape=inner_left -> {'model': 'minecraft:block/sandstone_stairs_inner', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=north,half=top,shape=inner_right -> {'model': 'minecraft:block/sandstone_stairs_inner', 'uvlock': True, 'x': 180}
+    facing=north,half=top,shape=outer_left -> {'model': 'minecraft:block/sandstone_stairs_outer', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=north,half=top,shape=outer_right -> {'model': 'minecraft:block/sandstone_stairs_outer', 'uvlock': True, 'x': 180}
+    facing=north,half=top,shape=straight -> {'model': 'minecraft:block/sandstone_stairs', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=south,half=bottom,shape=inner_left -> {'model': 'minecraft:block/sandstone_stairs_inner'}
+    facing=south,half=bottom,shape=inner_right -> {'model': 'minecraft:block/sandstone_stairs_inner', 'uvlock': True, 'y': 90}
+    facing=south,half=bottom,shape=outer_left -> {'model': 'minecraft:block/sandstone_stairs_outer'}
+    facing=south,half=bottom,shape=outer_right -> {'model': 'minecraft:block/sandstone_stairs_outer', 'uvlock': True, 'y': 90}
+    facing=south,half=bottom,shape=straight -> {'model': 'minecraft:block/sandstone_stairs', 'uvlock': True, 'y': 90}
+    facing=south,half=top,shape=inner_left -> {'model': 'minecraft:block/sandstone_stairs_inner', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=south,half=top,shape=inner_right -> {'model': 'minecraft:block/sandstone_stairs_inner', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=south,half=top,shape=outer_left -> {'model': 'minecraft:block/sandstone_stairs_outer', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=south,half=top,shape=outer_right -> {'model': 'minecraft:block/sandstone_stairs_outer', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=south,half=top,shape=straight -> {'model': 'minecraft:block/sandstone_stairs', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=west,half=bottom,shape=inner_left -> {'model': 'minecraft:block/sandstone_stairs_inner', 'uvlock': True, 'y': 90}
+    facing=west,half=bottom,shape=inner_right -> {'model': 'minecraft:block/sandstone_stairs_inner', 'uvlock': True, 'y': 180}
+    facing=west,half=bottom,shape=outer_left -> {'model': 'minecraft:block/sandstone_stairs_outer', 'uvlock': True, 'y': 90}
+    facing=west,half=bottom,shape=outer_right -> {'model': 'minecraft:block/sandstone_stairs_outer', 'uvlock': True, 'y': 180}
+    facing=west,half=bottom,shape=straight -> {'model': 'minecraft:block/sandstone_stairs', 'uvlock': True, 'y': 180}
+    facing=west,half=top,shape=inner_left -> {'model': 'minecraft:block/sandstone_stairs_inner', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=west,half=top,shape=inner_right -> {'model': 'minecraft:block/sandstone_stairs_inner', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=west,half=top,shape=outer_left -> {'model': 'minecraft:block/sandstone_stairs_outer', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=west,half=top,shape=outer_right -> {'model': 'minecraft:block/sandstone_stairs_outer', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=west,half=top,shape=straight -> {'model': 'minecraft:block/sandstone_stairs', 'uvlock': True, 'x': 180, 'y': 180}
+--- crimson_stairs: 40 variants
+    facing=east,half=bottom,shape=inner_left -> {'model': 'minecraft:block/crimson_stairs_inner', 'uvlock': True, 'y': 270}
+    facing=east,half=bottom,shape=inner_right -> {'model': 'minecraft:block/crimson_stairs_inner'}
+    facing=east,half=bottom,shape=outer_left -> {'model': 'minecraft:block/crimson_stairs_outer', 'uvlock': True, 'y': 270}
+    facing=east,half=bottom,shape=outer_right -> {'model': 'minecraft:block/crimson_stairs_outer'}
+    facing=east,half=bottom,shape=straight -> {'model': 'minecraft:block/crimson_stairs'}
+    facing=east,half=top,shape=inner_left -> {'model': 'minecraft:block/crimson_stairs_inner', 'uvlock': True, 'x': 180}
+    facing=east,half=top,shape=inner_right -> {'model': 'minecraft:block/crimson_stairs_inner', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=east,half=top,shape=outer_left -> {'model': 'minecraft:block/crimson_stairs_outer', 'uvlock': True, 'x': 180}
+    facing=east,half=top,shape=outer_right -> {'model': 'minecraft:block/crimson_stairs_outer', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=east,half=top,shape=straight -> {'model': 'minecraft:block/crimson_stairs', 'uvlock': True, 'x': 180}
+    facing=north,half=bottom,shape=inner_left -> {'model': 'minecraft:block/crimson_stairs_inner', 'uvlock': True, 'y': 180}
+    facing=north,half=bottom,shape=inner_right -> {'model': 'minecraft:block/crimson_stairs_inner', 'uvlock': True, 'y': 270}
+    facing=north,half=bottom,shape=outer_left -> {'model': 'minecraft:block/crimson_stairs_outer', 'uvlock': True, 'y': 180}
+    facing=north,half=bottom,shape=outer_right -> {'model': 'minecraft:block/crimson_stairs_outer', 'uvlock': True, 'y': 270}
+    facing=north,half=bottom,shape=straight -> {'model': 'minecraft:block/crimson_stairs', 'uvlock': True, 'y': 270}
+    facing=north,half=top,shape=inner_left -> {'model': 'minecraft:block/crimson_stairs_inner', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=north,half=top,shape=inner_right -> {'model': 'minecraft:block/crimson_stairs_inner', 'uvlock': True, 'x': 180}
+    facing=north,half=top,shape=outer_left -> {'model': 'minecraft:block/crimson_stairs_outer', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=north,half=top,shape=outer_right -> {'model': 'minecraft:block/crimson_stairs_outer', 'uvlock': True, 'x': 180}
+    facing=north,half=top,shape=straight -> {'model': 'minecraft:block/crimson_stairs', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=south,half=bottom,shape=inner_left -> {'model': 'minecraft:block/crimson_stairs_inner'}
+    facing=south,half=bottom,shape=inner_right -> {'model': 'minecraft:block/crimson_stairs_inner', 'uvlock': True, 'y': 90}
+    facing=south,half=bottom,shape=outer_left -> {'model': 'minecraft:block/crimson_stairs_outer'}
+    facing=south,half=bottom,shape=outer_right -> {'model': 'minecraft:block/crimson_stairs_outer', 'uvlock': True, 'y': 90}
+    facing=south,half=bottom,shape=straight -> {'model': 'minecraft:block/crimson_stairs', 'uvlock': True, 'y': 90}
+    facing=south,half=top,shape=inner_left -> {'model': 'minecraft:block/crimson_stairs_inner', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=south,half=top,shape=inner_right -> {'model': 'minecraft:block/crimson_stairs_inner', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=south,half=top,shape=outer_left -> {'model': 'minecraft:block/crimson_stairs_outer', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=south,half=top,shape=outer_right -> {'model': 'minecraft:block/crimson_stairs_outer', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=south,half=top,shape=straight -> {'model': 'minecraft:block/crimson_stairs', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=west,half=bottom,shape=inner_left -> {'model': 'minecraft:block/crimson_stairs_inner', 'uvlock': True, 'y': 90}
+    facing=west,half=bottom,shape=inner_right -> {'model': 'minecraft:block/crimson_stairs_inner', 'uvlock': True, 'y': 180}
+    facing=west,half=bottom,shape=outer_left -> {'model': 'minecraft:block/crimson_stairs_outer', 'uvlock': True, 'y': 90}
+    facing=west,half=bottom,shape=outer_right -> {'model': 'minecraft:block/crimson_stairs_outer', 'uvlock': True, 'y': 180}
+    facing=west,half=bottom,shape=straight -> {'model': 'minecraft:block/crimson_stairs', 'uvlock': True, 'y': 180}
+    facing=west,half=top,shape=inner_left -> {'model': 'minecraft:block/crimson_stairs_inner', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=west,half=top,shape=inner_right -> {'model': 'minecraft:block/crimson_stairs_inner', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=west,half=top,shape=outer_left -> {'model': 'minecraft:block/crimson_stairs_outer', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=west,half=top,shape=outer_right -> {'model': 'minecraft:block/crimson_stairs_outer', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=west,half=top,shape=straight -> {'model': 'minecraft:block/crimson_stairs', 'uvlock': True, 'x': 180, 'y': 180}
+--- bamboo_mosaic_stairs: 40 variants
+    facing=east,half=bottom,shape=inner_left -> {'model': 'minecraft:block/bamboo_mosaic_stairs_inner', 'uvlock': True, 'y': 270}
+    facing=east,half=bottom,shape=inner_right -> {'model': 'minecraft:block/bamboo_mosaic_stairs_inner'}
+    facing=east,half=bottom,shape=outer_left -> {'model': 'minecraft:block/bamboo_mosaic_stairs_outer', 'uvlock': True, 'y': 270}
+    facing=east,half=bottom,shape=outer_right -> {'model': 'minecraft:block/bamboo_mosaic_stairs_outer'}
+    facing=east,half=bottom,shape=straight -> {'model': 'minecraft:block/bamboo_mosaic_stairs'}
+    facing=east,half=top,shape=inner_left -> {'model': 'minecraft:block/bamboo_mosaic_stairs_inner', 'uvlock': True, 'x': 180}
+    facing=east,half=top,shape=inner_right -> {'model': 'minecraft:block/bamboo_mosaic_stairs_inner', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=east,half=top,shape=outer_left -> {'model': 'minecraft:block/bamboo_mosaic_stairs_outer', 'uvlock': True, 'x': 180}
+    facing=east,half=top,shape=outer_right -> {'model': 'minecraft:block/bamboo_mosaic_stairs_outer', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=east,half=top,shape=straight -> {'model': 'minecraft:block/bamboo_mosaic_stairs', 'uvlock': True, 'x': 180}
+    facing=north,half=bottom,shape=inner_left -> {'model': 'minecraft:block/bamboo_mosaic_stairs_inner', 'uvlock': True, 'y': 180}
+    facing=north,half=bottom,shape=inner_right -> {'model': 'minecraft:block/bamboo_mosaic_stairs_inner', 'uvlock': True, 'y': 270}
+    facing=north,half=bottom,shape=outer_left -> {'model': 'minecraft:block/bamboo_mosaic_stairs_outer', 'uvlock': True, 'y': 180}
+    facing=north,half=bottom,shape=outer_right -> {'model': 'minecraft:block/bamboo_mosaic_stairs_outer', 'uvlock': True, 'y': 270}
+    facing=north,half=bottom,shape=straight -> {'model': 'minecraft:block/bamboo_mosaic_stairs', 'uvlock': True, 'y': 270}
+    facing=north,half=top,shape=inner_left -> {'model': 'minecraft:block/bamboo_mosaic_stairs_inner', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=north,half=top,shape=inner_right -> {'model': 'minecraft:block/bamboo_mosaic_stairs_inner', 'uvlock': True, 'x': 180}
+    facing=north,half=top,shape=outer_left -> {'model': 'minecraft:block/bamboo_mosaic_stairs_outer', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=north,half=top,shape=outer_right -> {'model': 'minecraft:block/bamboo_mosaic_stairs_outer', 'uvlock': True, 'x': 180}
+    facing=north,half=top,shape=straight -> {'model': 'minecraft:block/bamboo_mosaic_stairs', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=south,half=bottom,shape=inner_left -> {'model': 'minecraft:block/bamboo_mosaic_stairs_inner'}
+    facing=south,half=bottom,shape=inner_right -> {'model': 'minecraft:block/bamboo_mosaic_stairs_inner', 'uvlock': True, 'y': 90}
+    facing=south,half=bottom,shape=outer_left -> {'model': 'minecraft:block/bamboo_mosaic_stairs_outer'}
+    facing=south,half=bottom,shape=outer_right -> {'model': 'minecraft:block/bamboo_mosaic_stairs_outer', 'uvlock': True, 'y': 90}
+    facing=south,half=bottom,shape=straight -> {'model': 'minecraft:block/bamboo_mosaic_stairs', 'uvlock': True, 'y': 90}
+    facing=south,half=top,shape=inner_left -> {'model': 'minecraft:block/bamboo_mosaic_stairs_inner', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=south,half=top,shape=inner_right -> {'model': 'minecraft:block/bamboo_mosaic_stairs_inner', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=south,half=top,shape=outer_left -> {'model': 'minecraft:block/bamboo_mosaic_stairs_outer', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=south,half=top,shape=outer_right -> {'model': 'minecraft:block/bamboo_mosaic_stairs_outer', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=south,half=top,shape=straight -> {'model': 'minecraft:block/bamboo_mosaic_stairs', 'uvlock': True, 'x': 180, 'y': 90}
+    facing=west,half=bottom,shape=inner_left -> {'model': 'minecraft:block/bamboo_mosaic_stairs_inner', 'uvlock': True, 'y': 90}
+    facing=west,half=bottom,shape=inner_right -> {'model': 'minecraft:block/bamboo_mosaic_stairs_inner', 'uvlock': True, 'y': 180}
+    facing=west,half=bottom,shape=outer_left -> {'model': 'minecraft:block/bamboo_mosaic_stairs_outer', 'uvlock': True, 'y': 90}
+    facing=west,half=bottom,shape=outer_right -> {'model': 'minecraft:block/bamboo_mosaic_stairs_outer', 'uvlock': True, 'y': 180}
+    facing=west,half=bottom,shape=straight -> {'model': 'minecraft:block/bamboo_mosaic_stairs', 'uvlock': True, 'y': 180}
+    facing=west,half=top,shape=inner_left -> {'model': 'minecraft:block/bamboo_mosaic_stairs_inner', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=west,half=top,shape=inner_right -> {'model': 'minecraft:block/bamboo_mosaic_stairs_inner', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=west,half=top,shape=outer_left -> {'model': 'minecraft:block/bamboo_mosaic_stairs_outer', 'uvlock': True, 'x': 180, 'y': 180}
+    facing=west,half=top,shape=outer_right -> {'model': 'minecraft:block/bamboo_mosaic_stairs_outer', 'uvlock': True, 'x': 180, 'y': 270}
+    facing=west,half=top,shape=straight -> {'model': 'minecraft:block/bamboo_mosaic_stairs', 'uvlock': True, 'x': 180, 'y': 180}
+
+=== models: the template trio + masters
+--- block/template_stairs.json
+  ERR "There is no item named 'assets/minecraft/models/block/template_stairs.json' in the archive"
+--- block/template_stairs_inner.json
+  ERR "There is no item named 'assets/minecraft/models/block/template_stairs_inner.json' in the archive"
+--- block/template_stairs_outer.json
+  ERR "There is no item named 'assets/minecraft/models/block/template_stairs_outer.json' in the archive"
+--- block/oak_stairs.json
+{
+  "parent": "minecraft:block/stairs",
+  "textures": {
+    "bottom": "minecraft:block/oak_planks",
+    "side": "minecraft:block/oak_planks",
+    "top": "minecraft:block/oak_planks"
+  }
+}
+--- block/stone_stairs.json
+{
+  "parent": "minecraft:block/stairs",
+  "textures": {
+    "bottom": "minecraft:block/stone",
+    "side": "minecraft:block/stone",
+    "top": "minecraft:block/stone"
+  }
+}
+--- block/cut_copper_stairs.json
+{
+  "parent": "minecraft:block/stairs",
+  "textures": {
+    "bottom": "minecraft:block/cut_copper",
+    "side": "minecraft:block/cut_copper",
+    "top": "minecraft:block/cut_copper"
+  }
+}
+--- block/waxed_cut_copper_stairs.json
+  ERR "There is no item named 'assets/minecraft/models/block/waxed_cut_copper_stairs.json' in the archive"
+--- block/deepslate_tile_stairs.json
+{
+  "parent": "minecraft:block/stairs",
+  "textures": {
+    "bottom": "minecraft:block/deepslate_tiles",
+    "side": "minecraft:block/deepslate_tiles",
+    "top": "minecraft:block/deepslate_tiles"
+  }
+}
+--- block/sandstone_stairs.json
+{
+  "parent": "minecraft:block/stairs",
+  "textures": {
+    "bottom": "minecraft:block/sandstone_bottom",
+    "side": "minecraft:block/sandstone",
+    "top": "minecraft:block/sandstone_top"
+  }
+}
+--- block/smooth_sandstone_stairs.json
+{
+  "parent": "minecraft:block/stairs",
+  "textures": {
+    "bottom": "minecraft:block/sandstone_top",
+    "side": "minecraft:block/sandstone_top",
+    "top": "minecraft:block/sandstone_top"
+  }
+}
+
+=== textures: stairs own pngs? (should be none)
+  stairs textures: NONE — stairs borrow the parent's textures
+
+=== loot tables: the self drops
+  oak_stairs: entries=['minecraft:oak_stairs']
+  stone_stairs: entries=['minecraft:stone_stairs']
+  cut_copper_stairs: entries=['minecraft:cut_copper_stairs']
+  waxed_cut_copper_stairs: entries=['minecraft:waxed_cut_copper_stairs']
+
+=== tags: mineable axe/pickaxe/shovel membership
+  axe: 2 stairs
+    ['#wooden_stairs', 'bamboo_mosaic_stairs']
+  pickaxe: 51 stairs
+   sample: ['cobblestone_stairs', 'brick_stairs', 'stone_brick_stairs', 'nether_brick_stairs', 'sandstone_stairs', 'quartz_stairs', 'prismarine_stairs', 'prismarine_brick_stairs', 'dark_prismarine_stairs', 'red_sandstone_stairs', 'purpur_stairs', 'polished_granite_stairs']
+  shovel: 0 stairs
+    []
+
+=== sounds: what voices the stairs rows reuse (wood/stone/copper)
+ERR "There is no item named 'assets/minecraft/sounds.json' in the archive"

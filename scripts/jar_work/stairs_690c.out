@@ -1,0 +1,217 @@
+--- getShape (getShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/shapes/CollisionContext;)Lnet/minecraft/world/phys/shapes/VoxelShape;)
+  pc 49: tableswitch default->84
+    case 1 -> pc 94
+    case 2 -> pc 128
+    case 3 -> pc 111
+    case 4 -> pc 111
+    case 5 -> pc 128
+  pc 159: tableswitch default->192
+    case 1 -> pc 202
+    case 2 -> pc 202
+    case 3 -> pc 202
+    case 4 -> pc 207
+    case 5 -> pc 215
+--- getStairsShape (getStairsShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/properties/StairsShape;)
+--- canTakeShape (canTakeShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Z)
+=== full walk getShape
+    0: aload_1
+    1: getstatic net/minecraft/world/level/block/StairBlock.HALF:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+    4: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+    7: getstatic net/minecraft/world/level/block/state/properties/Half.BOTTOM:Lnet/minecraft/world/level/block/state/properties/Half;
+    10: if_acmpne -> 17
+    13: iconst_1
+    14: goto -> 18
+    17: iconst_0
+    18: istore istore 5
+    20: aload_1
+    21: getstatic net/minecraft/world/level/block/StairBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+    24: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+    27: checkcast net/minecraft/core/Direction
+    30: astore astore 6
+    32: getstatic net/minecraft/world/level/block/StairBlock$1.$SwitchMap$net$minecraft$world$level$block$state$properties$StairsShape:[I
+    35: aload_1
+    36: getstatic net/minecraft/world/level/block/StairBlock.SHAPE:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+    39: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+    42: checkcast net/minecraft/world/level/block/state/properties/StairsShape
+    45: invokevirtual net/minecraft/world/level/block/state/properties/StairsShape.ordinal:()I
+    48: 0x2e
+    49: 0xaa tableswitch lo=1 hi=5 default=35
+    84: new java/lang/MatchException
+    87: dup
+    88: aconst_null
+    89: aconst_null
+    90: invokespecial java/lang/MatchException.<init>:(Ljava/lang/String;Ljava/lang/Throwable;)V
+    93: athrow
+    94: iload iload 5
+    96: ifeq -> 105
+    99: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_BOTTOM_STRAIGHT:Ljava/util/Map;
+    102: goto -> 142
+    105: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_TOP_STRAIGHT:Ljava/util/Map;
+    108: goto -> 142
+    111: iload iload 5
+    113: ifeq -> 122
+    116: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_BOTTOM_INNER:Ljava/util/Map;
+    119: goto -> 142
+    122: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_TOP_INNER:Ljava/util/Map;
+    125: goto -> 142
+    128: iload iload 5
+    130: ifeq -> 139
+    133: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_BOTTOM_OUTER:Ljava/util/Map;
+    136: goto -> 142
+    139: getstatic net/minecraft/world/level/block/StairBlock.SHAPE_TOP_OUTER:Ljava/util/Map;
+    142: getstatic net/minecraft/world/level/block/StairBlock$1.$SwitchMap$net$minecraft$world$level$block$state$properties$StairsShape:[I
+    145: aload_1
+    146: getstatic net/minecraft/world/level/block/StairBlock.SHAPE:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+    149: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+    152: checkcast net/minecraft/world/level/block/state/properties/StairsShape
+    155: invokevirtual net/minecraft/world/level/block/state/properties/StairsShape.ordinal:()I
+    158: 0x2e
+    159: 0xaa tableswitch lo=1 hi=5 default=33
+    192: new java/lang/MatchException
+    195: dup
+    196: aconst_null
+    197: aconst_null
+    198: invokespecial java/lang/MatchException.<init>:(Ljava/lang/String;Ljava/lang/Throwable;)V
+    201: athrow
+    202: aload aload 6
+    204: goto -> 220
+    207: aload aload 6
+    209: invokevirtual net/minecraft/core/Direction.getCounterClockWise:()Lnet/minecraft/core/Direction;
+    212: goto -> 220
+    215: aload aload 6
+    217: invokevirtual net/minecraft/core/Direction.getClockWise:()Lnet/minecraft/core/Direction;
+    220: invokeinterface java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+    223: iconst_m1
+    224: nop
+    225: checkcast net/minecraft/world/phys/shapes/VoxelShape
+    228: areturn
+=== full walk getStairsShape
+    0: aload_0
+    1: getstatic net/minecraft/world/level/block/StairBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+    4: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+    7: checkcast net/minecraft/core/Direction
+    10: astore_3
+    11: aload_1
+    12: aload_2
+    13: aload_3
+    14: invokevirtual net/minecraft/core/BlockPos.relative:(Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;
+    17: invokeinterface net/minecraft/world/level/BlockGetter.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+    20: iconst_m1
+    21: nop
+    22: astore astore 4
+    24: aload aload 4
+    26: invokestatic net/minecraft/world/level/block/StairBlock.isStairs:(Lnet/minecraft/world/level/block/state/BlockState;)Z
+    29: ifeq -> 115
+    32: aload_0
+    33: getstatic net/minecraft/world/level/block/StairBlock.HALF:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+    36: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+    39: aload aload 4
+    41: getstatic net/minecraft/world/level/block/StairBlock.HALF:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+    44: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+    47: if_acmpne -> 115
+    50: aload aload 4
+    52: getstatic net/minecraft/world/level/block/StairBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+    55: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+    58: checkcast net/minecraft/core/Direction
+    61: astore astore 5
+    63: aload aload 5
+    65: invokevirtual net/minecraft/core/Direction.getAxis:()Lnet/minecraft/core/Direction$Axis;
+    68: aload_0
+    69: getstatic net/minecraft/world/level/block/StairBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+    72: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+    75: checkcast net/minecraft/core/Direction
+    78: invokevirtual net/minecraft/core/Direction.getAxis:()Lnet/minecraft/core/Direction$Axis;
+    81: if_acmpeq -> 115
+    84: aload_0
+    85: aload_1
+    86: aload_2
+    87: aload aload 5
+    89: invokevirtual net/minecraft/core/Direction.getOpposite:()Lnet/minecraft/core/Direction;
+    92: invokestatic net/minecraft/world/level/block/StairBlock.canTakeShape:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Z
+    95: ifeq -> 115
+    98: aload aload 5
+    100: aload_3
+    101: invokevirtual net/minecraft/core/Direction.getCounterClockWise:()Lnet/minecraft/core/Direction;
+    104: if_acmpne -> 111
+    107: getstatic net/minecraft/world/level/block/state/properties/StairsShape.OUTER_LEFT:Lnet/minecraft/world/level/block/state/properties/StairsShape;
+    110: areturn
+    111: getstatic net/minecraft/world/level/block/state/properties/StairsShape.OUTER_RIGHT:Lnet/minecraft/world/level/block/state/properties/StairsShape;
+    114: areturn
+    115: aload_1
+    116: aload_2
+    117: aload_3
+    118: invokevirtual net/minecraft/core/Direction.getOpposite:()Lnet/minecraft/core/Direction;
+    121: invokevirtual net/minecraft/core/BlockPos.relative:(Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;
+    124: invokeinterface net/minecraft/world/level/BlockGetter.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+    127: iconst_m1
+    128: nop
+    129: astore astore 5
+    131: aload aload 5
+    133: invokestatic net/minecraft/world/level/block/StairBlock.isStairs:(Lnet/minecraft/world/level/block/state/BlockState;)Z
+    136: ifeq -> 219
+    139: aload_0
+    140: getstatic net/minecraft/world/level/block/StairBlock.HALF:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+    143: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+    146: aload aload 5
+    148: getstatic net/minecraft/world/level/block/StairBlock.HALF:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+    151: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+    154: if_acmpne -> 219
+    157: aload aload 5
+    159: getstatic net/minecraft/world/level/block/StairBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+    162: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+    165: checkcast net/minecraft/core/Direction
+    168: astore astore 6
+    170: aload aload 6
+    172: invokevirtual net/minecraft/core/Direction.getAxis:()Lnet/minecraft/core/Direction$Axis;
+    175: aload_0
+    176: getstatic net/minecraft/world/level/block/StairBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+    179: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+    182: checkcast net/minecraft/core/Direction
+    185: invokevirtual net/minecraft/core/Direction.getAxis:()Lnet/minecraft/core/Direction$Axis;
+    188: if_acmpeq -> 219
+    191: aload_0
+    192: aload_1
+    193: aload_2
+    194: aload aload 6
+    196: invokestatic net/minecraft/world/level/block/StairBlock.canTakeShape:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Z
+    199: ifeq -> 219
+    202: aload aload 6
+    204: aload_3
+    205: invokevirtual net/minecraft/core/Direction.getCounterClockWise:()Lnet/minecraft/core/Direction;
+    208: if_acmpne -> 215
+    211: getstatic net/minecraft/world/level/block/state/properties/StairsShape.INNER_LEFT:Lnet/minecraft/world/level/block/state/properties/StairsShape;
+    214: areturn
+    215: getstatic net/minecraft/world/level/block/state/properties/StairsShape.INNER_RIGHT:Lnet/minecraft/world/level/block/state/properties/StairsShape;
+    218: areturn
+    219: getstatic net/minecraft/world/level/block/state/properties/StairsShape.STRAIGHT:Lnet/minecraft/world/level/block/state/properties/StairsShape;
+    222: areturn
+=== full walk canTakeShape
+    0: aload_1
+    1: aload_2
+    2: aload_3
+    3: invokevirtual net/minecraft/core/BlockPos.relative:(Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;
+    6: invokeinterface net/minecraft/world/level/BlockGetter.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+    9: iconst_m1
+    10: nop
+    11: astore astore 4
+    13: aload aload 4
+    15: invokestatic net/minecraft/world/level/block/StairBlock.isStairs:(Lnet/minecraft/world/level/block/state/BlockState;)Z
+    18: ifeq -> 57
+    21: aload aload 4
+    23: getstatic net/minecraft/world/level/block/StairBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+    26: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+    29: aload_0
+    30: getstatic net/minecraft/world/level/block/StairBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+    33: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+    36: if_acmpne -> 57
+    39: aload aload 4
+    41: getstatic net/minecraft/world/level/block/StairBlock.HALF:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+    44: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+    47: aload_0
+    48: getstatic net/minecraft/world/level/block/StairBlock.HALF:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+    51: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+    54: if_acmpeq -> 61
+    57: iconst_1
+    58: goto -> 62
+    61: iconst_0
+    62: ireturn

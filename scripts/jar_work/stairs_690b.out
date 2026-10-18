@@ -1,0 +1,1100 @@
+=== the neighbor walk: getStairsShape + canTakeShape + isStairs
+--- net.minecraft.world.level.block.StairBlock.getStairsShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/properties/StairsShape;
+0: aload_0
+1: getstatic net/minecraft/world/level/block/StairBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+4: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+7: checkcast net/minecraft/core/Direction
+10: astore_3
+11: aload_1
+12: aload_2
+13: aload_3
+14: invokevirtual net/minecraft/core/BlockPos.relative:(Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;
+17: invokeinterface net/minecraft/world/level/BlockGetter.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+20: iconst_m1
+21: nop
+22: astore astore 4
+24: aload aload 4
+26: invokestatic net/minecraft/world/level/block/StairBlock.isStairs:(Lnet/minecraft/world/level/block/state/BlockState;)Z
+29: ifeq -> 115
+32: aload_0
+33: getstatic net/minecraft/world/level/block/StairBlock.HALF:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+36: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+39: aload aload 4
+41: getstatic net/minecraft/world/level/block/StairBlock.HALF:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+44: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+47: if_acmpne -> 115
+50: aload aload 4
+52: getstatic net/minecraft/world/level/block/StairBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+55: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+58: checkcast net/minecraft/core/Direction
+61: astore astore 5
+63: aload aload 5
+65: invokevirtual net/minecraft/core/Direction.getAxis:()Lnet/minecraft/core/Direction$Axis;
+68: aload_0
+69: getstatic net/minecraft/world/level/block/StairBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+72: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+75: checkcast net/minecraft/core/Direction
+78: invokevirtual net/minecraft/core/Direction.getAxis:()Lnet/minecraft/core/Direction$Axis;
+81: if_acmpeq -> 115
+84: aload_0
+85: aload_1
+86: aload_2
+87: aload aload 5
+89: invokevirtual net/minecraft/core/Direction.getOpposite:()Lnet/minecraft/core/Direction;
+92: invokestatic net/minecraft/world/level/block/StairBlock.canTakeShape:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Z
+95: ifeq -> 115
+98: aload aload 5
+100: aload_3
+101: invokevirtual net/minecraft/core/Direction.getCounterClockWise:()Lnet/minecraft/core/Direction;
+104: if_acmpne -> 111
+107: getstatic net/minecraft/world/level/block/state/properties/StairsShape.OUTER_LEFT:Lnet/minecraft/world/level/block/state/properties/StairsShape;
+110: areturn
+111: getstatic net/minecraft/world/level/block/state/properties/StairsShape.OUTER_RIGHT:Lnet/minecraft/world/level/block/state/properties/StairsShape;
+114: areturn
+115: aload_1
+116: aload_2
+117: aload_3
+118: invokevirtual net/minecraft/core/Direction.getOpposite:()Lnet/minecraft/core/Direction;
+121: invokevirtual net/minecraft/core/BlockPos.relative:(Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;
+124: invokeinterface net/minecraft/world/level/BlockGetter.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+127: iconst_m1
+128: nop
+129: astore astore 5
+131: aload aload 5
+133: invokestatic net/minecraft/world/level/block/StairBlock.isStairs:(Lnet/minecraft/world/level/block/state/BlockState;)Z
+136: ifeq -> 219
+139: aload_0
+140: getstatic net/minecraft/world/level/block/StairBlock.HALF:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+143: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+146: aload aload 5
+148: getstatic net/minecraft/world/level/block/StairBlock.HALF:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+151: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+154: if_acmpne -> 219
+157: aload aload 5
+159: getstatic net/minecraft/world/level/block/StairBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+162: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+165: checkcast net/minecraft/core/Direction
+168: astore astore 6
+170: aload aload 6
+172: invokevirtual net/minecraft/core/Direction.getAxis:()Lnet/minecraft/core/Direction$Axis;
+175: aload_0
+176: getstatic net/minecraft/world/level/block/StairBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+179: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+182: checkcast net/minecraft/core/Direction
+185: invokevirtual net/minecraft/core/Direction.getAxis:()Lnet/minecraft/core/Direction$Axis;
+188: if_acmpeq -> 219
+191: aload_0
+192: aload_1
+193: aload_2
+194: aload aload 6
+196: invokestatic net/minecraft/world/level/block/StairBlock.canTakeShape:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Z
+199: ifeq -> 219
+202: aload aload 6
+204: aload_3
+205: invokevirtual net/minecraft/core/Direction.getCounterClockWise:()Lnet/minecraft/core/Direction;
+208: if_acmpne -> 215
+211: getstatic net/minecraft/world/level/block/state/properties/StairsShape.INNER_LEFT:Lnet/minecraft/world/level/block/state/properties/StairsShape;
+214: areturn
+215: getstatic net/minecraft/world/level/block/state/properties/StairsShape.INNER_RIGHT:Lnet/minecraft/world/level/block/state/properties/StairsShape;
+218: areturn
+219: getstatic net/minecraft/world/level/block/state/properties/StairsShape.STRAIGHT:Lnet/minecraft/world/level/block/state/properties/StairsShape;
+222: areturn
+--- net.minecraft.world.level.block.StairBlock.canTakeShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Z
+0: aload_1
+1: aload_2
+2: aload_3
+3: invokevirtual net/minecraft/core/BlockPos.relative:(Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;
+6: invokeinterface net/minecraft/world/level/BlockGetter.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+9: iconst_m1
+10: nop
+11: astore astore 4
+13: aload aload 4
+15: invokestatic net/minecraft/world/level/block/StairBlock.isStairs:(Lnet/minecraft/world/level/block/state/BlockState;)Z
+18: ifeq -> 57
+21: aload aload 4
+23: getstatic net/minecraft/world/level/block/StairBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+26: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+29: aload_0
+30: getstatic net/minecraft/world/level/block/StairBlock.FACING:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+33: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+36: if_acmpne -> 57
+39: aload aload 4
+41: getstatic net/minecraft/world/level/block/StairBlock.HALF:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+44: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+47: aload_0
+48: getstatic net/minecraft/world/level/block/StairBlock.HALF:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+51: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+54: if_acmpeq -> 61
+57: iconst_1
+58: goto -> 62
+61: iconst_0
+62: ireturn
+--- net.minecraft.world.level.block.StairBlock.isStairs(Lnet/minecraft/world/level/block/state/BlockState;)Z
+0: aload_0
+1: invokevirtual net/minecraft/world/level/block/state/BlockState.getBlock:()Lnet/minecraft/world/level/block/Block;
+4: instanceof net/minecraft/world/level/block/StairBlock
+7: ireturn
+
+=== WeatheringCopperStairBlock methods
+  <clinit>()V
+  <init>(Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+  codec()Lcom/mojang/serialization/MapCodec;
+  getAge()Ljava/lang/Enum;
+  getAge()Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;
+  isRandomlyTicking(Lnet/minecraft/world/level/block/state/BlockState;)Z
+  lambda$static$0(Lcom/mojang/serialization/codecs/RecordCodecBuilder$Instance;)Lcom/mojang/datafixers/kinds/App;
+  lambda$static$1(Lnet/minecraft/world/level/block/WeatheringCopperStairBlock;)Lnet/minecraft/world/level/block/state/BlockState;
+  randomTick(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;)V
+
+=== Blocks clinit: the STAIRS rows (windows around each constant)
+  constants referenced in clinit: 57
+--- 12915: getstatic net/minecraft/references/BlockItemIds.BRICK_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 4177
+    12899: fconst_2
+    12900: ldc_w float 3.0
+    12903: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    12906: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    12909: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    12912: putstatic net/minecraft/world/level/block/Blocks.OAK_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+    12915: getstatic net/minecraft/references/BlockItemIds.BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    12918: getstatic net/minecraft/world/level/block/Blocks.BRICKS:Lnet/minecraft/world/level/block/Block;
+    12921: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    12924: putstatic net/minecraft/world/level/block/Blocks.BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    12927: getstatic net/minecraft/references/BlockItemIds.STONE_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    12930: getstatic net/minecraft/world/level/block/Blocks.STONE_BRICKS:Lnet/minecraft/world/level/block/Block;
+--- 12927: getstatic net/minecraft/references/BlockItemIds.STONE_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 4181
+    12909: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    12912: putstatic net/minecraft/world/level/block/Blocks.OAK_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+    12915: getstatic net/minecraft/references/BlockItemIds.BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    12918: getstatic net/minecraft/world/level/block/Blocks.BRICKS:Lnet/minecraft/world/level/block/Block;
+    12921: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    12924: putstatic net/minecraft/world/level/block/Blocks.BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    12927: getstatic net/minecraft/references/BlockItemIds.STONE_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    12930: getstatic net/minecraft/world/level/block/Blocks.STONE_BRICKS:Lnet/minecraft/world/level/block/Block;
+    12933: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    12936: putstatic net/minecraft/world/level/block/Blocks.STONE_BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    12939: getstatic net/minecraft/references/BlockItemIds.MUD_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    12942: getstatic net/minecraft/world/level/block/Blocks.MUD_BRICKS:Lnet/minecraft/world/level/block/Block;
+--- 12939: getstatic net/minecraft/references/BlockItemIds.MUD_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 4185
+    12921: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    12924: putstatic net/minecraft/world/level/block/Blocks.BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    12927: getstatic net/minecraft/references/BlockItemIds.STONE_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    12930: getstatic net/minecraft/world/level/block/Blocks.STONE_BRICKS:Lnet/minecraft/world/level/block/Block;
+    12933: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    12936: putstatic net/minecraft/world/level/block/Blocks.STONE_BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    12939: getstatic net/minecraft/references/BlockItemIds.MUD_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    12942: getstatic net/minecraft/world/level/block/Blocks.MUD_BRICKS:Lnet/minecraft/world/level/block/Block;
+    12945: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    12948: putstatic net/minecraft/world/level/block/Blocks.MUD_BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    12951: getstatic net/minecraft/references/BlockItemIds.MYCELIUM:Lnet/minecraft/references/BlockItemId;
+    12954: invokedynamic indy
+--- 13101: getstatic net/minecraft/references/BlockItemIds.RESIN_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 4238
+    13084: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13087: ldc float 1.5
+    13089: ldc_w float 6.0
+    13092: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13095: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    13098: putstatic net/minecraft/world/level/block/Blocks.RESIN_BRICKS:Lnet/minecraft/world/level/block/Block;
+    13101: getstatic net/minecraft/references/BlockItemIds.RESIN_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    13104: getstatic net/minecraft/world/level/block/Blocks.RESIN_BRICKS:Lnet/minecraft/world/level/block/Block;
+    13107: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    13110: putstatic net/minecraft/world/level/block/Blocks.RESIN_BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    13113: getstatic net/minecraft/references/BlockItemIds.RESIN_BRICK_SLAB:Lnet/minecraft/references/BlockItemId;
+    13116: invokedynamic indy
+--- 13331: getstatic net/minecraft/references/BlockItemIds.NETHER_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 4315
+    13313: ldc_w float 6.0
+    13316: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13319: getstatic net/minecraft/world/level/block/SoundType.NETHER_BRICKS:Lnet/minecraft/world/level/block/SoundType;
+    13322: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13325: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    13328: putstatic net/minecraft/world/level/block/Blocks.NETHER_BRICK_FENCE:Lnet/minecraft/world/level/block/Block;
+    13331: getstatic net/minecraft/references/BlockItemIds.NETHER_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    13334: getstatic net/minecraft/world/level/block/Blocks.NETHER_BRICKS:Lnet/minecraft/world/level/block/Block;
+    13337: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    13340: putstatic net/minecraft/world/level/block/Blocks.NETHER_BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    13343: getstatic net/minecraft/references/BlockItemIds.NETHER_WART:Lnet/minecraft/references/BlockItemId;
+    13346: invokedynamic indy
+--- 13865: getstatic net/minecraft/references/BlockItemIds.SANDSTONE_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 4482
+    13847: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13850: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noOcclusion:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13853: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+    13856: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.pushReaction:(Lnet/minecraft/world/level/material/PushReaction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13859: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    13862: putstatic net/minecraft/world/level/block/Blocks.COCOA:Lnet/minecraft/world/level/block/Block;
+    13865: getstatic net/minecraft/references/BlockItemIds.SANDSTONE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    13868: getstatic net/minecraft/world/level/block/Blocks.SANDSTONE:Lnet/minecraft/world/level/block/Block;
+    13871: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    13874: putstatic net/minecraft/world/level/block/Blocks.SANDSTONE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    13877: getstatic net/minecraft/references/BlockItemIds.EMERALD_ORE:Lnet/minecraft/references/BlockItemId;
+    13880: invokedynamic indy
+--- 14105: getstatic net/minecraft/references/BlockItemIds.SPRUCE_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 4558
+    14087: ldc_w float 6.0
+    14090: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    14093: getstatic net/minecraft/world/level/block/SoundType.METAL:Lnet/minecraft/world/level/block/SoundType;
+    14096: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    14099: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    14102: putstatic net/minecraft/world/level/block/Blocks.EMERALD_BLOCK:Lnet/minecraft/world/level/block/Block;
+    14105: getstatic net/minecraft/references/BlockItemIds.SPRUCE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    14108: getstatic net/minecraft/world/level/block/Blocks.SPRUCE_PLANKS:Lnet/minecraft/world/level/block/Block;
+    14111: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    14114: putstatic net/minecraft/world/level/block/Blocks.SPRUCE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    14117: getstatic net/minecraft/references/BlockItemIds.BIRCH_STAIRS:Lnet/minecraft/references/BlockItemId;
+    14120: getstatic net/minecraft/world/level/block/Blocks.BIRCH_PLANKS:Lnet/minecraft/world/level/block/Block;
+--- 14117: getstatic net/minecraft/references/BlockItemIds.BIRCH_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 4562
+    14099: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    14102: putstatic net/minecraft/world/level/block/Blocks.EMERALD_BLOCK:Lnet/minecraft/world/level/block/Block;
+    14105: getstatic net/minecraft/references/BlockItemIds.SPRUCE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    14108: getstatic net/minecraft/world/level/block/Blocks.SPRUCE_PLANKS:Lnet/minecraft/world/level/block/Block;
+    14111: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    14114: putstatic net/minecraft/world/level/block/Blocks.SPRUCE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    14117: getstatic net/minecraft/references/BlockItemIds.BIRCH_STAIRS:Lnet/minecraft/references/BlockItemId;
+    14120: getstatic net/minecraft/world/level/block/Blocks.BIRCH_PLANKS:Lnet/minecraft/world/level/block/Block;
+    14123: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    14126: putstatic net/minecraft/world/level/block/Blocks.BIRCH_STAIRS:Lnet/minecraft/world/level/block/Block;
+    14129: getstatic net/minecraft/references/BlockItemIds.JUNGLE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    14132: getstatic net/minecraft/world/level/block/Blocks.JUNGLE_PLANKS:Lnet/minecraft/world/level/block/Block;
+--- 14129: getstatic net/minecraft/references/BlockItemIds.JUNGLE_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 4566
+    14111: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    14114: putstatic net/minecraft/world/level/block/Blocks.SPRUCE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    14117: getstatic net/minecraft/references/BlockItemIds.BIRCH_STAIRS:Lnet/minecraft/references/BlockItemId;
+    14120: getstatic net/minecraft/world/level/block/Blocks.BIRCH_PLANKS:Lnet/minecraft/world/level/block/Block;
+    14123: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    14126: putstatic net/minecraft/world/level/block/Blocks.BIRCH_STAIRS:Lnet/minecraft/world/level/block/Block;
+    14129: getstatic net/minecraft/references/BlockItemIds.JUNGLE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    14132: getstatic net/minecraft/world/level/block/Blocks.JUNGLE_PLANKS:Lnet/minecraft/world/level/block/Block;
+    14135: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    14138: putstatic net/minecraft/world/level/block/Blocks.JUNGLE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    14141: getstatic net/minecraft/references/BlockItemIds.COMMAND_BLOCK:Lnet/minecraft/references/BlockItemId;
+    14144: invokedynamic indy
+--- 16100: getstatic net/minecraft/references/BlockItemIds.QUARTZ_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 5188
+    16082: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    16085: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    16088: ldc_w float 0.800000011920929
+    16091: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    16094: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    16097: putstatic net/minecraft/world/level/block/Blocks.QUARTZ_PILLAR:Lnet/minecraft/world/level/block/Block;
+    16100: getstatic net/minecraft/references/BlockItemIds.QUARTZ_STAIRS:Lnet/minecraft/references/BlockItemId;
+    16103: getstatic net/minecraft/world/level/block/Blocks.QUARTZ_BLOCK:Lnet/minecraft/world/level/block/Block;
+    16106: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    16109: putstatic net/minecraft/world/level/block/Blocks.QUARTZ_STAIRS:Lnet/minecraft/world/level/block/Block;
+    16112: getstatic net/minecraft/references/BlockItemIds.ACTIVATOR_RAIL:Lnet/minecraft/references/BlockItemId;
+    16115: invokedynamic indy
+--- 16230: getstatic net/minecraft/references/BlockItemIds.ACACIA_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 5226
+    16206: getstatic net/minecraft/references/BlockItemIds.STAINED_GLASS_PANE:Lnet/minecraft/world/level/block/ColorCollection;
+    16209: invokedynamic indy
+    16214: invokedynamic indy
+    16219: invokedynamic indy
+    16224: invokestatic net/minecraft/world/level/block/ColorCollection.registerBlocks:(Lnet/minecraft/world/level/block/ColorCollection;Lorg/apache/commons/lang3/function/TriFunction;Ljava/util/function/BiFunction;Ljava/util/function/Function;)Lnet/minecraft/world/level/block/ColorCollection;
+    16227: putstatic net/minecraft/world/level/block/Blocks.STAINED_GLASS_PANE:Lnet/minecraft/world/level/block/ColorCollection;
+    16230: getstatic net/minecraft/references/BlockItemIds.ACACIA_STAIRS:Lnet/minecraft/references/BlockItemId;
+    16233: getstatic net/minecraft/world/level/block/Blocks.ACACIA_PLANKS:Lnet/minecraft/world/level/block/Block;
+    16236: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    16239: putstatic net/minecraft/world/level/block/Blocks.ACACIA_STAIRS:Lnet/minecraft/world/level/block/Block;
+    16242: getstatic net/minecraft/references/BlockItemIds.CHERRY_STAIRS:Lnet/minecraft/references/BlockItemId;
+    16245: getstatic net/minecraft/world/level/block/Blocks.CHERRY_PLANKS:Lnet/minecraft/world/level/block/Block;
+--- 16242: getstatic net/minecraft/references/BlockItemIds.CHERRY_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 5230
+    16224: invokestatic net/minecraft/world/level/block/ColorCollection.registerBlocks:(Lnet/minecraft/world/level/block/ColorCollection;Lorg/apache/commons/lang3/function/TriFunction;Ljava/util/function/BiFunction;Ljava/util/function/Function;)Lnet/minecraft/world/level/block/ColorCollection;
+    16227: putstatic net/minecraft/world/level/block/Blocks.STAINED_GLASS_PANE:Lnet/minecraft/world/level/block/ColorCollection;
+    16230: getstatic net/minecraft/references/BlockItemIds.ACACIA_STAIRS:Lnet/minecraft/references/BlockItemId;
+    16233: getstatic net/minecraft/world/level/block/Blocks.ACACIA_PLANKS:Lnet/minecraft/world/level/block/Block;
+    16236: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    16239: putstatic net/minecraft/world/level/block/Blocks.ACACIA_STAIRS:Lnet/minecraft/world/level/block/Block;
+    16242: getstatic net/minecraft/references/BlockItemIds.CHERRY_STAIRS:Lnet/minecraft/references/BlockItemId;
+    16245: getstatic net/minecraft/world/level/block/Blocks.CHERRY_PLANKS:Lnet/minecraft/world/level/block/Block;
+    16248: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    16251: putstatic net/minecraft/world/level/block/Blocks.CHERRY_STAIRS:Lnet/minecraft/world/level/block/Block;
+    16254: getstatic net/minecraft/references/BlockItemIds.DARK_OAK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    16257: getstatic net/minecraft/world/level/block/Blocks.DARK_OAK_PLANKS:Lnet/minecraft/world/level/block/Block;
+--- 16254: getstatic net/minecraft/references/BlockItemIds.DARK_OAK_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 5234
+    16236: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    16239: putstatic net/minecraft/world/level/block/Blocks.ACACIA_STAIRS:Lnet/minecraft/world/level/block/Block;
+    16242: getstatic net/minecraft/references/BlockItemIds.CHERRY_STAIRS:Lnet/minecraft/references/BlockItemId;
+    16245: getstatic net/minecraft/world/level/block/Blocks.CHERRY_PLANKS:Lnet/minecraft/world/level/block/Block;
+    16248: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    16251: putstatic net/minecraft/world/level/block/Blocks.CHERRY_STAIRS:Lnet/minecraft/world/level/block/Block;
+    16254: getstatic net/minecraft/references/BlockItemIds.DARK_OAK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    16257: getstatic net/minecraft/world/level/block/Blocks.DARK_OAK_PLANKS:Lnet/minecraft/world/level/block/Block;
+    16260: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    16263: putstatic net/minecraft/world/level/block/Blocks.DARK_OAK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    16266: getstatic net/minecraft/references/BlockItemIds.PALE_OAK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    16269: getstatic net/minecraft/world/level/block/Blocks.PALE_OAK_PLANKS:Lnet/minecraft/world/level/block/Block;
+--- 16266: getstatic net/minecraft/references/BlockItemIds.PALE_OAK_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 5238
+    16248: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    16251: putstatic net/minecraft/world/level/block/Blocks.CHERRY_STAIRS:Lnet/minecraft/world/level/block/Block;
+    16254: getstatic net/minecraft/references/BlockItemIds.DARK_OAK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    16257: getstatic net/minecraft/world/level/block/Blocks.DARK_OAK_PLANKS:Lnet/minecraft/world/level/block/Block;
+    16260: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    16263: putstatic net/minecraft/world/level/block/Blocks.DARK_OAK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    16266: getstatic net/minecraft/references/BlockItemIds.PALE_OAK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    16269: getstatic net/minecraft/world/level/block/Blocks.PALE_OAK_PLANKS:Lnet/minecraft/world/level/block/Block;
+    16272: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    16275: putstatic net/minecraft/world/level/block/Blocks.PALE_OAK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    16278: getstatic net/minecraft/references/BlockItemIds.MANGROVE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    16281: getstatic net/minecraft/world/level/block/Blocks.MANGROVE_PLANKS:Lnet/minecraft/world/level/block/Block;
+--- 16278: getstatic net/minecraft/references/BlockItemIds.MANGROVE_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 5242
+    16260: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    16263: putstatic net/minecraft/world/level/block/Blocks.DARK_OAK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    16266: getstatic net/minecraft/references/BlockItemIds.PALE_OAK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    16269: getstatic net/minecraft/world/level/block/Blocks.PALE_OAK_PLANKS:Lnet/minecraft/world/level/block/Block;
+    16272: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    16275: putstatic net/minecraft/world/level/block/Blocks.PALE_OAK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    16278: getstatic net/minecraft/references/BlockItemIds.MANGROVE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    16281: getstatic net/minecraft/world/level/block/Blocks.MANGROVE_PLANKS:Lnet/minecraft/world/level/block/Block;
+    16284: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    16287: putstatic net/minecraft/world/level/block/Blocks.MANGROVE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    16290: getstatic net/minecraft/references/BlockItemIds.BAMBOO_STAIRS:Lnet/minecraft/references/BlockItemId;
+    16293: getstatic net/minecraft/world/level/block/Blocks.BAMBOO_PLANKS:Lnet/minecraft/world/level/block/Block;
+--- 16290: getstatic net/minecraft/references/BlockItemIds.BAMBOO_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 5246
+    16272: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    16275: putstatic net/minecraft/world/level/block/Blocks.PALE_OAK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    16278: getstatic net/minecraft/references/BlockItemIds.MANGROVE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    16281: getstatic net/minecraft/world/level/block/Blocks.MANGROVE_PLANKS:Lnet/minecraft/world/level/block/Block;
+    16284: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    16287: putstatic net/minecraft/world/level/block/Blocks.MANGROVE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    16290: getstatic net/minecraft/references/BlockItemIds.BAMBOO_STAIRS:Lnet/minecraft/references/BlockItemId;
+    16293: getstatic net/minecraft/world/level/block/Blocks.BAMBOO_PLANKS:Lnet/minecraft/world/level/block/Block;
+    16296: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    16299: putstatic net/minecraft/world/level/block/Blocks.BAMBOO_STAIRS:Lnet/minecraft/world/level/block/Block;
+    16302: getstatic net/minecraft/references/BlockItemIds.BAMBOO_MOSAIC_STAIRS:Lnet/minecraft/references/BlockItemId;
+    16305: getstatic net/minecraft/world/level/block/Blocks.BAMBOO_MOSAIC:Lnet/minecraft/world/level/block/Block;
+--- 16302: getstatic net/minecraft/references/BlockItemIds.BAMBOO_MOSAIC_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 5250
+    16284: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    16287: putstatic net/minecraft/world/level/block/Blocks.MANGROVE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    16290: getstatic net/minecraft/references/BlockItemIds.BAMBOO_STAIRS:Lnet/minecraft/references/BlockItemId;
+    16293: getstatic net/minecraft/world/level/block/Blocks.BAMBOO_PLANKS:Lnet/minecraft/world/level/block/Block;
+    16296: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    16299: putstatic net/minecraft/world/level/block/Blocks.BAMBOO_STAIRS:Lnet/minecraft/world/level/block/Block;
+    16302: getstatic net/minecraft/references/BlockItemIds.BAMBOO_MOSAIC_STAIRS:Lnet/minecraft/references/BlockItemId;
+    16305: getstatic net/minecraft/world/level/block/Blocks.BAMBOO_MOSAIC:Lnet/minecraft/world/level/block/Block;
+    16308: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    16311: putstatic net/minecraft/world/level/block/Blocks.BAMBOO_MOSAIC_STAIRS:Lnet/minecraft/world/level/block/Block;
+    16314: getstatic net/minecraft/references/BlockItemIds.SLIME_BLOCK:Lnet/minecraft/references/BlockItemId;
+    16317: invokedynamic indy
+--- 16612: getstatic net/minecraft/references/BlockItemIds.PRISMARINE_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 5351
+    16595: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    16598: ldc float 1.5
+    16600: ldc_w float 6.0
+    16603: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    16606: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    16609: putstatic net/minecraft/world/level/block/Blocks.DARK_PRISMARINE:Lnet/minecraft/world/level/block/Block;
+    16612: getstatic net/minecraft/references/BlockItemIds.PRISMARINE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    16615: getstatic net/minecraft/world/level/block/Blocks.PRISMARINE:Lnet/minecraft/world/level/block/Block;
+    16618: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    16621: putstatic net/minecraft/world/level/block/Blocks.PRISMARINE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    16624: getstatic net/minecraft/references/BlockItemIds.PRISMARINE_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    16627: getstatic net/minecraft/world/level/block/Blocks.PRISMARINE_BRICKS:Lnet/minecraft/world/level/block/Block;
+--- 16624: getstatic net/minecraft/references/BlockItemIds.PRISMARINE_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 5355
+    16606: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    16609: putstatic net/minecraft/world/level/block/Blocks.DARK_PRISMARINE:Lnet/minecraft/world/level/block/Block;
+    16612: getstatic net/minecraft/references/BlockItemIds.PRISMARINE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    16615: getstatic net/minecraft/world/level/block/Blocks.PRISMARINE:Lnet/minecraft/world/level/block/Block;
+    16618: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    16621: putstatic net/minecraft/world/level/block/Blocks.PRISMARINE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    16624: getstatic net/minecraft/references/BlockItemIds.PRISMARINE_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    16627: getstatic net/minecraft/world/level/block/Blocks.PRISMARINE_BRICKS:Lnet/minecraft/world/level/block/Block;
+    16630: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    16633: putstatic net/minecraft/world/level/block/Blocks.PRISMARINE_BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    16636: getstatic net/minecraft/references/BlockItemIds.DARK_PRISMARINE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    16639: getstatic net/minecraft/world/level/block/Blocks.DARK_PRISMARINE:Lnet/minecraft/world/level/block/Block;
+--- 16636: getstatic net/minecraft/references/BlockItemIds.DARK_PRISMARINE_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 5359
+    16618: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    16621: putstatic net/minecraft/world/level/block/Blocks.PRISMARINE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    16624: getstatic net/minecraft/references/BlockItemIds.PRISMARINE_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    16627: getstatic net/minecraft/world/level/block/Blocks.PRISMARINE_BRICKS:Lnet/minecraft/world/level/block/Block;
+    16630: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    16633: putstatic net/minecraft/world/level/block/Blocks.PRISMARINE_BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    16636: getstatic net/minecraft/references/BlockItemIds.DARK_PRISMARINE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    16639: getstatic net/minecraft/world/level/block/Blocks.DARK_PRISMARINE:Lnet/minecraft/world/level/block/Block;
+    16642: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    16645: putstatic net/minecraft/world/level/block/Blocks.DARK_PRISMARINE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    16648: getstatic net/minecraft/references/BlockItemIds.PRISMARINE_SLAB:Lnet/minecraft/references/BlockItemId;
+    16651: invokedynamic indy
+--- 17450: getstatic net/minecraft/references/BlockItemIds.RED_SANDSTONE_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 5618
+    17432: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17435: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17438: ldc_w float 0.800000011920929
+    17441: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    17444: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    17447: putstatic net/minecraft/world/level/block/Blocks.CUT_RED_SANDSTONE:Lnet/minecraft/world/level/block/Block;
+    17450: getstatic net/minecraft/references/BlockItemIds.RED_SANDSTONE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    17453: getstatic net/minecraft/world/level/block/Blocks.RED_SANDSTONE:Lnet/minecraft/world/level/block/Block;
+    17456: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    17459: putstatic net/minecraft/world/level/block/Blocks.RED_SANDSTONE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    17462: getstatic net/minecraft/references/BlockItemIds.OAK_SLAB:Lnet/minecraft/references/BlockItemId;
+    17465: invokedynamic indy
+--- 20170: getstatic net/minecraft/references/BlockItemIds.PURPUR_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 6517
+    20153: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    20156: ldc float 1.5
+    20158: ldc_w float 6.0
+    20161: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    20164: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    20167: putstatic net/minecraft/world/level/block/Blocks.PURPUR_PILLAR:Lnet/minecraft/world/level/block/Block;
+    20170: getstatic net/minecraft/references/BlockItemIds.PURPUR_STAIRS:Lnet/minecraft/references/BlockItemId;
+    20173: getstatic net/minecraft/world/level/block/Blocks.PURPUR_BLOCK:Lnet/minecraft/world/level/block/Block;
+    20176: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    20179: putstatic net/minecraft/world/level/block/Blocks.PURPUR_STAIRS:Lnet/minecraft/world/level/block/Block;
+    20182: getstatic net/minecraft/references/BlockItemIds.END_STONE_BRICKS:Lnet/minecraft/references/BlockItemId;
+    20185: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+--- 23337: getstatic net/minecraft/references/BlockItemIds.POLISHED_GRANITE_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 7529
+    23319: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.pushReaction:(Lnet/minecraft/world/level/material/PushReaction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    23322: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.liquid:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    23325: getstatic net/minecraft/world/level/block/SoundType.EMPTY:Lnet/minecraft/world/level/block/SoundType;
+    23328: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    23331: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    23334: putstatic net/minecraft/world/level/block/Blocks.BUBBLE_COLUMN:Lnet/minecraft/world/level/block/Block;
+    23337: getstatic net/minecraft/references/BlockItemIds.POLISHED_GRANITE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23340: getstatic net/minecraft/world/level/block/Blocks.POLISHED_GRANITE:Lnet/minecraft/world/level/block/Block;
+    23343: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23346: putstatic net/minecraft/world/level/block/Blocks.POLISHED_GRANITE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23349: getstatic net/minecraft/references/BlockItemIds.SMOOTH_RED_SANDSTONE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23352: getstatic net/minecraft/world/level/block/Blocks.SMOOTH_RED_SANDSTONE:Lnet/minecraft/world/level/block/Block;
+--- 23349: getstatic net/minecraft/references/BlockItemIds.SMOOTH_RED_SANDSTONE_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 7533
+    23331: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/resources/ResourceKey;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    23334: putstatic net/minecraft/world/level/block/Blocks.BUBBLE_COLUMN:Lnet/minecraft/world/level/block/Block;
+    23337: getstatic net/minecraft/references/BlockItemIds.POLISHED_GRANITE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23340: getstatic net/minecraft/world/level/block/Blocks.POLISHED_GRANITE:Lnet/minecraft/world/level/block/Block;
+    23343: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23346: putstatic net/minecraft/world/level/block/Blocks.POLISHED_GRANITE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23349: getstatic net/minecraft/references/BlockItemIds.SMOOTH_RED_SANDSTONE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23352: getstatic net/minecraft/world/level/block/Blocks.SMOOTH_RED_SANDSTONE:Lnet/minecraft/world/level/block/Block;
+    23355: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23358: putstatic net/minecraft/world/level/block/Blocks.SMOOTH_RED_SANDSTONE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23361: getstatic net/minecraft/references/BlockItemIds.MOSSY_STONE_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23364: getstatic net/minecraft/world/level/block/Blocks.MOSSY_STONE_BRICKS:Lnet/minecraft/world/level/block/Block;
+--- 23361: getstatic net/minecraft/references/BlockItemIds.MOSSY_STONE_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 7537
+    23343: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23346: putstatic net/minecraft/world/level/block/Blocks.POLISHED_GRANITE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23349: getstatic net/minecraft/references/BlockItemIds.SMOOTH_RED_SANDSTONE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23352: getstatic net/minecraft/world/level/block/Blocks.SMOOTH_RED_SANDSTONE:Lnet/minecraft/world/level/block/Block;
+    23355: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23358: putstatic net/minecraft/world/level/block/Blocks.SMOOTH_RED_SANDSTONE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23361: getstatic net/minecraft/references/BlockItemIds.MOSSY_STONE_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23364: getstatic net/minecraft/world/level/block/Blocks.MOSSY_STONE_BRICKS:Lnet/minecraft/world/level/block/Block;
+    23367: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23370: putstatic net/minecraft/world/level/block/Blocks.MOSSY_STONE_BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23373: getstatic net/minecraft/references/BlockItemIds.POLISHED_DIORITE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23376: getstatic net/minecraft/world/level/block/Blocks.POLISHED_DIORITE:Lnet/minecraft/world/level/block/Block;
+--- 23373: getstatic net/minecraft/references/BlockItemIds.POLISHED_DIORITE_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 7541
+    23355: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23358: putstatic net/minecraft/world/level/block/Blocks.SMOOTH_RED_SANDSTONE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23361: getstatic net/minecraft/references/BlockItemIds.MOSSY_STONE_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23364: getstatic net/minecraft/world/level/block/Blocks.MOSSY_STONE_BRICKS:Lnet/minecraft/world/level/block/Block;
+    23367: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23370: putstatic net/minecraft/world/level/block/Blocks.MOSSY_STONE_BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23373: getstatic net/minecraft/references/BlockItemIds.POLISHED_DIORITE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23376: getstatic net/minecraft/world/level/block/Blocks.POLISHED_DIORITE:Lnet/minecraft/world/level/block/Block;
+    23379: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23382: putstatic net/minecraft/world/level/block/Blocks.POLISHED_DIORITE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23385: getstatic net/minecraft/references/BlockItemIds.MOSSY_COBBLESTONE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23388: getstatic net/minecraft/world/level/block/Blocks.MOSSY_COBBLESTONE:Lnet/minecraft/world/level/block/Block;
+--- 23385: getstatic net/minecraft/references/BlockItemIds.MOSSY_COBBLESTONE_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 7545
+    23367: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23370: putstatic net/minecraft/world/level/block/Blocks.MOSSY_STONE_BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23373: getstatic net/minecraft/references/BlockItemIds.POLISHED_DIORITE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23376: getstatic net/minecraft/world/level/block/Blocks.POLISHED_DIORITE:Lnet/minecraft/world/level/block/Block;
+    23379: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23382: putstatic net/minecraft/world/level/block/Blocks.POLISHED_DIORITE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23385: getstatic net/minecraft/references/BlockItemIds.MOSSY_COBBLESTONE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23388: getstatic net/minecraft/world/level/block/Blocks.MOSSY_COBBLESTONE:Lnet/minecraft/world/level/block/Block;
+    23391: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23394: putstatic net/minecraft/world/level/block/Blocks.MOSSY_COBBLESTONE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23397: getstatic net/minecraft/references/BlockItemIds.END_STONE_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23400: getstatic net/minecraft/world/level/block/Blocks.END_STONE_BRICKS:Lnet/minecraft/world/level/block/Block;
+--- 23397: getstatic net/minecraft/references/BlockItemIds.END_STONE_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 7549
+    23379: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23382: putstatic net/minecraft/world/level/block/Blocks.POLISHED_DIORITE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23385: getstatic net/minecraft/references/BlockItemIds.MOSSY_COBBLESTONE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23388: getstatic net/minecraft/world/level/block/Blocks.MOSSY_COBBLESTONE:Lnet/minecraft/world/level/block/Block;
+    23391: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23394: putstatic net/minecraft/world/level/block/Blocks.MOSSY_COBBLESTONE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23397: getstatic net/minecraft/references/BlockItemIds.END_STONE_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23400: getstatic net/minecraft/world/level/block/Blocks.END_STONE_BRICKS:Lnet/minecraft/world/level/block/Block;
+    23403: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23406: putstatic net/minecraft/world/level/block/Blocks.END_STONE_BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23409: getstatic net/minecraft/references/BlockItemIds.STONE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23412: getstatic net/minecraft/world/level/block/Blocks.STONE:Lnet/minecraft/world/level/block/Block;
+--- 23409: getstatic net/minecraft/references/BlockItemIds.STONE_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 7553
+    23391: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23394: putstatic net/minecraft/world/level/block/Blocks.MOSSY_COBBLESTONE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23397: getstatic net/minecraft/references/BlockItemIds.END_STONE_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23400: getstatic net/minecraft/world/level/block/Blocks.END_STONE_BRICKS:Lnet/minecraft/world/level/block/Block;
+    23403: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23406: putstatic net/minecraft/world/level/block/Blocks.END_STONE_BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23409: getstatic net/minecraft/references/BlockItemIds.STONE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23412: getstatic net/minecraft/world/level/block/Blocks.STONE:Lnet/minecraft/world/level/block/Block;
+    23415: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23418: putstatic net/minecraft/world/level/block/Blocks.STONE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23421: getstatic net/minecraft/references/BlockItemIds.SMOOTH_SANDSTONE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23424: getstatic net/minecraft/world/level/block/Blocks.SMOOTH_SANDSTONE:Lnet/minecraft/world/level/block/Block;
+--- 23421: getstatic net/minecraft/references/BlockItemIds.SMOOTH_SANDSTONE_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 7557
+    23403: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23406: putstatic net/minecraft/world/level/block/Blocks.END_STONE_BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23409: getstatic net/minecraft/references/BlockItemIds.STONE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23412: getstatic net/minecraft/world/level/block/Blocks.STONE:Lnet/minecraft/world/level/block/Block;
+    23415: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23418: putstatic net/minecraft/world/level/block/Blocks.STONE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23421: getstatic net/minecraft/references/BlockItemIds.SMOOTH_SANDSTONE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23424: getstatic net/minecraft/world/level/block/Blocks.SMOOTH_SANDSTONE:Lnet/minecraft/world/level/block/Block;
+    23427: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23430: putstatic net/minecraft/world/level/block/Blocks.SMOOTH_SANDSTONE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23433: getstatic net/minecraft/references/BlockItemIds.SMOOTH_QUARTZ_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23436: getstatic net/minecraft/world/level/block/Blocks.SMOOTH_QUARTZ:Lnet/minecraft/world/level/block/Block;
+--- 23433: getstatic net/minecraft/references/BlockItemIds.SMOOTH_QUARTZ_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 7561
+    23415: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23418: putstatic net/minecraft/world/level/block/Blocks.STONE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23421: getstatic net/minecraft/references/BlockItemIds.SMOOTH_SANDSTONE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23424: getstatic net/minecraft/world/level/block/Blocks.SMOOTH_SANDSTONE:Lnet/minecraft/world/level/block/Block;
+    23427: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23430: putstatic net/minecraft/world/level/block/Blocks.SMOOTH_SANDSTONE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23433: getstatic net/minecraft/references/BlockItemIds.SMOOTH_QUARTZ_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23436: getstatic net/minecraft/world/level/block/Blocks.SMOOTH_QUARTZ:Lnet/minecraft/world/level/block/Block;
+    23439: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23442: putstatic net/minecraft/world/level/block/Blocks.SMOOTH_QUARTZ_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23445: getstatic net/minecraft/references/BlockItemIds.GRANITE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23448: getstatic net/minecraft/world/level/block/Blocks.GRANITE:Lnet/minecraft/world/level/block/Block;
+--- 23445: getstatic net/minecraft/references/BlockItemIds.GRANITE_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 7565
+    23427: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23430: putstatic net/minecraft/world/level/block/Blocks.SMOOTH_SANDSTONE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23433: getstatic net/minecraft/references/BlockItemIds.SMOOTH_QUARTZ_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23436: getstatic net/minecraft/world/level/block/Blocks.SMOOTH_QUARTZ:Lnet/minecraft/world/level/block/Block;
+    23439: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23442: putstatic net/minecraft/world/level/block/Blocks.SMOOTH_QUARTZ_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23445: getstatic net/minecraft/references/BlockItemIds.GRANITE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23448: getstatic net/minecraft/world/level/block/Blocks.GRANITE:Lnet/minecraft/world/level/block/Block;
+    23451: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23454: putstatic net/minecraft/world/level/block/Blocks.GRANITE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23457: getstatic net/minecraft/references/BlockItemIds.ANDESITE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23460: getstatic net/minecraft/world/level/block/Blocks.ANDESITE:Lnet/minecraft/world/level/block/Block;
+--- 23457: getstatic net/minecraft/references/BlockItemIds.ANDESITE_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 7569
+    23439: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23442: putstatic net/minecraft/world/level/block/Blocks.SMOOTH_QUARTZ_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23445: getstatic net/minecraft/references/BlockItemIds.GRANITE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23448: getstatic net/minecraft/world/level/block/Blocks.GRANITE:Lnet/minecraft/world/level/block/Block;
+    23451: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23454: putstatic net/minecraft/world/level/block/Blocks.GRANITE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23457: getstatic net/minecraft/references/BlockItemIds.ANDESITE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23460: getstatic net/minecraft/world/level/block/Blocks.ANDESITE:Lnet/minecraft/world/level/block/Block;
+    23463: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23466: putstatic net/minecraft/world/level/block/Blocks.ANDESITE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23469: getstatic net/minecraft/references/BlockItemIds.RED_NETHER_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23472: getstatic net/minecraft/world/level/block/Blocks.RED_NETHER_BRICKS:Lnet/minecraft/world/level/block/Block;
+--- 23469: getstatic net/minecraft/references/BlockItemIds.RED_NETHER_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 7573
+    23451: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23454: putstatic net/minecraft/world/level/block/Blocks.GRANITE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23457: getstatic net/minecraft/references/BlockItemIds.ANDESITE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23460: getstatic net/minecraft/world/level/block/Blocks.ANDESITE:Lnet/minecraft/world/level/block/Block;
+    23463: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23466: putstatic net/minecraft/world/level/block/Blocks.ANDESITE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23469: getstatic net/minecraft/references/BlockItemIds.RED_NETHER_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23472: getstatic net/minecraft/world/level/block/Blocks.RED_NETHER_BRICKS:Lnet/minecraft/world/level/block/Block;
+    23475: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23478: putstatic net/minecraft/world/level/block/Blocks.RED_NETHER_BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23481: getstatic net/minecraft/references/BlockItemIds.POLISHED_ANDESITE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23484: getstatic net/minecraft/world/level/block/Blocks.POLISHED_ANDESITE:Lnet/minecraft/world/level/block/Block;
+--- 23481: getstatic net/minecraft/references/BlockItemIds.POLISHED_ANDESITE_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 7577
+    23463: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23466: putstatic net/minecraft/world/level/block/Blocks.ANDESITE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23469: getstatic net/minecraft/references/BlockItemIds.RED_NETHER_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23472: getstatic net/minecraft/world/level/block/Blocks.RED_NETHER_BRICKS:Lnet/minecraft/world/level/block/Block;
+    23475: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23478: putstatic net/minecraft/world/level/block/Blocks.RED_NETHER_BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23481: getstatic net/minecraft/references/BlockItemIds.POLISHED_ANDESITE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23484: getstatic net/minecraft/world/level/block/Blocks.POLISHED_ANDESITE:Lnet/minecraft/world/level/block/Block;
+    23487: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23490: putstatic net/minecraft/world/level/block/Blocks.POLISHED_ANDESITE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23493: getstatic net/minecraft/references/BlockItemIds.DIORITE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23496: getstatic net/minecraft/world/level/block/Blocks.DIORITE:Lnet/minecraft/world/level/block/Block;
+--- 23493: getstatic net/minecraft/references/BlockItemIds.DIORITE_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 7581
+    23475: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23478: putstatic net/minecraft/world/level/block/Blocks.RED_NETHER_BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23481: getstatic net/minecraft/references/BlockItemIds.POLISHED_ANDESITE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23484: getstatic net/minecraft/world/level/block/Blocks.POLISHED_ANDESITE:Lnet/minecraft/world/level/block/Block;
+    23487: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23490: putstatic net/minecraft/world/level/block/Blocks.POLISHED_ANDESITE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23493: getstatic net/minecraft/references/BlockItemIds.DIORITE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    23496: getstatic net/minecraft/world/level/block/Blocks.DIORITE:Lnet/minecraft/world/level/block/Block;
+    23499: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    23502: putstatic net/minecraft/world/level/block/Blocks.DIORITE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    23505: getstatic net/minecraft/references/BlockItemIds.POLISHED_GRANITE_SLAB:Lnet/minecraft/references/BlockItemId;
+    23508: invokedynamic indy
+--- 26215: getstatic net/minecraft/references/BlockItemIds.CRIMSON_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 8447
+    26199: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    26202: fconst_2
+    26203: ldc_w float 3.0
+    26206: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    26209: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    26212: putstatic net/minecraft/world/level/block/Blocks.WARPED_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+    26215: getstatic net/minecraft/references/BlockItemIds.CRIMSON_STAIRS:Lnet/minecraft/references/BlockItemId;
+    26218: getstatic net/minecraft/world/level/block/Blocks.CRIMSON_PLANKS:Lnet/minecraft/world/level/block/Block;
+    26221: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    26224: putstatic net/minecraft/world/level/block/Blocks.CRIMSON_STAIRS:Lnet/minecraft/world/level/block/Block;
+    26227: getstatic net/minecraft/references/BlockItemIds.WARPED_STAIRS:Lnet/minecraft/references/BlockItemId;
+    26230: getstatic net/minecraft/world/level/block/Blocks.WARPED_PLANKS:Lnet/minecraft/world/level/block/Block;
+--- 26227: getstatic net/minecraft/references/BlockItemIds.WARPED_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 8451
+    26209: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    26212: putstatic net/minecraft/world/level/block/Blocks.WARPED_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+    26215: getstatic net/minecraft/references/BlockItemIds.CRIMSON_STAIRS:Lnet/minecraft/references/BlockItemId;
+    26218: getstatic net/minecraft/world/level/block/Blocks.CRIMSON_PLANKS:Lnet/minecraft/world/level/block/Block;
+    26221: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    26224: putstatic net/minecraft/world/level/block/Blocks.CRIMSON_STAIRS:Lnet/minecraft/world/level/block/Block;
+    26227: getstatic net/minecraft/references/BlockItemIds.WARPED_STAIRS:Lnet/minecraft/references/BlockItemId;
+    26230: getstatic net/minecraft/world/level/block/Blocks.WARPED_PLANKS:Lnet/minecraft/world/level/block/Block;
+    26233: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    26236: putstatic net/minecraft/world/level/block/Blocks.WARPED_STAIRS:Lnet/minecraft/world/level/block/Block;
+    26239: getstatic net/minecraft/references/BlockItemIds.CRIMSON_BUTTON:Lnet/minecraft/references/BlockItemId;
+    26242: invokedynamic indy
+--- 27245: getstatic net/minecraft/references/BlockItemIds.BLACKSTONE_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 8778
+    27228: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    27231: ldc float 1.5
+    27233: ldc_w float 6.0
+    27236: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    27239: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    27242: putstatic net/minecraft/world/level/block/Blocks.BLACKSTONE:Lnet/minecraft/world/level/block/Block;
+    27245: getstatic net/minecraft/references/BlockItemIds.BLACKSTONE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    27248: getstatic net/minecraft/world/level/block/Blocks.BLACKSTONE:Lnet/minecraft/world/level/block/Block;
+    27251: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    27254: putstatic net/minecraft/world/level/block/Blocks.BLACKSTONE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    27257: getstatic net/minecraft/references/BlockItemIds.BLACKSTONE_WALL:Lnet/minecraft/references/BlockItemId;
+    27260: invokedynamic indy
+--- 27417: getstatic net/minecraft/references/BlockItemIds.POLISHED_BLACKSTONE_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 8836
+    27401: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    27404: fconst_2
+    27405: ldc_w float 6.0
+    27408: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    27411: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    27414: putstatic net/minecraft/world/level/block/Blocks.POLISHED_BLACKSTONE_BRICK_SLAB:Lnet/minecraft/world/level/block/Block;
+    27417: getstatic net/minecraft/references/BlockItemIds.POLISHED_BLACKSTONE_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    27420: getstatic net/minecraft/world/level/block/Blocks.POLISHED_BLACKSTONE_BRICKS:Lnet/minecraft/world/level/block/Block;
+    27423: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    27426: putstatic net/minecraft/world/level/block/Blocks.POLISHED_BLACKSTONE_BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    27429: getstatic net/minecraft/references/BlockItemIds.POLISHED_BLACKSTONE_BRICK_WALL:Lnet/minecraft/references/BlockItemId;
+    27432: invokedynamic indy
+--- 27473: getstatic net/minecraft/references/BlockItemIds.POLISHED_BLACKSTONE_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 8854
+    27455: getstatic net/minecraft/world/level/block/Blocks.BLACKSTONE:Lnet/minecraft/world/level/block/Block;
+    27458: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    27461: getstatic net/minecraft/world/level/block/SoundType.GILDED_BLACKSTONE:Lnet/minecraft/world/level/block/SoundType;
+    27464: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    27467: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    27470: putstatic net/minecraft/world/level/block/Blocks.GILDED_BLACKSTONE:Lnet/minecraft/world/level/block/Block;
+    27473: getstatic net/minecraft/references/BlockItemIds.POLISHED_BLACKSTONE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    27476: getstatic net/minecraft/world/level/block/Blocks.POLISHED_BLACKSTONE:Lnet/minecraft/world/level/block/Block;
+    27479: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    27482: putstatic net/minecraft/world/level/block/Blocks.POLISHED_BLACKSTONE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    27485: getstatic net/minecraft/references/BlockItemIds.POLISHED_BLACKSTONE_SLAB:Lnet/minecraft/references/BlockItemId;
+    27488: invokedynamic indy
+--- 28081: getstatic net/minecraft/references/BlockItemIds.TUFF_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 9045
+    28061: getstatic net/minecraft/references/BlockItemIds.TUFF_SLAB:Lnet/minecraft/references/BlockItemId;
+    28064: invokedynamic indy
+    28069: getstatic net/minecraft/world/level/block/Blocks.TUFF:Lnet/minecraft/world/level/block/Block;
+    28072: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    28075: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    28078: putstatic net/minecraft/world/level/block/Blocks.TUFF_SLAB:Lnet/minecraft/world/level/block/Block;
+    28081: getstatic net/minecraft/references/BlockItemIds.TUFF_STAIRS:Lnet/minecraft/references/BlockItemId;
+    28084: invokedynamic indy
+    28089: getstatic net/minecraft/world/level/block/Blocks.TUFF:Lnet/minecraft/world/level/block/Block;
+    28092: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    28095: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    28098: putstatic net/minecraft/world/level/block/Blocks.TUFF_STAIRS:Lnet/minecraft/world/level/block/Block;
+--- 28165: getstatic net/minecraft/references/BlockItemIds.POLISHED_TUFF_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 9071
+    28145: getstatic net/minecraft/references/BlockItemIds.POLISHED_TUFF_SLAB:Lnet/minecraft/references/BlockItemId;
+    28148: invokedynamic indy
+    28153: getstatic net/minecraft/world/level/block/Blocks.POLISHED_TUFF:Lnet/minecraft/world/level/block/Block;
+    28156: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    28159: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    28162: putstatic net/minecraft/world/level/block/Blocks.POLISHED_TUFF_SLAB:Lnet/minecraft/world/level/block/Block;
+    28165: getstatic net/minecraft/references/BlockItemIds.POLISHED_TUFF_STAIRS:Lnet/minecraft/references/BlockItemId;
+    28168: invokedynamic indy
+    28173: getstatic net/minecraft/world/level/block/Blocks.POLISHED_TUFF:Lnet/minecraft/world/level/block/Block;
+    28176: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    28179: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    28182: putstatic net/minecraft/world/level/block/Blocks.POLISHED_TUFF_STAIRS:Lnet/minecraft/world/level/block/Block;
+--- 28264: getstatic net/minecraft/references/BlockItemIds.TUFF_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 9102
+    28244: getstatic net/minecraft/references/BlockItemIds.TUFF_BRICK_SLAB:Lnet/minecraft/references/BlockItemId;
+    28247: invokedynamic indy
+    28252: getstatic net/minecraft/world/level/block/Blocks.TUFF_BRICKS:Lnet/minecraft/world/level/block/Block;
+    28255: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    28258: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    28261: putstatic net/minecraft/world/level/block/Blocks.TUFF_BRICK_SLAB:Lnet/minecraft/world/level/block/Block;
+    28264: getstatic net/minecraft/references/BlockItemIds.TUFF_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    28267: invokedynamic indy
+    28272: getstatic net/minecraft/world/level/block/Blocks.TUFF_BRICKS:Lnet/minecraft/world/level/block/Block;
+    28275: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    28278: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    28281: putstatic net/minecraft/world/level/block/Blocks.TUFF_BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+--- 28407: getstatic net/minecraft/references/BlockItemIds.SULFUR_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 9148
+    28389: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    28392: putstatic net/minecraft/world/level/block/Blocks.POTENT_SULFUR:Lnet/minecraft/world/level/block/Block;
+    28395: getstatic net/minecraft/references/BlockItemIds.SULFUR_SLAB:Lnet/minecraft/references/BlockItemId;
+    28398: getstatic net/minecraft/world/level/block/Blocks.SULFUR:Lnet/minecraft/world/level/block/Block;
+    28401: invokestatic net/minecraft/world/level/block/Blocks.registerSlab:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    28404: putstatic net/minecraft/world/level/block/Blocks.SULFUR_SLAB:Lnet/minecraft/world/level/block/Block;
+    28407: getstatic net/minecraft/references/BlockItemIds.SULFUR_STAIRS:Lnet/minecraft/references/BlockItemId;
+    28410: getstatic net/minecraft/world/level/block/Blocks.SULFUR:Lnet/minecraft/world/level/block/Block;
+    28413: invokestatic net/minecraft/world/level/block/Blocks.registerStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    28416: putstatic net/minecraft/world/level/block/Blocks.SULFUR_STAIRS:Lnet/minecraft/world/level/block/Block;
+    28419: getstatic net/minecraft/references/BlockItemIds.SULFUR_WALL:Lnet/minecraft/references/BlockItemId;
+    28422: getstatic net/minecraft/world/level/block/Blocks.SULFUR:Lnet/minecraft/world/level/block/Block;
+--- 28458: getstatic net/minecraft/references/BlockItemIds.POLISHED_SULFUR_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 9165
+    28440: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    28443: putstatic net/minecraft/world/level/block/Blocks.POLISHED_SULFUR:Lnet/minecraft/world/level/block/Block;
+    28446: getstatic net/minecraft/references/BlockItemIds.POLISHED_SULFUR_SLAB:Lnet/minecraft/references/BlockItemId;
+    28449: getstatic net/minecraft/world/level/block/Blocks.POLISHED_SULFUR:Lnet/minecraft/world/level/block/Block;
+    28452: invokestatic net/minecraft/world/level/block/Blocks.registerSlab:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    28455: putstatic net/minecraft/world/level/block/Blocks.POLISHED_SULFUR_SLAB:Lnet/minecraft/world/level/block/Block;
+    28458: getstatic net/minecraft/references/BlockItemIds.POLISHED_SULFUR_STAIRS:Lnet/minecraft/references/BlockItemId;
+    28461: getstatic net/minecraft/world/level/block/Blocks.POLISHED_SULFUR:Lnet/minecraft/world/level/block/Block;
+    28464: invokestatic net/minecraft/world/level/block/Blocks.registerStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    28467: putstatic net/minecraft/world/level/block/Blocks.POLISHED_SULFUR_STAIRS:Lnet/minecraft/world/level/block/Block;
+    28470: getstatic net/minecraft/references/BlockItemIds.POLISHED_SULFUR_WALL:Lnet/minecraft/references/BlockItemId;
+    28473: getstatic net/minecraft/world/level/block/Blocks.POLISHED_SULFUR:Lnet/minecraft/world/level/block/Block;
+--- 28509: getstatic net/minecraft/references/BlockItemIds.SULFUR_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 9182
+    28491: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    28494: putstatic net/minecraft/world/level/block/Blocks.SULFUR_BRICKS:Lnet/minecraft/world/level/block/Block;
+    28497: getstatic net/minecraft/references/BlockItemIds.SULFUR_BRICK_SLAB:Lnet/minecraft/references/BlockItemId;
+    28500: getstatic net/minecraft/world/level/block/Blocks.SULFUR_BRICKS:Lnet/minecraft/world/level/block/Block;
+    28503: invokestatic net/minecraft/world/level/block/Blocks.registerSlab:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    28506: putstatic net/minecraft/world/level/block/Blocks.SULFUR_BRICK_SLAB:Lnet/minecraft/world/level/block/Block;
+    28509: getstatic net/minecraft/references/BlockItemIds.SULFUR_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    28512: getstatic net/minecraft/world/level/block/Blocks.SULFUR_BRICKS:Lnet/minecraft/world/level/block/Block;
+    28515: invokestatic net/minecraft/world/level/block/Blocks.registerStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    28518: putstatic net/minecraft/world/level/block/Blocks.SULFUR_BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    28521: getstatic net/minecraft/references/BlockItemIds.SULFUR_BRICK_WALL:Lnet/minecraft/references/BlockItemId;
+    28524: getstatic net/minecraft/world/level/block/Blocks.SULFUR_BRICKS:Lnet/minecraft/world/level/block/Block;
+--- 28601: getstatic net/minecraft/references/BlockItemIds.CINNABAR_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 9213
+    28583: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    28586: putstatic net/minecraft/world/level/block/Blocks.CINNABAR:Lnet/minecraft/world/level/block/Block;
+    28589: getstatic net/minecraft/references/BlockItemIds.CINNABAR_SLAB:Lnet/minecraft/references/BlockItemId;
+    28592: getstatic net/minecraft/world/level/block/Blocks.CINNABAR:Lnet/minecraft/world/level/block/Block;
+    28595: invokestatic net/minecraft/world/level/block/Blocks.registerSlab:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    28598: putstatic net/minecraft/world/level/block/Blocks.CINNABAR_SLAB:Lnet/minecraft/world/level/block/Block;
+    28601: getstatic net/minecraft/references/BlockItemIds.CINNABAR_STAIRS:Lnet/minecraft/references/BlockItemId;
+    28604: getstatic net/minecraft/world/level/block/Blocks.CINNABAR:Lnet/minecraft/world/level/block/Block;
+    28607: invokestatic net/minecraft/world/level/block/Blocks.registerStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    28610: putstatic net/minecraft/world/level/block/Blocks.CINNABAR_STAIRS:Lnet/minecraft/world/level/block/Block;
+    28613: getstatic net/minecraft/references/BlockItemIds.CINNABAR_WALL:Lnet/minecraft/references/BlockItemId;
+    28616: getstatic net/minecraft/world/level/block/Blocks.CINNABAR:Lnet/minecraft/world/level/block/Block;
+--- 28652: getstatic net/minecraft/references/BlockItemIds.POLISHED_CINNABAR_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 9230
+    28634: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    28637: putstatic net/minecraft/world/level/block/Blocks.POLISHED_CINNABAR:Lnet/minecraft/world/level/block/Block;
+    28640: getstatic net/minecraft/references/BlockItemIds.POLISHED_CINNABAR_SLAB:Lnet/minecraft/references/BlockItemId;
+    28643: getstatic net/minecraft/world/level/block/Blocks.POLISHED_CINNABAR:Lnet/minecraft/world/level/block/Block;
+    28646: invokestatic net/minecraft/world/level/block/Blocks.registerSlab:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    28649: putstatic net/minecraft/world/level/block/Blocks.POLISHED_CINNABAR_SLAB:Lnet/minecraft/world/level/block/Block;
+    28652: getstatic net/minecraft/references/BlockItemIds.POLISHED_CINNABAR_STAIRS:Lnet/minecraft/references/BlockItemId;
+    28655: getstatic net/minecraft/world/level/block/Blocks.POLISHED_CINNABAR:Lnet/minecraft/world/level/block/Block;
+    28658: invokestatic net/minecraft/world/level/block/Blocks.registerStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    28661: putstatic net/minecraft/world/level/block/Blocks.POLISHED_CINNABAR_STAIRS:Lnet/minecraft/world/level/block/Block;
+    28664: getstatic net/minecraft/references/BlockItemIds.POLISHED_CINNABAR_WALL:Lnet/minecraft/references/BlockItemId;
+    28667: getstatic net/minecraft/world/level/block/Blocks.POLISHED_CINNABAR:Lnet/minecraft/world/level/block/Block;
+--- 28703: getstatic net/minecraft/references/BlockItemIds.CINNABAR_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 9247
+    28685: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    28688: putstatic net/minecraft/world/level/block/Blocks.CINNABAR_BRICKS:Lnet/minecraft/world/level/block/Block;
+    28691: getstatic net/minecraft/references/BlockItemIds.CINNABAR_BRICK_SLAB:Lnet/minecraft/references/BlockItemId;
+    28694: getstatic net/minecraft/world/level/block/Blocks.CINNABAR_BRICKS:Lnet/minecraft/world/level/block/Block;
+    28697: invokestatic net/minecraft/world/level/block/Blocks.registerSlab:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    28700: putstatic net/minecraft/world/level/block/Blocks.CINNABAR_BRICK_SLAB:Lnet/minecraft/world/level/block/Block;
+    28703: getstatic net/minecraft/references/BlockItemIds.CINNABAR_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    28706: getstatic net/minecraft/world/level/block/Blocks.CINNABAR_BRICKS:Lnet/minecraft/world/level/block/Block;
+    28709: invokestatic net/minecraft/world/level/block/Blocks.registerStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    28712: putstatic net/minecraft/world/level/block/Blocks.CINNABAR_BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    28715: getstatic net/minecraft/references/BlockItemIds.CINNABAR_BRICK_WALL:Lnet/minecraft/references/BlockItemId;
+    28718: getstatic net/minecraft/world/level/block/Blocks.CINNABAR_BRICKS:Lnet/minecraft/world/level/block/Block;
+--- 29273: getstatic net/minecraft/references/BlockItemIds.CUT_COPPER_STAIRS:Lnet/minecraft/world/level/block/WeatheringCopperCollection; @ line 9418
+    29247: invokedynamic indy
+    29252: invokedynamic indy
+    29257: invokedynamic indy
+    29262: invokedynamic indy
+    29267: invokestatic net/minecraft/world/level/block/WeatheringCopperCollection.registerBlocks:(Lnet/minecraft/world/level/block/WeatheringCopperCollection;Lorg/apache/commons/lang3/function/TriFunction;Ljava/util/function/BiFunction;Ljava/util/function/BiFunction;Ljava/util/function/Function;)Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+    29270: putstatic net/minecraft/world/level/block/Blocks.CHISELED_COPPER:Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+    29273: getstatic net/minecraft/references/BlockItemIds.CUT_COPPER_STAIRS:Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+    29276: invokedynamic indy
+    29281: invokedynamic indy
+    29286: invokedynamic indy
+    29291: invokedynamic indy
+    29296: invokestatic net/minecraft/world/level/block/WeatheringCopperCollection.registerBlocks:(Lnet/minecraft/world/level/block/WeatheringCopperCollection;Lorg/apache/commons/lang3/function/TriFunction;Ljava/util/function/BiFunction;Ljava/util/function/BiFunction;Ljava/util/function/Function;)Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+--- 30511: getstatic net/minecraft/references/BlockItemIds.COBBLED_DEEPSLATE_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 9794
+    30493: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    30496: ldc_w float 3.5
+    30499: ldc_w float 6.0
+    30502: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    30505: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    30508: putstatic net/minecraft/world/level/block/Blocks.COBBLED_DEEPSLATE:Lnet/minecraft/world/level/block/Block;
+    30511: getstatic net/minecraft/references/BlockItemIds.COBBLED_DEEPSLATE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    30514: getstatic net/minecraft/world/level/block/Blocks.COBBLED_DEEPSLATE:Lnet/minecraft/world/level/block/Block;
+    30517: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    30520: putstatic net/minecraft/world/level/block/Blocks.COBBLED_DEEPSLATE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    30523: getstatic net/minecraft/references/BlockItemIds.COBBLED_DEEPSLATE_SLAB:Lnet/minecraft/references/BlockItemId;
+    30526: invokedynamic indy
+--- 30587: getstatic net/minecraft/references/BlockItemIds.POLISHED_DEEPSLATE_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 9818
+    30569: getstatic net/minecraft/world/level/block/Blocks.COBBLED_DEEPSLATE:Lnet/minecraft/world/level/block/Block;
+    30572: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    30575: getstatic net/minecraft/world/level/block/SoundType.POLISHED_DEEPSLATE:Lnet/minecraft/world/level/block/SoundType;
+    30578: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    30581: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    30584: putstatic net/minecraft/world/level/block/Blocks.POLISHED_DEEPSLATE:Lnet/minecraft/world/level/block/Block;
+    30587: getstatic net/minecraft/references/BlockItemIds.POLISHED_DEEPSLATE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    30590: getstatic net/minecraft/world/level/block/Blocks.POLISHED_DEEPSLATE:Lnet/minecraft/world/level/block/Block;
+    30593: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    30596: putstatic net/minecraft/world/level/block/Blocks.POLISHED_DEEPSLATE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    30599: getstatic net/minecraft/references/BlockItemIds.POLISHED_DEEPSLATE_SLAB:Lnet/minecraft/references/BlockItemId;
+    30602: invokedynamic indy
+--- 30663: getstatic net/minecraft/references/BlockItemIds.DEEPSLATE_TILE_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 9842
+    30645: getstatic net/minecraft/world/level/block/Blocks.COBBLED_DEEPSLATE:Lnet/minecraft/world/level/block/Block;
+    30648: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    30651: getstatic net/minecraft/world/level/block/SoundType.DEEPSLATE_TILES:Lnet/minecraft/world/level/block/SoundType;
+    30654: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    30657: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    30660: putstatic net/minecraft/world/level/block/Blocks.DEEPSLATE_TILES:Lnet/minecraft/world/level/block/Block;
+    30663: getstatic net/minecraft/references/BlockItemIds.DEEPSLATE_TILE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    30666: getstatic net/minecraft/world/level/block/Blocks.DEEPSLATE_TILES:Lnet/minecraft/world/level/block/Block;
+    30669: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    30672: putstatic net/minecraft/world/level/block/Blocks.DEEPSLATE_TILE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    30675: getstatic net/minecraft/references/BlockItemIds.DEEPSLATE_TILE_SLAB:Lnet/minecraft/references/BlockItemId;
+    30678: invokedynamic indy
+--- 30739: getstatic net/minecraft/references/BlockItemIds.DEEPSLATE_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 9866
+    30721: getstatic net/minecraft/world/level/block/Blocks.COBBLED_DEEPSLATE:Lnet/minecraft/world/level/block/Block;
+    30724: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.ofLegacyCopy:(Lnet/minecraft/world/level/block/state/BlockBehaviour;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    30727: getstatic net/minecraft/world/level/block/SoundType.DEEPSLATE_BRICKS:Lnet/minecraft/world/level/block/SoundType;
+    30730: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    30733: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    30736: putstatic net/minecraft/world/level/block/Blocks.DEEPSLATE_BRICKS:Lnet/minecraft/world/level/block/Block;
+    30739: getstatic net/minecraft/references/BlockItemIds.DEEPSLATE_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    30742: getstatic net/minecraft/world/level/block/Blocks.DEEPSLATE_BRICKS:Lnet/minecraft/world/level/block/Block;
+    30745: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    30748: putstatic net/minecraft/world/level/block/Blocks.DEEPSLATE_BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    30751: getstatic net/minecraft/references/BlockItemIds.DEEPSLATE_BRICK_SLAB:Lnet/minecraft/references/BlockItemId;
+    30754: invokedynamic indy
+--- 6809: getstatic net/minecraft/references/BlockItemIds.OAK_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 2190
+    6791: ldc_w float 10.0
+    6794: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    6797: getstatic net/minecraft/world/level/block/SoundType.CREAKING_HEART:Lnet/minecraft/world/level/block/SoundType;
+    6800: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    6803: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    6806: putstatic net/minecraft/world/level/block/Blocks.CREAKING_HEART:Lnet/minecraft/world/level/block/Block;
+    6809: getstatic net/minecraft/references/BlockItemIds.OAK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    6812: getstatic net/minecraft/world/level/block/Blocks.OAK_PLANKS:Lnet/minecraft/world/level/block/Block;
+    6815: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    6818: putstatic net/minecraft/world/level/block/Blocks.OAK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    6821: getstatic net/minecraft/references/BlockItemIds.CHEST:Lnet/minecraft/references/BlockItemId;
+    6824: invokedynamic indy
+--- 7766: getstatic net/minecraft/references/BlockItemIds.COBBLESTONE_STAIRS:Lnet/minecraft/references/BlockItemId; @ line 2500
+    7748: ldc_w float 0.699999988079071
+    7751: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    7754: getstatic net/minecraft/world/level/block/SoundType.METAL:Lnet/minecraft/world/level/block/SoundType;
+    7757: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    7760: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    7763: putstatic net/minecraft/world/level/block/Blocks.RAIL:Lnet/minecraft/world/level/block/Block;
+    7766: getstatic net/minecraft/references/BlockItemIds.COBBLESTONE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    7769: getstatic net/minecraft/world/level/block/Blocks.COBBLESTONE:Lnet/minecraft/world/level/block/Block;
+    7772: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    7775: putstatic net/minecraft/world/level/block/Blocks.COBBLESTONE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    7778: getstatic net/minecraft/references/BlockIds.OAK_WALL_SIGN:Lnet/minecraft/resources/ResourceKey;
+    7781: invokedynamic indy
+
+=== Blocks lambdas: the stair property chains (sound/strength/base)
+--- lambda$static$352(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    0: new net/minecraft/world/level/block/StairBlock
+    3: dup
+    4: getstatic net/minecraft/world/level/block/Blocks.TUFF:Lnet/minecraft/world/level/block/Block;
+    7: invokevirtual net/minecraft/world/level/block/Block.defaultBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+    10: aload_0
+    11: invokespecial net/minecraft/world/level/block/StairBlock.<init>:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+    14: areturn
+
+--- lambda$static$353(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    0: new net/minecraft/world/level/block/StairBlock
+    3: dup
+    4: getstatic net/minecraft/world/level/block/Blocks.POLISHED_TUFF:Lnet/minecraft/world/level/block/Block;
+    7: invokevirtual net/minecraft/world/level/block/Block.defaultBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+    10: aload_0
+    11: invokespecial net/minecraft/world/level/block/StairBlock.<init>:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+    14: areturn
+
+--- lambda$static$354(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    0: new net/minecraft/world/level/block/StairBlock
+    3: dup
+    4: getstatic net/minecraft/world/level/block/Blocks.TUFF_BRICKS:Lnet/minecraft/world/level/block/Block;
+    7: invokevirtual net/minecraft/world/level/block/Block.defaultBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+    10: aload_0
+    11: invokespecial net/minecraft/world/level/block/StairBlock.<init>:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+    14: areturn
+
+--- lambda$static$366(Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/StairBlock;
+    0: new net/minecraft/world/level/block/StairBlock
+    3: dup
+    4: getstatic net/minecraft/world/level/block/Blocks.CUT_COPPER:Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+    7: invokevirtual net/minecraft/world/level/block/WeatheringCopperCollection.waxed:()Lnet/minecraft/world/level/block/WeatheringCopperCollection$ByState;
+    10: aload_0
+    11: invokevirtual net/minecraft/world/level/block/WeatheringCopperCollection$ByState.pick:(Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;)Ljava/lang/Object;
+    14: checkcast net/minecraft/world/level/block/Block
+    17: invokevirtual net/minecraft/world/level/block/Block.defaultBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+    20: aload_1
+    21: invokespecial net/minecraft/world/level/block/StairBlock.<init>:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+    24: areturn
+
+--- lambda$static$367(Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/WeatheringCopperStairBlock;
+    0: new net/minecraft/world/level/block/WeatheringCopperStairBlock
+    3: dup
+    4: aload_0
+    5: getstatic net/minecraft/world/level/block/Blocks.CUT_COPPER:Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+    8: invokevirtual net/minecraft/world/level/block/WeatheringCopperCollection.weathering:()Lnet/minecraft/world/level/block/WeatheringCopperCollection$ByState;
+    11: aload_0
+    12: invokevirtual net/minecraft/world/level/block/WeatheringCopperCollection$ByState.pick:(Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;)Ljava/lang/Object;
+    15: checkcast net/minecraft/world/level/block/Block
+    18: invokevirtual net/minecraft/world/level/block/Block.defaultBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+    21: aload_1
+    22: invokespecial net/minecraft/world/level/block/WeatheringCopperStairBlock.<init>:(Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+    25: areturn
+
+  TOTAL stair lambdas: 5
+
+=== indy wiring: which lambda each stairs row uses
+--- 12915: getstatic net/minecraft/references/BlockItemIds.BRICK_STAIRS:Lnet/minecraft/references/BlockItemId; context (±10)
+    12887: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    12890: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.forceSolidOn:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    12893: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASS:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+    12896: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    12899: fconst_2
+    12900: ldc_w float 3.0
+    12903: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    12906: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    12909: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    12912: putstatic net/minecraft/world/level/block/Blocks.OAK_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+    12915: getstatic net/minecraft/references/BlockItemIds.BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    12918: getstatic net/minecraft/world/level/block/Blocks.BRICKS:Lnet/minecraft/world/level/block/Block;
+    12921: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    12924: putstatic net/minecraft/world/level/block/Blocks.BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    12927: getstatic net/minecraft/references/BlockItemIds.STONE_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    12930: getstatic net/minecraft/world/level/block/Blocks.STONE_BRICKS:Lnet/minecraft/world/level/block/Block;
+    12933: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    12936: putstatic net/minecraft/world/level/block/Blocks.STONE_BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    12939: getstatic net/minecraft/references/BlockItemIds.MUD_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    12942: getstatic net/minecraft/world/level/block/Blocks.MUD_BRICKS:Lnet/minecraft/world/level/block/Block;
+--- 12927: getstatic net/minecraft/references/BlockItemIds.STONE_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId; context (±10)
+    12899: fconst_2
+    12900: ldc_w float 3.0
+    12903: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    12906: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    12909: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    12912: putstatic net/minecraft/world/level/block/Blocks.OAK_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+    12915: getstatic net/minecraft/references/BlockItemIds.BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    12918: getstatic net/minecraft/world/level/block/Blocks.BRICKS:Lnet/minecraft/world/level/block/Block;
+    12921: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    12924: putstatic net/minecraft/world/level/block/Blocks.BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    12927: getstatic net/minecraft/references/BlockItemIds.STONE_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    12930: getstatic net/minecraft/world/level/block/Blocks.STONE_BRICKS:Lnet/minecraft/world/level/block/Block;
+    12933: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    12936: putstatic net/minecraft/world/level/block/Blocks.STONE_BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    12939: getstatic net/minecraft/references/BlockItemIds.MUD_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    12942: getstatic net/minecraft/world/level/block/Blocks.MUD_BRICKS:Lnet/minecraft/world/level/block/Block;
+    12945: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    12948: putstatic net/minecraft/world/level/block/Blocks.MUD_BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    12951: getstatic net/minecraft/references/BlockItemIds.MYCELIUM:Lnet/minecraft/references/BlockItemId;
+    12954: invokedynamic indy
+--- 12939: getstatic net/minecraft/references/BlockItemIds.MUD_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId; context (±10)
+    12909: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    12912: putstatic net/minecraft/world/level/block/Blocks.OAK_FENCE_GATE:Lnet/minecraft/world/level/block/Block;
+    12915: getstatic net/minecraft/references/BlockItemIds.BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    12918: getstatic net/minecraft/world/level/block/Blocks.BRICKS:Lnet/minecraft/world/level/block/Block;
+    12921: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    12924: putstatic net/minecraft/world/level/block/Blocks.BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    12927: getstatic net/minecraft/references/BlockItemIds.STONE_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    12930: getstatic net/minecraft/world/level/block/Blocks.STONE_BRICKS:Lnet/minecraft/world/level/block/Block;
+    12933: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    12936: putstatic net/minecraft/world/level/block/Blocks.STONE_BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    12939: getstatic net/minecraft/references/BlockItemIds.MUD_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    12942: getstatic net/minecraft/world/level/block/Blocks.MUD_BRICKS:Lnet/minecraft/world/level/block/Block;
+    12945: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    12948: putstatic net/minecraft/world/level/block/Blocks.MUD_BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    12951: getstatic net/minecraft/references/BlockItemIds.MYCELIUM:Lnet/minecraft/references/BlockItemId;
+    12954: invokedynamic indy
+    12959: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    12962: getstatic net/minecraft/world/level/material/MapColor.COLOR_PURPLE:Lnet/minecraft/world/level/material/MapColor;
+    12965: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    12968: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.randomTicks:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+--- 13101: getstatic net/minecraft/references/BlockItemIds.RESIN_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId; context (±10)
+    13072: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+    13075: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13078: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13081: getstatic net/minecraft/world/level/block/SoundType.RESIN_BRICKS:Lnet/minecraft/world/level/block/SoundType;
+    13084: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13087: ldc float 1.5
+    13089: ldc_w float 6.0
+    13092: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13095: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    13098: putstatic net/minecraft/world/level/block/Blocks.RESIN_BRICKS:Lnet/minecraft/world/level/block/Block;
+    13101: getstatic net/minecraft/references/BlockItemIds.RESIN_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    13104: getstatic net/minecraft/world/level/block/Blocks.RESIN_BRICKS:Lnet/minecraft/world/level/block/Block;
+    13107: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    13110: putstatic net/minecraft/world/level/block/Blocks.RESIN_BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    13113: getstatic net/minecraft/references/BlockItemIds.RESIN_BRICK_SLAB:Lnet/minecraft/references/BlockItemId;
+    13116: invokedynamic indy
+    13121: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13124: getstatic net/minecraft/world/level/material/MapColor.TERRACOTTA_ORANGE:Lnet/minecraft/world/level/material/MapColor;
+    13127: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13130: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+--- 13331: getstatic net/minecraft/references/BlockItemIds.NETHER_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId; context (±10)
+    13303: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+    13306: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13309: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13312: fconst_2
+    13313: ldc_w float 6.0
+    13316: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13319: getstatic net/minecraft/world/level/block/SoundType.NETHER_BRICKS:Lnet/minecraft/world/level/block/SoundType;
+    13322: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13325: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    13328: putstatic net/minecraft/world/level/block/Blocks.NETHER_BRICK_FENCE:Lnet/minecraft/world/level/block/Block;
+    13331: getstatic net/minecraft/references/BlockItemIds.NETHER_BRICK_STAIRS:Lnet/minecraft/references/BlockItemId;
+    13334: getstatic net/minecraft/world/level/block/Blocks.NETHER_BRICKS:Lnet/minecraft/world/level/block/Block;
+    13337: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    13340: putstatic net/minecraft/world/level/block/Blocks.NETHER_BRICK_STAIRS:Lnet/minecraft/world/level/block/Block;
+    13343: getstatic net/minecraft/references/BlockItemIds.NETHER_WART:Lnet/minecraft/references/BlockItemId;
+    13346: invokedynamic indy
+    13351: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13354: getstatic net/minecraft/world/level/material/MapColor.COLOR_RED:Lnet/minecraft/world/level/material/MapColor;
+    13357: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13360: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noCollision:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+--- 13865: getstatic net/minecraft/references/BlockItemIds.SANDSTONE_STAIRS:Lnet/minecraft/references/BlockItemId; context (±10)
+    13836: ldc float 0.20000000298023224
+    13838: ldc_w float 3.0
+    13841: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13844: getstatic net/minecraft/world/level/block/SoundType.WOOD:Lnet/minecraft/world/level/block/SoundType;
+    13847: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13850: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noOcclusion:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13853: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+    13856: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.pushReaction:(Lnet/minecraft/world/level/material/PushReaction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13859: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    13862: putstatic net/minecraft/world/level/block/Blocks.COCOA:Lnet/minecraft/world/level/block/Block;
+    13865: getstatic net/minecraft/references/BlockItemIds.SANDSTONE_STAIRS:Lnet/minecraft/references/BlockItemId;
+    13868: getstatic net/minecraft/world/level/block/Blocks.SANDSTONE:Lnet/minecraft/world/level/block/Block;
+    13871: invokestatic net/minecraft/world/level/block/Blocks.registerLegacyStair:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/Block;
+    13874: putstatic net/minecraft/world/level/block/Blocks.SANDSTONE_STAIRS:Lnet/minecraft/world/level/block/Block;
+    13877: getstatic net/minecraft/references/BlockItemIds.EMERALD_ORE:Lnet/minecraft/references/BlockItemId;
+    13880: invokedynamic indy
+    13885: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13888: getstatic net/minecraft/world/level/material/MapColor.STONE:Lnet/minecraft/world/level/material/MapColor;
+    13891: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13894: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+
+=== rotation-table identity across all 64 blockstates
+  reference: acacia_stairs (40 variants)
+  kinds checked: 64; identical to reference: 60
+  ODD kinds: ['waxed_cut_copper_stairs', 'waxed_exposed_cut_copper_stairs', 'waxed_oxidized_cut_copper_stairs', 'waxed_weathered_cut_copper_stairs']
+
+=== the template trio element boxes
+  ERR "There is no item named 'assets/minecraft/models/block/template_stairs.json' in the archive"
+  ERR "There is no item named 'assets/minecraft/models/block/template_stairs_inner.json' in the archive"
+  ERR "There is no item named 'assets/minecraft/models/block/template_stairs_outer.json' in the archive"
+
+=== master stair models (kind -> textures + parent)
+  block/oak_stairs: parent=minecraft:block/stairs textures={'bottom': 'minecraft:block/oak_planks', 'side': 'minecraft:block/oak_planks', 'top': 'minecraft:block/oak_planks'}
+  block/oak_stairs_inner: parent=minecraft:block/inner_stairs textures={'bottom': 'minecraft:block/oak_planks', 'side': 'minecraft:block/oak_planks', 'top': 'minecraft:block/oak_planks'}
+  block/oak_stairs_outer: parent=minecraft:block/outer_stairs textures={'bottom': 'minecraft:block/oak_planks', 'side': 'minecraft:block/oak_planks', 'top': 'minecraft:block/oak_planks'}
+  block/stone_stairs: parent=minecraft:block/stairs textures={'bottom': 'minecraft:block/stone', 'side': 'minecraft:block/stone', 'top': 'minecraft:block/stone'}
+  block/cut_copper_stairs: parent=minecraft:block/stairs textures={'bottom': 'minecraft:block/cut_copper', 'side': 'minecraft:block/cut_copper', 'top': 'minecraft:block/cut_copper'}
+  block/waxed_cut_copper_stairs: ERR "There is no item named 'assets/minecraft/models/block/waxed_cut_copper_stairs.json' in the archive"
+  block/bamboo_mosaic_stairs: parent=minecraft:block/stairs textures={'bottom': 'minecraft:block/bamboo_mosaic', 'side': 'minecraft:block/bamboo_mosaic', 'top': 'minecraft:block/bamboo_mosaic'}
+  block/crimson_stairs: parent=minecraft:block/stairs textures={'bottom': 'minecraft:block/crimson_planks', 'side': 'minecraft:block/crimson_planks', 'top': 'minecraft:block/crimson_planks'}
+  block/deepslate_tile_stairs: parent=minecraft:block/stairs textures={'bottom': 'minecraft:block/deepslate_tiles', 'side': 'minecraft:block/deepslate_tiles', 'top': 'minecraft:block/deepslate_tiles'}
+  block/smooth_sandstone_stairs: parent=minecraft:block/stairs textures={'bottom': 'minecraft:block/sandstone_top', 'side': 'minecraft:block/sandstone_top', 'top': 'minecraft:block/sandstone_top'}
+  block/cinnabar_stairs: parent=minecraft:block/stairs textures={'bottom': 'minecraft:block/cinnabar', 'side': 'minecraft:block/cinnabar', 'top': 'minecraft:block/cinnabar'}
+  block/resin_brick_stairs: parent=minecraft:block/stairs textures={'bottom': 'minecraft:block/resin_bricks', 'side': 'minecraft:block/resin_bricks', 'top': 'minecraft:block/resin_bricks'}
