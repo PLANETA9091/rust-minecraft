@@ -7386,6 +7386,22 @@ pub struct App {
     /// emptiness the fresh open keeps — the (0,0) stacks the empty
     /// slots wear.
     pub container_stores: std::collections::HashMap<(i32, i32, i32), Vec<(i32, i32)>>,
+    /// THE STORES' OWN DISK FILE (the dev-68 round — javap 26.2
+    /// HotbarManager's ctor the `Path.resolve("hotbar.nbt")` optionsFile
+    /// field speaks: the game-dir path the client's own cwd names, the
+    /// [`Self::container_stores_load_once`] lazy parse the first store
+    /// access rides, the [`Self::container_stores_file_save`] write the
+    /// flush/spill walks bank — the chest's stocked grid the RESTART
+    /// OUTLIVES, the break-after-boot the banked contents the spill
+    /// releases). THE NONE BOOT the no-game-dir stand-in keeps — the
+    /// headless lanes the file never touch (the goldens' own
+    /// determinism the missing path answers).
+    pub container_stores_file: Option<std::path::PathBuf>,
+    /// THE DISK BANK'S OWN ONCE FLAG (the `HotbarManager.get(I)` pcs
+    /// 1-13 walk the `loaded` once-flag speaks: the first store access
+    /// the lazy `load()` answers, the later chords the in-memory map
+    /// keep — the file lanes the walk never spends twice).
+    pub container_stores_loaded: bool,
     /// THE STORED CONTAINER'S OWN CELL (the open the key banks, the
     /// flush the key takes home — the None the chest kinds' closed
     /// screens keep; the chest_open_cell lid lane the barrel's own
@@ -8548,6 +8564,120 @@ pub fn hotbar_pages_from_nbt(value: &mc_protocol::nbt::Nbt) -> [[(i32, i32); 9];
     pages
 }
 
+/// THE STORES' OWN DATA VERSION (the hotbar lane's 26.2 jar the same
+/// pin keeps — `HOTBAR_DATA_VERSION`'s own 4903 the file header wears:
+/// the save's own registry era the number banks).
+pub const CONTAINERS_DATA_VERSION: i32 = 4903;
+
+/// THE STORES' OWN NBT SHAPE (the dev-68 round — the vanilla
+/// RandomizableContainer BE's own save law the container file wears:
+/// the chunk's block_entities list the per-position compound keeps,
+/// the `Items` list the slot-walk wears — the client's own numeric
+/// registry ids the `minecraft:` string bridge the hotbar file's
+/// `item_name`/`item_id_by_name` pair serves). THE ROOT: the
+/// "DataVersion" header the era banks + the "entries" list — each
+/// compound the x/y/z Int triple the map key keeps + the "Items"
+/// list of 27 per-slot compounds (the empty slot the OPTIONAL empty
+/// compound the hotbar's own law wears, the stocked slot the
+/// "id"/"count" pair speaks — the vanilla `Slot` index the list's
+/// own position answers, the dropContents walk's 0..27 order kept).
+pub fn container_stores_to_nbt(
+    stores: &std::collections::HashMap<(i32, i32, i32), Vec<(i32, i32)>>,
+) -> mc_protocol::nbt::Nbt {
+    let slot_compound = |(id, count): (i32, i32)| -> mc_protocol::nbt::Nbt {
+        let name = if id == 0 {
+            None
+        } else {
+            mc_registry::item_name(id).map(|n| format!("minecraft:{n}"))
+        };
+        match name {
+            Some(id) => mc_protocol::nbt::Nbt::Compound(vec![
+                ("id".to_string(), mc_protocol::nbt::Nbt::String(id)),
+                ("count".to_string(), mc_protocol::nbt::Nbt::Int(count)),
+            ]),
+            None => mc_protocol::nbt::Nbt::Compound(vec![]),
+        }
+    };
+    let mut entries = Vec::new();
+    // the BTree walk the deterministic byte order keeps — the file
+    // the same cells the same order the every save wears (the test
+    // matrix's own determinism the map's hash order never serves)
+    for ((x, y, z), slots) in stores.iter().collect::<std::collections::BTreeMap<_, _>>() {
+        let items = slots.iter().copied().map(slot_compound).collect();
+        entries.push(mc_protocol::nbt::Nbt::Compound(vec![
+            ("x".to_string(), mc_protocol::nbt::Nbt::Int(*x)),
+            ("y".to_string(), mc_protocol::nbt::Nbt::Int(*y)),
+            ("z".to_string(), mc_protocol::nbt::Nbt::Int(*z)),
+            ("Items".to_string(), mc_protocol::nbt::Nbt::List(items)),
+        ]));
+    }
+    mc_protocol::nbt::Nbt::Compound(vec![
+        (
+            "DataVersion".to_string(),
+            mc_protocol::nbt::Nbt::Int(CONTAINERS_DATA_VERSION),
+        ),
+        ("entries".to_string(), mc_protocol::nbt::Nbt::List(entries)),
+    ])
+}
+
+/// THE FILE ROOT'S OWN STORES — the tolerant walk the hotbar parse
+/// wears (the missing key the honest skip answers, the unknown name
+/// the empty stack keeps — never a guessed id, the "count" the
+/// fallback-1 field the absent entry keeps, the over-long list the
+/// 27-slot cap truncates, the short list the (0,0) pad fills — the
+/// fresh grid's own shape the menu law wears). The x/y/z triple the
+/// absent key's entry skip keeps — never a guessed cell.
+pub fn container_stores_from_nbt(
+    value: &mc_protocol::nbt::Nbt,
+) -> std::collections::HashMap<(i32, i32, i32), Vec<(i32, i32)>> {
+    let mut stores = std::collections::HashMap::new();
+    let Some(mc_protocol::nbt::Nbt::List(entries)) = value.get("entries") else {
+        return stores;
+    };
+    for entry in entries {
+        let mc_protocol::nbt::Nbt::Compound(fields) = entry else {
+            continue;
+        };
+        let read_int = |key: &str| -> Option<i32> {
+            fields.iter().find(|(k, _)| k == key).and_then(|(_, v)| v.as_i32())
+        };
+        let (Some(x), Some(y), Some(z)) = (read_int("x"), read_int("y"), read_int("z"))
+        else {
+            continue;
+        };
+        let Some(mc_protocol::nbt::Nbt::List(items)) =
+            fields.iter().find(|(k, _)| k == "Items").map(|(_, v)| v)
+        else {
+            continue;
+        };
+        let mut slots = vec![(0i32, 0i32); 27];
+        for (i, item) in items.iter().enumerate().take(27) {
+            let mc_protocol::nbt::Nbt::Compound(item_fields) = item else {
+                continue;
+            };
+            if item_fields.is_empty() {
+                continue; // the OPTIONAL empty map the empty stack wears
+            }
+            let Some((_, mc_protocol::nbt::Nbt::String(id))) =
+                item_fields.iter().find(|(k, _)| k == "id")
+            else {
+                continue;
+            };
+            let count = item_fields
+                .iter()
+                .find(|(k, _)| k == "count")
+                .and_then(|(_, v)| v.as_i32())
+                .unwrap_or(1);
+            let plain = id.strip_prefix("minecraft:").unwrap_or(id);
+            if let Some(wire_id) = mc_registry::item_id_by_name(plain) {
+                slots[i] = (wire_id, count);
+            }
+        }
+        stores.insert((x, y, z), slots);
+    }
+    stores
+}
+
 impl App {
     /// Deterministic boot: splash selection from the seed (vanilla picks a
     /// random line; here the RNG is seeded for reproducible rendering).
@@ -8759,6 +8889,8 @@ impl App {
             chest_carried: (0, 0),
             chest_open_cell: None,
             container_stores: std::collections::HashMap::new(),
+            container_stores_file: None,
+            container_stores_loaded: false,
             container_open_cell: None,
             furnace_slots: vec![(0, 0); 39],
             furnace_is_live: false,
@@ -20492,6 +20624,11 @@ impl App {
     /// vanilla menu wears).
     pub fn open_chest_for(&mut self, pos: (i32, i32, i32)) {
         self.enter_world();
+        // THE DISK BANK'S OWN LAZY LOAD (the dev-68 round — the first
+        // store access the once-flag's parse answers: the RESTART the
+        // banked stacks the reopen wears, the fresh open the file's
+        // own truth the entry law keeps)
+        self.container_stores_load_once();
         // the OFFLINE stand-in: the live lane's flag stays down (the
         // open_chest scene's own verdict the same law keeps)
         self.chest_is_live = false;
@@ -20553,8 +20690,15 @@ impl App {
     /// keep — the networked store the server's own authority owns,
     /// the local map the key never wears).
     pub fn container_store_flush(&mut self) {
+        self.container_stores_load_once();
         if let Some(pos) = self.container_open_cell.take() {
             self.container_stores.insert(pos, self.chest_slots.clone());
+            // THE DISK BANK'S OWN RIDE HOME (the dev-68 round — the
+            // close walk's edit the file write banks: the restart the
+            // same stacks the reopen wears, the failure the silent
+            // keep answers — the in-memory map the truth stays, the
+            // vanilla log the error walk keeps)
+            self.container_stores_file_save();
         }
     }
 
@@ -20599,6 +20743,11 @@ impl App {
     /// entry dies with the cell either way, the open cell the walk
     /// releases (the GUI's own key dies with the entry).
     pub fn container_store_spilled(&mut self, pos: (i32, i32, i32)) {
+        // THE DISK BANK'S OWN LAZY LOAD (the break-after-boot the
+        // banked contents the spill releases — the store access the
+        // once-flag's parse rides, the REAL Minecraft law the restart
+        // keeps: the stocked chest's death the floor the items wear)
+        self.container_stores_load_once();
         let store = self.container_stores.remove(&pos);
         if !self.world_is_network {
             if let Some(store) = store {
@@ -20623,6 +20772,10 @@ impl App {
         if self.container_open_cell == Some(pos) {
             self.container_open_cell = None;
         }
+        // THE DISK BANK'S OWN DEATH RIDE (the dev-68 round — the
+        // entry's removal the file write banks: the restart the spill
+        // never resurrects, the emptied key the banked walk answers)
+        self.container_stores_file_save();
     }
 
     /// THE TABLE'S OWN CLOSE (the vanilla CraftingMenu.removed walk —
@@ -28202,6 +28355,52 @@ impl App {
             return;
         };
         let root = hotbar_pages_to_nbt(&self.hotbar_manager);
+        let mut bytes = Vec::new();
+        if mc_protocol::nbt::write_file_nbt("", &root, &mut bytes).is_ok() {
+            let _ = std::fs::write(path, &bytes);
+        }
+    }
+
+    /// THE STORES' OWN LAZY LOAD (the dev-68 round — the hotbar lane's
+    /// `HotbarManager.get(I)` pcs 1-13 once-flag walk the store access
+    /// rides: the first open/flush/spill the file parse answers, the
+    /// later chords the in-memory map keep). THE MISSING/CORRUPT FILE
+    /// the fresh map the honest verdict keeps — never a guessed cell,
+    /// the `resultOrPartial` failure law the vanilla log speaks. THE
+    /// NONE BOOT the no-game-dir stand-in keeps — the flag banks, the
+    /// file lanes the store walk never spends (the headless goldens'
+    /// own determinism). THE EXTEND law: the load runs before any
+    /// store access (the once-flag the same-tick guards), the in-
+    /// memory entry the file's truth never clobbers — the session's
+    /// own map the banked walk only fills.
+    fn container_stores_load_once(&mut self) {
+        if self.container_stores_loaded {
+            return;
+        }
+        self.container_stores_loaded = true;
+        let Some(path) = self.container_stores_file.clone() else {
+            return;
+        };
+        if let Ok(bytes) = std::fs::read(&path) {
+            if let Ok((_, root)) =
+                mc_protocol::nbt::read_file_nbt(&mut bytes.as_slice())
+            {
+                self.container_stores.extend(container_stores_from_nbt(&root));
+            }
+        }
+    }
+
+    /// THE STORES' OWN SAVE WALK (the dev-68 round — the hotbar lane's
+    /// `HotbarManager.save()` pc 199 walk the flush/spill banks ride:
+    /// the `NbtIo.write(compound, optionsFile)` uncompressed lane the
+    /// same framing speaks). THE NONE BOOT the no-game-dir stand-in
+    /// keeps, the failure the silent keep answers — the in-memory map
+    /// the truth stays, the vanilla log the error walk keeps.
+    fn container_stores_file_save(&self) {
+        let Some(path) = &self.container_stores_file else {
+            return;
+        };
+        let root = container_stores_to_nbt(&self.container_stores);
         let mut bytes = Vec::new();
         if mc_protocol::nbt::write_file_nbt("", &root, &mut bytes).is_ok() {
             let _ = std::fs::write(path, &bytes);
@@ -57478,6 +57677,235 @@ mod tests {
         assert!(app.container_stores[&cell].iter().any(|&p| p == (926, 12)));
         app.on_escape();
         assert_eq!(app.container_stores[&cell][5], (926, 12), "the barrel's close the chest's store never touches");
+    }
+
+    /// THE STORES' OWN DISK BANK (the dev-68 round — the stocked grid
+    /// the RESTART OUTLIVES: javap HotbarManager the 26.2 walk the
+    /// save chord's `HotbarManager.save()` pc 199 the file writes, the
+    /// fresh app's `get(i)` once-flag pc 1-13 the lazy load speaks —
+    /// the close walk's flush the file ride banks, the NEW app the
+    /// same game dir the banked stacks the reopen wears, the break-
+    /// after-boot the banked contents the spill releases — the REAL
+    /// Minecraft law the restart keeps).
+    #[test]
+    fn the_stores_own_disk_bank_the_edits_the_restart_the_same_stacks_wear() {
+        let dir = std::env::temp_dir().join(format!("mc2rs-containers-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("the temp dir");
+        let file = dir.join("containers-round.nbt");
+        let _ = std::fs::remove_file(&file);
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        // THE FIRST SESSION: the open the fresh grid keeps (the
+        // missing file the honest empties wear), the edits the close
+        // bank — AND the flush the file write rides home
+        let mut app = App::new(11);
+        app.enter_world();
+        app.container_stores_file = Some(file.clone());
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        let cell = (c, surface + 1, c);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(cell.0, cell.1, cell.2, crate::world::CHEST);
+        app.open_chest_for(cell);
+        assert!(
+            app.container_stores_loaded,
+            "the once-flag the first access banks"
+        );
+        app.chest_slots[5] = (wire("diamond"), 12);
+        app.on_escape();
+        assert!(file.exists(), "the flush the file write banks");
+        // THE FILE'S OWN SHAPE (the DataVersion header + the entry the
+        // x/y/z triple keeps + the stocked slot the minecraft: pair
+        // speaks, the empty slots the OPTIONAL empties wear)
+        let bytes = std::fs::read(&file).expect("the banked file reads");
+        let (_, root) =
+            mc_protocol::nbt::read_file_nbt(&mut bytes.as_slice()).expect("the parse serves");
+        assert_eq!(
+            root.get("DataVersion").and_then(|v| v.as_i32()),
+            Some(CONTAINERS_DATA_VERSION),
+            "the header the era banks"
+        );
+        let entries = root
+            .get("entries")
+            .and_then(|v| v.as_list())
+            .expect("the entries list");
+        assert_eq!(entries.len(), 1, "the one stocked cell rides");
+        let entry = &entries[0];
+        assert_eq!(entry.get("x").and_then(|v| v.as_i32()), Some(cell.0));
+        assert_eq!(entry.get("y").and_then(|v| v.as_i32()), Some(cell.1));
+        assert_eq!(entry.get("z").and_then(|v| v.as_i32()), Some(cell.2));
+        let items = entry.get("Items").and_then(|v| v.as_list()).expect("the Items list");
+        assert_eq!(items.len(), 27, "the 27-slot grid the list keeps");
+        assert!(
+            items[0].get("id").is_none(),
+            "the empty slot the OPTIONAL empty compound wears"
+        );
+        assert_eq!(
+            items[5].get("id").and_then(|v| v.as_str()),
+            Some("minecraft:diamond"),
+            "the stocked slot the name bridge wears"
+        );
+        assert_eq!(items[5].get("count").and_then(|v| v.as_i32()), Some(12));
+        // THE RESTART: the fresh app the same game dir carries — the
+        // first open the once-flag's lazy read speaks, the banked
+        // stack the reopen wears
+        let mut fresh = App::new(11);
+        fresh.enter_world();
+        fresh.container_stores_file = Some(file.clone());
+        fresh
+            .offline_world
+            .as_mut()
+            .unwrap()
+            .set(cell.0, cell.1, cell.2, crate::world::CHEST);
+        fresh.open_chest_for(cell);
+        assert_eq!(
+            fresh.chest_slots[5],
+            (wire("diamond"), 12),
+            "the banked stack the restart wears"
+        );
+        fresh.on_escape();
+        // THE BREAK-AFTER-RESTART (the stocked chest's death the floor
+        // the items wear — the spill the banked contents releases, the
+        // entry's removal the file's death ride banks)
+        fresh.container_store_spilled(cell);
+        assert!(
+            !fresh.drops.is_empty(),
+            "the banked contents the spill wears"
+        );
+        assert!(
+            !fresh.container_stores.contains_key(&cell),
+            "the store the entry's death keeps"
+        );
+        let bytes = std::fs::read(&file).expect("the death ride reads");
+        let (_, root) =
+            mc_protocol::nbt::read_file_nbt(&mut bytes.as_slice()).expect("the parse serves");
+        let entries = root
+            .get("entries")
+            .and_then(|v| v.as_list())
+            .expect("the entries list");
+        assert!(
+            entries.is_empty(),
+            "the death ride the emptied bank keeps"
+        );
+        let _ = std::fs::remove_file(&file);
+    }
+
+    /// THE DISK BANK'S OWN REFUSALS — the tolerant walk the hotbar
+    /// parse wears: the non-compound root the empties keep, the
+    /// missing coordinate the entry skip keeps, the unknown name the
+    /// honest empty stack wears (never a guessed id), the missing
+    /// count the fallback-1 field keeps, the over-long Items the
+    /// 27-slot cap truncates, the corrupt file the lazy load never
+    /// wears, the NONE boot the file lanes never spends.
+    #[test]
+    fn the_stores_own_disk_parse_the_refusals_keep() {
+        // THE NON-COMPOUND ROOT (the int the entries never parse)
+        let stores = container_stores_from_nbt(&mc_protocol::nbt::Nbt::Int(1));
+        assert!(stores.is_empty(), "the non-compound the empties keep");
+        // THE TOLERANT ENTRY WALK: the coordinate-less entry skips,
+        // the unknown name empties, the missing count falls back 1
+        let root = mc_protocol::nbt::Nbt::Compound(vec![(
+            "entries".to_string(),
+            mc_protocol::nbt::Nbt::List(vec![
+                // the x/y/z-less row the skip keeps
+                mc_protocol::nbt::Nbt::Compound(vec![(
+                    "Items".to_string(),
+                    mc_protocol::nbt::Nbt::List(vec![]),
+                )]),
+                // the stocked row: slot 0 unknown (empty keeps), slot 1
+                // missing count (fallback-1), slot 2 stocked
+                mc_protocol::nbt::Nbt::Compound(vec![
+                    ("x".to_string(), mc_protocol::nbt::Nbt::Int(3)),
+                    ("y".to_string(), mc_protocol::nbt::Nbt::Int(4)),
+                    ("z".to_string(), mc_protocol::nbt::Nbt::Int(5)),
+                    (
+                        "Items".to_string(),
+                        mc_protocol::nbt::Nbt::List(vec![
+                            mc_protocol::nbt::Nbt::Compound(vec![(
+                                "id".to_string(),
+                                mc_protocol::nbt::Nbt::String(
+                                    "minecraft:not_an_item".to_string(),
+                                ),
+                            )]),
+                            mc_protocol::nbt::Nbt::Compound(vec![(
+                                "id".to_string(),
+                                mc_protocol::nbt::Nbt::String(
+                                    "minecraft:cobblestone".to_string(),
+                                ),
+                            )]),
+                            mc_protocol::nbt::Nbt::Compound(vec![(
+                                "id".to_string(),
+                                mc_protocol::nbt::Nbt::String("minecraft:iron_ingot".to_string()),
+                            ),
+                            ("count".to_string(), mc_protocol::nbt::Nbt::Int(64))]),
+                        ]),
+                    ),
+                ]),
+            ]),
+        )]);
+        let stores = container_stores_from_nbt(&root);
+        assert_eq!(stores.len(), 1, "the coordinate-less row the skip keeps");
+        let slots = stores[&(3, 4, 5)].clone();
+        assert_eq!(slots.len(), 27, "the fresh grid the shape keeps");
+        let cobble = mc_registry::item_id_by_name("cobblestone").expect("the registry names");
+        let iron = mc_registry::item_id_by_name("iron_ingot").expect("the registry names");
+        assert_eq!(slots[0], (0, 0), "the unknown name the empty stack keeps");
+        assert_eq!(slots[1], (cobble, 1), "the missing count the fallback-1 keeps");
+        assert_eq!(slots[2], (iron, 64), "the stocked slot the parse wears");
+        // THE OVER-LONG LIST (the 27-slot cap truncates)
+        let root = mc_protocol::nbt::Nbt::Compound(vec![(
+            "entries".to_string(),
+            mc_protocol::nbt::Nbt::List(vec![mc_protocol::nbt::Nbt::Compound(vec![
+                ("x".to_string(), mc_protocol::nbt::Nbt::Int(0)),
+                ("y".to_string(), mc_protocol::nbt::Nbt::Int(0)),
+                ("z".to_string(), mc_protocol::nbt::Nbt::Int(0)),
+                (
+                    "Items".to_string(),
+                    mc_protocol::nbt::Nbt::List(
+                        std::iter::repeat(mc_protocol::nbt::Nbt::Compound(vec![(
+                            "id".to_string(),
+                            mc_protocol::nbt::Nbt::String("minecraft:stone".to_string()),
+                        )]))
+                        .take(28)
+                        .collect(),
+                    ),
+                ),
+            ])]),
+        )]);
+        let stores = container_stores_from_nbt(&root);
+        let slots = stores[&(0, 0, 0)].clone();
+        assert_eq!(slots.len(), 27, "the cap the over-long list truncates");
+        // THE CORRUPT FILE (the lazy load the fresh map keeps — the
+        // read failure the silent keep answers) + THE NONE BOOT (the
+        // flag banks, no file lane spends)
+        let dir = std::env::temp_dir().join(format!("mc2rs-containers-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("the temp dir");
+        let file = dir.join("containers-corrupt.nbt");
+        std::fs::write(&file, [0x0A, 0x00, 0x01, 0xFF]).expect("the garbage writes");
+        let mut app = App::new(3);
+        app.enter_world();
+        app.container_stores_file = Some(file.clone());
+        app.container_stores_load_once();
+        assert!(
+            app.container_stores.is_empty(),
+            "the corrupt file the fresh map keeps"
+        );
+        assert!(app.container_stores_loaded, "the once-flag the failed read banks");
+        let mut bare = App::new(3);
+        bare.enter_world();
+        bare.container_stores_load_once();
+        assert!(
+            bare.container_stores.is_empty() && bare.container_stores_loaded,
+            "the NONE boot the flag banks, the map stays"
+        );
+        let _ = std::fs::remove_file(&file);
     }
 
     /// THE OFFLINE CHEST CLICK'S OWN WALK (the dev-66 round — the

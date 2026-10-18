@@ -1588,6 +1588,13 @@ pub fn run_gui_app(
     // lazy `load()` walk reads it — the headless boot the None keeps.
     app.hotbar_options_file =
         Some(std::env::current_dir().unwrap_or_default().join("hotbar.nbt"));
+    // THE STORES' OWN GAME DIR (the dev-68 round — the same vanilla
+    // default-game-dir law the hotbar file wears: the cwd the
+    // `containers.nbt` names, the chest's stocked grid the RESTART
+    // OUTLIVES — the lazy load the first open rides, the flush/spill
+    // banks the write serve; the headless boot the None keeps)
+    app.container_stores_file =
+        Some(std::env::current_dir().unwrap_or_default().join("containers.nbt"));
     app.offline_held_updated(held_item);
     app.offline_offhand_updated(offhand_item);
     // THE SAVE-DRAFTS OPTION'S OWN SEED (the --no-save-chat-drafts flag
