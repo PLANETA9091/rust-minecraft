@@ -295,6 +295,14 @@ fn is_transparent(kind: u16) -> bool {
         // AO the opaque walk never casts, the element quads the stairs
         // lane's own walk renders)
         || crate::world::is_stairs(kind)
+        // THE CHEST FAMILY the same verdict keeps (the dev-64 round —
+        // the 11 kinds the BE-rendered boxes the FULL cube never is:
+        // the 14/16-tall inset box the canOcclude verdict the false
+        // answer gives, the propagatesSkylightDown law the same
+        // verdict keeps: the chest cell the neighbors' faces draw
+        // against, the AO the opaque walk never casts, the hand-built
+        // quads the chest lane's own walk renders)
+        || crate::world::is_chest(kind)
         // THE SLAB FAMILY the same verdict keeps (the dev-63 round —
         // the 68 kinds the useShapeForLightOcclusion law the vanilla
         // light speaks: the BOTTOM/TOP states the shape the FULL cube
@@ -4903,6 +4911,150 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     }
                     continue;
                 }
+                // THE CHEST'S OWN ELEMENT LANE (the dev-64 round — the
+                // BE-rendered family the blockstate's dummy model never
+                // carries: the HAND-BUILT boxes the SHAPES law's own px
+                // vocabulary wears — the SINGLE the [1,0,1]->[15,14,15]
+                // symmetric inset keeps, the LEFT/RIGHT halves the
+                // connected side the flush edge wears [the
+                // chest_connected_direction walk the connected quarter
+                // answers], the per-face tile the FACE_TILES row the
+                // composite arm banks [the front the NORTH slot wears,
+                // the facing face the tile assignment rotates], the
+                // shade term the direction table the cube path keeps,
+                // the NO cullface the 1/16 inset the neighbor faces
+                // behind the box never hides — the vanilla chest law
+                // the isSuffocating false answer keeps). The lightmap
+                // the cell's own answer the lantern lane's own setup
+                // serves.
+                if crate::world::is_chest(id) {
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let (cell_sky, cell_block) = match light {
+                        Some(l) => {
+                            let (s, b) = cell_layers(l, world.chunks_per_side, wx, wy, wz);
+                            (s.map(|v| v as f32), b.map(|v| v as f32))
+                        }
+                        None => (None, None),
+                    };
+                    // the variant byte the facing/type pair the walk
+                    // unpacks (the default 0 the registerDefaultState's
+                    // SINGLE+north pin keeps)
+                    let v = world.variant(wx, wy, wz);
+                    let facing = crate::world::chest_variant_facing(v);
+                    let chest_type = crate::world::chest_variant_type(v);
+                    // the FACE_TILES row the composite arm banks (the
+                    // front the NORTH slot wears — the atlas order the
+                    // [east, west, up, down, south, north] law keeps),
+                    // the FACING the tile assignment rotates (the
+                    // front tile the facing face wears, the NORTH
+                    // slot the back face the side tile serves — the
+                    // swap the facing byte's own quarter answers)
+                    let tiles = if (id as usize) < atlas::N_KINDS {
+                        atlas::FACE_TILES[id as usize]
+                    } else {
+                        [atlas::TILE_NONE; 6]
+                    };
+                    let front_face = match facing {
+                        crate::world::CHEST_FACING_EAST => 0usize,
+                        crate::world::CHEST_FACING_WEST => 1usize,
+                        crate::world::CHEST_FACING_SOUTH => 4usize,
+                        _ => 5usize,
+                    };
+                    let face_tile = |face: usize| -> u16 {
+                        if face == front_face {
+                            tiles[5]
+                        } else if face == 5 && facing != crate::world::CHEST_FACING_NORTH {
+                            tiles[0]
+                        } else {
+                            tiles[face]
+                        }
+                    };
+                    for (pts_local, uvs, face) in chest_model_quads(facing, chest_type) {
+                        // the FACE_SHADE table the cube path keeps (the
+                        // direction the face's own slot answers)
+                        let face_shade = match face {
+                            2 => 1.0f32,
+                            3 => 0.5,
+                            4 | 5 => 0.8,
+                            _ => 0.6,
+                        };
+                        let tile = face_tile(face);
+                        let mut pts = [[0f32; 3]; 4];
+                        let mut colors = [[0f32; 3]; 4];
+                        for (i, pv) in pts_local.iter().enumerate() {
+                            pts[i] = [
+                                wx as f32 + pv[0],
+                                wy as f32 + pv[1],
+                                wz as f32 + pv[2],
+                            ];
+                            let lm = lightmap_combine(
+                                cell_sky,
+                                cell_block,
+                                sky_factor,
+                                sky_tint,
+                                ambient,
+                                block_tint,
+                                night_vision,
+                                world.night_vision_factor,
+                                world.darkness_scale,
+                            );
+                            colors[i] = [
+                                lm[0] * face_shade,
+                                lm[1] * face_shade,
+                                lm[2] * face_shade,
+                            ];
+                        }
+                        // the texel-space uv the /16 fold normalizes
+                        // (the hand-built px space the lane's own law
+                        // speaks — the lantern lane's own consumption
+                        // the same fold keeps)
+                        let uvs = [
+                            [uvs[0][0] / 16.0, uvs[0][1] / 16.0],
+                            [uvs[1][0] / 16.0, uvs[1][1] / 16.0],
+                            [uvs[2][0] / 16.0, uvs[2][1] / 16.0],
+                            [uvs[3][0] / 16.0, uvs[3][1] / 16.0],
+                        ];
+                        out.push(Quad {
+                            pts,
+                            colors,
+                            uvs,
+                            tile,
+                            translucent: false,
+                            per_texel_alpha: false,
+                        });
+                    }
+                    continue;
+                }
                 // THE STAIRS' OWN ELEMENT LANE (the dev-62 round —
                 // javap StairBlock the 26.2 jar the probe
                 // scripts/jar_work/stairs_690.py banks): the
@@ -6751,6 +6903,156 @@ fn empty_pane_models() -> &'static std::collections::HashMap<&'static str, Vec<D
 /// Rodrigues fold answers, the zero-width plane geometry the
 /// chain lane's own law serves). The unknown (kind, hanging) the
 /// empty slice keeps (the honest not-our-domain).
+
+/// THE CHEST MODEL'S OWN HAND-BUILT QUADS (the dev-64 round — the
+/// BE-rendered family the blockstate's dummy model never carries, the
+/// SHAPES law's own px vocabulary the boxes speak): the SINGLE the
+/// [1,0,1]->[15,14,15] symmetric box every facing wears, the LEFT/
+/// RIGHT halves the connected side the flush edge banks (the NORTH-
+/// connected base [1,0,0]->[15,15,14] the z 0..14 span keeps, the
+/// EAST the x 2..16, the SOUTH the z 2..16, the WEST the x 0..14 —
+/// the [`world::chest_connected_direction`] walk the quarter
+/// answers). The faces the FACE_TILES order returns (the face index
+/// the lane's tile + shade tables read), the vertex order the
+/// vanilla faceinfo corner picks keep (the winding the raster law
+/// banks), the UVs the content alignment law speaks (the vertical
+/// faces the v = y_hi - y fold — the top edge the tile's row 0 the
+/// lid strip samples, the bottom edge the base trim rows 14/15; the
+/// u the box's own span the 1..15 content band maps; the up/down the
+/// centered 1..15 both axes keep). The returned pts the 0..1 block
+/// units (the px /16 fold the derived quads wear), the uvs the
+/// 0..16 px space (the /16 normalize the consumption keeps).
+fn chest_model_quads(facing: u8, chest_type: u8) -> Vec<([[f32; 3]; 4], [[f32; 2]; 4], usize)> {
+    // THE BOX'S OWN SPANS (the px vocabulary the SHAPES law keeps)
+    let (x0, x1, z0, z1, y_hi) = if chest_type == crate::world::CHEST_TYPE_SINGLE {
+        (1.0f32, 15.0f32, 1.0f32, 15.0f32, 14.0f32)
+    } else {
+        let conn = crate::world::chest_connected_direction(facing, chest_type);
+        match conn {
+            crate::world::CHEST_FACING_NORTH => (1.0, 15.0, 0.0, 14.0, 15.0),
+            crate::world::CHEST_FACING_EAST => (2.0, 16.0, 1.0, 15.0, 15.0),
+            crate::world::CHEST_FACING_SOUTH => (1.0, 15.0, 2.0, 16.0, 15.0),
+            _ => (0.0, 14.0, 1.0, 15.0, 15.0),
+        }
+    };
+    let y0 = 0.0f32;
+    let px = |x: f32, y: f32, z: f32| [x / 16.0, y / 16.0, z / 16.0];
+    // the vertical faces' own uv law (the u the face's own span the
+    // 1..15 content band maps — the north/east the mirrored fold, the
+    // south/west the direct fold; the v the top edge the row 0 the
+    // lid strip samples, the bottom edge the y_hi row the base keeps)
+    let vert_uv = |x: f32, y: f32, z: f32, face: usize| -> [f32; 2] {
+        let u = match face {
+            5 => x + 15.0 - x1,        // north: u = x + (15 - x1)
+            0 => 16.0 - z + 1.0 - z0,  // east: u = (16 - z) + (1 - z0)
+            4 => x - x0 + 1.0,         // south: u = x - x0 + 1
+            _ => z - z0 + 1.0,         // west: u = z - z0 + 1
+        };
+        [u, y_hi - y]
+    };
+    let mut out: Vec<([[f32; 3]; 4], [[f32; 2]; 4], usize)> = Vec::with_capacity(6);
+    let mut push = |pts: [[f32; 3]; 4], uvs: [[f32; 2]; 4], face: usize| {
+        out.push((pts, uvs, face));
+    };
+    // DOWN (face 3): corners (x0,y0,z1) (x0,y0,z0) (x1,y0,z0) (x1,y0,z1)
+    push(
+        [
+            px(x0, y0, z1),
+            px(x0, y0, z0),
+            px(x1, y0, z0),
+            px(x1, y0, z1),
+        ],
+        [
+            [x0 - x0 + 1.0, z1 - z0 + 1.0],
+            [x0 - x0 + 1.0, z0 - z0 + 1.0],
+            [x1 - x0 + 1.0, z0 - z0 + 1.0],
+            [x1 - x0 + 1.0, z1 - z0 + 1.0],
+        ],
+        3,
+    );
+    // UP (face 2): corners (x0,y1,z0) (x0,y1,z1) (x1,y1,z1) (x1,y1,z0)
+    push(
+        [
+            px(x0, y_hi, z0),
+            px(x0, y_hi, z1),
+            px(x1, y_hi, z1),
+            px(x1, y_hi, z0),
+        ],
+        [
+            [x0 - x0 + 1.0, z0 - z0 + 1.0],
+            [x0 - x0 + 1.0, z1 - z0 + 1.0],
+            [x1 - x0 + 1.0, z1 - z0 + 1.0],
+            [x1 - x0 + 1.0, z0 - z0 + 1.0],
+        ],
+        2,
+    );
+    // NORTH (face 5): corners (x1,y1,z0) (x1,y0,z0) (x0,y0,z0) (x0,y1,z0)
+    push(
+        [
+            px(x1, y_hi, z0),
+            px(x1, y0, z0),
+            px(x0, y0, z0),
+            px(x0, y_hi, z0),
+        ],
+        [
+            vert_uv(x1, y_hi, z0, 5),
+            vert_uv(x1, y0, z0, 5),
+            vert_uv(x0, y0, z0, 5),
+            vert_uv(x0, y_hi, z0, 5),
+        ],
+        5,
+    );
+    // SOUTH (face 4): corners (x0,y1,z1) (x0,y0,z1) (x1,y0,z1) (x1,y1,z1)
+    push(
+        [
+            px(x0, y_hi, z1),
+            px(x0, y0, z1),
+            px(x1, y0, z1),
+            px(x1, y_hi, z1),
+        ],
+        [
+            vert_uv(x0, y_hi, z1, 4),
+            vert_uv(x0, y0, z1, 4),
+            vert_uv(x1, y0, z1, 4),
+            vert_uv(x1, y_hi, z1, 4),
+        ],
+        4,
+    );
+    // WEST (face 1): corners (x0,y1,z0) (x0,y0,z0) (x0,y0,z1) (x0,y1,z1)
+    push(
+        [
+            px(x0, y_hi, z0),
+            px(x0, y0, z0),
+            px(x0, y0, z1),
+            px(x0, y_hi, z1),
+        ],
+        [
+            vert_uv(x0, y_hi, z0, 1),
+            vert_uv(x0, y0, z0, 1),
+            vert_uv(x0, y0, z1, 1),
+            vert_uv(x0, y_hi, z1, 1),
+        ],
+        1,
+    );
+    // EAST (face 0): corners (x1,y1,z1) (x1,y0,z1) (x1,y0,z0) (x1,y1,z0)
+    push(
+        [
+            px(x1, y_hi, z1),
+            px(x1, y0, z1),
+            px(x1, y0, z0),
+            px(x1, y_hi, z0),
+        ],
+        [
+            vert_uv(x1, y_hi, z1, 0),
+            vert_uv(x1, y0, z1, 0),
+            vert_uv(x1, y0, z0, 0),
+            vert_uv(x1, y_hi, z0, 0),
+        ],
+        0,
+    );
+    out
+}
+
 fn lantern_model_quads(kind: u16, hanging: u8) -> &'static [mc_registry::element_quads::Quad] {
     static BAKES: std::sync::OnceLock<
         std::collections::HashMap<(u16, u8), Vec<mc_registry::element_quads::Quad>>,
@@ -11639,7 +11941,6 @@ mod tests {
     }
 
     #[test]
-    #[test]
     fn the_slab_lane_renders_the_bands_the_cullfaces_and_the_double_wears() {
         // THE SLAB LANE'S OWN LAWS (the dev-63 round — javap
         // SlabBlock the 26.2 jar the probe scripts/jar_work/
@@ -11879,6 +12180,186 @@ mod tests {
         assert!(
             dbl.iter().all(|quad| quad.tile == oak_tile),
             "the double the parent master re-wears"
+        );
+    }
+
+    #[test]
+    fn the_chest_lane_renders_the_boxes_the_latch_and_the_doubles_wear() {
+        // THE CHEST LANE'S OWN LAWS (the dev-64 round — the hand-built
+        // boxes the SHAPES law's own px vocabulary wears): the SINGLE
+        // the [1,0,1]->[15,14,15] box the 6 quads bake (the down + up
+        // + the four sides the open cell draws), the front tile the
+        // facing face wears, the sides the four vertical bands keep,
+        // the top/bottom the centered pair banks, the DOUBLES the
+        // connected side the flush edge wears (the 15/16 band the
+        // flat seam keeps), the waxed twin the bare geometry re-wears
+        use mc_registry::generated::atlas as gen_atlas;
+        let tiles = gen_atlas::FACE_TILES[crate::world::CHEST as usize];
+        let front_tile = tiles[5];
+        let side_tile = tiles[0];
+        let top_tile = tiles[2];
+        let bottom_tile = tiles[3];
+        assert_ne!(front_tile, gen_atlas::TILE_NONE, "the tile the regen banks");
+        let in_cell = |quad: &crate::mesher::Quad| {
+            quad.pts.iter().all(|p| {
+                p[0] >= 8.0 - 1e-4
+                    && p[0] <= 9.0 + 1e-4
+                    && p[1] >= 8.0 - 1e-4
+                    && p[1] <= 9.0 + 1e-4
+                    && p[2] >= 8.0 - 1e-4
+                    && p[2] <= 9.0 + 1e-4
+            })
+        };
+        let y_min_of = |quad: &crate::mesher::Quad| {
+            quad.pts.iter().map(|p| p[1]).fold(f32::MAX, f32::min)
+        };
+        let y_max_of = |quad: &crate::mesher::Quad| {
+            quad.pts.iter().map(|p| p[1]).fold(f32::MIN, f32::max)
+        };
+        let x_max_of = |quad: &crate::mesher::Quad| {
+            quad.pts.iter().map(|p| p[0]).fold(f32::MIN, f32::max)
+        };
+        // THE SINGLE CHEST (the unstamped default the registerDefault
+        // pin wears — the SIX quads the box bakes)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::CHEST);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let cell: Vec<_> = q.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(
+            cell.len(),
+            6,
+            "the single chest the 6 quads bakes, got {}",
+            cell.len()
+        );
+        // THE 14/16 BAND (the y span the 0..14 px box keeps — the
+        // world y 8.0..8.875 the cell's own base wears)
+        for quad in &cell {
+            let y_min = y_min_of(quad);
+            let y_max = y_max_of(quad);
+            assert!(
+                y_min >= 8.0 - 1e-5 && y_max <= 8.0 + 14.0 / 16.0 + 1e-5,
+                "the 0..14 band the single keeps, got {y_min}..{y_max}"
+            );
+            assert!(
+                !quad.translucent,
+                "the chest the opaque cutout lane wears"
+            );
+        }
+        // THE TILE LAWS THE FACE ASSIGNMENT SPEAKS (the facing=north
+        // default the front tile the -Z face wears, the sides the
+        // four vertical bands keep, the top/bottom the centered pair)
+        let north_face = |quad: &crate::mesher::Quad| {
+            quad.pts.iter().all(|p| (p[2] - (8.0 + 1.0 / 16.0)).abs() < 1e-5)
+        };
+        assert!(
+            cell.iter()
+                .filter(|quad| north_face(quad))
+                .all(|quad| quad.tile == front_tile),
+            "the facing face the front tile wears"
+        );
+        assert_eq!(
+            cell.iter().filter(|quad| north_face(quad)).count(),
+            1,
+            "the one north face the box bakes"
+        );
+        assert!(
+            cell.iter()
+                .filter(|quad| quad.tile == side_tile)
+                .count()
+                >= 3,
+            "the side faces the side tile keeps"
+        );
+        assert!(
+            cell.iter().any(|quad| quad.tile == top_tile),
+            "the top face the lid tile wears"
+        );
+        assert!(
+            cell.iter().any(|quad| quad.tile == bottom_tile),
+            "the bottom face the base tile wears"
+        );
+        // THE UV LAW (the v = y_hi - y fold — the top edge the row 0
+        // the lid strip samples: the top-face quad's v the 0 the row
+        // banks, the bottom edge the 14/16 the base keeps)
+        let top_face_quad = cell
+            .iter()
+            .find(|quad| quad.tile == top_tile)
+            .expect("the top face the lid tile wears");
+        assert!(
+            top_face_quad
+                .uvs
+                .iter()
+                .all(|uv| uv[0] >= 1.0 / 16.0 - 1e-6 && uv[0] <= 15.0 / 16.0 + 1e-6),
+            "the top face the centered 1..15 u band samples"
+        );
+        // THE FACING ROTATION (the east-facing chest the front tile
+        // the +X face wears — the placement stamp's own byte the box
+        // reads)
+        let mut we = empty_world();
+        put(&mut we, 8, 8, 8, crate::world::CHEST);
+        we.set_variant(
+            8,
+            8,
+            8,
+            crate::world::chest_variant(crate::world::CHEST_FACING_EAST, crate::world::CHEST_TYPE_SINGLE),
+        );
+        let qe = mesh_chunk(&we, 0, 0, None);
+        let celle: Vec<_> = qe.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(celle.len(), 6, "the east chest the same 6 quads bakes");
+        let east_face = |quad: &crate::mesher::Quad| {
+            quad.pts.iter().all(|p| (p[0] - (8.0 + 15.0 / 16.0)).abs() < 1e-5)
+        };
+        assert!(
+            celle
+                .iter()
+                .filter(|quad| east_face(quad))
+                .all(|quad| quad.tile == front_tile),
+            "the east face the front tile the facing rotation wears"
+        );
+        assert_eq!(
+            celle.iter().filter(|quad| east_face(quad)).count(),
+            1,
+            "the one east face the rotated box bakes"
+        );
+        // THE DOUBLE (the LEFT type the connected EAST side the flush
+        // edge wears — the x 2..16 arm the 15/16 band keeps, the 6
+        // quads the same box count bakes)
+        let mut wd = empty_world();
+        put(&mut wd, 8, 8, 8, crate::world::CHEST);
+        wd.set_variant(
+            8,
+            8,
+            8,
+            crate::world::chest_variant(crate::world::CHEST_FACING_NORTH, crate::world::CHEST_TYPE_LEFT),
+        );
+        let qd = mesh_chunk(&wd, 0, 0, None);
+        let celld: Vec<_> = qd.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(celld.len(), 6, "the double the same 6 quads bakes");
+        for quad in &celld {
+            let y_max = y_max_of(quad);
+            assert!(
+                y_max <= 8.0 + 15.0 / 16.0 + 1e-5,
+                "the 15/16 band the double keeps, got {y_max}"
+            );
+        }
+        let cell_x_hi = celld
+            .iter()
+            .map(|quad| x_max_of(quad))
+            .fold(f32::MIN, f32::max);
+        assert!(
+            (cell_x_hi - 9.0).abs() < 1e-5,
+            "the flush east edge the LEFT double wears, got {cell_x_hi}"
+        );
+        // THE WAXED TWIN THE BARE GEOMETRY RE-WEARS (the same box the
+        // bare copper tiles the waxed law keeps)
+        let mut ww = empty_world();
+        put(&mut ww, 8, 8, 8, crate::world::WAXED_COPPER_CHEST);
+        let qw = mesh_chunk(&ww, 0, 0, None);
+        let cellw: Vec<_> = qw.iter().filter(|quad| in_cell(quad)).collect();
+        assert_eq!(cellw.len(), 6, "the waxed twin the same box bakes");
+        let waxed_tiles = gen_atlas::FACE_TILES[crate::world::WAXED_COPPER_CHEST as usize];
+        assert!(
+            cellw.iter().all(|quad| waxed_tiles.contains(&quad.tile)),
+            "the waxed twin the bare copper tiles wears"
         );
     }
 

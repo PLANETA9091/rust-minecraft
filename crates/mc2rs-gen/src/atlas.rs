@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 737] = [
+pub const RUNTIME_PALETTE: [&str; 748] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -2245,6 +2245,18 @@ pub const RUNTIME_PALETTE: [&str; 737] = [
     "waxed_weathered_cut_copper_slab", "waxed_oxidized_cut_copper_slab",
     "cobbled_deepslate_slab", "polished_deepslate_slab",
     "deepslate_tile_slab", "deepslate_brick_slab",
+    // THE CHEST FAMILY'S OWN SEATS (the dev-64 round — the 11 kinds
+    // the vanilla registration order the clinit rows speak: the
+    // chest the head row banks, the trapped/ender pair the middle
+    // rows wear, the copper ladder the collection walk registers
+    // (the WeatheringCopperCollection.registerBlocks order — the
+    // PREFIXES ladder the bare quartet + the waxed twins speak); the
+    // BE-rendered family the blockstate's dummy model never carries
+    // — the composite-tile arm the entity sheets answer).
+    "chest", "trapped_chest", "ender_chest",
+    "copper_chest", "exposed_copper_chest", "weathered_copper_chest",
+    "oxidized_copper_chest", "waxed_copper_chest", "waxed_exposed_copper_chest",
+    "waxed_weathered_copper_chest", "waxed_oxidized_copper_chest",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -2267,6 +2279,144 @@ struct ResolvedFace {
     texture: String,   // e.g. "block/grass_block_top"
     #[cfg_attr(not(test), expect(dead_code))]
     tinted: bool,      // model face carried a tintindex
+}
+
+/// THE CHEST FAMILY'S OWN CENSUS (the dev-64 round): the 11 kinds the
+/// palette tail banks — the placeholder arm the BE-rendered family the
+/// blockstate's dummy model never resolves, the composite-tile arm the
+/// entity sheets answers.
+fn is_chest_family(block: &str) -> bool {
+    matches!(
+        block,
+        "chest"
+            | "trapped_chest"
+            | "ender_chest"
+            | "copper_chest"
+            | "exposed_copper_chest"
+            | "weathered_copper_chest"
+            | "oxidized_copper_chest"
+            | "waxed_copper_chest"
+            | "waxed_exposed_copper_chest"
+            | "waxed_weathered_copper_chest"
+            | "waxed_oxidized_copper_chest"
+    )
+}
+
+/// THE CHEST FAMILY'S OWN SHEET (the tile prefix + the entity sheet the
+/// renderer wears — the waxed kinds the BASE family's sheet the vanilla
+/// law keeps, no waxed sheet the jar banks).
+fn chest_family_sheet(block: &str) -> Option<(&'static str, &'static str)> {
+    match block {
+        "chest" => Some(("chest", "entity/chest/normal")),
+        "trapped_chest" => Some(("trapped_chest", "entity/chest/trapped")),
+        "ender_chest" => Some(("ender_chest", "entity/chest/ender")),
+        "copper_chest" | "waxed_copper_chest" => {
+            Some(("copper_chest", "entity/chest/copper"))
+        }
+        "exposed_copper_chest" | "waxed_exposed_copper_chest" => Some((
+            "exposed_copper_chest",
+            "entity/chest/copper_exposed",
+        )),
+        "weathered_copper_chest" | "waxed_weathered_copper_chest" => Some((
+            "weathered_copper_chest",
+            "entity/chest/copper_weathered",
+        )),
+        "oxidized_copper_chest" | "waxed_oxidized_copper_chest" => Some((
+            "oxidized_copper_chest",
+            "entity/chest/copper_oxidized",
+        )),
+        _ => None,
+    }
+}
+
+/// THE SHEET'S OWN CROP (the region the texOffs law speaks — the RGBA8
+/// bytes the [x0,y0,x1,y1) px window banks).
+fn crop_sheet(rgba: &[u8], w: u32, x0: u32, y0: u32, x1: u32, y1: u32) -> Vec<u8> {
+    let mut out = Vec::with_capacity(((x1 - x0) * (y1 - y0) * 4) as usize);
+    for y in y0..y1 {
+        for x in x0..x1 {
+            let i = ((y * w + x) * 4) as usize;
+            out.extend_from_slice(&rgba[i..i + 4]);
+        }
+    }
+    out
+}
+
+/// THE CHEST TILES' OWN COMPOSITION (the four 16x16 RGBA8 tiles the
+/// chest lane's faces sample — front/side/top/bottom). The side/front
+/// tiles the 14-row band wear (the lid strip the rows 0..5 keep, the
+/// body's exposed 9 rows the rows 5..14 bank, the 15th row the body
+/// base trim the doubles' 15-tall faces sample), the top/bottom tiles
+/// the centered 1..15 band keep, the lock the front tile's rows 2..5
+/// carry (the latch the seam's own band the vanilla look speaks).
+/// The sheet regions the ASCII probe banks: lid up (14,0)-(28,14),
+/// lid front (14,14)-(28,19), lid side (28,14)-(42,19), body down
+/// (28,19)-(42,33), body front (14,33)-(28,43), body side
+/// (28,33)-(42,43), lock (1,1)-(3,4).
+fn compose_chest_tiles(rgba: &[u8], w: u32, _h: u32) -> (Vec<u8>, Vec<u8>, Vec<u8>, Vec<u8>) {
+    let blank = [0u8; 16 * 16 * 4];
+    let compose_face = |lid_y: u32, body_x: u32| -> Vec<u8> {
+        // the vertical composition: the lid strip (rows 0..5) + the
+        // body's exposed rows (5..14) + the base extension (row 14)
+        let mut tile = blank.to_vec();
+        let put = |tile: &mut Vec<u8>, tx: u32, ty: u32, sx: u32, sy: u32| {
+            let i = ((ty * 16 + tx) * 4) as usize;
+            let j = ((sy * w + sx) * 4) as usize;
+            tile[i..i + 4].copy_from_slice(&rgba[j..j + 4]);
+        };
+        // the lid strip: face cols 1..15 <- sheet cols lid_x..lid_x+14
+        let lid_x = 14u32;
+        for fy in 0..5u32 {
+            for fx in 0..14u32 {
+                put(&mut tile, 1 + fx, fy, lid_x + fx, lid_y + fy);
+            }
+        }
+        // the body's exposed 9 rows: face rows 5..14 <- sheet rows
+        // body_y+1..body_y+10 (the top row the lid covers)
+        let body_y = 33u32;
+        for fy in 5..14u32 {
+            for fx in 0..14u32 {
+                put(&mut tile, 1 + fx, fy, body_x + fx, body_y + 1 + (fy - 5));
+            }
+        }
+        // the base trim extension (the doubles' 15th row)
+        for fx in 0..14u32 {
+            put(&mut tile, 1 + fx, 14, body_x + fx, body_y + 9);
+        }
+        tile
+    };
+    // FRONT: the lid's front strip (14,14) + the body's front + the lock
+    let mut front = compose_face(14, 14);
+    // the lock's 2x3 latch: face (7..9, 2..5) <- sheet (1..3, 1..4)
+    for ly in 0..3u32 {
+        for lx in 0..2u32 {
+            let i = (((2 + ly) * 16 + (7 + lx)) * 4) as usize;
+            let j = (((1 + ly) * w + (1 + lx)) * 4) as usize;
+            front[i..i + 4].copy_from_slice(&rgba[j..j + 4]);
+        }
+    }
+    // SIDE: the lid's side strip (28,14) + the body's side (28,33)
+    let side = compose_face(28, 28);
+    // TOP: the lid's up face centered (14,0)-(28,14)
+    let mut top = blank.to_vec();
+    for ty in 0..14u32 {
+        for tx in 0..14u32 {
+            let i = (((1 + ty) * 16 + (1 + tx)) * 4) as usize;
+            let j = (((ty) * w + (14 + tx)) * 4) as usize;
+            top[i..i + 4].copy_from_slice(&rgba[j..j + 4]);
+        }
+    }
+    // BOTTOM: the body's down face centered (28,19)-(42,33)
+    let mut bottom = blank.to_vec();
+    for ty in 0..14u32 {
+        for tx in 0..14u32 {
+            let i = (((1 + ty) * 16 + (1 + tx)) * 4) as usize;
+            let j = (((19 + ty) * w + (28 + tx)) * 4) as usize;
+            bottom[i..i + 4].copy_from_slice(&rgba[j..j + 4]);
+        }
+    }
+    let _ = crop_sheet; // the crop helper the composition arms share
+    (front, side, top, bottom)
 }
 
 fn tint_for_texture(stem: &str) -> u32 {
@@ -2926,6 +3076,18 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
     for block in RUNTIME_PALETTE {
         if block == "air" {
             faces.push(resolve_flat_stem("__air__", false));
+            continue;
+        }
+        if is_chest_family(block) {
+            // THE CHEST FAMILY'S OWN PLACEHOLDER (the dev-64 round):
+            // the BE-rendered family the blockstate's dummy model
+            // never carries (chest.json's "" variant -> the bare
+            // particle model — the six-face walk the chain demands
+            // would bail), the composite-tile arm below the entity
+            // sheets answers. The placeholder the composite arm's
+            // face_tiles overwrite keeps (the oak planks the particle
+            // row the dummy model carries).
+            faces.push(resolve_flat_stem("oak_planks", false));
             continue;
         }
         if block == "leaf_litter" {
@@ -4437,6 +4599,59 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         }
         face_tiles.push(ft);
         face_tints.push(tt);
+    }
+
+    // THE CHEST FAMILY'S OWN COMPOSITE TILES (the dev-64 round): the
+    // entity sheets the chest renderer wears (entity/chest/*.png the
+    // 64x64 sheets the lid/body/lock regions bank) the SINGLE 16x16
+    // tiles the chest lane's faces sample — the CROP law (the sheet's
+    // own texOffs regions the ASCII probe
+    // scripts/jar_work/container_692j.py banks: the lid up
+    // (14,0)-(28,14), the lid front (14,14)-(28,19), the lid side
+    // (28,14)-(42,19), the body down (28,19)-(42,33), the body front
+    // (14,33)-(28,43), the body side (28,33)-(42,43), the lock
+    // (1,1)-(3,4) — the latch the front tile's rows carry), the
+    // 14x14 face compositions the pad law keeps (the side/front
+    // tiles the rows 0..14 band wear — the top-aligned 14 rows +
+    // the 15th row the body base the doubles' 15-tall faces sample,
+    // the top/bottom tiles the centered 1..15 band keep), the waxed
+    // kinds the BASE family's tiles the vanilla law wears (no waxed
+    // sheet the jar keeps — the waxed copper chest the bare copper
+    // look wears like the waxed lantern's base models). The face
+    // slots the renderer order banks (0:+X 1:-X 2:+Y 3:-Y 4:+Z
+    // 5:-Z): the sides the four vertical bands keep, the front the
+    // NORTH slot wears (the latch the facing face's own tile — the
+    // mesher's per-quad verdict the slot map rotates).
+    for (ki, block) in RUNTIME_PALETTE.iter().enumerate() {
+        let Some((prefix, sheet)) = chest_family_sheet(block) else {
+            continue;
+        };
+        let raw = read_jar(
+            &mut archive,
+            &format!("assets/minecraft/textures/{sheet}.png"),
+        )
+        .with_context(|| format!("chest sheet {sheet}.png"))?;
+        let (w, h, rgba) = decode_rgba(&raw)?;
+        let (front, side, top, bottom) = compose_chest_tiles(&rgba, w, h);
+        let stems = [
+            (format!("{prefix}_front"), front),
+            (format!("{prefix}_side"), side),
+            (format!("{prefix}_top"), top),
+            (format!("{prefix}_bottom"), bottom),
+        ];
+        let mut idx = [0u16; 4];
+        for (i, (stem, bytes)) in stems.iter().enumerate() {
+            idx[i] = match tile_names.iter().position(|n| n == stem) {
+                Some(p) => p as u16,
+                None => {
+                    tile_names.push(stem.clone());
+                    tile_bytes.push(bytes.clone());
+                    (tile_names.len() - 1) as u16
+                }
+            };
+        }
+        // face order: [east, west, up, down, south, north]
+        face_tiles[ki] = [idx[1], idx[1], idx[2], idx[3], idx[1], idx[0]];
     }
 
     // THE SLAB FAMILY'S OWN SPLIT REFS (the dev-63 round — the

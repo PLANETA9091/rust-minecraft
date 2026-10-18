@@ -3634,6 +3634,72 @@ pub const POLISHED_DEEPSLATE_SLAB: u16 = 734;
 pub const DEEPSLATE_TILE_SLAB: u16 = 735;
 pub const DEEPSLATE_BRICK_SLAB: u16 = 736;
 
+// THE CHEST FAMILY'S OWN SEATS (the dev-64 round — the 11 kinds the
+// vanilla registration order the clinit rows speak: the chest the head
+// row banks (lambda$static$69 the ChestBlock ctor row
+// CHEST_OPEN/CHEST_CLOSE the open/close pair speaks),
+// mapColor(WOOD).instrument(BASS).strength(2.5).sound(WOOD).
+// ignitedByLava the properties chain keeps), the trapped pair the
+// middle rows wear (lambda the same chain the GOLD mapColor row
+// banks), the ender the stone row carries (mapColor(STONE).
+// BASEDRUM.strength(22.5, 600.0).lightLevel(7) the lambda$static$173
+// bipush-7 row the emission table answers), the copper ladder the
+// collection walk registers (WeatheringCopperCollection.
+// registerBlocks the FOUR indies the CopperChestBlock ctor rows
+// wear — the getHingeSound(state, open) pair the per-weathering
+// hinge voices answer, the waxed twins the bare quartet the PREFIXES
+// ladder banks). The BE-rendered family the blockstate's dummy model
+// never carries — the atlas's composite tiles the entity sheets
+// answer, the mesher's chest lane the hand-built boxes wear.
+pub const CHEST: u16 = 737;
+pub const TRAPPED_CHEST: u16 = 738;
+pub const ENDER_CHEST: u16 = 739;
+pub const COPPER_CHEST: u16 = 740;
+pub const EXPOSED_COPPER_CHEST: u16 = 741;
+pub const WEATHERED_COPPER_CHEST: u16 = 742;
+pub const OXIDIZED_COPPER_CHEST: u16 = 743;
+pub const WAXED_COPPER_CHEST: u16 = 744;
+pub const WAXED_EXPOSED_COPPER_CHEST: u16 = 745;
+pub const WAXED_WEATHERED_COPPER_CHEST: u16 = 746;
+pub const WAXED_OXIDIZED_COPPER_CHEST: u16 = 747;
+
+/// THE CHEST FAMILY'S OWN SEAT LADDER (the dev-64 round — the 11 kinds
+/// the explicit seats the tail banks): the mesher's chest lane and the
+/// family fns the ladder read.
+pub const CHEST_KINDS: [u16; 11] = [
+    CHEST,
+    TRAPPED_CHEST,
+    ENDER_CHEST,
+    COPPER_CHEST,
+    EXPOSED_COPPER_CHEST,
+    WEATHERED_COPPER_CHEST,
+    OXIDIZED_COPPER_CHEST,
+    WAXED_COPPER_CHEST,
+    WAXED_EXPOSED_COPPER_CHEST,
+    WAXED_WEATHERED_COPPER_CHEST,
+    WAXED_OXIDIZED_COPPER_CHEST,
+];
+
+/// THE CHEST FACING'S OWN BYTE VOCABULARY (the FACING HorizontalDirectionalBlock
+/// property the client's own two bits wear — the stairs family's own
+/// order the law keeps: 0 north, 1 east, 2 south, 3 west; the
+/// placement walk the look-opposite byte stamps, the mesher's box walk
+/// the facing face's front tile rotates).
+pub const CHEST_FACING_NORTH: u8 = 0;
+pub const CHEST_FACING_EAST: u8 = 1;
+pub const CHEST_FACING_SOUTH: u8 = 2;
+pub const CHEST_FACING_WEST: u8 = 3;
+
+/// THE CHEST TYPE'S OWN BYTE VOCABULARY (the TYPE ChestType property
+/// the client's own two bits wear — the SINGLE the default state's
+/// registerDefaultState pin keeps, the LEFT/RIGHT pair the connection
+/// walk's own law banks: LEFT the partner at the facing's clockwise
+/// side [the candidatePartnerFacing(getClockWise) == facing verdict],
+/// RIGHT the partner at the counter-clockwise side answers).
+pub const CHEST_TYPE_SINGLE: u8 = 0;
+pub const CHEST_TYPE_LEFT: u8 = 1;
+pub const CHEST_TYPE_RIGHT: u8 = 2;
+
 /// THE SLAB FAMILY'S OWN SEAT LADDER (the dev-63 round — the 68 kinds
 /// the explicit seats the tail banks, the vanilla registration order
 /// the clinit rows speak: the head walk the resin/prismarine rows
@@ -3812,6 +3878,191 @@ pub fn slab_can_replace(
     match clicked_type {
         SLAB_TYPE_BOTTOM => face == 1 || (face >= 2 && upper_half),
         _ => face == 0 || (face >= 2 && !upper_half),
+    }
+}
+
+/// THE CHEST VARIANT'S OWN PACK (the facing two bits + the type two
+/// bits the byte banks — the facing the low pair the stairs law
+/// keeps, the type the high pair the SINGLE/LEFT/RIGHT vocabulary
+/// wears: 0..11 the twelve states the FACING(4)xTYPE(3) map speaks).
+#[inline]
+pub fn chest_variant(facing: u8, chest_type: u8) -> u8 {
+    (facing & 0b11) | (chest_type << 2)
+}
+
+/// THE CHEST VARIANT'S OWN FACING READ (the low pair the identity
+/// unpack answers).
+#[inline]
+pub fn chest_variant_facing(v: u8) -> u8 {
+    v & 0b11
+}
+
+/// THE CHEST VARIANT'S OWN TYPE READ (the high pair the identity
+/// unpack answers).
+#[inline]
+pub fn chest_variant_type(v: u8) -> u8 {
+    (v >> 2) & 0b11
+}
+
+/// THE CHEST FAMILY'S OWN RANGE (the 11 seats the registration walk
+/// the ladder answers — the kind-only predicates the range reads).
+#[inline]
+pub fn is_chest(id: u16) -> bool {
+    (CHEST..=WAXED_OXIDIZED_COPPER_CHEST).contains(&id)
+}
+
+/// THE COPPER CHEST FAMILY'S OWN RUNGS (the 8 seats the collection
+/// walk registers — the waxed pair the base rows the waxed law
+/// wears, the dig/voice rows the copper answer keeps).
+#[inline]
+pub fn is_copper_chest(id: u16) -> bool {
+    (COPPER_CHEST..=WAXED_OXIDIZED_COPPER_CHEST).contains(&id)
+}
+
+/// THE CHEST FAMILY'S OWN CONNECT GATE (javap ChestBlock.
+/// chestCanConnectTo pc 0-5 the 26.2 jar — the `state.is(this)` walk
+/// the SAME-kind identity answers: the chest the chest kind alone
+/// connects, the trapped the trapped kind, the copper rungs their
+/// own kind — the cross-family doubles the vanilla never speaks).
+#[inline]
+pub fn chest_can_connect_to(candidate: u16, family: u16) -> bool {
+    candidate == family
+}
+
+/// THE CHEST PARTNER'S OWN FACING WALK (javap ChestBlock.
+/// candidatePartnerFacing pc 0-49 the 26.2 jar — the neighbor cell
+/// the walk reads: the connect gate + the SINGLE-type gate + the
+/// neighbor's own facing the Some answer keeps, the fail walk the
+/// None refusal banks).
+fn chest_candidate_partner_facing(world: &World, x: i32, y: i32, z: i32, dx: i32, dz: i32, family: u16) -> Option<u8> {
+    let nb = world.get(x + dx, y, z + dz);
+    if !chest_can_connect_to(nb, family) {
+        return None;
+    }
+    let v = world.variant(x + dx, y, z + dz);
+    if chest_variant_type(v) != CHEST_TYPE_SINGLE {
+        return None;
+    }
+    Some(chest_variant_facing(v))
+}
+
+/// THE CHEST TYPE'S OWN CONNECTION WALK (javap ChestBlock.getChestType
+/// pc 0-39 the 26.2 jar — the clockwise partner the LEFT arm banks:
+/// the candidate at the placement cell's CW side facing the SAME way
+/// the LEFT verdict speaks, the CCW candidate the RIGHT arm answers,
+/// the both-fail walk the SINGLE default keeps).
+pub fn chest_connection_type(world: &World, x: i32, y: i32, z: i32, facing: u8, family: u16) -> u8 {
+    let (fx, fz) = stairs_facing_delta(facing);
+    // the CW side: the facing's clockwise quarter (north->east cycle
+    // the stairs helper speaks)
+    let (cx, cz) = stairs_facing_delta(stairs_facing_cw(facing));
+    if chest_candidate_partner_facing(world, x, y, z, cx, cz, family) == Some(facing) {
+        return CHEST_TYPE_LEFT;
+    }
+    let (ccx, ccz) = stairs_facing_delta(stairs_facing_ccw(facing));
+    if chest_candidate_partner_facing(world, x, y, z, ccx, ccz, family) == Some(facing) {
+        return CHEST_TYPE_RIGHT;
+    }
+    let _ = (fx, fz);
+    CHEST_TYPE_SINGLE
+}
+
+/// THE CHEST PLACEMENT'S OWN VARIANT WALK (javap ChestBlock.
+/// getStateForPlacement pc 0-185 the 26.2 jar verbatim: the SINGLE
+/// default pc 0-3 the type keeps, the look-opposite facing pc 4-11
+/// the getHorizontalDirection().getOpposite() walk stamps, the
+/// SECONDARY-USE SIDE ARM pc 25-114 the sneak walk speaks — the
+/// horizontal face the candidate partner behind the clicked cell
+/// reads [the clicked chest the connect gate + the perpendicular
+/// axis gate the if_acmpeq keeps], the partner facing the new
+/// chest's own facing wears, the RIGHT the partner.ccw ==
+/// face.opposite verdict banks, the LEFT the else arm answers —
+/// the fresh-cell arm pc 115-140 the non-secondary walk serves:
+/// the SINGLE type the getChestType walk the connection pairs
+/// re-answers), the WATERLOGGED pc 165-179 the client's own
+/// vocabulary never carries (the fluid byte the variant never
+/// stores). The variant byte the pack fold answers.
+pub fn chest_placement_variant(
+    world: &World,
+    cell: (i32, i32, i32),
+    look_facing_opposite: u8,
+    hit_face: u8,
+    hit_pos: (i32, i32, i32),
+    secondary_use: bool,
+    family: u16,
+) -> u8 {
+    let mut chest_type = CHEST_TYPE_SINGLE;
+    // the look-opposite byte the furnace table stamps (the 2=north/
+    // 3=south/4=west/5=east vocabulary the DIRECTION_NORMAL order
+    // speaks) the client's own facing pair converts (0 north, 1 east,
+    // 2 south, 3 west — the stairs law the quarter helpers read)
+    let mut facing = match look_facing_opposite {
+        2 => CHEST_FACING_NORTH,
+        3 => CHEST_FACING_SOUTH,
+        4 => CHEST_FACING_WEST,
+        5 => CHEST_FACING_EAST,
+        b => b & 0b11,
+    };
+    if secondary_use && hit_face >= 2 {
+        // THE SNEAK-SIDE ARM: the clicked cell the partner candidate
+        // reads (the placement cell's neighbor at face.opposite() =
+        // the clicked block's own cell)
+        let (fx, fz) = face_normal_xz(hit_face);
+        let opposite = (-fx, -fz);
+        if let Some(partner_facing) =
+            chest_candidate_partner_facing(world, cell.0, cell.1, cell.2, opposite.0, opposite.1, family)
+        {
+            // THE PERPENDICULAR AXIS GATE (the partner's facing the
+            // click face's own axis the if_acmpeq refuses)
+            let face_axis = if fx == 0 { 0 } else { 1 }; // z-axis 0, x-axis 1
+            let partner_axis = if stairs_facing_delta(partner_facing).0 == 0 { 0 } else { 1 };
+            if partner_axis != face_axis {
+                facing = partner_facing;
+                // the RIGHT the partner.ccw == face.opposite verdict
+                let (ccx, ccz) = stairs_facing_delta(stairs_facing_ccw(partner_facing));
+                chest_type = if ccx == opposite.0 && ccz == opposite.1 {
+                    CHEST_TYPE_RIGHT
+                } else {
+                    CHEST_TYPE_LEFT
+                };
+            }
+        }
+    }
+    if chest_type == CHEST_TYPE_SINGLE && !secondary_use {
+        // THE FRESH-CELL ARM: the connection pairs the getChestType
+        // walk answers (the same-facing neighbor the perpendicular
+        // sides read)
+        chest_type = chest_connection_type(world, cell.0, cell.1, cell.2, facing, family);
+    }
+    let _ = hit_pos;
+    chest_variant(facing, chest_type)
+}
+
+/// THE HIT FACE'S OWN HORIZONTAL NORMAL (the face byte's own xz step
+/// the DIRECTION_NORMAL table speaks: 2 north (0,-1), 3 south (0,1),
+/// 4 west (-1,0), 5 east (1,0) — the vertical faces the (0,0) step
+/// keeps, the sneak arm's own gate the horizontal faces alone read).
+#[inline]
+pub fn face_normal_xz(face: u8) -> (i32, i32) {
+    match face {
+        2 => (0, -1),
+        3 => (0, 1),
+        4 => (-1, 0),
+        5 => (1, 0),
+        _ => (0, 0),
+    }
+}
+
+/// THE CHEST CONNECTED DIRECTION'S OWN WALK (javap ChestBlock.
+/// getConnectedDirection pc 0-35 the 26.2 jar — the LEFT type the
+/// facing's clockwise quarter answers, the RIGHT the counter-
+/// clockwise quarter keeps, the SINGLE the walk never reaches).
+#[inline]
+pub fn chest_connected_direction(facing: u8, chest_type: u8) -> u8 {
+    if chest_type == CHEST_TYPE_LEFT {
+        stairs_facing_cw(facing)
+    } else {
+        stairs_facing_ccw(facing)
     }
 }
 
@@ -4500,7 +4751,7 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 /// generated tables' own rows the names wire) — the
 /// END_PORTAL
 /// the beyond-table seat the displaced law keeps.
-pub const NAME_OF: [&str; 737] = [
+pub const NAME_OF: [&str; 748] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -5262,6 +5513,12 @@ pub const NAME_OF: [&str; 737] = [
     "waxed_weathered_cut_copper_slab", "waxed_oxidized_cut_copper_slab",
     "cobbled_deepslate_slab", "polished_deepslate_slab",
     "deepslate_tile_slab", "deepslate_brick_slab",
+    // THE CHEST FAMILY'S OWN ROWS (the dev-64 round — the 11 seats the
+    // registration order the clinit rows speak)
+    "chest", "trapped_chest", "ender_chest",
+    "copper_chest", "exposed_copper_chest", "weathered_copper_chest",
+    "oxidized_copper_chest", "waxed_copper_chest", "waxed_exposed_copper_chest",
+    "waxed_weathered_copper_chest", "waxed_oxidized_copper_chest",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -6977,6 +7234,16 @@ fn collision_face_footprint(
             // Full arm's own law the half-cube family keeps)
             Some(full)
         }
+        CollisionShape::Chest(_) => {
+            // THE CHEST'S OWN FACE (the dev-64 round — the SHAPE box
+            // [1,0,1]->[15,14,15] the DOWN face the inset square the
+            // projection answers: the 14/16 footprint the singles and
+            // the doubles ALIKE wear (the doubles' flush edge the
+            // 15/16-tall band the down-projection never reads — the
+            // inset square the conservative cover verdict keeps), the
+            // vanilla wall law the 1/16 rim the covered test refuses)
+            Some((1.0 / 16.0, 15.0 / 16.0, 1.0 / 16.0, 15.0 / 16.0))
+        }
         CollisionShape::Wall(bits, _) => {
             // THE WALL COMPOUND'S OWN FACE (the post box(4,0,4,12,24,12)
             // + the side strips box(5,0,0,11,24,11) the bits carry): the
@@ -8453,6 +8720,23 @@ pub enum CollisionShape {
     /// (the thin slab the body's feet the sweep band intersects, the
     /// top-slab head the ceiling the same px law serves).
     YSpan(u8, u8),
+    /// THE CHEST'S OWN INSET BOX (the dev-64 round — the variant byte
+    /// the facing/type pair carries): javap ChestBlock the 26.2 jar
+    /// the <clinit> pc 29-61 the SHAPES map speaks — the SINGLE the
+    /// `Block.column(14.0, 0, 14.0)` box [1,0,1]->[15,14,15] the
+    /// symmetric 14/16-tall band every facing wears (the column the
+    /// x/z the 8±7 inset keeps), the LEFT/RIGHT halves the
+    /// HALF_SHAPES map the `boxZ(14.0, 0, 14.0, 0, 15.0)` base box
+    /// [1,0,0]->[15,15,14] the rotateHorizontal quarter-turns bank
+    /// (the connected side the FLUSH edge wears — the z 0..14 span
+    /// the north-connected base keeps, the 15/16 the double's own
+    /// flat seam the vanilla redesign speaks; the EAST the x 2..16
+    /// flush-at-16 arm, the SOUTH the z 2..16, the WEST the x 0..14
+    /// — the getConnectedDirection walk the LEFT the facing's
+    /// clockwise quarter answers, the RIGHT the counter-clockwise
+    /// keeps). The variant byte the [`chest_variant_facing`]/[
+    /// [`chest_variant_type`]] unpack reads.
+    Chest(u8),
     /// The full-cube family — the default `Shapes.block()` registration
     /// the collision the body's box intersects refuses.
     Full,
@@ -8636,6 +8920,16 @@ pub fn collision_shape(id: u16) -> CollisionShape {
         // byte answers, the top box the [`lantern_cap_slabs`] walk
         // the roster serves.
         CollisionShape::Lantern(0)
+    } else if is_chest(id) {
+        // THE CHEST FAMILY'S OWN KIND-ONLY ROW (the dev-64 round —
+        // the facing/type the placement stamps the kind-only table
+        // never sees, the SINGLE box the conservative subset keeps:
+        // the [1, 0, 1] -> [15, 14, 15] band the placement's
+        // obstruction walk consumes — the SHAPE column(14.0, 0, 14.0)
+        // fold the symmetric inset the kind-only row wears). The
+        // doubles the variant-aware lane the variant byte +
+        // [`chest_connected_direction`] walk the compound answers.
+        CollisionShape::Chest(0)
     } else if is_stairs(id) {
         // THE STAIRS FAMILY'S OWN KIND-ONLY ROW (the dev-62 round —
         // the facing/half/shape the neighbor reads the kind-only
@@ -8965,6 +9259,17 @@ pub fn collision_shape_at(world: &World, cx: i32, cy: i32, cz: i32) -> Collision
     if is_lantern(id) {
         return CollisionShape::Lantern(world.variant(cx, cy, cz));
     }
+    // THE CHEST FAMILY'S OWN VARIANT-AWARE ROW (the dev-64 round —
+    // the facing/type the placed variant byte carries, the box the
+    // SHAPES map's own px law answers: the SINGLE the [1,0,1]->[15,
+    // 14,15] symmetric inset keeps, the LEFT/RIGHT halves the
+    // connected side the flush edge wears — the [
+    // `chest_connected_direction`] walk the connected quarter
+    // answers, the [`shape_slabs`] decode the px boxes the x/z
+    // override arms bank)
+    if is_chest(id) {
+        return CollisionShape::Chest(world.variant(cx, cy, cz));
+    }
     // THE STAIRS FAMILY'S OWN VARIANT-AWARE ROW (the dev-62 round —
     // the facing/half the placed variant byte carries, the SHAPE the
     // mesh-time law computes: the vanilla stores the SHAPE property
@@ -9088,6 +9393,17 @@ pub fn shape_slabs(
                 (cy as f64, cy as f64 + 8.0 / 16.0)
             }
         }
+        // THE CHEST'S OWN BAND (the dev-64 round — the SINGLE the 14/16
+        // box the SHAPE column speaks, the doubles the 15/16 the
+        // HALF_SHAPES law keeps)
+        CollisionShape::Chest(v) => {
+            let tall = if chest_variant_type(v) == CHEST_TYPE_SINGLE {
+                14.0f64
+            } else {
+                15.0f64
+            };
+            (cy as f64, cy as f64 + tall / 16.0)
+        }
         _ => (cy as f64, (cy + 1) as f64),
     };
     let inset = match shape {
@@ -9104,6 +9420,58 @@ pub fn shape_slabs(
             3 => z_lo = (cz + 1) as f64 - t,
             4 => x_hi = cx as f64 + t,
             _ => {}
+        }
+    }
+    // THE CHEST'S OWN INSET BOX (the dev-64 round — the SHAPE walk's
+    // own px boxes the variant byte rotates: the SINGLE the
+    // [1,0,1]->[15,14,15] symmetric inset keeps, the doubles the
+    // connected side the FLUSH edge wears — the NORTH-connected base
+    // box [1,0,0]->[15,15,14] the z 0..14 span banks, the EAST the x
+    // 2..16 flush-at-16 arm, the SOUTH the z 2..16, the WEST the x
+    // 0..14 — the [`chest_connected_direction`] walk the connected
+    // quarter answers)
+    if let CollisionShape::Chest(v) = shape {
+        let facing = chest_variant_facing(v);
+        let chest_type = chest_variant_type(v);
+        let inset = 1.0f64 / 16.0;
+        if chest_type == CHEST_TYPE_SINGLE {
+            x_lo = cx as f64 + inset;
+            x_hi = (cx + 1) as f64 - inset;
+            z_lo = cz as f64 + inset;
+            z_hi = (cz + 1) as f64 - inset;
+        } else {
+            // the connected side the FLUSH edge wears — the box's own
+            // span the quarter turn answers (the NORTH-connected base
+            // box [1,0,0]->[15,15,14] the z 0..14 span keeps, the
+            // EAST the x 2..16, the SOUTH the z 2..16, the WEST the x
+            // 0..14)
+            let conn = chest_connected_direction(facing, chest_type);
+            match conn {
+                CHEST_FACING_NORTH => {
+                    x_lo = cx as f64 + inset;
+                    x_hi = (cx + 1) as f64 - inset;
+                    z_lo = cz as f64;
+                    z_hi = cz as f64 + 14.0 / 16.0;
+                }
+                CHEST_FACING_EAST => {
+                    x_lo = cx as f64 + 2.0 / 16.0;
+                    x_hi = (cx + 1) as f64;
+                    z_lo = cz as f64 + inset;
+                    z_hi = (cz + 1) as f64 - inset;
+                }
+                CHEST_FACING_SOUTH => {
+                    x_lo = cx as f64 + inset;
+                    x_hi = (cx + 1) as f64 - inset;
+                    z_lo = cz as f64 + 2.0 / 16.0;
+                    z_hi = (cz + 1) as f64;
+                }
+                _ => {
+                    x_lo = cx as f64;
+                    x_hi = cx as f64 + 14.0 / 16.0;
+                    z_lo = cz as f64 + inset;
+                    z_hi = (cz + 1) as f64 - inset;
+                }
+            }
         }
     }
     // THE FENCE GATE'S OWN CENTERED STRIP (the dev-53 round — the
@@ -17435,7 +17803,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the lamp pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 737, "the palette the lamp pair banks");
+        assert_eq!(atlas::N_KINDS, 748, "the palette the lamp pair banks");
         assert!(is_redstone_lamp(REDSTONE_LAMP) && is_redstone_lamp(REDSTONE_LAMP_LIT));
         assert!(!is_redstone_lamp(REDSTONE_WIRE) && !is_redstone_lamp(STONE));
         assert!(!redstone_lamp_lit(REDSTONE_LAMP));
@@ -17532,7 +17900,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the wire pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 737, "the palette the wire pair banks");
+        assert_eq!(atlas::N_KINDS, 748, "the palette the wire pair banks");
         assert!(is_redstone_wire(REDSTONE_WIRE) && is_redstone_wire(REDSTONE_WIRE_ON));
         assert!(!is_redstone_wire(LEVER) && !is_redstone_wire(OAK_PRESSURE_PLATE));
         assert!(!wire_powered(REDSTONE_WIRE));
@@ -17686,7 +18054,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 737, "the palette the graded ladder banks");
+        assert_eq!(atlas::N_KINDS, 748, "the palette the graded ladder banks");
         // THE POWER READ'S OWN ROUND TRIP (the seat the kind the
         // inverse fold answers, the unknown id the None keeps)
         assert_eq!(wire_power_of(REDSTONE_WIRE), Some(0));
@@ -17873,7 +18241,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the planks' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 737, "the palette the planks' twelve banks");
+        assert_eq!(atlas::N_KINDS, 748, "the palette the planks' twelve banks");
         for (i, (name, kind, voice)) in PLANKS.iter().enumerate() {
             let seat = OAK_PLANKS + i as u16;
             assert_eq!(*kind, seat, "the seat the family order banks");
@@ -17965,7 +18333,7 @@ mod tests {
             None,
             "the portal the item lane refuses"
         );
-        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 748, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -18019,7 +18387,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kit's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 737, "the palette the kit's six banks");
+        assert_eq!(atlas::N_KINDS, 748, "the palette the kit's six banks");
         for (i, (name, kind, hard)) in KIT.iter().enumerate() {
             let seat = COBBLESTONE + i as u16;
             assert_eq!(*kind, seat, "the seat the stone shelf order banks");
@@ -18109,7 +18477,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kit's growth banks)
-        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 748, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -18166,7 +18534,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the shelf's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 737, "the palette the shelf's eight banks");
+        assert_eq!(atlas::N_KINDS, 748, "the palette the shelf's eight banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -18264,7 +18632,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the shelf's growth banks)
-        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 748, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -18333,7 +18701,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the cloths' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 737, "the palette the cloths' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 748, "the palette the cloths' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -18447,7 +18815,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the cloths' growth banks)
-        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 748, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -18522,7 +18890,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kilns' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 737, "the palette the kilns' seventeen banks");
+        assert_eq!(atlas::N_KINDS, 748, "the palette the kilns' seventeen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -18634,7 +19002,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kilns' growth banks)
-        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 748, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -18710,7 +19078,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 737, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 748, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -18827,7 +19195,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 748, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -18912,7 +19280,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 737, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 748, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -19063,7 +19431,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 748, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -19137,7 +19505,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 737, "the palette the ladder's twenty-two banks");
+        assert_eq!(atlas::N_KINDS, 748, "the palette the ladder's twenty-two banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -19326,7 +19694,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the ladder's growth banks)
-        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 748, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -19387,7 +19755,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the note's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 737, "the palette the note's own banks");
+        assert_eq!(atlas::N_KINDS, 748, "the palette the note's own banks");
         // THE ONE REGISTRY NAME ITS KIND ALONE SPEAKS (the NAME_OF row
         // + the generated KIND_NAMES/REGISTRY_NAMES rows the same
         // entry the three tables keep — no strip law the single kind
@@ -19698,7 +20066,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the note's growth banks)
-        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 748, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -19739,8 +20107,8 @@ mod tests {
             "the contiguous run the thirteen seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 737, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 748, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 748, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in OAK_FENCE..=NETHER_BRICK_FENCE {
@@ -20153,8 +20521,8 @@ mod tests {
             "the contiguous run the thirty-two seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 737, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 748, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 748, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in COBBLESTONE_WALL..=SULFUR_BRICK_WALL {
@@ -20493,8 +20861,8 @@ mod tests {
             "the contiguous run the seventeen seats wear"
         );
         assert_eq!(SULFUR_BRICK_WALL, 542, "the wall family the tail answers");
-        assert_eq!(atlas::N_KINDS, 737, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 748, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 748, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in GLASS..=BLACK_STAINED_GLASS {
@@ -20689,8 +21057,8 @@ mod tests {
             "the pane run the seventeen seats wear"
         );
         assert_eq!(BLACK_STAINED_GLASS, 559, "the glass family the tail answers");
-        assert_eq!(atlas::N_KINDS, 737, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 748, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 748, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in GLASS_PANE..=IRON_BARS {
@@ -20991,8 +21359,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_BARS, 585,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 737, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 748, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 748, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in COPPER_BARS..=WAXED_OXIDIZED_COPPER_BARS {
@@ -21312,8 +21680,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_CHAIN, 594,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 737, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 748, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 748, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in IRON_CHAIN..=WAXED_OXIDIZED_COPPER_CHAIN {
@@ -21611,8 +21979,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_LANTERN, 604,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 737, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 748, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 748, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in LANTERN..=WAXED_OXIDIZED_COPPER_LANTERN {
@@ -22091,8 +22459,8 @@ mod tests {
             DEEPSLATE_BRICK_STAIRS, 668,
             "the deepslate brick row the family's last seat keeps"
         );
-        assert_eq!(atlas::N_KINDS, 737, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 748, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 748, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in OAK_STAIRS..=DEEPSLATE_BRICK_STAIRS {
@@ -22587,8 +22955,8 @@ mod tests {
             DEEPSLATE_BRICK_SLAB, 736,
             "the deepslate brick row the family's last seat keeps"
         );
-        assert_eq!(atlas::N_KINDS, 737, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 737, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 748, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 748, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in RESIN_BRICK_SLAB..=DEEPSLATE_BRICK_SLAB {
@@ -22839,6 +23207,325 @@ mod tests {
     }
 
     #[test]
+    fn the_chest_familys_own_types_the_connection_walk_and_the_chest_voices_wear() {
+        // THE CHEST FAMILY'S OWN LAWS (the dev-64 round — javap
+        // ChestBlock the 26.2 jar the probe scripts/jar_work/
+        // container_692*.py banks): the FACING + TYPE + WATERLOGGED
+        // properties the registerDefaultState pins (FACING=NORTH +
+        // TYPE=SINGLE the default state wears), the <clinit> pc 29-61
+        // the SHAPES pair speaks (SHAPE = column(14.0, 0, 14.0) the
+        // [1,0,1]->[15,14,15] box banks, HALF_SHAPES =
+        // rotateHorizontal(boxZ(14.0, 0, 14.0, 0, 15.0)) the doubles'
+        // flush pair wears), getStateForPlacement pc 0-185 the
+        // look-opposite + sneak-partner + getChestType walks bank,
+        // getConnectedDirection pc 0-35 the LEFT=cw/RIGHT=ccw law
+        // speaks, the three clinit rows + the copper collection the
+        // 11 kinds register — the vanilla registration order the
+        // palette tail banks
+        use mc_registry::generated::atlas;
+        // THE ELEVEN SEATS' OWN BANK (the contiguous tail the
+        // append-only law keeps — the slab family the predecessor
+        // answers)
+        assert_eq!(CHEST, 737, "the chest head its tail seat keeps");
+        assert_eq!(TRAPPED_CHEST, 738, "the trapped row the ladder banks");
+        assert_eq!(ENDER_CHEST, 739, "the ender row the ladder banks");
+        assert_eq!(COPPER_CHEST, 740, "the copper head its seat keeps");
+        assert_eq!(
+            EXPOSED_COPPER_CHEST, 741,
+            "the exposed rung the ladder banks"
+        );
+        assert_eq!(
+            WEATHERED_COPPER_CHEST, 742,
+            "the weathered rung the ladder banks"
+        );
+        assert_eq!(
+            OXIDIZED_COPPER_CHEST, 743,
+            "the oxidized rung the ladder banks"
+        );
+        assert_eq!(
+            WAXED_COPPER_CHEST, 744,
+            "the waxed head its seat keeps"
+        );
+        assert_eq!(
+            WAXED_EXPOSED_COPPER_CHEST, 745,
+            "the waxed exposed rung the ladder banks"
+        );
+        assert_eq!(
+            WAXED_WEATHERED_COPPER_CHEST, 746,
+            "the waxed weathered rung the ladder banks"
+        );
+        assert_eq!(
+            WAXED_OXIDIZED_COPPER_CHEST, 747,
+            "the waxed oxidized rung the ladder banks"
+        );
+        assert_eq!(NAME_OF.len(), 748, "the NAME_OF table the one length keeps");
+        for k in CHEST_KINDS {
+            assert!(
+                (CHEST..=WAXED_OXIDIZED_COPPER_CHEST).contains(&k),
+                "the kind {} the tail range banks",
+                k
+            );
+            assert!(is_chest(k), "the kind {} the family predicate keeps", k);
+            assert_eq!(
+                NAME_OF[k as usize],
+                NAME_OF[k as usize],
+                "the name row the ladder banks"
+            );
+        }
+        for k in COPPER_CHEST..=WAXED_OXIDIZED_COPPER_CHEST {
+            assert!(
+                is_copper_chest(k),
+                "the kind {} the copper predicate keeps",
+                k
+            );
+        }
+        assert!(!is_copper_chest(CHEST), "the plain chest the head keeps");
+        // THE VARIANT PACK'S OWN ROUNDTRIP (the facing two bits + the
+        // type two bits the byte banks — the twelve states the
+        // FACING(4)xTYPE(3) map speaks)
+        for f in 0u8..4 {
+            for t in 0u8..3 {
+                let v = chest_variant(f, t);
+                assert_eq!(chest_variant_facing(v), f, "the facing the pack keeps");
+                assert_eq!(chest_variant_type(v), t, "the type the pack keeps");
+            }
+        }
+        // THE PLACEABLE ELEVEN (the item names the BlockItem pairing
+        // the registry answers — every kind the placeable lookup wears)
+        for k in CHEST_KINDS {
+            assert_eq!(
+                World::placeable_block(NAME_OF[k as usize]),
+                Some(k),
+                "the {} item the placeable lookup wears",
+                NAME_OF[k as usize]
+            );
+        }
+        // THE DIG ROWS (the generated table the REAL bootstrapped
+        // registry banks — the chest/trapped the strength(2.5) rows
+        // the no-tool demand keeps, the ender the strength(22.5, 600)
+        // the same no-tool verdict wears, the copper ladder the
+        // collection walk's 3.0 the requires-tool verdict banks)
+        let dig_expect: [(u16, f32, bool); 5] = [
+            (CHEST, 2.5, false),
+            (TRAPPED_CHEST, 2.5, false),
+            (ENDER_CHEST, 22.5, false),
+            (COPPER_CHEST, 3.0, true),
+            (WAXED_OXIDIZED_COPPER_CHEST, 3.0, true),
+        ];
+        for (k, hard, tool) in dig_expect {
+            let (h, t) = crate::dig::DigState::block_dig_row(k);
+            assert!(
+                (h - hard).abs() < 1e-4,
+                "the {} dig row the {} hardness wears, got {}",
+                NAME_OF[k as usize],
+                hard,
+                h
+            );
+            assert_eq!(
+                t, tool,
+                "the tool demand the {} row keeps",
+                NAME_OF[k as usize]
+            );
+        }
+        // THE VOICE LAWS THE FAMILY WEARS (the SoundType rows the
+        // generated table banks — the chest/trapped the WOOD voice
+        // keeps, the ender the STONE row wears, the copper ladder the
+        // COPPER voice the collection walk banks)
+        let voice_expect: [(u16, &str); 5] = [
+            (CHEST, "block.wood.break"),
+            (TRAPPED_CHEST, "block.wood.break"),
+            (ENDER_CHEST, "block.stone.break"),
+            (COPPER_CHEST, "block.copper.break"),
+            (WAXED_COPPER_CHEST, "block.copper.break"),
+        ];
+        for (k, voice) in voice_expect {
+            let idx = mc_registry::generated::block_sounds::sound_index(NAME_OF[k as usize])
+                .unwrap_or_else(|| panic!("the {} sound row the table banks", NAME_OF[k as usize]));
+            assert_eq!(
+                mc_registry::generated::block_sounds::SOUND_BREAK[idx],
+                voice,
+                "the voice the kind {} break row speaks",
+                k
+            );
+        }
+        // THE DROP POOLS THE SELF-ENTRY LAW BANKS (the 10 kinds the
+        // one-pool drop the self-entry law wears — the ENDER CHEST
+        // the obsidian alternative the loot table's silk-touch pair
+        // speaks: the `alternatives` pool the ender_chest item the
+        // silk arm keeps, the obsidian the 8-count the fall-through
+        // banks)
+        for k in CHEST_KINDS {
+            let name = NAME_OF[k as usize];
+            let pools = mc_registry::generated::block_drops::drops(name)
+                .unwrap_or_else(|| panic!("the {} drop pool the table banks", name));
+            if k == ENDER_CHEST {
+                assert!(
+                    pools
+                        .iter()
+                        .any(|p| p.entries.iter().any(|e| e.item == "obsidian")),
+                    "the ender chest the obsidian alternative the loot law wears"
+                );
+                continue;
+            }
+            assert_eq!(pools.len(), 1, "the {} the one-pool drop wears", name);
+            assert_eq!(
+                pools[0].entries[0].item, name,
+                "the {} drop the SELF-entry the chest law wears",
+                name
+            );
+        }
+        // THE CONNECTED DIRECTION'S OWN LAW (javap getConnectedDirection
+        // pc 0-35 — the LEFT the facing's clockwise quarter answers,
+        // the RIGHT the counter-clockwise keeps)
+        assert_eq!(
+            chest_connected_direction(CHEST_FACING_NORTH, CHEST_TYPE_LEFT),
+            CHEST_FACING_EAST,
+            "the LEFT the cw quarter banks"
+        );
+        assert_eq!(
+            chest_connected_direction(CHEST_FACING_NORTH, CHEST_TYPE_RIGHT),
+            CHEST_FACING_WEST,
+            "the RIGHT the ccw quarter banks"
+        );
+        // THE FRESH-CELL CONNECTION WALK (javap getChestType pc 0-39 +
+        // candidatePartnerFacing pc 0-49 — the same-facing SINGLE
+        // neighbor at the placement cell's CW side the LEFT verdict
+        // banks, the CCW side the RIGHT arm answers, the cross-family
+        // neighbor the connect gate refuses, the DOUBLE partner the
+        // SINGLE-type gate refuses)
+        let mut w = World::blank(3, 0x6D42);
+        let c = w.size_blocks() / 2;
+        let y = 8;
+        // the lone placement the SINGLE keeps
+        assert_eq!(
+            chest_connection_type(&w, c, y, c, CHEST_FACING_NORTH, CHEST),
+            CHEST_TYPE_SINGLE,
+            "the lone cell the SINGLE verdict keeps"
+        );
+        // the same-facing neighbor at the CW side (facing north -> the
+        // east side) the LEFT pair banks
+        w.set(c + 1, y, c, CHEST);
+        w.set_variant(c + 1, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE));
+        assert_eq!(
+            chest_connection_type(&w, c, y, c, CHEST_FACING_NORTH, CHEST),
+            CHEST_TYPE_LEFT,
+            "the cw same-facing single the LEFT pair banks"
+        );
+        // the CCW side the RIGHT arm answers (the west neighbor)
+        w.set(c - 1, y, c, CHEST);
+        w.set_variant(c - 1, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE));
+        w.set(c + 1, y, c, AIR);
+        assert_eq!(
+            chest_connection_type(&w, c, y, c, CHEST_FACING_NORTH, CHEST),
+            CHEST_TYPE_RIGHT,
+            "the ccw same-facing single the RIGHT pair banks"
+        );
+        // the cross-family gate: the plain chest beside the trapped
+        // held kind the connect refuses
+        w.set(c + 1, y, c, TRAPPED_CHEST);
+        w.set(c - 1, y, c, AIR);
+        assert_eq!(
+            chest_connection_type(&w, c, y, c, CHEST_FACING_NORTH, CHEST),
+            CHEST_TYPE_SINGLE,
+            "the cross-family neighbor the connect gate refuses"
+        );
+        // the DOUBLE partner the SINGLE-type gate refuses
+        w.set(c + 1, y, c, CHEST);
+        w.set_variant(c + 1, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_RIGHT));
+        assert_eq!(
+            chest_connection_type(&w, c, y, c, CHEST_FACING_NORTH, CHEST),
+            CHEST_TYPE_SINGLE,
+            "the double partner the single gate refuses"
+        );
+        // THE COLLISION'S OWN PAIR (the SHAPE walk the getShape read
+        // answers: the kind-only row the SINGLE box the conservative
+        // subset keeps, the variant-aware lane the SINGLE the 14/16
+        // inset box banks, the doubles the connected side the flush
+        // edge wears)
+        assert_eq!(collision_shape(CHEST), CollisionShape::Chest(0));
+        let mut wc = World::blank(3, 0x6D42);
+        wc.set(c, y, c, CHEST);
+        wc.set_variant(c, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE));
+        let shape = collision_shape_at(&wc, c, y, c);
+        let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) =
+            shape_slabs(shape, c, y, c).expect("the single chest the slabs never refuse");
+        assert!(
+            ((x_lo - (c as f64 + 1.0 / 16.0)).abs() < 1e-9)
+                && ((x_hi - (c as f64 + 15.0 / 16.0)).abs() < 1e-9)
+                && ((z_lo - (c as f64 + 1.0 / 16.0)).abs() < 1e-9)
+                && ((z_hi - (c as f64 + 15.0 / 16.0)).abs() < 1e-9),
+            "the 14/16 inset box the single keeps, got {x_lo}..{x_hi} {z_lo}..{z_hi}"
+        );
+        assert!(
+            ((y_lo - y as f64).abs() < 1e-9)
+                && ((y_hi - (y as f64 + 14.0 / 16.0)).abs() < 1e-9),
+            "the 0..14 band the single keeps, got {y_lo}..{y_hi}"
+        );
+        // the LEFT double (facing north, the partner east) the flush
+        // EAST edge the x 2..16 arm wears + the 15/16 band
+        wc.set_variant(
+            c,
+            y,
+            c,
+            chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_LEFT),
+        );
+        let shape = collision_shape_at(&wc, c, y, c);
+        let (x_lo, x_hi, _y_lo, y_hi, _z_lo, _z_hi) =
+            shape_slabs(shape, c, y, c).expect("the double the slabs never refuse");
+        assert!(
+            ((x_hi - (c as f64 + 1.0)).abs() < 1e-9)
+                && ((x_lo - (c as f64 + 2.0 / 16.0)).abs() < 1e-9),
+            "the flush east edge the LEFT double wears, got {x_lo}..{x_hi}"
+        );
+        assert!(
+            ((y_hi - (y as f64 + 15.0 / 16.0)).abs() < 1e-9),
+            "the 15/16 band the double keeps, got {y_hi}"
+        );
+        // THE TILE ROWS' OWN SEATS (the composite arm the four tiles
+        // banks — the front the NORTH slot wears, the sides the four
+        // vertical bands keep, the waxed twins the BASE family's
+        // tiles re-wear)
+        let row = atlas::FACE_TILES[CHEST as usize];
+        assert_eq!(
+            atlas::tile_name(row[5]),
+            "chest_front",
+            "the front tile the NORTH slot banks"
+        );
+        assert_eq!(
+            atlas::tile_name(row[0]),
+            "chest_side",
+            "the side tile the EAST slot keeps"
+        );
+        assert_eq!(
+            atlas::tile_name(row[2]),
+            "chest_top",
+            "the top tile the UP slot banks"
+        );
+        assert_eq!(
+            atlas::tile_name(row[3]),
+            "chest_bottom",
+            "the bottom tile the DOWN slot keeps"
+        );
+        assert_eq!(
+            atlas::FACE_TILES[WAXED_COPPER_CHEST as usize],
+            atlas::FACE_TILES[COPPER_CHEST as usize],
+            "the waxed twin the bare copper tiles re-wears"
+        );
+        assert!(
+            atlas::TILE_NAMES.iter().any(|n| *n == "trapped_chest_front"),
+            "the trapped family the own tiles banks"
+        );
+        assert!(
+            atlas::TILE_NAMES.iter().any(|n| *n == "ender_chest_front"),
+            "the ender family the own tiles banks"
+        );
+        assert!(
+            atlas::TILE_NAMES.iter().any(|n| *n == "oxidized_copper_chest_front"),
+            "the oxidized rung its own tiles banks"
+        );
+    }
+
+    #[test]
     fn the_redstone_torch_the_not_gate_and_the_source_arms_wear() {
         // THE REDSTONE TORCH'S OWN LAWS (the autopush-666 round — javap
         // RedstoneTorchBlock the 26.2 jar the probe scripts/jar_work/
@@ -22865,7 +23552,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the torch pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 737, "the palette the torch pair banks");
+        assert_eq!(atlas::N_KINDS, 748, "the palette the torch pair banks");
         assert!(is_redstone_torch(REDSTONE_TORCH) && is_redstone_torch(REDSTONE_TORCH_OFF));
         assert!(!is_redstone_torch(TORCH) && !is_redstone_torch(LEVER));
         assert!(redstone_torch_lit(REDSTONE_TORCH));
@@ -23006,7 +23693,7 @@ mod tests {
         assert_eq!(REDSTONE_WALL_TORCH, 324);
         assert_eq!(REDSTONE_WALL_TORCH_OFF, 325);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 737, "the palette the wall pair banks");
+        assert_eq!(atlas::N_KINDS, 748, "the palette the wall pair banks");
         assert!(
             is_redstone_torch(REDSTONE_WALL_TORCH) && is_redstone_torch(REDSTONE_WALL_TORCH_OFF),
             "the wall pair the family's tail banks"
@@ -23251,7 +23938,7 @@ mod tests {
         assert_eq!(OAK_TRAPDOOR_OPEN, 327);
         assert_eq!(END_PORTAL, 510);
         assert_eq!(
-            atlas::N_KINDS, 737,
+            atlas::N_KINDS, 748,
             "the palette the trapdoor pair banks"
         );
         assert_eq!(OAK_TRAPDOOR + 1, OAK_TRAPDOOR_OPEN, "the +1 mate wears");
@@ -23405,7 +24092,7 @@ mod tests {
         assert_eq!(END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-            737,
+            748,
             "the palette the gate pair banks"
         );
         assert_eq!(OAK_FENCE_GATE + 1, OAK_FENCE_GATE_OPEN, "the +1 mate wears");
@@ -23623,7 +24310,7 @@ mod tests {
         assert_eq!(WARPED_TRAPDOOR, 348);
         assert_eq!(WARPED_TRAPDOOR_OPEN, 349);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 737, "the palette the ladder banks");
+        assert_eq!(atlas::N_KINDS, 748, "the palette the ladder banks");
         // THE CONTIGUITY'S OWN LAW (the 22 kinds the range covers —
         // the neighbors the family fn refuses)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -23737,7 +24424,7 @@ mod tests {
         assert_eq!(IRON_TRAPDOOR, 366);
         assert_eq!(IRON_TRAPDOOR_OPEN, 367);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 737, "the palette the metal rungs bank");
+        assert_eq!(atlas::N_KINDS, 748, "the palette the metal rungs bank");
         // THE CONTIGUITY'S OWN LAW (the 42 kinds the range covers —
         // the waxed pairs the ±1 mate the parity answers)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -24108,7 +24795,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 737, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 748, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)

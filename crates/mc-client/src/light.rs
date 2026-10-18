@@ -119,6 +119,17 @@ fn sky_opacity(id: u16) -> u8 {
         // the useShapeForLightOcclusion walk the shape the local shade
         // serves)
         || is_stairs(id)
+        // THE CHEST FAMILY'S OWN ROW (the dev-64 round — the 11 kinds
+        // the canOcclude refusal the vanilla light law speaks: the
+        // ChestBlock rows the shape the FULL cube never is —
+        // `isShapeFullBlock(state)` the canOcclude verdict reads (the
+        // 14/16 inset box the false answer gives, the double's flush
+        // 15/16 halves the same verdict keeps — the full-cube test the
+        // 1/16 inset never passes), the propagatesSkylightDown law the
+        // same verdict keeps — the chest cell the sky the flood
+        // passes, the lid seam the shadow the non-occluding compound
+        // never banks)
+        || is_chest(id)
         // THE SLAB FAMILY'S OWN ROW (the dev-63 round — javap
         // SlabBlock.useShapeForLightOcclusion pc 0-18 the 26.2 jar the
         // type!=DOUBLE verdict speaks: the BOTTOM/TOP states the
@@ -274,6 +285,15 @@ fn emission(id: u16) -> u8 {
         // registrations speak, the LANTERN row's 15 the sibling
         // keeps)
         10
+    } else if id == crate::world::ENDER_CHEST {
+        // THE ENDER CHEST'S OWN ROW (the dev-64 round — javap the
+        // Blocks clinit the ENDER_CHEST registration the lightLevel
+        // indy pc 13991 the lambda$static$173 `bipush 7; ireturn`
+        // body banks: the obsidian chest's own violet glow the light
+        // grid paints — the strength(22.5, 600.0) unbreakable pair
+        // the pickaxe dig rows the generated table serves, the every-
+        // state read the emission's own verdict keeps)
+        7
     } else if id == crate::world::END_PORTAL {
         // THE END PORTAL'S OWN ROW (the dev-29 round — the blocks
         // clinit's end_portal registration the lightLevel lambda

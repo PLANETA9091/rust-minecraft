@@ -20429,6 +20429,35 @@ impl App {
         self.open(ScreenKind::Furnace);
     }
 
+    /// THE CHEST'S OWN FRESH STAND-IN (the dev-64 round — javap 26.2
+    /// ChestMenu.threeRows the 27-slot container the
+    /// EnderChestBlock.useWithoutItem lambda speaks, the
+    /// GenericContainerScreen generic_9x3 geometry the ScreenKind::
+    /// Chest lane wears): the RIGHT-CLICK on the placed chest the
+    /// block-use lane opens — the cell's own empty store the fresh
+    /// container banks (the placed chest's contents the per-cell
+    /// persistence the later rounds' own line, the empty 27-slot
+    /// grid the fresh cell keeps), the player's own hotbar row the
+    /// menu's own projection mirrors. The open_chest walk the PIXEL
+    /// test's own scene serves (the deterministic loadout the golden
+    /// pins) — THIS fn the live right-click lane answers (the two
+    /// flows the chest_is_live flag keeps apart).
+    pub fn open_chest_for(&mut self, pos: (i32, i32, i32)) {
+        self.enter_world();
+        // the OFFLINE stand-in: the live lane's flag stays down (the
+        // open_chest scene's own verdict the same law keeps)
+        self.chest_is_live = false;
+        self.chest_mirror.clear();
+        // the cell's own empty store (the fresh container the
+        // ChestMenu.threeRows ctor speaks — the 27 slots the menu's
+        // own addSlot walk places, the v1 round the contents the
+        // session's own lifetime keeps)
+        let _ = pos;
+        self.chest_slots = vec![(0i32, 0i32); 27];
+        self.chest_carried = (0, 0);
+        self.open(ScreenKind::Chest);
+    }
+
     /// THE TABLE'S OWN CLOSE (the vanilla CraftingMenu.removed walk —
     /// javap 26.2: the super.removed's carried return, then the
     /// clearContainer lambda over the craftSlots):
@@ -37258,6 +37287,31 @@ impl App {
             self.open_furnace(hit.pos);
             return true;
         }
+        // THE CHEST FAMILY'S OWN DOOR (the dev-64 round — javap 26.2
+        // ChestBlock.useWithoutItem pc 0-55 the openMenu walk the
+        // getMenuInflater verdict speaks, the BarrelBlock row the same
+        // SUCCESS shape banks, the EnderChestBlock pc 41-125 the
+        // above-cell isRedstoneConductor gate + the
+        // ChestMenu.threeRows lambda the same 27-slot container
+        // answers): the hit cell's chest kind the OFFLINE world
+        // answers — the generic_9x3 screen the fresh stand-in opens
+        // (the empty 27-slot store the fresh cell keeps — the
+        // open_chest_for walk the cell's own container banks). The
+        // WIRE session the local screen never opens (the server's own
+        // OpenScreen word owns the container — the menu type 2/27/28
+        // lane the projection feeds); the sneaking player the arm
+        // SKIPS (the crafting-table's own gate the vanilla use walk
+        // wears — the BlockItem.useOn's sneaking-place fallback the
+        // item lanes follow).
+        if !self.shift_down
+            && !self.world_is_network
+            && self
+                .active_world()
+                .is_some_and(|w| crate::world::is_chest(w.get(hit.pos.0, hit.pos.1, hit.pos.2)))
+        {
+            self.open_chest_for(hit.pos);
+            return true;
+        }
         // THE CAKE'S OWN BLOCK-USE ARM (javap 26.2 CakeBlock — the
         // useItemOn/useWithoutItem walk the BLOCK-use pass serves
         // BEFORE the item lanes reach, the crafting-table arm's own
@@ -38892,6 +38946,35 @@ impl App {
                 ) {
                     world.set_variant(cell.0, cell.1, cell.2, hanging);
                 }
+            }
+            // THE CHEST'S OWN FACING/TYPE STAMP (the dev-64 round — javap
+            // ChestBlock.getStateForPlacement pc 0-185 the 26.2 jar the
+            // look-opposite facing + the sneak-partner + the fresh-cell
+            // connection walks the pack fold speaks: the FACING byte the
+            // furnace arm's own law stamps [the
+            // getHorizontalDirection().getOpposite() walk the
+            // furnace_facing_byte table serves], the TYPE the
+            // secondary-use side arm the candidate partner behind the
+            // clicked cell reads + the getChestType walk the
+            // same-facing perpendicular neighbors answer — the variant
+            // byte the [`crate::world::chest_placement_variant`] walk
+            // the whole fold banks, the mesher's box lane the byte the
+            // box + tile assignment reads, the collision the SHAPE the
+            // same byte serves). The ender chest the facing-only byte
+            // the same walk stamps (the TYPE the ender's vocabulary
+            // never carries — the SINGLE the default state keeps).
+            if crate::world::is_chest(placed) {
+                let look_opposite = crate::world::furnace_facing_byte(cam_yaw);
+                let v = crate::world::chest_placement_variant(
+                    world,
+                    cell,
+                    look_opposite,
+                    hit.face,
+                    hit.pos,
+                    self.shift_down,
+                    placed,
+                );
+                world.set_variant(cell.0, cell.1, cell.2, v);
             }
             // THE PLACEMENT'S OWN CHAIN (javap BlockItem.placeBlock pc
             // 9 `bipush 11` — the setBlock the UPDATE_NEIGHBORS bit the
@@ -103816,7 +103899,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            737,
+            748,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -103897,7 +103980,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            737,
+            748,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -104199,7 +104282,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            737,
+            748,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -108129,7 +108212,7 @@ cow_sound_variant: None,
         // #texture ref banks)
         assert_eq!(
             atlas::N_KINDS,
-            737,
+            748,
             "the palette the weighted plates' own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
@@ -108349,7 +108432,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            737,
+            748,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
@@ -108626,7 +108709,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            737,
+            748,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
@@ -108742,7 +108825,7 @@ cow_sound_variant: None,
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE, 318);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, 319);
         assert_eq!(w::END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 737, "the palette the weighted rows bank");
+        assert_eq!(atlas::N_KINDS, 748, "the palette the weighted rows bank");
         for (off, on, name) in [
             (
                 w::LIGHT_WEIGHTED_PRESSURE_PLATE,
@@ -109856,7 +109939,7 @@ cow_sound_variant: None,
         assert_eq!(w::END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-            737,
+            748,
             "the palette the weighted plates' own rows bank"
         );
         for (off, on, name, wooden) in [
