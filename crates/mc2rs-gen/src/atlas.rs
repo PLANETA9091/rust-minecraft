@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 560] = [
+pub const RUNTIME_PALETTE: [&str; 578] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1856,6 +1856,102 @@ pub const RUNTIME_PALETTE: [&str; 560] = [
     "cyan_stained_glass", "purple_stained_glass", "blue_stained_glass",
     "brown_stained_glass", "green_stained_glass", "red_stained_glass",
     "black_stained_glass",
+    // THE PANE FAMILY'S OWN EIGHTEEN WINDOWS (the dev-58 round): the
+    // thin-strip rung the glass family's own lane wears — the glass
+    // pane the ONE seat the register row's own chain banks + the
+    // sixteen stained cloths the collection ladder serves + the iron
+    // bars the metal seam keeps. javap Blocks clinit the 26.2 jar
+    // (pinned sha1 2dc72797, the probes scripts/jar_work/pane_686.py
+    // + 686b/686c banks): the IRON_BARS row pc 12293-12328 —
+    // requiresCorrectToolForDrops() pc 12304, strength(5.0f, 6.0f)
+    // pc 12307-12313, sound(SoundType.IRON) pc 12316-12319,
+    // noOcclusion() pc 12322, register + putstatic pc 12325-12328
+    // (the COPPER_BARS WeatheringCopperCollection row pc 12331-12357
+    // the eight oxidization rungs the FOLLOW-UP round banks — the
+    // WeatheringCopper walk the chain carries, the palette the
+    // iron seam alone seats), the GLASS_PANE row pc 12430-12465 —
+    // instrument(HAT) pc 12441-12444, strength(0.3f) pc 12447-12450,
+    // sound(SoundType.GLASS) pc 12453-12456, noOcclusion() pc 12459,
+    // register + putstatic pc 12462-12465. javap IronBarsBlock the
+    // 26.2 jar: the ctor pc 0-13 the CrossCollisionBlock super
+    // (2.0F, 16.0F, 2.0F, 16.0F, 16.0F) args walk speaks — the
+    // 2/16-wide 16-tall band the collision makeShapes banks (the
+    // post Block.column(2.0, 0.0, 16.0) the [7,0,7]->[9,16,9]
+    // footprint wears, the arms the boxZ(2.0, ...) rotateHorizontal
+    // the four members keep — the FULL 16-tall band the anti-jump
+    // band's absence the standard-height law speaks: the vanilla
+    // jump NEVER clears the pane, the 1.0-tall collision the
+    // regular block's own answer keeps), the registerDefaultState
+    // pc 13-92 the NORTH/EAST/SOUTH/WEST/WATERLOGGED false pins
+    // speak. javap StainedGlassPaneBlock the ctor pc 0-10 the
+    // IronBarsBlock super the DyeColor field stores (the class
+    // header the walk banks — the STAINED_GLASS_PANE collection the
+    // ColorCollection.registerBlocks walk banks), the skipRendering
+    // override the class RETIRES (absent — the IronBarsBlock law
+    // every pane inherits). javap IronBarsBlock.skipRendering pc
+    // 0-124 the CULL LAW the mesher's same-kind arm speaks — the
+    // neighborState.is(this) arm pc 0-5, the BARS-tag pair arm pc
+    // 8-47 (the neighbor AND the state BOTH in the BARS tag — the
+    // tag the iron_bars + the eight copper rungs the probe's rows
+    // bank, the panes NEVER in — the pair arm the chain|bars law
+    // the client's iron-only palette never trips), the vertical
+    // axis arm pc 50-61 the TRUE verdict the stacked caps' shared
+    // plane culls, the mutual-connection arm pc 62-116 the state's
+    // own toward-dir property + the neighbor's opposite property
+    // the connected seam faces cull, the super fold pc 117-124 the
+    // default false keeps. javap IronBarsBlock.updateShape pc 0-105
+    // the connection walk the attachsTo predicate feeds (the
+    // WATERLOGGED schedule tick pc 0-33 the fluid pair banks, the
+    // horizontal axis arm pc 34-87 the PROPERTY_BY_DIRECTION[dir]
+    // the setValue walk serves, the super fold pc 88-105 keeps);
+    // javap IronBarsBlock.attachsTo pc 0-36 the THREE arms speak —
+    // (1) `!isExceptionForConnection(state) && isFaceSturdy` the
+    // sturdy-face arm (the leaves pair the exception verdict the
+    // client's palette ALONE seats), (2) `state.getBlock()
+    // instanceof IronBarsBlock` the INSTANCE arm EVERY pane and
+    // bars kind the class check connects (pane|pane ANY color pair,
+    // pane|bars, bars|bars — the whole thin-strip family the ONE
+    // class law banks), (3) `state.is(BlockTags.WALLS)` the WALLS
+    // arm the 32 wall kinds the dev-56 family connects — the
+    // ASYMMETRIC law the vanilla truth wears (the pane connects TO
+    // the wall, the wall's own connectsTo the pane never grows).
+    // The blockstates ALL EIGHTEEN the MULTIPART carry — the panes
+    // the UNCONDITIONAL post apply + the four side arms the
+    // north/east y0/y90 + the south/west side_ALT rows + the four
+    // NOSIDE arms the unconnected caps speak (the probe's glass/
+    // white rows bank), the iron_bars the post_ENDS unconditional
+    // + the all-false post arm + the four cap/cap_alt arms the
+    // single-connection patterns + the four side/side_alt arms
+    // wear. The models the pane templates the ZERO-inner-face law
+    // speaks (template_glass_pane_post the down/up cap pair only,
+    // template_glass_pane_side the north END face the cullface row
+    // carries + the west/east #pane long faces — NO south face the
+    // connected seam the z-fight never banks, template_glass_pane_
+    // noside the ONE-face cap the unconnected edge wears; the
+    // template_bars_* the ZERO-WIDTH planes the crossed-sheet look
+    // renders — the post pair x=8/z=8 planes, the side's plane +
+    // the END face + the y=0.001/15.999 edge strips), the
+    // ambientocclusion: false the pane templates ALL carry. The
+    // textures the alpha histograms the render lanes bank (the
+    // probe's png walk speaks): the glass_pane_top 16x16 alpha
+    // {0: 224, 255: 32} the BINARY cutout (the 2px edge strip
+    // opaque), the sixteen stained tops alpha {0: 224, 230: 32}
+    // the 0.90 edge band the translucent blend serves, the
+    // iron_bars 16x16 alpha {0: 140, 255: 116} the binary cutout
+    // (the bars' gaps the discard law wears) — the #pane side refs
+    // the GLASS FAMILY's own masters re-wear (the glass the binary
+    // cutout, the stained cloths the 0.4 body band the per-texel
+    // blend serves), the pane side quads the 26.2 models'
+    // force_translucent: true refs the render-layer signal carry.
+    "glass_pane", "white_stained_glass_pane", "orange_stained_glass_pane",
+    "magenta_stained_glass_pane", "light_blue_stained_glass_pane",
+    "yellow_stained_glass_pane", "lime_stained_glass_pane",
+    "pink_stained_glass_pane", "gray_stained_glass_pane",
+    "light_gray_stained_glass_pane", "cyan_stained_glass_pane",
+    "purple_stained_glass_pane", "blue_stained_glass_pane",
+    "brown_stained_glass_pane", "green_stained_glass_pane",
+    "red_stained_glass_pane", "black_stained_glass_pane",
+    "iron_bars",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -2817,6 +2913,64 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             let tex = tex_map
                 .get("wall")
                 .with_context(|| format!("model {model_ref}: no wall texture ref"))?;
+            let stem = tex
+                .trim_start_matches("minecraft:")
+                .trim_start_matches("block/")
+                .to_string();
+            faces.push(resolve_flat_stem(&stem, false));
+            continue;
+        }
+        if block.ends_with("glass_pane") || block == "iron_bars" {
+            // THE PANE FAMILY'S OWN PALETTE ARM (the dev-58 round, the
+            // official 26.2 jar): the blockstate is a MULTIPART — the
+            // UNCONDITIONAL post apply (block/{name}_post for the
+            // panes, block/iron_bars_post_ends for the bars — the
+            // declaration order's own head) + the side/noside or
+            // cap/side arms the when-rows — resolve_block's full-cube
+            // six-face requirement cannot apply (the pane post element
+            // carries the down/up cap pair ONLY, the full-cube finder
+            // the two-face element never banks). The FIRST apply (the
+            // post — the pane's every connection state wears it) is
+            // the canonical model: its merged texture map's `edge` ref
+            // (block/glass_pane_top for the plain row, block/{color}_
+            // stained_glass_pane_top the sixteen dyed rungs wear,
+            // block/iron_bars the metal seam keeps — the ONE ref the
+            // post AND the side/cap models the template parents bank)
+            // is the palette row — the EDGE master the six slots bank
+            // (the #pane side refs the GLASS FAMILY's own masters
+            // re-wear — the sibling kinds the id-17 rows the mesher's
+            // per-quad verdict reads — the edge tiles the on-demand
+            // collection the pane arm's own stem banks: 790 -> 808 the
+            // seventeen tops + the iron_bars master the append law
+            // keeps), tinted = false (the pre-colored masters carry
+            // NO tintindex). The append-only law verify_atlas_full.py
+            // banks — every pre-existing row the same pixels + tints +
+            // names renders.
+            let bs_bytes = read_jar(
+                &mut archive,
+                &format!("assets/minecraft/blockstates/{block}.json"),
+            )?;
+            let bs: Value = serde_json::from_slice(&bs_bytes)
+                .with_context(|| format!("blockstate {block}: json parse"))?;
+            let parts = bs
+                .get("multipart")
+                .and_then(|v| v.as_array())
+                .with_context(|| format!("blockstate {block}: no multipart"))?;
+            // the FIRST apply (the unconditional post/post_ends — the
+            // pane's every connection state wears it)
+            let model_ref = parts
+                .first()
+                .and_then(|p| p.get("apply"))
+                .and_then(|a| if a.is_array() { a.get(0) } else { Some(a) })
+                .and_then(|a| a.get("model"))
+                .and_then(|m| m.as_str())
+                .map(|m| m.trim_start_matches("minecraft:").to_string())
+                .with_context(|| format!("blockstate {block}: no post apply"))?;
+            let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
+                .with_context(|| format!("block {block}: model chain {model_ref}"))?;
+            let tex = tex_map
+                .get("edge")
+                .with_context(|| format!("model {model_ref}: no edge texture ref"))?;
             let stem = tex
                 .trim_start_matches("minecraft:")
                 .trim_start_matches("block/")

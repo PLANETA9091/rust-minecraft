@@ -1,0 +1,238 @@
+=== full iron_bars.json
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "minecraft:block/iron_bars_post_ends"
+      }
+    },
+    {
+      "apply": {
+        "model": "minecraft:block/iron_bars_post"
+      },
+      "when": {
+        "east": "false",
+        "north": "false",
+        "south": "false",
+        "west": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "minecraft:block/iron_bars_cap"
+      },
+      "when": {
+        "east": "false",
+        "north": "true",
+        "south": "false",
+        "west": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "minecraft:block/iron_bars_cap",
+        "y": 90
+      },
+      "when": {
+        "east": "true",
+        "north": "false",
+        "south": "false",
+        "west": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "minecraft:block/iron_bars_cap_alt"
+      },
+      "when": {
+        "east": "false",
+        "north": "false",
+        "south": "true",
+        "west": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "minecraft:block/iron_bars_cap_alt",
+        "y": 90
+      },
+      "when": {
+        "east": "false",
+        "north": "false",
+        "south": "false",
+        "west": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "minecraft:block/iron_bars_side"
+      },
+      "when": {
+        "north": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "minecraft:block/iron_bars_side",
+        "y": 90
+      },
+      "when": {
+        "east": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "minecraft:block/iron_bars_side_alt"
+      },
+      "when": {
+        "south": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "minecraft:block/iron_bars_side_alt",
+        "y": 90
+      },
+      "when": {
+        "west": "true"
+      }
+    }
+  ]
+}
+=== noside + bars template models
+--- template_glass_pane_noside.json: {"ambientocclusion": false, "textures": {"particle": "#pane"}, "elements": [{"from": [7, 0, 7], "to": [9, 16, 9], "faces": {"north": {"uv": [9, 0, 7, 16], "texture": "#pane"}}}]}
+--- template_glass_pane_noside_alt.json: {"ambientocclusion": false, "textures": {"particle": "#pane"}, "elements": [{"from": [7, 0, 7], "to": [9, 16, 9], "faces": {"east": {"uv": [7, 0, 9, 16], "texture": "#pane"}}}]}
+--- glass_pane_noside.json: {"parent": "minecraft:block/template_glass_pane_noside", "textures": {"pane": {"force_translucent": true, "sprite": "minecraft:block/glass"}}}
+--- glass_pane_noside_alt.json: {"parent": "minecraft:block/template_glass_pane_noside_alt", "textures": {"pane": {"force_translucent": true, "sprite": "minecraft:block/glass"}}}
+--- template_bars_post.json: {"ambientocclusion": false, "textures": {"particle": "#bars"}, "elements": [{"from": [8, 0, 7], "to": [8, 16, 9], "faces": {"west": {"uv": [7, 0, 9, 16], "texture": "#bars"}, "east": {"uv": [9, 0, 7, 16], "texture": "#bars"}}}, {"from": [7, 0, 8], "to": [9, 16, 8], "faces": {"north": {"uv": [7, 0, 9, 16], "texture": "#bars"}, "south": {"uv": [9, 0, 7, 16], "texture": "#bars"}}}]}
+--- template_bars_cap.json: {"ambientocclusion": false, "textures": {"particle": "#bars"}, "elements": [{"from": [8, 0, 8], "to": [8, 16, 9], "faces": {"west": {"uv": [8, 0, 7, 16], "texture": "#bars"}, "east": {"uv": [7, 0, 8, 16], "texture": "#bars"}}}, {"from": [7, 0, 9], "to": [9, 16, 9], "faces": {"north": {"uv": [9, 0, 7, 16], "texture": "#bars"}, "south": {"uv": [7, 0, 9, 16], "texture": "#bars"}}}]}
+--- template_bars_cap_alt.json: {"ambientocclusion": false, "textures": {"particle": "#bars"}, "elements": [{"from": [8, 0, 7], "to": [8, 16, 8], "faces": {"west": {"uv": [8, 0, 9, 16], "texture": "#bars"}, "east": {"uv": [9, 0, 8, 16], "texture": "#bars"}}}, {"from": [7, 0, 7], "to": [9, 16, 7], "faces": {"north": {"uv": [7, 0, 9, 16], "texture": "#bars"}, "south": {"uv": [9, 0, 7, 16], "texture": "#bars"}}}]}
+--- template_bars_side.json: {"ambientocclusion": false, "textures": {"particle": "#bars"}, "elements": [{"from": [8, 0, 0], "to": [8, 16, 8], "faces": {"west": {"uv": [16, 0, 8, 16], "texture": "#bars"}, "east": {"uv": [8, 0, 16, 16], "texture": "#bars"}}}, {"from": [7, 0, 0], "to": [9, 16, 7], "faces": {"north": {"uv": [7, 0, 9, 16], "texture": "#edge", "cullface": "north"}}}, {"from": [7, 0.001, 0], "to": [9, 0.001, 7], "faces": {"down": {"uv": [9, 0, 7, 7], "texture": "#edge"}, "up": {"uv": [7, 0, 9, 7], "texture": "#edge"}}}, {"from": [7, 15.999, 0], "to": [9, 15.999, 7], "faces": {"down": {"uv": [9, 0, 7, 7], "texture": "#edge"}, "up": {"uv": [7, 0, 9, 7], "texture": "#edge"}}}]}
+--- template_bars_side_alt.json: {"ambientocclusion": false, "textures": {"particle": "#bars"}, "elements": [{"from": [8, 0, 8], "to": [8, 16, 16], "faces": {"west": {"uv": [8, 0, 0, 16], "texture": "#bars"}, "east": {"uv": [0, 0, 8, 16], "texture": "#bars"}}}, {"from": [7, 0, 9], "to": [9, 16, 16], "faces": {"south": {"uv": [7, 0, 9, 16], "texture": "#edge", "cullface": "south"}, "down": {"uv": [9, 9, 7, 16], "texture": "#edge"}, "up": {"uv": [7, 9, 9, 16], "texture": "#edge"}}}, {"from": [7, 0.001, 9], "to": [9, 0.001, 16], "faces": {"down": {"uv": [9, 9, 7, 16], "texture": "#edge"}, "up": {"uv": [7, 9, 9, 16], "texture": "#edge"}}}, {"from": [7, 15.999, 9], "to": [9, 15.999, 16], "faces": {"down": {"uv": [9, 9, 7, 16], "texture": "#edge"}, "up": {"uv": [7, 9, 9, 16], "texture": "#edge"}}}]}
+--- iron_bars_post_ends.json: {"parent": "minecraft:block/template_bars_post_ends", "textures": {"bars": "minecraft:block/iron_bars", "edge": "minecraft:block/iron_bars"}}
+
+=== BARS tag
+{"values": ["minecraft:iron_bars", "minecraft:copper_bars", "minecraft:exposed_copper_bars", "minecraft:weathered_copper_bars", "minecraft:oxidized_copper_bars", "minecraft:waxed_copper_bars", "minecraft:waxed_exposed_copper_bars", "minecraft:waxed_weathered_copper_bars", "minecraft:waxed_oxidized_copper_bars"]}
+
+=== IronBarsBlock updateShape + skipRendering tail
+--- net.minecraft.world.level.block.IronBarsBlock.updateShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/world/level/ScheduledTickAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;)Lnet/minecraft/world/level/block/state/BlockState;
+0: aload_1
+1: getstatic net/minecraft/world/level/block/IronBarsBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+4: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+7: checkcast java/lang/Boolean
+10: invokevirtual java/lang/Boolean.booleanValue:()Z
+13: ifeq -> 34
+16: aload_3
+17: aload aload 4
+19: getstatic net/minecraft/world/level/material/Fluids.WATER:Lnet/minecraft/world/level/material/FlowingFluid;
+22: getstatic net/minecraft/world/level/material/Fluids.WATER:Lnet/minecraft/world/level/material/FlowingFluid;
+25: aload_2
+26: invokevirtual net/minecraft/world/level/material/FlowingFluid.getTickDelay:(Lnet/minecraft/world/level/LevelReader;)I
+29: invokeinterface net/minecraft/world/level/ScheduledTickAccess.scheduleTick:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/material/Fluid;I)V
+32: iconst_1
+33: nop
+34: aload aload 5
+36: invokevirtual net/minecraft/core/Direction.getAxis:()Lnet/minecraft/core/Direction$Axis;
+39: invokevirtual net/minecraft/core/Direction$Axis.isHorizontal:()Z
+42: ifeq -> 88
+45: aload_1
+46: getstatic net/minecraft/world/level/block/IronBarsBlock.PROPERTY_BY_DIRECTION:Ljava/util/Map;
+49: aload aload 5
+51: invokeinterface java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+54: iconst_m1
+55: nop
+56: checkcast net/minecraft/world/level/block/state/properties/Property
+59: aload_0
+60: aload aload 7
+62: aload aload 7
+64: aload_2
+65: aload aload 6
+67: aload aload 5
+69: invokevirtual net/minecraft/core/Direction.getOpposite:()Lnet/minecraft/core/Direction;
+72: invokevirtual net/minecraft/world/level/block/state/BlockState.isFaceSturdy:(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Z
+75: invokevirtual net/minecraft/world/level/block/IronBarsBlock.attachsTo:(Lnet/minecraft/world/level/block/state/BlockState;Z)Z
+78: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+81: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+84: checkcast net/minecraft/world/level/block/state/BlockState
+87: areturn
+88: aload_0
+89: aload_1
+90: aload_2
+91: aload_3
+92: aload aload 4
+94: aload aload 5
+96: aload aload 6
+98: aload aload 7
+100: aload aload 8
+102: invokespecial net/minecraft/world/level/block/CrossCollisionBlock.updateShape:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/world/level/ScheduledTickAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;)Lnet/minecraft/world/level/block/state/BlockState;
+105: areturn
+--- skipRendering FULL (59 pcs)
+0: aload_2
+1: aload_0
+2: invokevirtual net/minecraft/world/level/block/state/BlockState.is:(Ljava/lang/Object;)Z
+5: ifne -> 50
+8: aload_2
+9: getstatic net/minecraft/tags/BlockTags.BARS:Lnet/minecraft/tags/TagKey;
+12: invokevirtual net/minecraft/world/level/block/state/BlockState.is:(Lnet/minecraft/tags/TagKey;)Z
+15: ifeq -> 117
+18: aload_1
+19: getstatic net/minecraft/tags/BlockTags.BARS:Lnet/minecraft/tags/TagKey;
+22: invokevirtual net/minecraft/world/level/block/state/BlockState.is:(Lnet/minecraft/tags/TagKey;)Z
+25: ifeq -> 117
+28: aload_2
+29: getstatic net/minecraft/world/level/block/IronBarsBlock.PROPERTY_BY_DIRECTION:Ljava/util/Map;
+32: aload_3
+33: invokevirtual net/minecraft/core/Direction.getOpposite:()Lnet/minecraft/core/Direction;
+36: invokeinterface java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+39: iconst_m1
+40: nop
+41: checkcast net/minecraft/world/level/block/state/properties/Property
+44: invokevirtual net/minecraft/world/level/block/state/BlockState.hasProperty:(Lnet/minecraft/world/level/block/state/properties/Property;)Z
+47: ifeq -> 117
+50: aload_3
+51: invokevirtual net/minecraft/core/Direction.getAxis:()Lnet/minecraft/core/Direction$Axis;
+54: invokevirtual net/minecraft/core/Direction$Axis.isHorizontal:()Z
+57: ifne -> 62
+60: iconst_1
+61: ireturn
+62: aload_1
+63: getstatic net/minecraft/world/level/block/IronBarsBlock.PROPERTY_BY_DIRECTION:Ljava/util/Map;
+66: aload_3
+67: invokeinterface java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+70: iconst_m1
+71: nop
+72: checkcast net/minecraft/world/level/block/state/properties/Property
+75: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+78: checkcast java/lang/Boolean
+81: invokevirtual java/lang/Boolean.booleanValue:()Z
+84: ifeq -> 117
+87: aload_2
+88: getstatic net/minecraft/world/level/block/IronBarsBlock.PROPERTY_BY_DIRECTION:Ljava/util/Map;
+91: aload_3
+92: invokevirtual net/minecraft/core/Direction.getOpposite:()Lnet/minecraft/core/Direction;
+95: invokeinterface java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+98: iconst_m1
+99: nop
+100: checkcast net/minecraft/world/level/block/state/properties/Property
+103: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+106: checkcast java/lang/Boolean
+109: invokevirtual java/lang/Boolean.booleanValue:()Z
+112: ifeq -> 117
+115: iconst_1
+116: ireturn
+117: aload_0
+118: aload_1
+119: aload_2
+120: aload_3
+121: invokespecial net/minecraft/world/level/block/CrossCollisionBlock.skipRendering:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/Direction;)Z
+124: ireturn
+
+=== CrossCollisionBlock fields
+field NORTH : Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+field EAST : Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+field SOUTH : Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+field WEST : Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+field WATERLOGGED : Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+field PROPERTY_BY_DIRECTION : Ljava/util/Map;
+field collisionShapes : Ljava/util/function/Function;
+field shapes : Ljava/util/function/Function;

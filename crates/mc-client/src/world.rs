@@ -3073,6 +3073,106 @@ pub const GREEN_STAINED_GLASS: u16 = 557;
 pub const RED_STAINED_GLASS: u16 = 558;
 pub const BLACK_STAINED_GLASS: u16 = 559;
 
+/// THE PANE FAMILY'S OWN EIGHTEEN WINDOWS (the dev-58 round — the
+/// thin-strip rung the glass family's own lane wears): the glass pane
+/// the ONE seat the register row's own chain banks + the sixteen
+/// stained cloths the collection ladder serves + the iron bars the
+/// metal seam keeps. javap Blocks clinit the 26.2 jar (pinned sha1
+/// 2dc72797, the probes scripts/jar_work/pane_686.py + 686b/686c
+/// banks): the IRON_BARS row pc 12293-12328 —
+/// requiresCorrectToolForDrops() pc 12304, strength(5.0f, 6.0f) pc
+/// 12307-12313, sound(SoundType.IRON) pc 12316-12319, noOcclusion()
+/// pc 12322, register + putstatic pc 12325-12328 (the COPPER_BARS
+/// WeatheringCopperCollection row pc 12331-12357 the eight
+/// oxidization rungs the FOLLOW-UP round banks), the GLASS_PANE row
+/// pc 12430-12465 — instrument(HAT) pc 12441-12444, strength(0.3f)
+/// pc 12447-12450, sound(SoundType.GLASS) pc 12453-12456,
+/// noOcclusion() pc 12459, register + putstatic pc 12462-12465.
+/// javap IronBarsBlock the ctor pc 0-13 the CrossCollisionBlock
+/// super (2.0F, 16.0F, 2.0F, 16.0F, 16.0F) args walk speaks — the
+/// 2/16-wide 16-tall band the collision banks (the post
+/// Block.column(2.0, 0.0, 16.0) the [7,0,7]->[9,16,9] footprint
+/// wears, the arms the boxZ(2.0, ...) rotateHorizontal the four
+/// members keep — the FULL 16-tall band the standard-height law
+/// speaks: the vanilla jump NEVER clears the pane, the 1.0-tall
+/// collision the regular block's own answer keeps), the
+/// registerDefaultState pc 13-92 the N/E/S/W/WATERLOGGED false pins
+/// speak. javap StainedGlassPaneBlock the ctor pc 0-10 the
+/// IronBarsBlock super the DyeColor field stores, the skipRendering
+/// override the class RETIRES (absent — the IronBarsBlock law every
+/// pane inherits). javap IronBarsBlock.skipRendering pc 0-124 the
+/// CULL LAW the mesher's same-kind arm speaks (the same-instance
+/// arm pc 0-5, the BARS-tag pair arm pc 8-47 the panes never seat,
+/// the vertical axis arm pc 50-61 the TRUE verdict the stacked
+/// caps' shared plane culls, the mutual-connection arm pc 62-116
+/// the connected seam faces cull, the super fold pc 117-124 the
+/// default keeps). javap IronBarsBlock.updateShape pc 0-105 the
+/// connection walk the attachsTo predicate feeds; javap
+/// IronBarsBlock.attachsTo pc 0-36 the THREE arms speak — the
+/// sturdy-face arm (the leaves pair the exception verdict keeps),
+/// the `instanceof IronBarsBlock` arm EVERY pane and bars kind the
+/// class check connects (pane|pane ANY color, pane|bars, bars|bars),
+/// the `state.is(BlockTags.WALLS)` arm the 32 wall kinds the dev-56
+/// family connects — the ASYMMETRIC law the vanilla truth wears
+/// (the pane connects TO the wall, the wall's own connectsTo the
+/// pane never grows). The dig/sounds/drops rows the name-keyed
+/// generated tables the registry answers (the pane 0.3 no-tool, the
+/// bars (5.0, true) the pickaxe demand the requiresCorrectToolFor
+/// Drops row keeps), the placeable lane the Items pairing rows
+/// (the Items clinit the GLASS_PANE/IRON_BARS rows the pairing
+/// walk serves). The blockstates ALL EIGHTEEN the MULTIPART carry,
+/// the models the pane templates the ZERO-inner-face law speaks
+/// (the connected seam the z-fight never banks), the ambientocclusion:
+/// false the pane templates ALL carry. The textures the alpha
+/// histograms the render lanes bank: the glass_pane_top {0: 224,
+/// 255: 32} the BINARY cutout, the sixteen stained tops {0: 224,
+/// 230: 32} the 0.90 edge band, the iron_bars {0: 140, 255: 116}
+/// the binary cutout — the #pane side refs the GLASS FAMILY's own
+/// masters re-wear.
+pub const GLASS_PANE: u16 = 560;
+pub const WHITE_STAINED_GLASS_PANE: u16 = 561;
+pub const ORANGE_STAINED_GLASS_PANE: u16 = 562;
+pub const MAGENTA_STAINED_GLASS_PANE: u16 = 563;
+pub const LIGHT_BLUE_STAINED_GLASS_PANE: u16 = 564;
+pub const YELLOW_STAINED_GLASS_PANE: u16 = 565;
+pub const LIME_STAINED_GLASS_PANE: u16 = 566;
+pub const PINK_STAINED_GLASS_PANE: u16 = 567;
+pub const GRAY_STAINED_GLASS_PANE: u16 = 568;
+pub const LIGHT_GRAY_STAINED_GLASS_PANE: u16 = 569;
+pub const CYAN_STAINED_GLASS_PANE: u16 = 570;
+pub const PURPLE_STAINED_GLASS_PANE: u16 = 571;
+pub const BLUE_STAINED_GLASS_PANE: u16 = 572;
+pub const BROWN_STAINED_GLASS_PANE: u16 = 573;
+pub const GREEN_STAINED_GLASS_PANE: u16 = 574;
+pub const RED_STAINED_GLASS_PANE: u16 = 575;
+pub const BLACK_STAINED_GLASS_PANE: u16 = 576;
+pub const IRON_BARS: u16 = 577;
+
+/// THE PANE FAMILY'S OWN SEAT LADDER (the dev-58 round — the 18
+/// kinds the explicit seats the tail banks, the wall tables' own
+/// explicit-seat law the window rung wears): the mesher's pane lane
+/// and the family fns the ladder read.
+pub const PANE_KINDS: [u16; 18] = [
+    GLASS_PANE,
+    WHITE_STAINED_GLASS_PANE,
+    ORANGE_STAINED_GLASS_PANE,
+    MAGENTA_STAINED_GLASS_PANE,
+    LIGHT_BLUE_STAINED_GLASS_PANE,
+    YELLOW_STAINED_GLASS_PANE,
+    LIME_STAINED_GLASS_PANE,
+    PINK_STAINED_GLASS_PANE,
+    GRAY_STAINED_GLASS_PANE,
+    LIGHT_GRAY_STAINED_GLASS_PANE,
+    CYAN_STAINED_GLASS_PANE,
+    PURPLE_STAINED_GLASS_PANE,
+    BLUE_STAINED_GLASS_PANE,
+    BROWN_STAINED_GLASS_PANE,
+    GREEN_STAINED_GLASS_PANE,
+    RED_STAINED_GLASS_PANE,
+    BLACK_STAINED_GLASS_PANE,
+    IRON_BARS,
+];
+
 /// THE GLASS FAMILY'S OWN SEAT LADDER (the dev-57 round — the 17
 /// kinds the explicit seats the tail banks, the wall tables' own
 /// explicit-seat law the window rung wears): the family fns the
@@ -3717,7 +3817,7 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 /// generated tables' own rows the names wire) — the
 /// END_PORTAL
 /// the beyond-table seat the displaced law keeps.
-pub const NAME_OF: [&str; 560] = [
+pub const NAME_OF: [&str; 578] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -4382,6 +4482,19 @@ pub const NAME_OF: [&str; 560] = [
     "cyan_stained_glass", "purple_stained_glass", "blue_stained_glass",
     "brown_stained_glass", "green_stained_glass", "red_stained_glass",
     "black_stained_glass",
+    // THE PANE FAMILY'S OWN ROWS (the dev-58 round — the 18 seats
+    // the thin-strip rung banks, the ONE registry name each kind
+    // alone speaks, the dig/sound/drop/place lanes the generated
+    // tables' own rows the names wire)
+    "glass_pane", "white_stained_glass_pane", "orange_stained_glass_pane",
+    "magenta_stained_glass_pane", "light_blue_stained_glass_pane",
+    "yellow_stained_glass_pane", "lime_stained_glass_pane",
+    "pink_stained_glass_pane", "gray_stained_glass_pane",
+    "light_gray_stained_glass_pane", "cyan_stained_glass_pane",
+    "purple_stained_glass_pane", "blue_stained_glass_pane",
+    "brown_stained_glass_pane", "green_stained_glass_pane",
+    "red_stained_glass_pane", "black_stained_glass_pane",
+    "iron_bars",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -5376,6 +5489,79 @@ pub fn fence_connection_bits(world: &World, x: i32, y: i32, z: i32) -> u8 {
     bits
 }
 
+/// THE PANE FAMILY'S OWN THREE-ARM LAW (the dev-58 round — javap
+/// IronBarsBlock.attachsTo(state, isFaceSturdy) pc 0-36 the 26.2 jar
+/// the probes scripts/jar_work/pane_686.py + 686b/686c banks): (1)
+/// `!isExceptionForConnection(state) && isFaceSturdy` the
+/// sturdy-face arm the leaves pair the exception verdict keeps —
+/// the collision vocabulary's full-side family the sturdy read the
+/// fence law's own mapping wears (the Full/Column/InsetColumn rows
+/// the full side faces bank), (2) `state.getBlock() instanceof
+/// IronBarsBlock` the INSTANCE arm EVERY pane and bars kind the
+/// class check connects — pane|pane ANY color pair, pane|bars,
+/// bars|bars (the whole thin-strip family the ONE class law banks,
+/// the fence's isSameFence parity the instance arm NEVER wears),
+/// (3) `state.is(BlockTags.WALLS)` the WALLS arm the 32 wall kinds
+/// the dev-56 family connects — the ASYMMETRIC law the vanilla
+/// truth wears (the pane connects TO the wall, the wall's own
+/// connectsTo the pane never grows). The AIR the early refusal
+/// keeps (the attachsTo the neighbor's state the placement walk
+/// never consults on the void).
+pub fn pane_connects(world: &World, nx: i32, ny: i32, nz: i32) -> bool {
+    let other = world.get(nx, ny, nz);
+    if other == AIR {
+        return false;
+    }
+    // THE INSTANCE ARM (the instanceof IronBarsBlock check): every
+    // pane and bars kind the class law connects
+    if is_iron_bars_class(other) {
+        return true;
+    }
+    // THE WALLS-TAG ARM (the state.is(BlockTags.WALLS) check): the
+    // 32 wall kinds the dev-56 family connects
+    if is_wall(other) {
+        return true;
+    }
+    // THE STURDY-FACE ARM (the exception list + the sturdy read):
+    // the leaves pair the exception verdict keeps, the collision
+    // vocabulary's full-side family the sturdy verdict keeps (the
+    // fence law's own mapping the same walk wears)
+    if other == LEAVES || other == PALE_LEAVES {
+        return false;
+    }
+    matches!(
+        collision_shape(other),
+        CollisionShape::Full
+            | CollisionShape::Column(_)
+            | CollisionShape::InsetColumn(_, _)
+    )
+}
+
+/// THE PANE CONNECTION BITS' OWN MESH-TIME WALK (the variant-less
+/// law — the vanilla stores the NORTH/EAST/SOUTH/WEST properties the
+/// updateShape walk re-arms, the client's own variant byte the
+/// no-opinion 0 keeps, the connections the four neighbor reads the
+/// SAME verdict every frame answers: the placement/break updates
+/// the propagation never needs — the fence bits walk's own law the
+/// thin-strip rung wears): bit 0 north, bit 1 east, bit 2 south,
+/// bit 3 west.
+pub fn pane_connection_bits(world: &World, x: i32, y: i32, z: i32) -> u8 {
+    let mut bits = 0u8;
+    if pane_connects(world, x, y, z - 1) {
+        bits |= 0b0001;
+    }
+    if pane_connects(world, x + 1, y, z) {
+        bits |= 0b0010;
+    }
+    if pane_connects(world, x, y, z + 1) {
+        bits |= 0b0100;
+    }
+    if pane_connects(world, x - 1, y, z) {
+        bits |= 0b1000;
+    }
+    bits
+}
+
 /// THE WALL FAMILY'S OWN SEATS (the dev-56 round — the 32 kinds the
 /// rampart rung banks): the mesher's multipart lane the family fn
 /// reads, the collision's compound lane the bits law arms, the
@@ -5405,6 +5591,38 @@ pub fn is_glass(id: u16) -> bool {
 /// joins).
 pub fn is_stained_glass(id: u16) -> bool {
     (WHITE_STAINED_GLASS..=BLACK_STAINED_GLASS).contains(&id)
+}
+
+/// THE PANE FAMILY'S OWN RANGE (the dev-58 round — the 17 panes the
+/// contiguous run 560..576 banks, the iron bars the tail seat 577
+/// keeps): the WHOLE IronBarsBlock class the instance arm answers —
+/// the attachsTo walk the instanceof check the class law speaks
+/// (pane|pane ANY color pair, pane|bars, bars|bars — the whole
+/// thin-strip family the ONE class law banks), the noOcclusion
+/// verdict the mesher's is_transparent lane and the light's
+/// sky-opacity walk the same run reads.
+#[inline]
+pub fn is_glass_pane(id: u16) -> bool {
+    (GLASS_PANE..=BLACK_STAINED_GLASS_PANE).contains(&id)
+}
+
+/// THE IRON-BARS CLASS'S OWN ARM (the attachsTo instanceof check's
+/// own verdict — the pane family + the bars the ONE class law
+/// banks): the connection walk and the mesher's family fn the arm
+/// read.
+#[inline]
+pub fn is_iron_bars_class(id: u16) -> bool {
+    is_glass_pane(id) || id == IRON_BARS
+}
+
+/// THE STAINED PANE HALF'S OWN RANGE (the mesher's translucent lane
+/// the ladder read answers — the 16 dyed cloths the collection
+/// walk's members bank, the 0.4 body band the per-texel blend
+/// serves; the plain pane and the bars the cutout lane's own
+/// members the half never joins).
+#[inline]
+pub fn is_stained_glass_pane(id: u16) -> bool {
+    (WHITE_STAINED_GLASS_PANE..=BLACK_STAINED_GLASS_PANE).contains(&id)
 }
 
 /// THE WALL CONNECTION'S OWN FOUR-ARM LAW (javap WallBlock.connectsTo
@@ -5575,6 +5793,15 @@ fn collision_face_footprint(
             // wears, the TEST_POST square the post's own 6..10 the
             // covered verdict banks).
             Some((6.0 / 16.0, 10.0 / 16.0, 6.0 / 16.0, 10.0 / 16.0))
+        }
+        CollisionShape::Pane(_) => {
+            // THE PANE COMPOUND'S OWN FACE (the post [7,0,7]->[9,16,9]
+            // + the arms the bits carry): the DOWN face the post
+            // square the conservative answer keeps (the fence arm's
+            // own law — the arms' edge..center bands the cover
+            // verdict never grants, the thin window post the
+            // [7..9] square the walk's own answer banks)
+            Some((7.0 / 16.0, 9.0 / 16.0, 7.0 / 16.0, 9.0 / 16.0))
         }
         CollisionShape::Wall(bits, _) => {
             // THE WALL COMPOUND'S OWN FACE (the post box(4,0,4,12,24,12)
@@ -6961,6 +7188,19 @@ pub enum CollisionShape {
     /// byte the visual law's own verdict the mesher's when-rows
     /// read — the collision the bits alone banks.
     Wall(u8, u8),
+    /// THE PANE COMPOUND'S OWN VARIANT-AWARE LANE (the dev-58 round —
+    /// the connection bits the mesh-time law computes: the vanilla
+    /// stores the four BooleanProperties the updateShape walk re-arms,
+    /// the client's own [`pane_connection_bits`] walk the four
+    /// neighbor reads the SAME verdict every frame recomputes). The
+    /// post Block.column(2.0, 0.0, 16.0) the [7,0,7]->[9,16,9]
+    /// footprint ([`shape_slabs`]'s centered 1/16 band, the FULL
+    /// 0..1 y the standard-height law keeps — NO anti-jump band the
+    /// fence/wall over-tall family wears), the arms boxZ(2.0, ...)
+    /// the connected bits arm ([`pane_arm_slabs`]) — the ONE post
+    /// the variant-less kind-only law keeps (the placement's
+    /// obstruction walk the post-only conservative subset reads).
+    Pane(u8),
     /// THE TRAPDOOR'S OWN HORIZONTAL SLAB (the autopush-668 round —
     /// the closed state's own band the SHAPES map's UP/DOWN keys
     /// speak): javap TrapDoorBlock the 26.2 jar the SHAPES clinit's
@@ -7125,6 +7365,16 @@ pub fn collision_shape(id: u16) -> CollisionShape {
         // post alone the kind-only verdict answers (the UP verdict
         // the raise law the variant-aware lane computes).
         CollisionShape::Wall(0, 0)
+    } else if is_glass_pane(id) || id == IRON_BARS {
+        // THE PANE FAMILY'S OWN KIND-ONLY ROW (the dev-58 round —
+        // the connection bits the neighbor reads the kind-only table
+        // never sees, the POST box the conservative subset keeps:
+        // the [7, 0, 7] -> [9, 16, 9] band the placement's
+        // obstruction walk consumes, the arms the connected bits the
+        // variant-aware lane serves). The bits the 0 the no-opinion
+        // byte the empty-connection default wears — the post alone
+        // the kind-only verdict answers.
+        CollisionShape::Pane(0)
     } else if is_bamboo_stalk(id) {
         // THE STALK'S OWN INSET ROW (the autopush-608 round — javap
         // BambooStalkBlock.getCollisionShape pc 0-11 the 26.2 jar: the
@@ -7401,6 +7651,17 @@ pub fn collision_shape_at(world: &World, cx: i32, cy: i32, cz: i32) -> Collision
         }
         return CollisionShape::Wall(bits, tall);
     }
+    // THE PANE FAMILY'S OWN VARIANT-AWARE ROW (the dev-58 round —
+    // the connection bits the mesh-time law computes: the vanilla
+    // stores the NORTH/EAST/SOUTH/WEST properties the updateShape
+    // walk re-arms, the client's own [`pane_connection_bits`] walk
+    // the four neighbor reads the SAME verdict every frame answers —
+    // the placement/break updates the propagation never needs). The
+    // bits the compound's own arms the [`pane_arm_slabs`] walk
+    // serves, the post the [`shape_slabs`] decode banks.
+    if is_glass_pane(id) || id == IRON_BARS {
+        return CollisionShape::Pane(pane_connection_bits(world, cx, cy, cz));
+    }
     if !is_door(id) {
         return collision_shape(id);
     }
@@ -7506,6 +7767,22 @@ pub fn shape_slabs(
     // arms the [`fence_arm_slabs`] walk the compound serves)
     if let CollisionShape::Fence(_) = shape {
         let t = 2.0f64 / 16.0;
+        x_lo = cx as f64 + 0.5 - t;
+        x_hi = cx as f64 + 0.5 + t;
+        z_lo = cz as f64 + 0.5 - t;
+        z_hi = cz as f64 + 0.5 + t;
+    }
+    // THE PANE POST'S OWN CENTERED COLUMN (the dev-58 round — the
+    // [`Pane`] decode the SHAPE law's Block.column(2.0, 0.0, 16.0)
+    // box serves: the x/z the 0.5 ± 1/16 band the 8±1 px post banks
+    // (the [7,0,7]->[9,16,9] footprint the collision makeShapes
+    // call speaks — the THINNER post the fence's 2/16 the half
+    // width keeps), the y the FULL 0..1 band the standard-height
+    // law keeps (NO anti-jump band the over-tall family wears) —
+    // the bits the post alone the one-box contract answers, the
+    // arms the [`pane_arm_slabs`] walk the compound serves)
+    if let CollisionShape::Pane(_) = shape {
+        let t = 1.0f64 / 16.0;
         x_lo = cx as f64 + 0.5 - t;
         x_hi = cx as f64 + 0.5 + t;
         z_lo = cz as f64 + 0.5 - t;
@@ -7617,6 +7894,56 @@ pub fn wall_arm_slabs(
         // the (x,z)->(z,16-x) map wears (the box(0,0,5,11,24,11) row
         // speaks)
         (bits & 0b1000 != 0).then(|| (c, c + 11.0 / 16.0, y0, y1, zn_lo, zn_hi)),
+    ]
+}
+
+/// THE PANE ARMS' OWN SLABS (the dev-58 round — the compound's
+/// connected members the ONE walk serves: javap
+/// CrossCollisionBlock.makeShapes the 26.2 jar the arm
+/// Block.boxZ(2.0, 16.0, 0.0, 8.0) rotateHorizontal the four
+/// when-rows banks — the north arm [7, 0, 0] -> [9, 16, 8] the base
+/// row wears (the x the centered 1/16 post band keeps, the z the
+/// edge..center span 0..8 speaks — the fence's own edge..center law
+/// the thinner band wears), the east [8, 0, 7] -> [16, 16, 9], the
+/// south [7, 0, 8] -> [9, 16, 16], the west [0, 0, 7] -> [8, 16, 9]
+/// the quarter turns answer — the 0..16 px band the standard-height
+/// law every arm wears (NO anti-jump band the over-tall family
+/// keeps)). The bits the N/E/S/W order the vanilla
+/// registerDefaultState walk banks; the non-pane shape the four
+/// Nones the empty answer keeps.
+pub fn pane_arm_slabs(
+    shape: CollisionShape,
+    cx: i32,
+    cy: i32,
+    cz: i32,
+) -> [Option<(f64, f64, f64, f64, f64, f64)>; 4] {
+    let CollisionShape::Pane(bits) = shape else {
+        return [None, None, None, None];
+    };
+    let c = cx as f64;
+    let y0 = cy as f64;
+    let y1 = cy as f64 + 1.0;
+    let d = cz as f64;
+    // the centered 1/16 band the post's own width keeps (boxZ w=2.0
+    // → x 8±1 px — the 7..9 px band the base row wears)
+    let band = |a: f64| (a + 0.5 - 1.0 / 16.0, a + 0.5 + 1.0 / 16.0);
+    let (xn_lo, xn_hi) = band(c);
+    let (zn_lo, zn_hi) = band(d);
+    [
+        // north: x 7..9 centered band, z 0..8 — the cell edge the
+        // arm reaches (the boxZ(2.0, 16.0, 0.0, 8.0) base row wears)
+        (bits & 0b0001 != 0).then(|| (xn_lo, xn_hi, y0, y1, d, d + 8.0 / 16.0)),
+        // east: x 8..16, z 7..9 centered band — the Y_90 quarter the
+        // (x,z)->(16-z,x) map wears (the fence's own east arm the
+        // same walk banks — the arm the post's center the cell's
+        // east rim the 8-deep span keeps)
+        (bits & 0b0010 != 0).then(|| (c + 8.0 / 16.0, c + 1.0, y0, y1, zn_lo, zn_hi)),
+        // south: x 7..9 centered band, z 8..16 — the Y_180 quarter
+        // the mirrored band keeps
+        (bits & 0b0100 != 0).then(|| (xn_lo, xn_hi, y0, y1, d + 8.0 / 16.0, d + 1.0)),
+        // west: x 0..8, z 7..9 centered band — the Y_270 quarter
+        // the (x,z)->(z,16-x) map wears
+        (bits & 0b1000 != 0).then(|| (c, c + 8.0 / 16.0, y0, y1, zn_lo, zn_hi)),
     ]
 }
 
@@ -15624,7 +15951,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the lamp pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 560, "the palette the lamp pair banks");
+        assert_eq!(atlas::N_KINDS, 578, "the palette the lamp pair banks");
         assert!(is_redstone_lamp(REDSTONE_LAMP) && is_redstone_lamp(REDSTONE_LAMP_LIT));
         assert!(!is_redstone_lamp(REDSTONE_WIRE) && !is_redstone_lamp(STONE));
         assert!(!redstone_lamp_lit(REDSTONE_LAMP));
@@ -15721,7 +16048,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the wire pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 560, "the palette the wire pair banks");
+        assert_eq!(atlas::N_KINDS, 578, "the palette the wire pair banks");
         assert!(is_redstone_wire(REDSTONE_WIRE) && is_redstone_wire(REDSTONE_WIRE_ON));
         assert!(!is_redstone_wire(LEVER) && !is_redstone_wire(OAK_PRESSURE_PLATE));
         assert!(!wire_powered(REDSTONE_WIRE));
@@ -15875,7 +16202,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 560, "the palette the graded ladder banks");
+        assert_eq!(atlas::N_KINDS, 578, "the palette the graded ladder banks");
         // THE POWER READ'S OWN ROUND TRIP (the seat the kind the
         // inverse fold answers, the unknown id the None keeps)
         assert_eq!(wire_power_of(REDSTONE_WIRE), Some(0));
@@ -16062,7 +16389,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the planks' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 560, "the palette the planks' twelve banks");
+        assert_eq!(atlas::N_KINDS, 578, "the palette the planks' twelve banks");
         for (i, (name, kind, voice)) in PLANKS.iter().enumerate() {
             let seat = OAK_PLANKS + i as u16;
             assert_eq!(*kind, seat, "the seat the family order banks");
@@ -16154,7 +16481,7 @@ mod tests {
             None,
             "the portal the item lane refuses"
         );
-        assert_eq!(NAME_OF.len(), 560, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 578, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -16208,7 +16535,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kit's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 560, "the palette the kit's six banks");
+        assert_eq!(atlas::N_KINDS, 578, "the palette the kit's six banks");
         for (i, (name, kind, hard)) in KIT.iter().enumerate() {
             let seat = COBBLESTONE + i as u16;
             assert_eq!(*kind, seat, "the seat the stone shelf order banks");
@@ -16298,7 +16625,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kit's growth banks)
-        assert_eq!(NAME_OF.len(), 560, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 578, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -16355,7 +16682,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the shelf's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 560, "the palette the shelf's eight banks");
+        assert_eq!(atlas::N_KINDS, 578, "the palette the shelf's eight banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -16453,7 +16780,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the shelf's growth banks)
-        assert_eq!(NAME_OF.len(), 560, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 578, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -16522,7 +16849,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the cloths' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 560, "the palette the cloths' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 578, "the palette the cloths' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -16636,7 +16963,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the cloths' growth banks)
-        assert_eq!(NAME_OF.len(), 560, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 578, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -16711,7 +17038,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kilns' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 560, "the palette the kilns' seventeen banks");
+        assert_eq!(atlas::N_KINDS, 578, "the palette the kilns' seventeen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -16823,7 +17150,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kilns' growth banks)
-        assert_eq!(NAME_OF.len(), 560, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 578, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -16899,7 +17226,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 560, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 578, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -17016,7 +17343,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 560, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 578, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -17101,7 +17428,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 560, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 578, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -17252,7 +17579,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 560, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 578, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -17326,7 +17653,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 560, "the palette the ladder's twenty-two banks");
+        assert_eq!(atlas::N_KINDS, 578, "the palette the ladder's twenty-two banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -17515,7 +17842,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the ladder's growth banks)
-        assert_eq!(NAME_OF.len(), 560, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 578, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -17576,7 +17903,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the note's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 560, "the palette the note's own banks");
+        assert_eq!(atlas::N_KINDS, 578, "the palette the note's own banks");
         // THE ONE REGISTRY NAME ITS KIND ALONE SPEAKS (the NAME_OF row
         // + the generated KIND_NAMES/REGISTRY_NAMES rows the same
         // entry the three tables keep — no strip law the single kind
@@ -17887,7 +18214,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the note's growth banks)
-        assert_eq!(NAME_OF.len(), 560, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 578, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -17928,8 +18255,8 @@ mod tests {
             "the contiguous run the thirteen seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 560, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 560, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 578, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 578, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in OAK_FENCE..=NETHER_BRICK_FENCE {
@@ -18342,8 +18669,8 @@ mod tests {
             "the contiguous run the thirty-two seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 560, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 560, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 578, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 578, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in COBBLESTONE_WALL..=SULFUR_BRICK_WALL {
@@ -18682,8 +19009,8 @@ mod tests {
             "the contiguous run the seventeen seats wear"
         );
         assert_eq!(SULFUR_BRICK_WALL, 542, "the wall family the tail answers");
-        assert_eq!(atlas::N_KINDS, 560, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 560, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 578, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 578, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in GLASS..=BLACK_STAINED_GLASS {
@@ -18844,6 +19171,305 @@ mod tests {
     }
 
     #[test]
+    fn the_pane_familys_own_connections_the_class_arm_and_the_lanes_wear() {
+        // THE PANE FAMILY'S OWN LAWS (the dev-58 round — javap
+        // IronBarsBlock the 26.2 jar the probes scripts/jar_work/
+        // pane_686.py + 686b/686c banks): the EIGHTEEN kinds the
+        // contiguous tail banks (the glass pane 560 the register
+        // row's own chain speaks — pc 12430..12465 instrument(HAT) +
+        // strength(0.3f) + sound(GLASS) + noOcclusion() — the
+        // stained ladder the collection walk serves, the iron bars
+        // 577 the metal seam pc 12293..12328 banks —
+        // requiresCorrectToolForDrops + strength(5.0, 6.0) +
+        // sound(IRON) + noOcclusion()), the attachsTo pc 0-36 the
+        // THREE arms speak (the instanceof IronBarsBlock arm EVERY
+        // pane and bars kind the class check connects, the WALLS
+        // arm the 32 wall kinds connects, the sturdy-face arm the
+        // leaves exception keeps), the skipRendering pc 0-124 the
+        // same-instance cull the mesher's arm banks, the collision
+        // makeShapes the 2/16 post the [7,0,7]->[9,16,9] band the
+        // shape_slabs decode answers
+        use mc_registry::generated::atlas;
+        // THE EIGHTEEN SEATS' OWN BANK (the contiguous tail the
+        // append-only law keeps — the glass family the predecessor
+        // answers)
+        assert_eq!(GLASS_PANE, 560, "the window rung its tail seat keeps");
+        assert_eq!(
+            BLACK_STAINED_GLASS_PANE, 576,
+            "the black cloth the ladder's tail banks"
+        );
+        assert_eq!(IRON_BARS, 577, "the metal seam the family's tail keeps");
+        assert_eq!(
+            (GLASS_PANE..=BLACK_STAINED_GLASS_PANE).count(),
+            17,
+            "the pane run the seventeen seats wear"
+        );
+        assert_eq!(BLACK_STAINED_GLASS, 559, "the glass family the tail answers");
+        assert_eq!(atlas::N_KINDS, 578, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 578, "the NAME_OF table the one length keeps");
+        // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
+        // rows the same entry the three tables keep)
+        for k in GLASS_PANE..=IRON_BARS {
+            assert_eq!(
+                NAME_OF[k as usize],
+                atlas::KIND_NAMES[k as usize],
+                "the KIND_NAMES row the family's kind {} keeps",
+                k
+            );
+            assert_eq!(
+                NAME_OF[k as usize],
+                atlas::REGISTRY_NAMES[k as usize],
+                "the REGISTRY_NAMES row the family's kind {} keeps",
+                k
+            );
+        }
+        assert_eq!(NAME_OF[GLASS_PANE as usize], "glass_pane");
+        assert_eq!(
+            NAME_OF[WHITE_STAINED_GLASS_PANE as usize],
+            "white_stained_glass_pane"
+        );
+        assert_eq!(NAME_OF[IRON_BARS as usize], "iron_bars");
+        // THE SIBLING MAPPING'S OWN LAW (the pane kind its glass
+        // block the SAME dye the −17 seat wears — the id-17 offset
+        // the whole ladder answers)
+        assert_eq!(GLASS_PANE - 17, GLASS, "the plain sibling wears");
+        assert_eq!(
+            WHITE_STAINED_GLASS_PANE - 17,
+            WHITE_STAINED_GLASS,
+            "the white sibling wears"
+        );
+        assert_eq!(
+            BLACK_STAINED_GLASS_PANE - 17,
+            BLACK_STAINED_GLASS,
+            "the black sibling wears"
+        );
+        // THE RANGE WALKS (the whole family the class arm answers —
+        // the instanceof law the thin-strip rung banks)
+        assert!(is_glass_pane(GLASS_PANE) && is_glass_pane(BLACK_STAINED_GLASS_PANE));
+        assert!(is_iron_bars_class(GLASS_PANE) && is_iron_bars_class(IRON_BARS));
+        assert!(is_stained_glass_pane(WHITE_STAINED_GLASS_PANE));
+        assert!(
+            !is_stained_glass_pane(GLASS_PANE),
+            "the plain pane the half refuses"
+        );
+        assert!(
+            !is_iron_bars_class(BLACK_STAINED_GLASS),
+            "the glass BLOCK the class refuses"
+        );
+        assert!(!is_glass_pane(IRON_BARS) && !is_glass_pane(GLASS));
+        // THE PLACEABLE LANE (the Items clinit's registerBlock rows
+        // the reverse walk answers)
+        assert_eq!(
+            World::placeable_block("glass_pane"),
+            Some(GLASS_PANE),
+            "the pane item the placement lane grants"
+        );
+        assert_eq!(
+            World::placeable_block("iron_bars"),
+            Some(IRON_BARS),
+            "the bars item the placement lane grants"
+        );
+        assert_eq!(
+            World::placeable_block("red_stained_glass_pane"),
+            Some(RED_STAINED_GLASS_PANE),
+            "the red cloth item the placement lane grants"
+        );
+        // THE DIG ROWS (the generated table the REAL bootstrapped
+        // registry banks — the pane's 0.3 the no-tool demand the
+        // glass law keeps, the bars' 5.0 the pickaxe demand the
+        // requiresCorrectToolForDrops row speaks)
+        let (pane_hard, pane_tool) = crate::dig::DigState::block_dig_row(GLASS_PANE);
+        assert!(
+            (pane_hard - 0.3).abs() < 1e-4,
+            "the 0.3 strength the pane dig row wears, got {}",
+            pane_hard
+        );
+        assert!(!pane_tool, "the no-tool demand the pane keeps");
+        let (bars_hard, bars_tool) = crate::dig::DigState::block_dig_row(IRON_BARS);
+        assert!(
+            (bars_hard - 5.0).abs() < 1e-4,
+            "the 5.0 strength the bars dig row wears, got {}",
+            bars_hard
+        );
+        assert!(bars_tool, "the pickaxe demand the bars law wears");
+        // THE VOICE LAWS THE FAMILY WEARS (the SoundType.GLASS row
+        // the pane chain banks, the SoundType.IRON the bars chain
+        // keeps)
+        let pane_idx = mc_registry::generated::block_sounds::sound_index("glass_pane")
+            .expect("the glass_pane sound row the table banks");
+        assert_eq!(
+            mc_registry::generated::block_sounds::SOUND_BREAK[pane_idx],
+            "block.glass.break",
+            "the glass law the pane break row speaks"
+        );
+        let bars_idx = mc_registry::generated::block_sounds::sound_index("iron_bars")
+            .expect("the iron_bars sound row the table banks");
+        assert_eq!(
+            mc_registry::generated::block_sounds::SOUND_BREAK[bars_idx],
+            "block.iron.break",
+            "the metal law the bars break row speaks (the SoundType.IRON events the 26.2 banks)"
+        );
+        // THE CONNECTION LAW'S OWN WALK (the mesh-time bits the four
+        // neighbor reads answer; the BLANK world the air neighbors
+        // the terrain-free verdict keeps)
+        let mut w = World::blank(3, 0x9A7E);
+        let c = w.size_blocks() / 2;
+        let y = 8;
+        // THE INSTANCE ARM (the instanceof law): the pane the SAME
+        // color the neighbor pane connects — ANY color pair the
+        // class law banks (the fence's isSameFence parity the class
+        // arm never wears)
+        w.set(c, y, c, GLASS_PANE);
+        assert_eq!(
+            pane_connection_bits(&w, c, y, c),
+            0b0000,
+            "the lone pane the empty connections wears"
+        );
+        w.set(c, y, c - 1, GLASS_PANE);
+        assert_eq!(
+            pane_connection_bits(&w, c, y, c),
+            0b0001,
+            "the same-color neighbor the north bit banks"
+        );
+        w.set(c, y, c - 1, RED_STAINED_GLASS_PANE);
+        assert_eq!(
+            pane_connection_bits(&w, c, y, c),
+            0b0001,
+            "the DIFFERENT-color pane the class arm connects (the instanceof law wears)"
+        );
+        w.set(c, y, c - 1, IRON_BARS);
+        assert_eq!(
+            pane_connection_bits(&w, c, y, c),
+            0b0001,
+            "the bars the class arm connects (pane|bars the ONE class law banks)"
+        );
+        w.set(c, y, c - 1, COBBLESTONE_WALL);
+        assert_eq!(
+            pane_connection_bits(&w, c, y, c),
+            0b0001,
+            "the wall the WALLS arm connects (the pane TO the wall the asymmetric law wears)"
+        );
+        w.set(c, y, c - 1, STONE);
+        assert_eq!(
+            pane_connection_bits(&w, c, y, c),
+            0b0001,
+            "the stone's full face the sturdy arm connects"
+        );
+        w.set(c, y, c - 1, LEAVES);
+        assert_eq!(
+            pane_connection_bits(&w, c, y, c),
+            0b0000,
+            "the leaves the exception verdict refuses"
+        );
+        // THE ASYMMETRY'S OWN PROOF (the wall's own connectsTo the
+        // pane never grows — the vanilla truth the dev-56 walk
+        // banks)
+        w.set(c, y, c - 1, GLASS_PANE);
+        w.set(c, y, c, COBBLESTONE_WALL);
+        assert_eq!(
+            wall_connection_bits(&w, c, y, c),
+            0b0000,
+            "the wall TO the pane the connection refuses (the asymmetric vanilla law wears)"
+        );
+        // THE COLLISION'S OWN COMPOUND (the post [7,0,7]->[9,16,9]
+        // the 0.5±1/16 band the shape_slabs decode answers — the
+        // FULL 0..1 y the standard-height law keeps)
+        w.set(c, y, c, GLASS_PANE);
+        w.set(c, y, c - 1, GLASS_PANE);
+        let shape = collision_shape_at(&w, c, y, c);
+        let CollisionShape::Pane(bits) = shape else {
+            panic!("the pane shape the compound lane banks");
+        };
+        assert_eq!(bits, 0b0001, "the north neighbor the bits bank");
+        let (x_lo, x_hi, _y_lo, y_hi, z_lo, z_hi) =
+            shape_slabs(shape, c, y, c).expect("the post shape the slabs never refuse");
+        assert!(
+            ((x_lo - (c as f64 + 7.0 / 16.0)).abs() < 1e-9)
+                && ((x_hi - (c as f64 + 9.0 / 16.0)).abs() < 1e-9),
+            "the 0.5±1/16 post band the x walk keeps, got {x_lo}..{x_hi}"
+        );
+        assert!(
+            ((z_lo - (c as f64 + 7.0 / 16.0)).abs() < 1e-9)
+                && ((z_hi - (c as f64 + 9.0 / 16.0)).abs() < 1e-9),
+            "the 0.5±1/16 post band the z walk keeps, got {z_lo}..{z_hi}"
+        );
+        assert!(
+            ((y_hi - (y as f64 + 1.0)).abs() < 1e-9),
+            "the FULL 1.0-tall band the standard-height law keeps, got {y_hi}"
+        );
+        // THE NORTH ARM'S OWN SLAB (the edge..center span 0..8 px the
+        // boxZ(2.0, 16.0, 0.0, 8.0) base row wears)
+        let arms = pane_arm_slabs(shape, c, y, c);
+        let north = arms[0].expect("the north arm the bits bank");
+        assert!(
+            ((north.0 - (c as f64 + 7.0 / 16.0)).abs() < 1e-9)
+                && ((north.1 - (c as f64 + 9.0 / 16.0)).abs() < 1e-9),
+            "the 2px arm band the x walk keeps"
+        );
+        assert!(
+            ((north.4 - c as f64).abs() < 1e-9)
+                && ((north.5 - (c as f64 + 0.5)).abs() < 1e-9),
+            "the edge..center z span the base row wears, got {}..{}",
+            north.4,
+            north.5
+        );
+        assert!(
+            arms[1].is_none() && arms[2].is_none() && arms[3].is_none(),
+            "the unconnected dirs the empty arms wear"
+        );
+        // THE FACE_TILES ROWS THE EDGE MASTERS BANK (the #edge refs
+        // the kind's own row the pane-top master answers, the #pane
+        // refs the sibling rows re-wear — the id-17 offset the
+        // sibling mapping pins)
+        for k in GLASS_PANE..=BLACK_STAINED_GLASS_PANE {
+            let row = atlas::FACE_TILES[k as usize];
+            assert!(
+                row.iter().all(|t| t == &row[2]),
+                "the ONE-tile shape the family's kind {} keeps",
+                k
+            );
+            assert_ne!(row[2], atlas::TILE_NONE, "the edge master the kind {} resolves", k);
+            // THE EDGE TILE THE PANE-TOP STEM BANKS (the atlas
+            // tile-name walk the master's own row answers — the
+            // pane-top stem the pane name's own _pane strip the
+            // block form wears: glass + _pane_top = glass_pane_top)
+            let block_stem = NAME_OF[k as usize]
+                .strip_suffix("_pane")
+                .unwrap_or(NAME_OF[k as usize]);
+            assert_eq!(
+                atlas::tile_name(row[2]),
+                format!("{}_pane_top", block_stem),
+                "the edge master the kind {} its pane-top stem wears",
+                k
+            );
+        }
+        // THE SIBLING ROWS THE #PANE REFS RE-WEAR (the pane kind's
+        // side quads the glass block's master the −17 row banks —
+        // the pane's OWN row the EDGE master the DISTINCT tile
+        // wears)
+        assert_ne!(
+            atlas::FACE_TILES[GLASS_PANE as usize][2],
+            atlas::FACE_TILES[GLASS as usize][2],
+            "the pane's EDGE master the glass block's master the DISTINCT tiles wear"
+        );
+        assert_ne!(
+            atlas::FACE_TILES[WHITE_STAINED_GLASS_PANE as usize][2],
+            atlas::FACE_TILES[RED_STAINED_GLASS_PANE as usize][2],
+            "the dyed cloths the DISTINCT edge masters wear"
+        );
+        assert_ne!(
+            atlas::FACE_TILES[IRON_BARS as usize][2],
+            atlas::TILE_NONE,
+            "the bars' own master the row resolves"
+        );
+        assert_eq!(
+            atlas::tile_name(atlas::FACE_TILES[IRON_BARS as usize][2]),
+            "iron_bars",
+            "the bars master the metal stem wears"
+        );
+    }
+
+    #[test]
     fn the_redstone_torch_the_not_gate_and_the_source_arms_wear() {
         // THE REDSTONE TORCH'S OWN LAWS (the autopush-666 round — javap
         // RedstoneTorchBlock the 26.2 jar the probe scripts/jar_work/
@@ -18870,7 +19496,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the torch pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 560, "the palette the torch pair banks");
+        assert_eq!(atlas::N_KINDS, 578, "the palette the torch pair banks");
         assert!(is_redstone_torch(REDSTONE_TORCH) && is_redstone_torch(REDSTONE_TORCH_OFF));
         assert!(!is_redstone_torch(TORCH) && !is_redstone_torch(LEVER));
         assert!(redstone_torch_lit(REDSTONE_TORCH));
@@ -19011,7 +19637,7 @@ mod tests {
         assert_eq!(REDSTONE_WALL_TORCH, 324);
         assert_eq!(REDSTONE_WALL_TORCH_OFF, 325);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 560, "the palette the wall pair banks");
+        assert_eq!(atlas::N_KINDS, 578, "the palette the wall pair banks");
         assert!(
             is_redstone_torch(REDSTONE_WALL_TORCH) && is_redstone_torch(REDSTONE_WALL_TORCH_OFF),
             "the wall pair the family's tail banks"
@@ -19256,7 +19882,7 @@ mod tests {
         assert_eq!(OAK_TRAPDOOR_OPEN, 327);
         assert_eq!(END_PORTAL, 510);
         assert_eq!(
-            atlas::N_KINDS, 560,
+            atlas::N_KINDS, 578,
             "the palette the trapdoor pair banks"
         );
         assert_eq!(OAK_TRAPDOOR + 1, OAK_TRAPDOOR_OPEN, "the +1 mate wears");
@@ -19410,7 +20036,7 @@ mod tests {
         assert_eq!(END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-            560,
+            578,
             "the palette the gate pair banks"
         );
         assert_eq!(OAK_FENCE_GATE + 1, OAK_FENCE_GATE_OPEN, "the +1 mate wears");
@@ -19628,7 +20254,7 @@ mod tests {
         assert_eq!(WARPED_TRAPDOOR, 348);
         assert_eq!(WARPED_TRAPDOOR_OPEN, 349);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 560, "the palette the ladder banks");
+        assert_eq!(atlas::N_KINDS, 578, "the palette the ladder banks");
         // THE CONTIGUITY'S OWN LAW (the 22 kinds the range covers —
         // the neighbors the family fn refuses)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -19742,7 +20368,7 @@ mod tests {
         assert_eq!(IRON_TRAPDOOR, 366);
         assert_eq!(IRON_TRAPDOOR_OPEN, 367);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 560, "the palette the metal rungs bank");
+        assert_eq!(atlas::N_KINDS, 578, "the palette the metal rungs bank");
         // THE CONTIGUITY'S OWN LAW (the 42 kinds the range covers —
         // the waxed pairs the ±1 mate the parity answers)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -20113,7 +20739,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 560, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 578, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)

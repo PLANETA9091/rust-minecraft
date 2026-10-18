@@ -1,0 +1,50 @@
+=== IronBarsBlock methods list
+    codec()Lcom/mojang/serialization/MapCodec;
+    <init>(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+    getStateForPlacement(Lnet/minecraft/world/item/context/BlockPlaceContext;)Lnet/minecraft/world/level/block/state/BlockState;
+    updateShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/world/level/ScheduledTickAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;)Lnet/minecraft/world/level/block/state/BlockState;
+    getVisualShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/shapes/CollisionContext;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+    skipRendering(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/Direction;)Z
+    attachsTo(Lnet/minecraft/world/level/block/state/BlockState;Z)Z
+    createBlockStateDefinition(Lnet/minecraft/world/level/block/state/StateDefinition$Builder;)V
+    <clinit>()V
+
+=== CrossCollisionBlock methods list
+    <init>(FFFFFLnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+    codec()Lcom/mojang/serialization/MapCodec;
+    makeShapes(FFFFF)Ljava/util/function/Function;
+    propagatesSkylightDown(Lnet/minecraft/world/level/block/state/BlockState;)Z
+    getShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/shapes/CollisionContext;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+    getCollisionShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/shapes/CollisionContext;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+    getFluidState(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/material/FluidState;
+    isPathfindable(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/pathfinder/PathComputationType;)Z
+    rotate(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/Rotation;)Lnet/minecraft/world/level/block/state/BlockState;
+    mirror(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/Mirror;)Lnet/minecraft/world/level/block/state/BlockState;
+    lambda$makeShapes$0(Lnet/minecraft/world/phys/shapes/VoxelShape;Ljava/util/Map;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+    lambda$static$0(Ljava/util/Map$Entry;)Z
+    <clinit>()V
+
+=== attachsTo dumps
+--- net.minecraft.world.level.block.IronBarsBlock.attachsTo(Lnet/minecraft/world/level/block/state/BlockState;Z)Z
+0: aload_1
+1: invokestatic net/minecraft/world/level/block/IronBarsBlock.isExceptionForConnection:(Lnet/minecraft/world/level/block/state/BlockState;)Z
+4: ifne -> 11
+7: iload_2
+8: ifne -> 31
+11: aload_1
+12: invokevirtual net/minecraft/world/level/block/state/BlockState.getBlock:()Lnet/minecraft/world/level/block/Block;
+15: instanceof net/minecraft/world/level/block/IronBarsBlock
+18: ifne -> 31
+21: aload_1
+22: getstatic net/minecraft/tags/BlockTags.WALLS:Lnet/minecraft/tags/TagKey;
+25: invokevirtual net/minecraft/world/level/block/state/BlockState.is:(Lnet/minecraft/tags/TagKey;)Z
+28: ifeq -> 35
+31: iconst_1
+32: goto -> 36
+35: iconst_0
+36: ireturn
+!! net.minecraft.world.level.block.CrossCollisionBlock: no method matching attachsTo
+
+=== CrossCollisionBlock.skipRendering + updateShape
+!! net.minecraft.world.level.block.CrossCollisionBlock: no method matching skipRendering
+!! net.minecraft.world.level.block.CrossCollisionBlock: no method matching updateShape

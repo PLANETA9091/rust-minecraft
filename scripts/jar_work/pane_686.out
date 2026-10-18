@@ -1,0 +1,374 @@
+=== class headers
+--- net.minecraft.world.level.block.IronBarsBlock: ('?2', '?9', [])
+--- net.minecraft.world.level.block.StainedGlassPaneBlock: ('?2', '?8', ['?106'])
+--- net.minecraft.world.level.block.CrossCollisionBlock: ('?8', '?2', ['?207'])
+
+=== CrossCollisionBlock methods
+--- net.minecraft.world.level.block.CrossCollisionBlock.<init>(FFFFFLnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+0: aload_0
+1: aload aload 6
+3: invokespecial net/minecraft/world/level/block/Block.<init>:(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+6: aload_0
+7: aload_0
+8: 0x23 0x23 23
+10: iconst_2
+11: 0x25 0x25 11
+13: 0x17 0x17 5
+15: invokevirtual net/minecraft/world/level/block/CrossCollisionBlock.makeShapes:(FFFFF)Ljava/util/function/Function;
+18: putfield net/minecraft/world/level/block/CrossCollisionBlock.collisionShapes:Ljava/util/function/Function;
+21: aload_0
+22: aload_0
+23: 0x23 0x23 36
+25: 0x25 0x25 11
+27: 0x17 0x17 4
+29: invokevirtual net/minecraft/world/level/block/CrossCollisionBlock.makeShapes:(FFFFF)Ljava/util/function/Function;
+32: putfield net/minecraft/world/level/block/CrossCollisionBlock.shapes:Ljava/util/function/Function;
+35: return
+!! net.minecraft.world.level.block.CrossCollisionBlock: no method matching connectsTo
+!! net.minecraft.world.level.block.CrossCollisionBlock: no method matching updateShape
+--- net.minecraft.world.level.block.CrossCollisionBlock.getShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/shapes/CollisionContext;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+0: aload_0
+1: getfield net/minecraft/world/level/block/CrossCollisionBlock.shapes:Ljava/util/function/Function;
+4: aload_1
+5: invokeinterface java/util/function/Function.apply:(Ljava/lang/Object;)Ljava/lang/Object;
+8: iconst_m1
+9: nop
+10: checkcast net/minecraft/world/phys/shapes/VoxelShape
+13: areturn
+--- net.minecraft.world.level.block.CrossCollisionBlock.getCollisionShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/shapes/CollisionContext;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+0: aload_0
+1: getfield net/minecraft/world/level/block/CrossCollisionBlock.collisionShapes:Ljava/util/function/Function;
+4: aload_1
+5: invokeinterface java/util/function/Function.apply:(Ljava/lang/Object;)Ljava/lang/Object;
+8: iconst_m1
+9: nop
+10: checkcast net/minecraft/world/phys/shapes/VoxelShape
+13: areturn
+--- net.minecraft.world.level.block.CrossCollisionBlock.makeShapes(FFFFF)Ljava/util/function/Function;
+0: 0x23 0x23 141
+2: dconst_0
+3: 0x24
+4: 0x8d
+5: invokestatic net/minecraft/world/level/block/Block.column:(DDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+8: astore astore 6
+10: 0x25 0x25 141
+12: 0x17 0x17 4
+14: 0x8d
+15: 0x17 0x17 5
+17: 0x8d
+18: dconst_0
+19: ldc2_w double 8.0
+22: invokestatic net/minecraft/world/level/block/Block.boxZ:(DDDDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+25: invokestatic net/minecraft/world/phys/shapes/Shapes.rotateHorizontal:(Lnet/minecraft/world/phys/shapes/VoxelShape;)Ljava/util/Map;
+28: astore astore 7
+30: aload_0
+31: aload aload 6
+33: aload aload 7
+35: invokedynamic indy
+40: iconst_1
+41: anewarray net/minecraft/world/level/block/state/properties/Property
+44: dup
+45: iconst_0
+46: getstatic net/minecraft/world/level/block/CrossCollisionBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+49: 0x53
+50: invokevirtual net/minecraft/world/level/block/CrossCollisionBlock.getShapeForEachState:(Ljava/util/function/Function;[Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/util/function/Function;
+53: areturn
+--- net.minecraft.world.level.block.CrossCollisionBlock.lambda$makeShapes$0(Lnet/minecraft/world/phys/shapes/VoxelShape;Ljava/util/Map;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+0: aload_0
+1: astore_3
+2: getstatic net/minecraft/world/level/block/CrossCollisionBlock.PROPERTY_BY_DIRECTION:Ljava/util/Map;
+5: invokeinterface java/util/Map.entrySet:()Ljava/util/Set;
+8: aconst_null
+9: nop
+10: invokeinterface java/util/Set.iterator:()Ljava/util/Iterator;
+13: aconst_null
+14: nop
+15: astore astore 4
+17: aload aload 4
+19: invokeinterface java/util/Iterator.hasNext:()Z
+22: aconst_null
+23: nop
+24: ifeq -> 86
+27: aload aload 4
+29: invokeinterface java/util/Iterator.next:()Ljava/lang/Object;
+32: aconst_null
+33: nop
+34: checkcast java/util/Map$Entry
+37: astore astore 5
+39: aload_2
+40: aload aload 5
+42: invokeinterface java/util/Map$Entry.getValue:()Ljava/lang/Object;
+45: aconst_null
+46: nop
+47: checkcast net/minecraft/world/level/block/state/properties/Property
+50: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+53: checkcast java/lang/Boolean
+56: invokevirtual java/lang/Boolean.booleanValue:()Z
+59: ifeq -> 83
+62: aload_3
+63: aload_1
+64: aload aload 5
+66: invokeinterface java/util/Map$Entry.getKey:()Ljava/lang/Object;
+69: aconst_null
+70: nop
+71: invokeinterface java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+74: iconst_m1
+75: nop
+76: checkcast net/minecraft/world/phys/shapes/VoxelShape
+79: invokestatic net/minecraft/world/phys/shapes/Shapes.or:(Lnet/minecraft/world/phys/shapes/VoxelShape;Lnet/minecraft/world/phys/shapes/VoxelShape;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+82: astore_3
+83: goto -> 17
+86: aload_3
+87: areturn
+!! net.minecraft.world.level.block.CrossCollisionBlock: no method matching isSameInstance
+
+=== IronBarsBlock methods
+--- net.minecraft.world.level.block.IronBarsBlock.<init>(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+0: aload_0
+1: fconst_2
+2: ldc float 16.0
+4: fconst_2
+5: ldc float 16.0
+7: ldc float 16.0
+9: aload_1
+10: invokespecial net/minecraft/world/level/block/CrossCollisionBlock.<init>:(FFFFFLnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+13: aload_0
+14: aload_0
+15: getfield net/minecraft/world/level/block/IronBarsBlock.stateDefinition:Lnet/minecraft/world/level/block/state/StateDefinition;
+18: invokevirtual net/minecraft/world/level/block/state/StateDefinition.any:()Lnet/minecraft/world/level/block/state/StateHolder;
+21: checkcast net/minecraft/world/level/block/state/BlockState
+24: getstatic net/minecraft/world/level/block/IronBarsBlock.NORTH:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+27: iconst_0
+28: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+31: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+34: checkcast net/minecraft/world/level/block/state/BlockState
+37: getstatic net/minecraft/world/level/block/IronBarsBlock.EAST:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+40: iconst_0
+41: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+44: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+47: checkcast net/minecraft/world/level/block/state/BlockState
+50: getstatic net/minecraft/world/level/block/IronBarsBlock.SOUTH:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+53: iconst_0
+54: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+57: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+60: checkcast net/minecraft/world/level/block/state/BlockState
+63: getstatic net/minecraft/world/level/block/IronBarsBlock.WEST:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+66: iconst_0
+67: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+70: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+73: checkcast net/minecraft/world/level/block/state/BlockState
+76: getstatic net/minecraft/world/level/block/IronBarsBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+79: iconst_0
+80: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+83: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+86: checkcast net/minecraft/world/level/block/state/BlockState
+89: invokevirtual net/minecraft/world/level/block/IronBarsBlock.registerDefaultState:(Lnet/minecraft/world/level/block/state/BlockState;)V
+92: return
+--- net.minecraft.world.level.block.IronBarsBlock.skipRendering(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/Direction;)Z
+0: aload_2
+1: aload_0
+2: invokevirtual net/minecraft/world/level/block/state/BlockState.is:(Ljava/lang/Object;)Z
+5: ifne -> 50
+8: aload_2
+9: getstatic net/minecraft/tags/BlockTags.BARS:Lnet/minecraft/tags/TagKey;
+12: invokevirtual net/minecraft/world/level/block/state/BlockState.is:(Lnet/minecraft/tags/TagKey;)Z
+15: ifeq -> 117
+18: aload_1
+19: getstatic net/minecraft/tags/BlockTags.BARS:Lnet/minecraft/tags/TagKey;
+22: invokevirtual net/minecraft/world/level/block/state/BlockState.is:(Lnet/minecraft/tags/TagKey;)Z
+25: ifeq -> 117
+28: aload_2
+29: getstatic net/minecraft/world/level/block/IronBarsBlock.PROPERTY_BY_DIRECTION:Ljava/util/Map;
+32: aload_3
+33: invokevirtual net/minecraft/core/Direction.getOpposite:()Lnet/minecraft/core/Direction;
+36: invokeinterface java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+39: iconst_m1
+40: nop
+41: checkcast net/minecraft/world/level/block/state/properties/Property
+44: invokevirtual net/minecraft/world/level/block/state/BlockState.hasProperty:(Lnet/minecraft/world/level/block/state/properties/Property;)Z
+47: ifeq -> 117
+50: aload_3
+51: invokevirtual net/minecraft/core/Direction.getAxis:()Lnet/minecraft/core/Direction$Axis;
+54: invokevirtual net/minecraft/core/Direction$Axis.isHorizontal:()Z
+57: ifne -> 62
+60: iconst_1
+61: ireturn
+62: aload_1
+63: getstatic net/minecraft/world/level/block/IronBarsBlock.PROPERTY_BY_DIRECTION:Ljava/util/Map;
+66: aload_3
+67: invokeinterface java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+70: iconst_m1
+71: nop
+72: checkcast net/minecraft/world/level/block/state/properties/Property
+75: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+78: checkcast java/lang/Boolean
+81: invokevirtual java/lang/Boolean.booleanValue:()Z
+84: ifeq -> 117
+87: aload_2
+--- net.minecraft.world.level.block.IronBarsBlock.<clinit>()V
+0: invokedynamic indy
+5: invokestatic net/minecraft/world/level/block/IronBarsBlock.simpleCodec:(Ljava/util/function/Function;)Lcom/mojang/serialization/MapCodec;
+8: putstatic net/minecraft/world/level/block/IronBarsBlock.CODEC:Lcom/mojang/serialization/MapCodec;
+11: return
+
+=== StainedGlassPaneBlock methods
+--- net.minecraft.world.level.block.StainedGlassPaneBlock.<init>(Lnet/minecraft/world/item/DyeColor;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+0: aload_0
+1: aload_2
+2: invokespecial net/minecraft/world/level/block/IronBarsBlock.<init>:(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+5: aload_0
+6: aload_1
+7: putfield net/minecraft/world/level/block/StainedGlassPaneBlock.color:Lnet/minecraft/world/item/DyeColor;
+10: aload_0
+11: aload_0
+12: getfield net/minecraft/world/level/block/StainedGlassPaneBlock.stateDefinition:Lnet/minecraft/world/level/block/state/StateDefinition;
+15: invokevirtual net/minecraft/world/level/block/state/StateDefinition.any:()Lnet/minecraft/world/level/block/state/StateHolder;
+18: checkcast net/minecraft/world/level/block/state/BlockState
+21: getstatic net/minecraft/world/level/block/StainedGlassPaneBlock.NORTH:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+24: iconst_0
+25: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+28: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+31: checkcast net/minecraft/world/level/block/state/BlockState
+34: getstatic net/minecraft/world/level/block/StainedGlassPaneBlock.EAST:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+37: iconst_0
+38: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+41: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+44: checkcast net/minecraft/world/level/block/state/BlockState
+47: getstatic net/minecraft/world/level/block/StainedGlassPaneBlock.SOUTH:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+50: iconst_0
+51: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+54: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+57: checkcast net/minecraft/world/level/block/state/BlockState
+60: getstatic net/minecraft/world/level/block/StainedGlassPaneBlock.WEST:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+63: iconst_0
+64: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+67: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+70: checkcast net/minecraft/world/level/block/state/BlockState
+73: getstatic net/minecraft/world/level/block/StainedGlassPaneBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+76: iconst_0
+77: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+80: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+83: checkcast net/minecraft/world/level/block/state/BlockState
+86: invokevirtual net/minecraft/world/level/block/StainedGlassPaneBlock.registerDefaultState:(Lnet/minecraft/world/level/block/state/BlockState;)V
+89: return
+!! net.minecraft.world.level.block.StainedGlassPaneBlock: no method matching skipRendering
+
+=== Blocks clinit — GLASS_PANE row + IRON_BARS row
+--- clinit window @ Blocks.GLASS_PANE: (pc 12427..)
+12427: putstatic net/minecraft/world/level/block/Blocks.COPPER_CHAIN:Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+12430: getstatic net/minecraft/references/BlockItemIds.GLASS_PANE:Lnet/minecraft/references/BlockItemId;
+12433: invokedynamic indy
+12438: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12441: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.HAT:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+12444: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12447: ldc_w float 0.30000001192092896
+12450: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12453: getstatic net/minecraft/world/level/block/SoundType.GLASS:Lnet/minecraft/world/level/block/SoundType;
+12456: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12459: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noOcclusion:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12462: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+12465: putstatic net/minecraft/world/level/block/Blocks.GLASS_PANE:Lnet/minecraft/world/level/block/Block;
+12468: getstatic net/minecraft/references/BlockItemIds.PUMPKIN:Lnet/minecraft/references/BlockItemId;
+12471: invokedynamic indy
+12476: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12479: getstatic net/minecraft/world/level/material/MapColor.COLOR_ORANGE:Lnet/minecraft/world/level/material/MapColor;
+12482: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12485: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.DIDGERIDOO:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+12488: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12491: fconst_1
+12492: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12495: getstatic net/minecraft/world/level/block/SoundType.WOOD:Lnet/minecraft/world/level/block/SoundType;
+12498: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12501: getstatic net/minecraft/world/level/material/PushReaction.DESTROY:Lnet/minecraft/world/level/material/PushReaction;
+--- clinit window @ Blocks.IRON_BARS: (pc 12290..)
+12290: putstatic net/minecraft/world/level/block/Blocks.MUSHROOM_STEM:Lnet/minecraft/world/level/block/Block;
+12293: getstatic net/minecraft/references/BlockItemIds.IRON_BARS:Lnet/minecraft/references/BlockItemId;
+12296: invokedynamic indy
+12301: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12304: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12307: ldc_w float 5.0
+12310: ldc_w float 6.0
+12313: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12316: getstatic net/minecraft/world/level/block/SoundType.IRON:Lnet/minecraft/world/level/block/SoundType;
+12319: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12322: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noOcclusion:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12325: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+12328: putstatic net/minecraft/world/level/block/Blocks.IRON_BARS:Lnet/minecraft/world/level/block/Block;
+12331: getstatic net/minecraft/references/BlockItemIds.COPPER_BARS:Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+12334: invokedynamic indy
+12339: invokedynamic indy
+12344: invokedynamic indy
+12349: invokedynamic indy
+12354: invokestatic net/minecraft/world/level/block/WeatheringCopperCollection.registerBlocks:(Lnet/minecraft/world/level/block/WeatheringCopperCollection;Lorg/apache/commons/lang3/function/TriFunction;Ljava/util/function/BiFunction;Ljava/util/function/BiFunction;Ljava/util/function/Function;)Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+12357: putstatic net/minecraft/world/level/block/Blocks.COPPER_BARS:Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+12360: getstatic net/minecraft/references/BlockItemIds.IRON_CHAIN:Lnet/minecraft/references/BlockItemId;
+12363: invokedynamic indy
+12368: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12371: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.forceSolidOn:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12374: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+
+=== blockstates
+--- blockstates/glass_pane.json: {"multipart": [{"apply": {"model": "minecraft:block/glass_pane_post"}}, {"apply": {"model": "minecraft:block/glass_pane_side"}, "when": {"north": "true"}}, {"apply": {"model": "minecraft:block/glass_pane_side", "y": 90}, "when": {"east": "true"}}, {"apply": {"model": "minecraft:block/glass_pane_side_alt"}, "when": {"south": "true"}}, {"apply": {"model": "minecraft:block/glass_pane_side_alt", "y": 90}, "when": {"west": "true"}}, {"apply": {"model": "minecraft:block/glass_pane_noside"}, "when": {"north": "false"}}, {"apply": {"model": "minecraft:block/glass_pane_noside_alt"}, "when": {"east": "false"}}, {"apply": {"model": "minecraft:block/glass_pane_noside_alt", "y": 90}, "when": {"south": "false"}}, {"apply": {"model": "minecraft:block/glass_pane_noside", "y": 270}, "when": {"west": "false"}}]}
+--- blockstates/white_stained_glass_pane.json: {"multipart": [{"apply": {"model": "minecraft:block/white_stained_glass_pane_post"}}, {"apply": {"model": "minecraft:block/white_stained_glass_pane_side"}, "when": {"north": "true"}}, {"apply": {"model": "minecraft:block/white_stained_glass_pane_side", "y": 90}, "when": {"east": "true"}}, {"apply": {"model": "minecraft:block/white_stained_glass_pane_side_alt"}, "when": {"south": "true"}}, {"apply": {"model": "minecraft:block/white_stained_glass_pane_side_alt", "y": 90}, "when": {"west": "true"}}, {"apply": {"model": "minecraft:block/white_stained_glass_pane_noside"}, "when": {"north": "false"}}, {"apply": {"model": "minecraft:block/white_stained_glass_pane_noside_alt"}, "when": {"east": "false"}}, {"apply": {"model": "minecraft:block/white_stained_glass_pane_noside_alt", "y": 90}, "when": {"south": "false"}}, {"apply": {"model": "minecraft:block/white_stained_glass_pane_noside", "y": 270
+--- blockstates/iron_bars.json: {"multipart": [{"apply": {"model": "minecraft:block/iron_bars_post_ends"}}, {"apply": {"model": "minecraft:block/iron_bars_post"}, "when": {"east": "false", "north": "false", "south": "false", "west": "false"}}, {"apply": {"model": "minecraft:block/iron_bars_cap"}, "when": {"east": "false", "north": "true", "south": "false", "west": "false"}}, {"apply": {"model": "minecraft:block/iron_bars_cap", "y": 90}, "when": {"east": "true", "north": "false", "south": "false", "west": "false"}}, {"apply": {"model": "minecraft:block/iron_bars_cap_alt"}, "when": {"east": "false", "north": "false", "south": "true", "west": "false"}}, {"apply": {"model": "minecraft:block/iron_bars_cap_alt", "y": 90}, "when": {"east": "false", "north": "false", "south": "false", "west": "true"}}, {"apply": {"model": "minecraft:block/iron_bars_side"}, "when": {"north": "true"}}, {"apply": {"model": "minecraft:block/iron_b
+
+=== models
+--- models/block/template_glass_pane_post.json: {"ambientocclusion": false, "textures": {"particle": "#pane"}, "elements": [{"from": [7, 0, 7], "to": [9, 16, 9], "faces": {"down": {"uv": [7, 7, 9, 9], "texture": "#edge"}, "up": {"uv": [7, 7, 9, 9], "texture": "#edge"}}}]}
+--- models/block/template_glass_pane_side.json: {"ambientocclusion": false, "textures": {"particle": "#pane"}, "elements": [{"from": [7, 0, 0], "to": [9, 16, 7], "faces": {"down": {"uv": [7, 0, 9, 7], "texture": "#edge"}, "up": {"uv": [7, 0, 9, 7], "texture": "#edge"}, "north": {"uv": [7, 0, 9, 16], "texture": "#edge", "cullface": "north"}, "west": {"uv": [16, 0, 9, 16], "texture": "#pane"}, "east": {"uv": [9, 0, 16, 16], "texture": "#pane"}}}]}
+--- models/block/glass_pane_post.json: {"parent": "minecraft:block/template_glass_pane_post", "textures": {"edge": {"force_translucent": true, "sprite": "minecraft:block/glass_pane_top"}, "pane": {"force_translucent": true, "sprite": "minecraft:block/glass"}}}
+--- models/block/glass_pane_north.json: ABSENT
+--- models/block/white_stained_glass_pane_post.json: {"parent": "minecraft:block/template_glass_pane_post", "textures": {"edge": {"force_translucent": true, "sprite": "minecraft:block/white_stained_glass_pane_top"}, "pane": {"force_translucent": true, "sprite": "minecraft:block/white_stained_glass"}}}
+--- models/block/white_stained_glass_pane_north.json: ABSENT
+--- models/block/iron_bars_post.json: {"parent": "minecraft:block/template_bars_post", "textures": {"bars": "minecraft:block/iron_bars", "edge": "minecraft:block/iron_bars"}}
+--- models/block/iron_bars_cap.json: {"parent": "minecraft:block/template_bars_cap", "textures": {"bars": "minecraft:block/iron_bars", "edge": "minecraft:block/iron_bars"}}
+--- models/block/iron_bars_side.json: {"parent": "minecraft:block/template_bars_side", "textures": {"bars": "minecraft:block/iron_bars", "edge": "minecraft:block/iron_bars"}}
+
+=== texture alpha histograms
+--- glass_pane_top: 16x16 alpha {0: 224, 255: 32}
+--- white_stained_glass_pane_top: 16x16 alpha {0: 224, 230: 32}
+--- red_stained_glass_pane_top: 16x16 alpha {0: 224, 230: 32}
+--- iron_bars: 16x16 alpha {0: 140, 255: 116}
+
+=== tags
+--- tag mineable/pickaxe: 417 values; pane/bars rows: ['#minecraft:bars']
+
+=== Blocks clinit — STAINED_GLASS_PANE collection
+--- window @ pc 16170
+16170: ldc_w float 3.5
+16173: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+16176: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+16179: putstatic net/minecraft/world/level/block/Blocks.DROPPER:Lnet/minecraft/world/level/block/Block;
+16182: getstatic net/minecraft/references/BlockItemIds.DYED_TERRACOTTA:Lnet/minecraft/world/level/block/ColorCollection;
+16185: invokedynamic indy
+16190: invokedynamic indy
+16195: invokedynamic indy
+16200: invokestatic net/minecraft/world/level/block/ColorCollection.registerBlocks:(Lnet/minecraft/world/level/block/ColorCollection;Lorg/apache/commons/lang3/function/TriFunction;Ljava/util/function/BiFunction;Ljava/util/function/Function;)Lnet/minecraft/world/level/block/ColorCollection;
+16203: putstatic net/minecraft/world/level/block/Blocks.DYED_TERRACOTTA:Lnet/minecraft/world/level/block/ColorCollection;
+16206: getstatic net/minecraft/references/BlockItemIds.STAINED_GLASS_PANE:Lnet/minecraft/world/level/block/ColorCollection;
+16209: invokedynamic indy
+
+=== Items clinit — GLASS_PANE + IRON_BARS pairing rows
+--- clinit window @ Items.GLASS_PANE: (pc 4681..)
+4681: invokestatic net/minecraft/world/level/block/WeatheringCopperCollection.registerItems:(Lnet/minecraft/world/level/block/WeatheringCopperCollection;Lnet/minecraft/world/level/block/WeatheringCopperCollection;Ljava/util/function/BiFunction;)Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+4684: putstatic net/minecraft/world/item/Items.COPPER_CHAIN:Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+4687: getstatic net/minecraft/references/BlockItemIds.GLASS_PANE:Lnet/minecraft/references/BlockItemId;
+4690: getstatic net/minecraft/world/level/block/Blocks.GLASS_PANE:Lnet/minecraft/world/level/block/Block;
+4693: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+4696: putstatic net/minecraft/world/item/Items.GLASS_PANE:Lnet/minecraft/world/item/Item;
+4699: getstatic net/minecraft/references/BlockItemIds.MELON:Lnet/minecraft/references/BlockItemId;
+4702: getstatic net/minecraft/world/level/block/Blocks.MELON:Lnet/minecraft/world/level/block/Block;
+4705: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+4708: putstatic net/minecraft/world/item/Items.MELON:Lnet/minecraft/world/item/Item;
+4711: getstatic net/minecraft/references/BlockItemIds.VINE:Lnet/minecraft/references/BlockItemId;
+--- clinit window @ Items.IRON_BARS: (pc 4623..)
+4623: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+4626: putstatic net/minecraft/world/item/Items.MUSHROOM_STEM:Lnet/minecraft/world/item/Item;
+4629: getstatic net/minecraft/references/BlockItemIds.IRON_BARS:Lnet/minecraft/references/BlockItemId;
+4632: getstatic net/minecraft/world/level/block/Blocks.IRON_BARS:Lnet/minecraft/world/level/block/Block;
+4635: invokestatic net/minecraft/world/item/Items.registerBlock:(Lnet/minecraft/references/BlockItemId;Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/item/Item;
+4638: putstatic net/minecraft/world/item/Items.IRON_BARS:Lnet/minecraft/world/item/Item;
+4641: getstatic net/minecraft/references/BlockItemIds.COPPER_BARS:Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+4644: getstatic net/minecraft/world/level/block/Blocks.COPPER_BARS:Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+4647: invokedynamic indy
+4652: invokestatic net/minecraft/world/level/block/WeatheringCopperCollection.registerItems:(Lnet/minecraft/world/level/block/WeatheringCopperCollection;Lnet/minecraft/world/level/block/WeatheringCopperCollection;Ljava/util/function/BiFunction;)Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+4655: putstatic net/minecraft/world/item/Items.COPPER_BARS:Lnet/minecraft/world/level/block/WeatheringCopperCollection;

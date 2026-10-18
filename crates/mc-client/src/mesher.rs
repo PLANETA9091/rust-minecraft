@@ -248,6 +248,17 @@ fn is_transparent(kind: u16) -> bool {
         // HalfTransparentBlock.skipRendering law the face loop's own
         // glass arm speaks)
         || crate::world::is_glass(kind)
+        // THE PANE FAMILY the same verdict keeps (the dev-58 round —
+        // the blocks clinit's noOcclusion() rows the glass_pane and
+        // iron_bars chains speak [pc 12459 / pc 12322], the stained
+        // ladder the collection lambda's own chain the same row
+        // wears: the non-occluding thin strip the neighbors' faces
+        // draw against, the AO the opaque walk never casts, the
+        // multipart quads the pane lane's own arms render — the
+        // stone behind the window draws, the same-kind cull the
+        // skipRendering law the lane's own arm speaks)
+        || crate::world::is_glass_pane(kind)
+        || kind == crate::world::IRON_BARS
 }
 
 /// Only opaque blocks cast ambient occlusion (air/water/leaves never darken
@@ -4258,6 +4269,264 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     }
                     continue;
                 }
+                // THE PANE FAMILY'S OWN MULTIPART LANE (the dev-58
+                // round — the thin-strip rung the palette finally
+                // renders: the blockstates {name}.json's MULTIPART the
+                // UNCONDITIONAL post apply + the side/noside arms (the
+                // panes) or the post_ends/post/cap/side arms (the
+                // bars) the select_parts walk the CONNECTION STATE the
+                // mesh-time law computes the props answer — the
+                // [`pane_connection_bits`] walk the four neighbor reads
+                // the SAME verdict every frame answers, the
+                // placement/break updates the propagation never
+                // needs). The models the pane templates the derive
+                // walk resolves (the post's down/up cap pair + the
+                // side's END face the cullface row carries + the
+                // west/east #pane long faces — the ZERO-inner-face law
+                // the connected seam the z-fight never banks; the bars
+                // templates the ZERO-WIDTH planes the crossed-sheet
+                // look renders — the post pair x=8/z=8 planes, the
+                // side's plane + the END face + the y=0.001/15.999
+                // edge strips), the ambientocclusion: false the
+                // templates ALL carry (the AO the quads never cast).
+                // THE PER-QUAD TEXTURE VERDICT — the derived quads'
+                // resolved stems the tile mapping answers (the #edge
+                // refs the kind's own FACE_TILES row the pane-top
+                // master banks, the #pane refs the SIBLING glass kind's
+                // row the id-17 offset answers — the pane kind its
+                // glass block the SAME dye the −17 seat wears, the
+                // bars' #bars/#edge refs the kind's own iron_bars
+                // master the row banks). THE CULLFACE VERDICT the
+                // fence lane's own rotated law + THE SAME-KIND CULL
+                // ARM the skipRendering law banks (javap
+                // IronBarsBlock.skipRendering pc 0-124: the
+                // neighborState.is(this) arm pc 0-5 + the vertical
+                // axis arm pc 50-61 the stacked caps' shared plane
+                // culls + the mutual-connection arm pc 62-116 the
+                // connected seam faces cull — the instanceof
+                // universality the adjacent same-kind panes the
+                // ALWAYS-mutual verdict wears, the different-color
+                // pair the DIFFERENT blocks the draw keeps). THE
+                // STAINED HALF'S OWN TRANSLUCENT FLAGS the dyed cloths
+                // the per-texel blend serves (the #pane side refs the
+                // stained glass masters' 0.4 body band carry, the
+                // force_translucent: true refs the render-layer
+                // signal speaks), the plain pane and the bars the
+                // cutout lane's binary alphas wear.
+                if crate::world::is_glass_pane(id) || id == crate::world::IRON_BARS {
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let (cell_sky, cell_block) = match light {
+                        Some(l) => {
+                            let (s, b) = cell_layers(l, world.chunks_per_side, wx, wy, wz);
+                            (s.map(|v| v as f32), b.map(|v| v as f32))
+                        }
+                        None => (None, None),
+                    };
+                    // THE CONNECTION BITS the mesh-time law computes —
+                    // the N/E/S/W when-rows the props answer
+                    let bits = crate::world::pane_connection_bits(world, wx, wy, wz);
+                    let props = [
+                        ("north", if bits & 0b0001 != 0 { "true" } else { "false" }),
+                        ("east", if bits & 0b0010 != 0 { "true" } else { "false" }),
+                        ("south", if bits & 0b0100 != 0 { "true" } else { "false" }),
+                        ("west", if bits & 0b1000 != 0 { "true" } else { "false" }),
+                    ];
+                    // THE PER-QUAD TILE WALK — the derived quads'
+                    // resolved stems the tile mapping answers (the
+                    // #edge refs the kind's own row, the #pane refs
+                    // the sibling glass kind's row the id-17 offset
+                    // answers, the bars' own master the kind row
+                    // keeps)
+                    let models = pane_models(id);
+                    for apply in select_parts(pane_parts(id), &props) {
+                        let model_id = apply.model.strip_prefix("minecraft:").unwrap_or(&apply.model);
+                        // the model's y quarter the blockstate's own
+                        // y values speak (north/south the y0 rows the
+                        // side/side_alt models wear, east/west the
+                        // y90 turns — the steps the CW count answers)
+                        let steps = ((apply.y as usize) / 90) % 4;
+                        let Some(quads) = models.get(model_id) else {
+                            continue;
+                        };
+                        for q in quads {
+                            // THE ROTATED FACE DIRECTION the steps the
+                            // same walk folds (the same-kind arm and
+                            // the shade term the rotated direction
+                            // read)
+                            let rotated_dir = rotate_direction_cw(q.direction, steps);
+                            // THE SAME-KIND CULL ARM (the dev-58
+                            // round — javap IronBarsBlock.skipRendering
+                            // pc 0-124 the 26.2 jar: the
+                            // neighborState.is(this) arm pc 0-5 the
+                            // same instance the shared face culls, the
+                            // vertical axis arm pc 50-61 the stacked
+                            // caps' shared plane the TRUE verdict
+                            // wears, the mutual-connection arm pc
+                            // 62-116 the connected seam faces cull —
+                            // the instanceof universality the
+                            // adjacent same-kind panes the
+                            // ALWAYS-mutual verdict wears [the
+                            // attachsTo instance arm every pane pair
+                            // connects], the different-color pair the
+                            // DIFFERENT blocks the draw keeps)
+                            {
+                                let (dx, dy, dz) = match rotated_dir {
+                                    mc_registry::element_quads::Direction::Down => (0, -1, 0),
+                                    mc_registry::element_quads::Direction::Up => (0, 1, 0),
+                                    mc_registry::element_quads::Direction::North => (0, 0, -1),
+                                    mc_registry::element_quads::Direction::South => (0, 0, 1),
+                                    mc_registry::element_quads::Direction::West => (-1, 0, 0),
+                                    mc_registry::element_quads::Direction::East => (1, 0, 0),
+                                };
+                                if world.get(wx + dx, wy + dy, wz + dz) == id {
+                                    continue;
+                                }
+                            }
+                            // THE ROTATED CULLFACE VERDICT — the
+                            // six-direction law the fence lane wears
+                            if let Some(dir) = q.cullface {
+                                let rotated = rotate_direction_cw(dir, steps);
+                                let (dx, dy, dz) = match rotated {
+                                    mc_registry::element_quads::Direction::Down => (0, -1, 0),
+                                    mc_registry::element_quads::Direction::Up => (0, 1, 0),
+                                    mc_registry::element_quads::Direction::North => (0, 0, -1),
+                                    mc_registry::element_quads::Direction::South => (0, 0, 1),
+                                    mc_registry::element_quads::Direction::West => (-1, 0, 0),
+                                    mc_registry::element_quads::Direction::East => (1, 0, 0),
+                                };
+                                if !is_transparent(world.get(wx + dx, wy + dy, wz + dz)) {
+                                    continue;
+                                }
+                            }
+                            // THE SHADE TERM'S OWN READ — the pane
+                            // templates' shade defaults the direction
+                            // table answers (the ambientocclusion:
+                            // false the AO the quads never cast, the
+                            // shade:true the faces the world-facing
+                            // term keeps)
+                            let face_shade = if q.shade {
+                                match rotated_dir {
+                                    mc_registry::element_quads::Direction::Up => 1.0f32,
+                                    mc_registry::element_quads::Direction::Down => 0.5,
+                                    mc_registry::element_quads::Direction::North
+                                    | mc_registry::element_quads::Direction::South => 0.8,
+                                    mc_registry::element_quads::Direction::West
+                                    | mc_registry::element_quads::Direction::East => 0.6,
+                                }
+                            } else {
+                                1.0
+                            };
+                            let mut pts = [[0f32; 3]; 4];
+                            let mut colors = [[0f32; 3]; 4];
+                            let mut uvs = [[0f32; 2]; 4];
+                            for (i, v) in q.vertices.iter().enumerate() {
+                                // THE STEPS' OWN TURN (the blockstate y
+                                // values the CW walk folds — the fire
+                                // lane's own quarter walk the same map
+                                // wears)
+                                let (vx, vz) = match steps {
+                                    1 => (1.0 - v[2], v[0]),
+                                    2 => (1.0 - v[0], 1.0 - v[2]),
+                                    3 => (v[2], 1.0 - v[0]),
+                                    _ => (v[0], v[2]),
+                                };
+                                pts[i] = [
+                                    wx as f32 + vx,
+                                    wy as f32 + v[1],
+                                    wz as f32 + vz,
+                                ];
+                                uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
+                                let lm = lightmap_combine(
+                                    cell_sky,
+                                    cell_block,
+                                    sky_factor,
+                                    sky_tint,
+                                    ambient,
+                                    block_tint,
+                                    night_vision,
+                                    world.night_vision_factor,
+                                    world.darkness_scale,
+                                );
+                                colors[i] = [
+                                    lm[0] * face_shade,
+                                    lm[1] * face_shade,
+                                    lm[2] * face_shade,
+                                ];
+                            }
+                            // THE PER-QUAD TEXTURE VERDICT — the
+                            // resolved stem the tile mapping answers
+                            // (the #edge refs the kind's own
+                            // pane-top/iron_bars master the FACE_TILES
+                            // row banks, the #pane refs the SIBLING
+                            // glass kind's row the id-17 offset
+                            // answers — the pane kind its glass block
+                            // the SAME dye the −17 seat wears)
+                            let tex_stem = q
+                                .texture
+                                .trim_start_matches("minecraft:")
+                                .trim_start_matches("block/");
+                            let pane_tile = if tex_stem == "glass" {
+                                atlas::FACE_TILES[crate::world::GLASS as usize][2]
+                            } else if tex_stem.ends_with("_stained_glass") {
+                                atlas::FACE_TILES[(id - 17) as usize][2]
+                            } else if tex_stem == "iron_bars" {
+                                atlas::FACE_TILES[crate::world::IRON_BARS as usize][2]
+                            } else {
+                                // the #edge refs (glass_pane_top /
+                                // {color}_stained_glass_pane_top) the
+                                // kind's own row banks
+                                atlas::FACE_TILES[id as usize][2]
+                            };
+                            out.push(Quad {
+                                pts,
+                                colors,
+                                uvs,
+                                tile: pane_tile,
+                                // THE STAINED HALF'S OWN TRANSLUCENT
+                                // LANE (the 16 dyed cloths the
+                                // per-texel blend serves — the #pane
+                                // side refs the stained masters' 0.4
+                                // body band carry, the edge tiles'
+                                // 0.90 band the same law wears), the
+                                // plain pane and the bars the OPAQUE
+                                // pass the binary cutouts wear
+                                translucent: crate::world::is_stained_glass_pane(id),
+                                per_texel_alpha: crate::world::is_stained_glass_pane(id),
+                            });
+                        }
+                    }
+                    continue;
+                }
                 // THE END PORTAL'S OWN ARM (the dev-29 round — the
                 // starry volume the special pass draws: the
                 // EndPortalRenderer's own cube the shader law serves,
@@ -5631,6 +5900,104 @@ fn wall_models(
 
 static EMPTY_WALL_MODELS: (Vec<DerivedQuad>, Vec<DerivedQuad>, Vec<DerivedQuad>) =
     (Vec::new(), Vec::new(), Vec::new());
+
+/// THE PANE FAMILY'S OWN CACHED PARTS (the dev-58 round — the parsed
+/// blockstate definition the selection rides, the fence lane's own
+/// cache pattern): the blockstates/{name}.json's MULTIPART the
+/// generated BLOCKSTATES row banks (the UNCONDITIONAL post apply +
+/// the side/noside arms the panes wear, the post_ends/post/cap/side
+/// arms the iron_bars carries — the jar's own when-conditions the
+/// select_parts walk the fire/bamboo/fence/wall tests pin), the 18
+/// kinds the contiguous run the palette tail banks.
+fn pane_parts(kind: u16) -> &'static [Part<'static>] {
+    static PARTS: std::sync::OnceLock<std::collections::HashMap<u16, Vec<Part<'static>>>> =
+        std::sync::OnceLock::new();
+    PARTS.get_or_init(|| {
+        let mut map = std::collections::HashMap::new();
+        // THE EIGHTEEN KINDS the explicit seats the palette tail
+        // banks (the constant rows the range law reads — the seat
+        // ladder the windows' own walk keeps)
+        for k in crate::world::PANE_KINDS {
+            if let Some(Ok(mc_registry::blockstate_lookup::Definition::Multipart(parts))) =
+                mc_registry::blockstate_lookup::parse(crate::world::NAME_OF[k as usize])
+            {
+                map.insert(k, parts.to_vec());
+            }
+        }
+        map
+    })
+    .get(&kind)
+    .map(|v| v.as_slice())
+    .unwrap_or(&[])
+}
+
+/// THE PANE MODELS' OWN CACHED BAKES — the derive walk's quads per
+/// kind, derived ONCE for the eighteen-kind set (the panes the
+/// post/side/side_alt/noside/noside_alt five-model set the
+/// template_glass_pane_* parents resolve, the iron_bars the
+/// post_ends/post/cap/cap_alt/side/side_alt six-model set the
+/// template_bars_* parents wear; the derived quads' texture refs the
+/// resolve_ref walk the sprite stems answers — the per-quad tile
+/// verdict the lane's own stem map reads).
+fn pane_models(
+    kind: u16,
+) -> &'static std::collections::HashMap<&'static str, Vec<DerivedQuad>> {
+    static MODELS: std::sync::OnceLock<std::collections::HashMap<u16, std::collections::HashMap<&'static str, Vec<DerivedQuad>>>> =
+        std::sync::OnceLock::new();
+    MODELS.get_or_init(|| {
+        let mut map = std::collections::HashMap::new();
+        // THE EIGHTEEN KINDS the explicit seats the palette tail
+        // banks (the constant rows the derive walk reads — the seat
+        // ladder the windows' own walk keeps)
+        for k in crate::world::PANE_KINDS {
+            let name = crate::world::NAME_OF[k as usize];
+            let ids: Vec<String> = if k == crate::world::IRON_BARS {
+                [
+                    "iron_bars_post_ends",
+                    "iron_bars_post",
+                    "iron_bars_cap",
+                    "iron_bars_cap_alt",
+                    "iron_bars_side",
+                    "iron_bars_side_alt",
+                ]
+                .iter()
+                .map(|m| format!("block/{m}"))
+                .collect()
+            } else {
+                [
+                    "post",
+                    "side",
+                    "side_alt",
+                    "noside",
+                    "noside_alt",
+                ]
+                .iter()
+                .map(|suffix| format!("block/{name}_{suffix}"))
+                .collect()
+            };
+            let mut kind_models = std::collections::HashMap::new();
+            for id in ids {
+                let quads = derive_model_inherited(&id).unwrap_or_default();
+                // the 'static key the leak law carries (the model id
+                // strings the ONCE the process lifetime wears — the
+                // fence cache's own Box::leak precedent the same law
+                // banks)
+                let leaked: &'static str = Box::leak(id.into_boxed_str());
+                kind_models.insert(leaked, quads);
+            }
+            map.insert(k, kind_models);
+        }
+        map
+    })
+    .get(&kind)
+    .unwrap_or_else(|| empty_pane_models())
+}
+
+fn empty_pane_models() -> &'static std::collections::HashMap<&'static str, Vec<DerivedQuad>> {
+    static EMPTY: std::sync::OnceLock<std::collections::HashMap<&'static str, Vec<DerivedQuad>>> =
+        std::sync::OnceLock::new();
+    EMPTY.get_or_init(std::collections::HashMap::new)
+}
 
 /// THE BAMBOO MODELS' OWN CACHED BAKES — the derive walk's quads per
 /// model id, derived ONCE for the ten-model set (the four thin age0
@@ -9264,6 +9631,174 @@ mod tests {
                 .iter()
                 .any(|quad| quad.pts.iter().all(|p| (p[0] - 9.0).abs() < 1e-6)),
             "the stone's -X face the glass cell draws against"
+        );
+    }
+
+    #[test]
+    fn the_pane_lane_selects_the_post_the_arms_and_the_strips_wear() {
+        // THE PANE LANE'S OWN SELECTION (the dev-58 round — the
+        // blockstates {name}.json's multipart the pane_parts walk
+        // parses, the same select_parts walk the fence/wall tests
+        // pin): the lone state the post + the four noside caps
+        // speak, the connected state the post + the side arms the
+        // when-rows answer, the same-kind cull the skipRendering
+        // law banks, the per-quad tiles the #edge/#pane stems the
+        // mapping answers, the stained flags the dyed cloths carry
+        use mc_registry::generated::atlas as gen_atlas;
+        let edge_tile = gen_atlas::FACE_TILES[crate::world::GLASS_PANE as usize][2];
+        let glass_tile = gen_atlas::FACE_TILES[crate::world::GLASS as usize][2];
+        let red_edge_tile = gen_atlas::FACE_TILES[crate::world::RED_STAINED_GLASS_PANE as usize][2];
+        let red_glass_tile = gen_atlas::FACE_TILES[crate::world::RED_STAINED_GLASS as usize][2];
+        let bars_tile = gen_atlas::FACE_TILES[crate::world::IRON_BARS as usize][2];
+        assert_eq!(gen_atlas::tile_name(edge_tile), "glass_pane_top");
+        assert_eq!(gen_atlas::tile_name(red_edge_tile), "red_stained_glass_pane_top");
+        assert_eq!(gen_atlas::tile_name(bars_tile), "iron_bars");
+        // THE LONE PANE (all neighbors air — the post caps + the
+        // four noside caps the unconnected fan wears; the derived
+        // quads the templates speak: the post's 2 caps + the four
+        // noside ONE-face quads = the six quads)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::GLASS_PANE);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let pane: Vec<_> = q
+            .iter()
+            .filter(|quad| quad.tile == edge_tile || quad.tile == glass_tile)
+            .collect();
+        assert_eq!(pane.len(), 6, "the lone pane the post + the four noside caps wear");
+        // the plain pane the OPAQUE flags wear (the cutout lane)
+        for quad in &pane {
+            assert!(!quad.translucent, "the plain pane the OPAQUE pass rides");
+            assert!(!quad.per_texel_alpha, "the plain pane the binary cutout wears");
+        }
+        // the tiles the #edge refs the kind's own row bank (the
+        // post caps + the noside caps the SAME edge master wear —
+        // the noside's #pane ref the template's particle-only walk
+        // never emits [the noside element carries ONE north face
+        // the #pane ref answers — hmm, the noside's north face IS
+        // the #pane texture: the lone pane the noside quads the
+        // GLASS master wear])
+        let edges = pane.iter().filter(|quad| quad.tile == edge_tile).count();
+        let panes = pane.iter().filter(|quad| quad.tile == glass_tile).count();
+        assert_eq!(
+            edges, 2,
+            "the post's two caps the #edge master wears"
+        );
+        assert_eq!(
+            panes, 4,
+            "the four noside caps the #pane master wears (the glass block's own tile)"
+        );
+        // THE CONNECTED PAIR (the north neighbor — the side arm the
+        // when-row adds, the north noside the unconnected arm
+        // drops): the SAME-COLOR pair the seam END faces the
+        // same-kind cull keeps — each pane: 2 post caps + 4 arm
+        // quads (the END face the cull drops) + 3 noside caps = 9 —
+        // the pair the 18 quads the cull wears
+        let mut w2 = empty_world();
+        put(&mut w2, 8, 8, 8, crate::world::GLASS_PANE);
+        put(&mut w2, 8, 8, 7, crate::world::GLASS_PANE);
+        let q2 = mesh_chunk(&w2, 0, 0, None);
+        let pane2: Vec<_> = q2
+            .iter()
+            .filter(|quad| quad.tile == edge_tile || quad.tile == glass_tile)
+            .collect();
+        assert_eq!(pane2.len(), 18, "the same-color pair the seam cull wears");
+        // THE SEAM PLANE THE END FACES NEVER CARRY (the skipRendering
+        // law — the z=8.0 plane the two cells' boundary the END
+        // quads' shared plane the cull empties; the arm long faces'
+        // corners touch the plane the ALL-corners walk never counts)
+        let seam_quads = pane2
+            .iter()
+            .filter(|quad| quad.pts.iter().all(|p| (p[2] - 8.0).abs() < 1e-6))
+            .count();
+        assert_eq!(
+            seam_quads, 0,
+            "the connected seam the same-kind cull keeps (the skipRendering law wears)"
+        );
+        // THE STAINED CLOTH'S OWN FLAGS (the translucent pass the
+        // per-texel blend serves) + THE DIFFERENT-COLOR PAIR THE
+        // SEAM DRAWS (the skipRendering law the different blocks
+        // never fires — the END faces the seam plane carries, ONE
+        // per pane the #edge masters tile)
+        let mut w3 = empty_world();
+        put(&mut w3, 8, 8, 8, crate::world::WHITE_STAINED_GLASS_PANE);
+        put(&mut w3, 9, 8, 8, crate::world::RED_STAINED_GLASS_PANE);
+        let q3 = mesh_chunk(&w3, 0, 0, None);
+        let white_edge_tile =
+            gen_atlas::FACE_TILES[crate::world::WHITE_STAINED_GLASS_PANE as usize][2];
+        let white_glass_tile =
+            gen_atlas::FACE_TILES[crate::world::WHITE_STAINED_GLASS as usize][2];
+        let stained: Vec<_> = q3
+            .iter()
+            .filter(|quad| {
+                quad.tile == white_edge_tile
+                    || quad.tile == white_glass_tile
+                    || quad.tile == red_edge_tile
+                    || quad.tile == red_glass_tile
+            })
+            .collect();
+        // each pane: 2 post caps + 5 side-arm quads (the END face
+        // the DIFFERENT-color neighbor the draw keeps) + 3 noside
+        // caps = 10 — the pair the 20 quads the seam wears
+        assert_eq!(stained.len(), 20, "the different-color pair the seam faces wear");
+        for quad in &stained {
+            assert!(
+                quad.translucent,
+                "the stained quad the translucent pass rides"
+            );
+            assert!(
+                quad.per_texel_alpha,
+                "the stained quad the texel's own alpha composites"
+            );
+        }
+        // THE SEAM FACES THE PAIR CARRIES (the x=9.0 plane the two
+        // END quads the DIFFERENT-color draw keeps — one per pane
+        // the #edge masters tile)
+        let seam_a = stained
+            .iter()
+            .filter(|quad| {
+                quad.tile == white_edge_tile
+                    && quad.pts.iter().all(|p| (p[0] - 9.0).abs() < 1e-6)
+            })
+            .count();
+        let seam_b = stained
+            .iter()
+            .filter(|quad| {
+                quad.tile == red_edge_tile
+                    && quad.pts.iter().all(|p| (p[0] - 9.0).abs() < 1e-6)
+            })
+            .count();
+        assert_eq!(seam_a, 1, "the white pane's east END the seam draws");
+        assert_eq!(seam_b, 1, "the red pane's west END the seam draws");
+        // THE IRON BARS (the zero-width planes the crossed-sheet
+        // look renders — the lone bars the post_ends planes + the
+        // post planes the all-false arm wears)
+        let mut w4 = empty_world();
+        put(&mut w4, 8, 8, 8, crate::world::IRON_BARS);
+        let q4 = mesh_chunk(&w4, 0, 0, None);
+        let bars: Vec<_> = q4.iter().filter(|quad| quad.tile == bars_tile).collect();
+        assert!(
+            !bars.is_empty(),
+            "the lone bars the crossed-plane quads wear"
+        );
+        for quad in &bars {
+            assert!(
+                !quad.translucent,
+                "the bars the OPAQUE pass rides (the binary cutout)"
+            );
+            assert!(!quad.per_texel_alpha, "the bars the 0.5 cutout gate wears");
+        }
+        // the bars' planes the zero-width x folds speak (the post's
+        // planes at x=8.5 and z=8.5 — the crossed sheet the
+        // template_bars_post geometry wears)
+        assert!(
+            bars.iter()
+                .any(|quad| quad.pts.iter().all(|p| (p[0] - 8.5).abs() < 1e-6)),
+            "the x=8.5 plane the post's zero-width element wears"
+        );
+        assert!(
+            bars.iter()
+                .any(|quad| quad.pts.iter().all(|p| (p[2] - 8.5).abs() < 1e-6)),
+            "the z=8.5 plane the post's zero-width element wears"
         );
     }
 

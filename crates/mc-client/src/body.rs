@@ -664,6 +664,14 @@ fn clip_axis(world: &World, b: (f64, f64, f64, f64, f64, f64), axis: usize, d: f
                         }
                     }
                 }
+                for arm in crate::world::pane_arm_slabs(cell_shape, cx, cy, cz) {
+                    if let Some(b) = arm {
+                        if nb < 14 {
+                            boxes[nb] = Some(b);
+                            nb += 1;
+                        }
+                    }
+                }
                 if cy > 0 {
                     let below_shape = crate::world::collision_shape_at(world, cx, cy - 1, cz);
                     if crate::world::is_over_tall(below_shape) {
@@ -2006,6 +2014,14 @@ impl PlayerBody {
                         }
                     }
                     for arm in crate::world::wall_arm_slabs(cell_shape, cx, cy, cz) {
+                        if let Some(b) = arm {
+                            if nb < 14 {
+                                boxes[nb] = Some(b);
+                                nb += 1;
+                            }
+                        }
+                    }
+                    for arm in crate::world::pane_arm_slabs(cell_shape, cx, cy, cz) {
                         if let Some(b) = arm {
                             if nb < 14 {
                                 boxes[nb] = Some(b);

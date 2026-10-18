@@ -37024,6 +37024,25 @@ impl App {
             )
             .expect("the wall post shape the slabs never refuse");
             (x_lo, y_lo, z_lo, x_hi, y_hi, z_hi)
+        } else if crate::world::is_glass_pane(block) || block == crate::world::IRON_BARS {
+            // THE PANE FAMILY'S OWN THIN POST (the dev-58 round — the
+            // vanilla canPlace the PLACED state's own collision shape
+            // reads: the post-only kind law the conservative subset
+            // keeps [the connection arms the neighbor reads the
+            // placement walk never consults], the [7,0,7]->[9,16,9]
+            // band the 0.5±1/16 footprint + the 0..1 y-band the
+            // shape_slabs decode answers — the pane-in-your-own-cell
+            // placement the thin post the player's box misses the
+            // vanilla's own thin-shape law allows, the fence arm's
+            // own walk the thinner window post the same law serves)
+            let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) = crate::world::shape_slabs(
+                shape,
+                cell.0,
+                cell.1,
+                cell.2,
+            )
+            .expect("the pane post shape the slabs never refuse");
+            (x_lo, y_lo, z_lo, x_hi, y_hi, z_hi)
         } else if crate::world::is_fence_gate(block) {
             // THE CLOSED GATE'S OWN THIN PANEL (the dev-55 round — the
             // vanilla canPlace the SHAPE_COLLISION column(16.0, 4.0,
@@ -103555,7 +103574,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            560,
+            578,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -103636,7 +103655,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            560,
+            578,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -103938,7 +103957,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            560,
+            578,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -107868,7 +107887,7 @@ cow_sound_variant: None,
         // #texture ref banks)
         assert_eq!(
             atlas::N_KINDS,
-            560,
+            578,
             "the palette the weighted plates' own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
@@ -108088,7 +108107,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            560,
+            578,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
@@ -108365,7 +108384,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            560,
+            578,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
@@ -108481,7 +108500,7 @@ cow_sound_variant: None,
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE, 318);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, 319);
         assert_eq!(w::END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 560, "the palette the weighted rows bank");
+        assert_eq!(atlas::N_KINDS, 578, "the palette the weighted rows bank");
         for (off, on, name) in [
             (
                 w::LIGHT_WEIGHTED_PRESSURE_PLATE,
@@ -109595,7 +109614,7 @@ cow_sound_variant: None,
         assert_eq!(w::END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-            560,
+            578,
             "the palette the weighted plates' own rows bank"
         );
         for (off, on, name, wooden) in [

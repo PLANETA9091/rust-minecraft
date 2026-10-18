@@ -77,6 +77,16 @@ fn sky_opacity(id: u16) -> u8 {
         // passes, the interior the daylight the glass never shades,
         // the vanilla skylight's own law the windows answer)
         || is_glass(id)
+        // THE PANE FAMILY'S OWN ROW (the dev-58 round — the 18 kinds
+        // the noOcclusion() registration the lightBlock 0 the same
+        // law speaks: the glass_pane pc 12459 + the iron_bars pc
+        // 12322 the clinit chains bank, the stained pane ladder the
+        // collection lambda's own chain wears — the thin strip the
+        // light the flood passes, the CrossCollisionBlock's
+        // propagatesSkylightDown walk the vanilla skylight's own
+        // verdict keeps)
+        || is_glass_pane(id)
+        || id == IRON_BARS
     {
         0
     } else if id == WATER || id == LEAVES || id == PALE_LEAVES {
