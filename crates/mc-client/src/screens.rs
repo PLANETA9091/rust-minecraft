@@ -7379,10 +7379,12 @@ pub struct App {
     /// fresh 27-slot grid the first open inserts), the close arms
     /// FLUSH the edited chest_slots back (container_store_flush —
     /// the vanilla removed() walk's own persist law), the break lane
-    /// CLEARS the entry (container_store_cleared — the contents the
-    /// broken container spills, the vanilla drop-contents law's own
-    /// v1 shape: the store dies with the cell). The keyed emptiness
-    /// the fresh open keeps — the (0,0) stacks the empty slots wear.
+    /// SPILLS the entry (container_store_spilled — the dev-67 round:
+    /// the stocked slots the item entities the break releases, the
+    /// BlockEntity.preRemoveSideEffects dropContents arm's own law —
+    /// the store dies with the cell the spill speaks). The keyed
+    /// emptiness the fresh open keeps — the (0,0) stacks the empty
+    /// slots wear.
     pub container_stores: std::collections::HashMap<(i32, i32, i32), Vec<(i32, i32)>>,
     /// THE STORED CONTAINER'S OWN CELL (the open the key banks, the
     /// flush the key takes home — the None the chest kinds' closed
@@ -13388,11 +13390,13 @@ impl App {
                         // break sound, the debris burst, the reward
                         // half's creative gate)
                         self.dig_break_effects(broke_kind, pos);
-                        // THE STORE'S OWN BREAK (the dev-66 round — the
-                        // broken container cell the per-cell entry dies
-                        // with, the vanilla drop-contents law's own v1
-                        // shape the spill lane serves)
-                        self.container_store_cleared(pos);
+                        // THE STORE'S OWN SPILL (the dev-67 round — javap
+                        // BlockEntity.preRemoveSideEffects the
+                        // dropContents arm the removal walk speaks: the
+                        // broken container's stocked slots the item
+                        // entities the dig releases, the entry the walk
+                        // dies with)
+                        self.container_store_spilled(pos);
                     }
                 }
                 if beat {
@@ -20574,12 +20578,48 @@ impl App {
         self.hotbar_slots = self.inventory.hotbar();
     }
 
-    /// THE STORE'S OWN BREAK (the vanilla drop-contents law's own v1
-    /// shape — the broken container cell the store entry dies with,
-    /// the contents the spill the item entities' later rounds speak;
-    /// the misses the map's own absence the no-op keeps).
-    pub fn container_store_cleared(&mut self, pos: (i32, i32, i32)) {
-        self.container_stores.remove(&pos);
+    /// THE STORE'S OWN SPILL (the dev-67 round — javap the 26.2 walk
+    /// verbatim: `BlockEntity.preRemoveSideEffects(pos, state)` pc 18-30
+    /// the `Containers.dropContents(level, pos, container)` arm speaks —
+    /// the removal walk the block's death rides, the dropContents the
+    /// slot walk wears (the `!isEmpty` guard per slot, the 0..27 order
+    /// the container keeps), each non-empty stack the
+    /// [`crate::drops::ItemDrop::spawn_container_spill`] law releases
+    /// (the dropItemStack position bands + the `min(nextInt(21) + 10,
+    /// stackMax)` chunk split + the triangle throw). THE VANILLA
+    /// GAMEMODE'S OWN SPLIT: the spill the removal event owns — the
+    /// CREATIVE break the contents releases too (the abilities the
+    /// block-loot walk alone refuse — [`Self::spawn_drops_for`]'s
+    /// instabuild gate the block's own reward wears, the spill the same
+    /// beat keeps). THE ENTITY'S OWN AUTHORITY (the drop lane's own
+    /// law): the networked world's entities the server's stream owns —
+    /// the live session the store never wears (the wire chest the
+    /// server's OpenScreen word opens), the guard the honest belt
+    /// keeps. The misses the map's own absence the no-op keeps; the
+    /// entry dies with the cell either way, the open cell the walk
+    /// releases (the GUI's own key dies with the entry).
+    pub fn container_store_spilled(&mut self, pos: (i32, i32, i32)) {
+        let store = self.container_stores.remove(&pos);
+        if !self.world_is_network {
+            if let Some(store) = store {
+                for (item, count) in store {
+                    if count <= 0 {
+                        continue; // the dropContents walk's isEmpty guard
+                    }
+                    let chunks = crate::drops::ItemDrop::spawn_container_spill(
+                        self.next_drop_id,
+                        item,
+                        count,
+                        pos.0,
+                        pos.1,
+                        pos.2,
+                        &mut self.drop_rng,
+                    );
+                    self.next_drop_id += chunks.len() as i32;
+                    self.drops.extend(chunks);
+                }
+            }
+        }
         if self.container_open_cell == Some(pos) {
             self.container_open_cell = None;
         }
@@ -57513,12 +57553,14 @@ mod tests {
         assert_eq!(app.container_stores[&cell][3], (0, 0), "the grid the take emptied");
     }
 
-    /// THE BROKEN CONTAINER'S OWN STORE DEATH (the dev-66 round — the
-    /// vanilla drop-contents law's own v1 shape: the dug chest cell
-    /// the per-cell entry dies with, the reopen the fresh grid keeps;
-    /// the DIG lane's own completion the break speaks).
+    /// THE BROKEN CONTAINER'S OWN SPILL (the dev-67 round — javap
+    /// `BlockEntity.preRemoveSideEffects` the dropContents arm the
+    /// removal walk speaks: the dug chest cell the stocked slot the
+    /// item entity releases, the per-cell entry dies with, the reopen
+    /// the fresh grid keeps; the DIG lane's own completion the break
+    /// speaks).
     #[test]
-    fn the_broken_container_the_store_dies_with_the_cell() {
+    fn the_broken_container_the_contents_the_spill_wears() {
         let mut app = App::new(3);
         app.enter_world();
         let size = app.offline_world.as_ref().unwrap().size_blocks();
@@ -57552,6 +57594,31 @@ mod tests {
             !app.container_stores.contains_key(&cell),
             "the broken container the store never keeps"
         );
+        // THE SPILL (the dropContents arm the same beat speaks): the
+        // stocked (926, 5) the item entity the dig releases — the
+        // spawn-point bands the drops.rs unit test pins, the one-tick
+        // physics the dig's completion tick walks the wide cell
+        // margin keeps
+        let spill = app
+            .drops
+            .iter()
+            .find(|d| d.item == 926 && d.count == 5)
+            .expect("the stocked slot the spill releases");
+        assert!(
+            spill.x >= c as f64 - 0.5 && spill.x < c as f64 + 1.5,
+            "the cell's own x reach: {}",
+            spill.x
+        );
+        assert!(
+            spill.y >= surface as f64 - 0.5 && spill.y < surface as f64 + 1.5,
+            "the cell's own y reach: {}",
+            spill.y
+        );
+        assert!(
+            spill.z >= c as f64 - 0.5 && spill.z < c as f64 + 1.5,
+            "the cell's own z reach: {}",
+            spill.z
+        );
         app.on_left_release();
         // THE REBUILD + THE REOPEN: the fresh grid the new container
         // wears (the old stacks the break spent)
@@ -57562,6 +57629,55 @@ mod tests {
         app.open_chest_for(cell);
         assert_eq!(app.chest_slots[1], (0, 0), "the fresh store empty");
         app.on_escape();
+    }
+
+    /// THE CREATIVE BREAK'S OWN SPILL (the vanilla gamemode's own
+    /// split — the abilities the block-loot walk ALONE refuse: the
+    /// instabuild gate `spawn_drops_for` speaks, the spill the removal
+    /// event keeps — the stocked chest the creative hand breaks the
+    /// contents the floor wears).
+    #[test]
+    fn the_creative_break_the_contents_the_spill_keeps() {
+        let mut app = App::new(9);
+        app.enter_world();
+        app.game_mode = GameMode::Creative;
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        let cell = (c, surface, c);
+        // THE STOCKED STORE (the direct entry — the GUI walk the
+        // dev-66 round's own tests speak): the cobblestone x64 the
+        // chunk split drains, the diamonds x5 the ONE-chunk small
+        // stack wears, the (0,0) slots the walk's isEmpty guard skips
+        let mut slots = vec![(0i32, 0i32); 27];
+        slots[0] = (62, 64);
+        slots[2] = (926, 5);
+        app.container_stores.insert(cell, slots);
+        app.container_store_spilled(cell);
+        // THE ENTRY DIED WITH THE CELL
+        assert!(
+            !app.container_stores.contains_key(&cell),
+            "the spilled store the map never keeps"
+        );
+        // THE SPILL: the 64 the chunks split (the SUM the stack
+        // keeps), the 5 ONE chunk wears, the empty slots the silence
+        // keeps (the sums the exact counts answer)
+        let cobble: Vec<_> = app.drops.iter().filter(|d| d.item == 62).collect();
+        let total: i32 = cobble.iter().map(|d| d.count).sum();
+        assert_eq!(total, 64, "the chunks the whole stack drain");
+        assert!(cobble.len() > 1, "the 64 the 10..30 rolls split");
+        assert_eq!(
+            app.drops.iter().filter(|d| d.item == 926).count(),
+            1,
+            "the small stack ONE chunk wears"
+        );
+        // THE CREATIVE GATE: the block loot the abilities refuse (the
+        // instabuild the spawn_drops_for arm speaks — no chest ITEM
+        // drop rides the same break), the spill the removal keeps
+        assert!(
+            app.drops.iter().all(|d| d.item == 62 || d.item == 926),
+            "the block loot the instabuild arm never rolls"
+        );
     }
 
     #[test]

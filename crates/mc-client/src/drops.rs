@@ -66,6 +66,32 @@ pub const AIR_DRAG: f64 = 0.98;
 /// The landing bounce (javap: on-ground && vy < 0 -> `multiply(1, -0.5, 1)`).
 pub const LANDING_BOUNCE: f64 = -0.5;
 
+/// THE CONTAINER SPILL'S OWN SPREAD — javap `Containers.dropItemStack`
+/// pc 3-84 the 26.2 jar banks: `d0 = EntityType.ITEM.getWidth()` (0.25),
+/// `d1 = 1 - d0` (0.75), `d2 = d0 / 2` (0.125); the position ONE draw
+/// triplet wears — x/z `floor(x) + nextDouble() * d1 + d2`, y
+/// `floor(y) + nextDouble() * 0.8` — the stack's own spot the chunks
+/// share.
+pub const SPILL_XZ_SPAN: f64 = 0.75;
+pub const SPILL_XZ_OFFSET: f64 = 0.125;
+pub const SPILL_Y_SPAN: f64 = 0.8;
+/// The spill throw's own triangle (javap pc 140-169: `setDeltaMovement(
+/// triangle(0.0, 0.11485000171139836), triangle(0.2, 0.11485...),
+/// triangle(0.0, 0.11485...))` — the 0.11485 float the widened double
+/// carries, the `RandomSource.triangle(mode, delta)` default
+/// `mode + delta * (nextDouble() - nextDouble())` the two-draw spread
+/// speaks).
+pub const SPILL_THROW_DELTA: f64 = 0.11485000171139836;
+pub const SPILL_THROW_Y_CENTER: f64 = 0.2;
+/// The chunk split's own roll (javap pc 112: `nextInt(21) + 10` — the
+/// 10..30 span the `Math.min(roll, stack.getMaxStackSize())` fold caps;
+/// the stack the while-loop drains until empty).
+pub const SPILL_CHUNK_ROLL: u64 = 21;
+pub const SPILL_CHUNK_MIN: i32 = 10;
+/// The spill's own stack cap (the `stack.getMaxStackSize()` arm the min
+/// fold reads — our vocabulary's items all the 64 cap wear).
+pub const SPILL_STACK_MAX: i32 = 64;
+
 /// The drop lane's own deterministic generator — the audio lane's LCG
 /// (the same constants, the same seed scramble; the vanilla's
 /// RandomSource stand-in the whole audio lane already speaks). Each
@@ -266,6 +292,81 @@ impl ItemDrop {
             on_ground: false,
             prev: None,
         }
+    }
+
+    /// THE CONTAINER SPILL'S OWN SPAWN — javap `Containers.dropItemStack`
+    /// the 26.2 walk verbatim (`BlockEntity.preRemoveSideEffects`'s own
+    /// dropContents arm the broken container speaks): the position ONE
+    /// draw triplet wears (`floor(x) + nextDouble() * 0.75 + 0.125` x/z,
+    /// `floor(y) + nextDouble() * 0.8` y — the stack's own spot), the
+    /// stack the while-loop DRAINS by `min(nextInt(21) + 10, stackMax)`
+    /// chunks (`stack.split` takes the min(count, roll) the remainder
+    /// keeps), each chunk one ItemEntity at the SAME spot: the ctor's
+    /// throw pair the `setDeltaMovement` overwrite answers (the two
+    /// `(rnd - 0.5) * 0.1` draws the stream keeps, the velocity the
+    /// triangle arm re-speaks — `triangle(0.0, 0.11485)` x/z,
+    /// `triangle(0.2, 0.11485)` y), the bob seed the render's own spin
+    /// wears. One entity per chunk — the ids the base rides (the
+    /// caller's counter the slot's own walk bumps by the chunk count
+    /// the Vec speaks). Returns one entity per chunk; the empty stack
+    /// the isEmpty guard silences.
+    pub fn spawn_container_spill(
+        id: i32,
+        item: i32,
+        count: i32,
+        bx: i32,
+        by: i32,
+        bz: i32,
+        rng: &mut Lcg,
+    ) -> Vec<Self> {
+        if count <= 0 {
+            return Vec::new(); // the dropContents walk's isEmpty guard
+        }
+        // THE POSITION'S OWN TRIPLET (one draw set per STACK — the
+        // chunks the same spot share, javap pc 24-84 before the loop)
+        let x = bx as f64 + rng.next_f64_between(0.0, SPILL_XZ_SPAN) + SPILL_XZ_OFFSET;
+        let y = by as f64 + rng.next_f64_between(0.0, SPILL_Y_SPAN);
+        let z = bz as f64 + rng.next_f64_between(0.0, SPILL_XZ_SPAN) + SPILL_XZ_OFFSET;
+        let mut out = Vec::new();
+        let mut rest = count;
+        while rest > 0 {
+            // the chunk's own roll (javap pc 112: the 10..30 span the
+            // stack max caps, the split's min-count the remainder drains)
+            let roll = SPILL_CHUNK_MIN + rng.next_int(SPILL_CHUNK_ROLL);
+            let taken = roll.min(SPILL_STACK_MAX).min(rest);
+            rest -= taken;
+            // THE CTOR'S OWN THROW (the 5-arg ItemEntity ctor's
+            // setDeltaMovement — `(nextDouble() - 0.5) * 0.1` x/z, 0.2 y
+            // — the pair the spill's triangle overwrite answers: the
+            // draws the stream keeps, the velocity the re-speak)
+            let _ = rng.next_f64();
+            let _ = rng.next_f64();
+            // THE SPILL'S OWN THROW (javap pc 140-169 — the triangle
+            // arm the setDeltaMovement call re-speaks)
+            let vx = rng.triangle(SPILL_THROW_DELTA);
+            let vy = SPILL_THROW_Y_CENTER + rng.triangle(SPILL_THROW_DELTA);
+            let vz = rng.triangle(SPILL_THROW_DELTA);
+            // the bob seed (the render's own spin draw)
+            let bob_offs = rng.next_f32() * std::f32::consts::PI * 2.0;
+            out.push(Self {
+                id: id + out.len() as i32,
+                item,
+                count: taken,
+                x,
+                y,
+                z,
+                vx,
+                vy,
+                vz,
+                age: 0,
+                ticks: 0,
+                pickup_delay: POP_PICKUP_DELAY,
+                bob_offs,
+                on_ground: false,
+                prev: None,
+            });
+        }
+        out
     }
 
     /// The entity's bounding box (the 0.25 cube at the feet-anchored
@@ -918,6 +1019,55 @@ mod tests {
         assert_eq!(d.item, 42);
         assert_eq!(d.count, 1);
         assert_eq!(d.age, 0);
+    }
+
+    // ---------- the container spill law ----------
+
+    #[test]
+    fn container_spill_rides_drop_item_stack_law() {
+        // javap Containers.dropItemStack: ONE pos triplet per stack
+        // (floor + nextDouble * 0.75 + 0.125 x/z, floor + nextDouble *
+        // 0.8 y), the chunks `min(nextInt(21) + 10, stackMax)` at the
+        // SAME spot, the triangle throw, the 10-tick delay
+        let mut rng = Lcg::new(555);
+        let chunks = ItemDrop::spawn_container_spill(7, 42, 5, 10, 20, 30, &mut rng);
+        assert_eq!(chunks.len(), 1, "the small stack ONE chunk wears");
+        let c = &chunks[0];
+        assert_eq!(c.count, 5);
+        assert_eq!(c.id, 7);
+        assert_eq!(c.item, 42);
+        assert!(c.x >= 10.125 && c.x < 10.875, "the 0.75 span + the 0.125 offset: {}", c.x);
+        assert!(c.y >= 20.0 && c.y < 20.8, "the 0.8 y span: {}", c.y);
+        assert!(c.z >= 30.125 && c.z < 30.875, "the 0.75 span + the 0.125 offset: {}", c.z);
+        assert_eq!(c.pickup_delay, POP_PICKUP_DELAY);
+        // the throw bands (the triangle ±0.11485, the y center 0.2)
+        assert!(c.vx.abs() <= SPILL_THROW_DELTA, "vx band: {}", c.vx);
+        assert!(c.vz.abs() <= SPILL_THROW_DELTA, "vz band: {}", c.vz);
+        assert!(
+            (SPILL_THROW_Y_CENTER - SPILL_THROW_DELTA..=SPILL_THROW_Y_CENTER + SPILL_THROW_DELTA)
+                .contains(&c.vy),
+            "vy band: {}",
+            c.vy
+        );
+        assert!(c.bob_offs >= 0.0 && c.bob_offs < std::f32::consts::PI * 2.0);
+
+        // THE BIG STACK'S OWN DRAIN (the 64 the min(roll, 64) fold caps
+        // — the chunks the while-loop wears, the SUM the stack keeps,
+        // the spot the whole stack shares)
+        let mut rng = Lcg::new(777);
+        let chunks = ItemDrop::spawn_container_spill(100, 42, 64, 0, 0, 0, &mut rng);
+        let sum: i32 = chunks.iter().map(|c| c.count).sum();
+        assert_eq!(sum, 64, "the chunks the whole stack drain");
+        assert!(chunks.len() > 1, "the 64 the 10..30 rolls split");
+        for (n, c) in chunks.iter().enumerate() {
+            assert!((1..=30).contains(&c.count), "the roll band: {}", c.count);
+            assert_eq!(c.id, 100 + n as i32, "the chunk ids the base rides");
+            assert_eq!(c.x, chunks[0].x, "the pos triplet one draw set keeps");
+            assert_eq!(c.y, chunks[0].y);
+            assert_eq!(c.z, chunks[0].z);
+        }
+        // the empty count the isEmpty guard silences
+        assert!(ItemDrop::spawn_container_spill(1, 42, 0, 0, 0, 0, &mut rng).is_empty());
     }
 
     // ---------- the physics laws ----------
