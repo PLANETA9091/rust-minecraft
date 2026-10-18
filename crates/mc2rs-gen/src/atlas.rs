@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 586] = [
+pub const RUNTIME_PALETTE: [&str; 595] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -2000,6 +2000,52 @@ pub const RUNTIME_PALETTE: [&str; 586] = [
     "oxidized_copper_bars", "waxed_copper_bars",
     "waxed_exposed_copper_bars", "waxed_weathered_copper_bars",
     "waxed_oxidized_copper_bars",
+    // THE CHAIN FAMILY'S OWN NINE LINKS (the dev-60 round): the
+    // hanging rung the pane/bars lane's own element walk wears — the
+    // iron chain the clinit row banks + the eight copper rungs the
+    // WeatheringCopper walk serves. javap the 26.2 jar (pinned sha1
+    // 2dc72797, the probe scripts/jar_work/chain_688.py banks): the
+    // IRON_CHAIN row pc 12360-12398 — forceSolidOn() pc 12371,
+    // requiresCorrectToolForDrops() pc 12374, strength(5.0f, 6.0f)
+    // pc 12377-12383, sound(SoundType.CHAIN) pc 12386-12389,
+    // noOcclusion() pc 12392 (the COPPER_CHAIN collection row
+    // pc 12401-12427 the eight rungs the SAME walk banks — putstatic
+    // pc 12427 the ONE clinit row ALL EIGHT kinds registers), javap
+    // lambda$static$165 the chain PROPERTIES lambda — forceSolidOn()
+    // pc 3, requiresCorrectToolForDrops() pc 6, strength(5.0f, 6.0f)
+    // pc 9-15, sound(SoundType.CHAIN) pc 18-21, noOcclusion() pc 24
+    // (the copper rungs the IRON voice the chains KEEP — the bars
+    // lambda's COPPER voice the chains never wear, the block.chain.*
+    // events the generated table every rung banks). javap ChainBlock
+    // the class header the RotatedPillarBlock super the AXIS
+    // vocabulary speaks — the registerDefaultState pc 0-41 pins
+    // AXIS=Y + WATERLOGGED=false, the <clinit> pc 17-32 the SHAPES
+    // map banks (Block.cube(3.0, 3.0, 16.0) the [6,0,6]->[10,16,10]
+    // band + Shapes.rotateAllAxis the X/Z arms), getShape pc 0-18
+    // the SHAPES.get(AXIS) read, getStateForPlacement pc 20-22 the
+    // CLICKED FACE's axis the placement stamps. The blockstates the
+    // NINE the variants carry — the axis=y entry the IDENTITY model
+    // wears (block/{base} the x=0 y=0 row), the axis=z the x=90
+    // turn banks, the axis=x the x=90 + y=90 pair, the WAXED twins
+    // the BASE models RE-WEAR (the texture-sharing law the vanilla
+    // waxed look keeps). The models the template_chain parent wear —
+    // the TWO zero-width planes the ±45° y-axis element rotations
+    // speak (shade: false every face keeps), the textures the
+    // #texture refs the kind's own master resolves (iron_chain/
+    // copper_chain/exposed/weathered/oxidized the FIVE masters the
+    // on-demand collection the append-only tail banks: 812 -> 817),
+    // the alpha histograms the binary cutout every link wears —
+    // {0: 200, 255: 56} the 16x16 walk speaks. The dig/sounds/drops
+    // rows the name-keyed generated tables the registry answers (the
+    // nine rows (5.0, true) the pickaxe demand keeps, the
+    // block.chain.break/step/place/hit events the SoundType.CHAIN
+    // row banks, the drop pools the SELF-entry 1.0 the iron law
+    // wears), the placeable lane the Items pairing rows the
+    // generated items table banks.
+    "iron_chain", "copper_chain", "exposed_copper_chain",
+    "weathered_copper_chain", "oxidized_copper_chain",
+    "waxed_copper_chain", "waxed_exposed_copper_chain",
+    "waxed_weathered_copper_chain", "waxed_oxidized_copper_chain",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -2961,6 +3007,63 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             let tex = tex_map
                 .get("wall")
                 .with_context(|| format!("model {model_ref}: no wall texture ref"))?;
+            let stem = tex
+                .trim_start_matches("minecraft:")
+                .trim_start_matches("block/")
+                .to_string();
+            faces.push(resolve_flat_stem(&stem, false));
+            continue;
+        }
+        if block.ends_with("_chain") {
+            // THE CHAIN FAMILY'S OWN PALETTE ARM (the dev-60 round, the
+            // official 26.2 jar): the blockstate is a VARIANTS map —
+            // the axis=y entry the IDENTITY model wears (block/{base}
+            // the x=0 y=0 row keeps), the axis=z the x=90 turn banks,
+            // the axis=x the x=90 + y=90 pair (the probe's blockstate
+            // walk speaks), the waxed twins the BASE models re-wear —
+            // resolve_block's full-cube six-face requirement cannot
+            // apply (the two zero-width plane elements the full-cube
+            // finder never banks). The axis=y entry's model (the
+            // vertical chain every unstamped cell wears) is the
+            // canonical: its merged texture map's `all` ref (block/
+            // iron_chain the metal link, block/copper_chain the bare
+            // rung, block/{prefix}copper_chain the dyed rungs wear —
+            // the ONE ref the template's #texture parent chain
+            // resolves) is the palette row — the ONE master the six
+            // slots bank (the fence arm's law the family keeps),
+            // tinted = false (the pre-colored masters carry NO
+            // tintindex). The atlas tile count the ZERO-or-append tail
+            // keeps — the FIVE masters (iron + 4 bare copper rungs)
+            // the NEW tiles the append-only tail banks (812 -> 817),
+            // the waxed twins the base rows re-wear.
+            let bs_bytes = read_jar(
+                &mut archive,
+                &format!("assets/minecraft/blockstates/{block}.json"),
+            )?;
+            let bs: Value = serde_json::from_slice(&bs_bytes)
+                .with_context(|| format!("blockstate {block}: json parse"))?;
+            let variants = bs
+                .get("variants")
+                .and_then(|v| v.as_object())
+                .with_context(|| format!("blockstate {block}: no variants"))?;
+            let y_entry = variants
+                .get("axis=y")
+                .with_context(|| format!("blockstate {block}: no axis=y variant"))?;
+            let model_ref = (if y_entry.is_array() {
+                y_entry.get(0)
+            } else {
+                Some(y_entry)
+            })
+            .and_then(|a| a.get("model"))
+            .and_then(|m| m.as_str())
+            .map(|m| m.trim_start_matches("minecraft:").to_string())
+            .with_context(|| format!("blockstate {block}: no axis=y model"))?;
+            let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
+                .with_context(|| format!("block {block}: model chain {model_ref}"))?;
+            let tex = tex_map
+                .get("all")
+                .or_else(|| tex_map.get("texture"))
+                .with_context(|| format!("model {model_ref}: no all/texture ref"))?;
             let stem = tex
                 .trim_start_matches("minecraft:")
                 .trim_start_matches("block/")

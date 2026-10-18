@@ -93,6 +93,11 @@ fn sky_opacity(id: u16) -> u8 {
         // the light the flood passes, the propagatesSkylightDown law
         // the vanilla skylight's own verdict keeps)
         || is_copper_bars(id)
+        // THE CHAIN FAMILY'S OWN ROW (the dev-60 round — javap
+        // lambda$static$165 the Properties chain the noOcclusion()
+        // row pc 24 the nine links speak: the thin band the light the
+        // flood passes, the hanging link the sky the same law keeps)
+        || is_chain(id)
     {
         0
     } else if id == WATER || id == LEAVES || id == PALE_LEAVES {

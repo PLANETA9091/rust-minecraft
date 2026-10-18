@@ -1,0 +1,114 @@
+=== class headers
+--- net.minecraft.world.level.block.ChainBlock: ('?2', '?8', ['?163'])
+--- net.minecraft.world.level.block.RotatedPillarBlock: ('?2', '?8', [])
+
+=== ChainBlock methods
+--- net.minecraft.world.level.block.ChainBlock.<init>(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+0: aload_0
+1: aload_1
+2: invokespecial net/minecraft/world/level/block/RotatedPillarBlock.<init>:(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+5: aload_0
+6: aload_0
+7: getfield net/minecraft/world/level/block/ChainBlock.stateDefinition:Lnet/minecraft/world/level/block/state/StateDefinition;
+10: invokevirtual net/minecraft/world/level/block/state/StateDefinition.any:()Lnet/minecraft/world/level/block/state/StateHolder;
+13: checkcast net/minecraft/world/level/block/state/BlockState
+16: getstatic net/minecraft/world/level/block/ChainBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+19: iconst_0
+20: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+23: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+26: checkcast net/minecraft/world/level/block/state/BlockState
+29: getstatic net/minecraft/world/level/block/ChainBlock.AXIS:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+32: getstatic net/minecraft/core/Direction$Axis.Y:Lnet/minecraft/core/Direction$Axis;
+35: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+38: checkcast net/minecraft/world/level/block/state/BlockState
+41: invokevirtual net/minecraft/world/level/block/ChainBlock.registerDefaultState:(Lnet/minecraft/world/level/block/state/BlockState;)V
+44: return
+--- net.minecraft.world.level.block.ChainBlock.getShape(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/shapes/CollisionContext;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+0: getstatic net/minecraft/world/level/block/ChainBlock.SHAPES:Ljava/util/Map;
+3: aload_1
+4: getstatic net/minecraft/world/level/block/ChainBlock.AXIS:Lnet/minecraft/world/level/block/state/properties/EnumProperty;
+7: invokevirtual net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+10: invokeinterface java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+13: iconst_m1
+14: nop
+15: checkcast net/minecraft/world/phys/shapes/VoxelShape
+18: areturn
+--- net.minecraft.world.level.block.ChainBlock.getStateForPlacement(Lnet/minecraft/world/item/context/BlockPlaceContext;)Lnet/minecraft/world/level/block/state/BlockState;
+0: aload_1
+1: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getLevel:()Lnet/minecraft/world/level/Level;
+4: aload_1
+5: invokevirtual net/minecraft/world/item/context/BlockPlaceContext.getClickedPos:()Lnet/minecraft/core/BlockPos;
+8: invokevirtual net/minecraft/world/level/Level.getFluidState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/material/FluidState;
+11: astore_2
+12: aload_2
+13: getstatic net/minecraft/world/level/material/Fluids.WATER:Lnet/minecraft/world/level/material/FlowingFluid;
+16: invokevirtual net/minecraft/world/level/material/FluidState.is:(Ljava/lang/Object;)Z
+19: istore_3
+20: aload_0
+21: aload_1
+22: invokespecial net/minecraft/world/level/block/RotatedPillarBlock.getStateForPlacement:(Lnet/minecraft/world/item/context/BlockPlaceContext;)Lnet/minecraft/world/level/block/state/BlockState;
+25: getstatic net/minecraft/world/level/block/ChainBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+28: iload_3
+29: invokestatic java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+32: invokevirtual net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+35: checkcast net/minecraft/world/level/block/state/BlockState
+38: areturn
+--- net.minecraft.world.level.block.ChainBlock.<clinit>()V
+0: invokedynamic indy
+5: invokestatic net/minecraft/world/level/block/ChainBlock.simpleCodec:(Ljava/util/function/Function;)Lcom/mojang/serialization/MapCodec;
+8: putstatic net/minecraft/world/level/block/ChainBlock.CODEC:Lcom/mojang/serialization/MapCodec;
+11: getstatic net/minecraft/world/level/block/state/properties/BlockStateProperties.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+14: putstatic net/minecraft/world/level/block/ChainBlock.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+17: ldc2_w double 3.0
+20: ldc2_w double 3.0
+23: ldc2_w double 16.0
+26: invokestatic net/minecraft/world/level/block/Block.cube:(DDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+29: invokestatic net/minecraft/world/phys/shapes/Shapes.rotateAllAxis:(Lnet/minecraft/world/phys/shapes/VoxelShape;)Ljava/util/Map;
+32: putstatic net/minecraft/world/level/block/ChainBlock.SHAPES:Ljava/util/Map;
+35: return
+
+=== Blocks clinit: IRON_CHAIN row (pc 12360-12398) window
+--- clinit window @ Blocks.IRON_CHAIN: (pc 12354..)
+12354: invokestatic net/minecraft/world/level/block/WeatheringCopperCollection.registerBlocks:(Lnet/minecraft/world/level/block/WeatheringCopperCollection;Lorg/apache/commons/lang3/function/TriFunction;Ljava/util/function/BiFunction;Ljava/util/function/BiFunction;Ljava/util/function/Function;)Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+12357: putstatic net/minecraft/world/level/block/Blocks.COPPER_BARS:Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+12360: getstatic net/minecraft/references/BlockItemIds.IRON_CHAIN:Lnet/minecraft/references/BlockItemId;
+12363: invokedynamic indy
+12368: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12371: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.forceSolidOn:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12374: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12377: ldc_w float 5.0
+12380: ldc_w float 6.0
+12383: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12386: getstatic net/minecraft/world/level/block/SoundType.CHAIN:Lnet/minecraft/world/level/block/SoundType;
+12389: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12392: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noOcclusion:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12395: invokestatic net/minecraft/world/level/block/Blocks.register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+12398: putstatic net/minecraft/world/level/block/Blocks.IRON_CHAIN:Lnet/minecraft/world/level/block/Block;
+12401: getstatic net/minecraft/references/BlockItemIds.COPPER_CHAIN:Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+12404: invokedynamic indy
+12409: invokedynamic indy
+12414: invokedynamic indy
+12419: invokedynamic indy
+12424: invokestatic net/minecraft/world/level/block/WeatheringCopperCollection.registerBlocks:(Lnet/minecraft/world/level/block/WeatheringCopperCollection;Lorg/apache/commons/lang3/function/TriFunction;Ljava/util/function/BiFunction;Ljava/util/function/BiFunction;Ljava/util/function/Function;)Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+12427: putstatic net/minecraft/world/level/block/Blocks.COPPER_CHAIN:Lnet/minecraft/world/level/block/WeatheringCopperCollection;
+12430: getstatic net/minecraft/references/BlockItemIds.GLASS_PANE:Lnet/minecraft/references/BlockItemId;
+12433: invokedynamic indy
+12438: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12441: getstatic net/minecraft/world/level/block/state/properties/NoteBlockInstrument.HAT:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+12444: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+12447: ldc_w float 0.30000001192092896
+12450: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+
+=== the copper chain collection's own lambdas (SoundType + properties)
+--- lambda$static$165(Lnet/minecraft/world/level/block/WeatheringCopper$WeatherState;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    0: invokestatic net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    3: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.forceSolidOn:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    6: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    9: ldc_w float 5.0
+    12: ldc_w float 6.0
+    15: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    18: getstatic net/minecraft/world/level/block/SoundType.CHAIN:Lnet/minecraft/world/level/block/SoundType;
+    21: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24: invokevirtual net/minecraft/world/level/block/state/BlockBehaviour$Properties.noOcclusion:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    27: areturn
+

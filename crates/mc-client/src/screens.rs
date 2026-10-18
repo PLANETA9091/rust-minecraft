@@ -37043,6 +37043,25 @@ impl App {
             )
             .expect("the pane post shape the slabs never refuse");
             (x_lo, y_lo, z_lo, x_hi, y_hi, z_hi)
+        } else if crate::world::is_chain(block) {
+            // THE CHAIN'S OWN THIN BAND (the dev-60 round — the
+            // vanilla canPlace the PLACED state's own collision shape
+            // reads: the 3/16 band the [6,0,6]->[10,16,10] footprint
+            // + the 0..1 y-band the shape_slabs decode answers [the
+            // y-axis default the kind-only conservative subset keeps
+            // — the placed axis the pre-check walk never consults,
+            // the pane arm's own kind-only law the hanging link
+            // wears], the chain-in-your-own-cell placement the thin
+            // band the player's box misses the vanilla's own
+            // thin-shape law allows)
+            let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) = crate::world::shape_slabs(
+                shape,
+                cell.0,
+                cell.1,
+                cell.2,
+            )
+            .expect("the chain band shape the slabs never refuse");
+            (x_lo, y_lo, z_lo, x_hi, y_hi, z_hi)
         } else if crate::world::is_fence_gate(block) {
             // THE CLOSED GATE'S OWN THIN PANEL (the dev-55 round — the
             // vanilla canPlace the SHAPE_COLLISION column(16.0, 4.0,
@@ -38708,6 +38727,24 @@ impl App {
             // pair never consumes)
             if let Some(facing) = wall_torch_facing {
                 world.set_variant(cell.0, cell.1, cell.2, facing);
+            }
+            // THE CHAIN'S OWN AXIS STAMP (the dev-60 round — javap
+            // RotatedPillarBlock.getStateForPlacement the 26.2 jar the
+            // ChainBlock super pc 20-22 calls: the
+            // `setValue(AXIS, context.getClickedFace().getAxis())`
+            // walk the hit face's own axis the placed state wears —
+            // the floor/ceiling hits the Y axis keeps, the north/
+            // south normals the Z axis wears, the west/east normals
+            // the X axis banks; the mesher's model lane the byte the
+            // variant selection reads, the collision the per-axis
+            // band the same byte serves)
+            if crate::world::is_chain(placed) {
+                world.set_variant(
+                    cell.0,
+                    cell.1,
+                    cell.2,
+                    crate::world::chain_placement_variant(hit.face),
+                );
             }
             // THE PLACEMENT'S OWN CHAIN (javap BlockItem.placeBlock pc
             // 9 `bipush 11` — the setBlock the UPDATE_NEIGHBORS bit the
@@ -103574,7 +103611,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            586,
+            595,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -103655,7 +103692,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            586,
+            595,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -103957,7 +103994,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            586,
+            595,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -107887,7 +107924,7 @@ cow_sound_variant: None,
         // #texture ref banks)
         assert_eq!(
             atlas::N_KINDS,
-            586,
+            595,
             "the palette the weighted plates' own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
@@ -108107,7 +108144,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            586,
+            595,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
@@ -108384,7 +108421,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            586,
+            595,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
@@ -108500,7 +108537,7 @@ cow_sound_variant: None,
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE, 318);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, 319);
         assert_eq!(w::END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 586, "the palette the weighted rows bank");
+        assert_eq!(atlas::N_KINDS, 595, "the palette the weighted rows bank");
         for (off, on, name) in [
             (
                 w::LIGHT_WEIGHTED_PRESSURE_PLATE,
@@ -109614,7 +109651,7 @@ cow_sound_variant: None,
         assert_eq!(w::END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-            586,
+            595,
             "the palette the weighted plates' own rows bank"
         );
         for (off, on, name, wooden) in [

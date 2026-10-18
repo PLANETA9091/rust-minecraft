@@ -267,6 +267,14 @@ fn is_transparent(kind: u16) -> bool {
         // quads the pane lane's own arms render — the iron seam's own
         // law the copper rungs the class instances bank)
         || crate::world::is_copper_bars(kind)
+        // THE CHAIN FAMILY the same verdict keeps (the dev-60 round —
+        // javap lambda$static$165 the Properties chain the
+        // noOcclusion() row pc 24 speaks: the nine links the
+        // non-occluding thin band the neighbors' faces draw against,
+        // the AO the opaque walk never casts, the element quads the
+        // chain lane's own walk renders — the hanging link the light
+        // passes through)
+        || crate::world::is_chain(kind)
 }
 
 /// Only opaque blocks cast ambient occlusion (air/water/leaves never darken
@@ -4559,6 +4567,157 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     }
                     continue;
                 }
+                // THE CHAIN FAMILY'S OWN ELEMENT LANE (the dev-60
+                // round — the hanging link the element walk finally
+                // renders): javap ChainBlock the 26.2 jar the probe
+                // scripts/jar_work/chain_688.py banks — the
+                // RotatedPillarBlock super the AXIS vocabulary the
+                // variant byte wears, the blockstates the NINE the
+                // variants carry (the axis=y entry the IDENTITY model
+                // wears, the axis=z the x=90 turn banks, the axis=x
+                // the x=90 + y=90 pair — the probe's walk speaks, the
+                // waxed twins the BASE models the references re-wear),
+                // the template_chain parent the TWO zero-width planes
+                // the ±45° y-axis element rotations speak (the
+                // Rodrigues walk the derive fold answers, shade: false
+                // every face keeps — the chain's own light the cell
+                // samples, the AO the element never casts). THE FOLD
+                // ORDER THE GEOMETRY DEMANDS: the x=90 turn the
+                // vertical shaft the horizontal rung maps FIRST (the
+                // (x, y, z) -> (x, 1-z, y) quarter the y-span the
+                // z-span answers), the y-steps the CW walk the
+                // z-rung the x-rung turns SECOND — the axis=x entry's
+                // x=90+y=90 pair the along-x chain banks, the axis=z
+                // the x=90 alone the along-z chain wears. The
+                // lightmap the cell's own answer the pane lane's own
+                // setup serves, the per-quad tile the resolved stem
+                // the kind's own master banks (the waxed twins the
+                // BASE masters re-wear — the texture-sharing law the
+                // vanilla waxed look keeps), the OPAQUE flags the
+                // binary cutout rides (the {0: 200, 255: 56} alpha
+                // every link wears).
+                if crate::world::is_chain(id) {
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let (cell_sky, cell_block) = match light {
+                        Some(l) => {
+                            let (s, b) = cell_layers(l, world.chunks_per_side, wx, wy, wz);
+                            (s.map(|v| v as f32), b.map(|v| v as f32))
+                        }
+                        None => (None, None),
+                    };
+                    // THE AXIS'S OWN VARIANT (the placed byte the
+                    // ROTATED-PILLAR vocabulary wears — the default 0
+                    // the registerDefaultState's AXIS=Y pin keeps)
+                    let axis = world.variant(wx, wy, wz);
+                    let (chain_quads, bs_x_rot, bs_y_rot) = chain_model_quads(id, axis);
+                    for q in chain_quads {
+                        let mut pts = [[0f32; 3]; 4];
+                        let mut colors = [[0f32; 3]; 4];
+                        let mut uvs = [[0f32; 2]; 4];
+                        for (i, v) in q.vertices.iter().enumerate() {
+                            // THE X-FOLD'S OWN QUARTER (the axis=z/x
+                            // entries the x=90 turn the blockstate
+                            // carries: the (y, z) -> (1-z, y) fold the
+                            // vertical shaft the horizontal rung maps —
+                            // the right-handed quarter the +90 the
+                            // Rodrigues walk answers)
+                            let (fx, fy, fz) = if bs_x_rot == 90 {
+                                (v[0], 1.0 - v[2], v[1])
+                            } else {
+                                (v[0], v[1], v[2])
+                            };
+                            // THE Y-STEPS' OWN TURN (the axis=x entry
+                            // the y=90 the x=90 carries: the CW walk
+                            // the z-rung the x-rung turns — the pane
+                            // lane's own table the folded pair wears)
+                            let (vx, vz) = match (bs_y_rot as usize) / 90 % 4 {
+                                1 => (1.0 - fz, fx),
+                                2 => (1.0 - fx, 1.0 - fz),
+                                3 => (fz, 1.0 - fx),
+                                _ => (fx, fz),
+                            };
+                            pts[i] = [
+                                wx as f32 + vx,
+                                wy as f32 + fy,
+                                wz as f32 + vz,
+                            ];
+                            uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
+                            let lm = lightmap_combine(
+                                cell_sky,
+                                cell_block,
+                                sky_factor,
+                                sky_tint,
+                                ambient,
+                                block_tint,
+                                night_vision,
+                                world.night_vision_factor,
+                                world.darkness_scale,
+                            );
+                            // THE SHADE TERM'S OWN READ — the chain
+                            // elements' shade:false the 1.0 keeps (the
+                            // template's own law the flat link wears)
+                            let face_shade = 1.0f32;
+                            colors[i] = [
+                                lm[0] * face_shade,
+                                lm[1] * face_shade,
+                                lm[2] * face_shade,
+                            ];
+                        }
+                        // THE PER-QUAD TILE VERDICT — the resolved
+                        // stem the kind's own master answers (the
+                        // #texture refs the base names the waxed
+                        // twins' own rows re-wear — the texture-sharing
+                        // law the vanilla waxed look keeps)
+                        let tex_stem = q
+                            .texture
+                            .trim_start_matches("minecraft:")
+                            .trim_start_matches("block/");
+                        let chain_tile = if tex_stem == "iron_chain" {
+                            atlas::FACE_TILES[crate::world::IRON_CHAIN as usize][2]
+                        } else {
+                            atlas::FACE_TILES[id as usize][2]
+                        };
+                        out.push(Quad {
+                            pts,
+                            colors,
+                            uvs,
+                            tile: chain_tile,
+                            translucent: false,
+                            per_texel_alpha: false,
+                        });
+                    }
+                    continue;
+                }
                 // THE END PORTAL'S OWN ARM (the dev-29 round — the
                 // starry volume the special pass draws: the
                 // EndPortalRenderer's own cube the shader law serves,
@@ -6041,6 +6200,59 @@ fn empty_pane_models() -> &'static std::collections::HashMap<&'static str, Vec<D
     static EMPTY: std::sync::OnceLock<std::collections::HashMap<&'static str, Vec<DerivedQuad>>> =
         std::sync::OnceLock::new();
     EMPTY.get_or_init(std::collections::HashMap::new)
+}
+
+/// THE CHAIN MODELS' OWN CACHED BAKES (the dev-60 round — the kind's
+/// own blockstate the VARIANTS walk parses, the axis entry the placed
+/// byte selects, the apply's x/y turns the fold walk answers): the
+/// jar-driven walk the hardcoded model lists retires — the blockstate
+/// row's OWN variants the entry list carries (the axis=y identity +
+/// the axis=z x=90 + the axis=x x=90+y=90 the probe's walk speaks,
+/// the waxed twins the BASE models the blockstate references wear),
+/// the derived quads the element walk bakes ONCE per (kind, axis)
+/// (the template_chain's ±45° y-axis element rotations the Rodrigues
+/// fold answers). The unknown (kind, axis) the empty slice + the
+/// identity turns keep (the vertical chain the unstamped default
+/// wears).
+fn chain_model_quads(kind: u16, axis: u8) -> (&'static [DerivedQuad], u32, u32) {
+    static BAKES: std::sync::OnceLock<
+        std::collections::HashMap<(u16, u8), (Vec<DerivedQuad>, u32, u32)>,
+    > = std::sync::OnceLock::new();
+    BAKES.get_or_init(|| {
+        let mut map = std::collections::HashMap::new();
+        // THE NINE KINDS the explicit seats the palette tail banks
+        // (the constant rows the blockstate parse reads — the seat
+        // ladder the hanging links' own walk keeps)
+        for k in crate::world::CHAIN_KINDS {
+            let name = crate::world::NAME_OF[k as usize];
+            let Some(Ok(mc_registry::blockstate_lookup::Definition::Variants(entries))) =
+                mc_registry::blockstate_lookup::parse(name)
+            else {
+                continue;
+            };
+            for (key, applies) in entries {
+                // THE AXIS KEY'S OWN SEAT (the "axis=x"/"axis=y"/
+                // "axis=z" entries the variant byte maps: 0 the y key
+                // the vertical keeps, 1 the x key, 2 the z key)
+                let axis = match key {
+                    "axis=y" => crate::world::CHAIN_AXIS_Y,
+                    "axis=x" => crate::world::CHAIN_AXIS_X,
+                    "axis=z" => crate::world::CHAIN_AXIS_Z,
+                    _ => continue,
+                };
+                let Some(apply) = applies.first() else {
+                    continue;
+                };
+                let model_id = apply.model.trim_start_matches("minecraft:");
+                let quads = derive_model_inherited(model_id).unwrap_or_default();
+                map.insert((k, axis), (quads, apply.x, apply.y));
+            }
+        }
+        map
+    })
+    .get(&(kind, axis))
+    .map(|(quads, x, y)| (quads.as_slice(), *x, *y))
+    .unwrap_or((&[], 0, 0))
 }
 
 /// THE BAMBOO MODELS' OWN CACHED BAKES — the derive walk's quads per
@@ -9979,6 +10191,188 @@ mod tests {
         put(&mut w4, 8, 8, 8, crate::world::WAXED_COPPER_BARS);
         let q4 = mesh_chunk(&w4, 0, 0, None);
         let waxed: Vec<_> = q4.iter().filter(|quad| quad.tile == copper_tile).collect();
+        assert_eq!(
+            waxed.len(),
+            lone.len(),
+            "the waxed twin the BASE models the blockstate references render"
+        );
+    }
+
+    #[test]
+    fn the_chain_lane_renders_the_links_the_axis_turns_and_the_bare_masters_wear() {
+        // THE CHAIN LANE'S OWN LAWS (the dev-60 round — javap
+        // ChainBlock the 26.2 jar the probe scripts/jar_work/
+        // chain_688.py banks): the blockstates the NINE the variants
+        // carry (the axis=y identity + the axis=z x=90 + the axis=x
+        // x=90+y=90), the template_chain the TWO zero-width planes
+        // the ±45° y-axis rotations speak (the crossed diagonals the
+        // x==z / x+z==16 laws wear), the fold order the geometry
+        // demands (the x=90 the vertical shaft the horizontal rung
+        // maps FIRST, the y-steps the z-rung the x-rung turns
+        // SECOND), the waxed twins the BASE models the references
+        // re-wear
+        use mc_registry::generated::atlas as gen_atlas;
+        let iron_tile = gen_atlas::FACE_TILES[crate::world::IRON_CHAIN as usize][2];
+        let copper_tile = gen_atlas::FACE_TILES[crate::world::COPPER_CHAIN as usize][2];
+        let exposed_tile =
+            gen_atlas::FACE_TILES[crate::world::EXPOSED_COPPER_CHAIN as usize][2];
+        assert_eq!(gen_atlas::tile_name(iron_tile), "iron_chain");
+        assert_eq!(gen_atlas::tile_name(copper_tile), "copper_chain");
+        assert_ne!(iron_tile, copper_tile, "the two voices the DISTINCT masters wear");
+        assert_ne!(
+            copper_tile, exposed_tile,
+            "the bare rungs the DISTINCT masters wear"
+        );
+        // THE WAXED TWIN THE BASE MASTER RE-WEARS (the texture-
+        // sharing law the vanilla waxed look keeps)
+        assert_eq!(
+            gen_atlas::FACE_TILES[crate::world::WAXED_COPPER_CHAIN as usize][2],
+            copper_tile,
+            "the waxed head the bare master re-wears"
+        );
+        assert_eq!(
+            gen_atlas::FACE_TILES[crate::world::WAXED_OXIDIZED_COPPER_CHAIN as usize][2],
+            gen_atlas::FACE_TILES[crate::world::OXIDIZED_COPPER_CHAIN as usize][2],
+            "the waxed oxidized twin the base row re-wears"
+        );
+        // THE LONE VERTICAL CHAIN (the axis=y default the unstamped
+        // cell wears — the TWO zero-width planes the ±45° rotations
+        // render: two quads on the x==z diagonal, two on the
+        // x+z==16 anti-diagonal, the y span the FULL 0..1 band the
+        // vertical shaft keeps; shade:false the flat light wears)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::COPPER_CHAIN);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let lone: Vec<_> = q
+            .iter()
+            .filter(|quad| quad.tile == copper_tile)
+            .collect();
+        assert_eq!(
+            lone.len(),
+            4,
+            "the lone link the two crossed planes' faces wear (two quads each)"
+        );
+        for quad in &lone {
+            assert!(!quad.translucent, "the link the OPAQUE pass rides");
+            assert!(!quad.per_texel_alpha, "the link the binary cutout wears");
+            let y_min = quad
+                .pts
+                .iter()
+                .map(|p| p[1])
+                .fold(f32::MAX, f32::min);
+            let y_max = quad
+                .pts
+                .iter()
+                .map(|p| p[1])
+                .fold(f32::MIN, f32::max);
+            assert!(
+                (y_min - 8.0).abs() < 1e-5 && ((y_max - 9.0).abs() < 1e-5),
+                "the y span the FULL 0..1 band the vertical shaft keeps, got {y_min}..{y_max}"
+            );
+        }
+        let diagonal = lone
+            .iter()
+            .filter(|quad| {
+                quad.pts
+                    .iter()
+                    .all(|p| (p[0] - p[2]).abs() < 1e-4)
+            })
+            .count();
+        let anti_diagonal = lone
+            .iter()
+            .filter(|quad| {
+                quad.pts
+                    .iter()
+                    .all(|p| (p[0] + p[2] - 17.0).abs() < 1e-4)
+            })
+            .count();
+        assert_eq!(diagonal, 2, "the +45° plane the x==z diagonal wears");
+        assert_eq!(anti_diagonal, 2, "the -45° plane the x+z==17 anti-diagonal wears");
+        // THE AXIS=Z CHAIN THE X-FOLD RENDERS (the variant byte the
+        // 2 the placed stamp banks — the x=90 turn the vertical
+        // shaft the along-z rung maps: the y the centered 6.5..9.5
+        // band, the z the FULL 0..1 span, the diagonal the x+y==1
+        // plane wears)
+        let mut w2 = empty_world();
+        put(&mut w2, 8, 8, 8, crate::world::COPPER_CHAIN);
+        w2.set_variant(8, 8, 8, crate::world::CHAIN_AXIS_Z);
+        let q2 = mesh_chunk(&w2, 0, 0, None);
+        let rung_z: Vec<_> = q2
+            .iter()
+            .filter(|quad| quad.tile == copper_tile)
+            .collect();
+        assert_eq!(rung_z.len(), 4, "the horizontal rung the same crossed pair wears");
+        for quad in &rung_z {
+            for p in quad.pts.iter() {
+                assert!(
+                    p[1] - 8.0 >= 6.5 / 16.0 - 1e-5 && p[1] - 8.0 <= 9.5 / 16.0 + 1e-5,
+                    "the y band the centered 6.5..9.5 px the x=90 fold keeps, got {}",
+                    p[1]
+                );
+                assert!(
+                    p[2] >= 8.0 - 1e-5 && p[2] <= 9.0 + 1e-5,
+                    "the z span the FULL 0..1 band the rung keeps, got {}",
+                    p[2]
+                );
+            }
+            assert!(
+                quad
+                    .pts
+                    .iter()
+                    .all(|p| (p[0] + p[1] - 17.0).abs() < 1e-4)
+                    || quad
+                        .pts
+                        .iter()
+                        .all(|p| (p[0] - p[1]).abs() < 1e-4),
+                "the diagonal the x±y plane the folded pair wears"
+            );
+        }
+        // THE AXIS=X CHAIN THE Y-STEP TURNS (the x=90+y=90 pair the
+        // along-x rung banks: the x the FULL 0..1 span, the y/z the
+        // centered bands)
+        let mut w3 = empty_world();
+        put(&mut w3, 8, 8, 8, crate::world::COPPER_CHAIN);
+        w3.set_variant(8, 8, 8, crate::world::CHAIN_AXIS_X);
+        let q3 = mesh_chunk(&w3, 0, 0, None);
+        let rung_x: Vec<_> = q3
+            .iter()
+            .filter(|quad| quad.tile == copper_tile)
+            .collect();
+        assert_eq!(rung_x.len(), 4, "the x-rung the same crossed pair wears");
+        for quad in &rung_x {
+            let x_min = quad.pts.iter().map(|p| p[0]).fold(f32::MAX, f32::min);
+            let x_max = quad.pts.iter().map(|p| p[0]).fold(f32::MIN, f32::max);
+            assert!(
+                (x_min - 8.0).abs() < 1e-4 && ((x_max - 9.0).abs() < 1e-4),
+                "the x span the FULL 0..1 band the x-rung keeps, got {x_min}..{x_max}"
+            );
+            for p in quad.pts.iter() {
+                assert!(
+                    p[1] - 8.0 >= 6.5 / 16.0 - 1e-5 && p[1] - 8.0 <= 9.5 / 16.0 + 1e-5,
+                    "the y band the centered band the x-rung keeps, got {}",
+                    p[1]
+                );
+                assert!(
+                    (p[2] - 8.0).abs() >= 6.5 / 16.0 - 1e-5
+                        && (p[2] - 8.0).abs() <= 9.5 / 16.0 + 1e-5,
+                    "the z band the centered band the x-rung keeps, got {}",
+                    p[2]
+                );
+            }
+        }
+        // THE IRON LINK ITS OWN MASTER RENDERS (the metal link the
+        // iron_chain master the tile walk banks) + THE WAXED TWIN THE
+        // BASE GEOMETRY (the blockstate the BASE model references —
+        // the same crossed-pair count the bare rung wears)
+        let mut w4 = empty_world();
+        put(&mut w4, 8, 8, 8, crate::world::IRON_CHAIN);
+        let q4 = mesh_chunk(&w4, 0, 0, None);
+        let iron: Vec<_> = q4.iter().filter(|quad| quad.tile == iron_tile).collect();
+        assert_eq!(iron.len(), 4, "the iron link the crossed pair wears");
+        let mut w5 = empty_world();
+        put(&mut w5, 8, 8, 8, crate::world::WAXED_COPPER_CHAIN);
+        let q5 = mesh_chunk(&w5, 0, 0, None);
+        let waxed: Vec<_> = q5.iter().filter(|quad| quad.tile == copper_tile).collect();
         assert_eq!(
             waxed.len(),
             lone.len(),
