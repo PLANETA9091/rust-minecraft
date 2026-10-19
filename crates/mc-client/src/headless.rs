@@ -2318,6 +2318,81 @@ cow_sound_variant: None,
             app.frame = frame;
             app.clock_total = 6000 + frame;
         }
+        "chest_pair" => {
+            // THE PLACED PAIR'S OWN GOLDEN (the dev-78 round — the
+            // dev-71 pair's WORLD-side pin, the chest rounds' own
+            // sibling): the LEFT/RIGHT pair stands PLACED on the flat
+            // south lane, the mesher's double arms render the joined
+            // body (the conn flush edges the [`chest_model_quads`]
+            // spans wear — the NORTH-connected half the z 0..14 box
+            // keeps, the lid 15/16 the doubles wear, the shared edge
+            // the halves' own boxes join). THE --BODY LANE the
+            // furnace_lit golden's own look keeps (the south look the
+            // yaw-0 + pitch-12 flags speak — the spawn's own FLAT lane
+            // the seed's terrain keeps south), the pair the front-
+            // toward-the-player bytes wear (the latches the camera
+            // sees).
+            app.enter_world();
+            let size = app.offline_world.as_ref().unwrap().size_blocks();
+            let c = size / 2;
+            // THE SOUTH FOUR (the seed's own flat seat — the profile
+            // probe the round banks: z +4..+7 the dx 0..+3 columns the
+            // grass@13 plateau keeps, the water the north rows speak
+            // the foreground strip wears, the beach the west slope
+            // keeps — the pair the plateau's own edge wears, the
+            // furnace golden's own distance the frame keeps)
+            let pz = c + 4;
+            let (left, right) = {
+                let w = app.offline_world.as_mut().unwrap();
+                // the surface scan DOWN from the spawn surface (the mob
+                // ring's own law — the slope the honest ground keeps;
+                // the plateau the same level both halves wear)
+                let mut gy = app.spawn_y;
+                while gy > 0 && w.get(c, gy, pz) == crate::world::AIR {
+                    gy -= 1;
+                }
+                let y = gy + 1;
+                // THE PAIR'S OWN BYTES (the dig lane's own facing law —
+                // the NORTH-facing pair the LEFT half the WEST cell
+                // wears: the connected quarter cw(NORTH) = EAST the
+                // partner names, the RIGHT the ccw arm the WEST keeps;
+                // the latches the north faces the camera sees)
+                let lw = (c, y, pz);
+                let re = (c + 1, y, pz);
+                w.set(lw.0, lw.1, lw.2, crate::world::CHEST);
+                w.set_variant(
+                    lw.0,
+                    lw.1,
+                    lw.2,
+                    crate::world::chest_variant(
+                        crate::world::CHEST_FACING_NORTH,
+                        crate::world::CHEST_TYPE_LEFT,
+                    ),
+                );
+                w.set(re.0, re.1, re.2, crate::world::CHEST);
+                w.set_variant(
+                    re.0,
+                    re.1,
+                    re.2,
+                    crate::world::chest_variant(
+                        crate::world::CHEST_FACING_NORTH,
+                        crate::world::CHEST_TYPE_RIGHT,
+                    ),
+                );
+                (lw, re)
+            };
+            let _ = (left, right);
+            // THE STAGE'S OWN RE-SPEAK (the placement lane's own rhythm
+            // — the stamped pair the mesh wears THIS render: the
+            // --screen lane owns no ticks, the settle-less render the
+            // fresh quads reads)
+            app.remesh_offline();
+            // THE NOON PIN (the world arm's own law — the day look the
+            // full-day fold keeps, the noon tracks the sky renders;
+            // the clock the staged frame folds)
+            app.frame = frame;
+            app.clock_total = 6000 + frame;
+        }
         "inventory" => {
             // THE E-KEY SCREEN'S OWN STAGING: the offline world stands
             // first (the mannequin's world beneath), then the store's
@@ -2373,7 +2448,7 @@ cow_sound_variant: None,
             app.clock_total = 6000 + frame;
         }
         other => anyhow::bail!(
-            "unknown screen {other} (loading|title|servers|options|world|worldnight|pause|chest|chest_double|furnace|furnace_lit|inventory|crafting|creative)"
+            "unknown screen {other} (loading|title|servers|options|world|worldnight|pause|chest|chest_double|chest_pair|furnace|furnace_lit|inventory|crafting|creative)"
         ),
     }
 

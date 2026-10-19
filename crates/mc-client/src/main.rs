@@ -74,7 +74,7 @@ struct Cli {
     /// Windowed GUI application (boot chain + menus from generated data).
     #[arg(long)]
     gui: bool,
-    /// Headless GUI screen render: loading|title|servers|options|world|pause|chest|chest_double|furnace|furnace_lit|inventory|crafting.
+    /// Headless GUI screen render: loading|title|servers|options|world|pause|chest|chest_double|chest_pair|furnace|furnace_lit|inventory|crafting.
     #[arg(long)]
     screen: Option<String>,
     /// UI frame to capture (drives splash pulse / boot progress).
