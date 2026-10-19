@@ -4114,6 +4114,19 @@ pub fn chest_connected_direction(facing: u8, chest_type: u8) -> u8 {
     }
 }
 
+/// THE CHEST TYPE'S OWN OPPOSITE (javap ChestType.getOpposite the
+/// 26.2 jar — the LEFT the RIGHT answers, the RIGHT the LEFT keeps,
+/// the SINGLE the walk's own arm the same type returns: the updateShape
+/// promote's own pc 125 read the pair's opposite half stamps).
+#[inline]
+pub fn chest_type_opposite(chest_type: u8) -> u8 {
+    match chest_type {
+        CHEST_TYPE_LEFT => CHEST_TYPE_RIGHT,
+        CHEST_TYPE_RIGHT => CHEST_TYPE_LEFT,
+        _ => CHEST_TYPE_SINGLE,
+    }
+}
+
 /// THE BARREL FAMILY'S OWN RANGE (the ONE seat the palette tail
 /// banks — the kind-only predicate the lanes read).
 #[inline]
@@ -12980,6 +12993,97 @@ impl World {
                 (x - 1, y, z),
                 (x + 1, y, z),
             ]);
+        }
+        changed_any
+    }
+
+    /// THE CHEST'S OWN PAIR UPDATE (javap ChestBlock.updateShape
+    /// pc 0-160 over the 26.2 jar — the neighbor change's own beat the
+    /// flag-3 chain serves, the TWO arms the pair's truth keeps:
+    ///
+    /// 1. THE PROMOTE (pc 54-134): the same-kind neighbor the connect
+    ///    gate answers [pc 34-40], the horizontal axis the pc 43-51
+    ///    keeps, MY SINGLE the typed neighbor's own OPPOSITE wears
+    ///    [pc 67-128] — the same facing gate pc 88-103 + the
+    ///    connected direction's own quarter pc 106-116 the partner
+    ///    slot the gates name (the changed chest's own connected
+    ///    quarter the update's neighbor cell alone answers);
+    /// 2. THE DEMOTE (pc 138-160): the NON-same-kind change [pc 40's
+    ///    ifeq arm] or the vertical beat [pc 51] the arm reaches, the
+    ///    connected quarter the update's own axis speaks, the partner
+    ///    the loss the SINGLE wears.
+    ///
+    /// The typed mine the same-kind beat the walk NEVER demotes
+    /// (pc 77's if_acmpne 135 — the super the walk returns: the stale
+    /// double the same-kind single neighbor the vanilla keeps). The
+    /// ENDER CHEST the walk never speaks (the ender's own updateShape
+    /// the TYPE walk never carries — its class the waterlog law alone
+    /// keeps, the ender pair the SINGLE types wear). The vertical
+    /// neighbors the walk never spends (the vertical direction the
+    /// horizontal connected quarter never matches — the no-op verdict
+    /// the loop's own gates refuse). The single/single and the
+    /// facing-mismatch beats the super returns (pc 85/103's if_acmpne
+    /// 135) — the same verdicts the already-single demote's no-op
+    /// setValue answers. Returns whether any variant changed.
+    pub fn chest_shape_updates(&mut self, changed: (i32, i32, i32)) -> bool {
+        let changed_kind = self.get(changed.0, changed.1, changed.2);
+        let changed_variant = self.variant(changed.0, changed.1, changed.2);
+        let changed_type = if is_chest(changed_kind) {
+            chest_variant_type(changed_variant)
+        } else {
+            CHEST_TYPE_SINGLE
+        };
+        let mut changed_any = false;
+        // the four horizontal quarters — the offset the changed cell's
+        // own neighbor quarters keep (N/E/S/W the facing byte answers)
+        for (quarter, (dx, dz)) in [
+            (STAIRS_FACING_NORTH, (0, -1)),
+            (STAIRS_FACING_EAST, (1, 0)),
+            (STAIRS_FACING_SOUTH, (0, 1)),
+            (STAIRS_FACING_WEST, (-1, 0)),
+        ] {
+            let (nx, ny, nz) = (changed.0 + dx, changed.1, changed.2 + dz);
+            let kind = self.get(nx, ny, nz);
+            if !is_chest(kind) || kind == ENDER_CHEST {
+                continue; // the ender chest the TYPE walk never speaks
+            }
+            let v = self.variant(nx, ny, nz);
+            let facing = chest_variant_facing(v);
+            let ctype = chest_variant_type(v);
+            // the update's own direction byte: the neighbor toward the
+            // changed cell (the vanilla `direction` param the changed
+            // side's own quarter speaks)
+            let dir = (quarter + 2) & 0b11;
+            if chest_can_connect_to(changed_kind, kind) {
+                // THE PROMOTE ARM (pc 54-134): my SINGLE the typed
+                // neighbor's own opposite wears — the same facing +
+                // the connected direction's own quarter the partner
+                // slot the gates answer
+                if ctype == CHEST_TYPE_SINGLE && changed_type != CHEST_TYPE_SINGLE {
+                    let nb_facing = chest_variant_facing(changed_variant);
+                    if nb_facing == facing
+                        && chest_connected_direction(nb_facing, changed_type) == quarter
+                    {
+                        self.set_variant(
+                            nx,
+                            ny,
+                            nz,
+                            chest_variant(facing, chest_type_opposite(changed_type)),
+                        );
+                        changed_any = true;
+                    }
+                }
+                // the typed mine the same-kind beat the walk never
+                // demotes (pc 77's if_acmpne 135 — the super returns)
+            } else if ctype != CHEST_TYPE_SINGLE
+                && chest_connected_direction(facing, ctype) == dir
+            {
+                // THE DEMOTE ARM (pc 138-160): the connected quarter
+                // the update's own axis speaks, the partner the loss
+                // the SINGLE wears (the facing the byte keeps)
+                self.set_variant(nx, ny, nz, chest_variant(facing, CHEST_TYPE_SINGLE));
+                changed_any = true;
+            }
         }
         changed_any
     }
@@ -23643,6 +23747,188 @@ mod tests {
         assert!(
             atlas::TILE_NAMES.iter().any(|n| *n == "oxidized_copper_chest_front"),
             "the oxidized rung its own tiles banks"
+        );
+    }
+
+    #[test]
+    fn the_chest_pair_update_the_break_the_survivor_the_single_wears() {
+        // THE DEMOTE ARM (javap ChestBlock.updateShape pc 138-160 the
+        // 26.2 jar — the dev-73 round): the broken half's own
+        // neighborhood the partner loss re-reads, the survivor the
+        // SINGLE wears, the facing the byte keeps. THE PAIR the legal
+        // geometry stamps: the RIGHT half's connected quarter
+        // (ccw(north) = west) the partner cell names, the LEFT half's
+        // (cw(north) = east) the same pair answers.
+        let mut w = World::blank(3, 0x6D42);
+        let c = w.size_blocks() / 2;
+        let y = 8;
+        w.set(c, y, c, CHEST);
+        w.set_variant(c, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_RIGHT));
+        w.set(c - 1, y, c, CHEST);
+        w.set_variant(c - 1, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_LEFT));
+        // the break: the LEFT half the AIR the removal walks (the
+        // destroy_block walk the set the broadcast's own beat wears)
+        w.set(c - 1, y, c, AIR);
+        assert!(
+            w.chest_shape_updates((c - 1, y, c)),
+            "the break the demote beat speaks"
+        );
+        assert_eq!(
+            chest_variant_type(w.variant(c, y, c)),
+            CHEST_TYPE_SINGLE,
+            "the survivor the SINGLE wears"
+        );
+        assert_eq!(
+            chest_variant_facing(w.variant(c, y, c)),
+            CHEST_FACING_NORTH,
+            "the facing the byte keeps"
+        );
+        // THE RE-PAIR LEGALITY (the candidatePartnerFacing walk the
+        // demoted survivor answers — the stale type the gate refused,
+        // the demote the fresh placement's own pairing restores: the
+        // NEW chest at the VACATED cell the CW candidate the LEFT arm
+        // banks)
+        assert_eq!(
+            chest_connection_type(&w, c - 1, y, c, CHEST_FACING_NORTH, CHEST),
+            CHEST_TYPE_LEFT,
+            "the vacated cell the demoted survivor's LEFT arm answers"
+        );
+    }
+
+    #[test]
+    fn the_chest_pair_update_the_place_the_lone_the_pair_wears() {
+        // THE PROMOTE ARM (javap pc 54-134 — the dev-73 round): the
+        // placed typed LEFT half the lone same-kind neighbor's own
+        // OPPOSITE promotes — the same facing gate + the connected
+        // direction's own quarter the partner slot names.
+        let mut w = World::blank(3, 0x6D42);
+        let c = w.size_blocks() / 2;
+        let y = 8;
+        w.set(c, y, c, CHEST);
+        w.set_variant(c, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE));
+        w.set(c - 1, y, c, CHEST);
+        w.set_variant(c - 1, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_LEFT));
+        assert!(
+            w.chest_shape_updates((c - 1, y, c)),
+            "the placement the promote beat speaks"
+        );
+        assert_eq!(
+            chest_variant_type(w.variant(c, y, c)),
+            CHEST_TYPE_RIGHT,
+            "the lone half the OPPOSITE wears"
+        );
+        assert_eq!(
+            chest_variant_facing(w.variant(c, y, c)),
+            CHEST_FACING_NORTH,
+            "the facing the byte keeps"
+        );
+    }
+
+    #[test]
+    fn the_chest_pair_update_the_refusals_the_ways_keep() {
+        // (a) THE SINGLE/SINGLE BEAT (pc 77-85 the both-SINGLE the
+        // super returns): the same-kind neighbor the promote never
+        // speaks — (b) THE FACING MISMATCH (pc 88-103): the different
+        // facings the promote refuses — (c) THE CONNECTED QUARTER'S
+        // OWN MISMATCH (pc 106-116): the non-partner cell the promote
+        // refuses — (d) THE TYPED MINE (pc 77's if_acmpne 135): the
+        // same-kind beat the walk NEVER demotes — (e) THE CROSS-
+        // FAMILY (pc 34-40's ifeq): the trapped the connect gate
+        // refuses, the connected quarter the update's own axis the
+        // demote serves — (f) THE ENDER CHEST the TYPE walk never
+        // speaks.
+        let mut w = World::blank(3, 0x6D42);
+        let c = w.size_blocks() / 2;
+        let y = 8;
+        // (a) the single/single the super returns
+        w.set(c, y, c, CHEST);
+        w.set_variant(c, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE));
+        w.set(c - 1, y, c, CHEST);
+        w.set_variant(c - 1, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE));
+        assert!(
+            !w.chest_shape_updates((c - 1, y, c)),
+            "the single/single the walk never pairs"
+        );
+        assert_eq!(
+            chest_variant_type(w.variant(c, y, c)),
+            CHEST_TYPE_SINGLE,
+            "the lone half the SINGLE keeps"
+        );
+        // (b) the facing mismatch the promote refuses
+        w.set_variant(c, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE));
+        w.set_variant(c - 1, y, c, chest_variant(CHEST_FACING_EAST, CHEST_TYPE_LEFT));
+        assert!(
+            !w.chest_shape_updates((c - 1, y, c)),
+            "the facing mismatch the promote refuses"
+        );
+        assert_eq!(
+            chest_variant_type(w.variant(c, y, c)),
+            CHEST_TYPE_SINGLE,
+            "the mismatched neighbor the SINGLE keeps"
+        );
+        // (c) the connected quarter's own mismatch: the typed LEFT
+        // facing north whose partner slot (the cw = EAST side) the
+        // neighbor cell never wears — the west-side chest the gate
+        // refuses
+        w.set_variant(c - 1, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_LEFT));
+        w.set(c, y, c, AIR);
+        w.set(c - 2, y, c, CHEST);
+        w.set_variant(c - 2, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE));
+        assert!(
+            !w.chest_shape_updates((c - 1, y, c)),
+            "the non-partner cell the promote refuses"
+        );
+        assert_eq!(
+            chest_variant_type(w.variant(c - 2, y, c)),
+            CHEST_TYPE_SINGLE,
+            "the west-side chest the SINGLE keeps"
+        );
+        // (d) the typed mine the same-kind beat never demotes: the
+        // typed RIGHT with the same-kind SINGLE neighbor the super
+        // returns (pc 77's if_acmpne 135)
+        let mut w2 = World::blank(3, 0x6D42);
+        w2.set(c, y, c, CHEST);
+        w2.set_variant(c, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_RIGHT));
+        w2.set(c - 1, y, c, CHEST);
+        w2.set_variant(c - 1, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE));
+        assert!(
+            !w2.chest_shape_updates((c - 1, y, c)),
+            "the typed mine the same-kind beat never demotes"
+        );
+        assert_eq!(
+            chest_variant_type(w2.variant(c, y, c)),
+            CHEST_TYPE_RIGHT,
+            "the typed half the RIGHT keeps"
+        );
+        // (e) the cross-family the connect gate refuses, the connected
+        // quarter the update's own axis the demote serves: the trapped
+        // the partner cell takes, the typed plain chest the loss the
+        // SINGLE wears
+        w2.set(c - 1, y, c, TRAPPED_CHEST);
+        assert!(
+            w2.chest_shape_updates((c - 1, y, c)),
+            "the cross-family change the demote beat speaks"
+        );
+        assert_eq!(
+            chest_variant_type(w2.variant(c, y, c)),
+            CHEST_TYPE_SINGLE,
+            "the partner's loss the trapped took the SINGLE wears"
+        );
+        // (f) the ENDER CHEST the TYPE walk never speaks: the ender
+        // pair the demote never wears, the typed bits stay SINGLE
+        let mut w3 = World::blank(3, 0x6D42);
+        w3.set(c, y, c, ENDER_CHEST);
+        w3.set_variant(c, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE));
+        w3.set(c - 1, y, c, ENDER_CHEST);
+        w3.set_variant(c - 1, y, c, chest_variant(CHEST_FACING_NORTH, CHEST_TYPE_SINGLE));
+        assert!(
+            !w3.chest_shape_updates((c - 1, y, c)),
+            "the ender pair the walk never speaks"
+        );
+        assert_eq!(
+            chest_variant_facing(w3.variant(c, y, c)),
+            CHEST_FACING_NORTH,
+            "the ender's facing the byte keeps"
         );
     }
 

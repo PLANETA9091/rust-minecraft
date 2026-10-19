@@ -481,6 +481,13 @@ impl DigState {
         }
         world.set(pos.0, pos.1, pos.2, crate::world::AIR);
         let _ = world.fire_shape_updates(pos);
+        // THE CHEST'S OWN PAIR UPDATE (the dev-73 round — javap
+        // ChestBlock.updateShape pc 0-160 the 26.2 jar: the broken
+        // half's own neighborhood the partner loss re-reads, the
+        // survivor the SINGLE wears [the demote arm pc 138-160], the
+        // stale double the honest demote speaks — the reopen the
+        // single shape the mesher's own tall read answers)
+        let _ = world.chest_shape_updates(pos);
         // THE PORTAL'S OWN DOUSE BEAT (javap NetherPortalBlock.
         // updateShape pc 0-93 over the 26.2 jar — the broken block's
         // own neighborhood the frame-scan verdict re-reads, the lit

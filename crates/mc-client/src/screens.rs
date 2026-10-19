@@ -39981,6 +39981,13 @@ impl App {
                     placed,
                 );
                 world.set_variant(cell.0, cell.1, cell.2, v);
+                // THE PAIR'S OWN UPDATE (the dev-73 round — javap
+                // ChestBlock.updateShape pc 0-160 the 26.2 jar: the
+                // setBlock flag-11 broadcast the 6-neighbor walk speaks,
+                // the placed typed half the lone same-kind neighbor's
+                // own OPPOSITE promotes [the promote arm pc 54-134],
+                // the double the placement's own pairing completes)
+                world.chest_shape_updates(cell);
             }
             // THE BARREL'S OWN FACING STAMP (the dev-65 round — javap
             // BarrelBlock.getStateForPlacement pc 0-20 the 26.2 jar the
@@ -59327,6 +59334,119 @@ mod tests {
             .expect("the entries list");
         assert_eq!(entries.len(), 1, "the spilled half the file never resurrects");
         let _ = std::fs::remove_file(&file);
+    }
+
+    #[test]
+    fn the_dig_broken_half_the_survivor_the_single_shape_wears() {
+        // THE PAIR'S OWN BREAK (the dev-73 round — javap
+        // ChestBlock.updateShape pc 138-160 the 26.2 jar the removal
+        // chain serves): the hold mines the LEFT half to air, the
+        // destroy_block walk the demote beat speaks — the survivor the
+        // SINGLE wears, the facing the byte keeps, the survivor's own
+        // stock the world keeps (the vanilla law: the spill the broken
+        // half's own store alone releases), the reopen the single
+        // shape the 27 rows wears.
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        let a = (c, surface, c);
+        let b = (c - 1, surface, c);
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(a.0, a.1, a.2, crate::world::CHEST);
+            w.set_variant(
+                a.0,
+                a.1,
+                a.2,
+                crate::world::chest_variant(
+                    crate::world::CHEST_FACING_NORTH,
+                    crate::world::CHEST_TYPE_RIGHT,
+                ),
+            );
+            w.set(b.0, b.1, b.2, crate::world::CHEST);
+            w.set_variant(
+                b.0,
+                b.1,
+                b.2,
+                crate::world::chest_variant(
+                    crate::world::CHEST_FACING_NORTH,
+                    crate::world::CHEST_TYPE_LEFT,
+                ),
+            );
+        }
+        // THE OPEN THE COMPOUND SPEAKS (the pair the 54 rows wears) —
+        // the stock the survivor's own store banks
+        app.open_chest_for(a);
+        assert_eq!(app.chest_slots.len(), 54, "the pair the compound speaks");
+        app.chest_slots[27 + 3] = (926, 12); // the opened RIGHT half's own row
+        app.on_escape();
+        assert_eq!(
+            app.container_stores[&a][3],
+            (926, 12),
+            "the flush the survivor's half banks"
+        );
+        // THE DIG: the LEFT half the hold mines to air — the real lane
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(
+                b.0 as f32 + 0.5,
+                app.spawn_y as f32 + 4.0,
+                b.2 as f32 + 0.5,
+            ),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        app.on_press(0, 0);
+        let mut ticks = 0;
+        while app.offline_world.as_ref().unwrap().get(b.0, b.1, b.2) != crate::world::AIR {
+            app.update();
+            ticks += 1;
+            assert!(ticks < 400, "the dig completed in time");
+        }
+        // THE DEMOTE (the updateShape arm the removal chain serves):
+        // the survivor the SINGLE wears, the facing the byte keeps
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                crate::world::chest_variant_type(w.variant(a.0, a.1, a.2)),
+                crate::world::CHEST_TYPE_SINGLE,
+                "the survivor the SINGLE wears"
+            );
+            assert_eq!(
+                crate::world::chest_variant_facing(w.variant(a.0, a.1, a.2)),
+                crate::world::CHEST_FACING_NORTH,
+                "the facing the byte keeps"
+            );
+        }
+        // THE SURVIVOR'S OWN STOCK THE WORLD KEEPS (the vanilla law —
+        // the spill the broken half's own store alone releases)
+        assert_eq!(
+            app.container_stores.get(&a).map(|s| s[3]),
+            Some((926, 12)),
+            "the survivor's own store the world keeps"
+        );
+        assert!(
+            !app.container_stores.contains_key(&b),
+            "the broken half's entry the spill releases"
+        );
+        // THE REOPEN (the single shape the 27 rows wears — the partner
+        // key the demote takes)
+        app.open_chest_for(a);
+        assert_eq!(
+            app.chest_slots.len(),
+            27,
+            "the survivor the single shape reopens"
+        );
+        assert!(
+            app.container_open_cell_b.is_none(),
+            "the partner key the demote takes"
+        );
+        assert_eq!(
+            app.chest_slots[3],
+            (926, 12),
+            "the survivor's stock the reopen wears"
+        );
     }
 
     /// THE OFFLINE CHEST CLICK'S OWN WALK (the dev-66 round — the

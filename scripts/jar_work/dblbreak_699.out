@@ -1,0 +1,768 @@
+=== javap net.minecraft.world.level.block.entity.BlockEntity.preRemoveSideEffects
+
+  ---- public void preRemoveSideEffects(net.minecraft.core.BlockPos, net.minecraft.world.level.block.state.BlockState);
+    Code:
+       0: aload_0
+       1: astore        4
+       3: aload         4
+       5: instanceof    #280                // class net/minecraft/world/Container
+       8: ifeq          33
+      11: aload         4
+      13: checkcast     #280                // class net/minecraft/world/Container
+      16: astore_3
+      17: aload_0
+      18: getfield      #117                // Field level:Lnet/minecraft/world/level/Level;
+      21: ifnull        33
+      24: aload_0
+      25: getfield      #117                // Field level:Lnet/minecraft/world/level/Level;
+      28: aload_1
+      29: aload_3
+      30: invokestatic  #282                // Method net/minecraft/world/Containers.dropContents:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/Container;)V
+      33: return
+
+
+=== javap net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity (all)
+Compiled from "RandomizableContainerBlockEntity.java"
+public abstract class net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity extends net.minecraft.world.level.block.entity.BaseContainerBlockEntity implements net.minecraft.world.RandomizableContainer {
+  protected net.minecraft.resources.ResourceKey<net.minecraft.world.level.storage.loot.LootTable> lootTable;
+
+  protected long lootTableSeed;
+
+  protected net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity(net.minecraft.world.level.block.entity.BlockEntityType<?>, net.minecraft.core.BlockPos, net.minecraft.world.level.block.state.BlockState);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: aload_2
+       3: aload_3
+       4: invokespecial #1                  // Method net/minecraft/world/level/block/entity/BaseContainerBlockEntity."<init>":(Lnet/minecraft/world/level/block/entity/BlockEntityType;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V
+       7: aload_0
+       8: lconst_0
+       9: putfield      #9                  // Field lootTableSeed:J
+      12: return
+
+  public net.minecraft.resources.ResourceKey<net.minecraft.world.level.storage.loot.LootTable> getLootTable();
+    Code:
+       0: aload_0
+       1: getfield      #15                 // Field lootTable:Lnet/minecraft/resources/ResourceKey;
+       4: areturn
+
+  public void setLootTable(net.minecraft.resources.ResourceKey<net.minecraft.world.level.storage.loot.LootTable>);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #15                 // Field lootTable:Lnet/minecraft/resources/ResourceKey;
+       5: return
+
+  public long getLootTableSeed();
+    Code:
+       0: aload_0
+       1: getfield      #9                  // Field lootTableSeed:J
+       4: lreturn
+
+  public void setLootTableSeed(long);
+    Code:
+       0: aload_0
+       1: lload_1
+       2: putfield      #9                  // Field lootTableSeed:J
+       5: return
+
+  public boolean isEmpty();
+    Code:
+       0: aload_0
+       1: aconst_null
+       2: invokevirtual #19                 // Method unpackLootTable:(Lnet/minecraft/world/entity/player/Player;)V
+       5: aload_0
+       6: invokespecial #23                 // Method net/minecraft/world/level/block/entity/BaseContainerBlockEntity.isEmpty:()Z
+       9: ireturn
+
+  public net.minecraft.world.item.ItemStack getItem(int);
+    Code:
+       0: aload_0
+       1: aconst_null
+       2: invokevirtual #19                 // Method unpackLootTable:(Lnet/minecraft/world/entity/player/Player;)V
+       5: aload_0
+       6: iload_1
+       7: invokespecial #27                 // Method net/minecraft/world/level/block/entity/BaseContainerBlockEntity.getItem:(I)Lnet/minecraft/world/item/ItemStack;
+      10: areturn
+
+  public net.minecraft.world.item.ItemStack removeItem(int, int);
+    Code:
+       0: aload_0
+       1: aconst_null
+       2: invokevirtual #19                 // Method unpackLootTable:(Lnet/minecraft/world/entity/player/Player;)V
+       5: aload_0
+       6: iload_1
+       7: iload_2
+       8: invokespecial #31                 // Method net/minecraft/world/level/block/entity/BaseContainerBlockEntity.removeItem:(II)Lnet/minecraft/world/item/ItemStack;
+      11: areturn
+
+  public net.minecraft.world.item.ItemStack removeItemNoUpdate(int);
+    Code:
+       0: aload_0
+       1: aconst_null
+       2: invokevirtual #19                 // Method unpackLootTable:(Lnet/minecraft/world/entity/player/Player;)V
+       5: aload_0
+       6: iload_1
+       7: invokespecial #35                 // Method net/minecraft/world/level/block/entity/BaseContainerBlockEntity.removeItemNoUpdate:(I)Lnet/minecraft/world/item/ItemStack;
+      10: areturn
+
+  public void setItem(int, net.minecraft.world.item.ItemStack);
+    Code:
+       0: aload_0
+       1: aconst_null
+       2: invokevirtual #19                 // Method unpackLootTable:(Lnet/minecraft/world/entity/player/Player;)V
+       5: aload_0
+       6: iload_1
+       7: aload_2
+       8: invokespecial #38                 // Method net/minecraft/world/level/block/entity/BaseContainerBlockEntity.setItem:(ILnet/minecraft/world/item/ItemStack;)V
+      11: return
+
+  public boolean canOpen(net.minecraft.world.entity.player.Player);
+    Code:
+       0: aload_0
+       1: getfield      #15                 // Field lootTable:Lnet/minecraft/resources/ResourceKey;
+       4: ifnull        14
+       7: aload_1
+       8: invokevirtual #42                 // Method net/minecraft/world/entity/player/Player.isSpectator:()Z
+      11: ifne          26
+      14: aload_0
+      15: aload_1
+      16: invokespecial #47                 // Method net/minecraft/world/level/block/entity/BaseContainerBlockEntity.canOpen:(Lnet/minecraft/world/entity/player/Player;)Z
+      19: ifeq          26
+      22: iconst_1
+      23: goto          27
+      26: iconst_0
+      27: ireturn
+
+  public net.minecraft.world.inventory.AbstractContainerMenu createMenu(int, net.minecraft.world.entity.player.Inventory, net.minecraft.world.entity.player.Player);
+    Code:
+       0: aload_0
+       1: aload_3
+       2: invokevirtual #51                 // Method canOpen:(Lnet/minecraft/world/entity/player/Player;)Z
+       5: ifeq          23
+       8: aload_0
+       9: aload_2
+      10: getfield      #52                 // Field net/minecraft/world/entity/player/Inventory.player:Lnet/minecraft/world/entity/player/Player;
+      13: invokevirtual #19                 // Method unpackLootTable:(Lnet/minecraft/world/entity/player/Player;)V
+      16: aload_0
+      17: iload_1
+      18: aload_2
+      19: invokevirtual #58                 // Method createMenu:(ILnet/minecraft/world/entity/player/Inventory;)Lnet/minecraft/world/inventory/AbstractContainerMenu;
+      22: areturn
+      23: aload_3
+      24: invokevirtual #42                 // Method net/minecraft/world/entity/player/Player.isSpectator:()Z
+      27: ifne          45
+      30: aload_0
+      31: invokevirtual #62                 // Method getBlockPos:()Lnet/minecraft/core/BlockPos;
+      34: invokestatic  #66                 // Method net/minecraft/world/phys/Vec3.atCenterOf:(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/world/phys/Vec3;
+      37: aload_3
+      38: aload_0
+      39: invokevirtual #72                 // Method getDisplayName:()Lnet/minecraft/network/chat/Component;
+      42: invokestatic  #76                 // Method net/minecraft/world/level/block/entity/BaseContainerBlockEntity.sendChestLockedNotifications:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/network/chat/Component;)V
+      45: aconst_null
+      46: areturn
+
+  protected void applyImplicitComponents(net.minecraft.core.component.DataComponentGetter);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: invokespecial #80                 // Method net/minecraft/world/level/block/entity/BaseContainerBlockEntity.applyImplicitComponents:(Lnet/minecraft/core/component/DataComponentGetter;)V
+       5: aload_1
+       6: getstatic     #84                 // Field net/minecraft/core/component/DataComponents.CONTAINER_LOOT:Lnet/minecraft/core/component/DataComponentType;
+       9: invokeinterface #90,  2           // InterfaceMethod net/minecraft/core/component/DataComponentGetter.get:(Lnet/minecraft/core/component/DataComponentType;)Ljava/lang/Object;
+      14: checkcast     #96                 // class net/minecraft/world/item/component/SeededContainerLoot
+      17: astore_2
+      18: aload_2
+      19: ifnull        38
+      22: aload_0
+      23: aload_2
+      24: invokevirtual #98                 // Method net/minecraft/world/item/component/SeededContainerLoot.lootTable:()Lnet/minecraft/resources/ResourceKey;
+      27: putfield      #15                 // Field lootTable:Lnet/minecraft/resources/ResourceKey;
+      30: aload_0
+      31: aload_2
+      32: invokevirtual #101                // Method net/minecraft/world/item/component/SeededContainerLoot.seed:()J
+      35: putfield      #9                  // Field lootTableSeed:J
+      38: return
+
+  protected void collectImplicitComponents(net.minecraft.core.component.DataComponentMap$Builder);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: invokespecial #105                // Method net/minecraft/world/level/block/entity/BaseContainerBlockEntity.collectImplicitComponents:(Lnet/minecraft/core/component/DataComponentMap$Builder;)V
+       5: aload_0
+       6: getfield      #15                 // Field lootTable:Lnet/minecraft/resources/ResourceKey;
+       9: ifnull        35
+      12: aload_1
+      13: getstatic     #84                 // Field net/minecraft/core/component/DataComponents.CONTAINER_LOOT:Lnet/minecraft/core/component/DataComponentType;
+      16: new           #96                 // class net/minecraft/world/item/component/SeededContainerLoot
+      19: dup
+      20: aload_0
+      21: getfield      #15                 // Field lootTable:Lnet/minecraft/resources/ResourceKey;
+      24: aload_0
+      25: getfield      #9                  // Field lootTableSeed:J
+      28: invokespecial #109                // Method net/minecraft/world/item/component/SeededContainerLoot."<init>":(Lnet/minecraft/resources/ResourceKey;J)V
+      31: invokevirtual #112                // Method net/minecraft/core/component/DataComponentMap$Builder.set:(Lnet/minecraft/core/component/DataComponentType;Ljava/lang/Object;)Lnet/minecraft/core/component/DataComponentMap$Builder;
+      34: pop
+      35: return
+
+  public void removeComponentsFromTag(net.minecraft.world.level.storage.ValueOutput);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: invokespecial #118                // Method net/minecraft/world/level/block/entity/BaseContainerBlockEntity.removeComponentsFromTag:(Lnet/minecraft/world/level/storage/ValueOutput;)V
+       5: aload_1
+       6: ldc           #124                // String LootTable
+       8: invokeinterface #126,  2          // InterfaceMethod net/minecraft/world/level/storage/ValueOutput.discard:(Ljava/lang/String;)V
+      13: aload_1
+      14: ldc           #132                // String LootTableSeed
+      16: invokeinterface #126,  2          // InterfaceMethod net/minecraft/world/level/storage/ValueOutput.discard:(Ljava/lang/String;)V
+      21: return
+}
+
+
+=== javap net.minecraft.world.level.block.entity.ChestBlockEntity (method list)
+  protected net.minecraft.world.level.block.entity.ChestBlockEntity(net.minecraft.world.level.block.entity.BlockEntityType<?>, net.minecraft.core.BlockPos, net.minecraft.world.level.block.state.BlockState);
+       4: invokespecial #1                  // Method net/minecraft/world/level/block/entity/RandomizableContainerBlockEntity."<init>":(Lnet/minecraft/world/level/block/entity/BlockEntityType;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V
+      13: invokestatic  #13                 // Method net/minecraft/core/NonNullList.withSize:(ILjava/lang/Object;)Lnet/minecraft/core/NonNullList;
+      25: invokespecial #27                 // Method net/minecraft/world/level/block/entity/ChestBlockEntity$1."<init>":(Lnet/minecraft/world/level/block/entity/ChestBlockEntity;)V
+      36: invokespecial #36                 // Method net/minecraft/world/level/block/entity/ChestLidController."<init>":()V
+  public net.minecraft.world.level.block.entity.ChestBlockEntity(net.minecraft.core.BlockPos, net.minecraft.world.level.block.state.BlockState);
+       6: invokespecial #49                 // Method "<init>":(Lnet/minecraft/world/level/block/entity/BlockEntityType;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V
+  public int getContainerSize();
+  protected net.minecraft.network.chat.Component getDefaultName();
+  protected void loadAdditional(net.minecraft.world.level.storage.ValueInput);
+       2: invokespecial #54                 // Method net/minecraft/world/level/block/entity/RandomizableContainerBlockEntity.loadAdditional:(Lnet/minecraft/world/level/storage/ValueInput;)V
+       7: invokevirtual #58                 // Method getContainerSize:()I
+      13: invokestatic  #13                 // Method net/minecraft/core/NonNullList.withSize:(ILjava/lang/Object;)Lnet/minecraft/core/NonNullList;
+      21: invokevirtual #62                 // Method tryLoadLootTable:(Lnet/minecraft/world/level/storage/ValueInput;)Z
+      32: invokestatic  #66                 // Method net/minecraft/world/ContainerHelper.loadAllItems:(Lnet/minecraft/world/level/storage/ValueInput;Lnet/minecraft/core/NonNullList;)V
+  protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput);
+       2: invokespecial #72                 // Method net/minecraft/world/level/block/entity/RandomizableContainerBlockEntity.saveAdditional:(Lnet/minecraft/world/level/storage/ValueOutput;)V
+       7: invokevirtual #76                 // Method trySaveLootTable:(Lnet/minecraft/world/level/storage/ValueOutput;)Z
+      18: invokestatic  #80                 // Method net/minecraft/world/ContainerHelper.saveAllItems:(Lnet/minecraft/world/level/storage/ValueOutput;Lnet/minecraft/core/NonNullList;)V
+  public static void lidAnimateTick(net.minecraft.world.level.Level, net.minecraft.core.BlockPos, net.minecraft.world.level.block.state.BlockState, net.minecraft.world.level.block.entity.ChestBlockEntity);
+       4: invokevirtual #84                 // Method net/minecraft/world/level/block/entity/ChestLidController.tickLid:()V
+  private static void playSound(net.minecraft.world.level.Level, net.minecraft.core.BlockPos, net.minecraft.world.level.block.state.BlockState, net.minecraft.sounds.SoundEvent);
+       4: invokevirtual #93                 // Method net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+      22: invokevirtual #105                // Method net/minecraft/core/BlockPos.getX:()I
+      33: invokevirtual #112                // Method net/minecraft/core/BlockPos.getY:()I
+      44: invokevirtual #115                // Method net/minecraft/core/BlockPos.getZ:()I
+      63: invokestatic  #121                // Method net/minecraft/world/level/block/ChestBlock.getConnectedDirection:(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/core/Direction;
+      72: invokevirtual #125                // Method net/minecraft/core/Direction.getStepX:()I
+      87: invokevirtual #130                // Method net/minecraft/core/Direction.getStepZ:()I
+     113: invokevirtual #140                // Method net/minecraft/world/level/Level.getRandom:()Lnet/minecraft/util/RandomSource;
+     116: invokeinterface #146,  1          // InterfaceMethod net/minecraft/util/RandomSource.nextFloat:()F
+     127: invokevirtual #154                // Method net/minecraft/world/level/Level.playSound:(Lnet/minecraft/world/entity/Entity;DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+  public boolean triggerEvent(int, int);
+      18: invokevirtual #158                // Method net/minecraft/world/level/block/entity/ChestLidController.shouldBeOpen:(Z)V
+      26: invokespecial #162                // Method net/minecraft/world/level/block/entity/RandomizableContainerBlockEntity.triggerEvent:(II)Z
+  public void startOpen(net.minecraft.world.entity.ContainerUser);
+       8: invokeinterface #170,  1          // InterfaceMethod net/minecraft/world/entity/ContainerUser.getLivingEntity:()Lnet/minecraft/world/entity/LivingEntity;
+      13: invokevirtual #176                // Method net/minecraft/world/entity/LivingEntity.isSpectator:()Z
+      24: invokeinterface #170,  1          // InterfaceMethod net/minecraft/world/entity/ContainerUser.getLivingEntity:()Lnet/minecraft/world/entity/LivingEntity;
+      30: invokevirtual #182                // Method getLevel:()Lnet/minecraft/world/level/Level;
+      34: invokevirtual #186                // Method getBlockPos:()Lnet/minecraft/core/BlockPos;
+      38: invokevirtual #190                // Method getBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+      42: invokeinterface #194,  1          // InterfaceMethod net/minecraft/world/entity/ContainerUser.getContainerInteractionRange:()D
+      47: invokevirtual #198                // Method net/minecraft/world/level/block/entity/ContainerOpenersCounter.incrementOpeners:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;D)V
+  public void stopOpen(net.minecraft.world.entity.ContainerUser);
+       8: invokeinterface #170,  1          // InterfaceMethod net/minecraft/world/entity/ContainerUser.getLivingEntity:()Lnet/minecraft/world/entity/LivingEntity;
+      13: invokevirtual #176                // Method net/minecraft/world/entity/LivingEntity.isSpectator:()Z
+      24: invokeinterface #170,  1          // InterfaceMethod net/minecraft/world/entity/ContainerUser.getLivingEntity:()Lnet/minecraft/world/entity/LivingEntity;
+      30: invokevirtual #182                // Method getLevel:()Lnet/minecraft/world/level/Level;
+      34: invokevirtual #186                // Method getBlockPos:()Lnet/minecraft/core/BlockPos;
+      38: invokevirtual #190                // Method getBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+      41: invokevirtual #204                // Method net/minecraft/world/level/block/entity/ContainerOpenersCounter.decrementOpeners:(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V
+  public java.util.List<net.minecraft.world.entity.ContainerUser> getEntitiesWithContainerOpen();
+       5: invokevirtual #182                // Method getLevel:()Lnet/minecraft/world/level/Level;
+       9: invokevirtual #186                // Method getBlockPos:()Lnet/minecraft/core/BlockPos;
+      12: invokevirtual #208                // Method net/minecraft/world/level/block/entity/ContainerOpenersCounter.getEntitiesWithContainerOpen:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Ljava/util/List;
+  protected net.minecraft.core.NonNullList<net.minecraft.world.item.ItemStack> getItems();
+  protected void setItems(net.minecraft.core.NonNullList<net.minecraft.world.item.ItemStack>);
+  public float getOpenNess(float);
+       5: invokevirtual #212                // Method net/minecraft/world/level/block/entity/ChestLidController.getOpenness:(F)F
+  public static int getOpenCount(net.minecraft.world.level.BlockGetter, net.minecraft.core.BlockPos);
+       2: invokeinterface #216,  2          // InterfaceMethod net/minecraft/world/level/BlockGetter.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+       9: invokevirtual #221                // Method net/minecraft/world/level/block/state/BlockState.hasBlockEntity:()Z
+      17: invokeinterface #224,  2          // InterfaceMethod net/minecraft/world/level/BlockGetter.getBlockEntity:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/entity/BlockEntity;
+      41: invokevirtual #228                // Method net/minecraft/world/level/block/entity/ContainerOpenersCounter.getOpenerCount:()I
+  public static void swapContents(net.minecraft.world.level.block.entity.ChestBlockEntity, net.minecraft.world.level.block.entity.ChestBlockEntity);
+       1: invokevirtual #231                // Method getItems:()Lnet/minecraft/core/NonNullList;
+       7: invokevirtual #231                // Method getItems:()Lnet/minecraft/core/NonNullList;
+      10: invokevirtual #235                // Method setItems:(Lnet/minecraft/core/NonNullList;)V
+      15: invokevirtual #235                // Method setItems:(Lnet/minecraft/core/NonNullList;)V
+  protected net.minecraft.world.inventory.AbstractContainerMenu createMenu(int, net.minecraft.world.entity.player.Inventory);
+       3: invokestatic  #239                // Method net/minecraft/world/inventory/ChestMenu.threeRows:(ILnet/minecraft/world/entity/player/Inventory;Lnet/minecraft/world/Container;)Lnet/minecraft/world/inventory/ChestMenu;
+  public void recheckOpen();
+      12: invokevirtual #182                // Method getLevel:()Lnet/minecraft/world/level/Level;
+      16: invokevirtual #186                // Method getBlockPos:()Lnet/minecraft/core/BlockPos;
+      20: invokevirtual #190                // Method getBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+      23: invokevirtual #245                // Method net/minecraft/world/level/block/entity/ContainerOpenersCounter.recheckOpeners:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V
+  protected void signalOpenCount(net.minecraft.world.level.Level, net.minecraft.core.BlockPos, net.minecraft.world.level.block.state.BlockState, int, int);
+       1: invokevirtual #249                // Method net/minecraft/world/level/block/state/BlockState.getBlock:()Lnet/minecraft/world/level/block/Block;
+      13: invokevirtual #253                // Method net/minecraft/world/level/Level.blockEvent:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;II)V
+       3: invokestatic  #259                // InterfaceMethod net/minecraft/network/chat/Component.translatable:(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+
+=== javap ChestBlockEntity.preRemoveSideEffects (if overridden)
+
+
+=== javap net.minecraft.world.level.block.ChestBlock.onRemove
+
+
+=== javap net.minecraft.world.level.block.ChestBlock (method list)
+  public com.mojang.serialization.MapCodec<? extends net.minecraft.world.level.block.ChestBlock> codec();
+  protected net.minecraft.world.level.block.ChestBlock(java.util.function.Supplier<net.minecraft.world.level.block.entity.BlockEntityType<? extends net.minecraft.world.level.block.entity.ChestBlockEntity>>, net.minecraft.sounds.SoundEvent, net.minecraft.sounds.SoundEvent, net.minecraft.world.level.block.state.BlockBehaviour$Properties);
+       4: invokespecial #7                  // Method net/minecraft/world/level/block/AbstractChestBlock."<init>":(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;Ljava/util/function/Supplier;)V
+      22: invokevirtual #24                 // Method net/minecraft/world/level/block/state/StateDefinition.any:()Lnet/minecraft/world/level/block/state/StateHolder;
+      34: invokevirtual #42                 // Method net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+      46: invokevirtual #42                 // Method net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+      56: invokestatic  #59                 // Method java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+      59: invokevirtual #42                 // Method net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+      65: invokevirtual #65                 // Method registerDefaultState:(Lnet/minecraft/world/level/block/state/BlockState;)V
+  public static net.minecraft.world.level.block.DoubleBlockCombiner$BlockType getBlockType(net.minecraft.world.level.block.state.BlockState);
+       4: invokevirtual #69                 // Method net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+  protected net.minecraft.world.level.block.state.BlockState updateShape(net.minecraft.world.level.block.state.BlockState, net.minecraft.world.level.LevelReader, net.minecraft.world.level.ScheduledTickAccess, net.minecraft.core.BlockPos, net.minecraft.core.Direction, net.minecraft.core.BlockPos, net.minecraft.world.level.block.state.BlockState, net.minecraft.util.RandomSource);
+       4: invokevirtual #69                 // Method net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+      10: invokevirtual #87                 // Method java/lang/Boolean.booleanValue:()Z
+      26: invokevirtual #97                 // Method net/minecraft/world/level/material/FlowingFluid.getTickDelay:(Lnet/minecraft/world/level/LevelReader;)I
+      29: invokeinterface #103,  4          // InterfaceMethod net/minecraft/world/level/ScheduledTickAccess.scheduleTick:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/material/Fluid;I)V
+      37: invokevirtual #109                // Method chestCanConnectTo:(Lnet/minecraft/world/level/block/state/BlockState;)Z
+      45: invokevirtual #113                // Method net/minecraft/core/Direction.getAxis:()Lnet/minecraft/core/Direction$Axis;
+      48: invokevirtual #117                // Method net/minecraft/core/Direction$Axis.isHorizontal:()Z
+      59: invokevirtual #69                 // Method net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+      71: invokevirtual #69                 // Method net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+      92: invokevirtual #69                 // Method net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+     100: invokevirtual #69                 // Method net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+     108: invokestatic  #122                // Method getConnectedDirection:(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/core/Direction;
+     113: invokevirtual #126                // Method net/minecraft/core/Direction.getOpposite:()Lnet/minecraft/core/Direction;
+     125: invokevirtual #130                // Method net/minecraft/world/level/block/state/properties/ChestType.getOpposite:()Lnet/minecraft/world/level/block/state/properties/ChestType;
+     128: invokevirtual #42                 // Method net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+     139: invokestatic  #122                // Method getConnectedDirection:(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/core/Direction;
+     154: invokevirtual #42                 // Method net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+     175: invokespecial #133                // Method net/minecraft/world/level/block/AbstractChestBlock.updateShape:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/world/level/ScheduledTickAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;)Lnet/minecraft/world/level/block/state/BlockState;
+  public boolean chestCanConnectTo(net.minecraft.world.level.block.state.BlockState);
+       2: invokevirtual #137                // Method net/minecraft/world/level/block/state/BlockState.is:(Ljava/lang/Object;)Z
+  protected net.minecraft.world.phys.shapes.VoxelShape getShape(net.minecraft.world.level.block.state.BlockState, net.minecraft.world.level.BlockGetter, net.minecraft.core.BlockPos, net.minecraft.world.phys.shapes.CollisionContext);
+       7: invokevirtual #69                 // Method net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+      13: invokevirtual #147                // Method net/minecraft/world/level/block/state/properties/ChestType.ordinal:()I
+      50: invokespecial #153                // Method java/lang/MatchException."<init>":(Ljava/lang/String;Ljava/lang/Throwable;)V
+      64: invokestatic  #122                // Method getConnectedDirection:(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/core/Direction;
+      67: invokeinterface #164,  2          // InterfaceMethod java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+  public static net.minecraft.core.Direction getConnectedDirection(net.minecraft.world.level.block.state.BlockState);
+       4: invokevirtual #69                 // Method net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+      15: invokevirtual #69                 // Method net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+      25: invokevirtual #175                // Method net/minecraft/core/Direction.getClockWise:()Lnet/minecraft/core/Direction;
+      32: invokevirtual #178                // Method net/minecraft/core/Direction.getCounterClockWise:()Lnet/minecraft/core/Direction;
+  public static net.minecraft.core.BlockPos getConnectedBlockPos(net.minecraft.core.BlockPos, net.minecraft.world.level.block.state.BlockState);
+       1: invokestatic  #122                // Method getConnectedDirection:(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/core/Direction;
+       7: invokevirtual #181                // Method net/minecraft/core/BlockPos.relative:(Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;
+  public net.minecraft.world.level.block.state.BlockState getStateForPlacement(net.minecraft.world.item.context.BlockPlaceContext);
+       5: invokevirtual #187                // Method net/minecraft/world/item/context/BlockPlaceContext.getHorizontalDirection:()Lnet/minecraft/core/Direction;
+       8: invokevirtual #126                // Method net/minecraft/core/Direction.getOpposite:()Lnet/minecraft/core/Direction;
+      13: invokevirtual #192                // Method net/minecraft/world/item/context/BlockPlaceContext.getLevel:()Lnet/minecraft/world/level/Level;
+      17: invokevirtual #196                // Method net/minecraft/world/item/context/BlockPlaceContext.getClickedPos:()Lnet/minecraft/core/BlockPos;
+      20: invokevirtual #200                // Method net/minecraft/world/level/Level.getFluidState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/material/FluidState;
+      26: invokevirtual #206                // Method net/minecraft/world/item/context/BlockPlaceContext.isSecondaryUseActive:()Z
+      32: invokevirtual #209                // Method net/minecraft/world/item/context/BlockPlaceContext.getClickedFace:()Lnet/minecraft/core/Direction;
+      39: invokevirtual #113                // Method net/minecraft/core/Direction.getAxis:()Lnet/minecraft/core/Direction$Axis;
+      42: invokevirtual #117                // Method net/minecraft/core/Direction$Axis.isHorizontal:()Z
+      55: invokevirtual #192                // Method net/minecraft/world/item/context/BlockPlaceContext.getLevel:()Lnet/minecraft/world/level/Level;
+      59: invokevirtual #196                // Method net/minecraft/world/item/context/BlockPlaceContext.getClickedPos:()Lnet/minecraft/core/BlockPos;
+      64: invokevirtual #126                // Method net/minecraft/core/Direction.getOpposite:()Lnet/minecraft/core/Direction;
+      67: invokevirtual #212                // Method candidatePartnerFacing:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Lnet/minecraft/core/Direction;
+      79: invokevirtual #113                // Method net/minecraft/core/Direction.getAxis:()Lnet/minecraft/core/Direction$Axis;
+      84: invokevirtual #113                // Method net/minecraft/core/Direction.getAxis:()Lnet/minecraft/core/Direction$Axis;
+      94: invokevirtual #178                // Method net/minecraft/core/Direction.getCounterClockWise:()Lnet/minecraft/core/Direction;
+      99: invokevirtual #126                // Method net/minecraft/core/Direction.getOpposite:()Lnet/minecraft/core/Direction;
+     129: invokevirtual #192                // Method net/minecraft/world/item/context/BlockPlaceContext.getLevel:()Lnet/minecraft/world/level/Level;
+     133: invokevirtual #196                // Method net/minecraft/world/item/context/BlockPlaceContext.getClickedPos:()Lnet/minecraft/core/BlockPos;
+     137: invokevirtual #216                // Method getChestType:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Lnet/minecraft/world/level/block/state/properties/ChestType;
+     142: invokevirtual #220                // Method defaultBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+     149: invokevirtual #42                 // Method net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+     159: invokevirtual #42                 // Method net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+     173: invokevirtual #224                // Method net/minecraft/world/level/material/FluidState.is:(Ljava/lang/Object;)Z
+     176: invokestatic  #59                 // Method java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+     179: invokevirtual #42                 // Method net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+  protected net.minecraft.world.level.block.state.properties.ChestType getChestType(net.minecraft.world.level.Level, net.minecraft.core.BlockPos, net.minecraft.core.Direction);
+       5: invokevirtual #175                // Method net/minecraft/core/Direction.getClockWise:()Lnet/minecraft/core/Direction;
+       8: invokevirtual #212                // Method candidatePartnerFacing:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Lnet/minecraft/core/Direction;
+      23: invokevirtual #178                // Method net/minecraft/core/Direction.getCounterClockWise:()Lnet/minecraft/core/Direction;
+      26: invokevirtual #212                // Method candidatePartnerFacing:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Lnet/minecraft/core/Direction;
+  protected net.minecraft.world.level.material.FluidState getFluidState(net.minecraft.world.level.block.state.BlockState);
+       4: invokevirtual #69                 // Method net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+      10: invokevirtual #87                 // Method java/lang/Boolean.booleanValue:()Z
+      20: invokevirtual #227                // Method net/minecraft/world/level/material/FlowingFluid.getSource:(Z)Lnet/minecraft/world/level/material/FluidState;
+      26: invokespecial #231                // Method net/minecraft/world/level/block/AbstractChestBlock.getFluidState:(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/material/FluidState;
+  private net.minecraft.core.Direction candidatePartnerFacing(net.minecraft.world.level.Level, net.minecraft.core.BlockPos, net.minecraft.core.Direction);
+       3: invokevirtual #181                // Method net/minecraft/core/BlockPos.relative:(Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;
+       6: invokevirtual #234                // Method net/minecraft/world/level/Level.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+      14: invokevirtual #109                // Method chestCanConnectTo:(Lnet/minecraft/world/level/block/state/BlockState;)Z
+      25: invokevirtual #69                 // Method net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+      39: invokevirtual #69                 // Method net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+  protected void affectNeighborsAfterRemoval(net.minecraft.world.level.block.state.BlockState, net.minecraft.server.level.ServerLevel, net.minecraft.core.BlockPos, boolean);
+       3: invokestatic  #238                // Method net/minecraft/world/Containers.updateNeighboursAfterDestroy:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)V
+  protected net.minecraft.world.InteractionResult useWithoutItem(net.minecraft.world.level.block.state.BlockState, net.minecraft.world.level.Level, net.minecraft.core.BlockPos, net.minecraft.world.entity.player.Player, net.minecraft.world.phys.BlockHitResult);
+      17: invokevirtual #246                // Method getMenuProvider:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/MenuProvider;
+      31: invokevirtual #250                // Method net/minecraft/world/entity/player/Player.openMenu:(Lnet/minecraft/world/MenuProvider;)Ljava/util/OptionalInt;
+      38: invokevirtual #256                // Method getOpenChestStat:()Lnet/minecraft/stats/Stat;
+      41: invokevirtual #260                // Method net/minecraft/world/entity/player/Player.awardStat:(Lnet/minecraft/stats/Stat;)V
+      49: invokestatic  #264                // Method net/minecraft/world/entity/monster/piglin/PiglinAi.angerNearbyPiglins:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/player/Player;Z)V
+  protected net.minecraft.stats.Stat<net.minecraft.resources.Identifier> getOpenChestStat();
+       6: invokevirtual #286                // Method net/minecraft/stats/StatType.get:(Ljava/lang/Object;)Lnet/minecraft/stats/Stat;
+  public net.minecraft.world.level.block.entity.BlockEntityType<? extends net.minecraft.world.level.block.entity.ChestBlockEntity> blockEntityType();
+       4: invokeinterface #295,  1          // InterfaceMethod java/util/function/Supplier.get:()Ljava/lang/Object;
+  public static net.minecraft.world.Container getContainer(net.minecraft.world.level.block.ChestBlock, net.minecraft.world.level.block.state.BlockState, net.minecraft.world.level.Level, net.minecraft.core.BlockPos, boolean);
+       6: invokevirtual #302                // Method combine:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Z)Lnet/minecraft/world/level/block/DoubleBlockCombiner$NeighborCombineResult;
+      12: invokeinterface #310,  2          // InterfaceMethod net/minecraft/world/level/block/DoubleBlockCombiner$NeighborCombineResult.apply:(Lnet/minecraft/world/level/block/DoubleBlockCombiner$Combiner;)Ljava/lang/Object;
+      21: invokevirtual #318                // Method java/util/Optional.orElse:(Ljava/lang/Object;)Ljava/lang/Object;
+  public net.minecraft.world.level.block.DoubleBlockCombiner$NeighborCombineResult<? extends net.minecraft.world.level.block.entity.ChestBlockEntity> combine(net.minecraft.world.level.block.state.BlockState, net.minecraft.world.level.Level, net.minecraft.core.BlockPos, boolean);
+       5: invokedynamic #323,  0            // InvokeDynamic #0:test:()Ljava/util/function/BiPredicate;
+      15: invokedynamic #327,  0            // InvokeDynamic #1:test:()Ljava/util/function/BiPredicate;
+      26: invokeinterface #295,  1          // InterfaceMethod java/util/function/Supplier.get:()Ljava/lang/Object;
+      34: invokedynamic #328,  0            // InvokeDynamic #2:apply:()Ljava/util/function/Function;
+      39: invokedynamic #331,  0            // InvokeDynamic #3:apply:()Ljava/util/function/Function;
+      52: invokestatic  #332                // Method net/minecraft/world/level/block/DoubleBlockCombiner.combineWithNeigbour:(Lnet/minecraft/world/level/block/entity/BlockEntityType;Ljava/util/function/Function;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/properties/Property;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;Ljava/util/function/BiPredicate;)Lnet/minecraft/world/level/block/DoubleBlockCombiner$NeighborCombineResult;
+  protected net.minecraft.world.MenuProvider getMenuProvider(net.minecraft.world.level.block.state.BlockState, net.minecraft.world.level.Level, net.minecraft.core.BlockPos);
+       5: invokevirtual #302                // Method combine:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Z)Lnet/minecraft/world/level/block/DoubleBlockCombiner$NeighborCombineResult;
+      11: invokeinterface #310,  2          // InterfaceMethod net/minecraft/world/level/block/DoubleBlockCombiner$NeighborCombineResult.apply:(Lnet/minecraft/world/level/block/DoubleBlockCombiner$Combiner;)Ljava/lang/Object;
+      20: invokevirtual #318                // Method java/util/Optional.orElse:(Ljava/lang/Object;)Ljava/lang/Object;
+  public static net.minecraft.world.level.block.DoubleBlockCombiner$Combiner<net.minecraft.world.level.block.entity.ChestBlockEntity, it.unimi.dsi.fastutil.floats.Float2FloatFunction> opennessCombiner(net.minecraft.world.level.block.entity.LidBlockEntity);
+       5: invokespecial #345                // Method net/minecraft/world/level/block/ChestBlock$3."<init>":(Lnet/minecraft/world/level/block/entity/LidBlockEntity;)V
+  public net.minecraft.world.level.block.entity.BlockEntity newBlockEntity(net.minecraft.core.BlockPos, net.minecraft.world.level.block.state.BlockState);
+       6: invokespecial #350                // Method net/minecraft/world/level/block/entity/ChestBlockEntity."<init>":(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V
+  public <T extends net.minecraft.world.level.block.entity.BlockEntity> net.minecraft.world.level.block.entity.BlockEntityTicker<T> getTicker(net.minecraft.world.level.Level, net.minecraft.world.level.block.state.BlockState, net.minecraft.world.level.block.entity.BlockEntityType<T>);
+       1: invokevirtual #353                // Method net/minecraft/world/level/Level.isClientSide:()Z
+       9: invokevirtual #356                // Method blockEntityType:()Lnet/minecraft/world/level/block/entity/BlockEntityType;
+      12: invokedynamic #359,  0            // InvokeDynamic #4:tick:()Lnet/minecraft/world/level/block/entity/BlockEntityTicker;
+      17: invokestatic  #363                // Method createTickerHelper:(Lnet/minecraft/world/level/block/entity/BlockEntityType;Lnet/minecraft/world/level/block/entity/BlockEntityType;Lnet/minecraft/world/level/block/entity/BlockEntityTicker;)Lnet/minecraft/world/level/block/entity/BlockEntityTicker;
+  public static boolean isChestBlockedAt(net.minecraft.world.level.LevelAccessor, net.minecraft.core.BlockPos);
+       2: invokestatic  #367                // Method isBlockedChestByBlock:(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Z
+      10: invokestatic  #371                // Method isCatSittingOnChest:(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;)Z
+  private static boolean isBlockedChestByBlock(net.minecraft.world.level.BlockGetter, net.minecraft.core.BlockPos);
+       1: invokevirtual #375                // Method net/minecraft/core/BlockPos.above:()Lnet/minecraft/core/BlockPos;
+       7: invokeinterface #378,  2          // InterfaceMethod net/minecraft/world/level/BlockGetter.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+      14: invokevirtual #381                // Method net/minecraft/world/level/block/state/BlockState.isRedstoneConductor:(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Z
+  private static boolean isCatSittingOnChest(net.minecraft.world.level.LevelAccessor, net.minecraft.core.BlockPos);
+       9: invokevirtual #388                // Method net/minecraft/core/BlockPos.getX:()I
+      14: invokevirtual #391                // Method net/minecraft/core/BlockPos.getY:()I
+      21: invokevirtual #394                // Method net/minecraft/core/BlockPos.getZ:()I
+      26: invokevirtual #388                // Method net/minecraft/core/BlockPos.getX:()I
+      33: invokevirtual #391                // Method net/minecraft/core/BlockPos.getY:()I
+      40: invokevirtual #394                // Method net/minecraft/core/BlockPos.getZ:()I
+      46: invokespecial #397                // Method net/minecraft/world/phys/AABB."<init>":(DDDDDD)V
+      49: invokeinterface #400,  3          // InterfaceMethod net/minecraft/world/level/LevelAccessor.getEntitiesOfClass:(Ljava/lang/Class;Lnet/minecraft/world/phys/AABB;)Ljava/util/List;
+      56: invokeinterface #406,  1          // InterfaceMethod java/util/List.isEmpty:()Z
+      65: invokeinterface #411,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+      72: invokeinterface #415,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      81: invokeinterface #420,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      93: invokevirtual #423                // Method net/minecraft/world/entity/animal/feline/Cat.isInSittingPose:()Z
+  protected boolean hasAnalogOutputSignal(net.minecraft.world.level.block.state.BlockState);
+  protected int getAnalogOutputSignal(net.minecraft.world.level.block.state.BlockState, net.minecraft.world.level.Level, net.minecraft.core.BlockPos, net.minecraft.core.Direction);
+       5: invokestatic  #426                // Method getContainer:(Lnet/minecraft/world/level/block/ChestBlock;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Z)Lnet/minecraft/world/Container;
+       8: invokestatic  #430                // Method net/minecraft/world/inventory/AbstractContainerMenu.getRedstoneSignalFromContainer:(Lnet/minecraft/world/Container;)I
+  protected net.minecraft.world.level.block.state.BlockState rotate(net.minecraft.world.level.block.state.BlockState, net.minecraft.world.level.block.Rotation);
+       9: invokevirtual #69                 // Method net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+      15: invokevirtual #436                // Method net/minecraft/world/level/block/Rotation.rotate:(Lnet/minecraft/core/Direction;)Lnet/minecraft/core/Direction;
+      18: invokevirtual #42                 // Method net/minecraft/world/level/block/state/BlockState.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+  protected net.minecraft.world.level.block.state.BlockState mirror(net.minecraft.world.level.block.state.BlockState, net.minecraft.world.level.block.Mirror);
+       6: invokevirtual #69                 // Method net/minecraft/world/level/block/state/BlockState.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+      12: invokevirtual #442                // Method net/minecraft/world/level/block/Mirror.getRotation:(Lnet/minecraft/core/Direction;)Lnet/minecraft/world/level/block/Rotation;
+      15: invokevirtual #448                // Method net/minecraft/world/level/block/state/BlockState.rotate:(Lnet/minecraft/world/level/block/Rotation;)Lnet/minecraft/world/level/block/state/BlockState;
+  protected void createBlockStateDefinition(net.minecraft.world.level.block.state.StateDefinition$Builder<net.minecraft.world.level.block.Block, net.minecraft.world.level.block.state.BlockState>);
+      23: invokevirtual #453                // Method net/minecraft/world/level/block/state/StateDefinition$Builder.add:([Lnet/minecraft/world/level/block/state/properties/Property;)Lnet/minecraft/world/level/block/state/StateDefinition$Builder;
+  protected boolean isPathfindable(net.minecraft.world.level.block.state.BlockState, net.minecraft.world.level.pathfinder.PathComputationType);
+  protected void tick(net.minecraft.world.level.block.state.BlockState, net.minecraft.server.level.ServerLevel, net.minecraft.core.BlockPos, net.minecraft.util.RandomSource);
+       2: invokevirtual #459                // Method net/minecraft/server/level/ServerLevel.getBlockEntity:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/entity/BlockEntity;
+      24: invokevirtual #463                // Method net/minecraft/world/level/block/entity/ChestBlockEntity.recheckOpen:()V
+  public net.minecraft.sounds.SoundEvent getOpenChestSound();
+  public net.minecraft.sounds.SoundEvent getCloseChestSound();
+  private static boolean lambda$combine$0(net.minecraft.world.level.LevelAccessor, net.minecraft.core.BlockPos);
+  private static com.mojang.datafixers.kinds.App lambda$static$0(com.mojang.serialization.codecs.RecordCodecBuilder$Instance);
+       4: invokeinterface #473,  1          // InterfaceMethod net/minecraft/core/Registry.byNameCodec:()Lcom/mojang/serialization/Codec;
+      12: invokeinterface #481,  2          // InterfaceMethod com/mojang/serialization/Codec.fieldOf:(Ljava/lang/String;)Lcom/mojang/serialization/MapCodec;
+      17: invokedynamic #487,  0            // InvokeDynamic #5:apply:()Ljava/util/function/Function;
+      22: invokevirtual #488                // Method com/mojang/serialization/MapCodec.forGetter:(Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;
+      28: invokeinterface #473,  1          // InterfaceMethod net/minecraft/core/Registry.byNameCodec:()Lcom/mojang/serialization/Codec;
+      36: invokeinterface #481,  2          // InterfaceMethod com/mojang/serialization/Codec.fieldOf:(Ljava/lang/String;)Lcom/mojang/serialization/MapCodec;
+      41: invokedynamic #496,  0            // InvokeDynamic #6:apply:()Ljava/util/function/Function;
+      46: invokevirtual #488                // Method com/mojang/serialization/MapCodec.forGetter:(Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;
+      49: invokestatic  #497                // Method propertiesCodec:()Lcom/mojang/serialization/codecs/RecordCodecBuilder;
+      52: invokevirtual #501                // Method com/mojang/serialization/codecs/RecordCodecBuilder$Instance.group:(Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;)Lcom/mojang/datafixers/Products$P3;
+      56: invokedynamic #507,  0            // InvokeDynamic #7:apply:()Lcom/mojang/datafixers/util/Function3;
+      61: invokevirtual #510                // Method com/mojang/datafixers/Products$P3.apply:(Lcom/mojang/datafixers/kinds/Applicative;Lcom/mojang/datafixers/util/Function3;)Lcom/mojang/datafixers/kinds/App;
+  private static net.minecraft.world.level.block.ChestBlock lambda$static$1(net.minecraft.sounds.SoundEvent, net.minecraft.sounds.SoundEvent, net.minecraft.world.level.block.state.BlockBehaviour$Properties);
+       4: invokedynamic #515,  0            // InvokeDynamic #8:get:()Ljava/util/function/Supplier;
+      12: invokespecial #518                // Method "<init>":(Ljava/util/function/Supplier;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+  private static net.minecraft.world.level.block.entity.BlockEntityType lambda$static$2();
+       0: invokedynamic #527,  0            // InvokeDynamic #9:apply:()Ljava/util/function/Function;
+       5: invokestatic  #528                // Method com/mojang/serialization/codecs/RecordCodecBuilder.mapCodec:(Ljava/util/function/Function;)Lcom/mojang/serialization/MapCodec;
+      36: invokestatic  #545                // Method net/minecraft/world/level/block/Block.column:(DDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+      53: invokestatic  #553                // Method net/minecraft/world/level/block/Block.boxZ:(DDDDD)Lnet/minecraft/world/phys/shapes/VoxelShape;
+      56: invokestatic  #557                // Method net/minecraft/world/phys/shapes/Shapes.rotateHorizontal:(Lnet/minecraft/world/phys/shapes/VoxelShape;)Ljava/util/Map;
+      66: invokespecial #565                // Method net/minecraft/world/level/block/ChestBlock$1."<init>":()V
+      76: invokespecial #569                // Method net/minecraft/world/level/block/ChestBlock$2."<init>":()V
+
+=== javap ChestBlock.getContainer (the pair walk)
+
+  ---- public static net.minecraft.world.Container getContainer(net.minecraft.world.level.block.ChestBlock, net.minecraft.world.level.block.state.BlockState, net.minecraft.world.level.Level, net.minecraft.core.BlockPos, boolean);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: aload_2
+       3: aload_3
+       4: iload         4
+       6: invokevirtual #302                // Method combine:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Z)Lnet/minecraft/world/level/block/DoubleBlockCombiner$NeighborCombineResult;
+       9: getstatic     #306                // Field CHEST_COMBINER:Lnet/minecraft/world/level/block/DoubleBlockCombiner$Combiner;
+      12: invokeinterface #310,  2          // InterfaceMethod net/minecraft/world/level/block/DoubleBlockCombiner$NeighborCombineResult.apply:(Lnet/minecraft/world/level/block/DoubleBlockCombiner$Combiner;)Ljava/lang/Object;
+      17: checkcast     #316                // class java/util/Optional
+      20: aconst_null
+      21: invokevirtual #318                // Method java/util/Optional.orElse:(Ljava/lang/Object;)Ljava/lang/Object;
+      24: checkcast     #321                // class net/minecraft/world/Container
+      27: areturn
+
+
+=== javap net.minecraft.world.CompoundContainer (the 54 merger)
+Compiled from "CompoundContainer.java"
+public class net.minecraft.world.CompoundContainer implements net.minecraft.world.Container {
+  private final net.minecraft.world.Container container1;
+
+  private final net.minecraft.world.Container container2;
+
+  public net.minecraft.world.CompoundContainer(net.minecraft.world.Container, net.minecraft.world.Container);
+    Code:
+       0: aload_0
+       1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: aload_1
+       6: putfield      #7                  // Field container1:Lnet/minecraft/world/Container;
+       9: aload_0
+      10: aload_2
+      11: putfield      #13                 // Field container2:Lnet/minecraft/world/Container;
+      14: return
+
+  public int getContainerSize();
+    Code:
+       0: aload_0
+       1: getfield      #7                  // Field container1:Lnet/minecraft/world/Container;
+       4: invokeinterface #16,  1           // InterfaceMethod net/minecraft/world/Container.getContainerSize:()I
+       9: aload_0
+      10: getfield      #13                 // Field container2:Lnet/minecraft/world/Container;
+      13: invokeinterface #16,  1           // InterfaceMethod net/minecraft/world/Container.getContainerSize:()I
+      18: iadd
+      19: ireturn
+
+  public boolean isEmpty();
+    Code:
+       0: aload_0
+       1: getfield      #7                  // Field container1:Lnet/minecraft/world/Container;
+       4: invokeinterface #22,  1           // InterfaceMethod net/minecraft/world/Container.isEmpty:()Z
+       9: ifeq          28
+      12: aload_0
+      13: getfield      #13                 // Field container2:Lnet/minecraft/world/Container;
+      16: invokeinterface #22,  1           // InterfaceMethod net/minecraft/world/Container.isEmpty:()Z
+      21: ifeq          28
+      24: iconst_1
+      25: goto          29
+      28: iconst_0
+      29: ireturn
+
+  public boolean contains(net.minecraft.world.Container);
+    Code:
+       0: aload_0
+       1: getfield      #7                  // Field container1:Lnet/minecraft/world/Container;
+       4: aload_1
+       5: if_acmpeq     16
+       8: aload_0
+       9: getfield      #13                 // Field container2:Lnet/minecraft/world/Container;
+      12: aload_1
+      13: if_acmpne     20
+      16: iconst_1
+      17: goto          21
+      20: iconst_0
+      21: ireturn
+
+  public net.minecraft.world.item.ItemStack getItem(int);
+    Code:
+       0: iload_1
+       1: aload_0
+       2: getfield      #7                  // Field container1:Lnet/minecraft/world/Container;
+       5: invokeinterface #16,  1           // InterfaceMethod net/minecraft/world/Container.getContainerSize:()I
+      10: if_icmplt     34
+      13: aload_0
+      14: getfield      #13                 // Field container2:Lnet/minecraft/world/Container;
+      17: iload_1
+      18: aload_0
+      19: getfield      #7                  // Field container1:Lnet/minecraft/world/Container;
+      22: invokeinterface #16,  1           // InterfaceMethod net/minecraft/world/Container.getContainerSize:()I
+      27: isub
+      28: invokeinterface #26,  2           // InterfaceMethod net/minecraft/world/Container.getItem:(I)Lnet/minecraft/world/item/ItemStack;
+      33: areturn
+      34: aload_0
+      35: getfield      #7                  // Field container1:Lnet/minecraft/world/Container;
+      38: iload_1
+      39: invokeinterface #26,  2           // InterfaceMethod net/minecraft/world/Container.getItem:(I)Lnet/minecraft/world/item/ItemStack;
+      44: areturn
+
+  public net.minecraft.world.item.ItemStack removeItem(int, int);
+    Code:
+       0: iload_1
+       1: aload_0
+       2: getfield      #7                  // Field container1:Lnet/minecraft/world/Container;
+       5: invokeinterface #16,  1           // InterfaceMethod net/minecraft/world/Container.getContainerSize:()I
+      10: if_icmplt     35
+      13: aload_0
+      14: getfield      #13                 // Field container2:Lnet/minecraft/world/Container;
+      17: iload_1
+      18: aload_0
+      19: getfield      #7                  // Field container1:Lnet/minecraft/world/Container;
+      22: invokeinterface #16,  1           // InterfaceMethod net/minecraft/world/Container.getContainerSize:()I
+      27: isub
+      28: iload_2
+      29: invokeinterface #30,  3           // InterfaceMethod net/minecraft/world/Container.removeItem:(II)Lnet/minecraft/world/item/ItemStack;
+      34: areturn
+      35: aload_0
+      36: getfield      #7                  // Field container1:Lnet/minecraft/world/Container;
+      39: iload_1
+      40: iload_2
+      41: invokeinterface #30,  3           // InterfaceMethod net/minecraft/world/Container.removeItem:(II)Lnet/minecraft/world/item/ItemStack;
+      46: areturn
+
+  public net.minecraft.world.item.ItemStack removeItemNoUpdate(int);
+    Code:
+       0: iload_1
+       1: aload_0
+       2: getfield      #7                  // Field container1:Lnet/minecraft/world/Container;
+       5: invokeinterface #16,  1           // InterfaceMethod net/minecraft/world/Container.getContainerSize:()I
+      10: if_icmplt     34
+      13: aload_0
+      14: getfield      #13                 // Field container2:Lnet/minecraft/world/Container;
+      17: iload_1
+      18: aload_0
+      19: getfield      #7                  // Field container1:Lnet/minecraft/world/Container;
+      22: invokeinterface #16,  1           // InterfaceMethod net/minecraft/world/Container.getContainerSize:()I
+      27: isub
+      28: invokeinterface #34,  2           // InterfaceMethod net/minecraft/world/Container.removeItemNoUpdate:(I)Lnet/minecraft/world/item/ItemStack;
+      33: areturn
+      34: aload_0
+      35: getfield      #7                  // Field container1:Lnet/minecraft/world/Container;
+      38: iload_1
+      39: invokeinterface #34,  2           // InterfaceMethod net/minecraft/world/Container.removeItemNoUpdate:(I)Lnet/minecraft/world/item/ItemStack;
+      44: areturn
+
+  public void setItem(int, net.minecraft.world.item.ItemStack);
+    Code:
+       0: iload_1
+       1: aload_0
+       2: getfield      #7                  // Field container1:Lnet/minecraft/world/Container;
+       5: invokeinterface #16,  1           // InterfaceMethod net/minecraft/world/Container.getContainerSize:()I
+      10: if_icmplt     37
+      13: aload_0
+      14: getfield      #13                 // Field container2:Lnet/minecraft/world/Container;
+      17: iload_1
+      18: aload_0
+      19: getfield      #7                  // Field container1:Lnet/minecraft/world/Container;
+      22: invokeinterface #16,  1           // InterfaceMethod net/minecraft/world/Container.getContainerSize:()I
+      27: isub
+      28: aload_2
+      29: invokeinterface #37,  3           // InterfaceMethod net/minecraft/world/Container.setItem:(ILnet/minecraft/world/item/ItemStack;)V
+      34: goto          48
+      37: aload_0
+      38: getfield      #7                  // Field container1:Lnet/minecraft/world/Container;
+      41: iload_1
+      42: aload_2
+      43: invokeinterface #37,  3           // InterfaceMethod net/minecraft/world/Container.setItem:(ILnet/minecraft/world/item/ItemStack;)V
+      48: return
+
+  public int getMaxStackSize();
+    Code:
+       0: aload_0
+       1: getfield      #7                  // Field container1:Lnet/minecraft/world/Container;
+       4: invokeinterface #41,  1           // InterfaceMethod net/minecraft/world/Container.getMaxStackSize:()I
+       9: ireturn
+
+  public void setChanged();
+    Code:
+       0: aload_0
+       1: getfield      #7                  // Field container1:Lnet/minecraft/world/Container;
+       4: invokeinterface #44,  1           // InterfaceMethod net/minecraft/world/Container.setChanged:()V
+       9: aload_0
+      10: getfield      #13                 // Field container2:Lnet/minecraft/world/Container;
+      13: invokeinterface #44,  1           // InterfaceMethod net/minecraft/world/Container.setChanged:()V
+      18: return
+
+  public boolean stillValid(net.minecraft.world.entity.player.Player);
+    Code:
+       0: aload_0
+       1: getfield      #7                  // Field container1:Lnet/minecraft/world/Container;
+       4: aload_1
+       5: invokeinterface #47,  2           // InterfaceMethod net/minecraft/world/Container.stillValid:(Lnet/minecraft/world/entity/player/Player;)Z
+      10: ifeq          30
+      13: aload_0
+      14: getfield      #13                 // Field container2:Lnet/minecraft/world/Container;
+      17: aload_1
+      18: invokeinterface #47,  2           // InterfaceMethod net/minecraft/world/Container.stillValid:(Lnet/minecraft/world/entity/player/Player;)Z
+      23: ifeq          30
+      26: iconst_1
+      27: goto          31
+      30: iconst_0
+      31: ireturn
+
+  public void startOpen(net.minecraft.world.entity.ContainerUser);
+    Code:
+       0: aload_0
+       1: getfield      #7                  // Field container1:Lnet/minecraft/world/Container;
+       4: aload_1
+       5: invokeinterface #51,  2           // InterfaceMethod net/minecraft/world/Container.startOpen:(Lnet/minecraft/world/entity/ContainerUser;)V
+      10: aload_0
+      11: getfield      #13                 // Field container2:Lnet/minecraft/world/Container;
+      14: aload_1
+      15: invokeinterface #51,  2           // InterfaceMethod net/minecraft/world/Container.startOpen:(Lnet/minecraft/world/entity/ContainerUser;)V
+      20: return
+
+  public void stopOpen(net.minecraft.world.entity.ContainerUser);
+    Code:
+       0: aload_0
+       1: getfield      #7                  // Field container1:Lnet/minecraft/world/Container;
+       4: aload_1
+       5: invokeinterface #55,  2           // InterfaceMethod net/minecraft/world/Container.stopOpen:(Lnet/minecraft/world/entity/ContainerUser;)V
+      10: aload_0
+      11: getfield      #13                 // Field container2:Lnet/minecraft/world/Container;
+      14: aload_1
+      15: invokeinterface #55,  2           // InterfaceMethod net/minecraft/world/Container.stopOpen:(Lnet/minecraft/world/entity/ContainerUser;)V
+      20: return
+
+  public boolean canPlaceItem(int, net.minecraft.world.item.ItemStack);
+    Code:
+       0: iload_1
+       1: aload_0
+       2: getfield      #7                  // Field container1:Lnet/minecraft/world/Container;
+       5: invokeinterface #16,  1           // InterfaceMethod net/minecraft/world/Container.getContainerSize:()I
+      10: if_icmplt     35
+      13: aload_0
+      14: getfield      #13                 // Field container2:Lnet/minecraft/world/Container;
+      17: iload_1
+      18: aload_0
+      19: getfield      #7                  // Field container1:Lnet/minecraft/world/Container;
+      22: invokeinterface #16,  1           // InterfaceMethod net/minecraft/world/Container.getContainerSize:()I
+      27: isub
+      28: aload_2
+      29: invokeinterface #58,  3           // InterfaceMethod net/minecraft/world/Container.canPlaceItem:(ILnet/minecraft/world/item/ItemStack;)Z
+      34: ireturn
+      35: aload_0
+      36: getfield      #7                  // Field container1:Lnet/minecraft/world/Container;
+      39: iload_1
+      40: aload_2
+      41: invokeinterface #58,  3           // InterfaceMethod net/minecraft/world/Container.canPlaceItem:(ILnet/minecraft/world/item/ItemStack;)Z
+      46: ireturn
+
+  public void clearContent();
+    Code:
+       0: aload_0
+       1: getfield      #7                  // Field container1:Lnet/minecraft/world/Container;
+       4: invokeinterface #62,  1           // InterfaceMethod net/minecraft/world/Container.clearContent:()V
+       9: aload_0
+      10: getfield      #13                 // Field container2:Lnet/minecraft/world/Container;
+      13: invokeinterface #62,  1           // InterfaceMethod net/minecraft/world/Container.clearContent:()V
+      18: return
+}
+
