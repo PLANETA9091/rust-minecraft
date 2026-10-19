@@ -2198,6 +2198,69 @@ cow_sound_variant: None,
             app.frame = frame;
             app.clock_total = 6000 + frame;
         }
+        "furnace_lit" => {
+            // THE WORLD WALK'S OWN GOLDEN (the dev-75 round — the
+            // dev-72 world walk's own pixel pin): the stocked furnace
+            // stands UNOPENED (the furnace_pos the None the walk's own
+            // live-skip keeps), the settle ticks the walk the FIRST
+            // tick speaks — the coal the bank ignites, the ore the
+            // bank smelts, the LIT FLIP the world's own kind wears
+            // (FURNACE -> FURNACE_LIT, the emission-13 light the flood
+            // re-speaks, the one re-mesh the walk batches), the front
+            // face the mesher's furnace arm re-renders, the embers the
+            // animate tick the lit cell breathes (the smoke-then-flame
+            // pair the seeded ambient streams compose — the vanilla
+            // FurnaceBlock.animateTick's own walk). THE --BODY LANE
+            // the golden's own look keeps (the south look the yaw-0 +
+            // pitch-12 flags speak — the spawn's own FLAT lane the
+            // seed's terrain keeps south), the furnace the south four
+            // the front-toward-the-player byte wears.
+            app.enter_world();
+            let size = app.offline_world.as_ref().unwrap().size_blocks();
+            let c = size / 2;
+            let px = c; // the spawn column's own line (the south look)
+            let pz = c + 4; // the south four (the flat lane the seed keeps)
+            let cell = {
+                let w = app.offline_world.as_mut().unwrap();
+                // the surface scan DOWN from the spawn surface (the mob
+                // ring's own law — the slope the honest ground keeps)
+                let mut gy = app.spawn_y;
+                while gy > 0 && w.get(px, gy, pz) == crate::world::AIR {
+                    gy -= 1;
+                }
+                w.set(px, gy + 1, pz, crate::world::FURNACE);
+                // THE FRONT-TOWARD-THE-PLAYER BYTE (the placement walk's
+                // own law — the south look's own camera yaw PI the
+                // furnace_facing_byte flip answers: the front face the
+                // camera sees, the lit fire hole the flip re-renders)
+                w.set_variant(
+                    px,
+                    gy + 1,
+                    pz,
+                    crate::world::furnace_facing_byte(std::f32::consts::PI),
+                );
+                (px, gy + 1, pz)
+            };
+            // THE STOCKED BANK the walk reads (the per-cell trio the
+            // dev-69 law keeps: INPUT 0 the ore, FUEL 1 the coal, the
+            // result the zeros — the FurnaceMenu's own slot law; the
+            // registry's own ids the stacks speak, the missing name
+            // the loud verdict keeps). THE UNOPENED CELL the walk's
+            // own words walk (the banked state the tick wears).
+            let wire = |name: &str| {
+                mc_registry::item_id_by_name(name)
+                    .unwrap_or_else(|| panic!("the golden's own stack the registry answers: {name}"))
+            };
+            let mut store = vec![(0i32, 0i32); 3];
+            store[0] = (wire("iron_ore"), 5);
+            store[1] = (wire("coal"), 2);
+            app.furnace_stores.insert(cell, store);
+            // THE NOON PIN (the world arm's own law — the day look the
+            // full-day fold keeps, the noon tracks the sky renders;
+            // the clock the staged frame folds)
+            app.frame = frame;
+            app.clock_total = 6000 + frame;
+        }
         "inventory" => {
             // THE E-KEY SCREEN'S OWN STAGING: the offline world stands
             // first (the mannequin's world beneath), then the store's
@@ -2253,7 +2316,7 @@ cow_sound_variant: None,
             app.clock_total = 6000 + frame;
         }
         other => anyhow::bail!(
-            "unknown screen {other} (loading|title|servers|options|world|worldnight|pause|chest|chest_double|inventory|crafting|creative)"
+            "unknown screen {other} (loading|title|servers|options|world|worldnight|pause|chest|chest_double|furnace_lit|inventory|crafting|creative)"
         ),
     }
 

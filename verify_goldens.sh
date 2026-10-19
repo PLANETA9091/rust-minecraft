@@ -89,6 +89,8 @@ check gui_world_held_swing_320x180 0 --screen world --ui-frame 30 --seed 2026021
 check gui_chest_320x180 0 --screen chest --ui-frame 30 --seed 20260214 --width 320 --height 180
 # --- the double-chest screen (the dev-71 compound's own 9x6 canvas, the partner's rows the head keeps) ---
 check gui_chest_double_320x180 0 --screen chest_double --ui-frame 30 --seed 20260214 --width 320 --height 180
+# --- the lit furnace (the dev-72 world walk's own pin: the stocked furnace the settle ticks ignite, the LIT flip the emission-13 light the embers wear) ---
+check gui_furnace_lit_320x180 0 --screen furnace_lit --body --body-yaw 0 --body-pitch=-12 --ui-frame 30 --settle-ticks 15 --seed 20260214 --width 320 --height 180
 
 echo "== ${pass} passed, ${fail} failed =="
 if [[ "$fail" -gt 0 ]]; then
