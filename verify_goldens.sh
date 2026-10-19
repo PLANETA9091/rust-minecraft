@@ -95,6 +95,8 @@ check gui_furnace_lit_320x180 0 --screen furnace_lit --body --body-yaw 0 --body-
 check gui_furnace_320x180 0 --screen furnace --ui-frame 30 --seed 20260214 --width 320 --height 180
 # --- the placed chest pair (the dev-78 world-side pin: the LEFT/RIGHT pair the mesher's double arms render, the joined body the two latches the plateau edge wears) ---
 check gui_chest_pair_320x180 0 --screen chest_pair --body --body-yaw 0 --body-pitch=-12 --ui-frame 30 --seed 20260214 --width 320 --height 180
+# --- the creative picker (the dev-79 pin: the dev-30 CreativeModeInventoryScreen's own canvas — the 195x136 panel the 14-tab strip wears, the 45-slot palette the building-blocks tab speaks, the hotbar row the demo loadout paints) ---
+check gui_creative_320x180 0 --screen creative --ui-frame 30 --seed 20260214 --width 320 --height 180
 
 echo "== ${pass} passed, ${fail} failed =="
 if [[ "$fail" -gt 0 ]]; then
