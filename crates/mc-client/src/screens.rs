@@ -38960,17 +38960,25 @@ impl App {
                 self.world_quads = Some(crate::mesher::mesh_world(world, None));
             }
             // THE INSTRUMENT'S OWN STEM (the setInstrument walk the
-            // above consult first, the below law the default wears)
+            // above consult first, the below law the default wears —
+            // the MOB_HEAD type the imitate stem the above seat speaks,
+            // the CUSTOM type the below law the stem never answers)
             let imitate = crate::world::above_imitate(above_kind);
-            let stem = imitate
+            let stem_word = match imitate {
+                Some(crate::world::AboveImitate::Stem(s)) => Some(s),
+                _ => None,
+            };
+            let stem = stem_word
                 .unwrap_or_else(|| crate::world::below_instrument(below_kind));
             // THE AIR-ABOVE LAW'S OWN VERDICT (javap playNote
             // pc 13-28 — the worksAboveNoteBlock instruments the
             // imitate family alone wears, every base-block stem the
             // air-above cell demands; the covered note block the
-            // cycle keeps, the silent body the sound skips)
+            // cycle keeps, the silent body the sound skips — the
+            // worksAboveNoteBlock walk the type!=BASE_BLOCK law the
+            // bytecode pc 4-16 keeps: the CUSTOM type the MOB_HEAD
+            // family the above seat shares)
             if above_kind == crate::world::AIR || imitate.is_some() {
-                let pitch = crate::world::note_pitch(note);
                 let ear = self
                     .body
                     .as_ref()
@@ -38981,20 +38989,34 @@ impl App {
                     hit.pos.1 as f64 + 0.5,
                     hit.pos.2 as f64 + 0.5,
                 );
-                let voice_event = crate::world::note_voice(stem);
-                self.sounds.play_voice_at_pan(
-                    self.frame,
-                    &voice_event,
-                    3.0,
-                    pitch,
-                    ear_distance(ear, tx, ty, tz),
-                    ear_pan(ear, yaw, tx, ty, tz),
-                );
+                // THE CUSTOM HEAD'S OWN SILENCE (javap
+                // NoteBlock.triggerEvent pc 93-113 the 26.2 jar — the
+                // `hasCustomSound()` arm true the
+                // `getCustomSoundId(level, pos)` consult demands, the
+                // head's own profile the skull entity carries the
+                // offline palette never keeps — the null the early
+                // `iconst_0; ireturn` wears, the playSeededSound call
+                // pc 134-182 the walk never reaches; the MOB_HEAD
+                // family the imitate voice the stem's own event
+                // speaks)
+                if !matches!(imitate, Some(crate::world::AboveImitate::Custom)) {
+                    let pitch = crate::world::note_pitch(note);
+                    let voice_event = crate::world::note_voice(stem);
+                    self.sounds.play_voice_at_pan(
+                        self.frame,
+                        &voice_event,
+                        3.0,
+                        pitch,
+                        ear_distance(ear, tx, ty, tz),
+                        ear_pan(ear, yaw, tx, ty, tz),
+                    );
+                }
                 // THE GAME EVENT'S OWN POST (javap playNote
                 // pc 40-47 — the GameEvent.NOTE_BLOCK_PLAY the sculk
                 // lane's frequency-10 row the vibration table banks,
                 // the note cell's own center the dispatch's pos
-                // wears)
+                // wears — the server walk the post the sound's own
+                // custom-silence never skips)
                 if self.offline_world.is_some() {
                     self.dispatch_vibration_event(
                         "note_block_play",
@@ -106443,7 +106465,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            749,
+            756,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -106524,7 +106546,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            749,
+            756,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -106826,7 +106848,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            749,
+            756,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -110756,7 +110778,7 @@ cow_sound_variant: None,
         // #texture ref banks)
         assert_eq!(
             atlas::N_KINDS,
-            749,
+            756,
             "the palette the weighted plates' own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
@@ -110976,7 +110998,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            749,
+            756,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
@@ -111253,7 +111275,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            749,
+            756,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
@@ -111369,7 +111391,7 @@ cow_sound_variant: None,
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE, 318);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, 319);
         assert_eq!(w::END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 749, "the palette the weighted rows bank");
+        assert_eq!(atlas::N_KINDS, 756, "the palette the weighted rows bank");
         for (off, on, name) in [
             (
                 w::LIGHT_WEIGHTED_PRESSURE_PLATE,
@@ -112483,7 +112505,7 @@ cow_sound_variant: None,
         assert_eq!(w::END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-            749,
+            756,
             "the palette the weighted plates' own rows bank"
         );
         for (off, on, name, wooden) in [

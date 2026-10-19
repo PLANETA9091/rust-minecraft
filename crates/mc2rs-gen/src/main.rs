@@ -355,6 +355,22 @@ enum Cmd {
         #[arg(long, default_value = ".")]
         out: String,
     },
+    /// Re-emit mc-registry/src/generated/atlas.rs (the REAL texture atlas:
+    /// blockstates -> models -> PNGs) from a LOCAL client jar — the offline
+    /// half of the atlas arc (the dev-80 round): the palette-extension
+    /// rounds the sandbox the network never serves — no manifest fetch, no
+    /// jar download; the sha1 the local jar's own bytes wear (the same pin
+    /// the online atlas_cmd banks).
+    AtlasJar {
+        #[arg(long)]
+        version: String,
+        /// Path to the official client jar (e.g. tools/client.jar).
+        #[arg(long)]
+        jar: String,
+        /// Workspace root (contains crates/).
+        #[arg(long, default_value = ".")]
+        out: String,
+    },
     /// Download official game assets into a local cache (requires owning MC).
     Assets {
         #[arg(long)]
@@ -506,6 +522,15 @@ fn main() -> Result<()> {
                 .with_context(|| format!("workspace root {out} not found"))?;
             let path = write_worldgen(&root, &bytes)?;
             println!("worldgen ({version}): {}", path.display());
+        }
+        Cmd::AtlasJar { version, jar, out } => {
+            let bytes = std::fs::read(&jar).with_context(|| format!("read jar {jar}"))?;
+            let root = Path::new(&out)
+                .canonicalize()
+                .with_context(|| format!("workspace root {out} not found"))?;
+            let sha = util::sha1_hex(&bytes);
+            write_atlas(&root, &version, &sha, &bytes)?;
+            println!("atlas-jar ({version}): sha1 {} (the local jar's own bytes)", &sha[..8]);
         }
         Cmd::Skin { version, jar, out } => {
             let bytes = std::fs::read(&jar).with_context(|| format!("read jar {jar}"))?;

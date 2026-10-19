@@ -12,3 +12,4 @@ gen-report-tmp/
 # <client.jar> <class-slash-path> > scripts/<name>.txt
 scripts/*.txt
 tools/
+scripts/scratch/

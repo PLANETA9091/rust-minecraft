@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 749] = [
+pub const RUNTIME_PALETTE: [&str; 756] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -2266,6 +2266,42 @@ pub const RUNTIME_PALETTE: [&str; 749] = [
     // parent wears — the x/y turns the apply's own rotations bank,
     // the faces the ONE model every state shares]).
     "barrel",
+    // THE MOB HEADS' OWN SEVEN SEATS (the dev-80 round — the floor
+    // kinds the vanilla registration order the block_dig table's own
+    // rows banks: skeleton_skull, wither_skeleton_skull, zombie_head,
+    // player_head, creeper_head, dragon_head, piglin_head — the
+    // wall pair the same clinit window registers the floor kinds'
+    // tail keeps [the wall kinds the future round seats, the floor
+    // vocabulary the note block's above consult alone reads]). The
+    // NOTE BLOCK'S OWN ABOVE LAW the seats serve (javap
+    // NoteBlock.setInstrument pc 182-190 the 682d probe banks — the
+    // Properties rows: SKELETON_SKULL -> SKELETON,
+    // WITHER_SKELETON_SKULL -> WITHER_SKELETON, ZOMBIE_HEAD ->
+    // ZOMBIE, PLAYER_HEAD -> CUSTOM_HEAD, CREEPER_HEAD -> CREEPER,
+    // DRAGON_HEAD -> DRAGON, PIGLIN_HEAD -> PIGLIN), the stems the
+    // NoteBlockInstrument clinit carries (the MOB_HEAD type the
+    // imitate family wears: "imitate.skeleton",
+    // "imitate.wither_skeleton", "imitate.zombie", "imitate.creeper",
+    // "imitate.ender_dragon", "imitate.piglin" — the sounds.json rows
+    // the client's voice lane banks; the CUSTOM_HEAD the CUSTOM type
+    // wears, the UI_BUTTON_CLICK holder the clinit row banks — the
+    // head's own profile the getCustomSoundId walk reads, the null
+    // the offline palette never carries). THE BE-RENDERED FAMILY'S
+    // OWN PLACEHOLDER (the chest precedent's law the family shares):
+    // the blockstate's "" variant -> the bare block/skull model the
+    // PARTICLE row alone carries (block/soul_sand — the seven
+    // blockstates the ONE model every head wears), the six-face walk
+    // the chain demands would bail — the particle stem the resolve
+    // walk's placeholder banks, the tile the EXISTING soul_sand row
+    // re-wears (the ZERO-or-append tail keeps, 870 -> 870 the tile
+    // count never moves). The face the BE lane renders (the
+    // entity/skeleton/skeleton sheets the SkullBlockEntityRenderer
+    // serves) the mini-cube mesher lane the future round keeps —
+    // the palette seats the kind vocabulary + the above consult the
+    // note block's law reads, the mesher the generic full-cube
+    // verdict every unseated lane wears.
+    "skeleton_skull", "wither_skeleton_skull", "zombie_head",
+    "player_head", "creeper_head", "dragon_head", "piglin_head",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -2308,6 +2344,24 @@ fn is_chest_family(block: &str) -> bool {
             | "waxed_exposed_copper_chest"
             | "waxed_weathered_copper_chest"
             | "waxed_oxidized_copper_chest"
+    )
+}
+
+/// THE MOB HEADS' OWN CENSUS (the dev-80 round): the seven floor kinds
+/// the palette tail banks — the placeholder arm the BE-rendered family
+/// the blockstate's bare-particle model never resolves (the seven
+/// blockstates the ONE block/skull model the particle row alone
+/// carries — the six-face walk the chain demands would bail).
+fn is_skull_family(block: &str) -> bool {
+    matches!(
+        block,
+        "skeleton_skull"
+            | "wither_skeleton_skull"
+            | "zombie_head"
+            | "player_head"
+            | "creeper_head"
+            | "dragon_head"
+            | "piglin_head"
     )
 }
 
@@ -3097,6 +3151,24 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             // face_tiles overwrite keeps (the oak planks the particle
             // row the dummy model carries).
             faces.push(resolve_flat_stem("oak_planks", false));
+            continue;
+        }
+        if is_skull_family(block) {
+            // THE MOB HEADS' OWN PLACEHOLDER (the dev-80 round): the
+            // BE-rendered family the blockstate's bare model never
+            // resolves (all seven blockstates' "" variant -> the ONE
+            // block/skull model — the PARTICLE row alone the model
+            // carries, block/soul_sand the jar banks — the six-face
+            // walk the chain demands would bail). The placeholder the
+            // particle row the dummy model carries (the chest arm's
+            // own law the family shares — resolve_flat_stem the
+            // EXISTING soul_sand tile re-wears, the ZERO-or-append
+            // tail the tile count keeps). The face the BE lane
+            // renders (the entity sheets the SkullBlockEntityRenderer
+            // serves) the mini-cube mesher lane the future round
+            // keeps — the placeholder the six slots the kind
+            // vocabulary's own row banks.
+            faces.push(resolve_flat_stem("soul_sand", false));
             continue;
         }
         if block == "leaf_litter" {
@@ -6068,11 +6140,32 @@ mod tests {
         // block/furnace_on the facing=north,lit=true row answers)
         assert_eq!(RUNTIME_PALETTE[79], "furnace");
         assert_eq!(RUNTIME_PALETTE[80], "furnace_lit");
+        // THE MOB HEADS' OWN SEVEN SEATS (the dev-80 round): the
+        // palette tail the vanilla registration order the block_dig
+        // rows banks — the floor kinds the note block's above consult
+        // alone reads, the wall pair the future round seats
+        assert_eq!(RUNTIME_PALETTE[748], "barrel");
+        assert_eq!(RUNTIME_PALETTE[749], "skeleton_skull");
+        assert_eq!(RUNTIME_PALETTE[750], "wither_skeleton_skull");
+        assert_eq!(RUNTIME_PALETTE[751], "zombie_head");
+        assert_eq!(RUNTIME_PALETTE[752], "player_head");
+        assert_eq!(RUNTIME_PALETTE[753], "creeper_head");
+        assert_eq!(RUNTIME_PALETTE[754], "dragon_head");
+        assert_eq!(RUNTIME_PALETTE[755], "piglin_head");
+        // the census's own verdict: the seven seats the skull family
+        // the placeholder arm answers, the barrel the generic walk wears
+        assert!(is_skull_family("skeleton_skull") && is_skull_family("piglin_head"));
+        assert!(!is_skull_family("barrel") && !is_skull_family("skeleton_wall_skull"));
         // the shared-row law the registry-name walk speaks: every
         // stage the BASE "cake" row the dig/drop/sound/item lanes keep
         let names = registry_names();
         assert_eq!(names[67], "cake");
         assert_eq!(names[73], "cake");
+        // THE HEADS' OWN NAME ROWS (the registry name the palette name
+        // IS — no suffix strip the family's plain names wear)
+        assert_eq!(names[749], "skeleton_skull");
+        assert_eq!(names[752], "player_head");
+        assert_eq!(names[755], "piglin_head");
         assert_eq!(FACE_KEYS, ["east", "west", "up", "down", "south", "north"]);
     }
 
