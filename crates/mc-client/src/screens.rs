@@ -7407,6 +7407,23 @@ pub struct App {
     /// screens keep; the chest_open_cell lid lane the barrel's own
     /// bit wears stays the separate walk).
     pub container_open_cell: Option<(i32, i32, i32)>,
+    /// THE FURNACES' OWN PER-CELL STORES (the dev-69 round — the
+    /// placed furnace cells the THREE block-entity slots the vanilla
+    /// FurnaceMenu ctor speaks: INPUT 0, FUEL 1, RESULT 2 — the cell
+    /// the map's own key wears, the trio the value the GUI's edits
+    /// ride home to, the same per-cell law the chest grid speaks).
+    /// open_furnace LOADS the cell's trio (the fresh 3-slot vec the
+    /// first open inserts), the close arm FLUSHES the edited
+    /// furnace_slots back (furnace_store_flush), the break lane
+    /// SPILLS the entry (furnace_store_spilled — the stocked slots
+    /// the item entities the break releases, the dropContents arm's
+    /// own law the chest's spill speaks).
+    pub furnace_stores: std::collections::HashMap<(i32, i32, i32), Vec<(i32, i32)>>,
+    /// THE OPEN FURNACE'S OWN CELL (the open the key banks, the
+    /// flush the key takes home — the None the live-lane opens and
+    /// the closed screens keep, the networked trio the server's own
+    /// authority owns).
+    pub furnace_open_cell: Option<(i32, i32, i32)>,
     /// THE FURNACE'S OWN LIVE SHAPE (the menu type 14 lane's own
     /// projection — the menu's 39 slots as (item_id, count) pairs:
     /// input 0, fuel 1, result 2, the standard rows 3..39 the
@@ -8581,29 +8598,39 @@ pub const CONTAINERS_DATA_VERSION: i32 = 4903;
 /// compound the hotbar's own law wears, the stocked slot the
 /// "id"/"count" pair speaks — the vanilla `Slot` index the list's
 /// own position answers, the dropContents walk's 0..27 order kept).
-pub fn container_stores_to_nbt(
-    stores: &std::collections::HashMap<(i32, i32, i32), Vec<(i32, i32)>>,
-) -> mc_protocol::nbt::Nbt {
-    let slot_compound = |(id, count): (i32, i32)| -> mc_protocol::nbt::Nbt {
-        let name = if id == 0 {
-            None
-        } else {
-            mc_registry::item_name(id).map(|n| format!("minecraft:{n}"))
-        };
-        match name {
-            Some(id) => mc_protocol::nbt::Nbt::Compound(vec![
-                ("id".to_string(), mc_protocol::nbt::Nbt::String(id)),
-                ("count".to_string(), mc_protocol::nbt::Nbt::Int(count)),
-            ]),
-            None => mc_protocol::nbt::Nbt::Compound(vec![]),
-        }
+/// THE DEV-69 ROUND the shared walk the caps speak: the slot walk
+/// and the per-cell entries walk the 27-grid and the 3-trio banks
+/// the SAME laws wear — the cap the only word the two menus speak
+/// (the chest the ChestMenu.threeRows keeps, the furnace the
+/// FurnaceMenu's INPUT/FUEL/RESULT trio wears).
+fn store_slot_compound((id, count): (i32, i32)) -> mc_protocol::nbt::Nbt {
+    let name = if id == 0 {
+        None
+    } else {
+        mc_registry::item_name(id).map(|n| format!("minecraft:{n}"))
     };
+    match name {
+        Some(id) => mc_protocol::nbt::Nbt::Compound(vec![
+            ("id".to_string(), mc_protocol::nbt::Nbt::String(id)),
+            ("count".to_string(), mc_protocol::nbt::Nbt::Int(count)),
+        ]),
+        None => mc_protocol::nbt::Nbt::Compound(vec![]),
+    }
+}
+
+/// THE PER-CELL ENTRIES' OWN WALK (the shared lane the two banks
+/// wear): the BTree ordering the deterministic byte order keeps —
+/// the file the same cells the same order the every save wears (the
+/// test matrix's own determinism the map's hash order never serves),
+/// the `cap` the bank's own width speaks (the 27 the chest grid
+/// keeps, the 3 the furnace trio wears).
+fn store_entries_list(
+    stores: &std::collections::HashMap<(i32, i32, i32), Vec<(i32, i32)>>,
+    cap: usize,
+) -> Vec<mc_protocol::nbt::Nbt> {
     let mut entries = Vec::new();
-    // the BTree walk the deterministic byte order keeps — the file
-    // the same cells the same order the every save wears (the test
-    // matrix's own determinism the map's hash order never serves)
     for ((x, y, z), slots) in stores.iter().collect::<std::collections::BTreeMap<_, _>>() {
-        let items = slots.iter().copied().map(slot_compound).collect();
+        let items = slots.iter().copied().take(cap).map(store_slot_compound).collect();
         entries.push(mc_protocol::nbt::Nbt::Compound(vec![
             ("x".to_string(), mc_protocol::nbt::Nbt::Int(*x)),
             ("y".to_string(), mc_protocol::nbt::Nbt::Int(*y)),
@@ -8611,29 +8638,34 @@ pub fn container_stores_to_nbt(
             ("Items".to_string(), mc_protocol::nbt::Nbt::List(items)),
         ]));
     }
-    mc_protocol::nbt::Nbt::Compound(vec![
-        (
-            "DataVersion".to_string(),
-            mc_protocol::nbt::Nbt::Int(CONTAINERS_DATA_VERSION),
-        ),
-        ("entries".to_string(), mc_protocol::nbt::Nbt::List(entries)),
-    ])
+    entries
+}
+
+/// THE BANK'S OWN LIST WRAPPER (the dev-69 round the file root's
+/// two banks the same walk serves — the "entries" list the chest
+/// grid wears, the "furnaces" list the trio keeps, the DataVersion
+/// header the caller's root pins).
+pub fn container_bank_to_nbt(
+    stores: &std::collections::HashMap<(i32, i32, i32), Vec<(i32, i32)>>,
+    cap: usize,
+) -> mc_protocol::nbt::Nbt {
+    mc_protocol::nbt::Nbt::List(store_entries_list(stores, cap))
 }
 
 /// THE FILE ROOT'S OWN STORES — the tolerant walk the hotbar parse
 /// wears (the missing key the honest skip answers, the unknown name
 /// the empty stack keeps — never a guessed id, the "count" the
 /// fallback-1 field the absent entry keeps, the over-long list the
-/// 27-slot cap truncates, the short list the (0,0) pad fills — the
-/// fresh grid's own shape the menu law wears). The x/y/z triple the
-/// absent key's entry skip keeps — never a guessed cell.
-pub fn container_stores_from_nbt(
-    value: &mc_protocol::nbt::Nbt,
+/// cap truncates, the short list the (0,0) pad fills — the fresh
+/// grid's own shape the menu law wears). The x/y/z triple the
+/// absent key's entry skip keeps — never a guessed cell. THE
+/// DEV-69 ROUND the cap the two banks share: the 27 the chest
+/// parse keeps, the 3 the furnace trio wears.
+fn parse_stores_list(
+    entries: &[mc_protocol::nbt::Nbt],
+    cap: usize,
 ) -> std::collections::HashMap<(i32, i32, i32), Vec<(i32, i32)>> {
     let mut stores = std::collections::HashMap::new();
-    let Some(mc_protocol::nbt::Nbt::List(entries)) = value.get("entries") else {
-        return stores;
-    };
     for entry in entries {
         let mc_protocol::nbt::Nbt::Compound(fields) = entry else {
             continue;
@@ -8650,8 +8682,8 @@ pub fn container_stores_from_nbt(
         else {
             continue;
         };
-        let mut slots = vec![(0i32, 0i32); 27];
-        for (i, item) in items.iter().enumerate().take(27) {
+        let mut slots = vec![(0i32, 0i32); cap];
+        for (i, item) in items.iter().enumerate().take(cap) {
             let mc_protocol::nbt::Nbt::Compound(item_fields) = item else {
                 continue;
             };
@@ -8676,6 +8708,27 @@ pub fn container_stores_from_nbt(
         stores.insert((x, y, z), slots);
     }
     stores
+}
+
+pub fn container_stores_from_nbt(
+    value: &mc_protocol::nbt::Nbt,
+) -> std::collections::HashMap<(i32, i32, i32), Vec<(i32, i32)>> {
+    let Some(mc_protocol::nbt::Nbt::List(entries)) = value.get("entries") else {
+        return std::collections::HashMap::new();
+    };
+    parse_stores_list(entries, 27)
+}
+
+/// THE FURNACE BANK'S OWN PARSE (the dev-69 round — the "furnaces"
+/// list the trio cap wears: the same tolerant walk the chest parse
+/// serves, the missing/corrupt list the honest empties keep).
+pub fn furnace_stores_from_nbt(
+    value: &mc_protocol::nbt::Nbt,
+) -> std::collections::HashMap<(i32, i32, i32), Vec<(i32, i32)>> {
+    let Some(mc_protocol::nbt::Nbt::List(entries)) = value.get("furnaces") else {
+        return std::collections::HashMap::new();
+    };
+    parse_stores_list(entries, 3)
 }
 
 impl App {
@@ -8892,6 +8945,8 @@ impl App {
             container_stores_file: None,
             container_stores_loaded: false,
             container_open_cell: None,
+            furnace_stores: std::collections::HashMap::new(),
+            furnace_open_cell: None,
             furnace_slots: vec![(0, 0); 39],
             furnace_is_live: false,
             furnace_live_window: None,
@@ -13529,6 +13584,11 @@ impl App {
                         // entities the dig releases, the entry the walk
                         // dies with)
                         self.container_store_spilled(pos);
+                        // THE FURNACE'S OWN SPILL (the dev-69 round —
+                        // the broken furnace's stocked trio the same
+                        // removal law releases, the entry the walk
+                        // dies with)
+                        self.furnace_store_spilled(pos);
                     }
                 }
                 if beat {
@@ -18693,6 +18753,14 @@ impl App {
             }
             self.furnace_carried = (0, 0);
         }
+        // THE STORE'S OWN FLUSH (the dev-69 round — the close walk's
+        // edited trio the per-cell bank rides home: the open the
+        // furnace_open_cell key banks, the close the furnace_slots'
+        // three block-entity cells the map entry rides home to, the
+        // disk write the same lane banks — the restart the stocked
+        // trio the reopen wears; the None the live-lane opens keep,
+        // the networked furnace the server's own authority owns).
+        self.furnace_store_flush();
         self.open(ScreenKind::World);
     }
 
@@ -20576,6 +20644,25 @@ impl App {
                 ..Default::default()
             };
         }
+        // THE CELL'S OWN THREE SLOTS (the dev-69 round — the same
+        // per-cell law the chest grid speaks: the store the entry
+        // LOADS, the fresh trio the first open inserts — the
+        // FurnaceMenu law INPUT 0 FUEL 1 RESULT 2 the vanilla ctor
+        // wears; the DIFFERENT cell the reset branch the banked trio
+        // reads, the SAME furnace the retention keeps — the sim's own
+        // block entity the world remembers, reopening continues the
+        // burn; the disk bank's lazy load the first access rides).
+        self.container_stores_load_once();
+        if self.furnace_pos != Some(pos) {
+            let store = self
+                .furnace_stores
+                .entry(pos)
+                .or_insert_with(|| vec![(0i32, 0i32); 3]);
+            for i in 0..3 {
+                self.furnace_slots[i] = store[i];
+            }
+        }
+        self.furnace_open_cell = Some(pos);
         // THE STANDARD ROWS' OWN PROJECTION (the menu's
         // addStandardInventorySlots(8, 84) walk — the player's own
         // store the 36 rows mirror: the main grid items 9..35 ride
@@ -20775,6 +20862,67 @@ impl App {
         // THE DISK BANK'S OWN DEATH RIDE (the dev-68 round — the
         // entry's removal the file write banks: the restart the spill
         // never resurrects, the emptied key the banked walk answers)
+        self.container_stores_file_save();
+    }
+
+    /// THE FURNACE'S OWN FLUSH (the dev-69 round — the close walk's
+    /// edited trio the per-cell bank rides home: the open the
+    /// furnace_open_cell key banks, the close the furnace_slots'
+    /// three block-entity cells (INPUT 0 FUEL 1 RESULT 2 the
+    /// FurnaceMenu law) the map entry rides home to, the disk write
+    /// the container_stores_file_save lane banks. The None the
+    /// live-lane opens and the closed screens keep — the networked
+    /// furnace the server's own authority owns, the local map the
+    /// key never wears).
+    pub fn furnace_store_flush(&mut self) {
+        self.container_stores_load_once();
+        if let Some(pos) = self.furnace_open_cell.take() {
+            let trio: Vec<(i32, i32)> = self.furnace_slots.iter().copied().take(3).collect();
+            self.furnace_stores.insert(pos, trio);
+            self.container_stores_file_save();
+        }
+    }
+
+    /// THE FURNACE'S OWN SPILL (the dev-69 round — the same removal
+    /// law the chest's spill speaks: javap 26.2
+    /// BlockEntity.preRemoveSideEffects the dropContents arm the
+    /// block's death rides, the trio's non-empty slots the
+    /// [`crate::drops::ItemDrop::spawn_container_spill`] walk
+    /// releases — the stocked furnace's break the floor the items
+    /// wear). THE DISK BANK'S OWN LAZY LOAD: the break-after-boot the
+    /// banked trio the spill releases (the store access the
+    /// once-flag's parse rides). THE NETWORKED WORLD'S OWN SPLIT: the
+    /// live session the store never wears — the entities the server's
+    /// own stream owns, the guard the honest belt keeps. The misses
+    /// the map's own absence the no-op keeps; the entry dies with the
+    /// cell either way, the open cell the walk releases (the GUI's
+    /// own key dies with the entry), the file the death ride banks.
+    pub fn furnace_store_spilled(&mut self, pos: (i32, i32, i32)) {
+        self.container_stores_load_once();
+        let store = self.furnace_stores.remove(&pos);
+        if !self.world_is_network {
+            if let Some(store) = store {
+                for (item, count) in store {
+                    if count <= 0 {
+                        continue; // the dropContents walk's isEmpty guard
+                    }
+                    let chunks = crate::drops::ItemDrop::spawn_container_spill(
+                        self.next_drop_id,
+                        item,
+                        count,
+                        pos.0,
+                        pos.1,
+                        pos.2,
+                        &mut self.drop_rng,
+                    );
+                    self.next_drop_id += chunks.len() as i32;
+                    self.drops.extend(chunks);
+                }
+            }
+        }
+        if self.furnace_open_cell == Some(pos) {
+            self.furnace_open_cell = None;
+        }
         self.container_stores_file_save();
     }
 
@@ -28386,6 +28534,11 @@ impl App {
                 mc_protocol::nbt::read_file_nbt(&mut bytes.as_slice())
             {
                 self.container_stores.extend(container_stores_from_nbt(&root));
+                // THE FURNACE BANK'S OWN PARSE (the dev-69 round — the
+                // same read the trio bank answers: the missing list
+                // the honest empties keep, the extend law the
+                // in-memory entry never clobbers)
+                self.furnace_stores.extend(furnace_stores_from_nbt(&root));
             }
         }
     }
@@ -28393,14 +28546,31 @@ impl App {
     /// THE STORES' OWN SAVE WALK (the dev-68 round — the hotbar lane's
     /// `HotbarManager.save()` pc 199 walk the flush/spill banks ride:
     /// the `NbtIo.write(compound, optionsFile)` uncompressed lane the
-    /// same framing speaks). THE NONE BOOT the no-game-dir stand-in
+    /// same framing speaks). THE DEV-69 ROUND the dual root the one
+    /// file wears: the "entries" list the chest grid keeps, the
+    /// "furnaces" list the trio bank rides — the same DataVersion
+    /// header the era pins, the BTree order the deterministic bytes
+    /// keep. THE NONE BOOT the no-game-dir stand-in
     /// keeps, the failure the silent keep answers — the in-memory map
     /// the truth stays, the vanilla log the error walk keeps.
     fn container_stores_file_save(&self) {
         let Some(path) = &self.container_stores_file else {
             return;
         };
-        let root = container_stores_to_nbt(&self.container_stores);
+        let root = mc_protocol::nbt::Nbt::Compound(vec![
+            (
+                "DataVersion".to_string(),
+                mc_protocol::nbt::Nbt::Int(CONTAINERS_DATA_VERSION),
+            ),
+            (
+                "entries".to_string(),
+                container_bank_to_nbt(&self.container_stores, 27),
+            ),
+            (
+                "furnaces".to_string(),
+                container_bank_to_nbt(&self.furnace_stores, 3),
+            ),
+        ]);
         let mut bytes = Vec::new();
         if mc_protocol::nbt::write_file_nbt("", &root, &mut bytes).is_ok() {
             let _ = std::fs::write(path, &bytes);
@@ -57904,6 +58074,214 @@ mod tests {
         assert!(
             bare.container_stores.is_empty() && bare.container_stores_loaded,
             "the NONE boot the flag banks, the map stays"
+        );
+        let _ = std::fs::remove_file(&file);
+    }
+
+    /// THE FURNACES' OWN PER-CELL STORE (the dev-69 round — the same
+    /// session lane the chest grid speaks: the open the cell's trio
+    /// loads (the fresh 3-slot vec the first open inserts — the
+    /// FurnaceMenu law INPUT 0 FUEL 1 RESULT 2), the GUI's edits the
+    /// close flush banks, the reopen the SAME stacks wears (the
+    /// store's trio the fresh open reads), the DIFFERENT cell the
+    /// fresh trio keeps — the one furnace's stocks the other's store
+    /// never touches.
+    #[test]
+    fn the_furnaces_own_store_the_edits_the_reopen_the_same_stacks_bank() {
+        let mut app = App::new(11);
+        app.enter_world();
+        let wire_id_of = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        let cell = (c, surface + 1, c);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(cell.0, cell.1, cell.2, crate::world::FURNACE);
+        // THE FIRST OPEN (the fresh trio the store inserts, the open
+        // cell the key banks)
+        app.open_furnace(cell);
+        assert!(app.furnace_stores.contains_key(&cell), "the fresh trio banks");
+        assert!(app.furnace_open_cell == Some(cell), "the open cell the key wears");
+        // THE EDITS (the three block-entity slots the FurnaceMenu law
+        // wears — input rides in, fuel rides in)
+        app.furnace_slots[0] = (wire_id_of("raw_iron"), 5);
+        app.furnace_slots[1] = (wire_id_of("coal"), 3);
+        // THE CLOSE the flush banks
+        app.on_escape();
+        assert_eq!(app.furnace_stores[&cell][0], (wire_id_of("raw_iron"), 5));
+        assert_eq!(app.furnace_stores[&cell][1], (wire_id_of("coal"), 3));
+        assert!(app.furnace_open_cell.is_none(), "the close the key takes home");
+        // THE DIFFERENT CELL the fresh trio keeps (the second furnace
+        // the fresh 3-slot vec inserts — the first's stocks the
+        // second's store never wears)
+        let cell2 = (c, surface + 1, c + 2);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(cell2.0, cell2.1, cell2.2, crate::world::FURNACE);
+        app.open_furnace(cell2);
+        assert_eq!(
+            app.furnace_slots[0],
+            (0, 0),
+            "the different cell the fresh trio keeps"
+        );
+        app.on_escape();
+        // THE REOPEN the same stacks wear (the store's trio the fresh
+        // open reads — the first furnace's stocks the bank answers)
+        app.open_furnace(cell);
+        assert_eq!(
+            app.furnace_slots[0],
+            (wire_id_of("raw_iron"), 5),
+            "the banked input the reopen wears"
+        );
+        assert_eq!(
+            app.furnace_slots[1],
+            (wire_id_of("coal"), 3),
+            "the banked fuel the reopen wears"
+        );
+        app.on_escape();
+    }
+
+    /// THE FURNACE BANK'S OWN DISK (the dev-69 round — the same disk
+    /// law the chest grid speaks: the flush's file write the trio
+    /// banks, the file the "furnaces" list the 3-slot compounds keeps
+    /// (the stocked slot the minecraft: pair wears, the empty slots
+    /// the OPTIONAL empties), the RESTART the fresh app the banked
+    /// trio the reopen wears, the break-after-boot the banked
+    /// contents the spill releases — the REAL Minecraft law the
+    /// restart keeps).
+    #[test]
+    fn the_furnace_bank_the_disk_the_restart_the_same_stacks_wear() {
+        let dir = std::env::temp_dir().join(format!("mc2rs-containers-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("the temp dir");
+        let file = dir.join("containers-furnace.nbt");
+        let _ = std::fs::remove_file(&file);
+        let wire_id_of = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        // THE FIRST SESSION: the edits the close bank — the flush the
+        // file write rides home
+        let mut app = App::new(11);
+        app.enter_world();
+        app.container_stores_file = Some(file.clone());
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        let cell = (c, surface + 1, c);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(cell.0, cell.1, cell.2, crate::world::FURNACE);
+        app.open_furnace(cell);
+        app.furnace_slots[0] = (wire_id_of("raw_iron"), 5);
+        app.furnace_slots[1] = (wire_id_of("coal"), 3);
+        app.furnace_slots[2] = (wire_id_of("iron_ingot"), 2);
+        app.on_escape();
+        assert!(file.exists(), "the flush the file write banks");
+        // THE FILE'S OWN SHAPE (the dual root the one file wears: the
+        // "furnaces" list the trio keeps, the "entries" list the
+        // chest bank stays empty, the DataVersion header the era
+        // pins)
+        let bytes = std::fs::read(&file).expect("the banked file reads");
+        let (_, root) =
+            mc_protocol::nbt::read_file_nbt(&mut bytes.as_slice()).expect("the parse serves");
+        assert_eq!(
+            root.get("DataVersion").and_then(|v| v.as_i32()),
+            Some(CONTAINERS_DATA_VERSION),
+            "the header the era banks"
+        );
+        let furnaces = root
+            .get("furnaces")
+            .and_then(|v| v.as_list())
+            .expect("the furnaces list");
+        assert_eq!(furnaces.len(), 1, "the one stocked cell rides");
+        let entry = &furnaces[0];
+        assert_eq!(entry.get("x").and_then(|v| v.as_i32()), Some(cell.0));
+        assert_eq!(entry.get("y").and_then(|v| v.as_i32()), Some(cell.1));
+        assert_eq!(entry.get("z").and_then(|v| v.as_i32()), Some(cell.2));
+        let items = entry.get("Items").and_then(|v| v.as_list()).expect("the Items list");
+        assert_eq!(items.len(), 3, "the 3-slot trio the list keeps");
+        assert!(
+            items[0].get("id").is_some(),
+            "the stocked input the compound wears"
+        );
+        assert_eq!(
+            items[0].get("id").and_then(|v| v.as_str()),
+            Some("minecraft:raw_iron"),
+            "the input the name bridge wears"
+        );
+        assert_eq!(items[0].get("count").and_then(|v| v.as_i32()), Some(5));
+        assert_eq!(
+            items[1].get("id").and_then(|v| v.as_str()),
+            Some("minecraft:coal"),
+            "the fuel the name bridge wears"
+        );
+        assert_eq!(items[1].get("count").and_then(|v| v.as_i32()), Some(3));
+        assert_eq!(
+            items[2].get("id").and_then(|v| v.as_str()),
+            Some("minecraft:iron_ingot"),
+            "the result the name bridge wears"
+        );
+        let entries = root
+            .get("entries")
+            .and_then(|v| v.as_list())
+            .expect("the entries list");
+        assert!(entries.is_empty(), "the chest bank the furnace ops never wear");
+        // THE RESTART: the fresh app the same game dir carries — the
+        // first open the once-flag's lazy read speaks, the banked
+        // trio the reopen wears
+        let mut fresh = App::new(11);
+        fresh.enter_world();
+        fresh.container_stores_file = Some(file.clone());
+        fresh
+            .offline_world
+            .as_mut()
+            .unwrap()
+            .set(cell.0, cell.1, cell.2, crate::world::FURNACE);
+        fresh.open_furnace(cell);
+        assert_eq!(
+            fresh.furnace_slots[0],
+            (wire_id_of("raw_iron"), 5),
+            "the banked input the restart wears"
+        );
+        assert_eq!(
+            fresh.furnace_slots[1],
+            (wire_id_of("coal"), 3),
+            "the banked fuel the restart wears"
+        );
+        fresh.on_escape();
+        // THE BREAK-AFTER-RESTART (the stocked furnace's death the
+        // floor the items wear — the spill the banked trio releases,
+        // the entry's removal the file's death ride banks)
+        fresh.furnace_store_spilled(cell);
+        assert!(
+            !fresh.drops.is_empty(),
+            "the banked contents the spill wears"
+        );
+        assert!(
+            !fresh.furnace_stores.contains_key(&cell),
+            "the store the entry's death keeps"
+        );
+        let bytes = std::fs::read(&file).expect("the death ride reads");
+        let (_, root) =
+            mc_protocol::nbt::read_file_nbt(&mut bytes.as_slice()).expect("the parse serves");
+        let furnaces = root
+            .get("furnaces")
+            .and_then(|v| v.as_list())
+            .expect("the furnaces list");
+        assert!(
+            furnaces.is_empty(),
+            "the death ride the emptied bank keeps"
         );
         let _ = std::fs::remove_file(&file);
     }
