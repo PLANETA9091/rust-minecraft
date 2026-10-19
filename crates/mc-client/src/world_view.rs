@@ -3064,14 +3064,35 @@ pub fn predict_pickup_right(slot: (i32, i32), carried: (i32, i32)) -> ((i32, i32
 /// documented ITEM_MAX_STACK_DEFAULT 64 — the server repairs any
 /// overfill; the corrections replace the belief wholesale).
 pub fn predict_quick_move(slots: &[(i32, i32)], src: usize) -> Vec<(usize, (i32, i32))> {
+    predict_quick_move_grid(slots, src, 27)
+}
+
+/// THE WIDE GRID'S OWN QUICK MOVE (the dev-71 round — the same walk
+/// the 27-slot shape pins, the container rows the COUNT names): the
+/// double chest's own 54-slot compound the `grid` boundary wears —
+/// the grid 0..grid feeds the player rows from their END backwards
+/// (the hotbar first), the player rows feed the grid 0 forward, the
+/// two passes the same merge-then-empty order keeps. The 27 the
+/// single chest speaks (the [`predict_quick_move`] delegate), the 54
+/// the double's own compound rides — the section boundary the menu's
+/// own slot count IS.
+pub fn predict_quick_move_grid(
+    slots: &[(i32, i32)],
+    src: usize,
+    grid: usize,
+) -> Vec<(usize, (i32, i32))> {
     let src_item = slots[src];
     if src_item.1 <= 0 {
         return Vec::new(); // nothing to move
     }
-    let order: Vec<usize> = if src < 27 {
-        (27..63).rev().collect() // the grid -> the mirror, the hotbar first
+    // the player rows the menu's OWN shape wears (the 27 main + the 9
+    // hotbar — the end the grid names, the snapshot's tail padding the
+    // range never reads)
+    let end = grid + 36;
+    let order: Vec<usize> = if src < grid {
+        (grid..end).rev().collect() // the grid -> the mirror, the hotbar first
     } else {
-        (0..27).collect() // the mirror -> the grid, slot 0 forward
+        (0..grid).collect() // the mirror -> the grid, slot 0 forward
     };
     let mut slots = slots.to_vec();
     let mut remaining = src_item.1;

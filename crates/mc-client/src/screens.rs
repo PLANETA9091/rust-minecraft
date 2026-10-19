@@ -7407,6 +7407,17 @@ pub struct App {
     /// screens keep; the chest_open_cell lid lane the barrel's own
     /// bit wears stays the separate walk).
     pub container_open_cell: Option<(i32, i32, i32)>,
+    /// THE DOUBLE'S OWN PARTNER CELL (the dev-71 round — the combined
+    /// compound's second half the pairing walk banks: the opened
+    /// chest's variant type the connected direction reads, the partner
+    /// cell the SAME kind the compound orders — the
+    /// DoubleBlockCombiner's acceptDouble(neighbor, this) walk the
+    /// CompoundContainer(first, second) shape wears, the grid's
+    /// 0..27 rows the partner's own store hold, the 27..54 the opened
+    /// cell keeps). The flush the halves SPLIT (each half's own store
+    /// the rows ride home to), the single chest the None keeps — the
+    /// close walk the whole grid banks.
+    pub container_open_cell_b: Option<(i32, i32, i32)>,
     /// THE FURNACES' OWN PER-CELL STORES (the dev-69 round — the
     /// placed furnace cells the THREE block-entity slots the vanilla
     /// FurnaceMenu ctor speaks: INPUT 0, FUEL 1, RESULT 2 — the cell
@@ -9019,6 +9030,7 @@ impl App {
             container_stores_file: None,
             container_stores_loaded: false,
             container_open_cell: None,
+            container_open_cell_b: None,
             furnace_stores: std::collections::HashMap::new(),
             furnace_open_cell: None,
             furnace_word_stores: std::collections::HashMap::new(),
@@ -20804,6 +20816,40 @@ impl App {
         // open_chest scene's own verdict the same law keeps)
         self.chest_is_live = false;
         self.chest_mirror.clear();
+        // THE DOUBLE'S OWN COMBINE (the dev-71 round — javap 26.2 the
+        // DoubleBlockCombiner walk the chest menu provider rides: the
+        // opened chest's variant type the connected direction reads,
+        // the partner cell the SAME kind the canCombine gate answers,
+        // the acceptDouble(neighbor, this) order the
+        // CompoundContainer(first, second) shape wears — the grid's
+        // 0..27 rows the PARTNER's own store hold, the 27..54 the
+        // opened cell keeps; the SINGLE type the walk never speaks,
+        // the 27 the lone chest banks). The per-cell stores UNTOUCHED
+        // — the compound the two 27-slot stores' own projection is,
+        // the codec the per-cell shape keeps.
+        let partner: Option<(i32, i32, i32)> = self.offline_world.as_ref().and_then(|w| {
+            let kind = w.get(pos.0, pos.1, pos.2);
+            if !crate::world::is_chest(kind) {
+                return None; // the barrel the family gate refuses — no pair
+            }
+            let v = w.variant(pos.0, pos.1, pos.2);
+            let ctype = crate::world::chest_variant_type(v);
+            if ctype == crate::world::CHEST_TYPE_SINGLE {
+                return None; // the SINGLE type the connected walk never speaks
+            }
+            let dir = crate::world::chest_connected_direction(
+                crate::world::chest_variant_facing(v),
+                ctype,
+            );
+            let (dx, dz) = crate::world::stairs_facing_delta(dir);
+            let ppos = (pos.0 + dx, pos.1, pos.2 + dz);
+            let pk = w.get(ppos.0, ppos.1, ppos.2);
+            if crate::world::chest_can_connect_to(pk, kind) {
+                Some(ppos) // the same-kind partner the compound answers
+            } else {
+                None // the stale type the honest single keeps
+            }
+        });
         // THE CELL'S OWN STORE (the RandomizableContainer contents the
         // map key keeps — the first open the fresh 27-slot grid
         // inserts, the reopen the stored stacks load)
@@ -20811,8 +20857,19 @@ impl App {
             .container_stores
             .entry(pos)
             .or_insert_with(|| vec![(0i32, 0i32); 27]);
-        self.chest_slots = store.clone();
         self.container_open_cell = Some(pos);
+        self.container_open_cell_b = None;
+        self.chest_slots = store.clone();
+        if let Some(ppos) = partner {
+            let pstore = self
+                .container_stores
+                .entry(ppos)
+                .or_insert_with(|| vec![(0i32, 0i32); 27]);
+            let mut grid = pstore.clone(); // the acceptDouble(neighbor, _) order
+            grid.extend_from_slice(&self.chest_slots);
+            self.chest_slots = grid;
+            self.container_open_cell_b = Some(ppos);
+        }
         self.chest_carried = (0, 0);
         // the player's own rows the REAL inventory projects (the menu
         // 27..63 the main grid + hotbar the sync speaks — the GUI the
@@ -20863,13 +20920,33 @@ impl App {
     pub fn container_store_flush(&mut self) {
         self.container_stores_load_once();
         if let Some(pos) = self.container_open_cell.take() {
-            self.container_stores.insert(pos, self.chest_slots.clone());
+            // THE DOUBLE'S OWN SPLIT (the dev-71 round — the compound
+            // the two 27-slot stores' own projection is: the close the
+            // halves SEPARATE, the partner's 0..27 rows the partner
+            // cell banks, the opened cell's 27..54 the opened cell
+            // keeps — the per-cell stores the codec's own shape wear,
+            // the file the same two-list walk banks). The single the
+            // whole grid banks (the None the 27-slot shape keeps).
+            if let Some(ppos) = self.container_open_cell_b.take() {
+                let partner_half: Vec<(i32, i32)> =
+                    self.chest_slots.iter().take(27).copied().collect();
+                let opened_half: Vec<(i32, i32)> =
+                    self.chest_slots.iter().skip(27).take(27).copied().collect();
+                self.container_stores.insert(ppos, partner_half);
+                self.container_stores.insert(pos, opened_half);
+            } else {
+                self.container_stores.insert(pos, self.chest_slots.clone());
+            }
             // THE DISK BANK'S OWN RIDE HOME (the dev-68 round — the
             // close walk's edit the file write banks: the restart the
             // same stacks the reopen wears, the failure the silent
             // keep answers — the in-memory map the truth stays, the
             // vanilla log the error walk keeps)
             self.container_stores_file_save();
+        } else {
+            // the live-lane close the partner belt keeps (the None
+            // pair the closed screens wear)
+            self.container_open_cell_b = None;
         }
     }
 
@@ -20942,6 +21019,19 @@ impl App {
         }
         if self.container_open_cell == Some(pos) {
             self.container_open_cell = None;
+        }
+        // THE DOUBLE'S OWN DEMOTE (the dev-71 round — the spilled cell
+        // the OPEN compound's partner wears: the surviving half the
+        // single shape keeps — the opened cell's own 27 rows the grid
+        // truncates to, the partner key the None rides; the spill law
+        // the per-cell walk the partner's own store serves — the
+        // vanilla RandomizableContainer BE the own 27 slots drops, the
+        // surviving half's contents the surviving cell keeps).
+        if self.container_open_cell_b == Some(pos) {
+            self.container_open_cell_b = None;
+            if self.chest_slots.len() > 27 {
+                self.chest_slots = self.chest_slots[27..].to_vec();
+            }
         }
         // THE DISK BANK'S OWN DEATH RIDE (the dev-68 round — the
         // entry's removal the file write banks: the restart the spill
@@ -22402,28 +22492,47 @@ impl App {
     /// pixel surface of its own.
     fn render_chest(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
         g.fill(0, 0, w, h, [0.0, 0.0, 0.0, 0.35]);
-        let (px, py) = chest_panel_origin(w, h);
+        // THE ROWS' OWN CANVAS (the dev-71 round — the grid the count
+        // names: 27 slots the generic_9x3's 176x166 canvas wears, 54
+        // the double chest's own six-row shape — the +3 rows the
+        // +54px the height carries, the mirror rows the same +54 the
+        // offset rides; the vanilla sixRows ctor the row law speaks —
+        // the container rows 18..108, the player rows 139/157/175,
+        // the hotbar 197 — the codebase's own -1 shift the texture
+        // rows keep). The single the same numbers the goldens pin.
+        let n = self.chest_slots.len().max(27);
+        let extra_rows = (n / 9).max(3) - 3; // 0 single, 3 double
+        let extra = extra_rows as i32 * 18;
+        let panel_h = 166 + extra;
+        // the single the pinned origin helper keeps (the 166 canvas the
+        // generic_9x3 walk centers), the double the +54 rows the same
+        // centering law speaks
+        let (px, py) = if extra == 0 {
+            chest_panel_origin(w, h)
+        } else {
+            ((w - 176) / 2, (h - panel_h) / 2)
+        };
         self.chest_panel = (px, py); // the press walks' own geometry
-        // the hit boxes: the container grid's 0..27 then the mirror's
-        // 27..63 — the MENU's own numbering, the click's slot lane
-        self.chest_slot_rects = (0..27)
+        // the hit boxes: the container grid's 0..N then the mirror's
+        // N..N+36 — the MENU's own numbering, the click's slot lane
+        self.chest_slot_rects = (0..n)
             .map(|i| {
                 let (sx, sy) = chest_container_slot((px, py), i);
                 (sx + 1, sy + 1, i as i16)
             })
             .chain((0..36).map(|i| {
-                let (sx, sy) = chest_mirror_slot((px, py), i);
-                (sx + 1, sy + 1, (27 + i) as i16)
+                let (sx, sy) = chest_mirror_slot((px, py + extra), i);
+                (sx + 1, sy + 1, (n as i16) + i as i16)
             }))
             .collect();
         let face = [0.776, 0.776, 0.776, 1.0]; // 0xC6C6C6
         let light = [1.0, 1.0, 1.0, 1.0];
         let dark = [0.333, 0.333, 0.333, 1.0]; // 0x555555
-        g.fill(px + 1, py + 1, 174, 164, face);
+        g.fill(px + 1, py + 1, 174, panel_h - 2, face);
         g.fill(px, py, 176, 1, light); // top bevel
-        g.fill(px, py, 1, 166, light); // left bevel
-        g.fill(px, py + 165, 176, 1, dark); // bottom bevel
-        g.fill(px + 175, py, 1, 166, dark); // right bevel
+        g.fill(px, py, 1, panel_h, light); // left bevel
+        g.fill(px, py + panel_h - 1, 176, 1, dark); // bottom bevel
+        g.fill(px + 175, py, 1, panel_h, dark); // right bevel
         let label = [0.251, 0.251, 0.251]; // 0x404040
         g.text(
             a,
@@ -22433,7 +22542,7 @@ impl App {
             label,
             false,
         );
-        for i in 0..27 {
+        for i in 0..n {
             let (sx, sy) = chest_container_slot((px, py), i);
             g.sprite(a, "container/slot", sx, sy);
         }
@@ -22450,17 +22559,18 @@ impl App {
             }
         }
         for i in 0..36 {
-            let (sx, sy) = chest_mirror_slot((px, py), i);
+            let (sx, sy) = chest_mirror_slot((px, py + extra), i);
             g.sprite(a, "container/slot", sx, sy);
         }
         // the live mirror's contents (the networked store's rows 27..63):
         // the same icon/count treatment the grid rides over the mirror's
-        // own geometry — the offline stand-in leaves this list empty
+        // own geometry — the offline stand-in keeps the chrome-only shape
+        // the golden pins
         for (i, (id, count)) in self.chest_mirror.iter().enumerate().take(36) {
             if *count <= 0 {
                 continue; // the wire's own emptiness sentinel
             }
-            let (sx, sy) = chest_mirror_slot((px, py), i);
+            let (sx, sy) = chest_mirror_slot((px, py + extra), i);
             draw_item_icon(g, *id, sx + 1, sy + 1);
             if *count > 1 {
                 let s = count.to_string();
@@ -24973,11 +25083,14 @@ impl App {
         let menu = slot as usize;
         // THE HASITEM GATE (the keyPressed chain's own shape — the
         // EMPTY hovered slot the silence keeps, the slotClicked call
-        // never fires, NO packet)
-        let (id, count) = if menu < 27 {
+        // never fires, NO packet). THE GRID the count names (27 the
+        // single, 54 the double's compound — the boundary the mirror
+        // indexing rides).
+        let n = self.chest_slots.len();
+        let (id, count) = if menu < n {
             self.chest_slots[menu]
         } else {
-            self.chest_mirror[menu - 27]
+            self.chest_mirror[menu - n]
         };
         if count <= 0 {
             return;
@@ -24989,10 +25102,10 @@ impl App {
         let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
         if self.chest_carried.1 == 0 {
             let new = if whole_stack { (0, 0) } else { (id, count - 1) };
-            if menu < 27 {
+            if menu < n {
                 self.chest_slots[menu] = new;
             } else {
-                let mi = menu - 27;
+                let mi = menu - n;
                 self.chest_mirror[mi] = new;
                 if mi >= 27 {
                     let mut row = [(0, 0); 9];
@@ -25537,6 +25650,19 @@ impl App {
         self.qc_recalc_remainder(); // pc 53-54 — the new seat the recalc speaks
     }
 
+    /// THE CHEST PANEL'S OWN HEIGHT (the dev-71 round — the rows the
+    /// grid count names: 166 the generic_9x3 canvas, 220 the double
+    /// chest's six-row shape — the +54 the three extra rows speak).
+    /// The outside-rect walks the press lanes read — the render's own
+    /// numbers the belief never guesses.
+    fn chest_panel_h(&self) -> i32 {
+        if self.chest_slots.len() > 27 {
+            220
+        } else {
+            166
+        }
+    }
+
     /// THE CHEST DRAG'S OWN ARM (the same mouseClicked pcs 316-378
     /// walk the Inventory round banks — the generic_9x3 screen the
     /// SAME AbstractContainerScreen base class wears): the carried-
@@ -25570,11 +25696,15 @@ impl App {
             .iter()
             .any(|&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16);
         // THE OUTSIDE RECT (hasClickedOutside's own strict compare —
-        // the 176x166 chrome the panel origin frames; the render never
-        // spoken the outside test keeps silent — the seat the arm
-        // alone answers)
+        // the canvas chrome the panel origin frames, the height the
+        // rows speak — 166 the single, 220 the double): the render
+        // never spoken the outside test keeps silent — the seat the
+        // arm alone answers)
         let outside = panel != (0, 0)
-            && (mx < panel.0 || my < panel.1 || mx >= panel.0 + 176 || my >= panel.1 + 166);
+            && (mx < panel.0
+                || my < panel.1
+                || mx >= panel.0 + 176
+                || my >= panel.1 + self.chest_panel_h());
         if !on_seat && !outside {
             return; // pc 162-165 — the k == -1 press the walk skips
         }
@@ -25880,10 +26010,11 @@ impl App {
     /// store rows ride).
     fn qc_seat_stack(&self, menu: usize) -> (i32, i32) {
         if self.screen == ScreenKind::Chest {
-            return if menu < 27 {
+            let n = self.chest_slots.len();
+            return if menu < n {
                 self.chest_slots[menu]
             } else {
-                self.chest_mirror[menu - 27]
+                self.chest_mirror[menu - n]
             };
         }
         if self.screen == ScreenKind::Furnace {
@@ -26004,7 +26135,7 @@ impl App {
             let outside = mx < panel.0
                 || my < panel.1
                 || mx >= panel.0 + 176
-                || my >= panel.1 + 166;
+                || my >= panel.1 + self.chest_panel_h();
             let Some((window_id, state_id)) = self.chest_live_window else {
                 return;
             };
@@ -28913,10 +29044,10 @@ impl App {
                 // fed the .get() the empty belief speaks): the missing
                 // row the (0, 0) the render's hover pass answers, the
                 // panic the live lanes' own sync never rides
-                let (id, count) = if s < 27 {
+                let (id, count) = if s < self.chest_slots.len() {
                     *self.chest_slots.get(s).unwrap_or(&(0, 0))
                 } else {
-                    *self.chest_mirror.get(s - 27).unwrap_or(&(0, 0))
+                    *self.chest_mirror.get(s - self.chest_slots.len()).unwrap_or(&(0, 0))
                 };
                 Some((id, count, slot as i32))
             }
@@ -29628,47 +29759,52 @@ impl App {
         // to the OTHER section — the vanilla doClick's third branch
         // (`hasShiftDown()` overrides the click type for the left AND
         // the right press). The combined snapshot the REAL inventory
-        // wears (the grid 0..27, the main 27..54, the hotbar 54..63),
+        // wears (the grid 0..N — 27 the single chest, 54 the double's
+        // compound — the main N..N+27, the hotbar N+27..N+36),
         // the multi-slot deltas the grid AND the items mutate.
         if self.shift_down {
-            let mut snapshot: Vec<(i32, i32)> = Vec::with_capacity(63);
+            let n = self.chest_slots.len();
+            let mut snapshot: Vec<(i32, i32)> = Vec::with_capacity(n + 36);
             snapshot.extend_from_slice(&self.chest_slots);
             snapshot.extend_from_slice(&self.inventory.items[9..36]);
             snapshot.extend_from_slice(&self.inventory.items[0..9]);
-            let changed = crate::world_view::predict_quick_move(&snapshot, slot as usize);
+            let changed =
+                crate::world_view::predict_quick_move_grid(&snapshot, slot as usize, n);
             for (i, pair) in &changed {
-                if *i < 27 {
+                if *i < n {
                     self.chest_slots[*i] = *pair;
-                } else if *i < 54 {
-                    self.inventory.items[9 + *i - 27] = *pair;
+                } else if *i < n + 27 {
+                    self.inventory.items[9 + *i - n] = *pair;
                 } else {
-                    self.inventory.items[*i - 54] = *pair;
+                    self.inventory.items[*i - n - 27] = *pair;
                 }
             }
             self.chest_mirror_sync_from_inventory();
             return;
         }
-        // the believed slot value: the grid's 0..27, the REAL
-        // inventory's rows the menu numbering speaks (27..54 the main
-        // grid, 54..63 the hotbar)
-        let believed = if menu < 27 {
+        // the believed slot value: the grid's 0..N (27 the single, 54
+        // the double's compound), the REAL inventory's rows the menu
+        // numbering speaks (N..N+27 the main grid, N+27..N+36 the
+        // hotbar)
+        let n = self.chest_slots.len();
+        let believed = if menu < n {
             self.chest_slots[menu]
-        } else if menu < 54 {
-            self.inventory.items[9 + menu - 27]
+        } else if menu < n + 27 {
+            self.inventory.items[9 + menu - n]
         } else {
-            self.inventory.items[menu - 54]
+            self.inventory.items[menu - n - 27]
         };
         let (new_slot, new_carried) = if button == 0 {
             crate::world_view::predict_pickup(believed, self.chest_carried)
         } else {
             crate::world_view::predict_pickup_right(believed, self.chest_carried)
         };
-        if menu < 27 {
+        if menu < n {
             self.chest_slots[menu] = new_slot;
-        } else if menu < 54 {
-            self.inventory.items[9 + menu - 27] = new_slot;
+        } else if menu < n + 27 {
+            self.inventory.items[9 + menu - n] = new_slot;
         } else {
-            self.inventory.items[menu - 54] = new_slot;
+            self.inventory.items[menu - n - 27] = new_slot;
         }
         self.chest_carried = new_carried;
         self.chest_mirror_sync_from_inventory();
@@ -29708,12 +29844,10 @@ impl App {
         else {
             return; // the press landed between the slots — no click
         };
-        // the believed slot value: the grid's 0..27, the mirror's
-        // 27..63 — the menu's own numbering both lanes index
-        let believed = if (slot as usize) < 27 {
+        let believed = if (slot as usize) < self.chest_slots.len() {
             self.chest_slots[slot as usize]
         } else {
-            self.chest_mirror[slot as usize - 27]
+            self.chest_mirror[slot as usize - self.chest_slots.len()]
         };
         // THE QUICK_MOVE LANE (the shift-click): the whole stack moves
         // to the OTHER section — the vanilla doClick's third branch
@@ -29723,18 +29857,20 @@ impl App {
         // multi-slot deltas mutate the screen in place and ride the
         // command; the cursor is NOT the quick-move's lane.
         if self.shift_down {
+            let n = self.chest_slots.len();
             let snapshot: Vec<(i32, i32)> = self
                 .chest_slots
                 .iter()
                 .chain(self.chest_mirror.iter())
                 .copied()
                 .collect();
-            let changed = crate::world_view::predict_quick_move(&snapshot, slot as usize);
+            let changed =
+                crate::world_view::predict_quick_move_grid(&snapshot, slot as usize, n);
             for (i, pair) in &changed {
-                if *i < 27 {
+                if *i < n {
                     self.chest_slots[*i] = *pair;
                 } else {
-                    self.chest_mirror[*i - 27] = *pair;
+                    self.chest_mirror[*i - n] = *pair;
                 }
             }
             let _ = sink.send(crate::world_view::ContainerCommand::Click(
@@ -29755,10 +29891,10 @@ impl App {
         } else {
             crate::world_view::predict_pickup_right(believed, self.chest_carried)
         };
-        if (slot as usize) < 27 {
+        if (slot as usize) < self.chest_slots.len() {
             self.chest_slots[slot as usize] = new_slot;
         } else {
-            self.chest_mirror[slot as usize - 27] = new_slot;
+            self.chest_mirror[slot as usize - self.chest_slots.len()] = new_slot;
         }
         self.chest_carried = new_carried;
         let _ = sink.send(crate::world_view::ContainerCommand::Click(
@@ -30072,10 +30208,10 @@ impl App {
         if self.chest_carried.1 > 0 {
             return; // doClick pc 1400-1407 — the carried-empty gate
         }
-        let (id, count) = if (slot as usize) < 27 {
+        let (id, count) = if (slot as usize) < self.chest_slots.len() {
             self.chest_slots[slot as usize]
         } else {
-            self.chest_mirror[slot as usize - 27]
+            self.chest_mirror[slot as usize - self.chest_slots.len()]
         };
         if count <= 0 || id == 0 {
             return; // pc 1427-1432 — the hasItem gate
@@ -46060,16 +46196,24 @@ impl App {
                 if c.menu_type_id != crate::world_model::MENU_TYPE_CHEST {
                     return; // not the wired menu — the honest drop
                 }
-                // the menu's own numbering: 0..27 the container grid,
-                // the tail the player mirror (27 main + 9 hotbar) —
-                // padded to the layout's full shape, the wire's own
-                // (0, 0) emptiness riding verbatim
-                let mut grid = vec![(0i32, 0i32); 27];
-                for (i, &(id, count)) in c.slots.iter().take(27).enumerate() {
+                // the menu's own numbering: 0..N the container grid —
+                // 63 wire slots the 9x3's 27 rows speak, 90 the 9x6's
+                // 54 (the dev-71 round — the grid the wire's own count
+                // sizes: total minus the 36 player rows), the tail the
+                // player mirror (27 main + 9 hotbar) — padded to the
+                // layout's full shape, the wire's own (0, 0) emptiness
+                // riding verbatim
+                let grid_len = if c.slots.len() >= 63 {
+                    c.slots.len().saturating_sub(36)
+                } else {
+                    27
+                };
+                let mut grid = vec![(0i32, 0i32); grid_len];
+                for (i, &(id, count)) in c.slots.iter().take(grid_len).enumerate() {
                     grid[i] = (id, count);
                 }
                 let mut mirror = vec![(0i32, 0i32); 36];
-                for (i, &(id, count)) in c.slots.iter().skip(27).take(36).enumerate() {
+                for (i, &(id, count)) in c.slots.iter().skip(grid_len).take(36).enumerate() {
                     mirror[i] = (id, count);
                 }
                 self.chest_slots = grid;
@@ -58541,6 +58685,315 @@ mod tests {
             word_rows.is_empty(),
             "the death ride the emptied words bank keeps"
         );
+        let _ = std::fs::remove_file(&file);
+    }
+
+    /// THE DOUBLE CHEST'S OWN COMBINED GRID (the dev-71 round — the
+    /// paired halves the ONE 54-slot compound the menu wears: the
+    /// opened chest's variant type the connected direction reads, the
+    /// partner cell the SAME kind the compound answers, the
+    /// acceptDouble(neighbor, this) order the
+    /// CompoundContainer(first, second) shape wears — the grid's
+    /// 0..27 the PARTNER's own store hold, the 27..54 the opened
+    /// cell's own rows keep). The flush the halves SPLIT (each half's
+    /// own store the rows ride home to), the reopen from the OTHER
+    /// half the order flips (the neighbor the compound's head keeps),
+    /// the lone chest the 27-slot shape never leaves.
+    #[test]
+    fn the_double_chest_the_halves_the_combined_grid_wears() {
+        let mut app = App::new(11);
+        app.enter_world();
+        let wire_id_of = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        let a = (c, surface + 1, c); // the LEFT half
+        let b = (c + 1, surface + 1, c); // the RIGHT half (the east neighbor)
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(a.0, a.1, a.2, crate::world::CHEST);
+            w.set(b.0, b.1, b.2, crate::world::CHEST);
+            w.set_variant(
+                a.0,
+                a.1,
+                a.2,
+                crate::world::chest_variant(
+                    crate::world::CHEST_FACING_NORTH,
+                    crate::world::CHEST_TYPE_LEFT,
+                ),
+            );
+            w.set_variant(
+                b.0,
+                b.1,
+                b.2,
+                crate::world::chest_variant(
+                    crate::world::CHEST_FACING_NORTH,
+                    crate::world::CHEST_TYPE_RIGHT,
+                ),
+            );
+        }
+        // the partner's own store stocks first (the bank the direct
+        // walk wears — the first open the stocked rows load)
+        let mut b_store = vec![(0i32, 0i32); 27];
+        b_store[1] = (wire_id_of("diamond"), 12);
+        b_store[5] = (wire_id_of("coal"), 3);
+        app.container_stores.insert(b, b_store);
+        // THE OPEN FROM THE LEFT HALF (the compound the pair speaks —
+        // the neighbor's rows the head keeps, the opened cell's own
+        // rows the tail rides)
+        app.open_chest_for(a);
+        assert_eq!(
+            app.chest_slots.len(),
+            54,
+            "the double the compound's 54 slots wears"
+        );
+        assert_eq!(app.container_open_cell, Some(a), "the opened cell the key keeps");
+        assert_eq!(app.container_open_cell_b, Some(b), "the partner the second key banks");
+        assert_eq!(
+            app.chest_slots[1],
+            (wire_id_of("diamond"), 12),
+            "the neighbor half the compound's head keeps"
+        );
+        assert_eq!(
+            app.chest_slots[5],
+            (wire_id_of("coal"), 3),
+            "the neighbor's stocked row the head wears"
+        );
+        // THE EDIT the opened half's own rows (the 27..54 the tail
+        // keeps)
+        app.chest_slots[27 + 3] = (wire_id_of("iron_ingot"), 7);
+        // THE CLOSE the halves SPLIT (the flush the per-cell stores
+        // ride home — the partner's rows the partner banks, the
+        // opened cell's rows the opened cell keeps)
+        app.on_escape();
+        assert_eq!(
+            app.container_stores[&b][1],
+            (wire_id_of("diamond"), 12),
+            "the partner's half the partner store banks"
+        );
+        assert_eq!(
+            app.container_stores[&b][5],
+            (wire_id_of("coal"), 3),
+            "the partner's stocked row the partner keeps"
+        );
+        assert_eq!(
+            app.container_stores[&a][3],
+            (wire_id_of("iron_ingot"), 7),
+            "the opened half's rows the opened cell banks"
+        );
+        assert!(app.container_open_cell.is_none(), "the close the keys take home");
+        assert!(app.container_open_cell_b.is_none(), "the partner key the close takes");
+        // THE REOPEN FROM THE OTHER HALF (the order flips — the
+        // acceptDouble(neighbor, this) walk the opened cell speaks:
+        // now the LEFT half the compound's head wears)
+        app.open_chest_for(b);
+        assert_eq!(app.chest_slots.len(), 54, "the pair the compound keeps");
+        assert_eq!(app.container_open_cell, Some(b));
+        assert_eq!(app.container_open_cell_b, Some(a));
+        assert_eq!(
+            app.chest_slots[27 + 1],
+            (wire_id_of("diamond"), 12),
+            "the partner's rows the tail keeps now"
+        );
+        assert_eq!(
+            app.chest_slots[3],
+            (wire_id_of("iron_ingot"), 7),
+            "the opened half's rows the head keeps now"
+        );
+        app.on_escape();
+        // THE LONE CHEST the 27-slot shape never leaves (the SINGLE
+        // type the connected walk never speaks — no partner, no
+        // compound)
+        let lone = (c, surface + 1, c + 5);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(lone.0, lone.1, lone.2, crate::world::CHEST);
+        app.offline_world.as_mut().unwrap().set_variant(
+            lone.0,
+            lone.1,
+            lone.2,
+            crate::world::chest_variant(
+                crate::world::CHEST_FACING_NORTH,
+                crate::world::CHEST_TYPE_SINGLE,
+            ),
+        );
+        app.open_chest_for(lone);
+        assert_eq!(app.chest_slots.len(), 27, "the lone chest the single keeps");
+        assert!(app.container_open_cell_b.is_none(), "no partner the None keeps");
+        app.on_escape();
+    }
+
+    /// THE DOUBLE CHEST'S OWN DISK (the dev-71 round — the same disk
+    /// law the per-cell stores wear: the flush's file write the TWO
+    /// halves' entries banks, the RESTART the fresh app the banked
+    /// halves the reopen wears, the break-after-boot the partner's
+    /// own store the spill releases — the per-cell
+    /// preRemoveSideEffects walk the BE's own 27 slots drops — and
+    /// the surviving half the SINGLE shape reopens).
+    #[test]
+    fn the_double_chest_the_disk_the_restart_the_halves_keep() {
+        let dir = std::env::temp_dir().join(format!("mc2rs-containers-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("the temp dir");
+        let file = dir.join("containers-double.nbt");
+        let _ = std::fs::remove_file(&file);
+        let wire_id_of = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        // THE FIRST SESSION: the pair the compound's edits bank — the
+        // flush the halves' file write rides home
+        let mut app = App::new(11);
+        app.enter_world();
+        app.container_stores_file = Some(file.clone());
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        let a = (c, surface + 1, c);
+        let b = (c + 1, surface + 1, c);
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(a.0, a.1, a.2, crate::world::CHEST);
+            w.set(b.0, b.1, b.2, crate::world::CHEST);
+            w.set_variant(
+                a.0,
+                a.1,
+                a.2,
+                crate::world::chest_variant(
+                    crate::world::CHEST_FACING_NORTH,
+                    crate::world::CHEST_TYPE_LEFT,
+                ),
+            );
+            w.set_variant(
+                b.0,
+                b.1,
+                b.2,
+                crate::world::chest_variant(
+                    crate::world::CHEST_FACING_NORTH,
+                    crate::world::CHEST_TYPE_RIGHT,
+                ),
+            );
+        }
+        app.open_chest_for(a);
+        assert_eq!(app.chest_slots.len(), 54, "the pair the compound speaks");
+        app.chest_slots[1] = (wire_id_of("diamond"), 12); // the partner's rows
+        app.chest_slots[27 + 3] = (wire_id_of("iron_ingot"), 7); // the opened half
+        app.on_escape();
+        assert!(file.exists(), "the flush the file write banks");
+        // THE FILE'S OWN SHAPE (the entries list the TWO halves' rows
+        // keeps — the BTree walk the deterministic order speaks)
+        let bytes = std::fs::read(&file).expect("the banked file reads");
+        let (_, root) =
+            mc_protocol::nbt::read_file_nbt(&mut bytes.as_slice()).expect("the parse serves");
+        let entries = root
+            .get("entries")
+            .and_then(|v| v.as_list())
+            .expect("the entries list");
+        assert_eq!(entries.len(), 2, "the two halves the file banks");
+        // THE RESTART (the fresh app the banked halves the reopen
+        // wears — the world the same pair the placement walk re-wears,
+        // the disk the stores' own truth keeps)
+        let mut fresh = App::new(11);
+        fresh.enter_world();
+        fresh.container_stores_file = Some(file.clone());
+        {
+            let w = fresh.offline_world.as_mut().unwrap();
+            w.set(a.0, a.1, a.2, crate::world::CHEST);
+            w.set(b.0, b.1, b.2, crate::world::CHEST);
+            w.set_variant(
+                a.0,
+                a.1,
+                a.2,
+                crate::world::chest_variant(
+                    crate::world::CHEST_FACING_NORTH,
+                    crate::world::CHEST_TYPE_LEFT,
+                ),
+            );
+            w.set_variant(
+                b.0,
+                b.1,
+                b.2,
+                crate::world::chest_variant(
+                    crate::world::CHEST_FACING_NORTH,
+                    crate::world::CHEST_TYPE_RIGHT,
+                ),
+            );
+        }
+        fresh.open_chest_for(a);
+        assert_eq!(
+            fresh.chest_slots.len(),
+            54,
+            "the banked pair the compound wears"
+        );
+        assert_eq!(
+            fresh.chest_slots[1],
+            (wire_id_of("diamond"), 12),
+            "the partner's half the disk wears"
+        );
+        assert_eq!(
+            fresh.chest_slots[27 + 3],
+            (wire_id_of("iron_ingot"), 7),
+            "the opened half's rows the disk keeps"
+        );
+        fresh.on_escape();
+        // THE BREAK-AFTER-RESTART (the dig the cell AIR rides first —
+        // the removal walk the spill speaks — the partner's own store
+        // the item entities release, the entry the cell's death rides)
+        fresh
+            .offline_world
+            .as_mut()
+            .unwrap()
+            .set(b.0, b.1, b.2, crate::world::AIR);
+        fresh.container_store_spilled(b);
+        assert!(
+            !fresh.container_stores.contains_key(&b),
+            "the spilled half the entry dies with"
+        );
+        assert!(
+            !fresh.drops.is_empty(),
+            "the stocked half the item entities release"
+        );
+        assert_eq!(
+            fresh.container_stores[&a][3],
+            (wire_id_of("iron_ingot"), 7),
+            "the surviving half's contents the surviving cell keeps"
+        );
+        // THE REOPEN THE SINGLE (the stale LEFT type the missing
+        // partner the honest single keeps — the 27-slot shape the
+        // opened cell's own rows wear)
+        fresh.open_chest_for(a);
+        assert_eq!(
+            fresh.chest_slots.len(),
+            27,
+            "the surviving half the single shape wears"
+        );
+        assert!(
+            fresh.container_open_cell_b.is_none(),
+            "the missing partner the None keeps"
+        );
+        assert_eq!(
+            fresh.chest_slots[3],
+            (wire_id_of("iron_ingot"), 7),
+            "the surviving half's rows the reopen wears"
+        );
+        fresh.on_escape();
+        // THE DEATH RIDE (the file the emptied partner never banks —
+        // the one entry the surviving half keeps)
+        let bytes = std::fs::read(&file).expect("the death ride reads");
+        let (_, root) =
+            mc_protocol::nbt::read_file_nbt(&mut bytes.as_slice()).expect("the parse serves");
+        let entries = root
+            .get("entries")
+            .and_then(|v| v.as_list())
+            .expect("the entries list");
+        assert_eq!(entries.len(), 1, "the spilled half the file never resurrects");
         let _ = std::fs::remove_file(&file);
     }
 
