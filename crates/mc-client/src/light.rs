@@ -86,6 +86,14 @@ fn sky_opacity(id: u16) -> u8 {
         // never folds, the dark room behind the pane the flood never
         // reaches — the exact vanilla verdict the default answers)
 
+        // THE FLOOR HEADS' OWN ROW (the dev-82 round — javap
+        // SkullBlock the 26.2 jar: the 8-px box the FULL cube never
+        // is, the getLightBlock the DEFAULT walk the shape-based
+        // lightBlock 0 answers (the non-full shape the canOcclude
+        // false verdict keeps) — the sky the skull cell passes, the
+        // BE-rendered family the lightBlock-0 law the chest
+        // precedent's own row shares)
+        || is_floor_head(id)
         // THE PANE FAMILY'S OWN ROW (the dev-58 round — the 18 kinds
         // the noOcclusion() registration the lightBlock 0 the same
         // law speaks: the glass_pane pc 12459 + the iron_bars pc

@@ -3149,6 +3149,40 @@ fn blend_frames(cur: &[u8], next: &[u8], sub: usize, time: u64) -> Vec<u8> {
         .collect()
 }
 
+/// THE HEAD'S OWN SHEET MAP (the dev-82 round — the five
+/// humanoid-standard kinds the entity sheets the SkullBlockRenderer's
+/// TEXTURE map banks [javap lambda$static$0 the 26.2 jar]: skeleton/
+/// wither_skeleton/zombie/creeper + the PLAYER the
+/// DefaultPlayerSkin.getDefaultTexture the wide steve sheet; the
+/// DRAGON/PIGLIN pair the None the custom models keep).
+fn entity_head_sheet(block: &str) -> Option<&'static str> {
+    match block {
+        "skeleton_skull" => Some("entity/skeleton/skeleton"),
+        "wither_skeleton_skull" => Some("entity/skeleton/wither_skeleton"),
+        "zombie_head" => Some("entity/zombie/zombie"),
+        "player_head" => Some("entity/player/wide/steve"),
+        "creeper_head" => Some("entity/creeper/creeper"),
+        _ => None,
+    }
+}
+
+/// THE HEAD'S OWN FACE CROP (the 8x8 sheet region the 2x nearest
+/// upscale the 16x16 tile space speaks — each texel a 2x2 block, the
+/// pixel-exact fold the 8-px face over the 16-px tile answers).
+fn head_face_tile_bytes(rgba: &[u8], sheet_w: usize, rx: usize, ry: usize) -> Vec<u8> {
+    let mut bytes = vec![0u8; 16 * 16 * 4];
+    for ty in 0..16usize {
+        for tx in 0..16usize {
+            let sx = rx + tx / 2;
+            let sy = ry + ty / 2;
+            let s = (sy * sheet_w + sx) * 4;
+            let d = (ty * 16 + tx) * 4;
+            bytes[d..d + 4].copy_from_slice(&rgba[s..s + 4]);
+        }
+    }
+    bytes
+}
+
 /// Build the atlas from the official jar bytes and emit generated Rust.
 pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<String> {
     let cursor = std::io::Cursor::new(jar_bytes);
@@ -4755,6 +4789,57 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         face_tiles[ki] = [idx[1], idx[1], idx[2], idx[3], idx[1], idx[0]];
     }
 
+    // THE MOB HEADS' OWN ENTITY FACES (the dev-82 round — the BE
+    // mini-cube lane the five humanoid-standard kinds wear): the
+    // entity sheets the SkullBlockRenderer's own TEXTURE map banks
+    // (javap lambda$static$0 the 26.2 jar — skeleton/skeleton,
+    // skeleton/wither_skeleton, zombie/zombie, creeper/creeper,
+    // enderdragon/dragon, piglin/piglin, the PLAYER the
+    // DefaultPlayerSkin.getDefaultTexture the wide steve sheet the
+    // jar banks), the six 8x8 head regions the HumanoidModel head
+    // box law crops (SkullModel.createHeadModel: texOffs(0,0),
+    // addBox(-4,-8,-4, 8,8,8) — the standard cube UV walk: down
+    // (8,0), up (16,0), west (0,8), north/face (8,8), east (16,8),
+    // south (24,8), each 8x8). The 2x nearest upscale the 16x16
+    // tile space speaks (each texel a 2x2 block — the pixel-exact
+    // fold the 8-px face over the 16-px tile answers). The
+    // DRAGON/PIGLIN rows the TILE_NONE the custom models keep (the
+    // DragonHeadModel's own box + the PiglinHeadModel's ears the
+    // future rounds carry — the humanoid-standard five the ONE box
+    // law banks). The table the MODEL-face order banks [down, up,
+    // west, north, east, south] — the Cube ctor's own polygon law
+    // (NOT the block-face order the FACE_TILES rows wear).
+    let mut entity_head_faces: Vec<[u16; 6]> = Vec::with_capacity(RUNTIME_PALETTE.len());
+    // the six model-face regions (x0, y0) in sheet texels — the
+    // standard head UV walk the box law banks
+    const HEAD_REGIONS: [(usize, usize); 6] =
+        [(8, 0), (16, 0), (0, 8), (8, 8), (16, 8), (24, 8)];
+    for block in RUNTIME_PALETTE.iter() {
+        let mut row = [u16::MAX; 6];
+        if let Some(sheet) = entity_head_sheet(block) {
+            let raw = read_jar(
+                &mut archive,
+                &format!("assets/minecraft/textures/{sheet}.png"),
+            )
+            .with_context(|| format!("head sheet {sheet}.png"))?;
+            let (w, _h, rgba) = decode_rgba(&raw)?;
+            for (fi, (rx, ry)) in HEAD_REGIONS.iter().enumerate() {
+                let stem = format!("{block}_head_face{fi}");
+                let idx = match tile_names.iter().position(|n| n == &stem) {
+                    Some(p) => p as u16,
+                    None => {
+                        let bytes = head_face_tile_bytes(&rgba, w as usize, *rx, *ry);
+                        tile_names.push(stem.clone());
+                        tile_bytes.push(bytes);
+                        (tile_names.len() - 1) as u16
+                    }
+                };
+                row[fi] = idx;
+            }
+        }
+        entity_head_faces.push(row);
+    }
+
     // THE BARREL'S OWN OPEN LID TILE (the dev-65 round — the OPEN
     // property's own model the blockstates/barrel.json's open=true
     // arm carries: the block/barrel_open model the cube_bottom_top
@@ -5674,6 +5759,25 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         src.push_str(&format!("    {:?},\n", m));
     }
     src.push_str("];\n\n");
+    // THE MOB HEADS' OWN ENTITY FACES (the dev-82 round — the BE
+    // mini-cube lane the sheets serve): the six MODEL-face tiles per
+    // kind, the model-face order [down, up, west, north, east, south]
+    // (the Cube ctor's own polygon law — NOT the block-face order the
+    // FACE_TILES rows wear), the 8x8 sheet crops the 2x nearest
+    // upscale the tile space banks. The unserved rows the TILE_NONE
+    // the custom models keep.
+    src.push_str("\n/// The mob heads' per-kind MODEL-face tiles (the palette-row order \
+     \x20/// the kind ids wear — the model-face order [down, up, west, north, \
+     \x20/// east, south] the Cube ctor's own polygon law banks; the dev-82 \
+     \x20/// round the mesher's mini-cube lane reads).\n\n");
+    src.push_str("pub const ENTITY_HEAD_FACES: [[u16; 6]; N_KINDS] = [\n");
+    for row in &entity_head_faces {
+        src.push_str(&format!(
+            "    [{}, {}, {}, {}, {}, {}],\n",
+            row[0], row[1], row[2], row[3], row[4], row[5]
+        ));
+    }
+    src.push_str("];\n\n");
     for (i, bytes) in tile_bytes.iter().enumerate() {
         src.push_str(&format!("static TILE_{}_RGBA: [u8; {}] = [", i, bytes.len()));
         for (j, b) in bytes.iter().enumerate() {
@@ -6192,6 +6296,38 @@ mod tests {
         // THE TINTED GLASS'S OWN NAME ROW (the registry name the palette
         // name IS — the plain name the dig/sound/drop/item lanes wire)
         assert_eq!(names[756], "tinted_glass");
+        // THE MOB HEADS' OWN ENTITY FACES (the dev-82 round — the
+        // five humanoid-standard kinds the sheet map serves, the
+        // DRAGON/PIGLIN rows the None the custom models keep, the
+        // crop law the 2x upscale the tile bytes speak)
+        for k in 749..=753usize {
+            assert!(
+                entity_head_sheet(RUNTIME_PALETTE[k]).is_some(),
+                "the served kind {} the sheet map banks",
+                RUNTIME_PALETTE[k]
+            );
+        }
+        for k in 754..=755usize {
+            assert!(
+                entity_head_sheet(RUNTIME_PALETTE[k]).is_none(),
+                "the {} row the custom-model None keeps",
+                RUNTIME_PALETTE[k]
+            );
+        }
+        // THE CROP'S OWN UPSCALE (the 2x nearest fold the tile bytes
+        // speak: the 4-texel sheet the 16-tile the block replication
+        // banks — the tile row 0 the sheet rows 0..1 the 2x pair
+        // wears)
+        let sheet: Vec<u8> = (0..8 * 8 * 4).map(|i| (i % 251) as u8).collect();
+        let tile = head_face_tile_bytes(&sheet, 8, 0, 0);
+        assert_eq!(tile.len(), 16 * 16 * 4);
+        for ty in 0..16usize {
+            for tx in 0..16usize {
+                let s = ((ty / 2) * 8 + tx / 2) * 4;
+                let d = (ty * 16 + tx) * 4;
+                assert_eq!(&tile[d..d + 4], &sheet[s..s + 4], "the ({tx},{ty}) texel");
+            }
+        }
         assert_eq!(FACE_KEYS, ["east", "west", "up", "down", "south", "north"]);
     }
 

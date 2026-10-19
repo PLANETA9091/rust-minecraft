@@ -3790,6 +3790,42 @@ pub fn is_mob_head(kind: u16) -> bool {
     MOB_HEAD_KINDS.contains(&kind)
 }
 
+/// THE FLOOR HEADS' OWN PREDICATE (the dev-82 round — the five
+/// humanoid-standard kinds the mini-cube lane serves): the
+/// HumanoidModel head box law the five kinds share (javap
+/// SkullModel.createHeadModel the 26.2 jar — texOffs(0,0),
+/// addBox(-4,-8,-4, 8,8,8), the ONE box every skull body wears),
+/// the entity sheets the SkullBlockRenderer's TEXTURE map banks
+/// (skeleton/wither_skeleton/zombie/creeper + the PLAYER the
+/// DefaultPlayerSkin.getDefaultTexture the steve sheet). The
+/// DRAGON/PIGLIN pair the predicate REFUSES (the DragonHeadModel's
+/// own box + the PiglinHeadModel's ears the custom shapes the
+/// future rounds carry — the placement refusal the pair keeps).
+#[inline]
+pub fn is_floor_head(kind: u16) -> bool {
+    matches!(
+        kind,
+        SKELETON_SKULL | WITHER_SKELETON_SKULL | ZOMBIE_HEAD | PLAYER_HEAD | CREEPER_HEAD
+    )
+}
+
+/// THE HEAD'S OWN PLACEMENT SEGMENT (javap SkullBlock.
+/// getStateForPlacement pc 5-15 + RotationSegment.convertToSegment
+/// the 26.2 jar: the `setValue(ROTATION, RotationSegment.
+/// convertToSegment(context.getRotation()))` walk the look-yaw law
+/// speaks — SegmentedAnglePrecision(4).fromDegrees the probe
+/// scripts/skull_probe_82.py banks: `round(yaw * 16.0 / 360.0) & 15`
+/// the 16-step segment the ROTATION_16 property wears, the
+/// registerDefaultState's ROTATION=0 pin the fresh-kind default
+/// keeps). The client's own cam yaw the [`door_facing_byte`] walk's
+/// own offset fold answers (the `- PI` radians shift the vanilla
+/// yaw the walk speaks).
+#[inline]
+pub fn head_rotation_variant(cam_yaw_radians: f32) -> u8 {
+    let vanilla_yaw = (cam_yaw_radians - std::f32::consts::PI).to_degrees();
+    (((vanilla_yaw * 16.0 / 360.0).round() as i32) & 15) as u8
+}
+
 /// THE CHEST FAMILY'S OWN SEAT LADDER (the dev-64 round — the 11 kinds
 /// the explicit seats the tail banks): the mesher's chest lane and the
 /// family fns the ladder read.
@@ -7484,6 +7520,13 @@ fn collision_face_footprint(
             // vanilla wall law the 1/16 rim the covered test refuses)
             Some((1.0 / 16.0, 15.0 / 16.0, 1.0 / 16.0, 15.0 / 16.0))
         }
+        CollisionShape::Head => {
+            // THE FLOOR HEAD'S OWN FACE (the dev-82 round — the SHAPE
+            // column(8.0, 0.0, 8.0) the [4,0,4]->[12,8,12] box the
+            // DOWN face the inset square the projection answers: the
+            // 8/16 footprint the skull-top walk-on law keeps)
+            Some((4.0 / 16.0, 12.0 / 16.0, 4.0 / 16.0, 12.0 / 16.0))
+        }
         CollisionShape::Wall(bits, _) => {
             // THE WALL COMPOUND'S OWN FACE (the post box(4,0,4,12,24,12)
             // + the side strips box(5,0,0,11,24,11) the bits carry): the
@@ -9012,6 +9055,19 @@ pub enum CollisionShape {
     /// keeps). The variant byte the [`chest_variant_facing`]/[
     /// [`chest_variant_type`]] unpack reads.
     Chest(u8),
+    /// THE FLOOR HEAD'S OWN 8-PX BOX (the dev-82 round — javap
+    /// SkullBlock the 26.2 jar: getShape the SHAPE constant the
+    /// clinit's `Block.column(8.0, 0.0, 8.0)` walk banks (the probe
+    /// scripts/skull_probe_82.py the doubles speak) — the
+    /// [4,0,4]->[12,8,12] box the 3-arg column fold answers
+    /// (box(8-w/2, y0, 8-w/2, 8+w/2, y1, 8+w/2)), the
+    /// getCollisionShape the DEFAULT walk the same shape answers
+    /// (NOT overridden — the AbstractSkullBlock class body the
+    /// probe's method list banks), the ROTATION segment the shape
+    /// never reads (the axis-aligned box every yaw keeps). The
+    /// PIGLIN's wider SHAPE_PIGLIN column(10.0, 0.0, 8.0) the
+    /// refused kind never seats (the ears the future round banks).
+    Head,
     /// The full-cube family — the default `Shapes.block()` registration
     /// the collision the body's box intersects refuses.
     Full,
@@ -9205,6 +9261,17 @@ pub fn collision_shape(id: u16) -> CollisionShape {
         // doubles the variant-aware lane the variant byte +
         // [`chest_connected_direction`] walk the compound answers.
         CollisionShape::Chest(0)
+    } else if is_floor_head(id) {
+        // THE FLOOR HEADS' OWN ROW (the dev-82 round — javap
+        // SkullBlock the 26.2 jar: getShape the SHAPE constant the
+        // clinit's `Block.column(8.0, 0.0, 8.0)` walk banks — the
+        // [4,0,4]->[12,8,12] box the 3-arg column fold answers, the
+        // getCollisionShape the DEFAULT walk the same shape serves
+        // (NOT overridden), the ROTATION segment the axis-aligned
+        // box never reads). The PIGLIN's wider column(10.0, 0.0,
+        // 8.0) the refused kind never seats, the DRAGON the same
+        // refusal keeps (the custom shapes the future rounds carry).
+        CollisionShape::Head
     } else if is_stairs(id) {
         // THE STAIRS FAMILY'S OWN KIND-ONLY ROW (the dev-62 round —
         // the facing/half/shape the neighbor reads the kind-only
@@ -9679,10 +9746,20 @@ pub fn shape_slabs(
             };
             (cy as f64, cy as f64 + tall / 16.0)
         }
+        // THE FLOOR HEAD'S OWN BAND (the dev-82 round — the SHAPE
+        // column(8.0, 0.0, 8.0) the [4,0,4]->[12,8,12] box the y
+        // 0..8 band the feet's own sweep keeps: the skull the body
+        // steps ON the 8-px top wears, the head sweep the ceiling
+        // band the same walk answers)
+        CollisionShape::Head => (cy as f64, cy as f64 + 8.0 / 16.0),
         _ => (cy as f64, (cy + 1) as f64),
     };
     let inset = match shape {
         CollisionShape::InsetColumn(_, i) => i as f64 / 16.0,
+        // THE FLOOR HEAD'S OWN INSET (the dev-82 round — the SHAPE
+        // column(8.0, 0.0, 8.0) the 4/16 symmetric inset the box
+        // fold keeps)
+        CollisionShape::Head => 4.0 / 16.0,
         _ => 0.0,
     };
     let (mut x_lo, mut x_hi) = (cx as f64 + inset, (cx + 1) as f64 - inset);
@@ -11965,6 +12042,16 @@ impl World {
         if is_wheat(id) {
             return None;
         }
+        // THE FLOOR HEADS' OWN GRANT (the dev-82 round — the
+        // mini-cube lane the BE family's five humanoid-standard kinds
+        // wear): the head item the registry HAS, the placed body the
+        // 8x8x8 box the mini-cube lane NOW renders — the generic
+        // full-cube placement the honest verdict replaces (the
+        // dev-80 refusal the lane's own absence banked), the
+        // ROTATION segment the placement arm's own stamp carries.
+        if is_floor_head(id) {
+            return Some(id);
+        }
         // THE MOB HEADS' OWN REFUSAL (the dev-80 round — the
         // BE-rendered family the mini-cube lane the future round
         // keeps, the full-cube verdict the placement lane never
@@ -11973,6 +12060,9 @@ impl World {
         // renderer's own 8x8x8 box the generic full-cube placement
         // never serves — the wheat-precedent law the family shares
         // (the honest no-place, never a guessed full-cube voxel).
+        // The DRAGON/PIGLIN pair the refusal KEEPS (the custom
+        // models the mini-cube lane never banks — the dev-82 round
+        // the humanoid-standard five alone serves).
         if is_mob_head(id) {
             return None;
         }
@@ -21571,6 +21661,113 @@ mod tests {
             atlas::FACE_TILES[GLASS as usize][2],
             "the plain glass the DISTINCT master wears"
         );
+    }
+
+    #[test]
+    fn the_floor_heads_own_laws_the_segment_and_the_shape_wear() {
+        // THE FLOOR HEADS' OWN LAWS (the dev-82 round — javap
+        // SkullBlock + RotationSegment + SegmentedAnglePrecision the
+        // 26.2 jar the probe scripts/skull_probe_82.py banks): the
+        // five humanoid-standard kinds the predicate grants, the
+        // DRAGON/PIGLIN pair the custom models refuse, the placement
+        // segment the `round(yaw * 16/360) & 15` law wears, the
+        // collision the SHAPE column(8.0, 0.0, 8.0) the [4,0,4]->
+        // [12,8,12] box the default getCollisionShape answers
+        use mc_registry::generated::atlas;
+        // THE PREDICATE'S OWN SPLIT (the humanoid five the lane
+        // serves, the custom pair the refusal keeps)
+        assert!(is_floor_head(SKELETON_SKULL));
+        assert!(is_floor_head(WITHER_SKELETON_SKULL));
+        assert!(is_floor_head(ZOMBIE_HEAD));
+        assert!(is_floor_head(PLAYER_HEAD));
+        assert!(is_floor_head(CREEPER_HEAD));
+        assert!(!is_floor_head(DRAGON_HEAD) && !is_floor_head(PIGLIN_HEAD));
+        assert!(!is_floor_head(GLASS) && !is_floor_head(AIR));
+        assert!(is_mob_head(DRAGON_HEAD) && is_mob_head(PIGLIN_HEAD));
+        // THE PLACEABLE LANE'S OWN SPLIT (the five the grant wears,
+        // the pair the honest no-place keeps)
+        assert_eq!(
+            World::placeable_block("skeleton_skull"),
+            Some(SKELETON_SKULL),
+            "the skull item the placement lane grants"
+        );
+        assert_eq!(World::placeable_block("zombie_head"), Some(ZOMBIE_HEAD));
+        assert_eq!(World::placeable_block("player_head"), Some(PLAYER_HEAD));
+        assert_eq!(
+            World::placeable_block("dragon_head"),
+            None,
+            "the dragon the custom-model refusal keeps"
+        );
+        assert_eq!(
+            World::placeable_block("piglin_head"),
+            None,
+            "the piglin the ears-shape refusal keeps"
+        );
+        // THE PLACEMENT SEGMENT'S OWN LAW (RotationSegment.
+        // convertToSegment — the `round(yaw * 16/360) & 15` fold the
+        // client's own -PI yaw offset answers: the vanilla yaw 0 the
+        // segment 0 keeps [the south look the north face wears], the
+        // 90 the segment 4, the 180 the segment 8, the -90 the
+        // segment 12 the & mask banks)
+        let pi = std::f32::consts::PI;
+        assert_eq!(head_rotation_variant(pi), 0, "the vanilla yaw 0");
+        assert_eq!(
+            head_rotation_variant(pi + pi / 2.0),
+            4,
+            "the vanilla yaw 90 the segment 4 wears"
+        );
+        assert_eq!(head_rotation_variant(pi + pi), 8, "the vanilla yaw 180");
+        assert_eq!(
+            head_rotation_variant(pi / 2.0),
+            12,
+            "the vanilla yaw -90 the &15 mask banks"
+        );
+        // THE 22.5-DEGREE STEP (the yaw 22 the round(0.977) the
+        // segment 1 banks, the yaw 11 the round(0.489) the segment 0
+        // keeps — the half-step boundary the 0.5 round answers)
+        assert_eq!(head_rotation_variant(pi + pi * 22.0 / 180.0), 1);
+        assert_eq!(head_rotation_variant(pi + pi * 11.0 / 180.0), 0);
+        // THE COLLISION'S OWN BOX (the SHAPE column(8.0, 0.0, 8.0) the
+        // [4,0,4]->[12,8,12] band the shape_slabs decode answers —
+        // the 4/16 inset the x/z arms wear, the 8/16 the y band)
+        assert!(matches!(
+            collision_shape(SKELETON_SKULL),
+            CollisionShape::Head
+        ));
+        let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) =
+            shape_slabs(CollisionShape::Head, 10, 20, 10).unwrap();
+        assert!((x_lo - 10.25).abs() < 1e-9 && (x_hi - 10.75).abs() < 1e-9);
+        assert!((y_lo - 20.0).abs() < 1e-9 && (y_hi - 20.5).abs() < 1e-9);
+        assert!((z_lo - 10.25).abs() < 1e-9 && (z_hi - 10.75).abs() < 1e-9);
+        // THE ENTITY FACES' OWN ROWS (the five kinds the served tiles
+        // bank, the DRAGON/PIGLIN rows the TILE_NONE the custom
+        // models keep, the six tiles the DISTINCT masters wear)
+        for k in [SKELETON_SKULL, WITHER_SKELETON_SKULL, ZOMBIE_HEAD, PLAYER_HEAD, CREEPER_HEAD] {
+            let row = atlas::ENTITY_HEAD_FACES[k as usize];
+            assert!(
+                row.iter().all(|t| *t != atlas::TILE_NONE),
+                "the served kind {} the six tiles bank",
+                NAME_OF[k as usize]
+            );
+            for a in 0..6 {
+                for b in (a + 1)..6 {
+                    assert_ne!(
+                        row[a], row[b],
+                        "the {} faces the DISTINCT tiles wear",
+                        NAME_OF[k as usize]
+                    );
+                }
+            }
+        }
+        for k in [DRAGON_HEAD, PIGLIN_HEAD] {
+            assert!(
+                atlas::ENTITY_HEAD_FACES[k as usize]
+                    .iter()
+                    .all(|t| *t == atlas::TILE_NONE),
+                "the {} row the custom-model NONE keeps",
+                NAME_OF[k as usize]
+            );
+        }
     }
 
     #[test]

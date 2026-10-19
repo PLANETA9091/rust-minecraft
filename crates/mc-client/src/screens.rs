@@ -39977,6 +39977,24 @@ impl App {
                     crate::world::chain_placement_variant(hit.face),
                 );
             }
+            // THE FLOOR HEADS' OWN SEGMENT STAMP (the dev-82 round —
+            // javap SkullBlock.getStateForPlacement pc 5-15 the 26.2
+            // jar: the `setValue(ROTATION, RotationSegment.
+            // convertToSegment(context.getRotation()))` walk the
+            // look-yaw law speaks, the 16-step segment the
+            // [`crate::world::head_rotation_variant`] walk the
+            // client's own yaw offset fold answers — the mesher's
+            // mini-cube lane the byte the createGroundTransformation
+            // quarter reads, the support-pop arm the neighbor walk
+            // the future round keeps)
+            if crate::world::is_floor_head(placed) {
+                world.set_variant(
+                    cell.0,
+                    cell.1,
+                    cell.2,
+                    crate::world::head_rotation_variant(cam_yaw),
+                );
+            }
             // THE LANTERN'S OWN HANGING STAMP (the dev-61 round — javap
             // LanternBlock.getStateForPlacement the 26.2 jar the
             // nearest-looking Y walk the canSurvive fall-through

@@ -84,6 +84,64 @@ const FACE_CORNERS: [[[f32; 3]; 4]; 6] = [
 /// the loader's own lane reads)
 pub const TILE_END_PORTAL: u16 = 65534;
 
+/// THE HEAD'S OWN MODEL-FACE TABLE (the dev-82 round — javap
+/// ModelPart$Cube/<Polygon> the 26.2 ctor law the probe
+/// scripts/skull_probe_82.py decodes): per model face the four corner
+/// POSITIONS in model px (the head box x -4..4, y -8..0, z -4..4 —
+/// SkullModel.createHeadModel's addBox(-4,-8,-4, 8,8,8) law) + the
+/// four tile-space uvs (the Polygon ctor's rect-corner assignment —
+/// vertex[0] the (u1, v0) top-right corner wears, vertex[1] the
+/// (u0, v0), vertex[2] the (u0, v1), vertex[3] the (u1, v1), the
+/// NO-inset fold the fconst_0 speak) + the ENTITY_HEAD_FACES slot
+/// the tile row reads. The model-face order [down, up, west, north,
+/// east, south] the generated table's own law keeps — the DOWN face
+/// the model y0=-8 row carries (the head TOP the +Y-down convention
+/// speaks, the world top the flip answers), the NORTH face the skin
+/// FRONT region banks.
+const HEAD_MODEL_FACES: [([[f32; 3]; 4], [[f32; 2]; 4], usize); 6] = [
+    // DOWN (slot 0 — the [8,0] region, the head top the flip wears):
+    // v24 (maxX, y0, maxZ), v23 (x0, y0, maxZ), v19 (x0, y0, z0),
+    // v20 (maxX, y0, z0)
+    (
+        [[4.0, -8.0, 4.0], [-4.0, -8.0, 4.0], [-4.0, -8.0, -4.0], [4.0, -8.0, -4.0]],
+        [[1.0, 0.0], [0.0, 0.0], [0.0, 1.0], [1.0, 1.0]],
+        0,
+    ),
+    // UP (slot 1 — the [16,0] region, the neck cut): v21 (maxX, maxY,
+    // z0), v22 (x0, maxY, z0), v26 (x0, maxY, maxZ), v25 (maxX, maxY,
+    // maxZ)
+    (
+        [[4.0, 0.0, -4.0], [-4.0, 0.0, -4.0], [-4.0, 0.0, 4.0], [4.0, 0.0, 4.0]],
+        [[1.0, 1.0], [0.0, 1.0], [0.0, 0.0], [1.0, 0.0]],
+        1,
+    ),
+    // WEST (slot 2 — the [0,8] region): v19, v23, v26, v22
+    (
+        [[-4.0, -8.0, -4.0], [-4.0, -8.0, 4.0], [-4.0, 0.0, 4.0], [-4.0, 0.0, -4.0]],
+        [[1.0, 0.0], [0.0, 0.0], [0.0, 1.0], [1.0, 1.0]],
+        2,
+    ),
+    // NORTH — THE SKIN'S OWN FACE (slot 3 — the [8,8] region): v20,
+    // v19, v22, v21
+    (
+        [[4.0, -8.0, -4.0], [-4.0, -8.0, -4.0], [-4.0, 0.0, -4.0], [4.0, 0.0, -4.0]],
+        [[1.0, 0.0], [0.0, 0.0], [0.0, 1.0], [1.0, 1.0]],
+        3,
+    ),
+    // EAST (slot 4 — the [16,8] region): v24, v20, v21, v25
+    (
+        [[4.0, -8.0, 4.0], [4.0, -8.0, -4.0], [4.0, 0.0, -4.0], [4.0, 0.0, 4.0]],
+        [[1.0, 0.0], [0.0, 0.0], [0.0, 1.0], [1.0, 1.0]],
+        4,
+    ),
+    // SOUTH (slot 5 — the [24,8] region, the back): v23, v24, v25, v26
+    (
+        [[-4.0, -8.0, 4.0], [4.0, -8.0, 4.0], [4.0, 0.0, 4.0], [-4.0, 0.0, 4.0]],
+        [[1.0, 0.0], [0.0, 0.0], [0.0, 1.0], [1.0, 1.0]],
+        5,
+    ),
+];
+
 fn is_transparent(kind: u16) -> bool {
     // the leaves FAMILY: oak (foliage-tinted) and pale oak (the audited
     // no-tint verdict — still cutout leaves, non-occluding, no AO);
@@ -258,6 +316,14 @@ fn is_transparent(kind: u16) -> bool {
         // same-kind cull the super's own skipRendering pc 0-17 the
         // glass arm's tinted extension answers)
         || crate::world::is_tinted_glass(kind)
+        // THE FLOOR HEADS the same verdict keeps (the dev-82 round —
+        // javap SkullBlock the 26.2 jar the noOcclusion registration
+        // the Properties chain speaks, the 8-px box the full cube
+        // never is: the neighbors' faces draw against the skull cell,
+        // the AO the opaque walk never casts, the six model faces the
+        // mini-cube lane's own walk renders — the BE-rendered family
+        // the chest precedent's own verdict shares)
+        || crate::world::is_floor_head(kind)
         // THE PANE FAMILY the same verdict keeps (the dev-58 round —
         // the blocks clinit's noOcclusion() rows the glass_pane and
         // iron_bars chains speak [pc 12459 / pc 12322], the stained
@@ -5057,6 +5123,120 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         out.push(Quad {
                             pts,
                             colors,
+                            uvs,
+                            tile,
+                            translucent: false,
+                            per_texel_alpha: false,
+                        });
+                    }
+                    continue;
+                }
+                // THE MOB HEADS' OWN MINI-CUBE LANE (the dev-82 round —
+                // javap SkullModel.createHeadModel +
+                // SkullBlockRenderer.createGroundTransformation +
+                // ModelPart$Cube/<Polygon> the 26.2 jar the probe
+                // scripts/skull_probe_82.py banks): the 8x8x8 head box
+                // the model space speaks (addBox(-4,-8,-4, 8,8,8) — x
+                // -4..4, y -8..0, z -4..4 px), the createGround-
+                // Transformation's own compose the vertex walk answers
+                // (translation(0.5, 0, 0.5) · rotateY(-convertToDegrees(
+                // rot)) · scale(-1,-1,1) — the Y flip the model's own
+                // +Y-down convention converts, the rotation the ROTATION
+                // segment's 22.5-degree quarter negates, the translate
+                // the cell center the box lands on), the per-face rect
+                // corners the Polygon ctor assigns (NO half-texel inset
+                // the 26.2 walk banks — the fconst_0 fold the decode
+                // speaks), the entity sheets the ENTITY_HEAD_FACES
+                // table's own crops carry. The entity law the light
+                // lane keeps (entityCutoutNoCull — the uniform cell
+                // light every face wears, NO face shade, NO AO the
+                // entity pipeline never samples), the six faces the
+                // BE pass always emits (the neighbor cull the BE layer
+                // never runs).
+                if crate::world::is_floor_head(id) {
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let (cell_sky, cell_block) = match light {
+                        Some(l) => {
+                            let (s, b) = cell_layers(l, world.chunks_per_side, wx, wy, wz);
+                            (s.map(|v| v as f32), b.map(|v| v as f32))
+                        }
+                        None => (None, None),
+                    };
+                    // THE ROTATION SEGMENT'S OWN QUARTER (the
+                    // convertToDegrees law the transform negates — the
+                    // 22.5-degree step the ROTATION_16 property wears)
+                    let rot = world.variant(wx, wy, wz) & 15;
+                    let alpha = (-(rot as f32) * 22.5f32).to_radians();
+                    let (sin_a, cos_a) = alpha.sin_cos();
+                    let faces = atlas::ENTITY_HEAD_FACES[id as usize];
+                    let lm = lightmap_combine(
+                        cell_sky,
+                        cell_block,
+                        sky_factor,
+                        sky_tint,
+                        ambient,
+                        block_tint,
+                        night_vision,
+                        world.night_vision_factor,
+                        world.darkness_scale,
+                    );
+                    for (corners, uvs, slot) in HEAD_MODEL_FACES {
+                        let tile = faces[slot];
+                        if tile == atlas::TILE_NONE {
+                            continue; // the unserved kinds the honest skip keeps
+                        }
+                        let mut pts = [[0f32; 3]; 4];
+                        for (i, c) in corners.iter().enumerate() {
+                            // THE FLIP'S OWN PAIR (scale(-1,-1,1) — the
+                            // model's +Y-down convention the world's
+                            // +Y-up speaks)
+                            let (fx, fy, fz) = (-c[0], -c[1], c[2]);
+                            // THE ROTATE'S OWN PAIR (rotateY(alpha) —
+                            // the right-handed +Y law: x' = x cos + z
+                            // sin, z' = -x sin + z cos)
+                            let rx = fx * cos_a + fz * sin_a;
+                            let rz = -fx * sin_a + fz * cos_a;
+                            // THE TRANSLATE'S OWN PAIR (translation(8px,
+                            // 0, 8px) — the cell center the box lands on)
+                            pts[i] = [
+                                wx as f32 + (8.0 + rx) / 16.0,
+                                wy as f32 + fy / 16.0,
+                                wz as f32 + (8.0 + rz) / 16.0,
+                            ];
+                        }
+                        out.push(Quad {
+                            pts,
+                            colors: [lm; 4], // the entity law's uniform light
                             uvs,
                             tile,
                             translucent: false,
@@ -13578,6 +13758,83 @@ mod tests {
             !stone_bottom.translucent,
             "the stone's own opaque lane the bottom face keeps"
         );
+    }
+
+    #[test]
+    fn the_floor_head_the_mini_cube_the_segment_laws_wear() {
+        // THE MOB HEADS' OWN MESH LAWS (the dev-82 round — javap
+        // SkullModel.createHeadModel + createGroundTransformation +
+        // ModelPart$Cube/<Polygon> the 26.2 jar the probe
+        // scripts/skull_probe_82.py banks): the 8x8x8 box the cell
+        // center wears (x/z 4..12 px, y 0..8), the six model faces
+        // the ENTITY_HEAD_FACES tiles bank, the ROTATION segment's
+        // 22.5-degree quarter the face assignment rotates.
+        use mc_registry::generated::atlas;
+        // THE SOLO SKULL (the fresh-kind default the ROTATION=0 pin
+        // keeps): six quads, the box the [8.25, 8.75] x [8, 8.5]
+        // spans wear, the tiles the row's six slots speak.
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, SKELETON_SKULL);
+        let q = mesh_chunk(&w, 0, 0, None);
+        assert_eq!(q.len(), 6, "the solo head the six model faces wears");
+        let row = atlas::ENTITY_HEAD_FACES[SKELETON_SKULL as usize];
+        for quad in &q {
+            assert!(
+                !quad.translucent && !quad.per_texel_alpha,
+                "the entity cutout lane the head quads keep"
+            );
+            for p in &quad.pts {
+                assert!(
+                    (8.25..=8.75).contains(&p[0]) && (8.0..=8.5).contains(&p[1])
+                        && (8.25..=8.75).contains(&p[2]),
+                    "the 8-px box the cell-center spans keep, got {p:?}"
+                );
+            }
+            assert!(
+                row.contains(&quad.tile),
+                "the tile the row's own slots bank"
+            );
+        }
+        // THE FACE'S OWN SEAT (the ROTATION=0 law: the NORTH face at
+        // z = 8.25 the FRONT tile wears — the skin face the -Z plane
+        // banks)
+        let north_face = q
+            .iter()
+            .find(|quad| {
+                quad.tile == row[3]
+                    && quad.pts.iter().all(|p| (p[2] - 8.25).abs() < 1e-5)
+            })
+            .expect("the rotation-0 north face");
+        assert!(
+            north_face.pts.iter().all(|p| (8.25..=8.75).contains(&p[0])),
+            "the face the 4..12 px x band keeps"
+        );
+        // THE SEGMENT'S OWN QUARTER (the ROTATION=4 stamp — the
+        // -90-degree quarter the EAST plane the face rotates to: the
+        // face tile the x = 8.75 plane wears)
+        w.set_variant(8, 8, 8, 4);
+        let q = mesh_chunk(&w, 0, 0, None);
+        assert_eq!(q.len(), 6, "the rotated head the same six faces wears");
+        let east_face = q
+            .iter()
+            .find(|quad| {
+                quad.tile == row[3]
+                    && quad.pts.iter().all(|p| (p[0] - 8.75).abs() < 1e-5)
+            })
+            .expect("the rotation-4 east face");
+        assert!(
+            east_face.pts.iter().all(|p| (8.25..=8.75).contains(&p[2])),
+            "the rotated face the z band keeps"
+        );
+        // THE EMISSIVE CELL'S OWN LIGHT (the uniform entity law —
+        // every quad's four corners the SAME color the
+        // entityCutoutNoCull lane speaks, NO face shade the BE pass
+        // never samples)
+        for quad in &q {
+            assert_eq!(quad.colors[0], quad.colors[1]);
+            assert_eq!(quad.colors[1], quad.colors[2]);
+            assert_eq!(quad.colors[2], quad.colors[3]);
+        }
     }
 }
 
