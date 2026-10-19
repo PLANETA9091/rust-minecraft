@@ -91,6 +91,8 @@ check gui_chest_320x180 0 --screen chest --ui-frame 30 --seed 20260214 --width 3
 check gui_chest_double_320x180 0 --screen chest_double --ui-frame 30 --seed 20260214 --width 320 --height 180
 # --- the lit furnace (the dev-72 world walk's own pin: the stocked furnace the settle ticks ignite, the LIT flip the emission-13 light the embers wear) ---
 check gui_furnace_lit_320x180 0 --screen furnace_lit --body --body-yaw 0 --body-pitch=-12 --ui-frame 30 --settle-ticks 15 --seed 20260214 --width 320 --height 180
+# --- the furnace menu (the dev-69 FurnaceMenu's own 176x166 canvas, the trio the slots speak, the 50% flame the arrow the mid-arc words wear) ---
+check gui_furnace_320x180 0 --screen furnace --ui-frame 30 --seed 20260214 --width 320 --height 180
 
 echo "== ${pass} passed, ${fail} failed =="
 if [[ "$fail" -gt 0 ]]; then

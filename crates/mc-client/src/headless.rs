@@ -2198,6 +2198,63 @@ cow_sound_variant: None,
             app.frame = frame;
             app.clock_total = 6000 + frame;
         }
+        "furnace" => {
+            // THE FURNACE MENU'S OWN CANVAS (the dev-76 round — the
+            // dev-69 FurnaceMenu's own golden: the 176x166 canvas the
+            // chest rounds wear, the THREE block-entity slots the
+            // FurnaceMenu ctor speaks — INPUT 0 the ore, FUEL 1 the
+            // coal, RESULT 2 the emptiness — the progress pair the
+            // MID-ARC words wear (the flame the lit pair drives, the
+            // arrow the cooking pair drives, the 50% pin the [800,
+            // 1600, 100, 200] staged words speak), the standard rows
+            // the addStandardInventorySlots projection renders, the
+            // centered title the lang row keeps). THE OFFLINE STORE
+            // the disk never touches (the None boot the
+            // container_stores_file field banks — the headless goldens'
+            // own determinism), the staged trio + words the per-cell
+            // banks keep, the open_furnace walk the REAL read (the
+            // fresh branch the trio + the words + the prime loads).
+            app.enter_world();
+            let size = app.offline_world.as_ref().unwrap().size_blocks();
+            let c = size / 2;
+            let cell = (c, app.spawn_y, c); // the spawn column's own feet cell
+            {
+                let w = app.offline_world.as_mut().unwrap();
+                w.set(cell.0, cell.1, cell.2, crate::world::FURNACE);
+                // THE PLACEMENT'S OWN BYTE (the placement walk's own
+                // law — the south look's camera yaw PI the flip
+                // answers; the GUI never renders the world, the
+                // staged state the honest placed shape keeps)
+                w.set_variant(
+                    cell.0,
+                    cell.1,
+                    cell.2,
+                    crate::world::furnace_facing_byte(std::f32::consts::PI),
+                );
+            }
+            // THE STOCKED BANK + THE MID-ARC WORDS the fresh branch
+            // reads (the trio the FurnaceMenu's own slot law keeps,
+            // the words the SimpleContainerData(4) projection wears —
+            // the flame ceil(lit*13)+1 = 8, the arrow ceil(cook*24)
+            // = 12, the 50% pin the formulas' own fold speaks; the
+            // registry's own ids the stacks speak, the missing name
+            // the loud verdict keeps)
+            let wire = |name: &str| {
+                mc_registry::item_id_by_name(name)
+                    .unwrap_or_else(|| panic!("the golden's own stack the registry answers: {name}"))
+            };
+            let mut store = vec![(0i32, 0i32); 3];
+            store[0] = (wire("iron_ore"), 5);
+            store[1] = (wire("coal"), 2);
+            app.furnace_stores.insert(cell, store);
+            app.furnace_word_stores.insert(cell, [800, 1600, 100, 200]);
+            app.open_furnace(cell);
+            // THE NOON PIN (the world arm's own law — the day look the
+            // full-day fold keeps, the noon tracks the sky renders;
+            // the clock the staged frame folds)
+            app.frame = frame;
+            app.clock_total = 6000 + frame;
+        }
         "furnace_lit" => {
             // THE WORLD WALK'S OWN GOLDEN (the dev-75 round — the
             // dev-72 world walk's own pixel pin): the stocked furnace
@@ -2316,7 +2373,7 @@ cow_sound_variant: None,
             app.clock_total = 6000 + frame;
         }
         other => anyhow::bail!(
-            "unknown screen {other} (loading|title|servers|options|world|worldnight|pause|chest|chest_double|furnace_lit|inventory|crafting|creative)"
+            "unknown screen {other} (loading|title|servers|options|world|worldnight|pause|chest|chest_double|furnace|furnace_lit|inventory|crafting|creative)"
         ),
     }
 
