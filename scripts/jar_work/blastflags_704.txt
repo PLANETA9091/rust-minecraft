@@ -1,0 +1,149 @@
+=== 1. ServerExplosion.finalizeExplosion — the per-cell walk
+
+=== 2. BlockBehaviour.onExplosionHit — the cited setBlock tail
+
+  ---- protected void onExplosionHit(net.minecraft.world.level.block.state.BlockState, net.minecraft.server.level.ServerLevel, net.minecraft.core.BlockPos, net.minecraft.world.level.Explosion, java.util.function.BiConsumer<net.minecraft.world.item.ItemStack, net.minecraft.core.BlockPos>);
+    Code:
+       0: aload_1
+       1: invokevirtual #151                // Method net/minecraft/world/level/block/state/BlockState.isAir:()Z
+       4: ifne          20
+       7: aload         4
+       9: invokeinterface #155,  1          // InterfaceMethod net/minecraft/world/level/Explosion.getBlockInteraction:()Lnet/minecraft/world/level/Explosion$BlockInteraction;
+      14: getstatic     #161                // Field net/minecraft/world/level/Explosion$BlockInteraction.TRIGGER_BLOCK:Lnet/minecraft/world/level/Explosion$BlockInteraction;
+      17: if_acmpne     21
+      20: return
+      21: aload_1
+      22: invokevirtual #167                // Method net/minecraft/world/level/block/state/BlockState.getBlock:()Lnet/minecraft/world/level/block/Block;
+      25: astore        6
+      27: aload         4
+      29: invokeinterface #171,  1          // InterfaceMethod net/minecraft/world/level/Explosion.getIndirectSourceEntity:()Lnet/minecraft/world/entity/LivingEntity;
+      34: instanceof    #175                // class net/minecraft/world/entity/player/Player
+      37: istore        7
+      39: aload         6
+      41: aload         4
+      43: invokevirtual #177                // Method net/minecraft/world/level/block/Block.dropFromExplosion:(Lnet/minecraft/world/level/Explosion;)Z
+      46: ifeq          179
+      49: aload_1
+      50: invokevirtual #183                // Method net/minecraft/world/level/block/state/BlockState.hasBlockEntity:()Z
+      53: ifeq          64
+      56: aload_2
+      57: aload_3
+      58: invokevirtual #186                // Method net/minecraft/server/level/ServerLevel.getBlockEntity:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/entity/BlockEntity;
+      61: goto          65
+      64: aconst_null
+      65: astore        8
+      67: new           #192                // class net/minecraft/world/level/storage/loot/LootParams$Builder
+      70: dup
+      71: aload_2
+      72: invokespecial #194                // Method net/minecraft/world/level/storage/loot/LootParams$Builder."<init>":(Lnet/minecraft/server/level/ServerLevel;)V
+      75: getstatic     #197                // Field net/minecraft/world/level/storage/loot/parameters/LootContextParams.ORIGIN:Lnet/minecraft/util/context/ContextKey;
+      78: aload_3
+      79: invokestatic  #203                // Method net/minecraft/world/phys/Vec3.atCenterOf:(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/world/phys/Vec3;
+      82: invokevirtual #209                // Method net/minecraft/world/level/storage/loot/LootParams$Builder.withParameter:(Lnet/minecraft/util/context/ContextKey;Ljava/lang/Object;)Lnet/minecraft/world/level/storage/loot/LootParams$Builder;
+      85: getstatic     #213                // Field net/minecraft/world/level/storage/loot/parameters/LootContextParams.TOOL:Lnet/minecraft/util/context/ContextKey;
+      88: getstatic     #216                // Field net/minecraft/world/item/ItemStack.EMPTY:Lnet/minecraft/world/item/ItemStack;
+      91: invokevirtual #209                // Method net/minecraft/world/level/storage/loot/LootParams$Builder.withParameter:(Lnet/minecraft/util/context/ContextKey;Ljava/lang/Object;)Lnet/minecraft/world/level/storage/loot/LootParams$Builder;
+      94: getstatic     #222                // Field net/minecraft/world/level/storage/loot/parameters/LootContextParams.BLOCK_ENTITY:Lnet/minecraft/util/context/ContextKey;
+      97: aload         8
+      99: invokevirtual #225                // Method net/minecraft/world/level/storage/loot/LootParams$Builder.withOptionalParameter:(Lnet/minecraft/util/context/ContextKey;Ljava/lang/Object;)Lnet/minecraft/world/level/storage/loot/LootParams$Builder;
+     102: getstatic     #228                // Field net/minecraft/world/level/storage/loot/parameters/LootContextParams.THIS_ENTITY:Lnet/minecraft/util/context/ContextKey;
+     105: aload         4
+     107: invokeinterface #231,  1          // InterfaceMethod net/minecraft/world/level/Explosion.getDirectSourceEntity:()Lnet/minecraft/world/entity/Entity;
+     112: invokevirtual #225                // Method net/minecraft/world/level/storage/loot/LootParams$Builder.withOptionalParameter:(Lnet/minecraft/util/context/ContextKey;Ljava/lang/Object;)Lnet/minecraft/world/level/storage/loot/LootParams$Builder;
+     115: astore        9
+     117: aload         4
+     119: invokeinterface #155,  1          // InterfaceMethod net/minecraft/world/level/Explosion.getBlockInteraction:()Lnet/minecraft/world/level/Explosion$BlockInteraction;
+     124: getstatic     #235                // Field net/minecraft/world/level/Explosion$BlockInteraction.DESTROY_WITH_DECAY:Lnet/minecraft/world/level/Explosion$BlockInteraction;
+     127: if_acmpne     149
+     130: aload         9
+     132: getstatic     #238                // Field net/minecraft/world/level/storage/loot/parameters/LootContextParams.EXPLOSION_RADIUS:Lnet/minecraft/util/context/ContextKey;
+     135: aload         4
+     137: invokeinterface #241,  1          // InterfaceMethod net/minecraft/world/level/Explosion.radius:()F
+     142: invokestatic  #245                // Method java/lang/Float.valueOf:(F)Ljava/lang/Float;
+     145: invokevirtual #209                // Method net/minecraft/world/level/storage/loot/LootParams$Builder.withParameter:(Lnet/minecraft/util/context/ContextKey;Ljava/lang/Object;)Lnet/minecraft/world/level/storage/loot/LootParams$Builder;
+     148: pop
+     149: aload_1
+     150: aload_2
+     151: aload_3
+     152: getstatic     #216                // Field net/minecraft/world/item/ItemStack.EMPTY:Lnet/minecraft/world/item/ItemStack;
+     155: iload         7
+     157: invokevirtual #251                // Method net/minecraft/world/level/block/state/BlockState.spawnAfterBreak:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/item/ItemStack;Z)V
+     160: aload_1
+     161: aload         9
+     163: invokevirtual #255                // Method net/minecraft/world/level/block/state/BlockState.getDrops:(Lnet/minecraft/world/level/storage/loot/LootParams$Builder;)Ljava/util/List;
+     166: aload         5
+     168: aload_3
+     169: invokedynamic #259,  0            // InvokeDynamic #2:accept:(Ljava/util/function/BiConsumer;Lnet/minecraft/core/BlockPos;)Ljava/util/function/Consumer;
+     174: invokeinterface #263,  2          // InterfaceMethod java/util/List.forEach:(Ljava/util/function/Consumer;)V
+     179: aload_2
+     180: aload_3
+     181: getstatic     #269                // Field net/minecraft/world/level/block/Blocks.AIR:Lnet/minecraft/world/level/block/Block;
+     184: invokevirtual #275                // Method net/minecraft/world/level/block/Block.defaultBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+     187: iconst_3
+     188: invokevirtual #279                // Method net/minecraft/server/level/ServerLevel.setBlock:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z
+     191: pop
+     192: aload         6
+     194: aload_2
+     195: aload_3
+     196: aload         4
+     198: invokevirtual #283                // Method net/minecraft/world/level/block/Block.wasExploded:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/Explosion;)V
+     201: return
+
+
+  ---- private static void lambda$onExplosionHit$0(java.util.function.BiConsumer, net.minecraft.core.BlockPos, net.minecraft.world.item.ItemStack);
+    Code:
+       0: aload_0
+       1: aload_2
+       2: aload_1
+       3: invokeinterface #474,  3          // InterfaceMethod java/util/function/BiConsumer.accept:(Ljava/lang/Object;Ljava/lang/Object;)V
+       8: return
+
+=== 3. BlockBehaviour$BlockStateBase.onExplosionHit — the override chain
+
+  ---- public void onExplosionHit(net.minecraft.server.level.ServerLevel, net.minecraft.core.BlockPos, net.minecraft.world.level.Explosion, java.util.function.BiConsumer<net.minecraft.world.item.ItemStack, net.minecraft.core.BlockPos>);
+    Code:
+       0: aload_0
+       1: invokevirtual #195                // Method getBlock:()Lnet/minecraft/world/level/block/Block;
+       4: aload_0
+       5: invokevirtual #37                 // Method asState:()Lnet/minecraft/world/level/block/state/BlockState;
+       8: aload_1
+       9: aload_2
+      10: aload_3
+      11: aload         4
+      13: invokevirtual #460                // Method net/minecraft/world/level/block/Block.onExplosionHit:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/Explosion;Ljava/util/function/BiConsumer;)V
+      16: return
+
+=== 4. who calls preRemoveSideEffects (blast path?) — scan the big three
+  net.minecraft.world.level.block.state.BlockBehaviour: NO preRemoveSideEffects call
+  net.minecraft.world.level.block.state.BlockBehaviour$BlockStateBase: NO preRemoveSideEffects call
+  net.minecraft.world.level.ServerExplosion: NO preRemoveSideEffects call
+=== 5. BlockEntity.preRemoveSideEffects — the dropContents arm (dev-73 verdict re-check)
+
+  ---- public void preRemoveSideEffects(net.minecraft.core.BlockPos, net.minecraft.world.level.block.state.BlockState);
+    Code:
+       0: aload_0
+       1: astore        4
+       3: aload         4
+       5: instanceof    #280                // class net/minecraft/world/Container
+       8: ifeq          33
+      11: aload         4
+      13: checkcast     #280                // class net/minecraft/world/Container
+      16: astore_3
+      17: aload_0
+      18: getfield      #117                // Field level:Lnet/minecraft/world/level/Level;
+      21: ifnull        33
+      24: aload_0
+      25: getfield      #117                // Field level:Lnet/minecraft/world/level/Level;
+      28: aload_1
+      29: aload_3
+      30: invokestatic  #282                // Method net/minecraft/world/Containers.dropContents:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/Container;)V
+      33: return
+
+=== 6. ChestBlock blast-side hooks — wasExploded/onExplosionHit overrides?
+  NO blast-side hooks on ChestBlock
+=== 7. dropResources-with-blockentity in the blast walk? (the container drop verdict)
+  dropResources: absent
+  popResource: absent
+  onBlockExploded: absent
+  setBlock: absent
+  destroyBlock: absent

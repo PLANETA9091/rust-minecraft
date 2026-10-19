@@ -1,0 +1,84 @@
+CHEST: no strength row within 40 lines of register — instabreak/default family? (dump tail)
+    6824: invokedynamic #2456,  0           // InvokeDynamic #122:apply:()Ljava/util/function/Function;
+    6829: invokestatic  #30                 // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    6832: getstatic     #875                // Field net/minecraft/world/level/material/MapColor.WOOD:Lnet/minecraft/world/level/material/MapColor;
+    6835: invokevirtual #83                 // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    6838: getstatic     #43                 // Field net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASS:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+    6841: invokevirtual #49                 // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    6844: ldc_w         #2457               // float 2.5f
+    6847: invokevirtual #53                 // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    6850: getstatic     #878                // Field net/minecraft/world/level/block/SoundType.WOOD:Lnet/minecraft/world/level/block/SoundType;
+    6853: invokevirtual #57                 // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    6856: invokevirtual #61                 // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    6859: invokestatic  #188                // Method register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    6862: putstatic     #2458               // Field CHEST:Lnet/minecraft/world/level/block/Block;
+TRAPPED_CHEST: no strength row within 40 lines of register — instabreak/default family? (dump tail)
+    15660: invokedynamic #3978,  0          // InvokeDynamic #348:apply:()Ljava/util/function/Function;
+    15665: invokestatic  #30                // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    15668: getstatic     #875               // Field net/minecraft/world/level/material/MapColor.WOOD:Lnet/minecraft/world/level/material/MapColor;
+    15671: invokevirtual #83                // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    15674: getstatic     #43                // Field net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASS:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+    15677: invokevirtual #49                // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    15680: ldc_w         #2457              // float 2.5f
+    15683: invokevirtual #53                // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    15686: getstatic     #878               // Field net/minecraft/world/level/block/SoundType.WOOD:Lnet/minecraft/world/level/block/SoundType;
+    15689: invokevirtual #57                // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.sound:(Lnet/minecraft/world/level/block/SoundType;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    15692: invokevirtual #61                // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.ignitedByLava:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    15695: invokestatic  #188               // Method register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    15698: putstatic     #3979              // Field TRAPPED_CHEST:Lnet/minecraft/world/level/block/Block;
+ENDER_CHEST: no strength row within 40 lines of register — instabreak/default family? (dump tail)
+    13962: invokedynamic #3536,  0          // InvokeDynamic #284:apply:()Ljava/util/function/Function;
+    13967: invokestatic  #30                // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13970: getstatic     #136               // Field net/minecraft/world/level/material/MapColor.STONE:Lnet/minecraft/world/level/material/MapColor;
+    13973: invokevirtual #83                // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13976: getstatic     #779               // Field net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+    13979: invokevirtual #49                // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13982: ldc_w         #3537              // float 22.5f
+    13985: ldc_w         #3538              // float 600.0f
+    13988: invokevirtual #341               // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(FF)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13991: invokedynamic #3539,  0          // InvokeDynamic #285:applyAsInt:()Ljava/util/function/ToIntFunction;
+    13996: invokevirtual #163               // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.lightLevel:(Ljava/util/function/ToIntFunction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    13999: invokestatic  #188               // Method register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    14002: putstatic     #3540              // Field ENDER_CHEST:Lnet/minecraft/world/level/block/Block;
+FURNACE: no strength row within 40 lines of register — instabreak/default family? (dump tail)
+    7164: invokestatic  #30                 // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    7167: getstatic     #136                // Field net/minecraft/world/level/material/MapColor.STONE:Lnet/minecraft/world/level/material/MapColor;
+    7170: invokevirtual #83                 // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    7173: getstatic     #779                // Field net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+    7176: invokevirtual #49                 // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    7179: invokevirtual #336                // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    7182: ldc_w         #667                // float 3.5f
+    7185: invokevirtual #53                 // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    7188: bipush        13
+    7190: invokestatic  #409                // Method litBlockEmission:(I)Ljava/util/function/ToIntFunction;
+    7193: invokevirtual #163                // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.lightLevel:(Ljava/util/function/ToIntFunction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    7196: invokestatic  #188                // Method register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    7199: putstatic     #2515               // Field FURNACE:Lnet/minecraft/world/level/block/Block;
+BLAST_FURNACE: no strength row within 40 lines of register — instabreak/default family? (dump tail)
+    24263: invokestatic  #30                // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24266: getstatic     #136               // Field net/minecraft/world/level/material/MapColor.STONE:Lnet/minecraft/world/level/material/MapColor;
+    24269: invokevirtual #83                // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24272: getstatic     #779               // Field net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+    24275: invokevirtual #49                // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24278: invokevirtual #336               // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24281: ldc_w         #667               // float 3.5f
+    24284: invokevirtual #53                // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24287: bipush        13
+    24289: invokestatic  #409               // Method litBlockEmission:(I)Ljava/util/function/ToIntFunction;
+    24292: invokevirtual #163               // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.lightLevel:(Ljava/util/function/ToIntFunction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24295: invokestatic  #188               // Method register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    24298: putstatic     #5257              // Field BLAST_FURNACE:Lnet/minecraft/world/level/block/Block;
+SMOKER: no strength row within 40 lines of register — instabreak/default family? (dump tail)
+    24217: invokestatic  #30                // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.of:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24220: getstatic     #136               // Field net/minecraft/world/level/material/MapColor.STONE:Lnet/minecraft/world/level/material/MapColor;
+    24223: invokevirtual #83                // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.mapColor:(Lnet/minecraft/world/level/material/MapColor;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24226: getstatic     #779               // Field net/minecraft/world/level/block/state/properties/NoteBlockInstrument.BASEDRUM:Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;
+    24229: invokevirtual #49                // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.instrument:(Lnet/minecraft/world/level/block/state/properties/NoteBlockInstrument;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24232: invokevirtual #336               // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.requiresCorrectToolForDrops:()Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24235: ldc_w         #667               // float 3.5f
+    24238: invokevirtual #53                // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.strength:(F)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24241: bipush        13
+    24243: invokestatic  #409               // Method litBlockEmission:(I)Ljava/util/function/ToIntFunction;
+    24246: invokevirtual #163               // Method net/minecraft/world/level/block/state/BlockBehaviour$Properties.lightLevel:(Ljava/util/function/ToIntFunction;)Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;
+    24249: invokestatic  #188               // Method register:(Lnet/minecraft/references/BlockItemId;Ljava/util/function/Function;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)Lnet/minecraft/world/level/block/Block;
+    24252: putstatic     #5251              // Field SMOKER:Lnet/minecraft/world/level/block/Block;

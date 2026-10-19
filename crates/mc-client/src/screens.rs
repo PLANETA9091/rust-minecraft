@@ -16546,6 +16546,37 @@ impl App {
                             let _ = w.bamboo_shape_updates((bx, by, bz), self.frame + 1);
                         }
                     }
+                    // THE BLAST'S OWN SPILL (javap `BlockBehaviour.
+                    // onExplosionHit` pc 49-99 + pc 160-174 the 26.2 jar
+                    // — the blastflags_704 probe banks: the loot walk
+                    // the BLOCK_ENTITY param carries, the getDrops
+                    // forEach the stocked slots the floor wears — the
+                    // preRemoveSideEffects dropContents arm the blast
+                    // path NEVER calls [probe §4: no call in the big
+                    // three], the per-cell store the death the walk
+                    // serves): the destroyed containers' and furnaces'
+                    // stocked stacks the item entities the crater
+                    // releases, the entries the walk dies with — the
+                    // same spill walks the dig lane wears (the dev-67 /
+                    // dev-69 rounds), the map misses the no-op the
+                    // non-container cells keep
+                    for (bx, by, bz) in explosion_cells.iter().copied() {
+                        self.container_store_spilled((bx, by, bz));
+                        self.furnace_store_spilled((bx, by, bz));
+                    }
+                    // THE BLAST'S OWN PAIR UPDATE (the probe's own
+                    // verdict — pc 187 `iconst_3` the setBlock tail
+                    // speaks: the flag-3 the UPDATE_NEIGHBORS keeps,
+                    // the neighbor ChestBlock.updateShape walk the
+                    // blast-killed half's survivor the SINGLE wears —
+                    // the dev-73 law the dig lane serves, the SAME beat
+                    // the blast's own chain answers: the stale LEFT/
+                    // RIGHT the crater's survivor never wears again)
+                    for (bx, by, bz) in explosion_cells.iter().copied() {
+                        if let Some(w) = self.offline_world.as_mut() {
+                            let _ = w.chest_shape_updates((bx, by, bz));
+                        }
+                    }
                     // THE BLAST'S OWN RE-SPEAK: the crater the mesh
                     // wears THIS tick — the same batched rhythm the
                     // bite lane wears, the silent clears the fresh
@@ -115965,6 +115996,296 @@ cow_sound_variant: None,
         assert!(
             w.bamboo_ticks.is_empty(),
             "the queue the cascade drains"
+        );
+    }
+
+    #[test]
+    fn the_blast_the_stocked_stores_the_spill_the_entries_die() {
+        // THE BLAST'S OWN SPILL (javap `BlockBehaviour.onExplosionHit`
+        // pc 49-99 + pc 160-174 the 26.2 jar the blastflags_704 probe
+        // banks — the loot walk the BLOCK_ENTITY param carries, the
+        // stocked slots the getDrops walk releases; the
+        // preRemoveSideEffects dropContents the blast path NEVER
+        // calls): the boom the stocked chest's and the stocked
+        // furnace's cells clear, the stores' stacks the item entities
+        // the crater wears, the entries (and the words) the walk dies
+        // with — the RESTART the spill never resurrects (the file the
+        // death ride banks).
+        let mut app = App::new(3);
+        app.enter_world();
+        let wire_id_of = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        let (px, pz) = (c + 6, c);
+        // THE LANE the blast reads: the cells the boom's own ray
+        // crosses the honest air keeps (the pad tests' own stamping —
+        // the generated terrain's variance the verdict never rides)
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -1..=1i32 {
+                for dz in -1..=3i32 {
+                    w.set(px + dx, surface, pz + dz, crate::world::AIR);
+                }
+            }
+            w.set(px, surface, pz, crate::world::CHEST);
+            w.set(px, surface, pz + 2, crate::world::FURNACE);
+        }
+        // THE STOCKS (the full 27 the chest store wears, the trio +
+        // words the furnace store wears — the dig/open lanes' own
+        // formats)
+        app.container_stores.insert(
+            (px, surface, pz),
+            vec![
+                (0, 0),
+                (wire_id_of("diamond"), 12),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+                (0, 0),
+            ],
+        );
+        app.furnace_stores.insert(
+            (px, surface, pz + 2),
+            vec![(wire_id_of("raw_iron"), 5), (wire_id_of("coal"), 2), (0, 0)],
+        );
+        app.furnace_word_stores
+            .insert((px, surface, pz + 2), [800, 1600, 100, 200]);
+        // THE BOOM (the fuse=1 test seed — one tick the crossing arms;
+        // the TNT the chest's own cell tops — the diamond the blast
+        // verdict reads)
+        let mut t = crate::mob::PrimedTnt::new(
+            9,
+            px as f64 + 0.5,
+            (surface + 1) as f64,
+            pz as f64 + 0.5,
+            7,
+        );
+        t.fuse = 1;
+        app.primed_tnts.push(t);
+        app.update();
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(px, surface, pz),
+                crate::world::AIR,
+                "the chest the blast clears"
+            );
+            assert_eq!(
+                w.get(px, surface, pz + 2),
+                crate::world::AIR,
+                "the furnace the blast clears"
+            );
+        }
+        // THE ENTRIES THE WALK DIES WITH (the stores the keys drop,
+        // the words the progress never resurrects)
+        assert!(
+            !app.container_stores.contains_key(&(px, surface, pz)),
+            "the chest's entry the spill releases"
+        );
+        assert!(
+            !app.furnace_stores.contains_key(&(px, surface, pz + 2)),
+            "the furnace's trio the spill releases"
+        );
+        assert!(
+            !app.furnace_word_stores.contains_key(&(px, surface, pz + 2)),
+            "the furnace's words the death ride banks"
+        );
+        // THE STOCKED STACKS THE FLOOR WEARS (the spill's own chunks
+        // the drops vec carries — the diamond 12 and the raw_iron 5 +
+        // the coal 2 the stocked stores held)
+        // THE CHUNK LAW'S OWN SPLIT (javap ContainerHelper.dropAllItems
+        // the `min(nextInt(21) + 10, stackMax)` drain speaks — the 12
+        // the 10..30 rolls the 10+2 pair the draw wears): the stacks
+        // the chunks SUM to the stocked counts — the totals the spill
+        // released, the chunks the roll's own split keeps
+        let total = |app: &App, item: i32| -> i32 {
+            app.drops
+                .iter()
+                .filter(|d| d.item == item)
+                .map(|d| d.count)
+                .sum()
+        };
+        assert_eq!(
+            total(&app, wire_id_of("diamond")),
+            12,
+            "the chest's diamond the spill wears"
+        );
+        assert_eq!(
+            total(&app, wire_id_of("raw_iron")),
+            5,
+            "the furnace's input the spill wears"
+        );
+        assert_eq!(
+            total(&app, wire_id_of("coal")),
+            2,
+            "the furnace's fuel the spill wears"
+        );
+    }
+
+    #[test]
+    fn the_blast_the_chest_half_the_survivor_the_single_wears() {
+        // THE BLAST'S OWN PAIR UPDATE (the blastflags_704 probe's own
+        // verdict — javap `BlockBehaviour.onExplosionHit` pc 187
+        // `iconst_3` the 26.2 jar speaks: the flag-3 setBlock the
+        // UPDATE_NEIGHBORS keeps, the neighbor ChestBlock.updateShape
+        // walk the demote arms): the boom the LEFT half clears, the
+        // survivor the SINGLE wears (the facing the byte keeps), the
+        // survivor's own stock the world keeps (the spill the broken
+        // half's own store alone releases — the near half's own blast
+        // resistance the aimed rays the partner's reach refuses), the
+        // reopen the single shape the 27 rows wears.
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        let (px, pz) = (c + 6, c);
+        let right = (px, surface, pz);
+        let left = (px - 1, surface, pz);
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -3..=1i32 {
+                for dz in -1..=1i32 {
+                    w.set(px + dx, surface, pz + dz, crate::world::AIR);
+                }
+            }
+            w.set(right.0, right.1, right.2, crate::world::CHEST);
+            w.set_variant(
+                right.0,
+                right.1,
+                right.2,
+                crate::world::chest_variant(
+                    crate::world::CHEST_FACING_NORTH,
+                    crate::world::CHEST_TYPE_RIGHT,
+                ),
+            );
+            w.set(left.0, left.1, left.2, crate::world::CHEST);
+            w.set_variant(
+                left.0,
+                left.1,
+                left.2,
+                crate::world::chest_variant(
+                    crate::world::CHEST_FACING_NORTH,
+                    crate::world::CHEST_TYPE_LEFT,
+                ),
+            );
+        }
+        // THE STOCKS (the survivor's own row the RIGHT store banks,
+        // the broken half's own stack the LEFT store banks)
+        let mut left_store = vec![(0, 0); 27];
+        left_store[1] = (925, 4); // the LEFT half's own row
+        app.container_stores.insert(left, left_store);
+        let mut right_store = vec![(0, 0); 27];
+        right_store[3] = (926, 12); // the RIGHT half's own row
+        app.container_stores.insert(right, right_store);
+        // THE BOOM (the fuse=1 test seed — the TNT the ground ONE gap
+        // cell west of the LEFT half: the near half the blast's own
+        // aimed rays clear [the budget the 2.38 cost the weakest 2.8
+        // draw keeps], the aimed rays the near chest's OWN 2.5
+        // resistance the march attenuation speaks — (2.5+0.3)*0.3 —
+        // the partner's reach refuses: the max 4.6 budget the full
+        // 1.0-wide crossing the 3-4 samples the 2.52+ attenuation
+        // wears DIES INSIDE the near chest, the far half the ray
+        // never samples — the vanilla shield law the ray walk keeps)
+        let mut t = crate::mob::PrimedTnt::new(
+            9,
+            (left.0 - 2) as f64 + 0.5,
+            surface as f64,
+            left.2 as f64 + 0.5,
+            7,
+        );
+        t.fuse = 1;
+        app.primed_tnts.push(t);
+        app.update();
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(left.0, left.1, left.2),
+                crate::world::AIR,
+                "the broken half the blast clears"
+            );
+            assert_eq!(
+                w.get(right.0, right.1, right.2),
+                crate::world::CHEST,
+                "the survivor the blast keeps"
+            );
+            // THE DEMOTE (the updateShape arm the flag-3 chain serves):
+            // the survivor the SINGLE wears, the facing the byte keeps
+            assert_eq!(
+                crate::world::chest_variant_type(w.variant(right.0, right.1, right.2)),
+                crate::world::CHEST_TYPE_SINGLE,
+                "the survivor the SINGLE wears"
+            );
+            assert_eq!(
+                crate::world::chest_variant_facing(w.variant(right.0, right.1, right.2)),
+                crate::world::CHEST_FACING_NORTH,
+                "the facing the byte keeps"
+            );
+        }
+        // THE SURVIVOR'S OWN STOCK THE WORLD KEEPS (the vanilla law —
+        // the spill the broken half's own store alone releases)
+        assert!(
+            !app.container_stores.contains_key(&left),
+            "the broken half's entry the spill releases"
+        );
+        assert_eq!(
+            app.container_stores.get(&right).map(|s| s[3]),
+            Some((926, 12)),
+            "the survivor's own store the world keeps"
+        );
+        // THE FRESH MESH (the variant bytes the demote changed — the
+        // re-speak the boom tick already wore, the pad test's own
+        // verdict the pair change wears)
+        let w = app.offline_world.as_ref().unwrap();
+        let fresh = crate::mesher::mesh_world(w, None);
+        assert_eq!(
+            app.world_quads.as_ref().unwrap(),
+            &fresh,
+            "the survivor's demote the mesh the boom tick wears"
+        );
+        // THE REOPEN (the single shape the 27 rows wears — the partner
+        // key the demote takes)
+        app.open_chest_for(right);
+        assert_eq!(
+            app.chest_slots.len(),
+            27,
+            "the survivor the single shape reopens"
+        );
+        assert!(
+            app.container_open_cell_b.is_none(),
+            "the partner key the demote takes"
+        );
+        assert_eq!(
+            app.chest_slots[3],
+            (926, 12),
+            "the survivor's stock the reopen wears"
         );
     }
 

@@ -10253,6 +10253,19 @@ fn blast_resistance(id: u16) -> Option<f32> {
         "dirt_path" => 0.6499999761581421,
         "netherrack" => 0.4000000059604645,
         "crafting_table" => 2.5,
+        // THE CONTAINER FAMILY'S OWN ROWS (the blastresist_704 probe —
+        // javap Blocks clinit the 26.2 jar speaks: CHEST pc 6844-6847
+        // the `ldc_w 2.5f` + strength(F) single-arg pair BOTH fields
+        // the same value wears, TRAPPED_CHEST pc 15680-15683 the same
+        // 2.5 row, ENDER_CHEST pc 13982-13988 the strength(FF)
+        // `22.5f, 600.0f` pair the BLAST the 600.0 answers, FURNACE pc
+        // 7182-7185 the strength(3.5F) row, BLAST_FURNACE pc 24281-24284
+        // and SMOKER pc 24235-24238 the same 3.5 — the stocked stores'
+        // death the blast lane's own spill wears, the rays the family's
+        // own resistance the march attenuation speaks)
+        "chest" | "trapped_chest" => 2.5,
+        "ender_chest" => 600.0,
+        "furnace" | "blast_furnace" | "smoker" => 3.5,
         // the instabreak() row (javap Blocks clinit pc 5771-5783: the
         // Properties.of().mapColor(FIRE).instabreak().sound(GRASS)
         // .ignitedByLava() chain the TNT registration speaks — the
