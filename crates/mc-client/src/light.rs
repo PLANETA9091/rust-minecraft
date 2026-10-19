@@ -77,6 +77,15 @@ fn sky_opacity(id: u16) -> u8 {
         // passes, the interior the daylight the glass never shades,
         // the vanilla skylight's own law the windows answer)
         || is_glass(id)
+        // THE TINTED GLASS'S DELIBERATE NON-ROW (the dev-81 round —
+        // javap TintedGlassBlock.getLightDampening bipush 15 the 26.2
+        // jar speaks: the tinted seat the DEFAULT 15 verdict the walk
+        // falls through to banks — the window the daylight BLOCKS,
+        // the propagatesSkylightDown iconst_0 the same probe banks.
+        // NO explicit row the family law keeps: the kind the 0-family
+        // never folds, the dark room behind the pane the flood never
+        // reaches — the exact vanilla verdict the default answers)
+
         // THE PANE FAMILY'S OWN ROW (the dev-58 round — the 18 kinds
         // the noOcclusion() registration the lightBlock 0 the same
         // law speaks: the glass_pane pc 12459 + the iron_bars pc
@@ -1398,5 +1407,61 @@ mod tests {
         }
         assert_eq!(light_at(&w, 4, 1, 4).0, Some(15), "the trench's own daylight");
         assert_eq!(light_at(&w, 6, 0, 4).0, Some(15), "the deep end the shaft lights");
+    }
+
+    /// THE TINTED GLASS'S OWN DARK WINDOW — the dev-81 round the
+    /// light lane speaks: the tinted roof the skylight BLOCKS (javap
+    /// TintedGlassBlock.getLightDampening bipush 15 the 26.2 jar —
+    /// the default-15 verdict the sky_opacity walk banks, the
+    /// propagatesSkylightDown iconst_0 the same probe keeps) while
+    /// the PLAIN glass roof the daylight passes (the noOcclusion
+    /// family's lightBlock 0 the flood serves), the two roofs the
+    /// same scene the split verdict wears.
+    #[test]
+    fn the_tinted_roof_blocks_the_sky_the_plain_roof_passes() {
+        // THE PLAIN HALF: the glass lid over the floor — the cells
+        // under the lid the full 15 the flood speaks.
+        let mut w = empty_world();
+        for z in 0..16 {
+            for x in 0..16 {
+                w.set(x, 6, z, GLASS);
+                w.set(x, 0, z, STONE);
+            }
+        }
+        w.relight();
+        assert_eq!(light_at(&w, 8, 6, 8).0, Some(15), "the lid cell itself lit (opacity 0)");
+        assert_eq!(light_at(&w, 8, 5, 8).0, Some(15), "the plain glass passes");
+        assert_eq!(light_at(&w, 8, 1, 8).0, Some(15), "the floor cell daylight");
+        // THE TINTED HALF: the lid swaps — the cells under the lid
+        // the DARK the dampening speaks (the 0 the same verdict the
+        // stone roof's own shade banks).
+        for z in 0..16 {
+            for x in 0..16 {
+                w.set(x, 6, z, TINTED_GLASS);
+            }
+        }
+        w.relight();
+        assert_eq!(light_at(&w, 8, 6, 8).0, Some(0), "the tinted lid itself opaque");
+        assert_eq!(light_at(&w, 8, 5, 8).0, Some(0), "the tinted glass BLOCKS");
+        assert_eq!(light_at(&w, 8, 1, 8).0, Some(0), "the dark room the lid keeps");
+        // THE SPLIT THE SAME ROOF ROW WEARS: one tinted pane, one
+        // plain pane side by side — the floor cells the two verdicts
+        // wear, the dark patch the daylight window borders.
+        for z in 0..16 {
+            for x in 0..16 {
+                w.set(x, 6, z, AIR);
+            }
+        }
+        w.set(4, 6, 4, TINTED_GLASS);
+        w.set(6, 6, 4, GLASS);
+        w.relight();
+        assert_eq!(light_at(&w, 4, 6, 4).0, Some(0), "the tinted cell itself opaque");
+        assert_eq!(
+            light_at(&w, 4, 5, 4).0,
+            Some(14),
+            "the tinted patch the flood's one horizontal step shades"
+        );
+        assert_eq!(light_at(&w, 6, 6, 4).0, Some(15), "the plain cell itself lit");
+        assert_eq!(light_at(&w, 6, 5, 4).0, Some(15), "the plain pane lit");
     }
 }

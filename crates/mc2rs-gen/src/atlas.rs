@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 756] = [
+pub const RUNTIME_PALETTE: [&str; 757] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -2302,6 +2302,26 @@ pub const RUNTIME_PALETTE: [&str; 756] = [
     // verdict every unseated lane wears.
     "skeleton_skull", "wither_skeleton_skull", "zombie_head",
     "player_head", "creeper_head", "dragon_head", "piglin_head",
+    // THE TINTED GLASS'S OWN SEAT (the dev-81 round — kind 756 the
+    // translucent dark-glass pane the palette banks): the FULL CUBE the
+    // generic face walk resolves (blockstates/tinted_glass.json "" ->
+    // block/tinted_glass parent block/cube_all, the #all ref block/
+    // tinted_glass ONE master every face wears), the jar-native PNG the
+    // alpha 110/200 partial map the tile keeps (the palette-type PNG the
+    // decode walk banks — 196 body texels a 110, 60 edge texels a 200,
+    // rgb (39,37,40) the dark metal tint speaks). The 26.2 law the javap
+    // probe scripts/tinted_glass_probe_81.py banks: TintedGlassBlock
+    // extends TransparentBlock (the StainedGlassBlock super the same
+    // HalfTransparentBlock.skipRendering SAME-KIND cull the base class
+    // pc 0-17 answers — the tinted|tinted pair the shared face never
+    // draws, the tinted|glass pair the DIFFERENT blocks the draw wears),
+    // getLightDampening bipush 15 (the light the cell BLOCKS — the
+    // vanilla lightBlock 15 the client's sky-opacity DEFAULT verdict
+    // banks, the deliberate non-row the 0-family never seats),
+    // propagatesSkylightDown iconst_0 (the sky the cell never passes).
+    // The translucent render layer the partial-alpha texture demands —
+    // the per-texel blend the stained lane's own machinery serves.
+    "tinted_glass",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -6152,6 +6172,9 @@ mod tests {
         assert_eq!(RUNTIME_PALETTE[753], "creeper_head");
         assert_eq!(RUNTIME_PALETTE[754], "dragon_head");
         assert_eq!(RUNTIME_PALETTE[755], "piglin_head");
+        // THE TINTED GLASS'S OWN SEAT (the dev-81 round — the tail the
+        // kind 756 wears, the cube_all chain the generic walk resolves)
+        assert_eq!(RUNTIME_PALETTE[756], "tinted_glass");
         // the census's own verdict: the seven seats the skull family
         // the placeholder arm answers, the barrel the generic walk wears
         assert!(is_skull_family("skeleton_skull") && is_skull_family("piglin_head"));
@@ -6166,6 +6189,9 @@ mod tests {
         assert_eq!(names[749], "skeleton_skull");
         assert_eq!(names[752], "player_head");
         assert_eq!(names[755], "piglin_head");
+        // THE TINTED GLASS'S OWN NAME ROW (the registry name the palette
+        // name IS — the plain name the dig/sound/drop/item lanes wire)
+        assert_eq!(names[756], "tinted_glass");
         assert_eq!(FACE_KEYS, ["east", "west", "up", "down", "south", "north"]);
     }
 

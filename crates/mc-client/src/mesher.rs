@@ -248,6 +248,16 @@ fn is_transparent(kind: u16) -> bool {
         // HalfTransparentBlock.skipRendering law the face loop's own
         // glass arm speaks)
         || crate::world::is_glass(kind)
+        // THE TINTED GLASS the same verdict keeps (the dev-81 round —
+        // javap TintedGlassBlock the 26.2 jar: the TransparentBlock
+        // super the HalfTransparentBlock noOcclusion chain banks [the
+        // same law the glass family's own row keeps]: the non-occluding
+        // full cube the neighbors' faces draw against, the AO the
+        // opaque walk never casts, the full-cube quads the generic
+        // lane's translucent arm the per-texel blend serves — the
+        // same-kind cull the super's own skipRendering pc 0-17 the
+        // glass arm's tinted extension answers)
+        || crate::world::is_tinted_glass(kind)
         // THE PANE FAMILY the same verdict keeps (the dev-58 round —
         // the blocks clinit's noOcclusion() rows the glass_pane and
         // iron_bars chains speak [pc 12459 / pc 12322], the stained
@@ -5456,7 +5466,15 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     // glass|glass pair the cull keeps, the glass|stained
                     // pair the DIFFERENT blocks the draw wears, the coplanar
                     // z-fight the two quads' same plane never speaks)
-                    let glass_self = crate::world::is_glass(id);
+                    // THE TINTED EXTENSION (the dev-81 round — the
+                    // TintedGlassBlock the super's own law inherits: javap
+                    // the probe scripts/tinted_glass_probe_81.py the NO
+                    // skipRendering override banks — the tinted|tinted pair
+                    // the shared face the same verdict never draws, the
+                    // tinted|glass pair the DIFFERENT blocks the draw
+                    // wears)
+                    let glass_self =
+                        crate::world::is_glass(id) || crate::world::is_tinted_glass(id);
                     let draw = if water_self || lava_self {
                         n == AIR // the fluids draw only against air (surface)
                     } else if glass_self && n == id {
@@ -5730,8 +5748,11 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         // answers — the alpha-255 frame texels the depth
                         // write keeps, the alpha-0 interior the hole never
                         // occludes)
-                        translucent: water_self || crate::world::is_stained_glass(id),
-                        per_texel_alpha: crate::world::is_stained_glass(id),
+                        translucent: water_self
+                            || crate::world::is_stained_glass(id)
+                            || crate::world::is_tinted_glass(id),
+                        per_texel_alpha: crate::world::is_stained_glass(id)
+                            || crate::world::is_tinted_glass(id),
                     });
                 }
             }
@@ -13472,6 +13493,91 @@ mod tests {
         for (i, &src) in order.iter().enumerate() {
             assert_eq!(top.uvs[i], face_uv(2, FACE_CORNERS[2][src]), "uv must track corner {src}");
         }
+    }
+
+    #[test]
+    fn the_tinted_glass_the_same_kind_cull_and_the_translucent_lane_wear() {
+        // THE TINTED GLASS'S OWN MESH LAWS (the dev-81 round — javap
+        // HalfTransparentBlock.skipRendering pc 0-17 the 26.2 jar the
+        // TintedGlassBlock super inherits, the probe
+        // scripts/tinted_glass_probe_81.py the NO override banks): the
+        // tinted|tinted pair the shared face never draws, the
+        // tinted|glass pair the DIFFERENT blocks the draw wears, the
+        // translucent lane the per-texel alpha blend the partial-alpha
+        // texture serves, the neighbors' faces the non-occluding cube
+        // draws against.
+        // SOLO: five outer faces + the bottom face the air below keeps
+        // — six quads the one cube speaks.
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, TINTED_GLASS);
+        let q = mesh_chunk(&w, 0, 0, None);
+        assert_eq!(q.len(), 6, "the solo cube the six faces wears");
+        for quad in &q {
+            assert!(
+                quad.translucent && quad.per_texel_alpha,
+                "the translucent lane the per-texel blend every face wears"
+            );
+            assert_eq!(
+                quad.tile,
+                atlas::FACE_TILES[TINTED_GLASS as usize][2],
+                "the ONE master every face banks"
+            );
+        }
+        // THE SAME-KIND PAIR: two tinted cubes side by side — the
+        // shared plane the SAME block never draws (the skipRendering
+        // verdict true the skip banks), the 10 quads the pair speaks.
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, TINTED_GLASS);
+        put(&mut w, 9, 8, 8, TINTED_GLASS);
+        let q = mesh_chunk(&w, 0, 0, None);
+        assert_eq!(
+            q.len(),
+            10,
+            "the same-kind pair the shared faces never draws"
+        );
+        // THE MIXED PAIR: tinted + PLAIN glass side by side — the
+        // shared plane the DIFFERENT blocks the draw wears (the
+        // neighborState.is(this) verdict false the super's own default
+        // answers), the 12 quads the pair speaks, the flags the two
+        // lanes keep (the tinted per-texel, the plain cutout).
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, TINTED_GLASS);
+        put(&mut w, 9, 8, 8, GLASS);
+        let q = mesh_chunk(&w, 0, 0, None);
+        assert_eq!(
+            q.len(),
+            12,
+            "the mixed pair the shared faces the draw wears"
+        );
+        let tinted_x_face = q
+            .iter()
+            .find(|quad| {
+                quad.tile == atlas::FACE_TILES[TINTED_GLASS as usize][0]
+                    && quad.pts.iter().all(|p| (p[0] - 9.0).abs() < 1e-5)
+            })
+            .expect("the tinted +X face at the shared plane");
+        assert!(
+            tinted_x_face.translucent && tinted_x_face.per_texel_alpha,
+            "the tinted lane the shared face wears"
+        );
+        // THE NEIGHBOR'S OWN FACE: the stone face against the tinted
+        // cube draws (the noOcclusion verdict the transparent family
+        // keeps).
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, TINTED_GLASS);
+        put(&mut w, 8, 9, 8, STONE);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let stone_bottom = q
+            .iter()
+            .find(|quad| {
+                quad.tile == atlas::FACE_TILES[STONE as usize][3]
+                    && quad.pts.iter().all(|p| (p[1] - 9.0).abs() < 1e-5)
+            })
+            .expect("the stone's bottom face against the tinted cell");
+        assert!(
+            !stone_bottom.translucent,
+            "the stone's own opaque lane the bottom face keeps"
+        );
     }
 }
 
