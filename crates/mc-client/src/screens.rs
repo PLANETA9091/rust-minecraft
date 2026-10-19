@@ -7424,6 +7424,16 @@ pub struct App {
     /// the closed screens keep, the networked trio the server's own
     /// authority owns).
     pub furnace_open_cell: Option<(i32, i32, i32)>,
+    /// THE FURNACES' OWN PROGRESS WORDS (the dev-70 round — the
+    /// SimpleContainerData(4)'s own burn/cook state the
+    /// [`Self::furnace_data`] projection wears, the cell the map's
+    /// own key keeps: 0 the lit ticks remaining, 1 the lit total,
+    /// 2 the cooking progress, 3 the cooking total — the SAME disk
+    /// law the trio bank speaks, the restart the mid-smelt the
+    /// resume wears). open_furnace's fresh branch the banked words
+    /// read, the close arm the flush banks, the break lane the
+    /// removal walks, the dual-root save the third list rides.
+    pub furnace_word_stores: std::collections::HashMap<(i32, i32, i32), [i32; 4]>,
     /// THE FURNACE'S OWN LIVE SHAPE (the menu type 14 lane's own
     /// projection — the menu's 39 slots as (item_id, count) pairs:
     /// input 0, fuel 1, result 2, the standard rows 3..39 the
@@ -8731,6 +8741,70 @@ pub fn furnace_stores_from_nbt(
     parse_stores_list(entries, 3)
 }
 
+/// THE FURNACE WORDS' OWN BANK (the dev-70 round — the burn/cook
+/// progress words the trio's own lane rides: the same file the
+/// third list wears, each entry the x/y/z triple + the "Words" list
+/// of 4 Int compounds the SimpleContainerData(4) law keeps — 0 the
+/// lit ticks remaining, 1 the lit total, 2 the cooking progress,
+/// 3 the cooking total; the BTree order the deterministic bytes
+/// keep, the cap the 4-word width speaks).
+pub fn furnace_words_bank_to_nbt(
+    stores: &std::collections::HashMap<(i32, i32, i32), [i32; 4]>,
+) -> mc_protocol::nbt::Nbt {
+    let mut entries = Vec::new();
+    for ((x, y, z), words) in stores.iter().collect::<std::collections::BTreeMap<_, _>>() {
+        entries.push(mc_protocol::nbt::Nbt::Compound(vec![
+            ("x".to_string(), mc_protocol::nbt::Nbt::Int(*x)),
+            ("y".to_string(), mc_protocol::nbt::Nbt::Int(*y)),
+            ("z".to_string(), mc_protocol::nbt::Nbt::Int(*z)),
+            (
+                "Words".to_string(),
+                mc_protocol::nbt::Nbt::List(
+                    words.iter().map(|&w| mc_protocol::nbt::Nbt::Int(w)).collect(),
+                ),
+            ),
+        ]));
+    }
+    mc_protocol::nbt::Nbt::List(entries)
+}
+
+/// THE FURNACE WORDS' OWN PARSE (the tolerant walk the slot parse
+/// wears: the missing coordinate the entry skip keeps, the short
+/// list the zero pad fills, the over-long list the 4-word cap
+/// truncates, the missing list the honest empties keep).
+pub fn furnace_words_from_nbt(
+    value: &mc_protocol::nbt::Nbt,
+) -> std::collections::HashMap<(i32, i32, i32), [i32; 4]> {
+    let mut stores = std::collections::HashMap::new();
+    let Some(mc_protocol::nbt::Nbt::List(entries)) = value.get("furnace_words") else {
+        return stores;
+    };
+    for entry in entries {
+        let mc_protocol::nbt::Nbt::Compound(fields) = entry else {
+            continue;
+        };
+        let read_int = |key: &str| -> Option<i32> {
+            fields.iter().find(|(k, _)| k == key).and_then(|(_, v)| v.as_i32())
+        };
+        let (Some(x), Some(y), Some(z)) = (read_int("x"), read_int("y"), read_int("z"))
+        else {
+            continue;
+        };
+        let mut words = [0i32; 4];
+        if let Some(mc_protocol::nbt::Nbt::List(items)) =
+            fields.iter().find(|(k, _)| k == "Words").map(|(_, v)| v)
+        {
+            for (i, item) in items.iter().enumerate().take(4) {
+                if let Some(w) = item.as_i32() {
+                    words[i] = w;
+                }
+            }
+        }
+        stores.insert((x, y, z), words);
+    }
+    stores
+}
+
 impl App {
     /// Deterministic boot: splash selection from the seed (vanilla picks a
     /// random line; here the RNG is seeded for reproducible rendering).
@@ -8947,6 +9021,7 @@ impl App {
             container_open_cell: None,
             furnace_stores: std::collections::HashMap::new(),
             furnace_open_cell: None,
+            furnace_word_stores: std::collections::HashMap::new(),
             furnace_slots: vec![(0, 0); 39],
             furnace_is_live: false,
             furnace_live_window: None,
@@ -20661,6 +20736,15 @@ impl App {
             for i in 0..3 {
                 self.furnace_slots[i] = store[i];
             }
+            // THE PROGRESS WORDS' OWN READ (the dev-70 round — the
+            // banked burn/cook state the fresh branch wears: the
+            // restart the mid-smelt the resume wears, the fresh cell
+            // the zeros keep, the SAME furnace the retention law the
+            // words never clobbers)
+            self.furnace_data = *self
+                .furnace_word_stores
+                .entry(pos)
+                .or_insert([0i32; 4]);
         }
         self.furnace_open_cell = Some(pos);
         // THE STANDARD ROWS' OWN PROJECTION (the menu's
@@ -20879,6 +20963,10 @@ impl App {
         if let Some(pos) = self.furnace_open_cell.take() {
             let trio: Vec<(i32, i32)> = self.furnace_slots.iter().copied().take(3).collect();
             self.furnace_stores.insert(pos, trio);
+            // THE PROGRESS WORDS' OWN RIDE HOME (the dev-70 round —
+            // the same flush walk the bank answers: the burn/cook
+            // state the close banks, the restart the resume wears)
+            self.furnace_word_stores.insert(pos, self.furnace_data);
             self.container_stores_file_save();
         }
     }
@@ -20900,6 +20988,10 @@ impl App {
     pub fn furnace_store_spilled(&mut self, pos: (i32, i32, i32)) {
         self.container_stores_load_once();
         let store = self.furnace_stores.remove(&pos);
+        // THE WORDS' OWN DEATH RIDE (the dev-70 round — the burn/cook
+        // state the entry's removal wears: the broken furnace the
+        // progress never resurrects)
+        self.furnace_word_stores.remove(&pos);
         if !self.world_is_network {
             if let Some(store) = store {
                 for (item, count) in store {
@@ -28539,6 +28631,10 @@ impl App {
                 // the honest empties keep, the extend law the
                 // in-memory entry never clobbers)
                 self.furnace_stores.extend(furnace_stores_from_nbt(&root));
+                // THE PROGRESS WORDS' OWN PARSE (the dev-70 round —
+                // the third list the burn/cook bank answers, the same
+                // extend law the in-memory entry keeps)
+                self.furnace_word_stores.extend(furnace_words_from_nbt(&root));
             }
         }
     }
@@ -28569,6 +28665,10 @@ impl App {
             (
                 "furnaces".to_string(),
                 container_bank_to_nbt(&self.furnace_stores, 3),
+            ),
+            (
+                "furnace_words".to_string(),
+                furnace_words_bank_to_nbt(&self.furnace_word_stores),
             ),
         ]);
         let mut bytes = Vec::new();
@@ -58282,6 +58382,164 @@ mod tests {
         assert!(
             furnaces.is_empty(),
             "the death ride the emptied bank keeps"
+        );
+        let _ = std::fs::remove_file(&file);
+    }
+
+    /// THE FURNACE WORDS' OWN BANK (the dev-70 round — the burn/cook
+    /// progress state the session AND the restart OUTLIVE: the close
+    /// flush the words banks, the DIFFERENT cell the fresh zeros
+    /// keeps, the reopen the banked words wears, the RESTART the
+    /// mid-smelt the resume speaks, the break the words never
+    /// resurrects, the tolerant parse the coordinate-less row skips
+    /// and the short list the zero pad fills).
+    #[test]
+    fn the_furnace_words_the_disk_the_restart_the_burn_wears() {
+        // THE TOLERANT PARSE (the missing coordinate the skip keeps,
+        // the short list the zero pad fills, the over-long list the
+        // 4-word cap truncates, the missing list the empties keep)
+        let words = furnace_words_from_nbt(&mc_protocol::nbt::Nbt::Int(1));
+        assert!(words.is_empty(), "the non-compound the empties keep");
+        let root = mc_protocol::nbt::Nbt::Compound(vec![(
+            "furnace_words".to_string(),
+            mc_protocol::nbt::Nbt::List(vec![
+                // the x/y/z-less row the skip keeps
+                mc_protocol::nbt::Nbt::Compound(vec![(
+                    "Words".to_string(),
+                    mc_protocol::nbt::Nbt::List(vec![]),
+                )]),
+                // the stocked row: 2 words ride, the zero pad fills,
+                // the 5th word the cap truncates
+                mc_protocol::nbt::Nbt::Compound(vec![
+                    ("x".to_string(), mc_protocol::nbt::Nbt::Int(7)),
+                    ("y".to_string(), mc_protocol::nbt::Nbt::Int(8)),
+                    ("z".to_string(), mc_protocol::nbt::Nbt::Int(9)),
+                    (
+                        "Words".to_string(),
+                        mc_protocol::nbt::Nbt::List(vec![
+                            mc_protocol::nbt::Nbt::Int(5),
+                            mc_protocol::nbt::Nbt::Int(80),
+                            mc_protocol::nbt::Nbt::Int(12),
+                            mc_protocol::nbt::Nbt::Int(200),
+                            mc_protocol::nbt::Nbt::Int(999),
+                        ]),
+                    ),
+                ]),
+            ]),
+        )]);
+        let words = furnace_words_from_nbt(&root);
+        assert_eq!(words.len(), 1, "the coordinate-less row the skip keeps");
+        assert_eq!(
+            words[&(7, 8, 9)],
+            [5, 80, 12, 200],
+            "the stocked words the parse wears, the pad the zeros keep"
+        );
+        // THE SESSION LANE (the flush the close banks, the DIFFERENT
+        // cell the fresh zeros keep, the reopen the banked words wear)
+        let mut app = App::new(11);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        let cell = (c, surface + 1, c);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(cell.0, cell.1, cell.2, crate::world::FURNACE);
+        app.open_furnace(cell);
+        assert_eq!(app.furnace_data, [0, 0, 0, 0], "the fresh cell the zeros keep");
+        app.furnace_data = [5, 80, 12, 200];
+        app.on_escape();
+        assert_eq!(
+            app.furnace_word_stores[&cell],
+            [5, 80, 12, 200],
+            "the flush the words bank rides"
+        );
+        let cell2 = (c, surface + 1, c + 2);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(cell2.0, cell2.1, cell2.2, crate::world::FURNACE);
+        app.open_furnace(cell2);
+        assert_eq!(
+            app.furnace_data,
+            [0, 0, 0, 0],
+            "the different cell the fresh zeros keep"
+        );
+        app.on_escape();
+        app.open_furnace(cell);
+        assert_eq!(
+            app.furnace_data,
+            [5, 80, 12, 200],
+            "the banked words the reopen wears"
+        );
+        app.on_escape();
+        // THE DISK LANE (the flush's write the third list banks, the
+        // RESTART the mid-smelt the resume speaks, the break the
+        // words never resurrects)
+        let dir = std::env::temp_dir().join(format!("mc2rs-containers-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("the temp dir");
+        let file = dir.join("containers-furnace-words.nbt");
+        let _ = std::fs::remove_file(&file);
+        let mut app = App::new(11);
+        app.enter_world();
+        app.container_stores_file = Some(file.clone());
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(cell.0, cell.1, cell.2, crate::world::FURNACE);
+        app.open_furnace(cell);
+        app.furnace_data = [30, 200, 7, 200];
+        app.furnace_slots[0] = (62, 8);
+        app.on_escape();
+        let bytes = std::fs::read(&file).expect("the banked file reads");
+        let (_, root) =
+            mc_protocol::nbt::read_file_nbt(&mut bytes.as_slice()).expect("the parse serves");
+        let word_rows = root
+            .get("furnace_words")
+            .and_then(|v| v.as_list())
+            .expect("the furnace_words list");
+        assert_eq!(word_rows.len(), 1, "the one stocked cell rides");
+        let words = word_rows[0]
+            .get("Words")
+            .and_then(|v| v.as_list())
+            .expect("the Words list");
+        assert_eq!(words.len(), 4, "the 4-word width the list keeps");
+        assert_eq!(words[0].as_i32(), Some(30), "the lit remaining rides");
+        assert_eq!(words[1].as_i32(), Some(200), "the lit total rides");
+        assert_eq!(words[2].as_i32(), Some(7), "the cook progress rides");
+        assert_eq!(words[3].as_i32(), Some(200), "the cook total rides");
+        let mut fresh = App::new(11);
+        fresh.enter_world();
+        fresh.container_stores_file = Some(file.clone());
+        fresh
+            .offline_world
+            .as_mut()
+            .unwrap()
+            .set(cell.0, cell.1, cell.2, crate::world::FURNACE);
+        fresh.open_furnace(cell);
+        assert_eq!(
+            fresh.furnace_data,
+            [30, 200, 7, 200],
+            "the banked burn the restart resumes"
+        );
+        fresh.on_escape();
+        // THE BREAK-AFTER-RESTART (the words the entry's death wears)
+        fresh.furnace_store_spilled(cell);
+        assert!(
+            !fresh.furnace_word_stores.contains_key(&cell),
+            "the words the spill never resurrects"
+        );
+        let bytes = std::fs::read(&file).expect("the death ride reads");
+        let (_, root) =
+            mc_protocol::nbt::read_file_nbt(&mut bytes.as_slice()).expect("the parse serves");
+        let word_rows = root
+            .get("furnace_words")
+            .and_then(|v| v.as_list())
+            .expect("the furnace_words list");
+        assert!(
+            word_rows.is_empty(),
+            "the death ride the emptied words bank keeps"
         );
         let _ = std::fs::remove_file(&file);
     }
