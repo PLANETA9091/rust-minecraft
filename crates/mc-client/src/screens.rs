@@ -24492,6 +24492,15 @@ impl App {
         // the autopush-524 round the cake item the registry carries)
         let pick_name = if crate::world::is_candle_cake(kind) {
             "cake"
+        } else if let Some(twin) = crate::world::wall_head_floor_twin(kind) {
+            // THE WALL HEADS' OWN TWIN PICK (the dev-83 round — javap
+            // getCloneItemStack the 26.2 jar the candle-cake precedent
+            // the same fold banks: the wall kind the ITEM FORM never
+            // registers [the vanilla item the floor name alone pairs],
+            // the floor twin's stack the clone's own answer returns —
+            // the wallVariant law the pick lane the twin's own item
+            // serves)
+            crate::world::NAME_OF[twin as usize]
         } else {
             crate::world::NAME_OF[kind as usize]
         };
@@ -38018,7 +38027,7 @@ impl App {
     /// `Shapes.joinIsNotEmpty(shape, body, AND)` the strict-edge
     /// intersect the refusal speaks). `true` = the placed shape the
     /// body's box intersects — the canPlace refusal.
-    fn placement_obstructed(&self, block: u16, cell: (i32, i32, i32)) -> bool {
+    fn placement_obstructed(&self, block: u16, cell: (i32, i32, i32), hit_face: u8) -> bool {
         let shape = crate::world::collision_shape(block);
         if shape == crate::world::CollisionShape::Empty {
             return false;
@@ -38209,6 +38218,27 @@ impl App {
                 cell.2,
             )
             .expect("the gate panel shape the slabs never refuse");
+            (x_lo, y_lo, z_lo, x_hi, y_hi, z_hi)
+        } else if crate::world::is_floor_head(block) && (2..=5).contains(&hit_face) {
+            // THE WALL HEAD'S OWN PLACED BAND (the dev-83 round — the
+            // vanilla canPlace the WALL state's own collision shape the
+            // side hit reads: the StandingAndWallBlockItem.
+            // getPlacementState walk the wall block's FACING-stamped
+            // state the isUnobstructed read serves — the twin's
+            // kind-only conservative the y 4..12 band the four
+            // facings' union the honest superset keeps [the per-facing
+            // hugging box the placed variant the pre-check walk never
+            // consults — the door arm's own kind-only law the family
+            // wears], the wall-skull-at-your-own-cell placement the
+            // body's legs the 4..12 band intersects the vanilla's own
+            // refusal speaks)
+            let (x_lo, y_lo, z_lo, x_hi, y_hi, z_hi) = crate::world::shape_slabs(
+                crate::world::CollisionShape::YSpan(4, 12),
+                cell.0,
+                cell.1,
+                cell.2,
+            )
+            .expect("the wall head band shape the slabs never refuse");
             (x_lo, y_lo, z_lo, x_hi, y_hi, z_hi)
         } else {
             (
@@ -39603,7 +39633,7 @@ impl App {
         }
         // THE ENTITY LAW'S OWN SHAPE (javap the 26.2 chain verbatim —
         // the walk the [`App::placement_obstructed`] helper carries)
-        if self.placement_obstructed(block, cell) {
+        if self.placement_obstructed(block, cell, hit.face) {
             return false;
         }
         // THE PLANT'S OWN SURVIVAL LAW (javap VegetationBlock.canSurvive
@@ -39697,6 +39727,42 @@ impl App {
                             )),
                             crate::world::CollisionShape::Empty
                         )
+                    })
+            })
+        } else {
+            None
+        };
+        // THE WALL HEADS' OWN PLACEMENT CANDIDATE (the dev-83 round —
+        // javap StandingAndWallBlockItem.getPlacementState + WallSkull-
+        // Block.getStateForPlacement the 26.2 jar the probe
+        // scripts/skull_probe_83.py banks: the item's own scan the WALL
+        // state the horizontal arms wear — the wall block the item's
+        // own secondary block the ctor's wallBlock field banks, the
+        // FACING = dir.getOpposite() stamp the pc 62-76 fold speaks,
+        // the support verdict the pos.relative(d).canBeReplaced
+        // refusal keeps [the first non-replaceable horizontal arm the
+        // scan returns, the all-fail walk the aconst_null refusal
+        // speaks]): the candidates the look-ordered survive-first scan
+        // the torch's own walk re-wears ([`crate::world::
+        // wall_torch_facing_candidates`] — the same facing vocabulary
+        // the opposite fold banks), the attached-cell verdict the
+        // canBeReplaced law the kind-level read answers (the air and
+        // the replaceable plants the scan refuses, the sturdy-solid
+        // arm the placement wears), the side hit the gate the
+        // practical click answers (the vanilla's own DOWN-first floor
+        // arm the top/bottom click the floor lane wears — the floor
+        // skull the SEGMENT stamp serves)
+        let wall_head_facing: Option<u8> = if crate::world::is_floor_head(block)
+            && (2..=5).contains(&hit.face)
+        {
+            self.active_world().and_then(|w| {
+                crate::world::wall_torch_facing_candidates(cam_yaw)
+                    .into_iter()
+                    .find(|f| {
+                        let (dx, dy, dz) = crate::world::wall_torch_attached_offset(*f);
+                        let support = w.get(cell.0 + dx, cell.1 + dy, cell.2 + dz);
+                        support != crate::world::AIR
+                            && !crate::world::is_replaceable(support)
                     })
             })
         } else {
@@ -39901,6 +39967,18 @@ impl App {
             // old kind wears)
             } else if wall_torch_facing.is_some() {
                 crate::world::REDSTONE_WALL_TORCH
+            // THE WALL HEADS' OWN KIND SWAP (the dev-83 round — the
+            // item's own pairing the placement state the scan's
+            // surviving arm answers: the side hit the WALL twin the
+            // StandingAndWallBlockItem's wallBlock field wears, the
+            // floor kind the item's primary the top/bottom click
+            // keeps — the [`crate::world::wall_head_twin`] pair the
+            // five humanoid kinds answers, the DRAGON/PIGLIN floor
+            // pair the None the swap never carries [the refusal the
+            // floor kinds the placeable verdict banks — the arm the
+            // swapped wall kinds alone reaches])
+            } else if wall_head_facing.is_some() {
+                crate::world::wall_head_twin(block).unwrap_or(block)
             } else {
                 block
             };
@@ -39994,6 +40072,24 @@ impl App {
                     cell.2,
                     crate::world::head_rotation_variant(cam_yaw),
                 );
+            }
+            // THE WALL HEADS' OWN FACING STAMP (the dev-83 round — javap
+            // WallSkullBlock.getStateForPlacement pc 62-76 the 26.2 jar
+            // the probe scripts/skull_probe_83.py banks: the `setValue(
+            // FACING, dir.getOpposite())` walk the surviving scan arm's
+            // opposite the stamp speaks, the facing byte the torch
+            // vocabulary the candidates walk carries — the mesher's
+            // wall mini-cube lane the byte the createWallTransformation
+            // quarter reads, the collision's variant-aware row the
+            // [`crate::world::CollisionShape::WallHead`] box the same
+            // byte serves, the support-pop arm the heads' own
+            // canSurvive absence the float law keeps [the vanilla
+            // heads the support loss never pop — the neighborChanged
+            // walk the POWERED redstone law alone banks])
+            if crate::world::is_wall_head(placed) {
+                if let Some(facing) = wall_head_facing {
+                    world.set_variant(cell.0, cell.1, cell.2, facing);
+                }
             }
             // THE LANTERN'S OWN HANGING STAMP (the dev-61 round — javap
             // LanternBlock.getStateForPlacement the 26.2 jar the
@@ -91997,7 +92093,7 @@ cow_sound_variant: None,
         // block-use test pins, the obstruction walk's own verdict)
         app.offline_held_updated(Some("item/dirt"));
         assert!(
-            app.placement_obstructed(crate::world::DIRT, (c, top, c)),
+            app.placement_obstructed(crate::world::DIRT, (c, top, c), 1),
             "the dirt's full box the player's body intersects"
         );
         assert!(
@@ -92008,7 +92104,7 @@ cow_sound_variant: None,
         // placement at the player's own cell the walk NEVER refuses
         app.offline_held_updated(Some("item/dandelion"));
         assert!(
-            !app.placement_obstructed(crate::world::DANDELION, (c, top, c)),
+            !app.placement_obstructed(crate::world::DANDELION, (c, top, c), 1),
             "the dandelion's empty shape the walk never refuses"
         );
         assert!(app.on_right_press(0, 0), "the flower consumed the press");
@@ -92044,13 +92140,13 @@ cow_sound_variant: None,
             pitch: -std::f32::consts::FRAC_PI_2,
         });
         assert!(
-            !app.placement_obstructed(crate::world::OAK_DOOR, (c, top, c)),
+            !app.placement_obstructed(crate::world::OAK_DOOR, (c, top, c), 1),
             "the far-edge strip the own-cell placement admits"
         );
         // THE DIRT CONTROL (the full cube the refusal keeps — the same
         // staging the flower test's own law wears)
         assert!(
-            app.placement_obstructed(crate::world::DIRT, (c, top, c)),
+            app.placement_obstructed(crate::world::DIRT, (c, top, c), 1),
             "the dirt's full box the body intersects"
         );
         // THE NEAR EDGE (the yaw pi the south facing the NORTH strip
@@ -92062,7 +92158,7 @@ cow_sound_variant: None,
             pitch: -std::f32::consts::FRAC_PI_2,
         });
         assert!(
-            app.placement_obstructed(crate::world::OAK_DOOR, (c, top, c)),
+            app.placement_obstructed(crate::world::OAK_DOOR, (c, top, c), 1),
             "the near-edge strip the body's box the refusal keeps"
         );
     }
@@ -92097,18 +92193,18 @@ cow_sound_variant: None,
         });
         // THE FULL CUBE AT THE MOB'S CELL: the refusal
         assert!(
-            app.placement_obstructed(crate::world::DIRT, (c, top, c)),
+            app.placement_obstructed(crate::world::DIRT, (c, top, c), 1),
             "the dirt's box the zombie's box intersects"
         );
         // THE EMPTY SHAPE: the torch the shortcut never refuses
         assert!(
-            !app.placement_obstructed(crate::world::TORCH, (c, top, c)),
+            !app.placement_obstructed(crate::world::TORCH, (c, top, c), 1),
             "the torch's empty shape never refuses"
         );
         // THE COLUMN'S BAND: the farmland's 15/16 the mob's feet band
         // intersects (the feet at the cell's floor, the box [0, 0.9375])
         assert!(
-            app.placement_obstructed(crate::world::FARMLAND, (c, top, c)),
+            app.placement_obstructed(crate::world::FARMLAND, (c, top, c), 1),
             "the column's band the zombie's feet intersects"
         );
         // THE BAND'S OWN EDGE: the mob's feet ON the column's own top
@@ -92117,7 +92213,7 @@ cow_sound_variant: None,
         // walk lets pass
         app.mobs[0].y = top as f64 + 15.0 / 16.0;
         assert!(
-            !app.placement_obstructed(crate::world::FARMLAND, (c, top, c)),
+            !app.placement_obstructed(crate::world::FARMLAND, (c, top, c), 1),
             "the body on the band's edge the walk lets pass"
         );
     }
@@ -106483,7 +106579,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            757,
+            764,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -106564,7 +106660,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            757,
+            764,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -106866,7 +106962,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            757,
+            764,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -110796,7 +110892,7 @@ cow_sound_variant: None,
         // #texture ref banks)
         assert_eq!(
             atlas::N_KINDS,
-            757,
+            764,
             "the palette the weighted plates' own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
@@ -111016,7 +111112,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            757,
+            764,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
@@ -111293,7 +111389,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            757,
+            764,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
@@ -111409,7 +111505,7 @@ cow_sound_variant: None,
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE, 318);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, 319);
         assert_eq!(w::END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 757, "the palette the weighted rows bank");
+        assert_eq!(atlas::N_KINDS, 764, "the palette the weighted rows bank");
         for (off, on, name) in [
             (
                 w::LIGHT_WEIGHTED_PRESSURE_PLATE,
@@ -112523,7 +112619,7 @@ cow_sound_variant: None,
         assert_eq!(w::END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-            757,
+            764,
             "the palette the weighted plates' own rows bank"
         );
         for (off, on, name, wooden) in [
@@ -114102,6 +114198,111 @@ cow_sound_variant: None,
         assert_eq!(pools[0].entries[0].item, "torch", "the torch drops itself");
         // THE PICK LANE'S OWN GRANT (the item id the name walk answers)
         assert!(mc_registry::item_id_by_name("torch").is_some());
+    }
+
+    #[test]
+    fn the_wall_head_placement_wears_the_twin_laws() {
+        // THE WALL HEADS' OWN PLACEMENT LAWS (the dev-83 round — javap
+        // StandingAndWallBlockItem.getPlacementState + WallSkullBlock.
+        // getStateForPlacement the 26.2 jar the probe
+        // scripts/skull_probe_83.py banks): the side hit the WALL twin
+        // the item's secondary block wears [the scan arm the
+        // non-replaceable support finds, the FACING the opposite fold
+        // stamps], the top hit the FLOOR kind the item's primary keeps
+        // [the SEGMENT stamp the rotation segment wears].
+        // THE WALL CASE (the carved air the determinism keeps — the
+        // stone the east wall the west face hit answers): the skull
+        // the wall twin's kind the offset cell wears, the facing the
+        // west seat the support's own opposite banks
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/skeleton_skull"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -1..=3 {
+                for dz in -1..=1 {
+                    for dy in -3..=3 {
+                        w.set(c + dx, top + dy, c + dz, crate::world::AIR);
+                    }
+                }
+            }
+            w.set(c + 2, top + 1, c, crate::world::STONE);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 1.5, c as f32 + 0.5),
+            // THE EAST LOOK (the forward walk sin(yaw) the +x arm
+            // speaks — the pi/2 yaw the east ray aims, the stone's
+            // west face the hit answers)
+            yaw: std::f32::consts::FRAC_PI_2,
+            pitch: 0.0,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the skull on the wall the twin placement consumes"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 1, top + 1, c),
+                crate::world::SKELETON_WALL_SKULL,
+                "the side hit the WALL twin the offset cell wears"
+            );
+            assert_eq!(
+                w.variant(c + 1, top + 1, c),
+                crate::world::WALL_TORCH_FACING_WEST,
+                "the facing the support's own opposite the scan stamps"
+            );
+        }
+        // THE FLOOR CASE (the same stone the top face the down-look
+        // hits): the skull the FLOOR kind the above cell wears — the
+        // item's primary the SEGMENT stamp the rotation segment keeps
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/skeleton_skull"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -1..=3 {
+                for dz in -1..=1 {
+                    for dy in -3..=4 {
+                        w.set(c + dx, top + dy, c + dz, crate::world::AIR);
+                    }
+                }
+            }
+            w.set(c + 2, top + 1, c, crate::world::STONE);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            // THE DIAGONAL DOWN-LOOK (the eye the body's own column
+            // never enters the placement cell's conservative box —
+            // the pi/2 yaw the east arm aims, the -45 pitch the ray
+            // the stone's top face lands: the eye at the carved
+            // cell's own column, the body's box x 40.2..40.8 the
+            // placed cell x 42..43 the honest absence keeps)
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: std::f32::consts::FRAC_PI_2,
+            pitch: -std::f32::consts::FRAC_PI_4,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the skull on the stone top the floor placement consumes"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 2, top + 2, c),
+                crate::world::SKELETON_SKULL,
+                "the top hit the FLOOR kind the above cell wears"
+            );
+            assert!(
+                w.variant(c + 2, top + 2, c) <= 15,
+                "the rotation segment the variant byte wears"
+            );
+        }
     }
 
     #[test]

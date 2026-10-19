@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 757] = [
+pub const RUNTIME_PALETTE: [&str; 764] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -2322,6 +2322,39 @@ pub const RUNTIME_PALETTE: [&str; 757] = [
     // The translucent render layer the partial-alpha texture demands —
     // the per-texel blend the stained lane's own machinery serves.
     "tinted_glass",
+    // THE WALL HEADS' OWN TWIN SEATS (the dev-83 round — the seven
+    // wall-block kinds the vanilla registration order the block_dig
+    // table's interleaved rows bank [skeleton_skull, skeleton_wall_skull,
+    // wither_skeleton_skull, wither_skeleton_wall_skull, zombie_head,
+    // zombie_wall_head, player_head, player_wall_head, creeper_head,
+    // creeper_wall_head, dragon_head, dragon_wall_head, piglin_head,
+    // piglin_wall_head — the floor seven's contiguity the wall tail
+    // keeps]): javap WallSkullBlock the 26.2 jar the probe
+    // scripts/skull_probe_83.py banks — the SEPARATE WallSkullBlock
+    // class the wall pair registers (the FACING HorizontalDirectionalBlock
+    // property the createBlockStateDefinition arm adds, the SHAPES the
+    // Shapes.rotateHorizontal(Block.boxZ(8.0, 8.0, 16.0)) walk the
+    // base box(4,4,8)-(12,12,16) the quarter turns answer), the
+    // getStateForPlacement pc 5-108 the nearest-looking scan the
+    // FACING = dir.getOpposite() stamp wears, the support verdict the
+    // pos.relative(d).canBeReplaced refusal keeps (the first
+    // non-replaceable horizontal arm the scan returns, the all-fail
+    // walk the aconst_null refusal speaks). The wallVariant(floor)
+    // registration the Blocks clinit pc 15083-15111 banks (the
+    // Properties full-copy the loot table the floor twin's own row
+    // shares — the dig drop the floor item wears). The blockstate's
+    // "" variant the ONE block/skull model every wall twin wears (the
+    // particle row the placeholder arm re-wears, the ZERO-or-append
+    // tail the tile count keeps), the entity sheets the FLOOR TWINS'
+    // OWN TILE STEMS the entity_head_sheet pair re-wears (the dedup
+    // law the face tiles the floor kinds' crops carry — the wall twin
+    // renders the SAME six crops the transformation alone rotates).
+    // The faces the wall mini-cube mesher lane the dev-83 round
+    // keeps (the createWallTransformation compose the vertex walk
+    // answers), the DRAGON/PIGLIN wall rows the TILE_NONE the custom
+    // models keep (the floor pair's own refusal the twins share).
+    "skeleton_wall_skull", "wither_skeleton_wall_skull", "zombie_wall_head",
+    "player_wall_head", "creeper_wall_head", "dragon_wall_head", "piglin_wall_head",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -2376,12 +2409,19 @@ fn is_skull_family(block: &str) -> bool {
     matches!(
         block,
         "skeleton_skull"
+            | "skeleton_wall_skull"
             | "wither_skeleton_skull"
+            | "wither_skeleton_wall_skull"
             | "zombie_head"
+            | "zombie_wall_head"
             | "player_head"
+            | "player_wall_head"
             | "creeper_head"
+            | "creeper_wall_head"
             | "dragon_head"
+            | "dragon_wall_head"
             | "piglin_head"
+            | "piglin_wall_head"
     )
 }
 
@@ -3155,13 +3195,21 @@ fn blend_frames(cur: &[u8], next: &[u8], sub: usize, time: u64) -> Vec<u8> {
 /// wither_skeleton/zombie/creeper + the PLAYER the
 /// DefaultPlayerSkin.getDefaultTexture the wide steve sheet; the
 /// DRAGON/PIGLIN pair the None the custom models keep).
-fn entity_head_sheet(block: &str) -> Option<&'static str> {
+fn entity_head_sheet(block: &str) -> Option<(&'static str, &'static str)> {
     match block {
-        "skeleton_skull" => Some("entity/skeleton/skeleton"),
-        "wither_skeleton_skull" => Some("entity/skeleton/wither_skeleton"),
-        "zombie_head" => Some("entity/zombie/zombie"),
-        "player_head" => Some("entity/player/wide/steve"),
-        "creeper_head" => Some("entity/creeper/creeper"),
+        "skeleton_skull" | "skeleton_wall_skull" => {
+            Some(("entity/skeleton/skeleton", "skeleton_skull"))
+        }
+        "wither_skeleton_skull" | "wither_skeleton_wall_skull" => {
+            Some(("entity/skeleton/wither_skeleton", "wither_skeleton_skull"))
+        }
+        "zombie_head" | "zombie_wall_head" => Some(("entity/zombie/zombie", "zombie_head")),
+        "player_head" | "player_wall_head" => {
+            Some(("entity/player/wide/steve", "player_head"))
+        }
+        "creeper_head" | "creeper_wall_head" => {
+            Some(("entity/creeper/creeper", "creeper_head"))
+        }
         _ => None,
     }
 }
@@ -4816,7 +4864,7 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         [(8, 0), (16, 0), (0, 8), (8, 8), (16, 8), (24, 8)];
     for block in RUNTIME_PALETTE.iter() {
         let mut row = [u16::MAX; 6];
-        if let Some(sheet) = entity_head_sheet(block) {
+        if let Some((sheet, stem_base)) = entity_head_sheet(block) {
             let raw = read_jar(
                 &mut archive,
                 &format!("assets/minecraft/textures/{sheet}.png"),
@@ -4824,7 +4872,13 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             .with_context(|| format!("head sheet {sheet}.png"))?;
             let (w, _h, rgba) = decode_rgba(&raw)?;
             for (fi, (rx, ry)) in HEAD_REGIONS.iter().enumerate() {
-                let stem = format!("{block}_head_face{fi}");
+                // THE WALL TWIN'S OWN STEM RE-WEAR (the dev-83 round —
+                // the stem the FLOOR TWIN's own name the crop law
+                // keeps: the wall twin renders the SAME six crops the
+                // floor kind's tiles already bank — the dedup law the
+                // position hit the tile count never moves, the
+                // transformation alone the twins separate)
+                let stem = format!("{stem_base}_head_face{fi}");
                 let idx = match tile_names.iter().position(|n| n == &stem) {
                     Some(p) => p as u16,
                     None => {
@@ -6282,7 +6336,14 @@ mod tests {
         // the census's own verdict: the seven seats the skull family
         // the placeholder arm answers, the barrel the generic walk wears
         assert!(is_skull_family("skeleton_skull") && is_skull_family("piglin_head"));
-        assert!(!is_skull_family("barrel") && !is_skull_family("skeleton_wall_skull"));
+        assert!(!is_skull_family("barrel"));
+        // THE WALL TWINS' OWN FAMILY ROW (the dev-83 round — the seven
+        // wall kinds the SAME "" -> block/skull blockstate the floor
+        // family wears, the placeholder arm the particle row re-wears)
+        assert!(
+            is_skull_family("skeleton_wall_skull") && is_skull_family("piglin_wall_head"),
+            "the wall twins the skull family's own verdict wears"
+        );
         // the shared-row law the registry-name walk speaks: every
         // stage the BASE "cake" row the dig/drop/sound/item lanes keep
         let names = registry_names();
@@ -6296,6 +6357,18 @@ mod tests {
         // THE TINTED GLASS'S OWN NAME ROW (the registry name the palette
         // name IS — the plain name the dig/sound/drop/item lanes wire)
         assert_eq!(names[756], "tinted_glass");
+        // THE WALL TWINS' OWN SEATS + NAME ROWS (the dev-83 round — the
+        // tail the seven wall kinds wear, the plain registry name the
+        // dig/sound rows the generated tables' own interleaved rows wire)
+        assert_eq!(RUNTIME_PALETTE[757], "skeleton_wall_skull");
+        assert_eq!(RUNTIME_PALETTE[758], "wither_skeleton_wall_skull");
+        assert_eq!(RUNTIME_PALETTE[759], "zombie_wall_head");
+        assert_eq!(RUNTIME_PALETTE[760], "player_wall_head");
+        assert_eq!(RUNTIME_PALETTE[761], "creeper_wall_head");
+        assert_eq!(RUNTIME_PALETTE[762], "dragon_wall_head");
+        assert_eq!(RUNTIME_PALETTE[763], "piglin_wall_head");
+        assert_eq!(names[757], "skeleton_wall_skull");
+        assert_eq!(names[763], "piglin_wall_head");
         // THE MOB HEADS' OWN ENTITY FACES (the dev-82 round — the
         // five humanoid-standard kinds the sheet map serves, the
         // DRAGON/PIGLIN rows the None the custom models keep, the
@@ -6311,6 +6384,31 @@ mod tests {
             assert!(
                 entity_head_sheet(RUNTIME_PALETTE[k]).is_none(),
                 "the {} row the custom-model None keeps",
+                RUNTIME_PALETTE[k]
+            );
+        }
+        // THE WALL TWINS' OWN SHEET ROWS (the dev-83 round — the five
+        // humanoid wall kinds the FLOOR TWIN's (sheet, stem) pair the
+        // map serves — the stem the floor twin's own palette name the
+        // strip walk answers, the DRAGON/PIGLIN wall pair the None the
+        // custom models keep)
+        const WALL_TWIN_STEMS: [(&str, &str); 5] = [
+            ("skeleton_wall_skull", "skeleton_skull"),
+            ("wither_skeleton_wall_skull", "wither_skeleton_skull"),
+            ("zombie_wall_head", "zombie_head"),
+            ("player_wall_head", "player_head"),
+            ("creeper_wall_head", "creeper_head"),
+        ];
+        for (wall, stem_base) in WALL_TWIN_STEMS {
+            let (sheet, stem) = entity_head_sheet(wall)
+                .unwrap_or_else(|| panic!("the wall twin {wall} the sheet map banks"));
+            assert_eq!(stem, stem_base, "the stem the floor twin's own name wears");
+            assert!(sheet.starts_with("entity/"), "the sheet the entity lane banks");
+        }
+        for k in 762..=763usize {
+            assert!(
+                entity_head_sheet(RUNTIME_PALETTE[k]).is_none(),
+                "the {} wall row the custom-model None keeps",
                 RUNTIME_PALETTE[k]
             );
         }

@@ -775,7 +775,19 @@ impl Inventory {
 /// table row outside the wire vocabulary) drop nothing — the honest
 /// absence.
 pub fn roll_drops(kind: u16, held: Option<i32>, rng: &mut Lcg) -> Vec<(i32, i32)> {
-    let name = crate::world::NAME_OF[kind as usize];
+    // THE WALL HEADS' OWN TWIN FOLD (the dev-83 round — javap
+    // Blocks.wallVariant the 26.2 jar the probe scripts/skull_probe_83e.py
+    // banks: the wall skull's registration the Properties full-copy
+    // walk speaks — the LOOT TABLE the floor twin's own row the copy
+    // carries [the generated block_drops table the wall names never
+    // carries — the jar's loot_table/blocks/ the wall files never
+    // had], the dig drop the floor item wears). The non-head kinds
+    // the plain NAME_OF row the walk keeps.
+    let name = if let Some(twin) = crate::world::wall_head_floor_twin(kind) {
+        crate::world::NAME_OF[twin as usize]
+    } else {
+        crate::world::NAME_OF[kind as usize]
+    };
     if !crate::dig::DigState::correct_tool(kind, held) {
         return Vec::new();
     }

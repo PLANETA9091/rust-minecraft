@@ -94,6 +94,14 @@ fn sky_opacity(id: u16) -> u8 {
         // BE-rendered family the lightBlock-0 law the chest
         // precedent's own row shares)
         || is_floor_head(id)
+        // THE WALL HEADS' OWN ROW (the dev-83 round — javap
+        // WallSkullBlock the 26.2 jar the probe scripts/skull_probe_83.py
+        // banks: the wallVariant(floor) registration the Blocks clinit
+        // pc 15083-15111 walks — the Properties full-copy the
+        // noOcclusion + the shape-based lightBlock 0 the floor twin's
+        // own verdict carries, the sky the wall cell passes, the BE
+        // family the same law the twins share)
+        || is_wall_head_kind(id)
         // THE PANE FAMILY'S OWN ROW (the dev-58 round — the 18 kinds
         // the noOcclusion() registration the lightBlock 0 the same
         // law speaks: the glass_pane pc 12459 + the iron_bars pc

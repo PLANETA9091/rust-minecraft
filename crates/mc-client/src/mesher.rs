@@ -324,6 +324,14 @@ fn is_transparent(kind: u16) -> bool {
         // mini-cube lane's own walk renders — the BE-rendered family
         // the chest precedent's own verdict shares)
         || crate::world::is_floor_head(kind)
+        // THE WALL HEADS the same verdict keeps (the dev-83 round —
+        // javap WallSkullBlock the 26.2 jar the probe
+        // scripts/skull_probe_83.py banks: the wallVariant(floor)
+        // registration the Properties full-copy the noOcclusion
+        // verdict carries, the 8-px wall box the full cube never is —
+        // the neighbors' faces draw against the wall cell, the wall
+        // mini-cube lane's own walk the six model faces renders)
+        || crate::world::is_wall_head_kind(kind)
         // THE PANE FAMILY the same verdict keeps (the dev-58 round —
         // the blocks clinit's noOcclusion() rows the glass_pane and
         // iron_bars chains speak [pc 12459 / pc 12322], the stained
@@ -5153,7 +5161,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                 // entity pipeline never samples), the six faces the
                 // BE pass always emits (the neighbor cull the BE layer
                 // never runs).
-                if crate::world::is_floor_head(id) {
+                if crate::world::is_floor_head(id) || crate::world::is_wall_head(id) {
                     let sky_factor = world.sky_light_factor.unwrap_or(1.0)
                         * world
                             .day_tick
@@ -5195,8 +5203,42 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     // THE ROTATION SEGMENT'S OWN QUARTER (the
                     // convertToDegrees law the transform negates — the
                     // 22.5-degree step the ROTATION_16 property wears)
-                    let rot = world.variant(wx, wy, wz) & 15;
-                    let alpha = (-(rot as f32) * 22.5f32).to_radians();
+                    // THE WALL HEAD'S OWN FACING QUARTER (the dev-83
+                    // round — javap SkullBlockRenderer.createWall-
+                    // Transformation the 26.2 jar the probe
+                    // scripts/skull_probe_83.py banks: the compose
+                    // T(0.5 - stepX/4, 0.25, 0.5 - stepZ/4) ·
+                    // R_y(-toYRot(opposite(facing))) · scale(-1,-1,1)
+                    // the vertex walk answers — the toYRot table [north
+                    // 180, east -90, south 0, west +90] the opposite
+                    // fold the negation speaks [north 0°, east -90°,
+                    // south -180°, west +90°], the translate the hugging
+                    // offset the facing's own step wears [8 - 4·step px,
+                    // the y the 4px lift the 0.25 the wall band speaks])
+                    let (alpha, tx_px, ty_px, tz_px) = if crate::world::is_floor_head(id) {
+                        let rot = world.variant(wx, wy, wz) & 15;
+                        (
+                            (-(rot as f32) * 22.5f32).to_radians(),
+                            8.0f32,
+                            0.0f32,
+                            8.0f32,
+                        )
+                    } else {
+                        let facing = crate::world::wall_torch_facing_of(world.variant(wx, wy, wz));
+                        let (sx, _sy, sz) = crate::world::wall_torch_facing_delta(facing);
+                        let theta = match facing {
+                            crate::world::WALL_TORCH_FACING_EAST => -90.0f32,
+                            crate::world::WALL_TORCH_FACING_SOUTH => -180.0f32,
+                            crate::world::WALL_TORCH_FACING_WEST => 90.0f32,
+                            _ => 0.0f32,
+                        };
+                        (
+                            theta.to_radians(),
+                            8.0 - 4.0 * sx as f32,
+                            4.0f32,
+                            8.0 - 4.0 * sz as f32,
+                        )
+                    };
                     let (sin_a, cos_a) = alpha.sin_cos();
                     let faces = atlas::ENTITY_HEAD_FACES[id as usize];
                     let lm = lightmap_combine(
@@ -5226,12 +5268,18 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             // sin, z' = -x sin + z cos)
                             let rx = fx * cos_a + fz * sin_a;
                             let rz = -fx * sin_a + fz * cos_a;
-                            // THE TRANSLATE'S OWN PAIR (translation(8px,
-                            // 0, 8px) — the cell center the box lands on)
+                            // THE TRANSLATE'S OWN PAIR (the ground law's
+                            // translation(8px, 0, 8px) — the cell center
+                            // the box lands on; THE WALL LAW'S OWN PAIR
+                            // (the dev-83 round — the (8 - 4·step, 4,
+                            // 8 - 4·step) px the createWallTransformation
+                            // compose wears — the hugging side the
+                            // facing's own step answers, the y the 4px
+                            // lift the wall band speaks))
                             pts[i] = [
-                                wx as f32 + (8.0 + rx) / 16.0,
-                                wy as f32 + fy / 16.0,
-                                wz as f32 + (8.0 + rz) / 16.0,
+                                wx as f32 + (tx_px + rx) / 16.0,
+                                wy as f32 + (ty_px + fy) / 16.0,
+                                wz as f32 + (tz_px + rz) / 16.0,
                             ];
                         }
                         out.push(Quad {
@@ -13830,6 +13878,86 @@ mod tests {
         // every quad's four corners the SAME color the
         // entityCutoutNoCull lane speaks, NO face shade the BE pass
         // never samples)
+        for quad in &q {
+            assert_eq!(quad.colors[0], quad.colors[1]);
+            assert_eq!(quad.colors[1], quad.colors[2]);
+            assert_eq!(quad.colors[2], quad.colors[3]);
+        }
+    }
+
+    #[test]
+    fn the_wall_head_the_wall_transform_the_quads_wear() {
+        // THE WALL HEADS' OWN MESH LAWS (the dev-83 round — javap
+        // SkullBlockRenderer.createWallTransformation the 26.2 jar the
+        // probe scripts/skull_probe_83.py banks): the same 8x8x8 box
+        // the wall compose wears — T(0.5 - stepX/4, 0.25, 0.5 -
+        // stepZ/4) · R_y(-toYRot(opposite(facing))) · scale(-1,-1,1)
+        // — the y 4..12 px band the hugging side the facing speaks,
+        // the north the z 8..16 seat keeps, the east the x 0..8 arm,
+        // the six model faces the FLOOR TWINS' own tiles bank.
+        use mc_registry::generated::atlas;
+        // THE NORTH FACING (the variant byte 1 the torch vocabulary
+        // banks): the box the x/z [8.25, 8.75] x [8.5, 9.0] spans
+        // wear [x 4..12 px, z 8..16 px], the y [8.25, 8.75] the wall
+        // band keeps, the six quads the floor twin's tiles bank.
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, SKELETON_WALL_SKULL);
+        w.set_variant(8, 8, 8, crate::world::WALL_TORCH_FACING_NORTH);
+        let row = atlas::ENTITY_HEAD_FACES[SKELETON_WALL_SKULL as usize];
+        let floor_row = atlas::ENTITY_HEAD_FACES[SKELETON_SKULL as usize];
+        assert_eq!(row, floor_row, "the wall twin the floor tiles re-wears");
+        let q = mesh_chunk(&w, 0, 0, None);
+        assert_eq!(q.len(), 6, "the wall head the six model faces wears");
+        for quad in &q {
+            assert!(
+                !quad.translucent && !quad.per_texel_alpha,
+                "the entity cutout lane the wall quads keep"
+            );
+            for p in &quad.pts {
+                assert!(
+                    (8.25..=8.75).contains(&p[0]) && (8.25..=8.75).contains(&p[1])
+                        && (8.5..=9.0).contains(&p[2]),
+                    "the north-facing box the hugging spans keep, got {p:?}"
+                );
+            }
+            assert!(row.contains(&quad.tile), "the tile the row's own slots bank");
+        }
+        // THE FACE'S OWN SEAT (the north facing the rotation-0 law
+        // keeps: the FRONT tile the z = 8.5 plane the -Z side banks)
+        let north_face = q
+            .iter()
+            .find(|quad| quad.tile == row[3] && quad.pts.iter().all(|p| (p[2] - 8.5).abs() < 1e-5))
+            .expect("the north-facing front plane");
+        assert!(
+            north_face.pts.iter().all(|p| (8.25..=8.75).contains(&p[0])),
+            "the face the 4..12 px x band keeps"
+        );
+        // THE EAST FACING'S OWN QUARTER (the variant byte 2 — the
+        // -90-degree quarter the +X plane the face rotates to: the
+        // box the x [8.0, 8.5] arm the hugging side wears, the FRONT
+        // tile the x = 8.5 plane banks)
+        w.set_variant(8, 8, 8, crate::world::WALL_TORCH_FACING_EAST);
+        let q = mesh_chunk(&w, 0, 0, None);
+        assert_eq!(q.len(), 6, "the east head the same six faces wears");
+        for quad in &q {
+            for p in &quad.pts {
+                assert!(
+                    (8.0..=8.5).contains(&p[0]) && (8.25..=8.75).contains(&p[1])
+                        && (8.25..=8.75).contains(&p[2]),
+                    "the east-facing box the west-side spans keep, got {p:?}"
+                );
+            }
+        }
+        let east_face = q
+            .iter()
+            .find(|quad| quad.tile == row[3] && quad.pts.iter().all(|p| (p[0] - 8.5).abs() < 1e-5))
+            .expect("the east-facing front plane");
+        assert!(
+            east_face.pts.iter().all(|p| (8.25..=8.75).contains(&p[2])),
+            "the rotated face the z band keeps"
+        );
+        // THE EMISSIVE CELL'S OWN LIGHT (the uniform entity law — the
+        // wall lane the same cell light every face wears)
         for quad in &q {
             assert_eq!(quad.colors[0], quad.colors[1]);
             assert_eq!(quad.colors[1], quad.colors[2]);

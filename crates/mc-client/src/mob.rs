@@ -10552,7 +10552,16 @@ pub fn explosion_item_drops(
                 })
                 .collect()
         } else {
-            let name = crate::world::NAME_OF[kind as usize];
+            // THE WALL HEADS' OWN TWIN FOLD (the dev-83 round — the
+            // wallVariant loot table the floor twin's own row the
+            // [`crate::drops::roll_drops`] fold the same law wears:
+            // the generated table the wall names never carries, the
+            // blast's drop the floor item wears)
+            let name = if let Some(twin) = crate::world::wall_head_floor_twin(kind) {
+                crate::world::NAME_OF[twin as usize]
+            } else {
+                crate::world::NAME_OF[kind as usize]
+            };
             // the table's own silence (the block the flatten never
             // named — the air-family walk the honest empty answers)
             let pools: &[mc_registry::generated::block_drops::DropPool] =
