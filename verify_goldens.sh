@@ -87,6 +87,8 @@ check gui_world_held_320x180 0 --screen world --ui-frame 30 --seed 20260214 --he
 check gui_world_held_swing_320x180 0 --screen world --ui-frame 30 --seed 20260214 --held-item item/iron_sword --swing-progress 0.5 --width 320 --height 180
 # --- the chest screen (the container GUI's 9x3 grid round) ---
 check gui_chest_320x180 0 --screen chest --ui-frame 30 --seed 20260214 --width 320 --height 180
+# --- the double-chest screen (the dev-71 compound's own 9x6 canvas, the partner's rows the head keeps) ---
+check gui_chest_double_320x180 0 --screen chest_double --ui-frame 30 --seed 20260214 --width 320 --height 180
 
 echo "== ${pass} passed, ${fail} failed =="
 if [[ "$fail" -gt 0 ]]; then

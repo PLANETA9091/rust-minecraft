@@ -2132,6 +2132,72 @@ cow_sound_variant: None,
             app.frame = frame;
             app.clock_total = 6000 + frame;
         }
+        "chest_double" => {
+            // THE PAIR'S OWN CANVAS (the dev-74 round — the dev-71
+            // compound's own golden: the LEFT/RIGHT pair the dev-71
+            // test's own staging wears, the combined 54-slot grid the
+            // six-row canvas renders, the partner's rows the head
+            // keeps, the opened cell's the tail rides). THE OFFLINE
+            // STORE the disk never touches (the None boot the
+            // container_stores_file field banks — the headless goldens'
+            // own determinism), the in-memory inserts the staged rows
+            // keep, the open_chest_for walk the REAL pair reads.
+            app.enter_world();
+            let size = app.offline_world.as_ref().unwrap().size_blocks();
+            let c = size / 2;
+            let surface = app.spawn_y - 1;
+            let a = (c, surface + 1, c); // the LEFT half
+            let b = (c + 1, surface + 1, c); // the RIGHT half (the east neighbor)
+            {
+                let w = app.offline_world.as_mut().unwrap();
+                w.set(a.0, a.1, a.2, crate::world::CHEST);
+                w.set(b.0, b.1, b.2, crate::world::CHEST);
+                w.set_variant(
+                    a.0,
+                    a.1,
+                    a.2,
+                    crate::world::chest_variant(
+                        crate::world::CHEST_FACING_NORTH,
+                        crate::world::CHEST_TYPE_LEFT,
+                    ),
+                );
+                w.set_variant(
+                    b.0,
+                    b.1,
+                    b.2,
+                    crate::world::chest_variant(
+                        crate::world::CHEST_FACING_NORTH,
+                        crate::world::CHEST_TYPE_RIGHT,
+                    ),
+                );
+            }
+            // the stocked halves the compound rows wear (the partner's
+            // stacks the head keeps, the opened cell's the tail — the
+            // registry's own ids the stacks speak, the missing name the
+            // loud verdict keeps)
+            let wire = |name: &str| {
+                mc_registry::item_id_by_name(name)
+                    .unwrap_or_else(|| panic!("the golden's own stack the registry answers: {name}"))
+            };
+            let mut b_store = vec![(0i32, 0i32); 27];
+            b_store[1] = (wire("diamond"), 12);
+            b_store[5] = (wire("coal"), 3);
+            b_store[12] = (wire("iron_ingot"), 64);
+            b_store[22] = (wire("gold_ingot"), 7);
+            let mut a_store = vec![(0i32, 0i32); 27];
+            a_store[3] = (wire("oak_planks"), 27);
+            a_store[9] = (wire("apple"), 5);
+            a_store[17] = (wire("bread"), 3);
+            a_store[26] = (wire("cobblestone"), 16);
+            app.container_stores.insert(b, b_store);
+            app.container_stores.insert(a, a_store);
+            app.open_chest_for(a);
+            // THE NOON PIN (the world arm's own law — the day look the
+            // full-day fold keeps, the noon tracks the sky renders;
+            // the clock the staged frame folds)
+            app.frame = frame;
+            app.clock_total = 6000 + frame;
+        }
         "inventory" => {
             // THE E-KEY SCREEN'S OWN STAGING: the offline world stands
             // first (the mannequin's world beneath), then the store's
@@ -2187,7 +2253,7 @@ cow_sound_variant: None,
             app.clock_total = 6000 + frame;
         }
         other => anyhow::bail!(
-            "unknown screen {other} (loading|title|servers|options|world|worldnight|pause|chest|inventory|crafting|creative)"
+            "unknown screen {other} (loading|title|servers|options|world|worldnight|pause|chest|chest_double|inventory|crafting|creative)"
         ),
     }
 
