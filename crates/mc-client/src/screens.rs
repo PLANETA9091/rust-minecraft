@@ -9605,32 +9605,96 @@ impl App {
             if flipped {
                 let lit_now =
                     self.furnace_data[crate::furnace_sim::DATA_LIT_TIME] > 0;
-                // THE ORIENTABLE PAIR'S OWN WALK (the world cell's own
-                // family the UNLIT/LIT pair answers — the furnace the
-                // FURNACE/FURNACE_LIT pair keeps, the blast furnace /
-                // smoker their own pairs the kind kind's lanes speak)
-                let cell = self
-                    .offline_world
-                    .as_ref()
-                    .map(|w| w.get(pos.0, pos.1, pos.2))
-                    .unwrap_or(crate::world::FURNACE);
-                let next = if lit_now {
-                    crate::world::orientable_pair(cell)
-                        .map(|(_, lit)| lit)
-                        .unwrap_or(crate::world::FURNACE_LIT)
-                } else {
-                    crate::world::orientable_pair(cell)
-                        .map(|(unlit, _)| unlit)
-                        .unwrap_or(crate::world::FURNACE)
-                };
-                if let Some(world) = self.offline_world.as_mut() {
-                    let cur = world.get(pos.0, pos.1, pos.2);
-                    if cur != next && crate::world::is_orientable_furnace(cur) {
-                        world.set(pos.0, pos.1, pos.2, next);
-                        // THE KIND SWAP'S OWN LIGHT (the lit state
-                        // the emission-13 row the flood re-speaks —
-                        // the placement walk's own ensure walk)
-                        world.ensure_light_current();
+                // THE FLIP'S OWN HELPER (the dev-72 round — the same
+                // orientable walk the world walk's own flips serve,
+                // the re-mesh the changed verdict the caller keeps)
+                if self.furnace_world_flip(pos, lit_now) {
+                    if let Some(world) = self.offline_world.as_ref() {
+                        self.world_quads =
+                            Some(crate::mesher::mesh_world(world, None));
+                    }
+                }
+            }
+        }
+        // THE FURNACES' OWN WORLD WALK (the dev-72 round — the vanilla
+        // law the block entity's serverTick EVERY stocked furnace
+        // speaks: the opened screen the ONE live trio the walk above
+        // serves, the OTHER cells the per-cell banks the tick now
+        // wears — the coal the bank burns, the ore the bank smelts,
+        // the words the banks advance, the LIT flip the world's own
+        // kind keeps). THE PRIME (the vanilla law the setItem reset
+        // the input CHANGE alone answers — the closed cell's slots
+        // never change, no setItem ever speaks): the scratch sim's
+        // memory the banked input wears, the mid-smelt the walk never
+        // resets. The mined cell the walk never serves (the block the
+        // furnace family lost — the same frozen law the live arm
+        // speaks). The live cell the skip keeps (the furnace_pos trio
+        // the live arm's own walk serves — the open screen AND the
+        // close-retained burn — the doubled tick the skip never
+        // speaks). The re-mesh the flips the ONE walk batches.
+        if !self.world_is_network {
+            self.container_stores_load_once();
+            if !self.furnace_stores.is_empty() {
+                // the deterministic order the BTree fold keeps (the
+                // house law — the same verdicts every run speaks)
+                let mut cells: Vec<(i32, i32, i32)> =
+                    self.furnace_stores.keys().copied().collect();
+                cells.sort();
+                let live_cell = self.furnace_pos;
+                let mut any_flip = false;
+                for cell in cells {
+                    if live_cell == Some(cell) {
+                        continue; // the live arm's own trio never doubles
+                    }
+                    let block = self
+                        .offline_world
+                        .as_ref()
+                        .map(|w| w.get(cell.0, cell.1, cell.2))
+                        .unwrap_or(0);
+                    if !crate::world::is_orientable_furnace(block) {
+                        continue; // the mined cell the walk never serves
+                    }
+                    let kind = if crate::world::is_blast_furnace(block) {
+                        crate::furnace_sim::FurnaceKind::BlastFurnace
+                    } else if crate::world::is_smoker(block) {
+                        crate::furnace_sim::FurnaceKind::Smoker
+                    } else {
+                        crate::furnace_sim::FurnaceKind::Furnace
+                    };
+                    let mut trio: Vec<(i32, i32)> = self
+                        .furnace_stores
+                        .entry(cell)
+                        .or_insert_with(|| vec![(0, 0); 3])
+                        .iter()
+                        .copied()
+                        .take(3)
+                        .collect();
+                    while trio.len() < 3 {
+                        trio.push((0, 0));
+                    }
+                    let mut words = *self
+                        .furnace_word_stores
+                        .entry(cell)
+                        .or_insert([0i32; 4]);
+                    // THE PRIME (the closed cell's slots never change —
+                    // the banked input the memory wears, the
+                    // never-ticked stock's own total the fetch speaks)
+                    let mut sim = crate::furnace_sim::FurnaceSim {
+                        kind,
+                        last_input_id: 0,
+                    };
+                    sim.prime_loaded(&mut words, trio[0]);
+                    let flipped = sim.tick(&mut trio, &mut words);
+                    self.furnace_stores.insert(cell, trio);
+                    self.furnace_word_stores.insert(cell, words);
+                    if flipped {
+                        let lit_now =
+                            words[crate::furnace_sim::DATA_LIT_TIME] > 0;
+                        any_flip |= self.furnace_world_flip(cell, lit_now);
+                    }
+                }
+                if any_flip {
+                    if let Some(world) = self.offline_world.as_ref() {
                         self.world_quads =
                             Some(crate::mesher::mesh_world(world, None));
                     }
@@ -20723,6 +20787,24 @@ impl App {
         } else {
             crate::furnace_sim::FurnaceKind::Furnace
         };
+        // THE RETAINED CELL'S OWN RIDE HOME (the dev-72 round — the
+        // ticks the close the live arm kept walking the store banks
+        // BEFORE the switch: the retained trio the live slots' first
+        // three cells speak, the words the live furnace_data keeps,
+        // the world walk the banked state the next tick wears — the
+        // ticks the switch never loses). The live lane the gate keeps
+        // (the networked window the server's own authority owns).
+        if !self.world_is_network && !self.furnace_is_live {
+            if let Some(prev) = self.furnace_pos {
+                if prev != pos {
+                    let trio: Vec<(i32, i32)> =
+                        self.furnace_slots.iter().copied().take(3).collect();
+                    self.container_stores_load_once();
+                    self.furnace_stores.insert(prev, trio);
+                    self.furnace_word_stores.insert(prev, self.furnace_data);
+                }
+            }
+        }
         if self.furnace_pos != Some(pos) {
             self.furnace_slots = vec![(0, 0); 39];
             self.furnace_data = [0, 0, 0, 0];
@@ -20757,6 +20839,14 @@ impl App {
                 .furnace_word_stores
                 .entry(pos)
                 .or_insert([0i32; 4]);
+            // THE LOADED INPUT'S OWN PRIME (the dev-72 round — the
+            // banked progress the first live tick never resets: the
+            // vanilla law the setItem reset the input CHANGE alone
+            // answers, the loaded cell no setItem ever spoke — the
+            // sim's memory the loaded input wears, the never-ticked
+            // stock's own total the fetch speaks)
+            self.furnace_sim
+                .prime_loaded(&mut self.furnace_data, self.furnace_slots[0]);
         }
         self.furnace_open_cell = Some(pos);
         // THE STANDARD ROWS' OWN PROJECTION (the menu's
@@ -21037,6 +21127,43 @@ impl App {
         // entry's removal the file write banks: the restart the spill
         // never resurrects, the emptied key the banked walk answers)
         self.container_stores_file_save();
+    }
+
+    /// THE FURNACE FLIP'S OWN WORLD WALK (the dev-72 round — the lit
+    /// verdict the placed kind wears: the orientable pair the family
+    /// answers, the emission-13 light the flood re-speaks, the
+    /// re-mesh the changed verdict the caller batches). The mined
+    /// cell the guard never flips (the is_orientable_furnace gate
+    /// the live arm's own walk wears). Returns whether the world
+    /// cell changed.
+    fn furnace_world_flip(&mut self, pos: (i32, i32, i32), lit_now: bool) -> bool {
+        let cell = self
+            .offline_world
+            .as_ref()
+            .map(|w| w.get(pos.0, pos.1, pos.2))
+            .unwrap_or(crate::world::FURNACE);
+        let next = if lit_now {
+            crate::world::orientable_pair(cell)
+                .map(|(_, lit)| lit)
+                .unwrap_or(crate::world::FURNACE_LIT)
+        } else {
+            crate::world::orientable_pair(cell)
+                .map(|(unlit, _)| unlit)
+                .unwrap_or(crate::world::FURNACE)
+        };
+        let mut changed = false;
+        if let Some(world) = self.offline_world.as_mut() {
+            let cur = world.get(pos.0, pos.1, pos.2);
+            if cur != next && crate::world::is_orientable_furnace(cur) {
+                world.set(pos.0, pos.1, pos.2, next);
+                // THE KIND SWAP'S OWN LIGHT (the lit state the
+                // emission-13 row the flood re-speaks — the placement
+                // walk's own ensure walk)
+                world.ensure_light_current();
+                changed = true;
+            }
+        }
+        changed
     }
 
     /// THE FURNACE'S OWN FLUSH (the dev-69 round — the close walk's
@@ -58686,6 +58813,211 @@ mod tests {
             "the death ride the emptied words bank keeps"
         );
         let _ = std::fs::remove_file(&file);
+    }
+
+    /// THE FURNACES' OWN WORLD WALK (the dev-72 round — the vanilla
+    /// law the block entity's serverTick EVERY stocked furnace
+    /// speaks: the closed cell the bank's own tick serves — the coal
+    /// the bank burns, the ore the bank smelts, the ingot the bank
+    /// lands, the LIT flip the world's kind wears while the player
+    /// the OTHER furnace's screen wears).
+    #[test]
+    fn the_furnaces_own_world_walk_the_banked_cells_the_tocks_wear() {
+        let mut app = App::new(11);
+        app.enter_world();
+        let coal = mc_registry::item_id_by_name("coal").unwrap();
+        let raw_iron = mc_registry::item_id_by_name("raw_iron").unwrap();
+        let iron_ingot = mc_registry::item_id_by_name("iron_ingot").unwrap();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        let a = (c, surface + 1, c);
+        let b = (c, surface + 1, c + 2);
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(a.0, a.1, a.2, crate::world::FURNACE);
+            w.set(b.0, b.1, b.2, crate::world::FURNACE);
+        }
+        // THE STOCK (the opened cell's trio the close flush banks —
+        // the raw iron the input wears, the coal the fuel keeps)
+        app.open_furnace(a);
+        app.furnace_slots[0] = (raw_iron, 5);
+        app.furnace_slots[1] = (coal, 3);
+        app.on_escape();
+        // THE OTHER CELL (the screen the walkaway speaks — the
+        // furnace_pos the second cell the retention keeps)
+        app.open_furnace(b);
+        app.on_escape();
+        assert_eq!(app.furnace_pos, Some(b), "the walkaway the cell keeps");
+        // THE FIRST WALK TICK (the bank the ignite speaks — the coal
+        // the bank consumes, the LIT flip the world's kind wears)
+        app.update();
+        assert_eq!(
+            app.furnace_stores[&a][1],
+            (coal, 2),
+            "the bank's own coal the walk consumes"
+        );
+        assert_eq!(
+            app.furnace_word_stores[&a],
+            [1600, 1600, 1, 200],
+            "the banked words the walk ignites"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(a.0, a.1, a.2),
+            crate::world::FURNACE_LIT,
+            "the walk's own flip the world wears"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(b.0, b.1, b.2),
+            crate::world::FURNACE,
+            "the empty cell the unlit kind keeps"
+        );
+        // THE FULL SMELT (the walk the 200-tick arc serves — the
+        // ingot the bank lands, the input the bank shrinks)
+        for _ in 0..199 {
+            app.update();
+        }
+        assert_eq!(
+            app.furnace_stores[&a][2],
+            (iron_ingot, 1),
+            "the ingot the bank's own burn lands"
+        );
+        assert_eq!(
+            app.furnace_stores[&a][0],
+            (raw_iron, 4),
+            "the input the bank's own burn shrinks"
+        );
+    }
+
+    /// THE WORLD WALK'S OWN PRIME (the dev-72 round — the banked
+    /// mid-smelt the closed cell's tick NEVER resets: the scratch
+    /// sim's memory the banked input wears, the vanilla law the
+    /// setItem reset the input CHANGE alone answers — the closed
+    /// cell's slots never change, no setItem ever speaks; the
+    /// reopened live lane the same prime wears, the loaded input the
+    /// fresh sim's memory keeps).
+    #[test]
+    fn the_furnaces_own_world_walk_the_mid_smelt_never_resets() {
+        let mut app = App::new(11);
+        app.enter_world();
+        let coal = mc_registry::item_id_by_name("coal").unwrap();
+        let raw_iron = mc_registry::item_id_by_name("raw_iron").unwrap();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        let a = (c, surface + 1, c);
+        let b = (c, surface + 1, c + 2);
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(a.0, a.1, a.2, crate::world::FURNACE);
+            w.set(b.0, b.1, b.2, crate::world::FURNACE);
+        }
+        // THE MID-SMELT STOCK (the banked words the close flush banks)
+        app.open_furnace(a);
+        app.furnace_slots[0] = (raw_iron, 5);
+        app.furnace_slots[1] = (coal, 3);
+        app.furnace_data = [10, 80, 57, 200];
+        app.on_escape();
+        app.open_furnace(b);
+        app.on_escape();
+        // THE WALK TICK (the prime the progress keeps — 58 the walk
+        // speaks, the reset the zero the unprimed memory would wear)
+        app.update();
+        assert_eq!(
+            app.furnace_word_stores[&a],
+            [9, 80, 58, 200],
+            "the banked mid-smelt the walk continues"
+        );
+        // THE REOPEN (the live lane the same prime wears — the first
+        // live tick the banked arc never resets)
+        app.open_furnace(a);
+        app.update();
+        assert_eq!(
+            app.furnace_data,
+            [8, 80, 59, 200],
+            "the reopened live tick the arc continues"
+        );
+    }
+
+    /// THE RETAINED CELL'S OWN RIDE HOME (the dev-72 round — the
+    /// ticks the close the live arm kept walking the store banks at
+    /// the switch: the retention the live trio walks, the open the
+    /// OTHER cell the walked ticks ride home, the world walk the
+    /// bank continues, the reopen the FULL arc the resume wears —
+    /// the continuity the old switch the store's stale copy broke).
+    #[test]
+    fn the_retained_cell_the_switch_the_ride_home_the_continuity_wears() {
+        let mut app = App::new(11);
+        app.enter_world();
+        let coal = mc_registry::item_id_by_name("coal").unwrap();
+        let raw_iron = mc_registry::item_id_by_name("raw_iron").unwrap();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        let a = (c, surface + 1, c);
+        let b = (c, surface + 1, c + 2);
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(a.0, a.1, a.2, crate::world::FURNACE);
+            w.set(b.0, b.1, b.2, crate::world::FURNACE);
+        }
+        // THE STOCK + THE CLOSE (the flush the close-time state banks)
+        app.open_furnace(a);
+        app.furnace_slots[0] = (raw_iron, 5);
+        app.furnace_slots[1] = (coal, 3);
+        app.on_escape();
+        assert_eq!(
+            app.furnace_word_stores[&a],
+            [0, 0, 0, 0],
+            "the close the zeros banks"
+        );
+        // THE RETENTION WALK (the live arm the retained trio serves —
+        // the ignite the first tick speaks, the arc the ticks grow)
+        app.update();
+        assert_eq!(
+            app.furnace_data,
+            [1600, 1600, 1, 200],
+            "the retention the ignite wears"
+        );
+        for _ in 0..5 {
+            app.update();
+        }
+        assert_eq!(
+            app.furnace_data,
+            [1595, 1600, 6, 200],
+            "the retention the arc keeps"
+        );
+        // THE SWITCH (the ride home the walked ticks banks — the
+        // store the live state the same beat wears)
+        app.open_furnace(b);
+        assert_eq!(
+            app.furnace_word_stores[&a],
+            [1595, 1600, 6, 200],
+            "the ride home the walked words banks"
+        );
+        assert_eq!(
+            app.furnace_stores[&a][1],
+            (coal, 2),
+            "the ride home the trio banks"
+        );
+        app.on_escape();
+        // THE BANK'S OWN WALK (the world walk the banked arc serves)
+        app.update();
+        app.update();
+        assert_eq!(
+            app.furnace_word_stores[&a],
+            [1593, 1600, 8, 200],
+            "the bank the walk continues"
+        );
+        // THE REOPEN (the full arc the resume wears — the loaded
+        // input the prime the live tick never resets)
+        app.open_furnace(a);
+        app.update();
+        assert_eq!(
+            app.furnace_data,
+            [1592, 1600, 9, 200],
+            "the continuity the full arc wears"
+        );
     }
 
     /// THE DOUBLE CHEST'S OWN COMBINED GRID (the dev-71 round — the

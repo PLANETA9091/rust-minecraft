@@ -171,6 +171,22 @@ impl FurnaceSim {
         }
     }
 
+    /// THE LOADED CELL'S OWN PRIME (the dev-72 round — the vanilla
+    /// law the setItem reset the input CHANGE alone answers, the
+    /// loaded cell no setItem ever spoke): the sim's memory the
+    /// loaded input wears, the never-ticked stock's own total the
+    /// zero bank the getTotalCookTime fetch answers — the vanilla
+    /// GUI's click the setItem spoke, the model the tick head folds,
+    /// the fresh stock the same 200/100 word the live lane's own
+    /// first tick wears. The banked total the fetch never clobbers
+    /// (the mid-smelt the zero the only never-spoken keeps).
+    pub fn prime_loaded(&mut self, words: &mut [i32; 4], input: (i32, i32)) {
+        self.last_input_id = if input.1 > 0 { input.0 } else { 0 };
+        if input.1 > 0 && words[DATA_COOKING_TOTAL_TIME] == 0 {
+            words[DATA_COOKING_TOTAL_TIME] = self.kind.total_cook_time(input.0);
+        }
+    }
+
     /// THE TICK (javap AbstractFurnaceBlockEntity.serverTick — the
     /// walk in the bytecode's own order). `slots` the menu's first
     /// three cells (input 0, fuel 1, result 2), `data` the four
