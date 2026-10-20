@@ -8922,6 +8922,73 @@ pub fn redstone_signal_at(world: &World, x: i32, y: i32, z: i32) -> bool {
         || wall_torch_sources_near(world, x, y, z)
 }
 
+/// THE SUPPORT'S OWN STRONG VERDICT (the dev-102 round — javap
+/// `Level.getSignal(pos, dir)` the 26.2 jar the conductor arm the
+/// direct-signal max keeps: the `isRedstoneConductor ? max(weak,
+/// getDirectSignal(pos))` fold the solid cell's own read speaks, the
+/// `getDirectSignal` scan the attached source's 15 the support block
+/// carries — the wall lever/button the side face the press pulse
+/// strongly powers, the floor pair AND the plate the straight-below
+/// block the same strong read answers). The read the rail's own
+/// powered verdict [`World::rail_neighbor_updates`] wears — the
+/// `hasNeighborSignal` walk the weak arms [`redstone_signal_at`]
+/// alone read, the conductor's strong seat the dev-102 round the
+/// walk's own vocabulary banks. THE GATE the full-cube row
+/// [`can_support_rail`] keeps (the collision table's Full verdict —
+/// the pass-through kinds the strong read never carries), THE SCAN
+/// the attached source's own support decode [`lever_support_offset`]
+/// answers (the wall face the behind cell names, the floor/ceiling
+/// pair the straight arms wear, the PLATE the floor-only
+/// straight-below law [`is_pressure_plate`] keeps — the variant byte
+/// the plate never reads), the ON gate the LEVER_ON kind +
+/// [`button_powered`] + [`plate_powered`] trio banks (the OFF kinds
+/// the strong read the dead pulse never carries).
+pub fn strong_signal_conductors_near(world: &World, x: i32, y: i32, z: i32) -> bool {
+    for (dx, dy, dz) in [
+        (0, 1, 0),
+        (0, -1, 0),
+        (0, 0, -1),
+        (0, 0, 1),
+        (-1, 0, 0),
+        (1, 0, 0),
+    ] {
+        let (nx, ny, nz) = (x + dx, y + dy, z + dz);
+        // THE CONDUCTOR'S OWN GATE: the full-cube row the strong
+        // signal the collision table keeps
+        if !can_support_rail(world.get(nx, ny, nz)) {
+            continue;
+        }
+        // THE ATTACHED SOURCE'S OWN SCAN: the conductor's own six
+        // neighbors the ON kinds the support decode answers — the
+        // source whose support cell equals the conductor the strong
+        // 15 the block carries
+        for (ox, oy, oz) in [
+            (0, 1, 0),
+            (0, -1, 0),
+            (0, 0, -1),
+            (0, 0, 1),
+            (-1, 0, 0),
+            (1, 0, 0),
+        ] {
+            let (sx, sy, sz) = (nx + ox, ny + oy, nz + oz);
+            let kind = world.get(sx, sy, sz);
+            if kind != LEVER_ON && !button_powered(kind) && !plate_powered(kind) {
+                continue;
+            }
+            let support = if is_pressure_plate(kind) {
+                (sx, sy - 1, sz)
+            } else {
+                let (sdx, sdy, sdz) = lever_support_offset(world.variant(sx, sy, sz));
+                (sx + sdx, sy + sdy, sz + sdz)
+            };
+            if support == (nx, ny, nz) {
+                return true;
+            }
+        }
+    }
+    false
+}
+
 /// THE BUTTON'S OWN PLATE BOX — javap `ButtonBlock.makeShapes` pc 0-45
 /// the 26.2 jar: the base `Block.boxZ(6.0, 4.0, 8.0, 16.0)` plate the
 /// bytecode keeps (the 4-arg boxZ walk pc 0-24 the `8.0 ± size/2`
@@ -13740,7 +13807,15 @@ impl World {
     /// connections the axis along them wear; the perpendicular pair
     /// the corner shape the dev-92 round's [`rail_curve_byte`] verdict
     /// banks — the curve-capable gate the plain RAIL alone wears), the
-    /// zero/junction shapes the current byte keeps. Returns whether
+    /// zero/junction shapes the current byte keeps. THE VERTICAL SEAT
+    /// PAIR the dev-102 round the walk JOINS (the vanilla
+    /// updateNeighborsAt walk the six-neighbor notification speaks —
+    /// the support seed the press pulse's second call fires): the
+    /// straight-above AND straight-below cells the same re-evaluation
+    /// reads — the rail ON the support's top face the walk's own seat
+    /// takes [the wall button the support the pulse strongly powers,
+    /// the strong verdict [`strong_signal_conductors_near`] the bit
+    /// arms]. Returns whether
     /// any variant moved (the caller's own remesh the flag folds).
     pub fn rail_neighbor_updates(&mut self, changed: (i32, i32, i32)) -> bool {
         let (cx, cy, cz) = changed;
@@ -13758,6 +13833,15 @@ impl World {
             (cx, cy, cz + 1),
             (cx - 1, cy, cz),
             (cx + 1, cy, cz),
+            // THE SUPPORT'S OWN VERTICAL SEAT PAIR (the dev-102 round
+            // — the vanilla updateNeighborsAt walk the six-neighbor
+            // notification speaks: the y±1 arms today the slope
+            // diagonals alone wore, the straight seats the walk's own
+            // walk never named — the rail ON the support's top face
+            // the wall button's pulse the vanilla's own neighbor
+            // update re-reads)
+            (cx, cy + 1, cz),
+            (cx, cy - 1, cz),
             (cx + 1, cy + 1, cz),
             (cx - 1, cy + 1, cz),
             (cx, cy + 1, cz - 1),
@@ -13834,8 +13918,20 @@ impl World {
                 self.get(x, y, z),
                 crate::world::POWERED_RAIL | crate::world::ACTIVATOR_RAIL
             ) {
+                // THE SUPPORT'S OWN STRONG ARM (the dev-102 round —
+                // javap Level.getSignal the 26.2 jar the conductor
+                // arm the direct-signal max keeps): the weak arms the
+                // [`redstone_signal_at`] fold reads, the STRONG arm
+                // [`strong_signal_conductors_near`] the attached ON
+                // source the conductor carries answers — the wall
+                // button the support the press pulse strongly powers,
+                // the rail ON the support's top face the vanilla's
+                // own rail-on-top case the verdict arms (the above
+                // read the same strong walk the parity keeps)
                 let powered = redstone_signal_at(self, x, y, z)
-                    || redstone_signal_at(self, x, y + 1, z);
+                    || redstone_signal_at(self, x, y + 1, z)
+                    || strong_signal_conductors_near(self, x, y, z)
+                    || strong_signal_conductors_near(self, x, y + 1, z);
                 let cur = self.variant(x, y, z);
                 let next = if powered {
                     cur | RAIL_POWERED_BIT
@@ -19424,6 +19520,87 @@ mod tests {
             w.variant(8, 9, 10),
             1,
             "the plain rail the lever's signal never arms"
+        );
+    }
+
+    /// THE SUPPORT'S OWN STRONG VERDICT (the dev-102 round — javap
+    /// Level.getSignal the conductor arm the direct-signal max the
+    /// support block carries): the wall button the press pulse ON
+    /// the support the strong 15 speaks, the rail ON the support's
+    /// top face the vertical seat the walk re-reads — the POWERED
+    /// bit the strong verdict arms, the pulse's end the same walk
+    /// clears, the OFF source the verdict never arms, the DETECTOR
+    /// rail the strong pulse the cart law never lets it wear, the
+    /// E-W nibble the bit's own fold preserves.
+    #[test]
+    fn the_supports_own_strong_verdict_the_top_rail_wears() {
+        let mut w = slab_world();
+        // THE WALL BUTTON'S OWN SEAT: the stone support (8,8,8) the
+        // slab floor keeps, the button the west side the variant
+        // decode (facing 4 — the wall east) names, the rail the top
+        // face the E-W look-stamp wears
+        w.set(8, 9, 8, POWERED_RAIL);
+        w.set_variant(8, 9, 8, 1);
+        w.set(7, 8, 8, BUTTON_ON);
+        w.set_variant(7, 8, 8, lever_variant(LEVER_FACE_WALL, 4));
+        // THE SUPPORT SEED'S OWN WALK: the press walk's second call
+        // the support cell re-fires — the vertical seat pair the
+        // dev-102 round the walk joins, the top rail the strong
+        // verdict arms (the weak arms the direct-source scan never
+        // spoke — the button the support's SIDE the rail's own
+        // neighborhood never touches)
+        assert!(
+            w.rail_neighbor_updates((8, 8, 8)),
+            "the strong verdict the top rail's bit arms"
+        );
+        assert_eq!(
+            w.variant(8, 9, 8),
+            RAIL_POWERED_BIT | 1,
+            "the wall button the support's strong 15 the top rail wears — the nibble keeps"
+        );
+        // THE PULSE'S OWN END: the OFF kind the same support seed the
+        // strong read dead speaks — the bit the same walk clears
+        w.set(7, 8, 8, BUTTON);
+        assert!(
+            w.rail_neighbor_updates((8, 8, 8)),
+            "the dead pulse the clear's own moved verdict banks"
+        );
+        assert_eq!(
+            w.variant(8, 9, 8),
+            1,
+            "the OFF button the top rail's bit clears — the nibble keeps"
+        );
+        // THE OFF SOURCE'S OWN REFUSAL: the unpowered button the same
+        // support the verdict never arms (the strong 15 the ON kinds
+        // alone carry)
+        w.set(3, 9, 4, POWERED_RAIL);
+        w.set_variant(3, 9, 4, 1);
+        w.set(2, 8, 4, BUTTON);
+        w.set_variant(2, 8, 4, lever_variant(LEVER_FACE_WALL, 4));
+        assert!(
+            !w.rail_neighbor_updates((3, 8, 4)),
+            "the OFF button nothing moves"
+        );
+        assert_eq!(
+            w.variant(3, 9, 4),
+            1,
+            "the OFF source the bit never banks"
+        );
+        // THE DETECTOR'S OWN CART LAW: the strong pulse the detector
+        // rail the same walk never arms (its own law the cart's
+        // presence speaks)
+        w.set(12, 9, 12, DETECTOR_RAIL);
+        w.set_variant(12, 9, 12, 1);
+        w.set(11, 8, 12, BUTTON_ON);
+        w.set_variant(11, 8, 12, lever_variant(LEVER_FACE_WALL, 4));
+        assert!(
+            !w.rail_neighbor_updates((12, 8, 12)),
+            "the detector the strong pulse never arms"
+        );
+        assert_eq!(
+            w.variant(12, 9, 12),
+            1,
+            "the detector's byte the cart law keeps"
         );
     }
 
