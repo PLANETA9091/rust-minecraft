@@ -1081,16 +1081,31 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     // rail_corner texture the pool tail seats, the
                     // y=0/90/180/270 arms the uv rotation folds
                     // below wear; the straight bytes the kind's own
-                    // row the flat arm keeps)
-                    let corner = matches!(world.variant(wx, wy, wz), 6..=9);
+                    // row the flat arm keeps). THE SHAPE NIBBLE (the
+                    // dev-96 round — the variant's own bit layout the
+                    // mask reads: the low nibble the shape byte, the
+                    // 0x80 the POWERED bit the powered rails wear —
+                    // the shape arms the masked byte alone answer)
+                    let shape = world.variant(wx, wy, wz) & crate::world::RAIL_SHAPE_MASK;
+                    let corner = matches!(shape, 6..=9);
+                    // THE POWERED RAIL'S OWN ON SEAT (the dev-96 round
+                    // — the vanilla blockstates/powered_rail.json's
+                    // powered=true rows the model swap the bit reads:
+                    // the POWERED bit the powered_rail_on texture the
+                    // seat banks, the powered=false rows the kind's
+                    // own row the off master keeps)
+                    let powered_on = id == crate::world::POWERED_RAIL
+                        && world.variant(wx, wy, wz) & crate::world::RAIL_POWERED_BIT != 0;
                     let tile = if corner {
                         atlas::TILE_RAIL_CORNER
+                    } else if powered_on {
+                        atlas::TILE_POWERED_RAIL_ON
                     } else if (id as usize) < atlas::N_KINDS {
                         atlas::FACE_TILES[id as usize][2]
                     } else {
                         atlas::TILE_NONE
                     };
-                    let transposed = world.variant(wx, wy, wz) == 1;
+                    let transposed = shape == 1;
                     let sky_factor = world.sky_light_factor.unwrap_or(1.0)
                         * world
                             .day_tick
@@ -1160,7 +1175,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             let (uu, vv) = if transposed {
                                 (bz, bx)
                             } else {
-                                match world.variant(wx, wy, wz) {
+                                match shape {
                                     7 => (bz, 16.0 - bx),
                                     8 => (16.0 - bx, 16.0 - bz),
                                     9 => (16.0 - bz, bx),
@@ -1188,7 +1203,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             // — the upper cell's own rail seat the one
                             // plane connects, the low/high arms the
                             // byte's direction answers)
-                            let py = match world.variant(wx, wy, wz) {
+                            let py = match shape {
                                 2 => wy as f32 + 1.0 / 16.0 + bx / 16.0,
                                 3 => wy as f32 + 17.0 / 16.0 - bx / 16.0,
                                 4 => wy as f32 + 17.0 / 16.0 - bz / 16.0,
@@ -14285,6 +14300,78 @@ mod tests {
         });
         assert_eq!(ew_up.count(), 1, "the up face the transposed map wears");
         assert_eq!(ew_down.count(), 1, "the down face the flipped transpose wears");
+    }
+
+    #[test]
+    fn the_powered_rails_own_on_lane_the_tile_swap_wears() {
+        // THE POWERED RAIL'S OWN MESH LAW (the dev-96 round — the
+        // vanilla blockstates/powered_rail.json's powered=true rows
+        // the model swap the bit reads): the powered bit the
+        // powered_rail_on seat the swap banks, the off master the
+        // kind's own row keeps, the powered quarter the transposed
+        // uv fold the same lane serves, the shape nibble the mask
+        // the bit never touches.
+        use mc_registry::generated::atlas;
+        // THE OFF MASTER (the variant byte 0 the powered=false row
+        // speaks): the kind's own tile the lane banks
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::POWERED_RAIL);
+        let off_tile = atlas::FACE_TILES[crate::world::POWERED_RAIL as usize][2];
+        let q = mesh_chunk(&w, 0, 0, None);
+        assert_eq!(q.len(), 2, "the flat plane the up+down pair wears");
+        for quad in &q {
+            assert_eq!(quad.tile, off_tile, "the off rail the kind's own row keeps");
+        }
+        // THE ON SWAP (the POWERED bit the powered=true row speaks):
+        // the _on seat the same two quads wear
+        w.set_variant(8, 8, 8, crate::world::RAIL_POWERED_BIT);
+        let q_on = mesh_chunk(&w, 0, 0, None);
+        assert_eq!(q_on.len(), 2, "the swap the same two quads wears");
+        for quad in &q_on {
+            assert_eq!(
+                quad.tile,
+                atlas::TILE_POWERED_RAIL_ON,
+                "the powered bit the _on seat the swap banks"
+            );
+        }
+        // THE POWERED QUARTER (the bit + the E-W byte the powered
+        // east_west row speaks): the _on seat the transposed uv fold
+        // the same lane wears (the u the z-axis tracks — the shape
+        // nibble the mask reads)
+        w.set_variant(8, 8, 8, crate::world::RAIL_POWERED_BIT | 1);
+        let q_ew = mesh_chunk(&w, 0, 0, None);
+        assert_eq!(q_ew.len(), 2, "the powered quarter the same two quads wears");
+        for quad in &q_ew {
+            assert_eq!(
+                quad.tile,
+                atlas::TILE_POWERED_RAIL_ON,
+                "the powered quarter the _on seat keeps"
+            );
+        }
+        let ew_up = q_ew.iter().filter(|quad| {
+            quad.pts
+                .iter()
+                .zip(quad.uvs.iter())
+                .all(|(p, uv)| {
+                    (uv[0] - (p[2] - 8.0)).abs() < 1e-5
+                        && (uv[1] - (p[0] - 8.0)).abs() < 1e-5
+                })
+        });
+        assert_eq!(ew_up.count(), 1, "the powered quarter the transposed map wears");
+        // THE PLAIN RAIL THE BIT NEVER WEARS: the RAIL kind the same
+        // bit the off row keeps (the swap the powered kind alone
+        // takes)
+        let mut w2 = empty_world();
+        put(&mut w2, 8, 8, 8, crate::world::RAIL);
+        w2.set_variant(8, 8, 8, crate::world::RAIL_POWERED_BIT);
+        let q2 = mesh_chunk(&w2, 0, 0, None);
+        for quad in &q2 {
+            assert_ne!(
+                quad.tile,
+                atlas::TILE_POWERED_RAIL_ON,
+                "the plain rail the bit the swap never wears"
+            );
+        }
     }
 
     #[test]

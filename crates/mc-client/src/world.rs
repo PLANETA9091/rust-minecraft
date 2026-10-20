@@ -3857,6 +3857,17 @@ pub const RAIL_FLAT_TOP: f64 = 2.0 / 16.0;
 /// [`RAIL_FLAT_TOP`] the SHAPE_FLAT arm keeps).
 pub const RAIL_ASC_TOP: f64 = 8.0 / 16.0;
 
+/// THE RAIL VARIANT'S OWN BIT LAYOUT (the dev-96 round — the vanilla
+/// POWERED property the variant byte's own high bit banks): the low
+/// nibble the SHAPE byte the RailShape ordinals speak (0..9 — the
+/// bytes the dev-86/92/93 rounds bank), the 0x80 the POWERED bit the
+/// redstone verdict sets (the vanilla `powered=true` blockstate rows
+/// the _on models the swap wears) — the shape reads the mask the
+/// nibble alone keeps, the powered rails' own writes the bit the
+/// preserve fold carries.
+pub const RAIL_SHAPE_MASK: u8 = 0x0F;
+pub const RAIL_POWERED_BIT: u8 = 0x80;
+
 /// THE MOB HEADS' OWN KIND TABLE (the dev-80 round — the family
 /// predicates the palette tail reads: the placeable refusal, the
 /// above-imitate consult, the honest absence every non-head kind
@@ -13789,8 +13800,40 @@ impl World {
                 }
             });
             if let Some(v) = axis {
-                if self.variant(x, y, z) != v {
-                    self.set_variant(x, y, z, v);
+                // THE SHAPE WRITE'S OWN BIT PRESERVE (the dev-96 round
+                // — the powered rails' own POWERED bit the shape verdict
+                // never clobbers: the write the masked shape ORs the
+                // standing bit the cell wears, the byte the same
+                // layout keeps)
+                let cur = self.variant(x, y, z);
+                let next = (v & RAIL_SHAPE_MASK) | (cur & RAIL_POWERED_BIT);
+                if cur != next {
+                    self.set_variant(x, y, z, next);
+                    moved = true;
+                }
+            }
+            // THE POWERED RAIL'S OWN SWAP (the dev-96 round — javap
+            // PoweredRailBlock.updateState the 26.2 jar the
+            // neighborChanged walk serves: the `hasNeighborSignal(pos)
+            // || hasNeighborSignal(pos.above())` pair the verdict reads
+            // — the [`redstone_signal_at`] fold the honest client's own
+            // vocabulary answers [the lever/button/plate/wire/torch
+            // sources the same walk banks], the pos.above() arm the
+            // vanilla's own second call keeps — the POWERED bit the
+            // verdict sets or clears, the `powered=true` blockstate
+            // rows the _on model the swap wears, the shape nibble the
+            // bit's own fold never touches)
+            if self.get(x, y, z) == crate::world::POWERED_RAIL {
+                let powered = redstone_signal_at(self, x, y, z)
+                    || redstone_signal_at(self, x, y + 1, z);
+                let cur = self.variant(x, y, z);
+                let next = if powered {
+                    cur | RAIL_POWERED_BIT
+                } else {
+                    cur & !RAIL_POWERED_BIT
+                };
+                if cur != next {
+                    self.set_variant(x, y, z, next);
                     moved = true;
                 }
             }
@@ -14652,7 +14695,7 @@ impl World {
     /// vanilla's own isAscending() false keeps, the no-opinion byte
     /// 0 the flat arm the pre-variants look keeps).
     fn rail_band_top(&self, x: i32, y: i32, z: i32) -> f64 {
-        if matches!(self.variant(x, y, z), 2..=5) {
+        if matches!(self.variant(x, y, z) & RAIL_SHAPE_MASK, 2..=5) {
             RAIL_ASC_TOP
         } else {
             RAIL_FLAT_TOP
@@ -19172,6 +19215,102 @@ mod tests {
             w3.variant(9, 10, 8),
             2,
             "the powered high seat the down-west rail the same byte wears"
+        );
+    }
+
+    /// THE POWERED RAIL'S OWN SWAP (the dev-96 round — javap
+    /// PoweredRailBlock.updateState the 26.2 jar the neighborChanged
+    /// walk serves): the ON lever the six-neighbor scan the verdict
+    /// arms, the vanilla's own second call the cell above's own
+    /// neighborhood reads, the signal's loss the same walk the OFF
+    /// verdict re-answers, the shape nibble the bit's own fold never
+    /// touches, the shape verdict's own write the standing bit the
+    /// preserve fold carries, the powered ascent byte the band-top's
+    /// own mask the 8-px box the dev-94 law keeps.
+    #[test]
+    fn the_powered_rail_wears_the_redstone_swap() {
+        let mut w = slab_world();
+        w.set(8, 9, 8, POWERED_RAIL);
+        w.set_variant(8, 9, 8, 1); // the E-W look-stamp the placement wears
+        // THE SIDE LEVER'S ON KIND: the six-neighbor scan the verdict
+        // arms — the POWERED bit the byte's own high seat takes, the
+        // E-W nibble the same byte keeps
+        w.set(8, 9, 7, LEVER_ON);
+        assert!(
+            w.rail_neighbor_updates((8, 9, 7)),
+            "the swap the sweep's own moved verdict banks"
+        );
+        assert_eq!(
+            w.variant(8, 9, 8),
+            RAIL_POWERED_BIT | 1,
+            "the ON lever the POWERED bit arms — the nibble keeps"
+        );
+        // THE SIGNAL'S LOSS: the OFF lever the same walk clears (the
+        // vanilla's own false verdict the byte's bit drops)
+        w.set(8, 9, 7, LEVER);
+        assert!(
+            w.rail_neighbor_updates((8, 9, 7)),
+            "the clear the sweep's own moved verdict banks"
+        );
+        assert_eq!(
+            w.variant(8, 9, 8),
+            1,
+            "the OFF lever the bit clears — the shape nibble keeps"
+        );
+        // THE ABOVE ARM: the vanilla's own second call the cell
+        // above's own neighborhood reads — the lever beside the above
+        // cell the same verdict arms
+        w.set(7, 10, 8, LEVER_ON);
+        assert!(
+            w.rail_neighbor_updates((7, 10, 8)),
+            "the above arm the sweep's own moved verdict banks"
+        );
+        assert_eq!(
+            w.variant(8, 9, 8),
+            RAIL_POWERED_BIT | 1,
+            "the above lever the POWERED bit arms"
+        );
+        w.set(7, 10, 8, AIR);
+        w.rail_neighbor_updates((7, 10, 8));
+        assert_eq!(
+            w.variant(8, 9, 8),
+            1,
+            "the above lever's loss the bit clears"
+        );
+        // THE SHAPE WRITE'S OWN PRESERVE: the bit armed, the west
+        // neighbor the single connection the E-W axis re-forms — the
+        // shape verdict's own write the standing bit the same byte
+        // carries
+        w.set(7, 10, 8, LEVER_ON);
+        w.rail_neighbor_updates((7, 10, 8));
+        assert_eq!(
+            w.variant(8, 9, 8),
+            RAIL_POWERED_BIT | 1,
+            "the bit armed again"
+        );
+        w.set(7, 9, 8, RAIL);
+        w.set_variant(7, 9, 8, 1);
+        w.rail_neighbor_updates((7, 9, 8));
+        assert_eq!(
+            w.variant(8, 9, 8),
+            RAIL_POWERED_BIT | 1,
+            "the shape write the standing bit preserves"
+        );
+        // THE BAND TOP'S OWN MASK: the powered ascent byte the 8-px
+        // box the masked read keeps (the shape nibble the bit's own
+        // fold never touches)
+        w.set(9, 9, 8, STONE);
+        w.set(9, 10, 8, RAIL);
+        w.rail_neighbor_updates((9, 10, 8));
+        assert_eq!(
+            w.variant(8, 9, 8),
+            RAIL_POWERED_BIT | 2,
+            "the powered rail the ascent byte + the bit the one byte wears"
+        );
+        assert_eq!(
+            w.rail_band_top(8, 9, 8),
+            RAIL_ASC_TOP,
+            "the powered ascent cell the 8-px box the masked read keeps"
         );
     }
 
