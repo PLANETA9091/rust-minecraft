@@ -47344,7 +47344,8 @@ impl App {
         // BLOCK pick speaks it, mining or not) and the breaking overlay
         // (the destroy_stage crack on the armed dig's cell, the progress
         // law's own stage index — the vanilla's destroyBlockProgress
-        // state the level renderer draws)
+        // state the level renderer draws; the rail's own dig the 2-px
+        // band crack wears — the dev-88 law the SHAPE_FLAT speaks)
         if let Some(hit) = &self.frame_pick {
             let band = self.hit_outline_is_band(hit.pos);
             fb.draw_hit_outline(&ctx, hit.pos, band);
@@ -47352,7 +47353,14 @@ impl App {
         let stage = self.dig.destroy_stage();
         if (0..10).contains(&stage) {
             let tile = mc_registry::generated::atlas::DESTROY_TILES[stage as usize];
-            let quads = crate::mesher::destroy_overlay_quads(self.dig.pos, tile);
+            // THE RAIL'S OWN CRACK (the dev-88 law the SHAPE_FLAT
+            // speaks): the band cell the 2-px overlay wears, the
+            // every-other-kind the full cube keeps
+            let quads = if self.hit_outline_is_band(self.dig.pos) {
+                crate::mesher::destroy_overlay_quads_band(self.dig.pos, tile)
+            } else {
+                crate::mesher::destroy_overlay_quads(self.dig.pos, tile)
+            };
             fb.draw_destroy_overlay(&ctx, &quads);
         }
         if self.arm.is_none() {
