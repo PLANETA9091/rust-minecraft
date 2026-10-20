@@ -14323,6 +14323,20 @@ impl App {
                             .unwrap_or(crate::world::BUTTON);
                         if let Some(world) = self.offline_world.as_mut() {
                             world.set(*x, *y, *z, off_kind);
+                            // THE RELEASE'S OWN RAIL VERDICT (the dev-100
+                            // round — javap ButtonBlock.tick the
+                            // unpress's own setBlock flag-3 the
+                            // updateNeighbours walk the same two seeds
+                            // the press speaks): the pulse's death the
+                            // bit the swap clears, the support seed the
+                            // shared decode the same pass serves [the
+                            // remesh the attach_wire_voice tail's own
+                            // re-speak banks]
+                            let (dx, dy, dz) = crate::world::lever_support_offset(
+                                world.variant(*x, *y, *z),
+                            );
+                            let _ = world.rail_neighbor_updates((*x, *y, *z));
+                            let _ = world.rail_neighbor_updates((*x + dx, *y + dy, *z + dz));
                         }
                         let (cx, cy, cz) = (*x as f64 + 0.5, *y as f64 + 0.5, *z as f64 + 0.5);
                         let ear = self
@@ -39274,6 +39288,26 @@ impl App {
                         // the setValue(POWERED, true) setBlock flag-3
                         // walk the offline kind swap serves)
                         world.set(bx, by, bz, on_kind);
+                        // THE BUTTON'S OWN RAIL VERDICT (the dev-100
+                        // round — javap press pc 21-27 the
+                        // updateNeighbours walk the two seeds the
+                        // flag-3 broadcast speaks [the button pos +
+                        // the support pos the variant decode names],
+                        // the PoweredRailBlock.neighborChanged ->
+                        // updateState chain the rails among the seeds'
+                        // neighborhoods the re-read serves): the
+                        // [`World::rail_neighbor_updates`] walk the
+                        // two seeds the verdict re-fires — the
+                        // dev-96/97 swap laws the pulse the bit arms,
+                        // the face seat the shared decode the support
+                        // cell names [the button the same
+                        // FaceAttachedHorizontalDirectionalBlock base
+                        // the lever's own offset law wears]
+                        let (dx, dy, dz) = crate::world::lever_support_offset(
+                            world.variant(bx, by, bz),
+                        );
+                        let _ = world.rail_neighbor_updates((bx, by, bz));
+                        let _ = world.rail_neighbor_updates((bx + dx, by + dy, bz + dz));
                     }
                     // THE WIRE'S OWN BROADCAST (javap press pc 21-27 —
                     // the updateNeighbours walk the attach helper's own
@@ -111149,6 +111183,159 @@ cow_sound_variant: None,
             "the deactivate post the sculk lane hears"
         );
     }
+
+    #[test]
+    fn the_button_pulse_the_rail_verdict_the_swap_wears() {
+        // THE BUTTON'S OWN RAIL VERDICT (the dev-100 round — javap
+        // press pc 21-27 the updateNeighbours walk the two seeds the
+        // flag-3 broadcast speaks, ButtonBlock.tick the unpress the
+        // same walk re-fires): the pressed pulse the powered rail's
+        // POWERED bit the swap arms, the release beat the bit clears,
+        // the shape byte the verdicts the nibble alone answer.
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            // THE RAIL'S OWN SEAT (the button's south horizontal
+            // neighbor the walk reads — the ray's east lane the rail
+            // never blocks)
+            w.set(c + 1, top, c + 1, crate::world::POWERED_RAIL);
+            w.set_variant(c + 1, top, c + 1, 0);
+            // THE WALL'S OWN STONE (the button's west face the ray
+            // reads)
+            w.set(c + 2, top, c, crate::world::STONE);
+        }
+        app.offline_held_updated(Some("item/stone_button"));
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 - 1.5, top as f32 + 0.5, c as f32 + 0.5),
+            yaw: std::f32::consts::FRAC_PI_2,
+            pitch: 0.0,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the wall hit the button's wall lane lands"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c + 1, top, c),
+            crate::world::BUTTON,
+            "the OFF kind the wall lane lands"
+        );
+        // THE PRESS'S OWN BEAT (the same aim the button cell the ray
+        // answers): the ON kind the pulse wears, the rail's bit the
+        // swap arms
+        assert!(app.on_right_press(0, 0), "the button's press consumes");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 1, top, c),
+                crate::world::BUTTON_ON,
+                "the ON kind the press wears"
+            );
+            assert_eq!(
+                w.variant(c + 1, top, c + 1),
+                crate::world::RAIL_POWERED_BIT,
+                "the pressed pulse the powered rail's bit arms"
+            );
+        }
+        // THE PULSE'S OWN END (the 20-tick window the release beat
+        // serves): the OFF kind the release wears, the rail's bit the
+        // swap clears
+        for _ in 0..22 {
+            app.update();
+        }
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 1, top, c),
+                crate::world::BUTTON,
+                "the OFF kind the release wears"
+            );
+            assert_eq!(
+                w.variant(c + 1, top, c + 1),
+                0,
+                "the pulse's death the rail's bit clears"
+            );
+        }
+    }
+
+    #[test]
+    fn the_button_press_the_activator_arms_the_detector_refuses() {
+        // THE TWINS THROUGH THE BUTTON SEAM (the dev-100 round — the
+        // same two-seed broadcast the dev-97 law the press re-fires):
+        // the pressed pulse the activator's bit the same walk arms,
+        // the detector's own cart law the button's signal never arms,
+        // the release beat the armed bit clears.
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            // THE TWINS THE BUTTON'S Z-PAIR FLANKS (the ray's east
+            // lane neither blocks)
+            w.set(c + 1, top, c + 1, crate::world::ACTIVATOR_RAIL);
+            w.set_variant(c + 1, top, c + 1, 0);
+            w.set(c + 1, top, c - 1, crate::world::DETECTOR_RAIL);
+            w.set_variant(c + 1, top, c - 1, 0);
+            w.set(c + 2, top, c, crate::world::STONE);
+        }
+        app.offline_held_updated(Some("item/stone_button"));
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 - 1.5, top as f32 + 0.5, c as f32 + 0.5),
+            yaw: std::f32::consts::FRAC_PI_2,
+            pitch: 0.0,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the wall hit the button's wall lane lands"
+        );
+        assert!(app.on_right_press(0, 0), "the button's press consumes");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 1, top, c),
+                crate::world::BUTTON_ON,
+                "the ON kind the press wears"
+            );
+            assert_eq!(
+                w.variant(c + 1, top, c + 1),
+                crate::world::RAIL_POWERED_BIT,
+                "the pressed pulse the activator's bit arms"
+            );
+            assert_eq!(
+                w.variant(c + 1, top, c - 1),
+                0,
+                "the detector's own cart law the button's signal never arms"
+            );
+        }
+        for _ in 0..22 {
+            app.update();
+        }
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().variant(c + 1, top, c + 1),
+            0,
+            "the pulse's death the activator's bit clears"
+        );
+    }
+
     #[test]
     fn the_oak_button_kind_laws_the_family_and_the_windows_wear() {
         // THE WOODEN BUTTON'S OWN LAWS (the dev-47 round — javap
