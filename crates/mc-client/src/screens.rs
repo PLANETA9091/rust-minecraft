@@ -38232,13 +38232,29 @@ impl App {
             // wears], the wall-skull-at-your-own-cell placement the
             // body's legs the 4..12 band intersects the vanilla's own
             // refusal speaks)
+            // THE PITCH GATE'S OWN BAND SWAP (the dev-85 round — the
+            // vanilla canPlace the CHOSEN state's own shape the
+            // isUnobstructed read serves [the getPlacementState walk
+            // the scan's survivor the obstruction read banks]: the
+            // up-look the WALL state's y 4..12 band the UP-first arm
+            // keeps, the down/level look the FLOOR state's own
+            // [4,0,4]->[12,8,12] box the DOWN-first arm wears — the
+            // ROTATION segment the axis-aligned box never reads, the
+            // Head shape the exact kind-only law speaks; the client's
+            // own convention the up-look the POSITIVE pitch wears)
+            let wall_arm = self.world_camera().pitch > 0.0;
+            let head_shape = if wall_arm {
+                crate::world::CollisionShape::YSpan(4, 12)
+            } else {
+                crate::world::CollisionShape::Head
+            };
             let (x_lo, y_lo, z_lo, x_hi, y_hi, z_hi) = crate::world::shape_slabs(
-                crate::world::CollisionShape::YSpan(4, 12),
+                head_shape,
                 cell.0,
                 cell.1,
                 cell.2,
             )
-            .expect("the wall head band shape the slabs never refuse");
+            .expect("the head band shape the slabs never refuse");
             (x_lo, y_lo, z_lo, x_hi, y_hi, z_hi)
         } else {
             (
@@ -39763,8 +39779,27 @@ impl App {
         // all-fail walk the FLOOR fallback the floating skull the
         // SEGMENT stamp keeps — the canSurvive default the true
         // the no-override absence speaks)
+        // THE SIDE HIT'S OWN PITCH GATE (the dev-85 round — the
+        // orderedByNearest b8 fold the probe scripts/skull_probe_84.py
+        // banks: the sinP<0 vanilla arm the UP-first order speaks [the
+        // vanilla pitch<0 the UP look wears], the level/down look the
+        // DOWN-first arm the scan's first survive answers — the floor
+        // state the canSurvive default the floating skull keeps, the
+        // UP arm the scan never reaches [the vertical pair the
+        // adjacent seats the ordered array banks]); the client's own
+        // convention the UP look the POSITIVE pitch wears [the
+        // ceiling round's atan(0.75) slope the up-ray banks], the
+        // gate the cam_pitch>0.0 the WALL arm alone re-arms — the
+        // side click the down/level look the FLOOR kind the segment
+        // stamp wears [the dev-83 face-driven side arm the partial
+        // mismatch the law retires], the up-look the wall-first scan
+        // the twin answers. The ceiling click the gate the geometry
+        // itself wears [the bottom face the up-ray alone lands — the
+        // horizontal/down ray the underside never crosses], the same
+        // cam_pitch>0.0 verdict the honest form keeps)
         let wall_head_facing: Option<u8> = if crate::world::is_floor_head(block)
             && (hit.face == 0 || (2..=5).contains(&hit.face))
+            && cam_pitch > 0.0
         {
             self.active_world().and_then(|w| {
                 crate::world::wall_torch_facing_candidates(cam_yaw)
@@ -114251,7 +114286,14 @@ cow_sound_variant: None,
             // speaks — the pi/2 yaw the east ray aims, the stone's
             // west face the hit answers)
             yaw: std::f32::consts::FRAC_PI_2,
-            pitch: 0.0,
+            // THE UP LOOK (the dev-85 round — the pitch gate the side
+            // hit the orderedByNearest b8 fold wears: the vanilla
+            // sinP<0 the UP-first arm the wall scan banks, the
+            // client's own convention the UP look the POSITIVE pitch
+            // wears — the +0.2 slope the ray the west face the y
+            // top+1.804 the face span keeps, the level/down look the
+            // FLOOR arm the floating skull the pitch-gate test speaks)
+            pitch: 0.2,
         });
         assert!(
             app.on_right_press(0, 0),
@@ -114427,6 +114469,106 @@ cow_sound_variant: None,
             assert!(
                 w.variant(c + 2, top + 1, c) <= 15,
                 "the rotation segment the floating skull wears"
+            );
+        }
+    }
+
+    #[test]
+    fn the_side_hit_wears_the_pitch_gate_law() {
+        // THE SIDE HIT'S OWN PITCH GATE (the dev-85 round — the
+        // orderedByNearest b8 fold the probe scripts/skull_probe_84.py
+        // banks: the vanilla sinP<0 the UP-first order the wall scan
+        // banks, the level/down look the DOWN-first arm the floor
+        // state the scan's first survive answers — the canSurvive
+        // default the true the floating skull the SEGMENT stamp keeps,
+        // the UP arm the scan never reaches; the client's own
+        // convention the UP look the POSITIVE pitch wears, the
+        // cam_pitch>0.0 the wall arm alone re-arms).
+        // THE LEVEL LOOK (the pitch 0.0 the sinP=0 the DOWN-first
+        // boundary the fold wears) + THE DOWN LOOK (the pitch -0.2
+        // the vanilla down-look the same arm banks): the side click
+        // the FLOOR kind the offset cell wears — the wall twin the
+        // kind never seats, the segment the yaw stamp keeps
+        for (pitch, label) in [(0.0f32, "the level look"), (-0.2f32, "the down look")] {
+            let mut app = App::new(3);
+            app.enter_world();
+            app.offline_held_updated(Some("item/skeleton_skull"));
+            let size = app.offline_world.as_ref().unwrap().size_blocks();
+            let c = size / 2;
+            let top = app.spawn_y;
+            {
+                let w = app.offline_world.as_mut().unwrap();
+                for dx in -1..=3 {
+                    for dz in -1..=1 {
+                        for dy in -3..=3 {
+                            w.set(c + dx, top + dy, c + dz, crate::world::AIR);
+                        }
+                    }
+                }
+                w.set(c + 2, top + 1, c, crate::world::STONE);
+            }
+            app.offline_camera_updated(crate::camera::Camera {
+                pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 1.5, c as f32 + 0.5),
+                yaw: std::f32::consts::FRAC_PI_2,
+                pitch,
+            });
+            assert!(
+                app.on_right_press(0, 0),
+                "{label} the floating floor placement consumes"
+            );
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 1, top + 1, c),
+                crate::world::SKELETON_SKULL,
+                "{label} the DOWN-first arm the FLOOR kind the offset cell wears"
+            );
+            assert!(
+                w.variant(c + 1, top + 1, c) <= 15,
+                "{label} the rotation segment the floating skull wears"
+            );
+        }
+        // THE UP LOOK (the pitch +0.2 the tan slope the west face the
+        // y top+1.804 the face span keeps — the eye the body's own
+        // column the placement cell never enters): the side click the
+        // WALL twin the UP-first arm wears, the facing the west seat
+        // the support's own opposite stamps
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/skeleton_skull"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -1..=3 {
+                for dz in -1..=1 {
+                    for dy in -3..=3 {
+                        w.set(c + dx, top + dy, c + dz, crate::world::AIR);
+                    }
+                }
+            }
+            w.set(c + 2, top + 1, c, crate::world::STONE);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 1.5, c as f32 + 0.5),
+            yaw: std::f32::consts::FRAC_PI_2,
+            pitch: 0.2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the up look the wall twin placement consumes"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 1, top + 1, c),
+                crate::world::SKELETON_WALL_SKULL,
+                "the up look the UP-first arm the WALL twin wears"
+            );
+            assert_eq!(
+                w.variant(c + 1, top + 1, c),
+                crate::world::WALL_TORCH_FACING_WEST,
+                "the facing the support's own opposite the scan stamps"
             );
         }
     }
