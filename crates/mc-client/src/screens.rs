@@ -37793,6 +37793,21 @@ impl App {
         // THE POP'S OWN SCHEDULE (the popped cell's own flag-3
         // broadcast the falling checks the same walk re-arms — the
         // sand above the popped cell the falling walk's own lane
+        // THE RAIL'S OWN NEIGHBOR RE-ALIGNMENT (the dev-89 round—
+        // javap RailState.place the flag-3 broadcast the rails' own
+        // updateShape answer wears): the dug cell's horizontal rail
+        // neighbors the connection law re-stamps (the single
+        // connection the axis along it wears, the zero connections
+        // the survivor's shape holds), the OFFLINE lane the set's own
+        // branch wears (the networked world the server's own
+        // broadcast answers); the remesh the beat below carries
+        if !self.world_is_network && self.offline_world.is_some() {
+            let _ = self
+                .offline_world
+                .as_mut()
+                .expect("the offline world the gate carries")
+                .rail_neighbor_updates(pos);
+        }
         // serves) — the walk the helper below banks, the dig lane AND
         // the fire lane's burn-out consult the same body speaks
         self.remesh_offline();
@@ -40284,6 +40299,16 @@ impl App {
             // SAME beat douses); the surviving branch the verdict the
             // added support never gates (the chain the false fold keeps)
             let _ = world.fire_shape_updates(cell);
+            // THE RAIL'S OWN NEIGHBOR RE-ALIGNMENT (the dev-89 round—
+            // javap RailState.place the onPlace walk the flag-3
+            // broadcast serves: the placed cell the connection law
+            // re-stamps [the look-stamp the single connection
+            // overrides, the zero connections the look-stamp keeps],
+            // the horizontal rail neighbors the same law re-evaluates
+            // — the two-way handshake the vanilla's own neighbor
+            // updates speak; the remesh the placement arm's own tail
+            // carries)
+            let _ = world.rail_neighbor_updates(cell);
             // THE PORTAL'S OWN DOUSE BEAT (javap NetherPortalBlock.
             // updateShape pc 0-93 over the 26.2 jar — the placed or
             // replaced cell's own neighborhood the frame-scan verdict
@@ -114657,6 +114682,75 @@ cow_sound_variant: None,
             !app.hit_outline_is_band((c + 5, top, c)),
             "the air the full cube keeps"
         );
+    }
+
+    /// THE RAIL PLACEMENT'S OWN CONNECTION HANDSHAKE (the dev-89 round—
+    /// the on_right_press walk the sweep call serves): the second rail
+    /// the single connection the axis along it wears, the first rail
+    /// the same law flips (the E-W look-stamped pair the N-S cross the
+    /// handshake speaks), the vanilla's own neighbor updates the beat
+    /// answers.
+    #[test]
+    fn the_rail_placement_wears_the_connection_handshake() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/rail"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -1..=1 {
+                for dz in -2..=2 {
+                    for dy in -3..=3 {
+                        w.set(c + dx, top + dy, c + dz, crate::world::AIR);
+                    }
+                }
+            }
+            w.set(c, top - 1, c, crate::world::STONE);
+            w.set(c, top - 1, c - 1, crate::world::STONE);
+        }
+        // THE FIRST RAIL: the east-look floor click the X-axis quarter
+        // stamps (the E-W byte 1 the dev-86 law wears)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 3.0, c as f32 + 0.5),
+            yaw: std::f32::consts::FRAC_PI_2,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the first rail the placement consumes");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(w.get(c, top, c), crate::world::RAIL, "the first rail placed");
+            assert_eq!(
+                w.variant(c, top, c),
+                1,
+                "the lone rail the look-stamp keeps"
+            );
+        }
+        // THE SECOND RAIL: the north cell the same east look stamps (the
+        // E-W byte the placement wears), the sweep the single-connection
+        // law overrides (the south connection the N-S axis answers), the
+        // first rail the handshake flips to the same cross
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 3.0, c as f32 - 0.5),
+            yaw: std::f32::consts::FRAC_PI_2,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the second rail the placement consumes");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(w.get(c, top, c - 1), crate::world::RAIL, "the second rail placed");
+            assert_eq!(
+                w.variant(c, top, c - 1),
+                0,
+                "the placed rail the south connection aligns"
+            );
+            assert_eq!(
+                w.variant(c, top, c),
+                0,
+                "the first rail the handshake flips to N-S"
+            );
+        }
     }
 
     #[test]

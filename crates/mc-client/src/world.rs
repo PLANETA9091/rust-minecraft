@@ -7135,6 +7135,26 @@ pub fn can_support_rail(below: u16) -> bool {
     collision_shape(below) == CollisionShape::Full
 }
 
+/// THE RAIL'S OWN CONNECTION AXIS (the dev-89 round — javap RailState
+/// .place the 26.2 jar): the shape the same-level connections alone
+/// answer — the single connection the axis along it wears (the N/S
+/// pair the NORTH_SOUTH byte keeps, the E/W pair the EAST_WEST byte),
+/// the opposite pair the same axis carries, the perpendicular pair the
+/// curve rounds keep (None — the look-stamp stays), the zero
+/// connections the current shape keeps (None — the vanilla's own
+/// no-recompute verdict). The ascending/corner shapes the future
+/// rounds bank.
+#[inline]
+pub fn rail_connection_axis(north: bool, south: bool, west: bool, east: bool) -> Option<u8> {
+    match (north, south, west, east) {
+        (true, false, false, false) | (false, true, false, false) => Some(0),
+        (true, true, false, false) => Some(0),
+        (false, false, true, false) | (false, false, false, true) => Some(1),
+        (false, false, true, true) => Some(1),
+        _ => None,
+    }
+}
+
 /// THE PANE FAMILY'S OWN RANGE (the dev-58 round — the 17 panes the
 /// contiguous run 560..576 banks, the iron bars the tail seat 577
 /// keeps): the WHOLE IronBarsBlock class the instance arm answers —
@@ -13593,6 +13613,43 @@ impl World {
         popped
     }
 
+    /// THE RAIL'S OWN NEIGHBOR UPDATES (the dev-89 round — javap
+    /// RailState.place the 26.2 jar: the flag-3 broadcast the rails'
+    /// own updateShape answer wears): the changed cell + the four
+    /// horizontal neighbors the re-evaluation reads — every rail cell
+    /// among them the connection law re-stamps (the single/opposite
+    /// connections the axis along them wear), the zero/curve/junction
+    /// shapes the current byte keeps. Returns whether any variant
+    /// moved (the caller's own remesh the flag folds).
+    pub fn rail_neighbor_updates(&mut self, changed: (i32, i32, i32)) -> bool {
+        let (cx, cy, cz) = changed;
+        let mut moved = false;
+        for (x, y, z) in [
+            (cx, cy, cz),
+            (cx, cy, cz - 1),
+            (cx, cy, cz + 1),
+            (cx - 1, cy, cz),
+            (cx + 1, cy, cz),
+        ] {
+            if !is_rail(self.get(x, y, z)) {
+                continue;
+            }
+            let axis = rail_connection_axis(
+                is_rail(self.get(x, y, z - 1)),
+                is_rail(self.get(x, y, z + 1)),
+                is_rail(self.get(x - 1, y, z)),
+                is_rail(self.get(x + 1, y, z)),
+            );
+            if let Some(v) = axis {
+                if self.variant(x, y, z) != v {
+                    self.set_variant(x, y, z, v);
+                    moved = true;
+                }
+            }
+        }
+        moved
+    }
+
     /// THE FIRE'S OWN SHAPE UPDATE — javap `FireBlock.updateShape(state,
     /// level, sched, pos, dir, neighborPos, neighborState, random)` over
     /// the real 26.2 jar: the pc 0-8 `canSurvive` verdict the failed
@@ -18646,6 +18703,133 @@ mod tests {
         );
     }
 
+    /// THE RAIL'S OWN CONNECTION AXIS TABLE (the dev-89 round — javap
+    /// RailState.place the 26.2 jar): the single connection the axis
+    /// along it wears, the opposite pair the same axis carries, the
+    /// perpendicular pair the curve rounds keep, the zero connections
+    /// the current shape keeps.
+    #[test]
+    fn the_rail_connection_axis_wears_the_single_and_opposite_law() {
+        // the single connections
+        assert_eq!(
+            rail_connection_axis(true, false, false, false),
+            Some(0),
+            "the north neighbor the N-S axis wears"
+        );
+        assert_eq!(
+            rail_connection_axis(false, true, false, false),
+            Some(0),
+            "the south neighbor the same axis wears"
+        );
+        assert_eq!(
+            rail_connection_axis(false, false, true, false),
+            Some(1),
+            "the west neighbor the E-W axis wears"
+        );
+        assert_eq!(
+            rail_connection_axis(false, false, false, true),
+            Some(1),
+            "the east neighbor the same axis wears"
+        );
+        // the opposite pairs
+        assert_eq!(
+            rail_connection_axis(true, true, false, false),
+            Some(0),
+            "the N+S pair the N-S axis wears"
+        );
+        assert_eq!(
+            rail_connection_axis(false, false, true, true),
+            Some(1),
+            "the W+E pair the E-W axis wears"
+        );
+        // the perpendicular pairs the curve rounds keep
+        assert_eq!(
+            rail_connection_axis(true, false, true, false),
+            None,
+            "the N+W pair the curve keeps"
+        );
+        assert_eq!(
+            rail_connection_axis(true, false, false, true),
+            None,
+            "the N+E pair the curve keeps"
+        );
+        assert_eq!(
+            rail_connection_axis(false, true, true, false),
+            None,
+            "the S+W pair the curve keeps"
+        );
+        assert_eq!(
+            rail_connection_axis(false, true, false, true),
+            None,
+            "the S+E pair the curve keeps"
+        );
+        // the zero and the junction the current shape keeps
+        assert_eq!(
+            rail_connection_axis(false, false, false, false),
+            None,
+            "the zero connections the shape keeps"
+        );
+        assert_eq!(
+            rail_connection_axis(true, true, true, false),
+            None,
+            "the junction the curve rounds keep"
+        );
+    }
+
+    /// THE RAIL'S OWN TWO-WAY HANDSHAKE (the dev-89 round — the vanilla
+    /// place-notification walk the onPlace flag-3 broadcast speaks): the
+    /// placed rail the single connection the axis along it re-stamps,
+    /// the existing neighbor the same law flips (the E-W pair the N-S
+    /// cross the handshake wears), the zero connections the current
+    /// shape keeps (the break survivor the alignment holds), the
+    /// non-rail change the rails never read.
+    #[test]
+    fn the_rail_neighbor_updates_wear_the_two_way_handshake() {
+        let mut w = slab_world();
+        // the E-W rail the look-stamp wears (the dev-86 placement's
+        // own byte), the north cell the fresh look-stamped rail rides
+        w.set(8, 9, 8, RAIL);
+        w.set_variant(8, 9, 8, 1);
+        w.set(8, 9, 7, RAIL);
+        w.set_variant(8, 9, 7, 1);
+        // THE SWEEP: both rails the single-connection law flips to N-S
+        let moved = w.rail_neighbor_updates((8, 9, 7));
+        assert!(moved, "the handshake the variants move");
+        assert_eq!(
+            w.variant(8, 9, 7),
+            0,
+            "the placed rail the south connection aligns"
+        );
+        assert_eq!(
+            w.variant(8, 9, 8),
+            0,
+            "the neighbor rail the north connection aligns"
+        );
+        // THE ZERO CONNECTIONS: the lone rail the look-stamp keeps
+        w.set(3, 9, 3, RAIL);
+        w.set_variant(3, 9, 3, 1);
+        assert!(
+            !w.rail_neighbor_updates((3, 9, 3)),
+            "the lone rail nothing moves"
+        );
+        assert_eq!(w.variant(3, 9, 3), 1, "the look-stamp the zero law keeps");
+        // THE BREAK SIDE: the survivor the zero connections the shape
+        // holds (the N-S byte the break never rewinds)
+        w.set(8, 9, 8, AIR);
+        assert!(
+            !w.rail_neighbor_updates((8, 9, 8)),
+            "the break the survivor never moves"
+        );
+        assert_eq!(
+            w.variant(8, 9, 7),
+            0,
+            "the survivor the current shape keeps"
+        );
+        // THE NON-RAIL CHANGE: the stone drop-in the rails never read
+        w.set(12, 9, 7, STONE);
+        assert!(!w.rail_neighbor_updates((12, 9, 7)));
+    }
+
     /// THE RAIL CLIP'S OWN BAND LAW (the dev-87 round — the vanilla
     /// shape-clip the SHAPE_FLAT `Block.column(16.0, 0.0, 2.0)` the
     /// rail's getShape speaks): the straight-down ray the band's top
@@ -18658,7 +18842,7 @@ mod tests {
         let mut w = slab_world();
         w.set(8, 9, 8, RAIL);
         // THE BAND'S OWN TOP: the down ray stops at y + 2/16 (the old
-        // full-cube fold named the cell's own ceiling y + 1— the
+        // full-cube fold named the cell's own ceiling y + 1 — the
         // vanilla shape the honest plane keeps)
         let hit = w
             .clip((8.5, 12.0, 8.5), (0.0, -1.0, 0.0), BLOCK_INTERACTION_RANGE)
@@ -18712,7 +18896,7 @@ mod tests {
         assert_eq!(inside.pos, (8, 9, 8));
         assert!(inside.inside, "the band contains the eye");
         // THE UPPER AIR'S OWN DOWN-LOOK: the band's top plane (the
-        // inside flag false— the band the eye never wore)
+        // inside flag false — the band the eye never wore)
         let down = w
             .clip((8.5, 9.5, 8.5), (0.0, -1.0, 0.0), BLOCK_INTERACTION_RANGE)
             .expect("the band below the eye");
@@ -18720,7 +18904,7 @@ mod tests {
         assert_eq!(down.face, 1, "UP — the band's top plane");
         assert_eq!(down.location.1, 9.0 + RAIL_FLAT_TOP);
         assert!(!down.inside);
-        // THE AWAY-LOOK: the eye above the band looking up— the band
+        // THE AWAY-LOOK: the eye above the band looking up — the band
         // behind the ray the honest miss keeps
         assert!(
             w.clip((8.5, 9.5, 8.5), (0.0, 1.0, 0.0), 4.5).is_none(),
