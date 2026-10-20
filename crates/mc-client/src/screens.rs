@@ -114747,6 +114747,177 @@ cow_sound_variant: None,
         );
     }
 
+    /// THE PLACEMENT'S OWN INSTANT CORNER (the dev-95 round — javap
+    /// RailState.place the 26.2 jar the initial connection derivation
+    /// the on_right_press walk the dev-89 handshake serves): the rail
+    /// the perpendicular pair's own cell the placement lands in the
+    /// CORNER shape the same press wears — the curve arm the dev-92
+    /// verdict banks (the north+east pair the NORTH_EAST byte 9
+    /// answers, the curve-capable gate the plain RAIL alone takes),
+    /// the perpendicular arms the axis law they already held keep
+    /// (the E-W byte 1 the east arm's own west connection answers,
+    /// the N-S byte 0 the north arm's own south connection speaks),
+    /// the look-stamp the byte the handshake's verdict overrides (the
+    /// raw look the E-W quarter the corner arm never keeps).
+    #[test]
+    fn the_rail_placement_wears_the_instant_corner() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/rail"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -1..=2 {
+                for dz in -2..=2 {
+                    for dy in -3..=3 {
+                        w.set(c + dx, top + dy, c + dz, crate::world::AIR);
+                    }
+                }
+            }
+            // the three supports: the corner cell's own floor, the
+            // east arm's, the north arm's
+            w.set(c, top - 1, c, crate::world::STONE);
+            w.set(c + 1, top - 1, c, crate::world::STONE);
+            w.set(c, top - 1, c - 1, crate::world::STONE);
+        }
+        // THE EAST ARM: the east-look floor click the E-W quarter
+        // stamps (the lone rail the look-stamp keeps — the dev-89 law)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 1.5, top as f32 + 3.0, c as f32 + 0.5),
+            yaw: std::f32::consts::FRAC_PI_2,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the east arm the placement consumes"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(w.get(c + 1, top, c), crate::world::RAIL, "the east arm placed");
+            assert_eq!(
+                w.variant(c + 1, top, c),
+                1,
+                "the lone arm the look-stamp keeps"
+            );
+        }
+        // THE NORTH ARM: the same down click the north cell serves (the
+        // N-S default the Z-axis look stamps) — the two arms the
+        // perpendicular pair the corner cell's future speaks
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 3.0, c as f32 - 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the north arm the placement consumes"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(w.get(c, top, c - 1), crate::world::RAIL, "the north arm placed");
+            assert_eq!(
+                w.variant(c, top, c - 1),
+                0,
+                "the lone arm the look-stamp keeps"
+            );
+        }
+        // THE INSTANT CORNER: the perpendicular pair's own cell the
+        // same press lands in — the look-stamp the raw E-W look wears,
+        // the curve arm the verdict overrides (the north+east pair the
+        // NORTH_EAST byte 9 the vanilla's own initial derivation
+        // serves), the arms the axis bytes they held keep
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 3.0, c as f32 + 0.5),
+            yaw: std::f32::consts::FRAC_PI_2,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the corner cell the placement consumes"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(w.get(c, top, c), crate::world::RAIL, "the corner placed");
+            assert_eq!(
+                w.variant(c, top, c),
+                9,
+                "the perpendicular pair the instant corner wears"
+            );
+            assert_eq!(
+                w.variant(c + 1, top, c),
+                1,
+                "the east arm the west connection the E-W byte keeps"
+            );
+            assert_eq!(
+                w.variant(c, top, c - 1),
+                0,
+                "the north arm the south connection the N-S byte keeps"
+            );
+        }
+    }
+
+    /// THE PLACEMENT'S OWN ASCENT SEAT (the dev-95 round — javap
+    /// RailState.place the slope arms the on_right_press walk the
+    /// dev-93 handshake serves): the rail the slope's low end the
+    /// placement lands in the ASCENDING byte the same press wears —
+    /// the up-rail the step holds the low arm's canSurvive consult
+    /// reads (the Full floor the ride keeps), the high seat the same
+    /// byte the one slope the two cells share keeps.
+    #[test]
+    fn the_rail_placement_wears_the_ascent_seat() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/rail"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -1..=2 {
+                for dz in -2..=2 {
+                    for dy in -3..=3 {
+                        w.set(c + dx, top + dy, c + dz, crate::world::AIR);
+                    }
+                }
+            }
+            // the floor the low seat rides, the step the slope climbs,
+            // the up-rail the step's top holds (the look-stamp
+            // convention the direct stamp the tests' own set wears)
+            w.set(c, top - 1, c, crate::world::STONE);
+            w.set(c + 1, top, c, crate::world::STONE);
+            w.set(c + 1, top + 1, c, crate::world::RAIL);
+            w.set_variant(c + 1, top + 1, c, 2);
+        }
+        // THE DOWN CLICK: the floor's top face the ray names, the low
+        // seat the placement lands in — the ascent arm the up-rail +
+        // Full step the byte 2 speaks
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 3.0, c as f32 + 0.5),
+            yaw: std::f32::consts::FRAC_PI_2,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the low seat the placement consumes"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(w.get(c, top, c), crate::world::RAIL, "the low seat placed");
+            assert_eq!(
+                w.variant(c, top, c),
+                2,
+                "the up-rail the step holds the ascent byte speaks"
+            );
+            assert_eq!(
+                w.variant(c + 1, top + 1, c),
+                2,
+                "the high seat the same slope byte keeps"
+            );
+        }
+    }
+
     /// THE RAIL PLACEMENT'S OWN CONNECTION HANDSHAKE (the dev-89 round—
     /// the on_right_press walk the sweep call serves): the second rail
     /// the single connection the axis along it wears, the first rail
