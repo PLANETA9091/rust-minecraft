@@ -39749,11 +39749,22 @@ impl App {
         // canBeReplaced law the kind-level read answers (the air and
         // the replaceable plants the scan refuses, the sturdy-solid
         // arm the placement wears), the side hit the gate the
-        // practical click answers (the vanilla's own DOWN-first floor
-        // arm the top/bottom click the floor lane wears — the floor
-        // skull the SEGMENT stamp serves)
+        // practical click answers, THE CEILING CLICK THE SAME LANE
+        // WEARS (the dev-84 round — probe scripts/skull_probe_84.py
+        // the StandingAndWallBlockItem.getPlacementState 145B walk
+        // the 26.2 jar banks: the dirs scan the UP arm the wall
+        // state serves [the attachmentDirection's opposite the UP
+        // branch the precomputed wallState answers], the DOWN arm
+        // the floor state keeps, the horizontal dirs the loop's
+        // skip the never-used arms wear — the pitch<0 look the
+        // UP-first order the b8 fold banks, the bottom face hit
+        // the up-ray the pitch gate the geometry alone answers [the
+        // downward ray the ceiling's underside never lands], the
+        // all-fail walk the FLOOR fallback the floating skull the
+        // SEGMENT stamp keeps — the canSurvive default the true
+        // the no-override absence speaks)
         let wall_head_facing: Option<u8> = if crate::world::is_floor_head(block)
-            && (2..=5).contains(&hit.face)
+            && (hit.face == 0 || (2..=5).contains(&hit.face))
         {
             self.active_world().and_then(|w| {
                 crate::world::wall_torch_facing_candidates(cam_yaw)
@@ -39971,8 +39982,11 @@ impl App {
             // item's own pairing the placement state the scan's
             // surviving arm answers: the side hit the WALL twin the
             // StandingAndWallBlockItem's wallBlock field wears, the
-            // floor kind the item's primary the top/bottom click
-            // keeps — the [`crate::world::wall_head_twin`] pair the
+            // floor kind the item's primary the top click keeps —
+            // THE CEILING CLICK THE WALL-FIRST LAW THE SAME SCAN
+            // WEARS (the dev-84 round — the UP arm the wall state
+            // serves, the all-fail walk the floor fallback keeps):
+            // the [`crate::world::wall_head_twin`] pair the
             // five humanoid kinds answers, the DRAGON/PIGLIN floor
             // pair the None the swap never carries [the refusal the
             // floor kinds the placeable verdict banks — the arm the
@@ -114301,6 +114315,118 @@ cow_sound_variant: None,
             assert!(
                 w.variant(c + 2, top + 2, c) <= 15,
                 "the rotation segment the variant byte wears"
+            );
+        }
+    }
+
+    #[test]
+    fn the_ceiling_click_wears_the_wall_first_law() {
+        // THE CEILING CLICK'S OWN WALL-FIRST LAW (the dev-84 round —
+        // probe scripts/skull_probe_84.py the StandingAndWallBlockItem
+        // .getPlacementState 145B walk the 26.2 jar banks): the bottom
+        // face hit the UP arm the wall state serves [the dirs scan the
+        // pitch<0 look the UP-first order wears — the horizontal dirs
+        // the loop's skip the wall attempt the look-ordered support
+        // scan answers], the all-fail walk the FLOOR fallback the
+        // floating skull keeps [the canSurvive default the true the
+        // no-override absence speaks — the SkullBlock census the
+        // canSurvive row never banks, the SEGMENT stamp the rotation
+        // walk wears].
+        // THE WALL-FIRST CASE (the ceiling stone the bottom face the
+        // up-ray lands, the support stone the south neighbor the scan
+        // finds): the skull the WALL twin the ceiling cell wears, the
+        // facing the north seat the support's own opposite banks
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/skeleton_skull"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -1..=3 {
+                for dz in -1..=2 {
+                    for dy in -3..=4 {
+                        w.set(c + dx, top + dy, c + dz, crate::world::AIR);
+                    }
+                }
+            }
+            // THE CEILING STONE (the bottom face y top+2 the up-ray
+            // the tan(0.75) slope lands) + THE SUPPORT (the south
+            // neighbor the first non-replaceable horizontal the scan
+            // finds)
+            w.set(c + 2, top + 2, c, crate::world::STONE);
+            w.set(c + 2, top + 1, c + 1, crate::world::STONE);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 0.5, c as f32 + 0.5),
+            // THE EAST UP-LOOK (the yaw pi/2 the +x arm aims, the
+            // pitch the 0.75 slope the bottom-face crossing wears:
+            // the delta y 1.5 the delta x 2.0 the x c+2.5 the
+            // ceiling's underside the DOWN face lands — the target
+            // cell c+2/top+1 the last air walk keeps, the body's own
+            // column the x c+0.2..c+0.8 the placed cell never enters)
+            yaw: std::f32::consts::FRAC_PI_2,
+            pitch: 0.75f32.atan(),
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the ceiling click the wall twin placement consumes"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 2, top + 1, c),
+                crate::world::SKELETON_WALL_SKULL,
+                "the ceiling click the WALL twin the wall-first law wears"
+            );
+            assert_eq!(
+                w.variant(c + 2, top + 1, c),
+                crate::world::WALL_TORCH_FACING_NORTH,
+                "the facing the support's own opposite the scan stamps"
+            );
+        }
+        // THE FLOOR FALLBACK CASE (the same ceiling the support the
+        // carved absence keeps): the scan the None verdict the all-fail
+        // walk speaks, the skull the FLOOR kind the floating seat wears
+        // — the canSurvive default the true the no-override law banks,
+        // the SEGMENT stamp the rotation walk keeps
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/skeleton_skull"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -1..=3 {
+                for dz in -1..=2 {
+                    for dy in -3..=4 {
+                        w.set(c + dx, top + dy, c + dz, crate::world::AIR);
+                    }
+                }
+            }
+            w.set(c + 2, top + 2, c, crate::world::STONE);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 0.5, c as f32 + 0.5),
+            yaw: std::f32::consts::FRAC_PI_2,
+            pitch: 0.75f32.atan(),
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the ceiling click the floating floor placement consumes"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 2, top + 1, c),
+                crate::world::SKELETON_SKULL,
+                "the all-fail walk the FLOOR kind the ceiling cell wears"
+            );
+            assert!(
+                w.variant(c + 2, top + 1, c) <= 15,
+                "the rotation segment the floating skull wears"
             );
         }
     }
