@@ -14414,6 +14414,25 @@ impl App {
                         let off_kind = crate::world::plate_toggled(*kind).unwrap_or(*kind);
                         if let Some(world) = self.offline_world.as_mut() {
                             world.set(*x, *y, *z, off_kind);
+                            // THE PLATE'S OWN RAIL VERDICT (the dev-101
+                            // round — javap checkPressed pc 58-61 the
+                            // updateNeighbours walk the vacated beat the
+                            // same two seeds re-fires [the plate pos +
+                            // the pos.below() the floor support the
+                            // fixed decode names — the
+                            // BasePressurePlateBlock.updateNeighbours pc
+                            // 0-12 pair the below() arm the no-variant
+                            // decode wears], the PoweredRailBlock.
+                            // neighborChanged -> updateState chain the
+                            // rails among the seeds' own neighborhoods
+                            // the re-read serves): the
+                            // [`World::rail_neighbor_updates`] walk the
+                            // two seeds the verdict re-fires — the
+                            // armed bit the release beat the swap
+                            // clears, the shape nibble the same walk's
+                            // own masked fold keeps
+                            let _ = world.rail_neighbor_updates((*x, *y, *z));
+                            let _ = world.rail_neighbor_updates((*x, *y - 1, *z));
                         }
                         let (cx, cy, cz) = (*x as f64 + 0.5, *y as f64 + 0.5, *z as f64 + 0.5);
                         let ear = self
@@ -37161,6 +37180,26 @@ impl App {
             };
             if let Some(world) = self.offline_world.as_mut() {
                 world.set(x, y, z, on_kind);
+                // THE PLATE'S OWN RAIL VERDICT (the dev-101 round —
+                // javap checkPressed pc 58-61 the updateNeighbours
+                // walk the two seeds the flag-2 setBlock's own
+                // broadcast speaks [the plate pos + the pos.below()
+                // the floor support the fixed decode names —
+                // BasePressurePlateBlock.updateNeighbours pc 0-12 the
+                // updateNeighborsAt pair the below() arm the
+                // no-variant decode wears, the plate the floor-only
+                // family the face offset never keeps], the
+                // PoweredRailBlock.neighborChanged -> updateState
+                // chain the rails among the seeds' own neighborhoods
+                // the re-read serves): the
+                // [`World::rail_neighbor_updates`] walk the two seeds
+                // the verdict re-fires — the POWERED bit the
+                // dev-96/97 swap laws the pressed plate the bit arms,
+                // the shape nibble the same walk's own masked fold
+                // keeps [the remesh the attach_wire_voice tail's own
+                // re-speak banks]
+                let _ = world.rail_neighbor_updates((x, y, z));
+                let _ = world.rail_neighbor_updates((x, y - 1, z));
             }
             let (cx, cy, cz) = (x as f64 + 0.5, y as f64 + 0.5, z as f64 + 0.5);
             let ear = self
@@ -111334,6 +111373,198 @@ cow_sound_variant: None,
             0,
             "the pulse's death the activator's bit clears"
         );
+    }
+
+    #[test]
+    fn the_plate_press_the_rail_verdict_the_swap_wears() {
+        // THE PLATE'S OWN RAIL VERDICT (the dev-101 round — javap
+        // checkPressed pc 58-61 the updateNeighbours walk the two
+        // seeds the press's flag-2 setBlock speaks, the vacated beat
+        // the same walk re-fires): the pressed plate the powered
+        // rail's POWERED bit the swap arms, the release beat the bit
+        // clears, the shape byte the verdicts the nibble alone
+        // answer.
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        let (px, py, pz) = (c - 1, top, c);
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            // THE PLATE'S OWN SEAT (the floor the support keeps)
+            w.set(px, py, pz, crate::world::OAK_PRESSURE_PLATE);
+            // THE RAIL'S OWN SEAT (the plate's east horizontal
+            // neighbor the walk reads)
+            w.set(c, py, c, crate::world::POWERED_RAIL);
+            w.set_variant(c, py, c, 0);
+        }
+        // THE PRESS'S OWN BEAT (the player's feet bbox the touch band
+        // the OFF plate scans): the ON kind the press wears, the
+        // rail's bit the swap arms
+        app.body = Some(crate::body::PlayerBody::new(
+            px as f64 + 0.5,
+            py as f64,
+            pz as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        app.update();
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(px, py, pz),
+                crate::world::OAK_PRESSURE_PLATE_ON,
+                "the ON kind the press wears"
+            );
+            assert_eq!(
+                w.variant(c, py, c),
+                crate::world::RAIL_POWERED_BIT,
+                "the pressed plate the powered rail's bit arms"
+            );
+        }
+        // THE HOLD'S OWN BEAT (the occupied scan the due walk re-arms
+        // — the bit the window the stand keeps)
+        let start_frame = app.frame;
+        while app.frame < start_frame + 25 {
+            app.update();
+        }
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(px, py, pz),
+                crate::world::OAK_PRESSURE_PLATE_ON,
+                "the occupied scan the ON keeps"
+            );
+            assert_eq!(
+                w.variant(c, py, c),
+                crate::world::RAIL_POWERED_BIT,
+                "the hold the armed bit keeps"
+            );
+        }
+        // THE STEP-OFF'S OWN RELEASE (the vacated beat the OFF set +
+        // the two seeds the same walk re-fires): the OFF kind the
+        // release wears, the rail's bit the swap clears
+        app.body = Some(crate::body::PlayerBody::new(
+            (px + 2) as f64 + 0.5,
+            py as f64,
+            pz as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        let start_frame = app.frame;
+        while app.frame < start_frame + 25 {
+            app.update();
+        }
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(px, py, pz),
+                crate::world::OAK_PRESSURE_PLATE,
+                "the vacated beat the OFF release wears"
+            );
+            assert_eq!(
+                w.variant(c, py, c),
+                0,
+                "the release beat the rail's bit clears"
+            );
+        }
+    }
+
+    #[test]
+    fn the_plate_press_the_activator_arms_the_detector_refuses() {
+        // THE TWINS THROUGH THE PLATE SEAM (the dev-101 round — the
+        // same two-seed broadcast the dev-97 law the press re-fires):
+        // the pressed plate the activator's bit the same walk arms,
+        // the detector's own cart law the plate's signal never arms,
+        // the release beat the armed bit clears.
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        let (px, py, pz) = (c - 1, top, c);
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            // THE TWINS THE PLATE'S Z-PAIR FLANKS (the plate's north
+            // and south horizontal neighbors the walk reads — the
+            // updateNeighborsAt seed's own six the vanilla walk
+            // speaks, the diagonal the scan never reads)
+            w.set(px, py, pz, crate::world::OAK_PRESSURE_PLATE);
+            w.set(px, py, pz - 1, crate::world::ACTIVATOR_RAIL);
+            w.set_variant(px, py, pz - 1, 0);
+            w.set(px, py, pz + 1, crate::world::DETECTOR_RAIL);
+            w.set_variant(px, py, pz + 1, 0);
+        }
+        // THE PRESS'S OWN BEAT (the player the LIVING class the
+        // EVERYTHING row counts): the activator's bit the same walk
+        // arms, the detector's own cart law the refusal keeps
+        app.body = Some(crate::body::PlayerBody::new(
+            px as f64 + 0.5,
+            py as f64,
+            pz as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        app.update();
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(px, py, pz),
+                crate::world::OAK_PRESSURE_PLATE_ON,
+                "the ON kind the press wears"
+            );
+            assert_eq!(
+                w.variant(px, py, pz - 1),
+                crate::world::RAIL_POWERED_BIT,
+                "the pressed plate the activator's bit arms"
+            );
+            assert_eq!(
+                w.variant(px, py, pz + 1),
+                0,
+                "the detector's own cart law the plate's signal never arms"
+            );
+        }
+        // THE STEP-OFF'S OWN RELEASE: the armed bit the same walk
+        // clears
+        app.body = Some(crate::body::PlayerBody::new(
+            (px + 2) as f64 + 0.5,
+            py as f64,
+            pz as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        let start_frame = app.frame;
+        while app.frame < start_frame + 25 {
+            app.update();
+        }
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.variant(px, py, pz - 1),
+                0,
+                "the release beat the activator's bit clears"
+            );
+            assert_eq!(
+                w.variant(px, py, pz + 1),
+                0,
+                "the detector the silence the release keeps"
+            );
+        }
     }
 
     #[test]
