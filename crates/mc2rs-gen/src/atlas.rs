@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 764] = [
+pub const RUNTIME_PALETTE: [&str; 768] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -2355,6 +2355,31 @@ pub const RUNTIME_PALETTE: [&str; 764] = [
     // models keep (the floor pair's own refusal the twins share).
     "skeleton_wall_skull", "wither_skeleton_wall_skull", "zombie_wall_head",
     "player_wall_head", "creeper_wall_head", "dragon_wall_head", "piglin_wall_head",
+    // THE RAILS' OWN FOUR SEATS (the dev-86 round — the vanilla
+    // registration order the palette tail banks [rail, powered_rail,
+    // detector_rail, activator_rail — the interleaved _on textures the
+    // POWERED property the redstone rounds keep, the OFF kinds the
+    // placement wears]): javap BaseRailBlock the 26.2 jar the probe
+    // scripts/rail_probe_86.py banks — the getStateForPlacement 95B
+    // walk the `getHorizontalDirection()` RAW look answers (the X-axis
+    // arms EAST/WEST the RailShape.EAST_WEST stamp speaks, the Z-axis
+    // the NORTH_SOUTH default keeps — the furnace's own opposite the
+    // rail never wears), the canSurvive 9B the
+    // `canSupportRigidBlock(level, pos.below())` verdict reads (the
+    // full-cube + sturdy-UP the below cell carries), the SHAPE_FLAT
+    // `Block.column(16.0, 0.0, 2.0)` the 2-px full-footprint band the
+    // getShape's isSlope fold answers (the SHAPE_SLOPE the ascending
+    // kinds the future rounds keep), the `.noCollision()` row the
+    // Blocks clinit speaks (the walk-through verdict the collision
+    // table's Empty row banks, the outline the clip's own cube fold
+    // keeps — the wheat precedent's law the dig lane shares). The
+    // blockstate's SHAPE variants the "" key never carries — the
+    // flat-stem arm the texture resolve answers (block/rail +
+    // block/powered_rail + block/detector_rail + block/activator_rail
+    // the four masters the OFF kinds wear, the _on pair the powered
+    // swap the redstone rounds bank): the flat plane the mesher's
+    // rail lane the y=1/16 quad the rail_flat model speaks.
+    "rail", "powered_rail", "detector_rail", "activator_rail",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -2422,6 +2447,17 @@ fn is_skull_family(block: &str) -> bool {
             | "dragon_wall_head"
             | "piglin_head"
             | "piglin_wall_head"
+    )
+}
+
+/// THE RAILS' OWN CENSUS (the dev-86 round): the four kinds the
+/// palette tail banks — the flat-plane family the blockstate's SHAPE
+/// variants the "" key never carries (the six-face walk the chain
+/// demands would bail), the flat-stem arm the texture resolve answers.
+fn is_rail_family(block: &str) -> bool {
+    matches!(
+        block,
+        "rail" | "powered_rail" | "detector_rail" | "activator_rail"
     )
 }
 
@@ -3271,6 +3307,25 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             // keeps — the placeholder the six slots the kind
             // vocabulary's own row banks.
             faces.push(resolve_flat_stem("soul_sand", false));
+            continue;
+        }
+        if is_rail_family(block) {
+            // THE RAILS' OWN FLAT-STEM ARM (the dev-86 round — the
+            // probe scripts/rail_probe_86.py banks): the blockstate's
+            // SHAPE variants the "" key never carries (the ten
+            // shape=* rows the blockstates.rs table speaks — the
+            // six-face walk the chain demands would bail), the flat
+            // plane the rail_flat model speaks (the [0,1,0]->[16,1,16]
+            // zero-thickness element, the up face uv [0,0,16,16] +
+            // the down face the flipped v the model's own [0,16,16,0]
+            // window wears, ambientocclusion false). The kind's own
+            // master the stem walk resolves (block/rail +
+            // block/powered_rail + block/detector_rail +
+            // block/activator_rail — the OFF kinds the placement
+            // wears, the _on pair the powered swap the redstone
+            // rounds keep), the six slots the row banks (the mesher's
+            // rail lane the [2] up seat the quad consumes).
+            faces.push(resolve_flat_stem(block, false));
             continue;
         }
         if block == "leaf_litter" {

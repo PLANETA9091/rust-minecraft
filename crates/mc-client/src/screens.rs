@@ -39851,6 +39851,24 @@ impl App {
                 return false;
             }
         }
+        // THE RAIL'S OWN SURVIVAL GATE (the dev-86 round — javap
+        // BaseRailBlock.canSurvive 9B the 26.2 jar the probe
+        // scripts/rail_probe_86.py banks: the
+        // `canSupportRigidBlock(level, pos.below())` delegate the
+        // placement's own canPlace walk refuses through — the below
+        // cell the full-collision verdict reads ([`crate::world::
+        // can_support_rail`] walk — the farmland/path columns the
+        // 15/16 bands the full-block verdict refuses, the rail cell
+        // the floating refusal keeps — the press the PASS carries,
+        // the item lanes follow, nothing consumed)
+        if crate::world::is_rail(block) {
+            let below = self
+                .active_world()
+                .map(|w| w.get(cell.0, cell.1 - 1, cell.2));
+            if !below.is_some_and(crate::world::can_support_rail) {
+                return false;
+            }
+        }
         // THE LANTERN'S OWN SURVIVAL GATE (the dev-61 round — javap
         // LanternBlock.getStateForPlacement pc 12-123 the 26.2 jar:
         // the getNearestLookingDirections walk the first Y direction
@@ -40120,6 +40138,24 @@ impl App {
                     cell.1,
                     cell.2,
                     crate::world::head_rotation_variant(cam_yaw),
+                );
+            }
+            // THE RAIL'S OWN AXIS STAMP (the dev-86 round — javap
+            // BaseRailBlock.getStateForPlacement pcs 26-75 the 26.2
+            // jar the probe scripts/rail_probe_86.py banks: the
+            // `getHorizontalDirection()` RAW look the X-axis arms
+            // read — the EAST/WEST pair the EAST_WEST quarter stamps,
+            // the NORTH/SOUTH pair the NORTH_SOUTH default keeps —
+            // the byte the [`crate::world::rail_axis_variant`] walk
+            // the client's own yaw decode answers, the mesher's
+            // transposed uv fold the byte reads, the blockstate's
+            // y=90 row the same quarter the rail model speaks)
+            if crate::world::is_rail(placed) {
+                world.set_variant(
+                    cell.0,
+                    cell.1,
+                    cell.2,
+                    crate::world::rail_axis_variant(cam_yaw),
                 );
             }
             // THE WALL HEADS' OWN FACING STAMP (the dev-83 round — javap
@@ -106628,7 +106664,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            764,
+            768,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -106709,7 +106745,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            764,
+            768,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -107011,7 +107047,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            764,
+            768,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -110941,7 +110977,7 @@ cow_sound_variant: None,
         // #texture ref banks)
         assert_eq!(
             atlas::N_KINDS,
-            764,
+            768,
             "the palette the weighted plates' own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
@@ -111161,7 +111197,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            764,
+            768,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
@@ -111438,7 +111474,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            764,
+            768,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
@@ -111554,7 +111590,7 @@ cow_sound_variant: None,
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE, 318);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, 319);
         assert_eq!(w::END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 764, "the palette the weighted rows bank");
+        assert_eq!(atlas::N_KINDS, 768, "the palette the weighted rows bank");
         for (off, on, name) in [
             (
                 w::LIGHT_WEIGHTED_PRESSURE_PLATE,
@@ -112668,7 +112704,7 @@ cow_sound_variant: None,
         assert_eq!(w::END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-            764,
+            768,
             "the palette the weighted plates' own rows bank"
         );
         for (off, on, name, wooden) in [
@@ -114569,6 +114605,178 @@ cow_sound_variant: None,
                 w.variant(c + 1, top + 1, c),
                 crate::world::WALL_TORCH_FACING_WEST,
                 "the facing the support's own opposite the scan stamps"
+            );
+        }
+    }
+
+    #[test]
+    fn the_rail_placement_wears_the_axis_and_rigid_laws() {
+        // THE RAILS' OWN PLACEMENT LAWS (the dev-86 round — javap
+        // BaseRailBlock the 26.2 jar the probe scripts/rail_probe_86.py
+        // banks): the floor click the offset cell the RAIL kind wears
+        // [the getHorizontalDirection RAW look the axis variant
+        // stamps], the canSurvive walk the rigid-below verdict reads
+        // [the floating rail the refusal keeps — the press the PASS
+        // carries, nothing consumed].
+        // THE EAST LOOK'S OWN E-W QUARTER (the yaw pi/2 the +x arm
+        // aims, the down ray the stone's top face lands): the rail
+        // the offset cell wears, the variant the EAST_WEST byte banks
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/rail"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -1..=3 {
+                for dz in -1..=1 {
+                    for dy in -3..=3 {
+                        w.set(c + dx, top + dy, c + dz, crate::world::AIR);
+                    }
+                }
+            }
+            w.set(c, top - 1, c, crate::world::STONE);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 3.0, c as f32 + 0.5),
+            yaw: std::f32::consts::FRAC_PI_2,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the rail on the stone the placement consumes"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c),
+                crate::world::RAIL,
+                "the floor click the offset cell wears"
+            );
+            assert_eq!(
+                w.variant(c, top, c),
+                1,
+                "the east look the EAST_WEST quarter wears"
+            );
+        }
+        // THE NORTH LOOK'S OWN N-S DEFAULT (the yaw 0 the -z arm aims):
+        // the same floor the NORTH_SOUTH byte banks
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/rail"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -1..=3 {
+                for dz in -1..=1 {
+                    for dy in -3..=3 {
+                        w.set(c + dx, top + dy, c + dz, crate::world::AIR);
+                    }
+                }
+            }
+            w.set(c, top - 1, c, crate::world::STONE);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 3.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the rail on the stone the placement consumes"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c),
+                crate::world::RAIL,
+                "the floor click the offset cell wears"
+            );
+            assert_eq!(
+                w.variant(c, top, c),
+                0,
+                "the north look the NORTH_SOUTH default wears"
+            );
+        }
+        // THE FLOATING REFUSAL (the side hit the placement cell the
+        // carved absence below keeps): the canSurvive walk the
+        // rigid-below verdict refuses — the press the PASS carries,
+        // the offset cell the refusal never fills
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/rail"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -1..=3 {
+                for dz in -1..=1 {
+                    for dy in -3..=3 {
+                        w.set(c + dx, top + dy, c + dz, crate::world::AIR);
+                    }
+                }
+            }
+            w.set(c + 2, top + 1, c, crate::world::STONE);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 1.5, c as f32 + 0.5),
+            yaw: std::f32::consts::FRAC_PI_2,
+            pitch: 0.0,
+        });
+        assert!(
+            !app.on_right_press(0, 0),
+            "the floating rail the survival refusal keeps"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c + 1, top + 1, c),
+            crate::world::AIR,
+            "the offset cell the refusal never fills"
+        );
+        // THE SUPPORTED SIDE HIT (the below cell the stone carries):
+        // the gate passes the side-click lane the rail lands, the
+        // east look the same quarter stamps
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/rail"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -1..=3 {
+                for dz in -1..=1 {
+                    for dy in -3..=3 {
+                        w.set(c + dx, top + dy, c + dz, crate::world::AIR);
+                    }
+                }
+            }
+            w.set(c + 2, top + 1, c, crate::world::STONE);
+            w.set(c + 1, top, c, crate::world::STONE);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 1.5, c as f32 + 0.5),
+            yaw: std::f32::consts::FRAC_PI_2,
+            pitch: 0.0,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the supported rail the side placement consumes"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 1, top + 1, c),
+                crate::world::RAIL,
+                "the side hit the offset cell wears"
+            );
+            assert_eq!(
+                w.variant(c + 1, top + 1, c),
+                1,
+                "the east look the same quarter wears"
             );
         }
     }

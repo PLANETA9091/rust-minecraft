@@ -217,6 +217,13 @@ fn is_transparent(kind: u16) -> bool {
         // floor's top face under ANY wire draws, the wire casts no AO,
         // the flat geometry the dust lane's own walk renders
         || crate::world::is_redstone_wire(kind)
+        // THE RAILS the same verdict keeps (the dev-86 round — the
+        // Blocks clinit's noCollision() row the four rail kinds the
+        // probe scripts/rail_probe_86.py banks: the y=1/16 flat plane
+        // the neighbors' faces draw against, the AO the opaque walk
+        // never casts, the ground's top face under ANY rail draws,
+        // the flat geometry the rail lane's own walk renders)
+        || crate::world::is_rail(kind)
         // THE WEB the same verdict keeps (the dev-22 round — the
         // noCollision() pc 4247 the WebBlock registration speaks, the
         // cross planes non-occluding, no AO, the neighbors' faces the
@@ -1001,6 +1008,133 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                 per_texel_alpha: false,
                             });
                         }
+                    }
+                    continue;
+                }
+                // THE RAIL'S OWN FLAT LANE (the dev-86 round — the
+                // blockstates/rail.json's shape rows the models the
+                // probe scripts/rail_probe_86.py banks): the rail_flat
+                // parent's zero-thickness element the [0,1,0]->
+                // [16,1,16] span speaks — the full-footprint plane at
+                // y=1/16, the up face uv [0,0,16,16] + the down face
+                // the flipped v the model's own [0,16,16,0] window
+                // wears, ambientocclusion false — shade and light
+                // only, NO AO_CURVE term; no cullface — both faces
+                // draw unconditionally (the raster backface-culls
+                // each to its own side). THE SHAPE THE VARIANT BYTE
+                // READS: the 0 byte the NORTH_SOUTH default (the
+                // registerDefaultState pin the placement's Z-axis arm
+                // stamps), the 1 byte the EAST_WEST quarter — the
+                // blockstate's y=90 row the model rotation the
+                // transposed uv fold answers (the u the z-axis the
+                // quarter turns wear — the wire lane's own E-W law
+                // the same transpose keeps; the vanilla rail texture
+                // the symmetric ties the mirror direction the honest
+                // approximation keeps). The four kinds the lane's own
+                // tile row serves (the FACE_TILES [2] up seat the
+                // flat arm banks — the OFF masters the placement
+                // wears, the _on pair the powered swap the redstone
+                // rounds keep).
+                if crate::world::is_rail(id) {
+                    let tile = if (id as usize) < atlas::N_KINDS {
+                        atlas::FACE_TILES[id as usize][2]
+                    } else {
+                        atlas::TILE_NONE
+                    };
+                    let transposed = world.variant(wx, wy, wz) == 1;
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let fy = wy as f32 + 1.0 / 16.0;
+                    for face in [2usize, 3] {
+                        let base = world
+                            .face_tint(id, face, wx, wy, wz)
+                            .map(tint::unpack)
+                            .unwrap_or([1.0; 3]);
+                        let shade = FACE_SHADE[face];
+                        let clight = light
+                            .map(|l| corner_light(l, world.chunks_per_side, wx, wy, wz, face));
+                        if tile == atlas::TILE_NONE {
+                            continue;
+                        }
+                        let mut pts = [[0f32; 3]; 4];
+                        let mut colors = [[0f32; 3]; 4];
+                        let mut uvs = [[0f32; 2]; 4];
+                        for (i, c) in FACE_CORNERS[face].iter().enumerate() {
+                            // THE CORNER'S OWN POSITION INSIDE THE FULL
+                            // RECT (block units), the uv the model's
+                            // own map serves (the N-S default u=x/v=z,
+                            // the E-W quarter the transposed u=z/v=x
+                            // the y=90 rotation's rigid ride keeps;
+                            // the down face the vanilla's own flip the
+                            // mirrored v wears)
+                            let bx = c[0] * 16.0;
+                            let bz = c[2] * 16.0;
+                            let (uu, vv) = if transposed { (bz, bx) } else { (bx, bz) };
+                            let (uu, vv) = (uu / 16.0, vv / 16.0);
+                            uvs[i] = if face == 2 {
+                                [uu, vv]
+                            } else {
+                                [uu, 1.0 - vv]
+                            };
+                            pts[i] = [
+                                wx as f32 + bx / 16.0,
+                                fy,
+                                wz as f32 + bz / 16.0,
+                            ];
+                            let lm = match clight.as_ref() {
+                                Some((sky, block)) => lightmap_combine(
+                                    sky[i],
+                                    block[i],
+                                    sky_factor,
+                                    sky_tint,
+                                    ambient,
+                                    block_tint,
+                                    night_vision,
+                                    world.night_vision_factor,
+                                    world.darkness_scale,
+                                ),
+                                None => [1.0; 3], // no light layer — legacy look
+                            };
+                            let m = [shade * lm[0], shade * lm[1], shade * lm[2]];
+                            colors[i] = [base[0] * m[0], base[1] * m[1], base[2] * m[2]];
+                        }
+                        out.push(Quad {
+                            pts,
+                            colors,
+                            uvs,
+                            tile,
+                            translucent: false,
+                            per_texel_alpha: false,
+                        });
                     }
                     continue;
                 }
@@ -13883,6 +14017,95 @@ mod tests {
             assert_eq!(quad.colors[1], quad.colors[2]);
             assert_eq!(quad.colors[2], quad.colors[3]);
         }
+    }
+
+    #[test]
+    fn the_rails_own_flat_lane_the_two_quads_wear() {
+        // THE RAILS' OWN MESH LAWS (the dev-86 round — the rail_flat
+        // model the probe scripts/rail_probe_86.py banks): the
+        // zero-thickness plane the y=1/16 seat wears, the full
+        // footprint the two faces (up + down) keep, the tile the
+        // kind's own row banks, the E-W quarter the transposed uv
+        // fold wears, the down face the vanilla's own v-flip keeps.
+        use mc_registry::generated::atlas;
+        // THE N-S DEFAULT (the variant byte 0 the registerDefaultState
+        // pin speaks)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::RAIL);
+        let tile = atlas::FACE_TILES[crate::world::RAIL as usize][2];
+        let q = mesh_chunk(&w, 0, 0, None);
+        assert_eq!(q.len(), 2, "the flat plane the up+down pair wears");
+        for quad in &q {
+            assert!(
+                !quad.translucent && !quad.per_texel_alpha,
+                "the cutout lane the rail quads keep"
+            );
+            assert_eq!(quad.tile, tile, "the tile the kind's own row banks");
+            for p in &quad.pts {
+                assert!(
+                    (8.0..=9.0).contains(&p[0]) && (8.0..=9.0).contains(&p[2]),
+                    "the full footprint the plane spans, got {p:?}"
+                );
+                assert!(
+                    (p[1] - 8.0625).abs() < 1e-5,
+                    "the y=1/16 seat the flat plane wears, got {p:?}"
+                );
+            }
+        }
+        // THE N-S UV FOLD (the u the x-axis, the v the z-axis tracks —
+        // the up face the straight map, the down the mirrored v the
+        // model's [0,16,16,0] window wears): exactly one quad each
+        let ns_up = q.iter().filter(|quad| {
+            quad.pts
+                .iter()
+                .zip(quad.uvs.iter())
+                .all(|(p, uv)| {
+                    (uv[0] - (p[0] - 8.0)).abs() < 1e-5
+                        && (uv[1] - (p[2] - 8.0)).abs() < 1e-5
+                })
+        });
+        let ns_down = q.iter().filter(|quad| {
+            quad.pts
+                .iter()
+                .zip(quad.uvs.iter())
+                .all(|(p, uv)| {
+                    (uv[0] - (p[0] - 8.0)).abs() < 1e-5
+                        && (uv[1] - (9.0 - p[2])).abs() < 1e-5
+                })
+        });
+        assert_eq!(ns_up.count(), 1, "the up face the straight N-S map wears");
+        assert_eq!(ns_down.count(), 1, "the down face the v-flip wears");
+        // THE E-W QUARTER (the variant byte 1 the placement's X-axis
+        // arm stamps): the same plane the same seat the transposed
+        // uv fold wears (the u the z-axis, the v the x-axis tracks)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::RAIL);
+        w.set_variant(8, 8, 8, 1);
+        let q_ew = mesh_chunk(&w, 0, 0, None);
+        assert_eq!(q_ew.len(), 2, "the quarter the same two quads wears");
+        for quad in &q_ew {
+            assert_eq!(quad.tile, tile, "the tile the same row banks");
+        }
+        let ew_up = q_ew.iter().filter(|quad| {
+            quad.pts
+                .iter()
+                .zip(quad.uvs.iter())
+                .all(|(p, uv)| {
+                    (uv[0] - (p[2] - 8.0)).abs() < 1e-5
+                        && (uv[1] - (p[0] - 8.0)).abs() < 1e-5
+                })
+        });
+        let ew_down = q_ew.iter().filter(|quad| {
+            quad.pts
+                .iter()
+                .zip(quad.uvs.iter())
+                .all(|(p, uv)| {
+                    (uv[0] - (p[2] - 8.0)).abs() < 1e-5
+                        && (uv[1] - (9.0 - p[0])).abs() < 1e-5
+                })
+        });
+        assert_eq!(ew_up.count(), 1, "the up face the transposed map wears");
+        assert_eq!(ew_down.count(), 1, "the down face the flipped transpose wears");
     }
 
     #[test]

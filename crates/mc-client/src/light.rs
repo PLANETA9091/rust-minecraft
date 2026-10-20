@@ -102,6 +102,13 @@ fn sky_opacity(id: u16) -> u8 {
         // own verdict carries, the sky the wall cell passes, the BE
         // family the same law the twins share)
         || is_wall_head_kind(id)
+        // THE RAILS' OWN ROW (the dev-86 round — the Blocks clinit's
+        // `.noCollision()` registration the four rail kinds the probe
+        // scripts/rail_probe_86.py banks: the shape-based lightBlock 0
+        // the non-full 2-px band the canOcclude-false verdict keeps —
+        // the sky the rail cell passes, the flood the track the same
+        // reach the flat family's own law speaks)
+        || is_rail(id)
         // THE PANE FAMILY'S OWN ROW (the dev-58 round — the 18 kinds
         // the noOcclusion() registration the lightBlock 0 the same
         // law speaks: the glass_pane pc 12459 + the iron_bars pc
