@@ -37790,15 +37790,15 @@ impl App {
         } else {
             Vec::new()
         };
-        // THE POP'S OWN SCHEDULE (the popped cell's own flag-3
-        // broadcast the falling checks the same walk re-arms — the
-        // sand above the popped cell the falling walk's own lane
-        // THE RAIL'S OWN NEIGHBOR RE-ALIGNMENT (the dev-89 round—
+        // THE RAIL'S OWN NEIGHBOR RE-ALIGNMENT (the dev-89 round —
         // javap RailState.place the flag-3 broadcast the rails' own
         // updateShape answer wears): the dug cell's horizontal rail
         // neighbors the connection law re-stamps (the single
         // connection the axis along it wears, the zero connections
-        // the survivor's shape holds), the OFFLINE lane the set's own
+        // the survivor's shape holds — the support-pop arm the [
+        // `World::attach_support_updates`] walk the dev-90 round the
+        // same handshake inside the pop serves, the popped rail's own
+        // level the walk re-aligns), the OFFLINE lane the set's own
         // branch wears (the networked world the server's own
         // broadcast answers); the remesh the beat below carries
         if !self.world_is_network && self.offline_world.is_some() {
@@ -37808,8 +37808,6 @@ impl App {
                 .expect("the offline world the gate carries")
                 .rail_neighbor_updates(pos);
         }
-        // serves) — the walk the helper below banks, the dig lane AND
-        // the fire lane's burn-out consult the same body speaks
         self.remesh_offline();
         let name = crate::world::NAME_OF[kind as usize];
         self.sounds.play(self.frame, name, crate::sound::Lane::Break);
@@ -114749,6 +114747,99 @@ cow_sound_variant: None,
                 w.variant(c, top, c),
                 0,
                 "the first rail the handshake flips to N-S"
+            );
+        }
+    }
+
+    #[test]
+    fn the_rail_dig_wears_the_support_pop_and_the_re_align() {
+        // THE SUPPORT POP'S OWN DIG BEAT (the dev-90 round — javap
+        // BaseRailBlock.canSurvive the neighborChanged walk the
+        // destroyBlock chain serves): the dug support the rail above
+        // pops the SAME completion wears, the pop's own broadcast the
+        // perpendicular survivor re-stamps (the single connection the
+        // axis along it wears), the voice + the drop lane the pop list
+        // the [`Self::speak_attach_pops`] beat carries
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            // the lane the ray and the eye ride
+            for dx in -3..=2 {
+                for dz in -3..=2 {
+                    for dy in -2..=2 {
+                        w.set(c + dx, top + dy, c + dz, crate::world::AIR);
+                    }
+                }
+            }
+            // the supports: the dug one under the pop's rail, the
+            // survivor's own pair the L wears
+            w.set(c, top - 1, c, crate::world::STONE);
+            w.set(c + 1, top - 1, c, crate::world::STONE);
+            w.set(c + 1, top - 1, c - 1, crate::world::STONE);
+            // the rails: R1 the support's loss pops, R2 the
+            // perpendicular pair rides, R4 the north arm the single
+            // connection aligns
+            w.set(c, top, c, crate::world::RAIL);
+            w.set_variant(c, top, c, 1);
+            w.set(c + 1, top, c, crate::world::RAIL);
+            w.set_variant(c + 1, top, c, 1);
+            w.set(c + 1, top, c - 1, crate::world::RAIL);
+            w.set_variant(c + 1, top, c - 1, 0);
+        }
+        // THE SIDE LOOK: the support's own layer the ray rides (the y
+        // the rail's band never crosses — the west face the hit
+        // names, the rail above the ray never consults)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(
+                c as f32 - 2.5,
+                top as f32 - 0.5,
+                c as f32 + 0.5,
+            ),
+            yaw: std::f32::consts::FRAC_PI_2,
+            pitch: 0.0,
+        });
+        app.on_press(0, 0);
+        assert!(app.dig.is_destroying, "the press armed the support's dig");
+        assert_eq!(
+            app.dig.pos,
+            (c, top - 1, c),
+            "the stone the ray names"
+        );
+        // THE HOLD: the ticks mine the stone, the completion the pop
+        // the SAME beat serves
+        let mut ticks = 0;
+        while app.offline_world.as_ref().unwrap().get(c, top - 1, c)
+            != crate::world::AIR
+        {
+            app.update();
+            ticks += 1;
+            assert!(ticks < 400, "the dig completed in time");
+        }
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c),
+                crate::world::AIR,
+                "the rail the support's loss pops — the same beat"
+            );
+            assert_eq!(
+                w.get(c + 1, top, c),
+                crate::world::RAIL,
+                "the survivor rides"
+            );
+            assert_eq!(
+                w.variant(c + 1, top, c),
+                0,
+                "the perpendicular survivor the single north re-stamps"
+            );
+            assert_eq!(
+                w.variant(c + 1, top, c - 1),
+                0,
+                "the north arm the N-S byte keeps"
             );
         }
     }

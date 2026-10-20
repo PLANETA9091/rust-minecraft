@@ -13511,7 +13511,11 @@ impl World {
     /// speaks, the pure-world walk the state alone sets (the OFFLINE
     /// lane's own authority: the networked world's voxels are the
     /// server's own updates — the caller's `world_is_network` gate the
-    /// honest split keeps).
+    /// honest split keeps). THE RAIL the dev-90 round the family JOINS
+    /// — javap BaseRailBlock.canSurvive the 26.2 jar the straight-DOWN
+    /// support the pop law speaks: the [`can_support_rail`] rigid-below
+    /// verdict the below cell reads, the pop's own flag-3 broadcast the
+    /// survivors the [`Self::rail_neighbor_updates`] walk re-aligns.
     pub fn attach_support_updates(
         &mut self,
         changed: (i32, i32, i32),
@@ -13536,6 +13540,7 @@ impl World {
                 && !is_pressure_plate(kind)
                 && !is_redstone_wire(kind)
                 && !is_redstone_torch(kind)
+                && !is_rail(kind)
             {
                 continue;
             }
@@ -13561,6 +13566,7 @@ impl World {
             } else if is_pressure_plate(kind)
                 || is_redstone_wire(kind)
                 || is_redstone_torch(kind)
+                || is_rail(kind)
             {
                 (x, y - 1, z)
             } else {
@@ -13590,6 +13596,10 @@ impl World {
                 if can_support_torch(self.get(x, y - 1, z)) {
                     continue;
                 }
+            } else if is_rail(kind) {
+                if can_support_rail(self.get(x, y - 1, z)) {
+                    continue;
+                }
             } else if lever_can_survive(self, x, y, z, self.variant(x, y, z)) {
                 continue;
             }
@@ -13609,6 +13619,15 @@ impl World {
                 (x - 1, y, z),
                 (x + 1, y, z),
             ]);
+            // THE RAIL POP'S OWN HANDSHAKE (the dev-90 round — the
+            // pop's own flag-3 broadcast the vanilla destroyBlock
+            // speaks): the popped rail's horizontal survivors the
+            // connection law re-aligns (the single connection the axis
+            // along it wears, the zero connections the shape keeps),
+            // the walk the pop's own beat folds
+            if is_rail(kind) {
+                let _ = self.rail_neighbor_updates((x, y, z));
+            }
         }
         popped
     }
@@ -18828,6 +18847,73 @@ mod tests {
         // THE NON-RAIL CHANGE: the stone drop-in the rails never read
         w.set(12, 9, 7, STONE);
         assert!(!w.rail_neighbor_updates((12, 9, 7)));
+    }
+
+    /// THE RAIL'S OWN SUPPORT POP (the dev-90 round — javap
+    /// BaseRailBlock.canSurvive the 26.2 jar the straight-DOWN support
+    /// the neighborChanged walk serves): the support's loss the rail
+    /// above pops (the [`World::attach_support_updates`] walk the rail
+    /// arm joins), the standing support the consult survives, the
+    /// non-rail cell the same loss never reads, the pop's own
+    /// broadcast the survivors re-aligns (the perpendicular pair the
+    /// single connection re-stamps).
+    #[test]
+    fn the_rail_support_pop_wears_the_below_rigid_law() {
+        let mut w = slab_world();
+        // the supports the rails ride, the L the perpendicular pair
+        // and the single arm wear
+        w.set(8, 9, 8, STONE);
+        w.set(9, 9, 8, STONE);
+        w.set(9, 9, 7, STONE);
+        w.set(8, 10, 8, RAIL);
+        w.set_variant(8, 10, 8, 1);
+        w.set(9, 10, 8, RAIL);
+        w.set_variant(9, 10, 8, 1);
+        w.set(9, 10, 7, RAIL);
+        w.set_variant(9, 10, 7, 0);
+        // THE UNRELATED CHANGE: the below-below cell the walk never
+        // pops (the gate the offset compare wears)
+        assert!(
+            w.attach_support_updates((8, 8, 8)).is_empty(),
+            "the unrelated cell nothing pops"
+        );
+        assert_eq!(w.get(8, 10, 8), RAIL);
+        // THE STANDING SUPPORT: the consult the rigid-below verdict
+        // survives (the stone the Full row answers)
+        assert!(
+            w.attach_support_updates((8, 9, 8)).is_empty(),
+            "the standing support the rail keeps"
+        );
+        // THE POP: the support's loss the rail above wears — the
+        // handshake the survivor re-stamps the SAME walk folds (the
+        // west connection gone the single north the N-S axis wears)
+        w.set(8, 9, 8, AIR);
+        let popped = w.attach_support_updates((8, 9, 8));
+        assert_eq!(
+            popped,
+            vec![((8, 10, 8), RAIL)],
+            "the rail the pop list carries"
+        );
+        assert_eq!(w.get(8, 10, 8), AIR, "the popped cell the AIR wears");
+        assert_eq!(
+            w.variant(9, 10, 8),
+            0,
+            "the survivor the single north connection re-stamps"
+        );
+        assert_eq!(
+            w.variant(9, 10, 7),
+            0,
+            "the north arm the N-S byte keeps"
+        );
+        // THE NON-RAIL CELL: the same loss the stone above never reads
+        w.set(8, 10, 8, STONE);
+        w.set(8, 9, 8, STONE);
+        w.set(8, 9, 8, AIR);
+        assert!(
+            w.attach_support_updates((8, 9, 8)).is_empty(),
+            "the stone the pop never reads"
+        );
+        assert_eq!(w.get(8, 10, 8), STONE, "the stone the loss survives");
     }
 
     /// THE RAIL CLIP'S OWN BAND LAW (the dev-87 round — the vanilla
