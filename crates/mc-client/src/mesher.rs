@@ -1100,14 +1100,26 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     // the activator's own _on texture the kind's own
                     // const banks, the powered kind the dev-96 seat
                     // keeps, the powered=false rows the off master)
+                    // THE DETECTOR RAIL'S OWN SEAT (the dev-98 round
+                    // — the vanilla blockstates/detector_rail.json's
+                    // powered=true rows the same bit the lane reads:
+                    // the detector_rail_on texture the kind's own
+                    // const banks; the WORLD law the cart detection
+                    // its own lane serves, the neighbor signal the
+                    // detector's bit never arms — the mesher renders
+                    // whatever bit the world banks)
                     let powered_on = matches!(
                         id,
-                        crate::world::POWERED_RAIL | crate::world::ACTIVATOR_RAIL
+                        crate::world::POWERED_RAIL
+                            | crate::world::DETECTOR_RAIL
+                            | crate::world::ACTIVATOR_RAIL
                     ) && world.variant(wx, wy, wz) & crate::world::RAIL_POWERED_BIT != 0;
                     let tile = if corner {
                         atlas::TILE_RAIL_CORNER
                     } else if powered_on && id == crate::world::ACTIVATOR_RAIL {
                         atlas::TILE_ACTIVATOR_RAIL_ON
+                    } else if powered_on && id == crate::world::DETECTOR_RAIL {
+                        atlas::TILE_DETECTOR_RAIL_ON
                     } else if powered_on {
                         atlas::TILE_POWERED_RAIL_ON
                     } else if (id as usize) < atlas::N_KINDS {
@@ -14391,9 +14403,10 @@ mod tests {
         // the same bit the seat reads): the powered bit the
         // activator_rail_on seat the swap banks, the off master the
         // kind's own row keeps, the powered kind the dev-96 seat
-        // keeps, the detector kind the bit the swap never wears, the
-        // powered quarter the transposed uv fold the same lane
-        // serves, the shape nibble the mask the bit never touches.
+        // keeps, the detector kind the dev-98 seat its own lane
+        // banks, the powered quarter the transposed uv fold the same
+        // lane serves, the shape nibble the mask the bit never
+        // touches.
         use mc_registry::generated::atlas;
         assert_ne!(
             atlas::TILE_ACTIVATOR_RAIL_ON,
@@ -14459,19 +14472,126 @@ mod tests {
                 "the powered kind its own dev-96 seat keeps"
             );
         }
-        // THE DETECTOR KIND THE BIT NEVER WEARS: its own law the
-        // cart's presence speaks — the mesh lane the detector's byte
-        // the off row the same read keeps
+        // THE DETECTOR KIND ITS OWN SEAT WEARS (the dev-98 round —
+        // the vanilla blockstates/detector_rail.json's powered=true
+        // rows the same bit the detector's own _on seat the swap
+        // banks; the WORLD law the cart detection its own lane
+        // serves, the mesher the banked byte alone renders)
         let mut w4 = empty_world();
         put(&mut w4, 8, 8, 8, crate::world::DETECTOR_RAIL);
         w4.set_variant(8, 8, 8, crate::world::RAIL_POWERED_BIT);
-        let off_detector = atlas::FACE_TILES[crate::world::DETECTOR_RAIL as usize][2];
         let q4 = mesh_chunk(&w4, 0, 0, None);
         for quad in &q4 {
             assert_eq!(
                 quad.tile,
-                off_detector,
-                "the detector the bit the mesh lane never swaps"
+                atlas::TILE_DETECTOR_RAIL_ON,
+                "the detector's bit its own dev-98 seat banks"
+            );
+        }
+    }
+
+    #[test]
+    fn the_detector_rails_own_on_lane_the_tile_swap_wears() {
+        // THE DETECTOR RAIL'S OWN MESH LAW (the dev-98 round — the
+        // vanilla blockstates/detector_rail.json's powered=true rows
+        // the same bit the lane reads): the powered bit the
+        // detector_rail_on seat the swap banks, the off master the
+        // kind's own row keeps, the twin kinds the dev-96/97 seats
+        // keep, the powered quarter the transposed uv fold the same
+        // lane serves, the plain rail the bit the swap never wears.
+        use mc_registry::generated::atlas;
+        assert_ne!(
+            atlas::TILE_DETECTOR_RAIL_ON,
+            atlas::TILE_POWERED_RAIL_ON,
+            "the twin seats the pool's own distinct rows bank"
+        );
+        assert_ne!(
+            atlas::TILE_DETECTOR_RAIL_ON,
+            atlas::TILE_ACTIVATOR_RAIL_ON,
+            "the detector's seat the activator's row never shares"
+        );
+        // THE OFF MASTER (the variant byte 0 the powered=false row
+        // speaks): the kind's own tile the lane banks
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::DETECTOR_RAIL);
+        let off_tile = atlas::FACE_TILES[crate::world::DETECTOR_RAIL as usize][2];
+        let q = mesh_chunk(&w, 0, 0, None);
+        assert_eq!(q.len(), 2, "the flat plane the up+down pair wears");
+        for quad in &q {
+            assert_eq!(quad.tile, off_tile, "the off detector the kind's own row keeps");
+        }
+        // THE ON SWAP (the POWERED bit the powered=true row speaks):
+        // the detector's own _on seat the same two quads wear
+        w.set_variant(8, 8, 8, crate::world::RAIL_POWERED_BIT);
+        let q_on = mesh_chunk(&w, 0, 0, None);
+        assert_eq!(q_on.len(), 2, "the swap the same two quads wears");
+        for quad in &q_on {
+            assert_eq!(
+                quad.tile,
+                atlas::TILE_DETECTOR_RAIL_ON,
+                "the detector's bit its own _on seat banks"
+            );
+        }
+        // THE POWERED QUARTER (the bit + the E-W byte the powered
+        // east_west row speaks): the detector's own _on seat the
+        // transposed uv fold the same lane wears
+        w.set_variant(8, 8, 8, crate::world::RAIL_POWERED_BIT | 1);
+        let q_ew = mesh_chunk(&w, 0, 0, None);
+        assert_eq!(q_ew.len(), 2, "the detector quarter the same two quads wears");
+        for quad in &q_ew {
+            assert_eq!(
+                quad.tile,
+                atlas::TILE_DETECTOR_RAIL_ON,
+                "the detector quarter its own _on seat keeps"
+            );
+        }
+        let ew_up = q_ew.iter().filter(|quad| {
+            quad.pts
+                .iter()
+                .zip(quad.uvs.iter())
+                .all(|(p, uv)| {
+                    (uv[0] - (p[2] - 8.0)).abs() < 1e-5
+                        && (uv[1] - (p[0] - 8.0)).abs() < 1e-5
+                })
+        });
+        assert_eq!(ew_up.count(), 1, "the detector quarter the transposed map wears");
+        // THE TWIN KINDS THE OWN SEATS KEEP: the powered kind the
+        // dev-96 seat, the activator kind the dev-97 seat (the
+        // detector's seat the twins never wear)
+        let mut w3 = empty_world();
+        put(&mut w3, 8, 8, 8, crate::world::POWERED_RAIL);
+        w3.set_variant(8, 8, 8, crate::world::RAIL_POWERED_BIT);
+        let q3 = mesh_chunk(&w3, 0, 0, None);
+        for quad in &q3 {
+            assert_eq!(
+                quad.tile,
+                atlas::TILE_POWERED_RAIL_ON,
+                "the powered kind its own dev-96 seat keeps"
+            );
+        }
+        let mut w5 = empty_world();
+        put(&mut w5, 8, 8, 8, crate::world::ACTIVATOR_RAIL);
+        w5.set_variant(8, 8, 8, crate::world::RAIL_POWERED_BIT);
+        let q5 = mesh_chunk(&w5, 0, 0, None);
+        for quad in &q5 {
+            assert_eq!(
+                quad.tile,
+                atlas::TILE_ACTIVATOR_RAIL_ON,
+                "the activator kind its own dev-97 seat keeps"
+            );
+        }
+        // THE PLAIN RAIL THE BIT NEVER WEARS: the RAIL kind the
+        // same bit the off row keeps (the swap the powered kinds
+        // alone take)
+        let mut w2 = empty_world();
+        put(&mut w2, 8, 8, 8, crate::world::RAIL);
+        w2.set_variant(8, 8, 8, crate::world::RAIL_POWERED_BIT);
+        let q2 = mesh_chunk(&w2, 0, 0, None);
+        for quad in &q2 {
+            assert_ne!(
+                quad.tile,
+                atlas::TILE_DETECTOR_RAIL_ON,
+                "the plain rail the bit the swap never wears"
             );
         }
     }
