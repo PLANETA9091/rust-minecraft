@@ -13823,7 +13823,17 @@ impl World {
             // verdict sets or clears, the `powered=true` blockstate
             // rows the _on model the swap wears, the shape nibble the
             // bit's own fold never touches)
-            if self.get(x, y, z) == crate::world::POWERED_RAIL {
+            // THE ACTIVATOR RAIL'S OWN TWIN (the dev-97 round — javap
+            // ActivatorRailBlock.updateState the 26.2 jar the SAME
+            // `hasNeighborSignal(pos) || hasNeighborSignal(pos.above())`
+            // pair the verdict reads: the blockstates/activator_rail.json
+            // `powered=true` rows the activator_rail_on model the same
+            // bit arms, the shape nibble the twin's own fold never
+            // touches)
+            if matches!(
+                self.get(x, y, z),
+                crate::world::POWERED_RAIL | crate::world::ACTIVATOR_RAIL
+            ) {
                 let powered = redstone_signal_at(self, x, y, z)
                     || redstone_signal_at(self, x, y + 1, z);
                 let cur = self.variant(x, y, z);
@@ -19311,6 +19321,109 @@ mod tests {
             w.rail_band_top(8, 9, 8),
             RAIL_ASC_TOP,
             "the powered ascent cell the 8-px box the masked read keeps"
+        );
+    }
+
+    /// THE ACTIVATOR RAIL'S OWN SWAP (the dev-97 round — the vanilla
+    /// ActivatorRailBlock.updateState the 26.2 jar the SAME
+    /// `hasNeighborSignal` pair the dev-96 powered verdict reads: the
+    /// side lever's ON kind the bit arms, the signal's loss the same
+    /// walk the OFF verdict re-answers, the above arm the vanilla's
+    /// own second call keeps, the shape nibble the bit's own fold
+    /// never touches — the DETECTOR rail the signal's verdict never
+    /// wears [its own law the cart's presence speaks, the lever the
+    /// detector's byte never arms], the plain RAIL the bit the swap
+    /// never banks).
+    #[test]
+    fn the_activator_rail_wears_the_same_swap() {
+        let mut w = slab_world();
+        w.set(8, 9, 8, ACTIVATOR_RAIL);
+        w.set_variant(8, 9, 8, 1); // the E-W look-stamp the placement wears
+        // THE SIDE LEVER'S ON KIND: the six-neighbor scan the verdict
+        // arms — the POWERED bit the byte's own high seat takes, the
+        // E-W nibble the same byte keeps
+        w.set(8, 9, 7, LEVER_ON);
+        assert!(
+            w.rail_neighbor_updates((8, 9, 7)),
+            "the activator swap the sweep's own moved verdict banks"
+        );
+        assert_eq!(
+            w.variant(8, 9, 8),
+            RAIL_POWERED_BIT | 1,
+            "the ON lever the activator's bit arms — the nibble keeps"
+        );
+        // THE SIGNAL'S LOSS: the OFF lever the same walk clears (the
+        // vanilla's own false verdict the byte's bit drops)
+        w.set(8, 9, 7, LEVER);
+        assert!(
+            w.rail_neighbor_updates((8, 9, 7)),
+            "the clear the sweep's own moved verdict banks"
+        );
+        assert_eq!(
+            w.variant(8, 9, 8),
+            1,
+            "the OFF lever the activator's bit clears — the nibble keeps"
+        );
+        // THE ABOVE ARM: the vanilla's own second call the cell
+        // above's own neighborhood reads — the lever beside the above
+        // cell the same verdict arms
+        w.set(7, 10, 8, LEVER_ON);
+        assert!(
+            w.rail_neighbor_updates((7, 10, 8)),
+            "the above arm the sweep's own moved verdict banks"
+        );
+        assert_eq!(
+            w.variant(8, 9, 8),
+            RAIL_POWERED_BIT | 1,
+            "the above lever the activator's bit arms"
+        );
+        w.set(7, 10, 8, AIR);
+        w.rail_neighbor_updates((7, 10, 8));
+        assert_eq!(
+            w.variant(8, 9, 8),
+            1,
+            "the above lever's loss the activator's bit clears"
+        );
+        // THE SHAPE WRITE'S OWN PRESERVE: the bit armed, the west
+        // neighbor the single connection the E-W axis re-forms — the
+        // shape verdict's own write the standing bit the same byte
+        // carries
+        w.set(7, 10, 8, LEVER_ON);
+        w.rail_neighbor_updates((7, 10, 8));
+        assert_eq!(
+            w.variant(8, 9, 8),
+            RAIL_POWERED_BIT | 1,
+            "the activator's bit armed again"
+        );
+        w.set(7, 9, 8, RAIL);
+        w.set_variant(7, 9, 8, 1);
+        w.rail_neighbor_updates((7, 9, 8));
+        assert_eq!(
+            w.variant(8, 9, 8),
+            RAIL_POWERED_BIT | 1,
+            "the shape write the activator's standing bit preserves"
+        );
+        // THE DETECTOR'S OWN REFUSAL: the lever the detector rail the
+        // same walk never arms (its own law the cart's presence
+        // speaks — the neighbor signal the detector's byte never
+        // banks), the plain RAIL the bit the swap never wears
+        w.set(8, 9, 9, DETECTOR_RAIL);
+        w.set_variant(8, 9, 9, 1);
+        w.set(8, 10, 9, LEVER_ON);
+        w.rail_neighbor_updates((8, 10, 9));
+        assert_eq!(
+            w.variant(8, 9, 9),
+            1,
+            "the detector the lever's signal never arms"
+        );
+        w.set(8, 9, 10, RAIL);
+        w.set_variant(8, 9, 10, 1);
+        w.set(8, 10, 10, LEVER_ON);
+        w.rail_neighbor_updates((8, 10, 10));
+        assert_eq!(
+            w.variant(8, 9, 10),
+            1,
+            "the plain rail the lever's signal never arms"
         );
     }
 
