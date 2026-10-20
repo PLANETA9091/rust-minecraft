@@ -39345,6 +39345,27 @@ impl App {
                 );
                 if let Some(world) = self.offline_world.as_mut() {
                     world.set(lx, ly, lz, flipped);
+                    // THE LEVER'S OWN RAIL VERDICT (the dev-99 round —
+                    // javap LeverBlock.updateNeighbours the 26.2 jar
+                    // the setBlock flag-3 the two seeds the broadcast
+                    // speaks [the lever pos + the support pos the
+                    // variant decode names — the updateNeighborsAt
+                    // pair the wire voice's own scan the same walk
+                    // wears], the PoweredRailBlock.neighborChanged ->
+                    // updateState chain the rails among the seeds' own
+                    // neighborhoods the re-read serves): the
+                    // [`World::rail_neighbor_updates`] walk the two
+                    // seeds the verdict re-fires — the POWERED bit the
+                    // dev-96/97 swap laws the live lever the bit arms,
+                    // the dead lever the bit clears, the detector's
+                    // own cart law the signal never arms, the shape
+                    // nibble the same walk's own masked fold keeps
+                    // [the remesh the attach_wire_voice tail's own
+                    // re-speak banks]
+                    let (dx, dy, dz) =
+                        crate::world::lever_support_offset(world.variant(lx, ly, lz));
+                    let _ = world.rail_neighbor_updates((lx, ly, lz));
+                    let _ = world.rail_neighbor_updates((lx + dx, ly + dy, lz + dz));
                 }
                 // THE WIRE'S OWN VOICE (javap press pc 21-27 — the
                 // updateNeighbours walk the attach helper's own
@@ -110638,6 +110659,163 @@ cow_sound_variant: None,
                 .any(|e| e.starts_with("block_open") || e.starts_with("block_close")),
             "the vibration posts the sculk lane hears"
         );
+    }
+
+    #[test]
+    fn the_lever_toggle_the_rail_verdict_the_swap_wears() {
+        // THE LEVER'S OWN RAIL VERDICT (the dev-99 round — javap
+        // LeverBlock.updateNeighbours the setBlock flag-3 the two
+        // seeds the lever pos + the support pos the broadcast speaks,
+        // the PoweredRailBlock.neighborChanged -> updateState chain
+        // the rails among the seeds' neighborhoods the re-read
+        // serves): the live lever the powered rail's POWERED bit the
+        // swap arms, the dead lever the bit clears, the detector's
+        // own cart law the signal never arms, the plain rail the bit
+        // the swap never wears, the shape bytes the verdicts the
+        // nibble alone answer.
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            // THE THREE RAILS + THE OFF LEVER (the lever's own cell the
+            // ground answers — the rails the lever's own four horizontal
+            // neighbors the x-pair the z-pair flank)
+            w.set(c + 1, top, c, crate::world::POWERED_RAIL);
+            w.set_variant(c + 1, top, c, 0);
+            w.set(c + 3, top, c, crate::world::DETECTOR_RAIL);
+            w.set_variant(c + 3, top, c, 0);
+            w.set(c + 2, top, c - 1, crate::world::RAIL);
+            w.set_variant(c + 2, top, c - 1, 0);
+            w.set(c + 2, top, c, crate::world::LEVER);
+            w.set_variant(c + 2, top, c, 1);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(
+                c as f32 + 2.5,
+                top as f32 + 4.0,
+                c as f32 + 0.5,
+            ),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        // THE ON PRESS (the live lever the bit the swap arms)
+        assert!(app.on_right_press(0, 0), "the lever's ON press consumes");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 2, top, c),
+                crate::world::LEVER_ON,
+                "the lever's own kind the ON bit wears"
+            );
+            assert_eq!(
+                w.variant(c + 1, top, c),
+                crate::world::RAIL_POWERED_BIT,
+                "the live lever the powered rail's bit arms"
+            );
+            assert_eq!(
+                w.variant(c + 3, top, c),
+                0,
+                "the detector's own cart law the lever's signal never arms"
+            );
+            assert_eq!(
+                w.variant(c + 2, top, c - 1),
+                0,
+                "the plain rail the bit the swap never wears"
+            );
+        }
+        // THE OFF PRESS (the signal's death the bit the swap clears)
+        assert!(app.on_right_press(0, 0), "the lever's OFF press consumes");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 2, top, c),
+                crate::world::LEVER,
+                "the lever's own OFF the -1 mate wears"
+            );
+            assert_eq!(
+                w.variant(c + 1, top, c),
+                0,
+                "the dead lever the powered rail's bit clears"
+            );
+        }
+    }
+
+    #[test]
+    fn the_lever_toggle_the_activator_twin_the_same_seam_wears() {
+        // THE ACTIVATOR'S OWN TWIN THROUGH THE SEAM (the dev-99 round —
+        // the same two-seed broadcast the dev-97 swap law the toggle
+        // re-fires): the live lever the activator's bit the same walk
+        // arms, the dead lever the bit clears, the powered kind the
+        // same press its own bit keeps, the shape nibble the pair's
+        // own bytes answer.
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(c + 1, top, c, crate::world::POWERED_RAIL);
+            w.set_variant(c + 1, top, c, 0);
+            w.set(c + 3, top, c, crate::world::ACTIVATOR_RAIL);
+            w.set_variant(c + 3, top, c, 0);
+            w.set(c + 2, top, c, crate::world::LEVER);
+            w.set_variant(c + 2, top, c, 1);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(
+                c as f32 + 2.5,
+                top as f32 + 4.0,
+                c as f32 + 0.5,
+            ),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the lever's ON press consumes");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.variant(c + 3, top, c),
+                crate::world::RAIL_POWERED_BIT,
+                "the live lever the activator's bit arms"
+            );
+            assert_eq!(
+                w.variant(c + 1, top, c),
+                crate::world::RAIL_POWERED_BIT,
+                "the powered kind the same press its own bit keeps"
+            );
+        }
+        assert!(app.on_right_press(0, 0), "the lever's OFF press consumes");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.variant(c + 3, top, c),
+                0,
+                "the dead lever the activator's bit clears"
+            );
+            assert_eq!(
+                w.variant(c + 1, top, c),
+                0,
+                "the powered kind the dead lever's bit clears"
+            );
+        }
     }
 
     #[test]
