@@ -1,0 +1,35 @@
+# THE BUILD'S OWN BASELINE (the dev-103 round — the OOM guard the two
+# mc-client test-bin rounds spoke). The host ceiling is 4.1G with the
+# platform's own resident holding ~1.9G, and the test bin's rustc peak
+# (LLVM codegen of the crate-sized test modules) sits right at the
+# remaining ~2G — the canonical `cargo test --workspace` here needs the
+# serial, stripped, single-threaded-linker shape the env-flag rounds
+# (dev-102/103) proved. Keeping the baseline in the repo makes the bare
+# command carry it: no env gymnastics, one honest fingerprint set.
+#
+# THE SHAPE:
+# - jobs = 1: serial rustc processes — the parallel-compile peak the
+#   OOM killer took first (the SIGKILL the multi-rustc round hit);
+# - lld + lld --threads=1: the linker pass the default ld never
+#   finished in-budget, single-threaded — the link the 38s round ran;
+# - debug = 0 + no incremental: the debuginfo/ich bytes the peak
+#   never needed (the strip=debuginfo line the cargo probe keeps);
+# - the mc-client package's assertions off: the IR the crate-sized
+#   test modules carry, the margin the ceiling asked for.
+
+[build]
+jobs = 1
+
+[target.'cfg(all())']
+rustflags = [
+    "-C", "link-arg=-fuse-ld=lld",
+    "-C", "link-arg=-Wl,--threads=1",
+]
+
+[profile.dev]
+debug = 0
+incremental = false
+
+[profile.dev.package.mc-client]
+debug-assertions = false
+overflow-checks = false

@@ -19502,15 +19502,25 @@ mod tests {
         // THE DETECTOR'S OWN REFUSAL: the lever the detector rail the
         // same walk never arms (its own law the cart's presence
         // speaks — the neighbor signal the detector's byte never
-        // banks), the plain RAIL the bit the swap never wears
+        // banks), the plain RAIL the bit the swap never wears.
+        // THE VERTICAL SEAT'S OWN RE-STAMP (the dev-103 round — the
+        // dev-102 straight seats the six-neighbor notification the
+        // lever ABOVE serves): the stale E-W look-stamp the single
+        // activator connection north the N-S byte re-stamps [the
+        // vanilla's own neighborChanged -> RailState.place walk any
+        // neighbor change re-runs, the connection law the same
+        // verdict the horizontal seats wear] — the ASSERTION the
+        // vanilla-faithful byte reads, the BIT the refusal intent
+        // keeps (0 = the shape re-stamp alone, no 0x80 the lever's
+        // signal never arms)
         w.set(8, 9, 9, DETECTOR_RAIL);
         w.set_variant(8, 9, 9, 1);
         w.set(8, 10, 9, LEVER_ON);
         w.rail_neighbor_updates((8, 10, 9));
         assert_eq!(
             w.variant(8, 9, 9),
-            1,
-            "the detector the lever's signal never arms"
+            0,
+            "the detector the lever's signal never arms — the seat below the re-stamp serves"
         );
         w.set(8, 9, 10, RAIL);
         w.set_variant(8, 9, 10, 1);
@@ -19518,8 +19528,8 @@ mod tests {
         w.rail_neighbor_updates((8, 10, 10));
         assert_eq!(
             w.variant(8, 9, 10),
-            1,
-            "the plain rail the lever's signal never arms"
+            0,
+            "the plain rail the lever's signal never arms — the seat below the re-stamp serves"
         );
     }
 
