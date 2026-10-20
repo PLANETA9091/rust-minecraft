@@ -240,22 +240,30 @@ impl Framebuf {
     /// surface), ~2px wide (the vanilla GL line's own look at the
     /// reference window). Edges straddling the near plane skip — the
     /// vanilla clips them properly; the 4.5-block reach keeps the
-    /// targeted box in front of the camera for every honest aim.
-    pub fn draw_hit_outline(&mut self, ctx: &RenderCtx, pos: (i32, i32, i32)) {
+    /// targeted box in front of the camera for every honest aim. The
+    /// rail's own pick the 2-px band wireframe wears (the dev-87 law
+    /// the SHAPE_FLAT the clip itself refines— the outline the
+    /// hit's own shape speaks, the every-other-kind the full cube).
+    pub fn draw_hit_outline(&mut self, ctx: &RenderCtx, pos: (i32, i32, i32), band: bool) {
         let vp = ctx.proj.mul(&ctx.view);
         const EPS: f32 = 0.002;
         const ALPHA: f32 = 0.4;
+        // the band's own height (the dev-87 law the vanilla SHAPE_FLAT
+        // speaks: the rail pick the 2-px slab wireframe wears, the
+        // every-other-kind the full cube keeps)
+        let height = if band { 2.0f32 / 16.0 } else { 1.0 };
         let (x, y, z) = (pos.0 as f32 - EPS, pos.1 as f32 - EPS, pos.2 as f32 - EPS);
         let s = 1.0 + 2.0 * EPS;
+        let h = height + 2.0 * EPS;
         let corners = [
             [x, y, z],
             [x + s, y, z],
             [x + s, y, z + s],
             [x, y, z + s],
-            [x, y + s, z],
-            [x + s, y + s, z],
-            [x + s, y + s, z + s],
-            [x, y + s, z + s],
+            [x, y + h, z],
+            [x + s, y + h, z],
+            [x + s, y + h, z + s],
+            [x, y + h, z + s],
         ];
         const EDGES: [(usize, usize); 12] = [
             (0, 1),

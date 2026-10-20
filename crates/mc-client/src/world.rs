@@ -3825,9 +3825,10 @@ pub const PIGLIN_WALL_HEAD: u16 = 763;
 /// kinds the future rounds keep), the `.noCollision()` row the
 /// Blocks clinit speaks (the walk-through verdict the collision
 /// table's Empty row banks — the body/mob walks pass, the CLIP the
-/// ray the kind stops [the wheat precedent's law the dig lane
-/// shares], the outline the vanilla's own 2-px getShape the
-/// full-cube clip fold approximates). The POWERED property the
+/// ray the band itself refines [the dev-87 law the vanilla
+/// shape-clip speaks: the pass-over the upper 14-px air keeps, the
+/// hit the band's own plane the entry face names, the outline the
+/// same band's wireframe wears]). The POWERED property the
 /// detector/powered pair the _on kinds the redstone rounds keep —
 /// the OFF kinds the placement wears (the default state's
 /// powered=false pin the registerDefaultState walk banks). The
@@ -3839,6 +3840,12 @@ pub const RAIL: u16 = 764;
 pub const POWERED_RAIL: u16 = 765;
 pub const DETECTOR_RAIL: u16 = 766;
 pub const ACTIVATOR_RAIL: u16 = 767;
+
+/// THE RAIL'S OWN CLIP BAND HEIGHT (the dev-87 round — the vanilla
+/// SHAPE_FLAT `Block.column(16.0, 0.0, 2.0)` the 2-px the block
+/// units speak: the top plane the band clip answers, the band
+/// outline's own wireframe the same height wears).
+pub const RAIL_FLAT_TOP: f64 = 2.0 / 16.0;
 
 /// THE MOB HEADS' OWN KIND TABLE (the dev-80 round — the family
 /// predicates the palette tail reads: the placeable refusal, the
@@ -11372,6 +11379,80 @@ pub struct ClipHit {
     pub inside: bool,
 }
 
+/// THE RAIL'S OWN BAND CLIP (the dev-87 round — the vanilla SHAPE_FLAT
+/// `Block.column(16.0, 0.0, 2.0)` the rail's getShape speaks): the
+/// slab walk the 2-px full-footprint band answers. The entry face
+/// the crossed band plane names (the Direction ordinal the cell's
+/// own convention keeps: the min plane the negative side, the max
+/// plane the positive side), the exact point the plane's own t
+/// carries, the pass-over (the ray the upper 14-px air the band
+/// never meets) the None the traversal continues, the behind-origin
+/// look the honest miss keeps, the reach the segment's own end
+/// keeps (the t the eye's origin speaks).
+fn rail_band_hit(
+    origin: (f64, f64, f64),
+    dir: (f64, f64, f64),
+    cell: (i32, i32, i32),
+    reach: f64,
+) -> Option<ClipHit> {
+    let d = [dir.0, dir.1, dir.2];
+    let o = [origin.0, origin.1, origin.2];
+    let lo = [cell.0 as f64, cell.1 as f64, cell.2 as f64];
+    let hi = [lo[0] + 1.0, lo[1] + RAIL_FLAT_TOP, lo[2] + 1.0];
+    // the entry: the latest slab plane the ray crosses on the way
+    // in (the face that plane's own side names)
+    let mut t_enter = f64::NEG_INFINITY;
+    let mut face = 1u8;
+    for i in 0..3 {
+        if d[i] == 0.0 {
+            // the parallel slab: the origin inside the span or the
+            // miss
+            if o[i] < lo[i] || o[i] > hi[i] {
+                return None;
+            }
+            continue;
+        }
+        let (plane, f) = if d[i] > 0.0 {
+            (lo[i], [4u8, 0, 2][i])
+        } else {
+            (hi[i], [5u8, 1, 3][i])
+        };
+        let t = (plane - o[i]) / d[i];
+        if t > t_enter {
+            t_enter = t;
+            face = f;
+        }
+    }
+    // the exit: the earliest slab plane the ray leaves on the way
+    // out
+    let mut t_exit = f64::INFINITY;
+    for i in 0..3 {
+        if d[i] == 0.0 {
+            continue;
+        }
+        let plane = if d[i] > 0.0 { hi[i] } else { lo[i] };
+        let t = (plane - o[i]) / d[i];
+        if t < t_exit {
+            t_exit = t;
+        }
+    }
+    // the pass-over the miss keeps, the away-look the behind guard
+    // keeps, the reach the segment end keeps
+    if t_enter < 0.0 || t_enter > t_exit || t_enter > reach {
+        return None;
+    }
+    Some(ClipHit {
+        pos: cell,
+        face,
+        location: (
+            origin.0 + d[0] * t_enter,
+            origin.1 + d[1] * t_enter,
+            origin.2 + d[2] * t_enter,
+        ),
+        inside: false,
+    })
+}
+
 /// A plain data grid — derives follow the data (the join result carries a
 /// World through the `Debug/Clone/PartialEq` LoginResult surface; the
 /// stated sky-light factor is an f32, so `Eq` departs with it).
@@ -14377,13 +14458,34 @@ impl World {
         let mut x = origin.0.floor() as i32;
         let mut y = origin.1.floor() as i32;
         let mut z = origin.2.floor() as i32;
-        if solid(self.get(x, y, z)) {
-            return Some(ClipHit {
-                pos: (x, y, z),
-                face: 1, // UP — the eye-inside edge's own stand-in
-                location: origin,
-                inside: true,
-            });
+        let start_id = self.get(x, y, z);
+        if solid(start_id) {
+            // THE RAIL'S OWN START CELL (the dev-87 law the vanilla
+            // shape-contains verdict speaks): the eye inside the 2-px
+            // band the inside hit keeps, the eye in the upper air the
+            // band test answers (the down-look the top plane names,
+            // the away-look the honest miss carries)
+            if is_rail(start_id) {
+                let fy = origin.1 - y as f64;
+                if (0.0..=RAIL_FLAT_TOP).contains(&fy) {
+                    return Some(ClipHit {
+                        pos: (x, y, z),
+                        face: 1, // UP — the eye-inside edge's own stand-in
+                        location: origin,
+                        inside: true,
+                    });
+                }
+                if let Some(hit) = rail_band_hit(origin, (dx, dy, dz), (x, y, z), reach) {
+                    return Some(hit);
+                }
+            } else {
+                return Some(ClipHit {
+                    pos: (x, y, z),
+                    face: 1, // UP — the eye-inside edge's own stand-in
+                    location: origin,
+                    inside: true,
+                });
+            }
         }
         let step_x = if dx > 0.0 { 1i32 } else { -1i32 };
         let step_y = if dy > 0.0 { 1i32 } else { -1i32 };
@@ -14411,14 +14513,26 @@ impl World {
                 x += step_x;
                 let t = t_max_x;
                 t_max_x += t_dx;
-                if solid(self.get(x, y, z)) {
-                    let bx = if step_x > 0 { x as f64 } else { (x + 1) as f64 };
-                    return Some(ClipHit {
-                        pos: (x, y, z),
-                        face: if step_x > 0 { 4 } else { 5 }, // WEST : EAST
-                        location: (bx, origin.1 + dy * t, origin.2 + dz * t),
-                        inside: false,
-                    });
+                let id = self.get(x, y, z);
+                if solid(id) {
+                    // THE RAIL'S OWN BAND (the dev-87 law the SHAPE_FLAT
+                    // speaks): the hit the band's own plane the entry
+                    // face names, the pass-over the walk continues
+                    if is_rail(id) {
+                        if let Some(hit) =
+                            rail_band_hit(origin, (dx, dy, dz), (x, y, z), reach)
+                        {
+                            return Some(hit);
+                        }
+                    } else {
+                        let bx = if step_x > 0 { x as f64 } else { (x + 1) as f64 };
+                        return Some(ClipHit {
+                            pos: (x, y, z),
+                            face: if step_x > 0 { 4 } else { 5 }, // WEST : EAST
+                            location: (bx, origin.1 + dy * t, origin.2 + dz * t),
+                            inside: false,
+                        });
+                    }
                 }
             } else if t_max_y <= t_max_z {
                 if t_max_y > reach {
@@ -14427,14 +14541,26 @@ impl World {
                 y += step_y;
                 let t = t_max_y;
                 t_max_y += t_dy;
-                if solid(self.get(x, y, z)) {
-                    let by = if step_y > 0 { y as f64 } else { (y + 1) as f64 };
-                    return Some(ClipHit {
-                        pos: (x, y, z),
-                        face: if step_y > 0 { 0 } else { 1 }, // DOWN : UP
-                        location: (origin.0 + dx * t, by, origin.2 + dz * t),
-                        inside: false,
-                    });
+                let id = self.get(x, y, z);
+                if solid(id) {
+                    // THE RAIL'S OWN BAND (the dev-87 law the SHAPE_FLAT
+                    // speaks): the hit the band's own plane the entry
+                    // face names, the pass-over the walk continues
+                    if is_rail(id) {
+                        if let Some(hit) =
+                            rail_band_hit(origin, (dx, dy, dz), (x, y, z), reach)
+                        {
+                            return Some(hit);
+                        }
+                    } else {
+                        let by = if step_y > 0 { y as f64 } else { (y + 1) as f64 };
+                        return Some(ClipHit {
+                            pos: (x, y, z),
+                            face: if step_y > 0 { 0 } else { 1 }, // DOWN : UP
+                            location: (origin.0 + dx * t, by, origin.2 + dz * t),
+                            inside: false,
+                        });
+                    }
                 }
             } else {
                 if t_max_z > reach {
@@ -14443,14 +14569,26 @@ impl World {
                 z += step_z;
                 let t = t_max_z;
                 t_max_z += t_dz;
-                if solid(self.get(x, y, z)) {
-                    let bz = if step_z > 0 { z as f64 } else { (z + 1) as f64 };
-                    return Some(ClipHit {
-                        pos: (x, y, z),
-                        face: if step_z > 0 { 2 } else { 3 }, // NORTH : SOUTH
-                        location: (origin.0 + dx * t, origin.1 + dy * t, bz),
-                        inside: false,
-                    });
+                let id = self.get(x, y, z);
+                if solid(id) {
+                    // THE RAIL'S OWN BAND (the dev-87 law the SHAPE_FLAT
+                    // speaks): the hit the band's own plane the entry
+                    // face names, the pass-over the walk continues
+                    if is_rail(id) {
+                        if let Some(hit) =
+                            rail_band_hit(origin, (dx, dy, dz), (x, y, z), reach)
+                        {
+                            return Some(hit);
+                        }
+                    } else {
+                        let bz = if step_z > 0 { z as f64 } else { (z + 1) as f64 };
+                        return Some(ClipHit {
+                            pos: (x, y, z),
+                            face: if step_z > 0 { 2 } else { 3 }, // NORTH : SOUTH
+                            location: (origin.0 + dx * t, origin.1 + dy * t, bz),
+                            inside: false,
+                        });
+                    }
                 }
             }
         }
@@ -18505,6 +18643,88 @@ mod tests {
             w3.clip_fluid_any((8.5, 12.0, 8.5), (0.0, -1.0, 0.0), BLOCK_INTERACTION_RANGE)
                 .is_none(),
             "no fluid, no solid — the ray ends in the open air"
+        );
+    }
+
+    /// THE RAIL CLIP'S OWN BAND LAW (the dev-87 round — the vanilla
+    /// shape-clip the SHAPE_FLAT `Block.column(16.0, 0.0, 2.0)` the
+    /// rail's getShape speaks): the straight-down ray the band's top
+    /// plane names (the 2-px answer, not the cell's own ceiling), the
+    /// horizontal ray the upper air the pass-over keeps (the backstop
+    /// behind the rail the hit names), the in-band ray the full
+    /// footprint the entry plane keeps.
+    #[test]
+    fn the_rail_clip_wears_the_band_and_the_pass_over_law() {
+        let mut w = slab_world();
+        w.set(8, 9, 8, RAIL);
+        // THE BAND'S OWN TOP: the down ray stops at y + 2/16 (the old
+        // full-cube fold named the cell's own ceiling y + 1— the
+        // vanilla shape the honest plane keeps)
+        let hit = w
+            .clip((8.5, 12.0, 8.5), (0.0, -1.0, 0.0), BLOCK_INTERACTION_RANGE)
+            .expect("the rail under the eye");
+        assert_eq!(hit.pos, (8, 9, 8));
+        assert_eq!(hit.face, 1, "UP — the band's top plane");
+        assert_eq!(hit.location, (8.5, 9.0 + RAIL_FLAT_TOP, 8.5));
+        assert!(!hit.inside);
+        // THE PASS-OVER: the horizontal ray the upper air rides — the
+        // rail never decides the hit, the backstop behind it does
+        let mut w2 = slab_world();
+        w2.set(8, 9, 8, RAIL);
+        w2.set(11, 9, 8, STONE);
+        let over = w2
+            .clip((7.0, 9.5, 8.5), (1.0, 0.0, 0.0), BLOCK_INTERACTION_RANGE)
+            .expect("the backstop within the reach");
+        assert_eq!(over.pos, (11, 9, 8), "the rail's upper air the ray passes");
+        assert_eq!(over.face, 4, "WEST — the backstop's own entry");
+        // THE IN-BAND ENTRY: the ray inside the 2-px span the band's
+        // west plane names (the full footprint the plane shares)
+        let band = w2
+            .clip(
+                (5.5, 9.0 + RAIL_FLAT_TOP / 2.0, 8.5),
+                (1.0, 0.0, 0.0),
+                BLOCK_INTERACTION_RANGE,
+            )
+            .expect("the band within the reach");
+        assert_eq!(band.pos, (8, 9, 8));
+        assert_eq!(band.face, 4, "WEST — the band's full-footprint plane");
+        assert_eq!(band.location.0, 8.0, "the west plane exactly");
+        assert_eq!(band.location.1, 9.0 + RAIL_FLAT_TOP / 2.0);
+    }
+
+    /// THE RAIL START CELL'S OWN INSIDE LAW (the dev-87 round — the
+    /// vanilla shape-contains verdict the eye's own cell answers): the
+    /// eye inside the 2-px band the inside hit keeps, the eye in the
+    /// upper air the down-look the band's top plane names (the inside
+    /// flag false), the away-look the honest miss carries.
+    #[test]
+    fn the_rail_start_cell_wears_the_inside_band_law() {
+        let mut w = slab_world();
+        w.set(8, 9, 8, RAIL);
+        // THE EYE INSIDE THE BAND
+        let inside = w
+            .clip(
+                (8.5, 9.0 + RAIL_FLAT_TOP / 2.0, 8.5),
+                (0.0, -1.0, 0.0),
+                BLOCK_INTERACTION_RANGE,
+            )
+            .expect("the eye's own cell");
+        assert_eq!(inside.pos, (8, 9, 8));
+        assert!(inside.inside, "the band contains the eye");
+        // THE UPPER AIR'S OWN DOWN-LOOK: the band's top plane (the
+        // inside flag false— the band the eye never wore)
+        let down = w
+            .clip((8.5, 9.5, 8.5), (0.0, -1.0, 0.0), BLOCK_INTERACTION_RANGE)
+            .expect("the band below the eye");
+        assert_eq!(down.pos, (8, 9, 8));
+        assert_eq!(down.face, 1, "UP — the band's top plane");
+        assert_eq!(down.location.1, 9.0 + RAIL_FLAT_TOP);
+        assert!(!down.inside);
+        // THE AWAY-LOOK: the eye above the band looking up— the band
+        // behind the ray the honest miss keeps
+        assert!(
+            w.clip((8.5, 9.5, 8.5), (0.0, 1.0, 0.0), 4.5).is_none(),
+            "the band behind the ray never hits"
         );
     }
 

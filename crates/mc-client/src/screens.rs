@@ -36756,6 +36756,17 @@ impl App {
     /// the active camera's eye along the view direction through the
     /// BLOCK_INTERACTION_RANGE reach (the dig and the placement speak
     /// the same clip).
+    /// THE PICK'S OWN OUTLINE SHAPE (the dev-87 law): the rail the
+    /// band verdict wears (the SHAPE_FLAT the clip refines), the
+    /// every-other-kind the full cube keeps (the fold the precedent
+    /// kinds still speak), the world-less frame the honest default
+    /// keeps.
+    fn hit_outline_is_band(&self, pos: (i32, i32, i32)) -> bool {
+        self.active_world()
+            .map(|w| crate::world::is_rail(w.get(pos.0, pos.1, pos.2)))
+            .unwrap_or(false)
+    }
+
     fn clip_crosshair(&self) -> Option<crate::world::ClipHit> {
         self.active_world().and_then(|w| {
             let cam = self.world_camera();
@@ -47335,7 +47346,8 @@ impl App {
         // law's own stage index — the vanilla's destroyBlockProgress
         // state the level renderer draws)
         if let Some(hit) = &self.frame_pick {
-            fb.draw_hit_outline(&ctx, hit.pos);
+            let band = self.hit_outline_is_band(hit.pos);
+            fb.draw_hit_outline(&ctx, hit.pos, band);
         }
         let stage = self.dig.destroy_stage();
         if (0..10).contains(&stage) {
@@ -114607,6 +114619,36 @@ cow_sound_variant: None,
                 "the facing the support's own opposite the scan stamps"
             );
         }
+    }
+
+    /// THE PICK'S OWN OUTLINE SHAPE (the dev-87 law): the rail the
+    /// band verdict wears (the SHAPE_FLAT the clip refines), the
+    /// every-other-kind the full cube keeps, the air the honest
+    /// default keeps.
+    #[test]
+    fn the_hit_outline_wears_the_band_only_for_the_rails() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c, top, c, crate::world::RAIL);
+            w.set(c + 2, top, c, crate::world::STONE);
+        }
+        assert!(
+            app.hit_outline_is_band((c, top, c)),
+            "the rail the band wireframe arms"
+        );
+        assert!(
+            !app.hit_outline_is_band((c + 2, top, c)),
+            "the stone the full cube keeps"
+        );
+        assert!(
+            !app.hit_outline_is_band((c + 5, top, c)),
+            "the air the full cube keeps"
+        );
     }
 
     #[test]
