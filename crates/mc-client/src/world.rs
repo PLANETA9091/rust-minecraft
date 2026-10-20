@@ -7179,6 +7179,56 @@ pub fn rail_curve_byte(north: bool, south: bool, west: bool, east: bool) -> Opti
     }
 }
 
+/// THE RAIL'S OWN ASCENT VERDICT (the dev-93 round — the vanilla
+/// RailState.place's slope arms the 26.2 jar speaks: the raised_ne/sw
+/// templates the blockstates/rail.json's ascending rows wear): the
+/// byte the slope's two seats answer —
+/// THE LOW END (the arm the up-rail wears): the cell one up in the
+/// direction holds a rail whose own floor (the block at the subject's
+/// level in the same direction) is Full — the canSurvive consult the
+/// ascent ride keeps [the east-up rail the ASCENDING_EAST byte 2
+/// banks, the west-up 3, the north-up 4, the south-up 5];
+/// THE HIGH END (the arm the down-rail wears): the cell one below on
+/// the OPPOSITE side holds a rail — the subject the slope's high seat
+/// wears [the east ascent reads the west-below rail, the west the
+/// east-below, the north the south-below, the south the north-below].
+/// The X axis the Z verdict precedes (the east/west arms the
+/// north/south walk order keeps — the vanilla's own E-W-first
+/// evaluation the order banks), the every-other-read the None keeps.
+/// Both slope cells the SAME byte wear (the low and the high seats
+/// the one shape share — the vanilla's own continuous slope law).
+pub fn rail_ascent_byte(world: &World, x: i32, y: i32, z: i32) -> Option<u8> {
+    // THE LOW END: the up-rail the direction holds, the floor the
+    // subject's own level keeps (the step block the Full law reads)
+    if is_rail(world.get(x + 1, y + 1, z)) && can_support_rail(world.get(x + 1, y, z)) {
+        return Some(2); // ascending_east
+    }
+    if is_rail(world.get(x - 1, y + 1, z)) && can_support_rail(world.get(x - 1, y, z)) {
+        return Some(3); // ascending_west
+    }
+    if is_rail(world.get(x, y + 1, z - 1)) && can_support_rail(world.get(x, y, z - 1)) {
+        return Some(4); // ascending_north
+    }
+    if is_rail(world.get(x, y + 1, z + 1)) && can_support_rail(world.get(x, y, z + 1)) {
+        return Some(5); // ascending_south
+    }
+    // THE HIGH END: the down-rail the opposite side holds (the
+    // subject the slope's high seat wears)
+    if is_rail(world.get(x - 1, y - 1, z)) {
+        return Some(2); // ascending_east — the lower rail west-below
+    }
+    if is_rail(world.get(x + 1, y - 1, z)) {
+        return Some(3); // ascending_west — the lower rail east-below
+    }
+    if is_rail(world.get(x, y - 1, z + 1)) {
+        return Some(4); // ascending_north — the lower rail south-below
+    }
+    if is_rail(world.get(x, y - 1, z - 1)) {
+        return Some(5); // ascending_south — the lower rail north-below
+    }
+    None
+}
+
 /// THE PANE FAMILY'S OWN RANGE (the dev-58 round — the 17 panes the
 /// contiguous run 560..576 banks, the iron bars the tail seat 577
 /// keeps): the WHOLE IronBarsBlock class the instance arm answers —
@@ -13669,12 +13719,27 @@ impl World {
     pub fn rail_neighbor_updates(&mut self, changed: (i32, i32, i32)) -> bool {
         let (cx, cy, cz) = changed;
         let mut moved = false;
+        // THE SLOPE'S OWN DIAGONALS (the dev-93 round — the vanilla
+        // RailState.place's recursive re-place the connected rails
+        // wear): the up/down steps the ascent's mate sits in — the
+        // placement OR the dig of either slope end the diagonal
+        // re-stamp the walk serves (the high seat the low end's
+        // verdict reads, the low seat the high end's arm answers —
+        // the one slope the two cells the SAME byte share)
         for (x, y, z) in [
             (cx, cy, cz),
             (cx, cy, cz - 1),
             (cx, cy, cz + 1),
             (cx - 1, cy, cz),
             (cx + 1, cy, cz),
+            (cx + 1, cy + 1, cz),
+            (cx - 1, cy + 1, cz),
+            (cx, cy + 1, cz - 1),
+            (cx, cy + 1, cz + 1),
+            (cx + 1, cy - 1, cz),
+            (cx - 1, cy - 1, cz),
+            (cx, cy - 1, cz - 1),
+            (cx, cy - 1, cz + 1),
         ] {
             if !is_rail(self.get(x, y, z)) {
                 continue;
@@ -13685,13 +13750,18 @@ impl World {
             // straight+ascending vocabulary wears, the perpendicular
             // pair the axis verdict's None keeps there)
             let curve_capable = self.get(x, y, z) == crate::world::RAIL;
-            let axis = rail_connection_axis(
-                is_rail(self.get(x, y, z - 1)),
-                is_rail(self.get(x, y, z + 1)),
-                is_rail(self.get(x - 1, y, z)),
-                is_rail(self.get(x + 1, y, z)),
-            )
-            .or_else(|| {
+            // THE ASCENT'S OWN PRIORITY (the dev-93 round — the vanilla
+            // shape resolution the ascent connection first serves: the
+            // slope the curve the axis verdicts all precede — the
+            // flat-only connections the lower verdicts answer)
+            let axis = rail_ascent_byte(self, x, y, z).or_else(|| {
+                rail_connection_axis(
+                    is_rail(self.get(x, y, z - 1)),
+                    is_rail(self.get(x, y, z + 1)),
+                    is_rail(self.get(x - 1, y, z)),
+                    is_rail(self.get(x + 1, y, z)),
+                )
+            }).or_else(|| {
                 if curve_capable {
                     rail_curve_byte(
                         is_rail(self.get(x, y, z - 1)),
@@ -18957,6 +19027,111 @@ mod tests {
             w2.variant(8, 9, 8),
             0,
             "the powered rail the look-stamp byte keeps"
+        );
+    }
+
+    /// THE RAIL'S OWN ASCENT HANDSHAKE (the dev-93 round — the vanilla
+    /// RailState.place's slope arms the recursive re-place the slope's
+    /// both seats wear): the step's block the up-rail's floor keeps,
+    /// the low seat the up-east rail the ASCENDING_EAST byte banks,
+    /// the high seat the down-west rail the same byte wears [the ONE
+    /// slope the two cells share], the flat connection the ascent
+    /// never overrides (the priority the shape resolution keeps), the
+    /// dug high seat the remaining flat connection the axis re-forms,
+    /// the unsupported up-rail the Full-floor gate refuses, the
+    /// powered family the ascent the curve gate never wears.
+    #[test]
+    fn the_rail_neighbor_updates_wear_the_ascent_handshake() {
+        let mut w = slab_world();
+        // the slope: the low seat L at (8,9,8), the step stone at
+        // (9,9,8) [the up-rail's own floor], the high seat H at
+        // (9,10,8) — the look-stamps the flat bytes wear
+        w.set(9, 9, 8, STONE);
+        w.set(9, 10, 8, RAIL);
+        w.set_variant(9, 10, 8, 0);
+        w.set(8, 9, 8, RAIL);
+        w.set_variant(8, 9, 8, 1);
+        // THE SWEEP AT THE HIGH SEAT (the H placement's own beat): the
+        // diagonal walk the low seat reaches, both cells the SAME
+        // ascending byte bank
+        assert!(
+            w.rail_neighbor_updates((9, 10, 8)),
+            "the slope the sweep's own moved verdict banks"
+        );
+        assert_eq!(
+            w.variant(9, 10, 8),
+            2,
+            "the high seat the down-west rail the ASCENDING_EAST byte wears"
+        );
+        assert_eq!(
+            w.variant(8, 9, 8),
+            2,
+            "the low seat the up-east rail the same byte wears"
+        );
+        // THE FLAT RIDER: the west rail the single connection rides —
+        // the ascent the axis verdict never overrides
+        w.set(7, 9, 8, RAIL);
+        w.set_variant(7, 9, 8, 1);
+        w.rail_neighbor_updates((7, 9, 8));
+        assert_eq!(
+            w.variant(8, 9, 8),
+            2,
+            "the ascent the flat west connection never overrides"
+        );
+        assert_eq!(
+            w.variant(7, 9, 8),
+            1,
+            "the west rail the single east connection the E-W axis wears"
+        );
+        // THE DUG HIGH SEAT: the remaining flat west connection the
+        // axis re-forms (the single connection the axis law wears —
+        // the zero-loss keep the dev-89 verdict banks)
+        w.set(9, 10, 8, AIR);
+        assert!(
+            w.rail_neighbor_updates((9, 10, 8)),
+            "the dig the remaining connection the re-form banks"
+        );
+        assert_eq!(
+            w.variant(8, 9, 8),
+            1,
+            "the low seat the flat west connection the E-W axis re-forms"
+        );
+        // THE FULL-FLOOR GATE: the up-rail the non-Full floor holds —
+        // the low seat the ascent refuses (the canSurvive consult the
+        // ride keeps), the high seat the down-rail arm the byte wears
+        let mut w2 = slab_world();
+        w2.set(9, 9, 8, TORCH);
+        w2.set(9, 10, 8, RAIL);
+        w2.set_variant(9, 10, 8, 0);
+        w2.set(8, 9, 8, RAIL);
+        w2.set_variant(8, 9, 8, 1);
+        w2.rail_neighbor_updates((9, 10, 8));
+        assert_eq!(
+            w2.variant(8, 9, 8),
+            1,
+            "the torch floor the ascent gate refuses — the low seat keeps"
+        );
+        assert_eq!(
+            w2.variant(9, 10, 8),
+            2,
+            "the high seat the down-east rail arm the byte wears"
+        );
+        // THE POWERED ASCENT: the powered family the slope the same
+        // verdict banks (the curve gate the ascent never wears)
+        let mut w3 = slab_world();
+        w3.set(9, 9, 8, STONE);
+        w3.set(9, 10, 8, POWERED_RAIL);
+        w3.set(8, 9, 8, POWERED_RAIL);
+        w3.rail_neighbor_updates((8, 9, 8));
+        assert_eq!(
+            w3.variant(8, 9, 8),
+            2,
+            "the powered low seat the up-east rail the ascent banks"
+        );
+        assert_eq!(
+            w3.variant(9, 10, 8),
+            2,
+            "the powered high seat the down-west rail the same byte wears"
         );
     }
 

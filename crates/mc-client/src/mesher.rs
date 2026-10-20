@@ -1162,6 +1162,13 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                     7 => (bz, 16.0 - bx),
                                     8 => (16.0 - bx, 16.0 - bz),
                                     9 => (16.0 - bz, bx),
+                                    // THE ASCENT'S OWN UV (the dev-93
+                                    // round — the y=90-rotated raised
+                                    // template the E-W bytes wear: the u
+                                    // the z-axis tracks, the v the x-axis
+                                    // runs the slope along — the 16-x
+                                    // mirror the y=90 mapping keeps)
+                                    2 | 3 => (bz, 16.0 - bx),
                                     _ => (bx, bz),
                                 }
                             };
@@ -1171,9 +1178,24 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             } else {
                                 [uu, 1.0 - vv]
                             };
+                            // THE ASCENT'S OWN SLOPE (the dev-93 round —
+                            // the raised_ne/sw template's 45-degree
+                            // rotation the rescale the span keeps: the
+                            // plane the flat seat at the low edge wears,
+                            // the y=17/16 seam at the high edge reaches
+                            // — the upper cell's own rail seat the one
+                            // plane connects, the low/high arms the
+                            // byte's direction answers)
+                            let py = match world.variant(wx, wy, wz) {
+                                2 => wy as f32 + 1.0 / 16.0 + bx / 16.0,
+                                3 => wy as f32 + 17.0 / 16.0 - bx / 16.0,
+                                4 => wy as f32 + 17.0 / 16.0 - bz / 16.0,
+                                5 => wy as f32 + 1.0 / 16.0 + bz / 16.0,
+                                _ => fy,
+                            };
                             pts[i] = [
                                 wx as f32 + bx / 16.0,
-                                fy,
+                                py,
                                 wz as f32 + bz / 16.0,
                             ];
                             let lm = match clight.as_ref() {
@@ -14277,6 +14299,88 @@ mod tests {
                 })
         });
         assert_eq!(ne_up.count(), 1, "the NE byte the y=270 fold wears");
+    }
+
+    #[test]
+    fn the_rails_own_ascent_lane_the_sloped_plane_wears() {
+        // THE ASCENT'S OWN MESH LAWS (the dev-93 round — the
+        // raised_ne/sw templates the 45-degree rotation the rescale
+        // keeps): the sloped plane the flat seat at the low edge
+        // wears, the y=17/16 seam the high edge reaches [the upper
+        // cell's own rail seat the one plane connects], the tile the
+        // kind's own row banks (the raised models the plain rail
+        // texture reuse), the E-W bytes the y=90 uv fold wears, the
+        // N-S bytes the identity fold keeps
+        use mc_registry::generated::atlas;
+        let tile = atlas::FACE_TILES[crate::world::RAIL as usize][2];
+        // THE EAST ASCENT (the byte 2): the plane rises toward +x
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::RAIL);
+        w.set_variant(8, 8, 8, 2);
+        let q = mesh_chunk(&w, 0, 0, None);
+        assert_eq!(q.len(), 2, "the slope the up+down pair wears");
+        for quad in &q {
+            assert_eq!(
+                quad.tile, tile,
+                "the raised models the plain rail texture reuse"
+            );
+        }
+        // the up quad: the y the x-correlated slope wears (the west
+        // edge the 1/16 seat, the east edge the 17/16 seam)
+        let up = q
+            .iter()
+            .find(|quad| {
+                quad.pts
+                    .iter()
+                    .zip(quad.uvs.iter())
+                    .all(|(p, uv)| {
+                        (uv[0] - (p[2] - 8.0)).abs() < 1e-5
+                            && (uv[1] - (9.0 - p[0])).abs() < 1e-5
+                    })
+            })
+            .expect("the up face the y=90 fold wears");
+        for p in &up.pts {
+            assert!(
+                (p[1] - (8.0 + 1.0 / 16.0 + (p[0] - 8.0))).abs() < 1e-5,
+                "the slope the x-correlated y wears, got {p:?}"
+            );
+        }
+        let y_hi = up.pts.iter().map(|p| p[1]).fold(f32::MIN, f32::max);
+        let y_lo = up.pts.iter().map(|p| p[1]).fold(f32::MAX, f32::min);
+        assert!(
+            (y_hi - (8.0 + 17.0 / 16.0)).abs() < 1e-4,
+            "the high edge the 17/16 seam reaches, got {y_hi}"
+        );
+        assert!(
+            (y_lo - (8.0 + 1.0 / 16.0)).abs() < 1e-4,
+            "the low edge the flat seat keeps, got {y_lo}"
+        );
+        // THE NORTH ASCENT (the byte 4): the identity uv fold, the
+        // slope the z-correlated y wears (the north edge the 17/16
+        // seam, the south edge the flat seat)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::RAIL);
+        w.set_variant(8, 8, 8, 4);
+        let q = mesh_chunk(&w, 0, 0, None);
+        assert_eq!(q.len(), 2, "the slope the same pair wears");
+        let up4 = q
+            .iter()
+            .find(|quad| {
+                quad.pts
+                    .iter()
+                    .zip(quad.uvs.iter())
+                    .all(|(p, uv)| {
+                        (uv[0] - (p[0] - 8.0)).abs() < 1e-5
+                            && (uv[1] - (p[2] - 8.0)).abs() < 1e-5
+                    })
+            })
+            .expect("the up face the identity fold wears");
+        for p in &up4.pts {
+            assert!(
+                (p[1] - (8.0 + 17.0 / 16.0 - (p[2] - 8.0))).abs() < 1e-5,
+                "the slope the z-correlated y wears, got {p:?}"
+            );
+        }
     }
 
     #[test]
