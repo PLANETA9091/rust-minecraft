@@ -39985,6 +39985,10 @@ impl App {
         // THE OFFLINE PREDICTION: the voxel lands in the App's own
         // terrain and the mesh re-speaks (the networked world's
         // placement rides the server's chunk refresh — no local edit)
+        // THE SUPPORT CHAIN'S OWN COLLECTOR (the pop list the walk
+        // below fills — the speak the block's own close answers, the
+        // &mut self borrow the world's own live loan never folds)
+        let mut placement_pops: Vec<((i32, i32, i32), u16)> = Vec::new();
         if let (Some(world), false) = (self.offline_world.as_mut(), self.world_is_network) {
             // THE DOUBLE PLANT'S OWN PAIR WALKS (the autopush-413
             // round): the ORPHAN'S OWN CLEAR the placement-into wears
@@ -40297,7 +40301,7 @@ impl App {
             // SAME beat douses); the surviving branch the verdict the
             // added support never gates (the chain the false fold keeps)
             let _ = world.fire_shape_updates(cell);
-            // THE RAIL'S OWN NEIGHBOR RE-ALIGNMENT (the dev-89 round—
+            // THE RAIL'S OWN NEIGHBOR RE-ALIGNMENT (the dev-89 round —
             // javap RailState.place the onPlace walk the flag-3
             // broadcast serves: the placed cell the connection law
             // re-stamps [the look-stamp the single connection
@@ -40313,6 +40317,22 @@ impl App {
             // re-reads, the interior block the count the w*h equality
             // the walk refuses): the same law the dig's own beat wears
             let _ = world.portal_shape_updates(cell);
+            // THE PLACEMENT'S OWN SUPPORT CHAIN (the dev-91 round —
+            // javap BlockItem.placeBlock pc 9 the setBlock flag-11 the
+            // UPDATE_NEIGHBORS bit keeps, the neighbors' own
+            // neighborChanged the BaseRailBlock survival consult the
+            // dev-90 round's javap serves — the updateShape family the
+            // fire/rail/portal arms above wear, the canSurvive re-read
+            // the same beat's changed-block walk answers): the six
+            // neighbors the support walk reads — the rail above the
+            // placed cell the straight-DOWN law consults [the Full
+            // support the survive verdict keeps, the thin/empty below
+            // the pop the destroyBlock(pos, true) walk speaks], the
+            // floating torch/plate/wire the same consult the survival
+            // laws answer, the pops the speak walk the block's own
+            // close carries (the 2001 voice + the debris + the drops
+            // the dig's own pop arm wears)
+            placement_pops = world.attach_support_updates(cell);
             if crate::world::is_double_plant(block) {
                 if let Some(upper) = crate::world::double_plant_mate(block) {
                     // the is_double_plant mate IS the upper half (the
@@ -40537,6 +40557,16 @@ impl App {
                 self.hotbar_slots = self.inventory.hotbar();
                 self.use_consume_kills_pop(sel);
             }
+        }
+        // THE POP'S OWN PLACE-BEAT VOICE (the dev-91 round — the
+        // survival consult's pops the same speak walk the dig's own
+        // pop arm wears: the 2001 break voice + the debris burst + the
+        // drop roll + the vibration + the falling checks the schedule
+        // re-arms — the destroyBlock(pos, true) chain the vanilla's
+        // own beat keeps, the place sound the item's own tail speaks
+        // after — the collector the live world loan never folded)
+        if !placement_pops.is_empty() {
+            self.speak_attach_pops(&placement_pops);
         }
         // THE PLACE SOUND: BlockItem.place's own fold — the placed block's
         // SoundType through (v+1)/2, p*0.8. The networked prediction
@@ -114840,6 +114870,123 @@ cow_sound_variant: None,
                 w.variant(c + 1, top, c - 1),
                 0,
                 "the north arm the N-S byte keeps"
+            );
+        }
+    }
+
+    /// THE PLACEMENT'S OWN SUPPORT CHAIN (the dev-91 round — javap
+    /// BlockItem.placeBlock pc 9 the setBlock flag-11 broadcast the
+    /// UPDATE_NEIGHBORS bit keeps, the rail above the changed cell the
+    /// neighborChanged survival consult reads): the torch into the
+    /// floating rail's support cell the pop speaks [the thin below the
+    /// canSurvive refusal the destroyBlock walk serves, the 2001 voice
+    /// + the drop roll the speak walk carries], the stone into the
+    /// same cell the survive verdict keeps (the Full support the rail
+    /// rides). The offset look the ray the rail's own band never
+    /// consults wears — the pass-under the clip law keeps, the hit the
+    /// floor's top face names, the offset cell the rail's support cell
+    /// equals.
+    #[test]
+    fn the_rail_placement_wears_the_support_chain() {
+        // THE POP ARM: the torch the support cell lands, the floating
+        // rail the consult pops the SAME beat wears
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/torch"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            // the lane the ray and the eye ride
+            for dx in -3..=2 {
+                for dz in -2..=2 {
+                    for dy in -3..=3 {
+                        w.set(c + dx, top + dy, c + dz, crate::world::AIR);
+                    }
+                }
+            }
+            // the floor the click lands on + the floating rail the
+            // support cell below keeps (the air the canSurvive never
+            // banks — the look-stamp the tests' own set wears)
+            w.set(c, top - 2, c, crate::world::STONE);
+            w.set(c, top, c, crate::world::RAIL);
+        }
+        // THE OFFSET LOOK: the ray the band underpasses (the +x/-y
+        // slope the floor's top face the far half names — the reach
+        // the 3.3 the click keeps, the rail's own layer the ray
+        // enters below the band's y — the hit the support cell's
+        // floor names)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(
+                c as f32 - 1.0,
+                top as f32 + 2.0,
+                c as f32 + 0.5,
+            ),
+            yaw: std::f32::consts::FRAC_PI_2,
+            pitch: -1.15,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the torch the placement consumes"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top - 1, c),
+                crate::world::TORCH,
+                "the torch the support cell wears"
+            );
+            assert_eq!(
+                w.get(c, top, c),
+                crate::world::AIR,
+                "the rail the thin support's verdict pops"
+            );
+        }
+        // THE KEEP ARM: the stone the same cell wears, the Full
+        // support the consult keeps — the rail rides
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/stone"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -3..=2 {
+                for dz in -2..=2 {
+                    for dy in -3..=3 {
+                        w.set(c + dx, top + dy, c + dz, crate::world::AIR);
+                    }
+                }
+            }
+            w.set(c, top - 2, c, crate::world::STONE);
+            w.set(c, top, c, crate::world::RAIL);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(
+                c as f32 - 1.0,
+                top as f32 + 2.0,
+                c as f32 + 0.5,
+            ),
+            yaw: std::f32::consts::FRAC_PI_2,
+            pitch: -1.15,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the stone the placement consumes"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top - 1, c),
+                crate::world::STONE,
+                "the stone the support cell wears"
+            );
+            assert_eq!(
+                w.get(c, top, c),
+                crate::world::RAIL,
+                "the rail the Full support keeps"
             );
         }
     }
