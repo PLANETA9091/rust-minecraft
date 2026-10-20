@@ -7142,8 +7142,8 @@ pub fn can_support_rail(below: u16) -> bool {
 /// the opposite pair the same axis carries, the perpendicular pair the
 /// curve rounds keep (None — the look-stamp stays), the zero
 /// connections the current shape keeps (None — the vanilla's own
-/// no-recompute verdict). The ascending/corner shapes the future
-/// rounds bank.
+/// no-recompute verdict). The corner shapes the [`rail_curve_byte`]
+/// verdict the dev-92 round banks.
 #[inline]
 pub fn rail_connection_axis(north: bool, south: bool, west: bool, east: bool) -> Option<u8> {
     match (north, south, west, east) {
@@ -7151,6 +7151,30 @@ pub fn rail_connection_axis(north: bool, south: bool, west: bool, east: bool) ->
         (true, true, false, false) => Some(0),
         (false, false, true, false) | (false, false, false, true) => Some(1),
         (false, false, true, true) => Some(1),
+        _ => None,
+    }
+}
+
+/// THE RAIL'S OWN CURVE BYTE (the dev-92 round — the vanilla
+/// blockstates/rail.json's corner rows the RailShape enum's ordinals
+/// bank): the perpendicular pair the corner shape wears — the SOUTH_
+/// EAST byte 6 the S+E pair answers, the SOUTH_WEST 7 the S+W pair,
+/// the NORTH_WEST 8 the N+W pair, the NORTH_EAST 9 the N+E pair —
+/// the every-other-verdict the None keeps (the zero connections the
+/// current shape holds, the straight/opposite pairs the axis law
+/// [`rail_connection_axis`] banks, the three-way+ sprawl the
+/// no-recompute verdict keeps). The CURVE-CAPABLE gate the caller
+/// wears: the plain RAIL the corner shapes alone take (the powered/
+/// detector/activator family the straight+ascending vocabulary the
+/// vanilla's own RailState keeps — the perpendicular pair the same
+/// None the axis verdict banks there).
+#[inline]
+pub fn rail_curve_byte(north: bool, south: bool, west: bool, east: bool) -> Option<u8> {
+    match (north, south, west, east) {
+        (false, true, false, true) => Some(6), // south_east
+        (false, true, true, false) => Some(7), // south_west
+        (true, false, true, false) => Some(8), // north_west
+        (true, false, false, true) => Some(9), // north_east
         _ => None,
     }
 }
@@ -13637,9 +13661,11 @@ impl World {
     /// own updateShape answer wears): the changed cell + the four
     /// horizontal neighbors the re-evaluation reads — every rail cell
     /// among them the connection law re-stamps (the single/opposite
-    /// connections the axis along them wear), the zero/curve/junction
-    /// shapes the current byte keeps. Returns whether any variant
-    /// moved (the caller's own remesh the flag folds).
+    /// connections the axis along them wear; the perpendicular pair
+    /// the corner shape the dev-92 round's [`rail_curve_byte`] verdict
+    /// banks — the curve-capable gate the plain RAIL alone wears), the
+    /// zero/junction shapes the current byte keeps. Returns whether
+    /// any variant moved (the caller's own remesh the flag folds).
     pub fn rail_neighbor_updates(&mut self, changed: (i32, i32, i32)) -> bool {
         let (cx, cy, cz) = changed;
         let mut moved = false;
@@ -13653,12 +13679,30 @@ impl World {
             if !is_rail(self.get(x, y, z)) {
                 continue;
             }
+            // THE CURVE-CAPABLE GATE (the dev-92 round — the vanilla
+            // RailState's own curve verdict the plain RAIL alone
+            // takes: the powered/detector/activator family the
+            // straight+ascending vocabulary wears, the perpendicular
+            // pair the axis verdict's None keeps there)
+            let curve_capable = self.get(x, y, z) == crate::world::RAIL;
             let axis = rail_connection_axis(
                 is_rail(self.get(x, y, z - 1)),
                 is_rail(self.get(x, y, z + 1)),
                 is_rail(self.get(x - 1, y, z)),
                 is_rail(self.get(x + 1, y, z)),
-            );
+            )
+            .or_else(|| {
+                if curve_capable {
+                    rail_curve_byte(
+                        is_rail(self.get(x, y, z - 1)),
+                        is_rail(self.get(x, y, z + 1)),
+                        is_rail(self.get(x - 1, y, z)),
+                        is_rail(self.get(x + 1, y, z)),
+                    )
+                } else {
+                    None
+                }
+            });
             if let Some(v) = axis {
                 if self.variant(x, y, z) != v {
                     self.set_variant(x, y, z, v);
@@ -18792,6 +18836,127 @@ mod tests {
             rail_connection_axis(true, true, true, false),
             None,
             "the junction the curve rounds keep"
+        );
+    }
+
+    /// THE RAIL'S OWN CURVE BYTE TABLE (the dev-92 round — the vanilla
+    /// blockstates/rail.json's corner rows the RailShape enum's
+    /// ordinals bank): the perpendicular pair the corner shape wears
+    /// (the S+E pair the SOUTH_EAST byte 6 answers, the S+W pair the
+    /// SOUTH_WEST 7, the N+W pair the NORTH_WEST 8, the N+E pair the
+    /// NORTH_EAST 9), the every-other-verdict the None keeps (the
+    /// zero connections the shape holds, the straight pair the axis
+    /// law banks, the junction sprawl the no-recompute verdict keeps).
+    #[test]
+    fn the_rail_curve_byte_wears_the_perpendicular_law() {
+        assert_eq!(
+            rail_curve_byte(false, true, false, true),
+            Some(6),
+            "the S+E pair the SOUTH_EAST byte wears"
+        );
+        assert_eq!(
+            rail_curve_byte(false, true, true, false),
+            Some(7),
+            "the S+W pair the SOUTH_WEST byte wears"
+        );
+        assert_eq!(
+            rail_curve_byte(true, false, true, false),
+            Some(8),
+            "the N+W pair the NORTH_WEST byte wears"
+        );
+        assert_eq!(
+            rail_curve_byte(true, false, false, true),
+            Some(9),
+            "the N+E pair the NORTH_EAST byte wears"
+        );
+        // the every-other-verdict the None keeps
+        assert_eq!(
+            rail_curve_byte(false, false, false, false),
+            None,
+            "the zero connections the shape keeps"
+        );
+        assert_eq!(
+            rail_curve_byte(true, true, false, false),
+            None,
+            "the straight pair the axis law banks"
+        );
+        assert_eq!(
+            rail_curve_byte(true, true, true, false),
+            None,
+            "the junction the no-recompute verdict keeps"
+        );
+    }
+
+    /// THE RAIL'S OWN CURVE HANDSHAKE (the dev-92 round — the vanilla
+    /// RailState.place's corner verdict the neighbor walk re-speaks):
+    /// the L's corner cell the perpendicular pair re-stamps [the byte
+    /// 6 the S+E pair banks], the legs the axis along them wear, the
+    /// dug leg the single connection the straight byte re-forms (the
+    /// corner's loss the same walk answers), the powered family the
+    /// curve-capable gate the straight look-stamp keeps.
+    #[test]
+    fn the_rail_neighbor_updates_wear_the_curve_handshake() {
+        let mut w = slab_world();
+        // the L: the corner at (8,9,8), the legs south + east — the
+        // look-stamps the E-W byte wears (the dev-86 placement's own
+        // raw-look arm)
+        w.set(8, 9, 8, RAIL);
+        w.set_variant(8, 9, 8, 1);
+        w.set(8, 9, 9, RAIL);
+        w.set_variant(8, 9, 9, 1);
+        w.set(9, 9, 8, RAIL);
+        w.set_variant(9, 9, 8, 1);
+        assert!(
+            w.rail_neighbor_updates((8, 9, 8)),
+            "the curve the sweep's own moved verdict banks"
+        );
+        assert_eq!(
+            w.variant(8, 9, 8),
+            6,
+            "the corner cell the S+E pair the SOUTH_EAST byte re-stamps"
+        );
+        assert_eq!(
+            w.variant(8, 9, 9),
+            0,
+            "the south leg the single north connection the N-S axis wears"
+        );
+        assert_eq!(
+            w.variant(9, 9, 8),
+            1,
+            "the east leg the single west connection the E-W axis wears"
+        );
+        // THE DUG LEG: the east leg's loss the corner re-forms (the
+        // single south connection the N-S axis answers — the corner's
+        // own re-stamp the same sweep speaks)
+        w.set(9, 9, 8, AIR);
+        assert!(
+            w.rail_neighbor_updates((9, 9, 8)),
+            "the dig's own sweep the re-form banks"
+        );
+        assert_eq!(
+            w.variant(8, 9, 8),
+            0,
+            "the corner the single south connection the N-S axis re-forms"
+        );
+        // THE POWERED GATE: the perpendicular pair the curve-capable
+        // verdict refuses — the axis bytes the legs already wear (the
+        // single connections the axis law banks), the corner cell the
+        // look-stamp keeps
+        let mut w2 = slab_world();
+        w2.set(8, 9, 8, POWERED_RAIL);
+        w2.set_variant(8, 9, 8, 0);
+        w2.set(8, 9, 9, POWERED_RAIL);
+        w2.set_variant(8, 9, 9, 0);
+        w2.set(9, 9, 8, POWERED_RAIL);
+        w2.set_variant(9, 9, 8, 1);
+        assert!(
+            !w2.rail_neighbor_updates((8, 9, 8)),
+            "the powered pair the curve gate refuses — nothing moves"
+        );
+        assert_eq!(
+            w2.variant(8, 9, 8),
+            0,
+            "the powered rail the look-stamp byte keeps"
         );
     }
 

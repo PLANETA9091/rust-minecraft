@@ -1071,7 +1071,19 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                 // wears, the _on pair the powered swap the redstone
                 // rounds keep).
                 if crate::world::is_rail(id) {
-                    let tile = if (id as usize) < atlas::N_KINDS {
+                    // THE CORNER SEAT (the dev-92 round — the vanilla
+                    // blockstates/rail.json's corner rows the model
+                    // rotation the byte resolves: the curve bytes the
+                    // plain RAIL's perpendicular pair banks — the
+                    // [`crate::world::rail_curve_byte`] verdict — the
+                    // rail_corner texture the pool tail seats, the
+                    // y=0/90/180/270 arms the uv rotation folds
+                    // below wear; the straight bytes the kind's own
+                    // row the flat arm keeps)
+                    let corner = matches!(world.variant(wx, wy, wz), 6..=9);
+                    let tile = if corner {
+                        atlas::TILE_RAIL_CORNER
+                    } else if (id as usize) < atlas::N_KINDS {
                         atlas::FACE_TILES[id as usize][2]
                     } else {
                         atlas::TILE_NONE
@@ -1131,9 +1143,28 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             // the y=90 rotation's rigid ride keeps;
                             // the down face the vanilla's own flip the
                             // mirrored v wears)
+                            // THE CORNER'S OWN ROTATION FOLD (the dev-92
+                            // round — the blockstate's y-rotated model
+                            // the uv the inverse mapping samples: the
+                            // SE byte the identity wears, the SW byte
+                            // the y=90 arm (u=z, v=16-x), the NW byte
+                            // the y=180 arm (16-x, 16-z), the NE byte
+                            // the y=270 arm (16-z, x) — the texture's
+                            // own east+south bend the edges the decoded
+                            // PNG confirms, the down face the vanilla's
+                            // own v-flip the same fold keeps)
                             let bx = c[0] * 16.0;
                             let bz = c[2] * 16.0;
-                            let (uu, vv) = if transposed { (bz, bx) } else { (bx, bz) };
+                            let (uu, vv) = if transposed {
+                                (bz, bx)
+                            } else {
+                                match world.variant(wx, wy, wz) {
+                                    7 => (bz, 16.0 - bx),
+                                    8 => (16.0 - bx, 16.0 - bz),
+                                    9 => (16.0 - bz, bx),
+                                    _ => (bx, bz),
+                                }
+                            };
                             let (uu, vv) = (uu / 16.0, vv / 16.0);
                             uvs[i] = if face == 2 {
                                 [uu, vv]
@@ -14191,6 +14222,61 @@ mod tests {
         });
         assert_eq!(ew_up.count(), 1, "the up face the transposed map wears");
         assert_eq!(ew_down.count(), 1, "the down face the flipped transpose wears");
+    }
+
+    #[test]
+    fn the_rails_own_corner_lane_the_rotation_folds_wear() {
+        // THE CORNER SEAT (the dev-92 round — the vanilla
+        // blockstates/rail.json's corner rows the model rotation the
+        // byte resolves): the curve bytes the rail_corner tile wear
+        // (the pool tail seat), the SE byte the identity fold keeps,
+        // the NE byte the y=270 arm samples (u=16-z, v=x), the same
+        // y=1/16 plane the same two quads wear
+        use mc_registry::generated::atlas;
+        let corner_tile = atlas::TILE_RAIL_CORNER;
+        assert_ne!(
+            corner_tile,
+            atlas::TILE_NONE,
+            "the corner seat the pool tail banks"
+        );
+        // THE SE QUARTER (the byte 6): the identity uv (u=x, v=z)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::RAIL);
+        w.set_variant(8, 8, 8, 6);
+        let q = mesh_chunk(&w, 0, 0, None);
+        assert_eq!(q.len(), 2, "the corner the same two quads wears");
+        for quad in &q {
+            assert_eq!(quad.tile, corner_tile, "the corner tile the byte 6 wears");
+        }
+        let se_up = q.iter().filter(|quad| {
+            quad.pts
+                .iter()
+                .zip(quad.uvs.iter())
+                .all(|(p, uv)| {
+                    (uv[0] - (p[0] - 8.0)).abs() < 1e-5
+                        && (uv[1] - (p[2] - 8.0)).abs() < 1e-5
+                })
+        });
+        assert_eq!(se_up.count(), 1, "the SE byte the identity fold wears");
+        // THE NE QUARTER (the byte 9): the y=270 arm (u=16-z, v=x)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::RAIL);
+        w.set_variant(8, 8, 8, 9);
+        let q_ne = mesh_chunk(&w, 0, 0, None);
+        assert_eq!(q_ne.len(), 2, "the quarter the same two quads wears");
+        for quad in &q_ne {
+            assert_eq!(quad.tile, corner_tile, "the corner tile the byte 9 wears");
+        }
+        let ne_up = q_ne.iter().filter(|quad| {
+            quad.pts
+                .iter()
+                .zip(quad.uvs.iter())
+                .all(|(p, uv)| {
+                    (uv[0] - (9.0 - p[2])).abs() < 1e-5
+                        && (uv[1] - (p[0] - 8.0)).abs() < 1e-5
+                })
+        });
+        assert_eq!(ne_up.count(), 1, "the NE byte the y=270 fold wears");
     }
 
     #[test]
