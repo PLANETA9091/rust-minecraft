@@ -793,18 +793,20 @@ pub fn destroy_overlay_quads(pos: (i32, i32, i32), tile: u16) -> Vec<Quad> {
 
 /// THE RAIL'S OWN CRACK BAND (the dev-88 round — the vanilla destroy
 /// overlay the rail's SHAPE_FLAT `Block.column(16.0, 0.0, 2.0)` speaks):
-/// the six faces the 2-px band wraps — the top plane the band's own
-/// top carries, the bottom the cell floor keeps, the four sides the
-/// 2-px strip wears, the full tile uv the every-face sample keeps, the
-/// same 0.0015 epsilon the crumbling render type's polygon offset
-/// speaks.
-pub fn destroy_overlay_quads_band(pos: (i32, i32, i32), tile: u16) -> Vec<Quad> {
+/// the six faces the band top's own height wraps — the top plane the
+/// band's own top carries, the bottom the cell floor keeps, the four
+/// sides the strip wears, the full tile uv the every-face sample keeps,
+/// the same 0.0015 epsilon the crumbling render type's polygon offset
+/// speaks. THE ASCENT'S OWN SPAN (the dev-94 round — the vanilla
+/// SHAPE_ASCENDING box the ascent bytes wear): the caller the shape's
+/// own top passes — the flat bytes the 2-px the SHAPE_FLAT speaks, the
+/// ascent bytes the 8-px the same getShape's isAscending() arm serves.
+pub fn destroy_overlay_quads_band(pos: (i32, i32, i32), tile: u16, band_top: f32) -> Vec<Quad> {
     let (px, py, pz) = (pos.0 as f32, pos.1 as f32, pos.2 as f32);
     const EPS: f32 = 0.0015;
-    const BAND_TOP: f32 = 2.0 / 16.0;
     // the y fold the band's own span names: the low corners the
     // floor's below keeps, the high corners the band top's above wears
-    let yfold = |v: f32| if v <= 0.0 { -EPS } else { BAND_TOP + EPS };
+    let yfold = |v: f32| if v <= 0.0 { -EPS } else { band_top + EPS };
     let infl = |v: f32| if v <= 0.0 { -EPS } else { 1.0 + EPS };
     let mut out = Vec::with_capacity(6);
     for face in 0..6usize {
@@ -7940,7 +7942,7 @@ mod tests {
     /// law the contrast keeps.
     #[test]
     fn the_destroy_band_wears_the_two_px_span() {
-        let quads = destroy_overlay_quads_band((3, 4, 5), 777);
+        let quads = destroy_overlay_quads_band((3, 4, 5), 777, 2.0f32 / 16.0);
         assert_eq!(quads.len(), 6);
         let lo = 4.0 - 0.0015;
         let hi = 4.0 + 2.0f32 / 16.0 + 0.0015;
@@ -7979,6 +7981,45 @@ mod tests {
         for p in full[2].pts.iter() {
             assert!((p[1] - 5.0015).abs() < 1e-6, "the full cube's own ceiling");
         }
+    }
+
+    /// THE ASCENT'S OWN CRACK (the dev-94 round — the vanilla
+    /// SHAPE_ASCENDING box the destroy overlay the ascent bytes wear):
+    /// the 8-px top the caller's shape verdict serves — the top plane
+    /// the box's own 8/16 carries, the bottom the cell floor keeps,
+    /// the sides the 8-px strip wears.
+    #[test]
+    fn the_destroy_band_wears_the_ascent_span() {
+        let quads = destroy_overlay_quads_band((3, 4, 5), 777, 8.0f32 / 16.0);
+        assert_eq!(quads.len(), 6);
+        let lo = 4.0 - 0.0015;
+        let hi = 4.0 + 0.5 + 0.0015;
+        for (face, q) in quads.iter().enumerate() {
+            for p in q.pts.iter() {
+                assert!(
+                    p[1] >= lo && p[1] <= hi,
+                    "the 8-px span the face {} keeps",
+                    face
+                );
+            }
+            if face == 2 {
+                for p in q.pts.iter() {
+                    assert!((p[1] - hi).abs() < 1e-6, "the ascent box's top plane");
+                }
+            }
+            if face == 3 {
+                for p in q.pts.iter() {
+                    assert!((p[1] - lo).abs() < 1e-6, "the cell floor plane");
+                }
+            }
+        }
+        // the sides the 8-px strip wears: both edges the span speaks
+        let south = &quads[4];
+        assert!(
+            south.pts.iter().any(|p| (p[1] - lo).abs() < 1e-6)
+                && south.pts.iter().any(|p| (p[1] - hi).abs() < 1e-6),
+            "the side strip's own both edges"
+        );
     }
 
 

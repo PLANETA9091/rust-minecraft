@@ -36752,19 +36752,37 @@ impl App {
         }
     }
 
-    /// The crosshair pick — the vanilla GameRenderer.pick's own shape:
-    /// the active camera's eye along the view direction through the
-    /// BLOCK_INTERACTION_RANGE reach (the dig and the placement speak
-    /// the same clip).
     /// THE PICK'S OWN OUTLINE SHAPE (the dev-87 law): the rail the
     /// band verdict wears (the SHAPE_FLAT the clip refines), the
     /// every-other-kind the full cube keeps (the fold the precedent
     /// kinds still speak), the world-less frame the honest default
-    /// keeps.
-    fn hit_outline_is_band(&self, pos: (i32, i32, i32)) -> bool {
+    /// keeps. THE ASCENT'S OWN TOP (the dev-94 round — the vanilla
+    /// getShape's isAscending() arm the variant bytes answer): the
+    /// ascent bytes 2..=5 the 8-px SHAPE_ASCENDING box the verdict
+    /// serves, the every-other-byte the 2-px SHAPE_FLAT band the
+    /// flat law keeps, the 0.0 the full cube the non-rail kinds the
+    /// same verdict speaks.
+    fn hit_outline_band_top(&self, pos: (i32, i32, i32)) -> f32 {
         self.active_world()
-            .map(|w| crate::world::is_rail(w.get(pos.0, pos.1, pos.2)))
-            .unwrap_or(false)
+            .map(|w| {
+                if crate::world::is_rail(w.get(pos.0, pos.1, pos.2)) {
+                    self.rail_band_top(w, pos) as f32
+                } else {
+                    0.0
+                }
+            })
+            .unwrap_or(0.0)
+    }
+
+    /// The shape's own top the variant grid answers (the app-level
+    /// mirror of the [`crate::world::World::rail_band_top`] law — the
+    /// world-less frame the honest 2-px default keeps).
+    fn rail_band_top(&self, w: &crate::world::World, pos: (i32, i32, i32)) -> f32 {
+        if matches!(w.variant(pos.0, pos.1, pos.2), 2..=5) {
+            crate::world::RAIL_ASC_TOP as f32
+        } else {
+            crate::world::RAIL_FLAT_TOP as f32
+        }
     }
 
     fn clip_crosshair(&self) -> Option<crate::world::ClipHit> {
@@ -47397,20 +47415,24 @@ impl App {
         // BLOCK pick speaks it, mining or not) and the breaking overlay
         // (the destroy_stage crack on the armed dig's cell, the progress
         // law's own stage index — the vanilla's destroyBlockProgress
-        // state the level renderer draws; the rail's own dig the 2-px
-        // band crack wears — the dev-88 law the SHAPE_FLAT speaks)
+        // state the level renderer draws; the rail's own dig the shape's
+        // own span crack wears — the dev-88 law the SHAPE_FLAT speaks,
+        // the ascent bytes the 8-px box the dev-94 law serves)
         if let Some(hit) = &self.frame_pick {
-            let band = self.hit_outline_is_band(hit.pos);
-            fb.draw_hit_outline(&ctx, hit.pos, band);
+            let band_top = self.hit_outline_band_top(hit.pos);
+            fb.draw_hit_outline(&ctx, hit.pos, band_top);
         }
         let stage = self.dig.destroy_stage();
         if (0..10).contains(&stage) {
             let tile = mc_registry::generated::atlas::DESTROY_TILES[stage as usize];
             // THE RAIL'S OWN CRACK (the dev-88 law the SHAPE_FLAT
-            // speaks): the band cell the 2-px overlay wears, the
-            // every-other-kind the full cube keeps
-            let quads = if self.hit_outline_is_band(self.dig.pos) {
-                crate::mesher::destroy_overlay_quads_band(self.dig.pos, tile)
+            // speaks): the band cell the shape's own span the overlay
+            // wears (the flat bytes the 2-px, the ascent bytes the
+            // 8-px the dev-94 law serves), the every-other-kind the
+            // full cube keeps
+            let band_top = self.hit_outline_band_top(self.dig.pos);
+            let quads = if band_top > 0.0 {
+                crate::mesher::destroy_overlay_quads_band(self.dig.pos, tile, band_top)
             } else {
                 crate::mesher::destroy_overlay_quads(self.dig.pos, tile)
             };
@@ -114685,7 +114707,8 @@ cow_sound_variant: None,
     /// THE PICK'S OWN OUTLINE SHAPE (the dev-87 law): the rail the
     /// band verdict wears (the SHAPE_FLAT the clip refines), the
     /// every-other-kind the full cube keeps, the air the honest
-    /// default keeps.
+    /// default keeps. THE ASCENT'S OWN TOP (the dev-94 round): the
+    /// ascent bytes the 8-px box the same verdict speaks.
     #[test]
     fn the_hit_outline_wears_the_band_only_for_the_rails() {
         let mut app = App::new(3);
@@ -114697,17 +114720,29 @@ cow_sound_variant: None,
             let w = app.offline_world.as_mut().unwrap();
             w.set(c, top, c, crate::world::RAIL);
             w.set(c + 2, top, c, crate::world::STONE);
+            w.set(c + 4, top, c, crate::world::RAIL);
+            w.set_variant(c + 4, top, c, 2); // ASCENDING_EAST
         }
-        assert!(
-            app.hit_outline_is_band((c, top, c)),
-            "the rail the band wireframe arms"
+        let band_top = app.hit_outline_band_top((c, top, c));
+        assert_eq!(
+            band_top,
+            crate::world::RAIL_FLAT_TOP as f32,
+            "the flat rail the 2-px wireframe arms"
         );
-        assert!(
-            !app.hit_outline_is_band((c + 2, top, c)),
+        let ascent_top = app.hit_outline_band_top((c + 4, top, c));
+        assert_eq!(
+            ascent_top,
+            crate::world::RAIL_ASC_TOP as f32,
+            "the ascent bytes the 8-px box the verdict serves"
+        );
+        assert_eq!(
+            app.hit_outline_band_top((c + 2, top, c)),
+            0.0,
             "the stone the full cube keeps"
         );
-        assert!(
-            !app.hit_outline_is_band((c + 5, top, c)),
+        assert_eq!(
+            app.hit_outline_band_top((c + 5, top, c)),
+            0.0,
             "the air the full cube keeps"
         );
     }

@@ -241,17 +241,23 @@ impl Framebuf {
     /// reference window). Edges straddling the near plane skip — the
     /// vanilla clips them properly; the 4.5-block reach keeps the
     /// targeted box in front of the camera for every honest aim. The
-    /// rail's own pick the 2-px band wireframe wears (the dev-87 law
+    /// rail's own pick the band wireframe wears (the dev-87 law
     /// the SHAPE_FLAT the clip itself refines— the outline the
     /// hit's own shape speaks, the every-other-kind the full cube).
-    pub fn draw_hit_outline(&mut self, ctx: &RenderCtx, pos: (i32, i32, i32), band: bool) {
+    /// THE ASCENT'S OWN WIRE (the dev-94 round — the vanilla
+    /// SHAPE_ASCENDING box the ascent bytes wear): the caller the
+    /// shape's own top passes — 0.0 the full cube the every-other-kind
+    /// keeps, 2/16 the flat band the SHAPE_FLAT arm serves, 8/16 the
+    /// ascent box the isAscending() bytes the same verdict wears.
+    pub fn draw_hit_outline(&mut self, ctx: &RenderCtx, pos: (i32, i32, i32), band_top: f32) {
         let vp = ctx.proj.mul(&ctx.view);
         const EPS: f32 = 0.002;
         const ALPHA: f32 = 0.4;
         // the band's own height (the dev-87 law the vanilla SHAPE_FLAT
         // speaks: the rail pick the 2-px slab wireframe wears, the
+        // ascent bytes the 8-px box the dev-94 arm serves, the
         // every-other-kind the full cube keeps)
-        let height = if band { 2.0f32 / 16.0 } else { 1.0 };
+        let height = if band_top > 0.0 { band_top } else { 1.0 };
         let (x, y, z) = (pos.0 as f32 - EPS, pos.1 as f32 - EPS, pos.2 as f32 - EPS);
         let s = 1.0 + 2.0 * EPS;
         let h = height + 2.0 * EPS;

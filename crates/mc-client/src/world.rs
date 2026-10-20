@@ -3847,6 +3847,16 @@ pub const ACTIVATOR_RAIL: u16 = 767;
 /// outline's own wireframe the same height wears).
 pub const RAIL_FLAT_TOP: f64 = 2.0 / 16.0;
 
+/// THE ASCENT'S OWN BAND HEIGHT (the dev-94 round — the vanilla
+/// SHAPE_ASCENDING `Block.box(0.0, 0.0, 0.0, 16.0, 8.0, 16.0)` the
+/// [`RailBlock.getShape`]'s own `isAscending()` arm speaks: the
+/// ASCENDING_EAST/WEST/NORTH/SOUTH ordinals 2..=5 the shape bytes
+/// the variant grid banks, the 8-px full-footprint box the outline
+/// answer wears — the RENDER model the 45-degree slope draws, the
+/// SHAPE the honest crude box keeps, the flat bytes the 2-px
+/// [`RAIL_FLAT_TOP`] the SHAPE_FLAT arm keeps).
+pub const RAIL_ASC_TOP: f64 = 8.0 / 16.0;
+
 /// THE MOB HEADS' OWN KIND TABLE (the dev-80 round — the family
 /// predicates the palette tail reads: the placeable refusal, the
 /// above-imitate consult, the honest absence every non-head kind
@@ -11488,11 +11498,16 @@ fn rail_band_hit(
     dir: (f64, f64, f64),
     cell: (i32, i32, i32),
     reach: f64,
+    top: f64,
 ) -> Option<ClipHit> {
     let d = [dir.0, dir.1, dir.2];
     let o = [origin.0, origin.1, origin.2];
     let lo = [cell.0 as f64, cell.1 as f64, cell.2 as f64];
-    let hi = [lo[0] + 1.0, lo[1] + RAIL_FLAT_TOP, lo[2] + 1.0];
+    // the band's own top the shape's own verdict serves: the flat
+    // bytes the SHAPE_FLAT 2-px the caller passes, the ascent bytes
+    // the SHAPE_ASCENDING 8-px the same arm carries (the dev-94 law
+    // the vanilla getShape's isAscending() branch speaks)
+    let hi = [lo[0] + 1.0, lo[1] + top, lo[2] + 1.0];
     // the entry: the latest slab plane the ray crosses on the way
     // in (the face that plane's own side names)
     let mut t_enter = f64::NEG_INFINITY;
@@ -14628,6 +14643,22 @@ impl World {
         })
     }
 
+    /// THE ASCENT'S OWN BAND TOP (the dev-94 round — the vanilla
+    /// [`RailBlock.getShape`]'s own verdict the shape bytes the
+    /// variant grid banks: the ASCENDING_EAST/WEST/NORTH/SOUTH
+    /// ordinals 2..=5 the 8-px SHAPE_ASCENDING box the cell wears,
+    /// every other byte the 2-px SHAPE_FLAT band the flat bytes'
+    /// own law keeps — the curve bytes 6..=9 the flat arm the
+    /// vanilla's own isAscending() false keeps, the no-opinion byte
+    /// 0 the flat arm the pre-variants look keeps).
+    fn rail_band_top(&self, x: i32, y: i32, z: i32) -> f64 {
+        if matches!(self.variant(x, y, z), 2..=5) {
+            RAIL_ASC_TOP
+        } else {
+            RAIL_FLAT_TOP
+        }
+    }
+
     /// The shared DDA walk (the clip's own traversal): the predicate
     /// decides the hit cells, everything else — the boundary math, the
     /// entry face, the exact location — the one walk both laws speak.
@@ -14656,8 +14687,14 @@ impl World {
             // band test answers (the down-look the top plane names,
             // the away-look the honest miss carries)
             if is_rail(start_id) {
+                // THE ASCENT'S OWN BAND (the dev-94 round — the vanilla
+                // getShape's isAscending() arm the start cell answers:
+                // the ascent bytes the 8-px box the eye's own fy the
+                // containment consult reads, the flat bytes the 2-px
+                // band the same law keeps)
+                let top = self.rail_band_top(x, y, z);
                 let fy = origin.1 - y as f64;
-                if (0.0..=RAIL_FLAT_TOP).contains(&fy) {
+                if (0.0..=top).contains(&fy) {
                     return Some(ClipHit {
                         pos: (x, y, z),
                         face: 1, // UP — the eye-inside edge's own stand-in
@@ -14665,7 +14702,7 @@ impl World {
                         inside: true,
                     });
                 }
-                if let Some(hit) = rail_band_hit(origin, (dx, dy, dz), (x, y, z), reach) {
+                if let Some(hit) = rail_band_hit(origin, (dx, dy, dz), (x, y, z), reach, top) {
                     return Some(hit);
                 }
             } else {
@@ -14709,8 +14746,9 @@ impl World {
                     // speaks): the hit the band's own plane the entry
                     // face names, the pass-over the walk continues
                     if is_rail(id) {
+                        let top = self.rail_band_top(x, y, z);
                         if let Some(hit) =
-                            rail_band_hit(origin, (dx, dy, dz), (x, y, z), reach)
+                            rail_band_hit(origin, (dx, dy, dz), (x, y, z), reach, top)
                         {
                             return Some(hit);
                         }
@@ -14737,8 +14775,9 @@ impl World {
                     // speaks): the hit the band's own plane the entry
                     // face names, the pass-over the walk continues
                     if is_rail(id) {
+                        let top = self.rail_band_top(x, y, z);
                         if let Some(hit) =
-                            rail_band_hit(origin, (dx, dy, dz), (x, y, z), reach)
+                            rail_band_hit(origin, (dx, dy, dz), (x, y, z), reach, top)
                         {
                             return Some(hit);
                         }
@@ -14765,8 +14804,9 @@ impl World {
                     // speaks): the hit the band's own plane the entry
                     // face names, the pass-over the walk continues
                     if is_rail(id) {
+                        let top = self.rail_band_top(x, y, z);
                         if let Some(hit) =
-                            rail_band_hit(origin, (dx, dy, dz), (x, y, z), reach)
+                            rail_band_hit(origin, (dx, dy, dz), (x, y, z), reach, top)
                         {
                             return Some(hit);
                         }
@@ -19336,6 +19376,85 @@ mod tests {
             w.clip((8.5, 9.5, 8.5), (0.0, 1.0, 0.0), 4.5).is_none(),
             "the band behind the ray never hits"
         );
+    }
+
+    /// THE ASCENT'S OWN BAND CLIP (the dev-94 round — the vanilla
+    /// SHAPE_ASCENDING `Block.box(0.0, 0.0, 0.0, 16.0, 8.0, 16.0)`
+    /// the getShape's own isAscending() arm speaks): the ascent byte
+    /// the 8-px box the clip answers — the ray above the flat top the
+    /// box's west plane names (the same height the flat bytes the
+    /// pass-over keep), the down look the box's own top plane carries,
+    /// the eye inside the box the inside hit keeps, the corner byte
+    /// the flat band the isAscending() false keeps.
+    #[test]
+    fn the_rail_clip_wears_the_ascent_box_law() {
+        // THE ASCENT'S OWN ENTRY: the horizontal ray at fy=4/16 — above
+        // the SHAPE_FLAT 2-px, inside the SHAPE_ASCENDING 8-px — the
+        // ascent cell's west plane names
+        let mut w = slab_world();
+        w.set(8, 9, 8, RAIL);
+        w.set_variant(8, 9, 8, 2); // ASCENDING_EAST
+        w.set(11, 9, 8, STONE);
+        let hit = w
+            .clip(
+                (7.0, 9.0 + 0.25, 8.5),
+                (1.0, 0.0, 0.0),
+                BLOCK_INTERACTION_RANGE,
+            )
+            .expect("the ascent box within the reach");
+        assert_eq!(hit.pos, (8, 9, 8));
+        assert_eq!(hit.face, 4, "WEST — the ascent box's own entry");
+        assert_eq!(hit.location.0, 8.0, "the west plane exactly");
+        assert_eq!(hit.location.1, 9.0 + 0.25);
+        // THE FLAT BYTES THE CONTRAST KEEPS: the same height the flat
+        // rail the pass-over answers (the SHAPE_FLAT 2-px the ray
+        // never meets)
+        let mut w2 = slab_world();
+        w2.set(8, 9, 8, RAIL);
+        w2.set(11, 9, 8, STONE);
+        let over = w2
+            .clip(
+                (7.0, 9.0 + 0.25, 8.5),
+                (1.0, 0.0, 0.0),
+                BLOCK_INTERACTION_RANGE,
+            )
+            .expect("the backstop within the reach");
+        assert_eq!(over.pos, (11, 9, 8), "the flat band the ray passes");
+        assert_eq!(over.face, 4, "WEST — the backstop's own entry");
+        // THE ASCENT'S OWN TOP: the down ray the box's own 8-px plane
+        // names (the flat bytes' 2-px the same ray never wears)
+        let down = w
+            .clip((8.5, 12.0, 8.5), (0.0, -1.0, 0.0), BLOCK_INTERACTION_RANGE)
+            .expect("the ascent box under the eye");
+        assert_eq!(down.pos, (8, 9, 8));
+        assert_eq!(down.face, 1, "UP — the ascent box's top plane");
+        assert_eq!(down.location, (8.5, 9.0 + RAIL_ASC_TOP, 8.5));
+        assert!(!down.inside);
+        // THE EYE INSIDE THE BOX: the fy=4/16 the containment consult
+        // keeps (the flat band the same height never contains)
+        let inside = w
+            .clip(
+                (8.5, 9.0 + 0.25, 8.5),
+                (0.0, -1.0, 0.0),
+                BLOCK_INTERACTION_RANGE,
+            )
+            .expect("the eye's own cell");
+        assert_eq!(inside.pos, (8, 9, 8));
+        assert!(inside.inside, "the 8-px box contains the eye");
+        // THE CORNER BYTES THE FLAT ARM KEEPS: the isAscending() false
+        // the same height the pass-over answers
+        let mut w3 = slab_world();
+        w3.set(8, 9, 8, RAIL);
+        w3.set_variant(8, 9, 8, 6); // SOUTH_EAST corner
+        w3.set(11, 9, 8, STONE);
+        let corner = w3
+            .clip(
+                (7.0, 9.0 + 0.25, 8.5),
+                (1.0, 0.0, 0.0),
+                BLOCK_INTERACTION_RANGE,
+            )
+            .expect("the backstop within the reach");
+        assert_eq!(corner.pos, (11, 9, 8), "the corner the flat band keeps");
     }
 
     /// The diagonal's helper — the ray from (9.5, 11.0, 9.5) along
