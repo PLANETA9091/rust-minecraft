@@ -115,8 +115,79 @@ pub const V_REST_SPEED_SQR_FLOOR: f64 = 0.005;
 pub const SQRT_OF_TWO: f64 = 1.4142135f32 as f64;
 
 /// THE YAW STAMP'S OWN BASE (the adjustToRails pc 153's own #285 —
-/// the 128.0f the atan2 walk subtracts from, the flipped arm adds).
-pub const YAW_BASE: f32 = 128.0;
+/// the 180.0f the atan2 walk subtracts from, the flipped arm adds.
+/// THE MINE'S OWN RE-VERDICT the dev-106 round banks: the 128.0 the
+/// dev-105 walk wore exists NOWHERE in the minecart classes — the
+/// constant-pool scan (float/double 128.0 across AbstractMinecart /
+/// NewMinecartBehavior / OldMinecartBehavior) answers empty, the
+/// adjustToRails bytecode's `ldc_w #285` decodes Float 180.0, and
+/// BOTH behaviors' adjustToRails wear the same 180.0 — the east exit
+/// the 180.0 speaks (atan2(0,1) = 0), the south exit the 180 − 90 =
+/// 90.0 wears).
+pub const YAW_BASE: f32 = 180.0;
+
+/// THE USE-ON SPAWN'S OWN OFFSETS (the MinecartItem.useOn walk's own
+/// ldc2_w pair — the 26.2 jar the dev-106 round banks): the 0.0625
+/// the spawn y rides ABOVE the clicked cell's own y (pc 110-113's
+/// #88), the 0.5 the x/z CENTER adds and the SLOPE arm's yOffset
+/// wears (pc 87-90's #75 — the ascending rails the half-block lift
+/// keeps), the rail-below probe's own drop 0.1 + the 1e-5 the
+/// getCurrentBlockPosOrRailBelow walk subtracts (pcs 38-45's #420 +
+/// #422), and the slope snap's own lift the adjustToRails tail adds
+/// (pc 542-545's #337 — the dist + 0.1 the y gain keeps).
+pub const SPAWN_HEIGHT: f64 = 0.0625;
+pub const SLOPE_SPAWN_LIFT: f64 = 0.5;
+pub const RAIL_PROBE_DROP: f64 = 0.1;
+pub const RAIL_PROBE_EPS: f64 = 1.0e-5;
+pub const SLOPE_SNAP_LIFT: f64 = 0.1;
+
+/// THE SLOPE SNAP'S OWN LEAN (the adjustToRails tail's own pair —
+/// pc 563-572's #342/#343: the flipped cart's +45.0 the uphill lean
+/// speaks, the plain cart's −45.0 the descent lean keeps).
+pub const SLOPE_PITCH: f32 = 45.0;
+
+/// THE MINECART'S OWN ENTITY DIMENSIONS (the vanilla EntityType's own
+/// `sized(0.98F, 0.7F)` constants the MINECART row keeps — the same
+/// family the BOAT pair the world_view banks: the registry never
+/// ships the dims, the type's own constant the vanilla source keeps;
+/// the half-width the overlap scan walks, the height the box's own
+/// span speaks).
+pub const MINECART_DIMENSIONS_WIDTH: f32 = 0.98;
+pub const MINECART_DIMENSIONS_HEIGHT: f32 = 0.7;
+
+/// THE MINECART ITEM'S OWN FAMILY (the six names the item registry
+/// order keeps — the plain cart, the chest, the furnace, the hopper,
+/// the tnt, the command block: the family gate the useOn dispatch
+/// row reads BEFORE the block placement's own guard).
+pub const MINECART_ITEMS: [&str; 6] = [
+    "minecart",
+    "chest_minecart",
+    "furnace_minecart",
+    "hopper_minecart",
+    "tnt_minecart",
+    "command_block_minecart",
+];
+
+/// THE FAMILY'S OWN VERDICT (the held item's name the gate reads).
+pub fn is_minecart_item(name: &str) -> bool {
+    MINECART_ITEMS.contains(&name)
+}
+
+/// THE OFFLINE CART'S OWN RECORD (the spawn walk's own hull — the id
+/// the client's own counter keeps, the kind the item name's family
+/// speaks, the walk the cart_tick lane drives each 20-TPS beat).
+#[derive(Debug, Clone)]
+pub struct OfflineCart {
+    /// The offline spawner's own id (the counter the boat lane's own
+    /// precedent keeps).
+    pub id: i32,
+    /// The item name's own family word ("minecart" the plain cart
+    /// speaks, "chest_minecart" the boxed one — the render lane's
+    /// future selector).
+    pub kind: &'static str,
+    /// The walk the tick rides (the pos/delta/pose the step keeps).
+    pub cart: Minecart,
+}
 
 pub type V3 = [f64; 3];
 
@@ -331,10 +402,16 @@ pub struct Minecart {
     pub delta: V3,
     /// The yaw the adjustToRails stamp speaks (degrees).
     pub yaw_deg: f32,
+    /// The pitch the adjustToRails SLOPE arm stamps (degrees — the
+    /// ±45.0 pair the ascent lean wears, the flat rail the 0.0 keeps).
+    pub pitch_deg: f32,
     /// The on-rails flag the transition arms.
     pub on_rails: bool,
     /// The isVehicle fold (the ridden cart's own slowdown arm).
     pub ridden: bool,
+    /// The isFlipped fold (the vanilla Entity.isFlipped read the yaw
+    /// +pitch arms wear — the spawn the plain cart's false keeps).
+    pub flipped: bool,
 }
 
 impl Minecart {
@@ -343,8 +420,10 @@ impl Minecart {
             pos,
             delta: [0.0, 0.0, 0.0],
             yaw_deg: 0.0,
+            pitch_deg: 0.0,
             on_rails: false,
             ridden: false,
+            flipped: false,
         }
     }
 }
@@ -474,25 +553,160 @@ fn step_along_track(world: &World, cart: &mut Minecart, rail_pos: (i32, i32, i32
 }
 
 /// THE YAW STAMP (the adjustToRails pc 153-201 verbatim): the favored
-/// exit's atan2 the 128.0 base subtracts, the flipped cart's own +128
-/// the isFlipped arm adds (the v1 the unflipped cart serves).
+/// exit's atan2 the 180.0 base subtracts, the flipped cart's own +180
+/// the isFlipped arm adds (the v1 the unflipped cart serves). THE
+/// BASE THE MINE RE-SPEAKS (dev-106): 180.0 — no 128.0 float exists
+/// in any minecart class, the dev-105 walk's 128.0 was the mis-mine.
 pub fn adjust_to_rails_yaw(shape: u8, delta: V3, flipped: bool) -> f32 {
     let (first, second) = rail_exits(shape);
     let half1 = v_horizontal(v_scale(first, EXIT_SCALE));
     let half2 = v_horizontal(v_scale(second, EXIT_SCALE));
-    let mut favored = half2;
-    if v_len(delta) > STEP_EPS {
-        if v_dot(delta, half1) >= v_dot(delta, half2) && !is_descending(delta, shape) {
-            favored = half1;
-        }
+    // THE SWAP LAW (the adjustToRails pcs 94-151 verbatim — the
+    // dev-106 round's own re-walk): the swap arms BOTH — the dot
+    // refusal (len > eps && dot1 < dot2 → the motion favors the
+    // second exit) AND the descent verdict (the isDecending read the
+    // bytecode serves REGARDLESS of the length: the pcs 105→130 jump
+    // the short-motion path lands at the SAME isDecending read the
+    // dot-fall-through keeps — the dev-105 walk's else-arm the short
+    // motion kept half1 unconditionally is the seam the re-walk
+    // closes; the descent's strict sign the 1e-5 scale can carry).
+    let favored = if (v_len(delta) > STEP_EPS && v_dot(delta, half1) < v_dot(delta, half2))
+        || is_descending(delta, shape)
+    {
+        half2
     } else {
-        favored = half1;
-    }
+        half1
+    };
     let mut yaw = YAW_BASE - ((favored[2]).atan2(favored[0]) * 180.0 / std::f64::consts::PI) as f32;
     if flipped {
         yaw += YAW_BASE;
     }
     yaw
+}
+
+/// THE RAIL-BELOW'S OWN PROBE (the AbstractMinecart
+/// getCurrentBlockPosOrRailBelow walk's EXPERIMENTAL arm verbatim —
+/// the 26.2 jar the dev-106 round banks): the floor cell the position
+/// speaks, the probe y the 0.1 + 1e-5 drop rides (pcs 34-46), the
+/// probe cell's RAILS verdict the y the probe's own floor re-answers
+/// (pcs 61-78), and the miss the cell BELOW the floor y reads (the
+/// old-behavior arm pcs 82-95 — the (x, y−1, z) the isRail walk
+/// answers; the pos itself the silence keeps).
+pub fn rail_below_or_pos(world: &World, pos: V3) -> (i32, i32, i32) {
+    let bx = pos[0].floor() as i32;
+    let by = pos[1].floor() as i32;
+    let bz = pos[2].floor() as i32;
+    // THE EXPERIMENTAL ARM (the flag world the App's offline lane
+    // wears — the MINECART_IMPROVEMENTS default the vanilla worlds
+    // never speak: the feature-flag scan the dev-106 mine banks —
+    // FeatureFlags.DEFAULT_FLAGS = of(VANILLA) ONLY, the
+    // MINECART_IMPROVEMENTS flag the set never carries). The App's
+    // own offline world WEARS the flag (the NewMinecartBehavior
+    // selection the AbstractMinecart ctor's ifeq arm picks — the
+    // walk dev-105 banked IS the walk the carts ride).
+    let probe_y = pos[1] - RAIL_PROBE_DROP - RAIL_PROBE_EPS;
+    if is_rail(world.get(bx, probe_y.floor() as i32, bz)) {
+        return (bx, probe_y.floor() as i32, bz);
+    }
+    // THE OLD ARM'S OWN FALLBACK (the pcs 82-95 walk): the cell below
+    // the floor y the isRail read answers, the miss the floor cell
+    // itself keeps.
+    if is_rail(world.get(bx, by - 1, bz)) {
+        return (bx, by - 1, bz);
+    }
+    (bx, by, bz)
+}
+
+/// THE SPAWN'S OWN RAIL SNAP (the NewMinecartBehavior.adjustToRails
+/// walk verbatim — the 26.2 jar the dev-106 round banks, the walk
+/// the createMinecart factory's NewMinecartBehavior arm rides):
+/// the exits the shape speaks, the HALF exits the 0.5 scale wears,
+/// the favored exit the swap law + the yaw the 180.0 base stamps,
+/// the CURVE the projection keeps (the t the diff·rel/diff·dot walk
+/// banks, the corner's own diagonal the spawn lands on), the
+/// STRAIGHT the center-or-carry law keeps (the moving axis the
+/// cell's own center answers, the still axis the carried coord),
+/// and the SLOPE the lift + the lean the tail speaks (the target
+/// the second half-exit's own end rides, the dist + 0.1 the y gain,
+/// the pitch the flipped ±45.0 pair wears). The `immediate` bool
+/// the lerpSteps record's own weight speaks — the offline pose IS
+/// the truth, the record the walk never keeps.
+pub fn adjust_to_rails(world: &World, cart: &mut Minecart, rail_pos: (i32, i32, i32)) {
+    let shape = rail_shape_of(world, rail_pos.0, rail_pos.1, rail_pos.2);
+    let Some(shape) = shape else {
+        return; // the isRail guard pc 0-7 — the non-rail state the snap never reads
+    };
+    let (first, second) = rail_exits(shape);
+    let e1 = v_scale(first, EXIT_SCALE);
+    let e2 = v_scale(second, EXIT_SCALE);
+    let mut h1 = v_horizontal(e1);
+    let mut h2 = v_horizontal(e2);
+    // THE SWAP (pcs 94-151 — the same law the yaw walk wears).
+    if (v_len(cart.delta) > STEP_EPS && v_dot(cart.delta, h1) < v_dot(cart.delta, h2))
+        || is_descending(cart.delta, shape)
+    {
+        std::mem::swap(&mut h1, &mut h2);
+    }
+    let mut yaw = YAW_BASE - ((h1[2]).atan2(h1[0]) * 180.0 / std::f64::consts::PI) as f32;
+    if cart.flipped {
+        yaw += YAW_BASE;
+    }
+    let cur = cart.pos;
+    let bottom_center = [
+        rail_pos.0 as f64 + 0.5,
+        rail_pos.1 as f64,
+        rail_pos.2 as f64 + 0.5,
+    ];
+    let center = [
+        rail_pos.0 as f64 + 0.5,
+        rail_pos.1 as f64 + 0.5,
+        rail_pos.2 as f64 + 0.5,
+    ];
+    let mut new_pos = cur;
+    // THE CURVE'S OWN PROJECTION (pcs 244-360): BOTH axes differ →
+    // the corner — the diff the e2 − e1 keeps, the rel the carried
+    // offset minus the first half-exit wears, the t the dot ratio
+    // banks, the proj the yaw re-stamps.
+    let curved = e1[0] != e2[0] && e1[2] != e2[2];
+    if curved {
+        let diff = v_sub(e2, e1);
+        let rel = v_sub(v_sub(cur, bottom_center), e1);
+        let t = v_dot(diff, rel) / v_dot(diff, diff);
+        let proj = v_scale(diff, t);
+        new_pos = v_add(v_add(bottom_center, e1), proj);
+        yaw = YAW_BASE - ((proj[2]).atan2(proj[0]) * 180.0 / std::f64::consts::PI) as f32;
+        if cart.flipped {
+            yaw += YAW_BASE;
+        }
+    } else {
+        // THE STRAIGHT'S OWN SNAP (pcs 365-461): the xdiff/zdiff the
+        // exit delta's own axes speak — the moving axis the cell's
+        // own CENTER answers, the still axis the carried coord keeps,
+        // the y the CELL's own y wears (pc 434-437).
+        let xdiff = (e1[0] - e2[0]) != 0.0;
+        let zdiff = (e1[2] - e2[2]) != 0.0;
+        let x = if zdiff { center[0] } else { cur[0] };
+        let z = if xdiff { center[2] } else { cur[2] };
+        new_pos = [x, rail_pos.1 as f64, z];
+    }
+    cart.pos = new_pos;
+    // THE SLOPE'S OWN LIFT + LEAN (pcs 483-592): the y pair's
+    // mismatch the ascent speaks — the target the second half-exit's
+    // own end rides, the dist the target's distance keeps, the y the
+    // dist + 0.1 gains, the pitch the flipped ±45 pair banks.
+    let mut pitch = 0.0f32;
+    if e1[1] != e2[1] {
+        let target = v_add(bottom_center, h2);
+        let dist = ((target[0] - cart.pos[0]).powi(2)
+            + (target[1] - cart.pos[1]).powi(2)
+            + (target[2] - cart.pos[2]).powi(2))
+            .sqrt();
+        cart.pos = v_add(cart.pos, [0.0, dist + SLOPE_SNAP_LIFT, 0.0]);
+        pitch = if cart.flipped { SLOPE_PITCH } else { -SLOPE_PITCH };
+    }
+    cart.yaw_deg = yaw;
+    cart.pitch_deg = pitch;
+    cart.on_rails = true;
 }
 
 /// THE CART'S OWN TICK (the moveAlongTrack verbatim): the iteration
@@ -832,16 +1046,37 @@ mod tests {
 
     #[test]
     fn the_yaw_stamp_the_atan2_base_wears() {
-        // THE adjustToRails yaw: the favored exit's atan2 the 128.0
-        // base subtracts — the east exit the 128.0 speaks (atan2(0,1)
-        // = 0), the south exit the 128 − 90 = 38.0 wears.
+        // THE adjustToRails yaw: the favored exit's atan2 the 180.0
+        // base subtracts — the east exit the 180.0 speaks (atan2(0,1)
+        // = 0), the south exit the 180 − 90 = 90.0 wears. THE MINE'S
+        // OWN RE-VERDICT (dev-106): the 128.0 the dev-105 comment
+        // spoke exists NOWHERE in the minecart classes — the
+        // constant-pool scan answers empty, the bytecode's ldc_w
+        // decodes Float 180.0, the base the jar's own word keeps.
         let east = adjust_to_rails_yaw(1, [0.4, 0.0, 0.0], false);
         assert!((east - (YAW_BASE - 0.0)).abs() < 1e-4);
         let south = adjust_to_rails_yaw(0, [0.0, 0.0, 0.4], false);
         assert!((south - (YAW_BASE - 90.0)).abs() < 1e-4);
-        // THE FLIPPED arm the +128 adds.
+        // THE FLIPPED arm the +180 adds.
         let flipped = adjust_to_rails_yaw(1, [0.4, 0.0, 0.0], true);
         assert!((flipped - (YAW_BASE + YAW_BASE)).abs() < 1e-4);
+    }
+
+    #[test]
+    fn the_swap_law_the_short_motion_descends() {
+        // THE SWAP LAW'S OWN SEAM (the dev-106 re-walk — the pcs
+        // 105→130 jump): the SHORT motion (len ≤ 1e-5) the descent
+        // verdict STILL reads — the westward hair the ASCENDING_EAST's
+        // low side speaks swaps the favored exit to the second (the
+        // east exit the yaw wears). The dev-105 walk's else-arm kept
+        // half1 unconditionally — the seam the re-walk closes.
+        let short = adjust_to_rails_yaw(2, [-1.0e-6, 0.0, 0.0], false);
+        // the favored = half2 = the east exit → yaw = 180 − 0 = 180
+        assert!((short - 180.0).abs() < 1e-4);
+        // the plain zero motion: no swap, the first (west-below) exit
+        // the yaw stamps — atan2(0, −0.5) = π → 180 − 180 = 0
+        let zero = adjust_to_rails_yaw(2, [0.0, 0.0, 0.0], false);
+        assert!((zero - 0.0).abs() < 1e-4);
     }
 
     #[test]
@@ -901,5 +1136,114 @@ mod tests {
         // slowdown+cap the first-iteration arm keeps (0.2 · 0.975 —
         // under the cap the halved·slowdown speed stays).
         assert!((v_horizontal_distance(cart.delta) - 0.2 * SLOWDOWN_EMPTY).abs() < 1e-9);
+    }
+
+    #[test]
+    fn the_spawn_snap_the_flat_rail_centers() {
+        // THE createMinecart factory's own snap (the adjustToRails
+        // walk the NewMinecartBehavior arm rides): the fresh cart on
+        // an EAST_WEST rail — the straight arm's center-or-carry law
+        // (the x axis the exits MOVE, the z the carried coord keeps),
+        // the y the CELL's own y wears, the yaw the first (west)
+        // exit's atan2 the 180.0 base stamps (atan2(0, −0.5) = π →
+        // 180 − 180 = 0), the pitch the flat rail zeroes.
+        let mut world = yard();
+        world.set(5, Y, 3, RAIL);
+        world.set_variant(5, Y, 3, 1); // EAST_WEST
+        let mut cart = Minecart::new([5.5, Y as f64 + SPAWN_HEIGHT, 3.5]);
+        adjust_to_rails(&world, &mut cart, (5, Y, 3));
+        assert!((cart.pos[0] - 5.5).abs() < 1e-9, "the x the carried coord keeps");
+        assert!((cart.pos[1] - Y as f64).abs() < 1e-9, "the y the CELL's own y wears");
+        assert!((cart.pos[2] - 3.5).abs() < 1e-9, "the z the center answers");
+        assert!((cart.yaw_deg - 0.0).abs() < 1e-4);
+        assert!((cart.pitch_deg - 0.0).abs() < 1e-4);
+        assert!(cart.on_rails);
+    }
+
+    #[test]
+    fn the_spawn_snap_the_slope_lifts_and_leans() {
+        // THE ASCENDING_EAST spawn: the useOn walk's slope yOffset the
+        // raw spawn wears (y + 0.0625 + 0.5), the snap's straight arm
+        // the y the CELL's own y re-answers, the SLOPE tail the lift
+        // keeps (the target the second half-exit's own end rides —
+        // the dist 0.5 + the 0.1 the y gain wears) and the lean the
+        // −45.0 the plain cart's own descent pitch banks.
+        let mut world = yard();
+        world.set(5, Y, 3, RAIL);
+        world.set_variant(5, Y, 3, 2); // ASCENDING_EAST (the east high)
+        let mut cart = Minecart::new([5.5, Y as f64 + SPAWN_HEIGHT + SLOPE_SPAWN_LIFT, 3.5]);
+        adjust_to_rails(&world, &mut cart, (5, Y, 3));
+        assert!((cart.pos[0] - 5.5).abs() < 1e-9);
+        assert!((cart.pos[1] - (Y as f64 + 0.6)).abs() < 1e-9, "the dist + 0.1 lift");
+        assert!((cart.pos[2] - 3.5).abs() < 1e-9);
+        assert!((cart.yaw_deg - 0.0).abs() < 1e-4);
+        assert!((cart.pitch_deg - (-SLOPE_PITCH)).abs() < 1e-4);
+    }
+
+    #[test]
+    fn the_spawn_snap_the_corner_projects_the_diagonal() {
+        // THE SOUTH_EAST corner: the curved arm the projection keeps
+        // — the t the dot ratio banks (0.5 the fresh spawn's own
+        // center rides), the corner's own diagonal the pos wears
+        // (x + 0.75, z + 0.75), the yaw the proj's atan2 re-stamps
+        // (atan2(−0.25, 0.25) = −π/4 → 180 − (−45) = 225).
+        let mut world = yard();
+        world.set(5, Y, 3, RAIL);
+        world.set_variant(5, Y, 3, 6); // SOUTH_EAST
+        let mut cart = Minecart::new([5.5, Y as f64 + SPAWN_HEIGHT, 3.5]);
+        adjust_to_rails(&world, &mut cart, (5, Y, 3));
+        assert!((cart.pos[0] - 5.75).abs() < 1e-9);
+        assert!((cart.pos[1] - Y as f64).abs() < 1e-9);
+        assert!((cart.pos[2] - 3.75).abs() < 1e-9);
+        assert!((cart.yaw_deg - 225.0).abs() < 1e-4);
+        assert!((cart.pitch_deg - 0.0).abs() < 1e-4);
+    }
+
+    #[test]
+    fn the_rail_below_probe_the_experimental_drop_keeps() {
+        // THE getCurrentBlockPosOrRailBelow walk: the probe y the
+        // 0.1 + 1e-5 drop rides — a rail ONE below the floor y the
+        // probe's own floor answers, the non-rail column the old
+        // arm's (x, y−1, z) fallback speaks, the clean air the floor
+        // cell itself keeps.
+        let mut world = yard();
+        world.set(5, Y, 3, RAIL);
+        world.set_variant(5, Y, 3, 1);
+        // the pos a FULL block above the rail: the floor cell (5, Y+1, 3)
+        // carries no rail, the probe's drop reaches (5, Y, 3)
+        assert_eq!(
+            rail_below_or_pos(&world, [5.5, (Y + 1) as f64, 3.5]),
+            (5, Y, 3)
+        );
+        // the non-rail column: the probe misses, the old arm's below
+        // cell (5, Y−1, 3) misses too, the floor cell itself the
+        // silence keeps
+        assert_eq!(
+            rail_below_or_pos(&world, [7.5, Y as f64, 7.5]),
+            (7, Y, 7)
+        );
+        // the old arm's own case: the rail the floor-y−1 cell wears —
+        // the pos exactly ON the y boundary the probe's floor reads
+        // (Y − 0.1 → Y − 1)
+        world.set(5, Y - 1, 7, RAIL);
+        world.set_variant(5, Y - 1, 7, 1);
+        assert_eq!(
+            rail_below_or_pos(&world, [5.5, Y as f64, 7.5]),
+            (5, Y - 1, 7)
+        );
+    }
+
+    #[test]
+    fn the_snap_the_non_rail_cell_never_reads() {
+        // THE isRail guard pc 0-7: the non-rail state the snap never
+        // touches — the cart's own pose the silence keeps.
+        let mut world = yard();
+        world.set(5, Y, 3, crate::world::DIRT);
+        let mut cart = Minecart::new([5.5, Y as f64, 3.5]);
+        cart.yaw_deg = 42.0;
+        adjust_to_rails(&world, &mut cart, (5, Y, 3));
+        assert!((cart.yaw_deg - 42.0).abs() < 1e-6, "the pose untouched");
+        assert!(!cart.on_rails);
+        assert!((cart.pos[1] - Y as f64).abs() < 1e-9);
     }
 }

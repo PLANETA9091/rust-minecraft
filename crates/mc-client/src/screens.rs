@@ -7722,6 +7722,19 @@ pub struct App {
     /// the BoatItem.use walk's singleplayer arm; the wire ids stay the
     /// server's).
     pub next_boat_id: i32,
+    /// THE OFFLINE CARTS' OWN ID COUNTER (the client's own — the
+    /// MinecartItem.useOn walk's singleplayer arm; the wire ids stay
+    /// the server's).
+    pub next_cart_id: i32,
+    /// THE OFFLINE SPAWNER'S OWN CARTS (the MinecartItem.useOn walk's
+    /// singleplayer arm — the local carts the wire's Add Entity lane
+    /// is the future own of): the cart the offline right-click spawns
+    /// on the clicked rail, the adjustToRails snap the createMinecart
+    /// factory speaks, the tick the App's own 20-TPS beat rides (the
+    /// cart_tick lane the dev-105 round banked). The fresh session's
+    /// own honesty the boats' clear law keeps — the carts drop with
+    /// the world that carried them.
+    pub offline_carts: Vec<crate::cart::OfflineCart>,
     /// THE OFFLINE HULLS' OWN PHYSICS (the AbstractBoat fields the
     /// authoritative lane keeps — the delta's y word, the two
     /// statuses, the water level, the lastYd): the id keys the
@@ -9126,6 +9139,8 @@ impl App {
             orbs: Vec::new(),
             next_orb_id: 1,
             next_boat_id: 1,
+            next_cart_id: 1,
+            offline_carts: Vec::new(),
             take_xp_delay: 0,
             health: 20.0,
             food_data: crate::food::FoodData::new(),
@@ -10483,6 +10498,12 @@ impl App {
                 // lane the server's own beat paces, the singleplayer's
                 // the hull's own tick keeps)
                 self.tick_offline_paddle_voices();
+                // THE CARTS' OWN OFFLINE TICK (the moveAlongTrack walk
+                // the cart_tick lane banks — the dev-105 verbatim law
+                // the App's 20-TPS beat rides: the slope push the low
+                // side speaks, the halt/boost the powered rails arm,
+                // the off-rail the gravity fall wears)
+                self.tick_offline_carts();
             }
             let using = self.using_item.is_some();
             // THE REINS' OWN WORD (the controlling pass the held stack
@@ -18821,6 +18842,7 @@ impl App {
             // stale session's lerp state never names a local hull)
             self.offline_boats.clear();
             self.offline_boat_phys.clear();
+            self.offline_carts.clear();
             self.offline_ride = None;
             self.net_boats.clear();
             self.net_boat_lerp.clear();
@@ -24216,6 +24238,7 @@ impl App {
         self.dig_held = false;
         self.offline_boats.clear();
         self.offline_boat_phys.clear();
+        self.offline_carts.clear();
         self.offline_bubbles.clear();
         self.net_boats.clear();
         self.net_boat_lerp.clear();
@@ -24265,6 +24288,7 @@ impl App {
         // fresh walk arms)
         self.offline_boats.clear();
         self.offline_boat_phys.clear();
+        self.offline_carts.clear();
         self.offline_ride = None;
         self.net_boat_lerp.clear();
         // the paddle clocks the fresh world's own zero keeps (the wire's
@@ -39596,6 +39620,18 @@ impl App {
                     if let Some(launched) = self.on_right_press_firework_arm(&hit) {
                         return launched;
                     }
+                } else if crate::cart::is_minecart_item(held) {
+                    // THE MINECART'S OWN USE-ON WALK (javap MinecartItem.
+                    // useOn over the 26.2 jar — the dev-106 round's own
+                    // mine): the RAILS tag the clicked cell speaks FIRST,
+                    // the shape the BaseRailBlock property read banks, the
+                    // spawn Vec3 the (x+0.5, y+0.0625+yOffset, z+0.5) fold
+                    // wears, the createMinecart factory the adjustToRails
+                    // snap rides, the shrink(1) the survival stack rides,
+                    // the SUCCESS the swing arms.
+                    if let Some(spawned) = self.on_right_press_minecart_arm(&hit) {
+                        return spawned;
+                    }
                 }
             }
         }
@@ -40756,7 +40792,6 @@ impl App {
         face_gate: bool,
     ) -> Option<bool> {
         // THE SHOVEL'S OWN FACE GATE (javap ShovelItem.useOn pc 17-24
-        // over the 26.2 jar: the `getClickedFace() == DOWN` acmpeq the
         // PASS keeps — the clicked underside neither flattens nor
         // douses)
         if face_gate && hit.face == 0 {
@@ -40877,6 +40912,124 @@ impl App {
         }
         Some(true) // the SUCCESS pc 227-230 the press consumes
     }
+    /// THE MINECART'S OWN USE-ON WALK — javap MinecartItem.useOn over
+    /// the 26.2 jar (the dev-106 round's own mine, every constant the
+    /// CP decode banks): the RAILS tag the clicked state's is()
+    /// consult speaks FIRST (pc 17-31 — the miss the FAIL the walk
+    /// returns; the consumesAction()=false verdict the chain's own
+    /// order keeps, the fall-through the item lanes answer — the None
+    /// the caller's shape serves), the shape the BaseRailBlock's own
+    /// property read banks (pc 38-74 — the non-BaseRailBlock arm the
+    /// NORTH_SOUTH default keeps; the 26.2 rail family the property
+    /// never misses), the yOffset the isSlope() read wears (pc 79-90 —
+    /// the 0.5 the ascending rails lift), the spawn Vec3 the
+    /// (x+0.5, y+0.0625+yOffset, z+0.5) fold speaks (pc 92-128), the
+    /// EXPERIMENTAL overlap gate the flag world's getEntities scan
+    /// keeps (pc 174-236 — any AbstractMinecart box the spawned box
+    /// intersects the FAIL speaks; the vanilla's own FAIL verdict the
+    /// press NEVER consumes — the off-hand's own turn follows), the
+    /// createMinecart factory the setInitialPos + the adjustToRails
+    /// snap rides (the getCurrentBlockPosOrRailBelow probe the walk
+    /// reads, the NewMinecartBehavior arm the flag world picks), the
+    /// shrink(1) the survival stack rides (pc 285-288), the SUCCESS
+    /// the swing arms (pc 291-294). THE WIRE SESSION the server owns
+    /// (the client predicts NOTHING — the Add Entity the spawn lands
+    /// through; the useItemOn echo the block lane's own head already
+    /// spoke, the swing the client's own SUCCESS verdict keeps).
+    fn on_right_press_minecart_arm(&mut self, hit: &crate::world::ClipHit) -> Option<bool> {
+        // THE RAILS TAG GATE (pc 17-31): the clicked cell the is_rail
+        // walk answers — the miss the None keeps (the FAIL the chain
+        // never distinguishes from the PASS).
+        let rail_block = self
+            .active_world()
+            .map(|w| w.get(hit.pos.0, hit.pos.1, hit.pos.2))
+            .unwrap_or(0);
+        if !crate::world::is_rail(rail_block) {
+            return None;
+        }
+        // THE WIRE SESSION'S OWN SILENCE (the client predicts NOTHING
+        // — the server's addFreshEntity the spawn lands through; the
+        // echo the block lane's own head already spoke).
+        if self.world_is_network {
+            self.swing.start();
+            return Some(true);
+        }
+        // THE SHAPE + THE SPAWN VEC3 (pcs 38-128): the variant byte's
+        // own shape mask the property read stands in for, the slope's
+        // own 0.5 the yOffset lifts, the (x+0.5, y+0.0625+yOffset,
+        // z+0.5) the fold wears.
+        let shape = self
+            .active_world()
+            .map(|w| w.variant(hit.pos.0, hit.pos.1, hit.pos.2) & crate::world::RAIL_SHAPE_MASK)
+            .unwrap_or(0);
+        let slope_offset = if crate::cart::is_slope(shape) {
+            crate::cart::SLOPE_SPAWN_LIFT
+        } else {
+            0.0
+        };
+        let spawn: crate::cart::V3 = [
+            hit.pos.0 as f64 + 0.5,
+            hit.pos.1 as f64 + crate::cart::SPAWN_HEIGHT + slope_offset,
+            hit.pos.2 as f64 + 0.5,
+        ];
+        // THE EXPERIMENTAL OVERLAP GATE (pcs 174-236): the flag world
+        // the getEntities scan serves — the spawned box the cart dims
+        // keep, the existing cart's box the intersection verdict
+        // reads (the AABB-vs-AABB fold the vanilla's own boxes
+        // speak). The FAIL the press never consumes.
+        let hw = crate::cart::MINECART_DIMENSIONS_WIDTH as f64;
+        let bh = crate::cart::MINECART_DIMENSIONS_HEIGHT as f64;
+        let boxes_overlap =
+            |a: crate::cart::V3, b: crate::cart::V3| -> bool {
+                (a[0] - b[0]).abs() < hw
+                    && (a[2] - b[2]).abs() < hw
+                    && (a[1] - b[1]).abs() < bh
+            };
+        if self
+            .offline_carts
+            .iter()
+            .any(|c| boxes_overlap(c.cart.pos, spawn))
+        {
+            return Some(false); // the FAIL — the off-hand's own turn follows
+        }
+        // THE FACTORY (pcs 131-163 + the createMinecart walk): the
+        // entity the spawn pos wears, the getCurrentBlockPosOrRailBelow
+        // probe the walk reads (the spawn's own cell the flat y the
+        // probe's drop re-answers), the adjustToRails snap the
+        // NewMinecartBehavior arm rides (the projection/lift/lean the
+        // walk banks).
+        let world = self.offline_world.as_ref();
+        let Some(world) = world else {
+            return None; // the no-world session the spawn never serves
+        };
+        let rail_cell = crate::cart::rail_below_or_pos(world, spawn);
+        let mut cart = crate::cart::Minecart::new(spawn);
+        crate::cart::adjust_to_rails(world, &mut cart, rail_cell);
+        let kind = self.held_id().and_then(mc_registry::item_name);
+        let Some(kind) = kind else {
+            return None;
+        };
+        let cid = self.next_cart_id;
+        self.next_cart_id += 1;
+        self.offline_carts.push(crate::cart::OfflineCart { id: cid, kind, cart });
+        // THE SURVIVAL CONSUME (the shrink(1) pc 285-288 — the same
+        // walk the boat lane speaks; the `--held-item` stand-in the
+        // honest no-op keeps)
+        let held_id = self.held_id();
+        let sel = self.selected_hotbar;
+        let stack = self.inventory.items[sel];
+        if stack.1 > 0 && held_id == Some(stack.0) {
+            self.inventory.items[sel].1 -= 1;
+            if self.inventory.items[sel].1 <= 0 {
+                self.inventory.items[sel] = (0, 0);
+            }
+            self.hotbar_slots = self.inventory.hotbar();
+            self.use_consume_kills_pop(sel);
+        }
+        self.swing.start();
+        Some(true)
+    }
+
 
     /// THE SEEDS' OWN PLANT ARM — javap BlockItem.place over the real
     /// 26.2 jar (the wheat_seeds item's own BlockItem walk): the
@@ -45165,6 +45318,24 @@ impl App {
     /// the input law sets), and the x/z move's swept clamp (the
     /// compound's own y-then-x-then-z order). The wire's hulls stay the
     /// server's (the gate at the call site the offline lane keeps).
+    /// THE OFFLINE CARTS' OWN TICK (the moveAlongTrack walk the
+    /// cart_tick lane banks — dev-105's verbatim law the App's 20-TPS
+    /// beat rides): the offline world's own carts the per-tick walk
+    /// speaks, the rail line the step carries, the off-rail the
+    /// gravity fall wears. The wire session the server's own carts
+    /// own (the lane the offline world never serves).
+    fn tick_offline_carts(&mut self) {
+        if self.offline_carts.is_empty() {
+            return;
+        }
+        let Some(world) = self.offline_world.as_ref() else {
+            return;
+        };
+        for entry in &mut self.offline_carts {
+            crate::cart::cart_tick(world, &mut entry.cart);
+        }
+    }
+
     fn tick_offline_hulls(&mut self) {
         if self.offline_boats.is_empty() {
             return;
@@ -99271,6 +99442,265 @@ cow_sound_variant: None,
     /// verdict the ITEM lane falls through to, and THERE the eye gate
     /// speaks: the eye inside any pickable body's box the PASS keeps,
     /// the water stays hull-less.
+    /// THE MINECART'S OWN USE-ON WALK — the OFFLINE arc (javap
+    /// MinecartItem.useOn): the rail cell the RAILS tag consult keeps,
+    /// the spawn Vec3 the (x+0.5, y+0.0625, z+0.5) fold wears, the
+    /// adjustToRails snap the createMinecart factory rides (the flat
+    /// rail's own center law — the y the CELL's own y re-answers), the
+    /// survival consume the stack rides down, the swing the SUCCESS
+    /// verdict arms.
+    #[test]
+    fn the_minecart_use_walk_spawns_the_snapped_cart_offline() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        // the held stack: the plain minecart's five-count the hotbar's
+        // own selection carries (the consume's own lane)
+        let cart_id = wire("minecart");
+        app.inventory.items[app.selected_hotbar] = (cart_id, 5);
+        app.hotbar_slots = app.inventory.hotbar();
+        // the flat EAST_WEST rail floating in the spawn column's air
+        // band — every cell the spawned walk reads stays air
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let ry = app.spawn_y + 6;
+        app.offline_world.as_mut().unwrap().set(c, ry, c, crate::world::RAIL);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set_variant(c, ry, c, 1); // EAST_WEST
+        // THE USE-ON: the clicked rail cell the walk reads (the block
+        // lane's own clip hands the hit the arm serves)
+        let hit = crate::world::ClipHit {
+            pos: (c, ry, c),
+            face: 1,
+            location: (c as f64 + 0.5, ry as f64 + 1.0, c as f64 + 0.5),
+            inside: false,
+        };
+        assert!(
+            app.on_right_press_minecart_arm(&hit) == Some(true),
+            "the useOn consumed the press"
+        );
+        // THE LOCAL CART: one offline cart, the id the counter keeps,
+        // the kind the item name speaks, the snap the flat rail's own
+        // center law banks (x the carried coord, y the CELL's own y,
+        // z the center), the yaw the first (west) exit's 180.0 base
+        // stamps, the pitch the flat rail zeroes
+        assert_eq!(app.offline_carts.len(), 1, "the local cart spawned");
+        let entry = &app.offline_carts[0];
+        assert_eq!(entry.id, 1, "the offline spawner's own counter");
+        assert_eq!(entry.kind, "minecart");
+        let cart = &entry.cart;
+        assert!((cart.pos[0] - (c as f64 + 0.5)).abs() < 1e-9, "x carried");
+        assert!((cart.pos[1] - ry as f64).abs() < 1e-9, "y the cell's own");
+        assert!((cart.pos[2] - (c as f64 + 0.5)).abs() < 1e-9, "z centered");
+        // the first (west) exit's atan2 the 180.0 base stamps:
+        // atan2(0, −0.5) = π → 180 − 180 = 0.0
+        assert!((cart.yaw_deg - 0.0).abs() < 1e-4);
+        assert!((cart.pitch_deg - 0.0).abs() < 1e-4);
+        assert!(cart.on_rails);
+        // THE SURVIVAL CONSUME: the stack rode down one
+        assert_eq!(app.inventory.items[app.selected_hotbar], (cart_id, 4));
+        // THE SWING: the SUCCESS verdict's own arm
+        assert!(app.swing.swinging, "the swing started");
+    }
+
+    /// THE MINECART'S OWN USE-ON WALK — the SLOPE arc: the yOffset the
+    /// isSlope read lifts (the 0.5 the ascending rails wear), the snap
+    /// the dist + 0.1 the y gain keeps, the lean the −45.0 the plain
+    /// cart's own descent pitch banks.
+    #[test]
+    fn the_minecart_use_walk_the_slope_spawns_the_lifted_lean() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        app.inventory.items[app.selected_hotbar] = (wire("minecart"), 3);
+        app.hotbar_slots = app.inventory.hotbar();
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let ry = app.spawn_y + 6;
+        app.offline_world.as_mut().unwrap().set(c, ry, c, crate::world::RAIL);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set_variant(c, ry, c, 2); // ASCENDING_EAST (the east high)
+        let hit = crate::world::ClipHit {
+            pos: (c, ry, c),
+            face: 1,
+            location: (c as f64 + 0.5, ry as f64 + 1.0, c as f64 + 0.5),
+            inside: false,
+        };
+        assert_eq!(app.on_right_press_minecart_arm(&hit), Some(true));
+        let cart = &app.offline_carts[0].cart;
+        // THE SNAP'S OWN WORDS: the x/z the straight arm's center law
+        // keeps, the y the dist (0.5) + 0.1 lift wears, the lean the
+        // −45.0 speaks
+        assert!((cart.pos[0] - (c as f64 + 0.5)).abs() < 1e-9);
+        assert!((cart.pos[1] - (ry as f64 + 0.6)).abs() < 1e-9);
+        assert!((cart.pos[2] - (c as f64 + 0.5)).abs() < 1e-9);
+        assert!((cart.pitch_deg - (-45.0)).abs() < 1e-4);
+    }
+
+    /// THE MINECART'S OWN OVERLAP GATE — the FAIL the press never
+    /// consumes: the spawned box the existing cart's own dims keep,
+    /// the intersection verdict the second useOn speaks, the stack
+    /// the FAIL never shrinks, the list the second cart never gains.
+    #[test]
+    fn the_minecart_use_walk_the_overlap_fail_never_consumes() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let cart_id = wire("minecart");
+        app.inventory.items[app.selected_hotbar] = (cart_id, 5);
+        app.hotbar_slots = app.inventory.hotbar();
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let ry = app.spawn_y + 6;
+        app.offline_world.as_mut().unwrap().set(c, ry, c, crate::world::RAIL);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set_variant(c, ry, c, 1);
+        let hit = crate::world::ClipHit {
+            pos: (c, ry, c),
+            face: 1,
+            location: (c as f64 + 0.5, ry as f64 + 1.0, c as f64 + 0.5),
+            inside: false,
+        };
+        assert_eq!(app.on_right_press_minecart_arm(&hit), Some(true));
+        app.swing.swinging = false; // the first SUCCESS's arm the baseline clears
+        // THE SECOND PRESS: the overlap the FAIL speaks — no cart, no
+        // consume, no swing
+        assert_eq!(app.on_right_press_minecart_arm(&hit), Some(false));
+        assert_eq!(app.offline_carts.len(), 1, "the second cart never spawns");
+        assert_eq!(app.inventory.items[app.selected_hotbar], (cart_id, 4));
+        assert!(!app.swing.swinging, "the FAIL the swing never arms");
+    }
+
+    /// THE MINECART'S OWN GATES — the non-rail click the None keeps
+    /// (the FAIL verdict the chain's fall-through never distinguishes
+    /// from the PASS — the placement lane's own walk follows), and the
+    /// WIRE SESSION the server owns (the client predicts NOTHING: no
+    /// local cart, the echo the block lane's own head already spoke,
+    /// the swing the client's own SUCCESS verdict keeps).
+    #[test]
+    fn the_minecart_use_walk_the_gates_speak() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/minecart"));
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let ry = app.spawn_y + 6;
+        // THE NON-RAIL CELL: the dirt the RAILS tag consult refuses
+        app.offline_world.as_mut().unwrap().set(c, ry, c, crate::world::DIRT);
+        let hit = crate::world::ClipHit {
+            pos: (c, ry, c),
+            face: 1,
+            location: (c as f64 + 0.5, ry as f64 + 1.0, c as f64 + 0.5),
+            inside: false,
+        };
+        assert_eq!(app.on_right_press_minecart_arm(&hit), None);
+        assert!(app.offline_carts.is_empty());
+        // THE WIRE SESSION: the net world's own rail (the same
+        // WORLD_CHUNKS span the offline world's own coords keep), the
+        // local spawn the server's Add Entity owns
+        let mut net = crate::world::World::new(crate::screens::WORLD_CHUNKS, 0xCA2Cu64);
+        net.set(c, ry, c, crate::world::RAIL);
+        net.set_variant(c, ry, c, 1);
+        app.net_world = Some(net);
+        app.world_is_network = true;
+        assert_eq!(app.on_right_press_minecart_arm(&hit), Some(true));
+        assert!(app.offline_carts.is_empty(), "the wire lane never spawns");
+        assert!(app.swing.swinging, "the client's own SUCCESS arm");
+    }
+
+    /// THE CARTS' OWN OFFLINE TICK — the walk the App's 20-TPS beat
+    /// rides: the spawned slope cart the gravity push wears (the
+    /// ASCENDING_EAST's low side speaks — the west the delta gains),
+    /// the position the rail line's own walk moves.
+    #[test]
+    fn the_offline_carts_the_app_tick_rolls_downhill() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/minecart"));
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let ry = app.spawn_y + 6;
+        // the slope: the rail pair the descent's own line keeps (the
+        // west cell the low side the push wears, the east cell the
+        // high side the pair completes)
+        app.offline_world.as_mut().unwrap().set(c, ry, c, crate::world::RAIL);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set_variant(c, ry, c, 2); // ASCENDING_EAST
+        app.offline_world.as_mut().unwrap().set(c - 1, ry, c, crate::world::RAIL);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set_variant(c - 1, ry, c, 1); // EAST_WEST continues west
+        let hit = crate::world::ClipHit {
+            pos: (c, ry, c),
+            face: 1,
+            location: (c as f64 + 0.5, ry as f64 + 1.0, c as f64 + 0.5),
+            inside: false,
+        };
+        assert_eq!(app.on_right_press_minecart_arm(&hit), Some(true));
+        let x0 = app.offline_carts[0].cart.pos[0];
+        // THREE TICKS the App's own walk speaks — the push the slope
+        // wears, the step the west line moves
+        for _ in 0..3 {
+            app.tick_offline_carts();
+        }
+        assert!(
+            app.offline_carts[0].cart.pos[0] < x0,
+            "the cart rolled west (downhill): {} -> {}",
+            x0,
+            app.offline_carts[0].cart.pos[0]
+        );
+    }
+
+    /// THE FRESH SESSION'S OWN HONESTY — the previous offline
+    /// session's carts drop with the world that carried them (the
+    /// enter_world walk the boats' clear law keeps).
+    #[test]
+    fn the_offline_carts_the_fresh_world_clears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/minecart"));
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let ry = app.spawn_y + 6;
+        app.offline_world.as_mut().unwrap().set(c, ry, c, crate::world::RAIL);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set_variant(c, ry, c, 1);
+        let hit = crate::world::ClipHit {
+            pos: (c, ry, c),
+            face: 1,
+            location: (c as f64 + 0.5, ry as f64 + 1.0, c as f64 + 0.5),
+            inside: false,
+        };
+        assert_eq!(app.on_right_press_minecart_arm(&hit), Some(true));
+        assert_eq!(app.offline_carts.len(), 1);
+        // the REBUILD path the fresh world's own honesty wears (the
+        // world_quads=None the rebuild branch forces — the same walk
+        // the boats' clear law keeps)
+        app.world_quads = None;
+        app.enter_world();
+        assert!(app.offline_carts.is_empty(), "the fresh world cleared");
+    }
+
     #[test]
     fn the_boat_use_walk_refuses_the_eye_inside_bodies() {
         let mut app = App::new(3);
