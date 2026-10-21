@@ -10394,7 +10394,7 @@ fn explosion_dose(radius: f32, d_norm: f64, seen: f32) -> f64 {
 /// 1.0/0.0 pair keeps). The dose the `getEntityDamageAmount` formula
 /// deals, the push the `entity.push(dir.scale(strength))` the direct
 /// velocity add speaks.
-fn explosion_blast(
+pub fn explosion_blast(
     world: &World,
     center: (f64, f64, f64),
     radius: f32,

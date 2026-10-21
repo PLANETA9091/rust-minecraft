@@ -7735,6 +7735,15 @@ pub struct App {
     /// own honesty the boats' clear law keeps — the carts drop with
     /// the world that carried them.
     pub offline_carts: Vec<crate::cart::OfflineCart>,
+    /// THE CART'S OWN DETONATION QUEUE (the fuse-0 beat the offline
+    /// carts' own tick queues — the pos + the power the
+    /// `tnt_explode_power` law rolls at the explode moment: the
+    /// base+factor*nextDouble()*1.5*min(sqrt(hsqr),5.0) fold the mob_rng
+    /// stream draws). The update's explosion block consumes the queue
+    /// the SAME tick — the ray scan + the shuffle + the decay the
+    /// PrimedTnt boom's own walks serve, the same lanes the creeper's
+    /// blast fills.
+    pub pending_cart_booms: Vec<(f64, f64, f64, f32)>,
     /// THE CART RIDE'S OWN ROTATION ANCHOR (the Minecart.interact's
     /// client arm pc 34-37 — the `playerRotationOffset = rotationOffset`
     /// snapshot the mount records, the first drag delta the sync
@@ -9156,6 +9165,7 @@ impl App {
             next_boat_id: 1,
             next_cart_id: 1,
             offline_carts: Vec::new(),
+            pending_cart_booms: Vec::new(),
             offline_cart_drag: None,
             cart_model: None,
             take_xp_delay: 0,
@@ -15758,6 +15768,60 @@ impl App {
                             }
                         }
                         self.primed_tnts.retain(|t| !t.dead);
+                        // THE CART'S OWN DETONATIONS (the fuse-0 beat the
+                        // offline carts' own tick queued — the SAME
+                        // ServerLevel.explode walk the PrimedTnt's boom
+                        // serves: the ray scan the power law drives, the
+                        // drops the shuffle + decay rolls serve, the TNT
+                        // cells the chain queue keeps, the player's dose
+                        // the hurt lane answers, the mobs' doses the
+                        // tnt_blasts walk serves — the cart's own discard
+                        // the tick's tail already served, the owner the
+                        // no-living-source word keeps (the getIndirectSource
+                        // read the non-living cart the null answers))
+                        for (bx, by, bz, power) in
+                            std::mem::take(&mut self.pending_cart_booms)
+                        {
+                            booms.push((bx, by, bz, power));
+                            tnt_blasts.push((bx, by, bz, power));
+                            let to_blow = crate::mob::explosion_to_blow(
+                                world, bx, by, bz, power, &mut self.mob_rng,
+                            );
+                            let (drops, chains) = crate::mob::explosion_item_drops(
+                                &to_blow,
+                                power,
+                                world,
+                                &mut self.mob_rng,
+                            );
+                            explosion_cells.extend(to_blow.iter().copied());
+                            explosion_drops.extend(drops.iter().copied());
+                            tnt_chain_spawns.extend(
+                                chains.iter().copied().map(|c| (c, None)),
+                            );
+                            // THE PLAYER'S OWN DOSE (the hurtEntities walk
+                            // the player's box answers — the same fold the
+                            // primed lane's blast serves, the no-source
+                            // word the cart's indirect-entity read keeps)
+                            if let Some(p) = player.filter(|p| !p.dead) {
+                                let bbox = (
+                                    p.x - p.width / 2.0,
+                                    p.y,
+                                    p.z - p.width / 2.0,
+                                    p.x + p.width / 2.0,
+                                    p.y + p.height,
+                                    p.z + p.width / 2.0,
+                                );
+                                if let Some(b) = crate::mob::explosion_blast(
+                                    world,
+                                    (bx, by, bz),
+                                    power,
+                                    (p.x, p.eye_y as f64, p.z),
+                                    bbox,
+                                ) {
+                                    blast_player = Some((b, None));
+                                }
+                            }
+                        }
                         for (sx, sy, sz) in tnt_smokes {
                             let puff = crate::particles::smoke_puff(
                                 sx,
@@ -45867,6 +45931,12 @@ impl App {
         let mut smokes: Vec<(f64, f64, f64)> = Vec::new();
         let mut primes: Vec<(f64, f64, f64)> = Vec::new();
         let mut exploded: Vec<i32> = Vec::new();
+        // THE DETONATION'S OWN QUEUE (the fuse-0 beat the cart's own pos
+        // + the power the tnt_explode_power law rolls — the mob_rng
+        // stream the offline lane's level-random stand-in keeps, the
+        // nextDouble draw the explode(source, hsqr) call's own arg
+        // serves)
+        let mut booms: Vec<(f64, f64, f64, f32)> = Vec::new();
         for entry in &mut self.offline_carts {
             entry.cart.ridden = ride_id == Some(entry.id);
             crate::cart::cart_tick(world, &mut entry.cart);
@@ -45919,9 +45989,22 @@ impl App {
                 ));
             }
             if out.explode {
+                // THE POWER'S OWN ROLL (the explode(source, hsqr) call
+                // the nextDouble draw serves — the fold the operand
+                // stack's multiply order wears, the hsqr the tick's own
+                // beat carries)
+                let power = crate::cart::tnt_explode_power(
+                    hsqr,
+                    self.mob_rng.next_f64(),
+                );
+                booms.push((entry.cart.pos[0], entry.cart.pos[1], entry.cart.pos[2], power));
                 exploded.push(entry.id);
             }
         }
+        // THE QUEUE'S OWN HAND-OFF (the update's explosion block consumes
+        // the same tick — the ray scan + the shuffle + the decay the
+        // PrimedTnt boom's own walks serve)
+        self.pending_cart_booms.extend(booms);
         // THE BORROW'S OWN END (the world the drop releases — the
         // deferred actions the lanes serve)
         for (x, y, z) in smokes {
@@ -101076,6 +101159,128 @@ cow_sound_variant: None,
         assert!(app.offline_ride.is_none(), "the ride ejected");
     }
 
+    /// THE TNT CART'S OWN WORLD DAMAGE (javap `MinecartTNT.explode` the
+    /// 26.2 jar speaks — the `level.explode(this, source, null, x, y,
+    /// z, power, false, ExplosionInteraction.TNT)` call the ray machine
+    /// serves: the DESTROY_WITH_DECAY interaction the gamerule's true
+    /// default keeps, the ray scan the power law drives, the shuffle +
+    /// the decay the loot roll serves, the TNT cells the wasExploded
+    /// chain primes, the cart's own discard the tick's tail serves).
+    #[test]
+    fn the_tnt_cart_the_detonation_breaks_the_world() {
+        // THE TABLES' OWN ROWS (the blast arc's own data — the
+        // getExplosionResistance query the runtime dumper banked, the
+        // decay rows the loot JSONs bank)
+        assert!(
+            (mc_registry::generated::block_resistances::resistance("stone") - 6.0).abs() < 1e-4,
+            "the clinit's own strength row"
+        );
+        assert!(
+            (mc_registry::generated::block_resistances::resistance("water") - 100.0).abs() < 1e-3,
+            "the water block's own 100.0 row"
+        );
+        assert!(
+            (mc_registry::generated::block_resistances::resistance("obsidian") - 1200.0).abs()
+                < 1e-2,
+            "the explosionResistance override the one row speaks"
+        );
+        assert_eq!(
+            mc_registry::generated::block_resistances::resistance("wheat_stage3"),
+            0.0,
+            "the registry-foreign name the 0.0 default keeps"
+        );
+        assert!(
+            mc_registry::generated::block_explosion_decay::has_explosion_decay("iron_ore"),
+            "the ore rows the decay wears"
+        );
+        assert!(
+            !mc_registry::generated::block_explosion_decay::has_explosion_decay("stone"),
+            "the cobblestone arm the decay never wore"
+        );
+
+        let mut app = App::new(3);
+        app.enter_world();
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let ry = app.spawn_y + 6;
+        // THE BLAST'S OWN STAGE (the cleared box the walk's own rays
+        // march — the pad the dirt rows speak, the TNT cell the chain
+        // queue wears)
+        for dx in -4..=4 {
+            for dy in -3..=3 {
+                for dz in -4..=4 {
+                    app.offline_world
+                        .as_mut()
+                        .unwrap()
+                        .set(c + dx, ry + dy, c + dz, crate::world::AIR);
+                }
+            }
+        }
+        for dx in -2..=2 {
+            for dz in -2..=2 {
+                app.offline_world
+                    .as_mut()
+                    .unwrap()
+                    .set(c + dx, ry - 1, c + dz, crate::world::DIRT);
+            }
+        }
+        app.offline_world.as_mut().unwrap().set(c, ry, c, crate::world::RAIL);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c + 2, ry, c, crate::world::TNT);
+        // THE CART'S OWN SPAWN (the minecart arm the right-press walk
+        // serves)
+        app.offline_held_updated(Some("item/tnt_minecart"));
+        let hit = crate::world::ClipHit {
+            pos: (c, ry, c),
+            face: 1,
+            location: (c as f64 + 0.5, ry as f64 + 1.0, c as f64 + 0.5),
+            inside: false,
+        };
+        assert_eq!(app.on_right_press_minecart_arm(&hit), Some(true));
+        assert_eq!(app.offline_carts.len(), 1, "the cart spawned");
+        // THE FUSE-0 BEAT (the prime the 80 wears, the zero the arm the
+        // next tick's own verdict keeps — the honest walk the burn's
+        // own law wears)
+        crate::cart::prime_tnt_cart(&mut app.offline_carts[0]);
+        app.offline_carts[0].fuse = 0;
+        app.update();
+        // THE CART'S OWN LEAVE (the discard the tail serves)
+        assert!(app.offline_carts.is_empty(), "the cart consumed");
+        // THE WORLD'S OWN CRATER (the cells the ray walk took — the
+        // pad's center + the near edge the intensity always folds, the
+        // TNT cell the chain queue wears)
+        let world = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            world.get(c, ry - 1, c),
+            crate::world::AIR,
+            "the pad's own center"
+        );
+        assert_eq!(
+            world.get(c + 1, ry - 1, c),
+            crate::world::AIR,
+            "the pad's near edge"
+        );
+        assert_eq!(
+            world.get(c + 2, ry, c),
+            crate::world::AIR,
+            "the TNT cell the chain took"
+        );
+        // THE CHAIN'S OWN PRIME (the wasExploded walk the short-fuse
+        // roll serves — the PrimedTnt the queue spawns at the cell's
+        // own center)
+        assert!(
+            app.primed_tnts
+                .iter()
+                .any(|t| (t.x - (c as f64 + 2.5)).abs() < 1e-3),
+            "the chain's own prime"
+        );
+        // THE PAD'S OWN DROPS (the dirt rows the loot eval wears — the
+        // decay the table never wears, the count the definite pass
+        // keeps)
+        assert!(!app.drops.is_empty(), "the pad's own drop");
+    }
+
     /// THE TNT CART'S OWN DESTROY FORK (javap `MinecartTNT.destroy`
     /// the 26.2 jar speaks — the slow unprimed cart the Drop arm
     /// answers, the fast cart the `hsqr >= 0.01` gate the priming
@@ -101197,7 +101402,17 @@ cow_sound_variant: None,
         }
         assert!(smokes >= 5, "the SMOKE puff the burn beats wear ({smokes})");
         assert!(app2.offline_carts.is_empty(), "the fuse-0 explode the discard speaks");
-        assert!(app2.drops.is_empty(), "the consumed cart the drop never spawns");
+        // THE CONSUMED CART'S OWN DROP (the destroy chain the explode
+        // walk never serves — the getDropItem item the consumed entity
+        // never spawns; the WORLD'S own drops the blast's loot roll
+        // wears — the destroyed cells' own loot the shuffle spawns)
+        assert!(
+            app2
+                .drops
+                .iter()
+                .all(|d| mc_registry::item_name(d.item) != Some("minecart")),
+            "the consumed cart the drop never spawns"
+        );
     }
 
     /// THE ACTIVATOR RAIL'S OWN PRIME (javap the `activateMinecart`
@@ -101253,7 +101468,16 @@ cow_sound_variant: None,
         assert_eq!(app.offline_carts[0].fuse, 0, "the zero the burn reached");
         app.update();
         assert!(app.offline_carts.is_empty(), "the explode the discard speaks");
-        assert!(app.drops.is_empty(), "the consumed cart the drop never spawns");
+        // THE CONSUMED CART'S OWN DROP (the destroy chain the explode
+        // walk never serves — the getDropItem item the consumed entity
+        // never spawns; the WORLD'S own drops the blast's loot roll
+        // wears — the destroyed cells' own loot the shuffle spawns)
+        assert!(
+            app.drops
+                .iter()
+                .all(|d| mc_registry::item_name(d.item) != Some("minecart")),
+            "the consumed cart the drop never spawns"
+        );
         // THE UNPOWERED TWIN (the silent pass the prime refuses — the
         // fuse the unprimed −1 the same walk keeps)
         let mut app2 = App::new(3);

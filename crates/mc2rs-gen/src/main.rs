@@ -99,6 +99,22 @@ enum Cmd {
         #[arg(long)]
         java: Option<String>,
     },
+    /// Generate the explosion lane's block data table (the blast arc's
+    /// own numbers): boot the REAL vanilla registries from the official
+    /// jar + libraries (all sha1-verified) with the checked-in runtime
+    /// dumper and emit mc-registry/src/generated/block_resistances.rs —
+    /// the block's own getExplosionResistance() per block.
+    DumpBlockResistance {
+        #[arg(long)]
+        version: String,
+        /// Workspace root (contains crates/).
+        #[arg(long, default_value = ".")]
+        out: String,
+        /// Explicit java binary (>= the version's java requirement from
+        /// the manifest). Default: `java` on PATH.
+        #[arg(long)]
+        java: Option<String>,
+    },
     /// Generate the sound lane's block data table (the interaction arc's
     /// own numbers): boot the REAL vanilla registries from the official
     /// jar + libraries (all sha1-verified) with the checked-in runtime
@@ -442,6 +458,9 @@ fn main() -> Result<()> {
         }
         Cmd::DumpBlockDig { version, out, java } => {
             runtime_dump::dump_block_dig(&agent, &cache, &version, Path::new(&out), java.as_deref())?;
+        }
+        Cmd::DumpBlockResistance { version, out, java } => {
+            runtime_dump::dump_block_resistance(&agent, &cache, &version, Path::new(&out), java.as_deref())?;
         }
         Cmd::DumpBlockSounds { version, out, java } => {
             runtime_dump::dump_block_sounds(&agent, &cache, &version, Path::new(&out), java.as_deref())?;

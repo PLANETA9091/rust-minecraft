@@ -1,5 +1,7 @@
 pub mod atlas;
 pub mod block_dig;
+pub mod block_explosion_decay;
+pub mod block_resistances;
 pub mod block_drops;
 pub mod block_factors;
 pub mod block_ids;
