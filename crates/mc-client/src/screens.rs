@@ -7735,6 +7735,14 @@ pub struct App {
     /// own honesty the boats' clear law keeps — the carts drop with
     /// the world that carried them.
     pub offline_carts: Vec<crate::cart::OfflineCart>,
+    /// THE CART RIDE'S OWN ROTATION ANCHOR (the Minecart.interact's
+    /// client arm pc 34-37 — the `playerRotationOffset = rotationOffset`
+    /// snapshot the mount records, the first drag delta the sync
+    /// zeroes): the id keys the ride, the f32 the cart's own yaw the
+    /// drag last saw (the vanilla rotationOffset's accumulated word the
+    /// per-tick delta fold keeps). The dismount and the world clears
+    /// the belief drops.
+    pub offline_cart_drag: Option<(i32, f32)>,
     /// THE CART MODEL'S OWN LAZY SLOT (the AbstractMinecartRenderer's
     /// model field — the minecart.png texture the sha1 gate keeps, the
     /// one model ALL the cart kinds draw (the display block the variant
@@ -9148,6 +9156,7 @@ impl App {
             next_boat_id: 1,
             next_cart_id: 1,
             offline_carts: Vec::new(),
+            offline_cart_drag: None,
             cart_model: None,
             take_xp_delay: 0,
             health: 20.0,
@@ -10903,6 +10912,38 @@ impl App {
                         fx = m.x;
                         fy = m.y + r.ride_height as f64;
                         fz = m.z;
+                    } else if let Some(entry) = self
+                        .offline_carts
+                        .iter()
+                        .find(|cc| cc.id == r.vehicle_id)
+                    {
+                        // THE CART'S OWN CARRY (the PASSENGER attachment
+                        // the EntityTypes MINECART row speaks — the
+                        // 0.1875 the single-rider seat the getClamped
+                        // index-0 keeps, the x the 0.0 the
+                        // rotation-insensitive word): the cart's pose
+                        // the tick's own walk reached (the
+                        // vehicle-moves-then-passenger order the cart
+                        // tick's earlier arm keeps)
+                        fx = entry.cart.pos[0];
+                        fy = entry.cart.pos[1] + r.ride_height as f64;
+                        fz = entry.cart.pos[2];
+                        // THE ROTATION DRAG (Minecart.positionRider's
+                        // own client arm — the playerRotationOffset the
+                        // mount snapshots, the rotationOffset the cart's
+                        // own turn accumulates, the setYRot(yRot −
+                        // (offset − prev)) the delta fold speaks: the
+                        // rider's yaw the cart's yaw DELTA drags, the
+                        // wrap the degrees law keeps, no clamp the
+                        // curve keeps — the cart's look the rider
+                        // carries through every turn)
+                        if let Some((did, anchor)) = self.offline_cart_drag.as_mut() {
+                            if *did == r.vehicle_id {
+                                let delta = wrap_degrees(entry.cart.yaw_deg - *anchor);
+                                b.yaw = wrap_degrees(b.yaw + delta);
+                                *anchor = entry.cart.yaw_deg;
+                            }
+                        }
                     }
                     // THE PREV TRIO (the carried path's own trail — the
                     // render's partial-tick lerp anchors at the pose
@@ -16797,6 +16838,7 @@ impl App {
                         m.id == r.vehicle_id && m.death_time >= crate::mob::DEATH_DURATION_TICKS
                     }) {
                         self.offline_ride = None;
+                        self.offline_cart_drag = None;
                     }
                 }
                 self.mobs
@@ -17420,6 +17462,82 @@ impl App {
         }
         // the block clip's own distance term (the same law the pick's
         // tail speaks — the hull behind the wall the miss keeps)
+        let block_d2 = self
+            .active_world()
+            .and_then(|w| w.clip(eye, view, search_range))
+            .map(|hit| {
+                let (lx, ly, lz) = hit.location;
+                let (dx, dy, dz) = (lx - eye.0, ly - eye.1, lz - eye.2);
+                dx * dx + dy * dy + dz * dz
+            })
+            .unwrap_or(f64::INFINITY);
+        let entity_reach =
+            crate::world::ENTITY_INTERACTION_RANGE * crate::world::ENTITY_INTERACTION_RANGE;
+        let (id, d2) = best?;
+        if d2 < block_d2 && d2 < entity_reach {
+            Some((id, d2))
+        } else {
+            None
+        }
+    }
+
+    /// THE CART PICK (the pick_hull walk's own cart twin — the
+    /// AbstractMinecart's isPickable the Entity default keeps, the
+    /// MINECART dims the cart.rs row speaks: 0.98 wide, 0.7 tall).
+    /// The OFFLINE carts only (the wire lane predicts nothing — the
+    /// dev-106 law the spawn walk keeps). The same block-clip
+    /// distance term the hull pick's tail speaks (the cart behind
+    /// the wall the miss keeps) and the same entity reach gate.
+    fn pick_cart(&self) -> Option<(i32, f64)> {
+        let cam = self.world_camera();
+        let f = cam.forward();
+        let eye = (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64);
+        let view = (f.x as f64, f.y as f64, f.z as f64);
+        let search_range = crate::world::BLOCK_INTERACTION_RANGE.max(3.0);
+        let end = (
+            eye.0 + view.0 * search_range,
+            eye.1 + view.1 * search_range,
+            eye.2 + view.2 * search_range,
+        );
+        let hw = crate::cart::MINECART_DIMENSIONS_WIDTH as f64 / 2.0;
+        let bh = crate::cart::MINECART_DIMENSIONS_HEIGHT as f64;
+        let mut best: Option<(i32, f64)> = None;
+        for entry in &self.offline_carts {
+            let (vx, vy, vz) = (
+                entry.cart.pos[0],
+                entry.cart.pos[1],
+                entry.cart.pos[2],
+            );
+            // the eye inside the box: the vanilla contains(start) law
+            let inside = eye.0 >= vx - hw
+                && eye.0 <= vx + hw
+                && eye.1 >= vy
+                && eye.1 <= vy + bh
+                && eye.2 >= vz - hw
+                && eye.2 <= vz + hw;
+            let d2 = if inside {
+                0.0
+            } else {
+                match crate::mob::aabb_clip(
+                    eye,
+                    end,
+                    (vx - hw, vy, vz - hw),
+                    (vx + hw, vy + bh, vz + hw),
+                ) {
+                    Some((point, _)) => {
+                        let (px, py, pz) = point;
+                        let (ex, ey, ez) = (px - eye.0, py - eye.1, pz - eye.2);
+                        ex * ex + ey * ey + ez * ez
+                    }
+                    None => continue,
+                }
+            };
+            if d2 < search_range * search_range && best.map_or(true, |(_, b)| d2 < b) {
+                best = Some((entry.id, d2));
+            }
+        }
+        // the block clip's own distance term (the same law the pick's
+        // tail speaks — the cart behind the wall the miss keeps)
         let block_d2 = self
             .active_world()
             .and_then(|w| w.clip(eye, view, search_range))
@@ -18852,6 +18970,7 @@ impl App {
             self.offline_boat_phys.clear();
             self.offline_carts.clear();
             self.offline_ride = None;
+            self.offline_cart_drag = None;
             self.net_boats.clear();
             self.net_boat_lerp.clear();
             // the paddle clocks the fresh world's own zero keeps (the
@@ -24238,6 +24357,7 @@ impl App {
         self.net_mobs.clear();
         self.net_ride = None;
         self.offline_ride = None;
+        self.offline_cart_drag = None;
         self.drops.clear();
         self.orbs.clear();
         self.particles.clear();
@@ -24298,6 +24418,7 @@ impl App {
         self.offline_boat_phys.clear();
         self.offline_carts.clear();
         self.offline_ride = None;
+        self.offline_cart_drag = None;
         self.net_boat_lerp.clear();
         // the paddle clocks the fresh world's own zero keeps (the wire's
         // hulls the fresh sync's word arms — the stale session's
@@ -27058,12 +27179,46 @@ impl App {
             let mut entity_pass = false;
             let mob_hit = self.pick_mob_pair(&self.net_mobs);
             let hull_hit = self.pick_hull();
+            let cart_hit = self.pick_cart();
+            // THE THREE-WAY RANK (the NEAREST candidate the one pick's
+            // own law speaks — the mob the hull the cart the same
+            // distance fold ranks, the ties the earlier arm keeps)
             let hull_wins = match (mob_hit, hull_hit) {
                 (Some((_, md)), Some((_, hd))) => hd < md,
                 (None, Some(_)) => true,
                 _ => false,
             };
-            if hull_wins {
+            let cart_wins = match (mob_hit, cart_hit) {
+                (Some((_, md)), Some((_, cd))) => cd < md,
+                (None, Some(_)) => true,
+                _ => false,
+            } && match (hull_hit, cart_hit) {
+                (Some((_, hd)), Some((_, cd))) => cd < hd,
+                (None, Some(_)) => true,
+                _ => false,
+            };
+            if cart_wins {
+                if let Some((id, _)) = cart_hit {
+                    // THE CART'S INTERACT ARM (javap Minecart.interact —
+                    // the plain cart's own override the 26.2 speaks:
+                    // the isSecondaryUseActive the sneak PASS keeps
+                    // (the shift the dismount's own key the mount
+                    // refuses), the isVehicle the occupied cart the
+                    // startRiding's own false keeps, the startRiding
+                    // the SUCCESS verdict the consume carries — the
+                    // swing the SUCCESS never starts, the rotation
+                    // snapshot the client arm records). The BLOCK case
+                    // the entity hit the switch never routes — the
+                    // PASS arms the ITEM lane the fall-through keeps.
+                    if self.shift_down {
+                        entity_pass = true;
+                    } else if self.mount_offline_cart(id) {
+                        return true;
+                    } else {
+                        entity_pass = true;
+                    }
+                }
+            } else if hull_wins {
                 // THE HULL'S INTERACT ARM (javap AbstractBoat.interact —
                 // the chest arm the secondary use speaks, then the
                 // startRiding the CONSUME verdict carries). The RIDE
@@ -36190,15 +36345,58 @@ impl App {
         true
     }
 
+    /// THE CART'S OWN MOUNT (javap `Minecart.interact` — the plain
+    /// cart's own override the 26.2 bytecode speaks, the
+    /// AbstractMinecart's isRideable-false the subclass's `return 1`
+    /// overrides): the startRiding the ride belief arms, the
+    /// PASSENGER attachment the EntityTypes MINECART row speaks (the
+    /// 0.1875 the single-rider seat the getClamped index-0 keeps —
+    /// the x the 0.0 rotation-insensitive word), the ALREADY-RIDING
+    /// gate the vanilla startRiding's own false keeps, the unknown
+    /// id the honest false keeps. NO yaw snap — the local mount the
+    /// vanilla look keeps (the boat's handleSetEntityPassengers snap
+    /// the wire's own sync law speaks, the cart's local interact the
+    /// rider's own look preserves), the ROTATION DRAG the snapshot
+    /// arms instead (the interact's client arm pc 34-37 — the
+    /// `playerRotationOffset = rotationOffset` record the first drag
+    /// delta the sync zeroes). The sneak and the occupied gates the
+    /// DISPATCH's own walk serves (the secondary-use PASS the press
+    /// keeps transparent). Returns the startRiding's own word: the
+    /// SUCCESS verdict the true carries, the PASS the false.
+    pub fn mount_offline_cart(&mut self, id: i32) -> bool {
+        if self.net_ride.is_some() || self.offline_ride.is_some() {
+            return false;
+        }
+        let Some(entry) = self.offline_carts.iter().find(|c| c.id == id) else {
+            return false;
+        };
+        let yaw = entry.cart.yaw_deg;
+        self.offline_ride = Some(crate::world_view::OfflineRide {
+            vehicle_id: id,
+            seat_x: 0.0,
+            ride_height: crate::cart::MINECART_PASSENGER_ATTACHMENT,
+        });
+        self.offline_cart_drag = Some((id, yaw));
+        // THE MOUNT'S OWN MESSAGE (the fresh-mount arm the packet
+        // handler speaks — the same translatable the lanes fold)
+        self.set_overlay_message(&format_positional(
+            MOUNT_ONBOARD_FORMAT,
+            &[SHIFT_KEY_DISPLAY],
+        ));
+        true
+    }
+
     /// THE OFFLINE DISMOUNT (the shift edge the server's own
     /// handlePlayerInput lane speaks for the wire rides — the
     /// singleplayer's client IS the authority): the ride's drop hands
     /// the body back to itself at the carried pose (the stopRiding's
     /// no-path fallback the vanilla keeps — the physics the next
     /// tick's walk resumes), the overlay's life the timeout owns (no
-    /// explicit clear the wire lane keeps).
+    /// explicit clear the wire lane keeps). The CART DRAG the drop
+    /// clears (the anchor the next mount re-arms).
     pub fn dismount_offline_hull(&mut self) {
         self.offline_ride = None;
+        self.offline_cart_drag = None;
     }
 
     /// The OFFLINE world screen's camera pose — the look-control lane's
@@ -45339,7 +45537,13 @@ impl App {
         let Some(world) = self.offline_world.as_ref() else {
             return;
         };
+        // THE RIDER'S OWN WORD (the isVehicle fold the slowdown arm
+        // reads — the ride the ride state keeps, the empty cart the
+        // 0.995 the getSlowdownFactor walk banks: natural_slowdown
+        // reads the ridden flag the tick stamps)
+        let ride_id = self.offline_ride.as_ref().map(|r| r.vehicle_id);
         for entry in &mut self.offline_carts {
+            entry.cart.ridden = ride_id == Some(entry.id);
             crate::cart::cart_tick(world, &mut entry.cart);
         }
     }
@@ -45537,6 +45741,7 @@ impl App {
             {
                 if passenger_player {
                     self.offline_ride = None;
+                    self.offline_cart_drag = None;
                 }
             }
             // THE ROCK (the client branch — the post-tick word the sync
@@ -46775,6 +46980,7 @@ impl App {
             // pose keeps (the death camera the spot freezes), the
             // respawn the spawn pose walks
             self.offline_ride = None;
+            self.offline_cart_drag = None;
             self.net_ride = None;
             self.sounds.play_death_voice(self.frame);
         }
@@ -99856,6 +100062,187 @@ cow_sound_variant: None,
             .filter(|(a, b)| a != b)
             .count();
         assert!(changed > 0, "the cart's quads recolor {} bytes of the frame", changed);
+    }
+
+    /// THE CART'S OWN MOUNT (javap Minecart.interact — the startRiding
+    /// the ride belief arms): the 0.1875 attachment the EntityTypes
+    /// row speaks, the seat the single-rider 0.0 keeps, the rotation
+    /// anchor the client arm snapshots (the first drag delta the sync
+    /// zeroes), the overlay word the lanes share, the ALREADY-RIDING
+    /// gate the second ask's false keeps, the unknown id the honest
+    /// false keeps.
+    #[test]
+    fn the_minecart_ride_the_mount_arms_the_belief() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/minecart"));
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let ry = app.spawn_y + 6;
+        app.offline_world.as_mut().unwrap().set(c, ry, c, crate::world::RAIL);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set_variant(c, ry, c, 1); // EAST_WEST
+        let hit = crate::world::ClipHit {
+            pos: (c, ry, c),
+            face: 1,
+            location: (c as f64 + 0.5, ry as f64 + 1.0, c as f64 + 0.5),
+            inside: false,
+        };
+        assert_eq!(app.on_right_press_minecart_arm(&hit), Some(true));
+        assert!(app.mount_offline_cart(1), "the startRiding's own true");
+        let r = app.offline_ride.as_ref().expect("the ride belief armed");
+        assert_eq!(r.vehicle_id, 1, "the cart's own id");
+        assert_eq!(r.seat_x, 0.0, "the single rider's own seat");
+        assert_eq!(
+            r.ride_height,
+            crate::cart::MINECART_PASSENGER_ATTACHMENT,
+            "the seat height the EntityTypes row speaks"
+        );
+        assert_eq!(
+            app.offline_cart_drag,
+            Some((1, 0.0)),
+            "the rotation anchor the mount snapshots"
+        );
+        assert_eq!(
+            app.overlay_message.as_deref(),
+            Some("Press Left Shift to Dismount"),
+            "the mount's own overlay word"
+        );
+        // THE ALREADY-RIDING GATE (the isVehicle walk the interact
+        // keeps — the occupied cart the second ask refuses)
+        assert!(!app.mount_offline_cart(1), "the second ask the false keeps");
+        // THE UNKNOWN ID (the honest false)
+        assert!(!app.mount_offline_cart(999), "the unknown id's own false");
+    }
+
+    /// THE CART RIDE'S OWN CARRY (the positionRider walk the offline
+    /// tick speaks): the cart's pose the carried feet ride (the
+    /// 0.1875 the seat height adds), the body's own sleep the ride
+    /// keeps (no impulses, no gravity), the ridden flag the isVehicle
+    /// fold stamps (the slowdown arm reads), the SHIFT edge the ride
+    /// drops (the drag anchor the dismount clears), the physics the
+    /// next tick's walk resumes.
+    #[test]
+    fn the_minecart_ride_the_carry_follows_the_tick() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/minecart"));
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let ry = app.spawn_y + 6;
+        app.offline_world.as_mut().unwrap().set(c, ry, c, crate::world::RAIL);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set_variant(c, ry, c, 1);
+        let hit = crate::world::ClipHit {
+            pos: (c, ry, c),
+            face: 1,
+            location: (c as f64 + 0.5, ry as f64 + 1.0, c as f64 + 0.5),
+            inside: false,
+        };
+        assert_eq!(app.on_right_press_minecart_arm(&hit), Some(true));
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            ry as f64 + 2.0,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        assert!(app.mount_offline_cart(1), "the mount arms");
+        // THE CARRY (the update walk's own order — the cart's tick the
+        // ride's stamp arms, the carried feet the FRESH pose rides)
+        app.update();
+        let cart = &app.offline_carts[0].cart;
+        assert!(cart.ridden, "the isVehicle fold the ride stamps");
+        assert_eq!(cart.delta, [0.0, 0.0, 0.0], "the flat rail's own stillness");
+        let b = app.body.as_ref().unwrap();
+        assert_eq!(b.x, c as f64 + 0.5, "the cart's own x");
+        assert_eq!(b.z, c as f64 + 0.5, "the cart's own z");
+        assert!(
+            (b.y - (ry as f64 + crate::cart::MINECART_PASSENGER_ATTACHMENT as f64)).abs() < 1e-9,
+            "the seat height the carried feet ride (b.y {})",
+            b.y
+        );
+        assert_eq!(b.vx, 0.0, "the body's own sleep");
+        assert_eq!(b.vy, 0.0, "the gravity the ride never arms");
+        assert!(!b.on_ground, "the ground never claims the rider");
+        // THE SHIFT EDGE (the dismount's own ask): the ride drops, the
+        // drag anchor the dismount clears, the ridden flag the next
+        // tick's stamp clears
+        app.on_movement_input(0.0, 0.0, false, true, false);
+        assert!(app.offline_ride.is_none(), "the edge's own drop");
+        assert!(app.offline_cart_drag.is_none(), "the anchor the drop clears");
+        app.update();
+        assert!(
+            !app.offline_carts[0].cart.ridden,
+            "the empty cart the next stamp clears"
+        );
+    }
+
+    /// THE CART RIDE'S OWN ROTATION DRAG (Minecart.positionRider's
+    /// client arm): the rider's yaw the cart's own turn drags — the
+    /// delta the anchor's word speaks, the wrap the degrees law keeps,
+    /// the anchor the carry re-arms (the next delta the fresh word
+    /// reads), the mount's own first-tick silence the sync keeps.
+    #[test]
+    fn the_minecart_ride_the_yaw_drag() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/minecart"));
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let ry = app.spawn_y + 6;
+        app.offline_world.as_mut().unwrap().set(c, ry, c, crate::world::RAIL);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set_variant(c, ry, c, 1);
+        let hit = crate::world::ClipHit {
+            pos: (c, ry, c),
+            face: 1,
+            location: (c as f64 + 0.5, ry as f64 + 1.0, c as f64 + 0.5),
+            inside: false,
+        };
+        assert_eq!(app.on_right_press_minecart_arm(&hit), Some(true));
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            ry as f64 + 2.0,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        assert!(app.mount_offline_cart(1), "the mount arms");
+        // THE FIRST TICK'S OWN SILENCE: the cart's yaw the mount
+        // recorded — no turn, no drag (the sync the snapshot keeps)
+        app.update();
+        assert_eq!(app.body.as_ref().unwrap().yaw, 0.0, "the sync's own silence");
+        // THE CURVE'S OWN DRAG: the cart's yaw the rail transition
+        // stamps (the adjust_to_rails word the tick would re-wear) —
+        // the rider's view the delta carries
+        app.offline_carts[0].cart.yaw_deg = 30.0;
+        app.update();
+        assert!(
+            (app.body.as_ref().unwrap().yaw - 30.0).abs() < 1e-4,
+            "the drag the +30 curve speaks"
+        );
+        assert_eq!(
+            app.offline_cart_drag,
+            Some((1, 30.0)),
+            "the anchor the carry re-arms"
+        );
+        // THE WRAP'S OWN WORD: the anchor 170, the cart -170 — the +20
+        // delta the wrap speaks (the degrees law the ±180 band keeps),
+        // the body's own 190 the ±180 band folds to -170 (the drag the
+        // rider's accumulated view wears: 170 + 20 = 190 ≡ -170)
+        app.offline_carts[0].cart.yaw_deg = 170.0;
+        app.update();
+        app.offline_carts[0].cart.yaw_deg = -170.0;
+        app.update();
+        assert!(
+            (app.body.as_ref().unwrap().yaw - -170.0).abs() < 1e-4,
+            "the wrapped delta the ±180 band keeps (yaw {})",
+            app.body.as_ref().unwrap().yaw
+        );
     }
 
     #[test]

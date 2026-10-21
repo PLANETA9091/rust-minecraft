@@ -155,6 +155,15 @@ pub const SLOPE_PITCH: f32 = 45.0;
 pub const MINECART_DIMENSIONS_WIDTH: f32 = 0.98;
 pub const MINECART_DIMENSIONS_HEIGHT: f32 = 0.7;
 
+/// THE RIDER'S OWN SEAT HEIGHT (the 26.2 EntityTypes clinit's MINECART
+/// row pcs 3923-3932 — the one-element `passengerAttachments([F)` array
+/// the Float pool's #377 speaks: 0.1875, the classic 3/16 the rider's
+/// feet ride above the cart's own origin; the villagers' LOWERED
+/// arm the getPassengerAttachmentPoint walk serves the players never
+/// read — the instanceof Villager/WanderingTrader gate the walk keeps,
+/// the PLAYER the default attachment path answers).
+pub const MINECART_PASSENGER_ATTACHMENT: f32 = 0.1875;
+
 /// THE MINECART ITEM'S OWN FAMILY (the six names the item registry
 /// order keeps — the plain cart, the chest, the furnace, the hopper,
 /// the tnt, the command block: the family gate the useOn dispatch
