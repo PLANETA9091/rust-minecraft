@@ -2362,6 +2362,55 @@ fn detector_sources_near(world: &World, x: i32, y: i32, z: i32) -> bool {
     false
 }
 
+/// THE WIRE'S OWN CLIMBING LANES (the autopush-118 round — javap
+/// RedstoneWireEvaluator.getIncomingWireSignal pc 0-165 the 26.2 jar
+/// the per-dir ladder the incoming walk speaks): the four horizontal
+/// dirs the side = pos.relative(dir) read wears, the SAME-LEVEL lane
+/// the getWireSignal(side) read keeps, the UP lane the side's
+/// isRedstoneConductor verdict AND the wire's own pos.above() cell
+/// the non-conductor read the clear-headroom law banks (the climbed
+/// cell side.above() the lane's own target answers — pc 75 the
+/// side-conductor gate, pc 90 the headroom gate, pc 95 the
+/// side.above() read), the DOWN lane the side's non-conductor
+/// verdict the side.below() wire power arms (pc 125-136 — the
+/// else-if ladder ONE lane per dir speaks: the side the conductor
+/// keeps the headroom cut the NEITHER arm answers). THE CONDUCTOR'S
+/// OWN VERDICT the [`wire_climb_conductor`] walk banks (the
+/// Properties clinit's InvokeDynamic #5 the
+/// BlockStateBase::isCollisionShapeFullBlock default wears — the
+/// FULL cube the verdict arms, the columns/bands the thin rows
+/// refuse). THE PAIR THE TWO ENDS' OWN VERDICTS AGREE ON (the
+/// staircase: the lower wire's UP arm the step's conductor read
+/// banks, the upper wire's DOWN arm the same headroom cell the
+/// non-conductor read keeps — the offer walk the caller's
+/// relaxation wears, the flood the same targets the component's own
+/// reach banks).
+pub fn wire_step_neighbors(world: &World, x: i32, y: i32, z: i32) -> Vec<(i32, i32, i32)> {
+    let mut out = Vec::with_capacity(8);
+    let head_clear = !wire_climb_conductor(world.get(x, y + 1, z));
+    for (dx, dz) in [(1i32, 0i32), (-1i32, 0i32), (0i32, 1i32), (0i32, -1i32)] {
+        let (sx, sz) = (x + dx, z + dz);
+        out.push((sx, y, sz));
+        if wire_climb_conductor(world.get(sx, y, sz)) {
+            if head_clear {
+                out.push((sx, y + 1, sz));
+            }
+        } else {
+            out.push((sx, y - 1, sz));
+        }
+    }
+    out
+}
+
+/// THE CLIMB'S OWN CONDUCTOR GATE (the isRedstoneConductor read the
+/// incoming walk's lanes consult — the isCollisionShapeFullBlock
+/// default the javap walk banks: the FULL cube the verdict arms, the
+/// Column/InsetColumn/Band rows the thin shapes refuse — the
+/// farmland step the climb never wears).
+fn wire_climb_conductor(id: u16) -> bool {
+    matches!(collision_shape(id), CollisionShape::Full)
+}
+
 /// THE WIRE'S OWN COMPONENT WALK (the graded POWER lane the
 /// autopush-673 round banks — the DEFAULT evaluator's own walk the
 /// RedStoneWireBlock.updatePowerStrength + the
@@ -2371,12 +2420,16 @@ fn detector_sources_near(world: &World, x: i32, y: i32, z: i32) -> bool {
 /// vanilla's own math wears — the source-adjacent cell the 15 wears,
 /// the wire neighbor the `power - 1` offer the rung answers, the
 /// max-plus fixpoint the relaxation's own pass loop keeps). THE
+/// CLIMB'S OWN LANES the autopush-118 round wears (the
+/// [`wire_step_neighbors`] walk the incoming verdict's three lanes
+/// answers — the same-level step the first lane keeps, the UP climb
+/// the step conductor + the clear headroom the pair banks, the DOWN
+/// slope the open side the below wire arms). THE
 /// SEEDS THE CALLER BANKS (the changed cell + its six neighbors the
 /// attach walk's own scope keeps — the
 /// updateNeighborsOfNeighboringWires walk pc 0-118 the adjacent
 /// wires the re-evaluate arms speak): the flood the wire cells
-/// walks (the 4-horizontal same-level steps the first lane keeps —
-/// the up/down climbing the future lane's own walk serves), the
+/// walks (the per-dir lane targets the same walk serves), the
 /// per-cell power the fixpoint's unique verdict answers (the LEAST
 /// fixpoint the iteration order never reads — the max-plus algebra
 /// the same answer the any walk keeps, the component's own length
@@ -2407,9 +2460,10 @@ pub fn wire_component_flips(
         if !seen.insert(start) {
             continue;
         }
-        // THE COMPONENT'S OWN FLOOD (the same-level run the 4-horizontal
-        // steps walk — the seen set the re-fire the dedupe keeps, the
-        // index map the relaxation's own neighbor reads the seat wears)
+        // THE COMPONENT'S OWN FLOOD (the per-dir lane targets the
+        // same-level run + the climb's own arms walk — the seen set the
+        // re-fire the dedupe keeps, the index map the relaxation's own
+        // neighbor reads the seat wears)
         let mut component: Vec<(i32, i32, i32)> = vec![start];
         let mut index: std::collections::HashMap<(i32, i32, i32), usize> =
             std::collections::HashMap::new();
@@ -2418,9 +2472,7 @@ pub fn wire_component_flips(
         while ci < component.len() {
             let (x, y, z) = component[ci];
             ci += 1;
-            for (nx, ny, nz) in
-                [(x + 1, y, z), (x - 1, y, z), (x, y, z + 1), (x, y, z - 1)]
-            {
+            for (nx, ny, nz) in wire_step_neighbors(world, x, y, z) {
                 if !is_redstone_wire(world.get(nx, ny, nz)) {
                     continue;
                 }
@@ -2455,9 +2507,7 @@ pub fn wire_component_flips(
             for i in 0..component.len() {
                 let (x, y, z) = component[i];
                 let mut offer = powers[i];
-                for (nx, ny, nz) in
-                    [(x + 1, y, z), (x - 1, y, z), (x, y, z + 1), (x, y, z - 1)]
-                {
+                for (nx, ny, nz) in wire_step_neighbors(world, x, y, z) {
                     if let Some(&j) = index.get(&(nx, ny, nz)) {
                         let candidate = powers[j].saturating_sub(1);
                         if candidate > offer {
@@ -20483,6 +20533,167 @@ mod tests {
                 ((c + 4, y, c), REDSTONE_WIRE),
             ],
             "the two components the verdicts bank, the rung the decay's own step wears"
+        );
+    }
+
+    #[test]
+    fn the_wire_climb_the_stair_lanes_the_rung_ladder_wears() {
+        // THE WIRE'S OWN CLIMBING LANES (this round — javap
+        // RedstoneWireEvaluator.getIncomingWireSignal pc 0-165 the 26.2
+        // jar the per-dir ladder the incoming walk speaks): the
+        // staircase the two ends' own verdicts wear — the upper wire's
+        // DOWN arm the base run's power the rung ladder answers (the
+        // climb the -1 decay per step the same math wears), the lower
+        // wire's UP arm the top run's power the full step's own
+        // conductor read banks, the headroom block the wire's own
+        // pos.above() cell the NON-conductor read refuses (the pair the
+        // NEITHER arm answers — the lower's UP gate AND the upper's
+        // DOWN side the same cell the cut keeps), the farmland step the
+        // isCollisionShapeFullBlock default refuses (the Column row the
+        // thin shape the climb never wears — the upper's own power the
+        // base never hears).
+        let c = 4i32;
+        // THE UP RUN'S OWN CLIMB (the base source the 15 wears, the
+        // climb the 14/13 rungs the ladder's own seats answer)
+        let mut w = World::new(1, 0x600D);
+        for dx in -1..=3 {
+            for dz in -1..=1 {
+                w.set(c + dx, 0, c + dz, STONE);
+                for dy in 1..=3 {
+                    w.set(c + dx, dy, c + dz, AIR);
+                }
+            }
+        }
+        w.set(c - 1, 0, c, STONE);
+        w.set(c - 1, 1, c, LEVER_ON);
+        w.set(c, 1, c, REDSTONE_WIRE);
+        w.set(c + 1, 1, c, STONE);
+        w.set(c + 1, 2, c, REDSTONE_WIRE);
+        w.set(c + 2, 1, c, STONE);
+        w.set(c + 2, 2, c, REDSTONE_WIRE);
+        let flips = wire_component_flips(&w, &[(c, 1, c)]);
+        assert_eq!(
+            flips,
+            vec![
+                ((c, 1, c), REDSTONE_WIRE_ON),
+                ((c + 1, 2, c), REDSTONE_WIRE_P14),
+                ((c + 2, 2, c), REDSTONE_WIRE_P13),
+            ],
+            "the climb the -1 decay the rung ladder answers"
+        );
+        // THE HEADROOM'S OWN CUT (the block above the base wire the
+        // conductor read refuses — the pair the NEITHER arm answers:
+        // the lower's UP gate the pos.above() read refuses AND the
+        // upper's DOWN side the same cell the conductor keep refuses)
+        let mut w2 = World::new(1, 0x600D);
+        for dx in -1..=3 {
+            for dz in -1..=1 {
+                w2.set(c + dx, 0, c + dz, STONE);
+                for dy in 1..=3 {
+                    w2.set(c + dx, dy, c + dz, AIR);
+                }
+            }
+        }
+        w2.set(c - 1, 0, c, STONE);
+        w2.set(c - 1, 1, c, LEVER_ON);
+        w2.set(c, 1, c, REDSTONE_WIRE);
+        w2.set(c, 2, c, STONE);
+        w2.set(c + 1, 1, c, STONE);
+        w2.set(c + 1, 2, c, REDSTONE_WIRE);
+        w2.set(c + 2, 1, c, STONE);
+        w2.set(c + 2, 2, c, REDSTONE_WIRE);
+        let flips2 = wire_component_flips(&w2, &[(c, 1, c)]);
+        assert_eq!(
+            flips2,
+            vec![((c, 1, c), REDSTONE_WIRE_ON)],
+            "the headroom block the climb the cut keeps — the upper rungs the dark stay"
+        );
+        assert_eq!(
+            w2.get(c + 1, 2, c),
+            REDSTONE_WIRE,
+            "the climbed cell the severed verdict keeps"
+        );
+        assert_eq!(w2.get(c + 2, 2, c), REDSTONE_WIRE, "the tail the dark keeps");
+        // THE UP LANE'S OWN POWER (the top source the full step's
+        // conductor read banks — the base wire the 14 the descent's own
+        // rung wears)
+        let mut w3 = World::new(1, 0x600D);
+        for dx in -1..=3 {
+            for dz in -1..=1 {
+                w3.set(c + dx, 0, c + dz, STONE);
+                for dy in 1..=3 {
+                    w3.set(c + dx, dy, c + dz, AIR);
+                }
+            }
+        }
+        w3.set(c, 1, c, REDSTONE_WIRE);
+        w3.set(c + 1, 1, c, STONE);
+        w3.set(c + 1, 2, c, REDSTONE_WIRE);
+        w3.set(c + 2, 1, c, STONE);
+        w3.set(c + 2, 2, c, LEVER_ON);
+        let flips3 = wire_component_flips(&w3, &[(c, 1, c)]);
+        assert_eq!(
+            flips3,
+            vec![
+                ((c, 1, c), REDSTONE_WIRE_P14),
+                ((c + 1, 2, c), REDSTONE_WIRE_ON),
+            ],
+            "the full step the top's power the base the descent rung banks"
+        );
+        // THE COLUMN'S OWN REFUSAL (the farmland step the
+        // isCollisionShapeFullBlock default refuses — the base wire the
+        // top's power never hears, the upper rung the own source the
+        // ON kind keeps)
+        let mut w4 = World::new(1, 0x600D);
+        for dx in -1..=3 {
+            for dz in -1..=1 {
+                w4.set(c + dx, 0, c + dz, STONE);
+                for dy in 1..=3 {
+                    w4.set(c + dx, dy, c + dz, AIR);
+                }
+            }
+        }
+        w4.set(c, 1, c, REDSTONE_WIRE);
+        w4.set(c + 1, 1, c, FARMLAND);
+        w4.set(c + 1, 2, c, REDSTONE_WIRE);
+        w4.set(c + 2, 1, c, STONE);
+        w4.set(c + 2, 2, c, LEVER_ON);
+        let flips4 = wire_component_flips(&w4, &[(c, 1, c), (c + 1, 2, c)]);
+        assert_eq!(
+            flips4,
+            vec![((c + 1, 2, c), REDSTONE_WIRE_ON)],
+            "the farmland step the climb refuses — the base the dark keep wears"
+        );
+        assert_eq!(
+            w4.get(c, 1, c),
+            REDSTONE_WIRE,
+            "the base wire the refused lane the plain kind keeps"
+        );
+        // THE DOWN LANE'S OWN SLOPE (the open side the below wire arms —
+        // the upper source the 15 wears, the lower wire the 14 the
+        // descent's own rung answers)
+        let mut w5 = World::new(1, 0x600D);
+        for dx in -1..=3 {
+            for dz in -1..=1 {
+                w5.set(c + dx, 0, c + dz, STONE);
+                for dy in 1..=3 {
+                    w5.set(c + dx, dy, c + dz, AIR);
+                }
+            }
+        }
+        w5.set(c - 1, 1, c, STONE);
+        w5.set(c - 1, 2, c, LEVER_ON);
+        w5.set(c, 1, c, STONE);
+        w5.set(c, 2, c, REDSTONE_WIRE);
+        w5.set(c + 1, 1, c, REDSTONE_WIRE);
+        let flips5 = wire_component_flips(&w5, &[(c, 2, c)]);
+        assert_eq!(
+            flips5,
+            vec![
+                ((c, 2, c), REDSTONE_WIRE_ON),
+                ((c + 1, 1, c), REDSTONE_WIRE_P14),
+            ],
+            "the open side the below wire the descent rung banks"
         );
     }
 
