@@ -14653,6 +14653,9 @@ impl App {
                 // caller's own smoke lane fires. The networked world
                 // the SERVER ticks (the same split the fire lane's own
                 // authority keeps).
+                // THE DRAIN'S OWN DOOR LANE SEAT (this round — the lane
+                // flips escape the borrow the voices' own walk wears)
+                let mut drain_lane = crate::world::DoorLaneFlips::default();
                 let torch_burnouts: Vec<(i32, i32, i32)> =
                     if let Some(world) = self.offline_world.as_mut() {
                         let due = world.drain_due_torch_ticks(self.frame);
@@ -14663,6 +14666,10 @@ impl App {
                         // consult re-arms, the wire's own flips the same
                         // broadcast wears)
                         let mut cascade: Vec<(i32, i32, i32)> = Vec::new();
+                        // THE FLIPPED CELLS' OWN SEAT LIST (this round —
+                        // the door lane's own seeds the flipped cells'
+                        // own broadcasts wear)
+                        let mut torch_cells: Vec<(i32, i32, i32)> = Vec::new();
                         let mut torch_changed = false;
                         for (x, y, z) in due {
                             let out = world.redstone_torch_tick(self.frame, x, y, z);
@@ -14683,6 +14690,7 @@ impl App {
                                     flip_seeds.push((fx + dx, fy + dy, fz + dz));
                                 }
                                 cascade.push((fx, fy, fz));
+                                torch_cells.push((fx, fy, fz));
                             }
                             if out.burnout {
                                 burnouts.push((x, y, z));
@@ -14742,6 +14750,49 @@ impl App {
                                     torch_changed = true;
                                 }
                             }
+                            // THE DOOR LANE'S OWN SEATS (this round —
+                            // javap RedStoneWireBlock.updatePowerStrength
+                            // the 26.2 jar the changed cells' own setBlock
+                            // flag-3 walk the Level.updateNeighborsAt six
+                            // the neighborChanged broadcast speaks, the
+                            // DoorBlock / TrapDoorBlock / FenceGateBlock
+                            // the door/trapdoor/gate among the flips' own
+                            // neighborhoods the consult answers): the
+                            // flipped torch cells + the wire flips' own
+                            // cells the [redstone_door_lane_flips] scan
+                            // the SAME helper the attach path's
+                            // twelve-cell scan wears — the door at the
+                            // NOT-gate run's tail the lever's own scope
+                            // never reached the drain's own beat re-reads
+                            // (the wire drop the stale OPEN kind retires,
+                            // the relight the lit consult re-arms), the
+                            // flips' voices the setOpen walk's own rows
+                            // the caller's tail speaks
+                            {
+                                let mut door_seeds: Vec<(i32, i32, i32)> =
+                                    torch_cells.clone();
+                                door_seeds.extend(wire_cells.iter().copied());
+                                let lane = {
+                                    let read = &*world;
+                                    crate::world::redstone_door_lane_flips(read, &door_seeds)
+                                };
+                                for ((dx, dy, dz), flip) in lane.doors.iter() {
+                                    world.set(*dx, *dy, *dz, *flip);
+                                }
+                                for ((dx, dy, dz), flip) in lane.trapdoors.iter() {
+                                    world.set(*dx, *dy, *dz, *flip);
+                                }
+                                for ((dx, dy, dz), flip) in lane.gates.iter() {
+                                    world.set(*dx, *dy, *dz, *flip);
+                                }
+                                if !lane.doors.is_empty()
+                                    || !lane.trapdoors.is_empty()
+                                    || !lane.gates.is_empty()
+                                {
+                                    torch_changed = true;
+                                }
+                                drain_lane = lane;
+                            }
                             // THE NOT-GATE'S OWN CASCADE (the dev-51 round
                             // — javap RedstoneTorchBlock.neighborChanged
                             // pc 0-44: the flips' own setBlock the flag-3
@@ -14777,6 +14828,101 @@ impl App {
                         z,
                         voice: mc_protocol::REDSTONE_TORCH_BURNOUT_EFFECT,
                     }]);
+                }
+                // THE DRAIN'S OWN DOOR VOICES (javap DoorBlock.setOpen —
+                // the playSound walk the open/close events the set's
+                // new bit answers, the drain's own flip the same row
+                // speaks; the vibration posts the sculk lane hears —
+                // the same voice walk the attach path's own flips
+                // wear)
+                let ear = self
+                    .body
+                    .as_ref()
+                    .map(|b| (b.x, b.y + b.eye_height(), b.z));
+                let yaw = self.listener_yaw();
+                for ((dx, dy, dz), flip) in drain_lane.doors {
+                    let voice = crate::world::door_voice_stem(flip);
+                    let event = if crate::world::is_door_open(flip) {
+                        format!("{voice}.open")
+                    } else {
+                        format!("{voice}.close")
+                    };
+                    let (tx, ty, tz) = (dx as f64 + 0.5, dy as f64 + 0.5, dz as f64 + 0.5);
+                    self.sounds.play_voice_at_pan(
+                        self.frame,
+                        &event,
+                        1.0,
+                        0.9 + self.drop_rng.next_f32() * 0.1,
+                        ear_distance(ear, tx, ty, tz),
+                        ear_pan(ear, yaw, tx, ty, tz),
+                    );
+                    self.dispatch_vibration_event(
+                        if crate::world::is_door_open(flip) {
+                            "block_open"
+                        } else {
+                            "block_close"
+                        },
+                        (tx, ty, tz),
+                    );
+                }
+                // THE DRAIN'S OWN TRAPDOOR VOICES (javap TrapDoorBlock
+                // .playSound pc 0-42 the 26.2 jar — the trapdoorOpen/
+                // trapdoorClose events the NEW state's OPEN bit picks,
+                // the drain's own flip the same row speaks)
+                for ((dx, dy, dz), flip) in drain_lane.trapdoors {
+                    let voice = crate::world::trapdoor_voice_stem(flip);
+                    let event = if crate::world::trapdoor_open(flip) {
+                        format!("{voice}.open")
+                    } else {
+                        format!("{voice}.close")
+                    };
+                    let (tx, ty, tz) = (dx as f64 + 0.5, dy as f64 + 0.5, dz as f64 + 0.5);
+                    self.sounds.play_voice_at_pan(
+                        self.frame,
+                        &event,
+                        1.0,
+                        0.9 + self.drop_rng.next_f32() * 0.1,
+                        ear_distance(ear, tx, ty, tz),
+                        ear_pan(ear, yaw, tx, ty, tz),
+                    );
+                    self.dispatch_vibration_event(
+                        if crate::world::trapdoor_open(flip) {
+                            "block_open"
+                        } else {
+                            "block_close"
+                        },
+                        (tx, ty, tz),
+                    );
+                }
+                // THE DRAIN'S OWN GATE VOICES (javap FenceGateBlock
+                // .neighborChanged pc 87-153 the 26.2 jar — the
+                // fenceGateOpen/fenceGateClose events the NEW state's
+                // OPEN bit picks, the drain's own flip the same row
+                // speaks)
+                for ((dx, dy, dz), flip) in drain_lane.gates {
+                    let voice = crate::world::fence_gate_voice(flip);
+                    let event = if crate::world::fence_gate_open(flip) {
+                        format!("{voice}.open")
+                    } else {
+                        format!("{voice}.close")
+                    };
+                    let (tx, ty, tz) = (dx as f64 + 0.5, dy as f64 + 0.5, dz as f64 + 0.5);
+                    self.sounds.play_voice_at_pan(
+                        self.frame,
+                        &event,
+                        1.0,
+                        0.9 + self.drop_rng.next_f32() * 0.1,
+                        ear_distance(ear, tx, ty, tz),
+                        ear_pan(ear, yaw, tx, ty, tz),
+                    );
+                    self.dispatch_vibration_event(
+                        if crate::world::fence_gate_open(flip) {
+                            "block_open"
+                        } else {
+                            "block_close"
+                        },
+                        (tx, ty, tz),
+                    );
                 }
                 // THE BAMBOO'S OWN SCHEDULED TICKS (javap
                 // `BambooStalkBlock.tick` the 26.2 jar — the walk the
@@ -38108,159 +38254,23 @@ impl App {
             // THE TWELVE-CELL SCAN (javap the updateNeighbours walk —
             // the changed cell's own six + the support cell's own six
             // the Direction.values() loop serves; the FLOOR face's own
-            // DOWN arm the connected-direction law speaks)
-            {
+            // DOWN arm the connected-direction law speaks. THIS ROUND
+            // the scan's own verdicts the [redstone_door_lane_flips]
+            // helper wears — the same seeds the scan's loops bank [the
+            // changed cell's own six + the support cell's own six + the
+            // wire flips' own cells' six] the helper's per-cell arms
+            // answer, the trapdoor/gate/door consults the same `seen`
+            // dedup the inline closure kept)
+            let lane = {
                 let read = &*world;
-                let mut seen = std::collections::HashSet::new();
-                let mut scan = |cx: i32, cy: i32, cz: i32| {
-                    let kind = read.get(cx, cy, cz);
-                    // THE TRAPDOOR'S OWN OPEN-SYNC ARM (the autopush-668
-                    // round — javap TrapDoorBlock.neighborChanged pc 0-129
-                    // the 26.2 jar: the `signal != POWERED` gate the
-                    // consult arms — the signal the trapdoor's own cell
-                    // the lever-source walk answers, the OPEN bit the
-                    // signal's verdict the cycle law syncs [the armed
-                    // floor the open kind speaks, the dead one the
-                    // closed keeps], the playSound pc 51-73 the OPEN
-                    // change alone the voice fires [the POWERED-only
-                    // beats the silent keep wears]). The single cell
-                    // the door's mate-sync law never wears — the
-                    // two-pass scan the changed cell's own six + the
-                    // support cell's own six the trapdoor cells answer
-                    // (the consult the wire flips AND the breaks the
-                    // same broadcast serves). THE FAMILY VERDICT the
-                    // whole ladder the arm serves (the autopush-670
-                    // round — the is_oak_trapdoor check the 669 round's
-                    // wood rungs the consult never answered, the
-                    // is_trapdoor family fn every rung the wire arms —
-                    // the honest in-round fix the spruce..warped AND
-                    // the metal rungs the OPEN-sync walk wears).
-                    if crate::world::is_trapdoor(kind) {
-                        if !seen.insert((cx, cy, cz)) {
-                            return;
-                        }
-                        let open_now = crate::world::trapdoor_open(kind);
-                        let signal = crate::world::redstone_signal_at(read, cx, cy, cz);
-                        if signal != open_now {
-                            if let Some(flip) = crate::world::trapdoor_toggled(kind) {
-                                trapdoor_flips.push(((cx, cy, cz), flip));
-                            }
-                        }
-                        return;
-                    }
-                    // THE FENCE GATE'S OWN ARM (the dev-53 round —
-                    // javap FenceGateBlock.neighborChanged pc 0-154 the
-                    // 26.2 jar: the `hasNeighborSignal(pos)` read
-                    // pc 8-13 the POWERED/OPEN pair's own verdict arms
-                    // [the `POWERED != signal` gate pc 28-30 the
-                    // setBlock(POWERED=signal, OPEN=signal, flag 2)
-                    // walk pc 33-68 serves, the `OPEN != signal` gate
-                    // pc 79-84 the playSound + gameEvent walk
-                    // pc 87-153 wears — the POWERED-only beats the
-                    // silent keep the trapdoor arm's own law wears],
-                    // the OPEN-sync verdict the signal != open_now
-                    // fold the trapdoor arm's own walk keeps). The
-                    // single cell the door's mate-sync law never wears
-                    // — the one-cell kind the scan's own arm answers.
-                    if crate::world::is_fence_gate(kind) {
-                        if !seen.insert((cx, cy, cz)) {
-                            return;
-                        }
-                        let open_now = crate::world::fence_gate_open(kind);
-                        let signal = crate::world::redstone_signal_at(read, cx, cy, cz);
-                        if signal != open_now {
-                            if let Some(flip) = crate::world::fence_gate_toggled(kind) {
-                                gate_flips.push(((cx, cy, cz), flip));
-                            }
-                        }
-                        return;
-                    }
-                    if !crate::world::is_door(kind) || !seen.insert((cx, cy, cz)) {
-                        return;
-                    }
-                    let open_now = crate::world::is_door_open(kind);
-                    let mate = if crate::world::is_door_upper(kind) {
-                        (cx, cy - 1, cz)
-                    } else {
-                        (cx, cy + 1, cz)
-                    };
-                    let mate_kind = read.get(mate.0, mate.1, mate.2);
-                    let signal = crate::world::redstone_signal_at(read, cx, cy, cz)
-                        || (crate::world::is_door(mate_kind)
-                            && crate::world::redstone_signal_at(
-                                read, mate.0, mate.1, mate.2,
-                            ));
-                    if signal != open_now {
-                        if let Some(flip) = crate::world::door_flip_mate(kind) {
-                            door_flips.push(((cx, cy, cz), flip));
-                        }
-                        // THE MATE'S OWN SYNC (javap
-                        // DoorBlock.updateShape the Y-arm's own
-                        // return the cycled OPEN state the
-                        // other cell rides — the flipped half's
-                        // own setBlock broadcast the neighbor
-                        // door's updateShape walk serves, the
-                        // OPEN bit the two cells the same beat
-                        // wears; the hand walk's own both-halves
-                        // beat the wire flips share)
-                        let mate = if crate::world::is_door_upper(kind) {
-                            (cx, cy - 1, cz)
-                        } else {
-                            (cx, cy + 1, cz)
-                        };
-                        let mate_kind = read.get(mate.0, mate.1, mate.2);
-                        if crate::world::is_door(mate_kind) {
-                            if let Some(mate_flip) = crate::world::door_flip_mate(mate_kind) {
-                                if seen.insert(mate) {
-                                    door_flips.push((mate, mate_flip));
-                                }
-                            }
-                        }
-                    }
-                };
-                for (dx, dy, dz) in [
-                    (0, -1, 0),
-                    (0, 1, 0),
-                    (0, 0, -1),
-                    (0, 0, 1),
-                    (-1, 0, 0),
-                    (1, 0, 0),
-                ] {
-                    scan(lx + dx, ly + dy, lz + dz);
-                }
-                for (dx, dy, dz) in [
-                    (0, -1, 0),
-                    (0, 1, 0),
-                    (0, 0, -1),
-                    (0, 0, 1),
-                    (-1, 0, 0),
-                    (1, 0, 0),
-                ] {
-                    scan(lx + dx, ly - 1 + dy, lz + dz);
-                }
-                // THE WIRE'S OWN SEEDS (this round — javap
-                // RedStoneWireBlock.updatePowerStrength the changed
-                // cells' own setBlock flag-3 the Level.updateNeighborsAt
-                // six the neighborChanged broadcast speaks): the
-                // door/trapdoor/gate among the flips' own neighborhoods
-                // the consult answers — the door at the run's tail the
-                // lever's twelve-cell scope never reached before, the
-                // flips' own cells the same scan the same verdict wears
-                // (the fresh kinds the wire's own sets the signal read
-                // answers)
-                for (wx, wy, wz) in &wire_cells {
-                    for (dx, dy, dz) in [
-                        (0, -1, 0),
-                        (0, 1, 0),
-                        (0, 0, -1),
-                        (0, 0, 1),
-                        (-1, 0, 0),
-                        (1, 0, 0),
-                    ] {
-                        scan(*wx + dx, *wy + dy, *wz + dz);
-                    }
-                }
-            }
+                let mut door_seeds: Vec<(i32, i32, i32)> =
+                    vec![(lx, ly, lz), (lx, ly - 1, lz)];
+                door_seeds.extend(wire_cells.iter().copied());
+                crate::world::redstone_door_lane_flips(read, &door_seeds)
+            };
+            door_flips = lane.doors;
+            trapdoor_flips = lane.trapdoors;
+            gate_flips = lane.gates;
             for ((dx, dy, dz), flip) in door_flips.iter() {
                 world.set(*dx, *dy, *dz, *flip);
             }
@@ -114110,6 +114120,163 @@ cow_sound_variant: None,
                 w.get(c + 5, top + 1, c),
                 crate::world::REDSTONE_LAMP_LIT,
                 "the drain's own lamp seeds the tail lamp the lit kind re-arms"
+            );
+        }
+    }
+
+    /// THE DRAIN'S OWN DOOR SEATS (this round — javap
+    /// RedStoneWireBlock.updatePowerStrength the 26.2 jar the changed
+    /// cells' own setBlock flag-3 walk the Level.updateNeighborsAt six
+    /// the neighborChanged broadcast speaks, the DoorBlock the door
+    /// among the flips' own neighborhoods the consult answers): the
+    /// flipped torch cells + the wire flips' own cells the
+    /// [redstone_door_lane_flips] scan the drain's own beat consults —
+    /// the door at the NOT-gate run's tail the lever's twelve-cell
+    /// scope never reached the drain's own seeds re-read (the ON press
+    /// the stale OPEN kind keeps, the drain the torch OFF + the wire
+    /// drop + the door RETIRES the same beat, the second press the
+    /// relight the door the lit consult re-arms — the full NOT-gate
+    /// cycle the tail door wears).
+    #[test]
+    fn the_drain_door_seats_the_tail_door_the_not_gate_cycle_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=8 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 2, c + dz, crate::world::AIR);
+                }
+            }
+            // THE NOT-GATE'S OWN SEATS (the lever the pedestal's west
+            // neighbor the ray reads, the torch the pedestal's top the
+            // LIT default wears, the wire the torch's east neighbor the
+            // support stone carries, the tail DOOR the wire's east end
+            // the same ground row wears — the door BESIDE the tail
+            // rung the lever's own scope never reaches)
+            w.set(c + 2, top, c, crate::world::LEVER);
+            w.set_variant(c + 2, top, c, 1);
+            w.set(c + 3, top, c, crate::world::STONE);
+            w.set(c + 3, top + 1, c, crate::world::REDSTONE_TORCH);
+            w.set(c + 4, top, c, crate::world::STONE);
+            w.set(c + 4, top + 1, c, crate::world::REDSTONE_WIRE);
+            w.set(c + 5, top, c, crate::world::OAK_DOOR);
+            w.set(c + 5, top + 1, c, crate::world::OAK_DOOR_UPPER);
+        }
+        // THE LIT TORCH'S OWN ARM (the attach walk's own seam the
+        // placed-wire beat speaks — the component re-read the torch's
+        // 15 the wire wears, the press path's own door consult the
+        // tail door the ON rung's 15 opens)
+        app.attach_wire_voice(c + 4, top + 1, c);
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 4, top + 1, c),
+                crate::world::REDSTONE_WIRE_ON,
+                "the lit torch the wire's own 15 wears"
+            );
+            assert_eq!(
+                w.get(c + 5, top, c),
+                crate::world::OAK_DOOR_OPEN,
+                "the press path's own door seeds the tail door opens"
+            );
+            assert_eq!(
+                w.get(c + 5, top + 1, c),
+                crate::world::OAK_DOOR_UPPER_OPEN,
+                "the mate the scan's own sync wears"
+            );
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(
+                c as f32 + 2.5,
+                top as f32 + 4.0,
+                c as f32 + 0.5,
+            ),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        // THE ON PRESS (the NOT-gate's own consult the lever's scope
+        // arms — the tail door the STALE open kind keeps until the
+        // drain)
+        assert!(app.on_right_press(0, 0), "the lever's ON press consumes");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 2, top, c),
+                crate::world::LEVER_ON,
+                "the lever's own kind the ON bit wears"
+            );
+            assert_eq!(
+                w.get(c + 5, top, c),
+                crate::world::OAK_DOOR_OPEN,
+                "the press beat the door's stale kind keeps — the +2 consult the flip alone answers"
+            );
+        }
+        // THE DRAIN'S OWN BEAT (the +2 consult the tick walk serves —
+        // the torch the extinguish arm flips OFF, the wire re-read the
+        // component's drop the same walk answers, THE NEW DOOR SEATS
+        // the tail door the wire's drop the stale kind RETIRES)
+        for _ in 0..3 {
+            app.update();
+        }
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 3, top + 1, c),
+                crate::world::REDSTONE_TORCH_OFF,
+                "the NOT-gate's own verdict the torch's LIT bit drops"
+            );
+            assert_eq!(
+                w.get(c + 4, top + 1, c),
+                crate::world::REDSTONE_WIRE,
+                "the dead source the wire's plain kind wears"
+            );
+            assert_eq!(
+                w.get(c + 5, top, c),
+                crate::world::OAK_DOOR,
+                "the drain's own door seats the tail door the stale kind retires"
+            );
+            assert_eq!(
+                w.get(c + 5, top + 1, c),
+                crate::world::OAK_DOOR_UPPER,
+                "the mate the closed kind the same sync wears"
+            );
+        }
+        // THE SECOND PRESS (the lever's death the consult re-arms —
+        // the relight the +2 beat serves, the wire's 15 the re-read
+        // re-wears, the tail door the same consult the open kind
+        // re-arms)
+        assert!(app.on_right_press(0, 0), "the lever's OFF press consumes");
+        for _ in 0..3 {
+            app.update();
+        }
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 3, top + 1, c),
+                crate::world::REDSTONE_TORCH,
+                "the dead support the torch's LIT bit re-arms"
+            );
+            assert_eq!(
+                w.get(c + 4, top + 1, c),
+                crate::world::REDSTONE_WIRE_ON,
+                "the relit torch the wire's own 15 re-wears"
+            );
+            assert_eq!(
+                w.get(c + 5, top, c),
+                crate::world::OAK_DOOR_OPEN,
+                "the drain's own door seats the tail door the open kind re-arms"
+            );
+            assert_eq!(
+                w.get(c + 5, top + 1, c),
+                crate::world::OAK_DOOR_UPPER_OPEN,
+                "the mate the open kind the same sync wears"
             );
         }
     }

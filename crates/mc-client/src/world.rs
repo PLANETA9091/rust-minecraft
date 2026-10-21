@@ -2542,6 +2542,116 @@ pub fn redstone_lamp_flips(
     out
 }
 
+/// THE DOOR LANE'S OWN FLIPS (the twelve-cell scan the attach path
+/// wears the same verdicts a shared helper banks — the drain seat's
+/// own consult the SAME fold answers): javap RedStoneWireBlock
+/// .updatePowerStrength the 26.2 jar — the changed cells' own setBlock
+/// flag-3 walk the Level.updateNeighborsAt six the neighborChanged
+/// broadcast speaks, the DoorBlock / TrapDoorBlock / FenceGateBlock
+/// neighborChanged walks the door/trapdoor/gate among the flips' own
+/// neighborhoods the consult arms answer. THE SEEDS' OWN SIX each
+/// seed cell the per-cell arms wear — the seed itself the changed
+/// cell's own kind never is (the torch/wire/lever cell the consult
+/// never answers a door), the six the vanilla broadcast's own scope
+/// keeps. THE TRAPDOOR'S OWN OPEN-SYNC ARM the `signal != POWERED`
+/// gate the consult answers (the OPEN bit the signal's verdict the
+/// cycle law syncs, the POWERED-only beats the silent keep the voice
+/// lane wears), the fence gate the `OPEN != signal` fold the same
+/// law keeps, the door the own-or-mate signal read the OPEN bit
+/// cycles (the mate the updateShape's cycled OPEN state the same
+/// beat banks). THE DEDUP the one consult per cell the shared `seen`
+/// set keeps — the pushed mate the later seed's own six never
+/// re-answers (the same law the inline closure's set wore).
+pub struct DoorLaneFlips {
+    pub doors: Vec<((i32, i32, i32), u16)>,
+    pub trapdoors: Vec<((i32, i32, i32), u16)>,
+    pub gates: Vec<((i32, i32, i32), u16)>,
+}
+
+impl Default for DoorLaneFlips {
+    fn default() -> Self {
+        Self {
+            doors: Vec::new(),
+            trapdoors: Vec::new(),
+            gates: Vec::new(),
+        }
+    }
+}
+
+pub fn redstone_door_lane_flips(
+    world: &World,
+    seeds: &[(i32, i32, i32)],
+) -> DoorLaneFlips {
+    let mut out = DoorLaneFlips::default();
+    let mut seen: std::collections::HashSet<(i32, i32, i32)> =
+        std::collections::HashSet::new();
+    for &(sx, sy, sz) in seeds {
+        for (cx, cy, cz) in [
+            (sx, sy - 1, sz),
+            (sx, sy + 1, sz),
+            (sx, sy, sz - 1),
+            (sx, sy, sz + 1),
+            (sx - 1, sy, sz),
+            (sx + 1, sy, sz),
+        ] {
+            let kind = world.get(cx, cy, cz);
+            if is_trapdoor(kind) {
+                if !seen.insert((cx, cy, cz)) {
+                    continue;
+                }
+                let open_now = trapdoor_open(kind);
+                let signal = redstone_signal_at(world, cx, cy, cz);
+                if signal != open_now {
+                    if let Some(flip) = trapdoor_toggled(kind) {
+                        out.trapdoors.push(((cx, cy, cz), flip));
+                    }
+                }
+                continue;
+            }
+            if is_fence_gate(kind) {
+                if !seen.insert((cx, cy, cz)) {
+                    continue;
+                }
+                let open_now = fence_gate_open(kind);
+                let signal = redstone_signal_at(world, cx, cy, cz);
+                if signal != open_now {
+                    if let Some(flip) = fence_gate_toggled(kind) {
+                        out.gates.push(((cx, cy, cz), flip));
+                    }
+                }
+                continue;
+            }
+            if !is_door(kind) || !seen.insert((cx, cy, cz)) {
+                continue;
+            }
+            let open_now = is_door_open(kind);
+            let mate = if is_door_upper(kind) {
+                (cx, cy - 1, cz)
+            } else {
+                (cx, cy + 1, cz)
+            };
+            let mate_kind = world.get(mate.0, mate.1, mate.2);
+            let signal = redstone_signal_at(world, cx, cy, cz)
+                || (is_door(mate_kind)
+                    && redstone_signal_at(world, mate.0, mate.1, mate.2));
+            if signal != open_now {
+                if let Some(flip) = door_flip_mate(kind) {
+                    out.doors.push(((cx, cy, cz), flip));
+                }
+                let mate_kind = world.get(mate.0, mate.1, mate.2);
+                if is_door(mate_kind) {
+                    if let Some(mate_flip) = door_flip_mate(mate_kind) {
+                        if seen.insert(mate) {
+                            out.doors.push((mate, mate_flip));
+                        }
+                    }
+                }
+            }
+        }
+    }
+    out
+}
+
 /// THE PLATE'S OWN RELEASE CLOCK (javap `BasePressurePlateBlock.get
 /// PressedTime` pc 0-2 — the `bipush 20` BOTH sets wear: the pressed
 /// plate the scheduled tick re-arms while occupied, the vacated beat
