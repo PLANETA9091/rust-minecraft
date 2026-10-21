@@ -18034,6 +18034,63 @@ impl App {
         if !destroyed {
             return;
         }
+        // THE TNT CART'S OWN DESTROY FORK (javap `MinecartTNT.destroy`
+        // verbatim — the override the VehicleEntity.destroy call
+        // answers: the `hsqr = horizontalDistanceSqr()` the verdict
+        // reads, the punch's own source the direct-entity law
+        // refuses (the player's fist the Projectile branch never
+        // wears, the fire/explosion tags the melee never carries —
+        // the `damageSourceIgnitesTnt` the false answer keeps), the
+        // `hsqr >= 0.01` OR the ignites the priming arm arms: the
+        // primeFuse the bipush 80 wears THEN the
+        // `nextInt(20) + nextInt(20)` the 0..38 quick death
+        // overwrites, the cart the scene KEEPS (the drop the priming
+        // arm never spawns, the fuse the burn the next beat serves);
+        // the Drop arm the fall-through answers — the common destroy
+        // walk the item drop serves)
+        if self.offline_carts[idx].kind == "tnt_minecart" {
+            let hsqr = crate::cart::v_horizontal_distance_sqr(self.offline_carts[idx].cart.delta);
+            let ignites = crate::cart::tnt_damage_source_ignites(false, false, false, false);
+            match crate::cart::tnt_destroy_arm(ignites, hsqr, self.offline_carts[idx].fuse) {
+                crate::cart::TntDestroyArm::Drop => {}
+                crate::cart::TntDestroyArm::Prime => {
+                    // THE PRIME + REROLL (the destroy walk's own pair —
+                    // the primeFuse the 80 wears, the nextInt(20) +
+                    // nextInt(20) the 0..38 the putfield OVERWRITES)
+                    let (x, y, z) = {
+                        let entry = &mut self.offline_carts[idx];
+                        crate::cart::prime_tnt_cart(entry);
+                        (
+                            entry.cart.pos[0],
+                            entry.cart.pos[1],
+                            entry.cart.pos[2],
+                        )
+                    };
+                    self.offline_carts[idx].fuse =
+                        self.mob_rng.next_int(crate::cart::TNT_DESTROY_REROLL_BOUND as u64)
+                            + self.mob_rng.next_int(crate::cart::TNT_DESTROY_REROLL_BOUND as u64);
+                    // THE PRIME'S OWN VOICE (the primeFuse tail the
+                    // `playSound(null, x, y, z, TNT_PRIMED, BLOCKS,
+                    // 1.0f, 1.0f)` walk speaks — the broadcast 70 the
+                    // client's own event the offline lane's in-process
+                    // belief answers)
+                    let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+                    let yaw = self.listener_yaw();
+                    self.sounds.play_voice_at_pan(
+                        self.frame,
+                        "entity.tnt.primed",
+                        1.0,
+                        1.0,
+                        ear_distance(ear, x, y, z),
+                        ear_pan(ear, yaw, x, y, z),
+                    );
+                    return; // the priming arm the scene keeps
+                }
+                crate::cart::TntDestroyArm::SurvivePrimed => {
+                    return; // the already-primed cart the destroy survives
+                }
+            }
+        }
         // THE DESTROY WALK (VehicleEntity.destroy(level, source) →
         // destroy(level, getDropItem()) — the kill the removal speaks,
         // the drop the entity-loot spawn carries)
@@ -41346,6 +41403,7 @@ impl App {
             hurt_time: 0,
             hurt_dir: 1,
             damage: 0.0,
+            fuse: crate::cart::TNT_FUSE_UNPRIMED,
         });
         // THE SURVIVAL CONSUME (the shrink(1) pc 285-288 — the same
         // walk the boat lane speaks; the `--held-item` stand-in the
@@ -45671,6 +45729,13 @@ impl App {
         // 0.995 the getSlowdownFactor walk banks: natural_slowdown
         // reads the ridden flag the tick stamps)
         let ride_id = self.offline_ride.as_ref().map(|r| r.vehicle_id);
+        // THE BEAT'S OWN DEFERRED ACTIONS (the world borrow the lanes
+        // hold — the smoke the particle lane spawns, the primes the
+        // voice plays, the detonations the removal serves: the Vecs
+        // the borrow's own end collects)
+        let mut smokes: Vec<(f64, f64, f64)> = Vec::new();
+        let mut primes: Vec<(f64, f64, f64)> = Vec::new();
+        let mut exploded: Vec<i32> = Vec::new();
         for entry in &mut self.offline_carts {
             entry.cart.ridden = ride_id == Some(entry.id);
             crate::cart::cart_tick(world, &mut entry.cart);
@@ -45679,6 +45744,90 @@ impl App {
             // burns, the zero the wobble's angle gate keeps)
             if entry.hurt_time > 0 {
                 entry.hurt_time -= 1;
+            }
+            if entry.kind != "tnt_minecart" {
+                continue;
+            }
+            // THE ACTIVATOR RAIL'S OWN PASS (javap the
+            // `activateMinecart(level, x, y, z, powered)` walk the
+            // inside-blocks pass serves — the cart's own cell the
+            // rail read, the POWERED bit the variant byte carries,
+            // the `powered && fuse < 0` gate the primeFuse(null)
+            // arms: the bipush 80 the unprimed cart alone wears, the
+            // already-primed cart the ifge return keeps)
+            let cx = entry.cart.pos[0].floor() as i32;
+            let cy = entry.cart.pos[1].floor() as i32;
+            let cz = entry.cart.pos[2].floor() as i32;
+            if world.get(cx, cy, cz) == crate::world::ACTIVATOR_RAIL
+                && (world.variant(cx, cy, cz) & crate::world::RAIL_POWERED_BIT) != 0
+                && entry.fuse < 0
+            {
+                crate::cart::prime_tnt_cart(entry);
+                primes.push((
+                    entry.cart.pos[0],
+                    entry.cart.pos[1],
+                    entry.cart.pos[2],
+                ));
+            }
+            // THE FUSE'S OWN ARMS (javap `MinecartTNT.tick` the
+            // super.tick tail speaks — the burn arm the SMOKE puff
+            // wears, the `fuse == 0` arm the explode verdict answers,
+            // the collision arm the offline lane's collision fold
+            // never arms yet: the `false` the move() collision round
+            // banks — the walk the verbatim order keeps)
+            let hsqr = crate::cart::v_horizontal_distance_sqr(entry.cart.delta);
+            let out = crate::cart::tnt_fuse_tick(entry.fuse, hsqr, false);
+            entry.fuse = out.new_fuse;
+            if out.smoke {
+                // THE SMOKE'S OWN LIFT (the addParticle walk the y +
+                // 0.5 speaks — the #56 the CP decode banks)
+                smokes.push((
+                    entry.cart.pos[0],
+                    entry.cart.pos[1] + crate::cart::TNT_SMOKE_LIFT,
+                    entry.cart.pos[2],
+                ));
+            }
+            if out.explode {
+                exploded.push(entry.id);
+            }
+        }
+        // THE BORROW'S OWN END (the world the drop releases — the
+        // deferred actions the lanes serve)
+        for (x, y, z) in smokes {
+            let smoke =
+                crate::particles::shoot_smoke_puff(x, y, z, 0.0, 0.0, 0.0, &mut self.level_ambient_rng);
+            self.particles.push(smoke);
+        }
+        for (x, y, z) in primes {
+            // THE PRIME'S OWN VOICE (the primeFuse tail's
+            // `playSound(null, x, y, z, TNT_PRIMED, BLOCKS, 1.0f,
+            // 1.0f)` walk — the broadcast 70 the in-process belief
+            // answers)
+            let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+            let yaw = self.listener_yaw();
+            self.sounds.play_voice_at_pan(
+                self.frame,
+                "entity.tnt.primed",
+                1.0,
+                1.0,
+                ear_distance(ear, x, y, z),
+                ear_pan(ear, yaw, x, y, z),
+            );
+        }
+        for id in exploded {
+            // THE EXPLODE'S OWN DISCARD (the explode() tail the
+            // `discard()` speaks — the cart the removal takes, the
+            // drop the consumed entity never spawns, the rider the
+            // destroyed vehicle the belief ejects; the world-damage
+            // explosion the later round's own lane wears)
+            if let Some(idx) = self.offline_carts.iter().position(|c| c.id == id) {
+                self.offline_carts.remove(idx);
+            }
+            if let Some(r) = self.offline_ride.as_ref() {
+                if r.vehicle_id == id {
+                    self.offline_ride = None;
+                    self.offline_cart_drag = None;
+                }
             }
         }
     }
@@ -49422,14 +49571,14 @@ impl App {
             // pcs 169-244 — the dev-110 round's walk): the variant's
             // carried block the kind selector serves, the pose INSIDE the
             // pushed jitter+newRender chain the hull's fold wears, the S
-            // flip the display never touches. THE UNPRIMED FUSE the
-            // offline lane keeps (−1.0 — the TNT cart the priming lane
-            // never arms yet, the swell window's closed gate, the
-            // NO_OVERLAY flash answer); the hurt wobble the same fold
-            // slot the hull's own call speaks.
+            // flip the display never touches. THE LIVE FUSE the priming
+            // lane serves (the `entry.fuse` the tick walk burns — the
+            // unprimed −1.0 the same answer keeps, the last-10 window
+            // the swell+flash the TntMinecartRenderer walk banks); the
+            // hurt wobble the same fold slot the hull's own call speaks.
             let display = crate::avatar::cart_display_quads(
                 entry.kind,
-                -1.0,
+                entry.fuse as f32,
                 cart.yaw_deg,
                 cart.pitch_deg,
                 feet,
@@ -100644,6 +100793,248 @@ cow_sound_variant: None,
         assert!(app2.offline_carts.is_empty(), "the cart destroyed under the rider");
         assert!(app2.offline_ride.is_none(), "the ride ejected");
         assert!(app2.offline_cart_drag.is_none(), "the drag cleared");
+    }
+
+    /// THE TNT CART'S OWN DESTROY FORK (javap `MinecartTNT.destroy`
+    /// the 26.2 jar speaks — the slow unprimed cart the Drop arm
+    /// answers, the fast cart the `hsqr >= 0.01` gate the priming
+    /// arm arms: the `nextInt(20) + nextInt(20)` reroll the fuse
+    /// overwrites, the cart the scene KEEPS, the drop the priming
+    /// arm never spawns, the burn the next beat serves).
+    #[test]
+    fn the_tnt_cart_the_slow_punch_drops_the_fast_punch_primes() {
+        // THE SLOW TWIN (the resting cart the drop wears — the same
+        // walk the plain family's own destroy keeps)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/tnt_minecart"));
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let ry = app.spawn_y + 6;
+        app.offline_world.as_mut().unwrap().set(c, ry, c, crate::world::RAIL);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set_variant(c, ry, c, 1);
+        let hit = crate::world::ClipHit {
+            pos: (c, ry, c),
+            face: 1,
+            location: (c as f64 + 0.5, ry as f64 + 1.0, c as f64 + 0.5),
+            inside: false,
+        };
+        assert_eq!(app.on_right_press_minecart_arm(&hit), Some(true));
+        assert_eq!(app.offline_carts.len(), 1, "the tnt cart spawned");
+        assert_eq!(app.offline_carts[0].kind, "tnt_minecart");
+        assert_eq!(
+            app.offline_carts[0].fuse,
+            crate::cart::TNT_FUSE_UNPRIMED,
+            "the <init> the unprimed −1 keeps"
+        );
+        for _ in 0..3 {
+            app.attack_ticker = 100;
+            app.attack_cart(1);
+        }
+        assert!(app.offline_carts.is_empty(), "the slow cart the drop wears");
+        assert_eq!(app.drops.len(), 1, "the drop spawned");
+        assert_eq!(
+            mc_registry::item_name(app.drops[0].item),
+            Some("tnt_minecart"),
+            "the getDropItem item"
+        );
+        // THE FAST TWIN (the rolling cart the priming arm arms — the
+        // delta the test's own push wears, the destroy verdict the
+        // same three punches reads)
+        let mut app2 = App::new(3);
+        app2.enter_world();
+        app2.offline_held_updated(Some("item/tnt_minecart"));
+        app2.offline_world.as_mut().unwrap().set(c, ry, c, crate::world::RAIL);
+        app2.offline_world
+            .as_mut()
+            .unwrap()
+            .set_variant(c, ry, c, 1);
+        let hit2 = crate::world::ClipHit {
+            pos: (c, ry, c),
+            face: 1,
+            location: (c as f64 + 0.5, ry as f64 + 1.0, c as f64 + 0.5),
+            inside: false,
+        };
+        assert_eq!(app2.on_right_press_minecart_arm(&hit2), Some(true));
+        app2.offline_carts[0].cart.delta = [0.3, 0.0, 0.0];
+        for _ in 0..3 {
+            app2.attack_ticker = 100;
+            app2.attack_cart(1);
+        }
+        assert_eq!(app2.offline_carts.len(), 1, "the priming arm the cart KEEPS");
+        assert!(app2.drops.is_empty(), "the priming arm the drop refuses");
+        let fused = app2.offline_carts[0].fuse;
+        assert!(
+            (0..crate::cart::TNT_DESTROY_REROLL_BOUND * 2).contains(&fused),
+            "the nextInt(20)+nextInt(20) reroll the 0..38 keeps ({fused})"
+        );
+        assert!(
+            (app2.offline_carts[0].damage - 60.0).abs() < 1e-4,
+            "the hurt walk's own accumulator the priming arm keeps"
+        );
+        // THE DETERMINISM TWIN (the same seed the same reroll wears —
+        // the Lcg the App::new(3) the same 0x5EED_10CA arms)
+        let mut app3 = App::new(3);
+        app3.enter_world();
+        app3.offline_held_updated(Some("item/tnt_minecart"));
+        app3.offline_world.as_mut().unwrap().set(c, ry, c, crate::world::RAIL);
+        app3.offline_world
+            .as_mut()
+            .unwrap()
+            .set_variant(c, ry, c, 1);
+        let hit3 = crate::world::ClipHit {
+            pos: (c, ry, c),
+            face: 1,
+            location: (c as f64 + 0.5, ry as f64 + 1.0, c as f64 + 0.5),
+            inside: false,
+        };
+        assert_eq!(app3.on_right_press_minecart_arm(&hit3), Some(true));
+        app3.offline_carts[0].cart.delta = [0.3, 0.0, 0.0];
+        for _ in 0..3 {
+            app3.attack_ticker = 100;
+            app3.attack_cart(1);
+        }
+        assert_eq!(
+            app3.offline_carts[0].fuse, fused,
+            "the same seed the same reroll speaks"
+        );
+        // THE BURN'S OWN TAIL (the test's own steering the known fuse
+        // wears — the 5 the five smoke beats burn, the sixth the
+        // fuse-0 explode answers: the cart the discard takes, the
+        // drop the consumed entity never spawns)
+        app2.offline_carts[0].fuse = 5;
+        let mut smokes = 0usize;
+        for beat in 0..6 {
+            let before = app2.particles.len();
+            app2.update();
+            smokes += app2.particles.len() - before;
+            if beat < 5 {
+                assert_eq!(app2.offline_carts.len(), 1, "the burn the beat {} wears", beat);
+            }
+        }
+        assert!(smokes >= 5, "the SMOKE puff the burn beats wear ({smokes})");
+        assert!(app2.offline_carts.is_empty(), "the fuse-0 explode the discard speaks");
+        assert!(app2.drops.is_empty(), "the consumed cart the drop never spawns");
+    }
+
+    /// THE ACTIVATOR RAIL'S OWN PRIME (javap the `activateMinecart`
+    /// walk the inside-blocks pass serves — the powered pass the
+    /// `fuse < 0` gate the primeFuse(null) arms, the unpowered pass
+    /// the silence keeps, the burn the same-beat fuse the SMOKE
+    /// speaks, the fuse-0 explode the discard answers).
+    #[test]
+    fn the_tnt_cart_the_activator_rail_primes_and_burns() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/tnt_minecart"));
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let ry = app.spawn_y + 6;
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, ry, c, crate::world::ACTIVATOR_RAIL);
+        app.offline_world.as_mut().unwrap().set_variant(
+            c,
+            ry,
+            c,
+            1 | crate::world::RAIL_POWERED_BIT,
+        );
+        let hit = crate::world::ClipHit {
+            pos: (c, ry, c),
+            face: 1,
+            location: (c as f64 + 0.5, ry as f64 + 1.0, c as f64 + 0.5),
+            inside: false,
+        };
+        assert_eq!(app.on_right_press_minecart_arm(&hit), Some(true));
+        assert_eq!(app.offline_carts.len(), 1, "the cart spawned on the pass");
+        assert_eq!(app.offline_carts[0].fuse, crate::cart::TNT_FUSE_UNPRIMED);
+        // THE POWERED PASS (the beat the prime + the same-beat burn
+        // wears — the checkInsideBlocks the prime arms BEFORE the
+        // fuse arms the bytecode's own super.tick order keeps, the
+        // 80→79 the same beat speaks, the SMOKE the puff serves)
+        let before = app.particles.len();
+        app.update();
+        assert_eq!(app.offline_carts[0].fuse, 79, "the prime the same beat burns");
+        assert!(app.particles.len() > before, "the SMOKE the beat wears");
+        // THE BURN'S OWN TAIL (the 79 beats the countdown serves —
+        // the fuse-0 the last burn keeps, the 80th the explode
+        // answers)
+        for _ in 0..79 {
+            app.update();
+        }
+        assert_eq!(
+            app.offline_carts.len(),
+            1,
+            "the fuse-0 cart the last burn keeps"
+        );
+        assert_eq!(app.offline_carts[0].fuse, 0, "the zero the burn reached");
+        app.update();
+        assert!(app.offline_carts.is_empty(), "the explode the discard speaks");
+        assert!(app.drops.is_empty(), "the consumed cart the drop never spawns");
+        // THE UNPOWERED TWIN (the silent pass the prime refuses — the
+        // fuse the unprimed −1 the same walk keeps)
+        let mut app2 = App::new(3);
+        app2.enter_world();
+        app2.offline_held_updated(Some("item/tnt_minecart"));
+        app2.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, ry, c, crate::world::ACTIVATOR_RAIL);
+        app2.offline_world
+            .as_mut()
+            .unwrap()
+            .set_variant(c, ry, c, 1);
+        let hit2 = crate::world::ClipHit {
+            pos: (c, ry, c),
+            face: 1,
+            location: (c as f64 + 0.5, ry as f64 + 1.0, c as f64 + 0.5),
+            inside: false,
+        };
+        assert_eq!(app2.on_right_press_minecart_arm(&hit2), Some(true));
+        app2.update();
+        assert_eq!(
+            app2.offline_carts[0].fuse,
+            crate::cart::TNT_FUSE_UNPRIMED,
+            "the unpowered pass the silence keeps"
+        );
+        // THE RIDER'S OWN EJECT (the exploding cart the rider's
+        // belief drops — the drag anchor the eject clears)
+        let mut app3 = App::new(3);
+        app3.enter_world();
+        app3.offline_held_updated(Some("item/tnt_minecart"));
+        app3.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, ry, c, crate::world::ACTIVATOR_RAIL);
+        app3.offline_world.as_mut().unwrap().set_variant(
+            c,
+            ry,
+            c,
+            1 | crate::world::RAIL_POWERED_BIT,
+        );
+        let hit3 = crate::world::ClipHit {
+            pos: (c, ry, c),
+            face: 1,
+            location: (c as f64 + 0.5, ry as f64 + 1.0, c as f64 + 0.5),
+            inside: false,
+        };
+        assert_eq!(app3.on_right_press_minecart_arm(&hit3), Some(true));
+        app3.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            ry as f64 + 2.0,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        assert!(app3.mount_offline_cart(1), "the mount arms");
+        for _ in 0..81 {
+            app3.update();
+        }
+        assert!(app3.offline_carts.is_empty(), "the exploded cart left");
+        assert!(app3.offline_ride.is_none(), "the ride the explode ejects");
+        assert!(app3.offline_cart_drag.is_none(), "the drag the eject clears");
     }
 
     #[test]

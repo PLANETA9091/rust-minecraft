@@ -224,6 +224,30 @@ pub const CART_HURT_TICKS: i32 = 10;
 pub const CART_HURT_SCALE: f32 = 10.0;
 pub const CART_DESTROY_DAMAGE: f32 = 40.0;
 
+/// THE TNT CART'S OWN FUSE CONSTANTS (javap `MinecartTNT` the 26.2
+/// jar speaks — the `<init>` walk the defaults arms: the
+/// `putfield fuse: iconst_m1` the unprimed −1 keeps, the
+/// `ldc #15` the Float pool's 0x40800000 the 4.0 explosion power
+/// base wears, the `fconst_1` the 1.0 speed factor speaks; the
+/// `primeFuse` walk the bipush 80 the primed decade×8 arms, the
+/// `bipush 70` the broadcastEntityEvent the client's own fuse-start
+/// event carries; the `destroy` walk the nextInt(20)+nextInt(20)
+/// reroll the 0..38 quick death rolls, the #88 = 0.01 the
+/// horizontal speed-squared gate the priming arm reads; the `tick`
+/// walk the #56 = 0.5 the SMOKE particle's own y lift answers; the
+/// `explode` walk the #187 = 5.0 the sqrt cap the radius wears, the
+/// #196 = 1.5 the nextDouble spread the power grows by).
+pub const TNT_FUSE_UNPRIMED: i32 = -1;
+pub const TNT_FUSE_PRIME: i32 = 80;
+pub const TNT_DESTROY_REROLL_BOUND: i32 = 20;
+pub const TNT_EXPLODE_POWER_BASE: f32 = 4.0;
+pub const TNT_EXPLODE_SPEED_FACTOR: f32 = 1.0;
+pub const TNT_EXPLODE_SPREAD: f64 = 1.5;
+pub const TNT_EXPLODE_RADIUS_CAP: f64 = 5.0;
+pub const TNT_PRIME_SPEED_SQR: f64 = 0.01;
+pub const TNT_SMOKE_LIFT: f64 = 0.5;
+pub const TNT_PRIME_BROADCAST_EVENT: i8 = 70;
+
 /// THE HURT'S OWN FOLD (javap `VehicleEntity.hurtServer` verbatim —
 /// the isRemoved/isInvulnerableToBase gates the offline lane's alive
 /// cart passes, the `setHurtDir(−getHurtDir())` flip the wobble's own
@@ -273,6 +297,147 @@ pub fn cart_drop_item(kind: &str) -> &'static str {
     }
 }
 
+/// THE TNT CART'S PRIMED VERDICT (javap `MinecartTNT.isPrimed` the
+/// 26.2 jar speaks — the `getfield fuse; iconst_m1; if_icmple` the
+/// STRICT `fuse > −1` comparison keeps, the iconst_1/iconst_0 pair
+/// the boolean answers).
+pub fn tnt_is_primed(fuse: i32) -> bool {
+    fuse > TNT_FUSE_UNPRIMED
+}
+
+/// THE PRIME'S OWN ARM (javap `MinecartTNT.primeFuse` verbatim — the
+/// ServerLevel `TNT_EXPLODES` gamerule gate the offline lane's true
+/// default passes, the `putfield fuse: bipush 80` the primed decade×8
+/// arms, the ignitionSource the null source never sets, the
+/// `broadcastEntityEvent(this, 70)` the client's fuse-start event
+/// speaks, the `!isSilent → playSound(null, x, y, z, TNT_PRIMED,
+/// BLOCKS, 1.0f, 1.0f)` the hiss the caller's sound seam plays).
+pub fn prime_tnt_cart(cart: &mut OfflineCart) {
+    cart.fuse = TNT_FUSE_PRIME;
+}
+
+/// THE IGNITER'S OWN LAW (javap `MinecartTNT.damageSourceIgnitesTnt`
+/// verbatim — the `getDirectEntity` the direct walk reads, the
+/// `instanceof Projectile` branch the projectile's own `isOnFire()`
+/// answer RETURNS (the wet arrow the fire tags never reach), the
+/// non-projectile fall-through the `IS_FIRE || IS_EXPLOSION` tag
+/// pair speaks).
+pub fn tnt_damage_source_ignites(
+    direct_projectile: bool,
+    projectile_on_fire: bool,
+    source_is_fire: bool,
+    source_is_explosion: bool,
+) -> bool {
+    if direct_projectile {
+        return projectile_on_fire;
+    }
+    source_is_fire || source_is_explosion
+}
+
+/// THE DESTROY'S OWN FORK (javap `MinecartTNT.destroy` verbatim — the
+/// `hsqr = getDeltaMovement().horizontalDistanceSqr()` dstore the
+/// speed the verdict reads, the `!ignitesTnt && hsqr < 0.01` pair
+/// the `destroy(level, getDropItem())` item-drop arm answers, the
+/// igniting arm the `fuse < 0` gate the re-prime refuses: the
+/// `primeFuse(source)` the bipush 80 wears THEN the
+/// `fuse = nextInt(20) + nextInt(20)` the 0..38 quick death
+/// OVERWRITES (the putfield the iadd's sum alone stores — the 80 the
+/// reroll replaces, the "reroll" the bytecode's own order keeps);
+/// the already-primed cart the destroy call SURVIVES — the fuse the
+/// countdown keeps, the drop the survive arm never spawns).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TntDestroyArm {
+    /// The `destroy(level, getDropItem())` arm — the item drop the
+    /// caller spawns, the cart the removal takes.
+    Drop,
+    /// The `fuse < 0` priming arm — the caller rerolls
+    /// `fuse = nextInt(20) + nextInt(20)` (the RNG the Lcg serves),
+    /// the cart the scene KEEPS.
+    Prime,
+    /// The already-primed cart the `ifge start+62` return keeps —
+    /// the fuse the existing countdown burns.
+    SurvivePrimed,
+}
+
+pub fn tnt_destroy_arm(ignites: bool, hsqr: f64, fuse: i32) -> TntDestroyArm {
+    if !ignites && hsqr < TNT_PRIME_SPEED_SQR {
+        return TntDestroyArm::Drop;
+    }
+    if fuse < 0 {
+        TntDestroyArm::Prime
+    } else {
+        TntDestroyArm::SurvivePrimed
+    }
+}
+
+/// THE FUSE TICK'S OWN OUTCOME (javap `MinecartTNT.tick` verbatim —
+/// the arms the bytecode's own order keeps: the `fuse > 0` arm the
+/// `fuse -= 1` decrement + the `addParticle(SMOKE, x, y + 0.5, z,
+/// 0, 0, 0)` puff wears; the `fuse == 0` arm the
+/// `explode(ignitionSource, hsqr)` verdict answers; the
+/// `horizontalCollision && hsqr >= 0.01` arm the crash detonation
+/// speaks — the arm the fuse state NEVER reads, the unprimed fast
+/// cart the wall's own verdict detonates; the fuse==0 double the
+/// discard the offline removal answers once — the removed entity
+/// the second explode's own lane the isRemoved gate refuses).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct TntFuseOutcome {
+    /// The fuse the tick leaves (the countdown the burn arm wears,
+    /// the unchanged fuse the explode/idle arms keep).
+    pub new_fuse: i32,
+    /// The burn arm's own SMOKE puff (the caller spawns the particle
+    /// at the cart's `(x, y + 0.5, z)` — the #56 lift the CP speaks).
+    pub smoke: bool,
+    /// Any explode arm fired — the caller discards the cart (the
+    /// `level.explode(...)` + `discard()` walk the offline lane's
+    /// removal answers; the world-damage explosion the later round's
+    /// own lane wears).
+    pub explode: bool,
+}
+
+pub fn tnt_fuse_tick(fuse: i32, hsqr: f64, horizontal_collision: bool) -> TntFuseOutcome {
+    let mut out = TntFuseOutcome {
+        new_fuse: fuse,
+        smoke: false,
+        explode: false,
+    };
+    if fuse > 0 {
+        out.new_fuse = fuse - 1;
+        out.smoke = true;
+    } else if fuse == 0 {
+        out.explode = true;
+        return out; // the discard the removal speaks — the arms stop
+    }
+    // the collision arm the bytecode's pc 75-104 keeps — the fall
+    // through the burn arm reaches, the explode the crash detonates
+    if horizontal_collision && hsqr >= TNT_PRIME_SPEED_SQR {
+        out.explode = true;
+    }
+    out
+}
+
+/// THE EXPLODE'S OWN POWER (javap `MinecartTNT.explode` verbatim —
+/// the `min(sqrt(radiusModifier), 5.0)` cap the #187 speaks, the
+/// `(float)(explosionPowerBase + explosionSpeedFactor · nextDouble()
+/// · 1.5 · d5)` the power the f64 fold wears — the multiply order
+/// the bytecode's operand stack keeps: the factor·roll pair the
+/// first dmul serves, the #196 spread the second, the radius the
+/// third, the base the dadd adds).
+pub fn tnt_explode_power(hsqr: f64, roll: f64) -> f32 {
+    let radius = hsqr.sqrt().min(TNT_EXPLODE_RADIUS_CAP);
+    (TNT_EXPLODE_POWER_BASE as f64
+        + (TNT_EXPLODE_SPEED_FACTOR as f64 * roll) * TNT_EXPLODE_SPREAD * radius)
+        as f32
+}
+
+/// THE HORIZONTAL SPEED'S OWN SQUARE (javap `Vec3.horizontalDistanceSqr`
+/// the walk the destroy/tick verdicts read — the x² + z² pair the y
+/// the fall never weighs).
+#[inline]
+pub fn v_horizontal_distance_sqr(a: V3) -> f64 {
+    a[0] * a[0] + a[2] * a[2]
+}
+
 /// THE MINECART ITEM'S OWN FAMILY (the six names the item registry
 /// order keeps — the plain cart, the chest, the furnace, the hopper,
 /// the tnt, the command block: the family gate the useOn dispatch
@@ -313,6 +478,14 @@ pub struct OfflineCart {
     pub hurt_time: i32,
     pub hurt_dir: i32,
     pub damage: f32,
+    /// THE TNT CART'S OWN FUSE (the `MinecartTNT.fuse` field the
+    /// `<init>` walk's iconst_m1 default keeps — the unprimed −1 the
+    /// isPrimed `fuse > −1` verdict refuses, the primeFuse walk the
+    /// bipush 80 arms, the destroy walk the nextInt(20)+nextInt(20)
+    /// reroll speaks, the tick walk the countdown the SMOKE particle
+    /// + the explode arm serve; the activator rail's own
+    /// activateMinecart walk the same fuse the powered pass wears).
+    pub fuse: i32,
 }
 
 pub type V3 = [f64; 3];
@@ -1035,7 +1208,8 @@ mod tests {
 
     #[test]
     fn the_hurt_walk_the_vehicle_entity_verdict_wears() {
-        // THE DEFAULTS (the defineSynchedData trio: 0 / 1 / 0.0)
+        // THE DEFAULTS (the defineSynchedData trio: 0 / 1 / 0.0, the
+        // MinecartTNT fuse the iconst_m1 keeps)
         let mut cart = OfflineCart {
             id: 1,
             kind: "minecart",
@@ -1043,6 +1217,7 @@ mod tests {
             hurt_time: 0,
             hurt_dir: 1,
             damage: 0.0,
+            fuse: TNT_FUSE_UNPRIMED,
         };
         // THE FIRST PUNCH (the flip 1 → −1, the decade arms, the
         // damage the amount·10.0 grows): the bare fist's 1.0 the +10
@@ -1704,5 +1879,124 @@ mod tests {
         assert!((cart.yaw_deg - 42.0).abs() < 1e-6, "the pose untouched");
         assert!(!cart.on_rails);
         assert!((cart.pos[1] - Y as f64).abs() < 1e-9);
+    }
+
+    #[test]
+    fn the_tnt_igniter_the_projectile_branch_the_tags_serve() {
+        // THE instanceof Projectile branch the direct walk keeps — the
+        // projectile's own isOnFire the RETURN answers (the wet arrow
+        // the fire tags never reach), the non-projectile fall-through
+        // the IS_FIRE || IS_EXPLOSION pair speaks.
+        assert!(tnt_damage_source_ignites(true, true, false, false));
+        assert!(!tnt_damage_source_ignites(true, false, true, true));
+        assert!(tnt_damage_source_ignites(false, false, true, false));
+        assert!(tnt_damage_source_ignites(false, false, false, true));
+        assert!(
+            !tnt_damage_source_ignites(false, false, false, false),
+            "the punch the silence keeps"
+        );
+    }
+
+    #[test]
+    fn the_tnt_destroy_arm_the_three_verdicts() {
+        // THE hsqr < 0.01 + !ignites pair the Drop arm answers — the
+        // primed-but-stopped cart the drop the same walk serves.
+        assert_eq!(tnt_destroy_arm(false, 0.0, TNT_FUSE_UNPRIMED), TntDestroyArm::Drop);
+        assert_eq!(
+            tnt_destroy_arm(false, 0.0, 40),
+            TntDestroyArm::Drop,
+            "the stopped primed cart the drop wears"
+        );
+        assert_eq!(tnt_destroy_arm(false, 0.009, TNT_FUSE_UNPRIMED), TntDestroyArm::Drop);
+        // the igniting arm: the speed OR the fire the prime keeps
+        assert_eq!(tnt_destroy_arm(false, TNT_PRIME_SPEED_SQR, TNT_FUSE_UNPRIMED), TntDestroyArm::Prime);
+        assert_eq!(tnt_destroy_arm(true, 0.0, TNT_FUSE_UNPRIMED), TntDestroyArm::Prime);
+        // the fuse >= 0 gate the re-prime refuses — the survive arm
+        assert_eq!(tnt_destroy_arm(true, 0.5, 37), TntDestroyArm::SurvivePrimed);
+        assert_eq!(
+            tnt_destroy_arm(false, TNT_PRIME_SPEED_SQR, 1),
+            TntDestroyArm::SurvivePrimed
+        );
+    }
+
+    #[test]
+    fn the_tnt_fuse_tick_the_arms_the_order_keeps() {
+        // THE burn arm: the decrement + the SMOKE the same beat wears
+        let burn = tnt_fuse_tick(80, 0.0, false);
+        assert_eq!(burn.new_fuse, 79);
+        assert!(burn.smoke);
+        assert!(!burn.explode);
+        // the last burn: 1 → 0 + smoke, the NEXT beat the explode
+        let last = tnt_fuse_tick(1, 0.0, false);
+        assert_eq!(last.new_fuse, 0);
+        assert!(last.smoke && !last.explode);
+        // the explode arm: the fuse 0 the discard answers, the fuse
+        // the unchanged keeps
+        let boom = tnt_fuse_tick(0, 0.0, false);
+        assert!(boom.explode);
+        assert_eq!(boom.new_fuse, 0);
+        // the unprimed silence: the −1 the arms never touch
+        let idle = tnt_fuse_tick(TNT_FUSE_UNPRIMED, 0.0, false);
+        assert_eq!(idle.new_fuse, TNT_FUSE_UNPRIMED);
+        assert!(!idle.smoke && !idle.explode);
+        // THE COLLISION ARM the fuse state never reads — the unprimed
+        // fast cart the wall's own verdict detonates, the slow cart
+        // the gate refuses, the BURN + collision pair the same-beat
+        // explode wears
+        let crash = tnt_fuse_tick(TNT_FUSE_UNPRIMED, TNT_PRIME_SPEED_SQR, true);
+        assert!(crash.explode, "the crash the unprimed cart detonates");
+        assert!(!crash.smoke);
+        assert_eq!(crash.new_fuse, TNT_FUSE_UNPRIMED);
+        assert!(!tnt_fuse_tick(TNT_FUSE_UNPRIMED, 0.009, true).explode);
+        let burn_crash = tnt_fuse_tick(50, 0.25, true);
+        assert!(burn_crash.smoke && burn_crash.explode);
+        assert_eq!(burn_crash.new_fuse, 49);
+    }
+
+    #[test]
+    fn the_tnt_explode_power_the_cap_the_order_keeps() {
+        // THE sqrt cap: the 25 hsqr the exact 5.0 radius wears, the
+        // 36 hsqr the cap the 5.0 keeps (the min the #187 speaks)
+        assert_eq!(tnt_explode_power(0.0, 0.0), TNT_EXPLODE_POWER_BASE);
+        assert_eq!(
+            tnt_explode_power(25.0, 1.0),
+            (TNT_EXPLODE_POWER_BASE as f64 + 1.5 * 5.0) as f32
+        );
+        assert_eq!(tnt_explode_power(36.0, 1.0), tnt_explode_power(25.0, 1.0));
+        // the roll's own spread: the 0.0 the base keeps, the 0.5 the
+        // half spread wears (the f64 fold the f32 cast answers)
+        assert_eq!(tnt_explode_power(1.0, 0.0), TNT_EXPLODE_POWER_BASE);
+        assert_eq!(
+            tnt_explode_power(1.0, 0.5),
+            (TNT_EXPLODE_POWER_BASE as f64 + (1.0 * 0.5) * 1.5 * 1.0) as f32
+        );
+    }
+
+    #[test]
+    fn the_tnt_prime_and_verdicts_the_defaults_keep() {
+        let mut cart = OfflineCart {
+            id: 1,
+            kind: "tnt_minecart",
+            cart: Minecart::new([0.0, 0.0, 0.0]),
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
+            fuse: TNT_FUSE_UNPRIMED,
+        };
+        assert!(!tnt_is_primed(cart.fuse), "the −1 the isPrimed refuses");
+        prime_tnt_cart(&mut cart);
+        assert_eq!(cart.fuse, TNT_FUSE_PRIME);
+        assert!(tnt_is_primed(cart.fuse));
+        // the destroy reroll's own bounds: the pair the 0..38 keeps
+        // (the Lcg the same seed the same rolls wears — the
+        // determinism the App-level twin test re-reads)
+        let mut r1 = crate::drops::Lcg::new(7);
+        let mut r2 = crate::drops::Lcg::new(7);
+        let a = r1.next_int(TNT_DESTROY_REROLL_BOUND as u64);
+        let b = r2.next_int(TNT_DESTROY_REROLL_BOUND as u64);
+        assert_eq!(a, b, "the seed the roll's own twin keeps");
+        assert!((0..TNT_DESTROY_REROLL_BOUND).contains(&a));
+        // the horizontal speed square the y never weighs
+        assert_eq!(v_horizontal_distance_sqr([3.0, 100.0, 4.0]), 25.0);
     }
 }
