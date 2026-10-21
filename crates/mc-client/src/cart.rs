@@ -212,6 +212,67 @@ pub fn cart_display_block(kind: &str) -> Option<&'static str> {
 /// 2 px thickness the bottom sinks into.
 pub const CART_DISPLAY_OFFSET: i32 = 6;
 
+/// THE HURT'S OWN TRIO (javap `VehicleEntity.defineSynchedData` the
+/// 26.2 jar speaks — the DATA_ID_HURT iconst_0, the DATA_ID_HURTDIR
+/// iconst_1 (the wobble direction the FIRST hit flips to −1), the
+/// DATA_ID_DAMAGE fconst_0 the accumulator zero keeps) + the
+/// hurtServer's own constants (the Float pool #36 = 10.0 the damage
+/// scale `damage += amount · 10.0` wears, the #69 = 40.0 the destroy
+/// threshold `getDamage() > 40.0F` speaks, the bipush 10 the
+/// setHurtTime(10) the wobble's own decade keeps).
+pub const CART_HURT_TICKS: i32 = 10;
+pub const CART_HURT_SCALE: f32 = 10.0;
+pub const CART_DESTROY_DAMAGE: f32 = 40.0;
+
+/// THE HURT'S OWN FOLD (javap `VehicleEntity.hurtServer` verbatim —
+/// the isRemoved/isInvulnerableToBase gates the offline lane's alive
+/// cart passes, the `setHurtDir(−getHurtDir())` flip the wobble's own
+/// side swaps, the setHurtTime(10) the decade arms, the markHurt, the
+/// `setDamage(getDamage() + amount · 10.0)` the scale grows, the
+/// gameEvent the silence the offline keeps — the destroy verdict the
+/// `getDamage() > 40.0` threshold answers; the shouldSourceDestroy /
+/// instabuild arms the offline lane's survival punch never wears):
+/// returns true = the destroy threshold crossed (the caller drops the
+/// item and removes the cart).
+pub fn hurt_cart(cart: &mut OfflineCart, amount: f32) -> bool {
+    cart.hurt_dir = -cart.hurt_dir;
+    cart.hurt_time = CART_HURT_TICKS;
+    cart.damage += amount * CART_HURT_SCALE;
+    cart.damage > CART_DESTROY_DAMAGE
+}
+
+/// THE WOBBLE'S OWN ANGLE (javap `AbstractMinecartRenderer.submit`
+/// pcs 127-166 — the hurtTime > 0 gate the fcmpl keeps, the
+/// `XP.rotationDegrees(sin(hurtTime) · hurtTime · damageTime / 10.0 ·
+/// hurtDir)` the float fold wears: the #91 = 10.0 divisor the CP
+/// decode banks): the R_x degrees the display and the hull's own
+/// fold slot rides. hurt_time/damage_time the extractRenderState's
+/// `getHurtTime() − partialTick` / `max(0, getDamage() −
+/// partialTick)` lerp words speak.
+pub fn cart_hurt_wobble(hurt_time: f32, damage_time: f32, hurt_dir: i32) -> f32 {
+    if hurt_time <= 0.0 {
+        return 0.0;
+    }
+    hurt_time.sin() * hurt_time * damage_time / 10.0 * hurt_dir as f32
+}
+
+/// THE DROP'S OWN ITEM (javap the family's `getDropItem` overrides —
+/// Minecart → MINECART, MinecartChest → CHEST_MINECART, MinecartFurnace
+/// → FURNACE_MINECART, MinecartHopper → HOPPER_MINECART, MinecartTNT →
+/// TNT_MINECART, and MinecartCommandBlock's override the PLAIN
+/// MINECART answers — the vanilla quirk the command cart's cargo
+/// never drops): the destroy walk's `destroy(level, getDropItem())`
+/// the item stack spawns.
+pub fn cart_drop_item(kind: &str) -> &'static str {
+    match kind {
+        "chest_minecart" => "chest_minecart",
+        "furnace_minecart" => "furnace_minecart",
+        "hopper_minecart" => "hopper_minecart",
+        "tnt_minecart" => "tnt_minecart",
+        _ => "minecart",
+    }
+}
+
 /// THE MINECART ITEM'S OWN FAMILY (the six names the item registry
 /// order keeps — the plain cart, the chest, the furnace, the hopper,
 /// the tnt, the command block: the family gate the useOn dispatch
@@ -244,6 +305,14 @@ pub struct OfflineCart {
     pub kind: &'static str,
     /// The walk the tick rides (the pos/delta/pose the step keeps).
     pub cart: Minecart,
+    /// THE HURT TRIO (the synced DATA_ID_HURT / DATA_ID_HURTDIR /
+    /// DATA_ID_DAMAGE the VehicleEntity.defineSynchedData defines —
+    /// 0 / 1 / 0.0 the defaults, the hurtServer fold the wobble's own
+    /// decade + the damage accumulator wears, the tick the hurt_time
+    /// countdown serves, the render the wobble angle reads).
+    pub hurt_time: i32,
+    pub hurt_dir: i32,
+    pub damage: f32,
 }
 
 pub type V3 = [f64; 3];
@@ -963,6 +1032,74 @@ mod tests {
     // THE YARD'S OWN FLOOR (the world's CHUNK_Y=48 the walk stays
     // under — the y the tests' rails wear).
     const Y: i32 = 20;
+
+    #[test]
+    fn the_hurt_walk_the_vehicle_entity_verdict_wears() {
+        // THE DEFAULTS (the defineSynchedData trio: 0 / 1 / 0.0)
+        let mut cart = OfflineCart {
+            id: 1,
+            kind: "minecart",
+            cart: Minecart::new([0.0, 0.0, 0.0]),
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
+        };
+        // THE FIRST PUNCH (the flip 1 → −1, the decade arms, the
+        // damage the amount·10.0 grows): the bare fist's 1.0 the +10
+        // speaks — the threshold the 40.0 the exact hit never crosses
+        assert!(!hurt_cart(&mut cart, 1.0), "the 10.0 rides below");
+        assert_eq!(cart.hurt_dir, -1, "the flip the first hit speaks");
+        assert_eq!(cart.hurt_time, CART_HURT_TICKS, "the decade armed");
+        assert!((cart.damage - 10.0).abs() < 1e-5);
+        // THE FOUR-PUNCH LAW (the strict > the 40.0 the fourth punch's
+        // exact sum refuses — the FIFTH the 50.0 the destroy verdict
+        // arms): the flip pairs the hits keep (−1 → +1 → −1 → +1)
+        assert!(!hurt_cart(&mut cart, 1.0), "the 20.0 rides below");
+        assert_eq!(cart.hurt_dir, 1);
+        assert!(!hurt_cart(&mut cart, 1.0), "the 30.0 rides below");
+        assert_eq!(cart.hurt_dir, -1);
+        assert!(!hurt_cart(&mut cart, 1.0), "the exact 40.0 the > keeps");
+        assert_eq!(cart.hurt_dir, 1, "the fourth flip lands");
+        assert!((cart.damage - 40.0).abs() < 1e-5);
+        assert!(hurt_cart(&mut cart, 1.0), "the 50.0 the threshold crosses");
+        assert!((cart.damage - 50.0).abs() < 1e-5);
+    }
+
+    #[test]
+    fn the_hurt_wobble_the_submit_fold_degrees_wear() {
+        // THE CLOSED GATE (the hurtTime ≤ 0 the zero degrees keeps)
+        assert_eq!(cart_hurt_wobble(0.0, 10.0, -1), 0.0);
+        assert_eq!(cart_hurt_wobble(-1.0, 10.0, 1), 0.0);
+        // THE FULL DECADE'S OWN WORD (the sin(10)·ht·dt/10·dir fold —
+        // the first punch's damageTime 10.0 the /10 the ·ht keeps:
+        // sin(10 rad)·10·(−1) the exact law the f32 sin wears)
+        let want = 10.0f32.sin() * 10.0 * 10.0 / 10.0 * -1.0;
+        let got = cart_hurt_wobble(10.0, 10.0, -1);
+        assert!((got - want).abs() < 1e-4, "the wobble {got} vs {want}");
+        // THE HALF-DECADE'S OWN LERP (the partial tick the extract
+        // walk serves — the ht 5.5 the damageTime 10.0 keeps)
+        let want = 5.5f32.sin() * 5.5 * 10.0 / 10.0 * 1.0;
+        let got = cart_hurt_wobble(5.5, 10.0, 1);
+        assert!((got - want).abs() < 1e-4, "the lerp {got} vs {want}");
+        // THE DAMAGE-TIME CLAMP (the max(0, ·) the pre-damage wear the
+        // zero keeps — the damage the partial tick eroded)
+        let want = 9.5f32.sin() * 9.5 * 0.0 / 10.0 * -1.0;
+        assert!((cart_hurt_wobble(9.5, 0.0, -1) - want).abs() < 1e-6);
+    }
+
+    #[test]
+    fn the_drop_item_the_getdropitem_overrides_wear() {
+        // THE getDropItem OVERRIDES (the five kinds their items, the
+        // command cart the PLAIN minecart the vanilla quirk keeps)
+        assert_eq!(cart_drop_item("minecart"), "minecart");
+        assert_eq!(cart_drop_item("chest_minecart"), "chest_minecart");
+        assert_eq!(cart_drop_item("furnace_minecart"), "furnace_minecart");
+        assert_eq!(cart_drop_item("hopper_minecart"), "hopper_minecart");
+        assert_eq!(cart_drop_item("tnt_minecart"), "tnt_minecart");
+        assert_eq!(cart_drop_item("command_block_minecart"), "minecart");
+        // the unknown the plain answer keeps (the match's own tail)
+        assert_eq!(cart_drop_item("not_a_cart"), "minecart");
+    }
 
     #[test]
     fn the_display_block_the_variant_classes_own_words_wear() {

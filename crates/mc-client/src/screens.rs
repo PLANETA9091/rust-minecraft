@@ -17018,7 +17018,33 @@ impl App {
         // reach the filterHitResult speaks). THE ONE-LIST WALK the
         // render chain speaks: the offline lane first, the wire's
         // remote bodies after — the chain index the split reads.
-        if let Some(i) = self.pick_mob(&self.net_mobs) {
+        // THE CARTS THE SAME PICK RANKS (the vehicle's own
+        // isPickable the mob lane's verdict shares — the NEAREST
+        // candidate the one pick's own law speaks, the cart the
+        // closer body the hurt arm serves).
+        let mob_pick = self.pick_mob_pair(&self.net_mobs);
+        let cart_pick = self.pick_cart();
+        let cart_wins = match (mob_pick, cart_pick) {
+            (Some((_, md)), Some((_, cd))) => cd < md,
+            (None, Some(_)) => true,
+            _ => false,
+        };
+        if cart_wins {
+            if let Some((id, _)) = cart_pick {
+                // THE CART'S ATTACK ARM (javap VehicleEntity.hurtServer —
+                // the wobble decade the setHurtTime arms, the damage the
+                // amount·10.0 grows, the 40.0 threshold the destroy
+                // verdict answers — the drop the getDropItem walk
+                // spawns, the swing the attack's own word carries)
+                self.attack_cart(id);
+            }
+            self.swing.start();
+            if let Some(sink) = self.live_clicks.as_ref() {
+                let _ = sink.send(crate::world_view::ContainerCommand::Swing);
+            }
+            return;
+        }
+        if let Some((i, _)) = mob_pick {
             if i < self.mobs.len() {
                 // THE OFFLINE ARM: the body the client's own AI owns —
                 // the full local prediction (the damage, the crit
@@ -17940,6 +17966,102 @@ impl App {
         // 0.1 — the offline lane banks it straight into the FoodData)
         if !self.world_is_network {
             self.food_data.add_exhaustion(0.1);
+        }
+    }
+
+    /// THE MELEE STRIKE'S OWN DAMAGE (the walk the mob arm computes —
+    /// the vehicle arm the same source amount reads): the charge scale
+    /// `attribute · (0.2 + 0.8·charge²)` the meter folds, the crit's
+    /// 1.5× the full charge's fall speaks, the attribute's own sum
+    /// (the weapon addend + the weakness/strength rows) the sanitize
+    /// 0.0 floor keeps. The reset the caller's onAttack own order
+    /// wears (every executed attack re-arms the clock — the reset the
+    /// dmg gate's BEFORE keeps).
+    fn melee_strike_damage(&self) -> f32 {
+        let held_name = self
+            .held_id()
+            .and_then(|id| {
+                mc_registry::generated::item_order::ITEM_WIRE_ORDER.get(id as usize)
+            })
+            .copied();
+        let charge = ((self.attack_ticker as f32 + 0.5)
+            / held_charge_delay(held_name) as f32)
+            .clamp(0.0, 1.0);
+        let attribute = (PLAYER_ATTACK_DAMAGE
+            + held_attack_addend(held_name)
+            + crate::effects::weakness_addend(&self.effects)
+            + crate::effects::strength_addend(&self.effects))
+        .max(0.0) as f32;
+        let mut dmg = attribute * (0.2 + 0.8 * charge * charge);
+        let full = charge > 0.9;
+        let (on_ground, eye_water) = self.body_state();
+        let (falling, sprinting) = self
+            .body
+            .as_ref()
+            .map(|b| (b.fall_distance > 0.0, b.sprinting))
+            .unwrap_or((false, false));
+        if full && falling && !on_ground && !eye_water && !sprinting {
+            dmg *= 1.5;
+        }
+        dmg
+    }
+
+    /// THE CART'S OWN ATTACK ARM (javap `VehicleEntity.hurtServer` —
+    /// the dev-111 round's walk): the strike's own source amount the
+    /// melee fold computes, the hurtServer verdict the `damage >
+    /// 40.0` threshold answers — the destroy the
+    /// `destroy(level, getDropItem())` walk serves (the kill + the
+    /// `spawnAtLocation(new ItemStack(dropItem))` the entity-loot
+    /// spawn speaks — the CUSTOM_NAME component the plain stack never
+    /// wears, the ENTITY_DROPS gamerule the offline lane's true
+    /// default keeps), the destroyed vehicle the ride's eject drops
+    /// (the same walk the mob-death prune speaks, the drag anchor the
+    /// dismount clears). The knockback the vehicles never wear (the
+    /// hurtServer's own walk carries no dealDefaultKnockback), the
+    /// damage stars the same walk never arms.
+    fn attack_cart(&mut self, id: i32) {
+        let dmg = self.melee_strike_damage();
+        // onAttack's own reset (the vanilla speaks it BEFORE the
+        // damage gate — every executed attack re-arms the clock)
+        self.attack_ticker = 0;
+        if dmg <= 0.0 {
+            return;
+        }
+        let Some(idx) = self.offline_carts.iter().position(|c| c.id == id) else {
+            return;
+        };
+        let destroyed = crate::cart::hurt_cart(&mut self.offline_carts[idx], dmg);
+        if !destroyed {
+            return;
+        }
+        // THE DESTROY WALK (VehicleEntity.destroy(level, source) →
+        // destroy(level, getDropItem()) — the kill the removal speaks,
+        // the drop the entity-loot spawn carries)
+        let entry = self.offline_carts.remove(idx);
+        let item_name = crate::cart::cart_drop_item(entry.kind);
+        let Some(item) = mc_registry::item_id_by_name(item_name) else {
+            return;
+        };
+        let did = self.next_drop_id;
+        self.next_drop_id += 1;
+        let c = &entry.cart;
+        self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+            did,
+            item,
+            1,
+            c.pos[0],
+            c.pos[1],
+            c.pos[2],
+            &mut self.mob_rng,
+        ));
+        // THE RIDE'S OWN EJECT (the destroyed vehicle the passenger's
+        // belief drops — the body keeps the last carried pose, the
+        // standing walk the next tick resumes)
+        if let Some(r) = self.offline_ride.as_ref() {
+            if r.vehicle_id == id {
+                self.offline_ride = None;
+                self.offline_cart_drag = None;
+            }
         }
     }
 
@@ -41217,7 +41339,14 @@ impl App {
         };
         let cid = self.next_cart_id;
         self.next_cart_id += 1;
-        self.offline_carts.push(crate::cart::OfflineCart { id: cid, kind, cart });
+        self.offline_carts.push(crate::cart::OfflineCart {
+            id: cid,
+            kind,
+            cart,
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
+        });
         // THE SURVIVAL CONSUME (the shrink(1) pc 285-288 — the same
         // walk the boat lane speaks; the `--held-item` stand-in the
         // honest no-op keeps)
@@ -45545,6 +45674,12 @@ impl App {
         for entry in &mut self.offline_carts {
             entry.cart.ridden = ride_id == Some(entry.id);
             crate::cart::cart_tick(world, &mut entry.cart);
+            // THE WOBBLE'S OWN COUNTDOWN (the hurtTime the tick walk
+            // serves — the decade the hurtServer armed the 20-TPS beat
+            // burns, the zero the wobble's angle gate keeps)
+            if entry.hurt_time > 0 {
+                entry.hurt_time -= 1;
+            }
         }
     }
 
@@ -49258,7 +49393,17 @@ impl App {
                 cam.yaw,
                 cam.pitch,
                 entry.id,
-                0.0, // the hurt wobble's closed gate — the offline lane arms no cart hits yet
+                // THE WOBBLE'S OWN ANGLE (the submit pcs 127-166 walk —
+                // the extractRenderState's lerp words the partial tick
+                // serves: hurtTime = getHurtTime() − partialTick, the
+                // damageTime the max(0, damage − partialTick) clamp
+                // keeps, the θ = sin·ht·dt/10·dir degrees the fold
+                // rides)
+                crate::cart::cart_hurt_wobble(
+                    entry.hurt_time as f32 - self.partial_tick as f32,
+                    (entry.damage - self.partial_tick as f32).max(0.0),
+                    entry.hurt_dir,
+                ),
             );
             let sampled: Vec<crate::raster::SampledQuad> = quads
                 .iter()
@@ -49280,8 +49425,8 @@ impl App {
             // flip the display never touches. THE UNPRIMED FUSE the
             // offline lane keeps (−1.0 — the TNT cart the priming lane
             // never arms yet, the swell window's closed gate, the
-            // NO_OVERLAY flash answer); the hurt wobble's closed 0.0
-            // gate the hull's own call speaks.
+            // NO_OVERLAY flash answer); the hurt wobble the same fold
+            // slot the hull's own call speaks.
             let display = crate::avatar::cart_display_quads(
                 entry.kind,
                 -1.0,
@@ -49289,7 +49434,11 @@ impl App {
                 cart.pitch_deg,
                 feet,
                 entry.id,
-                0.0,
+                crate::cart::cart_hurt_wobble(
+                    entry.hurt_time as f32 - self.partial_tick as f32,
+                    (entry.damage - self.partial_tick as f32).max(0.0),
+                    entry.hurt_dir,
+                ),
             );
             if display.is_empty() {
                 continue; // the plain cart's AIR — the empty gate skips
@@ -100388,6 +100537,113 @@ cow_sound_variant: None,
             "the chest's own box recolors {} bytes the hull never speaks",
             changed
         );
+    }
+
+    /// THE CART'S OWN ATTACK WALK (the dev-111 round's App lane): the
+    /// punches the hurtServer verdict wears — four fists the exact
+    /// 40.0 the strict `>` refuses, the FIFTH the destroy verdict
+    /// arms — the cart the offline vec drops, the drop the
+    /// getDropItem item the cart's own position carries, the ride the
+    /// destroyed vehicle the eject clears, the wobble decade the
+    /// surviving cart's own fields speak.
+    #[test]
+    fn the_cart_attack_the_hurt_and_destroy_walk() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/minecart"));
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let ry = app.spawn_y + 6;
+        app.offline_world.as_mut().unwrap().set(c, ry, c, crate::world::RAIL);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set_variant(c, ry, c, 1);
+        let hit = crate::world::ClipHit {
+            pos: (c, ry, c),
+            face: 1,
+            location: (c as f64 + 0.5, ry as f64 + 1.0, c as f64 + 0.5),
+            inside: false,
+        };
+        assert_eq!(app.on_right_press_minecart_arm(&hit), Some(true));
+        assert_eq!(app.offline_carts.len(), 1, "the cart spawned");
+        let cart_pos = app.offline_carts[0].cart.pos;
+        // THE FULL CHARGE THE FIST'S OWN CLOCK READS (the ticker the
+        // max the meter keeps — the 2.0 attribute the (0.2+0.8·1²)
+        // scale the exact 2.0 strike answers, the +20 per punch the
+        // hurtServer's scale speaks)
+        app.attack_ticker = 100;
+        // THE TWO SURVIVING PUNCHES (the fist's 2.0 the +20 each
+        // speaks — the strict `>` the exact 40.0 the second punch's
+        // sum refuses, the wobble decade each hit re-arms, the flip
+        // pairs the hits keep)
+        for i in 0..2 {
+            // THE METER'S OWN RE-ARM (the reset the punch's walk wore —
+            // the full charge the waited-out clock re-reads)
+            app.attack_ticker = 100;
+            let pre_dir = app.offline_carts[0].hurt_dir;
+            app.attack_cart(1);
+            assert_eq!(app.offline_carts.len(), 1, "the punch {} survives", i + 1);
+            assert_eq!(app.offline_carts[0].hurt_dir, -pre_dir, "the flip");
+            assert_eq!(app.offline_carts[0].hurt_time, 10, "the decade armed");
+            assert!(
+                (app.offline_carts[0].damage - (20.0 * (i + 1) as f32)).abs() < 1e-4,
+                "the damage the punch {} wears",
+                i + 1
+            );
+        }
+        // THE WOBBLE'S OWN BURN (the 20-TPS beat the countdown serves)
+        app.update();
+        assert_eq!(app.offline_carts[0].hurt_time, 9, "the tick burned one");
+        // THE THIRD PUNCH'S DESTROY (the 60.0 the threshold crosses —
+        // the cart the vec drops, the drop the minecart item the
+        // cart's own position wears, the entity-loot spawn the
+        // pickup-delay arms)
+        app.attack_ticker = 100;
+        app.attack_cart(1);
+        assert!(app.offline_carts.is_empty(), "the destroyed cart left");
+        assert_eq!(app.drops.len(), 1, "the drop spawned");
+        let drop = &app.drops[0];
+        assert_eq!(
+            mc_registry::item_name(drop.item),
+            Some("minecart"),
+            "the getDropItem item"
+        );
+        assert_eq!(drop.count, 1);
+        assert!((drop.x - cart_pos[0]).abs() < 1e-6, "the cart's own x");
+        assert!((drop.y - cart_pos[1]).abs() < 1e-6, "the cart's own y");
+        assert!((drop.z - cart_pos[2]).abs() < 1e-6, "the cart's own z");
+        // THE RIDE'S OWN EJECT (the ride belief the destroyed vehicle
+        // drops — the drag anchor the eject clears)
+        let mut app2 = App::new(3);
+        app2.enter_world();
+        app2.offline_held_updated(Some("item/minecart"));
+        app2.offline_world.as_mut().unwrap().set(c, ry, c, crate::world::RAIL);
+        app2.offline_world
+            .as_mut()
+            .unwrap()
+            .set_variant(c, ry, c, 1);
+        let hit2 = crate::world::ClipHit {
+            pos: (c, ry, c),
+            face: 1,
+            location: (c as f64 + 0.5, ry as f64 + 1.0, c as f64 + 0.5),
+            inside: false,
+        };
+        assert_eq!(app2.on_right_press_minecart_arm(&hit2), Some(true));
+        app2.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            ry as f64 + 2.0,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        assert!(app2.mount_offline_cart(1), "the mount arms");
+        for _ in 0..3 {
+            app2.attack_ticker = 100;
+            app2.attack_cart(1);
+        }
+        assert!(app2.offline_carts.is_empty(), "the cart destroyed under the rider");
+        assert!(app2.offline_ride.is_none(), "the ride ejected");
+        assert!(app2.offline_cart_drag.is_none(), "the drag cleared");
     }
 
     #[test]
