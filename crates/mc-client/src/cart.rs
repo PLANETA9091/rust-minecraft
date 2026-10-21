@@ -297,6 +297,44 @@ pub fn cart_drop_item(kind: &str) -> &'static str {
     }
 }
 
+/// THE BOAT'S OWN HURT (the same `VehicleEntity.hurtServer` walk the
+/// carts speak — the 26.2 jar's AbstractBoat carries NO hurtServer and
+/// NO destroy override of its own, the classfile dump's own method
+/// table the base walk's word keeps: the `setHurtDir(−getHurtDir())`
+/// flip the wobble's side swaps, the setHurtTime(10) the decade arms,
+/// the `setDamage(getDamage() + amount · 10.0)` the scale grows, the
+/// `getDamage() > 40.0` destroy verdict the strict fcmpl/ifgt keeps):
+/// the trio the synced accessors 8/9/10 speak — the hurt_time/hurt_dir/
+/// damage words the WireBoat fields carry (the caller's own borrows the
+/// fields pass — the law the cart's own OfflineCart twin wears). Returns
+/// true = the destroy threshold crossed (the caller drops the item and
+/// removes the hull).
+pub fn hurt_boat(hurt_time: &mut i32, hurt_dir: &mut i32, damage: &mut f32, amount: f32) -> bool {
+    *hurt_dir = -*hurt_dir;
+    *hurt_time = CART_HURT_TICKS;
+    *damage += amount * CART_HURT_SCALE;
+    *damage > CART_DESTROY_DAMAGE
+}
+
+/// THE BOAT'S OWN DROP (javap `AbstractBoat.getDropItem` the 26.2 jar
+/// speaks — the `dropItem.get()` supplier the ctor field keeps; the
+/// supplier's own item the EntityTypes clinit's constant pool proves:
+/// every `lambda$static$N()` answer IS the entity's own registry name —
+/// ACACIA_BOAT ← Items.ACACIA_BOAT, BAMBOO_CHEST_RAFT ←
+/// Items.BAMBOO_CHEST_RAFT, the nine woods the boat/chest/raft trio
+/// dresses): the wood + the chest infix + the kind suffix the family
+/// parse's own inverse wears — `oak`/false/false → `oak_boat`,
+/// `bamboo`/true/true → `bamboo_chest_raft`. The destroy walk's
+/// `destroy(level, getDropItem())` the item stack spawns.
+pub fn boat_drop_item(raft: bool, chest: bool, wood: &str) -> String {
+    format!(
+        "{}{}_{}",
+        wood,
+        if chest { "_chest" } else { "" },
+        if raft { "raft" } else { "boat" }
+    )
+}
+
 /// THE TNT CART'S PRIMED VERDICT (javap `MinecartTNT.isPrimed` the
 /// 26.2 jar speaks — the `getfield fuse; iconst_m1; if_icmple` the
 /// STRICT `fuse > −1` comparison keeps, the iconst_1/iconst_0 pair
@@ -1274,6 +1312,47 @@ mod tests {
         assert_eq!(cart_drop_item("command_block_minecart"), "minecart");
         // the unknown the plain answer keeps (the match's own tail)
         assert_eq!(cart_drop_item("not_a_cart"), "minecart");
+    }
+
+    #[test]
+    fn the_boat_hurt_the_same_vehicle_law_wears() {
+        // THE TRIO THE ACCESSORS 8/9/10 SPEAK (the never-hit defaults
+        // the defineSynchedData keeps: 0 / 1 / 0.0 — the WireBoat
+        // fields the caller's own borrows pass)
+        let (mut t, mut d, mut dmg) = (0i32, 1i32, 0.0f32);
+        // THE FIRST PUNCH (the bare fist's 1.0 the +10 the scale
+        // speaks — the flip 1 → −1, the decade arms)
+        assert!(!hurt_boat(&mut t, &mut d, &mut dmg, 1.0), "the 10.0 rides below");
+        assert_eq!(d, -1, "the flip the first hit speaks");
+        assert_eq!(t, CART_HURT_TICKS, "the decade armed");
+        assert!((dmg - 10.0).abs() < 1e-5);
+        // THE FOUR-PUNCH LAW (the strict > the 40.0 the fourth punch's
+        // exact sum refuses — the FIFTH the 50.0 the destroy verdict
+        // arms; the flip pairs the hits keep, the decade re-arms)
+        assert!(!hurt_boat(&mut t, &mut d, &mut dmg, 1.0), "the 20.0 rides below");
+        assert_eq!(d, 1);
+        assert_eq!(t, CART_HURT_TICKS, "the re-arm");
+        assert!(!hurt_boat(&mut t, &mut d, &mut dmg, 1.0), "the 30.0 rides below");
+        assert_eq!(d, -1);
+        assert!(!hurt_boat(&mut t, &mut d, &mut dmg, 1.0), "the exact 40.0 the > keeps");
+        assert_eq!(d, 1, "the fourth flip lands");
+        assert!((dmg - 40.0).abs() < 1e-5);
+        assert!(hurt_boat(&mut t, &mut d, &mut dmg, 1.0), "the 50.0 the threshold crosses");
+        assert!((dmg - 50.0).abs() < 1e-5);
+    }
+
+    #[test]
+    fn the_boat_drop_item_the_lambda_suppliers_own_name_wears() {
+        // THE ENTITYTYPES CLINIT'S OWN LAMBDAS (the mined law — every
+        // dropItem supplier answers the entity's own registry name):
+        // the four family shapes the wood/infix/suffix trio dresses
+        assert_eq!(boat_drop_item(false, false, "oak"), "oak_boat");
+        assert_eq!(boat_drop_item(false, true, "oak"), "oak_chest_boat");
+        assert_eq!(boat_drop_item(true, false, "bamboo"), "bamboo_raft");
+        assert_eq!(boat_drop_item(true, true, "bamboo"), "bamboo_chest_raft");
+        // the nine woods the same shape the parse inverse keeps
+        assert_eq!(boat_drop_item(false, false, "pale_oak"), "pale_oak_boat");
+        assert_eq!(boat_drop_item(false, true, "dark_oak"), "dark_oak_chest_boat");
     }
 
     #[test]

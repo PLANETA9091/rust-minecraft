@@ -17021,13 +17021,41 @@ impl App {
         // THE CARTS THE SAME PICK RANKS (the vehicle's own
         // isPickable the mob lane's verdict shares — the NEAREST
         // candidate the one pick's own law speaks, the cart the
-        // closer body the hurt arm serves).
+        // closer body the hurt arm serves). THE HULLS THE SAME RAY
+        // RANKS (the AbstractBoat's own isPickable the same verdict
+        // keeps — the three families the ONE nearest-wins compare
+        // answers, the strict < the chain's own order keeps).
         let mob_pick = self.pick_mob_pair(&self.net_mobs);
         let cart_pick = self.pick_cart();
-        let cart_wins = match (mob_pick, cart_pick) {
-            (Some((_, md)), Some((_, cd))) => cd < md,
-            (None, Some(_)) => true,
-            _ => false,
+        let hull_pick = self.pick_offline_hull();
+        let hull_wins = match hull_pick {
+            None => false,
+            Some((_, hd)) => {
+                mob_pick.map_or(true, |(_, d)| hd < d) && cart_pick.map_or(true, |(_, d)| hd < d)
+            }
+        };
+        if hull_wins {
+            if let Some((id, _)) = hull_pick {
+                // THE BOAT'S ATTACK ARM (javap VehicleEntity.hurtServer —
+                // the walk the carts speak the AbstractBoat's own method
+                // table keeps NO override of: the wobble decade the
+                // setHurtTime arms, the damage the amount·10.0 grows,
+                // the 40.0 threshold the destroy verdict answers — the
+                // drop the getDropItem walk spawns, the swing the
+                // attack's own word carries)
+                self.attack_boat(id);
+            }
+            self.swing.start();
+            if let Some(sink) = self.live_clicks.as_ref() {
+                let _ = sink.send(crate::world_view::ContainerCommand::Swing);
+            }
+            return;
+        }
+        let cart_wins = match cart_pick {
+            None => false,
+            Some((_, cd)) => {
+                mob_pick.map_or(true, |(_, d)| cd < d) && hull_pick.map_or(true, |(_, d)| cd < d)
+            }
         };
         if cart_wins {
             if let Some((id, _)) = cart_pick {
@@ -17444,6 +17472,27 @@ impl App {
     /// Returns the hull's id + the hit's distance² from the eye (the
     /// nearest-of-entity-pick compare's own term).
     fn pick_hull(&self) -> Option<(i32, f64)> {
+        self.pick_hull_in(false)
+    }
+
+    /// THE ATTACK'S OWN HULL PICK (the same walk the ride's own
+    /// [`Self::pick_hull`] speaks — the OFFLINE hulls only, the wire
+    /// lane predicts nothing, the dev-106 law the cart pick's own word
+    /// keeps).
+    fn pick_offline_hull(&self) -> Option<(i32, f64)> {
+        self.pick_hull_in(true)
+    }
+
+    /// THE HULL PICK'S OWN WALK (the isPickable body the ride and the
+    /// punch both serve): the box clipped (the 1.375 x 0.562 box the
+    /// eye-inside gate speaks — the eye inside the box the 0.0 the
+    /// start-inside law keeps), the NEAREST hull wins, and the hit must
+    /// beat the block clip AND the 3.0 entity reach (the same
+    /// `closerThan` law the mob arm speaks). Returns the hull's id +
+    /// the hit's distance² from the eye (the nearest-of-entity-pick
+    /// compare's own term). `offline_only` = the offline spawner's own
+    /// hulls the walk ranks (the wire's bodies the net list owns).
+    fn pick_hull_in(&self, offline_only: bool) -> Option<(i32, f64)> {
         let cam = self.world_camera();
         let f = cam.forward();
         let eye = (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64);
@@ -17457,7 +17506,12 @@ impl App {
         let hw = crate::world_view::BOAT_DIMENSIONS_WIDTH as f64 / 2.0;
         let bh = crate::world_view::BOAT_DIMENSIONS_HEIGHT as f64;
         let mut best: Option<(i32, f64)> = None;
-        for b in self.net_boats.iter().chain(self.offline_boats.iter()) {
+        let source: Box<dyn Iterator<Item = &crate::world_view::WireBoat>> = if offline_only {
+            Box::new(self.offline_boats.iter())
+        } else {
+            Box::new(self.net_boats.iter().chain(self.offline_boats.iter()))
+        };
+        for b in source {
             // the eye inside the box: the vanilla contains(start) law
             let inside = eye.0 >= b.x - hw
                 && eye.0 <= b.x + hw
@@ -18109,6 +18163,83 @@ impl App {
             c.pos[0],
             c.pos[1],
             c.pos[2],
+            &mut self.mob_rng,
+        ));
+        // THE RIDE'S OWN EJECT (the destroyed vehicle the passenger's
+        // belief drops — the body keeps the last carried pose, the
+        // standing walk the next tick resumes)
+        if let Some(r) = self.offline_ride.as_ref() {
+            if r.vehicle_id == id {
+                self.offline_ride = None;
+                self.offline_cart_drag = None;
+            }
+        }
+    }
+
+    /// THE BOAT'S OWN ATTACK WALK (javap `VehicleEntity.hurtServer`
+    /// verbatim — the walk the carts speak, the 26.2 jar's AbstractBoat
+    /// carries NO override of: the onAttack reset the meter's own arm
+    /// wears BEFORE the damage gate, the `setHurtDir(−getHurtDir())`
+    /// flip, the setHurtTime(10) decade, the `setDamage(getDamage() +
+    /// amount · 10.0)` scale, the `getDamage() > 40.0` destroy verdict
+    /// the strict compare answers — the destroy the
+    /// `destroy(level, getDropItem())` chain speaks: the kill the
+    /// removal carries, the drop the EntityTypes clinit's own lambda
+    /// name spawns, the rider the eject clears). The OFFLINE hulls only
+    /// (the wire lane predicts nothing — the dev-106 law the cart pick
+    /// keeps). The WOBBLE'S OWN ARM: the hurt trio the synced accessors
+    /// speak, the client's own copy the seen-tracker adopts — the decay
+    /// the tick's own arm burns, the render the tilt the copy serves.
+    fn attack_boat(&mut self, id: i32) {
+        let dmg = self.melee_strike_damage();
+        // onAttack's own reset (the vanilla speaks it BEFORE the
+        // damage gate — every executed attack re-arms the clock)
+        self.attack_ticker = 0;
+        if dmg <= 0.0 {
+            return;
+        }
+        let Some(idx) = self.offline_boats.iter().position(|b| b.id == id) else {
+            return;
+        };
+        let destroyed = {
+            let b = &mut self.offline_boats[idx];
+            crate::cart::hurt_boat(&mut b.hurt_time, &mut b.hurt_dir, &mut b.damage, dmg)
+        };
+        // THE WOBBLE'S OWN ARM (the offline hull IS its own authority —
+        // the trio the punch's own word arms, the client's copy the
+        // seen-tracker adopts wholesale: the SetData overwrite the wire
+        // lane's walk answers, the decay the tick's own arm burns)
+        {
+            let b = &self.offline_boats[idx];
+            let hurt = self.hurt_state.entry(b.id).or_default();
+            hurt.seen_time = b.hurt_time;
+            hurt.seen_dir = b.hurt_dir;
+            hurt.seen_damage = b.damage;
+            hurt.time = b.hurt_time;
+            hurt.dir = b.hurt_dir;
+            hurt.damage = b.damage;
+        }
+        if !destroyed {
+            return;
+        }
+        // THE DESTROY WALK (VehicleEntity.destroy(level, source) →
+        // destroy(level, getDropItem()) — the kill the removal speaks,
+        // the drop the entity-loot spawn carries: the supplier the
+        // EntityTypes clinit's own lambda name proves)
+        let entry = self.offline_boats.remove(idx);
+        let item_name = crate::cart::boat_drop_item(entry.raft, entry.chest, &entry.wood);
+        let Some(item) = mc_registry::item_id_by_name(&item_name) else {
+            return;
+        };
+        let did = self.next_drop_id;
+        self.next_drop_id += 1;
+        self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+            did,
+            item,
+            1,
+            entry.x,
+            entry.y,
+            entry.z,
             &mut self.mob_rng,
         ));
         // THE RIDE'S OWN EJECT (the destroyed vehicle the passenger's
@@ -46033,6 +46164,21 @@ impl App {
             // LOCAL clock the authority's own word feeds)
             let rock = self.bubble_state.entry(boat.id).or_default();
             bubble_rock_step(rock, bubble.bubble_time);
+            // THE HURT WOBBLE'S OWN DECAY (the AbstractBoat.tick's own
+            // client arm — the isClientSide gate jumps straight to it,
+            // every tick, whatever the paddles say: the `getHurtTime()
+            // > 0` the −1 step speaks, the `getDamage() > 0.0F` the
+            // −1.0 ramp falls, the silence the 0 keeps — the same walk
+            // the wire lane's seen-tracker serves, the offline hull the
+            // punch's own arm feeds)
+            if let Some(hurt) = self.hurt_state.get_mut(&boat.id) {
+                if hurt.time > 0 {
+                    hurt.time -= 1;
+                }
+                if hurt.damage > 0.0 {
+                    hurt.damage -= 1.0;
+                }
+            }
         }
     }
 
@@ -100793,6 +100939,141 @@ cow_sound_variant: None,
         assert!(app2.offline_carts.is_empty(), "the cart destroyed under the rider");
         assert!(app2.offline_ride.is_none(), "the ride ejected");
         assert!(app2.offline_cart_drag.is_none(), "the drag cleared");
+    }
+
+    /// THE BOAT'S OWN PUNCH LANE (javap `VehicleEntity.hurtServer` the
+    /// 26.2 jar speaks — the walk the AbstractBoat's own method table
+    /// keeps NO override of): the wobble the decade arms (the client's
+    /// copy the seen-tracker adopts, the decay the tick burns), the
+    /// damage the amount·10 ramps, the destroy at the THIRD full-charge
+    /// punch (the 60.0 the strict > crosses — the 2.0 attribute the
+    /// meter's full charge wears), the drop the EntityTypes clinit's
+    /// own lambda name spawns, the raw word the server's own arm keeps
+    /// (the decay the CLIENT's own copy speaks, the wire's word the
+    /// offline lane freezes).
+    #[test]
+    fn the_boat_the_punch_wobbles_and_the_third_breaks() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_boats.push(crate::world_view::WireBoat {
+            id: 7,
+            x: 10.0,
+            y: 64.0,
+            z: -3.0,
+            yaw: 90.0,
+            raft: false,
+            chest: false,
+            wood: "oak".to_string(),
+            paddle_left: false,
+            paddle_right: false,
+            bubble_time: 0,
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
+        });
+        app.body = Some(crate::body::PlayerBody::new(10.5, 65.0, -2.0, 0.0, 0.0));
+        // THE TWO SURVIVING PUNCHES (the meter's own re-arm the punch's
+        // walk wore — the full charge the waited-out clock re-reads)
+        for i in 0..2 {
+            app.attack_ticker = 100;
+            let pre_dir = app.offline_boats[0].hurt_dir;
+            app.attack_boat(7);
+            assert_eq!(app.offline_boats.len(), 1, "the punch {} survives", i + 1);
+            assert_eq!(app.offline_boats[0].hurt_dir, -pre_dir, "the flip");
+            assert_eq!(app.offline_boats[0].hurt_time, 10, "the decade armed");
+            assert!(
+                (app.offline_boats[0].damage - (20.0 * (i + 1) as f32)).abs() < 1e-4,
+                "the damage the punch {} wears",
+                i + 1
+            );
+            // THE CLIENT'S OWN COPY (the seen-tracker the wobble's word
+            // arms — the same trio the raw word wears)
+            let h = app.hurt_state.get(&7).expect("the wobble state armed");
+            assert_eq!(h.time, 10, "the client's decade");
+            assert_eq!(h.dir, -pre_dir, "the client's flip");
+            assert!(
+                (h.damage - (20.0 * (i + 1) as f32)).abs() < 1e-4,
+                "the client's ramp"
+            );
+        }
+        // THE DECAY'S OWN BURN (the AbstractBoat.tick's client arm — the
+        // −1 step the time speaks, the raw word the server's own keeps;
+        // the ramp the two punches' 40.0 wears — the client's copy the
+        // −1.0 the beat falls)
+        app.update();
+        assert_eq!(
+            app.hurt_state.get(&7).unwrap().time,
+            9,
+            "the tick burned one"
+        );
+        assert!(
+            (app.hurt_state.get(&7).unwrap().damage - 39.0).abs() < 1e-4,
+            "the ramp fell one"
+        );
+        assert_eq!(
+            app.offline_boats[0].hurt_time, 10,
+            "the raw word the server's own keeps"
+        );
+        // THE THIRD PUNCH'S DESTROY (the 60.0 the threshold crosses —
+        // the hull the vec drops, the drop the oak_boat item the
+        // EntityTypes clinit's own lambda name wears, the hull's own
+        // position the entity-loot spawn carries — the pose the float's
+        // own tick settled)
+        let (bx, by, bz) = (
+            app.offline_boats[0].x,
+            app.offline_boats[0].y,
+            app.offline_boats[0].z,
+        );
+        app.attack_ticker = 100;
+        app.attack_boat(7);
+        assert!(app.offline_boats.is_empty(), "the destroyed hull left");
+        assert_eq!(app.drops.len(), 1, "the drop spawned");
+        let drop = &app.drops[0];
+        assert_eq!(
+            mc_registry::item_name(drop.item),
+            Some("oak_boat"),
+            "the getDropItem item"
+        );
+        assert_eq!(drop.count, 1);
+        assert!((drop.x - bx).abs() < 1e-6, "the hull's own x");
+        assert!((drop.y - by).abs() < 1e-6, "the hull's own y");
+        assert!((drop.z - bz).abs() < 1e-6, "the hull's own z");
+    }
+
+    /// THE DESTROYED BOAT'S OWN EJECT (the VehicleEntity.destroy
+    /// chain's own tail — the ride belief the destroyed hull drops, the
+    /// rider the standing walk the next tick resumes)
+    #[test]
+    fn the_destroyed_boat_the_rider_ejects() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_boats.push(crate::world_view::WireBoat {
+            id: 7,
+            x: 10.0,
+            y: 64.0,
+            z: -3.0,
+            yaw: 90.0,
+            raft: false,
+            chest: false,
+            wood: "oak".to_string(),
+            paddle_left: false,
+            paddle_right: false,
+            bubble_time: 0,
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
+        });
+        app.body = Some(crate::body::PlayerBody::new(10.5, 65.0, -2.0, 0.0, 0.0));
+        assert!(app.mount_offline_hull(7), "the mount arms");
+        for _ in 0..3 {
+            app.attack_ticker = 100;
+            app.attack_boat(7);
+        }
+        assert!(
+            app.offline_boats.is_empty(),
+            "the hull destroyed under the rider"
+        );
+        assert!(app.offline_ride.is_none(), "the ride ejected");
     }
 
     /// THE TNT CART'S OWN DESTROY FORK (javap `MinecartTNT.destroy`
