@@ -7735,6 +7735,13 @@ pub struct App {
     /// own honesty the boats' clear law keeps — the carts drop with
     /// the world that carried them.
     pub offline_carts: Vec<crate::cart::OfflineCart>,
+    /// THE CART MODEL'S OWN LAZY SLOT (the AbstractMinecartRenderer's
+    /// model field — the minecart.png texture the sha1 gate keeps, the
+    /// one model ALL the cart kinds draw (the display block the variant
+    /// carts' own pass renders). None = not yet loaded (the re-try the
+    /// fire-strips lane speaks); the failed sha1 stays None, the carts
+    /// unseen, the honest missing-asset law).
+    pub cart_model: Option<crate::avatar::MinecartModel>,
     /// THE OFFLINE HULLS' OWN PHYSICS (the AbstractBoat fields the
     /// authoritative lane keeps — the delta's y word, the two
     /// statuses, the water level, the lastYd): the id keys the
@@ -9141,6 +9148,7 @@ impl App {
             next_boat_id: 1,
             next_cart_id: 1,
             offline_carts: Vec::new(),
+            cart_model: None,
             take_xp_delay: 0,
             health: 20.0,
             food_data: crate::food::FoodData::new(),
@@ -47599,6 +47607,10 @@ impl App {
         // submit — the hulls the server spawned render in EVERY
         // perspective, the ride lane's own vehicle the camera sits in)
         self.render_boats(fb, &ctx, &cam);
+        // THE MINECART LANE's draw (the vanilla LevelRenderer's entity
+        // submit — the offline carts the right-click spawned render in
+        // EVERY perspective, the rail lane's own vehicle the tick rolls)
+        self.render_carts(fb, &ctx, &cam);
         // THE MOB LANE's draw (the vanilla LevelRenderer's entity
         // submit — the zombies render in EVERY perspective, the
         // first-person's own-body gate never touches them; the day
@@ -48983,6 +48995,64 @@ impl App {
                 rowing_r,
                 rock,
                 wobble,
+            );
+            let sampled: Vec<crate::raster::SampledQuad> = quads
+                .iter()
+                .map(|q| crate::raster::SampledQuad {
+                    pts: q.pts,
+                    uv: q.uv,
+                    tex: "",
+                    tint: [q.shade, q.shade, q.shade],
+                })
+                .collect();
+            fb.draw_sampled_quads(pm, &sampled, &mut |_tex, u, v| {
+                let [r, g, b, a] = model.pixel(u, v);
+                Some([r, g, b, a])
+            });
+        }
+    }
+
+    /// THE MINECART LANE's draw (the vanilla LevelRenderer's entity
+    /// submit — AbstractMinecartRenderer.submit's own walk, the
+    /// NEW-behavior path the offline world's MINECART_IMPROVEMENTS flag
+    /// wears): the offline carts at their tick poses (the offline lane
+    /// the pose verbatim keeps — its own tick IS the truth), the
+    /// minecart.png model the lazy slot keeps. The headless scenes
+    /// carry no carts (the goldens stay).
+    fn render_carts(
+        &mut self,
+        fb: &mut crate::raster::Framebuf,
+        ctx: &RenderCtx,
+        cam: &crate::camera::Camera,
+    ) {
+        if self.offline_carts.is_empty() {
+            return; // the deterministic scenes carry no carts — the goldens stay
+        }
+        // THE LAZY LOAD (the fire-strips lane's own re-try the model
+        // slot keeps — a failed sha1 stays None, the carts unseen)
+        if self.cart_model.is_none() {
+            self.cart_model = crate::avatar::MinecartModel::load(&crate::avatar::jar_runtime_root(
+                std::path::Path::new("assets-cache/jar"),
+            ));
+        }
+        let Some(model) = self.cart_model.as_ref() else {
+            return; // the texture failed its sha1 — the carts stay unseen
+        };
+        let pm = ctx.proj.mul(&ctx.view);
+        for entry in &self.offline_carts {
+            let cart = &entry.cart;
+            // THE TICK'S OWN POSE (the offline lane the verbatim keeps —
+            // the pos/yaw/pitch the adjustToRails snap and the cart_tick
+            // walk wear, the jitter the entity id's hash speaks)
+            let feet = Vec3::new(cart.pos[0] as f32, cart.pos[1] as f32, cart.pos[2] as f32);
+            let quads = model.quads(
+                cart.yaw_deg,
+                cart.pitch_deg,
+                feet,
+                cam.yaw,
+                cam.pitch,
+                entry.id,
+                0.0, // the hurt wobble's closed gate — the offline lane arms no cart hits yet
             );
             let sampled: Vec<crate::raster::SampledQuad> = quads
                 .iter()
@@ -99699,6 +99769,93 @@ cow_sound_variant: None,
         app.world_quads = None;
         app.enter_world();
         assert!(app.offline_carts.is_empty(), "the fresh world cleared");
+    }
+
+    /// THE MINECART RENDER LANE (the AbstractMinecartRenderer.submit
+    /// walk through the frame): the spawned cart the east-facing eye
+    /// watches, the lazy slot the sha1-kept model fills, the frame the
+    /// cart's quads recolor against the cart-free twin scene.
+    #[test]
+    fn the_offline_carts_the_render_lane_draws_the_model() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/minecart"));
+        let w0 = app.offline_world.as_ref().unwrap();
+        let c = w0.size_blocks() / 2;
+        let sy = app.spawn_y;
+        // THE VIEW CORRIDOR: the eastward column scan the zombie lane's
+        // own determinism speaks — the first flat surface (spawn_y) in
+        // 2..=8 the east-facing eye's frame keeps
+        let mut dx = None;
+        for d in 2..=8i32 {
+            let surface = crate::screens::top_solid_y(w0, c + d, c);
+            let clear = (1..=3).all(|dy| w0.get(c + d, sy + dy, c) == 0);
+            if surface == sy && clear {
+                dx = Some(d);
+                break;
+            }
+        }
+        let Some(dx) = dx else {
+            return; // the seed-3 terrain keeps no corridor — the honest skip
+        };
+        // the rail one above the flat surface, the cart the useOn walk
+        // spawns on it
+        app.offline_world.as_mut().unwrap().set(c + dx, sy + 1, c, crate::world::RAIL);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set_variant(c + dx, sy + 1, c, 1); // EAST_WEST
+        let hit = crate::world::ClipHit {
+            pos: (c + dx, sy + 1, c),
+            face: 1,
+            location: (c as f64 + dx as f64 + 0.5, sy as f64 + 2.0, c as f64 + 0.5),
+            inside: false,
+        };
+        assert_eq!(app.on_right_press_minecart_arm(&hit), Some(true));
+        assert_eq!(app.offline_carts.len(), 1, "the local cart spawned");
+        // THE EAST-FACING EYE (the seed_scene's own body walk — the
+        // spawn column's feet, the -90 yaw the sun-rise facing keeps)
+        crate::headless::seed_scene(
+            &mut app,
+            &crate::headless::SceneOpts {
+                body: true,
+                perspective: Some(crate::camera::CameraType::FirstPerson),
+                ..crate::headless::SceneOpts::default()
+            },
+        )
+        .unwrap();
+        assert!(app.cart_model.is_none(), "the lazy slot sleeps before the frame");
+        let mut fb = crate::raster::Framebuf::new(64, 64);
+        let mut assets = GuiAssets::open("assets-cache/jar");
+        app.render_world_3d(&mut fb, &mut assets);
+        assert!(app.cart_model.is_some(), "the lazy load fired — the sha1 kept");
+        // THE TWIN SCENE: the same seed, the same rail, NO cart — the
+        // frame diff the cart's own quads speak
+        let mut twin = App::new(3);
+        twin.enter_world();
+        twin.offline_world.as_mut().unwrap().set(c + dx, sy + 1, c, crate::world::RAIL);
+        twin.offline_world
+            .as_mut()
+            .unwrap()
+            .set_variant(c + dx, sy + 1, c, 1);
+        crate::headless::seed_scene(
+            &mut twin,
+            &crate::headless::SceneOpts {
+                body: true,
+                perspective: Some(crate::camera::CameraType::FirstPerson),
+                ..crate::headless::SceneOpts::default()
+            },
+        )
+        .unwrap();
+        let mut fb2 = crate::raster::Framebuf::new(64, 64);
+        twin.render_world_3d(&mut fb2, &mut assets);
+        let changed = fb
+            .color
+            .iter()
+            .zip(fb2.color.iter())
+            .filter(|(a, b)| a != b)
+            .count();
+        assert!(changed > 0, "the cart's quads recolor {} bytes of the frame", changed);
     }
 
     #[test]

@@ -78,7 +78,7 @@
 //! texel is trusted; an absent or mismatched file renders NOTHING
 //! (the reference renderer must not lie about its data).
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use anyhow::Context;
 use mc_registry::generated::skin;
@@ -5789,6 +5789,257 @@ fn build_boat_parts(raft: bool, chest: bool, rowing_left: f32, rowing_right: f32
 }
 
 // ---------------------------------------------------------------------------
+// THE MINECART MODEL (the 26.2 net.minecraft.client.model.object.cart.
+// MinecartModel.createBodyLayer + AbstractMinecartRenderer's own bytecode —
+// scripts/classfile_dump.py over the pinned jar, the dev-107 round's walk):
+// the five-piece cart the createBodyLayer layer speaks (the 20x16x2 floor
+// slab texOffs (0,10), the four 16x8x2 walls texOffs (0,0)), textured by
+// `entity/minecart/minecart.png` (the clinit's MINECART_LOCATION word, the
+// 64x32 layout the LayerDefinition.create(mesh, 64, 32) call keeps), the
+// submit fold the NEW-behavior path wears (the offline world's own
+// MINECART_IMPROVEMENTS flag — see cart.rs): T(jitter) · R_y(yRot) ·
+// R_z(xRot) · T(0, 0.375, 0) · R_x(hurt) · S(−1,−1,1) — the lift INSIDE
+// the yaw/pitch chain (the boat's outermost lift the minecart never
+// shares), the jitter the offsetSeed hash speaks.
+// ---------------------------------------------------------------------------
+
+/// THE RUNTIME ROOT'S OWN RESOLVER (the texture gates' own walk the
+/// tests speak): the hint the real client's cwd answers (the repo root
+/// the binary runs from), the cargo-test cwd the crate dir wears — the
+/// parent walk the first existing `assets-cache/jar` answers, the
+/// hint's own failure the honest return keeps (the load's None speaks
+/// the missing-asset law the caller renders).
+pub fn jar_runtime_root(hint: &Path) -> PathBuf {
+    if hint.exists() {
+        return hint.to_path_buf();
+    }
+    let mut dir = std::env::current_dir().unwrap_or_default();
+    loop {
+        let cand = dir.join("assets-cache/jar");
+        if cand.exists() {
+            return cand;
+        }
+        match dir.parent() {
+            Some(p) => dir = p.to_path_buf(),
+            None => return hint.to_path_buf(),
+        }
+    }
+}
+
+/// THE MINECART TEXTURE'S OWN SHA1 (the 26.2 jar's verbatim bytes, hashed
+/// by scripts over the extracted `entity/minecart/minecart.png`) — the
+/// load gate every other model speaks (a drifted extract keeps the cart
+/// unseen, the honest missing-asset law).
+const MINECART_PNG_SHA1: &str = "504ff4cc22f7e10cfbd13fc083c15f3ad5ecb809";
+
+/// THE OFFSET SEED'S OWN HASH TRIPLE (the extractRenderState walk's
+/// constant pool — Long 493286711 / 4392167121 / 98761): `i = id ·
+/// 493286711; i = i² · 4392167121 + i · 98761; offsetSeed = (int)(i >>
+/// 16) & 7` — the four lmul + one ladd the bytecode keeps, the & 7 the
+/// Long-7 pool entry serves, the 0..7 band the jitter's /8.0 walk reads.
+fn cart_offset_seed(id: i32) -> i32 {
+    let i = (id as i64).wrapping_mul(493286711);
+    let j = (i * i).wrapping_mul(4392167121).wrapping_add(i.wrapping_mul(98761));
+    (((j >> 16) & 7) as i32)
+}
+
+/// THE SUBMIT'S OWN JITTER (the pc 98 translate: `((seed + 0.5) / 8.0 −
+/// 0.5) · 0.004` — the Float pool's 0.5 / 8.0 / 0.004 the z-fight guard
+/// between stacked carts wears; the seed the hash keeps rides 0..7, the
+/// word rides ±0.00175).
+fn cart_jitter(id: i32) -> f32 {
+    ((cart_offset_seed(id) as f32 + 0.5) / 8.0 - 0.5) * 0.004_000_000_189_989_805_f32
+}
+
+/// THE CART'S SUBMIT FOLD (AbstractMinecartRenderer.submit + newRender's
+/// own mulPose order, the NEW-behavior path the offline world's flag
+/// wears): the S(−1,−1,1) flip first (the model-space point the
+/// entity-model convention carries), the hurt R_x slot between the flip
+/// and the lift (the undamaged cart's closed 0.0 gate), the 0.375 lift
+/// (the Float-pool word — INSIDE the rotations, the boat's outermost
+/// lift the cart never shares), the R_z(xRot) pitch lean, the R_y(yRot)
+/// yaw walk, the jitter translate the seed hash speaks, the feet the
+/// tick's own pos keeps (the offline lane the pose verbatim wears).
+fn cart_folds(
+    yaw_deg: f32,
+    pitch_deg: f32,
+    feet: Vec3,
+    id: i32,
+    hurt: f32,
+) -> (
+    impl Fn([f32; 3]) -> [f32; 3],
+    impl Fn([f32; 3]) -> [f32; 3],
+) {
+    let ya = yaw_deg.to_radians();
+    let (ys, yc) = ya.sin_cos();
+    let pa = pitch_deg.to_radians();
+    let (ps, pc) = pa.sin_cos();
+    let theta_h = hurt * (std::f32::consts::PI / 180.0);
+    let (hs, hc) = theta_h.sin_cos();
+    let jit = cart_jitter(id);
+    let lift = 0.375f32;
+    let fold_point = move |p: [f32; 3]| -> [f32; 3] {
+        // the S(−1,−1,1) flip
+        let (sx, sy, sz) = (-p[0], -p[1], p[2]);
+        // the hurt R_x slot (the closed gate the 0.0 hurt keeps)
+        let (hx, hy, hz) = (sx, sy * hc - sz * hs, sy * hs + sz * hc);
+        // the 0.375 lift
+        let (lx, ly, lz) = (hx, hy + lift, hz);
+        // the R_z(xRot) pitch lean
+        let (px, py, pz) = (lx * pc - ly * ps, lx * ps + ly * pc, lz);
+        // the R_y(yRot) yaw walk
+        let (wx, wy, wz) = (px * yc + pz * ys, py, -px * ys + pz * yc);
+        // the jitter + the feet
+        [
+            feet.x + wx + jit,
+            feet.y as f32 + wy + jit,
+            feet.z + wz + jit,
+        ]
+    };
+    let fold_normal = move |n: [f32; 3]| -> [f32; 3] {
+        let (sx, sy, sz) = (-n[0], -n[1], n[2]);
+        let (hx, hy, hz) = (sx, sy * hc - sz * hs, sy * hs + sz * hc);
+        let (px, py, pz) = (hx * pc - hy * ps, hx * ps + hy * pc, hz);
+        [px * yc + pz * ys, py, -px * ys + pz * yc]
+    };
+    (fold_point, fold_normal)
+}
+
+/// THE CART'S OWN PARTS (the createBodyLayer walk's own five — every
+/// number the bytecode speaks verbatim): the 'bottom' floor slab (the
+/// 20x16x2, texOffs (0,10), pivot (0,4,0), xRot π/2) and the four
+/// 16x8x2 walls (texOffs (0,0)): 'front' (pivot (−9,4,0), yRot 3π/2),
+/// 'back' (pivot (9,4,0), yRot π/2), 'left' (pivot (0,4,−7), yRot π),
+/// 'right' (pivot (0,4,7), the rotation the pose never speaks).
+fn build_minecart_parts() -> Vec<Part> {
+    const HALF_PI: f32 = 1.5707963705062866;
+    const PI_F: f32 = std::f32::consts::PI;
+    const THREE_HALF_PI: f32 = 4.71238899230957;
+    let wall = || Cube {
+        tex: (0.0, 0.0),
+        origin: [-8.0, -9.0, -1.0],
+        size: [16.0, 8.0, 2.0],
+        inflate: 0.0,
+        mirror: false,
+    };
+    vec![
+        Part {
+            pivot: [0.0, 4.0, 0.0],
+            x_rot: HALF_PI,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (0.0, 10.0),
+                origin: [-10.0, -8.0, -1.0],
+                size: [20.0, 16.0, 2.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        },
+        Part {
+            pivot: [-9.0, 4.0, 0.0],
+            x_rot: 0.0,
+            y_rot: THREE_HALF_PI,
+            z_rot: 0.0,
+            cubes: vec![wall()],
+            children: vec![],
+        },
+        Part {
+            pivot: [9.0, 4.0, 0.0],
+            x_rot: 0.0,
+            y_rot: HALF_PI,
+            z_rot: 0.0,
+            cubes: vec![wall()],
+            children: vec![],
+        },
+        Part {
+            pivot: [0.0, 4.0, -7.0],
+            x_rot: 0.0,
+            y_rot: PI_F,
+            z_rot: 0.0,
+            cubes: vec![wall()],
+            children: vec![],
+        },
+        Part {
+            pivot: [0.0, 4.0, 7.0],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![wall()],
+            children: vec![],
+        },
+    ]
+}
+
+/// The full minecart model — the 26.2 MinecartModel bytecode's own
+/// geometry, textured by the minecart.png the sha1 gate keeps. The fold
+/// is the renderer's OWN chain (the NEW-behavior submit above). The
+/// variant carts (chest/furnace/tnt/...) the SAME model draws in vanilla
+/// — the display block the submitMinecartContents pass renders, the lane
+/// the plain cart's first word serves.
+pub struct MinecartModel {
+    rgba: Vec<u8>,
+}
+
+impl MinecartModel {
+    /// Load + sha1-verify the minecart texture (`entity/minecart/
+    /// minecart.png`, the 64x32 layout the LayerDefinition keeps).
+    /// `None` = the cart never renders (the same honesty the mob paths
+    /// speak: the renderer must not lie about its data).
+    pub fn load(root: &Path) -> Option<MinecartModel> {
+        let bytes = std::fs::read(root.join("entity/minecart/minecart.png")).ok()?;
+        let digest = sha1::Sha1::digest(&bytes);
+        if hex::encode(digest) != MINECART_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != 64 || h != 32 || rgba.len() != 64 * 32 * 4 {
+            return None;
+        }
+        Some(MinecartModel { rgba })
+    }
+
+    /// The texture pixel at (u, v) — the RGBA row-major words, v down,
+    /// the 64-wide stride the layout speaks (the boat's 128 the cart
+    /// never shares).
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let (uu, vv) = (u.clamp(0.0, 63.999_9), v.clamp(0.0, 31.999_9));
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * 64 + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+
+    /// THE SUBMIT RENDER: the world-space textured quads of the cart at
+    /// `feet` — the submit fold above (the jitter, the R_y yaw, the R_z
+    /// pitch, the 0.375 lift, the S flip), the five-piece part tree the
+    /// createBodyLayer keeps. `cam_yaw/cam_pitch` speak the view
+    /// rotation the entity diffuse folds (the same mix_light every
+    /// entity rides). `hurt` the hit's R_x wobble in degrees (0.0 the
+    /// closed gate — the undamaged cart the offline lane keeps).
+    pub fn quads(
+        &self,
+        yaw_deg: f32,
+        pitch_deg: f32,
+        feet: Vec3,
+        cam_yaw: f32,
+        cam_pitch: f32,
+        id: i32,
+        hurt: f32,
+    ) -> Vec<AvatarQuad> {
+        let parts = build_minecart_parts();
+        let (fold_point, fold_normal) = cart_folds(yaw_deg, pitch_deg, feet, id, hurt);
+        let mut out: Vec<AvatarQuad> = Vec::with_capacity(30);
+        let ident = Mat4::IDENT;
+        for part in &parts {
+            collect_part(part, &ident, &fold_point, &fold_normal, cam_yaw, cam_pitch, &mut out);
+        }
+        out
+    }
+}
+
+// ---------------------------------------------------------------------------
 // THE ARMOR LAYERS (HumanoidArmorLayer.renderArmorPiece, the 26.2 jar's own
 // bytecode): the store's worn piece rides the humanoid armor model — the
 // SAME createMesh part tree the skin speaks, re-cubed by the slot's
@@ -10705,6 +10956,118 @@ mod tests {
         let raft = BoatModel::load(&root, true, false, "bamboo").expect("the raft loads");
         let raft_quads = raft.quads(0.0, false, Vec3::new(0.0, 0.0, 0.0), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
         assert_eq!(raft_quads.len(), 36, "the plank deck the raft speaks");
+    }
+
+    /// THE MINECART MODEL'S OWN LAW (the createBodyLayer + submit walk's
+    /// own numbers — the corners the fold chain speaks): the five-part
+    /// mesh's extents the flat rest pose wears, the yaw-90 span swap,
+    /// the pitch-45 lean the slope rails ride.
+    #[test]
+    fn the_minecart_model_the_law_corners() {
+        let cart = MinecartModel { rgba: vec![255u8; 64 * 32 * 4] };
+        let feet = Vec3::new(0.0, 0.0, 0.0);
+        let flat = cart.quads(0.0, 0.0, feet, 0.0, 0.0, 0, 0.0);
+        assert_eq!(flat.len(), 30, "the five parts' six faces");
+        let mut min_x = f32::MAX;
+        let mut max_x = f32::MIN;
+        let mut min_y = f32::MAX;
+        let mut max_y = f32::MIN;
+        let mut min_z = f32::MAX;
+        let mut max_z = f32::MIN;
+        for q in &flat {
+            for p in q.pts {
+                min_x = min_x.min(p[0]);
+                max_x = max_x.max(p[0]);
+                min_y = min_y.min(p[1]);
+                max_y = max_y.max(p[1]);
+                min_z = min_z.min(p[2]);
+                max_z = max_z.max(p[2]);
+            }
+        }
+        // THE ID-0 JITTER (the seed 0 the hash keeps — ((0.5/8 − 0.5) ·
+        // 0.004) = −0.00175 the every-axis word wears): the floor slab
+        // rides 0.0625..0.1875 (the spawn's own y word the useOn walk
+        // speaks), the wall tops 0.6875, the 20-texel length the x
+        // ±0.625 keeps, the 16-texel width the z ±0.5 keeps.
+        let jit = -0.4375f32 * 0.004_000_000_189_989_805_f32;
+        assert!((min_x - (-0.625 + jit)).abs() < 1e-4, "min x {min_x}");
+        assert!((max_x - (0.625 + jit)).abs() < 1e-4, "max x {max_x}");
+        assert!((min_y - (0.0625 + jit)).abs() < 1e-4, "min y {min_y}");
+        assert!((max_y - (0.6875 + jit)).abs() < 1e-4, "max y {max_y}");
+        assert!((min_z - (-0.5 + jit)).abs() < 1e-4, "min z {min_z}");
+        assert!((max_z - (0.5 + jit)).abs() < 1e-4, "max z {max_z}");
+        // THE YAW-90 SWAP: the R_y the yRot speaks — the 1.25 length the
+        // z axis carries, the 1.0 width the x keeps (the jitter the
+        // span never speaks — the same word every axis wears)
+        let yawed = cart.quads(90.0, 0.0, feet, 0.0, 0.0, 0, 0.0);
+        let (sx_min, sx_max, sz_min, sz_max) = yawed
+            .iter()
+            .flat_map(|q| q.pts)
+            .fold((f32::MAX, f32::MIN, f32::MAX, f32::MIN), |(a, b, c, d), p| {
+                (a.min(p[0]), b.max(p[0]), c.min(p[2]), d.max(p[2]))
+            });
+        assert!((sx_max - sx_min - 1.0).abs() < 1e-4, "the x span {sx_max}..{sx_min}");
+        assert!((sz_max - sz_min - 1.25).abs() < 1e-4, "the z span {sz_max}..{sz_min}");
+        // THE PITCH-45 LEAN: the R_z the xRot speaks — the mesh tips
+        // BELOW the origin (the downhill end the lean dips) and the
+        // vertical span the diagonal stretch grows past the flat 0.625
+        let leaned = cart.quads(0.0, 45.0, feet, 0.0, 0.0, 0, 0.0);
+        let (l_min_y, l_max_y) = leaned
+            .iter()
+            .flat_map(|q| q.pts)
+            .fold((f32::MAX, f32::MIN), |(a, b), p| (a.min(p[1]), b.max(p[1])));
+        assert!(l_min_y < -0.3, "the lean dips below the rail plane: {l_min_y}");
+        assert!(
+            (l_max_y - l_min_y) > 1.2 && (l_max_y - l_min_y) < 1.45,
+            "the leaned span {}..{}",
+            l_min_y,
+            l_max_y
+        );
+    }
+
+    /// THE OFFSET SEED'S OWN LAW (the extractRenderState walk's hash):
+    /// the id-0 seed the zero multiply keeps, the 0..7 band every id
+    /// rides, the jitter word the ±0.00175 band keeps.
+    #[test]
+    fn the_minecart_seed_the_jitter_law() {
+        assert_eq!(cart_offset_seed(0), 0, "the zero id's zero seed");
+        assert_eq!(cart_offset_seed(1), 7, "the id-1 hash's own word");
+        for id in 1..=256 {
+            let seed = cart_offset_seed(id);
+            assert!((0..=7).contains(&seed), "the seed {seed} rides the band");
+        }
+        // THE JITTER WORD: the (seed + 0.5)/8 − 0.5 fold — the 0.004
+        // scale the constant pool speaks, the ±0.00175 band the 0..7
+        // seeds wear
+        for id in 1..=256 {
+            let j = cart_jitter(id);
+            assert!(j.abs() <= 0.00175 + 1e-6, "the jitter {j} rides the band");
+        }
+        assert!(
+            (cart_jitter(0) - (-0.4375f32 * 0.004_000_000_189_989_805_f32)).abs() < 1e-9,
+            "the id-0 jitter's own word"
+        );
+    }
+
+    /// THE MINECART TEXTURE GATE (the load's own honesty — the runtime
+    /// extract the sha1 verifies): the 64x32 texture loads, the model
+    /// draws the five-piece mesh, the sampler speaks the RGBA words.
+    #[test]
+    #[ignore = "needs runtime assets (assets-cache/jar) from mc2rs-gen generate"]
+    fn the_minecart_model_loads_the_texture_gate() {
+        let mut dir = std::env::current_dir().unwrap();
+        let root = loop {
+            let cand = dir.join("assets-cache/jar");
+            if cand.exists() {
+                break cand;
+            }
+            dir = dir.parent().expect("the runtime root above").to_path_buf();
+        };
+        let model = MinecartModel::load(&root).expect("the minecart texture loads");
+        let quads = model.quads(0.0, 0.0, Vec3::new(0.0, 0.0, 0.0), 0.0, 0.0, 0, 0.0);
+        assert_eq!(quads.len(), 30, "the real texture draws the real mesh");
+        let px = model.pixel(0.0, 0.0);
+        assert_eq!(px.len(), 4, "the sampler's RGBA word");
     }
 
     /// THE QUADRUPED WALK (javap QuadrupedModel.setupAnim's own fold):
