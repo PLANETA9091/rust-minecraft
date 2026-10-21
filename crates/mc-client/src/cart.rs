@@ -26,9 +26,16 @@
 //! - `NewMinecartBehavior.calculateHaltTrackSpeed` — the unpowered
 //!   powered rail's brake: |motion| < 0.03 -> zero, else * 0.5.
 //! - `NewMinecartBehavior.calculateBoostTrackSpeed` — the powered
-//!   rail's +0.06 the moving cart wears (the |motion| > 0.01 arm; the
-//!   stalled launch arm the getRedstoneDirection law owns — the v2
-//!   round's bank).
+//!   rail's +0.06 the moving cart wears (the |motion| > 0.01 arm), the
+//!   stalled arm the getRedstoneDirection launch serves — the wall's
+//!   own side the conductor reads pick, the 0.2 the stalled speed
+//!   gains (the dev-109 round's own lane).
+//! - `AbstractMinecart.getRedstoneDirection` — the stalled launch's
+//!   own direction walk: the POWERED rail alone answers, the
+//!   EAST_WEST arm the west/east conductor reads (the west the +X —
+//!   AWAY from the wall — the east the −X), the NORTH_SOUTH arm the
+//!   north/south pair (the north the +Z, the south the −Z), the
+//!   curves + the ascents the ZERO keeps.
 //! - `NewMinecartBehavior.stepAlongTrack` — the per-cell walk: the
 //!   favored exit the motion's dot picks, the target the bottom
 //!   center + half-exit + 0.1 rides, the slope's √2 stretch, the
@@ -42,14 +49,14 @@
 //!   iteration || movementLeft > 1.0E-5 (the stepAlongTrack epsilon
 //!   the ldc2_w 1.0E-5f family speaks).
 //!
-//! THE V1 SCOPE the round banks: the rail walk's own laws (exits,
-//! step, speeds, halt/boost, slope, V-rest, y-follow, yaw stamp, the
-//! off-rail gravity fall the getDefaultGravity default wears). The v2
+//! THE LANES THE ROUNDS BANK: the rail walk's own laws (exits, step,
+//! speeds, halt/boost INCLUDING the getRedstoneDirection stalled
+//! launch the dev-109 round serves, slope, V-rest, y-follow, yaw
+//! stamp, the off-rail gravity fall), the useOn spawn, the
+//! entity-sheet render, the riding mount/dismount lane. The NEXT
 //! round's candidates: the collision-carrying move (the Entity.move
-//! fold), the stalled-launch arm (getRedstoneDirection), the
-//! adjustToRails' position projection, the getCurrentBlockPosOrRailBelow
-//! hang-off arm, the riding mount/dismount lane, the entity-sheet
-//! render.
+//! fold), the adjustToRails' position projection, the variant carts'
+//! display-block pass, the hurt/destruction lane.
 
 use crate::world::{is_rail, World, RAIL_SHAPE_MASK, POWERED_RAIL, RAIL, RAIL_POWERED_BIT, WATER};
 
@@ -102,9 +109,13 @@ pub const HALT_SPEED_FLOOR: f64 = 0.03;
 pub const HALT_BRAKE: f64 = 0.5;
 
 /// THE BOOST PAIR (the calculateBoostTrackSpeed's own 0.06 the moving
-/// cart's speed gains and the 0.01 the stalled arm's floor wears).
+/// cart's speed gains and the 0.01 the stalled arm's floor wears) and
+/// the stalled launch's own #502 (the 0.2 the launch direction scales
+/// the stalled length by — the pc 77-90 arm the wall's conductor
+/// side serves).
 pub const BOOST_ACCEL: f64 = 0.06;
 pub const BOOST_STALLED_FLOOR: f64 = 0.01;
+pub const LAUNCH_ACCEL: f64 = 0.2;
 
 /// THE V-REST'S OWN SPEED FLOOR (the restAtVShape pc 7's own #566 —
 /// the |delta|² under which the V law may zero the motion).
@@ -339,11 +350,18 @@ pub fn halt_speed(motion: V3, state_is_powered_rail: bool, state_powered: bool) 
     v_scale(motion, HALT_BRAKE)
 }
 
-/// THE BOOST LAW (the calculateBoostTrackSpeed's moving arm verbatim):
-/// the powered rail the speed gains +0.06 by; the stalled cart (the
-/// |motion| <= 0.01 arm) the getRedstoneDirection launch owns — the
-/// v2 round's bank the walk never serves.
-pub fn boost_speed(motion: V3, state_is_powered_rail: bool, state_powered: bool) -> V3 {
+/// THE BOOST LAW (the calculateBoostTrackSpeed verbatim): the powered
+/// rail the speed gains +0.06 by (the |motion| > 0.01 arm the moving
+/// cart wears); the stalled cart (the |motion| <= 0.01 arm) the
+/// getRedstoneDirection launch serves — the wall's own side the
+/// conductor reads pick, the direction the stalled length + 0.2
+/// scales.
+pub fn boost_speed(
+    motion: V3,
+    state_is_powered_rail: bool,
+    state_powered: bool,
+    launch: V3,
+) -> V3 {
     if !state_is_powered_rail || !state_powered {
         return motion;
     }
@@ -351,7 +369,76 @@ pub fn boost_speed(motion: V3, state_is_powered_rail: bool, state_powered: bool)
     if len > BOOST_STALLED_FLOOR {
         return v_scale(v_normalize(motion), len + BOOST_ACCEL);
     }
-    motion
+    // THE STALLED ARM (pcs 55-90): the launch the getRedstoneDirection
+    // walk answers — the ZERO the silence keeps (no conductor, no
+    // launch), the direction the len + 0.2 the scale speaks.
+    if v_length_sqr(launch) <= 0.0 {
+        return motion;
+    }
+    v_scale(launch, len + LAUNCH_ACCEL)
+}
+
+/// THE REDSTONE DIRECTION (the AbstractMinecart.getRedstoneDirection
+/// verbatim — the stalled launch's own direction walk): the POWERED
+/// rail alone answers, the EAST_WEST arm the west/east conductor
+/// reads (the west the +X — AWAY from the wall — the east the −X),
+/// the NORTH_SOUTH arm the north/south pair (the north the +Z, the
+/// south the −Z), the curves + the ascents the ZERO keeps (the flat
+/// shapes alone the launch serves).
+pub fn redstone_direction(
+    state_is_powered_rail: bool,
+    state_powered: bool,
+    shape: u8,
+    conductor_west: bool,
+    conductor_east: bool,
+    conductor_north: bool,
+    conductor_south: bool,
+) -> V3 {
+    // pcs 9-38: the POWERED rail the launch owns — the unpowered
+    // powered rail and every other block the ZERO answers.
+    if !state_is_powered_rail || !state_powered {
+        return [0.0, 0.0, 0.0];
+    }
+    // pcs 57-109: the EAST_WEST arm — the WEST conductor read first
+    // (the both-walls tie the west keeps), the +X the
+    // away-from-the-wall launch speaks.
+    if shape == 1 {
+        if conductor_west {
+            return [1.0, 0.0, 0.0];
+        }
+        if conductor_east {
+            return [-1.0, 0.0, 0.0];
+        }
+    }
+    // pcs 110-162: the NORTH_SOUTH arm — the NORTH conductor read
+    // first, the +Z the away launch speaks.
+    if shape == 0 {
+        if conductor_north {
+            return [0.0, 0.0, 1.0];
+        }
+        if conductor_south {
+            return [0.0, 0.0, -1.0];
+        }
+    }
+    // pc 163: the slopes + the curves + the conductor-less flats the
+    // ZERO keeps.
+    [0.0, 0.0, 0.0]
+}
+
+/// THE CONDUCTOR'S OWN VERDICT (the Level.isRedstoneConductor the
+/// direction walk asks — the BlockBehaviour default the isSolidRender
+/// fold speaks: the OPAQUE FULL CUBE the light never passes). The
+/// palette's own mapping: the full-cube collision the collision_shape
+/// row answers, the glass family + the tinted + the leaves the
+/// transparent render refuses (the half-slab/stair/wall families the
+/// non-full id-shape refuses — the variant's own double the
+/// collision_shape_at lane the later round banks).
+pub fn is_redstone_conductor(id: u16) -> bool {
+    crate::world::collision_shape(id) == crate::world::CollisionShape::Full
+        && !crate::world::is_glass(id)
+        && id != crate::world::TINTED_GLASS
+        && id != crate::world::LEAVES
+        && id != crate::world::PALE_LEAVES
 }
 
 /// THE MAX SPEED (the getMaxSpeed verbatim): the gamerule fraction —
@@ -776,7 +863,28 @@ pub fn cart_tick(world: &World, cart: &mut Minecart) {
                 if !has_boosted {
                     let id = world.get(cx, cy, cz);
                     let powered = (world.variant(cx, cy, cz) & RAIL_POWERED_BIT) != 0;
-                    let s = boost_speed(delta, id == POWERED_RAIL, powered);
+                    // THE STALLED ARM'S OWN DIRECTION (the
+                    // getRedstoneDirection walk the stalled cart alone
+                    // asks — the moving arm the +0.06 the motion's own
+                    // direction wears, the conductor reads the
+                    // moving/silent states never touch).
+                    let launch = if id == POWERED_RAIL
+                        && powered
+                        && v_len(delta) <= BOOST_STALLED_FLOOR
+                    {
+                        redstone_direction(
+                            id == POWERED_RAIL,
+                            powered,
+                            shape,
+                            is_redstone_conductor(world.get(cx - 1, cy, cz)),
+                            is_redstone_conductor(world.get(cx + 1, cy, cz)),
+                            is_redstone_conductor(world.get(cx, cy, cz - 1)),
+                            is_redstone_conductor(world.get(cx, cy, cz + 1)),
+                        )
+                    } else {
+                        [0.0, 0.0, 0.0]
+                    };
+                    let s = boost_speed(delta, id == POWERED_RAIL, powered, launch);
                     if s != delta {
                         has_boosted = true;
                         delta = s;
@@ -885,15 +993,162 @@ mod tests {
 
     #[test]
     fn the_boost_law_the_powered_rail_adds_the_six_hundredths() {
-        // THE calculateBoostTrackSpeed's moving arm: the powered rail
-        // the |motion| + 0.06 the direction keeps, the unpowered the
-        // motion never touches, the stalled arm the v2 law owns.
+        // THE calculateBoostTrackSpeed: the powered rail the |motion|
+        // + 0.06 the direction keeps (the moving arm), the unpowered
+        // the motion never touches, the stalled arm the launch law
+        // owns (the zero launch the silence keeps, the direction the
+        // 0.2 the stalled length scales).
         let moving = [0.4, 0.0, 0.0];
-        assert_eq!(boost_speed(moving, true, true), [0.46, 0.0, 0.0]);
-        assert_eq!(boost_speed(moving, true, false), moving);
-        assert_eq!(boost_speed(moving, false, false), moving);
+        assert_eq!(boost_speed(moving, true, true, [0.0, 0.0, 0.0]), [0.46, 0.0, 0.0]);
+        assert_eq!(boost_speed(moving, true, false, [1.0, 0.0, 0.0]), moving);
+        assert_eq!(boost_speed(moving, false, false, [1.0, 0.0, 0.0]), moving);
         let stalled = [0.005, 0.0, 0.0];
-        assert_eq!(boost_speed(stalled, true, true), stalled);
+        assert_eq!(boost_speed(stalled, true, true, [0.0, 0.0, 0.0]), stalled);
+        // THE STALLED ARM: the launch the len + 0.2 the launch's own
+        // axis scales (0.005 + 0.2 = 0.205 the east push speaks — the
+        // f64 tail the epsilon compare keeps).
+        let launched = boost_speed(stalled, true, true, [1.0, 0.0, 0.0]);
+        assert!((launched[0] - 0.205).abs() < 1e-9);
+        assert!(launched[1].abs() < 1e-9 && launched[2].abs() < 1e-9);
+    }
+
+    #[test]
+    fn the_redstone_direction_the_wall_side_picks() {
+        // THE getRedstoneDirection walk: the POWERED rail alone the
+        // direction answers, the away-from-the-wall axis the
+        // conductor's own side speaks, the both-walls tie the WEST
+        // (the NORTH) read first keeps, the slopes + the curves the
+        // ZERO keeps.
+        let z = [0.0, 0.0, 0.0];
+        // THE EAST_WEST arm: the west wall the +X speaks, the east
+        // wall the −X, the both the west first, the neither the ZERO.
+        assert_eq!(
+            redstone_direction(true, true, 1, true, false, false, false),
+            [1.0, 0.0, 0.0]
+        );
+        assert_eq!(
+            redstone_direction(true, true, 1, false, true, false, false),
+            [-1.0, 0.0, 0.0]
+        );
+        assert_eq!(
+            redstone_direction(true, true, 1, true, true, false, false),
+            [1.0, 0.0, 0.0]
+        );
+        assert_eq!(
+            redstone_direction(true, true, 1, false, false, false, false),
+            z
+        );
+        // THE NORTH_SOUTH arm: the north wall the +Z, the south the
+        // −Z.
+        assert_eq!(
+            redstone_direction(true, true, 0, false, false, true, false),
+            [0.0, 0.0, 1.0]
+        );
+        assert_eq!(
+            redstone_direction(true, true, 0, false, false, false, true),
+            [0.0, 0.0, -1.0]
+        );
+        // THE UNPOWERED RAIL the ZERO keeps (the launch the powered
+        // state alone owns), the other blocks the same silence.
+        assert_eq!(
+            redstone_direction(true, false, 1, true, false, false, false),
+            z
+        );
+        assert_eq!(
+            redstone_direction(false, true, 1, true, false, false, false),
+            z
+        );
+        // THE ASCENT + THE CURVE the ZERO keeps (the flat shapes alone
+        // the launch serves — the conductor's own presence the
+        // non-flat shape refuses).
+        assert_eq!(
+            redstone_direction(true, true, 2, true, false, false, false),
+            z
+        );
+        assert_eq!(
+            redstone_direction(true, true, 6, true, false, false, false),
+            z
+        );
+    }
+
+    #[test]
+    fn the_conductor_row_the_opaque_full_cubes_wear() {
+        // THE isSolidRender verdict: the opaque full cube the
+        // collision Full answers, the glass family + the tinted + the
+        // leaves the transparent render refuses, the fluids + the
+        // rails the non-full/transparent collision refuses.
+        assert!(is_redstone_conductor(crate::world::STONE));
+        assert!(is_redstone_conductor(crate::world::DIRT));
+        assert!(is_redstone_conductor(crate::world::GRASS));
+        assert!(!is_redstone_conductor(crate::world::AIR));
+        assert!(!is_redstone_conductor(crate::world::WATER));
+        assert!(!is_redstone_conductor(crate::world::GLASS));
+        assert!(!is_redstone_conductor(crate::world::TINTED_GLASS));
+        assert!(!is_redstone_conductor(crate::world::LEAVES));
+        assert!(!is_redstone_conductor(crate::world::PALE_LEAVES));
+        assert!(!is_redstone_conductor(POWERED_RAIL));
+    }
+
+    #[test]
+    fn the_launch_the_wall_pushes_the_stalled_cart() {
+        // THE calculateBoostTrackSpeed's stalled arm over the tick:
+        // the powered rail the west wall wears, the stalled cart the
+        // launch the 0.2 east speaks (the away-from-the-wall push),
+        // the pos the same tick's step rides, the second tick the
+        // moving arm's +0.06 the slowdown tail wears.
+        let mut world = yard();
+        world.set(5, Y, 3, POWERED_RAIL);
+        world.set_variant(5, Y, 3, 1 | RAIL_POWERED_BIT); // EAST_WEST, powered
+        world.set(4, Y, 3, crate::world::STONE); // the west wall
+        let mut cart = Minecart::new([5.5, Y as f64 + RAIL_RIDE_HEIGHT, 3.5]);
+        cart_tick(&world, &mut cart);
+        // THE LAUNCH: the delta the 0.2 east speaks (the stalled
+        // length + the 0.2 the direction scales), the pos the same
+        // tick's step rides (5.5 -> 5.7), the y the ride height
+        // keeps.
+        assert!((cart.delta[0] - 0.2).abs() < 1e-9);
+        assert!(cart.delta[1].abs() < 1e-9 && cart.delta[2].abs() < 1e-9);
+        assert!((cart.pos[0] - 5.7).abs() < 1e-9);
+        assert!((cart.pos[1] - (Y as f64 + RAIL_RIDE_HEIGHT)).abs() < 1e-9);
+        // THE SECOND TICK: the moving cart the +0.06 the boost arm
+        // wears AFTER the slowdown (0.2 · 0.975 + 0.06 — the chain's
+        // own order the tick keeps).
+        cart_tick(&world, &mut cart);
+        assert!(
+            (v_horizontal_distance(cart.delta) - (0.2 * SLOWDOWN_EMPTY + BOOST_ACCEL)).abs()
+                < 1e-9
+        );
+    }
+
+    #[test]
+    fn the_launch_the_east_wall_pushes_west() {
+        // THE EAST wall: the −X the away launch speaks (the direction
+        // walk's own second arm), the pos the west step rides.
+        let mut world = yard();
+        world.set(5, Y, 3, POWERED_RAIL);
+        world.set_variant(5, Y, 3, 1 | RAIL_POWERED_BIT);
+        world.set(6, Y, 3, crate::world::STONE); // the east wall
+        let mut cart = Minecart::new([5.5, Y as f64 + RAIL_RIDE_HEIGHT, 3.5]);
+        cart_tick(&world, &mut cart);
+        assert!((cart.delta[0] + 0.2).abs() < 1e-9);
+        assert!(cart.delta[1].abs() < 1e-9 && cart.delta[2].abs() < 1e-9);
+        assert!((cart.pos[0] - 5.3).abs() < 1e-9);
+    }
+
+    #[test]
+    fn the_launch_the_unpowered_rail_brakes_instead() {
+        // THE UNPOWERED powered rail the wall beside: the halt the
+        // brake owns (the launch the powered state alone speaks) —
+        // the stalled cart the zero the floor keeps, the wall the
+        // launch never fires.
+        let mut world = yard();
+        world.set(5, Y, 3, POWERED_RAIL);
+        world.set_variant(5, Y, 3, 1); // EAST_WEST, UNpowered
+        world.set(4, Y, 3, crate::world::STONE);
+        let mut cart = Minecart::new([5.5, Y as f64 + RAIL_RIDE_HEIGHT, 3.5]);
+        cart_tick(&world, &mut cart);
+        assert_eq!(cart.delta, [0.0, 0.0, 0.0]);
+        assert!((cart.pos[0] - 5.5).abs() < 1e-9);
     }
 
     #[test]
