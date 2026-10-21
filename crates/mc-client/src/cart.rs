@@ -248,6 +248,85 @@ pub const TNT_PRIME_SPEED_SQR: f64 = 0.01;
 pub const TNT_SMOKE_LIFT: f64 = 0.5;
 pub const TNT_PRIME_BROADCAST_EVENT: i8 = 70;
 
+/// THE MOVE'S OWN EQUAL BAND (javap `Mth.equal(DD)Z` the 26.2 jar —
+/// the `Math.abs(loc2 − loc0) < #91` the dsub/abs/ldc2_w/dcmpg walk
+/// speaks: CP #91 = the double bits 4532020583461814272 =
+/// 9.999999747378752e-06 — the float 1.0e-5 the f2d widening wears,
+/// the `<` the ifge tail answers). THE FLAG LAW'S OWN GRAZE: the
+/// clipped horizontal whose residue rides UNDER the band the flag
+/// never wears (the touching contact the honest silence keeps).
+pub const MTH_EQUAL_EPS: f64 = 9.999999747378752e-06;
+
+/// THE MOVE'S OWN EQUAL (the Mth.equal fold — the band the const
+/// banks).
+#[inline]
+pub fn mth_equal(a: f64, b: f64) -> bool {
+    (b - a).abs() < MTH_EQUAL_EPS
+}
+
+/// THE MOVE FOLD'S OWN VERDICT (javap `Entity.move` pcs 328-466 — the
+/// three flags the collide result vs the request wears: the
+/// horizontal the Mth.equal band pairs keep, the vertical the EXACT
+/// `!=` compare the dcmpl/ifeq speaks, the below the negative-y arm
+/// the `verticalCollision && moveVec.y < 0` pair answers).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct MoveOutcome {
+    /// The `horizontalCollision` flag the TNT tick's crash arm reads.
+    pub horizontal_collision: bool,
+    /// The `verticalCollision` flag (the y the collide clipped).
+    pub vertical_collision: bool,
+    /// The `verticalCollisionBelow` flag (the floor's own hit).
+    pub vertical_collision_below: bool,
+}
+
+/// THE ENTITY.MOVE FOLD (javap `Entity.move(MoverType, Vec3)` the 26.2
+/// jar — the collide walk the SELF mover's plain path serves): the
+/// request the collideBoundingBox-equivalent sweep
+/// ([`crate::body::collide`] — the axisStepOrder Y-first law the same
+/// walk banks) clips against the world's own collision shapes, the
+/// position the COLLIDED vector takes (`setPos(pos + collided)` the
+/// pc 307-310 walk speaks), the flags the result-vs-request compare
+/// wears — the horizontal the `!equal(x) || !equal(z)` pair (pcs
+/// 328-388, the Mth.equal 1e-5f band), the vertical the exact `mv.y
+/// != collided.y` (pcs 422-441, the authoritative compare the
+/// offline's own server keeps), the below the `vertical && mv.y < 0`
+/// pair (pcs 444-466). THE CART'S OWN BOX: the makeBoundingBox law —
+/// the half-width `0.98f / 2.0f` the fconst_2 division speaks, the
+/// height the 0.7 the EntityDimensions carries, the box the
+/// position's own center wears. THE STEP THE PLAIN COLLIDE KEEPS
+/// (the maxUpStep() fconst_0 the base Entity speaks — no step ladder
+/// the minecart's walk wears). THE NO-PHYSICS/STUCK/PISTON/EDGE ARMS
+/// the offline cart's own words never speak (noPhysics false, the
+/// stuck multiplier zero, the SELF mover the piston branch skips,
+/// the edge walk-back the staying-on-surface gate never arms) — the
+/// restitute/bounce + block-speed-factor tails the later rounds
+/// bank. The flag the cart's own field takes (the every-move re-store
+/// the noPhysics arm's iconst_0 zeroes prove — the stationary cart's
+/// last flag the early-return walk keeps).
+pub fn move_with_collision(world: &World, cart: &mut Minecart, mv: V3) -> MoveOutcome {
+    let half_w = (MINECART_DIMENSIONS_WIDTH / 2.0) as f64;
+    let height = MINECART_DIMENSIONS_HEIGHT as f64;
+    let b = (
+        cart.pos[0] - half_w,
+        cart.pos[1],
+        cart.pos[2] - half_w,
+        cart.pos[0] + half_w,
+        cart.pos[1] + height,
+        cart.pos[2] + half_w,
+    );
+    let c = crate::body::collide(world, b, (mv[0], mv[1], mv[2]));
+    cart.pos = [cart.pos[0] + c.dx, cart.pos[1] + c.dy, cart.pos[2] + c.dz];
+    let horizontal = !mth_equal(mv[0], c.dx) || !mth_equal(mv[2], c.dz);
+    let vertical = mv[1] != c.dy;
+    let below = vertical && mv[1] < 0.0;
+    cart.horizontal_collision = horizontal;
+    MoveOutcome {
+        horizontal_collision: horizontal,
+        vertical_collision: vertical,
+        vertical_collision_below: below,
+    }
+}
+
 /// THE HURT'S OWN FOLD (javap `VehicleEntity.hurtServer` verbatim —
 /// the isRemoved/isInvulnerableToBase gates the offline lane's alive
 /// cart passes, the `setHurtDir(−getHurtDir())` flip the wobble's own
@@ -825,6 +904,10 @@ pub struct Minecart {
     /// The isFlipped fold (the vanilla Entity.isFlipped read the yaw
     /// +pitch arms wear — the spawn the plain cart's false keeps).
     pub flipped: bool,
+    /// The horizontalCollision flag (the Entity.move field the crash
+    /// arm reads — the move fold re-stores it every move, the
+    /// stationary cart's last verdict the early-return walk keeps).
+    pub horizontal_collision: bool,
 }
 
 impl Minecart {
@@ -837,6 +920,7 @@ impl Minecart {
             on_rails: false,
             ridden: false,
             flipped: false,
+            horizontal_collision: false,
         }
     }
 }
@@ -930,9 +1014,12 @@ fn step_along_track(world: &World, cart: &mut Minecart, rail_pos: (i32, i32, i32
     } else {
         distance_left = 0.0;
     }
-    // THE MOVE (the MoverType.SELF walk — the v1 the collision-free
-    // direct fold the rail cells' own clearance serves).
-    cart.pos = v_add(cart.pos, v_sub(next, cart.pos));
+    // THE MOVE (javap `stepAlongTrack` pc 312-326 — the `move(SELF,
+    // next.subtract(oldPos))` walk the Entity.move collision fold
+    // serves: the request the collide sweep clips, the position the
+    // clipped vector takes, the horizontalCollision flag the cart's
+    // own field wears — the crash-detonation arm the TNT tick reads).
+    move_with_collision(world, cart, v_sub(next, cart.pos));
     // THE SLOPE'S OWN TAIL: the V-rest the next rail's shape keeps,
     // the y-follow the descent wears.
     if is_slope_rail {
@@ -1218,10 +1305,16 @@ pub fn cart_tick(world: &World, cart: &mut Minecart) {
                 // THE OFF-RAIL FALL (the comeOffTrack branch's v1
                 // honest fold — the default gravity the
                 // getDefaultGravity dry arm wears, the motion the
-                // position carries).
+                // position carries; the move(SELF, delta) pc 64-72
+                // walk the same collision fold serves — the fall the
+                // walls and the floor clip, the flags the same laws
+                // wear). THE comeOffTrack's own clamp/drag arms (the
+                // maxSpeed clamp, the onGround scale, the air drag)
+                // the later round banks — the v1 delta the fold
+                // carries as-is).
                 cart.on_rails = false;
                 cart.delta[1] -= CART_GRAVITY;
-                cart.pos = v_add(cart.pos, cart.delta);
+                move_with_collision(world, cart, cart.delta);
                 movement_left = 0.0;
             }
         }
@@ -1598,6 +1691,103 @@ mod tests {
         cart_tick(&world, &mut cart);
         assert_eq!(cart.delta, [0.0, 0.0, 0.0]);
         assert!((cart.pos[0] - 5.5).abs() < 1e-9);
+    }
+
+    #[test]
+    fn the_mth_equal_the_band_the_cp_double_wears() {
+        // THE Mth.equal law: |b − a| < 9.999999747378752e-06 — the
+        // float 1.0e-5 the f2d widening keeps, the < the ifge tail
+        // speaks: the exact band edge the `<` refuses.
+        assert!(mth_equal(1.0, 1.0));
+        assert!(mth_equal(1.0, 1.0 + 9.0e-6), "the under-band graze");
+        assert!(!mth_equal(1.0, 1.0 + 1.1e-5), "the over-band clip");
+        assert!(!mth_equal(1.0, 1.0 + MTH_EQUAL_EPS), "the exact edge the < refuses");
+        assert!(mth_equal(-3.0, -3.0 + 5.0e-6), "the negative side the same band wears");
+    }
+
+    #[test]
+    fn the_move_fold_the_wall_clips_the_flag_arms() {
+        // THE Entity.move fold over the flat rail: the rolling cart's
+        // box the stone wall's west face clips — the position the
+        // contact wears (the face minus the half-width), the flag the
+        // Mth.equal band's over-band residue arms, the delta the move
+        // never zeroes (the vanilla collision the request keeps).
+        let mut world = yard();
+        world.set(5, Y, 3, RAIL);
+        world.set_variant(5, Y, 3, 1); // EAST_WEST
+        world.set(6, Y, 3, crate::world::STONE); // the wall the box meets
+        let mut cart = Minecart::new([5.5, Y as f64 + RAIL_RIDE_HEIGHT, 3.5]);
+        cart.delta = [0.5, 0.0, 0.0];
+        cart_tick(&world, &mut cart);
+        // THE CONTACT: the east face at pos + 0.49 rides the wall's
+        // west face (6.0) — the box's own half-width the clip keeps.
+        let face = 6.0 - (MINECART_DIMENSIONS_WIDTH / 2.0) as f64;
+        assert!((cart.pos[0] - face).abs() < 1e-6, "pos {} vs face {}", cart.pos[0], face);
+        assert!((cart.pos[1] - (Y as f64 + RAIL_RIDE_HEIGHT)).abs() < 1e-9);
+        assert!((cart.pos[2] - 3.5).abs() < 1e-9);
+        assert!(
+            cart.horizontal_collision,
+            "the over-band residue the flag arms"
+        );
+        // THE DELTA the move keeps (the vanilla walk the delta never
+        // zeroes — the wall the cart presses, the next tick's chain
+        // the same speed re-derives; the cap the 0.4 the chain's own
+        // max-speed word wears).
+        assert!((cart.delta[0] - 0.4).abs() < 1e-9);
+    }
+
+    #[test]
+    fn the_move_fold_the_open_rail_the_flag_keeps_silent() {
+        // THE same roll without the wall: the move the full delta
+        // takes, the flag the under-band silence keeps.
+        let mut world = yard();
+        world.set(5, Y, 3, RAIL);
+        world.set_variant(5, Y, 3, 1);
+        let mut cart = Minecart::new([5.5, Y as f64 + RAIL_RIDE_HEIGHT, 3.5]);
+        cart.delta = [0.5, 0.0, 0.0];
+        cart_tick(&world, &mut cart);
+        assert!(!cart.horizontal_collision, "the free roll the silence wears");
+        // THE MOVE the cap'd delta takes (the 0.4 the chain's own max
+        // speed wears — the pos the 5.9 the full move rides).
+        assert!((cart.pos[0] - 5.9).abs() < 1e-9, "pos {}", cart.pos[0]);
+    }
+
+    #[test]
+    fn the_move_fold_the_fall_the_floor_lands_the_cart() {
+        // THE off-rail fall's own move(SELF, delta): the gravity the
+        // stone floor's top clips — the position the contact keeps,
+        // the verticalCollisionBelow the negative-y arm speaks.
+        let mut world = yard();
+        world.set(12, 30, 12, crate::world::STONE); // the floor's own cell
+        let mut cart = Minecart::new([12.5, 31.0, 12.5]);
+        cart_tick(&world, &mut cart);
+        assert!(!cart.on_rails);
+        assert!((cart.pos[1] - 31.0).abs() < 1e-9, "the floor's top the cart keeps");
+        assert_eq!(cart.delta[1], -CART_GRAVITY, "the delta the move never zeroes");
+    }
+
+    #[test]
+    fn the_fuse_tick_the_burn_and_crash_the_same_beat_wear() {
+        // THE primed cart's fast crash: the burn arm the fuse serves
+        // (5 → 4, the SMOKE the beat wears) AND the collision arm the
+        // explode answers — the sequential ifs the same beat keeps.
+        let out = tnt_fuse_tick(5, 0.25, true);
+        assert_eq!(out.new_fuse, 4);
+        assert!(out.smoke, "the burn's own puff");
+        assert!(out.explode, "the crash the same beat detonates");
+        // THE SLOW CRASH the speed gate refuses: the burn alone.
+        let slow = tnt_fuse_tick(5, 0.005, true);
+        assert_eq!(slow.new_fuse, 4);
+        assert!(slow.smoke);
+        assert!(!slow.explode, "the hsqr under the 0.01 gate");
+        // THE UNPRIMED FAST CRASH: the fuse state never reads — the
+        // −1 the explode verdict never gates.
+        let unprimed = tnt_fuse_tick(TNT_FUSE_UNPRIMED, 0.25, true);
+        assert!(unprimed.explode, "the unprimed fast cart the wall detonates");
+        assert_eq!(unprimed.new_fuse, TNT_FUSE_UNPRIMED);
+        // THE UNPRIMED SILENCE: no collision, no speed — the cart
+        // keeps.
+        assert!(!tnt_fuse_tick(TNT_FUSE_UNPRIMED, 0.25, false).explode);
     }
 
     #[test]

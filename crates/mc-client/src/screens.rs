@@ -45973,11 +45973,12 @@ impl App {
             // THE FUSE'S OWN ARMS (javap `MinecartTNT.tick` the
             // super.tick tail speaks — the burn arm the SMOKE puff
             // wears, the `fuse == 0` arm the explode verdict answers,
-            // the collision arm the offline lane's collision fold
-            // never arms yet: the `false` the move() collision round
-            // banks — the walk the verbatim order keeps)
+            // the collision arm the move fold's own flag arms: the
+            // `horizontalCollision` the move-with-collision walk
+            // stores — the wall the fast cart's own detonation speaks)
             let hsqr = crate::cart::v_horizontal_distance_sqr(entry.cart.delta);
-            let out = crate::cart::tnt_fuse_tick(entry.fuse, hsqr, false);
+            let out =
+                crate::cart::tnt_fuse_tick(entry.fuse, hsqr, entry.cart.horizontal_collision);
             entry.fuse = out.new_fuse;
             if out.smoke {
                 // THE SMOKE'S OWN LIFT (the addParticle walk the y +
@@ -101279,6 +101280,99 @@ cow_sound_variant: None,
         // decay the table never wears, the count the definite pass
         // keeps)
         assert!(!app.drops.is_empty(), "the pad's own drop");
+    }
+
+    /// THE TNT CART'S OWN CRASH (javap `MinecartTNT.tick`'s
+    /// `horizontalCollision && hsqr >= 0.01` arm — the flag the
+    /// Entity.move collision fold stores, the arm the fuse state
+    /// NEVER reads): the powered rail's launch the unprimed cart
+    /// rolls east, the plain rails the speed chain carries, the east
+    /// wall the box's over-band clip the crash speaks — the SAME
+    /// tick's fuse arm the detonation answers, the world the blast
+    /// eats, the stone wall the 6.0 resistance keeps.
+    #[test]
+    fn the_tnt_cart_the_crash_the_wall_detonates() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let ry = app.spawn_y + 6;
+        // THE STAGE: the cleared corridor, the dirt pad the blast
+        // eats, the powered rail the west wall launches (the
+        // getRedstoneDirection's conductor read speaks), the plain
+        // rails carry, the east wall the fast cart meets.
+        for dx in -4..=6 {
+            for dy in -3..=3 {
+                for dz in -4..=4 {
+                    app.offline_world
+                        .as_mut()
+                        .unwrap()
+                        .set(c + dx, ry + dy, c + dz, crate::world::AIR);
+                }
+            }
+        }
+        for dx in -2..=4 {
+            for dz in -2..=2 {
+                app.offline_world
+                    .as_mut()
+                    .unwrap()
+                    .set(c + dx, ry - 1, c + dz, crate::world::DIRT);
+            }
+        }
+        let w = app.offline_world.as_mut().unwrap();
+        w.set(c - 1, ry, c, crate::world::STONE); // the launch's own wall
+        w.set(c, ry, c, crate::world::POWERED_RAIL);
+        w.set_variant(c, ry, c, 1 | crate::world::RAIL_POWERED_BIT);
+        w.set(c + 1, ry, c, crate::world::RAIL);
+        w.set_variant(c + 1, ry, c, 1);
+        w.set(c + 2, ry, c, crate::world::RAIL);
+        w.set_variant(c + 2, ry, c, 1);
+        w.set(c + 3, ry, c, crate::world::STONE); // the crash wall
+        // THE SPAWN (the useOn arm the minecart walk serves — the
+        // UNPRIMED fuse the iconst_m1 keeps)
+        app.offline_held_updated(Some("item/tnt_minecart"));
+        let hit = crate::world::ClipHit {
+            pos: (c, ry, c),
+            face: 1,
+            location: (c as f64 + 0.5, ry as f64 + 1.0, c as f64 + 0.5),
+            inside: false,
+        };
+        assert_eq!(app.on_right_press_minecart_arm(&hit), Some(true));
+        assert_eq!(app.offline_carts.len(), 1, "the cart spawned");
+        assert_eq!(app.offline_carts[0].fuse, crate::cart::TNT_FUSE_UNPRIMED);
+        // THE ROLL: the launch the 0.2 east speaks, the speed chain
+        // the wall approach carries — the box the over-band clip the
+        // crash tick wears, the flag the same beat's fuse arm reads
+        // (the detonation the update's explosion block consumes).
+        for _ in 0..14 {
+            if app.offline_carts.is_empty() {
+                break;
+            }
+            app.update();
+        }
+        // THE DETONATION'S OWN WORDS: the cart the discard takes, the
+        // pad the blast eats (the 0.5 resistance gives way), the
+        // stone wall the (res + 0.3)·0.3 fold takes (the 6.0's own
+        // 1.89 erosion the over-2.34 intensities beat — the weakest
+        // ray's 4.0·0.7 − the 0.45 air march = 2.35 the wall never
+        // keeps), the loot the shuffle roll wears.
+        assert!(app.offline_carts.is_empty(), "the crash consumed the cart");
+        let world = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            world.get(c, ry - 1, c),
+            crate::world::AIR,
+            "the pad's center the blast took"
+        );
+        assert_eq!(
+            world.get(c + 1, ry - 1, c),
+            crate::world::AIR,
+            "the pad's east edge the blast took"
+        );
+        assert_eq!(
+            world.get(c + 3, ry, c),
+            crate::world::AIR,
+            "the wall the blast's own fold took"
+        );
+        assert!(!app.drops.is_empty(), "the pad's own drops the loot roll wears");
     }
 
     /// THE TNT CART'S OWN DESTROY FORK (javap `MinecartTNT.destroy`
