@@ -38019,6 +38019,12 @@ impl App {
             // reach banks, the changed cell's own six the placement
             // scan the same set wears)
             let mut lamp_seeds: Vec<(i32, i32, i32)> = Vec::new();
+            // THE WIRE'S OWN CELLS (the hoisted seat the twelve-cell
+            // scan's own seeds the door lane's scope banks — the flips'
+            // own cells the door/trapdoor/gate consult the same
+            // broadcast wears, the out-of-scope tails the lever's own
+            // two-seed sweep never reached)
+            let mut wire_cells: Vec<(i32, i32, i32)> = Vec::new();
             {
                 let read = &*world;
                 let mut seeds: Vec<(i32, i32, i32)> = vec![(lx, ly, lz)];
@@ -38033,7 +38039,6 @@ impl App {
                     seeds.push((lx + dx, ly + dy, lz + dz));
                 }
                 let wire_flips = crate::world::wire_component_flips(read, &seeds);
-                let mut wire_cells: Vec<(i32, i32, i32)> = Vec::new();
                 for ((wx, wy, wz), kind) in wire_flips {
                     world.set(wx, wy, wz, kind);
                     wire_cells.push((wx, wy, wz));
@@ -38201,6 +38206,28 @@ impl App {
                     (1, 0, 0),
                 ] {
                     scan(lx + dx, ly - 1 + dy, lz + dz);
+                }
+                // THE WIRE'S OWN SEEDS (this round — javap
+                // RedStoneWireBlock.updatePowerStrength the changed
+                // cells' own setBlock flag-3 the Level.updateNeighborsAt
+                // six the neighborChanged broadcast speaks): the
+                // door/trapdoor/gate among the flips' own neighborhoods
+                // the consult answers — the door at the run's tail the
+                // lever's twelve-cell scope never reached before, the
+                // flips' own cells the same scan the same verdict wears
+                // (the fresh kinds the wire's own sets the signal read
+                // answers)
+                for (wx, wy, wz) in &wire_cells {
+                    for (dx, dy, dz) in [
+                        (0, -1, 0),
+                        (0, 1, 0),
+                        (0, 0, -1),
+                        (0, 0, 1),
+                        (-1, 0, 0),
+                        (1, 0, 0),
+                    ] {
+                        scan(*wx + dx, *wy + dy, *wz + dz);
+                    }
                 }
             }
             for ((dx, dy, dz), flip) in door_flips.iter() {
@@ -113630,6 +113657,104 @@ cow_sound_variant: None,
                 w.variant(c + 5, top + 1, c),
                 crate::world::RAIL_POWERED_BIT,
                 "the drain's own wake the rail's bit re-arms"
+            );
+        }
+    }
+
+    #[test]
+    fn the_wire_run_the_door_and_trapdoor_tails_the_scan_wears() {
+        // THE DOOR LANE'S OWN WIRE SEEDS (this round — javap
+        // RedStoneWireBlock.updatePowerStrength the changed cells' own
+        // setBlock flag-3 the Level.updateNeighborsAt six the
+        // neighborChanged broadcast speaks: the door/trapdoor/gate among
+        // the flips' own neighborhoods the consult answers — the
+        // lever's twelve-cell scope the wire run's own tails never
+        // reached before): the ON press the east run's decay the rungs
+        // wear (the tail cell the P13 kind the fixpoint answers), the
+        // east door the lower's own signal the OPEN bit cycles (the
+        // mate the scan's own sync wears), the west trapdoor the tail's
+        // 15 the same beat opens, the OFF press the closed kinds the
+        // same seeds re-answer.
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -4..=6 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 2, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 3, c + dz, crate::world::AIR);
+                }
+            }
+            // THE TWO TAILS (the lever's own cell the ground answers,
+            // the east run the door's lower the run's tail wears, the
+            // west cell the trapdoor the floor carries — both consumers
+            // the lever's own scope never reaches)
+            w.set(c, top, c, crate::world::LEVER);
+            w.set_variant(c, top, c, 1);
+            w.set(c + 1, top, c, crate::world::REDSTONE_WIRE);
+            w.set(c + 2, top, c, crate::world::REDSTONE_WIRE);
+            w.set(c + 3, top, c, crate::world::REDSTONE_WIRE);
+            w.set(c + 4, top, c, crate::world::OAK_DOOR);
+            w.set(c + 4, top + 1, c, crate::world::OAK_DOOR_UPPER);
+            w.set(c - 1, top, c, crate::world::REDSTONE_WIRE);
+            w.set(c - 2, top, c, crate::world::OAK_TRAPDOOR);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(
+                c as f32 + 0.5,
+                top as f32 + 4.0,
+                c as f32 + 0.5,
+            ),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        // THE ON PRESS (the tails the flips' own seeds the scan
+        // consults — the door and the trapdoor the signal's own verdict
+        // opens)
+        assert!(app.on_right_press(0, 0), "the lever's ON press consumes");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 4, top, c),
+                crate::world::OAK_DOOR_OPEN,
+                "the east door's lower the tail's P13 signal opens"
+            );
+            assert_eq!(
+                w.get(c + 4, top + 1, c),
+                crate::world::OAK_DOOR_UPPER_OPEN,
+                "the mate the scan's own sync wears"
+            );
+            assert_eq!(
+                w.get(c - 2, top, c),
+                crate::world::OAK_TRAPDOOR_OPEN,
+                "the west trapdoor the tail's 15 the same beat opens"
+            );
+        }
+        // THE OFF PRESS (the signal's death the same seeds the verdicts
+        // re-answer — the closed kinds the quiet keep wears)
+        assert!(app.on_right_press(0, 0), "the lever's OFF press consumes");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 4, top, c),
+                crate::world::OAK_DOOR,
+                "the dead run the door's lower the closed kind wears"
+            );
+            assert_eq!(
+                w.get(c + 4, top + 1, c),
+                crate::world::OAK_DOOR_UPPER,
+                "the mate the closed kind the same sync wears"
+            );
+            assert_eq!(
+                w.get(c - 2, top, c),
+                crate::world::OAK_TRAPDOOR,
+                "the dead tail the trapdoor's closed kind wears"
             );
         }
     }

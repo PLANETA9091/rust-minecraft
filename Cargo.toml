@@ -10,7 +10,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.3.837"
+version = "0.3.838"
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/PLANETA9091/rust-minecraft"
