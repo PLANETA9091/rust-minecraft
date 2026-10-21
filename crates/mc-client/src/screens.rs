@@ -49273,6 +49273,53 @@ impl App {
                 let [r, g, b, a] = model.pixel(u, v);
                 Some([r, g, b, a])
             });
+            // THE DISPLAY BLOCK'S OWN PASS (AbstractMinecartRenderer.submit
+            // pcs 169-244 — the dev-110 round's walk): the variant's
+            // carried block the kind selector serves, the pose INSIDE the
+            // pushed jitter+newRender chain the hull's fold wears, the S
+            // flip the display never touches. THE UNPRIMED FUSE the
+            // offline lane keeps (−1.0 — the TNT cart the priming lane
+            // never arms yet, the swell window's closed gate, the
+            // NO_OVERLAY flash answer); the hurt wobble's closed 0.0
+            // gate the hull's own call speaks.
+            let display = crate::avatar::cart_display_quads(
+                entry.kind,
+                -1.0,
+                cart.yaw_deg,
+                cart.pitch_deg,
+                feet,
+                entry.id,
+                0.0,
+            );
+            if display.is_empty() {
+                continue; // the plain cart's AIR — the empty gate skips
+            }
+            let flash = display[0].flash;
+            let display_sampled: Vec<crate::raster::SampledQuad> = display
+                .iter()
+                .map(|q| crate::raster::SampledQuad {
+                    pts: q.pts,
+                    uv: q.uv,
+                    tex: q.texture,
+                    tint: [q.shade, q.shade, q.shade],
+                })
+                .collect();
+            if flash {
+                // THE WHITE-SOLID ARM (the lit decade the whole block's
+                // white render speaks — the overlay pack(1, 10) the
+                // closure's flat white answers)
+                fb.draw_sampled_quads(pm, &display_sampled, &mut |_tex, _u, _v| {
+                    Some([255, 255, 255, 255])
+                });
+            } else {
+                fb.draw_sampled_quads(pm, &display_sampled, &mut |tex, u, v| {
+                    match mc_registry::sprite_uv::sample_uv(tex, u, v) {
+                        mc_registry::sprite_uv::Sample::Pixel(c) => Some(c),
+                        mc_registry::sprite_uv::Sample::Missing(c) => Some(c),
+                        mc_registry::sprite_uv::Sample::Unknown => None,
+                    }
+                });
+            }
         }
     }
 
@@ -100242,6 +100289,104 @@ cow_sound_variant: None,
             (app.body.as_ref().unwrap().yaw - -170.0).abs() < 1e-4,
             "the wrapped delta the ±180 band keeps (yaw {})",
             app.body.as_ref().unwrap().yaw
+        );
+    }
+
+    /// THE VARIANT CART'S OWN DISPLAY FRAME (the dev-110 walk's App
+    /// lane): the chest cart the useOn walk spawns draws the carried
+    /// block the special wrapper serves — the frame the chest's box
+    /// paints above the hull walls the plain cart's own frame never
+    /// speaks (the same rail, the same eye, the twin diff the display
+    /// pass's own pixels answer).
+    #[test]
+    fn the_variant_carts_the_display_paints_the_frame() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/chest_minecart"));
+        let w0 = app.offline_world.as_ref().unwrap();
+        let c = w0.size_blocks() / 2;
+        let sy = app.spawn_y;
+        // THE VIEW CORRIDOR (the render-lane test's own scan — the
+        // first flat eastward surface the eye's frame keeps)
+        let mut dx = None;
+        for d in 2..=8i32 {
+            let surface = crate::screens::top_solid_y(w0, c + d, c);
+            let clear = (1..=3).all(|dy| w0.get(c + d, sy + dy, c) == 0);
+            if surface == sy && clear {
+                dx = Some(d);
+                break;
+            }
+        }
+        let Some(dx) = dx else {
+            return; // the seed-3 terrain keeps no corridor — the honest skip
+        };
+        app.offline_world.as_mut().unwrap().set(c + dx, sy + 1, c, crate::world::RAIL);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set_variant(c + dx, sy + 1, c, 1); // EAST_WEST
+        let hit = crate::world::ClipHit {
+            pos: (c + dx, sy + 1, c),
+            face: 1,
+            location: (c as f64 + dx as f64 + 0.5, sy as f64 + 2.0, c as f64 + 0.5),
+            inside: false,
+        };
+        assert_eq!(app.on_right_press_minecart_arm(&hit), Some(true));
+        assert_eq!(app.offline_carts.len(), 1, "the chest cart spawned");
+        assert_eq!(
+            app.offline_carts[0].kind, "chest_minecart",
+            "the kind the item name's family speaks"
+        );
+        crate::headless::seed_scene(
+            &mut app,
+            &crate::headless::SceneOpts {
+                body: true,
+                perspective: Some(crate::camera::CameraType::FirstPerson),
+                ..crate::headless::SceneOpts::default()
+            },
+        )
+        .unwrap();
+        let mut fb = crate::raster::Framebuf::new(64, 64);
+        let mut assets = GuiAssets::open("assets-cache/jar");
+        app.render_world_3d(&mut fb, &mut assets);
+        // THE TWIN: the SAME rail, the PLAIN cart — the display pass
+        // the AIR gate skips, the frame the hull alone paints
+        let mut twin = App::new(3);
+        twin.enter_world();
+        twin.offline_held_updated(Some("item/minecart"));
+        twin.offline_world.as_mut().unwrap().set(c + dx, sy + 1, c, crate::world::RAIL);
+        twin.offline_world
+            .as_mut()
+            .unwrap()
+            .set_variant(c + dx, sy + 1, c, 1);
+        let hit2 = crate::world::ClipHit {
+            pos: (c + dx, sy + 1, c),
+            face: 1,
+            location: (c as f64 + dx as f64 + 0.5, sy as f64 + 2.0, c as f64 + 0.5),
+            inside: false,
+        };
+        assert_eq!(twin.on_right_press_minecart_arm(&hit2), Some(true));
+        crate::headless::seed_scene(
+            &mut twin,
+            &crate::headless::SceneOpts {
+                body: true,
+                perspective: Some(crate::camera::CameraType::FirstPerson),
+                ..crate::headless::SceneOpts::default()
+            },
+        )
+        .unwrap();
+        let mut fb2 = crate::raster::Framebuf::new(64, 64);
+        twin.render_world_3d(&mut fb2, &mut assets);
+        let changed = fb
+            .color
+            .iter()
+            .zip(fb2.color.iter())
+            .filter(|(a, b)| a != b)
+            .count();
+        assert!(
+            changed > 0,
+            "the chest's own box recolors {} bytes the hull never speaks",
+            changed
         );
     }
 

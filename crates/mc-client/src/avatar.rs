@@ -6040,6 +6040,193 @@ impl MinecartModel {
 }
 
 // ---------------------------------------------------------------------------
+// THE CART'S DISPLAY BLOCK (AbstractMinecartRenderer.submit pcs 169-244,
+// the 26.2 jar's own bytecode — the dev-110 round's walk): the variant
+// cart's carried block the `displayBlockModel` field serves — the pass
+// the plain cart's AIR state skips (`isEmpty()` true, pcs 175-180), the
+// five variants the block set's model serves. THE POSE INSIDE the
+// pushed jitter + newRender chain, BEFORE the S(−1,−1,1) the hull's
+// model.submit reads: `scale(0.75)` (Float #114), `translate(−0.5,
+// (displayOffset−8)/16.0, 0.5)` (Float #118 = −0.5, #122 = 16.0, the
+// offset the synced default 6 the −0.125 answers), `mulPose(YP 90°)`
+// (Float #126), then `submitMinecartContents` — the TNT subclass's
+// override rides the fuse swell (TntMinecartRenderer's own walk: the
+// `fuse > −1 && fuse < 10` window the CP #19/#20 decode banks, the
+// `translate(−swell·0.5, 0, −swell·0.5)` the Double #27 = 0.5 speaks,
+// the `scale(1+swell)` pair the vanilla swell look keeps, the
+// `submitWhiteSolidBlock(..., isLit(fuse), ...)` the WHITE arm wraps).
+// THE CHEST the special path draws: the block set binds
+// ChestSpecialRenderer + `ChestRenderer.modelTransformation(NORTH)` —
+// the `Matrix4f().rotationAround(YP.rotationDegrees(NORTH.toYRot()=
+// 180), 0.5, 0, 0.5)` the createModelTransformation bytecode keeps —
+// the wrapper the BlockModelRenderState.submit's
+// `pushPose; mulPose(transformation); specialRenderer.submit; popPose`
+// arm applies INSIDE the display pose.
+// ---------------------------------------------------------------------------
+
+/// One display-block quad — the pose-folded world points, the texture
+/// the sampler closure reads (`block/*` atlas tiles the derive walk
+/// serves, `entity/chest/normal` the special bake carries), the
+/// block-face shade the tint pre-folds, the flash the WHITE-SOLID arm
+/// speaks (the lit TNT decade the whole block's white render keeps).
+pub struct CartDisplayQuad {
+    pub pts: [[f32; 3]; 4],
+    pub uv: [[f32; 2]; 4],
+    pub shade: f32,
+    pub texture: &'static str,
+    pub flash: bool,
+}
+
+/// THE BLOCK FACE'S OWN SHADE (the same law the primed-TNT lane and
+/// the drops pass keep — the Cull enum's own slots).
+fn cart_display_face_shade(d: mc_registry::element_quads::Direction) -> f32 {
+    use mc_registry::element_quads::Direction;
+    match d {
+        Direction::Up => 1.0f32,
+        Direction::Down => 0.5,
+        Direction::North | Direction::South => 0.8,
+        Direction::West | Direction::East => 0.6,
+    }
+}
+
+/// THE CHEST WRAPPER'S OWN BAKE (the `minecraft:chest#main` special
+/// layer the item_models table speaks, textured `entity/chest/normal`
+/// — the ChestSpecialRenderer.REGULAR the clinit's createDefaultTextures
+/// answers): the part-pose-composed polygons the dump keeps, the
+/// block-unit vertices the /16 fold serves, the uvs the ×16 span the
+/// sample_uv walk normalizes. `None` = the layer table lost the row
+/// (the honest empty pass).
+fn cart_display_chest_quads() -> Option<Vec<mc_registry::element_quads::Quad>> {
+    let (_, layer) = mc_registry::generated::special_models::SPECIAL_LAYERS
+        .iter()
+        .find(|(name, _)| *name == "minecraft:chest#main")?;
+    Some(mc_registry::display::special_layer_bake(
+        layer,
+        "entity/chest/normal",
+    ))
+}
+
+/// THE DISPLAY PASS'S OWN QUADS (the walk the bytecode speaks): the
+/// block set's model per kind (the chest the special bake, the four
+/// element blocks the derive walk), the fuse swell the TNT variant
+/// rides (the offline lane's unprimed −1 the closed window keeps),
+/// the fold — vertex order — `[chest wrapper] → [tnt swell S·T] →
+/// R_y(90°) → T(−0.5, −0.125, 0.5) → S(0.75) → R_x(hurt) → T(0,
+/// 0.375, 0) → R_z(pitch) → R_y(yaw) → T(jitter) → feet`, the S flip
+/// the hull reads the display never touches (the pass sits BEFORE the
+/// `scale(−1,−1,1)` the model.submit wears). `fuse = −1.0` = the
+/// unprimed cart the offline lane carries (the window's closed gate,
+/// the flash the NO_OVERLAY answer keeps).
+pub fn cart_display_quads(
+    kind: &str,
+    fuse: f32,
+    yaw_deg: f32,
+    pitch_deg: f32,
+    feet: Vec3,
+    id: i32,
+    hurt: f32,
+) -> Vec<CartDisplayQuad> {
+    let Some(block) = crate::cart::cart_display_block(kind) else {
+        return Vec::new(); // the plain cart's AIR — the empty gate skips
+    };
+    let quads: Vec<mc_registry::element_quads::Quad> = if block == "chest" {
+        match cart_display_chest_quads() {
+            Some(q) => q,
+            None => return Vec::new(),
+        }
+    } else {
+        let model_id = format!("block/{block}");
+        match mc_registry::element_quads::derive_model_inherited(&model_id) {
+            Some(q) => q,
+            None => return Vec::new(),
+        }
+    };
+    let is_chest = block == "chest";
+    let is_tnt = block == "tnt";
+    // THE SWELL'S OWN WINDOW (TntMinecartRenderer.submitMinecartContents
+    // pcs 6-63: `fuse > −1 && fuse < 10` — the CP #19/#20 decode; the
+    // translate rides INSIDE the display pose, the scale first the
+    // PoseStack post-multiply order keeps)
+    let (sw_scale, sw_tx, sw_tz) = if is_tnt && fuse > -1.0 && fuse < 10.0 {
+        let sw = crate::mob::tnt_swell_amount(fuse);
+        (1.0 + sw, -sw * 0.5, -sw * 0.5)
+    } else {
+        (1.0f32, 0.0f32, 0.0f32)
+    };
+    // THE FLASH'S OWN ARM (the `submitWhiteSolidBlock(..., isLit(fuse),
+    // ...)` walk — the whole block's white render the lit decade keeps)
+    let flash = is_tnt && crate::mob::tnt_is_lit(fuse);
+    // the display pass's own constants (the CP decode: #114 = 0.75,
+    // #118 = −0.5, #122 = 16.0, #55 = 0.5; the offset 6 the −0.125
+    // y the (6−8)/16 fold answers)
+    let display_y = (crate::cart::CART_DISPLAY_OFFSET - 8) as f32 / 16.0;
+    // the shared trig (the hull's cart_folds conventions — the yaw's
+    // (x·cos + z·sin, −x·sin + z·cos) walk, the pitch's R_z, the
+    // hurt's R_x degrees)
+    let ya = yaw_deg.to_radians();
+    let (ys, yc) = ya.sin_cos();
+    let pa = pitch_deg.to_radians();
+    let (ps, pc) = pa.sin_cos();
+    let theta_h = hurt * (std::f32::consts::PI / 180.0);
+    let (hs, hc) = theta_h.sin_cos();
+    let jit = cart_jitter(id);
+    let lift = 0.375f32;
+    let fold = move |p: [f32; 3]| -> [f32; 3] {
+        // the chest wrapper (the SpecialBlockModelWrapper's
+        // rotationAround matrix: c + R_y(180°)·(v − c) with c =
+        // (0.5, 0, 0.5) — the (1−x, y, 1−z) point-symmetry the
+        // 180° about the block center answers)
+        let (wx, wy, wz) = if is_chest {
+            (1.0 - p[0], p[1], 1.0 - p[2])
+        } else {
+            (p[0], p[1], p[2])
+        };
+        // the tnt swell (the override's S_s then T_t — the vertex
+        // order the post-multiply keeps)
+        let (sx, sy, sz) = (wx * sw_scale, wy * sw_scale, wz * sw_scale);
+        let (tx, ty, tz) = (sx + sw_tx, sy, sz + sw_tz);
+        // the display R_y(90°): (x, z) → (z, −x)
+        let (rx, ry, rz) = (tz, ty, -tx);
+        // the display translate(−0.5, (offset−8)/16, 0.5)
+        let (dx, dy, dz) = (rx - 0.5, ry + display_y, rz + 0.5);
+        // the display scale(0.75)
+        let (qx, qy, qz) = (dx * 0.75, dy * 0.75, dz * 0.75);
+        // the hurt R_x slot (the closed 0.0 gate the offline keeps)
+        let (hx, hy, hz) = (qx, qy * hc - qz * hs, qy * hs + qz * hc);
+        // the 0.375 lift (the hull's own word — the pass rides the
+        // same newRender chain the hull wears)
+        let (lx, ly, lz) = (hx, hy + lift, hz);
+        // the R_z(xRot) pitch lean
+        let (px, py, pz) = (lx * pc - ly * ps, lx * ps + ly * pc, lz);
+        // the R_y(yRot) yaw walk
+        let (wx2, wy2, wz2) = (px * yc + pz * ys, py, -px * ys + pz * yc);
+        // the jitter + the feet (the jit the hull's fold adds to all
+        // three axes — the translate's own word)
+        [
+            feet.x + wx2 + jit,
+            feet.y as f32 + wy2 + jit,
+            feet.z + wz2 + jit,
+        ]
+    };
+    let mut out: Vec<CartDisplayQuad> = Vec::with_capacity(quads.len());
+    for q in &quads {
+        let shade = if q.shade {
+            cart_display_face_shade(q.direction)
+        } else {
+            1.0
+        };
+        out.push(CartDisplayQuad {
+            pts: q.vertices.map(fold),
+            uv: q.uvs,
+            shade,
+            texture: q.texture,
+            flash,
+        });
+    }
+    out
+}
+
+// ---------------------------------------------------------------------------
 // THE ARMOR LAYERS (HumanoidArmorLayer.renderArmorPiece, the 26.2 jar's own
 // bytecode): the store's worn piece rides the humanoid armor model — the
 // SAME createMesh part tree the skin speaks, re-cubed by the slot's
@@ -11047,6 +11234,170 @@ mod tests {
             (cart_jitter(0) - (-0.4375f32 * 0.004_000_000_189_989_805_f32)).abs() < 1e-9,
             "the id-0 jitter's own word"
         );
+    }
+
+    /// THE DISPLAY FOLD'S OWN CORNERS (the pass the dev-110 walk pins):
+    /// the furnace block's (0,0,0) corner through the chain — the
+    /// R_y(90°) the identity the zero corner keeps, the
+    /// translate(−0.5, −0.125, 0.5), the 0.75 scale, the lift, the
+    /// id-0 jitter every axis wears — and the plain cart the empty
+    /// vec the AIR gate keeps.
+    #[test]
+    fn the_cart_display_the_fold_corners() {
+        let feet = Vec3::new(0.0, 0.0, 0.0);
+        // THE AIR GATE (the plain cart the pass never arms)
+        assert!(
+            cart_display_quads("minecart", -1.0, 0.0, 0.0, feet, 0, 0.0).is_empty(),
+            "the plain cart carries no display block"
+        );
+        // THE FURNACE'S DERIVE BAKE (the orientable elements the
+        // block/furnace model keeps) + the chain's own numbers: the
+        // (0,0,0) corner → R_y90 identity → (−0.5, −0.125, 0.5) →
+        // ×0.75 → (−0.375, −0.09375, 0.375) → +0.375 lift → (−0.375,
+        // 0.28125, 0.375) → the id-0 jitter (−0.00175) every axis
+        let quads = cart_display_quads("furnace_minecart", -1.0, 0.0, 0.0, feet, 0, 0.0);
+        assert!(!quads.is_empty(), "the furnace bakes its elements");
+        let jit = -0.4375f32 * 0.004_000_000_189_989_805_f32;
+        let want = [
+            -0.375 + jit,
+            0.28125 + jit,
+            0.375 + jit,
+        ];
+        let hit = quads.iter().any(|q| {
+            q.pts.iter().any(|p| {
+                (p[0] - want[0]).abs() < 1e-4
+                    && (p[1] - want[1]).abs() < 1e-4
+                    && (p[2] - want[2]).abs() < 1e-4
+            })
+        });
+        assert!(hit, "the (0,0,0) corner rides the chain verbatim");
+        // THE TEXTURE THE DERIVE WALK SERVES (the furnace's own atlas
+        // tiles the #front/#side/#top slots resolve — the ids the
+        // namespace prefix the jsons wear carries, the sample_uv's
+        // strip the resolution answers)
+        assert!(
+            quads
+                .iter()
+                .all(|q| q.texture.contains("block/furnace")),
+            "the furnace quads sample the atlas tiles"
+        );
+        // THE YAW THE CHAIN WEARS (the R_y the hull's own walk keeps):
+        // the corner (0,0,0) at yaw 180 folds to the +0.375 x the
+        // 180° point-symmetry answers (the jitter aside)
+        let yawed = cart_display_quads("furnace_minecart", -1.0, 180.0, 0.0, feet, 0, 0.0);
+        let want_yaw = [0.375 + jit, 0.28125 + jit, -0.375 + jit];
+        let hit = yawed.iter().any(|q| {
+            q.pts.iter().any(|p| {
+                (p[0] - want_yaw[0]).abs() < 1e-4
+                    && (p[1] - want_yaw[1]).abs() < 1e-4
+                    && (p[2] - want_yaw[2]).abs() < 1e-4
+            })
+        });
+        assert!(hit, "the yaw-180 corner mirrors the flat pose");
+    }
+
+    /// THE CHEST'S OWN SPECIAL WRAPPER (the block set's
+    /// ChestSpecialRenderer + the NORTH modelTransformation): the
+    /// lock's outer-face corner (9, 7, 16)/16 through the wrapper's
+    /// (1−x, y, 1−z) point-symmetry, the R_y(90°), the display
+    /// translate + 0.75 scale, the lift — the latch the cart-local
+    /// −x the 180°+90° composition lands.
+    #[test]
+    fn the_cart_display_the_chest_wrapper() {
+        let feet = Vec3::new(0.0, 0.0, 0.0);
+        let quads = cart_display_quads("chest_minecart", -1.0, 0.0, 0.0, feet, 0, 0.0);
+        assert!(!quads.is_empty(), "the chest bake loads its polygons");
+        // THE TEXTURE THE SPECIAL PATH SERVES (the entity/chest/normal
+        // the ChestSpecialRenderer.REGULAR carries)
+        assert!(
+            quads.iter().all(|q| q.texture == "entity/chest/normal"),
+            "the chest quads sample the entity texture"
+        );
+        // THE LATCH'S OUTER-FACE CORNER: the lock cube [7,−2,14]→[9,2,15]
+        // rides the lid part's pose [0,9,1] → the world vertex
+        // (9, 7, 16)/16 = (0.5625, 0.4375, 1.0); the wrapper
+        // (1−x, y, 1−z) → (0.4375, 0.4375, 0.0); the R_y(90°)
+        // (x,z)→(z,−x) → (0.0, 0.4375, −0.4375); the translate
+        // → (−0.5, 0.3125, 0.0625); the ×0.75 → (−0.375, 0.234375,
+        // 0.046875); the lift → y 0.609375; the jitter every axis
+        let jit = -0.4375f32 * 0.004_000_000_189_989_805_f32;
+        let want = [
+            -0.375 + jit,
+            0.609375 + jit,
+            0.046875 + jit,
+        ];
+        let hit = quads.iter().any(|q| {
+            q.pts.iter().any(|p| {
+                (p[0] - want[0]).abs() < 1e-4
+                    && (p[1] - want[1]).abs() < 1e-4
+                    && (p[2] - want[2]).abs() < 1e-4
+            })
+        });
+        assert!(hit, "the latch corner rides the wrapper + display chain");
+        // THE SHADE THE BLOCK LAW KEEPS (the chest's bake carries
+        // shade:true — the face slots the ground shades wear)
+        assert!(
+            quads.iter().any(|q| (q.shade - 1.0).abs() < 1e-6),
+            "the up faces ride the 1.0 slot"
+        );
+        assert!(
+            quads.iter().any(|q| (q.shade - 0.5).abs() < 1e-6),
+            "the down faces ride the 0.5 slot"
+        );
+    }
+
+    /// THE TNT'S OWN SWELL + FLASH (TntMinecartRenderer's
+    /// submitMinecartContents override): the unprimed −1 the closed
+    /// window keeps (the plain block the base chain draws), the
+    /// fuse-5 swell the S_s·T_t fold speaks, the lit decade the WHITE
+    /// arm wraps, the unlit odd decade the NO_OVERLAY keeps.
+    #[test]
+    fn the_cart_display_the_tnt_swell() {
+        let feet = Vec3::new(0.0, 0.0, 0.0);
+        // THE UNPRIMED WINDOW'S CLOSED GATE (the fuse −1: the swell
+        // rides no scale, the flash the NO_OVERLAY answers)
+        let unprimed = cart_display_quads("tnt_minecart", -1.0, 0.0, 0.0, feet, 0, 0.0);
+        assert!(!unprimed.is_empty(), "the tnt block bakes");
+        assert!(!unprimed.iter().any(|q| q.flash), "the unprimed never flashes");
+        // THE BASE CHAIN'S OWN NUMBER (the (0,0,0) corner → the same
+        // fold the furnace test pins — the swell's absence the
+        // identity scale keeps)
+        let jit = -0.4375f32 * 0.004_000_000_189_989_805_f32;
+        let hit = unprimed.iter().any(|q| {
+            q.pts.iter().any(|p| {
+                (p[0] - (-0.375 + jit)).abs() < 1e-4
+                    && (p[1] - (0.28125 + jit)).abs() < 1e-4
+                    && (p[2] - (0.375 + jit)).abs() < 1e-4
+            })
+        });
+        assert!(hit, "the unprimed corner rides the base chain");
+        // THE SWELL'S OWN FOLD (the fuse 5: swell = 0.01875 the
+        // ((1−0.5)²)²·0.3 law speaks, the S_s = 1.01875, the T_t =
+        // −0.009375 — the (1,1,1) corner: S_s → (1.01875, 1.01875,
+        // 1.01875), T_t → (1.009375, 1.01875, 1.009375), R_y90 →
+        // (1.009375, 1.01875, −1.009375), T_d → (0.509375, 0.89375,
+        // −0.509375), ×0.75 → (0.38203125, 0.6703125, −0.38203125),
+        // +lift → y 1.0453125, the jitter every axis
+        let swelled = cart_display_quads("tnt_minecart", 5.0, 0.0, 0.0, feet, 0, 0.0);
+        let want = [
+            0.38203125 + jit,
+            1.0453125 + jit,
+            -0.38203125 + jit,
+        ];
+        let hit = swelled.iter().any(|q| {
+            q.pts.iter().any(|p| {
+                (p[0] - want[0]).abs() < 1e-4
+                    && (p[1] - want[1]).abs() < 1e-4
+                    && (p[2] - want[2]).abs() < 1e-4
+            })
+        });
+        assert!(hit, "the swelled corner rides the S_s·T_t innermost fold");
+        assert!(!swelled.iter().any(|q| q.flash), "the fuse-5 decade rides unlit");
+        // THE WHITE ARM (the fuse 4: (4/5) as i32 % 2 == 0 the lit
+        // parity keeps — the whole block's white render the flag arms)
+        let lit = cart_display_quads("tnt_minecart", 4.0, 0.0, 0.0, feet, 0, 0.0);
+        assert!(!lit.is_empty(), "the lit block still bakes");
+        assert!(lit.iter().all(|q| q.flash), "the lit decade flashes white");
     }
 
     /// THE MINECART TEXTURE GATE (the load's own honesty — the runtime

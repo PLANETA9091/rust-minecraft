@@ -175,6 +175,43 @@ pub const MINECART_DIMENSIONS_HEIGHT: f32 = 0.7;
 /// the PLAYER the default attachment path answers).
 pub const MINECART_PASSENGER_ATTACHMENT: f32 = 0.1875;
 
+/// THE DISPLAY BLOCK'S OWN WORD (javap the variant classes'
+/// `getDefaultDisplayBlockState` overrides, the 26.2 jar the dev-110
+/// round mines): MinecartChest → `CHEST.defaultBlockState()
+/// .setValue(FACING, NORTH)` (the block set binds the
+/// ChestSpecialRenderer wrapper the BuiltInBlockModels clinit speaks —
+/// the elementless block/chest.json the special path serves),
+/// MinecartFurnace → `FURNACE...FACING NORTH, LIT=hasFuel()` (the
+/// offline lane's no-fuel the unlit block/furnace model keeps),
+/// MinecartHopper → `HOPPER...`, MinecartTNT → `TNT...`,
+/// MinecartCommandBlock → `COMMAND_BLOCK...`; the plain cart's
+/// AbstractMinecart override answers AIR — the
+/// `displayBlockModel.isEmpty()` gate the submit fold reads skips the
+/// whole pass. The four element models' blockstate rows all speak
+/// `facing=north → y=0` (the furnace/command_block/hopper jsons the
+/// variants json carries) — the base bakes the derive walk serves
+/// draw UNROTATED.
+pub fn cart_display_block(kind: &str) -> Option<&'static str> {
+    match kind {
+        "chest_minecart" => Some("chest"),
+        "furnace_minecart" => Some("furnace"),
+        "hopper_minecart" => Some("hopper"),
+        "tnt_minecart" => Some("tnt"),
+        "command_block_minecart" => Some("command_block"),
+        _ => None,
+    }
+}
+
+/// THE DISPLAY OFFSET'S OWN WORD (javap `AbstractMinecart
+/// .getDefaultDisplayOffset`: bipush 6 — the synced
+/// DATA_ID_DISPLAY_OFFSET default the defineSynchedData walk keeps
+/// (`define(offset, getDefaultDisplayOffset())`), the five variants
+/// the override never speaks): the display pass's y the
+/// `(displayOffset − 8) / 16.0` fold answers −0.125 — the carried
+/// block sits 2 px BELOW the cart's origin plane, the floor slab's
+/// 2 px thickness the bottom sinks into.
+pub const CART_DISPLAY_OFFSET: i32 = 6;
+
 /// THE MINECART ITEM'S OWN FAMILY (the six names the item registry
 /// order keeps — the plain cart, the chest, the furnace, the hopper,
 /// the tnt, the command block: the family gate the useOn dispatch
@@ -926,6 +963,27 @@ mod tests {
     // THE YARD'S OWN FLOOR (the world's CHUNK_Y=48 the walk stays
     // under — the y the tests' rails wear).
     const Y: i32 = 20;
+
+    #[test]
+    fn the_display_block_the_variant_classes_own_words_wear() {
+        // THE getDefaultDisplayBlockState OVERRIDES (the dev-110 walk):
+        // the five variants the block word keeps, the plain cart's AIR
+        // the None the empty gate answers, the unknown the None keeps.
+        assert_eq!(cart_display_block("minecart"), None, "the AIR override");
+        assert_eq!(cart_display_block("chest_minecart"), Some("chest"));
+        assert_eq!(cart_display_block("furnace_minecart"), Some("furnace"));
+        assert_eq!(cart_display_block("hopper_minecart"), Some("hopper"));
+        assert_eq!(cart_display_block("tnt_minecart"), Some("tnt"));
+        assert_eq!(
+            cart_display_block("command_block_minecart"),
+            Some("command_block")
+        );
+        assert_eq!(cart_display_block("not_a_cart"), None);
+        // THE OFFSET'S OWN WORD (bipush 6): the (6−8)/16 fold the −0.125
+        // y speaks — the exact f32 the division answers.
+        assert_eq!(CART_DISPLAY_OFFSET, 6);
+        assert_eq!((CART_DISPLAY_OFFSET - 8) as f32 / 16.0, -0.125f32);
+    }
 
     #[test]
     fn the_exits_table_the_railshapes_own_pairs_wear() {
