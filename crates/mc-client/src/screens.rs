@@ -14711,6 +14711,37 @@ impl App {
                             for (wx, wy, wz) in &wire_cells {
                                 let _ = world.rail_neighbor_updates((*wx, *wy, *wz));
                             }
+                            // THE LAMP'S OWN SEEDS (the autopush-116 round
+                            // — javap RedStoneWireBlock.updatePowerStrength
+                            // the 26.2 jar the changed cells' own setBlock
+                            // flag-3 walk the Level.updateNeighborsAt six
+                            // the neighborChanged broadcast speaks, the
+                            // RedstoneLampBlock the lamp among the flips'
+                            // own neighborhoods the consult answers): the
+                            // flipped torch cells + the wire flips' own
+                            // cells the lamp consult seeds the
+                            // [redstone_lamp_flips] scan the SAME helper
+                            // the press path wears — the lamp at the run's
+                            // tail the torch's own beat the stale kind
+                            // re-reads (the NOT-gate's drain the wire drop
+                            // the lamp's ON kind the same beat retires,
+                            // the relight the tail the remesh the batched
+                            // rhythm the drain's own tail keeps), the
+                            // relit torch the 15 the lamp's lit kind the
+                            // same consult re-arms
+                            {
+                                let mut lamp_seeds: Vec<(i32, i32, i32)> =
+                                    flip_seeds.clone();
+                                lamp_seeds.extend(wire_cells.iter().copied());
+                                let lamp_flips = {
+                                    let read = &*world;
+                                    crate::world::redstone_lamp_flips(read, &lamp_seeds)
+                                };
+                                for ((lx, ly, lz), flip) in lamp_flips {
+                                    world.set(lx, ly, lz, flip);
+                                    torch_changed = true;
+                                }
+                            }
                             // THE NOT-GATE'S OWN CASCADE (the dev-51 round
                             // — javap RedstoneTorchBlock.neighborChanged
                             // pc 0-44: the flips' own setBlock the flag-3
@@ -113940,6 +113971,145 @@ cow_sound_variant: None,
                 w.variant(c + 5, top + 1, c),
                 crate::world::RAIL_POWERED_BIT,
                 "the drain's own wake the rail's bit re-arms"
+            );
+        }
+    }
+
+    /// THE TORCH'S OWN BEAT THE DRAIN'S LAMP SEEDS WEAR (the autopush-116
+    /// round — javap RedStoneWireBlock.updatePowerStrength the 26.2 jar
+    /// the changed cells' own setBlock flag-3 the Level.updateNeighborsAt
+    /// six the neighborChanged broadcast speaks, the RedstoneLampBlock the
+    /// lamp among the flips' own neighborhoods the consult answers): the
+    /// lit torch the wire's own 15 the run's tail lamp the press path's
+    /// own consult lights, the lever press the NOT-gate the +2 beat flips,
+    /// the OFF flip the wire's drop the SAME drain the tail lamp's STALE
+    /// lit kind retires (the press path's own [redstone_lamp_flips]
+    /// helper the drain's seeds wear — the lamp the lever's twelve-cell
+    /// scope never reaches), the second press the relight the lamp's lit
+    /// kind the same consult re-arms.
+    #[test]
+    fn the_drain_lamp_seeds_the_tail_lamp_the_not_gate_cycle_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=8 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 2, c + dz, crate::world::AIR);
+                }
+            }
+            // THE NOT-GATE'S OWN SEATS (the lever the pedestal's west
+            // neighbor the ray reads, the torch the pedestal's top the
+            // LIT default wears, the wire the torch's east neighbor the
+            // support stone carries, the tail lamp the wire's east end
+            // the same support row wears — the lamp BESIDE the tail
+            // rung the lever's own scope never reaches)
+            w.set(c + 2, top, c, crate::world::LEVER);
+            w.set_variant(c + 2, top, c, 1);
+            w.set(c + 3, top, c, crate::world::STONE);
+            w.set(c + 3, top + 1, c, crate::world::REDSTONE_TORCH);
+            w.set(c + 4, top, c, crate::world::STONE);
+            w.set(c + 4, top + 1, c, crate::world::REDSTONE_WIRE);
+            w.set(c + 5, top, c, crate::world::STONE);
+            w.set(c + 5, top + 1, c, crate::world::REDSTONE_LAMP);
+        }
+        // THE LIT TORCH'S OWN ARM (the attach walk's own seam the
+        // placed-wire beat speaks — the component re-read the torch's
+        // 15 the wire wears, the press path's own lamp consult the
+        // tail lamp the ON rung's 15 lights)
+        app.attach_wire_voice(c + 4, top + 1, c);
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 4, top + 1, c),
+                crate::world::REDSTONE_WIRE_ON,
+                "the lit torch the wire's own 15 wears"
+            );
+            assert_eq!(
+                w.get(c + 5, top + 1, c),
+                crate::world::REDSTONE_LAMP_LIT,
+                "the press path's own consult the tail lamp lights"
+            );
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(
+                c as f32 + 2.5,
+                top as f32 + 4.0,
+                c as f32 + 0.5,
+            ),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        // THE ON PRESS (the NOT-gate's own consult the lever's scope
+        // arms — the tail lamp the STALE lit kind keeps until the drain)
+        assert!(app.on_right_press(0, 0), "the lever's ON press consumes");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 2, top, c),
+                crate::world::LEVER_ON,
+                "the lever's own kind the ON bit wears"
+            );
+            assert_eq!(
+                w.get(c + 5, top + 1, c),
+                crate::world::REDSTONE_LAMP_LIT,
+                "the press beat the lamp's stale kind keeps — the +2 consult the flip alone answers"
+            );
+        }
+        // THE DRAIN'S OWN BEAT (the +2 consult the tick walk serves —
+        // the torch the extinguish arm flips OFF, the wire re-read the
+        // component's drop the same walk answers, THE NEW LAMP SEEDS
+        // the tail lamp the wire's drop the stale kind RETIRES)
+        for _ in 0..3 {
+            app.update();
+        }
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 3, top + 1, c),
+                crate::world::REDSTONE_TORCH_OFF,
+                "the NOT-gate's own verdict the torch's LIT bit drops"
+            );
+            assert_eq!(
+                w.get(c + 4, top + 1, c),
+                crate::world::REDSTONE_WIRE,
+                "the dead source the wire's plain kind wears"
+            );
+            assert_eq!(
+                w.get(c + 5, top + 1, c),
+                crate::world::REDSTONE_LAMP,
+                "the drain's own lamp seeds the tail lamp the stale kind retires"
+            );
+        }
+        // THE SECOND PRESS (the lever's death the consult re-arms —
+        // the relight the +2 beat serves, the wire's 15 the re-read
+        // re-wears, the tail lamp the same consult the lit kind re-arms)
+        assert!(app.on_right_press(0, 0), "the lever's OFF press consumes");
+        for _ in 0..3 {
+            app.update();
+        }
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 3, top + 1, c),
+                crate::world::REDSTONE_TORCH,
+                "the dead support the torch's LIT bit re-arms"
+            );
+            assert_eq!(
+                w.get(c + 4, top + 1, c),
+                crate::world::REDSTONE_WIRE_ON,
+                "the relit torch the wire's own 15 re-wears"
+            );
+            assert_eq!(
+                w.get(c + 5, top + 1, c),
+                crate::world::REDSTONE_LAMP_LIT,
+                "the drain's own lamp seeds the tail lamp the lit kind re-arms"
             );
         }
     }
