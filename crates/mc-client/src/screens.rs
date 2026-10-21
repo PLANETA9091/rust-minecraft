@@ -14696,9 +14696,20 @@ impl App {
                             let read = &*world;
                             let wire_flips =
                                 crate::world::wire_component_flips(read, &flip_seeds);
+                            let mut wire_cells: Vec<(i32, i32, i32)> = Vec::new();
                             for ((wx, wy, wz), kind) in wire_flips {
                                 world.set(wx, wy, wz, kind);
                                 cascade.push((wx, wy, wz));
+                                wire_cells.push((wx, wy, wz));
+                            }
+                            // THE RAIL'S OWN WAKE (the same flag-3
+                            // broadcast the attach walk's own seam banks —
+                            // the torch's own beat the wire flips wear,
+                            // the tail rails the re-read the same verdict
+                            // arms and the dead run's stale bit the same
+                            // walk clears)
+                            for (wx, wy, wz) in &wire_cells {
+                                let _ = world.rail_neighbor_updates((*wx, *wy, *wz));
                             }
                             // THE NOT-GATE'S OWN CASCADE (the dev-51 round
                             // — javap RedstoneTorchBlock.neighborChanged
@@ -38029,6 +38040,21 @@ impl App {
                 }
                 // THE LAMP'S OWN SEEDS the wire flips' own cells bank
                 lamp_seeds.extend(wire_cells.iter().copied());
+                // THE RAIL'S OWN WAKE (this round — javap RedStoneWireBlock
+                // .updatePowerStrength the changed cells' own setBlock
+                // flag-3 walk the Level.updateNeighborsAt the six the
+                // neighborChanged law speaks, the PoweredRailBlock /
+                // ActivatorRailBlock updateState chain the rails among
+                // the flips' own neighborhoods the re-read answers): the
+                // wire run the lever/torch the decayed power the rungs
+                // wear, the run's tail rail the POWERED bit the verdict
+                // arms — the launch the wire's own reach the cart's own
+                // boost law serves, the shape nibble the same walk's
+                // masked fold keeps, the dead run the bit the same wake
+                // clears
+                for (wx, wy, wz) in &wire_cells {
+                    let _ = world.rail_neighbor_updates((*wx, *wy, *wz));
+                }
                 // THE NOT-GATE'S OWN CASCADE (the dev-51 round — javap
                 // RedstoneTorchBlock.neighborChanged pc 0-44: the wire's
                 // own setBlock the flag-3 beat the neighbor torches the
@@ -113374,6 +113400,238 @@ cow_sound_variant: None,
             2,
             "the stone's own + the pop's own the vibration posts wear"
         );
+    }
+
+    #[test]
+    fn the_wire_run_the_tail_rail_the_power_wears() {
+        // THE WIRE'S OWN RAIL WAKE (this round — javap RedStoneWireBlock
+        // .updatePowerStrength the changed cells' own setBlock flag-3 the
+        // Level.updateNeighborsAt the six the neighborChanged law speaks,
+        // the PoweredRailBlock/ActivatorRailBlock updateState chain the
+        // rails among the flips' own neighborhoods the re-read answers):
+        // the lever the wire run's own decay the rungs wear (the source
+        // cell the 15 speaks, the -1 per step the fixpoint answers), the
+        // run's tail rail the POWERED bit the verdict arms — the rail
+        // FOUR cells past the lever the two-seed sweep the updateNeighbours
+        // walk wears never reaches, the wire's own wake the ONLY arm the
+        // verdict answers, the OFF press the bit the same wake clears.
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=8 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            // THE ROW (the lever's own cell the ground answers, the wire
+            // run the x-row wears, the tail rail the run's east end the
+            // floor stone carries)
+            w.set(c + 2, top, c, crate::world::LEVER);
+            w.set_variant(c + 2, top, c, 1);
+            w.set(c + 3, top, c, crate::world::REDSTONE_WIRE);
+            w.set(c + 4, top, c, crate::world::REDSTONE_WIRE);
+            w.set(c + 5, top, c, crate::world::REDSTONE_WIRE);
+            w.set(c + 6, top, c, crate::world::POWERED_RAIL);
+            w.set_variant(c + 6, top, c, 0);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(
+                c as f32 + 2.5,
+                top as f32 + 4.0,
+                c as f32 + 0.5,
+            ),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        // THE ON PRESS (the wire run the decay the rungs wear, the tail
+        // rail the wire's own wake arms)
+        assert!(app.on_right_press(0, 0), "the lever's ON press consumes");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 2, top, c),
+                crate::world::LEVER_ON,
+                "the lever's own kind the ON bit wears"
+            );
+            assert_eq!(
+                w.get(c + 3, top, c),
+                crate::world::REDSTONE_WIRE_ON,
+                "the source cell the 15 wears"
+            );
+            assert_eq!(
+                w.get(c + 4, top, c),
+                crate::world::REDSTONE_WIRE_P14,
+                "the first step the -1 decay answers"
+            );
+            assert_eq!(
+                w.get(c + 5, top, c),
+                crate::world::REDSTONE_WIRE_P13,
+                "the second step the rung ladder wears"
+            );
+            assert_eq!(
+                w.variant(c + 6, top, c),
+                crate::world::RAIL_POWERED_BIT,
+                "the tail rail the wire's own wake arms — the lever's two-seed sweep the walk never reaches"
+            );
+        }
+        // THE OFF PRESS (the signal's death the rungs the plain kind
+        // wear, the tail rail the bit the same wake clears)
+        assert!(app.on_right_press(0, 0), "the lever's OFF press consumes");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 5, top, c),
+                crate::world::REDSTONE_WIRE,
+                "the dead run the plain kind wears"
+            );
+            assert_eq!(
+                w.variant(c + 6, top, c),
+                0,
+                "the dead run the tail rail's bit clears"
+            );
+        }
+    }
+
+    #[test]
+    fn the_torch_not_gate_the_wire_re_read_the_tail_rail_the_wake_wears() {
+        // THE TORCH'S OWN BEAT THE DRAIN SERVES (this round — the drain
+        // walk's own wire flips the rail wake the attach walk's own seam
+        // banks): the lit torch the wire's own 15 the re-read arms and
+        // the tail rail the wake's own verdict seats, the lever press
+        // the NOT-gate the +2 beat flips (the pedestal the lever's own
+        // signal reads), the OFF flip the wire's drop the SAME drain
+        // re-reads and the rail's STALE bit the wake clears, the second
+        // press the relight the 15 the wire re-wears and the rail the
+        // wake re-arms.
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=8 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 2, c + dz, crate::world::AIR);
+                }
+            }
+            // THE NOT-GATE'S OWN SEATS (the lever the pedestal's west
+            // neighbor the ray reads, the torch the pedestal's top the
+            // LIT default wears, the wire the torch's east neighbor the
+            // support stone carries, the tail rail the wire's east end
+            // the same support row wears)
+            w.set(c + 2, top, c, crate::world::LEVER);
+            w.set_variant(c + 2, top, c, 1);
+            w.set(c + 3, top, c, crate::world::STONE);
+            w.set(c + 3, top + 1, c, crate::world::REDSTONE_TORCH);
+            w.set(c + 4, top, c, crate::world::STONE);
+            w.set(c + 4, top + 1, c, crate::world::REDSTONE_WIRE);
+            w.set(c + 5, top, c, crate::world::STONE);
+            w.set(c + 5, top + 1, c, crate::world::POWERED_RAIL);
+            w.set_variant(c + 5, top + 1, c, 0);
+        }
+        // THE LIT TORCH'S OWN ARM (the attach walk's own seam the
+        // placed-wire beat speaks — the component re-read the torch's
+        // 15 the wire wears, the tail rail the wake's own verdict arms)
+        app.attach_wire_voice(c + 4, top + 1, c);
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 4, top + 1, c),
+                crate::world::REDSTONE_WIRE_ON,
+                "the lit torch the wire's own 15 wears"
+            );
+            assert_eq!(
+                w.variant(c + 5, top + 1, c),
+                crate::world::RAIL_POWERED_BIT,
+                "the tail rail the wire's own wake arms"
+            );
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(
+                c as f32 + 2.5,
+                top as f32 + 4.0,
+                c as f32 + 0.5,
+            ),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        // THE ON PRESS (the NOT-gate's own consult the lever's scope
+        // arms — the pedestal the torch's own below the verdict reads,
+        // the rail's bit the STALE armed state keeps until the drain)
+        assert!(app.on_right_press(0, 0), "the lever's ON press consumes");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 2, top, c),
+                crate::world::LEVER_ON,
+                "the lever's own kind the ON bit wears"
+            );
+            assert_eq!(
+                w.variant(c + 5, top + 1, c),
+                crate::world::RAIL_POWERED_BIT,
+                "the press beat the rail's stale bit keeps — the +2 consult the flip alone answers"
+            );
+        }
+        // THE DRAIN'S OWN BEAT (the +2 consult the tick walk serves —
+        // the torch the extinguish arm flips OFF, the wire re-read the
+        // component's drop the same walk answers, the tail rail the
+        // wake's own verdict the stale bit CLEARS)
+        for _ in 0..3 {
+            app.update();
+        }
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 3, top + 1, c),
+                crate::world::REDSTONE_TORCH_OFF,
+                "the NOT-gate's own verdict the torch's LIT bit drops"
+            );
+            assert_eq!(
+                w.get(c + 4, top + 1, c),
+                crate::world::REDSTONE_WIRE,
+                "the dead source the wire's plain kind wears"
+            );
+            assert_eq!(
+                w.variant(c + 5, top + 1, c),
+                0,
+                "the drain's own wake the stale bit clears — the attach seam's own law the beat wears"
+            );
+        }
+        // THE SECOND PRESS (the lever's death the consult re-arms — the
+        // relight the +2 beat serves, the wire's 15 the re-read re-wears,
+        // the tail rail the wake the bit re-arms)
+        assert!(app.on_right_press(0, 0), "the lever's OFF press consumes");
+        for _ in 0..3 {
+            app.update();
+        }
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c + 3, top + 1, c),
+                crate::world::REDSTONE_TORCH,
+                "the dead support the torch's LIT bit re-arms"
+            );
+            assert_eq!(
+                w.get(c + 4, top + 1, c),
+                crate::world::REDSTONE_WIRE_ON,
+                "the relit torch the wire's own 15 re-wears"
+            );
+            assert_eq!(
+                w.variant(c + 5, top + 1, c),
+                crate::world::RAIL_POWERED_BIT,
+                "the drain's own wake the rail's bit re-arms"
+            );
+        }
     }
 
     #[test]
