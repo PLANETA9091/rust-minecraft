@@ -116266,15 +116266,21 @@ cow_sound_variant: None,
         {
             let world = app.offline_world.as_mut().unwrap();
             // THE CHAIN'S OWN SEATS (the two torches the wire run's
-            // own consult the supports wear — the wire the B's
-            // support cell the wire_powered arms answer, the wire the
-            // A's support's east neighbor the same verdict reads)
+            // own consult the supports wear — the wire run the E-W
+            // axis the dead-end's own fill arms speak, the head cell
+            // the B's support the run's own tail the verdict reads,
+            // the head's west face the A's support's east neighbor the
+            // same fill arms. THE AUTOBPUSH-119 ROUND THE AXIS THE
+            // POINTING LAW BANKS: the Z-axis run the A's support the
+            // pass-through refusal keeps — the occupied N-S axis the
+            // fill never arms — the X-axis run the pointing law the
+            // both supports' verdicts wear)
             world.set(c, top, c, w::REDSTONE_TORCH);
             world.set(c + 1, top, c, w::REDSTONE_TORCH);
             world.set(c + 1, top - 1, c, w::REDSTONE_WIRE);
-            world.set(c + 1, top - 1, c + 1, w::REDSTONE_WIRE);
-            world.set(c + 1, top - 1, c + 2, w::REDSTONE_WIRE);
-            world.set(c + 1, top - 1, c + 3, w::LEVER_ON);
+            world.set(c + 2, top - 1, c, w::REDSTONE_WIRE);
+            world.set(c + 3, top - 1, c, w::REDSTONE_WIRE);
+            world.set(c + 4, top - 1, c, w::LEVER_ON);
         }
         // THE LEVER'S OWN ATTACH (the wire flood the component's graded
         // kinds the sets speak — the source-adjacent cell the ON kind
@@ -116282,7 +116288,7 @@ cow_sound_variant: None,
         // cascade the B's re-consult the +2 entry the queue banks — the
         // lit B the wire's own verdict the LIT == hasNeighborSignal
         // verdict arms)
-        app.attach_wire_voice(c + 1, top - 1, c + 3);
+        app.attach_wire_voice(c + 4, top - 1, c);
         {
             let world = app.offline_world.as_ref().unwrap();
             assert_eq!(

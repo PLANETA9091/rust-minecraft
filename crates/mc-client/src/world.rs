@@ -2411,6 +2411,140 @@ fn wire_climb_conductor(id: u16) -> bool {
     matches!(collision_shape(id), CollisionShape::Full)
 }
 
+/// THE WIRE'S OWN CONNECTABLE VERDICT (javap RedStoneWireBlock
+/// .shouldConnectTo pc 0-96 the 26.2 jar the 2-arg walk the
+/// getConnectionState's same-level lane consults): the
+/// REDSTONE_WIRE.is() arm pc 0-11 the wire kinds answer, the
+/// REPEATER/OBSERVER arms pc 12-78 the facing compares the client's
+/// vocabulary never banks (the seam the future lane reads), the
+/// isSignalSource arm pc 79-95 the `dir != null` gate the source
+/// families answer — the lever's pair, the button's ladder, the
+/// plate's rows, the torch's four kinds (the standing AND wall
+/// pairs), the detector rail's own iconst_1 verdict (the
+/// BaseRailBlock default the powered/activator rails inherit keeps
+/// the plain rails OUT). THE ANY-STATE SEATS the visual connection
+/// wears — the OFF lever the wire still points at, the OFF torch the
+/// dark kind the wire still arms: the CONNECTION the kind presence
+/// speaks, the power the ownSignal read carries.
+fn wire_connectable_dir(kind: u16) -> bool {
+    is_redstone_wire(kind)
+        || is_lever(kind)
+        || is_button(kind)
+        || is_pressure_plate(kind)
+        || is_redstone_torch(kind)
+        || kind == DETECTOR_RAIL
+}
+
+/// THE WIRE'S OWN PER-SIDE LANE WALK (javap RedStoneWireBlock
+/// .getConnectingSide pc 0-141 the 26.2 jar the THREE lanes the
+/// side's own verdict speaks — the same walk the
+/// [`wire_step_neighbors`] climb lanes bank, the verdict the
+/// consumer's own read the [`wire_side_connected`] fold serves): the
+/// UP lane pc 17-96 the wire's own headroom the
+/// [`wire_climb_conductor`] gate keeps + the adjacent cell the
+/// trapdoor-or-canSurviveOn host law arms (the TrapDoorBlock
+/// instanceof pc 27-30 the pass-through seat answers, the
+/// canSurviveOn pc 39 the wire's own [`wire_can_survive`] law wears)
+/// + the cell ABOVE the adjacent the dir-null shouldConnectTo read
+/// arms (the 1-arg walk pc 0-11 the WIRE arm alone answers — the
+/// sources the null-dir gate pc 86-94 refuses: the climb the wire
+/// cells alone connect) — the sturdy-vs-side fork pc 86-96 the
+/// isConnected verdict never reads (the UP and SIDE seats BOTH
+/// connect), the SAME-LEVEL lane pc 97-103 the 2-arg
+/// shouldConnectTo the wire-or-source verdict answers, the DOWN
+/// lane pc 106-137 the adjacent's non-conductor verdict the
+/// [`wire_climb_conductor`] gate keeps + the below wire the
+/// dir-null read arms (the descending slope the SIDE seat wears).
+fn wire_side_lane(world: &World, wx: i32, wy: i32, wz: i32, face: (i32, i32, i32)) -> bool {
+    let (ax, ay, az) = (wx + face.0, wy + face.1, wz + face.2);
+    let adj = world.get(ax, ay, az);
+    // THE UP LANE: the wire's own headroom clear + the adjacent hosts
+    // (the trapdoor seat OR the wire's own survival law) + the WIRE
+    // above the adjacent answers
+    let head_clear = !wire_climb_conductor(world.get(wx, wy + 1, wz));
+    if head_clear && (is_trapdoor(adj) || wire_can_survive(world, ax, ay, az)) {
+        if is_redstone_wire(world.get(ax, ay + 1, az)) {
+            return true;
+        }
+    }
+    // THE SAME-LEVEL LANE: the wire-or-source verdict the 2-arg walk
+    // answers
+    if wire_connectable_dir(adj) {
+        return true;
+    }
+    // THE DOWN LANE: the adjacent NOT a conductor + the WIRE below
+    // answers
+    !wire_climb_conductor(adj) && is_redstone_wire(world.get(ax, ay - 1, az))
+}
+
+/// THE WIRE'S OWN SIDE VERDICT (javap RedStoneWireBlock
+/// .getConnectionState pc 0-241 the 26.2 jar the four-side recompute
+/// the getSignal walk consults — the consumer's own climbed read the
+/// [`redstone_signal_at`] horizontal arms wear): the fresh four-side
+/// recompute the [`wire_side_lane`] walks speak, THE DOT'S OWN GUARD
+/// pc 36-49 the all-none recompute the dot state's early return
+/// keeps (the lone wire the fills NEVER wears — the dot points
+/// nowhere, the flat seat the older rounds wore the jar's own
+/// silence retires), THE DOT-FILL pc 144-239 the unconnected side
+/// the EMPTY perpendicular axis fills SIDE speaks (flag9 the N-S
+/// pair's own emptiness the E/W fills arm, flag10 the E-W pair the
+/// N/S fills answer — the dead-end's own pointing law the tail's
+/// seat wears, the pass-through run the occupied axis the fill
+/// refuses). THE FRESH-ONLY EQUIVALENCE the client's own state law
+/// keeps (the wire's shape the mesher recomputes each mesh, the
+/// stored-dot gate the settled world the same verdict answers —
+/// the stored state tracks the neighborhood the client's kind-only
+/// vocabulary the fresh walk serves).
+fn wire_side_connected(world: &World, wx: i32, wy: i32, wz: i32, face: (i32, i32, i32)) -> bool {
+    let north = wire_side_lane(world, wx, wy, wz, (0, 0, -1));
+    let south = wire_side_lane(world, wx, wy, wz, (0, 0, 1));
+    let east = wire_side_lane(world, wx, wy, wz, (1, 0, 0));
+    let west = wire_side_lane(world, wx, wy, wz, (-1, 0, 0));
+    let face_side = match face {
+        (0, 0, -1) => north,
+        (0, 0, 1) => south,
+        (1, 0, 0) => east,
+        (-1, 0, 0) => west,
+        _ => false,
+    };
+    if face_side {
+        return true;
+    }
+    // THE DOT'S OWN GUARD: the all-none recompute the dot's silence
+    // keeps — the fill never arms
+    if !north && !south && !east && !west {
+        return false;
+    }
+    // THE DOT-FILL: the face side the EMPTY perpendicular axis fills
+    // SIDE — the dead-end's own pointing law
+    if face.0 != 0 {
+        !north && !south
+    } else {
+        !east && !west
+    }
+}
+
+/// THE WIRE'S OWN SIDE ARMS (the four horizontal seats the
+/// [`redstone_signal_at`] fold reads — the hasNeighborSignal walk's
+/// `getSignal(pos.relative(dir), dir)` read the wire cells answer:
+/// the ON wire the ownSignal power carries, the connected-side
+/// verdict the [`wire_side_connected`] fold gates — the dir the
+/// step FROM the read cell TO the wire, the side the walk consults
+/// the wire's own face TOWARD the read cell the getOpposite law
+/// speaks).
+fn wire_sides_powered_near(world: &World, x: i32, y: i32, z: i32) -> bool {
+    for (dx, dz) in [(1i32, 0i32), (-1i32, 0i32), (0i32, 1i32), (0i32, -1i32)] {
+        let (sx, sz) = (x + dx, z + dz);
+        if wire_powered(world.get(sx, y, sz))
+            && wire_side_connected(world, sx, y, sz, (-dx, 0, -dz))
+        {
+            return true;
+        }
+    }
+    false
+}
+
+
 /// THE WIRE'S OWN COMPONENT WALK (the graded POWER lane the
 /// autopush-673 round banks — the DEFAULT evaluator's own walk the
 /// RedStoneWireBlock.updatePowerStrength + the
@@ -9088,26 +9222,43 @@ pub fn plate_can_survive(world: &World, x: i32, y: i32, z: i32) -> bool {
 /// ButtonBlock.isSignalSource the same family speaks (the press walk
 /// pc 0-47 the POWERED=true setBlock the ON kind's own 15 arms, the
 /// getDirectSignal walk the connected arm's 15 the direct lane
-/// wears) — the cell's own six neighbors any ON lever or ON button or
-/// ON plate or ON WIRE holds the signal verdict: the hasNeighborSignal
-/// walk's source subset the honest client speaks (the dev-45 round
-/// the lever family alone banked, the autopush-660 round the button's
-/// own seats the same walk wears, the autopush-665 round the ON
-/// WIRE's own arms the same walk wears — the RedStoneWireBlock
-/// .getSignal walk pc 0-81 the horizontal dirs' opposite-side
-/// connection verdict + the UP-dir the raw POWER read the door's own
-/// cell answers: the ON wire the 15 the nonzero verdict the door's
-/// hasNeighborSignal read arms — the wire's own verdict walk the
-/// [`wire_sources_near`] source-only scan keeps, the self-feed loop
-/// the shouldSignal guard's own law refuses).
+/// wears) — the dev-45 round the lever family alone banked, the
+/// autopush-660 round the button's own seats the same walk wears,
+/// the autopush-665 round the ON WIRE's own arms the same walk
+/// wears. THE WIRE'S OWN ARMS THE AUTOBPUSH-119 ROUND RESEATS (javap
+/// RedStoneWireBlock.getSignal pc 0-81 + getConnectionState pc
+/// 0-241 + getConnectingSide pc 0-141 the 26.2 jar the full verdict
+/// the consumer's own climbed read banks): the UP-dir the raw
+/// ownSignal read keeps (pc 33-38), the DOWN-dir the 0 the early
+/// return refuses (pc 9-16 — the wire below the cell the flat seat
+/// wore the jar's own gate retires), the four horizontals the
+/// connected-side verdict the three-lane walk + the dot-fill law
+/// answer (the [`wire_sides_powered_near`] walk the climb's own
+/// sides serves — the lone wire the dot guard's own silence keeps,
+/// the dead-end the fill's own pointing law arms, the pass-through
+/// run the occupied axis the fill refuses) — the wire's own verdict
+/// walk the [`wire_sources_near`] source-only scan keeps, the
+/// self-feed loop the shouldSignal guard's own law refuses).
 pub fn redstone_signal_at(world: &World, x: i32, y: i32, z: i32) -> bool {
     wire_sources_near(world, x, y, z)
+        // THE UP ARM'S OWN RAW READ (getSignal pc 33-38 — the dir ==
+        // UP compare the ownSignal power the raw read arms: the wire
+        // ABOVE the cell the power answers, the connected-side gate
+        // the UP arm never wears)
         || wire_powered(world.get(x, y + 1, z))
-        || wire_powered(world.get(x, y - 1, z))
-        || wire_powered(world.get(x + 1, y, z))
-        || wire_powered(world.get(x - 1, y, z))
-        || wire_powered(world.get(x, y, z + 1))
-        || wire_powered(world.get(x, y, z - 1))
+        // THE DOWN ARM'S OWN REFUSAL (getSignal pc 9-16 — the dir ==
+        // DOWN compare the 0 the early return keeps: the wire BELOW
+        // the cell the verdict never arms, the weak read the block
+        // above the wire the same gate refuses — the flat seat the
+        // older rounds wore the jar's own gate retires)
+        // THE FOUR HORIZONTAL ARMS (getSignal pc 41-79 — the
+        // connected-side verdict the getConnectionState walk answers:
+        // the dir.getOpposite() side the wire's own face TOWARD the
+        // cell the PROPERTY read consults, the three lanes the climb's
+        // own sides bank, the dot-fill the dead-end's pointing law
+        // speaks — the [`wire_sides_powered_near`] walk the verdict
+        // serves)
+        || wire_sides_powered_near(world, x, y, z)
         // THE DETECTOR RAIL'S OWN ARMS (the autopush-115 round — javap
         // DetectorRailBlock.ownSignal pc 0-22 the 26.2 jar the POWERED
         // bit the 15 the weak walk reads: the isSignalSource verdict
@@ -17279,11 +17430,16 @@ mod tests {
         w.set(x, y - 1, z, STONE);
         w.set(x, y, z, REDSTONE_TORCH);
         w.set(x + 1, y, z, REDSTONE_TORCH);
-        // THE STATE-NEEDS-CHANGE QUIET (the wire the B's support the
-        // verdict powers — the lit B the powered support the schedule
-        // arms ONLY through the changed cells' own broadcast, the
-        // un-broadcast walk the queue never fills)
-        w.set(x + 1, y - 2, z, REDSTONE_WIRE_ON);
+        // THE STATE-NEEDS-CHANGE QUIET (the wire run the B's support
+        // the verdict powers — the lit B the powered support the
+        // schedule arms ONLY through the changed cells' own broadcast,
+        // the un-broadcast walk the queue never fills. THE AUTOBPUSH-119
+        // ROUND THE RUN'S OWN POINTING BANKS: the wire UNDER the
+        // support the getSignal pc 9-16 DOWN arm the jar's own gate
+        // refuses — the E-W run beside the support the dead-end's own
+        // fill arms, the pointing law the support's verdict reads)
+        w.set(x + 2, y - 1, z, REDSTONE_WIRE_ON);
+        w.set(x + 3, y - 1, z, REDSTONE_WIRE);
         assert!(
             w.torch_ticks.is_empty(),
             "the needs-change B the un-broadcast walk keeps quiet"
@@ -20341,10 +20497,14 @@ mod tests {
         );
         assert_eq!(World::placeable_block("redstone_lamp"), Some(REDSTONE_LAMP));
         // THE VERDICT WALK'S OWN ARMS (the wire's own power bit the
-        // lamp's six the read answers)
+        // lamp's six the read answers. THE AUTOBPUSH-119 ROUND THE
+        // FIXTURE'S OWN POINTING BANKS: the lone wire the dot guard's
+        // own silence keeps — the west wire the E-W run the dead-end's
+        // own fill arms, the lamp the run's tail the verdict reads)
         let mut w = World::new(1, 0x600D);
         let (y, c) = (1i32, 4i32);
         w.set(c, y, c, REDSTONE_WIRE);
+        w.set(c - 1, y, c, REDSTONE_WIRE);
         w.set(c + 1, y, c, REDSTONE_LAMP);
         assert!(
             redstone_lamp_flips(&w, &[(c + 1, y, c), (c, y, c)]).is_empty(),
@@ -20480,8 +20640,13 @@ mod tests {
         assert!(!wire_sources_near(&w, c, y, c), "the bare cell the silence keeps");
         // THE DOOR'S OWN READ (javap DoorBlock the hasNeighborSignal
         // consult — the ON wire's own arms the same walk wears, the
-        // OFF wire the silence keeps)
+        // OFF wire the silence keeps. THE AUTOBPUSH-119 ROUND THE
+        // FIXTURE'S OWN POINTING BANKS: the connected-side verdict the
+        // lone wire the dot guard's own silence keeps — the
+        // continuing wire the E-W run the dead-end's own fill arms,
+        // the wire's west face the read cell the pointing law arms)
         w.set(c + 1, y, c, REDSTONE_WIRE_ON);
+        w.set(c + 2, y, c, REDSTONE_WIRE);
         assert!(redstone_signal_at(&w, c, y, c), "the ON wire's arm answers");
         w.set(c + 1, y, c, REDSTONE_WIRE);
         assert!(
@@ -20533,6 +20698,135 @@ mod tests {
                 ((c + 4, y, c), REDSTONE_WIRE),
             ],
             "the two components the verdicts bank, the rung the decay's own step wears"
+        );
+    }
+
+    #[test]
+    fn the_wire_sides_the_climb_lanes_and_the_dot_fill_wear() {
+        // THE CONSUMER'S OWN CLIMBED READ (the autopush-119 round —
+        // javap RedStoneWireBlock.getSignal pc 0-81 + getConnectionState
+        // pc 0-241 + getConnectingSide pc 0-141 the 26.2 jar the full
+        // connected-side verdict redstone_signal_at's horizontal arms
+        // wear): the DOWN arm the pc 9-16 early return refuses, the
+        // UP arm the pc 33-38 raw ownSignal read keeps, the four
+        // horizontals the three-lane walk + the dot-fill law answer —
+        // the lone wire the dot guard's own silence keeps, the
+        // dead-end the fill's own pointing law arms, the pass-through
+        // run the occupied axis the fill refuses, the climb's own UP
+        // and DOWN lanes the side wire the consumer's neighborhood
+        // wears.
+        let mut w = World::blank(1, 0x600D);
+        let (y, c) = (2i32, 6i32);
+        // THE READ CELL'S OWN FLOOR (the read cell AIR, the support
+        // the fixtures' own seats keep)
+        w.set(c, y - 2, c, STONE);
+        // THE LONE WIRE'S OWN SILENCE (getConnectionState pc 36-49 —
+        // the all-none recompute the dot state's early return keeps:
+        // the dot points nowhere, the flat seat the older rounds wore
+        // the jar's own gate retires)
+        w.set(c + 1, y, c, REDSTONE_WIRE_ON);
+        assert!(
+            !redstone_signal_at(&w, c, y, c),
+            "the lone ON wire the dot guard's own silence keeps"
+        );
+        // THE DEAD-END'S OWN FILL (getConnectionState pc 144-167 — the
+        // unconnected west face the EMPTY N-S axis fills SIDE: the
+        // wire's own pointing law the read cell's west neighbor arms)
+        w.set(c + 2, y, c, REDSTONE_WIRE);
+        assert!(
+            redstone_signal_at(&w, c, y, c),
+            "the dead-end run the fill's own pointing law arms"
+        );
+        // THE PASS-THROUGH'S OWN REFUSAL (the occupied N-S axis the
+        // fill never arms — the wire running PAST the cell the flat
+        // seat over-answered, the pointing law the straight run
+        // refuses)
+        w.set(c + 1, y, c, REDSTONE_WIRE_ON);
+        w.set(c + 2, y, c, REDSTONE_WIRE);
+        w.set(c + 1, y, c - 1, REDSTONE_WIRE);
+        w.set(c + 1, y, c + 1, REDSTONE_WIRE);
+        assert!(
+            !redstone_signal_at(&w, c, y, c),
+            "the pass-through run the occupied axis the fill refuses"
+        );
+        // THE SAME-LEVEL SOURCE LANE (getConnectingSide pc 97-103 —
+        // the 2-arg shouldConnectTo the OFF lever the wire still
+        // points at: the source the null-dir gate the up/down lanes
+        // refuse, the same-level lane the any-state seat arms — the
+        // E-W run the fill the west face answers)
+        let mut w2 = World::blank(1, 0x600D);
+        w2.set(c, y - 2, c, STONE);
+        w2.set(c + 1, y, c, REDSTONE_WIRE_ON);
+        w2.set(c + 2, y, c, LEVER);
+        assert!(
+            redstone_signal_at(&w2, c, y, c),
+            "the OFF lever the wire's east face the source lane arms"
+        );
+        // THE BELOW SEAT'S OWN REFUSAL (getSignal pc 9-16 — the dir ==
+        // DOWN compare the 0 the early return keeps: the wire UNDER
+        // the cell the verdict never arms, the weak read the block
+        // above the wire the same gate refuses)
+        let mut w3 = World::blank(1, 0x600D);
+        w3.set(c, y - 2, c, STONE);
+        w3.set(c, y - 1, c, REDSTONE_WIRE_ON);
+        assert!(
+            !redstone_signal_at(&w3, c, y, c),
+            "the ON wire below the cell the DOWN arm's own refusal keeps"
+        );
+        // THE ABOVE SEAT'S OWN RAW READ (getSignal pc 33-38 — the dir
+        // == UP compare the ownSignal power the raw read arms: the
+        // connected-side gate the UP arm never wears — the LAMP the
+        // read cell the wire's own support keeps)
+        let mut w4 = World::blank(1, 0x600D);
+        w4.set(c, y, c, REDSTONE_LAMP);
+        w4.set(c, y + 1, c, REDSTONE_WIRE_ON);
+        assert!(
+            redstone_signal_at(&w4, c, y, c),
+            "the ON wire above the cell the UP arm's own raw read arms"
+        );
+        // THE CLIMB'S OWN UP LANE (getConnectingSide pc 17-96 — the
+        // side wire's own headroom the clear read keeps, the read
+        // cell's host law the canSurviveOn verdict arms, the cell
+        // ABOVE the read cell the dir-null shouldConnectTo read the
+        // WIRE alone answers: the side wire the climbed rung the
+        // consumer's own neighborhood wears — the rung's own OFF kind
+        // the UP arm's raw read never arms, the climb lane the verdict
+        // alone serves)
+        let mut w5 = World::blank(1, 0x600D);
+        w5.set(c, y - 1, c, STONE);
+        w5.set(c, y, c, REDSTONE_LAMP);
+        w5.set(c, y + 1, c, REDSTONE_WIRE);
+        w5.set(c + 1, y, c, REDSTONE_WIRE_ON);
+        assert!(
+            redstone_signal_at(&w5, c, y, c),
+            "the side wire the climbed rung above the read cell the UP lane arms"
+        );
+        // THE CLIMB'S OWN UP LANE'S OWN HEADROOM CUT (the side wire's
+        // own headroom the conductor the lane refuses — the same gate
+        // the wire_step_neighbors climb lanes bank)
+        let mut w6 = World::blank(1, 0x600D);
+        w6.set(c, y - 1, c, STONE);
+        w6.set(c, y, c, REDSTONE_LAMP);
+        w6.set(c, y + 1, c, REDSTONE_WIRE);
+        w6.set(c + 1, y, c, REDSTONE_WIRE_ON);
+        w6.set(c + 1, y + 1, c, STONE);
+        assert!(
+            !redstone_signal_at(&w6, c, y, c),
+            "the side wire's own headroom the step the climb lane refuses"
+        );
+        // THE CLIMB'S OWN DOWN LANE (getConnectingSide pc 106-137 —
+        // the read cell's non-conductor verdict the below wire the
+        // dir-null read arms: the descending slope the SIDE seat the
+        // consumer's own neighborhood wears — the rung's own OFF kind
+        // the below seat's DOWN arm never arms, the slope lane the
+        // verdict alone serves)
+        let mut w7 = World::blank(1, 0x600D);
+        w7.set(c, y - 2, c, STONE);
+        w7.set(c, y - 1, c, REDSTONE_WIRE);
+        w7.set(c + 1, y, c, REDSTONE_WIRE_ON);
+        assert!(
+            redstone_signal_at(&w7, c, y, c),
+            "the side wire the sloped rung below the read cell the DOWN lane arms"
         );
     }
 
@@ -20853,8 +21147,12 @@ mod tests {
             "the far cells the right offer the re-banks wear"
         );
         // THE RUNG'S OWN SIGNAL (the ladder kind the redstone_signal_at
-        // arms answer — the consumer the >0 verdict reads)
+        // arms answer — the consumer the >0 verdict reads. THE
+        // AUTOBPUSH-119 ROUND THE FIXTURE'S OWN POINTING BANKS: the
+        // lone graded rung the dot guard's own silence keeps — the
+        // continuing wire the E-W run the dead-end's own fill arms)
         w.set(c + 25, y, c, REDSTONE_WIRE_P3);
+        w.set(c + 24, y, c, REDSTONE_WIRE);
         assert!(
             redstone_signal_at(&w, c + 26, y, c),
             "the rung's power the signal answers"
