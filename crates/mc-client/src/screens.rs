@@ -5806,11 +5806,21 @@ fn held_charge_delay(held: Option<&str>) -> f64 {
 
 /// THE STAB'S OWN TARGET TAG (the merged collection's own item — the
 /// mob body the mobs list answers, the warden the own list keeps; the
-/// two the hurt's own walk splits)
+/// two the hurt's own walk splits). THE HULLS THE SAME COLLECTION
+/// WEARS (the autopush-122 round — javap `ProjectileUtil
+/// .getHitEntitiesAlong` the 26.2 jar the `getManyEntityHitResult`
+/// walk the `level.getEntities(aabb, canHitEntity)` predicate serves:
+/// the vehicles the `isPickable` verdict answers — the offline carts
+/// the MINECART dims keep, the offline boats the BOAT dims wear — the
+/// `stabAttack` the generic `hurtServer` call the `VehicleEntity`
+/// walk answers, the knockback the `causeExtraKnockback`'s own
+/// `instanceof LivingEntity` gate the vehicles never push)
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum StabPick {
     Mob(usize),
     Warden(usize),
+    Cart(usize),
+    Boat(usize),
 }
 
 /// THE ATTACK RANGE COMPONENT'S OWN PICK WINDOW (javap `AttackRange` +
@@ -5844,6 +5854,44 @@ fn held_attack_pick_window(held: Option<&str>, creative: bool) -> (f64, f64) {
                 * crate::world::ENTITY_INTERACTION_RANGE,
         )
     }
+}
+
+/// THE HULL RAY'S OWN PER-BODY D2 (javap `ProjectileUtil
+/// .getManyEntityHitResult` pc 47-93 the 26.2 jar the two arms the
+/// vanilla walk serves): the eye INSIDE the box the `contains(start)`
+/// law keeps (the 0.0 the dead zone's own compare then refuses — the
+/// too-close body the polearm's ray never reaches), the box CLIP the
+/// `AABB.clip(start, end)` walk answers (the nearest face's own
+/// point the distance² fold wears). The same per-body law the cart
+/// and hull picks' eye-inside arms keep — the margin-inflate arm the
+/// `computeMargin` walk serves the picks never bank (the honest seam
+/// the melee lane already wears).
+fn stab_hull_ray_d2(
+    eye: (f64, f64, f64),
+    end: (f64, f64, f64),
+    center: (f64, f64, f64),
+    hw: f64,
+    bh: f64,
+) -> Option<f64> {
+    let (cx, cy, cz) = center;
+    let inside = eye.0 >= cx - hw
+        && eye.0 <= cx + hw
+        && eye.1 >= cy
+        && eye.1 <= cy + bh
+        && eye.2 >= cz - hw
+        && eye.2 <= cz + hw;
+    if inside {
+        return Some(0.0);
+    }
+    let (point, _) = crate::mob::aabb_clip(
+        eye,
+        end,
+        (cx - hw, cy, cz - hw),
+        (cx + hw, cy + bh, cz + hw),
+    )?;
+    let (px, py, pz) = point;
+    let (dx, dy, dz) = (px - eye.0, py - eye.1, pz - eye.2);
+    Some(dx * dx + dy * dy + dz * dz)
 }
 
 
@@ -18409,6 +18457,19 @@ impl App {
         // onAttack's own reset (the vanilla speaks it BEFORE the
         // damage gate — every executed attack re-arms the clock)
         self.attack_ticker = 0;
+        self.attack_cart_amount(id, dmg);
+    }
+
+    /// THE CART'S OWN ATTACK ARM — THE AMOUNT'S OWN SEAT (the
+    /// autopush-122 split: the STAB's hull reach the SAME hurt walk
+    /// wears — javap `PiercingWeapon.attack` pc 87-106 the
+    /// `stabAttack(slot, entity, dmg, true, dealsKnockback, dismounts)`
+    /// call the raw `getAttributeValue(ATTACK_DAMAGE)` amount passes,
+    /// the generic `hurtServer` the `VehicleEntity` walk answers). The
+    /// charge scale the melee fold speaks the caller's own amount
+    /// already wears — the stab the RAW attribute passes, the use-tick
+    /// kinetic walk the base + the `floor(relative·multiplier)` fold.
+    fn attack_cart_amount(&mut self, id: i32, dmg: f32) {
         if dmg <= 0.0 {
             return;
         }
@@ -18526,6 +18587,17 @@ impl App {
         // onAttack's own reset (the vanilla speaks it BEFORE the
         // damage gate — every executed attack re-arms the clock)
         self.attack_ticker = 0;
+        self.attack_boat_amount(id, dmg);
+    }
+
+    /// THE BOAT'S OWN ATTACK ARM — THE AMOUNT'S OWN SEAT (the
+    /// autopush-122 split: the STAB's hull reach the SAME hurt walk
+    /// wears — the `stabAttack` the generic `hurtServer` call the
+    /// `AbstractBoat`'s own VehicleEntity table answers, the wobble
+    /// decade + the damage accumulator + the 40.0 destroy verdict the
+    /// caller's own amount wears — the stab the RAW attribute passes,
+    /// the use-tick kinetic walk the base + the relative fold).
+    fn attack_boat_amount(&mut self, id: i32, dmg: f32) {
         if dmg <= 0.0 {
             return;
         }
@@ -18596,7 +18668,11 @@ impl App {
     /// block reaches first the Either's LEFT arm refuses — the empty
     /// list the `lambda$attack$1` returns).
     fn stab_pick_all(&self) -> Vec<StabPick> {
-        if self.mobs.is_empty() && self.wardens.is_empty() {
+        if self.mobs.is_empty()
+            && self.wardens.is_empty()
+            && self.offline_carts.is_empty()
+            && self.offline_boats.is_empty()
+        {
             return Vec::new();
         }
         let cam = self.world_camera();
@@ -18650,6 +18726,44 @@ impl App {
                 .filter(|(_, d2)| *d2 >= min_d2 && *d2 < block_d2)
                 .map(|(i, d2)| (StabPick::Warden(i), d2)),
         );
+        // THE HULLS THE SAME RAY SERVES (javap `PiercingWeapon.attack`
+        // pc 27-112 the 26.2 jar — the `getHitEntitiesAlong` collection
+        // the `getManyEntityHitResult` walk answers: the vehicles the
+        // `isPickable` verdict keeps, the OFFLINE bodies the wire lane
+        // predicts nothing — the dev-106 law the cart pick's own word
+        // keeps). The per-body clip the [`stab_hull_ray_d2`] walk
+        // serves, the window the (min, max) pair keeps (the dead zone
+        // the too-close hull refuses, the reach the max bounds), the
+        // wall's shadow the same block-clip term keeps.
+        if !self.offline_carts.is_empty() || !self.offline_boats.is_empty() {
+            let end = (
+                eye.0 + view.0 * reach,
+                eye.1 + view.1 * reach,
+                eye.2 + view.2 * reach,
+            );
+            let cart_hw = crate::cart::MINECART_DIMENSIONS_WIDTH as f64 / 2.0;
+            let cart_bh = crate::cart::MINECART_DIMENSIONS_HEIGHT as f64;
+            for (i, c) in self.offline_carts.iter().enumerate() {
+                let center = (c.cart.pos[0], c.cart.pos[1], c.cart.pos[2]);
+                let Some(d2) = stab_hull_ray_d2(eye, end, center, cart_hw, cart_bh) else {
+                    continue;
+                };
+                if d2 >= min_d2 && d2 < block_d2 {
+                    merged.push((StabPick::Cart(i), d2));
+                }
+            }
+            let boat_hw = crate::world_view::BOAT_DIMENSIONS_WIDTH as f64 / 2.0;
+            let boat_bh = crate::world_view::BOAT_DIMENSIONS_HEIGHT as f64;
+            for (i, b) in self.offline_boats.iter().enumerate() {
+                let center = (b.x, b.y, b.z);
+                let Some(d2) = stab_hull_ray_d2(eye, end, center, boat_hw, boat_bh) else {
+                    continue;
+                };
+                if d2 >= min_d2 && d2 < block_d2 {
+                    merged.push((StabPick::Boat(i), d2));
+                }
+            }
+        }
         merged.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
         merged.into_iter().map(|(pick, _)| pick).collect()
     }
@@ -18705,6 +18819,10 @@ impl App {
         )> = Vec::new();
         let mut warden_outcomes: Vec<(f64, f64, f64, crate::sculk::WardenHurt)> =
             Vec::new();
+        // THE VEHICLES' OWN CONTACT (stabAttack's own z2 the hurt's
+        // landed verdict wears — the offline hull the hurt always
+        // answers, the stale index the silence keeps)
+        let mut vehicle_contact = false;
         for &pick in &hits {
             match pick {
                 StabPick::Mob(i) => {
@@ -18737,6 +18855,33 @@ impl App {
                     // THE KNOCKBACK the resistance's own 1.0 the law
                     // refuses — the push the `*(1.0 - 1.0)` zero the
                     // LivingEntity.knockback fold keeps
+                }
+                StabPick::Cart(i) => {
+                    // THE CART'S OWN ARM (javap `stabAttack` pc 64-78 the
+                    // 26.2 jar — the generic `hurtServer` call the
+                    // `VehicleEntity` walk answers: the wobble decade the
+                    // hurt trio arms, the damage the amount·10 ramps, the
+                    // 40.0 threshold the destroy verdict serves — the
+                    // knockback the `causeExtraKnockback`'s own
+                    // `instanceof LivingEntity` gate pc 6-10 the vehicles
+                    // never push, the hurtEnemy the same instanceof gate
+                    // the durability never wears)
+                    let id = self.offline_carts.get(i).map(|c| c.id);
+                    if let Some(id) = id {
+                        vehicle_contact = true;
+                        self.attack_cart_amount(id, dmg);
+                    }
+                }
+                StabPick::Boat(i) => {
+                    // THE BOAT'S OWN ARM (the same generic hurt walk the
+                    // `AbstractBoat`'s own table keeps — the wobble trio
+                    // the seen-tracker banks, the drop the destroy walk
+                    // spawns, the ride the eject clears)
+                    let id = self.offline_boats.get(i).map(|b| b.id);
+                    if let Some(id) = id {
+                        vehicle_contact = true;
+                        self.attack_boat_amount(id, dmg);
+                    }
                 }
             }
         }
@@ -18818,7 +18963,7 @@ impl App {
                 ));
             }
         }
-        contact
+        contact || vehicle_contact
     }
 
     /// THE USE-TICK STAB'S OWN WALK (javap `KineticWeapon.damageEntities`
@@ -18912,6 +19057,9 @@ impl App {
         let mut warden_outcomes: Vec<(f64, f64, f64, crate::sculk::WardenHurt)> =
             Vec::new();
         let mut warden_contact = false;
+        // THE HULLS' OWN CONTACT (the stabAttack z2 the any condition's
+        // own verdict wears — the same law the warden arm keeps)
+        let mut hull_contact = false;
         for &pick in &hits {
             if let StabPick::Warden(i) = pick {
                 // THE WARDEN'S OWN ARM (the same memory + conditions
@@ -18965,6 +19113,81 @@ impl App {
                         warden.hurt_from_player(dmg, source_targetable)
                     {
                         warden_outcomes.push((warden.x, warden.y, warden.z, hurt));
+                    }
+                }
+                continue;
+            }
+            // THE HULLS' OWN ARM (javap `KineticWeapon.damageEntities`
+            // pc 139-178 the 26.2 jar — the same collection the memory
+            // keyed by the vehicle's own id keeps, the conditions the
+            // same `Condition.test` walk arms, the damage the same
+            // base + `floor(relative·multiplier)` fold wears; the
+            // VICTIM'S OWN MOTION the cart's delta speaks, the SNAPSHOT
+            // hull the zero dot keeps — the warden arm's own stationary
+            // law the motion-less body wears; the knockback the
+            // `causeExtraKnockback`'s own `instanceof LivingEntity` gate
+            // never pushes, the hurt the damage condition alone gates —
+            // the stabAttack's own z1 the vehicles answer)
+            let hull = match pick {
+                StabPick::Cart(i) => self.offline_carts.get(i).map(|c| {
+                    (
+                        c.id,
+                        20.0 * (c.cart.delta[0] * look.0
+                            + c.cart.delta[1] * look.1
+                            + c.cart.delta[2] * look.2),
+                        true,
+                    )
+                }),
+                StabPick::Boat(i) => {
+                    self.offline_boats.get(i).map(|b| (b.id, 0.0, false))
+                }
+                _ => None,
+            };
+            if let Some((vid, vdot, is_cart)) = hull {
+                // (i) THE RECENT-STAB SKIP (pcs 168-185): the same
+                // memory the vehicle's own id banks
+                if let Some(&(_, last)) = self
+                    .stab_contact_memory
+                    .iter()
+                    .find(|(id, _)| *id == vid)
+                {
+                    if now - last < KINETIC_CONTACT_COOLDOWN_TICKS as i64 {
+                        continue;
+                    }
+                }
+                // (ii) THE BANK (pcs 188-193 — the remember call the
+                // conditions' own clock rides BEFORE)
+                self.stab_contact_memory.retain(|(id, last)| {
+                    *id != vid && now - *last < 600
+                });
+                self.stab_contact_memory.push((vid, now));
+                // (iii) THE RELATIVE SPEED (pcs 194-215): the victim's
+                // own motion the dot folds — `max(0.0, lookDot -
+                // victimDot)` the cart's delta wears, the snapshot the
+                // zero keeps
+                let relative = (look_dot - vdot).max(0.0);
+                // (iv) THE THREE CONDITIONS (Condition.test verbatim)
+                let dismount = used_past <= row.dismount_max
+                    && look_dot >= f64::from(row.dismount_min);
+                let kb =
+                    used_past <= row.kb_max && look_dot >= f64::from(row.kb_min);
+                let damage =
+                    used_past <= row.dmg_max && relative >= f64::from(row.dmg_min_rel);
+                if !(dismount || kb || damage) {
+                    continue;
+                }
+                hull_contact = true;
+                // (v) THE DAMAGE (pcs 361-377 — the same fold the mob
+                // arm wears; the hurt the damage condition alone gates —
+                // the vehicles the stabAttack z1 the same verdict
+                // answers)
+                let hdmg = (PLAYER_ATTACK_DAMAGE as f32)
+                    + (relative * f64::from(row.multiplier)).floor() as i32 as f32;
+                if damage {
+                    if is_cart {
+                        self.attack_cart_amount(vid, hdmg);
+                    } else {
+                        self.attack_boat_amount(vid, hdmg);
                     }
                 }
                 continue;
@@ -19044,7 +19267,7 @@ impl App {
             }
         }
         // THE TAIL: the voices + the drops the captured facts speak
-        let mut any = warden_contact;
+        let mut any = warden_contact || hull_contact;
         for (_, mx, my, mz, died, pitch, kind, loot, xp, _) in outcomes {
             any = true;
             if died {
@@ -77313,6 +77536,193 @@ mod tests {
                 .count(),
             1,
             "the second stab the digging silence keeps (no second record)"
+        );
+    }
+
+    /// THE STAB'S OWN HULL REACH (the autopush-122 round — javap
+    /// `PiercingWeapon.attack` pc 27-112 + `ProjectileUtil
+    /// .getHitEntitiesAlong` the 26.2 jar the vehicles the `isPickable`
+    /// verdict serves): the collection the offline hulls answer — the
+    /// too-close hull the 1.875 dead zone refuses, the raw attribute
+    /// the stabAttack damage passes (the charge scale the melee fold
+    /// speaks the stab never wears), the wobble decade the hurt trio
+    /// arms, the damage the amount·10 ramps, the 40.0 threshold the
+    /// destroy verdict answers (the drop the destroy walk spawns), the
+    /// knockback the LivingEntity gate never pushes — and the USE-TICK
+    /// kinetic walk the same hulls the memory keyed by the vehicle's
+    /// own id serves (the second dose the 10-tick window refuses).
+    #[test]
+    fn the_stab_the_hulls_the_reach_the_vehicle_verdict_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let spear = mc_registry::item_id_by_name("iron_spear").unwrap();
+        app.inventory.items[app.selected_hotbar] = (spear, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        // the camera the sky reads (the stab's own ray the block clip
+        // never fears)
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(
+                c as f32 + 0.5,
+                (app.spawn_y + 7) as f32,
+                c as f32 + 0.5,
+            ),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        let cam = app.world_camera();
+        let f = cam.forward();
+        let (ex, ey, ez) = (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64);
+        // THE TOO-CLOSE BOAT (the eye-ahead 1.0 the window's own
+        // 1.875 min rides below) + THE CART 3.0 AHEAD (the iron
+        // spear's own window the reach answers)
+        let bx = ex + f.x as f64 * 1.0;
+        let bz = ez + f.z as f64 * 1.0;
+        app.offline_boats.push(crate::world_view::WireBoat {
+            id: 9,
+            x: bx,
+            y: ey - 0.4,
+            z: bz,
+            yaw: 0.0,
+            raft: false,
+            chest: false,
+            wood: "oak".to_string(),
+            paddle_left: false,
+            paddle_right: false,
+            bubble_time: 0,
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
+        });
+        let cx = ex + f.x as f64 * 3.0;
+        let cz = ez + f.z as f64 * 3.0;
+        app.offline_carts.push(crate::cart::OfflineCart {
+            id: 41,
+            kind: "minecart",
+            cart: crate::cart::Minecart::new([cx, ey - 0.4, cz]),
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
+            fuse: crate::cart::TNT_FUSE_UNPRIMED,
+        });
+        // THE PICK: the cart the window answers, the too-close boat
+        // the dead zone refuses
+        let picks = app.stab_pick_all();
+        assert_eq!(
+            picks,
+            vec![StabPick::Cart(0)],
+            "the window the cart answers, the boat the 1.875 dead zone refuses"
+        );
+        // THE STAB (the raw attribute the dmg wears —
+        // PLAYER_ATTACK_DAMAGE + the material's own bonus the
+        // modifier rides — the charge scale the stab never wears)
+        let expected_dmg = (PLAYER_ATTACK_DAMAGE + material_bonus("iron_spear")) as f32;
+        let contact = app.stab_walk("iron_spear");
+        assert!(contact, "the cart the stab's collection answers");
+        assert_eq!(app.offline_boats.len(), 1, "the dead-zone boat the stab never serves");
+        assert_eq!(app.offline_carts.len(), 1, "the first stab the cart survives");
+        let cart = &app.offline_carts[0];
+        assert!(
+            (cart.damage - expected_dmg * 10.0).abs() < 1e-4,
+            "the RAW amount the ·10 ramp wears ({})",
+            cart.damage
+        );
+        assert_eq!(
+            cart.hurt_time,
+            crate::cart::CART_HURT_TICKS,
+            "the decade armed"
+        );
+        assert_eq!(cart.hurt_dir, -1, "the flip the first hit speaks");
+        // THE KNOCKBACK the vehicles never wear (the position the
+        // push never moves — the LivingEntity gate the walk's own
+        // answer keeps)
+        assert_eq!(cart.cart.pos[0], cx, "the x the push never moves");
+        assert_eq!(cart.cart.pos[2], cz, "the z the push never moves");
+        // THE SECOND STAB: the accumulator the 40.0 threshold crosses —
+        // the destroy the drop speaks (the plain cart's own getDropItem
+        // the minecart item answers)
+        let contact = app.stab_walk("iron_spear");
+        assert!(contact, "the destroy the contact still answers");
+        assert!(
+            app.offline_carts.is_empty(),
+            "the meter the 40.0 the destroy serves"
+        );
+        let minecart_item = mc_registry::item_id_by_name("minecart").unwrap();
+        assert!(
+            app.drops.iter().any(|d| d.item == minecart_item),
+            "the cart's own drop: {:?}",
+            app.drops
+        );
+        // THE USE-TICK'S OWN HULL DOSE (javap `KineticWeapon
+        // .damageEntities` the same collection the memory keyed by the
+        // vehicle's own id serves): the sprint thrust the look·motion
+        // dot carries, the folded amount the raw base +
+        // `floor(relative·multiplier)` speaks, the hurt the damage
+        // condition alone gates — the 7.0 the ·10 ramp the destroy
+        // serves. THE BODY the camera's own authority wears (the
+        // sprint pattern — the cart the BODY's own forward serves)
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            (app.spawn_y + 7) as f64 - 1.62,
+            c as f64 + 0.5,
+            180.0,
+            0.0,
+        ));
+        let look = app.world_camera().forward();
+        let ucx = look.x as f64 * 3.0 + c as f64 + 0.5;
+        let ucz = look.z as f64 * 3.0 + c as f64 + 0.5;
+        app.offline_carts.push(crate::cart::OfflineCart {
+            id: 41,
+            kind: "minecart",
+            cart: crate::cart::Minecart::new([ucx, ey - 0.4, ucz]),
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
+            fuse: crate::cart::TNT_FUSE_UNPRIMED,
+        });
+        // THE SPRINT'S OWN LUNGE (the velocity the look carries —
+        // 0.28 b/tick × 20 = 5.6 b/s the sprint walk rides — the
+        // iron row's own 4.6 min the relative answers)
+        if let Some(b) = app.body.as_mut() {
+            b.vx = 0.28 * look.x as f64;
+            b.vz = 0.28 * look.z as f64;
+        }
+        app.frame = 30; // the throttle's bank the first window clears
+        app.spear_use_tick_stab(12); // the iron tier's own 12 the walk passes
+        assert!(
+            app.offline_carts.is_empty(),
+            "the folded 7.0 the ·10 ramp the destroy serves"
+        );
+        assert!(
+            app.drops.iter().any(|d| d.item == minecart_item),
+            "the use-tick's own drop"
+        );
+        assert!(
+            app.stab_contact_memory.iter().any(|(id, _)| *id == 41),
+            "the bank the vehicle's own id keeps"
+        );
+        // THE COOLDOWN'S OWN SILENCE (the respawned id the 10-tick
+        // window refuses — the re-evaluation the recent-stab memory
+        // never serves, no second dose)
+        app.offline_carts.push(crate::cart::OfflineCart {
+            id: 41,
+            kind: "minecart",
+            cart: crate::cart::Minecart::new([ucx, ey - 0.4, ucz]),
+            hurt_time: 0,
+            hurt_dir: 1,
+            damage: 0.0,
+            fuse: crate::cart::TNT_FUSE_UNPRIMED,
+        });
+        app.spear_use_tick_stab(13);
+        assert_eq!(app.offline_carts.len(), 1, "the cooldown the second dose refuses");
+        assert_eq!(
+            app.offline_carts[0].damage, 0.0,
+            "the hurt the refused walk never arms"
+        );
+        assert_eq!(
+            app.offline_carts[0].hurt_time, 0,
+            "the wobble the refused walk never arms"
         );
     }
 
