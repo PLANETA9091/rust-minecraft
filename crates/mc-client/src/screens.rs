@@ -45966,6 +45966,14 @@ impl App {
     /// gravity fall wears. The wire session the server's own carts
     /// own (the lane the offline world never serves).
     fn tick_offline_carts(&mut self) {
+        // THE DETECTOR'S OWN BEATS (the autopush-115 round — javap
+        // DetectorRailBlock.tick pc 0-24 the 26.2 jar: the scheduled
+        // beats the block-tick phase the cart list never gates — the
+        // boom'd cart the armed cell leaves the queue the release
+        // beat answers, the held cart the re-check the same drain
+        // banks). The walk rides the walk's own opening — the
+        // is_empty gate the later beat keeps.
+        self.tick_detector_rail_beats();
         if self.offline_carts.is_empty() {
             return;
         }
@@ -45990,6 +45998,10 @@ impl App {
         // nextDouble draw the explode(source, hsqr) call's own arg
         // serves)
         let mut booms: Vec<(f64, f64, f64, f32)> = Vec::new();
+        // THE DETECTOR'S OWN ARM SEEDS (the autopush-115 round — the
+        // entityInside consult the cart's own cell the floor read
+        // serves, the apply the loop's own end the borrow releases)
+        let mut detector_arms: Vec<(i32, i32, i32)> = Vec::new();
         for entry in &mut self.offline_carts {
             entry.cart.ridden = ride_id == Some(entry.id);
             crate::cart::cart_tick(world, &mut entry.cart);
@@ -45998,6 +46010,26 @@ impl App {
             // burns, the zero the wobble's angle gate keeps)
             if entry.hurt_time > 0 {
                 entry.hurt_time -= 1;
+            }
+            // THE DETECTOR'S OWN ENTITY-INSIDE CONSULT (the autopush-115
+            // round — javap DetectorRailBlock.entityInside pc 0-32 the
+            // 26.2 jar: the client-side return the server lane keeps,
+            // the POWERED early return the ARMED cell's own walk
+            // refuses — the bit the checkPressed beat never re-arms
+            // through the inside consult, the schedule tail the same
+            // walk's own law banks — the checkPressed arm the cart's
+            // own cell the floor read serves). THE CART'S OWN CELL the
+            // same read the activator pass wears (the floored pos the
+            // snap law keeps): the DETECTOR kind the UNARMED bit the
+            // arm push banks, the armed cell the early return keeps.
+            let dcx = entry.cart.pos[0].floor() as i32;
+            let dcy = entry.cart.pos[1].floor() as i32;
+            let dcz = entry.cart.pos[2].floor() as i32;
+            if world.get(dcx, dcy, dcz) == crate::world::DETECTOR_RAIL
+                && (world.variant(dcx, dcy, dcz) & crate::world::RAIL_POWERED_BIT) == 0
+                && !detector_arms.contains(&(dcx, dcy, dcz))
+            {
+                detector_arms.push((dcx, dcy, dcz));
             }
             if entry.kind != "tnt_minecart" {
                 continue;
@@ -46097,6 +46129,125 @@ impl App {
                     self.offline_cart_drag = None;
                 }
             }
+        }
+        // THE DETECTOR'S OWN ARM WALK (the autopush-115 round — javap
+        // DetectorRailBlock.checkPressed pc 57-123 the 26.2 jar: the
+        // `flag && !flag1` arm the flag-3 setBlock speaks [the POWERED
+        // bit the variant byte's high seat takes], the
+        // updatePowerToConnected(true) the connected rails'
+        // neighborChanged walk serves, the updateNeighborsAt(pos) +
+        // pos.below() pair the broadcast speaks, the pc 191-203 tail
+        // the scheduleTick(pos, this, 20) the held beat re-arms — the
+        // PRESSED_CHECK_PERIOD the bipush 20 the constant wears). THE
+        // TWO SEEDS the one attach scan covers (the plate walk's own
+        // fold — the below cell the changed cell's own six the scan's
+        // scope banks), the remesh the tail's own re-speak answers.
+        for (x, y, z) in detector_arms {
+            if let Some(world) = self.offline_world.as_mut() {
+                let cur = world.variant(x, y, z);
+                world.set_variant(x, y, z, cur | crate::world::RAIL_POWERED_BIT);
+                // THE CONNECTED RAILS' OWN WALK (updatePowerToConnected
+                // — the RailState.getConnections each the
+                // neighborChanged call serves: the adjacent powered/
+                // activator rail the verdict the same walk re-reads,
+                // the POWERED bit the detector's own 15 arms)
+                let _ = world.rail_neighbor_updates((x, y, z));
+                // THE HELD BEAT'S OWN RE-ARM (the cart-present tail —
+                // the scheduleTick(pos, this, 20) walk the check re-checks)
+                world.schedule_detector_tick(
+                    self.frame + crate::world::DETECTOR_PRESSED_CHECK_PERIOD,
+                    x,
+                    y,
+                    z,
+                );
+            }
+            self.attach_wire_voice(x, y, z);
+        }
+    }
+
+    /// THE DETECTOR'S OWN SCHEDULED BEATS (the autopush-115 round —
+    /// javap DetectorRailBlock the 26.2 jar the tick pc 0-24 + the
+    /// checkPressed pc 11-190 the scheduled beat the re-check wears:
+    /// the !POWERED return the unarmed cell's beat never speaks, the
+    /// armed beat the checkPressed re-check answers — the
+    /// cart-present verdict the keep the schedule's own re-arm banks
+    /// [pc 191-203 the scheduleTick(pos, this, 20) tail the held beat
+    /// re-arms], the vacated beat the RELEASE arm the pc 124-190 walk
+    /// serves: the `!flag && flag1` verdict the flag-3 setBlock speaks
+    /// [the POWERED bit drops], the updatePowerToConnected(false) the
+    /// connected rails' re-read serves, the updateNeighborsAt pair the
+    /// same broadcast the arm wears). THE CART'S OWN PRESENCE VERDICT
+    /// the getInteractingMinecartOfType walk the offline lane's
+    /// floored-pos fold answers (the same cell read the activator
+    /// pass banks — the straddling AABB the future lane's own walk
+    /// serves). THE DRAIN the cart walk's own opening rides — the
+    /// queue the cart list never gates (the boom'd cart the armed
+    /// cell leaves the release beat answers).
+    fn tick_detector_rail_beats(&mut self) {
+        let due = {
+            let Some(world) = self.offline_world.as_mut() else {
+                return;
+            };
+            world.drain_due_detector_ticks(self.frame)
+        };
+        if due.is_empty() {
+            return;
+        }
+        let mut keeps: Vec<(i32, i32, i32)> = Vec::new();
+        let mut releases: Vec<(i32, i32, i32)> = Vec::new();
+        for (x, y, z) in due {
+            // THE CART'S OWN PRESENCE VERDICT (the floored-pos fold the
+            // activator pass wears — the cart on the cell the beat
+            // keeps, the vacated cell the release walk serves)
+            let present = self.offline_carts.iter().any(|c| {
+                c.cart.pos[0].floor() as i32 == x
+                    && c.cart.pos[1].floor() as i32 == y
+                    && c.cart.pos[2].floor() as i32 == z
+            });
+            if present {
+                keeps.push((x, y, z));
+            } else {
+                releases.push((x, y, z));
+            }
+        }
+        {
+            let Some(world) = self.offline_world.as_mut() else {
+                return;
+            };
+            // THE HELD BEAT'S OWN RE-ARM (the pc 191-203 tail — the
+            // scheduleTick(pos, this, 20) walk the check re-checks)
+            for (x, y, z) in &keeps {
+                world.schedule_detector_tick(
+                    self.frame + crate::world::DETECTOR_PRESSED_CHECK_PERIOD,
+                    *x,
+                    *y,
+                    *z,
+                );
+            }
+            // THE RELEASE WALK (the pc 124-190 arm — the !flag && flag1
+            // verdict the flag-3 setBlock speaks, the
+            // updatePowerToConnected(false) the connected rails'
+            // neighborChanged walk serves; the RAIL-MATCH GATE the
+            // stale row the kind's own verdict drops — the dug rail the
+            // armed entry the queue's honest extra keeps)
+            for (x, y, z) in &releases {
+                if world.get(*x, *y, *z) != crate::world::DETECTOR_RAIL {
+                    continue;
+                }
+                let cur = world.variant(*x, *y, *z);
+                if (cur & crate::world::RAIL_POWERED_BIT) == 0 {
+                    continue;
+                }
+                world.set_variant(*x, *y, *z, cur & !crate::world::RAIL_POWERED_BIT);
+                let _ = world.rail_neighbor_updates((*x, *y, *z));
+            }
+        }
+        // THE BROADCAST'S OWN SEEDS (the attach walk the pos seed the
+        // two updateNeighborsAt the one scan covers, the remesh the
+        // tail's own re-speak answers — the wire's own re-read the
+        // dropped 15 the run's own verdict wears)
+        for (x, y, z) in releases {
+            self.attach_wire_voice(x, y, z);
         }
     }
 
@@ -84261,6 +84412,7 @@ mod tests {
             has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             torch_ticks: Vec::new(), // the torch's own queue: empty
+            detector_ticks: Vec::new(), // the detector's own queue: empty
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
@@ -84838,6 +84990,7 @@ mod tests {
                     has_skylight: true, // the portal's own axis store: empty
                     campfire_ticks: Vec::new(), // the campfire's own queue: empty
                     torch_ticks: Vec::new(), // the torch's own queue: empty
+                    detector_ticks: Vec::new(), // the detector's own queue: empty
                     torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
                     bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
                     chunks: vec![
@@ -85288,6 +85441,7 @@ mod tests {
             has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             torch_ticks: Vec::new(), // the torch's own queue: empty
+            detector_ticks: Vec::new(), // the detector's own queue: empty
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
@@ -85364,6 +85518,7 @@ mod tests {
             has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             torch_ticks: Vec::new(), // the torch's own queue: empty
+            detector_ticks: Vec::new(), // the detector's own queue: empty
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
@@ -85442,6 +85597,7 @@ mod tests {
                     has_skylight: true, // the portal's own axis store: empty
                     campfire_ticks: Vec::new(), // the campfire's own queue: empty
                     torch_ticks: Vec::new(), // the torch's own queue: empty
+                    detector_ticks: Vec::new(), // the detector's own queue: empty
                     torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
                     bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
                     chunks: vec![
@@ -85497,6 +85653,7 @@ mod tests {
             has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             torch_ticks: Vec::new(), // the torch's own queue: empty
+            detector_ticks: Vec::new(), // the detector's own queue: empty
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
@@ -100529,6 +100686,131 @@ cow_sound_variant: None,
         assert!(app.swing.swinging, "the client's own SUCCESS arm");
     }
 
+    /// THE DETECTOR RAIL'S OWN CART PASS (the autopush-115 round —
+    /// javap DetectorRailBlock the 26.2 jar: the entityInside pc 0-32
+    /// the cart's own cell the UNARMED consult serves, the
+    /// checkPressed pc 57-123 arm the flag-3 setBlock the POWERED bit
+    /// speaks [the updatePowerToConnected the connected rails'
+    /// neighborChanged walk serves, the updateNeighborsAt pair the
+    /// broadcast speaks], the pc 191-203 tail the scheduleTick(pos,
+    /// this, 20) the held beat banks, the pc 124-190 release the
+    /// vacated beat the bit drops — the wire the armed 15 the
+    /// component's own re-read wears [the ownSignal the dir never
+    /// reads — the six arms the no-facing gate keeps], the dead pulse
+    /// the same walk re-answers). THE FULL CYCLE the offline cart
+    /// walk's own beat serves: the use-on spawn the snap law banks,
+    /// the pass the arm the bit + the wire + the queue bank, the held
+    /// beat the re-arm the ONE live entry the dedup keeps, the
+    /// boom'd/vacated cart the release the bit + the wire + the queue
+    /// re-answers.
+    #[test]
+    fn the_detector_rail_the_cart_pass_the_bit_and_the_wire_wear() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let cart_id = wire("minecart");
+        app.inventory.items[app.selected_hotbar] = (cart_id, 5);
+        app.hotbar_slots = app.inventory.hotbar();
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let ry = app.spawn_y + 6;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            // THE DETECTOR'S OWN CELL (the E-W look-stamp the run wears)
+            w.set(c, ry, c, crate::world::DETECTOR_RAIL);
+            w.set_variant(c, ry, c, 1);
+            // THE WIRE'S OWN SEAT (the east neighbor the solid support
+            // the placement law keeps — the rung the armed detector's
+            // own 15 the component's flood banks)
+            w.set(c, ry - 1, c + 1, crate::world::STONE);
+            w.set(c, ry, c + 1, crate::world::REDSTONE_WIRE);
+        }
+        // THE USE-ON: the clicked detector cell the walk reads — the
+        // cart the snap law banks (the same seam the use-walk tests wear)
+        let hit = crate::world::ClipHit {
+            pos: (c, ry, c),
+            face: 1,
+            location: (c as f64 + 0.5, ry as f64 + 1.0, c as f64 + 0.5),
+            inside: false,
+        };
+        assert_eq!(
+            app.on_right_press_minecart_arm(&hit),
+            Some(true),
+            "the useOn consumed the press"
+        );
+        assert_eq!(app.offline_carts.len(), 1, "the local cart spawned");
+        // THE UNARMED REST (the bit the beat never banks before the walk)
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().variant(c, ry, c)
+                & crate::world::RAIL_POWERED_BIT,
+            0,
+            "the pre-tick rest the bit keeps"
+        );
+        // THE CART'S OWN PASS — the tick walk the entityInside consult
+        // serves: the flag-3 setBlock the bit arms, the wire's own
+        // re-read the ON kind wears, the schedule the held beat banks
+        app.tick_offline_carts();
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.variant(c, ry, c) & crate::world::RAIL_POWERED_BIT,
+                crate::world::RAIL_POWERED_BIT,
+                "the cart's pass the bit arms"
+            );
+            assert_eq!(
+                w.get(c, ry, c + 1),
+                crate::world::REDSTONE_WIRE_ON,
+                "the wire the armed 15 wears"
+            );
+            assert_eq!(
+                w.detector_ticks.len(),
+                1,
+                "the held beat the queue banks"
+            );
+        }
+        // THE HELD BEAT'S OWN RE-ARM (the cart-present verdict the keep
+        // the schedule banks — the ONE live entry the dedup keeps, the
+        // bit the re-check the same verdict holds)
+        app.frame += crate::world::DETECTOR_PRESSED_CHECK_PERIOD;
+        app.tick_offline_carts();
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.variant(c, ry, c) & crate::world::RAIL_POWERED_BIT,
+                crate::world::RAIL_POWERED_BIT,
+                "the held beat the bit keeps"
+            );
+            assert_eq!(w.detector_ticks.len(), 1, "the re-arm the dedup keeps");
+        }
+        // THE RELEASE (the vacated beat — the cart the boom'd lane
+        // removes, the 20-tick beat the !flag verdict serves: the bit
+        // drops, the wire the dead pulse re-answers, the queue retires)
+        app.offline_carts.clear();
+        app.frame += crate::world::DETECTOR_PRESSED_CHECK_PERIOD;
+        app.tick_offline_carts();
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.variant(c, ry, c) & crate::world::RAIL_POWERED_BIT,
+                0,
+                "the vacated beat the bit drops"
+            );
+            assert_eq!(
+                w.get(c, ry, c + 1),
+                crate::world::REDSTONE_WIRE,
+                "the wire the dead pulse keeps"
+            );
+            assert!(
+                w.detector_ticks.is_empty(),
+                "the release beat the queue retires"
+            );
+        }
+    }
+
     /// THE CARTS' OWN OFFLINE TICK — the walk the App's 20-TPS beat
     /// rides: the spawned slope cart the gravity push wears (the
     /// ASCENDING_EAST's low side speaks — the west the delta gains),
@@ -106789,6 +107071,7 @@ cow_sound_variant: None,
             has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             torch_ticks: Vec::new(), // the torch's own queue: empty
+            detector_ticks: Vec::new(), // the detector's own queue: empty
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![

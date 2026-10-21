@@ -8077,6 +8077,7 @@ mod tests {
             has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             torch_ticks: Vec::new(), // the torch's own queue: empty
+            detector_ticks: Vec::new(), // the detector's own queue: empty
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![vec![AIR; CHUNK_X * CHUNK_Y * CHUNK_Z]],

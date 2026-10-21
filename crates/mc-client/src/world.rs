@@ -2322,6 +2322,44 @@ pub fn wire_sources_near(world: &World, x: i32, y: i32, z: i32) -> bool {
         // kind answers — the [`wall_torch_sources_near`] walk the
         // door's own read the same helper serves)
         || wall_torch_sources_near(world, x, y, z)
+        // THE DETECTOR RAIL'S OWN SOURCE ARMS (the autopush-115 round
+        // — the wire's own power seeds the same 15 the component
+        // flood wears: the rung beside the armed detector the
+        // source-adjacent cell the 15 the ownSignal verdict banks)
+        || detector_sources_near(world, x, y, z)
+}
+
+/// THE DETECTOR RAIL'S OWN SOURCE SCAN (the autopush-115 round —
+/// javap DetectorRailBlock the 26.2 jar the `ownSignal` pc 0-22 the
+/// POWERED bit the 15 the weak walk reads: the armed rail the SIX
+/// directions the signal answers [the isSignalSource verdict the
+/// source family arms, the ownSignal the dir never reads — the
+/// no-facing gate the lever/button/plate scans the torch arms the
+/// detector never wears], the UNARMED rail the dead pulse the bit's
+/// own verdict keeps). THE READ the [`redstone_signal_at`] fold AND
+/// the [`wire_sources_near`] seed scan wear — the lamps/rails/doors
+/// the consumer verdicts the same helper answers, the wire run
+/// beside the armed detector the power seeds the component flood
+/// banks. THE CART'S OWN PRESENCE the bit the App-side checkPressed
+/// beat banks (the World the cart list never reads — the offline
+/// cart walk the arm/release walks the entityInside law serves).
+fn detector_sources_near(world: &World, x: i32, y: i32, z: i32) -> bool {
+    for (dx, dy, dz) in [
+        (0, 1, 0),
+        (0, -1, 0),
+        (0, 0, -1),
+        (0, 0, 1),
+        (-1, 0, 0),
+        (1, 0, 0),
+    ] {
+        let (nx, ny, nz) = (x + dx, y + dy, z + dz);
+        if world.get(nx, ny, nz) == DETECTOR_RAIL
+            && (world.variant(nx, ny, nz) & RAIL_POWERED_BIT) != 0
+        {
+            return true;
+        }
+    }
+    false
 }
 
 /// THE WIRE'S OWN COMPONENT WALK (the graded POWER lane the
@@ -3867,6 +3905,11 @@ pub const RAIL_ASC_TOP: f64 = 8.0 / 16.0;
 /// preserve fold carries.
 pub const RAIL_SHAPE_MASK: u8 = 0x0F;
 pub const RAIL_POWERED_BIT: u8 = 0x80;
+/// THE DETECTOR'S OWN RE-CHECK PERIOD — javap DetectorRailBlock the
+/// 26.2 jar the `PRESSED_CHECK_PERIOD` field the bipush 20 pc 199 the
+/// checkPressed tail's `scheduleTick(pos, this, 20)` walk serves: the
+/// held cart the beat re-arms, the vacated beat the release answers.
+pub const DETECTOR_PRESSED_CHECK_PERIOD: u64 = 20;
 
 /// THE MOB HEADS' OWN KIND TABLE (the dev-80 round — the family
 /// predicates the palette tail reads: the placeable refusal, the
@@ -8905,6 +8948,13 @@ pub fn redstone_signal_at(world: &World, x: i32, y: i32, z: i32) -> bool {
         || wire_powered(world.get(x - 1, y, z))
         || wire_powered(world.get(x, y, z + 1))
         || wire_powered(world.get(x, y, z - 1))
+        // THE DETECTOR RAIL'S OWN ARMS (the autopush-115 round — javap
+        // DetectorRailBlock.ownSignal pc 0-22 the 26.2 jar the POWERED
+        // bit the 15 the weak walk reads: the isSignalSource verdict
+        // the source family arms, the ownSignal the dir never reads —
+        // the six arms the no-facing gate wears, the cart's own
+        // presence the bit the checkPressed beat banks)
+        || detector_sources_near(world, x, y, z)
         // THE TORCH'S OWN ARMS (the autopush-666 round — the
         // getSignal walk's d != UP verdict the lit kind's own 15 the
         // five arms wear, the [`torch_sources_near`] walk the same
@@ -11865,6 +11915,24 @@ pub struct World {
     /// banks — the trim the head the oldest reads, the verdict the
     /// whole list the pos filter answers.
     pub torch_toggles: Vec<(u64, i32, i32, i32)>,
+    /// THE DETECTOR RAIL'S OWN SCHEDULE (the autopush-115 round —
+    /// javap DetectorRailBlock.checkPressed pc 191-203 the 26.2 jar:
+    /// the cart-present tail the `scheduleTick(pos, this, 20)` walk
+    /// serves — the PRESSED_CHECK_PERIOD the bipush 20 the held beat
+    /// re-arms, the vacated beat the RELEASE arm the same queue's
+    /// drain answers [the tick walk pc 0-24 the !POWERED return the
+    /// unarmed cell's beat never speaks, the armed beat the
+    /// checkPressed re-check wears]). The entries (due game tick, x,
+    /// y, z) the ONE-live-entry-per-pos law the torch queue's own
+    /// dedup keeps — the hasScheduledTick verdict the re-consult
+    /// refuses, the re-arm the held beat's own tail banks. THE DRAIN
+    /// the cart walk's own 20-TPS beat serves ([`App::tick_offline_carts`]'s
+    /// opening walk — the queue the cart list never gates, the boom'd
+    /// cart the armed cell leaves the release beat answers). The
+    /// networked world the SERVER ticks (the same split the fire
+    /// lane's own authority keeps) — the queue the offline world
+    /// alone fills.
+    pub detector_ticks: Vec<(u64, i32, i32, i32)>,
     /// THE BAMBOO'S OWN FALL QUEUE (the dig-side cascade's scheduled
     /// ticks — the fire queue's own shape the walk's one-tick lag
     /// wears): the (due game tick, x, y, z) entries the UNSUPPORTED
@@ -12240,6 +12308,7 @@ impl World {
             fire_ticks: Vec::new(), // the fire's own queue: no fire, no schedule
             campfire_ticks: Vec::new(), // the campfire's own queue: no lit campfire, no walk
             torch_ticks: Vec::new(), // the torch's own queue: no consult, no schedule
+            detector_ticks: Vec::new(), // the detector's own queue: no cart on the rail, no beat
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: no extinguish, no record
             bamboo_ticks: Vec::new(), // the bamboo's own queue: no unsupported stalk, no fall
             fire_age: std::collections::HashMap::new(), // the ladder's store: empty
@@ -13469,6 +13538,47 @@ impl World {
     pub fn drain_due_torch_ticks(&mut self, now: u64) -> Vec<(i32, i32, i32)> {
         let mut due_cells: Vec<(u64, i32, i32, i32)> = Vec::new();
         self.torch_ticks.retain(|&(at, x, y, z)| {
+            if at <= now {
+                due_cells.push((at, x, y, z));
+                false
+            } else {
+                true
+            }
+        });
+        due_cells.sort_by_key(|&(at, _, _, _)| at);
+        due_cells
+            .into_iter()
+            .map(|(_, x, y, z)| (x, y, z))
+            .collect()
+    }
+
+    /// THE DETECTOR RAIL'S OWN SCHEDULE ARM (the autopush-115 round —
+    /// javap DetectorRailBlock.checkPressed pc 191-203 the 26.2 jar:
+    /// the cart-present tail the `scheduleTick(pos, this, 20)` walk
+    /// serves, the PRESSED_CHECK_PERIOD the bipush 20 the held beat
+    /// re-arms — the [`DETECTOR_PRESSED_CHECK_PERIOD`] row the walk
+    /// wears). THE SET'S OWN LAW the torch queue's walk keeps: ONE
+    /// live entry per pos — the hasScheduledTick verdict the pending
+    /// re-arm the dedup refuses (the two carts the same cell the
+    /// second push drops, the held beat's own re-arm the same guard
+    /// banks).
+    pub fn schedule_detector_tick(&mut self, due: u64, x: i32, y: i32, z: i32) {
+        if self
+            .detector_ticks
+            .iter()
+            .any(|&(_, px, py, pz)| px == x && py == y && pz == z)
+        {
+            return; // the hasScheduledTick verdict — the pending entry the re-arm refuses
+        }
+        self.detector_ticks.push((due, x, y, z));
+    }
+
+    /// THE DETECTOR'S OWN BEAT DRAIN (the torch queue's own shape the
+    /// same retain law wears — the due entries the cart walk's
+    /// 20-TPS beat gives up, the future entries the queue keeps).
+    pub fn drain_due_detector_ticks(&mut self, now: u64) -> Vec<(i32, i32, i32)> {
+        let mut due_cells: Vec<(u64, i32, i32, i32)> = Vec::new();
+        self.detector_ticks.retain(|&(at, x, y, z)| {
             if at <= now {
                 due_cells.push((at, x, y, z));
                 false
@@ -16829,6 +16939,47 @@ mod tests {
         // the not-yet-due entry the drain keeps
         assert!(w.drain_due_campfire_ticks(100).is_empty(), "the future entry the drain keeps");
         assert_eq!(w.drain_due_campfire_ticks(101), vec![(x, y, z)]);
+    }
+
+    /// THE DETECTOR RAIL'S OWN SCHEDULE QUEUE (the autopush-115 round
+    /// — javap DetectorRailBlock.checkPressed pc 191-203 the 26.2 jar:
+    /// the cart-present tail the `scheduleTick(pos, this, 20)` walk
+    /// serves, the ONE-live-entry-per-pos law the hasScheduledTick
+    /// gate keeps — the pending re-arm the dedup refuses, the due
+    /// beat the drain gives up, the future entry the drain keeps).
+    #[test]
+    fn the_detector_rail_the_schedule_dedup_and_drain_wear() {
+        let mut w = World::new(1, 0x70B2);
+        let (x, y, z) = (4, 40, 4);
+        // THE DEDUP'S OWN LAW (the pending entry the re-arm refuses —
+        // the held beat's own re-schedule the same guard banks)
+        w.schedule_detector_tick(30, x, y, z);
+        w.schedule_detector_tick(31, x, y, z);
+        assert_eq!(
+            w.detector_ticks,
+            vec![(30, x, y, z)],
+            "the dedup the re-arm refuses"
+        );
+        // THE FUTURE ENTRY THE DRAIN KEEPS
+        assert!(
+            w.drain_due_detector_ticks(29).is_empty(),
+            "the future entry the drain keeps"
+        );
+        // THE DUE BEAT THE DRAIN GIVES UP
+        assert_eq!(w.drain_due_detector_ticks(30), vec![(x, y, z)]);
+        assert!(
+            w.detector_ticks.is_empty(),
+            "the due entry the drain gives up"
+        );
+        // THE TWO CELLS' OWN PAIR (the second pos the queue gains —
+        // the dedup the SAME pos alone refuses)
+        w.schedule_detector_tick(50, x, y, z);
+        w.schedule_detector_tick(50, x + 1, y, z);
+        assert_eq!(
+            w.drain_due_detector_ticks(50),
+            vec![(x, y, z), (x + 1, y, z)],
+            "the two cells the due order serves"
+        );
     }
 
     #[test]
