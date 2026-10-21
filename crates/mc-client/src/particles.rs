@@ -2933,6 +2933,39 @@ pub fn gateway_explosion_seed(x: f64, y: f64, z: f64) -> Particle {
     }
 }
 
+/// THE EXPLOSION'S OWN FLASH (javap `ClientPacketListener
+/// .handleExplosion` pc 100-125 the 26.2 jar — the addParticle walk
+/// the packet's own particle the center's exact coords serves: the
+/// `explosionParticle()` read the `(1.0, 0.0, 0.0)` velocity trio
+/// answers [the speed the flash's own ctor never reads — the
+/// dconst_0 trio the base walk keeps], the option the
+/// `ServerLevel.explode` pc 165 `isSmall()` fork packs). THE FORK'S
+/// OWN VERDICT (javap `ServerExplosion.isSmall` pc 0-21 — the
+/// `radius >= 2.0F && interactsWithBlocks()` pair the fcmpg/iflt
+/// fold arms: the LARGE blast the EXPLOSION_EMITTER wears, the small
+/// blast the SINGLE HugeExplosion flash answers). THE OFFLINE FORK
+/// the blast's own block walk the verdict keeps (every offline boom
+/// the to_blow walk serves — the interactsWithBlocks arm the true
+/// answer keeps, the radius compare the fork's own law wears): the
+/// large arm the [`gateway_explosion_seed`] emitter proxy banks
+/// (the invisible engine the six children per tick the same walk
+/// serves), the small arm the [`explosion_puff`] full quad the
+/// age-0 size-speed wears (the `2.0 * (1.0 - 0.0 * 0.5)` fold the
+/// 2.0 answers).
+pub fn explosion_flash(
+    x: f64,
+    y: f64,
+    z: f64,
+    radius: f32,
+    rng: &mut crate::drops::Lcg,
+) -> Particle {
+    if radius >= 2.0 {
+        gateway_explosion_seed(x, y, z)
+    } else {
+        explosion_puff(x, y, z, 0.0, rng)
+    }
+}
+
 /// The spell ring's 8 frames per set (the `effect_0..7` and
 /// `spell_0..7` textures the two jsons speak).
 pub const SPELL_FRAME_COUNT: usize = 8;

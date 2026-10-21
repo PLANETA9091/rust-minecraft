@@ -16356,7 +16356,7 @@ impl App {
                 // pitch the client's own TWO draws speak — the
                 // mob_rng's stream the shared random the stand-in
                 // spends)
-                for (bx, by, bz, _r) in booms {
+                for (bx, by, bz, r) in booms {
                     let r1 = self.mob_rng.next_f32();
                     let r2 = self.mob_rng.next_f32();
                     let pitch = (1.0 + (r1 - r2) * 0.2) * 0.7;
@@ -16368,6 +16368,16 @@ impl App {
                         ear_distance(ear, bx, by, bz),
                         ear_pan(ear, yaw, bx, by, bz),
                     );
+                    // THE FLASH'S OWN SEAT (handleExplosion pc 100-125
+                    // — the addParticle arm the voice's tail keeps:
+                    // the packet's own particle the isSmall fork packs,
+                    // the center's exact coords the (1.0, 0.0, 0.0)
+                    // velocity trio serves — the emitter seed the
+                    // large blast wears, the single flash the small
+                    // blast answers)
+                    let flash =
+                        crate::particles::explosion_flash(bx, by, bz, r, &mut self.mob_rng);
+                    self.particles.push(flash);
                 }
                 // THE PRIMED HISS'S OWN VOICE (javap `Creeper.tick` the
                 // playSound(SoundEvents.CREEPER_PRIMED, 1.0F, 0.5F) the
@@ -101749,6 +101759,97 @@ cow_sound_variant: None,
             "the wall the blast's own fold took"
         );
         assert!(!app.drops.is_empty(), "the pad's own drops the loot roll wears");
+    }
+
+    /// THE EXPLOSION'S OWN FLASH (javap `ClientPacketListener
+    /// .handleExplosion` pc 100-125 + `ServerExplosion.isSmall` pc
+    /// 0-21 the 26.2 jar — the addParticle arm the voice's tail
+    /// keeps, the isSmall fork the radius compare arms: the large
+    /// blast the EXPLOSION_EMITTER seed wears, the small blast the
+    /// single HugeExplosion flash answers).
+    #[test]
+    fn the_explosion_flash_the_center_the_small_fork_wears() {
+        // THE LARGE ARM (the emitter seed the invisible engine keeps
+        // — the 8-tick countdown the ctor's own write banks, the six
+        // children per tick the same walk serves)
+        let mut rng = crate::drops::Lcg::new(0x600D);
+        let big = crate::particles::explosion_flash(10.0, 64.0, 10.0, 4.0, &mut rng);
+        assert!(
+            matches!(
+                big.kind,
+                crate::particles::ParticleKind::ExplosionSeed
+            ),
+            "the large blast the emitter seed wears"
+        );
+        assert_eq!(
+            big.lifetime, 8,
+            "the 8-tick countdown the ctor's own write keeps"
+        );
+        assert_eq!(
+            big.quad_size, 0.0,
+            "the invisible engine the no-quad lane keeps"
+        );
+        assert_eq!(
+            (big.x, big.y, big.z),
+            (10.0, 64.0, 10.0),
+            "the center's exact coords the packet's own Vec3 wears"
+        );
+        // THE SMALL ARM (the single flash the full quad wears — the
+        // `6 + nextInt(4)` lifetime band the ctor's own write keeps,
+        // the age-0 size-speed the 2.0 fold answers, the grey tint
+        // band the ONE draw gives)
+        let small = crate::particles::explosion_flash(5.0, 64.0, 5.0, 1.5, &mut rng);
+        assert!(
+            matches!(small.kind, crate::particles::ParticleKind::Explosion),
+            "the small blast the single flash answers"
+        );
+        assert!(
+            (6..=9).contains(&small.lifetime),
+            "the 6 + nextInt(4) band the ctor's own write keeps"
+        );
+        assert!(
+            (small.quad_size - 2.0).abs() < 1e-6,
+            "the age-0 size-speed the full quad answers"
+        );
+        assert!(
+            small.col[0] >= 0.4 - 1e-6 && small.col[0] <= 1.0,
+            "the grey tint band the ONE draw keeps"
+        );
+        assert_eq!(
+            (small.x, small.y, small.z),
+            (5.0, 64.0, 5.0),
+            "the small blast's own center keeps"
+        );
+        // THE WALK (the cart boom's flash the same center the
+        // handleExplosion arm plants — the sound the same packet walk
+        // serves)
+        let mut app = App::new(3);
+        app.enter_world();
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let ry = app.spawn_y + 6;
+        let (fx, fy, fz) = (c as f64 + 0.5, ry as f64 + 0.5, c as f64 + 0.5);
+        app.pending_cart_booms.push((fx, fy, fz, 4.0));
+        for _ in 0..2 {
+            app.update();
+        }
+        assert!(
+            app.particles.iter().any(|p| matches!(
+                p.kind,
+                crate::particles::ParticleKind::ExplosionSeed
+            ) && (p.x - fx).abs() < 1e-9
+                && (p.y - fy).abs() < 1e-9
+                && (p.z - fz).abs() < 1e-9),
+            "the boom's own flash the center plants"
+        );
+        if sounds_loaded() {
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.contains("entity.generic.explode")),
+                "the boom's own voice the same packet walk plays"
+            );
+        }
     }
 
     /// THE TNT CART'S OWN DESTROY FORK (javap `MinecartTNT.destroy`
