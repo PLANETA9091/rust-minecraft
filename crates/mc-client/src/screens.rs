@@ -15070,6 +15070,17 @@ impl App {
                 let mut primed_hisses: Vec<(f64, f64, f64)> = Vec::new();
                 let mut discarded_ids: Vec<i32> = Vec::new();
                 let mut booms: Vec<(f64, f64, f64, f32)> = Vec::new();
+                // THE PER-BLOCK TRACKER'S OWN LIST (javap
+                // `ClientExplosionTracker` the 26.2 jar speaks — the
+                // `track` entry the handleExplosion pc 137-148 tail
+                // fills (the center the radius the packet's OWN
+                // blockCount the toBlow.size() return banks), the
+                // `ClientLevel.tick` pc 148-152 caller the list the
+                // ONE level-tick spends — the offline fold the SAME
+                // pass's tail answers, the cross-tick life the fold
+                // never needs (the packet the beat's own walk
+                // serves))
+                let mut tracked_booms: Vec<(f64, f64, f64, f32, i32)> = Vec::new();
                 // THE CHAIN REACTION'S OWN QUEUE (the wasExploded spawns
                 // the exploded TNT cells queue — the creeper's blast the
                 // mob loop fills, the tnt's own boom the primed lane
@@ -15341,6 +15352,17 @@ impl App {
                             if let Some((bx, by, bz, r)) = ev.explosion_at {
                                 blast_sources.push((mob.id, crate::mob::mob_prey_view(mob), (bx, by, bz, r)));
                                 booms.push((bx, by, bz, r));
+                                // THE TRACKER'S OWN SEAT (the handleExplosion
+                                // pc 137-148 tail the blast's own blockCount
+                                // keeps — the toBlow.size() return the
+                                // destroyed cells the same walk banks)
+                                tracked_booms.push((
+                                    bx,
+                                    by,
+                                    bz,
+                                    r,
+                                    ev.explosion_blocks.len() as i32,
+                                ));
                             }
                             explosion_cells.extend(ev.explosion_blocks.iter().copied());
                             explosion_drops.extend(ev.explosion_drops.iter().copied());
@@ -15923,6 +15945,16 @@ impl App {
                                 if let Some((bx, by, bz, r)) = ev.explosion_at {
                                     tnt_blasts.push((bx, by, bz, r));
                                     booms.push((bx, by, bz, r));
+                                    // THE TRACKER'S OWN SEAT (the same
+                                    // packet tail the creeper's blast wears —
+                                    // the destroyed cells the blockCount keeps)
+                                    tracked_booms.push((
+                                        bx,
+                                        by,
+                                        bz,
+                                        r,
+                                        ev.explosion_blocks.len() as i32,
+                                    ));
                                 }
                                 explosion_cells
                                     .extend(ev.explosion_blocks.iter().copied());
@@ -15981,6 +16013,16 @@ impl App {
                                 world,
                                 &mut self.mob_rng,
                             );
+                            // THE TRACKER'S OWN SEAT (the same packet tail
+                            // the cart's own boom wears — the to_blow walk's
+                            // own count the blockCount keeps)
+                            tracked_booms.push((
+                                bx,
+                                by,
+                                bz,
+                                power,
+                                to_blow.len() as i32,
+                            ));
                             explosion_cells.extend(to_blow.iter().copied());
                             explosion_drops.extend(drops.iter().copied());
                             tnt_chain_spawns.extend(
@@ -16968,6 +17010,33 @@ impl App {
                         d.bz,
                         &mut self.mob_rng,
                     ));
+                }
+                // THE PER-BLOCK TRACKER'S OWN TICK (javap
+                // `ClientExplosionTracker.tick` pc 0-100 the 26.2 jar
+                // speaks — the `ClientLevel.tick` pc 148-152 caller the
+                // client's own beat keeps, the server lane's whole
+                // explode walk the tail answers): the tracked booms the
+                // ONE level-tick spends (the offline fold the SAME
+                // pass's tail answers — the cross-tick life the fold
+                // never needs), the burst the tracker's own walk banks,
+                // THE CRATER'S AIR the gate reads (the cells the walk
+                // above set — the same order the vanilla packet walk
+                // keeps: the server's setBlock the client's own view
+                // wears first, the destroyed-cells verdict the tracker's
+                // tick arms), the rng stream the tick's own tail spends
+                // (the drops the walk above served — the tracker's own
+                // draws the walk's tail keeps)
+                if !tracked_booms.is_empty() {
+                    if let Some(w) = self.offline_world.as_ref() {
+                        let is_air =
+                            |x: i32, y: i32, z: i32| w.get(x, y, z) == crate::world::AIR;
+                        crate::particles::explosion_tracker_tick(
+                            &tracked_booms,
+                            &is_air,
+                            &mut self.mob_rng,
+                            &mut self.particles,
+                        );
+                    }
                 }
                 for (word, pitch, dist, pan) in groans {
                     // the ambient groan (makeSound's own call — the

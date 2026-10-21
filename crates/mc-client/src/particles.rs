@@ -2966,6 +2966,139 @@ pub fn explosion_flash(
     }
 }
 
+/// THE PER-BLOCK TRACKER'S OWN TICK (javap `ClientExplosionTracker.tick`
+/// pc 0-100 + `addParticle` pc 1-227 the 26.2 jar — the `ClientLevel
+/// .tick` pc 148-152 caller the level's own beat keeps): the tracked
+/// booms the ONE level-tick spends, the `getTotalWeight` sum the
+/// blockCount weights speak (the long fold the i2l cast keeps), the
+/// `Math.min(total, 512)` budget the sipush banks, the per-draw
+/// `getRandomItem` pick the `getWeightedItem` scan arms (idx -=
+/// blockCount; the idx < 0 the own boom answers), then the addParticle
+/// walk: the unit vector the THREE `(nextFloat() * 2.0F - 1.0F)` draws
+/// speak (the `Vec3.normalize` law the `len < 1.0E-4` ZERO arm keeps —
+/// the true sqrt division the walk serves, the fastInvSqrt the law
+/// never reads), the cbrt distance the `(cbrt(nextFloat()) as f32) *
+/// radius` fold banks (the d2f the fmul keeps — BOTH floats), the
+/// sample cell the `BlockPos.containing` floor law plants, THE AIR
+/// GATE the `isAir` verdict arms (pc 105 the `ifne` the emit path
+/// arms — the solid cell the early return keeps, the f9 + the
+/// weighted-info draws the gate refuses, the ATTEMPT the budget loop
+/// still spends), the f9 speed fold the `1.0F / (f6 / radius + 0.1F) *
+/// nextFloat() * nextFloat() + 0.3F` constants speak (cp #147 1.0f,
+/// #148 0.1f, #149 0.3f — the left-to-right float walk the stack
+/// order keeps), the weighted info the ONE `nextInt(2)` draw picks
+/// (the `getRandomOrThrow` pc 17-33 the prebuilt selector's own law
+/// keeps — the `Level.<clinit>` pc 54-92 rows the builder's
+/// `iconst_1` weight answers: the POOF entry the 0.5 scaling wears,
+/// the SMOKE entry the 1.0 keeps, both speed 1.0), the emit position
+/// the `center + dir * scaling` law speaks (pc 154-167 — the dir the
+/// per-component multiply the add answers), the velocity the
+/// `unit * (f9 * speed)` fold serves (pc 172-186 — the f32 product
+/// the f2d widen keeps). The POOF arm the [`poof`] ctor wears, the
+/// SMOKE arm the [`smoke_puff`] ctor keeps (the particle ctors' own
+/// draw chains ride the SAME rng the stand-in convention spends —
+/// the flash's own precedent speaks). The budget the ATTEMPT count
+/// keeps — the refused gate the attempt still spends (the vanilla
+/// loop the `i < budget` walk wears).
+pub fn explosion_tracker_tick(
+    tracked: &[(f64, f64, f64, f32, i32)],
+    is_air: impl Fn(i32, i32, i32) -> bool,
+    rng: &mut crate::drops::Lcg,
+    out: &mut Vec<Particle>,
+) {
+    if tracked.is_empty() {
+        return;
+    }
+    // the getTotalWeight sum (the blockCount weights) + the min cap
+    let total = tracked.iter().map(|t| t.4 as i64).sum::<i64>() as i32;
+    let budget = total.min(512);
+    for _ in 0..budget {
+        // the getRandomItem pick: nextInt(total) + the getWeightedItem
+        // scan (the idx < 0 the own boom answers)
+        let mut idx = rng.next_int(total as u64);
+        let mut pick = &tracked[0];
+        for t in tracked {
+            idx -= t.4;
+            if idx < 0 {
+                pick = t;
+                break;
+            }
+        }
+        let (cx, cy, cz, radius, _count) = *pick;
+        // pc 11-54: the unit vector (the three ×2−1 folds) + the
+        // normalize law (the len < 1.0E-4 the ZERO arm keeps)
+        let ux = (rng.next_f32() * 2.0f32 - 1.0f32) as f64;
+        let uy = (rng.next_f32() * 2.0f32 - 1.0f32) as f64;
+        let uz = (rng.next_f32() * 2.0f32 - 1.0f32) as f64;
+        let len = (ux * ux + uy * uy + uz * uz).sqrt();
+        let (ux, uy, uz) = if len < 1.0e-4 {
+            (0.0, 0.0, 0.0)
+        } else {
+            (ux / len, uy / len, uz / len)
+        };
+        // pc 56-79: the cbrt distance (the d2f the fmul keeps)
+        let f6 = f64::cbrt(rng.next_f32() as f64) as f32 * radius;
+        let dx = ux * f6 as f64;
+        let dy = uy * f6 as f64;
+        let dz = uz * f6 as f64;
+        // pc 93-105: the sample cell + THE AIR GATE (the solid cell
+        // the early return keeps — the attempt the budget still spends)
+        let bx = (cx + dx).floor() as i32;
+        let by = (cy + dy).floor() as i32;
+        let bz = (cz + dz).floor() as i32;
+        if !is_air(bx, by, bz) {
+            continue;
+        }
+        // pc 109-139: the f9 fold (the #147/#148/#149 trio)
+        let f9 =
+            1.0f32 / (f6 / radius + 0.1f32) * rng.next_f32() * rng.next_f32() + 0.3f32;
+        // pc 141-152: the weighted info (the ONE nextInt(2) draw — the
+        // clinit rows the weight-1 pair keeps)
+        let info = rng.next_int(2);
+        let (scaling, speed, poof) = if info == 0 {
+            (0.5f32, 1.0f32, true)
+        } else {
+            (1.0f32, 1.0f32, false)
+        };
+        // pc 154-186: the emit position (the center + the dir's own
+        // scaling) + the velocity (the f9 * speed the f32 fold keeps)
+        let ex = cx + dx * scaling as f64;
+        let ey = cy + dy * scaling as f64;
+        let ez = cz + dz * scaling as f64;
+        let spd = (f9 * speed) as f64;
+        if poof {
+            out.push(crate::particles::poof(
+                ex,
+                ey,
+                ez,
+                ux * spd,
+                uy * spd,
+                uz * spd,
+                rng.next_f32(),
+                rng.next_f32(),
+                rng.next_f32(),
+                rng.next_f32(),
+                rng.next_f32(),
+                rng.next_f32(),
+                rng.next_f32(),
+                rng.next_f32(),
+            ));
+        } else {
+            out.push(crate::particles::smoke_puff(
+                ex,
+                ey,
+                ez,
+                ux * spd,
+                uy * spd,
+                uz * spd,
+                rng.next_f32(),
+                rng.next_f32(),
+                rng.next_f32(),
+            ));
+        }
+    }
+}
+
 /// The spell ring's 8 frames per set (the `effect_0..7` and
 /// `spell_0..7` textures the two jsons speak).
 pub const SPELL_FRAME_COUNT: usize = 8;
@@ -9311,6 +9444,129 @@ mod tests {
         let mut out_b: Vec<(f64, f64, f64, f32)> = Vec::new();
         seed_b.tick_explosion_seed(&mut b, &mut out_b);
         assert_eq!(out_a, out_b, "the seeded chain replays");
+    }
+
+    /// THE PER-BLOCK TRACKER'S OWN WALK (javap `ClientExplosionTracker
+    /// .tick` + `addParticle` the 26.2 jar — the budget the
+    /// min(total, 512) cap keeps, the weighted pick the blockCount scan
+    /// arms, THE AIR GATE the solid cell the emit refuses (the attempt
+    /// the budget still spends), the emit the POOF/SMOKE arms the
+    /// weighted info wears, the position the center's own law plants).
+    #[test]
+    fn the_explosion_tracker_the_budget_the_air_gate_the_weighted_wear() {
+        // THE EMPTY ARM (the no-boom tick the silence keeps)
+        let mut rng = crate::drops::Lcg::new(0x7EAC_4E07);
+        let mut out: Vec<Particle> = Vec::new();
+        let always = |_: i32, _: i32, _: i32| true;
+        explosion_tracker_tick(&[], &always, &mut rng, &mut out);
+        assert!(out.is_empty(), "the empty list the silence keeps");
+        // THE ZERO-COUNT ARM (the all-air blast the weightless list
+        // wears — the total the 0 the budget keeps, the nextInt(0) the
+        // walk never spends)
+        let hollow = [(5.0f64, 64.0, 5.0, 4.0f32, 0i32)];
+        explosion_tracker_tick(&hollow, &always, &mut rng, &mut out);
+        assert!(out.is_empty(), "the zero-weight list the silence keeps");
+        // THE BUDGET CAP (the 400 + 400 the 800 total speaks — the min
+        // the 512 the sipush keeps, the ATTEMPTS the loop spends)
+        let big = [
+            (10.0f64, 64.0, 10.0, 4.0f32, 400i32),
+            (100.0, 64.0, 100.0, 4.0, 400),
+        ];
+        explosion_tracker_tick(&big, &always, &mut rng, &mut out);
+        assert_eq!(out.len(), 512, "the min(total, 512) budget the cap keeps");
+        // THE UNCAPPED WALK (the 300 + 200 the 500 total speaks — the
+        // cap the total never touches, the attempts the budget answers)
+        let mid = [
+            (10.0f64, 64.0, 10.0, 4.0f32, 300i32),
+            (100.0, 64.0, 100.0, 4.0, 200),
+        ];
+        let mut mid_out: Vec<Particle> = Vec::new();
+        explosion_tracker_tick(&mid, &always, &mut rng, &mut mid_out);
+        assert_eq!(mid_out.len(), 500, "the uncapped total the budget answers");
+        // THE AIR GATE (the solid cell the emit refuses — the attempts
+        // the budget still spends, the f9 + the weighted-info draws the
+        // gate refuses, the out the silence keeps)
+        let never = |_: i32, _: i32, _: i32| false;
+        let mut out2: Vec<Particle> = Vec::new();
+        explosion_tracker_tick(&big, &never, &mut rng, &mut out2);
+        assert!(out2.is_empty(), "the solid cell the emit refuses");
+        // THE SINGLE BOOM'S OWN EMIT (the one attempt the count speaks,
+        // the kind the weighted info picks, the lifetime band the ctor
+        // speaks, the position the center's own law plants — the dir's
+        // own reach the cbrt's own [0, radius] law keeps, the velocity
+        // the f9 fold serves)
+        let one = [(5.5f64, 64.5, 7.5, 3.0f32, 1i32)];
+        let mut out3: Vec<Particle> = Vec::new();
+        explosion_tracker_tick(&one, &always, &mut rng, &mut out3);
+        assert_eq!(out3.len(), 1, "the single boom the one attempt keeps");
+        let p = &out3[0];
+        assert!(
+            (p.x - 5.5).abs() <= 3.0 + 1e-9
+                && (p.y - 64.5).abs() <= 3.0 + 1e-9
+                && (p.z - 7.5).abs() <= 3.0 + 1e-9,
+            "the dir's own reach the scaling never exceeds: {} {} {}",
+            p.x,
+            p.y,
+            p.z
+        );
+        let speed = (p.vx * p.vx + p.vy * p.vy + p.vz * p.vz).sqrt();
+        assert!(
+            speed <= 10.3 + 1e-6,
+            "the f9's own fold the unit's own length keeps: {speed}"
+        );
+        match &p.kind {
+            ParticleKind::Poof => {
+                assert!(
+                    (18..=82).contains(&p.lifetime),
+                    "the poof's own 16/(r*0.8+0.2)+2 band keeps: {}",
+                    p.lifetime
+                );
+                assert!(
+                    (p.col[0] - p.col[1]).abs() < 1e-9 && (p.col[1] - p.col[2]).abs() < 1e-9,
+                    "the shared grey the trio keeps"
+                );
+                assert!(
+                    (0.7..=1.0).contains(&p.col[0]),
+                    "the poof's own grey band the r*0.3+0.7 draw gives: {}",
+                    p.col[0]
+                );
+            }
+            ParticleKind::Smoke => {
+                assert!(
+                    (1..=40).contains(&p.lifetime),
+                    "the smoke's own 8/(r*0.8+0.2) band keeps: {}",
+                    p.lifetime
+                );
+                assert!(
+                    (p.col[0] - p.col[1]).abs() < 1e-9 && (p.col[1] - p.col[2]).abs() < 1e-9,
+                    "the shared grey the trio keeps"
+                );
+                assert!(
+                    (0.0..=0.3).contains(&p.col[0]),
+                    "the smoke's own grey band the r*0.3 draw gives: {}",
+                    p.col[0]
+                );
+            }
+            other => panic!("the weighted info the poof/smoke pair keeps, got {other:?}"),
+        }
+        // THE DETERMINISM (the same seed the same walk replays)
+        let mut a = crate::drops::Lcg::new(0x7EAC_4E07);
+        let mut out_a: Vec<Particle> = Vec::new();
+        explosion_tracker_tick(&one, &always, &mut a, &mut out_a);
+        let mut b = crate::drops::Lcg::new(0x7EAC_4E07);
+        let mut out_b: Vec<Particle> = Vec::new();
+        explosion_tracker_tick(&one, &always, &mut b, &mut out_b);
+        assert_eq!(out_a.len(), out_b.len(), "the seeded walk replays");
+        assert_eq!(
+            std::mem::discriminant(&out_a[0].kind),
+            std::mem::discriminant(&out_b[0].kind),
+            "the weighted info replays"
+        );
+        assert_eq!(
+            (out_a[0].x, out_a[0].y, out_a[0].z),
+            (out_b[0].x, out_b[0].y, out_b[0].z),
+            "the emit position replays"
+        );
     }
 
     #[test]
