@@ -114,6 +114,69 @@ fn tr(key: &str) -> Option<&'static str> {
     LANG.get_or_init(load_lang).get(key).map(|s| s.as_str())
 }
 
+/// THE CONTAINER TITLE'S OWN DECODE (the OpenScreen word's Component —
+/// vanilla's text-component tree the anonymous-root compound the parse
+/// retains wears; `ComponentSerialization.TRUSTED_STREAM_CODEC`'s own
+/// shape). The rows the walk renders:
+/// - a `text` row the literal speaks (the anvil rename's own bytes);
+/// - a `translate` row the lang table answers — a MISSING row answers
+///   with the key ITSELF (the `Language.getOrDefault` law the chat
+///   decoration's own lookup keeps), the container.dropper row the
+///   live dropper window's default name rides;
+/// - an `extra` list the siblings ride (the base text the compound's
+///   own rows keep, the children concatenated after — the sibling law);
+/// - a bare list the concatenated children speak.
+/// The forms the walk never understands (scalars, styled compounds with
+/// neither row) stay `None` — the default lang row the canvas banks
+/// (the honest fallback, the `container.dispenser` default the live
+/// lane's own law keeps). The `%s` argument forms the walk never
+/// substitutes (the container rows carry none — the gap the doc names).
+fn decode_container_title(bytes: &[u8]) -> Option<String> {
+    use mc_protocol::nbt::Nbt;
+    fn text_of(node: &Nbt) -> Option<String> {
+        match node {
+            Nbt::String(s) => Some(s.clone()),
+            Nbt::List(items) => {
+                if items.is_empty() {
+                    return None;
+                }
+                let mut out = String::new();
+                for it in items {
+                    out.push_str(&text_of(it).unwrap_or_default());
+                }
+                Some(out)
+            }
+            Nbt::Compound(_) => {
+                let base = if let Some(t) = node.get("text").and_then(|v| v.as_str()) {
+                    Some(t.to_string())
+                } else if let Some(key) = node.get("translate").and_then(|v| v.as_str()) {
+                    // the getOrDefault law: the missing row answers its key
+                    Some(tr(key).unwrap_or(key).to_string())
+                } else {
+                    // a textless compound renders only its extras (the
+                    // vanilla default the empty text keeps)
+                    node.get("extra").map(|_| String::new())
+                };
+                match (base, node.get("extra").and_then(|v| v.as_list())) {
+                    (Some(b), Some(extra)) if !extra.is_empty() => {
+                        let mut out = b;
+                        for it in extra {
+                            out.push_str(&text_of(it).unwrap_or_default());
+                        }
+                        Some(out)
+                    }
+                    (Some(b), _) => Some(b),
+                    (None, _) => None,
+                }
+            }
+            _ => None,
+        }
+    }
+    let mut c: &[u8] = bytes;
+    let root = mc_protocol::nbt::read_network_nbt(&mut c).ok()?;
+    text_of(&root)
+}
+
 /// THE CHAT DECORATION'S OWN FORMAT (vanilla `TranslatableContents`
 /// .decompose's walk — the pattern the en_us lang table's entries carry,
 /// each `%s` the NEXT argument replaces; the positional `%N$s` forms the
@@ -7686,6 +7749,14 @@ pub struct App {
     /// shape (the OpenScreen word armed it, the stateId lane the slot
     /// packets last spoke).
     pub dispenser_live_window: Option<(i32, i32)>,
+    /// THE LIVE WINDOW'S OWN DECODED TITLE (the OpenScreen Component's
+    /// text/translate rows the 3x3 canvas renders — the store's
+    /// title_nbt the projection feeds, the decode lane the wire's own
+    /// name the anvil renames and the container.dropper default speak).
+    /// `None` = the default lang row the canvas banks (the wire never
+    /// spoke, the decode found no text) — the field dies with the
+    /// window (the close and the store's drop the live flags mirror).
+    pub live_dispenser_title: Option<String>,
     /// The mouse position in GUI units the LAST loop tick tracked —
     /// the carried stack renders here (the vanilla cursor-follow).
     /// `None` wherever no live mouse has moved (the headless scenes:
@@ -9411,6 +9482,7 @@ impl App {
             dispenser_open_kind: 0,
             dispenser_is_live: false,
             dispenser_live_window: None,
+            live_dispenser_title: None,
             mouse_pos: None,
             shift_down: false,
             press_doubled: false,
@@ -22539,6 +22611,7 @@ impl App {
             }
             self.dispenser_is_live = false;
             self.dispenser_live_window = None;
+            self.live_dispenser_title = None; // the title dies with the window
             self.dispenser_carried = (0, 0);
             self.open(ScreenKind::World);
             return;
@@ -25710,16 +25783,29 @@ impl App {
         );
         // THE CENTERED TITLE (the init walk's own formula the
         // DispenserScreen's own override speaks — the kind's own lang
-        // row the opened kind banks)
+        // row the opened kind banks). THE LIVE WINDOW'S OWN NAME (the
+        // decode lane's resolution — the wire's custom name the anvil
+        // rows speak, the container.dropper translatable the live
+        // dropper window answers; the None the default lang row the
+        // kind's own key banks — the same draw the offline canvas
+        // wears, the golden bytes the shape never moves).
         let label = [0.251, 0.251, 0.251];
         let title_key = if self.dispenser_open_kind == crate::world::DROPPER {
             "container.dropper"
         } else {
             "container.dispenser"
         };
-        if let Some(t) = tr(title_key) {
-            let tx = panel.0 + (176 - g.text_width(t)) / 2;
-            g.text(a, tx, panel.1 + 6, t, label, false);
+        let title_text: String = if self.dispenser_is_live {
+            self.live_dispenser_title
+                .clone()
+                .or_else(|| tr("container.dispenser").map(String::from))
+                .unwrap_or_default()
+        } else {
+            tr(title_key).unwrap_or("").to_string()
+        };
+        if !title_text.is_empty() {
+            let tx = panel.0 + (176 - g.text_width(&title_text)) / 2;
+            g.text(a, tx, panel.1 + 6, &title_text, label, false);
         }
         if let Some(t) = tr("container.inventory") {
             g.text(a, panel.0 + 8, panel.1 + 166 - 94, t, label, false);
@@ -51011,6 +51097,13 @@ impl App {
                     // title_nbt the decode round owns, the default
                     // container.dispenser title the canvas banks (the
                     // honest gap the next round's own line rides).
+                    // THE DECODE LIVES NOW (the projection's verbatim
+                    // bytes the walk reads): the text/translate rows
+                    // the canvas renders — the anvil rename's own
+                    // literal, the container.dropper translatable the
+                    // live dropper window's default name answers, the
+                    // empty/malformed bytes the None fallback banks.
+                    self.live_dispenser_title = decode_container_title(&c.title_nbt);
                     let mut grid = vec![(0i32, 0i32); 9];
                     for (i, &(id, count)) in c.slots.iter().take(9).enumerate() {
                         grid[i] = (id, count);
@@ -51163,6 +51256,7 @@ impl App {
                     self.open(ScreenKind::World);
                 }
                 self.dispenser_live_window = None;
+                self.live_dispenser_title = None; // the title dies with the window
                 self.dispenser_carried = (0, 0); // no window, no held stack
                 // the window's OWN rows die with it (the lifecycle the
                 // open() switch keeps — no stale bundle rides a later
@@ -92744,6 +92838,177 @@ cow_sound_variant: None,
         assert_eq!(app.screen, ScreenKind::Title, "no world to lose — no disconnect screen");
     }
 
+    /// THE CONTAINER TITLE'S OWN DECODE (the OpenScreen Component's
+    /// rows the walk reads): the `text` literal the anvil rename
+    /// speaks, the `translate` row the lang table answers — the
+    /// container.dropper default the live dropper window wears, the
+    /// missing row the key ITSELF answers (the getOrDefault law) —
+    /// the `extra` siblings the concatenation rides, the empty or
+    /// truncated bytes the honest None keeps (the default lang row
+    /// the canvas banks).
+    #[test]
+    fn the_container_title_decode_walks_the_component_rows() {
+        use mc_protocol::nbt::{Nbt, write_network_nbt};
+        // the wire's own encoder: the anonymous-root compound the
+        // parse retains (the write side the reader's mirror is)
+        let enc = |v: &Nbt| -> Vec<u8> {
+            let mut b = Vec::new();
+            write_network_nbt(v, &mut b).unwrap();
+            b
+        };
+        // the anvil rename's own literal
+        assert_eq!(
+            decode_container_title(&enc(&Nbt::Compound(vec![(
+                "text".to_string(),
+                Nbt::String("Rename Machine".to_string()),
+            )]))),
+            Some("Rename Machine".to_string()),
+            "the text row the literal speaks"
+        );
+        // the live dropper window's default name (the translatable
+        // the lang table answers — the Dropper row the canvas draws)
+        assert_eq!(
+            decode_container_title(&enc(&Nbt::Compound(vec![(
+                "translate".to_string(),
+                Nbt::String("container.dropper".to_string()),
+            )]))),
+            Some("Dropper".to_string()),
+            "the translate row the lang table answers"
+        );
+        // the missing row the key ITSELF answers (getOrDefault)
+        assert_eq!(
+            decode_container_title(&enc(&Nbt::Compound(vec![(
+                "translate".to_string(),
+                Nbt::String("container.server.custom".to_string()),
+            )]))),
+            Some("container.server.custom".to_string()),
+            "the untranslatable key displays as its key"
+        );
+        // the extra siblings the concatenation rides
+        assert_eq!(
+            decode_container_title(&enc(&Nbt::Compound(vec![
+                ("extra".to_string(), Nbt::List(vec![
+                    Nbt::Compound(vec![(
+                        "text".to_string(),
+                        Nbt::String("a".to_string()),
+                    )]),
+                    Nbt::Compound(vec![(
+                        "translate".to_string(),
+                        Nbt::String("container.dropper".to_string()),
+                    )]),
+                ])),
+            ]))),
+            Some("aDropper".to_string()),
+            "the extras ride after the base"
+        );
+        // the honest Nones: the empty root, the truncated bytes, the
+        // styled compound with neither row (the scalar shapes the
+        // walk never understands)
+        assert_eq!(decode_container_title(&[0x0A, 0x00]), None, "the empty root");
+        assert_eq!(decode_container_title(&[0x0A]), None, "the truncated root");
+        assert_eq!(decode_container_title(&[]), None, "no bytes at all");
+        assert_eq!(
+            decode_container_title(&enc(&Nbt::Compound(vec![(
+                "color".to_string(),
+                Nbt::String("red".to_string()),
+            )]))),
+            None,
+            "the styled compound with neither row"
+        );
+    }
+
+    /// THE LIVE WINDOW'S OWN TITLE LANE (the 3x3 canvas the wire's
+    /// own name rides): the OpenScreen Component the projection
+    /// feeds, the decode the dropper window's real default answers
+    /// (the menu type 6 the BlockEntity pair shares — the title the
+    /// ONLY distinguishing row the canvas reads), the fresh window's
+    /// re-speak the rename ride, the store's drop the title kills.
+    #[test]
+    fn the_live_dispenser_window_wears_the_wires_title() {
+        use crate::world_view::LiveContainer;
+        use mc_protocol::nbt::{Nbt, write_network_nbt};
+        let enc = |v: &Nbt| -> Vec<u8> {
+            let mut b = Vec::new();
+            write_network_nbt(v, &mut b).unwrap();
+            b
+        };
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        assert_eq!(app.screen, ScreenKind::World);
+
+        // the server opens a DROPPER (the same GENERIC_3x3 menu the
+        // dispenser window shares): the wire's own translatable the
+        // decode answers — the Dropper row the live canvas wears
+        // (the offline kind-0 default the honest gap's old law kept)
+        let dropper = LiveContainer {
+            id: 5,
+            menu_type_id: crate::world_model::MENU_TYPE_GENERIC_3X3,
+            slots: vec![(0i32, 0i32); 45],
+            carried: (0, 0),
+            state_id: 7,
+            bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
+            title_nbt: enc(&Nbt::Compound(vec![(
+                "translate".to_string(),
+                Nbt::String("container.dropper".to_string()),
+            )])),
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(dropper.clone()));
+        assert_eq!(app.screen, ScreenKind::Dispenser, "the window shows over the world");
+        assert!(app.dispenser_is_live, "the live lane owns the screen now");
+        assert_eq!(
+            app.live_dispenser_title.as_deref(),
+            Some("Dropper"),
+            "the wire's own translatable the canvas banks"
+        );
+
+        // a NEW window speaks a CUSTOM name (the anvil rename the
+        // text row carries): the fresh decode replaces the default
+        let mut custom = dropper.clone();
+        custom.state_id = 9;
+        custom.title_nbt = enc(&Nbt::Compound(vec![(
+            "text".to_string(),
+            Nbt::String("Rename Machine".to_string()),
+        )]));
+        app.live_view_updated(air_net_world(2, 2), None, None, Some(custom));
+        assert_eq!(app.screen, ScreenKind::Dispenser, "the re-open is in place");
+        assert_eq!(
+            app.live_dispenser_title.as_deref(),
+            Some("Rename Machine"),
+            "the fresh window's own name re-speaks"
+        );
+
+        // the wire never spoke a decodable name (the empty bytes the
+        // empty-root compound carries): the None the default lang row
+        // banks — the live canvas's honest fallback
+        let mut silent = dropper.clone();
+        silent.state_id = 11;
+        silent.title_nbt = vec![0x0A, 0x00];
+        app.live_view_updated(air_net_world(2, 3), None, None, Some(silent));
+        assert_eq!(
+            app.live_dispenser_title, None,
+            "the undecodable bytes the fallback banks"
+        );
+
+        // the store DROPPED (the server's Container Close): the title
+        // dies with the window — no stale name rides a later screen
+        app.live_view_updated(air_net_world(2, 4), None, None, None);
+        assert_eq!(app.screen, ScreenKind::World, "the close returns to the world");
+        assert!(!app.dispenser_is_live, "the live flag dropped with the window");
+        assert_eq!(app.live_dispenser_title, None, "the title died with the window");
+
+        // and the lane re-arms: the next window's own name rides in
+        app.live_view_updated(air_net_world(2, 5), None, None, Some(dropper));
+        assert!(app.dispenser_is_live, "the live lane re-took the screen");
+        assert_eq!(
+            app.live_dispenser_title.as_deref(),
+            Some("Dropper"),
+            "the fresh window's title rode in again"
+        );
+    }
+
     #[test]
     fn the_live_container_drives_the_chest_screen() {
         use crate::world_view::LiveContainer;
@@ -92771,6 +93036,7 @@ cow_sound_variant: None,
             state_id: 7,
             bundle_rows: Vec::new(),
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest.clone()));
         assert_eq!(app.screen, ScreenKind::Chest, "the window shows over the world");
@@ -92793,7 +93059,7 @@ cow_sound_variant: None,
 
         // a NON-chest menu is the honest drop: the store keeps it, the
         // screen machinery does not move (its screen is its own round)
-        let hopper = LiveContainer { id: 6, menu_type_id: 15, slots: vec![], carried: (0, 0), state_id: 0, bundle_rows: Vec::new(), data_slots: Vec::new() };
+        let hopper = LiveContainer { id: 6, menu_type_id: 15, slots: vec![], carried: (0, 0), state_id: 0, bundle_rows: Vec::new(), data_slots: Vec::new() , title_nbt: Vec::new() };
         app.live_view_updated(air_net_world(2, 3), None, None, Some(hopper));
         assert_eq!(app.screen, ScreenKind::Chest, "the wired screen stays");
         assert_eq!(app.chest_slots[9], (981, 3), "the hopper touched nothing");
@@ -92865,6 +93131,7 @@ cow_sound_variant: None,
             state_id: 7,
             bundle_rows: Vec::new(),
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(disp.clone()));
         assert_eq!(app.screen, ScreenKind::Dispenser, "the window shows over the world");
@@ -92889,7 +93156,7 @@ cow_sound_variant: None,
 
         // a NON-3x3 menu is the honest drop: the store keeps it, the
         // screen machinery does not move
-        let hopper = LiveContainer { id: 6, menu_type_id: 15, slots: vec![], carried: (0, 0), state_id: 0, bundle_rows: Vec::new(), data_slots: Vec::new() };
+        let hopper = LiveContainer { id: 6, menu_type_id: 15, slots: vec![], carried: (0, 0), state_id: 0, bundle_rows: Vec::new(), data_slots: Vec::new() , title_nbt: Vec::new() };
         app.live_view_updated(air_net_world(2, 3), None, None, Some(hopper));
         assert_eq!(app.screen, ScreenKind::Dispenser, "the wired screen stays");
         assert_eq!(app.dispenser_slots[5], (981, 3), "the hopper touched nothing");
@@ -92964,6 +93231,7 @@ cow_sound_variant: None,
             state_id: 3,
             bundle_rows: Vec::new(),
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(disp));
         // THE RENDER'S OWN LAYOUT (the hit boxes the render pre-lays —
@@ -93066,6 +93334,7 @@ cow_sound_variant: None,
             state_id: 3,
             bundle_rows: Vec::new(),
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(table.clone()));
         assert_eq!(app.screen, ScreenKind::Crafting, "the window shows over the world");
@@ -93091,7 +93360,7 @@ cow_sound_variant: None,
 
         // a NON-wired menu is the honest drop: the store keeps it, the
         // screen machinery does not move
-        let hopper = LiveContainer { id: 6, menu_type_id: 15, slots: vec![], carried: (0, 0), state_id: 0, bundle_rows: Vec::new(), data_slots: Vec::new() };
+        let hopper = LiveContainer { id: 6, menu_type_id: 15, slots: vec![], carried: (0, 0), state_id: 0, bundle_rows: Vec::new(), data_slots: Vec::new() , title_nbt: Vec::new() };
         app.live_view_updated(air_net_world(2, 3), None, None, Some(hopper));
         assert_eq!(app.screen, ScreenKind::Crafting, "the wired screen stays");
         assert_eq!(app.live_table_slots[11], (981, 3), "the hopper touched nothing");
@@ -93165,6 +93434,7 @@ cow_sound_variant: None,
             state_id: 2,
             bundle_rows: Vec::new(),
             data_slots: vec![180, 200, 90, 200], // lit remaining/total, cook progress/total
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(furnace.clone()));
         assert_eq!(app.screen, ScreenKind::Furnace, "the window shows over the world");
@@ -93195,7 +93465,7 @@ cow_sound_variant: None,
 
         // a NON-wired menu is the honest drop: the store keeps it, the
         // screen machinery does not move
-        let hopper = LiveContainer { id: 6, menu_type_id: 15, slots: vec![], carried: (0, 0), state_id: 0, bundle_rows: Vec::new(), data_slots: Vec::new() };
+        let hopper = LiveContainer { id: 6, menu_type_id: 15, slots: vec![], carried: (0, 0), state_id: 0, bundle_rows: Vec::new(), data_slots: Vec::new() , title_nbt: Vec::new() };
         app.live_view_updated(air_net_world(2, 3), None, None, Some(hopper));
         assert_eq!(app.screen, ScreenKind::Furnace, "the wired screen stays");
         assert_eq!(app.furnace_data, [170, 200, 91, 200], "the hopper touched nothing");
@@ -93254,6 +93524,7 @@ cow_sound_variant: None,
             state_id: 2,
             bundle_rows: Vec::new(),
             data_slots: vec![180, 200, 90, 200],
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(furnace));
         assert_eq!(app.screen, ScreenKind::Furnace);
@@ -93345,6 +93616,7 @@ cow_sound_variant: None,
             state_id: 2,
             bundle_rows: Vec::new(),
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(furnace));
         assert_eq!(app.screen, ScreenKind::Furnace, "the window shows");
@@ -93440,6 +93712,7 @@ cow_sound_variant: None,
             state_id: 2,
             bundle_rows: Vec::new(),
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(furnace));
         app.furnace_slot_rects = vec![(100, 100, 1)];
@@ -93594,6 +93867,7 @@ cow_sound_variant: None,
             state_id: 2,
             bundle_rows: Vec::new(),
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(furnace));
         assert_eq!(app.screen, ScreenKind::Furnace, "the window shows");
@@ -93681,6 +93955,7 @@ cow_sound_variant: None,
             state_id: 2,
             bundle_rows: Vec::new(),
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(furnace));
         app.furnace_slot_rects = vec![(100, 100, 12), (140, 100, 1), (180, 100, 0), (220, 100, 2)];
@@ -93798,6 +94073,7 @@ cow_sound_variant: None,
             state_id: 2,
             bundle_rows: Vec::new(),
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(furnace));
         app.furnace_slot_rects = vec![(100, 100, 12), (140, 100, 31)];
@@ -93915,6 +94191,7 @@ cow_sound_variant: None,
             state_id: 3,
             bundle_rows: Vec::new(),
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         let table2 = table.clone(); // the re-arm's own fresh window
         app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
@@ -94039,6 +94316,7 @@ cow_sound_variant: None,
             state_id: 7,
             bundle_rows: Vec::new(),
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
         assert_eq!(app.screen, ScreenKind::Chest);
@@ -94149,6 +94427,7 @@ cow_sound_variant: None,
             state_id: 3,
             bundle_rows: Vec::new(),
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
         assert_eq!(app.screen, ScreenKind::Chest);
@@ -94197,6 +94476,7 @@ cow_sound_variant: None,
             state_id: 11,
             bundle_rows: Vec::new(),
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
         assert_eq!(app.screen, ScreenKind::Chest);
@@ -94263,6 +94543,7 @@ cow_sound_variant: None,
             carried: (0, 0),
             state_id: 12,
             bundle_rows: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 2), None, None, Some(truth));
         assert_eq!(app.chest_slots[9], (0, 0), "the prediction's merge is gone");
@@ -94314,6 +94595,7 @@ cow_sound_variant: None,
             state_id: 8,
             bundle_rows: Vec::new(),
         data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
         assert_eq!(app.screen, ScreenKind::Chest);
@@ -94411,6 +94693,7 @@ cow_sound_variant: None,
             state_id: 7,
             bundle_rows: Vec::new(),
         data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
         assert_eq!(app.screen, ScreenKind::Chest);
@@ -111803,6 +112086,7 @@ cow_sound_variant: None,
             carried: (0, 0),
             state_id: 7,
         data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
         assert_eq!(app.screen, ScreenKind::Chest, "the window shows");
@@ -111829,6 +112113,7 @@ cow_sound_variant: None,
             carried: (0, 0),
             state_id: 8,
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
         assert_eq!(
@@ -111846,6 +112131,7 @@ cow_sound_variant: None,
             carried: (0, 0),
             state_id: 9,
         data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
         assert_eq!(app.bundle_contents[&4].items.len(), 1, "the changed row");
@@ -111864,6 +112150,7 @@ cow_sound_variant: None,
             carried: (0, 0),
             state_id: 10,
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
         assert!(app.bundle_contents.is_empty(), "the rowless sync");
@@ -111973,6 +112260,7 @@ cow_sound_variant: None,
             carried: (0, 0),
             state_id: 7,
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
         assert_eq!(app.screen, ScreenKind::Chest, "the window shows");
@@ -112183,6 +112471,7 @@ cow_sound_variant: None,
             state_id: 3,
             bundle_rows: Vec::new(),
         data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
         assert_eq!(app.screen, ScreenKind::Chest);
@@ -130492,6 +130781,7 @@ cow_sound_variant: None,
             state_id: 7,
             bundle_rows: Vec::new(),
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
         app.table_panel = inventory_panel_origin(640, 360);
@@ -130625,6 +130915,7 @@ cow_sound_variant: None,
             state_id: 7,
             bundle_rows: Vec::new(),
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
         // THE RESULT SEAT'S OWN mayPlace: the same-item cursor the
@@ -130799,6 +131090,7 @@ cow_sound_variant: None,
             state_id: 7,
             bundle_rows: Vec::new(),
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
         app.table_panel = inventory_panel_origin(640, 360);
@@ -130969,6 +131261,7 @@ cow_sound_variant: None,
             state_id: 7,
             bundle_rows: Vec::new(),
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
         app.live_table_carried = (dirt, 8);
@@ -131061,6 +131354,7 @@ cow_sound_variant: None,
             state_id: 7,
             bundle_rows: Vec::new(),
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
         app.table_panel = inventory_panel_origin(640, 360);
@@ -135241,6 +135535,7 @@ cow_sound_variant: None,
             state_id: 3,
             bundle_rows: Vec::new(),
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
         app.table_panel = inventory_panel_origin(640, 360);
@@ -135300,6 +135595,7 @@ cow_sound_variant: None,
             state_id: 5,
             bundle_rows: Vec::new(),
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 2), None, None, Some(table2));
         app.on_press(px + 124 + 1 + 8, py + 35 + 1 + 8);
@@ -137391,6 +137687,7 @@ cow_sound_variant: None,
             state_id: 3,
             bundle_rows: Vec::new(),
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
         assert_eq!(app.screen, ScreenKind::Crafting, "the window shows");
@@ -137463,6 +137760,7 @@ cow_sound_variant: None,
             state_id: 3,
             bundle_rows: Vec::new(),
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
         app.table_panel = inventory_panel_origin(640, 360);
@@ -137859,6 +138157,7 @@ cow_sound_variant: None,
             state_id: 3,
             bundle_rows: Vec::new(),
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
         assert_eq!(app.screen, ScreenKind::Crafting, "the window shows");
@@ -138300,6 +138599,7 @@ cow_sound_variant: None,
             state_id: 2,
             bundle_rows: Vec::new(),
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(furnace));
         assert_eq!(app.screen, ScreenKind::Furnace, "the window shows");
@@ -138358,6 +138658,7 @@ cow_sound_variant: None,
             state_id: 2,
             bundle_rows: Vec::new(),
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(furnace));
         app.furnace_slot_rects = vec![(100, 100, 0), (140, 100, 1), (180, 100, 2)];
@@ -138426,6 +138727,7 @@ cow_sound_variant: None,
             state_id: 3,
             bundle_rows: Vec::new(),
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
         assert_eq!(app.screen, ScreenKind::Crafting, "the window shows");
@@ -138555,6 +138857,7 @@ cow_sound_variant: None,
             state_id: 3,
             bundle_rows: Vec::new(),
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
         assert_eq!(app.screen, ScreenKind::Crafting, "the window shows");
@@ -138642,6 +138945,7 @@ cow_sound_variant: None,
             state_id: 3,
             bundle_rows: Vec::new(),
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
         app.table_panel = inventory_panel_origin(640, 360);
@@ -138743,6 +139047,7 @@ cow_sound_variant: None,
             state_id: 3,
             bundle_rows: Vec::new(),
             data_slots: Vec::new(),
+            title_nbt: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
         app.table_panel = inventory_panel_origin(640, 360);

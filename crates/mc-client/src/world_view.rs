@@ -2288,6 +2288,12 @@ pub struct LiveContainer {
     /// never spoke stays absent (the Vec's own length the store's
     /// growth speaks, the screen's zeros the absent reads answer).
     pub data_slots: Vec<i32>,
+    /// THE WINDOW'S OWN TITLE (the OpenScreen word's Component — the
+    /// anonymous-root compound's bytes the store retains verbatim;
+    /// the decode is the screen's act, the text/translate rows the
+    /// canvas renders). Empty bytes = the wire never spoke — the
+    /// default lang row the canvas banks (the honest fallback).
+    pub title_nbt: Vec<u8>,
 }
 
 /// The click's input modes, the UI-facing mirror of the wire's own
@@ -3494,6 +3500,9 @@ fn open_container_view(model: &WorldModel) -> Option<LiveContainer> {
         carried: (oc.carried.item_id, oc.carried.count),
         state_id: oc.state_id,
         data_slots: oc.data_slots.clone(),
+        // THE TITLE'S OWN RIDE (the store's verbatim bytes the
+        // projection feeds — the decode is the screen's act)
+        title_nbt: oc.title_nbt.clone(),
     })
 }
 
