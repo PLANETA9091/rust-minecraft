@@ -2444,13 +2444,19 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     // pushed state's own bake picks — the family
                     // members the sibling bakes answer, the plain
                     // kinds the generic cube wears)
-                    let (quads, facing, offset) = if let Some((pkind, pvariant)) = moving {
+                    let (quads, facing, offset) = if let Some((pkind, pvariant, pflags)) = moving {
                         let quarters = crate::world::moving_progress_quarters_of(variant).min(4);
-                        let frac = 1.0 - quarters as f32 / 4.0;
-                        let sign = if crate::world::moving_extending_of(variant) {
-                            -1.0f32
+                        // THE SLIDE'S OWN CURVE (the flag the shape
+                        // speaks — the land rows the shrinking
+                        // fraction the source-to-dest slide wears,
+                        // the HEAD_RETRACT row the GROWING fraction
+                        // the sink the base the head renders)
+                        let (sign, frac) = if pflags == crate::world::MOVING_FLAG_HEAD_RETRACT {
+                            (-1.0f32, quarters as f32 / 4.0)
+                        } else if crate::world::moving_extending_of(variant) {
+                            (-1.0f32, 1.0 - quarters as f32 / 4.0)
                         } else {
-                            1.0f32
+                            (1.0f32, 1.0 - quarters as f32 / 4.0)
                         };
                         let (sdx, sdy, sdz) = crate::world::piston_facing_delta6(
                             crate::world::moving_facing_of(variant),
@@ -2510,7 +2516,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     // reads — the piston-family pushes the name
                     // verdict keeps, the plain kinds the row serves)
                     let pushed_row: Option<[u16; 6]> = match moving {
-                        Some((pkind, _))
+                        Some((pkind, _, _))
                             if !crate::world::is_piston_kind(pkind)
                                 && !crate::world::is_piston_head(pkind) =>
                         {
@@ -9125,7 +9131,7 @@ mod tests {
         // frame's own offset wears)
         w.set(4, 10, 4, MOVING_PISTON);
         w.set_variant(4, 10, 4, moving_variant(5, true, 0));
-        w.set_moving_state(4, 10, 4, STONE, 0);
+        w.set_moving_state(4, 10, 4, STONE, 0, crate::world::MOVING_FLAG_LAND);
         let quads = mesh_chunk(&w, 0, 0, None);
         // THE FULL-CELL OFFSET (the slide the source cell wears — the
         // east facing the -x arm speaks: the pts the 3..4 x-band the
@@ -9200,6 +9206,82 @@ mod tests {
         assert!(
             quads.iter().all(|q| !in_band(q)),
             "the stash-less cell the honest silence keeps"
+        );
+    }
+
+    /// THE HEAD'S OWN RETRACT CURVE (the autopush-130 round — the
+    /// HEAD_RETRACT stash row the GROWING fraction renders: the
+    /// quarters-0 arm the extended position the offset-zero wears,
+    /// the quarters-2 arm the half sink the base the pts answer —
+    /// the min-x corner the cell's own border the sink crosses)
+    #[test]
+    fn the_head_retract_the_offset_the_curve_wears() {
+        let mut w = World::new(3, 11);
+        for x in 0..16 {
+            for z in 0..16 {
+                w.set(x, 9, z, STONE);
+            }
+        }
+        for x in 0..16 {
+            for y in 10..24 {
+                for z in 0..16 {
+                    w.set(x, y, z, AIR);
+                }
+            }
+        }
+        // THE HEAD-RETRACT CELL (the east facing — the head bake the
+        // 1.25 overhang the +x arm wears)
+        w.set(4, 10, 4, MOVING_PISTON);
+        w.set_variant(4, 10, 4, moving_variant(5, false, 0));
+        w.set_moving_state(
+            4,
+            10,
+            4,
+            PISTON_HEAD,
+            piston_head_variant(5, false),
+            crate::world::MOVING_FLAG_HEAD_RETRACT,
+        );
+        let quads = mesh_chunk(&w, 0, 0, None);
+        // THE QUARTERS-0 ARM (the extended position the offset zero
+        // wears — the head's own pts the 4..5.25 band the min-x >= 4
+        // keeps)
+        let in_band = |q: &Quad| {
+            q.pts
+                .iter()
+                .all(|p| p[1] >= 10.0 - 1e-3 && p[1] <= 11.0 + 1e-3)
+                && q.pts.iter().any(|p| p[1] > 10.5)
+                && q.pts.iter().any(|p| (p[0] - 4.5).abs() < 0.6)
+        };
+        let mine: Vec<_> = quads.iter().filter(|q| in_band(q)).collect();
+        assert!(!mine.is_empty(), "the head's quads the extended pos wears");
+        // THE PLATE'S OWN FRONT (the max-x the east facing's plate
+        // front wears — the vanilla shaft the BACK the 0.25 overhang
+        // the base cell's border the honest keep)
+        let max_x = mine
+            .iter()
+            .flat_map(|q| q.pts.iter())
+            .map(|p| p[0])
+            .fold(f32::MIN, f32::max);
+        assert!(
+            (max_x - 5.0).abs() < 0.05,
+            "the quarters-0 head the extended pos keeps: max_x {}",
+            max_x
+        );
+        // THE QUARTERS-2 ARM (the half sink the base the pts wear —
+        // the plate front the 4.5 the GROWING fraction speaks)
+        w.set_variant(4, 10, 4, moving_variant(5, false, 2));
+        let quads = mesh_chunk(&w, 0, 0, None);
+        let mine: Vec<_> = quads.iter().filter(|q| in_band(q)).collect();
+        assert!(!mine.is_empty(), "the half sink's quads the band wears");
+        let max_x = mine
+            .iter()
+            .flat_map(|q| q.pts.iter())
+            .map(|p| p[0])
+            .fold(f32::MIN, f32::max);
+        assert!(
+            (max_x - 4.5).abs() < 0.05,
+            "the half sink the growing fraction wears: max_x {}",
+            max_x
         );
     }
 

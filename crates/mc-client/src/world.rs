@@ -3239,6 +3239,14 @@ pub fn moving_progress_quarters_of(variant: u8) -> u8 {
     variant >> MOVING_PROGRESS_SHIFT
 }
 
+/// THE MOVING STASH'S OWN FLAG SEAT (the autopush-130 round — the
+/// third stash field the two walks wear: the LAND flag the settle
+/// walk banks, the HEAD_RETRACT flag the head's own slide keeps [the
+/// finalize the AIR landing speaks — the head the base the slide
+/// sinks into, the offset the GROWING fraction renders]).
+pub const MOVING_FLAG_LAND: u8 = 0;
+pub const MOVING_FLAG_HEAD_RETRACT: u8 = 1;
+
 
 /// THE PISTON'S OWN FACING STEP (the vanilla Direction order the
 /// variant byte speaks — the same DIRECTION_NORMAL walk the
@@ -3559,7 +3567,7 @@ pub fn piston_try_extend(
         let kind = world.get(fx, fy, fz);
         let variant = world.variant(fx, fy, fz);
         let (tx, ty, tz) = (fx + dx, fy + dy, fz + dz);
-        world.set_moving_state(tx, ty, tz, kind, variant);
+        world.set_moving_state(tx, ty, tz, kind, variant, MOVING_FLAG_LAND);
         world.set(tx, ty, tz, MOVING_PISTON);
         world.set_variant(tx, ty, tz, moving_variant(facing, true, 0));
         world.schedule_moving_tick(now + 1, tx, ty, tz);
@@ -3570,7 +3578,7 @@ pub fn piston_try_extend(
     // THE HEAD ARM: the first cell the extension places — the moving
     // head the stash's own PISTON_HEAD state wears.
     let (hx, hy, hz) = (x + dx, y + dy, z + dz);
-    world.set_moving_state(hx, hy, hz, PISTON_HEAD, piston_head_variant(facing, sticky));
+    world.set_moving_state(hx, hy, hz, PISTON_HEAD, piston_head_variant(facing, sticky), MOVING_FLAG_LAND);
     world.set(hx, hy, hz, MOVING_PISTON);
     world.set_variant(hx, hy, hz, moving_variant(facing, true, 0));
     world.schedule_moving_tick(now + 1, hx, hy, hz);
@@ -3616,7 +3624,7 @@ pub fn piston_try_retract(
         let kind = world.get(px, py, pz);
         if piston_push_reaction(kind) == PistonPush::Normal {
             let variant = world.variant(px, py, pz);
-            world.set_moving_state(hx, hy, hz, kind, variant);
+            world.set_moving_state(hx, hy, hz, kind, variant, MOVING_FLAG_LAND);
             world.set(hx, hy, hz, MOVING_PISTON);
             world.set_variant(hx, hy, hz, moving_variant(facing, false, 0));
             world.reschedule_moving_tick(now + 1, hx, hy, hz);
@@ -3626,13 +3634,24 @@ pub fn piston_try_retract(
             pulled = true;
         }
     }
-    // THE HEAD ARM: the head cell the clear serves — the pull's own
-    // mid-state the arm already banks, the no-pull arms the instant
-    // clear keeps (the head's own slide the round's minimal walk
-    // never animates — the settled verdict the 128 round banked).
+    // THE HEAD ARM: the pull's own mid-state the sticky arm already
+    // banks, the NO-PULL ARMS the head's own RETRACT SLIDE the
+    // autopush-130 round wears (the head's own moving BE the vanilla
+    // walk banks: the head state the stash carries, the HEAD_RETRACT
+    // flag the finalize's AIR landing speaks — the head the base the
+    // slide sinks into, the pending beat row the re-arm replaces)
     if !pulled {
-        world.take_moving_state(hx, hy, hz);
-        world.set(hx, hy, hz, AIR);
+        world.set_moving_state(
+            hx,
+            hy,
+            hz,
+            PISTON_HEAD,
+            piston_head_variant(facing, sticky),
+            MOVING_FLAG_HEAD_RETRACT,
+        );
+        world.set(hx, hy, hz, MOVING_PISTON);
+        world.set_variant(hx, hy, hz, moving_variant(facing, false, 0));
+        world.reschedule_moving_tick(now + 1, hx, hy, hz);
         changed.push((hx, hy, hz));
     }
     // THE BASE ARM: the retracted bit the variant keeps.
@@ -3665,23 +3684,41 @@ pub fn tick_moving_piston_cell(world: &mut World, now: u64, x: i32, y: i32, z: i
     }
     let variant = world.variant(x, y, z);
     let quarters = moving_progress_quarters_of(variant);
-    if quarters < 2 {
+    // THE CAP'S OWN SEAT (the stash's flag reads — the land rows the
+    // +2 finalize answer, the head-retract row the FULL slide the
+    // +4 finalize serves: the head the base the sink completes)
+    let stash_flags = world
+        .moving_state_of(x, y, z)
+        .map(|(_, _, f)| f)
+        .unwrap_or(MOVING_FLAG_LAND);
+    let cap = if stash_flags == MOVING_FLAG_HEAD_RETRACT { 4 } else { 2 };
+    if quarters < cap {
         // THE MID-SLIDE ARM: the half step the variant banks, the
         // finalize's own beat the +1 arm schedules.
         world.set_variant(
             x,
             y,
             z,
-            moving_variant(moving_facing_of(variant), moving_extending_of(variant), 2),
+            moving_variant(
+                moving_facing_of(variant),
+                moving_extending_of(variant),
+                (quarters + 2).min(cap),
+            ),
         );
         world.schedule_moving_tick(now + 1, x, y, z);
         return true;
     }
     // THE FINALIZE ARM: the stashed state the cell wears, the stash
-    // row the take clears.
-    let (kind, pvariant) = world.take_moving_state(x, y, z).unwrap_or((AIR, 0));
-    world.set(x, y, z, kind);
-    world.set_variant(x, y, z, pvariant);
+    // row the take clears — the HEAD_RETRACT flag the AIR landing
+    // speaks (the head the slide's own sink the base absorbs).
+    let (kind, pvariant, _) = world.take_moving_state(x, y, z).unwrap_or((AIR, 0, MOVING_FLAG_LAND));
+    let landed = if stash_flags == MOVING_FLAG_HEAD_RETRACT {
+        AIR
+    } else {
+        kind
+    };
+    world.set(x, y, z, landed);
+    world.set_variant(x, y, z, if landed == AIR { 0 } else { pvariant });
     true
 }
 
@@ -13734,7 +13771,7 @@ pub struct World {
     /// finalize the take serves, the mesher's offset render the
     /// same rows read; the tiny vec the per-piston line's own
     /// 13-cell reach keeps — the lookup the linear scan answers).
-    pub moving_states: Vec<([i32; 3], u16, u8)>,
+    pub moving_states: Vec<([i32; 3], u16, u8, u8)>,
 
     /// THE MOVING PISTON'S OWN QUEUE (the comparator's own shape the
     /// sibling wears: the (due, x, y, z) rows the extend/retract
@@ -15536,25 +15573,25 @@ impl World {
     /// three fns serve; the replace-or-push law the retract's own
     /// re-arm keeps [the rapid toggle the pull's stash the head
     /// cell's stale row replaces]).
-    pub fn moving_state_of(&self, x: i32, y: i32, z: i32) -> Option<(u16, u8)> {
+    pub fn moving_state_of(&self, x: i32, y: i32, z: i32) -> Option<(u16, u8, u8)> {
         self.moving_states
             .iter()
-            .find(|(c, _, _)| *c == [x, y, z])
-            .map(|&(_, k, v)| (k, v))
+            .find(|(c, _, _, _)| *c == [x, y, z])
+            .map(|&(_, k, v, f)| (k, v, f))
     }
 
-    pub fn set_moving_state(&mut self, x: i32, y: i32, z: i32, kind: u16, variant: u8) {
+    pub fn set_moving_state(&mut self, x: i32, y: i32, z: i32, kind: u16, variant: u8, flags: u8) {
         self.take_moving_state(x, y, z);
-        self.moving_states.push(([x, y, z], kind, variant));
+        self.moving_states.push(([x, y, z], kind, variant, flags));
     }
 
-    pub fn take_moving_state(&mut self, x: i32, y: i32, z: i32) -> Option<(u16, u8)> {
+    pub fn take_moving_state(&mut self, x: i32, y: i32, z: i32) -> Option<(u16, u8, u8)> {
         let at = self
             .moving_states
             .iter()
-            .position(|(c, _, _)| *c == [x, y, z])?;
-        let (_, k, v) = self.moving_states.remove(at);
-        Some((k, v))
+            .position(|(c, _, _, _)| *c == [x, y, z])?;
+        let (_, k, v, f) = self.moving_states.remove(at);
+        Some((k, v, f))
     }
 
     /// THE MOVING PISTON'S OWN SCHEDULE (the piston queue's own dedup
@@ -32701,12 +32738,12 @@ mod tests {
         );
         assert_eq!(
             w.moving_state_of(px + 1, py, pz),
-            Some((PISTON_HEAD, piston_head_variant(5, false))),
+            Some((PISTON_HEAD, piston_head_variant(5, false), MOVING_FLAG_LAND)),
             "the head's own state the stash banks"
         );
         assert_eq!(
             w.moving_state_of(px + 2, py, pz),
-            Some((STONE, 0)),
+            Some((STONE, 0, MOVING_FLAG_LAND)),
             "the stone the stash banks"
         );
         assert_eq!(
@@ -32768,12 +32805,35 @@ mod tests {
             "the stash row the take clears"
         );
         // THE 12-PUSH LIMIT THE LINE REFUSES (the 13-stone chain the
-        // resolve never answers — the retraction the reset serves)
+        // resolve never answers — the retraction the reset serves;
+        // the autopush-130 round the no-pull retract the head's OWN
+        // retract slide banks: the head state the stash wears, the
+        // HEAD_RETRACT flag the AIR landing speaks, the full-sink cap
+        // the +4 finalize answers)
         let _ = piston_try_retract(&mut w, 3, px, py, pz, 5, false);
         assert_eq!(
             w.get(px + 1, py, pz),
+            MOVING_PISTON,
+            "the no-pull head the mid-state wears"
+        );
+        assert_eq!(
+            w.moving_state_of(px + 1, py, pz),
+            Some((
+                PISTON_HEAD,
+                piston_head_variant(5, false),
+                MOVING_FLAG_HEAD_RETRACT
+            )),
+            "the head's own retract state the stash banks"
+        );
+        for now in 4..=6u64 {
+            for (x, y, z) in w.drain_due_moving_ticks(now) {
+                tick_moving_piston_cell(&mut w, now, x, y, z);
+            }
+        }
+        assert_eq!(
+            w.get(px + 1, py, pz),
             AIR,
-            "the no-pull head the instant clear keeps"
+            "the head's sink the AIR landing wears"
         );
         for i in 1..=13u32 {
             w.set(px + i as i32, py, pz, STONE);
@@ -32870,7 +32930,7 @@ mod tests {
         );
         assert_eq!(
             w.moving_state_of(px + 1, py, pz),
-            Some((STONE, 0)),
+            Some((STONE, 0, MOVING_FLAG_LAND)),
             "the pulled stone the stash banks"
         );
         assert!(
@@ -32905,6 +32965,14 @@ mod tests {
     /// the stash's own replace law the retract's re-arm answers)
     #[test]
     fn the_moving_piston_the_byte_the_line_the_wears() {
+        // THE FLAG SEAT'S OWN CONSTANTS (the land the zero keeps, the
+        // head-retract the one wears — the third stash field the two
+        // walks read)
+        assert_eq!(MOVING_FLAG_LAND, 0, "the land flag the zero keeps");
+        assert_eq!(
+            MOVING_FLAG_HEAD_RETRACT, 1,
+            "the head-retract flag the one wears"
+        );
         // THE VARIANT'S OWN ROUND TRIP (the three fields the one byte
         // wears — the six facings, the extending bit, the quarters)
         for facing in 0..6u8 {
@@ -32944,7 +33012,7 @@ mod tests {
         w.set_variant(4, 10, 4, piston_variant(5, false));
         w.set(5, 10, 4, MOVING_PISTON);
         w.set_variant(5, 10, 4, moving_variant(5, true, 0));
-        w.set_moving_state(5, 10, 4, STONE, 0);
+        w.set_moving_state(5, 10, 4, STONE, 0, MOVING_FLAG_LAND);
         w.set(6, 10, 4, STONE);
         assert!(
             piston_resolve_line(&w, 4, 10, 4, 5).is_none(),
@@ -32952,10 +33020,10 @@ mod tests {
         );
         // THE STASH'S OWN REPLACE LAW (the same cell the re-arm the
         // stale row replaces — the take the honest absence keeps)
-        w.set_moving_state(5, 10, 4, DIRT, 0);
+        w.set_moving_state(5, 10, 4, DIRT, 0, MOVING_FLAG_LAND);
         assert_eq!(
             w.moving_state_of(5, 10, 4),
-            Some((DIRT, 0)),
+            Some((DIRT, 0, MOVING_FLAG_LAND)),
             "the replace law the row wears"
         );
         assert!(
@@ -32965,6 +33033,75 @@ mod tests {
         assert!(
             w.moving_state_of(5, 10, 4).is_none(),
             "the absence the honest keep"
+        );
+    }
+
+    /// THE HEAD'S OWN RETRACT SLIDE (the autopush-130 round — the
+    /// no-pull retract the head's own moving BE banks: the head state
+    /// the stash wears, the HEAD_RETRACT flag the finalize's AIR
+    /// landing speaks, the FULL-sink cap the +4 finalize answers [the
+    /// land rows the +2 finalize keep — the two-beat cadence the two
+    /// curves wear], the mid-slide arms the quarter steps bank)
+    #[test]
+    fn the_head_retract_the_slide_the_sink_the_wears() {
+        let mut w = World::new(3, 11);
+        // THE SEED'S OWN HILL THE SWEEP ANSWERS (the generated terrain
+        // the push line's own volume the buried verdict never wears —
+        // the family precedent's box the test keeps)
+        for x in 0..12 {
+            for y in 10..16 {
+                for z in 0..12 {
+                    w.set(x, y, z, AIR);
+                }
+            }
+        }
+        w.set(4, 10, 4, PISTON);
+        w.set_variant(4, 10, 4, piston_variant(5, true));
+        // the extension the settled verdict the landing banks first
+        let _ = piston_try_extend(&mut w, 0, 4, 10, 4, 5, false);
+        for now in 1..=2u64 {
+            for (x, y, z) in w.drain_due_moving_ticks(now) {
+                tick_moving_piston_cell(&mut w, now, x, y, z);
+            }
+        }
+        assert_eq!(w.get(5, 10, 4), PISTON_HEAD, "the head the landing wears");
+        // THE NO-PULL RETRACT (the head's own slide the stash banks)
+        let _ = piston_try_retract(&mut w, 10, 4, 10, 4, 5, false);
+        assert_eq!(w.get(5, 10, 4), MOVING_PISTON, "the head the mid-state wears");
+        assert_eq!(
+            w.moving_state_of(5, 10, 4),
+            Some((
+                PISTON_HEAD,
+                piston_head_variant(5, false),
+                MOVING_FLAG_HEAD_RETRACT
+            )),
+            "the head's own retract state the stash banks"
+        );
+        // THE FULL-SINK CAP (the quarter steps the beats bank — the
+        // +2 arm the half sink wears, the +4 arm the finalize serves)
+        for (now, want) in [(11u64, 2u8), (12, 4)] {
+            for (x, y, z) in w.drain_due_moving_ticks(now) {
+                tick_moving_piston_cell(&mut w, now, x, y, z);
+            }
+            assert_eq!(
+                moving_progress_quarters_of(w.variant(5, 10, 4)),
+                want,
+                "the quarter step the beat banks"
+            );
+            assert_eq!(w.get(5, 10, 4), MOVING_PISTON, "the sink the cell keeps");
+        }
+        for (x, y, z) in w.drain_due_moving_ticks(13) {
+            tick_moving_piston_cell(&mut w, 13, x, y, z);
+        }
+        assert_eq!(w.get(5, 10, 4), AIR, "the head's sink the AIR landing wears");
+        assert!(
+            w.moving_state_of(5, 10, 4).is_none(),
+            "the stash row the take clears"
+        );
+        // THE BASE'S OWN RETRACTED BIT (the variant the base keeps)
+        assert!(
+            !piston_extended_of(w.variant(4, 10, 4)),
+            "the base the retracted bit keeps"
         );
     }
 }
