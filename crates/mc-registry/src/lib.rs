@@ -161,6 +161,26 @@ pub fn item_rarity(id: i32) -> Option<u8> {
     )
 }
 
+/// The ITEM registry id's own MAX STACK SIZE — the
+/// `DataComponents.MAX_STACK_SIZE` component the `ItemStack
+/// .getMaxStackSize()` walk reads (the per-item default the
+/// `Items.class` static init's `stacksTo(I)` / `durability(I)` / tool +
+/// armor walks speak — scripts/extract_max_stack.py's extraction). The
+/// table only rows the NON-64 items; the MISSING rows are the
+/// `Item.Properties` field init's own 64 default, never a guessed
+/// cap. Unresolvable ids wear the 64 too — the honest default the
+/// container lanes' fill formula divides by.
+pub fn item_max_stack(id: i32) -> i32 {
+    let Some(name) = item_name(id) else {
+        return 64;
+    };
+    let name = name.strip_prefix("minecraft:").unwrap_or(name);
+    generated::item_max_stack::ITEM_MAX_STACK
+        .binary_search_by_key(&name, |&(n, _)| n)
+        .map(|idx| generated::item_max_stack::ITEM_MAX_STACK[idx].1 as i32)
+        .unwrap_or(64)
+}
+
 /// The ITEM registry id's default rarity's CHAT COLOR — the
 /// `getRarity().color()` walk the HUD's held-item name rides, the
 /// `ChatFormatting` enum's own mapping (Rarity.class's static init:
@@ -790,6 +810,54 @@ mod tests {
             assert!(
                 generated::item_order::ITEM_WIRE_ORDER.iter().any(|&n| n == name),
                 "the rarity row {name} rides the wire vocabulary",
+            );
+        }
+    }
+
+    #[test]
+    fn item_max_stack_resolves_the_jar_laws() {
+        // the wire ids the vocabulary names (the position IS the id)
+        let id_of = |name: &str| {
+            generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect(name) as i32
+        };
+        // the NO-row items the 64 default keeps (the Item.Properties
+        // field init the jar's own construction speaks)
+        assert_eq!(item_max_stack(id_of("stone")), 64);
+        assert_eq!(item_max_stack(id_of("dirt")), 64);
+        assert_eq!(item_max_stack(id_of("oak_planks")), 64);
+        // the explicit stacksTo(16) rows the static init spoke
+        assert_eq!(item_max_stack(id_of("snowball")), 16);
+        assert_eq!(item_max_stack(id_of("egg")), 16);
+        assert_eq!(item_max_stack(id_of("ender_pearl")), 16);
+        assert_eq!(item_max_stack(id_of("oak_sign")), 16);
+        assert_eq!(item_max_stack(id_of("bucket")), 16);
+        assert_eq!(item_max_stack(id_of("white_banner")), 16);
+        // the stacksTo(1) rows (the tools the ctor law wears, the
+        // buckets the filled pair the walk caps, the armor the
+        // durability walk's own 1)
+        assert_eq!(item_max_stack(id_of("diamond_sword")), 1);
+        assert_eq!(item_max_stack(id_of("wooden_shovel")), 1);
+        assert_eq!(item_max_stack(id_of("oak_boat")), 1);
+        assert_eq!(item_max_stack(id_of("water_bucket")), 1);
+        assert_eq!(item_max_stack(id_of("elytra")), 1);
+        assert_eq!(item_max_stack(id_of("diamond_helmet")), 1);
+        assert_eq!(item_max_stack(id_of("white_harness")), 1);
+        // the unresolvable ids the 64 default keeps (the honest
+        // unknown never guesses a cap)
+        assert_eq!(item_max_stack(-1), 64);
+        let n = generated::item_order::ITEM_WIRE_ORDER.len() as i32;
+        assert_eq!(item_max_stack(n), 64);
+        // the table's own shape: sorted by name (the binary-search law)
+        // and every row resolves through the wire vocabulary
+        let rows = generated::item_max_stack::ITEM_MAX_STACK;
+        assert!(rows.windows(2).all(|w| w[0].0 < w[1].0), "sorted for the search");
+        for (name, _) in rows {
+            assert!(
+                generated::item_order::ITEM_WIRE_ORDER.iter().any(|&n| n == name),
+                "the max-stack row {name} rides the wire vocabulary",
             );
         }
     }

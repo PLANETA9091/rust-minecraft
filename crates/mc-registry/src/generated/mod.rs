@@ -15,6 +15,7 @@ pub mod elements;
 pub mod equipment;
 pub mod furnace_data;
 pub mod gui;
+pub mod item_max_stack;
 pub mod item_models;
 pub mod item_order;
 pub mod item_rarity;

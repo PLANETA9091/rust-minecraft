@@ -2619,13 +2619,18 @@ pub fn comparator_can_survive(world: &World, x: i32, y: i32, z: i32) -> bool {
 /// null container the 0 the early return keeps, the non-empty slots
 /// the `count / maxStackSize` fraction adds [Container
 /// .getMaxStackSize(ItemStack) = min(containerMax, itemMax) the
-/// bytecode's Math.min speaks — the chest/barrel 64 the limit the
-/// house store wears, the itemMax table the registry never banks the
-/// 64 default keeps], the sum the slot count divides [pc 58-66 the
-/// getContainerSize read], the `Mth.lerpDiscrete(f, 0, 15)` fold the
-/// answer speaks — javap Mth.lerpDiscrete pc 0-26 the
-/// `floor(f * (15 - 0 - 1)) + (f > 0 ? 1 : 0)` walk the classic
-/// fullness law banks: floor(f*14) + 1 the non-zero wears).
+/// bytecode's Math.min speaks — the chest/barrel 64 the container cap
+/// keeps, the itemMax the per-item `DataComponents.MAX_STACK_SIZE`
+/// component `ItemStack.getMaxStackSize()` reads — the
+/// `Items.class` static init's own `stacksTo(I)` / `durability(I)` /
+/// tool + armor walks the registry's item_max_stack table banks (the
+/// extraction scripts/extract_max_stack.py wore; the sword the 1, the
+/// snowball the 16, the stone the 64 default the missing row keeps)],
+/// the sum the slot count divides [pc 58-66 the getContainerSize read],
+/// the `Mth.lerpDiscrete(f, 0, 15)` fold the answer speaks — javap
+/// Mth.lerpDiscrete pc 0-26 the `floor(f * (15 - 0 - 1)) + (f > 0 ? 1
+/// : 0)` walk the classic fullness law banks: floor(f*14) + 1 the
+/// non-zero wears).
 pub fn container_analog_signal(items: &[(i32, i32)]) -> u8 {
     let slot_count = items.len();
     if slot_count == 0 {
@@ -2634,7 +2639,8 @@ pub fn container_analog_signal(items: &[(i32, i32)]) -> u8 {
     let mut f = 0.0f32;
     for &(id, count) in items {
         if id != 0 && count > 0 {
-            f += count as f32 / 64.0f32;
+            let cap = mc_registry::item_max_stack(id).min(64);
+            f += count as f32 / cap as f32;
         }
     }
     f /= slot_count as f32;
@@ -32075,6 +32081,92 @@ mod tests {
             comparator_output_signal(&w, cx, cy, cz),
             0,
             "the far-empty chest the j!=0 verdict the base keeps"
+        );
+    }
+
+    /// THE FILL FORMULA'S OWN LIMIT (the item max-stack cap the
+    /// per-slot fraction divides by — Container.getMaxStackSize(
+    /// ItemStack) = min(64, stack.getMaxStackSize()) the jar's own
+    /// Math.min speaks, the cap the `DataComponents.MAX_STACK_SIZE`
+    /// component reads and the registry's item_max_stack table banks:
+    /// the full-stack chest the 15 the SIZE never bends (the snowball
+    /// the 16-stack the sword the 1-stack the same full weight wear),
+    /// the half-stocked 16-stack chest the difference the 64-stand-in
+    /// never spoke).
+    #[test]
+    fn the_fill_formula_the_item_max_stack_cap_the_slots_wear() {
+        let snowball = mc_registry::item_id_by_name("snowball").expect("the snowball rides the wire table");
+        let sword = mc_registry::item_id_by_name("diamond_sword").expect("the sword rides the wire table");
+        let stone = mc_registry::item_id_by_name("stone").expect("the stone rides the wire table");
+        // THE FULL CHESTS THE SIZE NEVER BENDS (the 15 the count==cap
+        // full weight speaks — the 16-stack snowball the 1-stack sword
+        // the 64-stack stone the SAME verdict wear)
+        let mut full_snow = Vec::new();
+        for _ in 0..27 {
+            full_snow.push((snowball, 16));
+        }
+        assert_eq!(
+            container_analog_signal(&full_snow),
+            15,
+            "the full snowball chest the 15 the 16-stack cap wears"
+        );
+        let mut full_swords = Vec::new();
+        for _ in 0..27 {
+            full_swords.push((sword, 1));
+        }
+        assert_eq!(
+            container_analog_signal(&full_swords),
+            15,
+            "the full sword chest the 15 the 1-stack cap wears"
+        );
+        let mut full_stone = Vec::new();
+        for _ in 0..27 {
+            full_stone.push((stone, 64));
+        }
+        assert_eq!(
+            container_analog_signal(&full_stone),
+            15,
+            "the full stone chest the 15 the 64 default wears"
+        );
+        // THE HALF-STOCKED CHESTS THE CAPS DIVERGE (the 13 slots the
+        // classic 7 the full stacks wear regardless of the cap — the
+        // nine 16-count snowball slots the 5 speaks where the 64
+        // stand-in the 2 wore)
+        let mut thirteen_snow = vec![(0i32, 0i32); 27];
+        for slot in thirteen_snow.iter_mut().take(13) {
+            *slot = (snowball, 16);
+        }
+        assert_eq!(
+            container_analog_signal(&thirteen_snow),
+            7,
+            "the 13 full snowball slots the classic 7 the full weight wears"
+        );
+        let mut nine_snow = vec![(0i32, 0i32); 27];
+        for slot in nine_snow.iter_mut().take(9) {
+            *slot = (snowball, 16);
+        }
+        assert_eq!(
+            container_analog_signal(&nine_snow),
+            5,
+            "the nine full snowball slots the floor(9*14/27)+1 the 5 wears"
+        );
+        let mut nine_stone = vec![(0i32, 0i32); 27];
+        for slot in nine_stone.iter_mut().take(9) {
+            *slot = (stone, 16);
+        }
+        assert_eq!(
+            container_analog_signal(&nine_stone),
+            2,
+            "the nine 16-count stone slots the quarter weight the 2 wears"
+        );
+        // THE LONE STACKS THE +1 FLOOR KEEPS (the 1 snowball the 1 the
+        // f>0 arm banks, the count the cap never exceeds)
+        let mut lone = vec![(0i32, 0i32); 27];
+        lone[0] = (snowball, 1);
+        assert_eq!(
+            container_analog_signal(&lone),
+            1,
+            "the lone snowball the floor-0 +1 the 1 wears"
         );
     }
 
