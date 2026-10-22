@@ -1298,3 +1298,103 @@ Stage Summary:
   arm the wire's event words never bank), the max-stack table the
   GUI's own place/split walks ride (the chest screen's shift-click
   laws the 64 the stand-in keeps).
+
+---
+Task ID: autopush-136
+Agent: cron autopush (Job 384925, 2026-10-22 23:41 +08:00 tick, executed
+~00:1x +08:00)
+Task: the standing autopush round — the environment held (repo clean @
+504ac46 v0.3.859 + mirror, cargo 1.99.1 + the caches alive). THE LANE
+the 135 entry's next-candidates head named: THE ITEM FRAMES' OWN
+PERSISTENCE — the session-local item_frames store the containers file's
+own fourth list banks, the restart the wall frames finally OUTLIVE.
+
+Work Log:
+- THE BANK'S OWN WALK (the container/furnace bank shape the same file
+  wears): item_frames_bank_to_nbt the BTree cell order the
+  deterministic bytes keep; each entry the x/y/z triple + the facing
+  (the 2..=5 band the mayPlace law keeps) + the rotation slot + the
+  glow verdict (the Nbt::Byte the vanilla NBT convention wears) + the
+  Item compound the count-1 law wears (the minecraft: prefix the store
+  parse's own id shape keeps, the unresolvable id the honest empty
+  compound keeps — never a guessed name the bank invents, the empty
+  frame the OPTIONAL empty compound the store parse speaks). The id +
+  the poll clock the session's own counters own — the file the (cell)
+  identity banks, the boot walk the ids re-mints.
+- THE PARSE'S OWN TOLERANCE (the store parse's walk the same gates
+  wear): the missing coordinate the entry skip keeps, the out-of-band
+  facing the mayPlace law skips, the unknown item name the empty frame
+  keeps, the rotation the setRotation's own wrap wears (rem_euclid —
+  the negative the euclid answer serves), the absent glow the false
+  verdict keeps, the absent count the fallback-1 field the store parse
+  speaks, the missing list the honest empties keep.
+- THE BOOT'S OWN RIDE (container_stores_load_once the fifth parse
+  serves): the offline world ALONE the restore answers (the wire
+  session the server's own frames the echo lane owns — the placement
+  arm's own gate the same verdict keeps), the in-memory cell the
+  file's row never clobbers (the same extend law the chest/furnace
+  banks wear), the ids the next_frame_id counter re-mints, the analog
+  rows the same parse banks (item_frame_analog the rotation+1 fold the
+  map inserts) + the frame_analog_broadcast the through-wall
+  comparators the boot re-arms.
+- THE SAVE RIDES THE FIVE LANES BANK: the placement tail (the spawn
+  the file banks), the frame_analog_ride (the store/rotate/take lanes'
+  shared tail the same write speaks), the punch's death ride + the
+  poll pop's ride (the removal the file's row drops). The save root
+  the fourth list wears (containers.nbt the same DataVersion header
+  the era pins).
+- THE FMT INCIDENT THE ROUND CAUGHT (the honest record): the first
+  commit attempt swept `cargo fmt --all`'s whole-repo reformat — the
+  27273-line pre-existing fmt debt CLEARED, 116 files churned, the
+  lane mixed with the mechanical diff. The stat review caught it (the
+  178k-line commit the lane's 475 lines never spoke); reset --mixed +
+  checkout restored the pristine tree, the lane re-applied debt-free
+  (the fmt --check count 27273 = the clean-HEAD count EXACTLY — the
+  round's own code the fmt taste answered in place), re-committed
+  surgical (Cargo.toml/lock + screens.rs only). LESSON: never run
+  `cargo fmt --all` in write mode in this repo — the 27273-line debt
+  the rounds PRESERVE; the pipeline `| head` trick the exit-code
+  capture lied about once (the $? reads head's, never fmt's).
+- THE GOLDEN RUNNER'S OWN RECOVERY: the verify_goldens.sh the sandbox
+  alone kept is GONE (the post-wipe rounds' 18/18 runner never lived in
+  the repo); the git history's check rows the 5 dedicated scenes'
+  canonical args bank again — chest_pair (dev-78: --body --body-yaw 0
+  --body-pitch=-12 --ui-frame 30 --seed 20260214), furnace_lit (dev-75:
+  the same + --settle-ticks 15), furnace (dev-76: --ui-frame 30 --seed
+  20260214), chest_double/creative the plain --ui-frame 30 row wears.
+  The next round the 19-row script file re-homes (scripts/ owns it,
+  golden_matrix.sh the 14 core rows keep).
+- +3 tests: the bank/parse roundtrip (the BTree cell order, the glow
+  byte, the count-1 law, the id/poll-clock re-mints, the empty
+  compound), the tolerant parse (the coord-less skip, the 0/1/6 facing
+  skips, the unknown-name empty, the 9->1 + (-1)->7 wraps, the absent
+  glow/count fallbacks, the missing/wrong-tag list the empties keep),
+  the persistence arc (the place/store/rotate lanes the file banks,
+  the fresh app's load-once the frame re-mints + the analog row 2
+  banks, the second life's own turn the file re-banks, the third life
+  the rotation 2 + the analog 3 wears, the punch the file's row drops,
+  the restart the empty truth keeps).
+- Suite: 2646 passed / 0 failed / 22 ignored (+3 vs autopush-135's
+  2643); goldens 19/19 PASS rms 0.000 against the FRESH release build
+  at the lane's own HEAD (14-row golden_matrix.sh + the 5 dedicated
+  scenes' canonical args; NO regeneration — the persistence lane no
+  render path touches); cargo fmt --check 27273 = the clean-HEAD count
+  EXACTLY.
+- Pushed 4e961f8 (v0.3.860, the frames the restart outlive).
+
+Stage Summary:
+- THE WALL FRAME SURVIVES THE RESTART: the placed frame the session
+  closes and the file keeps — the reload the frame re-mints (the
+  cell/facing/rotation/item/glow the same rows wear), the stored item
+  the count-1 law the reload answers, the second turn the next boot
+  wears, the punch the file's row drops, the comparators behind the
+  wall the boot's own broadcast re-arms. THE WHOLE FRAME FEATURE THE
+  RESTART NOW OWNS: place, store, rotate, take, punch, pop — every
+  lane the file's truth banks.
+- NEXT CANDIDATES: the 19-row verify_goldens.sh the repo re-homes
+  (the check rows this round recovered — scripts/ owns the file), the
+  dropper/dispenser shot lanes (the offline arm the wire's event words
+  never bank), the max-stack table the GUI's own place/split walks
+  ride (the chest screen's shift-click laws the 64 the stand-in
+  keeps), the frame's glow item the render's own world lane the
+  comparator's max fold rides.
