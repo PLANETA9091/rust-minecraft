@@ -2238,6 +2238,17 @@ pub const SHIELD_SLOT: usize = 45;
 /// registry — vanilla-to-vanilla pins this number).
 pub const MENU_TYPE_CHEST: i32 = 2;
 
+/// `MenuType`'s generic_3x3 — the DispenserMenu's registry id (the SAME
+/// clinit order speaks: generic_9x6 5, GENERIC_3X3 lands at 6 — the
+/// wire's own word the live dispenser lane routes on; the menu's own
+/// shape the DispenserMenu ctor banks: NINE slots (the j + i*3
+/// row-major 3x3 the add3x3GridSlots(62, 17) walk speaks) + the
+/// standard 36, the DispenserBlockEntity/DropperBlockEntity pair the
+/// SAME menu class answers — the container.dispenser/container.dropper
+/// titles the OpenScreen word's own Component carries, the screen the
+/// DispenserScreen alone wears).
+pub const MENU_TYPE_GENERIC_3X3: i32 = 6;
+
 /// `MenuType`'s crafting — the CraftingMenu's registry id (the SAME
 /// clinit order speaks: generic_9x6 5, generic_3x3 6, crafter_3x3 7,
 /// anvil 8, beacon 9, blast_furnace 10, brewing_stand 11, CRAFTING

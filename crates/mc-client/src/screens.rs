@@ -7677,6 +7677,15 @@ pub struct App {
     /// title lane reads — the BlockEntity's DEFAULT_NAME the
     /// container.* lang row banks; the zero the closed screens keep).
     pub dispenser_open_kind: u16,
+    /// The dispenser's live flag (the GENERIC_3x3 menu-type window the
+    /// projection feeds — the chest's own law): `false` = the offline
+    /// stand-in, the clicks and the close echo stay local acts.
+    pub dispenser_is_live: bool,
+    /// The dispenser window's identity the clicks echo against: (window
+    /// id, the revision the client last saw) — the chest's own pair
+    /// shape (the OpenScreen word armed it, the stateId lane the slot
+    /// packets last spoke).
+    pub dispenser_live_window: Option<(i32, i32)>,
     /// The mouse position in GUI units the LAST loop tick tracked —
     /// the carried stack renders here (the vanilla cursor-follow).
     /// `None` wherever no live mouse has moved (the headless scenes:
@@ -9400,6 +9409,8 @@ impl App {
             dispenser_panel: (0, 0),
             dispenser_open_cell: None,
             dispenser_open_kind: 0,
+            dispenser_is_live: false,
+            dispenser_live_window: None,
             mouse_pos: None,
             shift_down: false,
             press_doubled: false,
@@ -19771,11 +19782,15 @@ impl App {
         // toggle; a chest-live switch the stale rows it never rides,
         // the ownership gate's own discipline). The offline world
         // carries no rows at all — the clears are its no-ops.
-        if matches!(kind, ScreenKind::Chest | ScreenKind::Inventory) {
+        if matches!(
+            kind,
+            ScreenKind::Chest | ScreenKind::Dispenser | ScreenKind::Inventory
+        ) {
             self.bundle_scroll_acc_x = 0.0;
             self.bundle_scroll_acc_y = 0.0;
         }
         if kind == ScreenKind::Chest
+            || kind == ScreenKind::Dispenser
             || (kind == ScreenKind::Inventory && self.chest_live_window.is_some())
         {
             self.bundle_contents.clear();
@@ -22511,6 +22526,23 @@ impl App {
     /// updateNeighbourForOutputSignal law the same walk serves), the
     /// screen back to the world.
     pub fn close_dispenser(&mut self) {
+        // THE WIRE'S OWN CLOSE (the chest's own shape — the live
+        // session's close echoes the serverbound Container Close
+        // packet through the live session's send lane, the belief
+        // resets with the window, the server's own close returns the
+        // carried stack server-side)
+        if self.dispenser_is_live {
+            if let (Some((window_id, _)), Some(sink)) =
+                (self.dispenser_live_window, self.live_clicks.as_ref())
+            {
+                let _ = sink.send(crate::world_view::ContainerCommand::Close { window_id });
+            }
+            self.dispenser_is_live = false;
+            self.dispenser_live_window = None;
+            self.dispenser_carried = (0, 0);
+            self.open(ScreenKind::World);
+            return;
+        }
         // THE CARRIED'S OWN HOME RIDE (the vanilla removed()'s
         // placeItemBackInInventory walk — the close_furnace shape)
         if self.dispenser_carried.1 > 0 {
@@ -31952,7 +31984,11 @@ impl App {
     /// answers: the grid source the moveItemStackTo(9, 45, true)
     /// REVERSE scan speaks — the hotbar row the first free seat the
     /// rev order keeps — the standard rows the moveItemStackTo(0, 9,
-    /// false) forward scan answers): the press finds the 16x16 hit
+    /// false) forward scan answers). THE WIRE LANE the live window's
+    /// clicks wear FIRST (the chest's own shape — the ContainerClick
+    /// echo the window's id + revision rides, the changed map the
+    /// local prediction names, the wholesale correction the next sync
+    /// speaks). The offline body: the press finds the 16x16 hit
     /// box the last render laid out, the PICKUP tables the same
     /// [`crate::world_view::predict_pickup`] folds the family wears
     /// (the left the whole-stack take, the right the half; the
@@ -31966,6 +32002,92 @@ impl App {
     /// return, the flush the edits bank, the shot beat the same map
     /// consumes).
     fn click_dispenser_slot(&mut self, mx: i32, my: i32, button: i8) {
+        if self.dispenser_is_live {
+            // THE WIRE'S OWN CLICK LANE (the chest's own shape — the
+            // believed rows, the pickup/split prediction, the
+            // ContainerClick echo, the wholesale correction the next
+            // sync speaks): the window's id + revision ride the
+            // command, the changed map the local prediction names, the
+            // carried cursor the belief keeps. THE QUICKCRAFT DRAG the
+            // chest's own live shape wears later — the press the
+            // PICKUP dispatch answers (the place-back the same table
+            // the deferred place speaks).
+            if self.dispenser_slot_rects.is_empty() {
+                return; // no render spoke yet — no geometry to hit
+            }
+            let Some((window_id, state_id)) = self.dispenser_live_window else {
+                return; // no window identity — nothing to echo against
+            };
+            let Some(sink) = self.live_clicks.as_ref() else {
+                return; // no live session — the command dies on the frame thread
+            };
+            let Some(&(_, _, slot)) = self
+                .dispenser_slot_rects
+                .iter()
+                .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+            else {
+                return; // the press landed between the slots — no click
+            };
+            let menu = slot as usize;
+            let believed = if menu < 9 {
+                self.dispenser_slots[menu]
+            } else {
+                self.dispenser_mirror[menu - 9]
+            };
+            // THE QUICK_MOVE LANE (the shift-click — the chest's own
+            // live walk the 45-slot belief wears): the whole stack
+            // moves to the OTHER section, the multi-slot deltas mutate
+            // the belief in place and ride the command (the cursor is
+            // NOT the quick-move's lane).
+            if self.shift_down {
+                let mut snapshot: Vec<(i32, i32)> = Vec::with_capacity(45);
+                snapshot.extend_from_slice(&self.dispenser_slots);
+                snapshot.extend_from_slice(&self.dispenser_mirror);
+                let changed = crate::world_view::predict_quick_move_grid(&snapshot, menu, 9);
+                for (i, pair) in &changed {
+                    if *i < 9 {
+                        self.dispenser_slots[*i] = *pair;
+                    } else {
+                        self.dispenser_mirror[*i - 9] = *pair;
+                    }
+                }
+                let _ = sink.send(crate::world_view::ContainerCommand::Click(
+                    crate::world_view::ContainerClick {
+                        window_id,
+                        state_id,
+                        slot,
+                        button,
+                        input: crate::world_view::ContainerInput::QuickMove,
+                        changed: changed.iter().map(|(i, p)| (*i as i16, *p)).collect(),
+                        carried: self.dispenser_carried,
+                    },
+                ));
+                return;
+            }
+            let (new_slot, new_carried) = if button == 0 {
+                crate::world_view::predict_pickup(believed, self.dispenser_carried)
+            } else {
+                crate::world_view::predict_pickup_right(believed, self.dispenser_carried)
+            };
+            if menu < 9 {
+                self.dispenser_slots[menu] = new_slot;
+            } else {
+                self.dispenser_mirror[menu - 9] = new_slot;
+            }
+            self.dispenser_carried = new_carried;
+            let _ = sink.send(crate::world_view::ContainerCommand::Click(
+                crate::world_view::ContainerClick {
+                    window_id,
+                    state_id,
+                    slot,
+                    button,
+                    input: crate::world_view::ContainerInput::Pickup,
+                    changed: vec![(slot, new_slot)],
+                    carried: new_carried,
+                },
+            ));
+            return;
+        }
         if self.dispenser_slot_rects.is_empty() {
             return; // no render spoke yet — no geometry to hit
         }
@@ -50874,6 +50996,67 @@ impl App {
                     }
                     return;
                 }
+                if c.menu_type_id == crate::world_model::MENU_TYPE_GENERIC_3X3 {
+                    // THE DISPENSER'S OWN WIRE LANE (the menu type 6
+                    // the server's OpenScreen word speaks — the
+                    // DispenserMenu the clinit order pins, the chest's
+                    // own projection shape): the menu's own numbering —
+                    // the nine 0..9 the add3x3GridSlots walk speaks,
+                    // the standard rows 9..45 the
+                    // addStandardInventorySlots walk keeps — the wire's
+                    // own (0, 0) emptiness riding verbatim. THE TITLE
+                    // LANE the OpenScreen word's own Component carries
+                    // (the container.dispenser/container.dropper rows
+                    // the BlockEntity pair wears) — the model's
+                    // title_nbt the decode round owns, the default
+                    // container.dispenser title the canvas banks (the
+                    // honest gap the next round's own line rides).
+                    let mut grid = vec![(0i32, 0i32); 9];
+                    for (i, &(id, count)) in c.slots.iter().take(9).enumerate() {
+                        grid[i] = (id, count);
+                    }
+                    let mut mirror = vec![(0i32, 0i32); 36];
+                    for (i, &(id, count)) in c.slots.iter().skip(9).take(36).enumerate() {
+                        mirror[i] = (id, count);
+                    }
+                    self.dispenser_slots = grid;
+                    self.dispenser_mirror = mirror;
+                    self.dispenser_is_live = true;
+                    // the window's identity rides in: the clicks echo
+                    // against THIS id and revision (the stateId lane)
+                    self.dispenser_live_window = Some((c.id, c.state_id));
+                    // the AUTHORITATIVE carried lands too (the chest's
+                    // wholesale replacement speaks)
+                    self.dispenser_carried = c.carried;
+                    // the server's window the per-cell key never banks
+                    // (the offline flush the live lane never rides)
+                    self.dispenser_open_cell = None;
+                    self.dispenser_open_kind = 0;
+                    if self.screen == ScreenKind::World {
+                        self.open(ScreenKind::Dispenser);
+                    }
+                    // THE BUNDLE CONTENTS' OWN FEED (the chest's own
+                    // law — the rows the wire's patches speak, the
+                    // WHOLESALE replacement the container lane rides)
+                    let mut rows = std::collections::HashMap::new();
+                    for (slot_id, items) in &c.bundle_rows {
+                        let selected = match self.bundle_contents.get(slot_id) {
+                            Some(prev) if prev.items == *items => prev.selected_item_index,
+                            _ => BundleContents::NO_SELECTED_INDEX,
+                        };
+                        rows.insert(
+                            *slot_id,
+                            BundleContents {
+                                items: items.clone(),
+                                selected_item_index: selected,
+                            },
+                        );
+                    }
+                    self.bundle_contents = rows;
+                    self.bundle_scroll_acc_x = 0.0;
+                    self.bundle_scroll_acc_y = 0.0;
+                    return;
+                }
                 if c.menu_type_id != crate::world_model::MENU_TYPE_CHEST {
                     return; // not the wired menu — the honest drop
                 }
@@ -50971,6 +51154,16 @@ impl App {
                 }
                 self.furnace_live_window = None;
                 self.live_furnace_carried = (0, 0); // no window, no held stack
+                // the store dropped: a LIVE dispenser closes back to the
+                // world (the same vanilla closeContainer return — the
+                // chest's own lane the menu-type-6 window mirrors);
+                // the fresh stand-in is not the live lane's to close
+                if self.screen == ScreenKind::Dispenser && self.dispenser_is_live {
+                    self.dispenser_is_live = false;
+                    self.open(ScreenKind::World);
+                }
+                self.dispenser_live_window = None;
+                self.dispenser_carried = (0, 0); // no window, no held stack
                 // the window's OWN rows die with it (the lifecycle the
                 // open() switch keeps — no stale bundle rides a later
                 // screen, the next window re-learns from its own sync)
@@ -89929,6 +90122,23 @@ mod tests {
             .collect()
     }
 
+    /// The 3x3 canvas's render-shaped hit boxes (the render's own
+    /// layout the test pre-lays — the render-then-hit pattern the
+    /// chest helper's shape keeps): the nine the j + i*3 order rides,
+    /// the standard rows the 9..45 ids speak.
+    fn dispenser_rects_for(panel: (i32, i32)) -> Vec<(i32, i32, i16)> {
+        (0..9)
+            .map(|i| {
+                let (sx, sy) = dispenser_grid_slot(panel, i);
+                (sx + 1, sy + 1, i as i16)
+            })
+            .chain((0..36).map(|i| {
+                let (sx, sy) = chest_mirror_slot(panel, i);
+                (sx + 1, sy + 1, (9 + i) as i16)
+            }))
+            .collect()
+    }
+
     /// THE DAY CLOCK'S WIRE RE-SYNC (vanilla ClientLevel's own absolute
     /// SetTime fold): the join snapshot's day opinion re-bases the
     /// fixed clock BEFORE the first frame renders, the 250ms refresh
@@ -92618,6 +92828,206 @@ cow_sound_variant: None,
         assert!(app.chest_is_live, "the live lane took the screen over");
         assert_eq!(app.chest_slots[4], (926, 12), "the live slots replaced the loadout");
         assert_eq!(app.chest_mirror[0], (921, 5), "the live mirror filled in");
+    }
+
+    /// THE WIRE DISPENSER'S OWN WINDOW (the menu type id 6 the
+    /// OpenScreen word carries — the GENERIC_3x3 the clinit order
+    /// pins): the store's projection opens the 3x3 canvas over the
+    /// world (the window-1 belief the 45-slot shape feeds — the nine
+    /// + the standard rows the menu's own numbering keeps), a NEWER
+    /// snapshot updates IN PLACE, the foreign menu stays the honest
+    /// drop, the store's drop returns to the world, and the offline
+    /// stand-in is never the live lane's to close.
+    #[test]
+    fn the_wire_dispenser_menu_drives_the_3x3_canvas() {
+        use crate::world_view::LiveContainer;
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        assert_eq!(app.screen, ScreenKind::World);
+
+        // the server opens a dispenser (Open Screen → the store, the
+        // Set Content fills it — here the store's PROJECTION arrives):
+        // the screen SHOWS over the world, the slots ride the menu's
+        // own numbering into the nine and the mirror
+        let disp = LiveContainer {
+            id: 5,
+            menu_type_id: crate::world_model::MENU_TYPE_GENERIC_3X3,
+            slots: {
+                let mut s = vec![(0i32, 0i32); 45];
+                s[4] = (926, 12); // the grid's center: diamond x12
+                s[9] = (921, 5); // the mirror's first main row slot: apple x5
+                s[36] = (932, 64); // the mirror's hotbar head: iron_ingot x64
+                s
+            },
+            carried: (0, 0),
+            state_id: 7,
+            bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(disp.clone()));
+        assert_eq!(app.screen, ScreenKind::Dispenser, "the window shows over the world");
+        assert!(app.dispenser_is_live, "the live lane owns the screen now");
+        assert_eq!(app.dispenser_live_window, Some((5, 7)), "the window identity rides");
+        assert_eq!(app.dispenser_open_cell, None, "the server's window no cell key banks");
+        assert_eq!(app.dispenser_slots.len(), 9);
+        assert_eq!(app.dispenser_slots[4], (926, 12), "the grid slot rode in");
+        assert_eq!(app.dispenser_mirror.len(), 36);
+        assert_eq!(app.dispenser_mirror[0], (921, 5), "the mirror's main row slot 0 = menu slot 9");
+        assert_eq!(app.dispenser_mirror[27], (932, 64), "the mirror's hotbar head = menu slot 36");
+
+        // a NEWER snapshot of the same window updates IN PLACE (the
+        // Set Content packet's replacement — no re-open flicker)
+        let mut disp2 = disp.clone();
+        disp2.slots[4] = (0, 0); // the diamond was taken out
+        disp2.slots[5] = (981, 3);
+        app.live_view_updated(air_net_world(2, 2), None, None, Some(disp2));
+        assert_eq!(app.screen, ScreenKind::Dispenser, "the update is in place");
+        assert_eq!(app.dispenser_slots[4], (0, 0), "the taken stack emptied");
+        assert_eq!(app.dispenser_slots[5], (981, 3), "the new stack landed");
+
+        // a NON-3x3 menu is the honest drop: the store keeps it, the
+        // screen machinery does not move
+        let hopper = LiveContainer { id: 6, menu_type_id: 15, slots: vec![], carried: (0, 0), state_id: 0, bundle_rows: Vec::new(), data_slots: Vec::new() };
+        app.live_view_updated(air_net_world(2, 3), None, None, Some(hopper));
+        assert_eq!(app.screen, ScreenKind::Dispenser, "the wired screen stays");
+        assert_eq!(app.dispenser_slots[5], (981, 3), "the hopper touched nothing");
+
+        // the store DROPPED (the server's Container Close): the live
+        // dispenser returns to the world — the vanilla closeContainer's own
+        app.live_view_updated(air_net_world(2, 4), None, None, None);
+        assert_eq!(app.screen, ScreenKind::World, "the close returns to the world");
+        assert!(!app.dispenser_is_live, "the live flag dropped with the window");
+
+        // a container-less update with NO dispenser up: nothing happens
+        app.live_view_updated(air_net_world(2, 5), None, None, None);
+        assert_eq!(app.screen, ScreenKind::World);
+
+        // the OFFLINE stand-in is never the live lane's to close: the
+        // deterministic canvas stays up (the app went PROCEDURAL with
+        // the offline scene — the world guard drops the live updates)
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        let cell = (c, surface + 1, c);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(cell.0, cell.1, cell.2, crate::world::DISPENSER);
+        app.open_dispenser_for(cell);
+        assert_eq!(app.screen, ScreenKind::Dispenser);
+        assert!(!app.dispenser_is_live);
+        app.live_view_updated(air_net_world(2, 6), None, None, None);
+        assert_eq!(app.screen, ScreenKind::Dispenser, "the offline canvas survives");
+        // and the lane re-arms on a NEW join: the network world back,
+        // the live window opens over it (the fresh menu's slots — the
+        // vanilla open is a fresh screen)
+        app.net_world = Some(air_net_world(2, 8));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        assert_eq!(app.screen, ScreenKind::World);
+        app.live_view_updated(air_net_world(2, 9), None, None, Some(disp));
+        assert_eq!(app.screen, ScreenKind::Dispenser);
+        assert!(app.dispenser_is_live, "the live lane took the screen over");
+        assert_eq!(app.dispenser_slots[4], (926, 12), "the live slots replaced the loadout");
+        assert_eq!(app.dispenser_mirror[0], (921, 5), "the live mirror filled in");
+    }
+
+    /// THE WIRE DISPENSER'S OWN CLICK ARC (the window-5 identity the
+    /// ServerboundContainerClickPacket speaks — the chest's send lane
+    /// the GENERIC_3x3 menu's own numbering rides): the grid seat's
+    /// pickup carries the window's id + revision, the place-back the
+    /// same PICKUP input speaks, the shift quick-move the QuickMove
+    /// input's changed map wears (the moveItemStackTo(9, 45, true)
+    /// reverse scan the DispenserMenu's own quickMoveStack banks),
+    /// and the close echoes the Container Close packet.
+    #[test]
+    fn the_wire_dispenser_clicks_speak_the_window() {
+        use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+        let diamond = mc_registry::item_id_by_name("diamond").unwrap();
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        let disp = LiveContainer {
+            id: 5,
+            menu_type_id: crate::world_model::MENU_TYPE_GENERIC_3X3,
+            slots: {
+                let mut s = vec![(0i32, 0i32); 45];
+                s[4] = (diamond, 12); // the grid's center: diamond x12
+                s
+            },
+            carried: (0, 0),
+            state_id: 3,
+            bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(disp));
+        // THE RENDER'S OWN LAYOUT (the hit boxes the render pre-lays —
+        // the test the helper's own shape wears)
+        let panel = inventory_panel_origin(640, 360);
+        app.dispenser_panel = panel;
+        app.dispenser_slot_rects = dispenser_rects_for(panel);
+        // THE GRID SEAT'S PICKUP (menu slot 4 = the 3x3's center): the
+        // whole stack rides the cursor, the packet the window's own
+        // identity names
+        let (gx, gy) = dispenser_grid_slot(panel, 4);
+        app.on_press(gx + 1 + 8, gy + 1 + 8);
+        match click_rx.try_recv().expect("the grid click rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 5, "the window's own id");
+                assert_eq!(c.state_id, 3, "the revision rides");
+                assert_eq!(c.slot, 4, "the menu's own numbering");
+                assert_eq!(c.input, ContainerInput::Pickup);
+                assert_eq!(c.changed, vec![(4, (0, 0))], "the taken slot emptied");
+                assert_eq!(c.carried, (diamond, 12), "the cursor carries the stack");
+            }
+            _ => panic!("the click command's own shape"),
+        }
+        assert_eq!(app.dispenser_carried, (diamond, 12), "the belief's cursor follows");
+        // THE PLACE-BACK (the second press the PICKUP table's own
+        // place arm serves — the vanilla doClick's symmetric answer)
+        app.on_press(gx + 1 + 8, gy + 1 + 8);
+        match click_rx.try_recv().expect("the place click rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.changed, vec![(4, (diamond, 12))], "the stack landed back");
+                assert_eq!(c.carried, (0, 0), "the cursor emptied");
+            }
+            _ => panic!("the click command's own shape"),
+        }
+        // THE SHIFT QUICK-MOVE (the whole stack the OTHER section
+        // takes — the 45-slot belief the predictor wears, the
+        // changed map the deltas name, the cursor untouched)
+        app.shift_down = true;
+        app.on_press(gx + 1 + 8, gy + 1 + 8);
+        app.shift_down = false;
+        match click_rx.try_recv().expect("the quick-move rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 5);
+                assert_eq!(c.slot, 4);
+                assert_eq!(c.input, ContainerInput::QuickMove);
+                assert_eq!(c.changed[0], (4, (0, 0)), "the source emptied");
+                assert_eq!(c.changed.last().copied().unwrap().0, 44, "the hotbar tail the rev scan takes");
+                assert_eq!(c.carried, (0, 0), "the cursor the quick-move never rides");
+            }
+            _ => panic!("the click command's own shape"),
+        }
+        assert_eq!(app.dispenser_slots[4], (0, 0), "the belief's grid emptied");
+        // THE CLOSE (the E/Escape lane the live window's own echo
+        // wears): the Container Close packet the window's id names,
+        // the belief resets with the window
+        app.on_escape();
+        match click_rx.try_recv().expect("the close rode the lane") {
+            ContainerCommand::Close { window_id } => {
+                assert_eq!(window_id, 5, "the window's own id");
+            }
+            other => panic!("expected a container close, got {other:?}"),
+        }
+        assert!(!app.dispenser_is_live, "the live flag the close drops");
+        assert_eq!(app.screen, ScreenKind::World, "the close the world wears");
     }
 
     /// THE WIRE TABLE'S OWN WINDOW (the menu type id 12 the OpenScreen
