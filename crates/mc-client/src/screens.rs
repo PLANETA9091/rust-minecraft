@@ -6037,13 +6037,36 @@ pub enum ScreenKind {
     /// store policy), the SET DATA packet feeds the progress words
     /// (the ubyte-window + BE-short-pair transport the parse pins,
     /// the handleContainerSetData's window-id gate the model arm
-    /// mirrors); the clicks ride the chest's own ContainerClick lane
-    /// (the pickup/split predictions the player's own store speaks —
-    /// the SHIFT quick-move the menu-specific quickMoveStack walk
-    /// OWNS server-side, the local belief stays put, the next sync's
-    /// wholesale correction the honest answer), the carried follows
     /// the cursor, the close echoes the Container Close packet.
     Furnace,
+    /// THE DISPENSER'S OWN 3x3 CANVAS (javap 26.2 DispenserScreen +
+    /// DispenserMenu — the right-press on the placed dispenser/
+    /// dropper the block-use lane opens, the useWithoutItem walk the
+    /// openMenu + the awardStat(INSPECT_DISPENSER) + the SUCCESS
+    /// verdict speaks): the REAL `container/dispenser.png` background
+    /// blitted 176x166 at the centered panel (the SINGLE
+    /// CONTAINER_LOCATION the dropper's own screen shares — the
+    /// DispenserScreen the DispenserMenu alone wears, the
+    /// DropperBlockEntity the same menu class answers), the menu's
+    /// own slots the ctor's add walk places (add3x3GridSlots(62, 17)
+    /// — the j + i*3 row-major order the 18-pitch 3x3 speaks — + the
+    /// standard rows addStandardInventorySlots(8, 84)), the CENTERED
+    /// title the init walk speaks (`titleLabelX = (imageWidth -
+    /// font.width(title)) / 2` — the furnace's own override the
+    /// base's left edge never keeps; the kind's own container.*
+    /// lang row the BlockEntity's DEFAULT_NAME banks). The OFFLINE
+    /// deterministic lane the chest's own per-cell store wears — the
+    /// nine the container_stores entry the open LOADS, the GUI's
+    /// edits the close flush banks (the dispenser's own shot beat the
+    /// SAME map the lever's flip consumes), the comparator's analog
+    /// read the fill-sync ride serves. The clicks ride the offline
+    /// PICKUP tables (the chest's own predictions speak — the
+    /// quick-move the moveItemStackTo(9, 45, true) reverse scan the
+    /// DispenserMenu's own quickMoveStack banks); the carried follows
+    /// the cursor, the close the carried stack home returns. The WIRE
+    /// lane (the GENERIC_3x3 menu type the OpenScreen word routes)
+    /// the chest's own live shape rides later.
+    Dispenser,
     /// THE WORLD OPTIONS' OWN DIAL (javap 26.2 WorldOptionsScreen +
     /// DifficultyButtons — the OptionsScreen's in-world
     /// `options.worldOptions.button` the header row opens): the
@@ -7622,6 +7645,38 @@ pub struct App {
     /// detector the cooking-words reset answers — the tick walk's
     /// own state).
     pub furnace_sim: crate::furnace_sim::FurnaceSim,
+    /// THE DISPENSER'S OWN BELIEVED NINE (the offline 3x3 canvas the
+    /// container_stores entry projects — the same law the chest grid
+    /// speaks: the open the cell's nine LOADS, the clicks mutate the
+    /// projection, the close flush the edited rows the map banks).
+    /// The (0, 0) stacks the empty slots wear (the beat's own filter
+    /// reads).
+    pub dispenser_slots: Vec<(i32, i32)>,
+    /// THE DISPENSER'S OWN MIRROR (the 36 standard rows the menu's
+    /// addStandardInventorySlots(8, 84) places — the main 0..26, the
+    /// hotbar 27..35; the chest's own sync law the projection keeps,
+    /// the REAL inventory the rows speak).
+    pub dispenser_mirror: Vec<(i32, i32)>,
+    /// THE DISPENSER'S OWN CARRIED (the offline doClick's own cursor
+    /// the pickup/split predictions mutate — the chest's own lane, the
+    /// close's add-back walk returns it).
+    pub dispenser_carried: (i32, i32),
+    /// The dispenser's slot hit boxes the LAST render laid out (the
+    /// furnace's own shape): (x, y, the MENU's own slot number) — the
+    /// 3x3 grid (0..8, the j + i*3 order) then the standard rows
+    /// (9..44), the 16x16 inner boxes the clicks hit-test against.
+    pub dispenser_slot_rects: Vec<(i32, i32, i16)>,
+    /// The dispenser panel's GUI origin the LAST render laid out (the
+    /// furnace's own centered origin — the same 176x166 canvas).
+    pub dispenser_panel: (i32, i32),
+    /// THE OPEN DISPENSER'S OWN CELL (the open the key banks, the
+    /// close flush the key takes home — the None the closed screens
+    /// keep; the per-cell law the chest lane speaks).
+    pub dispenser_open_cell: Option<(i32, i32, i32)>,
+    /// THE OPENED CELL'S OWN KIND (the DISPENSER/DROPPER byte the
+    /// title lane reads — the BlockEntity's DEFAULT_NAME the
+    /// container.* lang row banks; the zero the closed screens keep).
+    pub dispenser_open_kind: u16,
     /// The mouse position in GUI units the LAST loop tick tracked —
     /// the carried stack renders here (the vanilla cursor-follow).
     /// `None` wherever no live mouse has moved (the headless scenes:
@@ -9338,6 +9393,13 @@ impl App {
             furnace_pos: None,
             furnace_carried: (0, 0),
             furnace_sim: crate::furnace_sim::FurnaceSim::default(),
+            dispenser_slots: Vec::new(),
+            dispenser_mirror: Vec::new(),
+            dispenser_carried: (0, 0),
+            dispenser_slot_rects: Vec::new(),
+            dispenser_panel: (0, 0),
+            dispenser_open_cell: None,
+            dispenser_open_kind: 0,
             mouse_pos: None,
             shift_down: false,
             press_doubled: false,
@@ -20293,6 +20355,7 @@ impl App {
             ScreenKind::Creative => self.close_creative_picker(),
             ScreenKind::Crafting => self.close_crafting_table(),
             ScreenKind::Chest => self.close_chest_container(),
+            ScreenKind::Dispenser => self.close_dispenser(),
             ScreenKind::Furnace => self.close_furnace(),
             _ => {}
         }
@@ -22370,6 +22433,132 @@ impl App {
                 w.set_variant(pos.0, pos.1, pos.2, v & !crate::world::BARREL_OPEN_BIT);
             }
         }
+    }
+
+    /// THE DISPENSER'S OWN DOOR (javap 26.2 DispenserBlock.
+    /// useWithoutItem — the openMenu walk the BlockEntity's own
+    /// MenuProvider answers, the awardStat(INSPECT_DISPENSER) the
+    /// SUCCESS verdict carries: the right-press on the placed
+    /// dispenser/dropper the OFFLINE world answers — the cell's own
+    /// nine the [`Self::container_stores`] entry the fresh open
+    /// inserts, the reopen the stored stacks load, the player's own
+    /// rows the standard projection mirrors). The title lane the
+    /// opened KIND banks (the DispenserBlockEntity's DEFAULT_NAME the
+    /// container.dispenser row wears, the DropperBlockEntity's own
+    /// container.dropper the same menu class answers — the
+    /// DispenserScreen the DispenserMenu alone wears). The use-lane
+    /// arm (the block-use walk's own order the crafting-table arm
+    /// keeps) this fn the offline lane serves.
+    pub fn open_dispenser_for(&mut self, pos: (i32, i32, i32)) {
+        self.enter_world();
+        // THE DISK BANK'S OWN LAZY LOAD (the chest's own law — the
+        // first store access the once-flag's parse answers)
+        self.container_stores_load_once();
+        // THE CELL'S OWN KIND (the opened byte the title lane banks —
+        // the air cell the zero the closed screens keep)
+        self.dispenser_open_kind = self
+            .offline_world
+            .as_ref()
+            .map(|w| w.get(pos.0, pos.1, pos.2))
+            .unwrap_or(0);
+        // THE CELL'S OWN NINE (the DispenserBlockEntity's own 9-slot
+        // container the store map banks — the same entry the shot
+        // beat's random pick consumes, the write-back the count-1 law
+        // wears)
+        let store = self
+            .container_stores
+            .entry(pos)
+            .or_insert_with(|| vec![(0i32, 0i32); 9]);
+        self.dispenser_slots = store.clone();
+        self.dispenser_open_cell = Some(pos);
+        self.dispenser_carried = (0, 0);
+        // THE STANDARD ROWS' OWN PROJECTION (the menu's
+        // addStandardInventorySlots(8, 84) walk — the player's own
+        // store the 36 rows mirror: the main grid items 9..35 ride
+        // menu 9..35, the hotbar items 0..8 ride menu 36..44 — the
+        // chest's own sync law the projection keeps)
+        self.dispenser_mirror_sync_from_inventory();
+        self.open(ScreenKind::Dispenser);
+    }
+
+    /// THE DISPENSER'S OWN MIRROR SYNC (the chest's own law — the
+    /// projection the inventory IS: the main rows the items 9..35
+    /// speak, the hotbar row the items 0..8, the fresh rows EVERY
+    /// open and every mutation re-syncs).
+    fn dispenser_mirror_sync_from_inventory(&mut self) {
+        if self.dispenser_mirror.len() != 36 {
+            self.dispenser_mirror.resize(36, (0, 0));
+        }
+        for i in 0..27 {
+            self.dispenser_mirror[i] = self.inventory.items[9 + i];
+        }
+        for i in 0..9 {
+            self.dispenser_mirror[27 + i] = self.inventory.items[i];
+        }
+        self.hotbar_slots = self.inventory.hotbar();
+    }
+
+    /// THE DISPENSER'S OWN CLOSE (the vanilla Escape/E on the
+    /// dispenser's screen — the chest's own close walk the carried
+    /// return, the store flush and the fill ride speak): the carried
+    /// stack the add walk home returns (the same-item merges, the
+    /// first-empty pass, the full store the remainder drops — the
+    /// close_furnace shape), the edited nine the per-cell store rides
+    /// home to (the shot beat the SAME map consumes — the lever's
+    /// flip the GUI's own stock dispenses), the analog fill the
+    /// comparator's back read re-banks, the wire voice the cell+six
+    /// re-consult answers (the vanilla stopOpen tail the
+    /// updateNeighbourForOutputSignal law the same walk serves), the
+    /// screen back to the world.
+    pub fn close_dispenser(&mut self) {
+        // THE CARRIED'S OWN HOME RIDE (the vanilla removed()'s
+        // placeItemBackInInventory walk — the close_furnace shape)
+        if self.dispenser_carried.1 > 0 {
+            let (id, count) = self.dispenser_carried;
+            let mut rest = count;
+            for it in self.inventory.items.iter_mut() {
+                if rest == 0 {
+                    break;
+                }
+                if it.1 > 0 && it.0 == id && it.1 < crate::world_view::item_max_stack(id) {
+                    let take = (crate::world_view::item_max_stack(id) - it.1).min(rest);
+                    it.1 += take;
+                    rest -= take;
+                }
+            }
+            for it in self.inventory.items.iter_mut() {
+                if rest == 0 {
+                    break;
+                }
+                if it.1 <= 0 {
+                    *it = (id, rest);
+                    rest = 0;
+                }
+            }
+            if rest > 0 {
+                self.spawn_drop_at_player(id, rest);
+            }
+            self.dispenser_carried = (0, 0);
+        }
+        // THE STORE'S OWN FLUSH (the chest's own persist law — the
+        // open the dispenser_open_cell key banks, the close the
+        // edited nine the map entry rides home to, the disk write the
+        // same lane banks)
+        self.container_stores_load_once();
+        if let Some(pos) = self.dispenser_open_cell.take() {
+            let nine: Vec<(i32, i32)> = self.dispenser_slots.iter().copied().collect();
+            self.container_stores.insert(pos, nine);
+            self.container_stores_file_save();
+            // THE FILL'S OWN RIDE HOME (the comparator's container lane
+            // the close flush banks — the furnace's own law the nine
+            // wears: the edited slots the analog the map rides, the
+            // front comparators the attach broadcast the cell+six walk
+            // re-consults)
+            let _ = self.container_fill_sync(pos, None);
+            self.attach_wire_voice(pos.0, pos.1, pos.2);
+        }
+        self.dispenser_open_kind = 0;
+        self.open(ScreenKind::World);
     }
 
     /// THE STORE'S OWN FLUSH (the dev-66 round — the vanilla
@@ -25441,6 +25630,107 @@ impl App {
         self.render_bundle_tooltip(g, a);
     }
 
+    /// THE DISPENSER'S OWN RENDER (javap 26.2 DispenserScreen — the
+    /// frozen world dimmed beneath, the REAL `container/dispenser.png`
+    /// blitted 176x166 at the centered panel — the SINGLE
+    /// CONTAINER_LOCATION the dropper's own screen shares, the slots
+    /// the texture's own chrome bakes [NO container/slot sprites the
+    /// vector lanes draw]), the CENTERED title the init walk speaks
+    /// (`titleLabelX = (imageWidth - font.width(title)) / 2`,
+    /// titleLabelY 6 the base class keeps — the kind's own container.*
+    /// lang row the BlockEntity's DEFAULT_NAME banks), the inventory
+    /// label at +72 (the imageHeight - 94 the base walk keeps), the
+    /// menu's own slots (add3x3GridSlots(62, 17) — the j + i*3
+    /// row-major order the 18-pitch 3x3 speaks — + the standard rows
+    /// addStandardInventorySlots(8, 84) the chest mirror geometry
+    /// answers), the icons/counts the furnace's own draw keeps, the
+    /// carried follow. The render also lays out the slot HIT BOXES
+    /// (the 16x16 inner cells with their menu slot numbers) for the
+    /// press lane — the render-then-hit pattern the family keeps.
+    fn render_dispenser(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        g.fill(0, 0, w, h, [0.0, 0.0, 0.0, 0.35]);
+        let panel = inventory_panel_origin(w, h);
+        self.dispenser_panel = panel;
+        // THE HIT BOXES (the menu's own numbering — the nine the
+        // j + i*3 order the add3x3GridSlots walk speaks, the standard
+        // rows 9..44 the addStandardInventorySlots walk keeps — the
+        // main 9..35 then the hotbar 36..44, the 16x16 inner cells the
+        // +1 inset the Slot's own hit shape wears)
+        let mut rects: Vec<(i32, i32, i16)> = Vec::with_capacity(45);
+        for i in 0..9usize {
+            let (sx, sy) = dispenser_grid_slot(panel, i);
+            rects.push((sx + 1, sy + 1, i as i16));
+        }
+        for i in 0..36usize {
+            let (sx, sy) = chest_mirror_slot(panel, i);
+            rects.push((sx + 1, sy + 1, (9 + i) as i16));
+        }
+        self.dispenser_slot_rects = rects;
+        g.sprite_file_region(
+            a,
+            "gui/container/dispenser.png",
+            0,
+            0,
+            176,
+            166,
+            panel.0,
+            panel.1,
+        );
+        // THE CENTERED TITLE (the init walk's own formula the
+        // DispenserScreen's own override speaks — the kind's own lang
+        // row the opened kind banks)
+        let label = [0.251, 0.251, 0.251];
+        let title_key = if self.dispenser_open_kind == crate::world::DROPPER {
+            "container.dropper"
+        } else {
+            "container.dispenser"
+        };
+        if let Some(t) = tr(title_key) {
+            let tx = panel.0 + (176 - g.text_width(t)) / 2;
+            g.text(a, tx, panel.1 + 6, t, label, false);
+        }
+        if let Some(t) = tr("container.inventory") {
+            g.text(a, panel.0 + 8, panel.1 + 166 - 94, t, label, false);
+        }
+        // THE SLOT ICONS (the furnace's own draw — the believed rows
+        // the grid + the mirror keep: the store's projection, the
+        // standard rows the real inventory speaks)
+        for &(sx, sy, slot) in &self.dispenser_slot_rects {
+            let slot = slot as usize;
+            let believed = if slot < 9 {
+                self.dispenser_slots.get(slot)
+            } else {
+                self.dispenser_mirror.get(slot - 9)
+            };
+            let Some(&(id, count)) = believed else {
+                continue;
+            };
+            if count <= 0 {
+                continue; // the wire's own emptiness sentinel
+            }
+            draw_item_icon(g, id, sx, sy);
+            if count > 1 {
+                let s = count.to_string();
+                let tw = g.text_width(&s);
+                g.text(a, sx + 16 - tw, sy + 9, &s, WHITE, true);
+            }
+        }
+        // THE HELD STACK follows the cursor (the vanilla carried
+        // render — the offline sim's local cursor the chest's own gate
+        // keeps, the headless scenes track no mouse)
+        if self.dispenser_carried.1 > 0 {
+            if let Some((mx, my)) = self.mouse_pos {
+                draw_item_icon(g, self.dispenser_carried.0, mx - 8, my - 8);
+                if self.dispenser_carried.1 > 1 {
+                    let s = self.dispenser_carried.1.to_string();
+                    let tw = g.text_width(&s);
+                    g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
+                }
+            }
+        }
+        self.render_bundle_tooltip(g, a);
+    }
+
     /// THE DIMENSION SWAP (the verdict's own teleport tail — the
     /// vanilla handlePortal walk the countdown's TRUE return serves;
     /// the offline fiction's own lane: the far side's slot the
@@ -25849,6 +26139,11 @@ impl App {
             // screen): back to the world — the shared walk the echo, the
             // carried return, the store flush and the lid release speak
             self.close_chest_container();
+        } else if self.screen == ScreenKind::Dispenser {
+            // THE 3x3 CANVAS'S OWN CLOSE (the vanilla Escape/E on the
+            // dispenser's screen — the chest's own close walk the
+            // carried return, the store flush and the fill ride speak)
+            self.close_dispenser();
         } else if self.screen == ScreenKind::Furnace {
             // THE FURNACE'S OWN CLOSE (the vanilla Escape/E on the
             // furnace's screen — the chest's own close walk the menu
@@ -28304,6 +28599,17 @@ impl App {
     /// attack swing (the world's left press — the guard inside keeps
     /// the menus silent).
     pub fn on_press(&mut self, mx: i32, my: i32) {
+        if self.screen == ScreenKind::Dispenser {
+            // THE 3x3 CANVAS'S OWN PRESS (the chest's own offline law
+            // the direct dispatch keeps — the PICKUP table the press
+            // click speaks, the carried stack the SAME table the
+            // place-back serves; the QUICKCRAFT drag arm the chest's
+            // LIVE window alone wears — no live lane the offline
+            // stand-in keeps, the drag-place ride the later round's
+            // own line)
+            self.click_dispenser_slot(mx, my, 0);
+            return;
+        }
         if self.screen == ScreenKind::Chest {
             // THE QUICKCRAFT DRAG'S OWN ARM (the same mouseClicked pcs
             // 316-378 base walk the Inventory round banks — the
@@ -28413,6 +28719,18 @@ impl App {
     /// trident), the hold renders the using branch. Returns whether a
     /// use started (the tests' honest probe).
     pub fn on_right_press(&mut self, mx: i32, my: i32) -> bool {
+        if self.screen == ScreenKind::Dispenser {
+            // THE IN-FLIGHT DRAG'S OWN GATE (mouseClicked pc 168-172 —
+            // the armed drag's frames the other button's press keep
+            // silent); the right press the SPLIT-PICKUP dispatch keeps
+            // (the place-ONE the carried press speaks — the vanilla
+            // PICKUP's own byte the offline walk answers)
+            if self.qc_armed {
+                return false;
+            }
+            self.click_dispenser_slot(mx, my, 1);
+            return false;
+        }
         if self.screen == ScreenKind::Chest {
             // THE IN-FLIGHT DRAG'S OWN GATE (mouseClicked pc 168-172 —
             // the `isQuickCrafting` verdict the press walk never
@@ -30838,6 +31156,19 @@ impl App {
     /// bundle selection's packet carries).
     fn hovered_container(&self, mx: i32, my: i32) -> Option<(i32, i32, i32)> {
         match self.screen {
+            ScreenKind::Dispenser => {
+                let &(_, _, slot) = self
+                    .dispenser_slot_rects
+                    .iter()
+                    .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)?;
+                let s = slot as usize;
+                let (id, count) = if s < 9 {
+                    *self.dispenser_slots.get(s).unwrap_or(&(0, 0))
+                } else {
+                    *self.dispenser_mirror.get(s - 9).unwrap_or(&(0, 0))
+                };
+                Some((id, count, slot as i32))
+            }
             ScreenKind::Chest => {
                 let &(_, _, slot) = self
                     .chest_slot_rects
@@ -31613,6 +31944,111 @@ impl App {
         }
         self.chest_carried = new_carried;
         self.chest_mirror_sync_from_inventory();
+    }
+
+    /// THE OFFLINE DISPENSER CLICK'S OWN WALK (the chest's own offline
+    /// law the 3x3 canvas wears — javap 26.2 DispenserMenu.
+    /// quickMoveStack the two arms the combined 45-slot belief
+    /// answers: the grid source the moveItemStackTo(9, 45, true)
+    /// REVERSE scan speaks — the hotbar row the first free seat the
+    /// rev order keeps — the standard rows the moveItemStackTo(0, 9,
+    /// false) forward scan answers): the press finds the 16x16 hit
+    /// box the last render laid out, the PICKUP tables the same
+    /// [`crate::world_view::predict_pickup`] folds the family wears
+    /// (the left the whole-stack take, the right the half; the
+    /// carried stack the SAME tables the place-back serves — the
+    /// vanilla doClick's own symmetric answer). The outside press the
+    /// -999 THROW the furnace's own walk serves (the whole carried
+    /// the PRIMARY button drops). NO packet: the offline world its
+    /// own authority keeps, the mutations land DIRECTLY — the nine
+    /// the per-cell store's own lane rides, the mirror rows the REAL
+    /// inventory mutates (the close arms the carried stack home
+    /// return, the flush the edits bank, the shot beat the same map
+    /// consumes).
+    fn click_dispenser_slot(&mut self, mx: i32, my: i32, button: i8) {
+        if self.dispenser_slot_rects.is_empty() {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let Some(&(_, _, slot)) = self
+            .dispenser_slot_rects
+            .iter()
+            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+        else {
+            // THE DROP-OUTSIDE LANE (the furnace's own shape — the
+            // laid-out panel the strict rect compare speaks)
+            if self.dispenser_panel != (0, 0)
+                && (mx < self.dispenser_panel.0
+                    || my < self.dispenser_panel.1
+                    || mx >= self.dispenser_panel.0 + 176
+                    || my >= self.dispenser_panel.1 + 166)
+            {
+                self.throw_dispenser_carried_outside(button);
+            }
+            return;
+        };
+        let menu = slot as usize;
+        // THE QUICK_MOVE LANE (the shift-click — the vanilla doClick's
+        // own precedence the chest's walk keeps): the combined
+        // 45-slot snapshot the REAL inventory wears (the nine + the
+        // main 27 + the hotbar 9), the multi-slot deltas the grid AND
+        // the items mutate (the menu's own reverse flag the grid
+        // source speaks, the forward scan the standard rows answer).
+        if self.shift_down {
+            let mut snapshot: Vec<(i32, i32)> = Vec::with_capacity(45);
+            snapshot.extend_from_slice(&self.dispenser_slots);
+            snapshot.extend_from_slice(&self.inventory.items[9..36]);
+            snapshot.extend_from_slice(&self.inventory.items[0..9]);
+            let changed = crate::world_view::predict_quick_move_grid(&snapshot, menu, 9);
+            for (i, pair) in &changed {
+                if *i < 9 {
+                    self.dispenser_slots[*i] = *pair;
+                } else if *i < 36 {
+                    self.inventory.items[*i] = *pair;
+                } else {
+                    self.inventory.items[*i - 36] = *pair;
+                }
+            }
+            self.dispenser_mirror_sync_from_inventory();
+            return;
+        }
+        // the believed slot value: the nine's 0..9, the REAL
+        // inventory's rows the menu numbering speaks (9..35 the main
+        // grid, 36..44 the hotbar)
+        let believed = if menu < 9 {
+            self.dispenser_slots[menu]
+        } else if menu < 36 {
+            self.inventory.items[menu]
+        } else {
+            self.inventory.items[menu - 36]
+        };
+        let (new_slot, new_carried) = if button == 0 {
+            crate::world_view::predict_pickup(believed, self.dispenser_carried)
+        } else {
+            crate::world_view::predict_pickup_right(believed, self.dispenser_carried)
+        };
+        if menu < 9 {
+            self.dispenser_slots[menu] = new_slot;
+        } else if menu < 36 {
+            self.inventory.items[menu] = new_slot;
+        } else {
+            self.inventory.items[menu - 36] = new_slot;
+        }
+        self.dispenser_carried = new_carried;
+        self.dispenser_mirror_sync_from_inventory();
+    }
+
+    /// THE DISPENSER'S OWN OUTSIDE THROW (the furnace's own walk the
+    /// 3x3 canvas wears — the doClick -999 PICKUP the carried's drop
+    /// serves: the whole stack the PRIMARY button drops, the ONE item
+    /// the right press's byte keeps).
+    fn throw_dispenser_carried_outside(&mut self, button: i8) {
+        let (id, count) = self.dispenser_carried;
+        if count <= 0 {
+            return; // the doClick THROW's own isEmpty guard — silence
+        }
+        let dropped = if button == 0 { count } else { 1 };
+        self.drop_item_entity_aimed(id, dropped);
+        self.dispenser_carried = if button == 0 { (0, 0) } else { (id, count - 1) };
     }
 
     /// hit box the last render laid out (the vanilla Slot's own hit
@@ -40420,6 +40856,30 @@ impl App {
             self.open_chest_for(hit.pos);
             return true;
         }
+        // THE DISPENSER'S OWN DOOR (javap 26.2 DispenserBlock.
+        // useWithoutItem — the openMenu walk the BlockEntity's own
+        // MenuProvider answers, the awardStat(INSPECT_DISPENSER) the
+        // SUCCESS verdict carries: the right-press on the placed
+        // dispenser/dropper the OFFLINE world answers — the 3x3
+        // screen the fresh stand-in opens, the cell's own nine the
+        // per-cell store banks [the open_dispenser_for walk the shot
+        // beat's own map speaks]). The sneaking player the arm SKIPS
+        // (the crafting-table's own gate the vanilla use walk wears —
+        // the BlockItem.useOn's sneaking-place fallback the item
+        // lanes follow). The WIRE session the local screen never
+        // opens (the server's own OpenScreen word owns the container
+        // — the GENERIC_3x3 menu type lane the projection feeds).
+        if !self.shift_down
+            && !self.world_is_network
+            && self
+                .active_world()
+                .is_some_and(|w| {
+                    crate::world::is_dispenser_kind(w.get(hit.pos.0, hit.pos.1, hit.pos.2))
+                })
+        {
+            self.open_dispenser_for(hit.pos);
+            return true;
+        }
         // THE CAKE'S OWN BLOCK-USE ARM (javap 26.2 CakeBlock — the
         // useItemOn/useWithoutItem walk the BLOCK-use pass serves
         // BEFORE the item lanes reach, the crafting-table arm's own
@@ -47154,7 +47614,11 @@ impl App {
     fn screen_allowed_in_portal(&self) -> bool {
         !matches!(
             self.screen,
-            ScreenKind::Chest | ScreenKind::Inventory | ScreenKind::Crafting | ScreenKind::Furnace
+            ScreenKind::Chest
+                | ScreenKind::Dispenser
+                | ScreenKind::Inventory
+                | ScreenKind::Crafting
+                | ScreenKind::Furnace
         )
     }
 
@@ -47175,6 +47639,7 @@ impl App {
                 // the store flush, the lid release)
                 self.close_chest_container();
             }
+            ScreenKind::Dispenser => self.close_dispenser(),
             ScreenKind::Furnace => self.close_furnace(),
             ScreenKind::Inventory => self.close_inventory(),
             ScreenKind::Creative => self.close_creative_picker(),
@@ -50695,6 +51160,18 @@ impl App {
                 let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h)).with_scramble(self.frame);
                 let (gw, gh) = (g.w(), g.h());
                 self.render_furnace(&mut g, a, gw, gh);
+            }
+            ScreenKind::Dispenser => {
+                // THE DISPENSER'S OWN ROUND (the vanilla DispenserScreen
+                // over the frozen world — the furnace's own shape the
+                // texture-blitted base keeps): world underneath, dimmed,
+                // the REAL background texture, the 3x3 grid + the store
+                // icons, the carried follow — no mannequin (the
+                // DispenserScreen the vanilla PiP never renders).
+                self.render_world_3d(fb, a);
+                let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h)).with_scramble(self.frame);
+                let (gw, gh) = (g.w(), g.h());
+                self.render_dispenser(&mut g, a, gw, gh);
             }
             ScreenKind::Inventory => {
                 // the survival inventory's own round (the vanilla
@@ -61922,6 +62399,17 @@ fn chest_mirror_slot(panel: (i32, i32), index: usize) -> (i32, i32) {
     (panel.0 + 8 + (index % 9) as i32 * 18, panel.1 + y)
 }
 
+/// The 3x3 dispenser grid's slot origin (the sprite's top-left): the
+/// DispenserMenu's own add3x3GridSlots(62, 17) walk — the j + i*3
+/// row-major order the ctor's loop speaks, the 18-pitch the vanilla
+/// slot grid keeps (the texture's own chrome the canvas bakes).
+fn dispenser_grid_slot(panel: (i32, i32), index: usize) -> (i32, i32) {
+    (
+        panel.0 + 62 + (index % 3) as i32 * 18,
+        panel.1 + 17 + (index / 3) as i32 * 18,
+    )
+}
+
 /// One flat item icon, 16x16 GUI pixels, through the generated texture
 /// table (`mc_registry::item_icon` — the `item/<name>` GUI layer).
 /// Unresolvable ids and the pinned missing materials draw nothing —
@@ -64388,6 +64876,177 @@ mod tests {
         assert_eq!(app.inventory.items[0], (62, 27), "the carried rode home");
         assert_eq!(app.chest_carried, (0, 0), "the cursor the close clears");
         assert_eq!(app.container_stores[&cell][3], (0, 0), "the grid the take emptied");
+    }
+
+    /// THE DISPENSER'S OWN 3x3 CANVAS (the offline round — the
+    /// DispenserScreen the DispenserMenu's own geometry wears): the
+    /// door the use lane opens, the nine the per-cell store banks,
+    /// the transfer clicks the REAL inventory mutates, the flush the
+    /// close banks (the shot beat the SAME map consumes — the lever's
+    /// flip the GUI's own stock dispenses), the comparator's analog
+    /// read the fill ride serves, the reopen the same stacks wears.
+    #[test]
+    fn the_dispensers_own_canvas_the_nine_the_store_the_flush_banks() {
+        let mut app = App::new(11);
+        app.enter_world();
+        let cobble = mc_registry::item_id_by_name("cobblestone").unwrap();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        let cell = (c, surface + 1, c);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(cell.0, cell.1, cell.2, crate::world::DISPENSER);
+        // THE FIRST OPEN (the fresh nine the store inserts, the open
+        // cell the key banks, the kind the title lane banks)
+        app.open_dispenser_for(cell);
+        assert_eq!(app.screen, ScreenKind::Dispenser, "the door opened the screen");
+        assert_eq!(app.dispenser_open_cell, Some(cell), "the open cell the key wears");
+        assert_eq!(app.dispenser_open_kind, crate::world::DISPENSER, "the kind the title banks");
+        assert_eq!(app.dispenser_slots.len(), 9, "the fresh nine the menu wears");
+        assert!(app.dispenser_slots.iter().all(|&s| s == (0, 0)), "the fresh zeros");
+        // THE STANDARD ROWS' OWN PROJECTION (the player's own stock
+        // the 36 mirror rows speak — the hotbar head the menu 36
+        // wears)
+        app.inventory.items[0] = (cobble, 27);
+        app.dispenser_mirror_sync_from_inventory();
+        assert_eq!(app.dispenser_mirror[27], (cobble, 27), "the hotbar head rode");
+        // THE CLICK ON THE HOTBAR ROW (menu 36): the stack rides the
+        // cursor, the REAL inventory empties, the HUD row syncs
+        app.dispenser_slot_rects = vec![(100, 100, 36)];
+        app.mouse_pos = Some((108, 108));
+        app.click_dispenser_slot(100, 100, 0);
+        assert_eq!(app.dispenser_carried, (cobble, 27), "the take rides");
+        assert_eq!(app.inventory.items[0], (0, 0), "the real row emptied");
+        assert_eq!(app.hotbar_slots[0], (0, 0), "the HUD row synced");
+        assert_eq!(app.dispenser_mirror[27], (0, 0), "the mirror row follows");
+        // THE CLICK ON THE GRID SEAT (menu 3): the stack lands
+        app.dispenser_slot_rects = vec![(160, 100, 3)];
+        app.mouse_pos = Some((168, 108));
+        app.click_dispenser_slot(160, 100, 0);
+        assert_eq!(app.dispenser_slots[3], (cobble, 27), "the stack landed");
+        assert_eq!(app.dispenser_carried, (0, 0), "the cursor emptied");
+        // THE CLOSE the flush banks — the store the shot beat
+        // consumes, the analog fill the comparator's back read banks
+        app.on_escape();
+        assert_eq!(app.screen, ScreenKind::World, "the close the world wears");
+        assert_eq!(app.container_stores[&cell][3], (cobble, 27));
+        assert!(app.dispenser_open_cell.is_none(), "the close the key takes home");
+        assert_eq!(app.dispenser_open_kind, 0, "the kind the close clears");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().container_fill.get(&cell).copied(),
+            Some(1),
+            "the analog fill the nine's own total banks"
+        );
+        // THE REOPEN + THE SHIFT-CLICK HOME: the quick-move the REAL
+        // rows speak (the grid->mirror order the rev scan keeps, the
+        // HOTBAR row the first free seat the walk answers: menu 44
+        // the items[8] wears — the moveItemStackTo(9, 45, true) the
+        // DispenserMenu's own quickMoveStack banks)
+        app.open_dispenser_for(cell);
+        assert_eq!(app.dispenser_slots[3], (cobble, 27), "the store remembered");
+        app.dispenser_slot_rects = vec![(160, 100, 3)];
+        app.mouse_pos = Some((168, 108));
+        app.shift_down = true;
+        app.click_dispenser_slot(160, 100, 0);
+        assert_eq!(app.dispenser_slots[3], (0, 0), "the grid emptied");
+        assert_eq!(app.inventory.items[8], (cobble, 27), "the home ride");
+        assert_eq!(app.inventory.items[0], (0, 0), "the main scan never ran");
+        app.shift_down = false;
+        app.on_escape();
+        assert_eq!(app.container_stores[&cell][3], (0, 0));
+        assert_eq!(app.inventory.items[8], (cobble, 27));
+        // THE CARRIED'S OWN HOME RIDE (the vanilla removed()'s
+        // placeItemBackInInventory): the cursor's held stack the close
+        // returns through the add walk
+        app.open_dispenser_for(cell);
+        app.dispenser_slot_rects = vec![(100, 100, 44)];
+        app.mouse_pos = Some((108, 108));
+        app.click_dispenser_slot(100, 100, 0); // the hotbar stack back on the cursor
+        assert_eq!(app.dispenser_carried, (cobble, 27));
+        app.on_escape();
+        assert_eq!(app.inventory.items[0], (cobble, 27), "the carried rode home");
+        assert_eq!(app.dispenser_carried, (0, 0), "the cursor the close clears");
+        assert_eq!(
+            app.container_stores[&cell][3], (0, 0),
+            "the grid the take emptied"
+        );
+    }
+
+    /// THE DISPENSER'S OWN DOOR (the use lane the block-use walk
+    /// serves — javap DispenserBlock.useWithoutItem the openMenu +
+    /// the awardStat(INSPECT_DISPENSER) + the SUCCESS verdict speaks)
+    /// AND THE DROPPER'S OWN TITLE (the same menu class the two
+    /// BlockEntities answer — the DEFAULT_NAME the container.* rows
+    /// wear): the placed cell's right-press the 3x3 screen opens, the
+    /// per-cell store the two kinds keep, the sneaking player the arm
+    /// skips (the vanilla's own use walk the sneaking gate wears).
+    #[test]
+    fn the_dispensers_own_door_the_two_kinds_the_titles_wear() {
+        let mut app = App::new(11);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        // THE PLACED CELLS THE LOOK SEAM WEARS (the straight-down aim
+        // the hit's own cell reads — the dispenser cell the ground
+        // layer keeps, the dropper the sibling column answers: the
+        // terrain the direct set never guesses)
+        let dcell = (c, top - 1, c);
+        let rcell = (c + 2, top - 1, c);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(dcell.0, dcell.1, dcell.2, crate::world::DISPENSER);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(rcell.0, rcell.1, rcell.2, crate::world::DROPPER);
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: std::f32::consts::PI,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        // THE DOOR (the block-use arm the held item's lane PRECEDES —
+        // the empty hand the press keeps, the clip the dispenser's
+        // top face reads)
+        assert!(app.on_right_press(0, 0), "the door consumed the press");
+        assert_eq!(app.screen, ScreenKind::Dispenser, "the door opened the screen");
+        assert_eq!(app.dispenser_open_cell, Some(dcell), "the cell the key banks");
+        assert_eq!(app.dispenser_open_kind, crate::world::DISPENSER, "the title's kind");
+        assert_eq!(app.dispenser_slots.len(), 9, "the fresh nine banks");
+        // THE PER-CELL LAW (the dispenser's nine the store banks — the
+        // shot beat the SAME map consumes)
+        let dstore = app.container_stores.get(&dcell).expect("the dispenser's nine");
+        assert!(dstore.iter().all(|&s| s == (0, 0)), "the fresh nine the door keeps");
+        // THE SNEAKING PLAYER'S OWN GATE (the shift press the
+        // block-use arm never reaches — the vanilla's own use walk
+        // the sneaking skip wears)
+        app.on_escape();
+        app.shift_down = true;
+        assert!(!app.on_right_press(0, 0), "the sneaking press the door never wears");
+        assert_eq!(app.screen, ScreenKind::World, "the sneaking press the world keeps");
+        app.shift_down = false;
+        // THE DROPPER'S OWN DOOR (the sibling column the aim moves to
+        // — the same menu class the two kinds answer, the
+        // container.dropper row the title banks)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(
+                (c + 2) as f32 + 0.5,
+                top as f32 + 4.0,
+                c as f32 + 0.5,
+            ),
+            yaw: std::f32::consts::PI,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the dropper's door consumed");
+        assert_eq!(app.screen, ScreenKind::Dispenser, "the same screen the kind picks");
+        assert_eq!(app.dispenser_open_cell, Some(rcell), "the dropper cell the key banks");
+        assert_eq!(app.dispenser_open_kind, crate::world::DROPPER, "the dropper title");
+        assert_eq!(app.dispenser_slots.len(), 9, "the dropper's own fresh nine");
+        let rstore = app.container_stores.get(&rcell).expect("the dropper's nine");
+        assert!(rstore.iter().all(|&s| s == (0, 0)), "the fresh nine the dropper wears");
     }
 
     /// THE BROKEN CONTAINER'S OWN SPILL (the dev-67 round — javap
