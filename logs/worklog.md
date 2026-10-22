@@ -1760,3 +1760,93 @@ Stage Summary:
   thrown-shot's wire lane (the Add Entity word the live read banks),
   the README's golden section the 19-row runner's own row the text
   could name.
+
+---
+Task ID: autopush-141
+Agent: cron autopush (Job 384925, 2026-10-23 05:41:47 +08:00)
+Task: the standing autopush round — the lane the 140 entry's
+next-candidates wear: THE DISPENSER'S OWN 3x3 CANVAS (the
+DispenserMenu GUI the right-press door opens — the chest lane's own
+shape the per-cell store the click/belief/persistence walks keep).
+
+Work Log:
+- THE REPO THE CLEAN TREE ANSWERED (HEAD 6efbdd2, origin in sync, the
+  comparator dev-124 lane the history's own rounds long banked): the
+  140 entry's next-candidates head the round reads, the GUI lane the
+  interactivity priority serves.
+- THE FORENSICS javap 26.2 banks (the classfile_dump walk): javap
+  DispenserBlock.useWithoutItem pc 33-62 — the openMenu walk the
+  BlockEntity's own MenuProvider answers, the
+  awardStat(INSPECT_DISPENSER) the SUCCESS verdict carries; javap
+  DispenserBlockEntity — the NonNullList.withSize(9) items, the
+  createMenu the DispenserMenu ctor answers, the getDefaultName the
+  container.dispenser row wears; javap DropperBlockEntity — the SAME
+  menu class the container.dropper title answers; javap
+  DispenserScreen — the SINGLE CONTAINER_LOCATION
+  (textures/gui/container/dispenser.png) the dropper's own screen
+  shares, the init walk the CENTERED title
+  (titleLabelX = (imageWidth - font.width(title)) / 2, titleLabelY 6)
+  speaks; javap DispenserMenu — the GENERIC_3x3 menu type,
+  add3x3GridSlots(62, 17) the j + i*3 row-major 18-pitch order,
+  addStandardInventorySlots(8, 84), quickMoveStack the
+  moveItemStackTo(9, 45, true) reverse scan / moveItemStackTo(0, 9,
+  false) forward, removed the stopOpen tail.
+- THE LANES: screens.rs the ScreenKind::Dispenser variant + the
+  seven fields (the believed nine, the 36 mirror, the carried, the
+  rects, the panel, the open cell + kind u16) + open_dispenser_for
+  (the per-cell store the fresh nine inserts — the shot beat the
+  SAME container_stores map consumes, the standard rows the
+  player's own stock mirrors) + close_dispenser (the carried the
+  add walk home returns, the edited nine the flush banks, the
+  analog fill the comparator's back read re-banks — the
+  container_fill_sync + attach_wire_voice the furnace flush's own
+  shape wears) + render_dispenser (the REAL dispenser.png blitted
+  176x166 at the centered panel, the centered title the kind's own
+  lang row wears, the inventory label at +72, the hit boxes the
+  menu's own numbering lays, the icons/counts the furnace's own
+  draw keeps, the carried follow) + click_dispenser_slot (the
+  PICKUP tables the chest's own predictions speak — the left the
+  whole-stack take, the right the half, the carried the SAME table
+  the place-back serves, the shift quick-move the combined 45-slot
+  snapshot the menu's own rev/forward scans wear, the outside press
+  the -999 throw the furnace's own walk serves) + the press lanes
+  the direct dispatch keeps (the drag-place the chest's live shape
+  rides later) + the Escape/E/portal walk arms (the
+  screen_allowed_in_portal gate the fifth kind wears) + the
+  hovered_container arm + the use-lane door (the
+  dispenser/dropper right-press the OFFLINE world answers — the
+  sneaking player the arm skips, the wire session the server's
+  OpenScreen word owns) + dispenser_grid_slot the 62/17 3-pitch
+  helper.
+- +2 tests: the canvas round trip (the fresh nine, the hotbar take
+  the real row mutates, the grid seat the stack lands, the flush +
+  the analog fill the Some(1) banks, the reopen the store
+  remembered, the shift-click home the menu-44 hotbar seat the rev
+  scan answers, the carried's close ride), the two kinds' door (the
+  placed cell's press the screen opens, the sneaking press the
+  world keeps, the dropper the same screen the container.dropper
+  title banks, the per-cell stores the two cells keep).
+- fmt: the lane's hunks the hand-styled form keep (the fmt-check
+  diff count the HEAD's own 1539 wears — the pre-existing debt
+  never moved, the 138/139 discipline).
+- Suite: 2658 passed / 0 failed / 22 ignored (+2 lane tests; 2321
+  mc-client + 157 mc-protocol + 100 mc-registry + 80 mc2rs-pixel);
+  goldens 19/19 PASS rms 0.000 (NO regeneration — the lane a NEW
+  kind the existing render paths never touch, every golden byte the
+  same); cargo check --all-targets clean.
+- Pushed 0ad5122 (v0.3.865, the dispenser's own 3x3 canvas).
+
+Stage Summary:
+- THE DISPENSER THE PLAYER'S OWN HANDS LOAD: the right-press the
+  3x3 canvas opens, the transfer clicks the REAL inventory
+  mutates, the flush the edited nine the lever's own shot beat
+  dispenses — the comparator's analog read the close beat banks,
+  the two kinds the one screen the container.dropper title picks.
+- NEXT CANDIDATES: the dispenser's own wire lane (the GENERIC_3x3
+  menu type the OpenScreen word routes — the chest's live shape
+  the projection rides), the shulker box the getContainerAt walk
+  the dropper's front read never serves, the thrown-shot's wire
+  lane (the Add Entity word the live read banks), the README's
+  golden section the 19-row runner's own row the text could name,
+  the quickcraft drag arm the offline dispenser's carried press
+  the deferred place could wear.
