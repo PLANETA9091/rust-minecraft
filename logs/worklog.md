@@ -1466,3 +1466,75 @@ Stage Summary:
   64 the stand-in keeps), the frame's glow item the render's own world
   lane the comparator's max fold rides, the README's golden section
   the 19-row runner's own row the text could name.
+
+---
+Task ID: autopush-138
+Agent: cron autopush (Job 384923, 2026-10-23 00:47:11 +08:00)
+Task: the standing autopush round — the environment held (repo clean @
+bfb8573 v0.3.861 + mirror, cargo 1.99.1 + the caches alive). THE LANE
+the 137 entry's next-candidates head named: THE ITEM'S OWN MAX THE
+GUI'S OWN ADDS WEAR — the belief-add walks + the offline /give the
+flat-64 stand-in shed.
+
+Work Log:
+- THE LAW the 133/134 forensics bank: hasRemainingSpaceForItem the
+  `count < getMaxStackSize(stack)` gate (the min(64, itemMax) the
+  Inventory's own fold wears), addResource the empty split the
+  copyWithCount/min arm answers — the registry rows the 64 never
+  exceed (the 133 round's 295 rows: 246 max-1 + 49 max-16) so the
+  item's own max the cap answers (the snowball the 16, the sword the
+  1, the plain blocks the 64 keep).
+- THE FIVE WALKS THE CAP THREADS (screens.rs): the offline /give's
+  two passes (the merge tops partials to the item's own max, the
+  fresh fill the min(cap, remaining) wears — the 100-snowball grant
+  the six 16s + the 4 lands, the 3-sword grant the three singles
+  wears), belief_inventory_add (window-0), belief_table_inventory_add
+  (the crafting menu's 37..45/10..37), belief_chest_inventory_add
+  (the mirror's 54..62/27..53 the menu-id notes name),
+  belief_furnace_inventory_add (30..38/3..29) — the has_space gate
+  `sc < cap` the merge law rides, the landing space `cap - count` the
+  fill wears; the CASE D swap's SPLIT law (the max fold the split
+  arms already wore) the ADD's tail now matches — the swap's overflow
+  the fresh slots wear where the flat-64 the single row overfilled.
+- +3 tests: the give chunk law (the 16-cap chunks, the partial
+  top-up, the cap refusal, the unstackable singles), the belief
+  landing law (the 16+4 split, the all-16 refusal the leftover
+  returns, the one-per-slot swords, the 64 keep), the chest/furnace/
+  table re-keyed splits (the menu-id changed rows the mirror bands
+  name). THE SWAP CASE D TEST the vanilla truth re-speaks: the
+  30-egg hover the row's remaining space the cap takes (4 + 12 = 16),
+  the overflow the fresh slots wear (16 + 2) — the whole-hover-lands
+  34 the flat-64 bug spoke, the changed map's four rows the
+  correction name.
+- THE FMT INCIDENT THE ROUND HANDLED (the honest record): the mid-
+  lane `cargo fmt` formatted the WHOLE workspace (114 files, the
+  27273-line pre-existing debt the bare fmt would have moved) — the
+  tree the `git checkout -- .` restored, the lane the screens.rs-only
+  hunks re-applied (the backup-probe the whole-file reformat caught:
+  11824+/7118- the bare fmt wore, the restore the convention keeps).
+  cargo fmt --check: the screens.rs file the lane's diff carries the
+  ZERO debt across repeated full-tree runs (the workspace's own
+  pre-existing debt the count's sandbox variance wears — 27273/
+  32446/21563 the parallel rustfmt children's truncation spoke — the
+  per-file probe the honest verdict serves: screens.rs absent the
+  check's diff every run, HEAD and lane alike).
+- Suite: 2649 passed / 0 failed / 22 ignored (+3 vs autopush-137's
+  2646; 2312 mc-client + 157 mc-protocol + 100 mc-registry + 80
+  mc2rs-pixel); goldens 19/19 PASS rms 0.000 through the re-homed
+  runner (NO regeneration — the add lane no render path touches,
+  every golden byte the same).
+- Pushed 79b31cb (v0.3.862, the item's own max the adds wear).
+
+Stage Summary:
+- THE GUI'S STACKS THE ITEM'S OWN TRUTH STACKS: the chest screen's
+  belief the 16-snowball pile the cap believes, the sword pile the
+  singles the inventory keeps, the /give command the chunks the jar's
+  own max speaks — the flat-64 stand-in the whole ADD lane sheds, the
+  fill-formula/spill/merge/inventory lanes the 133/134 rounds banked
+  the belief tail now answers.
+- NEXT CANDIDATES: the dropper/dispenser shot lanes (the offline arm
+  the wire's event words never bank), the frame's glow item the
+  render's own world lane the comparator's max fold rides, the
+  README's golden section the 19-row runner's own row the text could
+  name, the swap CASE B/C arms the sub-64 items the mayPlace tails
+  the next probe wears.
