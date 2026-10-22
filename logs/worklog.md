@@ -773,3 +773,54 @@ Stage Summary:
   observer's classic feed), the container-analog lane (the
   comparator's hasAnalogOutputSignal back read — the chest fill the
   BE tables would need), the item-frame analog read.
+
+---
+Task ID: autopush-130
+Agent: cron autopush (Job 384923, 2026-10-22 ~18:32 +08:00)
+Task: the standing autopush round — the environment HELD this time
+(repo clean @ 351b47b, cargo + the caches alive), so the ONE step the
+worklog's next-candidates head named: THE HEAD'S OWN RETRACT SLIDE.
+
+Work Log:
+- Step 1 (auto-sync): the tree clean at 351b47b (v0.3.853 + the
+  mirror) — nothing to bank, straight to the dev step.
+- Step 2 (ONE step): the no-pull retract arms the head's own moving BE
+  bank — the 129 round kept the instant clear, the round retires it:
+  * the stash's THIRD FIELD: the flags byte (MOVING_FLAG_LAND /
+    MOVING_FLAG_HEAD_RETRACT) the widened (x,y,z,kind,variant,flags)
+    rows carry — moving_state_of/set/take the triple answer, the
+    extend walk's two banks AND the sticky pull's bank the LAND flag
+    wear;
+  * the no-pull retract arms: the head's own BE banks (the head state
+    the stash wears, the pending beat row the reschedule replaces);
+  * the progress walk's OWN CAP: tick_moving_piston_cell the flag
+    reads — the land rows the +2 finalize keep, the head-retract row
+    the FULL sink the +4 finalize serves (quarters 0 -> 2 -> 4), the
+    finalize the flag the AIR landing speaks (the head the base the
+    sink absorbs);
+  * the mesher's curve: the flag destructure — the land rows the
+    shrinking fraction, the HEAD_RETRACT row the GROWING fraction
+    (the offset -delta*p the progress multiplies — the head the
+    extended position the offset-zero wears, the half sink the base
+    the quarters-2 arm answers), the vanilla shaft's own 0.25 back
+    overhang the bake keeps.
+- Suite: 2629 passed / 0 failed / 22 ignored (+2 vs autopush-129's
+  2627); golden_matrix 14/14 PASS rms 0.000 (no regeneration); cargo
+  fmt --check 27273 = the 129 baseline EXACTLY (zero new fmt debt —
+  the round's own if-let/closure lines the fmt taste answered in
+  place).
+- Pushed bb81a70 (v0.3.854, the head-retract slide).
+
+Stage Summary:
+- THE RETRACT PLAYS BOTH HALVES: the sticky pull slides the block
+  (the 129 walk), the no-pull arms AND the head's own sink the base
+  render the head sliding back over the full two-beat cadence, the
+  AIR landing the sink completes — the piston family the vanilla
+  feel the two curves wear.
+- NEXT CANDIDATES: the sticky-pull arm's own head slide (the pull's
+  BE the head cell owns today — the vanilla walk the head AND the
+  block the pair of BEs the one cell cannot hold, the base cell's
+  own BE the vanilla answer would need), the dropper/dispenser shot
+  lanes (the observer's classic feed), the container-analog lane
+  (the comparator's hasAnalogOutputSignal back read), the item-frame
+  analog read.
