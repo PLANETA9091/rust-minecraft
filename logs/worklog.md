@@ -1110,3 +1110,72 @@ Stage Summary:
   placement/use/render lane the whole feature owns), the
   dropper/dispenser shot lanes (the offline arm the wire's event
   words never bank).
+
+---
+Task ID: autopush-134
+Agent: cron autopush (Job 384923, 2026-10-22 ~21:32 +08:00)
+Task: the standing maintenance round — the environment held (repo clean
+@ d070112 v0.3.857 + mirror, cargo 1.99.1 + the caches alive). THE LANE
+the 133 entry's next-candidates head named: THE DROP LANES THE SAME
+TABLE THE CAPS WEAR — the spill chunk cap, the neighbour merge and the
+inventory add the 64 stand-in wore, the item's own max the jar's law
+speaks.
+
+Work Log:
+- THE JAR'S OWN WALKS the 26.2 dumps bank (the Inventory class the
+  house parser reads):
+  * javap Containers.dropItemStack pc 112 — the `Math.min(roll,
+    stack.getMaxStackSize())` fold answers: the ITEM'S OWN cap the
+    min speaks (the 64 the fold never wore);
+  * javap ItemEntity.isMergable — the `count < maxStackSize` +
+    the `sum <= maxStackSize` verdicts the merge law banks;
+  * javap Inventory.addResource pc 37-51 — the
+    `getMaxStackSize(ItemStack)` fold the Math.min speaks (the
+    min(64, itemMax) the Container's own default wears — the empty
+    split the copyWithCount/min arm answers, the grow the same
+    space reads); javap hasRemainingSpaceForItem — the
+    `count < getMaxStackSize(stack)` gate the remaining-space scan
+    banks.
+- THE THREE LANES THE TABLE RIDES (drops.rs):
+  * the spill chunk `roll.min(item_max_stack(item))` — the
+    SPILL_STACK_MAX constant the table read answers (the per-item
+    cap no single number keeps);
+  * the merge `sum <= item_max_stack(item)` + the full-stack gate
+    (the snowball pair 10+10 the 16 refuses, the 5+5 accepts, the
+    16-count entity the gate skips);
+  * the inventory add `count < min(64, itemMax)` the space fold (the
+    20-snowball add the 16+4 split the two slots wears where the 64
+    stand-in the single 20-slot spoke, the full 16-slot the scan
+    refuses, the sword pile one entity per count the five slots
+    fills).
+- THE SPILL'S OWN SLICE: the 100-snowball spill the 16-capped chunks
+  wear (the 10..30 rolls the 16 caps), the 5-sword spill the FIVE
+  single-count entities (the unstackable the roll the 1 caps — the
+  vanilla's own per-sword split).
+- +3 tests: the spill cap (the 16-band the chunks wear, the sword
+  singles the five chunks speak, the sums the stacks keep), the
+  merge cap (the refuse/accept/full-gate trio the 16-stack wears),
+  the add cap (the 16+4 split, the full-slot refuse, the
+  one-per-slot swords).
+- Suite: 2638 passed / 0 failed / 22 ignored (+3 vs autopush-133's
+  2635); verify_goldens.sh 18/18 PASS rms 0.000 (no regeneration);
+  cargo fmt --check 27273 = the clean-HEAD count EXACTLY (the stash
+  compare the zero-new-debt verdict wears — the round's own test
+  lines the rustfmt shape the replay restored).
+- Pushed 3db537b (v0.3.858, the drop lanes' caps).
+
+Stage Summary:
+- THE DROP LANES THE ITEM'S OWN WEIGHT WEARS: a broken chest of 100
+  snowballs spills 16-capped chunks (the 30-count chunks the
+  stand-in spoke, gone), five swords spill five single entities, the
+  snowball drops refuse to merge past 16, the pickup fills a
+  snowball slot to 16 and opens the next — the whole drop arc the
+  jar's own per-item caps wear, the table the 133 round banks the
+  three lanes ride.
+- NEXT CANDIDATES: the item-frame analog read (the entity lane the
+  getInputSignal pc 155-164 banks — the frame store the
+  placement/use/render lane the whole feature owns), the
+  dropper/dispenser shot lanes (the offline arm the wire's event
+  words never bank), the max-stack table the GUI's own place/split
+  walks ride (the chest screen's shift-click laws the 64 the stand-
+  in keeps).
