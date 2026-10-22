@@ -200,6 +200,7 @@ pub fn materialize(
         comparator_ticks: Vec::new(),
             repeater_ticks: Vec::new(),
             observer_ticks: Vec::new(),
+            piston_ticks: Vec::new(),
         torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
         bamboo_ticks: Vec::new(), // the bamboo's own queue: empty (the wire world the server's own falls land)
     };

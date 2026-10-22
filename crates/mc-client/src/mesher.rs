@@ -2334,6 +2334,216 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     }
                     continue;
                 }
+                // THE PISTON LANE'S OWN ELEMENT WALK (the autopush-128
+                // round — the THREE kinds the family's own bake picks:
+                // the retracted base the template_piston full-cube
+                // chain [the sticky top the kind's own model answers],
+                // the extended base the piston_extended body the
+                // inside face the piston_inner tile wears, the head
+                // the plate + shaft chain the overhang the base
+                // cell's own border serves). THE JAR'S OWN Y-TABLE
+                // the blockstates rows speak — the down x=90 / up
+                // x=270 / east y=90 / south y=180 / west y=270 / north
+                // y=0 rows the observer's own table the mirror keeps,
+                // the folds' own order the vertical rows the x-fold
+                // alone answers. THE MODEL'S OWN CULLFACES the rows
+                // carry — the full cube's six the template_piston
+                // speaks, the extended body's five the open front
+                // keeps, the head plate's five + the shaft's none the
+                // overhang serves. The `shade: true` the model
+                // carries — the FACE_SHADE term the per-quad direction
+                // reads, the lightmap the per-corner fold answers.
+                if crate::world::is_piston_kind(id) || crate::world::is_piston_head(id) {
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
+                    });
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
+                    });
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
+                    });
+                    let (cell_sky, cell_block) = match light {
+                        Some(l) => {
+                            let (s, b) = cell_layers(l, world.chunks_per_side, wx, wy, wz);
+                            (s.map(|v| v as f32), b.map(|v| v as f32))
+                        }
+                        None => (None, None),
+                    };
+                    // the no-atlas boot's own default — the tile's own
+                    // pixels speak, the flat palette the missing row
+                    // keeps (the candle path's own verdict)
+                    let tile = if (id as usize) < atlas::N_KINDS {
+                        atlas::FACE_TILES[id as usize][2]
+                    } else {
+                        atlas::TILE_NONE
+                    };
+                    let base = if tile == atlas::TILE_NONE {
+                        crate::colors::palette_color(id, 2)
+                            .or_else(|| lut.and_then(|l| l.color(id, 2)))
+                            .unwrap_or_else(|| default_color(id, 2))
+                    } else {
+                        [1.0; 3]
+                    };
+                    let variant = world.variant(wx, wy, wz);
+                    // THE THREE BAKES' OWN PICK (the kind + the state
+                    // bits the decode serves — the base the retracted
+                    // pair the kind's own model wears, the extended
+                    // ONE chain both kinds speak, the head the type
+                    // bit the pair answers)
+                    let (quads, facing) = if crate::world::is_piston_head(id) {
+                        (
+                            piston_head_model_quads(
+                                crate::world::piston_head_sticky_of(variant),
+                            ),
+                            crate::world::piston_head_facing_of(variant),
+                        )
+                    } else {
+                        (
+                            piston_model_quads(
+                                id == crate::world::STICKY_PISTON,
+                                crate::world::piston_extended_of(variant),
+                            ),
+                            crate::world::piston_facing_of(variant),
+                        )
+                    };
+                    // THE Y-TABLE THE HORIZONTAL ROWS SPEAK — THE
+                    // X-FOLD THE VERTICAL PAIR (the down the -90° the
+                    // x=90 row answers, the up the +90° the x=270 row
+                    // wears — the observer's own table the mirror
+                    // keeps)
+                    let (turns, x_fold): (f32, Option<f32>) = match facing {
+                        0 => (0.0, Some(-std::f32::consts::FRAC_PI_2)), // down x=90
+                        1 => (0.0, Some(std::f32::consts::FRAC_PI_2)),  // up x=270
+                        2 => (0.0, None),                               // north y=0
+                        3 => (2.0, None),                               // south y=180
+                        4 => (3.0, None),                               // west y=270
+                        _ => (1.0, None),                               // east y=90
+                    };
+                    let (sn, cs) = (turns * std::f32::consts::FRAC_PI_2).sin_cos();
+                    let (xs, xc) = match x_fold {
+                        Some(a) => a.sin_cos(),
+                        None => (0.0f32, 1.0f32),
+                    };
+                    for q in quads {
+                        // THE MODEL'S OWN CULL READ (the cullface the
+                        // quad's own direction names — the neighbor's
+                        // solid verdict the face culls)
+                        if let Some(cf) = q.cullface {
+                            let (ox, oy, oz) = match cf {
+                                mc_registry::element_quads::Direction::Down => (0, -1, 0),
+                                mc_registry::element_quads::Direction::Up => (0, 1, 0),
+                                mc_registry::element_quads::Direction::North => (0, 0, -1),
+                                mc_registry::element_quads::Direction::South => (0, 0, 1),
+                                mc_registry::element_quads::Direction::West => (-1, 0, 0),
+                                mc_registry::element_quads::Direction::East => (1, 0, 0),
+                            };
+                            if !is_transparent(world.get(wx + ox, wy + oy, wz + oz)) {
+                                continue;
+                            }
+                        }
+                        // THE PER-QUAD TILE'S OWN VERDICT (the resolved
+                        // texture name the derive walk carries — the
+                        // five tiles the family wears)
+                        let tile = match q.texture {
+                            "block/piston_top" => atlas::TILE_PISTON_TOP,
+                            "block/piston_top_sticky" => atlas::TILE_PISTON_TOP_STICKY,
+                            "block/piston_side" => atlas::TILE_PISTON_SIDE,
+                            "block/piston_bottom" => atlas::TILE_PISTON_BOTTOM,
+                            "block/piston_inner" => atlas::TILE_PISTON_INNER,
+                            _ => tile,
+                        };
+                        // THE SHADE'S OWN SEAT (the model's shade:true
+                        // the face direction's own multiplier reads)
+                        let shade = match q.direction {
+                            mc_registry::element_quads::Direction::East => FACE_SHADE[0],
+                            mc_registry::element_quads::Direction::West => FACE_SHADE[1],
+                            mc_registry::element_quads::Direction::Up => FACE_SHADE[2],
+                            mc_registry::element_quads::Direction::Down => FACE_SHADE[3],
+                            mc_registry::element_quads::Direction::South => FACE_SHADE[4],
+                            mc_registry::element_quads::Direction::North => FACE_SHADE[5],
+                        };
+                        let mut pts = [[0f32; 3]; 4];
+                        let mut colors = [[0f32; 3]; 4];
+                        let mut uvs = [[0f32; 2]; 4];
+                        for (i, v) in q.vertices.iter().enumerate() {
+                            // THE FOLDS' OWN ORDER (the vertical rows
+                            // the x-fold alone answers — then the
+                            // horizontal y-rot the facing turns speak)
+                            let mut py = v[1];
+                            let mut pz = v[2];
+                            if x_fold.is_some() {
+                                let dy = v[1] - 0.5;
+                                let dz = v[2] - 0.5;
+                                py = 0.5 + dy * xc - dz * xs;
+                                pz = 0.5 + dy * xs + dz * xc;
+                            }
+                            let rx = 0.5 + (v[0] - 0.5) * cs - (pz - 0.5) * sn;
+                            let rz = 0.5 + (v[0] - 0.5) * sn + (pz - 0.5) * cs;
+                            pts[i] = [wx as f32 + rx, wy as f32 + py, wz as f32 + rz];
+                            uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
+                            let lm = lightmap_combine(
+                                cell_sky,
+                                cell_block,
+                                sky_factor,
+                                sky_tint,
+                                ambient,
+                                block_tint,
+                                night_vision,
+                                world.night_vision_factor,
+                                world.darkness_scale,
+                            );
+                            colors[i] = [
+                                base[0] * shade * lm[0],
+                                base[1] * shade * lm[1],
+                                base[2] * shade * lm[2],
+                            ];
+                        }
+                        out.push(Quad {
+                            pts,
+                            colors,
+                            uvs,
+                            tile,
+                            translucent: false,
+                            per_texel_alpha: false,
+                        });
+                    }
+                    continue;
+                }
                 // THE CANDLE PAIR'S OWN ELEMENT LANE (the autopush-522
                 // round — the canLight consult's own kinds finally
                 // RENDERS). blockstates/candle.json's one-candle rows:
@@ -6890,6 +7100,65 @@ fn observer_model_quads() -> &'static [mc_registry::element_quads::Quad] {
     })
 }
 
+/// THE PISTON'S OWN MODEL BAKES (the autopush-128 round — the three
+/// per-state chains the jar's own blockstates/piston.json +
+/// sticky_piston.json rows name: the retracted pair block/piston +
+/// block/sticky_piston the template_piston full-cube parent the
+/// platform's own sticky swap wears, the extended ONE chain
+/// block/piston_base the piston_extended body the INSIDE face the
+/// piston_inner tile answers [the blockstate's extended=true rows
+/// BOTH kinds the same model speak — the sticky top the retracted
+/// state alone wears]). The resolved texture refs the per-quad
+/// verdict reads (#platform the piston_top(_sticky) swap, #side the
+/// piston_side, #bottom the piston_bottom, #inside the
+/// piston_inner). The failed derive the honest empty slice keeps.
+fn piston_model_quads(sticky: bool, extended: bool) -> &'static [mc_registry::element_quads::Quad] {
+    static NORMAL: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    static STICKY: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    static EXTENDED: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    let cache = match (sticky, extended) {
+        (_, true) => &EXTENDED,
+        (false, false) => &NORMAL,
+        (_, false) => &STICKY,
+    };
+    cache.get_or_init(|| {
+        let model = match (sticky, extended) {
+            (_, true) => "block/piston_base",
+            (false, false) => "block/piston",
+            (_, false) => "block/sticky_piston",
+        };
+        mc_registry::element_quads::derive_model_inherited(model).unwrap_or_default()
+    })
+}
+
+/// THE PISTON HEAD'S OWN MODEL BAKES (the autopush-128 round — the
+/// blockstates/piston_head.json's type rows the pair of chains name:
+/// block/piston_head the normal arm, block/piston_head_sticky the
+/// sticky arm — BOTH parents block/template_piston_head the plate
+/// [0,0,0]->[16,16,4] + the shaft [6,6,4]->[10,10,20] geometry the
+/// overhang the base cell's own border the z=1.25 walk serves). The
+/// resolved texture refs the per-quad verdict reads (#platform the
+/// piston_top(_sticky), #side the piston_side, #unsticky the
+/// piston_top). The failed derive the honest empty slice keeps.
+fn piston_head_model_quads(sticky: bool) -> &'static [mc_registry::element_quads::Quad] {
+    static NORMAL: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    static STICKY: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    let cache = if sticky { &STICKY } else { &NORMAL };
+    cache.get_or_init(|| {
+        let model = if sticky {
+            "block/piston_head_sticky"
+        } else {
+            "block/piston_head"
+        };
+        mc_registry::element_quads::derive_model_inherited(model).unwrap_or_default()
+    })
+}
+
 /// THE TRAPDOOR LADDER'S OWN MODEL BAKES (the autopush-669 round —
 /// the per-stem chains the registry's derive walk resolves, the oak
 /// round's own cache pattern the wood rungs wear): the CLOSED kinds
@@ -8642,6 +8911,7 @@ mod tests {
             comparator_ticks: Vec::new(),
             repeater_ticks: Vec::new(),
             observer_ticks: Vec::new(),
+            piston_ticks: Vec::new(),
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(),  // the bamboo's own queue: empty
             chunks: vec![vec![AIR; CHUNK_X * CHUNK_Y * CHUNK_Z]],
@@ -11098,6 +11368,202 @@ mod tests {
             east[0].tile,
             gen_atlas::TILE_OBSERVER_FRONT,
             "the powered eye the same front tile keeps"
+        );
+    }
+
+    /// THE PISTON'S OWN BAKES AND FOLDS (the autopush-128 round — the
+    /// three base chains + the head pair the blockstate rows name:
+    /// the retracted full cube the six faces the template_piston
+    /// parent serves, the extended body the inside face the
+    /// piston_inner tile answers, the head the plate + shaft the
+    /// ten quads the overhang the base cell's border wears, the
+    /// sticky platform the kind's own tile swaps, the y-fold the
+    /// facing byte picks).
+    #[test]
+    fn the_piston_bakes_the_states_the_tiles_the_folds_wear() {
+        use mc_registry::generated::atlas as gen_atlas;
+        // THE BAKES' OWN SHAPES (the retracted full cube the six
+        // faces, the extended body the six, the head the plate six +
+        // the shaft four the ten wears)
+        let normal = piston_model_quads(false, false);
+        assert_eq!(normal.len(), 6, "the retracted full cube the six banks");
+        let sticky = piston_model_quads(true, false);
+        assert_eq!(sticky.len(), 6, "the sticky full cube the six keeps");
+        let extended = piston_model_quads(false, true);
+        assert_eq!(extended.len(), 6, "the extended body the six keeps");
+        let head = piston_head_model_quads(false);
+        assert_eq!(head.len(), 10, "the plate six + the shaft four the ten wears");
+        // THE RESOLVED NAMES THE PER-QUAD VERDICT READS (the
+        // #platform/#side/#bottom refs the merged map answers, the
+        // #inside ref the extended body's open face carries, the
+        // #unsticky ref the head's plate back wears)
+        let names: std::collections::BTreeSet<&str> =
+            normal.iter().map(|q| q.texture).collect();
+        for want in [
+            "block/piston_top",
+            "block/piston_side",
+            "block/piston_bottom",
+        ] {
+            assert!(names.contains(want), "the {want} ref the derive answers");
+        }
+        let sticky_names: std::collections::BTreeSet<&str> =
+            sticky.iter().map(|q| q.texture).collect();
+        assert!(
+            sticky_names.contains("block/piston_top_sticky"),
+            "the sticky platform the kind's own ref wears"
+        );
+        let ext_names: std::collections::BTreeSet<&str> =
+            extended.iter().map(|q| q.texture).collect();
+        assert!(
+            ext_names.contains("block/piston_inner"),
+            "the #inside ref the extended body carries"
+        );
+        // THE CULLFACES THE MODEL ROWS SPEAK (the full cube's six —
+        // the extended body the open front the north cullface never
+        // wears, the head plate's five the shaft's none keeps)
+        for cf in [
+            mc_registry::element_quads::Direction::Down,
+            mc_registry::element_quads::Direction::Up,
+            mc_registry::element_quads::Direction::North,
+            mc_registry::element_quads::Direction::South,
+            mc_registry::element_quads::Direction::West,
+            mc_registry::element_quads::Direction::East,
+        ] {
+            assert!(
+                normal.iter().any(|q| q.cullface == Some(cf)),
+                "the {cf:?} face the cube cullface keeps"
+            );
+        }
+        assert!(
+            !extended
+                .iter()
+                .any(|q| q.cullface == Some(mc_registry::element_quads::Direction::North)),
+            "the extended front the open face the cullface refuses"
+        );
+        // THE MESHED RETRACTED CELL THE FACING FOLD PICKS (the facing
+        // east — the platform face the model north the y=90 turn the
+        // EAST face wears, the bottom the model south the west keeps,
+        // the up face the side tile, the down face the floor culls)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, STONE);
+        put(&mut w, 8, 9, 8, crate::world::PISTON);
+        w.set_variant(8, 9, 8, crate::world::piston_variant(5, false));
+        let q = mesh_chunk(&w, 0, 0, None);
+        let cell: Vec<_> = q
+            .iter()
+            .filter(|quad| quad.pts.iter().any(|p| p[1] > 9.0 + 1e-4))
+            .collect();
+        assert_eq!(
+            cell.len(),
+            5,
+            "the six faces the culled bottom the five keeps"
+        );
+        let plane_tile = |axis: usize, value: f32| -> u16 {
+            cell.iter()
+                .find(|quad| quad.pts.iter().all(|p| (p[axis] - value).abs() < 1e-4))
+                .map(|quad| quad.tile)
+                .unwrap_or(u16::MAX)
+        };
+        assert_eq!(
+            plane_tile(0, 9.0),
+            gen_atlas::TILE_PISTON_TOP,
+            "the east face the platform tile the y=90 fold wears"
+        );
+        assert_eq!(
+            plane_tile(0, 8.0),
+            gen_atlas::TILE_PISTON_BOTTOM,
+            "the west face the bottom tile the model's south keeps"
+        );
+        assert_eq!(
+            plane_tile(1, 10.0),
+            gen_atlas::TILE_PISTON_SIDE,
+            "the up face the side tile the model's own rows wear"
+        );
+        // THE STICKY'S OWN SWAP (the platform face the sticky tile
+        // wears — the kind the model pick serves)
+        let mut w3 = empty_world();
+        put(&mut w3, 8, 8, 8, STONE);
+        put(&mut w3, 8, 9, 8, crate::world::STICKY_PISTON);
+        w3.set_variant(8, 9, 8, crate::world::piston_variant(5, false));
+        let q3 = mesh_chunk(&w3, 0, 0, None);
+        let cell3: Vec<_> = q3
+            .iter()
+            .filter(|quad| {
+                quad.pts.iter().any(|p| p[1] > 9.0 + 1e-4)
+                    && quad.pts.iter().all(|p| (p[0] - 9.0).abs() < 1e-4)
+            })
+            .collect();
+        assert_eq!(cell3.len(), 1, "the east face the one quad keeps");
+        assert_eq!(
+            cell3[0].tile,
+            gen_atlas::TILE_PISTON_TOP_STICKY,
+            "the sticky platform the kind's own tile wears"
+        );
+        // THE EXTENDED BODY'S OWN INSIDE (the facing east — the open
+        // front face the model north z=4 plane the y=90 fold the x=8.75
+        // plane wears, the inside tile the body's open face answers)
+        let mut w4 = empty_world();
+        put(&mut w4, 8, 8, 8, STONE);
+        put(&mut w4, 8, 9, 8, crate::world::PISTON);
+        w4.set_variant(8, 9, 8, crate::world::piston_variant(5, true));
+        let q4 = mesh_chunk(&w4, 0, 0, None);
+        let inside: Vec<_> = q4
+            .iter()
+            .filter(|quad| {
+                quad.pts.iter().all(|p| (p[0] - 8.75).abs() < 1e-4)
+                    && quad.pts.iter().all(|p| p[1] > 9.0 + 1e-4)
+            })
+            .collect();
+        assert_eq!(inside.len(), 1, "the body's open face the one quad keeps");
+        assert_eq!(
+            inside[0].tile,
+            gen_atlas::TILE_PISTON_INNER,
+            "the extended inside the piston_inner tile wears"
+        );
+        // THE HEAD'S OWN OVERHANG (the facing east — the plate the
+        // east edge the platform tile wears, the shaft the WEST the
+        // base cell's own border the overhang serves, the sticky head
+        // the sticky platform swap keeps)
+        let mut w5 = empty_world();
+        put(&mut w5, 8, 8, 8, STONE);
+        put(&mut w5, 8, 9, 8, crate::world::PISTON_HEAD);
+        w5.set_variant(8, 9, 8, crate::world::piston_head_variant(5, false));
+        let q5 = mesh_chunk(&w5, 0, 0, None);
+        let head_cell: Vec<_> = q5
+            .iter()
+            .filter(|quad| quad.pts.iter().any(|p| p[1] > 9.0 + 1e-4))
+            .collect();
+        let plate: Vec<_> = head_cell
+            .iter()
+            .filter(|quad| quad.pts.iter().all(|p| (p[0] - 9.0).abs() < 1e-4))
+            .collect();
+        assert_eq!(plate.len(), 1, "the plate face the one quad keeps");
+        assert_eq!(
+            plate[0].tile,
+            gen_atlas::TILE_PISTON_TOP,
+            "the plate face the platform tile the head's own rows wear"
+        );
+        let overhang: Vec<_> = head_cell
+            .iter()
+            .filter(|quad| quad.pts.iter().any(|p| p[0] < 8.0 - 1e-4))
+            .collect();
+        assert!(
+            !overhang.is_empty(),
+            "the shaft the west overhang the base cell's border serves"
+        );
+        w5.set_variant(8, 9, 8, crate::world::piston_head_variant(5, true));
+        let q6 = mesh_chunk(&w5, 0, 0, None);
+        let plate6: Vec<_> = q6
+            .iter()
+            .filter(|quad| {
+                quad.pts.iter().any(|p| p[1] > 9.0 + 1e-4)
+                    && quad.pts.iter().all(|p| (p[0] - 9.0).abs() < 1e-4)
+            })
+            .collect();
+        assert_eq!(
+            plate6[0].tile,
+            gen_atlas::TILE_PISTON_TOP_STICKY,
+            "the sticky head the platform swap wears"
         );
     }
 

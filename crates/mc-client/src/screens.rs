@@ -38653,6 +38653,114 @@ impl App {
                     *oz,
                 );
             }
+            // THE PISTON HEAD'S OWN SUPPORT WALK (the autopush-128
+            // round — javap PistonHeadBlock.updateShape the 26.2 jar
+            // the `!state.is(PISTON)` gate the pop serves: the head
+            // whose BACK cell the base no longer wears [the base dug
+            // OR the base's own facing the head's byte never matches]
+            // the AIR the pop answers — the changed cell + its six
+            // the consult's own scope the head's cell covers, the
+            // immediate set the updateShape walk's own law keeps, the
+            // popped cells the broadcast the wire re-read the same
+            // walk banks).
+            let mut piston_head_pops: Vec<(i32, i32, i32)> = Vec::new();
+            {
+                let read = &*world;
+                let mut seen: std::collections::HashSet<(i32, i32, i32)> =
+                    std::collections::HashSet::new();
+                let mut consult: Vec<(i32, i32, i32)> = vec![(lx, ly, lz)];
+                for (dx, dy, dz) in [
+                    (0, -1, 0),
+                    (0, 1, 0),
+                    (0, 0, -1),
+                    (0, 0, 1),
+                    (-1, 0, 0),
+                    (1, 0, 0),
+                ] {
+                    consult.push((lx + dx, ly + dy, lz + dz));
+                }
+                for (cx, cy, cz) in consult {
+                    if !seen.insert((cx, cy, cz)) {
+                        continue;
+                    }
+                    if read.get(cx, cy, cz) != crate::world::PISTON_HEAD {
+                        continue;
+                    }
+                    let variant = read.variant(cx, cy, cz);
+                    let (fdx, fdy, fdz) =
+                        crate::world::piston_facing_delta6(crate::world::piston_head_facing_of(
+                            variant,
+                        ));
+                    // THE BACK CELL'S OWN LAW: the base the -facing
+                    // step the head's byte answers — the piston kind
+                    // the support wears, the anything-else the pop
+                    // banks
+                    let back = read.get(cx - fdx, cy - fdy, cz - fdz);
+                    if !crate::world::is_piston_kind(back) {
+                        piston_head_pops.push((cx, cy, cz));
+                    }
+                }
+            }
+            for (hx, hy, hz) in &piston_head_pops {
+                world.set(*hx, *hy, *hz, crate::world::AIR);
+            }
+            // THE PISTON'S OWN CONSULT (the autopush-128 round — javap
+            // PistonBaseBlock.neighborChanged pc 0-30 the 26.2 jar the
+            // checkIfExtend walk the event serves: the changed cell +
+            // its six the scope the direct trigger wears [the piston
+            // AT the changed cell AND the six neighbors the arm reads]
+            // PLUS the QUASI-CONNECTIVITY arm the cell BELOW the
+            // consult cell answers [the piston's above-cell walk the
+            // neighbors the changed cell feeds — the lever beside the
+            // block above the piston the classic QC the scope banks],
+            // the blockEvent the same-tick law the `now` stamp the
+            // beat the same frame drains, the dedup the pending
+            // re-consult refuses).
+            {
+                let read = &*world;
+                let mut seen: std::collections::HashSet<(i32, i32, i32)> =
+                    std::collections::HashSet::new();
+                let mut consult: Vec<(i32, i32, i32)> = vec![(lx, ly, lz)];
+                for (dx, dy, dz) in [
+                    (0, -1, 0),
+                    (0, 1, 0),
+                    (0, 0, -1),
+                    (0, 0, 1),
+                    (-1, 0, 0),
+                    (1, 0, 0),
+                ] {
+                    consult.push((lx + dx, ly + dy, lz + dz));
+                }
+                let mut piston_due: Vec<(i32, i32, i32)> = Vec::new();
+                for (cx, cy, cz) in consult {
+                    // THE DIRECT ARM (the piston AT the changed cell
+                    // AND the six neighbors the scope wears)
+                    if seen.insert((cx, cy, cz)) {
+                        let kind = read.get(cx, cy, cz);
+                        if crate::world::is_piston_kind(kind) {
+                            piston_due.push((cx, cy, cz));
+                        }
+                    }
+                    // THE QC ARM (the piston BELOW the consult cell —
+                    // its above-cell walk the changed cell's own six
+                    // the neighbors feed)
+                    let below = (cx, cy - 1, cz);
+                    if seen.insert(below) {
+                        let kind = read.get(below.0, below.1, below.2);
+                        if crate::world::is_piston_kind(kind) {
+                            piston_due.push(below);
+                        }
+                    }
+                }
+                for (px, py, pz) in &piston_due {
+                    world.schedule_piston_tick(
+                        now + crate::world::PISTON_EVENT_DELAY,
+                        *px,
+                        *py,
+                        *pz,
+                    );
+                }
+            }
             // THE WIRE'S OWN RECOMPUTE (javap RedStoneWireBlock
             // .updateNeighborsOfNeighboringWires pc 0-118 the 26.2 jar —
             // the changed cell's own six + the cell itself the adjacent
@@ -41679,6 +41787,24 @@ impl App {
                     cell.1,
                     cell.2,
                     crate::world::observer_placement_variant(cam_yaw, cam_pitch),
+                );
+            }
+            // THE PISTON'S OWN FRONT STAMP (the autopush-128 round —
+            // javap PistonBaseBlock.getStateForPlacement pc 1-27 the
+            // 26.2 jar the `setValue(FACING, context
+            // .getNearestLookingDirection().getOpposite())` walk the
+            // ONE opposite the look's own front stamps [the head face
+            // the placer's own look the opposite wears — the placed
+            // piston the front the player reads, the ONE-opposite law
+            // the observer's DOUBLE the mirror retires], the pitch
+            // quarter the vertical gate reads, the fresh placement
+            // the retracted verdict keeps)
+            if crate::world::is_piston_kind(placed) {
+                world.set_variant(
+                    cell.0,
+                    cell.1,
+                    cell.2,
+                    crate::world::piston_placement_variant(cam_yaw, cam_pitch),
                 );
             }
             // THE WALL HEADS' OWN FACING STAMP (the dev-83 round — javap
@@ -46697,6 +46823,9 @@ impl App {
         // THE OBSERVER'S OWN BEAT (the autopush-127 round — the
         // scheduled pulses the diode family's own lane beside)
         self.tick_observer_beats();
+        // THE PISTON'S OWN BEAT (the autopush-128 round — the
+        // scheduled moves the diode family's own lane beside)
+        self.tick_piston_beats();
         if self.offline_carts.is_empty() {
             return;
         }
@@ -47114,6 +47243,62 @@ impl App {
             // new 15 the wire voice re-reads, the remesh the changed
             // pixels answers)
             self.attach_wire_voice(x, y, z);
+        }
+    }
+
+    /// THE PISTON'S OWN BEAT (the autopush-128 round — javap
+    /// PistonBaseBlock.eventReceived the 26.2 jar the j-fork the
+    /// moves serve: the powered && !EXTENDED pair the extension
+    /// banks, the !powered && EXTENDED pair the retraction keeps,
+    /// the steady state the beat's silence wears [the matches the
+    /// event never fires — the jar's own gate the checkIfExtend
+    /// verdict speaks]). The move the changed cells the broadcast
+    /// the attach walk's cell+six scope re-reads — the wires AND
+    /// the consumers AND the sibling pistons the same walk re-arms,
+    /// the cascade the blockEvent queue's own cadence the next
+    /// frame's beat answers.
+    fn tick_piston_beats(&mut self) {
+        let now = self.frame;
+        let due = {
+            let Some(world) = self.offline_world.as_mut() else {
+                return;
+            };
+            world.drain_due_piston_ticks(now)
+        };
+        if due.is_empty() {
+            return;
+        }
+        for (x, y, z) in due {
+            // THE RAIL-MATCH GATE + THE MOVE'S OWN WALK (the scoped
+            // borrow the changed cells the vec owns — the broadcast
+            // the mutable borrow's tail the walk serves)
+            let changed = {
+                let Some(world) = self.offline_world.as_mut() else {
+                    return;
+                };
+                let kind = world.get(x, y, z);
+                if !crate::world::is_piston_kind(kind) {
+                    continue; // the stale row the dug piston's honest extra keeps
+                }
+                let variant = world.variant(x, y, z);
+                let facing = crate::world::piston_facing_of(variant);
+                let extended = crate::world::piston_extended_of(variant);
+                let sticky = kind == crate::world::STICKY_PISTON;
+                let powered = crate::world::piston_input_signal(world, x, y, z, facing);
+                if powered && !extended {
+                    crate::world::piston_try_extend(world, x, y, z, facing, sticky)
+                } else if !powered && extended {
+                    crate::world::piston_try_retract(world, x, y, z, facing, sticky)
+                } else {
+                    continue; // the steady state the beat's silence keeps
+                }
+            };
+            // THE CHANGED CELLS' OWN BROADCAST (the attach walk the
+            // cell+six scope re-reads — the wire flips AND the lamp
+            // verdicts AND the sibling pistons the same walk re-arms)
+            for (cx, cy, cz) in changed {
+                self.attach_wire_voice(cx, cy, cz);
+            }
         }
     }
 
@@ -85469,6 +85654,7 @@ mod tests {
             comparator_ticks: Vec::new(),
             repeater_ticks: Vec::new(),
             observer_ticks: Vec::new(),
+            piston_ticks: Vec::new(),
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
@@ -86050,6 +86236,7 @@ mod tests {
                     comparator_ticks: Vec::new(),
             repeater_ticks: Vec::new(),
             observer_ticks: Vec::new(),
+            piston_ticks: Vec::new(),
                     torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
                     bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
                     chunks: vec![
@@ -86504,6 +86691,7 @@ mod tests {
             comparator_ticks: Vec::new(),
             repeater_ticks: Vec::new(),
             observer_ticks: Vec::new(),
+            piston_ticks: Vec::new(),
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
@@ -86584,6 +86772,7 @@ mod tests {
             comparator_ticks: Vec::new(),
             repeater_ticks: Vec::new(),
             observer_ticks: Vec::new(),
+            piston_ticks: Vec::new(),
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
@@ -86666,6 +86855,7 @@ mod tests {
                     comparator_ticks: Vec::new(),
             repeater_ticks: Vec::new(),
             observer_ticks: Vec::new(),
+            piston_ticks: Vec::new(),
                     torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
                     bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
                     chunks: vec![
@@ -86725,6 +86915,7 @@ mod tests {
             comparator_ticks: Vec::new(),
             repeater_ticks: Vec::new(),
             observer_ticks: Vec::new(),
+            piston_ticks: Vec::new(),
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
@@ -108237,6 +108428,7 @@ cow_sound_variant: None,
             comparator_ticks: Vec::new(),
             repeater_ticks: Vec::new(),
             observer_ticks: Vec::new(),
+            piston_ticks: Vec::new(),
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
@@ -110719,7 +110911,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            772,
+            775,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -110800,7 +110992,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            772,
+            775,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -111102,7 +111294,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            772,
+            775,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -116160,7 +116352,7 @@ cow_sound_variant: None,
         // #texture ref banks)
         assert_eq!(
             atlas::N_KINDS,
-            772,
+            775,
             "the palette the weighted plates' own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
@@ -116380,7 +116572,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            772,
+            775,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
@@ -116657,7 +116849,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            772,
+            775,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
@@ -116773,7 +116965,7 @@ cow_sound_variant: None,
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE, 318);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, 319);
         assert_eq!(w::END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 772, "the palette the weighted rows bank");
+        assert_eq!(atlas::N_KINDS, 775, "the palette the weighted rows bank");
         for (off, on, name) in [
             (
                 w::LIGHT_WEIGHTED_PRESSURE_PLATE,
@@ -117893,7 +118085,7 @@ cow_sound_variant: None,
         assert_eq!(w::END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-            772,
+            775,
             "the palette the weighted plates' own rows bank"
         );
         for (off, on, name, wooden) in [
