@@ -197,6 +197,7 @@ pub fn materialize(
         campfire_ticks: Vec::new(), // the campfire's own queue: empty
         torch_ticks: Vec::new(), // the torch's own queue: empty
         detector_ticks: Vec::new(), // the detector's own queue: empty (the cart the server's own beats tick)
+        comparator_ticks: Vec::new(),
         torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
         bamboo_ticks: Vec::new(), // the bamboo's own queue: empty (the wire world the server's own falls land)
     };

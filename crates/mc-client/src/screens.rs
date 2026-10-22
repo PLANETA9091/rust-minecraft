@@ -38473,6 +38473,60 @@ impl App {
             for (tx, ty, tz) in &torch_flips {
                 world.schedule_torch_tick(now + 2, *tx, *ty, *tz);
             }
+            // THE COMPARATOR'S OWN CONSULT (the autopush-124 round —
+            // javap ComparatorBlock.checkTickOnNeighbor pc 27-117 the
+            // 26.2 jar the willTickThisTick gate the scheduleTick(pos,
+            // this, 2, ...) walk the mismatch arms serve: the
+            // OUTPUT-CACHE arm the calculateOutputSignal vs the BE's
+            // stored verdict reads, the POWERED arm the shouldTurnOn
+            // sync keeps — the mismatch EITHER arm the +2 entry banks,
+            // the pending entry the re-consult refuses [the
+            // schedule_comparator_tick walk's own dedup]). THE
+            // CONSULT'S OWN SCOPE the changed cell + its six the seeds
+            // wear: the comparator AT the changed cell (the placement
+            // and the dig arm) AND the comparator whose back/side
+            // seats the changed cell serves (the +step cells the six
+            // walk banks — the back read the FACING decode names, the
+            // side reads the cw/ccw arms the alternate walk serves).
+            // THE TICK THE REFRESH ANSWERS (the beat's own drain the
+            // output cache + the powered verdict the live recompute
+            // banks, the front seed the attach walk re-broadcasts).
+            let mut comparator_due: Vec<(i32, i32, i32)> = Vec::new();
+            {
+                let read = &*world;
+                let mut seen: std::collections::HashSet<(i32, i32, i32)> =
+                    std::collections::HashSet::new();
+                let mut consult: Vec<(i32, i32, i32)> = vec![(lx, ly, lz)];
+                for (dx, dy, dz) in [
+                    (0, -1, 0),
+                    (0, 1, 0),
+                    (0, 0, -1),
+                    (0, 0, 1),
+                    (-1, 0, 0),
+                    (1, 0, 0),
+                ] {
+                    consult.push((lx + dx, ly + dy, lz + dz));
+                }
+                for (cx, cy, cz) in consult {
+                    if !seen.insert((cx, cy, cz)) {
+                        continue;
+                    }
+                    if read.get(cx, cy, cz) != crate::world::COMPARATOR {
+                        continue;
+                    }
+                    if crate::world::comparator_refresh_variant(read, cx, cy, cz).is_some() {
+                        comparator_due.push((cx, cy, cz));
+                    }
+                }
+            }
+            for (cx, cy, cz) in &comparator_due {
+                world.schedule_comparator_tick(
+                    now + crate::world::COMPARATOR_DELAY,
+                    *cx,
+                    *cy,
+                    *cz,
+                );
+            }
             // THE WIRE'S OWN RECOMPUTE (javap RedStoneWireBlock
             // .updateNeighborsOfNeighboringWires pc 0-118 the 26.2 jar —
             // the changed cell's own six + the cell itself the adjacent
@@ -40395,6 +40449,74 @@ impl App {
         // keeps). THE WIRE SESSION THE LOCAL TOGGLE NEVER LANDS (the
         // networked world's server-owned state the echo's reply names
         // — the door arm's own law keeps).
+        // THE COMPARATOR'S OWN MODE CYCLE (the autopush-124 round —
+        // javap ComparatorBlock.useWithoutItem pc 19-95 the 26.2 jar:
+        // the `state.cycle(MODE)` walk the subtract bit flips, the
+        // playSound pc 30-62 the COMPARATOR_CLICK BLOCKS voice the
+        // 0.3 volume carries [the pitch the NEW state's own mode the
+        // 0.55 subtract / 0.5 compare fold answers], the flag-2
+        // setBlock the instant setBlock walk serves, the still-is
+        // gate pc 75-89 the refreshOutputState walk arms — the output
+        // cache AND the powered verdict the live recompute banks, the
+        // updateNeighborsInFront the attach seed covers). THE WIRE
+        // SESSION THE LOCAL CYCLE NEVER LANDS (the lever arm's own
+        // law the networked world's server-owned state keeps).
+        if !self.world_is_network
+            && crate::world::is_comparator(
+                self.active_world()
+                    .map(|w| w.get(hit.pos.0, hit.pos.1, hit.pos.2))
+                    .unwrap_or(0),
+            )
+        {
+            let (cx0, cy0, cz0) = hit.pos;
+            let ear = self
+                .body
+                .as_ref()
+                .map(|b| (b.x, b.y + b.eye_height(), b.z));
+            let yaw = self.listener_yaw();
+            let (cx, cy, cz) = (
+                cx0 as f64 + 0.5,
+                cy0 as f64 + 0.5,
+                cz0 as f64 + 0.5,
+            );
+            if let Some(world) = self.offline_world.as_mut() {
+                let variant = world.variant(cx0, cy0, cz0);
+                let flipped = crate::world::comparator_variant(
+                    crate::world::comparator_facing_of(variant),
+                    !crate::world::comparator_subtract_of(variant),
+                    crate::world::comparator_powered_of(variant),
+                    crate::world::comparator_output_of(variant),
+                );
+                world.set_variant(cx0, cy0, cz0, flipped);
+                // THE INSTANT REFRESH (javap pc 75-89 — the refresh
+                // the use walk's own tail speaks, the mode the output
+                // the same click re-verdicts)
+                if let Some(fresh) = crate::world::comparator_refresh_variant(world, cx0, cy0, cz0)
+                {
+                    world.set_variant(cx0, cy0, cz0, fresh);
+                }
+            }
+            // THE FRONT SEED'S OWN BROADCAST (the updateNeighborsInFront
+            // walk the attach helper's own scan covers)
+            self.attach_wire_voice(cx0, cy0, cz0);
+            // THE CLICK'S OWN VOICE (javap pc 30-62 — the pitch the NEW
+            // mode's own arm the 0.55 subtract / 0.5 compare speaks)
+            let now_subtract = self
+                .active_world()
+                .map(|w| {
+                    crate::world::comparator_subtract_of(w.variant(cx0, cy0, cz0))
+                })
+                .unwrap_or(false);
+            self.sounds.play_voice_at_pan(
+                self.frame,
+                "block.comparator.click",
+                0.3,
+                if now_subtract { 0.55 } else { 0.5 },
+                ear_distance(ear, cx, cy, cz),
+                ear_pan(ear, yaw, cx, cy, cz),
+            );
+            return true;
+        }
         if !self.world_is_network {
             if let Some(flipped) = self
                 .active_world()
@@ -40853,6 +40975,19 @@ impl App {
                 return false;
             }
         }
+        // THE COMPARATOR'S OWN SURVIVAL GATE (the autopush-124 round —
+        // javap DiodeBlock.canSurvive the 26.2 jar the mayPlaceOn
+        // delegate the below cell's own sturdy read serves: the air/
+        // fluid/plant rows the Empty verdict the refusal keeps — the
+        // press the PASS carries, the item lane follows)
+        if crate::world::is_comparator(block) {
+            let below_ok = self.active_world().is_some_and(|w| {
+                crate::world::comparator_can_survive(w, cell.0, cell.1, cell.2)
+            });
+            if !below_ok {
+                return false;
+            }
+        }
         // THE PLACEMENT CONTEXT'S OWN LOOK (the furnace facing's own
         // input — the read rides BEFORE the mutable prediction borrow,
         // the camera's own yaw the wire_angles conversion's raw form
@@ -41308,6 +41443,22 @@ impl App {
                     cell.1,
                     cell.2,
                     crate::world::rail_axis_variant(cam_yaw),
+                );
+            }
+            // THE COMPARATOR'S OWN FACING STAMP (the autopush-124 round
+            // — javap DiodeBlock.getStateForPlacement pc 1-20 the 26.2
+            // jar the `setValue(FACING, context.getHorizontalDirection()
+            // .getOpposite())` walk the RAW look's opposite the stamp
+            // speaks: the FACING the placer's own look the +2 fold
+            // answers, the fresh placement the COMPARE mode the dark
+            // cache the default zeros keep — the mesher's y-table the
+            // byte reads, the input walk the FACING decode serves)
+            if crate::world::is_comparator(placed) {
+                world.set_variant(
+                    cell.0,
+                    cell.1,
+                    cell.2,
+                    crate::world::comparator_placement_variant(cam_yaw),
                 );
             }
             // THE WALL HEADS' OWN FACING STAMP (the dev-83 round — javap
@@ -46317,6 +46468,9 @@ impl App {
         // banks). The walk rides the walk's own opening — the
         // is_empty gate the later beat keeps.
         self.tick_detector_rail_beats();
+        // THE COMPARATOR'S OWN BEAT (the autopush-124 round — the
+        // scheduled refresh walks the detector's own lane beside)
+        self.tick_comparator_beats();
         if self.offline_carts.is_empty() {
             return;
         }
@@ -46590,6 +46744,47 @@ impl App {
         // tail's own re-speak answers — the wire's own re-read the
         // dropped 15 the run's own verdict wears)
         for (x, y, z) in releases {
+            self.attach_wire_voice(x, y, z);
+        }
+    }
+
+    /// THE COMPARATOR'S OWN BEAT DRAIN (the autopush-124 round —
+    /// javap ComparatorBlock.tick pc 4-7 the 26.2 jar the
+    /// refreshOutputState walk the due entries the drain serves: the
+    /// output cache the live recompute banks, the POWERED verdict the
+    /// shouldTurnOn sync wears, the flag-2 setBlock the remesh the
+    /// wire voice's own scan speaks, THE FRONT NEIGHBORS the
+    /// updateNeighborsInFront walk the attach seed covers — the wire
+    /// at the front cell the new output the flood re-reads).
+    fn tick_comparator_beats(&mut self) {
+        let due = {
+            let Some(world) = self.offline_world.as_mut() else {
+                return;
+            };
+            world.drain_due_comparator_ticks(self.frame)
+        };
+        if due.is_empty() {
+            return;
+        }
+        for (x, y, z) in due {
+            let Some(world) = self.offline_world.as_mut() else {
+                return;
+            };
+            // THE RAIL-MATCH GATE the stale row the kind's own verdict
+            // drops (the dug comparator the queued entry the detector
+            // lane's own honest extra keeps)
+            if world.get(x, y, z) != crate::world::COMPARATOR {
+                continue;
+            }
+            // THE REFRESH WALK (the variant the live verdict banks —
+            // the unchanged pair the write the honest guard refuses)
+            if let Some(fresh) = crate::world::comparator_refresh_variant(world, x, y, z) {
+                world.set_variant(x, y, z, fresh);
+            }
+            // THE FRONT SEED'S OWN BROADCAST (the comparator pos the
+            // attach walk's cell+six scan covers — the front cell the
+            // new output the wire voice re-reads, the remesh the
+            // changed pixels answers)
             self.attach_wire_voice(x, y, z);
         }
     }
@@ -84943,6 +85138,7 @@ mod tests {
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             torch_ticks: Vec::new(), // the torch's own queue: empty
             detector_ticks: Vec::new(), // the detector's own queue: empty
+            comparator_ticks: Vec::new(),
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
@@ -85521,6 +85717,7 @@ mod tests {
                     campfire_ticks: Vec::new(), // the campfire's own queue: empty
                     torch_ticks: Vec::new(), // the torch's own queue: empty
                     detector_ticks: Vec::new(), // the detector's own queue: empty
+                    comparator_ticks: Vec::new(),
                     torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
                     bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
                     chunks: vec![
@@ -85972,6 +86169,7 @@ mod tests {
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             torch_ticks: Vec::new(), // the torch's own queue: empty
             detector_ticks: Vec::new(), // the detector's own queue: empty
+            comparator_ticks: Vec::new(),
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
@@ -86049,6 +86247,7 @@ mod tests {
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             torch_ticks: Vec::new(), // the torch's own queue: empty
             detector_ticks: Vec::new(), // the detector's own queue: empty
+            comparator_ticks: Vec::new(),
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
@@ -86128,6 +86327,7 @@ mod tests {
                     campfire_ticks: Vec::new(), // the campfire's own queue: empty
                     torch_ticks: Vec::new(), // the torch's own queue: empty
                     detector_ticks: Vec::new(), // the detector's own queue: empty
+                    comparator_ticks: Vec::new(),
                     torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
                     bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
                     chunks: vec![
@@ -86184,6 +86384,7 @@ mod tests {
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             torch_ticks: Vec::new(), // the torch's own queue: empty
             detector_ticks: Vec::new(), // the detector's own queue: empty
+            comparator_ticks: Vec::new(),
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
@@ -107693,6 +107894,7 @@ cow_sound_variant: None,
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             torch_ticks: Vec::new(), // the torch's own queue: empty
             detector_ticks: Vec::new(), // the detector's own queue: empty
+            comparator_ticks: Vec::new(),
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
@@ -110175,7 +110377,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            768,
+            769,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -110256,7 +110458,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            768,
+            769,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -110558,7 +110760,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            768,
+            769,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -115616,7 +115818,7 @@ cow_sound_variant: None,
         // #texture ref banks)
         assert_eq!(
             atlas::N_KINDS,
-            768,
+            769,
             "the palette the weighted plates' own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
@@ -115836,7 +116038,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            768,
+            769,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
@@ -116113,7 +116315,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            768,
+            769,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
@@ -116229,7 +116431,7 @@ cow_sound_variant: None,
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE, 318);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, 319);
         assert_eq!(w::END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 768, "the palette the weighted rows bank");
+        assert_eq!(atlas::N_KINDS, 769, "the palette the weighted rows bank");
         for (off, on, name) in [
             (
                 w::LIGHT_WEIGHTED_PRESSURE_PLATE,
@@ -117349,7 +117551,7 @@ cow_sound_variant: None,
         assert_eq!(w::END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-            768,
+            769,
             "the palette the weighted plates' own rows bank"
         );
         for (off, on, name, wooden) in [

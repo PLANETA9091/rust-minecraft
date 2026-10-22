@@ -1917,6 +1917,185 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     }
                     continue;
                 }
+                // THE COMPARATOR'S OWN ELEMENT LANE (the autopush-124
+                // round — the four per-state model bakes the jar's own
+                // blockstate rows wear: block/comparator{,_on,
+                // _subtract,_on_subtract} the (subtract, powered) pair
+                // the variant byte picks. THE PER-QUAD TILE VERDICT the
+                // merged texture map's own names answer: the #top ref
+                // the TILE_COMPARATOR(_ON) swap banks, the #slab ref
+                // the smooth_stone tile keeps, the #unlit/#lit refs the
+                // redstone torch kinds' own tiles wear, the particle
+                // ref the quads never carry. THE FACING'S OWN Y-TABLE
+                // the blockstates/comparator.json rows speak — facing
+                // south the y=0 row answers, west y=90, north y=180,
+                // east y=270 (the turns the 90° steps the cell-center
+                // rotation fold wears — the wall torch lane's own
+                // formula the same walk serves). THE DOWN CULLFACE the
+                // slab's ground verdict keeps, the side cullfaces the
+                // rotated model the lane never consults [the touching
+                // slabs' opposite orientations the depth test settles].
+                // `shade: true` the models carry — the FACE_SHADE term
+                // the quad's own direction reads, the lightmap the
+                // per-corner fold answers).
+                if crate::world::is_comparator(id) {
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
+                    });
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
+                    });
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
+                    });
+                    let (cell_sky, cell_block) = match light {
+                        Some(l) => {
+                            let (s, b) = cell_layers(l, world.chunks_per_side, wx, wy, wz);
+                            (s.map(|v| v as f32), b.map(|v| v as f32))
+                        }
+                        None => (None, None),
+                    };
+                    // the no-atlas boot's own default — the tile's own
+                    // pixels speak, the flat palette the missing row
+                    // keeps (the candle path's own verdict)
+                    let tile = if (id as usize) < atlas::N_KINDS {
+                        atlas::FACE_TILES[id as usize][2]
+                    } else {
+                        atlas::TILE_NONE
+                    };
+                    let base = if tile == atlas::TILE_NONE {
+                        crate::colors::palette_color(id, 2)
+                            .or_else(|| lut.and_then(|l| l.color(id, 2)))
+                            .unwrap_or_else(|| default_color(id, 2))
+                    } else {
+                        [1.0; 3]
+                    };
+                    // THE DOWN CULL'S OWN READ — the below cell the
+                    // cullface verdict samples (the vanilla cullface law:
+                    // the neighbor's face the solid render answers)
+                    let below = world.get(wx, wy - 1, wz);
+                    let variant = world.variant(wx, wy, wz);
+                    let subtract = crate::world::comparator_subtract_of(variant);
+                    let powered = crate::world::comparator_powered_of(variant);
+                    let quads = comparator_model_quads(subtract, powered);
+                    let facing = crate::world::comparator_facing_of(variant);
+                    let turns = match facing {
+                        1 => 3.0f32, // east the y=270 row
+                        2 => 0.0,    // south the y=0 row
+                        3 => 1.0,    // west the y=90 row
+                        _ => 2.0,    // north the y=180 row
+                    };
+                    let (sn, cs) = (turns * std::f32::consts::FRAC_PI_2).sin_cos();
+                    for q in quads {
+                        if q.cullface == Some(mc_registry::element_quads::Direction::Down)
+                            && !is_transparent(below)
+                        {
+                            continue; // the slab's bottom the solid ground never shows
+                        }
+                        // THE PER-QUAD TILE'S OWN VERDICT (the resolved
+                        // texture name the derive walk carries — the
+                        // #top swap the powered bit's own seat banks)
+                        let tile = match q.texture {
+                            "block/comparator" => atlas::TILE_COMPARATOR,
+                            "block/comparator_on" => atlas::TILE_COMPARATOR_ON,
+                            "block/smooth_stone" => {
+                                atlas::FACE_TILES[crate::world::SMOOTH_STONE as usize][2]
+                            }
+                            "block/redstone_torch" => {
+                                atlas::FACE_TILES[crate::world::REDSTONE_TORCH as usize][2]
+                            }
+                            "block/redstone_torch_off" => {
+                                atlas::FACE_TILES[crate::world::REDSTONE_TORCH_OFF as usize][2]
+                            }
+                            _ => tile,
+                        };
+                        // THE SHADE'S OWN SEAT (the model's shade:true
+                        // the face direction's own multiplier reads —
+                        // the mesher's face order [east, west, top,
+                        // bottom, south, north] the Cull enum order
+                        // [Down, Up, North, South, West, East] the map
+                        // wears)
+                        let shade = match q.direction {
+                            mc_registry::element_quads::Direction::East => FACE_SHADE[0],
+                            mc_registry::element_quads::Direction::West => FACE_SHADE[1],
+                            mc_registry::element_quads::Direction::Up => FACE_SHADE[2],
+                            mc_registry::element_quads::Direction::Down => FACE_SHADE[3],
+                            mc_registry::element_quads::Direction::South => FACE_SHADE[4],
+                            mc_registry::element_quads::Direction::North => FACE_SHADE[5],
+                        };
+                        let mut pts = [[0f32; 3]; 4];
+                        let mut colors = [[0f32; 3]; 4];
+                        let mut uvs = [[0f32; 2]; 4];
+                        for (i, v) in q.vertices.iter().enumerate() {
+                            // THE Y-ROTATION'S OWN FOLD (the facing turns
+                            // the cell-center walk wears — the vanilla
+                            // blockstate y the clockwise order speaks)
+                            let rx = 0.5 + (v[0] - 0.5) * cs - (v[2] - 0.5) * sn;
+                            let rz = 0.5 + (v[0] - 0.5) * sn + (v[2] - 0.5) * cs;
+                            pts[i] = [wx as f32 + rx, wy as f32 + v[1], wz as f32 + rz];
+                            uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
+                            let lm = lightmap_combine(
+                                cell_sky,
+                                cell_block,
+                                sky_factor,
+                                sky_tint,
+                                ambient,
+                                block_tint,
+                                night_vision,
+                                world.night_vision_factor,
+                                world.darkness_scale,
+                            );
+                            colors[i] = [
+                                base[0] * shade * lm[0],
+                                base[1] * shade * lm[1],
+                                base[2] * shade * lm[2],
+                            ];
+                        }
+                        out.push(Quad {
+                            pts,
+                            colors,
+                            uvs,
+                            tile,
+                            translucent: false,
+                            per_texel_alpha: false,
+                        });
+                    }
+                    continue;
+                }
                 // THE CANDLE PAIR'S OWN ELEMENT LANE (the autopush-522
                 // round — the canLight consult's own kinds finally
                 // RENDERS). blockstates/candle.json's one-candle rows:
@@ -6329,6 +6508,44 @@ fn redstone_wall_torch_model_quads(lit: bool) -> &'static [mc_registry::element_
     })
 }
 
+/// THE COMPARATOR'S OWN MODEL BAKES (the autopush-124 round — the
+/// four per-state chains the registry's derive walk resolves, the
+/// torch lane's own cache pattern the pair of state bits wears):
+/// the (subtract, powered) pair the blockstates/comparator.json's
+/// four rows name — block/comparator, block/comparator_on, block/
+/// comparator_subtract, block/comparator_on_subtract. The resolved
+/// texture refs the per-quad verdict reads (#top the TILE_COMPARATOR
+/// swap banks, #slab the smooth_stone, #unlit/#lit the torch kinds).
+/// The failed derive the honest empty slice keeps.
+fn comparator_model_quads(
+    subtract: bool,
+    powered: bool,
+) -> &'static [mc_registry::element_quads::Quad] {
+    static OFF: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    static ON: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    static SUBTRACT: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    static ON_SUBTRACT: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    let cache = match (subtract, powered) {
+        (false, false) => &OFF,
+        (false, true) => &ON,
+        (true, false) => &SUBTRACT,
+        (true, true) => &ON_SUBTRACT,
+    };
+    cache.get_or_init(|| {
+        let model = match (subtract, powered) {
+            (false, false) => "block/comparator",
+            (false, true) => "block/comparator_on",
+            (true, false) => "block/comparator_subtract",
+            (true, true) => "block/comparator_on_subtract",
+        };
+        mc_registry::element_quads::derive_model_inherited(model).unwrap_or_default()
+    })
+}
+
 /// THE TRAPDOOR LADDER'S OWN MODEL BAKES (the autopush-669 round —
 /// the per-stem chains the registry's derive walk resolves, the oak
 /// round's own cache pattern the wood rungs wear): the CLOSED kinds
@@ -8078,6 +8295,7 @@ mod tests {
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             torch_ticks: Vec::new(), // the torch's own queue: empty
             detector_ticks: Vec::new(), // the detector's own queue: empty
+            comparator_ticks: Vec::new(),
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![vec![AIR; CHUNK_X * CHUNK_Y * CHUNK_Z]],
@@ -10256,8 +10474,72 @@ mod tests {
         }
     }
 
-    /// THE TORCH'S OWN ELEMENT-LANE LAWS (the dev-32 round): the stick
-    /// box the template_torch element bakes — the SIX quads the derive
+    /// THE COMPARATOR'S OWN BAKES (the autopush-124 round — the four
+    /// per-state derives the jar's own models answer: every state the
+    /// non-empty slice keeps, the ON models the lit-tile quads carry,
+    /// the subtract pair the bigger geometry the wire segments bank,
+    /// the per-quad texture verdict the resolved names the derive walk
+    /// serves).
+    #[test]
+    fn the_comparator_bakes_the_four_states_the_texture_verdicts_wear() {
+        // THE FOUR STATES THE NON-EMPTY BAKES KEEP
+        let off = comparator_model_quads(false, false);
+        let on = comparator_model_quads(false, true);
+        let sub = comparator_model_quads(true, false);
+        let on_sub = comparator_model_quads(true, true);
+        assert!(!off.is_empty(), "the base model the bake answers");
+        assert!(!on.is_empty(), "the on model the bake answers");
+        assert!(!sub.is_empty(), "the subtract model the bake answers");
+        assert!(!on_sub.is_empty(), "the on-subtract model the bake answers");
+        // THE ON MODELS THE WIRE GEOMETRY THE EXTRA QUADS BANK (the
+        // 16-element chain the 4-element base the count pair speaks)
+        assert!(
+            on.len() > off.len(),
+            "the lit model the wire segments the extra quads wear: {} vs {}",
+            on.len(),
+            off.len()
+        );
+        assert!(
+            on_sub.len() > sub.len(),
+            "the lit subtract the wire segments the extra quads wear"
+        );
+        // THE PER-QUAD TEXTURE VERDICT THE RESOLVED NAMES ANSWER (the
+        // #top swap the comparator tiles wear, the #slab the smooth
+        // stone keeps, the #unlit/#lit the torch kinds' tiles ride)
+        let names = |quads: &[mc_registry::element_quads::Quad]| {
+            let mut set = std::collections::BTreeSet::new();
+            for q in quads {
+                set.insert(q.texture);
+            }
+            set
+        };
+        let off_names = names(off);
+        assert!(
+            off_names.contains("block/comparator"),
+            "the base top the comparator tile names"
+        );
+        assert!(
+            off_names.contains("block/smooth_stone"),
+            "the slab the smooth stone names"
+        );
+        let on_names = names(on);
+        assert!(
+            on_names.contains("block/comparator_on"),
+            "the lit top the comparator_on tile names"
+        );
+        // THE UV TEXEL FOLD (the raw 0..16 the derive walk carries —
+        // the mesh lane's own /16 fold the unit square speaks: the
+        // raw texel rows the bounds the verdict reads)
+        for q in off.iter().chain(on.iter()) {
+            for uv in q.uvs.iter() {
+                assert!(
+                    (0.0..=16.0).contains(&uv[0]) && (0.0..=16.0).contains(&uv[1]),
+                    "the raw uv the texel square keeps: {uv:?}"
+                );
+            }
+        }
+    }
+
     /// walk keeps, the down face the solid ground culls (the cullface
     /// law the below cell's opaque verdict answers), the vertex bounds
     /// the [7,0,7]-[9,10,9] box keeps, the uv windows the texel rows

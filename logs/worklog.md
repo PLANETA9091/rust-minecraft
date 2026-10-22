@@ -108,3 +108,116 @@ Stage Summary:
   the sandbox REFUSES symlinks under /home; background nohup builds die
   with the shell (foreground only); the 10-minute tool ceiling wants
   single-command test runs (one suite pass per call, log to a file).
+
+---
+Task ID: autopush-124
+Agent: cron autopush (Job 384923, 2026-10-22 ~10:05 +08:00)
+Task: the ONE step the worklog named — REDO the comparator simulation
+lane the disk wipe ate (the lost round's spec, re-proven byte-true
+against the 26.2 jar before a line was written).
+
+Work Log:
+- Environment held (the 123 recovery): clean tree at 86b45f3, cargo
+  1.99.1, jar + runtime cache + gen cache all present. No re-recovery
+  needed.
+- THE FORENSICS REDO (scripts/classfile_dump.py, the 26.2 jar):
+  ComparatorBlock + DiodeBlock + SignalGetter dumped whole. The jar
+  sharpened the lost spec's compressed corners:
+  (a) DiodeBlock.sideInputDiodesOnly() returns FALSE — the sides read
+  SignalGetter.getControlInputSignal(pos, dir, false), NOT the
+  diode-only walk: REDSTONE_BLOCK→15, REDSTONE_WIRE→the raw POWER
+  property, isSignalSource→getDirectSignal (the STRONG walk — the ON
+  lever answers only toward its support, plates/torches/rails the 0
+  the no-override keeps); the lost round's "sides diode-only" gloss
+  was wrong, the jar's own bytes settle it;
+  (b) checkTickOnNeighbor schedules when (calculateOutputSignal !=
+  the BE's stored output) OR (POWERED != shouldTurnOn) — the
+  OUTPUT-CACHE arm the lost spec never named (the stale-output fix
+  the 2-tick beat owns); willTickThisTick dedups, priority NORMAL;
+  (c) DiodeBlock.getSignal answers dir == FACING only (ownSignal) —
+  the front cell = FACING.getOpposite() reads it, the back read of a
+  sibling comparator gates on ITS FACING == ours; getDirectSignal =
+  getSignal (the diode's front is STRONG power);
+  (d) DiodeBlock.getInputSignal: the back cell's weak getSignal +
+  the REDSTONE_WIRE override (the raw POWER property, the
+  connected-side verdict skipped);
+  (e) shouldTurnOn: i==0→false, i>j→true, tie→COMPARE only;
+  calculateOutputSignal: i==0→0, j>i→0, COMPARE→i, SUBTRACT→i−j;
+  (f) useWithoutItem: mayBuild gate, cycle(MODE), click sound 0.3
+  (pitch 0.55 subtract / 0.5 compare), flag-2 setBlock, instant
+  refreshOutputState when still-comparator;
+  (g) getStateForPlacement: FACING = getHorizontalDirection()
+  .getOpposite() (the front faces where the placer LOOKS);
+  (h) refreshOutputState: BE.setOutputSignal + the POWERED sync +
+  updateNeighborsInFront.
+- THE PIN (scripts/autopush124_comparator_pin.py, idempotent,
+  section-guarded): atlas.rs — TILE_909/910 decoded from the jar's
+  comparator.png/comparator_on.png (the pool tail, every existing
+  index holds), TILES 911, N_KINDS 769, KIND_NAMES +
+  REGISTRY_NAMES the "comparator" tails, TILE_NAMES the pair,
+  FACE_TILES [909;6], TINTS/DOOR_MODEL_BY_ROW/ENTITY_HEAD_FACES the
+  769-row law, TILE_COMPARATOR/TILE_COMPARATOR_ON named consts.
+  elements.rs + models.rs ALREADY carried the four typed rows (the
+  generator had them — only the atlas tiles were missing; the pin's
+  elements section the honest no-op keeps).
+- world.rs: COMPARATOR 768 + the variant codec (low2 facing compass
+  N0/E1/S2/W3, 0x04 subtract, 0x08 powered, high4 output cache), the
+  back/side/alternate walks (the jar's own lanes), output + should-
+  turn-on verdicts, refresh (pure read), comparator_sources_near +
+  comparator_front_output_near, comparator_can_survive, the placement
+  variant (the look's opposite — the +2/+2 cancellation the look
+  index answers directly), wire_source_strength_near (the bool walk's
+  own upgrade: the flood seeds the POWER, the comparator front the
+  0..15 the max fold carries), the flood site swapped, the
+  shouldConnectTo diode seat, the collision Empty row, the schedule/
+  drain pair (the pos-dedup the willTickThisTick law keeps), the
+  comparator_ticks queue + the test initializers' 9th field.
+- mesher.rs: comparator_model_quads (the four OnceLock bakes) + the
+  element lane (the per-quad tile verdict: #top→TILE_COMPARATOR(_ON),
+  #slab→smooth_stone, #unlit/#lit→the torch kinds' tiles; the
+  blockstate y-table south 0 / west 1 / north 2 / east 3 turns; the
+  DOWN cullface the ground law keeps; the FACE_SHADE term the quad
+  direction reads; the lightmap the per-corner fold answers).
+- screens.rs: tick_comparator_beats (the drain → the refresh → the
+  attach broadcast the cell+six scan covers), the use arm (the mode
+  cycle + the instant refresh + the click voice + the front seed),
+  the placement survival gate + the facing stamp, the attach_wire_
+  voice consult (the cell+six scope, the refresh-mismatch → schedule
+  +2, the collect→drop(read)→schedule discipline).
+- THE PIN BUMPS THE TESTS DEMAND: 34 kind-pins the palette law grew
+  (N_KINDS 768→769 ×8 + the one-line form ×27) + the 21 NAME_OF.len()
+  pins — the same bumps every kind-addition round has paid.
+- TESTS +4: the truth table (the wire back's raw read, the SUBTRACT
+  gap 15-4=11, the COMPARE tie keeps 4, the side dominance, the
+  shouldTurnOn tie laws), the schedule/refresh/front-seed walk (the
+  dedup, the drain order, the strength seed the front alone answers),
+  the placement/survival walk, the mesher bakes (the four states, the
+  wire-geometry count pair, the resolved texture names).
+- THE GATES: cargo check --workspace --all-targets GREEN; cargo test
+  --workspace 2612 passed / 0 failed / 22 ignored (+4); verify_goldens
+  .sh 18/18 PASS rms 0.000 (the pool tail the goldens never touch —
+  no regeneration); cargo fmt --check 27292 = 27292 EXACTLY (the
+  rustfmt install the minimal profile lacked came back, the +54 the
+  first pass wore the hand-fixed three spots — the lane's context
+  splits, the pts one-line, the signature split, the bamboo
+  alignment).
+
+Stage Summary:
+- THE COMPARATOR PLAYS LIKE VANILLA: place it (the front follows the
+  look), feed the back (the wire's raw power, the sources' weak walk),
+  the sides read the strong law (the wire's raw POWER, the lever's
+  support seat, the sibling's front), the click flips the mode (the
+  subtract gap the COMPARE tie), the 2-tick beat refreshes the output
+  cache + the powered verdict, the front cell carries the 0..15 into
+  the wire flood and the consumers' walk, the diode plate renders the
+  jar's own four models with the per-quad tiles the blockstate rows
+  name. The suite 2612/0/22, the goldens 18/18 rms 0.000, the fmt
+  debt the baseline keeps.
+- NEXT CANDIDATES: the container-analog lane (the comparator's
+  hasAnalogOutputSignal back read — the chest-fill signal the BE
+  tables would need), the REPEATER kind (the DiodeBlock sibling the
+  wire_connectable_dir comment names — the client's vocabulary never
+  banks it), the redstone BLOCK kind (the side walk's REDSTONE_BLOCK
+  arm waits), the item-frame analog read (the getInputSignal's
+  behind-conductor lane).
+

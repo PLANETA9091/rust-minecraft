@@ -2290,6 +2290,30 @@ pub fn wire_can_survive(world: &World, x: i32, y: i32, z: i32) -> bool {
 /// the OTHER WIRES never reads: the source-only scan the component
 /// BFS consults, the self-feed loop the guard's own law refuses).
 pub fn wire_sources_near(world: &World, x: i32, y: i32, z: i32) -> bool {
+    wire_source_strength_near(world, x, y, z) > 0
+}
+
+/// THE SEED'S OWN STRENGTH WALK (the autopush-124 round — the bool
+/// walk's own upgrade the comparator lane demands: the flood the
+/// seed's own POWER reads, the comparator front the 0..15 the cache
+/// carries — the bool arms the 15 the same verdicts keep, the
+/// consumers' redstone_signal_at the >0 fold the same walk serves).
+/// THE COMPARATOR'S OWN FRONT ARM the max fold wears — the lever
+/// beside AND the comparator front the 15 the max law keeps, the
+/// output cache the live value the strength speaks.
+pub fn wire_source_strength_near(world: &World, x: i32, y: i32, z: i32) -> u8 {
+    let mut strength = if wire_source_bools_near(world, x, y, z) {
+        15
+    } else {
+        0
+    };
+    if let Some(out) = comparator_front_output_near(world, x, y, z) {
+        strength = strength.max(out);
+    }
+    strength
+}
+
+fn wire_source_bools_near(world: &World, x: i32, y: i32, z: i32) -> bool {
     (world.get(x, y + 1, z) == LEVER_ON)
         || (world.get(x, y - 1, z) == LEVER_ON)
         || (world.get(x + 1, y, z) == LEVER_ON)
@@ -2360,6 +2384,326 @@ fn detector_sources_near(world: &World, x: i32, y: i32, z: i32) -> bool {
         }
     }
     false
+}
+
+/// THE COMPARATOR'S OWN KIND SEAT (the autopush-124 round — javap
+/// ComparatorBlock the 26.2 jar the whole lane the vanilla law wears:
+/// the ONE kind the variant byte the FACING/MODE/POWERED/OUTPUT state
+/// carries, the BlockEntity's stored output the high nibble banks).
+pub const COMPARATOR: u16 = 768;
+
+/// THE COMPARATOR'S OWN TICK DELAY (javap ComparatorBlock.getDelay
+/// pc 0-5 the iconst_2 the 2-tick the DiodeBlock delay law speaks).
+pub const COMPARATOR_DELAY: u64 = 2;
+
+/// THE COMPARATOR'S OWN VARIANT BYTE LAYOUT (the blockstate's four
+/// properties the one byte banks): the low 2 bits the FACING compass
+/// (north 0, east 1, south 2, west 3), the 0x04 bit the MODE subtract
+/// arm, the 0x08 bit the POWERED verdict, the high nibble the OUTPUT
+/// cache the ComparatorBlockEntity's own stored verdict keeps — the
+/// wires the cache read, the live recompute the tick beat's own
+/// refresh serves).
+pub const COMPARATOR_FACING_MASK: u8 = 0x03;
+pub const COMPARATOR_SUBTRACT_BIT: u8 = 0x04;
+pub const COMPARATOR_POWERED_BIT: u8 = 0x08;
+
+pub fn is_comparator(id: u16) -> bool {
+    id == COMPARATOR
+}
+
+/// THE COMPARATOR'S OWN VARIANT ENCODE (the four fields the one byte
+/// wears — the facing the low 2 bits keep, the mode/power bits the
+/// middle bank, the output cache the high nibble carries).
+pub fn comparator_variant(facing: u8, subtract: bool, powered: bool, output: u8) -> u8 {
+    (facing & COMPARATOR_FACING_MASK)
+        | (if subtract { COMPARATOR_SUBTRACT_BIT } else { 0 })
+        | (if powered { COMPARATOR_POWERED_BIT } else { 0 })
+        | ((output & 0x0F) << 4)
+}
+
+pub fn comparator_facing_of(variant: u8) -> u8 {
+    variant & COMPARATOR_FACING_MASK
+}
+
+pub fn comparator_subtract_of(variant: u8) -> bool {
+    variant & COMPARATOR_SUBTRACT_BIT != 0
+}
+
+pub fn comparator_powered_of(variant: u8) -> bool {
+    variant & COMPARATOR_POWERED_BIT != 0
+}
+
+pub fn comparator_output_of(variant: u8) -> u8 {
+    variant >> 4
+}
+
+/// THE FACING'S OWN STEP (the compass order the variant byte speaks —
+/// north the -z arm, east the +x, south the +z, west the -x).
+pub fn comparator_facing_delta(facing: u8) -> (i32, i32, i32) {
+    match facing {
+        1 => (1, 0, 0),
+        2 => (0, 0, 1),
+        3 => (-1, 0, 0),
+        _ => (0, 0, -1),
+    }
+}
+
+/// THE COMPARATOR'S OWN PLACEMENT FACING (javap DiodeBlock
+/// .getStateForPlacement pc 1-20 the 26.2 jar the `setValue(FACING,
+/// context.getHorizontalDirection().getOpposite())` walk the RAW
+/// look's opposite the stamp speaks — the FACING the placer's own
+/// look answers, the output the look's own far side extends). The
+/// fresh placement the COMPARE mode, the dark cache the default
+/// state's own zeros keep.
+pub fn comparator_placement_variant(cam_yaw_radians: f32) -> u8 {
+    let vanilla_yaw = (cam_yaw_radians - std::f32::consts::PI).to_degrees();
+    let look = direction_index_from_y_rot(f64::from(vanilla_yaw));
+    // the look index the [south, west, north, east] grid names — the
+    // compass byte the +2 fold answers, the FACING the look's own
+    // OPPOSITE the vanilla walk stamps: the compass opposite the +2
+    // fold wears, the +2 + 2 the look's own index answers (the two
+    // orders the half-turn apart cancel — the FACING compass byte the
+    // look index the direct seat keeps: a south look the north
+    // FACING the placer's own front the vanilla furnace arm banks)
+    let facing_compass = (look & 3) as u8;
+    comparator_variant(facing_compass, false, false, 0)
+}
+
+/// THE COMPARATOR'S OWN SURVIVAL GATE (javap DiodeBlock.canSurvive
+/// pc 0-15 the 26.2 jar the mayPlaceOn delegate the below cell's
+/// own sturdy read serves — the offline equivalence the collision
+/// table's non-Empty rows keep, the plate/wire lanes' own fold the
+/// air/fluid/plant rows the refusal speaks).
+pub fn comparator_can_survive(world: &World, x: i32, y: i32, z: i32) -> bool {
+    !matches!(
+        collision_shape(world.get(x, y - 1, z)),
+        CollisionShape::Empty
+    )
+}
+
+/// THE BACK INPUT'S OWN READ (javap DiodeBlock.getInputSignal pc 4-82
+/// the 26.2 jar: the `level.getSignal(pos.relative(FACING), FACING)`
+/// weak walk the back cell answers, the REDSTONE_WIRE arm the raw
+/// POWER property the max-0 fold overrides — the wire's own connected
+/// verdict the diode's back read never consults). The WEAK family the
+/// Level.getSignal walk keeps: the ON lever/button/plate the any-dir
+/// 15 answers, the lit standing torch the d != UP gate wears, the
+/// wall torch the dir == FACING refusal keeps, the armed detector
+/// rail the no-facing bit answers, the sibling comparator the
+/// dir == ITS FACING gate the powered output speaks — the front cell
+/// the sibling's own verdict (its FACING == our facing the back-to-
+/// front chain keeps).
+fn comparator_input_signal(world: &World, x: i32, y: i32, z: i32, facing: u8) -> u8 {
+    let (dx, dy, dz) = comparator_facing_delta(facing);
+    let (bx, by, bz) = (x + dx, y + dy, z + dz);
+    let back = world.get(bx, by, bz);
+    // THE WIRE'S OWN OVERRIDE (the raw POWER property the max-0 fold
+    // reads — the connected-side walk the diode's back read skips)
+    if let Some(p) = wire_power_of(back) {
+        return p;
+    }
+    // THE WEAK FAMILY (Level.getSignal — the any-dir seats the
+    // source families answer)
+    if back == LEVER_ON
+        || button_powered(back)
+        || plate_powered(back)
+        || back == REDSTONE_TORCH
+    {
+        return 15;
+    }
+    // THE WALL TORCH'S OWN GATE (RedstoneWallTorchBlock.getSignal —
+    // the direction == FACING refusal the lit kind wears)
+    if back == REDSTONE_WALL_TORCH {
+        let torch_facing = wall_torch_facing_of(world.variant(bx, by, bz));
+        if torch_facing.wrapping_sub(1) != facing {
+            return 15;
+        }
+        return 0;
+    }
+    // THE DETECTOR RAIL'S OWN BIT (the armed rail the no-facing
+    // verdict answers)
+    if back == DETECTOR_RAIL && (world.variant(bx, by, bz) & RAIL_POWERED_BIT) != 0 {
+        return 15;
+    }
+    // THE SIBLING COMPARATOR'S OWN GATE (DiodeBlock.getSignal — the
+    // dir == FACING verdict the ownSignal walk answers: the sibling
+    // whose FACING == our facing the front cell WE stand on the
+    // powered output speaks, the powered bit the dark 0 keeps)
+    if back == COMPARATOR {
+        let sibling = world.variant(bx, by, bz);
+        if comparator_facing_of(sibling) == facing && comparator_powered_of(sibling) {
+            return comparator_output_of(sibling);
+        }
+        return 0;
+    }
+    0
+}
+
+/// THE SIDE INPUT'S OWN READ (javap SignalGetter.getControlInputSignal
+/// pc 2-92 the 26.2 jar the diodesOnly=false walk the sides answer —
+/// the DiodeBlock.sideInputDiodesOnly() pc 0-2 the iconst_0 the FALSE
+/// the comparator's own sides keep): the REDSTONE_BLOCK arm the 15
+/// speaks, the REDSTONE_WIRE arm the raw POWER property reads, the
+/// isSignalSource arm the getDirectSignal(strong) walk answers — the
+/// ON lever the connected-direction law the support cell the
+/// comparator sits on speaks, the sibling comparator the dir == ITS
+/// FACING gate the front cell answers, the plate/torch/rail kinds the
+/// strong walk the 0 the no-override default keeps.
+fn comparator_side_signal(world: &World, x: i32, y: i32, z: i32, side: u8) -> u8 {
+    let (dx, dy, dz) = comparator_facing_delta(side);
+    let (sx, sy, sz) = (x + dx, y + dy, z + dz);
+    let cell = world.get(sx, sy, sz);
+    // the REDSTONE_BLOCK arm the client's vocabulary never banks
+    // (the kind the generated tables never carried — the arm the
+    // future round the new kind rides)
+    if let Some(p) = wire_power_of(cell) {
+        return p;
+    }
+    // THE STRONG WALK (getDirectSignal — the lever's
+    // connected-direction law: the ON lever whose SUPPORT cell the
+    // comparator's own cell answers)
+    if cell == LEVER_ON {
+        let (ox, oy, oz) = lever_support_offset(world.variant(sx, sy, sz));
+        if (ox, oy, oz) == (dx, dy, dz) {
+            return 15;
+        }
+        return 0;
+    }
+    // THE SIBLING COMPARATOR'S OWN GATE (DiodeBlock.getDirectSignal
+    // = getSignal — the dir == FACING verdict the front cell the
+    // powered output speaks)
+    if cell == COMPARATOR {
+        let sibling = world.variant(sx, sy, sz);
+        if comparator_facing_of(sibling) == side && comparator_powered_of(sibling) {
+            return comparator_output_of(sibling);
+        }
+        return 0;
+    }
+    0
+}
+
+/// THE SIDES' OWN MAX (javap DiodeBlock.getAlternateSignal pc 4-67 —
+/// the clockwise + the counter-clockwise arms the max fold serves,
+/// each the getControlInputSignal walk the side dir reads).
+fn comparator_alternate_signal(world: &World, x: i32, y: i32, z: i32, facing: u8) -> u8 {
+    let cw = (facing + 1) & 3;
+    let ccw = (facing + 3) & 3;
+    comparator_side_signal(world, x, y, z, cw).max(comparator_side_signal(world, x, y, z, ccw))
+}
+
+/// THE LIVE OUTPUT'S OWN VERDICT (javap ComparatorBlock
+/// .calculateOutputSignal pc 4-55 the 26.2 jar: the i == 0 arm the 0
+/// the early return keeps, the j > i arm the 0 the side-dominance
+/// speaks, the COMPARE mode the i the tie keeps, the SUBTRACT mode
+/// the i - j the gap wears).
+pub fn comparator_output_signal(world: &World, x: i32, y: i32, z: i32) -> u8 {
+    let Some(variant) = comparator_variant_at(world, x, y, z) else {
+        return 0;
+    };
+    let facing = comparator_facing_of(variant);
+    let i = comparator_input_signal(world, x, y, z, facing) as u16;
+    if i == 0 {
+        return 0;
+    }
+    let j = comparator_alternate_signal(world, x, y, z, facing) as u16;
+    if j > i {
+        return 0;
+    }
+    if comparator_subtract_of(variant) {
+        (i - j) as u8
+    } else {
+        i as u8
+    }
+}
+
+/// THE POWERED VERDICT'S OWN WALK (javap ComparatorBlock.shouldTurnOn
+/// pc 4-59 the 26.2 jar: the i == 0 arm the false keeps, the i > j
+/// arm the true speaks, the tie the COMPARE mode alone the true
+/// answers — the SUBTRACT mode the tie the dark verdict keeps).
+pub fn comparator_should_turn_on(world: &World, x: i32, y: i32, z: i32) -> bool {
+    let Some(variant) = comparator_variant_at(world, x, y, z) else {
+        return false;
+    };
+    let facing = comparator_facing_of(variant);
+    let i = comparator_input_signal(world, x, y, z, facing) as u16;
+    if i == 0 {
+        return false;
+    }
+    let j = comparator_alternate_signal(world, x, y, z, facing) as u16;
+    if i > j {
+        return true;
+    }
+    !comparator_subtract_of(variant) && i == j
+}
+
+fn comparator_variant_at(world: &World, x: i32, y: i32, z: i32) -> Option<u8> {
+    if world.get(x, y, z) != COMPARATOR {
+        return None;
+    }
+    Some(world.variant(x, y, z))
+}
+
+/// THE REFRESH'S OWN VERDICT (the pure read the consult's collect
+/// phase wears — the mismatch the caller schedules): the new output
+/// cache + the powered verdict the live walk answers, the unchanged
+/// pair the None the honest guard keeps.
+pub fn comparator_refresh_variant(world: &World, x: i32, y: i32, z: i32) -> Option<u8> {
+    let variant = comparator_variant_at(world, x, y, z)?;
+    let output = comparator_output_signal(world, x, y, z);
+    let powered = comparator_should_turn_on(world, x, y, z);
+    let fresh = comparator_variant(
+        comparator_facing_of(variant),
+        comparator_subtract_of(variant),
+        powered,
+        output,
+    );
+    if fresh != variant {
+        Some(fresh)
+    } else {
+        None
+    }
+}
+
+/// THE COMPARATOR'S OWN SOURCE ARMS (the consumers' weak walk —
+/// javap DiodeBlock.getSignal the dir == FACING gate the front cell
+/// alone the powered output speaks: the cell the comparator's front
+/// covers the verdict answers, the sides/back the 0 the dark keep).
+pub fn comparator_sources_near(world: &World, x: i32, y: i32, z: i32) -> bool {
+    comparator_front_output_near(world, x, y, z).map_or(false, |out| out > 0)
+}
+
+/// THE FRONT SEED'S OWN STRENGTH (the wire flood's own read — the
+/// comparator whose front cell this wire stands on the powered
+/// output the 0..15 the cache carries: the unpowered comparator the
+/// 0 the dark seed keeps, the sides/back the None the walk refuses).
+pub fn comparator_front_output_near(world: &World, x: i32, y: i32, z: i32) -> Option<u8> {
+    for (dx, dy, dz) in [
+        (0, 1, 0),
+        (0, -1, 0),
+        (0, 0, -1),
+        (0, 0, 1),
+        (-1, 0, 0),
+        (1, 0, 0),
+    ] {
+        let (nx, ny, nz) = (x + dx, y + dy, z + dz);
+        if world.get(nx, ny, nz) != COMPARATOR {
+            continue;
+        }
+        let variant = world.variant(nx, ny, nz);
+        let facing = comparator_facing_of(variant);
+        // THE FRONT CELL'S OWN LAW: the front = pos.relative(FACING
+        // .getOpposite()) — the reader the front covers the delta
+        // the -facing step answers
+        let (fdx, fdy, fdz) = comparator_facing_delta(facing);
+        if (nx - fdx, ny - fdy, nz - fdz) != (x, y, z) {
+            continue;
+        }
+        if comparator_powered_of(variant) {
+            return Some(comparator_output_of(variant));
+        }
+        return Some(0);
+    }
+    None
 }
 
 /// THE WIRE'S OWN CLIMBING LANES (the autopush-118 round — javap
@@ -2433,6 +2777,11 @@ fn wire_connectable_dir(kind: u16) -> bool {
         || is_pressure_plate(kind)
         || is_redstone_torch(kind)
         || kind == DETECTOR_RAIL
+        // THE COMPARATOR'S OWN SEAT (the autopush-124 round — the
+        // shouldConnectTo walk's diode arm the visual connection the
+        // wire's own shape wears: the wire the comparator's back and
+        // sides the pointing law keeps)
+        || is_comparator(kind)
 }
 
 /// THE WIRE'S OWN PER-SIDE LANE WALK (javap RedStoneWireBlock
@@ -2628,13 +2977,7 @@ pub fn wire_component_flips(
         // pass cap bounds)
         let mut powers: Vec<u8> = component
             .iter()
-            .map(|&(x, y, z)| {
-                if wire_sources_near(world, x, y, z) {
-                    15
-                } else {
-                    0
-                }
-            })
+            .map(|&(x, y, z)| wire_source_strength_near(world, x, y, z))
             .collect();
         for _ in 0..=component.len() {
             let mut changed = false;
@@ -5518,7 +5861,7 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 /// generated tables' own rows the names wire) — the
 /// END_PORTAL
 /// the beyond-table seat the displaced law keeps.
-pub const NAME_OF: [&str; 768] = [
+pub const NAME_OF: [&str; 769] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -6325,6 +6668,7 @@ pub const NAME_OF: [&str; 768] = [
     // speak], the DROPS the self-entry pools the generated table
     // banks — the broken rail the same item pops)
     "rail", "powered_rail", "detector_rail", "activator_rail",
+    "comparator",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -9958,6 +10302,11 @@ pub fn collision_shape(id: u16) -> CollisionShape {
         // verdict draws, the CLIP the ray the kind stops [the dig lane
         // the outline's full-cube fold the wheat precedent keeps])
         || is_rail(id)
+        // THE COMPARATOR'S OWN ROW (the autopush-124 round — the
+        // Blocks clinit's COMPARATOR registration the noCollision()
+        // call speaks: the 2-px diode plate the pass-through verdict
+        // the wire family's own row the sibling wears)
+        || id == COMPARATOR
         || is_flower(id)
         || is_tuft(id)
         || is_double_plant(id)
@@ -12244,6 +12593,11 @@ pub struct World {
     /// lane's own authority keeps) — the queue the offline world
     /// alone fills.
     pub detector_ticks: Vec<(u64, i32, i32, i32)>,
+    /// THE COMPARATOR'S OWN QUEUE (the autopush-124 round — the
+    /// scheduleTick(2) entries the checkTickOn walk's mismatch arms
+    /// bank, the (due, x, y, z) shape the detector's own queue wears,
+    /// the drain the tick beat's refresh walk serves).
+    pub comparator_ticks: Vec<(u64, i32, i32, i32)>,
     /// THE BAMBOO'S OWN FALL QUEUE (the dig-side cascade's scheduled
     /// ticks — the fire queue's own shape the walk's one-tick lag
     /// wears): the (due game tick, x, y, z) entries the UNSUPPORTED
@@ -12620,6 +12974,7 @@ impl World {
             campfire_ticks: Vec::new(), // the campfire's own queue: no lit campfire, no walk
             torch_ticks: Vec::new(), // the torch's own queue: no consult, no schedule
             detector_ticks: Vec::new(), // the detector's own queue: no cart on the rail, no beat
+            comparator_ticks: Vec::new(), // the comparator's own queue: no mismatch, no beat
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: no extinguish, no record
             bamboo_ticks: Vec::new(), // the bamboo's own queue: no unsupported stalk, no fall
             fire_age: std::collections::HashMap::new(), // the ladder's store: empty
@@ -13887,6 +14242,39 @@ impl World {
     /// THE DETECTOR'S OWN BEAT DRAIN (the torch queue's own shape the
     /// same retain law wears — the due entries the cart walk's
     /// 20-TPS beat gives up, the future entries the queue keeps).
+    /// THE COMPARATOR'S OWN SCHEDULE (javap ComparatorBlock
+    /// .checkTickOnNeighbor pc 114 the 26.2 jar the scheduleTick(pos,
+    /// this, 2, ...) walk the willTickThisTick gate dedupes — the
+    /// pending entry the re-schedule refuses, the mismatch arms the
+    /// output-cache OR powered verdict the queue banks).
+    pub fn schedule_comparator_tick(&mut self, due: u64, x: i32, y: i32, z: i32) {
+        if self
+            .comparator_ticks
+            .iter()
+            .any(|&(_, tx, ty, tz)| (tx, ty, tz) == (x, y, z))
+        {
+            return; // the willTickThisTick gate the pending entry keeps
+        }
+        self.comparator_ticks.push((due, x, y, z));
+    }
+
+    /// THE COMPARATOR'S OWN DRAIN (the detector lane's own shape the
+    /// due entries collect — the sort the deterministic order the
+    /// test's replay banks, the retain the future ticks keep).
+    pub fn drain_due_comparator_ticks(&mut self, now: u64) -> Vec<(i32, i32, i32)> {
+        let mut due: Vec<(u64, i32, i32, i32)> = Vec::new();
+        self.comparator_ticks.retain(|&(at, x, y, z)| {
+            if at <= now {
+                due.push((at, x, y, z));
+                false
+            } else {
+                true
+            }
+        });
+        due.sort();
+        due.into_iter().map(|(_, x, y, z)| (x, y, z)).collect()
+    }
+
     pub fn drain_due_detector_ticks(&mut self, now: u64) -> Vec<(i32, i32, i32)> {
         let mut due_cells: Vec<(u64, i32, i32, i32)> = Vec::new();
         self.detector_ticks.retain(|&(at, x, y, z)| {
@@ -20470,7 +20858,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the lamp pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 768, "the palette the lamp pair banks");
+        assert_eq!(atlas::N_KINDS, 769, "the palette the lamp pair banks");
         assert!(is_redstone_lamp(REDSTONE_LAMP) && is_redstone_lamp(REDSTONE_LAMP_LIT));
         assert!(!is_redstone_lamp(REDSTONE_WIRE) && !is_redstone_lamp(STONE));
         assert!(!redstone_lamp_lit(REDSTONE_LAMP));
@@ -20571,7 +20959,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the wire pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 768, "the palette the wire pair banks");
+        assert_eq!(atlas::N_KINDS, 769, "the palette the wire pair banks");
         assert!(is_redstone_wire(REDSTONE_WIRE) && is_redstone_wire(REDSTONE_WIRE_ON));
         assert!(!is_redstone_wire(LEVER) && !is_redstone_wire(OAK_PRESSURE_PLATE));
         assert!(!wire_powered(REDSTONE_WIRE));
@@ -21020,7 +21408,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 768, "the palette the graded ladder banks");
+        assert_eq!(atlas::N_KINDS, 769, "the palette the graded ladder banks");
         // THE POWER READ'S OWN ROUND TRIP (the seat the kind the
         // inverse fold answers, the unknown id the None keeps)
         assert_eq!(wire_power_of(REDSTONE_WIRE), Some(0));
@@ -21211,7 +21599,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the planks' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 768, "the palette the planks' twelve banks");
+        assert_eq!(atlas::N_KINDS, 769, "the palette the planks' twelve banks");
         for (i, (name, kind, voice)) in PLANKS.iter().enumerate() {
             let seat = OAK_PLANKS + i as u16;
             assert_eq!(*kind, seat, "the seat the family order banks");
@@ -21303,7 +21691,7 @@ mod tests {
             None,
             "the portal the item lane refuses"
         );
-        assert_eq!(NAME_OF.len(), 768, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 769, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -21357,7 +21745,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kit's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 768, "the palette the kit's six banks");
+        assert_eq!(atlas::N_KINDS, 769, "the palette the kit's six banks");
         for (i, (name, kind, hard)) in KIT.iter().enumerate() {
             let seat = COBBLESTONE + i as u16;
             assert_eq!(*kind, seat, "the seat the stone shelf order banks");
@@ -21447,7 +21835,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kit's growth banks)
-        assert_eq!(NAME_OF.len(), 768, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 769, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -21504,7 +21892,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the shelf's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 768, "the palette the shelf's eight banks");
+        assert_eq!(atlas::N_KINDS, 769, "the palette the shelf's eight banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -21602,7 +21990,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the shelf's growth banks)
-        assert_eq!(NAME_OF.len(), 768, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 769, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -21671,7 +22059,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the cloths' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 768, "the palette the cloths' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 769, "the palette the cloths' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -21785,7 +22173,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the cloths' growth banks)
-        assert_eq!(NAME_OF.len(), 768, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 769, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -21860,7 +22248,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kilns' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 768, "the palette the kilns' seventeen banks");
+        assert_eq!(atlas::N_KINDS, 769, "the palette the kilns' seventeen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -21972,7 +22360,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kilns' growth banks)
-        assert_eq!(NAME_OF.len(), 768, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 769, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -22048,7 +22436,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 768, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 769, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -22165,7 +22553,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 768, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 769, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -22250,7 +22638,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 768, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 769, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -22401,7 +22789,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 768, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 769, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -22475,7 +22863,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 768, "the palette the ladder's twenty-two banks");
+        assert_eq!(atlas::N_KINDS, 769, "the palette the ladder's twenty-two banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -22664,7 +23052,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the ladder's growth banks)
-        assert_eq!(NAME_OF.len(), 768, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 769, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -22725,7 +23113,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the note's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 768, "the palette the note's own banks");
+        assert_eq!(atlas::N_KINDS, 769, "the palette the note's own banks");
         // THE ONE REGISTRY NAME ITS KIND ALONE SPEAKS (the NAME_OF row
         // + the generated KIND_NAMES/REGISTRY_NAMES rows the same
         // entry the three tables keep — no strip law the single kind
@@ -23087,7 +23475,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the note's growth banks)
-        assert_eq!(NAME_OF.len(), 768, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 769, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -23128,8 +23516,8 @@ mod tests {
             "the contiguous run the thirteen seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 768, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 768, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 769, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 769, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in OAK_FENCE..=NETHER_BRICK_FENCE {
@@ -23542,8 +23930,8 @@ mod tests {
             "the contiguous run the thirty-two seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 768, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 768, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 769, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 769, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in COBBLESTONE_WALL..=SULFUR_BRICK_WALL {
@@ -23882,8 +24270,8 @@ mod tests {
             "the contiguous run the seventeen seats wear"
         );
         assert_eq!(SULFUR_BRICK_WALL, 542, "the wall family the tail answers");
-        assert_eq!(atlas::N_KINDS, 768, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 768, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 769, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 769, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in GLASS..=BLACK_STAINED_GLASS {
@@ -24584,8 +24972,8 @@ mod tests {
             "the pane run the seventeen seats wear"
         );
         assert_eq!(BLACK_STAINED_GLASS, 559, "the glass family the tail answers");
-        assert_eq!(atlas::N_KINDS, 768, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 768, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 769, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 769, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in GLASS_PANE..=IRON_BARS {
@@ -24886,8 +25274,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_BARS, 585,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 768, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 768, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 769, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 769, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in COPPER_BARS..=WAXED_OXIDIZED_COPPER_BARS {
@@ -25207,8 +25595,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_CHAIN, 594,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 768, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 768, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 769, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 769, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in IRON_CHAIN..=WAXED_OXIDIZED_COPPER_CHAIN {
@@ -25506,8 +25894,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_LANTERN, 604,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 768, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 768, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 769, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 769, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in LANTERN..=WAXED_OXIDIZED_COPPER_LANTERN {
@@ -25986,8 +26374,8 @@ mod tests {
             DEEPSLATE_BRICK_STAIRS, 668,
             "the deepslate brick row the family's last seat keeps"
         );
-        assert_eq!(atlas::N_KINDS, 768, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 768, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 769, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 769, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in OAK_STAIRS..=DEEPSLATE_BRICK_STAIRS {
@@ -26482,8 +26870,8 @@ mod tests {
             DEEPSLATE_BRICK_SLAB, 736,
             "the deepslate brick row the family's last seat keeps"
         );
-        assert_eq!(atlas::N_KINDS, 768, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 768, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 769, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 769, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in RESIN_BRICK_SLAB..=DEEPSLATE_BRICK_SLAB {
@@ -26785,7 +27173,7 @@ mod tests {
             WAXED_OXIDIZED_COPPER_CHEST, 747,
             "the waxed oxidized rung the ladder banks"
         );
-        assert_eq!(NAME_OF.len(), 768, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 769, "the NAME_OF table the one length keeps");
         for k in CHEST_KINDS {
             assert!(
                 (CHEST..=WAXED_OXIDIZED_COPPER_CHEST).contains(&k),
@@ -27253,7 +27641,7 @@ mod tests {
         // THE SEAT'S OWN BANK (the contiguous tail the append-only
         // law keeps — the chest family the predecessor answers)
         assert_eq!(BARREL, 748, "the barrel its tail seat keeps");
-        assert_eq!(NAME_OF.len(), 768, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 769, "the NAME_OF table the one length keeps");
         assert!(is_barrel(BARREL), "the barrel the family predicate keeps");
         assert!(!is_barrel(CHEST), "the chest the predicate refuses");
         // THE VARIANT PACK'S OWN ROUNDTRIP (the facing three bits +
@@ -27401,7 +27789,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the torch pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 768, "the palette the torch pair banks");
+        assert_eq!(atlas::N_KINDS, 769, "the palette the torch pair banks");
         assert!(is_redstone_torch(REDSTONE_TORCH) && is_redstone_torch(REDSTONE_TORCH_OFF));
         assert!(!is_redstone_torch(TORCH) && !is_redstone_torch(LEVER));
         assert!(redstone_torch_lit(REDSTONE_TORCH));
@@ -27542,7 +27930,7 @@ mod tests {
         assert_eq!(REDSTONE_WALL_TORCH, 324);
         assert_eq!(REDSTONE_WALL_TORCH_OFF, 325);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 768, "the palette the wall pair banks");
+        assert_eq!(atlas::N_KINDS, 769, "the palette the wall pair banks");
         assert!(
             is_redstone_torch(REDSTONE_WALL_TORCH) && is_redstone_torch(REDSTONE_WALL_TORCH_OFF),
             "the wall pair the family's tail banks"
@@ -27787,7 +28175,7 @@ mod tests {
         assert_eq!(OAK_TRAPDOOR_OPEN, 327);
         assert_eq!(END_PORTAL, 510);
         assert_eq!(
-            atlas::N_KINDS, 768,
+            atlas::N_KINDS, 769,
             "the palette the trapdoor pair banks"
         );
         assert_eq!(OAK_TRAPDOOR + 1, OAK_TRAPDOOR_OPEN, "the +1 mate wears");
@@ -27941,7 +28329,7 @@ mod tests {
         assert_eq!(END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-            768,
+            769,
             "the palette the gate pair banks"
         );
         assert_eq!(OAK_FENCE_GATE + 1, OAK_FENCE_GATE_OPEN, "the +1 mate wears");
@@ -28159,7 +28547,7 @@ mod tests {
         assert_eq!(WARPED_TRAPDOOR, 348);
         assert_eq!(WARPED_TRAPDOOR_OPEN, 349);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 768, "the palette the ladder banks");
+        assert_eq!(atlas::N_KINDS, 769, "the palette the ladder banks");
         // THE CONTIGUITY'S OWN LAW (the 22 kinds the range covers —
         // the neighbors the family fn refuses)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -28273,7 +28661,7 @@ mod tests {
         assert_eq!(IRON_TRAPDOOR, 366);
         assert_eq!(IRON_TRAPDOOR_OPEN, 367);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 768, "the palette the metal rungs bank");
+        assert_eq!(atlas::N_KINDS, 769, "the palette the metal rungs bank");
         // THE CONTIGUITY'S OWN LAW (the 42 kinds the range covers —
         // the waxed pairs the ±1 mate the parity answers)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -28644,7 +29032,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 768, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 769, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)
@@ -29956,5 +30344,232 @@ mod tests {
             None,
             "the sapling the NO-item block the lookup refuses"
         );
+    }
+
+    /// THE COMPARATOR'S OWN TRUTH TABLE (the autopush-124 round —
+    /// javap calculateOutputSignal pc 4-55 + shouldTurnOn pc 4-59 +
+    /// getAlternateSignal pc 4-67 the 26.2 jar the whole verdict the
+    /// offline walk replays: the i==0 arm, the j>i refusal, the
+    /// COMPARE tie the i keeps, the SUBTRACT gap the i-j wears, the
+    /// side walk the raw wire power the strong law reads).
+    #[test]
+    fn the_comparator_the_output_the_side_walk_the_tie_laws_wear() {
+        let mut w = World::new(3, 42);
+        let (cx, cy, cz) = (3i32, 10i32, 3i32);
+        for x in 0..8 {
+            for z in 0..8 {
+                w.set(x, 9, z, STONE);
+            }
+        }
+        // THE FACING THE EAST BYTE WEARS (the back cell = +x, the
+        // front cell = -x — the FACING the input side the vanilla
+        // walk names, the output the FACING.getOpposite() the front
+        // cell banks)
+        let facing = 1u8;
+        let place = |w: &mut World, sub: bool, pw: bool, out: u8| {
+            w.set(cx, cy, cz, COMPARATOR);
+            w.set_variant(cx, cy, cz, comparator_variant(facing, sub, pw, out));
+        };
+        // THE WIRE'S OWN RAW BACK READ (the POWER property the max-0
+        // fold reads — the ON kind the 15 answers, the P14 rung the
+        // 14 wears, the bare back cell the 0 the early return keeps)
+        place(&mut w, false, false, 0);
+        w.set(cx + 1, cy, cz, REDSTONE_WIRE_ON);
+        assert_eq!(
+            comparator_output_signal(&w, cx, cy, cz),
+            15,
+            "the full back the COMPARE mode the 15 speaks"
+        );
+        w.set(cx + 1, cy, cz, REDSTONE_WIRE_P14);
+        assert_eq!(
+            comparator_output_signal(&w, cx, cy, cz),
+            14,
+            "the P14 rung the raw read the 14 keeps"
+        );
+        w.set(cx + 1, cy, cz, AIR);
+        assert_eq!(
+            comparator_output_signal(&w, cx, cy, cz),
+            0,
+            "the bare back the i==0 arm the dark keeps"
+        );
+        // THE SUBTRACT GAP (the back the 15, the side the 4 — the
+        // i-j the gap wears): the side cell the clockwise arm the
+        // facing +1 names (south the +z step), the raw POWER the
+        // side walk reads
+        place(&mut w, true, false, 0);
+        w.set(cx + 1, cy, cz, REDSTONE_WIRE_ON);
+        w.set(cx, cy, cz + 1, REDSTONE_WIRE_P4);
+        assert_eq!(
+            comparator_output_signal(&w, cx, cy, cz),
+            11,
+            "the 15 back the 4 side the SUBTRACT the 11 speaks"
+        );
+        // THE COMPARE TIE (i == j the COMPARE mode the i keeps — the
+        // if_icmple gate the tie the own read banks): the back the
+        // P4 rung the re-seat the raw read answers
+        place(&mut w, false, false, 0);
+        w.set(cx + 1, cy, cz, REDSTONE_WIRE_P4);
+        w.set(cx, cy, cz + 1, REDSTONE_WIRE_P4);
+        assert_eq!(
+            comparator_output_signal(&w, cx, cy, cz),
+            4,
+            "the 4 back the 4 side the COMPARE tie the 4 keeps"
+        );
+        // THE SUBTRACT TIE (the same pair the SUBTRACT mode the 0
+        // wears — the gap the zero the floor keeps)
+        place(&mut w, true, false, 0);
+        assert_eq!(
+            comparator_output_signal(&w, cx, cy, cz),
+            0,
+            "the tie the SUBTRACT the 0 the dark keeps"
+        );
+        // THE SIDE DOMINANCE (the 2 back the 4 side the 0 the j>i arm
+        // keeps — the COMPARE mode the same refusal speaks)
+        place(&mut w, false, false, 0);
+        w.set(cx + 1, cy, cz, REDSTONE_WIRE_P2);
+        assert_eq!(
+            comparator_output_signal(&w, cx, cy, cz),
+            0,
+            "the 2 back the 4 side the dominance the dark keeps"
+        );
+        // THE SHOULDTURNON'S OWN TIE LAWS (the COMPARE mode the tie
+        // the true answers, the SUBTRACT mode the tie the false
+        // keeps, the i==0 arm the false speaks)
+        place(&mut w, false, false, 0);
+        w.set(cx + 1, cy, cz, REDSTONE_WIRE_P4);
+        assert!(
+            comparator_should_turn_on(&w, cx, cy, cz),
+            "the tie the COMPARE the lit verdict keeps"
+        );
+        place(&mut w, true, false, 0);
+        assert!(
+            !comparator_should_turn_on(&w, cx, cy, cz),
+            "the tie the SUBTRACT the dark verdict keeps"
+        );
+        w.set(cx + 1, cy, cz, AIR);
+        assert!(
+            !comparator_should_turn_on(&w, cx, cy, cz),
+            "the bare back the shouldTurnOn the false keeps"
+        );
+    }
+
+    /// THE COMPARATOR'S OWN SCHEDULING WALK (the scheduleTick(2) law
+    /// the willTickThisTick dedup the queue keeps — the refresh the
+    /// live verdict the variant banks, the front seed the strength
+    /// the wire flood reads, the consumers' signal walk the front
+    /// cell alone answers).
+    #[test]
+    fn the_comparator_the_schedule_the_refresh_the_front_seed_wear() {
+        let mut w = World::new(3, 7);
+        let (cx, cy, cz) = (3i32, 10i32, 3i32);
+        for x in 0..8 {
+            for z in 0..8 {
+                w.set(x, 9, z, STONE);
+            }
+        }
+        // THE STALE CACHE THE REFRESH BANKS (the facing east, the
+        // back the 15 wire, the fresh variant the output 15 + the
+        // powered verdict wears)
+        w.set(cx, cy, cz, COMPARATOR);
+        w.set_variant(cx, cy, cz, comparator_variant(1, false, false, 0));
+        w.set(cx + 1, cy, cz, REDSTONE_WIRE_ON);
+        let fresh = comparator_refresh_variant(&w, cx, cy, cz)
+            .expect("the stale cache the refresh answers");
+        assert_eq!(comparator_facing_of(fresh), 1, "the facing the byte keeps");
+        assert!(!comparator_subtract_of(fresh), "the compare mode keeps");
+        assert!(comparator_powered_of(fresh), "the 15 back the lit verdict");
+        assert_eq!(comparator_output_of(fresh), 15, "the output the cache banks");
+        // THE SCHEDULE'S OWN DEDUP (the two schedules the one entry
+        // the willTickThisTick law keeps, the drain the due cell the
+        // sort order answers, the re-drain the empty keeps)
+        w.schedule_comparator_tick(10, cx, cy, cz);
+        w.schedule_comparator_tick(10, cx, cy, cz);
+        assert_eq!(w.comparator_ticks.len(), 1, "the dedup the one entry keeps");
+        assert_eq!(
+            w.drain_due_comparator_ticks(9),
+            Vec::<(i32, i32, i32)>::new(),
+            "the future tick the queue keeps"
+        );
+        assert_eq!(
+            w.drain_due_comparator_ticks(10),
+            vec![(cx, cy, cz)],
+            "the due tick the drain answers"
+        );
+        assert!(
+            w.comparator_ticks.is_empty(),
+            "the drained queue the empty keeps"
+        );
+        // THE FRONT SEED'S OWN STRENGTH (the powered comparator the
+        // front cell the 15 the flood seed banks, the consumer's
+        // signal walk the front answers, the side cell the front
+        // gate the silence keeps)
+        w.set_variant(cx, cy, cz, comparator_variant(1, false, true, 15));
+        let (fx, fy, fz) = (cx - 1, cy, cz);
+        assert_eq!(
+            wire_source_strength_near(&w, fx, fy, fz),
+            15,
+            "the front cell the 15 the seed speaks"
+        );
+        assert!(
+            redstone_signal_at(&w, fx, fy, fz),
+            "the front cell the consumer's walk answers"
+        );
+        assert!(
+            !comparator_sources_near(&w, cx, cy, cz + 1),
+            "the side cell the front gate refuses"
+        );
+        assert_eq!(
+            wire_source_strength_near(&w, cx + 1, cy, cz),
+            0,
+            "the back cell the seed the 0 keeps"
+        );
+        // THE DARK COMPARATOR THE 0 SEED KEEPS (the powered bit the
+        // dark verdict the front walk refuses)
+        w.set_variant(cx, cy, cz, comparator_variant(1, false, false, 15));
+        assert_eq!(
+            wire_source_strength_near(&w, fx, fy, fz),
+            0,
+            "the unpowered comparator the dark seed keeps"
+        );
+    }
+
+    /// THE COMPARATOR'S OWN PLACEMENT AND SURVIVAL WALKS (the
+    /// getStateForPlacement's FACING the look's opposite the stamp
+    /// speaks, the canSurvive the below cell's own verdict reads —
+    /// the air floor the refusal keeps).
+    #[test]
+    fn the_comparator_the_placement_the_survival_wear() {
+        let mut w = World::new(2, 9);
+        w.set(0, 9, 0, STONE);
+        w.set(2, 9, 2, AIR);
+        assert!(
+            comparator_can_survive(&w, 0, 10, 0),
+            "the stone floor the survival answers"
+        );
+        assert!(
+            !comparator_can_survive(&w, 2, 10, 2),
+            "the air floor the refusal keeps"
+        );
+        // THE FACING'S OWN OPPOSITE (the look the yaw names — the
+        // south look the north FACING the furnace arm's own law
+        // wears, the east look the west keeps)
+        let south_look = std::f32::consts::PI; // vanilla yaw 0.0 = south
+        assert_eq!(
+            comparator_facing_of(comparator_placement_variant(south_look)),
+            0,
+            "the south look the north FACING speaks"
+        );
+        let east_look = std::f32::consts::PI - std::f32::consts::FRAC_PI_2;
+        assert_eq!(
+            comparator_facing_of(comparator_placement_variant(east_look)),
+            3,
+            "the east look the west FACING keeps"
+        );
+        // THE FRESH PLACEMENT THE DARK CACHE KEEPS (the COMPARE mode
+        // the unpowered verdict the default zeros wear)
+        let v = comparator_placement_variant(south_look);
+        assert!(!comparator_subtract_of(v), "the fresh COMPARE mode keeps");
+        assert!(!comparator_powered_of(v), "the fresh dark verdict keeps");
+        assert_eq!(comparator_output_of(v), 0, "the fresh dark cache keeps");
     }
 }
