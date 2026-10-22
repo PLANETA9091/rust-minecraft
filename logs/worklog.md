@@ -1538,3 +1538,134 @@ Stage Summary:
   README's golden section the 19-row runner's own row the text could
   name, the swap CASE B/C arms the sub-64 items the mayPlace tails
   the next probe wears.
+---
+Task ID: autopush-139
+Agent: cron autopush (Job 384923, 2026-10-23 02:02:12 +08:00)
+Task: the standing autopush round — the environment held (repo clean @
+ac65979 v0.3.862 + mirror, cargo 1.99.1 + the caches alive). THE LANE
+the 138 entry's next-candidates head named: THE DISPENSER/DROPPER'S
+OWN OFFLINE SHOT — the offline arm the wire's event words never
+banked.
+
+Work Log:
+- THE FORENSICS the classfile dump banks (the .mc2rs/classpath client.jar):
+  javap DispenserBlock.neighborChanged pc 2-113 — the
+  `hasNeighborSignal(pos) || hasNeighborSignal(pos.above())` flag, the
+  rising-edge `scheduleTick(pos, this, 4)` + setValue(TRIGGERED=1)
+  arms, the falling edge the flag-2 clear ALONE keeps (the pc 99-109
+  walk the schedule never serves); javap tick pc 4-7 → dispenseFrom
+  pc 5-134 — the random-slot walk, the -1 the levelEvent-1001 fail
+  voice keeps; javap DispenserBlockEntity.getRandomSlot — the
+  non-empty list pick; javap DefaultDispenseItemBehavior.spawnItem —
+  the `d3 = nextDouble()*0.1 + 0.2` + the `triangle(stepX*d3,
+  0.0172275*6)` triple + the two y-subtract arms (0.15625 horizontal /
+  0.125 vertical) + the 0.7 offset; javap DispenserBlock
+  .getDispensePosition — the center + 0.7*step fold; javap the
+  DispenseConfig builder — uncertainty 6.0 / power 1.1 + the
+  `(0.7, Vec3(0.0, 0.1, 0.0))` position lambda; javap Projectile
+  .shoot → getMovementToShoot — the normalize +
+  triangle(0, 0.0172275*uncertainty) + scale(power) + the
+  atan2*57.2957763671875 rotations; javap ProjectileDispenseBehavior
+  — the overrideDispenseEvent orElse 1002 launch voice; javap
+  DropperBlock.dispenseFrom — the front-container arm the
+  copyWithCount(1) + addItem + the taken-fold shrink speaks, the
+  container arm the NO-SOUND keeps; javap DispenserBlock
+  .getStateForPlacement pc 8-20 — the
+  `getNearestLookingDirection().getOpposite()` SIX-direction byte.
+  THE JAR'S OWN MODEL WALK the pool's luck spoke: the orientable
+  parent's textures ride furnace_side/furnace_top the generator's
+  pool ALREADY carried — only the four fronts the tail banks.
+- THE ATLAS PIN (scripts/autopush139_dispenser_pin.py, the idempotent
+  124..129 shape): TILE_924..927 at the POOL TAIL (every existing
+  index holds), N_KINDS 776->778, KIND_NAMES/REGISTRY_NAMES the
+  "dispenser","dropper" tails, FACE_TILES [79,79,80,80,79,924] +
+  [79,79,80,80,79,926], TINTS zeros, DOOR_MODEL empties,
+  ENTITY_HEAD_FACES TILE_NONE rows, TILE_NAMES tails, the named
+  consts; world.rs NAME_OF rows + the x27/x21 asserts bumped;
+  screens.rs the x8 asserts. THE FMT INCIDENT THE ROUND HANDLED
+  AGAIN (the honest record): the `cargo fmt -p mc-client` the whole
+  crate formatted (48 files, the 27k-line pre-existing debt moved) —
+  the tree the checkout restored; the SECOND mistake the whole-FILE
+  rustfmt wore (the lane's own files carry the debt — the whole-file
+  pass rewrites them) — the same checkout answered; THE STASH
+  RECOVERY the lane's own bytes banked (the fsck dangling-commit
+  walk the pre-fmt stash df01694 found — the git stash store/pop the
+  +1374 lines restored EXACTLY). The lane's hunks the hand-styled
+  form keep (the 138 entry's own discipline — the whole-file passes
+  the per-file debt the repo never asked to move).
+- THE LANES THE CLIENT RIDES: world.rs the two kind seats (776/777) +
+  the variant byte (the DIRECTION_NORMAL facing low 3 bits — the
+  barrel family's own vocabulary — + the TRIGGERED bit 0x08 the high
+  seat) + dispenser_placement_byte (the BY_2D compass [3,4,2,5] the
+  family's own vocabulary answers — the furnace's 1..4 band the
+  sibling lane's own convention keeps, the two vocabularies the two
+  lanes never share [the barrel's own furnace-byte passthrough the
+  latent mismatch the round's fresh decode sidesteps]) +
+  dispenser_input_signal (the direct + above-QC arms) + the pure laws
+  (dispenser_random_slot / dispense_position /
+  dispense_projectile_position / dispense_item_velocity /
+  projectile_shoot_law / dispenser_insert_into) + the dispenser_ticks
+  queue (the dedup + the deterministic drain the comparator's own
+  shape wears) + the x10 World initializers; the mesher the
+  dispenser/dropper front walk (the horizontal facings the front
+  tile travels, the vacated north the side keeps; the vertical
+  facings the *_vertical tile the front face wears, the REST the
+  furnace_top master — the dispenser_vertical model's own #side
+  authoring); screens.rs the consult arm (the changed cell + six the
+  piston scope wears, the rising edge the bit + the schedule banks,
+  the falling edge the quiet clear, the collect-then-act shape the
+  borrow discipline wears) + tick_dispenser_beats (the 9-slot store,
+  the random pick, the DROPPER's front-container arm the
+  container_stores/furnace_stores sinks serve [the refused stack the
+  intact count keeps, the no-sound arm the vanilla answers], the
+  DEFAULT eject the ItemDrop the triangle velocity wears [1000], the
+  DISPENSER's arrow the shoot law the arrows vec flies [1.1 / 6.0 /
+  no-crit / 1002], the snowball/egg the honest DEFAULT the
+  projectile entity types the future lanes own) + the placement
+  stamp + the container_fill_sync arm (the nine the analog formula
+  answers) + the lane's own dispenser_rng stream (0x5EED_D155 — the
+  per-lane split the crop_rng convention keeps).
+- +3 tests: the family seats/bytes/placement walk, the input walk
+  (the direct arm, the above-QC arm, the diagonal refusal), the
+  dispense laws (the seeded slot pick, the 0.7 + two-subtract
+  positions, the velocity bounds, the shoot folds, the insert
+  verdicts).
+- VERDICT THE ROUND'S OWN HONEST RECORD KEEPS: goldens 19/19 PASS
+  rms 0.000 (the release build 3m21s served — NO regeneration: the
+  pin the pool-tail append the every-existing-index law wears, every
+  golden byte the same); mc-protocol 157/157 + mc-registry 100/100 +
+  cargo check --all-targets clean. THE MC-CLIENT SUITE THE SANDBOX'S
+  OWN CEILING CROSSED — the platform's own resident grew past the
+  margin the .cargo baseline's ~2G peak shape asked (the dev-103
+  comment's own numbers speak), the test-bin rustc the OOM killer
+  took 17 attempts deep (cgroup v1 memory.events oom_kill the count
+  banks); the levers the round spent: codegen-units 1/256, the
+  release profile without lto, lld --no-keep-memory (the .cargo
+  config the flag keeps — the slower-but-alive shape the next rounds
+  inherit), -Zthreads=0 serial frontend, MALLOC_CONF jemalloc decay
+  — the clean-138-TREE STASH PROBE THE ENVIRONMENTAL VERDICT KEEPS
+  (the untouched HEAD the same SIGKILL wore — the lane's own +1374
+  lines the 0.5% delta the peak never explains). The lane's own +3
+  the all-targets typecheck compiles; THE NEXT FRESH-SESSION WINDOW
+  (the platform restart the python's ~1.9G resident the pre-growth
+  size restores) THE 2731-TEST GATE RE-RUNS FIRST — the head duty
+  the entry banks.
+- Pushed 5ea9543 (v0.3.863, the dispenser/dropper's own offline shot).
+
+Stage Summary:
+- THE DISPENSER THE WIRE'S OWN WORDS SPEAK OFFLINE: the lever's flip
+  the shot the four-tick beat serves, the empty inventory the fail
+  voice keeps, the dropper the chest the silent insert wears, the
+  arrow the 1.1/6.0 the launch voice flies, the comparator the nine
+  the analog fill reads — the placement the six-way byte stamps, the
+  vertical facings the front-vertical tiles render.
+- NEXT CANDIDATES (the head the gate's own debt wears): THE
+  MC-CLIENT SUITE the fresh-session window re-runs FIRST (the +3
+  tests the gate confirms, the 2731 total the count law keeps); the
+  dispenser's own 3x3 canvas (the DispenserMenu nine rows the
+  dispenser.png geometry wears — the chest lane's own shape the
+  click/belief/persistence walks keep, the GUI the loading door the
+  redstone shot the player's own hands serve); the snowball/egg
+  projectile entity types (the throw lane the dispenser shot's own
+  DEFAULT the honest stand-in retires); the shulker box the
+  getContainerAt walk the dropper's front read never serves.
