@@ -9047,6 +9047,7 @@ mod tests {
             fire_ticks: Vec::new(),
             fire_age: std::collections::HashMap::new(),
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
+            container_fill: std::collections::HashMap::new(), // the comparator lane: no fill
             has_skylight: true,                            // the portal's own axis store: empty
             campfire_ticks: Vec::new(),                    // the campfire's own queue: empty
             torch_ticks: Vec::new(),                       // the torch's own queue: empty

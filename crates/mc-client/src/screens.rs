@@ -22110,11 +22110,112 @@ impl App {
             // keep answers — the in-memory map the truth stays, the
             // vanilla log the error walk keeps)
             self.container_stores_file_save();
+            // THE FILL'S OWN RIDE HOME (the comparator's container lane
+            // the close flush banks — the edited store the analog the
+            // map rides, the double's partner the union law wears, the
+            // front comparators the attach broadcast the cell+six walk
+            // re-consults: the vanilla stopOpen tail the
+            // updateNeighbourForOutputSignal law the same re-read
+            // serves)
+            let partner = self.container_fill_sync(pos, None);
+            self.attach_wire_voice(pos.0, pos.1, pos.2);
+            if let Some(ppos) = partner {
+                // THE PARTNER'S OWN FACE (the double's far half the
+                // front comparator the same union re-read serves — the
+                // two cells the two-front comparators the one fill
+                // answers)
+                self.attach_wire_voice(ppos.0, ppos.1, ppos.2);
+            }
         } else {
             // the live-lane close the partner belt keeps (the None
             // pair the closed screens wear)
             self.container_open_cell_b = None;
         }
+    }
+
+    /// THE FILL'S OWN BANK (the comparator's container lane the store
+    /// walk serves — javap ComparatorBlock.getInputSignal the 26.2 jar
+    /// the hasAnalogOutputSignal read the world's analog answers: the
+    /// chest/barrel cell's own store the [`crate::world::
+    /// container_analog_signal`] formula banks, the double the union
+    /// law wears [the partner half the ChestBlock.getContainer combine
+    /// the 54-slot read speaks — the connected direction the variant
+    /// reads, the same-kind gate the stale type refuses], the ender
+    /// chest the jar's own silence the lane refuses [the entry the
+    /// map's absence keeps], the dug cell the air the entry the
+    /// removal answers). THE DEAD MATE the spill walk's own refusal —
+    /// the dying half the union never partners [the survivor's own
+    /// rows the half law banks, the dead cell's entry the caller's
+    /// removal keeps]. THE RETURN the partner the union banked —
+    /// the caller the far face's own broadcast wears.
+    fn container_fill_sync(
+        &mut self,
+        pos: (i32, i32, i32),
+        dead_mate: Option<(i32, i32, i32)>,
+    ) -> Option<(i32, i32, i32)> {
+        let Some(w) = self.offline_world.as_mut() else {
+            return None;
+        };
+        let kind = w.get(pos.0, pos.1, pos.2);
+        if kind == crate::world::ENDER_CHEST {
+            // THE ENDER'S OWN SILENCE (javap EnderChestBlock — the
+            // hasAnalogOutputSignal override the class never wears,
+            // the entry the map's absence the honest keep)
+            w.container_fill.remove(&pos);
+            return None;
+        }
+        if !crate::world::is_chest(kind) && !crate::world::is_barrel(kind) {
+            // THE AIR'S OWN REMOVAL (the dug/broken cell the entry the
+            // map drops — the stale fill the dead cell never speaks)
+            w.container_fill.remove(&pos);
+            return None;
+        }
+        // THE DOUBLE'S OWN PARTNER (the connected direction the
+        // variant reads — the same algebra open_chest_for wears, the
+        // same-kind gate the survivor's SINGLE the own-half law
+        // answers)
+        let mut partner = None;
+        if crate::world::is_chest(kind) {
+            let v = w.variant(pos.0, pos.1, pos.2);
+            let ctype = crate::world::chest_variant_type(v);
+            if ctype != crate::world::CHEST_TYPE_SINGLE {
+                let dir = crate::world::chest_connected_direction(
+                    crate::world::chest_variant_facing(v),
+                    ctype,
+                );
+                let (dx, dz) = crate::world::stairs_facing_delta(dir);
+                let ppos = (pos.0 + dx, pos.1, pos.2 + dz);
+                if Some(ppos) != dead_mate
+                    && crate::world::chest_can_connect_to(w.get(ppos.0, ppos.1, ppos.2), kind)
+                {
+                    partner = Some(ppos);
+                }
+            }
+        }
+        let fill = {
+            let own = self.container_stores.get(&pos).cloned().unwrap_or_default();
+            match partner {
+                Some(ppos) => {
+                    let mut all = own;
+                    all.extend_from_slice(
+                        &self
+                            .container_stores
+                            .get(&ppos)
+                            .cloned()
+                            .unwrap_or_default(),
+                    );
+                    crate::world::container_analog_signal(&all)
+                }
+                None => crate::world::container_analog_signal(&own),
+            }
+        };
+        w.container_fill.insert(pos, fill);
+        if let Some(ppos) = partner {
+            // THE UNION'S OWN MATE (both halves the one 54-slot read —
+            // the far face the same total the map banks)
+            w.container_fill.insert(ppos, fill);
+        }
+        partner
     }
 
     /// THE CARRIED'S OWN HOME RIDE (the vanilla AbstractContainerMenu.
@@ -22164,6 +22265,49 @@ impl App {
         // keeps: the stocked chest's death the floor the items wear)
         self.container_stores_load_once();
         let store = self.container_stores.remove(&pos);
+        // THE FILL'S OWN DEATH RIDE (the comparator's container lane
+        // the dig serves — the broken cell the air the entry the map
+        // drops, the double's survivor the own-half law the re-sync
+        // banks: the connected-direction scan the four horizontal
+        // neighbors the break's mate answers, the DEAD MATE the
+        // dying half the union never partners [the stale re-bank the
+        // standing-block paths the exclusion refuses], the entry's
+        // own removal the walk's last word keeps)
+        let (px, py, pz) = pos;
+        for (nx, ny, nz) in [
+            (px + 1, py, pz),
+            (px - 1, py, pz),
+            (px, py, pz + 1),
+            (px, py, pz - 1),
+        ] {
+            let survivor = self.offline_world.as_ref().and_then(|w| {
+                let k = w.get(nx, ny, nz);
+                if k == crate::world::ENDER_CHEST || !crate::world::is_chest(k) {
+                    return None;
+                }
+                let v = w.variant(nx, ny, nz);
+                let t = crate::world::chest_variant_type(v);
+                if t == crate::world::CHEST_TYPE_SINGLE {
+                    return None;
+                }
+                let dir = crate::world::chest_connected_direction(
+                    crate::world::chest_variant_facing(v),
+                    t,
+                );
+                let (dx, dz) = crate::world::stairs_facing_delta(dir);
+                if (nx + dx, ny, nz + dz) == (px, py, pz) {
+                    Some((nx, ny, nz))
+                } else {
+                    None
+                }
+            });
+            if let Some(spos) = survivor {
+                self.container_fill_sync(spos, Some(pos));
+            }
+        }
+        if let Some(w) = self.offline_world.as_mut() {
+            w.container_fill.remove(&pos);
+        }
         if !self.world_is_network {
             if let Some(store) = store {
                 for (item, count) in store {
@@ -30007,7 +30151,16 @@ impl App {
             if let Ok((_, root)) =
                 mc_protocol::nbt::read_file_nbt(&mut bytes.as_slice())
             {
-                self.container_stores.extend(container_stores_from_nbt(&root));
+                let parsed = container_stores_from_nbt(&root);
+                let keys: Vec<(i32, i32, i32)> = parsed.keys().copied().collect();
+                self.container_stores.extend(parsed);
+                // THE FILL'S OWN PARSE RIDE (the comparator's container
+                // lane the boot banks — the parsed stores the analog
+                // the same rows wear, the restart the stocked chest's
+                // fill the comparator's next consult the map serves)
+                for k in keys {
+                    self.container_fill_sync(k, None);
+                }
                 // THE FURNACE BANK'S OWN PARSE (the dev-69 round — the
                 // same read the trio bank answers: the missing list
                 // the honest empties keep, the extend law the
@@ -60967,6 +61120,150 @@ mod tests {
         assert_eq!(app.container_stores[&cell][5], (926, 12), "the barrel's close the chest's store never touches");
     }
 
+    /// THE COMPARATOR'S OWN CONTAINER LANE (the container-analog
+    /// round — the flush walk the fill banks, the front comparator the
+    /// consult schedules, the beat the variant the output wears, the
+    /// break the entry's death the survivor the own-half law banks:
+    /// javap ComparatorBlock.getInputSignal + the stopOpen tail the
+    /// 26.2 jar the whole felt behavior the offline walk replays).
+    #[test]
+    fn the_comparator_the_container_flush_the_fill_the_consult_and_the_break_wear() {
+        // THE SINGLE'S OWN LANE (the chest the comparator's back
+        // serves — the facing byte 1 the +x back the delta names)
+        let mut app = App::new(11);
+        app.enter_world();
+        let cell = (5i32, 10i32, 5i32);
+        let comp = (4i32, 10i32, 5i32);
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(cell.0, cell.1, cell.2, crate::world::CHEST);
+            w.set(comp.0, comp.1, comp.2, crate::world::COMPARATOR);
+            w.set_variant(
+                comp.0,
+                comp.1,
+                comp.2,
+                crate::world::comparator_variant(1, false, false, 0),
+            );
+        }
+        // THE STOCK + FLUSH WALK (the GUI's own lane the edits ride —
+        // the lone stack the close the flush banks, the fill the
+        // formula the +1 floor wears)
+        app.open_chest_for(cell);
+        app.chest_slots[0] = (926, 64);
+        app.container_store_flush();
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.container_fill.get(&cell).copied(),
+                Some(1),
+                "the lone stack the floor-0 + 1 wears"
+            );
+            assert!(
+                !w.comparator_ticks.is_empty(),
+                "the front comparator the consult schedules"
+            );
+        }
+        // THE BEAT'S OWN ANSWER (the tick walk the refresh banks — the
+        // output cache the variant wears, the powered bit the 1>0 law
+        // answers)
+        let due = app
+            .offline_world
+            .as_ref()
+            .unwrap()
+            .comparator_ticks
+            .first()
+            .map(|e| e.0)
+            .expect("the due beat");
+        app.frame = due;
+        app.tick_comparator_beats();
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            let v = w.variant(comp.0, comp.1, comp.2);
+            assert_eq!(
+                crate::world::comparator_output_of(v),
+                1,
+                "the beat the output cache the fill banks"
+            );
+            assert!(
+                crate::world::comparator_powered_of(v),
+                "the powered bit the i>j verdict answers"
+            );
+        }
+        // THE BREAK'S OWN DEATH RIDE (the spill the entry the air
+        // drops — the store the map's removal keeps, the floor the
+        // stocked stack wears)
+        app.container_store_spilled(cell);
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert!(
+                !w.container_fill.contains_key(&cell),
+                "the broken chest the entry the air drops"
+            );
+            assert!(
+                !app.container_stores.contains_key(&cell),
+                "the store the removal keeps"
+            );
+            assert!(!app.drops.is_empty(), "the stocked stack the floor wears");
+        }
+        // THE DOUBLE'S OWN UNION (the two halves the one 54-slot read
+        // — the partner the connected direction names, both fills the
+        // same total banks, the break the survivor the own-half law
+        // the 15 caps)
+        let mut app2 = App::new(11);
+        app2.enter_world();
+        let facing = 1u8;
+        let a = (5i32, 10i32, 7i32);
+        let va = crate::world::chest_variant(facing, crate::world::CHEST_TYPE_LEFT);
+        let dir = crate::world::chest_connected_direction(facing, crate::world::CHEST_TYPE_LEFT);
+        let (dx, dz) = crate::world::stairs_facing_delta(dir);
+        let b = (a.0 + dx, a.1, a.2 + dz);
+        let vb = crate::world::chest_variant(facing, crate::world::CHEST_TYPE_RIGHT);
+        {
+            let w = app2.offline_world.as_mut().unwrap();
+            w.set(a.0, a.1, a.2, crate::world::CHEST);
+            w.set_variant(a.0, a.1, a.2, va);
+            w.set(b.0, b.1, b.2, crate::world::CHEST);
+            w.set_variant(b.0, b.1, b.2, vb);
+        }
+        app2.open_chest_for(a);
+        assert_eq!(
+            app2.chest_slots.len(),
+            54,
+            "the compound the 54-slot grid wears"
+        );
+        for slot in app2.chest_slots.iter_mut().take(27) {
+            *slot = (926, 64);
+        }
+        app2.chest_slots[27] = (926, 64);
+        app2.container_store_flush();
+        {
+            let w = app2.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.container_fill.get(&a).copied(),
+                Some(8),
+                "the half-full double the floor(0.5*14)+1 the 8 wears"
+            );
+            assert_eq!(
+                w.container_fill.get(&b).copied(),
+                Some(8),
+                "the far face the same union the map banks"
+            );
+        }
+        app2.container_store_spilled(a);
+        {
+            let w = app2.offline_world.as_ref().unwrap();
+            assert!(
+                !w.container_fill.contains_key(&a),
+                "the broken half the entry the air drops"
+            );
+            assert_eq!(
+                w.container_fill.get(&b).copied(),
+                Some(15),
+                "the survivor the own-half law the 15 caps"
+            );
+        }
+    }
+
     /// THE STORES' OWN DISK BANK (the dev-68 round — the stocked grid
     /// the RESTART OUTLIVES: javap HotbarManager the 26.2 walk the
     /// save chord's `HotbarManager.save()` pc 199 the file writes, the
@@ -85669,6 +85966,7 @@ mod tests {
             fire_ticks: Vec::new(),
             fire_age: std::collections::HashMap::new(),
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
+            container_fill: std::collections::HashMap::new(), // the comparator lane: no fill
             has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             torch_ticks: Vec::new(), // the torch's own queue: empty
@@ -86253,6 +86551,7 @@ mod tests {
                     fire_ticks: Vec::new(),
                     fire_age: std::collections::HashMap::new(),
                     portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
+            container_fill: std::collections::HashMap::new(), // the comparator lane: no fill
                     has_skylight: true, // the portal's own axis store: empty
                     campfire_ticks: Vec::new(), // the campfire's own queue: empty
                     torch_ticks: Vec::new(), // the torch's own queue: empty
@@ -86710,6 +87009,7 @@ mod tests {
             fire_ticks: Vec::new(),
             fire_age: std::collections::HashMap::new(),
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
+            container_fill: std::collections::HashMap::new(), // the comparator lane: no fill
             has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             torch_ticks: Vec::new(), // the torch's own queue: empty
@@ -86793,6 +87093,7 @@ mod tests {
             fire_ticks: Vec::new(),
             fire_age: std::collections::HashMap::new(),
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
+            container_fill: std::collections::HashMap::new(), // the comparator lane: no fill
             has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             torch_ticks: Vec::new(), // the torch's own queue: empty
@@ -86878,6 +87179,7 @@ mod tests {
                     fire_ticks: Vec::new(),
                     fire_age: std::collections::HashMap::new(),
                     portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
+            container_fill: std::collections::HashMap::new(), // the comparator lane: no fill
                     has_skylight: true, // the portal's own axis store: empty
                     campfire_ticks: Vec::new(), // the campfire's own queue: empty
                     torch_ticks: Vec::new(), // the torch's own queue: empty
@@ -86940,6 +87242,7 @@ mod tests {
             fire_ticks: Vec::new(),
             fire_age: std::collections::HashMap::new(),
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
+            container_fill: std::collections::HashMap::new(), // the comparator lane: no fill
             has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             torch_ticks: Vec::new(), // the torch's own queue: empty
@@ -108455,6 +108758,7 @@ cow_sound_variant: None,
             fire_ticks: Vec::new(),
             fire_age: std::collections::HashMap::new(),
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
+            container_fill: std::collections::HashMap::new(), // the comparator lane: no fill
             has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             torch_ticks: Vec::new(), // the torch's own queue: empty

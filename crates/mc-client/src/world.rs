@@ -2614,7 +2614,70 @@ pub fn comparator_can_survive(world: &World, x: i32, y: i32, z: i32) -> bool {
     )
 }
 
-/// THE BACK INPUT'S OWN READ (javap DiodeBlock.getInputSignal pc 4-82
+/// THE CONTAINER'S OWN ANALOG FORMULA (javap AbstractContainerMenu
+/// .getRedstoneSignalFromContainer pc 0-75 the 26.2 jar verbatim: the
+/// null container the 0 the early return keeps, the non-empty slots
+/// the `count / maxStackSize` fraction adds [Container
+/// .getMaxStackSize(ItemStack) = min(containerMax, itemMax) the
+/// bytecode's Math.min speaks — the chest/barrel 64 the limit the
+/// house store wears, the itemMax table the registry never banks the
+/// 64 default keeps], the sum the slot count divides [pc 58-66 the
+/// getContainerSize read], the `Mth.lerpDiscrete(f, 0, 15)` fold the
+/// answer speaks — javap Mth.lerpDiscrete pc 0-26 the
+/// `floor(f * (15 - 0 - 1)) + (f > 0 ? 1 : 0)` walk the classic
+/// fullness law banks: floor(f*14) + 1 the non-zero wears).
+pub fn container_analog_signal(items: &[(i32, i32)]) -> u8 {
+    let slot_count = items.len();
+    if slot_count == 0 {
+        return 0;
+    }
+    let mut f = 0.0f32;
+    for &(id, count) in items {
+        if id != 0 && count > 0 {
+            f += count as f32 / 64.0f32;
+        }
+    }
+    f /= slot_count as f32;
+    let v = (f * 14.0).floor() as i32 + if f > 0.0 { 1 } else { 0 };
+    v.clamp(0, 15) as u8
+}
+
+/// THE COMPARATOR'S OWN BACK READ (javap ComparatorBlock.getInputSignal
+/// pc 0-168 the 26.2 jar the 26.2 walk the container lane answers:
+/// the WEAK WALK the base i the DiodeBlock super computes, the
+/// hasAnalogOutputSignal arm the back cell's own fill the i
+/// REPLACES [pc 37-58 the unconditional istore speaks — the empty
+/// chest the 0 the same override wears], the `i < 15 &&
+/// isRedstoneConductor` arm the one-more-step probe serves [pc 63-88]
+/// — the solid cube the chest hides the classic through-wall read
+/// answers, the `j != 0` verdict the quiet keep wears [pc 155-164];
+/// the item-frame half the max fold the entity lane never carries —
+/// the absent frame the 0 the max keeps, the port the container arm
+/// alone answers). THE WEAK WALK THE REPEATER KEEPS (the DiodeBlock
+/// super the sibling's own read the container arms never override —
+/// the repeater's back read the weak walk alone answers).
+fn comparator_input_signal(world: &World, x: i32, y: i32, z: i32, facing: u8) -> u8 {
+    let base = comparator_weak_back_signal(world, x, y, z, facing);
+    let (dx, dy, dz) = comparator_facing_delta(facing);
+    let (bx, by, bz) = (x + dx, y + dy, z + dz);
+    // THE CONTAINER'S OWN OVERRIDE (pc 37-58 — the fill the base i
+    // replaces, the empty entry the 0 the same walk banks)
+    if let Some(&fill) = world.container_fill.get(&(bx, by, bz)) {
+        return fill;
+    }
+    // THE THROUGH-WALL ARM (pc 63-164 — the base < 15 the conductor
+    // gate arms, the far cell's fill the j != 0 verdict banks)
+    if base < 15 && wire_climb_conductor(world.get(bx, by, bz)) {
+        if let Some(&fill) = world.container_fill.get(&(bx + dx, by + dy, bz + dz)) {
+            if fill != 0 {
+                return fill;
+            }
+        }
+    }
+    base
+}
+
+/// THE WEAK BACK READ'S OWN WALK (javap DiodeBlock.getInputSignal pc 4-82
 /// the 26.2 jar: the `level.getSignal(pos.relative(FACING), FACING)`
 /// weak walk the back cell answers, the REDSTONE_WIRE arm the raw
 /// POWER property the max-0 fold overrides — the wire's own connected
@@ -2626,7 +2689,7 @@ pub fn comparator_can_survive(world: &World, x: i32, y: i32, z: i32) -> bool {
 /// dir == ITS FACING gate the powered output speaks — the front cell
 /// the sibling's own verdict (its FACING == our facing the back-to-
 /// front chain keeps).
-fn comparator_input_signal(world: &World, x: i32, y: i32, z: i32, facing: u8) -> u8 {
+fn comparator_weak_back_signal(world: &World, x: i32, y: i32, z: i32, facing: u8) -> u8 {
     let (dx, dy, dz) = comparator_facing_delta(facing);
     let (bx, by, bz) = (x + dx, y + dy, z + dz);
     let back = world.get(bx, by, bz);
@@ -2868,9 +2931,13 @@ pub fn comparator_refresh_variant(world: &World, x: i32, y: i32, z: i32) -> Opti
 /// own walk the arms the wire override, the redstone block, the
 /// lever/button/plate/torch/detector families, the comparator AND
 /// repeater sibling gates the same verdicts serve; the repeater the
-/// REDSTONE_WIRE raw-POWER arm the comparator's back read wears).
+/// REDSTONE_WIRE raw-POWER arm the comparator's back read wears.
+/// THE CONTAINER'S OWN ARMS the repeater never wears — the
+/// ComparatorBlock.getInputSignal override the wrapper alone answers,
+/// the weak walk the sibling's own read the container lanes never
+/// ride).
 fn repeater_input_signal(world: &World, x: i32, y: i32, z: i32, facing: u8) -> u8 {
-    comparator_input_signal(world, x, y, z, facing)
+    comparator_weak_back_signal(world, x, y, z, facing)
 }
 
 /// THE REPEATER'S OWN SIDE READ (javap RepeaterBlock
@@ -13823,6 +13890,16 @@ pub struct World {
     /// side map wears; the store-less cell the west/east derive the
     /// mesher's own short-circuit answers.
     pub portal_axis: std::collections::HashMap<(i32, i32, i32), bool>,
+    /// THE CONTAINER'S OWN ANALOG BANK (the comparator's container
+    /// lane — the (x, y, z) -> 0..=15 rows the client's store flush
+    /// banks: the entry PRESENCE the jar's hasAnalogOutputSignal
+    /// verdict answers, the value the
+    /// AbstractContainerMenu.getRedstoneSignalFromContainer formula
+    /// banks. The chest family the ender chest the lane refuses [the
+    /// jar's own silence the override never wears], the barrel the
+    /// same law keeps; the networked world the server's analog never
+    /// synced — the empty map the honest keep).
+    pub container_fill: std::collections::HashMap<(i32, i32, i32), u8>,
     /// THE DIMENSION'S OWN SKY GATE (javap `DimensionType.hasSkylight`
     /// — the nether's false the light engine's sky-column pass never
     /// runs: the grid the block flood alone answers, the sky layer
@@ -14171,6 +14248,7 @@ impl World {
             bamboo_ticks: Vec::new(), // the bamboo's own queue: no unsupported stalk, no fall
             fire_age: std::collections::HashMap::new(), // the ladder's store: empty
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
+            container_fill: std::collections::HashMap::new(), // the comparator lane: no fill
             has_skylight: true, // the overworld default: the sky light the column pass speaks
         }
     }
@@ -31888,6 +31966,115 @@ mod tests {
             wire_source_strength_near(&w, fx, fy, fz),
             0,
             "the unpowered comparator the dark seed keeps"
+        );
+    }
+
+    /// THE CONTAINER'S OWN ANALOG READ (the container lane — the
+    /// [`container_analog_signal`] formula the lerpDiscrete fold
+    /// banks, the back-read override the fill the base replaces, the
+    /// through-wall probe the conductor gate arms: javap
+    /// ComparatorBlock.getInputSignal pc 37-164 the 26.2 jar the
+    /// whole verdict the offline walk replays).
+    #[test]
+    fn the_comparator_the_container_fill_the_back_and_through_wall_reads_wear() {
+        // THE FORMULA'S OWN LAWS (getRedstoneSignalFromContainer +
+        // Mth.lerpDiscrete — the empty container the 0 keeps, the
+        // lone item the floor-0 + 1 wear, the 13-full chest the
+        // classic 7 speaks, the full chest the 15 caps, the 54-slot
+        // double the union law banks)
+        let empty = vec![(0i32, 0i32); 27];
+        assert_eq!(
+            container_analog_signal(&empty),
+            0,
+            "the empty chest the 0 keeps"
+        );
+        let mut one = empty.clone();
+        one[0] = (17, 1);
+        assert_eq!(
+            container_analog_signal(&one),
+            1,
+            "the lone item the f>0 +1 the floor-0 wears"
+        );
+        let mut thirteen = vec![(0i32, 0i32); 27];
+        for slot in thirteen.iter_mut().take(13) {
+            *slot = (4, 64);
+        }
+        assert_eq!(
+            container_analog_signal(&thirteen),
+            7,
+            "the 13 full stacks the floor(13*14/27)+1 the 7 wears"
+        );
+        let full = vec![(4, 64); 27];
+        assert_eq!(
+            container_analog_signal(&full),
+            15,
+            "the full chest the 15 caps"
+        );
+        let mut double_half = vec![(4, 64); 27];
+        double_half.extend(vec![(0i32, 0i32); 27]);
+        assert_eq!(
+            container_analog_signal(&double_half),
+            8,
+            "the half-full double the floor(0.5*14)+1 the 8 wears"
+        );
+
+        // THE BACK-READ'S OWN OVERRIDE (the fill the base i replaces —
+        // the stocked chest the output the fill speaks, the POWERED
+        // verdict the shouldTurnOn walk answers, the empty entry the
+        // 0 the same walk keeps)
+        let mut w = World::new(3, 42);
+        for x in 0..8 {
+            for z in 0..8 {
+                w.set(x, 9, z, STONE);
+            }
+        }
+        let (cx, cy, cz) = (3i32, 10i32, 3i32);
+        let facing = 1u8; // the back cell = +x
+        w.set(cx, cy, cz, COMPARATOR);
+        w.set_variant(cx, cy, cz, comparator_variant(facing, false, false, 0));
+        w.set(cx + 1, cy, cz, CHEST);
+        w.container_fill.insert((cx + 1, cy, cz), 5);
+        assert_eq!(
+            comparator_output_signal(&w, cx, cy, cz),
+            5,
+            "the stocked chest the fill the output wears"
+        );
+        assert!(
+            comparator_should_turn_on(&w, cx, cy, cz),
+            "the powered verdict the 5>0 tie the COMPARE law answers"
+        );
+        w.container_fill.insert((cx + 1, cy, cz), 0);
+        assert_eq!(
+            comparator_output_signal(&w, cx, cy, cz),
+            0,
+            "the empty chest the 0 the same override banks"
+        );
+
+        // THE THROUGH-WALL ARM (the conductor the probe wears — the
+        // stone the chest hides the classic read answers, the base-15
+        // gate the probe refuses, the far-empty chest the j!=0
+        // verdict the base keeps)
+        w.set(cx + 1, cy, cz, STONE);
+        w.container_fill.remove(&(cx + 1, cy, cz));
+        w.container_fill.insert((cx + 2, cy, cz), 9);
+        assert_eq!(
+            comparator_output_signal(&w, cx, cy, cz),
+            9,
+            "the hidden chest the through-wall probe answers"
+        );
+        w.set(cx + 1, cy, cz, REDSTONE_BLOCK);
+        w.set(cx + 2, cy, cz, CHEST);
+        assert_eq!(
+            comparator_output_signal(&w, cx, cy, cz),
+            15,
+            "the base 15 the i<15 gate the probe refuses"
+        );
+        w.set(cx + 1, cy, cz, STONE);
+        w.container_fill.insert((cx + 2, cy, cz), 0);
+        assert_eq!(
+            comparator_output_signal(&w, cx, cy, cz),
+            0,
+            "the far-empty chest the j!=0 verdict the base keeps"
         );
     }
 
