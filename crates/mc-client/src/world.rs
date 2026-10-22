@@ -3196,6 +3196,50 @@ pub fn piston_head_sticky_of(variant: u8) -> bool {
     variant & PISTON_HEAD_STICKY_BIT != 0
 }
 
+/// THE MOVING PISTON'S OWN KIND SEAT (the autopush-129 round — javap
+/// PistonMovingBlockEntity the 26.2 jar the mid-state the pushed walk
+/// renders: the cells the extension/retraction slide wear BETWEEN the
+/// event and the progress walk's own landing, the blockentity the
+/// pushed state the stash carries, the render the offset the slide
+/// speaks). The jar's own moving_piston registry word the 361 id the
+/// generated block_ids row banks — the kind seat OUR 776-row atlas
+/// law wears.
+pub const MOVING_PISTON: u16 = 775;
+
+pub fn is_moving_piston(id: u16) -> bool {
+    id == MOVING_PISTON
+}
+
+/// THE MOVING PISTON'S OWN VARIANT BYTE (the piston family's own
+/// layout the sibling bytes mirror: the facing the low 3 bits keep —
+/// the delta6 order the base's own byte speaks — the EXTENDING bit
+/// the slide's own direction banks, the progress the high 4 bits
+/// carry in QUARTERS — the jar's own 0.5-per-tick walk the 0.25
+/// granularity renders: 0 the event frame, 2 the mid slide, the
+/// finalize the take serves).
+pub const MOVING_FACING_MASK: u8 = 0x07;
+pub const MOVING_EXTENDING_BIT: u8 = 0x08;
+pub const MOVING_PROGRESS_SHIFT: u8 = 4;
+
+pub fn moving_variant(facing: u8, extending: bool, quarters: u8) -> u8 {
+    (facing & MOVING_FACING_MASK)
+        | (if extending { MOVING_EXTENDING_BIT } else { 0 })
+        | (quarters.min(15) << MOVING_PROGRESS_SHIFT)
+}
+
+pub fn moving_facing_of(variant: u8) -> u8 {
+    variant & MOVING_FACING_MASK
+}
+
+pub fn moving_extending_of(variant: u8) -> bool {
+    variant & MOVING_EXTENDING_BIT != 0
+}
+
+pub fn moving_progress_quarters_of(variant: u8) -> u8 {
+    variant >> MOVING_PROGRESS_SHIFT
+}
+
+
 /// THE PISTON'S OWN FACING STEP (the vanilla Direction order the
 /// variant byte speaks — the same DIRECTION_NORMAL walk the
 /// observer's own step answers, the push cell AND the head cell the
@@ -3393,6 +3437,7 @@ pub fn piston_push_reaction(kind: u16) -> PistonPush {
     if kind == PISTON
         || kind == STICKY_PISTON
         || kind == PISTON_HEAD
+        || kind == MOVING_PISTON
         || kind == OBSIDIAN
         || kind == BEDROCK
     {
@@ -3473,17 +3518,22 @@ pub fn piston_resolve_line(
 }
 
 /// THE PISTON'S OWN EXTENSION (javap PistonBaseBlock.moveBlocks the
-/// 26.2 jar the extending=true walk the offline world the settled
-/// state answers: the toDestroy cells the pop the clear serves, the
-/// toPush chain the FAR-to-near order the one-cell shift the move
-/// keeps [the far end the first write the overwrite never pays],
-/// the head the FIRST cell the extension places [the type bit the
-/// sticky kind's own arm wears], the base the EXTENDED bit the
-/// variant banks). The moved kinds AND variants the walk carries —
-/// the pushed cell the same block the one cell over wears. The
-/// changed cells the broadcast the caller's own walk serves.
+/// 26.2 jar the extending=true walk — the autopush-129 round the
+/// MID-STATE the PistonMovingBlockEntity walk serves: the toDestroy
+/// cells the pop the clear keeps, the toPush chain the FAR-to-near
+/// order the one-cell shift wears [the far end the first write the
+/// overwrite never pays] — but every DESTINATION cell the slide
+/// touches banks a MOVING_PISTON mid-state (the pushed kind AND
+/// variant the stash carries, the EXTENDING byte the slide's own
+/// direction speaks), the SOURCE cells the air the slide-left walk
+/// banks, the head the FIRST moving cell the extension places [the
+/// head's own state the stash wears], the finalize the progress
+/// beat's own +2 landing serves, the base the EXTENDED bit the
+/// variant banks [the base the slide never wears]). The changed
+/// cells the broadcast the caller's own walk serves.
 pub fn piston_try_extend(
     world: &mut World,
+    now: u64,
     x: i32,
     y: i32,
     z: i32,
@@ -3501,19 +3551,29 @@ pub fn piston_try_extend(
         changed.push((*cx, *cy, *cz));
     }
     // THE MOVE ARM: the chain the far-to-near order the one-cell
-    // shift wears.
+    // shift wears — the destination the MOVING mid-state banks [the
+    // pushed state the stash carries, the progress beat the +1 arm
+    // schedules], the source the air the slide-left walk keeps.
     for i in (0..to_push.len()).rev() {
         let (fx, fy, fz) = to_push[i];
         let kind = world.get(fx, fy, fz);
         let variant = world.variant(fx, fy, fz);
-        world.set(fx + dx, fy + dy, fz + dz, kind);
-        world.set_variant(fx + dx, fy + dy, fz + dz, variant);
-        changed.push((fx + dx, fy + dy, fz + dz));
+        let (tx, ty, tz) = (fx + dx, fy + dy, fz + dz);
+        world.set_moving_state(tx, ty, tz, kind, variant);
+        world.set(tx, ty, tz, MOVING_PISTON);
+        world.set_variant(tx, ty, tz, moving_variant(facing, true, 0));
+        world.schedule_moving_tick(now + 1, tx, ty, tz);
+        world.set(fx, fy, fz, AIR);
+        changed.push((tx, ty, tz));
+        changed.push((fx, fy, fz));
     }
-    // THE HEAD ARM: the first cell the extension places.
+    // THE HEAD ARM: the first cell the extension places — the moving
+    // head the stash's own PISTON_HEAD state wears.
     let (hx, hy, hz) = (x + dx, y + dy, z + dz);
-    world.set(hx, hy, hz, PISTON_HEAD);
-    world.set_variant(hx, hy, hz, piston_head_variant(facing, sticky));
+    world.set_moving_state(hx, hy, hz, PISTON_HEAD, piston_head_variant(facing, sticky));
+    world.set(hx, hy, hz, MOVING_PISTON);
+    world.set_variant(hx, hy, hz, moving_variant(facing, true, 0));
+    world.schedule_moving_tick(now + 1, hx, hy, hz);
     changed.push((hx, hy, hz));
     // THE BASE ARM: the EXTENDED bit the variant banks.
     let variant = world.variant(x, y, z);
@@ -3533,6 +3593,7 @@ pub fn piston_try_extend(
 /// broadcast the caller's own walk serves.
 pub fn piston_try_retract(
     world: &mut World,
+    now: u64,
     x: i32,
     y: i32,
     z: i32,
@@ -3542,21 +3603,37 @@ pub fn piston_try_retract(
     let (dx, dy, dz) = piston_facing_delta6(facing);
     let (hx, hy, hz) = (x + dx, y + dy, z + dz);
     let mut changed: Vec<(i32, i32, i32)> = Vec::new();
-    // THE HEAD ARM: the head cell the clear serves.
-    world.set(hx, hy, hz, AIR);
-    changed.push((hx, hy, hz));
     // THE STICKY PULL ARM: the block beyond the head tip the pull
-    // the head's old cell banks.
+    // the head's old cell banks — the autopush-129 round the pull's
+    // own MID-STATE the moving cell wears (the pulled state the
+    // stash carries, the EXTENDING bit CLEAR the slide's own
+    // direction speaks [the block the front cell the head's old
+    // cell slides]), the source the air the slide-left walk keeps,
+    // the pending beat row the re-arm replaces).
+    let mut pulled = false;
     if sticky {
         let (px, py, pz) = (hx + dx, hy + dy, hz + dz);
         let kind = world.get(px, py, pz);
         if piston_push_reaction(kind) == PistonPush::Normal {
             let variant = world.variant(px, py, pz);
-            world.set(hx, hy, hz, kind);
-            world.set_variant(hx, hy, hz, variant);
+            world.set_moving_state(hx, hy, hz, kind, variant);
+            world.set(hx, hy, hz, MOVING_PISTON);
+            world.set_variant(hx, hy, hz, moving_variant(facing, false, 0));
+            world.reschedule_moving_tick(now + 1, hx, hy, hz);
             world.set(px, py, pz, AIR);
+            changed.push((hx, hy, hz));
             changed.push((px, py, pz));
+            pulled = true;
         }
+    }
+    // THE HEAD ARM: the head cell the clear serves — the pull's own
+    // mid-state the arm already banks, the no-pull arms the instant
+    // clear keeps (the head's own slide the round's minimal walk
+    // never animates — the settled verdict the 128 round banked).
+    if !pulled {
+        world.take_moving_state(hx, hy, hz);
+        world.set(hx, hy, hz, AIR);
+        changed.push((hx, hy, hz));
     }
     // THE BASE ARM: the retracted bit the variant keeps.
     let variant = world.variant(x, y, z);
@@ -3570,6 +3647,43 @@ pub fn piston_try_retract(
 /// event queue the same-tick execution serves — the offline walk
 /// the consult's own `now` stamp the beat the same frame drains).
 pub const PISTON_EVENT_DELAY: u64 = 0;
+
+/// THE MOVING PISTON'S OWN PROGRESS WALK (the autopush-129 round —
+/// javap PistonMovingBlockEntity.tick the 26.2 jar the 0.5-per-tick
+/// fold the offline walk's own quarters speak: the sub-1 beat the
+/// progress half the variant byte banks AND the next-tick beat
+/// reschedules, the 1.0 landing the finalize serves — the stashed
+/// state the cell wears [the stash row the take clears], the no-
+/// stash cell the air keeps [the stale mid-state the honest
+/// removal serves], the NOT-moving cell the stale row the silence
+/// skips [the double-event guard the retract's own clear keeps]).
+/// The true the cell changed speaks — the caller's own broadcast
+/// the walk serves.
+pub fn tick_moving_piston_cell(world: &mut World, now: u64, x: i32, y: i32, z: i32) -> bool {
+    if world.get(x, y, z) != MOVING_PISTON {
+        return false; // the stale row the dug/re-landed cell's guard skips
+    }
+    let variant = world.variant(x, y, z);
+    let quarters = moving_progress_quarters_of(variant);
+    if quarters < 2 {
+        // THE MID-SLIDE ARM: the half step the variant banks, the
+        // finalize's own beat the +1 arm schedules.
+        world.set_variant(
+            x,
+            y,
+            z,
+            moving_variant(moving_facing_of(variant), moving_extending_of(variant), 2),
+        );
+        world.schedule_moving_tick(now + 1, x, y, z);
+        return true;
+    }
+    // THE FINALIZE ARM: the stashed state the cell wears, the stash
+    // row the take clears.
+    let (kind, pvariant) = world.take_moving_state(x, y, z).unwrap_or((AIR, 0));
+    world.set(x, y, z, kind);
+    world.set_variant(x, y, z, pvariant);
+    true
+}
 
 /// THE COMPARATOR'S OWN SOURCE ARMS (the consumers' weak walk —
 /// javap DiodeBlock.getSignal the dir == FACING gate the front cell
@@ -6782,7 +6896,7 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 /// generated tables' own rows the names wire) — the
 /// END_PORTAL
 /// the beyond-table seat the displaced law keeps.
-pub const NAME_OF: [&str; 775] = [
+pub const NAME_OF: [&str; 776] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -7596,6 +7710,7 @@ pub const NAME_OF: [&str; 775] = [
     "piston",
     "sticky_piston",
     "piston_head",
+    "moving_piston",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -13613,6 +13728,26 @@ pub struct World {
     /// re-consult refuses, the drain the deterministic order the
     /// tick walk answers).
     pub piston_ticks: Vec<(u64, i32, i32, i32)>,
+    /// THE MOVING PISTON'S OWN STASH (the autopush-129 round — the
+    /// pushed state the mid-state cell renders: the (x, y, z) ->
+    /// (kind, variant) rows the extend/retract walk banks, the
+    /// finalize the take serves, the mesher's offset render the
+    /// same rows read; the tiny vec the per-piston line's own
+    /// 13-cell reach keeps — the lookup the linear scan answers).
+    pub moving_states: Vec<([i32; 3], u16, u8)>,
+
+    /// THE MOVING PISTON'S OWN QUEUE (the comparator's own shape the
+    /// sibling wears: the (due, x, y, z) rows the extend/retract
+    /// walk banks — the +1 arm the progress step schedules, the
+    /// +2 arm the finalize's own beat, the drain the deterministic
+    /// order the tick walk answers).
+    pub moving_ticks: Vec<(u64, i32, i32, i32)>,
+
+    /// THE MOVING PISTON'S OWN QUEUE (the comparator's own shape the
+    /// sibling wears: the (due, x, y, z) rows the extend/retract
+    /// walk banks — the +1 arm the progress step schedules, the
+    /// +2 arm the finalize's own beat, the drain the deterministic
+    /// order the tick walk answers).
     /// THE BAMBOO'S OWN FALL QUEUE (the dig-side cascade's scheduled
     /// ticks — the fire queue's own shape the walk's one-tick lag
     /// wears): the (due game tick, x, y, z) entries the UNSUPPORTED
@@ -13993,6 +14128,8 @@ impl World {
             repeater_ticks: Vec::new(),
             observer_ticks: Vec::new(),
             piston_ticks: Vec::new(), // the repeater's own queue: no mismatch, no beat
+            moving_states: Vec::new(), // the moving piston's own stash: no slide, no rows
+            moving_ticks: Vec::new(), // the moving piston's own queue: no slide, no beat
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: no extinguish, no record
             bamboo_ticks: Vec::new(), // the bamboo's own queue: no unsupported stalk, no fall
             fire_age: std::collections::HashMap::new(), // the ladder's store: empty
@@ -15382,6 +15519,72 @@ impl World {
     pub fn drain_due_piston_ticks(&mut self, now: u64) -> Vec<(i32, i32, i32)> {
         let mut due: Vec<(u64, i32, i32, i32)> = Vec::new();
         self.piston_ticks.retain(|&(at, x, y, z)| {
+            if at <= now {
+                due.push((at, x, y, z));
+                false
+            } else {
+                true
+            }
+        });
+        due.sort();
+        due.into_iter().map(|(_, x, y, z)| (x, y, z)).collect()
+    }
+
+    /// THE MOVING PISTON'S OWN STASH WALK (the autopush-129 round —
+    /// the (x, y, z) keyed rows the extend/retract arms bank, the
+    /// mesher's offset render AND the finalize's own take the same
+    /// three fns serve; the replace-or-push law the retract's own
+    /// re-arm keeps [the rapid toggle the pull's stash the head
+    /// cell's stale row replaces]).
+    pub fn moving_state_of(&self, x: i32, y: i32, z: i32) -> Option<(u16, u8)> {
+        self.moving_states
+            .iter()
+            .find(|(c, _, _)| *c == [x, y, z])
+            .map(|&(_, k, v)| (k, v))
+    }
+
+    pub fn set_moving_state(&mut self, x: i32, y: i32, z: i32, kind: u16, variant: u8) {
+        self.take_moving_state(x, y, z);
+        self.moving_states.push(([x, y, z], kind, variant));
+    }
+
+    pub fn take_moving_state(&mut self, x: i32, y: i32, z: i32) -> Option<(u16, u8)> {
+        let at = self
+            .moving_states
+            .iter()
+            .position(|(c, _, _)| *c == [x, y, z])?;
+        let (_, k, v) = self.moving_states.remove(at);
+        Some((k, v))
+    }
+
+    /// THE MOVING PISTON'S OWN SCHEDULE (the piston queue's own dedup
+    /// the pending row keeps — the extend's +1 beat the re-consult
+    /// refuses; the RESCHEDULE arm the retract's own re-arm wears: the
+    /// stale row the replace serves, the pull's own beat the cell
+    /// banks).
+    pub fn schedule_moving_tick(&mut self, due: u64, x: i32, y: i32, z: i32) {
+        if self
+            .moving_ticks
+            .iter()
+            .any(|&(_, tx, ty, tz)| (tx, ty, tz) == (x, y, z))
+        {
+            return; // the dedup the pending row keeps
+        }
+        self.moving_ticks.push((due, x, y, z));
+    }
+
+    pub fn reschedule_moving_tick(&mut self, due: u64, x: i32, y: i32, z: i32) {
+        self.moving_ticks
+            .retain(|&(_, tx, ty, tz)| (tx, ty, tz) != (x, y, z));
+        self.moving_ticks.push((due, x, y, z));
+    }
+
+    /// THE MOVING PISTON'S OWN DRAIN (the piston queue's own shape —
+    /// the sort the deterministic order the walk answers, the retain
+    /// the future beats keep).
+    pub fn drain_due_moving_ticks(&mut self, now: u64) -> Vec<(i32, i32, i32)> {
+        let mut due: Vec<(u64, i32, i32, i32)> = Vec::new();
+        self.moving_ticks.retain(|&(at, x, y, z)| {
             if at <= now {
                 due.push((at, x, y, z));
                 false
@@ -21976,7 +22179,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the lamp pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 775, "the palette the lamp pair banks");
+        assert_eq!(atlas::N_KINDS, 776, "the palette the lamp pair banks");
         assert!(is_redstone_lamp(REDSTONE_LAMP) && is_redstone_lamp(REDSTONE_LAMP_LIT));
         assert!(!is_redstone_lamp(REDSTONE_WIRE) && !is_redstone_lamp(STONE));
         assert!(!redstone_lamp_lit(REDSTONE_LAMP));
@@ -22077,7 +22280,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the wire pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 775, "the palette the wire pair banks");
+        assert_eq!(atlas::N_KINDS, 776, "the palette the wire pair banks");
         assert!(is_redstone_wire(REDSTONE_WIRE) && is_redstone_wire(REDSTONE_WIRE_ON));
         assert!(!is_redstone_wire(LEVER) && !is_redstone_wire(OAK_PRESSURE_PLATE));
         assert!(!wire_powered(REDSTONE_WIRE));
@@ -22526,7 +22729,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 775, "the palette the graded ladder banks");
+        assert_eq!(atlas::N_KINDS, 776, "the palette the graded ladder banks");
         // THE POWER READ'S OWN ROUND TRIP (the seat the kind the
         // inverse fold answers, the unknown id the None keeps)
         assert_eq!(wire_power_of(REDSTONE_WIRE), Some(0));
@@ -22717,7 +22920,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the planks' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 775, "the palette the planks' twelve banks");
+        assert_eq!(atlas::N_KINDS, 776, "the palette the planks' twelve banks");
         for (i, (name, kind, voice)) in PLANKS.iter().enumerate() {
             let seat = OAK_PLANKS + i as u16;
             assert_eq!(*kind, seat, "the seat the family order banks");
@@ -22809,7 +23012,7 @@ mod tests {
             None,
             "the portal the item lane refuses"
         );
-        assert_eq!(NAME_OF.len(), 775, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -22863,7 +23066,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kit's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 775, "the palette the kit's six banks");
+        assert_eq!(atlas::N_KINDS, 776, "the palette the kit's six banks");
         for (i, (name, kind, hard)) in KIT.iter().enumerate() {
             let seat = COBBLESTONE + i as u16;
             assert_eq!(*kind, seat, "the seat the stone shelf order banks");
@@ -22953,7 +23156,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kit's growth banks)
-        assert_eq!(NAME_OF.len(), 775, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -23010,7 +23213,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the shelf's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 775, "the palette the shelf's eight banks");
+        assert_eq!(atlas::N_KINDS, 776, "the palette the shelf's eight banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -23108,7 +23311,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the shelf's growth banks)
-        assert_eq!(NAME_OF.len(), 775, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -23177,7 +23380,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the cloths' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 775, "the palette the cloths' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 776, "the palette the cloths' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -23291,7 +23494,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the cloths' growth banks)
-        assert_eq!(NAME_OF.len(), 775, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -23366,7 +23569,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kilns' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 775, "the palette the kilns' seventeen banks");
+        assert_eq!(atlas::N_KINDS, 776, "the palette the kilns' seventeen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -23478,7 +23681,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kilns' growth banks)
-        assert_eq!(NAME_OF.len(), 775, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -23554,7 +23757,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 775, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 776, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -23671,7 +23874,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 775, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -23756,7 +23959,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 775, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 776, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -23907,7 +24110,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 775, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -23981,7 +24184,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 775, "the palette the ladder's twenty-two banks");
+        assert_eq!(atlas::N_KINDS, 776, "the palette the ladder's twenty-two banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -24170,7 +24373,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the ladder's growth banks)
-        assert_eq!(NAME_OF.len(), 775, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -24231,7 +24434,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the note's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 775, "the palette the note's own banks");
+        assert_eq!(atlas::N_KINDS, 776, "the palette the note's own banks");
         // THE ONE REGISTRY NAME ITS KIND ALONE SPEAKS (the NAME_OF row
         // + the generated KIND_NAMES/REGISTRY_NAMES rows the same
         // entry the three tables keep — no strip law the single kind
@@ -24593,7 +24796,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the note's growth banks)
-        assert_eq!(NAME_OF.len(), 775, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -24634,8 +24837,8 @@ mod tests {
             "the contiguous run the thirteen seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 775, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 775, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 776, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in OAK_FENCE..=NETHER_BRICK_FENCE {
@@ -25048,8 +25251,8 @@ mod tests {
             "the contiguous run the thirty-two seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 775, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 775, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 776, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in COBBLESTONE_WALL..=SULFUR_BRICK_WALL {
@@ -25388,8 +25591,8 @@ mod tests {
             "the contiguous run the seventeen seats wear"
         );
         assert_eq!(SULFUR_BRICK_WALL, 542, "the wall family the tail answers");
-        assert_eq!(atlas::N_KINDS, 775, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 775, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 776, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in GLASS..=BLACK_STAINED_GLASS {
@@ -26090,8 +26293,8 @@ mod tests {
             "the pane run the seventeen seats wear"
         );
         assert_eq!(BLACK_STAINED_GLASS, 559, "the glass family the tail answers");
-        assert_eq!(atlas::N_KINDS, 775, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 775, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 776, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in GLASS_PANE..=IRON_BARS {
@@ -26392,8 +26595,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_BARS, 585,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 775, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 775, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 776, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in COPPER_BARS..=WAXED_OXIDIZED_COPPER_BARS {
@@ -26713,8 +26916,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_CHAIN, 594,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 775, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 775, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 776, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in IRON_CHAIN..=WAXED_OXIDIZED_COPPER_CHAIN {
@@ -27012,8 +27215,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_LANTERN, 604,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 775, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 775, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 776, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in LANTERN..=WAXED_OXIDIZED_COPPER_LANTERN {
@@ -27492,8 +27695,8 @@ mod tests {
             DEEPSLATE_BRICK_STAIRS, 668,
             "the deepslate brick row the family's last seat keeps"
         );
-        assert_eq!(atlas::N_KINDS, 775, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 775, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 776, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in OAK_STAIRS..=DEEPSLATE_BRICK_STAIRS {
@@ -27988,8 +28191,8 @@ mod tests {
             DEEPSLATE_BRICK_SLAB, 736,
             "the deepslate brick row the family's last seat keeps"
         );
-        assert_eq!(atlas::N_KINDS, 775, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 775, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 776, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in RESIN_BRICK_SLAB..=DEEPSLATE_BRICK_SLAB {
@@ -28291,7 +28494,7 @@ mod tests {
             WAXED_OXIDIZED_COPPER_CHEST, 747,
             "the waxed oxidized rung the ladder banks"
         );
-        assert_eq!(NAME_OF.len(), 775, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
         for k in CHEST_KINDS {
             assert!(
                 (CHEST..=WAXED_OXIDIZED_COPPER_CHEST).contains(&k),
@@ -28759,7 +28962,7 @@ mod tests {
         // THE SEAT'S OWN BANK (the contiguous tail the append-only
         // law keeps — the chest family the predecessor answers)
         assert_eq!(BARREL, 748, "the barrel its tail seat keeps");
-        assert_eq!(NAME_OF.len(), 775, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
         assert!(is_barrel(BARREL), "the barrel the family predicate keeps");
         assert!(!is_barrel(CHEST), "the chest the predicate refuses");
         // THE VARIANT PACK'S OWN ROUNDTRIP (the facing three bits +
@@ -28907,7 +29110,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the torch pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 775, "the palette the torch pair banks");
+        assert_eq!(atlas::N_KINDS, 776, "the palette the torch pair banks");
         assert!(is_redstone_torch(REDSTONE_TORCH) && is_redstone_torch(REDSTONE_TORCH_OFF));
         assert!(!is_redstone_torch(TORCH) && !is_redstone_torch(LEVER));
         assert!(redstone_torch_lit(REDSTONE_TORCH));
@@ -29048,7 +29251,7 @@ mod tests {
         assert_eq!(REDSTONE_WALL_TORCH, 324);
         assert_eq!(REDSTONE_WALL_TORCH_OFF, 325);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 775, "the palette the wall pair banks");
+        assert_eq!(atlas::N_KINDS, 776, "the palette the wall pair banks");
         assert!(
             is_redstone_torch(REDSTONE_WALL_TORCH) && is_redstone_torch(REDSTONE_WALL_TORCH_OFF),
             "the wall pair the family's tail banks"
@@ -29293,7 +29496,7 @@ mod tests {
         assert_eq!(OAK_TRAPDOOR_OPEN, 327);
         assert_eq!(END_PORTAL, 510);
         assert_eq!(
-            atlas::N_KINDS, 775,
+            atlas::N_KINDS, 776,
             "the palette the trapdoor pair banks"
         );
         assert_eq!(OAK_TRAPDOOR + 1, OAK_TRAPDOOR_OPEN, "the +1 mate wears");
@@ -29447,7 +29650,7 @@ mod tests {
         assert_eq!(END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-            775,
+            776,
             "the palette the gate pair banks"
         );
         assert_eq!(OAK_FENCE_GATE + 1, OAK_FENCE_GATE_OPEN, "the +1 mate wears");
@@ -29665,7 +29868,7 @@ mod tests {
         assert_eq!(WARPED_TRAPDOOR, 348);
         assert_eq!(WARPED_TRAPDOOR_OPEN, 349);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 775, "the palette the ladder banks");
+        assert_eq!(atlas::N_KINDS, 776, "the palette the ladder banks");
         // THE CONTIGUITY'S OWN LAW (the 22 kinds the range covers —
         // the neighbors the family fn refuses)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -29779,7 +29982,7 @@ mod tests {
         assert_eq!(IRON_TRAPDOOR, 366);
         assert_eq!(IRON_TRAPDOOR_OPEN, 367);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 775, "the palette the metal rungs bank");
+        assert_eq!(atlas::N_KINDS, 776, "the palette the metal rungs bank");
         // THE CONTIGUITY'S OWN LAW (the 42 kinds the range covers —
         // the waxed pairs the ±1 mate the parity answers)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -30150,7 +30353,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 775, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 776, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)
@@ -32472,27 +32675,106 @@ mod tests {
         w.set(px, py + 1, pz, AIR);
         w.set(px, py + 1, pz + 1, AIR);
         // THE EXTENSION'S OWN WALK (the stone in front the chain move
-        // serves: the head the first cell the extension places, the
-        // stone the one cell over the move keeps, the base the
-        // EXTENDED bit the variant banks)
+        // serves: the head the first cell the extension places — the
+        // autopush-129 round the MID-STATE the destinations wear [the
+        // stashed states the cells carry, the sources the air the
+        // slide-left walk banks], the progress beat's own landing the
+        // stashed states the cells wear, the base the EXTENDED bit
+        // the variant banks)
         w.set(px + 1, py, pz, STONE);
         w.set(px + 2, py, pz, STONE);
-        let changed = piston_try_extend(&mut w, px, py, pz, 5, false);
-        assert_eq!(w.get(px + 1, py, pz), PISTON_HEAD, "the head the first cell wears");
+        let changed = piston_try_extend(&mut w, 0, px, py, pz, 5, false);
+        assert_eq!(
+            w.get(px + 1, py, pz),
+            MOVING_PISTON,
+            "the head cell the mid-state wears"
+        );
+        assert_eq!(
+            w.get(px + 2, py, pz),
+            MOVING_PISTON,
+            "the stone dest the mid-state wears"
+        );
+        assert_eq!(
+            w.get(px + 3, py, pz),
+            MOVING_PISTON,
+            "the tail dest the mid-state wears"
+        );
+        assert_eq!(
+            w.moving_state_of(px + 1, py, pz),
+            Some((PISTON_HEAD, piston_head_variant(5, false))),
+            "the head's own state the stash banks"
+        );
+        assert_eq!(
+            w.moving_state_of(px + 2, py, pz),
+            Some((STONE, 0)),
+            "the stone the stash banks"
+        );
+        assert_eq!(
+            moving_extending_of(w.variant(px + 1, py, pz)),
+            true,
+            "the extend's slide direction the byte wears"
+        );
+        assert!(
+            piston_extended_of(w.variant(px, py, pz)),
+            "the base the EXTENDED bit banks"
+        );
+        assert!(
+            changed.contains(&(px + 1, py, pz)),
+            "the head cell the changed banks"
+        );
+        // THE PROGRESS BEAT'S OWN LANDING (the +1 arm the half step
+        // banks AND the finalize's own beat reschedules, the +2 arm
+        // the stashed states the cells wear — the settled verdict the
+        // 128 round banked the landing serves)
+        for (x, y, z) in w.drain_due_moving_ticks(1) {
+            assert!(
+                tick_moving_piston_cell(&mut w, 1, x, y, z),
+                "the mid-slide arm speaks"
+            );
+        }
+        assert_eq!(
+            w.get(px + 1, py, pz),
+            MOVING_PISTON,
+            "the mid-slide the cell keeps"
+        );
+        assert_eq!(
+            moving_progress_quarters_of(w.variant(px + 1, py, pz)),
+            2,
+            "the half step the variant banks"
+        );
+        for (x, y, z) in w.drain_due_moving_ticks(2) {
+            assert!(
+                tick_moving_piston_cell(&mut w, 2, x, y, z),
+                "the finalize arm speaks"
+            );
+        }
+        assert_eq!(
+            w.get(px + 1, py, pz),
+            PISTON_HEAD,
+            "the head the first cell wears"
+        );
         assert_eq!(
             w.get(px + 2, py, pz),
             STONE,
             "the stone the one cell over the move keeps"
         );
-        assert_eq!(w.get(px + 3, py, pz), STONE, "the second stone the tail wears");
-        assert!(
-            piston_extended_of(w.variant(px, py, pz)),
-            "the base the EXTENDED bit banks"
+        assert_eq!(
+            w.get(px + 3, py, pz),
+            STONE,
+            "the second stone the tail wears"
         );
-        assert!(changed.contains(&(px + 1, py, pz)), "the head cell the changed banks");
+        assert!(
+            w.moving_state_of(px + 1, py, pz).is_none(),
+            "the stash row the take clears"
+        );
         // THE 12-PUSH LIMIT THE LINE REFUSES (the 13-stone chain the
         // resolve never answers — the retraction the reset serves)
-        let _ = piston_try_retract(&mut w, px, py, pz, 5, false);
+        let _ = piston_try_retract(&mut w, 3, px, py, pz, 5, false);
+        assert_eq!(
+            w.get(px + 1, py, pz),
+            AIR,
+            "the no-pull head the instant clear keeps"
+        );
         for i in 1..=13u32 {
             w.set(px + i as i32, py, pz, STONE);
         }
@@ -32507,18 +32789,38 @@ mod tests {
         // the line STOPS the pop banks, the head the cell takes)
         w.set(px + 1, py, pz, DANDELION);
         let (to_push, to_destroy) = piston_resolve_line(&w, px, py, pz, 5).unwrap();
-        assert!(to_push.is_empty(), "the flower the line stops before the push");
+        assert!(
+            to_push.is_empty(),
+            "the flower the line stops before the push"
+        );
         assert_eq!(
             to_destroy,
             vec![(px + 1, py, pz)],
             "the flower the toDestroy boundary banks"
         );
-        let changed = piston_try_extend(&mut w, px, py, pz, 5, false);
-        assert_eq!(w.get(px + 1, py, pz), PISTON_HEAD, "the head the popped cell takes");
-        assert!(changed.contains(&(px + 1, py, pz)), "the popped cell the changed keeps");
+        let changed = piston_try_extend(&mut w, 4, px, py, pz, 5, false);
+        assert_eq!(
+            w.get(px + 1, py, pz),
+            MOVING_PISTON,
+            "the head the popped cell takes"
+        );
+        assert!(
+            changed.contains(&(px + 1, py, pz)),
+            "the popped cell the changed keeps"
+        );
+        for now in 5..=6u64 {
+            for (x, y, z) in w.drain_due_moving_ticks(now) {
+                tick_moving_piston_cell(&mut w, now, x, y, z);
+            }
+        }
+        assert_eq!(
+            w.get(px + 1, py, pz),
+            PISTON_HEAD,
+            "the head the landing wears"
+        );
         // THE OBSIDIAN WALL THE WHOLE PUSH REFUSES (the BLOCK
         // reaction the resolve never answers)
-        let _ = piston_try_retract(&mut w, px, py, pz, 5, false);
+        let _ = piston_try_retract(&mut w, 7, px, py, pz, 5, false);
         w.set(px + 1, py, pz, OBSIDIAN);
         assert!(
             piston_resolve_line(&w, px, py, pz, 5).is_none(),
@@ -32528,22 +32830,63 @@ mod tests {
         // THE STICKY RETRACTION'S OWN PULL (the block beyond the head
         // tip the pull the head's old cell banks: the sticky base the
         // kind swap wears, the two-stone chain the extension moves,
-        // the retract the head clears AND the front-of-head stone
-        // the head's old cell lands [the normal piston the pull
-        // never answers — the kind the sticky arm's own gate reads])
+        // the retract the head's own MID-STATE the pull wears [the
+        // pulled stone the stash banks, the EXTENDING bit CLEAR the
+        // slide's own direction speaks], the front-of-head stone the
+        // head's old cell lands [the normal piston the pull never
+        // answers — the kind the sticky arm's own gate reads])
         w.set(px, py, pz, STICKY_PISTON);
         w.set_variant(px, py, pz, piston_variant(5, false));
         w.set(px + 1, py, pz, STONE);
+        w.set_variant(px + 1, py, pz, 0);
         w.set(px + 2, py, pz, STONE);
-        let _ = piston_try_extend(&mut w, px, py, pz, 5, true);
-        assert_eq!(w.get(px + 1, py, pz), PISTON_HEAD, "the sticky head the cell wears");
-        let changed = piston_try_retract(&mut w, px, py, pz, 5, true);
+        w.set_variant(px + 2, py, pz, 0);
+        let _ = piston_try_extend(&mut w, 10, px, py, pz, 5, true);
+        assert_eq!(
+            w.get(px + 1, py, pz),
+            MOVING_PISTON,
+            "the sticky head the mid-state wears"
+        );
+        for now in 11..=12u64 {
+            for (x, y, z) in w.drain_due_moving_ticks(now) {
+                tick_moving_piston_cell(&mut w, now, x, y, z);
+            }
+        }
+        assert_eq!(
+            w.get(px + 1, py, pz),
+            PISTON_HEAD,
+            "the sticky head the landing wears"
+        );
+        let changed = piston_try_retract(&mut w, 20, px, py, pz, 5, true);
+        assert_eq!(
+            w.get(px + 1, py, pz),
+            MOVING_PISTON,
+            "the pull's mid-state wears"
+        );
+        assert_eq!(
+            w.get(px + 2, py, pz),
+            AIR,
+            "the pulled cell the sticky arm vacates"
+        );
+        assert_eq!(
+            w.moving_state_of(px + 1, py, pz),
+            Some((STONE, 0)),
+            "the pulled stone the stash banks"
+        );
+        assert!(
+            !moving_extending_of(w.variant(px + 1, py, pz)),
+            "the pull's slide direction the byte wears"
+        );
+        for now in 21..=22u64 {
+            for (x, y, z) in w.drain_due_moving_ticks(now) {
+                tick_moving_piston_cell(&mut w, now, x, y, z);
+            }
+        }
         assert_eq!(
             w.get(px + 1, py, pz),
             STONE,
             "the pulled stone the head's old cell banks"
         );
-        assert_eq!(w.get(px + 2, py, pz), AIR, "the pulled cell the sticky arm vacates");
         assert!(
             changed.contains(&(px + 2, py, pz)),
             "the pull's source the changed banks"
@@ -32551,6 +32894,77 @@ mod tests {
         assert!(
             !piston_extended_of(w.variant(px, py, pz)),
             "the base the retracted bit keeps"
+        );
+    }
+
+    /// THE MOVING PISTON'S OWN BYTE AND LINE WALK (the autopush-129
+    /// round — the variant's three fields the round trip banks [the
+    /// facing the low 3, the EXTENDING bit, the progress the high 4
+    /// quarters carry], the mid-state's own push refusal the BLOCK
+    /// reaction keeps [the line the mid-state cell the walk refuses],
+    /// the stash's own replace law the retract's re-arm answers)
+    #[test]
+    fn the_moving_piston_the_byte_the_line_the_wears() {
+        // THE VARIANT'S OWN ROUND TRIP (the three fields the one byte
+        // wears — the six facings, the extending bit, the quarters)
+        for facing in 0..6u8 {
+            for extending in [true, false] {
+                for quarters in [0u8, 2, 4] {
+                    let v = moving_variant(facing, extending, quarters);
+                    assert_eq!(
+                        moving_facing_of(v),
+                        facing,
+                        "the facing {facing} the byte keeps"
+                    );
+                    assert_eq!(
+                        moving_extending_of(v),
+                        extending,
+                        "the slide arm the byte keeps"
+                    );
+                    assert_eq!(
+                        moving_progress_quarters_of(v),
+                        quarters,
+                        "the quarters the byte keeps"
+                    );
+                }
+            }
+        }
+        // THE QUARTERS' OWN CLAMP (the byte's own 4-bit ceiling the
+        // min arm keeps)
+        assert_eq!(
+            moving_progress_quarters_of(moving_variant(0, false, 15)),
+            15,
+            "the clamp the ceiling keeps"
+        );
+        // THE MID-STATE'S OWN PUSH REFUSAL (the BLOCK reaction the
+        // resolve never answers — the line the mid-state cell the
+        // whole walk refuses)
+        let mut w = World::new(3, 11);
+        w.set(4, 10, 4, PISTON);
+        w.set_variant(4, 10, 4, piston_variant(5, false));
+        w.set(5, 10, 4, MOVING_PISTON);
+        w.set_variant(5, 10, 4, moving_variant(5, true, 0));
+        w.set_moving_state(5, 10, 4, STONE, 0);
+        w.set(6, 10, 4, STONE);
+        assert!(
+            piston_resolve_line(&w, 4, 10, 4, 5).is_none(),
+            "the mid-state cell the whole push refuses"
+        );
+        // THE STASH'S OWN REPLACE LAW (the same cell the re-arm the
+        // stale row replaces — the take the honest absence keeps)
+        w.set_moving_state(5, 10, 4, DIRT, 0);
+        assert_eq!(
+            w.moving_state_of(5, 10, 4),
+            Some((DIRT, 0)),
+            "the replace law the row wears"
+        );
+        assert!(
+            w.take_moving_state(5, 10, 4).is_some(),
+            "the take the row clears"
+        );
+        assert!(
+            w.moving_state_of(5, 10, 4).is_none(),
+            "the absence the honest keep"
         );
     }
 }

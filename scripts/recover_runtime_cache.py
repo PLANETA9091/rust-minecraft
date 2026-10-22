@@ -163,6 +163,13 @@ def main() -> None:
     for key, _obj in aidx.items():
         if key.startswith("minecraft/textures/gui/title/background/panorama"):
             rel = key[len("minecraft/textures/"):]
+            # THE PLACEHOLDER'S OWN EVICTION (the jar's own panorama
+            # entries the flat copy laid down are 1x1 placeholders —
+            # the 69-byte files the goldens never render: the eviction
+            # the real fetch's only-if-absent law unblocks)
+            dest_probe = os.path.join(JAR_ROOT, rel)
+            if os.path.isfile(dest_probe) and os.path.getsize(dest_probe) < 1000:
+                os.remove(dest_probe)
             if fetch_verified(aidx, key, rel):
                 pano += 1
     print(f"[4/6] real panorama pixels fetched: {pano}")

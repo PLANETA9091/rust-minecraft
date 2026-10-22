@@ -2353,7 +2353,10 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                 // overhang serves. The `shade: true` the model
                 // carries — the FACE_SHADE term the per-quad direction
                 // reads, the lightmap the per-corner fold answers.
-                if crate::world::is_piston_kind(id) || crate::world::is_piston_head(id) {
+                if crate::world::is_piston_kind(id)
+                    || crate::world::is_piston_head(id)
+                    || crate::world::is_moving_piston(id)
+                {
                     let sky_factor = world.sky_light_factor.unwrap_or(1.0)
                         * world
                             .day_tick
@@ -2420,15 +2423,77 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         [1.0; 3]
                     };
                     let variant = world.variant(wx, wy, wz);
+                    // THE MOVING ARM'S OWN STASH READ (the pushed
+                    // state the mid-state cell wears — the slide's
+                    // own offset the variant byte's quarters AND
+                    // extending bit carry: the extend the source
+                    // BEHIND the destination the -delta arm keeps,
+                    // the retract pull the source AHEAD the +delta
+                    // arm wears; the full-cell offset the quarters'
+                    // 0 arm speaks, the half the 2 arm answers)
+                    let moving = if crate::world::is_moving_piston(id) {
+                        world.moving_state_of(wx, wy, wz)
+                    } else {
+                        None
+                    };
                     // THE THREE BAKES' OWN PICK (the kind + the state
                     // bits the decode serves — the base the retracted
                     // pair the kind's own model wears, the extended
                     // ONE chain both kinds speak, the head the type
-                    // bit the pair answers)
-                    let (quads, facing) = if crate::world::is_piston_head(id) {
+                    // bit the pair answers; the MOVING cell the
+                    // pushed state's own bake picks — the family
+                    // members the sibling bakes answer, the plain
+                    // kinds the generic cube wears)
+                    let (quads, facing, offset) = if let Some((pkind, pvariant)) = moving {
+                        let quarters = crate::world::moving_progress_quarters_of(variant).min(4);
+                        let frac = 1.0 - quarters as f32 / 4.0;
+                        let sign = if crate::world::moving_extending_of(variant) {
+                            -1.0f32
+                        } else {
+                            1.0f32
+                        };
+                        let (sdx, sdy, sdz) = crate::world::piston_facing_delta6(
+                            crate::world::moving_facing_of(variant),
+                        );
+                        let offset = [
+                            sign * frac * sdx as f32,
+                            sign * frac * sdy as f32,
+                            sign * frac * sdz as f32,
+                        ];
+                        if crate::world::is_piston_head(pkind) {
+                            (
+                                piston_head_model_quads(crate::world::piston_head_sticky_of(
+                                    pvariant,
+                                )),
+                                crate::world::piston_head_facing_of(pvariant),
+                                offset,
+                            )
+                        } else if crate::world::is_piston_kind(pkind) {
+                            (
+                                piston_model_quads(
+                                    pkind == crate::world::STICKY_PISTON,
+                                    crate::world::piston_extended_of(pvariant),
+                                ),
+                                crate::world::piston_facing_of(pvariant),
+                                offset,
+                            )
+                        } else {
+                            // the IDENTITY table the generic cube
+                            // wears (the north row the no-fold keep —
+                            // the family's own folds the authored
+                            // bakes alone answer)
+                            (moving_cube_model_quads(), 2, offset)
+                        }
+                    } else if crate::world::is_moving_piston(id) {
+                        // THE STASH-LESS MID-STATE (the stale cell the
+                        // honest absence keeps — the finalize's take
+                        // the row cleared): nothing renders.
+                        (&[][..], 0, [0.0f32; 3])
+                    } else if crate::world::is_piston_head(id) {
                         (
                             piston_head_model_quads(crate::world::piston_head_sticky_of(variant)),
                             crate::world::piston_head_facing_of(variant),
+                            [0.0f32; 3],
                         )
                     } else {
                         (
@@ -2437,7 +2502,25 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                 crate::world::piston_extended_of(variant),
                             ),
                             crate::world::piston_facing_of(variant),
+                            [0.0f32; 3],
                         )
+                    };
+                    // THE GENERIC ROW'S OWN SEAT (the pushed kind's
+                    // own FACE_TILES row the per-direction verdict
+                    // reads — the piston-family pushes the name
+                    // verdict keeps, the plain kinds the row serves)
+                    let pushed_row: Option<[u16; 6]> = match moving {
+                        Some((pkind, _))
+                            if !crate::world::is_piston_kind(pkind)
+                                && !crate::world::is_piston_head(pkind) =>
+                        {
+                            if (pkind as usize) < atlas::N_KINDS {
+                                Some(atlas::FACE_TILES[pkind as usize])
+                            } else {
+                                None
+                            }
+                        }
+                        _ => None,
                     };
                     // THE Y-TABLE THE HORIZONTAL ROWS SPEAK — THE
                     // X-FOLD THE VERTICAL PAIR (the down the -90° the
@@ -2476,14 +2559,28 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         }
                         // THE PER-QUAD TILE'S OWN VERDICT (the resolved
                         // texture name the derive walk carries — the
-                        // five tiles the family wears)
-                        let tile = match q.texture {
-                            "block/piston_top" => atlas::TILE_PISTON_TOP,
-                            "block/piston_top_sticky" => atlas::TILE_PISTON_TOP_STICKY,
-                            "block/piston_side" => atlas::TILE_PISTON_SIDE,
-                            "block/piston_bottom" => atlas::TILE_PISTON_BOTTOM,
-                            "block/piston_inner" => atlas::TILE_PISTON_INNER,
-                            _ => tile,
+                        // five tiles the family wears; the MOVING
+                        // generic arm the pushed kind's own row the
+                        // per-direction pick serves)
+                        let tile = if let Some(row) = pushed_row {
+                            use mc_registry::element_quads::Direction as Dir;
+                            match q.direction {
+                                Dir::East => row[0],
+                                Dir::West => row[1],
+                                Dir::Up => row[2],
+                                Dir::Down => row[3],
+                                Dir::South => row[4],
+                                Dir::North => row[5],
+                            }
+                        } else {
+                            match q.texture {
+                                "block/piston_top" => atlas::TILE_PISTON_TOP,
+                                "block/piston_top_sticky" => atlas::TILE_PISTON_TOP_STICKY,
+                                "block/piston_side" => atlas::TILE_PISTON_SIDE,
+                                "block/piston_bottom" => atlas::TILE_PISTON_BOTTOM,
+                                "block/piston_inner" => atlas::TILE_PISTON_INNER,
+                                _ => tile,
+                            }
                         };
                         // THE SHADE'S OWN SEAT (the model's shade:true
                         // the face direction's own multiplier reads)
@@ -2512,7 +2609,15 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             }
                             let rx = 0.5 + (v[0] - 0.5) * cs - (pz - 0.5) * sn;
                             let rz = 0.5 + (v[0] - 0.5) * sn + (pz - 0.5) * cs;
-                            pts[i] = [wx as f32 + rx, wy as f32 + py, wz as f32 + rz];
+                            // THE SLIDE'S OWN OFFSET (the mid-state's
+                            // quarters the variant byte carries — the
+                            // world-space step the pts assembly adds,
+                            // the settled cells the zero offset keeps)
+                            pts[i] = [
+                                wx as f32 + rx + offset[0],
+                                wy as f32 + py + offset[1],
+                                wz as f32 + rz + offset[2],
+                            ];
                             uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
                             let lm = lightmap_combine(
                                 cell_sky,
@@ -7152,6 +7257,20 @@ fn piston_bake(model: &'static str) -> Vec<mc_registry::element_quads::Quad> {
         .collect()
 }
 
+/// THE MOVING PISTON'S OWN GENERIC BAKE (the autopush-129 round — the
+/// pushed state the piston family's own bakes never cover the plain
+/// full-cube walk serves: the block/cube element the jar's own six
+/// faces the derive wears — the same parent chain the template_piston
+/// bakes walk — the per-face tile the PUSHED kind's own FACE_TILES
+/// row picks at the emission site [the texture refs the derive never
+/// resolves — the cube's #down..#east the per-direction verdict
+/// reads]). The failed derive the honest empty slice keeps.
+fn moving_cube_model_quads() -> &'static [mc_registry::element_quads::Quad] {
+    static CUBE: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    CUBE.get_or_init(|| piston_bake("block/cube"))
+}
+
 /// THE PISTON HEAD'S OWN MODEL BAKES (the autopush-128 round — the
 /// blockstates/piston_head.json's type rows the pair of chains name:
 /// block/piston_head the normal arm, block/piston_head_sticky the
@@ -8930,6 +9049,8 @@ mod tests {
             repeater_ticks: Vec::new(),
             observer_ticks: Vec::new(),
             piston_ticks: Vec::new(),
+            moving_states: Vec::new(),
+            moving_ticks: Vec::new(),
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(),  // the bamboo's own queue: empty
             chunks: vec![vec![AIR; CHUNK_X * CHUNK_Y * CHUNK_Z]],
@@ -8971,6 +9092,115 @@ mod tests {
         let idx = x as usize + z as usize * CHUNK_X + y as usize * CHUNK_X * CHUNK_Z;
         w.light.as_mut().unwrap().sky[0][idx] = sky.unwrap_or(LIGHT_UNKNOWN);
         w.light.as_mut().unwrap().block[0][idx] = block.unwrap_or(LIGHT_UNKNOWN);
+    }
+
+    /// THE MOVING PISTON'S OWN OFFSET WALK (the autopush-129 round —
+    /// the mid-state cell the stash's pushed state renders: the
+    /// quarters-0 arm the full-cell offset the SOURCE cell wears, the
+    /// quarters-2 arm the half step answers, the EXTENDING bit the
+    /// slide's own direction speaks [the extend the -delta arm, the
+    /// retract pull the +delta arm], the stash-less mid-state the
+    /// honest absence keeps)
+    #[test]
+    fn the_moving_piston_the_offset_the_stash_wears() {
+        let mut w = World::new(3, 11);
+        for x in 0..48 {
+            for z in 0..48 {
+                w.set(x, 9, z, STONE);
+            }
+        }
+        // THE SEED'S OWN HILL THE SWEEP ANSWERS (the generated terrain
+        // the band's own volume the buried verdict never wears — the
+        // piston test's own box the family precedent keeps; the FULL
+        // 12-cell span the world's own edge the border faces answer)
+        for x in 0..48 {
+            for y in 10..40 {
+                for z in 0..48 {
+                    w.set(x, y, z, AIR);
+                }
+            }
+        }
+        // THE MID-STATE CELL (the east extend mid-slide — the stone
+        // stash the pushed state carries, the quarters 0 the event
+        // frame's own offset wears)
+        w.set(4, 10, 4, MOVING_PISTON);
+        w.set_variant(4, 10, 4, moving_variant(5, true, 0));
+        w.set_moving_state(4, 10, 4, STONE, 0);
+        let quads = mesh_chunk(&w, 0, 0, None);
+        // THE FULL-CELL OFFSET (the slide the source cell wears — the
+        // east facing the -x arm speaks: the pts the 3..4 x-band the
+        // strict test keeps, the y band the ground tops the strict
+        // > excludes)
+        let in_band = |q: &Quad| {
+            q.pts
+                .iter()
+                .all(|p| p[1] >= 10.0 - 1e-3 && p[1] <= 11.0 + 1e-3)
+                && q.pts.iter().any(|p| p[1] > 10.5)
+                && q.pts.iter().any(|p| (p[0] - 3.5).abs() < 0.6)
+        };
+        let mine: Vec<_> = quads.iter().filter(|q| in_band(q)).collect();
+        assert!(
+            !mine.is_empty(),
+            "the mid-state's quads the source cell wears"
+        );
+        for q in &mine {
+            for p in q.pts {
+                assert!(
+                    p[0] >= 3.0 - 1e-3 && p[0] <= 4.0 + 1e-3,
+                    "the quarters-0 slide the full cell back wears"
+                );
+            }
+        }
+        // THE HALF STEP (the quarters 2 the 0.5 offset answers — the
+        // pts the 3.5..4.5 band the mid-slide keeps)
+        w.set_variant(4, 10, 4, moving_variant(5, true, 2));
+        let quads = mesh_chunk(&w, 0, 0, None);
+        let mine: Vec<_> = quads.iter().filter(|q| in_band(q)).collect();
+        assert!(
+            !mine.is_empty(),
+            "the mid-slide's quads the half step wears"
+        );
+        for q in &mine {
+            for p in q.pts {
+                assert!(
+                    p[0] >= 3.5 - 1e-3 && p[0] <= 4.5 + 1e-3,
+                    "the quarters-2 slide the half cell back wears"
+                );
+            }
+        }
+        // THE RETRACT PULL'S OWN DIRECTION (the EXTENDING bit CLEAR
+        // the +delta arm wears — the quarters 0 the slide the FRONT
+        // cell keeps: the pts the 5..6 x-band the pull wears)
+        let pull_band = |q: &Quad| {
+            q.pts
+                .iter()
+                .all(|p| p[1] >= 10.0 - 1e-3 && p[1] <= 11.0 + 1e-3)
+                && q.pts.iter().any(|p| p[1] > 10.5)
+                && q.pts.iter().any(|p| (p[0] - 5.5).abs() < 0.6)
+        };
+        w.set_variant(4, 10, 4, moving_variant(5, false, 0));
+        let quads = mesh_chunk(&w, 0, 0, None);
+        let mine: Vec<_> = quads.iter().filter(|q| pull_band(q)).collect();
+        assert!(!mine.is_empty(), "the pull's quads the front cell wears");
+        for q in &mine {
+            for p in q.pts {
+                assert!(
+                    p[0] >= 5.0 - 1e-3 && p[0] <= 6.0 + 1e-3,
+                    "the pull's slide the full cell forward wears"
+                );
+            }
+        }
+        // THE STASH-LESS MID-STATE (the finalize's take the row
+        // cleared — the honest absence the nothing renders keeps)
+        assert!(
+            w.take_moving_state(4, 10, 4).is_some(),
+            "the take the row clears"
+        );
+        let quads = mesh_world(&w, None);
+        assert!(
+            quads.iter().all(|q| !in_band(q)),
+            "the stash-less cell the honest silence keeps"
+        );
     }
 
     /// The top-face quad of the stone block at (8,8,8): shade(top)=1.0,

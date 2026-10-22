@@ -47259,6 +47259,28 @@ impl App {
     /// frame's beat answers.
     fn tick_piston_beats(&mut self) {
         let now = self.frame;
+        // THE MOVING PISTONS' OWN BEAT (the autopush-129 round — the
+        // progress steps the mid-state walk serves, the finalize the
+        // pushed state's landing keeps: the drain the due cells the
+        // walk answers, the changed cells the same attach broadcast
+        // the event walk wears)
+        let due_moves = {
+            let Some(world) = self.offline_world.as_mut() else {
+                return;
+            };
+            world.drain_due_moving_ticks(now)
+        };
+        for (x, y, z) in due_moves {
+            let changed = {
+                let Some(world) = self.offline_world.as_mut() else {
+                    return;
+                };
+                crate::world::tick_moving_piston_cell(world, now, x, y, z)
+            };
+            if changed {
+                self.attach_wire_voice(x, y, z);
+            }
+        }
         let due = {
             let Some(world) = self.offline_world.as_mut() else {
                 return;
@@ -47286,9 +47308,9 @@ impl App {
                 let sticky = kind == crate::world::STICKY_PISTON;
                 let powered = crate::world::piston_input_signal(world, x, y, z, facing);
                 if powered && !extended {
-                    crate::world::piston_try_extend(world, x, y, z, facing, sticky)
+                    crate::world::piston_try_extend(world, now, x, y, z, facing, sticky)
                 } else if !powered && extended {
-                    crate::world::piston_try_retract(world, x, y, z, facing, sticky)
+                    crate::world::piston_try_retract(world, now, x, y, z, facing, sticky)
                 } else {
                     continue; // the steady state the beat's silence keeps
                 }
@@ -85655,6 +85677,8 @@ mod tests {
             repeater_ticks: Vec::new(),
             observer_ticks: Vec::new(),
             piston_ticks: Vec::new(),
+            moving_states: Vec::new(),
+            moving_ticks: Vec::new(),
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
@@ -86237,6 +86261,8 @@ mod tests {
             repeater_ticks: Vec::new(),
             observer_ticks: Vec::new(),
             piston_ticks: Vec::new(),
+            moving_states: Vec::new(),
+            moving_ticks: Vec::new(),
                     torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
                     bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
                     chunks: vec![
@@ -86692,6 +86718,8 @@ mod tests {
             repeater_ticks: Vec::new(),
             observer_ticks: Vec::new(),
             piston_ticks: Vec::new(),
+            moving_states: Vec::new(),
+            moving_ticks: Vec::new(),
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
@@ -86773,6 +86801,8 @@ mod tests {
             repeater_ticks: Vec::new(),
             observer_ticks: Vec::new(),
             piston_ticks: Vec::new(),
+            moving_states: Vec::new(),
+            moving_ticks: Vec::new(),
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
@@ -86856,6 +86886,8 @@ mod tests {
             repeater_ticks: Vec::new(),
             observer_ticks: Vec::new(),
             piston_ticks: Vec::new(),
+            moving_states: Vec::new(),
+            moving_ticks: Vec::new(),
                     torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
                     bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
                     chunks: vec![
@@ -86916,6 +86948,8 @@ mod tests {
             repeater_ticks: Vec::new(),
             observer_ticks: Vec::new(),
             piston_ticks: Vec::new(),
+            moving_states: Vec::new(),
+            moving_ticks: Vec::new(),
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
@@ -108429,6 +108463,8 @@ cow_sound_variant: None,
             repeater_ticks: Vec::new(),
             observer_ticks: Vec::new(),
             piston_ticks: Vec::new(),
+            moving_states: Vec::new(),
+            moving_ticks: Vec::new(),
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
@@ -110911,7 +110947,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            775,
+            776,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -110992,7 +111028,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            775,
+            776,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -111294,7 +111330,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            775,
+            776,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -116352,7 +116388,7 @@ cow_sound_variant: None,
         // #texture ref banks)
         assert_eq!(
             atlas::N_KINDS,
-            775,
+            776,
             "the palette the weighted plates' own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
@@ -116572,7 +116608,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            775,
+            776,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
@@ -116849,7 +116885,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            775,
+            776,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
@@ -116965,7 +117001,7 @@ cow_sound_variant: None,
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE, 318);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, 319);
         assert_eq!(w::END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 775, "the palette the weighted rows bank");
+        assert_eq!(atlas::N_KINDS, 776, "the palette the weighted rows bank");
         for (off, on, name) in [
             (
                 w::LIGHT_WEIGHTED_PRESSURE_PLATE,
@@ -118085,7 +118121,7 @@ cow_sound_variant: None,
         assert_eq!(w::END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-            775,
+            776,
             "the palette the weighted plates' own rows bank"
         );
         for (off, on, name, wooden) in [
