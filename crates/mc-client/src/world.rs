@@ -3342,6 +3342,271 @@ pub fn is_moving_piston(id: u16) -> bool {
     id == MOVING_PISTON
 }
 
+/// THE DISPENSER/DROPPER FAMILY'S OWN KIND SEATS (the autopush-139
+/// round — javap DispenserBlock + DropperBlock the 26.2 jar the whole
+/// lane the vanilla law wears: the TWO kinds the registry's own tail
+/// rows bank [the jar's blockstates the facing property the one
+/// visual field speaks], the variant byte the DIRECTION_NORMAL facing
+/// the barrel family's own vocabulary extends + the TRIGGERED bit the
+/// neighborChanged walk's own setValue arms bank).
+pub const DISPENSER: u16 = 776;
+
+/// THE DROPPER'S OWN KIND SEAT (the sibling — the DEFAULT eject the
+/// dispenseFrom override the whole behavior map answers).
+pub const DROPPER: u16 = 777;
+
+/// THE DISPENSER'S OWN COOLDOWN (javap DispenserBlock.neighborChanged
+/// pc 55 the 26.2 jar — the `level.scheduleTick(pos, this, 4)` walk
+/// the rising edge serves, the four-tick beat the dispense the drain
+/// answers).
+pub const DISPENSER_COOLDOWN: u64 = 4;
+
+/// THE DISPENSER FAMILY'S OWN VARIANT BYTE LAYOUT (the blockstate's
+/// two properties the one byte wears — the DIRECTION_NORMAL facing
+/// the low 3 bits keep [down 0, up 1, north 2, south 3, west 4, east
+/// 5 — the barrel/piston family's own order the sibling bytes wear],
+/// the TRIGGERED bit the neighborChanged walk's rising-edge setValue
+/// banks [the blockstate's own variant JSON the property never
+/// renders — the sim-state bit the offline walk alone reads]).
+pub const DISPENSER_FACING_MASK: u8 = 0x07;
+pub const DISPENSER_TRIGGERED_BIT: u8 = 0x08;
+
+/// THE DIRECTION_NORMAL FACING VOCABULARY (the Direction property's
+/// own order the barrel family keeps — the placement walk the byte
+/// stamps, the mesher's front-face walk the byte rotates).
+pub const DISPENSER_FACING_DOWN: u8 = 0;
+pub const DISPENSER_FACING_UP: u8 = 1;
+pub const DISPENSER_FACING_NORTH: u8 = 2;
+pub const DISPENSER_FACING_SOUTH: u8 = 3;
+pub const DISPENSER_FACING_WEST: u8 = 4;
+pub const DISPENSER_FACING_EAST: u8 = 5;
+
+pub fn is_dispenser_kind(id: u16) -> bool {
+    id == DISPENSER || id == DROPPER
+}
+
+/// THE FAMILY'S OWN VARIANT ENCODE (the two fields the one byte
+/// wears — the facing the low 3 bits keep, the triggered bit the
+/// rising-edge walk's own setValue arms).
+#[inline]
+pub fn dispenser_variant(facing: u8, triggered: bool) -> u8 {
+    (facing & DISPENSER_FACING_MASK) | if triggered { DISPENSER_TRIGGERED_BIT } else { 0 }
+}
+
+/// THE FACING'S OWN READ (the three bits the identity unpack serves).
+#[inline]
+pub fn dispenser_facing_of(v: u8) -> u8 {
+    v & DISPENSER_FACING_MASK
+}
+
+/// THE TRIGGERED BIT'S OWN READ (the rising-edge walk's own verdict —
+/// the re-consult the already-set bit the honest no-op keeps).
+#[inline]
+pub fn dispenser_triggered_of(v: u8) -> bool {
+    v & DISPENSER_TRIGGERED_BIT != 0
+}
+
+/// THE FAMILY'S OWN FACING DELTA (the DIRECTION_NORMAL order the
+/// barrel family's own table keeps — the front cell the dispense
+/// walk's own `pos.relative(FACING)` read serves, the eject's own
+/// step the DEFAULT behavior's position law wears).
+#[inline]
+pub fn dispenser_facing_delta6(facing: u8) -> (i32, i32, i32) {
+    match facing {
+        DISPENSER_FACING_DOWN => (0, -1, 0),
+        DISPENSER_FACING_UP => (0, 1, 0),
+        DISPENSER_FACING_SOUTH => (0, 0, 1),
+        DISPENSER_FACING_WEST => (-1, 0, 0),
+        DISPENSER_FACING_EAST => (1, 0, 0),
+        _ => (0, 0, -1), // NORTH the default state's own byte keeps
+    }
+}
+
+/// THE FAMILY'S OWN PLACEMENT WALK (javap DispenserBlock.
+/// getStateForPlacement pc 8-20 the 26.2 jar — the `setValue(FACING,
+/// context.getNearestLookingDirection().getOpposite())` walk the
+/// SIX-direction byte stamps: the pitch quarter the vertical axis the
+/// look vector's own law answers, the horizontal fallback the
+/// look-opposite byte the barrel arm's own law wears — the barrel's
+/// own getStateForPlacement the SAME walk the sibling byte keeps).
+#[inline]
+pub fn dispenser_placement_facing(pitch: f64, look_opposite: u8) -> u8 {
+    if pitch < -std::f64::consts::FRAC_PI_4 {
+        DISPENSER_FACING_UP
+    } else if pitch > std::f64::consts::FRAC_PI_4 {
+        DISPENSER_FACING_DOWN
+    } else {
+        look_opposite
+    }
+}
+
+/// THE PLACEMENT BYTE'S OWN DECODE (javap the chain the furnace arm's
+/// own walk keeps — UseOnContext.getHorizontalDirection the
+/// `player.getDirection()` read, Entity.getDirection the fromYRot yaw
+/// decode, getNearestLookingDirection the pitch quarter's own dominant
+/// axis, getOpposite the oppositeIndex flip — the BY_2D compass order
+/// [south, west, north, east] the from2DDataValue table banks, the
+/// FAMILY'S OWN VOCABULARY the bytes wear [north 2 / south 3 / west 4
+/// / east 5 — the DIRECTION_NORMAL order the barrel family's own
+/// constants speak, the furnace's 1..4 band the sibling lane's own
+/// convention keeps — the two vocabularies the two lanes' own tables
+/// never share]).
+pub fn dispenser_placement_byte(cam_yaw_radians: f32, cam_pitch_radians: f32) -> u8 {
+    const BY_2D: [u8; 4] = [3, 4, 2, 5]; // south, west, north, east
+    if cam_pitch_radians < -std::f32::consts::FRAC_PI_4 {
+        return DISPENSER_FACING_UP; // the floor look the UP face answers
+    }
+    if cam_pitch_radians > std::f32::consts::FRAC_PI_4 {
+        return DISPENSER_FACING_DOWN; // the ceiling look the DOWN face wears
+    }
+    let vanilla_yaw = (cam_yaw_radians - std::f32::consts::PI).to_degrees();
+    let look = direction_index_from_y_rot(f64::from(vanilla_yaw));
+    BY_2D[(look + 2) & 3] // the opposite compass byte the family keeps
+}
+
+/// THE FAMILY'S OWN INPUT READ (javap DispenserBlock.neighborChanged
+/// pc 2-13 the 26.2 jar — the `hasNeighborSignal(pos) ||
+/// hasNeighborSignal(pos.above())` walk the powered verdict answers:
+/// the direct cell's six the weak family the wire/lever/button/plate/
+/// torch arms serve, the cell ABOVE the classic QC seat the same walk
+/// covers — the client's [`redstone_signal_at`] walk the kind-only
+/// vocabulary answers).
+pub fn dispenser_input_signal(world: &World, x: i32, y: i32, z: i32) -> bool {
+    redstone_signal_at(world, x, y, z) || redstone_signal_at(world, x, y + 1, z)
+}
+
+/// THE RANDOM SLOT'S OWN PICK (javap DispenserBlockEntity
+/// .getRandomSlot the 26.2 jar — the non-empty slot indices the list
+/// walk collects, the `random.nextInt(list.size())` draw the pick
+/// serves, the empty inventory the -1 the caller's fail voice wears:
+/// the None the empty verdict keeps).
+pub fn dispenser_random_slot(slots: &[(i32, i32)], rng: &mut crate::drops::Lcg) -> Option<usize> {
+    let filled: Vec<usize> = slots
+        .iter()
+        .enumerate()
+        .filter(|&(_, &(id, count))| id != 0 && count > 0)
+        .map(|(i, _)| i)
+        .collect();
+    if filled.is_empty() {
+        return None;
+    }
+    Some(filled[rng.next_int(filled.len() as u64) as usize])
+}
+
+/// THE DISPENSE POSITION'S OWN LAW (javap DispenserBlock
+/// .getDispensePosition the 26.2 jar — the block center the
+/// `source.center()` walk answers [the +0.5 trio], the `0.7` offset
+/// the facing step scales, the Y-AXIS ARM the `d1 -= 0.125` fold the
+/// vertical facings wear [the horizontal the 0.15625 keeps — the
+/// spawnItem walk's own two subtract arms]).
+pub fn dispense_position(
+    center: (f64, f64, f64),
+    step: (i32, i32, i32),
+) -> (f64, f64, f64) {
+    let (sx, sy, sz) = (f64::from(step.0), f64::from(step.1), f64::from(step.2));
+    let y_off = if step.1 != 0 { 0.125 } else { 0.15625 };
+    (
+        center.0 + 0.7 * sx,
+        center.1 + 0.7 * sy - y_off,
+        center.2 + 0.7 * sz,
+    )
+}
+
+/// THE PROJECTILE'S OWN SPAWN POSITION (javap the DispenseConfig
+/// builder's `lambda$new$0` the 26.2 jar — the `getDispensePosition(
+/// source, 0.7, new Vec3(0.0, 0.1, 0.0))` walk the projectile lane's
+/// own positionFunction serves: the same `0.7` offset the facing step
+/// scales, the `(0.0, 0.1, 0.0)` nudge the Vec3 add banks, the
+/// spawnItem walk's own y subtract the projectile arm NEVER wears
+/// [the two walks the two offsets keep]).
+pub fn dispense_projectile_position(
+    center: (f64, f64, f64),
+    step: (i32, i32, i32),
+) -> (f64, f64, f64) {
+    (
+        center.0 + 0.7 * f64::from(step.0),
+        center.1 + 0.7 * f64::from(step.1) + 0.1,
+        center.2 + 0.7 * f64::from(step.2),
+    )
+}
+
+/// THE DEFAULT EJECT'S OWN VELOCITY (javap DefaultDispenseItemBehavior
+/// .spawnItem the 26.2 jar — the `d3 = nextDouble() * 0.1 + 0.2`
+/// fold the speed draws, the `triangle(stepX * d3, 0.0172275 * 6)`
+/// triple the three axes wear [the X/Z mean the facing step * d3
+/// speaks, the Y axis the 0.2 mean keeps, the 0.0172275 * 6 =
+/// 0.103365 spread the six-tick roll the call's own constant wears],
+/// the `triangle(mode, delta) = mode + delta * (r - r)` fold the
+/// RandomSource's own law answers).
+pub fn dispense_item_velocity(
+    rng: &mut crate::drops::Lcg,
+    step: (i32, i32, i32),
+) -> (f64, f64, f64) {
+    let d3 = rng.next_f64() * 0.1 + 0.2;
+    let spread = 0.0172275 * 6.0;
+    (
+        f64::from(step.0) * d3 + rng.triangle(spread),
+        0.2 + rng.triangle(spread),
+        f64::from(step.2) * d3 + rng.triangle(spread),
+    )
+}
+
+/// THE PROJECTILE SHOOT'S OWN LAW (javap Projectile.shoot →
+/// getMovementToShoot the 26.2 jar — the `(stepX, stepY, stepZ)`
+/// vector the facing step builds [the raw step the FACING.getStepX
+/// triple speaks], the normalize the spread ADDS ride, the
+/// `triangle(0.0, 0.0172275 * uncertainty)` triple the three axes
+/// wear, the `scale(power)` fold the 1.1 default the DispenseConfig
+/// builder banks, the rotations the atan2 degrees fold speaks —
+/// yRot = atan2(vx, vz) * 57.2957763671875, xRot = atan2(vy, horiz)
+/// * 57.2957763671875 [the horizontalDistance the divisor wears]).
+/// Returns (velocity, yRot, xRot).
+pub fn projectile_shoot_law(
+    rng: &mut crate::drops::Lcg,
+    step: (i32, i32, i32),
+    power: f32,
+    uncertainty: f32,
+) -> ((f64, f64, f64), f32, f32) {
+    let (mx, my, mz) = (f64::from(step.0), f64::from(step.1), f64::from(step.2));
+    let len = (mx * mx + my * my + mz * mz).sqrt().max(1e-9);
+    let spread = 0.0172275 * f64::from(uncertainty);
+    let (vx, vy, vz) = (
+        (mx / len + rng.triangle(spread)) * f64::from(power),
+        (my / len + rng.triangle(spread)) * f64::from(power),
+        (mz / len + rng.triangle(spread)) * f64::from(power),
+    );
+    let horiz = (vx * vx + vz * vz).sqrt();
+    let y_rot = (vx.atan2(vz) * 57.295_776_367_187_5) as f32;
+    let x_rot = (vy.atan2(horiz) * 57.295_776_367_187_5) as f32;
+    ((vx, vy, vz), y_rot, x_rot)
+}
+
+/// THE DROPPER'S OWN INSERT WALK (javap HopperBlockEntity.addItem the
+/// 26.2 jar the merge law the belief-add lanes keep — the
+/// `count < getMaxStackSize` gate the same-item slot's space the cap
+/// answers [the min(64, itemMax) fold the registry's own max table
+/// serves], the first-empty slot the split arm fills, the FULL
+/// container the leftover stack keeps [the true the one item the
+/// front container took speaks — the caller's own shrink the copy
+/// fold answers]).
+pub fn dispenser_insert_into(slots: &mut [(i32, i32)], id: i32) -> bool {
+    let cap = mc_registry::item_max_stack(id).min(64);
+    for s in slots.iter_mut() {
+        if s.0 == id && s.1 > 0 && (s.1 as i64) < cap as i64 {
+            s.1 += 1;
+            return true;
+        }
+    }
+    for s in slots.iter_mut() {
+        if s.0 == 0 || s.1 <= 0 {
+            *s = (id, 1);
+            return true;
+        }
+    }
+    false
+}
+
+
 /// THE MOVING PISTON'S OWN VARIANT BYTE (the piston family's own
 /// layout the sibling bytes mirror: the facing the low 3 bits keep —
 /// the delta6 order the base's own byte speaks — the EXTENDING bit
@@ -7065,7 +7330,7 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 /// generated tables' own rows the names wire) — the
 /// END_PORTAL
 /// the beyond-table seat the displaced law keeps.
-pub const NAME_OF: [&str; 776] = [
+pub const NAME_OF: [&str; 778] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -7880,6 +8145,8 @@ pub const NAME_OF: [&str; 776] = [
     "sticky_piston",
     "piston_head",
     "moving_piston",
+    "dispenser",
+    "dropper",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -13874,6 +14141,13 @@ pub struct World {
     /// bank, the (due, x, y, z) shape the detector's own queue wears,
     /// the drain the tick beat's refresh walk serves).
     pub comparator_ticks: Vec<(u64, i32, i32, i32)>,
+    /// THE DISPENSER/DROPPER'S OWN QUEUE (the autopush-139 round —
+    /// the scheduleTick(4) entries the neighborChanged walk's rising
+    /// edge banks, the (due, x, y, z) shape the diode family's own
+    /// queues wear, the drain the dispense beat's shot walk serves —
+    /// the networked world the SERVER ticks, the queue the offline
+    /// world alone fills).
+    pub dispenser_ticks: Vec<(u64, i32, i32, i32)>,
 
     /// THE REPEATER'S OWN QUEUE (the autopush-126 round — the
     /// comparator's own shape the sibling wears, the (due, x, y, z)
@@ -14314,6 +14588,7 @@ impl World {
             torch_ticks: Vec::new(), // the torch's own queue: no consult, no schedule
             detector_ticks: Vec::new(), // the detector's own queue: no cart on the rail, no beat
             comparator_ticks: Vec::new(), // the comparator's own queue: no mismatch, no beat
+            dispenser_ticks: Vec::new(), // the dispenser's own queue: no edge, no shot
             repeater_ticks: Vec::new(),
             observer_ticks: Vec::new(),
             piston_ticks: Vec::new(), // the repeater's own queue: no mismatch, no beat
@@ -15710,6 +15985,38 @@ impl World {
     pub fn drain_due_piston_ticks(&mut self, now: u64) -> Vec<(i32, i32, i32)> {
         let mut due: Vec<(u64, i32, i32, i32)> = Vec::new();
         self.piston_ticks.retain(|&(at, x, y, z)| {
+            if at <= now {
+                due.push((at, x, y, z));
+                false
+            } else {
+                true
+            }
+        });
+        due.sort();
+        due.into_iter().map(|(_, x, y, z)| (x, y, z)).collect()
+    }
+
+    /// THE DISPENSER'S OWN SCHEDULE (the autopush-139 round — the
+    /// comparator's own dedup walk the sibling wears: the pending
+    /// entry the re-consult refuses, the willTickThisTick gate the
+    /// same law keeps).
+    pub fn schedule_dispenser_tick(&mut self, due: u64, x: i32, y: i32, z: i32) {
+        if self
+            .dispenser_ticks
+            .iter()
+            .any(|&(_, tx, ty, tz)| (tx, ty, tz) == (x, y, z))
+        {
+            return; // the willTickThisTick gate the pending entry keeps
+        }
+        self.dispenser_ticks.push((due, x, y, z));
+    }
+
+    /// THE DISPENSER'S OWN DRAIN (the comparator's own shape the
+    /// sibling wears — the sort the deterministic order the test's
+    /// replay banks, the retain the future ticks keep).
+    pub fn drain_due_dispenser_ticks(&mut self, now: u64) -> Vec<(i32, i32, i32)> {
+        let mut due: Vec<(u64, i32, i32, i32)> = Vec::new();
+        self.dispenser_ticks.retain(|&(at, x, y, z)| {
             if at <= now {
                 due.push((at, x, y, z));
                 false
@@ -22370,7 +22677,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the lamp pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 776, "the palette the lamp pair banks");
+        assert_eq!(atlas::N_KINDS, 778, "the palette the lamp pair banks");
         assert!(is_redstone_lamp(REDSTONE_LAMP) && is_redstone_lamp(REDSTONE_LAMP_LIT));
         assert!(!is_redstone_lamp(REDSTONE_WIRE) && !is_redstone_lamp(STONE));
         assert!(!redstone_lamp_lit(REDSTONE_LAMP));
@@ -22471,7 +22778,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the wire pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 776, "the palette the wire pair banks");
+        assert_eq!(atlas::N_KINDS, 778, "the palette the wire pair banks");
         assert!(is_redstone_wire(REDSTONE_WIRE) && is_redstone_wire(REDSTONE_WIRE_ON));
         assert!(!is_redstone_wire(LEVER) && !is_redstone_wire(OAK_PRESSURE_PLATE));
         assert!(!wire_powered(REDSTONE_WIRE));
@@ -22920,7 +23227,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 776, "the palette the graded ladder banks");
+        assert_eq!(atlas::N_KINDS, 778, "the palette the graded ladder banks");
         // THE POWER READ'S OWN ROUND TRIP (the seat the kind the
         // inverse fold answers, the unknown id the None keeps)
         assert_eq!(wire_power_of(REDSTONE_WIRE), Some(0));
@@ -23111,7 +23418,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the planks' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 776, "the palette the planks' twelve banks");
+        assert_eq!(atlas::N_KINDS, 778, "the palette the planks' twelve banks");
         for (i, (name, kind, voice)) in PLANKS.iter().enumerate() {
             let seat = OAK_PLANKS + i as u16;
             assert_eq!(*kind, seat, "the seat the family order banks");
@@ -23203,7 +23510,7 @@ mod tests {
             None,
             "the portal the item lane refuses"
         );
-        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 778, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -23257,7 +23564,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kit's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 776, "the palette the kit's six banks");
+        assert_eq!(atlas::N_KINDS, 778, "the palette the kit's six banks");
         for (i, (name, kind, hard)) in KIT.iter().enumerate() {
             let seat = COBBLESTONE + i as u16;
             assert_eq!(*kind, seat, "the seat the stone shelf order banks");
@@ -23347,7 +23654,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kit's growth banks)
-        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 778, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -23404,7 +23711,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the shelf's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 776, "the palette the shelf's eight banks");
+        assert_eq!(atlas::N_KINDS, 778, "the palette the shelf's eight banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -23502,7 +23809,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the shelf's growth banks)
-        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 778, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -23571,7 +23878,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the cloths' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 776, "the palette the cloths' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 778, "the palette the cloths' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -23685,7 +23992,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the cloths' growth banks)
-        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 778, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -23760,7 +24067,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kilns' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 776, "the palette the kilns' seventeen banks");
+        assert_eq!(atlas::N_KINDS, 778, "the palette the kilns' seventeen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -23872,7 +24179,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kilns' growth banks)
-        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 778, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -23948,7 +24255,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 776, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 778, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -24065,7 +24372,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 778, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -24150,7 +24457,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 776, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 778, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -24301,7 +24608,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 778, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -24375,7 +24682,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 776, "the palette the ladder's twenty-two banks");
+        assert_eq!(atlas::N_KINDS, 778, "the palette the ladder's twenty-two banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -24564,7 +24871,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the ladder's growth banks)
-        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 778, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -24625,7 +24932,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the note's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 776, "the palette the note's own banks");
+        assert_eq!(atlas::N_KINDS, 778, "the palette the note's own banks");
         // THE ONE REGISTRY NAME ITS KIND ALONE SPEAKS (the NAME_OF row
         // + the generated KIND_NAMES/REGISTRY_NAMES rows the same
         // entry the three tables keep — no strip law the single kind
@@ -24987,7 +25294,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the note's growth banks)
-        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 778, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -25028,8 +25335,8 @@ mod tests {
             "the contiguous run the thirteen seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 776, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 778, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 778, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in OAK_FENCE..=NETHER_BRICK_FENCE {
@@ -25442,8 +25749,8 @@ mod tests {
             "the contiguous run the thirty-two seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 776, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 778, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 778, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in COBBLESTONE_WALL..=SULFUR_BRICK_WALL {
@@ -25782,8 +26089,8 @@ mod tests {
             "the contiguous run the seventeen seats wear"
         );
         assert_eq!(SULFUR_BRICK_WALL, 542, "the wall family the tail answers");
-        assert_eq!(atlas::N_KINDS, 776, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 778, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 778, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in GLASS..=BLACK_STAINED_GLASS {
@@ -26484,8 +26791,8 @@ mod tests {
             "the pane run the seventeen seats wear"
         );
         assert_eq!(BLACK_STAINED_GLASS, 559, "the glass family the tail answers");
-        assert_eq!(atlas::N_KINDS, 776, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 778, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 778, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in GLASS_PANE..=IRON_BARS {
@@ -26786,8 +27093,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_BARS, 585,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 776, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 778, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 778, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in COPPER_BARS..=WAXED_OXIDIZED_COPPER_BARS {
@@ -27107,8 +27414,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_CHAIN, 594,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 776, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 778, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 778, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in IRON_CHAIN..=WAXED_OXIDIZED_COPPER_CHAIN {
@@ -27406,8 +27713,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_LANTERN, 604,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 776, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 778, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 778, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in LANTERN..=WAXED_OXIDIZED_COPPER_LANTERN {
@@ -27886,8 +28193,8 @@ mod tests {
             DEEPSLATE_BRICK_STAIRS, 668,
             "the deepslate brick row the family's last seat keeps"
         );
-        assert_eq!(atlas::N_KINDS, 776, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 778, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 778, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in OAK_STAIRS..=DEEPSLATE_BRICK_STAIRS {
@@ -28382,8 +28689,8 @@ mod tests {
             DEEPSLATE_BRICK_SLAB, 736,
             "the deepslate brick row the family's last seat keeps"
         );
-        assert_eq!(atlas::N_KINDS, 776, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 778, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 778, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in RESIN_BRICK_SLAB..=DEEPSLATE_BRICK_SLAB {
@@ -28685,7 +28992,7 @@ mod tests {
             WAXED_OXIDIZED_COPPER_CHEST, 747,
             "the waxed oxidized rung the ladder banks"
         );
-        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 778, "the NAME_OF table the one length keeps");
         for k in CHEST_KINDS {
             assert!(
                 (CHEST..=WAXED_OXIDIZED_COPPER_CHEST).contains(&k),
@@ -29153,7 +29460,7 @@ mod tests {
         // THE SEAT'S OWN BANK (the contiguous tail the append-only
         // law keeps — the chest family the predecessor answers)
         assert_eq!(BARREL, 748, "the barrel its tail seat keeps");
-        assert_eq!(NAME_OF.len(), 776, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 778, "the NAME_OF table the one length keeps");
         assert!(is_barrel(BARREL), "the barrel the family predicate keeps");
         assert!(!is_barrel(CHEST), "the chest the predicate refuses");
         // THE VARIANT PACK'S OWN ROUNDTRIP (the facing three bits +
@@ -29301,7 +29608,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the torch pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 776, "the palette the torch pair banks");
+        assert_eq!(atlas::N_KINDS, 778, "the palette the torch pair banks");
         assert!(is_redstone_torch(REDSTONE_TORCH) && is_redstone_torch(REDSTONE_TORCH_OFF));
         assert!(!is_redstone_torch(TORCH) && !is_redstone_torch(LEVER));
         assert!(redstone_torch_lit(REDSTONE_TORCH));
@@ -29442,7 +29749,7 @@ mod tests {
         assert_eq!(REDSTONE_WALL_TORCH, 324);
         assert_eq!(REDSTONE_WALL_TORCH_OFF, 325);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 776, "the palette the wall pair banks");
+        assert_eq!(atlas::N_KINDS, 778, "the palette the wall pair banks");
         assert!(
             is_redstone_torch(REDSTONE_WALL_TORCH) && is_redstone_torch(REDSTONE_WALL_TORCH_OFF),
             "the wall pair the family's tail banks"
@@ -29687,7 +29994,7 @@ mod tests {
         assert_eq!(OAK_TRAPDOOR_OPEN, 327);
         assert_eq!(END_PORTAL, 510);
         assert_eq!(
-            atlas::N_KINDS, 776,
+            atlas::N_KINDS, 778,
             "the palette the trapdoor pair banks"
         );
         assert_eq!(OAK_TRAPDOOR + 1, OAK_TRAPDOOR_OPEN, "the +1 mate wears");
@@ -29841,7 +30148,7 @@ mod tests {
         assert_eq!(END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-            776,
+            778,
             "the palette the gate pair banks"
         );
         assert_eq!(OAK_FENCE_GATE + 1, OAK_FENCE_GATE_OPEN, "the +1 mate wears");
@@ -30059,7 +30366,7 @@ mod tests {
         assert_eq!(WARPED_TRAPDOOR, 348);
         assert_eq!(WARPED_TRAPDOOR_OPEN, 349);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 776, "the palette the ladder banks");
+        assert_eq!(atlas::N_KINDS, 778, "the palette the ladder banks");
         // THE CONTIGUITY'S OWN LAW (the 22 kinds the range covers —
         // the neighbors the family fn refuses)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -30173,7 +30480,7 @@ mod tests {
         assert_eq!(IRON_TRAPDOOR, 366);
         assert_eq!(IRON_TRAPDOOR_OPEN, 367);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 776, "the palette the metal rungs bank");
+        assert_eq!(atlas::N_KINDS, 778, "the palette the metal rungs bank");
         // THE CONTIGUITY'S OWN LAW (the 42 kinds the range covers —
         // the waxed pairs the ±1 mate the parity answers)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -30544,7 +30851,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 776, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 778, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)
@@ -33430,6 +33737,232 @@ mod tests {
         assert!(
             !piston_extended_of(w.variant(px, py, pz)),
             "the base the retracted bit keeps"
+        );
+    }
+
+    /// THE DISPENSER/DROPPER FAMILY'S OWN SEATS AND BYTES WALK (the
+    /// autopush-139 round — the two kind seats the tail rows bank, the
+    /// variant byte's round trip the two fields keep, the placement
+    /// byte's six walks the getStateForPlacement law speaks, the
+    /// delta6 the facing step the front cell reads)
+    #[test]
+    fn the_dispenser_family_the_seats_the_bytes_the_placement_wear() {
+        // THE SEATS' OWN BANK (the contiguous tail the append-only law
+        // keeps — the moving-piston family the predecessor answers)
+        assert_eq!(DISPENSER, 776, "the dispenser its tail seat keeps");
+        assert_eq!(DROPPER, 777, "the dropper its tail seat keeps");
+        assert_eq!(
+            NAME_OF[DISPENSER as usize],
+            "dispenser",
+            "the jar's own registry word the dig/sound/drop tables key"
+        );
+        assert_eq!(NAME_OF[DROPPER as usize], "dropper", "the sibling row");
+        assert!(is_dispenser_kind(DISPENSER) && is_dispenser_kind(DROPPER));
+        assert!(!is_dispenser_kind(MOVING_PISTON), "the piston the refusal keeps");
+        // THE VARIANT'S OWN ROUND TRIP (the two fields the one byte
+        // wears — the six facings, the triggered bit)
+        for facing in 0u8..6 {
+            let v = dispenser_variant(facing, false);
+            assert_eq!(dispenser_facing_of(v), facing, "the facing the byte keeps");
+            assert!(!dispenser_triggered_of(v), "the fresh byte the clear bit keeps");
+            let vt = dispenser_variant(facing, true);
+            assert_eq!(dispenser_facing_of(vt), facing, "the facing the bit never moves");
+            assert!(dispenser_triggered_of(vt), "the triggered bit the set banks");
+        }
+        // THE DELTA6'S OWN SIX (the DIRECTION_NORMAL order the front
+        // cell's own step wears — the piston family's own table the
+        // sibling bytes mirror)
+        assert_eq!(dispenser_facing_delta6(DISPENSER_FACING_DOWN), (0, -1, 0));
+        assert_eq!(dispenser_facing_delta6(DISPENSER_FACING_UP), (0, 1, 0));
+        assert_eq!(dispenser_facing_delta6(DISPENSER_FACING_NORTH), (0, 0, -1));
+        assert_eq!(dispenser_facing_delta6(DISPENSER_FACING_SOUTH), (0, 0, 1));
+        assert_eq!(dispenser_facing_delta6(DISPENSER_FACING_WEST), (-1, 0, 0));
+        assert_eq!(dispenser_facing_delta6(DISPENSER_FACING_EAST), (1, 0, 0));
+        // THE PLACEMENT BYTE'S OWN SIX (the getStateForPlacement law —
+        // the pitch quarter the vertical axis answers, the horizontal
+        // looks the look-opposite compass byte the family's own
+        // vocabulary keeps)
+        use std::f32::consts::{FRAC_PI_2, PI};
+        assert_eq!(
+            dispenser_placement_byte(PI, 0.0),
+            DISPENSER_FACING_NORTH,
+            "the south look faces the front north"
+        );
+        assert_eq!(
+            dispenser_placement_byte(0.0, 0.0),
+            DISPENSER_FACING_SOUTH,
+            "the north look faces the front south"
+        );
+        assert_eq!(
+            dispenser_placement_byte(FRAC_PI_2, 0.0),
+            DISPENSER_FACING_WEST,
+            "the east look faces the front west"
+        );
+        assert_eq!(
+            dispenser_placement_byte(-FRAC_PI_2, 0.0),
+            DISPENSER_FACING_EAST,
+            "the west look faces the front east"
+        );
+        assert_eq!(
+            dispenser_placement_byte(0.0, -FRAC_PI_2),
+            DISPENSER_FACING_UP,
+            "the floor look the UP front banks"
+        );
+        assert_eq!(
+            dispenser_placement_byte(0.0, FRAC_PI_2),
+            DISPENSER_FACING_DOWN,
+            "the ceiling look the DOWN front wears"
+        );
+    }
+
+    /// THE DISPENSER'S OWN INPUT WALK (the autopush-139 round — javap
+    /// DispenserBlock.neighborChanged pc 2-13 the 26.2 jar the
+    /// hasNeighborSignal pair speaks: the direct cell's six the weak
+    /// family answers, the cell ABOVE the QC seat the same walk
+    /// covers, the dark cell the false verdict keeps)
+    #[test]
+    fn the_dispenser_input_the_direct_and_above_arms_wear() {
+        let mut w = World::new(3, 11);
+        for x in 0..9 {
+            for z in 0..9 {
+                w.set(x, 9, z, STONE);
+            }
+        }
+        let (dx, dy, dz) = (4i32, 10i32, 4i32);
+        w.set(dx, dy, dz, DISPENSER);
+        // THE DARK CELL (no source anywhere — the false verdict keeps)
+        assert!(
+            !dispenser_input_signal(&w, dx, dy, dz),
+            "the dark cell the quiet verdict keeps"
+        );
+        // THE DIRECT ARM (the ON lever beside — the weak family the
+        // six-neighbor walk answers)
+        w.set(dx, dy, dz + 1, LEVER_ON);
+        assert!(
+            dispenser_input_signal(&w, dx, dy, dz),
+            "the side lever the direct arm answers"
+        );
+        w.set(dx, dy, dz + 1, AIR);
+        // THE ABOVE ARM (the lever ON the dispenser's top face — the
+        // hasNeighborSignal(pos.above()) walk the QC seat covers)
+        w.set(dx, dy + 1, dz, LEVER_ON);
+        assert!(
+            dispenser_input_signal(&w, dx, dy, dz),
+            "the above lever the QC arm answers"
+        );
+        w.set(dx, dy + 1, dz, AIR);
+        // THE BESIDE-THE-ABOVE REFUSAL (the lever diagonal to the above
+        // cell the read never covers — the vanilla's own six the
+        // pos.above() read wears)
+        w.set(dx + 1, dy + 1, dz, LEVER_ON);
+        assert!(
+            !dispenser_input_signal(&w, dx, dy, dz),
+            "the diagonal the refusal keeps"
+        );
+    }
+
+    /// THE DISPENSE LAWS' OWN WALK (the autopush-139 round — the
+    /// random slot the getRandomSlot law picks, the eject position the
+    /// 0.7 + the two subtract arms keep, the eject velocity the
+    /// triangle triple answers, the shoot law the power/uncertainty
+    /// folds bank, the insert walk the merge/empty/cap verdicts serve)
+    #[test]
+    fn the_dispense_laws_the_slot_the_position_the_shoot_the_insert_wear() {
+        // THE RANDOM SLOT'S OWN PICK (the seeded draw the law replays;
+        // the empty inventory the None keeps)
+        let empty = [(0i32, 0i32); 9];
+        let mut rng = crate::drops::Lcg::new(1);
+        assert!(
+            dispenser_random_slot(&empty, &mut rng).is_none(),
+            "the empty inventory the fail verdict keeps"
+        );
+        let mut slots = [(0i32, 0i32); 9];
+        slots[3] = (7, 12);
+        slots[6] = (9, 1);
+        let mut rng = crate::drops::Lcg::new(42);
+        let pick = dispenser_random_slot(&slots, &mut rng).expect("the filled pair");
+        assert!(pick == 3 || pick == 6, "the pick the filled slots keep");
+        // the zero-count row the filter drops (the honest empty)
+        slots[6] = (9, 0);
+        let mut rng = crate::drops::Lcg::new(42);
+        assert_eq!(
+            dispenser_random_slot(&slots, &mut rng),
+            Some(3),
+            "the zero-count row the filter drops"
+        );
+        // THE EJECT POSITION'S OWN LAW (the 0.7 step + the two y
+        // subtract arms — the horizontal the 0.15625 keeps, the
+        // vertical the 0.125 wears)
+        let center = (4.5, 10.5, 4.5);
+        let (px, py, pz) = dispense_position(center, (1, 0, 0));
+        assert_eq!(px, 5.2, "the +x the 0.7 step speaks");
+        assert_eq!(py, 10.5 - 0.15625, "the horizontal arm the 0.15625 keeps");
+        assert_eq!(pz, 4.5, "the z the step-less axis keeps");
+        let (px, py, pz) = dispense_position(center, (0, -1, 0));
+        assert_eq!(px, 4.5, "the x the step-less axis keeps");
+        assert_eq!(py, 10.5 - 0.7 - 0.125, "the vertical arm the 0.125 wears");
+        assert_eq!(pz, 4.5, "the z the step-less axis keeps");
+        // THE PROJECTILE'S OWN POSITION (the 0.7 step + the (0, 0.1, 0)
+        // nudge — the spawnItem subtract the projectile arm never wears)
+        let (px, py, pz) = dispense_projectile_position(center, (0, 1, 0));
+        assert_eq!(py, 10.5 + 0.7 + 0.1, "the nudge the +0.1 keeps");
+        // THE EJECT VELOCITY'S OWN BOUNDS (the triangle spread — the
+        // x mean the step*d3 speaks, the y mean the 0.2 keeps, the
+        // spread the 0.0172275*6 the ±0.310095 band the triangle's own
+        // bound wears)
+        let mut rng = crate::drops::Lcg::new(7);
+        let (vx, vy, vz) = dispense_item_velocity(&mut rng, (1, 0, 0));
+        assert!(vx > 0.2 && vx < 0.5, "the +x mean the step*d3 answers ({vx})");
+        assert!(vy > 0.2 - 0.32 && vy < 0.2 + 0.32, "the y mean the 0.2 keeps ({vy})");
+        assert!(vz.abs() < 0.32, "the z the step-less axis the jitter alone ({vz})");
+        // THE SHOOT LAW'S OWN FOLDS (the axis shot the power 1.1 the
+        // speed keeps — the uncertainty 6 the spread the ±0.103365
+        // band the triangle's own bound wears; the rotations the
+        // atan2 degrees fold speaks)
+        let mut rng = crate::drops::Lcg::new(9);
+        let ((vx, vy, vz), y_rot, x_rot) =
+            projectile_shoot_law(&mut rng, (0, 0, -1), 1.1, 6.0);
+        let speed = (vx * vx + vy * vy + vz * vz).sqrt();
+        assert!(
+            speed > 1.1 - 0.4 && speed < 1.1 + 0.4,
+            "the power 1.1 the speed scales ({speed})"
+        );
+        assert!(vz < 0.0, "the -z step the velocity wears");
+        assert!((y_rot - 180.0).abs() < 10.0, "the -z shot the 180 yRot ({y_rot})");
+        assert!(x_rot.abs() < 10.0, "the flat shot the 0 xRot ({x_rot})");
+        // THE INSERT WALK'S OWN VERDICTS (the merge the same-id slot
+        // tops up, the first-empty the split arm fills, the cap the
+        // refusal keeps, the full container the false speaks)
+        let mut nine = vec![(7i32, 62i32), (0, 0), (0, 0)];
+        assert!(
+            dispenser_insert_into(&mut nine, 7),
+            "the merge arm the same-id slot answers"
+        );
+        assert_eq!(nine[0], (7, 63), "the top-up the +1 wears");
+        // the 64-cap stone the merge refusal rides (the first-empty the
+        // split arm fills)
+        assert!(
+            dispenser_insert_into(&mut nine, 7),
+            "the 63->64 the cap the merge arm still takes"
+        );
+        assert_eq!(nine[0], (7, 64), "the cap the 64 wears");
+        assert!(
+            dispenser_insert_into(&mut nine, 7),
+            "the full same-id slot the fresh slot answers"
+        );
+        assert_eq!(nine[1], (7, 1), "the fresh slot the single lands");
+        // the snowball's 16 cap the registry's own max answers
+        let snow = mc_registry::item_id_by_name("snowball").expect("the wire table");
+        let mut capped = vec![(snow, 16i32), (0, 0)];
+        assert!(
+            dispenser_insert_into(&mut capped, snow),
+            "the full same-id the fresh slot answers"
+        );
+        assert_eq!(capped[1], (snow, 1), "the fresh slot the single wears");
+        let mut full = vec![(7i32, 64i32), (snow, 16i32)];
+        assert!(
+            !dispenser_insert_into(&mut full, 7),
+            "the full container the refusal keeps"
         );
     }
 

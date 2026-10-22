@@ -6790,6 +6790,99 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             } else {
                                 row[0]
                             }
+                        } else if crate::world::is_dispenser_kind(id) {
+                            // THE DISPENSER/DROPPER'S OWN FRONT WALK (the
+                            // autopush-139 round — the orientable parent's
+                            // one textured direction the facing byte
+                            // rotates, the blockstate's own y/x turns the
+                            // model law speaks): the HORIZONTAL facings
+                            // (north 2 / south 3 / west 4 / east 5 — the
+                            // barrel family's own vocabulary) the front
+                            // tile (the FACE_TILES row's north entry —
+                            // the model's own north=#front authoring)
+                            // MOVES to the facing direction's face index
+                            // [the furnace family's own travel law the
+                            // vocabulary differs], the vacated north slot
+                            // the side tile wears; the VERTICAL facings
+                            // (down 0 / up 1) the dispenser_vertical +
+                            // dropper_vertical models the x=0/x=180 turns
+                            // speak — the front face the *_vertical tile
+                            // wears, the REST the side master (furnace_top)
+                            // banks [the vertical model's own #side
+                            // authoring — the horizontal row's
+                            // side/top split the vertical arm never
+                            // keeps]. The TRIGGERED bit the byte's high
+                            // seat the visual never renders (the
+                            // blockstate's own variant JSON the property
+                            // never wears — the sim-state bit the offline
+                            // walk alone reads).
+                            let v = world.variant(wx, wy, wz);
+                            let facing = crate::world::dispenser_facing_of(v);
+                            let row = atlas::FACE_TILES[id as usize];
+                            let (front_h, front_v) = if id == crate::world::DISPENSER {
+                                (
+                                    atlas::TILE_DISPENSER_FRONT,
+                                    atlas::TILE_DISPENSER_FRONT_VERTICAL,
+                                )
+                            } else {
+                                (
+                                    atlas::TILE_DROPPER_FRONT,
+                                    atlas::TILE_DROPPER_FRONT_VERTICAL,
+                                )
+                            };
+                            match facing {
+                                crate::world::DISPENSER_FACING_DOWN => {
+                                    if face == 3 {
+                                        front_v
+                                    } else {
+                                        row[2] // the vertical model's own #side
+                                    }
+                                }
+                                crate::world::DISPENSER_FACING_UP => {
+                                    if face == 2 {
+                                        front_v
+                                    } else {
+                                        row[2]
+                                    }
+                                }
+                                crate::world::DISPENSER_FACING_SOUTH => {
+                                    if face == 4 {
+                                        front_h
+                                    } else if face == 5 {
+                                        row[0] // the vacated north
+                                    } else {
+                                        row[face]
+                                    }
+                                }
+                                crate::world::DISPENSER_FACING_WEST => {
+                                    if face == 1 {
+                                        front_h
+                                    } else if face == 5 {
+                                        row[0]
+                                    } else {
+                                        row[face]
+                                    }
+                                }
+                                crate::world::DISPENSER_FACING_EAST => {
+                                    if face == 0 {
+                                        front_h
+                                    } else if face == 5 {
+                                        row[0]
+                                    } else {
+                                        row[face]
+                                    }
+                                }
+                                _ => {
+                                    // NORTH (the default state's own byte
+                                    // keeps — the model's own north seat
+                                    // the row already banks)
+                                    if face == 5 {
+                                        front_h
+                                    } else {
+                                        row[face]
+                                    }
+                                }
+                            }
                         } else if crate::world::is_orientable_furnace(id) {
                             // THE ORIENTABLE TRIO'S OWN FRONT-TILE SWAP
                             // (the autopush-601 furnace arm, the dev-26
@@ -9054,6 +9147,7 @@ mod tests {
             torch_ticks: Vec::new(),                       // the torch's own queue: empty
             detector_ticks: Vec::new(),                    // the detector's own queue: empty
             comparator_ticks: Vec::new(),
+            dispenser_ticks: Vec::new(),
             repeater_ticks: Vec::new(),
             observer_ticks: Vec::new(),
             piston_ticks: Vec::new(),

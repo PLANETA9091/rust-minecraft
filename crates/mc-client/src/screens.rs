@@ -7332,6 +7332,11 @@ pub struct App {
     pub next_mob_id: i32,
     /// The mob lane's own RNG (the goal clocks + the spawn draws).
     pub mob_rng: crate::drops::Lcg,
+    /// THE DISPENSER LANE'S OWN STREAM (the autopush-139 round — the
+    /// random-slot pick + the eject's triangle draws the lane's own
+    /// stream spends, the per-lane split the crop_rng convention keeps:
+    /// the mob lane's own stream the dispenser draws never perturb)
+    pub dispenser_rng: crate::drops::Lcg,
     /// THE CROP WALK'S OWN STREAM (the random-tick lane's RNG the
     /// stream-split the determinism pins ask — the mob_rng's spawn/crit
     /// draws the crop picks never perturb, the vanilla level.random the
@@ -9293,6 +9298,7 @@ impl App {
             spawn_clock: 0,
             next_mob_id: 1,
             mob_rng: crate::drops::Lcg::new(0x5EED_10CA),
+            dispenser_rng: crate::drops::Lcg::new(0x5EED_D155),
             crop_rng: crate::drops::Lcg::new(0x5EED_C909),
             fire_rng: crate::drops::Lcg::new(0x5EED_F1A7),
             ambient_rng: crate::drops::Lcg::new(0x5EED_1ABA),
@@ -22430,6 +22436,19 @@ impl App {
             // family the is_orientable_furnace gate keeps)
             let trio = self.furnace_stores.get(&pos).cloned().unwrap_or_default();
             let fill = crate::world::container_analog_signal(&trio);
+            w.container_fill.insert(pos, fill);
+            return None;
+        }
+        if crate::world::is_dispenser_kind(kind) {
+            // THE DISPENSER/DROPPER'S OWN NINE (the autopush-139 round
+            // — javap DispenserBlock.hasAnalogOutputSignal the
+            // iconst_1 the 26.2 jar speaks, the getAnalogOutputSignal
+            // the getRedstoneSignalFromContainer walk answers, the SAME
+            // fill formula over the NINE slots the DispenserMenu ctor
+            // wears — the store map the pair banks, the container_fill
+            // entry the comparator's back read consumes)
+            let nine = self.container_stores.get(&pos).cloned().unwrap_or_default();
+            let fill = crate::world::container_analog_signal(&nine);
             w.container_fill.insert(pos, fill);
             return None;
         }
@@ -39264,6 +39283,88 @@ impl App {
                     );
                 }
             }
+            // THE DISPENSER/DROPPER'S OWN CONSULT (the autopush-139
+            // round — javap DispenserBlock.neighborChanged pc 0-113 the
+            // 26.2 jar the rising/falling-edge walk the changed cell +
+            // its six the same scope the piston consult wears: the
+            // `hasNeighborSignal(pos) || hasNeighborSignal(pos.above())`
+            // flag the [`crate::world::dispenser_input_signal`] walk
+            // answers, the `flag && !TRIGGERED` arm the
+            // `scheduleTick(pos, this, 4)` + the flag-2
+            // setValue(TRIGGERED=1) setBlock speaks, the `!flag &&
+            // TRIGGERED` arm the flag-2 setValue(TRIGGERED=0) setBlock
+            // alone keeps [the falling edge the schedule never serves —
+            // the de-powered cell the quiet clear the jar's own pc
+            // 99-109 walk banks], the dedup the pending entry the
+            // schedule's own gate refuses — the willTickThisTick law
+            // the held-power re-consult the honest no-op keeps).
+            let mut rise: Vec<(i32, i32, i32, u8)> = Vec::new();
+            let mut fall: Vec<(i32, i32, i32, u8)> = Vec::new();
+            {
+                let read = &*world;
+                let mut seen: std::collections::HashSet<(i32, i32, i32)> =
+                    std::collections::HashSet::new();
+                let mut consult: Vec<(i32, i32, i32)> = vec![(lx, ly, lz)];
+                for (dx, dy, dz) in [
+                    (0, -1, 0),
+                    (0, 1, 0),
+                    (0, 0, -1),
+                    (0, 0, 1),
+                    (-1, 0, 0),
+                    (1, 0, 0),
+                ] {
+                    consult.push((lx + dx, ly + dy, lz + dz));
+                }
+                for (cx, cy, cz) in consult {
+                    if !seen.insert((cx, cy, cz)) {
+                        continue;
+                    }
+                    let kind = read.get(cx, cy, cz);
+                    if !crate::world::is_dispenser_kind(kind) {
+                        continue;
+                    }
+                    let powered = crate::world::dispenser_input_signal(read, cx, cy, cz);
+                    let variant = read.variant(cx, cy, cz);
+                    let triggered = crate::world::dispenser_triggered_of(variant);
+                    // THE VERDICT'S OWN ROW (the read scope's own
+                    // collect — the walk's own verdicts the apply pass
+                    // the mutable borrow's tail serves, the piston
+                    // consult's own shape the collect-then-act keeps)
+                    if powered && !triggered {
+                        rise.push((cx, cy, cz, variant));
+                    } else if !powered && triggered {
+                        fall.push((cx, cy, cz, variant));
+                    }
+                }
+            }
+            for (cx, cy, cz, variant) in rise {
+                world.set_variant(
+                    cx,
+                    cy,
+                    cz,
+                    crate::world::dispenser_variant(
+                        crate::world::dispenser_facing_of(variant),
+                        true,
+                    ),
+                );
+                world.schedule_dispenser_tick(
+                    now + crate::world::DISPENSER_COOLDOWN,
+                    cx,
+                    cy,
+                    cz,
+                );
+            }
+            for (cx, cy, cz, variant) in fall {
+                world.set_variant(
+                    cx,
+                    cy,
+                    cz,
+                    crate::world::dispenser_variant(
+                        crate::world::dispenser_facing_of(variant),
+                        false,
+                    ),
+                );
+            }
             // THE WIRE'S OWN RECOMPUTE (javap RedStoneWireBlock
             // .updateNeighborsOfNeighboringWires pc 0-118 the 26.2 jar —
             // the changed cell's own six + the cell itself the adjacent
@@ -42426,6 +42527,25 @@ impl App {
                     cell.1,
                     cell.2,
                     crate::world::barrel_variant(facing, false),
+                );
+            }
+            // THE DISPENSER/DROPPER'S OWN FACING STAMP (the autopush-139
+            // round — javap DispenserBlock.getStateForPlacement pc 8-20
+            // the 26.2 jar the `setValue(FACING,
+            // context.getNearestLookingDirection().getOpposite())` walk
+            // the SIX-direction byte stamps: the pitch quarter the
+            // vertical axis the look vector's own law answers [the
+            // floor click the UP front banks, the ceiling click the
+            // DOWN front wears], the horizontal looks the look-opposite
+            // compass byte the family's own vocabulary keeps — the
+            // TRIGGERED bit the fresh placement never sets, the closed
+            // default the neighborChanged walk's own arms bank).
+            if crate::world::is_dispenser_kind(placed) {
+                world.set_variant(
+                    cell.0,
+                    cell.1,
+                    cell.2,
+                    crate::world::dispenser_placement_byte(cam_yaw, cam_pitch),
                 );
             }
             // THE PLACEMENT'S OWN CHAIN (javap BlockItem.placeBlock pc
@@ -47870,6 +47990,9 @@ impl App {
         // THE PISTON'S OWN BEAT (the autopush-128 round — the
         // scheduled moves the diode family's own lane beside)
         self.tick_piston_beats();
+        // THE DISPENSER/DROPPER'S OWN BEAT (the autopush-139 round —
+        // the scheduled shots the diode family's own lane beside)
+        self.tick_dispenser_beats();
         // THE ITEM FRAME'S OWN POLL (the HangingEntity.tick's 100-tick
         // clock the survive verdict rides — the popped frames the
         // support's own loss the drop walk serves)
@@ -48370,6 +48493,243 @@ impl App {
                 self.attach_wire_voice(cx, cy, cz);
             }
         }
+    }
+
+    /// THE DISPENSER/DROPPER'S OWN BEAT (the autopush-139 round —
+    /// javap DispenserBlock.tick pc 4-7 → dispenseFrom pc 5-134 the
+    /// 26.2 jar the due entries the drain serves: the DROPPER
+    /// override's own front-container walk the addItem copy fold
+    /// speaks [the front cell's Container the getContainerAt read
+    /// answers, the inserted copy the `copyWithCount(1)` + the source
+    /// shrink the vanilla tail wears, the NO-SOUND arm the container
+    /// lane keeps], the DEFAULT behavior's eject the
+    /// `getDispensePosition` + the spawnItem triangle walk the
+    /// ItemEntity serves [the playDefaultSound the levelEvent-1000
+    /// voice answers], the PROJECTILE walk the shoot law the arrow's
+    /// DispenseConfig speaks [power 1.1, uncertainty 6.0, the 0.7 +
+    /// (0.0, 0.1, 0.0) position the builder's lambda banks, the
+    /// levelEvent-1002 launch voice the overrideDispenseEvent's
+    /// orElse answers], the RANDOM-SLOT the getRandomSlot walk
+    /// banks [the -1 the levelEvent-1001 fail voice keeps], the
+    /// fill sync + the attach tail the comparator's next consult the
+    /// analog re-banks).
+    fn tick_dispenser_beats(&mut self) {
+        let due = {
+            let Some(world) = self.offline_world.as_mut() else {
+                return;
+            };
+            world.drain_due_dispenser_ticks(self.frame)
+        };
+        if due.is_empty() {
+            return;
+        }
+        for (x, y, z) in due {
+            let Some(world) = self.offline_world.as_ref() else {
+                return;
+            };
+            // THE RAIL-MATCH GATE the stale row the kind's own verdict
+            // drops (the dug dispenser the queued entry the honest
+            // extra keeps)
+            let kind = world.get(x, y, z);
+            if !crate::world::is_dispenser_kind(kind) {
+                continue;
+            }
+            let variant = world.variant(x, y, z);
+            let facing = crate::world::dispenser_facing_of(variant);
+            let step = crate::world::dispenser_facing_delta6(facing);
+            let (fdx, fdy, fdz) = step;
+            let center = (f64::from(x) + 0.5, f64::from(y) + 0.5, f64::from(z) + 0.5);
+            // THE TRIGGERED BIT'S OWN CLEAR (the vanilla tick the bit
+            // never clears — the falling edge's neighborChanged arm the
+            // quiet clear owns; the held-power re-trigger the rising
+            // edge's gate refuses — the one-shot-per-pulse law the
+            // consult walk banks)
+            self.container_stores_load_once();
+            // THE CELL'S OWN NINE SLOTS (the DispenserBlockEntity's own
+            // 9-slot container the store map banks — the fresh entry
+            // the first beat inserts, the loaded row the same law the
+            // chest grid wears)
+            let slots = self
+                .container_stores
+                .entry((x, y, z))
+                .or_insert_with(|| vec![(0i32, 0i32); 9])
+                .clone();
+            // THE RANDOM SLOT'S OWN PICK (the getRandomSlot walk — the
+            // None the fail voice keeps)
+            let Some(slot_i) =
+                crate::world::dispenser_random_slot(&slots, &mut self.dispenser_rng)
+            else {
+                self.play_dispenser_voice(1001, x, y, z);
+                continue;
+            };
+            let (item, count) = slots[slot_i];
+            let arrow_id = mc_registry::item_id_by_name("arrow").unwrap_or(-1);
+            // THE TWO WALKS THE TWO KINDS WEAR (the dispenseFrom
+            // override the dropper's own lane answers)
+            let (dispensed, voice) = if kind == crate::world::DROPPER {
+                // THE FRONT CONTAINER'S OWN READ (the getContainerAt
+                // walk — the chest/barrel + the sibling pair the store
+                // map banks, the furnace family the trio map keeps)
+                let front = (x + fdx, y + fdy, z + fdz);
+                let front_kind = self
+                    .offline_world
+                    .as_ref()
+                    .map(|w| w.get(front.0, front.1, front.2))
+                    .unwrap_or(0);
+                if crate::world::is_chest(front_kind)
+                    || crate::world::is_barrel(front_kind)
+                    || crate::world::is_dispenser_kind(front_kind)
+                {
+                    self.container_stores_load_once();
+                    self.container_stores.entry(front).or_insert_with(|| {
+                        if crate::world::is_dispenser_kind(front_kind) {
+                            vec![(0i32, 0i32); 9]
+                        } else {
+                            vec![(0i32, 0i32); 27]
+                        }
+                    });
+                    if crate::world::dispenser_insert_into(
+                        self.container_stores
+                            .get_mut(&front)
+                            .expect("the sink the entry arm banks"),
+                        item,
+                    ) {
+                        (true, 0) // the container arm the no-sound keeps
+                    } else {
+                        (false, 0) // the FULL container the stack keeps
+                    }
+                } else if crate::world::is_orientable_furnace(front_kind) {
+                    self.container_stores_load_once();
+                    self.furnace_stores
+                        .entry(front)
+                        .or_insert_with(|| vec![(0i32, 0i32); 3]);
+                    if crate::world::dispenser_insert_into(
+                        self.furnace_stores
+                            .get_mut(&front)
+                            .expect("the sink the entry arm banks"),
+                        item,
+                    ) {
+                        (true, 0)
+                    } else {
+                        (false, 0)
+                    }
+                } else {
+                    // THE DEFAULT EJECT (the spawnItem walk — the
+                    // ItemEntity the dispense position + the triangle
+                    // velocity wears, the playDefaultSound the 1000
+                    // voice answers)
+                    (true, 1000)
+                }
+            } else if item == arrow_id {
+                // THE PROJECTILE WALK (the shoot law — the arrow the
+                // power 1.1 the uncertainty 6.0 the builder's own
+                // defaults wear, the launch voice the 1002 keeps)
+                (true, 1002)
+            } else {
+                // THE DEFAULT WALK THE BEHAVIOR MAP ANSWERS (the
+                // snowball/egg the projectile types the future entity
+                // lanes own — the honest DEFAULT the round banks)
+                (true, 1000)
+            };
+            // THE VOICE'S OWN SPEAK (the 1000 the dispense walk, the
+            // 1001 the fail, the 1002 the launch — the three words the
+            // levelEvent arms answer)
+            if voice != 0 {
+                self.play_dispenser_voice(voice, x, y, z);
+            }
+            // THE SLOT'S OWN WRITE-BACK (the setItem walk — the shrunk
+            // stack the count-1 law wears, the insert-refused stack the
+            // intact count keeps, the emptied slot the honest (0,0) row
+            // the random-slot pick's own filter reads)
+            let new_count = if dispensed { count - 1 } else { count };
+            let row = if new_count > 0 { (item, new_count) } else { (0, 0) };
+            if let Some(store) = self.container_stores.get_mut(&(x, y, z)) {
+                store[slot_i] = row;
+            }
+            // THE EJECT'S OWN ENTITY (the spawned drop the arrow the
+            // two lanes the two Vecs wear — the position/velocity the
+            // laws bank, the id the lane's own counter mints)
+            if dispensed && voice == 1000 {
+                let (px, py, pz) = crate::world::dispense_position(center, step);
+                let (vx, vy, vz) =
+                    crate::world::dispense_item_velocity(&mut self.dispenser_rng, step);
+                let id = self.next_drop_id;
+                self.next_drop_id += 1;
+                let mut drop =
+                    crate::drops::ItemDrop::spawn_entity_loot(id, item, 1, px, py, pz, &mut self.dispenser_rng);
+                drop.vx = vx;
+                drop.vy = vy;
+                drop.vz = vz;
+                self.drops.push(drop);
+            }
+            // THE PROJECTILE'S OWN FLIGHT (the ArrowShot the from_spawn
+            // ctor answers — the seed the entity-voice law keeps, the
+            // no-crit the config power the vanilla answer speaks)
+            if dispensed && voice == 1002 {
+                let (px, py, pz) =
+                    crate::world::dispense_projectile_position(center, step);
+                let ((vx, vy, vz), y_rot, x_rot) = crate::world::projectile_shoot_law(
+                    &mut self.dispenser_rng,
+                    step,
+                    1.1,
+                    6.0,
+                );
+                let id = self.next_drop_id;
+                self.next_drop_id += 1;
+                let seed = crate::mob::arrow_entity_seed(id);
+                let shot = crate::mob::ArrowShot {
+                    id,
+                    x: px,
+                    y: py,
+                    z: pz,
+                    vx,
+                    vy,
+                    vz,
+                    y_rot,
+                    x_rot,
+                    crit: false,
+                    pitch: 0.0,
+                    seed,
+                    owner: None,
+                };
+                self.arrows.push(crate::mob::Arrow::from_spawn(&shot));
+            }
+            // THE FILL SYNC + THE ATTACH TAIL (the comparator's next
+            // consult the analog re-banks, the front wire the new
+            // eject the broadcast re-reads)
+            let _ = self.container_fill_sync((x, y, z), None);
+            self.attach_wire_voice(x, y, z);
+        }
+    }
+
+    /// THE DISPENSER VOICE'S OWN FOLD (the wire lane's own case arms
+    /// the offline beat answers — the 1000 the dispense word the
+    /// `DISPENSER_DISPENSE` branch banks [volume 1.0, pitch 1.0], the
+    /// 1001/1002 the fail/launch words the raised 1.2 pitch the pair
+    /// shares, the block center the +0.5 trio the playLocalSound
+    /// resolve places).
+    fn play_dispenser_voice(&mut self, voice: i32, x: i32, y: i32, z: i32) {
+        let (key, pitch) = match voice {
+            1000 => ("block.dispenser.dispense", 1.0),
+            mc_protocol::SOUND_DISPENSER_FAIL_EFFECT => ("block.dispenser.fail", 1.2),
+            mc_protocol::SOUND_DISPENSER_PROJECTILE_LAUNCH_EFFECT => {
+                ("block.dispenser.launch", 1.2)
+            }
+            _ => return,
+        };
+        let sx = f64::from(x) + 0.5;
+        let sy = f64::from(y) + 0.5;
+        let sz = f64::from(z) + 0.5;
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
+        self.sounds.play_voice_at_pan(
+            self.frame,
+            key,
+            1.0,
+            pitch,
+            ear_distance(ear, sx, sy, sz),
+            ear_pan(ear, yaw, sx, sy, sz),
+        );
     }
 
     fn tick_offline_hulls(&mut self) {
@@ -87483,6 +87843,7 @@ mod tests {
             torch_ticks: Vec::new(), // the torch's own queue: empty
             detector_ticks: Vec::new(), // the detector's own queue: empty
             comparator_ticks: Vec::new(),
+            dispenser_ticks: Vec::new(),
             repeater_ticks: Vec::new(),
             observer_ticks: Vec::new(),
             piston_ticks: Vec::new(),
@@ -88069,6 +88430,7 @@ mod tests {
                     torch_ticks: Vec::new(), // the torch's own queue: empty
                     detector_ticks: Vec::new(), // the detector's own queue: empty
                     comparator_ticks: Vec::new(),
+            dispenser_ticks: Vec::new(),
             repeater_ticks: Vec::new(),
             observer_ticks: Vec::new(),
             piston_ticks: Vec::new(),
@@ -88528,6 +88890,7 @@ mod tests {
             torch_ticks: Vec::new(), // the torch's own queue: empty
             detector_ticks: Vec::new(), // the detector's own queue: empty
             comparator_ticks: Vec::new(),
+            dispenser_ticks: Vec::new(),
             repeater_ticks: Vec::new(),
             observer_ticks: Vec::new(),
             piston_ticks: Vec::new(),
@@ -88613,6 +88976,7 @@ mod tests {
             torch_ticks: Vec::new(), // the torch's own queue: empty
             detector_ticks: Vec::new(), // the detector's own queue: empty
             comparator_ticks: Vec::new(),
+            dispenser_ticks: Vec::new(),
             repeater_ticks: Vec::new(),
             observer_ticks: Vec::new(),
             piston_ticks: Vec::new(),
@@ -88700,6 +89064,7 @@ mod tests {
                     torch_ticks: Vec::new(), // the torch's own queue: empty
                     detector_ticks: Vec::new(), // the detector's own queue: empty
                     comparator_ticks: Vec::new(),
+            dispenser_ticks: Vec::new(),
             repeater_ticks: Vec::new(),
             observer_ticks: Vec::new(),
             piston_ticks: Vec::new(),
@@ -88764,6 +89129,7 @@ mod tests {
             torch_ticks: Vec::new(), // the torch's own queue: empty
             detector_ticks: Vec::new(), // the detector's own queue: empty
             comparator_ticks: Vec::new(),
+            dispenser_ticks: Vec::new(),
             repeater_ticks: Vec::new(),
             observer_ticks: Vec::new(),
             piston_ticks: Vec::new(),
@@ -110914,6 +111280,7 @@ cow_sound_variant: None,
             torch_ticks: Vec::new(), // the torch's own queue: empty
             detector_ticks: Vec::new(), // the detector's own queue: empty
             comparator_ticks: Vec::new(),
+            dispenser_ticks: Vec::new(),
             repeater_ticks: Vec::new(),
             observer_ticks: Vec::new(),
             piston_ticks: Vec::new(),
@@ -113401,7 +113768,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            776,
+            778,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -113482,7 +113849,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            776,
+            778,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -113784,7 +114151,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            776,
+            778,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -118842,7 +119209,7 @@ cow_sound_variant: None,
         // #texture ref banks)
         assert_eq!(
             atlas::N_KINDS,
-            776,
+            778,
             "the palette the weighted plates' own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
@@ -119062,7 +119429,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            776,
+            778,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
@@ -119339,7 +119706,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            776,
+            778,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
@@ -119455,7 +119822,7 @@ cow_sound_variant: None,
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE, 318);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, 319);
         assert_eq!(w::END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 776, "the palette the weighted rows bank");
+        assert_eq!(atlas::N_KINDS, 778, "the palette the weighted rows bank");
         for (off, on, name) in [
             (
                 w::LIGHT_WEIGHTED_PRESSURE_PLATE,
@@ -120575,7 +120942,7 @@ cow_sound_variant: None,
         assert_eq!(w::END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-            776,
+            778,
             "the palette the weighted plates' own rows bank"
         );
         for (off, on, name, wooden) in [
