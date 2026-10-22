@@ -824,3 +824,119 @@ Stage Summary:
   lanes (the observer's classic feed), the container-analog lane
   (the comparator's hasAnalogOutputSignal back read), the item-frame
   analog read.
+
+---
+Task ID: autopush-131
+Agent: cron autopush (Job 384925, 2026-10-22 ~19:01 +08:00)
+Task: the standing autopush round — the environment held (repo clean @
+58d4900 v0.3.854 + mirror, cargo 1.99.1 + the caches alive). THE SYNC
+THE ROUND WORE FIRST: the prior session's carried brief ("redo the
+comparator simulation per the saved spec") the worklog's own record
+RETIRES — the 124 round landed the comparator whole (the pin, the
+signal walk, the tick beats the 124..130 chain the same file banks);
+the next-candidates head the 130 entry names the round took instead:
+THE CONTAINER-ANALOG LANE (the comparator's hasAnalogOutputSignal
+back read — the chest/barrel fill the output wears).
+
+Work Log:
+- THE JAR'S OWN FORENSICS the 26.2 classpath spoke (scripts/
+  raw_disasm.py, the headless JRE the javap replacement wears):
+  * AbstractContainerMenu.getRedstoneSignalFromContainer pc 0-75 —
+    the null container the 0 keeps, the non-empty slots the
+    count/maxStackSize fraction adds, the sum the slot count
+    divides, the fold Mth.lerpDiscrete(f, 0, 15) the answer wears;
+  * Mth.lerpDiscrete pc 0-26 — the floor(f * (b - a - 1)) +
+    (f > 0 ? 1 : 0) walk the CLASSIC fullness law keeps (floor(f*14)
+    + 1 the non-zero wears — the old "+1 if any non-empty" term the
+    lerp fold absorbs);
+  * Container.getMaxStackSize(ItemStack) — the Math.min
+    (containerMax, itemMax) walk (the chest/barrel 64 the limit the
+    house store wears; the per-item max table the registry never
+    banks — the 64 the honest default, the 16/1-stack items the
+    later max-stack lane answers);
+  * ChestBlock.getAnalogOutputSignal — the getContainer
+    (allowOverlap=false) walk the DOUBLE the 54-slot UNION answers;
+    ChestBlock + BarrelBlock.hasAnalogOutputSignal the iconst_1
+    speaks (TrappedChest + the copper family the ChestBlock super
+    the same TRUE inherits — scripts/super_probe.py the superclass
+    chains read), EnderChestBlock the NO override the honest
+    EXCLUSION wears;
+  * ComparatorBlock.getInputSignal pc 0-168 — the WEAK WALK the
+    DiodeBlock super computes, the hasAnalogOutputSignal arm the
+    back cell's own fill the base i REPLACES (pc 37-58 the
+    unconditional istore — the empty chest the 0 the same override
+    wears), the i < 15 && isRedstoneConductor arm the one-more-step
+    probe serves (pc 63-88 the through-wall read the solid cube the
+    chest hides answers, the j != 0 verdict pc 155-164 the quiet
+    keep wears, the item-frame half the max fold the absent entity
+    the 0 the max keeps — the entity lane the future round owns).
+- world.rs the verdict:
+  * container_fill the (x, y, z) -> 0..=15 map the World field
+    wears (the entry PRESENCE the hasAnalogOutputSignal verdict
+    answers, the value the formula carries; the networked world the
+    server's analog never synced — the empty map the honest keep),
+    the 10 initializer sites the count law keeps (world.rs 1 +
+    world_view 1 + mesher 1 + screens 7);
+  * container_analog_signal the pure formula (the slot count the
+    slice length wears, the clamp the 15 caps);
+  * comparator_input_signal the WRAPPER the container arms wear —
+    the old walk the comparator_weak_back_signal rename the arms
+    keep verbatim, the override + the through-wall probe the wrapper
+    adds; the REPEATER the weak walk alone keeps (repeater_input_
+    signal the DiodeBlock super the ComparatorBlock override never
+    rides — the container arms the comparator lane alone answers).
+- screens.rs the store walk serves:
+  * container_fill_sync(pos, dead_mate) — the kind gate the
+    chest-minus-ender + barrel families answer, the ender the map's
+    absence keeps, the dug cell the entry the removal answers, the
+    double the connected-direction union the same algebra
+    open_chest_for wears (chest_connected_direction +
+    stairs_facing_delta + chest_can_connect_to the same-kind gate
+    the stale type refuses), the DEAD MATE the spill's dying half
+    the union never partners;
+  * the close flush the fill banks AND the attach broadcast the
+    cell+six walk the front comparators re-consults (the vanilla
+    stopOpen tail the updateNeighbourForOutputSignal law the same
+    re-read serves — the +2 entries the mismatch arms bank), the
+    partner's own face the far comparator the same union re-read
+    wears;
+  * the load-once parse the boot the stocked chests the analog
+    banks (the parsed keys the same sync rides — the restart the
+    fill the comparator's next consult serves);
+  * the spill walk the entry the air drops AND the survivor scan
+    the four horizontal neighbors the break's mate re-syncs (the
+    own-half law the 15 caps; the removal the walk's last word —
+    the standing-block paths the stale re-bank the dead-mate
+    exclusion + the order refuse). THE PROBE THE ROUND PAID: the
+    direct spill call the block the dig walk alone clears wears —
+    the survivor's sync the dying half the live partner the
+    dead-mate arg refuses (the 15 re-bank the probe caught, the
+    fix the signature the exclusion wears).
+- THE GUI'S OWN RHYTHM THE FLUSH BANKS: the slot edits while the
+  chest screen holds the close flush alone banks (the GUI the
+  modal law keeps — the comparator's verdict the close beat
+  converges; the vanilla's per-change updateNeighbourForOutputSignal
+  the player-observable difference the modal screen never wears).
+- Suite: 2631 passed / 0 failed / 22 ignored (+2 vs autopush-130's
+  2629); verify_goldens.sh 18/18 PASS rms 0.000 (the fill lane no
+  golden scene touches — no regeneration); cargo fmt --check 27273
+  = the 130 baseline EXACTLY (the init comments the width fold
+  shortened — zero new fmt debt).
+- Pushed 60dc5fe (v0.3.855, the container-analog lane).
+
+Stage Summary:
+- THE COMPARATOR READS THE CHEST: stock a chest, close the lid, the
+  comparator behind it speaks the fullness — the lone stack the 1,
+  the 13-full chest the classic 7, the full chest the 15, the empty
+  the 0 the same override wears; the double chest the two halves the
+  one 54-slot read answers, the stone the chest hides the
+  through-wall probe answers, the break the entry the air drops and
+  the survivor the own-half law banks. The 26.2 formula the
+  lerpDiscrete fold the bytecode verbatim wears.
+- NEXT CANDIDATES: the furnace trio's own analog read (the
+  furnace_stores the 3-slot law the same formula wears — the lit
+  furnace the comparator's classic read, the sync sites the flush/
+  spill walks the same shape), the item-frame analog read (the
+  max fold's other half — the entity lane), the sticky-pull arm's
+  own head slide (the base cell's own BE the vanilla answer), the
+  dropper/dispenser shot lanes (the observer's classic feed).
