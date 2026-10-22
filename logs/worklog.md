@@ -1398,3 +1398,71 @@ Stage Summary:
   ride (the chest screen's shift-click laws the 64 the stand-in
   keeps), the frame's glow item the render's own world lane the
   comparator's max fold rides.
+
+---
+Task ID: autopush-137
+Agent: cron autopush (Job 384923, 2026-10-23 00:17:10 +08:00)
+Task: the standing autopush round — the environment held (repo clean @
+856a68c v0.3.860 + mirror, cargo 1.99.1 + the caches alive). THE LANE
+the 136 entry's next-candidates head named: THE GOLDEN RUNNER'S RE-HOME
+— the verify_goldens.sh the repo itself owns, the 19 rows the file
+speaks.
+
+Work Log:
+- THE RE-HOME (git mv the rename serves): verify_goldens.sh ->
+  scripts/verify_goldens.sh — the golden tooling's own home
+  (golden_matrix.sh the 14-core companion stays, the full runner the
+  neighbor now); the root ./verify_goldens.sh the README documents a
+  3-line shim execs (exec "$(dirname "$0")/scripts/
+  verify_goldens.sh" "$@" — the documented invocation the move never
+  breaks, the canonical file the scripts/ dir owns).
+- THE 19TH ROW THE ROOT COPY MISSED: gui_world_dual_320x180 (dev-51's
+  offhand-lane golden — the sword the main hand wears, the shield the
+  offhand carries, the two submitArmWithItem lanes the one frame
+  renders) the 18-row root file never checked since the dual golden
+  landed — the root copy the restore kept was pre-dual.
+  golden_matrix.sh's row the canonical args keep (--screen world
+  --ui-frame 30 --held-item item/iron_sword --offhand-item
+  item/shield, no seed — the exact args the 136 round's 19/19 run
+  verified).
+- THE HEADER THE COUNT CAUGHT: the "eight GUI screens" comment the 15
+  GUI rows the text now speaks (the six originals + the held,
+  held-swing, dual world scenes + the chest, double-chest, placed-pair,
+  furnace, lit-furnace, creative-picker canvases); the cd the new home
+  wears (dirname/.. — scripts/ the file lives in, the repo root the
+  checks still anchor).
+- THE STASH INCIDENT THE ROUND HANDLED (the honest record): the
+  fmt-probe stash push/pop (the untracked shim aboard) hit the
+  "verify_goldens.sh already exists, no checkout" pop error — the
+  tracked changes applied, the shim content the working tree already
+  wore, the stash the drop released; the content the git-diff walk +
+  bash -n + the 19-check count re-verified intact (the rename the
+  flatten to add+modify wore — the end state the lane's bytes keep,
+  the old runner's content the git history still banks).
+- THE FMT COUNT THE WORKTREE PROBE SETTLED: 27300 at the lane's tree =
+  27300 at HEAD EXACTLY (git worktree add -> cargo fmt --check ->
+  remove — the stash the probe's first try wore); the 136 entry's
+  27273 the count-moment drift wore; the lane's diff ZERO .rs files
+  the debt never moves by construction.
+- Suite: 2646 passed / 0 failed / 22 ignored (2309 mc-client + 157
+  mc-protocol + 100 mc-registry + 80 mc2rs-pixel — the 136 count
+  EXACTLY; the mc-client run alone 543s, the 10-minute tool cap the
+  per-crate split answered); goldens 19/19 PASS rms 0.000 through the
+  re-homed runner via the root shim (the release build the script's
+  own first step served, 1m52s); NO regeneration — the move no render
+  path touches, every golden byte the same.
+- Pushed 7aa9b8d (v0.3.861, the golden runner the repo owns).
+
+Stage Summary:
+- THE GOLDEN CONTRACT THE REPO ITSELF ENFORCES NOW: the 19-row runner
+  the scripts/ dir owns, the root shim the README's invocation keeps —
+  the next wipe the sandbox's copy the repo never needs.
+  ./verify_goldens.sh the one command the full 19-golden truth speaks,
+  the dual-wield row the 18-row copy missed the check the runner now
+  wears.
+- NEXT CANDIDATES: the dropper/dispenser shot lanes (the offline arm
+  the wire's event words never bank), the max-stack table the GUI's
+  own place/split walks ride (the chest screen's shift-click laws the
+  64 the stand-in keeps), the frame's glow item the render's own world
+  lane the comparator's max fold rides, the README's golden section
+  the 19-row runner's own row the text could name.
