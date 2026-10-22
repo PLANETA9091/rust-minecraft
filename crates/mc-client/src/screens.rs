@@ -38582,6 +38582,77 @@ impl App {
                     *cz,
                 );
             }
+            // THE OBSERVER'S OWN TRIGGER CONSULT (the autopush-127
+            // round — javap ObserverBlock.updateShape pc 16-33 the
+            // 26.2 jar the `dir == FACING && !POWERED` gate the
+            // startSignal walk serves, the startSignal pc 10-34 the
+            // !hasScheduledTick dedup the scheduleTick(pos, this, 2)
+            // entry banks): the changed cell + its six the scope the
+            // shape walk's own reach keeps — the observer whose EYE
+            // the changed cell covers the unpowered + unscheduled
+            // pair the +2 entry banks [the eye = pos.relative(FACING)
+            // the +facing step the variant decode answers — the
+            // observer AT the consult cell whose facing step lands ON
+            // the changed cell the trigger wears, the eye-at-self
+            // pair the geometry never answers], the pending entry the
+            // schedule_observer_tick walk's own dedup refuses, the
+            // powered cell the jar's own !POWERED gate keeps. THE
+            // TICK THE PULSE ANSWERS (the beat's own drain the POWERED
+            // flip the jar's own tick walk banks, the off-beat the
+            // +2 tail the pulse wears, the front seed the broadcast
+            // the attach walk re-reads — the face change the block
+            // placement/dig/use events the shape walk fires, the
+            // wire flips' own cascade the same walk re-arms).
+            let mut observer_due: Vec<(i32, i32, i32)> = Vec::new();
+            {
+                let read = &*world;
+                let mut seen: std::collections::HashSet<(i32, i32, i32)> =
+                    std::collections::HashSet::new();
+                let mut consult: Vec<(i32, i32, i32)> = vec![(lx, ly, lz)];
+                for (dx, dy, dz) in [
+                    (0, -1, 0),
+                    (0, 1, 0),
+                    (0, 0, -1),
+                    (0, 0, 1),
+                    (-1, 0, 0),
+                    (1, 0, 0),
+                ] {
+                    consult.push((lx + dx, ly + dy, lz + dz));
+                }
+                for (cx, cy, cz) in consult {
+                    if !seen.insert((cx, cy, cz)) {
+                        continue;
+                    }
+                    if read.get(cx, cy, cz) != crate::world::OBSERVER {
+                        continue;
+                    }
+                    let variant = read.variant(cx, cy, cz);
+                    // THE !POWERED GATE (the jar's own updateShape arm
+                    // — the powered cell the re-trigger never banks)
+                    if crate::world::observer_powered_of(variant) {
+                        continue;
+                    }
+                    // THE EYE'S OWN LAW (the dir == FACING verdict the
+                    // +facing step the changed cell covers — the
+                    // observer whose eye the changed cell IS the
+                    // trigger wears)
+                    let (fdx, fdy, fdz) = crate::world::observer_facing_delta6(
+                        crate::world::observer_facing_of(variant),
+                    );
+                    if (cx + fdx, cy + fdy, cz + fdz) != (lx, ly, lz) {
+                        continue;
+                    }
+                    observer_due.push((cx, cy, cz));
+                }
+            }
+            for (ox, oy, oz) in &observer_due {
+                world.schedule_observer_tick(
+                    now + crate::world::OBSERVER_DELAY,
+                    *ox,
+                    *oy,
+                    *oz,
+                );
+            }
             // THE WIRE'S OWN RECOMPUTE (javap RedStoneWireBlock
             // .updateNeighborsOfNeighboringWires pc 0-118 the 26.2 jar —
             // the changed cell's own six + the cell itself the adjacent
@@ -41590,6 +41661,24 @@ impl App {
                     } else {
                         0
                     },
+                );
+            }
+            // THE OBSERVER'S OWN EYE STAMP (the autopush-127 round —
+            // javap ObserverBlock.getStateForPlacement pc 1-23 the
+            // 26.2 jar the `setValue(FACING, context
+            // .getNearestLookingDirection().getOpposite()
+            // .getOpposite())` walk the DOUBLE opposite the look's
+            // own direction stamps [the eye the placer's own look
+            // faces, the output dot the look's own far side the
+            // player reads], the pitch quarter the vertical gate the
+            // dominant axis reads, the fresh placement the dark
+            // verdict keeps)
+            if crate::world::is_observer(placed) {
+                world.set_variant(
+                    cell.0,
+                    cell.1,
+                    cell.2,
+                    crate::world::observer_placement_variant(cam_yaw, cam_pitch),
                 );
             }
             // THE WALL HEADS' OWN FACING STAMP (the dev-83 round — javap
@@ -46605,6 +46694,9 @@ impl App {
         // THE REPEATER'S OWN BEAT (the autopush-126 round — the dial's
         // scheduled flips the comparator's own lane beside)
         self.tick_repeater_beats();
+        // THE OBSERVER'S OWN BEAT (the autopush-127 round — the
+        // scheduled pulses the diode family's own lane beside)
+        self.tick_observer_beats();
         if self.offline_carts.is_empty() {
             return;
         }
@@ -46959,6 +47051,66 @@ impl App {
             }
             // THE FRONT SEED'S OWN BROADCAST (the repeater pos the
             // attach walk's cell+six scan covers — the front cell the
+            // new 15 the wire voice re-reads, the remesh the changed
+            // pixels answers)
+            self.attach_wire_voice(x, y, z);
+        }
+    }
+
+    /// THE OBSERVER'S OWN BEAT (the autopush-127 round — javap
+    /// ObserverBlock.tick the 26.2 jar the POWERED fork the flip arms
+    /// wear: the powered cell the flag-2 setBlock(POWERED=false) the
+    /// off-beat banks, the unpowered the setBlock(POWERED=true) + the
+    /// scheduleTick(pos, this, 2) tail the pulse's own pair keeps,
+    /// the updateNeighborsInFront walk BOTH arms the back cell the
+    /// broadcast serves — the front seed the attach walk's cell+six
+    /// scope re-reads, the wire flood AND the consumers' verdicts the
+    /// back cell's own strength re-arms).
+    fn tick_observer_beats(&mut self) {
+        let now = self.frame;
+        let due = {
+            let Some(world) = self.offline_world.as_mut() else {
+                return;
+            };
+            world.drain_due_observer_ticks(now)
+        };
+        if due.is_empty() {
+            return;
+        }
+        for (x, y, z) in due {
+            let Some(world) = self.offline_world.as_mut() else {
+                return;
+            };
+            // THE RAIL-MATCH GATE the stale row the kind's own verdict
+            // drops (the dug observer the queued entry the detector
+            // lane's own honest extra keeps)
+            if world.get(x, y, z) != crate::world::OBSERVER {
+                continue;
+            }
+            // THE FLIP'S OWN FORK (the jar's own tick walk the powered
+            // bit the variant byte banks — the ON beat the OFF set
+            // banks, the OFF beat the ON set + the +2 tail the pulse
+            // wears)
+            let variant = world.variant(x, y, z);
+            let was_powered = crate::world::observer_powered_of(variant);
+            world.set_variant(
+                x,
+                y,
+                z,
+                crate::world::observer_variant(
+                    crate::world::observer_facing_of(variant),
+                    !was_powered,
+                ),
+            );
+            if !was_powered {
+                // THE PULSE'S OWN TAIL (javap tick pc 65 — the
+                // scheduleTick(pos, this, 2) the ON arm banks, the
+                // off-beat the same queue drains)
+                world.schedule_observer_tick(now + crate::world::OBSERVER_DELAY, x, y, z);
+            }
+            // THE FRONT SEED'S OWN BROADCAST (updateNeighborsInFront
+            // the back cell the walk serves — the observer pos the
+            // attach walk's cell+six scan covers, the back cell the
             // new 15 the wire voice re-reads, the remesh the changed
             // pixels answers)
             self.attach_wire_voice(x, y, z);
@@ -85316,6 +85468,7 @@ mod tests {
             detector_ticks: Vec::new(), // the detector's own queue: empty
             comparator_ticks: Vec::new(),
             repeater_ticks: Vec::new(),
+            observer_ticks: Vec::new(),
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
@@ -85896,6 +86049,7 @@ mod tests {
                     detector_ticks: Vec::new(), // the detector's own queue: empty
                     comparator_ticks: Vec::new(),
             repeater_ticks: Vec::new(),
+            observer_ticks: Vec::new(),
                     torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
                     bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
                     chunks: vec![
@@ -86349,6 +86503,7 @@ mod tests {
             detector_ticks: Vec::new(), // the detector's own queue: empty
             comparator_ticks: Vec::new(),
             repeater_ticks: Vec::new(),
+            observer_ticks: Vec::new(),
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
@@ -86428,6 +86583,7 @@ mod tests {
             detector_ticks: Vec::new(), // the detector's own queue: empty
             comparator_ticks: Vec::new(),
             repeater_ticks: Vec::new(),
+            observer_ticks: Vec::new(),
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
@@ -86509,6 +86665,7 @@ mod tests {
                     detector_ticks: Vec::new(), // the detector's own queue: empty
                     comparator_ticks: Vec::new(),
             repeater_ticks: Vec::new(),
+            observer_ticks: Vec::new(),
                     torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
                     bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
                     chunks: vec![
@@ -86567,6 +86724,7 @@ mod tests {
             detector_ticks: Vec::new(), // the detector's own queue: empty
             comparator_ticks: Vec::new(),
             repeater_ticks: Vec::new(),
+            observer_ticks: Vec::new(),
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
@@ -108078,6 +108236,7 @@ cow_sound_variant: None,
             detector_ticks: Vec::new(), // the detector's own queue: empty
             comparator_ticks: Vec::new(),
             repeater_ticks: Vec::new(),
+            observer_ticks: Vec::new(),
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
@@ -110560,7 +110719,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            771,
+            772,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -110641,7 +110800,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            771,
+            772,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -110943,7 +111102,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            771,
+            772,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -116001,7 +116160,7 @@ cow_sound_variant: None,
         // #texture ref banks)
         assert_eq!(
             atlas::N_KINDS,
-            771,
+            772,
             "the palette the weighted plates' own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
@@ -116221,7 +116380,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            771,
+            772,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
@@ -116498,7 +116657,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            771,
+            772,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
@@ -116614,7 +116773,7 @@ cow_sound_variant: None,
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE, 318);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, 319);
         assert_eq!(w::END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 771, "the palette the weighted rows bank");
+        assert_eq!(atlas::N_KINDS, 772, "the palette the weighted rows bank");
         for (off, on, name) in [
             (
                 w::LIGHT_WEIGHTED_PRESSURE_PLATE,
@@ -117734,7 +117893,7 @@ cow_sound_variant: None,
         assert_eq!(w::END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-            771,
+            772,
             "the palette the weighted plates' own rows bank"
         );
         for (off, on, name, wooden) in [

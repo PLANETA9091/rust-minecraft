@@ -412,3 +412,170 @@ Stage Summary:
   read — the chest-fill signal the BE tables would need), the
   item-frame analog read, the piston lane (the biggest mover the
   redstone family still lacks).
+
+---
+Task ID: autopush-127
+Agent: cron autopush (Job 384923, 2026-10-22 ~13:45 +08:00)
+Task: the standing autopush round — the ONE step the worklog's next
+candidates named: THE OBSERVER KIND (the DirectionalBlock sibling the
+shouldConnectTo comment's other missing seat — the eye the
+SIX-direction facing the diode family's horizontal-only vocabulary
+extends, the pulse the 2-game-tick beat wears).
+
+Work Log:
+- Environment held (clean tree at 55643f2, cargo 1.99.1, the runtime
+  caches the autopush-123 recovery banked all in place).
+- THE JAR'S OWN FORENSICS FIRST (classfile_dump.py the 26.2 jar,
+  ObserverBlock + the blockstate/model rows): getStateForPlacement pc
+  1-23 the `setValue(FACING, context.getNearestLookingDirection()
+  .getOpposite().getOpposite())` walk the DOUBLE opposite the look's
+  own direction stamps (the net identity — the eye the placer's own
+  LOOK faces, the output dot the look's own far side the player
+  reads; the diode family's own look-OPPOSITE law the mirror
+  retires), getSignal the dir == FACING gate the ownSignal walk
+  answers (POWERED ? 15 : 0), getDirectSignal = getSignal the STRONG
+  back-output law keeps, isSignalSource the iconst_1 the source
+  family arms, tick the POWERED fork the flip arms wear (the powered
+  cell the flag-2 setBlock(POWERED=false), the unpowered the
+  setBlock(POWERED=true) + the scheduleTick(pos, this, 2) tail the
+  pulse's own pair keeps) + the updateNeighborsInFront walk BOTH
+  arms the back cell the broadcast serves
+  (pos.relative(FACING.getOpposite())), updateShape the
+  `dir == FACING && !POWERED` gate the startSignal walk serves (the
+  startSignal pc 10-34 the !hasScheduledTick dedup the
+  scheduleTick(pos, this, 2) entry banks), onPlace the
+  piston-placed-POWERED normalization arm (the flag-18 setBlock +
+  the front broadcast — the fresh placement the dark default keeps),
+  affectNeighborsAfterRemoval the back cell re-read serves, NO
+  useWithoutItem the right-click silence keeps; the blockstates/
+  observer.json the y-table north 0 / east 90 / south 180 / west 270
+  + the x-rows down 90 / up 270 speak, the model the ONE full-cube
+  chain the per-face textures wear (#top the down/up faces, #side
+  the flanks, #front the EYE [the north face at rest], #bottom the
+  back — the observer_on parent the ONE texture swap [#bottom ->
+  block/observer_back_on] the lit pulse wears, the ALL-SIX
+  cullfaces the full-cube law keeps).
+- THE PIN (scripts/autopush127_observer_pin.py, idempotent): TILE_
+  914..918 decoded from the jar's observer_top/side/front/back/
+  back_on.png (the pool tail, every existing index holds), TILES
+  919, N_KINDS 772, the KIND_NAMES + REGISTRY_NAMES the "observer"
+  tails (the block AND item the same word wear — the repeater's
+  registry divergence the observer never speaks), TILE_NAMES the
+  five's own tails, FACE_TILES [916;6] (the model's own particle
+  texture the front tile wears), TINTS/DOOR_MODEL/ENTITY_HEAD the
+  772-row law, the TILE_OBSERVER_TOP/SIDE/FRONT/BACK/BACK_ON named
+  consts; the elements.rs the "block/observer" full-cube row the
+  generator already banked (the pin's honest no-op keeps — the ONE
+  bake the lane derives, the powered swap the verdict's #bottom
+  seat reads); world.rs NAME_OF the 772nd row. The name-keyed tables
+  (block_dig/block_resistances/block_sounds/block_mineable/
+  block_drops + blocks/blockstates/item_models) the "observer" rows
+  the generator already carried — the pin rides the ATLAS alone.
+- world.rs the whole verdict: OBSERVER const 771 + the variant byte
+  (low3 facing the vanilla Direction order down0/up1/north2/south3/
+  west4/east5, 0x08 powered), the delta6 walk (the SIX-direction
+  step the diode family's horizontal fold extends), the placement
+  variant (the look's own direction — the pitch quarter the
+  vertical gate reads [the barrel lane's ±45° fold the dominant-
+  axis law keeps], the horizontal look byte the DIRECTION_NORMAL
+  order keeps, the NO-opposite law the double-getOpposite
+  cancellation speaks), observer_back_output_near (the wire flood's
+  own seed — the powered back the 15, the same -facing-step law the
+  comparator/repeater front arms wear, the SIX-direction delta the
+  vertical pairs answer), the flood site + the consumers'
+  redstone_signal_at the seed walk ride, the strong lane's back arm
+  (strong_signal_conductors_near — the conductor the observer's
+  back the block-into-block chain wears), the diode input walks'
+  observer gates (comparator_input_signal's back arm +
+  comparator_side_signal's isSignalSource arm — the dir == ITS
+  FACING verdict the DELTA compare answers [the observer's
+  DIRECTION_NORMAL byte the diode's horizontal compass never keys —
+  the two vocabularies the facing-delta fold bridges], the
+  observer→repeater/comparator chain the same-direction pair
+  wears), the repeater's sides the DIODES-ONLY law the non-diode
+  seat refuses (the observer the DirectionalBlock the DiodeBlock
+  super never carries), the wire's shouldConnectTo seat (the
+  isSignalSource arm the wire the observer's back the pointing law
+  keeps), the collision the DEFAULT full cube keeps (no Empty row —
+  the body the block walks around), the queue the comparator's own
+  shape wears (observer_ticks + the schedule dedup + the drain
+  sort, OBSERVER_DELAY = 2).
+- mesher.rs the OBSERVER'S OWN LANE: the ONE full-cube bake
+  (observer_model_quads — derive_model_inherited("block/observer"),
+  the observer_on parent-override the bake never derives, the
+  powered swap the per-quad verdict's #bottom seat reads), the
+  per-quad tile verdict (#top→TILE_OBSERVER_TOP / #side→TILE_
+  OBSERVER_SIDE / #front→TILE_OBSERVER_FRONT / #bottom→TILE_
+  OBSERVER_BACK(_ON)), the y-table north 0 / east 1 / south 2 /
+  west 3 the quarter folds keep (the model's north-anchored front
+  the comparator's south-anchored table the mirror wears), the
+  x-rows the vertical pair (down the -90° X-fold the x=90 row
+  answers, up the +90° the x=270 row wears — the cell-center
+  (y, z) fold the uvs ride), the ALL-SIX cullfaces the full-cube
+  law keeps (the neighbor's solid verdict the comparator's
+  down-only law extends), the FACE_SHADE seat + the per-corner
+  lightmap the diode lane's own walk serves.
+- screens.rs the integration: the OBSERVER'S OWN TRIGGER CONSULT
+  (the attach walk's cell+six scope — the observer whose EYE the
+  changed cell covers [the +facing step the changed cell IS] the
+  unpowered + unscheduled pair the +2 entry banks, the jar's own
+  !POWERED gate the powered cell's re-trigger never banks, the
+  !hasScheduledTick dedup the pending re-consult refuses, the
+  collect→drop(read)→schedule discipline the family's own walk
+  keeps; the face change the block placement/dig/use events the
+  shape walk fires, the wire flips' own cascade the same walk
+  re-arms — the jar's flag-2 silence the codebase's established
+  broad-broadcast approximation the whole redstone family's beats
+  ride retires [the facing-pair pulse the approximation answers,
+  the offline loop the schedule+2 advance bounds]), tick_observer_
+  beats (the drain → the POWERED flip → the ON arm's +2 tail the
+  pulse wears → the attach broadcast the cell+six re-reads), the
+  placement survival gate none (the full cube the canSurvive
+  override never carries) + the facing stamp (the look's own eye).
+- TESTS +4: the variant/placement/kind walk (the six-facings round
+  trip, the delta six, the east look the EAST eye [the diode
+  family's west the contrast names], the pitch quarter the
+  vertical pair, the shallow look the horizontal byte, the full
+  cube collision, the "observer" pairing, the dig row 3.0, the
+  loot stem), the pulse/signal/back walk (the dark back the 0,
+  the schedule dedup + the drain pair, the ON beat the 15 the
+  flood + the consumer + the strong conductor, the off-beat tail,
+  the back repeater AND comparator the DELTA-compare gates the 15
+  answer, the repeater's sides the diodes-only law refuses), the
+  vertical walk (the eye down the back up the 15, the eye up the
+  mirror pair, the strong lane's vertical conductor), the mesher
+  bakes (the six-face bake, the resolved names, the all-six
+  cullfaces, the meshed cell the per-face tiles the facing byte
+  picks [the plane probe the whole-face law keeps], the powered
+  back the _on swap).
+- THE PINS THE KIND DEMANDS: N_KINDS 771→772 ×35 (the one-line
+  ×27 + the multi-line ×8) + NAME_OF.len() ×21 + the World
+  initializers ×10 (the observer_ticks field the struct law grows).
+- Version bump 0.3.850 → 0.3.851.
+
+Stage Summary:
+- THE OBSERVER PLAYS LIKE VANILLA: place it — the eye follows the
+  look (the pitch the vertical pairs answer, the double-getOpposite
+  cancellation the jar's own bytes speak), the face change in front
+  the +2 beat the pulse schedules, the pulse the back cell the
+  powered 15 banks (the wire flood seeds, the lamps/doors/rails the
+  consumers answer, the block in back the strong 15 the chain
+  carries, the sibling diode the DELTA-compare gates the 15 read),
+  the 2-tick beat the off-flip the pulse closes, the click the
+  observer never wears (the jar's own silence), the dig the 3.0
+  strength the row banks, the drop the self item the loot stem
+  rolls, the render the jar's own five tiles the full-cube faces
+  wear (the eye the FACING face answers, the lit back the pulse
+  swaps). The suite 2622/0/22 (2286 mc-client + 157 + 99 + 80;
+  +4 vs autopush-126's 2618); verify_goldens.sh 18/18 PASS rms
+  0.000 (the pool tail no golden scene touches — no regeneration);
+  cargo fmt --check 27273 = 27273 EXACTLY (1537 hunks the baseline
+  keeps — zero new fmt debt).
+- NEXT CANDIDATES: the piston lane (the biggest mover the redstone
+  family still lacks — the extension/retraction the block-push walk
+  the observer pair feeds), the container-analog lane (the
+  comparator's hasAnalogOutputSignal back read — the chest-fill
+  signal the BE tables would need), the item-frame analog read
+  (the getInputSignal's behind-conductor lane), the dropper/
+  dispenser shot lanes (the observer's classic feed the placement
+  wave banks).

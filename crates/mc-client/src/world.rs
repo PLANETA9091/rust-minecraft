@@ -2317,6 +2317,14 @@ pub fn wire_source_strength_near(world: &World, x: i32, y: i32, z: i32) -> u8 {
     if let Some(out) = repeater_front_output_near(world, x, y, z) {
         strength = strength.max(out);
     }
+    // THE OBSERVER'S OWN BACK ARM (the autopush-127 round — javap
+    // ObserverBlock.getSignal the dir == FACING gate the powered 15
+    // the pulse bit speaks, the getDirectSignal = getSignal the STRONG
+    // law the same verdict keeps: the wire the observer's back the
+    // full flood the seed wears, the unpowered the 0 the dark keep)
+    if let Some(out) = observer_back_output_near(world, x, y, z) {
+        strength = strength.max(out);
+    }
     strength
 }
 
@@ -2677,6 +2685,24 @@ fn comparator_input_signal(world: &World, x: i32, y: i32, z: i32, facing: u8) ->
         }
         return 0;
     }
+    // THE OBSERVER'S OWN GATE (the autopush-127 round — javap
+    // ObserverBlock.getSignal the dir == FACING verdict the ownSignal
+    // walk answers: the sibling whose FACING step == our back step
+    // the back cell the powered 15 speaks — the observer→repeater/
+    // comparator chain the same-direction pair wears [the observer's
+    // back the output the diode's input cell the -facing step
+    // answers; the two vocabularies the DELTA compare answers — the
+    // observer's DIRECTION_NORMAL byte the diode's horizontal compass
+    // never keys], the powered bit the dark 0 keeps)
+    if back == OBSERVER {
+        let sibling = world.variant(bx, by, bz);
+        if observer_facing_delta6(observer_facing_of(sibling)) == comparator_facing_delta(facing)
+            && observer_powered_of(sibling)
+        {
+            return 15;
+        }
+        return 0;
+    }
     0
 }
 
@@ -2729,6 +2755,24 @@ fn comparator_side_signal(world: &World, x: i32, y: i32, z: i32, side: u8) -> u8
     if cell == REPEATER {
         let sibling = world.variant(sx, sy, sz);
         if repeater_facing_of(sibling) == side && repeater_powered_of(sibling) {
+            return 15;
+        }
+        return 0;
+    }
+    // THE OBSERVER'S OWN GATE (the autopush-127 round — the
+    // isSignalSource arm the getDirectSignal walk answers: javap
+    // ObserverBlock.isSignalSource pc 0-2 the iconst_1 the TRUE the
+    // source family arms, the getDirectSignal = getSignal the dir ==
+    // FACING gate the powered 15 speaks — the observer beside the
+    // comparator's side the dominance arms the same walk serves [the
+    // two vocabularies the DELTA compare answers — the observer's
+    // DIRECTION_NORMAL byte the diode's horizontal compass never
+    // keys], the eye/side the 0 the dark keep)
+    if cell == OBSERVER {
+        let sibling = world.variant(sx, sy, sz);
+        if observer_facing_delta6(observer_facing_of(sibling)) == comparator_facing_delta(side)
+            && observer_powered_of(sibling)
+        {
             return 15;
         }
         return 0;
@@ -2956,6 +3000,134 @@ pub fn repeater_front_output_near(world: &World, x: i32, y: i32, z: i32) -> Opti
     None
 }
 
+/// THE OBSERVER'S OWN KIND SEAT (the autopush-127 round — javap
+/// ObserverBlock the 26.2 jar the whole lane the vanilla law wears:
+/// the DirectionalBlock sibling the comparator's DiodeBlock super the
+/// family's own seat answers, the ONE kind the variant byte the
+/// FACING/POWERED state carries, the SIX-direction facing the
+/// property's own vocabulary speaks).
+pub const OBSERVER: u16 = 771;
+
+pub fn is_observer(id: u16) -> bool {
+    id == OBSERVER
+}
+
+/// THE OBSERVER'S OWN TICK DELAY (javap ObserverBlock.startSignal pc
+/// 29 the 26.2 jar the scheduleTick(pos, this, 2) walk the trigger
+/// banks, the tick walk's own re-schedule pc 65 the same 2 speaks —
+/// the pulse the 2-game-tick beat the vanilla law wears).
+pub const OBSERVER_DELAY: u64 = 2;
+
+/// THE OBSERVER'S OWN VARIANT BYTE LAYOUT (the blockstate's two
+/// properties the one byte banks): the low 3 bits the FACING the
+/// vanilla Direction order speaks (down 0, up 1, north 2, south 3,
+/// west 4, east 5 — the DIRECTION_NORMAL order the barrel lane's own
+/// constants wear, the UP/DOWN pair the 6-directional property the
+/// diode family's horizontal-only byte never carries), the 0x08 bit
+/// the POWERED verdict the pulse cycle banks.
+pub const OBSERVER_FACING_MASK: u8 = 0x07;
+pub const OBSERVER_POWERED_BIT: u8 = 0x08;
+
+/// THE OBSERVER'S OWN VARIANT ENCODE (the two fields the one byte
+/// wears — the facing the low 3 bits keep, the powered bit the pulse
+/// verdict banks).
+pub fn observer_variant(facing: u8, powered: bool) -> u8 {
+    (facing & OBSERVER_FACING_MASK) | (if powered { OBSERVER_POWERED_BIT } else { 0 })
+}
+
+pub fn observer_facing_of(variant: u8) -> u8 {
+    variant & OBSERVER_FACING_MASK
+}
+
+pub fn observer_powered_of(variant: u8) -> bool {
+    variant & OBSERVER_POWERED_BIT != 0
+}
+
+/// THE OBSERVER'S OWN FACING STEP (the vanilla Direction order the
+/// variant byte speaks — down the -y arm, up the +y, north the -z,
+/// south the +z, west the -x, east the +x: the SIX-direction walk the
+/// diode family's horizontal `comparator_facing_delta` fold extends,
+/// the eye cell AND the back cell the ±step pairs answer).
+pub fn observer_facing_delta6(facing: u8) -> (i32, i32, i32) {
+    match facing {
+        0 => (0, -1, 0),  // down
+        1 => (0, 1, 0),   // up
+        2 => (0, 0, -1),  // north
+        3 => (0, 0, 1),   // south
+        4 => (-1, 0, 0),  // west
+        _ => (1, 0, 0),   // east
+    }
+}
+
+/// THE OBSERVER'S OWN PLACEMENT VARIANT (javap ObserverBlock
+/// .getStateForPlacement pc 1-23 the 26.2 jar the
+/// `setValue(FACING, context.getNearestLookingDirection().getOpposite()
+/// .getOpposite())` walk the DOUBLE opposite the look's own direction
+/// answers — the eye the placer's own look faces [the placed observer
+/// watches where the player LOOKS, the output dot the look's own far
+/// side the player reads], the double getOpposite the net identity
+/// the jar's own bytes speak). The pitch quarter the vertical gate
+/// reads (the |pitch| > 45° the dominant axis the look vector's own
+/// law keeps — the barrel lane's own fold serves: the look down the
+/// DOWN eye wears, the look up the UP eye), the horizontal look byte
+/// the DIRECTION_NORMAL order keeps [the look index the
+/// direction_index_from_y_rot decode answers, the NO-opposite law the
+/// furnace arm's +2 fold never wears]. The fresh placement the dark
+/// verdict keeps — the POWERED bit the default state's own zero
+/// speaks.
+pub fn observer_placement_variant(cam_yaw_radians: f32, cam_pitch_radians: f32) -> u8 {
+    let facing = if cam_pitch_radians < -std::f32::consts::FRAC_PI_4 {
+        0u8 // the look down — the eye follows (the nearest DOWN speaks)
+    } else if cam_pitch_radians > std::f32::consts::FRAC_PI_4 {
+        1u8 // the look up
+    } else {
+        let vanilla_yaw = (cam_yaw_radians - std::f32::consts::PI).to_degrees();
+        let look = direction_index_from_y_rot(f64::from(vanilla_yaw));
+        // the look index the [south, west, north, east] grid names —
+        // the DIRECTION_NORMAL byte the LOOK ITSELF the identity fold
+        // answers (south 3, west 4, north 2, east 5)
+        const LOOK_BYTE: [u8; 4] = [3, 4, 2, 5];
+        LOOK_BYTE[look & 3]
+    };
+    observer_variant(facing, false)
+}
+
+/// THE OUTPUT SEED'S OWN STRENGTH (the wire flood's own read — javap
+/// ObserverBlock.getSignal the 26.2 jar the `dir == FACING` gate the
+/// ownSignal walk answers, the getDirectSignal = getSignal the STRONG
+/// law keeps: the observer whose back cell this wire stands on the
+/// powered 15 the flood seeds, the unpowered the 0 the dark seed
+/// keeps, the sides/eye the None the walk refuses). THE OUTPUT'S OWN
+/// CELL the updateNeighborsInFront walk names —
+/// pos.relative(FACING.getOpposite()) the back the reader's -facing
+/// step answers (the same law the comparator/repeater front arms
+/// wear — the SIX-direction delta the eye's own order speaks).
+pub fn observer_back_output_near(world: &World, x: i32, y: i32, z: i32) -> Option<u8> {
+    for (dx, dy, dz) in [
+        (0, 1, 0),
+        (0, -1, 0),
+        (0, 0, -1),
+        (0, 0, 1),
+        (-1, 0, 0),
+        (1, 0, 0),
+    ] {
+        let (nx, ny, nz) = (x + dx, y + dy, z + dz);
+        if world.get(nx, ny, nz) != OBSERVER {
+            continue;
+        }
+        let variant = world.variant(nx, ny, nz);
+        // THE BACK CELL'S OWN LAW: the output = pos.relative(FACING
+        // .getOpposite()) — the reader the back covers the delta
+        // the -facing step answers
+        let (fdx, fdy, fdz) = observer_facing_delta6(observer_facing_of(variant));
+        if (nx - fdx, ny - fdy, nz - fdz) != (x, y, z) {
+            continue;
+        }
+        return Some(if observer_powered_of(variant) { 15 } else { 0 });
+    }
+    None
+}
+
 /// THE COMPARATOR'S OWN SOURCE ARMS (the consumers' weak walk —
 /// javap DiodeBlock.getSignal the dir == FACING gate the front cell
 /// alone the powered output speaks: the cell the comparator's front
@@ -3083,6 +3255,11 @@ fn wire_connectable_dir(kind: u16) -> bool {
         // block answers: the wire the block's sides the pointing
         // law keeps)
         || is_redstone_block(kind)
+        // THE OBSERVER'S OWN SEAT (the autopush-127 round — the
+        // shouldConnectTo walk's isSignalSource arm the source block
+        // answers: the wire the observer's back the pointing law
+        // keeps, the run the observer's 15 the flood seeds)
+        || is_observer(kind)
 }
 
 /// THE WIRE'S OWN PER-SIDE LANE WALK (javap RedStoneWireBlock
@@ -6162,7 +6339,7 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 /// generated tables' own rows the names wire) — the
 /// END_PORTAL
 /// the beyond-table seat the displaced law keeps.
-pub const NAME_OF: [&str; 771] = [
+pub const NAME_OF: [&str; 772] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -6972,6 +7149,7 @@ pub const NAME_OF: [&str; 771] = [
     "comparator",
     "redstone_block",
     "repeater",
+    "observer",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -10004,6 +10182,23 @@ pub fn strong_signal_conductors_near(world: &World, x: i32, y: i32, z: i32) -> b
                 }
                 continue;
             }
+            // THE OBSERVER'S OWN BACK ARM (the autopush-127 round —
+            // javap ObserverBlock.getDirectSignal = getSignal the dir
+            // == FACING gate the powered 15 the pulse bit speaks: the
+            // conductor the observer's back the strong 15 the block
+            // carries — the block-into-block chain the observer's own
+            // output wears, the eye/sides the dark keep)
+            if kind == OBSERVER {
+                let sibling = world.variant(sx, sy, sz);
+                if observer_powered_of(sibling) {
+                    let (fdx, fdy, fdz) =
+                        observer_facing_delta6(observer_facing_of(sibling));
+                    if (sx - fdx, sy - fdy, sz - fdz) == (nx, ny, nz) {
+                        return true;
+                    }
+                }
+                continue;
+            }
             if kind != LEVER_ON && !button_powered(kind) && !plate_powered(kind) {
                 continue;
             }
@@ -12935,6 +13130,14 @@ pub struct World {
     /// entries the mismatch consult banks, the dial the due beat the
     /// DELAY*2 walk stamps, the drain the tick beat's flip serves).
     pub repeater_ticks: Vec<(u64, i32, i32, i32)>,
+
+    /// THE OBSERVER'S OWN QUEUE (the autopush-127 round — the
+    /// comparator's own shape the sibling wears: the (due, x, y, z)
+    /// entries the eye-trigger consult banks, the scheduleTick(2)
+    /// the startSignal walk stamps, the pulse the tick beat's flip
+    /// serves [the ON arm's own +2 tail the off-beat banks], the
+    /// drain the deterministic order the tick walk answers).
+    pub observer_ticks: Vec<(u64, i32, i32, i32)>,
     /// THE BAMBOO'S OWN FALL QUEUE (the dig-side cascade's scheduled
     /// ticks — the fire queue's own shape the walk's one-tick lag
     /// wears): the (due game tick, x, y, z) entries the UNSUPPORTED
@@ -13312,7 +13515,8 @@ impl World {
             torch_ticks: Vec::new(), // the torch's own queue: no consult, no schedule
             detector_ticks: Vec::new(), // the detector's own queue: no cart on the rail, no beat
             comparator_ticks: Vec::new(), // the comparator's own queue: no mismatch, no beat
-            repeater_ticks: Vec::new(), // the repeater's own queue: no mismatch, no beat
+            repeater_ticks: Vec::new(),
+            observer_ticks: Vec::new(), // the repeater's own queue: no mismatch, no beat
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: no extinguish, no record
             bamboo_ticks: Vec::new(), // the bamboo's own queue: no unsupported stalk, no fall
             fire_age: std::collections::HashMap::new(), // the ladder's store: empty
@@ -14634,6 +14838,40 @@ impl World {
     pub fn drain_due_repeater_ticks(&mut self, now: u64) -> Vec<(i32, i32, i32)> {
         let mut due: Vec<(u64, i32, i32, i32)> = Vec::new();
         self.repeater_ticks.retain(|&(at, x, y, z)| {
+            if at <= now {
+                due.push((at, x, y, z));
+                false
+            } else {
+                true
+            }
+        });
+        due.sort();
+        due.into_iter().map(|(_, x, y, z)| (x, y, z)).collect()
+    }
+
+    /// THE OBSERVER'S OWN SCHEDULE (the autopush-127 round — javap
+    /// ObserverBlock.startSignal pc 10-34 the 26.2 jar the
+    /// `!hasScheduledTick(pos, this)` gate the scheduleTick(pos, this,
+    /// 2) walk guards: the pending entry the re-consult refuses, the
+    /// eye-trigger consult + the pulse's own tail the same queue
+    /// banks, the comparator's own dedup walk the sibling wears).
+    pub fn schedule_observer_tick(&mut self, due: u64, x: i32, y: i32, z: i32) {
+        if self
+            .observer_ticks
+            .iter()
+            .any(|&(_, tx, ty, tz)| (tx, ty, tz) == (x, y, z))
+        {
+            return; // the !hasScheduledTick gate the pending entry keeps
+        }
+        self.observer_ticks.push((due, x, y, z));
+    }
+
+    /// THE OBSERVER'S OWN DRAIN (the comparator's own shape the
+    /// sibling wears — the sort the deterministic order the test's
+    /// replay banks, the retain the future ticks keep).
+    pub fn drain_due_observer_ticks(&mut self, now: u64) -> Vec<(i32, i32, i32)> {
+        let mut due: Vec<(u64, i32, i32, i32)> = Vec::new();
+        self.observer_ticks.retain(|&(at, x, y, z)| {
             if at <= now {
                 due.push((at, x, y, z));
                 false
@@ -21228,7 +21466,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the lamp pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 771, "the palette the lamp pair banks");
+        assert_eq!(atlas::N_KINDS, 772, "the palette the lamp pair banks");
         assert!(is_redstone_lamp(REDSTONE_LAMP) && is_redstone_lamp(REDSTONE_LAMP_LIT));
         assert!(!is_redstone_lamp(REDSTONE_WIRE) && !is_redstone_lamp(STONE));
         assert!(!redstone_lamp_lit(REDSTONE_LAMP));
@@ -21329,7 +21567,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the wire pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 771, "the palette the wire pair banks");
+        assert_eq!(atlas::N_KINDS, 772, "the palette the wire pair banks");
         assert!(is_redstone_wire(REDSTONE_WIRE) && is_redstone_wire(REDSTONE_WIRE_ON));
         assert!(!is_redstone_wire(LEVER) && !is_redstone_wire(OAK_PRESSURE_PLATE));
         assert!(!wire_powered(REDSTONE_WIRE));
@@ -21778,7 +22016,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 771, "the palette the graded ladder banks");
+        assert_eq!(atlas::N_KINDS, 772, "the palette the graded ladder banks");
         // THE POWER READ'S OWN ROUND TRIP (the seat the kind the
         // inverse fold answers, the unknown id the None keeps)
         assert_eq!(wire_power_of(REDSTONE_WIRE), Some(0));
@@ -21969,7 +22207,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the planks' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 771, "the palette the planks' twelve banks");
+        assert_eq!(atlas::N_KINDS, 772, "the palette the planks' twelve banks");
         for (i, (name, kind, voice)) in PLANKS.iter().enumerate() {
             let seat = OAK_PLANKS + i as u16;
             assert_eq!(*kind, seat, "the seat the family order banks");
@@ -22061,7 +22299,7 @@ mod tests {
             None,
             "the portal the item lane refuses"
         );
-        assert_eq!(NAME_OF.len(), 771, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 772, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -22115,7 +22353,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kit's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 771, "the palette the kit's six banks");
+        assert_eq!(atlas::N_KINDS, 772, "the palette the kit's six banks");
         for (i, (name, kind, hard)) in KIT.iter().enumerate() {
             let seat = COBBLESTONE + i as u16;
             assert_eq!(*kind, seat, "the seat the stone shelf order banks");
@@ -22205,7 +22443,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kit's growth banks)
-        assert_eq!(NAME_OF.len(), 771, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 772, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -22262,7 +22500,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the shelf's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 771, "the palette the shelf's eight banks");
+        assert_eq!(atlas::N_KINDS, 772, "the palette the shelf's eight banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -22360,7 +22598,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the shelf's growth banks)
-        assert_eq!(NAME_OF.len(), 771, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 772, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -22429,7 +22667,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the cloths' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 771, "the palette the cloths' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 772, "the palette the cloths' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -22543,7 +22781,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the cloths' growth banks)
-        assert_eq!(NAME_OF.len(), 771, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 772, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -22618,7 +22856,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the kilns' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 771, "the palette the kilns' seventeen banks");
+        assert_eq!(atlas::N_KINDS, 772, "the palette the kilns' seventeen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -22730,7 +22968,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the kilns' growth banks)
-        assert_eq!(NAME_OF.len(), 771, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 772, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -22806,7 +23044,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 771, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 772, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -22923,7 +23161,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 771, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 772, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -23008,7 +23246,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the rungs' own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 771, "the palette the rungs' fifteen banks");
+        assert_eq!(atlas::N_KINDS, 772, "the palette the rungs' fifteen banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -23159,7 +23397,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the rungs' growth banks)
-        assert_eq!(NAME_OF.len(), 771, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 772, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -23233,7 +23471,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the ladder's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 771, "the palette the ladder's twenty-two banks");
+        assert_eq!(atlas::N_KINDS, 772, "the palette the ladder's twenty-two banks");
         let tile_id = |name: &str| -> u16 {
             atlas::TILE_NAMES
                 .iter()
@@ -23422,7 +23660,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the ladder's growth banks)
-        assert_eq!(NAME_OF.len(), 771, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 772, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -23483,7 +23721,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the note's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 771, "the palette the note's own banks");
+        assert_eq!(atlas::N_KINDS, 772, "the palette the note's own banks");
         // THE ONE REGISTRY NAME ITS KIND ALONE SPEAKS (the NAME_OF row
         // + the generated KIND_NAMES/REGISTRY_NAMES rows the same
         // entry the three tables keep — no strip law the single kind
@@ -23845,7 +24083,7 @@ mod tests {
         );
         // THE TABLES' OWN ONE COUNT (the palette rows the NAME_OF rows
         // the same 510 the note's growth banks)
-        assert_eq!(NAME_OF.len(), 771, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 772, "the NAME_OF table the one length keeps");
         assert_eq!(
             NAME_OF.len(),
             atlas::N_KINDS,
@@ -23886,8 +24124,8 @@ mod tests {
             "the contiguous run the thirteen seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 771, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 771, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 772, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 772, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in OAK_FENCE..=NETHER_BRICK_FENCE {
@@ -24300,8 +24538,8 @@ mod tests {
             "the contiguous run the thirty-two seats wear"
         );
         assert_eq!(END_PORTAL, 510, "the displaced seat the family banks");
-        assert_eq!(atlas::N_KINDS, 771, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 771, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 772, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 772, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in COBBLESTONE_WALL..=SULFUR_BRICK_WALL {
@@ -24640,8 +24878,8 @@ mod tests {
             "the contiguous run the seventeen seats wear"
         );
         assert_eq!(SULFUR_BRICK_WALL, 542, "the wall family the tail answers");
-        assert_eq!(atlas::N_KINDS, 771, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 771, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 772, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 772, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in GLASS..=BLACK_STAINED_GLASS {
@@ -25342,8 +25580,8 @@ mod tests {
             "the pane run the seventeen seats wear"
         );
         assert_eq!(BLACK_STAINED_GLASS, 559, "the glass family the tail answers");
-        assert_eq!(atlas::N_KINDS, 771, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 771, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 772, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 772, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in GLASS_PANE..=IRON_BARS {
@@ -25644,8 +25882,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_BARS, 585,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 771, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 771, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 772, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 772, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in COPPER_BARS..=WAXED_OXIDIZED_COPPER_BARS {
@@ -25965,8 +26203,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_CHAIN, 594,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 771, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 771, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 772, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 772, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in IRON_CHAIN..=WAXED_OXIDIZED_COPPER_CHAIN {
@@ -26264,8 +26502,8 @@ mod tests {
             WAXED_OXIDIZED_COPPER_LANTERN, 604,
             "the waxed tail the family's last rung keeps"
         );
-        assert_eq!(atlas::N_KINDS, 771, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 771, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 772, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 772, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in LANTERN..=WAXED_OXIDIZED_COPPER_LANTERN {
@@ -26744,8 +26982,8 @@ mod tests {
             DEEPSLATE_BRICK_STAIRS, 668,
             "the deepslate brick row the family's last seat keeps"
         );
-        assert_eq!(atlas::N_KINDS, 771, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 771, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 772, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 772, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in OAK_STAIRS..=DEEPSLATE_BRICK_STAIRS {
@@ -27240,8 +27478,8 @@ mod tests {
             DEEPSLATE_BRICK_SLAB, 736,
             "the deepslate brick row the family's last seat keeps"
         );
-        assert_eq!(atlas::N_KINDS, 771, "the palette the family banks");
-        assert_eq!(NAME_OF.len(), 771, "the NAME_OF table the one length keeps");
+        assert_eq!(atlas::N_KINDS, 772, "the palette the family banks");
+        assert_eq!(NAME_OF.len(), 772, "the NAME_OF table the one length keeps");
         // THE ONE REGISTRY NAME EACH KIND ALONE SPEAKS (the generated
         // rows the same entry the three tables keep)
         for k in RESIN_BRICK_SLAB..=DEEPSLATE_BRICK_SLAB {
@@ -27543,7 +27781,7 @@ mod tests {
             WAXED_OXIDIZED_COPPER_CHEST, 747,
             "the waxed oxidized rung the ladder banks"
         );
-        assert_eq!(NAME_OF.len(), 771, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 772, "the NAME_OF table the one length keeps");
         for k in CHEST_KINDS {
             assert!(
                 (CHEST..=WAXED_OXIDIZED_COPPER_CHEST).contains(&k),
@@ -28011,7 +28249,7 @@ mod tests {
         // THE SEAT'S OWN BANK (the contiguous tail the append-only
         // law keeps — the chest family the predecessor answers)
         assert_eq!(BARREL, 748, "the barrel its tail seat keeps");
-        assert_eq!(NAME_OF.len(), 771, "the NAME_OF table the one length keeps");
+        assert_eq!(NAME_OF.len(), 772, "the NAME_OF table the one length keeps");
         assert!(is_barrel(BARREL), "the barrel the family predicate keeps");
         assert!(!is_barrel(CHEST), "the chest the predicate refuses");
         // THE VARIANT PACK'S OWN ROUNDTRIP (the facing three bits +
@@ -28159,7 +28397,7 @@ mod tests {
             END_PORTAL, 510,
             "the displaced seat the torch pair's own tail banks"
         );
-        assert_eq!(atlas::N_KINDS, 771, "the palette the torch pair banks");
+        assert_eq!(atlas::N_KINDS, 772, "the palette the torch pair banks");
         assert!(is_redstone_torch(REDSTONE_TORCH) && is_redstone_torch(REDSTONE_TORCH_OFF));
         assert!(!is_redstone_torch(TORCH) && !is_redstone_torch(LEVER));
         assert!(redstone_torch_lit(REDSTONE_TORCH));
@@ -28300,7 +28538,7 @@ mod tests {
         assert_eq!(REDSTONE_WALL_TORCH, 324);
         assert_eq!(REDSTONE_WALL_TORCH_OFF, 325);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 771, "the palette the wall pair banks");
+        assert_eq!(atlas::N_KINDS, 772, "the palette the wall pair banks");
         assert!(
             is_redstone_torch(REDSTONE_WALL_TORCH) && is_redstone_torch(REDSTONE_WALL_TORCH_OFF),
             "the wall pair the family's tail banks"
@@ -28545,7 +28783,7 @@ mod tests {
         assert_eq!(OAK_TRAPDOOR_OPEN, 327);
         assert_eq!(END_PORTAL, 510);
         assert_eq!(
-            atlas::N_KINDS, 771,
+            atlas::N_KINDS, 772,
             "the palette the trapdoor pair banks"
         );
         assert_eq!(OAK_TRAPDOOR + 1, OAK_TRAPDOOR_OPEN, "the +1 mate wears");
@@ -28699,7 +28937,7 @@ mod tests {
         assert_eq!(END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-            771,
+            772,
             "the palette the gate pair banks"
         );
         assert_eq!(OAK_FENCE_GATE + 1, OAK_FENCE_GATE_OPEN, "the +1 mate wears");
@@ -28917,7 +29155,7 @@ mod tests {
         assert_eq!(WARPED_TRAPDOOR, 348);
         assert_eq!(WARPED_TRAPDOOR_OPEN, 349);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 771, "the palette the ladder banks");
+        assert_eq!(atlas::N_KINDS, 772, "the palette the ladder banks");
         // THE CONTIGUITY'S OWN LAW (the 22 kinds the range covers —
         // the neighbors the family fn refuses)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -29031,7 +29269,7 @@ mod tests {
         assert_eq!(IRON_TRAPDOOR, 366);
         assert_eq!(IRON_TRAPDOOR_OPEN, 367);
         assert_eq!(END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 771, "the palette the metal rungs bank");
+        assert_eq!(atlas::N_KINDS, 772, "the palette the metal rungs bank");
         // THE CONTIGUITY'S OWN LAW (the 42 kinds the range covers —
         // the waxed pairs the ±1 mate the parity answers)
         for (i, &k) in TRAPDOOR_KINDS.iter().enumerate() {
@@ -29402,7 +29640,7 @@ mod tests {
                 "kind {id} the right quartet the base row wears"
             );
         }
-        assert_eq!(NAME_OF.len(), 771, "the palette rows the cross-check keeps");
+        assert_eq!(NAME_OF.len(), 772, "the palette rows the cross-check keeps");
         // THE ITEM FORM THE REGISTRATION CARRIES (BlockItemIds.OAK_DOOR
         // the ITEM FORM HAS — the placeable lookup the FIRST row's
         // position answers: the closed lower the item places)
@@ -31299,6 +31537,251 @@ mod tests {
         assert!(
             repeater_locked_at(&w, rx, ry, rz),
             "the side repeater the lock the sibling answers"
+        );
+    }
+
+    /// THE OBSERVER'S OWN VARIANT AND PLACEMENT WALK (the autopush-127
+    /// round — javap ObserverBlock the 26.2 jar the two-property
+    /// variant the one byte banks [the SIX-direction facing the
+    /// DIRECTION_NORMAL order speaks], the placement the
+    /// getNearestLookingDirection().getOpposite().getOpposite() walk
+    /// the DOUBLE opposite the look's own eye stamps, the pitch
+    /// quarter the vertical gate reads, the full cube the DEFAULT
+    /// collision the body walks around).
+    #[test]
+    fn the_observer_the_variant_the_placement_the_kind_wear() {
+        // THE VARIANT ROUND TRIP (the two fields the one byte wears —
+        // the six facings the low 3 bits bank, the powered bit the
+        // pulse verdict keeps)
+        for facing in 0..6u8 {
+            let v = observer_variant(facing, true);
+            assert_eq!(observer_facing_of(v), facing, "the facing {facing} the byte keeps");
+            assert!(observer_powered_of(v), "the powered bit the byte keeps");
+            let dark = observer_variant(facing, false);
+            assert_eq!(observer_facing_of(dark), facing, "the facing the dark byte keeps");
+            assert!(!observer_powered_of(dark), "the dark byte the quiet keep");
+        }
+        // THE FACING STEP'S OWN SIX (the vanilla Direction order the
+        // deltas speak — the eye cell AND the back cell the ±step
+        // pairs answer)
+        assert_eq!(observer_facing_delta6(0), (0, -1, 0), "the down the -y arm");
+        assert_eq!(observer_facing_delta6(1), (0, 1, 0), "the up the +y arm");
+        assert_eq!(observer_facing_delta6(2), (0, 0, -1), "the north the -z arm");
+        assert_eq!(observer_facing_delta6(3), (0, 0, 1), "the south the +z arm");
+        assert_eq!(observer_facing_delta6(4), (-1, 0, 0), "the west the -x arm");
+        assert_eq!(observer_facing_delta6(5), (1, 0, 0), "the east the +x arm");
+        // THE PLACEMENT'S OWN LOOK LAW (the double getOpposite the net
+        // identity — the east look the EAST eye the no-opposite fold
+        // answers [the diode family's own west the look's opposite
+        // wears, the observer the LOOK the eye follows], the fresh
+        // placement the dark verdict keeps)
+        let east_look = std::f32::consts::PI - std::f32::consts::FRAC_PI_2;
+        let v = observer_placement_variant(east_look, 0.0);
+        assert_eq!(observer_facing_of(v), 5, "the east look the east EYE keeps");
+        assert!(!observer_powered_of(v), "the fresh dark verdict keeps");
+        // THE PITCH QUARTER THE VERTICAL GATE (the look down the DOWN
+        // eye wears, the look up the UP, the shallow pitch the
+        // horizontal byte keeps — the barrel lane's own ±45° fold the
+        // dominant-axis law speaks)
+        let v = observer_placement_variant(0.0, -0.9);
+        assert_eq!(observer_facing_of(v), 0, "the look down the DOWN eye wears");
+        let v = observer_placement_variant(0.0, 0.9);
+        assert_eq!(observer_facing_of(v), 1, "the look up the UP eye wears");
+        let v = observer_placement_variant(0.0, -0.6);
+        assert_eq!(observer_facing_of(v), 2, "the shallow look the horizontal byte keeps");
+        // THE FULL CUBE THE DEFAULT COLLISION KEEPS (the body the
+        // block walks AROUND — the DiodeBlock family's Empty row the
+        // observer never wears)
+        assert!(
+            matches!(collision_shape(OBSERVER), CollisionShape::Full),
+            "the observer cell the full cube keeps"
+        );
+        // THE ITEM PAIRING'S OWN SEAT (the jar's own registry the
+        // item the "observer" name carries — the block AND item the
+        // same word wear, the repeater's divergence the family's own
+        // exception never speaks)
+        assert_eq!(
+            World::placeable_block("observer"),
+            Some(OBSERVER),
+            "the item the BlockItem pairing places"
+        );
+        // THE DIG ROW'S OWN REGISTRY SEAT (the strength(3.0) the row
+        // answers — the mineable pickaxe the mineable table banks)
+        let (hard, _) = crate::dig::DigState::block_dig_row(OBSERVER);
+        assert!(
+            (hard - 3.0).abs() < 1e-4,
+            "the observer the 3.0 strength the dig row wears"
+        );
+        // THE LOOT NAME'S OWN SEAT (the jar's loot_table/blocks/
+        // observer.json the file stem the generated table's key wears
+        // — the self-drop the roll answers)
+        assert!(
+            mc_registry::generated::block_drops::drops("observer").is_some(),
+            "the loot table's own key the drops table banks"
+        );
+    }
+
+    /// THE OBSERVER'S OWN PULSE AND SIGNAL WALK (the autopush-127
+    /// round — javap ObserverBlock the 26.2 jar the trigger the
+    /// scheduleTick(2) entry banks, the tick beat the POWERED flip
+    /// the +2 tail serves, the back cell the powered 15 the wire
+    /// flood AND the consumers AND the strong lane the same walk
+    /// serves, the back diode the input read the sibling's own 15
+    /// answers, the repeater's sides the diodes-only law the
+    /// non-diode seat refuses).
+    #[test]
+    fn the_observer_the_pulse_the_signal_the_back_wear() {
+        let mut w = World::new(3, 11);
+        let (ox, oy, oz) = (4i32, 10i32, 4i32);
+        for x in 0..9 {
+            for z in 0..9 {
+                w.set(x, 9, z, STONE);
+            }
+        }
+        // THE EYE THE BACK THE GEOMETRY KEEPS (the facing east — the
+        // eye cell +x the watch wears, the back cell -x the output
+        // answers)
+        w.set(ox, oy, oz, OBSERVER);
+        w.set_variant(ox, oy, oz, observer_variant(5, false));
+        // THE DARK STATE THE BACK THE SILENCE KEEPS
+        w.set(ox - 1, oy, oz, REDSTONE_WIRE);
+        assert_eq!(
+            wire_source_strength_near(&w, ox - 1, oy, oz),
+            0,
+            "the unpowered back the 0 the dark seed keeps"
+        );
+        // THE PULSE'S OWN PAIR (the trigger consult the +2 entry
+        // banks, the dedup the pending re-consult refuses, the drain
+        // the deterministic order answers)
+        w.schedule_observer_tick(2, ox, oy, oz);
+        w.schedule_observer_tick(2, ox, oy, oz);
+        assert_eq!(w.observer_ticks.len(), 1, "the dedup the one entry keeps");
+        assert_eq!(
+            w.drain_due_observer_ticks(1),
+            Vec::<(i32, i32, i32)>::new(),
+            "the future tick the retain keeps"
+        );
+        assert_eq!(
+            w.drain_due_observer_ticks(2),
+            vec![(ox, oy, oz)],
+            "the due tick the drain answers"
+        );
+        // THE ON BEAT THE FLIP BANKS (the tick walk the POWERED bit
+        // sets — the back cell the 15 the flood seeds, the consumer's
+        // walk the same arm reads)
+        w.set_variant(ox, oy, oz, observer_variant(5, true));
+        assert_eq!(
+            wire_source_strength_near(&w, ox - 1, oy, oz),
+            15,
+            "the powered back the 15 the seed speaks"
+        );
+        assert!(
+            redstone_signal_at(&w, ox - 1, oy, oz),
+            "the consumer's walk the back arm answers"
+        );
+        // THE OFF-BEAT'S OWN TAIL (the ON arm's scheduleTick(2) the
+        // queue banks — the drain the flip's own pair answers)
+        w.schedule_observer_tick(4, ox, oy, oz);
+        assert_eq!(
+            w.drain_due_observer_ticks(4),
+            vec![(ox, oy, oz)],
+            "the pulse tail the drain answers"
+        );
+        w.set_variant(ox, oy, oz, observer_variant(5, false));
+        assert_eq!(
+            wire_source_strength_near(&w, ox - 1, oy, oz),
+            0,
+            "the off beat the 0 the dark seed keeps"
+        );
+        // THE STRONG LANE THE BACK CONDUCTOR CARRIES (the stone block
+        // the back cell the strong 15 the chain wears — the
+        // getDirectSignal = getSignal the strong law speaks)
+        w.set_variant(ox, oy, oz, observer_variant(5, true));
+        w.set(ox - 1, oy, oz, STONE);
+        assert!(
+            strong_signal_conductors_near(&w, ox - 2, oy, oz),
+            "the cell beside the back conductor the strong verdict answers"
+        );
+        w.set(ox - 1, oy, oz, AIR);
+        // THE BACK REPEATER THE INPUT READ THE SIBLING ANSWERS (the
+        // same-direction pair the observer's back the diode's input
+        // cell covers — the powered observer the repeater's back read
+        // the 15 speaks, the DELTA compare the two vocabularies
+        // answers)
+        w.set(ox - 1, oy, oz, REPEATER);
+        w.set_variant(ox - 1, oy, oz, repeater_variant(1, false, 1, false));
+        assert!(
+            repeater_should_turn_on(&w, ox - 1, oy, oz),
+            "the sibling chain the observer's 15 the repeater back reads"
+        );
+        // THE BACK COMPARATOR THE INPUT READ THE SIBLING ANSWERS (the
+        // same walk the comparator's own arm serves — the powered
+        // observer the output the 15 the cache banks)
+        w.set(ox - 1, oy, oz, COMPARATOR);
+        w.set_variant(ox - 1, oy, oz, comparator_variant(1, false, false, 0));
+        assert_eq!(
+            comparator_output_signal(&w, ox - 1, oy, oz),
+            15,
+            "the sibling chain the observer's 15 the comparator back reads"
+        );
+        // THE REPEATER'S SIDES THE DIODES-ONLY LAW REFUSES (the
+        // observer the side seat the non-diode the 0 keeps — the
+        // getControlInputSignal's diodesOnly arm the family's own law)
+        w.set(ox, oy, oz + 1, REPEATER);
+        w.set_variant(ox, oy, oz + 1, repeater_variant(2, false, 1, false));
+        assert!(
+            !repeater_should_turn_on(&w, ox, oy, oz + 1),
+            "the observer side the diodes-only walk refuses"
+        );
+    }
+
+    /// THE OBSERVER'S OWN VERTICAL WALK (the autopush-127 round — the
+    /// SIX-direction facing the diode family's horizontal-only
+    /// vocabulary extends: the eye down/up the vertical pairs the
+    /// back-output seed answers, the strong lane's vertical arm the
+    /// same law wears, the placement pitch the vertical byte stamps).
+    #[test]
+    fn the_observer_the_vertical_pairs_the_seed_wears() {
+        let mut w = World::new(3, 13);
+        let (ox, oy, oz) = (4i32, 10i32, 4i32);
+        for x in 0..9 {
+            for z in 0..9 {
+                w.set(x, 9, z, STONE);
+            }
+        }
+        // THE EYE DOWN THE BACK UP THE VERTICAL PAIR (the facing
+        // down — the eye cell -y the watch wears, the back cell +y
+        // the output answers)
+        w.set(ox, oy, oz, OBSERVER);
+        w.set_variant(ox, oy, oz, observer_variant(0, true));
+        w.set(ox, oy + 1, oz, REDSTONE_WIRE);
+        assert_eq!(
+            wire_source_strength_near(&w, ox, oy + 1, oz),
+            15,
+            "the vertical back the 15 the seed speaks"
+        );
+        // THE EYE UP THE BACK DOWN THE MIRROR PAIR (the facing up —
+        // the back cell -y the output the same law wears)
+        w.set_variant(ox, oy, oz, observer_variant(1, true));
+        assert_eq!(
+            wire_source_strength_near(&w, ox, oy + 1, oz),
+            0,
+            "the eye-side cell the seed never answers"
+        );
+        w.set(ox, oy + 1, oz, AIR);
+        w.set(ox, oy - 1, oz, REDSTONE_WIRE);
+        assert_eq!(
+            wire_source_strength_near(&w, ox, oy - 1, oz),
+            15,
+            "the down back the 15 the mirror pair speaks"
+        );
+        // THE STRONG LANE THE VERTICAL CONDUCTOR CARRIES (the stone
+        // block the below cell the strong 15 the chain wears — the
+        // block-into-block chain the vertical pair wears)
+        w.set(ox, oy - 1, oz, STONE);
+        assert!(
+            strong_signal_conductors_near(&w, ox, oy - 2, oz),
+            "the cell beneath the back conductor the strong verdict answers"
         );
     }
 }

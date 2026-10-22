@@ -2119,6 +2119,221 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     }
                     continue;
                 }
+                // THE OBSERVER'S OWN ELEMENT LANE (the autopush-127
+                // round — the ONE full-cube bake the jar's own
+                // blockstates/observer.json rows wear: block/observer
+                // the twelve rows' model, the (powered) bit the
+                // per-quad verdict's #bottom seat swaps to the _on
+                // back tile [the observer_on parent-override the bake
+                // never derives — the parent's ONE texture swap the
+                // verdict reads]). THE PER-QUAD TILE VERDICT the
+                // merged texture map's own names answer: the #top ref
+                // the observer_top tile banks [the down/up faces the
+                // model's own rows speak], the #side ref the
+                // observer_side keeps, the #front ref the eye tile the
+                // FACING face wears, the #bottom ref the back(_on)
+                // tile the output face swaps. THE FACING'S OWN Y-TABLE
+                // the blockstates/observer.json rows speak — facing
+                // north the y=0 row answers [the model's #front the
+                // NORTH face at rest the comparator's south-anchored
+                // table the mirror wears], east y=90, south y=180,
+                // west y=270. THE X-ROWS the vertical pair speaks —
+                // facing down the x=90 row [the model's north face the
+                // DOWN face the -90° X-fold answers], facing up the
+                // x=270 [the +90° fold the eye up wears], the folds'
+                // own order the vertical rows the x-fold alone answers
+                // [the blockstate rows never mix the pair]. THE
+                // ALL-SIX CULLFACES the full-cube law keeps — every
+                // face the neighbor's solid verdict culls [the model's
+                // own cullface rows the jar speaks, the comparator's
+                // plate the down-only law the cube lane extends]. The
+                // `shade: true` the model carries — the FACE_SHADE
+                // term the quad's own direction reads, the lightmap
+                // the per-corner fold answers.
+                if crate::world::is_observer(id) {
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
+                    });
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
+                    });
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [
+                            a[0] as f32 / 255.0,
+                            a[1] as f32 / 255.0,
+                            a[2] as f32 / 255.0,
+                        ]
+                    });
+                    let (cell_sky, cell_block) = match light {
+                        Some(l) => {
+                            let (s, b) = cell_layers(l, world.chunks_per_side, wx, wy, wz);
+                            (s.map(|v| v as f32), b.map(|v| v as f32))
+                        }
+                        None => (None, None),
+                    };
+                    // the no-atlas boot's own default — the tile's own
+                    // pixels speak, the flat palette the missing row
+                    // keeps (the candle path's own verdict)
+                    let tile = if (id as usize) < atlas::N_KINDS {
+                        atlas::FACE_TILES[id as usize][2]
+                    } else {
+                        atlas::TILE_NONE
+                    };
+                    let base = if tile == atlas::TILE_NONE {
+                        crate::colors::palette_color(id, 2)
+                            .or_else(|| lut.and_then(|l| l.color(id, 2)))
+                            .unwrap_or_else(|| default_color(id, 2))
+                    } else {
+                        [1.0; 3]
+                    };
+                    let variant = world.variant(wx, wy, wz);
+                    let powered = crate::world::observer_powered_of(variant);
+                    let facing = crate::world::observer_facing_of(variant);
+                    let quads = observer_model_quads();
+                    // THE Y-TABLE THE HORIZONTAL ROWS SPEAK (the
+                    // blockstate's own turns the quarter folds keep) —
+                    // THE X-FOLD THE VERTICAL PAIR (the down the -90°
+                    // the x=90 row answers, the up the +90° the x=270
+                    // row wears)
+                    let (turns, x_fold): (f32, Option<f32>) = match facing {
+                        0 => (0.0, Some(-std::f32::consts::FRAC_PI_2)), // down x=90
+                        1 => (0.0, Some(std::f32::consts::FRAC_PI_2)),  // up x=270
+                        2 => (0.0, None),                               // north y=0
+                        3 => (2.0, None),                               // south y=180
+                        4 => (3.0, None),                               // west y=270
+                        _ => (1.0, None),                               // east y=90
+                    };
+                    let (sn, cs) = (turns * std::f32::consts::FRAC_PI_2).sin_cos();
+                    let (xs, xc) = match x_fold {
+                        Some(a) => a.sin_cos(),
+                        None => (0.0f32, 1.0f32),
+                    };
+                    for q in quads {
+                        // THE ALL-SIX CULL'S OWN READ (the full-cube
+                        // law the neighbor's face the solid render
+                        // answers — the cullface the quad's own
+                        // direction names)
+                        if let Some(cf) = q.cullface {
+                            let (ox, oy, oz) = match cf {
+                                mc_registry::element_quads::Direction::Down => (0, -1, 0),
+                                mc_registry::element_quads::Direction::Up => (0, 1, 0),
+                                mc_registry::element_quads::Direction::North => (0, 0, -1),
+                                mc_registry::element_quads::Direction::South => (0, 0, 1),
+                                mc_registry::element_quads::Direction::West => (-1, 0, 0),
+                                mc_registry::element_quads::Direction::East => (1, 0, 0),
+                            };
+                            if !is_transparent(world.get(wx + ox, wy + oy, wz + oz)) {
+                                continue;
+                            }
+                        }
+                        // THE PER-QUAD TILE'S OWN VERDICT (the resolved
+                        // texture name the derive walk carries — the
+                        // #bottom swap the powered bit's own seat banks)
+                        let tile = match q.texture {
+                            "block/observer_top" => atlas::TILE_OBSERVER_TOP,
+                            "block/observer_side" => atlas::TILE_OBSERVER_SIDE,
+                            "block/observer_front" => atlas::TILE_OBSERVER_FRONT,
+                            "block/observer_back" => {
+                                if powered {
+                                    atlas::TILE_OBSERVER_BACK_ON
+                                } else {
+                                    atlas::TILE_OBSERVER_BACK
+                                }
+                            }
+                            _ => tile,
+                        };
+                        // THE SHADE'S OWN SEAT (the model's shade:true
+                        // the face direction's own multiplier reads —
+                        // the mesher's face order the Cull enum order
+                        // the map wears)
+                        let shade = match q.direction {
+                            mc_registry::element_quads::Direction::East => FACE_SHADE[0],
+                            mc_registry::element_quads::Direction::West => FACE_SHADE[1],
+                            mc_registry::element_quads::Direction::Up => FACE_SHADE[2],
+                            mc_registry::element_quads::Direction::Down => FACE_SHADE[3],
+                            mc_registry::element_quads::Direction::South => FACE_SHADE[4],
+                            mc_registry::element_quads::Direction::North => FACE_SHADE[5],
+                        };
+                        let mut pts = [[0f32; 3]; 4];
+                        let mut colors = [[0f32; 3]; 4];
+                        let mut uvs = [[0f32; 2]; 4];
+                        for (i, v) in q.vertices.iter().enumerate() {
+                            // THE FOLDS' OWN ORDER (the vertical rows
+                            // the x-fold alone answers — the cell-center
+                            // X-rotation the (y, z) pair wears — then
+                            // the horizontal y-rot the facing turns
+                            // speak, the vanilla x-then-y compose the
+                            // blockstate rows keep)
+                            let mut py = v[1];
+                            let mut pz = v[2];
+                            if x_fold.is_some() {
+                                let dy = v[1] - 0.5;
+                                let dz = v[2] - 0.5;
+                                py = 0.5 + dy * xc - dz * xs;
+                                pz = 0.5 + dy * xs + dz * xc;
+                            }
+                            let rx = 0.5 + (v[0] - 0.5) * cs - (pz - 0.5) * sn;
+                            let rz = 0.5 + (v[0] - 0.5) * sn + (pz - 0.5) * cs;
+                            pts[i] = [wx as f32 + rx, wy as f32 + py, wz as f32 + rz];
+                            uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
+                            let lm = lightmap_combine(
+                                cell_sky,
+                                cell_block,
+                                sky_factor,
+                                sky_tint,
+                                ambient,
+                                block_tint,
+                                night_vision,
+                                world.night_vision_factor,
+                                world.darkness_scale,
+                            );
+                            colors[i] = [
+                                base[0] * shade * lm[0],
+                                base[1] * shade * lm[1],
+                                base[2] * shade * lm[2],
+                            ];
+                        }
+                        out.push(Quad {
+                            pts,
+                            colors,
+                            uvs,
+                            tile,
+                            translucent: false,
+                            per_texel_alpha: false,
+                        });
+                    }
+                    continue;
+                }
                 // THE CANDLE PAIR'S OWN ELEMENT LANE (the autopush-522
                 // round — the canLight consult's own kinds finally
                 // RENDERS). blockstates/candle.json's one-candle rows:
@@ -6658,6 +6873,23 @@ fn repeater_model_quads(
     })
 }
 
+/// THE OBSERVER'S OWN MODEL BAKE (the autopush-127 round — the ONE
+/// full-cube chain the jar's own blockstates/observer.json rows name:
+/// block/observer the twelve rows' model the dark AND lit states
+/// wear, the observer_on parent-override the bake never derives —
+/// the parent's ONE texture swap [#bottom -> block/observer_back_on]
+/// the per-quad verdict's own (powered) seat reads). The resolved
+/// texture refs the per-quad verdict reads (#top the observer_top
+/// tile, #side the observer_side, #front the eye, #bottom the
+/// back(_on)). The failed derive the honest empty slice keeps.
+fn observer_model_quads() -> &'static [mc_registry::element_quads::Quad] {
+    static MODEL: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    MODEL.get_or_init(|| {
+        mc_registry::element_quads::derive_model_inherited("block/observer").unwrap_or_default()
+    })
+}
+
 /// THE TRAPDOOR LADDER'S OWN MODEL BAKES (the autopush-669 round —
 /// the per-stem chains the registry's derive walk resolves, the oak
 /// round's own cache pattern the wood rungs wear): the CLOSED kinds
@@ -8409,6 +8641,7 @@ mod tests {
             detector_ticks: Vec::new(),                    // the detector's own queue: empty
             comparator_ticks: Vec::new(),
             repeater_ticks: Vec::new(),
+            observer_ticks: Vec::new(),
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(),  // the bamboo's own queue: empty
             chunks: vec![vec![AIR; CHUNK_X * CHUNK_Y * CHUNK_Z]],
@@ -10743,6 +10976,128 @@ mod tests {
         assert!(
             on_names.contains("block/redstone_torch"),
             "the lit torches the lit tile names"
+        );
+    }
+
+    /// THE OBSERVER'S OWN BAKE AND LANE (the autopush-127 round — the
+    /// ONE full-cube bake the jar's own model rows wear, the resolved
+    /// names the per-quad verdict reads, the all-six cullfaces the
+    /// cube law keeps, the per-face tiles the facing byte picks, the
+    /// powered back the verdict's #bottom seat swaps).
+    #[test]
+    fn the_observer_bakes_the_full_cube_the_tile_verdicts_wear() {
+        use mc_registry::generated::atlas as gen_atlas;
+        // THE BAKE'S OWN SHAPE (the one full-cube chain the six faces
+        // the jar's own model speaks)
+        let quads = observer_model_quads();
+        assert_eq!(quads.len(), 6, "the full cube the six faces banks");
+        // THE RESOLVED NAMES THE PER-QUAD VERDICT READS (the #top/
+        // #side/#front/#bottom refs the merged map answers)
+        let names: std::collections::BTreeSet<&str> = quads.iter().map(|q| q.texture).collect();
+        for want in [
+            "block/observer_top",
+            "block/observer_side",
+            "block/observer_front",
+            "block/observer_back",
+        ] {
+            assert!(names.contains(want), "the {want} ref the derive answers");
+        }
+        // THE ALL-SIX CULLFACES THE CUBE LAW KEEPS (the jar's own
+        // model rows the cullface pairs speak)
+        for cf in [
+            mc_registry::element_quads::Direction::Down,
+            mc_registry::element_quads::Direction::Up,
+            mc_registry::element_quads::Direction::North,
+            mc_registry::element_quads::Direction::South,
+            mc_registry::element_quads::Direction::West,
+            mc_registry::element_quads::Direction::East,
+        ] {
+            assert!(
+                quads.iter().any(|q| q.cullface == Some(cf)),
+                "the {cf:?} face the cullface law keeps"
+            );
+        }
+        // THE MESHED CELL THE PER-FACE TILES THE FACING BYTE PICKS
+        // (the facing east — the east face the eye tile wears, the
+        // west face the back keeps, the up face the top tile, the
+        // flanks the side tile, the down face the floor culls)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, STONE);
+        put(&mut w, 8, 9, 8, crate::world::OBSERVER);
+        w.set_variant(8, 9, 8, crate::world::observer_variant(5, false));
+        let q = mesh_chunk(&w, 0, 0, None);
+        // THE CELL'S OWN SELECT (the quads the observer's own bounds
+        // bank — the stone seat's top the y=9.0 plane the all-points
+        // law refuses, the observer's faces the >9.0 arm answers)
+        let cell: Vec<_> = q
+            .iter()
+            .filter(|quad| quad.pts.iter().any(|p| p[1] > 9.0 + 1e-4))
+            .collect();
+        assert_eq!(
+            cell.len(),
+            5,
+            "the six faces the culled bottom the five keeps"
+        );
+        // THE PLANE'S OWN PROBE (the quad the WHOLE face the plane
+        // covers — the all-four-points law the axis probe keeps)
+        let plane_tile = |axis: usize, value: f32| -> u16 {
+            cell.iter()
+                .find(|quad| quad.pts.iter().all(|p| (p[axis] - value).abs() < 1e-4))
+                .map(|quad| quad.tile)
+                .unwrap_or(u16::MAX)
+        };
+        assert_eq!(
+            plane_tile(0, 9.0),
+            gen_atlas::TILE_OBSERVER_FRONT,
+            "the east face the eye tile the FACING arm wears"
+        );
+        assert_eq!(
+            plane_tile(0, 8.0),
+            gen_atlas::TILE_OBSERVER_BACK,
+            "the west face the back tile the output arm wears"
+        );
+        assert_eq!(
+            plane_tile(1, 10.0),
+            gen_atlas::TILE_OBSERVER_TOP,
+            "the up face the top tile the model's own rows wear"
+        );
+        // THE FLANKS THE SIDE TILE (the north face the z=8.0 plane
+        // the side tile answers)
+        assert_eq!(
+            plane_tile(2, 8.0),
+            gen_atlas::TILE_OBSERVER_SIDE,
+            "the flank the side tile the model's own rows wear"
+        );
+        // THE POWERED BACK THE VERDICT SWAPS (the #bottom seat the
+        // _on tile the lit pulse wears — the eye/top/side tiles the
+        // same verdict keeps)
+        let mut w2 = empty_world();
+        put(&mut w2, 8, 8, 8, STONE);
+        put(&mut w2, 8, 9, 8, crate::world::OBSERVER);
+        w2.set_variant(8, 9, 8, crate::world::observer_variant(5, true));
+        let q2 = mesh_chunk(&w2, 0, 0, None);
+        let cell2: Vec<_> = q2
+            .iter()
+            .filter(|quad| quad.pts.iter().any(|p| p[1] > 9.0 + 1e-4))
+            .collect();
+        let west: Vec<_> = cell2
+            .iter()
+            .filter(|quad| quad.pts.iter().all(|p| (7.99..=8.01).contains(&p[0])))
+            .collect();
+        assert_eq!(west.len(), 1, "the west face the one quad keeps");
+        assert_eq!(
+            west[0].tile,
+            gen_atlas::TILE_OBSERVER_BACK_ON,
+            "the powered back the _on tile the verdict swaps"
+        );
+        let east: Vec<_> = cell2
+            .iter()
+            .filter(|quad| quad.pts.iter().all(|p| (8.99..=9.01).contains(&p[0])))
+            .collect();
+        assert_eq!(
+            east[0].tile,
+            gen_atlas::TILE_OBSERVER_FRONT,
+            "the powered eye the same front tile keeps"
         );
     }
 
