@@ -1020,3 +1020,93 @@ Stage Summary:
   own BE the vanilla answer), the dropper/dispenser shot lanes
   (the observer's classic feed), the max-stack table the 16/1
   items the fill formula's own limit wears.
+
+---
+Task ID: autopush-133
+Agent: cron autopush (Job 384925, 2026-10-22 ~20:21 +08:00)
+Task: the standing autopush round — the environment held (repo clean @
+6a36819 v0.3.856 + mirror, cargo 1.99.1 + the caches alive). THE LANE
+the 132 entry's next-candidates tail named: THE MAX-STACK TABLE THE
+FILL FORMULA'S OWN LIMIT — the comparator's container read the per-slot
+fraction the ITEM'S OWN cap divides (the 64 stand-in the snowball
+chest the 4 wore, the 15 the vanilla truth speaks).
+
+Work Log:
+- THE JAR'S OWN CHAIN the 26.2 classpath spoke (javap-less — the JRE
+  the sandbox wears, scripts/classfile_dump.py the house parser the
+  walks ride):
+  * Items.class <clinit> the ALIGNED mini-stack walk (the branch
+    assert the straight-line law wears): the registerItem/
+    registerBlock call's KEY arg (the references/ItemIds|
+    BlockItemIds getstatic) names the item, the MAX_STACK_SIZE law
+    THREE layers: (1) the visible Properties chain's stacksTo(I)
+    (the DataComponents.MAX_STACK_SIZE component the
+    Item$Properties.stacksTo body's component(MAX_STACK_SIZE, loc1)
+    fold writes) + the 1-setting walks the Properties class's own
+    bodies name (durability(I) the iconst_1 component writes;
+    sword/axe/pickaxe/hoe/spear/tool the
+    ToolMaterial.applyToolProperties -> applyCommonProperties ->
+    durability chain rides; humanoidArmor the durability delegate;
+    horseArmor/nautilusArmor/wolfArmor the stacksTo(1) calls; the
+    SHOVEL walk the props-body census added — ShovelItem.<init>'s
+    props.shovel(...) the dump spoke); (2) the Function lambdas the
+    registerItem(KEY, Function) overload hides (the wooden_axe the
+    args window never speaks — the lambda body the walks INSIDE
+    wears, the BootstrapMethods table the impl resolves, the Java
+    eval order the body's write the chain's AFTER makes the body's
+    value win); (3) the item-class ctor layer (the direct
+    Item::new-style method refs the class_ctor_value scan serves —
+    the class's <init> the stacksTo/durability/tool-walk invokes
+    reads); (4) the ColorCollection loop families (ONE invokedynamic
+    per family — lambda$static$47 the harnesses 1, $26 the dyed
+    shulker boxes 1, $132 the dyed bundles 1, $134 the dyed beds 1,
+    $148 the dyed banners 16 — each body the straight-line stacksTo
+    wears, the membership the 16-name shape the DyeColor enum's size
+    asserts).
+  * THE WALK'S OWN RIG the three bugs the round caught: the
+    invokedynamic's 4 operand bytes the decoder skipped (the drift
+    the post-first-lambda stream wore); the putstatic the pop and
+    the invokestatic the push never spoke (the +1-per-registration
+    drift the keys died of); the KEY_RE.match the anchor-at-0 never
+    matched AND the ItemIds.X.item() chain the sym ate (the result
+    the sym inherits, the search the prefix answers).
+- 295 rows banked (246 max-1 + 49 max-16, zero dropped): the
+  snowball/egg/ender_pearl/signs/empty-buckets/banner family the 16,
+  the swords/axes/pickaxes/shovels/hoes/spears/boats/minecarts/
+  armor/elytra/shield/filled-buckets/harness family the 1; the
+  water_bucket the 1 the jar's own row answers (the 16 the memory
+  guessed never rode); the ItemIds.POWDER_SNOW field the
+  powder_snow_bucket registry id the alias wears (the one row the
+  vocabulary's name differs on).
+- crates/mc-registry/src/generated/item_max_stack.rs the
+  item_rarity.rs shape wears (the name-keyed NON-64 rows, sorted for
+  the binary search); lib.rs the item_max_stack(id) accessor the
+  item_rarity law keeps (the missing rows the 64 default, the
+  unresolvable ids the 64 keep).
+- world.rs container_analog_signal the cap threads: the per-slot
+  fraction count / min(64, itemMax) — the AbstractContainerMenu's own
+  Math.min fold the jar's bytecode speaks. THE FULL-CHEST LAWS THE
+  SIZE NEVER BENDS: the 27 full snowball slots the 15, the 27 sword
+  slots the 15, the 27 stone slots the 15 (the count==cap full
+  weight); the 9 full snowball slots the 5 where the 64 stand-in the
+  2 wore; the 13 full slots the classic 7 the same wear.
+- Suite: 2635 passed / 0 failed / 22 ignored (+2 vs autopush-132's
+  2633); verify_goldens.sh 18/18 PASS rms 0.000 (no regeneration);
+  cargo fmt --check 27273 = the clean-HEAD count EXACTLY (the git
+  stash compare the zero-new-debt verdict wears).
+- Pushed fe2981d (v0.3.857, the fill formula's own limit).
+
+Stage Summary:
+- THE COMPARATOR READS THE CHEST THE ITEM'S OWN WEIGHT WEARS: a chest
+  of 27 full snowball stacks speaks 15 (the 64 stand-in said 4), a
+  chest of swords speaks 15 (the stand-in said 1), the 9-slot
+  snowball chest the 5 the stand-in never knew — the lerpDiscrete
+  formula the per-slot cap the jar's own component law banks.
+- NEXT CANDIDATES: the drop-lane caps the same table rides (the
+  spill chunk cap the stack.getMaxStackSize() min fold reads — the
+  drops.rs SPILL_STACK_MAX the 64 stand-in keeps, the merge cap the
+  pickup walk's own), the item-frame analog read (the entity lane
+  the getInputSignal pc 155-164 banks — the frame store the
+  placement/use/render lane the whole feature owns), the
+  dropper/dispenser shot lanes (the offline arm the wire's event
+  words never bank).
