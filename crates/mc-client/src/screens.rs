@@ -7854,7 +7854,11 @@ pub struct App {
     /// banks, the survive poll the HangingEntity.tick's 100-tick clock
     /// rides). The wire session the server's own frames the echo lane
     /// never speaks — the list the offline world that carried them
-    /// drops (the carts' own honesty).
+    /// drops (the carts' own honesty). THE CONTAINERS FILE'S OWN
+    /// FOURTH LIST the RESTART OUTLIVES (the autopush-136 round —
+    /// the same file the chest/furnace banks share, the load-once
+    /// parse the offline world alone serves, the cell the identity
+    /// the in-memory row never clobbers).
     pub item_frames: Vec<ItemFrameEnt>,
     /// THE OFFLINE SPAWNER'S OWN CARTS (the MinecartItem.useOn walk's
     /// singleplayer arm — the local carts the wire's Add Entity lane
@@ -8981,6 +8985,123 @@ pub fn furnace_words_from_nbt(
         stores.insert((x, y, z), words);
     }
     stores
+}
+
+/// THE FRAME BANK'S OWN WALK (the autopush-136 round — the
+/// "item_frames" list the containers file's fourth bank wears: the
+/// wall frames the RESTART OUTLIVES the same file the chest/furnace
+/// lists share). The BTree cell order the deterministic bytes keep;
+/// each entry the x/y/z triple + the facing (the 2..=5 band the
+/// mayPlace law keeps) + the rotation slot + the glow verdict + the
+/// Item compound the count-1 law wears (the empty frame the OPTIONAL
+/// empty compound keeps — the store parse's own shape). The id the
+/// session's own counter owns — the file the (cell) identity banks,
+/// the boot walk the ids re-mints; the poll clock the same session
+/// state keeps — never a banked tick count.
+pub fn item_frames_bank_to_nbt(frames: &[ItemFrameEnt]) -> mc_protocol::nbt::Nbt {
+    let mut ordered = frames.iter().collect::<Vec<_>>();
+    ordered.sort_by_key(|f| f.cell);
+    let mut entries = Vec::new();
+    for f in ordered {
+        let item = if f.item.1 > 0 {
+            match mc_registry::item_name(f.item.0) {
+                Some(name) => mc_protocol::nbt::Nbt::Compound(vec![
+                    (
+                        "id".to_string(),
+                        mc_protocol::nbt::Nbt::String(format!("minecraft:{name}")),
+                    ),
+                    ("count".to_string(), mc_protocol::nbt::Nbt::Int(f.item.1)),
+                ]),
+                // THE UNRESOLVABLE ID the honest empty keeps — never a
+                // guessed name the bank invents
+                None => mc_protocol::nbt::Nbt::Compound(vec![]),
+            }
+        } else {
+            mc_protocol::nbt::Nbt::Compound(vec![])
+        };
+        entries.push(mc_protocol::nbt::Nbt::Compound(vec![
+            ("x".to_string(), mc_protocol::nbt::Nbt::Int(f.cell.0)),
+            ("y".to_string(), mc_protocol::nbt::Nbt::Int(f.cell.1)),
+            ("z".to_string(), mc_protocol::nbt::Nbt::Int(f.cell.2)),
+            ("facing".to_string(), mc_protocol::nbt::Nbt::Int(f.facing as i32)),
+            (
+                "rotation".to_string(),
+                mc_protocol::nbt::Nbt::Int(f.rotation as i32),
+            ),
+            ("glow".to_string(), mc_protocol::nbt::Nbt::Byte(f.glow as i8)),
+            ("Item".to_string(), item),
+        ]));
+    }
+    mc_protocol::nbt::Nbt::List(entries)
+}
+
+/// THE FRAME BANK'S OWN PARSE (the tolerant walk the store parse
+/// wears: the missing coordinate the entry skip keeps, the
+/// out-of-band facing the mayPlace law skips [the 2..=5 band the
+/// horizontal placement keeps], the unknown item name the empty
+/// frame keeps — never a guessed id, the rotation the setRotation's
+/// own wrap wears, the absent glow the false verdict keeps, the
+/// absent count the fallback-1 field the store parse speaks, the
+/// missing list the honest empties keep). The id the parse the zero
+/// re-mints — the boot walk's own counter the session owns.
+pub fn item_frames_from_nbt(value: &mc_protocol::nbt::Nbt) -> Vec<ItemFrameEnt> {
+    let mut frames = Vec::new();
+    let Some(mc_protocol::nbt::Nbt::List(entries)) = value.get("item_frames") else {
+        return frames;
+    };
+    for entry in entries {
+        let mc_protocol::nbt::Nbt::Compound(fields) = entry else {
+            continue;
+        };
+        let read_int = |key: &str| -> Option<i32> {
+            fields.iter().find(|(k, _)| k == key).and_then(|(_, v)| v.as_i32())
+        };
+        let (Some(x), Some(y), Some(z)) = (read_int("x"), read_int("y"), read_int("z"))
+        else {
+            continue;
+        };
+        // THE FACING BAND'S OWN GATE (the mayPlace law — the vertical
+        // or nonsense facing the corrupt row's skip wears)
+        let facing = match read_int("facing") {
+            Some(v) if (2..=5).contains(&v) => v as u8,
+            _ => continue,
+        };
+        // THE ROTATION'S OWN WRAP (the setRotation %8 law — the
+        // over-band slot the same wrap keeps, the negative the
+        // euclid answer serves)
+        let rotation = read_int("rotation").unwrap_or(0).rem_euclid(8) as u8;
+        let glow = read_int("glow").unwrap_or(0) != 0;
+        // THE ITEM'S OWN PARSE (the id/count pair the store parse's
+        // own walk wears — the unknown name the empty frame keeps)
+        let mut item = (0i32, 0i32);
+        if let Some(mc_protocol::nbt::Nbt::Compound(item_fields)) =
+            fields.iter().find(|(k, _)| k == "Item").map(|(_, v)| v)
+        {
+            if let Some((_, mc_protocol::nbt::Nbt::String(id))) =
+                item_fields.iter().find(|(k, _)| k == "id")
+            {
+                let count = item_fields
+                    .iter()
+                    .find(|(k, _)| k == "count")
+                    .and_then(|(_, v)| v.as_i32())
+                    .unwrap_or(1);
+                let plain = id.strip_prefix("minecraft:").unwrap_or(id);
+                if let Some(wire_id) = mc_registry::item_id_by_name(plain) {
+                    item = (wire_id, count);
+                }
+            }
+        }
+        frames.push(ItemFrameEnt {
+            id: 0,
+            cell: (x, y, z),
+            facing,
+            rotation,
+            item,
+            glow,
+            check_interval: 0,
+        });
+    }
+    frames
 }
 
 impl App {
@@ -30361,6 +30482,30 @@ impl App {
                 // the third list the burn/cook bank answers, the same
                 // extend law the in-memory entry keeps)
                 self.furnace_word_stores.extend(furnace_words_from_nbt(&root));
+                // THE FRAME BANK'S OWN PARSE (the autopush-136 round —
+                // the fourth list the wall frames' boot bank answers:
+                // the offline world alone the restore serves [the wire
+                // session the server's own frames the echo lane owns],
+                // the in-memory cell the file's row never clobbers, the
+                // ids the session's counter re-mints, the analog rows
+                // the same parse the comparators' consult banks)
+                if self.offline_world.is_some() {
+                    for f in item_frames_from_nbt(&root) {
+                        if self.item_frames.iter().any(|e| e.cell == f.cell) {
+                            continue;
+                        }
+                        let cell = f.cell;
+                        let analog =
+                            crate::world::item_frame_analog(f.item.1 == 0, f.rotation);
+                        let fid = self.next_frame_id;
+                        self.next_frame_id += 1;
+                        self.item_frames.push(ItemFrameEnt { id: fid, ..f });
+                        if let Some(w) = self.offline_world.as_mut() {
+                            w.frame_analog.insert(cell, analog);
+                        }
+                        self.frame_analog_broadcast(cell);
+                    }
+                }
             }
         }
     }
@@ -30395,6 +30540,13 @@ impl App {
             (
                 "furnace_words".to_string(),
                 furnace_words_bank_to_nbt(&self.furnace_word_stores),
+            ),
+            // THE FRAME BANK'S OWN LIST (the autopush-136 round — the
+            // wall frames the same file the fourth list wears, the
+            // BTree cell order the deterministic bytes keep)
+            (
+                "item_frames".to_string(),
+                item_frames_bank_to_nbt(&self.item_frames),
             ),
         ]);
         let mut bytes = Vec::new();
@@ -42969,6 +43121,10 @@ impl App {
             self.hotbar_slots = self.inventory.hotbar();
             self.use_consume_kills_pop(sel);
         }
+        // THE PLACEMENT'S OWN SAVE RIDE (the autopush-136 round — the
+        // spawn the containers file banks, the RESTART the frame
+        // OUTLIVES)
+        self.container_stores_file_save();
         self.swing.start();
         Some(true)
     }
@@ -43179,6 +43335,11 @@ impl App {
             w.frame_analog.insert(cell, analog);
         }
         self.frame_analog_broadcast(cell);
+        // THE FILE'S OWN RIDE (the autopush-136 round — the
+        // store/rotate/take lanes' truth the containers file banks:
+        // the same write the chest flush speaks, the RESTART the
+        // frame's own rows OUTLIVE)
+        self.container_stores_file_save();
     }
 
     /// THE FRAME'S OWN PUNCH ARM (javap ItemFrame.hurtServer the 26.2
@@ -43274,6 +43435,10 @@ impl App {
             w.frame_analog.remove(&cell);
         }
         self.frame_analog_broadcast(cell);
+        // THE DEATH'S OWN SAVE RIDE (the autopush-136 round — the
+        // removal the containers file banks, the RESTART the empty
+        // truth keeps)
+        self.container_stores_file_save();
     }
 
     /// THE FRAME'S OWN SURVIVE POLL (javap HangingEntity.tick the 26.2
@@ -43378,6 +43543,10 @@ impl App {
             w.frame_analog.remove(&cell);
         }
         self.frame_analog_broadcast(cell);
+        // THE POP'S OWN SAVE RIDE (the autopush-136 round — the
+        // support's own loss the file's row drops too, the RESTART
+        // the empty truth keeps)
+        self.container_stores_file_save();
     }
 
     /// THE SEEDS' OWN PLANT ARM — javap BlockItem.place over the real
@@ -105076,6 +105245,304 @@ cow_sound_variant: None,
                 .any(|e| e.starts_with("entity.item_frame.remove_item ")),
             "the remove_item voice the filled arm speaks"
         );
+    }
+
+    /// THE FRAME BANK'S OWN ROUNDTRIP (the autopush-136 round — the
+    /// "item_frames" list the bank walk writes, the parse walk the
+    /// same rows reads: the BTree cell order the deterministic bytes
+    /// keep, the id the session's counter owns [the parse the zero
+    /// re-mints], the poll clock the fresh walk re-mints, the empty
+    /// frame the OPTIONAL empty compound wears).
+    #[test]
+    fn the_item_frames_bank_parse_roundtrip_wears() {
+        let stick = mc_registry::item_id_by_name("stick").unwrap();
+        let frames = vec![
+            ItemFrameEnt {
+                id: 7,
+                cell: (3, 64, -7),
+                facing: 2,
+                rotation: 7,
+                item: (stick, 1),
+                glow: true,
+                check_interval: 55,
+            },
+            ItemFrameEnt {
+                id: 9,
+                cell: (-2, 70, 11),
+                facing: 5,
+                rotation: 0,
+                item: (0, 0),
+                glow: false,
+                check_interval: 0,
+            },
+        ];
+        let bank = item_frames_bank_to_nbt(&frames);
+        let root = mc_protocol::nbt::Nbt::Compound(vec![("item_frames".to_string(), bank)]);
+        let parsed = item_frames_from_nbt(&root);
+        assert_eq!(parsed.len(), 2, "the two frames the bank keeps");
+        // THE BTREE ORDER (the cell sort the deterministic bytes keep —
+        // the -2,70,11 row the smaller x the first slot wears)
+        assert_eq!(parsed[0].cell, (-2, 70, 11));
+        assert_eq!(parsed[1].cell, (3, 64, -7));
+        // THE EMPTY FRAME'S OWN ROW (the OPTIONAL empty compound the
+        // parse the (0,0) stack wears)
+        assert_eq!(parsed[0].facing, 5);
+        assert_eq!(parsed[0].rotation, 0);
+        assert!(!parsed[0].glow);
+        assert_eq!(
+            parsed[0].item,
+            (0, 0),
+            "the empty frame the OPTIONAL empty compound keeps"
+        );
+        // THE FILLED GLOW'S OWN ROW
+        assert_eq!(parsed[1].facing, 2);
+        assert_eq!(parsed[1].rotation, 7);
+        assert!(parsed[1].glow);
+        assert_eq!(parsed[1].item, (stick, 1), "the count-1 the bank wears");
+        // THE SESSION'S OWN COUNTERS (the id + the poll clock the boot
+        // walk re-mints — the file the cell identity banks)
+        assert!(
+            parsed.iter().all(|f| f.id == 0),
+            "the id the session's counter owns"
+        );
+        assert!(
+            parsed.iter().all(|f| f.check_interval == 0),
+            "the poll clock the fresh walk re-mints"
+        );
+    }
+
+    /// THE FRAME PARSE'S OWN TOLERANCE (the same walk the store parse
+    /// wears — the missing coordinate the entry skip keeps, the
+    /// out-of-band facing the mayPlace law skips, the unknown item
+    /// name the empty frame keeps [never a guessed id], the rotation
+    /// the setRotation's %8 wrap banks, the absent glow the false
+    /// wears, the absent count the fallback-1 keeps, the missing list
+    /// the honest empties keep).
+    #[test]
+    fn the_item_frames_parse_tolerant_the_corrupt_rows_skip() {
+        let stick = mc_registry::item_id_by_name("stick").unwrap();
+        let kv = |k: &str, v: mc_protocol::nbt::Nbt| (k.to_string(), v);
+        let xyz = || {
+            vec![
+                kv("x", mc_protocol::nbt::Nbt::Int(4)),
+                kv("y", mc_protocol::nbt::Nbt::Int(65)),
+                kv("z", mc_protocol::nbt::Nbt::Int(-3)),
+            ]
+        };
+        let root = mc_protocol::nbt::Nbt::Compound(vec![kv(
+            "item_frames",
+            mc_protocol::nbt::Nbt::List(vec![
+                // THE MISSING COORDINATE the entry skip keeps
+                mc_protocol::nbt::Nbt::Compound(vec![kv(
+                    "facing",
+                    mc_protocol::nbt::Nbt::Int(2),
+                )]),
+                // THE OUT-OF-BAND FACING the mayPlace law skips (the
+                // vertical 0/1 + the nonsense 6 the corrupt rows wear)
+                mc_protocol::nbt::Nbt::Compound({
+                    let mut f = xyz();
+                    f.push(kv("facing", mc_protocol::nbt::Nbt::Int(0)));
+                    f
+                }),
+                mc_protocol::nbt::Nbt::Compound({
+                    let mut f = xyz();
+                    f.push(kv("facing", mc_protocol::nbt::Nbt::Int(6)));
+                    f
+                }),
+                // THE UNKNOWN ITEM NAME the empty frame keeps — never
+                // a guessed id the parse invents
+                mc_protocol::nbt::Nbt::Compound({
+                    let mut f = xyz();
+                    f.push(kv("facing", mc_protocol::nbt::Nbt::Int(2)));
+                    f.push(kv(
+                        "Item",
+                        mc_protocol::nbt::Nbt::Compound(vec![
+                            kv(
+                                "id",
+                                mc_protocol::nbt::Nbt::String("minecraft:no_such_thing".into()),
+                            ),
+                            kv("count", mc_protocol::nbt::Nbt::Int(1)),
+                        ]),
+                    ));
+                    f
+                }),
+                // THE WRAP ROW (the 9 the %8 wears) + THE ABSENT COUNT
+                // the fallback-1 keeps + THE ABSENT GLOW the false
+                mc_protocol::nbt::Nbt::Compound({
+                    let mut f = xyz();
+                    f.push(kv("facing", mc_protocol::nbt::Nbt::Int(3)));
+                    f.push(kv("rotation", mc_protocol::nbt::Nbt::Int(9)));
+                    f.push(kv(
+                        "Item",
+                        mc_protocol::nbt::Nbt::Compound(vec![kv(
+                            "id",
+                            mc_protocol::nbt::Nbt::String("minecraft:stick".into()),
+                        )]),
+                    ));
+                    f
+                }),
+                // THE NEGATIVE ROTATION the euclid wrap keeps
+                mc_protocol::nbt::Nbt::Compound({
+                    let mut f = xyz();
+                    f.push(kv("facing", mc_protocol::nbt::Nbt::Int(4)));
+                    f.push(kv("rotation", mc_protocol::nbt::Nbt::Int(-1)));
+                    f
+                }),
+            ]),
+        )]);
+        let parsed = item_frames_from_nbt(&root);
+        assert_eq!(
+            parsed.len(),
+            3,
+            "the coord-less + the two out-of-band rows the skips keep"
+        );
+        assert_eq!(parsed[0].item, (0, 0), "the unknown name the empty frame keeps");
+        assert_eq!(parsed[1].rotation, 1, "the 9 the %8 wrap banks");
+        assert_eq!(parsed[1].item, (stick, 1), "the absent count the 1 keeps");
+        assert!(!parsed[1].glow, "the absent glow the false wears");
+        assert_eq!(parsed[1].facing, 3);
+        assert_eq!(parsed[2].rotation, 7, "the -1 the euclid wrap banks");
+        // THE MISSING LIST the honest empties keep + the wrong tag too
+        assert!(item_frames_from_nbt(&mc_protocol::nbt::Nbt::Int(1)).is_empty());
+        assert!(item_frames_from_nbt(&mc_protocol::nbt::Nbt::Compound(vec![])).is_empty());
+    }
+
+    /// THE FRAME'S OWN PERSISTENCE ARC (the autopush-136 round — the
+    /// placement/store/rotate lanes' save rides the containers file
+    /// banks, the fresh app's load-once the frames re-mints [the
+    /// analog rows the same parse banks, the ids the counter
+    /// re-mints], the second life's own turn the file re-banks, the
+    /// punch the file's row drops, the restart the empty truth keeps
+    /// — the RESTART the frames OUTLIVE).
+    #[test]
+    fn the_item_frame_the_persistence_arc_the_restart_outlives() {
+        let dir = std::env::temp_dir().join(format!("mc2rs-framepersist-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("the temp dir");
+        let file = dir.join("frames-arc.nbt");
+        let _ = std::fs::remove_file(&file);
+        // THE SHARED CELLS (the same seed the same wall wears — the
+        // support the collision-bearing kind, the frame cell the air)
+        let (w0, y) = {
+            let mut p = App::new(3);
+            p.enter_world();
+            let w0 = p.offline_world.as_ref().unwrap().size_blocks() / 2;
+            (w0, p.spawn_y + 6)
+        };
+        let set_cells = |app: &mut App| {
+            let mut w = app.offline_world.as_mut().unwrap();
+            w.set(w0, y, w0, crate::world::STONE);
+            w.set(w0, y, w0 - 1, crate::world::AIR);
+            drop(w);
+        };
+
+        // THE FIRST LIFE: the place + the store + the rotate, the
+        // save rides the file banks at every lane
+        let mut app = App::new(3);
+        app.enter_world();
+        app.container_stores_file = Some(file.clone());
+        set_cells(&mut app);
+        let hit = crate::world::ClipHit {
+            pos: (w0, y, w0),
+            face: 2,
+            location: (w0 as f64 + 0.5, y as f64 + 0.5, w0 as f64),
+            inside: false,
+        };
+        assert_eq!(app.on_right_press_item_frame_arm(&hit), Some(true));
+        assert!(file.exists(), "the placement lane the save ride banks");
+        let ingot = mc_registry::item_id_by_name("iron_ingot").unwrap();
+        app.inventory.items[app.selected_hotbar] = (ingot, 5);
+        app.hotbar_slots = app.inventory.hotbar();
+        let fid = app.item_frames[0].id;
+        assert!(app.on_right_press_item_frame_interact(fid), "the store lane");
+        app.inventory.items[app.selected_hotbar] = (0, 0);
+        app.hotbar_slots = app.inventory.hotbar();
+        app.offline_held = None;
+        assert!(app.on_right_press_item_frame_interact(fid), "the rotate lane");
+        assert_eq!(app.item_frames[0].rotation, 1, "the turn the +1 banks");
+        assert_eq!(
+            app.offline_world
+                .as_ref()
+                .unwrap()
+                .frame_analog
+                .get(&(w0, y, w0 - 1)),
+            Some(&2),
+            "the filled frame's analog the rotation+1 wears"
+        );
+
+        // THE RESTART: the fresh app the load-once the frame re-mints
+        let mut born = App::new(3);
+        born.enter_world();
+        born.container_stores_file = Some(file.clone());
+        assert!(born.item_frames.is_empty(), "the fresh app the empty list keeps");
+        born.container_stores_load_once();
+        assert_eq!(born.item_frames.len(), 1, "the boot parse the frame re-mints");
+        let f = born.item_frames[0].clone();
+        assert_eq!(f.cell, (w0, y, w0 - 1), "the cell the file keeps");
+        assert_eq!(f.facing, 2, "the facing the file keeps");
+        assert_eq!(f.rotation, 1, "the turn the file banks");
+        assert_eq!(f.item, (ingot, 1), "the count-1 the file wears");
+        assert!(!f.glow, "the plain frame the glow-less row keeps");
+        assert_ne!(f.id, 0, "the id the counter re-mints");
+        assert_eq!(
+            born.offline_world
+                .as_ref()
+                .unwrap()
+                .frame_analog
+                .get(&(w0, y, w0 - 1)),
+            Some(&2),
+            "the analog row the boot parse banks"
+        );
+
+        // THE SECOND LIFE'S OWN TURN: the rotate the file re-banks
+        let bid = born.item_frames[0].id;
+        assert!(
+            born.on_right_press_item_frame_interact(bid),
+            "the rotate lane the second life rides"
+        );
+        assert_eq!(born.item_frames[0].rotation, 2, "the second turn the +1 banks");
+
+        // THE THIRD LIFE: the turn the file wears
+        let mut aged = App::new(3);
+        aged.enter_world();
+        aged.container_stores_file = Some(file.clone());
+        aged.container_stores_load_once();
+        assert_eq!(
+            aged.item_frames[0].rotation, 2,
+            "the second turn the file wears"
+        );
+        assert_eq!(
+            aged.offline_world
+                .as_ref()
+                .unwrap()
+                .frame_analog
+                .get(&(w0, y, w0 - 1)),
+            Some(&3),
+            "the analog the +1 the re-bank wears"
+        );
+
+        // THE PUNCH THE FILE'S ROW DROPS (the removal the save ride
+        // banks, the restart the empty truth keeps)
+        let aid = aged.item_frames[0].id;
+        aged.attack_item_frame(aid);
+        assert!(aged.item_frames.is_empty(), "the punch the frame kills");
+        let mut last = App::new(3);
+        last.enter_world();
+        last.container_stores_file = Some(file.clone());
+        last.container_stores_load_once();
+        assert!(
+            last.item_frames.is_empty(),
+            "the punch the file's row drops"
+        );
+        assert!(
+            last.offline_world
+                .as_ref()
+                .unwrap()
+                .frame_analog
+                .get(&(w0, y, w0 - 1))
+                .is_none(),
+            "the analog row the punch's own file ride drops"
+        );
+        let _ = std::fs::remove_file(&file);
     }
 
     /// THE ITEM FRAME'S OWN SURVIVE POLL (javap HangingEntity.tick the
