@@ -15820,7 +15820,12 @@ impl App {
                         // the 0-dose word speaks, the 1/8 roll the chick
                         // banks, the ten shards the broadcast-3 wears,
                         // the discard the removal)
-                        let mut egg_breaks: Vec<(f64, f64, f64)> = Vec::new();
+                        let mut egg_breaks: Vec<(
+                            f64,
+                            f64,
+                            f64,
+                            crate::mob::ThrownProjectileKind,
+                        )> = Vec::new();
                         for egg in self.eggs.iter_mut() {
                             if egg.dead {
                                 continue;
@@ -15847,32 +15852,38 @@ impl App {
                                 // the age -24000 the baby's own clock
                                 // wears, the moveTo the egg's own pos
                                 // keeps, the variant the world's own
-                                // biome word picks)
-                                if let Some(count) =
-                                    crate::mob::EggProjectile::chick_count(&mut self.mob_rng)
-                                {
-                                    for _ in 0..count {
-                                        let cid = self.next_drop_id;
-                                        self.next_drop_id += 1;
-                                        let mut chick = crate::mob::Zombie::new(
-                                            cid,
-                                            egg.x,
-                                            egg.y,
-                                            egg.z,
-                                            cid as u64,
-                                        );
-                                        chick.kind = crate::mob::MobKind::Chicken;
-                                        chick.age = -24000;
-                                        chick.farm_variant = Some(
-                                            crate::mob::chicken_variant_for_biome(spawn_biome(
-                                                self.seed,
-                                            )),
-                                        );
-                                        self.mobs.push(chick);
+                                // biome word picks) — THE KIND'S OWN
+                                // GATE (the SNOWBALL the plain break
+                                // the onHit override never wears — NO
+                                // rolls the base's own discard alone
+                                // speaks)
+                                if egg.kind == crate::mob::ThrownProjectileKind::Egg {
+                                    if let Some(count) = crate::mob::EggProjectile::chick_count(
+                                        &mut self.mob_rng,
+                                    ) {
+                                        for _ in 0..count {
+                                            let cid = self.next_drop_id;
+                                            self.next_drop_id += 1;
+                                            let mut chick = crate::mob::Zombie::new(
+                                                cid,
+                                                egg.x,
+                                                egg.y,
+                                                egg.z,
+                                                cid as u64,
+                                            );
+                                            chick.kind = crate::mob::MobKind::Chicken;
+                                            chick.age = -24000;
+                                            chick.farm_variant = Some(
+                                                crate::mob::chicken_variant_for_biome(spawn_biome(
+                                                    self.seed,
+                                                )),
+                                            );
+                                            self.mobs.push(chick);
+                                        }
                                     }
                                 }
                                 egg.dead = true;
-                                egg_breaks.push((egg.x, egg.y, egg.z));
+                                egg_breaks.push((egg.x, egg.y, egg.z, egg.kind));
                                 continue;
                             }
                             // THE MOB SWEEP (the boxes the inflate-0.3
@@ -15915,32 +15926,37 @@ impl App {
                                 }
                                 // THE CHICK'S OWN ROLLS (the same onHit
                                 // walk the block's own arm wears — the
-                                // mob hit the roll rides too)
-                                if let Some(count) =
-                                    crate::mob::EggProjectile::chick_count(&mut self.mob_rng)
-                                {
-                                    for _ in 0..count {
-                                        let cid = self.next_drop_id;
-                                        self.next_drop_id += 1;
-                                        let mut chick = crate::mob::Zombie::new(
-                                            cid,
-                                            egg.x,
-                                            egg.y,
-                                            egg.z,
-                                            cid as u64,
-                                        );
-                                        chick.kind = crate::mob::MobKind::Chicken;
-                                        chick.age = -24000;
-                                        chick.farm_variant = Some(
-                                            crate::mob::chicken_variant_for_biome(spawn_biome(
-                                                self.seed,
-                                            )),
-                                        );
-                                        self.mobs.push(chick);
+                                // mob hit the roll rides too) — THE
+                                // KIND'S OWN GATE (the SNOWBALL the
+                                // plain break the mob-hit arm never
+                                // rolls)
+                                if egg.kind == crate::mob::ThrownProjectileKind::Egg {
+                                    if let Some(count) = crate::mob::EggProjectile::chick_count(
+                                        &mut self.mob_rng,
+                                    ) {
+                                        for _ in 0..count {
+                                            let cid = self.next_drop_id;
+                                            self.next_drop_id += 1;
+                                            let mut chick = crate::mob::Zombie::new(
+                                                cid,
+                                                egg.x,
+                                                egg.y,
+                                                egg.z,
+                                                cid as u64,
+                                            );
+                                            chick.kind = crate::mob::MobKind::Chicken;
+                                            chick.age = -24000;
+                                            chick.farm_variant = Some(
+                                                crate::mob::chicken_variant_for_biome(spawn_biome(
+                                                    self.seed,
+                                                )),
+                                            );
+                                            self.mobs.push(chick);
+                                        }
                                     }
                                 }
                                 egg.dead = true;
-                                egg_breaks.push((egg.x, egg.y, egg.z));
+                                egg_breaks.push((egg.x, egg.y, egg.z, egg.kind));
                                 continue;
                             }
                             // THE ARC (the drag the scale ride, the
@@ -15970,7 +15986,30 @@ impl App {
                         // jitter wears (the getRandomX/Y(1.0) law the
                         // 0.25-wide bb keeps), the wire velocity the
                         // gaussian trio's x0.02 carries)
-                        for (bx, by, bz) in egg_breaks {
+                        for (bx, by, bz, bkind) in egg_breaks {
+                            if bkind == crate::mob::ThrownProjectileKind::Snowball {
+                                // THE SNOWBALL'S OWN CASE-3 (javap
+                                // `Snowball.handleEntityEvent` the 26.2
+                                // jar — the `bipush 8` loop the case
+                                // speaks, the `addParticle(getParticle()
+                                // , x, y, z, 0.0, 0.0, 0.0)` the ZERO
+                                // velocity keeps [NO jitter the egg's
+                                // own call wears, the entity's own pos
+                                // the plain args speak])
+                                for _ in 0..8 {
+                                    let shard = crate::particles::breaking_snowball_shard(
+                                        bx, by, bz, &mut self.mob_rng,
+                                    );
+                                    self.particles.push(shard);
+                                }
+                                continue;
+                            }
+                            // THE SHATTER'S OWN BURSTS (javap the case-3
+                            // walk — the `bipush 10` loop the ten shards
+                            // speak, the position the random trio's own
+                            // jitter wears (the getRandomX/Y(1.0) law the
+                            // 0.25-wide bb keeps), the wire velocity the
+                            // gaussian trio's x0.02 carries)
                             for _ in 0..10 {
                                 let jx = bx + (self.mob_rng.next_f64() * 2.0 - 1.0) * 0.25;
                                 let jy = by + self.mob_rng.next_f64() * 0.25;
@@ -48564,6 +48603,8 @@ impl App {
             };
             let (item, count) = slots[slot_i];
             let arrow_id = mc_registry::item_id_by_name("arrow").unwrap_or(-1);
+            let snowball_id = mc_registry::item_id_by_name("snowball").unwrap_or(-1);
+            let egg_id = mc_registry::item_id_by_name("egg").unwrap_or(-1);
             // THE TWO WALKS THE TWO KINDS WEAR (the dispenseFrom
             // override the dropper's own lane answers)
             let (dispensed, voice) = if kind == crate::world::DROPPER {
@@ -48620,15 +48661,19 @@ impl App {
                     // voice answers)
                     (true, 1000)
                 }
-            } else if item == arrow_id {
+            } else if item == arrow_id || item == snowball_id || item == egg_id {
                 // THE PROJECTILE WALK (the shoot law — the arrow the
                 // power 1.1 the uncertainty 6.0 the builder's own
-                // defaults wear, the launch voice the 1002 keeps)
+                // defaults wear, the launch voice the 1002 keeps; the
+                // snowball/egg the SAME defaults the
+                // `createDispenseConfig` interface default answers —
+                // the DispenseConfig.DEFAULT the items inherit, the
+                // `<init>`'s ldc pair the 26.2 jar banks)
                 (true, 1002)
             } else {
                 // THE DEFAULT WALK THE BEHAVIOR MAP ANSWERS (the
-                // snowball/egg the projectile types the future entity
-                // lanes own — the honest DEFAULT the round banks)
+                // remaining items the spawnItem walk serves — the
+                // honest DEFAULT the lane keeps)
                 (true, 1000)
             };
             // THE VOICE'S OWN SPEAK (the 1000 the dispense walk, the
@@ -48664,7 +48709,9 @@ impl App {
             }
             // THE PROJECTILE'S OWN FLIGHT (the ArrowShot the from_spawn
             // ctor answers — the seed the entity-voice law keeps, the
-            // no-crit the config power the vanilla answer speaks)
+            // no-crit the config power the vanilla answer speaks; the
+            // THROWN FAMILY the snowball/egg ids the kind byte picks —
+            // the `asProjectile` factory the item's own answer serves)
             if dispensed && voice == 1002 {
                 let (px, py, pz) =
                     crate::world::dispense_projectile_position(center, step);
@@ -48676,23 +48723,46 @@ impl App {
                 );
                 let id = self.next_drop_id;
                 self.next_drop_id += 1;
-                let seed = crate::mob::arrow_entity_seed(id);
-                let shot = crate::mob::ArrowShot {
-                    id,
-                    x: px,
-                    y: py,
-                    z: pz,
-                    vx,
-                    vy,
-                    vz,
-                    y_rot,
-                    x_rot,
-                    crit: false,
-                    pitch: 0.0,
-                    seed,
-                    owner: None,
-                };
-                self.arrows.push(crate::mob::Arrow::from_spawn(&shot));
+                if item == arrow_id {
+                    let seed = crate::mob::arrow_entity_seed(id);
+                    let shot = crate::mob::ArrowShot {
+                        id,
+                        x: px,
+                        y: py,
+                        z: pz,
+                        vx,
+                        vy,
+                        vz,
+                        y_rot,
+                        x_rot,
+                        crit: false,
+                        pitch: 0.0,
+                        seed,
+                        owner: None,
+                    };
+                    self.arrows.push(crate::mob::Arrow::from_spawn(&shot));
+                } else {
+                    // THE THROWN FAMILY'S OWN SHOT (javap the
+                    // `ProjectileDispenseBehavior.execute` walk the
+                    // snowball/egg items' own DispenseConfig.DEFAULT
+                    // serves — the position the 0.7/0.1 lambda fold,
+                    // the shoot law the same 1.1/6.0 defaults, the
+                    // arc the ThrowableProjectile base the kind byte
+                    // keeps)
+                    let kind = if item == snowball_id {
+                        crate::mob::ThrownProjectileKind::Snowball
+                    } else {
+                        crate::mob::ThrownProjectileKind::Egg
+                    };
+                    let thrown = crate::mob::EggProjectile::dispenser_shot(
+                        id,
+                        kind,
+                        center,
+                        step,
+                        &mut self.dispenser_rng,
+                    );
+                    self.eggs.push(thrown);
+                }
             }
             // THE FILL SYNC + THE ATTACH TAIL (the comparator's next
             // consult the analog re-banks, the front wire the new
@@ -55811,6 +55881,7 @@ impl App {
         let mut portal_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         let mut eye_shard_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         let mut egg_shard_quads: Vec<crate::raster::SampledQuad> = Vec::new();
+        let mut snowball_shard_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         // the firework flash's own group (the Starter cadence's overlay
         // quads — the alpha law the tint carries, the visible quad the
         // custom-ARGB colors arm)
@@ -56508,6 +56579,22 @@ impl App {
                         tint: p.col,
                     });
                 }
+                crate::particles::ParticleKind::SnowballItem => {
+                    // the shard's own quad (the SAME quarter walk the
+                    // egg's own arm wears — the SnowballProvider's own
+                    // sprite the namespace lane resolves, the white
+                    // tint the snowball pixels wear whole)
+                    let ul = (p.uo + 1.0) / 4.0;
+                    let ur = p.uo / 4.0;
+                    let vt = p.vo / 4.0;
+                    let vb = (p.vo + 1.0) / 4.0;
+                    snowball_shard_quads.push(crate::raster::SampledQuad {
+                        pts,
+                        uv: [[ul, vb], [ur, vb], [ur, vt], [ul, vt]],
+                        tex: "item/snowball",
+                        tint: p.col,
+                    });
+                }
                 crate::particles::ParticleKind::ExplosionSeed => {
                     // THE INVISIBLE ENGINE (javap
                     // `HugeExplosionSeedParticle` — the
@@ -56853,6 +56940,17 @@ impl App {
         // sprite_uv namespace lane the egg's own texture resolves)
         if !egg_shard_quads.is_empty() {
             fb.draw_sampled_quads(vp, &egg_shard_quads, &mut |tex, u, v| {
+                match mc_registry::sprite_uv::sample_uv(tex, u, v) {
+                    mc_registry::sprite_uv::Sample::Pixel(c) => Some(c),
+                    mc_registry::sprite_uv::Sample::Missing(c) => Some(c),
+                    mc_registry::sprite_uv::Sample::Unknown => None,
+                }
+            });
+        }
+        // the snowball shard group (the SAME namespace lane the
+        // SnowballProvider's own sprite resolves)
+        if !snowball_shard_quads.is_empty() {
+            fb.draw_sampled_quads(vp, &snowball_shard_quads, &mut |tex, u, v| {
                 match mc_registry::sprite_uv::sample_uv(tex, u, v) {
                     mc_registry::sprite_uv::Sample::Pixel(c) => Some(c),
                     mc_registry::sprite_uv::Sample::Missing(c) => Some(c),
@@ -141834,6 +141932,296 @@ cow_sound_variant: None,
         assert_eq!(
             drained180, taken180,
             "the drained clock the gate's skip the absence answers"
+        );
+    }
+
+    /// THE DISPENSER'S OWN THROWN SHOT (javap the 26.2 walk the
+    /// autopush-140 lane banks — the snowball the shot lane wears):
+    /// the lever pulse the beat answers, the SNOWBALL the kind byte
+    /// the eggs vec flies, the position the `dispense_projectile_position`
+    /// fold keeps, the velocity the 1.1 power's band carries, the
+    /// slot the shrink law spends, the 1002 the launch voice speaks.
+    #[test]
+    fn the_dispenser_the_snowball_shot_the_thrown_lane_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let snow_id = mc_registry::item_id_by_name("snowball").expect("the wire table");
+        // THE SKY PAD'S OWN STAGE (the egg throw test's own shape —
+        // the terrain's tops the pad's level never reaches)
+        let (px, pz) = (16i32, 16i32);
+        let gy = 30i32;
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            for dx in -4..=4 {
+                for dz in -4..=4 {
+                    world.set(px + dx, gy - 1, pz + dz, crate::world::STONE);
+                }
+            }
+            // THE DISPENSER'S OWN SEAT (the facing the SOUTH byte
+            // stamps, the front cell the pad's own air keeps)
+            world.set(px, gy, pz, crate::world::DISPENSER);
+            world.set_variant(
+                px,
+                gy,
+                pz,
+                crate::world::dispenser_variant(crate::world::DISPENSER_FACING_SOUTH, false),
+            );
+        }
+        // THE STORE'S OWN ROW (the snowball the first slot holds, the
+        // nine the DispenserBlockEntity's own size keeps)
+        app.container_stores.insert(
+            (px, gy, pz),
+            vec![(snow_id, 2), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)],
+        );
+        // THE PULSE'S OWN TAIL (the consult arm's own schedule shape —
+        // the due the +4 cooldown keeps, the drain the frame's own
+        // crossing answers)
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            world.schedule_dispenser_tick(
+                app.frame + crate::world::DISPENSER_COOLDOWN,
+                px,
+                gy,
+                pz,
+            );
+        }
+        for _ in 0..6 {
+            app.update();
+        }
+        assert_eq!(app.eggs.len(), 1, "the snowball the shot lane flies");
+        let e = &app.eggs[0];
+        assert_eq!(
+            e.kind,
+            crate::mob::ThrownProjectileKind::Snowball,
+            "the kind byte the item's own asProjectile speaks"
+        );
+        // THE SPAWN'S OWN FOLD (the `0.7 + Vec3(0.0, 0.1, 0.0)` lambda
+        // the south step scales — the flight ticks the drained window
+        // wears, the spread's tiny drift the tolerance keeps)
+        assert!(
+            (e.x - (f64::from(px) + 0.5)).abs() < 0.5,
+            "the x the center keeps ({})",
+            e.x
+        );
+        assert!(
+            e.y > f64::from(gy) + 0.4 && e.y < f64::from(gy) + 0.8,
+            "the y the 0.1 nudge the fall fold keeps ({})",
+            e.y
+        );
+        assert!(
+            e.z > f64::from(pz) + 1.0 && e.z < f64::from(pz) + 5.0,
+            "the z the 0.7 offset the flight keeps ({})",
+            e.z
+        );
+        // THE VELOCITY'S OWN BAND (the 1.1 power the triangle spread's
+        // ±0.1034 pair keeps, the drag the flight ticks wear)
+        assert!(
+            e.vz > 1.0 && e.vz < 1.25,
+            "the south step the 1.1 scale speaks ({})",
+            e.vz
+        );
+        assert!(e.vx.abs() < 0.2 && e.vy.abs() < 0.2, "the flanks the spread keeps");
+        // THE SLOT'S OWN SPEND (the count-1 law the write-back wears)
+        assert_eq!(
+            app.container_stores[&(px, gy, pz)][0],
+            (snow_id, 1),
+            "the shrink the setItem law answers"
+        );
+        // THE LAUNCH'S OWN VOICE (the 1002 the playSound walk answers)
+        if sounds_loaded() {
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("block.dispenser.launch @")),
+                "the 1002 the launch voice rode"
+            );
+        }
+    }
+
+    /// THE DISPENSER'S OWN EGG SHOT (the sibling kind the same lane
+    /// wears — the kind byte the `asProjectile` factory's own item
+    /// speaks, the eggs vec the ThrownEgg's own flight answers).
+    #[test]
+    fn the_dispenser_the_egg_shot_the_kind_byte_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let egg_id = mc_registry::item_id_by_name("egg").expect("the wire table");
+        let (px, pz) = (16i32, 16i32);
+        let gy = 30i32;
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            for dx in -4..=4 {
+                for dz in -4..=4 {
+                    world.set(px + dx, gy - 1, pz + dz, crate::world::STONE);
+                }
+            }
+            world.set(px, gy, pz, crate::world::DISPENSER);
+            world.set_variant(
+                px,
+                gy,
+                pz,
+                crate::world::dispenser_variant(crate::world::DISPENSER_FACING_SOUTH, false),
+            );
+        }
+        app.container_stores.insert(
+            (px, gy, pz),
+            vec![(egg_id, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)],
+        );
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            world.schedule_dispenser_tick(
+                app.frame + crate::world::DISPENSER_COOLDOWN,
+                px,
+                gy,
+                pz,
+            );
+        }
+        for _ in 0..6 {
+            app.update();
+        }
+        assert_eq!(app.eggs.len(), 1, "the egg the shot lane flies");
+        assert_eq!(
+            app.eggs[0].kind,
+            crate::mob::ThrownProjectileKind::Egg,
+            "the kind byte the egg's own factory speaks"
+        );
+        assert_eq!(
+            app.container_stores[&(px, gy, pz)][0],
+            (0, 0),
+            "the last egg the emptied slot's honest row keeps"
+        );
+        assert!(
+            app.drops.is_empty(),
+            "the shot lane the DEFAULT eject never wears"
+        );
+    }
+
+    /// THE DEFAULT'S OWN KEEP (the stone the spawnItem walk serves —
+    /// the eject the ItemDrop wears, the thrown family the shot lane
+    /// never sees, the 1000 the dispense voice speaks).
+    #[test]
+    fn the_dispenser_the_stone_eject_the_default_keeps() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let stone_id = mc_registry::item_id_by_name("stone").expect("the wire table");
+        let (px, pz) = (16i32, 16i32);
+        let gy = 30i32;
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            for dx in -4..=4 {
+                for dz in -4..=4 {
+                    world.set(px + dx, gy - 1, pz + dz, crate::world::STONE);
+                }
+            }
+            world.set(px, gy, pz, crate::world::DISPENSER);
+            world.set_variant(
+                px,
+                gy,
+                pz,
+                crate::world::dispenser_variant(crate::world::DISPENSER_FACING_SOUTH, false),
+            );
+        }
+        app.container_stores.insert(
+            (px, gy, pz),
+            vec![(stone_id, 3), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)],
+        );
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            world.schedule_dispenser_tick(
+                app.frame + crate::world::DISPENSER_COOLDOWN,
+                px,
+                gy,
+                pz,
+            );
+        }
+        for _ in 0..6 {
+            app.update();
+        }
+        assert!(app.eggs.is_empty(), "the stone the thrown lane never rides");
+        assert_eq!(app.drops.len(), 1, "the eject the ItemDrop wears");
+        assert_eq!(
+            app.container_stores[&(px, gy, pz)][0],
+            (stone_id, 2),
+            "the shrink the count-1 law keeps"
+        );
+    }
+
+    /// THE SNOWBALL'S OWN BREAK (javap `Snowball.handleEntityEvent`
+    /// case 3 the 26.2 jar — the `bipush 8` loop the plain case
+    /// speaks, the ZERO-velocity shards the jitter walk never wears,
+    /// the NO-chick break the onHit override never rolls): the wall
+    /// the clip ray banks, the eight SnowballItem shards the burst
+    /// wears, the mobs the count the gate never adds.
+    #[test]
+    fn the_snowball_the_break_the_eight_shards_wear() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let (px, pz) = (16i32, 16i32);
+        let gy = 30i32;
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            for dx in -4..=4 {
+                for dz in -4..=4 {
+                    world.set(px + dx, gy - 1, pz + dz, crate::world::STONE);
+                }
+            }
+            // THE WALL THE SHOT'S OWN TARGET (the south column the
+            // flight's ray crosses)
+            world.set(px, gy + 1, pz + 3, crate::world::STONE);
+        }
+        let mobs_before = app.mobs.len();
+        app.eggs.push(crate::mob::EggProjectile {
+            id: 777,
+            x: f64::from(px) + 0.5,
+            y: f64::from(gy) + 1.5,
+            z: f64::from(pz) + 0.5,
+            vx: 0.0,
+            vy: 0.0,
+            vz: 0.5,
+            yaw: 0.0,
+            pitch: 0.0,
+            dead: false,
+            kind: crate::mob::ThrownProjectileKind::Snowball,
+        });
+        for _ in 0..12 {
+            if app.eggs.is_empty() {
+                break;
+            }
+            app.update();
+        }
+        assert!(app.eggs.is_empty(), "the break the discard serves");
+        let snow_shards = app
+            .particles
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::SnowballItem))
+            .count();
+        let egg_shards = app
+            .particles
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::EggItem))
+            .count();
+        assert_eq!(snow_shards, 8, "the bipush-8 loop the case speaks ({snow_shards})");
+        assert_eq!(egg_shards, 0, "the egg's own shards the kind never wears");
+        assert_eq!(
+            app.mobs.len(),
+            mobs_before,
+            "the NO-chick break the onHit override keeps"
+        );
+        // THE SHARD'S OWN REST (the ZERO wire velocity the case-3
+        // call wears — the internal drift the only speed the shard
+        // carries)
+        let shard = app
+            .particles
+            .iter()
+            .find(|p| matches!(p.kind, crate::particles::ParticleKind::SnowballItem))
+            .expect("the burst the shards keep");
+        assert!(
+            shard.vx.abs() < 0.05 && shard.vy.abs() < 0.15 && shard.vz.abs() < 0.05,
+            "the zero-velocity call the internal drift keeps ({},{},{})",
+            shard.vx,
+            shard.vy,
+            shard.vz
         );
     }
 }

@@ -643,6 +643,17 @@ pub enum ParticleKind {
     /// the draw the stream still spends), the white tint the item
     /// pixels wear.
     EggItem,
+    /// `BreakingItemParticle` — the thrown snowball's own shatter
+    /// (javap `Snowball.handleEntityEvent` case 3 + the
+    /// `BreakingItemParticle$SnowballProvider` the 26.2 jar: the
+    /// `bipush 8` loop the case speaks, the `addParticle(getParticle()
+    /// , x, y, z, 0.0, 0.0, 0.0)` the ZERO wire velocity keeps [NO
+    /// jitter the egg's own call wears, NO gaussian the caller's own
+    /// spread never rides — the ctor's internal `xd * 0.1` the only
+    /// drift the shard keeps]), the `item/snowball.png` sprite the
+    /// SnowballProvider's own set carries, the white tint the item
+    /// pixels wear.
+    SnowballItem,
     /// `GlowParticle` — the wax trio's own puff (the single `glow`
     /// sprite the `wax_on` / `wax_off` / `scrape` jsons' one-texture
     /// sets keep, the provider tints the ctor's own `setColor` rows
@@ -3300,6 +3311,55 @@ pub fn breaking_egg_shard(
         vx: sx * scale + wire_vx,
         vy: sy * scale + wire_vy,
         vz: sz * scale + wire_vz,
+        age: 0,
+        lifetime: life,
+        gravity: 1.0,
+        friction: 0.98,
+        quad_size: base_quad_size(r_size) / 2.0,
+        uo,
+        vo,
+        col: [1.0, 1.0, 1.0],
+    }
+}
+
+/// The thrown snowball's own shatter (javap `Snowball.handleEntityEvent`
+/// case 3 the 26.2 jar — the `bipush 8` loop the caller speaks, the
+/// `addParticle(getParticle(), x, y, z, 0.0, 0.0, 0.0)` walk the ZERO
+/// wire velocity keeps): the SAME `BreakingItemParticle` chain the
+/// egg's shard wears — the `BreakingItemParticle$SnowballProvider`
+/// the provider set carries, the `item/snowball.png` sprite the
+/// single-layer pick draws, the 9-draw ctor chain the eye's own walk
+/// banks (the base lifetime, the three spreads, the size draw, the
+/// uo/vo pair — the `xd = xd * 0.1 + xSpeed` fold the ZERO xSpeed
+/// keeps, the internal drift the ONLY velocity the shard wears), the
+/// gravity 1.0, the `/2` size fold, the base 0.98 friction. NO wire
+/// velocity args the vanilla walk never passes — the ctor's own
+/// spread the plain trio speaks.
+pub fn breaking_snowball_shard(
+    x: f64,
+    y: f64,
+    z: f64,
+    rng: &mut crate::drops::Lcg,
+) -> Particle {
+    // THE SPRITE PICK (the `nextInt(1)` the single-layer model's
+    // activeLayerCount speaks — the draw the stream spends, the zero
+    // answer the pick keeps)
+    let _layer = rng.next_int(1);
+    let life = base_lifetime(rng.next_f32());
+    let (sx, sy, sz) = ctor_spread_and_normalize(rng);
+    let r_size = rng.next_f32();
+    let uo = rng.next_f32() * 3.0;
+    let vo = rng.next_f32() * 3.0;
+    let scale = f64::from(0.1f32);
+    Particle {
+        kind: ParticleKind::SnowballItem,
+        x,
+        y,
+        z,
+        prev: None,
+        vx: sx * scale,
+        vy: sy * scale,
+        vz: sz * scale,
         age: 0,
         lifetime: life,
         gravity: 1.0,

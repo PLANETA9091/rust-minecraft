@@ -1669,3 +1669,94 @@ Stage Summary:
   projectile entity types (the throw lane the dispenser shot's own
   DEFAULT the honest stand-in retires); the shulker box the
   getContainerAt walk the dropper's front read never serves.
+
+---
+Task ID: autopush-140
+Agent: cron autopush (Job 384923, 2026-10-23 03:17:13 +08:00)
+Task: the standing autopush round — the fresh-session window the 139
+entry's head duty banked (the gate re-runs FIRST), the lane the 139
+entry's next-candidates wear: THE DISPENSER'S OWN THROWN SHOT — the
+snowball/egg the honest DEFAULT retires.
+
+Work Log:
+- THE HEAD DUTY THE WINDOW ANSWERED: the full workspace gate RAN —
+  mc-client 2319 passed / 0 failed / 22 ignored + mc-protocol 157 +
+  mc-registry 100 + mc2rs-pixel 80 = 2656 passed / 0 failed / 22
+  ignored, the OOM ceiling the 139 entry's 17 SIGKILLs crossed CLEARED
+  (the platform's own resident the smallest boot the record wears —
+  the ~450MB python the window's 3.5G margin answers, the .cargo
+  baseline shape the serial lld --no-keep-memory linker keeps). THE
+  2731-TEST GATE the duty banked NOW SPEAKS — and the speak caught
+  THE 139 ROUND'S OWN NEVER-EXECUTED +2: the diagonal refusal's
+  (dx+1, dy+1, dz) seat the above cell's six-neighbor scan the
+  pos.above() arm covers (the POWERED verdict vanilla honestly speaks
+  — the TRUE diagonal (dx+1, dy+1, dz+1) the fix stamps), the dispense
+  laws' yRot the 180-only band the atan2's ±180 wrap refutes (the
+  -179.87 the -z shot's honest answer — the |±180| band the fix
+  keeps). The gate's own confirmation the duty's whole point wears.
+- THE DISK RESET THE ROUND SURVIVED (the second the record wears): the
+  mid-round wipe ate the forensics + the tool + the first lane
+  application whole — the recovery the protocol banks ran: the clone
+  (@682bfd3) + rustup 1.99.1 + recover_runtime_cache.py (SIX rounds
+  the CDN's resets wore — 2156 oggs the final fetch banks) + the
+  cache build (font.bin + textures.bin) + the baseline check. THE
+  LANE THE CONVERSATION'S OWN RECORD REPLAYED — the forensic
+  verdicts the in-context banks kept, the same anchors the same
+  edits re-wore.
+- THE FORENSICS THE RAW WALK BANKS (scripts/raw_trace.py — the new
+  tool the folding classfile_dump's loop bodies the straight-line
+  trace shows; the cp-walker the tag-15/header-offset lessons the
+  build fixed): javap Snowball.handleEntityEvent case 3 — the
+  `bipush 8` loop the case speaks, the `addParticle(getParticle(),
+  x, y, z, 0.0, 0.0, 0.0)` the ZERO wire velocity keeps (NO jitter
+  the egg's own call wears); javap ThrownEgg.handleEntityEvent case
+  3 — the ItemParticleOption loop the same count wears; javap the
+  DispenseConfig$Builder <init> — the ldc pair the uncertainty 6.0
+  the power 1.1 defaults bank; javap ProjectileItem.createDispenseConfig
+  — the interface default the snowball/egg inherit (NO override the
+  items speak); javap ProjectileDispenseBehavior.execute — the
+  `spawnProjectileUsingShoot(step, power, uncertainty)` call the
+  playSound's `orElse(1002)` voice keeps; javap Snowball.onHit — the
+  broadcastEntityEvent(3) + discard the NO-chick walk speaks; javap
+  SnowballItem/EggItem.asProjectile — the item factory the 26.2
+  shape wears.
+- THE LANES THE CLIENT RIDES: mob.rs the ThrownProjectileKind enum
+  (Egg/Snowball) + the EggProjectile kind field + the dispenser_shot
+  ctor (the projectile_shoot_law 1.1/6.0 the arrow's own walk + the
+  dispense_projectile_position 0.7/0.1 fold) + the throw_from's Egg
+  stamp; particles.rs the SnowballItem kind + breaking_snowball_shard
+  (the 9-draw BreakingItemParticle chain the egg's shard shares, the
+  ZERO wire velocity the ctor's internal drift alone keeps); screens.rs
+  the beat's 1002 branch (the arrow/thrown split the kind byte picks),
+  the break walk's chick gate (the SNOWBALL the roll never wears) +
+  the 8/10 burst branch, the snowball shard quad group (the
+  item/snowball sprite the sprite_uv namespace lane resolves).
+- +4 tests: the snowball shot (the fold position the flight window's
+  tolerance keeps, the 1.1 band, the shrink law, the 1002 voice), the
+  egg shot (the kind byte, the emptied slot's honest row, the DEFAULT
+  eject the lane never wears), the stone default keeps (the ItemDrop
+  the 1000 wears), the snowball break (the bipush-8 shards, the
+  NO-chick break, the zero-velocity rest).
+- fmt: the lane's hunks the hand-styled form keep (the 138/139
+  discipline — no whole-file passes the pre-existing debt never moves).
+- Suite: 2656 passed / 0 failed / 22 ignored (+4 lane tests, +2
+  corrected 139 rows; 2319 mc-client + 157 mc-protocol + 100
+  mc-registry + 80 mc2rs-pixel); goldens 19/19 PASS rms 0.000 (NO
+  regeneration — the lane no render path the existing kinds touch,
+  the snowball quads the break alone spawns, every golden byte the
+  same).
+- Pushed v0.3.864.
+
+Stage Summary:
+- THE DISPENSER THE THROWN FAMILY'S OWN SHOT SPEAKS: the lever's flip
+  the snowball the 1.1 power's arc flies, the egg the chick rolls'
+  break wears, the stone the honest DEFAULT keeps — the item's own
+  asProjectile factory the shot lane answers, the 8-particle break
+  the zero-velocity call renders.
+- NEXT CANDIDATES: the dispenser's own 3x3 canvas (the DispenserMenu
+  nine rows the dispenser.png geometry wears — the chest lane's own
+  shape the click/belief/persistence walks keep), the shulker box the
+  getContainerAt walk the dropper's front read never serves, the
+  thrown-shot's wire lane (the Add Entity word the live read banks),
+  the README's golden section the 19-row runner's own row the text
+  could name.

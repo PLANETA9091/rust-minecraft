@@ -11637,6 +11637,27 @@ pub fn pick_all_entities(
     hits
 }
 
+/// THE THROWN FAMILY'S OWN KIND WORD (javap the 26.2 jar — the
+/// `Snowball` and `ThrownEgg` classes the `ThrowableItemProjectile`
+/// base pair wears: the SAME arc law the tick walk keeps [the drag
+/// 0.99 the water 0.8, the gravity 0.03], the SAME 0-dose the base
+/// `onHitEntity` speaks, the break walk the only branch — the egg's
+/// `broadcastEntityEvent(3)` the chick rolls bank, the snowball's
+/// own case-3 the plain 8-particle walk the zero velocity keeps).
+/// The dispenser's shot lane the kind byte wears (the item's own
+/// `asProjectile` factory the 26.2 walk answers — the snowball the
+/// kind the shot's own call picks, the egg the throw lane mints).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ThrownProjectileKind {
+    /// `ThrownEgg` — the 1/8 roll the chick banks, the ten shards
+    /// the broadcast-3's jitter walk wears.
+    Egg,
+    /// `Snowball` — the plain break the onHit walk speaks (NO chick
+    /// rolls the onHit override never wears), the 8-particle case-3
+    /// the zero-velocity walk banks.
+    Snowball,
+}
+
 /// THE THROWN EGG'S OWN BODY (javap `ThrownEgg` the 26.2 law speaks —
 /// the `ThrowableProjectile` base's own arc the tick walk keeps: the
 /// drag 0.99 the per-tick scale ride, the gravity 0.03 the fall fold
@@ -11667,6 +11688,10 @@ pub struct EggProjectile {
     pub yaw: f32,
     pub pitch: f32,
     pub dead: bool,
+    /// THE KIND'S OWN BYTE (the thrown family's own word — the egg
+    /// the throw lane mints, the snowball the dispenser's shot lane
+    /// picks; the break walk's chick gate the byte answers).
+    pub kind: ThrownProjectileKind,
 }
 
 /// THE SHOOT'S OWN POWER (javap `EggItem.use`'s
@@ -11718,6 +11743,47 @@ impl EggProjectile {
             yaw: yaw as f32,
             pitch: pitch as f32,
             dead: false,
+            kind: ThrownProjectileKind::Egg,
+        }
+    }
+
+    /// THE DISPENSER'S OWN SHOT (javap the 26.2 jar — the
+    /// `ProjectileDispenseBehavior.execute` walk the snowball/egg
+    /// items' own `DispenseConfig.DEFAULT` serves: the position the
+    /// `lambda$new$0`'s `0.7 + Vec3(0.0, 0.1, 0.0)` fold speaks [the
+    /// `dispense_projectile_position` law the arrow's arm banks],
+    /// the `spawnProjectileUsingShoot(stepX, stepY, stepZ, power,
+    /// uncertainty)` call the builder's own defaults wear [the
+    /// uncertainty 6.0 the power 1.1 the `<init>`'s ldc pair banks
+    /// — the snowball/egg `createDispenseConfig` the interface
+    /// default keeps, NO override the items speak], the shoot law
+    /// the `projectile_shoot_law` fold answers [the normalize + the
+    /// `triangle(0, 0.0172275 * 6)` spread + the `scale(1.1)` — the
+    /// arrow's own walk the two thrown kinds share]). The kind the
+    /// item's own `asProjectile` factory speaks (the snowball the
+    /// kind 1, the egg the kind 0 — the shot's own call picks).
+    pub fn dispenser_shot(
+        id: i32,
+        kind: ThrownProjectileKind,
+        center: (f64, f64, f64),
+        step: (i32, i32, i32),
+        rng: &mut Lcg,
+    ) -> Self {
+        let (px, py, pz) = crate::world::dispense_projectile_position(center, step);
+        let ((vx, vy, vz), y_rot, x_rot) =
+            crate::world::projectile_shoot_law(rng, step, 1.1, 6.0);
+        Self {
+            id,
+            x: px,
+            y: py,
+            z: pz,
+            vx,
+            vy,
+            vz,
+            yaw: y_rot as f32,
+            pitch: x_rot as f32,
+            dead: false,
+            kind,
         }
     }
 

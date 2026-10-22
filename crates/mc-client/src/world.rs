@@ -33851,13 +33851,19 @@ mod tests {
             "the above lever the QC arm answers"
         );
         w.set(dx, dy + 1, dz, AIR);
-        // THE BESIDE-THE-ABOVE REFUSAL (the lever diagonal to the above
-        // cell the read never covers — the vanilla's own six the
-        // pos.above() read wears)
-        w.set(dx + 1, dy + 1, dz, LEVER_ON);
+        // THE TRUE-DIAGONAL REFUSAL (the lever DIAGONAL to both the
+        // dispenser and its above cell the read never covers — the
+        // vanilla's own six the pos and the pos.above() reads wear;
+        // the (dx+1, dy+1, dz) seat the FIRST draft's mis-model the
+        // gate's own run caught — the cell the above's six-neighbor
+        // scan the pos.above() arm covers [the direct neighbor the
+        // lever is], the POWERED verdict the vanilla walk honestly
+        // speaks)
+        w.set(dx + 1, dy + 1, dz, AIR);
+        w.set(dx + 1, dy + 1, dz + 1, LEVER_ON);
         assert!(
             !dispenser_input_signal(&w, dx, dy, dz),
-            "the diagonal the refusal keeps"
+            "the true diagonal the refusal keeps"
         );
     }
 
@@ -33928,7 +33934,15 @@ mod tests {
             "the power 1.1 the speed scales ({speed})"
         );
         assert!(vz < 0.0, "the -z step the velocity wears");
-        assert!((y_rot - 180.0).abs() < 10.0, "the -z shot the 180 yRot ({y_rot})");
+        // THE ±180 WRAP THE ATAN2 KEEPS (the -z look the ±180 answer
+        // speaks — the spread's tiny flank the 179.87/−180.13 pair
+        // wears, the |±180| band the honest verdict keeps; the
+        // 180-only band the FIRST draft's mis-model the gate's own
+        // run caught)
+        assert!(
+            y_rot.abs() > 170.0,
+            "the -z shot the ±180 yRot ({y_rot})"
+        );
         assert!(x_rot.abs() < 10.0, "the flat shot the 0 xRot ({x_rot})");
         // THE INSERT WALK'S OWN VERDICTS (the merge the same-id slot
         // tops up, the first-empty the split arm fills, the cap the
