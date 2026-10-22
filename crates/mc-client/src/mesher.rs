@@ -1938,7 +1938,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                 // `shade: true` the models carry — the FACE_SHADE term
                 // the quad's own direction reads, the lightmap the
                 // per-corner fold answers).
-                if crate::world::is_comparator(id) {
+                if crate::world::is_comparator(id) || crate::world::is_repeater(id) {
                     let sky_factor = world.sky_light_factor.unwrap_or(1.0)
                         * world
                             .day_tick
@@ -2009,10 +2009,27 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     // the neighbor's face the solid render answers)
                     let below = world.get(wx, wy - 1, wz);
                     let variant = world.variant(wx, wy, wz);
-                    let subtract = crate::world::comparator_subtract_of(variant);
-                    let powered = crate::world::comparator_powered_of(variant);
-                    let quads = comparator_model_quads(subtract, powered);
-                    let facing = crate::world::comparator_facing_of(variant);
+                    // THE SHARED LANE'S OWN DECODE (the kind's own
+                    // variant law the pair speaks — the comparator the
+                    // (subtract, powered) pair the four bakes pick, the
+                    // repeater the (powered, delay, locked) triple the
+                    // sixteen chains answer)
+                    let (quads, facing) = if crate::world::is_comparator(id) {
+                        let subtract = crate::world::comparator_subtract_of(variant);
+                        let powered = crate::world::comparator_powered_of(variant);
+                        (
+                            comparator_model_quads(subtract, powered),
+                            crate::world::comparator_facing_of(variant),
+                        )
+                    } else {
+                        let powered = crate::world::repeater_powered_of(variant);
+                        let delay = crate::world::repeater_delay_of(variant);
+                        let locked = crate::world::repeater_locked_of(variant);
+                        (
+                            repeater_model_quads(powered, delay, locked),
+                            crate::world::repeater_facing_of(variant),
+                        )
+                    };
                     let turns = match facing {
                         1 => 3.0f32, // east the y=270 row
                         2 => 0.0,    // south the y=0 row
@@ -2032,6 +2049,8 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         let tile = match q.texture {
                             "block/comparator" => atlas::TILE_COMPARATOR,
                             "block/comparator_on" => atlas::TILE_COMPARATOR_ON,
+                            "block/repeater" => atlas::TILE_REPEATER,
+                            "block/repeater_on" => atlas::TILE_REPEATER_ON,
                             "block/smooth_stone" => {
                                 atlas::FACE_TILES[crate::world::SMOOTH_STONE as usize][2]
                             }
@@ -2041,6 +2060,10 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             "block/redstone_torch_off" => {
                                 atlas::FACE_TILES[crate::world::REDSTONE_TORCH_OFF as usize][2]
                             }
+                            // THE LOCK BAR'S OWN TILE (the autopush-126
+                            // round — the #lock ref the jar's own
+                            // block/bedrock texture the freeze bar wears)
+                            "block/bedrock" => atlas::FACE_TILES[crate::world::BEDROCK as usize][2],
                             _ => tile,
                         };
                         // THE SHADE'S OWN SEAT (the model's shade:true
@@ -6546,6 +6569,95 @@ fn comparator_model_quads(
     })
 }
 
+/// THE REPEATER'S OWN MODEL BAKES (the autopush-126 round — the
+/// sixteen per-state chains the jar's own blockstates/repeater.json
+/// rows name: the (powered, delay, locked) triple the variant byte
+/// picks — block/repeater_{1..4}tick the dark rows, the _on pair the
+/// lit torch + the twelve halo faces the glow star carries, the
+/// _locked rows the bedrock bar the freeze wears). The resolved
+/// texture refs the per-quad verdict reads (#top the TILE_REPEATER
+/// swap banks, #slab the smooth_stone, #unlit/#lit the torch kinds'
+/// own tiles, #lock the bedrock tile). The failed derive the honest
+/// empty slice keeps.
+fn repeater_model_quads(
+    powered: bool,
+    delay: u8,
+    locked: bool,
+) -> &'static [mc_registry::element_quads::Quad] {
+    static OFF_1: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    static OFF_2: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    static OFF_3: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    static OFF_4: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    static ON_1: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    static ON_2: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    static ON_3: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    static ON_4: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    static LOCK_1: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    static LOCK_2: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    static LOCK_3: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    static LOCK_4: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    static ON_LOCK_1: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    static ON_LOCK_2: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    static ON_LOCK_3: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    static ON_LOCK_4: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    let step = delay.clamp(1, 4) as usize;
+    let cache = match (powered, locked, step) {
+        (false, false, 1) => &OFF_1,
+        (false, false, 2) => &OFF_2,
+        (false, false, 3) => &OFF_3,
+        (false, false, _) => &OFF_4,
+        (false, true, 1) => &LOCK_1,
+        (false, true, 2) => &LOCK_2,
+        (false, true, 3) => &LOCK_3,
+        (false, true, _) => &LOCK_4,
+        (true, false, 1) => &ON_1,
+        (true, false, 2) => &ON_2,
+        (true, false, 3) => &ON_3,
+        (true, false, _) => &ON_4,
+        (_, true, 1) => &ON_LOCK_1,
+        (_, true, 2) => &ON_LOCK_2,
+        (_, true, 3) => &ON_LOCK_3,
+        (_, true, _) => &ON_LOCK_4,
+    };
+    cache.get_or_init(|| {
+        let model = match (powered, locked, step) {
+            (false, false, 1) => "block/repeater_1tick",
+            (false, false, 2) => "block/repeater_2tick",
+            (false, false, 3) => "block/repeater_3tick",
+            (false, false, _) => "block/repeater_4tick",
+            (false, true, 1) => "block/repeater_1tick_locked",
+            (false, true, 2) => "block/repeater_2tick_locked",
+            (false, true, 3) => "block/repeater_3tick_locked",
+            (false, true, _) => "block/repeater_4tick_locked",
+            (true, false, 1) => "block/repeater_1tick_on",
+            (true, false, 2) => "block/repeater_2tick_on",
+            (true, false, 3) => "block/repeater_3tick_on",
+            (true, false, _) => "block/repeater_4tick_on",
+            (_, true, 1) => "block/repeater_1tick_on_locked",
+            (_, true, 2) => "block/repeater_2tick_on_locked",
+            (_, true, 3) => "block/repeater_3tick_on_locked",
+            (_, true, _) => "block/repeater_4tick_on_locked",
+        };
+        mc_registry::element_quads::derive_model_inherited(model).unwrap_or_default()
+    })
+}
+
 /// THE TRAPDOOR LADDER'S OWN MODEL BAKES (the autopush-669 round —
 /// the per-stem chains the registry's derive walk resolves, the oak
 /// round's own cache pattern the wood rungs wear): the CLOSED kinds
@@ -8291,13 +8403,14 @@ mod tests {
             fire_ticks: Vec::new(),
             fire_age: std::collections::HashMap::new(),
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
-            has_skylight: true, // the portal's own axis store: empty
-            campfire_ticks: Vec::new(), // the campfire's own queue: empty
-            torch_ticks: Vec::new(), // the torch's own queue: empty
-            detector_ticks: Vec::new(), // the detector's own queue: empty
+            has_skylight: true,                            // the portal's own axis store: empty
+            campfire_ticks: Vec::new(),                    // the campfire's own queue: empty
+            torch_ticks: Vec::new(),                       // the torch's own queue: empty
+            detector_ticks: Vec::new(),                    // the detector's own queue: empty
             comparator_ticks: Vec::new(),
+            repeater_ticks: Vec::new(),
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
-            bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
+            bamboo_ticks: Vec::new(),  // the bamboo's own queue: empty
             chunks: vec![vec![AIR; CHUNK_X * CHUNK_Y * CHUNK_Z]],
             light: None,
             day_tick: None,
@@ -10538,6 +10651,99 @@ mod tests {
                 );
             }
         }
+    }
+
+    /// THE REPEATER'S OWN BAKES (the autopush-126 round — the sixteen
+    /// per-state derives the jar's own models answer: every state the
+    /// non-empty slice keeps, the ON models the lit-tile + halo quads
+    /// carry, the locked rows the bedrock bar the freeze wears, the
+    /// delay dial the slider z the four positions the geometry moves,
+    /// the per-quad texture verdict the resolved names the derive
+    /// walk serves).
+    #[test]
+    fn the_repeater_bakes_the_sixteen_states_the_texture_verdicts_wear() {
+        // THE SIXTEEN STATES THE NON-EMPTY BAKES KEEP (the powered ×
+        // dial × lock triple the blockstate rows' own variants answer)
+        for powered in [false, true] {
+            for delay in 1..=4u8 {
+                for locked in [false, true] {
+                    let quads = repeater_model_quads(powered, delay, locked);
+                    assert!(
+                        !quads.is_empty(),
+                        "the ({powered},{delay},{locked}) state the bake answers"
+                    );
+                }
+            }
+        }
+        // THE SLAB BASE THE GROUND CULL KEEPS (the down cullface the
+        // below cell's opaque verdict culls — the DiodeBlock family's
+        // own shape the lane wears)
+        let off = repeater_model_quads(false, 1, false);
+        assert!(
+            off.iter()
+                .any(|q| q.cullface == Some(mc_registry::element_quads::Direction::Down)),
+            "the slab bottom the down cullface wears"
+        );
+        // THE ON MODELS THE HALO QUADS THE LIT GEOMETRY BANKS (the
+        // twelve glow faces the star the count gap speaks)
+        let on = repeater_model_quads(true, 1, false);
+        assert!(
+            on.len() > off.len(),
+            "the lit model the halo star the extra quads wear: {} vs {}",
+            on.len(),
+            off.len()
+        );
+        // THE DELAY DIAL THE SLIDER Z THE GEOMETRY MOVES (the moving
+        // torch the z = 4 + 2*delay lane the four positions wear —
+        // the delay-1 the mid z, the delay-4 the far z the quad sets
+        // differ)
+        let d4 = repeater_model_quads(false, 4, false);
+        let moved = off
+            .iter()
+            .zip(d4.iter())
+            .any(|(a, b)| (a.vertices[0][2] - b.vertices[0][2]).abs() > 1e-6);
+        assert!(moved, "the dial the slider z the geometry moves");
+        // THE LOCKED ROW THE BEDROCK BAR WEARS (the #lock ref the
+        // freeze bar the per-quad verdict answers, the moving torch
+        // the bar the geometry replaces)
+        let locked = repeater_model_quads(false, 1, true);
+        let names = |quads: &[mc_registry::element_quads::Quad]| {
+            let mut set = std::collections::BTreeSet::new();
+            for q in quads {
+                set.insert(q.texture);
+            }
+            set
+        };
+        let locked_names = names(locked);
+        assert!(
+            locked_names.contains("block/bedrock"),
+            "the lock bar the bedrock tile names"
+        );
+        // THE PER-QUAD TEXTURE VERDICT THE RESOLVED NAMES ANSWER (the
+        // #top swap the repeater tiles wear, the #slab the smooth
+        // stone keeps, the #unlit/#lit the torch kinds' tiles ride)
+        let off_names = names(off);
+        assert!(
+            off_names.contains("block/repeater"),
+            "the base top the repeater tile names"
+        );
+        assert!(
+            off_names.contains("block/smooth_stone"),
+            "the slab the smooth stone names"
+        );
+        assert!(
+            off_names.contains("block/redstone_torch_off"),
+            "the dark torches the unlit tile names"
+        );
+        let on_names = names(on);
+        assert!(
+            on_names.contains("block/repeater_on"),
+            "the lit top the repeater_on tile names"
+        );
+        assert!(
+            on_names.contains("block/redstone_torch"),
+            "the lit torches the lit tile names"
+        );
     }
 
     /// walk keeps, the down face the solid ground culls (the cullface

@@ -289,3 +289,126 @@ Stage Summary:
   missing sibling).
 
 
+
+---
+Task ID: autopush-126
+Agent: cron autopush (Job 384923, 2026-10-22 ~12:00 +08:00)
+Task: the standing autopush round — the ONE step the worklog's next
+candidates named: THE REPEATER KIND (the DiodeBlock sibling — the
+delay dial the right-click cycle, the one-way gate, the lock state,
+the boost-to-15 arm — the biggest redstone lane left).
+
+Work Log:
+- Environment held (clean tree at fbb5810, cargo 1.99.1, the runtime
+  caches the autopush-123 recovery banked all in place).
+- THE JAR'S OWN FORENSICS FIRST (the whole walk the 26.2 bytes speak):
+  javap RepeaterBlock the sideInputDiodesOnly pc 0-2 the iconst_1 the
+  TRUE the sides keep (the DiodeBlock sibling the comparator's FALSE
+  the mirror wears), the useWithoutItem pc 2-35 the cycle(DELAY) +
+  setBlock(3) the NO playSound the jar's own silence speaks (the
+  older click assumption the 26.2 bytes retire), isLocked the
+  getAlternateSignal > 0 fold, the placement the DiodeBlock super
+  call the getHorizontalDirection().getOpposite() law + the
+  setValue(LOCKED, isLocked(...)) tail; DiodeBlock.tick the branch
+  probe scripts/tick_branch_probe.py the raw jump targets banked
+  (the isLocked early-return, the mismatch arms, the steady-state
+  reschedule nuance the offline dedup+sort queue approximates), the
+  checkTickOnNeighbor the POWERED==shouldTurnOn quiet + the
+  willTickThisTick dedup; the blockstates/repeater.json the y-table
+  south 0 / west 90 / north 180 / east 270 the comparator's own
+  table speaks, the SIXTEEN model rows (repeater_{1..4}tick ×
+  _locked × _on — the slider z the 4+2*delay walk, the _on the
+  twelve halo faces the glow star carries, the _locked the bedrock
+  bar the freeze wears); the name tables the dig/sound/resistances/
+  drops keys ALL the "repeater" stem answers (the jar's own
+  loot_table/blocks/repeater.json + the Items rows the short name
+  wear — the vanilla register's "redstone_repeater" the REGISTRY
+  word never enters the lanes; the first kind the registry/item
+  names diverge — the NAME_OF row the "repeater" stem carries).
+- THE PIN scripts/autopush126_repeater_pin.py (idempotent): TILE_912
+  (block/repeater.png) + TILE_913 (block/repeater_on.png) the pool
+  tail decodes (every existing index holds), TILES 914,
+  N_KINDS 771, the KIND_NAMES + REGISTRY_NAMES the "repeater" tails
+  (the dig/drop/sound word both wear), FACE_TILES [912;6], TINTS/
+  DOOR_MODEL/ENTITY_HEAD the 771-row law, TILE_REPEATER/
+  TILE_REPEATER_ON the named consts; the elements.rs the SIXTEEN
+  typed rows the generator already banked (the pin's honest no-op
+  keeps); world.rs NAME_OF the "repeater" row.
+- world.rs the whole verdict: REPEATER const 770 + the variant byte
+  (low2 facing compass, 0x04 powered, 0x08/0x10 the delay-1 dial,
+  0x20 locked), the dial cycle 1→2→3→4→1, the placement variant +
+  the LOCKED eval, the survival gate (the comparator's own walk the
+  sibling wears), the input walk the SHARED DiodeBlock walk the
+  comparator lane serves (the comparator sibling arm the +REPEATER
+  gate the back/side reads both wear — the comparator's back and
+  sides now answer a powered repeater's 15 too), the side walk the
+  DIODES-ONLY law (the getControlInputSignal's diodesOnly arm — the
+  redstone block/wire/lever arms the repeater's sides never read),
+  shouldTurnOn the any-input verdict, the refresh read the LOCKED
+  freeze the None keeps, the front-seed walk the constant 15 the
+  powered bit speaks; the wire flood's seed (wire_source_strength_near
+  the max fold), the consumers' redstone_signal_at the same walk
+  rides, the strong lane's front arm (the conductor the repeater's
+  front the redstone-block-into-block chain wears), the wire's
+  shouldConnectTo seat, the collision Empty row (the DiodeBlock
+  family the noCollision verdict the sibling wears); the queue the
+  comparator's own shape wears (repeater_ticks + schedule dedup +
+  drain sort) + the dial delay*2 the beat stamps.
+- mesher.rs the SHARED DIODE LANE: the comparator's element lane the
+  gate the repeater joins (the per-kind decode the (powered, delay,
+  locked) triple the sixteen bakes pick), the per-quad tile verdict
+  #top→TILE_REPEATER(_ON) / #slab→smooth_stone / #unlit/#lit→the
+  torch kinds / #lock→the bedrock tile, the y-table the shared fold
+  keeps, the DOWN cullface + the FACE_SHADE seat + the per-corner
+  lightmap the comparator's own walk serves.
+- screens.rs the integration: the tick beat (tick_repeater_beats —
+  the drain the flip the LOCKED guard banks, the front seed the
+  attach walk re-broadcasts), the attach consult (the cell+six
+  scope, the mismatch → schedule(dial*2), the collect→drop(read)→
+  schedule discipline), the use arm (the dial cycle, the NO click
+  voice the 26.2 bytes retire, the broadcast the attach scan covers),
+  the placement survival gate + the facing stamp + the LOCKED eval;
+  drops.rs the plain NAME_OF walk the "repeater" stem answers (no
+  exception arm — the first pass's redstone_repeater guess the
+  tables' own keys retired).
+- TESTS +4: the variant/dial/placement walk (the round trip, the
+  4→1 wrap, the east look the west FACING, the collision Empty, the
+  "repeater" pairing, the dig row 0.0, the loot stem the drops
+  table keys), the signal/beat/front walk (the lever back the
+  any-input verdict, the dedup, the delay*2, the flip, the front
+  wire 15 + the consumer + the strong conductor + the sibling
+  comparator's back read, the stale-POWERED bit the dark phase
+  banks first), the lock walk (the block side the diodes-only walk
+  refuses, the side comparator the lock speaks, the locked cell the
+  refresh the silence keeps, the sibling repeater the same walk
+  answers), the mesher bakes (the sixteen states non-empty, the
+  down cullface, the halo count, the slider z the dial moves, the
+  bedrock bar, the resolved names).
+- THE PINS THE KIND DEMANDS AGAIN: N_KINDS 770→771 ×35 +
+  NAME_OF.len() ×21 (the palette law the same bump every kind-add
+  round pays); the World initializers ×10 the repeater_ticks field
+  the struct law grows.
+- THE GATES: cargo check --workspace --all-targets GREEN; cargo test
+  --workspace 2618 passed / 0 failed / 22 ignored (+4 vs autopush-
+  125's 2614; the stale-binary detour the fresh-hash rebuild
+  retired); verify_goldens.sh 18/18 PASS rms 0.000 (the pool tail no
+  golden scene touches); cargo fmt --check the content-hash churn
+  ZERO new hunks (the bedrock arm collapse + the comment alignment
+  the first pass wore — no fmt debt this round).
+
+Stage Summary:
+- THE REPEATER PLAYS LIKE VANILLA: place it facing the look, the
+  dial the right-click 1→2→3→4→1 cycles, the back lever the
+  delay*2 beat the flip banks, the front wire the 15 the flood
+  seeds, the lamps/doors/rails the front cell answer, the block in
+  front the strong 15 the chain carries, the side diode the lock
+  freeze wears (the wire/block sides the diodes-only walk refuses),
+  the dig the instant 0.0 the row banks, the drop the self item the
+  loot stem rolls. The suite 2618/0/22, the goldens 18/18 rms 0.000,
+  the fmt debt the baseline keeps.
+- NEXT CANDIDATES: the OBSERVER kind (the shouldConnectTo comment's
+  other missing sibling — the facing + powered/facing pulse), the
+  container-analog lane (the comparator's hasAnalogOutputSignal back
+  read — the chest-fill signal the BE tables would need), the
+  item-frame analog read, the piston lane (the biggest mover the
+  redstone family still lacks).

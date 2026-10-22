@@ -38527,6 +38527,61 @@ impl App {
                     *cz,
                 );
             }
+            // THE REPEATER'S OWN CONSULT (the autopush-126 round —
+            // javap RepeaterBlock.neighborChanged pc 16-26 +
+            // DiodeBlock.checkTickOnNeighbor pc 4-102 the 26.2 jar the
+            // same walk the sibling's own consult banks: the repeater
+            // AT the changed cell (the placement and the dig arm) AND
+            // the repeater whose back/side seats the changed cell
+            // serves, the checkTickOn law the LOCKED freeze + the
+            // POWERED==shouldTurnOn pair the quiet keep — the
+            // mismatch alone the scheduleTick(getDelay) entry banks
+            // [the dial the delay*2 walk stamps], the pending entry
+            // the schedule_repeater_tick walk's own dedup refuses).
+            // THE CONSULT'S OWN SCOPE the changed cell + its six the
+            // seeds wear — the collect→drop(read)→schedule discipline
+            // the comparator arm's own shape keeps.
+            let mut repeater_due: Vec<(i32, i32, i32)> = Vec::new();
+            {
+                let read = &*world;
+                let mut seen: std::collections::HashSet<(i32, i32, i32)> =
+                    std::collections::HashSet::new();
+                let mut consult: Vec<(i32, i32, i32)> = vec![(lx, ly, lz)];
+                for (dx, dy, dz) in [
+                    (0, -1, 0),
+                    (0, 1, 0),
+                    (0, 0, -1),
+                    (0, 0, 1),
+                    (-1, 0, 0),
+                    (1, 0, 0),
+                ] {
+                    consult.push((lx + dx, ly + dy, lz + dz));
+                }
+                for (cx, cy, cz) in consult {
+                    if !seen.insert((cx, cy, cz)) {
+                        continue;
+                    }
+                    if read.get(cx, cy, cz) != crate::world::REPEATER {
+                        continue;
+                    }
+                    if crate::world::repeater_refresh_variant(read, cx, cy, cz).is_some() {
+                        repeater_due.push((cx, cy, cz));
+                    }
+                }
+            }
+            for (cx, cy, cz) in &repeater_due {
+                // THE DIAL'S OWN DELAY (javap RepeaterBlock.getDelay —
+                // the DELAY * 2 walk the beat stamps, the checkTickOn
+                // arm the shouldPrioritize nuance the queue's own
+                // dedup+sort walk approximates)
+                let dial = crate::world::repeater_delay_of(world.variant(*cx, *cy, *cz));
+                world.schedule_repeater_tick(
+                    now + (dial as u64) * crate::world::REPEATER_TICKS_PER_STEP,
+                    *cx,
+                    *cy,
+                    *cz,
+                );
+            }
             // THE WIRE'S OWN RECOMPUTE (javap RedStoneWireBlock
             // .updateNeighborsOfNeighboringWires pc 0-118 the 26.2 jar —
             // the changed cell's own six + the cell itself the adjacent
@@ -40449,6 +40504,37 @@ impl App {
         // keeps). THE WIRE SESSION THE LOCAL TOGGLE NEVER LANDS (the
         // networked world's server-owned state the echo's reply names
         // — the door arm's own law keeps).
+        // THE REPEATER'S OWN DIAL ARM (the autopush-126 round — javap
+        // RepeaterBlock.useWithoutItem pc 2-35 the 26.2 jar the
+        // mayBuild gate the PASS carries, the state.cycle(DELAY) walk
+        // the setBlock(3) the dial wraps 1→2→3→4→1, the InteractionResult
+        // .SUCCESS the hand swing banks. THE CLICK'S OWN SILENCE the
+        // same bytes retire — the 26.2 useWithoutItem the playSound
+        // call never speaks, the dial the quiet turn the jar's own law
+        // keeps. THE POWERED VERDICT the dial never re-reads — the
+        // mismatch the NEXT neighbor-changed consult reschedules, the
+        // vanilla setBlock's own flag-1 broadcast the attach walk's
+        // own scan covers). THE WIRE SESSION THE LOCAL CYCLE NEVER
+        // LANDS (the comparator arm's own law the networked world's
+        // server-owned state keeps).
+        if !self.world_is_network
+            && crate::world::is_repeater(
+                self.active_world()
+                    .map(|w| w.get(hit.pos.0, hit.pos.1, hit.pos.2))
+                    .unwrap_or(0),
+            )
+        {
+            let (cx0, cy0, cz0) = hit.pos;
+            if let Some(world) = self.offline_world.as_mut() {
+                let cycled = crate::world::repeater_delay_cycled(world.variant(cx0, cy0, cz0));
+                world.set_variant(cx0, cy0, cz0, cycled);
+            }
+            // THE NEIGHBORS' OWN BROADCAST (the setBlock flag-1 the
+            // attach walk's cell+six scan covers — the back/side
+            // repeaters the changed cell the consult re-reads)
+            self.attach_wire_voice(cx0, cy0, cz0);
+            return true;
+        }
         // THE COMPARATOR'S OWN MODE CYCLE (the autopush-124 round —
         // javap ComparatorBlock.useWithoutItem pc 19-95 the 26.2 jar:
         // the `state.cycle(MODE)` walk the subtract bit flips, the
@@ -40988,6 +41074,17 @@ impl App {
                 return false;
             }
         }
+        // THE REPEATER'S OWN SURVIVAL GATE (the autopush-126 round —
+        // the same DiodeBlock.canSurvive walk the sibling wears: the
+        // air/fluid/plant rows the Empty verdict the refusal keeps)
+        if crate::world::is_repeater(block) {
+            let below_ok = self.active_world().is_some_and(|w| {
+                crate::world::repeater_can_survive(w, cell.0, cell.1, cell.2)
+            });
+            if !below_ok {
+                return false;
+            }
+        }
         // THE PLACEMENT CONTEXT'S OWN LOOK (the furnace facing's own
         // input — the read rides BEFORE the mutable prediction borrow,
         // the camera's own yaw the wire_angles conversion's raw form
@@ -41459,6 +41556,40 @@ impl App {
                     cell.1,
                     cell.2,
                     crate::world::comparator_placement_variant(cam_yaw),
+                );
+            }
+            // THE REPEATER'S OWN FACING STAMP (the autopush-126 round —
+            // javap RepeaterBlock.getStateForPlacement pc 2-14 the 26.2
+            // jar the DiodeBlock super call the SAME FACING walk the
+            // sibling stamps + the `setValue(LOCKED, isLocked(level,
+            // pos, state))` tail the side-diode arms evaluate: the
+            // dial the DELAY=1 default answers, the LOCKED bit the
+            // placement cell's own cw/ccw seats the powered side diode
+            // the freeze banks, the powered side the placement itself
+            // the locked start wears)
+            if crate::world::is_repeater(placed) {
+                let fresh = crate::world::repeater_placement_variant(cam_yaw);
+                // THE LOCKED TAIL'S OWN EVAL (javap pc 12-26 — the
+                // `setValue(LOCKED, isLocked(level, pos, state))` walk
+                // the placement cell's own cw/ccw seats the powered
+                // side diode the freeze banks)
+                let facing = crate::world::repeater_facing_of(fresh);
+                let locked = crate::world::repeater_alternate_signal(
+                    world,
+                    cell.0,
+                    cell.1,
+                    cell.2,
+                    facing,
+                ) > 0;
+                world.set_variant(
+                    cell.0,
+                    cell.1,
+                    cell.2,
+                    fresh | if locked {
+                        crate::world::REPEATER_LOCKED_BIT
+                    } else {
+                        0
+                    },
                 );
             }
             // THE WALL HEADS' OWN FACING STAMP (the dev-83 round — javap
@@ -46471,6 +46602,9 @@ impl App {
         // THE COMPARATOR'S OWN BEAT (the autopush-124 round — the
         // scheduled refresh walks the detector's own lane beside)
         self.tick_comparator_beats();
+        // THE REPEATER'S OWN BEAT (the autopush-126 round — the dial's
+        // scheduled flips the comparator's own lane beside)
+        self.tick_repeater_beats();
         if self.offline_carts.is_empty() {
             return;
         }
@@ -46785,6 +46919,48 @@ impl App {
             // attach walk's cell+six scan covers — the front cell the
             // new output the wire voice re-reads, the remesh the
             // changed pixels answers)
+            self.attach_wire_voice(x, y, z);
+        }
+    }
+
+    /// THE REPEATER'S OWN BEAT (the autopush-126 round — javap
+    /// DiodeBlock.tick the 26.2 jar the isLocked early-return pc 4-10
+    /// the freeze speaks, the POWERED != shouldTurnOn mismatch the
+    /// flag-2 setBlock flips, the dial the pulse the delay*2 beat
+    /// banks; the refresh walk the LOCKED guard the pure read's own
+    /// None keeps, the front seed the broadcast the wire voice
+    /// re-reads — the wire flood AND the consumers' verdicts the
+    /// front cell's own strength re-arms).
+    fn tick_repeater_beats(&mut self) {
+        let due = {
+            let Some(world) = self.offline_world.as_mut() else {
+                return;
+            };
+            world.drain_due_repeater_ticks(self.frame)
+        };
+        if due.is_empty() {
+            return;
+        }
+        for (x, y, z) in due {
+            let Some(world) = self.offline_world.as_mut() else {
+                return;
+            };
+            // THE RAIL-MATCH GATE the stale row the kind's own verdict
+            // drops (the dug repeater the queued entry the honest
+            // extra keeps)
+            if world.get(x, y, z) != crate::world::REPEATER {
+                continue;
+            }
+            // THE REFRESH WALK (the variant the live verdict banks —
+            // the LOCKED freeze the None the quiet keep wears, the
+            // unchanged pair the write the honest guard refuses)
+            if let Some(fresh) = crate::world::repeater_refresh_variant(world, x, y, z) {
+                world.set_variant(x, y, z, fresh);
+            }
+            // THE FRONT SEED'S OWN BROADCAST (the repeater pos the
+            // attach walk's cell+six scan covers — the front cell the
+            // new 15 the wire voice re-reads, the remesh the changed
+            // pixels answers)
             self.attach_wire_voice(x, y, z);
         }
     }
@@ -85139,6 +85315,7 @@ mod tests {
             torch_ticks: Vec::new(), // the torch's own queue: empty
             detector_ticks: Vec::new(), // the detector's own queue: empty
             comparator_ticks: Vec::new(),
+            repeater_ticks: Vec::new(),
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
@@ -85718,6 +85895,7 @@ mod tests {
                     torch_ticks: Vec::new(), // the torch's own queue: empty
                     detector_ticks: Vec::new(), // the detector's own queue: empty
                     comparator_ticks: Vec::new(),
+            repeater_ticks: Vec::new(),
                     torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
                     bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
                     chunks: vec![
@@ -86170,6 +86348,7 @@ mod tests {
             torch_ticks: Vec::new(), // the torch's own queue: empty
             detector_ticks: Vec::new(), // the detector's own queue: empty
             comparator_ticks: Vec::new(),
+            repeater_ticks: Vec::new(),
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
@@ -86248,6 +86427,7 @@ mod tests {
             torch_ticks: Vec::new(), // the torch's own queue: empty
             detector_ticks: Vec::new(), // the detector's own queue: empty
             comparator_ticks: Vec::new(),
+            repeater_ticks: Vec::new(),
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
@@ -86328,6 +86508,7 @@ mod tests {
                     torch_ticks: Vec::new(), // the torch's own queue: empty
                     detector_ticks: Vec::new(), // the detector's own queue: empty
                     comparator_ticks: Vec::new(),
+            repeater_ticks: Vec::new(),
                     torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
                     bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
                     chunks: vec![
@@ -86385,6 +86566,7 @@ mod tests {
             torch_ticks: Vec::new(), // the torch's own queue: empty
             detector_ticks: Vec::new(), // the detector's own queue: empty
             comparator_ticks: Vec::new(),
+            repeater_ticks: Vec::new(),
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
@@ -107895,6 +108077,7 @@ cow_sound_variant: None,
             torch_ticks: Vec::new(), // the torch's own queue: empty
             detector_ticks: Vec::new(), // the detector's own queue: empty
             comparator_ticks: Vec::new(),
+            repeater_ticks: Vec::new(),
             torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
             bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
@@ -110377,7 +110560,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            770,
+            771,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -110458,7 +110641,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            770,
+            771,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -110760,7 +110943,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            770,
+            771,
             "the palette the weighted plates' own tail banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -115818,7 +116001,7 @@ cow_sound_variant: None,
         // #texture ref banks)
         assert_eq!(
             atlas::N_KINDS,
-            770,
+            771,
             "the palette the weighted plates' own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
@@ -116038,7 +116221,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            770,
+            771,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
@@ -116315,7 +116498,7 @@ cow_sound_variant: None,
         );
         assert_eq!(
             atlas::N_KINDS,
-            770,
+            771,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
@@ -116431,7 +116614,7 @@ cow_sound_variant: None,
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE, 318);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, 319);
         assert_eq!(w::END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 770, "the palette the weighted rows bank");
+        assert_eq!(atlas::N_KINDS, 771, "the palette the weighted rows bank");
         for (off, on, name) in [
             (
                 w::LIGHT_WEIGHTED_PRESSURE_PLATE,
@@ -117551,7 +117734,7 @@ cow_sound_variant: None,
         assert_eq!(w::END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-            770,
+            771,
             "the palette the weighted plates' own rows bank"
         );
         for (off, on, name, wooden) in [
