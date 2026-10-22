@@ -1179,3 +1179,122 @@ Stage Summary:
   words never bank), the max-stack table the GUI's own place/split
   walks ride (the chest screen's shift-click laws the 64 the stand-
   in keeps).
+
+---
+Task ID: autopush-135
+Agent: cron autopush (Job 384923, 2026-10-22 ~23:0x +08:00)
+Task: the standing maintenance round — the environment held (repo clean @
+f8a62c1 v0.3.858 + mirror, cargo 1.99.1 + the caches alive). THE LANE
+the 134 entry's next-candidates head named: THE ITEM FRAME'S OWN
+ANALOG READ — the comparator's entity lane the getInputSignal pc
+155-164 banks, the frame store the placement/use/render lane the
+whole feature owns.
+
+Work Log:
+- THE JAR'S OWN WALKS the 26.2 dumps bank (the house classfile parser):
+  * javap ItemFrame.getAnalogOutput — the `getItem().isEmpty()` early
+    return the 0 the empty frame speaks, the `getRotation() + 1` fold
+    the 1..=8 band the famous max-8 signal wears (the rotation slot
+    the setRotation's own %8 wrap keeps);
+  * javap ComparatorBlock.getInputSignal pc 104-168 — the getItemFrame
+    AABB scan the SECOND cell (`pos.relative(FACING).relative(FACING)`
+    — the through-wall read the wall the conductor wears) the
+    `Math.max(j, fill)` fold + the `j != 0` verdict the quiet keep
+    banks; javap getItemFrame — the cell-bounds AABB the first frame
+    or the null keeps;
+  * javap Level.updateNeighbourForOutputSignal pc 3-130 — the
+    Direction.Plane walk the FOUR horizontal arms keep: the DIRECT arm
+    the COMPARATOR neighbor the neighborChanged serves, the CONDUCTOR
+    arm the two-steps-away comparator the through-wall read answers;
+  * javap ItemFrame.interact — the STORE lane (the held stack the
+    count-1 copy the setItem's copyWithCount(1) fold banks, the
+    consume(1) the survival shrink wears, the add_item voice the
+    non-empty arm plays) the EMPTY frame alone serves, the ROTATE lane
+    (the rotate_item voice opens, the `setRotation(getRotation() + 1)`
+    the %8 wrap banks) the filled frame + empty hand answers, the
+    getSlot(0) sneak swap the filled frame's own access the hand keeps;
+  * javap ItemFrame.setItem/setRotation — the DATA_ITEM count-1 law,
+    the add_item voice, the updateNeighbourForOutputSignal tail the
+    comparator re-reads ride;
+  * javap ItemFrame.hurtServer — the shouldDamageDropItem verdict (the
+    explosion-or-stored disjunction) the FILLED frame the drop walk +
+    the remove_item voice banks (the frame item + the contained item
+    the dropChance-1.0 pair spawns, the infinite-materials player the
+    honest no-drop keeps), the EMPTY frame the super's kill the break
+    voice + the frame item's own drop keeps;
+  * javap HangingEntity.tick — the `checkInterval++ == 100` clock the
+    survives poll rides (the 0 reset the survives arm banks), the
+    !survives arm the discard + the dropItem(2-arg) walk serves;
+  * javap HangingEntityItem.useOn — the mayPlace HORIZONTAL-face gate
+    (`getAxis().isVertical()` the UP/DOWN refusal), the
+    `pos = clicked.relative(face)` frame cell, the survives gate, the
+    playPlacementSound + the addFreshEntity + the `shrink(1)` the
+    spawn lane wears.
+- THE LANES THE CLIENT RIDES (world.rs + screens.rs + mesher.rs +
+  world_view.rs):
+  * the World's frame_analog map — the (x,y,z) -> 1..=8 rows the
+    comparator_input_signal's through-wall arm reads (the Math.max the
+    container fill the j the fold serves, the absent frame the 0 the
+    max keeps), the 10 World-literal sites the field's init keeps;
+  * the ItemFrameEnt store (cell/facing/rotation/item/glow/
+    check_interval) the App banks, the box_() the 0.75 x 0.75 x 1/16
+    slab the calculateBoundingBox walk banks;
+  * the placement arm — the horizontal-face gate, the collision_shape
+    survives verdicts (the Empty shape the frame cell's no-collision
+    band wears, the non-Empty the support answers, the same-cell frame
+    the overlap gate refuses), the place voice, the survival consume;
+  * the interact arm — the store/rotate/sneak lanes the SUCCESS
+    verdict carries (the wire session the swing-only silence keeps);
+  * the punch arm — the drop pairs + the voices, the analog row the
+    death's own map ride drops;
+  * the 100-tick poll — the support's own loss the pop serves, the
+    break voice + the pair the survival drop speaks;
+  * the frame_analog_broadcast — the updateNeighbourForOutputSignal
+    walk the comparators re-arms (the +2 schedule the refresh verdict
+    banks, the pending dedup the re-consult refuses);
+  * the render lane — the baked block/item_frame model the yaw the
+    support-adjacency law rotates (NORTH 0 / WEST 90 / SOUTH 180 /
+    EAST 270 — the template's panel at the +Z edge the NORTH facing
+    wears), the face shade the rotated direction table keeps, the
+    contained item the FIXED pose the panel-plane ride + the clockwise
+    45-deg-per-slot fold the 0.5 scale wears, the glow variant the
+    block/glow_item_frame model keeps; the entity pass the drops lane
+    beside rides.
+- +5 tests: the analog band (the empty 0, the 1..=8 band, the %8
+  wrap), the through-wall read (the wall + the frame cell the 5
+  speaks, the Math.max both verdicts, the quiet keep) + the broadcast
+  walk's three arms, the place/store/rotate/take lanes (the voice +
+  the map + the consume walks), the punch pairs + the voices, the
+  survive poll + the live comparator chain (the store's +2 schedule
+  the output cache the 1 banks, the dig's own broadcast the re-read
+  arms, the pop the pair drops).
+- Suite: 2643 passed / 0 failed / 22 ignored (+5 vs autopush-134's
+  2638); verify_goldens.sh 18/18 PASS rms 0.000 (the frame lane no
+  golden scene touches — no regeneration); cargo fmt --check 27273 =
+  the clean-HEAD count EXACTLY (the stash compare the zero-new-debt
+  verdict wears — the insert's own comment the alignment group the
+  restore re-padded).
+- Pushed 4dc168c (v0.3.859, the item frame's analog read).
+
+Stage Summary:
+- THE COMPARATOR READS THE FRAME THROUGH THE WALL: the frame on the
+  far side of a solid block speaks the item's rotation — the empty
+  frame the 0, the upright item the 1, the seventh turn the 8 the
+  max-8 band caps, the rotation turns the comparator's re-read rides
+  (the setItem/setRotation's own updateNeighbourForOutputSignal law
+  the broadcast walk wears), the container fill the max fold the same
+  cell answers. THE FRAME PLAYS LIKE VANILLA: the wall click places
+  (the horizontal faces alone admit, the floor/ceiling click the
+  chain refuses), the item click stores (the count-1 law, the
+  consume, the add voice), the empty-hand click rotates (the +1 %8,
+  the rotate voice), the sneak click takes (the item the hand keeps),
+  the punch breaks (the pair the dropChance-1.0 law spawns, the
+  creative the honest no-drop keeps), the dug support the 100-tick
+  poll pops, the render the block-model proxy the contained item's
+  clockwise turns wears.
+- NEXT CANDIDATES: the frame's world persistence (the offline lane
+  the session-local store the container_stores file-save pattern the
+  boot parse rides), the dropper/dispenser shot lanes (the offline
+  arm the wire's event words never bank), the max-stack table the
+  GUI's own place/split walks ride (the chest screen's shift-click
+  laws the 64 the stand-in keeps).
