@@ -1919,3 +1919,77 @@ Stage Summary:
   walk the dropper's front read never serves, the thrown-shot's
   wire lane (the Add Entity word the live read banks), the README's
   golden section the 19-row runner's own row the text could name.
+---
+Task ID: dev-143
+Agent: cron-agent-loop (Job 384925 round, trace 1a0a02c3c1060631-cron-agent-loop-202610230708)
+Task: ONE minimal step per the tick protocol — the worklog's NEXT CANDIDATES head: the live title lane (the OpenScreen Component's own decode the container.dropper row the dropper's window banks — the model's title_nbt the projection feeds).
+
+Work Log:
+- THE REPO THE CLEAN TREE ANSWERED (HEAD abf5ac7, origin in sync; the stale
+  dev-124 comparator summary the session rode — that lane the history's own
+  rounds long banked, the live HEAD the v0.3.866 dispenser window was).
+- THE HONEST GAP the v0.3.866 comment named now closed: the store's
+  title_nbt the projection NEVER fed (the LiveContainer's own shape the
+  field lacked), the live dropper window the kind-0 default misnamed (the
+  GENERIC_3x3 menu the BlockEntity pair shares — the title the ONLY
+  distinguishing row the canvas reads), the anvil rename the live window
+  never wore.
+- THE FORENSICS banked before the walk: the OpenScreen title the parse
+  RETAINS as the anonymous-root compound (skip_network_nbt's 0x0A gate —
+  the bare-string shapes the parse rejects, the decode lane the compound
+  forms alone answers); the render style NO forensics needed — the offline
+  canvases' centered 4210752 draw the 19 goldens the pixel law keeps (the
+  lane swaps the STRING the wire carries, never the draw).
+- THE LANES: world_view.rs the LiveContainer title_nbt field the store's
+  verbatim bytes ride (open_container_view the oc.title_nbt.clone() copy
+  the projection speaks); screens.rs decode_container_title the Component
+  walk the text-component tree reads (the text row the anvil literal
+  speaks, the translate row the lang table answers with the missing row
+  the KEY ITSELF banks — the Language.getOrDefault law, the extra list the
+  siblings ride, the bare list the concatenated children speak; the
+  scalars/styled-shapes the None keeps — the default lang row the canvas
+  banks, the %s args the gap the doc names); the GENERIC_3x3 arm the
+  decode lands (live_dispenser_title the resolution banks) + the
+  None-drop arm and close_dispenser the title dies with the window + the
+  3x3 canvas's title draw the live name renders (the None the
+  container.dispenser default the kind-key fallback banks).
+- THE 44 test-harness literals the new field wore (the brace-walking
+  script scripts/dev143_title_field.py the bulk insert spoke, the
+  reindent the field lines hand-styled keeps); the projection site the
+  real clone ride wears.
+- ONE false alarm the direct-binary run raised (the third-person helmet
+  lane 468 vs 0): the test the CWD-COUPLED law wears — the hardcoded
+  "assets-cache/jar" the lazy pass probes, cargo test's crates/mc-client
+  cwd the load-fail verdict keeps (the test's own premise), the repo-root
+  cwd the direct binary wears the load SUCCEEDS. The cargo gate green;
+  the test untouched (the environment coupling the pre-existing law is).
+- +2 tests: the decode walk (the text literal, the container.dropper
+  translatable the Dropper row answers, the missing row the key itself,
+  the extras the concatenation rides, the empty/truncated/styled Nones
+  the honest fallback keeps), the live window's title lane (the dropper
+  window the wire's own translatable banks, the custom name the fresh
+  window re-speaks, the empty root the None fallback, the store's drop
+  the title kills, the re-arm the next window's name rides).
+- fmt: the lane's hunks the hand-styled form keep (the fmt-check diff
+  count the HEAD's own 1539 wears — no hunk in the touched files).
+- Suite: 2662 passed / 0 failed / 22 ignored (2325 mc-client + 157
+  mc-protocol + 100 mc-registry + 80 mc2rs-pixel; +2 title tests);
+  goldens 19/19 PASS rms 0.000 (NO regeneration — the live lane no
+  golden scene renders, the offline title draw the same string keeps,
+  every golden byte the same); cargo check --all-targets clean.
+- Pushed 74e45f4 (v0.3.867, the live window's own title); the repo
+  mirror logs/worklog.md the same record wears (the auto-sync commit
+  rides).
+
+Stage Summary:
+- THE SERVER'S OWN WINDOW NAME THE PLAYER'S CANVAS WEARS: the OpenScreen
+  Component the decode lane reads, the live dropper window the "Dropper"
+  row banks, the anvil rename the live canvas renders — the title dies
+  with the window, the next window's own name re-speaks.
+- NEXT CANDIDATES: the chest/furnace/table windows the same decode ride
+  (the helper generic — the arms the live_dispenser_title shape mirrors),
+  the quickcraft drag arm the dispenser's carried press the deferred
+  place could wear, the shulker box the getContainerAt walk the dropper's
+  front read never serves, the thrown-shot's wire lane (the Add Entity
+  word the live read banks), the README's golden section the 19-row
+  runner's own row the text could name.
