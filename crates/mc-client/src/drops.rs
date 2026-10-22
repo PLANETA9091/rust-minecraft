@@ -8,7 +8,8 @@
 //! drag, the landing bounce, the settle skip, the neighbour merge, the
 //! 6000-tick despawn. The player's box scans `inflate(1.0, 0.5, 1.0)`
 //! (Player.aiStep), the pickup rides `Inventory.add`'s own merge order
-//! (the selected slot first, the scan, the free slot, the 64 cap), and
+//! (the selected slot first, the scan, the free slot, the min(64,
+//! itemMax) cap the jar's own getMaxStackSize(ItemStack) fold reads), and
 //! the pickup voice folds `volume 0.2`, `pitch (r - r) * 1.4 + 2.0`
 //! (ClientPacketListener.handleTakeItemEntity — the modern law).
 //!
@@ -89,8 +90,12 @@ pub const SPILL_THROW_Y_CENTER: f64 = 0.2;
 pub const SPILL_CHUNK_ROLL: u64 = 21;
 pub const SPILL_CHUNK_MIN: i32 = 10;
 /// The spill's own stack cap (the `stack.getMaxStackSize()` arm the min
-/// fold reads — our vocabulary's items all the 64 cap wear).
-pub const SPILL_STACK_MAX: i32 = 64;
+/// fold reads — the registry's item_max_stack table the autopush-133
+/// round banks: the sword the 1, the snowball the 16, the missing row
+/// the 64 default wears; the unstackable spill one entity per count
+/// speaks, the 16-stack the 10..30 rolls the 16 caps). The constant
+/// the walk's own table read answers — the per-item cap no single
+/// number keeps.
 
 /// The drop lane's own deterministic generator — the audio lane's LCG
 /// (the same constants, the same seed scramble; the vanilla's
@@ -333,7 +338,8 @@ impl ItemDrop {
             // the chunk's own roll (javap pc 112: the 10..30 span the
             // stack max caps, the split's min-count the remainder drains)
             let roll = SPILL_CHUNK_MIN + rng.next_int(SPILL_CHUNK_ROLL);
-            let taken = roll.min(SPILL_STACK_MAX).min(rest);
+            let stack_max = mc_registry::item_max_stack(item) as i32;
+            let taken = roll.min(stack_max).min(rest);
             rest -= taken;
             // THE CTOR'S OWN THROW (the 5-arg ItemEntity ctor's
             // setDeltaMovement — `(nextDouble() - 0.5) * 0.1` x/z, 0.2 y
@@ -547,9 +553,13 @@ fn box_overlaps_solid(world: &World, b: (f64, f64, f64, f64, f64, f64), deflate:
 
 /// `isMergable`'s own law (javap): the stack fits one more of its kind
 /// and the two stacks share the item id (the components' honest
-/// stand-in — the client's stacks carry the id alone).
+/// stand-in — the client's stacks carry the id alone). The cap the
+/// item's own max stack wears — the registry's item_max_stack table
+/// (the snowball pair the 16 the sum refuses, the azalea pair the 64
+/// the sum accepts).
 fn mergeable(a: &ItemDrop, b: &ItemDrop) -> bool {
-    a.item == b.item && a.count > 0 && b.count > 0 && a.count + b.count <= 64
+    let cap = mc_registry::item_max_stack(a.item) as i32;
+    a.item == b.item && a.count > 0 && b.count > 0 && a.count + b.count <= cap
 }
 
 /// The neighbour merge (javap mergeWithNeighbours): the closest
@@ -566,7 +576,8 @@ pub fn merge_pass(drops: &mut Vec<ItemDrop>) {
             continue;
         }
         let Some(self_ref) = drops.get(i) else { continue };
-        if self_ref.count <= 0 || self_ref.count >= 64 {
+        let cap = mc_registry::item_max_stack(self_ref.item) as i32;
+        if self_ref.count <= 0 || self_ref.count >= cap {
             continue;
         }
         let b = self_ref.box_();
@@ -646,10 +657,13 @@ impl Default for Inventory {
 
 impl Inventory {
     /// `hasRemainingSpaceForItem` (javap): the same item, stackable,
-    /// and the count below the max (the client's stacks carry the id
-    /// alone — the components' comparison collapses to the id).
+    /// and the count below the max — the cap the Inventory's own
+    /// `getMaxStackSize(ItemStack)` fold speaks (the min(64, itemMax)
+    /// the addResource split's Math.min answers, the registry's
+    /// item_max_stack table the itemMax side banks).
     fn has_remaining_space(item: (i32, i32), id: i32) -> bool {
-        item.1 > 0 && item.0 == id && item.1 < 64
+        let cap = mc_registry::item_max_stack(id).min(64);
+        item.1 > 0 && item.0 == id && item.1 < cap
     }
 
     /// `getSlotWithRemainingSpace` (javap): the SELECTED hotbar slot
@@ -694,7 +708,10 @@ impl Inventory {
         } else {
             self.items[slot].1
         };
-        let space = 64 - count;
+        // the space the jar's own getMaxStackSize(ItemStack) fold speaks
+        // (the min(64, itemMax) — the item's own cap the table banks)
+        let cap = mc_registry::item_max_stack(id).min(64);
+        let space = cap - count;
         let take = incoming.min(space);
         if take == 0 {
             return incoming;
@@ -1063,9 +1080,10 @@ mod tests {
         );
         assert!(c.bob_offs >= 0.0 && c.bob_offs < std::f32::consts::PI * 2.0);
 
-        // THE BIG STACK'S OWN DRAIN (the 64 the min(roll, 64) fold caps
-        // — the chunks the while-loop wears, the SUM the stack keeps,
-        // the spot the whole stack shares)
+        // THE BIG STACK'S OWN DRAIN (the stack max the min(roll, max)
+        // fold caps — the azalea the 64 default wears, the chunks the
+        // while-loop wears, the SUM the stack keeps, the spot the whole
+        // stack shares)
         let mut rng = Lcg::new(777);
         let chunks = ItemDrop::spawn_container_spill(100, 42, 64, 0, 0, 0, &mut rng);
         let sum: i32 = chunks.iter().map(|c| c.count).sum();
@@ -1246,6 +1264,141 @@ mod tests {
         let mut drops = vec![a, b];
         merge_pass(&mut drops);
         assert_eq!(drops.len(), 2, "the overflow refuses the merge");
+    }
+
+    #[test]
+    fn the_spill_chunks_the_item_max_stack_cap_wears() {
+        // the 16-stack item: the 10..30 rolls the 16 caps (the 64 the
+        // stand-in spoke), the chunks the while-loop drains, the SUM the
+        // stack keeps
+        let snowball =
+            mc_registry::item_id_by_name("snowball").expect("the snowball rides the wire table");
+        let mut rng = Lcg::new(909);
+        let chunks = ItemDrop::spawn_container_spill(200, snowball, 100, 0, 0, 0, &mut rng);
+        let sum: i32 = chunks.iter().map(|c| c.count).sum();
+        assert_eq!(sum, 100, "the chunks the whole stack drain");
+        assert!(chunks.len() > 1, "the 100 the 16-capped rolls split");
+        for (n, c) in chunks.iter().enumerate() {
+            assert!((1..=16).contains(&c.count), "the 16 cap: {}", c.count);
+            assert_eq!(c.item, snowball);
+            assert_eq!(c.id, 200 + n as i32, "the chunk ids the base rides");
+        }
+        // THE UNSTACKABLE SPILL (the 1-stack item: the roll the 1 caps —
+        // one entity PER count, the sword pile the single entities wear)
+        let sword =
+            mc_registry::item_id_by_name("diamond_sword").expect("the sword rides the wire table");
+        let mut rng = Lcg::new(910);
+        let chunks = ItemDrop::spawn_container_spill(300, sword, 5, 0, 0, 0, &mut rng);
+        assert_eq!(chunks.len(), 5, "the 5 swords the 5 single chunks wear");
+        for (n, c) in chunks.iter().enumerate() {
+            assert_eq!(c.count, 1, "the 1-stack the roll the 1 caps");
+            assert_eq!(c.item, sword);
+            assert_eq!(c.id, 300 + n as i32);
+        }
+    }
+
+    #[test]
+    fn the_merge_law_the_item_max_stack_cap_wears() {
+        // THE 16-STACK ITEM THE 16 CAP WEARS: 10 + 10 exceeds the 16 —
+        // the merge refuses (the 64 the stand-in never spoke)
+        let snowball =
+            mc_registry::item_id_by_name("snowball").expect("the snowball rides the wire table");
+        let mut a = ItemDrop::spawn(1, snowball, 10, 0, 0, 0, &mut Lcg::new(21));
+        let mut b = ItemDrop::spawn(2, snowball, 10, 0, 0, 0, &mut Lcg::new(22));
+        a.x = 100.0;
+        a.y = 60.0;
+        a.z = 100.0;
+        b.x = 100.1;
+        b.y = 60.0;
+        b.z = 100.0;
+        let mut drops = vec![a, b];
+        merge_pass(&mut drops);
+        assert_eq!(drops.len(), 2, "the 20 sum the 16 cap refuses");
+        // THE FITTING SUM MERGES (5 + 5 = 10 <= 16 — the merge the same
+        // law accepts)
+        let mut a = ItemDrop::spawn(1, snowball, 5, 0, 0, 0, &mut Lcg::new(23));
+        let mut b = ItemDrop::spawn(2, snowball, 5, 0, 0, 0, &mut Lcg::new(24));
+        a.x = 100.0;
+        a.y = 60.0;
+        a.z = 100.0;
+        b.x = 100.1;
+        b.y = 60.0;
+        b.z = 100.0;
+        let mut drops = vec![a, b];
+        merge_pass(&mut drops);
+        assert_eq!(drops.len(), 1, "the 10 sum the 16 cap accepts");
+        assert_eq!(drops[0].count, 10);
+        // THE FULL STACK NEVER MERGES (the 16-count entity the count >=
+        // cap gate the merge pass skips)
+        let mut a = ItemDrop::spawn(1, snowball, 16, 0, 0, 0, &mut Lcg::new(25));
+        let mut b = ItemDrop::spawn(2, snowball, 4, 0, 0, 0, &mut Lcg::new(26));
+        a.x = 100.0;
+        a.y = 60.0;
+        a.z = 100.0;
+        b.x = 100.1;
+        b.y = 60.0;
+        b.z = 100.0;
+        let mut drops = vec![a, b];
+        merge_pass(&mut drops);
+        assert_eq!(drops.len(), 2, "the full stack the gate refuses");
+        assert_eq!(drops[0].count, 16);
+        assert_eq!(drops[1].count, 4);
+    }
+
+    #[test]
+    fn the_inventory_add_the_item_max_stack_cap_wears() {
+        // THE EMPTY INVENTORY THE 16-CAP SPLIT WEARS: 20 snowballs —
+        // the first slot takes min(20, 16) = 16, the leftover 4 the
+        // loop re-locates (the second pass the free slot opens — the
+        // 64 stand-in the single 20-slot wore)
+        let snowball =
+            mc_registry::item_id_by_name("snowball").expect("the snowball rides the wire table");
+        let mut inv = Inventory::default();
+        let (leftover, spoke) = inv.add(0, snowball, 20, false);
+        assert_eq!(inv.items[0], (snowball, 16), "the first slot the 16 caps");
+        assert_eq!(
+            inv.items[1],
+            (snowball, 4),
+            "the overflow the next slot opens"
+        );
+        assert_eq!(leftover, 0);
+        assert!(spoke, "the walk's last pass took — the add's TRUE");
+        // THE FULL 16-SLOT THE REMAINING-SPACE GATE REFUSES (the scan
+        // the 16 < 16 verdict skips — the add the free slot opens)
+        let mut inv = Inventory::default();
+        inv.items[0] = (snowball, 16);
+        let (leftover, spoke) = inv.add(0, snowball, 5, false);
+        assert_eq!(
+            inv.items[0],
+            (snowball, 16),
+            "the full 16 the add never bends"
+        );
+        assert_eq!(
+            inv.items[1],
+            (snowball, 5),
+            "the free slot the overflow opens"
+        );
+        assert_eq!(leftover, 0);
+        assert!(spoke);
+        // THE 1-STACK ITEM THE ONE-PER-SLOT LAW WEARS (the swords never
+        // merge — the 5-add the 5 slots the scan order fills)
+        let sword =
+            mc_registry::item_id_by_name("diamond_sword").expect("the sword rides the wire table");
+        let mut inv = Inventory::default();
+        let (leftover, spoke) = inv.add(0, sword, 5, false);
+        assert_eq!(
+            inv.items[0],
+            (sword, 1),
+            "the first sword the selected takes"
+        );
+        assert_eq!(inv.items[1], (sword, 1));
+        assert_eq!(
+            inv.items[4],
+            (sword, 1),
+            "the fifth sword the fifth slot wears"
+        );
+        assert_eq!(leftover, 0);
+        assert!(spoke);
     }
 
     // ---------- the inventory laws ----------
