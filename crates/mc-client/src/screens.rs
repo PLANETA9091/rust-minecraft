@@ -34179,15 +34179,22 @@ impl App {
                 };
                 // THE INVENTORY ADD WALK (the vanilla add's own two
                 // passes — the merge the same-id partial stacks top up,
-                // the empties the fresh stacks fill, the 64 the cap)
+                // the empties the fresh stacks fill, the ITEM'S OWN MAX
+                // the cap wears (the hasRemainingSpaceForItem gate the
+                // `count < getMaxStackSize(stack)` fold speaks — the
+                // min(64, itemMax) the addResource law rides, the
+                // registry rows the 64 never exceed so the item's own
+                // max the cap answers: the snowball the 16, the sword
+                // the 1, the plain blocks the 64 keep)
+                let cap = crate::world_view::item_max_stack(id);
                 let mut remaining = requested;
                 for slot in self.hotbar_slots.iter_mut() {
                     if remaining == 0 {
                         break;
                     }
                     let (sid, scount) = *slot;
-                    if sid == id && scount > 0 && scount < 64 {
-                        let take = 64 - scount;
+                    if sid == id && scount > 0 && scount < cap {
+                        let take = cap - scount;
                         let add = take.min(remaining as i32);
                         slot.1 = scount + add;
                         remaining -= add as i64;
@@ -34198,7 +34205,7 @@ impl App {
                         break;
                     }
                     if *slot == (0, 0) {
-                        let add = 64.min(remaining);
+                        let add = (cap as i64).min(remaining);
                         *slot = (id, add as i32);
                         remaining -= add as i64;
                     }
@@ -59200,9 +59207,12 @@ fn inventory_hover_menu_id(hover: InventoryHover) -> usize {
 /// walk's own head), the OFFHAND menu 45 second (the getItem(40) arm),
 /// the full merge scan after (the hotbar ids 36..44 the store's own
 /// order keeps, the main grid 9..36 after), the first-empty fallback
-/// the same order speaks. The flat-64 space law the model's banked
-/// (id, count) simplification wears (the 64 the addResource's own
-/// constant, NOT the item's own max). Each landing rides the changed
+/// the same order speaks. The space law the item's own max wears (the
+/// hasRemainingSpaceForItem gate the `count < getMaxStackSize(stack)`
+/// fold speaks — the min(64, itemMax) the addResource law rides, the
+/// registry rows the 64 never exceed so the item's own max the cap
+/// answers: the snowball the 16, the sword the 1, the plain blocks
+/// the 64 keep). Each landing rides the changed
 /// vec (the note_batch_change law — the repeated slot the map's own
 /// put replaces), the leftover the caller's honest tail (the add's
 /// FALSE the server's own drop lane speaks — the belief the sync
@@ -59220,8 +59230,10 @@ fn belief_inventory_add(
     // THE SCAN ORDER (the offline getSlotWithRemainingSpace's own
     // lanes, the menu ids the window-0 projection keys): the selected
     // hotbar slot, the offhand, the merge scan (hotbar 36..44 then
-    // main 9..36), the first-empty the same order answers.
-    let has_space = |(sid, sc): (i32, i32)| sc > 0 && sid == id && sc < 64;
+    // main 9..36), the first-empty the same order answers. The cap
+    // the item's own max wears (the min(64, itemMax) fold).
+    let cap = crate::world_view::item_max_stack(id);
+    let has_space = |(sid, sc): (i32, i32)| sc > 0 && sid == id && sc < cap;
     let candidate = |slots: &[(i32, i32); crate::world_view::INVENTORY_MENU_SLOTS]| {
         let sel_menu = 36 + selected;
         if has_space(slots[sel_menu]) {
@@ -59246,12 +59258,12 @@ fn belief_inventory_add(
             return remaining; // the pass stalled — the no-home arm
         };
         // addResource's own walk: the empty slot takes the id, the
-        // fill rides the flat-64 space, the leftover returns
+        // fill rides the item's-own-max space, the leftover returns
         let (_, cur_count) = live_slots[slot];
         if cur_count <= 0 {
             live_slots[slot] = (id, 0);
         }
-        let space = 64 - live_slots[slot].1;
+        let space = cap - live_slots[slot].1;
         let take = remaining.min(space);
         if take > 0 {
             live_slots[slot].1 += take;
@@ -59272,8 +59284,12 @@ fn belief_inventory_add(
 /// SELECTED hotbar slot first (menu 37+selected — the
 /// getSlotWithRemainingSpace walk's own head), the merge scan the
 /// hotbar ids 37..45 then the main 10..37 keeps, the first-empty the
-/// same order speaks. The flat-64 space law the model's banked (id,
-/// count) simplification wears. Each landing rides the changed vec
+/// same order speaks. The space law the item's own max wears (the
+/// hasRemainingSpaceForItem gate the `count < getMaxStackSize(stack)`
+/// fold speaks — the min(64, itemMax) the addResource law rides, the
+/// registry rows the 64 never exceed so the item's own max the cap
+/// answers: the snowball the 16, the sword the 1, the plain blocks
+/// the 64 keep). Each landing rides the changed vec
 /// (the repeated slot the map's own put replaces), the leftover the
 /// caller's honest tail (the server's own drop lane).
 fn belief_table_inventory_add(
@@ -59286,7 +59302,8 @@ fn belief_table_inventory_add(
     if count <= 0 {
         return 0; // the isEmpty gate (pc 0-8) — nothing walks
     }
-    let has_space = |(sid, sc): (i32, i32)| sc > 0 && sid == id && sc < 64;
+    let cap = crate::world_view::item_max_stack(id);
+    let has_space = |(sid, sc): (i32, i32)| sc > 0 && sid == id && sc < cap;
     let candidate = |slots: &[(i32, i32); 46]| {
         let sel_menu = 37 + selected;
         if has_space(slots[sel_menu]) {
@@ -59312,7 +59329,7 @@ fn belief_table_inventory_add(
         if cur_count <= 0 {
             live_slots[slot] = (id, 0);
         }
-        let space = 64 - live_slots[slot].1;
+        let space = cap - live_slots[slot].1;
         let take = remaining.min(space);
         if take > 0 {
             live_slots[slot].1 += take;
@@ -59555,8 +59572,12 @@ fn wire_inventory_drop(
 /// later jar round banks): the SELECTED hotbar row first (menu
 /// 54+selected — the getSlotWithRemainingSpace walk's own head), the
 /// merge scan the hotbar rows 54..62 then the main 27..53 keeps, the
-/// first-empty the same order speaks. The flat-64 space law the
-/// model's banked (id, count) simplification wears. Each landing
+/// first-empty the same order speaks. The space law the item's own
+/// max wears (the hasRemainingSpaceForItem gate the `count <
+/// getMaxStackSize(stack)` fold speaks — the min(64, itemMax) the
+/// addResource law rides, the registry rows the 64 never exceed so
+/// the item's own max the cap answers: the snowball the 16, the
+/// sword the 1, the plain blocks the 64 keep). Each landing
 /// rides the changed vec (the repeated slot the map's own put
 /// replaces), the leftover the caller's honest tail (the server's
 /// own drop lane).
@@ -59570,7 +59591,8 @@ fn belief_chest_inventory_add(
     if count <= 0 {
         return 0; // the isEmpty gate (pc 0-8) — nothing walks
     }
-    let has_space = |(sid, sc): (i32, i32)| sc > 0 && sid == id && sc < 64;
+    let cap = crate::world_view::item_max_stack(id);
+    let has_space = |(sid, sc): (i32, i32)| sc > 0 && sid == id && sc < cap;
     let candidate = |slots: &[(i32, i32)]| {
         let sel_idx = 27 + selected; // the mirror's hotbar row — menu 54+selected
         if has_space(slots[sel_idx]) {
@@ -59595,7 +59617,7 @@ fn belief_chest_inventory_add(
         if cur_count <= 0 {
             mirror[idx] = (id, 0);
         }
-        let space = 64 - mirror[idx].1;
+        let space = cap - mirror[idx].1;
         let take = remaining.min(space);
         if take > 0 {
             mirror[idx].1 += take;
@@ -60363,8 +60385,12 @@ fn wire_table_swap(
 /// the SELECTED hotbar slot first (menu 30+selected — the
 /// getSlotWithRemainingSpace walk's own head), the merge scan the
 /// hotbar ids 30..38 then the main 3..29 keeps, the first-empty the
-/// same order speaks. The flat-64 space law the model's banked (id,
-/// count) simplification wears. Each landing rides the changed vec
+/// same order speaks. The space law the item's own max wears (the
+/// hasRemainingSpaceForItem gate the `count < getMaxStackSize(stack)`
+/// fold speaks — the min(64, itemMax) the addResource law rides, the
+/// registry rows the 64 never exceed so the item's own max the cap
+/// answers: the snowball the 16, the sword the 1, the plain blocks
+/// the 64 keep). Each landing rides the changed vec
 /// (the repeated slot the map's own put replaces), the leftover the
 /// caller's honest tail (the server's own drop lane).
 fn belief_furnace_inventory_add(
@@ -60377,7 +60403,8 @@ fn belief_furnace_inventory_add(
     if count <= 0 {
         return 0; // the isEmpty gate (pc 0-8) — nothing walks
     }
-    let has_space = |(sid, sc): (i32, i32)| sc > 0 && sid == id && sc < 64;
+    let cap = crate::world_view::item_max_stack(id);
+    let has_space = |(sid, sc): (i32, i32)| sc > 0 && sid == id && sc < cap;
     let candidate = |slots: &[(i32, i32)]| {
         let sel_menu = 30 + selected;
         if has_space(slots[sel_menu]) {
@@ -60400,12 +60427,12 @@ fn belief_furnace_inventory_add(
             return remaining; // the pass stalled — the no-home arm
         };
         // addResource's own walk: the empty slot takes the id, the
-        // fill rides the flat-64 space, the leftover returns
+        // fill rides the item's-own-max space, the leftover returns
         let (_, cur_count) = live_slots[slot];
         if cur_count <= 0 {
             live_slots[slot] = (id, 0);
         }
-        let space = 64 - live_slots[slot].1;
+        let space = cap - live_slots[slot].1;
         let take = remaining.min(space);
         if take > 0 {
             live_slots[slot].1 += take;
@@ -64284,6 +64311,143 @@ mod tests {
         app.chat_input = "/give dirt 10".into();
         app.on_chat_submit();
         assert_eq!(app.chat_messages.len(), before, "the no-room the silence keeps");
+    }
+
+    #[test]
+    fn the_offline_command_the_give_the_item_max_the_chunks_wear() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let snowball = mc_registry::item_id_by_name("snowball").expect("the registry names");
+        let sword = mc_registry::item_id_by_name("iron_sword").expect("the registry names");
+        // THE 16-CAP CHUNKS (the snowball's own max the give ride wears —
+        // the 64 the flat cap never spoke): 100 snowballs the six 16s +
+        // the 4 remainder land, the seventh slot the 4 carries
+        app.chat_open = true;
+        app.chat_input = "/give snowball 100".into();
+        app.on_chat_submit();
+        for slot in app.hotbar_slots.iter().take(6) {
+            assert_eq!(*slot, (snowball, 16), "the full chunk the cap wears");
+        }
+        assert_eq!(app.hotbar_slots[6], (snowball, 4), "the remainder the fresh slot keeps");
+        assert_eq!(app.hotbar_slots[7], (0, 0), "the exhausted grant the silence keeps");
+        // THE PARTIAL TOP-UP (the 4-count slot the merge rides — the
+        // cap the top-up's own ceiling, the 64 never reached)
+        app.chat_open = true;
+        app.chat_input = "/give snowball 2".into();
+        app.on_chat_submit();
+        assert_eq!(app.hotbar_slots[6], (snowball, 6), "the partial the merge tops up");
+        assert_eq!(app.hotbar_slots[7], (0, 0), "the no fresh slot the merge spoke");
+        // THE CAP REFUSAL (the full 16 slot the merge never partners —
+        // the next grant the fresh slot answers)
+        app.chat_open = true;
+        app.chat_input = "/give snowball 16".into();
+        app.on_chat_submit();
+        assert_eq!(app.hotbar_slots[6], (snowball, 16), "the partial the cap reaches");
+        assert_eq!(app.hotbar_slots[7], (snowball, 6), "the fresh slot the 6 remainder keeps");
+        // THE UNSTACKABLE LANE (the sword's 1 the merge gate never
+        // opens — every sword the own slot wears)
+        let mut app2 = App::new(3);
+        app2.enter_world();
+        app2.chat_open = true;
+        app2.chat_input = "/give iron_sword 3".into();
+        app2.on_chat_submit();
+        for slot in app2.hotbar_slots.iter().take(3) {
+            assert_eq!(*slot, (sword, 1), "the one-per-slot the sword's cap wears");
+        }
+        assert_eq!(app2.hotbar_slots[3], (0, 0), "the exact count the silence keeps");
+        app2.chat_open = true;
+        app2.chat_input = "/give iron_sword 2".into();
+        app2.on_chat_submit();
+        assert_eq!(app2.hotbar_slots[0], (sword, 1), "the full slot the merge refuses");
+        assert_eq!(app2.hotbar_slots[3], (sword, 1), "the fresh slots the singles wear");
+        assert_eq!(app2.hotbar_slots[4], (sword, 1), "the second single the fresh slot keeps");
+    }
+
+    #[test]
+    fn the_belief_add_the_item_max_the_landing_wears() {
+        let snowball = mc_registry::item_id_by_name("snowball").expect("the registry names");
+        let sword = mc_registry::item_id_by_name("iron_sword").expect("the registry names");
+        let stone = mc_registry::item_id_by_name("stone").expect("the registry names");
+        // THE SPLIT LANDING (the window-0 belief add — the selected
+        // hotbar the 16-cap landing wears, the remainder the next slot
+        // keeps, the changed rows the landings name)
+        let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
+        let leftover = belief_inventory_add(&mut slots, 0, snowball, 20, &mut changed);
+        assert_eq!(leftover, 0, "the empty belief the whole grant lands");
+        assert_eq!(slots[36], (snowball, 16), "the selected hotbar the cap wears");
+        assert_eq!(slots[37], (snowball, 4), "the remainder the next slot keeps");
+        assert_eq!(
+            changed,
+            vec![(36, (snowball, 16)), (37, (snowball, 4))],
+            "the changed rows the landings name"
+        );
+        // THE CAP REFUSAL (the all-16 belief the merge never partners —
+        // the pass stalls, the leftover the caller's honest tail)
+        for s in slots.iter_mut() {
+            *s = (snowball, 16);
+        }
+        let mut changed2: Vec<(i16, (i32, i32))> = Vec::new();
+        let leftover = belief_inventory_add(&mut slots, 0, snowball, 5, &mut changed2);
+        assert_eq!(leftover, 5, "the full belief the leftover returns");
+        assert!(changed2.is_empty(), "the stalled pass the changed map never names");
+        // THE UNSTACKABLE LANE (the sword's 1 the merge gate never
+        // opens — every sword the own slot wears)
+        let mut slots2 = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        slots2[36] = (sword, 1);
+        let mut changed3: Vec<(i16, (i32, i32))> = Vec::new();
+        let leftover = belief_inventory_add(&mut slots2, 0, sword, 3, &mut changed3);
+        assert_eq!(leftover, 0, "the empty slots the singles take");
+        assert_eq!(slots2[36], (sword, 1), "the 1-cap slot the merge refuses");
+        assert_eq!(slots2[37], (sword, 1), "the first fresh slot the single wears");
+        assert_eq!(slots2[38], (sword, 1), "the second fresh slot the single wears");
+        // THE 64 KEEP (the stone the plain cap wears — the single
+        // landing the whole stack takes)
+        let mut slots3 = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        let mut changed4: Vec<(i16, (i32, i32))> = Vec::new();
+        let leftover = belief_inventory_add(&mut slots3, 0, stone, 64, &mut changed4);
+        assert_eq!(leftover, 0, "the 64 stack the one slot keeps");
+        assert_eq!(slots3[36], (stone, 64), "the plain cap the landing wears");
+    }
+
+    #[test]
+    fn the_chest_furnace_table_adds_the_item_max_the_landing_wears() {
+        let snowball = mc_registry::item_id_by_name("snowball").expect("the registry names");
+        let sword = mc_registry::item_id_by_name("iron_sword").expect("the registry names");
+        // THE CHEST MIRROR'S OWN SPLIT (the selected hotbar row the 16
+        // cap tops up, the remainder the next row keeps, the changed
+        // rows the mirror's menu ids name — 27+idx the hotbar band)
+        let mut mirror = [(0, 0); 36];
+        mirror[27] = (snowball, 12);
+        let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
+        let leftover = belief_chest_inventory_add(&mut mirror, 0, snowball, 8, &mut changed);
+        assert_eq!(leftover, 0, "the mirror's room the grant takes");
+        assert_eq!(mirror[27], (snowball, 16), "the partial the cap tops up");
+        assert_eq!(mirror[28], (snowball, 4), "the remainder the next row keeps");
+        assert_eq!(
+            changed,
+            vec![(54, (snowball, 16)), (55, (snowball, 4))],
+            "the mirror rows the menu ids name"
+        );
+        // THE FURNACE MENU'S OWN SPLIT (the 15-count partial the one
+        // take the cap reaches, the fresh slot the 4 carries)
+        let mut fslots = [(0, 0); 39];
+        fslots[30] = (snowball, 15);
+        let mut changed2: Vec<(i16, (i32, i32))> = Vec::new();
+        let leftover = belief_furnace_inventory_add(&mut fslots, 0, snowball, 5, &mut changed2);
+        assert_eq!(leftover, 0, "the furnace belief's room the grant takes");
+        assert_eq!(fslots[30], (snowball, 16), "the partial the cap reaches");
+        assert_eq!(fslots[31], (snowball, 4), "the remainder the fresh slot keeps");
+        // THE TABLE'S OWN SPLIT (the crafting menu's player rows the
+        // sword's 1 the one-per-slot law wears)
+        let mut tslots = [(0, 0); 46];
+        tslots[37] = (sword, 1);
+        let mut changed3: Vec<(i16, (i32, i32))> = Vec::new();
+        let leftover = belief_table_inventory_add(&mut tslots, 0, sword, 2, &mut changed3);
+        assert_eq!(leftover, 0, "the table belief's room the grant takes");
+        assert_eq!(tslots[37], (sword, 1), "the 1-cap slot the merge refuses");
+        assert_eq!(tslots[38], (sword, 1), "the first fresh slot the single wears");
+        assert_eq!(tslots[39], (sword, 1), "the second fresh slot the single wears");
     }
 
     #[test]
@@ -137158,7 +137322,8 @@ cow_sound_variant: None,
     /// stacks trade), the count > max arm the split(max) + the ORIGINAL
     /// hovered stack the BELIEF's add rides (the add's merge-then-
     /// first-empty law over the window-0 rows — the row's own remaining
-    /// space the whole hover lands, the FULL store the stall speaks —
+    /// space the ITEM'S OWN MAX caps, the overflow the fresh slots
+    /// wear, the FULL store the stall speaks —
     /// the leftover the belief's honest tail, the server's drop lane
     /// the correction speaks).
     #[test]
@@ -137191,9 +137356,9 @@ cow_sound_variant: None,
         click_rx.try_recv().expect("the packet rode");
         // THE SPLIT + THE ADD'S MERGE: the row 20 eggs, the hover 30
         // eggs — the cell takes 16, the row keeps 4, the add's scan
-        // finds the row's own remaining space and lands the WHOLE 30
-        // (4 + 30 = 34, no drop) — the row's entry the map's own put
-        // replaces
+        // finds the row's own remaining space the ITEM'S OWN MAX caps
+        // (4 + 12 = 16), the overflow the fresh slots wear (16 + 2) —
+        // the row's entry the map's own put replaces
         app.live_inv_slots[14] = (0, 0);
         app.live_inv_slots[36] = (egg, 20);
         app.live_inv_slots[15] = (egg, 30);
@@ -137201,12 +137366,29 @@ cow_sound_variant: None,
         app.mouse_pos = Some((ox2 + 8, oy2 + 8));
         assert!(app.on_inventory_swap_key(0), "the digit consumes");
         assert_eq!(app.live_inv_slots[15], (egg, 16), "the cell the max takes");
-        assert_eq!(app.live_inv_slots[36], (egg, 34), "the add's merge the row fills");
+        assert_eq!(
+            app.live_inv_slots[36],
+            (egg, 16),
+            "the add's merge the row's remaining space fills"
+        );
+        assert_eq!(
+            app.live_inv_slots[37], (egg, 16),
+            "the overflow the first fresh slot wears"
+        );
+        assert_eq!(
+            app.live_inv_slots[38], (egg, 2),
+            "the tail the second fresh slot keeps"
+        );
         match click_rx.try_recv().expect("the packet rode") {
             ContainerCommand::Click(c) => {
                 assert_eq!(
                     c.changed,
-                    vec![(15, (egg, 16)), (36, (egg, 34))],
+                    vec![
+                        (15, (egg, 16)),
+                        (36, (egg, 16)),
+                        (37, (egg, 16)),
+                        (38, (egg, 2)),
+                    ],
                     "the repeated slot the map's own put replaces"
                 );
             }
