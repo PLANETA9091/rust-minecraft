@@ -194,6 +194,7 @@ pub fn materialize(
         // the local check_portal_spawn the store the same beat banks)
         portal_axis: std::collections::HashMap::new(),
         container_fill: std::collections::HashMap::new(),
+        frame_analog: std::collections::HashMap::new(),
         has_skylight: true,
         campfire_ticks: Vec::new(), // the campfire's own queue: empty
         torch_ticks: Vec::new(), // the torch's own queue: empty

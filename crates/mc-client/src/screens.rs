@@ -6477,6 +6477,75 @@ pub(crate) struct BundleTooltipView {
     pub total: i32,
 }
 
+/// THE ITEM FRAME'S OWN ENTITY (javap net.minecraft.world.entity
+/// .decoration.ItemFrame the 26.2 jar — the HangingEntity subclass the
+/// HangingEntityItem.useOn walk spawns: the `pos` the occupied AIR
+/// cell keeps (the clicked support + the face's own step), the
+/// `direction` the clicked face's own ordinal wears [the vanilla
+/// Direction ordinals the clip's encoding speaks — DOWN 0 / UP 1 /
+/// NORTH 2 / SOUTH 3 / WEST 4 / EAST 5, the horizontal band 2..=5 the
+/// mayPlace's `axis.isVertical()` refusal keeps], the DATA_ROTATION
+/// slot the 0..=7 the setRotation's own %8 wrap banks, the DATA_ITEM
+/// the count-1 stack the copyWithCount(1) fold normalizes [the
+/// setItem walk's own `isEmpty ? EMPTY : copyWithCount(1)` arm], the
+/// `glow` the GlowItemFrame subclass's own verdict the held item's
+/// name answers). The analog row the World's frame_analog map keeps —
+/// the rotation/item mutations the App's broadcast walk re-banks.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ItemFrameEnt {
+    pub id: i32,
+    /// The occupied AIR cell (the HangingEntity's own `pos` — the
+    /// clicked support + the face's own step).
+    pub cell: (i32, i32, i32),
+    /// The clicked face's vanilla ordinal (the `direction` field —
+    /// the horizontal band 2..=5 only, the mayPlace law keeps).
+    pub facing: u8,
+    /// The rotation slot 0..=7 (the DATA_ROTATION — the interact's
+    /// `getRotation() + 1` walk the setRotation's %8 wrap banks).
+    pub rotation: u8,
+    /// The contained stack (the DATA_ITEM — the count-1 law the
+    /// copyWithCount(1) fold wears; (0, 0) = the empty frame).
+    pub item: (i32, i32),
+    /// The GlowItemFrame verdict (the held item's name the spawn walk
+    /// reads — the glow variant's own model + the max(5, blockLight)
+    /// render law the 26.2's own getBlockLightLevel speaks).
+    pub glow: bool,
+    /// The survive poll's own clock (the HangingEntity.tick's
+    /// `checkInterval` field — the == 100 verdict the survives walk
+    /// answers, the reset the same walk banks).
+    pub check_interval: u32,
+}
+
+impl ItemFrameEnt {
+    /// THE BOX'S OWN SLAB (javap ItemFrame.calculateBoundingBox /
+    /// HangingEntity.recalculateBoundingBox the 26.2 jar — the
+    /// 0.46875 = 0.5 - 1/32 offset the box center the support face
+    /// shifts, the 1/16 = 2*1/32 the depth the panel's own thickness
+    /// keeps, the 0.75 the width the 0.375 half-extents wear): the
+    /// pick + the punch + the overlap verdicts the same box read.
+    pub fn box_(&self) -> (f64, f64, f64, f64, f64, f64) {
+        let (sx, sy, sz) = crate::world::World::DIRECTION_NORMAL[self.facing as usize];
+        let (cx, cy, cz) = (
+            self.cell.0 as f64 + 0.5 - sx as f64 * 0.46875,
+            self.cell.1 as f64 + 0.5 - sy as f64 * 0.46875,
+            self.cell.2 as f64 + 0.5 - sz as f64 * 0.46875,
+        );
+        let (hx, hy, hz) = match (sx, sy, sz) {
+            (0, 0, _) => (0.03125, 0.375, 0.375),
+            (_, 0, 0) => (0.375, 0.375, 0.03125),
+            _ => (0.375, 0.03125, 0.375),
+        };
+        (
+            cx - hx,
+            cy - hy,
+            cz - hz,
+            cx + hx,
+            cy + hy,
+            cz + hz,
+        )
+    }
+}
+
 /// THE THREE DIMENSIONS (the vanilla `Level.OVERWORLD`/`NETHER`/`END`
 /// registry keys the client's own enum wears — the swap's lane the
 /// per-dimension table answers: the `coordinate_scale` the rows carry
@@ -7774,6 +7843,19 @@ pub struct App {
     /// MinecartItem.useOn walk's singleplayer arm; the wire ids stay
     /// the server's).
     pub next_cart_id: i32,
+    /// THE OFFLINE ITEM FRAMES' OWN ID COUNTER (the client's own — the
+    /// HangingEntityItem.useOn walk's singleplayer arm; the wire ids
+    /// stay the server's).
+    pub next_frame_id: i32,
+    /// THE OFFLINE ITEM FRAMES (the HangingEntityItem.useOn walk's
+    /// singleplayer arm — the local frames the wall click spawns, the
+    /// interact/rotate/store the frame's own interact walk serves, the
+    /// comparator's through-wall analog the World's frame_analog map
+    /// banks, the survive poll the HangingEntity.tick's 100-tick clock
+    /// rides). The wire session the server's own frames the echo lane
+    /// never speaks — the list the offline world that carried them
+    /// drops (the carts' own honesty).
+    pub item_frames: Vec<ItemFrameEnt>,
     /// THE OFFLINE SPAWNER'S OWN CARTS (the MinecartItem.useOn walk's
     /// singleplayer arm — the local carts the wire's Add Entity lane
     /// is the future own of): the cart the offline right-click spawns
@@ -9212,6 +9294,8 @@ impl App {
             next_orb_id: 1,
             next_boat_id: 1,
             next_cart_id: 1,
+            next_frame_id: 1,
+            item_frames: Vec::new(),
             offline_carts: Vec::new(),
             pending_cart_booms: Vec::new(),
             offline_cart_drag: None,
@@ -17418,10 +17502,13 @@ impl App {
         let mob_pick = self.pick_mob_pair(&self.net_mobs);
         let cart_pick = self.pick_cart();
         let hull_pick = self.pick_offline_hull();
+        let frame_pick = self.pick_item_frame();
         let hull_wins = match hull_pick {
             None => false,
             Some((_, hd)) => {
-                mob_pick.map_or(true, |(_, d)| hd < d) && cart_pick.map_or(true, |(_, d)| hd < d)
+                mob_pick.map_or(true, |(_, d)| hd < d)
+                    && cart_pick.map_or(true, |(_, d)| hd < d)
+                    && frame_pick.map_or(true, |(_, d)| hd < d)
             }
         };
         if hull_wins {
@@ -17444,9 +17531,33 @@ impl App {
         let cart_wins = match cart_pick {
             None => false,
             Some((_, cd)) => {
-                mob_pick.map_or(true, |(_, d)| cd < d) && hull_pick.map_or(true, |(_, d)| cd < d)
+                mob_pick.map_or(true, |(_, d)| cd < d)
+                    && hull_pick.map_or(true, |(_, d)| cd < d)
+                    && frame_pick.map_or(true, |(_, d)| cd < d)
             }
         };
+        let frame_wins = !hull_wins
+            && !cart_wins
+            && frame_pick
+                .map_or(false, |(_, fd)| {
+                    mob_pick.map_or(true, |(_, md)| fd < md)
+                });
+        if frame_wins {
+            if let Some((id, _)) = frame_pick {
+                // THE FRAME'S PUNCH ARM (javap ItemFrame.hurtServer —
+                // the shouldDamageDropItem verdict the filled frame the
+                // drop walk serves, the remove_item voice the arm plays,
+                // the empty frame the super's kill the break voice + the
+                // frame item's own drop keeps — the frame dies both
+                // arms, the swing the attack's own word carries)
+                self.attack_item_frame(id);
+            }
+            self.swing.start();
+            if let Some(sink) = self.live_clicks.as_ref() {
+                let _ = sink.send(crate::world_view::ContainerCommand::Swing);
+            }
+            return;
+        }
         if cart_wins {
             if let Some((id, _)) = cart_pick {
                 // THE CART'S ATTACK ARM (javap VehicleEntity.hurtServer —
@@ -28242,6 +28353,7 @@ impl App {
             let mob_hit = self.pick_mob_pair(&self.net_mobs);
             let hull_hit = self.pick_hull();
             let cart_hit = self.pick_cart();
+            let frame_hit = self.pick_item_frame();
             // THE THREE-WAY RANK (the NEAREST candidate the one pick's
             // own law speaks — the mob the hull the cart the same
             // distance fold ranks, the ties the earlier arm keeps)
@@ -28249,7 +28361,7 @@ impl App {
                 (Some((_, md)), Some((_, hd))) => hd < md,
                 (None, Some(_)) => true,
                 _ => false,
-            };
+            } && frame_hit.map_or(true, |(_, fd)| hull_hit.map_or(true, |(_, hd)| hd < fd));
             let cart_wins = match (mob_hit, cart_hit) {
                 (Some((_, md)), Some((_, cd))) => cd < md,
                 (None, Some(_)) => true,
@@ -28258,8 +28370,24 @@ impl App {
                 (Some((_, hd)), Some((_, cd))) => cd < hd,
                 (None, Some(_)) => true,
                 _ => false,
-            };
-            if cart_wins {
+            } && frame_hit.map_or(true, |(_, fd)| cart_hit.map_or(true, |(_, cd)| cd < fd));
+            let frame_wins = !cart_wins
+                && !hull_wins
+                && frame_hit
+                    .map_or(false, |(_, fd)| mob_hit.map_or(true, |(_, md)| fd < md));
+            if frame_wins {
+                if let Some((id, _)) = frame_hit {
+                    // THE FRAME'S INTERACT ARM (javap ItemFrame.interact
+                    // — the store/rotate/slot lanes the SUCCESS verdict
+                    // carries; the PASS arms the ITEM lane the
+                    // fall-through keeps — the BLOCK case the entity hit
+                    // the switch never routes)
+                    if self.on_right_press_item_frame_interact(id) {
+                        return true;
+                    }
+                    entity_pass = true;
+                }
+            } else if cart_wins {
                 if let Some((id, _)) = cart_hit {
                     // THE CART'S INTERACT ARM (javap Minecart.interact —
                     // the plain cart's own override the 26.2 speaks:
@@ -41211,6 +41339,17 @@ impl App {
                     if let Some(spawned) = self.on_right_press_minecart_arm(&hit) {
                         return spawned;
                     }
+                } else if held == "item_frame" || held == "glow_item_frame" {
+                    // THE ITEM FRAME'S OWN USE-ON WALK (javap
+                    // HangingEntityItem.useOn over the 26.2 jar — the
+                    // frame arm's own spawn lane: the horizontal face the
+                    // mayPlace gate admits, the survives law the
+                    // support/cell verdicts keeps, the factory the
+                    // pos+direction pair wears, the consume the shrink
+                    // rides)
+                    if let Some(spawned) = self.on_right_press_item_frame_arm(&hit) {
+                        return spawned;
+                    }
                 }
             }
         }
@@ -42727,6 +42866,519 @@ impl App {
         Some(true)
     }
 
+    /// THE ITEM FRAME'S OWN USE-ON WALK — javap HangingEntityItem.useOn
+    /// over the real 26.2 jar (the item_frame/glow_item_frame item's
+    /// own spawn lane): the `mayPlace` gate pc 42-51 the HORIZONTAL
+    /// face alone admits (`Direction.getAxis().isVertical()` the
+    /// UP/DOWN refusal speaks — the floor/ceiling click the FAIL the
+    /// chain keeps), the `pos = clicked.relative(face)` frame cell the
+    /// pc 12 walk banks, the `new ItemFrame(level, pos, direction)`
+    /// factory the HangingEntity ctor's own pos+direction pair wears,
+    /// the `survives()` gate pc 179 the HangingEntity law keeps (the
+    /// support box the solid verdict — the port's `!is_replaceable`
+    /// walk the collision-bearing cells answer, the frame cell the
+    /// replaceable/no-collision band the popBox's own
+    /// `hasLevelCollision` refusal speaks, the coexist the one frame
+    /// per cell the canCoexist(false) gate keeps), the
+    /// playPlacementSound + the gameEvent + the addFreshEntity + the
+    /// `stack.shrink(1)` pc 195-224 walk the survival consume rides,
+    /// the SUCCESS the press consumes. THE WIRE SESSION'S OWN SILENCE
+    /// (the client predicts NOTHING — the server's addFreshEntity the
+    /// spawn lands through; the echo the block lane's own head spoke).
+    fn on_right_press_item_frame_arm(&mut self, hit: &crate::world::ClipHit) -> Option<bool> {
+        // THE HORIZONTAL FACE'S OWN GATE (pc 1-26 mayPlace — the
+        // vertical axis the refusal wears, the FAIL the chain keeps)
+        if hit.face < 2 {
+            return None;
+        }
+        let Some(world) = self.offline_world.as_ref() else {
+            // THE WIRE SESSION'S OWN SILENCE (the minecart arm's own
+            // shape — the swing the press consumes, the local spawn the
+            // server's own echo owns)
+            self.swing.start();
+            return Some(true);
+        };
+        let normal = crate::world::World::DIRECTION_NORMAL[hit.face as usize];
+        let cell = (
+            hit.pos.0 + normal.0,
+            hit.pos.1 + normal.1,
+            hit.pos.2 + normal.2,
+        );
+        // THE SURVIVES LAW (pc 179 HangingEntity.survives — the popBox
+        // the `hasLevelCollision` verdict answers, the support box the
+        // allMatch walk banks, the canCoexist(false) the one-frame
+        // verdict keeps): the frame cell the no-collision band (the
+        // Empty shape the collision_shape walk banks — the air, the
+        // water, the cross plants the vanilla's own isUnobstructed
+        // shortcut admits), the support the collision-bearing kind the
+        // same walk banks, the same-cell frame the overlap gate
+        // refuses
+        if crate::world::collision_shape(world.get(cell.0, cell.1, cell.2))
+            != crate::world::CollisionShape::Empty
+        {
+            return Some(false); // the FAIL — the off-hand's own turn follows
+        }
+        if crate::world::collision_shape(world.get(hit.pos.0, hit.pos.1, hit.pos.2))
+            == crate::world::CollisionShape::Empty
+        {
+            return Some(false);
+        }
+        if self.item_frames.iter().any(|f| f.cell == cell) {
+            return Some(false);
+        }
+        // THE FACTORY (pcs 104-160 — the ItemFrame the pos+direction
+        // pair wears, the glow the type field's own fork the
+        // GlowItemFrame arm serves, the rotation the DATA_ROTATION's
+        // default 0 keeps, the item the DATA_ITEM's default EMPTY
+        // wears)
+        let glow = self.held_id().and_then(mc_registry::item_name) == Some("glow_item_frame");
+        let id = self.next_frame_id;
+        self.next_frame_id += 1;
+        self.item_frames.push(ItemFrameEnt {
+            id,
+            cell,
+            facing: hit.face as u8,
+            rotation: 0,
+            item: (0, 0),
+            glow,
+            check_interval: 0,
+        });
+        // THE ANALOG ROW'S OWN BANK (the getItemFrame scan the map's
+        // entry answers — the empty frame the 0 the rotation+1 fold
+        // keeps; the broadcast the updateNeighbourForOutputSignal law
+        // the through-wall comparators re-arms)
+        if let Some(w) = self.offline_world.as_mut() {
+            w.frame_analog.insert(cell, 0);
+        }
+        self.frame_analog_broadcast(cell);
+        // THE PLACEMENT'S OWN VOICE (the playPlacementSound pc 187-195 —
+        // the ItemFrame.getPlaceSound row the 1.0/1.0 base wears)
+        self.sounds
+            .play_voice(self.frame, "entity.item_frame.place", 1.0, 1.0);
+        // THE SURVIVAL CONSUME (the shrink(1) pc 224-230 — the same
+        // walk the minecart arm speaks; the `--held-item` stand-in the
+        // honest no-op keeps)
+        let held_id = self.held_id();
+        let sel = self.selected_hotbar;
+        let stack = self.inventory.items[sel];
+        if stack.1 > 0 && held_id == Some(stack.0) {
+            self.inventory.items[sel].1 -= 1;
+            if self.inventory.items[sel].1 <= 0 {
+                self.inventory.items[sel] = (0, 0);
+            }
+            self.hotbar_slots = self.inventory.hotbar();
+            self.use_consume_kills_pop(sel);
+        }
+        self.swing.start();
+        Some(true)
+    }
+
+    /// THE ITEM FRAME'S OWN PICK (the pick_hull_in shape — the
+    /// isPickable verdict the HangingEntity's own box answers: the ray
+    /// clipped over the 0.75 x 0.75 x 1/16 slab the
+    /// calculateBoundingBox walk banks, the eye-inside the 0.0 the
+    /// start-inside law keeps, the NEAREST frame wins, the hit must
+    /// beat the block clip AND the entity reach).
+    fn pick_item_frame(&self) -> Option<(i32, f64)> {
+        if self.item_frames.is_empty() {
+            return None;
+        }
+        let cam = self.world_camera();
+        let f = cam.forward();
+        let eye = (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64);
+        let view = (f.x as f64, f.y as f64, f.z as f64);
+        let search_range = crate::world::BLOCK_INTERACTION_RANGE.max(3.0);
+        let end = (
+            eye.0 + view.0 * search_range,
+            eye.1 + view.1 * search_range,
+            eye.2 + view.2 * search_range,
+        );
+        let mut best: Option<(i32, f64)> = None;
+        for fr in &self.item_frames {
+            let (x0, y0, z0, x1, y1, z1) = fr.box_();
+            let inside = eye.0 >= x0
+                && eye.0 <= x1
+                && eye.1 >= y0
+                && eye.1 <= y1
+                && eye.2 >= z0
+                && eye.2 <= z1;
+            let d2 = if inside {
+                0.0
+            } else {
+                match crate::mob::aabb_clip(eye, end, (x0, y0, z0), (x1, y1, z1)) {
+                    Some((point, _)) => {
+                        let (px, py, pz) = point;
+                        let (ex, ey, ez) = (px - eye.0, py - eye.1, pz - eye.2);
+                        ex * ex + ey * ey + ez * ez
+                    }
+                    None => continue,
+                }
+            };
+            if d2 < search_range * search_range && best.map_or(true, |(_, b)| d2 < b) {
+                best = Some((fr.id, d2));
+            }
+        }
+        // the block clip's own distance term (the same law the hull
+        // pick's tail speaks — the frame behind the wall the miss
+        // keeps)
+        let block_d2 = self
+            .active_world()
+            .and_then(|w| w.clip(eye, view, search_range))
+            .map(|hit| {
+                let (lx, ly, lz) = hit.location;
+                let (dx, dy, dz) = (lx - eye.0, ly - eye.1, lz - eye.2);
+                dx * dx + dy * dy + dz * dz
+            })
+            .unwrap_or(f64::INFINITY);
+        let entity_reach =
+            crate::world::ENTITY_INTERACTION_RANGE * crate::world::ENTITY_INTERACTION_RANGE;
+        let (id, d2) = best?;
+        if d2 < block_d2 && d2 < entity_reach {
+            Some((id, d2))
+        } else {
+            None
+        }
+    }
+
+    /// THE FRAME'S OWN ANALOG BROADCAST (javap Level
+    /// .updateNeighbourForOutputSignal pc 3-130 — the Direction.Plane
+    /// walk the 4 horizontal arms keep, the direct arm the COMPARATOR
+    /// neighbor the neighborChanged speaks, the conductor arm the
+    /// second cell the through-wall read answers): the comparator
+    /// cells the refresh-verdict consults, the +2 schedule the
+    /// mismatch arms bank (the attach consult's own shape — the
+    /// refresh walk the pure read's own verdict keeps, the pending
+    /// dedup the schedule walk refuses).
+    fn frame_analog_broadcast(&mut self, cell: (i32, i32, i32)) {
+        let now = self.frame;
+        let Some(world) = self.offline_world.as_mut() else {
+            return;
+        };
+        let mut due: Vec<(i32, i32, i32)> = Vec::new();
+        for (cx, cy, cz) in
+            crate::world::frame_analog_comparators_near(&*world, cell.0, cell.1, cell.2)
+        {
+            if crate::world::comparator_refresh_variant(&*world, cx, cy, cz).is_some() {
+                due.push((cx, cy, cz));
+            }
+        }
+        for (cx, cy, cz) in &due {
+            world.schedule_comparator_tick(
+                now + crate::world::COMPARATOR_DELAY,
+                *cx,
+                *cy,
+                *cz,
+            );
+        }
+    }
+
+    /// THE FRAME'S OWN INTERACT WALK — javap ItemFrame.interact the
+    /// 26.2 jar (the SUCCESS arms the press consumes): the STORE lane
+    /// [pcs 131-152 — the held stack the count-1 copy the setItem
+    /// walk's copyWithCount(1) fold banks, the consume(1) the survival
+    /// shrink wears, the add_item voice the non-empty arm plays] the
+    /// EMPTY frame alone serves, the ROTATE lane [pcs 159-188 — the
+    /// rotate_item voice opens, the `setRotation(getRotation() + 1)`
+    /// walk the %8 wrap banks] the filled frame + empty hand answers,
+    /// the SLOT lane the filled frame + sneak the getSlot(0) access
+    /// law serves (the held stack the swap the count-1 fold banks, the
+    /// frame's own item the hand keeps, the add_item voice the
+    /// received stack plays). The wire session the local walk never
+    /// serves (the server's own interact the echo lane owns).
+    fn on_right_press_item_frame_interact(&mut self, id: i32) -> bool {
+        if self.world_is_network {
+            self.swing.start();
+            return true;
+        }
+        let Some(idx) = self.item_frames.iter().position(|f| f.id == id) else {
+            return false;
+        };
+        let (held, held_count) = match self.held_id() {
+            Some(h) => (h, self.inventory.items[self.selected_hotbar].1),
+            None => (0, 0),
+        };
+        let frame_item = self.item_frames[idx].item;
+        let frame_filled = frame_item.1 > 0;
+        let sneak = self.shift_down;
+        // THE SNEAK SLOT LANE (the getSlot(0) access the filled frame
+        // alone serves — the swap the held count-1 fold banks, the
+        // frame's own item the hand keeps)
+        if sneak && frame_filled {
+            let old = frame_item;
+            let fresh = if held != 0 && held_count > 0 { held } else { 0 };
+            self.item_frames[idx].item = if fresh != 0 { (fresh, 1) } else { (0, 0) };
+            // THE HAND'S OWN KEEP (the frame's old item the selected
+            // slot the swap wears — the empty slot the fresh stack
+            // banks, the held stack the old REPLACES)
+            let sel = self.selected_hotbar;
+            self.inventory.items[sel] = if old.1 > 0 { old } else { (0, 0) };
+            self.hotbar_slots = self.inventory.hotbar();
+            // THE ANALOG'S OWN RIDE (the setItem walk's
+            // updateNeighbourForOutputSignal law the map re-bank +
+            // the broadcast serve) + THE VOICE (the add_item the
+            // received stack plays, the empty hand the silence keeps)
+            self.frame_analog_ride(idx);
+            if fresh != 0 {
+                self.sounds
+                    .play_voice(self.frame, "entity.item_frame.add_item", 1.0, 1.0);
+            }
+            self.swing.start();
+            return true;
+        }
+        // THE STORE LANE (the EMPTY frame + the held stack — pcs
+        // 131-152)
+        if !frame_filled && held != 0 && held_count > 0 {
+            self.item_frames[idx].item = (held, 1);
+            // THE CONSUME (the stack.consume(1, player) pc 146-152 —
+            // the survival shrink the stack rides, the empty slot
+            // clears; the `--held-item` stand-in the honest no-op
+            // keeps)
+            let sel = self.selected_hotbar;
+            let stack = self.inventory.items[sel];
+            if stack.1 > 0 && stack.0 == held {
+                self.inventory.items[sel].1 -= 1;
+                if self.inventory.items[sel].1 <= 0 {
+                    self.inventory.items[sel] = (0, 0);
+                }
+                self.hotbar_slots = self.inventory.hotbar();
+                self.use_consume_kills_pop(sel);
+            }
+            // THE VOICE + THE RIDE (the setItem walk's add_item
+            // playSound + the updateNeighbourForOutputSignal tail)
+            self.sounds
+                .play_voice(self.frame, "entity.item_frame.add_item", 1.0, 1.0);
+            self.frame_analog_ride(idx);
+            self.swing.start();
+            return true;
+        }
+        // THE ROTATE LANE (the filled frame + the empty hand — pcs
+        // 159-188: the rotate_item voice opens, the +1 %8 the set
+        // banks)
+        if frame_filled && (held == 0 || held_count == 0) && !sneak {
+            self.sounds
+                .play_voice(self.frame, "entity.item_frame.rotate_item", 1.0, 1.0);
+            self.item_frames[idx].rotation = (self.item_frames[idx].rotation + 1) % 8;
+            self.frame_analog_ride(idx);
+            self.swing.start();
+            return true;
+        }
+        false
+    }
+
+    /// THE FRAME'S OWN ANALOG RIDE (the setItem/setRotation walks'
+    /// updateNeighbourForOutputSignal tail — the map row the live
+    /// analog re-banks, the broadcast the through-wall comparators
+    /// re-arms)
+    fn frame_analog_ride(&mut self, idx: usize) {
+        let (cell, empty, rotation) = {
+            let f = &self.item_frames[idx];
+            (f.cell, f.item.1 == 0, f.rotation)
+        };
+        let analog = crate::world::item_frame_analog(empty, rotation);
+        if let Some(w) = self.offline_world.as_mut() {
+            w.frame_analog.insert(cell, analog);
+        }
+        self.frame_analog_broadcast(cell);
+    }
+
+    /// THE FRAME'S OWN PUNCH ARM (javap ItemFrame.hurtServer the 26.2
+    /// jar — the shouldDamageDropItem verdict the FILLED frame the
+    /// explosion-or-stored disjunction answers [pcs 42-51]: the drop
+    /// walk the frame item + the contained item spawnAtLocation pair
+    /// banks [the dropItem(3-arg, false) walk's own survival arm — the
+    /// infinite-materials player the honest no-drop keeps], the
+    /// remove_item voice the same arm plays, the verdict true the
+    /// hurt consumes) — the EMPTY frame the super's kill the
+    /// HangingEntity walk serves (the break voice the 2-arg dropItem
+    /// plays, the frame item the survival arm spawns). The frame dies
+    /// both arms.
+    fn attack_item_frame(&mut self, id: i32) {
+        if self.world_is_network {
+            return;
+        }
+        let Some(idx) = self.item_frames.iter().position(|f| f.id == id) else {
+            return;
+        };
+        let (filled, glow, cell, contained) = {
+            let f = &self.item_frames[idx];
+            (f.item.1 > 0, f.glow, f.cell, f.item)
+        };
+        let creative = self.game_mode == GameMode::Creative;
+        let (fx, fy, fz) = (cell.0 as f64 + 0.5, cell.1 as f64 + 0.5, cell.2 as f64 + 0.5);
+        let frame_id = mc_registry::item_id_by_name(if glow {
+            "glow_item_frame"
+        } else {
+            "item_frame"
+        });
+        if filled {
+            // THE FILLED ARM (shouldDamageDropItem true — the frame
+            // item + the contained item the survival pair spawns, the
+            // remove_item voice the arm plays)
+            if !creative {
+                if let Some(fid) = frame_id {
+                    let did = self.next_drop_id;
+                    self.next_drop_id += 1;
+                    self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                        did,
+                        fid,
+                        1,
+                        fx,
+                        fy,
+                        fz,
+                        &mut self.mob_rng,
+                    ));
+                }
+                if contained.0 != 0 {
+                    let did = self.next_drop_id;
+                    self.next_drop_id += 1;
+                    self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                        did,
+                        contained.0,
+                        contained.1,
+                        fx,
+                        fy,
+                        fz,
+                        &mut self.mob_rng,
+                    ));
+                }
+            }
+            self.sounds
+                .play_voice(self.frame, "entity.item_frame.remove_item", 1.0, 1.0);
+        } else {
+            // THE EMPTY ARM (the super's kill — the break voice the
+            // 2-arg dropItem plays, the frame item the survival arm
+            // spawns)
+            if !creative {
+                if let Some(fid) = frame_id {
+                    let did = self.next_drop_id;
+                    self.next_drop_id += 1;
+                    self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                        did,
+                        fid,
+                        1,
+                        fx,
+                        fy,
+                        fz,
+                        &mut self.mob_rng,
+                    ));
+                }
+            }
+            self.sounds
+                .play_voice(self.frame, "entity.item_frame.break", 1.0, 1.0);
+        }
+        // THE DEATH'S OWN RIDE (the removal the analog row the map
+        // drops, the broadcast the through-wall comparators re-arms)
+        let cell = self.item_frames[idx].cell;
+        self.item_frames.remove(idx);
+        if let Some(w) = self.offline_world.as_mut() {
+            w.frame_analog.remove(&cell);
+        }
+        self.frame_analog_broadcast(cell);
+    }
+
+    /// THE FRAME'S OWN SURVIVE POLL (javap HangingEntity.tick the 26.2
+    /// jar — the `checkInterval++ == 100` verdict the survives walk
+    /// answers [the 0 reset the same walk banks], the !survives arm
+    /// the discard + the dropItem(2-arg) walk serves: the break voice
+    /// the pop plays, the frame item + the contained item the
+    /// survival pair spawns, the analog row the map drops). The port's
+    /// survives verdict: the support cell the collision-bearing kind
+    /// (the collision_shape walk the non-Empty family banks), the
+    /// frame cell the no-collision band (the popBox's own
+    /// hasLevelCollision refusal — the Empty family keeps).
+    fn tick_item_frames(&mut self) {
+        if self.item_frames.is_empty() {
+            return;
+        }
+        let mut due: Vec<i32> = Vec::new();
+        {
+            let Some(world) = self.offline_world.as_ref() else {
+                return;
+            };
+            for f in self.item_frames.iter_mut() {
+                let (sx, sy, sz) = crate::world::World::DIRECTION_NORMAL[f.facing as usize];
+                let support = world.get(f.cell.0 - sx, f.cell.1 - sy, f.cell.2 - sz);
+                let survives = crate::world::collision_shape(support)
+                    != crate::world::CollisionShape::Empty
+                    && crate::world::collision_shape(world.get(f.cell.0, f.cell.1, f.cell.2))
+                        == crate::world::CollisionShape::Empty;
+                f.check_interval += 1;
+                if f.check_interval == 100 {
+                    if survives {
+                        f.check_interval = 0; // the survives arm the reset wears
+                    } else {
+                        due.push(f.id); // the !survives arm the pop serves
+                    }
+                }
+            }
+        }
+        // THE DUE WALK (the ids the removal the borrow's own end
+        // collects — the pop the analog row the map drops, the
+        // broadcast the comparators re-arms)
+        for id in due {
+            let cell = self.item_frames.iter().find(|f| f.id == id).map(|f| f.cell);
+            if let Some(cell) = cell {
+                self.pop_item_frame(id, cell);
+            }
+        }
+    }
+
+    /// THE FRAME'S OWN POP (the survive poll's fail arm — the 2-arg
+    /// dropItem walk: the break voice plays, the frame item + the
+    /// contained item the survival pair spawns [the creative the
+    /// honest no-drop keeps], the removal the analog row the map
+    /// drops, the broadcast the comparators re-arms)
+    fn pop_item_frame(&mut self, id: i32, cell: (i32, i32, i32)) {
+        let Some(idx) = self.item_frames.iter().position(|f| f.id == id) else {
+            return;
+        };
+        let (item, glow) = {
+            let f = &self.item_frames[idx];
+            (f.item, f.glow)
+        };
+        let creative = self.game_mode == GameMode::Creative;
+        let (fx, fy, fz) = (cell.0 as f64 + 0.5, cell.1 as f64 + 0.5, cell.2 as f64 + 0.5);
+        self.sounds
+            .play_voice(self.frame, "entity.item_frame.break", 1.0, 1.0);
+        if !creative {
+            let frame_item = mc_registry::item_id_by_name(if glow {
+                "glow_item_frame"
+            } else {
+                "item_frame"
+            });
+            if let Some(fid) = frame_item {
+                let did = self.next_drop_id;
+                self.next_drop_id += 1;
+                self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                    did,
+                    fid,
+                    1,
+                    fx,
+                    fy,
+                    fz,
+                    &mut self.mob_rng,
+                ));
+            }
+            if item.1 > 0 {
+                let did = self.next_drop_id;
+                self.next_drop_id += 1;
+                self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                    did,
+                    item.0,
+                    item.1,
+                    fx,
+                    fy,
+                    fz,
+                    &mut self.mob_rng,
+                ));
+            }
+        }
+        self.item_frames.remove(idx);
+        if let Some(w) = self.offline_world.as_mut() {
+            w.frame_analog.remove(&cell);
+        }
+        self.frame_analog_broadcast(cell);
+    }
 
     /// THE SEEDS' OWN PLANT ARM — javap BlockItem.place over the real
     /// 26.2 jar (the wheat_seeds item's own BlockItem walk): the
@@ -47042,6 +47694,10 @@ impl App {
         // THE PISTON'S OWN BEAT (the autopush-128 round — the
         // scheduled moves the diode family's own lane beside)
         self.tick_piston_beats();
+        // THE ITEM FRAME'S OWN POLL (the HangingEntity.tick's 100-tick
+        // clock the survive verdict rides — the popped frames the
+        // support's own loss the drop walk serves)
+        self.tick_item_frames();
         if self.offline_carts.is_empty() {
             return;
         }
@@ -49805,6 +50461,13 @@ impl App {
         // entities bob and spin at their world positions
         if !self.drops.is_empty() {
             self.render_drops(fb, &ctx);
+        }
+        // THE ITEM FRAME LANE's draw (the entity pass's own arm — the
+        // ItemFrameRenderer.submit walk's block-model proxy: the frame
+        // models hug the support slabs, the contained items ride the
+        // FIXED pose the 0.5 scale + the rotation fold wears)
+        if !self.item_frames.is_empty() {
+            self.render_item_frames(fb, &ctx);
         }
         // THE XP ORB LANE's draw (the entity pass's own arm — the award
         // orbs' camera-facing quads ride the entityTranslucentCullItem-
@@ -54063,6 +54726,177 @@ impl App {
                     tex: q.texture,
                     tint: [base[0] * sh, base[1] * sh, base[2] * sh],
                 });
+            }
+        }
+        if sampled.is_empty() {
+            return;
+        }
+        let vp = ctx.proj.mul(&ctx.view);
+        fb.draw_sampled_quads(vp, &sampled, &mut |tex, u, v| {
+            match mc_registry::sprite_uv::sample_uv(tex, u, v) {
+                mc_registry::sprite_uv::Sample::Pixel(c) => Some(c),
+                mc_registry::sprite_uv::Sample::Missing(c) => Some(c),
+                mc_registry::sprite_uv::Sample::Unknown => None,
+            }
+        });
+    }
+
+    /// THE ITEM FRAME's render (javap ItemFrameRenderer.submit the 26.2
+    /// jar — the entity the BLOCK-model proxy renders: the frameModel
+    /// the updateForItemFrame walk resolves [the map=false variant the
+    /// plain frame wears], the submit walk the centered
+    /// `translate(-0.5,-0.5,-0.5)` pose draws [pcs 171-205], the
+    /// direction orientation the toYRot·axisStep fold speaks, the
+    /// contained item the `translate(0,0,0.5)` panel-plane ride + the
+    /// `ZP.rotationDegrees(rotation * 360 / 8)` fold + the 0.5 scale
+    /// + the FIXED display context [pcs 353-426] wears). THE PORT'S
+    /// OWN GEOMETRY (the template's panel at the +Z edge the NORTH
+    /// facing wears — the yaw the support-adjacency law maps: NORTH 0
+    /// / WEST 90 / SOUTH 180 / EAST 270): the body quads the baked
+    /// block/item_frame model carries, the shade the face-direction
+    /// law the mesher's own table answers, the item quads the FIXED
+    /// pose resolved, the on-screen rotation the clockwise 45°-per-
+    /// slot fold the Y-flip + the Z-rotation pair serves. The glow
+    /// variant the block/glow_item_frame model the same walk keeps.
+    fn render_item_frames(&mut self, fb: &mut crate::raster::Framebuf, ctx: &RenderCtx) {
+        use mc_registry::element_quads::Direction;
+        // the face shade law (colors.rs's own table, the Cull enum order)
+        let ground_shade = |d: Direction| match d {
+            Direction::Up => 1.0f32,
+            Direction::Down => 0.5,
+            Direction::North | Direction::South => 0.8,
+            Direction::West | Direction::East => 0.6,
+        };
+        // the yaw the support-adjacency law keeps (the template's panel
+        // at the +Z edge the NORTH facing wears)
+        let yaw_radians = |facing: u8| -> f32 {
+            let deg = match facing {
+                4 => 90.0f32,  // WEST
+                3 => 180.0,    // SOUTH
+                5 => 270.0,    // EAST
+                _ => 0.0,      // NORTH (and the vertical band the gate refuses)
+            };
+            deg * std::f32::consts::PI / 180.0
+        };
+        // the direction's own rotation (the shade law reads the
+        // WORLD-facing slot — the yaw the step vectors carry)
+        let rot_dir_y = |d: Direction, deg: f32| -> Direction {
+            let (x, z) = match d {
+                Direction::North => (0.0f32, -1.0),
+                Direction::South => (0.0, 1.0),
+                Direction::West => (-1.0, 0.0),
+                Direction::East => (1.0, 0.0),
+                _ => return d,
+            };
+            let rad = deg * std::f32::consts::PI / 180.0;
+            let (s, c) = rad.sin_cos();
+            let (rx, rz) = (x * c + z * s, -x * s + z * c);
+            if rx.abs() > rz.abs() {
+                if rx > 0.0 {
+                    Direction::East
+                } else {
+                    Direction::West
+                }
+            } else if rz > 0.0 {
+                Direction::South
+            } else {
+                Direction::North
+            }
+        };
+        let mut sampled: Vec<crate::raster::SampledQuad> = Vec::new();
+        for fr in &self.item_frames {
+            // THE BODY'S OWN BAKE (the block/item_frame model the
+            // OnceLock walk derives — the glow variant the
+            // block/glow_item_frame row keeps)
+            let model_id = if fr.glow {
+                "block/glow_item_frame"
+            } else {
+                "block/item_frame"
+            };
+            let Some(quads) = mc_registry::element_quads::derive_model_inherited(model_id)
+            else {
+                continue;
+            };
+            let yaw = yaw_radians(fr.facing);
+            let deg = yaw * 180.0 / std::f32::consts::PI;
+            let (cx, cy, cz) = (
+                fr.cell.0 as f32 + 0.5,
+                fr.cell.1 as f32 + 0.5,
+                fr.cell.2 as f32 + 0.5,
+            );
+            let m_body = Mat4::translation(cx, cy, cz)
+                .mul(&Mat4::rot_y(yaw))
+                .mul(&Mat4::translation(-0.5, -0.5, -0.5));
+            for q in &quads {
+                let base = [1.0f32, 1.0, 1.0];
+                let sh = if q.shade {
+                    ground_shade(rot_dir_y(q.direction, deg))
+                } else {
+                    1.0
+                };
+                sampled.push(crate::raster::SampledQuad {
+                    pts: q.vertices.map(|v| {
+                        let p = m_body.transform_point(Vec3::new(v[0], v[1], v[2]));
+                        [p[0], p[1], p[2]]
+                    }),
+                    uv: q.uvs,
+                    tex: q.texture,
+                    tint: [base[0] * sh, base[1] * sh, base[2] * sh],
+                });
+            }
+            // THE CONTAINED ITEM'S OWN RIDE (the FIXED pose the item
+            // layers resolve, the panel plane the 0.4375 open face
+            // keeps minus the 1/128 z-fight epsilon, the Y-flip the
+            // sprite's reading orientation the front face carries, the
+            // Z-rotation the clockwise 45°-per-slot fold wears, the
+            // 0.5 scale the half-block item the vanilla law speaks)
+            if fr.item.1 > 0 {
+                if let Some(layers) = mc_registry::item_model_layers(fr.item.0) {
+                    let mut parts: Vec<(mc_registry::element_quads::Quad, &'static [&'static str])> =
+                        Vec::new();
+                    let mut ok = true;
+                    for layer in &layers {
+                        match mc_registry::display::posed_item_layer_quads(
+                            layer.model,
+                            layer.transform,
+                            mc_registry::display::FIXED,
+                        ) {
+                            Some(Ok(quads)) => {
+                                for q in quads {
+                                    parts.push((q, layer.tints));
+                                }
+                            }
+                            _ => {
+                                ok = false;
+                                break;
+                            }
+                        }
+                    }
+                    if ok && !parts.is_empty() {
+                        let rad_slot = -(fr.rotation as f32) * 45.0
+                            * std::f32::consts::PI
+                            / 180.0;
+                        let m_item = Mat4::translation(cx, cy, cz)
+                            .mul(&Mat4::rot_y(yaw))
+                            .mul(&Mat4::translation(0.0, 0.0, 0.4375 - 0.0078125))
+                            .mul(&Mat4::rot_z(rad_slot))
+                            .mul(&Mat4::rot_y(std::f32::consts::PI))
+                            .mul(&Mat4::scale_3d(0.5, 0.5, 0.5));
+                        for (q, tints) in &parts {
+                            let base = icon_tint(tints);
+                            sampled.push(crate::raster::SampledQuad {
+                                pts: q.vertices.map(|v| {
+                                    let p =
+                                        m_item.transform_point(Vec3::new(v[0], v[1], v[2]));
+                                    [p[0], p[1], p[2]]
+                                }),
+                                uv: q.uvs,
+                                tex: q.texture,
+                                tint: base,
+                            });
+                        }
+                    }
+                }
             }
         }
         if sampled.is_empty() {
@@ -86310,6 +87144,7 @@ mod tests {
             fire_age: std::collections::HashMap::new(),
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
             container_fill: std::collections::HashMap::new(), // the comparator lane: no fill
+            frame_analog: std::collections::HashMap::new(), // the frame lane: no analog
             has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             torch_ticks: Vec::new(), // the torch's own queue: empty
@@ -86895,6 +87730,7 @@ mod tests {
                     fire_age: std::collections::HashMap::new(),
                     portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
             container_fill: std::collections::HashMap::new(), // the comparator lane: no fill
+            frame_analog: std::collections::HashMap::new(), // the frame lane: no analog
                     has_skylight: true, // the portal's own axis store: empty
                     campfire_ticks: Vec::new(), // the campfire's own queue: empty
                     torch_ticks: Vec::new(), // the torch's own queue: empty
@@ -87353,6 +88189,7 @@ mod tests {
             fire_age: std::collections::HashMap::new(),
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
             container_fill: std::collections::HashMap::new(), // the comparator lane: no fill
+            frame_analog: std::collections::HashMap::new(), // the frame lane: no analog
             has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             torch_ticks: Vec::new(), // the torch's own queue: empty
@@ -87437,6 +88274,7 @@ mod tests {
             fire_age: std::collections::HashMap::new(),
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
             container_fill: std::collections::HashMap::new(), // the comparator lane: no fill
+            frame_analog: std::collections::HashMap::new(), // the frame lane: no analog
             has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             torch_ticks: Vec::new(), // the torch's own queue: empty
@@ -87523,6 +88361,7 @@ mod tests {
                     fire_age: std::collections::HashMap::new(),
                     portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
             container_fill: std::collections::HashMap::new(), // the comparator lane: no fill
+            frame_analog: std::collections::HashMap::new(), // the frame lane: no analog
                     has_skylight: true, // the portal's own axis store: empty
                     campfire_ticks: Vec::new(), // the campfire's own queue: empty
                     torch_ticks: Vec::new(), // the torch's own queue: empty
@@ -87586,6 +88425,7 @@ mod tests {
             fire_age: std::collections::HashMap::new(),
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
             container_fill: std::collections::HashMap::new(), // the comparator lane: no fill
+            frame_analog: std::collections::HashMap::new(), // the frame lane: no analog
             has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             torch_ticks: Vec::new(), // the torch's own queue: empty
@@ -104004,6 +104844,341 @@ cow_sound_variant: None,
         assert!(app3.offline_cart_drag.is_none(), "the drag the eject clears");
     }
 
+    /// THE ITEM FRAME'S OWN LANES (javap HangingEntityItem.useOn +
+    /// ItemFrame.interact/setItem/setRotation the 26.2 jar — the
+    /// placement the horizontal face + the survives law wears, the
+    /// store lane the count-1 + the consume + the add_item voice
+    /// banks, the rotate lane the +1 %8 + the rotate_item voice
+    /// serves, the sneak slot lane the swap the hand keeps, the
+    /// analog row the map the World banks, the broadcast the
+    /// through-wall comparator the +2 schedule re-arms).
+    #[test]
+    fn the_item_frame_the_place_store_rotate_take_lanes_wear() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let w0 = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let y = app.spawn_y + 6;
+        // THE WALL (the support cell the collision-bearing kind keeps)
+        let mut w = app.offline_world.as_mut().unwrap();
+        w.set(w0, y, w0, crate::world::STONE);
+        w.set(w0, y, w0 - 1, crate::world::AIR); // the frame cell the air keeps
+        drop(w);
+        // THE PLACE (the face NORTH = 2 — the frame cell = the wall's
+        // north neighbor, the place voice the playPlacementSound speaks)
+        let hit = crate::world::ClipHit {
+            pos: (w0, y, w0),
+            face: 2,
+            location: (w0 as f64 + 0.5, y as f64 + 0.5, w0 as f64),
+            inside: false,
+        };
+        assert_eq!(
+            app.on_right_press_item_frame_arm(&hit),
+            Some(true),
+            "the wall click the frame spawns"
+        );
+        assert_eq!(app.item_frames.len(), 1, "the one frame the spawn keeps");
+        assert_eq!(app.item_frames[0].cell, (w0, y, w0 - 1), "the cell the +step law keeps");
+        assert_eq!(app.item_frames[0].facing, 2, "the facing the clicked face wears");
+        assert_eq!(app.item_frames[0].rotation, 0, "the rotation the default 0 keeps");
+        assert!(app
+            .sounds
+            .events
+            .iter()
+            .any(|e| e.starts_with("entity.item_frame.place ")),
+            "the place voice the playPlacementSound speaks");
+        // THE ANALOG ROW (the empty frame the 0 the map banks)
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().frame_analog.get(&(w0, y, w0 - 1)),
+            Some(&0),
+            "the empty frame the 0 row banks"
+        );
+        // THE VERTICAL FACE'S OWN REFUSAL (the mayPlace law — the UP
+        // click the None the chain keeps)
+        let up_hit = crate::world::ClipHit {
+            pos: (w0, y, w0),
+            face: 1,
+            location: (w0 as f64 + 0.5, y as f64 + 1.0, w0 as f64 + 0.5),
+            inside: false,
+        };
+        assert_eq!(
+            app.on_right_press_item_frame_arm(&up_hit),
+            None,
+            "the floor click the vertical face the chain refuses"
+        );
+        // THE SUPPORT'S OWN REFUSAL (the replaceable cell the survives
+        // law refuses — the air wall the FAIL speaks)
+        app.offline_world.as_mut().unwrap().set(w0 + 4, y, w0, crate::world::AIR);
+        let air_hit = crate::world::ClipHit {
+            pos: (w0 + 4, y, w0),
+            face: 2,
+            location: ((w0 + 4) as f64 + 0.5, y as f64 + 0.5, w0 as f64),
+            inside: false,
+        };
+        assert_eq!(
+            app.on_right_press_item_frame_arm(&air_hit),
+            Some(false),
+            "the air support the survives law refuses"
+        );
+
+        // THE STORE LANE (the held stack the count-1 copy the frame
+        // banks, the consume the survival shrink wears, the add_item
+        // voice the setItem's own arm speaks, the analog row the +1
+        // fold banks)
+        let ingot = mc_registry::item_id_by_name("iron_ingot").unwrap();
+        app.inventory.items[app.selected_hotbar] = (ingot, 5);
+        app.hotbar_slots = app.inventory.hotbar();
+        let fid = app.item_frames[0].id;
+        assert!(
+            app.on_right_press_item_frame_interact(fid),
+            "the store lane the SUCCESS verdict carries"
+        );
+        assert_eq!(app.item_frames[0].item, (ingot, 1), "the count-1 the copyWithCount fold wears");
+        assert_eq!(app.inventory.items[app.selected_hotbar], (ingot, 4), "the consume the shrink rides");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().frame_analog.get(&(w0, y, w0 - 1)),
+            Some(&1),
+            "the analog the rotation+1 the 1 banks"
+        );
+        assert!(app
+            .sounds
+            .events
+            .iter()
+            .any(|e| e.starts_with("entity.item_frame.add_item ")),
+            "the add_item voice the setItem walk speaks");
+
+        // THE ROTATE LANE (the empty hand the +1 %8 the setRotation
+        // banks — the rotate_item voice opens)
+        app.inventory.items[app.selected_hotbar] = (0, 0);
+        app.hotbar_slots = app.inventory.hotbar();
+        app.offline_held = None;
+        assert!(
+            app.on_right_press_item_frame_interact(fid),
+            "the rotate lane the SUCCESS verdict carries"
+        );
+        assert_eq!(app.item_frames[0].rotation, 1, "the rotation the +1 the wrap banks");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().frame_analog.get(&(w0, y, w0 - 1)),
+            Some(&2),
+            "the analog the rotation 1 the 2 banks"
+        );
+        assert!(app
+            .sounds
+            .events
+            .iter()
+            .any(|e| e.starts_with("entity.item_frame.rotate_item ")),
+            "the rotate_item voice the interact walk speaks");
+
+        // THE SNEAK SLOT LANE (the filled frame the swap the hand
+        // keeps — the frame empties, the item returns)
+        app.shift_down = true;
+        assert!(
+            app.on_right_press_item_frame_interact(fid),
+            "the sneak take the SUCCESS verdict carries"
+        );
+        assert_eq!(app.item_frames[0].item, (0, 0), "the frame the take empties");
+        assert_eq!(
+            app.inventory.items[app.selected_hotbar],
+            (ingot, 1),
+            "the hand the frame's own item keeps"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().frame_analog.get(&(w0, y, w0 - 1)),
+            Some(&0),
+            "the analog the empty frame the 0 re-banks"
+        );
+        // the held swap: the EMPTY frame + the held stack the STORE
+        // lane answers (the sneak lane the filled frame alone serves)
+        app.inventory.items[app.selected_hotbar] = (ingot, 3);
+        app.hotbar_slots = app.inventory.hotbar();
+        assert!(app.on_right_press_item_frame_interact(fid), "the store the SUCCESS carries");
+        assert_eq!(app.item_frames[0].item, (ingot, 1), "the store the count-1 the frame banks");
+        assert_eq!(
+            app.inventory.items[app.selected_hotbar],
+            (ingot, 2),
+            "the consume the stack's remainder keeps"
+        );
+    }
+
+    /// THE ITEM FRAME'S OWN PUNCH LANES (javap ItemFrame.hurtServer the
+    /// 26.2 jar — the FILLED frame the drop walk the frame item + the
+    /// contained item the pair spawns, the remove_item voice the arm
+    /// plays, the EMPTY frame the super's kill the break voice + the
+    /// frame item's own drop keeps, the analog row the death's own map
+    /// ride drops).
+    #[test]
+    fn the_item_frame_the_punch_lanes_the_drops_and_voices_wear() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let w0 = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let y = app.spawn_y + 6;
+        let mut w = app.offline_world.as_mut().unwrap();
+        w.set(w0, y, w0, crate::world::STONE);
+        w.set(w0, y, w0 - 1, crate::world::AIR); // the frame cell the air keeps
+        drop(w);
+        let hit = crate::world::ClipHit {
+            pos: (w0, y, w0),
+            face: 2,
+            location: (w0 as f64 + 0.5, y as f64 + 0.5, w0 as f64),
+            inside: false,
+        };
+        assert_eq!(app.on_right_press_item_frame_arm(&hit), Some(true));
+        let fid = app.item_frames[0].id;
+        let cell = app.item_frames[0].cell;
+        // THE EMPTY ARM (the break voice the 2-arg dropItem plays, the
+        // frame item the survival drop speaks)
+        app.offline_held = None;
+        app.attack_item_frame(fid);
+        assert!(app.item_frames.is_empty(), "the punch the empty frame kills");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().frame_analog.get(&cell),
+            None,
+            "the death the analog row the map drops"
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.item_frame.break ")),
+            "the break voice the super's kill speaks"
+        );
+        assert_eq!(
+            app.drops
+                .iter()
+                .filter(|d| mc_registry::item_name(d.item) == Some("item_frame"))
+                .count(),
+            1,
+            "the frame item the survival drop speaks"
+        );
+        // THE FILLED ARM (the frame item + the contained item the pair
+        // spawns, the remove_item voice the arm plays)
+        let before = app.drops.len();
+        assert_eq!(app.on_right_press_item_frame_arm(&hit), Some(true));
+        let fid2 = app.item_frames[0].id;
+        let ingot = mc_registry::item_id_by_name("iron_ingot").unwrap();
+        app.inventory.items[app.selected_hotbar] = (ingot, 2);
+        app.hotbar_slots = app.inventory.hotbar();
+        assert!(app.on_right_press_item_frame_interact(fid2), "the store the press consumes");
+        app.attack_item_frame(fid2);
+        assert!(app.item_frames.is_empty(), "the punch the filled frame kills");
+        let new_drops = &app.drops[before..];
+        assert!(
+            new_drops.iter().any(|d| mc_registry::item_name(d.item) == Some("item_frame")),
+            "the frame item the drop pair speaks"
+        );
+        assert!(
+            new_drops.iter().any(|d| mc_registry::item_name(d.item) == Some("iron_ingot")),
+            "the contained item the drop pair speaks"
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.item_frame.remove_item ")),
+            "the remove_item voice the filled arm speaks"
+        );
+    }
+
+    /// THE ITEM FRAME'S OWN SURVIVE POLL (javap HangingEntity.tick the
+    /// 26.2 jar — the 100-tick clock the survives verdict rides, the
+    /// support's own loss the pop walk serves: the break voice plays,
+    /// the frame item + the contained item the pair spawns, the analog
+    /// row the map drops) AND THE COMPARATOR'S OWN LIVE CHAIN (the
+    /// store lane's broadcast the +2 schedule banks, the tick walk the
+    /// output cache the through-wall read re-banks — the comparator
+    /// behind the wall the framed item's fill speaks).
+    #[test]
+    fn the_item_frame_the_survive_poll_and_the_comparator_chain_wear() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let w0 = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let y = app.spawn_y + 6;
+        // THE WALL + THE COMPARATOR (the comparator's back cell = the
+        // wall, the second cell = the frame cell — the through-wall
+        // read the classic setup keeps)
+        let mut w = app.offline_world.as_mut().unwrap();
+        w.set(w0, y, w0, crate::world::STONE); // the wall
+        w.set(w0 + 1, y, w0, crate::world::AIR); // the frame cell the air keeps
+        w.set(w0 - 1, y, w0, crate::world::COMPARATOR); // behind the wall
+        w.set_variant(w0 - 1, y, w0, crate::world::comparator_variant(1, false, false, 0));
+        drop(w);
+        // facing 1: the back = +x — the wall the back cell wears, the
+        // second cell the wall's east side the frame answers
+        let hit = crate::world::ClipHit {
+            pos: (w0, y, w0),
+            face: 5, // EAST — the frame cell the wall's east side
+            location: (w0 as f64 + 1.0, y as f64 + 0.5, w0 as f64 + 0.5),
+            inside: false,
+        };
+        assert_eq!(app.on_right_press_item_frame_arm(&hit), Some(true));
+        let fid = app.item_frames[0].id;
+        assert_eq!(app.item_frames[0].cell, (w0 + 1, y, w0), "the cell the east side keeps");
+        // THE STORE (the analog row the 1 banks — the broadcast the
+        // +2 schedule the comparator's re-read arms)
+        let ingot = mc_registry::item_id_by_name("iron_ingot").unwrap();
+        app.inventory.items[app.selected_hotbar] = (ingot, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        assert!(app.on_right_press_item_frame_interact(fid), "the store the press consumes");
+        // THE CHAIN (the +2 tick the comparator the refresh banks —
+        // the output cache the through-wall read the 1 speaks)
+        app.update();
+        app.update();
+        let variant = app.offline_world.as_ref().unwrap().variant(w0 - 1, y, w0);
+        assert_eq!(
+            crate::world::comparator_output_of(variant),
+            1,
+            "the comparator the framed item's own fill the output speaks"
+        );
+        // THE SURVIVE POLL (the support dug the pop the 100-tick clock
+        // serves — the break voice + the frame item's own drop the
+        // pair wears; the DIG'S OWN BROADCAST the break walk's
+        // attach_wire_voice ride serves — the through-wall arm the
+        // missing conductor kills, the comparator's re-read the dig's
+        // own consult arms BEFORE the pop lands)
+        let before = app.drops.len();
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(w0, y, w0, crate::world::AIR);
+        app.attach_wire_voice(w0, y, w0);
+        for _ in 0..100 {
+            app.update();
+        }
+        assert!(app.item_frames.is_empty(), "the dug support the poll pops");
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.item_frame.break ")),
+            "the break voice the pop walk speaks"
+        );
+        assert!(
+            app.drops[before..]
+                .iter()
+                .any(|d| mc_registry::item_name(d.item) == Some("item_frame")),
+            "the frame item the pop's own drop speaks"
+        );
+        assert!(
+            app.drops[before..]
+                .iter()
+                .any(|d| mc_registry::item_name(d.item) == Some("iron_ingot")),
+            "the contained item the pop's own drop speaks"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().frame_analog.get(&(w0 + 1, y, w0)),
+            None,
+            "the pop the analog row the map drops"
+        );
+        // THE COMPARATOR'S OWN TAIL (the dig's own broadcast the
+        // re-read arms — the through-wall arm the missing conductor
+        // kills, the output cache the 0 the refresh banks)
+        let variant = app.offline_world.as_ref().unwrap().variant(w0 - 1, y, w0);
+        assert_eq!(
+            crate::world::comparator_output_of(variant),
+            0,
+            "the dug wall the comparator's own output the refresh banks"
+        );
+    }
+
     #[test]
     fn the_boat_use_walk_refuses_the_eye_inside_bodies() {
         let mut app = App::new(3);
@@ -109102,6 +110277,7 @@ cow_sound_variant: None,
             fire_age: std::collections::HashMap::new(),
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
             container_fill: std::collections::HashMap::new(), // the comparator lane: no fill
+            frame_analog: std::collections::HashMap::new(), // the frame lane: no analog
             has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             torch_ticks: Vec::new(), // the torch's own queue: empty

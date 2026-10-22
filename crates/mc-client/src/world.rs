@@ -2648,6 +2648,53 @@ pub fn container_analog_signal(items: &[(i32, i32)]) -> u8 {
     v.clamp(0, 15) as u8
 }
 
+/// THE ITEM FRAME'S OWN ANALOG (javap ItemFrame.getAnalogOutput the
+/// 26.2 jar — the `getItem().isEmpty()` early-return the 0 the empty
+/// frame speaks [pcs 1-11], the `getRotation() + 1` fold the loaded
+/// frame's value the iconst_1/iadd window banks [pcs 13-21]: the
+/// rotation slot the setRotation's own %8 wrap keeps — the analog the
+/// 1..=8 band the famous max-8 signal wears).
+pub fn item_frame_analog(item_empty: bool, rotation: u8) -> u8 {
+    if item_empty {
+        0
+    } else {
+        rotation % 8 + 1
+    }
+}
+
+/// THE FRAME'S OWN ANALOG BROADCAST WALK (javap Level
+/// .updateNeighbourForOutputSignal pc 3-130 the 26.2 jar — the
+/// Direction.Plane iterator the FOUR HORIZONTAL arms keep, each the
+/// two-step probe serves: the DIRECT arm the COMPARATOR neighbor the
+/// neighborChanged speaks [pcs 57-71], the CONDUCTOR arm the second
+/// cell the `isRedstoneConductor` gate + the two-steps-away
+/// comparator the through-wall read answers [pcs 82-124] — the frame
+/// cell's own setItem/setRotation/pop the App's map update rides,
+/// the verdict rows the re-read arms). Returns the comparator cells
+/// the schedule walk consults.
+pub fn frame_analog_comparators_near(
+    world: &World,
+    x: i32,
+    y: i32,
+    z: i32,
+) -> Vec<(i32, i32, i32)> {
+    let mut out = Vec::new();
+    for (dx, dz) in [(0, -1), (0, 1), (-1, 0), (1, 0)] {
+        let (nx, nz) = (x + dx, z + dz);
+        if world.get(nx, y, nz) == COMPARATOR {
+            out.push((nx, y, nz));
+            continue;
+        }
+        if wire_climb_conductor(world.get(nx, y, nz)) {
+            let (sx, sz) = (nx + dx, nz + dz);
+            if world.get(sx, y, sz) == COMPARATOR {
+                out.push((sx, y, sz));
+            }
+        }
+    }
+    out
+}
+
 /// THE COMPARATOR'S OWN BACK READ (javap ComparatorBlock.getInputSignal
 /// pc 0-168 the 26.2 jar the 26.2 walk the container lane answers:
 /// the WEAK WALK the base i the DiodeBlock super computes, the
@@ -2657,9 +2704,10 @@ pub fn container_analog_signal(items: &[(i32, i32)]) -> u8 {
 /// isRedstoneConductor` arm the one-more-step probe serves [pc 63-88]
 /// — the solid cube the chest hides the classic through-wall read
 /// answers, the `j != 0` verdict the quiet keep wears [pc 155-164];
-/// the item-frame half the max fold the entity lane never carries —
-/// the absent frame the 0 the max keeps, the port the container arm
-/// alone answers). THE WEAK WALK THE REPEATER KEEPS (the DiodeBlock
+/// the item-frame half the max fold the entity lane carries — the
+/// getItemFrame AABB scan the second cell answers [pc 104-121], the
+/// getAnalogOutput the rotation+1 verdict banks, the absent frame the
+/// 0 the max keeps). THE WEAK WALK THE REPEATER KEEPS (the DiodeBlock
 /// super the sibling's own read the container arms never override —
 /// the repeater's back read the weak walk alone answers).
 fn comparator_input_signal(world: &World, x: i32, y: i32, z: i32, facing: u8) -> u8 {
@@ -2674,10 +2722,21 @@ fn comparator_input_signal(world: &World, x: i32, y: i32, z: i32, facing: u8) ->
     // THE THROUGH-WALL ARM (pc 63-164 — the base < 15 the conductor
     // gate arms, the far cell's fill the j != 0 verdict banks)
     if base < 15 && wire_climb_conductor(world.get(bx, by, bz)) {
-        if let Some(&fill) = world.container_fill.get(&(bx + dx, by + dy, bz + dz)) {
-            if fill != 0 {
-                return fill;
-            }
+        // THE FRAME'S OWN HALF (pc 104-168 — the getItemFrame AABB scan
+        // the SECOND cell the `pos.relative(FACING).relative(FACING)`
+        // walk answers, the getAnalogOutput the empty->0 / rotation+1
+        // fold the j banks, the Math.max the container fill the j the
+        // fold serves [pc 139-150 — the hasAnalogOutputSignal verdict
+        // the second cell's own fill the max rides], the j != 0 verdict
+        // the quiet keep wears [pc 155-164] — the absent frame the 0
+        // the max keeps)
+        let (sx, sy, sz) = (bx + dx, by + dy, bz + dz);
+        let j = world.frame_analog.get(&(sx, sy, sz)).copied().unwrap_or(0);
+        if let Some(&fill) = world.container_fill.get(&(sx, sy, sz)) {
+            return j.max(fill);
+        }
+        if j != 0 {
+            return j;
         }
     }
     base
@@ -13906,6 +13965,16 @@ pub struct World {
     /// same law keeps; the networked world the server's analog never
     /// synced — the empty map the honest keep).
     pub container_fill: std::collections::HashMap<(i32, i32, i32), u8>,
+    /// THE ITEM FRAME'S OWN ANALOG ROW (javap ComparatorBlock
+    /// .getInputSignal pc 104-121 + ItemFrame.getAnalogOutput the 26.2
+    /// jar — the (x, y, z) -> 1..=8 rows the frame's occupied cell
+    /// banks: the entry PRESENCE the getItemFrame AABB scan's own
+    /// verdict answers, the value the empty->0 / rotation+1 fold the
+    /// bytecode speaks. The through-wall lane's own read the
+    /// [`World::comparator_input_signal`] walk serves — the map the
+    /// frame's setItem/setRotation/pop walks the App maintains, the
+    /// absent row the 0 the max fold keeps).
+    pub frame_analog: std::collections::HashMap<(i32, i32, i32), u8>,
     /// THE DIMENSION'S OWN SKY GATE (javap `DimensionType.hasSkylight`
     /// — the nether's false the light engine's sky-column pass never
     /// runs: the grid the block flood alone answers, the sky layer
@@ -14255,6 +14324,7 @@ impl World {
             fire_age: std::collections::HashMap::new(), // the ladder's store: empty
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
             container_fill: std::collections::HashMap::new(), // the comparator lane: no fill
+            frame_analog: std::collections::HashMap::new(), // the frame lane: no analog
             has_skylight: true, // the overworld default: the sky light the column pass speaks
         }
     }
@@ -32081,6 +32151,133 @@ mod tests {
             comparator_output_signal(&w, cx, cy, cz),
             0,
             "the far-empty chest the j!=0 verdict the base keeps"
+        );
+    }
+
+    /// THE ITEM FRAME'S OWN ANALOG (javap ItemFrame.getAnalogOutput the
+    /// 26.2 jar — the empty frame the 0 keeps, the rotation slot the
+    /// +1 fold the 1..=8 band the famous max-8 signal wears, the
+    /// setRotation's own %8 wrap the input keeps).
+    #[test]
+    fn the_item_frame_analog_the_rotation_plus_one_band_wears() {
+        assert_eq!(
+            item_frame_analog(true, 0),
+            0,
+            "the empty frame the 0 the early-return keeps"
+        );
+        assert_eq!(
+            item_frame_analog(false, 0),
+            1,
+            "the upright item the rotation 0 the +1 the 1 wears"
+        );
+        for rotation in 0u8..8 {
+            assert_eq!(
+                item_frame_analog(false, rotation),
+                rotation + 1,
+                "the rotation {rotation} the +1 the {} speaks",
+                rotation + 1
+            );
+        }
+        assert_eq!(
+            item_frame_analog(false, 8),
+            1,
+            "the wrapped slot the %8 the 1 keeps"
+        );
+    }
+
+    /// THE COMPARATOR'S OWN ITEM FRAME READ (javap ComparatorBlock
+    /// .getInputSignal pc 104-168 the 26.2 jar — the getItemFrame
+    /// AABB scan the SECOND cell answers, the getAnalogOutput the
+    /// rotation+1 verdict banks, the Math.max the container fill the
+    /// j the fold serves, the j != 0 verdict the quiet keep wears;
+    /// the Level.updateNeighbourForOutputSignal walk the broadcast
+    /// arms banks: the DIRECT arm the COMPARATOR neighbor serves, the
+    /// conductor arm the second cell the through-wall comparator
+    /// answers).
+    #[test]
+    fn the_comparator_the_item_frame_the_through_wall_read_wears() {
+        let mut w = World::new(3, 42);
+        for x in 0..8 {
+            for z in 0..8 {
+                w.set(x, 9, z, STONE);
+            }
+        }
+        let (cx, cy, cz) = (3i32, 10i32, 3i32);
+        let facing = 1u8; // the back cell = +x
+        w.set(cx, cy, cz, COMPARATOR);
+        w.set_variant(cx, cy, cz, comparator_variant(facing, false, false, 0));
+        // THE WALL + THE FRAME CELL (the through-wall arm the second
+        // cell the frame's analog banks — the rotation 4 the +1 the 5
+        // speaks)
+        w.set(cx + 1, cy, cz, STONE);
+        w.frame_analog.insert((cx + 2, cy, cz), 5);
+        assert_eq!(
+            comparator_output_signal(&w, cx, cy, cz),
+            5,
+            "the framed item the through-wall read the 5 speaks"
+        );
+        assert!(
+            comparator_should_turn_on(&w, cx, cy, cz),
+            "the powered verdict the 5>0 the COMPARE law answers"
+        );
+        // THE MAX FOLD (the second cell's own fill the j the fold
+        // serves — the fill 9 the max speaks, the fill 3 the j wins)
+        w.set(cx + 2, cy, cz, CHEST);
+        w.container_fill.insert((cx + 2, cy, cz), 9);
+        assert_eq!(
+            comparator_output_signal(&w, cx, cy, cz),
+            9,
+            "the fill 9 the max the fill wins"
+        );
+        w.container_fill.insert((cx + 2, cy, cz), 3);
+        assert_eq!(
+            comparator_output_signal(&w, cx, cy, cz),
+            5,
+            "the fill 3 the j 5 the frame wins"
+        );
+        w.container_fill.remove(&(cx + 2, cy, cz));
+        // THE QUIET KEEP (the absent frame the 0 the max keeps — the
+        // base the conductor's own 0 the same verdict wears)
+        w.frame_analog.remove(&(cx + 2, cy, cz));
+        assert_eq!(
+            comparator_output_signal(&w, cx, cy, cz),
+            0,
+            "the absent frame the 0 the base keeps"
+        );
+
+        // THE BROADCAST WALK (the updateNeighbourForOutputSignal law
+        // the 4 horizontal arms keep — the direct arm the comparator
+        // neighbor serves, the conductor arm the two-steps-away
+        // comparator answers, the air second cell the walk refuses)
+        let mut w2 = World::new(3, 42);
+        // the DIRECT arm: the comparator standing beside the frame cell
+        w2.set(5, 10, 6, COMPARATOR);
+        w2.set_variant(5, 10, 6, comparator_variant(0, false, false, 0));
+        let direct = frame_analog_comparators_near(&w2, 5, 10, 5);
+        assert!(
+            direct.contains(&(5, 10, 6)),
+            "the direct arm the beside comparator the walk answers"
+        );
+        // the THROUGH-WALL arm: the conductor between (the WEST arm —
+        // the neighbor (4,10,5) the conductor wears, the second cell
+        // (3,10,5) the comparator answers)
+        w2.set(3, 10, 5, COMPARATOR);
+        w2.set_variant(3, 10, 5, comparator_variant(0, false, false, 0));
+        w2.set(4, 10, 5, STONE);
+        let through = frame_analog_comparators_near(&w2, 5, 10, 5);
+        assert!(
+            through.contains(&(3, 10, 5)),
+            "the conductor arm the two-steps-away comparator the walk answers"
+        );
+        // the AIR SECOND CELL (the no-conductor arm the walk refuses —
+        // the far comparator the neither arm answers)
+        w2.set(4, 10, 1, STONE);
+        w2.set(3, 10, 1, COMPARATOR);
+        w2.set(4, 10, 1, AIR);
+        let air = frame_analog_comparators_near(&w2, 5, 10, 1);
+        assert!(
+            !air.contains(&(3, 10, 1)),
+            "the air second cell the walk refuses"
         );
     }
 

@@ -9048,6 +9048,7 @@ mod tests {
             fire_age: std::collections::HashMap::new(),
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
             container_fill: std::collections::HashMap::new(), // the comparator lane: no fill
+            frame_analog: std::collections::HashMap::new(), // the frame lane: no analog
             has_skylight: true,                            // the portal's own axis store: empty
             campfire_ticks: Vec::new(),                    // the campfire's own queue: empty
             torch_ticks: Vec::new(),                       // the torch's own queue: empty
