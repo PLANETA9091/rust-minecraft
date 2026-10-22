@@ -221,3 +221,71 @@ Stage Summary:
   arm waits), the item-frame analog read (the getInputSignal's
   behind-conductor lane).
 
+---
+Task ID: autopush-125
+Agent: cron autopush (Job 384923, 2026-10-22 ~11:35 +08:00)
+Task: the ONE step the worklog's candidates named — the REDSTONE
+BLOCK kind, the constant-15 source the comparator's side arm and the
+wire flood have been waiting for (the smallest kind-addition the
+vanilla redstone family carries).
+
+Work Log:
+- Environment held (clean tree at 34edf40, cargo 1.99.1, caches in
+  place).
+- THE PIN'S OWN SHRINKAGE (the name-keyed tables the recon credits):
+  block_dig/block_resistances/block_sounds/items are REGISTRY-NAME
+  keyed across the whole 1196-block vanilla set — the "redstone_block"
+  rows they already carry — so the pin rides the ATLAS alone
+  (scripts/autopush125_redstone_block_pin.py, idempotent): TILE_911
+  decoded from the jar's redstone_block.png (the pool tail, every
+  existing index holds), TILES 912, N_KINDS 770, the KIND_NAMES/
+  REGISTRY_NAMES/TILE_NAMES tails, FACE_TILES [911;6] (the full cube
+  the DEFAULT walk renders — no named const, no mesher lane),
+  TINTS/DOOR_MODEL/ENTITY_HEAD the 770-row law, world.rs NAME_OF the
+  770th entry.
+- world.rs the source's own arms (javap RedStoneBlock the 26.2 jar —
+  getSignal AND getDirectSignal the constant 15 the any-dir read
+  answers): the wire flood's six seeds (wire_source_bools_near), the
+  consumers' redstone_signal_at (rides the seed walk), the strong
+  lane's neighbor arm (strong_signal_conductors_near — the source the
+  conductor's own neighbor carries, the NO attachment decode the
+  lever pair keeps — the redstone-block-into-block chain the lamps
+  wear), the wire's shouldConnectTo seat (the wire points at the
+  block), the comparator's back arm (the weak 15) AND the side arm
+  (the strong 15 — the getControlInputSignal's REDSTONE_BLOCK arm the
+  autopush-124 comment reserved now lives), is_redstone_block.
+- Collision the DEFAULT full cube keeps (no Empty row — the block
+  the body walks AROUND).
+- THE PIN BUMPS THE TESTS DEMAND AGAIN: 56 kind-pins the palette law
+  grew (N_KINDS 769→770 ×35 + NAME_OF.len() ×21).
+- TESTS +2: the seed/strong/consumer walk (the six seats the 15
+  answers, the far cell the silence keeps, the conductor-adjacent
+  strong verdict, the full-cube collision, the placeable_block
+  lookup the NAME_OF row answers), the comparator arms (the back the
+  15 speaks, the side the dominance wears, the COMPARE tie keeps,
+  the SUBTRACT tie the 0 wears, the bare side the 15−0 gap speaks).
+- THE GATES: cargo check --workspace --all-targets GREEN; cargo test
+  --workspace 2614 passed / 0 failed / 22 ignored (+2); verify_goldens
+  .sh 18/18 PASS rms 0.000 (the pool tail no golden scene touches);
+  cargo fmt --check 27292 = 27292 EXACTLY (the lane's edits the clean
+  form kept — zero fmt debt this round).
+
+Stage Summary:
+- THE REDSTONE BLOCK PLAYS LIKE VANILLA: place it, the wire around it
+  lights to 15 (the flood seeds), the lamps/doors/rails beside answer,
+  the comparator's back AND sides read the constant 15 (the compare
+  tie the subtract gap the dominance arms the same walk serves), the
+  block-into-block chain the strong lane carries, the dig lane the
+  name-keyed tables the destroy-speed row resolves, the placement
+  the item pairing answers. The suite 2614/0/22, the goldens 18/18
+  rms 0.000, the fmt debt the baseline keeps.
+- NEXT CANDIDATES: the REPEATER kind (the DiodeBlock sibling — the
+  delay dial the right-click cycle, the one-way gate, the lock state,
+  the boost-to-15 arm — the biggest redstone lane left), the
+  container-analog lane (the comparator's hasAnalogOutputSignal back
+  read — the chest-fill signal the BE tables would need), the
+  item-frame analog read (the getInputSignal's behind-conductor
+  lane), the observer kind (the shouldConnectTo comment's other
+  missing sibling).
+
+
