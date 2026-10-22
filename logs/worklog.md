@@ -1850,3 +1850,72 @@ Stage Summary:
   golden section the 19-row runner's own row the text could name,
   the quickcraft drag arm the offline dispenser's carried press
   the deferred place could wear.
+
+---
+Task ID: autopush-142
+Agent: cron autopush (Job 384925, 2026-10-23 06:32:16 +08:00)
+Task: the standing autopush round — the lane the 141 entry's
+next-candidates wear: THE DISPENSER'S OWN WIRE LANE (the GENERIC_3x3
+menu type the OpenScreen word routes — the chest's live shape the
+projection rides).
+
+Work Log:
+- THE REPO THE CLEAN TREE ANSWERED (HEAD 6b84b99, origin in sync).
+- THE FORENSICS javap 26.2 banks: the MenuType clinit order the
+  generic_9x6 5 the GENERIC_3X3 6 speaks (the
+  DispenserMenu/DropperBlockEntity pair the SAME menu class answers —
+  the chest's 2 the holder VarInts never share); the
+  OpenContainerState title_nbt the OpenScreen Component's own bytes
+  bank (the decode round owns it — the live title lane the honest
+  gap rides).
+- THE LANES: world_model.rs the MENU_TYPE_GENERIC_3X3 = 6 constant
+  the clinit-order doc banks; screens.rs live_container_updated the
+  GENERIC_3x3 arm FIRST (the store's projection opens the 3x3
+  canvas over the world — the nine 0..9 + the standard rows 9..45
+  the wire's own (0,0) emptiness rides, the window's id + revision
+  the echo identity banks, the AUTHORITATIVE carried the wholesale
+  replacement lands, the per-cell key the server's window never
+  banks, the bundle rows the chest's own feed wears) + the
+  None-drop arm the live dispenser closes back to the world (the
+  fresh stand-in the live lane never closes) + click_dispenser_slot
+  the WIRE arm (the chest's own shape — the believed rows the
+  pickup/split prediction mutates, the ContainerClick echo the
+  window's id + revision + the changed map rides, the shift
+  quick-move the 45-slot belief the QuickMove input's changed map
+  wears, the wholesale correction the next sync speaks) +
+  close_dispenser the wire arm (the Container Close packet the
+  window's id names, the belief resets with the window) + the
+  open() bundle lifecycle the fifth kind wears.
+- +2 tests: the wire window (the menu type 6 the screen opens over
+  the world, the 45-slot projection the nine + mirror ride, the
+  in-place update, the foreign menu the honest drop, the store's
+  drop the world returns, the offline stand-in the live lane never
+  closes, the re-join the lane re-arms), the click arc (the grid
+  seat's pickup the window-5 identity speaks, the place-back the
+  same PICKUP input, the shift quick-move the changed map the
+  hotbar-tail the rev scan takes, the close the Container Close
+  packet wears).
+- fmt: the lane's hunks the hand-styled form keep (the fmt-check
+  diff count the HEAD's own 1539 wears — the pre-existing debt
+  never moved).
+- Suite: 2660 passed / 0 failed / 22 ignored (+2 lane tests; 2323
+  mc-client + 157 mc-protocol + 100 mc-registry + 80 mc2rs-pixel);
+  goldens 19/19 PASS rms 0.000 (NO regeneration — the lane no
+  render path the existing kinds touch, every golden byte the
+  same); cargo check --all-targets clean.
+- Pushed bd16867 (v0.3.866, the dispenser's own wire lane).
+
+Stage Summary:
+- THE SERVER'S DISPENSER THE PLAYER'S OWN CURSOR LOADS: the
+  OpenScreen word the 3x3 canvas opens over the networked world,
+  the window's clicks the ContainerClick packet speaks, the close
+  the packet echoes — the wholesale correction the next sync
+  serves.
+- NEXT CANDIDATES: the live title lane (the OpenScreen Component's
+  own decode the container.dropper row the dropper's window banks —
+  the model's title_nbt the projection feeds), the quickcraft drag
+  arm the dispenser's carried press the deferred place could wear
+  (the chest's own live shape), the shulker box the getContainerAt
+  walk the dropper's front read never serves, the thrown-shot's
+  wire lane (the Add Entity word the live read banks), the README's
+  golden section the 19-row runner's own row the text could name.
