@@ -9781,6 +9781,17 @@ impl App {
                         let lit_now =
                             words[crate::furnace_sim::DATA_LIT_TIME] > 0;
                         any_flip |= self.furnace_world_flip(cell, lit_now);
+                        // THE LIT FLIP'S OWN RE-READ (javap serverTick
+                        // pc 399 the `setBlock(pos, state.setValue(LIT,
+                        // flag), 3)` walk the flip speaks — the flag-3
+                        // UPDATE_NEIGHBORS the comparator re-consult
+                        // rides: the tick-worn trio the fill re-banks,
+                        // the front's beat the schedule serves; the
+                        // between-flips ticks the push the vanilla
+                        // furnace never wears — the setBlock the flip
+                        // arm alone serves)
+                        let _ = self.container_fill_sync(cell, None);
+                        self.attach_wire_voice(cell.0, cell.1, cell.2);
                     }
                 }
                 if any_flip {
@@ -21879,6 +21890,13 @@ impl App {
                     self.container_stores_load_once();
                     self.furnace_stores.insert(prev, trio);
                     self.furnace_word_stores.insert(prev, self.furnace_data);
+                    // THE PREV CELL'S OWN FILL (the switch the tick-worn
+                    // trio the analog re-banks — the open-screen ticks
+                    // the banked slots the flush never rode, the
+                    // comparator's next consult the same law the close
+                    // beat serves)
+                    let _ = self.container_fill_sync(prev, None);
+                    self.attach_wire_voice(prev.0, prev.1, prev.2);
                 }
             }
         }
@@ -22164,6 +22182,25 @@ impl App {
             w.container_fill.remove(&pos);
             return None;
         }
+        if crate::world::is_orientable_furnace(kind) {
+            // THE FURNACE'S OWN TRIO (javap AbstractFurnaceBlock —
+            // `hasAnalogOutputSignal` the iconst_1 speaks,
+            // `getAnalogOutputSignal` the
+            // `AbstractContainerMenu.getRedstoneSignalFromBlockEntity`
+            // walk answers, the `instanceof Container` gate the furnace
+            // BE passes, the getRedstoneSignalFromContainer the SAME
+            // fill formula over the THREE slots the FurnaceMenu ctor
+            // wears [INPUT 0 FUEL 1 RESULT 2 — the trio the
+            // furnace_stores bank keeps]; the chest's DOUBLE the union
+            // the furnace family never partners — getContainer's
+            // allowOverlap walk the chest block alone serves, the trio
+            // the one-cell read banks, the lit variants the same
+            // family the is_orientable_furnace gate keeps)
+            let trio = self.furnace_stores.get(&pos).cloned().unwrap_or_default();
+            let fill = crate::world::container_analog_signal(&trio);
+            w.container_fill.insert(pos, fill);
+            return None;
+        }
         if !crate::world::is_chest(kind) && !crate::world::is_barrel(kind) {
             // THE AIR'S OWN REMOVAL (the dug/broken cell the entry the
             // map drops — the stale fill the dead cell never speaks)
@@ -22406,6 +22443,16 @@ impl App {
             // state the close banks, the restart the resume wears)
             self.furnace_word_stores.insert(pos, self.furnace_data);
             self.container_stores_file_save();
+            // THE FILL'S OWN RIDE HOME (the comparator's container lane
+            // the close flush banks — the chest's own law the trio
+            // wears: the edited slots the analog the map rides, the
+            // front comparators the attach broadcast the cell+six walk
+            // re-consults — the vanilla stopOpen tail the
+            // updateNeighbourForOutputSignal law the same re-read
+            // serves, the modal screen's own convergence the close
+            // beat keeps)
+            let _ = self.container_fill_sync(pos, None);
+            self.attach_wire_voice(pos.0, pos.1, pos.2);
         }
     }
 
@@ -22430,6 +22477,13 @@ impl App {
         // state the entry's removal wears: the broken furnace the
         // progress never resurrects)
         self.furnace_word_stores.remove(&pos);
+        // THE FILL'S OWN DEATH RIDE (the comparator's container lane
+        // the dig serves — the chest's own removal law the trio wears:
+        // the broken furnace the entry the air drops, the stale fill
+        // the dead cell never speaks)
+        if let Some(w) = self.offline_world.as_mut() {
+            w.container_fill.remove(&pos);
+        }
         if !self.world_is_network {
             if let Some(store) = store {
                 for (item, count) in store {
@@ -30166,6 +30220,15 @@ impl App {
                 // the honest empties keep, the extend law the
                 // in-memory entry never clobbers)
                 self.furnace_stores.extend(furnace_stores_from_nbt(&root));
+                // THE FURNACE FILL'S OWN PARSE RIDE (the comparator's
+                // container lane the boot banks — the parsed trios the
+                // analog the same rows wear, the restart the stocked
+                // furnace's fill the comparator's next consult the map
+                // serves; the stale cell the file the world's own gate
+                // the air-arm refuses)
+                for k in self.furnace_stores.keys().copied().collect::<Vec<_>>() {
+                    self.container_fill_sync(k, None);
+                }
                 // THE PROGRESS WORDS' OWN PARSE (the dev-70 round —
                 // the third list the burn/cook bank answers, the same
                 // extend law the in-memory entry keeps)
@@ -61262,6 +61325,286 @@ mod tests {
                 "the survivor the own-half law the 15 caps"
             );
         }
+    }
+
+    /// THE FURNACE'S OWN TRIO THE FILL WEARS (the container-analog
+    /// lane's furnace half — javap 26.2 AbstractFurnaceBlock the
+    /// `getAnalogOutputSignal` walk the getRedstoneSignalFromBlock-
+    /// Entity answers, the `instanceof Container` gate the furnace BE
+    /// passes, the SAME lerpDiscrete formula over the THREE slots the
+    /// FurnaceMenu ctor wears: the lone input the 5, the stocked trio
+    /// the 8, the empty the 0 the presence keeps, the break the entry
+    /// the air drops — the flush the front comparator's consult
+    /// schedules, the beat the output cache the fill banks).
+    #[test]
+    fn the_furnace_the_trio_the_fill_the_flush_the_beat_and_the_break_wear() {
+        let wire_id_of = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let mut app = App::new(11);
+        app.enter_world();
+        let cell = (5i32, 10i32, 5i32);
+        let comp = (4i32, 10i32, 5i32);
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(cell.0, cell.1, cell.2, crate::world::FURNACE);
+            w.set(comp.0, comp.1, comp.2, crate::world::COMPARATOR);
+            w.set_variant(
+                comp.0,
+                comp.1,
+                comp.2,
+                crate::world::comparator_variant(1, false, false, 0),
+            );
+        }
+        // THE EMPTY'S OWN PRESENCE (the fresh trio the open loads, the
+        // flush the 0-fill the map banks — the entry the hasAnalog
+        // arm's verdict keeps, the vanilla getRedstoneSignalFrom-
+        // Container the all-empty walk the 0 speaks)
+        app.open_furnace(cell);
+        assert_eq!(
+            app.furnace_slots.len(),
+            39,
+            "the fresh grid the FurnaceMenu law keeps"
+        );
+        app.furnace_store_flush();
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.container_fill.get(&cell).copied(),
+                Some(0),
+                "the empty furnace the 0 the presence banks"
+            );
+        }
+        // THE STOCKED TRIO'S OWN FILL (the reopen the stocked slots
+        // wear — wait, the fresh open the empty store loads; the
+        // reopen below the flushed trio reads. THE FORMULA the 131
+        // walk wears: (32/64 + 64/64 + 13/64)/3 the sum the slot
+        // count divides, the floor(7.947)*14 fold +1 the 8 speaks)
+        app.open_furnace(cell);
+        app.furnace_slots[0] = (wire_id_of("raw_iron"), 32);
+        app.furnace_slots[1] = (wire_id_of("coal"), 64);
+        app.furnace_slots[2] = (wire_id_of("iron_ingot"), 13);
+        app.furnace_store_flush();
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.container_fill.get(&cell).copied(),
+                Some(8),
+                "the stocked trio the floor(0.5677*14)+1 the 8 wears"
+            );
+            assert!(
+                !w.comparator_ticks.is_empty(),
+                "the front comparator the consult schedules"
+            );
+        }
+        // THE BEAT'S OWN ANSWER (the tick walk the refresh banks —
+        // the output cache the variant wears, the powered bit the
+        // 8>0 law answers)
+        let due = app
+            .offline_world
+            .as_ref()
+            .unwrap()
+            .comparator_ticks
+            .first()
+            .map(|e| e.0)
+            .expect("the due beat");
+        app.frame = due;
+        app.tick_comparator_beats();
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            let v = w.variant(comp.0, comp.1, comp.2);
+            assert_eq!(
+                crate::world::comparator_output_of(v),
+                8,
+                "the beat the output cache the trio fill banks"
+            );
+            assert!(
+                crate::world::comparator_powered_of(v),
+                "the powered bit the i>j verdict answers"
+            );
+        }
+        // THE BREAK'S OWN DEATH RIDE (the spill the trio the floor
+        // wears, the fill the entry the air drops — the words the
+        // same death the removal keeps)
+        app.furnace_store_spilled(cell);
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert!(
+                !w.container_fill.contains_key(&cell),
+                "the broken furnace the entry the air drops"
+            );
+            assert!(
+                !app.furnace_stores.contains_key(&cell),
+                "the trio the removal keeps"
+            );
+            assert!(!app.drops.is_empty(), "the stocked trio the floor wears");
+        }
+    }
+
+    /// THE FILL'S OWN RIDE LANES (the furnace analog's walk rides —
+    /// the boot parse the restart banks, the lit flip the tick walk
+    /// re-reads [the vanilla setBlock flag-3 law the pc 399 walk
+    /// speaks], the switch the prev cell's trio the re-bank serves).
+    #[test]
+    fn the_furnace_fill_the_boot_the_flip_and_the_switch_rides_wear() {
+        let wire_id_of = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        // THE BOOT'S OWN PARSE RIDE (the disk bank the restart wears —
+        // the flush the file write banks, the FRESH APP the same dir
+        // the load-once parse rides, the stocked furnace's fill the
+        // comparator's next consult the map serves BEFORE any open)
+        let dir = std::env::temp_dir().join(format!("mc2rs-furnfill-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("the temp dir");
+        let file = dir.join("furnfill-round.nbt");
+        let _ = std::fs::remove_file(&file);
+        let mut app = App::new(11);
+        app.enter_world();
+        app.container_stores_file = Some(file.clone());
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        let cell = (c, surface + 1, c);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(cell.0, cell.1, cell.2, crate::world::FURNACE);
+        app.open_furnace(cell);
+        app.furnace_slots[0] = (wire_id_of("raw_iron"), 64);
+        app.furnace_store_flush();
+        assert!(file.exists(), "the flush the file write banks");
+        // THE RESTART: the fresh app the once-flag's parse the fills
+        // bank — the lone stack (64/64)/3 the floor(4.667)+1 the 5
+        // wears, the comparator's consult the map the open never rode
+        let mut fresh = App::new(11);
+        fresh.enter_world();
+        fresh.container_stores_file = Some(file.clone());
+        fresh
+            .offline_world
+            .as_mut()
+            .unwrap()
+            .set(cell.0, cell.1, cell.2, crate::world::FURNACE);
+        fresh.container_stores_load_once();
+        {
+            let w = fresh.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.container_fill.get(&cell).copied(),
+                Some(5),
+                "the boot parse the stocked furnace's fill banks"
+            );
+        }
+        // THE LIT FLIP'S OWN RE-READ (the world walk the tick serves —
+        // the banked trio the raw banks ride, the update the sim tick
+        // the fuel consumes, the LIT flip the setBlock flag-3 law the
+        // re-read serves: the fill re-banks, the front comparator the
+        // consult schedules, the beat the output cache the fresh fill
+        // wears)
+        let cell2 = (c, surface + 1, c + 3);
+        let comp2 = (c - 1, surface + 1, c + 3);
+        fresh
+            .offline_world
+            .as_mut()
+            .unwrap()
+            .set(cell2.0, cell2.1, cell2.2, crate::world::FURNACE);
+        fresh.offline_world.as_mut().unwrap().set(
+            comp2.0,
+            comp2.1,
+            comp2.2,
+            crate::world::COMPARATOR,
+        );
+        fresh.offline_world.as_mut().unwrap().set_variant(
+            comp2.0,
+            comp2.1,
+            comp2.2,
+            crate::world::comparator_variant(1, false, false, 0),
+        );
+        fresh.furnace_stores.insert(
+            cell2,
+            vec![
+                (wire_id_of("raw_iron"), 16),
+                (wire_id_of("coal"), 1),
+                (0, 0),
+            ],
+        );
+        fresh.furnace_word_stores.insert(cell2, [0, 0, 0, 0]);
+        fresh.update();
+        {
+            let w = fresh.offline_world.as_ref().unwrap();
+            // the consumed fuel the post-tick trio wears — (16/64)/3
+            // the same floor(1.167)+1 the 2 speaks either arm
+            assert_eq!(
+                w.container_fill.get(&cell2).copied(),
+                Some(2),
+                "the flip the tick-worn trio the fill re-banks"
+            );
+            assert!(
+                w.comparator_ticks
+                    .iter()
+                    .any(|e| e.1 == comp2.0 && e.2 == comp2.1 && e.3 == comp2.2),
+                "the flip the front comparator the consult schedules"
+            );
+            assert_eq!(
+                w.get(cell2.0, cell2.1, cell2.2),
+                crate::world::FURNACE_LIT,
+                "the lit flip the world's own kind wears"
+            );
+        }
+        // THE BEAT'S OWN ANSWER (the flip's consult the output wears)
+        let due2 = fresh
+            .offline_world
+            .as_ref()
+            .unwrap()
+            .comparator_ticks
+            .first()
+            .map(|e| e.0)
+            .expect("the due beat");
+        fresh.frame = due2;
+        fresh.tick_comparator_beats();
+        {
+            let w = fresh.offline_world.as_ref().unwrap();
+            let v = w.variant(comp2.0, comp2.1, comp2.2);
+            assert_eq!(
+                crate::world::comparator_output_of(v),
+                2,
+                "the beat the output cache the flip's fill banks"
+            );
+        }
+        // THE SWITCH'S OWN PREV RIDE (the open-another walk the banked
+        // trio the fill re-banks — the edited slots the flush never
+        // rode, the prev cell's fill the switch the same law banks)
+        fresh.open_furnace(cell2); // the live cell the fresh trio keeps
+        fresh.furnace_slots[1] = (wire_id_of("coal"), 64);
+        let cell3 = (c, surface + 1, c + 6);
+        fresh.offline_world.as_mut().unwrap().set(
+            cell3.0,
+            cell3.1,
+            cell3.2,
+            crate::world::BLAST_FURNACE,
+        );
+        fresh.open_furnace(cell3);
+        {
+            let a = fresh.furnace_stores.get(&cell2).expect("the prev trio");
+            assert_eq!(
+                a[1],
+                (wire_id_of("coal"), 64),
+                "the prev trio the switch banks"
+            );
+            let w = fresh.offline_world.as_ref().unwrap();
+            // (16/64 + 64/64)/3 the floor(5.833)+1 the 6 speaks
+            assert_eq!(
+                w.container_fill.get(&cell2).copied(),
+                Some(6),
+                "the prev cell's fill the switch re-banks"
+            );
+        }
+        let _ = std::fs::remove_file(&file);
+        let _ = std::fs::remove_dir(&dir);
     }
 
     /// THE STORES' OWN DISK BANK (the dev-68 round — the stocked grid
