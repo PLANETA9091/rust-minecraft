@@ -687,3 +687,89 @@ Stage Summary:
   lanes (the observer's classic feed), the container-analog lane
   (the comparator's hasAnalogOutputSignal back read — the chest
   fill the BE tables would need), the item-frame analog read.
+
+---
+Task ID: autopush-129
+Agent: cron autopush (Job 384925, 2026-10-22 ~17:01 +08:00)
+Task: the standing autopush round — the environment recovery FIRST (the
+sandbox disk wiped again: cargo, .mc2rs/, assets-cache/ all gone), then
+the ONE dev step the worklog's next-candidates head named: the
+MOVING PISTON lane.
+
+Work Log:
+- Step 1 (auto-sync) found NO repo, NO cargo, NO caches — the third
+  disk reset this machine family has worn. Cloned from the token URL:
+  HEAD = e69b864 (autopush-128 + the mirror commit, v0.3.852). rustup
+  minimal (1.99.1). recover_runtime_cache.py rebuilt the runtime cache:
+  client.jar sha1-verified, 10968 jar assets, the flat layout, 2147
+  oggs, font.bin + textures.bin. THE SCRIPT'S OWN FLAW the round found
+  and fixed: step 3's flat copy lays the jar's own 69-byte 1x1 panorama
+  PLACEHOLDERS into gui/title/background/, and step 4's only-if-absent
+  law then never fetches the real pixels (gui_title's golden wore rms
+  32.234). The fix: the <1000-byte eviction before the fetch — 7 store
+  objects sha1-verified, the golden back to rms 0.000. The root
+  worklog.md mirror restored from logs/worklog.md.
+- Step 2 (ONE step): THE MOVING PISTON'S OWN WALK — the mid-state the
+  pushed cells wear between the piston event and the landing, the
+  blockentity walk javap PistonMovingBlockEntity speaks:
+  * the kind seat: MOVING_PISTON 775, N_KINDS 776 (the pin script the
+    128 pattern wears — no tiles, the moving_piston model carries one
+    particle ref the pool already banks); the variant byte: low3
+    facing (delta6), bit3 EXTENDING (the slide's own direction),
+    bits 4..7 the progress in QUARTERS (the jar's 0.5-per-tick walk
+    the 0.25 granularity renders);
+  * the world lane: moving_states (the (x,y,z)->(kind,variant) stash
+    the pushed state carries, the replace-or-push law the retract's
+    re-arm keeps) + moving_ticks (the (due,x,y,z) queue, the dedup +
+    the reschedule arm the stale row replaces + the sorted drain);
+    piston_try_extend/retract take the now stamp — the extension banks
+    MOVING mid-states at every destination (the head the FIRST moving
+    cell, the sources the air the slide-left walk keeps), the sticky
+    pull banks the pull's own mid-state (the EXTENDING bit CLEAR),
+    tick_moving_piston_cell walks the +1 half-step beat AND the +2
+    finalize (the stashed state the cell wears, the stash row the
+    take clears, the no-stash cell the air keeps, the stale row the
+    silence skips); the mid-state's own push refusal the BLOCK
+    reaction keeps;
+  * the render: the mesher's piston lane the MOVING arm extends — the
+    stash read picks the pushed state's bake (the family members the
+    sibling bakes answer, the plain kinds the block/cube generic bake
+    the derive walk wears — the identity north table the no-fold
+    keep), the per-face tile the PUSHED kind's own FACE_TILES row
+    reads, the slide's own offset the pts assembly adds (quarters 0 =
+    the full cell back, quarters 2 = the half step, the EXTENDING bit
+    the -delta/+delta sign), the stash-less cell the honest silence
+    keeps; screens.rs tick_piston_beats the moving drain BEFORE the
+    event drain serves, the changed cells the same attach broadcast.
+- THE TOOLCHAIN LESSON the round paid twice: the transport eats the
+  literal bracket-m sequence in tool arguments AND outputs (the
+  "[mc_registry" signature the Edit tool mangled into "c_registry",
+  the displays the same pairs hide) — the hex-dump probes the truth
+  read, the byte-safe chr(91) surgery the file repaired. AND the fmt
+  storm: cargo fmt reformatted 113 files (the repo KEEPS a 27300-line
+  fmt-check DEBT by design — the applied churn is NOT the house
+  style); the replay script (scripts/replay129_edits.py) the clean
+  state rebuilt: HEAD + the pin + ONLY this round's blocks, extracted
+  from the fmt'ed copies by anchor.
+- Suite: 2627 passed / 0 failed / 22 ignored (+2 vs autopush-128's
+  2625); golden_matrix 14/14 PASS rms 0.000 (the moving lane no
+  golden scene touches — no regeneration); cargo fmt --check 27273
+  (<= the 27300 baseline — the round's own code the fmt-clean keep,
+  the test-tail rewrite the 128 hunks the region carried resolved).
+- Pushed 9ec8a49 (v0.3.853, the moving-piston lane).
+
+Stage Summary:
+- THE PISTON SLIDES LIKE VANILLA: flip the lever, the head AND the
+  pushed chain wear the moving mid-state for two game ticks (the
+  full-cell offset the event frame renders, the half step the mid
+  beat answers), the stashed states land at the +2 finalize, the
+  sticky pull slides the front block BACK into the head's old cell,
+  the mid-state cells refuse being pushed themselves, the render
+  walks the pushed block's own tiles. The suite 2627/0/22, the
+  goldens 14/14 rms 0.000, the fmt debt the baseline keeps.
+- NEXT CANDIDATES: the head's own retract slide (the no-pull arms
+  the instant clear keeps today — the head's own moving BE the
+  vanilla walk banks), the dropper/dispenser shot lanes (the
+  observer's classic feed), the container-analog lane (the
+  comparator's hasAnalogOutputSignal back read — the chest fill the
+  BE tables would need), the item-frame analog read.
