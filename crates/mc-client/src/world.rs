@@ -3320,8 +3320,11 @@ fn piston_cell_signal(world: &World, cx: i32, cy: i32, cz: i32, dir: u8) -> u8 {
         return 0;
     }
     // THE CONDUCTOR'S STRONG ARM (the max fold's second conjunct —
-    // the full-cube cell the strong arrival the walk answers)
-    if can_support_rail(cell) && strong_signal_conductors_near(world, cx, cy, cz) {
+    // the full-cube cell the strong arrival the walk answers: the
+    // cell's own DIRECT arrival the [direct_signal_into_cell] walk
+    // reads — the consumer read one hop the family fn wears the
+    // emission read never borrows)
+    if can_support_rail(cell) && direct_signal_into_cell(world, cx, cy, cz) {
         return 15;
     }
     0
@@ -3354,7 +3357,7 @@ pub fn piston_input_signal(world: &World, x: i32, y: i32, z: i32, facing: u8) ->
     }
     // THE OWN-CELL ARM: the piston the full cube the conductor the
     // strong arrival answers (the hasSignal(pos, DOWN) read).
-    if strong_signal_conductors_near(world, x, y, z) {
+    if direct_signal_into_cell(world, x, y, z) {
         return true;
     }
     // THE QUASI-CONNECTIVITY WALK: the space above the piston the
@@ -10587,73 +10590,82 @@ pub fn strong_signal_conductors_near(world: &World, x: i32, y: i32, z: i32) -> b
         if !can_support_rail(world.get(nx, ny, nz)) {
             continue;
         }
-        // THE ATTACHED SOURCE'S OWN SCAN: the conductor's own six
-        // neighbors the ON kinds the support decode answers — the
-        // source whose support cell equals the conductor the strong
-        // 15 the block carries
-        for (ox, oy, oz) in [
-            (0, 1, 0),
-            (0, -1, 0),
-            (0, 0, -1),
-            (0, 0, 1),
-            (-1, 0, 0),
-            (1, 0, 0),
-        ] {
-            let (sx, sy, sz) = (nx + ox, ny + oy, nz + oz);
-            let kind = world.get(sx, sy, sz);
-            // THE REDSTONE BLOCK'S OWN ARM (javap RedStoneBlock
-            // .getDirectSignal the constant 15 the any-dir read
-            // answers — the source the conductor's own neighbor the
-            // strong walk carries, the NO attachment decode the
-            // lever/button pair keeps)
-            if kind == REDSTONE_BLOCK {
-                return true;
-            }
-            // THE REPEATER'S OWN FRONT ARM (the autopush-126 round —
-            // javap DiodeBlock.getDirectSignal the dir == FACING gate
-            // the constant 15 the powered bit speaks: the conductor
-            // the repeater's front the strong 15 the block carries —
-            // the redstone-block-into-block chain the repeater run
-            // wears, the sides/back the dark keep)
-            if kind == REPEATER {
-                let sibling = world.variant(sx, sy, sz);
-                if repeater_powered_of(sibling) {
-                    let (fdx, fdy, fdz) = repeater_facing_delta(repeater_facing_of(sibling));
-                    if (sx - fdx, sy - fdy, sz - fdz) == (nx, ny, nz) {
-                        return true;
-                    }
+        // THE ATTACHED SOURCE'S OWN SCAN: the conductor's own
+        // neighbors the DIRECT emission the [direct_signal_into_cell]
+        // walk answers — the source whose support cell equals the
+        // conductor the strong 15 the block carries
+        if direct_signal_into_cell(world, nx, ny, nz) {
+            return true;
+        }
+    }
+    false
+}
+
+/// THE DIRECT ARRIVAL'S OWN WALK (javap SignalGetter.getDirectSignalTo
+/// the cell's own strong read the 26.2 jar answers — the cell's own
+/// neighbors the DIRECT emission the max fold banks: the redstone
+/// block the any-dir 15 wears, the powered repeater the front cell
+/// the -facing step the [repeater_front_output_near] law keeps, the
+/// powered observer the back cell the same step the [observer_back_
+/// output_near] law answers, the ON lever/button the support cell the
+/// attached emission speaks, the ON plate the floor seat the same
+/// support law wears — the piston's own-cell arm the conductor read
+/// banks, the consumer read the [strong_signal_conductors_near] walk
+/// one hop the emission read never borrows).
+fn direct_signal_into_cell(world: &World, cx: i32, cy: i32, cz: i32) -> bool {
+    for (ox, oy, oz) in [
+        (0, 1, 0),
+        (0, -1, 0),
+        (0, 0, -1),
+        (0, 0, 1),
+        (-1, 0, 0),
+        (1, 0, 0),
+    ] {
+        let (sx, sy, sz) = (cx + ox, cy + oy, cz + oz);
+        let kind = world.get(sx, sy, sz);
+        // THE REDSTONE BLOCK'S OWN ARM (javap RedStoneBlock
+        // .getDirectSignal the constant 15 the any-dir read answers)
+        if kind == REDSTONE_BLOCK {
+            return true;
+        }
+        // THE REPEATER'S OWN FRONT ARM (the autopush-126 round — the
+        // front cell the -facing step the conductor the powered bit
+        // speaks)
+        if kind == REPEATER {
+            let sibling = world.variant(sx, sy, sz);
+            if repeater_powered_of(sibling) {
+                let (fdx, fdy, fdz) = repeater_facing_delta(repeater_facing_of(sibling));
+                if (sx - fdx, sy - fdy, sz - fdz) == (cx, cy, cz) {
+                    return true;
                 }
-                continue;
             }
-            // THE OBSERVER'S OWN BACK ARM (the autopush-127 round —
-            // javap ObserverBlock.getDirectSignal = getSignal the dir
-            // == FACING gate the powered 15 the pulse bit speaks: the
-            // conductor the observer's back the strong 15 the block
-            // carries — the block-into-block chain the observer's own
-            // output wears, the eye/sides the dark keep)
-            if kind == OBSERVER {
-                let sibling = world.variant(sx, sy, sz);
-                if observer_powered_of(sibling) {
-                    let (fdx, fdy, fdz) =
-                        observer_facing_delta6(observer_facing_of(sibling));
-                    if (sx - fdx, sy - fdy, sz - fdz) == (nx, ny, nz) {
-                        return true;
-                    }
+            continue;
+        }
+        // THE OBSERVER'S OWN BACK ARM (the autopush-127 round — the
+        // back cell the -facing step the conductor the powered bit
+        // speaks)
+        if kind == OBSERVER {
+            let sibling = world.variant(sx, sy, sz);
+            if observer_powered_of(sibling) {
+                let (fdx, fdy, fdz) =
+                    observer_facing_delta6(observer_facing_of(sibling));
+                if (sx - fdx, sy - fdy, sz - fdz) == (cx, cy, cz) {
+                    return true;
                 }
-                continue;
             }
-            if kind != LEVER_ON && !button_powered(kind) && !plate_powered(kind) {
-                continue;
-            }
-            let support = if is_pressure_plate(kind) {
-                (sx, sy - 1, sz)
-            } else {
-                let (sdx, sdy, sdz) = lever_support_offset(world.variant(sx, sy, sz));
-                (sx + sdx, sy + sdy, sz + sdz)
-            };
-            if support == (nx, ny, nz) {
-                return true;
-            }
+            continue;
+        }
+        if kind != LEVER_ON && !button_powered(kind) && !plate_powered(kind) {
+            continue;
+        }
+        let support = if is_pressure_plate(kind) {
+            (sx, sy - 1, sz)
+        } else {
+            let (sdx, sdy, sdz) = lever_support_offset(world.variant(sx, sy, sz));
+            (sx + sdx, sy + sdy, sz + sdz)
+        };
+        if support == (cx, cy, cz) {
+            return true;
         }
     }
     false
@@ -32400,10 +32412,20 @@ mod tests {
     #[test]
     fn the_piston_the_signal_the_move_the_wears() {
         let mut w = World::new(3, 11);
-        let (px, py, pz) = (4i32, 5i32, 4i32);
+        let (px, py, pz) = (4i32, 10i32, 4i32);
         for x in 0..9 {
             for z in 0..9 {
-                w.set(x, 2, z, STONE);
+                w.set(x, 9, z, STONE);
+            }
+        }
+        // THE SEED'S OWN HILL THE BOX THE SWEEP ANSWERS (the generated
+        // terrain the line's own volume the buried verdict never wears
+        // — the push line's 13-cell reach the air the walk reads)
+        for x in 3..19 {
+            for y in 10..13 {
+                for z in 2..7 {
+                    w.set(x, y, z, AIR);
+                }
             }
         }
         // THE PISTON FACING EAST (the front cell +x the push wears)

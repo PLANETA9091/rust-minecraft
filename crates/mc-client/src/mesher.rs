@@ -2427,9 +2427,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     // bit the pair answers)
                     let (quads, facing) = if crate::world::is_piston_head(id) {
                         (
-                            piston_head_model_quads(
-                                crate::world::piston_head_sticky_of(variant),
-                            ),
+                            piston_head_model_quads(crate::world::piston_head_sticky_of(variant)),
                             crate::world::piston_head_facing_of(variant),
                         )
                     } else {
@@ -7130,8 +7128,28 @@ fn piston_model_quads(sticky: bool, extended: bool) -> &'static [mc_registry::el
             (false, false) => "block/piston",
             (_, false) => "block/sticky_piston",
         };
-        mc_registry::element_quads::derive_model_inherited(model).unwrap_or_default()
+        piston_bake(model)
     })
+}
+
+/// THE PISTON BAKES' OWN RESOLVE (the derive walk the prefix the jar's
+/// own rows wear — the block/piston chain's slots the "minecraft:"
+/// prefix the bare path the family lanes' rows never carry: the
+/// comparator/observer rows the bare stems the verdict matches, the
+/// piston rows the prefixed values the derive verbatim carries — the
+/// strip the per-quad verdict's bare arms demand, the consumption
+/// site's own strip_prefix law the mesher's walk keeps).
+fn piston_bake(model: &'static str) -> Vec<mc_registry::element_quads::Quad> {
+    mc_registry::element_quads::derive_model_inherited(model)
+        .unwrap_or_default()
+        .into_iter()
+        .map(|mut q| {
+            if let Some(bare) = q.texture.strip_prefix("minecraft:") {
+                q.texture = bare;
+            }
+            q
+        })
+        .collect()
 }
 
 /// THE PISTON HEAD'S OWN MODEL BAKES (the autopush-128 round — the
@@ -7155,7 +7173,7 @@ fn piston_head_model_quads(sticky: bool) -> &'static [mc_registry::element_quads
         } else {
             "block/piston_head"
         };
-        mc_registry::element_quads::derive_model_inherited(model).unwrap_or_default()
+        piston_bake(model)
     })
 }
 
@@ -11392,13 +11410,16 @@ mod tests {
         let extended = piston_model_quads(false, true);
         assert_eq!(extended.len(), 6, "the extended body the six keeps");
         let head = piston_head_model_quads(false);
-        assert_eq!(head.len(), 10, "the plate six + the shaft four the ten wears");
+        assert_eq!(
+            head.len(),
+            10,
+            "the plate six + the shaft four the ten wears"
+        );
         // THE RESOLVED NAMES THE PER-QUAD VERDICT READS (the
         // #platform/#side/#bottom refs the merged map answers, the
         // #inside ref the extended body's open face carries, the
         // #unsticky ref the head's plate back wears)
-        let names: std::collections::BTreeSet<&str> =
-            normal.iter().map(|q| q.texture).collect();
+        let names: std::collections::BTreeSet<&str> = normal.iter().map(|q| q.texture).collect();
         for want in [
             "block/piston_top",
             "block/piston_side",
@@ -11511,7 +11532,7 @@ mod tests {
             .iter()
             .filter(|quad| {
                 quad.pts.iter().all(|p| (p[0] - 8.75).abs() < 1e-4)
-                    && quad.pts.iter().all(|p| p[1] > 9.0 + 1e-4)
+                    && quad.pts.iter().all(|p| p[1] > 9.0 - 1e-4)
             })
             .collect();
         assert_eq!(inside.len(), 1, "the body's open face the one quad keeps");
