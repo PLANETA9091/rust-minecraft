@@ -940,3 +940,83 @@ Stage Summary:
   max fold's other half — the entity lane), the sticky-pull arm's
   own head slide (the base cell's own BE the vanilla answer), the
   dropper/dispenser shot lanes (the observer's classic feed).
+
+---
+Task ID: autopush-132
+Agent: cron autopush (Job 384925, 2026-10-22 ~19:41 +08:00)
+Task: the standing autopush round — the environment held (repo clean @
+bb41dbd v0.3.855 + mirror, cargo 1.99.1 + the caches alive). THE LANE
+the 131 entry's next-candidates head named: THE FURNACE TRIO'S OWN
+ANALOG READ — the comparator's container lane the furnace half the
+round answers (the chest/barrel fill the 131 round banked, the
+furnace/blast-furnace/smoker trio the same formula the round rides).
+
+Work Log:
+- THE JAR'S OWN CHAIN the 26.2 classpath spoke (scripts/
+  raw_disasm.py):
+  * AbstractFurnaceBlock.hasAnalogOutputSignal — the iconst_1
+    speaks (the override the whole family inherits);
+  * AbstractFurnaceBlock.getAnalogOutputSignal — the
+    AbstractContainerMenu.getRedstoneSignalFromBlockEntity
+    (Level.getBlockEntity(pos)) walk the GENERIC container lane
+    answers — the special cooking-progress formula the memory
+    guessed the jar NEVER banks, the fill formula the furnace wears;
+  * AbstractContainerMenu.getRedstoneSignalFromBlockEntity — the
+    instanceof Container gate the furnace BE passes, the
+    getRedstoneSignalFromContainer the SAME lerpDiscrete formula
+    over the THREE slots (INPUT 0 FUEL 1 RESULT 2 the FurnaceMenu
+    ctor wears — the 131 round's container_analog_signal the whole
+    verdict re-wears, no world.rs change the lane needed);
+  * AbstractFurnaceBlockEntity.serverTick — the
+    updateNeighbourForOutputSignal the walk NEVER calls: the
+    comparator re-read the setBlock(pos, state.setValue(LIT, flag),
+    3) walk pc 399 alone rides (the lit flip the block update
+    speaks, the between-flips ticks the push the vanilla furnace
+    never wears — the honest lag the house law keeps).
+- screens.rs the verdict:
+  * container_fill_sync the is_orientable_furnace branch the SIX
+    kinds the lit pairs keep — the trio the one-cell read banks
+    (the chest's DOUBLE the union the furnace family never
+    partners: getContainer's allowOverlap walk the chest block
+    alone serves), the fill the same formula the map inserts, the
+    through-wall probe the solid furnace the wrapper's own arms
+    already serve;
+  * THE FIVE RIDE LANES: the close flush the fill+broadcast rides
+    (the chest's own stopOpen law the modal convergence wears),
+    the break the entry the air drops (the fill's death ride the
+    spill walk answers), the open-another switch the prev cell's
+    tick-worn trio the re-bank serves, the boot parse the stocked
+    furnaces the restart the fills banks (the stale cell the
+    world's own gate the air-arm refuses), the background tick's
+    lit flip the re-read+broadcast serves (the vanilla flag-3 law
+    the world walk's flip arm answers).
+- THE FMT DEBT THE ROUND ALMOST WORE: a stray `cargo fmt` the
+  whole-repo rewrite spoke (113 files, 178k lines — the house's
+  intentional 27300-line --check debt the run would have
+  clobbered); the `git checkout -- .` the revert answered, the
+  replay the same edits the byte-identical tree restored, the
+  --check count 27300 = the clean-HEAD count EXACTLY the zero-new-
+  debt verdict keeps (the plain-`cargo` 0-line reading the
+  command-not-found stderr the 2>/dev/null swallowed — the
+  $HOME/.cargo/bin/cargo the honest count speaks).
+- Suite: 2633 passed / 0 failed / 22 ignored (+2 vs autopush-131's
+  2631); verify_goldens.sh 18/18 PASS rms 0.000 (no regeneration);
+  cargo fmt --check 27300 = the clean-HEAD count EXACTLY.
+- Pushed 1770710 (v0.3.856, the furnace trio's analog read).
+
+Stage Summary:
+- THE COMPARATOR READS THE FURNACE: stock the trio, the comparator
+  behind speaks the fill — the lone stack the 5, the stocked
+  (32/64/13) the classic 8, the empty the 0 the presence keeps,
+  the break the entry the air drops; the smelting furnace the lit
+  flips the comparator's re-read rides (the vanilla flag-3 law),
+  the restart the boot parse the fills banks, the switch the prev
+  cell's trio the re-bank serves. The 26.2 chain the bytecode
+  verbatim wears — the generic container lane the furnace family
+  answers, no special formula the jar ever spoke.
+- NEXT CANDIDATES: the item-frame analog read (the max fold's
+  other half — the entity lane the getInputSignal pc 155-164
+  banks), the sticky-pull arm's own head slide (the base cell's
+  own BE the vanilla answer), the dropper/dispenser shot lanes
+  (the observer's classic feed), the max-stack table the 16/1
+  items the fill formula's own limit wears.
