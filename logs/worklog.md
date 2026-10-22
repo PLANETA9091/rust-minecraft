@@ -579,3 +579,111 @@ Stage Summary:
   (the getInputSignal's behind-conductor lane), the dropper/
   dispenser shot lanes (the observer's classic feed the placement
   wave banks).
+
+---
+Task ID: autopush-128
+Agent: cron autopush (Job 384923, 2026-10-22 ~15:45 +08:00)
+Task: the standing autopush round — step 1 auto-synced the WIP piston
+lane the previous tick left uncommitted (the whole lane check-green,
+two tests red, never pushed — the disk-wipe insurance the 123 round
+established); step 2 FINISHED the lane: the three fixes the red pair
+demanded, the gates re-proven, the push.
+
+Work Log:
+- Environment held (clean tree at f2a5f4a = autopush-127, cargo
+  1.99.1, the runtime caches the 123 recovery banked all in place).
+  HEAD had moved past the last worklog entry's plan: the comparator
+  redo landed as autopush-124, then 125 (redstone block), 126
+  (repeater), 127 (observer) — the log the commits carry.
+- Step 1 (auto-sync): the working tree held the WIP piston lane —
+  atlas pin applied (TILE_919..923, N_KINDS 775, the three kinds),
+  world/mesher/screens wired, scripts/autopush128_piston_pin.py
+  untracked. Committed 4224547 + pushed BEFORE any edit (the wipe
+  insurance).
+- THE RED PAIR THE SUITE NAMED (cargo test 2287 passed / 2 failed):
+  (a) world::tests::the_piston_the_signal_the_move_the_wears —
+  "the front lever the exclusion the dark verdict keeps". THE ROOT:
+  piston_cell_signal's conductor arm AND piston_input_signal's
+  own-cell arm called strong_signal_conductors_near — the CONSUMER
+  read ("some neighbor of S is strongly powered" = hasSignal's
+  through-conductor semantics the 125/126/127 rounds banked) — one
+  hop deeper than the EMission read the piston's arms demand
+  (getSignal(N, dir) = N's own weak emission OR N's OWN direct
+  arrival = getDirectSignalTo(N)). The failing trace: the front
+  lever at (px+1, py, pz) floor-supports the terrain stone at
+  (px+1, py-1, pz); the piston's DOWN neighbor stone reads
+  "strongly powered through the adjacent conductor" → arm 1 fires →
+  the front exclusion the jar's own gate keeps never speaks. THE
+  FIX: direct_signal_into_cell(world, cx, cy, cz) — the cell's OWN
+  direct arrival walk (the redstone block the any-dir 15, the
+  powered repeater the front cell the -facing step, the powered
+  observer the back cell the same step, the ON lever/button/plate
+  the support cell the attached emission) — extracted from
+  strong_signal_conductors_near's inner scan (the consumer fn the
+  same behavior keeps, its 125-127 tests hold verbatim); the
+  conductor arm wears can_support_rail(cell) &&
+  direct_signal_into_cell(cell), the own-cell arm the direct call.
+  (b) mesher::tests::the_piston_bakes_the_states_the_tiles_the_
+  folds_wear — "the block/piston_top ref the derive answers". THE
+  ROOT: the jar's own block/piston model rows carry the
+  "minecraft:"-prefixed slot values the comparator/observer rows
+  never wear (the derive resolve_ref returns them verbatim) — the
+  per-quad tile verdict's bare arms never hit. THE FIX: the
+  piston_bake helper (the strip_prefix("minecraft:") pass over the
+  derived quads — the consumption site's own law the mesher's other
+  lanes wear), the retracted/sticky/extended/head bakes the same
+  helper serves.
+- THE RED PAIR'S SECOND LAYER (after the fixes the asserts walked
+  deeper): the world test's plane sat INSIDE the generated terrain
+  (World::new(3, 11) = seed 11 TERRAIN, not an empty box — the
+  floor-at-y=2/piston-at-y=5 setup buried the piston and the 13-cell
+  push line hit the seed's own hill: the probe printed stone from
+  y=3 through y=10). THE FIX: the family precedent's raised plane
+  (the floor y=9, the piston y=10 — the repeater's own setup) PLUS
+  the explicit air sweep over the test's volume (x 3..19, y 10..13,
+  z 2..7) — the push line's reach the seed's hill never buries. And
+  the mesher test's inside-face probe (`p[1] > 9.0 + 1e-4`) excluded
+  the face's own minY corners (the face spans y 9..10 — the strict
+  > never keeps the one quad): `-1e-4` the floor fold answers.
+- THE PINS THE KIND DEMANDS: the WIP round's pin the snapshot
+  carried (TILE_919..923 the pool tail, TILES 924, N_KINDS 775, the
+  piston/sticky_piston/piston_head tails, FACE_TILES [920;6], the
+  775-row laws, the TILE_PISTON_* consts, NAME_OF the three tails,
+  the N_KINDS x35 + NAME_OF.len() x21 + the World initializers x10
+  count laws) — the pin's idempotence the re-run keeps.
+- Version bump 0.3.851 → 0.3.852.
+- THE GATES: cargo check --workspace --all-targets GREEN (37.4s);
+  cargo test --workspace 2625 passed / 0 failed / 22 ignored (+3 vs
+  autopush-127's 2622; the +3 the piston pair the lane wears);
+  verify_goldens.sh 18/18 PASS rms 0.000 (the pool tail no golden
+  scene touches — no regeneration); cargo fmt --check 27300 =
+  27300 EXACTLY vs the same-machine 127 measurement (346 mesher
+  hunks the baseline keeps — the WIP round's three piston hunks the
+  round's own collapse/expand/fold answers — zero new fmt debt).
+  NOTE the 27273 the 127 commit message banked: the same commit
+  measures 27300 on this box now (the worktree AND the main path
+  agree) — the baseline the FUTURE rounds compare is the 27300/346
+  pair THIS round measured twice.
+- Pushed 72e8bb6 (v0.3.852, the autopush-128 lane); the mirror
+  (logs/worklog.md) this entry wears, the same commit the push
+  serves.
+
+Stage Summary:
+- THE PISTON PLAYS LIKE VANILLA: place it facing away from the look,
+  the front lever the dark verdict keeps (the exclusion the jar's
+  own gate), the side lever the weak arm answers, the repeater's
+  front the 15 the piston reads, the space above the classic QC the
+  powered verdict speaks, the lever/crank the extend the head +
+  the chain the far-to-near order moves, the 13-stone chain the
+  12-limit refuses, the flower the destroy boundary pops, the
+  obsidian the whole push refuses, the sticky pull the head's old
+  cell banks, the render the jar's own five tiles the four bakes
+  wear (the extended body the piston_inner open face answers, the
+  sticky platform the kind's own tile swaps). The suite 2625/0/22,
+  the goldens 18/18 rms 0.000, the fmt debt the baseline keeps.
+- NEXT CANDIDATES: the moving-piston lane (the 361 kind the
+  extension's mid-state renders — the block entity the moving
+  piston the one kind the family lacks), the dropper/dispenser shot
+  lanes (the observer's classic feed), the container-analog lane
+  (the comparator's hasAnalogOutputSignal back read — the chest
+  fill the BE tables would need), the item-frame analog read.
