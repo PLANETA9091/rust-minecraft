@@ -2054,3 +2054,74 @@ Stage Summary:
   never serves, the thrown-shot's wire lane (the Add Entity word the
   live read banks), the README's golden section the 19-row runner's
   own row the text could name.
+---
+Task ID: dev-145
+Agent: cron-agent-loop (Job 384925, 2026-10-23 08:21:49 +08:00, trace 1a0a02c3c1060631-cron-agent-loop-202610230828)
+Task: ONE minimal step per the tick protocol — the worklog's NEXT
+CANDIDATES head: the quickcraft drag arm the dispenser's carried
+press the deferred place could wear (the chest's own live shape).
+
+Work Log:
+- THE REPO THE CLEAN TREE ANSWERED (HEAD 47c1746, origin in sync; the
+  v0.3.868 generic title ride the previous round wore).
+- THE DRAG NOW LANDS ON THE 3x3: the quickcraft walk the chest's
+  live shape wears the dispenser window's own lane speaks — the
+  carried press the drag arms, the motion the collect paints, the
+  release the distribution and the deferred place both serve.
+- THE LANES: screens.rs wire_dispenser_quickcraft_distribute the
+  packet triple over the 45-slot belief (the START the mask(0,type)
+  button the slot -999 keeps, the ADDs the mask(1,type) per painted
+  seat ride, the END the mask(2,type) the changed map the
+  distribution's own mutations names — the grid 0..9 the mirror
+  9..45 the same net fold keeps, the HUD row the mirror's hotbar
+  rows 27..36 the sync follows); qc_arm_dispenser the carried-
+  NON-EMPTY press the isQuickCrafting start speaks (the hovered seat
+  AND the outside press the arm answers, the between the k == -1
+  silence keeps, the OFFLINE SIM the direct dispatch keeps — the
+  drag the LIVE window alone wears, the offline place-back the
+  press lane never loses); qc_paint_dispenser the
+  shouldAddSlotToQuickCraft gates the motion answers (the count's
+  own law, the canItemQuickReplace pair, the plain slots' mayPlace
+  the base Slot's iconst_1 keeps); qc_distribute_dispenser_wire the
+  disjoint borrows ride; qc_release the 3x3's own branches wear
+  (the painted set the distribution answers, the empty-paint tail
+  the deferred place serves — the seat the PICKUP speaks, the
+  outside the -999 drop the wire_throw_outside rides, the between
+  the -1 no-op keeps); qc_carried/qc_seat_stack the 3x3's own
+  numbering the drag reads; on_press/on_right_press the arm/pickup
+  split the button keys (the left the type-0, the right the type-1,
+  the in-flight gate the other button's press silences);
+  on_left_release/on_right_release the qc gates the Dispenser arm
+  admits (the release lanes the distribution and the abort answer).
+- THE WIRE LAW the pre-existing test now wears:
+  the_wire_dispenser_clicks_speak_the_window the place-back block
+  the move+press+release sequence speaks (the carried press the
+  drag arms — the mouseClicked pcs 316-378 law the chest's own
+  round wore, the place-back the DEFERRED PLACE serves).
+- TOOLING NOTE the round's hunks wore: the edit-write pipeline the
+  `[m` byte-pair two hunks ate (the qc_seat_stack lanes the sed fix
+  spoke — the grep-verified counts the honest form bank); the bash
+  input the corruption never wore, the post-edit grep the invariant
+  keeps.
+- fmt: the lane's hunks the hand-styled form keep (the fmt-check
+  diff count the HEAD's own 1159 wears — no hunk the touched files
+  add; the 1539 the morning's HEAD measured the committed tree's
+  own count was, the round's own verify the 1159 both ways wore).
+- Suite: 2666 passed / 0 failed / 22 ignored (2329 mc-client + 157
+  mc-protocol + 100 mc-registry + 80 mc2rs-pixel; +2 drag tests);
+  goldens 19/19 PASS rms 0.000 (NO regeneration — the drag no
+  render path the golden scenes touch, every golden byte the same);
+  cargo check --all-targets clean.
+- Pushed 0c1db58 (v0.3.869, the dispenser's own drag).
+
+Stage Summary:
+- THE SERVER'S DISPENSER WINDOW THE PLAYER'S OWN DRAG PAINTS: the
+  one-each split and the even fold the release serves, the deferred
+  place the empty-paint tail speaks — the same vanilla walk the
+  chest round banked, the offline sim the direct dispatch keeps.
+- NEXT CANDIDATES: the shulker box the getContainerAt walk the
+  dropper's front read never serves, the thrown-shot's wire lane
+  (the Add Entity word the live read banks), the README's golden
+  section the 19-row runner's own row the text could name, the
+  quickcraft drag the offline dispenser sim could wear (the local
+  stores the same fold answers).
