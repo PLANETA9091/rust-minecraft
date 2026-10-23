@@ -6854,6 +6854,92 @@ fn the_saved_player_row_wears_the_vitals() {
         assert!(app.offline_ride.is_none() && app.net_ride.is_none());
     }
 
+    /// THE DEATH'S OWN XP (javap LivingEntity.dropExperience →
+    /// Player.getExperienceReward — the orbs the death spot wears,
+    /// the level-capped half the reward law speaks, the SPECTATOR the
+    /// zero the isSpectator gate answers, the fresh respawn the trio's
+    /// zero the new body's constructor rows speak).
+    #[test]
+    fn the_death_drops_the_xp_orbs_and_the_respawn_zeroes_the_trio() {
+        let mut app = App::new(5);
+        app.enter_world();
+        app.spawn_offline_body();
+        let (dx, dy, dz) = {
+            let b = app.body.as_ref().expect("the body stands");
+            (b.x, b.y, b.z)
+        };
+        // THE STAGED TRIO (the vitals test's own row): level 3, total
+        // 42 — the reward `min(floor(42 * 0.5F), 7 * 3)` = 21 speaks
+        app.xp = crate::xp::ExperienceStat {
+            level: 3,
+            progress: 0.25,
+            total: 42,
+        };
+        // THE FATAL DOSE (the orbs the death spot wears — the
+        // `awardWithDirection` split the flat 21 into [17, 3, 1])
+        app.actually_hurt(100.0, HurtVoice::Plain, None, None);
+        assert!(app.dead, "the dose the player kills");
+        assert_eq!(app.orbs.len(), 3, "the split the bands speak");
+        for o in &app.orbs {
+            assert_eq!((o.x, o.y, o.z), (dx, dy, dz), "the body's own spot");
+        }
+        let values: Vec<i32> = app.orbs.iter().map(|o| o.value).collect();
+        assert_eq!(values, vec![17, 3, 1], "the split the bands speak");
+        assert_eq!(
+            values.iter().sum::<i32>(),
+            21,
+            "the level-capped half the reward speaks"
+        );
+        // THE RESPAWN'S OWN ZERO (the fresh entity the vanilla respawn
+        // re-creates — the bar the empty rows wear)
+        app.respawn();
+        assert_eq!(app.xp.level, 0, "the level the respawn zeroes");
+        assert_eq!(app.xp.progress, 0.0, "the progress the respawn zeroes");
+        assert_eq!(app.xp.total, 0, "the points the respawn zeroes");
+        // THE PARTIAL'S OWN FALL (the level-0 body the sub-1 arm wears:
+        // the reward `ceil(progress * needed * 0.5F)` the partial bar
+        // answers — the zero-zero death the 0 both arms agree on)
+        let mut app2 = App::new(5);
+        app2.enter_world();
+        app2.spawn_offline_body();
+        let need = crate::xp::xp_needed_for_next_level(0);
+        app2.xp = crate::xp::ExperienceStat {
+            level: 0,
+            progress: 0.5,
+            total: 0,
+        };
+        app2.actually_hurt(100.0, HurtVoice::Plain, None, None);
+        let sum2: i32 = app2.orbs.iter().map(|o| o.value).sum();
+        assert_eq!(
+            sum2,
+            ((0.5 * need as f32 * 0.5).ceil()) as i32,
+            "the partial the sub-1 arm answers"
+        );
+        assert!(sum2 > 0, "the partial the drop wears");
+        // THE ZERO-ZERO DEATH (the fresh body the 0 both arms agree on
+        // — the orb-less crossing the vanilla silence keeps)
+        let mut app3 = App::new(5);
+        app3.enter_world();
+        app3.spawn_offline_body();
+        app3.actually_hurt(100.0, HurtVoice::Plain, None, None);
+        assert!(app3.dead, "the dose the player kills");
+        assert!(app3.orbs.is_empty(), "the zero the reward speaks");
+        // THE SPECTATOR'S OWN GATE (the isSpectator arm the reward
+        // wears — the staged trio the zero the gate answers)
+        let mut app4 = App::new(5);
+        app4.enter_world();
+        app4.spawn_offline_body();
+        app4.game_mode = GameMode::Spectator;
+        app4.xp = crate::xp::ExperienceStat {
+            level: 3,
+            progress: 0.25,
+            total: 42,
+        };
+        app4.actually_hurt(f32::MAX, HurtVoice::GenericKill, None, None);
+        assert!(app4.dead, "the genericKill the invulnerable gate bypasses");
+        assert!(app4.orbs.is_empty(), "the spectator the zero the gate keeps");
+    }
+
 
     /// THE FIRE LANES' OWN KIND ROWS (the loop's own consumption the
     /// kind fix speaks): the burning cow's death the cow's own row

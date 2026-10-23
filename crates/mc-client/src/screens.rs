@@ -52324,7 +52324,55 @@ impl App {
             self.offline_ride = None;
             self.offline_cart_drag = None;
             self.net_ride = None;
+            // THE DEATH'S OWN XP (javap LivingEntity.dropExperience →
+            // Player.getExperienceReward — the orbs the death spot
+            // wears, the keepInventory-false body the offline lane's
+            // own defaults always answer): the level-capped half the
+            // getExperienceReward law speaks, the award the PHYSICAL
+            // orbs spawns (the `awardWithDirection` while loop — the
+            // split the getExperienceValue bands speak, the [17, 3, 1]
+            // walk a flat 21 fragments into) at the body's own exact
+            // position (the entity's getX/getY/getZ the ctor passes —
+            // the feet the physics settles on the floor). The
+            // NETWORKED world the server's own orbs keep (the same
+            // split the orb tick's collection the client's Vec never
+            // wears), the SPECTATOR the zero the reward's own gate
+            // answers, the fresh respawn the trio's zero the vanilla
+            // body re-creates.
+            if !self.world_is_network {
+                if let Some(b) = self.body.as_ref() {
+                    let (px, py, pz) = (b.x, b.y, b.z);
+                    let drop = self.death_xp_drop();
+                    if drop > 0 {
+                        self.spawn_xp_orbs(px, py, pz, drop);
+                    }
+                }
+            }
             self.sounds.play_death_voice(self.frame);
+        }
+    }
+
+    /// THE DEATH'S OWN REWARD (javap `Player.getExperienceReward` the
+    /// 26.2 jar speaks — the keepInventory-false body the offline
+    /// lane's own defaults wear, the SPECTATOR the 0 the isSpectator
+    /// gate answers): the level-capped half `min(floor(total * 0.5F),
+    /// 7 * level)` the banked total and the level's own 7× rate speak,
+    /// the SUB-1 fall the partial progress answers
+    /// `ceil(progress * needed * 0.5F)` — the zero-zero death the 0
+    /// both arms agree on (the orb-less crossing the vanilla silence
+    /// keeps, the `i > 0` gate the addFreshEntity call wears).
+    fn death_xp_drop(&self) -> i32 {
+        if matches!(self.game_mode, GameMode::Spectator) {
+            return 0;
+        }
+        let i = ((self.xp.total as f32 * 0.5).floor() as i32).min(7 * self.xp.level);
+        if i < 1 {
+            ((self.xp.progress
+                * crate::xp::xp_needed_for_next_level(self.xp.level) as f32
+                * 0.5)
+                .ceil()) as i32
+        } else {
+            i
         }
     }
 
@@ -52341,6 +52389,11 @@ impl App {
         // the player's stats — the fresh FoodData the constructor
         // speaks: the full bar, the 5.0 saturation, the zero bank)
         self.food_data = crate::food::FoodData::new();
+        // THE TRIO'S OWN ZERO (the vanilla respawn's fresh entity the
+        // death's spent drop answers — the level/progress/total the
+        // new body's constructor rows speak, the death spot the orbs
+        // already wore the reward the bar never re-reads)
+        self.xp = crate::xp::ExperienceStat::new();
         // THE STATUS-EFFECTS' OWN RESET (the death's removal — the
         // vanilla death clears the active effects, the fresh respawn's
         // body carries none, the absorption value rides the dead
