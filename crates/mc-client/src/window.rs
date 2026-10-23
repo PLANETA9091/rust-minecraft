@@ -2240,7 +2240,17 @@ pub fn run_gui_app(
         // same law the F3+F4 open's screen-eats-input shape keeps)
         let f3_down = window.is_key_down(Key::F3);
         if in_world {
-            if let Some((x, y)) = window.get_mouse_pos(minifb::MouseMode::Pass) {
+            // THE LOOK'S OWN LEAVE-GUARD (the vanilla grab's own law —
+            // the cursor the grab holds the off-window roam NEVER
+            // shows, the desktop's other windows the look the grab
+            // never feeds: minifb's Pass arm the raw coords the bounds
+            // check never wears (lib.rs 116), the Discard arm the
+            // window-rect gate speaks (lib.rs 119) — the SAME law the
+            // GUI's own lanes (the hover/click reads above) already
+            // wear: the off-window roam the deltas the None answer
+            // kills, the re-entry the prev=None the spike the fresh
+            // arm never wears)
+            if let Some((x, y)) = window.get_mouse_pos(minifb::MouseMode::Discard) {
                 if let Some((px, py)) = prev_mouse {
                     app.on_look_delta((x - px) as f64, (y - py) as f64);
                 }
@@ -2253,11 +2263,13 @@ pub fn run_gui_app(
             // API surface speaks: set_cursor_visibility/set_cursor_style
             // the only cursor calls, the X11 backend the polled
             // XQueryPointer alone wears, no MotionNotify, no
-            // XGrabPointer/XWarpPointer — the Pass stream the desktop
-            // cursor tracks until the SCREEN edge's pin the mouse
-            // lane's own turn stop wears). The arrows the held turn
-            // speak — the frame's dt the rate scales, the same
-            // World/paused gate the mouse lane's own seat keeps. The
+            // XGrabPointer/XWarpPointer — the polled stream the desktop
+            // cursor tracks (the leave-guard's Discard gate the
+            // off-window roam the look never wears) until the SCREEN
+            // edge's pin the mouse lane's own turn stop wears). The
+            // arrows the held turn speak — the frame's dt the rate
+            // scales, the same World/paused gate the mouse lane's own
+            // seat keeps. The
             // sign the mouse's own deltas mirror: Right/Down the
             // positive the on-screen drag wears.
             let turn_x = (window.is_key_down(Key::Right) as i32
