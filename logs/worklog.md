@@ -2604,3 +2604,65 @@ Stage Summary:
   dispenser's carried press the split-pickup the right byte's
   place-ONE already serves, the offline chest the drag's lanes the
   live shape mirrors the record the v0.3.874 round already banked.
+  THE DROPPER'S FRONT READ SERVES: (a) THE KIND MINT — the
+  generated atlas N_KINDS 778->779, the six kind-keyed tables the
+  tail rows speak (KIND_NAMES + REGISTRY_NAMES both multiline tails
+  the shulker_box row gains, FACE_TILES [928;6] the plain-cube law
+  [the one tile all six faces wear — the generic row[face] fallback
+  the mesher's own answer, NO special arm the kind needs], TINTS
+  the 0x0 no-tint row, DOOR_MODEL_BY_ROW the "" not-a-door row,
+  ENTITY_HEAD_FACES the 65535 not-a-head row), the TILE_928_RGBA
+  static the jar's block/shulker_box.png the decode serves (the
+  16x16 colortype-3 indexed PNG the zlib un-filter walk the stride
+  fix the second run answered, the purple 127/143/151 tones the
+  256 RGBA bytes bank), TILE_NAMES/TILES 928->929 the pool tail
+  wears; (b) THE KIND SEAT — world.rs SHULKER_BOX 778 the const +
+  is_shulker the predicate + NAME_OF the 779-row extend (the
+  world_view's own NAME_OF==REGISTRY_NAMES assert the compile error
+  the parallel table the honest extend answered — the seed-row
+  parallel the FIRST check run named); (c) THE WALK — the dropper's
+  front read the is_shulker arm the predicate gains, the 27-slot
+  store the chest-sized or_insert the first beat banks, the addItem
+  copy the dispenser_insert_into walk the copyWithCount(1) tail
+  serves, the FULL sink the stack-keeps law the setItem write-back
+  keeps (the refused row the intact count, the eject the
+  container-present arm never sees).
+- +2 TESTS: the_droppers_front_shulker_the_insert_wears (the
+  south-facing beat the insert speaks — the sink's 27 the first
+  beat mints, the slot 0 the copy wears, the source slot the
+  shrink keeps, the drops vec the eject never sees) and
+  the_droppers_front_shulker_the_full_keep_wears (the 27 full
+  stone seats the insert refuses — the stack the intact count
+  keeps, the sink's rows the refusal never moves, the eject the
+  container-present arm never wears).
+- THE VERIFY THE PROTOCOL'S OWN SHAPE ANSWERED: cargo check
+  --all-targets clean (the +2 tests the compile proves); mc-protocol
+  157 + mc-registry 100 + mc2rs-gen 80 = 337 PASSED / 0 FAILED;
+  goldens 19/19 PASS rms 0.000 (the mint the append-at-tail law the
+  release build re-proves — NO regeneration, the pool tail the
+  indices never moves, every golden byte the same); fmt the
+  1159-hunk baseline the digit wears (the mint's shapes the
+  generator's own style keeps).
+- THE FULL cargo test --workspace GATE THE SAME SIGKILL WALL KEEPS:
+  the platform's 1.85G python resident the 1.79G codegen peak the
+  1.87G available the 85MB margin refuses — the deferral the FOURTH
+  round wears; the resume plan carries (re-run when the platform's
+  resident shrinks; the +2 tests the same tree holds, the compile
+  the check proved).
+- THE VERSION the bump rode (0.3.875 -> 0.3.876) — the verify the
+  bumped tree ran.
+- Pushed 661f5db (v0.3.876, the shulker box the front read serves).
+
+Stage Summary:
+- THE GETCONTAINERAT WALK THE FIFTH CONTAINER THE WALK ANSWERS: the
+  chest, the barrel, the dispenser/dropper pair, the furnace family
+  AND the shulker box — the offline dropper's beat the vanilla
+  getContainerAt family the one predicate now speaks, the sink's
+  own store the container kind's shape wears.
+- NEXT CANDIDATES: the shulker box the OFFLINE PLACEMENT the walk's
+  kind the creative picker never offers (the block item the
+  placement palette mints — the mesher's generic cube the render
+  already answers), the shulker's own live window the OpenScreen
+  GENERIC_9x3 kind the wire lane banks, the dispenser's carried
+  press the split-pickup the record "already serves", the README's
+  golden section the v0.3.875 round banked.
