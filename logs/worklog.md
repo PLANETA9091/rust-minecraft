@@ -2265,7 +2265,8 @@ Work Log:
   spot carries.
 - THE VERSION the bump rode first (0.3.870 -> 0.3.871) — the
   verify the bumped tree ran.
-- Pushed 23a4d1e (v0.3.871, the test bank's own split).
+- Pushed 23a4d1e (v0.3.871, the test bank's own split) + 93ddf42
+  (the logs/worklog.md mirror).
 
 Stage Summary:
 - THE 2331-BODY THE LINK NOW SURVIVES: the split the codegen peak's
@@ -2278,3 +2279,85 @@ Stage Summary:
   (the server's own event the burst anchors at), the README's
   golden section the 19-row runner's own row the text could name,
   the quickcraft drag the offline dispenser sim could wear.
+---
+Task ID: autopush-145
+Agent: cron-agent-loop (Job 384923, 2026-10-23 11:17:20 +08:00, trace
+1a0a02c3c1060631-cron-agent-loop-202610231117)
+Task: ONE minimal step per the tick protocol — the dev-147 NEXT
+CANDIDATES' head the wire thrown lane's own word answered: the
+EntityEvent case-3 shatter arm the discard wears (the server's own
+event the burst anchors at).
+
+Work Log:
+- THE REPO THE CLEAN TREE ANSWERED (HEAD 93ddf42, origin in sync;
+  the dev-145/146/147 rounds the morning's own record spoke — the
+  v0.3.871 test-bank split the suite's own link keeps).
+- THE LANE THE PIPELINE'S OWN SHAPE WORE (the firework-explode arm's
+  own end-to-end the five files mirror): world_model.rs the
+  ThrownShatterArm + thrown_shatter_events mailbox banks (the
+  EntityEvent handler the case-3 arm between the 17 and the byte-2
+  walks keeps — the registry's own type gate answers: the
+  minecraft:snowball the true keeps, the minecraft:egg the false, the
+  OTHER bodies' 3s the honest silence keeps — the chick-roll word the
+  Chicken's own body speaks; the pose the store's last-known word
+  banks; the drain fn the sibling lanes' shape wears; the level-reset
+  the mailbox dies with), world_view.rs the WireThrownShatterEvent +
+  the SnapshotView field the mailbox verbatim projects (both refresh
+  arms the shipment rides, the join helper the empty mailbox banks),
+  window.rs the two channel tuples + the two drain sites + the send/
+  destructure + the app call the lane wires, screens.rs
+  live_thrown_shatter_events_updated the discard word wears.
+- THE DISCARD'S OWN LAW THE VANILLA WALK BANKED: the sim'd shot the
+  id lookup names the dead flag banks (the retain the lane's own
+  population prunes — no ghost flight the server's hit never rode),
+  the SIM pose the anchor lookup prefers (the client copy's own
+  getX/getY/getZ the vanilla handleEntityEvent reads — the still-
+  simmed flight the between-refresh truth keeps, the store's stale
+  word the anchor never wears), the store's last-known pose the
+  no-sim fallback keeps (the rocket lane's own law the shot wears —
+  the Remove Entities race the refresh's own order arms), the
+  ALREADY-BROKEN shot the silence keeps (the dead flag the
+  double-burst never arms — the same-batch second word the Some-dead
+  guard answers), the shard walk the same case-3 ctors keep (the
+  snowball the 8 plain shards, the egg the 10-jitter loop the
+  gaussian trio's x0.02 wears). The MOB-HIT word the lane's own
+  answer serves — the sim's block ray the server's mob contacts never
+  crossed, the server's own event the truth the discard rides.
+- THE FIRST COMPILE'S TWO HOLES THE CHECKER SPOKE (the honest fixes
+  the errors wore): the channel's OWN TYPE the two declarations bank
+  (the struct field at 193 AND the live channel at 1753 — the
+  72-tuple the new Vec realigned, the cascade the one insertion
+  answered), the join helper's OWN SnapshotView literal the
+  materialize_snapshot_view keeps (the third initializer the empty
+  mailbox banks).
+- +2 TESTS: the model's type-gate arm banks (the snowball's
+  4.5/66.5/-8.25 pose + the egg's false kind + the pig's 3 the
+  silence keeps + the unknown id no phantom + the byte-2 the
+  kinetic filter refuses + the drain ships once), the app's discard
+  lane (the sim's 12.376/65.97 pose the 8 shards anchor at — the
+  store's stale 99-trio never wears, the egg's 10-jitter band at the
+  store pose the no-sim fallback keeps, the same-batch double word
+  the silence keeps — before + 8, the retain swept).
+- THE VERIFY THE FULL GATE ANSWERED: mc-client 2333 + mc-protocol
+  157 + mc-registry 100 + mc2rs-pixel 80 = 2670 PASSED / 0 FAILED /
+  22 ignored (the +2 the split's own link the FIRST build executed —
+  no OOM the ceiling wears); goldens 19/19 PASS rms 0.000 (NO
+  regeneration — the arm path no golden scene renders, no render
+  byte the reshape touched); cargo check --all-targets clean (zero
+  new warnings the new-code probe answered); fmt: the 1159-hunk
+  baseline the digit wears.
+- THE VERSION the bump rode first (0.3.871 -> 0.3.872) — the verify
+  the bumped tree ran.
+- Pushed 2ea400a (v0.3.872, the thrown shot's own shatter lane).
+
+Stage Summary:
+- THE WIRE THROWN LANE'S OWN TWO WORDS THE LANE NOW SPEAKS: the
+  client sim's own block ray the flight breaks at AND the server's
+  own EntityEvent the discard + burst answers (the mob-hit word the
+  sim's ray never crossed — the dispenser's shots the wall-less hits
+  the server's truth speaks).
+- NEXT CANDIDATES: the shulker box the getContainerAt walk the
+  dropper's front read never serves, the quickcraft drag the offline
+  dispenser sim could wear, the README's golden section the 19-row
+  runner's own row the text could name, the dispenser's carried
+  press the deferred place could wear (the chest's own live shape).
