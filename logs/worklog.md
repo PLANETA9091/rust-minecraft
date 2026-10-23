@@ -699,3 +699,19 @@ Work Log:
 Stage Summary:
 - THE DEATH ARC'S OWN GAMERULE: the keepInventory row the offline vocabulary carries — the chat literal the query/set walk serves, the reward the zero keeps, the scatters the pockets spare, the respawn the trio + pockets re-wears. The death arc's vanilla rows now answer BOTH arms (the drop the keepInventory-false default wears, the spare the true row speaks).
 - NEXT CANDIDATES: the keepInventory row the OFFLINE OPTIONS SCREEN never carries (the chat literal the row's own toggle the screen form answers), the test-file GuiAssets roots (part_3/5/6/7/8's bare 'assets-cache/jar' — the absence-pin flips the honest own-root staging re-pins), the minifb pointer-grab window-edge turn stop (the API's own limit the alternative the recon answers), the warden biolum TRUE-absence (the unreachable the record keeps).
+
+---
+Task ID: autopush-155
+Agent: autopush (Job 384923, 21:47:31 +08 tick)
+Task: git status (clone if absent; auto-sync commit + push if dirty) -> ONE minimal step -> cargo test --workspace green -> push -> worklog entry.
+
+Work Log:
+- Incoming state: clean tree @a2e260d (the mirror over a8e1588 = v0.3.889 autopush-154 keepInventory gamerule row), origin synced. The chat literal the row's own screen form the round answers — the keepInventory row the OFFLINE OPTIONS the screen never carried.
+- THE ROW THE SCREEN WEARS: the WorldOptionsScreen the row below the difficulty pair banks — render_world_options the 200-wide button pushes (the label the `gamerule.keepInventory` lang row "Keep inventory after death" speaks, the value the `options.on`/`options.off` pair the boolean display keeps, `cx - 100` the centering seat, `dial_y + 24` the dial band's next row ride), the ACTIVE arm `!world_is_network` the dial's own split keeps (the NETWORKED world the server's /gamerule the wire keeps — the inactive button the hovered() gate refuses). THE DISPATCH: the `wokeepinv` arm the keep_inventory flip wears — the death lanes' gates the same field reads, the screen row + the chat literal the ONE store serve.
+- THE TEST THE ROW WEARS: part_4's the_world_options_screen_wears_the_keep_inventory_row (inserted beside the dial walk — the fmt seam PRE-CHECKED first this time): the fresh boot's "Keep inventory after death: OFF" + the active arm, the click the rule arms + the re-render the "…: ON" speaks, the second click rings home, the networked lane the inactive button the click never arms.
+- VERIFY (final code state): FULL mc-client 2351 PASSED / 0 FAILED / 22 ignored (2350 baseline + the row's walk — ZERO flips, the dial walk unflipped); mc-protocol 157 + mc-registry 100 + mc2rs-gen 80 = 337 PASSED; goldens 19/19 PASS rms 0.000 (NO regeneration — the WorldOptions screen the golden scenes never wear); fmt 1702 = the HEAD baseline (ZERO new hunks — the part_4 seam the kill-boilerplate shapes never shared, the part_1 lesson's artifact this seam never trips).
+- Version 0.3.889 -> 0.3.890. Pushed 7cd27f7 (a2e260d..7cd27f7); the repo's logs/worklog.md this entry mirrors.
+
+Stage Summary:
+- THE GAMERULE THE BOTH FORMS SERVE: the keepInventory row the WorldOptions screen wears + the /gamerule chat literal the ONE field bank — the offline player the toggle the screen's own click answers (the death arc's gates the flip re-arms live), the networked lane the server's own command the wire keeps.
+- NEXT CANDIDATES: the keepInventory state the offline world save's own row (the gamerule the level.dat lane persists — the reload the rule re-banks), the test-file GuiAssets roots (part_3/5/6/7/8's bare 'assets-cache/jar' — the absence-pin flips the honest own-root staging re-pins), the minifb pointer-grab window-edge turn stop (the API's own limit the alternative the recon answers), the warden biolum TRUE-absence (the unreachable the record keeps).
