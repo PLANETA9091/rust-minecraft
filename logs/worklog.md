@@ -2814,3 +2814,87 @@ Stage Summary:
   own mesher arm the entity-driven box the generic cube the
   honest upgrade the BE-lane round keeps, the FULL gate the
   memory wall the resume plan keeps.
+
+---
+Task ID: dev-151
+Agent: main (cron tick 2026-10-23 14:21:55 +08:00, Job ID 384925)
+Task: rust-minecraft 发展 tick —— git 检查 → ONE 步发展 → 测试 → push → worklog。
+
+Work Log:
+- THE STATE THE TICK READ: the clean tree @3d1378c (v0.3.878, the
+  dev-150 shulker door record), origin synced; the memory
+  landscape the RESUME PLAN'S OWN TRIGGER the round answers —
+  free -m the 3467MB available speaks (the platform's 1.85G
+  resident the sandbox wipe took, the wall's own condition
+  "re-run when the platform's resident shrinks" the round
+  meets), the FULL gate the six-round deferral the re-run
+  claims.
+- THE FULL cargo test --workspace GATE THE WALL ANSWERS: the
+  compile the six rounds never let finish the suite the green
+  wears — and the FIRST RUN THE 40 RED SPOKE: 38 the STALE
+  KIND-COUNT PINS the shulker mint (autopush-147's N_KINDS
+  778->779) the compile-only rounds could never execute (the
+  mc-client bin the OOM wall's own hostage), 47 world.rs + 5
+  part_8 + 3 part_7 pins the sweep 779 wears (atlas::N_KINDS +
+  NAME_OF.len() the two shapes the sed/perl speaks — the
+  SHULKER_BOX const 778 the SEAT the sweep never touches); +2
+  the BEHAVIORAL PINS the autopush-146 gate rewrite
+  (qc_arm_chest the world_is_network && chest_live_window.
+  is_none() no-window refusal the live-only law replaced) the
+  part_9 stand-in beats the hybrid state wore
+  (chest_live_window Some + chest_is_live false the old law's
+  own impossible shape) — the beats re-shaped, the window the
+  silence-beat AFTER sets, the REAL gate's refusal the beat
+  pins.
+- THE 5 THE DIRECT-BINARY RUN WORE, THE CARGO LANE REFUSES:
+  the warden glow + the third-person helmet + the darkness
+  pulse + the water murk + the portal tint — the dep-binary
+  invocation (the repo-root CWD the tee'd run wore) the
+  static-heavy render lanes the 2-CPU parallelism the unlucky
+  interleave spoke ("0 bytes differ" the glow read), the cargo
+  invocation the SAME tree the 2342-green wears, the isolated
+  --exact run the 5 the green confirms — the honest note the
+  record keeps: the render-static tests the parallel-
+  scheduling sensitivity, the suite's green the cargo lane
+  owns.
+- THE MINIMAL STEP THE DEV-150 CANDIDATE THE PIN BANKS: +1
+  TEST the_dispenser_right_press_the_split_and_the_one_each_wear
+  (part_4) — the right-press dispatch the record "already
+  serves" the test never wore: the carried-EMPTY press the
+  split-pickup's ceiling half (5 -> 3 taken, 2 left) the
+  PICKUP button-1 byte the wire wears, the held press the
+  type-1 drag arms (qc_armed + qc_type 1 + qc_button 1, NO
+  place NO packet), the two seats the motion paints, the
+  release the one-each serves (the cursor pays two), the
+  masked START(4)/ADD(5)x2/END(6) QuickCraft bytes the
+  changed-map deltas name. THE FMT'S OWN QUIRK the round
+  meets: the for-loop shape the first draft wore the rustfmt
+  --check parse the recovery garbage rode (part_4's
+  pre-divergent region the +}-at-col-0 cascade spoke, the
+  blanket rustfmt the 7 pre-existing hunks the blanket never
+  wears — reverted), the unrolled two-match shape the SAME
+  semantics the 1703-hunk baseline the zero-new-hunks law
+  keeps.
+- THE VERSION the bump rode (0.3.878 -> 0.3.879) — the verify
+  the bumped tree ran.
+- Pushed 866f605 (v0.3.879, the wall the memory answers) + the
+  mirror commit; the external worklog the dev-151 entry wears.
+
+Stage Summary:
+- THE FULL GATE THE SIX-ROUND DEFERRAL CLOSES: the OOM wall's
+  own resume plan the memory landscape answers, the 40 red the
+  deferred-execution debt the sweep pays, the suite 2679
+  PASSED / 0 FAILED / 22 ignored the whole workspace wears
+  (mc-client 2342 + mc-protocol 157 + mc-registry 100 +
+  mc2rs-gen 80).
+- VERIFY: goldens 19/19 PASS rms 0.000 (NO regeneration — the
+  round no render byte touches); fmt 1703 = the HEAD baseline
+  (ZERO hunks the round adds); cargo check --all-targets
+  clean.
+- NEXT CANDIDATES: the shulker's own mesher arm the
+  entity-driven box the generic cube the honest upgrade (the
+  render byte the golden regen the round names), the 5
+  render-static tests the parallel-sensitivity the serial/lock
+  shape the flake the future round tames, the single-pass
+  cargo test --workspace the tool's 600s ceiling the longer
+  window the whole-suite one-lane proof keeps.
