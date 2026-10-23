@@ -56710,16 +56710,22 @@ impl App {
     ) {
         // THE PAIR'S OWN LOAD (the lazy lane the avatar models keep —
         // the sha1 gates the cache's bytes verify, `None` the unseen
-        // portal the failed-overlay honesty keeps)
+        // portal the failed-overlay honesty keeps). THE ROOT THE WALK
+        // ANSWERS (the jar_runtime_root law the file's other lazy lanes
+        // speak — the full-path literals the sweep's bare-prefix filter
+        // never wore, the package-dir cwd the loads the law serves)
+        let jar = crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
         if self.end_portal_sky.is_none() {
+            let path = jar.join("environment/end_sky.png").to_string_lossy().into_owned();
             self.end_portal_sky = Self::load_end_portal_texture(
-                "assets-cache/jar/environment/end_sky.png",
+                &path,
                 "b9da532dd98befc1a7cbd6420c17532239485788",
             );
         }
         if self.end_portal_noise.is_none() {
+            let path = jar.join("entity/end_portal/end_portal.png").to_string_lossy().into_owned();
             self.end_portal_noise = Self::load_end_portal_texture(
-                "assets-cache/jar/entity/end_portal/end_portal.png",
+                &path,
                 "04099306b075ead427f5c95d8a8d896715c5bde6",
             );
         }

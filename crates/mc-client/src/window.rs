@@ -1626,7 +1626,11 @@ pub fn run_gui_app(
     // schedule through the best output backend (rodio when built with
     // `--features audio` and a device exists; deterministic silence otherwise)
     let mut music = crate::audio::MenuMusic::start(&mut app);
-    let mut assets = GuiAssets::open("assets-cache/jar");
+    // THE ROOT THE WALK ANSWERS (the jar_runtime_root law — the bare
+    // literal the package-dir cwd the GUI app's sprites never wore)
+    let mut assets = GuiAssets::open(crate::avatar::jar_runtime_root(
+        std::path::Path::new("assets-cache/jar"),
+    ));
     let mut fb = Framebuf::new(width, height);
     let mut buf: Vec<u32> = vec![0; width * height];
     // server-list pings run on detached worker threads (blocking status

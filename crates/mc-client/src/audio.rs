@@ -432,7 +432,12 @@ impl MenuMusic {
     /// silence. Startup cost: one frame-counting decode pass over the
     /// playlist (samples are not retained).
     pub fn start(app: &mut crate::screens::App) -> Self {
-        Self::start_with_root(app, Path::new("assets-cache/jar"))
+        // THE ROOT THE WALK ANSWERS (the jar_runtime_root law — the bare
+        // literal the package-dir cwd the menu music never wore)
+        Self::start_with_root(
+            app,
+            &crate::avatar::jar_runtime_root(Path::new("assets-cache/jar")),
+        )
     }
 
     /// `start` against an explicit runtime asset root (tests redirect this

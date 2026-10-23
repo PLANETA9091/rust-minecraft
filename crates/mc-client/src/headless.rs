@@ -2700,7 +2700,9 @@ cow_sound_variant: None,
     }
 
     let mut fb = Framebuf::new(width, height);
-    let mut assets = GuiAssets::open("assets-cache/jar");
+    let mut assets = GuiAssets::open(crate::avatar::jar_runtime_root(std::path::Path::new(
+        "assets-cache/jar",
+    )));
     app.render(&mut fb, &mut assets);
     write_rgb_png(out_path, width, height, &fb.color)?;
     println!(
