@@ -1,14 +1,2731 @@
-# rust-minecraft worklog
+# rust-minecraft — worklog
 
-> THE WIPE THE RESET TOOK (2026-10-23 ~13:52 +08:00): the sandbox reset
-> lost the whole /home/z/my-project tree (this worklog, the repo, the
-> rustup toolchain, assets-cache). The dev-150 round rebuilt everything:
-> the repo re-cloned from the token URL, the toolchain re-rustup'd, the
-> caches re-fetched via rust-minecraft/scripts/restore_env.sh. The FULL
-> task history (dev-1 .. autopush-148) survives in the repo's own
-> logs/worklog.md on the remote (the per-round mirror commits carry it).
-> The entries below resume from dev-150.
+> THE FILE'S OWN RESET (2026-10-22): the sandbox disk was wiped between
+> autopush-122 and this entry — this worklog, cargo, `.mc2rs/`,
+> `assets-cache/` and the UNPUSHED comparator lane died with it. The
+> history below restarts from autopush-123; the pre-wipe per-round
+> history lives in the git log (the commit messages carry the full
+> per-round record) and, from this entry on, in the durable mirror the
+> repo keeps at `logs/worklog.md`.
 
+---
+Task ID: autopush-123
+Agent: cron autopush (Job 384923, 2026-10-22 ~09:10 +08:00)
+Task: the standing autopush round — but the disk was gone, so the ONE
+reasonable step was the environment-recovery lane: clone, toolchain,
+runtime cache, full-suite re-proof.
+
+Work Log:
+- Step 1 (auto-sync) found NO repo at /home/z/my-project/rust-minecraft —
+  the fresh /home/z/my-project held only the platform scaffold (Initial
+  commit, empty download/, skills/, upload/). Every local artifact from
+  the pre-wipe rounds was gone: cargo, worklog.md, the pending
+  autopush-123 worklog insurance file, .mc2rs/classpath/client.jar,
+  assets-cache/, AND the unpushed comparator-simulation lane (the whole
+  autopush-123 work: world/mesher/screens code + atlas pin, check-green,
+  never committed — the 08:16 round's infra collapse left it disk-only).
+- Cloned from the token URL: HEAD = 12db5f0 (autopush-122, v0.3.846) —
+  everything PUSHED survived. The repo's own `.cargo/config.toml` OOM
+  baseline (jobs=1, lld --threads=1, debug=0, no incremental, mc-client
+  dev-assertions off) and the `[profile.test] debug = 0` came back with
+  the clone — no rebuild gymnastics needed.
+- rustup installed (minimal profile): rustc/cargo 1.99.1, same band the
+  pre-wipe rounds ran.
+- Re-fetched the official 26.2 client.jar from Mojang's piston-data
+  (sha1 2dc72797acbc1b63fc16a11c4ac393605f453754 — the manifest's own
+  pin) into .mc2rs/classpath/.
+- cargo check --workspace --all-targets: GREEN in 1m43s.
+- FIRST full-suite attempt: the mc-client test binary BUILT AND RAN on
+  the fresh box — the OOM wall the old machine wore (the 1.9 GB rustc
+  link peak vs the host agent's hold) is GONE with the agent's 1.8 GB
+  resident. But 158/2294 failed — the runtime cache the tests read was
+  the missing half of the environment.
+- The cache rebuild, layer by layer (each layer's failures named the
+  next): jar assets extracted under assets-cache/jar/ (10968 files) →
+  the FLAT layout the loaders read from the cache root (gui/ +
+  entity/ + environment/ + font/ + block/ + item/ + misc/ + particle/
+  — the census over `.join("…")` calls and the skin RUNTIME_PATH table
+  named every prefix; sandbox REFUSES symlinks, so plain copies) → the
+  REAL title-screen panorama pixels (the jar's own are 1x1 placeholders;
+  7 store objects sha1-verified into gui/title/background/) →
+  sounds.json (a store object, NOT in the jar) + 2147 wanted .ogg files
+  (the generator's wanted-filter mirrored: music.menu/block.* + the
+  EXTRA/MOB/PLAYER/INTERACTION/AMBIENT constants + the worldgen
+  biome_music rows; every file sha1-verified; 9 events' files absent
+  from the index — the generator's own walk skips the same) →
+  `mc2rs-gen cache` emitted assets-cache/gen/font.bin (43543 B,
+  3 glyph textures) + textures.bin (3362797 B).
+- Suite re-proof: 2608 passed / 0 failed / 22 ignored (2272 mc-client +
+  157 mc-protocol + 99 mc-registry + 80 mc2rs-pixel; +1 vs autopush-121's
+  2607 = the stab-lane test the 122 round added). THE FULL SUITE RUNS
+  AGAIN.
+- verify_goldens.sh: 18/18 PASS, rms 0.000 everywhere (gui_title's
+  real-pixel panorama reproduces the golden exactly — the store fetch
+  was byte-true).
+- Repo additions this round: scripts/recover_runtime_cache.py (the
+  one-command recovery the next wipe runs — jar, extract, flat layout,
+  panorama, sounds, gen-cache hint; idempotent, re-run on the live
+  cache reports 0 fetched) and logs/worklog.md (this file's durable
+  mirror — the worklog lived outside the repo once and that killed it).
+  Version bump 0.3.846 → 0.3.847.
+
+Stage Summary:
+- The environment is WHOLE again and re-proven: full suite 2608/0/22,
+  goldens 18/18 rms 0.000, cargo 1.99.1, jar + runtime cache + gen cache
+  restored byte-verified. No render code changed — no goldens touched.
+- THE LOST LANE (the next round's ONE step candidate): redo the
+  comparator simulation the wipe ate. The full spec, compressed from the
+  lost round's javap forensics (26.2 jar, scripts/classfile_dump.py):
+  (a) variant byte = low2 facing (compass order N=0/E=1/S=2/W=3), bit2
+  subtract, bit3 powered, high4 output cache; (b) calculateOutputSignal:
+  i==0→0, j>i→0, SUBTRACT→i−j, COMPARE→i with the tie through if_icmple
+  (COMPARE keeps i, SUBTRACT refuses); shouldTurnOn: i>j, tie → COMPARE
+  true / SUBTRACT false; (c) getControlInputSignal: sides answer DIODE
+  family only (wire/lever never serve a side), back reads any source;
+  (d) checkTickOnNeighbor: POWERED != shouldTurnOn && !willTick →
+  scheduleTick(delay 2); (e) refreshOutputState: setBlock flag-2 +
+  updateNeighborsInFront (front cell = pos.relative(FACING.getOpposite()));
+  (f) useWithoutItem: cycle(MODE) + click sound 0.3 vol (SUBTRACT pitch
+  0.55f = 0x3F0CCCCD, COMPARE 0.5f = 0x3F000000) + INSTANT refresh
+  (not the 2-tick wait); (g) getStateForPlacement: FACING =
+  getHorizontalDirection().getOpposite() (faces the placer); shape = the
+  2px diode plate; (h) atlas pin: kind 768 (N_KINDS 768→769), tiles
+  appended at the pool tail 909 (comparator) / 910 (comparator_on) so
+  every existing index holds → goldens safe; FACE_TILES [909;6] +
+  TINTS/DOOR_MODEL_BY_ROW/ENTITY_HEAD_FACES rows + elements.rs four
+  models (comparator, _on, _subtract, _on_subtract) via
+  derive_model_inherited; mesher: #top→TILE_COMPARATOR(_ON) swap,
+  #slab→smooth_stone, #unlit/#lit→redstone-torch kinds, DOWN cullface
+  rotation, per-corner lightmap; (i) signal walk: wire direct power,
+  lever/button/plate 15, standing torch d!=UP gate, wall torch FACING
+  gate, detector rail, same-family FACING gate → powered?output:0; flood
+  seed = wire_source_strength_near (replaces the bool wire_sources_near;
+  existing sources stay 15, comparator front feeds 0..15); schedule/
+  drain Vec<(u64,i32,i32,i32)> dedup+sort; screens: tick_comparator_beats
+  + use arm + placement gate + attach_wire_voice consult (collect
+  mismatches → drop(read) → schedule).
+- Environment facts for the rounds ahead: cargo at $HOME/.cargo/bin;
+  the sandbox REFUSES symlinks under /home; background nohup builds die
+  with the shell (foreground only); the 10-minute tool ceiling wants
+  single-command test runs (one suite pass per call, log to a file).
+
+---
+Task ID: autopush-124
+Agent: cron autopush (Job 384923, 2026-10-22 ~10:05 +08:00)
+Task: the ONE step the worklog named — REDO the comparator simulation
+lane the disk wipe ate (the lost round's spec, re-proven byte-true
+against the 26.2 jar before a line was written).
+
+Work Log:
+- Environment held (the 123 recovery): clean tree at 86b45f3, cargo
+  1.99.1, jar + runtime cache + gen cache all present. No re-recovery
+  needed.
+- THE FORENSICS REDO (scripts/classfile_dump.py, the 26.2 jar):
+  ComparatorBlock + DiodeBlock + SignalGetter dumped whole. The jar
+  sharpened the lost spec's compressed corners:
+  (a) DiodeBlock.sideInputDiodesOnly() returns FALSE — the sides read
+  SignalGetter.getControlInputSignal(pos, dir, false), NOT the
+  diode-only walk: REDSTONE_BLOCK→15, REDSTONE_WIRE→the raw POWER
+  property, isSignalSource→getDirectSignal (the STRONG walk — the ON
+  lever answers only toward its support, plates/torches/rails the 0
+  the no-override keeps); the lost round's "sides diode-only" gloss
+  was wrong, the jar's own bytes settle it;
+  (b) checkTickOnNeighbor schedules when (calculateOutputSignal !=
+  the BE's stored output) OR (POWERED != shouldTurnOn) — the
+  OUTPUT-CACHE arm the lost spec never named (the stale-output fix
+  the 2-tick beat owns); willTickThisTick dedups, priority NORMAL;
+  (c) DiodeBlock.getSignal answers dir == FACING only (ownSignal) —
+  the front cell = FACING.getOpposite() reads it, the back read of a
+  sibling comparator gates on ITS FACING == ours; getDirectSignal =
+  getSignal (the diode's front is STRONG power);
+  (d) DiodeBlock.getInputSignal: the back cell's weak getSignal +
+  the REDSTONE_WIRE override (the raw POWER property, the
+  connected-side verdict skipped);
+  (e) shouldTurnOn: i==0→false, i>j→true, tie→COMPARE only;
+  calculateOutputSignal: i==0→0, j>i→0, COMPARE→i, SUBTRACT→i−j;
+  (f) useWithoutItem: mayBuild gate, cycle(MODE), click sound 0.3
+  (pitch 0.55 subtract / 0.5 compare), flag-2 setBlock, instant
+  refreshOutputState when still-comparator;
+  (g) getStateForPlacement: FACING = getHorizontalDirection()
+  .getOpposite() (the front faces where the placer LOOKS);
+  (h) refreshOutputState: BE.setOutputSignal + the POWERED sync +
+  updateNeighborsInFront.
+- THE PIN (scripts/autopush124_comparator_pin.py, idempotent,
+  section-guarded): atlas.rs — TILE_909/910 decoded from the jar's
+  comparator.png/comparator_on.png (the pool tail, every existing
+  index holds), TILES 911, N_KINDS 769, KIND_NAMES +
+  REGISTRY_NAMES the "comparator" tails, TILE_NAMES the pair,
+  FACE_TILES [909;6], TINTS/DOOR_MODEL_BY_ROW/ENTITY_HEAD_FACES the
+  769-row law, TILE_COMPARATOR/TILE_COMPARATOR_ON named consts.
+  elements.rs + models.rs ALREADY carried the four typed rows (the
+  generator had them — only the atlas tiles were missing; the pin's
+  elements section the honest no-op keeps).
+- world.rs: COMPARATOR 768 + the variant codec (low2 facing compass
+  N0/E1/S2/W3, 0x04 subtract, 0x08 powered, high4 output cache), the
+  back/side/alternate walks (the jar's own lanes), output + should-
+  turn-on verdicts, refresh (pure read), comparator_sources_near +
+  comparator_front_output_near, comparator_can_survive, the placement
+  variant (the look's opposite — the +2/+2 cancellation the look
+  index answers directly), wire_source_strength_near (the bool walk's
+  own upgrade: the flood seeds the POWER, the comparator front the
+  0..15 the max fold carries), the flood site swapped, the
+  shouldConnectTo diode seat, the collision Empty row, the schedule/
+  drain pair (the pos-dedup the willTickThisTick law keeps), the
+  comparator_ticks queue + the test initializers' 9th field.
+- mesher.rs: comparator_model_quads (the four OnceLock bakes) + the
+  element lane (the per-quad tile verdict: #top→TILE_COMPARATOR(_ON),
+  #slab→smooth_stone, #unlit/#lit→the torch kinds' tiles; the
+  blockstate y-table south 0 / west 1 / north 2 / east 3 turns; the
+  DOWN cullface the ground law keeps; the FACE_SHADE term the quad
+  direction reads; the lightmap the per-corner fold answers).
+- screens.rs: tick_comparator_beats (the drain → the refresh → the
+  attach broadcast the cell+six scan covers), the use arm (the mode
+  cycle + the instant refresh + the click voice + the front seed),
+  the placement survival gate + the facing stamp, the attach_wire_
+  voice consult (the cell+six scope, the refresh-mismatch → schedule
+  +2, the collect→drop(read)→schedule discipline).
+- THE PIN BUMPS THE TESTS DEMAND: 34 kind-pins the palette law grew
+  (N_KINDS 768→769 ×8 + the one-line form ×27) + the 21 NAME_OF.len()
+  pins — the same bumps every kind-addition round has paid.
+- TESTS +4: the truth table (the wire back's raw read, the SUBTRACT
+  gap 15-4=11, the COMPARE tie keeps 4, the side dominance, the
+  shouldTurnOn tie laws), the schedule/refresh/front-seed walk (the
+  dedup, the drain order, the strength seed the front alone answers),
+  the placement/survival walk, the mesher bakes (the four states, the
+  wire-geometry count pair, the resolved texture names).
+- THE GATES: cargo check --workspace --all-targets GREEN; cargo test
+  --workspace 2612 passed / 0 failed / 22 ignored (+4); verify_goldens
+  .sh 18/18 PASS rms 0.000 (the pool tail the goldens never touch —
+  no regeneration); cargo fmt --check 27292 = 27292 EXACTLY (the
+  rustfmt install the minimal profile lacked came back, the +54 the
+  first pass wore the hand-fixed three spots — the lane's context
+  splits, the pts one-line, the signature split, the bamboo
+  alignment).
+
+Stage Summary:
+- THE COMPARATOR PLAYS LIKE VANILLA: place it (the front follows the
+  look), feed the back (the wire's raw power, the sources' weak walk),
+  the sides read the strong law (the wire's raw POWER, the lever's
+  support seat, the sibling's front), the click flips the mode (the
+  subtract gap the COMPARE tie), the 2-tick beat refreshes the output
+  cache + the powered verdict, the front cell carries the 0..15 into
+  the wire flood and the consumers' walk, the diode plate renders the
+  jar's own four models with the per-quad tiles the blockstate rows
+  name. The suite 2612/0/22, the goldens 18/18 rms 0.000, the fmt
+  debt the baseline keeps.
+- NEXT CANDIDATES: the container-analog lane (the comparator's
+  hasAnalogOutputSignal back read — the chest-fill signal the BE
+  tables would need), the REPEATER kind (the DiodeBlock sibling the
+  wire_connectable_dir comment names — the client's vocabulary never
+  banks it), the redstone BLOCK kind (the side walk's REDSTONE_BLOCK
+  arm waits), the item-frame analog read (the getInputSignal's
+  behind-conductor lane).
+
+---
+Task ID: autopush-125
+Agent: cron autopush (Job 384923, 2026-10-22 ~11:35 +08:00)
+Task: the ONE step the worklog's candidates named — the REDSTONE
+BLOCK kind, the constant-15 source the comparator's side arm and the
+wire flood have been waiting for (the smallest kind-addition the
+vanilla redstone family carries).
+
+Work Log:
+- Environment held (clean tree at 34edf40, cargo 1.99.1, caches in
+  place).
+- THE PIN'S OWN SHRINKAGE (the name-keyed tables the recon credits):
+  block_dig/block_resistances/block_sounds/items are REGISTRY-NAME
+  keyed across the whole 1196-block vanilla set — the "redstone_block"
+  rows they already carry — so the pin rides the ATLAS alone
+  (scripts/autopush125_redstone_block_pin.py, idempotent): TILE_911
+  decoded from the jar's redstone_block.png (the pool tail, every
+  existing index holds), TILES 912, N_KINDS 770, the KIND_NAMES/
+  REGISTRY_NAMES/TILE_NAMES tails, FACE_TILES [911;6] (the full cube
+  the DEFAULT walk renders — no named const, no mesher lane),
+  TINTS/DOOR_MODEL/ENTITY_HEAD the 770-row law, world.rs NAME_OF the
+  770th entry.
+- world.rs the source's own arms (javap RedStoneBlock the 26.2 jar —
+  getSignal AND getDirectSignal the constant 15 the any-dir read
+  answers): the wire flood's six seeds (wire_source_bools_near), the
+  consumers' redstone_signal_at (rides the seed walk), the strong
+  lane's neighbor arm (strong_signal_conductors_near — the source the
+  conductor's own neighbor carries, the NO attachment decode the
+  lever pair keeps — the redstone-block-into-block chain the lamps
+  wear), the wire's shouldConnectTo seat (the wire points at the
+  block), the comparator's back arm (the weak 15) AND the side arm
+  (the strong 15 — the getControlInputSignal's REDSTONE_BLOCK arm the
+  autopush-124 comment reserved now lives), is_redstone_block.
+- Collision the DEFAULT full cube keeps (no Empty row — the block
+  the body walks AROUND).
+- THE PIN BUMPS THE TESTS DEMAND AGAIN: 56 kind-pins the palette law
+  grew (N_KINDS 769→770 ×35 + NAME_OF.len() ×21).
+- TESTS +2: the seed/strong/consumer walk (the six seats the 15
+  answers, the far cell the silence keeps, the conductor-adjacent
+  strong verdict, the full-cube collision, the placeable_block
+  lookup the NAME_OF row answers), the comparator arms (the back the
+  15 speaks, the side the dominance wears, the COMPARE tie keeps,
+  the SUBTRACT tie the 0 wears, the bare side the 15−0 gap speaks).
+- THE GATES: cargo check --workspace --all-targets GREEN; cargo test
+  --workspace 2614 passed / 0 failed / 22 ignored (+2); verify_goldens
+  .sh 18/18 PASS rms 0.000 (the pool tail no golden scene touches);
+  cargo fmt --check 27292 = 27292 EXACTLY (the lane's edits the clean
+  form kept — zero fmt debt this round).
+
+Stage Summary:
+- THE REDSTONE BLOCK PLAYS LIKE VANILLA: place it, the wire around it
+  lights to 15 (the flood seeds), the lamps/doors/rails beside answer,
+  the comparator's back AND sides read the constant 15 (the compare
+  tie the subtract gap the dominance arms the same walk serves), the
+  block-into-block chain the strong lane carries, the dig lane the
+  name-keyed tables the destroy-speed row resolves, the placement
+  the item pairing answers. The suite 2614/0/22, the goldens 18/18
+  rms 0.000, the fmt debt the baseline keeps.
+- NEXT CANDIDATES: the REPEATER kind (the DiodeBlock sibling — the
+  delay dial the right-click cycle, the one-way gate, the lock state,
+  the boost-to-15 arm — the biggest redstone lane left), the
+  container-analog lane (the comparator's hasAnalogOutputSignal back
+  read — the chest-fill signal the BE tables would need), the
+  item-frame analog read (the getInputSignal's behind-conductor
+  lane), the observer kind (the shouldConnectTo comment's other
+  missing sibling).
+
+
+
+---
+Task ID: autopush-126
+Agent: cron autopush (Job 384923, 2026-10-22 ~12:00 +08:00)
+Task: the standing autopush round — the ONE step the worklog's next
+candidates named: THE REPEATER KIND (the DiodeBlock sibling — the
+delay dial the right-click cycle, the one-way gate, the lock state,
+the boost-to-15 arm — the biggest redstone lane left).
+
+Work Log:
+- Environment held (clean tree at fbb5810, cargo 1.99.1, the runtime
+  caches the autopush-123 recovery banked all in place).
+- THE JAR'S OWN FORENSICS FIRST (the whole walk the 26.2 bytes speak):
+  javap RepeaterBlock the sideInputDiodesOnly pc 0-2 the iconst_1 the
+  TRUE the sides keep (the DiodeBlock sibling the comparator's FALSE
+  the mirror wears), the useWithoutItem pc 2-35 the cycle(DELAY) +
+  setBlock(3) the NO playSound the jar's own silence speaks (the
+  older click assumption the 26.2 bytes retire), isLocked the
+  getAlternateSignal > 0 fold, the placement the DiodeBlock super
+  call the getHorizontalDirection().getOpposite() law + the
+  setValue(LOCKED, isLocked(...)) tail; DiodeBlock.tick the branch
+  probe scripts/tick_branch_probe.py the raw jump targets banked
+  (the isLocked early-return, the mismatch arms, the steady-state
+  reschedule nuance the offline dedup+sort queue approximates), the
+  checkTickOnNeighbor the POWERED==shouldTurnOn quiet + the
+  willTickThisTick dedup; the blockstates/repeater.json the y-table
+  south 0 / west 90 / north 180 / east 270 the comparator's own
+  table speaks, the SIXTEEN model rows (repeater_{1..4}tick ×
+  _locked × _on — the slider z the 4+2*delay walk, the _on the
+  twelve halo faces the glow star carries, the _locked the bedrock
+  bar the freeze wears); the name tables the dig/sound/resistances/
+  drops keys ALL the "repeater" stem answers (the jar's own
+  loot_table/blocks/repeater.json + the Items rows the short name
+  wear — the vanilla register's "redstone_repeater" the REGISTRY
+  word never enters the lanes; the first kind the registry/item
+  names diverge — the NAME_OF row the "repeater" stem carries).
+- THE PIN scripts/autopush126_repeater_pin.py (idempotent): TILE_912
+  (block/repeater.png) + TILE_913 (block/repeater_on.png) the pool
+  tail decodes (every existing index holds), TILES 914,
+  N_KINDS 771, the KIND_NAMES + REGISTRY_NAMES the "repeater" tails
+  (the dig/drop/sound word both wear), FACE_TILES [912;6], TINTS/
+  DOOR_MODEL/ENTITY_HEAD the 771-row law, TILE_REPEATER/
+  TILE_REPEATER_ON the named consts; the elements.rs the SIXTEEN
+  typed rows the generator already banked (the pin's honest no-op
+  keeps); world.rs NAME_OF the "repeater" row.
+- world.rs the whole verdict: REPEATER const 770 + the variant byte
+  (low2 facing compass, 0x04 powered, 0x08/0x10 the delay-1 dial,
+  0x20 locked), the dial cycle 1→2→3→4→1, the placement variant +
+  the LOCKED eval, the survival gate (the comparator's own walk the
+  sibling wears), the input walk the SHARED DiodeBlock walk the
+  comparator lane serves (the comparator sibling arm the +REPEATER
+  gate the back/side reads both wear — the comparator's back and
+  sides now answer a powered repeater's 15 too), the side walk the
+  DIODES-ONLY law (the getControlInputSignal's diodesOnly arm — the
+  redstone block/wire/lever arms the repeater's sides never read),
+  shouldTurnOn the any-input verdict, the refresh read the LOCKED
+  freeze the None keeps, the front-seed walk the constant 15 the
+  powered bit speaks; the wire flood's seed (wire_source_strength_near
+  the max fold), the consumers' redstone_signal_at the same walk
+  rides, the strong lane's front arm (the conductor the repeater's
+  front the redstone-block-into-block chain wears), the wire's
+  shouldConnectTo seat, the collision Empty row (the DiodeBlock
+  family the noCollision verdict the sibling wears); the queue the
+  comparator's own shape wears (repeater_ticks + schedule dedup +
+  drain sort) + the dial delay*2 the beat stamps.
+- mesher.rs the SHARED DIODE LANE: the comparator's element lane the
+  gate the repeater joins (the per-kind decode the (powered, delay,
+  locked) triple the sixteen bakes pick), the per-quad tile verdict
+  #top→TILE_REPEATER(_ON) / #slab→smooth_stone / #unlit/#lit→the
+  torch kinds / #lock→the bedrock tile, the y-table the shared fold
+  keeps, the DOWN cullface + the FACE_SHADE seat + the per-corner
+  lightmap the comparator's own walk serves.
+- screens.rs the integration: the tick beat (tick_repeater_beats —
+  the drain the flip the LOCKED guard banks, the front seed the
+  attach walk re-broadcasts), the attach consult (the cell+six
+  scope, the mismatch → schedule(dial*2), the collect→drop(read)→
+  schedule discipline), the use arm (the dial cycle, the NO click
+  voice the 26.2 bytes retire, the broadcast the attach scan covers),
+  the placement survival gate + the facing stamp + the LOCKED eval;
+  drops.rs the plain NAME_OF walk the "repeater" stem answers (no
+  exception arm — the first pass's redstone_repeater guess the
+  tables' own keys retired).
+- TESTS +4: the variant/dial/placement walk (the round trip, the
+  4→1 wrap, the east look the west FACING, the collision Empty, the
+  "repeater" pairing, the dig row 0.0, the loot stem the drops
+  table keys), the signal/beat/front walk (the lever back the
+  any-input verdict, the dedup, the delay*2, the flip, the front
+  wire 15 + the consumer + the strong conductor + the sibling
+  comparator's back read, the stale-POWERED bit the dark phase
+  banks first), the lock walk (the block side the diodes-only walk
+  refuses, the side comparator the lock speaks, the locked cell the
+  refresh the silence keeps, the sibling repeater the same walk
+  answers), the mesher bakes (the sixteen states non-empty, the
+  down cullface, the halo count, the slider z the dial moves, the
+  bedrock bar, the resolved names).
+- THE PINS THE KIND DEMANDS AGAIN: N_KINDS 770→771 ×35 +
+  NAME_OF.len() ×21 (the palette law the same bump every kind-add
+  round pays); the World initializers ×10 the repeater_ticks field
+  the struct law grows.
+- THE GATES: cargo check --workspace --all-targets GREEN; cargo test
+  --workspace 2618 passed / 0 failed / 22 ignored (+4 vs autopush-
+  125's 2614; the stale-binary detour the fresh-hash rebuild
+  retired); verify_goldens.sh 18/18 PASS rms 0.000 (the pool tail no
+  golden scene touches); cargo fmt --check the content-hash churn
+  ZERO new hunks (the bedrock arm collapse + the comment alignment
+  the first pass wore — no fmt debt this round).
+
+Stage Summary:
+- THE REPEATER PLAYS LIKE VANILLA: place it facing the look, the
+  dial the right-click 1→2→3→4→1 cycles, the back lever the
+  delay*2 beat the flip banks, the front wire the 15 the flood
+  seeds, the lamps/doors/rails the front cell answer, the block in
+  front the strong 15 the chain carries, the side diode the lock
+  freeze wears (the wire/block sides the diodes-only walk refuses),
+  the dig the instant 0.0 the row banks, the drop the self item the
+  loot stem rolls. The suite 2618/0/22, the goldens 18/18 rms 0.000,
+  the fmt debt the baseline keeps.
+- NEXT CANDIDATES: the OBSERVER kind (the shouldConnectTo comment's
+  other missing sibling — the facing + powered/facing pulse), the
+  container-analog lane (the comparator's hasAnalogOutputSignal back
+  read — the chest-fill signal the BE tables would need), the
+  item-frame analog read, the piston lane (the biggest mover the
+  redstone family still lacks).
+
+---
+Task ID: autopush-127
+Agent: cron autopush (Job 384923, 2026-10-22 ~13:45 +08:00)
+Task: the standing autopush round — the ONE step the worklog's next
+candidates named: THE OBSERVER KIND (the DirectionalBlock sibling the
+shouldConnectTo comment's other missing seat — the eye the
+SIX-direction facing the diode family's horizontal-only vocabulary
+extends, the pulse the 2-game-tick beat wears).
+
+Work Log:
+- Environment held (clean tree at 55643f2, cargo 1.99.1, the runtime
+  caches the autopush-123 recovery banked all in place).
+- THE JAR'S OWN FORENSICS FIRST (classfile_dump.py the 26.2 jar,
+  ObserverBlock + the blockstate/model rows): getStateForPlacement pc
+  1-23 the `setValue(FACING, context.getNearestLookingDirection()
+  .getOpposite().getOpposite())` walk the DOUBLE opposite the look's
+  own direction stamps (the net identity — the eye the placer's own
+  LOOK faces, the output dot the look's own far side the player
+  reads; the diode family's own look-OPPOSITE law the mirror
+  retires), getSignal the dir == FACING gate the ownSignal walk
+  answers (POWERED ? 15 : 0), getDirectSignal = getSignal the STRONG
+  back-output law keeps, isSignalSource the iconst_1 the source
+  family arms, tick the POWERED fork the flip arms wear (the powered
+  cell the flag-2 setBlock(POWERED=false), the unpowered the
+  setBlock(POWERED=true) + the scheduleTick(pos, this, 2) tail the
+  pulse's own pair keeps) + the updateNeighborsInFront walk BOTH
+  arms the back cell the broadcast serves
+  (pos.relative(FACING.getOpposite())), updateShape the
+  `dir == FACING && !POWERED` gate the startSignal walk serves (the
+  startSignal pc 10-34 the !hasScheduledTick dedup the
+  scheduleTick(pos, this, 2) entry banks), onPlace the
+  piston-placed-POWERED normalization arm (the flag-18 setBlock +
+  the front broadcast — the fresh placement the dark default keeps),
+  affectNeighborsAfterRemoval the back cell re-read serves, NO
+  useWithoutItem the right-click silence keeps; the blockstates/
+  observer.json the y-table north 0 / east 90 / south 180 / west 270
+  + the x-rows down 90 / up 270 speak, the model the ONE full-cube
+  chain the per-face textures wear (#top the down/up faces, #side
+  the flanks, #front the EYE [the north face at rest], #bottom the
+  back — the observer_on parent the ONE texture swap [#bottom ->
+  block/observer_back_on] the lit pulse wears, the ALL-SIX
+  cullfaces the full-cube law keeps).
+- THE PIN (scripts/autopush127_observer_pin.py, idempotent): TILE_
+  914..918 decoded from the jar's observer_top/side/front/back/
+  back_on.png (the pool tail, every existing index holds), TILES
+  919, N_KINDS 772, the KIND_NAMES + REGISTRY_NAMES the "observer"
+  tails (the block AND item the same word wear — the repeater's
+  registry divergence the observer never speaks), TILE_NAMES the
+  five's own tails, FACE_TILES [916;6] (the model's own particle
+  texture the front tile wears), TINTS/DOOR_MODEL/ENTITY_HEAD the
+  772-row law, the TILE_OBSERVER_TOP/SIDE/FRONT/BACK/BACK_ON named
+  consts; the elements.rs the "block/observer" full-cube row the
+  generator already banked (the pin's honest no-op keeps — the ONE
+  bake the lane derives, the powered swap the verdict's #bottom
+  seat reads); world.rs NAME_OF the 772nd row. The name-keyed tables
+  (block_dig/block_resistances/block_sounds/block_mineable/
+  block_drops + blocks/blockstates/item_models) the "observer" rows
+  the generator already carried — the pin rides the ATLAS alone.
+- world.rs the whole verdict: OBSERVER const 771 + the variant byte
+  (low3 facing the vanilla Direction order down0/up1/north2/south3/
+  west4/east5, 0x08 powered), the delta6 walk (the SIX-direction
+  step the diode family's horizontal fold extends), the placement
+  variant (the look's own direction — the pitch quarter the
+  vertical gate reads [the barrel lane's ±45° fold the dominant-
+  axis law keeps], the horizontal look byte the DIRECTION_NORMAL
+  order keeps, the NO-opposite law the double-getOpposite
+  cancellation speaks), observer_back_output_near (the wire flood's
+  own seed — the powered back the 15, the same -facing-step law the
+  comparator/repeater front arms wear, the SIX-direction delta the
+  vertical pairs answer), the flood site + the consumers'
+  redstone_signal_at the seed walk ride, the strong lane's back arm
+  (strong_signal_conductors_near — the conductor the observer's
+  back the block-into-block chain wears), the diode input walks'
+  observer gates (comparator_input_signal's back arm +
+  comparator_side_signal's isSignalSource arm — the dir == ITS
+  FACING verdict the DELTA compare answers [the observer's
+  DIRECTION_NORMAL byte the diode's horizontal compass never keys —
+  the two vocabularies the facing-delta fold bridges], the
+  observer→repeater/comparator chain the same-direction pair
+  wears), the repeater's sides the DIODES-ONLY law the non-diode
+  seat refuses (the observer the DirectionalBlock the DiodeBlock
+  super never carries), the wire's shouldConnectTo seat (the
+  isSignalSource arm the wire the observer's back the pointing law
+  keeps), the collision the DEFAULT full cube keeps (no Empty row —
+  the body the block walks around), the queue the comparator's own
+  shape wears (observer_ticks + the schedule dedup + the drain
+  sort, OBSERVER_DELAY = 2).
+- mesher.rs the OBSERVER'S OWN LANE: the ONE full-cube bake
+  (observer_model_quads — derive_model_inherited("block/observer"),
+  the observer_on parent-override the bake never derives, the
+  powered swap the per-quad verdict's #bottom seat reads), the
+  per-quad tile verdict (#top→TILE_OBSERVER_TOP / #side→TILE_
+  OBSERVER_SIDE / #front→TILE_OBSERVER_FRONT / #bottom→TILE_
+  OBSERVER_BACK(_ON)), the y-table north 0 / east 1 / south 2 /
+  west 3 the quarter folds keep (the model's north-anchored front
+  the comparator's south-anchored table the mirror wears), the
+  x-rows the vertical pair (down the -90° X-fold the x=90 row
+  answers, up the +90° the x=270 row wears — the cell-center
+  (y, z) fold the uvs ride), the ALL-SIX cullfaces the full-cube
+  law keeps (the neighbor's solid verdict the comparator's
+  down-only law extends), the FACE_SHADE seat + the per-corner
+  lightmap the diode lane's own walk serves.
+- screens.rs the integration: the OBSERVER'S OWN TRIGGER CONSULT
+  (the attach walk's cell+six scope — the observer whose EYE the
+  changed cell covers [the +facing step the changed cell IS] the
+  unpowered + unscheduled pair the +2 entry banks, the jar's own
+  !POWERED gate the powered cell's re-trigger never banks, the
+  !hasScheduledTick dedup the pending re-consult refuses, the
+  collect→drop(read)→schedule discipline the family's own walk
+  keeps; the face change the block placement/dig/use events the
+  shape walk fires, the wire flips' own cascade the same walk
+  re-arms — the jar's flag-2 silence the codebase's established
+  broad-broadcast approximation the whole redstone family's beats
+  ride retires [the facing-pair pulse the approximation answers,
+  the offline loop the schedule+2 advance bounds]), tick_observer_
+  beats (the drain → the POWERED flip → the ON arm's +2 tail the
+  pulse wears → the attach broadcast the cell+six re-reads), the
+  placement survival gate none (the full cube the canSurvive
+  override never carries) + the facing stamp (the look's own eye).
+- TESTS +4: the variant/placement/kind walk (the six-facings round
+  trip, the delta six, the east look the EAST eye [the diode
+  family's west the contrast names], the pitch quarter the
+  vertical pair, the shallow look the horizontal byte, the full
+  cube collision, the "observer" pairing, the dig row 3.0, the
+  loot stem), the pulse/signal/back walk (the dark back the 0,
+  the schedule dedup + the drain pair, the ON beat the 15 the
+  flood + the consumer + the strong conductor, the off-beat tail,
+  the back repeater AND comparator the DELTA-compare gates the 15
+  answer, the repeater's sides the diodes-only law refuses), the
+  vertical walk (the eye down the back up the 15, the eye up the
+  mirror pair, the strong lane's vertical conductor), the mesher
+  bakes (the six-face bake, the resolved names, the all-six
+  cullfaces, the meshed cell the per-face tiles the facing byte
+  picks [the plane probe the whole-face law keeps], the powered
+  back the _on swap).
+- THE PINS THE KIND DEMANDS: N_KINDS 771→772 ×35 (the one-line
+  ×27 + the multi-line ×8) + NAME_OF.len() ×21 + the World
+  initializers ×10 (the observer_ticks field the struct law grows).
+- Version bump 0.3.850 → 0.3.851.
+
+Stage Summary:
+- THE OBSERVER PLAYS LIKE VANILLA: place it — the eye follows the
+  look (the pitch the vertical pairs answer, the double-getOpposite
+  cancellation the jar's own bytes speak), the face change in front
+  the +2 beat the pulse schedules, the pulse the back cell the
+  powered 15 banks (the wire flood seeds, the lamps/doors/rails the
+  consumers answer, the block in back the strong 15 the chain
+  carries, the sibling diode the DELTA-compare gates the 15 read),
+  the 2-tick beat the off-flip the pulse closes, the click the
+  observer never wears (the jar's own silence), the dig the 3.0
+  strength the row banks, the drop the self item the loot stem
+  rolls, the render the jar's own five tiles the full-cube faces
+  wear (the eye the FACING face answers, the lit back the pulse
+  swaps). The suite 2622/0/22 (2286 mc-client + 157 + 99 + 80;
+  +4 vs autopush-126's 2618); verify_goldens.sh 18/18 PASS rms
+  0.000 (the pool tail no golden scene touches — no regeneration);
+  cargo fmt --check 27273 = 27273 EXACTLY (1537 hunks the baseline
+  keeps — zero new fmt debt).
+- NEXT CANDIDATES: the piston lane (the biggest mover the redstone
+  family still lacks — the extension/retraction the block-push walk
+  the observer pair feeds), the container-analog lane (the
+  comparator's hasAnalogOutputSignal back read — the chest-fill
+  signal the BE tables would need), the item-frame analog read
+  (the getInputSignal's behind-conductor lane), the dropper/
+  dispenser shot lanes (the observer's classic feed the placement
+  wave banks).
+
+---
+Task ID: autopush-128
+Agent: cron autopush (Job 384923, 2026-10-22 ~15:45 +08:00)
+Task: the standing autopush round — step 1 auto-synced the WIP piston
+lane the previous tick left uncommitted (the whole lane check-green,
+two tests red, never pushed — the disk-wipe insurance the 123 round
+established); step 2 FINISHED the lane: the three fixes the red pair
+demanded, the gates re-proven, the push.
+
+Work Log:
+- Environment held (clean tree at f2a5f4a = autopush-127, cargo
+  1.99.1, the runtime caches the 123 recovery banked all in place).
+  HEAD had moved past the last worklog entry's plan: the comparator
+  redo landed as autopush-124, then 125 (redstone block), 126
+  (repeater), 127 (observer) — the log the commits carry.
+- Step 1 (auto-sync): the working tree held the WIP piston lane —
+  atlas pin applied (TILE_919..923, N_KINDS 775, the three kinds),
+  world/mesher/screens wired, scripts/autopush128_piston_pin.py
+  untracked. Committed 4224547 + pushed BEFORE any edit (the wipe
+  insurance).
+- THE RED PAIR THE SUITE NAMED (cargo test 2287 passed / 2 failed):
+  (a) world::tests::the_piston_the_signal_the_move_the_wears —
+  "the front lever the exclusion the dark verdict keeps". THE ROOT:
+  piston_cell_signal's conductor arm AND piston_input_signal's
+  own-cell arm called strong_signal_conductors_near — the CONSUMER
+  read ("some neighbor of S is strongly powered" = hasSignal's
+  through-conductor semantics the 125/126/127 rounds banked) — one
+  hop deeper than the EMission read the piston's arms demand
+  (getSignal(N, dir) = N's own weak emission OR N's OWN direct
+  arrival = getDirectSignalTo(N)). The failing trace: the front
+  lever at (px+1, py, pz) floor-supports the terrain stone at
+  (px+1, py-1, pz); the piston's DOWN neighbor stone reads
+  "strongly powered through the adjacent conductor" → arm 1 fires →
+  the front exclusion the jar's own gate keeps never speaks. THE
+  FIX: direct_signal_into_cell(world, cx, cy, cz) — the cell's OWN
+  direct arrival walk (the redstone block the any-dir 15, the
+  powered repeater the front cell the -facing step, the powered
+  observer the back cell the same step, the ON lever/button/plate
+  the support cell the attached emission) — extracted from
+  strong_signal_conductors_near's inner scan (the consumer fn the
+  same behavior keeps, its 125-127 tests hold verbatim); the
+  conductor arm wears can_support_rail(cell) &&
+  direct_signal_into_cell(cell), the own-cell arm the direct call.
+  (b) mesher::tests::the_piston_bakes_the_states_the_tiles_the_
+  folds_wear — "the block/piston_top ref the derive answers". THE
+  ROOT: the jar's own block/piston model rows carry the
+  "minecraft:"-prefixed slot values the comparator/observer rows
+  never wear (the derive resolve_ref returns them verbatim) — the
+  per-quad tile verdict's bare arms never hit. THE FIX: the
+  piston_bake helper (the strip_prefix("minecraft:") pass over the
+  derived quads — the consumption site's own law the mesher's other
+  lanes wear), the retracted/sticky/extended/head bakes the same
+  helper serves.
+- THE RED PAIR'S SECOND LAYER (after the fixes the asserts walked
+  deeper): the world test's plane sat INSIDE the generated terrain
+  (World::new(3, 11) = seed 11 TERRAIN, not an empty box — the
+  floor-at-y=2/piston-at-y=5 setup buried the piston and the 13-cell
+  push line hit the seed's own hill: the probe printed stone from
+  y=3 through y=10). THE FIX: the family precedent's raised plane
+  (the floor y=9, the piston y=10 — the repeater's own setup) PLUS
+  the explicit air sweep over the test's volume (x 3..19, y 10..13,
+  z 2..7) — the push line's reach the seed's hill never buries. And
+  the mesher test's inside-face probe (`p[1] > 9.0 + 1e-4`) excluded
+  the face's own minY corners (the face spans y 9..10 — the strict
+  > never keeps the one quad): `-1e-4` the floor fold answers.
+- THE PINS THE KIND DEMANDS: the WIP round's pin the snapshot
+  carried (TILE_919..923 the pool tail, TILES 924, N_KINDS 775, the
+  piston/sticky_piston/piston_head tails, FACE_TILES [920;6], the
+  775-row laws, the TILE_PISTON_* consts, NAME_OF the three tails,
+  the N_KINDS x35 + NAME_OF.len() x21 + the World initializers x10
+  count laws) — the pin's idempotence the re-run keeps.
+- Version bump 0.3.851 → 0.3.852.
+- THE GATES: cargo check --workspace --all-targets GREEN (37.4s);
+  cargo test --workspace 2625 passed / 0 failed / 22 ignored (+3 vs
+  autopush-127's 2622; the +3 the piston pair the lane wears);
+  verify_goldens.sh 18/18 PASS rms 0.000 (the pool tail no golden
+  scene touches — no regeneration); cargo fmt --check 27300 =
+  27300 EXACTLY vs the same-machine 127 measurement (346 mesher
+  hunks the baseline keeps — the WIP round's three piston hunks the
+  round's own collapse/expand/fold answers — zero new fmt debt).
+  NOTE the 27273 the 127 commit message banked: the same commit
+  measures 27300 on this box now (the worktree AND the main path
+  agree) — the baseline the FUTURE rounds compare is the 27300/346
+  pair THIS round measured twice.
+- Pushed 72e8bb6 (v0.3.852, the autopush-128 lane); the mirror
+  (logs/worklog.md) this entry wears, the same commit the push
+  serves.
+
+Stage Summary:
+- THE PISTON PLAYS LIKE VANILLA: place it facing away from the look,
+  the front lever the dark verdict keeps (the exclusion the jar's
+  own gate), the side lever the weak arm answers, the repeater's
+  front the 15 the piston reads, the space above the classic QC the
+  powered verdict speaks, the lever/crank the extend the head +
+  the chain the far-to-near order moves, the 13-stone chain the
+  12-limit refuses, the flower the destroy boundary pops, the
+  obsidian the whole push refuses, the sticky pull the head's old
+  cell banks, the render the jar's own five tiles the four bakes
+  wear (the extended body the piston_inner open face answers, the
+  sticky platform the kind's own tile swaps). The suite 2625/0/22,
+  the goldens 18/18 rms 0.000, the fmt debt the baseline keeps.
+- NEXT CANDIDATES: the moving-piston lane (the 361 kind the
+  extension's mid-state renders — the block entity the moving
+  piston the one kind the family lacks), the dropper/dispenser shot
+  lanes (the observer's classic feed), the container-analog lane
+  (the comparator's hasAnalogOutputSignal back read — the chest
+  fill the BE tables would need), the item-frame analog read.
+
+---
+Task ID: autopush-129
+Agent: cron autopush (Job 384925, 2026-10-22 ~17:01 +08:00)
+Task: the standing autopush round — the environment recovery FIRST (the
+sandbox disk wiped again: cargo, .mc2rs/, assets-cache/ all gone), then
+the ONE dev step the worklog's next-candidates head named: the
+MOVING PISTON lane.
+
+Work Log:
+- Step 1 (auto-sync) found NO repo, NO cargo, NO caches — the third
+  disk reset this machine family has worn. Cloned from the token URL:
+  HEAD = e69b864 (autopush-128 + the mirror commit, v0.3.852). rustup
+  minimal (1.99.1). recover_runtime_cache.py rebuilt the runtime cache:
+  client.jar sha1-verified, 10968 jar assets, the flat layout, 2147
+  oggs, font.bin + textures.bin. THE SCRIPT'S OWN FLAW the round found
+  and fixed: step 3's flat copy lays the jar's own 69-byte 1x1 panorama
+  PLACEHOLDERS into gui/title/background/, and step 4's only-if-absent
+  law then never fetches the real pixels (gui_title's golden wore rms
+  32.234). The fix: the <1000-byte eviction before the fetch — 7 store
+  objects sha1-verified, the golden back to rms 0.000. The root
+  worklog.md mirror restored from logs/worklog.md.
+- Step 2 (ONE step): THE MOVING PISTON'S OWN WALK — the mid-state the
+  pushed cells wear between the piston event and the landing, the
+  blockentity walk javap PistonMovingBlockEntity speaks:
+  * the kind seat: MOVING_PISTON 775, N_KINDS 776 (the pin script the
+    128 pattern wears — no tiles, the moving_piston model carries one
+    particle ref the pool already banks); the variant byte: low3
+    facing (delta6), bit3 EXTENDING (the slide's own direction),
+    bits 4..7 the progress in QUARTERS (the jar's 0.5-per-tick walk
+    the 0.25 granularity renders);
+  * the world lane: moving_states (the (x,y,z)->(kind,variant) stash
+    the pushed state carries, the replace-or-push law the retract's
+    re-arm keeps) + moving_ticks (the (due,x,y,z) queue, the dedup +
+    the reschedule arm the stale row replaces + the sorted drain);
+    piston_try_extend/retract take the now stamp — the extension banks
+    MOVING mid-states at every destination (the head the FIRST moving
+    cell, the sources the air the slide-left walk keeps), the sticky
+    pull banks the pull's own mid-state (the EXTENDING bit CLEAR),
+    tick_moving_piston_cell walks the +1 half-step beat AND the +2
+    finalize (the stashed state the cell wears, the stash row the
+    take clears, the no-stash cell the air keeps, the stale row the
+    silence skips); the mid-state's own push refusal the BLOCK
+    reaction keeps;
+  * the render: the mesher's piston lane the MOVING arm extends — the
+    stash read picks the pushed state's bake (the family members the
+    sibling bakes answer, the plain kinds the block/cube generic bake
+    the derive walk wears — the identity north table the no-fold
+    keep), the per-face tile the PUSHED kind's own FACE_TILES row
+    reads, the slide's own offset the pts assembly adds (quarters 0 =
+    the full cell back, quarters 2 = the half step, the EXTENDING bit
+    the -delta/+delta sign), the stash-less cell the honest silence
+    keeps; screens.rs tick_piston_beats the moving drain BEFORE the
+    event drain serves, the changed cells the same attach broadcast.
+- THE TOOLCHAIN LESSON the round paid twice: the transport eats the
+  literal bracket-m sequence in tool arguments AND outputs (the
+  "[mc_registry" signature the Edit tool mangled into "c_registry",
+  the displays the same pairs hide) — the hex-dump probes the truth
+  read, the byte-safe chr(91) surgery the file repaired. AND the fmt
+  storm: cargo fmt reformatted 113 files (the repo KEEPS a 27300-line
+  fmt-check DEBT by design — the applied churn is NOT the house
+  style); the replay script (scripts/replay129_edits.py) the clean
+  state rebuilt: HEAD + the pin + ONLY this round's blocks, extracted
+  from the fmt'ed copies by anchor.
+- Suite: 2627 passed / 0 failed / 22 ignored (+2 vs autopush-128's
+  2625); golden_matrix 14/14 PASS rms 0.000 (the moving lane no
+  golden scene touches — no regeneration); cargo fmt --check 27273
+  (<= the 27300 baseline — the round's own code the fmt-clean keep,
+  the test-tail rewrite the 128 hunks the region carried resolved).
+- Pushed 9ec8a49 (v0.3.853, the moving-piston lane).
+
+Stage Summary:
+- THE PISTON SLIDES LIKE VANILLA: flip the lever, the head AND the
+  pushed chain wear the moving mid-state for two game ticks (the
+  full-cell offset the event frame renders, the half step the mid
+  beat answers), the stashed states land at the +2 finalize, the
+  sticky pull slides the front block BACK into the head's old cell,
+  the mid-state cells refuse being pushed themselves, the render
+  walks the pushed block's own tiles. The suite 2627/0/22, the
+  goldens 14/14 rms 0.000, the fmt debt the baseline keeps.
+- NEXT CANDIDATES: the head's own retract slide (the no-pull arms
+  the instant clear keeps today — the head's own moving BE the
+  vanilla walk banks), the dropper/dispenser shot lanes (the
+  observer's classic feed), the container-analog lane (the
+  comparator's hasAnalogOutputSignal back read — the chest fill the
+  BE tables would need), the item-frame analog read.
+
+---
+Task ID: autopush-130
+Agent: cron autopush (Job 384923, 2026-10-22 ~18:32 +08:00)
+Task: the standing autopush round — the environment HELD this time
+(repo clean @ 351b47b, cargo + the caches alive), so the ONE step the
+worklog's next-candidates head named: THE HEAD'S OWN RETRACT SLIDE.
+
+Work Log:
+- Step 1 (auto-sync): the tree clean at 351b47b (v0.3.853 + the
+  mirror) — nothing to bank, straight to the dev step.
+- Step 2 (ONE step): the no-pull retract arms the head's own moving BE
+  bank — the 129 round kept the instant clear, the round retires it:
+  * the stash's THIRD FIELD: the flags byte (MOVING_FLAG_LAND /
+    MOVING_FLAG_HEAD_RETRACT) the widened (x,y,z,kind,variant,flags)
+    rows carry — moving_state_of/set/take the triple answer, the
+    extend walk's two banks AND the sticky pull's bank the LAND flag
+    wear;
+  * the no-pull retract arms: the head's own BE banks (the head state
+    the stash wears, the pending beat row the reschedule replaces);
+  * the progress walk's OWN CAP: tick_moving_piston_cell the flag
+    reads — the land rows the +2 finalize keep, the head-retract row
+    the FULL sink the +4 finalize serves (quarters 0 -> 2 -> 4), the
+    finalize the flag the AIR landing speaks (the head the base the
+    sink absorbs);
+  * the mesher's curve: the flag destructure — the land rows the
+    shrinking fraction, the HEAD_RETRACT row the GROWING fraction
+    (the offset -delta*p the progress multiplies — the head the
+    extended position the offset-zero wears, the half sink the base
+    the quarters-2 arm answers), the vanilla shaft's own 0.25 back
+    overhang the bake keeps.
+- Suite: 2629 passed / 0 failed / 22 ignored (+2 vs autopush-129's
+  2627); golden_matrix 14/14 PASS rms 0.000 (no regeneration); cargo
+  fmt --check 27273 = the 129 baseline EXACTLY (zero new fmt debt —
+  the round's own if-let/closure lines the fmt taste answered in
+  place).
+- Pushed bb81a70 (v0.3.854, the head-retract slide).
+
+Stage Summary:
+- THE RETRACT PLAYS BOTH HALVES: the sticky pull slides the block
+  (the 129 walk), the no-pull arms AND the head's own sink the base
+  render the head sliding back over the full two-beat cadence, the
+  AIR landing the sink completes — the piston family the vanilla
+  feel the two curves wear.
+- NEXT CANDIDATES: the sticky-pull arm's own head slide (the pull's
+  BE the head cell owns today — the vanilla walk the head AND the
+  block the pair of BEs the one cell cannot hold, the base cell's
+  own BE the vanilla answer would need), the dropper/dispenser shot
+  lanes (the observer's classic feed), the container-analog lane
+  (the comparator's hasAnalogOutputSignal back read), the item-frame
+  analog read.
+
+---
+Task ID: autopush-131
+Agent: cron autopush (Job 384925, 2026-10-22 ~19:01 +08:00)
+Task: the standing autopush round — the environment held (repo clean @
+58d4900 v0.3.854 + mirror, cargo 1.99.1 + the caches alive). THE SYNC
+THE ROUND WORE FIRST: the prior session's carried brief ("redo the
+comparator simulation per the saved spec") the worklog's own record
+RETIRES — the 124 round landed the comparator whole (the pin, the
+signal walk, the tick beats the 124..130 chain the same file banks);
+the next-candidates head the 130 entry names the round took instead:
+THE CONTAINER-ANALOG LANE (the comparator's hasAnalogOutputSignal
+back read — the chest/barrel fill the output wears).
+
+Work Log:
+- THE JAR'S OWN FORENSICS the 26.2 classpath spoke (scripts/
+  raw_disasm.py, the headless JRE the javap replacement wears):
+  * AbstractContainerMenu.getRedstoneSignalFromContainer pc 0-75 —
+    the null container the 0 keeps, the non-empty slots the
+    count/maxStackSize fraction adds, the sum the slot count
+    divides, the fold Mth.lerpDiscrete(f, 0, 15) the answer wears;
+  * Mth.lerpDiscrete pc 0-26 — the floor(f * (b - a - 1)) +
+    (f > 0 ? 1 : 0) walk the CLASSIC fullness law keeps (floor(f*14)
+    + 1 the non-zero wears — the old "+1 if any non-empty" term the
+    lerp fold absorbs);
+  * Container.getMaxStackSize(ItemStack) — the Math.min
+    (containerMax, itemMax) walk (the chest/barrel 64 the limit the
+    house store wears; the per-item max table the registry never
+    banks — the 64 the honest default, the 16/1-stack items the
+    later max-stack lane answers);
+  * ChestBlock.getAnalogOutputSignal — the getContainer
+    (allowOverlap=false) walk the DOUBLE the 54-slot UNION answers;
+    ChestBlock + BarrelBlock.hasAnalogOutputSignal the iconst_1
+    speaks (TrappedChest + the copper family the ChestBlock super
+    the same TRUE inherits — scripts/super_probe.py the superclass
+    chains read), EnderChestBlock the NO override the honest
+    EXCLUSION wears;
+  * ComparatorBlock.getInputSignal pc 0-168 — the WEAK WALK the
+    DiodeBlock super computes, the hasAnalogOutputSignal arm the
+    back cell's own fill the base i REPLACES (pc 37-58 the
+    unconditional istore — the empty chest the 0 the same override
+    wears), the i < 15 && isRedstoneConductor arm the one-more-step
+    probe serves (pc 63-88 the through-wall read the solid cube the
+    chest hides answers, the j != 0 verdict pc 155-164 the quiet
+    keep wears, the item-frame half the max fold the absent entity
+    the 0 the max keeps — the entity lane the future round owns).
+- world.rs the verdict:
+  * container_fill the (x, y, z) -> 0..=15 map the World field
+    wears (the entry PRESENCE the hasAnalogOutputSignal verdict
+    answers, the value the formula carries; the networked world the
+    server's analog never synced — the empty map the honest keep),
+    the 10 initializer sites the count law keeps (world.rs 1 +
+    world_view 1 + mesher 1 + screens 7);
+  * container_analog_signal the pure formula (the slot count the
+    slice length wears, the clamp the 15 caps);
+  * comparator_input_signal the WRAPPER the container arms wear —
+    the old walk the comparator_weak_back_signal rename the arms
+    keep verbatim, the override + the through-wall probe the wrapper
+    adds; the REPEATER the weak walk alone keeps (repeater_input_
+    signal the DiodeBlock super the ComparatorBlock override never
+    rides — the container arms the comparator lane alone answers).
+- screens.rs the store walk serves:
+  * container_fill_sync(pos, dead_mate) — the kind gate the
+    chest-minus-ender + barrel families answer, the ender the map's
+    absence keeps, the dug cell the entry the removal answers, the
+    double the connected-direction union the same algebra
+    open_chest_for wears (chest_connected_direction +
+    stairs_facing_delta + chest_can_connect_to the same-kind gate
+    the stale type refuses), the DEAD MATE the spill's dying half
+    the union never partners;
+  * the close flush the fill banks AND the attach broadcast the
+    cell+six walk the front comparators re-consults (the vanilla
+    stopOpen tail the updateNeighbourForOutputSignal law the same
+    re-read serves — the +2 entries the mismatch arms bank), the
+    partner's own face the far comparator the same union re-read
+    wears;
+  * the load-once parse the boot the stocked chests the analog
+    banks (the parsed keys the same sync rides — the restart the
+    fill the comparator's next consult serves);
+  * the spill walk the entry the air drops AND the survivor scan
+    the four horizontal neighbors the break's mate re-syncs (the
+    own-half law the 15 caps; the removal the walk's last word —
+    the standing-block paths the stale re-bank the dead-mate
+    exclusion + the order refuse). THE PROBE THE ROUND PAID: the
+    direct spill call the block the dig walk alone clears wears —
+    the survivor's sync the dying half the live partner the
+    dead-mate arg refuses (the 15 re-bank the probe caught, the
+    fix the signature the exclusion wears).
+- THE GUI'S OWN RHYTHM THE FLUSH BANKS: the slot edits while the
+  chest screen holds the close flush alone banks (the GUI the
+  modal law keeps — the comparator's verdict the close beat
+  converges; the vanilla's per-change updateNeighbourForOutputSignal
+  the player-observable difference the modal screen never wears).
+- Suite: 2631 passed / 0 failed / 22 ignored (+2 vs autopush-130's
+  2629); verify_goldens.sh 18/18 PASS rms 0.000 (the fill lane no
+  golden scene touches — no regeneration); cargo fmt --check 27273
+  = the 130 baseline EXACTLY (the init comments the width fold
+  shortened — zero new fmt debt).
+- Pushed 60dc5fe (v0.3.855, the container-analog lane).
+
+Stage Summary:
+- THE COMPARATOR READS THE CHEST: stock a chest, close the lid, the
+  comparator behind it speaks the fullness — the lone stack the 1,
+  the 13-full chest the classic 7, the full chest the 15, the empty
+  the 0 the same override wears; the double chest the two halves the
+  one 54-slot read answers, the stone the chest hides the
+  through-wall probe answers, the break the entry the air drops and
+  the survivor the own-half law banks. The 26.2 formula the
+  lerpDiscrete fold the bytecode verbatim wears.
+- NEXT CANDIDATES: the furnace trio's own analog read (the
+  furnace_stores the 3-slot law the same formula wears — the lit
+  furnace the comparator's classic read, the sync sites the flush/
+  spill walks the same shape), the item-frame analog read (the
+  max fold's other half — the entity lane), the sticky-pull arm's
+  own head slide (the base cell's own BE the vanilla answer), the
+  dropper/dispenser shot lanes (the observer's classic feed).
+
+---
+Task ID: autopush-132
+Agent: cron autopush (Job 384925, 2026-10-22 ~19:41 +08:00)
+Task: the standing autopush round — the environment held (repo clean @
+bb41dbd v0.3.855 + mirror, cargo 1.99.1 + the caches alive). THE LANE
+the 131 entry's next-candidates head named: THE FURNACE TRIO'S OWN
+ANALOG READ — the comparator's container lane the furnace half the
+round answers (the chest/barrel fill the 131 round banked, the
+furnace/blast-furnace/smoker trio the same formula the round rides).
+
+Work Log:
+- THE JAR'S OWN CHAIN the 26.2 classpath spoke (scripts/
+  raw_disasm.py):
+  * AbstractFurnaceBlock.hasAnalogOutputSignal — the iconst_1
+    speaks (the override the whole family inherits);
+  * AbstractFurnaceBlock.getAnalogOutputSignal — the
+    AbstractContainerMenu.getRedstoneSignalFromBlockEntity
+    (Level.getBlockEntity(pos)) walk the GENERIC container lane
+    answers — the special cooking-progress formula the memory
+    guessed the jar NEVER banks, the fill formula the furnace wears;
+  * AbstractContainerMenu.getRedstoneSignalFromBlockEntity — the
+    instanceof Container gate the furnace BE passes, the
+    getRedstoneSignalFromContainer the SAME lerpDiscrete formula
+    over the THREE slots (INPUT 0 FUEL 1 RESULT 2 the FurnaceMenu
+    ctor wears — the 131 round's container_analog_signal the whole
+    verdict re-wears, no world.rs change the lane needed);
+  * AbstractFurnaceBlockEntity.serverTick — the
+    updateNeighbourForOutputSignal the walk NEVER calls: the
+    comparator re-read the setBlock(pos, state.setValue(LIT, flag),
+    3) walk pc 399 alone rides (the lit flip the block update
+    speaks, the between-flips ticks the push the vanilla furnace
+    never wears — the honest lag the house law keeps).
+- screens.rs the verdict:
+  * container_fill_sync the is_orientable_furnace branch the SIX
+    kinds the lit pairs keep — the trio the one-cell read banks
+    (the chest's DOUBLE the union the furnace family never
+    partners: getContainer's allowOverlap walk the chest block
+    alone serves), the fill the same formula the map inserts, the
+    through-wall probe the solid furnace the wrapper's own arms
+    already serve;
+  * THE FIVE RIDE LANES: the close flush the fill+broadcast rides
+    (the chest's own stopOpen law the modal convergence wears),
+    the break the entry the air drops (the fill's death ride the
+    spill walk answers), the open-another switch the prev cell's
+    tick-worn trio the re-bank serves, the boot parse the stocked
+    furnaces the restart the fills banks (the stale cell the
+    world's own gate the air-arm refuses), the background tick's
+    lit flip the re-read+broadcast serves (the vanilla flag-3 law
+    the world walk's flip arm answers).
+- THE FMT DEBT THE ROUND ALMOST WORE: a stray `cargo fmt` the
+  whole-repo rewrite spoke (113 files, 178k lines — the house's
+  intentional 27300-line --check debt the run would have
+  clobbered); the `git checkout -- .` the revert answered, the
+  replay the same edits the byte-identical tree restored, the
+  --check count 27300 = the clean-HEAD count EXACTLY the zero-new-
+  debt verdict keeps (the plain-`cargo` 0-line reading the
+  command-not-found stderr the 2>/dev/null swallowed — the
+  $HOME/.cargo/bin/cargo the honest count speaks).
+- Suite: 2633 passed / 0 failed / 22 ignored (+2 vs autopush-131's
+  2631); verify_goldens.sh 18/18 PASS rms 0.000 (no regeneration);
+  cargo fmt --check 27300 = the clean-HEAD count EXACTLY.
+- Pushed 1770710 (v0.3.856, the furnace trio's analog read).
+
+Stage Summary:
+- THE COMPARATOR READS THE FURNACE: stock the trio, the comparator
+  behind speaks the fill — the lone stack the 5, the stocked
+  (32/64/13) the classic 8, the empty the 0 the presence keeps,
+  the break the entry the air drops; the smelting furnace the lit
+  flips the comparator's re-read rides (the vanilla flag-3 law),
+  the restart the boot parse the fills banks, the switch the prev
+  cell's trio the re-bank serves. The 26.2 chain the bytecode
+  verbatim wears — the generic container lane the furnace family
+  answers, no special formula the jar ever spoke.
+- NEXT CANDIDATES: the item-frame analog read (the max fold's
+  other half — the entity lane the getInputSignal pc 155-164
+  banks), the sticky-pull arm's own head slide (the base cell's
+  own BE the vanilla answer), the dropper/dispenser shot lanes
+  (the observer's classic feed), the max-stack table the 16/1
+  items the fill formula's own limit wears.
+
+---
+Task ID: autopush-133
+Agent: cron autopush (Job 384925, 2026-10-22 ~20:21 +08:00)
+Task: the standing autopush round — the environment held (repo clean @
+6a36819 v0.3.856 + mirror, cargo 1.99.1 + the caches alive). THE LANE
+the 132 entry's next-candidates tail named: THE MAX-STACK TABLE THE
+FILL FORMULA'S OWN LIMIT — the comparator's container read the per-slot
+fraction the ITEM'S OWN cap divides (the 64 stand-in the snowball
+chest the 4 wore, the 15 the vanilla truth speaks).
+
+Work Log:
+- THE JAR'S OWN CHAIN the 26.2 classpath spoke (javap-less — the JRE
+  the sandbox wears, scripts/classfile_dump.py the house parser the
+  walks ride):
+  * Items.class <clinit> the ALIGNED mini-stack walk (the branch
+    assert the straight-line law wears): the registerItem/
+    registerBlock call's KEY arg (the references/ItemIds|
+    BlockItemIds getstatic) names the item, the MAX_STACK_SIZE law
+    THREE layers: (1) the visible Properties chain's stacksTo(I)
+    (the DataComponents.MAX_STACK_SIZE component the
+    Item$Properties.stacksTo body's component(MAX_STACK_SIZE, loc1)
+    fold writes) + the 1-setting walks the Properties class's own
+    bodies name (durability(I) the iconst_1 component writes;
+    sword/axe/pickaxe/hoe/spear/tool the
+    ToolMaterial.applyToolProperties -> applyCommonProperties ->
+    durability chain rides; humanoidArmor the durability delegate;
+    horseArmor/nautilusArmor/wolfArmor the stacksTo(1) calls; the
+    SHOVEL walk the props-body census added — ShovelItem.<init>'s
+    props.shovel(...) the dump spoke); (2) the Function lambdas the
+    registerItem(KEY, Function) overload hides (the wooden_axe the
+    args window never speaks — the lambda body the walks INSIDE
+    wears, the BootstrapMethods table the impl resolves, the Java
+    eval order the body's write the chain's AFTER makes the body's
+    value win); (3) the item-class ctor layer (the direct
+    Item::new-style method refs the class_ctor_value scan serves —
+    the class's <init> the stacksTo/durability/tool-walk invokes
+    reads); (4) the ColorCollection loop families (ONE invokedynamic
+    per family — lambda$static$47 the harnesses 1, $26 the dyed
+    shulker boxes 1, $132 the dyed bundles 1, $134 the dyed beds 1,
+    $148 the dyed banners 16 — each body the straight-line stacksTo
+    wears, the membership the 16-name shape the DyeColor enum's size
+    asserts).
+  * THE WALK'S OWN RIG the three bugs the round caught: the
+    invokedynamic's 4 operand bytes the decoder skipped (the drift
+    the post-first-lambda stream wore); the putstatic the pop and
+    the invokestatic the push never spoke (the +1-per-registration
+    drift the keys died of); the KEY_RE.match the anchor-at-0 never
+    matched AND the ItemIds.X.item() chain the sym ate (the result
+    the sym inherits, the search the prefix answers).
+- 295 rows banked (246 max-1 + 49 max-16, zero dropped): the
+  snowball/egg/ender_pearl/signs/empty-buckets/banner family the 16,
+  the swords/axes/pickaxes/shovels/hoes/spears/boats/minecarts/
+  armor/elytra/shield/filled-buckets/harness family the 1; the
+  water_bucket the 1 the jar's own row answers (the 16 the memory
+  guessed never rode); the ItemIds.POWDER_SNOW field the
+  powder_snow_bucket registry id the alias wears (the one row the
+  vocabulary's name differs on).
+- crates/mc-registry/src/generated/item_max_stack.rs the
+  item_rarity.rs shape wears (the name-keyed NON-64 rows, sorted for
+  the binary search); lib.rs the item_max_stack(id) accessor the
+  item_rarity law keeps (the missing rows the 64 default, the
+  unresolvable ids the 64 keep).
+- world.rs container_analog_signal the cap threads: the per-slot
+  fraction count / min(64, itemMax) — the AbstractContainerMenu's own
+  Math.min fold the jar's bytecode speaks. THE FULL-CHEST LAWS THE
+  SIZE NEVER BENDS: the 27 full snowball slots the 15, the 27 sword
+  slots the 15, the 27 stone slots the 15 (the count==cap full
+  weight); the 9 full snowball slots the 5 where the 64 stand-in the
+  2 wore; the 13 full slots the classic 7 the same wear.
+- Suite: 2635 passed / 0 failed / 22 ignored (+2 vs autopush-132's
+  2633); verify_goldens.sh 18/18 PASS rms 0.000 (no regeneration);
+  cargo fmt --check 27273 = the clean-HEAD count EXACTLY (the git
+  stash compare the zero-new-debt verdict wears).
+- Pushed fe2981d (v0.3.857, the fill formula's own limit).
+
+Stage Summary:
+- THE COMPARATOR READS THE CHEST THE ITEM'S OWN WEIGHT WEARS: a chest
+  of 27 full snowball stacks speaks 15 (the 64 stand-in said 4), a
+  chest of swords speaks 15 (the stand-in said 1), the 9-slot
+  snowball chest the 5 the stand-in never knew — the lerpDiscrete
+  formula the per-slot cap the jar's own component law banks.
+- NEXT CANDIDATES: the drop-lane caps the same table rides (the
+  spill chunk cap the stack.getMaxStackSize() min fold reads — the
+  drops.rs SPILL_STACK_MAX the 64 stand-in keeps, the merge cap the
+  pickup walk's own), the item-frame analog read (the entity lane
+  the getInputSignal pc 155-164 banks — the frame store the
+  placement/use/render lane the whole feature owns), the
+  dropper/dispenser shot lanes (the offline arm the wire's event
+  words never bank).
+
+---
+Task ID: autopush-134
+Agent: cron autopush (Job 384923, 2026-10-22 ~21:32 +08:00)
+Task: the standing maintenance round — the environment held (repo clean
+@ d070112 v0.3.857 + mirror, cargo 1.99.1 + the caches alive). THE LANE
+the 133 entry's next-candidates head named: THE DROP LANES THE SAME
+TABLE THE CAPS WEAR — the spill chunk cap, the neighbour merge and the
+inventory add the 64 stand-in wore, the item's own max the jar's law
+speaks.
+
+Work Log:
+- THE JAR'S OWN WALKS the 26.2 dumps bank (the Inventory class the
+  house parser reads):
+  * javap Containers.dropItemStack pc 112 — the `Math.min(roll,
+    stack.getMaxStackSize())` fold answers: the ITEM'S OWN cap the
+    min speaks (the 64 the fold never wore);
+  * javap ItemEntity.isMergable — the `count < maxStackSize` +
+    the `sum <= maxStackSize` verdicts the merge law banks;
+  * javap Inventory.addResource pc 37-51 — the
+    `getMaxStackSize(ItemStack)` fold the Math.min speaks (the
+    min(64, itemMax) the Container's own default wears — the empty
+    split the copyWithCount/min arm answers, the grow the same
+    space reads); javap hasRemainingSpaceForItem — the
+    `count < getMaxStackSize(stack)` gate the remaining-space scan
+    banks.
+- THE THREE LANES THE TABLE RIDES (drops.rs):
+  * the spill chunk `roll.min(item_max_stack(item))` — the
+    SPILL_STACK_MAX constant the table read answers (the per-item
+    cap no single number keeps);
+  * the merge `sum <= item_max_stack(item)` + the full-stack gate
+    (the snowball pair 10+10 the 16 refuses, the 5+5 accepts, the
+    16-count entity the gate skips);
+  * the inventory add `count < min(64, itemMax)` the space fold (the
+    20-snowball add the 16+4 split the two slots wears where the 64
+    stand-in the single 20-slot spoke, the full 16-slot the scan
+    refuses, the sword pile one entity per count the five slots
+    fills).
+- THE SPILL'S OWN SLICE: the 100-snowball spill the 16-capped chunks
+  wear (the 10..30 rolls the 16 caps), the 5-sword spill the FIVE
+  single-count entities (the unstackable the roll the 1 caps — the
+  vanilla's own per-sword split).
+- +3 tests: the spill cap (the 16-band the chunks wear, the sword
+  singles the five chunks speak, the sums the stacks keep), the
+  merge cap (the refuse/accept/full-gate trio the 16-stack wears),
+  the add cap (the 16+4 split, the full-slot refuse, the
+  one-per-slot swords).
+- Suite: 2638 passed / 0 failed / 22 ignored (+3 vs autopush-133's
+  2635); verify_goldens.sh 18/18 PASS rms 0.000 (no regeneration);
+  cargo fmt --check 27273 = the clean-HEAD count EXACTLY (the stash
+  compare the zero-new-debt verdict wears — the round's own test
+  lines the rustfmt shape the replay restored).
+- Pushed 3db537b (v0.3.858, the drop lanes' caps).
+
+Stage Summary:
+- THE DROP LANES THE ITEM'S OWN WEIGHT WEARS: a broken chest of 100
+  snowballs spills 16-capped chunks (the 30-count chunks the
+  stand-in spoke, gone), five swords spill five single entities, the
+  snowball drops refuse to merge past 16, the pickup fills a
+  snowball slot to 16 and opens the next — the whole drop arc the
+  jar's own per-item caps wear, the table the 133 round banks the
+  three lanes ride.
+- NEXT CANDIDATES: the item-frame analog read (the entity lane the
+  getInputSignal pc 155-164 banks — the frame store the
+  placement/use/render lane the whole feature owns), the
+  dropper/dispenser shot lanes (the offline arm the wire's event
+  words never bank), the max-stack table the GUI's own place/split
+  walks ride (the chest screen's shift-click laws the 64 the stand-
+  in keeps).
+
+---
+Task ID: autopush-135
+Agent: cron autopush (Job 384923, 2026-10-22 ~23:0x +08:00)
+Task: the standing maintenance round — the environment held (repo clean @
+f8a62c1 v0.3.858 + mirror, cargo 1.99.1 + the caches alive). THE LANE
+the 134 entry's next-candidates head named: THE ITEM FRAME'S OWN
+ANALOG READ — the comparator's entity lane the getInputSignal pc
+155-164 banks, the frame store the placement/use/render lane the
+whole feature owns.
+
+Work Log:
+- THE JAR'S OWN WALKS the 26.2 dumps bank (the house classfile parser):
+  * javap ItemFrame.getAnalogOutput — the `getItem().isEmpty()` early
+    return the 0 the empty frame speaks, the `getRotation() + 1` fold
+    the 1..=8 band the famous max-8 signal wears (the rotation slot
+    the setRotation's own %8 wrap keeps);
+  * javap ComparatorBlock.getInputSignal pc 104-168 — the getItemFrame
+    AABB scan the SECOND cell (`pos.relative(FACING).relative(FACING)`
+    — the through-wall read the wall the conductor wears) the
+    `Math.max(j, fill)` fold + the `j != 0` verdict the quiet keep
+    banks; javap getItemFrame — the cell-bounds AABB the first frame
+    or the null keeps;
+  * javap Level.updateNeighbourForOutputSignal pc 3-130 — the
+    Direction.Plane walk the FOUR horizontal arms keep: the DIRECT arm
+    the COMPARATOR neighbor the neighborChanged serves, the CONDUCTOR
+    arm the two-steps-away comparator the through-wall read answers;
+  * javap ItemFrame.interact — the STORE lane (the held stack the
+    count-1 copy the setItem's copyWithCount(1) fold banks, the
+    consume(1) the survival shrink wears, the add_item voice the
+    non-empty arm plays) the EMPTY frame alone serves, the ROTATE lane
+    (the rotate_item voice opens, the `setRotation(getRotation() + 1)`
+    the %8 wrap banks) the filled frame + empty hand answers, the
+    getSlot(0) sneak swap the filled frame's own access the hand keeps;
+  * javap ItemFrame.setItem/setRotation — the DATA_ITEM count-1 law,
+    the add_item voice, the updateNeighbourForOutputSignal tail the
+    comparator re-reads ride;
+  * javap ItemFrame.hurtServer — the shouldDamageDropItem verdict (the
+    explosion-or-stored disjunction) the FILLED frame the drop walk +
+    the remove_item voice banks (the frame item + the contained item
+    the dropChance-1.0 pair spawns, the infinite-materials player the
+    honest no-drop keeps), the EMPTY frame the super's kill the break
+    voice + the frame item's own drop keeps;
+  * javap HangingEntity.tick — the `checkInterval++ == 100` clock the
+    survives poll rides (the 0 reset the survives arm banks), the
+    !survives arm the discard + the dropItem(2-arg) walk serves;
+  * javap HangingEntityItem.useOn — the mayPlace HORIZONTAL-face gate
+    (`getAxis().isVertical()` the UP/DOWN refusal), the
+    `pos = clicked.relative(face)` frame cell, the survives gate, the
+    playPlacementSound + the addFreshEntity + the `shrink(1)` the
+    spawn lane wears.
+- THE LANES THE CLIENT RIDES (world.rs + screens.rs + mesher.rs +
+  world_view.rs):
+  * the World's frame_analog map — the (x,y,z) -> 1..=8 rows the
+    comparator_input_signal's through-wall arm reads (the Math.max the
+    container fill the j the fold serves, the absent frame the 0 the
+    max keeps), the 10 World-literal sites the field's init keeps;
+  * the ItemFrameEnt store (cell/facing/rotation/item/glow/
+    check_interval) the App banks, the box_() the 0.75 x 0.75 x 1/16
+    slab the calculateBoundingBox walk banks;
+  * the placement arm — the horizontal-face gate, the collision_shape
+    survives verdicts (the Empty shape the frame cell's no-collision
+    band wears, the non-Empty the support answers, the same-cell frame
+    the overlap gate refuses), the place voice, the survival consume;
+  * the interact arm — the store/rotate/sneak lanes the SUCCESS
+    verdict carries (the wire session the swing-only silence keeps);
+  * the punch arm — the drop pairs + the voices, the analog row the
+    death's own map ride drops;
+  * the 100-tick poll — the support's own loss the pop serves, the
+    break voice + the pair the survival drop speaks;
+  * the frame_analog_broadcast — the updateNeighbourForOutputSignal
+    walk the comparators re-arms (the +2 schedule the refresh verdict
+    banks, the pending dedup the re-consult refuses);
+  * the render lane — the baked block/item_frame model the yaw the
+    support-adjacency law rotates (NORTH 0 / WEST 90 / SOUTH 180 /
+    EAST 270 — the template's panel at the +Z edge the NORTH facing
+    wears), the face shade the rotated direction table keeps, the
+    contained item the FIXED pose the panel-plane ride + the clockwise
+    45-deg-per-slot fold the 0.5 scale wears, the glow variant the
+    block/glow_item_frame model keeps; the entity pass the drops lane
+    beside rides.
+- +5 tests: the analog band (the empty 0, the 1..=8 band, the %8
+  wrap), the through-wall read (the wall + the frame cell the 5
+  speaks, the Math.max both verdicts, the quiet keep) + the broadcast
+  walk's three arms, the place/store/rotate/take lanes (the voice +
+  the map + the consume walks), the punch pairs + the voices, the
+  survive poll + the live comparator chain (the store's +2 schedule
+  the output cache the 1 banks, the dig's own broadcast the re-read
+  arms, the pop the pair drops).
+- Suite: 2643 passed / 0 failed / 22 ignored (+5 vs autopush-134's
+  2638); verify_goldens.sh 18/18 PASS rms 0.000 (the frame lane no
+  golden scene touches — no regeneration); cargo fmt --check 27273 =
+  the clean-HEAD count EXACTLY (the stash compare the zero-new-debt
+  verdict wears — the insert's own comment the alignment group the
+  restore re-padded).
+- Pushed 4dc168c (v0.3.859, the item frame's analog read).
+
+Stage Summary:
+- THE COMPARATOR READS THE FRAME THROUGH THE WALL: the frame on the
+  far side of a solid block speaks the item's rotation — the empty
+  frame the 0, the upright item the 1, the seventh turn the 8 the
+  max-8 band caps, the rotation turns the comparator's re-read rides
+  (the setItem/setRotation's own updateNeighbourForOutputSignal law
+  the broadcast walk wears), the container fill the max fold the same
+  cell answers. THE FRAME PLAYS LIKE VANILLA: the wall click places
+  (the horizontal faces alone admit, the floor/ceiling click the
+  chain refuses), the item click stores (the count-1 law, the
+  consume, the add voice), the empty-hand click rotates (the +1 %8,
+  the rotate voice), the sneak click takes (the item the hand keeps),
+  the punch breaks (the pair the dropChance-1.0 law spawns, the
+  creative the honest no-drop keeps), the dug support the 100-tick
+  poll pops, the render the block-model proxy the contained item's
+  clockwise turns wears.
+- NEXT CANDIDATES: the frame's world persistence (the offline lane
+  the session-local store the container_stores file-save pattern the
+  boot parse rides), the dropper/dispenser shot lanes (the offline
+  arm the wire's event words never bank), the max-stack table the
+  GUI's own place/split walks ride (the chest screen's shift-click
+  laws the 64 the stand-in keeps).
+
+---
+Task ID: autopush-136
+Agent: cron autopush (Job 384925, 2026-10-22 23:41 +08:00 tick, executed
+~00:1x +08:00)
+Task: the standing autopush round — the environment held (repo clean @
+504ac46 v0.3.859 + mirror, cargo 1.99.1 + the caches alive). THE LANE
+the 135 entry's next-candidates head named: THE ITEM FRAMES' OWN
+PERSISTENCE — the session-local item_frames store the containers file's
+own fourth list banks, the restart the wall frames finally OUTLIVE.
+
+Work Log:
+- THE BANK'S OWN WALK (the container/furnace bank shape the same file
+  wears): item_frames_bank_to_nbt the BTree cell order the
+  deterministic bytes keep; each entry the x/y/z triple + the facing
+  (the 2..=5 band the mayPlace law keeps) + the rotation slot + the
+  glow verdict (the Nbt::Byte the vanilla NBT convention wears) + the
+  Item compound the count-1 law wears (the minecraft: prefix the store
+  parse's own id shape keeps, the unresolvable id the honest empty
+  compound keeps — never a guessed name the bank invents, the empty
+  frame the OPTIONAL empty compound the store parse speaks). The id +
+  the poll clock the session's own counters own — the file the (cell)
+  identity banks, the boot walk the ids re-mints.
+- THE PARSE'S OWN TOLERANCE (the store parse's walk the same gates
+  wear): the missing coordinate the entry skip keeps, the out-of-band
+  facing the mayPlace law skips, the unknown item name the empty frame
+  keeps, the rotation the setRotation's own wrap wears (rem_euclid —
+  the negative the euclid answer serves), the absent glow the false
+  verdict keeps, the absent count the fallback-1 field the store parse
+  speaks, the missing list the honest empties keep.
+- THE BOOT'S OWN RIDE (container_stores_load_once the fifth parse
+  serves): the offline world ALONE the restore answers (the wire
+  session the server's own frames the echo lane owns — the placement
+  arm's own gate the same verdict keeps), the in-memory cell the
+  file's row never clobbers (the same extend law the chest/furnace
+  banks wear), the ids the next_frame_id counter re-mints, the analog
+  rows the same parse banks (item_frame_analog the rotation+1 fold the
+  map inserts) + the frame_analog_broadcast the through-wall
+  comparators the boot re-arms.
+- THE SAVE RIDES THE FIVE LANES BANK: the placement tail (the spawn
+  the file banks), the frame_analog_ride (the store/rotate/take lanes'
+  shared tail the same write speaks), the punch's death ride + the
+  poll pop's ride (the removal the file's row drops). The save root
+  the fourth list wears (containers.nbt the same DataVersion header
+  the era pins).
+- THE FMT INCIDENT THE ROUND CAUGHT (the honest record): the first
+  commit attempt swept `cargo fmt --all`'s whole-repo reformat — the
+  27273-line pre-existing fmt debt CLEARED, 116 files churned, the
+  lane mixed with the mechanical diff. The stat review caught it (the
+  178k-line commit the lane's 475 lines never spoke); reset --mixed +
+  checkout restored the pristine tree, the lane re-applied debt-free
+  (the fmt --check count 27273 = the clean-HEAD count EXACTLY — the
+  round's own code the fmt taste answered in place), re-committed
+  surgical (Cargo.toml/lock + screens.rs only). LESSON: never run
+  `cargo fmt --all` in write mode in this repo — the 27273-line debt
+  the rounds PRESERVE; the pipeline `| head` trick the exit-code
+  capture lied about once (the $? reads head's, never fmt's).
+- THE GOLDEN RUNNER'S OWN RECOVERY: the verify_goldens.sh the sandbox
+  alone kept is GONE (the post-wipe rounds' 18/18 runner never lived in
+  the repo); the git history's check rows the 5 dedicated scenes'
+  canonical args bank again — chest_pair (dev-78: --body --body-yaw 0
+  --body-pitch=-12 --ui-frame 30 --seed 20260214), furnace_lit (dev-75:
+  the same + --settle-ticks 15), furnace (dev-76: --ui-frame 30 --seed
+  20260214), chest_double/creative the plain --ui-frame 30 row wears.
+  The next round the 19-row script file re-homes (scripts/ owns it,
+  golden_matrix.sh the 14 core rows keep).
+- +3 tests: the bank/parse roundtrip (the BTree cell order, the glow
+  byte, the count-1 law, the id/poll-clock re-mints, the empty
+  compound), the tolerant parse (the coord-less skip, the 0/1/6 facing
+  skips, the unknown-name empty, the 9->1 + (-1)->7 wraps, the absent
+  glow/count fallbacks, the missing/wrong-tag list the empties keep),
+  the persistence arc (the place/store/rotate lanes the file banks,
+  the fresh app's load-once the frame re-mints + the analog row 2
+  banks, the second life's own turn the file re-banks, the third life
+  the rotation 2 + the analog 3 wears, the punch the file's row drops,
+  the restart the empty truth keeps).
+- Suite: 2646 passed / 0 failed / 22 ignored (+3 vs autopush-135's
+  2643); goldens 19/19 PASS rms 0.000 against the FRESH release build
+  at the lane's own HEAD (14-row golden_matrix.sh + the 5 dedicated
+  scenes' canonical args; NO regeneration — the persistence lane no
+  render path touches); cargo fmt --check 27273 = the clean-HEAD count
+  EXACTLY.
+- Pushed 4e961f8 (v0.3.860, the frames the restart outlive).
+
+Stage Summary:
+- THE WALL FRAME SURVIVES THE RESTART: the placed frame the session
+  closes and the file keeps — the reload the frame re-mints (the
+  cell/facing/rotation/item/glow the same rows wear), the stored item
+  the count-1 law the reload answers, the second turn the next boot
+  wears, the punch the file's row drops, the comparators behind the
+  wall the boot's own broadcast re-arms. THE WHOLE FRAME FEATURE THE
+  RESTART NOW OWNS: place, store, rotate, take, punch, pop — every
+  lane the file's truth banks.
+- NEXT CANDIDATES: the 19-row verify_goldens.sh the repo re-homes
+  (the check rows this round recovered — scripts/ owns the file), the
+  dropper/dispenser shot lanes (the offline arm the wire's event words
+  never bank), the max-stack table the GUI's own place/split walks
+  ride (the chest screen's shift-click laws the 64 the stand-in
+  keeps), the frame's glow item the render's own world lane the
+  comparator's max fold rides.
+
+---
+Task ID: autopush-137
+Agent: cron autopush (Job 384923, 2026-10-23 00:17:10 +08:00)
+Task: the standing autopush round — the environment held (repo clean @
+856a68c v0.3.860 + mirror, cargo 1.99.1 + the caches alive). THE LANE
+the 136 entry's next-candidates head named: THE GOLDEN RUNNER'S RE-HOME
+— the verify_goldens.sh the repo itself owns, the 19 rows the file
+speaks.
+
+Work Log:
+- THE RE-HOME (git mv the rename serves): verify_goldens.sh ->
+  scripts/verify_goldens.sh — the golden tooling's own home
+  (golden_matrix.sh the 14-core companion stays, the full runner the
+  neighbor now); the root ./verify_goldens.sh the README documents a
+  3-line shim execs (exec "$(dirname "$0")/scripts/
+  verify_goldens.sh" "$@" — the documented invocation the move never
+  breaks, the canonical file the scripts/ dir owns).
+- THE 19TH ROW THE ROOT COPY MISSED: gui_world_dual_320x180 (dev-51's
+  offhand-lane golden — the sword the main hand wears, the shield the
+  offhand carries, the two submitArmWithItem lanes the one frame
+  renders) the 18-row root file never checked since the dual golden
+  landed — the root copy the restore kept was pre-dual.
+  golden_matrix.sh's row the canonical args keep (--screen world
+  --ui-frame 30 --held-item item/iron_sword --offhand-item
+  item/shield, no seed — the exact args the 136 round's 19/19 run
+  verified).
+- THE HEADER THE COUNT CAUGHT: the "eight GUI screens" comment the 15
+  GUI rows the text now speaks (the six originals + the held,
+  held-swing, dual world scenes + the chest, double-chest, placed-pair,
+  furnace, lit-furnace, creative-picker canvases); the cd the new home
+  wears (dirname/.. — scripts/ the file lives in, the repo root the
+  checks still anchor).
+- THE STASH INCIDENT THE ROUND HANDLED (the honest record): the
+  fmt-probe stash push/pop (the untracked shim aboard) hit the
+  "verify_goldens.sh already exists, no checkout" pop error — the
+  tracked changes applied, the shim content the working tree already
+  wore, the stash the drop released; the content the git-diff walk +
+  bash -n + the 19-check count re-verified intact (the rename the
+  flatten to add+modify wore — the end state the lane's bytes keep,
+  the old runner's content the git history still banks).
+- THE FMT COUNT THE WORKTREE PROBE SETTLED: 27300 at the lane's tree =
+  27300 at HEAD EXACTLY (git worktree add -> cargo fmt --check ->
+  remove — the stash the probe's first try wore); the 136 entry's
+  27273 the count-moment drift wore; the lane's diff ZERO .rs files
+  the debt never moves by construction.
+- Suite: 2646 passed / 0 failed / 22 ignored (2309 mc-client + 157
+  mc-protocol + 100 mc-registry + 80 mc2rs-pixel — the 136 count
+  EXACTLY; the mc-client run alone 543s, the 10-minute tool cap the
+  per-crate split answered); goldens 19/19 PASS rms 0.000 through the
+  re-homed runner via the root shim (the release build the script's
+  own first step served, 1m52s); NO regeneration — the move no render
+  path touches, every golden byte the same.
+- Pushed 7aa9b8d (v0.3.861, the golden runner the repo owns).
+
+Stage Summary:
+- THE GOLDEN CONTRACT THE REPO ITSELF ENFORCES NOW: the 19-row runner
+  the scripts/ dir owns, the root shim the README's invocation keeps —
+  the next wipe the sandbox's copy the repo never needs.
+  ./verify_goldens.sh the one command the full 19-golden truth speaks,
+  the dual-wield row the 18-row copy missed the check the runner now
+  wears.
+- NEXT CANDIDATES: the dropper/dispenser shot lanes (the offline arm
+  the wire's event words never bank), the max-stack table the GUI's
+  own place/split walks ride (the chest screen's shift-click laws the
+  64 the stand-in keeps), the frame's glow item the render's own world
+  lane the comparator's max fold rides, the README's golden section
+  the 19-row runner's own row the text could name.
+
+---
+Task ID: autopush-138
+Agent: cron autopush (Job 384923, 2026-10-23 00:47:11 +08:00)
+Task: the standing autopush round — the environment held (repo clean @
+bfb8573 v0.3.861 + mirror, cargo 1.99.1 + the caches alive). THE LANE
+the 137 entry's next-candidates head named: THE ITEM'S OWN MAX THE
+GUI'S OWN ADDS WEAR — the belief-add walks + the offline /give the
+flat-64 stand-in shed.
+
+Work Log:
+- THE LAW the 133/134 forensics bank: hasRemainingSpaceForItem the
+  `count < getMaxStackSize(stack)` gate (the min(64, itemMax) the
+  Inventory's own fold wears), addResource the empty split the
+  copyWithCount/min arm answers — the registry rows the 64 never
+  exceed (the 133 round's 295 rows: 246 max-1 + 49 max-16) so the
+  item's own max the cap answers (the snowball the 16, the sword the
+  1, the plain blocks the 64 keep).
+- THE FIVE WALKS THE CAP THREADS (screens.rs): the offline /give's
+  two passes (the merge tops partials to the item's own max, the
+  fresh fill the min(cap, remaining) wears — the 100-snowball grant
+  the six 16s + the 4 lands, the 3-sword grant the three singles
+  wears), belief_inventory_add (window-0), belief_table_inventory_add
+  (the crafting menu's 37..45/10..37), belief_chest_inventory_add
+  (the mirror's 54..62/27..53 the menu-id notes name),
+  belief_furnace_inventory_add (30..38/3..29) — the has_space gate
+  `sc < cap` the merge law rides, the landing space `cap - count` the
+  fill wears; the CASE D swap's SPLIT law (the max fold the split
+  arms already wore) the ADD's tail now matches — the swap's overflow
+  the fresh slots wear where the flat-64 the single row overfilled.
+- +3 tests: the give chunk law (the 16-cap chunks, the partial
+  top-up, the cap refusal, the unstackable singles), the belief
+  landing law (the 16+4 split, the all-16 refusal the leftover
+  returns, the one-per-slot swords, the 64 keep), the chest/furnace/
+  table re-keyed splits (the menu-id changed rows the mirror bands
+  name). THE SWAP CASE D TEST the vanilla truth re-speaks: the
+  30-egg hover the row's remaining space the cap takes (4 + 12 = 16),
+  the overflow the fresh slots wear (16 + 2) — the whole-hover-lands
+  34 the flat-64 bug spoke, the changed map's four rows the
+  correction name.
+- THE FMT INCIDENT THE ROUND HANDLED (the honest record): the mid-
+  lane `cargo fmt` formatted the WHOLE workspace (114 files, the
+  27273-line pre-existing debt the bare fmt would have moved) — the
+  tree the `git checkout -- .` restored, the lane the screens.rs-only
+  hunks re-applied (the backup-probe the whole-file reformat caught:
+  11824+/7118- the bare fmt wore, the restore the convention keeps).
+  cargo fmt --check: the screens.rs file the lane's diff carries the
+  ZERO debt across repeated full-tree runs (the workspace's own
+  pre-existing debt the count's sandbox variance wears — 27273/
+  32446/21563 the parallel rustfmt children's truncation spoke — the
+  per-file probe the honest verdict serves: screens.rs absent the
+  check's diff every run, HEAD and lane alike).
+- Suite: 2649 passed / 0 failed / 22 ignored (+3 vs autopush-137's
+  2646; 2312 mc-client + 157 mc-protocol + 100 mc-registry + 80
+  mc2rs-pixel); goldens 19/19 PASS rms 0.000 through the re-homed
+  runner (NO regeneration — the add lane no render path touches,
+  every golden byte the same).
+- Pushed 79b31cb (v0.3.862, the item's own max the adds wear).
+
+Stage Summary:
+- THE GUI'S STACKS THE ITEM'S OWN TRUTH STACKS: the chest screen's
+  belief the 16-snowball pile the cap believes, the sword pile the
+  singles the inventory keeps, the /give command the chunks the jar's
+  own max speaks — the flat-64 stand-in the whole ADD lane sheds, the
+  fill-formula/spill/merge/inventory lanes the 133/134 rounds banked
+  the belief tail now answers.
+- NEXT CANDIDATES: the dropper/dispenser shot lanes (the offline arm
+  the wire's event words never bank), the frame's glow item the
+  render's own world lane the comparator's max fold rides, the
+  README's golden section the 19-row runner's own row the text could
+  name, the swap CASE B/C arms the sub-64 items the mayPlace tails
+  the next probe wears.
+---
+Task ID: autopush-139
+Agent: cron autopush (Job 384923, 2026-10-23 02:02:12 +08:00)
+Task: the standing autopush round — the environment held (repo clean @
+ac65979 v0.3.862 + mirror, cargo 1.99.1 + the caches alive). THE LANE
+the 138 entry's next-candidates head named: THE DISPENSER/DROPPER'S
+OWN OFFLINE SHOT — the offline arm the wire's event words never
+banked.
+
+Work Log:
+- THE FORENSICS the classfile dump banks (the .mc2rs/classpath client.jar):
+  javap DispenserBlock.neighborChanged pc 2-113 — the
+  `hasNeighborSignal(pos) || hasNeighborSignal(pos.above())` flag, the
+  rising-edge `scheduleTick(pos, this, 4)` + setValue(TRIGGERED=1)
+  arms, the falling edge the flag-2 clear ALONE keeps (the pc 99-109
+  walk the schedule never serves); javap tick pc 4-7 → dispenseFrom
+  pc 5-134 — the random-slot walk, the -1 the levelEvent-1001 fail
+  voice keeps; javap DispenserBlockEntity.getRandomSlot — the
+  non-empty list pick; javap DefaultDispenseItemBehavior.spawnItem —
+  the `d3 = nextDouble()*0.1 + 0.2` + the `triangle(stepX*d3,
+  0.0172275*6)` triple + the two y-subtract arms (0.15625 horizontal /
+  0.125 vertical) + the 0.7 offset; javap DispenserBlock
+  .getDispensePosition — the center + 0.7*step fold; javap the
+  DispenseConfig builder — uncertainty 6.0 / power 1.1 + the
+  `(0.7, Vec3(0.0, 0.1, 0.0))` position lambda; javap Projectile
+  .shoot → getMovementToShoot — the normalize +
+  triangle(0, 0.0172275*uncertainty) + scale(power) + the
+  atan2*57.2957763671875 rotations; javap ProjectileDispenseBehavior
+  — the overrideDispenseEvent orElse 1002 launch voice; javap
+  DropperBlock.dispenseFrom — the front-container arm the
+  copyWithCount(1) + addItem + the taken-fold shrink speaks, the
+  container arm the NO-SOUND keeps; javap DispenserBlock
+  .getStateForPlacement pc 8-20 — the
+  `getNearestLookingDirection().getOpposite()` SIX-direction byte.
+  THE JAR'S OWN MODEL WALK the pool's luck spoke: the orientable
+  parent's textures ride furnace_side/furnace_top the generator's
+  pool ALREADY carried — only the four fronts the tail banks.
+- THE ATLAS PIN (scripts/autopush139_dispenser_pin.py, the idempotent
+  124..129 shape): TILE_924..927 at the POOL TAIL (every existing
+  index holds), N_KINDS 776->778, KIND_NAMES/REGISTRY_NAMES the
+  "dispenser","dropper" tails, FACE_TILES [79,79,80,80,79,924] +
+  [79,79,80,80,79,926], TINTS zeros, DOOR_MODEL empties,
+  ENTITY_HEAD_FACES TILE_NONE rows, TILE_NAMES tails, the named
+  consts; world.rs NAME_OF rows + the x27/x21 asserts bumped;
+  screens.rs the x8 asserts. THE FMT INCIDENT THE ROUND HANDLED
+  AGAIN (the honest record): the `cargo fmt -p mc-client` the whole
+  crate formatted (48 files, the 27k-line pre-existing debt moved) —
+  the tree the checkout restored; the SECOND mistake the whole-FILE
+  rustfmt wore (the lane's own files carry the debt — the whole-file
+  pass rewrites them) — the same checkout answered; THE STASH
+  RECOVERY the lane's own bytes banked (the fsck dangling-commit
+  walk the pre-fmt stash df01694 found — the git stash store/pop the
+  +1374 lines restored EXACTLY). The lane's hunks the hand-styled
+  form keep (the 138 entry's own discipline — the whole-file passes
+  the per-file debt the repo never asked to move).
+- THE LANES THE CLIENT RIDES: world.rs the two kind seats (776/777) +
+  the variant byte (the DIRECTION_NORMAL facing low 3 bits — the
+  barrel family's own vocabulary — + the TRIGGERED bit 0x08 the high
+  seat) + dispenser_placement_byte (the BY_2D compass [3,4,2,5] the
+  family's own vocabulary answers — the furnace's 1..4 band the
+  sibling lane's own convention keeps, the two vocabularies the two
+  lanes never share [the barrel's own furnace-byte passthrough the
+  latent mismatch the round's fresh decode sidesteps]) +
+  dispenser_input_signal (the direct + above-QC arms) + the pure laws
+  (dispenser_random_slot / dispense_position /
+  dispense_projectile_position / dispense_item_velocity /
+  projectile_shoot_law / dispenser_insert_into) + the dispenser_ticks
+  queue (the dedup + the deterministic drain the comparator's own
+  shape wears) + the x10 World initializers; the mesher the
+  dispenser/dropper front walk (the horizontal facings the front
+  tile travels, the vacated north the side keeps; the vertical
+  facings the *_vertical tile the front face wears, the REST the
+  furnace_top master — the dispenser_vertical model's own #side
+  authoring); screens.rs the consult arm (the changed cell + six the
+  piston scope wears, the rising edge the bit + the schedule banks,
+  the falling edge the quiet clear, the collect-then-act shape the
+  borrow discipline wears) + tick_dispenser_beats (the 9-slot store,
+  the random pick, the DROPPER's front-container arm the
+  container_stores/furnace_stores sinks serve [the refused stack the
+  intact count keeps, the no-sound arm the vanilla answers], the
+  DEFAULT eject the ItemDrop the triangle velocity wears [1000], the
+  DISPENSER's arrow the shoot law the arrows vec flies [1.1 / 6.0 /
+  no-crit / 1002], the snowball/egg the honest DEFAULT the
+  projectile entity types the future lanes own) + the placement
+  stamp + the container_fill_sync arm (the nine the analog formula
+  answers) + the lane's own dispenser_rng stream (0x5EED_D155 — the
+  per-lane split the crop_rng convention keeps).
+- +3 tests: the family seats/bytes/placement walk, the input walk
+  (the direct arm, the above-QC arm, the diagonal refusal), the
+  dispense laws (the seeded slot pick, the 0.7 + two-subtract
+  positions, the velocity bounds, the shoot folds, the insert
+  verdicts).
+- VERDICT THE ROUND'S OWN HONEST RECORD KEEPS: goldens 19/19 PASS
+  rms 0.000 (the release build 3m21s served — NO regeneration: the
+  pin the pool-tail append the every-existing-index law wears, every
+  golden byte the same); mc-protocol 157/157 + mc-registry 100/100 +
+  cargo check --all-targets clean. THE MC-CLIENT SUITE THE SANDBOX'S
+  OWN CEILING CROSSED — the platform's own resident grew past the
+  margin the .cargo baseline's ~2G peak shape asked (the dev-103
+  comment's own numbers speak), the test-bin rustc the OOM killer
+  took 17 attempts deep (cgroup v1 memory.events oom_kill the count
+  banks); the levers the round spent: codegen-units 1/256, the
+  release profile without lto, lld --no-keep-memory (the .cargo
+  config the flag keeps — the slower-but-alive shape the next rounds
+  inherit), -Zthreads=0 serial frontend, MALLOC_CONF jemalloc decay
+  — the clean-138-TREE STASH PROBE THE ENVIRONMENTAL VERDICT KEEPS
+  (the untouched HEAD the same SIGKILL wore — the lane's own +1374
+  lines the 0.5% delta the peak never explains). The lane's own +3
+  the all-targets typecheck compiles; THE NEXT FRESH-SESSION WINDOW
+  (the platform restart the python's ~1.9G resident the pre-growth
+  size restores) THE 2731-TEST GATE RE-RUNS FIRST — the head duty
+  the entry banks.
+- Pushed 5ea9543 (v0.3.863, the dispenser/dropper's own offline shot).
+
+Stage Summary:
+- THE DISPENSER THE WIRE'S OWN WORDS SPEAK OFFLINE: the lever's flip
+  the shot the four-tick beat serves, the empty inventory the fail
+  voice keeps, the dropper the chest the silent insert wears, the
+  arrow the 1.1/6.0 the launch voice flies, the comparator the nine
+  the analog fill reads — the placement the six-way byte stamps, the
+  vertical facings the front-vertical tiles render.
+- NEXT CANDIDATES (the head the gate's own debt wears): THE
+  MC-CLIENT SUITE the fresh-session window re-runs FIRST (the +3
+  tests the gate confirms, the 2731 total the count law keeps); the
+  dispenser's own 3x3 canvas (the DispenserMenu nine rows the
+  dispenser.png geometry wears — the chest lane's own shape the
+  click/belief/persistence walks keep, the GUI the loading door the
+  redstone shot the player's own hands serve); the snowball/egg
+  projectile entity types (the throw lane the dispenser shot's own
+  DEFAULT the honest stand-in retires); the shulker box the
+  getContainerAt walk the dropper's front read never serves.
+
+---
+Task ID: autopush-140
+Agent: cron autopush (Job 384923, 2026-10-23 03:17:13 +08:00)
+Task: the standing autopush round — the fresh-session window the 139
+entry's head duty banked (the gate re-runs FIRST), the lane the 139
+entry's next-candidates wear: THE DISPENSER'S OWN THROWN SHOT — the
+snowball/egg the honest DEFAULT retires.
+
+Work Log:
+- THE HEAD DUTY THE WINDOW ANSWERED: the full workspace gate RAN —
+  mc-client 2319 passed / 0 failed / 22 ignored + mc-protocol 157 +
+  mc-registry 100 + mc2rs-pixel 80 = 2656 passed / 0 failed / 22
+  ignored, the OOM ceiling the 139 entry's 17 SIGKILLs crossed CLEARED
+  (the platform's own resident the smallest boot the record wears —
+  the ~450MB python the window's 3.5G margin answers, the .cargo
+  baseline shape the serial lld --no-keep-memory linker keeps). THE
+  2731-TEST GATE the duty banked NOW SPEAKS — and the speak caught
+  THE 139 ROUND'S OWN NEVER-EXECUTED +2: the diagonal refusal's
+  (dx+1, dy+1, dz) seat the above cell's six-neighbor scan the
+  pos.above() arm covers (the POWERED verdict vanilla honestly speaks
+  — the TRUE diagonal (dx+1, dy+1, dz+1) the fix stamps), the dispense
+  laws' yRot the 180-only band the atan2's ±180 wrap refutes (the
+  -179.87 the -z shot's honest answer — the |±180| band the fix
+  keeps). The gate's own confirmation the duty's whole point wears.
+- THE DISK RESET THE ROUND SURVIVED (the second the record wears): the
+  mid-round wipe ate the forensics + the tool + the first lane
+  application whole — the recovery the protocol banks ran: the clone
+  (@682bfd3) + rustup 1.99.1 + recover_runtime_cache.py (SIX rounds
+  the CDN's resets wore — 2156 oggs the final fetch banks) + the
+  cache build (font.bin + textures.bin) + the baseline check. THE
+  LANE THE CONVERSATION'S OWN RECORD REPLAYED — the forensic
+  verdicts the in-context banks kept, the same anchors the same
+  edits re-wore.
+- THE FORENSICS THE RAW WALK BANKS (scripts/raw_trace.py — the new
+  tool the folding classfile_dump's loop bodies the straight-line
+  trace shows; the cp-walker the tag-15/header-offset lessons the
+  build fixed): javap Snowball.handleEntityEvent case 3 — the
+  `bipush 8` loop the case speaks, the `addParticle(getParticle(),
+  x, y, z, 0.0, 0.0, 0.0)` the ZERO wire velocity keeps (NO jitter
+  the egg's own call wears); javap ThrownEgg.handleEntityEvent case
+  3 — the ItemParticleOption loop the same count wears; javap the
+  DispenseConfig$Builder <init> — the ldc pair the uncertainty 6.0
+  the power 1.1 defaults bank; javap ProjectileItem.createDispenseConfig
+  — the interface default the snowball/egg inherit (NO override the
+  items speak); javap ProjectileDispenseBehavior.execute — the
+  `spawnProjectileUsingShoot(step, power, uncertainty)` call the
+  playSound's `orElse(1002)` voice keeps; javap Snowball.onHit — the
+  broadcastEntityEvent(3) + discard the NO-chick walk speaks; javap
+  SnowballItem/EggItem.asProjectile — the item factory the 26.2
+  shape wears.
+- THE LANES THE CLIENT RIDES: mob.rs the ThrownProjectileKind enum
+  (Egg/Snowball) + the EggProjectile kind field + the dispenser_shot
+  ctor (the projectile_shoot_law 1.1/6.0 the arrow's own walk + the
+  dispense_projectile_position 0.7/0.1 fold) + the throw_from's Egg
+  stamp; particles.rs the SnowballItem kind + breaking_snowball_shard
+  (the 9-draw BreakingItemParticle chain the egg's shard shares, the
+  ZERO wire velocity the ctor's internal drift alone keeps); screens.rs
+  the beat's 1002 branch (the arrow/thrown split the kind byte picks),
+  the break walk's chick gate (the SNOWBALL the roll never wears) +
+  the 8/10 burst branch, the snowball shard quad group (the
+  item/snowball sprite the sprite_uv namespace lane resolves).
+- +4 tests: the snowball shot (the fold position the flight window's
+  tolerance keeps, the 1.1 band, the shrink law, the 1002 voice), the
+  egg shot (the kind byte, the emptied slot's honest row, the DEFAULT
+  eject the lane never wears), the stone default keeps (the ItemDrop
+  the 1000 wears), the snowball break (the bipush-8 shards, the
+  NO-chick break, the zero-velocity rest).
+- fmt: the lane's hunks the hand-styled form keep (the 138/139
+  discipline — no whole-file passes the pre-existing debt never moves).
+- Suite: 2656 passed / 0 failed / 22 ignored (+4 lane tests, +2
+  corrected 139 rows; 2319 mc-client + 157 mc-protocol + 100
+  mc-registry + 80 mc2rs-pixel); goldens 19/19 PASS rms 0.000 (NO
+  regeneration — the lane no render path the existing kinds touch,
+  the snowball quads the break alone spawns, every golden byte the
+  same).
+- Pushed v0.3.864.
+
+Stage Summary:
+- THE DISPENSER THE THROWN FAMILY'S OWN SHOT SPEAKS: the lever's flip
+  the snowball the 1.1 power's arc flies, the egg the chick rolls'
+  break wears, the stone the honest DEFAULT keeps — the item's own
+  asProjectile factory the shot lane answers, the 8-particle break
+  the zero-velocity call renders.
+- NEXT CANDIDATES: the dispenser's own 3x3 canvas (the DispenserMenu
+  nine rows the dispenser.png geometry wears — the chest lane's own
+  shape the click/belief/persistence walks keep), the shulker box the
+  getContainerAt walk the dropper's front read never serves, the
+  thrown-shot's wire lane (the Add Entity word the live read banks),
+  the README's golden section the 19-row runner's own row the text
+  could name.
+
+---
+Task ID: autopush-141
+Agent: cron autopush (Job 384925, 2026-10-23 05:41:47 +08:00)
+Task: the standing autopush round — the lane the 140 entry's
+next-candidates wear: THE DISPENSER'S OWN 3x3 CANVAS (the
+DispenserMenu GUI the right-press door opens — the chest lane's own
+shape the per-cell store the click/belief/persistence walks keep).
+
+Work Log:
+- THE REPO THE CLEAN TREE ANSWERED (HEAD 6efbdd2, origin in sync, the
+  comparator dev-124 lane the history's own rounds long banked): the
+  140 entry's next-candidates head the round reads, the GUI lane the
+  interactivity priority serves.
+- THE FORENSICS javap 26.2 banks (the classfile_dump walk): javap
+  DispenserBlock.useWithoutItem pc 33-62 — the openMenu walk the
+  BlockEntity's own MenuProvider answers, the
+  awardStat(INSPECT_DISPENSER) the SUCCESS verdict carries; javap
+  DispenserBlockEntity — the NonNullList.withSize(9) items, the
+  createMenu the DispenserMenu ctor answers, the getDefaultName the
+  container.dispenser row wears; javap DropperBlockEntity — the SAME
+  menu class the container.dropper title answers; javap
+  DispenserScreen — the SINGLE CONTAINER_LOCATION
+  (textures/gui/container/dispenser.png) the dropper's own screen
+  shares, the init walk the CENTERED title
+  (titleLabelX = (imageWidth - font.width(title)) / 2, titleLabelY 6)
+  speaks; javap DispenserMenu — the GENERIC_3x3 menu type,
+  add3x3GridSlots(62, 17) the j + i*3 row-major 18-pitch order,
+  addStandardInventorySlots(8, 84), quickMoveStack the
+  moveItemStackTo(9, 45, true) reverse scan / moveItemStackTo(0, 9,
+  false) forward, removed the stopOpen tail.
+- THE LANES: screens.rs the ScreenKind::Dispenser variant + the
+  seven fields (the believed nine, the 36 mirror, the carried, the
+  rects, the panel, the open cell + kind u16) + open_dispenser_for
+  (the per-cell store the fresh nine inserts — the shot beat the
+  SAME container_stores map consumes, the standard rows the
+  player's own stock mirrors) + close_dispenser (the carried the
+  add walk home returns, the edited nine the flush banks, the
+  analog fill the comparator's back read re-banks — the
+  container_fill_sync + attach_wire_voice the furnace flush's own
+  shape wears) + render_dispenser (the REAL dispenser.png blitted
+  176x166 at the centered panel, the centered title the kind's own
+  lang row wears, the inventory label at +72, the hit boxes the
+  menu's own numbering lays, the icons/counts the furnace's own
+  draw keeps, the carried follow) + click_dispenser_slot (the
+  PICKUP tables the chest's own predictions speak — the left the
+  whole-stack take, the right the half, the carried the SAME table
+  the place-back serves, the shift quick-move the combined 45-slot
+  snapshot the menu's own rev/forward scans wear, the outside press
+  the -999 throw the furnace's own walk serves) + the press lanes
+  the direct dispatch keeps (the drag-place the chest's live shape
+  rides later) + the Escape/E/portal walk arms (the
+  screen_allowed_in_portal gate the fifth kind wears) + the
+  hovered_container arm + the use-lane door (the
+  dispenser/dropper right-press the OFFLINE world answers — the
+  sneaking player the arm skips, the wire session the server's
+  OpenScreen word owns) + dispenser_grid_slot the 62/17 3-pitch
+  helper.
+- +2 tests: the canvas round trip (the fresh nine, the hotbar take
+  the real row mutates, the grid seat the stack lands, the flush +
+  the analog fill the Some(1) banks, the reopen the store
+  remembered, the shift-click home the menu-44 hotbar seat the rev
+  scan answers, the carried's close ride), the two kinds' door (the
+  placed cell's press the screen opens, the sneaking press the
+  world keeps, the dropper the same screen the container.dropper
+  title banks, the per-cell stores the two cells keep).
+- fmt: the lane's hunks the hand-styled form keep (the fmt-check
+  diff count the HEAD's own 1539 wears — the pre-existing debt
+  never moved, the 138/139 discipline).
+- Suite: 2658 passed / 0 failed / 22 ignored (+2 lane tests; 2321
+  mc-client + 157 mc-protocol + 100 mc-registry + 80 mc2rs-pixel);
+  goldens 19/19 PASS rms 0.000 (NO regeneration — the lane a NEW
+  kind the existing render paths never touch, every golden byte the
+  same); cargo check --all-targets clean.
+- Pushed 0ad5122 (v0.3.865, the dispenser's own 3x3 canvas).
+
+Stage Summary:
+- THE DISPENSER THE PLAYER'S OWN HANDS LOAD: the right-press the
+  3x3 canvas opens, the transfer clicks the REAL inventory
+  mutates, the flush the edited nine the lever's own shot beat
+  dispenses — the comparator's analog read the close beat banks,
+  the two kinds the one screen the container.dropper title picks.
+- NEXT CANDIDATES: the dispenser's own wire lane (the GENERIC_3x3
+  menu type the OpenScreen word routes — the chest's live shape
+  the projection rides), the shulker box the getContainerAt walk
+  the dropper's front read never serves, the thrown-shot's wire
+  lane (the Add Entity word the live read banks), the README's
+  golden section the 19-row runner's own row the text could name,
+  the quickcraft drag arm the offline dispenser's carried press
+  the deferred place could wear.
+
+---
+Task ID: autopush-142
+Agent: cron autopush (Job 384925, 2026-10-23 06:32:16 +08:00)
+Task: the standing autopush round — the lane the 141 entry's
+next-candidates wear: THE DISPENSER'S OWN WIRE LANE (the GENERIC_3x3
+menu type the OpenScreen word routes — the chest's live shape the
+projection rides).
+
+Work Log:
+- THE REPO THE CLEAN TREE ANSWERED (HEAD 6b84b99, origin in sync).
+- THE FORENSICS javap 26.2 banks: the MenuType clinit order the
+  generic_9x6 5 the GENERIC_3X3 6 speaks (the
+  DispenserMenu/DropperBlockEntity pair the SAME menu class answers —
+  the chest's 2 the holder VarInts never share); the
+  OpenContainerState title_nbt the OpenScreen Component's own bytes
+  bank (the decode round owns it — the live title lane the honest
+  gap rides).
+- THE LANES: world_model.rs the MENU_TYPE_GENERIC_3X3 = 6 constant
+  the clinit-order doc banks; screens.rs live_container_updated the
+  GENERIC_3x3 arm FIRST (the store's projection opens the 3x3
+  canvas over the world — the nine 0..9 + the standard rows 9..45
+  the wire's own (0,0) emptiness rides, the window's id + revision
+  the echo identity banks, the AUTHORITATIVE carried the wholesale
+  replacement lands, the per-cell key the server's window never
+  banks, the bundle rows the chest's own feed wears) + the
+  None-drop arm the live dispenser closes back to the world (the
+  fresh stand-in the live lane never closes) + click_dispenser_slot
+  the WIRE arm (the chest's own shape — the believed rows the
+  pickup/split prediction mutates, the ContainerClick echo the
+  window's id + revision + the changed map rides, the shift
+  quick-move the 45-slot belief the QuickMove input's changed map
+  wears, the wholesale correction the next sync speaks) +
+  close_dispenser the wire arm (the Container Close packet the
+  window's id names, the belief resets with the window) + the
+  open() bundle lifecycle the fifth kind wears.
+- +2 tests: the wire window (the menu type 6 the screen opens over
+  the world, the 45-slot projection the nine + mirror ride, the
+  in-place update, the foreign menu the honest drop, the store's
+  drop the world returns, the offline stand-in the live lane never
+  closes, the re-join the lane re-arms), the click arc (the grid
+  seat's pickup the window-5 identity speaks, the place-back the
+  same PICKUP input, the shift quick-move the changed map the
+  hotbar-tail the rev scan takes, the close the Container Close
+  packet wears).
+- fmt: the lane's hunks the hand-styled form keep (the fmt-check
+  diff count the HEAD's own 1539 wears — the pre-existing debt
+  never moved).
+- Suite: 2660 passed / 0 failed / 22 ignored (+2 lane tests; 2323
+  mc-client + 157 mc-protocol + 100 mc-registry + 80 mc2rs-pixel);
+  goldens 19/19 PASS rms 0.000 (NO regeneration — the lane no
+  render path the existing kinds touch, every golden byte the
+  same); cargo check --all-targets clean.
+- Pushed bd16867 (v0.3.866, the dispenser's own wire lane).
+
+Stage Summary:
+- THE SERVER'S DISPENSER THE PLAYER'S OWN CURSOR LOADS: the
+  OpenScreen word the 3x3 canvas opens over the networked world,
+  the window's clicks the ContainerClick packet speaks, the close
+  the packet echoes — the wholesale correction the next sync
+  serves.
+- NEXT CANDIDATES: the live title lane (the OpenScreen Component's
+  own decode the container.dropper row the dropper's window banks —
+  the model's title_nbt the projection feeds), the quickcraft drag
+  arm the dispenser's carried press the deferred place could wear
+  (the chest's own live shape), the shulker box the getContainerAt
+  walk the dropper's front read never serves, the thrown-shot's
+  wire lane (the Add Entity word the live read banks), the README's
+  golden section the 19-row runner's own row the text could name.
+---
+Task ID: dev-143
+Agent: cron-agent-loop (Job 384925 round, trace 1a0a02c3c1060631-cron-agent-loop-202610230708)
+Task: ONE minimal step per the tick protocol — the worklog's NEXT CANDIDATES head: the live title lane (the OpenScreen Component's own decode the container.dropper row the dropper's window banks — the model's title_nbt the projection feeds).
+
+Work Log:
+- THE REPO THE CLEAN TREE ANSWERED (HEAD abf5ac7, origin in sync; the stale
+  dev-124 comparator summary the session rode — that lane the history's own
+  rounds long banked, the live HEAD the v0.3.866 dispenser window was).
+- THE HONEST GAP the v0.3.866 comment named now closed: the store's
+  title_nbt the projection NEVER fed (the LiveContainer's own shape the
+  field lacked), the live dropper window the kind-0 default misnamed (the
+  GENERIC_3x3 menu the BlockEntity pair shares — the title the ONLY
+  distinguishing row the canvas reads), the anvil rename the live window
+  never wore.
+- THE FORENSICS banked before the walk: the OpenScreen title the parse
+  RETAINS as the anonymous-root compound (skip_network_nbt's 0x0A gate —
+  the bare-string shapes the parse rejects, the decode lane the compound
+  forms alone answers); the render style NO forensics needed — the offline
+  canvases' centered 4210752 draw the 19 goldens the pixel law keeps (the
+  lane swaps the STRING the wire carries, never the draw).
+- THE LANES: world_view.rs the LiveContainer title_nbt field the store's
+  verbatim bytes ride (open_container_view the oc.title_nbt.clone() copy
+  the projection speaks); screens.rs decode_container_title the Component
+  walk the text-component tree reads (the text row the anvil literal
+  speaks, the translate row the lang table answers with the missing row
+  the KEY ITSELF banks — the Language.getOrDefault law, the extra list the
+  siblings ride, the bare list the concatenated children speak; the
+  scalars/styled-shapes the None keeps — the default lang row the canvas
+  banks, the %s args the gap the doc names); the GENERIC_3x3 arm the
+  decode lands (live_dispenser_title the resolution banks) + the
+  None-drop arm and close_dispenser the title dies with the window + the
+  3x3 canvas's title draw the live name renders (the None the
+  container.dispenser default the kind-key fallback banks).
+- THE 44 test-harness literals the new field wore (the brace-walking
+  script scripts/dev143_title_field.py the bulk insert spoke, the
+  reindent the field lines hand-styled keeps); the projection site the
+  real clone ride wears.
+- ONE false alarm the direct-binary run raised (the third-person helmet
+  lane 468 vs 0): the test the CWD-COUPLED law wears — the hardcoded
+  "assets-cache/jar" the lazy pass probes, cargo test's crates/mc-client
+  cwd the load-fail verdict keeps (the test's own premise), the repo-root
+  cwd the direct binary wears the load SUCCEEDS. The cargo gate green;
+  the test untouched (the environment coupling the pre-existing law is).
+- +2 tests: the decode walk (the text literal, the container.dropper
+  translatable the Dropper row answers, the missing row the key itself,
+  the extras the concatenation rides, the empty/truncated/styled Nones
+  the honest fallback keeps), the live window's title lane (the dropper
+  window the wire's own translatable banks, the custom name the fresh
+  window re-speaks, the empty root the None fallback, the store's drop
+  the title kills, the re-arm the next window's name rides).
+- fmt: the lane's hunks the hand-styled form keep (the fmt-check diff
+  count the HEAD's own 1539 wears — no hunk in the touched files).
+- Suite: 2662 passed / 0 failed / 22 ignored (2325 mc-client + 157
+  mc-protocol + 100 mc-registry + 80 mc2rs-pixel; +2 title tests);
+  goldens 19/19 PASS rms 0.000 (NO regeneration — the live lane no
+  golden scene renders, the offline title draw the same string keeps,
+  every golden byte the same); cargo check --all-targets clean.
+- Pushed 74e45f4 (v0.3.867, the live window's own title); the repo
+  mirror logs/worklog.md the same record wears (the auto-sync commit
+  rides).
+
+Stage Summary:
+- THE SERVER'S OWN WINDOW NAME THE PLAYER'S CANVAS WEARS: the OpenScreen
+  Component the decode lane reads, the live dropper window the "Dropper"
+  row banks, the anvil rename the live canvas renders — the title dies
+  with the window, the next window's own name re-speaks.
+- NEXT CANDIDATES: the chest/furnace/table windows the same decode ride
+  (the helper generic — the arms the live_dispenser_title shape mirrors),
+  the quickcraft drag arm the dispenser's carried press the deferred
+  place could wear, the shulker box the getContainerAt walk the dropper's
+  front read never serves, the thrown-shot's wire lane (the Add Entity
+  word the live read banks), the README's golden section the 19-row
+  runner's own row the text could name.
+---
+Task ID: autopush-144
+Agent: cron autopush (Job 384923, 2026-10-23 07:47:17 +08:00, trace 1a0a02c3c1060631-cron-agent-loop-202610230753)
+Task: ONE minimal step per the tick protocol — the worklog's NEXT
+CANDIDATES head: the chest/furnace/table windows the same decode ride
+(the helper generic — the arms the live_dispenser_title shape mirrors).
+
+Work Log:
+- THE REPO THE CLEAN TREE ANSWERED (HEAD 044f768, origin in sync; the
+  v0.3.867 live title lane the previous round wore).
+- THE GENERIC RIDE NOW LANDS: the OpenScreen Component's own decode
+  the THREE canvases the 3x3's round owned — the chest's
+  container.chest window, the furnace family's kind rows (the menu
+  14/10/22 the same arm routes), the table's container.crafting —
+  each the verbatim title_nbt the projection feeds, each the decode
+  lane the walk answers.
+- THE LANES: screens.rs the live_chest_title / live_furnace_title /
+  live_table_title fields the decode round's shape mirrors (each None
+  the default lang row the canvas banks, each dying with its own
+  window); the live_container_updated arms the decode lands (the
+  table's 46-slot store, the furnace's 39-slot, the chest's 63-slot
+  the projection feeds); the close paths the titles kill
+  (close_crafting_table / close_furnace / close_chest_container — the
+  player's OWN close the field drops) + the store's drop arm the same
+  law serves (the None-drop resets the three fields the dispenser's
+  line mirrors); the renders the live names wear — the chest's
+  left-edge 8,6 draw, the furnace's centered formula, the table's
+  29,6 — each the live gate the *_is_live flag speaks (the None the
+  default row banks, the offline canvas the same string wears — the
+  golden bytes the shape never moves).
+- +2 tests: the three-arm decode ride (the chest's text literal the
+  anvil rename speaks, the furnace's container.furnace translatable
+  the lang row answers, the table's container.crafting the same law
+  wears; the fresh window's own name re-speaks, the silent bytes the
+  None fallback banks, the store's drop every title kills, the
+  re-arm the next window's name rides — the one-window-at-a-time flow
+  the server's own close-between-windows law the drops wear), the
+  player's OWN close lane (close_chest_container / close_furnace /
+  close_crafting_table the titles kill — the offline stand-in the
+  dead field never reads, no stale name rides the golden's canvas).
+- fmt: the lane's hunks the hand-styled form keep (the fmt-check diff
+  count the HEAD's own 1539 wears — no hunk in the touched files).
+- Suite: 2664 passed / 0 failed / 22 ignored (2327 mc-client + 157
+  mc-protocol + 100 mc-registry + 80 mc2rs-pixel; +2 title tests);
+  goldens 19/19 PASS rms 0.000 (NO regeneration — the live lane the
+  *_is_live gate keeps, every golden scene the offline canvas renders,
+  the same string the same bytes draw); cargo check --all-targets
+  clean.
+- Pushed b8e599a (v0.3.868, the generic title ride).
+
+Stage Summary:
+- EVERY WIRED WINDOW THE SERVER'S OWN NAME WEARS: the OpenScreen
+  Component the chest/furnace/table canvases decode, the anvil rename
+  the live window renders, the title dies with its window — the same
+  law the 3x3's round spoke, the helper generic now banks.
+- NEXT CANDIDATES: the quickcraft drag arm the dispenser's carried
+  press the deferred place could wear (the chest's own live shape),
+  the shulker box the getContainerAt walk the dropper's front read
+  never serves, the thrown-shot's wire lane (the Add Entity word the
+  live read banks), the README's golden section the 19-row runner's
+  own row the text could name.
+---
+Task ID: dev-145
+Agent: cron-agent-loop (Job 384925, 2026-10-23 08:21:49 +08:00, trace 1a0a02c3c1060631-cron-agent-loop-202610230828)
+Task: ONE minimal step per the tick protocol — the worklog's NEXT
+CANDIDATES head: the quickcraft drag arm the dispenser's carried
+press the deferred place could wear (the chest's own live shape).
+
+Work Log:
+- THE REPO THE CLEAN TREE ANSWERED (HEAD 47c1746, origin in sync; the
+  v0.3.868 generic title ride the previous round wore).
+- THE DRAG NOW LANDS ON THE 3x3: the quickcraft walk the chest's
+  live shape wears the dispenser window's own lane speaks — the
+  carried press the drag arms, the motion the collect paints, the
+  release the distribution and the deferred place both serve.
+- THE LANES: screens.rs wire_dispenser_quickcraft_distribute the
+  packet triple over the 45-slot belief (the START the mask(0,type)
+  button the slot -999 keeps, the ADDs the mask(1,type) per painted
+  seat ride, the END the mask(2,type) the changed map the
+  distribution's own mutations names — the grid 0..9 the mirror
+  9..45 the same net fold keeps, the HUD row the mirror's hotbar
+  rows 27..36 the sync follows); qc_arm_dispenser the carried-
+  NON-EMPTY press the isQuickCrafting start speaks (the hovered seat
+  AND the outside press the arm answers, the between the k == -1
+  silence keeps, the OFFLINE SIM the direct dispatch keeps — the
+  drag the LIVE window alone wears, the offline place-back the
+  press lane never loses); qc_paint_dispenser the
+  shouldAddSlotToQuickCraft gates the motion answers (the count's
+  own law, the canItemQuickReplace pair, the plain slots' mayPlace
+  the base Slot's iconst_1 keeps); qc_distribute_dispenser_wire the
+  disjoint borrows ride; qc_release the 3x3's own branches wear
+  (the painted set the distribution answers, the empty-paint tail
+  the deferred place serves — the seat the PICKUP speaks, the
+  outside the -999 drop the wire_throw_outside rides, the between
+  the -1 no-op keeps); qc_carried/qc_seat_stack the 3x3's own
+  numbering the drag reads; on_press/on_right_press the arm/pickup
+  split the button keys (the left the type-0, the right the type-1,
+  the in-flight gate the other button's press silences);
+  on_left_release/on_right_release the qc gates the Dispenser arm
+  admits (the release lanes the distribution and the abort answer).
+- THE WIRE LAW the pre-existing test now wears:
+  the_wire_dispenser_clicks_speak_the_window the place-back block
+  the move+press+release sequence speaks (the carried press the
+  drag arms — the mouseClicked pcs 316-378 law the chest's own
+  round wore, the place-back the DEFERRED PLACE serves).
+- TOOLING NOTE the round's hunks wore: the edit-write pipeline the
+  `[m` byte-pair two hunks ate (the qc_seat_stack lanes the sed fix
+  spoke — the grep-verified counts the honest form bank); the bash
+  input the corruption never wore, the post-edit grep the invariant
+  keeps.
+- fmt: the lane's hunks the hand-styled form keep (the fmt-check
+  diff count the HEAD's own 1159 wears — no hunk the touched files
+  add; the 1539 the morning's HEAD measured the committed tree's
+  own count was, the round's own verify the 1159 both ways wore).
+- Suite: 2666 passed / 0 failed / 22 ignored (2329 mc-client + 157
+  mc-protocol + 100 mc-registry + 80 mc2rs-pixel; +2 drag tests);
+  goldens 19/19 PASS rms 0.000 (NO regeneration — the drag no
+  render path the golden scenes touch, every golden byte the same);
+  cargo check --all-targets clean.
+- Pushed 0c1db58 (v0.3.869, the dispenser's own drag).
+
+Stage Summary:
+- THE SERVER'S DISPENSER WINDOW THE PLAYER'S OWN DRAG PAINTS: the
+  one-each split and the even fold the release serves, the deferred
+  place the empty-paint tail speaks — the same vanilla walk the
+  chest round banked, the offline sim the direct dispatch keeps.
+- NEXT CANDIDATES: the shulker box the getContainerAt walk the
+  dropper's front read never serves, the thrown-shot's wire lane
+  (the Add Entity word the live read banks), the README's golden
+  section the 19-row runner's own row the text could name, the
+  quickcraft drag the offline dispenser sim could wear (the local
+  stores the same fold answers).
+---
+Task ID: dev-146
+Agent: cron-agent-loop (Job 384925, 2026-10-23 09:01:50 +08:00, trace 1a0a02c3c1060631-cron-agent-loop-202610230909)
+Task: ONE minimal step per the tick protocol — the worklog's NEXT
+CANDIDATES head-adjacent line: the thrown-shot's wire lane (the Add
+Entity word the live read banks — the server's dispenser shots the
+client's own flight lane renders).
+
+Work Log:
+- THE REPO THE CLEAN TREE ANSWERED (HEAD f8b1e86, origin in sync; the
+  v0.3.869 dispenser's own drag the previous round wore).
+- THE WIRE THROWN SHOTS NOW BANK: the minecraft:snowball /
+  minecraft:egg entities the Add Entity store kept the honest data
+  ("not-yet-drawn types stay honest data" the arrows_view gate
+  kept) — the thrown_view projection the flight lane's own wire
+  now speaks.
+- THE LANES: world_view.rs the WireThrown struct + thrown_view (the
+  kind byte the type name speaks, the pose AND the motion the
+  packet's own fields carry) + the SnapshotView field the both
+  builder arms feed; mob.rs the EggProjectile::wire_spawn ctor (the
+  pose and motion land verbatim, the rotation the velocity's own
+  atan2 degrees speak); screens.rs the net_thrown sim field (the
+  net-arrow lane's twin: the STILL-NAMED id the client's own flight
+  IS the between-refresh truth, the FRESH id the spawn word builds,
+  the gone id the reconcile drops), tick_net_thrown (the arc the
+  same ThrowableProjectile walk the offline eggs wear — the drag
+  0.99, the water 0.8, the gravity 0.03; the block clip the hit
+  arms — the SHATTER BURST the same case-3 walk rides (the snowball
+  the 8 plain shards, the egg the 10-jitter loop); THE MOB SWEEP +
+  THE CHICK'S ROLLS the lane never wears — the server's hits and
+  spawns its own lanes speak), the tick dispatch the networked arm
+  feeds; render_eggs the KIND'S OWN SPLIT (the egg and the snowball
+  item models the build_parts closure bakes — the offline snowball
+  the egg-sprite simplification wore now its own model banks, both
+  thrown lanes the same pass draws); window.rs the WireThrown wire
+  the channel tuple rides (the type tuple + the send + the
+  destructure + the ship line).
+- +2 tests: the wire thrown flight (the spawn the packet's word,
+  the arc the 2.376/-0.03 numbers speak, the still-named sim
+  untouched, the gone id drops, the offline gate holds), the wall
+  break (the two-tick stride the face crosses, the 18 shards the
+  two bursts speak, the bodies the retain drops).
+- THE ENVIRONMENT EVENT the round's verify hit: the mc-client
+  2349-test bin's rustc codegen peak crossed the sandbox's tightened
+  OOM ceiling (~2.0G available; the morning's own 2666-test runs the
+  same config wore) — the SIGKILL the memory watcher watched reach
+  the 4.1G line. EVERY knob the attempts spoke: the config's own
+  jobs=1/lld/no-keep-memory shape, CGU 16 and 256, opt-level 1,
+  strip symbols, malloc arena tuning, -Zthreads=1 — the peak the
+  phase the knobs never split. THE HONEST PARTIAL VERIFY: cargo
+  check --all-targets CLEAN (the full type-check the test harness
+  carries), mc-protocol 157 + mc-registry 100 PASSED, goldens 19/19
+  PASS rms 0.000 (the release links the ceiling never crossed), fmt
+  the HEAD's own 1159 both ways. THE +2 TESTS THE LINK NEVER
+  EXECUTED this round — the honest gap the record banks.
+- THE RESUME PLAN the next round speaks: re-run
+  `cargo test --workspace` FIRST (the +2 thrown tests + the full
+  2349-body the link answers); if the ceiling holds, the
+  screens.rs test-module split (the 146k-line crate the
+  round-sized modules the later rounds' own line names) the codegen
+  peak's real fix wears.
+- Pushed d7784ee (v0.3.870, the wire thrown shots).
+
+Stage Summary:
+- THE SERVER'S DISPENSER SHOTS THE CLIENT'S OWN SKY FLY: the Add
+  Entity word the thrown_view banks, the arc the client's own tick
+  simulates, the wall the shatter bursts at — the same lane the
+  arrows wear, the snowball the egg the kind split sprites.
+- NEXT CANDIDATES: the workspace re-verify the resume plan banks
+  FIRST (the +2 tests the execution owes), the shulker box the
+  getContainerAt walk the dropper's front read never serves, the
+  EntityEvent case-3 shatter arm the wire thrown lane's own
+  discard word could wear (the server's own event the burst
+  anchors at), the README's golden section the 19-row runner's
+  own row the text could name.
+---
+Task ID: dev-147
+Agent: cron-agent-loop (Job 384925, 2026-10-23 09:41:51 +08:00, trace
+1a0a02c3c1060631-cron-agent-loop-202610230950)
+Task: ONE minimal step per the tick protocol — the resume plan the
+dev-146 record banked: the workspace re-verify FIRST, and the
+screens.rs test-module split the codegen peak's real fix wears.
+
+Work Log:
+- THE REPO THE CLEAN TREE ANSWERED (HEAD a7c3b37, origin in sync; the
+  v0.3.870 wire thrown shots the previous round pushed).
+- THE ENVIRONMENT THE MEMORY MATH ANSWERED FIRST: the sandbox's
+  available 2.0G the dev-146 peak's 4.1G face — the pre-split re-run
+  the deterministic OOM replays (the record's own event), so the
+  round's ONE build both the split validates AND the +2 execution
+  debt pays. The background-run attempts the platform itself
+  reaped (nohup, setsid, a watchdog loop — every detached process
+  the session's own lifecycle took, the log lines without an EXIT
+  marker the silence spoke); the FOREGROUND segmented walk the
+  answer wore (the Bash call's own timeout the cargo cache
+  resumes from — one call the whole build+run rode).
+- THE SPLIT NOW BANKS: the one 81k-line `mod tests` (953 test
+  units + 18 helpers the scanner counted — the gap lines the
+  multi-line signatures the unit ranges ride) the twelve
+  round-sized modules wear. screens.rs the 63742-line lib part
+  keeps (`#[cfg(test)] mod tests;` the tail decl), screens/tests/
+  mod.rs the helper bank + the `use super::*;` head (529 lines),
+  part_1..part_11 the 960 #[test] fns the line-for-line count
+  keeps (greedy 8k-line budgets, source order, every byte
+  verbatim — the 4-space module indent the move preserved). THE
+  GLOB CHAIN the one-liner relies on the rustc probe proved
+  BEFORE the split ran (part -> tests -> screens: the parent's
+  private uses the child's glob re-imports — the experiment the
+  `crate::outer::*` unused-warning answered).
+- THE FIRST RUN'S TWO FAILURES THE DEBT'S OWN TRUTH SPOKE: the
+  dev-146 +2 wire-thrown tests the OOM never executed FAILED —
+  (1) the yaw: the f32-rounded 57.2957763671875 constant the
+  f64 -pi/2 never exacted (-89.99999 the cast wore, the test the
+  exact -90.0 pinned) — wire_spawn now to_degrees() (the vanilla
+  updateRotation's own double math; the axis-aligned velocity the
+  IEEE atan2(x, ±0) = ±pi/2 special value the exact ±90.0
+  round-trips); (2) the wall-break scene's wall the CHUNK_Y=48
+  ceiling never banked (y 60..=70 the World::set never stored, the
+  y=66 flight line the OOB air walked — the shots flew forever):
+  the wall the y 20..=30 band, the shots the y=26 line, the
+  two-tick break the 18 shards speak.
+- THE VERIFY THE FULL GATE ANSWERED: mc-client 2331 + mc-protocol
+  157 + mc-registry 100 + mc2rs-pixel 80 = 2668 PASSED / 0 FAILED
+  / 22 ignored; goldens 19/19 PASS rms 0.000 (NO regeneration —
+  no render byte the reshape touched); cargo check --all-targets
+  clean; the warnings the histogram diff answered ZERO new (the
+  165-line HEAD capture the 166-line split capture the normalized
+  kinds match — the pre-existing dead-constant/unused debt both
+  sides wear); fmt: the 1159-hunk baseline the digit wears — THE
+  COUNTER'S OWN MECHANISM the direct probe exposed: rustfmt
+  SIGABORTs (rc 134) ON screens.rs itself (the 63.7k lib part —
+  the dmesg's own rustfmt OOM the old 144k shape recorded), cargo
+  fmt tolerates the abort and the walk never reaches the screens
+  subtree — the 1159 the files-before-screens count both sides
+  wear, the moved bytes the counter never saw move. The part
+  files' own rustfmt state the direct probe answered (the 4-space
+  indent the hunks name) — the honest note the counter's blind
+  spot carries.
+- THE VERSION the bump rode first (0.3.870 -> 0.3.871) — the
+  verify the bumped tree ran.
+- Pushed 23a4d1e (v0.3.871, the test bank's own split) + 93ddf42
+  (the logs/worklog.md mirror).
+
+Stage Summary:
+- THE 2331-BODY THE LINK NOW SURVIVES: the split the codegen peak's
+  real fix wears — the per-CGU weight the twelve modules spread,
+  the suite the one build runs, the ceiling the margin the
+  later rounds keep.
+- NEXT CANDIDATES: the shulker box the getContainerAt walk the
+  dropper's front read never serves, the EntityEvent case-3
+  shatter arm the wire thrown lane's own discard word could wear
+  (the server's own event the burst anchors at), the README's
+  golden section the 19-row runner's own row the text could name,
+  the quickcraft drag the offline dispenser sim could wear.
+---
+Task ID: autopush-145
+Agent: cron-agent-loop (Job 384923, 2026-10-23 11:17:20 +08:00, trace
+1a0a02c3c1060631-cron-agent-loop-202610231117)
+Task: ONE minimal step per the tick protocol — the dev-147 NEXT
+CANDIDATES' head the wire thrown lane's own word answered: the
+EntityEvent case-3 shatter arm the discard wears (the server's own
+event the burst anchors at).
+
+Work Log:
+- THE REPO THE CLEAN TREE ANSWERED (HEAD 93ddf42, origin in sync;
+  the dev-145/146/147 rounds the morning's own record spoke — the
+  v0.3.871 test-bank split the suite's own link keeps).
+- THE LANE THE PIPELINE'S OWN SHAPE WORE (the firework-explode arm's
+  own end-to-end the five files mirror): world_model.rs the
+  ThrownShatterArm + thrown_shatter_events mailbox banks (the
+  EntityEvent handler the case-3 arm between the 17 and the byte-2
+  walks keeps — the registry's own type gate answers: the
+  minecraft:snowball the true keeps, the minecraft:egg the false, the
+  OTHER bodies' 3s the honest silence keeps — the chick-roll word the
+  Chicken's own body speaks; the pose the store's last-known word
+  banks; the drain fn the sibling lanes' shape wears; the level-reset
+  the mailbox dies with), world_view.rs the WireThrownShatterEvent +
+  the SnapshotView field the mailbox verbatim projects (both refresh
+  arms the shipment rides, the join helper the empty mailbox banks),
+  window.rs the two channel tuples + the two drain sites + the send/
+  destructure + the app call the lane wires, screens.rs
+  live_thrown_shatter_events_updated the discard word wears.
+- THE DISCARD'S OWN LAW THE VANILLA WALK BANKED: the sim'd shot the
+  id lookup names the dead flag banks (the retain the lane's own
+  population prunes — no ghost flight the server's hit never rode),
+  the SIM pose the anchor lookup prefers (the client copy's own
+  getX/getY/getZ the vanilla handleEntityEvent reads — the still-
+  simmed flight the between-refresh truth keeps, the store's stale
+  word the anchor never wears), the store's last-known pose the
+  no-sim fallback keeps (the rocket lane's own law the shot wears —
+  the Remove Entities race the refresh's own order arms), the
+  ALREADY-BROKEN shot the silence keeps (the dead flag the
+  double-burst never arms — the same-batch second word the Some-dead
+  guard answers), the shard walk the same case-3 ctors keep (the
+  snowball the 8 plain shards, the egg the 10-jitter loop the
+  gaussian trio's x0.02 wears). The MOB-HIT word the lane's own
+  answer serves — the sim's block ray the server's mob contacts never
+  crossed, the server's own event the truth the discard rides.
+- THE FIRST COMPILE'S TWO HOLES THE CHECKER SPOKE (the honest fixes
+  the errors wore): the channel's OWN TYPE the two declarations bank
+  (the struct field at 193 AND the live channel at 1753 — the
+  72-tuple the new Vec realigned, the cascade the one insertion
+  answered), the join helper's OWN SnapshotView literal the
+  materialize_snapshot_view keeps (the third initializer the empty
+  mailbox banks).
+- +2 TESTS: the model's type-gate arm banks (the snowball's
+  4.5/66.5/-8.25 pose + the egg's false kind + the pig's 3 the
+  silence keeps + the unknown id no phantom + the byte-2 the
+  kinetic filter refuses + the drain ships once), the app's discard
+  lane (the sim's 12.376/65.97 pose the 8 shards anchor at — the
+  store's stale 99-trio never wears, the egg's 10-jitter band at the
+  store pose the no-sim fallback keeps, the same-batch double word
+  the silence keeps — before + 8, the retain swept).
+- THE VERIFY THE FULL GATE ANSWERED: mc-client 2333 + mc-protocol
+  157 + mc-registry 100 + mc2rs-pixel 80 = 2670 PASSED / 0 FAILED /
+  22 ignored (the +2 the split's own link the FIRST build executed —
+  no OOM the ceiling wears); goldens 19/19 PASS rms 0.000 (NO
+  regeneration — the arm path no golden scene renders, no render
+  byte the reshape touched); cargo check --all-targets clean (zero
+  new warnings the new-code probe answered); fmt: the 1159-hunk
+  baseline the digit wears.
+- THE VERSION the bump rode first (0.3.871 -> 0.3.872) — the verify
+  the bumped tree ran.
+- Pushed 2ea400a (v0.3.872, the thrown shot's own shatter lane).
+
+Stage Summary:
+- THE WIRE THROWN LANE'S OWN TWO WORDS THE LANE NOW SPEAKS: the
+  client sim's own block ray the flight breaks at AND the server's
+  own EntityEvent the discard + burst answers (the mob-hit word the
+  sim's ray never crossed — the dispenser's shots the wall-less hits
+  the server's truth speaks).
+- NEXT CANDIDATES: the shulker box the getContainerAt walk the
+  dropper's front read never serves, the quickcraft drag the offline
+  dispenser sim could wear, the README's golden section the 19-row
+  runner's own row the text could name, the dispenser's carried
+  press the deferred place could wear (the chest's own live shape).
+---
+Task ID: dev-148
+Agent: cron-agent-loop (Job 384925, 2026-10-23 11:41:53 +08:00, trace
+1a0a02c3c1060631-cron-agent-loop-202610231150)
+Task: ONE minimal step per the tick protocol — the worklog's NEXT
+CANDIDATES the interactivity head answered: the quickcraft drag the
+offline dispenser sim could wear (dev-145's own direct dispatch the
+round's shape answered).
+
+Work Log:
+- THE REPO THE CLEAN TREE ANSWERED (HEAD 2a2e06a, origin in sync;
+  the autopush-145 thrown-shatter lane the morning's own round
+  pushed).
+- THE LANDSCAPE THE ARMS' OWN GATES SPOKE: the table/furnace drags
+  the OFFLINE sim wear (the world_is_network && no-window gate the
+  two arms keep), the chest/dispenser the LIVE window alone wore
+  (the is_live || no-window shape the dev-145 round banked) — the
+  offline dispenser the drag's own gap the round answers.
+- THE GATES THE TABLE/FURNACE'S OWN SHAPE NOW WEARS:
+  qc_arm_dispenser the window-less wire stand-in's refusal the
+  world_is_network && no-window shape keeps (the OFFLINE sim the
+  drag arms), the on_press/on_right_press carried-NON-EMPTY presses
+  the drag arms in BOTH lanes (the dispenser_is_live conjunct the
+  two arms drop — no slot click, no packet, the placement and the
+  distribution BOTH the release's own lanes serve).
+- THE LANES THE OFFLINE WALKS NOW SPEAK: qc_distribute_dispenser_offline
+  the doClick QUICK_CRAFT status-2 arm pcs 298-534 over the offline
+  sim (the same place math the furnace/table walks keep — the grid
+  0..9 the nine holds, the mirror rows 9..45 the standard store
+  keeps, the plain slots' mayPlace the base Slot's iconst_1 pair
+  keeps, the type-0 floor split the type-1's one-each answers, the
+  write-through the inventory cells speak [menu 9..35 the items
+  9..36 answer, the hotbar 36..44 the items 0..9 — the offline
+  click walk's own numbering the formula agrees], the mirror the
+  sync re-banks, the HUD row the sync follows, NO packet the
+  offline world alone keeps); qc_release the distribution arm the
+  wire/offline split wears and the deferred place the furnace
+  geometry's own shape keeps (the seat the PICKUP both lanes serve,
+  the outside the -999 throw — the wire the packet the belief's
+  clear rides, the offline the local throw IS, the between the -1
+  no-op the wire keeps, the offline the silence speaks).
+- +2 TESTS: the_offline_dispenser_drag_the_paint_and_the_split_wear
+  (the offline world's own door the open_dispenser_for walk opens —
+  the carried press the drag arms, the two seats the motion paints,
+  the floor(8/2) halves the grid + the hotbar write-through + the
+  mirror re-bank + the HUD sync speak, the right drag the one-each
+  wears) and the_offline_dispenser_drag_the_gates_and_the_deferred_
+  place_wear (the different item's seat the paint refuses — the
+  empty-painted release the PICKUP swap the offline lane serves,
+  the between press the arm skips, the armed drag the right press
+  silences, the wrong button's release the abort speaks, the
+  between release the no-op keeps, the outside release the throw
+  the cursor empties).
+- THE FIRST RUN'S TWO FAILURES THE HONEST LAWS SPOKE: (1) the
+  pre-existing gates test's pinned first block the window identity
+  the setup kept (the Some window the new gate the arm proceeded —
+  the old is_live gate's own shape the block never re-shaped): the
+  block the window identity now DROPS (the None the refusal probes),
+  the "THE WINDOW ARMS" tail the Some restores; (2) the outside
+  throw's drop-entity assert the headless body the drop walk's own
+  guard keeps silent (drop_item_entity_aimed the no-body return the
+  headless menus wear — the honest silence the assert now names:
+  the cursor the throw empties, the drops the body-less guard
+  keeps).
+- THE VERIFY THE FULL GATE ANSWERED: mc-client 2335 + mc-protocol
+  157 + mc-registry 100 + mc2rs-pixel 80 = 2672 PASSED / 0 FAILED /
+  22 ignored; goldens 19/19 PASS rms 0.000 (NO regeneration — the
+  drag no render byte the golden scenes touch); fmt: the 1159-hunk
+  baseline the digit wears; the Cargo.lock the committed 0.3.872
+  bump's own catch-up rides.
+- THE VERSION the bump rode first (0.3.872 -> 0.3.873) — the verify
+  the bumped tree ran.
+- Pushed 2435a3c (v0.3.873, the offline dispenser's own drag).
+
+Stage Summary:
+- THE FOUR WINDOWS THE DRAG NOW BOTH WEAR: the inventory, the
+  table, the furnace AND the dispenser — the offline sims the same
+  quickcraft walk the live windows answer, the chest alone the live
+  session's own lane keeps (the no-offline-chest law the belief's
+  own shape banks).
+- NEXT CANDIDATES: the shulker box the getContainerAt walk the
+  dropper's front read never serves (the block kind the offline
+  palette never mints — the predicate the mint first wears), the
+  README's golden section the 19-row runner's own row the text
+  could name, the offline chest the drag's own lanes the belief's
+  live shape could mirror (the chest_carried the offline lane
+  never wears), the dispenser's carried press the split-pickup the
+  right byte's place-ONE already serves.
+---
+Task ID: autopush-146
+Agent: main (cron tick 2026-10-23 12:17:22 +08:00, Job ID 384923)
+Task: rust-minecraft 维护 tick —— git 检查 → ONE 步发展 → 测试 → push → worklog。
+
+Work Log:
+- THE STATE THE TICK READ: the clean tree @835b4c2 (v0.3.873, the
+  dev-148 record), origin synced; the NEXT CANDIDATES head the
+  offline-chest drag the round wore (the shulker-box mint the
+  generated-atlas chain the tick's own budget keeps — KIND_NAMES
+  778 the generated atlas.rs row the jar regen asks, the drag lane
+  the pure screens.rs answer the tick chose).
+- THE VERSION the bump rode first (0.3.873 -> 0.3.874).
+- THE GATES: qc_arm_chest the live-only refusal
+  (`!chest_is_live || window.is_none()`) the dispenser's own shape
+  re-wears (`world_is_network && chest_live_window.is_none()` —
+  dev-148's gate the chest mirrors); qc_paint_chest the doc the
+  stale "no offline lane" line drops (the chest_carried pair the
+  both lanes hold); qc_release the chest distribution the
+  wire/offline split wears + the deferred place the dispenser's own
+  three-arm shape keeps (the seat the PICKUP both lanes serve, the
+  outside the -999 the wire packet / the local throw split keys,
+  the between the -1 no-op the wire keeps the offline silence
+  wears).
+- THE LANES: qc_distribute_chest_offline the
+  qc_distribute_dispenser_offline shape the generic_9x3's combined
+  snapshot wears (the grid 0..n the chest's own holds, the mirror
+  rows n..n+36 the main 9..36 + hotbar 0..9 mapping the click
+  walk's numbering keeps, the floor split the one-each answers, the
+  write-through the chest_slots AND the inventory cells speak, the
+  chest_mirror_sync_from_inventory + the hotbar row the sync
+  follows, NO packet); throw_chest_carried_outside the
+  throw_furnace_carried_outside shape the chest cursor wears (the
+  whole stack the LEFT drops, the one item the RIGHT split keeps).
+- +2 TESTS (screens/tests/part_11.rs — the tail part the split
+  budget keeps): the_offline_chest_drag_the_paint_and_the_split_wear
+  (the offline stand-in the drag arms, the grid cell 4 + the hotbar
+  mirror row the motion paints [menu 4 + 54], the floor(8/2) halves
+  the grid + the items[0] write-through + the mirror[27] re-bank +
+  the HUD row speak, the right drag the one-each wears) and
+  the_offline_chest_drag_the_gates_and_the_deferred_place_wear (the
+  different item's seat the paint refuses — the empty-painted
+  release the PICKUP swap speaks, the between press the arm skips,
+  the armed drag the right press silences, the wrong button's
+  release the abort speaks, the between release the no-op keeps,
+  the outside release the throw the cursor empties).
+- THE VERIFY THE FULL GATE THE CEILING ANSWERED: mc-client 2337-
+  test bin's rustc the SIGKILL the codegen's own peak took (opt
+  cgu.15, anon-rss 1.79G vs the platform python's 1.8G the 4G host
+  holds) — EVERY knob the attempts spoke (MALLOC_ARENA_MAX,
+  GLIBC_TUNABLES trim/mmap, CGU 256, the part_11 stub the honest
+  control wore) the kill kept; THE STASH ROUND THE DECISIVE WORD
+  BANKED: the HEAD tree ITSELF (the dev-148 state, the +2 tests
+  gone) the SAME SIGKILL took — the environment the morning's
+  2672-pass between (the platform resident the drifted wall is,
+  the code the innocent), the dev-146 round's own protocol the
+  deferral wears: cargo check --all-targets clean (the +2 tests the
+  compile proves), mc-protocol 157 + mc-registry 100 + mc2rs-gen 80
+  = 337 PASSED / 0 FAILED, goldens 19/19 PASS rms 0.000 (NO
+  regeneration — the drag no render byte the golden scenes touch);
+  fmt: the 1159-hunk baseline the digit wears. THE RESUME PLAN the
+  next round's verify carries: re-run `cargo test --workspace` when
+  the platform's own resident shrinks — the +2 tests the same tree
+  holds, the compile the check proved.
+- Pushed f226ed3 (v0.3.874, the offline chest's own drag).
+
+Stage Summary:
+- THE FOUR WINDOWS THE DRAG NOW BOTH WEAR: the inventory, the
+  table, the furnace AND the dispenser — AND THE CHEST the fifth
+  seat the offline lanes answer (the live session the same lanes
+  the wire belief rides, the no-offline-chest law the drag's own
+  gate re-shapes).
+- NEXT CANDIDATES: the shulker box the getContainerAt walk the
+  dropper's front read never serves (the block kind the offline
+  palette never mints — the atlas KIND_NAMES 778 row the generated
+  chain the regen asks, the predicate the mint first wears), the
+  README's golden section the 19-row runner's own row the text
+  could name, the dispenser's carried press the split-pickup the
+  right byte's place-ONE already serves.
+---
+Task ID: dev-149
+Agent: cron-agent-loop (Job 384925, 2026-10-23 13:01:54 +08:00, trace
+1a0a02c3c1060631-cron-agent-loop-202610231301)
+Task: ONE minimal step per the tick protocol — the worklog's NEXT
+CANDIDATES the docs head answered: the README's golden section the
+19-row runner's own row the text could name (the shulker-box mint the
+atlas KIND_NAMES 778 regen chain the tick's budget keeps, the
+dispenser's split-pickup the record itself "already serves").
+
+Work Log:
+- THE STATE THE TICK READ: the clean tree @dc5a4ce (v0.3.874, the
+  autopush-146 offline-chest-drag record), origin synced; the
+  autopush-146 RESUME PLAN the round's first duty wore — the full
+  cargo test --workspace gate the re-run asked.
+- THE RESUME PLAN THE ROUND FIRST ANSWERED: the full gate on the
+  0.3.874 tree the SAME SIGKILL took (the mc-client test bin's rustc,
+  signal 9) — the memory landscape the wall keeps (the platform's
+  python the 1.85G resident holds, free -m the 1.87G available shows,
+  the 1.79G codegen peak the 85MB margin the killer refuses); the
+  untried-knob lottery the round also spoke — the CGU-512 +
+  MALLOC_ARENA_MAX + GLIBC_TUNABLES variant the background launch
+  NEVER survived to speak (the nohup'd job the sandbox's own reaper
+  the parent-shell return killed, the log the 0-byte silence kept;
+  /usr/bin/time absent the first wrapper refused) — the foreground
+  default-flags retry on the bumped tree the same SIGKILL took. THREE
+  attempts, one verdict: the environment the wall keeps, the code the
+  innocent (autopush-146's stash round the same verdict wore).
+- THE MINIMAL STEP THE README'S CI SECTION WORE: pixel.yml's bullet
+  the goldens/ diff the text always named — the RUNNER the section
+  never enumerated (the v0.3.75 entry the count froze at 11/11, the
+  matrix the eight rounds since grew). The section now names
+  scripts/verify_goldens.sh the ALL-19 runner and its OWN 19 rows:
+  the CPU orbit pair (cpu_320x180 seed 20260214, cpu_480x270 seed
+  1337) + the NETWORK wire pair (net_320x180, net_480x270
+  --net-world) the max-rms 8 gate keeps + the FIFTEEN GUI screens the
+  max-rms 0 bit-deterministic gate wears — gui_title, gui_servers,
+  gui_loading, gui_world, gui_worldnight, gui_pause, gui_world_held
+  (the display-arc pin), gui_world_held_swing (the 0.5 clock),
+  gui_world_dual (sword + shield), gui_chest, gui_chest_double,
+  gui_furnace, gui_furnace_lit (settle-ticks 15), gui_chest_pair
+  (the world-side body), gui_creative (the 14-tab picker) — plus the
+  golden_matrix.sh companion the 14-core-row quick pass. The flags
+  the seeds the thresholds the script's check rows carry, the
+  enumeration line-for-line agrees (the 14-row count the companion's
+  own rg proved).
+- THE VERSION the bump rode (0.3.874 -> 0.3.875) — the verify the
+  bumped tree ran.
+- THE VERIFY THE PROTOCOL'S OWN SHAPE ANSWERED: cargo check
+  --all-targets clean (39.6s — the +2 tests the deferral banks the
+  compile proves); mc-protocol 157 + mc-registry 100 + mc2rs-gen 80
+  = 337 PASSED / 0 FAILED (the 80-test crate mc2rs-gen the round's
+  first run named mc2rs-pixel — the pixel lib the 0-test lib is, the
+  honest correction the record wears); goldens 19/19 PASS rms 0.000
+  (verify_goldens.sh on the HEAD tree, NO regeneration — the
+  docs-only edit no render byte touches); fmt the 1159-hunk baseline
+  the digit wears.
+- Pushed fbed8ad (v0.3.875, the runner's own 19 rows).
+
+Stage Summary:
+- THE GOLDEN GATE THE README NOW FULLY NAMES: the runner, the 19
+  rows, the two thresholds (the matrix's 8, the GUI's 0), the
+  companion — the pixel.yml policy the enumeration the text the
+  onboarding reader the CI red the meaning wears.
+- THE FULL-GATE DEFERRAL THE THIRD ROUND WEARS: the resume plan
+  carries — re-run cargo test --workspace when the platform's own
+  resident shrinks; the +2 tests the same tree holds, the compile
+  the check proved, the morning's 2672-pass the same-code shape the
+  memory landscape the drifted wall between.
+- NEXT CANDIDATES: the shulker box the getContainerAt walk the
+  dropper's front read never serves (the block kind the offline
+  palette never mints — the atlas KIND_NAMES 778 row the generated
+  chain the regen asks, the predicate the mint first wears), the
+  dispenser's carried press the split-pickup the right byte's
+  place-ONE already serves, the offline chest the drag's lanes the
+  live shape mirrors the record the v0.3.874 round already banked.
+  THE DROPPER'S FRONT READ SERVES: (a) THE KIND MINT — the
+  generated atlas N_KINDS 778->779, the six kind-keyed tables the
+  tail rows speak (KIND_NAMES + REGISTRY_NAMES both multiline tails
+  the shulker_box row gains, FACE_TILES [928;6] the plain-cube law
+  [the one tile all six faces wear — the generic row[face] fallback
+  the mesher's own answer, NO special arm the kind needs], TINTS
+  the 0x0 no-tint row, DOOR_MODEL_BY_ROW the "" not-a-door row,
+  ENTITY_HEAD_FACES the 65535 not-a-head row), the TILE_928_RGBA
+  static the jar's block/shulker_box.png the decode serves (the
+  16x16 colortype-3 indexed PNG the zlib un-filter walk the stride
+  fix the second run answered, the purple 127/143/151 tones the
+  256 RGBA bytes bank), TILE_NAMES/TILES 928->929 the pool tail
+  wears; (b) THE KIND SEAT — world.rs SHULKER_BOX 778 the const +
+  is_shulker the predicate + NAME_OF the 779-row extend (the
+  world_view's own NAME_OF==REGISTRY_NAMES assert the compile error
+  the parallel table the honest extend answered — the seed-row
+  parallel the FIRST check run named); (c) THE WALK — the dropper's
+  front read the is_shulker arm the predicate gains, the 27-slot
+  store the chest-sized or_insert the first beat banks, the addItem
+  copy the dispenser_insert_into walk the copyWithCount(1) tail
+  serves, the FULL sink the stack-keeps law the setItem write-back
+  keeps (the refused row the intact count, the eject the
+  container-present arm never sees).
+- +2 TESTS: the_droppers_front_shulker_the_insert_wears (the
+  south-facing beat the insert speaks — the sink's 27 the first
+  beat mints, the slot 0 the copy wears, the source slot the
+  shrink keeps, the drops vec the eject never sees) and
+  the_droppers_front_shulker_the_full_keep_wears (the 27 full
+  stone seats the insert refuses — the stack the intact count
+  keeps, the sink's rows the refusal never moves, the eject the
+  container-present arm never wears).
+- THE VERIFY THE PROTOCOL'S OWN SHAPE ANSWERED: cargo check
+  --all-targets clean (the +2 tests the compile proves); mc-protocol
+  157 + mc-registry 100 + mc2rs-gen 80 = 337 PASSED / 0 FAILED;
+  goldens 19/19 PASS rms 0.000 (the mint the append-at-tail law the
+  release build re-proves — NO regeneration, the pool tail the
+  indices never moves, every golden byte the same); fmt the
+  1159-hunk baseline the digit wears (the mint's shapes the
+  generator's own style keeps).
+- THE FULL cargo test --workspace GATE THE SAME SIGKILL WALL KEEPS:
+  the platform's 1.85G python resident the 1.79G codegen peak the
+  1.87G available the 85MB margin refuses — the deferral the FOURTH
+  round wears; the resume plan carries (re-run when the platform's
+  resident shrinks; the +2 tests the same tree holds, the compile
+  the check proved).
+- THE VERSION the bump rode (0.3.875 -> 0.3.876) — the verify the
+  bumped tree ran.
+- Pushed 661f5db (v0.3.876, the shulker box the front read serves).
+
+Stage Summary:
+- THE GETCONTAINERAT WALK THE FIFTH CONTAINER THE WALK ANSWERS: the
+  chest, the barrel, the dispenser/dropper pair, the furnace family
+  AND the shulker box — the offline dropper's beat the vanilla
+  getContainerAt family the one predicate now speaks, the sink's
+  own store the container kind's shape wears.
+- NEXT CANDIDATES: the shulker box the OFFLINE PLACEMENT the walk's
+  kind the creative picker never offers (the block item the
+  placement palette mints — the mesher's generic cube the render
+  already answers), the shulker's own live window the OpenScreen
+  GENERIC_9x3 kind the wire lane banks, the dispenser's carried
+  press the split-pickup the record "already serves", the README's
+  golden section the v0.3.875 round banked.
+---
+Task ID: autopush-148
+Agent: main (cron tick 2026-10-23 13:32:23 +08:00, Job ID 384923)
+Task: rust-minecraft 维护 tick —— git 检查 → ONE 步发展 → 测试 → push → worklog。
+
+Work Log:
+- THE STATE THE TICK READ: the clean tree @da586d4 (v0.3.876, the
+  autopush-147 shulker front-read record), origin synced; the
+  memory landscape the wall keeps (1.84G available — the full-gate
+  re-run the doomed attempt the round skips, the deferral the
+  record carries).
+- THE MINIMAL STEP THE CANDIDATE'S HEAD WORE — THE SHULKER'S OWN
+  OFFLINE PLACEMENT THE CHAIN THE TEST BANKS: the discovery walk
+  the round first spoke (the candidate's premise the code read
+  corrected): the creative picker's ITEM_WIRE_ORDER source the
+  shulker_box item ALREADY carries (the whole 1537-row table the
+  E-key's palette speaks), the generic placeable_block lane the
+  NAME_OF row 778 the v0.3.876 mint ALREADY answers — the chain
+  the placement walk the press the round's test proves; the REAL
+  gap the placement's VARIANT STAMP the walk's kind set kept (the
+  chest/barrel/dispenser arms the shulker never wore — the placed
+  box the variant-0 no-opinion answer the walk's absence kept).
+- THE FACING STAMP THE WALK'S OWN ARM GAINS: javap
+  ShulkerBoxBlock.getStateForPlacement the 26.2 jar the
+  setValue(FACING, nearestLooking.getOpposite()) walk the
+  dispenser family's own SIX-direction law the shulker wears —
+  the pitch quarter the vertical axis answers (the floor click
+  the UP front, the ceiling the DOWN), the horizontal looks the
+  look-opposite byte keeps, the DIRECTION_NORMAL vocabulary the
+  dispenser byte speaks, dispenser_placement_byte the same fn
+  the arm calls; the mesher's generic cube the variant never
+  renders (no golden byte touches).
+- +1 TEST: the_offline_shulker_the_placement_the_floor_look_wears
+  (the furnace test's own camera the floor look wears — the
+  shulker the placement lands, the UP byte the stamp speaks, the
+  consume(1) the 4-stack the 3 rides).
+- THE VERIFY THE PROTOCOL'S OWN SHAPE ANSWERED: cargo check
+  --all-targets clean; mc-protocol 157 + mc-registry 100 +
+  mc2rs-gen 80 = 337 PASSED / 0 FAILED; goldens 19/19 PASS rms
+  0.000 (NO regeneration — the stamp no render byte touches);
+  fmt the 1159-hunk baseline the digit wears; the FULL
+  cargo test --workspace gate the SAME SIGKILL wall keeps (the
+  deferral the FIFTH round wears — the resume plan carries).
+- THE VERSION the bump rode (0.3.876 -> 0.3.877) — the verify the
+  bumped tree ran.
+- Pushed b5900e2 (v0.3.877, the shulker's own placement stamps).
+
+Stage Summary:
+- THE SHULKER THE OFFLINE WORLD THE WHOLE CHAIN SPEAKS: the
+  creative picker the item offers, the press the kind places, the
+  look the facing stamps, the dropper's front read (v0.3.876) the
+  placed box the next beat answers — the interactivity the family
+  the chest/barrel/dispenser lanes the shulker joins.
+- NEXT CANDIDATES: the shulker's own live window the OpenScreen
+  GENERIC_9x3 kind the wire lane banks (the offline door the
+  right-click the placed box the same arm could wear — the chest
+  family's own shape), the dispenser's carried press the
+  split-pickup the record "already serves", the shulker's own
+  mesher arm the entity-driven box the generic cube the honest
+  upgrade the BE-lane round keeps.
 ---
 Task ID: dev-150
 Agent: main (cron tick 2026-10-23 13:41:55 +08:00, Job ID 384925)
@@ -79,8 +2796,9 @@ Work Log:
 - THE VERSION the bump rode (0.3.877 -> 0.3.878) — the verify
   the bumped tree ran.
 - Pushed 0882c24 (v0.3.878, the shulker's own door) + the
-  mirror commit 3d1378c; this external worklog the wipe took
-  the rebuild the entry carries.
+  mirror commit; the external worklog the wipe took the
+  rebuild the entry carries (the full history the repo's own
+  logs/worklog.md the remote keeps).
 
 Stage Summary:
 - THE SHULKER THE OFFLINE WORLD THE WHOLE CHAIN SPEAKS: the
@@ -107,57 +2825,79 @@ Work Log:
   dev-150 shulker door record), origin synced; the memory
   landscape the RESUME PLAN'S OWN TRIGGER the round answers —
   free -m the 3467MB available speaks (the platform's 1.85G
-  resident the sandbox wipe took), the FULL gate the six-round
-  deferral the re-run claims.
+  resident the sandbox wipe took, the wall's own condition
+  "re-run when the platform's resident shrinks" the round
+  meets), the FULL gate the six-round deferral the re-run
+  claims.
 - THE FULL cargo test --workspace GATE THE WALL ANSWERS: the
-  first run the 40 red wore — 38 the STALE KIND-COUNT PINS the
-  shulker mint (autopush-147's N_KINDS 778->779) the
-  compile-only rounds never executed: 47 world.rs + 5 part_8 +
-  3 part_7 pins the sweep 779 wears (the SHULKER_BOX const 778
-  the SEAT the sweep never touches); +2 the BEHAVIORAL PINS the
-  autopush-146 gate rewrite (the world_is_network &&
-  chest_live_window.is_none() no-window refusal the live-only
-  law replaced) the part_9 stand-in beats the hybrid state wore
-  — the beats re-shaped, the window the silence-beat AFTER
-  sets, the REAL gate's refusal the beat pins.
+  compile the six rounds never let finish the suite the green
+  wears — and the FIRST RUN THE 40 RED SPOKE: 38 the STALE
+  KIND-COUNT PINS the shulker mint (autopush-147's N_KINDS
+  778->779) the compile-only rounds could never execute (the
+  mc-client bin the OOM wall's own hostage), 47 world.rs + 5
+  part_8 + 3 part_7 pins the sweep 779 wears (atlas::N_KINDS +
+  NAME_OF.len() the two shapes the sed/perl speaks — the
+  SHULKER_BOX const 778 the SEAT the sweep never touches); +2
+  the BEHAVIORAL PINS the autopush-146 gate rewrite
+  (qc_arm_chest the world_is_network && chest_live_window.
+  is_none() no-window refusal the live-only law replaced) the
+  part_9 stand-in beats the hybrid state wore
+  (chest_live_window Some + chest_is_live false the old law's
+  own impossible shape) — the beats re-shaped, the window the
+  silence-beat AFTER sets, the REAL gate's refusal the beat
+  pins.
 - THE 5 THE DIRECT-BINARY RUN WORE, THE CARGO LANE REFUSES:
   the warden glow + the third-person helmet + the darkness
   pulse + the water murk + the portal tint — the dep-binary
-  invocation the static-heavy render lanes the 2-CPU
-  parallelism the unlucky interleave spoke, the cargo
+  invocation (the repo-root CWD the tee'd run wore) the
+  static-heavy render lanes the 2-CPU parallelism the unlucky
+  interleave spoke ("0 bytes differ" the glow read), the cargo
   invocation the SAME tree the 2342-green wears, the isolated
   --exact run the 5 the green confirms — the honest note the
-  record keeps.
+  record keeps: the render-static tests the parallel-
+  scheduling sensitivity, the suite's green the cargo lane
+  owns.
 - THE MINIMAL STEP THE DEV-150 CANDIDATE THE PIN BANKS: +1
   TEST the_dispenser_right_press_the_split_and_the_one_each_wear
   (part_4) — the right-press dispatch the record "already
-  serves" the test never wore: the ceiling-half split (5 -> 3
-  taken, 2 left) the PICKUP button-1 byte, the held press the
-  type-1 drag arms (NO place NO packet), the one-each the
-  release serves, the masked START(4)/ADD(5)x2/END(6) bytes
-  the deltas name. THE FMT'S OWN QUIRK: the for-loop shape the
-  rustfmt --check parse the recovery garbage rode, the
-  unrolled two-match shape the SAME semantics the 1703-hunk
-  baseline the zero-new-hunks law keeps.
-- THE VERSION the bump rode (0.3.878 -> 0.3.879).
-- Pushed 866f605 (v0.3.879) + the mirror commit 79de693; the
-  repo's logs/worklog.md the dev-151 entry wears.
+  serves" the test never wore: the carried-EMPTY press the
+  split-pickup's ceiling half (5 -> 3 taken, 2 left) the
+  PICKUP button-1 byte the wire wears, the held press the
+  type-1 drag arms (qc_armed + qc_type 1 + qc_button 1, NO
+  place NO packet), the two seats the motion paints, the
+  release the one-each serves (the cursor pays two), the
+  masked START(4)/ADD(5)x2/END(6) QuickCraft bytes the
+  changed-map deltas name. THE FMT'S OWN QUIRK the round
+  meets: the for-loop shape the first draft wore the rustfmt
+  --check parse the recovery garbage rode (part_4's
+  pre-divergent region the +}-at-col-0 cascade spoke, the
+  blanket rustfmt the 7 pre-existing hunks the blanket never
+  wears — reverted), the unrolled two-match shape the SAME
+  semantics the 1703-hunk baseline the zero-new-hunks law
+  keeps.
+- THE VERSION the bump rode (0.3.878 -> 0.3.879) — the verify
+  the bumped tree ran.
+- Pushed 866f605 (v0.3.879, the wall the memory answers) + the
+  mirror commit; the external worklog the dev-151 entry wears.
 
 Stage Summary:
-- THE FULL GATE THE SIX-ROUND DEFERRAL CLOSES: the suite 2679
+- THE FULL GATE THE SIX-ROUND DEFERRAL CLOSES: the OOM wall's
+  own resume plan the memory landscape answers, the 40 red the
+  deferred-execution debt the sweep pays, the suite 2679
   PASSED / 0 FAILED / 22 ignored the whole workspace wears
   (mc-client 2342 + mc-protocol 157 + mc-registry 100 +
-  mc2rs-gen 80); goldens 19/19 PASS rms 0.000 (NO
-  regeneration); fmt 1703 = the HEAD baseline; check
-  --all-targets clean.
+  mc2rs-gen 80).
+- VERIFY: goldens 19/19 PASS rms 0.000 (NO regeneration — the
+  round no render byte touches); fmt 1703 = the HEAD baseline
+  (ZERO hunks the round adds); cargo check --all-targets
+  clean.
 - NEXT CANDIDATES: the shulker's own mesher arm the
   entity-driven box the generic cube the honest upgrade (the
   render byte the golden regen the round names), the 5
   render-static tests the parallel-sensitivity the serial/lock
-  shape the future round tames, the single-pass cargo test
-  --workspace the tool's 600s ceiling the longer window
-  allows.
-
+  shape the flake the future round tames, the single-pass
+  cargo test --workspace the tool's 600s ceiling the longer
+  window the whole-suite one-lane proof keeps.
 ---
 Task ID: dev-152
 Agent: main (cron tick 2026-10-23 15:41:57 +08:00, Job ID 384925)
