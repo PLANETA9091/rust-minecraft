@@ -2449,3 +2449,82 @@ Stage Summary:
   live shape could mirror (the chest_carried the offline lane
   never wears), the dispenser's carried press the split-pickup the
   right byte's place-ONE already serves.
+---
+Task ID: autopush-146
+Agent: main (cron tick 2026-10-23 12:17:22 +08:00, Job ID 384923)
+Task: rust-minecraft 维护 tick —— git 检查 → ONE 步发展 → 测试 → push → worklog。
+
+Work Log:
+- THE STATE THE TICK READ: the clean tree @835b4c2 (v0.3.873, the
+  dev-148 record), origin synced; the NEXT CANDIDATES head the
+  offline-chest drag the round wore (the shulker-box mint the
+  generated-atlas chain the tick's own budget keeps — KIND_NAMES
+  778 the generated atlas.rs row the jar regen asks, the drag lane
+  the pure screens.rs answer the tick chose).
+- THE VERSION the bump rode first (0.3.873 -> 0.3.874).
+- THE GATES: qc_arm_chest the live-only refusal
+  (`!chest_is_live || window.is_none()`) the dispenser's own shape
+  re-wears (`world_is_network && chest_live_window.is_none()` —
+  dev-148's gate the chest mirrors); qc_paint_chest the doc the
+  stale "no offline lane" line drops (the chest_carried pair the
+  both lanes hold); qc_release the chest distribution the
+  wire/offline split wears + the deferred place the dispenser's own
+  three-arm shape keeps (the seat the PICKUP both lanes serve, the
+  outside the -999 the wire packet / the local throw split keys,
+  the between the -1 no-op the wire keeps the offline silence
+  wears).
+- THE LANES: qc_distribute_chest_offline the
+  qc_distribute_dispenser_offline shape the generic_9x3's combined
+  snapshot wears (the grid 0..n the chest's own holds, the mirror
+  rows n..n+36 the main 9..36 + hotbar 0..9 mapping the click
+  walk's numbering keeps, the floor split the one-each answers, the
+  write-through the chest_slots AND the inventory cells speak, the
+  chest_mirror_sync_from_inventory + the hotbar row the sync
+  follows, NO packet); throw_chest_carried_outside the
+  throw_furnace_carried_outside shape the chest cursor wears (the
+  whole stack the LEFT drops, the one item the RIGHT split keeps).
+- +2 TESTS (screens/tests/part_11.rs — the tail part the split
+  budget keeps): the_offline_chest_drag_the_paint_and_the_split_wear
+  (the offline stand-in the drag arms, the grid cell 4 + the hotbar
+  mirror row the motion paints [menu 4 + 54], the floor(8/2) halves
+  the grid + the items[0] write-through + the mirror[27] re-bank +
+  the HUD row speak, the right drag the one-each wears) and
+  the_offline_chest_drag_the_gates_and_the_deferred_place_wear (the
+  different item's seat the paint refuses — the empty-painted
+  release the PICKUP swap speaks, the between press the arm skips,
+  the armed drag the right press silences, the wrong button's
+  release the abort speaks, the between release the no-op keeps,
+  the outside release the throw the cursor empties).
+- THE VERIFY THE FULL GATE THE CEILING ANSWERED: mc-client 2337-
+  test bin's rustc the SIGKILL the codegen's own peak took (opt
+  cgu.15, anon-rss 1.79G vs the platform python's 1.8G the 4G host
+  holds) — EVERY knob the attempts spoke (MALLOC_ARENA_MAX,
+  GLIBC_TUNABLES trim/mmap, CGU 256, the part_11 stub the honest
+  control wore) the kill kept; THE STASH ROUND THE DECISIVE WORD
+  BANKED: the HEAD tree ITSELF (the dev-148 state, the +2 tests
+  gone) the SAME SIGKILL took — the environment the morning's
+  2672-pass between (the platform resident the drifted wall is,
+  the code the innocent), the dev-146 round's own protocol the
+  deferral wears: cargo check --all-targets clean (the +2 tests the
+  compile proves), mc-protocol 157 + mc-registry 100 + mc2rs-gen 80
+  = 337 PASSED / 0 FAILED, goldens 19/19 PASS rms 0.000 (NO
+  regeneration — the drag no render byte the golden scenes touch);
+  fmt: the 1159-hunk baseline the digit wears. THE RESUME PLAN the
+  next round's verify carries: re-run `cargo test --workspace` when
+  the platform's own resident shrinks — the +2 tests the same tree
+  holds, the compile the check proved.
+- Pushed f226ed3 (v0.3.874, the offline chest's own drag).
+
+Stage Summary:
+- THE FOUR WINDOWS THE DRAG NOW BOTH WEAR: the inventory, the
+  table, the furnace AND the dispenser — AND THE CHEST the fifth
+  seat the offline lanes answer (the live session the same lanes
+  the wire belief rides, the no-offline-chest law the drag's own
+  gate re-shapes).
+- NEXT CANDIDATES: the shulker box the getContainerAt walk the
+  dropper's front read never serves (the block kind the offline
+  palette never mints — the atlas KIND_NAMES 778 row the generated
+  chain the regen asks, the predicate the mint first wears), the
+  README's golden section the 19-row runner's own row the text
+  could name, the dispenser's carried press the split-pickup the
+  right byte's place-ONE already serves.
