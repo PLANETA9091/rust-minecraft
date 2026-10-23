@@ -33,6 +33,33 @@ mod part_11;
     }
 
 
+    /// THE TESTS' OWN ASSETS ROOT (the CWD-independent pin the darkness
+    /// walk's ancestor pattern wears — the bare `assets-cache/jar` the
+    /// package-root cargo seat never resolves, the stub lane the absent
+    /// sprites wear): the MC2RS_ASSETS env the first word keeps, the
+    /// ancestor walk the repo's own root finds from every seat inside
+    /// (the `assets-cache/jar` exists the each-candidate's verdict
+    /// answers, the pop's exhaustion the bare relative fallback keeps —
+    /// the packaged run the stub lane's own shape wears).
+    fn assets_root() -> std::path::PathBuf {
+        if let Some(p) = std::env::var_os("MC2RS_ASSETS") {
+            return std::path::PathBuf::from(p);
+        }
+        if let Ok(mut dir) = std::env::current_dir() {
+            loop {
+                let cand = dir.join("assets-cache").join("jar");
+                if cand.exists() {
+                    return cand;
+                }
+                if !dir.pop() {
+                    break;
+                }
+            }
+        }
+        std::path::PathBuf::from("assets-cache/jar")
+    }
+
+
     /// A hand-built Brigadier graph mirroring the real servers' own:
     /// root(0) → time(1) → set(3)/query(4); tp(2) redirect→teleport(5)
     /// → the targets argument(7); tick(6). The structure the local
@@ -414,7 +441,7 @@ cow_sound_variant: None,
     impl App {
         fn render_title_buttons_for_test(&mut self) {
             let mut fb = crate::raster::Framebuf::new(320, 180);
-            let mut assets = GuiAssets::open("assets-cache/jar");
+            let mut assets = GuiAssets::open(assets_root());
             self.render(&mut fb, &mut assets);
         }
     }

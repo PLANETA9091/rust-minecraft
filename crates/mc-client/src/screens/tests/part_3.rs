@@ -7523,7 +7523,7 @@ use super::*;
         // render the hit-box cache fills)
         assert!(app.chat_suggestion_rect.is_none(), "the rect the render owns");
         let mut fb = crate::raster::Framebuf::new(320, 180);
-        let mut assets = GuiAssets::open("assets-cache/jar");
+        let mut assets = GuiAssets::open(assets_root());
         app.render(&mut fb, &mut assets);
         let (rx, ry, rw, rh) = app.chat_suggestion_rect.expect("the drawn list's rect");
         // the constructor's Rect2i margins the bounds speak (the x - 1
@@ -7587,7 +7587,7 @@ use super::*;
             matches: (0..15).map(row).collect(),
         });
         let mut fb = crate::raster::Framebuf::new(320, 180);
-        let mut assets = GuiAssets::open("assets-cache/jar");
+        let mut assets = GuiAssets::open(assets_root());
         app.render(&mut fb, &mut assets);
         let (rx, ry, _rw, _rh) = app.chat_suggestion_rect.expect("the drawn list's rect");
         assert_eq!(app.chat_suggestion_offset, 0);
@@ -7646,7 +7646,7 @@ use super::*;
         };
         let mut app = build(Some("§aTeleports or sets"));
         let mut fb = crate::raster::Framebuf::new(320, 180);
-        let mut assets = GuiAssets::open("assets-cache/jar");
+        let mut assets = GuiAssets::open(assets_root());
         app.render(&mut fb, &mut assets);
         let (rx, ry, _rw, _rh) = app.chat_suggestion_rect.expect("the drawn list's rect");
         // THE HOVER (the move the row 1 selects — the tooltip's own row)

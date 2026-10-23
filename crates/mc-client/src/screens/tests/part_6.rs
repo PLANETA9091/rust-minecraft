@@ -2476,7 +2476,7 @@ use super::*;
         .unwrap();
         assert!(app.cart_model.is_none(), "the lazy slot sleeps before the frame");
         let mut fb = crate::raster::Framebuf::new(64, 64);
-        let mut assets = GuiAssets::open("assets-cache/jar");
+        let mut assets = GuiAssets::open(assets_root());
         app.render_world_3d(&mut fb, &mut assets);
         assert!(app.cart_model.is_some(), "the lazy load fired — the sha1 kept");
         // THE TWIN SCENE: the same seed, the same rail, NO cart — the
@@ -2748,7 +2748,7 @@ use super::*;
         )
         .unwrap();
         let mut fb = crate::raster::Framebuf::new(64, 64);
-        let mut assets = GuiAssets::open("assets-cache/jar");
+        let mut assets = GuiAssets::open(assets_root());
         app.render_world_3d(&mut fb, &mut assets);
         // THE TWIN: the SAME rail, the PLAIN cart — the display pass
         // the AIR gate skips, the frame the hull alone paints

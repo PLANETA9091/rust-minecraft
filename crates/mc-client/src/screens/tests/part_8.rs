@@ -8205,7 +8205,7 @@ fn the_saved_player_row_wears_the_vitals() {
         app.frame = 30;
         app.clock_total = 6_000 + 30;
         let mut fb = crate::raster::Framebuf::new(64, 64);
-        let mut assets = GuiAssets::open("assets-cache/jar");
+        let mut assets = GuiAssets::open(assets_root());
         app.render_world_3d(&mut fb, &mut assets);
         assert_eq!(app.day_bake, Some((128, [255, 255, 255])));
         assert_eq!(
@@ -8283,7 +8283,7 @@ fn the_saved_player_row_wears_the_vitals() {
         app.frame = 30;
         app.clock_total = 14_040;
         let mut fb = crate::raster::Framebuf::new(64, 64);
-        let mut assets = GuiAssets::open("assets-cache/jar");
+        let mut assets = GuiAssets::open(assets_root());
         app.render_world_3d(&mut fb, &mut assets);
         // THE SERVER'S WORD: the wire world's clock the Set Time value
         // keeps — the app's own clock the wire lane never overwrites

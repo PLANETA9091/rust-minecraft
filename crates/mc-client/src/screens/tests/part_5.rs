@@ -2287,7 +2287,7 @@ use super::*;
         // THE RENDER: the with/without diff the sprite's own pixels
         // answers (the same frame twice, the rocket the only delta)
         let mut fb_with = crate::raster::Framebuf::new(320, 180);
-        let mut assets = GuiAssets::open("assets-cache/jar");
+        let mut assets = GuiAssets::open(assets_root());
         app.render(&mut fb_with, &mut assets);
         let with = fb_with.color.clone();
         let rockets = std::mem::take(&mut app.fireworks);
@@ -2340,7 +2340,7 @@ use super::*;
         let fx = c as f64 + 0.5;
         let fy = eye_y as f64;
         let fz = c as f64 + 0.5 - 2.0;
-        let mut assets = GuiAssets::open("assets-cache/jar");
+        let mut assets = GuiAssets::open(assets_root());
         // THE SPRITE'S OWN PRE-LOAD (the unit test's CWD the package
         // root keeps — the manifest-relative walk-up the audio tests
         // speak; the render's lazy load the Some arm never re-runs)

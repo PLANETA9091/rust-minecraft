@@ -1088,7 +1088,7 @@ dependencies = [
 
 [[package]]
 name = "mc-client"
-version = "0.3.899"
+version = "0.3.900"
 dependencies = [
  "anyhow",
  "clap",

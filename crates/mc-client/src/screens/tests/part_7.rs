@@ -4297,7 +4297,7 @@ use super::*;
         app.water_vision_time = 0;
         let mut fb = crate::raster::Framebuf::new(64, 64);
         fb.color.fill(0);
-        let mut assets = GuiAssets::open("assets-cache/jar");
+        let mut assets = GuiAssets::open(assets_root());
         app.render_world_3d(&mut fb, &mut assets);
         // THE MURK'S OWN PAINT (the honest overlay's signature): the
         // dive frame the texture's blend family wears — the two
@@ -4326,7 +4326,7 @@ use super::*;
         app.water_vision_time = 600;
         let mut open = crate::raster::Framebuf::new(64, 64);
         open.color.fill(0);
-        let mut open_assets = GuiAssets::open("assets-cache/jar");
+        let mut open_assets = GuiAssets::open(assets_root());
         app.render_world_3d(&mut open, &mut open_assets);
         let moved = open
             .color
