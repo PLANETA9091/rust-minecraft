@@ -1269,6 +1269,16 @@ pub struct PlayerBody {
     /// lerp walks.
     pub fov_modifier: f32,
     pub prev_fov_modifier: f32,
+    /// THE FOV EFFECTS' OWN SCALE (the `fovEffectScale` option the
+    /// AccessibilityOptionsScreen row wears — the 0..1 the
+    /// doubleRange codec banks, the default 1.0 the dconst_1 speaks):
+    /// the value the Camera.tickFov read passes into
+    /// getFieldOfViewModifier's own ZF pair, the tail's
+    /// `Mth.lerp(scale, 1.0, f)` the consumer law keeps — 1.0 the
+    /// modifier rides unblended, 0.0 the effects the 1.0 the OFF
+    /// caption keeps. The App's boot load the file's row the body
+    /// wears (the session's own store the tick reads).
+    pub fov_effect_scale: f32,
     /// The input impulses (the KeyboardInput's own ±1 shape).
     pub forward: f32,
     pub left: f32,
@@ -1755,6 +1765,7 @@ impl PlayerBody {
             flying_speed: FLY_SPEED,
             fov_modifier: 1.0,
             prev_fov_modifier: 1.0,
+            fov_effect_scale: 1.0,
             forward: 0.0,
             left: 0.0,
             jumping: false,
@@ -1958,8 +1969,8 @@ impl PlayerBody {
     }
 
     /// `AbstractClientPlayer.getFieldOfViewModifier`'s own walk (the
-    /// 26.2 jar's raw disasm, the scripts/abstractclientplayer_getfovmodifier.txt
-    /// dump): f = 1.0, the flying *1.1 the abilities' word keeps (the
+    /// 26.2 jar's raw disasm, the fov_scale_tail_262.py probe): f = 1.0,
+    /// the flying *1.1 the abilities' word keeps (the
     /// body's no-flight lane never arms it), the speed ratio the
     /// ATTRIBUTE speaks — `f *= (speed / walkSpeed + 1.0) / 2.0` over
     /// the same attribute law `speed()` folds, so the sprint's 1.3
@@ -1967,9 +1978,14 @@ impl PlayerBody {
     /// 0.2 answers 0.6 — the Abilities.getWalkingSpeed default the
     /// MOVEMENT_SPEED base speaks. The bow's draw zoom and the
     /// spyglass's 0.1 the client's own arms never draw (no bow, no
-    /// spyglass the inventory keeps); the fovEffectScale lerp the
-    /// no-option client keeps at its own 1.0 default (lerp(1.0, 1.0, f)
-    /// = f — the modifier rides unblended).
+    /// spyglass the inventory keeps; the spyglass gate the
+    /// firstPerson ARG the Z slot wears — the pc 105-116 walk the
+    /// probe banks). THE TAIL'S OWN LERP the option value speaks —
+    /// `Mth.lerp(scale, 1.0, f)` the ZF signature's F arg carries (the
+    /// Camera.tickFov the `fovEffectScale().get().floatValue()` read
+    /// passes, pcs 37-55): 1.0 the modifier rides unblended, 0.0 the
+    /// effects the 1.0 the OFF caption keeps, the between the scale's
+    /// own fraction wears.
     fn fov_target(&self, using_item: bool) -> f32 {
         if MOVEMENT_SPEED == 0.0 {
             return 1.0;
@@ -1980,7 +1996,11 @@ impl PlayerBody {
         // 1.1`, the walking-speed ratio product the fold continues —
         // the flying camera's own zoom-out the sprint ratio rides)
         let fly = if self.flying { FLY_FOV } else { 1.0 };
-        fly * ((ratio + 1.0) / 2.0)
+        let f = fly * ((ratio + 1.0) / 2.0);
+        // THE EFFECT SCALE'S OWN LERP (the tail's Mth.lerp the option
+        // speaks — 1.0 + scale * (f - 1.0), the scale the Camera's read
+        // passes): the no-effect default the 1.0 the modifier keeps.
+        1.0 + self.fov_effect_scale * (f - 1.0)
     }
 
     /// `Camera.tickFov`'s own beat (the scripts/camera_tickfov.txt
@@ -5566,6 +5586,50 @@ mod tests {
         b.sprinting = true;
         b.tick(&w, false);
         assert_eq!(b.exhaustion_event, crate::food::EXHAUSTION_SPRINT_JUMP);
+    }
+
+    /// THE FOV EFFECT SCALE'S OWN LERP (the 26.2 tail the
+    /// fov_scale_tail_262.py probe banks — `Mth.lerp(scale, 1.0, f)` the
+    /// Camera.tickFov read passes): 1.0 the default the modifier rides
+    /// unblended (the sprint's 1.15 the existing laws keep), 0.0 the
+    /// OFF the 1.0 the caption keeps, the 0.5 the half-zoom wears.
+    #[test]
+    fn the_fov_effect_scale_the_tail_lerp_wears() {
+        let mut b = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        // THE DEFAULT (the ctor's 1.0 — the sprint's 1.15 the unblended
+        // walk the existing laws bank)
+        b.sprinting = true;
+        assert!(
+            (b.fov_target(false) - 1.15).abs() < 1e-6,
+            "the default the sprint keeps"
+        );
+        // THE HALF (the 0.5 the half-zoom wears — 1.0 + 0.5*(1.15-1.0))
+        b.fov_effect_scale = 0.5;
+        assert!(
+            (b.fov_target(false) - 1.075).abs() < 1e-6,
+            "the half the 1.075 wears"
+        );
+        // THE OFF (the 0.0 the effects never zoom — the walk's f the
+        // 1.0 the OFF caption keeps)
+        b.fov_effect_scale = 0.0;
+        assert!(
+            (b.fov_target(false) - 1.0).abs() < 1e-6,
+            "the OFF the 1.0 keeps"
+        );
+        // THE FLY FOLD (the flying zoom the scale blends — the full
+        // scale the 1.1 wears, the OFF the zoom the 1.0 keeps silent)
+        b.sprinting = false;
+        b.flying = true;
+        b.fov_effect_scale = 1.0;
+        assert!(
+            (b.fov_target(false) - FLY_FOV).abs() < 1e-6,
+            "the full the fly keeps"
+        );
+        b.fov_effect_scale = 0.0;
+        assert!(
+            (b.fov_target(false) - 1.0).abs() < 1e-6,
+            "the OFF the fly still keeps"
+        );
     }
 
     /// THE EFFECT ATTRIBUTES' OWN MOTION (javap MobEffects clinit the

@@ -6806,6 +6806,14 @@ pub struct App {
     /// the law's own gate reads, the false the pause the refresh alone
     /// speaks).
     pub pause_on_lost_focus: bool,
+    /// THE FOV EFFECTS' OWN SCALE (the `fovEffectScale` option the
+    /// AccessibilityOptionsScreen row wears — the 0..1 the slider's own
+    /// unit keeps, the default 1.0 the dconst_1 banks, the camera's
+    /// read the body's tick wears: the tail's Mth.lerp the modifier
+    /// blends, the 0.0 the OFF the effects keep silent; the flat
+    /// options screen the row never hosts — the file + the boot load
+    /// the round-trip answers).
+    pub fov_effect_scale: f64,
     /// THE LAST ACTIVE'S OWN TIMESTAMP (the vanilla
     /// `Minecraft.lastActiveTime` field — the millis the active walk
     /// alone refreshes, the unfocused walk the 500ms grace the elapsed
@@ -10169,6 +10177,7 @@ impl App {
             creative_scroll_drag: false,
             stopping: false,
             pause_on_lost_focus: true,
+            fov_effect_scale: 1.0,
             last_active_ms: 0,
             look_sensitivity: crate::body::LOOK_SENSITIVITY_DEFAULT,
             sensitivity_drag: false,
@@ -32374,6 +32383,13 @@ impl App {
         self.fov = file.fov;
         self.volume = file.sound_category_master;
         self.pause_on_lost_focus = file.pause_on_lost_focus;
+        self.fov_effect_scale = file.fov_effect_scale;
+        // THE BODY'S OWN READ (the Camera.tickFov the option value the
+        // tick passes — the body's own store the boot's truth wears,
+        // the no-body boot the field the later spawn's ctor keeps)
+        if let Some(b) = self.body.as_mut() {
+            b.fov_effect_scale = self.fov_effect_scale as f32;
+        }
     }
 
     /// THE OPTIONS FILE'S OWN SAVE WALK (the vanilla `Options.save()` law
@@ -32391,6 +32407,7 @@ impl App {
             fov: self.fov,
             sound_category_master: self.volume,
             pause_on_lost_focus: self.pause_on_lost_focus,
+            fov_effect_scale: self.fov_effect_scale,
         };
         file.save(path);
     }

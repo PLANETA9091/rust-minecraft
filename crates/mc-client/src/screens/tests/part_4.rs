@@ -9025,7 +9025,7 @@ fn the_options_file_the_stores_restart_outlives() {
     assert_eq!(app.screen, ScreenKind::Title, "the Done the return wears");
     let text = std::fs::read_to_string(&path).expect("the chord the file writes");
     assert_eq!(
-        text, "version:4903\nmouseSensitivity:1.0\nfov:110\nsoundCategory_master:0.0\npauseOnLostFocus:true\n",
+        text, "version:4903\nmouseSensitivity:1.0\nfov:110\nsoundCategory_master:0.0\npauseOnLostFocus:true\nfovEffectScale:1.0\n",
         "the file the vanilla rows wear"
     );
     // THE RESTART (the fresh boot the file's truth wears — the session's
@@ -9061,7 +9061,7 @@ fn the_options_escape_the_save_and_return_wears() {
     assert_eq!(app.screen, ScreenKind::Title, "the escape the return wears");
     let text = std::fs::read_to_string(&path).expect("the escape the file writes");
     assert_eq!(
-        text, "version:4903\nmouseSensitivity:0.75\nfov:90\nsoundCategory_master:0.25\npauseOnLostFocus:true\n",
+        text, "version:4903\nmouseSensitivity:0.75\nfov:90\nsoundCategory_master:0.25\npauseOnLostFocus:true\nfovEffectScale:1.0\n",
         "the SAME save chord the Done wears the escape speaks"
     );
     // THE PAUSED LANE (the pause screen's own Options — the
@@ -9170,7 +9170,7 @@ fn the_quit_lane_the_stop_flag_and_the_files_absence_wears() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the removed() moment the file writes"),
-        "version:4903\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\n",
+        "version:4903\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\n",
         "the takeover's own exit the rows bank"
     );
     app.render_title_buttons_for_test();
@@ -9184,7 +9184,7 @@ fn the_quit_lane_the_stop_flag_and_the_files_absence_wears() {
     assert!(app.stopping, "the second stop the same chord wears");
     assert_eq!(
         std::fs::read_to_string(&path).expect("the file the exit keeps"),
-        "version:4903\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\n",
+        "version:4903\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\n",
         "the quit the file NEVER re-writes — the removed() moment ALONE the rows keep"
     );
     let _ = std::fs::remove_dir_all(&dir);
@@ -9235,7 +9235,7 @@ fn the_options_exit_the_removed_moment_itself_saves() {
     app.open(ScreenKind::Servers);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the takeover the file writes"),
-        "version:4903\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:1.0\npauseOnLostFocus:true\n",
+        "version:4903\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\n",
         "the replacement lane the removed() moment speaks"
     );
     // THE SAME-KIND RE-ENTRY (the open(Options) from Options the
@@ -9246,7 +9246,7 @@ fn the_options_exit_the_removed_moment_itself_saves() {
     app.open(ScreenKind::Options);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the re-entry the file writes"),
-        "version:4903\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:0.5\npauseOnLostFocus:true\n",
+        "version:4903\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:0.5\npauseOnLostFocus:true\nfovEffectScale:1.0\n",
         "the same-kind walk the old screen's discard keeps"
     );
     // THE NONE BOOT'S SILENT KEEP (the options_file None the save walk
@@ -9384,7 +9384,7 @@ fn the_focus_pause_chord_the_flip_and_the_rows_wear() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the exit the file writes"),
-        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:false\n",
+        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:false\nfovEffectScale:1.0\n",
         "the flipped row the exit banks"
     );
     // THE SECOND FLIP (the chord the option re-arms — the row the next
@@ -9395,7 +9395,7 @@ fn the_focus_pause_chord_the_flip_and_the_rows_wear() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the second exit the file writes"),
-        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\n",
+        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\n",
         "the re-armed row the exit banks"
     );
     // THE THIRD FLIP (the option the false re-wears — the restart the
@@ -9406,7 +9406,7 @@ fn the_focus_pause_chord_the_flip_and_the_rows_wear() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the third exit the file writes"),
-        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:false\n",
+        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:false\nfovEffectScale:1.0\n",
         "the flipped row the exit banks"
     );
     // THE BOOT LOAD (the file's truth the boot walk wears — the false
@@ -9432,6 +9432,82 @@ fn the_focus_pause_chord_the_flip_and_the_rows_wear() {
     assert!(
         app3.pause_on_lost_focus,
         "the missing row the default true keeps"
+    );
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+// THE FOV EFFECT SCALE'S OWN ROW (the 26.2 AccessibilityOptionsScreen
+// row the file's law wears — the fov_scale_tail_262.py probe the
+// Camera.tickFov read the body's tick passes: the boot load the body's
+// own store wears, the strict decode the out-of-range/bool rows the
+// skip keeps, the restart the row outlives)
+#[test]
+fn the_fov_effect_scale_row_the_boot_the_body_wears() {
+    let dir = std::env::temp_dir().join(format!("mc2rs_fov_scale_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&dir);
+    let path = dir.join("options.txt");
+    let mut app = App::new(262);
+    app.options_file = Some(path.clone());
+    // THE DEFAULT (the dconst_1 the ctor speaks)
+    assert_eq!(app.fov_effect_scale, 1.0, "the default the ctor banks");
+    // THE FILE'S TRUTH (the 0.5 row the boot load wears — the body's
+    // own store the tick's read passes)
+    std::fs::write(
+        &path,
+        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:0.5\n",
+    )
+    .expect("the scale file writes");
+    app.enter_world();
+    app.spawn_offline_body();
+    app.options_file_load();
+    assert_eq!(app.fov_effect_scale, 0.5, "the row the load wears");
+    let b = app.body.as_ref().expect("the spawned body");
+    assert!(
+        (b.fov_effect_scale - 0.5).abs() < 1e-6,
+        "the body the read wears"
+    );
+    // THE OFF (the 0.0 row the boot the body's silent store wears —
+    // the effects the OFF caption keeps, the zoom the 1.0 answers)
+    std::fs::write(
+        &path,
+        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:0.0\n",
+    )
+    .expect("the off file writes");
+    let mut app2 = App::new(262);
+    app2.options_file = Some(path.clone());
+    app2.enter_world();
+    app2.spawn_offline_body();
+    app2.options_file_load();
+    let b2 = app2.body.as_ref().expect("the body");
+    assert!(
+        (b2.fov_effect_scale - 0.0).abs() < 1e-6,
+        "the OFF row the body wears"
+    );
+    // THE STRICT DECODE (the out-of-range 1.5 the default keeps — the
+    // clamp never wears, the doubleRange codec the skip answers)
+    std::fs::write(
+        &path,
+        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.5\n",
+    )
+    .expect("the oor file writes");
+    let mut app4 = App::new(262);
+    app4.options_file = Some(path.clone());
+    app4.options_file_load();
+    assert_eq!(
+        app4.fov_effect_scale, 1.0,
+        "the out-of-range the default keeps"
+    );
+    // THE ROUND TRIP (the in-memory scale the removed() exit banks —
+    // the restart the row outlives)
+    let mut app5 = App::new(262);
+    app5.options_file = Some(path.clone());
+    app5.fov_effect_scale = 0.25;
+    app5.open(ScreenKind::Options);
+    app5.open(ScreenKind::Title);
+    let text = std::fs::read_to_string(&path).expect("the exit the file writes");
+    assert!(
+        text.contains("fovEffectScale:0.25\n"),
+        "the scale row the exit banks"
     );
     let _ = std::fs::remove_dir_all(&dir);
 }

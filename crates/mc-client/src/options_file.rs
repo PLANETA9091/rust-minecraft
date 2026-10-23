@@ -18,7 +18,14 @@
 //!   `soundCategory_master` the SoundSource loop's BSM126 recipe
 //!   `'soundCategory_' + name` builds (the createSoundSliderOptionInstance
 //!   walk the UnitDouble default 1.0 wears — the dconst_1 the map factory
-//!   speaks).
+//!   speaks), `pauseOnLostFocus` the boolean row the round-trip wears
+//!   (the "true"/"false" the codec vocabulary), `fovEffectScale` the
+//!   AccessibilityOptionsScreen row the UnitDouble.xmap slider wears
+//!   (the doubleRange(0.0, 1.0) codec the range keeps — the BOOL
+//!   alternative the codec NEVER carries, the strict double the decode
+//!   answers, the default 1.0 the dconst_1 banks; the row the
+//!   fov_scale_tail_262.py probe the Camera.tickFov read passes into
+//!   getFieldOfViewModifier's ZF pair the tail's Mth.lerp speaks).
 //! - THE LOAD THE MISSING FILE THE DEFAULTS KEEP (the
 //!   `if (!optionsFile.exists()) return` the head walk speaks), the lines
 //!   the `Splitter.on(':').limit(2)` law splits, the malformed line the
@@ -55,6 +62,14 @@ pub struct OptionsFile {
     /// round-trip wears — the 26.2's own seat the debug chord toggles,
     /// the screen row the accessibility lane retired).
     pub pause_on_lost_focus: bool,
+    /// `fovEffectScale` — the FOV effects' own 0..1 scale (the default
+    /// 1.0 the dconst_1 banks, the doubleRange(0.0, 1.0) codec the
+    /// range keeps — the strict double the decode answers, the BOOL
+    /// alternative the UnitDouble-withAlternative lane the option
+    /// never registers; the AccessibilityOptionsScreen row the 26.2
+    /// seat keeps, the client's flat options screen the row never
+    /// hosts — the file + the camera's read the round-trip answers).
+    pub fov_effect_scale: f64,
 }
 
 impl Default for OptionsFile {
@@ -64,6 +79,7 @@ impl Default for OptionsFile {
             fov: 70.0,
             sound_category_master: 1.0,
             pause_on_lost_focus: true,
+            fov_effect_scale: 1.0,
         }
     }
 }
@@ -112,6 +128,18 @@ impl OptionsFile {
                         out.pause_on_lost_focus = false;
                     }
                 }
+                "fovEffectScale" => {
+                    // THE STRICT DOUBLE'S OWN DECODE (the
+                    // doubleRange(0.0, 1.0) codec the in-range double
+                    // answers — the BOOL alternative the option never
+                    // registers, the out-of-range/malformed the default
+                    // keeps, the clamp never wears)
+                    if let Ok(v) = value.parse::<f64>() {
+                        if (0.0..=1.0).contains(&v) {
+                            out.fov_effect_scale = v;
+                        }
+                    }
+                }
                 _ => {} // the jar's other rows the client's seats never carry
             }
         }
@@ -138,6 +166,12 @@ impl OptionsFile {
         // THE BOOLEAN'S OWN ROW (the "true"/"false" the Rust Display the
         // vanilla BooleanValue's codec vocabulary wears)
         text.push_str(&format!("pauseOnLostFocus:{}\n", self.pause_on_lost_focus));
+        // THE SCALE'S OWN ROW (the double the java_double print keeps —
+        // the 1.0 the default the decimal speaks)
+        text.push_str(&format!(
+            "fovEffectScale:{}\n",
+            java_double(self.fov_effect_scale)
+        ));
         let _ = std::fs::write(path, text);
     }
 }
@@ -197,7 +231,7 @@ mod tests {
         OptionsFile::default().save(&path);
         let text = std::fs::read_to_string(&path).expect("the save the file writes");
         assert_eq!(
-            text, "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\n",
+            text, "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\n",
             "the file the vanilla rows wear"
         );
         let loaded = OptionsFile::load(&path);
@@ -207,6 +241,10 @@ mod tests {
         assert_eq!(
             loaded.pause_on_lost_focus, true,
             "the default the round-trip wears"
+        );
+        assert_eq!(
+            loaded.fov_effect_scale, 1.0,
+            "the scale the default the round-trip wears"
         );
         let _ = std::fs::remove_dir_all(&dir);
     }
@@ -234,7 +272,11 @@ mod tests {
              fov:5\n\
              soundCategory_master:true\n\
              pauseOnLostFocus:maybe\n\
-             pauseOnLostFocus:false\n",
+             pauseOnLostFocus:false\n\
+             fovEffectScale:0.5\n\
+             fovEffectScale:1.5\n\
+             fovEffectScale:true\n\
+             fovEffectScale:0.25\n",
         )
         .expect("the probe file writes");
         let loaded = OptionsFile::load(&path);
@@ -258,6 +300,13 @@ mod tests {
             loaded.pause_on_lost_focus, false,
             "the boolean the decode wears — the malformed row the skip keeps"
         );
+        // THE SCALE'S OWN DECODE (the in-range double the read wears —
+        // the out-of-range 1.5 the skip keeps, the BOOL row the strict
+        // codec never answers, the LAST valid the 0.25 the read banks)
+        assert_eq!(
+            loaded.fov_effect_scale, 0.25,
+            "the scale the last valid row wears — the out-of-range/bool the skip keeps"
+        );
         let _ = std::fs::remove_dir_all(&dir);
         // THE MISSING FILE the defaults keep (the exists() gate the head
         // walk speaks)
@@ -268,6 +317,10 @@ mod tests {
         assert_eq!(
             missing.pause_on_lost_focus, true,
             "the missing file the default true keeps"
+        );
+        assert_eq!(
+            missing.fov_effect_scale, 1.0,
+            "the missing file the default scale keeps"
         );
     }
 
