@@ -2125,3 +2125,78 @@ Stage Summary:
   section the 19-row runner's own row the text could name, the
   quickcraft drag the offline dispenser sim could wear (the local
   stores the same fold answers).
+---
+Task ID: dev-146
+Agent: cron-agent-loop (Job 384925, 2026-10-23 09:01:50 +08:00, trace 1a0a02c3c1060631-cron-agent-loop-202610230909)
+Task: ONE minimal step per the tick protocol — the worklog's NEXT
+CANDIDATES head-adjacent line: the thrown-shot's wire lane (the Add
+Entity word the live read banks — the server's dispenser shots the
+client's own flight lane renders).
+
+Work Log:
+- THE REPO THE CLEAN TREE ANSWERED (HEAD f8b1e86, origin in sync; the
+  v0.3.869 dispenser's own drag the previous round wore).
+- THE WIRE THROWN SHOTS NOW BANK: the minecraft:snowball /
+  minecraft:egg entities the Add Entity store kept the honest data
+  ("not-yet-drawn types stay honest data" the arrows_view gate
+  kept) — the thrown_view projection the flight lane's own wire
+  now speaks.
+- THE LANES: world_view.rs the WireThrown struct + thrown_view (the
+  kind byte the type name speaks, the pose AND the motion the
+  packet's own fields carry) + the SnapshotView field the both
+  builder arms feed; mob.rs the EggProjectile::wire_spawn ctor (the
+  pose and motion land verbatim, the rotation the velocity's own
+  atan2 degrees speak); screens.rs the net_thrown sim field (the
+  net-arrow lane's twin: the STILL-NAMED id the client's own flight
+  IS the between-refresh truth, the FRESH id the spawn word builds,
+  the gone id the reconcile drops), tick_net_thrown (the arc the
+  same ThrowableProjectile walk the offline eggs wear — the drag
+  0.99, the water 0.8, the gravity 0.03; the block clip the hit
+  arms — the SHATTER BURST the same case-3 walk rides (the snowball
+  the 8 plain shards, the egg the 10-jitter loop); THE MOB SWEEP +
+  THE CHICK'S ROLLS the lane never wears — the server's hits and
+  spawns its own lanes speak), the tick dispatch the networked arm
+  feeds; render_eggs the KIND'S OWN SPLIT (the egg and the snowball
+  item models the build_parts closure bakes — the offline snowball
+  the egg-sprite simplification wore now its own model banks, both
+  thrown lanes the same pass draws); window.rs the WireThrown wire
+  the channel tuple rides (the type tuple + the send + the
+  destructure + the ship line).
+- +2 tests: the wire thrown flight (the spawn the packet's word,
+  the arc the 2.376/-0.03 numbers speak, the still-named sim
+  untouched, the gone id drops, the offline gate holds), the wall
+  break (the two-tick stride the face crosses, the 18 shards the
+  two bursts speak, the bodies the retain drops).
+- THE ENVIRONMENT EVENT the round's verify hit: the mc-client
+  2349-test bin's rustc codegen peak crossed the sandbox's tightened
+  OOM ceiling (~2.0G available; the morning's own 2666-test runs the
+  same config wore) — the SIGKILL the memory watcher watched reach
+  the 4.1G line. EVERY knob the attempts spoke: the config's own
+  jobs=1/lld/no-keep-memory shape, CGU 16 and 256, opt-level 1,
+  strip symbols, malloc arena tuning, -Zthreads=1 — the peak the
+  phase the knobs never split. THE HONEST PARTIAL VERIFY: cargo
+  check --all-targets CLEAN (the full type-check the test harness
+  carries), mc-protocol 157 + mc-registry 100 PASSED, goldens 19/19
+  PASS rms 0.000 (the release links the ceiling never crossed), fmt
+  the HEAD's own 1159 both ways. THE +2 TESTS THE LINK NEVER
+  EXECUTED this round — the honest gap the record banks.
+- THE RESUME PLAN the next round speaks: re-run
+  `cargo test --workspace` FIRST (the +2 thrown tests + the full
+  2349-body the link answers); if the ceiling holds, the
+  screens.rs test-module split (the 146k-line crate the
+  round-sized modules the later rounds' own line names) the codegen
+  peak's real fix wears.
+- Pushed d7784ee (v0.3.870, the wire thrown shots).
+
+Stage Summary:
+- THE SERVER'S DISPENSER SHOTS THE CLIENT'S OWN SKY FLY: the Add
+  Entity word the thrown_view banks, the arc the client's own tick
+  simulates, the wall the shatter bursts at — the same lane the
+  arrows wear, the snowball the egg the kind split sprites.
+- NEXT CANDIDATES: the workspace re-verify the resume plan banks
+  FIRST (the +2 tests the execution owes), the shulker box the
+  getContainerAt walk the dropper's front read never serves, the
+  EntityEvent case-3 shatter arm the wire thrown lane's own
+  discard word could wear (the server's own event the burst
+  anchors at), the README's golden section the 19-row runner's
+  own row the text could name.
