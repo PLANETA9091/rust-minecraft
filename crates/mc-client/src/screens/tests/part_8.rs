@@ -7043,6 +7043,59 @@ fn the_saved_player_row_wears_the_vitals() {
         assert_eq!(app.xp.total, 42, "the trio the respawn re-wears");
     }
 
+    /// THE GAMERULE'S OWN ROUND TRIP (vanilla level.dat's GameRules
+    /// compound the String "true"/"false" values keep — the save the
+    /// rule's own row banks, the reload the death lanes' gate re-arms,
+    /// the flip the file's own latest truth re-wears, the elder file's
+    /// missing row the false default the boot wears).
+    #[test]
+    fn the_keep_inventory_rule_round_trips_the_save() {
+        let dir = std::env::temp_dir().join(format!("mc2rs_keep_inv_{}", std::process::id()));
+        let _ = std::fs::create_dir_all(&dir);
+        let path = dir.join("world_edits.nbt");
+        // THE ARMED SESSION'S SAVE (the row the rule's own truth banks)
+        let mut app = App::new(3);
+        app.offline_world_file = Some(path.clone());
+        app.enter_world();
+        app.keep_inventory = true;
+        app.offline_world_file_save();
+        // THE FILE'S OWN ROW (the String "true" the vanilla gamerule
+        // shape wears)
+        let bytes = std::fs::read(&path).expect("the flush the file writes");
+        let (_, root) = mc_protocol::nbt::read_file_nbt(&mut bytes.as_slice())
+            .expect("the file the parse answers");
+        if let mc_protocol::nbt::Nbt::Compound(rows) = &root {
+            let row = rows
+                .iter()
+                .find(|(k, _)| k == "keepInventory")
+                .expect("the rule's own row the save banks");
+            assert_eq!(
+                row.1,
+                mc_protocol::nbt::Nbt::String("true".to_string()),
+                "the String 'true' the vanilla gamerule shape wears"
+            );
+        }
+        // THE RELOAD (the armed rule the fresh session re-banks — the
+        // death lanes' gate the restart keeps)
+        let mut app2 = App::new(3);
+        app2.offline_world_file = Some(path.clone());
+        app2.enter_world();
+        assert!(app2.keep_inventory, "the armed rule the reload re-banks");
+        // THE SECOND SAVE (the disarmed row the flip banks — the file
+        // the session's own latest truth wears)
+        app2.keep_inventory = false;
+        app2.offline_world_file_save();
+        let mut app3 = App::new(3);
+        app3.offline_world_file = Some(path.clone());
+        app3.enter_world();
+        assert!(
+            !app3.keep_inventory,
+            "the disarmed rule the reload re-banks"
+        );
+        let _ = std::fs::remove_file(&path);
+        let _ = std::fs::remove_dir(&dir);
+    }
+
 
     /// THE FIRE LANES' OWN KIND ROWS (the loop's own consumption the
     /// kind fix speaks): the burning cow's death the cow's own row
