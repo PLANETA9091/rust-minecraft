@@ -8130,3 +8130,57 @@ use super::*;
         assert!(app.drops.is_empty(), "no drop the scroll never names");
         assert!(!app.swing.swinging, "no swing the scroll never names");
     }
+
+    /// THE DOMOBSPAWNING RULE'S OWN FREEZE LAW (the RULE_DOMOBSPAWNING
+    /// row the natural cycle's own gate reads): the false the whole
+    /// beat's attempts the walk never earns — the day's creature arm
+    /// the gate refuses (the armed walk the day-beat test speaks),
+    /// the world's own ticks the frame keeps.
+    #[test]
+    fn the_do_mob_spawning_rule_freezes_the_spawn_beat() {
+        let mut app = App::new(9);
+        app.enter_world();
+        // THE FLAT GRASS PLATFORM (the day beat's own voxels the test
+        // sets — the walk's every spot the platform keeps)
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for x in 0..size {
+                for z in 0..size {
+                    for y in 0..8 {
+                        w.set(x, y, z, crate::world::STONE);
+                    }
+                    w.set(x, 8, z, crate::world::GRASS);
+                    for y in 9..size {
+                        w.set(x, y, z, crate::world::AIR);
+                    }
+                }
+            }
+        }
+        app.body = Some(crate::body::PlayerBody::new(40.0, 9.0, 40.0, 0.0, 0.0));
+        // THE DISARM (the rule the set walk flips — the chat literal's
+        // own arm): the natural attempts the beat never earns
+        app.chat_open = true;
+        app.chat_input = "/gamerule doMobSpawning false".into();
+        app.on_chat_submit();
+        assert!(!app.do_mob_spawning, "the set the rule disarms");
+        // THE DAY BAND (the gate's own word — the bright tick the beat's
+        // creature arm keeps)
+        let day_tick = (0..24_000i64)
+            .find(|t| crate::mob::is_bright_outside(*t))
+            .expect("a day band the sky keeps");
+        app.clock_total = day_tick as u64 + app.frame;
+        // THE BEAT (the spawn_clock the 40th update the % SPAWN_CYCLE
+        // arm — the gate the attempts refuse, the ring the randoms
+        // never spends)
+        for _ in 0..400 {
+            app.update();
+        }
+        assert!(
+            app.mobs.is_empty(),
+            "the disarmed beat the spawns refuses"
+        );
+        // THE WORLD'S OWN BEAT (the frame the rule never gates — the
+        // doDaylightCycle law's own shape the spawn clock shares)
+        assert_eq!(app.frame, 400, "the world's own ticks the rule keeps");
+    }

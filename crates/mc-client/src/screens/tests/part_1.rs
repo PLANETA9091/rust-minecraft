@@ -8167,10 +8167,11 @@ use super::*;
         );
         // THE UNKNOWN RULE (the GameRuleArgument's own walk — the
         // parse failure the RED error keeps; the doDaylightCycle the
-        // KNOWN row the file-end walk now serves, the probe the
-        // still-unknown rule wears)
+        // KNOWN row the file-end walk now serves, the doMobSpawning
+        // the third row the natural spawner's cycle banks, the probe
+        // the still-unknown rule wears)
         app.chat_open = true;
-        app.chat_input = "/gamerule doMobSpawning true".into();
+        app.chat_input = "/gamerule doFireTick true".into();
         app.on_chat_submit();
         let err = app.chat_messages.last().map(|(m, _)| m.clone()).unwrap();
         assert!(
@@ -8242,5 +8243,65 @@ use super::*;
         assert_eq!(
             app.chat_messages.last().map(|(m, _)| m.as_str()),
             Some("Gamerule doDaylightCycle is now set to: true"),
+        );
+    }
+
+    /// THE DOMOBSPAWNING RULE'S OWN COMMAND WALK (the `/gamerule`
+    /// literal's third known row — the query the default TRUE the
+    /// boot wears, the set the field flips, the bad value the parse
+    /// failure keeps): the natural spawner's own gate the walk arms
+    /// (the freeze law the part_6 test wears).
+    #[test]
+    fn the_offline_command_the_gamerule_the_do_mob_spawning_walks() {
+        let mut app = App::new(3);
+        app.enter_world();
+        assert!(
+            app.do_mob_spawning,
+            "the vanilla default the true boot wears"
+        );
+        // THE QUERY (the default the row reads)
+        app.chat_open = true;
+        app.chat_input = "/gamerule doMobSpawning".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Gamerule doMobSpawning is currently set to: true"),
+        );
+        // THE SET FALSE (the row the rule disarms)
+        app.chat_open = true;
+        app.chat_input = "/gamerule doMobSpawning false".into();
+        app.on_chat_submit();
+        assert!(!app.do_mob_spawning, "the set the row disarms");
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Gamerule doMobSpawning is now set to: false"),
+        );
+        // THE RE-QUERY (the disarmed row the query speaks)
+        app.chat_open = true;
+        app.chat_input = "/gamerule doMobSpawning".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Gamerule doMobSpawning is currently set to: false"),
+        );
+        // THE BAD VALUE (the BoolArgumentType's parse the failure
+        // keeps — the row unmoved, the RED error rides)
+        app.chat_open = true;
+        app.chat_input = "/gamerule doMobSpawning maybe".into();
+        app.on_chat_submit();
+        assert!(!app.do_mob_spawning, "the bad value the row unmoved keeps");
+        let err = app.chat_messages.last().map(|(m, _)| m.clone()).unwrap();
+        assert!(
+            err.starts_with("\u{a7}c"),
+            "the parse failure the RED error rides: {err:?}"
+        );
+        // THE SET TRUE (the row the rule re-arms)
+        app.chat_open = true;
+        app.chat_input = "/gamerule doMobSpawning true".into();
+        app.on_chat_submit();
+        assert!(app.do_mob_spawning, "the set the row arms");
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Gamerule doMobSpawning is now set to: true"),
         );
     }

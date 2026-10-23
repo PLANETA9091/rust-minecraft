@@ -8642,6 +8642,15 @@ pub struct App {
     /// frame keeps). The `/gamerule doDaylightCycle` command the row's
     /// own walk serves.
     pub do_daylight_cycle: bool,
+    /// THE DOMOBSPAWNING GAMERULE'S OWN ROW (javap
+    /// `GameRules.RULE_DOMOBSPAWNING` the 26.2 clinit speaks — the
+    /// BooleanValue the natural spawner's own cycle reads): the TRUE
+    /// the vanilla world creation's own default wears, the FALSE the
+    /// natural attempts the beat never earns — the night's monster
+    /// arm and the day's creature arm the ONE gate refuses (the
+    /// spawn clock the world's own phase keeps). The
+    /// `/gamerule doMobSpawning` command the row's own walk serves.
+    pub do_mob_spawning: bool,
     /// THE ABILITIES OBJECT'S OWN BANK (the vanilla client's ONE
     /// `Abilities` instance the whole walk family reads —
     /// `LocalPlayer.aiStep`'s mayfly gate, `MultiPlayerGameMode`'s
@@ -10093,6 +10102,7 @@ impl App {
             previous_game_mode: None,
             keep_inventory: false,
             do_daylight_cycle: true,
+            do_mob_spawning: true,
             abilities_word: None,
             gm_hovered: 0,
             gm_first_mouse: None,
@@ -14964,7 +14974,16 @@ impl App {
                 // darken's first tick) the creature lane rode, the
                 // vanilla dusk spawns the beat never offered.
                 self.spawn_clock += 1;
-                if self.spawn_clock % crate::mob::SPAWN_CYCLE_TICKS == 0 {
+                // THE GAMERULE'S OWN SPAWN GATE (javap GameRules
+                // .RULE_DOMOBSPAWNING the natural cycle's own read —
+                // the false the whole beat's attempts the walk never
+                // earns: the night's monster arm AND the day's creature
+                // arm the ONE gate refuses, the spawn clock the world's
+                // own phase keeps — the doDaylightCycle gate's own shape
+                // the world's ticks the frame keeps)
+                if self.spawn_clock % crate::mob::SPAWN_CYCLE_TICKS == 0
+                    && self.do_mob_spawning
+                {
                     let day_time = self.day_time_now();
                     if !crate::mob::is_bright_outside(day_time) {
                         if let (Some(world), Some(b)) =
@@ -36508,26 +36527,31 @@ impl App {
             // the SET walk serves). THE RULES the offline vocabulary
             // carries: keepInventory — the GameRules.RULE_KEEPIVENTORY
             // row the death lanes' own gates read (the reward's zero,
-            // the scatters' refuse, the respawn's re-copy) — and
+            // the scatters' refuse, the respawn's re-copy) —,
             // doDaylightCycle, the RULE_DAYLIGHT row the day clock's
             // own advance gate reads (the false the per-tick step the
-            // walk never earns). THE
+            // walk never earns) — and doMobSpawning, the
+            // RULE_DOMOBSPAWNING row the natural spawner's cycle reads
+            // (the false the beat's attempts the walk never earns). THE
             // FEEDBACK (the 26.2 lang table's own rows: query
             // "Gamerule %s is currently set to: %s", set "Gamerule %s
             // is now set to: %s" — the raw rule id the first arg
             // wears, the serialized bool the second).
             ["gamerule", rule] => {
                 // THE KNOWN RULES (the GameRuleArgument's own walk —
-                // the two rows the offline vocabulary speaks, any
+                // the three rows the offline vocabulary speaks, any
                 // other word the parse failure the RED error keeps)
-                if *rule != "keepInventory" && *rule != "doDaylightCycle" {
+                if *rule != "keepInventory"
+                    && *rule != "doDaylightCycle"
+                    && *rule != "doMobSpawning"
+                {
                     self.push_local_command_error();
                     return;
                 }
-                let val = if *rule == "keepInventory" {
-                    self.keep_inventory.to_string()
-                } else {
-                    self.do_daylight_cycle.to_string()
+                let val = match *rule {
+                    "keepInventory" => self.keep_inventory.to_string(),
+                    "doDaylightCycle" => self.do_daylight_cycle.to_string(),
+                    _ => self.do_mob_spawning.to_string(),
                 };
                 let msg = format_positional(
                     tr("commands.gamerule.query")
@@ -36537,7 +36561,10 @@ impl App {
                 self.push_chat_message(msg);
             }
             ["gamerule", rule, value] => {
-                if *rule != "keepInventory" && *rule != "doDaylightCycle" {
+                if *rule != "keepInventory"
+                    && *rule != "doDaylightCycle"
+                    && *rule != "doMobSpawning"
+                {
                     self.push_local_command_error();
                     return;
                 }
@@ -36548,10 +36575,10 @@ impl App {
                     self.push_local_command_error();
                     return;
                 };
-                if *rule == "keepInventory" {
-                    self.keep_inventory = v;
-                } else {
-                    self.do_daylight_cycle = v;
+                match *rule {
+                    "keepInventory" => self.keep_inventory = v,
+                    "doDaylightCycle" => self.do_daylight_cycle = v,
+                    _ => self.do_mob_spawning = v,
                 }
                 let msg = format_positional(
                     tr("commands.gamerule.set").unwrap_or("Gamerule %s is now set to: %s"),
