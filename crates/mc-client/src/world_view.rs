@@ -391,6 +391,12 @@ pub struct SnapshotView {
     /// honest silence: no arrow the server spawned, the shape every
     /// lane rides).
     pub arrows: Vec<WireArrow>,
+    /// The wire's THROWN population (see [`WireThrown`]) — the
+    /// `minecraft:snowball` / `minecraft:egg` bodies the registry
+    /// named, the dispenser's (and the player's) shots the flight
+    /// lane renders (the empty list the honest silence: no shot the
+    /// server spawned, the shape every lane rides).
+    pub thrown: Vec<WireThrown>,
     /// The wire arrows' PENDING SYNC WORDS — the Entity Position Sync
     /// mailbox the model resolved (see [`WireArrowSync`]): the server's
     /// corrections for the shots in flight, shipped once with the
@@ -1974,6 +1980,63 @@ pub fn arrows_view(model: &WorldModel) -> Vec<WireArrow> {
                 yaw: e.y_rot,
                 pitch: e.x_rot,
                 crit,
+            })
+        })
+        .collect()
+}
+
+/// One wire THROWN shot as the flight lane consumes it — the Add
+/// Entity store's `minecraft:snowball` / `minecraft:egg` bodies, the
+/// dispenser's (and the player's) shots the server's own words spoke.
+/// The pose AND the motion ride the spawn packet verbatim — the arc
+/// the client's own tick simulates between the refreshes (the same
+/// law the net-arrow lane wears).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireThrown {
+    pub id: i32,
+    /// THE KIND'S OWN WORD — the type name the registry named: `true`
+    /// the `minecraft:snowball` speaks, `false` the `minecraft:egg`
+    /// (the shatter burst's own sprite the byte picks, the arc the
+    /// same ThrowableProjectile walk both wear).
+    pub snowball: bool,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    /// The spawn word's own motion — the LP Vec3 the Add Entity
+    /// packet carried (the shoot's velocity the server's
+    /// shootFromRotation spoke, the decode's 1/32766 fold the LP lane
+    /// answers). The flight's initial `deltaMovement`.
+    pub vx: f64,
+    pub vy: f64,
+    pub vz: f64,
+}
+
+/// THE THROWN PROJECTION: the entity store's `minecraft:snowball` /
+/// `minecraft:egg` bodies — the dispenser's (and the player's) own
+/// shots the server spawned. Every other type id stays honest data
+/// the screen doesn't draw (the mob/boat/arrow filters' own shape);
+/// the kind byte the two names the registry's own word keeps.
+pub fn thrown_view(model: &WorldModel) -> Vec<WireThrown> {
+    model
+        .entities()
+        .filter_map(|(id, e)| {
+            let name = model.entity_type_name(e.type_id)?;
+            let snowball = if name == "minecraft:snowball" {
+                true
+            } else if name == "minecraft:egg" {
+                false
+            } else {
+                return None; // not-yet-drawn types stay honest data
+            };
+            Some(WireThrown {
+                id,
+                snowball,
+                x: e.x,
+                y: e.y,
+                z: e.z,
+                vx: e.motion[0],
+                vy: e.motion[1],
+                vz: e.motion[2],
             })
         })
         .collect()
@@ -3883,6 +3946,7 @@ pub fn materialize_snapshot_view(
         // and no arrows (a fresh join carries no shots in flight — the
         // empty lane the flight render skips)
         arrows: Vec::new(),
+        thrown: Vec::new(),
         // and no arrow syncs (the join snapshot carries no corrections
         // — the empty mailbox the projection walks)
         arrow_syncs: Vec::new(),
@@ -5119,6 +5183,10 @@ impl LiveView {
                 // the arrows' belief rides the same arm — the shots are
                 // the connection's own population, not the pose's
                 arrows: arrows_view(&self.model),
+                // the thrown shots ride the same arm — the dispenser's
+                // (and the player's) projectiles the connection's own
+                // population keeps
+                thrown: thrown_view(&self.model),
                 // the sync words ride the pose-less arm too — the
                 // corrections are the connection's own word
                 arrow_syncs,
@@ -5349,6 +5417,10 @@ impl LiveView {
             // the shots ride with the population — the arrows the server
             // spawned follow the store exactly like the boats do
             arrows: arrows_view(&self.model),
+            // the thrown shots ride with the population — the snowballs
+            // and eggs the server spawned follow the store exactly like
+            // the boats do
+            thrown: thrown_view(&self.model),
             // the sync words ride every refresh too — the corrections
             // follow the mailbox exactly like the voices do
             arrow_syncs,

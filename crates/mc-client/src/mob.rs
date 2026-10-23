@@ -11787,6 +11787,46 @@ impl EggProjectile {
         }
     }
 
+    /// THE WIRE SPAWN'S OWN WORD (the net-arrow lane's `from_wire` the
+    /// thrown family's own answer wears — javap
+    /// `Projectile.recreateFromPacket`: the pose AND the motion the
+    /// Add Entity packet carried land verbatim, the rotation the
+    /// velocity's own atan2 degrees speak (the updateRotation target
+    /// the initial flight word banks — no lerp the fresh body needs).
+    /// The kind the registry's own type name picks (the `WireThrown`
+    /// projection's byte the decode lane carried).
+    pub fn wire_spawn(
+        id: i32,
+        snowball: bool,
+        x: f64,
+        y: f64,
+        z: f64,
+        vx: f64,
+        vy: f64,
+        vz: f64,
+    ) -> Self {
+        let horiz = (vx * vx + vz * vz).sqrt();
+        let pitch = (vy).atan2(horiz) * 57.295_776_367_187_5;
+        let yaw = (-vx).atan2(-vz) * 57.295_776_367_187_5;
+        Self {
+            id,
+            x,
+            y,
+            z,
+            vx,
+            vy,
+            vz,
+            yaw: yaw as f32,
+            pitch: pitch as f32,
+            dead: false,
+            kind: if snowball {
+                ThrownProjectileKind::Snowball
+            } else {
+                ThrownProjectileKind::Egg
+            },
+        }
+    }
+
     /// THE ROTATION'S OWN LERP (javap `Projectile.updateRotation` —
     /// the target the velocity's own words speak, the
     /// `lerpRotation` fold the arrow's own walk shares).

@@ -7363,6 +7363,13 @@ pub struct App {
     /// hits. The offline lane's own `arrows` stay the client's
     /// authority — the two never mix.
     pub net_arrows: Vec<crate::mob::Arrow>,
+    /// THE WIRE THROWN SHOTS' OWN SIM (the net-arrow lane's twin — the
+    /// `minecraft:snowball` / `minecraft:egg` bodies the Add Entity
+    /// word built, the arc the client's own tick simulates between the
+    /// refreshes, the despawn the Remove Entities word speaks). The
+    /// offline world never wears the lane (the world_is_network gate
+    /// the arrows' own law keeps).
+    pub net_thrown: Vec<crate::mob::EggProjectile>,
     /// THE WIRE'S OWN ROCKETS (the Add Entity firework_rocket entities
     /// the server spawned — the flying rockets the byte-17 bursts
     /// anchor at): the client-side entities the `from_wire` spawn
@@ -9434,6 +9441,7 @@ impl App {
             arrow_model: None,
             net_mobs: Vec::new(),
             net_arrows: Vec::new(),
+            net_thrown: Vec::new(),
             net_fireworks: Vec::new(),
             fireworks: Vec::new(),
             firework_starters: Vec::new(),
@@ -14463,6 +14471,11 @@ impl App {
                 // words built, the physics the client's own tick
                 // simulates, the hits the wire's own lanes speak)
                 self.tick_net_arrows();
+                // THE WIRE THROWN SHOTS' OWN FLIGHT (the same entity lane —
+                // the client-side throwables the spawn words built, the arc
+                // the client walk every tick speaks, the wall break the
+                // clip's own ray arms)
+                self.tick_net_thrown();
                 // THE WIRE ROCKETS' OWN FLIGHT (the same entity lane —
                 // the client-side rockets the spawn words built, the
                 // trail the client walk every tick speaks, the
@@ -34069,6 +34082,143 @@ impl App {
         // the ids the wire no longer names never re-enter net_arrows —
         // the moved-out map drops them (the despawn the Remove
         // Entities spoke, no ghosts)
+    }
+
+    /// THE WIRE THROWN SHOTS' OWN BANK (the net-arrow lane's own walk
+    /// the thrown family's answer wears): the wire's own population —
+    /// the `minecraft:snowball` / `minecraft:egg` bodies the Add
+    /// Entity word built — lands through the reconcile law the arrows
+    /// speak: the STILL-NAMED id the client's own flight IS the
+    /// between-refresh truth (the body rides untouched), the FRESH id
+    /// the packet's own word becomes the client-side entity (the pose
+    /// AND the motion land verbatim — the rotation the velocity's own
+    /// degrees speak), the ids the wire no longer names never
+    /// re-enter (the despawn the Remove Entities spoke, no ghosts).
+    /// The offline lane's eggs are never touched (the
+    /// world_is_network gate the arrows' own law keeps).
+    pub fn live_net_thrown_updated(&mut self, thrown: Vec<crate::world_view::WireThrown>) {
+        if !self.world_is_network {
+            return;
+        }
+        let mut old: std::collections::HashMap<i32, crate::mob::EggProjectile> = std::mem::take(
+            &mut self.net_thrown,
+        )
+        .into_iter()
+        .map(|t| (t.id, t))
+        .collect();
+        for w in thrown {
+            if let Some(t) = old.remove(&w.id) {
+                // THE STILL-NAMED SHOT: the client's own flight IS the
+                // between-refresh truth (the spawn word's re-ship never
+                // re-poses the sim — the same honest leave the arrows'
+                // own law wears)
+                self.net_thrown.push(t);
+                continue;
+            }
+            // THE FRESH SPAWN: the packet's own word becomes the
+            // client-side entity (the pose AND the motion — the arc's
+            // initial velocity the LP Vec3 carried; the kind the
+            // registry's own type name spoke)
+            self.net_thrown.push(crate::mob::EggProjectile::wire_spawn(
+                w.id, w.snowball, w.x, w.y, w.z, w.vx, w.vy, w.vz,
+            ));
+        }
+    }
+
+    /// THE WIRE THROWN SHOTS' OWN FLIGHT (the vanilla ClientLevel's
+    /// projectile lane the net-arrow lane paces — the client-side
+    /// `ThrowableProjectile` the spawn words built ticks its OWN
+    /// physics): the arc the same walk the offline eggs' tick wears —
+    /// the drag the scale ride (the water 0.8, the air 0.99), the
+    /// gravity the fall fold, the pos the delta moves, the rotation
+    /// the lerp fold banks. THE BLOCK'S OWN RAY the clip walks (the
+    /// position to the position+velocity segment — the offline egg's
+    /// own law shares): the hit the shot dies AT (the break the
+    /// client-side Projectile.tick's own onHit answer speaks) — the
+    /// SHATTER BURST the same case-3 walk rides (the snowball the 8
+    /// shards, the egg the 10-jitter loop the same ctors speak). THE
+    /// MOB SWEEP the lane never wears (the server's hits its own
+    /// lanes speak — the net mobs' health the client never spends),
+    /// THE CHICK'S OWN ROLLS the egg's onHit arm never rides (the
+    /// server's spawn word the mob lane's authority keeps). No world
+    /// yet (the swap the network arm speaks hasn't landed): the shots
+    /// rest a tick — never a guessed flight.
+    pub fn tick_net_thrown(&mut self) {
+        if self.net_thrown.is_empty() {
+            return;
+        }
+        let Some(world) = self.net_world.as_ref() else {
+            return;
+        };
+        let mut breaks: Vec<(f64, f64, f64, crate::mob::ThrownProjectileKind)> = Vec::new();
+        for t in self.net_thrown.iter_mut() {
+            if t.dead {
+                continue;
+            }
+            // THE BLOCK'S OWN RAY (the clip the position to the
+            // position+velocity the segment walks — the offline egg's
+            // own law shares)
+            if let Some(h) = crate::body::clip_ray(
+                world,
+                crate::math::Vec3::new(t.x as f32, t.y as f32, t.z as f32),
+                crate::math::Vec3::new(
+                    (t.x + t.vx) as f32,
+                    (t.y + t.vy) as f32,
+                    (t.z + t.vz) as f32,
+                ),
+            ) {
+                t.x = h.x as f64;
+                t.y = h.y as f64;
+                t.z = h.z as f64;
+                t.dead = true;
+                breaks.push((t.x, t.y, t.z, t.kind));
+                continue;
+            }
+            // THE ARC (the drag the scale ride, the gravity the fall
+            // fold, the pos the delta moves, the rotation the lerp
+            // fold banks — the same walk the offline eggs' tick wears)
+            let drag = if matches!(
+                world.get(t.x.floor() as i32, t.y.floor() as i32, t.z.floor() as i32),
+                crate::world::WATER
+            ) {
+                0.8
+            } else {
+                crate::mob::EGG_DRAG
+            };
+            t.vx *= drag;
+            t.vy *= drag;
+            t.vz *= drag;
+            t.vy -= crate::mob::EGG_GRAVITY;
+            t.x += t.vx;
+            t.y += t.vy;
+            t.z += t.vz;
+            t.update_rotation();
+        }
+        self.net_thrown.retain(|t| !t.dead);
+        // THE SHATTER'S OWN BURSTS (the same case-3 walk the offline
+        // eggs' break lane rides — the snowball the 8 plain shards,
+        // the egg the 10-jitter loop the gaussian trio's x0.02 wears)
+        for (bx, by, bz, bkind) in breaks {
+            if bkind == crate::mob::ThrownProjectileKind::Snowball {
+                for _ in 0..8 {
+                    let shard =
+                        crate::particles::breaking_snowball_shard(bx, by, bz, &mut self.mob_rng);
+                    self.particles.push(shard);
+                }
+                continue;
+            }
+            for _ in 0..10 {
+                let jx = bx + (self.mob_rng.next_f64() * 2.0 - 1.0) * 0.25;
+                let jy = by + self.mob_rng.next_f64() * 0.25;
+                let jz = bz + (self.mob_rng.next_f64() * 2.0 - 1.0) * 0.25;
+                let wvx = self.mob_rng.next_gaussian() * 0.02;
+                let wvy = self.mob_rng.next_gaussian() * 0.02;
+                let wvz = self.mob_rng.next_gaussian() * 0.02;
+                let shard =
+                    crate::particles::breaking_egg_shard(jx, jy, jz, wvx, wvy, wvz, &mut self.mob_rng);
+                self.particles.push(shard);
+            }
+        }
     }
 
     /// THE WIRE ARROWS' SYNC LANE (the vanilla ClientPacketListener's
@@ -53789,37 +53939,44 @@ impl App {
         ctx: &RenderCtx,
         cam: &crate::camera::Camera,
     ) {
-        if self.eggs.is_empty() {
+        if self.eggs.is_empty() && self.net_thrown.is_empty() {
             return; // the deterministic scenes carry no throwables — the goldens stay
         }
         let Some(egg_id) = crate::mob::wire_id("egg") else {
             return;
         };
-        let Some(layers) = mc_registry::item_model_layers(egg_id) else {
-            return;
+        // THE KIND'S OWN SPLIT (the two thrown sprites the item models
+        // speak — the snowball the wire's own shots wear, the egg the
+        // throw lane mints; the model the derive walk bakes for each,
+        // the build's own failure the honest silence keeps)
+        let build_parts = |id: i32| -> Vec<mc_registry::element_quads::Quad> {
+            let Some(layers) = mc_registry::item_model_layers(id) else {
+                return Vec::new();
+            };
+            let mut out = Vec::new();
+            for layer in &layers {
+                match mc_registry::display::posed_item_layer_quads(
+                    layer.model,
+                    layer.transform,
+                    mc_registry::display::GROUND,
+                ) {
+                    Some(Ok(quads)) => {
+                        for q in quads {
+                            out.push(q);
+                        }
+                    }
+                    _ => return Vec::new(),
+                }
+            }
+            out
         };
         // the posed quads (the GROUND context the drops' own walk
         // wears — the item model's own flat plane)
-        let mut parts: Vec<mc_registry::element_quads::Quad> = Vec::new();
-        let mut ok = true;
-        for layer in &layers {
-            match mc_registry::display::posed_item_layer_quads(
-                layer.model,
-                layer.transform,
-                mc_registry::display::GROUND,
-            ) {
-                Some(Ok(quads)) => {
-                    for q in quads {
-                        parts.push(q);
-                    }
-                }
-                _ => {
-                    ok = false;
-                    break;
-                }
-            }
-        }
-        if !ok || parts.is_empty() {
+        let parts: Vec<mc_registry::element_quads::Quad> = build_parts(egg_id);
+        let snow_parts: Vec<mc_registry::element_quads::Quad> = crate::mob::wire_id("snowball")
+            .map(build_parts)
+            .unwrap_or_default();
+        if parts.is_empty() && snow_parts.is_empty() {
             return; // the honest unknown renders nothing
         }
         // the camera basis (the mulPose(cameraOrientation) fold — the
@@ -53835,8 +53992,17 @@ impl App {
         let fwd = cam.forward();
         let fwd = [-fwd.x, -fwd.y, -fwd.z];
         let mut sampled: Vec<crate::raster::SampledQuad> = Vec::new();
-        for e in &self.eggs {
-            for q in &parts {
+        for e in self.eggs.iter().chain(self.net_thrown.iter()) {
+            // THE KIND'S OWN SPRITE (the egg the throw lane mints, the
+            // snowball the dispenser's shot lane picks — the model the
+            // kind byte picks, the build's own failure the silence
+            // keeps)
+            let parts = if e.kind == crate::mob::ThrownProjectileKind::Snowball {
+                &snow_parts
+            } else {
+                &parts
+            };
+            for q in parts {
                 sampled.push(crate::raster::SampledQuad {
                     pts: q.vertices.map(|v| {
                         [
@@ -90790,6 +90956,197 @@ mod tests {
             crit: false,
         }]);
         assert!(offline.net_arrows.is_empty(), "the offline lane never mixes");
+    }
+
+    /// THE WIRE THROWN SHOTS' FLIGHT LANE (javap `Projectile.
+    /// recreateFromPacket` the 26.2 walk the net-arrow lane's shape
+    /// wears): the Add Entity word becomes the CLIENT-side throwable
+    /// (the pose AND the motion the packet's own fields keep, the
+    /// kind the registry's own type name speaks), the arc the
+    /// client's own tick simulates (the move the velocity speaks, the
+    /// drag the 0.99 keeps, the gravity the 0.03 rides), the
+    /// still-named id rides its OWN sim untouched (the between-refresh
+    /// truth the client's physics owns), the wire's silence drops the
+    /// shot (no ghosts), the offline lane never enters the lane.
+    #[test]
+    fn the_wire_thrown_shots_fly_the_client_sim() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // the spawn lands at the word (the kind the type name speaks,
+        // the pose and the motion the packet's own fields carry)
+        app.live_net_thrown_updated(vec![
+            crate::world_view::WireThrown {
+                id: 400,
+                snowball: true,
+                x: 10.0,
+                y: 66.0,
+                z: 10.0,
+                vx: 2.4,
+                vy: 0.0,
+                vz: 0.0,
+            },
+            crate::world_view::WireThrown {
+                id: 401,
+                snowball: false,
+                x: 30.0,
+                y: 66.0,
+                z: 30.0,
+                vx: 1.0,
+                vy: 0.0,
+                vz: 0.0,
+            },
+        ]);
+        assert_eq!(app.net_thrown.len(), 2, "the shots the wire spawned");
+        assert_eq!(app.net_thrown[0].id, 400);
+        assert_eq!(
+            app.net_thrown[0].kind,
+            crate::mob::ThrownProjectileKind::Snowball,
+            "the kind the type name spoke"
+        );
+        assert_eq!(
+            app.net_thrown[1].kind,
+            crate::mob::ThrownProjectileKind::Egg,
+            "the egg the type name spoke"
+        );
+        assert_eq!(
+            (app.net_thrown[0].x, app.net_thrown[0].y, app.net_thrown[0].z),
+            (10.0, 66.0, 10.0),
+            "the spawn IS the packet's word"
+        );
+        assert_eq!(app.net_thrown[0].yaw, -90.0, "the yaw the velocity speaks");
+        // THE ARC (the client's own ThrowableProjectile.tick): the
+        // move the velocity speaks (x += vx), the drag the 0.99 keeps,
+        // the gravity the 0.03 rides
+        app.tick_net_thrown();
+        assert!((app.net_thrown[0].x - 12.376).abs() < 1e-9, "the move the velocity speaks");
+        assert!((app.net_thrown[0].vx - 2.376).abs() < 1e-9, "the drag the 0.99 keeps");
+        assert!((app.net_thrown[0].vy + 0.03).abs() < 1e-9, "the gravity the 0.03 rides");
+        // THE STILL-NAMED IDS: the refresh ships the ids again — the
+        // client's own sim rides untouched (the projectile the spawn
+        // word never re-poses)
+        app.live_net_thrown_updated(vec![
+            crate::world_view::WireThrown {
+                id: 400,
+                snowball: true,
+                x: 99.0,
+                y: 99.0,
+                z: 99.0,
+                vx: 0.0,
+                vy: 0.0,
+                vz: 0.0,
+            },
+            crate::world_view::WireThrown {
+                id: 401,
+                snowball: false,
+                x: 99.0,
+                y: 99.0,
+                z: 99.0,
+                vx: 0.0,
+                vy: 0.0,
+                vz: 0.0,
+            },
+        ]);
+        assert_eq!(app.net_thrown.len(), 2, "the still-named shots the sim keeps");
+        assert!((app.net_thrown[0].x - 12.376).abs() < 1e-9, "the sim's own flight rode");
+        assert!((app.net_thrown[0].y - 65.97).abs() < 1e-9, "the arc's own fall rode");
+        // THE WIRE'S SILENCE: the id 401 the wire no longer names —
+        // the body never re-enters (the despawn the Remove Entities
+        // spoke, no ghosts)
+        app.live_net_thrown_updated(vec![crate::world_view::WireThrown {
+            id: 400,
+            snowball: true,
+            x: 99.0,
+            y: 99.0,
+            z: 99.0,
+            vx: 0.0,
+            vy: 0.0,
+            vz: 0.0,
+        }]);
+        assert_eq!(app.net_thrown.len(), 1, "the gone id the reconcile drops");
+        assert_eq!(app.net_thrown[0].id, 400, "the still-named shot re-arms");
+        // THE OFFLINE GATE: the local world's own eggs the wire lane
+        // never touches (the world_is_network law the arrows wear)
+        let mut offline = App::new(3);
+        offline.enter_world();
+        offline.live_net_thrown_updated(vec![crate::world_view::WireThrown {
+            id: 7,
+            snowball: true,
+            x: 1.0,
+            y: 1.0,
+            z: 1.0,
+            vx: 1.0,
+            vy: 0.0,
+            vz: 0.0,
+        }]);
+        assert!(offline.net_thrown.is_empty(), "the offline lane never mixes");
+    }
+
+    /// THE WIRE THROWN SHOTS' OWN BREAK (the client-side
+    /// Projectile.tick's own onHit answer the wall speaks): the block
+    /// the clip's own ray arms — the shot dies AT the hit (the pose
+    /// the hit's own spot keeps), the SHATTER BURST the same case-3
+    /// walk rides (the snowball the 8 plain shards the entity's own
+    /// pos wears), the body the retain drops (no ghost flight
+    /// through the wall), the server's own hit words the mob lane
+    /// never rides (no chicks the wire egg's break never rolls).
+    #[test]
+    fn the_wire_thrown_shots_break_the_wall_the_burst_wears() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // THE WALL (the stone slab the shot's own flight line wears —
+        // the vertical face the +x walk crosses)
+        {
+            let w = app.net_world.as_mut().unwrap();
+            for dy in 60..=70 {
+                for dz in 8..=12 {
+                    w.set(20, dy, dz, crate::world::STONE);
+                }
+            }
+        }
+        // THE SHOT (the dispenser's own word — the flat arc the wall's
+        // face crosses in two ticks)
+        app.live_net_thrown_updated(vec![
+            crate::world_view::WireThrown {
+                id: 500,
+                snowball: true,
+                x: 10.5,
+                y: 66.0,
+                z: 10.5,
+                vx: 5.0,
+                vy: 0.0,
+                vz: 0.0,
+            },
+            crate::world_view::WireThrown {
+                id: 501,
+                snowball: false,
+                x: 10.5,
+                y: 66.0,
+                z: 11.5,
+                vx: 5.0,
+                vy: 0.0,
+                vz: 0.0,
+            },
+        ]);
+        assert_eq!(app.particles.len(), 0, "the fresh lane no burst carries");
+        // TWO FLIGHT TICKS (the 5-cell stride the wall's face at x=20
+        // the second tick's own segment crosses — the first the air
+        // walk keeps)
+        app.tick_net_thrown();
+        app.tick_net_thrown();
+        // THE BREAK (the wall face at x=20 the 5-cell stride crosses —
+        // the clip the segment walks, the pose the hit's own spot
+        // keeps, the bodies the retain drops)
+        assert!(
+            app.net_thrown.is_empty(),
+            "the broken shots the retain drops"
+        );
+        // THE BURSTS (the snowball the 8 plain shards, the egg the
+        // 10-jitter loop — the same ctors the offline lane rides)
+        assert_eq!(app.particles.len(), 18, "the two bursts the case-3 walk speaks");
     }
 
     /// THE WIRE ARROWS' SYNC LANE (the handleEntityPositionSync walk

@@ -150,6 +150,7 @@ fn run_join(
                 Vec<crate::world_view::WireMob>,
                 Vec<crate::world_view::WireBoat>,
                 Vec<crate::world_view::WireArrow>,
+                Vec<crate::world_view::WireThrown>,
                 Vec<crate::world_view::WireFirework>,
                 Vec<crate::world_view::WireVoice>,
                 Vec<crate::world_view::WireWorldVoice>,
@@ -1097,6 +1098,12 @@ fn run_join(
                                     // despawns — the sim the client's own
                                     // tick owns between them)
                                     upd.arrows,
+                                    // the thrown shots ride with the population —
+                                    // the snowballs and eggs the server spawned
+                                    // stream to the net-thrown lane (the spawns,
+                                    // the despawns — the arc the client's own
+                                    // tick owns between them)
+                                    upd.thrown,
                                     // the rockets ride with the population —
                                     // the firework entities the server spawned
                                     // stream to the net-rocket lane (the sim
@@ -1692,6 +1699,7 @@ pub fn run_gui_app(
                 Vec<crate::world_view::WireMob>,
                 Vec<crate::world_view::WireBoat>,
                 Vec<crate::world_view::WireArrow>,
+                Vec<crate::world_view::WireThrown>,
                 Vec<crate::world_view::WireFirework>,
                 Vec<crate::world_view::WireVoice>,
                 Vec<crate::world_view::WireWorldVoice>,
@@ -2480,6 +2488,7 @@ pub fn run_gui_app(
                     mobs,
                     boats,
                     arrows,
+                    thrown,
                     fireworks,
                     voices,
                     world_voices,
@@ -2600,6 +2609,12 @@ pub fn run_gui_app(
                     // missing id drops — the sim the client's own tick
                     // owns between the refreshes)
                     app.live_net_arrows_updated(arrows);
+                    // the net-thrown lane beside the net-arrow lane's:
+                    // the spawns and the despawns the wire's own
+                    // population speaks (the fresh id the spawn word
+                    // builds, the missing id drops — the arc the
+                    // client's own tick owns between the refreshes)
+                    app.live_net_thrown_updated(thrown);
                     // the wire-rocket lane beside the net-arrow lane's:
                     // the spawns and the despawns the wire's own
                     // population speaks (the fresh id the spawn word
