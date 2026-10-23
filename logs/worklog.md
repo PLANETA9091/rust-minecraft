@@ -2361,3 +2361,91 @@ Stage Summary:
   dispenser sim could wear, the README's golden section the 19-row
   runner's own row the text could name, the dispenser's carried
   press the deferred place could wear (the chest's own live shape).
+---
+Task ID: dev-148
+Agent: cron-agent-loop (Job 384925, 2026-10-23 11:41:53 +08:00, trace
+1a0a02c3c1060631-cron-agent-loop-202610231150)
+Task: ONE minimal step per the tick protocol — the worklog's NEXT
+CANDIDATES the interactivity head answered: the quickcraft drag the
+offline dispenser sim could wear (dev-145's own direct dispatch the
+round's shape answered).
+
+Work Log:
+- THE REPO THE CLEAN TREE ANSWERED (HEAD 2a2e06a, origin in sync;
+  the autopush-145 thrown-shatter lane the morning's own round
+  pushed).
+- THE LANDSCAPE THE ARMS' OWN GATES SPOKE: the table/furnace drags
+  the OFFLINE sim wear (the world_is_network && no-window gate the
+  two arms keep), the chest/dispenser the LIVE window alone wore
+  (the is_live || no-window shape the dev-145 round banked) — the
+  offline dispenser the drag's own gap the round answers.
+- THE GATES THE TABLE/FURNACE'S OWN SHAPE NOW WEARS:
+  qc_arm_dispenser the window-less wire stand-in's refusal the
+  world_is_network && no-window shape keeps (the OFFLINE sim the
+  drag arms), the on_press/on_right_press carried-NON-EMPTY presses
+  the drag arms in BOTH lanes (the dispenser_is_live conjunct the
+  two arms drop — no slot click, no packet, the placement and the
+  distribution BOTH the release's own lanes serve).
+- THE LANES THE OFFLINE WALKS NOW SPEAK: qc_distribute_dispenser_offline
+  the doClick QUICK_CRAFT status-2 arm pcs 298-534 over the offline
+  sim (the same place math the furnace/table walks keep — the grid
+  0..9 the nine holds, the mirror rows 9..45 the standard store
+  keeps, the plain slots' mayPlace the base Slot's iconst_1 pair
+  keeps, the type-0 floor split the type-1's one-each answers, the
+  write-through the inventory cells speak [menu 9..35 the items
+  9..36 answer, the hotbar 36..44 the items 0..9 — the offline
+  click walk's own numbering the formula agrees], the mirror the
+  sync re-banks, the HUD row the sync follows, NO packet the
+  offline world alone keeps); qc_release the distribution arm the
+  wire/offline split wears and the deferred place the furnace
+  geometry's own shape keeps (the seat the PICKUP both lanes serve,
+  the outside the -999 throw — the wire the packet the belief's
+  clear rides, the offline the local throw IS, the between the -1
+  no-op the wire keeps, the offline the silence speaks).
+- +2 TESTS: the_offline_dispenser_drag_the_paint_and_the_split_wear
+  (the offline world's own door the open_dispenser_for walk opens —
+  the carried press the drag arms, the two seats the motion paints,
+  the floor(8/2) halves the grid + the hotbar write-through + the
+  mirror re-bank + the HUD sync speak, the right drag the one-each
+  wears) and the_offline_dispenser_drag_the_gates_and_the_deferred_
+  place_wear (the different item's seat the paint refuses — the
+  empty-painted release the PICKUP swap the offline lane serves,
+  the between press the arm skips, the armed drag the right press
+  silences, the wrong button's release the abort speaks, the
+  between release the no-op keeps, the outside release the throw
+  the cursor empties).
+- THE FIRST RUN'S TWO FAILURES THE HONEST LAWS SPOKE: (1) the
+  pre-existing gates test's pinned first block the window identity
+  the setup kept (the Some window the new gate the arm proceeded —
+  the old is_live gate's own shape the block never re-shaped): the
+  block the window identity now DROPS (the None the refusal probes),
+  the "THE WINDOW ARMS" tail the Some restores; (2) the outside
+  throw's drop-entity assert the headless body the drop walk's own
+  guard keeps silent (drop_item_entity_aimed the no-body return the
+  headless menus wear — the honest silence the assert now names:
+  the cursor the throw empties, the drops the body-less guard
+  keeps).
+- THE VERIFY THE FULL GATE ANSWERED: mc-client 2335 + mc-protocol
+  157 + mc-registry 100 + mc2rs-pixel 80 = 2672 PASSED / 0 FAILED /
+  22 ignored; goldens 19/19 PASS rms 0.000 (NO regeneration — the
+  drag no render byte the golden scenes touch); fmt: the 1159-hunk
+  baseline the digit wears; the Cargo.lock the committed 0.3.872
+  bump's own catch-up rides.
+- THE VERSION the bump rode first (0.3.872 -> 0.3.873) — the verify
+  the bumped tree ran.
+- Pushed 2435a3c (v0.3.873, the offline dispenser's own drag).
+
+Stage Summary:
+- THE FOUR WINDOWS THE DRAG NOW BOTH WEAR: the inventory, the
+  table, the furnace AND the dispenser — the offline sims the same
+  quickcraft walk the live windows answer, the chest alone the live
+  session's own lane keeps (the no-offline-chest law the belief's
+  own shape banks).
+- NEXT CANDIDATES: the shulker box the getContainerAt walk the
+  dropper's front read never serves (the block kind the offline
+  palette never mints — the predicate the mint first wears), the
+  README's golden section the 19-row runner's own row the text
+  could name, the offline chest the drag's own lanes the belief's
+  live shape could mirror (the chest_carried the offline lane
+  never wears), the dispenser's carried press the split-pickup the
+  right byte's place-ONE already serves.
