@@ -349,3 +349,74 @@ Stage Summary:
   table holds: the pointer-grab stand-in's window-edge turn-stop the
   minifb API the walk never answers, the offline world's persistence
   the quit lane never writes).
+---
+Task ID: autopush-151
+Agent: main (tick 18:47:28, Job 384923)
+Task: ONE minimal step — the client's interactivity row, the worklog's own next candidate: the OFFLINE WORLD'S PERSISTENCE the quit lane never wrote (the session's dig/place/build the restart now outlives — the vanilla region-file stand-in the edit journal wears).
+
+Work Log:
+- INCOMING STATE: HEAD 710fb87 (v0.3.883, autopush-150), clean tree,
+  origin synced. The NEXT CANDIDATES' interactivity row the round
+  takes — the recon the offline edit surface read (the container
+  stores' own persistence law the pattern names: field + load_once +
+  file_save at each edit; the World::set choke point the gen also
+  wears; the enter_world rebuild the deterministic seed speaks).
+- THE JOURNAL THE WORLD KEEPS: World's journaling gate (default
+  false — the gen's own sets the terrain shape never bank, the
+  goldens' staged worlds the bit-for-bit default keeps) the App's
+  post-gen arm wears; set()'s edit rows ((x,y,z,new_id) apply order,
+  the same-state silence the no-op never costs) + set_variant()'s
+  state-byte rows (the trapdoor facing/repeater delay the block id
+  alone cannot carry) the session's journal banks.
+- THE FILE THE SESSION BANKS: world_edits.nbt the game-dir law
+  (run_gui_app's cwd join — the hotbar.nbt/containers.nbt siblings);
+  the uncompressed NbtIo.write framing (DataVersion 4903 + seed Long
+  + edits/variants lists); offline_world_file_save() the marks bank.
+- THE RELOAD THE SEED GATES: enter_world's apply lane (after
+  relight, BEFORE the mesh/spawn builds) the file's rows in order
+  replays — the apply the journaling gate keeps OFF (the re-apply
+  the journal never re-banks), the journal the file's own rows the
+  baseline keeps (the self-contained file the next flush writes, no
+  per-boot duplication), the foreign seed the fresh terrain refuses;
+  world_edits_from_nbt the strict-shape parse the None answer wears.
+- THE FLUSH THE CADENCE THROTTLES: update()'s 40-tick lane (the
+  dirty verdict the marks' compare speaks — the hold-mine's
+  per-frame write never pays); the Save-and-Quit button the final
+  flush the cooldown bypass rides; the networked world the lanes
+  never wear (materialize + the 8 staged World literals the honest
+  empty fields carry — the E0063 sweep the brace-count patcher
+  answered; the v1 regex-close approach the WRONG-close inserts wore,
+  the revert + the brace-only walker the record keeps).
+- VERIFY: cargo check --all-targets clean; FULL mc-client 2344
+  PASSED / 0 FAILED / 22 ignored (2342 + the two new laws: the
+  world-level journal test + the file round-trip/reload/seed-gate/
+  cadence test — ZERO flips); mc-protocol 157 + mc-registry 100 +
+  mc2rs-gen 80 = 337 PASSED; goldens 19/19 PASS rms 0.000 (NO
+  regeneration — the save lanes the no-file boot the no-op keep);
+  fmt 1703 = the HEAD baseline (ZERO hunks — the empty_world's
+  12-space indent the mesher insert wears, the chain-width split the
+  set_variant call adopts; the worktree-at-HEAD diff the +1 hunk's
+  hunt rode).
+- Version 0.3.883 -> 0.3.884. Pushed b6cb2c8 (710fb87..b6cb2c8); the
+  repo's logs/worklog.md the autopush-151 entry wears.
+
+Stage Summary:
+- THE OFFLINE WORLD THE RESTART OUTLIVES: the dig/place/build the
+  session's journal banks, the boot's re-apply the same terrain
+  replays, the file the seed gates — the client's persistence row the
+  hotbar/containers laws the third file completes. The player-pos
+  lane the file never carries (the spawn's top-solid the reload
+  answers — the body's own save the next candidate names).
+- THE STRUCT-LITERAL PATCH LESSON THE RECORD BANKS: a mixed
+  paren/brace close (the `Some(World { ... })` + `});` shapes) the
+  naive close-line regex never answers — the brace-only depth walker
+  the literal's own `}` wears, the per-literal indent the fmt
+  baseline's own count guards.
+- NEXT CANDIDATES: the player pos/inventory's own save row (the
+  world_edits.nbt's player compound the body's position + the
+  offline gameplay inventory the reload wears — the vanilla
+  level.dat's player tag the law names), the test-file GuiAssets
+  roots the cargo-lane absence-world wears (part_3/5/6/7/8's bare
+  'assets-cache/jar' — the honest own-root staging the flips read),
+  the warden biolum's TRUE-absence diff (the refill the absence
+  world the unreachable wears).
