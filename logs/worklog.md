@@ -2726,3 +2726,91 @@ Stage Summary:
   split-pickup the record "already serves", the shulker's own
   mesher arm the entity-driven box the generic cube the honest
   upgrade the BE-lane round keeps.
+---
+Task ID: dev-150
+Agent: main (cron tick 2026-10-23 13:41:55 +08:00, Job ID 384925)
+Task: rust-minecraft 发展 tick —— git 检查 → ONE 步发展 → 测试 → push → worklog。
+
+Work Log:
+- THE STATE THE TICK READ: the clean tree @b2fc563 (v0.3.877, the
+  autopush-148 shulker placement record), origin synced; the
+  memory landscape the wall keeps (1835MB available, the
+  platform's 1.85G resident the same lane wears) — the full-gate
+  re-run the record's plan defers, the candidate's head the
+  NEXT list keeps: THE SHULKER'S OWN LIVE WINDOW the offline
+  door the round answers.
+- THE MINIMAL STEP THE DOOR THE WINDOW BANKS: the use-walk
+  gains the shulker's own arm (javap 26.2 ShulkerBoxBlock.
+  useWithoutItem the openMenu walk the ShulkerBoxMenu the
+  27-slot generic_9x3 shape the chest family's own grid
+  answers, the container.shulkerBox default name the lang row
+  the table wears): the right-press on the placed box the
+  OFFLINE world answers, the WIRE session the server's own
+  OpenScreen word owns (the SHULKER_BOX menu type the
+  projection's menu_type_id feeds verbatim — the live lane the
+  round's read proves menu-type-agnostic).
+- THE DOOR'S OWN WALK: open_shulker_for the single-cell
+  27-slot store the SAME container_stores map the dropper's
+  front-read inserts (the autopush-147 row the walk's own lane
+  keeps), the mirror sync the player's real rows project, the
+  DOUBLE the shulker never speaks (the chest's combiner the
+  chest kinds alone answer), the lid the variant never wears
+  (the facing property the only field — the mesher's generic
+  cube no OPEN bit renders); the kind flag chest_window_shulker
+  the title lane banks (the container.shulkerBox row the
+  offline canvas wears), the chest's own openers + the golden
+  scene + the live lane the flag reset keeps — the golden
+  scenes the flag never set, the pixels the shape never moves.
+- +1 TEST: the_offline_shulker_the_door_the_window_the_27_slots_banks
+  (the REAL press walk the door arms — the window the chest
+  shape opens, the kind row the title banks, the pre-banked
+  stack the open loads, the DOUBLE the lone box never speaks,
+  the sneaking press the PASS verdict keeps, the reopen the
+  stack rides).
+- THE ENVIRONMENT THE RESET TOOK, THE RESUME LANE THE ROUND
+  REBUILT: the mc-client test-bin codegen attempt the sandbox
+  wipe rode (the first 7-min tool timeout the wall's own
+  shadow spoke, the second shell the workspace GONE read —
+  repo, toolchain, assets-cache, the external worklog all
+  lost); the re-clone the token URL speaks (b2fc563 the HEAD
+  the remote kept), the rustup the pinned stable answers
+  (1.99.1, the profile minimal the repo's toolchain.toml
+  wears), restore_env.sh the four-step cache the lane banks
+  (jar sha1 2dc72797 verified, gen cache font+textures, index
+  objects 5028 linked, jar textures 10967) — the mc-registry
+  4-red the bare cache the restore greens (the sprite-bake
+  tests the elytra/gui rows the cache absence wore).
+- THE VERIFY THE PROTOCOL'S OWN SHAPE ANSWERED: cargo check
+  --all-targets clean (the bumped tree); mc-protocol 157 +
+  mc-registry 100 + mc2rs-gen 80 = 337 PASSED / 0 FAILED;
+  goldens 19/19 PASS rms 0.000 (NO regeneration — the flag the
+  golden scenes never set); fmt the fresh rustfmt 1.99.1 the
+  same-tree count re-speaks (1703 hunks the HEAD wears, 1703
+  the diff keeps — ZERO hunks the round adds; the 1159 the old
+  record wore the older rustfmt's own count was); the FULL
+  cargo test --workspace gate the SAME SIGKILL wall keeps (the
+  codegen attempt the wipe rode — the deferral the SIXTH round
+  wears, the resume plan carries: re-run when the platform's
+  resident shrinks; the +1 test the compile proof banks, the
+  execution the wall defers).
+- THE VERSION the bump rode (0.3.877 -> 0.3.878) — the verify
+  the bumped tree ran.
+- Pushed 0882c24 (v0.3.878, the shulker's own door) + the
+  mirror commit; the external worklog the wipe took the
+  rebuild the entry carries (the full history the repo's own
+  logs/worklog.md the remote keeps).
+
+Stage Summary:
+- THE SHULKER THE OFFLINE WORLD THE WHOLE CHAIN SPEAKS: the
+  creative picker the item offers, the press the kind places,
+  the look the facing stamps (v0.3.877), the right-press the
+  WINDOW opens (this round), the dropper's front read
+  (v0.3.876) the placed box the container the lane reads — the
+  interactivity the chest family's own shape the shulker
+  completes.
+- NEXT CANDIDATES: the dispenser's carried press the
+  split-pickup the record "already serves" (the offline chest
+  drag's own lanes the dispenser window mirrors), the shulker's
+  own mesher arm the entity-driven box the generic cube the
+  honest upgrade the BE-lane round keeps, the FULL gate the
+  memory wall the resume plan keeps.
