@@ -33803,15 +33803,17 @@ impl App {
         if rain_level <= 0.0 {
             return;
         }
+        let jar_root =
+            crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
         if self.weather_rain.is_none() {
             self.weather_rain = crate::weather::WeatherSprite::load(
-                std::path::Path::new("assets-cache/jar"),
+                &jar_root,
                 "environment/rain.png",
             );
         }
         if self.weather_snow.is_none() {
             self.weather_snow = crate::weather::WeatherSprite::load(
-                std::path::Path::new("assets-cache/jar"),
+                &jar_root,
                 "environment/snow.png",
             );
         }
@@ -52770,7 +52772,9 @@ impl App {
             } else {
                 crate::hand::ArmKind::Wide
             };
-            self.arm = crate::hand::load_kind(std::path::Path::new("assets-cache/jar"), kind);
+        let jar_root =
+            crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
+            self.arm = crate::hand::load_kind(&jar_root, kind);
         }
         // vanilla submitArmWithItem: a non-empty main hand draws the ITEM
         // instead of the arm; the empty hand draws the arm. Exactly one of
@@ -52932,8 +52936,10 @@ impl App {
             return;
         }
         if self.underwater_screen.is_none() {
+        let jar_root =
+            crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
             self.underwater_screen =
-                crate::avatar::UnderwaterScreen::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::UnderwaterScreen::load(&jar_root);
         }
         let Some(screen) = &self.underwater_screen else {
             return; // the texture failed its sha1 — the overlay stays honest
@@ -53035,8 +53041,10 @@ impl App {
             return;
         }
         if self.fire_strips.is_none() {
+        let jar_root =
+            crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
             self.fire_strips =
-                crate::avatar::FireStrips::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::FireStrips::load(&jar_root);
         }
         let Some(strips) = &self.fire_strips else {
             return; // the strip asset failed its sha1 — the overlay stays honest
@@ -54083,12 +54091,16 @@ impl App {
         if self.offline_carts.is_empty() {
             return; // the deterministic scenes carry no carts — the goldens stay
         }
+        // THE RUNTIME ROOT'S OWN WALK (the law the other lanes wear: the
+        // hoisted hint the repo-root cwd answers, the walk-up the
+        // package-dir processes answer — the per-attempt inline the
+        // hoisted let replaces)
+        let jar_root =
+            crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
         // THE LAZY LOAD (the fire-strips lane's own re-try the model
         // slot keeps — a failed sha1 stays None, the carts unseen)
         if self.cart_model.is_none() {
-            self.cart_model = crate::avatar::MinecartModel::load(&crate::avatar::jar_runtime_root(
-                std::path::Path::new("assets-cache/jar"),
-            ));
+            self.cart_model = crate::avatar::MinecartModel::load(&jar_root);
         }
         let Some(model) = self.cart_model.as_ref() else {
             return; // the texture failed its sha1 — the carts stay unseen
@@ -57134,9 +57146,11 @@ impl App {
         ctx: &RenderCtx,
         cam: &crate::camera::Camera,
     ) {
+        let jar_root =
+            crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
         if self.orb_sheet.is_none() {
             self.orb_sheet =
-                crate::avatar::OrbSheet::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::OrbSheet::load(&jar_root);
         }
         let Some(sheet) = &self.orb_sheet else {
             return;
@@ -57283,123 +57297,125 @@ impl App {
         ctx: &RenderCtx,
         cam: &crate::camera::Camera,
     ) {
+        let jar_root =
+            crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
         // the lazy runtime loads (the orb sheet's own pattern — the
         // missing file keeps its kind invisible)
         if self.crit_sprite.is_none() {
             self.crit_sprite =
-                crate::avatar::CritSprite::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::CritSprite::load(&jar_root);
         }
         if self.poof_frames.is_none() {
             self.poof_frames =
-                crate::avatar::PoofFrames::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::PoofFrames::load(&jar_root);
         }
         if self.spark_frames.is_none() {
             self.spark_frames =
-                crate::avatar::SparkFrames::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::SparkFrames::load(&jar_root);
         }
         if self.bubble_sprite.is_none() {
             self.bubble_sprite =
-                crate::avatar::BubbleSprite::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::BubbleSprite::load(&jar_root);
         }
         if self.splash_frames.is_none() {
             self.splash_frames =
-                crate::avatar::SplashFrames::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::SplashFrames::load(&jar_root);
         }
         if self.lava_sprite.is_none() {
             self.lava_sprite =
-                crate::avatar::LavaSprite::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::LavaSprite::load(&jar_root);
         }
         if self.drip_hang_sprite.is_none() {
             self.drip_hang_sprite =
-                crate::avatar::DripHangSprite::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::DripHangSprite::load(&jar_root);
         }
         if self.drip_fall_sprite.is_none() {
             self.drip_fall_sprite =
-                crate::avatar::DripFallSprite::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::DripFallSprite::load(&jar_root);
         }
         if self.drip_land_sprite.is_none() {
             self.drip_land_sprite =
-                crate::avatar::DripLandSprite::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::DripLandSprite::load(&jar_root);
         }
         if self.flame_sprite.is_none() {
             self.flame_sprite =
-                crate::avatar::FlameSprite::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::FlameSprite::load(&jar_root);
         }
         if self.soul_flame_sprite.is_none() {
             self.soul_flame_sprite =
-                crate::avatar::SoulFlameSprite::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::SoulFlameSprite::load(&jar_root);
         }
         if self.damage_sprite.is_none() {
             self.damage_sprite =
-                crate::avatar::DamageSprite::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::DamageSprite::load(&jar_root);
         }
         if self.sweep_frames.is_none() {
             self.sweep_frames =
-                crate::avatar::SweepFrames::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::SweepFrames::load(&jar_root);
         }
         if self.explosion_frames.is_none() {
             self.explosion_frames =
-                crate::avatar::ExplosionFrames::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::ExplosionFrames::load(&jar_root);
         }
         if self.heart_sprite.is_none() {
             self.heart_sprite =
-                crate::avatar::HeartSprite::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::HeartSprite::load(&jar_root);
         }
         if self.glow_sprite.is_none() {
             self.glow_sprite =
-                crate::avatar::GlowSprite::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::GlowSprite::load(&jar_root);
         }
         if self.sculk_charge_frames.is_none() {
             self.sculk_charge_frames =
-                crate::avatar::SculkChargeFrames::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::SculkChargeFrames::load(&jar_root);
         }
         if self.sonic_boom_frames.is_none() {
             self.sonic_boom_frames =
-                crate::avatar::SonicBoomFrames::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::SonicBoomFrames::load(&jar_root);
         }
         if self.sculk_pop_frames.is_none() {
             self.sculk_pop_frames =
-                crate::avatar::SculkPopFrames::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::SculkPopFrames::load(&jar_root);
         }
         if self.big_smoke_frames.is_none() {
             self.big_smoke_frames =
-                crate::avatar::BigSmokeFrames::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::BigSmokeFrames::load(&jar_root);
         }
         if self.shriek_sprite.is_none() {
             self.shriek_sprite =
-                crate::avatar::ShriekSprite::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::ShriekSprite::load(&jar_root);
         }
         if self.sculk_soul_frames.is_none() {
             self.sculk_soul_frames =
-                crate::avatar::SculkSoulFrames::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::SculkSoulFrames::load(&jar_root);
         }
         if self.flash_sprite.is_none() {
             self.flash_sprite =
-                crate::avatar::FlashSprite::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::FlashSprite::load(&jar_root);
         }
         if self.glint_sprite.is_none() {
             self.glint_sprite =
-                crate::avatar::GlintSprite::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::GlintSprite::load(&jar_root);
         }
         if self.effect_frames.is_none() {
             self.effect_frames = crate::avatar::SpellFrames::load(
-                std::path::Path::new("assets-cache/jar"),
+                &jar_root,
                 false,
             );
         }
         if self.spell_frames.is_none() {
             self.spell_frames = crate::avatar::SpellFrames::load(
-                std::path::Path::new("assets-cache/jar"),
+                &jar_root,
                 true,
             );
         }
         if self.potion_sprites.is_none() {
             self.potion_sprites =
-                crate::avatar::PotionSprites::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::PotionSprites::load(&jar_root);
         }
         if self.eye_sprites.is_none() {
             self.eye_sprites =
-                crate::avatar::EyeSprites::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::EyeSprites::load(&jar_root);
         }
         let sy = cam.yaw.sin();
         let cy = cam.yaw.cos();

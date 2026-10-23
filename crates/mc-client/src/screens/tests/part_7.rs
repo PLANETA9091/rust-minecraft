@@ -4280,22 +4280,37 @@ use super::*;
             },
         )
         .unwrap();
-        let murk = [5u8, 5u8, 51u8];
-        // THE FRESH DIVE: the clear bands speak the murk exactly — the
-        // frame carries the attribute's own color where no quad covers
+        // THE FRESH DIVE (the honest world the overlay texture wears —
+        // the 16x16 translucent blues the alpha 135/146 the fog blend
+        // carries, the pure attribute color [5,5,51] the fullscreen
+        // cover the sky band never keeps — the pre-jar_root lane the
+        // load's failure the fog-only frame wore, the degenerate pass
+        // the record retires)
         app.water_vision_time = 0;
         let mut fb = crate::raster::Framebuf::new(64, 64);
         fb.color.fill(0);
         let mut assets = GuiAssets::open("assets-cache/jar");
         app.render_world_3d(&mut fb, &mut assets);
-        let murk_pixels = fb
+        // THE MURK'S OWN PAINT (the honest overlay's signature): the
+        // dive frame the texture's blend family wears — the two
+        // dominant murk-over-scene blends the deterministic scene
+        // paints, the floors the overlay's absence the 0-pixel red
+        // answers
+        let blend_a = [162u8, 111, 93];
+        let blend_b = [148u8, 97, 77];
+        let a_pixels = fb
             .color
             .chunks_exact(3)
-            .filter(|px| **px == murk)
+            .filter(|px| *px == blend_a)
+            .count();
+        let b_pixels = fb
+            .color
+            .chunks_exact(3)
+            .filter(|px| *px == blend_b)
             .count();
         assert!(
-            murk_pixels > 0,
-            "the murk clear survives somewhere in the dive's frame"
+            a_pixels > 150 && b_pixels > 60,
+            "the murk overlay the dive frame paints (a={a_pixels} b={b_pixels})"
         );
         // THE RAMP RIDES THE RENDER: the soaked eye (wvt 600, end 96)
         // sees a different frame than the fresh dive (end 24) — the
