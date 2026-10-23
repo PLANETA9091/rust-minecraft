@@ -8651,6 +8651,16 @@ pub struct App {
     /// spawn clock the world's own phase keeps). The
     /// `/gamerule doMobSpawning` command the row's own walk serves.
     pub do_mob_spawning: bool,
+    /// THE MOBGRIEFING GAMERULE'S OWN ROW (javap
+    /// `GameRules.RULE_MOBGRIEFING` the 26.2 clinit speaks — the
+    /// BooleanValue the mob blasts' own interaction reads): the TRUE
+    /// the vanilla world creation's own default wears, the FALSE the
+    /// mob-sourced terrain the blasts never clear — the creeper's
+    /// toBlow the empty set the NONE interaction keeps (the drops and
+    /// the TNT chains the same refusal answers), the entity doses and
+    /// the boom the rule never gates. The `/gamerule mobGriefing`
+    /// command the row's own walk serves.
+    pub mob_griefing: bool,
     /// THE ABILITIES OBJECT'S OWN BANK (the vanilla client's ONE
     /// `Abilities` instance the whole walk family reads —
     /// `LocalPlayer.aiStep`'s mayfly gate, `MultiPlayerGameMode`'s
@@ -10103,6 +10113,7 @@ impl App {
             keep_inventory: false,
             do_daylight_cycle: true,
             do_mob_spawning: true,
+            mob_griefing: true,
             abilities_word: None,
             gm_hovered: 0,
             gm_first_mouse: None,
@@ -16149,6 +16160,11 @@ impl App {
                         // the ride branch's FRESH pose read)
                         let ridden_id =
                             self.offline_ride.as_ref().map(|r| r.vehicle_id);
+                        // THE GAMERULE'S OWN GRIEF READ (the disjoint field
+                        // borrow the loop's own verdict keeps — the gamerule
+                        // the blast lane's gate reads the hoist the checker
+                        // answers)
+                        let mob_griefing = self.mob_griefing;
                         for mob in self.mobs.iter_mut() {
                             // THE DESPAWN'S OWN MOMENT (javap `ServerLevel.
                             // lambda$tick$0` the 26.2 jar speaks — the
@@ -16276,26 +16292,50 @@ impl App {
                                     by,
                                     bz,
                                     r,
-                                    ev.explosion_blocks.len() as i32,
+                                    // THE GRIEF GATE'S OWN COUNT (the
+                                    // toBlow.size() return the NONE
+                                    // interaction's empty set the zero
+                                    // keeps — the mobGriefing-off blast
+                                    // the handleExplosion walk answers)
+                                    if mob_griefing {
+                                        ev.explosion_blocks.len() as i32
+                                    } else {
+                                        0
+                                    },
                                 ));
                             }
-                            explosion_cells.extend(ev.explosion_blocks.iter().copied());
-                            explosion_drops.extend(ev.explosion_drops.iter().copied());
-                            // THE CHAIN'S OWN QUEUE (the creeper's blast
-                            // the exploded TNT cells the wasExploded law
-                            // queues — the post-loop walk the spawns
-                            // serves) THE CHAIN'S OWN INHERITANCE (the
-                            // new PrimedTnt the explosion's own indirect
-                            // source the ctor's owner arg speaks — the
-                            // creeper the chain's own word wears)
-                            tnt_chain_spawns.extend(
-                                ev.explosion_tnt_chains
-                                    .iter()
-                                    .copied()
-                                    .map(|c| {
-                                        (c, Some(crate::mob::BlastSource::Mob(mob.kind)))
-                                    }),
-                            );
+                            // THE GAMERULE'S OWN GRIEF GATE (javap
+                            // GameRules.RULE_MOBGRIEFING the mob blast's
+                            // own interaction reads — the false the
+                            // EntityInteraction.NONE the toBlow's
+                            // consumption refuses: the cells the world
+                            // never clears, the drops the loot walk
+                            // never rolls, the TNT chains the
+                            // wasExploded law never queues — the SOUND
+                            // and the entity doses the rule never
+                            // gates, the TNT's own KEEP interaction the
+                            // primed tick's own lane keeps)
+                            if mob_griefing {
+                                explosion_cells
+                                    .extend(ev.explosion_blocks.iter().copied());
+                                explosion_drops
+                                    .extend(ev.explosion_drops.iter().copied());
+                                // THE CHAIN'S OWN QUEUE (the creeper's blast
+                                // the exploded TNT cells the wasExploded law
+                                // queues — the post-loop walk the spawns
+                                // serves) THE CHAIN'S OWN INHERITANCE (the
+                                // new PrimedTnt the explosion's own indirect
+                                // source the ctor's owner arg speaks — the
+                                // creeper the chain's own word wears)
+                                tnt_chain_spawns.extend(
+                                    ev.explosion_tnt_chains
+                                        .iter()
+                                        .copied()
+                                        .map(|c| {
+                                            (c, Some(crate::mob::BlastSource::Mob(mob.kind)))
+                                        }),
+                                );
+                            }
                             if ev.blast_player.is_some() {
                                 // THE CREEPER'S OWN NAME (the explosion's
                                 // source entity the getIndirectSourceEntity
@@ -36552,18 +36592,22 @@ impl App {
             // own advance gate reads (the false the per-tick step the
             // walk never earns) — and doMobSpawning, the
             // RULE_DOMOBSPAWNING row the natural spawner's cycle reads
-            // (the false the beat's attempts the walk never earns). THE
+            // (the false the beat's attempts the walk never earns) —
+            // and mobGriefing, the RULE_MOBGRIEFING row the mob
+            // blasts' own interaction reads (the false the terrain the
+            // blasts never clear). THE
             // FEEDBACK (the 26.2 lang table's own rows: query
             // "Gamerule %s is currently set to: %s", set "Gamerule %s
             // is now set to: %s" — the raw rule id the first arg
             // wears, the serialized bool the second).
             ["gamerule", rule] => {
                 // THE KNOWN RULES (the GameRuleArgument's own walk —
-                // the three rows the offline vocabulary speaks, any
+                // the four rows the offline vocabulary speaks, any
                 // other word the parse failure the RED error keeps)
                 if *rule != "keepInventory"
                     && *rule != "doDaylightCycle"
                     && *rule != "doMobSpawning"
+                    && *rule != "mobGriefing"
                 {
                     self.push_local_command_error();
                     return;
@@ -36571,7 +36615,8 @@ impl App {
                 let val = match *rule {
                     "keepInventory" => self.keep_inventory.to_string(),
                     "doDaylightCycle" => self.do_daylight_cycle.to_string(),
-                    _ => self.do_mob_spawning.to_string(),
+                    "doMobSpawning" => self.do_mob_spawning.to_string(),
+                    _ => self.mob_griefing.to_string(),
                 };
                 let msg = format_positional(
                     tr("commands.gamerule.query")
@@ -36584,6 +36629,7 @@ impl App {
                 if *rule != "keepInventory"
                     && *rule != "doDaylightCycle"
                     && *rule != "doMobSpawning"
+                    && *rule != "mobGriefing"
                 {
                     self.push_local_command_error();
                     return;
@@ -36598,7 +36644,8 @@ impl App {
                 match *rule {
                     "keepInventory" => self.keep_inventory = v,
                     "doDaylightCycle" => self.do_daylight_cycle = v,
-                    _ => self.do_mob_spawning = v,
+                    "doMobSpawning" => self.do_mob_spawning = v,
+                    _ => self.mob_griefing = v,
                 }
                 let msg = format_positional(
                     tr("commands.gamerule.set").unwrap_or("Gamerule %s is now set to: %s"),

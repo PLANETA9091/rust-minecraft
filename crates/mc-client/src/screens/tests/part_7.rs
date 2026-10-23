@@ -8179,3 +8179,79 @@ use super::*;
             );
         }
     }
+
+    /// THE MOBGRIEFING RULE'S OWN GRIEF LAW (the RULE_MOBGRIEFING row
+    /// the mob blast's own interaction reads): the false the mob-sourced
+    /// terrain the blast never clears — the creeper's toBlow the empty
+    /// set the NONE interaction keeps, the SOUND the discard the rule
+    /// never gates (the entity doses the blast's own walk still serves),
+    /// the TNT's own KEEP interaction the primed tick's own lane keeps.
+    #[test]
+    fn the_mob_griefing_rule_spares_the_creeper_terrain() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        // THE FLAT STONE PAD (the blast's own cells the walk banks — the
+        // every-cell STONE the after-verdict the honest difference keeps)
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for x in (c - 4)..(c + 6) {
+                for z in (c - 4)..(c + 6) {
+                    for y in (top - 3)..top {
+                        w.set(x, y, z, crate::world::STONE);
+                    }
+                    w.set(x, top, z, crate::world::STONE);
+                    for y in (top + 1)..size {
+                        w.set(x, y, z, crate::world::AIR);
+                    }
+                }
+            }
+        }
+        app.spawn_offline_body();
+        // THE DISARM (the rule the set walk flips — the chat literal's
+        // own arm)
+        app.chat_open = true;
+        app.chat_input = "/gamerule mobGriefing false".into();
+        app.on_chat_submit();
+        assert!(!app.mob_griefing, "the set the rule disarms");
+        // THE CREEPER'S OWN RING (the body the 2-block seat wears — the
+        // dist-squared 4.0 the START ring 9.0 the goal arms, the LOS
+        // the same-level seats keep)
+        let mut creep = crate::mob::Zombie::new(7, c as f64 + 2.5, top as f64, c as f64 + 0.5, 3);
+        creep.kind = crate::mob::MobKind::Creeper;
+        creep.on_ground = true;
+        app.mobs.push(creep);
+        // THE SWELL WALK (the goal the dir arms, the 30-tick fuse the
+        // maxSwell crossing serves — the boom the walk's own tail speaks)
+        for _ in 0..40 {
+            app.update();
+        }
+        // THE TERRAIN THE RULE SPARES (the NONE interaction's empty
+        // toBlow — the pad's every cell the blast never clears)
+        let w = app.offline_world.as_ref().unwrap();
+        for x in (c - 4)..(c + 6) {
+            for z in (c - 4)..(c + 6) {
+                assert_eq!(
+                    w.get(x, top, z),
+                    crate::world::STONE,
+                    "the pad's cell the spared terrain keeps"
+                );
+            }
+        }
+        // THE BLAST THE RULE NEVER GATES (the discard the swell machine's
+        // own tail speaks, the boom voice the same consumer plays — the
+        // sound the mobGriefing-off world still hears)
+        assert!(
+            app.mobs.iter().all(|m| m.id != 7),
+            "the exploded creeper the discard removes"
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.generic.explode @")),
+            "the boom voice the rule never gates"
+        );
+    }
