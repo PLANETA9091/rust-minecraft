@@ -4502,6 +4502,28 @@ cargo run -p mc2rs-pixel -- --a render.png --b goldens/cpu_320x180.png --out dif
 * `pixel.yml` — renders deterministic frames and compares them against
   `goldens/` with `mc2rs-pixel` (RMS threshold + heatmap artifact). Any visual
   change that is not an intentional, reviewed golden update = red build.
+* `scripts/verify_goldens.sh` — the full matrix's own runner: ALL 19 goldens
+  re-rendered at their exact recorded flags and diffed through `mc2rs-pixel`
+  in one command (strict exit code, nothing regenerated automatically — a
+  golden update stays a deliberate, documented act). The runner's own 19 rows:
+  + the CPU orbit-camera reference world at both sizes — `cpu_320x180`
+    (`--seed 20260214`) and `cpu_480x270` (`--seed 1337`);
+  + the NETWORK wire world at both sizes — `net_320x180` and `net_480x270`
+    (`--net-world --seed 20260214`); these four matrix rows gate at
+    **max-rms 8** (the shared-float-raster tolerance);
+  + the fifteen GUI screens gate at **max-rms 0** — the GUI path is
+    bit-deterministic, so any pixel drift at all is a regression:
+    `gui_title`, `gui_servers`, `gui_loading`, `gui_world`,
+    `gui_worldnight`, `gui_pause`, `gui_world_held` (the iron sword's
+    display-arc pin), `gui_world_held_swing` (the swing clock pinned at
+    progress 0.5), `gui_world_dual` (the sword the main hand wears, the
+    shield the offhand carries), `gui_chest`, `gui_chest_double`,
+    `gui_furnace`, `gui_furnace_lit` (the stocked furnace the settle ticks
+    ignite — `--settle-ticks 15`), `gui_chest_pair` (the world-side LEFT/RIGHT
+    double body) and `gui_creative` (the creative picker's 14-tab panel).
+* `golden_matrix.sh` — the companion quick pass: the 14 core rows of the
+  same matrix for fast iteration; the full 19-row gate stays the runner
+  above.
 
 ## Status / honest scope
 
