@@ -715,3 +715,20 @@ Work Log:
 Stage Summary:
 - THE GAMERULE THE BOTH FORMS SERVE: the keepInventory row the WorldOptions screen wears + the /gamerule chat literal the ONE field bank — the offline player the toggle the screen's own click answers (the death arc's gates the flip re-arms live), the networked lane the server's own command the wire keeps.
 - NEXT CANDIDATES: the keepInventory state the offline world save's own row (the gamerule the level.dat lane persists — the reload the rule re-banks), the test-file GuiAssets roots (part_3/5/6/7/8's bare 'assets-cache/jar' — the absence-pin flips the honest own-root staging re-pins), the minifb pointer-grab window-edge turn stop (the API's own limit the alternative the recon answers), the warden biolum TRUE-absence (the unreachable the record keeps).
+
+---
+Task ID: autopush-156
+Agent: autopush (Job 384923, 22:02:32 +08 tick)
+Task: git status (clone if absent; auto-sync commit + push if dirty) -> ONE minimal step -> cargo test --workspace green -> push -> worklog entry.
+
+Work Log:
+- Incoming state: clean tree @83ab869 (the mirror over 7cd27f7 = v0.3.890 autopush-155 keepInventory screen row), origin synced. The gamerule the restart outlives the round answers — the keepInventory state the offline world save's own row (the NEXT CANDIDATES' first the screen row's round named).
+- THE ROW THE SAVE BANKS: offline_world_file_save the root rows the gamerule pair rides — the `"keepInventory"` key the vanilla compound's own name keeps, the `Nbt::String` the level.dat GameRules compound's String "true"/"false" shape wears (the bool Display the serialization speaks), the row the PLAYER tag's row follows (the gamerule the WORLD's own truth banks).
+- THE RESTORE THE RELOAD WEARS: the enter_world file re-apply's seed-matched branch the row reads (after the player tag's restore block) — the String "true" the death lanes' gate re-arms, anything else the false default the boot already wore (the elder file's missing row the honest parse keeps, never a guessed rule). The NETWORKED lane the file path never reads (the offline build's own branch).
+- THE TEST THE REBANK WEARS: part_8's the_keep_inventory_rule_round_trips_the_save — the armed session's save the String "true" row banks, the reload the armed rule re-banks, the flip's second save the disarmed row re-wears, the reload the false re-banks. The neighbors (the journal round trip, the pose+pockets, the vitals rows, the spare law) the same file lane unflipped.
+- VERIFY (final code state): FULL mc-client 2352 PASSED / 0 FAILED / 22 ignored (2351 baseline + the round trip — ZERO flips); mc-protocol 157 + mc-registry 100 + mc2rs-gen 80 = 337 PASSED; goldens 19/19 PASS rms 0.000 (NO regeneration — the save format the golden scenes never wear); fmt 1702 = the HEAD baseline (ZERO new hunks — the part_8 insertion the 17-hunk shape the +53 shift keeps, the seam the pre-check answered clean).
+- Version 0.3.890 -> 0.3.891. Pushed 824f335 (83ab869..824f335); the repo's logs/worklog.md this entry mirrors.
+
+Stage Summary:
+- THE GAMERULE THE RESTART OUTLIVES: the keepInventory the chat literal + the WorldOptions row + the save file's own row the ONE truth serve — the armed session's spare the reload still wears, the death arc's whole walk (screen, scatters, orbs, trio) the restart keeps.
+- NEXT CANDIDATES: the test-file GuiAssets roots (part_3/5/6/7/8's bare 'assets-cache/jar' — the absence-pin flips the honest own-root staging re-pins), the minifb pointer-grab window-edge turn stop (the API's own limit the alternative the recon answers), the gamerule row the OTHER boolean rules the same lane answers (doDaylightCycle the time tick's own gate), the warden biolum TRUE-absence (the unreachable the record keeps).
