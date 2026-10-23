@@ -3355,6 +3355,19 @@ pub const DISPENSER: u16 = 776;
 /// dispenseFrom override the whole behavior map answers).
 pub const DROPPER: u16 = 777;
 
+/// THE SHULKER BOX'S OWN KIND SEAT (the autopush-147 round — the
+/// jar's blockstates/shulker_box.json the kind mint answers, the
+/// atlas's six kind-keyed tables the pool-tail tile 928 the row
+/// extends [the every-existing-index law the goldens keep], the
+/// vanilla getContainerAt walk the Container family the one predicate
+/// reads — the shulker the DyeableBlockEntity container the walk's
+/// own answer wears).
+pub const SHULKER_BOX: u16 = 778;
+
+pub fn is_shulker(id: u16) -> bool {
+    id == SHULKER_BOX
+}
+
 /// THE DISPENSER'S OWN COOLDOWN (javap DispenserBlock.neighborChanged
 /// pc 55 the 26.2 jar — the `level.scheduleTick(pos, this, 4)` walk
 /// the rising edge serves, the four-tick beat the dispense the drain
@@ -7330,7 +7343,7 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 /// generated tables' own rows the names wire) — the
 /// END_PORTAL
 /// the beyond-table seat the displaced law keeps.
-pub const NAME_OF: [&str; 778] = [
+pub const NAME_OF: [&str; 779] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -8147,6 +8160,7 @@ pub const NAME_OF: [&str; 778] = [
     "moving_piston",
     "dispenser",
     "dropper",
+    "shulker_box",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass

@@ -49950,8 +49950,10 @@ impl App {
             // override the dropper's own lane answers)
             let (dispensed, voice) = if kind == crate::world::DROPPER {
                 // THE FRONT CONTAINER'S OWN READ (the getContainerAt
-                // walk — the chest/barrel + the sibling pair the store
-                // map banks, the furnace family the trio map keeps)
+                // walk — the chest/barrel + the sibling pair + THE
+                // SHULKER BOX the autopush-147 row the predicate
+                // wears, the store map banks, the furnace family the
+                // trio map keeps)
                 let front = (x + fdx, y + fdy, z + fdz);
                 let front_kind = self
                     .offline_world
@@ -49961,6 +49963,7 @@ impl App {
                 if crate::world::is_chest(front_kind)
                     || crate::world::is_barrel(front_kind)
                     || crate::world::is_dispenser_kind(front_kind)
+                    || crate::world::is_shulker(front_kind)
                 {
                     self.container_stores_load_once();
                     self.container_stores.entry(front).or_insert_with(|| {

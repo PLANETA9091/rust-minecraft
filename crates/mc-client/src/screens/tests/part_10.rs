@@ -8146,3 +8146,128 @@ use super::*;
             "the shrink the count-1 law keeps"
         );
     }
+
+    /// THE SHULKER FRONT'S OWN INSERT (the autopush-147 round — the
+    /// getContainerAt walk the DyeableBlockEntity container the one
+    /// predicate gains): the offline dropper the south-facing beat
+    /// wears, the front cell's shulker box the walk answers, the
+    /// 27-slot store the first beat mints, the addItem copy the
+    /// `copyWithCount(1)` tail wears, the source slot the shrink
+    /// keeps, the NO-SOUND arm the container lane keeps (the drops
+    /// vec the eject never sees).
+    #[test]
+    fn the_droppers_front_shulker_the_insert_wears() {
+        let dirt = mc_registry::item_id_by_name("dirt").expect("the wire table");
+        let mut app = App::new(3);
+        app.enter_world();
+        let (px, pz) = (16i32, 16i32);
+        let gy = 30i32;
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            for dx in -4..=4 {
+                for dz in -4..=4 {
+                    world.set(px + dx, gy - 1, pz + dz, crate::world::STONE);
+                }
+            }
+            world.set(px, gy, pz, crate::world::DROPPER);
+            world.set_variant(
+                px,
+                gy,
+                pz,
+                crate::world::dispenser_variant(crate::world::DISPENSER_FACING_SOUTH, false),
+            );
+            world.set(px, gy, pz + 1, crate::world::SHULKER_BOX);
+        }
+        let mut nine = vec![(0i32, 0i32); 9];
+        nine[3] = (dirt, 5);
+        app.container_stores.insert((px, gy, pz), nine);
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            world.schedule_dispenser_tick(
+                app.frame + crate::world::DISPENSER_COOLDOWN,
+                px,
+                gy,
+                pz,
+            );
+        }
+        for _ in 0..6 {
+            app.update();
+        }
+        let sink = app
+            .container_stores
+            .get(&(px, gy, pz + 1))
+            .expect("the shulker's own 27 the first beat mints");
+        assert_eq!(sink.len(), 27, "the chest-sized store the shulker keeps");
+        assert_eq!(sink[0], (dirt, 1), "the inserted copy the slot 0 wears");
+        assert_eq!(
+            app.container_stores[&(px, gy, pz)][3],
+            (dirt, 4),
+            "the source slot the shrink keeps"
+        );
+        assert!(
+            app.drops.is_empty(),
+            "the container arm the eject never wears"
+        );
+    }
+
+    /// THE SHULKER FRONT'S OWN FULL KEEP (the addItem's false the
+    /// vanilla tail wears): the 27 full seats the insert refuses, the
+    /// stack the count the walk keeps (the setItem write-back the
+    /// insert-refused row the intact count answers), the eject the
+    /// container-present arm never sees (the drop the lane never
+    /// mints), the sink's own rows the refusal the untouched keeps.
+    #[test]
+    fn the_droppers_front_shulker_the_full_keep_wears() {
+        let dirt = mc_registry::item_id_by_name("dirt").expect("the wire table");
+        let stone = mc_registry::item_id_by_name("stone").expect("the wire table");
+        let mut app = App::new(3);
+        app.enter_world();
+        let (px, pz) = (16i32, 16i32);
+        let gy = 30i32;
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            for dx in -4..=4 {
+                for dz in -4..=4 {
+                    world.set(px + dx, gy - 1, pz + dz, crate::world::STONE);
+                }
+            }
+            world.set(px, gy, pz, crate::world::DROPPER);
+            world.set_variant(
+                px,
+                gy,
+                pz,
+                crate::world::dispenser_variant(crate::world::DISPENSER_FACING_SOUTH, false),
+            );
+            world.set(px, gy, pz + 1, crate::world::SHULKER_BOX);
+        }
+        app.container_stores.insert((px, gy, pz + 1), vec![(stone, 64); 27]);
+        let mut nine = vec![(0i32, 0i32); 9];
+        nine[3] = (dirt, 5);
+        app.container_stores.insert((px, gy, pz), nine);
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            world.schedule_dispenser_tick(
+                app.frame + crate::world::DISPENSER_COOLDOWN,
+                px,
+                gy,
+                pz,
+            );
+        }
+        for _ in 0..6 {
+            app.update();
+        }
+        assert_eq!(
+            app.container_stores[&(px, gy, pz)][3],
+            (dirt, 5),
+            "the refused insert the stack keeps"
+        );
+        assert_eq!(
+            app.container_stores[&(px, gy, pz + 1)][0],
+            (stone, 64),
+            "the sink's own rows the refusal never moves"
+        );
+        assert!(
+            app.drops.is_empty(),
+            "the container-present arm the eject never wears"
+        );
+    }
