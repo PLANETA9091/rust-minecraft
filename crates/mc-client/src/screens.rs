@@ -34100,6 +34100,15 @@ impl App {
                 "wokeepinv" => {
                     self.keep_inventory = !self.keep_inventory;
                 }
+                // THE DAY CLOCK'S OWN TOGGLE (the BooleanValue's own flip
+                // — the same store the /gamerule set walk's arm wears:
+                // the OFFLINE world the integrated-server's gamerule lane
+                // IS, the NETWORKED world the inactive button the
+                // hovered() gate refuses — the server's own /gamerule
+                // command the wire keeps)
+                "wodaylight" => {
+                    self.do_daylight_cycle = !self.do_daylight_cycle;
+                }
                 "quit" => {}
                 "back" => {
                     let ret = self.options_return;
@@ -61140,6 +61149,34 @@ impl App {
         );
         keep.active = !self.world_is_network;
         self.buttons.push(keep);
+        // THE GAMERULE'S OWN SECOND ROW (javap 26.2 GameRules.RULE_DAYLIGHT
+        // the day clock's advance gate reads — the keepInventory row's own
+        // pattern the second toggle wears): the label the
+        // `gamerule.doDaylightCycle` lang row speaks, the value the
+        // `options.on`/`options.off` pair the boolean display keeps, the
+        // 200-wide button the row below the keepInventory row wears. THE
+        // ACTIVE ARM the keepInventory row's own split keeps: the OFFLINE
+        // world the integrated-server's gamerule lane IS, the NETWORKED
+        // world the server's own /gamerule command the wire keeps (the
+        // inactive button the hovered() gate refuses).
+        let mut daylight = Button::new(
+            "wodaylight",
+            format!(
+                "{}: {}",
+                tr("gamerule.doDaylightCycle").unwrap_or("Advance time of day"),
+                tr(if self.do_daylight_cycle {
+                    "options.on"
+                } else {
+                    "options.off"
+                })
+                .unwrap_or(if self.do_daylight_cycle { "ON" } else { "OFF" }),
+            ),
+            cx - 100,
+            dial_y + 48,
+            200,
+        );
+        daylight.active = !self.world_is_network;
+        self.buttons.push(daylight);
         // THE DONE FOOTER (the footer's 200-wide button the
         // HeaderAndFooterLayout walk keeps — the onClose the
         // lastScreen chain wears: the Options screen the walk returns

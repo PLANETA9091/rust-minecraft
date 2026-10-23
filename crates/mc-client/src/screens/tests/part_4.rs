@@ -8562,3 +8562,71 @@ use super::*;
         assert!(app.on_right_press(0, 0), "the fresh pull starts");
         assert!(app.is_using(), "the pull the fresh stack arms");
     }
+
+    /// THE GAMERULE'S OWN SECOND ROW THE WORLD OPTIONS WEARS (javap 26.2
+    /// GameRules.RULE_DAYLIGHT the row the day clock's advance gate
+    /// reads): the label the `gamerule.doDaylightCycle` lang row speaks,
+    /// the value the `options.on`/`options.off` pair the boolean display
+    /// keeps, the click the toggle the offline lane's own gamerule store
+    /// answers, the NETWORKED world the inactive button the hovered()
+    /// gate refuses.
+    #[test]
+    fn the_world_options_screen_wears_the_do_daylight_cycle_row() {
+        let mut app = App::new(3);
+        app.enter_world();
+        assert!(
+            app.do_daylight_cycle,
+            "the vanilla default the true boot wears"
+        );
+        app.open(ScreenKind::WorldOptions);
+        app.render_title_buttons_for_test();
+        let daylight = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "wodaylight")
+            .expect("the doDaylightCycle row the offline screen wears")
+            .clone();
+        assert_eq!(
+            daylight.label, "Advance time of day: ON",
+            "the lang row + the options.on word the fresh boot wears"
+        );
+        assert!(daylight.active, "the OFFLINE world the gamerule arm wears");
+        // THE TOGGLE (the click the BooleanValue's own flip answers —
+        // the row's word the re-render speaks)
+        app.on_click(daylight.x + daylight.w / 2, daylight.y + daylight.h / 2);
+        assert!(!app.do_daylight_cycle, "the click the rule disarms");
+        app.render_title_buttons_for_test();
+        let daylight = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "wodaylight")
+            .expect("the row")
+            .clone();
+        assert_eq!(
+            daylight.label, "Advance time of day: OFF",
+            "the options.off word the disarmed row speaks"
+        );
+        // THE SECOND CLICK (the flip the boolean's own walk rings home)
+        app.on_click(daylight.x + daylight.w / 2, daylight.y + daylight.h / 2);
+        assert!(app.do_daylight_cycle, "the second click the row re-arms");
+        // THE NETWORKED LANE'S REFUSAL (the inactive button the
+        // hovered() gate never clicks — the server's own /gamerule the
+        // wire keeps)
+        app.world_is_network = true;
+        app.render_title_buttons_for_test();
+        let daylight = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "wodaylight")
+            .expect("the row")
+            .clone();
+        assert!(
+            !daylight.active,
+            "the networked world the gamerule arm refuses"
+        );
+        app.on_click(daylight.x + daylight.w / 2, daylight.y + daylight.h / 2);
+        assert!(
+            app.do_daylight_cycle,
+            "the inactive button the click never disarms"
+        );
+    }
