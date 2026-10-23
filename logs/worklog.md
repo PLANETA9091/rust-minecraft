@@ -549,3 +549,74 @@ Stage Summary:
   bare 'assets-cache/jar' — the honest own-root staging the flips
   read), the warden biolum's TRUE-absence diff (the refill the
   absence world the unreachable wears).
+
+---
+Task ID: autopush-153
+Agent: main (cron 384923, 20:02:32 tick)
+Task: ONE minimal correct step for the Minecraft->Rust generator/client; cargo test --workspace green; push; worklog entry.
+
+Work Log:
+- Incoming state: clean tree @9d7488a (mirror) over 31b9ea2 = v0.3.886
+  (dev-154 vitals save row); origin synced. The worklog's NEXT
+  CANDIDATES read: the death lane's xp drop, the test-file GuiAssets
+  roots, the warden TRUE-absence (unreachable — skipped again). THE
+  ROUND PICKED the death lane's own xp drop — the offline restore
+  trilogy the persistence rows completed, the death crossing the
+  vanilla reward the lane never wore.
+- THE REWARD THE CROSSING WEARS: actually_hurt's death block (the
+  health-floor arms the dead flag) the ORB DROP rides —
+  death_xp_drop() the javap Player.getExperienceReward law speaks:
+  the SPECTATOR the 0 the isSpectator gate answers (the /kill
+  genericKill the invulnerable gate bypasses, the reward the gate
+  still zeroes), the level-capped half min(floor(total * 0.5F),
+  7 * level) the banked total + the level's own 7x rate speak, the
+  SUB-1 fall the partial progress answers ceil(progress * needed *
+  0.5F), the zero-zero death the 0 both arms agree on (the i > 0
+  gate the addFreshEntity call the vanilla silence wears).
+- THE ORBS THE DEATH SPOT WEARS: the drop rides the SHARED
+  spawn_xp_orbs walk (the awardWithDirection while loop — the
+  getExperienceValue bands the split speaks, the flat 21 the
+  [17, 3, 1] orbs fragment into) at the body's own EXACT position
+  (the entity's getX/getY/getZ the ctor passes — the feet the orb
+  physics settles on the floor; the mob lanes' +0.5 the cell-center
+  convention the player lane never borrows), the NETWORKED world the
+  server's own orbs keep (the !world_is_network gate the orb tick's
+  collection the client's Vec never wears), the dead player the orb
+  scan's own dead-gate already refuses (the follow the corpse never
+  rides — xp.rs's own law the round never touched).
+- THE TRIO'S OWN ZERO: respawn() the ExperienceStat::new the fresh
+  entity's constructor rows speak (the level/progress/total the
+  death's spent drop never re-reads) — the bar the empty rows the
+  HUD re-draws, the keepInventory-true lane the offline vocabulary
+  never carries (the gamerule row the future's own round wears).
+- THE TEST THE LAW WEARS: part_8's
+  the_death_drops_the_xp_orbs_and_the_respawn_zeroes_the_trio — the
+  staged trio (3/0.25/42) the [17, 3, 1] split at the body's own
+  spot speaks, the respawn the zeroed rows re-draws, the level-0
+  partial the sub-1 arm's ceil answers, the zero-zero death the
+  empty Vec keeps, the spectator /kill the gate's zero wears.
+- VERIFY: cargo test -p mc-client --no-run clean; FULL mc-client
+  2347 PASSED / 0 FAILED / 22 ignored (2346 baseline + the death-xp
+  law — ZERO flips); mc-protocol 157 + mc-registry 100 + mc2rs-gen
+  80 = 337 PASSED; goldens 19/19 PASS rms 0.000 (NO regeneration —
+  the death lane the golden lanes never touches); fmt 1702 <= the
+  1703 HEAD baseline (ZERO hunks the round adds — one pre-existing
+  drift hunk the rewritten respawn region absorbed; the per-file
+  probe the edited regions' clean shapes confirms).
+- Version 0.3.886 -> 0.3.887. Pushed 9d309d1 (9d7488a..9d309d1); the
+  repo's logs/worklog.md this entry mirrors.
+
+Stage Summary:
+- THE DEATH ARC THE VANILLA FULLY SPEAKS: the death screen + the
+  dismount (the rounds before), the XP orbs at the death spot + the
+  trio's zero at the respawn (this round) — the keepInventory-false
+  body the whole reward law wears. The player's death the orbs drop
+  and the bar empties; the walk-back-and-collect the orb lanes
+  already answer.
+- NEXT CANDIDATES: the test-file GuiAssets roots the cargo-lane
+  absence-world wears (part_3/5/6/7/8's bare 'assets-cache/jar' —
+  the honest own-root staging the flips read), the keepInventory
+  gamerule row the death lanes' own gate answers (the offline
+  options screen the row never carries), the warden biolum's
+  TRUE-absence diff (the refill the absence world the unreachable
+  wears).
