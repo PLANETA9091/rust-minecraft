@@ -6351,6 +6351,133 @@ use super::*;
         assert_eq!(app.screen, ScreenKind::World, "the close the world wears");
     }
 
+    /// THE DISPENSER'S OWN RIGHT PRESS (the dev-150 candidate the
+    /// record "already serves" the pin banks — the carried-EMPTY
+    /// press the split-pickup dispatch keeps: the ceiling half the
+    /// PICKUP's own button-1 walk serves, the held press the type-1
+    /// drag arms — NO place, NO packet —, the one-each the release
+    /// serves, the masked START/ADD/END bytes the wire wears, the
+    /// release the arm clears).
+    #[test]
+    fn the_dispenser_right_press_the_split_and_the_one_each_wear() {
+        use crate::world_view::{ContainerCommand, ContainerInput, LiveContainer};
+        let diamond = mc_registry::item_id_by_name("diamond").unwrap();
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        let disp = LiveContainer {
+            id: 6,
+            menu_type_id: crate::world_model::MENU_TYPE_GENERIC_3X3,
+            slots: {
+                let mut s = vec![(0i32, 0i32); 45];
+                s[4] = (diamond, 5); // the odd split's own number
+                s
+            },
+            carried: (0, 0),
+            state_id: 4,
+            bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
+            title_nbt: Vec::new(),
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(disp));
+        assert_eq!(app.screen, ScreenKind::Dispenser);
+        let panel = inventory_panel_origin(640, 360);
+        app.dispenser_panel = panel;
+        app.dispenser_slot_rects = dispenser_rects_for(panel);
+        // THE CARRIED-EMPTY PRESS THE SPLIT-PICKUP KEEPS (the ceiling
+        // half rides — 5 -> 3 taken, 2 left — the PICKUP button-1 byte
+        // the wire wears)
+        let (gx, gy) = dispenser_grid_slot(panel, 4);
+        app.on_right_press(gx + 9, gy + 9);
+        assert_eq!(app.dispenser_slots[4], (diamond, 2), "the odd split left two");
+        assert_eq!(app.dispenser_carried, (diamond, 3), "the ceiling half rides");
+        match click_rx.try_recv().expect("the split's click") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 6, "the window's own id");
+                assert_eq!(c.state_id, 4, "the revision rides");
+                assert_eq!(c.slot, 4, "the menu's own numbering");
+                assert_eq!(c.button, 1, "the right press's own byte");
+                assert_eq!(c.input, ContainerInput::Pickup);
+                assert_eq!(c.changed, vec![(4, (diamond, 2))]);
+                assert_eq!(c.carried, (diamond, 3));
+            }
+            other => panic!("expected a click, got {other:?}"),
+        }
+        // THE HELD PRESS THE TYPE-1 DRAG ARMS (no place, no packet —
+        // the arm the silent start keeps, the one-each the release
+        // serves)
+        app.dispenser_carried = (dirt, 5);
+        let (ex, ey) = dispenser_grid_slot(panel, 5);
+        app.on_right_press(ex + 9, ey + 9);
+        assert!(app.qc_armed, "the right press the drag arms");
+        assert_eq!(app.qc_type, 1, "the right button's own type");
+        assert_eq!(app.qc_button, 1, "the right button remembered");
+        assert!(app.qc_slots.is_empty(), "the press paints nothing");
+        assert_eq!(app.dispenser_slots[5], (0, 0), "the press NO place speaks");
+        assert!(click_rx.try_recv().is_err(), "the arm NO packet speaks");
+        app.on_mouse_move(ex + 9, ey + 9);
+        let (fx, fy) = dispenser_grid_slot(panel, 6);
+        app.on_mouse_move(fx + 9, fy + 9);
+        assert_eq!(app.qc_slots, vec![5, 6], "the two seats the motion paints");
+        app.on_right_release();
+        assert_eq!(app.dispenser_slots[5], (dirt, 1), "the one-each's own one");
+        assert_eq!(app.dispenser_slots[6], (dirt, 1), "the one-each's own one");
+        assert_eq!(app.dispenser_carried, (dirt, 3), "the two the cursor paid");
+        assert!(!app.qc_armed, "the release the arm clears");
+        // THE MASKED BYTES THE WIRE WEARS (the START mask(0,1) byte 4,
+        // the ADDs mask(1,1) byte 5, the END mask(2,1) byte 6 — the
+        // changed map the one-each deltas names)
+        match click_rx.try_recv().expect("the START rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 6);
+                assert_eq!(c.state_id, 4);
+                assert_eq!(c.slot, -999);
+                assert_eq!(c.button, 4, "the START's own masked byte");
+                assert_eq!(c.input, ContainerInput::QuickCraft);
+                assert_eq!(c.changed, Vec::new());
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        match click_rx.try_recv().expect("the first ADD rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 6);
+                assert_eq!(c.slot, 5);
+                assert_eq!(c.button, 5, "the ADD's own masked byte");
+                assert_eq!(c.input, ContainerInput::QuickCraft);
+                assert_eq!(c.changed, Vec::new());
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        match click_rx.try_recv().expect("the second ADD rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 6);
+                assert_eq!(c.slot, 6);
+                assert_eq!(c.button, 5, "the ADD's own masked byte");
+                assert_eq!(c.input, ContainerInput::QuickCraft);
+                assert_eq!(c.changed, Vec::new());
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        match click_rx.try_recv().expect("the END rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 6);
+                assert_eq!(c.slot, -999);
+                assert_eq!(c.button, 6, "the END's own masked byte");
+                assert_eq!(c.input, ContainerInput::QuickCraft);
+                assert_eq!(
+                    c.changed,
+                    vec![(5, (dirt, 1)), (6, (dirt, 1))],
+                    "the one-each deltas"
+                );
+                assert_eq!(c.carried, (dirt, 3), "the remainder the packet keeps");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
 
     /// THE WIRE TABLE'S OWN WINDOW (the menu type id 12 the OpenScreen
     /// word carries — the autopush-329 round): the store's projection

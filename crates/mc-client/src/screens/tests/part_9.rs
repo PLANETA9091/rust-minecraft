@@ -2646,9 +2646,9 @@ use super::*;
     /// THE CHEST DRAG'S OWN GATES AND ABORTS (the shouldAdd gates the
     /// paint answers — the different item the canItemQuickReplace
     /// verdict refuses, the count's own `> painted` law the third seat
-    /// refuses; the offline stand-in the arm silences, the between-
-    /// slots press the arm skips, the armed drag the right press
-    /// silences, the wrong button's release the mismatch abort speaks,
+    /// refuses; the wire session's no-window refusal the arm silences,
+    /// the between-slots press the arm skips, the armed drag the right
+    /// press silences, the wrong button's release the mismatch abort speaks,
     /// the empty-paint release the deferred place keeps — the seat the
     /// PICKUP speaks, the between the -1 no-op the wire names, the
     /// outside the -999 drop serves).
@@ -2664,21 +2664,22 @@ use super::*;
         let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
         app.attach_live_clicks(click_tx);
         app.open(ScreenKind::Chest);
-        app.chest_live_window = Some((5, 7));
         let panel = chest_panel_origin(640, 360);
         app.chest_panel = panel;
         app.chest_slots = vec![(0, 0); 27];
         app.chest_mirror = vec![(0, 0); 36];
         app.chest_slot_rects = chest_rects_for(panel);
-        // THE OFFLINE STAND-IN (chest_is_live false): the carried press
-        // the arm silences — the chest's own live-only law the arm
-        // shares (the click walk's own gate)
+        // THE WIRE SESSION'S NO-WINDOW REFUSAL (chest_live_window None):
+        // the carried press the arm silences — the gate the window's own
+        // presence keys (the world_is_network && no-window shape the
+        // autopush-146 round wears)
         app.chest_carried = (dirt, 8);
         let (gx, gy) = chest_container_slot(panel, 4);
         app.on_press(gx + 9, gy + 9);
         assert!(!app.qc_armed, "the stand-in's press the arm never speaks");
         assert!(click_rx.try_recv().is_err(), "the silence NO packet keeps");
         // THE WINDOW ARMS
+        app.chest_live_window = Some((5, 7));
         app.chest_is_live = true;
         // THE DIFFERENT ITEM'S SEAT REFUSES the paint — the empty-
         // painted release the deferred place's PICKUP speaks (the
@@ -2997,11 +2998,12 @@ use super::*;
     }
 
 
-    /// THE CHEST RIGHT DRAG'S OWN GATES AND ABORTS (the offline stand-in
-    /// the arm silences, the armed drag the other button's press keeps
-    /// silent, the wrong button's release the mismatch abort speaks BOTH
-    /// ways — the left release the right drag aborts, the right release
-    /// the left drag aborts — the aborts the packets never send).
+    /// THE CHEST RIGHT DRAG'S OWN GATES AND ABORTS (the wire session's
+    /// no-window refusal the arm silences, the armed drag the other
+    /// button's press keeps silent, the wrong button's release the
+    /// mismatch abort speaks BOTH ways — the left release the right
+    /// drag aborts, the right release the left drag aborts — the
+    /// aborts the packets never send).
     #[test]
     fn the_chest_right_drag_the_gates_and_the_aborts_wear() {
         use crate::world_view::ContainerCommand;
@@ -3013,19 +3015,21 @@ use super::*;
         let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
         app.attach_live_clicks(click_tx);
         app.open(ScreenKind::Chest);
-        app.chest_live_window = Some((5, 7));
         let panel = chest_panel_origin(640, 360);
         app.chest_panel = panel;
         app.chest_slots = vec![(0, 0); 27];
         app.chest_mirror = vec![(0, 0); 36];
         app.chest_slot_rects = chest_rects_for(panel);
-        // THE OFFLINE STAND-IN (chest_is_live false): the carried right
-        // press the arm silences — the live-only law the arm shares
+        // THE WIRE SESSION'S NO-WINDOW REFUSAL (chest_live_window None):
+        // the carried right press the arm silences — the gate the
+        // window's own presence keys (the world_is_network && no-window
+        // shape the autopush-146 round wears)
         app.chest_carried = (dirt, 8);
         let (gx, gy) = chest_container_slot(panel, 4);
         app.on_right_press(gx + 9, gy + 9);
         assert!(!app.qc_armed, "the stand-in's right press the arm never speaks");
         assert!(click_rx.try_recv().is_err(), "the silence NO packet keeps");
+        app.chest_live_window = Some((5, 7));
         app.chest_is_live = true;
         // THE ARMED LEFT DRAG THE RIGHT PRESS SILENCES (the in-flight
         // gate — no place rides, the type-0 state the press keeps; the

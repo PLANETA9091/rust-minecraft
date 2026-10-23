@@ -1061,7 +1061,7 @@ use super::*;
         // #texture ref banks)
         assert_eq!(
             atlas::N_KINDS,
-            778,
+             779,
             "the palette the weighted plates' own rows bank"
         );
         assert_eq!(atlas::KIND_NAMES[262], "oak_button");
@@ -1282,7 +1282,7 @@ use super::*;
         );
         assert_eq!(
             atlas::N_KINDS,
-            778,
+             779,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap BlockSetType's static init —
@@ -1560,7 +1560,7 @@ use super::*;
         );
         assert_eq!(
             atlas::N_KINDS,
-            778,
+             779,
             "the palette the weighted plates' own rows bank"
         );
         // THE VOICES' OWN FIVE SETS (javap the BlockSetType clinit the
@@ -1677,7 +1677,7 @@ use super::*;
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE, 318);
         assert_eq!(w::HEAVY_WEIGHTED_PRESSURE_PLATE_ON, 319);
         assert_eq!(w::END_PORTAL, 510);
-        assert_eq!(atlas::N_KINDS, 778, "the palette the weighted rows bank");
+        assert_eq!(atlas::N_KINDS, 779, "the palette the weighted rows bank");
         for (off, on, name) in [
             (
                 w::LIGHT_WEIGHTED_PRESSURE_PLATE,
@@ -2805,7 +2805,7 @@ use super::*;
         assert_eq!(w::END_PORTAL, 510);
         assert_eq!(
             atlas::N_KINDS,
-            778,
+             779,
             "the palette the weighted plates' own rows bank"
         );
         for (off, on, name, wooden) in [
