@@ -11793,8 +11793,13 @@ impl EggProjectile {
     /// Add Entity packet carried land verbatim, the rotation the
     /// velocity's own atan2 degrees speak (the updateRotation target
     /// the initial flight word banks — no lerp the fresh body needs).
-    /// The kind the registry's own type name picks (the `WireThrown`
-    /// projection's byte the decode lane carried).
+    /// The degrees the f64 `180.0 / Math.PI` walk speaks (the vanilla
+    /// updateRotation's own double math — `to_degrees` the IEEE
+    /// special cases lands exact: the axis-aligned velocity the
+    /// atan2(x, ±0) = ±π/2 word carries, the ±90.0 the exact product
+    /// round-trips — the f32-rounded constant the f64 pose never
+    /// exacted). The kind the registry's own type name picks (the
+    /// `WireThrown` projection's byte the decode lane carried).
     pub fn wire_spawn(
         id: i32,
         snowball: bool,
@@ -11806,8 +11811,8 @@ impl EggProjectile {
         vz: f64,
     ) -> Self {
         let horiz = (vx * vx + vz * vz).sqrt();
-        let pitch = (vy).atan2(horiz) * 57.295_776_367_187_5;
-        let yaw = (-vx).atan2(-vz) * 57.295_776_367_187_5;
+        let pitch = (vy).atan2(horiz).to_degrees();
+        let yaw = (-vx).atan2(-vz).to_degrees();
         Self {
             id,
             x,
