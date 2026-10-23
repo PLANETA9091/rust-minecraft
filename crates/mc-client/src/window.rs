@@ -1620,6 +1620,14 @@ pub fn run_gui_app(
     // RESTART OUTLIVES)
     app.offline_world_file =
         Some(std::env::current_dir().unwrap_or_default().join("world_edits.nbt"));
+    // THE OPTIONS FILE'S OWN GAME DIR (the same vanilla default-game-dir
+    // law the hotbar + containers + world-edits files wear: the cwd the
+    // `options.txt` names, the three stores the RESTART OUTLIVES — the
+    // load the boot answers (the Minecraft.<init> moment the menus
+    // precede), the Done chord the save rides)
+    app.options_file =
+        Some(std::env::current_dir().unwrap_or_default().join("options.txt"));
+    app.options_file_load();
     app.offline_held_updated(held_item);
     app.offline_offhand_updated(offhand_item);
     // THE SAVE-DRAFTS OPTION'S OWN SEED (the --no-save-chat-drafts flag

@@ -38,6 +38,7 @@ mod mth;
 mod net_fixture;
 mod music;
 mod noise;
+mod options_file;
 mod png_io;
 mod profiler;
 mod raster;

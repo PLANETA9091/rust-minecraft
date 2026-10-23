@@ -1,0 +1,665 @@
+0: aload_0
+1: aload_1
+2: invokevirtual net/minecraft/client/Options.processDumpedOptions:(Lnet/minecraft/client/Options$OptionAccess;)V
+5: aload_1
+6: ldc_w ldcw@1839
+9: aload_0
+10: getfield net/minecraft/client/Options.autoJump:Lnet/minecraft/client/OptionInstance;
+13: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+16: iconst_0
+17: nop
+18: aload_1
+19: ldc_w ldcw@1843
+22: aload_0
+23: getfield net/minecraft/client/Options.rotateWithMinecart:Lnet/minecraft/client/OptionInstance;
+26: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+29: iconst_0
+30: nop
+31: aload_1
+32: ldc_w ldcw@1844
+35: aload_0
+36: getfield net/minecraft/client/Options.operatorItemsTab:Lnet/minecraft/client/OptionInstance;
+39: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+42: iconst_0
+43: nop
+44: aload_1
+45: ldc_w ldcw@1845
+48: aload_0
+49: getfield net/minecraft/client/Options.autoSuggestions:Lnet/minecraft/client/OptionInstance;
+52: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+55: iconst_0
+56: nop
+57: aload_1
+58: ldc_w ldcw@1846
+61: aload_0
+62: getfield net/minecraft/client/Options.chatColors:Lnet/minecraft/client/OptionInstance;
+65: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+68: iconst_0
+69: nop
+70: aload_1
+71: ldc_w ldcw@1847
+74: aload_0
+75: getfield net/minecraft/client/Options.chatLinks:Lnet/minecraft/client/OptionInstance;
+78: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+81: iconst_0
+82: nop
+83: aload_1
+84: ldc_w ldcw@1848
+87: aload_0
+88: getfield net/minecraft/client/Options.chatLinksPrompt:Lnet/minecraft/client/OptionInstance;
+91: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+94: iconst_0
+95: nop
+96: aload_1
+97: ldc_w ldcw@1849
+100: aload_0
+101: getfield net/minecraft/client/Options.discreteMouseScroll:Lnet/minecraft/client/OptionInstance;
+104: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+107: iconst_0
+108: nop
+109: aload_1
+110: ldc_w ldcw@1851
+113: aload_0
+114: getfield net/minecraft/client/Options.invertXMouse:Lnet/minecraft/client/OptionInstance;
+117: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+120: iconst_0
+121: nop
+122: aload_1
+123: ldc_w ldcw@1852
+126: aload_0
+127: getfield net/minecraft/client/Options.invertYMouse:Lnet/minecraft/client/OptionInstance;
+130: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+133: iconst_0
+134: nop
+135: aload_1
+136: ldc_w ldcw@1853
+139: aload_0
+140: getfield net/minecraft/client/Options.realmsNotifications:Lnet/minecraft/client/OptionInstance;
+143: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+146: iconst_0
+147: nop
+148: aload_1
+149: ldc_w ldcw@1854
+152: aload_0
+153: getfield net/minecraft/client/Options.showSubtitles:Lnet/minecraft/client/OptionInstance;
+156: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+159: iconst_0
+160: nop
+161: aload_1
+162: ldc_w ldcw@1855
+165: aload_0
+166: getfield net/minecraft/client/Options.directionalAudio:Lnet/minecraft/client/OptionInstance;
+169: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+172: iconst_0
+173: nop
+174: aload_1
+175: ldc_w ldcw@1856
+178: aload_0
+179: getfield net/minecraft/client/Options.bobView:Lnet/minecraft/client/OptionInstance;
+182: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+185: iconst_0
+186: nop
+187: aload_1
+188: ldc_w ldcw@1857
+191: aload_0
+192: getfield net/minecraft/client/Options.toggleCrouch:Lnet/minecraft/client/OptionInstance;
+195: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+198: iconst_0
+199: nop
+200: aload_1
+201: ldc_w ldcw@1858
+204: aload_0
+205: getfield net/minecraft/client/Options.toggleSprint:Lnet/minecraft/client/OptionInstance;
+208: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+211: iconst_0
+212: nop
+213: aload_1
+214: ldc_w ldcw@1859
+217: aload_0
+218: getfield net/minecraft/client/Options.toggleAttack:Lnet/minecraft/client/OptionInstance;
+221: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+224: iconst_0
+225: nop
+226: aload_1
+227: ldc_w ldcw@1860
+230: aload_0
+231: getfield net/minecraft/client/Options.toggleUse:Lnet/minecraft/client/OptionInstance;
+234: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+237: iconst_0
+238: nop
+239: aload_1
+240: ldc_w ldcw@1861
+243: aload_0
+244: getfield net/minecraft/client/Options.sprintWindow:Lnet/minecraft/client/OptionInstance;
+247: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+250: iconst_0
+251: nop
+252: aload_1
+253: ldc_w ldcw@1862
+256: aload_0
+257: getfield net/minecraft/client/Options.darkMojangStudiosBackground:Lnet/minecraft/client/OptionInstance;
+260: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+263: iconst_0
+264: nop
+265: aload_1
+266: ldc_w ldcw@1863
+269: aload_0
+270: getfield net/minecraft/client/Options.hideLightningFlash:Lnet/minecraft/client/OptionInstance;
+273: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+276: iconst_0
+277: nop
+278: aload_1
+279: ldc_w ldcw@1865
+282: aload_0
+283: getfield net/minecraft/client/Options.hideSplashTexts:Lnet/minecraft/client/OptionInstance;
+286: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+289: iconst_0
+290: nop
+291: aload_1
+292: ldc_w ldcw@1866
+295: aload_0
+296: getfield net/minecraft/client/Options.sensitivity:Lnet/minecraft/client/OptionInstance;
+299: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+302: iconst_0
+303: nop
+304: aload_1
+305: ldc_w ldcw@1868
+308: aload_0
+309: getfield net/minecraft/client/Options.damageTiltStrength:Lnet/minecraft/client/OptionInstance;
+312: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+315: iconst_0
+316: nop
+317: aload_1
+318: ldc_w ldcw@1869
+321: aload_0
+322: getfield net/minecraft/client/Options.highContrast:Lnet/minecraft/client/OptionInstance;
+325: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+328: iconst_0
+329: nop
+330: aload_1
+331: ldc_w ldcw@1870
+334: aload_0
+335: getfield net/minecraft/client/Options.highContrastBlockOutline:Lnet/minecraft/client/OptionInstance;
+338: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+341: iconst_0
+342: nop
+343: aload_1
+344: ldc_w ldcw@1871
+347: aload_0
+348: getfield net/minecraft/client/Options.narratorHotkey:Lnet/minecraft/client/OptionInstance;
+351: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+354: iconst_0
+355: nop
+356: aload_0
+357: aload_1
+358: ldc_w ldcw@1872
+361: aload_0
+362: getfield net/minecraft/client/Options.resourcePacks:Ljava/util/List;
+365: invokedynamic indy
+370: getstatic net/minecraft/client/Options.GSON:Lcom/google/gson/Gson;
+373: dup
+374: invokestatic java/util/Objects.requireNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+377: pop
+378: invokedynamic indy
+383: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Ljava/lang/Object;Ljava/util/function/Function;Ljava/util/function/Function;)Ljava/lang/Object;
+386: iconst_2
+387: nop
+388: checkcast java/util/List
+391: putfield net/minecraft/client/Options.resourcePacks:Ljava/util/List;
+394: aload_0
+395: aload_1
+396: ldc_w ldcw@1884
+399: aload_0
+400: getfield net/minecraft/client/Options.incompatibleResourcePacks:Ljava/util/List;
+403: invokedynamic indy
+408: getstatic net/minecraft/client/Options.GSON:Lcom/google/gson/Gson;
+411: dup
+412: invokestatic java/util/Objects.requireNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+415: pop
+416: invokedynamic indy
+421: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Ljava/lang/Object;Ljava/util/function/Function;Ljava/util/function/Function;)Ljava/lang/Object;
+424: iconst_2
+425: nop
+426: checkcast java/util/List
+429: putfield net/minecraft/client/Options.incompatibleResourcePacks:Ljava/util/List;
+432: aload_0
+433: aload_1
+434: ldc_w ldcw@1885
+437: aload_0
+438: getfield net/minecraft/client/Options.lastMpIp:Ljava/lang/String;
+441: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+444: iconst_0
+445: nop
+446: putfield net/minecraft/client/Options.lastMpIp:Ljava/lang/String;
+449: aload_0
+450: aload_1
+451: ldc_w ldcw@1890
+454: aload_0
+455: getfield net/minecraft/client/Options.languageCode:Ljava/lang/String;
+458: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+461: iconst_0
+462: nop
+463: putfield net/minecraft/client/Options.languageCode:Ljava/lang/String;
+466: aload_1
+467: ldc_w ldcw@1892
+470: aload_0
+471: getfield net/minecraft/client/Options.chatVisibility:Lnet/minecraft/client/OptionInstance;
+474: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+477: iconst_0
+478: nop
+479: aload_1
+480: ldc_w ldcw@1893
+483: aload_0
+484: getfield net/minecraft/client/Options.chatOpacity:Lnet/minecraft/client/OptionInstance;
+487: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+490: iconst_0
+491: nop
+492: aload_1
+493: ldc_w ldcw@1894
+496: aload_0
+497: getfield net/minecraft/client/Options.chatLineSpacing:Lnet/minecraft/client/OptionInstance;
+500: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+503: iconst_0
+504: nop
+505: aload_1
+506: ldc_w ldcw@1895
+509: aload_0
+510: getfield net/minecraft/client/Options.textBackgroundOpacity:Lnet/minecraft/client/OptionInstance;
+513: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+516: iconst_0
+517: nop
+518: aload_1
+519: ldc_w ldcw@1896
+522: aload_0
+523: getfield net/minecraft/client/Options.backgroundForChatOnly:Lnet/minecraft/client/OptionInstance;
+526: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+529: iconst_0
+530: nop
+531: aload_0
+532: aload_1
+533: ldc_w ldcw@1897
+536: aload_0
+537: getfield net/minecraft/client/Options.hideServerAddress:Z
+540: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Z)Z
+543: iconst_0
+544: nop
+545: putfield net/minecraft/client/Options.hideServerAddress:Z
+548: aload_0
+549: aload_1
+550: ldc_w ldcw@1904
+553: aload_0
+554: getfield net/minecraft/client/Options.advancedItemTooltips:Z
+557: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Z)Z
+560: iconst_0
+561: nop
+562: putfield net/minecraft/client/Options.advancedItemTooltips:Z
+565: aload_0
+566: aload_1
+567: ldc_w ldcw@1908
+570: aload_0
+571: getfield net/minecraft/client/Options.pauseOnLostFocus:Z
+574: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Z)Z
+577: iconst_0
+578: nop
+579: putfield net/minecraft/client/Options.pauseOnLostFocus:Z
+582: aload_0
+583: aload_1
+584: ldc_w ldcw@1909
+587: aload_0
+588: getfield net/minecraft/client/Options.overrideWidth:I
+591: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;I)I
+594: iconst_0
+595: nop
+596: putfield net/minecraft/client/Options.overrideWidth:I
+599: aload_0
+600: aload_1
+601: ldc_w ldcw@1916
+604: aload_0
+605: getfield net/minecraft/client/Options.overrideHeight:I
+608: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;I)I
+611: iconst_0
+612: nop
+613: putfield net/minecraft/client/Options.overrideHeight:I
+616: aload_1
+617: ldc_w ldcw@1920
+620: aload_0
+621: getfield net/minecraft/client/Options.chatHeightFocused:Lnet/minecraft/client/OptionInstance;
+624: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+627: iconst_0
+628: nop
+629: aload_1
+630: ldc_w ldcw@1921
+633: aload_0
+634: getfield net/minecraft/client/Options.chatDelay:Lnet/minecraft/client/OptionInstance;
+637: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+640: iconst_0
+641: nop
+642: aload_1
+643: ldc_w ldcw@1922
+646: aload_0
+647: getfield net/minecraft/client/Options.chatHeightUnfocused:Lnet/minecraft/client/OptionInstance;
+650: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+653: iconst_0
+654: nop
+655: aload_1
+656: ldc_w ldcw@1923
+659: aload_0
+660: getfield net/minecraft/client/Options.chatScale:Lnet/minecraft/client/OptionInstance;
+663: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+666: iconst_0
+667: nop
+668: aload_1
+669: ldc_w ldcw@1924
+672: aload_0
+673: getfield net/minecraft/client/Options.chatWidth:Lnet/minecraft/client/OptionInstance;
+676: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+679: iconst_0
+680: nop
+681: aload_1
+682: ldc_w ldcw@1925
+685: aload_0
+686: getfield net/minecraft/client/Options.notificationDisplayTime:Lnet/minecraft/client/OptionInstance;
+689: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+692: iconst_0
+693: nop
+694: aload_0
+695: aload_1
+696: ldc_w ldcw@1926
+699: aload_0
+700: getfield net/minecraft/client/Options.useNativeTransport:Z
+703: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Z)Z
+706: iconst_0
+707: nop
+708: putfield net/minecraft/client/Options.useNativeTransport:Z
+711: aload_1
+712: ldc_w ldcw@1927
+715: aload_0
+716: getfield net/minecraft/client/Options.mainHand:Lnet/minecraft/client/OptionInstance;
+719: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+722: iconst_0
+723: nop
+724: aload_1
+725: ldc_w ldcw@1928
+728: aload_0
+729: getfield net/minecraft/client/Options.attackIndicator:Lnet/minecraft/client/OptionInstance;
+732: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+735: iconst_0
+736: nop
+737: aload_0
+738: aload_1
+739: ldc_w ldcw@1929
+742: aload_0
+743: getfield net/minecraft/client/Options.tutorialStep:Lnet/minecraft/client/tutorial/TutorialSteps;
+746: invokedynamic indy
+751: invokedynamic indy
+756: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Ljava/lang/Object;Ljava/util/function/Function;Ljava/util/function/Function;)Ljava/lang/Object;
+759: iconst_2
+760: nop
+761: checkcast net/minecraft/client/tutorial/TutorialSteps
+764: putfield net/minecraft/client/Options.tutorialStep:Lnet/minecraft/client/tutorial/TutorialSteps;
+767: aload_1
+768: ldc_w ldcw@1932
+771: aload_0
+772: getfield net/minecraft/client/Options.mouseWheelSensitivity:Lnet/minecraft/client/OptionInstance;
+775: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+778: iconst_0
+779: nop
+780: aload_1
+781: ldc_w ldcw@1933
+784: aload_0
+785: getfield net/minecraft/client/Options.rawMouseInput:Lnet/minecraft/client/OptionInstance;
+788: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+791: iconst_0
+792: nop
+793: aload_1
+794: ldc_w ldcw@1934
+797: aload_0
+798: getfield net/minecraft/client/Options.allowCursorChanges:Lnet/minecraft/client/OptionInstance;
+801: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+804: iconst_0
+805: nop
+806: aload_0
+807: aload_1
+808: ldc_w ldcw@1935
+811: aload_0
+812: getfield net/minecraft/client/Options.glDebugVerbosity:I
+815: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;I)I
+818: iconst_0
+819: nop
+820: putfield net/minecraft/client/Options.glDebugVerbosity:I
+823: aload_0
+824: aload_1
+825: ldc_w ldcw@1936
+828: aload_0
+829: getfield net/minecraft/client/Options.skipMultiplayerWarning:Z
+832: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Z)Z
+835: iconst_0
+836: nop
+837: putfield net/minecraft/client/Options.skipMultiplayerWarning:Z
+840: aload_1
+841: ldc_w ldcw@1940
+844: aload_0
+845: getfield net/minecraft/client/Options.hideMatchedNames:Lnet/minecraft/client/OptionInstance;
+848: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+851: iconst_0
+852: nop
+853: aload_0
+854: aload_1
+855: ldc_w ldcw@1941
+858: aload_0
+859: getfield net/minecraft/client/Options.joinedFirstServer:Z
+862: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Z)Z
+865: iconst_0
+866: nop
+867: putfield net/minecraft/client/Options.joinedFirstServer:Z
+870: aload_0
+871: aload_1
+872: ldc_w ldcw@1942
+875: aload_0
+876: getfield net/minecraft/client/Options.syncWrites:Z
+879: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Z)Z
+882: iconst_0
+883: nop
+884: putfield net/minecraft/client/Options.syncWrites:Z
+887: aload_1
+888: ldc_w ldcw@1944
+891: aload_0
+892: getfield net/minecraft/client/Options.showAutosaveIndicator:Lnet/minecraft/client/OptionInstance;
+895: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+898: iconst_0
+899: nop
+900: aload_1
+901: ldc_w ldcw@1945
+904: aload_0
+905: getfield net/minecraft/client/Options.allowServerListing:Lnet/minecraft/client/OptionInstance;
+908: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+911: iconst_0
+912: nop
+913: aload_1
+914: ldc_w ldcw@1946
+917: aload_0
+918: getfield net/minecraft/client/Options.inGameNotification:Lnet/minecraft/client/OptionInstance;
+921: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+924: iconst_0
+925: nop
+926: aload_1
+927: ldc_w ldcw@1947
+930: aload_0
+931: getfield net/minecraft/client/Options.sharePresence:Lnet/minecraft/client/OptionInstance;
+934: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+937: iconst_0
+938: nop
+939: aload_1
+940: ldc_w ldcw@1948
+943: aload_0
+944: getfield net/minecraft/client/Options.onlyShowSecureChat:Lnet/minecraft/client/OptionInstance;
+947: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+950: iconst_0
+951: nop
+952: aload_1
+953: ldc_w ldcw@1949
+956: aload_0
+957: getfield net/minecraft/client/Options.saveChatDrafts:Lnet/minecraft/client/OptionInstance;
+960: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+963: iconst_0
+964: nop
+965: aload_1
+966: ldc_w ldcw@1950
+969: aload_0
+970: getfield net/minecraft/client/Options.panoramaSpeed:Lnet/minecraft/client/OptionInstance;
+973: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+976: iconst_0
+977: nop
+978: aload_1
+979: ldc_w ldcw@1952
+982: aload_0
+983: getfield net/minecraft/client/Options.telemetryOptInExtra:Lnet/minecraft/client/OptionInstance;
+986: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+989: iconst_0
+990: nop
+991: aload_0
+992: aload_1
+993: ldc_w ldcw@1953
+996: aload_0
+997: getfield net/minecraft/client/Options.onboardAccessibility:Z
+1000: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Z)Z
+1003: iconst_0
+1004: nop
+1005: putfield net/minecraft/client/Options.onboardAccessibility:Z
+1008: aload_1
+1009: ldc_w ldcw@1954
+1012: aload_0
+1013: getfield net/minecraft/client/Options.menuBackgroundBlurriness:Lnet/minecraft/client/OptionInstance;
+1016: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+1019: iconst_0
+1020: nop
+1021: aload_0
+1022: aload_1
+1023: ldc_w ldcw@1955
+1026: aload_0
+1027: getfield net/minecraft/client/Options.startedCleanly:Z
+1030: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Z)Z
+1033: iconst_0
+1034: nop
+1035: putfield net/minecraft/client/Options.startedCleanly:Z
+1038: aload_1
+1039: ldc_w ldcw@1956
+1042: aload_0
+1043: getfield net/minecraft/client/Options.musicToast:Lnet/minecraft/client/OptionInstance;
+1046: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+1049: iconst_0
+1050: nop
+1051: aload_1
+1052: ldc_w ldcw@1957
+1055: aload_0
+1056: getfield net/minecraft/client/Options.musicFrequency:Lnet/minecraft/client/OptionInstance;
+1059: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+1062: iconst_0
+1063: nop
+1064: aload_0
+1065: getfield net/minecraft/client/Options.keyMappings:[Lnet/minecraft/client/KeyMapping;
+1068: astore_2
+1069: aload_2
+1070: arraylength
+1071: istore_3
+1072: iconst_0
+1073: istore istore 4
+1075: iload iload 4
+1077: iload_3
+1078: if_icmpge -> 1140
+1081: aload_2
+1082: iload iload 4
+1084: aaload
+1085: astore astore 5
+1087: aload aload 5
+1089: invokevirtual net/minecraft/client/KeyMapping.saveString:()Ljava/lang/String;
+1092: astore astore 6
+1094: aload_1
+1095: aload aload 5
+1097: invokevirtual net/minecraft/client/KeyMapping.getName:()Ljava/lang/String;
+1100: invokedynamic indy
+1105: aload aload 6
+1107: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+1110: iconst_0
+1111: nop
+1112: astore astore 7
+1114: aload aload 6
+1116: aload aload 7
+1118: invokevirtual java/lang/String.equals:(Ljava/lang/Object;)Z
+1121: ifne -> 1134
+1124: aload aload 5
+1126: aload aload 7
+1128: invokestatic com/mojang/blaze3d/platform/InputConstants.getKey:(Ljava/lang/String;)Lcom/mojang/blaze3d/platform/InputConstants$Key;
+1131: invokevirtual net/minecraft/client/KeyMapping.setKey:(Lcom/mojang/blaze3d/platform/InputConstants$Key;)V
+1134: iinc 4 1
+1137: goto -> 1075
+1140: invokestatic net/minecraft/sounds/SoundSource.values:()[Lnet/minecraft/sounds/SoundSource;
+1143: astore_2
+1144: aload_2
+1145: arraylength
+1146: istore_3
+1147: iconst_0
+1148: istore istore 4
+1150: iload iload 4
+1152: iload_3
+1153: if_icmpge -> 1198
+1156: aload_2
+1157: iload iload 4
+1159: aaload
+1160: astore astore 5
+1162: aload_1
+1163: aload aload 5
+1165: invokevirtual net/minecraft/sounds/SoundSource.getName:()Ljava/lang/String;
+1168: invokedynamic indy
+1173: aload_0
+1174: getfield net/minecraft/client/Options.soundSourceVolumes:Ljava/util/Map;
+1177: aload aload 5
+1179: invokeinterface java/util/Map.get:(Ljava/lang/Object;)Ljava/lang/Object;
+1182: iconst_m1
+1183: nop
+1184: checkcast net/minecraft/client/OptionInstance
+1187: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+1190: iconst_0
+1191: nop
+1192: iinc 4 1
+1195: goto -> 1150
+1198: invokestatic net/minecraft/world/entity/player/PlayerModelPart.values:()[Lnet/minecraft/world/entity/player/PlayerModelPart;
+1201: astore_2
+1202: aload_2
+1203: arraylength
+1204: istore_3
+1205: iconst_0
+1206: istore istore 4
+1208: iload iload 4
+1210: iload_3
+1211: if_icmpge -> 1274
+1214: aload_2
+1215: iload iload 4
+1217: aaload
+1218: astore astore 5
+1220: aload_0
+1221: getfield net/minecraft/client/Options.modelParts:Ljava/util/Set;
+1224: aload aload 5
+1226: invokeinterface java/util/Set.contains:(Ljava/lang/Object;)Z
+1229: iconst_m1
+1230: nop
+1231: istore istore 6
+1233: aload_1
+1234: aload aload 5
+1236: invokevirtual net/minecraft/world/entity/player/PlayerModelPart.getId:()Ljava/lang/String;
+1239: invokedynamic indy
+1244: iload iload 6
+1246: invokeinterface net/minecraft/client/Options$FieldAccess.process:(Ljava/lang/String;Z)Z
+1249: iconst_0
+1250: nop
+1251: istore istore 7
+1253: iload iload 7
+1255: iload iload 6
+1257: if_icmpeq -> 1268
+1260: aload_0
+1261: aload aload 5
+1263: iload iload 7
+1265: invokevirtual net/minecraft/client/Options.setModelPart:(Lnet/minecraft/world/entity/player/PlayerModelPart;Z)V
+1268: iinc 4 1
+1271: goto -> 1208
+1274: return

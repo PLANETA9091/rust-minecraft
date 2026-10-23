@@ -8066,6 +8066,16 @@ pub struct App {
     /// shape the sensitivity/fov seats wear — the Music & Sounds row's
     /// own flag).
     pub volume_drag: bool,
+    /// THE OPTIONS FILE'S OWN PATH (the `optionsFile` field the 26.2
+    /// ctor's `File` param banks — the cwd the vanilla default game dir
+    /// names, the run_gui_app boot sets; the headless boot the None the
+    /// determinism keeps — the hotbar/containers/world-edits lanes the
+    /// same game-dir law wear).
+    pub options_file: Option<std::path::PathBuf>,
+    /// THE LOAD'S OWN ONCE-FLAG (the same lazy bank the hotbar/container
+    /// lanes wear — the boot call the file's truth speaks, the later
+    /// chords the in-memory stores keep).
+    options_file_loaded: bool,
     /// THE 45 VISIBLE PALETTE SLOTS (the CONTAINER SimpleContainer the
     /// scrollTo walk refills: cell r*9+c = items[(r+row)*9+c] or
     /// EMPTY — the display stacks the click walk never depletes).
@@ -10144,6 +10154,8 @@ impl App {
             fov_drag: false,
             volume: 1.0,
             volume_drag: false,
+            options_file: None,
+            options_file_loaded: false,
             creative_palette: [(0, 0); 45],
             creative_tab: 0,
             creative_panel: (0, 0),
@@ -32266,6 +32278,44 @@ impl App {
         }
     }
 
+    /// THE OPTIONS FILE'S OWN LOAD WALK (the vanilla `Options.load()` law
+    /// the probes bank — see [`crate::options_file`] module doc): the boot
+    /// the file's truth wears, the missing file the defaults keep, the
+    /// decode failure the default keeps (the clamp never wears), the None
+    /// boot the no-game-dir stand-in keeps — the headless goldens' own
+    /// determinism (the flag banks, the file lane the walk never spends).
+    pub fn options_file_load(&mut self) {
+        if self.options_file_loaded {
+            return;
+        }
+        self.options_file_loaded = true;
+        let Some(path) = self.options_file.clone() else {
+            return;
+        };
+        let file = crate::options_file::OptionsFile::load(&path);
+        self.look_sensitivity = file.mouse_sensitivity;
+        self.fov = file.fov;
+        self.volume = file.sound_category_master;
+    }
+
+    /// THE OPTIONS FILE'S OWN SAVE WALK (the vanilla `Options.save()` law
+    /// — the truncating rewrite the FileOutputStream speaks, the version
+    /// line the first row keeps, the three keys the processOptions lane
+    /// passes; the Done chord the OptionsScreen.onClose moment rides).
+    /// THE NONE BOOT the no-game-dir stand-in keeps — the failure the
+    /// silent keep answers (the in-memory stores the truth stays).
+    pub fn options_file_save(&self) {
+        let Some(path) = &self.options_file else {
+            return;
+        };
+        let file = crate::options_file::OptionsFile {
+            mouse_sensitivity: self.look_sensitivity,
+            fov: self.fov,
+            sound_category_master: self.volume,
+        };
+        file.save(path);
+    }
+
     /// THE STORES' OWN LAZY LOAD (the dev-68 round — the hotbar lane's
     /// `HotbarManager.get(I)` pcs 1-13 once-flag walk the store access
     /// rides: the first open/flush/spill the file parse answers, the
@@ -34400,6 +34450,14 @@ impl App {
                 }
                 "quit" => {}
                 "back" => {
+                    // THE OPTIONS SCREEN'S OWN SAVE CHORD (the vanilla
+                    // OptionsScreen.onClose moment — the Done the
+                    // `options.save()` walk answers, the Servers screen's
+                    // Cancel the same id the save never wears): the
+                    // sliders' drags the file's rows become
+                    if self.screen == ScreenKind::Options {
+                        self.options_file_save();
+                    }
                     let ret = self.options_return;
                     self.open(ret);
                 }

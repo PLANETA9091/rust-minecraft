@@ -8976,3 +8976,63 @@ use super::*;
             "the master the output's own record wears"
         );
     }
+// THE OPTIONS FILE'S OWN ROUND TRIP (the persistence law — the vanilla
+// `Options.save()`/`load()` walks the stores' restart outlives: the Done
+// chord the file's rows become, the fresh boot the file's truth wears,
+// the missing file the defaults keep)
+#[test]
+fn the_options_file_the_stores_restart_outlives() {
+    let dir = std::env::temp_dir().join(format!("mc2rs_options_stores_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&dir);
+    let path = dir.join("options.txt");
+    let mut app = App::new(262);
+    app.options_file = Some(path.clone());
+    // THE MISSING FILE the defaults keep (the exists() gate the load
+    // head wears — no file, no guess)
+    app.options_file_load();
+    assert_eq!(app.look_sensitivity, 0.5, "the default the load keeps");
+    assert_eq!(app.fov, 70.0, "the default the load keeps");
+    assert_eq!(app.volume, 1.0, "the default the load keeps");
+    // THE DRAGS THE STORES WEAR (the sensitivity row's right-edge press
+    // the 1.0 the track law clamps; the fov/volume stores the same
+    // slider rows' own drags wear — the caption/drag laws the sibling
+    // tests keep)
+    app.open(ScreenKind::Options);
+    app.render_title_buttons_for_test();
+    let sens = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_sensitivity")
+        .expect("the slider row")
+        .clone();
+    app.on_press(sens.x + sens.w - 1, sens.y + sens.h / 2);
+    assert_eq!(app.look_sensitivity, 1.0, "the right edge clamps");
+    app.on_left_release();
+    app.fov = 110.0;
+    app.volume = 0.0;
+    // THE DONE CHORD'S OWN SAVE (the vanilla OptionsScreen.onClose
+    // moment — the "back" button the sliders' drags the file's rows
+    // become, the return the options_return speaks)
+    let back = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "back")
+        .expect("the Done row")
+        .clone();
+    app.on_click(back.x + back.w / 2, back.y + back.h / 2);
+    assert_eq!(app.screen, ScreenKind::Title, "the Done the return wears");
+    let text = std::fs::read_to_string(&path).expect("the chord the file writes");
+    assert_eq!(
+        text, "version:4903\nmouseSensitivity:1.0\nfov:110\nsoundCategory_master:0.0\n",
+        "the file the vanilla rows wear"
+    );
+    // THE RESTART (the fresh boot the file's truth wears — the session's
+    // drags the file the restart outlives)
+    let mut app2 = App::new(262);
+    app2.options_file = Some(path.clone());
+    app2.options_file_load();
+    assert_eq!(app2.look_sensitivity, 1.0, "the drag the reload wears");
+    assert_eq!(app2.fov, 110.0, "the dial the reload wears");
+    assert_eq!(app2.volume, 0.0, "the mute the reload wears");
+    let _ = std::fs::remove_dir_all(&dir);
+}
