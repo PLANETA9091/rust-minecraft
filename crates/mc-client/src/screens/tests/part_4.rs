@@ -8898,3 +8898,81 @@ use super::*;
         assert_eq!(fov_from_value(0.5), 70.0);
         assert_eq!(fov_from_value(0.51), 71.0, "the 1-degree step rounds");
     }
+
+    /// THE VOLUME SLIDER'S OWN LAW (the "Music & Sounds" master the
+    /// Options row speaks — the 0..1 the value IS, the caption the
+    /// percent answers (the 0.0 the options.off 'OFF' end wears, the
+    /// default 1.0 the 'Music & Sounds: 100%' word keeps), the press
+    /// the track math lands, the armed drag the track's outside rides,
+    /// the release the disarm speaks; the OUTPUT'S OWN GAIN the
+    /// deterministic stand-in records — the master the every lane
+    /// scales).
+    #[test]
+    fn the_volume_slider_wears_the_caption_and_gain_law() {
+        let mut app = App::new(3);
+        assert_eq!(app.volume, 1.0, "the default the master's 1.0 wears");
+        app.open(ScreenKind::Options);
+        app.render_title_buttons_for_test();
+        let b = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "opt_music")
+            .expect("the slider row")
+            .clone();
+        assert_eq!(
+            b.label, "Music & Sounds: 100%",
+            "the default the master's own percent speaks"
+        );
+        assert_eq!(b.value, Some(1.0));
+        // THE CENTER PRESS (the 0..1 the value IS — the mid-track the
+        // 0.5 keeps)
+        app.on_press(b.x + b.w / 2, b.y + b.h / 2);
+        assert_eq!(app.volume, 0.5, "the center the 0.5 keeps");
+        assert!(app.volume_drag, "the press inside the track arms");
+        // THE RIGHT EDGE (the 1.0 the clamp keeps)
+        app.on_press(b.x + b.w - 1, b.y + b.h / 2);
+        assert_eq!(app.volume, 1.0, "the right edge clamps");
+        app.on_volume_slider_drag(b.x + b.w + 60);
+        assert_eq!(app.volume, 1.0, "the beyond-right drag clamps");
+        // THE RELEASE'S OWN DISARM (the mouseReleased walk — the
+        // disarmed drag the silence keeps)
+        app.on_left_release();
+        assert!(!app.volume_drag, "the release disarms");
+        app.on_volume_slider_drag(b.x + 4);
+        assert_eq!(app.volume, 1.0, "the disarmed drag never moves");
+        // THE MID CAPTION (the percent the 0.5 speaks)
+        app.on_press(b.x + b.w / 2, b.y + b.h / 2);
+        app.on_left_release();
+        app.render_title_buttons_for_test();
+        let b = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "opt_music")
+            .expect("the slider row")
+            .clone();
+        assert_eq!(b.label, "Music & Sounds: 50%");
+        assert_eq!(b.value, Some(0.5));
+        // THE ZERO END (the options.off 'OFF' the 0.0 wears)
+        app.on_press(b.x + 4, b.y + b.h / 2);
+        assert_eq!(app.volume, 0.0, "the left edge clamps");
+        app.on_left_release();
+        app.render_title_buttons_for_test();
+        let b = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "opt_music")
+            .expect("the slider row")
+            .clone();
+        assert_eq!(b.label, "Music & Sounds: OFF");
+        // THE OUTPUT'S OWN RECORD (the deterministic stand-in the
+        // audible path's sink gain mirrors — the master the set lane
+        // stores)
+        use crate::audio::AudioOutput;
+        let mut out = crate::audio::SilentOutput::default();
+        out.set_volume(0.25);
+        assert_eq!(
+            out.volume(),
+            0.25,
+            "the master the output's own record wears"
+        );
+    }

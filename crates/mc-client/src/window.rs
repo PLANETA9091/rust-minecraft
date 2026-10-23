@@ -2096,6 +2096,12 @@ pub fn run_gui_app(
         if left_down && app.fov_drag {
             app.on_fov_slider_drag(gmx);
         }
+        // THE VOLUME SLIDER'S OWN DRAG (the same armed lane the
+        // sensitivity/fov seats wear — the held frames the 0..1 the
+        // cursor's x answers, the release the disarm speaks below)
+        if left_down && app.volume_drag {
+            app.on_volume_slider_drag(gmx);
+        }
         // the LEFT press's falling edge (the vanilla's own release lane):
         // the dig's hold flag drops and the destroy state ABORTs (the
         // continueAttack(false) tail — the crack overlay clears)
@@ -3091,6 +3097,10 @@ pub fn run_gui_app(
             app.on_command_tree(tree);
         }
         music.sync(&app.music);
+        // THE MASTER'S OWN LANE (the Options seat's "Music & Sounds" slider
+        // the output's gain wears — the store's own value the every-frame
+        // ride answers, the music + UI + block lanes the ONE master scales)
+        music.set_volume(app.volume as f32);
         // UI one-shots (ui.button.click) ride the independent UI channel
         music.sync_ui(&app.ui_sounds);
         // the block-sound lane's own one-shots (the dig beat's hit, the

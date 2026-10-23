@@ -5475,6 +5475,24 @@ fn calculate_fov_degrees(fov: f64, modifier: f32) -> f32 {
     fov as f32 * modifier
 }
 
+/// THE VOLUME SLIDER'S OWN CAPTION (the vanilla volume law — the
+/// percent the value*100 speaks, the 0.0 the options.off 'OFF' end
+/// wears, the default 1.0 the 'Music & Sounds: 100%' word keeps).
+fn volume_caption(v: f64) -> String {
+    if v <= 0.0 {
+        return format!(
+            "{}: {}",
+            tr("options.musicVolume").unwrap_or("Music & Sounds"),
+            tr("options.off").unwrap_or("OFF")
+        );
+    }
+    format!(
+        "{}: {}%",
+        tr("options.musicVolume").unwrap_or("Music & Sounds"),
+        (v * 100.0) as i32
+    )
+}
+
 /// THE LOCK ICON'S OWN STATE ARMS (javap 26.2 LockIconButton$Icon +
 /// `extractContents`' raw bytecode — the six `Icon` states the clinit
 /// banks, the selection the three arms speak): the DISABLED pair the
@@ -8039,6 +8057,15 @@ pub struct App {
     /// THE FOV SLIDER'S OWN ARM (the same AbstractWidget dragging
     /// shape the sensitivity seat wears — the FOV row's own flag).
     pub fov_drag: bool,
+    /// THE VOLUME'S OWN STORE (the "Music & Sounds" master the Options
+    /// row speaks — the 0..1 the slider's own unit wears, the default
+    /// 1.0 the 100% caption keeps, the output's gain the master
+    /// scales).
+    pub volume: f64,
+    /// THE VOLUME SLIDER'S OWN ARM (the same AbstractWidget dragging
+    /// shape the sensitivity/fov seats wear — the Music & Sounds row's
+    /// own flag).
+    pub volume_drag: bool,
     /// THE 45 VISIBLE PALETTE SLOTS (the CONTAINER SimpleContainer the
     /// scrollTo walk refills: cell r*9+c = items[(r+row)*9+c] or
     /// EMPTY — the display stacks the click walk never depletes).
@@ -10115,6 +10142,8 @@ impl App {
             sensitivity_drag: false,
             fov: 70.0,
             fov_drag: false,
+            volume: 1.0,
+            volume_drag: false,
             creative_palette: [(0, 0); 45],
             creative_tab: 0,
             creative_panel: (0, 0),
@@ -20461,6 +20490,9 @@ impl App {
         // THE FOV SLIDER'S OWN DISARM (the same mouseReleased lane the
         // sensitivity seat's flag wears)
         self.fov_drag = false;
+        // THE VOLUME SLIDER'S OWN DISARM (the same mouseReleased lane
+        // the sensitivity/fov seats' flags wear)
+        self.volume_drag = false;
         // THE SCROLLBAR'S OWN DISARM (the mouseReleased walk's own first
         // lane — the button-0 release the `scrolling` flag the
         // unconditional false speaks BEFORE the tab walk; the sim's
@@ -29992,6 +30024,16 @@ impl App {
                 if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
                     self.fov = fov_from_value(slider_value_from_x(mx, bx, bw));
                     self.fov_drag = true;
+                }
+            }
+            // THE VOLUME SLIDER'S OWN ARM (the same press walk the
+            // Music & Sounds row wears — the 0..1 the value IS, the
+            // flag the drag rides)
+            if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_music") {
+                let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
+                if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
+                    self.volume = slider_value_from_x(mx, bx, bw);
+                    self.volume_drag = true;
                 }
             }
             return;
@@ -40256,6 +40298,19 @@ impl App {
         if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_fov") {
             let (bx, bw) = (b.x, b.w);
             self.fov = fov_from_value(slider_value_from_x(mx, bx, bw));
+        }
+    }
+
+    /// THE VOLUME SLIDER'S OWN DRAG (the same armed lane the
+    /// sensitivity/fov seats wear — the held frames the 0..1 the
+    /// cursor's x answers, the release the disarm speaks).
+    pub fn on_volume_slider_drag(&mut self, mx: i32) {
+        if !self.volume_drag || self.screen != ScreenKind::Options {
+            return;
+        }
+        if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_music") {
+            let (bx, bw) = (b.x, b.w);
+            self.volume = slider_value_from_x(mx, bx, bw);
         }
     }
 
@@ -61321,13 +61376,20 @@ impl App {
         );
         sens.value = Some(self.look_sensitivity);
         self.buttons.push(sens);
-        // volume sliders rendered as labeled buttons with percentage fill
-        let music = format!(
-            "{}: {}%",
-            tr("options.musicVolume").unwrap_or("Music & Sounds"),
-            100
+        // THE VOLUME SLIDER'S OWN ROW (the "Music & Sounds" master the
+        // Options row speaks — the 0..1 the value IS, the caption the
+        // percent (the 0.0 the options.off 'OFF' end wears), the
+        // output's gain the store's own lane scales): the row the
+        // music seat's own place keeps.
+        let mut music = Button::new(
+            "opt_music",
+            volume_caption(self.volume),
+            cx,
+            h / 2 - 16,
+            bw,
         );
-        self.buttons.push(Button::new("opt_music", music, cx, h / 2 - 16, bw));
+        music.value = Some(self.volume);
+        self.buttons.push(music);
         // THE FOV SLIDER'S OWN ROW (the `options.fov` OptionInstance the
         // 26.2 clinit banks — the IntRange(30, 110) the slider's own
         // range wears, the default 70 the raw-int caption speaks, the

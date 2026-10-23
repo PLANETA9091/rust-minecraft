@@ -167,6 +167,10 @@ pub trait AudioOutput {
     fn play_ui(&mut self, track: Track);
     #[cfg_attr(not(test), expect(dead_code))]
     fn ui_playing(&self) -> bool;
+    /// THE MASTER'S OWN GAIN (the Options seat's "Music & Sounds" slider
+    /// the output's volume wears — the music + UI + block lanes the ONE
+    /// master scales, the 0..1 the store's own unit keeps).
+    fn set_volume(&mut self, volume: f32);
 }
 
 /// Deterministic silent backend: records state, emits nothing. Default for
@@ -176,6 +180,10 @@ pub trait AudioOutput {
 pub struct SilentOutput {
     active: bool,
     ui_active: bool,
+    /// THE MASTER'S OWN RECORD (the deterministic stand-in the audible
+    /// path's sink gain mirrors — the value the set_volume lane stores,
+    /// the getter the tests read).
+    volume: f32,
 }
 
 impl AudioOutput for SilentOutput {
@@ -193,6 +201,16 @@ impl AudioOutput for SilentOutput {
     }
     fn ui_playing(&self) -> bool {
         self.ui_active
+    }
+    fn set_volume(&mut self, volume: f32) {
+        self.volume = volume;
+    }
+}
+
+impl SilentOutput {
+    #[cfg_attr(not(test), expect(dead_code))]
+    pub fn volume(&self) -> f32 {
+        self.volume
     }
 }
 
@@ -242,6 +260,13 @@ impl AudioOutput for RodioOutput {
     }
     fn ui_playing(&self) -> bool {
         !self.ui_sink.empty()
+    }
+    fn set_volume(&mut self, volume: f32) {
+        // BOTH SINKS THE ONE MASTER SCALES (the music channel + the UI
+        // one-shot channel — the vanilla sound engine's own master the
+        // every-voice gain folds)
+        self.sink.set_volume(volume);
+        self.ui_sink.set_volume(volume);
     }
 }
 
@@ -563,6 +588,14 @@ impl MenuMusic {
             }
         }
         self.block_seen = events.len();
+    }
+
+    /// THE MASTER'S OWN LANE (the Options seat's "Music & Sounds" slider
+    /// the output's gain wears — the window loop's every-frame ride the
+    /// store's own value answers, the music + UI + block lanes the ONE
+    /// master scales).
+    pub fn set_volume(&mut self, volume: f32) {
+        self.output.set_volume(volume);
     }
 }
 
