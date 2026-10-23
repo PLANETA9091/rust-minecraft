@@ -8702,3 +8702,56 @@ fn the_saved_player_row_wears_the_vitals() {
         let _ = std::fs::remove_file(&path);
         let _ = std::fs::remove_dir(&dir);
     }
+
+    /// THE DOMOBSPAWNING RULE'S OWN ROUND TRIP (vanilla level.dat's
+    /// GameRules compound the String "true"/"false" values keep — the
+    /// save the spawner's own row banks, the reload the natural gate
+    /// re-arms, the flip the file's own latest truth re-wears, the
+    /// elder file's missing row the TRUE default the boot wears).
+    #[test]
+    fn the_do_mob_spawning_rule_round_trips_the_save() {
+        let dir = std::env::temp_dir().join(format!("mc2rs_mobspawn_{}", std::process::id()));
+        let _ = std::fs::create_dir_all(&dir);
+        let path = dir.join("world_edits.nbt");
+        // THE DISARMED SESSION'S SAVE (the row the rule's own truth banks)
+        let mut app = App::new(3);
+        app.offline_world_file = Some(path.clone());
+        app.enter_world();
+        app.do_mob_spawning = false;
+        app.offline_world_file_save();
+        // THE FILE'S OWN ROW (the String "false" the vanilla gamerule
+        // shape wears)
+        let bytes = std::fs::read(&path).expect("the flush the file writes");
+        let (_, root) = mc_protocol::nbt::read_file_nbt(&mut bytes.as_slice())
+            .expect("the file the parse answers");
+        if let mc_protocol::nbt::Nbt::Compound(rows) = &root {
+            let row = rows
+                .iter()
+                .find(|(k, _)| k == "doMobSpawning")
+                .expect("the rule's own row the save banks");
+            assert_eq!(
+                row.1,
+                mc_protocol::nbt::Nbt::String("false".to_string()),
+                "the String 'false' the vanilla gamerule shape wears"
+            );
+        }
+        // THE RELOAD (the disarmed gate the fresh session re-banks — the
+        // natural attempts the restart keeps refusing)
+        let mut app2 = App::new(3);
+        app2.offline_world_file = Some(path.clone());
+        app2.enter_world();
+        assert!(
+            !app2.do_mob_spawning,
+            "the disarmed rule the reload re-banks"
+        );
+        // THE SECOND SAVE (the armed row the flip banks — the file the
+        // session's own latest truth wears)
+        app2.do_mob_spawning = true;
+        app2.offline_world_file_save();
+        let mut app3 = App::new(3);
+        app3.offline_world_file = Some(path.clone());
+        app3.enter_world();
+        assert!(app3.do_mob_spawning, "the armed rule the reload re-banks");
+        let _ = std::fs::remove_file(&path);
+        let _ = std::fs::remove_dir(&dir);
+    }

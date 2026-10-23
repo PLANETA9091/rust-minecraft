@@ -20815,7 +20815,8 @@ impl App {
                                 // the elder file's missing rows the boot
                                 // defaults the creation already wore: the
                                 // keepInventory the false, the
-                                // doDaylightCycle the true)
+                                // doDaylightCycle the true, the
+                                // doMobSpawning the true)
                                 if let mc_protocol::nbt::Nbt::Compound(rows) = &root {
                                     if let Some((_, mc_protocol::nbt::Nbt::String(v))) =
                                         rows.iter().find(|(k, _)| k == "keepInventory")
@@ -20826,6 +20827,11 @@ impl App {
                                         rows.iter().find(|(k, _)| k == "doDaylightCycle")
                                     {
                                         self.do_daylight_cycle = v == "true";
+                                    }
+                                    if let Some((_, mc_protocol::nbt::Nbt::String(v))) =
+                                        rows.iter().find(|(k, _)| k == "doMobSpawning")
+                                    {
+                                        self.do_mob_spawning = v == "true";
                                     }
                                 }
                             }
@@ -32196,7 +32202,8 @@ impl App {
         // compound the String "true"/"false" values keep — the
         // keepInventory the death lanes' own gates read, the
         // doDaylightCycle the day clock's advance gate reads, the
-        // reload the rules re-bank)
+        // doMobSpawning the natural spawner's cycle reads, the reload
+        // the rules re-bank)
         root_rows.push((
             "keepInventory".to_string(),
             mc_protocol::nbt::Nbt::String(self.keep_inventory.to_string()),
@@ -32204,6 +32211,10 @@ impl App {
         root_rows.push((
             "doDaylightCycle".to_string(),
             mc_protocol::nbt::Nbt::String(self.do_daylight_cycle.to_string()),
+        ));
+        root_rows.push((
+            "doMobSpawning".to_string(),
+            mc_protocol::nbt::Nbt::String(self.do_mob_spawning.to_string()),
         ));
         let root = mc_protocol::nbt::Nbt::Compound(root_rows);
         let mut bytes = Vec::new();
