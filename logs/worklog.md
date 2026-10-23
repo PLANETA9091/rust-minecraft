@@ -800,3 +800,20 @@ Work Log:
 Stage Summary:
 - THE GAMERULE'S OWN THIRD ROW: the doMobSpawning the chat literal + the natural spawner's gate the ONE field serve — the disarmed session the beat's attempts never earns, the living world's spawning the restart (the rebank lane) the gamerule pair's own pattern the third row now wears. The offline vocabulary the THREE boolean rules the vanilla GameRules clinit speaks.
 - NEXT CANDIDATES: the doMobSpawning row the save file's own bank (the level.dat GameRules compound's third row — the keepInventory lane the shape wears), the doMobSpawning row the WorldOptions screen never carries (the second row's own pattern the third toggle answers), the test-file GuiAssets roots (part_3/5/6/7/8's bare 'assets-cache/jar' — the absence-pin flips the honest own-root staging re-pins), the minifb pointer-grab window-edge turn stop (the API's own limit the alternative the recon answers), the warden biolum TRUE-absence (the unreachable the record keeps).
+
+---
+Task ID: autopush-160
+Agent: autopush (Job 384923, 23:32:35 +08 tick)
+Task: git status (clone if absent; auto-sync commit + push if dirty) -> ONE minimal step -> cargo test --workspace green -> push -> worklog entry.
+
+Work Log:
+- Incoming state: clean tree @60b297b (the mirror over 7fd4a4e = v0.3.895 autopush-159 doMobSpawning gate), origin synced. The NEXT CANDIDATES' first row the round answers — the doMobSpawning the save file's own bank (the keepInventory + doDaylightCycle lanes' shape the third rule wears).
+- THE ROW THE SAVE BANKS: offline_world_file_save the root rows the gamerule trio rides — the `"doMobSpawning"` key the vanilla compound's own name keeps, the `Nbt::String` the pair's String "true"/"false" shape wears (the bool Display the serialization speaks), the row the pair's neighbor banks (the gamerule the WORLD's own truth carries).
+- THE RESTORE THE RELOAD WEARS: the enter_world file re-apply's seed-matched branch the third read wears — the String "true" the natural attempts re-arm, the String "false" the disarmed beat re-arms, the elder file's missing row the TRUE default the boot already wore (the honest parse the vanilla compound's own values keep, never a guessed rule). The NETWORKED lane the file path never reads.
+- THE TEST THE REBANK WEARS: part_8's the_do_mob_spawning_rule_round_trips_the_save (file END — the seam lesson pre-applied) — the disarmed session's save the String "false" row banks, the reload the disarmed rule re-banks, the flip's second save the armed row re-wears, the reload the true re-banks; the elder-file law the missing row the TRUE default answers (the neighbor round trips the same file lane unflipped).
+- VERIFY (final code state): FULL mc-client 2359 PASSED / 0 FAILED / 22 ignored (2358 baseline + the round trip — ZERO flips); mc-protocol 157 + mc-registry 100 + mc2rs-gen 80 = 337 PASSED; goldens 19/19 PASS rms 0.000 (NO regeneration — the save format the golden scenes never wear); fmt 1702 = the HEAD baseline (ZERO hunks — the part_8 file-end insertion the 17-hunk shape keeps, the seam lesson pre-applied).
+- Version 0.3.895 -> 0.3.896. Pushed 48eb4c8 (60b297b..48eb4c8); the repo's logs/worklog.md this entry mirrors.
+
+Stage Summary:
+- THE GAMERULE'S OWN THIRD BANK: the doMobSpawning the chat literal + the spawner's gate + the save file's own row the ONE truth serve — the disarmed session's refusals the reload still wears, the spawning arc's whole walk (literal, gate, bank) the restart keeps. The gamerule trio (keepInventory + doDaylightCycle + doMobSpawning) the level.dat compound's own rows the vanilla shape wears.
+- NEXT CANDIDATES: the doMobSpawning row the WorldOptions screen never carries (the doDaylightCycle row's own pattern the third toggle answers), the test-file GuiAssets roots (part_3/5/6/7/8's bare 'assets-cache/jar' — the absence-pin flips the honest own-root staging re-pins), the minifb pointer-grab window-edge turn stop (the API's own limit the alternative the recon answers), the warden biolum TRUE-absence (the unreachable the record keeps).
