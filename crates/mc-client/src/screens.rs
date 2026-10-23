@@ -20603,6 +20603,14 @@ impl App {
         self.qc_armed = false;
         self.qc_slots.clear();
         self.qc_remainder = 0;
+        // THE SLIDERS' OWN DRAG DEATH (the same removed() walk — the
+        // AbstractSliderButton's dragging flag the widget instance
+        // carried dies with the screen, the fresh ctor's false the
+        // rebuild arms; the mid-drag Escape the stale arm the re-open
+        // never inherits)
+        self.sensitivity_drag = false;
+        self.fov_drag = false;
+        self.volume_drag = false;
     }
 
     /// THE AMBIENT WALK (javap `ClientLevel.animateTick` +
@@ -27222,6 +27230,17 @@ impl App {
             // CraftingMenu.removed speaks — the grid contents + the
             // carried stack ride home, the screen back to the world
             self.close_crafting_table();
+        } else if self.screen == ScreenKind::Options {
+            // THE OPTIONS SCREEN'S OWN ESCAPE LANE (the vanilla Escape
+            // the Screen.shouldCloseOnEsc default the keyPressed walk
+            // answers — the SAME onClose moment the Done chord wears:
+            // the options.save() the file's rows keep, the lastScreen
+            // the setScreen ride returns; the paused world the
+            // options_return's own shape keeps — the open() the drag
+            // state's death the rebuild never inherits)
+            self.options_file_save();
+            let ret = self.options_return;
+            self.open(ret);
         } else if matches!(self.screen, ScreenKind::Connect | ScreenKind::Disconnect) {
             self.open(ScreenKind::Servers);
         }

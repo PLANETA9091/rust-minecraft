@@ -9036,3 +9036,90 @@ fn the_options_file_the_stores_restart_outlives() {
     assert_eq!(app2.volume, 0.0, "the mute the reload wears");
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+// THE OPTIONS ESCAPE'S OWN CHORD (the vanilla Escape lane — the
+// Screen.shouldCloseOnEsc default the keyPressed walk answers, the
+// SAME onClose moment the Done chord wears: the options.save() the
+// file's rows keep, the lastScreen the return speaks)
+#[test]
+fn the_options_escape_the_save_and_return_wears() {
+    let dir = std::env::temp_dir().join(format!("mc2rs_options_escape_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&dir);
+    let path = dir.join("options.txt");
+    let mut app = App::new(262);
+    app.options_file = Some(path.clone());
+    // THE TITLE LANE (the title screen's own Options — the lastScreen
+    // the Title the return speaks)
+    app.options_return = ScreenKind::Title;
+    app.open(ScreenKind::Options);
+    app.look_sensitivity = 0.75;
+    app.fov = 90.0;
+    app.volume = 0.25;
+    app.on_escape();
+    assert_eq!(app.screen, ScreenKind::Title, "the escape the return wears");
+    let text = std::fs::read_to_string(&path).expect("the escape the file writes");
+    assert_eq!(
+        text, "version:4903\nmouseSensitivity:0.75\nfov:90\nsoundCategory_master:0.25\n",
+        "the SAME save chord the Done wears the escape speaks"
+    );
+    // THE PAUSED LANE (the pause screen's own Options — the
+    // options_return the World the pause overlay's shape keeps, the
+    // world the escape returns the pause still wears)
+    app.paused = true;
+    app.options_return = ScreenKind::World;
+    app.open(ScreenKind::Options);
+    app.look_sensitivity = 0.9;
+    app.on_escape();
+    assert_eq!(
+        app.screen,
+        ScreenKind::World,
+        "the paused the world return wears"
+    );
+    assert!(app.paused, "the pause the world still wears");
+    let text = std::fs::read_to_string(&path).expect("the second chord the file writes");
+    assert!(
+        text.contains("mouseSensitivity:0.9"),
+        "the second drag the file's rows keep"
+    );
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+// THE SCREEN TAKEOVER'S OWN DRAG DEATH (the removed() walk the open()
+// banks — the mid-drag Escape the armed flag dies with the screen, the
+// re-open the pressless drag the stale arm never wears)
+#[test]
+fn the_screen_takeover_the_slider_drag_kills() {
+    let mut app = App::new(262);
+    app.open(ScreenKind::Options);
+    app.render_title_buttons_for_test();
+    let b = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_sensitivity")
+        .expect("the slider row")
+        .clone();
+    app.on_press(b.x + b.w / 2, b.y + b.h / 2);
+    assert!(app.sensitivity_drag, "the press the drag arms");
+    assert_eq!(
+        app.look_sensitivity, 0.5,
+        "the center press the value wears"
+    );
+    // THE MID-DRAG ESCAPE (the takeover the death walk answers — the
+    // armed flag the screen instance carried dies with the open())
+    app.on_escape();
+    assert_eq!(app.screen, ScreenKind::Title, "the escape the return wears");
+    assert!(!app.sensitivity_drag, "the takeover the drag kills");
+    assert!(
+        !app.fov_drag && !app.volume_drag,
+        "the siblings the same death wear"
+    );
+    // THE RE-OPEN (the fresh screen the pressless drag refuses — the
+    // stale arm the rebuild never inherits)
+    app.open(ScreenKind::Options);
+    app.render_title_buttons_for_test();
+    app.on_sensitivity_slider_drag(12345);
+    assert_eq!(
+        app.look_sensitivity, 0.5,
+        "the pressless drag the value never moves"
+    );
+}
