@@ -8255,3 +8255,49 @@ use super::*;
             "the boom voice the rule never gates"
         );
     }
+
+    /// THE TURN KEY'S OWN LANE (the pointer-grab alternative the
+    /// window-edge recon lands — minifb 0.27 has no cursor grab/warp
+    /// the API surface speaks, the Pass stream the desktop cursor
+    /// tracks until the SCREEN edge's pin the mouse lane's own turn
+    /// stop wears): the held arrow the frame's dt the rate scales —
+    /// the World screen's own gate the mouse lane's shape keeps (the
+    /// pause and the open screen the lane never reads), the degrees
+    /// the body's turn_keys the same clamp law wears.
+    #[test]
+    fn the_turn_keys_steer_where_the_cursor_pinned() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        // THE RATE: half a second at the 180 deg/s the 90 degrees
+        // speaks — the quarter revolution the held Right wears
+        let yaw_before = app.body.as_ref().unwrap().yaw;
+        app.on_turn_key(1.0, 0.0, 0.5);
+        let turned = app.body.as_ref().unwrap().yaw - yaw_before;
+        assert!(
+            (turned - 90.0).abs() < 1e-4,
+            "0.5s at the 180 deg/s = 90 degrees, got {}",
+            turned
+        );
+        // THE PITCH CLAMP: the held Down the ±90 the turn's own law
+        // wears (the same PITCH_LIMIT the mouse curve keeps)
+        app.on_turn_key(0.0, 1.0, 100.0);
+        assert_eq!(
+            app.body.as_ref().unwrap().pitch,
+            crate::body::PITCH_LIMIT,
+            "the held Down the clamp keeps"
+        );
+        // THE PAUSE FREEZE: the keys the frozen lane never reads
+        app.paused = true;
+        let yaw = app.body.as_ref().unwrap().yaw;
+        app.on_turn_key(1.0, 0.0, 1.0);
+        assert_eq!(app.body.as_ref().unwrap().yaw, yaw, "the pause the turn freezes");
+        // THE SCREEN GATE: the open screen the in-world lane never is
+        // (the menus the cursor shows, the turn the mouse lane's own
+        // gate keeps silent)
+        app.paused = false;
+        app.screen = crate::screens::ScreenKind::Title;
+        let yaw = app.body.as_ref().unwrap().yaw;
+        app.on_turn_key(1.0, 0.0, 1.0);
+        assert_eq!(app.body.as_ref().unwrap().yaw, yaw, "the screen the turn gates");
+    }

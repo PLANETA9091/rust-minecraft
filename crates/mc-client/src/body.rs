@@ -499,6 +499,16 @@ fn look_gain(sensitivity: f64) -> f64 {
 /// The vanilla default sensitivity (the Options slider's own default).
 pub const LOOK_SENSITIVITY_DEFAULT: f64 = 0.5;
 
+/// THE TURN KEY'S OWN RATE (the keyboard look lane the pointer-grab
+/// alternative answers — minifb 0.27 has no cursor grab/warp the API
+/// surface speaks, the X11 backend the polled XQueryPointer alone
+/// wears, no MotionNotify, no XGrabPointer/XWarpPointer — the Pass
+/// stream the desktop cursor tracks until the SCREEN edge's pin the
+/// mouse lane's own turn stop wears). The held arrow turns half a
+/// revolution per second — the no-grab seat's own sweep the rate
+/// speaks, the dt the caller's frame time scales.
+pub const TURN_KEY_RATE_DEG_PER_SEC: f32 = 180.0;
+
 /// One collision sweep result — the allowed movement per axis plus the
 /// flags the wire and the ground state speak. The collided flags ride
 /// the restitution law: the collided components of the carried
@@ -1841,6 +1851,20 @@ impl PlayerBody {
         let k = look_gain(sensitivity);
         self.pitch = (self.pitch + (dy_px * k) as f32).clamp(-PITCH_LIMIT, PITCH_LIMIT);
         self.yaw += (dx_px * k) as f32;
+    }
+
+    /// THE KEYBOARD LOOK'S OWN TURN (the no-grab seat's alternative
+    /// the window-edge turn stop answers — the mouse stream's Pass
+    /// coordinates the desktop cursor tracks until the SCREEN edge's
+    /// pin, the pointer the API can neither grab nor warp): the held
+    /// arrow's degrees the rate*dt the caller scales, the SAME pitch
+    /// clamp the mouse turn's law wears (the ±90 the PITCH_LIMIT
+    /// keeps), the yaw the unclamped wrap the mouse lane keeps. The
+    /// sign the mouse's own deltas speak — right/down the positive
+    /// the on-screen drag wears.
+    pub fn turn_keys(&mut self, yaw_deg: f32, pitch_deg: f32) {
+        self.pitch = (self.pitch + pitch_deg).clamp(-PITCH_LIMIT, PITCH_LIMIT);
+        self.yaw += yaw_deg;
     }
 
     /// `jumpFromGround`'s own fold (javap ServerPlayer.jumpFromGround /
@@ -4185,6 +4209,38 @@ mod tests {
         let mut b = PlayerBody::new(0.0, 1.0, 0.0, 0.0, 0.0);
         b.turn(1.0, 0.0, 0.0);
         assert!((b.yaw - 0.0096).abs() < 1e-6, "yaw {}", b.yaw);
+    }
+
+    #[test]
+    fn turn_keys_wear_the_mouses_own_clamp_and_sign() {
+        // THE KEYBOARD LOOK'S OWN LAW (the no-grab seat's alternative
+        // the window-edge turn stop answers): the degrees the caller's
+        // rate*dt speaks, the turn()'s own pitch clamp the same
+        // PITCH_LIMIT keeps, the yaw the unclamped wrap the mouse
+        // lane's own shape wears
+        let mut b = PlayerBody::new(0.0, 1.0, 0.0, 0.0, 0.0);
+        b.turn_keys(90.0, -45.0);
+        assert!((b.yaw - 90.0).abs() < 1e-6, "yaw {}", b.yaw);
+        assert!((b.pitch + 45.0).abs() < 1e-6, "pitch {}", b.pitch);
+        // the sign the mouse's own drag mirrors: the negative pair the
+        // left/up keys wear, the positive the right/down
+        let mut b = PlayerBody::new(0.0, 1.0, 0.0, 0.0, 0.0);
+        b.turn_keys(-30.0, 30.0);
+        assert!((b.yaw + 30.0).abs() < 1e-6, "yaw {}", b.yaw);
+        assert!((b.pitch - 30.0).abs() < 1e-6, "pitch {}", b.pitch);
+        // the SAME pitch clamp the mouse turn's law wears (the ±90)
+        let mut b = PlayerBody::new(0.0, 1.0, 0.0, 0.0, 0.0);
+        b.turn_keys(0.0, 1000.0);
+        assert_eq!(b.pitch, PITCH_LIMIT);
+        b.turn_keys(0.0, -1000.0);
+        assert_eq!(b.pitch, -PITCH_LIMIT);
+        // the yaw unbounded (the wrap the display side keeps)
+        let mut b = PlayerBody::new(0.0, 1.0, 0.0, 0.0, 0.0);
+        b.turn_keys(100000.0, 0.0);
+        assert!(b.yaw > 1000.0);
+        // the rate constant the lane's own sweep speaks (half a
+        // revolution per second — the no-grab seat's own feel)
+        assert_eq!(TURN_KEY_RATE_DEG_PER_SEC, 180.0);
     }
 
     #[test]

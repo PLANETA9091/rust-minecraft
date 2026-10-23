@@ -40043,6 +40043,22 @@ impl App {
         }
     }
 
+    /// THE TURN KEY'S OWN LANE (the pointer-grab alternative the
+    /// window-edge recon lands): the held arrow the frame's seconds
+    /// the TURN_KEY_RATE scales, the World/paused gate the mouse
+    /// lane's own shape keeps (the same body the feed answers), the
+    /// degrees the body's turn_keys the same clamp law speaks. The
+    /// x/y the key semantics wear — Right/Down the positive the
+    /// mouse's own on-screen drag mirrors.
+    pub fn on_turn_key(&mut self, x: f32, y: f32, dt_secs: f32) {
+        if self.screen == ScreenKind::World && !self.paused {
+            if let Some(b) = self.body.as_mut() {
+                let deg = crate::body::TURN_KEY_RATE_DEG_PER_SEC * dt_secs;
+                b.turn_keys(x * deg, y * deg);
+            }
+        }
+    }
+
     /// THE SPRINT LAW'S OWN TICK (26.2 LocalPlayer.aiStep's audited
     /// walk — scripts/jar_work/aistep_262.txt, the disasm the offsets
     /// in the doc wear). FOUR beats, the bytecode's own order:

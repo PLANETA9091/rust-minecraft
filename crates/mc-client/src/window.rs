@@ -1692,6 +1692,10 @@ pub fn run_gui_app(
     // frame's close keeps, the nanosecond duration the LocalSampleLogger
     // ring appends, the FPS chart's own column data)
     let mut prev_frame_instant: Option<std::time::Instant> = None;
+    // THE FRAME'S OWN SECONDS (the same delta the log_frame_duration
+    // ride computes — the keyboard look lane's dt the rate scales; the
+    // first frame the zero wears, the None re-arm the log keeps)
+    let mut frame_dt_secs = 0.0f32;
     // THE F3 MODIFIER'S OWN DOWN STATE (the KeyboardHandler.keyPress's
     // release lane — the bare release the overlay toggle answers, the
     // chord-spent release the usedDebugKeyAsModifier flag swallows;
@@ -1811,6 +1815,7 @@ pub fn run_gui_app(
         // frame the None re-arm skips)
         let t_frame = std::time::Instant::now();
         if let Some(prev) = prev_frame_instant {
+            frame_dt_secs = (t_frame - prev).as_secs_f32();
             app.log_frame_duration((t_frame - prev).as_nanos() as i64);
         }
         prev_frame_instant = Some(t_frame);
@@ -2211,6 +2216,27 @@ pub fn run_gui_app(
                 prev_mouse = Some((x, y));
             } else {
                 prev_mouse = None;
+            }
+            // THE KEYBOARD LOOK'S OWN LANE (the pointer-grab alternative
+            // the recon lands — minifb 0.27 has no cursor grab/warp the
+            // API surface speaks: set_cursor_visibility/set_cursor_style
+            // the only cursor calls, the X11 backend the polled
+            // XQueryPointer alone wears, no MotionNotify, no
+            // XGrabPointer/XWarpPointer — the Pass stream the desktop
+            // cursor tracks until the SCREEN edge's pin the mouse
+            // lane's own turn stop wears). The arrows the held turn
+            // speak — the frame's dt the rate scales, the same
+            // World/paused gate the mouse lane's own seat keeps. The
+            // sign the mouse's own deltas mirror: Right/Down the
+            // positive the on-screen drag wears.
+            let turn_x = (window.is_key_down(Key::Right) as i32
+                - window.is_key_down(Key::Left) as i32)
+                as f32;
+            let turn_y = (window.is_key_down(Key::Down) as i32
+                - window.is_key_down(Key::Up) as i32)
+                as f32;
+            if turn_x != 0.0 || turn_y != 0.0 {
+                app.on_turn_key(turn_x, turn_y, frame_dt_secs);
             }
             let fwd = (window.is_key_down(Key::W) as i32 - window.is_key_down(Key::S) as i32) as f32;
             let strafe =
