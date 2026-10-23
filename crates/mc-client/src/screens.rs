@@ -20572,6 +20572,16 @@ impl App {
     }
 
     pub fn open(&mut self, kind: ScreenKind) {
+        // THE OPTIONS SCREEN'S OWN REMOVED MOMENT (the vanilla
+        // OptionsScreen.removed() pc 4 the Options.save call — the old
+        // screen's own discard the setScreen walk answers FIRST: the
+        // Done AND the Escape AND the takeover's own screen-replacement
+        // lane the SAME moment keeps — the autopush-170 recon the
+        // seat's own truth banks, the explicit arms' chords the walk
+        // retires, the file the EVERY exit wears)
+        if self.screen == ScreenKind::Options {
+            self.options_file_save();
+        }
         // THE SETSCREEN'S OWN REMOVED WALK (the vanilla Minecraft.setScreen
         // lane — the NEW screen's install the OLD screen's removed()
         // answers first, the ChatScreen's exit verdict the ctor's
@@ -27244,11 +27254,12 @@ impl App {
             // THE OPTIONS SCREEN'S OWN ESCAPE LANE (the vanilla Escape
             // the Screen.shouldCloseOnEsc default the keyPressed walk
             // answers — the SAME onClose moment the Done chord wears:
-            // the options.save() the file's rows keep, the lastScreen
-            // the setScreen ride returns; the paused world the
-            // options_return's own shape keeps — the open() the drag
-            // state's death the rebuild never inherits)
-            self.options_file_save();
+            // the lastScreen the setScreen ride returns; the paused
+            // world the options_return's own shape keeps — the open()
+            // the drag state's death the rebuild never inherits. THE
+            // SAVE THE WALK ITSELF SPEAKS — the open()'s removed()
+            // moment the file's rows keep, the explicit chord the seat
+            // the walk retires)
             let ret = self.options_return;
             self.open(ret);
         } else if matches!(self.screen, ScreenKind::Connect | ScreenKind::Disconnect) {
@@ -34488,14 +34499,12 @@ impl App {
                     self.stopping = true;
                 }
                 "back" => {
-                    // THE OPTIONS SCREEN'S OWN SAVE CHORD (the vanilla
-                    // OptionsScreen.onClose moment — the Done the
-                    // `options.save()` walk answers, the Servers screen's
-                    // Cancel the same id the save never wears): the
-                    // sliders' drags the file's rows become
-                    if self.screen == ScreenKind::Options {
-                        self.options_file_save();
-                    }
+                    // THE OPTIONS SCREEN'S OWN RETURN (the vanilla
+                    // OptionsScreen's Done the setScreen ride answers —
+                    // the Servers screen's Cancel the same id the save
+                    // never wears: the SAVE THE OPEN() ITSELF SPEAKS,
+                    // the removed() moment the file's rows keep, the
+                    // explicit chord the seat the walk retires)
                     let ret = self.options_return;
                     self.open(ret);
                 }

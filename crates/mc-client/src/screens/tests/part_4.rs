@@ -9135,7 +9135,9 @@ fn the_screen_takeover_the_slider_drag_kills() {
 // onFullscreenError, the tick's joinedFirstServer, the toggleFullscreen
 // speak; the shutdown walk the second write refuses — the options.txt
 // the OptionsScreen.removed() moment ALONE keeps, the quit lane the
-// file never touches, the session's unsaved rows the exit never banks)
+// file never touches. THE autopush-171 WALK THE MOMENT ITSELF WEARS —
+// the open()'s own head the save speaks, the takeover's exit the rows
+// bank, the quit the SECOND write still refuses)
 #[test]
 fn the_quit_lane_the_stop_flag_and_the_files_absence_wears() {
     let dir = std::env::temp_dir().join(format!("mc2rs_quit_stop_{}", std::process::id()));
@@ -9158,13 +9160,19 @@ fn the_quit_lane_the_stop_flag_and_the_files_absence_wears() {
         !path.exists(),
         "the quit the file NEVER writes — the OptionsScreen's own removed() moment the rows keep"
     );
-    // THE UNSAVED ROWS THE QUIT NEVER BANKS (the Options screen's own
-    // value the session changed, the lane the write never wears — the
-    // same absence the second stop speaks)
+    // THE REMOVED MOMENT'S OWN BANK (the autopush-171 walk — the
+    // Options screen's exit the open() itself answers: the takeover's
+    // screen-replacement lane the file's rows keep, the quit lane the
+    // SECOND write the law still refuses)
     app.stopping = false;
     app.open(ScreenKind::Options);
     app.look_sensitivity = 0.8;
     app.open(ScreenKind::Title);
+    assert_eq!(
+        std::fs::read_to_string(&path).expect("the removed() moment the file writes"),
+        "version:4903\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\n",
+        "the takeover's own exit the rows bank"
+    );
     app.render_title_buttons_for_test();
     let quit2 = app
         .buttons
@@ -9174,9 +9182,10 @@ fn the_quit_lane_the_stop_flag_and_the_files_absence_wears() {
         .clone();
     app.on_click(quit2.x + quit2.w / 2, quit2.y + quit2.h / 2);
     assert!(app.stopping, "the second stop the same chord wears");
-    assert!(
-        !path.exists(),
-        "the unsaved row the quit never banks — the file the lane never touches"
+    assert_eq!(
+        std::fs::read_to_string(&path).expect("the file the exit keeps"),
+        "version:4903\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\n",
+        "the quit the file NEVER re-writes — the removed() moment ALONE the rows keep"
     );
     let _ = std::fs::remove_dir_all(&dir);
 }
@@ -9202,4 +9211,51 @@ fn the_none_boot_the_quit_still_stops() {
     app.on_click(quit.x + quit.w / 2, quit.y + quit.h / 2);
     assert!(app.stopping, "the None boot the stop still wears");
     assert_eq!(app.screen, ScreenKind::Title, "the exit the screen keeps");
+}
+
+// THE REMOVED MOMENT'S OWN WALK (the autopush-171 law — the vanilla
+// OptionsScreen.removed() pc 4 the Options.save call the open()'s own
+// head now wears: the Done AND the Escape AND the takeover's own
+// screen-replacement lane the SAME moment keep — the save's seat the
+// open() walk itself is, the explicit arms' chords the walk retires)
+#[test]
+fn the_options_exit_the_removed_moment_itself_saves() {
+    let dir = std::env::temp_dir().join(format!("mc2rs_removed_save_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&dir);
+    let path = dir.join("options.txt");
+    let mut app = App::new(262);
+    app.options_file = Some(path.clone());
+    // THE TAKEOVER (the screen-replacement lane the Done/Escape arms
+    // never speak — the open() walk the old Options screen's
+    // discarded() moment answers: the rows the replacement banks)
+    app.open(ScreenKind::Title);
+    app.open(ScreenKind::Options);
+    app.look_sensitivity = 0.65;
+    app.fov = 85.0;
+    app.open(ScreenKind::Servers);
+    assert_eq!(
+        std::fs::read_to_string(&path).expect("the takeover the file writes"),
+        "version:4903\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:1.0\n",
+        "the replacement lane the removed() moment speaks"
+    );
+    // THE SAME-KIND RE-ENTRY (the open(Options) from Options the
+    // vanilla removed() walk the old instance's discard answers — the
+    // re-init the save still wears, the vanilla setScreen's own law)
+    app.open(ScreenKind::Options);
+    app.volume = 0.5;
+    app.open(ScreenKind::Options);
+    assert_eq!(
+        std::fs::read_to_string(&path).expect("the re-entry the file writes"),
+        "version:4903\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:0.5\n",
+        "the same-kind walk the old screen's discard keeps"
+    );
+    // THE NONE BOOT'S SILENT KEEP (the options_file None the save walk
+    // the silent keep answers — the takeover no-panic the absence
+    // speaks, the in-memory stores the truth stays)
+    let mut app2 = App::new(262);
+    app2.open(ScreenKind::Options);
+    app2.look_sensitivity = 0.9;
+    app2.open(ScreenKind::Title);
+    assert_eq!(app2.look_sensitivity, 0.9, "the None boot the memory keeps");
+    let _ = std::fs::remove_dir_all(&dir);
 }
