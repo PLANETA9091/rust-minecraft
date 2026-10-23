@@ -8802,3 +8802,99 @@ use super::*;
             "the keyboard lane's own rate the slider never scales"
         );
     }
+
+    /// THE FOV SLIDER'S OWN LAW (the `options.fov` OptionInstance the
+    /// 26.2 clinit banks — the IntRange(30, 110) the default 70 wears,
+    /// the caption the ends law speaks (the 30 the options.fov.min
+    /// 'Normal' row, the 110 the options.fov.max 'Quake Pro' row, the
+    /// between the raw int), the press the IntRange's own step lands,
+    /// the armed drag the track's outside rides, the release the
+    /// disarm speaks).
+    #[test]
+    fn the_fov_slider_wears_the_range_and_caption_law() {
+        let mut app = App::new(3);
+        assert_eq!(app.fov, 70.0, "the default the IntRange's own 70 wears");
+        app.open(ScreenKind::Options);
+        app.render_title_buttons_for_test();
+        let b = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "opt_fov")
+            .expect("the slider row")
+            .clone();
+        assert_eq!(b.label, "FOV: 70", "the default the raw-int caption speaks");
+        assert_eq!(b.value, Some(0.5), "the 70 the range's own mid wears");
+        // THE CENTER PRESS (the same track math — the 1-degree step the
+        // round keeps)
+        app.on_press(b.x + b.w / 2, b.y + b.h / 2);
+        assert_eq!(app.fov, 70.0, "the center the 70 keeps");
+        assert!(app.fov_drag, "the press inside the track arms");
+        // THE RIGHT EDGE (the 110 the clamp keeps — the Quake Pro end)
+        app.on_press(b.x + b.w - 1, b.y + b.h / 2);
+        assert_eq!(app.fov, 110.0, "the right edge the 110 keeps");
+        app.on_sensitivity_slider_drag(0);
+        app.on_fov_slider_drag(b.x + b.w + 60);
+        assert_eq!(app.fov, 110.0, "the beyond-right drag clamps");
+        app.on_left_release();
+        assert!(!app.fov_drag, "the release disarms");
+        app.on_fov_slider_drag(b.x + 4);
+        assert_eq!(app.fov, 110.0, "the disarmed drag never moves");
+        app.render_title_buttons_for_test();
+        let b = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "opt_fov")
+            .expect("the slider row")
+            .clone();
+        assert_eq!(b.label, "FOV: Quake Pro");
+        assert_eq!(b.value, Some(1.0));
+        // THE LEFT EDGE (the 30 the clamp keeps — the Normal end)
+        app.on_press(b.x + 4, b.y + b.h / 2);
+        assert_eq!(app.fov, 30.0, "the left edge the 30 keeps");
+        app.on_left_release();
+        app.render_title_buttons_for_test();
+        let b = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "opt_fov")
+            .expect("the slider row")
+            .clone();
+        assert_eq!(b.label, "FOV: Normal");
+        assert_eq!(b.value, Some(0.0));
+    }
+
+    /// THE CAMERA FOLD'S OWN LAW (the CAMERA.calculateFov walk — the
+    /// store's degrees the body's modifier scales, the default 70 the
+    /// bit-exact product keeps, the sprint's 1.15 the wider arc the
+    /// frame speaks, the sneak's 0.85 the narrower walk keeps; the
+    /// IntRange round-trip the slider's own math banks).
+    #[test]
+    fn the_camera_fold_wears_the_stored_fov() {
+        // THE DEFAULT'S BIT-EXACT PRODUCT (the ×1.0 the legacy literal
+        // the store wears — the golden seat the same degrees keeps)
+        assert_eq!(calculate_fov_degrees(70.0, 1.0), 70.0);
+        assert_eq!(calculate_fov_degrees(110.0, 1.0), 110.0);
+        assert_eq!(calculate_fov_degrees(30.0, 1.0), 30.0);
+        // THE MODIFIER'S OWN RIDE (the sprint/sneak lerp the fold
+        // scales — the f32 product the approx law asserts)
+        let sprint = calculate_fov_degrees(70.0, 1.15);
+        assert!(
+            (sprint - 80.5).abs() < 1e-2,
+            "the sprint's 1.15 the wider arc speaks"
+        );
+        let sneak = calculate_fov_degrees(70.0, 0.85);
+        assert!(
+            (sneak - 59.5).abs() < 1e-2,
+            "the sneak's 0.85 the narrower walk keeps"
+        );
+        // THE INT RANGE'S OWN ROUND-TRIP (the slider's own math — the
+        // 30 the value's 0.0 wears, the 110 the 1.0 wears, the step
+        // the round keeps)
+        assert_eq!(fov_value(30.0), 0.0);
+        assert_eq!(fov_value(110.0), 1.0);
+        assert_eq!(fov_value(70.0), 0.5);
+        assert_eq!(fov_from_value(0.0), 30.0);
+        assert_eq!(fov_from_value(1.0), 110.0);
+        assert_eq!(fov_from_value(0.5), 70.0);
+        assert_eq!(fov_from_value(0.51), 71.0, "the 1-degree step rounds");
+    }

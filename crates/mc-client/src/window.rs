@@ -2089,6 +2089,13 @@ pub fn run_gui_app(
         if left_down && app.sensitivity_drag {
             app.on_sensitivity_slider_drag(gmx);
         }
+        // THE FOV SLIDER'S OWN DRAG (the same armed lane the
+        // sensitivity seat wears — the held frames the IntRange's own
+        // step the cursor's x answers, the release the disarm speaks
+        // below)
+        if left_down && app.fov_drag {
+            app.on_fov_slider_drag(gmx);
+        }
         // the LEFT press's falling edge (the vanilla's own release lane):
         // the dig's hold flag drops and the destroy state ABORTs (the
         // continueAttack(false) tail — the crack overlay clears)

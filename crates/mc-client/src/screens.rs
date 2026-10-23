@@ -5428,9 +5428,51 @@ fn sensitivity_caption(v: f64) -> String {
 /// THE SLIDER'S OWN MATH (the AbstractSliderButton
 /// setValueFromMouseX walk — the `(mouseX - (x + 4)) / (width - 8)`
 /// the 4px inset the thumb travel wears, the clamp the 0..1 unit
-/// keeps).
-fn sensitivity_value_from_x(mx: i32, bx: i32, bw: i32) -> f64 {
+/// keeps — BOTH sliders the same math wears).
+fn slider_value_from_x(mx: i32, bx: i32, bw: i32) -> f64 {
     ((mx - (bx + 4)) as f64 / (bw - 8) as f64).clamp(0.0, 1.0)
+}
+
+/// THE FOV'S OWN NORMALIZATION (the IntRange(30, 110) the slider's
+/// own range wears — the value the render's handle seat reads).
+fn fov_value(fov: f64) -> f64 {
+    (fov - 30.0) / 80.0
+}
+
+/// THE FOV'S OWN STEP (the IntRange's own from-slider walk — the
+/// 30 + value*80 the range answers, the round the 1-degree step
+/// keeps).
+fn fov_from_value(v: f64) -> f64 {
+    (30.0 + v * 80.0).round()
+}
+
+/// THE FOV SLIDER'S OWN CAPTION (the 26.2 en_us table the ends law
+/// speaks — the 30 the options.fov.min 'Normal' row wears, the 110
+/// the options.fov.max 'Quake Pro' row wears, the between the raw
+/// int the literal keeps — the default 70 the 'FOV: 70' word
+/// speaks).
+fn fov_caption(fov: f64) -> String {
+    let i = fov as i32;
+    let word = if i == 30 {
+        tr("options.fov.min").unwrap_or("Normal")
+    } else if i == 110 {
+        tr("options.fov.max").unwrap_or("Quake Pro")
+    } else {
+        return format!("{}: {}", tr("options.fov").unwrap_or("FOV"), i);
+    };
+    format!(
+        "{}: {}",
+        tr("options.fov").unwrap_or("FOV"),
+        word
+    )
+}
+
+/// THE CAMERA'S OWN FOV FOLD (the CAMERA.calculateFov walk — the
+/// option's degrees the body's modifier scales, the sprint's 1.15
+/// the wider arc the frame speaks, the default 70.0 the bit-exact
+/// product keeps).
+fn calculate_fov_degrees(fov: f64, modifier: f32) -> f32 {
+    fov as f32 * modifier
 }
 
 /// THE LOCK ICON'S OWN STATE ARMS (javap 26.2 LockIconButton$Icon +
@@ -7989,6 +8031,14 @@ pub struct App {
     /// frames the value's own seat follows, the release the disarm
     /// speaks).
     pub sensitivity_drag: bool,
+    /// THE FOV'S OWN STORE (the `options.fov` OptionInstance the 26.2
+    /// clinit banks — the IntRange(30, 110) the default 70 wears, the
+    /// CAMERA.calculateFov fold the degrees the body's modifier
+    /// scales, the slider's click/drag the store writes).
+    pub fov: f64,
+    /// THE FOV SLIDER'S OWN ARM (the same AbstractWidget dragging
+    /// shape the sensitivity seat wears — the FOV row's own flag).
+    pub fov_drag: bool,
     /// THE 45 VISIBLE PALETTE SLOTS (the CONTAINER SimpleContainer the
     /// scrollTo walk refills: cell r*9+c = items[(r+row)*9+c] or
     /// EMPTY — the display stacks the click walk never depletes).
@@ -10063,6 +10113,8 @@ impl App {
             creative_scroll_drag: false,
             look_sensitivity: crate::body::LOOK_SENSITIVITY_DEFAULT,
             sensitivity_drag: false,
+            fov: 70.0,
+            fov_drag: false,
             creative_palette: [(0, 0); 45],
             creative_tab: 0,
             creative_panel: (0, 0),
@@ -20406,6 +20458,9 @@ impl App {
         // the release the dragging flag the unconditional false
         // speaks, the same law the creative scrollbar's disarm wears)
         self.sensitivity_drag = false;
+        // THE FOV SLIDER'S OWN DISARM (the same mouseReleased lane the
+        // sensitivity seat's flag wears)
+        self.fov_drag = false;
         // THE SCROLLBAR'S OWN DISARM (the mouseReleased walk's own first
         // lane — the button-0 release the `scrolling` flag the
         // unconditional false speaks BEFORE the tab walk; the sim's
@@ -29925,8 +29980,18 @@ impl App {
             if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_sensitivity") {
                 let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
                 if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
-                    self.look_sensitivity = sensitivity_value_from_x(mx, bx, bw);
+                    self.look_sensitivity = slider_value_from_x(mx, bx, bw);
                     self.sensitivity_drag = true;
+                }
+            }
+            // THE FOV SLIDER'S OWN ARM (the same press walk the FOV row
+            // wears — the IntRange's own step the store's degrees
+            // keeps, the flag the drag rides)
+            if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_fov") {
+                let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
+                if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
+                    self.fov = fov_from_value(slider_value_from_x(mx, bx, bw));
+                    self.fov_drag = true;
                 }
             }
             return;
@@ -40177,7 +40242,20 @@ impl App {
         }
         if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_sensitivity") {
             let (bx, bw) = (b.x, b.w);
-            self.look_sensitivity = sensitivity_value_from_x(mx, bx, bw);
+            self.look_sensitivity = slider_value_from_x(mx, bx, bw);
+        }
+    }
+
+    /// THE FOV SLIDER'S OWN DRAG (the same armed lane the sensitivity
+    /// seat wears — the held frames the IntRange's own step the
+    /// cursor's x answers, the release the disarm speaks).
+    pub fn on_fov_slider_drag(&mut self, mx: i32) {
+        if !self.fov_drag || self.screen != ScreenKind::Options {
+            return;
+        }
+        if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_fov") {
+            let (bx, bw) = (b.x, b.w);
+            self.fov = fov_from_value(slider_value_from_x(mx, bx, bw));
         }
     }
 
@@ -53644,12 +53722,22 @@ impl App {
             // walk keeps; the no-body lanes the 1.0 stand-in holds (the
             // ×1.0 the bit-exact fold never rounds).
             proj: Mat4::perspective(
-                (70.0f32
-                    * self
-                        .body
+                // CAMERA.calculateFov'S OWN FOLD (the 26.2 jar's raw disasm,
+                // the scripts/camera_calculatefov.txt dump): the option's
+                // degrees — the `options.fov` the FOV slider's own store
+                // writes — x the modifier the body's fov state lerps — the
+                // sprint's 1.15 the zoom the frame speaks, the sneak's 0.85
+                // the narrower walk keeps; the no-body lanes the 1.0
+                // stand-in holds (the ×1.0 the bit-exact fold never
+                // rounds, the default 70 the legacy literal the store
+                // wears).
+                calculate_fov_degrees(
+                    self.fov,
+                    self.body
                         .as_ref()
                         .map(|b| b.fov_modifier_at(self.partial_tick))
-                        .unwrap_or(1.0))
+                        .unwrap_or(1.0),
+                )
                 .to_radians(),
                 fb.w as f32 / fb.h as f32,
                 0.1,
@@ -61240,8 +61328,14 @@ impl App {
             100
         );
         self.buttons.push(Button::new("opt_music", music, cx, h / 2 - 16, bw));
-        let fov = format!("FOV: {}", 70);
-        self.buttons.push(Button::new("opt_fov", fov, cx, h / 2 + 8, bw));
+        // THE FOV SLIDER'S OWN ROW (the `options.fov` OptionInstance the
+        // 26.2 clinit banks — the IntRange(30, 110) the slider's own
+        // range wears, the default 70 the raw-int caption speaks, the
+        // ends the options.fov.min 'Normal' / options.fov.max 'Quake
+        // Pro' rows answer): the store the camera's own fold reads.
+        let mut fov = Button::new("opt_fov", fov_caption(self.fov), cx, h / 2 + 8, bw);
+        fov.value = Some(fov_value(self.fov));
+        self.buttons.push(fov);
         // THE IN-WORLD OPENER (javap the 26.2 OptionsScreen.init — the
         // header row the `inWorld` flag gates: the FOV slider the
         // `options.worldOptions.button` the ClientOptions entry rides,
