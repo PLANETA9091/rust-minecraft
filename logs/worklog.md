@@ -279,6 +279,7 @@ Stage Summary:
 - THE JAR ROOT LAW THE WHOLE RENDER SPEAKS: every runtime texture load the mc-client's screens.rs wears the jar_runtime_root walk — the cargo package-dir lane and the repo-root lane the loaded world SEE alike, the CWD the render's input never wears again (the honest-load world the suite's pins the round's two re-pins the degenerate artifacts retired).
 - THE DEGENERATE-PASS FAMILY THE RECORD GROWS: the warden biolum take-refill (dev-153), the murk fog-only frame (this round) — the pre-fix cargo lane's failed loads the 'absence' pins the vacuous greens wore; the honest-load world the re-pins the blend-signature/state-gate techniques wear, the take() the refill world never answers.
 - NEXT CANDIDATES: the warden biolum's TRUE-absence diff (the refill the absence world the unreachable wears), the particles' honest-load world the pins the sweep never flipped (2342 green — the absence-pins the particle lanes' scenes never staged, the staged-particle tests the next dig reads), the client's interactivity row (the real input/movement/interaction walk the protocol's priority keeps — the render lanes' CWD law the DONE column wears, the game-loop lanes the next rounds' table holds).
+
 ---
 Task ID: autopush-150
 Agent: main (tick 18:17:28, Job 384923)
@@ -349,6 +350,7 @@ Stage Summary:
   table holds: the pointer-grab stand-in's window-edge turn-stop the
   minifb API the walk never answers, the offline world's persistence
   the quit lane never writes).
+
 ---
 Task ID: autopush-151
 Agent: main (tick 18:47:28, Job 384923)
@@ -420,6 +422,7 @@ Stage Summary:
   'assets-cache/jar' — the honest own-root staging the flips read),
   the warden biolum's TRUE-absence diff (the refill the absence
   world the unreachable wears).
+
 ---
 Task ID: autopush-152
 Agent: main (tick 19:17:29, Job 384923)
@@ -474,3 +477,75 @@ Stage Summary:
   the honest own-root staging the flips read), the warden biolum's
   TRUE-absence diff (the refill the absence world the unreachable
   wears).
+
+---
+Task ID: dev-154
+Agent: main (tick 19:42:03, Job 384925)
+Task: ONE minimal step — the persistence arc's own third row: the
+VITALS the player tag's Health/food/Xp rows wear — the hurt bar, the
+drained food quartet, the earned xp trio the world_edits.nbt file's
+player compound now banks, the respawn's full state the reload keeps.
+
+Work Log:
+- INCOMING STATE: HEAD 23bac94 (v0.3.885, autopush-152), clean tree,
+  origin synced. The NEXT CANDIDATES' first row the round takes — the
+  vitals' own save row the same player compound extends. The recon the
+  shapes read: App's health f32 + food_data FoodData (the food_level/
+  saturation/exhaustion/tick_timer quartet — the getters the file's
+  read speaks, the tick_timer getter the round adds) + xp
+  ExperienceStat (the level/progress/total trio the pub fields wear).
+  THE SHAPE LAW: SavedPlayer's Copy derive the flattened scalars keep
+  (FoodData/ExperienceStat the non-Copy compounds the struct never
+  nests) — the vanilla level.dat's own flat tag the mirror speaks.
+- THE ROW THE TAG EXTENDS: SavedPlayer the 8 scalars wear (Health,
+  foodLevel, foodSaturationLevel, foodExhaustionLevel, foodTickTimer,
+  XpLevel, XpP, XpTotal — the vanilla tag's own field names the NBT
+  rows speak); player_row_to_nbt the 8 rows writes; the parse the
+  OPTIONAL law keeps — the elder pre-vitals file's missing rows the
+  vanilla spawn state answers (health 20.0, the fresh quartet, the
+  zeroed trio), the strict pose/pocket rows the ?-gates still wear.
+- THE RESTORE THE LANE WEARS: enter_world's file-load the vitals
+  re-clothes (health = sp.health, FoodData::from_saved the
+  constructor the four fields verbatim speak — the round adds it
+  beside the tick_timer getter, the exhaustion getter's dead-code
+  mark retires; the ExperienceStat the trio's own fields), the food
+  sim the saved state resumes. THE READ: player_state_now the live
+  vitals speaks — the dirty verdict the SavedPlayer equality the
+  vitals ride for free (the hurt/drained/earned ticks the 40-tick
+  cadence banks, the code the verdict never touched).
+- THE FMT TRAP THE ROUND STEPPED IN AND CLIMBED OUT (autopush-149's
+  own record the map wore): a bare `cargo fmt --all` the
+  workspace-wide drift APPLIED (126 files, 254k insertions — the
+  fresh rustfmt's preference the HEAD never wears; the working tree
+  the stash saved, the checkout the clean tree restored, the stash
+  pop the fmt-applied edits brought back, the 3 files the fmt shapes'
+  ground truth wore, the rebuild the canonical shapes the clean tree
+  re-wore). THE METRIC THAT HELD: `cargo fmt --all --check`'s
+  `^Diff in` count = 1703 clean HEAD, 1703 with the edits — ZERO
+  hunks the round adds; the 3 touched files the per-file check the
+  0-marker answer speaks.
+- VERIFY: cargo check --all-targets clean; FULL mc-client 2346
+  PASSED / 0 FAILED / 22 ignored (2345 baseline + the vitals
+  round-trip law `the_saved_player_row_wears_the_vitals`: the staged
+  hurt bar 13.5 / drained quartet 9/1.5/2.0/7 / xp trio 3/0.25/42
+  the reload re-wears, the elder file the spawn defaults answers —
+  ZERO flips); mc-protocol 157 + mc-registry 100 + mc2rs-gen 80 =
+  337 PASSED; goldens 19/19 PASS rms 0.000 (NO regeneration — the
+  save lanes the no-file boot the no-op keep).
+- Version 0.3.885 -> 0.3.886. Pushed 31b9ea2 (23bac94..31b9ea2); the
+  repo's logs/worklog.md the dev-154 entry wears.
+
+Stage Summary:
+- THE OFFLINE SESSION THE RESTART FULLY RESTORES, ROW THREE: the
+  terrain's edits (autopush-151), the pose + pockets + selection
+  (autopush-152), the vitals' bar/quartet/trio (this round) — the
+  vanilla level.dat player tag's own row set the file's compound
+  completes. The respawn the full state re-wears; the death lane's
+  xp drop the vanilla law speaks the round never touched.
+- NEXT CANDIDATES: the death lane's own xp drop (the vanilla death
+  the orbs spawn + the trio's reset the respawn answers — the
+  drop_orbs lane the body's death crossing wears), the test-file
+  GuiAssets roots the cargo-lane absence-world wears (part_3/5/6/7/8's
+  bare 'assets-cache/jar' — the honest own-root staging the flips
+  read), the warden biolum's TRUE-absence diff (the refill the
+  absence world the unreachable wears).
