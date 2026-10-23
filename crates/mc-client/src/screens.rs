@@ -7533,6 +7533,15 @@ pub struct App {
     /// (open_chest, the pixel test's own scene) is never closed by the
     /// live lane's container-less updates, the two flows stay separate.
     pub chest_is_live: bool,
+    /// THE SHULKER WINDOW'S OWN KIND FLAG (the offline canvas's title
+    /// lane reads — the generic_9x3 shape the chest screen wears, the
+    /// container.shulkerBox row the shulker's own door banks). The
+    /// chest's own openers reset it (the chest's default name the
+    /// family law keeps), the shulker's own door sets it; the LIVE
+    /// lane's title the wire's own Component carries (the flag the
+    /// offline canvas alone reads — the golden scenes the flag never
+    /// sets, the pixels the shape never moves).
+    pub chest_window_shulker: bool,
     /// The last biome the network world's music situation resolved to
     /// (the synced registry name at the player's feet). `None` until a
     /// join resolves one; cleared with the level (Save and Quit, a kick).
@@ -9467,6 +9476,7 @@ impl App {
             chest_slots: Vec::new(),
             chest_mirror: Vec::new(),
             chest_is_live: false,
+            chest_window_shulker: false,
             live_clicks: None,
             chest_live_window: None,
             chest_slot_rects: Vec::new(),
@@ -20360,6 +20370,9 @@ impl App {
         // two flows stay separate (the golden pins this scene's pixels)
         self.chest_is_live = false;
         self.chest_mirror.clear();
+        // the shulker's kind row the chest's own scene never wears (the
+        // container.chest default the golden pins)
+        self.chest_window_shulker = false;
         // the deterministic scene the fresh grid keeps — the flush key
         // the scene NEVER wears (the per-cell stores the right-click
         // lane's own cells serve)
@@ -22456,6 +22469,9 @@ impl App {
         // open_chest scene's own verdict the same law keeps)
         self.chest_is_live = false;
         self.chest_mirror.clear();
+        // the shulker's kind row the chest's own door never wears (the
+        // container.chest default the family law keeps)
+        self.chest_window_shulker = false;
         // THE DOUBLE'S OWN COMBINE (the dev-71 round — javap 26.2 the
         // DoubleBlockCombiner walk the chest menu provider rides: the
         // opened chest's variant type the connected direction reads,
@@ -22548,6 +22564,54 @@ impl App {
                 w.set_variant(pos.0, pos.1, pos.2, v & !crate::world::BARREL_OPEN_BIT);
             }
         }
+    }
+
+    /// THE SHULKER'S OWN DOOR (javap 26.2 ShulkerBoxBlock.
+    /// useWithoutItem — the openMenu walk the ShulkerBoxMenu the
+    /// 27-slot container the generic_9x3 canvas wears, the
+    /// container.shulkerBox DEFAULT_NAME the ShulkerBoxBlockEntity
+    /// banks): the right-press on the placed box the OFFLINE world
+    /// answers — the cell's own 27-slot store the
+    /// [`Self::container_stores`] entry banks (the SAME map the
+    /// dropper's front-read inserts — the autopush-147 row the walk
+    /// keeps), the player's own rows the standard projection mirrors,
+    /// the flag the title lane's kind row banks. THE PAIR THE SHULKER
+    /// NEVER SPEAKS (the chest's DoubleBlockCombiner walk the chest
+    /// kinds alone answers — the single 27 the lone box banks), THE
+    /// LID THE VARIANT NEVER WEARS (the blockstate's facing property
+    /// the only field speaks — the open animation the block entity's
+    /// own walk drives, the mesher's generic cube the variant never
+    /// renders). The use-lane arm (the block-use walk's own order the
+    /// crafting-table arm keeps) this fn the offline lane serves.
+    pub fn open_shulker_for(&mut self, pos: (i32, i32, i32)) {
+        self.enter_world();
+        // THE DISK BANK'S OWN LAZY LOAD (the chest's own law — the
+        // first store access the once-flag's parse answers)
+        self.container_stores_load_once();
+        // the OFFLINE stand-in: the live lane's flag stays down (the
+        // chest's own open walk the same law keeps)
+        self.chest_is_live = false;
+        self.chest_mirror.clear();
+        // THE CELL'S OWN STORE (the RandomizableContainer contents the
+        // map key keeps — the first open the fresh 27-slot grid
+        // inserts, the reopen the stored stacks load)
+        let store = self
+            .container_stores
+            .entry(pos)
+            .or_insert_with(|| vec![(0i32, 0i32); 27]);
+        self.container_open_cell = Some(pos);
+        self.container_open_cell_b = None;
+        self.chest_slots = store.clone();
+        self.chest_carried = (0, 0);
+        // the player's own rows the REAL inventory projects (the chest's
+        // own sync law the menu's 27..63 rows the mirror keeps)
+        self.chest_mirror_sync_from_inventory();
+        self.chest_open_cell = None;
+        // THE SHULKER'S OWN KIND ROW (the title lane's flag the draw
+        // reads — the container.shulkerBox default the vanilla menu
+        // banks)
+        self.chest_window_shulker = true;
+        self.open(ScreenKind::Chest);
     }
 
     /// THE DISPENSER'S OWN DOOR (javap 26.2 DispenserBlock.
@@ -24574,6 +24638,11 @@ impl App {
                 .clone()
                 .or_else(|| tr("container.chest").map(String::from))
                 .unwrap_or_default()
+        } else if self.chest_window_shulker {
+            // THE SHULKER'S OWN ROW (the offline canvas's kind lane —
+            // the container.shulkerBox default the ShulkerBoxBlockEntity
+            // banks, the chest's own row the family sibling keeps)
+            tr("container.shulkerBox").unwrap_or("Shulker Box").to_string()
         } else {
             tr("container.chest").unwrap_or("Chest").to_string()
         };
@@ -41660,6 +41729,30 @@ impl App {
             self.open_chest_for(hit.pos);
             return true;
         }
+        // THE SHULKER'S OWN DOOR (javap 26.2 ShulkerBoxBlock.
+        // useWithoutItem — the openMenu walk the ShulkerBoxMenu the
+        // GENERIC_9x3 shape the chest family's own 27-slot grid
+        // answers, the container.shulkerBox default name the block
+        // entity banks): the right-press on the placed box the OFFLINE
+        // world answers — the window the fresh stand-in opens, the
+        // cell's own 27-slot store the SAME map the dropper's
+        // front-read inserts (the autopush-147 row the walk's own lane
+        // keeps). The sneaking player the arm SKIPS (the
+        // crafting-table's own gate the vanilla use walk wears — the
+        // BlockItem.useOn's sneaking-place fallback the item lanes
+        // follow). The WIRE session the local screen never opens (the
+        // server's own OpenScreen word owns the container — the
+        // SHULKER_BOX menu type lane the projection's menu_type_id
+        // feeds verbatim).
+        if !self.shift_down
+            && !self.world_is_network
+            && self
+                .active_world()
+                .is_some_and(|w| crate::world::is_shulker(w.get(hit.pos.0, hit.pos.1, hit.pos.2)))
+        {
+            self.open_shulker_for(hit.pos);
+            return true;
+        }
         // THE DISPENSER'S OWN DOOR (javap 26.2 DispenserBlock.
         // useWithoutItem — the openMenu walk the BlockEntity's own
         // MenuProvider answers, the awardStat(INSPECT_DISPENSER) the
@@ -51874,6 +51967,10 @@ impl App {
                 self.chest_slots = grid;
                 self.chest_mirror = mirror;
                 self.chest_is_live = true;
+                // the shulker's kind row the wire window never wears
+                // (the OpenScreen Component's own name the live lane
+                // banks — the flag the offline canvas alone reads)
+                self.chest_window_shulker = false;
                 // THE WINDOW'S OWN NAME (the same decode ride — the
                 // OpenScreen Component the 3x3 canvas's round owns,
                 // the custom name the anvil rows speak; the None the
