@@ -620,3 +620,67 @@ Stage Summary:
   options screen the row never carries), the warden biolum's
   TRUE-absence diff (the refill the absence world the unreachable
   wears).
+
+---
+Task ID: dev-155
+Agent: main (cron 384925, 20:22:02 tick)
+Task: ONE minimal step toward the 100% Minecraft-feel client; tests green; push; worklog entry.
+
+Work Log:
+- Incoming state: clean tree @4e2c5d5 (mirror) over dcdf1aa..9d309d1
+  = v0.3.887 (autopush-153, the death xp orbs); origin synced. The
+  death arc's own inventory row the vanilla law speaks — the round
+  picked THE POCKETS' DEATH SCATTER (keepInventory-false the offline
+  lane's own default wears, the death the drop the client never
+  wore).
+- THE DROP THE LAW WEARS: actually_hurt's death block the scatters
+  ride — Inventory.dropAll the dropCustomDeathLoot consumer: every
+  non-empty stack the THREE compartments wear (the 36 items, the 4
+  armor, the 1 offhand) one ItemEntity at the Player#drop(stack,
+  true, false) law: the player's own getX/getZ at the getEyeY() -
+  0.3F height (the LIVE pose's eye — b.eye_height() the sneak's own
+  lower eye rides), the PICKUP DELAY 40, the spread f =
+  random * 0.5F over f1 = random * 2PI (the delta (-sin(f1) * f,
+  0.2, cos(f1) * f) the THROW-RANDOMLY arm speaks), the bob seed the
+  ctor's own roll (the bob draw the spread pair rides BEFORE).
+- THE SPAWN THE DROPS OWN ROW WEARS: drops.rs spawn_death_drop
+  beside the entity-loot/pop/container siblings; DEATH_PICKUP_DELAY
+  = 40 the POP_PICKUP_DELAY 10 never blurs. THE HELPER: App's
+  drop_inventory_at_death(px, py, pz) — the stacks the three lists'
+  own chain collects, the ids the next_drop_id counter speaks, the
+  container the Inventory::default the slot-clear verdict keeps
+  (the pockets the death already emptied — the reload the empty rows
+  the same verdict re-banks, the respawn the fresh entity the empty
+  pockets re-answers). THE GATES: the !world_is_network split the
+  xp orb lane wears (the networked world the server's own drops
+  keep), the keepInventory-true lane the offline vocabulary never
+  carries (the gamerule row the future's own round answers).
+- THE TEST THE LAW WEARS: part_8's
+  the_death_scatters_the_pockets_and_the_container_empties — the
+  five staged stacks the compartments' order speaks (items 0/5/35,
+  armor 2, offhand), the 40-tick grace + the 0.2 lift + the
+  0.5-capped spread the body's own x/z wear, the emptied container
+  the respawn re-answers, the zero-pocket death the silence keeps.
+- VERIFY: FULL mc-client 2348 PASSED / 0 FAILED / 22 ignored (2347
+  baseline + the scatter law — ZERO flips); mc-protocol 157 +
+  mc-registry 100 + mc2rs-gen 80 = 337 PASSED; goldens 19/19 PASS
+  rms 0.000 (NO regeneration — the death lane the golden lanes never
+  touches); fmt 1702 = the HEAD baseline (ZERO hunks the round adds
+  — the split spawn signature the per-file preference the new fn
+  already wears).
+- Version 0.3.887 -> 0.3.888. Pushed dcdf1aa (4e2c5d5..dcdf1aa); the
+  repo's logs/worklog.md this entry mirrors.
+
+Stage Summary:
+- THE DEATH ARC THE VANILLA FULLY SPEAKS: the death screen + the
+  dismount, the xp orbs at the death spot + the trio's zero, the
+  POCKETS' SCATTER + the emptied container (this round) — the
+  keepInventory-false body the whole reward law wears. The walk-back
+  the drops' pickup lanes already answer (the 40-tick grace the
+  re-arm wears).
+- NEXT CANDIDATES: the keepInventory gamerule row the death lanes'
+  own gate answers (the offline options screen the row never
+  carries), the test-file GuiAssets roots the cargo-lane absence-
+  world wears (part_3/5/6/7/8's bare 'assets-cache/jar'), the
+  warden biolum's TRUE-absence diff (the unreachable the record
+  keeps).
