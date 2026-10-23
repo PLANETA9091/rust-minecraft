@@ -817,3 +817,20 @@ Work Log:
 Stage Summary:
 - THE GAMERULE'S OWN THIRD BANK: the doMobSpawning the chat literal + the spawner's gate + the save file's own row the ONE truth serve — the disarmed session's refusals the reload still wears, the spawning arc's whole walk (literal, gate, bank) the restart keeps. The gamerule trio (keepInventory + doDaylightCycle + doMobSpawning) the level.dat compound's own rows the vanilla shape wears.
 - NEXT CANDIDATES: the doMobSpawning row the WorldOptions screen never carries (the doDaylightCycle row's own pattern the third toggle answers), the test-file GuiAssets roots (part_3/5/6/7/8's bare 'assets-cache/jar' — the absence-pin flips the honest own-root staging re-pins), the minifb pointer-grab window-edge turn stop (the API's own limit the alternative the recon answers), the warden biolum TRUE-absence (the unreachable the record keeps).
+
+---
+Task ID: autopush-161
+Agent: autopush (Job 384923, 00:02:34 +08 tick)
+Task: git status (clone if absent; auto-sync commit + push if dirty) -> ONE minimal step -> cargo test --workspace green -> push -> worklog entry.
+
+Work Log:
+- Incoming state: clean tree @c285d46 (the mirror over 48eb4c8 = v0.3.896 autopush-160 doMobSpawning rebank), origin synced. The NEXT CANDIDATES' first row the round answers — the doMobSpawning the WorldOptions screen never carries (the doDaylightCycle row's own pattern the third toggle wears).
+- THE ROW THE SCREEN WEARS: render_world_options the row below the doDaylightCycle pair banks — the label the `gamerule.doMobSpawning` lang row speaks (the jar's own "Spawn mobs" the exact fallback keeps — the jar's row PROBED FIRST the dev-156 lesson wears), the value the `options.on`/`options.off` pair the boolean display keeps, the 200-wide button the `dial_y + 72` seat wears (the 24-pitch the row below rides), the ACTIVE arm the gamerule rows' own split keeps (`!world_is_network` — the NETWORKED world the server's /gamerule the wire keeps, the inactive button the hovered() gate refuses).
+- THE DISPATCH: the `womobspawn` arm the do_mob_spawning flip wears — the natural spawner's gate the same field reads, the /gamerule literal + the WorldOptions row + the save file's row the ONE store serve.
+- THE TEST THE ROW WEARS: part_4's the_world_options_screen_wears_the_do_mob_spawning_row (file END — the seam lesson pre-applied): the fresh boot's "Spawn mobs: ON" + the active arm, the click the rule disarms + the re-render the "…: OFF" speaks, the second click rings home, the networked lane the inactive button the click never disarms.
+- VERIFY (final code state): FULL mc-client 2360 PASSED / 0 FAILED / 22 ignored (2359 baseline + the row's walk — ZERO flips, the dial walk + the keepInventory + doDaylightCycle row walks unflipped); mc-protocol 157 + mc-registry 100 + mc2rs-gen 80 = 337 PASSED; goldens 19/19 PASS rms 0.000 (NO regeneration — the WorldOptions screen the golden scenes never wear); fmt 1702 = the HEAD baseline (ZERO hunks — the part_4 file-end insertion the 13-hunk shape keeps, the seam lesson pre-applied).
+- Version 0.3.896 -> 0.3.897. Pushed 5babe05 (c285d46..5babe05); the repo's logs/worklog.md this entry mirrors.
+
+Stage Summary:
+- THE GAMERULE'S OWN THIRD SCREEN ROW: the doMobSpawning the WorldOptions screen's own toggle the offline player clicks — the chat literal + the screen row + the save file's row the ONE truth serve, the spawning arc's whole walk (literal, screen, gate, bank) the vanilla pattern the gamerule rows' own shape wears. The offline options screen now carries ALL THREE boolean gamerule rows the vanilla 26.2 vocabulary speaks.
+- NEXT CANDIDATES: the test-file GuiAssets roots (part_3/5/6/7/8's bare 'assets-cache/jar' — the absence-pin flips the honest own-root staging re-pins), the minifb pointer-grab window-edge turn stop (the API's own limit the alternative the recon answers), the mobGriefing boolean rule the same vocabulary answers (the literal's parse table the fourth row banks — the creeper's terrain lane the gate reads), the warden biolum TRUE-absence (the unreachable the record keeps).
