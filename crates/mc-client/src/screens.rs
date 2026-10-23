@@ -24491,6 +24491,22 @@ impl App {
         self.furnace_carried = if button == 0 { (0, 0) } else { (id, count - 1) };
     }
 
+    /// THE CHEST CARRIED'S OWN THROW (the 26.2 mouseClicked's own
+    /// walk the doClick-OUTSIDE lane serves — the
+    /// [`Self::throw_furnace_carried_outside`] shape the offline
+    /// stand-in's cursor wears: the whole stack the LEFT press drops,
+    /// the one item the RIGHT split keeps, the aimed impulse the drop
+    /// walk speaks).
+    fn throw_chest_carried_outside(&mut self, button: i8) {
+        let (id, count) = self.chest_carried;
+        if count <= 0 {
+            return; // the doClick THROW's own isEmpty guard — silence
+        }
+        let dropped = if button == 0 { count } else { 1 };
+        self.drop_item_entity_aimed(id, dropped);
+        self.chest_carried = if button == 0 { (0, 0) } else { (id, count - 1) };
+    }
+
     /// The chest screen render: the frozen world dimmed underneath (the
     /// container background's own treatment), the classic gray panel
     /// with its white/0x555555 bevels, the real `container/slot` insets,
@@ -27857,21 +27873,23 @@ impl App {
     /// release's own lanes serve. The hovered seat AND the outside
     /// press the arm answers (the k == -999 press the same pc 316 walk
     /// enters); the press BETWEEN the slots (k == -1) the whole arm
-    /// skips. The chest's own gates: the offline stand-in the silence
-    /// keeps (the chest the LIVE session alone wears — the click
-    /// walk's own chest_is_live law the arm shares) and the render
-    /// never spoken the geometry refuses (the furnace panel's own
-    /// (0, 0) convention). THE BUTTON'S OWN TYPE (mouseClicked pcs
-    /// 338-377): the arm answers BOTH presses — the left the type-0
-    /// drag arms (pc 338-347), the RIGHT press the type-1 drag arms
-    /// (pc 353-363) — the one-each distribution the release's own
-    /// lane serves, the vanilla law the button's own verdict keys.
+    /// skips. The chest's own gates: the wire session's no window the
+    /// drag refuses (the dispenser's own shape the gate wears — the
+    /// OFFLINE sim the drag the local lanes ride, autopush-146's own
+    /// answer the direct dispatch's place-back the deferred place
+    /// serves) and the render never spoken the geometry refuses (the
+    /// furnace panel's own (0, 0) convention). THE BUTTON'S OWN TYPE
+    /// (mouseClicked pcs 338-377): the arm answers BOTH presses — the
+    /// left the type-0 drag arms (pc 338-347), the RIGHT press the
+    /// type-1 drag arms (pc 353-363) — the one-each distribution the
+    /// release's own lane serves, the vanilla law the button's own
+    /// verdict keys.
     fn qc_arm_chest(&mut self, mx: i32, my: i32, button: usize) {
         if self.qc_armed {
             return; // pc 168-172 — the in-flight drag the press never re-arms
         }
-        if !self.chest_is_live || self.chest_live_window.is_none() {
-            return; // the offline stand-in: no window, no drag
+        if self.world_is_network && self.chest_live_window.is_none() {
+            return; // the wire session's no-window refusal the stand-in's silence keeps
         }
         if self.chest_slot_rects.is_empty() {
             return; // no render spoke yet — no geometry to hit
@@ -27909,7 +27927,8 @@ impl App {
     /// seat's canItemQuickReplace (the EMPTY seat or the same item),
     /// the mayPlace, the canDragTo the base menu's iconst_1 keeps.
     /// The chest's own cursor the belief's `chest_carried` pair holds
-    /// (the chest the LIVE session alone wears — no offline lane).
+    /// (the OFFLINE sim the SAME field's own stack holds — the click
+    /// walk's own carried the both lanes share).
     fn qc_paint_chest(&mut self, mx: i32, my: i32) {
         let Some(&(_, _, slot)) = self
             .chest_slot_rects
@@ -28244,6 +28263,70 @@ impl App {
         );
     }
 
+    /// THE CHEST DRAG'S OWN OFFLINE DISTRIBUTION (the dispenser's own
+    /// offline walk the generic_9x3's combined snapshot wears —
+    /// autopush-146's own lanes: the doClick QUICK_CRAFT status-2 arm
+    /// over the offline sim speaks, NO packet the offline world alone
+    /// keeps): the carried-NON-EMPTY release the place math answers —
+    /// the type-0 floor split, the type-1's one-each — the grid
+    /// 0..n the chest's own holds (27 the single, 54 the double's
+    /// compound), the mirror rows n..n+36 the standard store keeps
+    /// [the main rows 0..27 the items 9..36 answer, the hotbar
+    /// 27..36 the items 0..9 — the click walk's own numbering the
+    /// formula agrees], the write-through the chest grid AND the
+    /// inventory cells speak, the mirror the sync re-banks, the HUD
+    /// row the sync follows.
+    fn qc_distribute_chest_offline(&mut self) {
+        let carried = self.chest_carried;
+        if carried.1 <= 0 {
+            return; // pcs 307-319 — the empty cursor the walk aborts
+        }
+        let painted = self.qc_slots.len();
+        let n = self.chest_slots.len();
+        let mut k = carried.1;
+        let seats = self.qc_slots.clone(); // the disjoint borrow the write keeps
+        for &menu in &seats {
+            let (seat_id, seat_count) = self.qc_seat_stack(menu);
+            if seat_id != 0 && seat_id != carried.0 {
+                continue; // pc 373-381 — canItemQuickReplace
+            }
+            // the mayPlace verdict: the chest menu's slots ALL plain
+            // (the base Slot's iconst_1 pair the chest swap walk
+            // banks) — no refusal the walk wears
+            if self.qc_type != 2 && carried.1 < painted as i32 {
+                continue; // pc 394-416 — the count's own gate
+            }
+            let cap = crate::world_view::item_max_stack(carried.0);
+            // getQuickCraftPlaceCount — the type-0 floor split, the
+            // type-1's own ONE per seat the ghost keeps
+            let place_count = if self.qc_type == 1 { 1 } else { carried.1 / painted as i32 };
+            let place = std::cmp::min(place_count + seat_count, cap);
+            k -= place - seat_count; // pc 495-503 — the net the carried loses
+            let new = (carried.0, place); // pc 505-514
+            if menu < n {
+                if menu < self.chest_slots.len() {
+                    self.chest_slots[menu] = new;
+                }
+            } else {
+                // THE WRITE-THROUGH (the projection the inventory IS —
+                // the mirror row the inventory cell answers: the main
+                // rows 0..27 the items 9..36 keep, the hotbar 27..36
+                // the items 0..9 speak)
+                let row = menu - n;
+                let idx = if row < 27 { 9 + row } else { row - 27 };
+                if idx < self.inventory.items.len() {
+                    self.inventory.items[idx] = new;
+                }
+            }
+        }
+        self.chest_carried = if k > 0 { (carried.0, k) } else { (0, 0) }; // pc 520-530 — the remainder the cursor keeps
+        // THE MIRROR'S OWN SYNC (the fresh rows EVERY mutation
+        // re-syncs — the open's own law the write-through's tail
+        // wears) + the HUD row the store's sync follows
+        self.chest_mirror_sync_from_inventory();
+        self.hotbar_slots = self.inventory.hotbar();
+    }
+
     /// THE DISPENSER DRAG'S OWN WIRE DISTRIBUTION (the offline walk's
     /// twin over the LIVE 3x3 belief — the free fn
     /// [`wire_dispenser_quickcraft_distribute`] the disjoint field
@@ -28440,9 +28523,9 @@ impl App {
     /// vanilla law reads: the seat the PICKUP speaks, the outside the
     /// -999 drop serves, the between-slots the -1 no-op), the pc
     /// 452-454 tail the arm always clears). The screen's own lanes
-    /// branch: the CHEST the wire-only distribution (the chest the
-    /// LIVE session alone wears) and the chest geometry's own deferred
-    /// place keeps.
+    /// branch: the CHEST the wire/offline split wears (autopush-146's
+    /// own lanes — the offline sim the local write-through answers)
+    /// and the chest geometry's own deferred place keeps.
     fn qc_release(&mut self, released: i32) {
         if self.qc_armed && self.qc_button != released {
             // pcs 246-284 — the wrong button's release the drag aborts
@@ -28456,7 +28539,15 @@ impl App {
         if !self.qc_slots.is_empty() {
             // pcs 299-322 — the painted set the distribution answers
             if self.screen == ScreenKind::Chest {
-                self.qc_distribute_chest_wire();
+                // THE CHEST'S OWN LANES (the click walk's own split —
+                // the wire the window belief rides, the offline sim
+                // the local write-through answer — autopush-146's own
+                // lanes the drag the offline window wears)
+                if self.world_is_network {
+                    self.qc_distribute_chest_wire();
+                } else {
+                    self.qc_distribute_chest_offline();
+                }
             } else if self.screen == ScreenKind::Dispenser {
                 // THE 3x3'S OWN LANES (the click walk's own split —
                 // the wire the window belief rides, the offline sim
@@ -28504,10 +28595,12 @@ impl App {
         };
         if self.screen == ScreenKind::Chest {
             // THE CHEST'S OWN DEFERRED PLACE (the same pc 325-449 walk
-            // the chest geometry answers): the seat the PICKUP speaks,
-            // the outside the -999 drop serves, the between the -1
-            // no-op keeps — the chest the LIVE session alone wears
-            // (no offline lane the stand-in simulates).
+            // the chest geometry answers — autopush-146's own shape
+            // the offline lanes the drag wears): the seat the click
+            // walk's own PICKUP serves (the wire lane the window
+            // belief rides, the offline sim the local lanes — the
+            // place-back the offline stores speak), the outside the
+            // -999 drop serves, the between the -1 no-op keeps.
             let panel = self.chest_panel;
             let on_seat = self
                 .chest_slot_rects
@@ -28517,32 +28610,44 @@ impl App {
                 || my < panel.1
                 || mx >= panel.0 + 176
                 || my >= panel.1 + self.chest_panel_h();
-            let Some((window_id, state_id)) = self.chest_live_window else {
-                return;
-            };
             if on_seat {
                 // pc 427-449 — the PICKUP the click walk's own lanes
                 // serve (the armed button the release wears — the right
-                // drag's deferred place the place-ONE speaks)
+                // drag's deferred place the place-ONE speaks): the
+                // screen's own is_live gate the both lanes key
                 self.click_chest_slot(mx, my, self.qc_button as i8);
-            } else if outside {
+                return;
+            }
+            if outside {
                 // doClick pc 599-660 — the -999 PICKUP the carried's
                 // drop speaks (the whole carried the PRIMARY button
-                // drops): the LIVE session the packet the belief's
+                // drops): the wire session the packet the belief's
                 // clear rides (the drop entity the server's Add Entity
-                // lane spawns)
-                if let Some(sink) = self.live_clicks.as_ref() {
-                    wire_throw_outside(
-                        sink,
-                        &mut self.chest_carried,
-                        self.qc_button as i8,
-                        window_id,
-                        state_id,
-                    );
+                // lane spawns), the offline sim the local throw IS
+                if self.world_is_network {
+                    let Some((window_id, state_id)) = self.chest_live_window else {
+                        return;
+                    };
+                    if let Some(sink) = self.live_clicks.as_ref() {
+                        wire_throw_outside(
+                            sink,
+                            &mut self.chest_carried,
+                            self.qc_button as i8,
+                            window_id,
+                            state_id,
+                        );
+                    }
+                } else {
+                    self.throw_chest_carried_outside(self.qc_button as i8);
                 }
-            } else {
+                return;
+            }
+            if self.world_is_network {
                 // pc 599's own jump — the -1 PICKUP the wire keeps (the
                 // isValidSlotIndex refusal — the no-op)
+                let Some((window_id, state_id)) = self.chest_live_window else {
+                    return;
+                };
                 if let Some(sink) = self.live_clicks.as_ref() {
                     let _ = sink.send(crate::world_view::ContainerCommand::Click(
                         crate::world_view::ContainerClick {
