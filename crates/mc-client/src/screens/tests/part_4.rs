@@ -9259,3 +9259,101 @@ fn the_options_exit_the_removed_moment_itself_saves() {
     assert_eq!(app2.look_sensitivity, 0.9, "the None boot the memory keeps");
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+// THE FOCUS-LOSS'S OWN PAUSE (the vanilla pauseIfInactive law — the
+// renderFrame's per-frame call the 26.2 bytecode banks: the focused
+// walk the timestamp refresh speaks, the unfocused walk the 500ms
+// grace the elapsed answers, the pauseGame(false) the FULL pause menu
+// the PauseScreen's !arg ctor wears — the ESC walk's own pause the
+// same shape keeps, the death the modal law refuses)
+#[test]
+fn the_focus_loss_the_grace_and_the_pause_wears() {
+    let mut app = App::new(262);
+    app.enter_world();
+    app.spawn_offline_body();
+    assert_eq!(app.screen, ScreenKind::World);
+    assert!(!app.paused, "the live world the pause never wears");
+    // THE ACTIVE WALK (the focus the timestamp refresh speaks — the
+    // grace's own seat the active frames keep)
+    app.on_window_focus(true, 0);
+    // THE UNFOCUSED GRACE (the 500ms the vanilla law wears — the
+    // flick the pause never speaks)
+    app.on_window_focus(false, 300);
+    assert!(!app.paused, "the grace the flick never pauses");
+    app.on_window_focus(false, 500);
+    assert!(
+        !app.paused,
+        "the grace the boundary keeps — > 500 the law alone fires"
+    );
+    // THE EXPIRY (the elapsed the 500ms gate answers — the pause the
+    // full menu's own walk wears)
+    app.on_window_focus(false, 501);
+    assert!(app.paused, "the expiry the pause speaks");
+    assert_eq!(app.screen, ScreenKind::World, "the pause the world keeps");
+    // THE RE-FIRE'S OWN IDEMPOTENCE (the vanilla setPauseScreen's own
+    // first check the screen-up walk answers — the paused gate the
+    // re-fire eats, the buttons the clear never re-wears)
+    app.on_window_focus(false, 2000);
+    assert!(app.paused, "the re-fire the idempotence keeps");
+    // THE REFOCUS (the timestamp the active walk refreshes — the pause
+    // the user's own ESC/backtogame lane alone lifts, the refocus the
+    // pause never touches)
+    app.on_window_focus(true, 2100);
+    assert!(app.paused, "the refocus the pause never lifts");
+    // THE OPTION'S OWN FALSE ARM (the pauseOnLostFocus false the walk
+    // the refresh alone speaks — the unfocused stretch the pause never
+    // wears)
+    app.paused = false;
+    app.pause_on_lost_focus = false;
+    app.on_window_focus(false, 100_000);
+    assert!(!app.paused, "the option's false the pause refuses");
+    // THE REFRESH THE FALSE ARM SPEAKS (the re-arm the next true
+    // walk's grace the fresh timestamp carries — the option's flip
+    // the mid-unfocus the grace re-arms)
+    app.pause_on_lost_focus = true;
+    app.on_window_focus(false, 100_100);
+    assert!(!app.paused, "the fresh timestamp the grace re-arms");
+    app.on_window_focus(false, 100_601);
+    assert!(app.paused, "the re-armed grace the expiry fires");
+}
+
+// THE GATES' OWN SEATS (the pause the walk's own gates wear — the
+// title screen no world the pause never wears, the dead the ESC arm's
+// own modal law the focus walk keeps)
+#[test]
+fn the_focus_pause_the_gates_the_screen_and_death_wear() {
+    let mut app = App::new(262);
+    // THE TITLE SEAT (no world — the gate the screen keeps)
+    app.open(ScreenKind::Title);
+    app.on_window_focus(false, 10_000);
+    assert!(!app.paused, "the title seat the pause never wears");
+    // THE DEATH GATE (the world the dead modal law keeps — the
+    // Respawn/Title buttons the only exits the focus walk respects)
+    let mut app2 = App::new(262);
+    app2.enter_world();
+    app2.spawn_offline_body();
+    app2.dead = true;
+    app2.on_window_focus(false, 10_000);
+    assert!(!app2.paused, "the dead the pause never wears");
+    // THE PAUSED GATE (the already-paused walk the idempotence keeps —
+    // the buttons the clear never re-wears)
+    let mut app3 = App::new(262);
+    app3.enter_world();
+    app3.spawn_offline_body();
+    app3.on_escape();
+    assert!(app3.paused, "the ESC the pause wears");
+    app3.buttons.push(crate::screens::Button::new(
+        "backtogame",
+        "Back to Game".to_string(),
+        10,
+        10,
+        100,
+    ));
+    app3.on_window_focus(false, 10_000);
+    assert!(app3.paused, "the paused the walk never touches");
+    assert_eq!(
+        app3.buttons.len(),
+        1,
+        "the buttons the re-fire never clears"
+    );
+}

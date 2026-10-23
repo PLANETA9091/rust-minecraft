@@ -1819,6 +1819,7 @@ pub fn run_gui_app(
     // THE STOP'S OWN READ (the vanilla run loop's `while (this.running)`
     // law — the Title screen's quit button the flag arms, the loop the
     // negation's own guard wears, the window's close the exit speaks)
+    let boot_instant = std::time::Instant::now();
     while window.is_open() && !app.stopping {
         // THE FRAME-TIME SAMPLE (the vanilla runTick's own ride — the
         // inter-frame delta the LocalSampleLogger ring keeps, one
@@ -1830,6 +1831,11 @@ pub fn run_gui_app(
             app.log_frame_duration((t_frame - prev).as_nanos() as i64);
         }
         prev_frame_instant = Some(t_frame);
+        // THE FOCUS-LOSS'S OWN PER-FRAME CALL (the vanilla renderFrame's
+        // pauseIfInactive lane — the window's is_active the focus read
+        // speaks, the millis the boot instant the elapsed wears, the
+        // 500ms grace the App's own law answers)
+        app.on_window_focus(window.is_active(), (t_frame - boot_instant).as_millis() as u64);
         // THE CHAT CHAR DRAIN (the ChatScreen's own typing lane — the
         // chars the open screen's EditBox answers, the closed screen
         // the on_chat_char gate keeps silent)

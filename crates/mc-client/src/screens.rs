@@ -6801,6 +6801,16 @@ pub struct App {
     /// own removed() moment already keeps, the quit lane the second
     /// write the law refuses).
     pub stopping: bool,
+    /// THE FOCUS-LOSS'S OWN OPTION (the vanilla `options.pauseOnLostFocus`
+    /// — the default TRUE the Options ctor wears, the focus-loss pause
+    /// the law's own gate reads, the false the pause the refresh alone
+    /// speaks).
+    pub pause_on_lost_focus: bool,
+    /// THE LAST ACTIVE'S OWN TIMESTAMP (the vanilla
+    /// `Minecraft.lastActiveTime` field — the millis the active walk
+    /// alone refreshes, the unfocused walk the 500ms grace the elapsed
+    /// answers, the pause the expiry fires).
+    pub last_active_ms: u64,
     /// Meshed world (built lazily on entering the world screen).
     pub world_quads: Option<Vec<crate::mesher::Quad>>,
     pub world_size: i32,
@@ -10158,6 +10168,8 @@ impl App {
             creative_scroll: 0.0,
             creative_scroll_drag: false,
             stopping: false,
+            pause_on_lost_focus: true,
+            last_active_ms: 0,
             look_sensitivity: crate::body::LOOK_SENSITIVITY_DEFAULT,
             sensitivity_drag: false,
             fov: 70.0,
@@ -27200,6 +27212,31 @@ impl App {
         self.container_store_flush();
         self.barrel_lid_released();
         self.open(ScreenKind::World);
+    }
+
+    /// THE FOCUS-LOSS'S OWN PAUSE (the vanilla `pauseIfInactive` law —
+    /// the renderFrame's own per-frame call the 26.2 bytecode banks:
+    /// the window the focus keeps OR the option the default true
+    /// refuses → the timestamp the refresh speaks; the unfocused walk
+    /// the 500ms grace the elapsed answers → the `pauseGame(false)`
+    /// the FULL pause menu the `!arg` PauseScreen ctor wears — the
+    /// same walk the ESC toggle's own pause speaks, the death gate
+    /// the ESC arm's own modal law keeps, the re-fire the paused
+    /// gate's idempotence eats).
+    pub fn on_window_focus(&mut self, focused: bool, now_ms: u64) {
+        if focused || !self.pause_on_lost_focus {
+            self.last_active_ms = now_ms;
+            return;
+        }
+        if now_ms.saturating_sub(self.last_active_ms) > 500 {
+            // THE PAUSE'S OWN GATES (the ESC walk's own shape — the
+            // World screen the seat keeps, the dead the modal law
+            // refuses, the paused the idempotence keeps)
+            if self.screen == ScreenKind::World && !self.paused && !self.dead {
+                self.paused = true;
+                self.buttons.clear();
+            }
+        }
     }
 
     /// Escape: toggles the pause menu while in game (vanilla behavior);
