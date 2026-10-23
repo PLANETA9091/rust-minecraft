@@ -52347,6 +52347,17 @@ impl App {
                         self.spawn_xp_orbs(px, py, pz, drop);
                     }
                 }
+                // THE POCKETS' OWN SCATTER (javap Inventory.dropAll the
+                // dropCustomDeathLoot consumer — the keepInventory-
+                // false death the compartments' every non-empty stack
+                // the THROW-RANDOMLY ItemEntity scatters, the container
+                // the walk empties slot by slot): the death spot the
+                // eye-minus-0.3 height the Player#drop law wears, the
+                // cleared rows the fresh respawn's own empty re-answers
+                if let Some(b) = self.body.as_ref() {
+                    let (px, py, pz) = (b.x, b.y + b.eye_height() - 0.3, b.z);
+                    self.drop_inventory_at_death(px, py, pz);
+                }
             }
             self.sounds.play_death_voice(self.frame);
         }
@@ -52374,6 +52385,39 @@ impl App {
         } else {
             i
         }
+    }
+
+    /// THE POCKETS' OWN DEATH SCATTER (javap `Inventory.dropAll` the
+    /// `Player#dropCustomDeathLoot` consumer — the compartments' walk
+    /// the death speaks: every non-empty stack the THREE lists wear
+    /// (the 36 items, the 4 armor, the 1 offhand) the THROW-RANDOMLY
+    /// `Player#drop(stack, true, false)` ItemEntity answers at the
+    /// eye-minus-0.3 spot the caller passes, the 40-tick pickup delay
+    /// the setPickUpDelay call wears, the ids the caller's own counter
+    /// speaks, the container the walk empties slot by slot (the
+    /// `list.set(i, EMPTY)` the cleared rows' verdict keeps — the
+    /// respawn's fresh entity the empty pockets re-answers, the
+    /// keepInventory-true lane the offline vocabulary never carries).
+    fn drop_inventory_at_death(&mut self, px: f64, py: f64, pz: f64) {
+        let stacks: Vec<(i32, i32)> = self
+            .inventory
+            .items
+            .into_iter()
+            .chain(self.inventory.armor)
+            .chain(self.inventory.offhand)
+            .filter(|s| s.1 > 0)
+            .collect();
+        for (item, count) in stacks {
+            let id = self.next_drop_id;
+            self.next_drop_id += 1;
+            self.drops.push(crate::drops::ItemDrop::spawn_death_drop(
+                id, item, count, px, py, pz, &mut self.drop_rng,
+            ));
+        }
+        // THE CONTAINER'S OWN EMPTY (dropAll's slot clears the walk
+        // speaks — the pockets the death already emptied, the reload
+        // the empty rows the same verdict re-banks)
+        self.inventory = crate::drops::Inventory::default();
     }
 
     /// THE RESPAWN (the DeathScreen's Respawn button's own action): the

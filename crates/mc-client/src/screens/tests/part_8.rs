@@ -6940,6 +6940,73 @@ fn the_saved_player_row_wears_the_vitals() {
         assert!(app4.orbs.is_empty(), "the spectator the zero the gate keeps");
     }
 
+    /// THE DEATH'S OWN INVENTORY DROP (javap Inventory.dropAll the
+    /// dropCustomDeathLoot consumer — the compartments' every
+    /// non-empty stack the THROW-RANDOMLY ItemEntity scatters at the
+    /// eye-minus-0.3 spot, the 40-tick pickup delay the setPickUpDelay
+    /// call wears, the container the walk empties, the fresh respawn
+    /// the empty rows re-answers).
+    #[test]
+    fn the_death_scatters_the_pockets_and_the_container_empties() {
+        let mut app = App::new(5);
+        app.enter_world();
+        app.spawn_offline_body();
+        let (dx, dz) = {
+            let b = app.body.as_ref().expect("the body stands");
+            (b.x, b.z)
+        };
+        // THE STAGED POCKETS: the hotbar trio, one armor stack, the
+        // offhand — the three compartments the walk wears
+        app.inventory.items[0] = (1, 64);
+        app.inventory.items[5] = (748, 1);
+        app.inventory.items[35] = (903, 5);
+        app.inventory.armor[2] = (310, 1);
+        app.inventory.offhand[0] = (861, 1);
+        // THE FATAL DOSE (the scatters the death spot wears)
+        app.actually_hurt(100.0, HurtVoice::Plain, None, None);
+        assert!(app.dead, "the dose the player kills");
+        assert_eq!(app.drops.len(), 5, "the stacks the scatters speak");
+        let stacks: Vec<(i32, i32)> = app.drops.iter().map(|d| (d.item, d.count)).collect();
+        assert_eq!(
+            stacks,
+            vec![(1, 64), (748, 1), (903, 5), (310, 1), (861, 1)],
+            "the compartments' order the walk wears"
+        );
+        for d in &app.drops {
+            assert_eq!(d.pickup_delay, 40, "the death's own grace");
+            assert_eq!(d.vy, 0.2, "the throw's own lift");
+            assert_eq!(d.x, dx, "the x the body wears");
+            assert_eq!(d.z, dz, "the z the body wears");
+            let spread = d.vx * d.vx + d.vz * d.vz;
+            assert!(
+                spread <= 0.25,
+                "the f the 0.5 cap the magnitude's square speaks"
+            );
+        }
+        // THE CONTAINER THE DEATH EMPTIED (dropAll's slot clears —
+        // the respawn's fresh entity the empty pockets re-answers)
+        assert_eq!(
+            app.inventory,
+            crate::drops::Inventory::default(),
+            "the rows the walk empties"
+        );
+        app.respawn();
+        assert!(!app.dead, "the respawn the vitals reset");
+        assert_eq!(
+            app.inventory,
+            crate::drops::Inventory::default(),
+            "the fresh entity the empty pockets wears"
+        );
+        // THE ZERO-POCKET DEATH (the empty compartments the silence
+        // keeps — the drop-less crossing the xp orb the only spawn)
+        let mut app3 = App::new(5);
+        app3.enter_world();
+        app3.spawn_offline_body();
+        app3.actually_hurt(100.0, HurtVoice::Plain, None, None);
+        assert!(app3.dead, "the dose the player kills");
+        assert!(app3.drops.is_empty(), "the empty rows the silence keeps");
+    }
+
 
     /// THE FIRE LANES' OWN KIND ROWS (the loop's own consumption the
     /// kind fix speaks): the burning cow's death the cow's own row

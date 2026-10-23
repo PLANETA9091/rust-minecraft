@@ -31,6 +31,10 @@ const HALF: f64 = ITEM_WIDTH / 2.0;
 pub const POP_SPREAD: f64 = 0.25;
 /// The pickup delay the block drops arm (javap: `setPickUpDelay(10)`.
 pub const POP_PICKUP_DELAY: i32 = 10;
+/// The pickup delay the death drop wears (javap `Player#drop(stack,
+/// true, false)`: `setPickUpDelay(40)` — the death's two-second grace
+/// the regular pop's 10 never shares).
+pub const DEATH_PICKUP_DELAY: i32 = 40;
 /// The despawn age (javap ItemEntity.tick: `age >= 6000` discards).
 pub const DESPAWN_AGE: i32 = 6000;
 /// The settle skip's divisor (javap: `(tickCount + getId()) % 4 != 0`
@@ -294,6 +298,49 @@ impl ItemDrop {
             ticks: 0,
             pickup_delay: POP_PICKUP_DELAY,
             bob_offs: rng.next_f32() * std::f32::consts::PI * 2.0,
+            on_ground: false,
+            prev: None,
+        }
+    }
+
+    /// THE DEATH DROP'S OWN SPAWN (javap `Player#drop(stack, true,
+    /// false)` the `Inventory.dropAll` consumer — the keepInventory-
+    /// false death the compartments' stacks the THROW-RANDOMLY arm
+    /// scatters): the ItemEntity rides the player's own getX/getZ at
+    /// the `getEyeY() - 0.3F` height the caller passes, the PICKUP
+    /// DELAY 40 the setPickUpDelay call wears, the spread the random
+    /// pair draws — `f = random.nextFloat() * 0.5F`, `f1 =
+    /// random.nextFloat() * 2PI` — the delta `(-sin(f1) * f, 0.2,
+    /// cos(f1) * f)` the THROW-RANDOMLY arm speaks (the 0.2 the vy
+    /// literal wears), the bob seed the ItemEntity ctor's own roll
+    /// keeps (the ctor the drop() call precedes — the bob draw the
+    /// spread pair rides BEFORE).
+    pub fn spawn_death_drop(
+        id: i32,
+        item: i32,
+        count: i32,
+        x: f64,
+        y: f64,
+        z: f64,
+        rng: &mut Lcg,
+    ) -> Self {
+        let bob = rng.next_f32() * std::f32::consts::PI * 2.0;
+        let f = rng.next_f32() * 0.5;
+        let f1 = rng.next_f32() * std::f32::consts::PI * 2.0;
+        Self {
+            id,
+            item,
+            count,
+            x,
+            y,
+            z,
+            vx: (-f1.sin() * f) as f64,
+            vy: 0.2,
+            vz: (f1.cos() * f) as f64,
+            age: 0,
+            ticks: 0,
+            pickup_delay: DEATH_PICKUP_DELAY,
+            bob_offs: bob,
             on_ground: false,
             prev: None,
         }
