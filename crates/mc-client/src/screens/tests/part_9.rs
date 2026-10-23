@@ -3250,14 +3250,16 @@ use super::*;
 
     /// THE DISPENSER DRAG'S OWN GATES AND THE DEFERRED PLACE (the same
     /// AbstractContainerScreen walk the chest round banks — the 3x3's
-    /// own differences the block speaks): the OFFLINE SIM the direct
-    /// dispatch keeps (the held press the offline click lane answers —
-    /// the drag the LIVE window alone wears), the different item's
+    /// own differences the block speaks): the window-less wire stand-in
+    /// the drag's own gate refuses (no window, no drag — the table/
+    /// furnace's own law the hybrid wears), the different item's
     /// seat the paint refuses (the empty-painted release the deferred
     /// place's PICKUP speaks — the swap the click lane serves), the
     /// armed drag the right press silences (the in-flight gate), the
     /// wrong button's release the abort speaks, the between-slots
-    /// release the -1 PICKUP no-op rides.
+    /// release the -1 PICKUP no-op rides. THE OFFLINE SIM the drag's
+    /// own lanes the dedicated tests speak (dev-148's own round the
+    /// local walks bank).
     #[test]
     fn the_dispenser_quickcraft_gates_and_the_deferred_place_wear() {
         use crate::world_view::ContainerCommand;
@@ -3276,18 +3278,22 @@ use super::*;
         app.dispenser_slots = vec![(0, 0); 9];
         app.dispenser_mirror = vec![(0, 0); 36];
         app.dispenser_slot_rects = dispenser_rects_for(panel);
-        // THE OFFLINE SIM (dispenser_is_live false): the carried press
-        // the DIRECT DISPATCH keeps — the offline place-back the local
-        // stores speak, the drag the live window alone wears
+        // THE WINDOW-LESS WIRE STAND-IN (dispenser_is_live false, the
+        // window identity dropped): the carried press the drag's own
+        // gate refuses — the silence the arm's own refusal keeps (no
+        // place, no packet — the table/furnace's own law the hybrid
+        // wears; the OFFLINE sim the drag the dedicated tests speak)
+        app.dispenser_live_window = None;
         app.dispenser_carried = (dirt, 8);
         let (gx, gy) = dispenser_grid_slot(panel, 4);
         app.on_press(gx + 9, gy + 9);
-        assert!(!app.qc_armed, "the stand-in's press the drag never arms");
-        assert_eq!(app.dispenser_slots[4], (dirt, 8), "the offline place-back the press spoke");
-        assert_eq!(app.dispenser_carried, (0, 0), "the offline cursor the place empties");
-        assert!(click_rx.try_recv().is_err(), "the offline lane NO packet keeps");
+        assert!(!app.qc_armed, "the window-less stand-in the drag refuses");
+        assert_eq!(app.dispenser_slots[4], (0, 0), "no place the refused press speaks");
+        assert_eq!(app.dispenser_carried, (dirt, 8), "the cursor the refusal keeps");
+        assert!(click_rx.try_recv().is_err(), "the refused press NO packet keeps");
         // THE WINDOW ARMS (the cursor the belief re-speaks)
         app.dispenser_is_live = true;
+        app.dispenser_live_window = Some((5, 7));
         app.dispenser_carried = (dirt, 8);
         app.dispenser_slots[4] = (0, 0);
         // THE DIFFERENT ITEM'S SEAT REFUSES the paint — the empty-
@@ -3370,6 +3376,160 @@ use super::*;
             }
             other => panic!("expected a container click, got {other:?}"),
         }
+    }
+
+    /// THE OFFLINE DISPENSER DRAG'S OWN PAINT AND SPLIT (dev-148's own
+    /// lanes — the quickcraft walk the offline sim the table/furnace's
+    /// own gate shape wears): the carried press the drag arms (no
+    /// place, no packet), the motion the paint speaks (the grid seat
+    /// the press's own motion paints, the hotbar mirror row the paint
+    /// adds), the release the even split the local stores answer — the
+    /// grid cell the nine keeps, the hotbar row the write-through
+    /// speaks, the mirror the sync re-banks, the HUD row the sync
+    /// follows, the exact split the cursor empties — and the right
+    /// drag the one-each split serves.
+    #[test]
+    fn the_offline_dispenser_drag_the_paint_and_the_split_wear() {
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        let cell = (c, surface + 1, c);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(cell.0, cell.1, cell.2, crate::world::DISPENSER);
+        app.open_dispenser_for(cell);
+        assert_eq!(app.screen, ScreenKind::Dispenser);
+        assert!(!app.dispenser_is_live, "the offline sim the door keeps");
+        let panel = inventory_panel_origin(640, 360);
+        app.dispenser_panel = panel;
+        app.dispenser_slot_rects = dispenser_rects_for(panel);
+        for it in app.inventory.items.iter_mut() {
+            *it = (0, 0); // the deterministic store the split reads
+        }
+        app.dispenser_mirror_sync_from_inventory();
+        // the cursor 8 dirt; the drag over the grid cell 4 + the
+        // hotbar mirror row 0 (menu 36)
+        app.dispenser_carried = (dirt, 8);
+        let (ax, ay) = dispenser_grid_slot(panel, 4);
+        app.on_press(ax + 9, ay + 9);
+        assert!(app.qc_armed, "the offline carried press the drag arms");
+        assert_eq!(app.dispenser_slots[4], (0, 0), "no place the press speaks");
+        app.on_mouse_move(ax + 9, ay + 9);
+        let (bx, by) = chest_mirror_slot(panel, 27);
+        app.on_mouse_move(bx + 9, by + 9);
+        assert_eq!(app.qc_slots, vec![4, 36], "the two seats the motion paints");
+        app.on_left_release();
+        // THE SPLIT: the floor(8/2) halves the local stores speak
+        assert_eq!(app.dispenser_slots[4], (dirt, 4), "the grid cell's half");
+        assert_eq!(
+            app.inventory.items[0], (dirt, 4),
+            "the hotbar row the write-through speaks"
+        );
+        assert_eq!(app.dispenser_mirror[27], (dirt, 4), "the mirror row the sync re-banks");
+        assert_eq!(app.hotbar_slots[0], (dirt, 4), "the HUD row the sync follows");
+        assert_eq!(app.dispenser_carried, (0, 0), "the exact split the cursor empties");
+        // THE RIGHT DRAG'S OWN ONE-EACH (the type-1 the right press
+        // arms): the two seats the one each speaks, the 2-stack the
+        // seats empty
+        app.dispenser_carried = (dirt, 2);
+        let (cx, cy) = dispenser_grid_slot(panel, 5);
+        app.on_right_press(cx + 9, cy + 9);
+        assert!(app.qc_armed, "the right press the drag arms");
+        app.on_mouse_move(cx + 9, cy + 9);
+        let (dx, dy) = dispenser_grid_slot(panel, 6);
+        app.on_mouse_move(dx + 9, dy + 9);
+        assert_eq!(app.qc_slots, vec![5, 6], "the two seats the motion paints");
+        app.on_right_release();
+        assert_eq!(app.dispenser_slots[5], (dirt, 1), "the one-each's own one");
+        assert_eq!(app.dispenser_slots[6], (dirt, 1), "the one-each's own one");
+        assert_eq!(app.dispenser_carried, (0, 0), "the 2-stack the two seats empty");
+    }
+
+    /// THE OFFLINE DISPENSER DRAG'S OWN GATES AND THE DEFERRED PLACE
+    /// (dev-148's own lanes — the drag the offline sim wears): the
+    /// different item's seat the paint refuses (the empty-painted
+    /// release the deferred place's PICKUP speaks — the swap the
+    /// offline click lane serves), the between-slots press the arm
+    /// skips (the release the un-armed walk never enters), the armed
+    /// drag the right press silences (the in-flight gate), the wrong
+    /// button's release the abort speaks, the between release the
+    /// offline no-op keeps, the OUTSIDE release the -999 throw the
+    /// local drop speaks (the whole carried the primary button drops).
+    #[test]
+    fn the_offline_dispenser_drag_the_gates_and_the_deferred_place_wear() {
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        let cell = (c, surface + 1, c);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(cell.0, cell.1, cell.2, crate::world::DISPENSER);
+        app.open_dispenser_for(cell);
+        let panel = inventory_panel_origin(640, 360);
+        app.dispenser_panel = panel;
+        app.dispenser_slot_rects = dispenser_rects_for(panel);
+        // THE DIFFERENT ITEM'S SEAT REFUSES the paint — the empty-
+        // painted release the deferred place's PICKUP speaks (the swap
+        // the offline lanes serve)
+        app.dispenser_slots[4] = (stone, 5);
+        app.dispenser_carried = (dirt, 8);
+        let (gx, gy) = dispenser_grid_slot(panel, 4);
+        app.on_press(gx + 9, gy + 9);
+        assert!(app.qc_armed, "the carried press arms on ANY seat");
+        app.on_mouse_move(gx + 9, gy + 9);
+        assert!(app.qc_slots.is_empty(), "the stone seat the different carried refuses");
+        app.on_left_release();
+        assert_eq!(app.dispenser_carried, (stone, 5), "the deferred place the swap speaks");
+        assert_eq!(app.dispenser_slots[4], (dirt, 8), "the stone the hand took");
+        // THE BETWEEN-SLOTS PRESS THE ARM SKIPS (the k == -1 silence —
+        // the release the un-armed walk never enters)
+        app.dispenser_carried = (dirt, 4);
+        app.on_press(panel.0 + 170, panel.1 + 20);
+        assert!(!app.qc_armed, "the between press the arm never speaks");
+        app.on_left_release();
+        assert_eq!(app.dispenser_carried, (dirt, 4), "the un-armed release the silence keeps");
+        // THE ARMED DRAG THE RIGHT PRESS SILENCES (the in-flight gate —
+        // no split-place rides, the mismatch release the abort speaks)
+        app.dispenser_slots[4] = (0, 0);
+        app.on_press(gx + 9, gy + 9);
+        assert!(app.qc_armed, "the drag armed");
+        app.on_right_press(gx + 9, gy + 9);
+        assert!(app.qc_armed, "the right press the in-flight gate keeps");
+        assert_eq!(app.dispenser_slots[4], (0, 0), "no split-place rode the press");
+        app.on_right_release();
+        assert!(!app.qc_armed, "the wrong button's release the drag aborts");
+        assert!(app.qc_slots.is_empty(), "the abort the painted set clears");
+        // THE EMPTY-PAINT RELEASE BETWEEN THE SLOTS: the offline walk
+        // the -1 no-op keeps (no throw, no place — the cursor keeps)
+        app.on_press(gx + 9, gy + 9);
+        assert!(app.qc_armed, "the drag armed again");
+        app.on_mouse_move(panel.0 + 170, panel.1 + 20); // the paint skips (no seat)
+        assert!(app.qc_slots.is_empty(), "the between motion paints nothing");
+        app.on_left_release();
+        assert_eq!(app.dispenser_carried, (dirt, 4), "the between release the no-op keeps");
+        // THE OUTSIDE RELEASE THE THROW SPEAKS (the -999 PICKUP the
+        // local throw wears — the whole carried the primary drops: the
+        // cursor the throw empties, the headless menus the body-less
+        // silence the drop walk's own guard keeps)
+        app.on_press(gx + 9, gy + 9);
+        assert!(app.qc_armed, "the drag armed");
+        app.on_mouse_move(panel.0 + 200, panel.1 + 20); // outside — no seat
+        assert!(app.qc_slots.is_empty(), "the outside motion paints nothing");
+        app.on_left_release();
+        assert_eq!(app.dispenser_carried, (0, 0), "the whole carried the throw drops");
+        assert!(
+            app.drops.is_empty(),
+            "the headless body the drop walk's own guard keeps silent"
+        );
     }
 
 

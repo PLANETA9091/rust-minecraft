@@ -27949,19 +27949,21 @@ impl App {
     /// seat AND the outside press the arm answers (the k == -999 press
     /// the same pc 316 walk enters); the press BETWEEN the slots
     /// (k == -1) the whole arm skips. The dispenser's own gates: the
-    /// offline stand-in the silence keeps (the offline sim the direct
-    /// dispatch's own lane keeps — the LIVE window the drag alone
-    /// wears) and the render never spoken the geometry refuses (the
-    /// panel's own (0, 0) convention). THE BUTTON'S OWN TYPE
-    /// (mouseClicked pcs 338-377): the left the type-0 drag arms (pc
-    /// 338-347), the RIGHT press the type-1 (pc 353-363) — the
-    /// one-each distribution the release's own lane serves.
+    /// wire session's no window the drag refuses (the table/furnace's
+    /// own shape the gate wears — the OFFLINE sim the drag the local
+    /// lanes ride, dev-148's own answer the direct dispatch's
+    /// place-back the deferred place serves) and the render never
+    /// spoken the geometry refuses (the panel's own (0, 0)
+    /// convention). THE BUTTON'S OWN TYPE (mouseClicked pcs 338-377):
+    /// the left the type-0 drag arms (pc 338-347), the RIGHT press the
+    /// type-1 (pc 353-363) — the one-each distribution the release's
+    /// own lane serves.
     fn qc_arm_dispenser(&mut self, mx: i32, my: i32, button: usize) {
         if self.qc_armed {
             return; // pc 168-172 — the in-flight drag the press never re-arms
         }
-        if !self.dispenser_is_live || self.dispenser_live_window.is_none() {
-            return; // the offline stand-in: no window, no drag
+        if self.world_is_network && self.dispenser_live_window.is_none() {
+            return; // the stand-in: no window, no drag
         }
         if self.dispenser_slot_rects.is_empty() {
             return; // no render spoke yet — no geometry to hit
@@ -28270,6 +28272,67 @@ impl App {
         );
     }
 
+    /// THE DISPENSER'S OFFLINE DISTRIBUTION (the doClick QUICK_CRAFT
+    /// status-2 arm pcs 298-534 over the offline sim — dev-148's own
+    /// answer the drag the local lanes ride): the same place math the
+    /// other walks keep, the seats the 3x3's own numbering answers
+    /// (the grid 0..9 the nine holds, the mirror rows 9..45 the
+    /// standard store keeps — the plain slots' mayPlace the base
+    /// Slot's iconst_1 pair keeps, no special seat the 3x3 speaks),
+    /// the mirror rows' mutation the write-through the inventory
+    /// cells speak, the fresh rows the mirror's own sync re-banks,
+    /// the HUD row the store's own sync follows. NO packet — the
+    /// offline world the local answer alone keeps.
+    fn qc_distribute_dispenser_offline(&mut self) {
+        let carried = self.dispenser_carried;
+        if carried.1 <= 0 {
+            return; // pcs 307-319 — the empty cursor the walk aborts
+        }
+        let painted = self.qc_slots.len();
+        let mut k = carried.1;
+        let seats = self.qc_slots.clone(); // the disjoint borrow the write keeps
+        for &menu in &seats {
+            let (seat_id, seat_count) = self.qc_seat_stack(menu);
+            if seat_id != 0 && seat_id != carried.0 {
+                continue; // pc 373-381 — canItemQuickReplace
+            }
+            // the mayPlace verdict: the dispenser menu's slots ALL
+            // plain (the base Slot's iconst_1 pair the chest swap
+            // walk banks) — no refusal the walk wears
+            if self.qc_type != 2 && carried.1 < painted as i32 {
+                continue; // pc 394-416 — the count's own gate
+            }
+            let cap = crate::world_view::item_max_stack(carried.0);
+            // getQuickCraftPlaceCount — the type-0 floor split, the
+            // type-1's own ONE per seat the ghost keeps
+            let place_count = if self.qc_type == 1 { 1 } else { carried.1 / painted as i32 };
+            let place = std::cmp::min(place_count + seat_count, cap);
+            k -= place - seat_count; // pc 495-503 — the net the carried loses
+            let new = (carried.0, place); // pc 505-514
+            if menu < 9 {
+                if menu < self.dispenser_slots.len() {
+                    self.dispenser_slots[menu] = new;
+                }
+            } else {
+                // THE WRITE-THROUGH (the projection the inventory IS —
+                // the mirror row the inventory cell answers: the main
+                // rows 0..27 the items 9..36 keep, the hotbar 27..36
+                // the items 0..9 speak)
+                let row = menu - 9;
+                let idx = if row < 27 { 9 + row } else { row - 27 };
+                if idx < self.inventory.items.len() {
+                    self.inventory.items[idx] = new;
+                }
+            }
+        }
+        self.dispenser_carried = if k > 0 { (carried.0, k) } else { (0, 0) }; // pc 520-530 — the remainder the cursor keeps
+        // THE MIRROR'S OWN SYNC (the fresh rows EVERY mutation
+        // re-syncs — the open's own law the write-through's tail
+        // wears) + the HUD row the store's sync follows
+        self.dispenser_mirror_sync_from_inventory();
+        self.hotbar_slots = self.inventory.hotbar();
+    }
+
     /// THE GHOST'S OWN RECALC (recalculateQuickCraftRemaining — the
     /// painted set's projected leftover the cursor keeps): the type-2
     /// arm the carried's own max speaks (pc 23-39), the split arms the
@@ -28395,10 +28458,15 @@ impl App {
             if self.screen == ScreenKind::Chest {
                 self.qc_distribute_chest_wire();
             } else if self.screen == ScreenKind::Dispenser {
-                // THE 3x3'S OWN WIRE DISTRIBUTION (the chest's own
-                // shape — the dispenser window the LIVE session alone
-                // wears, the offline sim the drag never arms)
-                self.qc_distribute_dispenser_wire();
+                // THE 3x3'S OWN LANES (the click walk's own split —
+                // the wire the window belief rides, the offline sim
+                // the local write-through answer — dev-148's own
+                // lanes the drag the offline window wears)
+                if self.world_is_network {
+                    self.qc_distribute_dispenser_wire();
+                } else {
+                    self.qc_distribute_dispenser_offline();
+                }
             } else if self.screen == ScreenKind::Crafting {
                 // THE TABLE'S OWN LANES (the click walk's own split —
                 // the wire the window-1 belief rides, the offline sim
@@ -28493,46 +28561,58 @@ impl App {
         }
         if self.screen == ScreenKind::Dispenser {
             // THE DISPENSER'S OWN DEFERRED PLACE (the same pc 325-449
-            // walk the chest geometry answers — the 3x3 canvas the LIVE
-            // session alone wears the arm on, the offline sim the drag
-            // never arms): the seat the PICKUP speaks, the outside the
+            // walk the furnace geometry answers — dev-148's own shape
+            // the offline lanes the drag wears): the seat the click
+            // walk's own PICKUP serves (the wire lane the window
+            // belief rides, the offline sim the local lanes — the
+            // place-back the offline stores speak), the outside the
             // -999 drop serves, the between the -1 no-op keeps.
-            let panel = self.dispenser_panel;
             let on_seat = self
                 .dispenser_slot_rects
                 .iter()
                 .any(|&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16);
+            let panel = self.dispenser_panel;
             let outside = panel != (0, 0)
                 && (mx < panel.0
                     || my < panel.1
                     || mx >= panel.0 + 176
                     || my >= panel.1 + 166);
-            let Some((window_id, state_id)) = self.dispenser_live_window else {
-                return;
-            };
             if on_seat {
                 // pc 427-449 — the PICKUP the click walk's own lanes
                 // serve (the armed button the release wears — the right
                 // drag's deferred place the place-ONE speaks)
                 self.click_dispenser_slot(mx, my, self.qc_button as i8);
-            } else if outside {
+                return;
+            }
+            if outside {
                 // doClick pc 599-660 — the -999 PICKUP the carried's
                 // drop speaks (the whole carried the PRIMARY button
-                // drops): the LIVE session the packet the belief's
-                // clear rides (the drop entity the server's Add Entity
-                // lane spawns)
-                if let Some(sink) = self.live_clicks.as_ref() {
-                    wire_throw_outside(
-                        sink,
-                        &mut self.dispenser_carried,
-                        self.qc_button as i8,
-                        window_id,
-                        state_id,
-                    );
+                // drops): the wire session the packet the belief's
+                // clear rides, the offline sim the local throw IS
+                if self.world_is_network {
+                    let Some((window_id, state_id)) = self.dispenser_live_window else {
+                        return;
+                    };
+                    if let Some(sink) = self.live_clicks.as_ref() {
+                        wire_throw_outside(
+                            sink,
+                            &mut self.dispenser_carried,
+                            self.qc_button as i8,
+                            window_id,
+                            state_id,
+                        );
+                    }
+                } else {
+                    self.throw_dispenser_carried_outside(self.qc_button as i8);
                 }
-            } else {
+                return;
+            }
+            if self.world_is_network {
                 // pc 599's own jump — the -1 PICKUP the wire keeps (the
                 // isValidSlotIndex refusal — the no-op)
+                let Some((window_id, state_id)) = self.dispenser_live_window else {
+                    return;
+                };
                 if let Some(sink) = self.live_clicks.as_ref() {
                     let _ = sink.send(crate::world_view::ContainerCommand::Click(
                         crate::world_view::ContainerClick {
@@ -28971,16 +29051,14 @@ impl App {
     /// the menus silent).
     pub fn on_press(&mut self, mx: i32, my: i32) {
         if self.screen == ScreenKind::Dispenser {
-            // THE 3x3 CANVAS'S OWN PRESS (the chest's own offline law
-            // the direct dispatch keeps — the PICKUP table the press
-            // click speaks, the carried stack the SAME table the
-            // place-back serves; the QUICKCRAFT drag arm the LIVE
-            // window alone wears — the carried press the drag arms: NO
-            // slot click, NO packet, the placement and the distribution
-            // BOTH the release's own lanes serve; the offline sim the
-            // direct dispatch keeps — the drag the window never lacks
-            // the offline lane never wears)
-            let held = self.dispenser_is_live && self.dispenser_carried.1 > 0;
+            // THE 3x3 CANVAS'S OWN PRESS (the quickcraft drag's own arm
+            // the table/furnace's own gate shape wears — dev-148's own
+            // answer the OFFLINE sim the drag rides: the carried press
+            // the drag arms — NO slot click, NO packet, the placement
+            // and the distribution BOTH the release's own lanes serve,
+            // the place-back the deferred place speaks; the carried-
+            // empty press the PICKUP dispatch keeps)
+            let held = self.dispenser_carried.1 > 0;
             if held {
                 self.qc_arm_dispenser(mx, my, 0);
             } else {
@@ -29104,15 +29182,16 @@ impl App {
             // pcs 353-377 — the carried-NON-EMPTY press the
             // isQuickCrafting start speaks for BOTH buttons, the type
             // the button's own verdict keys — NO slot click, NO packet,
-            // the one-each distribution the release serves); the
+            // the one-each distribution the release serves; the OFFLINE
+            // sim the drag dev-148's own lanes ride — the table/
+            // furnace's own gate shape the arm wears); the
             // carried-empty press the SPLIT-PICKUP dispatch keeps (the
             // place-ONE the carried press speaks — the vanilla PICKUP's
-            // own byte the offline walk answers; the offline sim the
-            // direct dispatch keeps)
+            // own byte the offline walk answers)
             if self.qc_armed {
                 return false;
             }
-            let held = self.dispenser_is_live && self.dispenser_carried.1 > 0;
+            let held = self.dispenser_carried.1 > 0;
             if held {
                 self.qc_arm_dispenser(mx, my, 1);
             } else {
