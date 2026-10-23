@@ -5338,11 +5338,15 @@ pub struct Button {
     pub label: String,
     pub active: bool,
     pub id: &'static str,
+    /// THE SLIDER'S OWN VALUE (the AbstractSliderButton's `value`
+    /// field — 0..1 the track's own unit wears, the Some the slider
+    /// render path speaks, the None the plain button sprite keeps).
+    pub value: Option<f64>,
 }
 
 impl Button {
     pub fn new(id: &'static str, label: String, cx: i32, y: i32, w: i32) -> Self {
-        Button { x: cx - w / 2, y, w, h: 20, label, active: true, id }
+        Button { x: cx - w / 2, y, w, h: 20, label, active: true, id, value: None }
     }
 
     pub fn hovered(&self, mx: i32, my: i32) -> bool {
@@ -5350,6 +5354,38 @@ impl Button {
     }
 
     pub fn render(&self, g: &mut Gui, a: &mut GuiAssets, mx: i32, my: i32) {
+        if let Some(v) = self.value {
+            // THE SLIDER'S OWN RENDER (the AbstractSliderButton
+            // renderWidget walk — the track sprite the full rect
+            // blits, the handle the 8x20 seat at `x + value*(w-8)`
+            // wears, the hovered variants the isHoveredOrFocused arm
+            // answers, the label the caption the caption lambda
+            // composed over both speaks)
+            let hovered = self.hovered(mx, my);
+            let track = if hovered {
+                "widget/slider_highlighted"
+            } else {
+                "widget/slider"
+            };
+            g.sprite_9slice(a, track, self.x, self.y, self.w, self.h);
+            let hx = self.x + (v * (self.w - 8) as f64) as i32;
+            let handle = if hovered {
+                "widget/slider_handle_highlighted"
+            } else {
+                "widget/slider_handle"
+            };
+            g.sprite_9slice(a, handle, hx, self.y, 8, self.h);
+            let color = if self.active { WHITE } else { [0.5, 0.5, 0.5] };
+            g.text_centered(
+                a,
+                self.x + self.w / 2,
+                self.y + self.h / 2 - 4,
+                &self.label,
+                color,
+                true,
+            );
+            return;
+        }
         let sprite = if !self.active {
             "widget/button_disabled"
         } else if self.hovered(mx, my) {
@@ -5361,6 +5397,40 @@ impl Button {
         let color = if self.active { WHITE } else { [0.5, 0.5, 0.5] };
         g.text_centered(a, self.x + self.w / 2, self.y + self.h / 2 - 4, &self.label, color, true);
     }
+}
+
+/// THE SENSITIVITY SLIDER'S OWN CAPTION (the OptionInstance.SENSITIVITY
+/// toString lambda the 26.2 Options clinit banks — the `d0 = value *
+/// 2.0` the percent answers, the 0.0 the `options.sensitivity.min`
+/// end wears, the 2.0 the `options.sensitivity.max` end wears, the
+/// between the `(int)(d0 * 100.0) + "%"` composition keeps — the
+/// default 0.5 the "100%" word speaks).
+fn sensitivity_caption(v: f64) -> String {
+    let d0 = v * 2.0;
+    let word = if d0 == 0.0 {
+        tr("options.sensitivity.min").unwrap_or("*yawn*")
+    } else if d0 == 2.0 {
+        tr("options.sensitivity.max").unwrap_or("HYPERSPEED!!!")
+    } else {
+        return format!(
+            "{}: {}%",
+            tr("options.sensitivity").unwrap_or("Sensitivity"),
+            (d0 * 100.0) as i32
+        );
+    };
+    format!(
+        "{}: {}",
+        tr("options.sensitivity").unwrap_or("Sensitivity"),
+        word
+    )
+}
+
+/// THE SLIDER'S OWN MATH (the AbstractSliderButton
+/// setValueFromMouseX walk — the `(mouseX - (x + 4)) / (width - 8)`
+/// the 4px inset the thumb travel wears, the clamp the 0..1 unit
+/// keeps).
+fn sensitivity_value_from_x(mx: i32, bx: i32, bw: i32) -> f64 {
+    ((mx - (bx + 4)) as f64 / (bw - 8) as f64).clamp(0.0, 1.0)
 }
 
 /// THE LOCK ICON'S OWN STATE ARMS (javap 26.2 LockIconButton$Icon +
@@ -7908,6 +7978,17 @@ pub struct App {
     /// the unconditional disarm speaks, the armed drag the
     /// mouseDragged lane alone reads).
     pub creative_scroll_drag: bool,
+    /// THE SENSITIVITY'S OWN STORE (the `options.sensitivity`
+    /// OptionInstance the 26.2 Options clinit banks — the UnitDouble
+    /// 0..1 range the default 0.5 wears, the look curve's own
+    /// sensitivity the turnPlayer gain reads, the slider's click/drag
+    /// the store writes).
+    pub look_sensitivity: f64,
+    /// THE SLIDER'S OWN ARM (the AbstractWidget dragging field's own
+    /// shape — the press inside the track the flag arms, the held
+    /// frames the value's own seat follows, the release the disarm
+    /// speaks).
+    pub sensitivity_drag: bool,
     /// THE 45 VISIBLE PALETTE SLOTS (the CONTAINER SimpleContainer the
     /// scrollTo walk refills: cell r*9+c = items[(r+row)*9+c] or
     /// EMPTY — the display stacks the click walk never depletes).
@@ -9980,6 +10061,8 @@ impl App {
             creative_search: String::new(),
             creative_scroll: 0.0,
             creative_scroll_drag: false,
+            look_sensitivity: crate::body::LOOK_SENSITIVITY_DEFAULT,
+            sensitivity_drag: false,
             creative_palette: [(0, 0); 45],
             creative_tab: 0,
             creative_panel: (0, 0),
@@ -20319,6 +20402,10 @@ impl App {
     /// order — a bow release does not speak a dig abort).
     pub fn on_left_release(&mut self) {
         self.dig_held = false;
+        // THE SLIDER'S OWN DISARM (the mouseReleased walk's own lane —
+        // the release the dragging flag the unconditional false
+        // speaks, the same law the creative scrollbar's disarm wears)
+        self.sensitivity_drag = false;
         // THE SCROLLBAR'S OWN DISARM (the mouseReleased walk's own first
         // lane — the button-0 release the `scrolling` flag the
         // unconditional false speaks BEFORE the tab walk; the sim's
@@ -29828,6 +29915,22 @@ impl App {
     /// attack swing (the world's left press — the guard inside keeps
     /// the menus silent).
     pub fn on_press(&mut self, mx: i32, my: i32) {
+        // THE SENSITIVITY SLIDER'S OWN ARM (the AbstractSliderButton's
+        // mouseDown walk — the press INSIDE the track the value's own
+        // seat answers, the armed flag the held drag rides, the
+        // outside press the slider never claims; the rect the last
+        // render's own build wears, the same seat the on_click
+        // dispatch reads)
+        if self.screen == ScreenKind::Options {
+            if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_sensitivity") {
+                let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
+                if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
+                    self.look_sensitivity = sensitivity_value_from_x(mx, bx, bw);
+                    self.sensitivity_drag = true;
+                }
+            }
+            return;
+        }
         if self.screen == ScreenKind::Dispenser {
             // THE 3x3 CANVAS'S OWN PRESS (the quickcraft drag's own arm
             // the table/furnace's own gate shape wears — dev-148's own
@@ -40034,11 +40137,13 @@ impl App {
     /// the turnPlayer curve (the sensitivity 0.5 slider, the famous
     /// 0.15 deg/px). No-op without a body (the headless scenes) or
     /// while paused (the pause freezes the look — the vanilla's own
-    /// pause law).
+    /// pause law). THE SLIDER'S OWN STORE the gain now reads — the
+    /// `options.sensitivity` the Options seat's slider writes, the
+    /// default 0.5 the curve the legacy seat wore keeps.
     pub fn on_look_delta(&mut self, dx: f64, dy: f64) {
         if self.screen == ScreenKind::World && !self.paused {
             if let Some(b) = self.body.as_mut() {
-                b.turn(dx, dy, crate::body::LOOK_SENSITIVITY_DEFAULT);
+                b.turn(dx, dy, self.look_sensitivity);
             }
         }
     }
@@ -40056,6 +40161,23 @@ impl App {
                 let deg = crate::body::TURN_KEY_RATE_DEG_PER_SEC * dt_secs;
                 b.turn_keys(x * deg, y * deg);
             }
+        }
+    }
+
+    /// THE SENSITIVITY SLIDER'S OWN DRAG (the AbstractWidget's armed
+    /// lane — the press inside the track the flag armed, the held
+    /// frames the value's own seat the cursor's x follows, the rect
+    /// the armed lane never re-checks — the vanilla's own once-armed
+    /// drag the track's outside rides; the disarm the release's own
+    /// walk speaks, the screen gate the stale arm a mid-drag close
+    /// the rebuild never inherits).
+    pub fn on_sensitivity_slider_drag(&mut self, mx: i32) {
+        if !self.sensitivity_drag || self.screen != ScreenKind::Options {
+            return;
+        }
+        if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_sensitivity") {
+            let (bx, bw) = (b.x, b.w);
+            self.look_sensitivity = sensitivity_value_from_x(mx, bx, bw);
         }
     }
 
@@ -61096,6 +61218,21 @@ impl App {
         g.text_centered(a, w / 2, 12, tr("options.title").unwrap_or("Options"), WHITE, true);
         let cx = w / 2;
         let bw = 140;
+        // THE SENSITIVITY SLIDER'S OWN ROW (the OptionInstance.SENSITIVITY
+        // seat the 26.2 Options clinit banks — the UnitDouble 0..1 the
+        // slider's own track wears, the caption the value's own word
+        // speaks, the Some the slider render path answers): the row
+        // the column's head wears, the press/drag the store's own
+        // lane serves.
+        let mut sens = Button::new(
+            "opt_sensitivity",
+            sensitivity_caption(self.look_sensitivity),
+            cx,
+            h / 2 - 40,
+            bw,
+        );
+        sens.value = Some(self.look_sensitivity);
+        self.buttons.push(sens);
         // volume sliders rendered as labeled buttons with percentage fill
         let music = format!(
             "{}: {}%",

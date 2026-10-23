@@ -2082,6 +2082,13 @@ pub fn run_gui_app(
         if left_down && app.creative_scroll_drag {
             app.on_creative_scroll_drag(gmy);
         }
+        // THE SENSITIVITY SLIDER'S OWN DRAG (the AbstractSliderButton's
+        // armed lane — the press inside the track armed the flag, the
+        // held frames the value's own seat the cursor's x follows, the
+        // release the disarm speaks below)
+        if left_down && app.sensitivity_drag {
+            app.on_sensitivity_slider_drag(gmx);
+        }
         // the LEFT press's falling edge (the vanilla's own release lane):
         // the dig's hold flag drops and the destroy state ABORTs (the
         // continueAttack(false) tail — the crack overlay clears)

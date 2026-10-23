@@ -8698,3 +8698,107 @@ use super::*;
             "the inactive button the click never disarms"
         );
     }
+
+    /// THE SENSITIVITY SLIDER'S OWN LAW (the OptionInstance.SENSITIVITY
+    /// seat the 26.2 Options clinit banks — the UnitDouble 0..1 the
+    /// default 0.5 wears, the caption the value*2 the percent answers
+    /// (the 0.0 the *yawn* end wears, the 2.0 the HYPERSPEED!!! end
+    /// wears), the press the setValueFromMouseX walk speaks, the armed
+    /// drag the track's outside rides, the release the disarm speaks).
+    #[test]
+    fn the_sensitivity_slider_wears_the_value_and_caption_law() {
+        let mut app = App::new(3);
+        assert_eq!(
+            app.look_sensitivity, 0.5,
+            "the default the UnitDouble's own 0.5 wears"
+        );
+        app.open(ScreenKind::Options);
+        app.render_title_buttons_for_test();
+        let b = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "opt_sensitivity")
+            .expect("the slider row")
+            .clone();
+        assert_eq!(
+            b.label, "Sensitivity: 100%",
+            "the default's own caption the 0.5*2 percent speaks"
+        );
+        assert_eq!(b.value, Some(0.5), "the slider render path the value wears");
+        // THE CENTER PRESS (the setValueFromMouseX walk — the 4px inset
+        // the thumb travel wears, the mid-track the 0.5 the unit keeps)
+        app.on_press(b.x + b.w / 2, b.y + b.h / 2);
+        assert_eq!(app.look_sensitivity, 0.5, "the center the 0.5 keeps");
+        assert!(app.sensitivity_drag, "the press inside the track arms");
+        // THE RIGHT EDGE (the clamp the 1.0 keeps) + THE ARMED DRAG the
+        // rect never re-checks (the track's outside the same seat rides)
+        app.on_press(b.x + b.w - 1, b.y + b.h / 2);
+        assert_eq!(app.look_sensitivity, 1.0, "the right edge clamps");
+        app.on_sensitivity_slider_drag(b.x + b.w + 60);
+        assert_eq!(app.look_sensitivity, 1.0, "the beyond-right drag clamps");
+        // THE RELEASE'S OWN DISARM (the mouseReleased walk — the flag
+        // the unconditional false speaks, the disarmed drag the
+        // silence keeps)
+        app.on_left_release();
+        assert!(!app.sensitivity_drag, "the release disarms");
+        app.on_sensitivity_slider_drag(b.x + 4);
+        assert_eq!(app.look_sensitivity, 1.0, "the disarmed drag never moves");
+        // THE MAX END'S CAPTION (the d0 == 2.0 the HYPERSPEED!!! wears)
+        app.render_title_buttons_for_test();
+        let b = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "opt_sensitivity")
+            .expect("the slider row")
+            .clone();
+        assert_eq!(b.label, "Sensitivity: HYPERSPEED!!!");
+        assert_eq!(b.value, Some(1.0));
+        // THE LEFT EDGE (the clamp the 0.0 keeps — the *yawn* end wears)
+        app.on_press(b.x + 4, b.y + b.h / 2);
+        assert_eq!(app.look_sensitivity, 0.0, "the left edge clamps");
+        app.on_left_release();
+        app.render_title_buttons_for_test();
+        let b = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "opt_sensitivity")
+            .expect("the slider row")
+            .clone();
+        assert_eq!(b.label, "Sensitivity: *yawn*");
+    }
+
+    /// THE LOOK LANE'S OWN STORE (the on_look_delta walk — the slider
+    /// the `options.sensitivity` the curve's own gain writes, the same
+    /// drag the sharper turn speaks; THE KEYBOARD LANE'S OWN
+    /// INDEPENDENCE the verdict keeps — the turn key's rate the
+    /// slider never scales, the lane's own law the store never reads).
+    #[test]
+    fn the_look_lane_wears_the_stored_sensitivity() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.look_sensitivity = 0.5;
+        let y0 = app.body.as_ref().unwrap().yaw;
+        app.on_look_delta(100.0, 0.0);
+        let y1 = app.body.as_ref().unwrap().yaw;
+        assert!(y1 > y0, "the positive drag the positive yaw wears");
+        // THE SHARPER GAIN (the 1.0 the same drag the wider turn wears
+        // — the store the curve's own sensitivity reads)
+        app.look_sensitivity = 1.0;
+        app.on_look_delta(-100.0, 0.0);
+        let y2 = app.body.as_ref().unwrap().yaw;
+        assert!(
+            y2 < y0,
+            "the 1.0 gain the same drag the sharper turn-back wears"
+        );
+        // THE KEYBOARD LANE'S OWN INDEPENDENCE (the rate the slider
+        // never scales — 180 deg/s the dt alone scales, the 0.5s the
+        // quarter revolution speaks at ANY sensitivity)
+        let y3 = app.body.as_ref().unwrap().yaw;
+        app.on_turn_key(1.0, 0.0, 0.5);
+        let y4 = app.body.as_ref().unwrap().yaw;
+        assert_eq!(
+            y4 - y3, 90.0,
+            "the keyboard lane's own rate the slider never scales"
+        );
+    }
