@@ -8589,3 +8589,63 @@ fn the_saved_player_row_wears_the_vitals() {
         );
         assert!(rx.try_recv().is_err(), "no Attack packet the offline press sends");
     }
+
+    /// THE DODAYLIGHTCYCLE RULE'S OWN FREEZE LAW (the RULE_DAYLIGHT
+    /// row the clock's advance gate reads): the false the per-tick day
+    /// step the walk never earns — the world's own ticks the frame
+    /// keeps (the pause law's own shape), the manual `/time set` the
+    /// frozen walk still re-anchors, the re-armed rule the advance
+    /// resumes.
+    #[test]
+    fn the_do_daylight_cycle_rule_freezes_the_day_clock() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        // THE BASELINE WALK (the default TRUE the 1-tick step earns)
+        app.chat_open = true;
+        app.chat_input = "/time set 6000".into();
+        app.on_chat_submit();
+        assert_eq!(app.day_time_now(), 6000, "the manual write the walk pre-arms");
+        for _ in 0..10 {
+            app.update();
+        }
+        assert_eq!(app.day_time_now(), 6010, "the default walk the step earns");
+        // THE DISARM (the rule the set walk flips — the chat literal's
+        // own arm): the day the freeze never earns, the frame the
+        // world's own beat still speaks
+        app.chat_open = true;
+        app.chat_input = "/gamerule doDaylightCycle false".into();
+        app.on_chat_submit();
+        assert!(!app.do_daylight_cycle, "the set the rule disarms");
+        for _ in 0..10 {
+            app.update();
+        }
+        assert_eq!(app.day_time_now(), 6010, "the frozen day the rule keeps");
+        assert_eq!(app.frame, 20, "the world's own ticks the rule never gates");
+        // THE MANUAL WRITE UNDER THE FREEZE (the frozen walk the set
+        // arm still re-anchors — the rule the advance gates, the
+        // manual lane the write keeps; the freeze the write never
+        // thaws)
+        app.chat_open = true;
+        app.chat_input = "/time set 7000".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.day_time_now(),
+            7000,
+            "the manual write the freeze never gates"
+        );
+        for _ in 0..10 {
+            app.update();
+        }
+        assert_eq!(app.day_time_now(), 7000, "the frozen day the write never thaws");
+        // THE RE-ARM (the rule the set walk flips back — the advance
+        // the walk resumes)
+        app.chat_open = true;
+        app.chat_input = "/gamerule doDaylightCycle true".into();
+        app.on_chat_submit();
+        assert!(app.do_daylight_cycle, "the set the rule re-arms");
+        for _ in 0..10 {
+            app.update();
+        }
+        assert_eq!(app.day_time_now(), 7010, "the re-armed walk the step resumes");
+    }

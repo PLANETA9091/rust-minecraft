@@ -8632,6 +8632,16 @@ pub struct App {
     /// trio + pockets the rule re-copies. The `/gamerule keepInventory`
     /// command the row's own walk serves.
     pub keep_inventory: bool,
+    /// THE DODAYLIGHTCYCLE GAMERULE'S OWN ROW (javap
+    /// `GameRules.RULE_DAYLIGHT` the 26.2 clinit speaks — the
+    /// BooleanValue the day clock's own advance gate reads): the TRUE
+    /// the vanilla world creation's own default wears (the 1-tick step
+    /// the walk keeps), the FALSE the daylight the freeze never earns —
+    /// the clock the advance the rule gates (the `/time set`/`add`
+    /// manual writes the freeze never gates, the world's own ticks the
+    /// frame keeps). The `/gamerule doDaylightCycle` command the row's
+    /// own walk serves.
+    pub do_daylight_cycle: bool,
     /// THE ABILITIES OBJECT'S OWN BANK (the vanilla client's ONE
     /// `Abilities` instance the whole walk family reads —
     /// `LocalPlayer.aiStep`'s mayfly gate, `MultiPlayerGameMode`'s
@@ -10082,6 +10092,7 @@ impl App {
             game_mode: GameMode::Survival,
             previous_game_mode: None,
             keep_inventory: false,
+            do_daylight_cycle: true,
             abilities_word: None,
             gm_hovered: 0,
             gm_first_mouse: None,
@@ -10454,12 +10465,16 @@ impl App {
         // the accumulated time the clock OWNS, the shared tick
         // counter no longer the day's ride): the pause the advance
         // gates (`setPaused` — the day alone freezes, the world's
-        // own ticks keep), the rate the per-tick step scales
+        // own ticks keep), the doDaylightCycle-false gamerule the
+        // SAME freeze wears (the RULE_DAYLIGHT row the gate reads —
+        // the manual `/time` writes the freeze never gates), the
+        // rate the per-tick step scales
         // (`setRate` — the fractional carry the floor folds, the
         // whole ticks the clock banks), the default 1.0 the
         // bit-exact one-tick step the old `base + frame` fold wore.
-        if self.clock_paused {
-            // THE FROZEN CLOCK — the advance the pause never earns.
+        if self.clock_paused || !self.do_daylight_cycle {
+            // THE FROZEN CLOCK — the advance the pause / the
+            // doDaylightCycle-false rule never earns.
         } else if self.clock_rate == 1.0 {
             self.clock_total += 1;
         } else {
@@ -36468,30 +36483,39 @@ impl App {
             // THE GAMERULE LITERAL (javap GameRuleCommand — the
             // `literal("gamerule")` node the rule argument carries,
             // the no-value form the QUERY walk serves, the value form
-            // the SET walk serves). THE RULE the offline vocabulary
+            // the SET walk serves). THE RULES the offline vocabulary
             // carries: keepInventory — the GameRules.RULE_KEEPIVENTORY
             // row the death lanes' own gates read (the reward's zero,
-            // the scatters' refuse, the respawn's re-copy). THE
+            // the scatters' refuse, the respawn's re-copy) — and
+            // doDaylightCycle, the RULE_DAYLIGHT row the day clock's
+            // own advance gate reads (the false the per-tick step the
+            // walk never earns). THE
             // FEEDBACK (the 26.2 lang table's own rows: query
             // "Gamerule %s is currently set to: %s", set "Gamerule %s
             // is now set to: %s" — the raw rule id the first arg
             // wears, the serialized bool the second).
             ["gamerule", rule] => {
-                if *rule != "keepInventory" {
-                    // THE UNKNOWN RULE (the GameRuleArgument's own walk
-                    // — the parse failure the RED error keeps)
+                // THE KNOWN RULES (the GameRuleArgument's own walk —
+                // the two rows the offline vocabulary speaks, any
+                // other word the parse failure the RED error keeps)
+                if *rule != "keepInventory" && *rule != "doDaylightCycle" {
                     self.push_local_command_error();
                     return;
                 }
+                let val = if *rule == "keepInventory" {
+                    self.keep_inventory.to_string()
+                } else {
+                    self.do_daylight_cycle.to_string()
+                };
                 let msg = format_positional(
                     tr("commands.gamerule.query")
                         .unwrap_or("Gamerule %s is currently set to: %s"),
-                    &["keepInventory", &self.keep_inventory.to_string()],
+                    &[*rule, &val],
                 );
                 self.push_chat_message(msg);
             }
             ["gamerule", rule, value] => {
-                if *rule != "keepInventory" {
+                if *rule != "keepInventory" && *rule != "doDaylightCycle" {
                     self.push_local_command_error();
                     return;
                 }
@@ -36502,10 +36526,14 @@ impl App {
                     self.push_local_command_error();
                     return;
                 };
-                self.keep_inventory = v;
+                if *rule == "keepInventory" {
+                    self.keep_inventory = v;
+                } else {
+                    self.do_daylight_cycle = v;
+                }
                 let msg = format_positional(
                     tr("commands.gamerule.set").unwrap_or("Gamerule %s is now set to: %s"),
-                    &["keepInventory", &v.to_string()],
+                    &[*rule, &v.to_string()],
                 );
                 self.push_chat_message(msg);
             }
