@@ -2041,7 +2041,7 @@ Work Log:
   *_is_live gate keeps, every golden scene the offline canvas renders,
   the same string the same bytes draw); cargo check --all-targets
   clean.
-- Pushed <SHA> (v0.3.868, the generic title ride).
+- Pushed b8e599a (v0.3.868, the generic title ride).
 
 Stage Summary:
 - EVERY WIRED WINDOW THE SERVER'S OWN NAME WEARS: the OpenScreen
