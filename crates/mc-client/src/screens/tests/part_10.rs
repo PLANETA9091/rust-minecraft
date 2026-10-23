@@ -7895,15 +7895,32 @@ use super::*;
         let warden = crate::sculk::WardenMob::new(502, bx + 2.0, by, bz);
         app.mobs.clear();
         app.wardens.push(warden);
-        // THE BIOLUM AXIS (the constant-1.0 layer the frame lights,
-        // the texture's absence the honest skip keeps)
+        // THE BIOLUM AXIS (the constant-1.0 layer the frame lights):
+        // the jar_root law the lazy pass the REFILL arms — the take()
+        // the load's own success DEFEATS (the refilled frame the full
+        // stack wears again, the 0-diff the refill's artifact the
+        // dev-152 record's '383 cargo / 0 repo' split the honest lane
+        // now answers — the repo lane the spots loads the SUCCESS wore,
+        // the cargo lane the jar_root walk the same world sees). THE
+        // TEXTURE SWAP the axis isolates: the biolum lane the quads
+        // the SAME state wears, the texels the spots1 texture speaks —
+        // the two textures the glow palette differ, the contribution
+        // the diff bytes keep (the refill the swap never rides: both
+        // frames the Some the lane draws).
+        let Some(spots1_tex) = crate::avatar::WardenModel::load_layer(
+            root,
+            crate::avatar::WardenLayer::PulsatingSpots1,
+        ) else {
+            return;
+        };
         let plain0 = third_person_frame(&mut app);
         let saved = app.warden_biolum_model.take();
-        let no_biolum = third_person_frame(&mut app);
+        app.warden_biolum_model = Some(spots1_tex);
+        let swapped = third_person_frame(&mut app);
         app.warden_biolum_model = saved;
         let biolum_diff = plain0
             .iter()
-            .zip(no_biolum.iter())
+            .zip(swapped.iter())
             .filter(|(a, b)| a != b)
             .count();
         assert!(
@@ -7942,6 +7959,7 @@ use super::*;
             "the drained clock the gate's skip the absence answers"
         );
     }
+
 
 
     /// THE DISPENSER'S OWN THROWN SHOT (javap the 26.2 walk the

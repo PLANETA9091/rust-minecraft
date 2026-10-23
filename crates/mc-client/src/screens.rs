@@ -53958,6 +53958,13 @@ impl App {
         if self.net_boats.is_empty() && self.offline_boats.is_empty() {
             return; // the deterministic scenes carry no hulls — the goldens stay
         }
+        // THE RUNTIME ROOT'S OWN WALK (the render_avatar lane's
+        // jar_runtime_root law the boat loads wear now — the hint the
+        // repo-root cwd answers, the walk-up the package-dir processes
+        // answer). The repo-root hint the IDENTICAL path returns —
+        // the goldens' bytes the same root speaks.
+        let jar_root =
+            crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
         // THE LAZY LOAD PASS (the same honesty the mob skins speak):
         // each (raft, chest, wood) shape its own texture — a failed
         // load's None stays cached, that hull unseen, the others draw
@@ -53965,7 +53972,7 @@ impl App {
             let key = (boat.raft, boat.chest, boat.wood.clone());
             if !self.boat_models.contains_key(&key) {
                 let model = crate::avatar::BoatModel::load(
-                    std::path::Path::new("assets-cache/jar"),
+                    &jar_root,
                     boat.raft,
                     boat.chest,
                     &boat.wood,
@@ -54796,34 +54803,40 @@ impl App {
         if self.mobs.is_empty() && self.net_mobs.is_empty() && self.wardens.is_empty() {
             return; // the deterministic scenes carry no mobs — the goldens stay
         }
+        // THE RUNTIME ROOT'S OWN WALK (the render_avatar lane's
+        // jar_runtime_root law the mob loads wear now): the hint the
+        // repo-root cwd answers, the package-dir processes the walk-up
+        // answers — the pig/cow/sheep lazy loads the cargo lane the
+        // degenerate None never wore. The repo-root hint the IDENTICAL
+        // path returns — the goldens' bytes the same root speaks.
+        let jar_root =
+            crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
         if self.zombie_avatar.is_none() {
-            self.zombie_avatar = crate::avatar::AvatarModel::load_zombie(std::path::Path::new(
-                "assets-cache/jar",
-            ));
+            self.zombie_avatar = crate::avatar::AvatarModel::load_zombie(&jar_root);
         }
         let Some(model) = &self.zombie_avatar else {
             return; // the zombie skin failed its sha1 — the mobs stay unseen
         };
         if self.pig_model.is_none() {
-            self.pig_model = crate::avatar::PigModel::load(std::path::Path::new("assets-cache/jar"));
+            self.pig_model = crate::avatar::PigModel::load(&jar_root);
         }
         if self.cow_model.is_none() {
-            self.cow_model = crate::avatar::CowModel::load(std::path::Path::new("assets-cache/jar"));
+            self.cow_model = crate::avatar::CowModel::load(&jar_root);
         }
         if self.sheep_model.is_none() {
             self.sheep_model =
-                crate::avatar::SheepModel::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::SheepModel::load(&jar_root);
         }
         if self.sheep_wool_model.is_none() {
             self.sheep_wool_model =
-                crate::avatar::SheepWoolModel::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::SheepWoolModel::load(&jar_root);
         }
         // THE UNDERCOAT's own lazy load (the SheepWoolUndercoatLayer's
         // own texture — the same honesty: a failed undercoat keeps only
         // the undercoat unseen, the bodies + the wool fur keep drawing)
         if self.sheep_wool_undercoat_model.is_none() {
             self.sheep_wool_undercoat_model =
-                crate::avatar::SheepWoolUndercoatModel::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::SheepWoolUndercoatModel::load(&jar_root);
         }
         // THE BABY LANE's own lazy loads (the AgeableMobRenderer's
         // babyModel field the isBaby word picks — each kind's honesty
@@ -54831,30 +54844,30 @@ impl App {
         // that kind unseen)
         if self.baby_sheep_model.is_none() {
             self.baby_sheep_model =
-                crate::avatar::BabySheepModel::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::BabySheepModel::load(&jar_root);
         }
         if self.baby_sheep_wool_model.is_none() {
             self.baby_sheep_wool_model =
-                crate::avatar::BabySheepWoolModel::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::BabySheepWoolModel::load(&jar_root);
         }
         if self.baby_cow_model.is_none() {
             self.baby_cow_model =
-                crate::avatar::BabyCowModel::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::BabyCowModel::load(&jar_root);
         }
         if self.baby_pig_model.is_none() {
             self.baby_pig_model =
-                crate::avatar::BabyPigModel::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::BabyPigModel::load(&jar_root);
         }
         // THE CHICKEN LANE's own lazy loads (the adult + the baby —
         // the same honesty: a failed chicken skin keeps only the
         // chickens unseen)
         if self.chicken_model.is_none() {
             self.chicken_model =
-                crate::avatar::ChickenModel::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::ChickenModel::load(&jar_root);
         }
         if self.baby_chicken_model.is_none() {
             self.baby_chicken_model =
-                crate::avatar::BabyChickenModel::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::BabyChickenModel::load(&jar_root);
         }
         // THE VARIANT SKINS' OWN LAZY WALK (the cold/warm pairs the
         // same cache keeps — each load's sha1 verdict its own lane,
@@ -54862,20 +54875,20 @@ impl App {
         // draw)
         if self.chicken_cold_model.is_none() {
             self.chicken_cold_model =
-                crate::avatar::ChickenColdModel::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::ChickenColdModel::load(&jar_root);
         }
         if self.chicken_warm_model.is_none() {
             self.chicken_warm_model =
-                crate::avatar::ChickenModel::load_warm(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::ChickenModel::load_warm(&jar_root);
         }
         if self.baby_chicken_cold_model.is_none() {
             self.baby_chicken_cold_model = crate::avatar::BabyChickenModel::load_cold(
-                std::path::Path::new("assets-cache/jar"),
+                &jar_root,
             );
         }
         if self.baby_chicken_warm_model.is_none() {
             self.baby_chicken_warm_model = crate::avatar::BabyChickenModel::load_warm(
-                std::path::Path::new("assets-cache/jar"),
+                &jar_root,
             );
         }
         // THE PIG/COW VARIANTS' OWN LAZY WALK (the same honesty the
@@ -54883,57 +54896,57 @@ impl App {
         // lane)
         if self.pig_cold_model.is_none() {
             self.pig_cold_model =
-                crate::avatar::ColdPigModel::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::ColdPigModel::load(&jar_root);
         }
         if self.pig_warm_model.is_none() {
             self.pig_warm_model =
-                crate::avatar::PigModel::load_warm(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::PigModel::load_warm(&jar_root);
         }
         if self.cow_cold_model.is_none() {
             self.cow_cold_model =
-                crate::avatar::ColdCowModel::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::ColdCowModel::load(&jar_root);
         }
         if self.cow_warm_model.is_none() {
             self.cow_warm_model =
-                crate::avatar::WarmCowModel::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::WarmCowModel::load(&jar_root);
         }
         if self.baby_pig_cold_model.is_none() {
             self.baby_pig_cold_model = crate::avatar::BabyPigModel::load_cold(
-                std::path::Path::new("assets-cache/jar"),
+                &jar_root,
             );
         }
         if self.baby_pig_warm_model.is_none() {
             self.baby_pig_warm_model = crate::avatar::BabyPigModel::load_warm(
-                std::path::Path::new("assets-cache/jar"),
+                &jar_root,
             );
         }
         if self.baby_cow_cold_model.is_none() {
             self.baby_cow_cold_model = crate::avatar::BabyCowModel::load_cold(
-                std::path::Path::new("assets-cache/jar"),
+                &jar_root,
             );
         }
         if self.baby_cow_warm_model.is_none() {
             self.baby_cow_warm_model = crate::avatar::BabyCowModel::load_warm(
-                std::path::Path::new("assets-cache/jar"),
+                &jar_root,
             );
         }
         // THE SPIDER LANE's own lazy load (the same honesty: a failed
         // spider skin keeps only the spiders unseen)
         if self.spider_model.is_none() {
             self.spider_model =
-                crate::avatar::SpiderModel::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::SpiderModel::load(&jar_root);
         }
         // THE CREEPER LANE's own lazy load (the same honesty: a failed
         // creeper skin keeps only the creepers unseen)
         if self.creeper_model.is_none() {
             self.creeper_model =
-                crate::avatar::CreeperModel::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::CreeperModel::load(&jar_root);
         }
         // THE WARDEN LANE's own lazy load (the same honesty: a failed
         // warden skin keeps only the wardens unseen)
         if self.warden_model.is_none() {
             self.warden_model =
-                crate::avatar::WardenModel::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::WardenModel::load(&jar_root);
         }
         // THE EMISSIVE LAYERS' own lazy walks (the ctor's addLayer
         // set — each texture its OWN sha1 lane, a failed layer keeps
@@ -54941,25 +54954,25 @@ impl App {
         // drawing)
         if self.warden_heart_model.is_none() {
             self.warden_heart_model = crate::avatar::WardenModel::load_layer(
-                std::path::Path::new("assets-cache/jar"),
+                &jar_root,
                 crate::avatar::WardenLayer::Heart,
             );
         }
         if self.warden_biolum_model.is_none() {
             self.warden_biolum_model = crate::avatar::WardenModel::load_layer(
-                std::path::Path::new("assets-cache/jar"),
+                &jar_root,
                 crate::avatar::WardenLayer::Bioluminescent,
             );
         }
         if self.warden_spots1_model.is_none() {
             self.warden_spots1_model = crate::avatar::WardenModel::load_layer(
-                std::path::Path::new("assets-cache/jar"),
+                &jar_root,
                 crate::avatar::WardenLayer::PulsatingSpots1,
             );
         }
         if self.warden_spots2_model.is_none() {
             self.warden_spots2_model = crate::avatar::WardenModel::load_layer(
-                std::path::Path::new("assets-cache/jar"),
+                &jar_root,
                 crate::avatar::WardenLayer::PulsatingSpots2,
             );
         }
@@ -54968,11 +54981,11 @@ impl App {
         // baby the two OWN shas the loads verify)
         if self.wolf_model.is_none() {
             self.wolf_model =
-                crate::avatar::WolfModel::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::WolfModel::load(&jar_root);
         }
         if self.baby_wolf_model.is_none() {
             self.baby_wolf_model =
-                crate::avatar::BabyWolfModel::load(std::path::Path::new("assets-cache/jar"));
+                crate::avatar::BabyWolfModel::load(&jar_root);
         }
         // the pig's honesty is its OWN lane: a failed pig skin keeps
         // only the pigs unseen, the zombies keep drawing
@@ -55107,7 +55120,7 @@ impl App {
                 }
                 let loaded = mc_registry::generated::equipment::find(name).and_then(|e| {
                     crate::avatar::ArmorTex::load(
-                        std::path::Path::new("assets-cache/jar"),
+                        &jar_root,
                         dir,
                         e,
                     )
@@ -55712,7 +55725,7 @@ impl App {
                     // kinds' lanes speak)
                     if self.skeleton_avatar.is_none() {
                         self.skeleton_avatar = crate::avatar::AvatarModel::load_skeleton(
-                            std::path::Path::new("assets-cache/jar"),
+                            &jar_root,
                         );
                     }
                     let Some(skeleton) = &self.skeleton_avatar else {
@@ -56230,7 +56243,7 @@ impl App {
             if mob.fire_ticks > 0 {
                 if self.fire_strips.is_none() {
                     self.fire_strips =
-                        crate::avatar::FireStrips::load(std::path::Path::new("assets-cache/jar"));
+                        crate::avatar::FireStrips::load(&jar_root);
                 }
                 if let Some(strips) = &self.fire_strips {
                     let flames = crate::avatar::flame_quads(feet, bbox_w, bbox_h, cam.yaw, day_time);
