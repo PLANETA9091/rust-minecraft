@@ -1993,3 +1993,64 @@ Stage Summary:
   front read never serves, the thrown-shot's wire lane (the Add Entity
   word the live read banks), the README's golden section the 19-row
   runner's own row the text could name.
+---
+Task ID: autopush-144
+Agent: cron autopush (Job 384923, 2026-10-23 07:47:17 +08:00, trace 1a0a02c3c1060631-cron-agent-loop-202610230753)
+Task: ONE minimal step per the tick protocol — the worklog's NEXT
+CANDIDATES head: the chest/furnace/table windows the same decode ride
+(the helper generic — the arms the live_dispenser_title shape mirrors).
+
+Work Log:
+- THE REPO THE CLEAN TREE ANSWERED (HEAD 044f768, origin in sync; the
+  v0.3.867 live title lane the previous round wore).
+- THE GENERIC RIDE NOW LANDS: the OpenScreen Component's own decode
+  the THREE canvases the 3x3's round owned — the chest's
+  container.chest window, the furnace family's kind rows (the menu
+  14/10/22 the same arm routes), the table's container.crafting —
+  each the verbatim title_nbt the projection feeds, each the decode
+  lane the walk answers.
+- THE LANES: screens.rs the live_chest_title / live_furnace_title /
+  live_table_title fields the decode round's shape mirrors (each None
+  the default lang row the canvas banks, each dying with its own
+  window); the live_container_updated arms the decode lands (the
+  table's 46-slot store, the furnace's 39-slot, the chest's 63-slot
+  the projection feeds); the close paths the titles kill
+  (close_crafting_table / close_furnace / close_chest_container — the
+  player's OWN close the field drops) + the store's drop arm the same
+  law serves (the None-drop resets the three fields the dispenser's
+  line mirrors); the renders the live names wear — the chest's
+  left-edge 8,6 draw, the furnace's centered formula, the table's
+  29,6 — each the live gate the *_is_live flag speaks (the None the
+  default row banks, the offline canvas the same string wears — the
+  golden bytes the shape never moves).
+- +2 tests: the three-arm decode ride (the chest's text literal the
+  anvil rename speaks, the furnace's container.furnace translatable
+  the lang row answers, the table's container.crafting the same law
+  wears; the fresh window's own name re-speaks, the silent bytes the
+  None fallback banks, the store's drop every title kills, the
+  re-arm the next window's name rides — the one-window-at-a-time flow
+  the server's own close-between-windows law the drops wear), the
+  player's OWN close lane (close_chest_container / close_furnace /
+  close_crafting_table the titles kill — the offline stand-in the
+  dead field never reads, no stale name rides the golden's canvas).
+- fmt: the lane's hunks the hand-styled form keep (the fmt-check diff
+  count the HEAD's own 1539 wears — no hunk in the touched files).
+- Suite: 2664 passed / 0 failed / 22 ignored (2327 mc-client + 157
+  mc-protocol + 100 mc-registry + 80 mc2rs-pixel; +2 title tests);
+  goldens 19/19 PASS rms 0.000 (NO regeneration — the live lane the
+  *_is_live gate keeps, every golden scene the offline canvas renders,
+  the same string the same bytes draw); cargo check --all-targets
+  clean.
+- Pushed <SHA> (v0.3.868, the generic title ride).
+
+Stage Summary:
+- EVERY WIRED WINDOW THE SERVER'S OWN NAME WEARS: the OpenScreen
+  Component the chest/furnace/table canvases decode, the anvil rename
+  the live window renders, the title dies with its window — the same
+  law the 3x3's round spoke, the helper generic now banks.
+- NEXT CANDIDATES: the quickcraft drag arm the dispenser's carried
+  press the deferred place could wear (the chest's own live shape),
+  the shulker box the getContainerAt walk the dropper's front read
+  never serves, the thrown-shot's wire lane (the Add Entity word the
+  live read banks), the README's golden section the 19-row runner's
+  own row the text could name.

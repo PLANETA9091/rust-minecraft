@@ -7757,6 +7757,16 @@ pub struct App {
     /// spoke, the decode found no text) — the field dies with the
     /// window (the close and the store's drop the live flags mirror).
     pub live_dispenser_title: Option<String>,
+    /// THE LIVE WINDOW'S OWN DECODED TITLES (the same OpenScreen
+    /// Component walk the 3x3 canvas's lane owns — the chest's
+    /// container.chest window, the furnace family's kind rows, the
+    /// table's container.crafting the decode answers): one field per
+    /// canvas, each `None` the default lang row the canvas banks, each
+    /// dying with its own window (the close and the store's drop the
+    /// live flags mirror).
+    pub live_chest_title: Option<String>,
+    pub live_furnace_title: Option<String>,
+    pub live_table_title: Option<String>,
     /// The mouse position in GUI units the LAST loop tick tracked —
     /// the carried stack renders here (the vanilla cursor-follow).
     /// `None` wherever no live mouse has moved (the headless scenes:
@@ -9483,6 +9493,9 @@ impl App {
             dispenser_is_live: false,
             dispenser_live_window: None,
             live_dispenser_title: None,
+            live_chest_title: None,
+            live_furnace_title: None,
+            live_table_title: None,
             mouse_pos: None,
             shift_down: false,
             press_doubled: false,
@@ -20377,6 +20390,7 @@ impl App {
             // the LIVE window's own block entity the server speaks —
             // the offline sim's memory retires with it
             self.furnace_pos = None;
+            self.live_furnace_title = None; // the title dies with the window
         }
         self.furnace_live_window = None;
         // the player's OWN close returns the held stack to the
@@ -23125,6 +23139,7 @@ impl App {
             }
             self.table_is_live = false;
             self.table_live_window = None;
+            self.live_table_title = None; // the title dies with the window
             self.live_table_carried = (0, 0);
             self.open(ScreenKind::World);
             return;
@@ -24520,14 +24535,21 @@ impl App {
         g.fill(px, py + panel_h - 1, 176, 1, dark); // bottom bevel
         g.fill(px + 175, py, 1, panel_h, dark); // right bevel
         let label = [0.251, 0.251, 0.251]; // 0x404040
-        g.text(
-            a,
-            px + 8,
-            py + 6,
-            tr("container.chest").unwrap_or("Chest"),
-            label,
-            false,
-        );
+        // THE LIVE WINDOW'S OWN NAME (the same decode ride — the wire's
+        // custom name the anvil rows speak; the None the
+        // container.chest default the offline canvas wears — the
+        // golden bytes the shape never moves)
+        let chest_title: String = if self.chest_is_live {
+            self.live_chest_title
+                .clone()
+                .or_else(|| tr("container.chest").map(String::from))
+                .unwrap_or_default()
+        } else {
+            tr("container.chest").unwrap_or("Chest").to_string()
+        };
+        if !chest_title.is_empty() {
+            g.text(a, px + 8, py + 6, &chest_title, label, false);
+        }
         for i in 0..n {
             let (sx, sy) = chest_container_slot((px, py), i);
             g.sprite(a, "container/slot", sx, sy);
@@ -25235,10 +25257,22 @@ impl App {
         // the store's syncs feed), the offline store's own fields
         let live = self.world_is_network && self.table_is_live;
         // THE TITLE (the init's own titleLabelX 29 — the
-        // extractLabels walk the base class defaults ride)
+        // extractLabels walk the base class defaults ride). THE LIVE
+        // WINDOW'S OWN NAME (the decode lane's ride — the wire's
+        // custom name the anvil rows speak; the None the
+        // container.crafting default the offline canvas wears — the
+        // golden bytes the shape never moves)
         let label = [0.251, 0.251, 0.251];
-        if let Some(t) = tr("container.crafting") {
-            g.text(a, panel.0 + 29, panel.1 + 6, t, label, false);
+        let title_text: String = if live {
+            self.live_table_title
+                .clone()
+                .or_else(|| tr("container.crafting").map(String::from))
+                .unwrap_or_default()
+        } else {
+            tr("container.crafting").unwrap_or("").to_string()
+        };
+        if !title_text.is_empty() {
+            g.text(a, panel.0 + 29, panel.1 + 6, &title_text, label, false);
         }
         if let Some(t) = tr("container.inventory") {
             g.text(a, panel.0 + 8, panel.1 + 166 - 94, t, label, false);
@@ -25644,9 +25678,21 @@ impl App {
         // AbstractFurnaceScreen's own override the crafting's left
         // edge never speaks; titleLabelY 6 the base class keeps)
         let label = [0.251, 0.251, 0.251];
-        if let Some(t) = tr(title_key) {
-            let tx = panel.0 + (176 - g.text_width(t)) / 2;
-            g.text(a, tx, panel.1 + 6, t, label, false);
+        // THE LIVE WINDOW'S OWN NAME (the same decode ride — the wire's
+        // custom name the anvil rows speak; the None the kind's own
+        // lang row the offline canvas wears — the golden bytes the
+        // shape never moves)
+        let title_text: String = if self.furnace_is_live {
+            self.live_furnace_title
+                .clone()
+                .or_else(|| tr(title_key).map(String::from))
+                .unwrap_or_default()
+        } else {
+            tr(title_key).unwrap_or("").to_string()
+        };
+        if !title_text.is_empty() {
+            let tx = panel.0 + (176 - g.text_width(&title_text)) / 2;
+            g.text(a, tx, panel.1 + 6, &title_text, label, false);
         }
         if let Some(t) = tr("container.inventory") {
             g.text(a, panel.0 + 8, panel.1 + 166 - 94, t, label, false);
@@ -26231,6 +26277,7 @@ impl App {
         }
         self.chest_is_live = false;
         self.chest_live_window = None;
+        self.live_chest_title = None; // the title dies with the window
         self.container_carried_returned(was_live);
         self.chest_carried = (0, 0);
         self.container_store_flush();
@@ -51015,6 +51062,11 @@ impl App {
                     }
                     self.live_table_slots = slots;
                     self.table_is_live = true;
+                    // THE WINDOW'S OWN NAME (the decode lane's ride —
+                    // the OpenScreen Component the 3x3 canvas's round
+                    // owns, the custom name the anvil rows speak; the
+                    // None the container.crafting default banks)
+                    self.live_table_title = decode_container_title(&c.title_nbt);
                     // the window's identity rides in: the clicks echo
                     // against THIS id and revision (the stateId lane)
                     self.table_live_window = Some((c.id, c.state_id));
@@ -51063,6 +51115,9 @@ impl App {
                     }
                     self.furnace_slots = slots;
                     self.furnace_is_live = true;
+                    // THE WINDOW'S OWN NAME (the same decode ride —
+                    // the None the kind's own lang row banks)
+                    self.live_furnace_title = decode_container_title(&c.title_nbt);
                     // the window's identity rides in: the clicks echo
                     // against THIS id and revision (the stateId lane)
                     self.furnace_live_window = Some((c.id, c.state_id));
@@ -51176,6 +51231,11 @@ impl App {
                 self.chest_slots = grid;
                 self.chest_mirror = mirror;
                 self.chest_is_live = true;
+                // THE WINDOW'S OWN NAME (the same decode ride — the
+                // OpenScreen Component the 3x3 canvas's round owns,
+                // the custom name the anvil rows speak; the None the
+                // container.chest default banks)
+                self.live_chest_title = decode_container_title(&c.title_nbt);
                 // the window's identity rides in: the clicks echo
                 // against THIS id and revision (the stateId lane)
                 self.chest_live_window = Some((c.id, c.state_id));
@@ -51228,6 +51288,7 @@ impl App {
                 }
                 self.table_live_window = None;
                 self.live_table_carried = (0, 0); // no window, no held stack
+                self.live_table_title = None; // the title dies with the window
                 // the store dropped: a LIVE chest closes back to the
                 // world (the vanilla closeContainer's return); the
                 // offline stand-in is not the live lane's to close
@@ -51237,6 +51298,7 @@ impl App {
                 }
                 self.chest_live_window = None;
                 self.chest_carried = (0, 0); // no window, no held stack
+                self.live_chest_title = None; // the title dies with the window
                 // the store dropped: a LIVE furnace closes back to the
                 // world (the same vanilla closeContainer return — the
                 // chest's own lane the menu-type-14 window mirrors);
@@ -51247,6 +51309,7 @@ impl App {
                 }
                 self.furnace_live_window = None;
                 self.live_furnace_carried = (0, 0); // no window, no held stack
+                self.live_furnace_title = None; // the title dies with the window
                 // the store dropped: a LIVE dispenser closes back to the
                 // world (the same vanilla closeContainer return — the
                 // chest's own lane the menu-type-6 window mirrors);
@@ -93007,6 +93070,262 @@ cow_sound_variant: None,
             Some("Dropper"),
             "the fresh window's title rode in again"
         );
+    }
+
+    #[test]
+    fn the_live_chest_furnace_and_table_windows_wear_the_wires_title() {
+        use crate::world_view::LiveContainer;
+        use mc_protocol::nbt::{Nbt, write_network_nbt};
+        // the wire's own encoder (the decode walk's own mirror)
+        let enc = |v: &Nbt| -> Vec<u8> {
+            let mut b = Vec::new();
+            write_network_nbt(v, &mut b).unwrap();
+            b
+        };
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(3, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        assert_eq!(app.screen, ScreenKind::World, "the world owns the entry");
+
+        // the CHEST window (the generic_9x3 menu the 63-slot store
+        // speaks): the wire's own text row the decode answers — the
+        // anvil rename the live canvas wears (the container.chest
+        // default the None banks)
+        let chest = LiveContainer {
+            id: 3,
+            menu_type_id: crate::world_model::MENU_TYPE_CHEST,
+            slots: vec![(0i32, 0i32); 63],
+            carried: (0, 0),
+            state_id: 4,
+            bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
+            title_nbt: enc(&Nbt::Compound(vec![(
+                "text".to_string(),
+                Nbt::String("Storage Room".to_string()),
+            )])),
+        };
+        app.live_view_updated(air_net_world(3, 1), None, None, Some(chest.clone()));
+        assert_eq!(app.screen, ScreenKind::Chest, "the window shows over the world");
+        assert!(app.chest_is_live, "the live lane owns the screen now");
+        assert_eq!(
+            app.live_chest_title.as_deref(),
+            Some("Storage Room"),
+            "the wire's own text row the canvas banks"
+        );
+        // the server CLOSES the chest before the next window (the one
+        // window at a time the wire's own flow speaks — the drop the
+        // world returns)
+        app.live_view_updated(air_net_world(3, 2), None, None, None);
+        assert_eq!(app.screen, ScreenKind::World, "the drop returns to the world");
+
+        // the FURNACE window (the menu type 14 the same lane routes):
+        // the translatable the lang row answers
+        let furnace = LiveContainer {
+            id: 4,
+            menu_type_id: crate::world_model::MENU_TYPE_FURNACE,
+            slots: vec![(0i32, 0i32); 39],
+            carried: (0, 0),
+            state_id: 6,
+            bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
+            title_nbt: enc(&Nbt::Compound(vec![(
+                "translate".to_string(),
+                Nbt::String("container.furnace".to_string()),
+            )])),
+        };
+        app.live_view_updated(air_net_world(3, 3), None, None, Some(furnace.clone()));
+        assert_eq!(app.screen, ScreenKind::Furnace, "the window shows over the world");
+        assert!(app.furnace_is_live, "the live lane owns the screen now");
+        assert_eq!(
+            app.live_furnace_title.as_deref(),
+            Some("Furnace"),
+            "the kind's own lang row the decode answers"
+        );
+        app.live_view_updated(air_net_world(3, 4), None, None, None);
+        assert_eq!(app.screen, ScreenKind::World, "the drop returns to the world");
+
+        // the TABLE window (the crafting menu the 46-slot store
+        // speaks): the translatable the Crafting row answers
+        let table = LiveContainer {
+            id: 5,
+            menu_type_id: crate::world_model::MENU_TYPE_CRAFTING,
+            slots: vec![(0i32, 0i32); 46],
+            carried: (0, 0),
+            state_id: 8,
+            bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
+            title_nbt: enc(&Nbt::Compound(vec![(
+                "translate".to_string(),
+                Nbt::String("container.crafting".to_string()),
+            )])),
+        };
+        app.live_view_updated(air_net_world(3, 5), None, None, Some(table));
+        assert_eq!(app.screen, ScreenKind::Crafting, "the window shows over the world");
+        assert!(app.table_is_live, "the live lane owns the screen now");
+        assert_eq!(
+            app.live_table_title.as_deref(),
+            Some("Crafting"),
+            "the table's own lang row the decode answers"
+        );
+        app.live_view_updated(air_net_world(3, 6), None, None, None);
+        assert_eq!(app.screen, ScreenKind::World, "the drop returns to the world");
+
+        // a NEW window speaks a CUSTOM name (the anvil rename the
+        // text row carries): the fresh decode replaces the default —
+        // and the silent bytes the None fallback banks
+        let mut custom = chest.clone();
+        custom.state_id = 10;
+        custom.title_nbt = enc(&Nbt::Compound(vec![(
+            "text".to_string(),
+            Nbt::String("Loot Cellar".to_string()),
+        )]));
+        app.live_view_updated(air_net_world(3, 7), None, None, Some(custom));
+        assert_eq!(app.screen, ScreenKind::Chest, "the re-open is in place");
+        assert_eq!(
+            app.live_chest_title.as_deref(),
+            Some("Loot Cellar"),
+            "the fresh window's own name re-speaks"
+        );
+        let mut silent = chest;
+        silent.state_id = 12;
+        silent.title_nbt = vec![0x0A, 0x00];
+        app.live_view_updated(air_net_world(3, 8), None, None, Some(silent));
+        assert_eq!(
+            app.live_chest_title, None,
+            "the undecodable bytes the fallback banks"
+        );
+        app.live_view_updated(air_net_world(3, 9), None, None, None);
+        assert_eq!(app.screen, ScreenKind::World, "the drop returns to the world");
+
+        // the store DROPPED (the server's Container Close): every
+        // title dies with its window — no stale name rides a later
+        // screen (the chest's drop the furnace's and the table's own
+        // resets the same arm serves)
+        app.live_view_updated(air_net_world(3, 9), None, None, Some(furnace));
+        assert_eq!(app.screen, ScreenKind::Furnace, "the furnace window re-armed");
+        assert_eq!(app.live_furnace_title.as_deref(), Some("Furnace"));
+        app.live_view_updated(air_net_world(3, 10), None, None, None);
+        assert_eq!(app.screen, ScreenKind::World, "the close returns to the world");
+        assert!(!app.furnace_is_live, "the live flag dropped with the window");
+        assert_eq!(app.live_chest_title, None, "the chest's title died with its window");
+        assert_eq!(app.live_furnace_title, None, "the furnace's title died with its window");
+        assert_eq!(app.live_table_title, None, "the table's title died with its window");
+
+        // and the lane re-arms: the next window's own name rides in
+        let rearm = LiveContainer {
+            id: 3,
+            menu_type_id: crate::world_model::MENU_TYPE_CHEST,
+            slots: vec![(0i32, 0i32); 63],
+            carried: (0, 0),
+            state_id: 14,
+            bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
+            title_nbt: enc(&Nbt::Compound(vec![(
+                "translate".to_string(),
+                Nbt::String("container.chest".to_string()),
+            )])),
+        };
+        app.live_view_updated(air_net_world(3, 11), None, None, Some(rearm));
+        assert!(app.chest_is_live, "the live lane re-took the screen");
+        assert_eq!(
+            app.live_chest_title.as_deref(),
+            Some("Chest"),
+            "the fresh window's title rode in again"
+        );
+    }
+
+    #[test]
+    fn the_player_s_own_close_kills_the_live_windows_title() {
+        use crate::world_view::LiveContainer;
+        use mc_protocol::nbt::{Nbt, write_network_nbt};
+        // the wire's own encoder (the decode walk's own mirror)
+        let enc = |v: &Nbt| -> Vec<u8> {
+            let mut b = Vec::new();
+            write_network_nbt(v, &mut b).unwrap();
+            b
+        };
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(4, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        assert_eq!(app.screen, ScreenKind::World, "the world owns the entry");
+
+        // the CHEST window the player opens: the OWN close (Escape/E
+        // the close walk speaks) kills the title with the window —
+        // the offline stand-in's canvas the default row banks
+        let chest = LiveContainer {
+            id: 2,
+            menu_type_id: crate::world_model::MENU_TYPE_CHEST,
+            slots: vec![(0i32, 0i32); 63],
+            carried: (0, 0),
+            state_id: 3,
+            bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
+            title_nbt: enc(&Nbt::Compound(vec![(
+                "text".to_string(),
+                Nbt::String("Named Store".to_string()),
+            )])),
+        };
+        app.live_view_updated(air_net_world(4, 1), None, None, Some(chest.clone()));
+        assert_eq!(app.screen, ScreenKind::Chest, "the window shows over the world");
+        assert_eq!(app.live_chest_title.as_deref(), Some("Named Store"));
+        app.close_chest_container();
+        assert_eq!(app.screen, ScreenKind::World, "the own close returns to the world");
+        assert!(!app.chest_is_live, "the live flag dropped");
+        assert_eq!(app.live_chest_title, None, "the title died with the window");
+
+        // the FURNACE window the same law wears (the kind's own close
+        // walk the chest's shape mirrors)
+        let furnace = LiveContainer {
+            id: 3,
+            menu_type_id: crate::world_model::MENU_TYPE_FURNACE,
+            slots: vec![(0i32, 0i32); 39],
+            carried: (0, 0),
+            state_id: 5,
+            bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
+            title_nbt: enc(&Nbt::Compound(vec![(
+                "text".to_string(),
+                Nbt::String("Smeltery".to_string()),
+            )])),
+        };
+        app.live_view_updated(air_net_world(4, 2), None, None, Some(furnace));
+        assert_eq!(app.screen, ScreenKind::Furnace, "the window shows over the world");
+        assert_eq!(app.live_furnace_title.as_deref(), Some("Smeltery"));
+        app.close_furnace();
+        assert_eq!(app.screen, ScreenKind::World, "the own close returns to the world");
+        assert!(!app.furnace_is_live, "the live flag dropped");
+        assert_eq!(app.live_furnace_title, None, "the title died with the window");
+
+        // the TABLE window the same law wears (the crafting menu's
+        // own close the chest's shape mirrors)
+        let table = LiveContainer {
+            id: 4,
+            menu_type_id: crate::world_model::MENU_TYPE_CRAFTING,
+            slots: vec![(0i32, 0i32); 46],
+            carried: (0, 0),
+            state_id: 7,
+            bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
+            title_nbt: enc(&Nbt::Compound(vec![(
+                "text".to_string(),
+                Nbt::String("Workbench".to_string()),
+            )])),
+        };
+        app.live_view_updated(air_net_world(4, 3), None, None, Some(table));
+        assert_eq!(app.screen, ScreenKind::Crafting, "the window shows over the world");
+        assert_eq!(app.live_table_title.as_deref(), Some("Workbench"));
+        app.close_crafting_table();
+        assert_eq!(app.screen, ScreenKind::World, "the own close returns to the world");
+        assert!(!app.table_is_live, "the live flag dropped");
+        assert_eq!(app.live_table_title, None, "the title died with the window");
+
+        // the offline stand-in the dead field never reads: the fresh
+        // offline chest the default row banks (the golden's own law)
+        app.open_chest();
+        assert!(!app.chest_is_live, "the offline stand-in the live lane never owns");
+        assert_eq!(app.live_chest_title, None, "no stale name rides the offline canvas");
     }
 
     #[test]
