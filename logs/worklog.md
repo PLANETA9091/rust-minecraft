@@ -888,3 +888,20 @@ Work Log:
 Stage Summary:
 - THE GUIASSETS ROOTS' OWN HONEST STAGING: the bare absence-pin the helper's ancestor walk retires, the twelve seats the textured lane the canonical cargo run wears, the stub lane the packaged-run fallback keeps. The tests' own root discovery the darkness walk's pattern the family now shares.
 - NEXT CANDIDATES: the part_2 darkness walk's inline root the helper's shape could wear (the same walk the own inline ancestor loop keeps — the unification the helper's reuse answers), the minifb pointer-grab window-edge turn stop (the API's own limit the alternative the recon answers), the warden biolum TRUE-absence (the unreachable the record keeps).
+
+---
+Task ID: autopush-164
+Agent: autopush (Job 384923, 02:02:35 +08 tick)
+Task: git status (clone if absent; auto-sync commit + push if dirty) -> ONE minimal step -> cargo test --workspace green -> push -> worklog entry.
+
+Work Log:
+- Incoming state: clean tree @b488f41 (the mirror over 695d41f = v0.3.900 autopush-163 GuiAssets honest staging), origin synced. The NEXT CANDIDATES' first row the round answers — the part_2 darkness walk's inline root the helper's shape could wear (the unification the helper's reuse answers).
+- THE OPTION CORE THE HELPER WEARS: the assets_root_opt the ancestor walk's honest-skip shape speaks — the MC2RS_ASSETS env the first word keeps (the value the GuiAssets root ITSELF — the jar dir the open seats wear), the ancestor walk the repo's own root finds from every seat inside, the pop's exhaustion the None floor keeps; the assets_root the unwrap the stub lane's bare fallback wears (the packaged run the degrade shape keeps). The TWELVE re-pinned seats the same helper body answers — the walk's logic byte-equivalent, the helper's two shapes the family's two intents wear.
+- THE JAR LEVEL THE UNIFICATION LANDS: the inline walk's root the assets-cache PARENT returned (the `dir.join("assets-cache")` filter the jar's existence wore) — the GuiAssets root the level never was (the sprites the parent-level join's None kept, the darkness render seat the stub lane the walks wore); the helper's jar-level root the same law the bare family's twelve seats answer — the darkness walk's render seat the textured lane now wears (the walk's logic asserts the level-insensitive verdicts keep, the honest shape the family's own law lands).
+- THE FMT REGION THE UNIFICATION RETIRES: the inline block's own long-line `.or_else(|| {` chain the rustfmt violation carried — the helper call the clean shape speaks, the count 1702 -> 1701 the sweep banks (the part_2 region the diff list dropped, ZERO new hunks — the mod.rs + part_2 hunks the edit seats never touch).
+- VERIFY (final code state): FULL mc-client 2362 PASSED / 0 FAILED / 22 ignored (ZERO flips — the darkness walk + the water-fog + the suggestion trio the smoke runs the green spoke, the FULL sweep the same count wears); mc-protocol 157 + mc-registry 100 + mc2rs-gen 80 = 337 PASSED; goldens 19/19 PASS rms 0.000 (NO regeneration — the test-file helper the golden scenes never wear); fmt 1701 = the 1702 baseline MINUS the part_2 region the unification retired (ZERO new hunks).
+- Version 0.3.900 -> 0.3.901. Pushed 2988d6a (b488f41..2988d6a); the repo's logs/worklog.md this entry mirrors.
+
+Stage Summary:
+- THE ROOT HELPER'S OWN OPTION CORE: the honest-skip and degrade shapes the ONE walk serves, the darkness walk the family's shared helper wears, the jar-level root the GuiAssets root the render seat lands. The inline loop the tests' own bank retires.
+- NEXT CANDIDATES: the minifb pointer-grab window-edge turn stop (the API's own limit the alternative the recon answers), the warden biolum TRUE-absence (the unreachable the record keeps).
