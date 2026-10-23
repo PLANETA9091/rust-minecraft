@@ -2378,6 +2378,14 @@ pub fn run_gui_app(
             if f3_down && window.is_key_pressed(Key::B, minifb::KeyRepeat::No) {
                 app.on_hitboxes_key();
             }
+            // THE F3+P FOCUS-PAUSE TOGGLE (the 26.2 debug entry the
+            // key.debug.focusPause binding wears — the
+            // options.pauseOnLostFocus the flip serves, the focus
+            // law's own gate the option reads, the debug.pause_focus
+            // strings the vanilla lang banks)
+            if f3_down && window.is_key_pressed(Key::P, minifb::KeyRepeat::No) {
+                app.on_focus_pause_key();
+            }
             // THE F3+F4 CHORD (the handleDebugKeys' keyDebugSwitchGameMode
             // lane — the `matches` arm the level/screen/canSwitchGameMode
             // chain guards opens the GameModeSwitcherScreen, the default

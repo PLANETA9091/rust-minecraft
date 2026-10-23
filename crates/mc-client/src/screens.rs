@@ -32373,6 +32373,7 @@ impl App {
         self.look_sensitivity = file.mouse_sensitivity;
         self.fov = file.fov;
         self.volume = file.sound_category_master;
+        self.pause_on_lost_focus = file.pause_on_lost_focus;
     }
 
     /// THE OPTIONS FILE'S OWN SAVE WALK (the vanilla `Options.save()` law
@@ -32389,6 +32390,7 @@ impl App {
             mouse_sensitivity: self.look_sensitivity,
             fov: self.fov,
             sound_category_master: self.volume,
+            pause_on_lost_focus: self.pause_on_lost_focus,
         };
         file.save(path);
     }
@@ -37859,6 +37861,21 @@ impl App {
     /// joins.
     pub fn on_hitboxes_key(&mut self) {
         self.hitboxes = !self.hitboxes;
+        self.debug_modifier_used = true;
+    }
+
+    /// THE FOCUS-PAUSE TOGGLE'S OWN CHORD (the 26.2 debug entry the
+    /// `key.debug.focusPause` binding wears — the F3+P chord the
+    /// handleDebugKeys lane answers, the `options.pauseOnLostFocus`
+    /// the flip serves: the default TRUE the ctor's iconst_1 banks,
+    /// the focus law's own gate the option reads. The
+    /// `debug.pause_focus.on/off` strings the vanilla lang banks —
+    /// the display the debug-entry feedback system wears, the flip
+    /// the family's own shape keeps the borders/hitboxes toggles the
+    /// same silent verdict speak). The file's row the removed()
+    /// moment's own save rides.
+    pub fn on_focus_pause_key(&mut self) {
+        self.pause_on_lost_focus = !self.pause_on_lost_focus;
         self.debug_modifier_used = true;
     }
 

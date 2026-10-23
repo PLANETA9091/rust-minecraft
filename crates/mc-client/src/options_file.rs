@@ -49,6 +49,12 @@ pub struct OptionsFile {
     /// `soundCategory_master` — the 0..1 master volume (the default 1.0
     /// the createSoundSliderOptionInstance dconst_1 banks).
     pub sound_category_master: f64,
+    /// `pauseOnLostFocus` — the focus-loss pause's own boolean (the
+    /// default TRUE the Options ctor's iconst_1 banks, the
+    /// processOptions pc 567-574 the `process("pauseOnLostFocus", Z)Z`
+    /// round-trip wears — the 26.2's own seat the debug chord toggles,
+    /// the screen row the accessibility lane retired).
+    pub pause_on_lost_focus: bool,
 }
 
 impl Default for OptionsFile {
@@ -57,6 +63,7 @@ impl Default for OptionsFile {
             mouse_sensitivity: 0.5,
             fov: 70.0,
             sound_category_master: 1.0,
+            pause_on_lost_focus: true,
         }
     }
 }
@@ -95,6 +102,16 @@ impl OptionsFile {
                         out.sound_category_master = v;
                     }
                 }
+                "pauseOnLostFocus" => {
+                    // THE BOOLEAN'S OWN DECODE (the "true"/"false" the
+                    // codec's own vocabulary wears — the malformed the
+                    // default keeps, the skip law the row answers)
+                    if value == "true" {
+                        out.pause_on_lost_focus = true;
+                    } else if value == "false" {
+                        out.pause_on_lost_focus = false;
+                    }
+                }
                 _ => {} // the jar's other rows the client's seats never carry
             }
         }
@@ -118,6 +135,9 @@ impl OptionsFile {
             "soundCategory_master:{}\n",
             java_double(self.sound_category_master)
         ));
+        // THE BOOLEAN'S OWN ROW (the "true"/"false" the Rust Display the
+        // vanilla BooleanValue's codec vocabulary wears)
+        text.push_str(&format!("pauseOnLostFocus:{}\n", self.pause_on_lost_focus));
         let _ = std::fs::write(path, text);
     }
 }
@@ -177,13 +197,17 @@ mod tests {
         OptionsFile::default().save(&path);
         let text = std::fs::read_to_string(&path).expect("the save the file writes");
         assert_eq!(
-            text, "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\n",
+            text, "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\n",
             "the file the vanilla rows wear"
         );
         let loaded = OptionsFile::load(&path);
         assert_eq!(loaded.mouse_sensitivity, 0.5);
         assert_eq!(loaded.fov, 70.0);
         assert_eq!(loaded.sound_category_master, 1.0);
+        assert_eq!(
+            loaded.pause_on_lost_focus, true,
+            "the default the round-trip wears"
+        );
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -208,7 +232,9 @@ mod tests {
              mouseSensitivity:1.5\n\
              fov:70.5\n\
              fov:5\n\
-             soundCategory_master:true\n",
+             soundCategory_master:true\n\
+             pauseOnLostFocus:maybe\n\
+             pauseOnLostFocus:false\n",
         )
         .expect("the probe file writes");
         let loaded = OptionsFile::load(&path);
@@ -225,6 +251,13 @@ mod tests {
         );
         // the unknown/malformed/out-of-range rows the skip law answers —
         // no panic, the defaults keep
+        // THE BOOLEAN'S OWN DECODE (the last valid row the parse wears —
+        // the `false` the decode speaks, the malformed `maybe` the skip
+        // keeps, the legacy rows the same law the doubles answer)
+        assert_eq!(
+            loaded.pause_on_lost_focus, false,
+            "the boolean the decode wears — the malformed row the skip keeps"
+        );
         let _ = std::fs::remove_dir_all(&dir);
         // THE MISSING FILE the defaults keep (the exists() gate the head
         // walk speaks)
@@ -232,6 +265,10 @@ mod tests {
         assert_eq!(missing.mouse_sensitivity, 0.5);
         assert_eq!(missing.fov, 70.0);
         assert_eq!(missing.sound_category_master, 1.0);
+        assert_eq!(
+            missing.pause_on_lost_focus, true,
+            "the missing file the default true keeps"
+        );
     }
 
     // THE JAVA DOUBLE'S OWN PRINT (the integral the ".0" the decimal

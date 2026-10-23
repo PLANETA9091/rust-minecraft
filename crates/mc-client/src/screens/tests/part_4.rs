@@ -9025,7 +9025,7 @@ fn the_options_file_the_stores_restart_outlives() {
     assert_eq!(app.screen, ScreenKind::Title, "the Done the return wears");
     let text = std::fs::read_to_string(&path).expect("the chord the file writes");
     assert_eq!(
-        text, "version:4903\nmouseSensitivity:1.0\nfov:110\nsoundCategory_master:0.0\n",
+        text, "version:4903\nmouseSensitivity:1.0\nfov:110\nsoundCategory_master:0.0\npauseOnLostFocus:true\n",
         "the file the vanilla rows wear"
     );
     // THE RESTART (the fresh boot the file's truth wears — the session's
@@ -9061,7 +9061,7 @@ fn the_options_escape_the_save_and_return_wears() {
     assert_eq!(app.screen, ScreenKind::Title, "the escape the return wears");
     let text = std::fs::read_to_string(&path).expect("the escape the file writes");
     assert_eq!(
-        text, "version:4903\nmouseSensitivity:0.75\nfov:90\nsoundCategory_master:0.25\n",
+        text, "version:4903\nmouseSensitivity:0.75\nfov:90\nsoundCategory_master:0.25\npauseOnLostFocus:true\n",
         "the SAME save chord the Done wears the escape speaks"
     );
     // THE PAUSED LANE (the pause screen's own Options — the
@@ -9170,7 +9170,7 @@ fn the_quit_lane_the_stop_flag_and_the_files_absence_wears() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the removed() moment the file writes"),
-        "version:4903\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\n",
+        "version:4903\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\n",
         "the takeover's own exit the rows bank"
     );
     app.render_title_buttons_for_test();
@@ -9184,7 +9184,7 @@ fn the_quit_lane_the_stop_flag_and_the_files_absence_wears() {
     assert!(app.stopping, "the second stop the same chord wears");
     assert_eq!(
         std::fs::read_to_string(&path).expect("the file the exit keeps"),
-        "version:4903\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\n",
+        "version:4903\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\n",
         "the quit the file NEVER re-writes — the removed() moment ALONE the rows keep"
     );
     let _ = std::fs::remove_dir_all(&dir);
@@ -9235,7 +9235,7 @@ fn the_options_exit_the_removed_moment_itself_saves() {
     app.open(ScreenKind::Servers);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the takeover the file writes"),
-        "version:4903\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:1.0\n",
+        "version:4903\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:1.0\npauseOnLostFocus:true\n",
         "the replacement lane the removed() moment speaks"
     );
     // THE SAME-KIND RE-ENTRY (the open(Options) from Options the
@@ -9246,7 +9246,7 @@ fn the_options_exit_the_removed_moment_itself_saves() {
     app.open(ScreenKind::Options);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the re-entry the file writes"),
-        "version:4903\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:0.5\n",
+        "version:4903\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:0.5\npauseOnLostFocus:true\n",
         "the same-kind walk the old screen's discard keeps"
     );
     // THE NONE BOOT'S SILENT KEEP (the options_file None the save walk
@@ -9356,4 +9356,82 @@ fn the_focus_pause_the_gates_the_screen_and_death_wear() {
         1,
         "the buttons the re-fire never clears"
     );
+}
+
+// THE FOCUS-PAUSE TOGGLE'S OWN CHORD (the 26.2 debug entry the
+// key.debug.focusPause binding wears — the F3+P chord the flip
+// serves: the option the memory flips, the file's row the removed()
+// moment's own save rides, the boot load the row's truth wears)
+#[test]
+fn the_focus_pause_chord_the_flip_and_the_rows_wear() {
+    let dir = std::env::temp_dir().join(format!("mc2rs_focus_pause_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&dir);
+    let path = dir.join("options.txt");
+    let mut app = App::new(262);
+    app.options_file = Some(path.clone());
+    app.enter_world();
+    app.spawn_offline_body();
+    // THE DEFAULT (the ctor's own true the option wears)
+    assert!(app.pause_on_lost_focus, "the default the ctor speaks");
+    // THE F3+P FLIP (the debug entry the chord toggles — the modifier
+    // flag the family's own shape wears)
+    app.on_focus_pause_key();
+    assert!(!app.pause_on_lost_focus, "the chord the flip speaks");
+    assert!(app.debug_modifier_used, "the modifier the chord spends");
+    // THE FILE'S ROW (the Options exit the removed() moment the save
+    // rides — the false the round-trip's own row wears)
+    app.open(ScreenKind::Options);
+    app.open(ScreenKind::Title);
+    assert_eq!(
+        std::fs::read_to_string(&path).expect("the exit the file writes"),
+        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:false\n",
+        "the flipped row the exit banks"
+    );
+    // THE SECOND FLIP (the chord the option re-arms — the row the next
+    // exit the true re-wears)
+    app.on_focus_pause_key();
+    assert!(app.pause_on_lost_focus, "the second flip the true re-arms");
+    app.open(ScreenKind::Options);
+    app.open(ScreenKind::Title);
+    assert_eq!(
+        std::fs::read_to_string(&path).expect("the second exit the file writes"),
+        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\n",
+        "the re-armed row the exit banks"
+    );
+    // THE THIRD FLIP (the option the false re-wears — the restart the
+    // flip outlives)
+    app.on_focus_pause_key();
+    assert!(!app.pause_on_lost_focus, "the third flip the false wears");
+    app.open(ScreenKind::Options);
+    app.open(ScreenKind::Title);
+    assert_eq!(
+        std::fs::read_to_string(&path).expect("the third exit the file writes"),
+        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:false\n",
+        "the flipped row the exit banks"
+    );
+    // THE BOOT LOAD (the file's truth the boot walk wears — the false
+    // row the restart outlives, the vanilla Options.load law the same
+    // walk the three stores' restart keep)
+    let mut app2 = App::new(262);
+    app2.options_file = Some(path.clone());
+    app2.options_file_load();
+    assert!(
+        !app2.pause_on_lost_focus,
+        "the row's false the boot load wears"
+    );
+    // THE MISSING KEY (the older file's shape the default keeps — the
+    // three-row file the vanilla's own default true answers)
+    std::fs::write(
+        &path,
+        "version:4903\nmouseSensitivity:0.9\nfov:100\nsoundCategory_master:0.1\n",
+    )
+    .expect("the legacy file writes");
+    let mut app3 = App::new(262);
+    app3.options_file = Some(path.clone());
+    app3.options_file_load();
+    assert!(
+        app3.pause_on_lost_focus,
+        "the missing row the default true keeps"
+    );
+    let _ = std::fs::remove_dir_all(&dir);
 }
