@@ -8649,3 +8649,56 @@ fn the_saved_player_row_wears_the_vitals() {
         }
         assert_eq!(app.day_time_now(), 7010, "the re-armed walk the step resumes");
     }
+
+    /// THE DODAYLIGHTCYCLE RULE'S OWN ROUND TRIP (vanilla level.dat's
+    /// GameRules compound the String "true"/"false" values keep — the
+    /// save the day clock's own row banks, the reload the advance gate
+    /// re-arms, the flip the file's own latest truth re-wears, the
+    /// elder file's missing row the TRUE default the boot wears).
+    #[test]
+    fn the_do_daylight_cycle_rule_round_trips_the_save() {
+        let dir = std::env::temp_dir().join(format!("mc2rs_daylight_{}", std::process::id()));
+        let _ = std::fs::create_dir_all(&dir);
+        let path = dir.join("world_edits.nbt");
+        // THE DISARMED SESSION'S SAVE (the row the rule's own truth banks)
+        let mut app = App::new(3);
+        app.offline_world_file = Some(path.clone());
+        app.enter_world();
+        app.do_daylight_cycle = false;
+        app.offline_world_file_save();
+        // THE FILE'S OWN ROW (the String "false" the vanilla gamerule
+        // shape wears)
+        let bytes = std::fs::read(&path).expect("the flush the file writes");
+        let (_, root) = mc_protocol::nbt::read_file_nbt(&mut bytes.as_slice())
+            .expect("the file the parse answers");
+        if let mc_protocol::nbt::Nbt::Compound(rows) = &root {
+            let row = rows
+                .iter()
+                .find(|(k, _)| k == "doDaylightCycle")
+                .expect("the rule's own row the save banks");
+            assert_eq!(
+                row.1,
+                mc_protocol::nbt::Nbt::String("false".to_string()),
+                "the String 'false' the vanilla gamerule shape wears"
+            );
+        }
+        // THE RELOAD (the disarmed gate the fresh session re-banks — the
+        // day clock the restart keeps frozen)
+        let mut app2 = App::new(3);
+        app2.offline_world_file = Some(path.clone());
+        app2.enter_world();
+        assert!(
+            !app2.do_daylight_cycle,
+            "the disarmed rule the reload re-banks"
+        );
+        // THE SECOND SAVE (the armed row the flip banks — the file the
+        // session's own latest truth wears)
+        app2.do_daylight_cycle = true;
+        app2.offline_world_file_save();
+        let mut app3 = App::new(3);
+        app3.offline_world_file = Some(path.clone());
+        app3.enter_world();
+        assert!(app3.do_daylight_cycle, "the armed rule the reload re-banks");
+        let _ = std::fs::remove_file(&path);
+        let _ = std::fs::remove_dir(&dir);
+    }

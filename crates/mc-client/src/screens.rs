@@ -20790,16 +20790,23 @@ impl App {
                                     self.saved_player = Some(sp);
                                 }
                                 // THE GAMERULE'S OWN RESTORE (the
-                                // level.dat GameRules row the reload
+                                // level.dat GameRules rows the reload
                                 // re-banks — the String "true"/"false"
                                 // the vanilla compound's own shape keeps,
-                                // the elder file's missing row the false
-                                // default the boot already wore)
+                                // the elder file's missing rows the boot
+                                // defaults the creation already wore: the
+                                // keepInventory the false, the
+                                // doDaylightCycle the true)
                                 if let mc_protocol::nbt::Nbt::Compound(rows) = &root {
                                     if let Some((_, mc_protocol::nbt::Nbt::String(v))) =
                                         rows.iter().find(|(k, _)| k == "keepInventory")
                                     {
                                         self.keep_inventory = v == "true";
+                                    }
+                                    if let Some((_, mc_protocol::nbt::Nbt::String(v))) =
+                                        rows.iter().find(|(k, _)| k == "doDaylightCycle")
+                                    {
+                                        self.do_daylight_cycle = v == "true";
                                     }
                                 }
                             }
@@ -32166,12 +32173,18 @@ impl App {
         if let Some(sp) = player_row {
             root_rows.push(("player".to_string(), player_row_to_nbt(&sp)));
         }
-        // THE GAMERULE'S OWN ROW (vanilla level.dat's GameRules compound
-        // the String "true"/"false" values keep — the keepInventory the
-        // death lanes' own gates read, the reload the rule re-banks)
+        // THE GAMERULE'S OWN ROWS (vanilla level.dat's GameRules
+        // compound the String "true"/"false" values keep — the
+        // keepInventory the death lanes' own gates read, the
+        // doDaylightCycle the day clock's advance gate reads, the
+        // reload the rules re-bank)
         root_rows.push((
             "keepInventory".to_string(),
             mc_protocol::nbt::Nbt::String(self.keep_inventory.to_string()),
+        ));
+        root_rows.push((
+            "doDaylightCycle".to_string(),
+            mc_protocol::nbt::Nbt::String(self.do_daylight_cycle.to_string()),
         ));
         let root = mc_protocol::nbt::Nbt::Compound(root_rows);
         let mut bytes = Vec::new();
