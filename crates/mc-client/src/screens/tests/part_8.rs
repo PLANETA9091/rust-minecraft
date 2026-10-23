@@ -61,6 +61,80 @@ fn the_world_edits_journal_round_trips_the_session() {
     let _ = std::fs::remove_dir(&dir);
 }
 
+// THE SAVED PLAYER'S OWN ROUND TRIP (the level.dat player tag's own
+// law — the pose the reload re-anchors, the pockets the inventory
+// restores, the selected slot the HUD re-wears, the RESPAWN point the
+// world spawn keeps)
+#[test]
+fn the_saved_player_row_restores_the_pose_and_the_pockets() {
+    let dir = std::env::temp_dir().join(format!("mc2rs_saved_player_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&dir);
+    let path = dir.join("world_edits.nbt");
+    let mut app = App::new(3);
+    app.offline_world_file = Some(path.clone());
+    app.enter_world();
+    app.spawn_offline_body();
+    // THE STAGED SESSION: the body walks, the pockets fill, the
+    // selection moves (the state the file's player row banks)
+    {
+        let b = app.body.as_mut().unwrap();
+        b.x = 12.5;
+        b.y = 8.0;
+        b.z = 20.5;
+        b.yaw = 91.0;
+        b.pitch = -13.5;
+    }
+    app.inventory.items[0] = (4, 17);
+    app.inventory.items[1] = (1, 3);
+    app.inventory.armor[0] = (748, 1);
+    app.inventory.offhand[0] = (903, 5);
+    app.selected_hotbar = 2;
+    app.offline_world_file_save();
+    // THE RELOAD: the fresh boot the row wears (the pose the spawn
+    // re-anchors, the pockets the gameplay inventory re-wears)
+    let mut app2 = App::new(3);
+    app2.offline_world_file = Some(path.clone());
+    app2.enter_world();
+    assert_eq!(
+        app2.inventory.items[0],
+        (4, 17),
+        "the pockets the reload wears"
+    );
+    assert_eq!(app2.inventory.items[1], (1, 3));
+    assert_eq!(app2.inventory.armor[0], (748, 1));
+    assert_eq!(app2.inventory.offhand[0], (903, 5));
+    assert_eq!(app2.selected_hotbar, 2, "the selection the reload wears");
+    assert!(app2.saved_player.is_some(), "the row the load banks");
+    app2.spawn_offline_body();
+    let b2 = app2.body.as_ref().unwrap();
+    assert_eq!(b2.x, 12.5, "the saved pose the spawn wears");
+    assert_eq!(b2.y, 8.0);
+    assert_eq!(b2.z, 20.5);
+    assert_eq!(b2.yaw, 91.0);
+    assert_eq!(b2.pitch, -13.5);
+    // THE RESPAWN POINT the world spawn stays (the death lane's own
+    // law — the saved pose the FIRST spawn alone wears)
+    let sp = app2.spawn_pose.expect("the spawn the surface scan banks");
+    assert_ne!(sp.0, 12.5, "the respawn the world spawn keeps");
+    // THE FRESH PLAYER: the absent row the surface spawn answers
+    let dir3 = std::env::temp_dir().join(format!("mc2rs_fresh_player_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&dir3);
+    let mut app3 = App::new(3);
+    app3.offline_world_file = Some(dir3.join("world_edits.nbt"));
+    app3.enter_world();
+    app3.spawn_offline_body();
+    let b3 = app3.body.as_ref().unwrap();
+    assert_eq!(
+        b3.x,
+        app3.world_size as f64 / 2.0,
+        "the fresh player the world spawn wears"
+    );
+    assert!(app3.saved_player.is_none(), "the fresh row the None keeps");
+    let _ = std::fs::remove_file(&path);
+    let _ = std::fs::remove_dir(&dir);
+    let _ = std::fs::remove_dir(&dir3);
+}
+
     /// THE TORCH'S OWN BEAT THE DRAIN'S LAMP SEEDS WEAR (the autopush-116
     /// round — javap RedStoneWireBlock.updatePowerStrength the 26.2 jar
     /// the changed cells' own setBlock flag-3 the Level.updateNeighborsAt

@@ -7635,6 +7635,12 @@ pub struct App {
     /// never pays; the Save-and-Quit lane the final flush the
     /// cooldown bypass rides).
     pub offline_save_cooldown: u32,
+    /// THE SAVED PLAYER'S OWN ROW (the vanilla level.dat player tag's
+    /// stand-in — the pose the reload re-anchors, the pockets the
+    /// inventory restores, the selected slot the HUD re-wears; the
+    /// mark the flush's dirty verdict compares — the body's own state
+    /// the file's row the equality verdict reads).
+    pub saved_player: Option<SavedPlayer>,
     /// THE DISK BANK'S OWN ONCE FLAG (the `HotbarManager.get(I)` pcs
     /// 1-13 walk the `loaded` once-flag speaks: the first store access
     /// the lazy `load()` answers, the later chords the in-memory map
@@ -9041,6 +9047,187 @@ pub fn world_edits_from_nbt(
     Some((seed?, edits?, variants?))
 }
 
+/// THE SAVED PLAYER'S OWN ROW (the vanilla level.dat player tag's own
+/// stand-in — the pose the reload re-anchors, the pockets the
+/// inventory restores, the selected slot the HUD re-wears; the mark
+/// the flush's dirty verdict compares).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SavedPlayer {
+    /// The FEET position (the body's own x/y/z — the AABB's bottom
+    /// center, the world-block coordinates the file stores verbatim).
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    /// The vanilla angles (degrees — the wire's own convention).
+    pub yaw: f32,
+    pub pitch: f32,
+    /// The gameplay inventory's own 41 stacks (the hotbar 0..8, the
+    /// main 9..35, the armor, the offhand).
+    pub inventory: crate::drops::Inventory,
+    /// The active hotbar slot (the HUD selection the reload re-wears).
+    pub selected_hotbar: i32,
+}
+
+/// THE STACK LIST'S OWN NBT (the slot/id/count compounds the player
+/// tag's Items entries wear — the slot index the list's own order
+/// keeps).
+fn stacks_row_to_nbt(stacks: &[(i32, i32)]) -> mc_protocol::nbt::Nbt {
+    mc_protocol::nbt::Nbt::List(
+        stacks
+            .iter()
+            .enumerate()
+            .map(|(i, (id, count))| {
+                mc_protocol::nbt::Nbt::Compound(vec![
+                    ("slot".to_string(), mc_protocol::nbt::Nbt::Int(i as i32)),
+                    ("id".to_string(), mc_protocol::nbt::Nbt::Int(*id)),
+                    ("count".to_string(), mc_protocol::nbt::Nbt::Int(*count)),
+                ])
+            })
+            .collect(),
+    )
+}
+
+/// THE STACK LIST'S OWN PARSE (the slot-ordered placement the missing
+/// slots' empty stacks keep — the (0, 0) tuple the air pocket wears).
+fn stacks_row_from_nbt(v: &mc_protocol::nbt::Nbt, len: usize) -> Option<Vec<(i32, i32)>> {
+    let mc_protocol::nbt::Nbt::List(items) = v else {
+        return None;
+    };
+    let mut out = vec![(0, 0); len];
+    for item in items {
+        let mc_protocol::nbt::Nbt::Compound(fields) = item else {
+            return None;
+        };
+        let mut slot = None;
+        let mut id = None;
+        let mut count = None;
+        for (fk, fv) in fields {
+            let mc_protocol::nbt::Nbt::Int(n) = fv else {
+                return None;
+            };
+            match fk.as_str() {
+                "slot" => slot = Some(*n),
+                "id" => id = Some(*n),
+                "count" => count = Some(*n),
+                _ => {}
+            }
+        }
+        let (s, id, count) = (slot?, id?, count?);
+        if s < 0 || s as usize >= len {
+            return None;
+        }
+        out[s as usize] = (id, count);
+    }
+    Some(out)
+}
+
+/// THE PLAYER ROW'S OWN NBT BUILD (the Pos/Rotation/SelectedHotbar +
+/// the three stack lists the vanilla player tag's own shape wears).
+fn player_row_to_nbt(sp: &SavedPlayer) -> mc_protocol::nbt::Nbt {
+    let stacks = |v: &[(i32, i32)]| stacks_row_to_nbt(v);
+    mc_protocol::nbt::Nbt::Compound(vec![
+        (
+            "Pos".to_string(),
+            mc_protocol::nbt::Nbt::List(vec![
+                mc_protocol::nbt::Nbt::Double(sp.x),
+                mc_protocol::nbt::Nbt::Double(sp.y),
+                mc_protocol::nbt::Nbt::Double(sp.z),
+            ]),
+        ),
+        (
+            "Rotation".to_string(),
+            mc_protocol::nbt::Nbt::List(vec![
+                mc_protocol::nbt::Nbt::Float(sp.yaw),
+                mc_protocol::nbt::Nbt::Float(sp.pitch),
+            ]),
+        ),
+        (
+            "SelectedHotbar".to_string(),
+            mc_protocol::nbt::Nbt::Int(sp.selected_hotbar),
+        ),
+        ("Items".to_string(), stacks(&sp.inventory.items)),
+        ("Armor".to_string(), stacks(&sp.inventory.armor)),
+        ("Offhand".to_string(), stacks(&sp.inventory.offhand)),
+    ])
+}
+
+/// THE PLAYER ROW'S OWN PARSE (the strict shape the missing row's None
+/// keeps — the fresh player the absent tag answers).
+pub fn player_state_from_nbt(root: &mc_protocol::nbt::Nbt) -> Option<SavedPlayer> {
+    let mc_protocol::nbt::Nbt::Compound(rows) = root else {
+        return None;
+    };
+    let player = rows.iter().find(|(k, _)| k == "player")?.1.clone();
+    let mc_protocol::nbt::Nbt::Compound(fields) = player else {
+        return None;
+    };
+    let mut pos = None;
+    let mut rot = None;
+    let mut sel = None;
+    let mut items = None;
+    let mut armor = None;
+    let mut offhand = None;
+    let doubles = |v: &mc_protocol::nbt::Nbt| -> Option<Vec<f64>> {
+        let mc_protocol::nbt::Nbt::List(xs) = v else {
+            return None;
+        };
+        xs.iter()
+            .map(|x| {
+                let mc_protocol::nbt::Nbt::Double(d) = x else {
+                    return None;
+                };
+                Some(*d)
+            })
+            .collect()
+    };
+    let floats = |v: &mc_protocol::nbt::Nbt| -> Option<Vec<f32>> {
+        let mc_protocol::nbt::Nbt::List(xs) = v else {
+            return None;
+        };
+        xs.iter()
+            .map(|x| {
+                let mc_protocol::nbt::Nbt::Float(f) = x else {
+                    return None;
+                };
+                Some(*f)
+            })
+            .collect()
+    };
+    for (k, v) in &fields {
+        match k.as_str() {
+            "Pos" => pos = doubles(v),
+            "Rotation" => rot = floats(v),
+            "SelectedHotbar" => {
+                if let mc_protocol::nbt::Nbt::Int(n) = v {
+                    sel = Some(*n);
+                }
+            }
+            "Items" => items = stacks_row_from_nbt(v, 36),
+            "Armor" => armor = stacks_row_from_nbt(v, 4),
+            "Offhand" => offhand = stacks_row_from_nbt(v, 1),
+            _ => {}
+        }
+    }
+    let p = pos?;
+    let r = rot?;
+    if p.len() != 3 || r.len() != 2 {
+        return None;
+    }
+    Some(SavedPlayer {
+        x: p[0],
+        y: p[1],
+        z: p[2],
+        yaw: r[0],
+        pitch: r[1],
+        inventory: crate::drops::Inventory {
+            items: items?.try_into().ok()?,
+            armor: armor?.try_into().ok()?,
+            offhand: offhand?.try_into().ok()?,
+        },
+        selected_hotbar: sel?,
+    })
+}
+
 /// THE STORES' OWN NBT SHAPE (the dev-68 round — the vanilla
 /// RandomizableContainer BE's own save law the container file wears:
 /// the chunk's block_entities list the per-position compound keeps,
@@ -9584,6 +9771,7 @@ impl App {
             container_stores_file: None,
             offline_world_file: None,
             offline_save_cooldown: 0,
+            saved_player: None,
             container_stores_loaded: false,
             container_open_cell: None,
             container_open_cell_b: None,
@@ -10130,7 +10318,7 @@ impl App {
             w.journaling
                 && (w.edit_journal.len() != w.saved_edits_mark
                     || w.variant_journal.len() != w.saved_variants_mark)
-        });
+        }) || self.player_state_now() != self.saved_player;
         if self.offline_save_cooldown > 0 {
             self.offline_save_cooldown -= 1;
         } else if offline_dirty && self.offline_world_file.is_some() {
@@ -20426,6 +20614,21 @@ impl App {
                                 world.saved_edits_mark = world.edit_journal.len();
                                 world.saved_variants_mark =
                                     world.variant_journal.len();
+                                // THE PLAYER TAG'S OWN RESTORE (the pose
+                                // the spawn re-anchors, the pockets the
+                                // gameplay inventory re-wears, the
+                                // selected slot the held payload's own
+                                // reload follows — the 1-9 key walk's
+                                // law the restore lane wears)
+                                if let Some(sp) = player_state_from_nbt(&root) {
+                                    self.inventory = sp.inventory;
+                                    self.selected_hotbar =
+                                        sp.selected_hotbar.clamp(0, 8) as usize;
+                                    self.hotbar_slots = self.inventory.hotbar();
+                                    let id = self.held_id();
+                                    self.load_held_payload_from_id(id);
+                                    self.saved_player = Some(sp);
+                                }
                             }
                         }
                     }
@@ -31748,6 +31951,7 @@ impl App {
         let Some(w) = self.offline_world.as_ref() else {
             return;
         };
+        let player_row = self.player_state_now();
         let edits = mc_protocol::nbt::Nbt::List(
             w.edit_journal
                 .iter()
@@ -31774,7 +31978,7 @@ impl App {
                 })
                 .collect(),
         );
-        let root = mc_protocol::nbt::Nbt::Compound(vec![
+        let mut root_rows = vec![
             (
                 "DataVersion".to_string(),
                 mc_protocol::nbt::Nbt::Int(WORLD_EDITS_DATA_VERSION),
@@ -31782,20 +31986,51 @@ impl App {
             ("seed".to_string(), mc_protocol::nbt::Nbt::Long(w.seed as i64)),
             ("edits".to_string(), edits),
             ("variants".to_string(), variants),
-        ]);
+        ];
+        // THE PLAYER TAG'S OWN ROW (the pose + the pockets the reload
+        // wears — the absent body the row the file's own loaded state
+        // keeps, the fresh player the None the tag never writes)
+        if let Some(sp) = player_row {
+            root_rows.push(("player".to_string(), player_row_to_nbt(&sp)));
+        }
+        let root = mc_protocol::nbt::Nbt::Compound(root_rows);
         let mut bytes = Vec::new();
         if mc_protocol::nbt::write_file_nbt("", &root, &mut bytes).is_ok() {
             let _ = std::fs::write(&path, &bytes);
         }
         // THE BASELINE'S OWN BANK (the marks the flush's dirty verdict
         // compares — the written lens the next throttle tick the clean
-        // verdict speaks)
+        // verdict speaks; the player row the same bank wears)
+        self.saved_player = player_row;
         let w = self
             .offline_world
             .as_mut()
             .expect("the world the save just wore");
         w.saved_edits_mark = w.edit_journal.len();
         w.saved_variants_mark = w.variant_journal.len();
+    }
+
+    /// THE PLAYER STATE'S OWN READ (the flush's row source — the body's
+    /// own pose + the gameplay inventory the offline session wears; the
+    /// NETWORKED world the None keeps (the wire's body the server's
+    /// truth stores), the not-yet-spawned boot the file's own loaded
+    /// row keeps, the fresh player the None the no-row write answers).
+    fn player_state_now(&self) -> Option<SavedPlayer> {
+        if self.world_is_network {
+            return None;
+        }
+        if let Some(b) = self.body.as_ref() {
+            return Some(SavedPlayer {
+                x: b.x,
+                y: b.y,
+                z: b.z,
+                yaw: b.yaw,
+                pitch: b.pitch,
+                inventory: self.inventory,
+                selected_hotbar: self.selected_hotbar as i32,
+            });
+        }
+        self.saved_player
     }
 
     /// THE F KEY'S OWN LANE (javap Minecraft.handleKeybinds's
@@ -39400,12 +39635,22 @@ impl App {
             }
         }
         let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
+        // THE SAVED POSE'S OWN RE-ANCHOR (the vanilla session-restore
+        // law — the level.dat's Pos/Rotation the reload spawns at; the
+        // RESPAWN point the world spawn stays (the death lane's own
+        // law the spawn_pose keeps), the saved pose the FIRST spawn
+        // alone wears)
+        let (bx, by, bz, byaw, bpitch) = if let Some(sp) = self.saved_player {
+            (sp.x, sp.y, sp.z, sp.yaw, sp.pitch)
+        } else {
+            (n / 2.0, feet_y as f64, n / 2.0, yaw, pitch)
+        };
         self.body = Some(crate::body::PlayerBody::new(
-            n / 2.0,
-            feet_y as f64,
-            n / 2.0,
-            yaw,
-            pitch,
+            bx,
+            by,
+            bz,
+            byaw,
+            bpitch,
         ));
         // THE SPAWN POSE (the respawn's own re-anchor: the vanilla
         // respawn teleports the player to the spawn point — the pose
