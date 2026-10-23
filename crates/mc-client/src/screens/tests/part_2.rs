@@ -3356,7 +3356,8 @@ use super::*;
     /// LightmapRenderStateExtractor pc 304-344 — the removal tail the
     /// 260-tick DARKNESS instance arms, the blend the 22-step fade
     /// walks, the pulse the cosine fold breathes, the re-bake grain the
-    /// mesh's own re-walk wears, the survival gate the creative mode
+    /// mesh's own re-walk wears, the expiry the client copy's own KEEP
+    /// the wire's Remove retires, the survival gate the creative mode
     /// refuses).
     #[test]
     fn the_darkness_effect_the_store_the_pulse_wears() {
@@ -3383,12 +3384,21 @@ use super::*;
             "the pre-render floor the grain never arms — the walk the render serves");
         // THE RENDER SEAT (the windowed loop's own split — the update
         // ticks, the render walks the lightmap state; the assets-cache
-        // root the gui tests' own discovery keeps)
+        // root the ANCESTOR WALK discovers — the CWD-independent pin
+        // the package-root cargo seat's own vacuous pass answers: the
+        // bare current-dir join the early return wore, the walk-up the
+        // repo's own root finds from every seat inside)
         let root = std::env::var("MC2RS_ASSETS").ok().map(std::path::PathBuf::from).or_else(|| {
-            std::env::current_dir()
-                .ok()
-                .map(|d| d.join("assets-cache"))
-                .filter(|p| p.join("jar").exists())
+            let mut dir = std::env::current_dir().ok()?;
+            loop {
+                let cand = dir.join("assets-cache");
+                if cand.join("jar").exists() {
+                    return Some(cand);
+                }
+                if !dir.pop() {
+                    return None;
+                }
+            }
         });
         let Some(root) = root else { return };
         let mut assets = GuiAssets::open(&root);
@@ -3424,20 +3434,44 @@ use super::*;
                     "tick {k} the grain the re-bake's own walk arms");
             }
         }
-        // === THE EXPIRY (the 260-tick window drains — the effect gone,
-        // the floor restored: the grain None the field's 0.0 wears —
-        // the final render the re-bake's own return speaks)
+        // === THE EXPIRY (the 260-tick window drains — the client
+        // copy's own law the drained instance KEEPS: the wire's Remove
+        // is the truth the store mirrors, the decrement the tail's own
+        // walk banks — the blend the fade-out's completed 0.0 keeps,
+        // the floor the render's own walk restores: the grain None the
+        // field's 0.0 wears — the final render the re-bake's own
+        // return speaks)
         for _ in 0..254 {
             app.update();
+            // THE WALK'S OWN PIN (the all-air construct the fall never
+            // grounds — the void's dose the living body's own expiry
+            // walk refuses: the y the seat's 35.0 keeps, the fall the
+            // zero velocity stills — the client copy's decrement the
+            // living health gate the vanilla server's grounded word
+            // wears)
+            if let Some(b) = app.body.as_mut() {
+                b.y = 35.0;
+                b.vy = 0.0;
+            }
         }
-        assert!(app.effects.get(crate::effects::MOB_EFFECT_DARKNESS).is_none(),
-            "the drained window the net lane's own decrement retires");
+        let drained = app
+            .effects
+            .get(crate::effects::MOB_EFFECT_DARKNESS)
+            .expect("the drained window the client copy's own law keeps");
+        assert_eq!(drained.duration, 0,
+            "the decrement the net lane's own tail banks");
         app.update();
         app.render(&mut fb, &mut assets);
         assert_eq!(app.darkness_bake, None,
             "the expired effect the floor's grain restores");
         assert_eq!(app.net_world.as_ref().unwrap().darkness_scale, 0.0,
             "the floor the field's own identity keeps");
+        // THE WIRE'S OWN REMOVE (the sync's own law the snapshot's
+        // dropped ids wear — the wire-less session the walk's own sync
+        // call speaks, the drained corpse the empty snapshot retires)
+        app.effects.sync_from_wire(&[]);
+        assert!(app.effects.get(crate::effects::MOB_EFFECT_DARKNESS).is_none(),
+            "the wire's Remove the mirror's own walk lands");
         // === THE CREATIVE GATE (the survival head the verdict refuses —
         // the store the removal never arms)
         let mut app = App::new(3);
