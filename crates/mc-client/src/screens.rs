@@ -34043,6 +34043,15 @@ impl App {
                         world.difficulty = world.difficulty.next();
                     }
                 }
+                // THE GAMERULE'S OWN TOGGLE (the BooleanValue's own flip
+                // — the same store the set walk's arm wears: the OFFLINE
+                // world the integrated-server's gamerule lane IS, the
+                // NETWORKED world the inactive button the hovered() gate
+                // refuses — the server's own /gamerule command the wire
+                // keeps)
+                "wokeepinv" => {
+                    self.keep_inventory = !self.keep_inventory;
+                }
                 "quit" => {}
                 "back" => {
                     let ret = self.options_return;
@@ -61042,6 +61051,34 @@ impl App {
         let mut lock = Button::new("wodlock", String::new(), row_left + 140, dial_y, 20);
         lock.active = dial_active;
         self.buttons.push(lock);
+        // THE GAMERULE'S OWN ROW (javap 26.2 GameRules.RULE_KEEPIVENTORY
+        // the offline vocabulary carries — the BooleanValue the death
+        // lanes' own gates read): the label the `gamerule.keepInventory`
+        // lang row speaks, the value the `options.on`/`options.off` pair
+        // the boolean display keeps, the 200-wide button the row below
+        // the dial band wears. THE ACTIVE ARM the dial's own split
+        // answers: the OFFLINE world the integrated-server's gamerule
+        // lane IS, the NETWORKED world the server's own /gamerule
+        // command the wire keeps (the inactive button the hovered()
+        // gate refuses).
+        let mut keep = Button::new(
+            "wokeepinv",
+            format!(
+                "{}: {}",
+                tr("gamerule.keepInventory").unwrap_or("Keep inventory after death"),
+                tr(if self.keep_inventory {
+                    "options.on"
+                } else {
+                    "options.off"
+                })
+                .unwrap_or(if self.keep_inventory { "ON" } else { "OFF" }),
+            ),
+            cx - 100,
+            dial_y + 24,
+            200,
+        );
+        keep.active = !self.world_is_network;
+        self.buttons.push(keep);
         // THE DONE FOOTER (the footer's 200-wide button the
         // HeaderAndFooterLayout walk keeps — the onClose the
         // lastScreen chain wears: the Options screen the walk returns

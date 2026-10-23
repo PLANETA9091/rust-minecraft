@@ -1119,6 +1119,74 @@ use super::*;
         assert!(app.paused, "the chain's return the pause keeps");
     }
 
+    /// THE GAMERULE'S OWN ROW THE WORLD OPTIONS WEARS (javap 26.2
+    /// GameRules.RULE_KEEPIVENTORY the row the death lanes' own gates
+    /// read): the label the `gamerule.keepInventory` lang row speaks,
+    /// the value the `options.on`/`options.off` pair the boolean
+    /// display keeps, the click the toggle the offline lane's own
+    /// gamerule store answers, the NETWORKED world the inactive button
+    /// the hovered() gate refuses.
+    #[test]
+    fn the_world_options_screen_wears_the_keep_inventory_row() {
+        let mut app = App::new(3);
+        app.enter_world();
+        assert!(
+            !app.keep_inventory,
+            "the vanilla default the false boot wears"
+        );
+        app.open(ScreenKind::WorldOptions);
+        app.render_title_buttons_for_test();
+        let keep = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "wokeepinv")
+            .expect("the keepInventory row the offline screen wears")
+            .clone();
+        assert_eq!(
+            keep.label, "Keep inventory after death: OFF",
+            "the lang row + the options.off word the fresh boot wears"
+        );
+        assert!(keep.active, "the OFFLINE world the gamerule arm wears");
+        // THE TOGGLE (the click the BooleanValue's own flip answers —
+        // the row's word the re-render speaks)
+        app.on_click(keep.x + keep.w / 2, keep.y + keep.h / 2);
+        assert!(app.keep_inventory, "the click the rule arms");
+        app.render_title_buttons_for_test();
+        let keep = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "wokeepinv")
+            .expect("the row")
+            .clone();
+        assert_eq!(
+            keep.label, "Keep inventory after death: ON",
+            "the options.on word the armed row speaks"
+        );
+        // THE SECOND CLICK (the flip the boolean's own walk rings home)
+        app.on_click(keep.x + keep.w / 2, keep.y + keep.h / 2);
+        assert!(!app.keep_inventory, "the second click the row disarms");
+        // THE NETWORKED LANE'S REFUSAL (the inactive button the
+        // hovered() gate never clicks — the server's own /gamerule the
+        // wire keeps)
+        app.world_is_network = true;
+        app.render_title_buttons_for_test();
+        let keep = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "wokeepinv")
+            .expect("the row")
+            .clone();
+        assert!(
+            !keep.active,
+            "the networked world the gamerule arm refuses"
+        );
+        app.on_click(keep.x + keep.w / 2, keep.y + keep.h / 2);
+        assert!(
+            !app.keep_inventory,
+            "the inactive button the click never arms"
+        );
+    }
+
 
     /// THE DIAL'S OWN GATES THE FOOD TICK WEARS (the FoodData tick's
     /// ctx the level's own difficulty reads — the exhaustion fold the
