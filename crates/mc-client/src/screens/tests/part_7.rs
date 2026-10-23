@@ -4267,6 +4267,7 @@ use super::*;
     // dive's — the ramp rides the render.
     #[test]
     fn the_water_fog_paints_the_murk_over_the_sky() {
+        let _render_lane = render_lane();
         let mut app = App::new(3);
         app.enter_world();
         crate::headless::seed_scene(

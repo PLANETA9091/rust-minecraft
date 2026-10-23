@@ -467,6 +467,25 @@ cow_sound_variant: None,
     }
 
 
+    /// THE RENDER LANE'S OWN SERIAL LOCK (the dev-151 record's own
+    /// prescription — the five render-lane tests the direct-binary
+    /// run's 2-CPU interleave wore): the heavy lanes (the warden
+    /// glow, the third-person armor/head frames, the darkness pulse,
+    /// the water murk, the portal tint) the guard serializes — the
+    /// world-build + frame-render bodies the parallel harness never
+    /// interleaves, the honest-skip arms the transient load failure
+    /// the pressure window closes. The lock the execution ORDER
+    /// alone owns: no rendered byte the shape moves (the goldens the
+    /// same suite wears), the poisoned guard the panic's own
+    /// recovery keeps (`into_inner` — one test's panic the rest of
+    /// the lane never spreads).
+    static RENDER_LANE: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+    fn render_lane() -> std::sync::MutexGuard<'static, ()> {
+        RENDER_LANE.lock().unwrap_or_else(|e| e.into_inner())
+    }
+
+
     /// The armored SKELETON's own stage (the flat strip the world's
     /// spawn neighborhood keeps — the strip the terrain's own hills
     /// never occlude): the body at the spawn, the skeleton 3 blocks

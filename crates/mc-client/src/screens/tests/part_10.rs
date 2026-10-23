@@ -7510,6 +7510,7 @@ use super::*;
     /// twice, the dressed frame the armor's pixels wear.
     #[test]
     fn the_player_armor_the_frame_paints() {
+        let _render_lane = render_lane();
         // the runtime root the loaders' prefix walk keeps (the absent
         // cache the honest skip answers — the mannequin tests' own law)
         let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
@@ -7652,6 +7653,7 @@ use super::*;
 
     #[test]
     fn the_third_person_head_lane_the_live_and_verdict_keep() {
+        let _render_lane = render_lane();
         let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
             .iter()
             .map(std::path::Path::new)
@@ -7671,15 +7673,18 @@ use super::*;
         app.avatar = Some(model);
         let bare = third_person_frame(&mut app);
         // THE HELMET'S NO-DOUBLE-RENDER (the shouldRender TRUE arm's
-        // headItem.clear() the extraction speaks): the head lane
-        // refuses the EQUIPPABLE stack, the armor lane the lazy load
-        // the test's CWD never satisfies — the frame stays BARE
+        // headItem.clear() the extraction speaks): the head lane's
+        // NEITHER verdict the pumpkin/skull branches refuse — the
+        // helmet the ARMOR lane's one paint rides (the dev-152 round's
+        // runtime-root walk the armor textures BOTH lanes load — the
+        // old 0-diff pin the degenerate no-asset lane's own artifact
+        // wore, the loaded world the paint speaks)
         app.inventory.armor[0] = (id("iron_helmet"), 1);
         let helmeted = third_person_frame(&mut app);
-        assert_eq!(
-            diff_pixels(&bare, &helmeted),
-            0,
-            "the unverified helmet the third-person frame never paints (no double render)"
+        let helmet_diff = diff_pixels(&bare, &helmeted);
+        assert!(
+            helmet_diff > 100,
+            "the helmet the armor lane paints once ({helmet_diff} pixels differ)"
         );
         // THE LIVE LANE (the network store's window slot 5 the 39-k
         // order speaks): the server's own equipment the head chain
@@ -7851,6 +7856,7 @@ use super::*;
     /// LEQUAL tie the coplanar overlay the body's own depth answers.
     #[test]
     fn the_warden_glow_the_layers_the_frame_wears() {
+        let _render_lane = render_lane();
         let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
             .iter()
             .map(std::path::Path::new)
@@ -7875,13 +7881,18 @@ use super::*;
         app.warden_model = Some(warden_model);
         app.warden_heart_model = Some(heart_model);
         app.warden_biolum_model = Some(biolum_model);
-        // THE WARDEN (the cleared box's far half — the stage camera's
-        // own seven-block look the whole body the frame keeps)
+        // THE WARDEN (the stage's own side seat — the body's z the TWO
+        // cameras share: the yaw-0 camera the 4-ahead 2-right view
+        // speaks, the flipped heart camera the SAME seat mirrors — the
+        // warden the player silhouette clears both ways, the dev-152
+        // round's own law: the render_avatar's runtime-root walk the
+        // player body DRAWS now, the behind-the-body seat the body's
+        // own shadow the degenerate lane never wore)
         let (bx, by, bz) = {
             let b = app.body.as_ref().unwrap();
             (b.x, b.y, b.z)
         };
-        let warden = crate::sculk::WardenMob::new(502, bx + 1.0, by, bz + 3.0);
+        let warden = crate::sculk::WardenMob::new(502, bx + 2.0, by, bz);
         app.mobs.clear();
         app.wardens.push(warden);
         // THE BIOLUM AXIS (the constant-1.0 layer the frame lights,

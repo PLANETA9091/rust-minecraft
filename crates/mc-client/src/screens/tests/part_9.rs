@@ -1717,59 +1717,74 @@ use super::*;
     /// .extractPortalOverlay` — the ARGB.white(alpha) color the blit's
     /// own tint arg speaks, the NETHER_PORTAL block's default-state
     /// PARTICLE sprite the `block/nether_portal.png` source the jar
-    /// banks): the sprite_file_at_tinted walk the multiply rides — the
-    /// every channel the tint folds, the alpha included.
+    /// banks): the sprite_file_at_tinted walk the vanilla's own
+    /// DOUBLE fold rides — the vertex-color multiply the shader
+    /// speaks (every channel the tint folds, the alpha included) THEN
+    /// the srcAlpha blend the raster keeps (the alpha's second fold
+    /// the blend over the black clear wears). The three tints the
+    /// per-channel folds pin: the both-channels quarter, the rgb-only
+    /// half, the alpha-only half.
     #[test]
     fn the_portal_overlay_the_tint_the_blit_wears() {
-        // the real assets the honest source keeps (the MC2RS_ASSETS
-        // root the gui tests' own discovery keeps, the absent cache
-        // the early return the same law wears)
-        let root = std::env::var("MC2RS_ASSETS")
-            .ok()
-            .map(std::path::PathBuf::from)
-            .or_else(|| {
-                std::env::current_dir()
-                    .ok()
-                    .map(|d| d.join("assets-cache"))
-                    .filter(|p| p.join("jar").exists())
-            });
+        let _render_lane = render_lane();
+        // the real assets the honest source keeps (the loaders' prefix
+        // walk the gui tests' own law speaks — the dev-152 round's own
+        // fix: the CWD-relative lane the package-dir processes never
+        // satisfied, the vacuous early return the walked root retires —
+        // the absent cache the honest skip the same law keeps)
+        let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| p.join("block/nether_portal.png").exists());
         let Some(root) = root else { return };
-        let mut fb = crate::raster::Framebuf::new(32, 32);
-        fb.clear([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]);
-        let mut g = Gui::new(&mut fb, 1);
-        let mut assets = GuiAssets::open(&root.join("jar"));
+        // THE VANILLA'S OWN DOUBLE FOLD (the vertex-color multiply the
+        // shader speaks THEN the srcAlpha blend the raster keeps): the
+        // ARGB.white(t) tint the production lane passes folds t into
+        // EVERY channel — the rgb the multiply folds, the alpha the
+        // blend folds AGAIN over the black clear — the [0.5;4] tint
+        // the quarter the full speaks (the old f*0.5 pin the single-
+        // fold math the blend never wore)
+        let half_of = |tint: [f32; 4]| -> Vec<u8> {
+            let mut fb = crate::raster::Framebuf::new(32, 32);
+            fb.clear([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]);
+            let mut g = Gui::new(&mut fb, 1);
+            let mut assets = GuiAssets::open(root);
+            g.sprite_file_at_tinted(&mut assets, "block/nether_portal.png", 0, 0, 32, 32, tint);
+            fb.color[(16 * 32 + 16) * 3..(16 * 32 + 16) * 3 + 3].to_vec()
+        };
         // the full tint the sprite's own pixel the center sample keeps
-        g.sprite_file_at_tinted(
-            &mut assets,
-            "block/nether_portal.png",
-            0,
-            0,
-            32,
-            32,
-            [1.0, 1.0, 1.0, 1.0],
-        );
-        let full = fb.color[(16 * 32 + 16) * 3..(16 * 32 + 16) * 3 + 3].to_vec();
-        // the half tint the multiply the same texel wears
-        let mut fb2 = crate::raster::Framebuf::new(32, 32);
-        fb2.clear([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]);
-        let mut g2 = Gui::new(&mut fb2, 1);
-        let mut assets2 = GuiAssets::open(&root.join("jar"));
-        g2.sprite_file_at_tinted(
-            &mut assets2,
-            "block/nether_portal.png",
-            0,
-            0,
-            32,
-            32,
-            [0.5, 0.5, 0.5, 0.5],
-        );
-        let half = fb2.color[(16 * 32 + 16) * 3..(16 * 32 + 16) * 3 + 3].to_vec();
+        let full = half_of([1.0, 1.0, 1.0, 1.0]);
+        // the BOTH-channels fold: the quarter (0.5 rgb * 0.5 blend)
+        let half = half_of([0.5, 0.5, 0.5, 0.5]);
         for ch in 0..3 {
             let f = full[ch] as f32 / 255.0;
             let h = half[ch] as f32 / 255.0;
             assert!(
+                (h - f * 0.25).abs() < 0.02,
+                "the both-channels fold the quarter wears (ch{ch}: {h} vs {})",
+                f * 0.25
+            );
+        }
+        // the RGB-ONLY fold: the blend at alpha 1 — the half speaks
+        let rgb_only = half_of([0.5, 0.5, 0.5, 1.0]);
+        for ch in 0..3 {
+            let f = full[ch] as f32 / 255.0;
+            let h = rgb_only[ch] as f32 / 255.0;
+            assert!(
                 (h - f * 0.5).abs() < 0.02,
-                "the half tint the multiply the channel wears"
+                "the rgb fold the half wears (ch{ch}: {h} vs {})",
+                f * 0.5
+            );
+        }
+        // the ALPHA-ONLY fold: the multiply at rgb 1 — the half speaks
+        let alpha_only = half_of([1.0, 1.0, 1.0, 0.5]);
+        for ch in 0..3 {
+            let f = full[ch] as f32 / 255.0;
+            let h = alpha_only[ch] as f32 / 255.0;
+            assert!(
+                (h - f * 0.5).abs() < 0.02,
+                "the alpha fold the half wears (ch{ch}: {h} vs {})",
+                f * 0.5
             );
         }
     }

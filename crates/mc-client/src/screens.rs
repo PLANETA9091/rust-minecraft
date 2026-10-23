@@ -53294,6 +53294,15 @@ impl App {
         ctx: &RenderCtx,
         cam: &crate::camera::Camera,
     ) {
+        // THE RUNTIME ROOT'S OWN WALK (the cart lane's jar_runtime_root
+        // the same law speaks — the hint the CWD-relative path keeps,
+        // the walk-up the package-dir processes answer: the mannequin's
+        // own prefix law the whole fn wears now). The repo-root hint
+        // the IDENTICAL path returns — the goldens' bytes the same root
+        // speaks; the package-dir processes the loaded world see — the
+        // tests' degenerate no-asset lane the walk retires.
+        let jar_root =
+            crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
         if self.perspective.is_first_person() {
             return; // the vanilla first-person law: no own-body render
         }
@@ -53301,8 +53310,7 @@ impl App {
             return; // the deterministic scenes own no body — nothing to watch
         };
         if self.avatar.is_none() {
-            self.avatar =
-                crate::avatar::AvatarModel::load(std::path::Path::new("assets-cache/jar"));
+            self.avatar = crate::avatar::AvatarModel::load(&jar_root);
         }
         let Some(model) = &self.avatar else {
             return; // the skin asset failed its sha1 — the renderer stays honest
@@ -53694,11 +53702,8 @@ impl App {
             };
             let base_key = format!("{dir}/{name}");
             if !self.armor_textures.contains_key(&base_key) {
-                let loaded = crate::avatar::ArmorTex::load(
-                    std::path::Path::new("assets-cache/jar"),
-                    dir,
-                    entry,
-                );
+                let loaded =
+                    crate::avatar::ArmorTex::load(&jar_root, dir, entry);
                 self.armor_textures.insert(base_key.clone(), loaded);
             }
             if !matches!(self.armor_textures.get(&base_key), Some(Some(_))) {
@@ -53710,11 +53715,7 @@ impl App {
             {
                 let loaded = mc_registry::generated::equipment::find("leather_overlay")
                     .and_then(|e| {
-                        crate::avatar::ArmorTex::load(
-                            std::path::Path::new("assets-cache/jar"),
-                            dir,
-                            e,
-                        )
+                        crate::avatar::ArmorTex::load(&jar_root, dir, e)
                     });
                 self.armor_textures
                     .insert(format!("{base_key}_overlay"), loaded);
@@ -53868,8 +53869,7 @@ impl App {
             chest.1 > 0 && Some(chest.0) == mc_registry::item_id_by_name("elytra");
         if wearing_elytra {
             if self.wings_tex.is_none() {
-                self.wings_tex =
-                    crate::avatar::WingsTex::load(std::path::Path::new("assets-cache/jar"));
+                self.wings_tex = crate::avatar::WingsTex::load(&jar_root);
             }
             if let Some(tex) = &self.wings_tex {
                 // THE POSE'S OWN LERP (the extraction's
@@ -53907,8 +53907,7 @@ impl App {
         // skins speak.
         if body.remaining_fire_ticks > 0 {
             if self.fire_strips.is_none() {
-                self.fire_strips =
-                    crate::avatar::FireStrips::load(std::path::Path::new("assets-cache/jar"));
+                self.fire_strips = crate::avatar::FireStrips::load(&jar_root);
             }
             if let Some(strips) = &self.fire_strips {
                 let day_time = self.day_time_now();

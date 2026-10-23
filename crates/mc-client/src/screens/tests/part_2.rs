@@ -491,6 +491,7 @@ use super::*;
     /// store banks, the STRICT closerThan the exact-touch refuses).
     #[test]
     fn the_pulse_the_cadence_the_darkness_wears() {
+        let _render_lane = render_lane();
         // === THE SUMMON (the walk-B's own setup — the stone floor the
         // warden lands) ===
         let mut app = App::new(3);
