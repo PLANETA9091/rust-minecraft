@@ -1614,6 +1614,12 @@ pub fn run_gui_app(
     // banks the write serve; the headless boot the None keeps)
     app.container_stores_file =
         Some(std::env::current_dir().unwrap_or_default().join("containers.nbt"));
+    // THE WORLD EDITS' OWN GAME DIR (the same vanilla default-game-dir
+    // law the hotbar + containers files wear: the cwd the
+    // `world_edits.nbt` names, the session's dig/place journal the
+    // RESTART OUTLIVES)
+    app.offline_world_file =
+        Some(std::env::current_dir().unwrap_or_default().join("world_edits.nbt"));
     app.offline_held_updated(held_item);
     app.offline_offhand_updated(offhand_item);
     // THE SAVE-DRAFTS OPTION'S OWN SEED (the --no-save-chat-drafts flag

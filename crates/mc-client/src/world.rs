@@ -14269,6 +14269,30 @@ pub struct World {
     /// the zero keeps). The overworld's true the default build speaks;
     /// [`Self::new_nether`] the false the nether build banks.
     pub has_skylight: bool,
+    /// THE OFFLINE SAVE'S OWN GATE (the vanilla region-file stand-in's
+    /// arm — the gate the world's own generation keeps OFF: the gen's
+    /// own `set()` walks the terrain shape the journal never names,
+    /// the App's post-gen arm the gameplay edits the session banks).
+    /// The networked world the gate never wears (the wire's own model
+    /// the server's truth keeps); the goldens' staged worlds the
+    /// default false the bit-for-bit scenes keep.
+    pub journaling: bool,
+    /// THE SESSION'S OWN EDIT ROWS ((x, y, z, new_id) in apply order —
+    /// the later row the cell's final state wears, the reload the same
+    /// order the deterministic terrain replays). The `set()`'s own
+    /// same-state silence the no-op edit never banks (the transition
+    /// alone the row costs).
+    pub edit_journal: Vec<(i32, i32, i32, u16)>,
+    /// THE SESSION'S OWN STATE-VARIANT ROWS ((x, y, z, variant) — the
+    /// trapdoor facing, the repeater delay, the wall torch's mount the
+    /// block id alone cannot carry; the reload the state byte the same
+    /// rows restore).
+    pub variant_journal: Vec<(i32, i32, i32, u8)>,
+    /// THE FLUSH CADENCE'S OWN BASELINES (the journal lens the last
+    /// file write banked — the dirty verdict the throttle's own
+    /// compare speaks; the tick the App's update lane owns).
+    pub saved_edits_mark: usize,
+    pub saved_variants_mark: usize,
 }
 
 /// A biome cell with no opinion — the server never answered for the
@@ -14615,6 +14639,11 @@ impl World {
             container_fill: std::collections::HashMap::new(), // the comparator lane: no fill
             frame_analog: std::collections::HashMap::new(), // the frame lane: no analog
             has_skylight: true, // the overworld default: the sky light the column pass speaks
+            journaling: false, // the gen's own sets the journal never banks (the App's post-gen arm)
+            edit_journal: Vec::new(), // the session's rows: no edits yet
+            variant_journal: Vec::new(), // the state rows: no variants yet
+            saved_edits_mark: 0,  // the flush baseline: nothing written yet
+            saved_variants_mark: 0,
         }
     }
 
@@ -14752,6 +14781,13 @@ impl World {
                 return; // THE SAME STATE'S OWN SILENCE — the no-op edit the walk never pays
             }
             self.chunks[ci][cell] = id;
+            // THE OFFLINE SAVE'S OWN ROW (the journaling gate the gen
+            // never wears — the gameplay edit the session's journal
+            // banks, the region-file stand-in's entry the reload
+            // replays)
+            if self.journaling {
+                self.edit_journal.push((wx, wy, wz, id));
+            }
             // THE CAMPFIRE QUEUE'S OWN MAINTENANCE (the autopush-530
             // round — the lit transition the entry pushes, the un-lit
             // the entry drops: the ONE-live-entry-per-cell law the fire
@@ -14962,6 +14998,11 @@ impl World {
         let lx = wx.rem_euclid(CHUNK_X as i32) as usize;
         let lz = wz.rem_euclid(CHUNK_Z as i32) as usize;
         layer[ci][lx + lz * CHUNK_X + wy as usize * CHUNK_X * CHUNK_Z] = v;
+        // THE OFFLINE SAVE'S OWN VARIANT ROW (the gate the block lane
+        // wears — the state byte the same file's variant list banks)
+        if self.journaling {
+            self.variant_journal.push((wx, wy, wz, v));
+        }
     }
 
     /// The entry face's own normal offsets, indexed by the Direction
@@ -17789,6 +17830,34 @@ impl World {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // THE OFFLINE JOURNAL'S OWN LAW (the region-file stand-in's rows —
+    // the gen the gate never banks, the gameplay edit the session
+    // banks, the same-state silence the no-op never costs, the variant
+    // byte the same journal wears)
+    #[test]
+    fn the_offline_journal_banks_the_gameplay_edits_the_gen_never() {
+        let mut w = World::new(2, 7);
+        assert!(!w.journaling, "the gen the gate keeps off");
+        assert!(w.edit_journal.is_empty(), "the gen's own sets never bank");
+        // THE UN-ARMED WALK: the staged world's sets the journal never
+        // names (the gate's own default the honest baseline keeps)
+        w.set(3, 5, 3, 1);
+        assert!(w.edit_journal.is_empty(), "the un-armed set never banks");
+        // THE ARM: the App's post-gen law the session edits wear
+        w.journaling = true;
+        w.set(3, 5, 3, 4);
+        assert_eq!(w.edit_journal, vec![(3, 5, 3, 4u16)]);
+        w.set(3, 5, 3, 4); // the same state's own silence — no row
+        assert_eq!(w.edit_journal.len(), 1, "the no-op edit never banks");
+        w.set(3, 5, 3, 2);
+        assert_eq!(w.edit_journal, vec![(3, 5, 3, 4u16), (3, 5, 3, 2u16)]);
+        assert_eq!(w.get(3, 5, 3), 2, "the world the final row wears");
+        // THE VARIANT LANE: the state byte the same journal banks
+        w.set_variant(1, 2, 1, 7);
+        assert_eq!(w.variant_journal, vec![(1, 2, 1, 7u8)]);
+        assert_eq!(w.variant(1, 2, 1), 7);
+    }
 
     // THE COLLISION SHAPE'S OWN ROW LAW (the table the placement's
     // obstruction walk consumes — the rows the enum's doc carries): the

@@ -1234,6 +1234,14 @@ use super::*;
             night_vision_factor: 0.0,
             rain_level: 0.0,
             thunder_level: 0.0,
+            // THE OFFLINE SAVE'S OWN LANES the staged world never wears —
+            // the gate the gen-time default keeps off, the journal the
+            // session's rows never names
+            journaling: false,
+            edit_journal: Vec::new(),
+            variant_journal: Vec::new(),
+            saved_edits_mark: 0,
+            saved_variants_mark: 0,
         });
         app.net_world.as_mut().unwrap().set(8, 0, 8, crate::world::STONE);
         app.enter_network_world(None, Skybox::Overworld, None, None);

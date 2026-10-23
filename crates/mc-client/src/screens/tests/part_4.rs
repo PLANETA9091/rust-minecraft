@@ -1482,6 +1482,14 @@ use super::*;
             night_vision_factor: 0.0, // no effect store rides these scenes — the golden floor
             rain_level: 0.0,  // the dry test world — no weather word rides
             thunder_level: 0.0, // the dry test world — no storm speaks
+            // THE OFFLINE SAVE'S OWN LANES the staged world never wears —
+            // the gate the gen-time default keeps off, the journal the
+            // session's rows never names
+            journaling: false,
+            edit_journal: Vec::new(),
+            variant_journal: Vec::new(),
+            saved_edits_mark: 0,
+            saved_variants_mark: 0,
         });
         app.open(ScreenKind::WorldOptions);
         app.render_title_buttons_for_test();
@@ -2088,6 +2096,14 @@ use super::*;
             night_vision_factor: 0.0, // no effect store rides these scenes — the golden floor
             rain_level: 0.0,  // the dry test world — no weather word rides
             thunder_level: 0.0, // the dry test world — no storm speaks
+            // THE OFFLINE SAVE'S OWN LANES the staged world never wears —
+            // the gate the gen-time default keeps off, the journal the
+            // session's rows never names
+            journaling: false,
+            edit_journal: Vec::new(),
+            variant_journal: Vec::new(),
+            saved_edits_mark: 0,
+            saved_variants_mark: 0,
                 },
                 camera: None,
                 spawn_biome: Some("minecraft:plains".into()),
@@ -2551,6 +2567,14 @@ use super::*;
             night_vision_factor: 0.0, // no effect store rides these scenes — the golden floor
             rain_level: 0.0,  // the dry test world — no weather word rides
             thunder_level: 0.0, // the dry test world — no storm speaks
+            // THE OFFLINE SAVE'S OWN LANES the staged world never wears —
+            // the gate the gen-time default keeps off, the journal the
+            // session's rows never names
+            journaling: false,
+            edit_journal: Vec::new(),
+            variant_journal: Vec::new(),
+            saved_edits_mark: 0,
+            saved_variants_mark: 0,
         });
         app.enter_network_world(None, Skybox::Overworld, None, None);
         assert_eq!(app.screen, ScreenKind::World);
@@ -2638,6 +2662,14 @@ use super::*;
             night_vision_factor: 0.0, // no effect store rides these scenes — the golden floor
             rain_level: 0.0,  // the dry test world — no weather word rides
             thunder_level: 0.0, // the dry test world — no storm speaks
+            // THE OFFLINE SAVE'S OWN LANES the staged world never wears —
+            // the gate the gen-time default keeps off, the journal the
+            // session's rows never names
+            journaling: false,
+            edit_journal: Vec::new(),
+            variant_journal: Vec::new(),
+            saved_edits_mark: 0,
+            saved_variants_mark: 0,
         });
         app.enter_network_world(None, Skybox::Overworld, None, None);
         let flight = app.world_camera();
@@ -2727,6 +2759,14 @@ use super::*;
             night_vision_factor: 0.0, // no effect store rides these scenes — the golden floor
             rain_level: 0.0,  // the dry test world — no weather word rides
             thunder_level: 0.0, // the dry test world — no storm speaks
+            // THE OFFLINE SAVE'S OWN LANES the staged world never wears —
+            // the gate the gen-time default keeps off, the journal the
+            // session's rows never names
+            journaling: false,
+            edit_journal: Vec::new(),
+            variant_journal: Vec::new(),
+            saved_edits_mark: 0,
+            saved_variants_mark: 0,
                 },
                 camera: None,
                 spawn_biome: None,

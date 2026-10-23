@@ -208,6 +208,14 @@ pub fn materialize(
         moving_ticks: Vec::new(), // the moving piston's own queue: no slide, no beat
         torch_toggles: Vec::new(), // the RECENT_TOGGLES window: empty
         bamboo_ticks: Vec::new(), // the bamboo's own queue: empty (the wire world the server's own falls land)
+        // THE OFFLINE SAVE'S OWN LANES the NETWORKED world never wears —
+        // the wire's own model the server's truth keeps, the journal
+        // the offline session's gate alone arms
+        journaling: false,
+        edit_journal: Vec::new(),
+        variant_journal: Vec::new(),
+        saved_edits_mark: 0,
+        saved_variants_mark: 0,
     };
     let side_i = side as i32;
     for gz in 0..side_i {

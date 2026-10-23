@@ -208,6 +208,14 @@ mod part_11;
             night_vision_factor: 0.0, // no effect store rides these scenes — the golden floor
             rain_level: 0.0,  // the dry test world — no weather word rides
             thunder_level: 0.0, // the dry test world — no storm speaks
+            // THE OFFLINE SAVE'S OWN LANES the staged world never wears —
+            // the gate the gen-time default keeps off, the journal the
+            // session's rows never names
+            journaling: false,
+            edit_journal: Vec::new(),
+            variant_journal: Vec::new(),
+            saved_edits_mark: 0,
+            saved_variants_mark: 0,
         }
     }
 

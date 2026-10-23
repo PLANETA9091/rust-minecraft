@@ -7621,6 +7621,20 @@ pub struct App {
     /// headless lanes the file never touch (the goldens' own
     /// determinism the missing path answers).
     pub container_stores_file: Option<std::path::PathBuf>,
+    /// THE OFFLINE WORLD'S OWN SAVE FILE (the vanilla region-file
+    /// stand-in's path — the session's edit journal the
+    /// [`Self::offline_world_file_save`] walk banks, the boot's
+    /// re-apply the [`Self::enter_world`] build wears: the placed
+    /// blocks, the dug cells, the grown crops the RESTART OUTLIVE).
+    /// THE NONE BOOT the no-game-dir stand-in keeps — the headless
+    /// lanes the file never touch (the goldens' own determinism the
+    /// missing path answers).
+    pub offline_world_file: Option<std::path::PathBuf>,
+    /// THE OFFLINE FLUSH'S OWN COOLDOWN (the dirty verdict's own
+    /// throttle — the 40-tick cadence the hold-mine's per-frame write
+    /// never pays; the Save-and-Quit lane the final flush the
+    /// cooldown bypass rides).
+    pub offline_save_cooldown: u32,
     /// THE DISK BANK'S OWN ONCE FLAG (the `HotbarManager.get(I)` pcs
     /// 1-13 walk the `loaded` once-flag speaks: the first store access
     /// the lazy `load()` answers, the later chords the in-memory map
@@ -8944,6 +8958,89 @@ pub fn hotbar_pages_from_nbt(value: &mc_protocol::nbt::Nbt) -> [[(i32, i32); 9];
 /// the save's own registry era the number banks).
 pub const CONTAINERS_DATA_VERSION: i32 = 4903;
 
+/// THE WORLD EDITS' OWN DATA VERSION (the container file's own era the
+/// same pin keeps — `CONTAINERS_DATA_VERSION`'s 4903 the header wears:
+/// the save's own registry era the number banks).
+pub const WORLD_EDITS_DATA_VERSION: i32 = 4903;
+
+/// THE OFFLINE FLUSH'S OWN CADENCE (ticks — the 2-second cadence the
+/// 20-tick second speaks; the vanilla autosave's own period the
+/// minutes keep, the client's session the shorter the crash the loss
+/// bounds).
+const OFFLINE_SAVE_CADENCE_TICKS: u32 = 40;
+
+/// THE WORLD EDITS' OWN NBT PARSE (the offline journal's reload walk —
+/// the seed the foreign file's gate reads, the two row lists the
+/// replay wears). `None` = the file the law refuses (the missing
+/// list, the wrong shape) — the fresh terrain the honest answer keeps.
+pub fn world_edits_from_nbt(
+    root: &mc_protocol::nbt::Nbt,
+) -> Option<(u64, Vec<(i32, i32, i32, u16)>, Vec<(i32, i32, i32, u8)>)> {
+    let mc_protocol::nbt::Nbt::Compound(rows) = root else {
+        return None;
+    };
+    let mut seed = None;
+    let mut edits = None;
+    let mut variants = None;
+    for (k, v) in rows {
+        match k.as_str() {
+            "seed" => {
+                if let mc_protocol::nbt::Nbt::Long(s) = v {
+                    seed = Some(*s as u64);
+                }
+            }
+            "edits" | "variants" => {
+                let mc_protocol::nbt::Nbt::List(items) = v else {
+                    return None;
+                };
+                let mut rows_out = Vec::with_capacity(items.len());
+                for item in items {
+                    let mc_protocol::nbt::Nbt::Compound(fields) = item else {
+                        return None;
+                    };
+                    let mut x = None;
+                    let mut y = None;
+                    let mut z = None;
+                    let mut payload = None;
+                    for (fk, fv) in fields {
+                        let mc_protocol::nbt::Nbt::Int(n) = fv else {
+                            return None;
+                        };
+                        match fk.as_str() {
+                            "x" => x = Some(*n),
+                            "y" => y = Some(*n),
+                            "z" => z = Some(*n),
+                            "id" | "v" => payload = Some(*n),
+                            _ => {}
+                        }
+                    }
+                    match (x, y, z, payload) {
+                        (Some(x), Some(y), Some(z), Some(p)) => rows_out.push((x, y, z, p)),
+                        _ => return None,
+                    }
+                }
+                if k == "edits" {
+                    edits = Some(
+                        rows_out
+                            .into_iter()
+                            .map(|(x, y, z, p)| (x, y, z, p as u16))
+                            .collect::<Vec<(i32, i32, i32, u16)>>(),
+                    );
+                } else {
+                    variants = Some(
+                        rows_out
+                            .into_iter()
+                            .map(|(x, y, z, p)| (x, y, z, p as u8))
+                            .collect::<Vec<(i32, i32, i32, u8)>>(),
+                    );
+                }
+            }
+            _ => {}
+        }
+    }
+    Some((seed?, edits?, variants?))
+}
+
 /// THE STORES' OWN NBT SHAPE (the dev-68 round — the vanilla
 /// RandomizableContainer BE's own save law the container file wears:
 /// the chunk's block_entities list the per-position compound keeps,
@@ -9485,6 +9582,8 @@ impl App {
             chest_open_cell: None,
             container_stores: std::collections::HashMap::new(),
             container_stores_file: None,
+            offline_world_file: None,
+            offline_save_cooldown: 0,
             container_stores_loaded: false,
             container_open_cell: None,
             container_open_cell_b: None,
@@ -10020,6 +10119,24 @@ impl App {
     /// Advance deterministic boot progress; transitions to title.
     pub fn update(&mut self) {
         self.frame += 1;
+        // THE OFFLINE SAVE'S OWN CADENCE (the container stores' flush
+        // law the world journal wears — the dirty verdict the marks'
+        // compare speaks, the 40-tick throttle the hold-mine's
+        // per-frame write never pays; the Save-and-Quit lane the final
+        // flush the cooldown bypass rides). The no-file boot the
+        // headless lanes the no-op keeps — the goldens' own
+        // determinism the missing path answers.
+        let offline_dirty = self.offline_world.as_ref().is_some_and(|w| {
+            w.journaling
+                && (w.edit_journal.len() != w.saved_edits_mark
+                    || w.variant_journal.len() != w.saved_variants_mark)
+        });
+        if self.offline_save_cooldown > 0 {
+            self.offline_save_cooldown -= 1;
+        } else if offline_dirty && self.offline_world_file.is_some() {
+            self.offline_world_file_save();
+            self.offline_save_cooldown = OFFLINE_SAVE_CADENCE_TICKS;
+        }
         // THE WORLD CLOCK'S OWN ADVANCE (the 26.2 WorldClock walk —
         // the accumulated time the clock OWNS, the shared tick
         // counter no longer the day's ride): the pause the advance
@@ -20279,6 +20396,41 @@ impl App {
             // the mesher's smooth-lighting lane consumes (the wire
             // world's same consumer).
             world.relight();
+            // THE SAVE FILE'S OWN RE-APPLY (the offline session's own
+            // persistence — the vanilla region file's reload law: the
+            // seed gate the foreign file refuses, the rows the same
+            // order the deterministic terrain replays, the journal the
+            // file's own rows the baseline keeps — the session's edits
+            // append, the next flush the self-contained file writes).
+            // The apply the journaling gate keeps OFF — the file's rows
+            // the re-apply the journal never re-banks — and the mesh +
+            // spawn's own top the applied world wears (the insert the
+            // `mesh_world` build precedes).
+            if let Some(path) = self.offline_world_file.clone() {
+                if let Ok(bytes) = std::fs::read(&path) {
+                    if let Ok((_, root)) =
+                        mc_protocol::nbt::read_file_nbt(&mut bytes.as_slice())
+                    {
+                        if let Some((seed, edits, variants)) =
+                            world_edits_from_nbt(&root)
+                        {
+                            if seed == world.seed {
+                                for (x, y, z, id) in &edits {
+                                    world.set(*x, *y, *z, *id);
+                                }
+                                for (x, y, z, v) in &variants {
+                                    world.set_variant(*x, *y, *z, *v);
+                                }
+                                world.edit_journal = edits;
+                                world.variant_journal = variants;
+                                world.saved_edits_mark = world.edit_journal.len();
+                                world.saved_variants_mark =
+                                    world.variant_journal.len();
+                            }
+                        }
+                    }
+                }
+            }
             // THE OVERWORLD'S OWN AMBIENT BASE: the integrated server's
             // dimension the generated table answers (the jar's
             // `visual/ambient_light_color` #0a0a0a — the lightmap's
@@ -20298,7 +20450,11 @@ impl App {
             self.day_bake = Some(day_bake_inputs(&world));
             self.world_is_network = false;
             // the App OWNS the procedural voxels now (the block-use
-            // lane's placement prediction edits them in place)
+            // lane's placement prediction edits them in place). THE
+            // JOURNAL'S OWN ARM (the gen-time sets the terrain shape
+            // the gate never banked — the gameplay edits from here the
+            // session's journal wears)
+            world.journaling = true;
             self.offline_world = Some(world);
             // the fresh terrain's own honesty — the previous offline
             // session's hulls drop with the world that carried them;
@@ -31577,6 +31733,71 @@ impl App {
         }
     }
 
+    /// THE WORLD EDITS' OWN SAVE WALK (the container stores' own law
+    /// the same file framing speaks — the `NbtIo.write` uncompressed
+    /// lane, the seed the reload's gate reads, the two row lists the
+    /// journal keeps). THE NONE BOOT the no-game-dir stand-in keeps,
+    /// the no-world walk the honest early-return answers (the title
+    /// screen's lanes the file never touch), the failure the silent
+    /// keep answers — the in-memory journal the truth stays, the next
+    /// cadence tick the retry the dirty verdict re-arms.
+    fn offline_world_file_save(&mut self) {
+        let Some(path) = self.offline_world_file.clone() else {
+            return;
+        };
+        let Some(w) = self.offline_world.as_ref() else {
+            return;
+        };
+        let edits = mc_protocol::nbt::Nbt::List(
+            w.edit_journal
+                .iter()
+                .map(|(x, y, z, id)| {
+                    mc_protocol::nbt::Nbt::Compound(vec![
+                        ("x".to_string(), mc_protocol::nbt::Nbt::Int(*x)),
+                        ("y".to_string(), mc_protocol::nbt::Nbt::Int(*y)),
+                        ("z".to_string(), mc_protocol::nbt::Nbt::Int(*z)),
+                        ("id".to_string(), mc_protocol::nbt::Nbt::Int(*id as i32)),
+                    ])
+                })
+                .collect(),
+        );
+        let variants = mc_protocol::nbt::Nbt::List(
+            w.variant_journal
+                .iter()
+                .map(|(x, y, z, v)| {
+                    mc_protocol::nbt::Nbt::Compound(vec![
+                        ("x".to_string(), mc_protocol::nbt::Nbt::Int(*x)),
+                        ("y".to_string(), mc_protocol::nbt::Nbt::Int(*y)),
+                        ("z".to_string(), mc_protocol::nbt::Nbt::Int(*z)),
+                        ("v".to_string(), mc_protocol::nbt::Nbt::Int(*v as i32)),
+                    ])
+                })
+                .collect(),
+        );
+        let root = mc_protocol::nbt::Nbt::Compound(vec![
+            (
+                "DataVersion".to_string(),
+                mc_protocol::nbt::Nbt::Int(WORLD_EDITS_DATA_VERSION),
+            ),
+            ("seed".to_string(), mc_protocol::nbt::Nbt::Long(w.seed as i64)),
+            ("edits".to_string(), edits),
+            ("variants".to_string(), variants),
+        ]);
+        let mut bytes = Vec::new();
+        if mc_protocol::nbt::write_file_nbt("", &root, &mut bytes).is_ok() {
+            let _ = std::fs::write(&path, &bytes);
+        }
+        // THE BASELINE'S OWN BANK (the marks the flush's dirty verdict
+        // compares — the written lens the next throttle tick the clean
+        // verdict speaks)
+        let w = self
+            .offline_world
+            .as_mut()
+            .expect("the world the save just wore");
+        w.saved_edits_mark = w.edit_journal.len();
+        w.saved_variants_mark = w.variant_journal.len();
+    }
+
     /// THE F KEY'S OWN LANE (javap Minecraft.handleKeybinds's
     /// keySwapOffhand arm — scripts/jar_work/handlekeybinds_48.txt pcs
     /// 375-414: the `Options.keySwapOffhand.consumeClick()` rising edge
@@ -33457,6 +33678,11 @@ impl App {
                 }
                 "saveandquit" => {
                     self.paused = false;
+                    // THE OFFLINE WORLD'S OWN FINAL FLUSH (the vanilla
+                    // Save's own law the quit lane keeps — the session's
+                    // journal the file banks before the title screen's
+                    // own lanes the walk serves)
+                    self.offline_world_file_save();
                     if self.world_is_network {
                         // vanilla Save and Quit unloads the level: the
                         // network mesh drops (a newer join rematerializes

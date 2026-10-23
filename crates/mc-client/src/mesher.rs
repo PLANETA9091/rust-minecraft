@@ -9177,6 +9177,14 @@ mod tests {
             night_vision_factor: 0.0,
             rain_level: 0.0,  // the air-window scene: the dry world
             thunder_level: 0.0,
+            // THE OFFLINE SAVE'S OWN LANES the staged world never wears —
+            // the gate the gen-time default keeps off, the journal the
+            // session's rows never names
+            journaling: false,
+            edit_journal: Vec::new(),
+            variant_journal: Vec::new(),
+            saved_edits_mark: 0,
+            saved_variants_mark: 0,
         }
     }
 

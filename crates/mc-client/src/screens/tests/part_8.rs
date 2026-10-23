@@ -1,5 +1,65 @@
 use super::*;
 
+// THE WORLD EDITS' OWN ROUND TRIP (the offline save's own law — the
+// file the session's journal banks, the reload the rows the fresh
+// terrain replays, the seed gate the foreign file refuses, the
+// cadence tick the dirty world's own flush wears)
+#[test]
+fn the_world_edits_journal_round_trips_the_session() {
+    let dir = std::env::temp_dir().join(format!("mc2rs_world_edits_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&dir);
+    let path = dir.join("world_edits.nbt");
+    let mut app = App::new(3);
+    app.offline_world_file = Some(path.clone());
+    app.enter_world();
+    app.offline_world.as_mut().unwrap().set(10, 5, 10, 41);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set_variant(10, 5, 10, 3);
+    app.offline_world_file_save();
+    // THE FILE the rows wear (the save the marks bank — the dirty
+    // verdict the next cadence the clean verdict speaks)
+    let w = app.offline_world.as_ref().unwrap();
+    assert_eq!(w.saved_edits_mark, 1, "the flush the mark banks");
+    let bytes = std::fs::read(&path).expect("the flush the file writes");
+    let (_, root) =
+        mc_protocol::nbt::read_file_nbt(&mut bytes.as_slice()).expect("the file the parse answers");
+    let (seed, edits, variants) =
+        crate::screens::world_edits_from_nbt(&root).expect("the rows the parse wears");
+    assert_eq!(seed, 3);
+    assert_eq!(edits, vec![(10, 5, 10, 41u16)]);
+    assert_eq!(variants, vec![(10, 5, 10, 3u8)]);
+    // THE RELOAD: the fresh world the rows wear (the vanilla law — the
+    // restart the session's builds outlive; the journal the file's own
+    // rows the baseline keeps, the session's edits append)
+    let mut app2 = App::new(3);
+    app2.offline_world_file = Some(path.clone());
+    app2.enter_world();
+    let w2 = app2.offline_world.as_ref().unwrap();
+    assert_eq!(w2.get(10, 5, 10), 41, "the placed block the reload wears");
+    assert_eq!(w2.variant(10, 5, 10), 3, "the state byte the reload wears");
+    assert!(w2.journaling, "the armed gate the session continues");
+    assert_eq!(w2.edit_journal, edits, "the file the baseline keeps");
+    // THE SEED GATE: the foreign file the fresh terrain refuses
+    let mut app3 = App::new(99);
+    app3.offline_world_file = Some(path.clone());
+    app3.enter_world();
+    let w3 = app3.offline_world.as_ref().unwrap();
+    assert!(
+        w3.edit_journal.is_empty(),
+        "the foreign seed the apply never answers"
+    );
+    assert!(w3.journaling, "the fresh session the gate arms");
+    // THE CADENCE: the dirty world the tick's own flush banks (the
+    // throttle the hold-mine's per-frame write never pays)
+    let _ = std::fs::remove_file(&path);
+    app2.offline_world.as_mut().unwrap().set(11, 5, 10, 41);
+    app2.update();
+    assert!(path.exists(), "the dirty tick the flush banks");
+    let _ = std::fs::remove_file(&path);
+    let _ = std::fs::remove_dir(&dir);
+}
 
     /// THE TORCH'S OWN BEAT THE DRAIN'S LAMP SEEDS WEAR (the autopush-116
     /// round — javap RedStoneWireBlock.updatePowerStrength the 26.2 jar
