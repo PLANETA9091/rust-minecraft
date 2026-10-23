@@ -135,6 +135,127 @@ fn the_saved_player_row_restores_the_pose_and_the_pockets() {
     let _ = std::fs::remove_dir(&dir3);
 }
 
+// THE VITALS' OWN SAVE ROW (the player tag's Health/food/Xp rows the
+// same file wears — the hurt bar, the drained food quartet, the
+// earned xp trio the reload re-wears; the ELDER file's missing rows
+// the vanilla spawn state answers)
+#[test]
+fn the_saved_player_row_wears_the_vitals() {
+    let dir = std::env::temp_dir().join(format!("mc2rs_saved_vitals_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&dir);
+    let path = dir.join("world_edits.nbt");
+    let mut app = App::new(3);
+    app.offline_world_file = Some(path.clone());
+    app.enter_world();
+    app.spawn_offline_body();
+    // THE STAGED SESSION: the hurt bar, the drained food quartet (the
+    // from_saved constructor the staging dogfoods), the earned xp trio
+    app.health = 13.5;
+    app.food_data = crate::food::FoodData::from_saved(9, 1.5, 2.0, 7);
+    app.xp = crate::xp::ExperienceStat {
+        level: 3,
+        progress: 0.25,
+        total: 42,
+    };
+    app.offline_world_file_save();
+    // THE FILE the vitals rows wear (the vanilla tag's own field
+    // names the parse re-reads)
+    let bytes = std::fs::read(&path).expect("the flush the file writes");
+    let (_, root) =
+        mc_protocol::nbt::read_file_nbt(&mut bytes.as_slice()).expect("the file the parse answers");
+    let sp = crate::screens::player_state_from_nbt(&root).expect("the row the parse wears");
+    assert_eq!(sp.health, 13.5, "the hurt bar the file banks");
+    assert_eq!(sp.food_level, 9, "the drained bar the file banks");
+    assert_eq!(sp.saturation, 1.5, "the drained saturation the file banks");
+    assert_eq!(sp.exhaustion, 2.0, "the banked exhaustion the file wears");
+    assert_eq!(
+        sp.tick_timer, 7,
+        "the shared beat's own count the file wears"
+    );
+    assert_eq!(sp.xp_level, 3, "the level the file banks");
+    assert_eq!(sp.xp_progress, 0.25, "the progress the file banks");
+    assert_eq!(sp.xp_total, 42, "the lifetime points the file banks");
+    // THE RELOAD: the fresh boot the vitals wear (the HUD the same
+    // bars re-draws, the food sim the saved quartet resumes)
+    let mut app2 = App::new(3);
+    app2.offline_world_file = Some(path.clone());
+    app2.enter_world();
+    assert_eq!(app2.health, 13.5, "the bar the reload wears");
+    assert_eq!(app2.food_data.food_level(), 9, "the bar the reload wears");
+    assert_eq!(
+        app2.food_data.saturation(),
+        1.5,
+        "the saturation the reload wears"
+    );
+    assert_eq!(
+        app2.food_data.exhaustion(),
+        2.0,
+        "the bank the reload wears"
+    );
+    assert_eq!(app2.food_data.tick_timer(), 7, "the timer the reload wears");
+    assert_eq!(app2.xp.level, 3, "the level the reload wears");
+    assert_eq!(app2.xp.progress, 0.25, "the progress the reload wears");
+    assert_eq!(app2.xp.total, 42, "the points the reload wears");
+    // THE ELDER FILE: the missing vitals rows the spawn state answers
+    // (the pre-vitals tag the fresh constructor's own quartet/trio
+    // wears — the pose + the pockets the same parse still banks)
+    let elder = mc_protocol::nbt::Nbt::Compound(vec![(
+        "player".to_string(),
+        mc_protocol::nbt::Nbt::Compound(vec![
+            (
+                "Pos".to_string(),
+                mc_protocol::nbt::Nbt::List(vec![
+                    mc_protocol::nbt::Nbt::Double(1.0),
+                    mc_protocol::nbt::Nbt::Double(2.0),
+                    mc_protocol::nbt::Nbt::Double(3.0),
+                ]),
+            ),
+            (
+                "Rotation".to_string(),
+                mc_protocol::nbt::Nbt::List(vec![
+                    mc_protocol::nbt::Nbt::Float(45.0),
+                    mc_protocol::nbt::Nbt::Float(-5.0),
+                ]),
+            ),
+            ("SelectedHotbar".to_string(), mc_protocol::nbt::Nbt::Int(1)),
+            ("Items".to_string(), mc_protocol::nbt::Nbt::List(vec![])),
+            ("Armor".to_string(), mc_protocol::nbt::Nbt::List(vec![])),
+            ("Offhand".to_string(), mc_protocol::nbt::Nbt::List(vec![])),
+        ]),
+    )]);
+    let sp2 = crate::screens::player_state_from_nbt(&elder).expect("the elder row the parse wears");
+    assert_eq!(sp2.x, 1.0, "the pose the elder parse keeps");
+    assert_eq!(
+        sp2.selected_hotbar, 1,
+        "the selection the elder parse keeps"
+    );
+    assert_eq!(
+        sp2.health,
+        crate::screens::MAX_HEALTH,
+        "the elder file the spawn bar wears"
+    );
+    assert_eq!(
+        sp2.food_level,
+        crate::food::MAX_FOOD,
+        "the elder file the spawn bar wears"
+    );
+    assert_eq!(
+        sp2.saturation,
+        crate::food::START_SATURATION,
+        "the elder file the spawn saturation wears"
+    );
+    assert_eq!(sp2.exhaustion, 0.0, "the elder file the fresh bank wears");
+    assert_eq!(sp2.tick_timer, 0, "the elder file the fresh beat wears");
+    assert_eq!(sp2.xp_level, 0, "the elder file the fresh level wears");
+    assert_eq!(
+        sp2.xp_progress, 0.0,
+        "the elder file the fresh progress wears"
+    );
+    assert_eq!(sp2.xp_total, 0, "the elder file the fresh points wear");
+    let _ = std::fs::remove_file(&path);
+    let _ = std::fs::remove_dir(&dir);
+}
+
     /// THE TORCH'S OWN BEAT THE DRAIN'S LAMP SEEDS WEAR (the autopush-116
     /// round — javap RedStoneWireBlock.updatePowerStrength the 26.2 jar
     /// the changed cells' own setBlock flag-3 the Level.updateNeighborsAt

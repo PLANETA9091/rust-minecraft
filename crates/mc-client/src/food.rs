@@ -194,9 +194,28 @@ impl FoodData {
         self.saturation
     }
 
-    #[cfg_attr(not(test), expect(dead_code))]
     pub fn exhaustion(&self) -> f32 {
         self.exhaustion
+    }
+
+    /// The shared regen/starve beat's own read (the file's foodTickTimer
+    /// row the reload re-wears — the lane switch's own count the restart
+    /// keeps).
+    pub fn tick_timer(&self) -> i32 {
+        self.tick_timer
+    }
+
+    /// THE SAVED ROW'S OWN CONSTRUCTOR (the level.dat read the reload
+    /// speaks — the four fields the player tag's food rows store
+    /// verbatim, the save-time state's own clamps the file's row
+    /// already wore, the constructor the honest restore answers).
+    pub fn from_saved(food_level: i32, saturation: f32, exhaustion: f32, tick_timer: i32) -> Self {
+        Self {
+            food_level,
+            saturation,
+            exhaustion,
+            tick_timer,
+        }
     }
 
     /// `hasEnoughFood` (javap: `foodLevel > 6.0f` as a float compare —

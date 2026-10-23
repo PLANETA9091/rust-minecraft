@@ -9049,8 +9049,12 @@ pub fn world_edits_from_nbt(
 
 /// THE SAVED PLAYER'S OWN ROW (the vanilla level.dat player tag's own
 /// stand-in — the pose the reload re-anchors, the pockets the
-/// inventory restores, the selected slot the HUD re-wears; the mark
-/// the flush's dirty verdict compares).
+/// inventory restores, the selected slot the HUD re-wears, the
+/// VITALS the same tag's Health/food/Xp rows the restart re-wears;
+/// the mark the flush's dirty verdict compares). THE VITALS' OWN
+/// SHAPE the vanilla tag's flat fields keep — the Health Float, the
+/// food quartet, the Xp trio the flattened scalars speak (the
+/// FoodData/ExperienceStat compounds the tag never nests).
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct SavedPlayer {
     /// The FEET position (the body's own x/y/z — the AABB's bottom
@@ -9066,6 +9070,22 @@ pub struct SavedPlayer {
     pub inventory: crate::drops::Inventory,
     /// The active hotbar slot (the HUD selection the reload re-wears).
     pub selected_hotbar: i32,
+    /// The health bar (`Health` — the 0..=max clamp the live lane
+    /// keeps; the hurt fields the session's own transients stay).
+    pub health: f32,
+    /// THE FOOD QUARTET (`foodLevel`/`foodSaturationLevel`/
+    /// `foodExhaustionLevel`/`foodTickTimer` — the FoodData's own
+    /// four fields the vanilla tag stores flat).
+    pub food_level: i32,
+    pub saturation: f32,
+    pub exhaustion: f32,
+    pub tick_timer: i32,
+    /// THE XP TRIO (`XpLevel`/`XpP`/`XpTotal` — the level, the
+    /// progress fraction, the lifetime points the tag's own rows
+    /// speak).
+    pub xp_level: i32,
+    pub xp_progress: f32,
+    pub xp_total: i32,
 }
 
 /// THE STACK LIST'S OWN NBT (the slot/id/count compounds the player
@@ -9148,11 +9168,47 @@ fn player_row_to_nbt(sp: &SavedPlayer) -> mc_protocol::nbt::Nbt {
         ("Items".to_string(), stacks(&sp.inventory.items)),
         ("Armor".to_string(), stacks(&sp.inventory.armor)),
         ("Offhand".to_string(), stacks(&sp.inventory.offhand)),
+        (
+            "Health".to_string(),
+            mc_protocol::nbt::Nbt::Float(sp.health),
+        ),
+        (
+            "foodLevel".to_string(),
+            mc_protocol::nbt::Nbt::Int(sp.food_level),
+        ),
+        (
+            "foodSaturationLevel".to_string(),
+            mc_protocol::nbt::Nbt::Float(sp.saturation),
+        ),
+        (
+            "foodExhaustionLevel".to_string(),
+            mc_protocol::nbt::Nbt::Float(sp.exhaustion),
+        ),
+        (
+            "foodTickTimer".to_string(),
+            mc_protocol::nbt::Nbt::Int(sp.tick_timer),
+        ),
+        (
+            "XpLevel".to_string(),
+            mc_protocol::nbt::Nbt::Int(sp.xp_level),
+        ),
+        (
+            "XpP".to_string(),
+            mc_protocol::nbt::Nbt::Float(sp.xp_progress),
+        ),
+        (
+            "XpTotal".to_string(),
+            mc_protocol::nbt::Nbt::Int(sp.xp_total),
+        ),
     ])
 }
 
 /// THE PLAYER ROW'S OWN PARSE (the strict shape the missing row's None
-/// keeps — the fresh player the absent tag answers).
+/// keeps — the fresh player the absent tag answers). THE VITALS' OWN
+/// ROWS the OPTIONAL parse keeps — the elder file's missing rows the
+/// vanilla spawn state answers (the fresh FoodData/ExperienceStat the
+/// constructor speaks), the written row's own values the reload
+/// re-wears.
 pub fn player_state_from_nbt(root: &mc_protocol::nbt::Nbt) -> Option<SavedPlayer> {
     let mc_protocol::nbt::Nbt::Compound(rows) = root else {
         return None;
@@ -9167,6 +9223,17 @@ pub fn player_state_from_nbt(root: &mc_protocol::nbt::Nbt) -> Option<SavedPlayer
     let mut items = None;
     let mut armor = None;
     let mut offhand = None;
+    // THE VITALS' OWN DEFAULTS (the vanilla spawn state — the elder
+    // file's missing rows the fresh constructor's own quartet/trio
+    // answers, the written row the parse's Some overwrites)
+    let mut health = MAX_HEALTH;
+    let mut food_level = crate::food::MAX_FOOD;
+    let mut saturation = crate::food::START_SATURATION;
+    let mut exhaustion = 0.0f32;
+    let mut tick_timer = 0i32;
+    let mut xp_level = 0i32;
+    let mut xp_progress = 0.0f32;
+    let mut xp_total = 0i32;
     let doubles = |v: &mc_protocol::nbt::Nbt| -> Option<Vec<f64>> {
         let mc_protocol::nbt::Nbt::List(xs) = v else {
             return None;
@@ -9205,6 +9272,46 @@ pub fn player_state_from_nbt(root: &mc_protocol::nbt::Nbt) -> Option<SavedPlayer
             "Items" => items = stacks_row_from_nbt(v, 36),
             "Armor" => armor = stacks_row_from_nbt(v, 4),
             "Offhand" => offhand = stacks_row_from_nbt(v, 1),
+            "Health" => {
+                if let mc_protocol::nbt::Nbt::Float(f) = v {
+                    health = *f;
+                }
+            }
+            "foodLevel" => {
+                if let mc_protocol::nbt::Nbt::Int(n) = v {
+                    food_level = *n;
+                }
+            }
+            "foodSaturationLevel" => {
+                if let mc_protocol::nbt::Nbt::Float(f) = v {
+                    saturation = *f;
+                }
+            }
+            "foodExhaustionLevel" => {
+                if let mc_protocol::nbt::Nbt::Float(f) = v {
+                    exhaustion = *f;
+                }
+            }
+            "foodTickTimer" => {
+                if let mc_protocol::nbt::Nbt::Int(n) = v {
+                    tick_timer = *n;
+                }
+            }
+            "XpLevel" => {
+                if let mc_protocol::nbt::Nbt::Int(n) = v {
+                    xp_level = *n;
+                }
+            }
+            "XpP" => {
+                if let mc_protocol::nbt::Nbt::Float(f) = v {
+                    xp_progress = *f;
+                }
+            }
+            "XpTotal" => {
+                if let mc_protocol::nbt::Nbt::Int(n) = v {
+                    xp_total = *n;
+                }
+            }
             _ => {}
         }
     }
@@ -9225,6 +9332,14 @@ pub fn player_state_from_nbt(root: &mc_protocol::nbt::Nbt) -> Option<SavedPlayer
             offhand: offhand?.try_into().ok()?,
         },
         selected_hotbar: sel?,
+        health,
+        food_level,
+        saturation,
+        exhaustion,
+        tick_timer,
+        xp_level,
+        xp_progress,
+        xp_total,
     })
 }
 
@@ -20627,6 +20742,26 @@ impl App {
                                     self.hotbar_slots = self.inventory.hotbar();
                                     let id = self.held_id();
                                     self.load_held_payload_from_id(id);
+                                    // THE VITALS' OWN RESTORE (the
+                                    // Health/food/Xp rows the reload
+                                    // re-wears — the bar, the food
+                                    // quartet's four fields, the xp trio
+                                    // the same tag's own rows speak; the
+                                    // elder file's missing rows the
+                                    // parse's spawn defaults already
+                                    // wore)
+                                    self.health = sp.health;
+                                    self.food_data = crate::food::FoodData::from_saved(
+                                        sp.food_level,
+                                        sp.saturation,
+                                        sp.exhaustion,
+                                        sp.tick_timer,
+                                    );
+                                    self.xp = crate::xp::ExperienceStat {
+                                        level: sp.xp_level,
+                                        progress: sp.xp_progress,
+                                        total: sp.xp_total,
+                                    };
                                     self.saved_player = Some(sp);
                                 }
                             }
@@ -32011,10 +32146,11 @@ impl App {
     }
 
     /// THE PLAYER STATE'S OWN READ (the flush's row source — the body's
-    /// own pose + the gameplay inventory the offline session wears; the
-    /// NETWORKED world the None keeps (the wire's body the server's
-    /// truth stores), the not-yet-spawned boot the file's own loaded
-    /// row keeps, the fresh player the None the no-row write answers).
+    /// own pose + the gameplay inventory + the vitals the offline
+    /// session wears; the NETWORKED world the None keeps (the wire's
+    /// body the server's truth stores), the not-yet-spawned boot the
+    /// file's own loaded row keeps, the fresh player the None the
+    /// no-row write answers).
     fn player_state_now(&self) -> Option<SavedPlayer> {
         if self.world_is_network {
             return None;
@@ -32028,6 +32164,14 @@ impl App {
                 pitch: b.pitch,
                 inventory: self.inventory,
                 selected_hotbar: self.selected_hotbar as i32,
+                health: self.health,
+                food_level: self.food_data.food_level(),
+                saturation: self.food_data.saturation(),
+                exhaustion: self.food_data.exhaustion(),
+                tick_timer: self.food_data.tick_timer(),
+                xp_level: self.xp.level,
+                xp_progress: self.xp.progress,
+                xp_total: self.xp.total,
             });
         }
         self.saved_player
