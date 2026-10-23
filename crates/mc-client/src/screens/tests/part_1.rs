@@ -3008,7 +3008,6 @@ use super::*;
         assert_eq!(app.health, 0.0);
     }
 
-
     #[test]
     fn the_offline_command_the_kill_targets_the_selector_walk_speaks() {
         // THE PURE PARSE (the EntitySelectorParser's own word law —
@@ -8113,4 +8112,73 @@ use super::*;
             app.warden_tracker.ticks_since_last_warning, arrival as i32,
             "the tick walk the doTick slot keeps — the warn the counter never resets"
         );
+    }
+
+    /// THE GAMERULE LITERAL'S OWN WALK (javap GameRuleCommand — the
+    /// keepInventory row the query/set pair serves, the raw rule id +
+    /// the serialized bool the 26.2 lang rows wear, the unknown rule
+    /// and the bad value the parse failures keep).
+    #[test]
+    fn the_offline_command_the_gamerule_the_keepinventory_walks() {
+        let mut app = App::new(3);
+        app.enter_world();
+        assert!(
+            !app.keep_inventory,
+            "the vanilla default the false boot wears"
+        );
+        // THE SET TRUE (commands.gamerule.set the two-arg translatable
+        // wears — the raw rule id + the serialized bool)
+        app.chat_open = true;
+        app.chat_input = "/gamerule keepInventory true".into();
+        app.on_chat_submit();
+        assert!(app.keep_inventory, "the set the row arms");
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Gamerule keepInventory is now set to: true"),
+        );
+        // THE QUERY (commands.gamerule.query the two-arg translatable
+        // wears)
+        app.chat_open = true;
+        app.chat_input = "/gamerule keepInventory".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Gamerule keepInventory is currently set to: true"),
+        );
+        // THE SET FALSE (the row the rule disarms)
+        app.chat_open = true;
+        app.chat_input = "/gamerule keepInventory false".into();
+        app.on_chat_submit();
+        assert!(!app.keep_inventory, "the set the row disarms");
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Gamerule keepInventory is now set to: false"),
+        );
+        // THE BAD VALUE (the BoolArgumentType's parse the failure
+        // keeps — the row unmoved, the RED error rides)
+        app.chat_open = true;
+        app.chat_input = "/gamerule keepInventory maybe".into();
+        app.on_chat_submit();
+        assert!(!app.keep_inventory, "the bad value the row unmoved keeps");
+        let err = app.chat_messages.last().map(|(m, _)| m.clone()).unwrap();
+        assert!(
+            err.starts_with("\u{a7}c"),
+            "the parse failure the RED error rides: {err:?}"
+        );
+        // THE UNKNOWN RULE (the GameRuleArgument's own walk — the
+        // parse failure the RED error keeps)
+        app.chat_open = true;
+        app.chat_input = "/gamerule doDaylightCycle true".into();
+        app.on_chat_submit();
+        let err = app.chat_messages.last().map(|(m, _)| m.clone()).unwrap();
+        assert!(
+            err.starts_with("\u{a7}c"),
+            "the unknown rule the RED error rides: {err:?}"
+        );
+        // THE SET THE DEATH ARC ANSWERS (the armed row the death
+        // lanes' gates read — the same spare the part_8 law wears)
+        app.chat_open = true;
+        app.chat_input = "/gamerule keepInventory true".into();
+        app.on_chat_submit();
+        assert!(app.keep_inventory, "the set the row arms");
     }

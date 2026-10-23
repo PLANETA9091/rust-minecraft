@@ -8623,6 +8623,15 @@ pub struct App {
     /// feel speaks). `None` until an actual change lands (the
     /// same-mode arm the switchToHoveredGameMode walk keeps silent).
     pub previous_game_mode: Option<GameMode>,
+    /// THE KEEPINVENTORY GAMERULE'S OWN ROW (javap `GameRules.RULE_KEEPIVENTORY`
+    /// the 26.2 clinit speaks — the BooleanValue the death lanes' own
+    /// gates read): the FALSE the vanilla world creation's own default
+    /// wears, the TRUE the death's reward the zero keeps (the
+    /// getExperienceReward gate), the pockets the scatters never walk
+    /// (the dropCustomDeathLoot gate), the respawn's fresh entity the
+    /// trio + pockets the rule re-copies. The `/gamerule keepInventory`
+    /// command the row's own walk serves.
+    pub keep_inventory: bool,
     /// THE ABILITIES OBJECT'S OWN BANK (the vanilla client's ONE
     /// `Abilities` instance the whole walk family reads —
     /// `LocalPlayer.aiStep`'s mayfly gate, `MultiPlayerGameMode`'s
@@ -10072,6 +10081,7 @@ impl App {
             hitboxes: false,
             game_mode: GameMode::Survival,
             previous_game_mode: None,
+            keep_inventory: false,
             abilities_word: None,
             gm_hovered: 0,
             gm_first_mouse: None,
@@ -36426,6 +36436,50 @@ impl App {
                     .to_string();
                 self.push_chat_message(msg);
             }
+            // THE GAMERULE LITERAL (javap GameRuleCommand — the
+            // `literal("gamerule")` node the rule argument carries,
+            // the no-value form the QUERY walk serves, the value form
+            // the SET walk serves). THE RULE the offline vocabulary
+            // carries: keepInventory — the GameRules.RULE_KEEPIVENTORY
+            // row the death lanes' own gates read (the reward's zero,
+            // the scatters' refuse, the respawn's re-copy). THE
+            // FEEDBACK (the 26.2 lang table's own rows: query
+            // "Gamerule %s is currently set to: %s", set "Gamerule %s
+            // is now set to: %s" — the raw rule id the first arg
+            // wears, the serialized bool the second).
+            ["gamerule", rule] => {
+                if *rule != "keepInventory" {
+                    // THE UNKNOWN RULE (the GameRuleArgument's own walk
+                    // — the parse failure the RED error keeps)
+                    self.push_local_command_error();
+                    return;
+                }
+                let msg = format_positional(
+                    tr("commands.gamerule.query")
+                        .unwrap_or("Gamerule %s is currently set to: %s"),
+                    &["keepInventory", &self.keep_inventory.to_string()],
+                );
+                self.push_chat_message(msg);
+            }
+            ["gamerule", rule, value] => {
+                if *rule != "keepInventory" {
+                    self.push_local_command_error();
+                    return;
+                }
+                // THE BOOL PARSE (the BoolArgumentType.bool() — the
+                // exact true/false words the value wears, everything
+                // else the parse failure keeps)
+                let Some(v) = Self::parse_bool_arg(value) else {
+                    self.push_local_command_error();
+                    return;
+                };
+                self.keep_inventory = v;
+                let msg = format_positional(
+                    tr("commands.gamerule.set").unwrap_or("Gamerule %s is now set to: %s"),
+                    &["keepInventory", &v.to_string()],
+                );
+                self.push_chat_message(msg);
+            }
             // THE KILL LITERAL (javap KillCommand — the no-arg
             // executes the SELF collection rides, the `targets`
             // EntityArgument lane the selector vocabulary the offline
@@ -52353,10 +52407,15 @@ impl App {
                 // the THROW-RANDOMLY ItemEntity scatters, the container
                 // the walk empties slot by slot): the death spot the
                 // eye-minus-0.3 height the Player#drop law wears, the
-                // cleared rows the fresh respawn's own empty re-answers
-                if let Some(b) = self.body.as_ref() {
-                    let (px, py, pz) = (b.x, b.y + b.eye_height() - 0.3, b.z);
-                    self.drop_inventory_at_death(px, py, pz);
+                // cleared rows the fresh respawn's own empty re-answers.
+                // THE KEEPINVENTORY-TRUE row the scatters never walks
+                // (the gamerule's own gate the pockets the death
+                // spares)
+                if !self.keep_inventory {
+                    if let Some(b) = self.body.as_ref() {
+                        let (px, py, pz) = (b.x, b.y + b.eye_height() - 0.3, b.z);
+                        self.drop_inventory_at_death(px, py, pz);
+                    }
                 }
             }
             self.sounds.play_death_voice(self.frame);
@@ -52365,15 +52424,16 @@ impl App {
 
     /// THE DEATH'S OWN REWARD (javap `Player.getExperienceReward` the
     /// 26.2 jar speaks — the keepInventory-false body the offline
-    /// lane's own defaults wear, the SPECTATOR the 0 the isSpectator
-    /// gate answers): the level-capped half `min(floor(total * 0.5F),
-    /// 7 * level)` the banked total and the level's own 7× rate speak,
-    /// the SUB-1 fall the partial progress answers
+    /// lane's own default wears, the SPECTATOR the 0 the isSpectator
+    /// gate answers, the KEEPINVENTORY-true row the 0 the gamerule's
+    /// own gate answers): the level-capped half `min(floor(total *
+    /// 0.5F), 7 * level)` the banked total and the level's own 7× rate
+    /// speak, the SUB-1 fall the partial progress answers
     /// `ceil(progress * needed * 0.5F)` — the zero-zero death the 0
     /// both arms agree on (the orb-less crossing the vanilla silence
     /// keeps, the `i > 0` gate the addFreshEntity call wears).
     fn death_xp_drop(&self) -> i32 {
-        if matches!(self.game_mode, GameMode::Spectator) {
+        if self.keep_inventory || matches!(self.game_mode, GameMode::Spectator) {
             return 0;
         }
         let i = ((self.xp.total as f32 * 0.5).floor() as i32).min(7 * self.xp.level);
@@ -52436,8 +52496,13 @@ impl App {
         // THE TRIO'S OWN ZERO (the vanilla respawn's fresh entity the
         // death's spent drop answers — the level/progress/total the
         // new body's constructor rows speak, the death spot the orbs
-        // already wore the reward the bar never re-reads)
-        self.xp = crate::xp::ExperienceStat::new();
+        // already wore the reward the bar never re-reads). THE
+        // KEEPINVENTORY-TRUE row the zero never walks (the fresh
+        // entity the trio the rule re-copies — the bar the spent
+        // nothing the death never wore)
+        if !self.keep_inventory {
+            self.xp = crate::xp::ExperienceStat::new();
+        }
         // THE STATUS-EFFECTS' OWN RESET (the death's removal — the
         // vanilla death clears the active effects, the fresh respawn's
         // body carries none, the absorption value rides the dead

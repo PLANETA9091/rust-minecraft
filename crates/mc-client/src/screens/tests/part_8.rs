@@ -7007,6 +7007,42 @@ fn the_saved_player_row_wears_the_vitals() {
         assert!(app3.drops.is_empty(), "the empty rows the silence keeps");
     }
 
+    /// THE KEEPINVENTORY RULE'S OWN SPARE (javap GameRules.RULE_KEEPIVENTORY
+    /// the death lanes' gates read — the reward the zero keeps, the
+    /// scatters never walk, the respawn's fresh entity the trio +
+    /// pockets the rule re-copies: the death screen the arms the
+    /// rule's own death still answers).
+    #[test]
+    fn the_keep_inventory_rule_spares_the_death_rows() {
+        let mut app = App::new(5);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.keep_inventory = true;
+        // THE STAGED ROWS (the pockets the trio the rule spares)
+        app.inventory.items[0] = (1, 64);
+        app.inventory.armor[2] = (310, 1);
+        app.xp = crate::xp::ExperienceStat {
+            level: 3,
+            progress: 0.25,
+            total: 42,
+        };
+        // THE FATAL DOSE (the death the screen arms, the rows the
+        // rule spares)
+        app.actually_hurt(100.0, HurtVoice::Plain, None, None);
+        assert!(app.dead, "the dose the player kills");
+        assert!(app.orbs.is_empty(), "the reward the rule zeroes");
+        assert!(app.drops.is_empty(), "the scatters the rule refuses");
+        assert_eq!(app.inventory.items[0], (1, 64), "the pockets the rule spares");
+        assert_eq!(app.inventory.armor[2], (310, 1), "the armor the rule spares");
+        assert_eq!(app.xp.total, 42, "the trio the rule spares");
+        // THE RESPAWN (the fresh entity the rows the rule re-copies —
+        // the bar the spent nothing the death never wore)
+        app.respawn();
+        assert!(!app.dead, "the respawn the screen closes");
+        assert_eq!(app.inventory.items[0], (1, 64), "the pockets the respawn re-wears");
+        assert_eq!(app.xp.total, 42, "the trio the respawn re-wears");
+    }
+
 
     /// THE FIRE LANES' OWN KIND ROWS (the loop's own consumption the
     /// kind fix speaks): the burning cow's death the cow's own row
