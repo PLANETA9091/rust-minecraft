@@ -6792,6 +6792,15 @@ pub struct App {
     pub music: crate::music::MusicScheduler,
     /// In-game state: pause menu open (world frozen underneath).
     pub paused: bool,
+    /// THE STOP'S OWN FLAG (the `Minecraft.running` field's own shadow —
+    /// the polarity the loop's guard inverts: the Title screen's quit
+    /// button the `stop()` walk answers, the flag the run loop reads,
+    /// the frame the exit the window's own close speaks. The vanilla
+    /// 26.2 bytecode's own absence the lane keeps: the shutdown the
+    /// Options.save NEVER wears — the file's rows the OptionsScreen's
+    /// own removed() moment already keeps, the quit lane the second
+    /// write the law refuses).
+    pub stopping: bool,
     /// Meshed world (built lazily on entering the world screen).
     pub world_quads: Option<Vec<crate::mesher::Quad>>,
     pub world_size: i32,
@@ -10148,6 +10157,7 @@ impl App {
             creative_search: String::new(),
             creative_scroll: 0.0,
             creative_scroll_drag: false,
+            stopping: false,
             look_sensitivity: crate::body::LOOK_SENSITIVITY_DEFAULT,
             sensitivity_drag: false,
             fov: 70.0,
@@ -34467,7 +34477,16 @@ impl App {
                 "womobspawn" => {
                     self.do_mob_spawning = !self.do_mob_spawning;
                 }
-                "quit" => {}
+                // THE TITLE'S OWN STOP CHORD (the vanilla quit button's
+                // lambda$init$5 the `Minecraft.stop()` call answers — the
+                // running flag the run loop reads, the frame the window's
+                // own close speaks. NO options save here: the 26.2 close()
+                // walk the Options.save never wears — the file's rows the
+                // OptionsScreen.removed() moment already keeps, the quit
+                // lane the second write the law refuses)
+                "quit" => {
+                    self.stopping = true;
+                }
                 "back" => {
                     // THE OPTIONS SCREEN'S OWN SAVE CHORD (the vanilla
                     // OptionsScreen.onClose moment — the Done the

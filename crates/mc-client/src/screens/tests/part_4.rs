@@ -1865,7 +1865,9 @@ use super::*;
         // a click on empty space (no button) is silent
         app.on_click(1, 1);
         assert_eq!(app.ui_sounds.len(), 1, "no button -> no click sound");
-        // no-op actions (quit has no headless behavior) still play the click
+        // the REALMS no-op still clicks, like vanilla — quit now wears
+        // the stop chord (the flag the run loop reads), the click the
+        // exit still speaks
         app.open(ScreenKind::Title);
         app.render_title_buttons_for_test();
         let quit = app.buttons.iter().find(|b| b.id == "quit").expect("quit button").clone();
@@ -9122,4 +9124,82 @@ fn the_screen_takeover_the_slider_drag_kills() {
         app.look_sensitivity, 0.5,
         "the pressless drag the value never moves"
     );
+}
+
+// THE QUIT LANE'S OWN STOP CHORD (the vanilla Title screen's quit
+// button — the lambda$init$5 the `Minecraft.stop()` call answers, the
+// running flag the run loop reads, the window's close the exit speaks.
+// THE TRUE-ABSENCE THE RECON BANKS: the 26.2 Minecraft.close() walk the
+// Options.save NEVER wears — the save's own sites the ctor boot, the
+// onGameLoadFinished, the clearResourcePacksOnError, the
+// onFullscreenError, the tick's joinedFirstServer, the toggleFullscreen
+// speak; the shutdown walk the second write refuses — the options.txt
+// the OptionsScreen.removed() moment ALONE keeps, the quit lane the
+// file never touches, the session's unsaved rows the exit never banks)
+#[test]
+fn the_quit_lane_the_stop_flag_and_the_files_absence_wears() {
+    let dir = std::env::temp_dir().join(format!("mc2rs_quit_stop_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&dir);
+    let path = dir.join("options.txt");
+    let mut app = App::new(262);
+    app.options_file = Some(path.clone());
+    app.open(ScreenKind::Title);
+    app.render_title_buttons_for_test();
+    let quit = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "quit")
+        .expect("the Quit row")
+        .clone();
+    app.on_click(quit.x + quit.w / 2, quit.y + quit.h / 2);
+    assert!(app.stopping, "the stop the quit arm speaks");
+    assert_eq!(app.screen, ScreenKind::Title, "the exit the screen keeps");
+    assert!(
+        !path.exists(),
+        "the quit the file NEVER writes — the OptionsScreen's own removed() moment the rows keep"
+    );
+    // THE UNSAVED ROWS THE QUIT NEVER BANKS (the Options screen's own
+    // value the session changed, the lane the write never wears — the
+    // same absence the second stop speaks)
+    app.stopping = false;
+    app.open(ScreenKind::Options);
+    app.look_sensitivity = 0.8;
+    app.open(ScreenKind::Title);
+    app.render_title_buttons_for_test();
+    let quit2 = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "quit")
+        .expect("the Quit row")
+        .clone();
+    app.on_click(quit2.x + quit2.w / 2, quit2.y + quit2.h / 2);
+    assert!(app.stopping, "the second stop the same chord wears");
+    assert!(
+        !path.exists(),
+        "the unsaved row the quit never banks — the file the lane never touches"
+    );
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+// THE NONE BOOT'S OWN QUIT (the headless goldens' own shape — the
+// options_file None the save walk the silent keep answers, the stop
+// flag the lane still arms, the no-panic the absence speaks)
+#[test]
+fn the_none_boot_the_quit_still_stops() {
+    let mut app = App::new(262);
+    assert!(
+        app.options_file.is_none(),
+        "the headless boot the file keeps"
+    );
+    app.open(ScreenKind::Title);
+    app.render_title_buttons_for_test();
+    let quit = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "quit")
+        .expect("the Quit row")
+        .clone();
+    app.on_click(quit.x + quit.w / 2, quit.y + quit.h / 2);
+    assert!(app.stopping, "the None boot the stop still wears");
+    assert_eq!(app.screen, ScreenKind::Title, "the exit the screen keeps");
 }

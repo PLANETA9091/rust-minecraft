@@ -1816,7 +1816,10 @@ pub fn run_gui_app(
     }
     window.set_input_callback(Box::new(ChatCharSink(chat_chars.clone())));
 
-    while window.is_open() {
+    // THE STOP'S OWN READ (the vanilla run loop's `while (this.running)`
+    // law — the Title screen's quit button the flag arms, the loop the
+    // negation's own guard wears, the window's close the exit speaks)
+    while window.is_open() && !app.stopping {
         // THE FRAME-TIME SAMPLE (the vanilla runTick's own ride — the
         // inter-frame delta the LocalSampleLogger ring keeps, one
         // sample per frame the chart's columns speak; the first
