@@ -2666,3 +2666,63 @@ Stage Summary:
   GENERIC_9x3 kind the wire lane banks, the dispenser's carried
   press the split-pickup the record "already serves", the README's
   golden section the v0.3.875 round banked.
+---
+Task ID: autopush-148
+Agent: main (cron tick 2026-10-23 13:32:23 +08:00, Job ID 384923)
+Task: rust-minecraft 维护 tick —— git 检查 → ONE 步发展 → 测试 → push → worklog。
+
+Work Log:
+- THE STATE THE TICK READ: the clean tree @da586d4 (v0.3.876, the
+  autopush-147 shulker front-read record), origin synced; the
+  memory landscape the wall keeps (1.84G available — the full-gate
+  re-run the doomed attempt the round skips, the deferral the
+  record carries).
+- THE MINIMAL STEP THE CANDIDATE'S HEAD WORE — THE SHULKER'S OWN
+  OFFLINE PLACEMENT THE CHAIN THE TEST BANKS: the discovery walk
+  the round first spoke (the candidate's premise the code read
+  corrected): the creative picker's ITEM_WIRE_ORDER source the
+  shulker_box item ALREADY carries (the whole 1537-row table the
+  E-key's palette speaks), the generic placeable_block lane the
+  NAME_OF row 778 the v0.3.876 mint ALREADY answers — the chain
+  the placement walk the press the round's test proves; the REAL
+  gap the placement's VARIANT STAMP the walk's kind set kept (the
+  chest/barrel/dispenser arms the shulker never wore — the placed
+  box the variant-0 no-opinion answer the walk's absence kept).
+- THE FACING STAMP THE WALK'S OWN ARM GAINS: javap
+  ShulkerBoxBlock.getStateForPlacement the 26.2 jar the
+  setValue(FACING, nearestLooking.getOpposite()) walk the
+  dispenser family's own SIX-direction law the shulker wears —
+  the pitch quarter the vertical axis answers (the floor click
+  the UP front, the ceiling the DOWN), the horizontal looks the
+  look-opposite byte keeps, the DIRECTION_NORMAL vocabulary the
+  dispenser byte speaks, dispenser_placement_byte the same fn
+  the arm calls; the mesher's generic cube the variant never
+  renders (no golden byte touches).
+- +1 TEST: the_offline_shulker_the_placement_the_floor_look_wears
+  (the furnace test's own camera the floor look wears — the
+  shulker the placement lands, the UP byte the stamp speaks, the
+  consume(1) the 4-stack the 3 rides).
+- THE VERIFY THE PROTOCOL'S OWN SHAPE ANSWERED: cargo check
+  --all-targets clean; mc-protocol 157 + mc-registry 100 +
+  mc2rs-gen 80 = 337 PASSED / 0 FAILED; goldens 19/19 PASS rms
+  0.000 (NO regeneration — the stamp no render byte touches);
+  fmt the 1159-hunk baseline the digit wears; the FULL
+  cargo test --workspace gate the SAME SIGKILL wall keeps (the
+  deferral the FIFTH round wears — the resume plan carries).
+- THE VERSION the bump rode (0.3.876 -> 0.3.877) — the verify the
+  bumped tree ran.
+- Pushed b5900e2 (v0.3.877, the shulker's own placement stamps).
+
+Stage Summary:
+- THE SHULKER THE OFFLINE WORLD THE WHOLE CHAIN SPEAKS: the
+  creative picker the item offers, the press the kind places, the
+  look the facing stamps, the dropper's front read (v0.3.876) the
+  placed box the next beat answers — the interactivity the family
+  the chest/barrel/dispenser lanes the shulker joins.
+- NEXT CANDIDATES: the shulker's own live window the OpenScreen
+  GENERIC_9x3 kind the wire lane banks (the offline door the
+  right-click the placed box the same arm could wear — the chest
+  family's own shape), the dispenser's carried press the
+  split-pickup the record "already serves", the shulker's own
+  mesher arm the entity-driven box the generic cube the honest
+  upgrade the BE-lane round keeps.
