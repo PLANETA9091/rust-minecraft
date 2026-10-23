@@ -43851,6 +43851,25 @@ impl App {
                     crate::world::dispenser_placement_byte(cam_yaw, cam_pitch),
                 );
             }
+            // THE SHULKER BOX'S OWN FACING STAMP (the autopush-148
+            // round — javap ShulkerBoxBlock.getStateForPlacement the
+            // 26.2 jar the `setValue(FACING, context
+            // .getNearestLookingDirection().getOpposite())` walk the
+            // dispenser family's own SIX-direction law the shulker
+            // wears: the pitch quarter the vertical axis the look
+            // vector's own law answers, the horizontal looks the
+            // look-opposite compass byte keeps — the DIRECTION_NORMAL
+            // vocabulary the dispenser byte already speaks, the
+            // placement byte the same fn the family shares, the
+            // UNSTAMPED variant-0 answer the arm's absence wore).
+            if crate::world::is_shulker(placed) {
+                world.set_variant(
+                    cell.0,
+                    cell.1,
+                    cell.2,
+                    crate::world::dispenser_placement_byte(cam_yaw, cam_pitch),
+                );
+            }
             // THE PLACEMENT'S OWN CHAIN (javap BlockItem.placeBlock pc
             // 9 `bipush 11` — the setBlock the UPDATE_NEIGHBORS bit the
             // broadcast keeps): the REPLACED cell the placement's own

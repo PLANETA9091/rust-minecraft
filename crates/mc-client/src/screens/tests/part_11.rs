@@ -233,3 +233,54 @@ use super::*;
     }
 
 
+
+    /// THE SHULKER'S OWN PLACEMENT CHAIN (the autopush-148 round —
+    /// the kind mint v0.3.876 banked the walk the generic
+    /// placeable_block lane already answers): the held shulker_box
+    /// item the offline press places, the SHULKER_BOX kind the
+    /// NAME_OF row 778 speaks, the FLOOR LOOK the UP byte the
+    /// dispenser family's own getStateForPlacement law stamps
+    /// (ShulkerBoxBlock the same setValue(FACING,
+    /// nearestLooking.getOpposite()) walk the six-direction byte
+    /// wears), the consume(1) the stack rides, the dropper's front
+    /// read the placed box the next beat answers.
+    #[test]
+    fn the_offline_shulker_the_placement_the_floor_look_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let shulker_id = mc_registry::item_id_by_name("shulker_box").expect("the wire table");
+        app.inventory.items[0] = (shulker_id, 4);
+        app.hotbar_slots = app.inventory.hotbar();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        // THE FLOOR LOOK (the furnace placement test's own camera —
+        // the pitch -PI/2 the top face the 4.0 read answers)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: std::f32::consts::PI,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the shulker placement consumed the press"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c),
+                crate::world::SHULKER_BOX,
+                "the shulker the kind mint the placement lands"
+            );
+            assert_eq!(
+                w.variant(c, top, c),
+                crate::world::DISPENSER_FACING_UP,
+                "the floor look the UP byte the shulker stamp wears"
+            );
+        }
+        assert_eq!(
+            app.inventory.items[0],
+            (shulker_id, 3),
+            "the consume(1) the stack rides"
+        );
+    }
