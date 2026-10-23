@@ -3383,24 +3383,12 @@ use super::*;
         assert!(app.darkness_bake.is_none(),
             "the pre-render floor the grain never arms — the walk the render serves");
         // THE RENDER SEAT (the windowed loop's own split — the update
-        // ticks, the render walks the lightmap state; the assets-cache
-        // root the ANCESTOR WALK discovers — the CWD-independent pin
-        // the package-root cargo seat's own vacuous pass answers: the
-        // bare current-dir join the early return wore, the walk-up the
-        // repo's own root finds from every seat inside)
-        let root = std::env::var("MC2RS_ASSETS").ok().map(std::path::PathBuf::from).or_else(|| {
-            let mut dir = std::env::current_dir().ok()?;
-            loop {
-                let cand = dir.join("assets-cache");
-                if cand.join("jar").exists() {
-                    return Some(cand);
-                }
-                if !dir.pop() {
-                    return None;
-                }
-            }
-        });
-        let Some(root) = root else { return };
+        // ticks, the render walks the lightmap state; the assets root
+        // the tests' own helper discovers — the ancestor walk the
+        // family's shared shape wears, the None the honest-skip keeps,
+        // the jar-level root the GuiAssets root the bare family's own
+        // seats answer)
+        let Some(root) = assets_root_opt() else { return };
         let mut assets = GuiAssets::open(&root);
         let mut fb = crate::raster::Framebuf::new(320, 180);
         // === THE PULSE (the update ticks the body + the store, the

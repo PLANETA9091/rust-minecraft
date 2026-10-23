@@ -36,27 +36,32 @@ mod part_11;
     /// THE TESTS' OWN ASSETS ROOT (the CWD-independent pin the darkness
     /// walk's ancestor pattern wears — the bare `assets-cache/jar` the
     /// package-root cargo seat never resolves, the stub lane the absent
-    /// sprites wear): the MC2RS_ASSETS env the first word keeps, the
-    /// ancestor walk the repo's own root finds from every seat inside
-    /// (the `assets-cache/jar` exists the each-candidate's verdict
-    /// answers, the pop's exhaustion the bare relative fallback keeps —
-    /// the packaged run the stub lane's own shape wears).
-    fn assets_root() -> std::path::PathBuf {
+    /// sprites wear): the MC2RS_ASSETS env the first word keeps (the
+    /// value the GuiAssets root itself — the jar dir the open seats
+    /// wear), the ancestor walk the repo's own root finds from every
+    /// seat inside (the `assets-cache/jar` exists the each-candidate's
+    /// verdict answers), the pop's exhaustion the None floor keeps.
+    fn assets_root_opt() -> Option<std::path::PathBuf> {
         if let Some(p) = std::env::var_os("MC2RS_ASSETS") {
-            return std::path::PathBuf::from(p);
+            return Some(std::path::PathBuf::from(p));
         }
-        if let Ok(mut dir) = std::env::current_dir() {
-            loop {
-                let cand = dir.join("assets-cache").join("jar");
-                if cand.exists() {
-                    return cand;
-                }
-                if !dir.pop() {
-                    break;
-                }
+        let mut dir = std::env::current_dir().ok()?;
+        loop {
+            let cand = dir.join("assets-cache").join("jar");
+            if cand.exists() {
+                return Some(cand);
+            }
+            if !dir.pop() {
+                return None;
             }
         }
-        std::path::PathBuf::from("assets-cache/jar")
+    }
+
+    /// THE ROOT'S OWN DEGRADE SHAPE (the bare relative fallback the
+    /// packaged run keeps — the helper's Option the honest-skip seats
+    /// wear, the unwrap the stub lane's own shape answers).
+    fn assets_root() -> std::path::PathBuf {
+        assets_root_opt().unwrap_or_else(|| std::path::PathBuf::from("assets-cache/jar"))
     }
 
 
