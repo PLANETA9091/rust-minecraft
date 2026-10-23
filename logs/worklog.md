@@ -2528,3 +2528,79 @@ Stage Summary:
   README's golden section the 19-row runner's own row the text
   could name, the dispenser's carried press the split-pickup the
   right byte's place-ONE already serves.
+---
+Task ID: dev-149
+Agent: cron-agent-loop (Job 384925, 2026-10-23 13:01:54 +08:00, trace
+1a0a02c3c1060631-cron-agent-loop-202610231301)
+Task: ONE minimal step per the tick protocol — the worklog's NEXT
+CANDIDATES the docs head answered: the README's golden section the
+19-row runner's own row the text could name (the shulker-box mint the
+atlas KIND_NAMES 778 regen chain the tick's budget keeps, the
+dispenser's split-pickup the record itself "already serves").
+
+Work Log:
+- THE STATE THE TICK READ: the clean tree @dc5a4ce (v0.3.874, the
+  autopush-146 offline-chest-drag record), origin synced; the
+  autopush-146 RESUME PLAN the round's first duty wore — the full
+  cargo test --workspace gate the re-run asked.
+- THE RESUME PLAN THE ROUND FIRST ANSWERED: the full gate on the
+  0.3.874 tree the SAME SIGKILL took (the mc-client test bin's rustc,
+  signal 9) — the memory landscape the wall keeps (the platform's
+  python the 1.85G resident holds, free -m the 1.87G available shows,
+  the 1.79G codegen peak the 85MB margin the killer refuses); the
+  untried-knob lottery the round also spoke — the CGU-512 +
+  MALLOC_ARENA_MAX + GLIBC_TUNABLES variant the background launch
+  NEVER survived to speak (the nohup'd job the sandbox's own reaper
+  the parent-shell return killed, the log the 0-byte silence kept;
+  /usr/bin/time absent the first wrapper refused) — the foreground
+  default-flags retry on the bumped tree the same SIGKILL took. THREE
+  attempts, one verdict: the environment the wall keeps, the code the
+  innocent (autopush-146's stash round the same verdict wore).
+- THE MINIMAL STEP THE README'S CI SECTION WORE: pixel.yml's bullet
+  the goldens/ diff the text always named — the RUNNER the section
+  never enumerated (the v0.3.75 entry the count froze at 11/11, the
+  matrix the eight rounds since grew). The section now names
+  scripts/verify_goldens.sh the ALL-19 runner and its OWN 19 rows:
+  the CPU orbit pair (cpu_320x180 seed 20260214, cpu_480x270 seed
+  1337) + the NETWORK wire pair (net_320x180, net_480x270
+  --net-world) the max-rms 8 gate keeps + the FIFTEEN GUI screens the
+  max-rms 0 bit-deterministic gate wears — gui_title, gui_servers,
+  gui_loading, gui_world, gui_worldnight, gui_pause, gui_world_held
+  (the display-arc pin), gui_world_held_swing (the 0.5 clock),
+  gui_world_dual (sword + shield), gui_chest, gui_chest_double,
+  gui_furnace, gui_furnace_lit (settle-ticks 15), gui_chest_pair
+  (the world-side body), gui_creative (the 14-tab picker) — plus the
+  golden_matrix.sh companion the 14-core-row quick pass. The flags
+  the seeds the thresholds the script's check rows carry, the
+  enumeration line-for-line agrees (the 14-row count the companion's
+  own rg proved).
+- THE VERSION the bump rode (0.3.874 -> 0.3.875) — the verify the
+  bumped tree ran.
+- THE VERIFY THE PROTOCOL'S OWN SHAPE ANSWERED: cargo check
+  --all-targets clean (39.6s — the +2 tests the deferral banks the
+  compile proves); mc-protocol 157 + mc-registry 100 + mc2rs-gen 80
+  = 337 PASSED / 0 FAILED (the 80-test crate mc2rs-gen the round's
+  first run named mc2rs-pixel — the pixel lib the 0-test lib is, the
+  honest correction the record wears); goldens 19/19 PASS rms 0.000
+  (verify_goldens.sh on the HEAD tree, NO regeneration — the
+  docs-only edit no render byte touches); fmt the 1159-hunk baseline
+  the digit wears.
+- Pushed fbed8ad (v0.3.875, the runner's own 19 rows).
+
+Stage Summary:
+- THE GOLDEN GATE THE README NOW FULLY NAMES: the runner, the 19
+  rows, the two thresholds (the matrix's 8, the GUI's 0), the
+  companion — the pixel.yml policy the enumeration the text the
+  onboarding reader the CI red the meaning wears.
+- THE FULL-GATE DEFERRAL THE THIRD ROUND WEARS: the resume plan
+  carries — re-run cargo test --workspace when the platform's own
+  resident shrinks; the +2 tests the same tree holds, the compile
+  the check proved, the morning's 2672-pass the same-code shape the
+  memory landscape the drifted wall between.
+- NEXT CANDIDATES: the shulker box the getContainerAt walk the
+  dropper's front read never serves (the block kind the offline
+  palette never mints — the atlas KIND_NAMES 778 row the generated
+  chain the regen asks, the predicate the mint first wears), the
+  dispenser's carried press the split-pickup the right byte's
+  place-ONE already serves, the offline chest the drag's lanes the
+  live shape mirrors the record the v0.3.874 round already banked.
