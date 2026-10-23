@@ -8630,3 +8630,71 @@ use super::*;
             "the inactive button the click never disarms"
         );
     }
+
+    /// THE GAMERULE'S OWN THIRD ROW THE WORLD OPTIONS WEARS (javap 26.2
+    /// GameRules.RULE_DOMOBSPAWNING the row the natural spawner's cycle
+    /// reads): the label the `gamerule.doMobSpawning` lang row speaks,
+    /// the value the `options.on`/`options.off` pair the boolean display
+    /// keeps, the click the toggle the offline lane's own gamerule store
+    /// answers, the NETWORKED world the inactive button the hovered()
+    /// gate refuses.
+    #[test]
+    fn the_world_options_screen_wears_the_do_mob_spawning_row() {
+        let mut app = App::new(3);
+        app.enter_world();
+        assert!(
+            app.do_mob_spawning,
+            "the vanilla default the true boot wears"
+        );
+        app.open(ScreenKind::WorldOptions);
+        app.render_title_buttons_for_test();
+        let mobspawn = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "womobspawn")
+            .expect("the doMobSpawning row the offline screen wears")
+            .clone();
+        assert_eq!(
+            mobspawn.label, "Spawn mobs: ON",
+            "the lang row + the options.on word the fresh boot wears"
+        );
+        assert!(mobspawn.active, "the OFFLINE world the gamerule arm wears");
+        // THE TOGGLE (the click the BooleanValue's own flip answers —
+        // the row's word the re-render speaks)
+        app.on_click(mobspawn.x + mobspawn.w / 2, mobspawn.y + mobspawn.h / 2);
+        assert!(!app.do_mob_spawning, "the click the rule disarms");
+        app.render_title_buttons_for_test();
+        let mobspawn = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "womobspawn")
+            .expect("the row")
+            .clone();
+        assert_eq!(
+            mobspawn.label, "Spawn mobs: OFF",
+            "the options.off word the disarmed row speaks"
+        );
+        // THE SECOND CLICK (the flip the boolean's own walk rings home)
+        app.on_click(mobspawn.x + mobspawn.w / 2, mobspawn.y + mobspawn.h / 2);
+        assert!(app.do_mob_spawning, "the second click the row re-arms");
+        // THE NETWORKED LANE'S REFUSAL (the inactive button the
+        // hovered() gate never clicks — the server's own /gamerule the
+        // wire keeps)
+        app.world_is_network = true;
+        app.render_title_buttons_for_test();
+        let mobspawn = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "womobspawn")
+            .expect("the row")
+            .clone();
+        assert!(
+            !mobspawn.active,
+            "the networked world the gamerule arm refuses"
+        );
+        app.on_click(mobspawn.x + mobspawn.w / 2, mobspawn.y + mobspawn.h / 2);
+        assert!(
+            app.do_mob_spawning,
+            "the inactive button the click never disarms"
+        );
+    }

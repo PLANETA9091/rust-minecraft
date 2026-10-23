@@ -34139,6 +34139,15 @@ impl App {
                 "wodaylight" => {
                     self.do_daylight_cycle = !self.do_daylight_cycle;
                 }
+                // THE SPAWNER'S OWN TOGGLE (the BooleanValue's own flip
+                // — the same store the /gamerule set walk's arm wears:
+                // the OFFLINE world the integrated-server's gamerule
+                // lane IS, the NETWORKED world the inactive button the
+                // hovered() gate refuses — the server's own /gamerule
+                // command the wire keeps)
+                "womobspawn" => {
+                    self.do_mob_spawning = !self.do_mob_spawning;
+                }
                 "quit" => {}
                 "back" => {
                     let ret = self.options_return;
@@ -61215,6 +61224,34 @@ impl App {
         );
         daylight.active = !self.world_is_network;
         self.buttons.push(daylight);
+        // THE GAMERULE'S OWN THIRD ROW (javap 26.2 GameRules
+        // .RULE_DOMOBSPAWNING the natural spawner's cycle reads — the
+        // doDaylightCycle row's own pattern the third toggle wears):
+        // the label the `gamerule.doMobSpawning` lang row speaks, the
+        // value the `options.on`/`options.off` pair the boolean display
+        // keeps, the 200-wide button the row below the doDaylightCycle
+        // row wears. THE ACTIVE ARM the gamerule rows' own split keeps:
+        // the OFFLINE world the integrated-server's gamerule lane IS,
+        // the NETWORKED world the server's own /gamerule command the
+        // wire keeps (the inactive button the hovered() gate refuses).
+        let mut mobspawn = Button::new(
+            "womobspawn",
+            format!(
+                "{}: {}",
+                tr("gamerule.doMobSpawning").unwrap_or("Spawn mobs"),
+                tr(if self.do_mob_spawning {
+                    "options.on"
+                } else {
+                    "options.off"
+                })
+                .unwrap_or(if self.do_mob_spawning { "ON" } else { "OFF" }),
+            ),
+            cx - 100,
+            dial_y + 72,
+            200,
+        );
+        mobspawn.active = !self.world_is_network;
+        self.buttons.push(mobspawn);
         // THE DONE FOOTER (the footer's 200-wide button the
         // HeaderAndFooterLayout walk keeps — the onClose the
         // lastScreen chain wears: the Options screen the walk returns
