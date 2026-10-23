@@ -2200,3 +2200,81 @@ Stage Summary:
   discard word could wear (the server's own event the burst
   anchors at), the README's golden section the 19-row runner's
   own row the text could name.
+---
+Task ID: dev-147
+Agent: cron-agent-loop (Job 384925, 2026-10-23 09:41:51 +08:00, trace
+1a0a02c3c1060631-cron-agent-loop-202610230950)
+Task: ONE minimal step per the tick protocol — the resume plan the
+dev-146 record banked: the workspace re-verify FIRST, and the
+screens.rs test-module split the codegen peak's real fix wears.
+
+Work Log:
+- THE REPO THE CLEAN TREE ANSWERED (HEAD a7c3b37, origin in sync; the
+  v0.3.870 wire thrown shots the previous round pushed).
+- THE ENVIRONMENT THE MEMORY MATH ANSWERED FIRST: the sandbox's
+  available 2.0G the dev-146 peak's 4.1G face — the pre-split re-run
+  the deterministic OOM replays (the record's own event), so the
+  round's ONE build both the split validates AND the +2 execution
+  debt pays. The background-run attempts the platform itself
+  reaped (nohup, setsid, a watchdog loop — every detached process
+  the session's own lifecycle took, the log lines without an EXIT
+  marker the silence spoke); the FOREGROUND segmented walk the
+  answer wore (the Bash call's own timeout the cargo cache
+  resumes from — one call the whole build+run rode).
+- THE SPLIT NOW BANKS: the one 81k-line `mod tests` (953 test
+  units + 18 helpers the scanner counted — the gap lines the
+  multi-line signatures the unit ranges ride) the twelve
+  round-sized modules wear. screens.rs the 63742-line lib part
+  keeps (`#[cfg(test)] mod tests;` the tail decl), screens/tests/
+  mod.rs the helper bank + the `use super::*;` head (529 lines),
+  part_1..part_11 the 960 #[test] fns the line-for-line count
+  keeps (greedy 8k-line budgets, source order, every byte
+  verbatim — the 4-space module indent the move preserved). THE
+  GLOB CHAIN the one-liner relies on the rustc probe proved
+  BEFORE the split ran (part -> tests -> screens: the parent's
+  private uses the child's glob re-imports — the experiment the
+  `crate::outer::*` unused-warning answered).
+- THE FIRST RUN'S TWO FAILURES THE DEBT'S OWN TRUTH SPOKE: the
+  dev-146 +2 wire-thrown tests the OOM never executed FAILED —
+  (1) the yaw: the f32-rounded 57.2957763671875 constant the
+  f64 -pi/2 never exacted (-89.99999 the cast wore, the test the
+  exact -90.0 pinned) — wire_spawn now to_degrees() (the vanilla
+  updateRotation's own double math; the axis-aligned velocity the
+  IEEE atan2(x, ±0) = ±pi/2 special value the exact ±90.0
+  round-trips); (2) the wall-break scene's wall the CHUNK_Y=48
+  ceiling never banked (y 60..=70 the World::set never stored, the
+  y=66 flight line the OOB air walked — the shots flew forever):
+  the wall the y 20..=30 band, the shots the y=26 line, the
+  two-tick break the 18 shards speak.
+- THE VERIFY THE FULL GATE ANSWERED: mc-client 2331 + mc-protocol
+  157 + mc-registry 100 + mc2rs-pixel 80 = 2668 PASSED / 0 FAILED
+  / 22 ignored; goldens 19/19 PASS rms 0.000 (NO regeneration —
+  no render byte the reshape touched); cargo check --all-targets
+  clean; the warnings the histogram diff answered ZERO new (the
+  165-line HEAD capture the 166-line split capture the normalized
+  kinds match — the pre-existing dead-constant/unused debt both
+  sides wear); fmt: the 1159-hunk baseline the digit wears — THE
+  COUNTER'S OWN MECHANISM the direct probe exposed: rustfmt
+  SIGABORTs (rc 134) ON screens.rs itself (the 63.7k lib part —
+  the dmesg's own rustfmt OOM the old 144k shape recorded), cargo
+  fmt tolerates the abort and the walk never reaches the screens
+  subtree — the 1159 the files-before-screens count both sides
+  wear, the moved bytes the counter never saw move. The part
+  files' own rustfmt state the direct probe answered (the 4-space
+  indent the hunks name) — the honest note the counter's blind
+  spot carries.
+- THE VERSION the bump rode first (0.3.870 -> 0.3.871) — the
+  verify the bumped tree ran.
+- Pushed 23a4d1e (v0.3.871, the test bank's own split).
+
+Stage Summary:
+- THE 2331-BODY THE LINK NOW SURVIVES: the split the codegen peak's
+  real fix wears — the per-CGU weight the twelve modules spread,
+  the suite the one build runs, the ceiling the margin the
+  later rounds keep.
+- NEXT CANDIDATES: the shulker box the getContainerAt walk the
+  dropper's front read never serves, the EntityEvent case-3
+  shatter arm the wire thrown lane's own discard word could wear
+  (the server's own event the burst anchors at), the README's
+  golden section the 19-row runner's own row the text could name,
+  the quickcraft drag the offline dispenser sim could wear.
