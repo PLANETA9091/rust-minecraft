@@ -420,3 +420,57 @@ Stage Summary:
   'assets-cache/jar' — the honest own-root staging the flips read),
   the warden biolum's TRUE-absence diff (the refill the absence
   world the unreachable wears).
+---
+Task ID: autopush-152
+Agent: main (tick 19:17:29, Job 384923)
+Task: ONE minimal step — the persistence arc's own second row: the SAVED PLAYER row (the vanilla level.dat player tag's stand-in) the world_edits.nbt file now wears — the pose the reload re-anchors, the pockets the inventory restores, the selected slot the HUD re-wears.
+
+Work Log:
+- INCOMING STATE: HEAD 468a6fc (v0.3.884, autopush-151), clean tree,
+  origin synced. The NEXT CANDIDATES' first row the round takes — the
+  player pos/inventory lane the world_edits.nbt file the body's own
+  state now banks. The recon the shapes read: PlayerBody (feet x/y/z
+  + yaw/pitch), Inventory (items 36 + armor 4 + offhand 1 —
+  Debug/Clone/Copy/PartialEq derives the mark compare rides),
+  selected_hotbar (the App's own usize the held_id walk reads).
+- THE ROW THE FILE BANKS: SavedPlayer (pose + inventory + selected —
+  Copy + PartialEq the dirty verdict wears); player_state_now() the
+  row's source answers (the body's own state the offline session
+  wears, the NETWORKED world the None keeps, the not-yet-spawned
+  boot the file's own loaded row keeps); the write the flush's dirty
+  verdict extends (the journal lens OR the player state's equality —
+  the walked body the 40-tick cadence the moved pose banks); the NBT
+  the Pos/Rotation/SelectedHotbar + Items/Armor/Offhand lists wear
+  (the slot/id/count compounds — the vanilla player tag's own shape).
+- THE RESTORE THE SEED GATES: enter_world's player_state_from_nbt
+  parse (the strict shape the missing row's None keeps — the fresh
+  player the absent tag answers) the pockets + selection the
+  inventory re-wears (the hotbar_slots projection + the held
+  payload's own reload the 1-9 key walk's law follows);
+  spawn_offline_body the saved pose the FIRST spawn alone
+  re-anchors — the RESPAWN point the world spawn stays (the
+  spawn_pose the surface scan keeps — the death lane's own law).
+- VERIFY: cargo check --all-targets clean; FULL mc-client 2345
+  PASSED / 0 FAILED / 22 ignored (2344 + the saved-player round-trip
+  law: the staged walk's pose + pockets + armor + offhand + selection
+  the reload re-wears, the respawn point the world spawn keeps, the
+  fresh player the surface spawn answers — ZERO flips); mc-protocol
+  157 + mc-registry 100 + mc2rs-gen 80 = 337 PASSED; goldens 19/19
+  PASS rms 0.000 (NO regeneration); fmt 1703 = the HEAD baseline
+  (ZERO hunks the round adds).
+- Version 0.3.884 -> 0.3.885. Pushed f2242ec (468a6fc..f2242ec); the
+  repo's logs/worklog.md the autopush-152 entry wears.
+
+Stage Summary:
+- THE OFFLINE SESSION THE RESTART FULLY RESTORES: the terrain's edits
+  (autopush-151's journal), the player's pose + pockets + selection
+  (this round) — the client's persistence row the vanilla level.dat's
+  own pair completes. The health/hunger/xp lanes the vitals view
+  carries — the file the next candidate names.
+- NEXT CANDIDATES: the vitals' own save row (the health/hunger/xp the
+  player compound the same file extends — the respawn's full state
+  the reload keeps), the test-file GuiAssets roots the cargo-lane
+  absence-world wears (part_3/5/6/7/8's bare 'assets-cache/jar' —
+  the honest own-root staging the flips read), the warden biolum's
+  TRUE-absence diff (the refill the absence world the unreachable
+  wears).
