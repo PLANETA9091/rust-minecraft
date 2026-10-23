@@ -279,3 +279,73 @@ Stage Summary:
 - THE JAR ROOT LAW THE WHOLE RENDER SPEAKS: every runtime texture load the mc-client's screens.rs wears the jar_runtime_root walk — the cargo package-dir lane and the repo-root lane the loaded world SEE alike, the CWD the render's input never wears again (the honest-load world the suite's pins the round's two re-pins the degenerate artifacts retired).
 - THE DEGENERATE-PASS FAMILY THE RECORD GROWS: the warden biolum take-refill (dev-153), the murk fog-only frame (this round) — the pre-fix cargo lane's failed loads the 'absence' pins the vacuous greens wore; the honest-load world the re-pins the blend-signature/state-gate techniques wear, the take() the refill world never answers.
 - NEXT CANDIDATES: the warden biolum's TRUE-absence diff (the refill the absence world the unreachable wears), the particles' honest-load world the pins the sweep never flipped (2342 green — the absence-pins the particle lanes' scenes never staged, the staged-particle tests the next dig reads), the client's interactivity row (the real input/movement/interaction walk the protocol's priority keeps — the render lanes' CWD law the DONE column wears, the game-loop lanes the next rounds' table holds).
+---
+Task ID: autopush-150
+Agent: main (tick 18:17:28, Job 384923)
+Task: ONE minimal step — the jar-root law's MISSED lanes: the 5 runtime sites the autopush-149 sweep's bare-prefix filter never caught (the two full-path portal loads, the two GuiAssets roots, the menu music root) the jar_runtime_root walk now wears.
+
+Work Log:
+- INCOMING STATE: HEAD 5439c81 (v0.3.882, autopush-149), clean tree,
+  origin synced. The NEXT CANDIDATES' interactivity row the round's
+  recon read first — the survey found the GUI app's interaction model
+  deep already (64 on_* handlers, the spear charge, the scroll wheel,
+  the 1-9 hotbar, F5, crafting, chat) — and the survey's own rg the
+  MISSED LANES spoke: 'assets-cache/jar' hits OUTSIDE screens.rs the
+  sweep's file scope never named, and TWO full-path literals the
+  bare-arg filter rode past.
+- THE SITE MAP: 5 runtime sites, 4 files — (a) screens.rs
+  render_end_portal's two FULL-PATH lazy loads
+  ('assets-cache/jar/environment/end_sky.png' +
+  'assets-cache/jar/entity/end_portal/end_portal.png' — the sha1-gated
+  pair the package-dir cwd the loads never answered, the portal the
+  unseen-overlay degenerate world wore); (b) window.rs run_gui_app's
+  GuiAssets::open('assets-cache/jar') root (GuiAssets::open the walk
+  NEVER carries — the root the sprite lane joins directly); (c)
+  headless gui lane's GuiAssets::open root (the golden lane the same
+  shape wears); (d) audio.rs MenuMusic::start's start_with_root
+  root (the bare Path::new the menu playlist never decoded). The
+  test-file GuiAssets roots (part_2/3/5/6/7/8 + mod.rs) the round
+  LEAVES — the tests the OWN roots stage (part_2/4/10 &root) or the
+  cargo-lane roots the next dig owns, the runtime lanes the law's
+  scope keeps.
+- THE FIX THE LAW'S OWN SHAPE SPEAKS: the fn-top one jar_root the
+  portal fn computes, the two loads the joined sub-paths wear; the
+  three roots the jar_runtime_root(hint) call the hint's identical
+  path returns. THE FMT DISCIPLINE THE RECORD KEEPS: the first shapes
+  the 1705 count wore (2 new hunks — rustfmt the audio one-line call
+  the SPLIT form wants, the headless split call the nested-pack form
+  wants, the window/screens twins the SAME text fmt-clean wore) the
+  per-file preferred shapes adopted, the 1703 baseline the re-run
+  speaks, ZERO hunks the round adds.
+- VERIFY: cargo check --all-targets clean; FULL mc-client 2342
+  PASSED / 0 FAILED / 22 ignored (the EXACT dev-153/autopush-149
+  baseline — ZERO flips: the gui/portal/music test lanes the OWN
+  roots stage, the absence-pins the missed lanes never carried); 
+  mc-protocol 157 + mc-registry 100 + mc2rs-gen 80 = 337 PASSED;
+  goldens 19/19 PASS rms 0.000 (NO regeneration — the repo-root hint
+  the IDENTICAL path returns, the law's own honesty the bytes keep).
+- Version 0.3.882 -> 0.3.883. Pushed df500d0 (5439c81..df500d0); the
+  repo's logs/worklog.md the autopush-150 entry wears.
+
+Stage Summary:
+- THE JAR-ROOT LAW THE MISSED LANES NOW SPEAKS: the sweep's rg
+  bare-arg filter the full-path literals and the out-of-file roots
+  never caught — the 5 sites the walk answers, the runtime surface
+  the CWD-independent load wears END-TO-END (sprites, portal pair,
+  menu music, the golden lane included). The remaining test-file
+  roots the named candidate keeps.
+- THE FILTER-SCOPE LESSON THE RECORD BANKS: a sweep's rg pattern the
+  literals' OTHER shapes never sees — the full-path form, the
+  sibling-file roots, the join() calls the next sweep's site map
+  carries ('assets-cache/jar/' WITH the slash, per-file root
+  literals, the test-file count the mirror names).
+- NEXT CANDIDATES: the test-file GuiAssets roots the cargo-lane
+  absence-world wears (part_3/5/6/7/8's bare 'assets-cache/jar' —
+  the tests the cargo lane the sprite-absent pixels pin, the own-root
+  staging the honest world answers — the flips the round reads), the
+  warden biolum's TRUE-absence diff (the refill the absence world the
+  unreachable wears), the client's interactivity row (the interaction
+  model the recon named DEEP — the game-loop lane the next rounds'
+  table holds: the pointer-grab stand-in's window-edge turn-stop the
+  minifb API the walk never answers, the offline world's persistence
+  the quit lane never writes).
