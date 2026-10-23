@@ -684,3 +684,18 @@ Stage Summary:
   world wears (part_3/5/6/7/8's bare 'assets-cache/jar'), the
   warden biolum's TRUE-absence diff (the unreachable the record
   keeps).
+
+---
+Task ID: autopush-154
+Agent: autopush (Job 384923, 21:17:31 +08 tick)
+Task: git status (clone if absent; auto-sync commit + push if dirty) -> ONE minimal step -> cargo test --workspace green -> push -> worklog entry.
+
+Work Log:
+- Incoming state: 4 files UNCOMMITTED at 7c984c3 (the mirror over dcdf1aa = v0.3.888 dev-155 death scatter) — the interrupted round's STAGED keepInventory work the verification never reached: the App's keep_inventory field + the false boot init, the /gamerule literal (the query/set/bad-value/unknown-rule lanes), the THREE gates (death_xp_drop's zero, the scatter's refuse, the respawn's trio re-copy), the two tests (part_1's command walk, part_8's spare law), the Cargo.lock's 0.3.888 sync. The helpers the command lanes call (tr, format_positional, parse_bool_arg, push_local_command_error) all pre-exist — compile check clean in 29s, the two new laws' targeted runs green.
+- THE ROUND'S STEP: resume + land the staged feature. THE FMT HUNT: cargo fmt --all --check counted 1703 vs the 1702 HEAD baseline (+1) — the hunk anchored at part_1.rs:3060, INSIDE the staged command-walk test, yet the isolated test body (dedented, wrapped, doc comment included) formats 100% clean, and moving the test to the file's END restores EXACTLY the 13-hunk HEAD shape: the seam between the kill-target tests (the three tests the chat-boilerplate token shapes share) trips rustfmt's diff-ALIGNMENT artifact, not a real formatting fault. THE FIX: the command-walk test the part_1's end wears (the seam's pre-existing double blank the single blank restores); part_8's spare law stays put (its insertion the 17=17 count never disturbed).
+- VERIFY (final code state): FULL mc-client 2350 PASSED / 0 FAILED / 22 ignored (2348 baseline + the command walk + the spare law — ZERO flips); mc-protocol 157 + mc-registry 100 + mc2rs-gen 80 = 337 PASSED; goldens 19/19 PASS rms 0.000 (NO regeneration — the gamerule lane the golden lanes never touches); fmt 1702 = the HEAD baseline (ZERO new hunks).
+- Version 0.3.888 -> 0.3.889. Pushed a8e1588 (7c984c3..a8e1588); the repo's logs/worklog.md this entry mirrors.
+
+Stage Summary:
+- THE DEATH ARC'S OWN GAMERULE: the keepInventory row the offline vocabulary carries — the chat literal the query/set walk serves, the reward the zero keeps, the scatters the pockets spare, the respawn the trio + pockets re-wears. The death arc's vanilla rows now answer BOTH arms (the drop the keepInventory-false default wears, the spare the true row speaks).
+- NEXT CANDIDATES: the keepInventory row the OFFLINE OPTIONS SCREEN never carries (the chat literal the row's own toggle the screen form answers), the test-file GuiAssets roots (part_3/5/6/7/8's bare 'assets-cache/jar' — the absence-pin flips the honest own-root staging re-pins), the minifb pointer-grab window-edge turn stop (the API's own limit the alternative the recon answers), the warden biolum TRUE-absence (the unreachable the record keeps).
