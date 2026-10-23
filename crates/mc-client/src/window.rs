@@ -191,6 +191,7 @@ fn run_join(
                 Vec<crate::world_view::WireShootSmokeEvent>,
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
                 Vec<crate::world_view::WireFireworkExplodeEvent>,
+                Vec<crate::world_view::WireThrownShatterEvent>,
                 Vec<crate::world_view::WireDragonFireballSplashEvent>,
                 Vec<crate::world_view::WireWaterEvaporatingEvent>,
                 Vec<crate::world_view::WireComposterFillEvent>,
@@ -318,6 +319,7 @@ fn run_join(
             view.model.drain_shoot_smoke_events();
             view.model.drain_white_smoke_events();
             view.model.drain_firework_explode_events();
+            view.model.drain_thrown_shatter_events();
             view.model.drain_dragon_fireball_splash_events();
             view.model.drain_water_evaporating_events();
             view.model.drain_composter_fill_events();
@@ -1041,6 +1043,7 @@ fn run_join(
                             view.model.drain_shoot_smoke_events();
                             view.model.drain_white_smoke_events();
             view.model.drain_firework_explode_events();
+            view.model.drain_thrown_shatter_events();
                             view.model.drain_dragon_fireball_splash_events();
                             view.model.drain_water_evaporating_events();
                             view.model.drain_composter_fill_events();
@@ -1369,6 +1372,15 @@ fn run_join(
                                     // own law folds, each arm rides
                                     // exactly one shipped refresh)
                                     upd.firework_explode_events,
+                                    // the thrown-shatter's arms ride
+                                    // beside the firework's — the
+                                    // byte-3 words the server's own
+                                    // thrown hits broadcast stream to
+                                    // the discard lane (the crack burst
+                                    // the render's own law folds, each
+                                    // arm rides exactly one shipped
+                                    // refresh)
+                                    upd.thrown_shatter_events,
                                     // the dragon-fireball splash's arms ride
                                     // beside the white's — the 2006 words
                                     // the server's own fireball broadcast
@@ -1740,6 +1752,7 @@ pub fn run_gui_app(
                 Vec<crate::world_view::WireShootSmokeEvent>,
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
                 Vec<crate::world_view::WireFireworkExplodeEvent>,
+                Vec<crate::world_view::WireThrownShatterEvent>,
                 Vec<crate::world_view::WireDragonFireballSplashEvent>,
                 Vec<crate::world_view::WireWaterEvaporatingEvent>,
                 Vec<crate::world_view::WireComposterFillEvent>,
@@ -2529,6 +2542,7 @@ pub fn run_gui_app(
                     shoot_smoke_events,
                     white_smoke_events,
                     firework_explode_events,
+                    thrown_shatter_events,
                     dragon_fireball_splash_events,
                     water_evaporating_events,
                     composter_fill_events,
@@ -2807,6 +2821,13 @@ pub fn run_gui_app(
                     // lane's own law folds — the plain rocket's silence
                     // the vanilla client answers the same packet with)
                     app.live_firework_explode_events_updated(firework_explode_events);
+                    // the thrown-shatter's lane beside the firework's:
+                    // the byte-3 words the server's own thrown hits
+                    // broadcast land at their own anchors (the discard
+                    // + the crack burst the render lane's own law folds
+                    // — the sim pose the lookup prefers, the vanilla
+                    // client answers the same packet with)
+                    app.live_thrown_shatter_events_updated(thrown_shatter_events);
                     // the dragon-fireball splash's lane beside the white's:
                     // the 2006 words the server's own fireball broadcasts
                     // land at their own anchors (the 200-puff pool walk the

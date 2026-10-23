@@ -518,6 +518,10 @@ pub struct SnapshotView {
     /// server's own rocket broadcasts — the entity-event lane the
     /// sibling shipments' own shape wears).
     pub firework_explode_events: Vec<WireFireworkExplodeEvent>,
+    /// THE THROWN SHOT'S OWN SHATTER SHIPMENT (the byte-3 words the
+    /// server's own thrown hits broadcast — the entity-event lane the
+    /// sibling shipments' own shape wears).
+    pub thrown_shatter_events: Vec<WireThrownShatterEvent>,
     /// The splash-potion effect's PENDING ARMS — the Level Event mailbox
     /// the model kept (the 2002/2007 words the server's own potion
     /// impacts broadcast, [`mc_protocol::play::SPLASH_POTION_EFFECT`] /
@@ -1495,6 +1499,28 @@ pub struct WireFireworkExplodeEvent {
     pub mz: f64,
     /// The decoded FIREWORKS component list (empty = the poof branch).
     pub explosions: Vec<mc_protocol::FireworkExplosion>,
+}
+
+/// One wire THROWN-SHATTER arm — the Entity Event packet's own
+/// landing (the byte-3 words the server's own thrown hits broadcast):
+/// the entity's own id (the wire-sim discard lookup key the screen
+/// lane reads), the store's last-known pose (the SIM pose the lookup
+/// prefers — the no-sim fallback this anchor keeps), verbatim, and
+/// the shard KIND the registry's own type name resolved (the
+/// snowball's true the 8-shard plain walk keeps, the egg's false the
+/// 10-jitter loop carries).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireThrownShatterEvent {
+    /// The thrown shot's own entity id (the sim pose the screen
+    /// layer's lookup prefers — the store pose the no-sim fallback
+    /// keeps).
+    pub entity_id: i32,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    /// The shard kind the type gate resolved (true = the snowball's
+    /// 8-shard plain walk, false = the egg's 10-jitter loop).
+    pub snowball: bool,
 }
 
 /// One wire SPLASH-POTION arm — the Level Event packet's own landing
@@ -4101,6 +4127,9 @@ pub fn materialize_snapshot_view(
         // and no firework-explosion words (the join snapshot carries no
         // byte-17 traffic — the empty mailbox the render lane skips)
         firework_explode_events: Vec::new(),
+        // and no thrown-shatter words (the join snapshot carries no
+        // byte-3 traffic — the empty mailbox the render lane skips)
+        thrown_shatter_events: Vec::new(),
         // and no splash words (the join snapshot carries no 2002/2007
         // traffic — the empty mailbox the render lane skips)
         splash_events: Vec::new(),
@@ -5078,6 +5107,22 @@ impl LiveView {
                 explosions: arm.explosions.clone(),
             })
             .collect();
+        // the thrown-shatter's own projection (the mailbox verbatim
+        // — the store pose + the kind the arms carry, the render
+        // lane's own crack burst reads): each byte-3 word ships once
+        // with this view, the worker's drain empties the mailbox after
+        let thrown_shatter_events = self
+            .model
+            .thrown_shatter_events
+            .iter()
+            .map(|arm| WireThrownShatterEvent {
+                entity_id: arm.entity_id,
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+                snowball: arm.snowball,
+            })
+            .collect();
         // the splash-potion effect's own projection (the mailbox verbatim
         // — the anchor + the color word + the instant flag the arms
         // carry, the render lane's own law reads): each 2002/2007 word
@@ -5379,6 +5424,10 @@ impl LiveView {
                 // too — the byte-17 words are the connection's own
                 // traffic, not the pose's
                 firework_explode_events,
+                // the thrown-shatter's arms ride the pose-less arm too
+                // — the byte-3 words are the connection's own traffic,
+                // not the pose's
+                thrown_shatter_events,
                 // the splash-potion effect's arms ride the pose-less
                 // arm too — the 2002/2007 words are the connection's
                 // own traffic, not the pose's
@@ -5624,6 +5673,10 @@ impl LiveView {
             // the byte-17 words follow the mailbox exactly like the
             // white-smoke's own arms do
             firework_explode_events,
+            // the thrown-shatter's arms ride every refresh too — the
+            // byte-3 words follow the mailbox exactly like the
+            // firework's own arms do
+            thrown_shatter_events,
             // the splash-potion effect's arms ride every refresh too —
             // the 2002/2007 words follow the mailbox exactly like the
             // smoke's own arms do

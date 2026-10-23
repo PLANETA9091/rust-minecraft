@@ -3043,6 +3043,115 @@ use super::*;
         assert!(offline.net_thrown.is_empty(), "the offline lane never mixes");
     }
 
+    /// THE WIRE THROWN SHOT'S OWN SHATTER LANE (javap `Snowball`/
+    /// `ThrownEgg.handleEntityEvent` case 3 the 26.2 walk): the
+    /// server's byte-3 word the sim'd shot DISCARDS at (the dead flag
+    /// the retain drops, no ghost flight the server's hit never rode),
+    /// the SIM pose the anchor lookup prefers (the store's stale word
+    /// the anchor never wears — the client copy's own position the
+    /// vanilla walk reads), the unknown id the store's pose the
+    /// fallback keeps (the model's gate the vanilla `level.getEntity`
+    /// answers), the kind the shard walk picks (the snowball's 8 plain
+    /// shards, the egg's 10-jitter loop), the ALREADY-BROKEN shot the
+    /// silence keeps (the sim's own ray the shards already spoke).
+    #[test]
+    fn the_wire_thrown_shatters_the_server_word_discards() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // the snowball the spawn word minted: the sim the flight owns
+        // (the store pose the server's spawn word keeps — the sim's
+        // own tick the drift the store never re-poses)
+        app.live_net_thrown_updated(vec![crate::world_view::WireThrown {
+            id: 500,
+            snowball: true,
+            x: 10.0,
+            y: 66.0,
+            z: 10.0,
+            vx: 2.4,
+            vy: 0.0,
+            vz: 0.0,
+        }]);
+        app.tick_net_thrown();
+        assert!(
+            (app.net_thrown[0].x - 12.376).abs() < 1e-9,
+            "the sim's own flight rode"
+        );
+        // THE SERVER'S OWN DISCARD: the byte-3 arm the sim lookup
+        // names — the shards anchor at the SIM pose (the store's stale
+        // 99-trio the anchor never wears), the shot the lane drops
+        app.live_thrown_shatter_events_updated(vec![crate::world_view::WireThrownShatterEvent {
+            entity_id: 500,
+            x: 99.0,
+            y: 99.0,
+            z: 99.0,
+            snowball: true,
+        }]);
+        assert!(app.net_thrown.is_empty(), "the server's word the discard rides");
+        assert_eq!(app.particles.len(), 8, "the snowball's 8 plain shards");
+        for p in &app.particles {
+            assert_eq!(p.kind, crate::particles::ParticleKind::SnowballItem);
+            assert!(
+                (p.x - 12.376).abs() < 1e-9 && (p.y - 65.97).abs() < 1e-9,
+                "the SIM pose the shards anchor at"
+            );
+        }
+        // THE EGG'S OWN ARM: the kind the false keeps — the 10-jitter
+        // loop the egg's own walk speaks (the store pose the no-sim
+        // fallback keeps — the id the lane never minted)
+        app.live_thrown_shatter_events_updated(vec![crate::world_view::WireThrownShatterEvent {
+            entity_id: 501,
+            x: 30.0,
+            y: 66.0,
+            z: 30.0,
+            snowball: false,
+        }]);
+        assert_eq!(app.particles.len(), 18, "the egg's 10-jitter loop joins");
+        for p in &app.particles[8..] {
+            assert_eq!(p.kind, crate::particles::ParticleKind::EggItem);
+            assert!(
+                (p.x - 30.0).abs() <= 0.25 && (p.y - 66.0).abs() <= 0.25,
+                "the jitter the 0.25 band keeps at the store pose"
+            );
+        }
+        // THE ALREADY-BROKEN SHOT: the dead flag the double-burst
+        // never arms — the second word the SAME batch carries finds
+        // the dead flag (the sim's own ray the shards already spoke —
+        // the silence the double burst never wears)
+        app.live_net_thrown_updated(vec![crate::world_view::WireThrown {
+            id: 502,
+            snowball: true,
+            x: 5.0,
+            y: 66.0,
+            z: 5.0,
+            vx: 1.0,
+            vy: 0.0,
+            vz: 0.0,
+        }]);
+        let before = app.particles.len();
+        app.live_thrown_shatter_events_updated(vec![
+            crate::world_view::WireThrownShatterEvent {
+                entity_id: 502,
+                x: 99.0,
+                y: 99.0,
+                z: 99.0,
+                snowball: true,
+            },
+            crate::world_view::WireThrownShatterEvent {
+                entity_id: 502,
+                x: 99.0,
+                y: 99.0,
+                z: 99.0,
+                snowball: true,
+            },
+        ]);
+        assert_eq!(app.particles.len(), before + 8, "the second word the silence keeps");
+        assert!(
+            app.net_thrown.is_empty(),
+            "the discard the retain swept"
+        );
+    }
 
     /// THE WIRE THROWN SHOTS' OWN BREAK (the client-side
     /// Projectile.tick's own onHit answer the wall speaks): the block

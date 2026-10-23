@@ -45773,6 +45773,78 @@ impl App {
         }
     }
 
+    /// THE THROWN SHOT'S OWN SHATTER LANE (javap `Snowball`/
+    /// `ThrownEgg.handleEntityEvent` case 3 the 26.2 walk — the
+    /// server's own `onHit` the `broadcastEntityEvent(this, (byte) 3)`
+    /// discard speaks, the client's case-3 the crack burst answers):
+    /// the wire's byte-3 word the sim'd shot DISCARDS at (the
+    /// client-side copy the vanilla walk runs on — the dead flag the
+    /// retain drops, the server's hit the truth the sim's own ray
+    /// never raced), the SIM pose the anchor lookup prefers (the
+    /// client copy's own `getX()/getY()/getZ()` the vanilla walk reads
+    /// — the still-simmed flight the between-refresh truth keeps), the
+    /// store's last-known pose the no-sim fallback keeps (the rocket
+    /// lane's own law the shot wears — the Remove Entities race the
+    /// refresh's own order arms). THE ALREADY-BROKEN SHOT the silence
+    /// keeps (the sim's own block ray the shards already spoke — the
+    /// dead flag the double-burst never arms), the shard walk the same
+    /// case-3 ctors keep (the snowball the 8 plain shards, the egg the
+    /// 10-jitter loop the gaussian trio's x0.02 wears). The MOB-HIT
+    /// word the lane's own answer serves — the sim's block ray the
+    /// server's mob contacts never crossed, the server's own event the
+    /// truth the discard rides.
+    pub fn live_thrown_shatter_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireThrownShatterEvent>,
+    ) {
+        for ev in events {
+            // THE SIM POSE'S OWN ANCHOR (the client copy the vanilla
+            // walk runs on): the sim'd shot the id lookup names the
+            // discard banks — the ALREADY-BROKEN one the silence keeps
+            // (the sim's own ray the shards already spoke), the
+            // unknown id the store's pose the fallback keeps (the
+            // vanilla `level.getEntity` the model's store already
+            // answered — the arm only banks the entity's own body).
+            let (ax, ay, az) =
+                match self.net_thrown.iter_mut().find(|t| t.id == ev.entity_id) {
+                    Some(t) if !t.dead => {
+                        let (px, py, pz) = (t.x, t.y, t.z);
+                        t.dead = true;
+                        (px, py, pz)
+                    }
+                    Some(_) => continue,
+                    None => (ev.x, ev.y, ev.z),
+                };
+            // THE SHATTER'S OWN BURSTS (the same case-3 walk the net
+            // sim's break lane rides — the snowball the 8 plain
+            // shards, the egg the 10-jitter loop the gaussian trio's
+            // x0.02 wears)
+            if ev.snowball {
+                for _ in 0..8 {
+                    let shard =
+                        crate::particles::breaking_snowball_shard(ax, ay, az, &mut self.mob_rng);
+                    self.particles.push(shard);
+                }
+                continue;
+            }
+            for _ in 0..10 {
+                let jx = ax + (self.mob_rng.next_f64() * 2.0 - 1.0) * 0.25;
+                let jy = ay + self.mob_rng.next_f64() * 0.25;
+                let jz = az + (self.mob_rng.next_f64() * 2.0 - 1.0) * 0.25;
+                let wvx = self.mob_rng.next_gaussian() * 0.02;
+                let wvy = self.mob_rng.next_gaussian() * 0.02;
+                let wvz = self.mob_rng.next_gaussian() * 0.02;
+                let shard = crate::particles::breaking_egg_shard(
+                    jx, jy, jz, wvx, wvy, wvz, &mut self.mob_rng,
+                );
+                self.particles.push(shard);
+            }
+        }
+        // THE DISCARD'S OWN SWEEP (the dead flags the retain drops —
+        // the server's word the lane's own population prunes)
+        self.net_thrown.retain(|t| !t.dead);
+    }
+
     /// THE WHITE-SMOKE WALK (javap the case-2010 arm verbatim — the
     /// shared `shootParticles` helper the smoke lane's own walk
     /// mirrors): the facing the `abs(irem(data, 6))` fold resolves,

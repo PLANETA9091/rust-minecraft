@@ -406,6 +406,19 @@ pub struct WorldModel {
     /// Entity packet declared) — the other bodies' 17s the honest
     /// silence keeps.
     pub firework_explode_events: Vec<FireworkExplodeArm>,
+    /// THE THROWN SHOT'S OWN SHATTER MAILBOX (the Entity Event packet's
+    /// byte-3 words the server's own thrown hits broadcast — javap
+    /// `ThrownEgg.onHit`/`Snowball.onHit` the 26.2 walk:
+    /// `broadcastEntityEvent(this, (byte) 3)` the discard speaks, the
+    /// client's `handleEntityEvent` case-3 the crack burst answers).
+    /// The arms the entity's own wire pose carry — the SIM pose the
+    /// screen's lookup prefers, the no-sim fallback this anchor keeps.
+    /// The TYPE gate the registry's own name keeps (`minecraft:
+    /// snowball` / `minecraft:egg` the Add Entity packet declared) —
+    /// the other bodies' 3s the honest silence keeps (the chick-roll
+    /// word the Chicken's body answers, the thrown lane's gate the
+    /// type name alone banks).
+    pub thrown_shatter_events: Vec<ThrownShatterArm>,
     /// THE WAX TRIO'S OWN MAILBOX (the Level Event packet's own next
     /// vocabulary word — [`mc_protocol::play::PARTICLES_AND_SOUND_WAX_ON_EFFECT`]
     /// + [`mc_protocol::play::PARTICLES_WAX_OFF_EFFECT`] +
@@ -1047,6 +1060,37 @@ pub struct KineticHitArm {
     /// The event target's id — the LOCAL player's own (the model's
     /// `own_entity_id` filter the arm banks).
     pub entity_id: i32,
+}
+
+/// One pending THROWN-SHATTER arm — the Entity Event packet's byte-3
+/// word the model keeps (see [`WorldModel::thrown_shatter_events`]).
+/// javap of the real 26.2 walks: the server's own `onHit` the
+/// `broadcastEntityEvent(this, (byte) 3)` broadcast speaks (the
+/// `ThrownEgg` the snowball's own `Snowball` both carry), the client's
+/// `handleEntityEvent` case-3 the crack burst answers — the anchor the
+/// entity's own pose keeps (the client copy's `getX()/getY()/getZ()`
+/// the vanilla walk reads), the KIND the registry's own type name
+/// speaks (the `minecraft:snowball` the 8-shard plain walk keeps, the
+/// `minecraft:egg` the 10-jitter loop carries). The OTHER bodies' 3s
+/// the honest silence keeps (the event's dispatch the entity's own
+/// class answers — the chick-roll word the Chicken's body speaks, the
+/// thrown lane's gate the type name alone banks).
+#[derive(Debug, Clone, PartialEq)]
+pub struct ThrownShatterArm {
+    /// The event target's id — the thrown shot's own (the wire sim's
+    /// discard lookup key the screen lane reads).
+    pub entity_id: i32,
+    /// The store's last-known pose (the wire's spawn/sync words the
+    /// snapshot banks) — the SIM pose the screen's lookup prefers, the
+    /// no-sim fallback this anchor keeps (the Remove Entities race the
+    /// refresh's own order arms).
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    /// The shard kind the type name resolved — the snowball's true
+    /// keeps the 8-shard plain walk, the egg's false the 10-jitter
+    /// loop (the two ctors the render lane's own law picks from).
+    pub snowball: bool,
 }
 
 /// One pending WAX arm — the Level Event packet's own landing (the
@@ -2573,6 +2617,7 @@ impl WorldModel {
             smash_attack_events: Vec::new(),
             kinetic_hit_events: Vec::new(),
             firework_explode_events: Vec::new(),
+            thrown_shatter_events: Vec::new(),
             wax_events: Vec::new(),
             gateway_spawn_events: Vec::new(),
             dragon_growl_events: Vec::new(),
@@ -2816,6 +2861,13 @@ impl WorldModel {
     /// exactly once, the drained mailbox the empty vec keeps).
     pub fn drain_firework_explode_events(&mut self) -> Vec<FireworkExplodeArm> {
         std::mem::take(&mut self.firework_explode_events)
+    }
+
+    /// The thrown-shatter mailbox's own drain (the same walk the
+    /// sibling lanes speak — the byte-3 arms the refresh ships
+    /// exactly once, the drained mailbox the empty vec keeps).
+    pub fn drain_thrown_shatter_events(&mut self) -> Vec<ThrownShatterArm> {
+        std::mem::take(&mut self.thrown_shatter_events)
     }
 
     /// The ender-dragon growl effect's mailbox's own drain (the same
@@ -3538,6 +3590,10 @@ impl WorldModel {
                 // (the same walk — the old level's byte-17 words never
                 // poof again)
                 self.firework_explode_events.clear();
+                // the thrown-shatter mailbox dies with the level (the
+                // same walk — the old level's byte-3 words never
+                // shatter again)
+                self.thrown_shatter_events.clear();
                 // the wax trio's mailbox dies with the level (the same
                 // walk — the old level's 3003/3004/3005 words never
                 // wax again)
@@ -5477,6 +5533,39 @@ impl WorldModel {
                         my: snap.motion[1],
                         mz: snap.motion[2],
                         explosions,
+                    });
+                    return true;
+                }
+                // THE THROWN SHOT'S OWN 3 (javap `ThrownEgg.onHit` /
+                // `Snowball.onHit` the 26.2 walk — the
+                // `broadcastEntityEvent(this, (byte) 3)` the discard
+                // speaks, the client's `handleEntityEvent` case-3 the
+                // crack burst answers). The TYPE gate the registry's
+                // own name keeps — the `minecraft:snowball` the
+                // 8-shard plain walk banks, the `minecraft:egg` the
+                // 10-jitter loop carries, the OTHER bodies' 3s the
+                // honest silence keeps (the chick-roll word the
+                // Chicken's own body answers, the event's dispatch the
+                // entity's own class speaks). The pose the store's
+                // last-known word banks (the SIM pose the screen's
+                // lookup prefers — the no-sim fallback this anchor
+                // keeps, the Remove Entities race the refresh's own
+                // order arms).
+                if e.event == 3 {
+                    let Some(snap) = self.entities.get(&e.entity_id) else {
+                        return false;
+                    };
+                    let snowball = match self.entity_type_name(snap.type_id) {
+                        Some("minecraft:snowball") => true,
+                        Some("minecraft:egg") => false,
+                        _ => return false,
+                    };
+                    self.thrown_shatter_events.push(ThrownShatterArm {
+                        entity_id: e.entity_id,
+                        x: snap.x,
+                        y: snap.y,
+                        z: snap.z,
+                        snowball,
                     });
                     return true;
                 }
@@ -8598,6 +8687,128 @@ mod tests {
         assert_eq!((drained[0].x, drained[0].y, drained[0].z), (12.25, 68.5, -3.75));
         assert!(drained[0].explosions.is_empty(), "the plain rocket the empty list keeps");
         assert!(m.drain_firework_explode_events().is_empty(), "the drained silence ships nothing");
+    }
+
+    /// THE THROWN SHOT'S OWN 3 (javap `ThrownEgg.onHit`/`Snowball.
+    /// onHit` the 26.2 walk): the byte-3 the thrown bodies' own class
+    /// dispatch answers — the TYPE gate the registry's
+    /// `minecraft:snowball` / `minecraft:egg` names keep, the pose the
+    /// store's last-known word banks, the OTHER bodies' 3s (the pig's
+    /// body the chick-roll word never lands for) the honest silence
+    /// keeps, the unknown id no phantom banks, the byte-2 the thrown
+    /// body wears the kinetic gate's own silence keeps, the drain
+    /// ships once.
+    #[test]
+    fn the_thrown_event_3_the_type_gate_the_shatter_arm_banks() {
+        let mut m = WorldModel::new();
+        m.registry = RegistryData {
+            command_argument_types: Vec::new(),
+            jukebox_songs: Vec::new(),
+            chat_types: Vec::new(),
+            dimension_types: Vec::new(),
+            biomes: Vec::new(),
+            biome_tags: Vec::new(),
+            world_clocks: Vec::new(),
+            // the synced entity-type table: id 0 the snowball, id 1
+            // the egg, id 2 the pig (the arrival-order ids the Add
+            // Entity packets carry)
+            entity_types: vec![
+                "minecraft:snowball".to_string(),
+                "minecraft:egg".to_string(),
+                "minecraft:pig".to_string(),
+            ],
+            entity_type_tags: Vec::new(),
+            sound_events: Vec::new(),
+            chicken_variants: Vec::new(),
+            pig_variants: Vec::new(),
+            cow_variants: Vec::new(),
+            chicken_sound_variants: Vec::new(),
+            pig_sound_variants: Vec::new(),
+            cow_sound_variants: Vec::new(),
+            timelines: Vec::new(),
+            timeline_tags: Vec::new(),
+        };
+        // the server's snowball + egg + pig neighbor: the spawn
+        // packets the wire speaks (the full-precision poses the
+        // anchor banks)
+        for (id, type_id, x, z) in [(60, 0, 4.5, -8.25), (61, 1, 20.75, 3.5), (62, 2, 0.0, 0.0)] {
+            assert!(m.apply(PlayEvent::Spawn(EntitySpawn {
+                id,
+                uuid: id as u128,
+                type_id,
+                x,
+                y: 66.5,
+                z,
+                movement: [0.0; 3],
+                x_rot: 0.0,
+                y_rot: 0.0,
+                y_head_rot: 0.0,
+                data: 0,
+            })));
+        }
+        // THE SNOWBALL'S CROSSING: the 3 the discard broadcast speaks
+        // → the arm banks at the entity's own pose, the kind the true
+        // keeps
+        assert!(m.apply(PlayEvent::EntityEvent(mc_protocol::play::EntityEventPacket {
+            entity_id: 60,
+            event: 3,
+        })));
+        assert_eq!(
+            m.thrown_shatter_events.len(),
+            1,
+            "the snowball's 3 the arm banks"
+        );
+        let arm = &m.thrown_shatter_events[0];
+        assert_eq!(arm.entity_id, 60, "the entity's own id the sim lookup reads");
+        assert_eq!(
+            (arm.x, arm.y, arm.z),
+            (4.5, 66.5, -8.25),
+            "the store's last-known pose the anchor banks"
+        );
+        assert!(arm.snowball, "the kind the type name spoke");
+        // THE EGG'S CROSSING: the same walk the false keeps (the
+        // 10-jitter loop the kind speaks)
+        assert!(m.apply(PlayEvent::EntityEvent(mc_protocol::play::EntityEventPacket {
+            entity_id: 61,
+            event: 3,
+        })));
+        assert_eq!(m.thrown_shatter_events.len(), 2);
+        assert!(!m.thrown_shatter_events[1].snowball, "the egg the false keeps");
+        // THE PIG'S 3: the type gate the silence keeps (the event's
+        // dispatch the thrown bodies' own class answers — a pig's body
+        // the byte never lands for)
+        assert!(!m.apply(PlayEvent::EntityEvent(mc_protocol::play::EntityEventPacket {
+            entity_id: 62,
+            event: 3,
+        })));
+        assert_eq!(m.thrown_shatter_events.len(), 2, "the pig's 3 the silence keeps");
+        // THE UNKNOWN ID: no phantom burst (the dispatch needs the
+        // entity's own body — the model's map the lookup answers)
+        assert!(!m.apply(PlayEvent::EntityEvent(mc_protocol::play::EntityEventPacket {
+            entity_id: 999,
+            event: 3,
+        })));
+        assert_eq!(m.thrown_shatter_events.len(), 2);
+        // THE OTHER BYTES: the 3 gate alone arms this lane (the
+        // snowball's byte-2 the kinetic walk's own-entity filter
+        // refuses — the thrown body the byte never lands for)
+        assert!(!m.apply(PlayEvent::EntityEvent(mc_protocol::play::EntityEventPacket {
+            entity_id: 60,
+            event: 2,
+        })));
+        assert_eq!(m.thrown_shatter_events.len(), 2, "the byte-2 never shatters");
+        // THE DRAIN: ships once, then the empty silence
+        let drained = m.drain_thrown_shatter_events();
+        assert_eq!(drained.len(), 2);
+        assert_eq!((drained[0].x, drained[0].y, drained[0].z), (4.5, 66.5, -8.25));
+        assert!(
+            drained[0].snowball && !drained[1].snowball,
+            "the kinds the gates spoke"
+        );
+        assert!(
+            m.drain_thrown_shatter_events().is_empty(),
+            "the drained silence ships nothing"
+        );
     }
 
     /// THE FIREWORK'S OWN COMPONENT ENTRY (javap `getExplosions` the
