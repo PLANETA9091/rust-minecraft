@@ -19824,6 +19824,7 @@ impl App {
         // the deferred place answer).
         if self.screen == ScreenKind::Inventory
             || self.screen == ScreenKind::Chest
+            || self.screen == ScreenKind::Dispenser
             || self.screen == ScreenKind::Crafting
             || self.screen == ScreenKind::Furnace
         {
@@ -27751,6 +27752,13 @@ impl App {
     /// LIVE session the belief's own projection carries, the CHEST
     /// screen the generic_9x3's own `chest_carried` pair speaks).
     fn qc_carried(&self) -> (i32, i32) {
+        if self.screen == ScreenKind::Dispenser {
+            // THE 3x3 CANVAS'S OWN LANE CURSOR (the live belief's own
+            // projection the window speaks — the offline sim the SAME
+            // field's own stack holds, the drag the live window alone
+            // arms)
+            return self.dispenser_carried;
+        }
         if self.screen == ScreenKind::Chest {
             return self.chest_carried;
         }
@@ -27912,6 +27920,90 @@ impl App {
         // the mayPlace verdict: the chest menu's slots ALL plain (the
         // base Slot's iconst_1 pair the chest swap walk banks) — no
         // refusal the walk wears
+        if self.qc_slots.contains(&menu) {
+            return; // pc 45-50 — the `Set.add`'s own false the recalc never feeds
+        }
+        self.qc_slots.push(menu);
+        self.qc_recalc_remainder(); // pc 53-54 — the new seat the recalc speaks
+    }
+
+    /// THE DISPENSER DRAG'S OWN ARM (the same mouseClicked pcs 316-378
+    /// base walk the Inventory + chest + table + furnace rounds bank —
+    /// the 3x3 screen the SAME AbstractContainerScreen base class
+    /// wears): the carried-NON-EMPTY press the isQuickCrafting start
+    /// speaks — NO slot click, NO packet, the placement and the
+    /// distribution BOTH the release's own lanes serve. The hovered
+    /// seat AND the outside press the arm answers (the k == -999 press
+    /// the same pc 316 walk enters); the press BETWEEN the slots
+    /// (k == -1) the whole arm skips. The dispenser's own gates: the
+    /// offline stand-in the silence keeps (the offline sim the direct
+    /// dispatch's own lane keeps — the LIVE window the drag alone
+    /// wears) and the render never spoken the geometry refuses (the
+    /// panel's own (0, 0) convention). THE BUTTON'S OWN TYPE
+    /// (mouseClicked pcs 338-377): the left the type-0 drag arms (pc
+    /// 338-347), the RIGHT press the type-1 (pc 353-363) — the
+    /// one-each distribution the release's own lane serves.
+    fn qc_arm_dispenser(&mut self, mx: i32, my: i32, button: usize) {
+        if self.qc_armed {
+            return; // pc 168-172 — the in-flight drag the press never re-arms
+        }
+        if !self.dispenser_is_live || self.dispenser_live_window.is_none() {
+            return; // the offline stand-in: no window, no drag
+        }
+        if self.dispenser_slot_rects.is_empty() {
+            return; // no render spoke yet — no geometry to hit
+        }
+        let panel = self.dispenser_panel;
+        let on_seat = self
+            .dispenser_slot_rects
+            .iter()
+            .any(|&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16);
+        // THE OUTSIDE RECT (hasClickedOutside's own strict compare —
+        // the canvas chrome the panel origin frames, the 166 the 3x3's
+        // own height speaks): the render never spoken the outside test
+        // keeps silent — the seat the arm alone answers
+        let outside = panel != (0, 0)
+            && (mx < panel.0 || my < panel.1 || mx >= panel.0 + 176 || my >= panel.1 + 166);
+        if !on_seat && !outside {
+            return; // pc 162-165 — the k == -1 press the walk skips
+        }
+        self.qc_armed = true;
+        self.qc_button = button as i32;
+        self.qc_type = button as i32; // the button's own type (pc 338-347 the left, pc 353-363 the right)
+        self.qc_slots.clear();
+        self.qc_remainder = 0;
+    }
+
+    /// THE DISPENSER DRAG'S OWN COLLECT (mouseDragged pcs 23-58 — the
+    /// hovered seat the `shouldAddSlotToQuickCraft` gates answer, the
+    /// NEW seat the `Set.add` verdict passes the remainder recalc
+    /// feeds): the same walk the chest's paint wears — the carried
+    /// non-empty, the count's own law, the seat's
+    /// canItemQuickReplace, the plain slots' mayPlace the base Slot's
+    /// iconst_1 pair keeps.
+    fn qc_paint_dispenser(&mut self, mx: i32, my: i32) {
+        let Some(&(_, _, slot)) = self
+            .dispenser_slot_rects
+            .iter()
+            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+        else {
+            return; // pc 25 — the no-seat frame the paint skips
+        };
+        let carried = self.dispenser_carried;
+        if carried.1 <= 0 {
+            return; // shouldAdd pc 7-11 — the empty cursor never paints
+        }
+        if !(carried.1 as usize > self.qc_slots.len() || self.qc_type == 2) {
+            return; // shouldAdd pc 14-37 — the count's own gate
+        }
+        let menu = slot as usize;
+        let (seat_id, _) = self.qc_seat_stack(menu);
+        if seat_id != 0 && seat_id != carried.0 {
+            return; // canItemQuickReplace — the different item the seat refuses
+        }
+        // the mayPlace verdict: the dispenser menu's slots ALL plain
+        // (the base Slot's iconst_1 pair the chest swap walk banks) —
+        // no refusal the walk wears
         if self.qc_slots.contains(&menu) {
             return; // pc 45-50 — the `Set.add`'s own false the recalc never feeds
         }
@@ -28137,6 +28229,34 @@ impl App {
         );
     }
 
+    /// THE DISPENSER DRAG'S OWN WIRE DISTRIBUTION (the offline walk's
+    /// twin over the LIVE 3x3 belief — the free fn
+    /// [`wire_dispenser_quickcraft_distribute`] the disjoint field
+    /// borrows keep): the packet triple the dispenser window's own
+    /// identity rides, the place math the same net fold keeps, the
+    /// HUD row the mirror's hotbar rows sync follows.
+    fn qc_distribute_dispenser_wire(&mut self) {
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return; // no live session — the command dies on the frame thread
+        };
+        let Some((window_id, state_id)) = self.dispenser_live_window else {
+            return; // the offline stand-in: no window, no echo
+        };
+        let qc_type = self.qc_type;
+        let qc_slots = self.qc_slots.clone();
+        wire_dispenser_quickcraft_distribute(
+            sink,
+            &mut self.dispenser_slots,
+            &mut self.dispenser_mirror,
+            &mut self.hotbar_slots,
+            qc_type,
+            &qc_slots,
+            window_id,
+            state_id,
+            &mut self.dispenser_carried,
+        );
+    }
+
     /// THE GHOST'S OWN RECALC (recalculateQuickCraftRemaining — the
     /// painted set's projected leftover the cursor keeps): the type-2
     /// arm the carried's own max speaks (pc 23-39), the split arms the
@@ -28174,6 +28294,16 @@ impl App {
     /// 0..27 the container cells hold, the mirror's 27..63 the player
     /// store rows ride).
     fn qc_seat_stack(&self, menu: usize) -> (i32, i32) {
+        if self.screen == ScreenKind::Dispenser {
+            // THE 3x3'S OWN NUMBERING (the nine the grid 0..9 keeps,
+            // the standard rows 9..45 the mirror holds — the click
+            // walk's own split the paint seat read wears)
+            return if menu < 9 {
+                self.dispenser_slots[menu]
+            } else {
+                self.dispenser_mirror[menu - 9]
+            };
+        }
         if self.screen == ScreenKind::Chest {
             let n = self.chest_slots.len();
             return if menu < n {
@@ -28251,6 +28381,11 @@ impl App {
             // pcs 299-322 — the painted set the distribution answers
             if self.screen == ScreenKind::Chest {
                 self.qc_distribute_chest_wire();
+            } else if self.screen == ScreenKind::Dispenser {
+                // THE 3x3'S OWN WIRE DISTRIBUTION (the chest's own
+                // shape — the dispenser window the LIVE session alone
+                // wears, the offline sim the drag never arms)
+                self.qc_distribute_dispenser_wire();
             } else if self.screen == ScreenKind::Crafting {
                 // THE TABLE'S OWN LANES (the click walk's own split —
                 // the wire the window-1 belief rides, the offline sim
@@ -28337,6 +28472,64 @@ impl App {
                             input: crate::world_view::ContainerInput::Pickup,
                             changed: Vec::new(),
                             carried: self.chest_carried,
+                        },
+                    ));
+                }
+            }
+            return;
+        }
+        if self.screen == ScreenKind::Dispenser {
+            // THE DISPENSER'S OWN DEFERRED PLACE (the same pc 325-449
+            // walk the chest geometry answers — the 3x3 canvas the LIVE
+            // session alone wears the arm on, the offline sim the drag
+            // never arms): the seat the PICKUP speaks, the outside the
+            // -999 drop serves, the between the -1 no-op keeps.
+            let panel = self.dispenser_panel;
+            let on_seat = self
+                .dispenser_slot_rects
+                .iter()
+                .any(|&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16);
+            let outside = panel != (0, 0)
+                && (mx < panel.0
+                    || my < panel.1
+                    || mx >= panel.0 + 176
+                    || my >= panel.1 + 166);
+            let Some((window_id, state_id)) = self.dispenser_live_window else {
+                return;
+            };
+            if on_seat {
+                // pc 427-449 — the PICKUP the click walk's own lanes
+                // serve (the armed button the release wears — the right
+                // drag's deferred place the place-ONE speaks)
+                self.click_dispenser_slot(mx, my, self.qc_button as i8);
+            } else if outside {
+                // doClick pc 599-660 — the -999 PICKUP the carried's
+                // drop speaks (the whole carried the PRIMARY button
+                // drops): the LIVE session the packet the belief's
+                // clear rides (the drop entity the server's Add Entity
+                // lane spawns)
+                if let Some(sink) = self.live_clicks.as_ref() {
+                    wire_throw_outside(
+                        sink,
+                        &mut self.dispenser_carried,
+                        self.qc_button as i8,
+                        window_id,
+                        state_id,
+                    );
+                }
+            } else {
+                // pc 599's own jump — the -1 PICKUP the wire keeps (the
+                // isValidSlotIndex refusal — the no-op)
+                if let Some(sink) = self.live_clicks.as_ref() {
+                    let _ = sink.send(crate::world_view::ContainerCommand::Click(
+                        crate::world_view::ContainerClick {
+                            window_id,
+                            state_id,
+                            slot: -1,
+                            button: self.qc_button as i8,
+                            input: crate::world_view::ContainerInput::Pickup,
+                            changed: Vec::new(),
+                            carried: self.dispenser_carried,
                         },
                     ));
                 }
@@ -28768,11 +28961,18 @@ impl App {
             // THE 3x3 CANVAS'S OWN PRESS (the chest's own offline law
             // the direct dispatch keeps — the PICKUP table the press
             // click speaks, the carried stack the SAME table the
-            // place-back serves; the QUICKCRAFT drag arm the chest's
-            // LIVE window alone wears — no live lane the offline
-            // stand-in keeps, the drag-place ride the later round's
-            // own line)
-            self.click_dispenser_slot(mx, my, 0);
+            // place-back serves; the QUICKCRAFT drag arm the LIVE
+            // window alone wears — the carried press the drag arms: NO
+            // slot click, NO packet, the placement and the distribution
+            // BOTH the release's own lanes serve; the offline sim the
+            // direct dispatch keeps — the drag the window never lacks
+            // the offline lane never wears)
+            let held = self.dispenser_is_live && self.dispenser_carried.1 > 0;
+            if held {
+                self.qc_arm_dispenser(mx, my, 0);
+            } else {
+                self.click_dispenser_slot(mx, my, 0);
+            }
             return;
         }
         if self.screen == ScreenKind::Chest {
@@ -28887,13 +29087,24 @@ impl App {
         if self.screen == ScreenKind::Dispenser {
             // THE IN-FLIGHT DRAG'S OWN GATE (mouseClicked pc 168-172 —
             // the armed drag's frames the other button's press keep
-            // silent); the right press the SPLIT-PICKUP dispatch keeps
-            // (the place-ONE the carried press speaks — the vanilla
-            // PICKUP's own byte the offline walk answers)
+            // silent); the right press the TYPE-1 DRAG ARMS (mouseClicked
+            // pcs 353-377 — the carried-NON-EMPTY press the
+            // isQuickCrafting start speaks for BOTH buttons, the type
+            // the button's own verdict keys — NO slot click, NO packet,
+            // the one-each distribution the release serves); the
+            // carried-empty press the SPLIT-PICKUP dispatch keeps (the
+            // place-ONE the carried press speaks — the vanilla PICKUP's
+            // own byte the offline walk answers; the offline sim the
+            // direct dispatch keeps)
             if self.qc_armed {
                 return false;
             }
-            self.click_dispenser_slot(mx, my, 1);
+            let held = self.dispenser_is_live && self.dispenser_carried.1 > 0;
+            if held {
+                self.qc_arm_dispenser(mx, my, 1);
+            } else {
+                self.click_dispenser_slot(mx, my, 1);
+            }
             return false;
         }
         if self.screen == ScreenKind::Chest {
@@ -30378,6 +30589,7 @@ impl App {
             && self.qc_button != 1
             && (self.screen == ScreenKind::Inventory
                 || self.screen == ScreenKind::Chest
+                || self.screen == ScreenKind::Dispenser
                 || self.screen == ScreenKind::Crafting
                 || self.screen == ScreenKind::Furnace)
         {
@@ -30393,6 +30605,7 @@ impl App {
             && self.qc_button == 1
             && (self.screen == ScreenKind::Inventory
                 || self.screen == ScreenKind::Chest
+                || self.screen == ScreenKind::Dispenser
                 || self.screen == ScreenKind::Crafting
                 || self.screen == ScreenKind::Furnace)
         {
@@ -30725,6 +30938,8 @@ impl App {
                 self.qc_paint(mx, my);
             } else if self.screen == ScreenKind::Chest {
                 self.qc_paint_chest(mx, my);
+            } else if self.screen == ScreenKind::Dispenser {
+                self.qc_paint_dispenser(mx, my);
             } else if self.screen == ScreenKind::Crafting {
                 self.qc_paint_table(mx, my);
             } else if self.screen == ScreenKind::Furnace {
@@ -60168,6 +60383,119 @@ fn wire_chest_quickcraft_distribute(
                 grid[menu] = new;
             } else {
                 mirror[menu - 27] = new;
+            }
+            changed.push((menu as i16, new));
+        }
+        *carried = if k > 0 { (carried.0, k) } else { (0, 0) }; // pc 520-530 — the remainder the cursor keeps
+        let mut row = [(0, 0); 9];
+        row.copy_from_slice(&mirror[27..36]);
+        *hotbar = row; // the HUD row the mirror's hotbar rows speak
+    }
+    // THE END (pc 71-87 — slotClicked(null, -999, mask(2, type),
+    // QUICK_CRAFT)): the distribution's own mutations the changed map
+    // names, the empty-cursor drag the EMPTY map keeps
+    let _ = sink.send(crate::world_view::ContainerCommand::Click(
+        crate::world_view::ContainerClick {
+            window_id,
+            state_id,
+            slot: -999,
+            button: end_button,
+            input: crate::world_view::ContainerInput::QuickCraft,
+            changed,
+            carried: *carried,
+        },
+    ));
+}
+
+/// THE DISPENSER DRAG'S OWN WIRE DISTRIBUTION (the same doClick
+/// QUICK_CRAFT status-2 arm pcs 298-534 over the generic_3x3's
+/// belief, the packet triple `quickCraftToSlots` pcs 0-90 speaks —
+/// the dispenser window's own identity the packets ride, the chest's
+/// own lane the shape mirrors): the START packet the `mask(0, type)`
+/// button the slot -999 keeps (the changed map the state
+/// transition's own silence keeps EMPTY), the ADD packets the
+/// `mask(1, type)` button per painted seat ride (the collect's own
+/// no-mutation the EMPTY map names), the END packet the
+/// `mask(2, type)` button the changed map the distribution's own
+/// mutations names. The per-seat place math the same net fold keeps
+/// (the dispenser menu's slots ALL plain — the mayPlace TRUE pair
+/// the base Slot keeps, no verdict the walk wears), the HUD row the
+/// mirror's hotbar rows 27..36 the sync follows (the store indices
+/// the chest swap walk banks).
+fn wire_dispenser_quickcraft_distribute(
+    sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
+    grid: &mut [(i32, i32)],
+    mirror: &mut [(i32, i32)],
+    hotbar: &mut [(i32, i32); 9],
+    qc_type: i32,
+    qc_slots: &[usize],
+    window_id: i32,
+    state_id: i32,
+    carried: &mut (i32, i32),
+) {
+    let start_button = ((qc_type & 3) << 2) as i8; // getQuickcraftMask(0, type)
+    let add_button = start_button | 1; // getQuickcraftMask(1, type)
+    let end_button = start_button | 2; // getQuickcraftMask(2, type)
+    // THE START (quickCraftToSlots pc 0-16 — slotClicked(null, -999,
+    // mask(0, type), QUICK_CRAFT)): the state machine's own transition
+    // the changed map never names
+    let _ = sink.send(crate::world_view::ContainerCommand::Click(
+        crate::world_view::ContainerClick {
+            window_id,
+            state_id,
+            slot: -999,
+            button: start_button,
+            input: crate::world_view::ContainerInput::QuickCraft,
+            changed: Vec::new(),
+            carried: *carried,
+        },
+    ));
+    // THE ADDS (pc 19-68 — slotClicked(slot, slot.index, mask(1, type),
+    // QUICK_CRAFT) per painted seat): the collect's own no-mutation
+    let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
+    if carried.1 > 0 {
+        for &menu in qc_slots {
+            let _ = sink.send(crate::world_view::ContainerCommand::Click(
+                crate::world_view::ContainerClick {
+                    window_id,
+                    state_id,
+                    slot: menu as i16,
+                    button: add_button,
+                    input: crate::world_view::ContainerInput::QuickCraft,
+                    changed: Vec::new(),
+                    carried: *carried,
+                },
+            ));
+        }
+        // THE DISTRIBUTION (doClick pcs 298-534): the per-seat gates +
+        // place math the same table keeps — the dispenser's seats the
+        // plain-Slot pair never refuses (canItemQuickReplace the only
+        // gate the walk re-checks)
+        let painted = qc_slots.len();
+        let mut k = carried.1;
+        for &menu in qc_slots {
+            let (seat_id, seat_count) = if menu < 9 {
+                grid[menu]
+            } else {
+                mirror[menu - 9]
+            };
+            if seat_id != 0 && seat_id != carried.0 {
+                continue; // pc 373-381 — canItemQuickReplace
+            }
+            if qc_type != 2 && carried.1 < painted as i32 {
+                continue; // pc 394-416 — the count's own gate
+            }
+            let cap = crate::world_view::item_max_stack(carried.0);
+            // getQuickCraftPlaceCount — the type-0 floor(count/painted),
+            // the type-1's own ONE per seat (the right drag's answer)
+            let place_count = if qc_type == 1 { 1 } else { carried.1 / painted as i32 };
+            let place = std::cmp::min(place_count + seat_count, cap);
+            k -= place - seat_count; // pc 495-503 — the net the carried loses
+            let new = (carried.0, place); // pc 505-514
+            if menu < 9 {
+                grid[menu] = new;
+            } else {
+                mirror[menu - 9] = new;
             }
             changed.push((menu as i16, new));
         }
@@ -93575,9 +93903,14 @@ cow_sound_variant: None,
             _ => panic!("the click command's own shape"),
         }
         assert_eq!(app.dispenser_carried, (diamond, 12), "the belief's cursor follows");
-        // THE PLACE-BACK (the second press the PICKUP table's own
-        // place arm serves — the vanilla doClick's symmetric answer)
+        // THE PLACE-BACK (the carried press the DRAG ARMS — the
+        // mouseClicked pcs 316-378 law the chest's own live lane
+        // wears: NO slot click, NO packet — the empty-painted release
+        // the DEFERRED PLACE speaks: the release position the PICKUP
+        // table serves, the vanilla doClick's symmetric answer)
+        app.on_mouse_move(gx + 1 + 8, gy + 1 + 8);
         app.on_press(gx + 1 + 8, gy + 1 + 8);
+        app.on_left_release();
         match click_rx.try_recv().expect("the place click rode the lane") {
             ContainerCommand::Click(c) => {
                 assert_eq!(c.changed, vec![(4, (diamond, 12))], "the stack landed back");
@@ -131065,6 +131398,220 @@ cow_sound_variant: None,
                     "the distribution's own deltas"
                 );
                 assert_eq!(c.carried, (dirt, 2), "the remainder the packet keeps");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+
+    /// THE DISPENSER DRAG'S OWN PAINT AND WIRE SPLIT (the same
+    /// AbstractContainerScreen base walk the Inventory + chest rounds
+    /// bank — the 3x3 screen the SAME class wears, the window's own
+    /// menu ids the seats speak): the carried press the arm speaks —
+    /// NO place, NO packet —, the first motion paints the press seat
+    /// itself, the mirror's hotbar rows the motion paints, the release
+    /// the floor(32/3) tenths the belief and the triple wear — the
+    /// dispenser window's own identity the packets ride, the HUD row
+    /// the mirror's hotbar sync follows.
+    #[test]
+    fn the_dispenser_quickcraft_drag_the_paint_and_the_wire_split_wear() {
+        use crate::world_view::ContainerCommand;
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open(ScreenKind::Dispenser);
+        app.dispenser_is_live = true;
+        app.dispenser_live_window = Some((5, 7));
+        let panel = inventory_panel_origin(640, 360);
+        app.dispenser_panel = panel;
+        app.dispenser_slots = vec![(0, 0); 9];
+        app.dispenser_mirror = vec![(0, 0); 36];
+        app.dispenser_slot_rects = dispenser_rects_for(panel);
+        // the cursor 32 dirt; the drag over the grid cell 4 + the
+        // mirror's hotbar rows 0/1 (the menus 36/37)
+        app.dispenser_carried = (dirt, 32);
+        let (ax, ay) = dispenser_grid_slot(panel, 4);
+        app.on_press(ax + 9, ay + 9);
+        app.on_mouse_move(ax + 9, ay + 9);
+        let (bx, by) = chest_mirror_slot(panel, 27);
+        app.on_mouse_move(bx + 9, by + 9);
+        let (cx, cy) = chest_mirror_slot(panel, 28);
+        app.on_mouse_move(cx + 9, cy + 9);
+        assert_eq!(app.qc_slots, vec![4, 36, 37], "the three seats the motion paints");
+        app.on_left_release();
+        // THE BELIEF: the grid cell + the hotbar menus the tenths hold,
+        // the cursor the remainder keeps
+        assert_eq!(app.dispenser_slots[4], (dirt, 10), "the grid cell's tenth");
+        assert_eq!(app.dispenser_mirror[27], (dirt, 10), "the hotbar row 0's tenth");
+        assert_eq!(app.dispenser_mirror[28], (dirt, 10), "the hotbar row 1's tenth");
+        assert_eq!(app.dispenser_carried, (dirt, 2), "the remainder the belief keeps");
+        // THE HUD: the mirror's hotbar rows the sync speaks
+        assert_eq!(app.hotbar_slots[0], (dirt, 10));
+        assert_eq!(app.hotbar_slots[1], (dirt, 10));
+        // THE TRIPLE: the START (mask(0,0) byte 0), the three ADDs
+        // (mask(1,0) byte 1), the END (mask(2,0) byte 2) the changed
+        // map the tenths name — the dispenser window's own identity rides
+        match click_rx.try_recv().expect("the START rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 5);
+                assert_eq!(c.slot, -999);
+                assert_eq!(c.button, 0);
+                assert_eq!(c.input, crate::world_view::ContainerInput::QuickCraft);
+                assert_eq!(c.changed, Vec::new());
+                assert_eq!(c.carried, (dirt, 32));
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        for menu in [4, 36, 37] {
+            match click_rx.try_recv().expect("the ADD rode the lane") {
+                ContainerCommand::Click(c) => {
+                    assert_eq!(c.window_id, 5);
+                    assert_eq!(c.slot, menu);
+                    assert_eq!(c.button, 1);
+                    assert_eq!(c.input, crate::world_view::ContainerInput::QuickCraft);
+                    assert_eq!(c.changed, Vec::new());
+                }
+                other => panic!("expected a container click, got {other:?}"),
+            }
+        }
+        match click_rx.try_recv().expect("the END rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 5);
+                assert_eq!(c.slot, -999);
+                assert_eq!(c.button, 2);
+                assert_eq!(
+                    c.changed,
+                    vec![(4, (dirt, 10)), (36, (dirt, 10)), (37, (dirt, 10))],
+                    "the distribution's own deltas"
+                );
+                assert_eq!(c.carried, (dirt, 2), "the remainder the packet keeps");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+
+    /// THE DISPENSER DRAG'S OWN GATES AND THE DEFERRED PLACE (the same
+    /// AbstractContainerScreen walk the chest round banks — the 3x3's
+    /// own differences the block speaks): the OFFLINE SIM the direct
+    /// dispatch keeps (the held press the offline click lane answers —
+    /// the drag the LIVE window alone wears), the different item's
+    /// seat the paint refuses (the empty-painted release the deferred
+    /// place's PICKUP speaks — the swap the click lane serves), the
+    /// armed drag the right press silences (the in-flight gate), the
+    /// wrong button's release the abort speaks, the between-slots
+    /// release the -1 PICKUP no-op rides.
+    #[test]
+    fn the_dispenser_quickcraft_gates_and_the_deferred_place_wear() {
+        use crate::world_view::ContainerCommand;
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open(ScreenKind::Dispenser);
+        app.dispenser_live_window = Some((5, 7));
+        let panel = inventory_panel_origin(640, 360);
+        app.dispenser_panel = panel;
+        app.dispenser_slots = vec![(0, 0); 9];
+        app.dispenser_mirror = vec![(0, 0); 36];
+        app.dispenser_slot_rects = dispenser_rects_for(panel);
+        // THE OFFLINE SIM (dispenser_is_live false): the carried press
+        // the DIRECT DISPATCH keeps — the offline place-back the local
+        // stores speak, the drag the live window alone wears
+        app.dispenser_carried = (dirt, 8);
+        let (gx, gy) = dispenser_grid_slot(panel, 4);
+        app.on_press(gx + 9, gy + 9);
+        assert!(!app.qc_armed, "the stand-in's press the drag never arms");
+        assert_eq!(app.dispenser_slots[4], (dirt, 8), "the offline place-back the press spoke");
+        assert_eq!(app.dispenser_carried, (0, 0), "the offline cursor the place empties");
+        assert!(click_rx.try_recv().is_err(), "the offline lane NO packet keeps");
+        // THE WINDOW ARMS (the cursor the belief re-speaks)
+        app.dispenser_is_live = true;
+        app.dispenser_carried = (dirt, 8);
+        app.dispenser_slots[4] = (0, 0);
+        // THE DIFFERENT ITEM'S SEAT REFUSES the paint — the empty-
+        // painted release the deferred place's PICKUP speaks (the
+        // click walk's own lanes serve: the carried rides the cursor,
+        // the seat's stack the hand takes)
+        app.dispenser_slots[4] = (stone, 5);
+        app.on_press(gx + 9, gy + 9);
+        assert!(app.qc_armed, "the carried press arms on ANY seat");
+        app.on_mouse_move(gx + 9, gy + 9);
+        assert!(app.qc_slots.is_empty(), "the stone seat the different carried refuses");
+        app.on_left_release();
+        assert_eq!(app.dispenser_carried, (stone, 5), "the deferred place the swap speaks");
+        assert_eq!(app.dispenser_slots[4], (dirt, 8), "the stone the hand took");
+        match click_rx.try_recv().expect("the PICKUP rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 5);
+                assert_eq!(c.slot, 4);
+                assert_eq!(c.button, 0);
+                assert_eq!(c.input, crate::world_view::ContainerInput::Pickup);
+                assert_eq!(c.changed, vec![(4, (dirt, 8))], "the swap's own delta");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE COUNT'S OWN GATE: the 2-stack paints TWO seats, the
+        // third the `count > painted` law refuses; the release the
+        // even split speaks (1 per seat, the cursor empty)
+        app.dispenser_carried = (dirt, 2);
+        let (bx, by) = dispenser_grid_slot(panel, 1);
+        app.on_press(bx + 9, by + 9);
+        app.on_mouse_move(bx + 9, by + 9);
+        let (nx, ny) = dispenser_grid_slot(panel, 2);
+        app.on_mouse_move(nx + 9, ny + 9);
+        assert_eq!(app.qc_slots.len(), 2, "the second seat the count still paints");
+        let (mx2, my2) = dispenser_grid_slot(panel, 3);
+        app.on_mouse_move(mx2 + 9, my2 + 9);
+        assert_eq!(app.qc_slots.len(), 2, "the third seat the count gate refuses");
+        app.on_left_release();
+        assert_eq!(app.dispenser_slots[1], (dirt, 1), "the split's own one");
+        assert_eq!(app.dispenser_slots[2], (dirt, 1), "the split's own one");
+        assert_eq!(app.dispenser_carried, (0, 0), "the exact split the cursor empties");
+        for _ in 0..4 {
+            let _ = click_rx.try_recv(); // the START, the two ADDs, the END
+        }
+        // THE BETWEEN-SLOTS PRESS THE ARM SKIPS (the k == -1 silence —
+        // the release the un-armed walk never enters)
+        app.dispenser_carried = (dirt, 4);
+        app.on_press(panel.0 + 170, panel.1 + 20);
+        assert!(!app.qc_armed, "the between press the arm never speaks");
+        app.on_left_release();
+        assert_eq!(app.dispenser_carried, (dirt, 4), "the un-armed release the silence keeps");
+        assert!(click_rx.try_recv().is_err(), "the between release the silence keeps");
+        // THE ARMED DRAG THE RIGHT PRESS SILENCES (the in-flight gate —
+        // no split-place rides, the mismatch release the abort speaks)
+        app.dispenser_slots[4] = (0, 0);
+        app.on_press(gx + 9, gy + 9);
+        assert!(app.qc_armed, "the drag armed");
+        app.on_right_press(gx + 9, gy + 9);
+        assert!(app.qc_armed, "the right press the in-flight gate keeps");
+        assert_eq!(app.dispenser_slots[4], (0, 0), "no split-place rode the press");
+        app.on_right_release();
+        assert!(!app.qc_armed, "the wrong button's release the drag aborts");
+        assert!(app.qc_slots.is_empty(), "the abort the painted set clears");
+        // THE EMPTY-PAINT RELEASE BETWEEN THE SLOTS: the deferred
+        // place's -1 PICKUP the wire keeps (the isValidSlotIndex
+        // refusal — the no-op the packet names, the cursor keeps)
+        app.on_press(gx + 9, gy + 9);
+        assert!(app.qc_armed, "the drag armed again");
+        app.on_mouse_move(panel.0 + 170, panel.1 + 20); // the paint skips (no seat)
+        assert!(app.qc_slots.is_empty(), "the between motion paints nothing");
+        app.on_left_release();
+        match click_rx.try_recv().expect("the no-op PICKUP rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 5);
+                assert_eq!(c.slot, -1, "the between release's own -1");
+                assert_eq!(c.button, 0);
+                assert_eq!(c.input, crate::world_view::ContainerInput::Pickup);
+                assert_eq!(c.changed, Vec::new());
+                assert_eq!(c.carried, (dirt, 4), "the cursor the -1 keeps");
             }
             other => panic!("expected a container click, got {other:?}"),
         }
