@@ -383,12 +383,15 @@ pub const MOJANG_RED: [f32; 3] = [239.0 / 255.0, 50.0 / 255.0, 61.0 / 255.0];
 /// 0xFF5555 the number format's default speaks).
 pub const SIDEBAR_SCORE_RED: [f32; 3] = [1.0, 85.0 / 255.0, 85.0 / 255.0];
 /// THE SIDEBAR'S HEADER BAND (javap — `Options.getBackgroundColor(0.3F)`
-/// = `ARGB.colorFromFloat` → `as8BitChannel` = FLOOR(f × 255) per
-/// channel over black: floor(0.3 × 255) = 76 — the title band's own
-/// translucency).
+/// the (F)I overload the bgopacity_lanes_180 probe banks = the
+/// `ARGB.colorFromFloat(gate, 0,0,0)` call the raw lane's
+/// `ARGB.colorFromFloat` → `as8BitChannel` = `Mth.floor(f × 255)` per
+/// channel over black keeps: floor(0.3 × 255) = 76 — the title band's
+/// own translucency; the Everywhere lane the bg_band_alpha gate the
+/// render lane wears).
 pub const SIDEBAR_HEADER_BG: [f32; 4] = [0.0, 0.0, 0.0, 76.0 / 255.0];
 /// THE SIDEBAR'S BODY (the same walk at 0.4: floor(0.4 × 255) = 102 —
-/// the rows' band).
+/// the rows' band; the gate the render lane the header's own law wears).
 pub const SIDEBAR_BODY_BG: [f32; 4] = [0.0, 0.0, 0.0, 102.0 / 255.0];
 /// THE SIDEBAR'S SCORE SEPARATOR (javap — the `ldc ": "` the width
 /// law's third measure keeps: the colon-space the score's width
@@ -2332,6 +2335,55 @@ pub fn chat_band_alpha(background_for_chat_only: bool, textbg: f64) -> f32 {
         0.5
     } else {
         textbg as f32
+    }
+}
+
+/// THE BG-OPACITY GATE'S OWN LAW (the 26.2
+/// `Options.getBackgroundOpacity(F)F` walk the bgopacity_lanes_180.py
+/// probe banks — the bytecode's own `ifeq -> fload_1` /
+/// `textBackgroundOpacity().floatValue()` pair speaks: the TRUE lane
+/// the raw float arg returns VERBATIM, the Everywhere lane the textbg
+/// value ALONE — the arg the lane discards, the `raw * textbg`
+/// multiply the old guess wears the bytecode refuses). The F-variant
+/// the render-state mirror (OptionsRenderState.getBackgroundOpacity)
+/// the submitNameTag 0.25F and the TextDisplay 0.25F walks read —
+/// the same law the two copies keep.
+pub fn bg_opacity_gate(background_for_chat_only: bool, textbg: f64, raw: f32) -> f32 {
+    if background_for_chat_only {
+        raw
+    } else {
+        textbg as f32
+    }
+}
+
+/// THE BAND FOLD (the `ARGB.as8BitChannel(F)I` walk the same probe
+/// banks — the `ldc 255.0; fmul; Mth.floor` rows the byte the band
+/// paints speaks: the gate's folded alpha the house's f32 blend lane
+/// wears, the 0.3 the floor(76.5) = 76 byte the sidebar header keeps,
+/// the 0.4 the floor(102.0) = 102 the body speaks, the 0.8 the 204
+/// the subtitle's band would wear — the FLOOR the
+/// `f * 255 + 0.5` round the old guess wears the bytecode refuses).
+/// The float overload's own law (`Options.getBackgroundColor(F)I` =
+/// `ARGB.colorFromFloat(gate, 0, 0, 0)` — the Hud sidebar's 0.3F/0.4F
+/// and the SubtitleOverlay's 0.8F walks the chatbgonly_179e probe
+/// banks) the same fold the black band's alpha seat keeps.
+pub fn bg_band_alpha(background_for_chat_only: bool, textbg: f64, raw: f32) -> f32 {
+    let a = bg_opacity_gate(background_for_chat_only, textbg, raw);
+    (a * 255.0).floor() / 255.0
+}
+
+/// THE ROW GATE (the `Options.getBackgroundColor(I)I` law the same
+/// walk banks — the TRUE lane the raw ARGB VERBATIM (the
+/// 0x20FFFFFF the tab row's band keeps), the Everywhere lane the
+/// `colorFromFloat(textbg, 0, 0, 0)` black the textbg fold wears).
+/// The PlayerTabOverlay row highlight's own seat — the pc 834
+/// `getBackgroundColor` call the raw 0x20FFFFFF operand wears, the
+/// header/footer/body bands the RAW fills the gate never reads.
+pub fn bg_row_gate(background_for_chat_only: bool, textbg: f64, raw: [f32; 4]) -> [f32; 4] {
+    if background_for_chat_only {
+        raw
+    } else {
+        [0.0, 0.0, 0.0, (textbg as f32 * 255.0).floor() / 255.0]
     }
 }
 
@@ -61043,14 +61095,37 @@ impl App {
             let sep_w = g.text_width(SIDEBAR_SCORE_SEPARATOR);
             let (left, top, bottom, right, width) =
                 sidebar_layout(w, h, g.text_width(&sb.title), sep_w, &row_widths);
-            // the vanilla fill's x1/y1/x2/y2 shape → the house's x/y/w/h
-            g.fill(left - 2, top - 10, right - (left - 2), 9, SIDEBAR_HEADER_BG);
+            // the vanilla fill's x1/y1/x2/y2 shape → the house's x/y/w/h;
+            // the bands' colors the `getBackgroundColor(0.3F/0.4F)` calls
+            // the chatbgonly_179e walk banks (the (F)I overload the
+            // bgopacity_lanes_180 probe speaks) — the raw/Everywhere gate
+            // the bg_band_alpha fold keeps (the defaults the 76/102 bytes
+            // the constants' own raw lane answers — the byte-identical
+            // fold the no-render-change law keeps)
+            let sb_gate = (self.background_for_chat_only, self.text_background_opacity);
+            g.fill(
+                left - 2,
+                top - 10,
+                right - (left - 2),
+                9,
+                [
+                    SIDEBAR_HEADER_BG[0],
+                    SIDEBAR_HEADER_BG[1],
+                    SIDEBAR_HEADER_BG[2],
+                    bg_band_alpha(sb_gate.0, sb_gate.1, 0.3),
+                ],
+            );
             g.fill(
                 left - 2,
                 top - 1,
                 right - (left - 2),
                 bottom - (top - 1),
-                SIDEBAR_BODY_BG,
+                [
+                    SIDEBAR_BODY_BG[0],
+                    SIDEBAR_BODY_BG[1],
+                    SIDEBAR_BODY_BG[2],
+                    bg_band_alpha(sb_gate.0, sb_gate.1, 0.4),
+                ],
             );
             let title_x = left + width / 2 - g.text_width(&sb.title) / 2;
             g.text(a, title_x, top - 9, &sb.title, WHITE, false);
@@ -61132,7 +61207,21 @@ impl App {
                 let r = idx as i32 % row_count.max(1);
                 let x = grid_x + col * (col_width + TAB_GUTTER);
                 let ry = y + r * TAB_ROW_PITCH;
-                g.fill(x, ry, col_width, TAB_ROW_BAND_H, TAB_ROW_BG);
+                // the row's band the `getBackgroundColor(0x20FFFFFF)` call
+                // the chatbgonly_179e walk banks (the (I)I gate the raw
+                // lane's verbatim the defaults keep, the Everywhere lane
+                // the bg_row_gate fold wears)
+                g.fill(
+                    x,
+                    ry,
+                    col_width,
+                    TAB_ROW_BAND_H,
+                    bg_row_gate(
+                        self.background_for_chat_only,
+                        self.text_background_opacity,
+                        TAB_ROW_BG,
+                    ),
+                );
                 // the face slot the online mode reserves (the +9 the
                 // iinc speaks — the house's no-skin lane keeps the
                 // offset, the name at the vanilla's own x)

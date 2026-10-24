@@ -10854,3 +10854,94 @@ fn the_chat_bg_only_row_the_band_scope_wears() {
     );
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+/// THE BG-OPACITY GATE'S OWN LANES (the 26.2 bgopacity_lanes_180 probe
+/// the walk banks — the `Options.getBackgroundOpacity(F)F` law the
+/// bytecode's `ifeq -> fload_1` / `textBackgroundOpacity` pair speaks,
+/// the `ARGB.as8BitChannel` the `Mth.floor(f * 255)` fold the byte the
+/// band paints keeps, the `getBackgroundColor(F)I` overload the Hud
+/// sidebar's 0.3F/0.4F and the SubtitleOverlay's 0.8F walks wear, the
+/// `getBackgroundColor(I)I` the tab row's 0x20FFFFFF operand carries —
+/// the raw/Everywhere pair the three lanes the gates keep).
+#[test]
+fn the_bg_opacity_gate_the_lanes_fold_wears() {
+    // THE (F)F LAW'S OWN PAIR (the TRUE lane the raw arg verbatim, the
+    // Everywhere lane the textbg ALONE — the arg the lane discards,
+    // the multiply the bytecode refuses)
+    assert_eq!(bg_opacity_gate(true, 0.5, 0.3), 0.3, "the TRUE's own raw");
+    assert_eq!(
+        bg_opacity_gate(false, 0.5, 0.3),
+        0.5,
+        "the Everywhere lane the textbg alone the arg discards"
+    );
+    assert_eq!(
+        bg_opacity_gate(false, 0.25, 0.8),
+        0.25,
+        "the raw the fold never multiplies"
+    );
+    // THE BAND FOLD'S OWN BYTES (the floor law the sidebar's raw lane
+    // keeps — the 0.3 the floor(76.5) = 76, the 0.4 the 102, the 0.8
+    // the 204 the subtitle's band would wear, the Everywhere lane the
+    // floor(0.5 × 255) = 127 the textbg fold speaks — the raw
+    // `f * 255 + 0.5` round the old guess wears the bytecode refuses)
+    assert_eq!(
+        bg_band_alpha(true, 0.5, 0.3),
+        76.0 / 255.0,
+        "the header band's own byte"
+    );
+    assert_eq!(
+        bg_band_alpha(true, 0.5, 0.4),
+        102.0 / 255.0,
+        "the body band's own byte"
+    );
+    assert_eq!(
+        bg_band_alpha(true, 0.5, 0.8),
+        204.0 / 255.0,
+        "the subtitle band's own byte"
+    );
+    assert_eq!(
+        bg_band_alpha(false, 0.5, 0.3),
+        127.0 / 255.0,
+        "the Everywhere fold the floor law keeps"
+    );
+    // THE ROW GATE'S OWN PAIR (the TRUE lane the raw ARGB verbatim —
+    // the 0x20FFFFFF the tab row keeps — the Everywhere lane the
+    // textbg-folded black the colorFromFloat rows speak)
+    assert_eq!(
+        bg_row_gate(true, 0.5, TAB_ROW_BG),
+        TAB_ROW_BG,
+        "the TRUE lane the raw verbatim"
+    );
+    assert_eq!(
+        bg_row_gate(false, 0.5, TAB_ROW_BG),
+        [0.0, 0.0, 0.0, 127.0 / 255.0],
+        "the Everywhere lane the folded black"
+    );
+    // THE DEFAULT'S OWN NO-CHANGE (the boot defaults the gates the
+    // byte-identical fold keep — the bgOnly TRUE the raw lane the
+    // constants' own bytes answer, the render the goldens never see
+    // the flip speak)
+    let app = App::new(262);
+    assert!(
+        app.background_for_chat_only,
+        "the boot's own TRUE the raw lane arms"
+    );
+    assert_eq!(
+        bg_band_alpha(
+            app.background_for_chat_only,
+            app.text_background_opacity,
+            0.3
+        ),
+        SIDEBAR_HEADER_BG[3],
+        "the default fold the header's own byte wears"
+    );
+    assert_eq!(
+        bg_band_alpha(
+            app.background_for_chat_only,
+            app.text_background_opacity,
+            0.4
+        ),
+        SIDEBAR_BODY_BG[3],
+        "the default fold the body's own byte wears"
+    );
+}
