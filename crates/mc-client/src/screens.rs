@@ -35614,6 +35614,22 @@ impl App {
                             [crate::options_file::key_binds::DEBUG_DUMP_DYNAMIC_TEXTURES];
                     self.kb_selected = None;
                 }
+                // THE DEBUG RELOAD RESOURCE PACKS' OWN ARMS (the row
+                // the debug fifteen-row walk the AFTER seat renders
+                // — the ctor's pc 3544-3563 the 4-arg ctor the
+                // `iconst_0` orderI default banks, the T the
+                // dumpDynamicTextures row's own plain shape the
+                // capture honors)
+                "kb_change_debugreloadpacks" => {
+                    self.kb_selected =
+                        Some(crate::options_file::key_binds::DEBUG_RELOAD_RESOURCE_PACKS);
+                }
+                "kb_rowreset_debugreloadpacks" => {
+                    self.key_binds[crate::options_file::key_binds::DEBUG_RELOAD_RESOURCE_PACKS] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::DEBUG_RELOAD_RESOURCE_PACKS];
+                    self.kb_selected = None;
+                }
                 "kb_rowreset_forward" => {
                     self.key_binds[crate::options_file::key_binds::FORWARD] =
                         crate::options_file::key_binds::DEFAULTS
@@ -63709,6 +63725,10 @@ impl App {
             // debug fourteen-row walk the AFTER seat renders — the
             // ctor's putfield order the id answers)
             kb::DEBUG_DUMP_DYNAMIC_TEXTURES => "kb_change_debugdumptextures",
+            // THE DEBUG RELOAD RESOURCE PACKS' OWN ID (the row the
+            // debug fifteen-row walk the AFTER seat renders — the
+            // ctor's putfield order the id answers)
+            kb::DEBUG_RELOAD_RESOURCE_PACKS => "kb_change_debugreloadpacks",
             _ => "kb_change_hotbar9",
         };
         self.buttons
@@ -63786,6 +63806,10 @@ impl App {
             // the row keeps — the fourteen-row walk the file's own END
             // rows wear)
             kb::DEBUG_DUMP_DYNAMIC_TEXTURES => "kb_rowreset_debugdumptextures",
+            // THE DEBUG RELOAD RESOURCE PACKS' OWN ID (the same seat
+            // the row keeps — the fifteen-row walk the file's own END
+            // rows wear)
+            kb::DEBUG_RELOAD_RESOURCE_PACKS => "kb_rowreset_debugreloadpacks",
             _ => "kb_rowreset_hotbar9",
         };
         let mut rb = Button::new(
