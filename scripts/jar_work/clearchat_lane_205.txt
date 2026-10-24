@@ -1,0 +1,62 @@
+########## I. ChatComponent.clearMessages(Z)V — the boolean's own walk
+  --- clearMessages(Z)V
+    0: aload_0
+    1: getfield net/minecraft/client/gui/components/ChatComponent.minecraftLnet/minecraft/client/Minecraft;
+    4: getfield net/minecraft/client/Minecraft.guiLnet/minecraft/client/gui/Gui;
+    7: invokevirtual net/minecraft/client/gui/Gui.chatListener()Lnet/minecraft/client/multiplayer/chat/ChatListener;
+    10: invokevirtual net/minecraft/client/multiplayer/chat/ChatListener.flushQueue()V
+    13: aload_0
+    14: getfield net/minecraft/client/gui/components/ChatComponent.messageDeletionQueueLjava/util/List;
+    17: invokeinterface java/util/List.clear()V
+    20: aconst_null
+    21: nop
+    22: aload_0
+    23: getfield net/minecraft/client/gui/components/ChatComponent.trimmedMessagesLjava/util/List;
+    26: invokeinterface java/util/List.clear()V
+    29: aconst_null
+    30: nop
+    31: aload_0
+    32: getfield net/minecraft/client/gui/components/ChatComponent.allMessagesLjava/util/List;
+    35: invokeinterface java/util/List.clear()V
+    38: aconst_null
+    39: nop
+    40: iload_1
+    41: ifeq -> 66
+    44: aload_0
+    45: getfield net/minecraft/client/gui/components/ChatComponent.recentChatLnet/minecraft/util/ArrayListDeque;
+    48: invokevirtual net/minecraft/util/ArrayListDeque.clear()V
+    51: aload_0
+    52: getfield net/minecraft/client/gui/components/ChatComponent.recentChatLnet/minecraft/util/ArrayListDeque;
+    55: aload_0
+    56: getfield net/minecraft/client/gui/components/ChatComponent.commandHistoryLnet/minecraft/client/CommandHistory;
+    59: invokevirtual net/minecraft/client/CommandHistory.history()Ljava/util/Collection;
+    62: invokevirtual net/minecraft/util/ArrayListDeque.addAll(Ljava/util/Collection;)Z
+    65: pop
+    66: return
+
+########## II. the clearMessages callers — who walks it
+  net.minecraft.client.KeyboardHandler.handleDebugKeys(Lnet/minecraft/client/input/KeyEvent;)Z
+      223: invokevirtual net/minecraft/client/gui/components/ChatComponent.clearMessages(Z)V
+  net.minecraft.client.gui.Hud.onDisconnected()V
+      39: invokevirtual net/minecraft/client/gui/components/ChatComponent.clearMessages(Z)V
+
+########## III. the handleDebugKeys caller — the gate chain
+  net.minecraft.client.KeyboardHandler.keyPress(JILnet/minecraft/client/input/KeyEvent;)V
+      879: aload aload 4
+      881: invokevirtual net/minecraft/client/input/KeyEvent.isEscape()Z
+      884: ifeq -> 903
+      887: aload_0
+      888: getfield net/minecraft/client/KeyboardHandler.minecraftLnet/minecraft/client/Minecraft;
+      891: iload iload 8
+      893: invokevirtual net/minecraft/client/Minecraft.pauseGame(Z)V
+      896: iload iload 8
+      898: istore istore 14
+      900: goto -> 963
+      903: iload iload 8
+      905: ifeq -> 963
+      908: aload_0
+      909: aload aload 4
+      911: invokevirtual net/minecraft/client/KeyboardHandler.handleDebugKeys(Lnet/minecraft/client/input/KeyEvent;)Z
+      914: istore istore 14
+      916: iload iload 14
+      ...

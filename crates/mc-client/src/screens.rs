@@ -39339,6 +39339,27 @@ impl App {
         self.debug_modifier_used = true;
     }
 
+    /// THE CLEAR CHAT'S OWN CHORD (javap 26.2
+    /// KeyboardHandler.handleDebugKeys's keyDebugClearChat lane — the
+    /// `matches` arm the `minecraft.gui.hud.getChat().clearMessages(false)`
+    /// walk answers, the istore_3 the used flag banks). The FALSE arg
+    /// the probe's clearMessages(Z) walk reads (the
+    /// clearchat_lane_205.py the body banks): the chatListener queue
+    /// flush the messageDeletionQueue + trimmedMessages + allMessages
+    /// the THREE unconditional clears speak — the display rows the
+    /// walk never keeps —, the recentChat arm the `iload_1; ifeq`
+    /// gate TRUE alone serves — the false arg the input history the
+    /// up-arrow recall keeps (the Hud.onDisconnected the same method's
+    /// only other caller wears). The Rust model the pair merges: the
+    /// `chat_messages` display queue the clear serves, the
+    /// `recent_chat` rows the false arg keeps. The modifier-spent
+    /// flag the bare F3 release gate reads rides — the chord the F3
+    /// modifier's own family joins.
+    pub fn on_clear_chat_key(&mut self) {
+        self.chat_messages.clear();
+        self.debug_modifier_used = true;
+    }
+
     /// THE F3+F4 CHORD'S OWN OPEN LANE (javap 26.2
     /// KeyboardHandler.handleDebugKeys's keyDebugSwitchGameMode walk —
     /// the `matches` arm the level/screen/canSwitchGameMode chain

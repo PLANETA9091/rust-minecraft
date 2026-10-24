@@ -10169,6 +10169,59 @@ fn the_focus_pause_chord_the_flip_and_the_rows_wear() {
     let _ = std::fs::remove_dir_all(&dir);
 }
 
+// THE CLEAR CHAT'S OWN CHORD (the 26.2 handleDebugKeys walk the
+// keyDebugClearChat lane wears — the clearchat_lane_205.py probe the
+// clearMessages(Z) body banks: the display rows the three
+// unconditional clears speak, the recentChat arm the iload_1 ifeq
+// gate TRUE alone serves — the false arg the F3+D lane passes the
+// input history the up-arrow recall keeps)
+#[test]
+fn the_clear_chat_chord_the_rows_and_the_history_keep() {
+    let mut app = App::new(262);
+    app.enter_world();
+    app.spawn_offline_body();
+    // THE SEED (the display rows + the input history the pair fills —
+    // the push walk the display queue serves, the history the
+    // typed-rows store keeps)
+    app.push_chat_message("hello world".to_string());
+    app.push_chat_message("second row".to_string());
+    app.add_recent_chat("/time set day".to_string());
+    app.add_recent_chat("/weather clear".to_string());
+    assert_eq!(
+        app.chat_messages.len(),
+        2,
+        "the seeded rows the queue wears"
+    );
+    assert_eq!(
+        app.recent_chat.len(),
+        2,
+        "the seeded history the store wears"
+    );
+    // THE CHORD (the F3+D lane the clear serves — the display rows
+    // the walk never keeps, the modifier flag the family spends)
+    app.on_clear_chat_key();
+    assert!(
+        app.chat_messages.is_empty(),
+        "the chord the display rows clear"
+    );
+    assert_eq!(
+        app.recent_chat.len(),
+        2,
+        "the false arg the input history keeps"
+    );
+    assert!(app.debug_modifier_used, "the modifier the chord spends");
+    // THE RELEASE (the bare F3 the flag re-arms — the overlay toggle
+    // the spent chord never speaks)
+    app.on_debug_modifier_released();
+    assert!(!app.debug_modifier_used, "the release the flag consumes");
+    // THE DRAW WALK (the empty queue the zero rows renders — the
+    // chat draw the cleared queue the silent band serves)
+    assert!(
+        app.chat_messages.iter().rev().count() == 0,
+        "the cleared queue the draw never feeds"
+    );
+}
+
 // THE FOV EFFECT SCALE'S OWN ROW (the 26.2 AccessibilityOptionsScreen
 // row the file's law wears — the fov_scale_tail_262.py probe the
 // Camera.tickFov read the body's tick passes: the boot load the body's

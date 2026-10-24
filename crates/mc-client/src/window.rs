@@ -2575,6 +2575,14 @@ pub fn run_gui_app(
             if f3_down && window.is_key_pressed(Key::B, minifb::KeyRepeat::No) {
                 app.on_hitboxes_key();
             }
+            // THE F3+D CLEAR CHAT (the handleDebugKeys'
+            // keyDebugClearChat lane — the getChat().clearMessages(false)
+            // walk the probe's clearMessages(Z) body answers: the
+            // display rows the three unconditional clears serve, the
+            // input history the false arg keeps)
+            if f3_down && window.is_key_pressed(Key::D, minifb::KeyRepeat::No) {
+                app.on_clear_chat_key();
+            }
             // THE F3+P FOCUS-PAUSE TOGGLE (the 26.2 debug entry the
             // key.debug.focusPause binding wears — the
             // options.pauseOnLostFocus the flip serves, the focus
