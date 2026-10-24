@@ -35720,6 +35720,21 @@ impl App {
                             [crate::options_file::key_binds::DEBUG_NETWORK_CHARTS];
                     self.kb_selected = None;
                 }
+                // THE DEBUG LIGHTMAP TEXTURE'S OWN ARMS (the row
+                // the debug twenty-two-row walk the AFTER seat renders
+                // — the ctor's pc 3701-3721 the FIVE-arg ctor the
+                // `iconst_4` orderI banks, the '4' the
+                // networkCharts row's own shape the
+                // capture honors)
+                "kb_change_debuglightmaptexture" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::DEBUG_LIGHTMAP_TEXTURE);
+                }
+                "kb_rowreset_debuglightmaptexture" => {
+                    self.key_binds[crate::options_file::key_binds::DEBUG_LIGHTMAP_TEXTURE] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::DEBUG_LIGHTMAP_TEXTURE];
+                    self.kb_selected = None;
+                }
                 "kb_rowreset_forward" => {
                     self.key_binds[crate::options_file::key_binds::FORWARD] =
                         crate::options_file::key_binds::DEFAULTS
@@ -63843,6 +63858,10 @@ impl App {
             // debug twenty-one-row walk the AFTER seat renders — the
             // ctor's putfield order the id answers)
             kb::DEBUG_NETWORK_CHARTS => "kb_change_debugnetworkcharts",
+            // THE DEBUG LIGHTMAP TEXTURE'S OWN ID (the row the
+            // debug twenty-two-row walk the AFTER seat renders — the
+            // ctor's putfield order the id answers)
+            kb::DEBUG_LIGHTMAP_TEXTURE => "kb_change_debuglightmaptexture",
             _ => "kb_change_hotbar9",
         };
         self.buttons
@@ -63948,6 +63967,10 @@ impl App {
             // the row keeps — the twenty-one-row walk the file's own END
             // rows wear)
             kb::DEBUG_NETWORK_CHARTS => "kb_rowreset_debugnetworkcharts",
+            // THE DEBUG LIGHTMAP TEXTURE'S OWN RESET ID (the row the
+            // debug twenty-two-row walk the AFTER seat renders — the
+            // ctor's putfield order the id answers)
+            kb::DEBUG_LIGHTMAP_TEXTURE => "kb_rowreset_debuglightmaptexture",
             _ => "kb_rowreset_hotbar9",
         };
         let mut rb = Button::new(
