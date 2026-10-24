@@ -7962,6 +7962,75 @@ use super::*;
 
 
 
+    /// THE BIOLUM GLOW'S OWN ABSENCE RECORD (the TRUE-absence diff
+    /// the swap pin never measures — the dev-153 verdict the record
+    /// keeps): the biolum alpha the 1.0 const the gate's skip never
+    /// arms, the absence the None seat ONLY the walk speaks (the
+    /// `let Some(tex) = tex else { continue }` arm the table's own
+    /// honesty keeps), and the None seat the honest lane the lazy
+    /// pass's own REFILL never wears — the render's lazy walk the
+    /// failed field re-loads (the SAME sha1-gated texture the same
+    /// load wears), the refilled frame the seeded TRUE frame's
+    /// EXACT bytes keep: the TRUE-absence diff the honest lane
+    /// answers 0 BY CONSTRUCTION, the unreachable the test itself
+    /// banks. The cwd-escape probe the parallel-test hazard the
+    /// record holds (the honest lane the probe never rides), the
+    /// load's own None the bogus root's missing-asset law speaks —
+    /// the absence the LOAD level the caller's skip seat wears.
+    #[test]
+    fn the_warden_glow_the_absence_the_refill_law_keeps() {
+        let _render_lane = render_lane();
+        let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| p.join(mc_registry::generated::skin::WARDEN_RUNTIME_PATH).exists());
+        let Some(root) = root else { return };
+        let Some(warden_model) = crate::avatar::WardenModel::load(root) else {
+            return;
+        };
+        let Some(biolum_model) = crate::avatar::WardenModel::load_layer(
+            root,
+            crate::avatar::WardenLayer::Bioluminescent,
+        ) else {
+            return;
+        };
+        let mut app = App::new(3);
+        armored_skeleton_stage(&mut app);
+        app.warden_model = Some(warden_model);
+        app.warden_biolum_model = Some(biolum_model);
+        // THE WARDEN (the swap test's own side seat — the body's
+        // coords the 2-right seat keeps, the mobs the warden alone
+        // speaks)
+        let (bx, by, bz) = {
+            let b = app.body.as_ref().unwrap();
+            (b.x, b.y, b.z)
+        };
+        app.mobs.clear();
+        app.wardens.push(crate::sculk::WardenMob::new(503, bx + 2.0, by, bz));
+        // THE TRUE FRAME (the seeded biolum the layer paints)
+        let seeded = third_person_frame(&mut app);
+        // THE NONE SEED (the absence the field wears BEFORE the
+        // render): the lazy pass the walk re-fills — the field the
+        // Some the load's success answers, the SAME texture the
+        // sha1 gate keeps, the refilled frame the TRUE frame's own
+        // bytes wear (the absence world the honest lane never wears
+        // — the unreachable the construction keeps)
+        app.warden_biolum_model = None;
+        let refilled = third_person_frame(&mut app);
+        assert!(app.warden_biolum_model.is_some(), "the lazy pass the None seed re-fills");
+        assert_eq!(refilled, seeded, "the refilled frame the TRUE frame's own bytes keep");
+        // THE LOAD'S OWN ABSENCE (the bogus root the missing-asset
+        // law speaks): the None the caller's skip seat wears — the
+        // absence lane the LOAD level the honest walk answers
+        let absent = crate::avatar::WardenModel::load_layer(
+            std::path::Path::new("assets-cache/jar-absent-walk"),
+            crate::avatar::WardenLayer::Bioluminescent,
+        );
+        assert!(absent.is_none(), "the bogus root the layer's load the None keeps");
+    }
+
+
+
     /// THE DISPENSER'S OWN THROWN SHOT (javap the 26.2 walk the
     /// autopush-140 lane banks — the snowball the shot lane wears):
     /// the lever pulse the beat answers, the SNOWBALL the kind byte
