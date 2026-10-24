@@ -35528,6 +35528,21 @@ impl App {
                             [crate::options_file::key_binds::DEBUG_SHOW_ADV_TOOLTIPS];
                     self.kb_selected = None;
                 }
+                // THE DEBUG COPY RECREATE COMMAND'S OWN ARMS (the row
+                // the debug nonet walk the AFTER seat renders — the
+                // ctor's pc 3410-3429 the 4-arg ctor the `iconst_0`
+                // orderI default banks, the I the advTooltips row's
+                // own plain shape the capture honors)
+                "kb_change_debugcopyrecreate" => {
+                    self.kb_selected =
+                        Some(crate::options_file::key_binds::DEBUG_COPY_RECREATE_COMMAND);
+                }
+                "kb_rowreset_debugcopyrecreate" => {
+                    self.key_binds[crate::options_file::key_binds::DEBUG_COPY_RECREATE_COMMAND] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::DEBUG_COPY_RECREATE_COMMAND];
+                    self.kb_selected = None;
+                }
                 "kb_rowreset_forward" => {
                     self.key_binds[crate::options_file::key_binds::FORWARD] =
                         crate::options_file::key_binds::DEFAULTS
@@ -63599,6 +63614,10 @@ impl App {
             // debug octet walk the AFTER seat renders — the ctor's
             // putfield order the id answers)
             kb::DEBUG_SHOW_ADV_TOOLTIPS => "kb_change_debugadvtooltips",
+            // THE DEBUG COPY RECREATE COMMAND'S OWN ID (the row the
+            // debug nonet walk the AFTER seat renders — the ctor's
+            // putfield order the id answers)
+            kb::DEBUG_COPY_RECREATE_COMMAND => "kb_change_debugcopyrecreate",
             _ => "kb_change_hotbar9",
         };
         self.buttons
@@ -63659,6 +63678,7 @@ impl App {
             // THE DEBUG SHOW ADVANCED TOOLTIPS' OWN ID (the same seat
             // the row keeps — the octet the file's own END rows wear)
             kb::DEBUG_SHOW_ADV_TOOLTIPS => "kb_rowreset_debugadvtooltips",
+            kb::DEBUG_COPY_RECREATE_COMMAND => "kb_rowreset_debugcopyrecreate",
             _ => "kb_rowreset_hotbar9",
         };
         let mut rb = Button::new(

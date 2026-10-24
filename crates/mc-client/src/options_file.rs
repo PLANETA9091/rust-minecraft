@@ -389,7 +389,19 @@ pub mod key_binds {
     /// `key.debug.copyRecreateCommand` string the bipush 73 the I
     /// default the walk banks)
     pub const DEBUG_SHOW_ADV_TOOLTIPS: usize = 33;
-    pub const COUNT: usize = 34;
+    /// THE DEBUG COPY RECREATE COMMAND'S OWN SLOT (the ctor's
+    /// pc 3410-3429 walk the advTooltips' putfield the AFTER banks
+    /// — the `ldc_w cp#1456` the `key.debug.copyRecreateCommand`
+    /// string answers, the `KEYSYM, bipush 73` the GLFW I default
+    /// wears, the Category.DEBUG the same group's ordinal keeps, the
+    /// FOUR-arg ctor the call speaks — the `iconst_0` the orderI
+    /// default the 4-arg delegate banks, the advTooltips row's own
+    /// plain shape the row shares, the next registration the pc 3432
+    /// seat the later round banks — the cp#1461 the
+    /// `key.debug.spectate` string the bipush 78 the N default the
+    /// walk banks)
+    pub const DEBUG_COPY_RECREATE_COMMAND: usize = 34;
+    pub const COUNT: usize = 35;
 
     /// THE VANILLA BINDING NAMES (the `key_` + name the file row's
     /// prefix wears, the lang captions the `key.*` rows answer — the
@@ -459,6 +471,10 @@ pub mod key_binds {
         // `ldc_w cp#1451` the pc 3393 string answers — the advTooltips
         // row the chunkBorders' AFTER the ladder wears)
         "key.debug.showAdvancedTooltips",
+        // THE DEBUG COPY RECREATE COMMAND'S OWN NAME (the ctor's
+        // `ldc_w cp#1456` the pc 3415 string answers — the
+        // copyRecreate row the advTooltips' AFTER the ladder wears)
+        "key.debug.copyRecreateCommand",
     ];
 
     /// THE CAPTIONS' OWN FALLBACK (the en_us values the assets-absent
@@ -521,6 +537,11 @@ pub mod key_binds {
         // row speaks — key.debug.showAdvancedTooltips the 'Show
         // Advanced Tooltips' words wear)
         "Show Advanced Tooltips",
+        // THE DEBUG COPY RECREATE COMMAND'S OWN CAPTION (the en_us
+        // row speaks — key.debug.copyRecreateCommand the 'Copy Data'
+        // words wear — the field's own RecreateCommand word the lang
+        // row hides the Copy Data caption answers)
+        "Copy Data",
     ];
 
     /// THE CATEGORY'S OWN ROW (the CategoryEntry the list groups the
@@ -655,6 +676,11 @@ pub mod key_binds {
         // the keyboard bind wears, the 4-arg ctor the call speaks,
         // the orderI the `iconst_0` default the delegate banks)
         Some(Bind::Keyboard(Key::H)),
+        // THE DEBUG COPY RECREATE COMMAND'S OWN SEAT (the ctor's pc
+        // 3421 the `bipush 73` the GLFW I answers — the KEYSYM type
+        // the keyboard bind wears, the 4-arg ctor the call speaks,
+        // the orderI the `iconst_0` default the delegate banks)
+        Some(Bind::Keyboard(Key::I)),
     ];
 
     /// THE LIST'S OWN GEOMETRY (the entries the walk's y positions
@@ -707,13 +733,14 @@ pub mod key_binds {
     /// bottom keeps (the trio + the hotbar nine the 306-start stride
     /// wear: 12 rows the 11 strides speak, the CREATIVE pair the
     /// 594-header the 606-start rows wear, the SPECTATOR pair the
-    /// 654-header the 666-start rows wear, the DEBUG octet the
+    /// 654-header the 666-start rows wear, the DEBUG nonet the
     /// 714-header the 726-start rows the walk's own bottom keeps
     /// (the overlay the 726 seat, the modifier the 750 seat, the
     /// crash the 774 seat, the reloadChunk the 798 seat, the
     /// showHitboxes the 822 seat, the clearChat the 846 seat, the
     /// showChunkBorders the 870 seat, the showAdvancedTooltips the
-    /// 894 seat — the row's own bottom the content answers))
+    /// 894 seat, the copyRecreateCommand the 918 seat — the row's
+    /// own bottom the content answers))
     pub fn content_height() -> i32 {
         DEBUG_ROWS_START + (COUNT - DEBUG_OVERLAY - 1) as i32 * ROW_STRIDE + 20 - LIST_TOP
     }
@@ -1197,6 +1224,14 @@ impl OptionsFile {
                     out.key_binds[key_binds::DEBUG_SHOW_ADV_TOOLTIPS] =
                         key_binds::bind_from_save(value);
                 }
+                // THE DEBUG COPY RECREATE COMMAND'S OWN DECODE (the
+                // same prefix the row wears — the I row the restart
+                // the decode answers, the plain-shape row the
+                // saveString keeps)
+                "key_key.debug.copyRecreateCommand" => {
+                    out.key_binds[key_binds::DEBUG_COPY_RECREATE_COMMAND] =
+                        key_binds::bind_from_save(value);
+                }
                 _ => {} // the jar's other rows the client's seats never carry
             }
         }
@@ -1350,7 +1385,7 @@ mod tests {
         OptionsFile::default().save(&path);
         let text = std::fs::read_to_string(&path).expect("the save the file writes");
         assert_eq!(
-            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\n",
+            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\n",
             "the file the vanilla rows wear"
         );
         let loaded = OptionsFile::load(&path);
