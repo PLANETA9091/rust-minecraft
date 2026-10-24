@@ -35585,6 +35585,20 @@ impl App {
                             [crate::options_file::key_binds::DEBUG_DEBUG_OPTIONS];
                     self.kb_selected = None;
                 }
+                // THE DEBUG FOCUS PAUSE'S OWN ARMS (the row the debug
+                // thirteen-row walk the AFTER seat renders — the
+                // ctor's pc 3500-3519 the 4-arg ctor the `iconst_0`
+                // orderI default banks, the P the debugOptions row's
+                // own plain shape the capture honors)
+                "kb_change_debugfocuspause" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::DEBUG_FOCUS_PAUSE);
+                }
+                "kb_rowreset_debugfocuspause" => {
+                    self.key_binds[crate::options_file::key_binds::DEBUG_FOCUS_PAUSE] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::DEBUG_FOCUS_PAUSE];
+                    self.kb_selected = None;
+                }
                 "kb_rowreset_forward" => {
                     self.key_binds[crate::options_file::key_binds::FORWARD] =
                         crate::options_file::key_binds::DEFAULTS
@@ -63672,6 +63686,10 @@ impl App {
             // twelve-row walk the AFTER seat renders — the ctor's
             // putfield order the id answers)
             kb::DEBUG_DEBUG_OPTIONS => "kb_change_debugoptions",
+            // THE DEBUG FOCUS PAUSE'S OWN ID (the row the debug
+            // thirteen-row walk the AFTER seat renders — the ctor's
+            // putfield order the id answers)
+            kb::DEBUG_FOCUS_PAUSE => "kb_change_debugfocuspause",
             _ => "kb_change_hotbar9",
         };
         self.buttons
@@ -63741,6 +63759,10 @@ impl App {
             // wear)
             kb::DEBUG_SWITCH_GAME_MODE => "kb_rowreset_debugswitchgamemode",
             kb::DEBUG_DEBUG_OPTIONS => "kb_rowreset_debugoptions",
+            // THE DEBUG FOCUS PAUSE'S OWN ID (the same seat the row
+            // keeps — the thirteen-row walk the file's own END rows
+            // wear)
+            kb::DEBUG_FOCUS_PAUSE => "kb_rowreset_debugfocuspause",
             _ => "kb_rowreset_hotbar9",
         };
         let mut rb = Button::new(
