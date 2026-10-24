@@ -8618,6 +8618,13 @@ pub struct App {
     /// key the bind speaks, the Escape the UNKNOWN clear the modern
     /// law keeps, the None the walk's own reset answers).
     pub kb_selected: Option<usize>,
+    /// THE LIST'S OWN SCROLL AMOUNT (the AbstractScrollArea's
+    /// `scrollAmount` double the mouseScrolled/setScrollAmount walks
+    /// keep — the pixels the entries' shift reads, the wheel the
+    /// `yScroll * 4.0 * 6.0` step the defaultSettings rate wears, the
+    /// clamp the maxScrollAmount law keeps; the fresh screen the
+    /// vanilla list rebuild the zero wears).
+    pub kb_scroll: f64,
     /// THE FOV'S OWN STORE (the `options.fov` OptionInstance the 26.2
     /// clinit banks — the IntRange(30, 110) the default 70 wears, the
     /// CAMERA.calculateFov fold the degrees the body's modifier
@@ -10772,6 +10779,7 @@ impl App {
             sensitivity_drag: false,
             key_binds: crate::options_file::key_binds::DEFAULTS,
             kb_selected: None,
+            kb_scroll: 0.0,
             fov: 70.0,
             fov_drag: false,
             volume: 1.0,
@@ -33054,6 +33062,23 @@ impl App {
         true
     }
 
+    /// THE LIST'S OWN SCROLL LAW (the AbstractScrollArea.mouseScrolled
+    /// walk verbatim — the `setScrollAmount(scrollAmount() - yScroll *
+    /// 4.0 * scrollRate())` the dload/iconst_4/dmul walk banks, the
+    /// rate 6 the `defaultSettings` bipush wears: ONE wheel notch the
+    /// 24px row answers, the client's own stride the same 24 keeps —
+    /// the clamp the `maxScrollAmount()` law keeps:
+    /// `max(0, contentHeight - height)` the content's own bottom the
+    /// band's own bottom the walk aligns. The `visible` gate the
+    /// dispatch's own screen arm serves — the open KeyBinds the arm's
+    /// own verdict keeps).
+    pub fn on_kb_scroll(&mut self, sdy: f64, gui_h: i32) {
+        let band = gui_h - 28 - crate::options_file::key_binds::LIST_TOP;
+        let max = (crate::options_file::key_binds::content_height() - band).max(0) as f64;
+        let next = self.kb_scroll - sdy * 4.0 * 6.0;
+        self.kb_scroll = next.clamp(0.0, max);
+    }
+
     /// THE STORES' OWN LAZY LOAD (the dev-68 round — the hotbar lane's
     /// `HotbarManager.get(I)` pcs 1-13 once-flag walk the store access
     /// rides: the first open/flush/spill the file parse answers, the
@@ -35154,7 +35179,14 @@ impl App {
                 // `lambda$addOptions$1` supplier opens: the `new
                 // KeyBindsScreen(this, options)` the cp#68 utf8's own
                 // target keeps)
-                "keybinds" => self.open(ScreenKind::KeyBinds),
+                "keybinds" => {
+                    // THE FRESH LIST'S OWN SEAT (the vanilla open the
+                    // list REBUILDS — the scrollAmount the zero keeps,
+                    // the selectedKey the null the fresh screen wears)
+                    self.kb_selected = None;
+                    self.kb_scroll = 0.0;
+                    self.open(ScreenKind::KeyBinds);
+                }
                 // THE RESET-ALL BUTTON'S OWN WALK (the KeyBindsScreen
                 // addFooter pc 0-15 the `controls.resetAll` button
                 // keeps — the `lambda$addFooter$0` walk the
@@ -35190,6 +35222,15 @@ impl App {
                 }
                 "kb_change_sprint" => {
                     self.kb_selected = Some(crate::options_file::key_binds::SPRINT);
+                }
+                "kb_change_inventory" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::INVENTORY);
+                }
+                "kb_change_swapoffhand" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::SWAP_OFFHAND);
+                }
+                "kb_change_drop" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::DROP);
                 }
                 "kb_rowreset_forward" => {
                     self.key_binds[crate::options_file::key_binds::FORWARD] =
@@ -35231,6 +35272,24 @@ impl App {
                     self.key_binds[crate::options_file::key_binds::SPRINT] =
                         crate::options_file::key_binds::DEFAULTS
                             [crate::options_file::key_binds::SPRINT];
+                    self.kb_selected = None;
+                }
+                "kb_rowreset_inventory" => {
+                    self.key_binds[crate::options_file::key_binds::INVENTORY] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::INVENTORY];
+                    self.kb_selected = None;
+                }
+                "kb_rowreset_swapoffhand" => {
+                    self.key_binds[crate::options_file::key_binds::SWAP_OFFHAND] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::SWAP_OFFHAND];
+                    self.kb_selected = None;
+                }
+                "kb_rowreset_drop" => {
+                    self.key_binds[crate::options_file::key_binds::DROP] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::DROP];
                     self.kb_selected = None;
                 }
                 // THE FOOTERS' OWN RETURNS (the OptionsSubScreen
@@ -62840,67 +62899,55 @@ impl App {
             true,
         );
         use crate::options_file::key_binds as kb;
-        // THE CATEGORY'S OWN HEADER (the CategoryEntry the list the
-        // rows group under — the lang row the grey label wears)
-        g.text(
-            a,
-            16,
-            30,
-            tr(kb::CATEGORY_NAME).unwrap_or(kb::CATEGORY_FALLBACK),
-            [0.7, 0.7, 0.7],
-            false,
-        );
-        // THE BINDING ROWS' OWN WALK (the KeyEntry shape — the name
-        // the left label, the change the 75x20 seat, the reset the
-        // 50x20 pair; the y the 42-start 24-stride the rows wear, the
-        // footer band the full-row clip refuses)
-        for i in 0..kb::COUNT {
-            let by = 42 + i as i32 * 24;
-            if by + 20 > h - 28 {
-                break; // the clip the band the honest render keeps
-            }
-            let name = tr(kb::NAMES[i]).unwrap_or(kb::NAME_FALLBACKS[i]);
-            g.text(a, 16, by + 6, name, WHITE, false);
-            let display = key_bind_display(self.key_binds[i]);
-            let caption = if self.kb_selected == Some(i) {
-                format!("> {display} <")
-            } else {
-                display
-            };
-            self.buttons.push(Button::new(
-                match i {
-                    kb::FORWARD => "kb_change_forward",
-                    kb::LEFT => "kb_change_left",
-                    kb::BACK => "kb_change_back",
-                    kb::RIGHT => "kb_change_right",
-                    kb::JUMP => "kb_change_jump",
-                    kb::SNEAK => "kb_change_sneak",
-                    _ => "kb_change_sprint",
-                },
-                caption,
-                w - 107,
-                by,
-                75,
-            ));
-            // THE RESET'S OWN SEAT (the refreshEntry law — the button
-            // ALWAYS renders, the active seat the !isDefault arms)
-            let mut rb = Button::new(
-                match i {
-                    kb::FORWARD => "kb_rowreset_forward",
-                    kb::LEFT => "kb_rowreset_left",
-                    kb::BACK => "kb_rowreset_back",
-                    kb::RIGHT => "kb_rowreset_right",
-                    kb::JUMP => "kb_rowreset_jump",
-                    kb::SNEAK => "kb_rowreset_sneak",
-                    _ => "kb_rowreset_sprint",
-                },
-                tr("controls.reset").unwrap_or("Reset").to_string(),
-                w - 41,
-                by,
-                50,
+        // THE LIST'S OWN WALK (the entries the sorted array's own
+        // groups wear — the CategoryEntry the category boundary adds,
+        // the KeyEntry the row keeps; the scroll the list-space y the
+        // shift reads, the full-row clip the band law keeps: the
+        // above-band the skip answers, the past-bottom the same law
+        // refuses — the `by + 20 > h - 28` the 186 walk's own seat)
+        let band_bottom = h - 28;
+        let off = self.kb_scroll.round() as i32;
+        // THE MOVEMENT GROUP'S OWN HEADER (the CategoryEntry the 30
+        // seat the 186 render wears)
+        let hy = kb::LIST_TOP - off;
+        if hy >= kb::LIST_TOP && hy + 20 <= band_bottom {
+            g.text(
+                a,
+                16,
+                hy,
+                tr(kb::CATEGORY_NAME).unwrap_or(kb::CATEGORY_FALLBACK),
+                [0.7, 0.7, 0.7],
+                false,
             );
-            rb.active = self.key_binds[i] != kb::DEFAULTS[i];
-            self.buttons.push(rb);
+        }
+        for i in 0..kb::INVENTORY {
+            let by = kb::MOVEMENT_ROWS_START + i as i32 * kb::ROW_STRIDE - off;
+            if by < kb::LIST_TOP || by + 20 > band_bottom {
+                continue; // the clip the band the honest render keeps
+            }
+            self.kb_render_row(g, a, w, i, by);
+        }
+        // THE INVENTORY GROUP'S OWN HEADER (the CategoryEntry the
+        // category boundary 210 wears — the trio the array order the
+        // movement pair's AFTER banks, the SAME group shape the rows
+        // keep: the +12 gap the movement group's own law answers)
+        let hy = kb::INVENTORY_HEADER_Y - off;
+        if hy >= kb::LIST_TOP && hy + 20 <= band_bottom {
+            g.text(
+                a,
+                16,
+                hy,
+                tr(kb::CATEGORY_INV_NAME).unwrap_or(kb::CATEGORY_INV_FALLBACK),
+                [0.7, 0.7, 0.7],
+                false,
+            );
+        }
+        for i in kb::INVENTORY..kb::COUNT {
+            let by = kb::INVENTORY_ROWS_START + (i - kb::INVENTORY) as i32 * kb::ROW_STRIDE - off;
+            if by < kb::LIST_TOP || by + 20 > band_bottom {
+                continue; // the clip the band the honest render keeps
+            }
+            self.kb_render_row(g, a, w, i, by);
         }
         // THE FOOTER'S OWN PAIR (the addFooter override's spacing(8)
         // walk — the LEFT the reset-all seat the `cx - 4 - bw/2`
@@ -62922,6 +62969,59 @@ impl App {
         for b in &self.buttons.clone() {
             b.render(g, a, -1, -1);
         }
+    }
+
+    /// THE ROW'S OWN SEAT (the KeyEntry's walk the list row wears —
+    /// the name the left label, the change the 75x20 the ctor's
+    /// `bounds(0,0,75,20)` keeps, the reset the 50x20 pair the
+    /// refreshEntry law ALWAYS renders, the active seat the
+    /// `!keyMapping.isDefault()` arms; the selected row the
+    /// `"> " + display + " <"` wrap the cp#256/#264 utf8s bank)
+    fn kb_render_row(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, i: usize, by: i32) {
+        use crate::options_file::key_binds as kb;
+        let name = tr(kb::NAMES[i]).unwrap_or(kb::NAME_FALLBACKS[i]);
+        g.text(a, 16, by + 6, name, WHITE, false);
+        let display = key_bind_display(self.key_binds[i]);
+        let caption = if self.kb_selected == Some(i) {
+            format!("> {display} <")
+        } else {
+            display
+        };
+        let change_id = match i {
+            kb::FORWARD => "kb_change_forward",
+            kb::LEFT => "kb_change_left",
+            kb::BACK => "kb_change_back",
+            kb::RIGHT => "kb_change_right",
+            kb::JUMP => "kb_change_jump",
+            kb::SNEAK => "kb_change_sneak",
+            kb::SPRINT => "kb_change_sprint",
+            kb::INVENTORY => "kb_change_inventory",
+            kb::SWAP_OFFHAND => "kb_change_swapoffhand",
+            _ => "kb_change_drop",
+        };
+        self.buttons
+            .push(Button::new(change_id, caption, w - 107, by, 75));
+        let reset_id = match i {
+            kb::FORWARD => "kb_rowreset_forward",
+            kb::LEFT => "kb_rowreset_left",
+            kb::BACK => "kb_rowreset_back",
+            kb::RIGHT => "kb_rowreset_right",
+            kb::JUMP => "kb_rowreset_jump",
+            kb::SNEAK => "kb_rowreset_sneak",
+            kb::SPRINT => "kb_rowreset_sprint",
+            kb::INVENTORY => "kb_rowreset_inventory",
+            kb::SWAP_OFFHAND => "kb_rowreset_swapoffhand",
+            _ => "kb_rowreset_drop",
+        };
+        let mut rb = Button::new(
+            reset_id,
+            tr("controls.reset").unwrap_or("Reset").to_string(),
+            w - 41,
+            by,
+            50,
+        );
+        rb.active = self.key_binds[i] != kb::DEFAULTS[i];
+        self.buttons.push(rb);
     }
 
     /// THE WORLD OPTIONS SCREEN'S OWN DIAL (javap the 26.2 jar the

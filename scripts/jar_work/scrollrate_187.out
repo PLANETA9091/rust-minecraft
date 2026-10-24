@@ -1,0 +1,145 @@
+===== net.minecraft.client.gui.components.AbstractScrollArea$ScrollbarSettings
+=== net.minecraft.client.gui.components.AbstractScrollArea$ScrollbarSettings methods:
+  <init>(Lnet/minecraft/resources/Identifier;Lnet/minecraft/resources/Identifier;Lnet/minecraft/resources/Identifier;IIIZ)V
+  toString()Ljava/lang/String;
+  hashCode()I
+  equals(Ljava/lang/Object;)Z
+  scrollerSprite()Lnet/minecraft/resources/Identifier;
+  disabledScrollerSprite()Lnet/minecraft/resources/Identifier;
+  backgroundSprite()Lnet/minecraft/resources/Identifier;
+  scrollbarWidth()I
+  scrollbarMinHeight()I
+  scrollRate()I
+  resizingScrollbar()Z
+  <clinit>()V
+*** <init>(Lnet/minecraft/resources/Identifier;Lnet/minecraft/resources/Identifier;Lnet/minecraft/resources/Identifier;IIIZ)V
+0: aload_0
+1: invokespecial java/lang/Record.<init>()V
+4: aload_0
+5: aload_1
+6: putfield net/minecraft/client/gui/components/AbstractScrollArea$ScrollbarSettings.scrollerSpriteLnet/minecraft/resources/Identifier;
+9: aload_0
+10: aload_2
+11: putfield net/minecraft/client/gui/components/AbstractScrollArea$ScrollbarSettings.disabledScrollerSpriteLnet/minecraft/resources/Identifier;
+14: aload_0
+15: aload_3
+16: putfield net/minecraft/client/gui/components/AbstractScrollArea$ScrollbarSettings.backgroundSpriteLnet/minecraft/resources/Identifier;
+19: aload_0
+20: iload iload 4
+22: putfield net/minecraft/client/gui/components/AbstractScrollArea$ScrollbarSettings.scrollbarWidthI
+25: aload_0
+26: iload iload 5
+28: putfield net/minecraft/client/gui/components/AbstractScrollArea$ScrollbarSettings.scrollbarMinHeightI
+31: aload_0
+32: iload iload 6
+34: putfield net/minecraft/client/gui/components/AbstractScrollArea$ScrollbarSettings.scrollRateI
+37: aload_0
+38: iload iload 7
+40: putfield net/minecraft/client/gui/components/AbstractScrollArea$ScrollbarSettings.resizingScrollbarZ
+43: return
+*** scrollRate()I
+0: aload_0
+1: getfield net/minecraft/client/gui/components/AbstractScrollArea$ScrollbarSettings.scrollRateI
+4: ireturn
+===== net.minecraft.client.gui.screens.options.controls.KeyBindsList$CategoryEntry
+=== net.minecraft.client.gui.screens.options.controls.KeyBindsList$CategoryEntry methods:
+  <init>(Lnet/minecraft/client/gui/screens/options/controls/KeyBindsList;Lnet/minecraft/client/KeyMapping$Category;)V
+  extractContent(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIZF)V
+  children()Ljava/util/List;
+  narratables()Ljava/util/List;
+  refreshEntry()V
+*** <init>(Lnet/minecraft/client/gui/screens/options/controls/KeyBindsList;Lnet/minecraft/client/KeyMapping$Category;)V
+0: aload_0
+1: aload_1
+2: dup
+3: invokestatic java/util/Objects.requireNonNull(Ljava/lang/Object;)Ljava/lang/Object;
+6: pop
+7: putfield net/minecraft/client/gui/screens/options/controls/KeyBindsList$CategoryEntry.this$0Lnet/minecraft/client/gui/screens/options/controls/KeyBindsList;
+10: aload_0
+11: invokespecial net/minecraft/client/gui/screens/options/controls/KeyBindsList$Entry.<init>()V
+14: aload_0
+15: aload_2
+16: invokevirtual net/minecraft/client/KeyMapping$Category.label()Lnet/minecraft/network/chat/Component;
+19: aload_1
+20: invokestatic net/minecraft/client/gui/screens/options/controls/KeyBindsList.access$000(Lnet/minecraft/client/gui/screens/options/controls/KeyBindsList;)Lnet/minecraft/client/Minecraft;
+23: getfield net/minecraft/client/Minecraft.fontLnet/minecraft/client/gui/Font;
+26: invokestatic net/minecraft/client/gui/components/FocusableTextWidget.builder(Lnet/minecraft/network/chat/Component;Lnet/minecraft/client/gui/Font;)Lnet/minecraft/client/gui/components/FocusableTextWidget$Builder;
+29: iconst_0
+30: invokevirtual net/minecraft/client/gui/components/FocusableTextWidget$Builder.alwaysShowBorder(Z)Lnet/minecraft/client/gui/components/FocusableTextWidget$Builder;
+33: getstatic net/minecraft/client/gui/components/FocusableTextWidget$BackgroundFill.ON_FOCUSLnet/minecraft/client/gui/components/FocusableTextWidget$BackgroundFill;
+36: invokevirtual net/minecraft/client/gui/components/FocusableTextWidget$Builder.backgroundFill(Lnet/minecraft/client/gui/components/FocusableTextWidget$BackgroundFill;)Lnet/minecraft/client/gui/components/FocusableTextWidget$Builder;
+39: invokevirtual net/minecraft/client/gui/components/FocusableTextWidget$Builder.build()Lnet/minecraft/client/gui/components/FocusableTextWidget;
+42: putfield net/minecraft/client/gui/screens/options/controls/KeyBindsList$CategoryEntry.categoryNameLnet/minecraft/client/gui/components/FocusableTextWidget;
+45: return
+===== KeyBindsList <init> (the cellHeight the super call wears)
+0: aload_0
+1: aload_2
+2: aload_1
+3: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.widthI
+6: aload_1
+7: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.layoutLnet/minecraft/client/gui/layouts/HeaderAndFooterLayout;
+10: invokevirtual net/minecraft/client/gui/layouts/HeaderAndFooterLayout.getContentHeight()I
+13: aload_1
+14: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.layoutLnet/minecraft/client/gui/layouts/HeaderAndFooterLayout;
+17: invokevirtual net/minecraft/client/gui/layouts/HeaderAndFooterLayout.getHeaderHeight()I
+20: bipush 20
+22: invokespecial net/minecraft/client/gui/components/ContainerObjectSelectionList.<init>(Lnet/minecraft/client/Minecraft;IIII)V
+25: aload_0
+26: aload_1
+27: putfield net/minecraft/client/gui/screens/options/controls/KeyBindsList.keyBindsScreenLnet/minecraft/client/gui/screens/options/controls/KeyBindsScreen;
+30: aload_2
+31: getfield net/minecraft/client/Minecraft.optionsLnet/minecraft/client/Options;
+34: getfield net/minecraft/client/Options.keyMappings[Lnet/minecraft/client/KeyMapping;
+37: invokestatic org/apache/commons/lang3/ArrayUtils.clone([Ljava/lang/Object;)[Ljava/lang/Object;
+40: checkcast [Lnet/minecraft/client/KeyMapping;
+43: astore_2
+44: aload_3
+45: invokestatic java/util/Arrays.sort([Ljava/lang/Object;)V
+48: aconst_null
+49: astore astore 4
+51: aload_3
+52: astore astore 5
+54: aload aload 5
+56: arraylength
+57: istore istore 6
+59: iconst_0
+60: istore istore 7
+62: iload iload 7
+64: iload iload 6
+66: if_icmpge -> 168
+69: aload aload 5
+71: iload iload 7
+73: aaload
+74: astore astore 8
+76: aload aload 8
+===== AbstractSelectionList: scrollRate/cellHeight overrides
+*** contentHeight()I
+0: iconst_0
+1: istore_1
+2: aload_0
+3: getfield net/minecraft/client/gui/components/AbstractSelectionList.childrenLjava/util/List;
+6: invokeinterface java/util/List.iterator()Ljava/util/Iterator;
+9: aconst_null
+10: nop
+11: astore_1
+12: aload_2
+13: invokeinterface java/util/Iterator.hasNext()Z
+16: aconst_null
+17: nop
+18: ifeq -> 41
+21: aload_2
+22: invokeinterface java/util/Iterator.next()Ljava/lang/Object;
+25: aconst_null
+26: nop
+27: checkcast net/minecraft/client/gui/components/AbstractSelectionList$Entry
+30: astore_2
+31: iload_1
+32: aload_3
+33: invokevirtual net/minecraft/client/gui/components/AbstractSelectionList$Entry.getHeight()I
+36: iadd
+37: istore_1
+38: goto -> 12
+41: iload_1
+42: iconst_4
+43: iadd
+44: ireturn

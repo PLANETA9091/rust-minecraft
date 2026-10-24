@@ -242,7 +242,15 @@ pub mod key_binds {
     pub const JUMP: usize = 4;
     pub const SNEAK: usize = 5;
     pub const SPRINT: usize = 6;
-    pub const COUNT: usize = 7;
+    /// THE INVENTORY TRIO'S OWN SLOTS (the ctor's registrations the
+    /// movement pair's AFTER wear — the 186 walk's array order: the
+    /// `key.inventory`/`key.swapOffhand`/`key.drop` rows the
+    /// INVENTORY category answers, the E/F/Q defaults the ctor's
+    /// GLFW codes the minifb enum's own discriminants keep)
+    pub const INVENTORY: usize = 7;
+    pub const SWAP_OFFHAND: usize = 8;
+    pub const DROP: usize = 9;
+    pub const COUNT: usize = 10;
 
     /// THE VANILLA BINDING NAMES (the `key_` + name the file row's
     /// prefix wears, the lang captions the `key.*` rows answer — the
@@ -255,6 +263,9 @@ pub mod key_binds {
         "key.jump",
         "key.sneak",
         "key.sprint",
+        "key.inventory",
+        "key.swapOffhand",
+        "key.drop",
     ];
 
     /// THE CAPTIONS' OWN FALLBACK (the en_us values the assets-absent
@@ -267,6 +278,9 @@ pub mod key_binds {
         "Jump",
         "Sneak",
         "Sprint",
+        "Open/Close Inventory",
+        "Swap Item With Off Hand",
+        "Drop Selected Item",
     ];
 
     /// THE CATEGORY'S OWN ROW (the CategoryEntry the list groups the
@@ -274,6 +288,11 @@ pub mod key_binds {
     /// "Movement" row answers).
     pub const CATEGORY_NAME: &str = "key.categories.movement";
     pub const CATEGORY_FALLBACK: &str = "Movement";
+    /// THE INVENTORY GROUP'S OWN HEADER ROW (the CategoryEntry the
+    /// category boundary adds — the `key.categories.inventory` key the
+    /// lang "Inventory" row answers)
+    pub const CATEGORY_INV_NAME: &str = "key.categories.inventory";
+    pub const CATEGORY_INV_FALLBACK: &str = "Inventory";
 
     /// THE DEFAULTS' OWN ROW (the ctor's codes the minifb Key enum's
     /// own discriminants answer).
@@ -285,7 +304,31 @@ pub mod key_binds {
         Some(Key::Space),
         Some(Key::LeftShift),
         Some(Key::LeftCtrl),
+        Some(Key::E),
+        Some(Key::F),
+        Some(Key::Q),
     ];
+
+    /// THE LIST'S OWN GEOMETRY (the entries the walk's y positions
+    /// keep — the movement group the 186 render's own shape wears
+    /// (the header the 30 seat, the rows the 42-start stride), the
+    /// inventory group the category boundary the SAME shape keeps
+    /// (the header 210 = 42 + 7*24, the rows the 222 start +12 the
+    /// movement group's own gap answers)); the scroll the list-space
+    /// y the shift reads.
+    pub const LIST_TOP: i32 = 30;
+    pub const ROW_STRIDE: i32 = 24;
+    pub const MOVEMENT_ROWS_START: i32 = 42;
+    pub const INVENTORY_HEADER_Y: i32 = 210;
+    pub const INVENTORY_ROWS_START: i32 = 222;
+
+    /// THE CONTENT'S OWN HEIGHT (the walk's own bottom — the last
+    /// trio row's bottom minus the list top; the maxScrollAmount law
+    /// the band height subtracts: `max(0, contentHeight - height)`
+    /// the AbstractScrollArea walk banks)
+    pub fn content_height() -> i32 {
+        INVENTORY_ROWS_START + (COUNT - INVENTORY - 1) as i32 * ROW_STRIDE + 20 - LIST_TOP
+    }
 
     /// THE KEYBOARD'S OWN NAME TABLE (the InputConstants names the
     /// `key.keyboard.*` rows wear — the minifb Key the row's own pair
@@ -608,6 +651,15 @@ impl OptionsFile {
                 "key_key.sprint" => {
                     out.key_binds[key_binds::SPRINT] = key_binds::key_bind_from_save(value);
                 }
+                "key_key.inventory" => {
+                    out.key_binds[key_binds::INVENTORY] = key_binds::key_bind_from_save(value);
+                }
+                "key_key.swapOffhand" => {
+                    out.key_binds[key_binds::SWAP_OFFHAND] = key_binds::key_bind_from_save(value);
+                }
+                "key_key.drop" => {
+                    out.key_binds[key_binds::DROP] = key_binds::key_bind_from_save(value);
+                }
                 _ => {} // the jar's other rows the client's seats never carry
             }
         }
@@ -761,7 +813,7 @@ mod tests {
         OptionsFile::default().save(&path);
         let text = std::fs::read_to_string(&path).expect("the save the file writes");
         assert_eq!(
-            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\n",
+            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\n",
             "the file the vanilla rows wear"
         );
         let loaded = OptionsFile::load(&path);

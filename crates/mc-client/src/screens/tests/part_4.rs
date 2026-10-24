@@ -9758,7 +9758,7 @@ fn the_options_file_the_stores_restart_outlives() {
     assert_eq!(app.screen, ScreenKind::Title, "the Done the return wears");
     let text = std::fs::read_to_string(&path).expect("the chord the file writes");
     assert_eq!(
-        text, "version:4903\nshowSubtitles:false\nmouseSensitivity:1.0\nfov:110\nsoundCategory_master:0.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\n",
+        text, "version:4903\nshowSubtitles:false\nmouseSensitivity:1.0\nfov:110\nsoundCategory_master:0.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\n",
         "the file the vanilla rows wear"
     );
     // THE RESTART (the fresh boot the file's truth wears — the session's
@@ -9794,7 +9794,7 @@ fn the_options_escape_the_save_and_return_wears() {
     assert_eq!(app.screen, ScreenKind::Title, "the escape the return wears");
     let text = std::fs::read_to_string(&path).expect("the escape the file writes");
     assert_eq!(
-        text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.75\nfov:90\nsoundCategory_master:0.25\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\n",
+        text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.75\nfov:90\nsoundCategory_master:0.25\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\n",
         "the SAME save chord the Done wears the escape speaks"
     );
     // THE PAUSED LANE (the pause screen's own Options — the
@@ -9903,7 +9903,7 @@ fn the_quit_lane_the_stop_flag_and_the_files_absence_wears() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the removed() moment the file writes"),
-        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\n",
         "the takeover's own exit the rows bank"
     );
     app.render_title_buttons_for_test();
@@ -9917,7 +9917,7 @@ fn the_quit_lane_the_stop_flag_and_the_files_absence_wears() {
     assert!(app.stopping, "the second stop the same chord wears");
     assert_eq!(
         std::fs::read_to_string(&path).expect("the file the exit keeps"),
-        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\n",
         "the quit the file NEVER re-writes — the removed() moment ALONE the rows keep"
     );
     let _ = std::fs::remove_dir_all(&dir);
@@ -9968,7 +9968,7 @@ fn the_options_exit_the_removed_moment_itself_saves() {
     app.open(ScreenKind::Servers);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the takeover the file writes"),
-        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\n",
         "the replacement lane the removed() moment speaks"
     );
     // THE SAME-KIND RE-ENTRY (the open(Options) from Options the
@@ -9979,7 +9979,7 @@ fn the_options_exit_the_removed_moment_itself_saves() {
     app.open(ScreenKind::Options);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the re-entry the file writes"),
-        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:0.5\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:0.5\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\n",
         "the same-kind walk the old screen's discard keeps"
     );
     // THE NONE BOOT'S SILENT KEEP (the options_file None the save walk
@@ -10117,7 +10117,7 @@ fn the_focus_pause_chord_the_flip_and_the_rows_wear() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the exit the file writes"),
-        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:false\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:false\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\n",
         "the flipped row the exit banks"
     );
     // THE SECOND FLIP (the chord the option re-arms — the row the next
@@ -10128,7 +10128,7 @@ fn the_focus_pause_chord_the_flip_and_the_rows_wear() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the second exit the file writes"),
-        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\n",
         "the re-armed row the exit banks"
     );
     // THE THIRD FLIP (the option the false re-wears — the restart the
@@ -10139,7 +10139,7 @@ fn the_focus_pause_chord_the_flip_and_the_rows_wear() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the third exit the file writes"),
-        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:false\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:false\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\n",
         "the flipped row the exit banks"
     );
     // THE BOOT LOAD (the file's truth the boot walk wears — the false
@@ -11592,9 +11592,7 @@ fn the_notification_row_the_multiplier_wears() {
         "the visit-order adjacency the file rows keep"
     );
     assert!(
-        pre_exit
-            .trim_end()
-            .ends_with("key_key.sprint:key.keyboard.left.control"),
+        pre_exit.trim_end().ends_with("key_key.drop:key.keyboard.q"),
         "the key block the file's own END row wears"
     );
     // THE ROW'S OWN SEAT (the array's index 9 the row BETWEEN the
@@ -12276,6 +12274,198 @@ fn the_key_binds_the_rows_the_rebind_the_file_wear() {
         re.screen,
         ScreenKind::Controls,
         "the parent the Escape ride returns"
+    );
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// THE INVENTORY TRIO'S OWN ROUND (the autopush-187 walk): the trio
+/// the Options ctor's registrations the movement pair's AFTER wear
+/// (the keyInventory/keySwapOffhand/keyDrop rows the INVENTORY
+/// category answers), the list the category boundary the SECOND
+/// header wears, the SCROLL the wheel law the entries' shift reads
+/// (the mouseScrolled walk the AbstractScrollArea verbatim serves —
+/// the `yScroll * 4.0 * 6.0` step one 24px row answers, the clamp
+/// the maxScrollAmount law keeps), the clipped rows the scroll the
+/// band REACHES (the 320x240 render the trio the clip refuses, the
+/// wheel the rows the band restores), the LANES the store's own keys
+/// re-wear (the E/F/Q hardcoded reads retire — the rebind the lanes
+/// honor), the file the trio's rows the exit saves (the array order
+/// the sprint row's AFTER keeps), the restart the trio the decode
+/// keeps.
+#[test]
+fn the_inventory_trio_the_scroll_the_lanes_the_file_wear() {
+    let dir = std::env::temp_dir().join(format!("mc2rs_keybinds_trio_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&dir);
+    let path = dir.join("options.txt");
+    let mut app = App::new(262);
+    app.options_file = Some(path.clone());
+    // THE TRIO'S OWN DEFAULTS (the ctor's codes the store keeps)
+    assert_eq!(
+        app.key_binds[crate::options_file::key_binds::INVENTORY],
+        Some(minifb::Key::E),
+        "the inventory the E default wears"
+    );
+    assert_eq!(
+        app.key_binds[crate::options_file::key_binds::SWAP_OFFHAND],
+        Some(minifb::Key::F),
+        "the swap the F default wears"
+    );
+    assert_eq!(
+        app.key_binds[crate::options_file::key_binds::DROP],
+        Some(minifb::Key::Q),
+        "the drop the Q default wears"
+    );
+    // THE SCROLL'S OWN LAW (the mouseScrolled walk the method serves —
+    // the wheel UP at the top the clamp keeps, the wheel DOWN the row
+    // the shift wears, the 4.0*6.0 step the 24px answer speaks)
+    app.on_kb_scroll(1.0, 240);
+    assert_eq!(
+        app.kb_scroll, 0.0,
+        "the wheel up at the top the clamp keeps"
+    );
+    app.on_kb_scroll(-1.0, 240);
+    assert_eq!(app.kb_scroll, 24.0, "the one notch the one row wears");
+    app.on_kb_scroll(-1000.0, 240);
+    assert_eq!(
+        app.kb_scroll, 78.0,
+        "the clamp the maxScroll law keeps (content 260 - band 182)"
+    );
+    app.on_kb_scroll(1000.0, 240);
+    assert_eq!(
+        app.kb_scroll, 0.0,
+        "the wheel up the top the clamp restores"
+    );
+    // THE TALL WINDOW'S OWN NO-SCROLL (the band the content holds —
+    // the maxScroll the zero the clamp keeps)
+    app.on_kb_scroll(-1.0, 320);
+    assert_eq!(app.kb_scroll, 0.0, "the tall band the content fits");
+    app.kb_scroll = 24.0;
+    // THE OPENER'S OWN WALK (the fresh screen the list rebuilds — the
+    // scrollAmount the zero the fresh seat wears)
+    app.open(ScreenKind::Options);
+    app.render_title_buttons_for_test();
+    let ctl = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "controls")
+        .expect("the controls opener")
+        .clone();
+    app.on_click(ctl.x + ctl.w / 2, ctl.y + ctl.h / 2);
+    app.render_title_buttons_for_test();
+    let kb = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "keybinds")
+        .expect("the pair's right seat")
+        .clone();
+    app.on_click(kb.x + kb.w / 2, kb.y + kb.h / 2);
+    assert_eq!(app.screen, ScreenKind::KeyBinds, "the list the seat opens");
+    assert_eq!(app.kb_scroll, 0.0, "the fresh list the zero keeps");
+    assert_eq!(app.kb_selected, None, "the fresh seat the null keeps");
+    // THE SMALL BAND'S OWN CLIP (the real-client h=240 the trio the
+    // footer band refuses — the rows the render's own walk never
+    // pushes, the reach the scroll alone serves)
+    let root = crate::screens::tests::assets_root();
+    let mut assets = GuiAssets::open(&root);
+    let mut fb = crate::raster::Framebuf::new(320, 240);
+    app.render(&mut fb, &mut assets);
+    assert!(
+        app.buttons
+            .iter()
+            .all(|b| !b.id.starts_with("kb_change_inventory")),
+        "the clipped trio the band render refuses"
+    );
+    // THE SCROLL'S OWN REACH (the two notches the trio's first row the
+    // band restores — the 222 y the 48 shift the 174 seat wears, the
+    // header the boundary the shift rides)
+    app.on_kb_scroll(-1.0, 240);
+    app.on_kb_scroll(-1.0, 240);
+    assert_eq!(app.kb_scroll, 48.0, "the two notches the two rows wear");
+    app.render(&mut fb, &mut assets);
+    let inv = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_change_inventory")
+        .expect("the scrolled row the band restores")
+        .clone();
+    assert_eq!(inv.label, "E", "the default the display speaks");
+    assert_eq!(inv.y, 174, "the shifted row the scroll seat wears");
+    assert!(
+        app.buttons.iter().any(|b| b.id == "kb_rowreset_inventory"),
+        "the reset the row's pair keeps"
+    );
+    // THE CLAMP'S OWN BOTTOM (the wheel down the max the walk keeps —
+    // the content's own bottom the band's own bottom aligns, the last
+    // row the fully-visible seat wears)
+    app.on_kb_scroll(-1.0, 240);
+    app.on_kb_scroll(-1.0, 240);
+    app.on_kb_scroll(-1.0, 240);
+    assert_eq!(app.kb_scroll, 78.0, "the fourth notch the clamp keeps");
+    app.render(&mut fb, &mut assets);
+    assert!(
+        app.buttons
+            .iter()
+            .any(|b| b.id == "kb_change_drop" && b.y + b.h <= 240 - 28),
+        "the last row the max scroll the fully-visible seat wears"
+    );
+    // THE REBIND'S OWN WALK (the trio's change click the selectedKey
+    // arms, the capture the bind wears — the lanes the store honor;
+    // the re-render the row's own seat re-wears, the stale clone the
+    // scroll's own shift retires, the fresh find the 186 law keeps)
+    let inv = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_change_inventory")
+        .expect("the re-rendered row")
+        .clone();
+    app.on_click(inv.x + inv.w / 2, inv.y + inv.h / 2);
+    assert_eq!(
+        app.kb_selected,
+        Some(crate::options_file::key_binds::INVENTORY),
+        "the trio's change the selectedKey arms"
+    );
+    assert!(
+        app.kb_capture(Some(minifb::Key::L)),
+        "the capture the bind consumes"
+    );
+    assert_eq!(
+        app.key_binds[crate::options_file::key_binds::INVENTORY],
+        Some(minifb::Key::L),
+        "the rebind the store writes"
+    );
+    // THE FILE'S OWN ROWS (the family save the exit banks — the trio
+    // the array order the sprint row's AFTER appends, the rebind the
+    // row's own value wears)
+    app.open(ScreenKind::Controls);
+    let text = std::fs::read_to_string(&path).expect("the exit save wrote");
+    let tail = text
+        .find("key_key.sprint:")
+        .map(|i| &text[i..])
+        .unwrap_or_default();
+    assert!(
+        tail.starts_with(
+            "key_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.l\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\n"
+        ),
+        "the trio the array order the file rows wear ({tail})"
+    );
+    // THE RESTART'S OWN DECODE (the fresh boot the trio's truth wears)
+    let mut re = App::new(262);
+    re.options_file = Some(path.clone());
+    re.options_file_load();
+    assert_eq!(
+        re.key_binds[crate::options_file::key_binds::INVENTORY],
+        Some(minifb::Key::L),
+        "the restart the rebind the decode keeps"
+    );
+    assert_eq!(
+        re.key_binds[crate::options_file::key_binds::SWAP_OFFHAND],
+        Some(minifb::Key::F),
+        "the restart the default the decode keeps"
+    );
+    assert_eq!(
+        re.key_binds[crate::options_file::key_binds::DROP],
+        Some(minifb::Key::Q),
+        "the restart the default the decode keeps"
     );
     let _ = std::fs::remove_dir_all(&dir);
 }

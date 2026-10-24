@@ -1915,8 +1915,15 @@ pub fn run_gui_app(
         // inventory screen closes it back — the App's own death gate
         // keeps the DeathScreen modal. The open chat the vanilla
         // Screen's own key-consumption law keeps silent (the
-        // ChatScreen the world keys never reads)
-        if !app.chat_open && window.is_key_pressed(Key::E, minifb::KeyRepeat::No) {
+        // ChatScreen the world keys never reads). THE STORE'S OWN KEY
+        // the lane reads (the 186 law the movement lanes wear — the
+        // `keyMappings[INVENTORY].isDown()` the binding answers, the
+        // rebind the store writes, the None the never-pressed the
+        // unbound law keeps)
+        if !app.chat_open
+            && app.key_binds[crate::options_file::key_binds::INVENTORY]
+                .is_some_and(|k| window.is_key_pressed(k, minifb::KeyRepeat::No))
+        {
             app.on_inventory_key();
         }
         // THE PICKER'S SEARCH BACKSPACE (the EditBox's own keyPressed
@@ -1934,7 +1941,10 @@ pub fn run_gui_app(
         // screen gates keep the two chains honest (the world Q the
         // inventory walk never passes, the container Q the handleKeybinds
         // gate never did)
-        if !app.chat_open && window.is_key_pressed(Key::Q, minifb::KeyRepeat::No) {
+        if !app.chat_open
+            && app.key_binds[crate::options_file::key_binds::DROP]
+                .is_some_and(|k| window.is_key_pressed(k, minifb::KeyRepeat::No))
+        {
             // THE PICKER'S OWN Q (the creative keyPressed's super chain
             // — the keyDrop arm the container screens share, the
             // creative THROW arms the seats' own walks answer, the
@@ -1970,8 +1980,13 @@ pub fn run_gui_app(
         // pcs 375-414: the rising edge the spectator verdict gates, the
         // SWAP_ITEM_WITH_OFFHAND packet the wire speaks; the world-
         // screen/death gates the App's own verdict keeps — the swap the
-        // container screens never read)
-        if !app.chat_open && window.is_key_pressed(Key::F, minifb::KeyRepeat::No) {
+        // container screens never read). THE STORE'S OWN KEY the lane
+        // reads (the binding the store's own slot answers, the None
+        // the never-pressed the unbound law keeps)
+        if !app.chat_open
+            && app.key_binds[crate::options_file::key_binds::SWAP_OFFHAND]
+                .is_some_and(|k| window.is_key_pressed(k, minifb::KeyRepeat::No))
+        {
             // THE CONTAINER SCREEN'S OWN OFFHAND SWAP (checkHotbarKeyPressed's
             // own FIRST arm — the keySwapOffhand match the
             // slotClicked(hovered, index, 40, SWAP) walk rides; the
@@ -2392,8 +2407,12 @@ pub fn run_gui_app(
             // the selected hotbar slot, the Ctrl modifier the whole
             // stack (hasControlDown the LocalPlayer.drop boolean speaks
             // — the same key the sprint gate reads, the vanilla's own
-            // dual use)
-            if window.is_key_pressed(Key::Q, minifb::KeyRepeat::No) {
+            // dual use). THE STORE'S OWN KEY the lane reads (the
+            // binding the store's own slot answers, the None the
+            // never-pressed the unbound law keeps)
+            if app.key_binds[crate::options_file::key_binds::DROP]
+                .is_some_and(|k| window.is_key_pressed(k, minifb::KeyRepeat::No))
+            {
                 app.on_drop_key(window.is_key_down(Key::LeftCtrl));
             }
             // THE F1 HIDE-HUD TOGGLE (vanilla Gui.handleKeybinds's
@@ -2577,6 +2596,12 @@ pub fn run_gui_app(
                 // creative arm — the delta / scrollableRows subtraction
                 // the scrollTo refill rides)
                 app.on_creative_scroll(sdy as f64);
+            } else if app.screen == crate::screens::ScreenKind::KeyBinds {
+                // THE KEY BINDS LIST'S OWN SCROLL (the mouseScrolled
+                // walk the AbstractScrollArea serves — the amount the
+                // [`App::on_kb_scroll`] the wheel's own step wears, the
+                // band the render's own 30-top/28-footer law keeps)
+                app.on_kb_scroll(sdy as f64, height as i32 / 2);
             }
         }
         // THE FIXED CLOCK SPENDS (vanilla `Minecraft.runTick`'s own
