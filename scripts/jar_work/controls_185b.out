@@ -1,0 +1,277 @@
+########## A. ControlsScreen.addOptions + the two lambdas
+--- net.minecraft.client.gui.screens.options.controls.ControlsScreen.addOptions()V
+0: aload_0
+1: getfield net/minecraft/client/gui/screens/options/controls/ControlsScreen.listLnet/minecraft/client/gui/components/OptionsList;
+4: ldc options.mouse_settings
+6: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+9: aload_0
+10: invokedynamic indy
+15: invokestatic net/minecraft/client/gui/components/Button.builder(Lnet/minecraft/network/chat/Component;Lnet/minecraft/client/gui/components/Button$OnPress;)Lnet/minecraft/client/gui/components/Button$Builder;
+18: invokevirtual net/minecraft/client/gui/components/Button$Builder.build()Lnet/minecraft/client/gui/components/Button;
+21: ldc controls.keybinds
+23: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+26: aload_0
+27: invokedynamic indy
+32: invokestatic net/minecraft/client/gui/components/Button.builder(Lnet/minecraft/network/chat/Component;Lnet/minecraft/client/gui/components/Button$OnPress;)Lnet/minecraft/client/gui/components/Button$Builder;
+35: invokevirtual net/minecraft/client/gui/components/Button$Builder.build()Lnet/minecraft/client/gui/components/Button;
+38: invokevirtual net/minecraft/client/gui/components/OptionsList.addSmall(Lnet/minecraft/client/gui/components/AbstractWidget;Lnet/minecraft/client/gui/components/AbstractWidget;)V
+41: aload_0
+42: getfield net/minecraft/client/gui/screens/options/controls/ControlsScreen.listLnet/minecraft/client/gui/components/OptionsList;
+45: aload_0
+46: getfield net/minecraft/client/gui/screens/options/controls/ControlsScreen.optionsLnet/minecraft/client/Options;
+49: invokestatic net/minecraft/client/gui/screens/options/controls/ControlsScreen.options(Lnet/minecraft/client/Options;)[Lnet/minecraft/client/OptionInstance;
+52: invokevirtual net/minecraft/client/gui/components/OptionsList.addSmall([Lnet/minecraft/client/OptionInstance;)V
+55: return
+--- net.minecraft.client.gui.screens.options.controls.ControlsScreen.lambda$addOptions$1(Lnet/minecraft/client/gui/components/Button;)V
+0: aload_0
+1: getfield net/minecraft/client/gui/screens/options/controls/ControlsScreen.minecraftLnet/minecraft/client/Minecraft;
+4: getfield net/minecraft/client/Minecraft.guiLnet/minecraft/client/gui/Gui;
+7: new net/minecraft/client/gui/screens/options/controls/KeyBindsScreen
+10: dup
+11: aload_0
+12: aload_0
+13: getfield net/minecraft/client/gui/screens/options/controls/ControlsScreen.optionsLnet/minecraft/client/Options;
+16: invokespecial net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.<init>(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Options;)V
+19: invokevirtual net/minecraft/client/gui/Gui.setScreen(Lnet/minecraft/client/gui/screens/Screen;)V
+22: return
+--- net.minecraft.client.gui.screens.options.controls.ControlsScreen.lambda$addOptions$0(Lnet/minecraft/client/gui/components/Button;)V
+0: aload_0
+1: getfield net/minecraft/client/gui/screens/options/controls/ControlsScreen.minecraftLnet/minecraft/client/Minecraft;
+4: getfield net/minecraft/client/Minecraft.guiLnet/minecraft/client/gui/Gui;
+7: new net/minecraft/client/gui/screens/options/MouseSettingsScreen
+10: dup
+11: aload_0
+12: aload_0
+13: getfield net/minecraft/client/gui/screens/options/controls/ControlsScreen.optionsLnet/minecraft/client/Options;
+16: invokespecial net/minecraft/client/gui/screens/options/MouseSettingsScreen.<init>(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Options;)V
+19: invokevirtual net/minecraft/client/gui/Gui.setScreen(Lnet/minecraft/client/gui/screens/Screen;)V
+22: return
+--- net.minecraft.client.gui.screens.options.controls.ControlsScreen.lambda$addOptions$0(Lnet/minecraft/client/gui/components/Button;)V
+0: aload_0
+1: getfield net/minecraft/client/gui/screens/options/controls/ControlsScreen.minecraftLnet/minecraft/client/Minecraft;
+4: getfield net/minecraft/client/Minecraft.guiLnet/minecraft/client/gui/Gui;
+7: new net/minecraft/client/gui/screens/options/MouseSettingsScreen
+10: dup
+11: aload_0
+12: aload_0
+13: getfield net/minecraft/client/gui/screens/options/controls/ControlsScreen.optionsLnet/minecraft/client/Options;
+16: invokespecial net/minecraft/client/gui/screens/options/MouseSettingsScreen.<init>(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Options;)V
+19: invokevirtual net/minecraft/client/gui/Gui.setScreen(Lnet/minecraft/client/gui/screens/Screen;)V
+22: return
+--- net.minecraft.client.gui.screens.options.controls.ControlsScreen.lambda$addOptions$1(Lnet/minecraft/client/gui/components/Button;)V
+0: aload_0
+1: getfield net/minecraft/client/gui/screens/options/controls/ControlsScreen.minecraftLnet/minecraft/client/Minecraft;
+4: getfield net/minecraft/client/Minecraft.guiLnet/minecraft/client/gui/Gui;
+7: new net/minecraft/client/gui/screens/options/controls/KeyBindsScreen
+10: dup
+11: aload_0
+12: aload_0
+13: getfield net/minecraft/client/gui/screens/options/controls/ControlsScreen.optionsLnet/minecraft/client/Options;
+16: invokespecial net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.<init>(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Options;)V
+19: invokevirtual net/minecraft/client/gui/Gui.setScreen(Lnet/minecraft/client/gui/screens/Screen;)V
+22: return
+
+########## B. ControlsScreen options(Lnet/minecraft/client/Options;) static
+--- net.minecraft.client.gui.screens.options.controls.ControlsScreen.options(Lnet/minecraft/client/Options;)[Lnet/minecraft/client/OptionInstance;
+0: bipush 7
+2: anewarray net/minecraft/client/OptionInstance
+5: dup
+6: iconst_0
+7: aload_0
+8: invokevirtual net/minecraft/client/Options.toggleCrouch()Lnet/minecraft/client/OptionInstance;
+11: aastore
+12: dup
+13: iconst_1
+14: aload_0
+15: invokevirtual net/minecraft/client/Options.toggleSprint()Lnet/minecraft/client/OptionInstance;
+18: aastore
+19: dup
+20: iconst_2
+21: aload_0
+22: invokevirtual net/minecraft/client/Options.toggleAttack()Lnet/minecraft/client/OptionInstance;
+25: aastore
+26: dup
+27: iconst_3
+28: aload_0
+29: invokevirtual net/minecraft/client/Options.toggleUse()Lnet/minecraft/client/OptionInstance;
+32: aastore
+33: dup
+34: iconst_4
+35: aload_0
+36: invokevirtual net/minecraft/client/Options.autoJump()Lnet/minecraft/client/OptionInstance;
+39: aastore
+40: dup
+41: iconst_5
+42: aload_0
+43: invokevirtual net/minecraft/client/Options.sprintWindow()Lnet/minecraft/client/OptionInstance;
+46: aastore
+47: dup
+48: bipush 6
+50: aload_0
+51: invokevirtual net/minecraft/client/Options.operatorItemsTab()Lnet/minecraft/client/OptionInstance;
+54: aastore
+55: areturn
+
+########## C. OptionsSubScreen base (the removed/onClose law the lane inherits)
+=== net.minecraft.client.gui.screens.options.OptionsSubScreen methods:
+  <init>(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Options;Lnet/minecraft/network/chat/Component;)V
+  init()V
+  addTitle()V
+  addContents()V
+  addOptions()V
+  addFooter()V
+  repositionElements()V
+  removed()V
+  onClose()V
+  resetOption(Lnet/minecraft/client/OptionInstance;)V
+  lambda$addFooter$0(Lnet/minecraft/client/gui/components/Button;)V
+  lambda$init$0(Lnet/minecraft/client/gui/screens/options/OptionsSubScreen;Lnet/minecraft/client/gui/components/AbstractWidget;)V
+--- net.minecraft.client.gui.screens.options.OptionsSubScreen.removed()V
+0: aload_0
+1: getfield net/minecraft/client/gui/screens/options/OptionsSubScreen.minecraftLnet/minecraft/client/Minecraft;
+4: getfield net/minecraft/client/Minecraft.optionsLnet/minecraft/client/Options;
+7: invokevirtual net/minecraft/client/Options.save()V
+10: return
+--- net.minecraft.client.gui.screens.options.OptionsSubScreen.onClose()V
+0: aload_0
+1: getfield net/minecraft/client/gui/screens/options/OptionsSubScreen.listLnet/minecraft/client/gui/components/OptionsList;
+4: ifnull -> 14
+7: aload_0
+8: getfield net/minecraft/client/gui/screens/options/OptionsSubScreen.listLnet/minecraft/client/gui/components/OptionsList;
+11: invokevirtual net/minecraft/client/gui/components/OptionsList.applyUnsavedChanges()V
+14: aload_0
+15: getfield net/minecraft/client/gui/screens/options/OptionsSubScreen.minecraftLnet/minecraft/client/Minecraft;
+18: getfield net/minecraft/client/Minecraft.guiLnet/minecraft/client/gui/Gui;
+21: aload_0
+22: getfield net/minecraft/client/gui/screens/options/OptionsSubScreen.lastScreenLnet/minecraft/client/gui/screens/Screen;
+25: invokevirtual net/minecraft/client/gui/Gui.setScreen(Lnet/minecraft/client/gui/screens/Screen;)V
+28: return
+--- net.minecraft.client.gui.screens.options.OptionsSubScreen.<init>(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Options;Lnet/minecraft/network/chat/Component;)V
+0: aload_0
+1: aload_3
+2: invokespecial net/minecraft/client/gui/screens/Screen.<init>(Lnet/minecraft/network/chat/Component;)V
+5: aload_0
+6: new net/minecraft/client/gui/layouts/HeaderAndFooterLayout
+9: dup
+10: aload_0
+11: invokespecial net/minecraft/client/gui/layouts/HeaderAndFooterLayout.<init>(Lnet/minecraft/client/gui/screens/Screen;)V
+14: putfield net/minecraft/client/gui/screens/options/OptionsSubScreen.layoutLnet/minecraft/client/gui/layouts/HeaderAndFooterLayout;
+17: aload_0
+18: aload_1
+19: putfield net/minecraft/client/gui/screens/options/OptionsSubScreen.lastScreenLnet/minecraft/client/gui/screens/Screen;
+22: aload_0
+23: aload_2
+24: putfield net/minecraft/client/gui/screens/options/OptionsSubScreen.optionsLnet/minecraft/client/Options;
+27: return
+--- net.minecraft.client.gui.screens.options.OptionsSubScreen.init()V
+0: aload_0
+1: invokevirtual net/minecraft/client/gui/screens/options/OptionsSubScreen.addTitle()V
+4: aload_0
+5: invokevirtual net/minecraft/client/gui/screens/options/OptionsSubScreen.addContents()V
+8: aload_0
+9: invokevirtual net/minecraft/client/gui/screens/options/OptionsSubScreen.addFooter()V
+12: aload_0
+13: getfield net/minecraft/client/gui/screens/options/OptionsSubScreen.layoutLnet/minecraft/client/gui/layouts/HeaderAndFooterLayout;
+16: aload_0
+17: astore_0
+18: aload_1
+19: invokedynamic indy
+24: invokevirtual net/minecraft/client/gui/layouts/HeaderAndFooterLayout.visitWidgets(Ljava/util/function/Consumer;)V
+27: aload_0
+28: invokevirtual net/minecraft/client/gui/screens/options/OptionsSubScreen.repositionElements()V
+31: return
+--- net.minecraft.client.gui.screens.options.OptionsSubScreen.lambda$init$0(Lnet/minecraft/client/gui/screens/options/OptionsSubScreen;Lnet/minecraft/client/gui/components/AbstractWidget;)V
+0: aload_0
+1: aload_1
+2: invokevirtual net/minecraft/client/gui/screens/options/OptionsSubScreen.addRenderableWidget(Lnet/minecraft/client/gui/components/events/GuiEventListener;)Lnet/minecraft/client/gui/components/events/GuiEventListener;
+5: pop
+6: return
+!! net.minecraft.client.gui.screens.options.OptionsSubScreen: no method matching renderBackground
+
+########## D. KeyBindsScreen methods + utf8 words
+=== net.minecraft.client.gui.screens.options.controls.KeyBindsScreen methods:
+  <init>(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Options;)V
+  addContents()V
+  addOptions()V
+  addFooter()V
+  repositionElements()V
+  mouseClicked(Lnet/minecraft/client/input/MouseButtonEvent;Z)Z
+  keyPressed(Lnet/minecraft/client/input/KeyEvent;)Z
+  extractRenderState(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V
+  lambda$addFooter$1(Lnet/minecraft/client/gui/components/Button;)V
+  lambda$addFooter$0(Lnet/minecraft/client/gui/components/Button;)V
+  <clinit>()V
+=== net.minecraft.client.gui.screens.options.controls.KeyBindsScreen utf8 words (needles: ['controls', 'key', 'reset', 'done', 'keyboard', 'mouse', 'category', 'conflict', 'none', 'press'])
+  cp#4: 'net/minecraft/client/gui/screens/options/controls/KeyBindsScreen'
+  cp#18: 'net/minecraft/client/gui/screens/options/controls/KeyBindsList'
+  cp#25: '(Lnet/minecraft/client/gui/screens/options/controls/KeyBindsScreen;Lnet/minecraft/client/Minecraft;)V'
+  cp#34: 'keyBindsList'
+  cp#35: 'Lnet/minecraft/client/gui/screens/options/controls/KeyBindsList;'
+  cp#37: 'controls.resetAll'
+  cp#47: '(Lnet/minecraft/client/gui/screens/options/controls/KeyBindsScreen;)Lnet/minecraft/client/gui/components/Button$OnPress;'
+  cp#62: 'resetButton'
+  cp#126: 'resetMappingAndUpdateButtons'
+  cp#129: 'mouseClicked'
+  cp#159: 'keyPressed'
+  cp#173: 'keyMappings'
+  cp#190: 'controls.keybinds.title'
+  cp#198: 'Lnet/minecraft/client/gui/screens/options/controls/KeyBindsScreen;'
+  cp#213: 'key'
+  cp#216: 'mouseX'
+  cp#217: 'mouseY'
+
+########## E. KeyBindsScreen ctor + init + removed + keyPressed
+--- net.minecraft.client.gui.screens.options.controls.KeyBindsScreen.<init>(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Options;)V
+0: aload_0
+1: aload_1
+2: aload_2
+3: getstatic net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.TITLELnet/minecraft/network/chat/Component;
+6: invokespecial net/minecraft/client/gui/screens/options/OptionsSubScreen.<init>(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Options;Lnet/minecraft/network/chat/Component;)V
+9: return
+--- net.minecraft.client.gui.screens.options.controls.KeyBindsScreen.<init>(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Options;)V
+0: aload_0
+1: aload_1
+2: aload_2
+3: getstatic net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.TITLELnet/minecraft/network/chat/Component;
+6: invokespecial net/minecraft/client/gui/screens/options/OptionsSubScreen.<init>(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Options;Lnet/minecraft/network/chat/Component;)V
+9: return
+--- net.minecraft.client.gui.screens.options.controls.KeyBindsScreen.<clinit>()V
+0: ldc controls.keybinds.title
+2: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+5: putstatic net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.TITLELnet/minecraft/network/chat/Component;
+8: return
+!! net.minecraft.client.gui.screens.options.controls.KeyBindsScreen: no method matching removed
+!! net.minecraft.client.gui.screens.options.controls.KeyBindsScreen: no method matching onClose
+--- net.minecraft.client.gui.screens.options.controls.KeyBindsScreen.keyPressed(Lnet/minecraft/client/input/KeyEvent;)Z
+0: aload_0
+1: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.selectedKeyLnet/minecraft/client/KeyMapping;
+4: ifnull -> 59
+7: aload_1
+8: invokevirtual net/minecraft/client/input/KeyEvent.isEscape()Z
+11: ifeq -> 27
+14: aload_0
+15: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.selectedKeyLnet/minecraft/client/KeyMapping;
+18: getstatic com/mojang/blaze3d/platform/InputConstants.UNKNOWNLcom/mojang/blaze3d/platform/InputConstants$Key;
+21: invokevirtual net/minecraft/client/KeyMapping.setKey(Lcom/mojang/blaze3d/platform/InputConstants$Key;)V
+24: goto -> 38
+27: aload_0
+28: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.selectedKeyLnet/minecraft/client/KeyMapping;
+31: aload_1
+32: invokestatic com/mojang/blaze3d/platform/InputConstants.getKey(Lnet/minecraft/client/input/KeyEvent;)Lcom/mojang/blaze3d/platform/InputConstants$Key;
+35: invokevirtual net/minecraft/client/KeyMapping.setKey(Lcom/mojang/blaze3d/platform/InputConstants$Key;)V
+38: aload_0
+39: aconst_null
+40: putfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.selectedKeyLnet/minecraft/client/KeyMapping;
+43: aload_0
+44: invokestatic net/minecraft/util/Util.getMillis()J
+47: putfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.lastKeySelectionJ
+50: aload_0
+51: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.keyBindsListLnet/minecraft/client/gui/screens/options/controls/KeyBindsList;
+54: invokevirtual net/minecraft/client/gui/screens/options/controls/KeyBindsList.resetMappingAndUpdateButtons()V
+57: iconst_1
+58: ireturn
+59: aload_0
+60: aload_1
+61: invokespecial net/minecraft/client/gui/screens/options/OptionsSubScreen.keyPressed(Lnet/minecraft/client/input/KeyEvent;)Z
+64: ireturn
+!! net.minecraft.client.gui.screens.options.controls.KeyBindsScreen: no method matching rebind

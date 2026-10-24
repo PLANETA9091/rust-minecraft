@@ -10250,8 +10250,9 @@ fn the_fov_effect_scale_row_the_boot_the_body_wears() {
 // the `options.accessibility` button the lambda$init$8 supplier
 // opens, the row array's index-12 fovEffectScale the sub-screen's
 // slider wears, the Escape the shouldCloseOnEsc default the parent
-// ride returns, the save law the removed()-less class the
-// parent's own exit keeps)
+// ride returns, the save law the OptionsSubScreen.removed() the
+// class INHERITS the exit's own moment keeps — the base class's
+// Options.save the 185 recon the whole family banks)
 #[test]
 fn the_accessibility_screen_the_row_the_save_seat_wears() {
     let dir = std::env::temp_dir().join(format!("mc2rs_access_{}", std::process::id()));
@@ -10353,30 +10354,36 @@ fn the_accessibility_screen_the_row_the_save_seat_wears() {
     assert_eq!(app.fov_effect_scale, 1.0, "the disarmed drag never moves");
     // THE ESCAPE'S OWN LANE (the shouldCloseOnEsc default the
     // keyPressed walk answers — the parent the lastScreen ride
-    // returns; the open() law the old==Accessibility check the save
-    // never speaks — the sub-screen the `removed()` method never
-    // wears, the in-screen 1.0 the file's pre-exit row keeps)
+    // returns; THE REMOVED MOMENT THE BASE CLASS THE 185 RECON BANKS:
+    // the `OptionsSubScreen.removed()` pc 7 the Options.save call the
+    // class inherits — the sub-screen the own-removed-less class the
+    // super chain answers, the in-screen change the exit's save the
+    // file keeps — the autopush-176 "the save never speaks" verdict
+    // the base-class walk the probe REFUTES, the class-file probe the
+    // own-methods table only read)
+    app.fov_effect_scale = 0.75;
     app.on_escape();
     assert_eq!(
         app.screen,
         ScreenKind::Options,
         "the parent the Escape ride returns"
     );
-    let mid = std::fs::read_to_string(&path).expect("the entry save's rows");
+    let mid = std::fs::read_to_string(&path).expect("the exit save wrote");
     assert!(
-        mid.contains("fovEffectScale:1.0\n"),
-        "the sub-screen's own walks the save never speaks"
+        mid.contains("fovEffectScale:0.75\n"),
+        "the inherited removed() the exit save keeps ({mid})"
     );
     // THE PARENT'S OWN EXIT (the removed() moment the save the
     // sub-screen's change banks — the restart the row outlives)
     app.open(ScreenKind::Title);
     let post = std::fs::read_to_string(&path).expect("the parent exit wrote");
     assert!(
-        post.contains("fovEffectScale:1.0\n"),
-        "the drag's own 1.0 the parent exit banks"
+        post.contains("fovEffectScale:0.75\n"),
+        "the sub-screen's own 0.75 the exit saves keep"
     );
     // THE DONE FOOTER'S OWN RETURN (the onClose walk the accdone id
-    // answers — the same no-save law the Escape lane keeps)
+    // answers — the same inherited removed() law the Escape lane
+    // keeps)
     let mut app2 = App::new(262);
     app2.options_file = Some(path.clone());
     app2.open(ScreenKind::Options);
@@ -10397,8 +10404,8 @@ fn the_accessibility_screen_the_row_the_save_seat_wears() {
     );
     let mid2 = std::fs::read_to_string(&path).expect("the rows");
     assert!(
-        mid2.contains("fovEffectScale:1.0\n"),
-        "the done exit the save never speaks"
+        mid2.contains("fovEffectScale:0.25\n"),
+        "the done exit the inherited removed() banks"
     );
     app2.open(ScreenKind::Title);
     let post2 = std::fs::read_to_string(&path).expect("the parent exit wrote");
@@ -10495,17 +10502,18 @@ fn the_textbg_row_the_chat_background_wears() {
     );
     // THE ESCAPE'S OWN LANE (the shouldCloseOnEsc default the
     // keyPressed walk answers — the parent the lastScreen ride
-    // returns; the sub-screen the `removed()` method never wears, the
-    // in-screen 1.0 the file's pre-exit row keeps)
+    // returns; THE REMOVED MOMENT THE BASE CLASS THE 185 RECON BANKS:
+    // the `OptionsSubScreen.removed()` the class inherits — the
+    // in-screen 1.0 the exit's save the file keeps)
     app.on_escape();
     assert_eq!(
         app.screen, ScreenKind::Options,
         "the parent the Escape ride returns"
     );
-    let mid = std::fs::read_to_string(&path).expect("the entry save's rows");
+    let mid = std::fs::read_to_string(&path).expect("the exit save wrote");
     assert!(
-        mid.contains("textBackgroundOpacity:0.5\n"),
-        "the sub-screen's own walks the save never speaks"
+        mid.contains("textBackgroundOpacity:1.0\n"),
+        "the inherited removed() the exit save keeps"
     );
     // THE PARENT'S OWN EXIT (the removed() moment the save the
     // sub-screen's change banks — the restart the row outlives)
@@ -10647,17 +10655,18 @@ fn the_chat_opacity_row_the_chat_text_wears() {
     assert_eq!(app.chat_opacity, 0.0, "the re-arm the edge keeps");
     // THE ESCAPE'S OWN LANE (the shouldCloseOnEsc default the
     // keyPressed walk answers — the parent the lastScreen ride
-    // returns; the sub-screen the `removed()` method never wears, the
-    // in-screen 0.0 the file's pre-exit row keeps)
+    // returns; THE REMOVED MOMENT THE BASE CLASS THE 185 RECON BANKS:
+    // the `OptionsSubScreen.removed()` the class inherits — the
+    // in-screen 0.0 the exit's save the file keeps)
     app.on_escape();
     assert_eq!(
         app.screen, ScreenKind::Options,
         "the parent the Escape ride returns"
     );
-    let mid = std::fs::read_to_string(&path).expect("the entry save's rows");
+    let mid = std::fs::read_to_string(&path).expect("the exit save wrote");
     assert!(
-        mid.contains("chatOpacity:1.0\n"),
-        "the sub-screen's own walks the save never speaks"
+        mid.contains("chatOpacity:0.0\n"),
+        "the inherited removed() the exit save keeps"
     );
     // THE PARENT'S OWN EXIT (the removed() moment the save the
     // sub-screen's change banks — the restart the row outlives)
@@ -10830,10 +10839,13 @@ fn the_chat_bg_only_row_the_band_scope_wears() {
         app.screen, ScreenKind::Options,
         "the parent the Escape ride returns"
     );
-    let mid = std::fs::read_to_string(&path).expect("the entry save's rows");
+    // THE REMOVED MOMENT THE BASE CLASS THE 185 RECON BANKS (the
+    // `OptionsSubScreen.removed()` the class inherits — the FALSE
+    // seat the exit's save the file keeps)
+    let mid = std::fs::read_to_string(&path).expect("the exit save wrote");
     assert!(
-        mid.contains("backgroundForChatOnly:true\n"),
-        "the sub-screen's own walks the save never speaks"
+        mid.contains("backgroundForChatOnly:false\n"),
+        "the inherited removed() the exit save keeps"
     );
     app.open(ScreenKind::Title);
     let post = std::fs::read_to_string(&path).expect("the parent exit wrote");
@@ -10997,17 +11009,18 @@ fn the_chat_line_spacing_row_the_chat_pitch_wears() {
     assert_eq!(app.chat_line_spacing, 0.0, "the re-arm the edge keeps");
     // THE ESCAPE'S OWN LANE (the shouldCloseOnEsc default the
     // keyPressed walk answers — the parent the lastScreen ride
-    // returns; the sub-screen the `removed()` method never wears, the
-    // in-screen 0.0 the file's pre-exit row keeps)
+    // returns; THE REMOVED MOMENT THE BASE CLASS THE 185 RECON BANKS:
+    // the `OptionsSubScreen.removed()` the class inherits — the
+    // in-screen 0.0 the exit's save the file keeps)
     app.on_escape();
     assert_eq!(
         app.screen, ScreenKind::Options,
         "the parent the Escape ride returns"
     );
-    let mid = std::fs::read_to_string(&path).expect("the entry save's rows");
+    let mid = std::fs::read_to_string(&path).expect("the exit save wrote");
     assert!(
         mid.contains("chatLineSpacing:0.0\n"),
-        "the sub-screen's own walks the save never speaks"
+        "the inherited removed() the exit save keeps"
     );
     // THE PARENT'S OWN EXIT (the removed() moment the save the
     // sub-screen's change banks — the restart the row outlives)
@@ -11206,18 +11219,19 @@ fn the_show_subtitles_row_the_overlay_wears() {
     );
     // THE ESCAPE'S OWN LANE (the shouldCloseOnEsc default the
     // keyPressed walk answers — the parent the lastScreen ride
-    // returns; the sub-screen the `removed()` method never wears, the
-    // in-screen TRUE the file's pre-exit row keeps)
+    // returns; THE REMOVED MOMENT THE BASE CLASS THE 185 RECON BANKS:
+    // the `OptionsSubScreen.removed()` the class inherits — the
+    // in-screen TRUE the exit's save the file keeps)
     app.on_escape();
     assert_eq!(
         app.screen,
         ScreenKind::Options,
         "the parent the Escape ride returns"
     );
-    let mid = std::fs::read_to_string(&path).expect("the entry save's rows");
+    let mid = std::fs::read_to_string(&path).expect("the exit save wrote");
     assert!(
-        mid.contains("showSubtitles:false\n"),
-        "the sub-screen's own walks the save never speaks"
+        mid.contains("showSubtitles:true\n"),
+        "the inherited removed() the exit save keeps"
     );
     // THE PARENT'S OWN EXIT (the removed() moment the save the
     // sub-screen's change banks — the restart the row outlives)
@@ -11662,10 +11676,11 @@ fn the_notification_row_the_multiplier_wears() {
         nd.label, "Notification Time: 10.0x",
         "the ceiling seat the caption speaks"
     );
-    // THE ESCAPE'S OWN LANE (the sub-screen the save never speaks —
-    // the in-screen walk the file's pre-exit row keeps) + THE PARENT'S
-    // OWN EXIT (the removed() moment the save the slider's seats bank
-    // — the restart the row outlives)
+    // THE ESCAPE'S OWN LANE (the shouldCloseOnEsc default the parent
+    // ride returns — the base class's own `OptionsSubScreen.removed()`
+    // the exit's save the file keeps, the 185 recon the family banks)
+    // + THE PARENT'S OWN EXIT (the removed() moment the save the
+    // slider's seats bank — the restart the row outlives)
     app.on_escape();
     assert_eq!(
         app.screen,
@@ -11731,4 +11746,252 @@ fn the_notification_row_the_multiplier_wears() {
     app3.render(&mut fb, &mut assets);
     let diff = diff_count(&bare, &fb.color, 0, 300, 640, 60);
     assert!(diff > 20, "the doubled window the row paints: {diff}");
+}
+
+// THE CONTROLS SCREEN'S OWN PAIR (the autopush-185 round — the
+// OptionsScreen's `options.controls` button the first addSmall row
+// the openScreenButton walk builds, the ControlsScreen the
+// OptionsSubScreen family extends: the addOptions walk the addSmall
+// PAIR builds (the LEFT `options.mouse_settings` the
+// `lambda$addOptions$0` walk the MouseSettingsScreen opens, the RIGHT
+// `controls.keybinds` the `lambda$addOptions$1` walk the
+// KeyBindsScreen opens), the MouseSettings the sensitivity index-0
+// seat the store's own slider wears, the KeyBinds the EMPTY list the
+// client's keyMappings the store never carried keeps + the Reset
+// Keys/Done footer pair, and the SAVE LAW the base class's own
+// `OptionsSubScreen.removed()` the whole family inherits — every
+// sub-screen exit the file's rows keep)
+#[test]
+fn the_controls_pair_the_sub_screens_the_family_save_wears() {
+    let dir = std::env::temp_dir().join(format!("mc2rs_controls_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&dir);
+    let path = dir.join("options.txt");
+    let mut app = App::new(262);
+    app.options_file = Some(path.clone());
+    // THE OPENER'S OWN ROW (the title lane the pair wears — the
+    // `options.controls` word the lang table speaks, the LEFT seat
+    // the first row's own precedence keeps)
+    app.open(ScreenKind::Options);
+    app.render_title_buttons_for_test();
+    let ctl = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "controls")
+        .expect("the controls opener")
+        .clone();
+    assert_eq!(
+        ctl.label, "Controls...",
+        "the `options.controls` word the lang table speaks"
+    );
+    let acc = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "accessibility")
+        .expect("the pair's right seat")
+        .clone();
+    assert!(
+        ctl.x + ctl.w / 2 < acc.x + acc.w / 2,
+        "the pair the LEFT/RIGHT seats keep"
+    );
+    // THE ENTRY SAVE THE OPTIONS EXIT BANKS (the old==Options head
+    // the removed() moment the file's rows keep — the DEFAULT 0.5
+    // the mouseSensitivity row speaks)
+    app.on_click(ctl.x + ctl.w / 2, ctl.y + ctl.h / 2);
+    assert_eq!(
+        app.screen,
+        ScreenKind::Controls,
+        "the sub-screen the opener wears"
+    );
+    let entry = std::fs::read_to_string(&path).expect("the entry save wrote");
+    assert!(
+        entry.contains("mouseSensitivity:0.5\n"),
+        "the options exit the removed() moment banks ({entry})"
+    );
+    // THE PAIR'S OWN SEATS (the addOptions walk the addSmall pair
+    // keeps — the LEFT the mouse settings caption the cp#44 utf8's
+    // own row speaks, the RIGHT the keybinds caption the cp#68 utf8
+    // wears; the 7-toggle rows the store the client never carried —
+    // the pair row the ONLY seat the list hosts)
+    app.render_title_buttons_for_test();
+    let ms = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "mousesettings")
+        .expect("the pair's left seat")
+        .clone();
+    let kb = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "keybinds")
+        .expect("the pair's right seat")
+        .clone();
+    assert_eq!(
+        ms.label, "Mouse Settings...",
+        "the `options.mouse_settings` word the pair speaks"
+    );
+    assert_eq!(
+        kb.label, "Key Binds...",
+        "the `controls.keybinds` word the pair speaks"
+    );
+    assert!(
+        app.buttons.iter().any(|b| b.id == "controlsdone"),
+        "the Done footer the base class's own walk keeps"
+    );
+    // THE LEFT SEAT'S OWN WALK (the lambda$addOptions$0 supplier the
+    // click answers — the MouseSettingsScreen the new
+    // ControlsScreen(this, options) parent wears; the ENTRY SAVE the
+    // family gate's Controls arm banks)
+    app.on_click(ms.x + ms.w / 2, ms.y + ms.h / 2);
+    assert_eq!(
+        app.screen,
+        ScreenKind::MouseSettings,
+        "the mouse settings the left seat opens"
+    );
+    // THE SENSITIVITY ROW'S OWN SEAT (the Options.sensitivity()
+    // index-0 the array's own walk keeps — the caption the `*2.0`
+    // percent law the default's 100% word speaks, the value the
+    // slider's own unit wears)
+    app.render_title_buttons_for_test();
+    let sens = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_ms_sensitivity")
+        .expect("the sensitivity row")
+        .clone();
+    assert_eq!(
+        sens.label, "Sensitivity: 100%",
+        "the default's own percent word"
+    );
+    assert_eq!(sens.value, Some(0.5), "the slider the store wears");
+    // THE SLIDER'S OWN LAW (the same walk the Options screen's row
+    // wears — the press inside the track arms, the drag the store's
+    // own seat follows, the release the disarm speaks, the disarmed
+    // drag never moves)
+    app.on_press(sens.x + 4, sens.y + sens.h / 2);
+    assert_eq!(app.look_sensitivity, 0.0, "the left edge clamps");
+    assert!(app.sensitivity_drag, "the press inside the track arms");
+    app.render_title_buttons_for_test();
+    let sens = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_ms_sensitivity")
+        .expect("the row")
+        .clone();
+    assert_eq!(
+        sens.label, "Sensitivity: *yawn*",
+        "the 0.0 the min end wears"
+    );
+    app.on_sensitivity_slider_drag(sens.x + sens.w / 2);
+    assert_eq!(
+        app.look_sensitivity, 0.5,
+        "the mid-track drag the half wears"
+    );
+    app.on_left_release();
+    assert!(!app.sensitivity_drag, "the release disarms");
+    app.on_sensitivity_slider_drag(sens.x + 4);
+    assert_eq!(app.look_sensitivity, 0.5, "the disarmed drag never moves");
+    // THE DONE FOOTER'S OWN RETURN (the onClose walk the msdone id
+    // answers — the lastScreen the CONTROLS screen wears; THE FAMILY
+    // SAVE THE BASE CLASS BANKS: the MouseSettings exit the inherited
+    // `OptionsSubScreen.removed()` the file's rows keep)
+    app.look_sensitivity = 0.75;
+    app.render_title_buttons_for_test();
+    let done = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "msdone")
+        .expect("the done footer")
+        .clone();
+    app.on_click(done.x + done.w / 2, done.y + done.h / 2);
+    assert_eq!(
+        app.screen,
+        ScreenKind::Controls,
+        "the parent the Done wears"
+    );
+    let mid = std::fs::read_to_string(&path).expect("the exit save wrote");
+    assert!(
+        mid.contains("mouseSensitivity:0.75\n"),
+        "the inherited removed() the MouseSettings exit banks ({mid})"
+    );
+    // THE RIGHT SEAT'S OWN WALK (the lambda$addOptions$1 supplier the
+    // click answers — the KeyBindsScreen the empty list the client's
+    // keyMappings the store never carried keeps, the footer pair the
+    // addFooter override wears)
+    app.render_title_buttons_for_test();
+    let kb = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "keybinds")
+        .expect("the right seat")
+        .clone();
+    app.on_click(kb.x + kb.w / 2, kb.y + kb.h / 2);
+    assert_eq!(
+        app.screen,
+        ScreenKind::KeyBinds,
+        "the key binds the right seat opens"
+    );
+    app.render_title_buttons_for_test();
+    let reset = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_reset")
+        .expect("the reset footer")
+        .clone();
+    let kbd = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kbdone")
+        .expect("the done footer")
+        .clone();
+    assert_eq!(
+        reset.label, "Reset Keys",
+        "the `controls.resetAll` word the footer speaks"
+    );
+    assert_eq!(kbd.label, "Done", "the GUI_DONE word the pair wears");
+    assert!(
+        reset.x + reset.w / 2 < kbd.x + kbd.w / 2,
+        "the footer pair the LEFT/RIGHT seats keep"
+    );
+    // THE RESET'S OWN WALK (the lambda$addFooter$0 the array over —
+    // setKey(getDefaultKey()) the each-row answer; the EMPTY array
+    // the loop the zero rows the honest no-op keeps)
+    app.on_click(reset.x + reset.w / 2, reset.y + reset.h / 2);
+    assert_eq!(
+        app.screen,
+        ScreenKind::KeyBinds,
+        "the empty array the reset the same screen keeps"
+    );
+    // THE ESCAPE'S OWN LANE (the shouldCloseOnEsc default the
+    // keyPressed walk answers — the lastScreen the CONTROLS ride
+    // returns; the family save the inherited removed() banks)
+    app.on_escape();
+    assert_eq!(
+        app.screen,
+        ScreenKind::Controls,
+        "the parent the Escape ride returns"
+    );
+    // THE CONTROLS SCREEN'S OWN ESCAPE (the same default — the
+    // lastScreen the parent Options wears; the family save the same
+    // law the exit keeps)
+    app.on_escape();
+    assert_eq!(
+        app.screen,
+        ScreenKind::Options,
+        "the Options screen the Controls escape wears"
+    );
+    let post = std::fs::read_to_string(&path).expect("the exits wrote");
+    assert!(
+        post.contains("mouseSensitivity:0.75\n"),
+        "the family's own exits the rows keep ({post})"
+    );
+    // THE RESTART'S OWN ROW (the load the file's parse rides — the
+    // 0.75 the decode keeps)
+    let mut re = App::new(262);
+    re.options_file = Some(path.clone());
+    re.options_file_load();
+    assert_eq!(
+        re.look_sensitivity, 0.75,
+        "the restart the sub-screen's row the decode keeps"
+    );
+    let _ = std::fs::remove_dir_all(&dir);
 }

@@ -1,0 +1,473 @@
+########## A. KeyBindsScreen addContents/addOptions/addFooter + lambdas
+--- net.minecraft.client.gui.screens.options.controls.KeyBindsScreen.addContents()V
+0: aload_0
+1: aload_0
+2: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.layoutLnet/minecraft/client/gui/layouts/HeaderAndFooterLayout;
+5: new net/minecraft/client/gui/screens/options/controls/KeyBindsList
+8: dup
+9: aload_0
+10: aload_0
+11: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.minecraftLnet/minecraft/client/Minecraft;
+14: invokespecial net/minecraft/client/gui/screens/options/controls/KeyBindsList.<init>(Lnet/minecraft/client/gui/screens/options/controls/KeyBindsScreen;Lnet/minecraft/client/Minecraft;)V
+17: invokevirtual net/minecraft/client/gui/layouts/HeaderAndFooterLayout.addToContents(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+20: checkcast net/minecraft/client/gui/screens/options/controls/KeyBindsList
+23: putfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.keyBindsListLnet/minecraft/client/gui/screens/options/controls/KeyBindsList;
+26: return
+--- net.minecraft.client.gui.screens.options.controls.KeyBindsScreen.addOptions()V
+0: return
+--- net.minecraft.client.gui.screens.options.controls.KeyBindsScreen.addFooter()V
+0: aload_0
+1: ldc controls.resetAll
+3: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+6: aload_0
+7: invokedynamic indy
+12: invokestatic net/minecraft/client/gui/components/Button.builder(Lnet/minecraft/network/chat/Component;Lnet/minecraft/client/gui/components/Button$OnPress;)Lnet/minecraft/client/gui/components/Button$Builder;
+15: invokevirtual net/minecraft/client/gui/components/Button$Builder.build()Lnet/minecraft/client/gui/components/Button;
+18: putfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.resetButtonLnet/minecraft/client/gui/components/Button;
+21: aload_0
+22: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.layoutLnet/minecraft/client/gui/layouts/HeaderAndFooterLayout;
+25: invokestatic net/minecraft/client/gui/layouts/LinearLayout.horizontal()Lnet/minecraft/client/gui/layouts/LinearLayout;
+28: bipush 8
+30: invokevirtual net/minecraft/client/gui/layouts/LinearLayout.spacing(I)Lnet/minecraft/client/gui/layouts/LinearLayout;
+33: invokevirtual net/minecraft/client/gui/layouts/HeaderAndFooterLayout.addToFooter(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+36: checkcast net/minecraft/client/gui/layouts/LinearLayout
+39: astore_0
+40: aload_1
+41: aload_0
+42: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.resetButtonLnet/minecraft/client/gui/components/Button;
+45: invokevirtual net/minecraft/client/gui/layouts/LinearLayout.addChild(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+48: pop
+49: aload_1
+50: getstatic net/minecraft/network/chat/CommonComponents.GUI_DONELnet/minecraft/network/chat/Component;
+53: aload_0
+54: invokedynamic indy
+59: invokestatic net/minecraft/client/gui/components/Button.builder(Lnet/minecraft/network/chat/Component;Lnet/minecraft/client/gui/components/Button$OnPress;)Lnet/minecraft/client/gui/components/Button$Builder;
+62: invokevirtual net/minecraft/client/gui/components/Button$Builder.build()Lnet/minecraft/client/gui/components/Button;
+65: invokevirtual net/minecraft/client/gui/layouts/LinearLayout.addChild(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+68: pop
+69: return
+--- net.minecraft.client.gui.screens.options.controls.KeyBindsScreen.lambda$addFooter$1(Lnet/minecraft/client/gui/components/Button;)V
+0: aload_0
+1: invokevirtual net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.onClose()V
+4: return
+--- net.minecraft.client.gui.screens.options.controls.KeyBindsScreen.lambda$addFooter$0(Lnet/minecraft/client/gui/components/Button;)V
+0: aload_0
+1: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.optionsLnet/minecraft/client/Options;
+4: getfield net/minecraft/client/Options.keyMappings[Lnet/minecraft/client/KeyMapping;
+7: astore_1
+8: aload_2
+9: arraylength
+10: istore_3
+11: iconst_0
+12: istore istore 4
+14: iload iload 4
+16: iload_3
+17: if_icmpge -> 42
+20: aload_2
+21: iload iload 4
+23: aaload
+24: astore astore 5
+26: aload aload 5
+28: aload aload 5
+30: invokevirtual net/minecraft/client/KeyMapping.getDefaultKey()Lcom/mojang/blaze3d/platform/InputConstants$Key;
+33: invokevirtual net/minecraft/client/KeyMapping.setKey(Lcom/mojang/blaze3d/platform/InputConstants$Key;)V
+36: iinc 4 1
+39: goto -> 14
+42: aload_0
+43: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.keyBindsListLnet/minecraft/client/gui/screens/options/controls/KeyBindsList;
+46: invokevirtual net/minecraft/client/gui/screens/options/controls/KeyBindsList.resetMappingAndUpdateButtons()V
+49: return
+--- net.minecraft.client.gui.screens.options.controls.KeyBindsScreen.lambda$addFooter$0(Lnet/minecraft/client/gui/components/Button;)V
+0: aload_0
+1: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.optionsLnet/minecraft/client/Options;
+4: getfield net/minecraft/client/Options.keyMappings[Lnet/minecraft/client/KeyMapping;
+7: astore_1
+8: aload_2
+9: arraylength
+10: istore_3
+11: iconst_0
+12: istore istore 4
+14: iload iload 4
+16: iload_3
+17: if_icmpge -> 42
+20: aload_2
+21: iload iload 4
+23: aaload
+24: astore astore 5
+26: aload aload 5
+28: aload aload 5
+30: invokevirtual net/minecraft/client/KeyMapping.getDefaultKey()Lcom/mojang/blaze3d/platform/InputConstants$Key;
+33: invokevirtual net/minecraft/client/KeyMapping.setKey(Lcom/mojang/blaze3d/platform/InputConstants$Key;)V
+36: iinc 4 1
+39: goto -> 14
+42: aload_0
+43: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.keyBindsListLnet/minecraft/client/gui/screens/options/controls/KeyBindsList;
+46: invokevirtual net/minecraft/client/gui/screens/options/controls/KeyBindsList.resetMappingAndUpdateButtons()V
+49: return
+--- net.minecraft.client.gui.screens.options.controls.KeyBindsScreen.lambda$addFooter$1(Lnet/minecraft/client/gui/components/Button;)V
+0: aload_0
+1: invokevirtual net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.onClose()V
+4: return
+--- net.minecraft.client.gui.screens.options.controls.KeyBindsScreen.mouseClicked(Lnet/minecraft/client/input/MouseButtonEvent;Z)Z
+0: aload_0
+1: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.selectedKeyLnet/minecraft/client/KeyMapping;
+4: ifnull -> 38
+7: aload_0
+8: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.selectedKeyLnet/minecraft/client/KeyMapping;
+11: getstatic com/mojang/blaze3d/platform/InputConstants$Type.MOUSELcom/mojang/blaze3d/platform/InputConstants$Type;
+14: aload_1
+15: invokevirtual net/minecraft/client/input/MouseButtonEvent.button()I
+18: invokevirtual com/mojang/blaze3d/platform/InputConstants$Type.getOrCreate(I)Lcom/mojang/blaze3d/platform/InputConstants$Key;
+21: invokevirtual net/minecraft/client/KeyMapping.setKey(Lcom/mojang/blaze3d/platform/InputConstants$Key;)V
+24: aload_0
+25: aconst_null
+26: putfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.selectedKeyLnet/minecraft/client/KeyMapping;
+29: aload_0
+30: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.keyBindsListLnet/minecraft/client/gui/screens/options/controls/KeyBindsList;
+33: invokevirtual net/minecraft/client/gui/screens/options/controls/KeyBindsList.resetMappingAndUpdateButtons()V
+36: iconst_1
+37: ireturn
+38: aload_0
+39: aload_1
+40: iload_2
+41: invokespecial net/minecraft/client/gui/screens/options/OptionsSubScreen.mouseClicked(Lnet/minecraft/client/input/MouseButtonEvent;Z)Z
+44: ireturn
+--- net.minecraft.client.gui.screens.options.controls.KeyBindsScreen.repositionElements()V
+0: aload_0
+1: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.layoutLnet/minecraft/client/gui/layouts/HeaderAndFooterLayout;
+4: invokevirtual net/minecraft/client/gui/layouts/HeaderAndFooterLayout.arrangeElements()V
+7: aload_0
+8: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.keyBindsListLnet/minecraft/client/gui/screens/options/controls/KeyBindsList;
+11: aload_0
+12: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.widthI
+15: aload_0
+16: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.layoutLnet/minecraft/client/gui/layouts/HeaderAndFooterLayout;
+19: invokevirtual net/minecraft/client/gui/screens/options/controls/KeyBindsList.updateSize(ILnet/minecraft/client/gui/layouts/HeaderAndFooterLayout;)V
+22: return
+
+########## B. OptionsSubScreen addFooter + resetOption (the base law)
+--- net.minecraft.client.gui.screens.options.OptionsSubScreen.addFooter()V
+0: aload_0
+1: getfield net/minecraft/client/gui/screens/options/OptionsSubScreen.layoutLnet/minecraft/client/gui/layouts/HeaderAndFooterLayout;
+4: getstatic net/minecraft/network/chat/CommonComponents.GUI_DONELnet/minecraft/network/chat/Component;
+7: aload_0
+8: invokedynamic indy
+13: invokestatic net/minecraft/client/gui/components/Button.builder(Lnet/minecraft/network/chat/Component;Lnet/minecraft/client/gui/components/Button$OnPress;)Lnet/minecraft/client/gui/components/Button$Builder;
+16: sipush 200
+19: invokevirtual net/minecraft/client/gui/components/Button$Builder.width(I)Lnet/minecraft/client/gui/components/Button$Builder;
+22: invokevirtual net/minecraft/client/gui/components/Button$Builder.build()Lnet/minecraft/client/gui/components/Button;
+25: invokevirtual net/minecraft/client/gui/layouts/HeaderAndFooterLayout.addToFooter(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+28: pop
+29: return
+--- net.minecraft.client.gui.screens.options.OptionsSubScreen.lambda$addFooter$0(Lnet/minecraft/client/gui/components/Button;)V
+0: aload_0
+1: invokevirtual net/minecraft/client/gui/screens/options/OptionsSubScreen.onClose()V
+4: return
+--- net.minecraft.client.gui.screens.options.OptionsSubScreen.resetOption(Lnet/minecraft/client/OptionInstance;)V
+0: aload_0
+1: getfield net/minecraft/client/gui/screens/options/OptionsSubScreen.listLnet/minecraft/client/gui/components/OptionsList;
+4: ifnull -> 15
+7: aload_0
+8: getfield net/minecraft/client/gui/screens/options/OptionsSubScreen.listLnet/minecraft/client/gui/components/OptionsList;
+11: aload_1
+12: invokevirtual net/minecraft/client/gui/components/OptionsList.resetOption(Lnet/minecraft/client/OptionInstance;)V
+15: return
+
+########## C. KeyBindsList methods + utf8 words
+=== net.minecraft.client.gui.screens.options.controls.KeyBindsList methods:
+  <init>(Lnet/minecraft/client/gui/screens/options/controls/KeyBindsScreen;Lnet/minecraft/client/Minecraft;)V
+  resetMappingAndUpdateButtons()V
+  refreshEntries()V
+  getRowWidth()I
+  access$000(Lnet/minecraft/client/gui/screens/options/controls/KeyBindsList;)Lnet/minecraft/client/Minecraft;
+  access$100(Lnet/minecraft/client/gui/screens/options/controls/KeyBindsList;)I
+  access$200(Lnet/minecraft/client/gui/screens/options/controls/KeyBindsList;)I
+  access$300(Lnet/minecraft/client/gui/screens/options/controls/KeyBindsList;)Lnet/minecraft/client/Minecraft;
+  access$400(Lnet/minecraft/client/gui/screens/options/controls/KeyBindsList;)Lnet/minecraft/client/Minecraft;
+  access$500(Lnet/minecraft/client/gui/screens/options/controls/KeyBindsList;)Lnet/minecraft/client/Minecraft;
+=== net.minecraft.client.gui.screens.options.controls.KeyBindsList utf8 words (needles: ['key', 'category', 'none', '> <', 'conflict'])
+  cp#38: 'keyBindsScreen'
+  cp#50: 'keyMappings'
+  cp#135: 'category'
+  cp#139: 'key'
+
+########## D. KeyBindsList ctor (the rows the list builds)
+--- net.minecraft.client.gui.screens.options.controls.KeyBindsList.<init>(Lnet/minecraft/client/gui/screens/options/controls/KeyBindsScreen;Lnet/minecraft/client/Minecraft;)V
+0: aload_0
+1: aload_2
+2: aload_1
+3: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.widthI
+6: aload_1
+7: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.layoutLnet/minecraft/client/gui/layouts/HeaderAndFooterLayout;
+10: invokevirtual net/minecraft/client/gui/layouts/HeaderAndFooterLayout.getContentHeight()I
+13: aload_1
+14: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.layoutLnet/minecraft/client/gui/layouts/HeaderAndFooterLayout;
+17: invokevirtual net/minecraft/client/gui/layouts/HeaderAndFooterLayout.getHeaderHeight()I
+20: bipush 20
+22: invokespecial net/minecraft/client/gui/components/ContainerObjectSelectionList.<init>(Lnet/minecraft/client/Minecraft;IIII)V
+25: aload_0
+26: aload_1
+27: putfield net/minecraft/client/gui/screens/options/controls/KeyBindsList.keyBindsScreenLnet/minecraft/client/gui/screens/options/controls/KeyBindsScreen;
+30: aload_2
+31: getfield net/minecraft/client/Minecraft.optionsLnet/minecraft/client/Options;
+34: getfield net/minecraft/client/Options.keyMappings[Lnet/minecraft/client/KeyMapping;
+37: invokestatic org/apache/commons/lang3/ArrayUtils.clone([Ljava/lang/Object;)[Ljava/lang/Object;
+40: checkcast [Lnet/minecraft/client/KeyMapping;
+43: astore_2
+44: aload_3
+45: invokestatic java/util/Arrays.sort([Ljava/lang/Object;)V
+48: aconst_null
+49: astore astore 4
+51: aload_3
+52: astore astore 5
+54: aload aload 5
+56: arraylength
+57: istore istore 6
+59: iconst_0
+60: istore istore 7
+62: iload iload 7
+64: iload iload 6
+66: if_icmpge -> 168
+69: aload aload 5
+71: iload iload 7
+73: aaload
+74: astore astore 8
+76: aload aload 8
+78: invokevirtual net/minecraft/client/KeyMapping.getCategory()Lnet/minecraft/client/KeyMapping$Category;
+81: astore astore 9
+83: aload aload 9
+85: aload aload 4
+87: if_acmpeq -> 109
+90: aload aload 9
+92: astore astore 4
+94: aload_0
+95: new net/minecraft/client/gui/screens/options/controls/KeyBindsList$CategoryEntry
+98: dup
+99: aload_0
+100: aload aload 9
+102: invokespecial net/minecraft/client/gui/screens/options/controls/KeyBindsList$CategoryEntry.<init>(Lnet/minecraft/client/gui/screens/options/controls/KeyBindsList;Lnet/minecraft/client/KeyMapping$Category;)V
+105: invokevirtual net/minecraft/client/gui/screens/options/controls/KeyBindsList.addEntry(Lnet/minecraft/client/gui/components/AbstractSelectionList$Entry;)I
+108: pop
+109: aload aload 8
+111: invokevirtual net/minecraft/client/KeyMapping.getName()Ljava/lang/String;
+114: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+117: astore astore 10
+119: aload_2
+120: getfield net/minecraft/client/Minecraft.fontLnet/minecraft/client/gui/Font;
+123: aload aload 10
+125: invokevirtual net/minecraft/client/gui/Font.width(Lnet/minecraft/network/chat/FormattedText;)I
+128: istore istore 11
+130: iload iload 11
+132: aload_0
+133: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsList.maxNameWidthI
+136: if_icmple -> 145
+139: aload_0
+140: iload iload 11
+142: putfield net/minecraft/client/gui/screens/options/controls/KeyBindsList.maxNameWidthI
+145: aload_0
+146: new net/minecraft/client/gui/screens/options/controls/KeyBindsList$KeyEntry
+149: dup
+150: aload_0
+151: aload aload 8
+153: aload aload 10
+155: invokespecial net/minecraft/client/gui/screens/options/controls/KeyBindsList$KeyEntry.<init>(Lnet/minecraft/client/gui/screens/options/controls/KeyBindsList;Lnet/minecraft/client/KeyMapping;Lnet/minecraft/network/chat/Component;)V
+158: invokevirtual net/minecraft/client/gui/screens/options/controls/KeyBindsList.addEntry(Lnet/minecraft/client/gui/components/AbstractSelectionList$Entry;)I
+161: pop
+162: iinc 7 1
+165: goto -> 62
+168: return
+
+########## E. KeyEntry walk (the row's own click/key)
+=== net.minecraft.client.gui.screens.options.controls.KeyBindsList$KeyEntry methods:
+  <init>(Lnet/minecraft/client/gui/screens/options/controls/KeyBindsList;Lnet/minecraft/client/KeyMapping;Lnet/minecraft/network/chat/Component;)V
+  extractContent(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIZF)V
+  children()Ljava/util/List;
+  narratables()Ljava/util/List;
+  refreshEntry()V
+  lambda$new$3(Lnet/minecraft/network/chat/Component;Ljava/util/function/Supplier;)Lnet/minecraft/network/chat/MutableComponent;
+  lambda$new$2(Lnet/minecraft/client/KeyMapping;Lnet/minecraft/client/gui/screens/options/controls/KeyBindsList;Lnet/minecraft/client/gui/components/Button;)V
+  lambda$new$1(Lnet/minecraft/client/KeyMapping;Lnet/minecraft/network/chat/Component;Ljava/util/function/Supplier;)Lnet/minecraft/network/chat/MutableComponent;
+  lambda$new$0(Lnet/minecraft/client/gui/screens/options/controls/KeyBindsList;Lnet/minecraft/client/KeyMapping;Lnet/minecraft/client/gui/components/Button;)V
+  <clinit>()V
+--- net.minecraft.client.gui.screens.options.controls.KeyBindsList$KeyEntry.<init>(Lnet/minecraft/client/gui/screens/options/controls/KeyBindsList;Lnet/minecraft/client/KeyMapping;Lnet/minecraft/network/chat/Component;)V
+0: aload_0
+1: aload_1
+2: dup
+3: invokestatic java/util/Objects.requireNonNull(Ljava/lang/Object;)Ljava/lang/Object;
+6: pop
+7: putfield net/minecraft/client/gui/screens/options/controls/KeyBindsList$KeyEntry.this$0Lnet/minecraft/client/gui/screens/options/controls/KeyBindsList;
+10: aload_0
+11: invokespecial net/minecraft/client/gui/screens/options/controls/KeyBindsList$Entry.<init>()V
+14: aload_0
+15: iconst_0
+16: putfield net/minecraft/client/gui/screens/options/controls/KeyBindsList$KeyEntry.hasCollisionZ
+19: aload_0
+20: aload_2
+21: putfield net/minecraft/client/gui/screens/options/controls/KeyBindsList$KeyEntry.keyLnet/minecraft/client/KeyMapping;
+24: aload_0
+25: aload_3
+26: putfield net/minecraft/client/gui/screens/options/controls/KeyBindsList$KeyEntry.nameLnet/minecraft/network/chat/Component;
+29: aload_0
+30: aload_3
+31: aload_1
+32: aload_2
+33: invokedynamic indy
+38: invokestatic net/minecraft/client/gui/components/Button.builder(Lnet/minecraft/network/chat/Component;Lnet/minecraft/client/gui/components/Button$OnPress;)Lnet/minecraft/client/gui/components/Button$Builder;
+41: iconst_0
+42: iconst_0
+43: bipush 75
+45: bipush 20
+47: invokevirtual net/minecraft/client/gui/components/Button$Builder.bounds(IIII)Lnet/minecraft/client/gui/components/Button$Builder;
+50: aload_2
+51: aload_3
+52: invokedynamic indy
+57: invokevirtual net/minecraft/client/gui/components/Button$Builder.createNarration(Lnet/minecraft/client/gui/components/Button$CreateNarration;)Lnet/minecraft/client/gui/components/Button$Builder;
+60: invokevirtual net/minecraft/client/gui/components/Button$Builder.build()Lnet/minecraft/client/gui/components/Button;
+63: putfield net/minecraft/client/gui/screens/options/controls/KeyBindsList$KeyEntry.changeButtonLnet/minecraft/client/gui/components/Button;
+66: aload_0
+67: getstatic net/minecraft/client/gui/screens/options/controls/KeyBindsList$KeyEntry.RESET_BUTTON_TITLELnet/minecraft/network/chat/Component;
+70: aload_2
+71: aload_1
+72: invokedynamic indy
+77: invokestatic net/minecraft/client/gui/components/Button.builder(Lnet/minecraft/network/chat/Component;Lnet/minecraft/client/gui/components/Button$OnPress;)Lnet/minecraft/client/gui/components/Button$Builder;
+80: iconst_0
+81: iconst_0
+82: bipush 50
+84: bipush 20
+86: invokevirtual net/minecraft/client/gui/components/Button$Builder.bounds(IIII)Lnet/minecraft/client/gui/components/Button$Builder;
+89: aload_3
+90: invokedynamic indy
+95: invokevirtual net/minecraft/client/gui/components/Button$Builder.createNarration(Lnet/minecraft/client/gui/components/Button$CreateNarration;)Lnet/minecraft/client/gui/components/Button$Builder;
+98: invokevirtual net/minecraft/client/gui/components/Button$Builder.build()Lnet/minecraft/client/gui/components/Button;
+101: putfield net/minecraft/client/gui/screens/options/controls/KeyBindsList$KeyEntry.resetButtonLnet/minecraft/client/gui/components/Button;
+104: aload_0
+105: invokevirtual net/minecraft/client/gui/screens/options/controls/KeyBindsList$KeyEntry.refreshEntry()V
+108: return
+
+########## F. lang rows (en_us.json)
+  controls.keybinds = 'Key Binds...'
+  controls.keybinds.duplicateKeybinds = 'This key is also used for:\n%s'
+  controls.keybinds.title = 'Key Binds'
+  controls.reset = 'Reset'
+  controls.resetAll = 'Reset Keys'
+  controls.title = 'Controls'
+  gui.done = 'Done'
+  key.attack = 'Attack/Destroy'
+  key.back = 'Walk Backward'
+  key.categories.creative = 'Creative Mode'
+  key.categories.gameplay = 'Gameplay'
+  key.categories.inventory = 'Inventory'
+  key.categories.misc = 'Miscellaneous'
+  key.categories.movement = 'Movement'
+  key.categories.multiplayer = 'Multiplayer'
+  key.categories.spectator = 'Spectator'
+  key.categories.ui = 'Game Interface'
+  key.chat = 'Open Chat'
+  key.drop = 'Drop Selected Item'
+  key.forward = 'Walk Forward'
+  key.inventory = 'Open/Close Inventory'
+  key.jump = 'Jump'
+  key.keyboard.apostrophe = "'"
+  key.keyboard.backslash = '\\'
+  key.keyboard.backspace = 'Backspace'
+  key.keyboard.caps.lock = 'Caps Lock'
+  key.keyboard.comma = ','
+  key.keyboard.delete = 'Delete'
+  key.keyboard.down = 'Down Arrow'
+  key.keyboard.end = 'End'
+  key.keyboard.enter = 'Enter'
+  key.keyboard.equal = '='
+  key.keyboard.escape = 'Escape'
+  key.keyboard.f1 = 'F1'
+  key.keyboard.f10 = 'F10'
+  key.keyboard.f11 = 'F11'
+  key.keyboard.f12 = 'F12'
+  key.keyboard.f13 = 'F13'
+  key.keyboard.f14 = 'F14'
+  key.keyboard.f15 = 'F15'
+  key.keyboard.f16 = 'F16'
+  key.keyboard.f17 = 'F17'
+  key.keyboard.f18 = 'F18'
+  key.keyboard.f19 = 'F19'
+  key.keyboard.f2 = 'F2'
+  key.keyboard.f20 = 'F20'
+  key.keyboard.f21 = 'F21'
+  key.keyboard.f22 = 'F22'
+  key.keyboard.f23 = 'F23'
+  key.keyboard.f24 = 'F24'
+  key.keyboard.f25 = 'F25'
+  key.keyboard.f3 = 'F3'
+  key.keyboard.f4 = 'F4'
+  key.keyboard.f5 = 'F5'
+  key.keyboard.f6 = 'F6'
+  key.keyboard.f7 = 'F7'
+  key.keyboard.f8 = 'F8'
+  key.keyboard.f9 = 'F9'
+  key.keyboard.grave.accent = '`'
+  key.keyboard.home = 'Home'
+  key.keyboard.insert = 'Insert'
+  key.keyboard.keypad.0 = 'Keypad 0'
+  key.keyboard.keypad.1 = 'Keypad 1'
+  key.keyboard.keypad.2 = 'Keypad 2'
+  key.keyboard.keypad.3 = 'Keypad 3'
+  key.keyboard.keypad.4 = 'Keypad 4'
+  key.keyboard.keypad.5 = 'Keypad 5'
+  key.keyboard.keypad.6 = 'Keypad 6'
+  key.keyboard.keypad.7 = 'Keypad 7'
+  key.keyboard.keypad.8 = 'Keypad 8'
+  key.keyboard.keypad.9 = 'Keypad 9'
+  key.keyboard.keypad.add = 'Keypad +'
+  key.keyboard.keypad.decimal = 'Keypad Decimal'
+  key.keyboard.keypad.divide = 'Keypad /'
+  key.keyboard.keypad.enter = 'Keypad Enter'
+  key.keyboard.keypad.equal = 'Keypad ='
+  key.keyboard.keypad.multiply = 'Keypad *'
+  key.keyboard.keypad.subtract = 'Keypad -'
+  key.keyboard.left = 'Left Arrow'
+  key.keyboard.left.alt = 'Left Alt'
+  key.keyboard.left.bracket = '['
+  key.keyboard.left.control = 'Left Control'
+  key.keyboard.left.shift = 'Left Shift'
+  key.keyboard.left.win = 'Left Win'
+  key.keyboard.menu = 'Menu'
+  key.keyboard.minus = '-'
+  key.keyboard.num.lock = 'Num Lock'
+  key.keyboard.page.down = 'Page Down'
+  key.keyboard.page.up = 'Page Up'
+  key.keyboard.pause = 'Pause'
+  key.keyboard.period = '.'
+  key.keyboard.print.screen = 'Print Screen'
+  key.keyboard.right = 'Right Arrow'
+  key.keyboard.right.alt = 'Right Alt'
+  key.keyboard.right.bracket = ']'
+  key.keyboard.right.control = 'Right Control'
+  key.keyboard.right.shift = 'Right Shift'
+  key.keyboard.right.win = 'Right Win'
+  key.keyboard.scroll.lock = 'Scroll Lock'
+  key.keyboard.semicolon = ';'
+  key.keyboard.slash = '/'
+  key.keyboard.space = 'Space'
+  key.keyboard.tab = 'Tab'
+  key.keyboard.unknown = 'Not Bound'
+  key.keyboard.up = 'Up Arrow'
+  key.keyboard.world.1 = 'World 1'
+  key.keyboard.world.2 = 'World 2'
+  key.left = 'Strafe Left'
+  key.mouse = 'Button %1$s'
+  key.mouse.left = 'Left Button'
+  key.mouse.middle = 'Middle Button'
+  key.mouse.right = 'Right Button'
+  key.pickItem = 'Pick Block'
+  key.right = 'Strafe Right'
+  key.sneak = 'Sneak'
+  key.sprint = 'Sprint'
+  key.use = 'Use Item/Place Block'
+  options.controls = 'Controls...'
+  options.mouse_settings = 'Mouse Settings...'
+  options.mouse_settings.title = 'Mouse Settings'
+  options.narrator = 'Narrator'
+  options.narrator.all = 'Narrates All'
+  options.narrator.chat = 'Narrates Chat'
+  options.narrator.notavailable = 'Not Available'
+  options.narrator.off = 'OFF'
+  options.narrator.system = 'Narrates System'

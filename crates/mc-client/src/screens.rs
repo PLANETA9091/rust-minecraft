@@ -6636,6 +6636,81 @@ pub enum ScreenKind {
     /// override the class keeps — the lastScreen the parent ride
     /// returns).
     Accessibility,
+    /// THE CONTROLS SCREEN'S OWN SEAT (javap 26.2 ControlsScreen —
+    /// `net.minecraft.client.gui.screens.options.controls.ControlsScreen`
+    /// the OptionsScreen's `options.controls` button the first addSmall
+    /// row opens: `lambda$init$?` the `new ControlsScreen(this, options)`
+    /// supplier the openScreenButton walk builds — scripts/jar_work/
+    /// controls_185*.py the class walks keep). The vanilla screen's own
+    /// shape the port wears: the OptionsSubScreen family the class
+    /// extends (the TITLE the `controls.title` translatable the clinit
+    /// banks — "Controls" the en_us row speaks), the addOptions walk
+    /// the addSmall PAIR builds (pc 0-38: the LEFT
+    /// `options.mouse_settings` button the `lambda$addOptions$0` walk
+    /// the MouseSettingsScreen opens, the RIGHT `controls.keybinds`
+    /// button the `lambda$addOptions$1` walk the KeyBindsScreen opens —
+    /// the pair the cp#44/#68 utf8s keep, the lang rows the en_us table
+    /// answers), and the 7-instance toggle array the second addSmall
+    /// walk hosts (toggleCrouch/toggleSprint/toggleAttack/toggleUse/
+    /// autoJump/sprintWindow/operatorItemsTab — the static
+    /// `options(Options)` the pcs 0-55 array keeps; the toggles the
+    /// client's own Options store never carried — the rows the
+    /// follow-up candidates wear, the list the ONE pair row hosts).
+    /// THE EXIT LAWS the base class wears: the Done footer the
+    /// OptionsSubScreen.addFooter walk keeps (the 200-wide GUI_DONE the
+    /// onClose ride returns), the Escape the shouldCloseOnEsc default
+    /// the same close speaks, and the REMOVED MOMENT the base's own
+    /// walk banks — `OptionsSubScreen.removed()` pc 7 the
+    /// `Options.save()` call (the probe's verbatim walk the
+    /// autopush-185 recon keeps) the class inherits — the sub-screen's
+    /// own exit the file's rows keep, the open() gate the family the
+    /// widened arm serves.
+    Controls,
+    /// THE MOUSE SETTINGS' OWN SLIDER SEAT (javap 26.2
+    /// MouseSettingsScreen — the ControlsScreen pair's LEFT button the
+    /// `lambda$addOptions$0` walk opens: `new
+    /// MouseSettingsScreen(this, options)` the supplier keeps). The
+    /// static `options(Options)` the 6-instance array wears —
+    /// sensitivity, mouseWheelSensitivity, discreteMouseScroll,
+    /// invertMouseX, invertMouseY, allowCursorChanges (the pcs 0-47
+    /// walk the probe banks) — the client's own Options the ONE seat
+    /// carries: the `Options.sensitivity()` row the index-0 seat hosts
+    /// (the UnitDouble 0..1 the slider's own track wears, the caption
+    /// the `*2.0` percent law the `*yawn*`/`HYPERSPEED!!!` ends keep —
+    /// the SAME caption law the Options screen's own row shares); the
+    /// other 5 rows the stores the client's Options never carried —
+    /// the follow-up candidates the record names. THE TITLE the
+    /// `options.mouse_settings.title` translatable the clinit banks
+    /// ("Mouse Settings" the en_us row speaks); the exit laws the
+    /// OptionsSubScreen base the Controls seat's doc keeps — the Done
+    /// footer + the Escape + the removed() save the open() gate
+    /// serves.
+    MouseSettings,
+    /// THE KEY BINDS' OWN LIST SEAT (javap 26.2 KeyBindsScreen — the
+    /// ControlsScreen pair's RIGHT button the `lambda$addOptions$1`
+    /// walk opens: `new KeyBindsScreen(this, options)` the supplier
+    /// keeps). The TITLE the `controls.keybinds.title` translatable
+    /// the clinit banks ("Key Binds" the en_us row speaks); the
+    /// addContents walk the KeyBindsList builds — the ctor's own walk
+    /// the `options.keyMappings` array clones, sorts, and rows (the
+    /// CategoryEntry/KeyEntry pair the category changes wear) — and
+    /// the CLIENT'S OWN ARRAY THE EMPTY SEAT KEEPS: the keyMappings
+    /// the client's Options store never carried (the input lanes the
+    /// hardcoded keys the window walk serves), the EMPTY list the
+    /// vanilla ctor's own law the honest port renders (an empty array
+    /// the list's rows never wear), the rows the keyMappings store
+    /// round the follow-up banks. THE FOOTER the addFooter override
+    /// wears: the horizontal LinearLayout spacing(8) pair — the
+    /// `controls.resetAll` button the `lambda$addFooter$0` walk the
+    /// `keyMappings` array over (setKey(getDefaultKey()) the each-row
+    /// answer; the EMPTY array the walk's own no-op keeps) + the
+    /// GUI_DONE the `lambda$addFooter$1` onClose ride. The rebind
+    /// lane the class's own walk banks — the selectedKey the
+    /// keyPressed walk answers (Escape the `setKey(UNKNOWN)` clear
+    /// speaks, the other keys the `InputConstants.getKey` bind wears,
+    /// the mouseClicked the MOUSE type the same bind serves) — the
+    /// store the follow-up round's own seat keeps.
+    KeyBinds,
     /// THE DIFFICULTY'S OWN LOCK QUESTION (javap 26.2 ConfirmScreen —
     /// the DifficultyButtons record's lock onPress opens it: the
     /// `lambda$create$1` walk's `new ConfirmScreen(answer ->
@@ -20915,14 +20990,37 @@ impl App {
     }
 
     pub fn open(&mut self, kind: ScreenKind) {
-        // THE OPTIONS SCREEN'S OWN REMOVED MOMENT (the vanilla
+        // THE OPTIONS FAMILY'S OWN REMOVED MOMENT (the vanilla
         // OptionsScreen.removed() pc 4 the Options.save call — the old
         // screen's own discard the setScreen walk answers FIRST: the
         // Done AND the Escape AND the takeover's own screen-replacement
         // lane the SAME moment keeps — the autopush-170 recon the
         // seat's own truth banks, the explicit arms' chords the walk
-        // retires, the file the EVERY exit wears)
-        if self.screen == ScreenKind::Options {
+        // retires, the file the EVERY exit wears). THE SUB-SCREEN'S
+        // OWN INHERITANCE THE 185 RECON BANKS: the
+        // `OptionsSubScreen.removed()` pc 7 the `Options.save()` call
+        // the probe's verbatim walk keeps — the base class the whole
+        // family inherits (Accessibility the own-removed-less class
+        // the super chain answers, Controls/MouseSettings/KeyBinds the
+        // same law wears — no override any of the classes keeps), the
+        // sub-screen's OWN exit the file's rows keep (the Escape's
+        // ride the save speaks — the autopush-176 "the save never
+        // speaks" verdict the base-class walk the probe REFUTES, the
+        // class-file probe the own-methods table only read). THE
+        // WORLD OPTIONS THE GATE REFUSES: the WorldOptionsScreen the
+        // Screen base DIRECTLY extends (the 185 probe the super chain
+        // answers), no removed() the class wears — the in-world
+        // options exit the save never speaks, the client's own lane
+        // the same absence keeps.
+        if self.screen == ScreenKind::Options
+            || matches!(
+                self.screen,
+                ScreenKind::Accessibility
+                    | ScreenKind::Controls
+                    | ScreenKind::MouseSettings
+                    | ScreenKind::KeyBinds
+            )
+        {
             self.options_file_save();
         }
         // THE SETSCREEN'S OWN REMOVED WALK (the vanilla Minecraft.setScreen
@@ -27660,11 +27758,28 @@ impl App {
             // Screen.shouldCloseOnEsc default the Accessibility screen
             // never overrides — the keyPressed walk's close the
             // onClose() ride speaks, the lastScreen the parent
-            // Options screen returns; the open() law the
-            // old==Accessibility check the save never speaks — the
-            // sub-screen the `removed()` method never wears, the save
-            // seat stays the parent's own exit)
+            // Options screen returns; the REMOVED MOMENT the
+            // open() gate's family arm serves — the base class's own
+            // `OptionsSubScreen.removed()` the Options.save call the
+            // 185 recon banks, the exit the file's rows keep)
             self.open(ScreenKind::Options);
+        } else if self.screen == ScreenKind::Controls {
+            // THE CONTROLS SCREEN'S OWN ESCAPE LANE (the
+            // shouldCloseOnEsc default the same close wears — the
+            // lastScreen the parent Options ride returns, the
+            // removed() moment the open() gate's family arm banks)
+            self.open(ScreenKind::Options);
+        } else if self.screen == ScreenKind::MouseSettings {
+            // THE MOUSE SETTINGS' OWN ESCAPE LANE (the same default —
+            // the lastScreen the CONTROLS screen the pair's own
+            // opener wears)
+            self.open(ScreenKind::Controls);
+        } else if self.screen == ScreenKind::KeyBinds {
+            // THE KEY BINDS' OWN ESCAPE LANE (the same default — the
+            // lastScreen the CONTROLS screen the pair's own opener
+            // wears; the selectedKey the rebind lane's own Escape
+            // seat the store round banks)
+            self.open(ScreenKind::Controls);
         } else if self.screen == ScreenKind::Options {
             // THE OPTIONS SCREEN'S OWN ESCAPE LANE (the vanilla Escape
             // the Screen.shouldCloseOnEsc default the keyPressed walk
@@ -30520,6 +30635,22 @@ impl App {
                 if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
                     self.volume = slider_value_from_x(mx, bx, bw);
                     self.volume_drag = true;
+                }
+            }
+            return;
+        }
+        if self.screen == ScreenKind::MouseSettings {
+            // THE SENSITIVITY ROW'S OWN ARM (the Options.sensitivity()
+            // index-0 seat the array's own walk keeps — the
+            // AbstractSliderButton's mouseDown walk the press INSIDE
+            // the track answers, the SAME caption/store law the
+            // Options screen's own row wears: the UnitDouble 0..1 the
+            // value IS, the armed flag the held drag rides)
+            if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_ms_sensitivity") {
+                let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
+                if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
+                    self.look_sensitivity = slider_value_from_x(mx, bx, bw);
+                    self.sensitivity_drag = true;
                 }
             }
             return;
@@ -34930,12 +35061,49 @@ impl App {
                 // open() the old==Options head the removed() moment the
                 // save keeps — the vanilla law the parent's exit wears)
                 "accessibility" => self.open(ScreenKind::Accessibility),
+                // THE CONTROLS SCREEN'S OWN WALK (the 26.2
+                // OptionsScreen's first addSmall row — the
+                // `options.controls` button the openScreenButton walk
+                // builds, the `new ControlsScreen(this, options)`
+                // supplier the cp#367 utf8 keeps; the open() the
+                // old==Options head the removed() moment the save
+                // keeps)
+                "controls" => self.open(ScreenKind::Controls),
+                // THE PAIR'S OWN LEFT SEAT (the ControlsScreen
+                // addOptions pc 4-15 walk — the `options.mouse_settings`
+                // button the `lambda$addOptions$0` supplier opens: the
+                // `new MouseSettingsScreen(this, options)` the cp#44
+                // utf8's own target keeps)
+                "mousesettings" => self.open(ScreenKind::MouseSettings),
+                // THE PAIR'S OWN RIGHT SEAT (the addOptions pc 21-32
+                // walk — the `controls.keybinds` button the
+                // `lambda$addOptions$1` supplier opens: the `new
+                // KeyBindsScreen(this, options)` the cp#68 utf8's own
+                // target keeps)
+                "keybinds" => self.open(ScreenKind::KeyBinds),
+                // THE RESET BUTTON'S OWN WALK (the KeyBindsScreen
+                // addFooter pc 0-15 the `controls.resetAll` button
+                // keeps — the `lambda$addFooter$0` walk the
+                // `keyMappings` array over: setKey(getDefaultKey())
+                // the each-row answer; the CLIENT'S OWN ARRAY THE
+                // EMPTY SEAT KEEPS — the keyMappings the store never
+                // carried, the loop the zero rows the honest no-op
+                // answers)
+                "kb_reset" => {}
+                // THE FOOTERS' OWN RETURNS (the OptionsSubScreen
+                // onClose walk — the lastScreen each opener's own
+                // parent wears: the Controls seat the Options ride,
+                // the Mouse/KeyBinds seats the CONTROLS return; the
+                // removed() moment the open() gate's family arm banks)
+                "controlsdone" => self.open(ScreenKind::Options),
+                "msdone" => self.open(ScreenKind::Controls),
+                "kbdone" => self.open(ScreenKind::Controls),
                 // THE DONE FOOTER'S OWN RETURN (the
                 // AccessibilityOptionsScreen.onClose walk — the
-                // lastScreen the Options screen wears; the open() law
-                // the old==Accessibility check the save never speaks —
-                // the sub-screen the `removed()` method never wears,
-                // the save seat stays the parent's own exit)
+                // lastScreen the Options screen wears; the removed()
+                // moment the open() gate's family arm serves — the
+                // base class's own OptionsSubScreen.removed() the
+                // Options.save call the 185 recon banks)
                 "accdone" => self.open(ScreenKind::Options),
                 // THE DONE FOOTER'S OWN RETURN (the
                 // WorldOptionsScreen.onClose walk — the lastScreen the
@@ -41098,10 +41266,23 @@ impl App {
     /// walk speaks, the screen gate the stale arm a mid-drag close
     /// the rebuild never inherits).
     pub fn on_sensitivity_slider_drag(&mut self, mx: i32) {
-        if !self.sensitivity_drag || self.screen != ScreenKind::Options {
+        if !self.sensitivity_drag
+            || !matches!(
+                self.screen,
+                ScreenKind::Options | ScreenKind::MouseSettings
+            )
+        {
             return;
         }
-        if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_sensitivity") {
+        // THE TWO SEATS' OWN LOOKUP (the Options screen's own row the
+        // `opt_sensitivity` id keeps, the MouseSettings row the
+        // `opt_ms_sensitivity` id wears — the SAME store lane both
+        // seats serve, the armed flag the screen's own row wears)
+        if let Some(b) = self
+            .buttons
+            .iter()
+            .find(|b| b.id == "opt_sensitivity" || b.id == "opt_ms_sensitivity")
+        {
             let (bx, bw) = (b.x, b.w);
             self.look_sensitivity = slider_value_from_x(mx, bx, bw);
         }
@@ -54221,6 +54402,9 @@ impl App {
             ScreenKind::Servers => self.render_servers(&mut g, a, w, h),
             ScreenKind::Options => self.render_options(&mut g, a, w, h),
             ScreenKind::Accessibility => self.render_accessibility(&mut g, a, w, h),
+            ScreenKind::Controls => self.render_controls(&mut g, a, w, h),
+            ScreenKind::MouseSettings => self.render_mouse_settings(&mut g, a, w, h),
+            ScreenKind::KeyBinds => self.render_key_binds(&mut g, a, w, h),
             ScreenKind::WorldOptions => self.render_world_options(&mut g, a, w, h),
             ScreenKind::DifficultyLockConfirm => {
                 self.render_difficulty_lock_confirm(&mut g, a, w, h)
@@ -62164,12 +62348,28 @@ impl App {
         // screen's grid the in-world pause the same row keeps, the
         // inWorld flag the row never reads): the sub-screen the row
         // opens, the fovEffectScale seat the list hosts.
+        // THE OPTIONS ROW'S OWN PAIR (the 26.2 addOptions's first
+        // addSmall row the CONTROLS button wears — the
+        // `options.controls` button the openScreenButton walk builds,
+        // the `new ControlsScreen(this, options)` supplier the cp#367
+        // utf8 keeps; the pair the vanilla geometry keeps — the LEFT
+        // the controls seat the first row's own precedence speaks, the
+        // RIGHT the accessibility seat the sub-screen's own opener
+        // wears, the 4px center gap the addSmall walk answers — the
+        // flat port's slider rows the column the seats above keep)
+        self.buttons.push(Button::new(
+            "controls",
+            tr("options.controls").unwrap_or("Controls...").to_string(),
+            cx - 4 - bw / 2,
+            h / 2 + 32,
+            bw,
+        ));
         self.buttons.push(Button::new(
             "accessibility",
             tr("options.accessibility")
                 .unwrap_or("Accessibility Settings...")
                 .to_string(),
-            cx,
+            cx + 4 + bw / 2,
             h / 2 + 32,
             bw,
         ));
@@ -62323,6 +62523,183 @@ impl App {
             "accdone",
             tr("gui.done").unwrap_or("Done").to_string(),
             cx,
+            h - 28,
+            bw,
+        ));
+        for b in &self.buttons.clone() {
+            b.render(g, a, -1, -1);
+        }
+    }
+
+    /// THE CONTROLS SCREEN'S OWN PAIR (javap 26.2 ControlsScreen —
+    /// the OptionsScreen's `options.controls` button the first
+    /// addSmall row opens, the class the OptionsSubScreen family
+    /// extends): the title the `controls.title` translatable wears
+    /// ("Controls" the en_us row speaks), the addOptions walk the
+    /// addSmall PAIR builds (pc 0-38 — the LEFT `options.mouse_settings`
+    /// button the `lambda$addOptions$0` walk the MouseSettingsScreen
+    /// opens, the RIGHT `controls.keybinds` button the
+    /// `lambda$addOptions$1` walk the KeyBindsScreen opens; the pair
+    /// the vanilla geometry keeps — each 150-wide the `addSmall`
+    /// left/right seats wear, the flat port the 140 the other rows
+    /// share, the 4px center gap the walk's own pair speaks), the
+    /// 7-toggle array the second addSmall the rows the client's
+    /// store never carried (the toggles the follow-up candidates —
+    /// the list the ONE pair row hosts), the Done footer the base
+    /// class's own addFooter keeps (the onClose ride the parent
+    /// returns, the removed() moment the open() gate's family arm
+    /// banks).
+    fn render_controls(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        for y in 0..h {
+            let t = y as f32 / h.max(1) as f32;
+            let c = [0.10 + 0.04 * t, 0.10 + 0.04 * t, 0.13 + 0.05 * t];
+            g.fill(0, y, w, 1, [c[0], c[1], c[2], 1.0]);
+        }
+        g.text_centered(
+            a,
+            w / 2,
+            12,
+            tr("controls.title").unwrap_or("Controls"),
+            WHITE,
+            true,
+        );
+        let cx = w / 2;
+        let bw = 140;
+        // THE PAIR'S OWN SEATS (the addSmall walk's left/right pair —
+        // the LEFT the center `cx - 4 - bw/2` the vanilla geometry
+        // wears, the RIGHT the center `cx + 4 + bw/2` the same gap
+        // keeps)
+        self.buttons.push(Button::new(
+            "mousesettings",
+            tr("options.mouse_settings")
+                .unwrap_or("Mouse Settings...")
+                .to_string(),
+            cx - 4 - bw / 2,
+            h / 2 - 40,
+            bw,
+        ));
+        self.buttons.push(Button::new(
+            "keybinds",
+            tr("controls.keybinds").unwrap_or("Key Binds...").to_string(),
+            cx + 4 + bw / 2,
+            h / 2 - 40,
+            bw,
+        ));
+        self.buttons.push(Button::new(
+            "controlsdone",
+            tr("gui.done").unwrap_or("Done").to_string(),
+            cx,
+            h - 28,
+            bw,
+        ));
+        for b in &self.buttons.clone() {
+            b.render(g, a, -1, -1);
+        }
+    }
+
+    /// THE MOUSE SETTINGS' OWN ROW (javap 26.2 MouseSettingsScreen —
+    /// the ControlsScreen pair's LEFT button the
+    /// `lambda$addOptions$0` walk opens): the title the
+    /// `options.mouse_settings.title` translatable wears ("Mouse
+    /// Settings" the en_us row speaks), the static `options(Options)`
+    /// the 6-instance array the probe banks — the
+    /// `Options.sensitivity()` row the index-0 seat the client's own
+    /// store carries (the UnitDouble 0..1 the slider's own track
+    /// wears, the caption the `*2.0` percent law the Options screen's
+    /// own row shares), the other 5 rows the stores the client never
+    /// carried (the follow-up candidates), the Done footer the base
+    /// class's own walk keeps.
+    fn render_mouse_settings(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        for y in 0..h {
+            let t = y as f32 / h.max(1) as f32;
+            let c = [0.10 + 0.04 * t, 0.10 + 0.04 * t, 0.13 + 0.05 * t];
+            g.fill(0, y, w, 1, [c[0], c[1], c[2], 1.0]);
+        }
+        g.text_centered(
+            a,
+            w / 2,
+            12,
+            tr("options.mouse_settings.title").unwrap_or("Mouse Settings"),
+            WHITE,
+            true,
+        );
+        let cx = w / 2;
+        let bw = 140;
+        // THE SENSITIVITY ROW'S OWN SEAT (the array's index-0 the
+        // `Options.sensitivity()` OptionInstance keeps — the slider's
+        // own value the Some render path answers, the SAME caption
+        // the Options screen's row wears)
+        let mut sens = Button::new(
+            "opt_ms_sensitivity",
+            sensitivity_caption(self.look_sensitivity),
+            cx,
+            h / 2 - 40,
+            bw,
+        );
+        sens.value = Some(self.look_sensitivity);
+        self.buttons.push(sens);
+        self.buttons.push(Button::new(
+            "msdone",
+            tr("gui.done").unwrap_or("Done").to_string(),
+            cx,
+            h - 28,
+            bw,
+        ));
+        for b in &self.buttons.clone() {
+            b.render(g, a, -1, -1);
+        }
+    }
+
+    /// THE KEY BINDS' OWN EMPTY LIST (javap 26.2 KeyBindsScreen — the
+    /// ControlsScreen pair's RIGHT button the `lambda$addOptions$1`
+    /// walk opens): the title the `controls.keybinds.title`
+    /// translatable wears ("Key Binds" the en_us row speaks), the
+    /// addContents walk the KeyBindsList builds — the ctor the
+    /// `options.keyMappings` array clones, sorts, and rows (the
+    /// CategoryEntry/KeyEntry pair the category changes wear) — and
+    /// the CLIENT'S OWN ARRAY THE EMPTY SEAT KEEPS (the keyMappings
+    /// the store never carried, the empty list the vanilla ctor's own
+    /// law the honest port renders — the list area the zero rows, the
+    /// rows the keyMappings store round the follow-up banks). THE
+    /// FOOTER the addFooter override wears: the horizontal
+    /// LinearLayout spacing(8) pair — the `controls.resetAll` button
+    /// the `lambda$addFooter$0` walk the array over (the EMPTY array
+    /// the loop's own no-op keeps) + the GUI_DONE the
+    /// `lambda$addFooter$1` onClose ride.
+    fn render_key_binds(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        for y in 0..h {
+            let t = y as f32 / h.max(1) as f32;
+            let c = [0.10 + 0.04 * t, 0.10 + 0.04 * t, 0.13 + 0.05 * t];
+            g.fill(0, y, w, 1, [c[0], c[1], c[2], 1.0]);
+        }
+        g.text_centered(
+            a,
+            w / 2,
+            12,
+            tr("controls.keybinds.title").unwrap_or("Key Binds"),
+            WHITE,
+            true,
+        );
+        let cx = w / 2;
+        let bw = 140;
+        // THE LIST'S OWN EMPTY SEAT (the keyMappings array the
+        // client's store never carried — the rows the honest absence
+        // keeps, the ctor's own walk the zero-entry list the same
+        // empty the vanilla law renders)
+        // THE FOOTER'S OWN PAIR (the addFooter override's spacing(8)
+        // walk — the LEFT the reset seat the `cx - 4 - bw/2` center
+        // wears, the RIGHT the done seat the same gap keeps)
+        self.buttons.push(Button::new(
+            "kb_reset",
+            tr("controls.resetAll").unwrap_or("Reset Keys").to_string(),
+            cx - 4 - bw / 2,
+            h - 28,
+            bw,
+        ));
+        self.buttons.push(Button::new(
+            "kbdone",
+            tr("gui.done").unwrap_or("Done").to_string(),
+            cx + 4 + bw / 2,
             h - 28,
             bw,
         ));

@@ -1,0 +1,52 @@
+########## 1. OptionsScreen: the controls utf8 + the button row
+=== net.minecraft.client.gui.screens.options.OptionsScreen utf8 words (needles: ['controls', 'Controls'])
+  cp#328: 'net/minecraft/client/gui/screens/options/controls/ControlsScreen'
+  cp#367: 'options.controls'
+
+########## 2. ControlsScreen methods
+=== net.minecraft.client.gui.screens.options.controls.ControlsScreen methods:
+  options(Lnet/minecraft/client/Options;)[Lnet/minecraft/client/OptionInstance;
+  <init>(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Options;)V
+  addOptions()V
+  lambda$addOptions$1(Lnet/minecraft/client/gui/components/Button;)V
+  lambda$addOptions$0(Lnet/minecraft/client/gui/components/Button;)V
+  <clinit>()V
+
+########## 3. ControlsScreen utf8 words
+=== net.minecraft.client.gui.screens.options.controls.ControlsScreen utf8 words (needles: ['controls', 'key', 'reset', 'done', 'keyboard', 'mouse', 'category', 'conflict', 'none', '> <'])
+  cp#30: 'net/minecraft/client/gui/screens/options/controls/ControlsScreen'
+  cp#44: 'options.mouse_settings'
+  cp#54: '(Lnet/minecraft/client/gui/screens/options/controls/ControlsScreen;)Lnet/minecraft/client/gui/components/Button$OnPress;'
+  cp#68: 'controls.keybinds'
+  cp#97: 'net/minecraft/client/gui/screens/options/controls/KeyBindsScreen'
+  cp#111: 'controls.title'
+  cp#119: 'Lnet/minecraft/client/gui/screens/options/controls/ControlsScreen;'
+
+########## 4. ControlsScreen ctor + init
+--- net.minecraft.client.gui.screens.options.controls.ControlsScreen.<init>(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Options;)V
+0: aload_0
+1: aload_1
+2: aload_2
+3: getstatic net/minecraft/client/gui/screens/options/controls/ControlsScreen.TITLELnet/minecraft/network/chat/Component;
+6: invokespecial net/minecraft/client/gui/screens/options/OptionsSubScreen.<init>(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Options;Lnet/minecraft/network/chat/Component;)V
+9: return
+--- net.minecraft.client.gui.screens.options.controls.ControlsScreen.<init>(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Options;)V
+0: aload_0
+1: aload_1
+2: aload_2
+3: getstatic net/minecraft/client/gui/screens/options/controls/ControlsScreen.TITLELnet/minecraft/network/chat/Component;
+6: invokespecial net/minecraft/client/gui/screens/options/OptionsSubScreen.<init>(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Options;Lnet/minecraft/network/chat/Component;)V
+9: return
+--- net.minecraft.client.gui.screens.options.controls.ControlsScreen.<clinit>()V
+0: ldc controls.title
+2: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+5: putstatic net/minecraft/client/gui/screens/options/controls/ControlsScreen.TITLELnet/minecraft/network/chat/Component;
+8: return
+
+########## 5. ControlsScreen removed/onClose/shouldCloseOnEsc/rebind
+!! net.minecraft.client.gui.screens.options.controls.ControlsScreen: no method matching removed
+!! net.minecraft.client.gui.screens.options.controls.ControlsScreen: no method matching onClose
+!! net.minecraft.client.gui.screens.options.controls.ControlsScreen: no method matching shouldCloseOnEsc
+!! net.minecraft.client.gui.screens.options.controls.ControlsScreen: no method matching keyPressed
+!! net.minecraft.client.gui.screens.options.controls.ControlsScreen: no method matching mouseClicked
+!! net.minecraft.client.gui.screens.options.controls.ControlsScreen: no method matching rebind
