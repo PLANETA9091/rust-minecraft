@@ -302,7 +302,15 @@ pub mod key_binds {
     /// Toolbar word wears))
     pub const SAVE_ACTIVATOR: usize = 22;
     pub const LOAD_ACTIVATOR: usize = 23;
-    pub const COUNT: usize = 24;
+    /// THE SPECTATOR PAIR'S OWN SLOTS (the ctor's putfields the
+    /// activator pair's AFTER the walk banks — the pc 3205/3226 rows
+    /// wear: the outlines the `getstatic InputConstants.UNKNOWN` the
+    /// unbound default answers, the hotbar the `Type.MOUSE, iconst_2`
+    /// the middle button the seeded name wears, the SPECTATOR
+    /// category the pair's rows the clinit's ordinal 6 keeps)
+    pub const SPECTATOR_OUTLINES: usize = 24;
+    pub const SPECTATOR_HOTBAR: usize = 25;
+    pub const COUNT: usize = 26;
 
     /// THE VANILLA BINDING NAMES (the `key_` + name the file row's
     /// prefix wears, the lang captions the `key.*` rows answer — the
@@ -335,6 +343,11 @@ pub mod key_binds {
         // wears, the HotbarActivator word the FIELD name keeps)
         "key.saveToolbarActivator",
         "key.loadToolbarActivator",
+        // THE SPECTATOR PAIR'S OWN NAMES (the ctor's ldc strings the
+        // cp#1394/#1402 utf8s resolve — the pc 3190/3213 rows the
+        // activator pair's AFTER wear)
+        "key.spectatorOutlines",
+        "key.spectatorHotbar",
     ];
 
     /// THE CAPTIONS' OWN FALLBACK (the en_us values the assets-absent
@@ -366,6 +379,11 @@ pub mod key_binds {
         // Hotbar words the field name hides the lang rows answer)
         "Save Hotbar Activator",
         "Load Hotbar Activator",
+        // THE SPECTATOR PAIR'S OWN CAPTIONS (the en_us rows speak —
+        // key.spectatorOutlines the 'Highlight Players' row wears,
+        // key.spectatorHotbar the 'Select On Hotbar' row answers)
+        "Highlight Players",
+        "Select On Hotbar",
     ];
 
     /// THE CATEGORY'S OWN ROW (the CategoryEntry the list groups the
@@ -396,6 +414,15 @@ pub mod key_binds {
     /// store never carries)
     pub const CATEGORY_CREATIVE_NAME: &str = "key.categories.creative";
     pub const CATEGORY_CREATIVE_FALLBACK: &str = "Creative Mode";
+    /// THE SPECTATOR GROUP'S OWN HEADER ROW (the CategoryEntry the
+    /// category boundary adds — the `key.categories.spectator` key the
+    /// lang "Spectator" row answers; the SORT_ORDER walk the clinit
+    /// banks: movement, misc, multiplayer, gameplay, INVENTORY,
+    /// CREATIVE, SPECTATOR, debug — the spectator the creative rows'
+    /// AFTER the ordinal 6 keeps, the misc/multiplayer/debug rows the
+    /// store never carries)
+    pub const CATEGORY_SPECTATOR_NAME: &str = "key.categories.spectator";
+    pub const CATEGORY_SPECTATOR_FALLBACK: &str = "Spectator";
 
     /// THE DEFAULTS' OWN ROW (the ctor's codes the minifb Key enum's
     /// own discriminants answer).
@@ -432,6 +459,14 @@ pub mod key_binds {
         // category the pair's rows wear)
         Some(Bind::Keyboard(Key::C)),
         Some(Bind::Keyboard(Key::X)),
+        // THE SPECTATOR PAIR'S OWN SEATS (the ctor's pc 3193 the
+        // `getstatic InputConstants.UNKNOWN` the UNBOUND default
+        // answers — the None the `key.keyboard.unknown` the save row
+        // wears, the pc 3216 the `Type.MOUSE, iconst_2` the MIDDLE
+        // button the seeded name speaks — the SPECTATOR category the
+        // pair's rows wear)
+        None,
+        Some(Bind::Mouse(MouseButton::Middle)),
     ];
 
     /// THE LIST'S OWN GEOMETRY (the entries the walk's y positions
@@ -463,6 +498,12 @@ pub mod key_binds {
     /// the same +12 the groups' own gap keeps)
     pub const CREATIVE_HEADER_Y: i32 = 594;
     pub const CREATIVE_ROWS_START: i32 = 606;
+    /// THE SPECTATOR GROUP'S OWN SEATS (the sorted walk's own y — the
+    /// creative pair the 606-start stride wears, the SPECTATOR header
+    /// the pair's own bottom the next stride slot answers (630 + 24),
+    /// the rows the +12 the groups' own gap keeps)
+    pub const SPECTATOR_HEADER_Y: i32 = 654;
+    pub const SPECTATOR_ROWS_START: i32 = 666;
 
     /// THE CONTENT'S OWN HEIGHT (the walk's own bottom — the LAST
     /// group's last row's bottom minus the list top; the maxScrollAmount
@@ -471,11 +512,12 @@ pub mod key_binds {
     /// DISPLAY walk re-orders — the inventory group the walk's own
     /// bottom keeps (the trio + the hotbar nine the 306-start stride
     /// wear: 12 rows the 11 strides speak, the CREATIVE pair the
-    /// 594-header the 606-start rows the walk's own bottom keeps (the
-    /// save the 606 seat, the load the 630 — the pair's own bottom
-    /// the content answers))
+    /// 594-header the 606-start rows wear, the SPECTATOR pair the
+    /// 654-header the 666-start rows the walk's own bottom keeps (the
+    /// outlines the 666 seat, the hotbar the 690 — the pair's own
+    /// bottom the content answers))
     pub fn content_height() -> i32 {
-        CREATIVE_ROWS_START + (COUNT - SAVE_ACTIVATOR - 1) as i32 * ROW_STRIDE + 20 - LIST_TOP
+        SPECTATOR_ROWS_START + (COUNT - SPECTATOR_OUTLINES - 1) as i32 * ROW_STRIDE + 20 - LIST_TOP
     }
 
     /// THE MOUSE'S OWN NAME TABLE (the InputConstants$Type clinit the
@@ -894,6 +936,16 @@ impl OptionsFile {
                 "key_key.loadToolbarActivator" => {
                     out.key_binds[key_binds::LOAD_ACTIVATOR] = key_binds::bind_from_save(value);
                 }
+                // THE SPECTATOR PAIR'S OWN DECODE (the `key_key.` +
+                // name prefix the save rows wear — the UNKNOWN row the
+                // None the unbound law keeps, the `key.mouse.middle`
+                // row the seeded name the decode answers)
+                "key_key.spectatorOutlines" => {
+                    out.key_binds[key_binds::SPECTATOR_OUTLINES] = key_binds::bind_from_save(value);
+                }
+                "key_key.spectatorHotbar" => {
+                    out.key_binds[key_binds::SPECTATOR_HOTBAR] = key_binds::bind_from_save(value);
+                }
                 _ => {} // the jar's other rows the client's seats never carry
             }
         }
@@ -1047,7 +1099,7 @@ mod tests {
         OptionsFile::default().save(&path);
         let text = std::fs::read_to_string(&path).expect("the save the file writes");
         assert_eq!(
-            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\n",
+            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\n",
             "the file the vanilla rows wear"
         );
         let loaded = OptionsFile::load(&path);

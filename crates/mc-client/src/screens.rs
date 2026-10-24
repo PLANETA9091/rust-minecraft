@@ -35408,6 +35408,15 @@ impl App {
                 "kb_change_loadactivator" => {
                     self.kb_selected = Some(crate::options_file::key_binds::LOAD_ACTIVATOR);
                 }
+                // THE SPECTATOR PAIR'S OWN ARMS (the rows the spectator
+                // group walk the AFTER seat renders — the ctor's
+                // putfield order the ids answer)
+                "kb_change_spectatoroutlines" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::SPECTATOR_OUTLINES);
+                }
+                "kb_change_spectatorhotbar" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::SPECTATOR_HOTBAR);
+                }
                 "kb_rowreset_forward" => {
                     self.key_binds[crate::options_file::key_binds::FORWARD] =
                         crate::options_file::key_binds::DEFAULTS
@@ -35556,6 +35565,23 @@ impl App {
                     self.key_binds[crate::options_file::key_binds::LOAD_ACTIVATOR] =
                         crate::options_file::key_binds::DEFAULTS
                             [crate::options_file::key_binds::LOAD_ACTIVATOR];
+                    self.kb_selected = None;
+                }
+                // THE SPECTATOR PAIR'S OWN RESETS (the row's own walk —
+                // the `setKey(getDefaultKey())` the lambda$new$2 law
+                // keeps: the outlines the UNBOUND None the UNKNOWN
+                // law restores, the hotbar the MIDDLE the seeded name
+                // wears)
+                "kb_rowreset_spectatoroutlines" => {
+                    self.key_binds[crate::options_file::key_binds::SPECTATOR_OUTLINES] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::SPECTATOR_OUTLINES];
+                    self.kb_selected = None;
+                }
+                "kb_rowreset_spectatorhotbar" => {
+                    self.key_binds[crate::options_file::key_binds::SPECTATOR_HOTBAR] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::SPECTATOR_HOTBAR];
                     self.kb_selected = None;
                 }
                 // THE FOOTERS' OWN RETURNS (the OptionsSubScreen
@@ -63285,9 +63311,36 @@ impl App {
                 false,
             );
         }
-        for i in kb::SAVE_ACTIVATOR..kb::COUNT {
+        for i in kb::SAVE_ACTIVATOR..kb::SPECTATOR_OUTLINES {
             let by =
                 kb::CREATIVE_ROWS_START + (i - kb::SAVE_ACTIVATOR) as i32 * kb::ROW_STRIDE - off;
+            if by < kb::LIST_TOP || by + 20 > band_bottom {
+                continue; // the clip the band the honest render keeps
+            }
+            self.kb_render_row(g, a, w, i, by);
+        }
+        // THE SPECTATOR GROUP'S OWN HEADER + PAIR (the CategoryEntry
+        // the category boundary 654 wears — the spectator pair the
+        // ctor's putfields the activator pair's AFTER the slots keep,
+        // the SORT_ORDER ordinal the creative rows' AFTER the seat
+        // banks — movement, misc, multiplayer, gameplay, INVENTORY,
+        // CREATIVE, SPECTATOR, debug — the SAME group shape the rows
+        // keep: the +12 gap the groups' own law answers)
+        let hy = kb::SPECTATOR_HEADER_Y - off;
+        if hy >= kb::LIST_TOP && hy + 20 <= band_bottom {
+            g.text(
+                a,
+                16,
+                hy,
+                tr(kb::CATEGORY_SPECTATOR_NAME).unwrap_or(kb::CATEGORY_SPECTATOR_FALLBACK),
+                [0.7, 0.7, 0.7],
+                false,
+            );
+        }
+        for i in kb::SPECTATOR_OUTLINES..kb::COUNT {
+            let by = kb::SPECTATOR_ROWS_START
+                + (i - kb::SPECTATOR_OUTLINES) as i32 * kb::ROW_STRIDE
+                - off;
             if by < kb::LIST_TOP || by + 20 > band_bottom {
                 continue; // the clip the band the honest render keeps
             }
@@ -63364,6 +63417,11 @@ impl App {
             // order the ids answer)
             kb::SAVE_ACTIVATOR => "kb_change_saveactivator",
             kb::LOAD_ACTIVATOR => "kb_change_loadactivator",
+            // THE SPECTATOR PAIR'S OWN IDS (the rows the spectator
+            // group walk the AFTER seat renders — the ctor's putfield
+            // order the ids answer)
+            kb::SPECTATOR_OUTLINES => "kb_change_spectatoroutlines",
+            kb::SPECTATOR_HOTBAR => "kb_change_spectatorhotbar",
             _ => "kb_change_hotbar9",
         };
         self.buttons
@@ -63397,6 +63455,10 @@ impl App {
             // keep)
             kb::SAVE_ACTIVATOR => "kb_rowreset_saveactivator",
             kb::LOAD_ACTIVATOR => "kb_rowreset_loadactivator",
+            // THE SPECTATOR PAIR'S OWN IDS (the same seats the rows
+            // keep)
+            kb::SPECTATOR_OUTLINES => "kb_rowreset_spectatoroutlines",
+            kb::SPECTATOR_HOTBAR => "kb_rowreset_spectatorhotbar",
             _ => "kb_rowreset_hotbar9",
         };
         let mut rb = Button::new(
