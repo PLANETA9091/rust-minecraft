@@ -35543,6 +35543,20 @@ impl App {
                             [crate::options_file::key_binds::DEBUG_COPY_RECREATE_COMMAND];
                     self.kb_selected = None;
                 }
+                // THE DEBUG SPECTATE'S OWN ARMS (the row the debug
+                // ten-row walk the AFTER seat renders — the ctor's
+                // pc 3432-3451 the 4-arg ctor the `iconst_0` orderI
+                // default banks, the N the copyRecreate row's own
+                // plain shape the capture honors)
+                "kb_change_debugspectate" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::DEBUG_SPECTATE);
+                }
+                "kb_rowreset_debugspectate" => {
+                    self.key_binds[crate::options_file::key_binds::DEBUG_SPECTATE] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::DEBUG_SPECTATE];
+                    self.kb_selected = None;
+                }
                 "kb_rowreset_forward" => {
                     self.key_binds[crate::options_file::key_binds::FORWARD] =
                         crate::options_file::key_binds::DEFAULTS
@@ -63618,6 +63632,10 @@ impl App {
             // debug nonet walk the AFTER seat renders — the ctor's
             // putfield order the id answers)
             kb::DEBUG_COPY_RECREATE_COMMAND => "kb_change_debugcopyrecreate",
+            // THE DEBUG SPECTATE'S OWN ID (the row the debug ten-row
+            // walk the AFTER seat renders — the ctor's putfield order
+            // the id answers)
+            kb::DEBUG_SPECTATE => "kb_change_debugspectate",
             _ => "kb_change_hotbar9",
         };
         self.buttons
@@ -63679,6 +63697,9 @@ impl App {
             // the row keeps — the octet the file's own END rows wear)
             kb::DEBUG_SHOW_ADV_TOOLTIPS => "kb_rowreset_debugadvtooltips",
             kb::DEBUG_COPY_RECREATE_COMMAND => "kb_rowreset_debugcopyrecreate",
+            // THE DEBUG SPECTATE'S OWN ID (the same seat the row
+            // keeps — the ten-row walk the file's own END rows wear)
+            kb::DEBUG_SPECTATE => "kb_rowreset_debugspectate",
             _ => "kb_rowreset_hotbar9",
         };
         let mut rb = Button::new(
