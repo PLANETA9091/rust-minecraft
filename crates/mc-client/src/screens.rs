@@ -35662,6 +35662,22 @@ impl App {
                             [crate::options_file::key_binds::DEBUG_COPY_LOCATION];
                     self.kb_selected = None;
                 }
+                // THE DEBUG DUMP VERSION'S OWN ARMS (the row
+                // the debug eighteen-row walk the AFTER seat renders
+                // — the ctor's pc 3610-3629 the 4-arg ctor the
+                // `iconst_0` orderI default banks, the V the
+                // copyLocation row's own plain shape the
+                // capture honors)
+                "kb_change_debugdumpversion" => {
+                    self.kb_selected =
+                        Some(crate::options_file::key_binds::DEBUG_DUMP_VERSION);
+                }
+                "kb_rowreset_debugdumpversion" => {
+                    self.key_binds[crate::options_file::key_binds::DEBUG_DUMP_VERSION] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::DEBUG_DUMP_VERSION];
+                    self.kb_selected = None;
+                }
                 "kb_rowreset_forward" => {
                     self.key_binds[crate::options_file::key_binds::FORWARD] =
                         crate::options_file::key_binds::DEFAULTS
@@ -63769,6 +63785,10 @@ impl App {
             // debug seventeen-row walk the AFTER seat renders — the
             // ctor's putfield order the id answers)
             kb::DEBUG_COPY_LOCATION => "kb_change_debugcopylocation",
+            // THE DEBUG DUMP VERSION'S OWN ID (the row the
+            // debug eighteen-row walk the AFTER seat renders — the
+            // ctor's putfield order the id answers)
+            kb::DEBUG_DUMP_VERSION => "kb_change_debugdumpversion",
             _ => "kb_change_hotbar9",
         };
         self.buttons
@@ -63858,6 +63878,10 @@ impl App {
             // the row keeps — the seventeen-row walk the file's own END
             // rows wear)
             kb::DEBUG_COPY_LOCATION => "kb_rowreset_debugcopylocation",
+            // THE DEBUG DUMP VERSION'S OWN ID (the same seat
+            // the row keeps — the eighteen-row walk the file's own END
+            // rows wear)
+            kb::DEBUG_DUMP_VERSION => "kb_rowreset_debugdumpversion",
             _ => "kb_rowreset_hotbar9",
         };
         let mut rb = Button::new(
