@@ -39,9 +39,9 @@ fn load_splashes() -> Vec<String> {
         "../assets-cache/jar",
         "../../assets-cache/jar",
     ] {
-        if let Ok(bytes) = std::fs::read(
-            std::path::Path::new(prefix).join("assets/minecraft/texts/splashes.txt"),
-        ) {
+        if let Ok(bytes) =
+            std::fs::read(std::path::Path::new(prefix).join("assets/minecraft/texts/splashes.txt"))
+        {
             return parse_splashes(&bytes);
         }
     }
@@ -81,7 +81,11 @@ fn lang_collect(
     out: &mut std::collections::BTreeMap<String, String>,
 ) {
     for (k, v) in obj {
-        let key = if prefix.is_empty() { k.clone() } else { format!("{prefix}.{k}") };
+        let key = if prefix.is_empty() {
+            k.clone()
+        } else {
+            format!("{prefix}.{k}")
+        };
         match v {
             serde_json::Value::String(s) => {
                 out.insert(key, s.clone());
@@ -98,9 +102,9 @@ fn load_lang() -> std::collections::BTreeMap<String, String> {
         "../assets-cache/jar",
         "../../assets-cache/jar",
     ] {
-        if let Ok(bytes) = std::fs::read(
-            std::path::Path::new(prefix).join("assets/minecraft/lang/en_us.json"),
-        ) {
+        if let Ok(bytes) =
+            std::fs::read(std::path::Path::new(prefix).join("assets/minecraft/lang/en_us.json"))
+        {
             return parse_lang(&bytes);
         }
     }
@@ -362,7 +366,11 @@ pub const GRAY: [f32; 3] = [0.667, 0.667, 0.667];
 /// THE LEVEL NUMBER'S GREEN (javap `ContextualBar.extractExperienceLevel`
 /// — the int -8323296 the final text call carries = 0xFF80FF20, the
 /// classic experience green the level digits speak).
-pub const EXP_LEVEL_GREEN: [f32; 3] = [0x80 as f32 / 255.0, 0xFF as f32 / 255.0, 0x20 as f32 / 255.0];
+pub const EXP_LEVEL_GREEN: [f32; 3] = [
+    0x80 as f32 / 255.0,
+    0xFF as f32 / 255.0,
+    0x20 as f32 / 255.0,
+];
 /// THE OUTLINE BLACK (the same method's -16777216 = 0xFF000000 — the
 /// four neighbor draws the dropShadow-less text walks).
 pub const TEXT_OUTLINE_BLACK: [f32; 3] = [0.0, 0.0, 0.0];
@@ -402,8 +410,7 @@ pub const TAB_ROW_BG: [f32; 4] = [1.0, 1.0, 1.0, 32.0 / 255.0];
 /// opaque (the alpha-less raster `Gui::text` owns), so the ARGB's
 /// 0x90 alpha folds onto the white RGB — the composite over the dark
 /// band the vanilla alpha walk paints.
-pub const TAB_SPECTATOR_NAME: [f32; 3] =
-    [144.0 / 255.0, 144.0 / 255.0, 144.0 / 255.0];
+pub const TAB_SPECTATOR_NAME: [f32; 3] = [144.0 / 255.0, 144.0 / 255.0, 144.0 / 255.0];
 /// THE TAB'S ROW PITCH (javap — the `bipush 9` the row stride and the
 /// band heights keep: 9px per row, the font's own line).
 pub const TAB_ROW_PITCH: i32 = 9;
@@ -411,8 +418,7 @@ pub const TAB_ROW_PITCH: i32 = 9;
 /// — the `ldc_w -1873784752` = 0x90505050 the fill the per-line
 /// rectangle keeps: the rgb-0x50 gray at the 0x90 alpha the band
 /// paints, the [f32; 4] the house's raster lane speaks).
-pub const DEBUG_BAND_BG: [f32; 4] =
-    [80.0 / 255.0, 80.0 / 255.0, 80.0 / 255.0, 144.0 / 255.0];
+pub const DEBUG_BAND_BG: [f32; 4] = [80.0 / 255.0, 80.0 / 255.0, 80.0 / 255.0, 144.0 / 255.0];
 /// THE DEBUG PANEL'S OWN TEXT (the `ldc_w -2039584` = 0xFFE0E0E0 the
 /// text call's own color keeps — the rgb-0xE0 light gray the lines
 /// draw at, the shadowed pass the boolean-true ride arms).
@@ -849,9 +855,7 @@ fn system_memory_probe() -> Option<(u64, u64, u64)> {
         }
     }
     if max.is_none() {
-        if let Ok(v1) = std::fs::read_to_string(
-            "/sys/fs/cgroup/memory/memory.limit_in_bytes",
-        ) {
+        if let Ok(v1) = std::fs::read_to_string("/sys/fs/cgroup/memory/memory.limit_in_bytes") {
             if let Ok(b) = v1.trim().parse::<u64>() {
                 if b > 0 && b < (1u64 << 50) {
                     max = Some(b);
@@ -1035,15 +1039,14 @@ pub(crate) fn chunk_border_lines(
     let sec_y = (sy * 16) as f32;
     let y0 = min_y as f32; // the level.getMinY word
     let y1 = max_y_incl as f32; // the level.getMaxY() + 1 word
-    let line = |a: [f32; 3], b: [f32; 3], rgb: [f32; 3], alpha: f32, top: bool| {
-        crate::raster::DebugLine {
+    let line =
+        |a: [f32; 3], b: [f32; 3], rgb: [f32; 3], alpha: f32, top: bool| crate::raster::DebugLine {
             a: Vec3::new(a[0], a[1], a[2]),
             b: Vec3::new(b[0], b[1], b[2]),
             rgb,
             alpha,
             always_on_top: top,
-        }
-    };
+        };
     let mut out = Vec::new();
     // LAYER 1 — the neighbor grid (the 4x4 verticals, red alpha 0.5)
     for i in [-16i32, 0, 16, 32] {
@@ -1158,7 +1161,13 @@ pub(crate) fn chunk_border_lines(
     let mut y = min_y;
     while y <= max_y_incl {
         let fy = y as f32;
-        out.push(line([mx, fy, mz], [mx, fy, mz + 16.0], CHUNK_MAJOR_BLUE, 1.0, false));
+        out.push(line(
+            [mx, fy, mz],
+            [mx, fy, mz + 16.0],
+            CHUNK_MAJOR_BLUE,
+            1.0,
+            false,
+        ));
         out.push(line(
             [mx, fy, mz + 16.0],
             [mx + 16.0, fy, mz + 16.0],
@@ -1281,7 +1290,11 @@ pub(crate) fn hitbox_gizmos(
     let (blue, alpha_blue) = hitbox_argb(HITBOX_LOOK_BLUE);
     let mut lines = Vec::new();
     let mut points = Vec::new();
-    let box_edges = |min: [f64; 3], max: [f64; 3], rgb: [f32; 3], alpha: f32, out: &mut Vec<crate::raster::DebugLine>| {
+    let box_edges = |min: [f64; 3],
+                     max: [f64; 3],
+                     rgb: [f32; 3],
+                     alpha: f32,
+                     out: &mut Vec<crate::raster::DebugLine>| {
         let corners = [
             Vec3::new(min[0] as f32, min[1] as f32, min[2] as f32),
             Vec3::new(max[0] as f32, min[1] as f32, min[2] as f32),
@@ -1328,7 +1341,11 @@ pub(crate) fn hitbox_gizmos(
     );
     // THE WHITE POINT (pcs 52-60 — the lerped position the dot wears)
     points.push(crate::raster::DebugPoint {
-        pos: Vec3::new(e.rendered_x as f32, e.rendered_y as f32, e.rendered_z as f32),
+        pos: Vec3::new(
+            e.rendered_x as f32,
+            e.rendered_y as f32,
+            e.rendered_z as f32,
+        ),
         rgb: white,
         alpha: alpha_white,
     });
@@ -1505,7 +1522,11 @@ fn debug_bottom_lines(
     let network = debug_chart_row(
         modifier,
         "3",
-        if integrated { "Ping" } else { "Bandwidth + Ping" },
+        if integrated {
+            "Ping"
+        } else {
+            "Bandwidth + Ping"
+        },
         network_charts,
     );
     let lightmap = debug_chart_row(modifier, "4", "Lightmap", lightmap_view);
@@ -1989,10 +2010,9 @@ fn profiler_pie_side_fills(
         let steps = (s.span_pct / 4.0).floor() as i64 + 1;
         for i in 1..=steps {
             // THE ANGLES (the verbatim f64 chain the d2f cast wears)
-            let ta = ((s.start_pct + s.span_pct * i as f64 / steps as f64) * two_pi / 100.0)
+            let ta = ((s.start_pct + s.span_pct * i as f64 / steps as f64) * two_pi / 100.0) as f32;
+            let tb = ((s.start_pct + s.span_pct * (i - 1) as f64 / steps as f64) * two_pi / 100.0)
                 as f32;
-            let tb = ((s.start_pct + s.span_pct * (i - 1) as f64 / steps as f64) * two_pi
-                / 100.0) as f32;
             let xa = (ta as f64).sin() as f32 * rx;
             let ya = (ta as f64).cos() as f32 * ry;
             let xb = (tb as f64).sin() as f32 * rx;
@@ -2069,13 +2089,25 @@ fn lightmap_uniforms(world: &crate::world::World) -> LightmapUniforms {
         sky_factor,
         sky_tint,
         ambient: world.ambient_light.map_or([0.0f32; 3], |a| {
-            [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+            [
+                a[0] as f32 / 255.0,
+                a[1] as f32 / 255.0,
+                a[2] as f32 / 255.0,
+            ]
         }),
         block_tint: world.block_light_tint.map(|a| {
-            [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+            [
+                a[0] as f32 / 255.0,
+                a[1] as f32 / 255.0,
+                a[2] as f32 / 255.0,
+            ]
         }),
         night_vision: world.night_vision_color.map(|a| {
-            [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+            [
+                a[0] as f32 / 255.0,
+                a[1] as f32 / 255.0,
+                a[2] as f32 / 255.0,
+            ]
         }),
         night_vision_factor: world.night_vision_factor,
         darkness_scale: world.darkness_scale,
@@ -2092,8 +2124,8 @@ fn lightmap_uniforms(world: &crate::world::World) -> LightmapUniforms {
 /// keep — the exact pair the fresh world's mesh bakes.
 fn day_bake_inputs(world: &crate::world::World) -> (u32, [u8; 3]) {
     let track = world.day_tick;
-    let factor =
-        world.sky_light_factor.unwrap_or(1.0) * track.map(crate::timeline::sky_light_factor).unwrap_or(1.0);
+    let factor = world.sky_light_factor.unwrap_or(1.0)
+        * track.map(crate::timeline::sky_light_factor).unwrap_or(1.0);
     let tint = match world.sky_light_color {
         None => track
             .map(crate::timeline::sky_light_color_bytes)
@@ -2350,16 +2382,8 @@ const SELECTOR_SUGGESTIONS: [(&str, &str, &str); 6] = [
         "argument.entity.selector.nearestPlayer",
         "Nearest player",
     ),
-    (
-        "@a",
-        "argument.entity.selector.allPlayers",
-        "All players",
-    ),
-    (
-        "@e",
-        "argument.entity.selector.allEntities",
-        "All entities",
-    ),
+    ("@a", "argument.entity.selector.allPlayers", "All players"),
+    ("@e", "argument.entity.selector.allEntities", "All entities"),
     (
         "@r",
         "argument.entity.selector.randomPlayer",
@@ -2376,7 +2400,11 @@ const SELECTOR_SUGGESTIONS: [(&str, &str, &str); 6] = [
 /// The one selector suggestion's own shape (the tooltip the lang
 /// table's own law resolves, the en_us inline fallback the
 /// cache-absent boot answers).
-fn selector_suggestion(name: &str, key: &str, fallback: &str) -> mc_protocol::play::CommandSuggestionsMatch {
+fn selector_suggestion(
+    name: &str,
+    key: &str,
+    fallback: &str,
+) -> mc_protocol::play::CommandSuggestionsMatch {
     mc_protocol::play::CommandSuggestionsMatch {
         text: name.to_string(),
         tooltip: Some(tr(key).unwrap_or(fallback).to_string()),
@@ -2518,10 +2546,7 @@ fn mob_kind_entity_id(kind: crate::mob::MobKind) -> &'static str {
 /// message's %2$s arg wears, the missing key the getOrDefault law the
 /// key ITSELF renders.
 fn mob_kind_display_name(kind: crate::mob::MobKind) -> String {
-    let key = format!(
-        "entity.{}",
-        mob_kind_entity_id(kind).replace(':', ".")
-    );
+    let key = format!("entity.{}", mob_kind_entity_id(kind).replace(':', "."));
     tr(&key).unwrap_or(key.as_str()).to_string()
 }
 
@@ -2598,9 +2623,11 @@ fn parse_entity_selector_word(word: &str) -> Option<ParsedEntitySelector> {
             // minecraft: prefix the strip answers, the tag `#` the
             // offline walk never serves)
             if id.starts_with('#')
-                || !id
-                    .chars()
-                    .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || matches!(c, '_' | '.' | '-' | ':'))
+                || !id.chars().all(|c| {
+                    c.is_ascii_lowercase()
+                        || c.is_ascii_digit()
+                        || matches!(c, '_' | '.' | '-' | ':')
+                })
             {
                 return None;
             }
@@ -3030,8 +3057,7 @@ fn local_selector_options_suggestions(
     let tail_body = &tail[tail_ws..];
     let tail_lc = tail_body.to_lowercase();
     let mut matches = selector_option_matches();
-    matches
-        .retain(|m| m.text.to_lowercase().starts_with(&tail_lc));
+    matches.retain(|m| m.text.to_lowercase().starts_with(&tail_lc));
     matches.retain(|m| {
         let key = m.text.trim_end_matches('=');
         selector_option_row_can_use(key, &states, current_entity)
@@ -3089,16 +3115,16 @@ fn selector_option_row_can_use(
 fn selector_option_matches() -> Vec<mc_protocol::play::CommandSuggestionsMatch> {
     let mut matches: Vec<mc_protocol::play::CommandSuggestionsMatch> = SELECTOR_OPTIONS
         .iter()
-        .map(|(key, tooltip)| {
-            mc_protocol::play::CommandSuggestionsMatch {
+        .map(
+            |(key, tooltip)| mc_protocol::play::CommandSuggestionsMatch {
                 text: format!("{key}="),
                 tooltip: Some(
                     tr(&format!("argument.entity.options.{key}.description"))
                         .unwrap_or(tooltip)
                         .to_string(),
                 ),
-            }
-        })
+            },
+        )
         .collect();
     // the Suggestions.merge sort (the compareToIgnoreCase law)
     matches.sort_by(|a, b| a.text.to_lowercase().cmp(&b.text.to_lowercase()));
@@ -3297,9 +3323,7 @@ fn selector_earlier_element_walk(
     // THE KEY READ (the readString walk the parseOptions loop carries
     // — the quoted form the terminators/escapes answer, the unquoted
     // run the charset speaks — the run stops at the '=' the key ends)
-    let (key, key_end, post): (String, usize, &str) = if t.starts_with('"')
-        || t.starts_with('\'')
-    {
+    let (key, key_end, post): (String, usize, &str) = if t.starts_with('"') || t.starts_with('\'') {
         match selector_quoted_key_read(t) {
             SelectorQuotedKeyRead::Terminated { key, end } => (key, end, &t[end..]),
             // the unterminated/invalid quote the completed element
@@ -3631,7 +3655,6 @@ impl SelectorOptionStates {
     }
 }
 
-
 /// THE UNQUOTED CHARSET RUN THE BRIGADIER READ WALKS SPEAK (the
 /// `isAllowedInUnquotedString` fold the readString/readUnquotedString
 /// walks ride — the greedy run, the first refused char the stop
@@ -3738,9 +3761,7 @@ fn selector_number_char_ok(c: char) -> bool {
 /// the coordinate lanes ONLY wear), `"5..10"`/`"5.5.5"`/`"-"` the
 /// INVALID-DOUBLE throw answers.
 fn selector_double_ok(value: &str) -> bool {
-    !value.is_empty()
-        && value.chars().all(selector_number_char_ok)
-        && value.parse::<f64>().is_ok()
+    !value.is_empty() && value.chars().all(selector_number_char_ok) && value.parse::<f64>().is_ok()
 }
 
 /// THE BOUNDS READNUMBER RUN LAW (javap
@@ -3806,7 +3827,11 @@ fn selector_bounds_walk(value: &str, ints: bool, closed: bool) -> SelectorValueW
     // the min-side run (the '.'-law)
     let min_run = selector_bounds_run_len(value);
     let min_side = &value[..min_run];
-    let min_v = if min_side.is_empty() { None } else { Some(min_side) };
+    let min_v = if min_side.is_empty() {
+        None
+    } else {
+        Some(min_side)
+    };
     // the stop position's own shape: the end, the '..' separator, the
     // '.'-junk (the peek(1) crash the end-of-input form wears), the
     // plain junk char — the branch the parse's own walk takes
@@ -3821,7 +3846,11 @@ fn selector_bounds_walk(value: &str, ints: bool, closed: bool) -> SelectorValueW
                 let start = min_run + 2;
                 let max_run = selector_bounds_run_len(&value[start..]);
                 let max_side = &value[start..start + max_run];
-                let max_v = if max_side.is_empty() { None } else { Some(max_side) };
+                let max_v = if max_side.is_empty() {
+                    None
+                } else {
+                    Some(max_side)
+                };
                 let junk = if start + max_run < b.len() {
                     Some(start + max_run)
                 } else {
@@ -4230,11 +4259,7 @@ fn selector_option_value_walk(
                 }
                 // the id the read carries — the FULL tag when the run
                 // consumed it, the run prefix the stopped read returns
-                let id = if run == tag.len() {
-                    tag
-                } else {
-                    &tag[..run]
-                };
+                let id = if run == tag.len() { tag } else { &tag[..run] };
                 let state = states.for_key("type").unwrap();
                 if !state.can_parse_tag(id) {
                     return Some(SelectorValueWalk::Refused);
@@ -4762,7 +4787,10 @@ fn suggestion_matches_sub_str(remaining_lc: &str, candidate_lc: &str) -> bool {
         if cand[i..].starts_with(&rem) {
             return true;
         }
-        match cand[i..].iter().position(|&c| c == '.' || c == '_' || c == '/') {
+        match cand[i..]
+            .iter()
+            .position(|&c| c == '.' || c == '_' || c == '/')
+        {
             Some(j) => i = i + j + 1,
             None => return false,
         }
@@ -4797,7 +4825,14 @@ pub fn local_command_suggestions(
     allow_selectors: bool,
     entity_types: &[String],
 ) -> ChatSuggestionSource {
-    local_command_suggestions_with_tags(tree, input, online_names, allow_selectors, entity_types, &[])
+    local_command_suggestions_with_tags(
+        tree,
+        input,
+        online_names,
+        allow_selectors,
+        entity_types,
+        &[],
+    )
 }
 
 /// THE LOCAL SUGGESTION WALK (the vanilla
@@ -5024,7 +5059,13 @@ fn local_entity_suggestions(
         // the '@' walk: the '[' the options walk opens — the name
         // positions the local lane answers, the value states the ask
         if let Some(bracket_idx) = sel_chars.find('[') {
-            return local_selector_options_suggestions(sel_chars, bracket_idx, token_start, entity_types, entity_type_tags);
+            return local_selector_options_suggestions(
+                sel_chars,
+                bracket_idx,
+                token_start,
+                entity_types,
+                entity_type_tags,
+            );
         }
         if !allow_selectors {
             // the selectors the permission gate never names — the '@'
@@ -5045,9 +5086,10 @@ fn local_entity_suggestions(
         for (name, key, fallback) in SELECTOR_SUGGESTIONS {
             matches.push(selector_suggestion(name, key, fallback));
         }
-        let parsed = sel_chars.as_bytes().first().is_some_and(|&c| {
-            matches!(c, b'a' | b'e' | b'n' | b'p' | b'r' | b's')
-        });
+        let parsed = sel_chars
+            .as_bytes()
+            .first()
+            .is_some_and(|&c| matches!(c, b'a' | b'e' | b'n' | b'p' | b'r' | b's'));
         if parsed {
             (token_start + 1, partial.len() - 1)
         } else {
@@ -5302,27 +5344,27 @@ pub fn is_view_blocking(kind: u16) -> bool {
 pub fn particle_tile(kind: u16) -> u16 {
     use mc_registry::generated::atlas;
     match kind {
-        crate::world::STONE => 0,      // "stone"
-        crate::world::DIRT => 1,       // "dirt"
-        crate::world::GRASS => 1,      // the model's particle: dirt
-        crate::world::LOG => 4,        // "oak_log" (the side)
-        crate::world::SAND => 8,       // "sand"
-        crate::world::GRANITE => 9,    // "granite"
-        crate::world::DIORITE => 10,   // "diorite"
-        crate::world::ANDESITE => 11,  // "andesite"
-        crate::world::DEEPSLATE => 12, // "deepslate" (the side)
-        crate::world::COBBLED_DEEPSLATE => 14, // "cobbled_deepslate"
-        crate::world::GRAVEL => 15,    // "gravel"
-        crate::world::BEDROCK => 16,   // "bedrock"
-        crate::world::COAL_ORE => 17,  // "coal_ore"
-        crate::world::COPPER_ORE => 18, // "copper_ore"
-        crate::world::IRON_ORE => 19,  // "iron_ore"
-        crate::world::GOLD_ORE => 20,  // "gold_ore"
-        crate::world::REDSTONE_ORE => 21, // "redstone_ore"
-        crate::world::LAPIS_ORE => 22, // "lapis_ore"
-        crate::world::DIAMOND_ORE => 23, // "diamond_ore"
-        crate::world::EMERALD_ORE => 24, // "emerald_ore"
-        crate::world::NETHERRACK => 25, // "netherrack"
+        crate::world::STONE => 0,                                 // "stone"
+        crate::world::DIRT => 1,                                  // "dirt"
+        crate::world::GRASS => 1,                                 // the model's particle: dirt
+        crate::world::LOG => 4,                                   // "oak_log" (the side)
+        crate::world::SAND => 8,                                  // "sand"
+        crate::world::GRANITE => 9,                               // "granite"
+        crate::world::DIORITE => 10,                              // "diorite"
+        crate::world::ANDESITE => 11,                             // "andesite"
+        crate::world::DEEPSLATE => 12,                            // "deepslate" (the side)
+        crate::world::COBBLED_DEEPSLATE => 14,                    // "cobbled_deepslate"
+        crate::world::GRAVEL => 15,                               // "gravel"
+        crate::world::BEDROCK => 16,                              // "bedrock"
+        crate::world::COAL_ORE => 17,                             // "coal_ore"
+        crate::world::COPPER_ORE => 18,                           // "copper_ore"
+        crate::world::IRON_ORE => 19,                             // "iron_ore"
+        crate::world::GOLD_ORE => 20,                             // "gold_ore"
+        crate::world::REDSTONE_ORE => 21,                         // "redstone_ore"
+        crate::world::LAPIS_ORE => 22,                            // "lapis_ore"
+        crate::world::DIAMOND_ORE => 23,                          // "diamond_ore"
+        crate::world::EMERALD_ORE => 24,                          // "emerald_ore"
+        crate::world::NETHERRACK => 25,                           // "netherrack"
         crate::world::HONEY_BLOCK => atlas::TILE_HONEY_BLOCK_TOP, // the model's particle: honey_block_top
         _ => atlas::TILE_NONE,
     }
@@ -5346,7 +5388,16 @@ pub struct Button {
 
 impl Button {
     pub fn new(id: &'static str, label: String, cx: i32, y: i32, w: i32) -> Self {
-        Button { x: cx - w / 2, y, w, h: 20, label, active: true, id, value: None }
+        Button {
+            x: cx - w / 2,
+            y,
+            w,
+            h: 20,
+            label,
+            active: true,
+            id,
+            value: None,
+        }
     }
 
     pub fn hovered(&self, mx: i32, my: i32) -> bool {
@@ -5395,7 +5446,14 @@ impl Button {
         };
         g.sprite_9slice(a, sprite, self.x, self.y, self.w, self.h);
         let color = if self.active { WHITE } else { [0.5, 0.5, 0.5] };
-        g.text_centered(a, self.x + self.w / 2, self.y + self.h / 2 - 4, &self.label, color, true);
+        g.text_centered(
+            a,
+            self.x + self.w / 2,
+            self.y + self.h / 2 - 4,
+            &self.label,
+            color,
+            true,
+        );
     }
 }
 
@@ -5460,11 +5518,7 @@ fn fov_caption(fov: f64) -> String {
     } else {
         return format!("{}: {}", tr("options.fov").unwrap_or("FOV"), i);
     };
-    format!(
-        "{}: {}",
-        tr("options.fov").unwrap_or("FOV"),
-        word
-    )
+    format!("{}: {}", tr("options.fov").unwrap_or("FOV"), word)
 }
 
 /// THE CAMERA'S OWN FOV FOLD (the CAMERA.calculateFov walk — the
@@ -5489,6 +5543,28 @@ fn volume_caption(v: f64) -> String {
     format!(
         "{}: {}%",
         tr("options.musicVolume").unwrap_or("Music & Sounds"),
+        (v * 100.0) as i32
+    )
+}
+
+/// THE FOV EFFECTS' OWN CAPTION (the vanilla UnitDouble law the
+/// `options.generic_value` composition speaks — the "%s: %s" the
+/// CommonComponents.optionNameValue walk keeps, the value word the
+/// percent the OFF end wears: the default 1.0 the 'FOV Effects: 100%'
+/// word keeps, the 0.0 the 'FOV Effects: OFF' row the volume lane's
+/// own shape wears — the same percent/OFF pair the master volume's
+/// caption law keeps, the 26.2 UnitDouble the percent word banks).
+fn fov_effect_caption(v: f64) -> String {
+    if v <= 0.0 {
+        return format!(
+            "{}: {}",
+            tr("options.fovEffectScale").unwrap_or("FOV Effects"),
+            tr("options.off").unwrap_or("OFF")
+        );
+    }
+    format!(
+        "{}: {}%",
+        tr("options.fovEffectScale").unwrap_or("FOV Effects"),
         (v * 100.0) as i32
     )
 }
@@ -5678,9 +5754,7 @@ fn parse_address(addr: &str) -> (String, u16) {
 /// arm the no-fold reads).
 fn ear_distance(ear: Option<(f64, f64, f64)>, x: f64, y: f64, z: f64) -> f64 {
     match ear {
-        Some((ex, ey, ez)) => {
-            ((x - ex).powi(2) + (y - ey).powi(2) + (z - ez).powi(2)).sqrt()
-        }
+        Some((ex, ey, ez)) => ((x - ex).powi(2) + (y - ey).powi(2) + (z - ez).powi(2)).sqrt(),
         None => 0.0,
     }
 }
@@ -5781,10 +5855,8 @@ pub(crate) fn held_attack_addend(held: Option<&str>) -> f64 {
     }
     const SWORD_BASE: f64 = 3.0;
     match name {
-        "wooden_sword" | "golden_sword" | "stone_sword" | "copper_sword"
-        | "iron_sword" | "diamond_sword" | "netherite_sword" => {
-            SWORD_BASE + material_bonus(name)
-        }
+        "wooden_sword" | "golden_sword" | "stone_sword" | "copper_sword" | "iron_sword"
+        | "diamond_sword" | "netherite_sword" => SWORD_BASE + material_bonus(name),
         _ => 0.0,
     }
 }
@@ -5829,8 +5901,8 @@ fn held_tool_args(held: &str) -> Option<(f64, f64)> {
         "stone_axe" | "copper_axe" => (7.0, -3.2),
         "iron_axe" => (6.0, -3.1),
         "diamond_axe" | "netherite_axe" => (5.0, -3.0),
-        "wooden_shovel" | "golden_shovel" | "stone_shovel" | "copper_shovel"
-        | "iron_shovel" | "diamond_shovel" | "netherite_shovel" => (1.5, -3.0),
+        "wooden_shovel" | "golden_shovel" | "stone_shovel" | "copper_shovel" | "iron_shovel"
+        | "diamond_shovel" | "netherite_shovel" => (1.5, -3.0),
         "wooden_pickaxe" | "golden_pickaxe" | "stone_pickaxe" | "copper_pickaxe"
         | "iron_pickaxe" | "diamond_pickaxe" | "netherite_pickaxe" => (1.0, -2.8),
         "wooden_hoe" | "golden_hoe" => (0.0, -3.0),
@@ -5916,16 +5988,7 @@ pub(crate) struct KineticRow {
 }
 
 pub(crate) fn spear_kinetic_row(name: &str) -> Option<KineticRow> {
-    let (
-        contact,
-        dmax,
-        dmin,
-        kmax,
-        kmin,
-        gmax,
-        gmin,
-        mult,
-    ) = match name {
+    let (contact, dmax, dmin, kmax, kmin, gmax, gmin, mult) = match name {
         // wooden: F2 0.70, F3 0.75, (5.0, 14.0), (10.0, 5.1), (15.0, 4.6)
         "wooden_spear" => (15, 100, 14.0f32, 200, 5.1f32, 300, 4.6f32, 0.70f32),
         // stone: F2 0.82, F3 0.70, (4.5, 13.0), (9.0, 5.1), (13.75, 4.6)
@@ -6043,8 +6106,7 @@ fn held_attack_pick_window(held: Option<&str>, creative: bool) -> (f64, f64) {
     } else {
         (
             0.0,
-            crate::world::ENTITY_INTERACTION_RANGE
-                * crate::world::ENTITY_INTERACTION_RANGE,
+            crate::world::ENTITY_INTERACTION_RANGE * crate::world::ENTITY_INTERACTION_RANGE,
         )
     }
 }
@@ -6086,7 +6148,6 @@ fn stab_hull_ray_d2(
     let (dx, dy, dz) = (px - eye.0, py - eye.1, pz - eye.2);
     Some(dx * dx + dy * dy + dz * dz)
 }
-
 
 /// THE ROCK'S OWN STEP (javap `tickBubbleColumn`'s client arm — the
 /// walk BOTH lanes speak: the multiplier the bubbleTime's presence
@@ -6273,6 +6334,34 @@ pub enum ScreenKind {
     /// ServerboundLockDifficultyPacket walk wears, the hardcore arm
     /// the client's own worlds never wear).
     WorldOptions,
+    /// THE ACCESSIBILITY SCREEN'S OWN SEAT (javap 26.2
+    /// AccessibilityOptionsScreen — the OptionsScreen's
+    /// `options.accessibility` button the lambda$init$8 walk opens:
+    /// `new AccessibilityOptionsScreen(this, options)` — the BOTH
+    /// lanes the button wears, the title screen's grid the in-world
+    /// pause the same row keeps). The addOptions walk banks the ROW
+    /// ARRAY: the static `options(Options)` the 24 instances keeps —
+    /// narrator, showSubtitles, highContrast, menuBackgroundBlurriness,
+    /// textBackgroundOpacity, backgroundForChatOnly, chatOpacity,
+    /// chatLineSpacing, chatDelay, notificationDisplayTime, bobView,
+    /// screenEffectScale, FOV EFFECT SCALE (index 12 — the row the
+    /// client's own store carries), darknessEffectScale,
+    /// damageTiltStrength, glintSpeed, glintStrength,
+    /// hideLightningFlash, darkMojangStudiosBackground, panoramaSpeed,
+    /// hideSplashTexts, narratorHotkey, rotateWithMinecart,
+    /// highContrastBlockOutline — the first addSmall row the CONTROLS
+    /// button + the narrator pair wear, the rest the two-per-row walk
+    /// adds. THE ABSENCE THE RECORD KEEPS: the sub-screen's stores the
+    /// client's own Options the ONE seat wears — the fovEffectScale row
+    /// ALONE the list hosts, the other 23 rows the follow-up candidates
+    /// (each row its own store the next rounds bank). THE SAVE LAW THE
+    /// TRUE-ABSENCE SPEAKS: the class the `removed()` method NEVER
+    /// WEARS (the 26.2 class file the probe answers — the save seat
+    /// stays the parent OptionsScreen.removed() the open() head wears),
+    /// the Escape the `shouldCloseOnEsc` default the close speaks (no
+    /// override the class keeps — the lastScreen the parent ride
+    /// returns).
+    Accessibility,
     /// THE DIFFICULTY'S OWN LOCK QUESTION (javap 26.2 ConfirmScreen —
     /// the DifficultyButtons record's lock onPress opens it: the
     /// `lambda$create$1` walk's `new ConfirmScreen(answer ->
@@ -6568,7 +6657,7 @@ pub(crate) fn draw_gamemode_switcher_panel(g: &mut Gui, x: i32, y: i32) {
     let grey = [1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0, 1.0]; // 85/255
     let head = [33.0 / 255.0, 33.0 / 255.0, 33.0 / 255.0, 1.0];
     let body = [33.0 / 255.0, 33.0 / 255.0, 33.0 / 255.0, 0.4]; // 102/255
-    // THE BLACK OUTLINE (the octagon the corner transparency speaks)
+                                                                // THE BLACK OUTLINE (the octagon the corner transparency speaks)
     g.fill(x + 2, y, 120, 1, k); // y0
     g.fill(x + 1, y + 1, 1, 1, k);
     g.fill(x + 122, y + 1, 1, 1, k);
@@ -6751,14 +6840,7 @@ impl ItemFrameEnt {
             (_, 0, 0) => (0.375, 0.375, 0.03125),
             _ => (0.375, 0.03125, 0.375),
         };
-        (
-            cx - hx,
-            cy - hy,
-            cz - hz,
-            cx + hx,
-            cy + hy,
-            cz + hz,
-        )
+        (cx - hx, cy - hy, cz - hz, cx + hx, cy + hy, cz + hz)
     }
 }
 
@@ -8093,6 +8175,10 @@ pub struct App {
     /// shape the sensitivity/fov seats wear — the Music & Sounds row's
     /// own flag).
     pub volume_drag: bool,
+    /// THE FOV EFFECTS SLIDER'S OWN ARM (the same AbstractWidget
+    /// dragging shape the Options screen's own seats wear — the
+    /// Accessibility sub-screen's fovEffectScale row's own flag).
+    pub fov_effect_drag: bool,
     /// THE OPTIONS FILE'S OWN PATH (the `optionsFile` field the 26.2
     /// ctor's `File` param banks — the cwd the vanilla default game dir
     /// names, the run_gui_app boot sets; the headless boot the None the
@@ -9135,8 +9221,10 @@ pub fn hotbar_pages_to_nbt(pages: &[[(i32, i32); 9]; 9]) -> mc_protocol::nbt::Nb
             None => mc_protocol::nbt::Nbt::Compound(vec![]),
         }
     };
-    let mut root: Vec<(String, mc_protocol::nbt::Nbt)> =
-        vec![("DataVersion".to_string(), mc_protocol::nbt::Nbt::Int(HOTBAR_DATA_VERSION))];
+    let mut root: Vec<(String, mc_protocol::nbt::Nbt)> = vec![(
+        "DataVersion".to_string(),
+        mc_protocol::nbt::Nbt::Int(HOTBAR_DATA_VERSION),
+    )];
     for (i, page) in pages.iter().enumerate() {
         let items = page.iter().copied().map(item_compound).collect();
         root.push((i.to_string(), mc_protocol::nbt::Nbt::List(items)));
@@ -9620,7 +9708,12 @@ fn store_entries_list(
 ) -> Vec<mc_protocol::nbt::Nbt> {
     let mut entries = Vec::new();
     for ((x, y, z), slots) in stores.iter().collect::<std::collections::BTreeMap<_, _>>() {
-        let items = slots.iter().copied().take(cap).map(store_slot_compound).collect();
+        let items = slots
+            .iter()
+            .copied()
+            .take(cap)
+            .map(store_slot_compound)
+            .collect();
         entries.push(mc_protocol::nbt::Nbt::Compound(vec![
             ("x".to_string(), mc_protocol::nbt::Nbt::Int(*x)),
             ("y".to_string(), mc_protocol::nbt::Nbt::Int(*y)),
@@ -9661,10 +9754,12 @@ fn parse_stores_list(
             continue;
         };
         let read_int = |key: &str| -> Option<i32> {
-            fields.iter().find(|(k, _)| k == key).and_then(|(_, v)| v.as_i32())
+            fields
+                .iter()
+                .find(|(k, _)| k == key)
+                .and_then(|(_, v)| v.as_i32())
         };
-        let (Some(x), Some(y), Some(z)) = (read_int("x"), read_int("y"), read_int("z"))
-        else {
+        let (Some(x), Some(y), Some(z)) = (read_int("x"), read_int("y"), read_int("z")) else {
             continue;
         };
         let Some(mc_protocol::nbt::Nbt::List(items)) =
@@ -9740,7 +9835,10 @@ pub fn furnace_words_bank_to_nbt(
             (
                 "Words".to_string(),
                 mc_protocol::nbt::Nbt::List(
-                    words.iter().map(|&w| mc_protocol::nbt::Nbt::Int(w)).collect(),
+                    words
+                        .iter()
+                        .map(|&w| mc_protocol::nbt::Nbt::Int(w))
+                        .collect(),
                 ),
             ),
         ]));
@@ -9764,10 +9862,12 @@ pub fn furnace_words_from_nbt(
             continue;
         };
         let read_int = |key: &str| -> Option<i32> {
-            fields.iter().find(|(k, _)| k == key).and_then(|(_, v)| v.as_i32())
+            fields
+                .iter()
+                .find(|(k, _)| k == key)
+                .and_then(|(_, v)| v.as_i32())
         };
-        let (Some(x), Some(y), Some(z)) = (read_int("x"), read_int("y"), read_int("z"))
-        else {
+        let (Some(x), Some(y), Some(z)) = (read_int("x"), read_int("y"), read_int("z")) else {
             continue;
         };
         let mut words = [0i32; 4];
@@ -9821,12 +9921,18 @@ pub fn item_frames_bank_to_nbt(frames: &[ItemFrameEnt]) -> mc_protocol::nbt::Nbt
             ("x".to_string(), mc_protocol::nbt::Nbt::Int(f.cell.0)),
             ("y".to_string(), mc_protocol::nbt::Nbt::Int(f.cell.1)),
             ("z".to_string(), mc_protocol::nbt::Nbt::Int(f.cell.2)),
-            ("facing".to_string(), mc_protocol::nbt::Nbt::Int(f.facing as i32)),
+            (
+                "facing".to_string(),
+                mc_protocol::nbt::Nbt::Int(f.facing as i32),
+            ),
             (
                 "rotation".to_string(),
                 mc_protocol::nbt::Nbt::Int(f.rotation as i32),
             ),
-            ("glow".to_string(), mc_protocol::nbt::Nbt::Byte(f.glow as i8)),
+            (
+                "glow".to_string(),
+                mc_protocol::nbt::Nbt::Byte(f.glow as i8),
+            ),
             ("Item".to_string(), item),
         ]));
     }
@@ -9852,10 +9958,12 @@ pub fn item_frames_from_nbt(value: &mc_protocol::nbt::Nbt) -> Vec<ItemFrameEnt> 
             continue;
         };
         let read_int = |key: &str| -> Option<i32> {
-            fields.iter().find(|(k, _)| k == key).and_then(|(_, v)| v.as_i32())
+            fields
+                .iter()
+                .find(|(k, _)| k == key)
+                .and_then(|(_, v)| v.as_i32())
         };
-        let (Some(x), Some(y), Some(z)) = (read_int("x"), read_int("y"), read_int("z"))
-        else {
+        let (Some(x), Some(y), Some(z)) = (read_int("x"), read_int("y"), read_int("z")) else {
             continue;
         };
         // THE FACING BAND'S OWN GATE (the mayPlace law — the vertical
@@ -10185,6 +10293,7 @@ impl App {
             fov_drag: false,
             volume: 1.0,
             volume_drag: false,
+            fov_effect_drag: false,
             options_file: None,
             options_file_loaded: false,
             creative_palette: [(0, 0); 45],
@@ -10418,8 +10527,7 @@ impl App {
                 .map(|w| w.difficulty)
                 .unwrap_or(crate::difficulty::Difficulty::Normal)
         };
-        let can_respond = sk.can_summon
-            && difficulty != crate::difficulty::Difficulty::Peaceful;
+        let can_respond = sk.can_summon && difficulty != crate::difficulty::Difficulty::Peaceful;
         if !can_respond || sk.warning_level <= 0 {
             return;
         }
@@ -10459,12 +10567,8 @@ impl App {
                 // lane's vocabulary banks
                 let id = self.next_mob_id;
                 self.next_mob_id += 1;
-                let mut warden = crate::sculk::WardenMob::new(
-                    id,
-                    sx as f64 + 0.5,
-                    sy as f64,
-                    sz as f64 + 0.5,
-                );
+                let mut warden =
+                    crate::sculk::WardenMob::new(id, sx as f64 + 0.5, sy as f64, sz as f64 + 0.5);
                 // THE SUMMON'S OWN FINALIZE (javap `Warden.finalizeSpawn`
                 // pc 0-66 — the TRIGGERED spawn reason the shrieker's
                 // trySummonWarden `EntitySpawnReason.TRIGGERED` arg
@@ -10634,7 +10738,8 @@ impl App {
             if !charges.is_empty() {
                 let total: i32 = charges.iter().sum();
                 for charge in &charges {
-                    cat.cursors.push(crate::sculk::SculkCursor::fresh(cursor_pos, *charge));
+                    cat.cursors
+                        .push(crate::sculk::SculkCursor::fresh(cursor_pos, *charge));
                 }
                 self.game_events.push(format!(
                     "sculk_cursors @{} x{} y{} z{} n{} c{}",
@@ -10740,28 +10845,26 @@ impl App {
         if !self.world_is_network
             && !self.furnace_is_live
             && self.furnace_pos.is_some()
-            && self
-                .active_world()
-                .is_some_and(|w| crate::world::is_orientable_furnace(w.get(
+            && self.active_world().is_some_and(|w| {
+                crate::world::is_orientable_furnace(w.get(
                     self.furnace_pos.unwrap().0,
                     self.furnace_pos.unwrap().1,
                     self.furnace_pos.unwrap().2,
-                )))
+                ))
+            })
         {
             let pos = self.furnace_pos.unwrap();
-            let flipped =
-                self.furnace_sim
-                    .tick(&mut self.furnace_slots, &mut self.furnace_data);
+            let flipped = self
+                .furnace_sim
+                .tick(&mut self.furnace_slots, &mut self.furnace_data);
             if flipped {
-                let lit_now =
-                    self.furnace_data[crate::furnace_sim::DATA_LIT_TIME] > 0;
+                let lit_now = self.furnace_data[crate::furnace_sim::DATA_LIT_TIME] > 0;
                 // THE FLIP'S OWN HELPER (the dev-72 round — the same
                 // orientable walk the world walk's own flips serve,
                 // the re-mesh the changed verdict the caller keeps)
                 if self.furnace_world_flip(pos, lit_now) {
                     if let Some(world) = self.offline_world.as_ref() {
-                        self.world_quads =
-                            Some(crate::mesher::mesh_world(world, None));
+                        self.world_quads = Some(crate::mesher::mesh_world(world, None));
                     }
                 }
             }
@@ -10787,8 +10890,7 @@ impl App {
             if !self.furnace_stores.is_empty() {
                 // the deterministic order the BTree fold keeps (the
                 // house law — the same verdicts every run speaks)
-                let mut cells: Vec<(i32, i32, i32)> =
-                    self.furnace_stores.keys().copied().collect();
+                let mut cells: Vec<(i32, i32, i32)> = self.furnace_stores.keys().copied().collect();
                 cells.sort();
                 let live_cell = self.furnace_pos;
                 let mut any_flip = false;
@@ -10822,10 +10924,7 @@ impl App {
                     while trio.len() < 3 {
                         trio.push((0, 0));
                     }
-                    let mut words = *self
-                        .furnace_word_stores
-                        .entry(cell)
-                        .or_insert([0i32; 4]);
+                    let mut words = *self.furnace_word_stores.entry(cell).or_insert([0i32; 4]);
                     // THE PRIME (the closed cell's slots never change —
                     // the banked input the memory wears, the
                     // never-ticked stock's own total the fetch speaks)
@@ -10838,8 +10937,7 @@ impl App {
                     self.furnace_stores.insert(cell, trio);
                     self.furnace_word_stores.insert(cell, words);
                     if flipped {
-                        let lit_now =
-                            words[crate::furnace_sim::DATA_LIT_TIME] > 0;
+                        let lit_now = words[crate::furnace_sim::DATA_LIT_TIME] > 0;
                         any_flip |= self.furnace_world_flip(cell, lit_now);
                         // THE LIT FLIP'S OWN RE-READ (javap serverTick
                         // pc 399 the `setBlock(pos, state.setValue(LIT,
@@ -10856,8 +10954,7 @@ impl App {
                 }
                 if any_flip {
                     if let Some(world) = self.offline_world.as_ref() {
-                        self.world_quads =
-                            Some(crate::mesher::mesh_world(world, None));
+                        self.world_quads = Some(crate::mesher::mesh_world(world, None));
                     }
                 }
             }
@@ -10895,13 +10992,14 @@ impl App {
                         )
                     })
                 });
-            if let (Some(world), Some((bx, by, bz))) =
-                (if self.world_is_network {
+            if let (Some(world), Some((bx, by, bz))) = (
+                if self.world_is_network {
                     self.net_world.as_ref()
                 } else {
                     self.offline_world.as_ref()
-                }, body_cell)
-            {
+                },
+                body_cell,
+            ) {
                 // the ear the positioned voices hoist before the walk
                 // (the campfire lane's own shape)
                 let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
@@ -10937,12 +11035,7 @@ impl App {
                                 animate.next_f64(),
                             );
                             if v.crackle {
-                                crackle_cells.push((
-                                    sx,
-                                    sy,
-                                    sz,
-                                    "block.furnace.fire_crackle",
-                                ));
+                                crackle_cells.push((sx, sy, sz, "block.furnace.fire_crackle"));
                             }
                             // THE SMOKE-THEN-FLAME ORDER (pc 187-232 —
                             // the flame flag TRUE the pair's own tail
@@ -10963,12 +11056,7 @@ impl App {
                                 animate.next_f64(),
                             );
                             if v.crackle {
-                                crackle_cells.push((
-                                    sx,
-                                    sy,
-                                    sz,
-                                    "block.blastfurnace.fire_crackle",
-                                ));
+                                crackle_cells.push((sx, sy, sz, "block.blastfurnace.fire_crackle"));
                             }
                             // THE SMOKE-ONLY TAIL (pc 187-209 — the
                             // ONE addParticle the flame-less sibling
@@ -10986,15 +11074,11 @@ impl App {
                             // random the smoker's own animateTick
                             // spends, the FIXED (x+0.5, y+1.1, z+0.5)
                             // anchor the `ldc2_w 1.1; dadd` speaks)
-                            let v = crate::furnace_sim::smoker_animate_tick(
-                                animate.next_f64(),
-                            );
+                            let v = crate::furnace_sim::smoker_animate_tick(animate.next_f64());
                             if v.crackle {
-                                crackle_cells
-                                    .push((sx, sy, sz, "block.smoker.smoke"));
+                                crackle_cells.push((sx, sy, sz, "block.smoker.smoke"));
                             }
-                            smoker_smokes
-                                .push((sx as f64 + 0.5, sy as f64 + 1.1, sz as f64 + 0.5));
+                            smoker_smokes.push((sx as f64 + 0.5, sy as f64 + 1.1, sz as f64 + 0.5));
                         }
                         _ => {}
                     }
@@ -11025,13 +11109,11 @@ impl App {
                     // ride); the FLAME SECOND the furnace's pair alone
                     // adds (the blast furnace the flame-less sibling,
                     // the smoke the both keep)
-                    let smoke = crate::particles::shoot_smoke_puff(
-                        px, py, pz, 0.0, 0.0, 0.0, level,
-                    );
+                    let smoke =
+                        crate::particles::shoot_smoke_puff(px, py, pz, 0.0, 0.0, 0.0, level);
                     self.particles.push(smoke);
                     if flame {
-                        let flame =
-                            crate::particles::torch_flame(px, py, pz, level);
+                        let flame = crate::particles::torch_flame(px, py, pz, level);
                         self.particles.push(flame);
                     }
                 }
@@ -11039,9 +11121,8 @@ impl App {
                     // THE SMOKER'S OWN SMOKE (pc 79-96: the ONE
                     // addParticle(SMOKE) at the fixed +1.1 anchor — the
                     // smoke above the block the simple tail speaks)
-                    let smoke = crate::particles::shoot_smoke_puff(
-                        px, py, pz, 0.0, 0.0, 0.0, level,
-                    );
+                    let smoke =
+                        crate::particles::shoot_smoke_puff(px, py, pz, 0.0, 0.0, 0.0, level);
                     self.particles.push(smoke);
                 }
             }
@@ -11070,8 +11151,8 @@ impl App {
         // hand falls back to; the haste/fatigue folds the jar's duration
         // gates keep are honest absences here — the client tracks
         // neither effect)
-        self.swing.duration = held_swing_anim(mc_registry::item_name(self.held_id().unwrap_or(0)))
-            .duration;
+        self.swing.duration =
+            held_swing_anim(mc_registry::item_name(self.held_id().unwrap_or(0))).duration;
         self.swing.tick();
         // THE OVERLAY CLOCK (Hud.tick's own arm — the overlay message's
         // time ticks down while it lives, the > 0 gate the negative
@@ -11308,18 +11389,14 @@ impl App {
         // SparkParticle.tick gate arms — the (x, y, z, col, fade,
         // twinkle) specs the parent's own post-tick state carries, the
         // ctor draws the consumption's engine stream spends)
-        let mut spark_children: Vec<(f64, f64, f64, [f32; 3], Option<[f32; 3]>, bool)> =
-            Vec::new();
+        let mut spark_children: Vec<(f64, f64, f64, [f32; 3], Option<[f32; 3]>, bool)> = Vec::new();
         let level_rng = &mut self.level_ambient_rng;
         self.particles.retain_mut(|p| match p.kind {
             crate::particles::ParticleKind::Bubble => {
                 let wet = bubble_world
                     .map(|w| {
-                        w.get(
-                            p.x.floor() as i32,
-                            p.y.floor() as i32,
-                            p.z.floor() as i32,
-                        ) == crate::world::WATER
+                        w.get(p.x.floor() as i32, p.y.floor() as i32, p.z.floor() as i32)
+                            == crate::world::WATER
                     })
                     .unwrap_or(false);
                 p.tick_bubble(wet)
@@ -11332,11 +11409,8 @@ impl App {
             crate::particles::ParticleKind::BubbleColumnUp => {
                 let wet = bubble_world
                     .map(|w| {
-                        w.get(
-                            p.x.floor() as i32,
-                            p.y.floor() as i32,
-                            p.z.floor() as i32,
-                        ) == crate::world::WATER
+                        w.get(p.x.floor() as i32, p.y.floor() as i32, p.z.floor() as i32)
+                            == crate::world::WATER
                     })
                     .unwrap_or(false);
                 p.tick_bubble_column_up(wet)
@@ -11380,9 +11454,7 @@ impl App {
             // the drip's own walk: the base law + the smoke child's
             // gate (the roll rides the LEVEL random the parent's own
             // field speaks, the six floats ride the out-vec)
-            crate::particles::ParticleKind::Lava => {
-                p.tick_lava(level_rng, &mut smoke_spawns)
-            }
+            crate::particles::ParticleKind::Lava => p.tick_lava(level_rng, &mut smoke_spawns),
             // the dripstone family's own walks (the LevelEvent-1504
             // chain: the hang's expiry the fall spawns, the fall's
             // landing the land walk answers — the solid check the
@@ -11410,9 +11482,7 @@ impl App {
             // — the base law + the fade lerp + the trail CHILD the
             // gate arm banks: the children the out-vec lands, the
             // ctor draws the post-loop consumption spends)
-            crate::particles::ParticleKind::Spark { .. } => {
-                p.tick_spark(&mut spark_children)
-            }
+            crate::particles::ParticleKind::Spark { .. } => p.tick_spark(&mut spark_children),
             // the campfire smoke's own walk (javap CampfireSmokeParticle
             // .tick — the FULL override the drift/fade laws the base
             // lane never folds: the four rolls per tick, the raw
@@ -11430,7 +11500,12 @@ impl App {
         // base size, the grey tint, the lifetime.
         for (px, py, pz, pvx, pvy, pvz) in smoke_spawns {
             let child = crate::particles::smoke_puff(
-                px, py, pz, pvx, pvy, pvz,
+                px,
+                py,
+                pz,
+                pvx,
+                pvy,
+                pvz,
                 self.level_ambient_rng.next_f32(),
                 self.level_ambient_rng.next_f32(),
                 self.level_ambient_rng.next_f32(),
@@ -11482,9 +11557,7 @@ impl App {
         for (px, py, pz, pvx, pvy, pvz, lava) in drip_fall_spawns {
             let r_sprite = self.level_ambient_rng.next_f32();
             let r_life = self.level_ambient_rng.next_f32();
-            let drop = crate::particles::dripstone_drip_fall(
-                px, py, pz, lava, r_sprite, r_life,
-            );
+            let drop = crate::particles::dripstone_drip_fall(px, py, pz, lava, r_sprite, r_life);
             let _ = (pvx, pvy, pvz);
             self.particles.push(drop);
         }
@@ -11526,8 +11599,7 @@ impl App {
                         .find(|m| m.id == self.crit_emitters[i].target_id)
                         .map(|m| (m.x, m.y, m.z))
                 });
-            let (spawned, alive) =
-                self.crit_emitters[i].tick(target, &mut self.mob_rng);
+            let (spawned, alive) = self.crit_emitters[i].tick(target, &mut self.mob_rng);
             self.particles.extend(spawned);
             if !alive {
                 self.crit_emitters.remove(i);
@@ -11671,7 +11743,7 @@ impl App {
                 eye_y: b.y + b.eye_height(),
                 dead: self.dead,
                 width: crate::body::WIDTH,
-                            height: b.height(),
+                height: b.height(),
                 // THE BEGGOAL'S OWN GATE RAW MATERIAL (the main hand's
                 // stack the held word speaks — the wolves' own beg the
                 // interesting hand arms)
@@ -11724,11 +11796,9 @@ impl App {
                 // ticks spend silently)
                 if fly_changed {
                     if let Some(sink) = self.live_clicks.as_ref() {
-                        let _ = sink.send(
-                            crate::world_view::ContainerCommand::PlayerAbilities {
-                                flying: b.flying,
-                            },
-                        );
+                        let _ = sink.send(crate::world_view::ContainerCommand::PlayerAbilities {
+                            flying: b.flying,
+                        });
                     }
                 }
                 if self.fly_trigger_time > 0 {
@@ -11814,9 +11884,11 @@ impl App {
                     // The reins' word the hoist spoke (the &self read
                     // the body's mut borrow precedes).
                     if reins {
-                        if let Some(pig) = self.mobs.iter_mut().find(
-                            |m| m.id == vid && m.saddled && m.health > 0.0,
-                        ) {
+                        if let Some(pig) = self
+                            .mobs
+                            .iter_mut()
+                            .find(|m| m.id == vid && m.saddled && m.health > 0.0)
+                        {
                             // THE TICKRIDDEN SNAP (javap Pig.tickRidden
                             // 6-37 — the setRot the RIDER's own look
                             // carries: the yaw the body's word, the
@@ -11918,11 +11990,10 @@ impl App {
                                     pz.floor() as i32,
                                 )
                             })
-                            .unwrap_or(crate::world::AIR) as usize];
+                            .unwrap_or(crate::world::AIR)
+                            as usize];
                         if let Some(pig) = self.mobs.iter().find(|m| m.id == vid) {
-                            if let Some((event, volume, pitch)) =
-                                pig.step_voice(Some(under))
-                            {
+                            if let Some((event, volume, pitch)) = pig.step_voice(Some(under)) {
                                 let ear = Some((b.x, b.y + b.eye_height(), b.z));
                                 self.sounds.play_voice_at_pan(
                                     self.frame,
@@ -12005,8 +12076,7 @@ impl App {
                         }
                     }
                     let (mut fx, mut fy, mut fz) = (b.x, b.y, b.z);
-                    if let Some(v) = self.offline_boats.iter().find(|bb| bb.id == r.vehicle_id)
-                    {
+                    if let Some(v) = self.offline_boats.iter().find(|bb| bb.id == r.vehicle_id) {
                         let theta = -(v.yaw as f64) * std::f64::consts::PI / 180.0;
                         let (sin, cos) = theta.sin_cos();
                         let lx = r.seat_x as f64;
@@ -12026,8 +12096,7 @@ impl App {
                             .map(|p| p.delta_rotation)
                             .unwrap_or(0.0);
                         b.yaw = boat_rider_yaw_after(b.yaw, v.yaw, dr);
-                    } else if let Some(m) = self.mobs.iter().find(|mm| mm.id == r.vehicle_id)
-                    {
+                    } else if let Some(m) = self.mobs.iter().find(|mm| mm.id == r.vehicle_id) {
                         // THE MOB'S OWN CARRY (the PASSENGER attachment
                         // the fallback lambda$static$1 speaks —
                         // Vec3(0, height, 0) the ride_height carries:
@@ -12041,10 +12110,8 @@ impl App {
                         fx = m.x;
                         fy = m.y + r.ride_height as f64;
                         fz = m.z;
-                    } else if let Some(entry) = self
-                        .offline_carts
-                        .iter()
-                        .find(|cc| cc.id == r.vehicle_id)
+                    } else if let Some(entry) =
+                        self.offline_carts.iter().find(|cc| cc.id == r.vehicle_id)
                     {
                         // THE CART'S OWN CARRY (the PASSENGER attachment
                         // the EntityTypes MINECART row speaks — the
@@ -12173,8 +12240,8 @@ impl App {
                         b.chest_item = chest.0;
                         b.elytra_damage = 0;
                     }
-                    b.chest_glides = chest.1 > 0
-                        && Some(chest.0) == mc_registry::item_id_by_name("elytra");
+                    b.chest_glides =
+                        chest.1 > 0 && Some(chest.0) == mc_registry::item_id_by_name("elytra");
                     // THE EFFECT ATTRIBUTES' OWN FOLD (javap
                     // `MobEffect.addAttributeModifiers` +
                     // `AttributeTemplate.create` pc 8-16 — the modifier
@@ -12193,20 +12260,14 @@ impl App {
                     // SAFE_FALL_DISTANCE's +1.0×(amp+1) ADD_VALUE lift
                     // the fall-grace threshold wears.
                     let mut speed_mult = 1.0f32;
-                    if let Some(inst) = self
-                        .effects
-                        .get(crate::effects::MOB_EFFECT_SPEED)
-                    {
-                        speed_mult *=
-                            1.0 + crate::body::SPEED_EFFECT_MOVEMENT_MODIFIER
+                    if let Some(inst) = self.effects.get(crate::effects::MOB_EFFECT_SPEED) {
+                        speed_mult *= 1.0
+                            + crate::body::SPEED_EFFECT_MOVEMENT_MODIFIER
                                 * (inst.amplifier + 1) as f32;
                     }
-                    if let Some(inst) = self
-                        .effects
-                        .get(crate::effects::MOB_EFFECT_SLOWNESS)
-                    {
-                        speed_mult *=
-                            1.0 + crate::body::SLOWNESS_EFFECT_MOVEMENT_MODIFIER
+                    if let Some(inst) = self.effects.get(crate::effects::MOB_EFFECT_SLOWNESS) {
+                        speed_mult *= 1.0
+                            + crate::body::SLOWNESS_EFFECT_MOVEMENT_MODIFIER
                                 * (inst.amplifier + 1) as f32;
                     }
                     b.effect_speed_mult = speed_mult.max(0.0);
@@ -12231,14 +12292,14 @@ impl App {
                     // 85-98 — the hasEffect call the drag override
                     // answers): the store's read the body's flag banks,
                     // the water lane the glide speaks.
-                    b.dolphins_grace =
-                        self.effects.has_effect(crate::effects::MOB_EFFECT_DOLPHINS_GRACE);
+                    b.dolphins_grace = self
+                        .effects
+                        .has_effect(crate::effects::MOB_EFFECT_DOLPHINS_GRACE);
                     // THE WEAVING READ (javap WebBlock.entityInside pc
                     // 35-41 — the hasEffect(WEAVING) call the wider
                     // stuck clamp answers): the store's read the body's
                     // flag banks, the web beat the clamp speaks.
-                    b.weaving =
-                        self.effects.has_effect(crate::effects::MOB_EFFECT_WEAVING);
+                    b.weaving = self.effects.has_effect(crate::effects::MOB_EFFECT_WEAVING);
                     b.tick(w, using);
                     // THE LANDING RETIRE (javap LocalPlayer.aiStep the
                     // 26.2 jar — pcs 1098-1133, the tail AFTER the
@@ -12251,11 +12312,10 @@ impl App {
                     if b.flying && b.on_ground && self.game_mode != GameMode::Spectator {
                         b.flying = false;
                         if let Some(sink) = self.live_clicks.as_ref() {
-                            let _ = sink.send(
-                                crate::world_view::ContainerCommand::PlayerAbilities {
+                            let _ =
+                                sink.send(crate::world_view::ContainerCommand::PlayerAbilities {
                                     flying: false,
-                                },
-                            );
+                                });
                         }
                     }
                     // THE FOOTSTEP: the body's own cadence law fired on a
@@ -12309,7 +12369,12 @@ impl App {
                         // BUBBLE ring first, the SPLASH one after)
                         if let Some((px, py, pz, pvx, pvy, pvz)) = b.take_splash_pose() {
                             let rings = crate::particles::water_entry_rings(
-                                px, py, pz, pvx, pvy, pvz,
+                                px,
+                                py,
+                                pz,
+                                pvx,
+                                pvy,
+                                pvz,
                                 crate::body::WIDTH,
                                 &mut self.mob_rng,
                             );
@@ -12337,12 +12402,10 @@ impl App {
                         self.sounds.start_elytra_voice(self.frame);
                         if self.world_is_network {
                             if let Some(sink) = self.live_clicks.as_ref() {
-                                let _ = sink.send(
-                                    crate::world_view::ContainerCommand::PlayerCommand {
-                                        action: mc_protocol::play::
-                                            PLAYER_COMMAND_START_FALL_FLYING,
-                                    },
-                                );
+                                let _ =
+                                    sink.send(crate::world_view::ContainerCommand::PlayerCommand {
+                                        action: mc_protocol::play::PLAYER_COMMAND_START_FALL_FLYING,
+                                    });
                             }
                         }
                     }
@@ -12452,8 +12515,14 @@ impl App {
                     })
                     .unwrap_or(false);
                 if on_honey {
-                    self.sounds
-                        .play_voice_at_pan(self.frame, "block.honey_block.slide", 1.0, 1.0, 0.0, 0.0);
+                    self.sounds.play_voice_at_pan(
+                        self.frame,
+                        "block.honey_block.slide",
+                        1.0,
+                        1.0,
+                        0.0,
+                        0.0,
+                    );
                     self.spawn_honey_particles(10); // showJumpParticles — the ×10
                 }
                 self.apply_fall_damage(dmg);
@@ -12633,11 +12702,8 @@ impl App {
                             (1, 0, 0),
                         ];
                         for (dx, dy, dz) in RESONATE_DIRS {
-                            let (nx, ny, nz) = (
-                                sensor.pos.0 + dx,
-                                sensor.pos.1 + dy,
-                                sensor.pos.2 + dz,
-                            );
+                            let (nx, ny, nz) =
+                                (sensor.pos.0 + dx, sensor.pos.1 + dy, sensor.pos.2 + dz);
                             if crate::sculk::block_resonates(w.get(nx, ny, nz) as u32) {
                                 let event = crate::sculk::resonance_event_by_frequency(
                                     sensor.resonate_frequency,
@@ -12730,9 +12796,7 @@ impl App {
                                         sk.pos.1 as f64 + 0.5,
                                         sk.pos.2 as f64 + 0.5,
                                     ),
-                                    |x, y, z| {
-                                        crate::sculk::block_occludes(w.get(x, y, z) as u32)
-                                    },
+                                    |x, y, z| crate::sculk::block_occludes(w.get(x, y, z) as u32),
                                 ),
                                 None => false,
                             };
@@ -12747,9 +12811,7 @@ impl App {
                                 sk.pos.2,
                                 distance,
                                 crate::mth::floor(distance as f64),
-                                crate::sculk::vibration_frequency(
-                                    "sculk_sensor_tendrils_clicking"
-                                ),
+                                crate::sculk::vibration_frequency("sculk_sensor_tendrils_clicking"),
                                 0
                             ));
                             sk.shriek_at =
@@ -12835,8 +12897,8 @@ impl App {
                 // OptionalInt answers (the Some the ifPresent put
                 // banks, the None the pc 49 return the shriek walk
                 // never arms); the plain cell the gate skips
-                let can_respond = sk.can_summon
-                    && sk_difficulty != crate::difficulty::Difficulty::Peaceful;
+                let can_respond =
+                    sk.can_summon && sk_difficulty != crate::difficulty::Difficulty::Peaceful;
                 if can_respond {
                     // THE POSITIONS THE GATE READS (the
                     // getEntitiesOfClass walk's own shape — the wardens'
@@ -12864,8 +12926,7 @@ impl App {
                     }
                 }
                 sk.free_at = self.frame + crate::sculk::SHRIEKER_SHRIEK_TICKS;
-                let ring =
-                    crate::particles::sculk_shriek_ring(sk.pos, &mut self.level_ambient_rng);
+                let ring = crate::particles::sculk_shriek_ring(sk.pos, &mut self.level_ambient_rng);
                 self.particles.extend(ring);
                 let pitch = 0.6 + self.level_ambient_rng.next_f32() * 0.4;
                 shriek_voices.push((sk.pos.0, sk.pos.1, sk.pos.2, 2.0, pitch));
@@ -12896,36 +12957,30 @@ impl App {
             // volume-carrying pair speaks — the play_warden_voice_v the
             // 3.0f volume serves, the FIXED pitch 1.0f the fconst_1
             // keeps)
-            let mut roar_voices: Vec<(&'static str, f64, f64, f64, f32, f32)> =
-                Vec::new();
+            let mut roar_voices: Vec<(&'static str, f64, f64, f64, f32, f32)> = Vec::new();
             // THE SNIFF'S OWN VOICES (the Sniffing.start's own tail the
             // volume-carrying pair speaks — the play_warden_voice_v the
             // 5.0f volume serves, the FIXED pitch 1.0f the fconst_1
             // keeps; the LISTENING pair the stop's anger arm banks —
             // the 10.0f volume the playListeningSound wears)
-            let mut sniff_voices: Vec<(&'static str, f64, f64, f64, f32, f32)> =
-                Vec::new();
-            let mut sniff_listen_voices: Vec<(&'static str, f64, f64, f64, f32)> =
-                Vec::new();
+            let mut sniff_voices: Vec<(&'static str, f64, f64, f64, f32, f32)> = Vec::new();
+            let mut sniff_listen_voices: Vec<(&'static str, f64, f64, f64, f32)> = Vec::new();
             // THE EMERGE'S OWN VOICES (the Emerging.start's own tail the
             // volume-carrying pair speaks — the play_warden_voice_v the
             // 5.0f volume serves, the FIXED pitch 1.0f the fconst_1
             // keeps)
-            let mut emerge_voices: Vec<(&'static str, f64, f64, f64, f32, f32)> =
-                Vec::new();
+            let mut emerge_voices: Vec<(&'static str, f64, f64, f64, f32, f32)> = Vec::new();
             // THE DIG'S OWN VOICES (the Digging.start's own arms the
             // volume-carrying pair speaks — the play_warden_voice_v the
             // 5.0f volume serves, the FIXED pitch 1.0f the fconst_1
             // keeps; the WARDEN_DIG the on-ground arm banks, the
             // AGITATED the water/lava arm carries)
-            let mut dig_voices: Vec<(&'static str, f64, f64, f64, f32, f32)> =
-                Vec::new();
+            let mut dig_voices: Vec<(&'static str, f64, f64, f64, f32, f32)> = Vec::new();
             // THE ATTACK IMPACT'S OWN VOICES (the doHurtTarget's own
             // landing the volume-carrying pair speaks — the
             // play_warden_voice_v the FIXED 10.0 volume serves, the
             // two-draw pitch the landing banks)
-            let mut warden_impact_voices: Vec<(f64, f64, f64, f32)> =
-                Vec::new();
+            let mut warden_impact_voices: Vec<(f64, f64, f64, f32)> = Vec::new();
             // THE MELEE DOSE'S OWN YAWS (the landed swings the caller's
             // own hurt walk wears — the 30.0 the ATTACK_DAMAGE attr
             // carries, the knockback the swing's own facing speaks: the
@@ -12935,11 +12990,7 @@ impl App {
             // per-victim walk serves). THE WARDEN'S OWN SNAPSHOT the
             // triple leads — the setLastHurtByMob reference the dose
             // banks (the bitten mob's own HurtBy the retaliation arms)
-            let mut warden_melee_doses: Vec<(
-                crate::mob::PreyView,
-                Option<u64>,
-                f32,
-            )> = Vec::new();
+            let mut warden_melee_doses: Vec<(crate::mob::PreyView, Option<u64>, f32)> = Vec::new();
             // THE SONIC LANE'S OWN COLLECTS (the SonicBoom behavior's
             // own arms the lanes serve — the charge the start's voice
             // wears, the boom the dose + the push the victim's own
@@ -12948,25 +12999,17 @@ impl App {
             // VICTIM the pair carries — the player the None speaks,
             // the mob target's own id the Some banks — the dose the
             // consumer's per-victim walk serves)
-            let mut warden_sonic_charge_voices: Vec<(f64, f64, f64)> =
+            let mut warden_sonic_charge_voices: Vec<(f64, f64, f64)> = Vec::new();
+            let mut warden_sonic_boom_voices: Vec<(f64, f64, f64)> = Vec::new();
+            let mut warden_sonic_doses: Vec<(crate::mob::PreyView, Option<u64>, f64, f64, f64)> =
                 Vec::new();
-            let mut warden_sonic_boom_voices: Vec<(f64, f64, f64)> =
-                Vec::new();
-            let mut warden_sonic_doses: Vec<(
-                crate::mob::PreyView,
-                Option<u64>,
-                f64,
-                f64,
-                f64,
-            )> = Vec::new();
             // THE SONIC BEAM'S OWN PLANTS (javap `SonicBoom
             // .lambda$tick$2` pc 40-108 — the `Mth.floor(len) + 7`
             // walk's exact points the sendParticles count-1 plants: the
             // chest origin + the beam dir * j for j in 1..i the
             // sampled points bank — the grey draws the spawn walk
             // spends AFTER the loop the borrow order keeps)
-            let mut warden_sonic_beams: Vec<((f64, f64, f64), (f64, f64, f64), i64)> =
-                Vec::new();
+            let mut warden_sonic_beams: Vec<((f64, f64, f64), (f64, f64, f64), i64)> = Vec::new();
             for warden in &mut self.wardens {
                 if warden.tick() {
                     if let Some(word) = crate::sculk::warden_ambient_sound(
@@ -13027,10 +13070,9 @@ impl App {
                     // THE TARGET POS THE LOOK ARM CONSULTS (the player
                     // body the suspect answers, the mob the list keeps)
                     let (roar_pos, roar_is_player) = match warden.entity_angry_at() {
-                        Some(crate::sculk::WARDEN_PLAYER_SUSPECT) => (
-                            self.body.as_ref().map(|b| (b.x, b.y, b.z)),
-                            true,
-                        ),
+                        Some(crate::sculk::WARDEN_PLAYER_SUSPECT) => {
+                            (self.body.as_ref().map(|b| (b.x, b.y, b.z)), true)
+                        }
                         Some(id) => (
                             self.mobs
                                 .iter()
@@ -13040,8 +13082,7 @@ impl App {
                         ),
                         None => (None, false),
                     };
-                    if let Some(sound) =
-                        warden.roar_lane(roar_targetable, roar_pos, roar_is_player)
+                    if let Some(sound) = warden.roar_lane(roar_targetable, roar_pos, roar_is_player)
                     {
                         roar_voices.push((
                             sound.word,
@@ -13105,8 +13146,8 @@ impl App {
                     // fallback serves.
                     let suspect_view: Option<crate::sculk::WardenSuspect> = {
                         let wpos = (warden.x, warden.y, warden.z);
-                        let range2 = crate::sculk::WARDEN_SENSOR_RANGE
-                            * crate::sculk::WARDEN_SENSOR_RANGE;
+                        let range2 =
+                            crate::sculk::WARDEN_SENSOR_RANGE * crate::sculk::WARDEN_SENSOR_RANGE;
                         // THE PLAYER ARM (the lambda$0 the PLAYER filter
                         // keeps — the canTargetEntity verdict the
                         // survival + alive pair answers)
@@ -13271,14 +13312,11 @@ impl App {
                                         world,
                                         crate::math::Vec3::new(
                                             warden.x as f32,
-                                            (warden.y + crate::sculk::WARDEN_EYE_HEIGHT as f64) as f32,
+                                            (warden.y + crate::sculk::WARDEN_EYE_HEIGHT as f64)
+                                                as f32,
                                             warden.z as f32,
                                         ),
-                                        crate::math::Vec3::new(
-                                            tx as f32,
-                                            eh as f32,
-                                            tz as f32,
-                                        ),
+                                        crate::math::Vec3::new(tx as f32, eh as f32, tz as f32),
                                     )
                                     .is_none(),
                                     None => false,
@@ -13312,16 +13350,13 @@ impl App {
                             // target's own feet-anchored hitbox the
                             // box_for table speaks — the bite the dose
                             // consumer's mob arm lands)
-                            match fight_target_id.and_then(|id| {
-                                self.mobs
-                                    .iter()
-                                    .find(|m| m.id as u64 == id)
-                            }) {
+                            match fight_target_id
+                                .and_then(|id| self.mobs.iter().find(|m| m.id as u64 == id))
+                            {
                                 Some(m) => {
-                                    let (bmin, bmax) =
-                                        crate::sculk::warden_entity_box((
-                                            warden.x, warden.y, warden.z,
-                                        ));
+                                    let (bmin, bmax) = crate::sculk::warden_entity_box((
+                                        warden.x, warden.y, warden.z,
+                                    ));
                                     let r = crate::sculk::WARDEN_MELEE_REACH;
                                     let atk = (
                                         (bmin.0 - r, bmin.1, bmin.2 - r),
@@ -13348,14 +13383,13 @@ impl App {
                         // canTargetEntity verdict the invalid-target
                         // erase the memory's own target keeps
                         let sonic_eye = if fight_is_player {
-                            self.body.as_ref().map(|b| {
-                                (b.x, b.y + b.eye_height(), b.z)
-                            })
+                            self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z))
                         } else {
                             fight_target_id.and_then(|id| {
-                                self.mobs.iter().find(|m| m.id as u64 == id).map(|m| {
-                                    (m.x, m.y + m.kind.eye_height(), m.z)
-                                })
+                                self.mobs
+                                    .iter()
+                                    .find(|m| m.id as u64 == id)
+                                    .map(|m| (m.x, m.y + m.kind.eye_height(), m.z))
                             })
                         };
                         // THE CALM LOOK'S OWN LANE (javap `SetWardenLook
@@ -13371,27 +13405,15 @@ impl App {
                         let roar_block = warden.roar_target.and_then(|t| {
                             if t == crate::sculk::WARDEN_PLAYER_SUSPECT {
                                 self.body.as_ref().map(|b| {
-                                    (
-                                        b.x.floor() as i32,
-                                        b.y.floor() as i32,
-                                        b.z.floor() as i32,
-                                    )
+                                    (b.x.floor() as i32, b.y.floor() as i32, b.z.floor() as i32)
                                 })
                             } else {
-                                self.mobs
-                                    .iter()
-                                    .find(|m| m.id as u64 == t)
-                                    .map(|m| {
-                                        (
-                                            m.x.floor() as i32,
-                                            m.y.floor() as i32,
-                                            m.z.floor() as i32,
-                                        )
-                                    })
+                                self.mobs.iter().find(|m| m.id as u64 == t).map(|m| {
+                                    (m.x.floor() as i32, m.y.floor() as i32, m.z.floor() as i32)
+                                })
                             }
                         });
-                        let disturbance_block =
-                            warden.disturbance.as_ref().map(|d| d.pos);
+                        let disturbance_block = warden.disturbance.as_ref().map(|d| d.pos);
                         warden.calm_look_trigger(roar_block, disturbance_block);
                         // THE FIGHT'S OWN LOOK BANK (javap `WardenAi
                         // .initFightActivity` pc 23-37 + `SetEntityLook
@@ -13469,12 +13491,10 @@ impl App {
                                 warden.y + crate::sculk::WARDEN_SONIC_CHEST_OFFSET_Y,
                                 warden.z,
                             );
-                            let points =
-                                (sonic_out.beam_len.floor() as i64) + 7;
+                            let points = (sonic_out.beam_len.floor() as i64) + 7;
                             warden_sonic_beams.push((chest, sonic_out.beam, points));
                         }
-                        let melee_out =
-                            warden.fight_lane(fight_pos, fight_seen, fight_in_reach);
+                        let melee_out = warden.fight_lane(fight_pos, fight_seen, fight_in_reach);
                         if let Some(impact) = melee_out.impact {
                             warden_impact_voices.push((warden.x, warden.y, warden.z, impact.pitch));
                         }
@@ -13634,9 +13654,7 @@ impl App {
                             .find(|w| w.id == attacker.id)
                             .filter(|w| w.health > 0.0)
                             .is_some();
-                        let Some(mob) =
-                            self.mobs.iter_mut().find(|m| m.id as u64 == id)
-                        else {
+                        let Some(mob) = self.mobs.iter_mut().find(|m| m.id as u64 == id) else {
                             continue;
                         };
                         // THE DYING BODY THE DOSE REFUSES (the hurt
@@ -13668,14 +13686,14 @@ impl App {
                         let kind = mob.kind;
                         let died = mob.health <= 0.0;
                         let (mx, my, mz) = (mob.x, mob.y, mob.z);
-                        let loot =
-                            if died { mob.death_loot(false) } else { Vec::new() };
+                        let loot = if died {
+                            mob.death_loot(false)
+                        } else {
+                            Vec::new()
+                        };
                         let hurt_word = kind.voice_event(crate::mob::VoiceSlot::Hurt);
                         let death_word = kind.voice_event(crate::mob::VoiceSlot::Death);
-                        let ear = self
-                            .body
-                            .as_ref()
-                            .map(|b| (b.x, b.y + b.eye_height(), b.z));
+                        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
                         let yaw = self.listener_yaw();
                         // THE VOICE (hurtServer's makeSound — the hurt
                         // sound while alive, the death sound the die()
@@ -13738,10 +13756,10 @@ impl App {
                             let rad = yaw as f64 * std::f64::consts::PI / 180.0;
                             let (nx, nz) = (-(rad.sin()), rad.cos());
                             if let Some(b) = &mut self.body {
-                                b.vx = b.vx / 2.0
-                                    + nx * crate::sculk::WARDEN_ATTACK_KNOCKBACK as f64;
-                                b.vz = b.vz / 2.0
-                                    + nz * crate::sculk::WARDEN_ATTACK_KNOCKBACK as f64;
+                                b.vx =
+                                    b.vx / 2.0 + nx * crate::sculk::WARDEN_ATTACK_KNOCKBACK as f64;
+                                b.vz =
+                                    b.vz / 2.0 + nz * crate::sculk::WARDEN_ATTACK_KNOCKBACK as f64;
                                 if b.on_ground {
                                     b.vy = (b.vy / 2.0
                                         + crate::sculk::WARDEN_ATTACK_KNOCKBACK as f64)
@@ -13793,9 +13811,7 @@ impl App {
                             .find(|w| w.id == attacker.id)
                             .filter(|w| w.health > 0.0)
                             .is_some();
-                        let Some(mob) =
-                            self.mobs.iter_mut().find(|m| m.id as u64 == id)
-                        else {
+                        let Some(mob) = self.mobs.iter_mut().find(|m| m.id as u64 == id) else {
                             continue;
                         };
                         // THE DYING BODY THE DOSE REFUSES (the hurt
@@ -13814,12 +13830,9 @@ impl App {
                         // melee knockback's own fold never takes, the
                         // beam the direction the normalized walk
                         // serves)
-                        mob.vx +=
-                            bx * crate::sculk::WARDEN_SONIC_KNOCKBACK_HORIZONTAL;
-                        mob.vy +=
-                            by * crate::sculk::WARDEN_SONIC_KNOCKBACK_VERTICAL;
-                        mob.vz +=
-                            bz * crate::sculk::WARDEN_SONIC_KNOCKBACK_HORIZONTAL;
+                        mob.vx += bx * crate::sculk::WARDEN_SONIC_KNOCKBACK_HORIZONTAL;
+                        mob.vy += by * crate::sculk::WARDEN_SONIC_KNOCKBACK_VERTICAL;
+                        mob.vz += bz * crate::sculk::WARDEN_SONIC_KNOCKBACK_HORIZONTAL;
                         // THE KIND'S OWN WORDS + THE LOOT'S OWN ROLL (the
                         // facts the borrow captures — the drop the tail
                         // speaks AT the kill, the spawn order the
@@ -13828,14 +13841,14 @@ impl App {
                         let kind = mob.kind;
                         let died = mob.health <= 0.0;
                         let (mx, my, mz) = (mob.x, mob.y, mob.z);
-                        let loot =
-                            if died { mob.death_loot(false) } else { Vec::new() };
+                        let loot = if died {
+                            mob.death_loot(false)
+                        } else {
+                            Vec::new()
+                        };
                         let hurt_word = kind.voice_event(crate::mob::VoiceSlot::Hurt);
                         let death_word = kind.voice_event(crate::mob::VoiceSlot::Death);
-                        let ear = self
-                            .body
-                            .as_ref()
-                            .map(|b| (b.x, b.y + b.eye_height(), b.z));
+                        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
                         let yaw = self.listener_yaw();
                         // THE VOICE (hurtServer's makeSound — the hurt
                         // sound while alive, the death sound the die()
@@ -14317,7 +14330,11 @@ impl App {
                 // own store carries — the placed vein the SCULK_VEIN
                 // name + the face bits answer, the grid's u16
                 // vocabulary the face words never carries)
-                let mut probe_at = |x: i32, y: i32, z: i32, place: crate::sculk::SculkWrite| -> crate::sculk::SculkMovementProbe {
+                let mut probe_at = |x: i32,
+                                    y: i32,
+                                    z: i32,
+                                    place: crate::sculk::SculkWrite|
+                 -> crate::sculk::SculkMovementProbe {
                     match place {
                         crate::sculk::SculkWrite::None => {}
                         crate::sculk::SculkWrite::Vein(bit) => {
@@ -14415,7 +14432,11 @@ impl App {
                         .map(|(_, _, _, s)| *s)
                     {
                         return crate::sculk::SculkMovementProbe {
-                            name: if shrieker { "sculk_shrieker" } else { "sculk_sensor" },
+                            name: if shrieker {
+                                "sculk_shrieker"
+                            } else {
+                                "sculk_sensor"
+                            },
                             faces: 0,
                         };
                     }
@@ -14532,10 +14553,20 @@ impl App {
                         // walk keeps — the lane's grown cell the same
                         // honest false wears)
                         self.place_sculk_shrieker(cx, cy, cz, false);
-                        self.play_sculk_growth("block.sculk_shrieker.place", g.pos.0, g.pos.1, g.pos.2);
+                        self.play_sculk_growth(
+                            "block.sculk_shrieker.place",
+                            g.pos.0,
+                            g.pos.1,
+                            g.pos.2,
+                        );
                     } else {
                         self.place_sculk_sensor(cx, cy, cz);
-                        self.play_sculk_growth("block.sculk_sensor.place", g.pos.0, g.pos.1, g.pos.2);
+                        self.play_sculk_growth(
+                            "block.sculk_sensor.place",
+                            g.pos.0,
+                            g.pos.1,
+                            g.pos.2,
+                        );
                     }
                 }
                 if !charge_events.is_empty() {
@@ -14612,8 +14643,7 @@ impl App {
                 }
             }
             if in_soul_fire_hurt {
-                if self
-                    .hurt_burning_keyed(crate::body::IN_SOUL_FIRE_DAMAGE, "death.attack.inFire")
+                if self.hurt_burning_keyed(crate::body::IN_SOUL_FIRE_DAMAGE, "death.attack.inFire")
                 {
                     self.sounds.play_burn(self.frame);
                 }
@@ -14629,10 +14659,8 @@ impl App {
                 }
             }
             if in_soul_campfire_hurt {
-                if self.hurt_burning_keyed(
-                    crate::body::SOUL_CAMPFIRE_DAMAGE,
-                    "death.attack.inFire",
-                ) {
+                if self.hurt_burning_keyed(crate::body::SOUL_CAMPFIRE_DAMAGE, "death.attack.inFire")
+                {
                     self.sounds.play_burn(self.frame);
                 }
             }
@@ -14660,7 +14688,13 @@ impl App {
                 self.hurt_drowning(crate::body::DROWN_DAMAGE);
                 if let Some((px, py, pz, pvx, pvy, pvz)) = drown_pose {
                     let bubbles = crate::particles::drown_bubbles(
-                        px, py, pz, pvx, pvy, pvz, &mut self.mob_rng,
+                        px,
+                        py,
+                        pz,
+                        pvx,
+                        pvy,
+                        pvz,
+                        &mut self.mob_rng,
                     );
                     self.particles.extend(bubbles);
                 }
@@ -14790,10 +14824,7 @@ impl App {
             if self.dig_held && !using {
                 // the pick's own tuple copied out (the borrow ends before
                 // the machine's borrows and the sends begin)
-                let pick = self
-                    .frame_pick
-                    .as_ref()
-                    .map(|h| (h.pos, h.face));
+                let pick = self.frame_pick.as_ref().map(|h| (h.pos, h.face));
                 let mut sends: Vec<crate::dig::DigSend> = Vec::new();
                 let mut beat = false;
                 let mut broke = false;
@@ -14837,9 +14868,7 @@ impl App {
                             // HASTE and CONDUIT_POWER amps the shared read
                             // folds — the unworn pair the None identity
                             // rides, the greater amp the Some wears)
-                            let haste = crate::effects::dig_speed_amplification(
-                                &self.effects,
-                            );
+                            let haste = crate::effects::dig_speed_amplification(&self.effects);
                             // THE GAMEMODE DISPATCH's own folds (the
                             // audited instabuild grant + the restricted
                             // head — the LIVE reads the vanilla
@@ -14867,11 +14896,19 @@ impl App {
                             };
                             let dig = &mut self.dig;
                             if let Some(world) = world_opt {
-                                let was_solid =
-                                    world.get(pos.0, pos.1, pos.2) != crate::world::AIR;
+                                let was_solid = world.get(pos.0, pos.1, pos.2) != crate::world::AIR;
                                 let (s, b) = dig.continue_destroy_block(
-                                    pos, face, held, world, on_ground, eye_water, instabuild,
-                                    restricted, mining_fatigue, haste, attrs,
+                                    pos,
+                                    face,
+                                    held,
+                                    world,
+                                    on_ground,
+                                    eye_water,
+                                    instabuild,
+                                    restricted,
+                                    mining_fatigue,
+                                    haste,
+                                    attrs,
                                 );
                                 sends = s;
                                 beat = b;
@@ -14915,7 +14952,12 @@ impl App {
                     let tile = particle_tile(hit_kind.unwrap_or(crate::world::AIR));
                     if tile != mc_registry::generated::atlas::TILE_NONE {
                         let dust = crate::particles::dig_dust(
-                            tile, pos.0, pos.1, pos.2, face, &mut self.mob_rng,
+                            tile,
+                            pos.0,
+                            pos.1,
+                            pos.2,
+                            face,
+                            &mut self.mob_rng,
                         );
                         self.particles.push(dust);
                     }
@@ -15103,10 +15145,7 @@ impl App {
                     // the touch pass: the plain bbox intersect, the
                     // takeXpDelay gate one orb per window (the vanilla's
                     // own 2-tick throttle the pickup cadence speaks)
-                    let touched = self
-                        .orbs
-                        .iter()
-                        .position(|o| o.touches_body(body));
+                    let touched = self.orbs.iter().position(|o| o.touches_body(body));
                     if let Some(i) = touched {
                         let orb = self.orbs[i].clone();
                         self.orbs.remove(i);
@@ -15128,8 +15167,12 @@ impl App {
                             } else {
                                 self.xp.level as f32 / 30.0
                             } * 0.75;
-                            self.sounds
-                                .play_voice(self.frame, "entity.player.levelup", volume, 1.0);
+                            self.sounds.play_voice(
+                                self.frame,
+                                "entity.player.levelup",
+                                volume,
+                                1.0,
+                            );
                             self.last_level_up_time = self.frame as i32;
                         }
                     }
@@ -15199,9 +15242,7 @@ impl App {
                 // arm the ONE gate refuses, the spawn clock the world's
                 // own phase keeps — the doDaylightCycle gate's own shape
                 // the world's ticks the frame keeps)
-                if self.spawn_clock % crate::mob::SPAWN_CYCLE_TICKS == 0
-                    && self.do_mob_spawning
-                {
+                if self.spawn_clock % crate::mob::SPAWN_CYCLE_TICKS == 0 && self.do_mob_spawning {
                     let day_time = self.day_time_now();
                     if !crate::mob::is_bright_outside(day_time) {
                         if let (Some(world), Some(b)) =
@@ -15228,15 +15269,7 @@ impl App {
                                 let mobs = &mut self.mobs;
                                 let rng = &mut self.mob_rng;
                                 let next_id = &mut self.next_mob_id;
-                                crate::mob::try_spawn(
-                                    mobs,
-                                    next_id,
-                                    px,
-                                    pz,
-                                    world,
-                                    rng,
-                                    true,
-                                );
+                                crate::mob::try_spawn(mobs, next_id, px, pz, world, rng, true);
                             }
                         }
                     } else {
@@ -15258,14 +15291,7 @@ impl App {
                             let mobs = &mut self.mobs;
                             let rng = &mut self.mob_rng;
                             let next_id = &mut self.next_mob_id;
-                            crate::mob::try_spawn_creatures(
-                                mobs,
-                                next_id,
-                                px,
-                                pz,
-                                world,
-                                rng,
-                            );
+                            crate::mob::try_spawn_creatures(mobs, next_id, px, pz, world, rng);
                         }
                     }
                 }
@@ -15325,8 +15351,7 @@ impl App {
                                     // pairing serves — the color's own
                                     // concrete the conversion speaks)
                                     let placed = if convert {
-                                        crate::world::concrete_powder_target(kind)
-                                            .unwrap_or(kind)
+                                        crate::world::concrete_powder_target(kind).unwrap_or(kind)
                                     } else {
                                         kind
                                     };
@@ -15359,7 +15384,13 @@ impl App {
                             let id = self.next_drop_id;
                             self.next_drop_id += 1;
                             self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
-                                id, item, 1, x, y, z, &mut self.mob_rng,
+                                id,
+                                item,
+                                1,
+                                x,
+                                y,
+                                z,
+                                &mut self.mob_rng,
                             ));
                         }
                     }
@@ -15454,10 +15485,8 @@ impl App {
                             // pairing serves — the vanilla's own
                             // color-pair law the collection's sibling
                             // walk answers)
-                            if let Some(target) = crate::world::concrete_powder_target(kind)
-                            {
-                                if crate::world::concrete_touches_liquid(w, *x, *y, *z)
-                                {
+                            if let Some(target) = crate::world::concrete_powder_target(kind) {
+                                if crate::world::concrete_touches_liquid(w, *x, *y, *z) {
                                     w.set(*x, *y, *z, target);
                                     solidified.push((*x, *y, *z));
                                     continue;
@@ -15532,8 +15561,8 @@ impl App {
                                 continue;
                             }
                         }
-                        let off_kind = crate::world::button_toggled(*kind)
-                            .unwrap_or(crate::world::BUTTON);
+                        let off_kind =
+                            crate::world::button_toggled(*kind).unwrap_or(crate::world::BUTTON);
                         if let Some(world) = self.offline_world.as_mut() {
                             world.set(*x, *y, *z, off_kind);
                             // THE RELEASE'S OWN RAIL VERDICT (the dev-100
@@ -15545,17 +15574,13 @@ impl App {
                             // shared decode the same pass serves [the
                             // remesh the attach_wire_voice tail's own
                             // re-speak banks]
-                            let (dx, dy, dz) = crate::world::lever_support_offset(
-                                world.variant(*x, *y, *z),
-                            );
+                            let (dx, dy, dz) =
+                                crate::world::lever_support_offset(world.variant(*x, *y, *z));
                             let _ = world.rail_neighbor_updates((*x, *y, *z));
                             let _ = world.rail_neighbor_updates((*x + dx, *y + dy, *z + dz));
                         }
                         let (cx, cy, cz) = (*x as f64 + 0.5, *y as f64 + 0.5, *z as f64 + 0.5);
-                        let ear = self
-                            .body
-                            .as_ref()
-                            .map(|b| (b.x, b.y + b.eye_height(), b.z));
+                        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
                         let yaw = self.listener_yaw();
                         self.attach_wire_voice(*x, *y, *z);
                         // THE CLICK-OFF VOICE (javap playSound pc 0-26 —
@@ -15648,10 +15673,7 @@ impl App {
                             let _ = world.rail_neighbor_updates((*x, *y - 1, *z));
                         }
                         let (cx, cy, cz) = (*x as f64 + 0.5, *y as f64 + 0.5, *z as f64 + 0.5);
-                        let ear = self
-                            .body
-                            .as_ref()
-                            .map(|b| (b.x, b.y + b.eye_height(), b.z));
+                        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
                         let yaw = self.listener_yaw();
                         self.attach_wire_voice(*x, *y, *z);
                         // THE PLATE'S OWN CLICK-OFF (the sounds.json
@@ -15749,16 +15771,9 @@ impl App {
                             // BLOCKS source serves, the 1.0F/1.0F pair
                             // the volume and the pitch keep — the same
                             // law the igniter arm's own prime speaks)
-                            let ear = self
-                                .body
-                                .as_ref()
-                                .map(|b| (b.x, b.y + b.eye_height(), b.z));
+                            let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
                             let yaw = self.listener_yaw();
-                            let (tx, ty, tz) = (
-                                x as f64 + 0.5,
-                                y as f64,
-                                z as f64 + 0.5,
-                            );
+                            let (tx, ty, tz) = (x as f64 + 0.5, y as f64, z as f64 + 0.5);
                             self.sounds.play_voice_at_pan(
                                 self.frame,
                                 "entity.tnt.primed",
@@ -15835,8 +15850,7 @@ impl App {
                         // the same beat re-arms)
                         if !flip_seeds.is_empty() {
                             let read = &*world;
-                            let wire_flips =
-                                crate::world::wire_component_flips(read, &flip_seeds);
+                            let wire_flips = crate::world::wire_component_flips(read, &flip_seeds);
                             let mut wire_cells: Vec<(i32, i32, i32)> = Vec::new();
                             for ((wx, wy, wz), kind) in wire_flips {
                                 world.set(wx, wy, wz, kind);
@@ -15871,8 +15885,7 @@ impl App {
                             // relit torch the 15 the lamp's lit kind the
                             // same consult re-arms
                             {
-                                let mut lamp_seeds: Vec<(i32, i32, i32)> =
-                                    flip_seeds.clone();
+                                let mut lamp_seeds: Vec<(i32, i32, i32)> = flip_seeds.clone();
                                 lamp_seeds.extend(wire_cells.iter().copied());
                                 let lamp_flips = {
                                     let read = &*world;
@@ -15902,8 +15915,7 @@ impl App {
                             // flips' voices the setOpen walk's own rows
                             // the caller's tail speaks
                             {
-                                let mut door_seeds: Vec<(i32, i32, i32)> =
-                                    torch_cells.clone();
+                                let mut door_seeds: Vec<(i32, i32, i32)> = torch_cells.clone();
                                 door_seeds.extend(wire_cells.iter().copied());
                                 let lane = {
                                     let read = &*world;
@@ -15955,12 +15967,14 @@ impl App {
                     // the shift walk's own provider banks, the
                     // block.redstone_torch.burnout voice the same row
                     // speaks)
-                    self.live_smoke_voice_events_updated(vec![crate::world_view::WireSmokeVoiceEvent {
-                        x,
-                        y,
-                        z,
-                        voice: mc_protocol::REDSTONE_TORCH_BURNOUT_EFFECT,
-                    }]);
+                    self.live_smoke_voice_events_updated(vec![
+                        crate::world_view::WireSmokeVoiceEvent {
+                            x,
+                            y,
+                            z,
+                            voice: mc_protocol::REDSTONE_TORCH_BURNOUT_EFFECT,
+                        },
+                    ]);
                 }
                 // THE DRAIN'S OWN DOOR VOICES (javap DoorBlock.setOpen —
                 // the playSound walk the open/close events the set's
@@ -15968,10 +15982,7 @@ impl App {
                 // speaks; the vibration posts the sculk lane hears —
                 // the same voice walk the attach path's own flips
                 // wear)
-                let ear = self
-                    .body
-                    .as_ref()
-                    .map(|b| (b.x, b.y + b.eye_height(), b.z));
+                let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
                 let yaw = self.listener_yaw();
                 for ((dx, dy, dz), flip) in drain_lane.doors {
                     let voice = crate::world::door_voice_stem(flip);
@@ -16091,12 +16102,12 @@ impl App {
                     // pc 24-47 — the levelEvent the non-fire break the
                     // EVERY walk speaks: the break voice + the debris
                     // burst)
-                    self.sounds.play(self.frame, "bamboo", crate::sound::Lane::Break);
+                    self.sounds
+                        .play(self.frame, "bamboo", crate::sound::Lane::Break);
                     let tile = particle_tile(crate::world::BAMBOO);
                     if tile != mc_registry::generated::atlas::TILE_NONE {
-                        let burst = crate::particles::terrain_burst(
-                            tile, x, y, z, &mut self.mob_rng,
-                        );
+                        let burst =
+                            crate::particles::terrain_burst(tile, x, y, z, &mut self.mob_rng);
                         self.particles.extend(burst);
                     }
                     // THE POP'S OWN LOOT (javap pc 48-83 — the
@@ -16109,7 +16120,13 @@ impl App {
                         let id = self.next_drop_id;
                         self.next_drop_id += 1;
                         self.drops.push(crate::drops::ItemDrop::spawn(
-                            id, item, count, x, y, z, &mut self.drop_rng,
+                            id,
+                            item,
+                            count,
+                            x,
+                            y,
+                            z,
+                            &mut self.drop_rng,
                         ));
                     }
                     // THE POP'S OWN GAME EVENT (javap pc 99-118 — the
@@ -16134,8 +16151,7 @@ impl App {
                 // out-edges ride the hurt pipeline (the knockback the
                 // dealDefaultKnockback law speaks), the ambient groans
                 // draw their pitch from the entity's own stream.
-                let mut hit_events: Vec<(f64, f64, f64, crate::mob::MobKind)> =
-                    Vec::new();
+                let mut hit_events: Vec<(f64, f64, f64, crate::mob::MobKind)> = Vec::new();
                 // THE WOLF'S OWN BITES (the events the mob ticks queued
                 // — the (prey id, damage, dir) tuples the caller's own
                 // pass hurts the mob slice by)
@@ -16229,29 +16245,25 @@ impl App {
                 // answer): the caller's spawn lane the ItemEntities
                 // wear (the popResource law the ItemDrop::spawn keeps)
                 let mut explosion_drops: Vec<crate::mob::ExplosionDropStack> = Vec::new();
-                let mut blast_player: Option<
-                    (crate::mob::ExplosionBlast, Option<crate::mob::BlastSource>),
-                > = None;
-                let mut blast_sources: Vec<(
-                    i32,
-                    crate::mob::PreyView,
-                    (f64, f64, f64, f32),
-                )> = Vec::new();
+                let mut blast_player: Option<(
+                    crate::mob::ExplosionBlast,
+                    Option<crate::mob::BlastSource>,
+                )> = None;
+                let mut blast_sources: Vec<(i32, crate::mob::PreyView, (f64, f64, f64, f32))> =
+                    Vec::new();
                 // THE LISTENER'S OWN EAR (the SoundEngine's camera —
                 // the body's standing/crouching eye the render's own
                 // walk speaks): the mob voices' distance fold the wire
                 // lane speaks, the offline lane the same law answers
-                let ear = self
-                    .body
-                    .as_ref()
-                    .map(|b| (b.x, b.y + b.eye_height(), b.z));
+                let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
                 // the listener's own yaw the stereo split rides (the
                 // same read the cave mood's tick wears — the pan law
                 // the mob voices' log tails now speak)
                 let yaw = self.listener_yaw();
                 let mut groans: Vec<(&'static str, f32, f64, f32)> = Vec::new();
                 let mut mob_hurts: Vec<(&'static str, f32, f64, f32)> = Vec::new();
-                let mut mob_kills: Vec<(&'static str, f64, f64, f64, f32, Vec<(i32, i32)>)> = Vec::new();
+                let mut mob_kills: Vec<(&'static str, f64, f64, f64, f32, Vec<(i32, i32)>)> =
+                    Vec::new();
                 let mut fizzes: Vec<(f32, f64, f32)> = Vec::new();
                 // THE HURTBY GOAL'S OWN ALERTS (the start()'s
                 // alertOthers walk the events queue — the same-kind
@@ -16270,8 +16282,7 @@ impl App {
                     f64,
                     f64,
                     Option<crate::mob::PreyView>,
-                )> =
-                    Vec::new();
+                )> = Vec::new();
                 // the love walk's own boxes (the aiStep's ambient gate
                 // the in-love mobs arm — the spawns land AFTER the
                 // loop the disjoint-borrow pattern keeps)
@@ -16365,8 +16376,7 @@ impl App {
                         // the skip refuses: the vanilla order the
                         // vehicle-moves-then-passenger keeps, the carry
                         // the ride branch's FRESH pose read)
-                        let ridden_id =
-                            self.offline_ride.as_ref().map(|r| r.vehicle_id);
+                        let ridden_id = self.offline_ride.as_ref().map(|r| r.vehicle_id);
                         // THE GAMERULE'S OWN GRIEF READ (the disjoint field
                         // borrow the loop's own verdict keeps — the gamerule
                         // the blast lane's gate reads the hoist the checker
@@ -16433,9 +16443,13 @@ impl App {
                                 // autopush-451 correction banks
                                 // speaks, the mob_rng the heart
                                 // lanes' own stand-in keeps)
-                                self.particles.push(crate::particles::happy_villager_sparkle(
-                                    sx, sy, sz, &mut self.mob_rng,
-                                ));
+                                self.particles
+                                    .push(crate::particles::happy_villager_sparkle(
+                                        sx,
+                                        sy,
+                                        sz,
+                                        &mut self.mob_rng,
+                                    ));
                             }
                             if let Some((lx, ly, lz, _locked)) = ev.age_lock_sparkle {
                                 // THE AGE-LOCK PARTICLE'S OWN RIDE (the
@@ -16447,17 +16461,16 @@ impl App {
                                 // texture name — the spawn the caller's
                                 // level-random stand-in the sparkle lane
                                 // keeps)
-                                self.particles.push(crate::particles::happy_villager_sparkle(
-                                    lx, ly, lz, &mut self.mob_rng,
-                                ));
+                                self.particles
+                                    .push(crate::particles::happy_villager_sparkle(
+                                        lx,
+                                        ly,
+                                        lz,
+                                        &mut self.mob_rng,
+                                    ));
                             }
                             if let Some(atk) = ev.attack {
-                                hit_events.push((
-                                    atk.damage,
-                                    atk.dir_x,
-                                    atk.dir_z,
-                                    mob.kind,
-                                ));
+                                hit_events.push((atk.damage, atk.dir_x, atk.dir_z, mob.kind));
                             }
                             if let Some((prey_id, atk)) = ev.attack_prey {
                                 // THE ATTACKER'S OWN ID (the event's
@@ -16465,7 +16478,8 @@ impl App {
                                 // the setLastHurtByMob reference the
                                 // victim's dose names, the counter-fire
                                 // the ref arms)
-                                bite_events.push((mob.id, prey_id, atk.damage, atk.dir_x, atk.dir_z));
+                                bite_events
+                                    .push((mob.id, prey_id, atk.damage, atk.dir_x, atk.dir_z));
                             }
                             if let Some(shot) = ev.arrow_shot {
                                 arrow_shots.push(shot);
@@ -16488,7 +16502,11 @@ impl App {
                                 discarded_ids.push(mob.id);
                             }
                             if let Some((bx, by, bz, r)) = ev.explosion_at {
-                                blast_sources.push((mob.id, crate::mob::mob_prey_view(mob), (bx, by, bz, r)));
+                                blast_sources.push((
+                                    mob.id,
+                                    crate::mob::mob_prey_view(mob),
+                                    (bx, by, bz, r),
+                                ));
                                 booms.push((bx, by, bz, r));
                                 // THE TRACKER'S OWN SEAT (the handleExplosion
                                 // pc 137-148 tail the blast's own blockCount
@@ -16523,10 +16541,8 @@ impl App {
                             // gates, the TNT's own KEEP interaction the
                             // primed tick's own lane keeps)
                             if mob_griefing {
-                                explosion_cells
-                                    .extend(ev.explosion_blocks.iter().copied());
-                                explosion_drops
-                                    .extend(ev.explosion_drops.iter().copied());
+                                explosion_cells.extend(ev.explosion_blocks.iter().copied());
+                                explosion_drops.extend(ev.explosion_drops.iter().copied());
                                 // THE CHAIN'S OWN QUEUE (the creeper's blast
                                 // the exploded TNT cells the wasExploded law
                                 // queues — the post-loop walk the spawns
@@ -16538,9 +16554,7 @@ impl App {
                                     ev.explosion_tnt_chains
                                         .iter()
                                         .copied()
-                                        .map(|c| {
-                                            (c, Some(crate::mob::BlastSource::Mob(mob.kind)))
-                                        }),
+                                        .map(|c| (c, Some(crate::mob::BlastSource::Mob(mob.kind)))),
                                 );
                             }
                             if ev.blast_player.is_some() {
@@ -16548,10 +16562,9 @@ impl App {
                                 // source entity the getIndirectSourceEntity
                                 // walk returns — the entity row the death
                                 // message speaks)
-                                blast_player =
-                                    ev.blast_player.map(|b| {
-                                        (b, Some(crate::mob::BlastSource::Mob(mob.kind)))
-                                    });
+                                blast_player = ev
+                                    .blast_player
+                                    .map(|b| (b, Some(crate::mob::BlastSource::Mob(mob.kind))));
                             }
                             if ev.ambient {
                                 // THE PLAY'S OWN NULL GATE (javap
@@ -16624,12 +16637,7 @@ impl App {
                                 // voice + the feet the caller speaks,
                                 // the pitch the entity's own stream
                                 // drew)
-                                egg_lays.push((
-                                    pitch,
-                                    mob.x,
-                                    mob.y,
-                                    mob.z,
-                                ));
+                                egg_lays.push((pitch, mob.x, mob.y, mob.z));
                             }
                             if ev.step {
                                 // THE KIND'S OWN VOICE (MobKind::step_voice
@@ -16642,10 +16650,9 @@ impl App {
                                     mob.x.floor() as i32,
                                     (mob.y - 0.2).floor() as i32,
                                     mob.z.floor() as i32,
-                                ) as usize];
-                                if let Some((event, volume, pitch)) =
-                                    mob.step_voice(Some(under))
-                                {
+                                )
+                                    as usize];
+                                if let Some((event, volume, pitch)) = mob.step_voice(Some(under)) {
                                     mob_steps.push((
                                         event,
                                         volume,
@@ -16712,12 +16719,8 @@ impl App {
                         // the 0-dose word speaks, the 1/8 roll the chick
                         // banks, the ten shards the broadcast-3 wears,
                         // the discard the removal)
-                        let mut egg_breaks: Vec<(
-                            f64,
-                            f64,
-                            f64,
-                            crate::mob::ThrownProjectileKind,
-                        )> = Vec::new();
+                        let mut egg_breaks: Vec<(f64, f64, f64, crate::mob::ThrownProjectileKind)> =
+                            Vec::new();
                         for egg in self.eggs.iter_mut() {
                             if egg.dead {
                                 continue;
@@ -16750,26 +16753,21 @@ impl App {
                                 // rolls the base's own discard alone
                                 // speaks)
                                 if egg.kind == crate::mob::ThrownProjectileKind::Egg {
-                                    if let Some(count) = crate::mob::EggProjectile::chick_count(
-                                        &mut self.mob_rng,
-                                    ) {
+                                    if let Some(count) =
+                                        crate::mob::EggProjectile::chick_count(&mut self.mob_rng)
+                                    {
                                         for _ in 0..count {
                                             let cid = self.next_drop_id;
                                             self.next_drop_id += 1;
                                             let mut chick = crate::mob::Zombie::new(
-                                                cid,
-                                                egg.x,
-                                                egg.y,
-                                                egg.z,
-                                                cid as u64,
+                                                cid, egg.x, egg.y, egg.z, cid as u64,
                                             );
                                             chick.kind = crate::mob::MobKind::Chicken;
                                             chick.age = -24000;
-                                            chick.farm_variant = Some(
-                                                crate::mob::chicken_variant_for_biome(spawn_biome(
-                                                    self.seed,
-                                                )),
-                                            );
+                                            chick.farm_variant =
+                                                Some(crate::mob::chicken_variant_for_biome(
+                                                    spawn_biome(self.seed),
+                                                ));
                                             self.mobs.push(chick);
                                         }
                                     }
@@ -16823,26 +16821,21 @@ impl App {
                                 // plain break the mob-hit arm never
                                 // rolls)
                                 if egg.kind == crate::mob::ThrownProjectileKind::Egg {
-                                    if let Some(count) = crate::mob::EggProjectile::chick_count(
-                                        &mut self.mob_rng,
-                                    ) {
+                                    if let Some(count) =
+                                        crate::mob::EggProjectile::chick_count(&mut self.mob_rng)
+                                    {
                                         for _ in 0..count {
                                             let cid = self.next_drop_id;
                                             self.next_drop_id += 1;
                                             let mut chick = crate::mob::Zombie::new(
-                                                cid,
-                                                egg.x,
-                                                egg.y,
-                                                egg.z,
-                                                cid as u64,
+                                                cid, egg.x, egg.y, egg.z, cid as u64,
                                             );
                                             chick.kind = crate::mob::MobKind::Chicken;
                                             chick.age = -24000;
-                                            chick.farm_variant = Some(
-                                                crate::mob::chicken_variant_for_biome(spawn_biome(
-                                                    self.seed,
-                                                )),
-                                            );
+                                            chick.farm_variant =
+                                                Some(crate::mob::chicken_variant_for_biome(
+                                                    spawn_biome(self.seed),
+                                                ));
                                             self.mobs.push(chick);
                                         }
                                     }
@@ -16855,7 +16848,11 @@ impl App {
                             // gravity the fall fold, the pos the delta
                             // moves, the rotation the lerp fold banks)
                             let drag = if matches!(
-                                world.get(egg.x.floor() as i32, egg.y.floor() as i32, egg.z.floor() as i32),
+                                world.get(
+                                    egg.x.floor() as i32,
+                                    egg.y.floor() as i32,
+                                    egg.z.floor() as i32
+                                ),
                                 crate::world::WATER
                             ) {
                                 0.8
@@ -16890,7 +16887,10 @@ impl App {
                                 // the plain args speak])
                                 for _ in 0..8 {
                                     let shard = crate::particles::breaking_snowball_shard(
-                                        bx, by, bz, &mut self.mob_rng,
+                                        bx,
+                                        by,
+                                        bz,
+                                        &mut self.mob_rng,
                                     );
                                     self.particles.push(shard);
                                 }
@@ -16910,7 +16910,13 @@ impl App {
                                 let wvy = self.mob_rng.next_gaussian() * 0.02;
                                 let wvz = self.mob_rng.next_gaussian() * 0.02;
                                 let shard = crate::particles::breaking_egg_shard(
-                                    jx, jy, jz, wvx, wvy, wvz, &mut self.mob_rng,
+                                    jx,
+                                    jy,
+                                    jz,
+                                    wvx,
+                                    wvy,
+                                    wvz,
+                                    &mut self.mob_rng,
                                 );
                                 self.particles.push(shard);
                             }
@@ -16972,8 +16978,7 @@ impl App {
                                         for cz in bz0..=bz1 {
                                             if crate::world::arrow_presses_button(
                                                 world, arrow.x, arrow.y, arrow.z, cx, cy, cz,
-                                            ) && !arrow_button_presses
-                                                .contains(&(cx, cy, cz))
+                                            ) && !arrow_button_presses.contains(&(cx, cy, cz))
                                             {
                                                 arrow_button_presses.push((cx, cy, cz));
                                             }
@@ -17072,9 +17077,7 @@ impl App {
                         // the boosted v reads, the rocket-after-player
                         // tick pairing the vanilla order keeps; the
                         // glide-less frame the word never carries)
-                        if let (Some(b), Some((vx, vy, vz))) =
-                            (self.body.as_mut(), rider_v)
-                        {
+                        if let (Some(b), Some((vx, vy, vz))) = (self.body.as_mut(), rider_v) {
                             b.vx = vx;
                             b.vy = vy;
                             b.vz = vz;
@@ -17157,10 +17160,8 @@ impl App {
                                         ev.explosion_blocks.len() as i32,
                                     ));
                                 }
-                                explosion_cells
-                                    .extend(ev.explosion_blocks.iter().copied());
-                                explosion_drops
-                                    .extend(ev.explosion_drops.iter().copied());
+                                explosion_cells.extend(ev.explosion_blocks.iter().copied());
+                                explosion_drops.extend(ev.explosion_drops.iter().copied());
                                 tnt_chain_spawns.extend(
                                     ev.explosion_tnt_chains
                                         .iter()
@@ -17178,8 +17179,7 @@ impl App {
                                     // the killed body; the fire walk's
                                     // None the generic row keeps: "mc2rs
                                     // blew up")
-                                    blast_player =
-                                        ev.blast_player.map(|b| (b, t.owner));
+                                    blast_player = ev.blast_player.map(|b| (b, t.owner));
                                 }
                             } else {
                                 // the client-side SMOKE (the addParticle
@@ -17200,13 +17200,16 @@ impl App {
                         // the tick's tail already served, the owner the
                         // no-living-source word keeps (the getIndirectSource
                         // read the non-living cart the null answers))
-                        for (bx, by, bz, power) in
-                            std::mem::take(&mut self.pending_cart_booms)
-                        {
+                        for (bx, by, bz, power) in std::mem::take(&mut self.pending_cart_booms) {
                             booms.push((bx, by, bz, power));
                             tnt_blasts.push((bx, by, bz, power));
                             let to_blow = crate::mob::explosion_to_blow(
-                                world, bx, by, bz, power, &mut self.mob_rng,
+                                world,
+                                bx,
+                                by,
+                                bz,
+                                power,
+                                &mut self.mob_rng,
                             );
                             let (drops, chains) = crate::mob::explosion_item_drops(
                                 &to_blow,
@@ -17217,18 +17220,10 @@ impl App {
                             // THE TRACKER'S OWN SEAT (the same packet tail
                             // the cart's own boom wears — the to_blow walk's
                             // own count the blockCount keeps)
-                            tracked_booms.push((
-                                bx,
-                                by,
-                                bz,
-                                power,
-                                to_blow.len() as i32,
-                            ));
+                            tracked_booms.push((bx, by, bz, power, to_blow.len() as i32));
                             explosion_cells.extend(to_blow.iter().copied());
                             explosion_drops.extend(drops.iter().copied());
-                            tnt_chain_spawns.extend(
-                                chains.iter().copied().map(|c| (c, None)),
-                            );
+                            tnt_chain_spawns.extend(chains.iter().copied().map(|c| (c, None)));
                             // THE PLAYER'S OWN DOSE (the hurtEntities walk
                             // the player's box answers — the same fold the
                             // primed lane's blast serves, the no-source
@@ -17324,8 +17319,7 @@ impl App {
                                 if victim_id == *_src_id {
                                     continue;
                                 }
-                                let Some(mob) =
-                                    self.mobs.iter_mut().find(|m| m.id == victim_id)
+                                let Some(mob) = self.mobs.iter_mut().find(|m| m.id == victim_id)
                                 else {
                                     continue;
                                 };
@@ -17382,8 +17376,7 @@ impl App {
                                 &self.mobs,
                             );
                             for (victim_id, blast) in doses {
-                                let Some(mob) =
-                                    self.mobs.iter_mut().find(|m| m.id == victim_id)
+                                let Some(mob) = self.mobs.iter_mut().find(|m| m.id == victim_id)
                                 else {
                                     continue;
                                 };
@@ -17469,10 +17462,9 @@ impl App {
                     // the same word the F3 Biome row reads)
                     match spawn.child.kind {
                         crate::mob::MobKind::Chicken => {
-                            spawn.child.farm_variant =
-                                Some(crate::mob::chicken_variant_for_biome(spawn_biome(
-                                    self.seed,
-                                )));
+                            spawn.child.farm_variant = Some(crate::mob::chicken_variant_for_biome(
+                                spawn_biome(self.seed),
+                            ));
                         }
                         crate::mob::MobKind::Pig => {
                             spawn.child.farm_variant =
@@ -17518,8 +17510,7 @@ impl App {
                         // mob-caused hurt the (kind, stamp, mid-fall)
                         // triple banks, the fall's own word the entry
                         // the assist/finish row later speaks)
-                        self.last_hurt_by_mob =
-                            Some((kind, self.frame, self.hit_lands_mid_fall()));
+                        self.last_hurt_by_mob = Some((kind, self.frame, self.hit_lands_mid_fall()));
                         // THE KNOCKBACK (dealDefaultKnockback's own law
                         // over the victim): the impulse rides the minus
                         // of the attacker-minus-victim direction —
@@ -17565,11 +17556,8 @@ impl App {
                                 &mob_kind_display_name(kind),
                             );
                             if hit {
-                                self.last_hurt_by_mob = Some((
-                                    kind,
-                                    self.frame,
-                                    self.hit_lands_mid_fall(),
-                                ));
+                                self.last_hurt_by_mob =
+                                    Some((kind, self.frame, self.hit_lands_mid_fall()));
                             }
                             hit
                         }
@@ -17578,9 +17566,7 @@ impl App {
                             "death.attack.explosion.player",
                             PLAYER_NAME,
                         ),
-                        None => {
-                            self.hurt_keyed(blast.dose as f32, "death.attack.explosion")
-                        }
+                        None => self.hurt_keyed(blast.dose as f32, "death.attack.explosion"),
                     };
                     if landed {
                         if let Some(b) = &mut self.body {
@@ -17618,8 +17604,7 @@ impl App {
                     // velocity trio serves — the emitter seed the
                     // large blast wears, the single flash the small
                     // blast answers)
-                    let flash =
-                        crate::particles::explosion_flash(bx, by, bz, r, &mut self.mob_rng);
+                    let flash = crate::particles::explosion_flash(bx, by, bz, r, &mut self.mob_rng);
                     self.particles.push(flash);
                 }
                 // THE PRIMED HISS'S OWN VOICE (javap `Creeper.tick` the
@@ -17642,8 +17627,7 @@ impl App {
                 // the death_time topple the lane never wears, the loot
                 // roll the die() call the discard skips)
                 if !discarded_ids.is_empty() {
-                    self.mobs
-                        .retain(|m| !discarded_ids.contains(&m.id));
+                    self.mobs.retain(|m| !discarded_ids.contains(&m.id));
                 }
                 // THE WOLF'S OWN BITES (the doHurtTarget the caller's
                 // own pass serves — the prey the id names the hurt
@@ -17655,10 +17639,7 @@ impl App {
                 // voice + the loot the player-kill gate CLOSED rolls,
                 // the bite the mob's own dose the vanilla law keeps)
                 for (attacker_id, prey_id, dmg, dir_x, dir_z) in bite_events {
-                    let mob_pos = self
-                        .mobs
-                        .iter()
-                        .position(|m| m.id == prey_id);
+                    let mob_pos = self.mobs.iter().position(|m| m.id == prey_id);
                     let Some(idx) = mob_pos else {
                         // THE WARDEN'S OWN BODY (the prey the wardens array
                         // keeps — the counter-bite the warden's own hurt
@@ -17672,9 +17653,7 @@ impl App {
                         // refuses — the push the caller never serves (the
                         // `*(1.0 - 1.0)` zero the LivingEntity.knockback
                         // fold keeps).
-                        let Some(widx) =
-                            self.wardens.iter().position(|w| w.id == prey_id)
-                        else {
+                        let Some(widx) = self.wardens.iter().position(|w| w.id == prey_id) else {
                             continue;
                         };
                         // THE ATTACKER'S OWN LIVE WORD (the canTargetEntity
@@ -17760,11 +17739,7 @@ impl App {
                         Some(a) => mob.hurt_by_mob(dmg, a),
                         None => mob.hurt(dmg, false),
                     }
-                    mob.knockback(
-                        crate::mob::KNOCKBACK_STRENGTH,
-                        -dir_x,
-                        -dir_z,
-                    );
+                    mob.knockback(crate::mob::KNOCKBACK_STRENGTH, -dir_x, -dir_z);
                     // THE KIND'S OWN ROW (the hurt/death sound the hurt
                     // pipeline's makeSound speaks — captured while the
                     // borrow lives, the voices the tail's vecs wear)
@@ -17811,13 +17786,9 @@ impl App {
                     let shooter_kind = owner_id
                         .and_then(|id| self.mobs.iter().find(|m| m.id == id))
                         .map(|m| m.kind);
-                    let killer = shooter_kind
-                        .map(mob_kind_display_name)
-                        .unwrap_or_else(|| {
-                            tr("entity.minecraft.arrow")
-                                .unwrap_or("Arrow")
-                                .to_string()
-                        });
+                    let killer = shooter_kind.map(mob_kind_display_name).unwrap_or_else(|| {
+                        tr("entity.minecraft.arrow").unwrap_or("Arrow").to_string()
+                    });
                     if self.hurt_by_named(dmg as f32, "death.attack.arrow", &killer) {
                         // THE SHOVER'S OWN ENTRY (the arrow's causing
                         // entity the shooter names — the skeleton's
@@ -17874,10 +17845,7 @@ impl App {
                         continue; // the popped cell the queue's lag wears
                     };
                     let (cx, cy, cz) = (x as f64 + 0.5, y as f64 + 0.5, z as f64 + 0.5);
-                    let ear = self
-                        .body
-                        .as_ref()
-                        .map(|b| (b.x, b.y + b.eye_height(), b.z));
+                    let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
                     let yaw = self.listener_yaw();
                     if let Some(world) = self.offline_world.as_mut() {
                         world.set(x, y, z, on_kind);
@@ -17948,7 +17916,12 @@ impl App {
                 // answers)
                 for (tx, ty, tz, mx, my, mz) in firework_trails {
                     let spark = crate::particles::firework_spark(
-                        tx, ty, tz, mx, my, mz,
+                        tx,
+                        ty,
+                        tz,
+                        mx,
+                        my,
+                        mz,
                         &mut self.level_ambient_rng,
                     );
                     self.particles.push(spark);
@@ -18073,10 +18046,7 @@ impl App {
                 // 4x4x4 debris burst the block's own particle tile
                 // carries — the world's own pixels the bite throws
                 if !eat_swaps.is_empty() {
-                    let ear = self
-                        .body
-                        .as_ref()
-                        .map(|b| (b.x, b.y + b.eye_height(), b.z));
+                    let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
                     if let Some(w) = self.offline_world.as_mut() {
                         for (bx, by, bz, id) in eat_swaps {
                             let old = w.get(bx, by, bz);
@@ -18103,7 +18073,11 @@ impl App {
                             let tile = particle_tile(old);
                             if tile != mc_registry::generated::atlas::TILE_NONE {
                                 let burst = crate::particles::terrain_burst(
-                                    tile, bx, by, bz, &mut self.mob_rng,
+                                    tile,
+                                    bx,
+                                    by,
+                                    bz,
+                                    &mut self.mob_rng,
                                 );
                                 self.particles.extend(burst);
                             }
@@ -18229,8 +18203,7 @@ impl App {
                 // draws the walk's tail keeps)
                 if !tracked_booms.is_empty() {
                     if let Some(w) = self.offline_world.as_ref() {
-                        let is_air =
-                            |x: i32, y: i32, z: i32| w.get(x, y, z) == crate::world::AIR;
+                        let is_air = |x: i32, y: i32, z: i32| w.get(x, y, z) == crate::world::AIR;
                         crate::particles::explosion_tracker_tick(
                             &tracked_booms,
                             &is_air,
@@ -18387,9 +18360,7 @@ impl App {
             // spectator the vanilla's own gate refuses; the camera
             // flight the walk never counts — no player, no bank).
             if !self.world_is_network {
-                if let (Some(b), Some(w)) =
-                    (self.body.as_ref(), self.offline_world.as_mut())
-                {
+                if let (Some(b), Some(w)) = (self.body.as_ref(), self.offline_world.as_mut()) {
                     w.tick_inhabited(b.x, b.z);
                 }
             }
@@ -18486,8 +18457,7 @@ impl App {
         let held_name = mc_registry::item_name(main_id);
         let is_spear = held_name.is_some_and(|name| name.ends_with("_spear"));
         if is_spear {
-            let charge = self.attack_ticker as f32
-                / held_charge_delay(held_name) as f32;
+            let charge = self.attack_ticker as f32 / held_charge_delay(held_name) as f32;
             if charge < 1.0 {
                 return;
             }
@@ -18596,10 +18566,7 @@ impl App {
         };
         let frame_wins = !hull_wins
             && !cart_wins
-            && frame_pick
-                .map_or(false, |(_, fd)| {
-                    mob_pick.map_or(true, |(_, md)| fd < md)
-                });
+            && frame_pick.map_or(false, |(_, fd)| mob_pick.map_or(true, |(_, md)| fd < md));
         if frame_wins {
             if let Some((id, _)) = frame_pick {
                 // THE FRAME'S PUNCH ARM (javap ItemFrame.hurtServer —
@@ -18663,7 +18630,8 @@ impl App {
                     (w.id, w.box_at())
                 };
                 if let Some(sink) = self.live_clicks.as_ref() {
-                    let _ = sink.send(crate::world_view::ContainerCommand::Attack { entity_id: wid });
+                    let _ =
+                        sink.send(crate::world_view::ContainerCommand::Attack { entity_id: wid });
                 }
                 // THE ECHO'S OWN FACTS (the attacker's own state the
                 // offline arm's walk reads — the same gates the same
@@ -18698,13 +18666,11 @@ impl App {
                             b.vx,
                             b.vz,
                             b.yaw as f64 * std::f64::consts::PI / 180.0,
-                            b.y
-                                + if b.crouching {
-                                    crate::body::CROUCH_HEIGHT
-                                } else {
-                                    crate::body::STANDING_HEIGHT
-                                }
-                                    * 0.5,
+                            b.y + if b.crouching {
+                                crate::body::CROUCH_HEIGHT
+                            } else {
+                                crate::body::STANDING_HEIGHT
+                            } * 0.5,
                         )
                     })
                     .unwrap_or((false, false, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0));
@@ -18721,8 +18687,7 @@ impl App {
                     && !sprinting
                     && on_ground
                     && holding_sword
-                    && (bvx * bvx + bvz * bvz)
-                        < (crate::body::MOVEMENT_SPEED as f64 * 2.5).powi(2);
+                    && (bvx * bvx + bvz * bvz) < (crate::body::MOVEMENT_SPEED as f64 * 2.5).powi(2);
                 // THE SWEEP'S OWN PREDICTION (doSweepAttack's client
                 // walk — the voice the offset-0 speaks, the arc the
                 // count-0 sendParticles leaves at the body's own mid
@@ -18811,9 +18776,7 @@ impl App {
                 // CONDUIT_POWER amps the shared read folds — the
                 // unworn pair the None identity rides, the greater
                 // amp the Some wears)
-                let haste = crate::effects::dig_speed_amplification(
-                    &self.effects,
-                );
+                let haste = crate::effects::dig_speed_amplification(&self.effects);
                 // THE GAMEMODE DISPATCH's own folds (the audited
                 // instabuild grant + the restricted head — the press
                 // the startDestroyBlock's own walk speaks first, the
@@ -18852,25 +18815,24 @@ impl App {
                         haste,
                         attrs,
                     );
-                    dug = was_solid
-                        && world.get(h.pos.0, h.pos.1, h.pos.2) == crate::world::AIR;
+                    dug = was_solid && world.get(h.pos.0, h.pos.1, h.pos.2) == crate::world::AIR;
                     if dug {
                         dug_pos = Some(h.pos);
                     }
                 }
             } else {
                 self.miss_time = 10; // the vanilla hasMissTime branch
-                // THE MISS LANE'S OWN RESET (the 26.2 MISS case's own
-                // tail — startAttack pcs 366-370: the
-                // `resetAttackStrengthTicker()` the miss arm speaks —
-                // the meter the air-click zeroes, the next press the
-                // fresh clock waits for)
+                                     // THE MISS LANE'S OWN RESET (the 26.2 MISS case's own
+                                     // tail — startAttack pcs 366-370: the
+                                     // `resetAttackStrengthTicker()` the miss arm speaks —
+                                     // the meter the air-click zeroes, the next press the
+                                     // fresh clock waits for)
                 self.attack_ticker = 0;
             }
         } else {
             self.miss_time = 10; // the pick spoke MISS
-            // THE MISS LANE'S OWN RESET (the same pcs 366-370 walk —
-            // the no-hit arm the same MISS case serves)
+                                 // THE MISS LANE'S OWN RESET (the same pcs 366-370 walk —
+                                 // the no-hit arm the same MISS case serves)
             self.attack_ticker = 0;
         }
         self.enqueue_dig(&sends);
@@ -18970,8 +18932,8 @@ impl App {
         // the spear's reach the blocks never borrow, the
         // raycastHitResult's own filterHitResult clip the block hits
         // the blockInteractionRange serves)
-        let block_search = crate::world::BLOCK_INTERACTION_RANGE
-            .max(crate::world::ENTITY_INTERACTION_RANGE);
+        let block_search =
+            crate::world::BLOCK_INTERACTION_RANGE.max(crate::world::ENTITY_INTERACTION_RANGE);
         // the two lanes' own nearest (the nearest overall is the
         // nearest of each lane's own nearest — the same verdict the
         // one-list walk speaks)
@@ -19142,11 +19104,7 @@ impl App {
         let bh = crate::cart::MINECART_DIMENSIONS_HEIGHT as f64;
         let mut best: Option<(i32, f64)> = None;
         for entry in &self.offline_carts {
-            let (vx, vy, vz) = (
-                entry.cart.pos[0],
-                entry.cart.pos[1],
-                entry.cart.pos[2],
-            );
+            let (vx, vy, vz) = (entry.cart.pos[0], entry.cart.pos[1], entry.cart.pos[2]);
             // the eye inside the box: the vanilla contains(start) law
             let inside = eye.0 >= vx - hw
                 && eye.0 <= vx + hw
@@ -19219,12 +19177,9 @@ impl App {
         // gate the same lookup reuses)
         let held_name = self
             .held_id()
-            .and_then(|id| {
-                mc_registry::generated::item_order::ITEM_WIRE_ORDER.get(id as usize)
-            })
+            .and_then(|id| mc_registry::generated::item_order::ITEM_WIRE_ORDER.get(id as usize))
             .copied();
-        let charge = ((self.attack_ticker as f32 + 0.5)
-            / held_charge_delay(held_name) as f32)
+        let charge = ((self.attack_ticker as f32 + 0.5) / held_charge_delay(held_name) as f32)
             .clamp(0.0, 1.0);
         // THE ATTACK-DAMAGE ATTRIBUTE'S OWN SUM (javap
         // `RangedAttribute("attribute.name.attack_damage", 2.0, 0.0,
@@ -19260,13 +19215,11 @@ impl App {
                     b.vx,
                     b.vz,
                     b.yaw as f64 * std::f64::consts::PI / 180.0,
-                    b.y
-                        + if b.crouching {
-                            crate::body::CROUCH_HEIGHT
-                        } else {
-                            crate::body::STANDING_HEIGHT
-                        }
-                            * 0.5,
+                    b.y + if b.crouching {
+                        crate::body::CROUCH_HEIGHT
+                    } else {
+                        crate::body::STANDING_HEIGHT
+                    } * 0.5,
                 )
             })
             .unwrap_or((false, false, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0));
@@ -19284,16 +19237,13 @@ impl App {
         // getSpeed() * 2.5)` — the walk passes under the 0.25 block
         // band, the sprint's own speed refuses — and the SWORDS tag
         // the main hand holds)
-        let holding_sword = held_name
-            .map(|n| n.ends_with("_sword"))
-            .unwrap_or(false);
+        let holding_sword = held_name.map(|n| n.ends_with("_sword")).unwrap_or(false);
         let sweep = full
             && !crit
             && !sprinting
             && on_ground
             && holding_sword
-            && (bvx * bvx + bvz * bvz)
-                < (crate::body::MOVEMENT_SPEED as f64 * 2.5).powi(2);
+            && (bvx * bvx + bvz * bvz) < (crate::body::MOVEMENT_SPEED as f64 * 2.5).powi(2);
         // onAttack's own reset (the vanilla speaks it BEFORE the
         // damage gate — every executed attack re-arms the clock)
         self.attack_ticker = 0;
@@ -19304,10 +19254,7 @@ impl App {
         // voices' distance fold the wire lane speaks, the fist's own
         // voices the same law answers — the stereo tail the pan law's
         // own yaw speaks
-        let ear = self
-            .body
-            .as_ref()
-            .map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
         let yaw = self.listener_yaw();
         let Some(mob) = self.mobs.get_mut(i) else {
             return;
@@ -19346,11 +19293,7 @@ impl App {
         // THE KNOCKBACK (the hurt pipeline's own dealDefaultKnockback:
         // the caller's (x, z) runs attacker-minus-victim — the
         // knockback's minus law pushes the mob away)
-        mob.knockback(
-            crate::mob::KNOCKBACK_STRENGTH,
-            bx - mob.x,
-            bz - mob.z,
-        );
+        mob.knockback(crate::mob::KNOCKBACK_STRENGTH, bx - mob.x, bz - mob.z);
         // the target's own box (the inflated form the sweep's AoE
         // intersection reads — captured while the borrow lives)
         let target_box = mob.box_at();
@@ -19366,12 +19309,20 @@ impl App {
         // drops land BEFORE the sweep's own AoE can kill — the spawn
         // order the die-then-sweep call site speaks)
         let (mx, my, mz) = (mob.x, mob.y, mob.z);
-        let target_loot = if died { mob.death_loot(true) } else { Vec::new() };
+        let target_loot = if died {
+            mob.death_loot(true)
+        } else {
+            Vec::new()
+        };
         // THE KILL'S OWN ROLL (the entity's own stream — the loot's
         // own draws the death walk speaks first, the base_xp_reward
         // roll the dropExperience order follows; captured while the
         // borrow lives)
-        let target_xp = if died { Some(mob.base_xp_reward()) } else { None };
+        let target_xp = if died {
+            Some(mob.base_xp_reward())
+        } else {
+            None
+        };
         if died {
             self.sounds.play_voice_at_pan(
                 self.frame,
@@ -19473,9 +19424,8 @@ impl App {
                 }
                 // the distanceToSqr law — the feet positions' squared
                 // distance under the 9.0 ring
-                let d2 = (m.x - bx) * (m.x - bx)
-                    + (m.y - by) * (m.y - by)
-                    + (m.z - bz) * (m.z - bz);
+                let d2 =
+                    (m.x - bx) * (m.x - bx) + (m.y - by) * (m.y - by) + (m.z - bz) * (m.z - bz);
                 if d2 >= 9.0 {
                     continue;
                 }
@@ -19545,14 +19495,8 @@ impl App {
             // speaks, the velocity the (d8, 0.0, d10) pair the ctor's
             // quadSize fold reads; the grey tint the one draw the ctor
             // keeps)
-            let arc = crate::particles::sweep(
-                bx - sy,
-                by_mid,
-                bz + cy,
-                -sy,
-                cy,
-                self.mob_rng.next_f32(),
-            );
+            let arc =
+                crate::particles::sweep(bx - sy, by_mid, bz + cy, -sy, cy, self.mob_rng.next_f32());
             self.particles.push(arc);
         }
         // THE ATTACK VOICE (attackVisualEffects's own branch — the
@@ -19593,12 +19537,9 @@ impl App {
     fn melee_strike_damage(&self) -> f32 {
         let held_name = self
             .held_id()
-            .and_then(|id| {
-                mc_registry::generated::item_order::ITEM_WIRE_ORDER.get(id as usize)
-            })
+            .and_then(|id| mc_registry::generated::item_order::ITEM_WIRE_ORDER.get(id as usize))
             .copied();
-        let charge = ((self.attack_ticker as f32 + 0.5)
-            / held_charge_delay(held_name) as f32)
+        let charge = ((self.attack_ticker as f32 + 0.5) / held_charge_delay(held_name) as f32)
             .clamp(0.0, 1.0);
         let attribute = (PLAYER_ATTACK_DAMAGE
             + held_attack_addend(held_name)
@@ -19686,15 +19627,14 @@ impl App {
                     let (x, y, z) = {
                         let entry = &mut self.offline_carts[idx];
                         crate::cart::prime_tnt_cart(entry);
-                        (
-                            entry.cart.pos[0],
-                            entry.cart.pos[1],
-                            entry.cart.pos[2],
-                        )
+                        (entry.cart.pos[0], entry.cart.pos[1], entry.cart.pos[2])
                     };
-                    self.offline_carts[idx].fuse =
-                        self.mob_rng.next_int(crate::cart::TNT_DESTROY_REROLL_BOUND as u64)
-                            + self.mob_rng.next_int(crate::cart::TNT_DESTROY_REROLL_BOUND as u64);
+                    self.offline_carts[idx].fuse = self
+                        .mob_rng
+                        .next_int(crate::cart::TNT_DESTROY_REROLL_BOUND as u64)
+                        + self
+                            .mob_rng
+                            .next_int(crate::cart::TNT_DESTROY_REROLL_BOUND as u64);
                     // THE PRIME'S OWN VOICE (the primeFuse tail the
                     // `playSound(null, x, y, z, TNT_PRIMED, BLOCKS,
                     // 1.0f, 1.0f)` walk speaks — the broadcast 70 the
@@ -19860,8 +19800,7 @@ impl App {
         let eye = (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64);
         let view = (f.x as f64, f.y as f64, f.z as f64);
         let held_name = mc_registry::item_name(self.held_id().unwrap_or(0));
-        let (min_d2, max_d2) =
-            held_attack_pick_window(held_name, self.abilities_instabuild());
+        let (min_d2, max_d2) = held_attack_pick_window(held_name, self.abilities_instabuild());
         // the movement's own lead (the same fold the melee pick speaks —
         // the lunge ahead the crosshair answers, the retreat the max(0,
         // dot) gate never wears)
@@ -19876,8 +19815,8 @@ impl App {
         let reach = max_d2.sqrt() + lead;
         // the block clip's own shadow (the same search the melee pick
         // runs — the wall the stab's ray fears)
-        let block_search = crate::world::BLOCK_INTERACTION_RANGE
-            .max(crate::world::ENTITY_INTERACTION_RANGE);
+        let block_search =
+            crate::world::BLOCK_INTERACTION_RANGE.max(crate::world::ENTITY_INTERACTION_RANGE);
         let block_d2 = self
             .active_world()
             .and_then(|w| w.clip(eye, view, block_search))
@@ -19890,16 +19829,12 @@ impl App {
         // THE MERGED COLLECTION (the two lists the same ray serves —
         // the mob bodies + the wardens the NEAREST-FIRST order the
         // pierce's own walk wears)
-        let mut merged: Vec<(StabPick, f64)> = crate::mob::pick_all_entities(
-            &self.mobs,
-            eye,
-            view,
-            reach,
-        )
-        .into_iter()
-        .filter(|(_, d2)| *d2 >= min_d2 && *d2 < block_d2)
-        .map(|(i, d2)| (StabPick::Mob(i), d2))
-        .collect();
+        let mut merged: Vec<(StabPick, f64)> =
+            crate::mob::pick_all_entities(&self.mobs, eye, view, reach)
+                .into_iter()
+                .filter(|(_, d2)| *d2 >= min_d2 && *d2 < block_d2)
+                .map(|(i, d2)| (StabPick::Mob(i), d2))
+                .collect();
         merged.extend(
             crate::sculk::warden_pick_all(&self.wardens, eye, view, reach)
                 .into_iter()
@@ -19969,16 +19904,9 @@ impl App {
         // verdict the full-charge gate already speaks)
         let dmg = (PLAYER_ATTACK_DAMAGE + material_bonus(held_name)) as f32;
         // the attacker's own facts (the melee arm's own reads)
-        let ear = self
-            .body
-            .as_ref()
-            .map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
         let yaw = self.listener_yaw();
-        let (bx, bz) = self
-            .body
-            .as_ref()
-            .map(|b| (b.x, b.z))
-            .unwrap_or((0.0, 0.0));
+        let (bx, bz) = self.body.as_ref().map(|b| (b.x, b.z)).unwrap_or((0.0, 0.0));
         // THE ATTACKER'S OWN TARGETABLE VERDICT (the hurtServer anger
         // walk's canTargetEntity consult — the survival+alive pair the
         // dispatch's own SOURCE tail wears, the creative the FALSE the
@@ -19997,8 +19925,7 @@ impl App {
             Vec<(i32, i32)>,
             Option<i32>,
         )> = Vec::new();
-        let mut warden_outcomes: Vec<(f64, f64, f64, crate::sculk::WardenHurt)> =
-            Vec::new();
+        let mut warden_outcomes: Vec<(f64, f64, f64, crate::sculk::WardenHurt)> = Vec::new();
         // THE VEHICLES' OWN CONTACT (stabAttack's own z2 the hurt's
         // landed verdict wears — the offline hull the hurt always
         // answers, the stale index the silence keeps)
@@ -20014,8 +19941,16 @@ impl App {
                     let pitch = mob.voice_pitch();
                     let kind = mob.kind;
                     let (mx, my, mz) = (mob.x, mob.y, mob.z);
-                    let loot = if died { mob.death_loot(true) } else { Vec::new() };
-                    let xp = if died { Some(mob.base_xp_reward()) } else { None };
+                    let loot = if died {
+                        mob.death_loot(true)
+                    } else {
+                        Vec::new()
+                    };
+                    let xp = if died {
+                        Some(mob.base_xp_reward())
+                    } else {
+                        None
+                    };
                     outcomes.push((mx, my, mz, died, pitch, kind, loot, xp));
                 }
                 StabPick::Warden(i) => {
@@ -20026,11 +19961,8 @@ impl App {
                     let Some(warden) = self.wardens.get_mut(i) else {
                         continue;
                     };
-                    if let Some(hurt) =
-                        warden.hurt_from_player(dmg, source_targetable)
-                    {
-                        warden_outcomes
-                            .push((warden.x, warden.y, warden.z, hurt));
+                    if let Some(hurt) = warden.hurt_from_player(dmg, source_targetable) {
+                        warden_outcomes.push((warden.x, warden.y, warden.z, hurt));
                     }
                     // THE KNOCKBACK the resistance's own 1.0 the law
                     // refuses — the push the `*(1.0 - 1.0)` zero the
@@ -20072,11 +20004,7 @@ impl App {
         for &pick in &hits {
             if let StabPick::Mob(i) = pick {
                 if let Some(mob) = self.mobs.get_mut(i) {
-                    mob.knockback(
-                        crate::mob::KNOCKBACK_STRENGTH,
-                        bx - mob.x,
-                        bz - mob.z,
-                    );
+                    mob.knockback(crate::mob::KNOCKBACK_STRENGTH, bx - mob.x, bz - mob.z);
                 }
             }
         }
@@ -20137,8 +20065,7 @@ impl App {
                     "warden_anger @{} suspect{} +{} -> {}",
                     self.frame,
                     crate::sculk::WARDEN_PLAYER_SUSPECT,
-                    crate::sculk::WARDEN_ANGER_ANGRY_MIN
-                        + crate::sculk::WARDEN_ON_HURT_ANGER_BOOST,
+                    crate::sculk::WARDEN_ANGER_ANGRY_MIN + crate::sculk::WARDEN_ON_HURT_ANGER_BOOST,
                     hurt.anger_after
                 ));
             }
@@ -20205,16 +20132,9 @@ impl App {
             return;
         }
         // the attacker's own facts (the melee arm's own reads)
-        let ear = self
-            .body
-            .as_ref()
-            .map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
         let yaw = self.listener_yaw();
-        let (bx, bz) = self
-            .body
-            .as_ref()
-            .map(|b| (b.x, b.z))
-            .unwrap_or((0.0, 0.0));
+        let (bx, bz) = self.body.as_ref().map(|b| (b.x, b.z)).unwrap_or((0.0, 0.0));
         let now = self.day_time_now();
         // THE ATTACKER'S OWN TARGETABLE VERDICT (the hurtServer anger
         // walk's canTargetEntity consult — the survival+alive pair the
@@ -20234,8 +20154,7 @@ impl App {
             Option<i32>,
             bool,
         )> = Vec::new();
-        let mut warden_outcomes: Vec<(f64, f64, f64, crate::sculk::WardenHurt)> =
-            Vec::new();
+        let mut warden_outcomes: Vec<(f64, f64, f64, crate::sculk::WardenHurt)> = Vec::new();
         let mut warden_contact = false;
         // THE HULLS' OWN CONTACT (the stabAttack z2 the any condition's
         // own verdict wears — the same law the warden arm keeps)
@@ -20262,9 +20181,8 @@ impl App {
                 }
                 // (ii) THE BANK (pcs 188-193 — the remember call the
                 // conditions' own clock rides BEFORE)
-                self.stab_contact_memory.retain(|(id, last)| {
-                    *id != warden.id && now - *last < 600
-                });
+                self.stab_contact_memory
+                    .retain(|(id, last)| *id != warden.id && now - *last < 600);
                 self.stab_contact_memory.push((warden.id, now));
                 // (iii) THE RELATIVE SPEED (pcs 194-215): the
                 // STATIONARY body the victim's own zero dot keeps (the
@@ -20272,12 +20190,10 @@ impl App {
                 // absence the 0.0 keeps)
                 let relative = look_dot.max(0.0);
                 // (iv) THE THREE CONDITIONS (Condition.test verbatim)
-                let dismount = used_past <= row.dismount_max
-                    && look_dot >= f64::from(row.dismount_min);
-                let kb =
-                    used_past <= row.kb_max && look_dot >= f64::from(row.kb_min);
-                let damage =
-                    used_past <= row.dmg_max && relative >= f64::from(row.dmg_min_rel);
+                let dismount =
+                    used_past <= row.dismount_max && look_dot >= f64::from(row.dismount_min);
+                let kb = used_past <= row.kb_max && look_dot >= f64::from(row.kb_min);
+                let damage = used_past <= row.dmg_max && relative >= f64::from(row.dmg_min_rel);
                 if !(dismount || kb || damage) {
                     continue;
                 }
@@ -20289,9 +20205,7 @@ impl App {
                 let dmg = (PLAYER_ATTACK_DAMAGE as f32)
                     + (relative * f64::from(row.multiplier)).floor() as i32 as f32;
                 if damage && warden.health > 0.0 {
-                    if let Some(hurt) =
-                        warden.hurt_from_player(dmg, source_targetable)
-                    {
+                    if let Some(hurt) = warden.hurt_from_player(dmg, source_targetable) {
                         warden_outcomes.push((warden.x, warden.y, warden.z, hurt));
                     }
                 }
@@ -20318,18 +20232,13 @@ impl App {
                         true,
                     )
                 }),
-                StabPick::Boat(i) => {
-                    self.offline_boats.get(i).map(|b| (b.id, 0.0, false))
-                }
+                StabPick::Boat(i) => self.offline_boats.get(i).map(|b| (b.id, 0.0, false)),
                 _ => None,
             };
             if let Some((vid, vdot, is_cart)) = hull {
                 // (i) THE RECENT-STAB SKIP (pcs 168-185): the same
                 // memory the vehicle's own id banks
-                if let Some(&(_, last)) = self
-                    .stab_contact_memory
-                    .iter()
-                    .find(|(id, _)| *id == vid)
+                if let Some(&(_, last)) = self.stab_contact_memory.iter().find(|(id, _)| *id == vid)
                 {
                     if now - last < KINETIC_CONTACT_COOLDOWN_TICKS as i64 {
                         continue;
@@ -20337,9 +20246,8 @@ impl App {
                 }
                 // (ii) THE BANK (pcs 188-193 — the remember call the
                 // conditions' own clock rides BEFORE)
-                self.stab_contact_memory.retain(|(id, last)| {
-                    *id != vid && now - *last < 600
-                });
+                self.stab_contact_memory
+                    .retain(|(id, last)| *id != vid && now - *last < 600);
                 self.stab_contact_memory.push((vid, now));
                 // (iii) THE RELATIVE SPEED (pcs 194-215): the victim's
                 // own motion the dot folds — `max(0.0, lookDot -
@@ -20347,12 +20255,10 @@ impl App {
                 // zero keeps
                 let relative = (look_dot - vdot).max(0.0);
                 // (iv) THE THREE CONDITIONS (Condition.test verbatim)
-                let dismount = used_past <= row.dismount_max
-                    && look_dot >= f64::from(row.dismount_min);
-                let kb =
-                    used_past <= row.kb_max && look_dot >= f64::from(row.kb_min);
-                let damage =
-                    used_past <= row.dmg_max && relative >= f64::from(row.dmg_min_rel);
+                let dismount =
+                    used_past <= row.dismount_max && look_dot >= f64::from(row.dismount_min);
+                let kb = used_past <= row.kb_max && look_dot >= f64::from(row.kb_min);
+                let damage = used_past <= row.dmg_max && relative >= f64::from(row.dmg_min_rel);
                 if !(dismount || kb || damage) {
                     continue;
                 }
@@ -20404,8 +20310,7 @@ impl App {
             // used-past clock serves, the attacker's speed the
             // dismount/knockback gates keep, the RELATIVE speed the
             // damage gate keeps
-            let dismount = used_past <= row.dismount_max
-                && look_dot >= f64::from(row.dismount_min);
+            let dismount = used_past <= row.dismount_max && look_dot >= f64::from(row.dismount_min);
             let kb = used_past <= row.kb_max && look_dot >= f64::from(row.kb_min);
             let damage = used_past <= row.dmg_max && relative >= f64::from(row.dmg_min_rel);
             if !(dismount || kb || damage) {
@@ -20427,8 +20332,16 @@ impl App {
             let pitch = mob.voice_pitch();
             let kind = mob.kind;
             let (mx, my, mz) = (mob.x, mob.y, mob.z);
-            let loot = if died { mob.death_loot(true) } else { Vec::new() };
-            let xp = if died { Some(mob.base_xp_reward()) } else { None };
+            let loot = if died {
+                mob.death_loot(true)
+            } else {
+                Vec::new()
+            };
+            let xp = if died {
+                Some(mob.base_xp_reward())
+            } else {
+                None
+            };
             outcomes.push((i, mx, my, mz, died, pitch, kind, loot, xp, kb));
         }
         // PASS TWO: the knockback (the kb condition the stabAttack's
@@ -20438,11 +20351,7 @@ impl App {
         for &(i, _, _, _, _, _, _, _, _, kb) in &outcomes {
             if kb {
                 if let Some(mob) = self.mobs.get_mut(i) {
-                    mob.knockback(
-                        crate::mob::KNOCKBACK_STRENGTH,
-                        bx - mob.x,
-                        bz - mob.z,
-                    );
+                    mob.knockback(crate::mob::KNOCKBACK_STRENGTH, bx - mob.x, bz - mob.z);
                 }
             }
         }
@@ -20506,16 +20415,15 @@ impl App {
                     "warden_anger @{} suspect{} +{} -> {}",
                     self.frame,
                     crate::sculk::WARDEN_PLAYER_SUSPECT,
-                    crate::sculk::WARDEN_ANGER_ANGRY_MIN
-                        + crate::sculk::WARDEN_ON_HURT_ANGER_BOOST,
+                    crate::sculk::WARDEN_ANGER_ANGRY_MIN + crate::sculk::WARDEN_ON_HURT_ANGER_BOOST,
                     hurt.anger_after
                 ));
             }
         }
         if any {
-            self.live_kinetic_hit_events_updated(vec![
-                crate::world_view::WireKineticHitEvent { entity_id: 0 },
-            ]);
+            self.live_kinetic_hit_events_updated(vec![crate::world_view::WireKineticHitEvent {
+                entity_id: 0,
+            }]);
         }
     }
 
@@ -20536,6 +20444,10 @@ impl App {
         // THE VOLUME SLIDER'S OWN DISARM (the same mouseReleased lane
         // the sensitivity/fov seats' flags wear)
         self.volume_drag = false;
+        // THE FOV EFFECTS SLIDER'S OWN DISARM (the same mouseReleased
+        // lane the Options screen's own seats' flags wear — the
+        // sub-screen's row the same law keeps)
+        self.fov_effect_drag = false;
         // THE SCROLLBAR'S OWN DISARM (the mouseReleased walk's own first
         // lane — the button-0 release the `scrolling` flag the
         // unconditional false speaks BEFORE the tab walk; the sim's
@@ -20652,6 +20564,7 @@ impl App {
         self.sensitivity_drag = false;
         self.fov_drag = false;
         self.volume_drag = false;
+        self.fov_effect_drag = false;
     }
 
     /// THE AMBIENT WALK (javap `ClientLevel.animateTick` +
@@ -20683,10 +20596,7 @@ impl App {
     /// stream (the same stand-in the drip's chain keeps). Returns the
     /// particles (the caller lands them after its own tick loop — the
     /// vanilla queue order).
-    pub fn animate_tick_walk(
-        &mut self,
-        cam: (f64, f64, f64),
-    ) -> Vec<crate::particles::Particle> {
+    pub fn animate_tick_walk(&mut self, cam: (f64, f64, f64)) -> Vec<crate::particles::Particle> {
         let world: Option<&crate::world::World> = if self.world_is_network {
             self.net_world.as_ref()
         } else {
@@ -20702,14 +20612,11 @@ impl App {
                 // the six draws the doAnimateTick bytecode speaks:
                 // two nextInt(r) per axis on the LEVEL random (x, y,
                 // z — the ±triangle the add/sub pair folds)
-                let x = cx
-                    + self.level_ambient_rng.next_int(r as u64)
+                let x = cx + self.level_ambient_rng.next_int(r as u64)
                     - self.level_ambient_rng.next_int(r as u64);
-                let y = cy
-                    + self.level_ambient_rng.next_int(r as u64)
+                let y = cy + self.level_ambient_rng.next_int(r as u64)
                     - self.level_ambient_rng.next_int(r as u64);
-                let z = cz
-                    + self.level_ambient_rng.next_int(r as u64)
+                let z = cz + self.level_ambient_rng.next_int(r as u64)
                     - self.level_ambient_rng.next_int(r as u64);
                 let cell = w.get(x, y, z);
                 // THE BLOCK'S OWN ANIMATE TICK (the state's block the
@@ -21030,12 +20937,8 @@ impl App {
             // `mesh_world` build precedes).
             if let Some(path) = self.offline_world_file.clone() {
                 if let Ok(bytes) = std::fs::read(&path) {
-                    if let Ok((_, root)) =
-                        mc_protocol::nbt::read_file_nbt(&mut bytes.as_slice())
-                    {
-                        if let Some((seed, edits, variants)) =
-                            world_edits_from_nbt(&root)
-                        {
+                    if let Ok((_, root)) = mc_protocol::nbt::read_file_nbt(&mut bytes.as_slice()) {
+                        if let Some((seed, edits, variants)) = world_edits_from_nbt(&root) {
                             if seed == world.seed {
                                 for (x, y, z, id) in &edits {
                                     world.set(*x, *y, *z, *id);
@@ -21046,8 +20949,7 @@ impl App {
                                 world.edit_journal = edits;
                                 world.variant_journal = variants;
                                 world.saved_edits_mark = world.edit_journal.len();
-                                world.saved_variants_mark =
-                                    world.variant_journal.len();
+                                world.saved_variants_mark = world.variant_journal.len();
                                 // THE PLAYER TAG'S OWN RESTORE (the pose
                                 // the spawn re-anchors, the pockets the
                                 // gameplay inventory re-wears, the
@@ -21056,8 +20958,7 @@ impl App {
                                 // law the restore lane wears)
                                 if let Some(sp) = player_state_from_nbt(&root) {
                                     self.inventory = sp.inventory;
-                                    self.selected_hotbar =
-                                        sp.selected_hotbar.clamp(0, 8) as usize;
+                                    self.selected_hotbar = sp.selected_hotbar.clamp(0, 8) as usize;
                                     self.hotbar_slots = self.inventory.hotbar();
                                     let id = self.held_id();
                                     self.load_held_payload_from_id(id);
@@ -21122,8 +21023,9 @@ impl App {
             // clamp at 1.0 whatever the base rides — the day look the
             // goldens spoke holds bit for bit; the caves' floor the
             // base lifts off the pitch black.
-            world.ambient_light = mc_registry::generated::worldgen::dimension_type("minecraft:overworld")
-                .map(|d| d.ambient_light_color);
+            world.ambient_light =
+                mc_registry::generated::worldgen::dimension_type("minecraft:overworld")
+                    .map(|d| d.ambient_light_color);
             self.world_size = world.size_blocks();
             self.spawn_y = top_solid_y(&world, self.world_size / 2, self.world_size / 2);
             self.world_quads = Some(crate::mesher::mesh_world(&world, None));
@@ -21639,11 +21541,8 @@ impl App {
         for r in 0..5usize {
             for c in 0..9usize {
                 let idx = (r + offset as usize) * 9 + c;
-                self.creative_palette[r * 9 + c] = self
-                    .creative_items
-                    .get(idx)
-                    .copied()
-                    .unwrap_or((0, 0));
+                self.creative_palette[r * 9 + c] =
+                    self.creative_items.get(idx).copied().unwrap_or((0, 0));
             }
         }
     }
@@ -22211,7 +22110,8 @@ impl App {
         let hovered = self.creative_palette[cell];
         // the per-item max the jar's own table speaks (the
         // item_max_stack walk the merges and takes share)
-        let max = crate::world_view::item_max_stack(if carried.1 > 0 { carried.0 } else { hovered.0 });
+        let max =
+            crate::world_view::item_max_stack(if carried.1 > 0 { carried.0 } else { hovered.0 });
         if carried.1 > 0 && hovered.1 > 0 && carried.0 == hovered.0 {
             if button == 0 {
                 if self.shift_down {
@@ -22353,16 +22253,18 @@ impl App {
             // FALSE the drop speaks
             self.inventory.armor[k] = (hotbar_id, 1);
             put_row(self, (hotbar_id, hotbar_count - 1));
-            let (leftover, _spoke) = self.inventory.add(self.selected_hotbar, worn.0, worn.1, false);
+            let (leftover, _spoke) =
+                self.inventory
+                    .add(self.selected_hotbar, worn.0, worn.1, false);
             if leftover > 0 {
-                let (px, py, pz) = self
-                    .body
-                    .as_ref()
-                    .map(|b| (b.x, b.y, b.z))
-                    .unwrap_or_else(|| {
-                        let c = self.world_camera();
-                        (c.pos.x as f64, c.pos.y as f64, c.pos.z as f64)
-                    });
+                let (px, py, pz) =
+                    self.body
+                        .as_ref()
+                        .map(|b| (b.x, b.y, b.z))
+                        .unwrap_or_else(|| {
+                            let c = self.world_camera();
+                            (c.pos.x as f64, c.pos.y as f64, c.pos.z as f64)
+                        });
                 let id = self.next_drop_id;
                 self.next_drop_id += 1;
                 self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
@@ -22474,8 +22376,7 @@ impl App {
         } else {
             None
         };
-        let search_seat =
-            CREATIVE_TABS[self.creative_tab].kind == CreativeTabKind::Search;
+        let search_seat = CREATIVE_TABS[self.creative_tab].kind == CreativeTabKind::Search;
         // THE WRAPPED SEAT'S OWN SWAP (the default arm's
         // InventoryMenu.clicked walk — the Main/Hotbar/Offhand rows
         // the base Slot's law the table answers, the Armor the OWN
@@ -22585,8 +22486,7 @@ impl App {
                             break;
                         }
                         if it.1 <= 0 {
-                            let take =
-                                rest.min(crate::world_view::item_max_stack(old.0));
+                            let take = rest.min(crate::world_view::item_max_stack(old.0));
                             *it = (old.0, take);
                             rest -= take;
                         }
@@ -22753,8 +22653,7 @@ impl App {
                 if rest == 0 {
                     break;
                 }
-                let room =
-                    crate::world_view::item_max_stack(it.0) - it.1;
+                let room = crate::world_view::item_max_stack(it.0) - it.1;
                 if it.1 > 0 && it.0 == hovered.0 && room > 0 {
                     let take = room.min(rest);
                     it.1 += take;
@@ -22767,8 +22666,7 @@ impl App {
                         break;
                     }
                     if it.1 <= 0 {
-                        let take = rest
-                            .min(crate::world_view::item_max_stack(hovered.0));
+                        let take = rest.min(crate::world_view::item_max_stack(hovered.0));
                         *it = (hovered.0, take);
                         rest -= take;
                     }
@@ -22801,10 +22699,7 @@ impl App {
         } else {
             self.inventory.items[button]
         };
-        self.creative_swap_live_words(&[
-            (36 + s as i32, target),
-            (button_menu, button_stack),
-        ]);
+        self.creative_swap_live_words(&[(36 + s as i32, target), (button_menu, button_stack)]);
         true
     }
 
@@ -22876,9 +22771,7 @@ impl App {
             return;
         }
         if let Some(sink) = self.live_clicks.as_ref() {
-            let _ = sink.send(crate::world_view::ContainerCommand::CreativeDrop {
-                item: taken,
-            });
+            let _ = sink.send(crate::world_view::ContainerCommand::CreativeDrop { item: taken });
         }
     }
 
@@ -22979,9 +22872,7 @@ impl App {
                 let menu_id = match slot {
                     CreativeWrapSlot::Armor(k) => 5 + k as i32,
                     CreativeWrapSlot::Offhand => 45,
-                    CreativeWrapSlot::Main(i) | CreativeWrapSlot::Hotbar(i) => {
-                        store_menu_id(i)
-                    }
+                    CreativeWrapSlot::Main(i) | CreativeWrapSlot::Hotbar(i) => store_menu_id(i),
                     CreativeWrapSlot::Bin => 0, // the gate's own miss — never rides
                 };
                 match slot {
@@ -23237,10 +23128,7 @@ impl App {
             // restart the mid-smelt the resume wears, the fresh cell
             // the zeros keep, the SAME furnace the retention law the
             // words never clobbers)
-            self.furnace_data = *self
-                .furnace_word_stores
-                .entry(pos)
-                .or_insert([0i32; 4]);
+            self.furnace_data = *self.furnace_word_stores.entry(pos).or_insert([0i32; 4]);
             // THE LOADED INPUT'S OWN PRIME (the dev-72 round — the
             // banked progress the first live tick never resets: the
             // vanilla law the setItem reset the input CHANGE alone
@@ -23396,8 +23284,7 @@ impl App {
     /// the facing the lid law keeps; the no-cell arm the offline
     /// guard the chest kinds never bank).
     pub fn barrel_lid_released(&mut self) {
-        if let (Some(pos), Some(w)) = (self.chest_open_cell.take(), self.offline_world.as_mut())
-        {
+        if let (Some(pos), Some(w)) = (self.chest_open_cell.take(), self.offline_world.as_mut()) {
             if crate::world::is_barrel(w.get(pos.0, pos.1, pos.2)) {
                 let v = w.variant(pos.0, pos.1, pos.2);
                 w.set_variant(pos.0, pos.1, pos.2, v & !crate::world::BARREL_OPEN_BIT);
@@ -24191,8 +24078,7 @@ impl App {
                     // store the Inventory.add walk answers, the FALSE
                     // the player.drop the body drop speaks
                     let (leftover, _spoke) =
-                        self.inventory
-                            .add(self.selected_hotbar, rem_item, 1, false);
+                        self.inventory.add(self.selected_hotbar, rem_item, 1, false);
                     if leftover > 0 {
                         self.spawn_drop_at_player(rem_item, leftover);
                     }
@@ -24497,8 +24383,11 @@ impl App {
             if mx < panel.0 || my < panel.1 || mx >= panel.0 + 176 || my >= panel.1 + 166 {
                 let carried = self.live_table_carried;
                 if carried.1 > 0 {
-                    let new_carried =
-                        if button == 0 { (0, 0) } else { (carried.0, carried.1 - 1) };
+                    let new_carried = if button == 0 {
+                        (0, 0)
+                    } else {
+                        (carried.0, carried.1 - 1)
+                    };
                     self.live_table_carried = new_carried;
                     let _ = sink.send(crate::world_view::ContainerCommand::Click(
                         crate::world_view::ContainerClick {
@@ -24532,8 +24421,7 @@ impl App {
                 *slot = self.live_table_slots[Self::table_store_menu_id(i) as usize];
             }
             items[store] = (0, 0); // the source's own stack the walk carries
-            let (changed, rest) =
-                crate::world_view::predict_quick_move_to_store(&items, id, count);
+            let (changed, rest) = crate::world_view::predict_quick_move_to_store(&items, id, count);
             for (i, pair) in &changed {
                 self.live_table_slots[Self::table_store_menu_id(*i) as usize] = *pair;
             }
@@ -24613,8 +24501,7 @@ impl App {
                     // store the Inventory.add walk answers, the FALSE
                     // the player.drop the body drop speaks
                     let (leftover, _spoke) =
-                        self.inventory
-                            .add(self.selected_hotbar, rem_item, 1, false);
+                        self.inventory.add(self.selected_hotbar, rem_item, 1, false);
                     if leftover > 0 {
                         self.spawn_drop_at_player(rem_item, leftover);
                     }
@@ -24688,11 +24575,8 @@ impl App {
             self.hotbar_slots = self.inventory.hotbar();
             return;
         }
-        let (new_slot, new_carried) = crate::world_view::predict_pickup_armor(
-            believed,
-            self.inv_carried,
-            k,
-        );
+        let (new_slot, new_carried) =
+            crate::world_view::predict_pickup_armor(believed, self.inv_carried, k);
         self.inventory.armor[k] = new_slot;
         self.inv_carried = new_carried;
         // the armor list the hotbar row never mirrors — no HUD sync
@@ -24836,10 +24720,7 @@ impl App {
     /// same order, 64 the slot's max). Returns the moved count.
     fn move_result_stack_to_store(&mut self, id: i32, count: i32) -> i32 {
         let max = crate::world_view::item_max_stack(id);
-        let order: Vec<usize> = (0..9)
-            .rev()
-            .chain((9..36).rev())
-            .collect(); // hotbar 8..0, then main 35..9
+        let order: Vec<usize> = (0..9).rev().chain((9..36).rev()).collect(); // hotbar 8..0, then main 35..9
         let mut rest = count;
         // pass 1: the merges (the same-item stacks the range keeps)
         for &s in &order {
@@ -25094,8 +24975,11 @@ impl App {
             if mx < panel.0 || my < panel.1 || mx >= panel.0 + 176 || my >= panel.1 + 166 {
                 let carried = self.live_inv_carried;
                 if carried.1 > 0 {
-                    let new_carried =
-                        if button == 0 { (0, 0) } else { (carried.0, carried.1 - 1) };
+                    let new_carried = if button == 0 {
+                        (0, 0)
+                    } else {
+                        (carried.0, carried.1 - 1)
+                    };
                     self.live_inv_carried = new_carried;
                     let _ = sink.send(crate::world_view::ContainerCommand::Click(
                         crate::world_view::ContainerClick {
@@ -25132,14 +25016,14 @@ impl App {
                 *slot = self.live_inv_slots[5 + k];
             }
             let offhand = self.live_inv_slots[45];
-            let changed = crate::world_view::predict_quick_move_inventory(
-                &items,
-                &armor,
-                &offhand,
-                store,
-            );
+            let changed =
+                crate::world_view::predict_quick_move_inventory(&items, &armor, &offhand, store);
             for (i, pair) in &changed {
-                let menu_id: i32 = if *i >= 36 { 5 + (*i - 36) as i32 } else { store_menu_id(*i) };
+                let menu_id: i32 = if *i >= 36 {
+                    5 + (*i - 36) as i32
+                } else {
+                    store_menu_id(*i)
+                };
                 self.live_inv_slots[menu_id as usize] = *pair;
             }
             self.hotbar_slots = self.live_hotbar_row();
@@ -25153,7 +25037,11 @@ impl App {
                     changed: changed
                         .iter()
                         .map(|(i, p)| {
-                            let menu_id: i32 = if *i >= 36 { 5 + (*i - 36) as i32 } else { store_menu_id(*i) };
+                            let menu_id: i32 = if *i >= 36 {
+                                5 + (*i - 36) as i32
+                            } else {
+                                store_menu_id(*i)
+                            };
                             (menu_id as i16, *p)
                         })
                         .collect(),
@@ -25447,8 +25335,8 @@ impl App {
             ((w - 176) / 2, (h - panel_h) / 2)
         };
         self.chest_panel = (px, py); // the press walks' own geometry
-        // the hit boxes: the container grid's 0..N then the mirror's
-        // N..N+36 — the MENU's own numbering, the click's slot lane
+                                     // the hit boxes: the container grid's 0..N then the mirror's
+                                     // N..N+36 — the MENU's own numbering, the click's slot lane
         self.chest_slot_rects = (0..n)
             .map(|i| {
                 let (sx, sy) = chest_container_slot((px, py), i);
@@ -25468,10 +25356,10 @@ impl App {
         g.fill(px, py + panel_h - 1, 176, 1, dark); // bottom bevel
         g.fill(px + 175, py, 1, panel_h, dark); // right bevel
         let label = [0.251, 0.251, 0.251]; // 0x404040
-        // THE LIVE WINDOW'S OWN NAME (the same decode ride — the wire's
-        // custom name the anvil rows speak; the None the
-        // container.chest default the offline canvas wears — the
-        // golden bytes the shape never moves)
+                                           // THE LIVE WINDOW'S OWN NAME (the same decode ride — the wire's
+                                           // custom name the anvil rows speak; the None the
+                                           // container.chest default the offline canvas wears — the
+                                           // golden bytes the shape never moves)
         let chest_title: String = if self.chest_is_live {
             self.live_chest_title
                 .clone()
@@ -25481,7 +25369,9 @@ impl App {
             // THE SHULKER'S OWN ROW (the offline canvas's kind lane —
             // the container.shulkerBox default the ShulkerBoxBlockEntity
             // banks, the chest's own row the family sibling keeps)
-            tr("container.shulkerBox").unwrap_or("Shulker Box").to_string()
+            tr("container.shulkerBox")
+                .unwrap_or("Shulker Box")
+                .to_string()
         } else {
             tr("container.chest").unwrap_or("Chest").to_string()
         };
@@ -25568,7 +25458,16 @@ impl App {
         g.fill(0, 0, w, h, [0.0, 0.0, 0.0, 0.35]);
         let panel = inventory_panel_origin(w, h);
         self.inv_panel = panel;
-        g.sprite_file_region(a, "gui/container/inventory.png", 0, 0, 176, 166, panel.0, panel.1);
+        g.sprite_file_region(
+            a,
+            "gui/container/inventory.png",
+            0,
+            0,
+            176,
+            166,
+            panel.0,
+            panel.1,
+        );
     }
 
     /// The survival inventory's MANNEQUIN pass (the vanilla
@@ -25588,7 +25487,11 @@ impl App {
         if self.avatar.is_none() {
             // the loaders' prefix walk (the sound/font tables' own law —
             // the CWD the process speaks varies)
-            for prefix in ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"] {
+            for prefix in [
+                "assets-cache/jar",
+                "../assets-cache/jar",
+                "../../assets-cache/jar",
+            ] {
                 if let Some(m) = crate::avatar::AvatarModel::load(std::path::Path::new(prefix)) {
                     self.avatar = Some(m);
                     break;
@@ -25604,12 +25507,17 @@ impl App {
         let vp = mannequin_vp(panel.0, panel.1, gs, fb.w as f32, fb.h as f32, pitch);
         // THE EQUIPMENT ROOT (the loaders' prefix walk — the equipment
         // table's own dir the runtime cache keeps)
-        let equipment_root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
-            .iter()
-            .map(std::path::Path::new)
-            .find(|p| {
-                p.join(mc_registry::generated::equipment::HUMANOID_DIR).exists()
-            });
+        let equipment_root = [
+            "assets-cache/jar",
+            "../assets-cache/jar",
+            "../../assets-cache/jar",
+        ]
+        .iter()
+        .map(std::path::Path::new)
+        .find(|p| {
+            p.join(mc_registry::generated::equipment::HUMANOID_DIR)
+                .exists()
+        });
         // THE LOAD PHASE (the lazy cache the avatar's own honesty law
         // keeps — one sha1-verified entry per "<dir>/<asset>", the
         // leather pair BOTH: the dyeable base AND the untinted overlay
@@ -25619,8 +25527,7 @@ impl App {
                 if count <= 0 {
                     continue;
                 }
-                let Some(asset) =
-                    crate::avatar::armor_asset_name(mc_registry::item_name(id))
+                let Some(asset) = crate::avatar::armor_asset_name(mc_registry::item_name(id))
                 else {
                     continue;
                 };
@@ -25779,9 +25686,10 @@ impl App {
         if let Some(&(held_id, held_count)) = self.inventory.items.get(self.selected_hotbar) {
             if held_count > 0 {
                 if let Some(name) = mc_registry::item_name(held_id) {
-                    if let Some((_, model, _, _)) = mc_registry::generated::item_models::ITEM_MODEL_DEFS
-                        .iter()
-                        .find(|d| d.0 == name)
+                    if let Some((_, model, _, _)) =
+                        mc_registry::generated::item_models::ITEM_MODEL_DEFS
+                            .iter()
+                            .find(|d| d.0 == name)
                     {
                         let model_id = model.strip_prefix("minecraft:").unwrap_or(model);
                         if let Some(hq) = crate::avatar::held_item_quads(
@@ -25819,9 +25727,10 @@ impl App {
         if let Some(&(held_id, held_count)) = self.inventory.offhand.first() {
             if held_count > 0 {
                 if let Some(name) = mc_registry::item_name(held_id) {
-                    if let Some((_, model, _, _)) = mc_registry::generated::item_models::ITEM_MODEL_DEFS
-                        .iter()
-                        .find(|d| d.0 == name)
+                    if let Some((_, model, _, _)) =
+                        mc_registry::generated::item_models::ITEM_MODEL_DEFS
+                            .iter()
+                            .find(|d| d.0 == name)
                     {
                         let model_id = model.strip_prefix("minecraft:").unwrap_or(model);
                         if let Some(hq) = crate::avatar::offhand_item_quads(
@@ -25861,7 +25770,10 @@ impl App {
                 // over the base), the dye fold over the base's holes
                 let base = self.armor_textures.get(base_key).and_then(|o| o.as_ref());
                 let overlay_key = format!("{base_key}_overlay");
-                let overlay = self.armor_textures.get(&overlay_key).and_then(|o| o.as_ref());
+                let overlay = self
+                    .armor_textures
+                    .get(&overlay_key)
+                    .and_then(|o| o.as_ref());
                 if let (Some(base), Some(overlay)) = (base, overlay) {
                     let [r, g, b, al] = overlay.pixel(u, v);
                     if al >= 128 {
@@ -26133,7 +26045,16 @@ impl App {
         // walk speaks)
         for (i, &mode) in GameMode::ICON_ORDER.iter().enumerate() {
             let (sx, sy) = layout.slots[i];
-            g.sprite_file_region(a, "gui/sprites/gamemode_switcher/slot.png", 0, 0, 26, 26, sx, sy);
+            g.sprite_file_region(
+                a,
+                "gui/sprites/gamemode_switcher/slot.png",
+                0,
+                0,
+                26,
+                26,
+                sx,
+                sy,
+            );
             if i == self.gm_hovered {
                 g.sprite_file_region(
                     a,
@@ -26189,7 +26110,16 @@ impl App {
         g.fill(0, 0, w, h, [0.0, 0.0, 0.0, 0.35]);
         let panel = inventory_panel_origin(w, h);
         self.table_panel = panel;
-        g.sprite_file_region(a, "gui/container/crafting_table.png", 0, 0, 176, 166, panel.0, panel.1);
+        g.sprite_file_region(
+            a,
+            "gui/container/crafting_table.png",
+            0,
+            0,
+            176,
+            166,
+            panel.0,
+            panel.1,
+        );
         // THE LANE'S OWN TRUTH (the two lanes never mix): the wire
         // session's window-1 belief (the live_table_slots projection
         // the store's syncs feed), the offline store's own fields
@@ -26258,7 +26188,11 @@ impl App {
         let hotbar = self.inventory.hotbar();
         for i in 0..36usize {
             let (id, count) = if live {
-                let menu = if i < 9 { 37 + i as i32 } else { 10 + (i as i32 - 9) };
+                let menu = if i < 9 {
+                    37 + i as i32
+                } else {
+                    10 + (i as i32 - 9)
+                };
                 self.live_table_slots[menu as usize]
             } else if i < 9 {
                 hotbar[i]
@@ -26883,11 +26817,11 @@ impl App {
         // THE ENTRY CELL (the processor's own banked entry — the
         // fallback the bare verdict's own feet the world's center
         // keeps)
-        let entry = self
-            .body
-            .as_ref()
-            .and_then(|b| b.portal_entry)
-            .unwrap_or((self.world_size / 2, 20, self.world_size / 2));
+        let entry = self.body.as_ref().and_then(|b| b.portal_entry).unwrap_or((
+            self.world_size / 2,
+            20,
+            self.world_size / 2,
+        ));
         // THE SCALE WALK (javap DimensionType — the coordinate_scale
         // the per-dimension table keeps: the destination the source's
         // own scale the division carries — the nether's 8.0 the
@@ -27063,22 +26997,25 @@ impl App {
                 self.world_skybox = Skybox::None;
                 self.world_fog = Some((10.0, 96.0));
                 self.world_cloud_fog_end = None;
-                world.ambient_light = mc_registry::generated::worldgen::dimension_type("minecraft:the_nether")
-                    .map(|d| d.ambient_light_color);
+                world.ambient_light =
+                    mc_registry::generated::worldgen::dimension_type("minecraft:the_nether")
+                        .map(|d| d.ambient_light_color);
             }
             Dimension::End => {
                 self.world_skybox = Skybox::End;
                 self.world_fog = None;
                 self.world_cloud_fog_end = None;
-                world.ambient_light = mc_registry::generated::worldgen::dimension_type("minecraft:the_end")
-                    .map(|d| d.ambient_light_color);
+                world.ambient_light =
+                    mc_registry::generated::worldgen::dimension_type("minecraft:the_end")
+                        .map(|d| d.ambient_light_color);
             }
             Dimension::Overworld => {
                 self.world_skybox = Skybox::Overworld;
                 self.world_fog = None;
                 self.world_cloud_fog_end = None;
-                world.ambient_light = mc_registry::generated::worldgen::dimension_type("minecraft:overworld")
-                    .map(|d| d.ambient_light_color);
+                world.ambient_light =
+                    mc_registry::generated::worldgen::dimension_type("minecraft:overworld")
+                        .map(|d| d.ambient_light_color);
             }
         }
         world.relight();
@@ -27135,9 +27072,17 @@ impl App {
     /// section under the player not loaded) the unknown-key lookup falls
     /// back to the generic `music.game` situation — no seeded guess
     /// about a network world.
-    pub fn enter_network_world(&mut self, spawn_biome: Option<String>, skybox: Skybox, fog: Option<(f32, f32)>, cloud_fog_end: Option<f32>) {
+    pub fn enter_network_world(
+        &mut self,
+        spawn_biome: Option<String>,
+        skybox: Skybox,
+        fog: Option<(f32, f32)>,
+        cloud_fog_end: Option<f32>,
+    ) {
         let (size, spawn_y, quads) = {
-            let Some(world) = self.net_world.as_ref() else { return };
+            let Some(world) = self.net_world.as_ref() else {
+                return;
+            };
             let size = world.size_blocks();
             let c = size / 2;
             (
@@ -27296,6 +27241,16 @@ impl App {
             // CraftingMenu.removed speaks — the grid contents + the
             // carried stack ride home, the screen back to the world
             self.close_crafting_table();
+        } else if self.screen == ScreenKind::Accessibility {
+            // THE SUB-SCREEN'S OWN ESCAPE LANE (the vanilla
+            // Screen.shouldCloseOnEsc default the Accessibility screen
+            // never overrides — the keyPressed walk's close the
+            // onClose() ride speaks, the lastScreen the parent
+            // Options screen returns; the open() law the
+            // old==Accessibility check the save never speaks — the
+            // sub-screen the `removed()` method never wears, the save
+            // seat stays the parent's own exit)
+            self.open(ScreenKind::Options);
         } else if self.screen == ScreenKind::Options {
             // THE OPTIONS SCREEN'S OWN ESCAPE LANE (the vanilla Escape
             // the Screen.shouldCloseOnEsc default the keyPressed walk
@@ -27477,8 +27432,7 @@ impl App {
         } else {
             crate::world::NAME_OF[kind as usize]
         };
-        let Some(item) = mc_registry::item_id_by_name(pick_name)
-        else {
+        let Some(item) = mc_registry::item_id_by_name(pick_name) else {
             return; // the item-less block — the honest absence
         };
         // tryPickItem's scan: findSlotMatchingItem (the empties
@@ -29244,7 +29198,11 @@ impl App {
             let cap = crate::world_view::item_max_stack(carried.0);
             // getQuickCraftPlaceCount — the type-0 floor split, the
             // type-1's own ONE per seat the ghost keeps
-            let place_count = if self.qc_type == 1 { 1 } else { carried.1 / painted as i32 };
+            let place_count = if self.qc_type == 1 {
+                1
+            } else {
+                carried.1 / painted as i32
+            };
             let place = std::cmp::min(place_count + seat_count, cap);
             k -= place - seat_count; // pc 495-503 — the net the carried loses
             let new = (carried.0, place); // pc 505-514
@@ -29265,9 +29223,9 @@ impl App {
             }
         }
         self.chest_carried = if k > 0 { (carried.0, k) } else { (0, 0) }; // pc 520-530 — the remainder the cursor keeps
-        // THE MIRROR'S OWN SYNC (the fresh rows EVERY mutation
-        // re-syncs — the open's own law the write-through's tail
-        // wears) + the HUD row the store's sync follows
+                                                                          // THE MIRROR'S OWN SYNC (the fresh rows EVERY mutation
+                                                                          // re-syncs — the open's own law the write-through's tail
+                                                                          // wears) + the HUD row the store's sync follows
         self.chest_mirror_sync_from_inventory();
         self.hotbar_slots = self.inventory.hotbar();
     }
@@ -29333,7 +29291,11 @@ impl App {
             let cap = crate::world_view::item_max_stack(carried.0);
             // getQuickCraftPlaceCount — the type-0 floor split, the
             // type-1's own ONE per seat the ghost keeps
-            let place_count = if self.qc_type == 1 { 1 } else { carried.1 / painted as i32 };
+            let place_count = if self.qc_type == 1 {
+                1
+            } else {
+                carried.1 / painted as i32
+            };
             let place = std::cmp::min(place_count + seat_count, cap);
             k -= place - seat_count; // pc 495-503 — the net the carried loses
             let new = (carried.0, place); // pc 505-514
@@ -29354,9 +29316,9 @@ impl App {
             }
         }
         self.dispenser_carried = if k > 0 { (carried.0, k) } else { (0, 0) }; // pc 520-530 — the remainder the cursor keeps
-        // THE MIRROR'S OWN SYNC (the fresh rows EVERY mutation
-        // re-syncs — the open's own law the write-through's tail
-        // wears) + the HUD row the store's sync follows
+                                                                              // THE MIRROR'S OWN SYNC (the fresh rows EVERY mutation
+                                                                              // re-syncs — the open's own law the write-through's tail
+                                                                              // wears) + the HUD row the store's sync follows
         self.dispenser_mirror_sync_from_inventory();
         self.hotbar_slots = self.inventory.hotbar();
     }
@@ -29385,7 +29347,11 @@ impl App {
             let _ = seat_id;
             // getQuickCraftPlaceCount — the type-0 floor split, the
             // type-1's own ONE per seat the ghost keeps
-            let place_count = if self.qc_type == 1 { 1 } else { carried.1 / painted as i32 };
+            let place_count = if self.qc_type == 1 {
+                1
+            } else {
+                carried.1 / painted as i32
+            };
             let place = std::cmp::min(place_count + seat_count, cap);
             remainder -= place - seat_count;
         }
@@ -29623,10 +29589,7 @@ impl App {
                 .any(|&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16);
             let panel = self.dispenser_panel;
             let outside = panel != (0, 0)
-                && (mx < panel.0
-                    || my < panel.1
-                    || mx >= panel.0 + 176
-                    || my >= panel.1 + 166);
+                && (mx < panel.0 || my < panel.1 || mx >= panel.0 + 176 || my >= panel.1 + 166);
             if on_seat {
                 // pc 427-449 — the PICKUP the click walk's own lanes
                 // serve (the armed button the release wears — the right
@@ -29893,7 +29856,11 @@ impl App {
             let cap = crate::world_view::item_max_stack(carried.0);
             // getQuickCraftPlaceCount — the type-0 floor(count/painted),
             // the type-1's own ONE per seat (the right drag's answer)
-            let place_count = if self.qc_type == 1 { 1 } else { carried.1 / painted as i32 };
+            let place_count = if self.qc_type == 1 {
+                1
+            } else {
+                carried.1 / painted as i32
+            };
             let place = std::cmp::min(place_count + seat_count, cap);
             k -= place - seat_count; // pc 495-503 — the net the carried loses
             self.inventory_set_hover(hover, (carried.0, place)); // pc 505-514
@@ -29965,7 +29932,11 @@ impl App {
             let cap = crate::world_view::item_max_stack(carried.0);
             // getQuickCraftPlaceCount — the type-0 floor split, the
             // type-1's own ONE per seat the ghost keeps
-            let place_count = if self.qc_type == 1 { 1 } else { carried.1 / painted as i32 };
+            let place_count = if self.qc_type == 1 {
+                1
+            } else {
+                carried.1 / painted as i32
+            };
             let place = std::cmp::min(place_count + seat_count, cap);
             k -= place - seat_count; // pc 495-503 — the net the carried loses
             let new = (carried.0, place); // pc 505-514
@@ -30032,8 +30003,7 @@ impl App {
         let kind = self.furnace_sim.kind;
         let seats = self.qc_slots.clone(); // the disjoint borrow the write keeps
         for &menu in &seats {
-            let (seat_id, seat_count) =
-                self.furnace_slots.get(menu).copied().unwrap_or((0, 0));
+            let (seat_id, seat_count) = self.furnace_slots.get(menu).copied().unwrap_or((0, 0));
             if seat_id != 0 && seat_id != carried.0 {
                 continue; // pc 373-381 — canItemQuickReplace
             }
@@ -30046,7 +30016,11 @@ impl App {
             let cap = crate::world_view::item_max_stack(carried.0);
             // getQuickCraftPlaceCount — the type-0 floor split, the
             // type-1's own ONE per seat the ghost keeps
-            let place_count = if self.qc_type == 1 { 1 } else { carried.1 / painted as i32 };
+            let place_count = if self.qc_type == 1 {
+                1
+            } else {
+                carried.1 / painted as i32
+            };
             let place = std::cmp::min(place_count + seat_count, cap);
             k -= place - seat_count; // pc 495-503 — the net the carried loses
             let new = (carried.0, place); // pc 505-514
@@ -30136,6 +30110,21 @@ impl App {
             }
             return;
         }
+        if self.screen == ScreenKind::Accessibility {
+            // THE FOV EFFECTS SLIDER'S OWN ARM (the AbstractSliderButton's
+            // mouseDown walk the sub-screen's row wears — the press
+            // INSIDE the track the value's own seat answers, the armed
+            // flag the held drag rides, the UnitDouble 0..1 the store's
+            // own unit keeps)
+            if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_fov_effect") {
+                let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
+                if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
+                    self.fov_effect_scale = slider_value_from_x(mx, bx, bw);
+                    self.fov_effect_drag = true;
+                }
+            }
+            return;
+        }
         if self.screen == ScreenKind::Dispenser {
             // THE 3x3 CANVAS'S OWN PRESS (the quickcraft drag's own arm
             // the table/furnace's own gate shape wears — dev-148's own
@@ -30186,8 +30175,9 @@ impl App {
             // compute the click dispatch the arm BEFORE keeps, the
             // previous press's seat the compare reads)
             let hovered = self.inventory_hover(mx, my).map(inventory_hover_menu_id);
-            self.inv_doubleclick =
-                self.inv_last_click_slot.is_some() && self.inv_last_click_slot == hovered && self.press_doubled;
+            self.inv_doubleclick = self.inv_last_click_slot.is_some()
+                && self.inv_last_click_slot == hovered
+                && self.press_doubled;
             // THE LANE'S OWN CURSOR (the offline world the `inv_carried`
             // stack holds, the LIVE session the belief's own projection
             // `live_inv_carried` carries — the two lanes never mix)
@@ -30412,7 +30402,8 @@ impl App {
                 (Some((_, md)), Some((_, hd))) => hd < md,
                 (None, Some(_)) => true,
                 _ => false,
-            } && frame_hit.map_or(true, |(_, fd)| hull_hit.map_or(true, |(_, hd)| hd < fd));
+            } && frame_hit
+                .map_or(true, |(_, fd)| hull_hit.map_or(true, |(_, hd)| hd < fd));
             let cart_wins = match (mob_hit, cart_hit) {
                 (Some((_, md)), Some((_, cd))) => cd < md,
                 (None, Some(_)) => true,
@@ -30421,11 +30412,11 @@ impl App {
                 (Some((_, hd)), Some((_, cd))) => cd < hd,
                 (None, Some(_)) => true,
                 _ => false,
-            } && frame_hit.map_or(true, |(_, fd)| cart_hit.map_or(true, |(_, cd)| cd < fd));
+            } && frame_hit
+                .map_or(true, |(_, fd)| cart_hit.map_or(true, |(_, cd)| cd < fd));
             let frame_wins = !cart_wins
                 && !hull_wins
-                && frame_hit
-                    .map_or(false, |(_, fd)| mob_hit.map_or(true, |(_, md)| fd < md));
+                && frame_hit.map_or(false, |(_, fd)| mob_hit.map_or(true, |(_, md)| fd < md));
             if frame_wins {
                 if let Some((id, _)) = frame_hit {
                     // THE FRAME'S INTERACT ARM (javap ItemFrame.interact
@@ -30518,12 +30509,11 @@ impl App {
                             let cursor = (location.0 - vx, location.1 - vy, location.2 - vz);
                             let shift = self.shift_down;
                             if let Some(sink) = self.live_clicks.as_ref() {
-                                let _ =
-                                    sink.send(crate::world_view::ContainerCommand::Interact {
-                                        entity_id: id,
-                                        cursor,
-                                        shift,
-                                    });
+                                let _ = sink.send(crate::world_view::ContainerCommand::Interact {
+                                    entity_id: id,
+                                    cursor,
+                                    shift,
+                                });
                             }
                             return true;
                         }
@@ -30561,17 +30551,14 @@ impl App {
                     // sentinel the held lane's miss rides, the chain's
                     // own gates the word answers
                     let held = held.as_deref().unwrap_or("");
-                    let mut verdict =
-                        self.mobs[i].mob_interact(held, &mut self.mob_rng);
+                    let mut verdict = self.mobs[i].mob_interact(held, &mut self.mob_rng);
                     // THE SECONDARY-USE STAND-DOWN (bytecode 28-32:
                     // `player.isSecondaryUseActive()` ifne -> 55 — the
                     // sneak the ride arm refuses, the super's miss the
                     // walk falls to: the already-saddled hull the
                     // equip arm's hasItemInSlot gate closes, the PASS
                     // the chain's own tail speaks)
-                    if matches!(verdict, crate::mob::MobInteract::Ride)
-                        && self.shift_down
-                    {
+                    if matches!(verdict, crate::mob::MobInteract::Ride) && self.shift_down {
                         verdict = crate::mob::MobInteract::Pass;
                     }
                     if let crate::mob::MobInteract::Shear(wool) = verdict {
@@ -30586,17 +30573,15 @@ impl App {
                         for item in wool {
                             let id = self.next_drop_id;
                             self.next_drop_id += 1;
-                            self.drops.push(
-                                crate::drops::ItemDrop::spawn_entity_loot(
-                                    id,
-                                    item,
-                                    1,
-                                    mx,
-                                    my,
-                                    mz,
-                                    &mut self.mob_rng,
-                                ),
-                            );
+                            self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                                id,
+                                item,
+                                1,
+                                mx,
+                                my,
+                                mz,
+                                &mut self.mob_rng,
+                            ));
                         }
                         // the SUCCESS_SERVER's own swing (the
                         // SwingSource.SERVER the verdict carries —
@@ -30653,14 +30638,13 @@ impl App {
                                     // `!add` arm the player.drop walk
                                     // speaks — the entity at the
                                     // player's own feet)
-                                    let (px, py, pz) = self
-                                        .body
-                                        .as_ref()
-                                        .map(|b| (b.x, b.y, b.z))
-                                        .unwrap_or_else(|| {
-                                            let c = self.world_camera();
-                                            (c.pos.x as f64, c.pos.y as f64, c.pos.z as f64)
-                                        });
+                                    let (px, py, pz) =
+                                        self.body.as_ref().map(|b| (b.x, b.y, b.z)).unwrap_or_else(
+                                            || {
+                                                let c = self.world_camera();
+                                                (c.pos.x as f64, c.pos.y as f64, c.pos.z as f64)
+                                            },
+                                        );
                                     let id = self.next_drop_id;
                                     self.next_drop_id += 1;
                                     self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
@@ -30798,8 +30782,7 @@ impl App {
                             // SEVEN hearts the handleEntityEvent arm
                             // spawns at the body's own registration box)
                             let bbox = self.mobs[i].box_for();
-                            let burst =
-                                crate::particles::heart_burst(bbox, &mut self.mob_rng);
+                            let burst = crate::particles::heart_burst(bbox, &mut self.mob_rng);
                             self.particles.extend(burst);
                             if let Some(eat_word) = self.mobs[i].eat_voice() {
                                 self.sounds.play_voice(self.frame, eat_word, 1.0, 1.0);
@@ -30894,16 +30877,13 @@ impl App {
                             // THE HEART BURST (byte 7 — the success arm
                             // the same walk the event-18 love burst
                             // wears)
-                            let burst =
-                                crate::particles::heart_burst(bbox, &mut self.mob_rng);
+                            let burst = crate::particles::heart_burst(bbox, &mut self.mob_rng);
                             self.particles.extend(burst);
                         } else {
                             // THE SMOKE BURST (byte 6 — the failure arm
                             // the spawnTamingParticles walk answers)
-                            let burst = crate::particles::taming_smoke_burst(
-                                bbox,
-                                &mut self.mob_rng,
-                            );
+                            let burst =
+                                crate::particles::taming_smoke_burst(bbox, &mut self.mob_rng);
                             self.particles.extend(burst);
                         }
                         self.swing.start();
@@ -30952,23 +30932,18 @@ impl App {
                     // THE HIT LOCATION (the same clip the pick's own
                     // distance walk measured — the eye-inside arm the
                     // 0.0 distance speaks lands the eye itself)
-                    let location = crate::mob::aabb_clip(
-                        eye,
-                        end,
-                        (bx0, by0, bz0),
-                        (bx1, by1, bz1),
-                    )
-                    .map(|(p, _)| p)
-                    .unwrap_or(eye);
+                    let location =
+                        crate::mob::aabb_clip(eye, end, (bx0, by0, bz0), (bx1, by1, bz1))
+                            .map(|(p, _)| p)
+                            .unwrap_or(eye);
                     let cursor = (location.0 - mx, location.1 - my, location.2 - mz);
                     let shift = self.shift_down;
                     if let Some(sink) = self.live_clicks.as_ref() {
-                        let _ =
-                            sink.send(crate::world_view::ContainerCommand::Interact {
-                                entity_id,
-                                cursor,
-                                shift,
-                            });
+                        let _ = sink.send(crate::world_view::ContainerCommand::Interact {
+                            entity_id,
+                            cursor,
+                            shift,
+                        });
                     }
                     return true;
                 }
@@ -31033,15 +31008,13 @@ impl App {
                             (hit.location.2 - hit.pos.2 as f64) as f32,
                         );
                         if let Some(sink) = self.live_clicks.as_ref() {
-                            let _ = sink.send(
-                                crate::world_view::ContainerCommand::UseItemOn {
-                                    hand: 1, // the OFF turn's own ctx
-                                    pos: hit.pos,
-                                    face: hit.face,
-                                    cursor,
-                                    inside: hit.inside,
-                                },
-                            );
+                            let _ = sink.send(crate::world_view::ContainerCommand::UseItemOn {
+                                hand: 1, // the OFF turn's own ctx
+                                pos: hit.pos,
+                                face: hit.face,
+                                cursor,
+                                inside: hit.inside,
+                            });
                         }
                         self.using_item = None; // one use at a time
                         self.using_item = Some(UseActive {
@@ -31074,23 +31047,20 @@ impl App {
                         if let Some(mc_registry::UsingStateRender::Special(_)) =
                             mc_registry::item_using_state(off_id, state)
                         {
-                            self.held_offhand =
-                                crate::hand::load_special_using_item_ctx(
-                                    off_id,
-                                    mc_registry::display::FIRSTPERSON_LEFTHAND,
-                                );
+                            self.held_offhand = crate::hand::load_special_using_item_ctx(
+                                off_id,
+                                mc_registry::display::FIRSTPERSON_LEFTHAND,
+                            );
                         }
                         // the wire echo: the camera's angles in the vanilla
                         // degrees, the OFF_HAND ordinal
-                        let (yaw, pitch) =
-                            crate::world_view::wire_angles(&self.world_camera());
+                        let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
                         if let Some(sink) = self.live_clicks.as_ref() {
-                            let _ =
-                                sink.send(crate::world_view::ContainerCommand::UseItem {
-                                    yaw,
-                                    pitch,
-                                    hand: 1,
-                                });
+                            let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
+                                yaw,
+                                pitch,
+                                hand: 1,
+                            });
                         }
                         return true;
                     }
@@ -31101,9 +31071,7 @@ impl App {
                     // own pull loaded, the same law the main lane's own
                     // shot arm wears — the wire the OFF_HAND ordinal
                     // speaks)
-                    if self.off_charge.is_some()
-                        && mc_registry::item_charge_def(off_id).is_some()
-                    {
+                    if self.off_charge.is_some() && mc_registry::item_charge_def(off_id).is_some() {
                         // THE KIND THE SHOT READS BEFORE THE CLEAR (the
                         // ROCKET kind the firework's own spawn the
                         // performShooting walk answers, the ARROW kind
@@ -31127,15 +31095,13 @@ impl App {
                                 self.crossbow_shot_offline();
                             }
                         }
-                        let (yaw, pitch) =
-                            crate::world_view::wire_angles(&self.world_camera());
+                        let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
                         if let Some(sink) = self.live_clicks.as_ref() {
-                            let _ =
-                                sink.send(crate::world_view::ContainerCommand::UseItem {
-                                    yaw,
-                                    pitch,
-                                    hand: 1,
-                                });
+                            let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
+                                yaw,
+                                pitch,
+                                hand: 1,
+                            });
                         }
                         return true;
                     }
@@ -31193,15 +31159,13 @@ impl App {
                     }
                     // the wire echo: the camera's angles in the vanilla
                     // degrees, the OFF_HAND ordinal
-                    let (yaw, pitch) =
-                        crate::world_view::wire_angles(&self.world_camera());
+                    let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
                     if let Some(sink) = self.live_clicks.as_ref() {
-                        let _ =
-                            sink.send(crate::world_view::ContainerCommand::UseItem {
-                                yaw,
-                                pitch,
-                                hand: 1,
-                            });
+                        let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
+                            yaw,
+                            pitch,
+                            hand: 1,
+                        });
                     }
                     return true;
                 }
@@ -31233,15 +31197,13 @@ impl App {
                     self.eating = eat;
                     // the wire echo: the OFF-hand use-item click (the
                     // packet's own hand field the server's truth reads)
-                    let (yaw, pitch) =
-                        crate::world_view::wire_angles(&self.world_camera());
+                    let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
                     if let Some(sink) = self.live_clicks.as_ref() {
-                        let _ =
-                            sink.send(crate::world_view::ContainerCommand::UseItem {
-                                yaw,
-                                pitch,
-                                hand: 1,
-                            });
+                        let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
+                            yaw,
+                            pitch,
+                            hand: 1,
+                        });
                     }
                     return true;
                 }
@@ -31412,126 +31374,191 @@ impl App {
     /// use consumed (the press returns — the off hand never runs),
     /// `false` = the PASS/FAIL verdict the OFF hand's own turn answers.
     fn on_right_press_main_item_lane(&mut self) -> bool {
-    // the item lane reads the UNIFIED held id (the networked
-    // store's selection, the offline `--held-item` stand-in —
-    // the offline client's use animations are the vanilla's own
-    // singleplayer behavior)
-    if let Some(id) = self.held_id() {
-        // THE BOAT'S OWN USE WALK (javap BoatItem.use — the held
-        // hull's spawn arc the item's use() speaks): the
-        // Fluid-ANY POV clip, the eye-inside gate, the
-        // noCollision fold, the verdict the lanes' own order
-        // keeps. The None the item lanes' fall-through keeps (a
-        // PASS — the vanilla's own order), the Some the press's
-        // own verdict speaks.
-        if let Some(consumed) = self.on_right_press_boat_lane(id) {
-            return consumed;
-        }
-        // THE CARROT-ON-A-STICK'S OWN USE (the 26.2's data-driven
-        // item walk the ride speaks): the ridden pig the vehicle
-        // answers — the ItemBasedSteering.boost the window arms
-        // (the nextInt(841)+140 the RandomSource keeps), the
-        // CONSUME the swing speaks (the hurtAndBreak durability
-        // the repo's item vocabulary never speaks — the honest
-        // skip the shears arm keeps); the re-press the boosting
-        // bit refuses (the false the PASS keeps), the un-ridden
-        // press the PASS the walk returns
-        if let Some(name) = mc_registry::item_name(id) {
-            if name == "carrot_on_a_stick" {
-                let vid = self.offline_ride.as_ref().map(|r| r.vehicle_id);
-                let boosted = if let Some(vid) = vid {
-                    let Some(mob) = self
-                        .mobs
-                        .iter_mut()
-                        .find(|m| m.id == vid && m.kind == crate::mob::MobKind::Pig)
-                    else {
-                        return false;
+        // the item lane reads the UNIFIED held id (the networked
+        // store's selection, the offline `--held-item` stand-in —
+        // the offline client's use animations are the vanilla's own
+        // singleplayer behavior)
+        if let Some(id) = self.held_id() {
+            // THE BOAT'S OWN USE WALK (javap BoatItem.use — the held
+            // hull's spawn arc the item's use() speaks): the
+            // Fluid-ANY POV clip, the eye-inside gate, the
+            // noCollision fold, the verdict the lanes' own order
+            // keeps. The None the item lanes' fall-through keeps (a
+            // PASS — the vanilla's own order), the Some the press's
+            // own verdict speaks.
+            if let Some(consumed) = self.on_right_press_boat_lane(id) {
+                return consumed;
+            }
+            // THE CARROT-ON-A-STICK'S OWN USE (the 26.2's data-driven
+            // item walk the ride speaks): the ridden pig the vehicle
+            // answers — the ItemBasedSteering.boost the window arms
+            // (the nextInt(841)+140 the RandomSource keeps), the
+            // CONSUME the swing speaks (the hurtAndBreak durability
+            // the repo's item vocabulary never speaks — the honest
+            // skip the shears arm keeps); the re-press the boosting
+            // bit refuses (the false the PASS keeps), the un-ridden
+            // press the PASS the walk returns
+            if let Some(name) = mc_registry::item_name(id) {
+                if name == "carrot_on_a_stick" {
+                    let vid = self.offline_ride.as_ref().map(|r| r.vehicle_id);
+                    let boosted = if let Some(vid) = vid {
+                        let Some(mob) = self
+                            .mobs
+                            .iter_mut()
+                            .find(|m| m.id == vid && m.kind == crate::mob::MobKind::Pig)
+                        else {
+                            return false;
+                        };
+                        mob.boost(&mut self.mob_rng)
+                    } else {
+                        false
                     };
-                    mob.boost(&mut self.mob_rng)
-                } else {
-                    false
-                };
-                if boosted {
-                    self.swing.start();
-                    return true;
+                    if boosted {
+                        self.swing.start();
+                        return true;
+                    }
+                    return false;
                 }
-                return false;
             }
-        }
-        // THE BUCKET'S OWN USE WALK (javap BucketItem.use — the fluid
-        // context's POV clip the content's mode picks, the pour the
-        // emptyContents walk answers, the pickup the BucketPickup
-        // draw serves): the None the item lanes' fall-through keeps
-        // (a PASS — the vanilla's own order), the Some the press's
-        // own verdict speaks.
-        if let Some(consumed) = self.on_right_press_bucket_lane(id) {
-            return consumed;
-        }
-        // THE EAT LANE FIRST (the vanilla startUseItem's own
-        // order — the item's use() speaks: the CONSUMABLE's
-        // startConsuming opens the hold; the pull lanes ride
-        // after): the canConsume gate — a FOOD-less consumable
-        // (the potion) consumes unconditionally, the FOOD's
-        // own lane speaks `canEat(canAlwaysEat)`.
-        if let Some(def) = self.food_def_of(id) {
-            let consumes = !def.has_food()
-                || crate::eat::can_eat(
-                    def.can_always_eat,
-                    false,
-                    self.food_data.needs_food(),
-                );
-            if !consumes {
-                return false; // the canConsume's own FAIL
+            // THE BUCKET'S OWN USE WALK (javap BucketItem.use — the fluid
+            // context's POV clip the content's mode picks, the pour the
+            // emptyContents walk answers, the pickup the BucketPickup
+            // draw serves): the None the item lanes' fall-through keeps
+            // (a PASS — the vanilla's own order), the Some the press's
+            // own verdict speaks.
+            if let Some(consumed) = self.on_right_press_bucket_lane(id) {
+                return consumed;
             }
-            self.using_item = None; // one use at a time
-            self.eating = crate::eat::EatActive::start(id, def);
-            // the wire echo: the eat's use-item click (the
-            // networked lane's own command the pull lane rides)
-            let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
-            if let Some(sink) = self.live_clicks.as_ref() {
-                let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
-                    yaw,
-                    pitch,
-                    hand: 0,
-                });
+            // THE EAT LANE FIRST (the vanilla startUseItem's own
+            // order — the item's use() speaks: the CONSUMABLE's
+            // startConsuming opens the hold; the pull lanes ride
+            // after): the canConsume gate — a FOOD-less consumable
+            // (the potion) consumes unconditionally, the FOOD's
+            // own lane speaks `canEat(canAlwaysEat)`.
+            if let Some(def) = self.food_def_of(id) {
+                let consumes = !def.has_food()
+                    || crate::eat::can_eat(def.can_always_eat, false, self.food_data.needs_food());
+                if !consumes {
+                    return false; // the canConsume's own FAIL
+                }
+                self.using_item = None; // one use at a time
+                self.eating = crate::eat::EatActive::start(id, def);
+                // the wire echo: the eat's use-item click (the
+                // networked lane's own command the pull lane rides)
+                let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
+                if let Some(sink) = self.live_clicks.as_ref() {
+                    let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
+                        yaw,
+                        pitch,
+                        hand: 0,
+                    });
+                }
+                return true;
             }
-            return true;
-        }
-        // THE FIREWORK'S OWN USE (javap `FireworkRocketItem.use` the
-        // 26.2 walk — the isFallFlying gate the verdict keeps: the
-        // NOT-gliding press the PASS answer serves (pc 90 the getstatic
-        // PASS arm — the OFF hand's own turn the fall-through speaks),
-        // the gliding press the SUCCESS wears: the attached rocket the
-        // (Level, ItemStack, LivingEntity) ctor spawns, the
-        // `consume(1, player)` the stack answers, the awardStat the
-        // client's ledger never banks)
-        if self.held_word_of(id) == Some("firework_rocket") {
-            let gliding = self
-                .body
-                .as_ref()
-                .map(|b| b.fall_flying)
-                .unwrap_or(false);
-            if !gliding {
-                return false; // the PASS the gate keeps
+            // THE FIREWORK'S OWN USE (javap `FireworkRocketItem.use` the
+            // 26.2 walk — the isFallFlying gate the verdict keeps: the
+            // NOT-gliding press the PASS answer serves (pc 90 the getstatic
+            // PASS arm — the OFF hand's own turn the fall-through speaks),
+            // the gliding press the SUCCESS wears: the attached rocket the
+            // (Level, ItemStack, LivingEntity) ctor spawns, the
+            // `consume(1, player)` the stack answers, the awardStat the
+            // client's ledger never banks)
+            if self.held_word_of(id) == Some("firework_rocket") {
+                let gliding = self.body.as_ref().map(|b| b.fall_flying).unwrap_or(false);
+                if !gliding {
+                    return false; // the PASS the gate keeps
+                }
+                // THE OFFLINE PREDICTION (the useOn firework arm's own
+                // gate — the LIVE session the server's own rocket the
+                // wire's Add Entity lane serves, the client predicts none)
+                if let (Some(_), false) = (self.offline_world.as_mut(), self.world_is_network) {
+                    // THE OWNER'S OWN FEET (the ctor's super walk the
+                    // getX/getY/getZ reads — the attached_rocket ctor the
+                    // same pose keeps; the body the gate's glide verdict
+                    // owns)
+                    let (ox, oy, oz) = match self.body.as_ref() {
+                        Some(b) => (b.x, b.y, b.z),
+                        None => (0.0, 0.0, 0.0),
+                    };
+                    // THE LEVEL'S OWN ENTITY COUNTER (the next_drop_id the
+                    // shared id space keeps — the arrow arm's own precedent)
+                    let ent = self.next_drop_id;
+                    self.next_drop_id += 1;
+                    self.fireworks
+                        .push(crate::mob::Firework::attached_rocket(ent, ox, oy, oz));
+                    // THE CONSUME (javap ItemStack.consume(1, player) — the
+                    // hasInfiniteMaterials gate the creative arm keeps, the
+                    // shrink(1) the survival stack wears; the `--held-item`
+                    // stand-in the conjured stack the shrink never owns)
+                    if self.game_mode != GameMode::Creative {
+                        let slot = self.selected_hotbar;
+                        if self.inventory.items[slot].0 == id && self.inventory.items[slot].1 > 0 {
+                            self.inventory.items[slot].1 -= 1;
+                            self.use_consume_kills_pop(slot);
+                        }
+                    }
+                }
+                // THE WIRE ECHO (the use-item click the networked lane
+                // rides — the camera's angles in the vanilla degrees)
+                let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
+                if let Some(sink) = self.live_clicks.as_ref() {
+                    let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
+                        yaw,
+                        pitch,
+                        hand: 0,
+                    });
+                }
+                return true;
             }
-            // THE OFFLINE PREDICTION (the useOn firework arm's own
-            // gate — the LIVE session the server's own rocket the
-            // wire's Add Entity lane serves, the client predicts none)
-            if let (Some(_), false) = (self.offline_world.as_mut(), self.world_is_network) {
-                // THE OWNER'S OWN FEET (the ctor's super walk the
-                // getX/getY/getZ reads — the attached_rocket ctor the
-                // same pose keeps; the body the gate's glide verdict
-                // owns)
-                let (ox, oy, oz) = match self.body.as_ref() {
-                    Some(b) => (b.x, b.y, b.z),
-                    None => (0.0, 0.0, 0.0),
-                };
-                // THE LEVEL'S OWN ENTITY COUNTER (the next_drop_id the
-                // shared id space keeps — the arrow arm's own precedent)
-                let ent = self.next_drop_id;
-                self.next_drop_id += 1;
-                self.fireworks
-                    .push(crate::mob::Firework::attached_rocket(ent, ox, oy, oz));
+            // THE EGG'S OWN THROW (javap `EggItem.use` the 26.2 walk — the
+            // sound the press arms FIRST: `playSound(EGG_THROW, 0.5F,
+            // 0.4F / (nextFloat() * 0.4F + 0.8F))` the level's own stream
+            // draws, the ThrownEgg ctor the `shootFromRotation(player,
+            // xRot, yRot, 0.0F, 1.5F, 1.0F)` walk serves (the power 1.5
+            // the inaccuracy 1.0 keeps), the `consume(1, player)` the
+            // survival stack wears, the awardStat the client's ledger
+            // never banks). The LIVE session the server's own egg the
+            // wire's Add Entity word serves — the client predicts none.
+            if self.held_word_of(id) == Some("egg") {
+                // THE VOICE (the press's own spot the ear answers — the
+                // pitch draw the level's stream rides BEFORE the ctor's
+                // own gaussians, the vanilla's own draw order the walk
+                // keeps)
+                let pitch = 0.4 / (self.mob_rng.next_f32() * 0.4 + 0.8);
+                self.sounds
+                    .play_voice(self.frame, "entity.egg.throw", 0.5, pitch);
+                // THE OFFLINE PREDICTION (the live lane the wire serves —
+                // the owner's own eye minus 0.1 the ctor's spawn law keeps,
+                // the flight camera the headless fallback answers)
+                if let (Some(_), false) = (self.offline_world.as_mut(), self.world_is_network) {
+                    let (ox, oy, oz, dir) = match self.body.as_ref() {
+                        Some(b) => {
+                            let cam = b.camera();
+                            (
+                                b.x,
+                                b.y + b.eye_height() - 0.1,
+                                b.z,
+                                (
+                                    cam.forward().x as f64,
+                                    cam.forward().y as f64,
+                                    cam.forward().z as f64,
+                                ),
+                            )
+                        }
+                        None => (0.0, 0.0, 0.0, (0.0, 0.0, 0.0)),
+                    };
+                    let ent = self.next_drop_id;
+                    self.next_drop_id += 1;
+                    let egg = crate::mob::EggProjectile::throw_from(
+                        ent,
+                        ox,
+                        oy,
+                        oz,
+                        dir,
+                        &mut self.mob_rng,
+                    );
+                    self.eggs.push(egg);
+                }
                 // THE CONSUME (javap ItemStack.consume(1, player) — the
                 // hasInfiniteMaterials gate the creative arm keeps, the
                 // shrink(1) the survival stack wears; the `--held-item`
@@ -31543,168 +31570,122 @@ impl App {
                         self.use_consume_kills_pop(slot);
                     }
                 }
+                // THE WIRE ECHO (the use-item click the networked lane
+                // rides — the camera's angles in the vanilla degrees)
+                let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
+                if let Some(sink) = self.live_clicks.as_ref() {
+                    let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
+                        yaw,
+                        pitch,
+                        hand: 0,
+                    });
+                }
+                return true;
             }
-            // THE WIRE ECHO (the use-item click the networked lane
-            // rides — the camera's angles in the vanilla degrees)
-            let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
-            if let Some(sink) = self.live_clicks.as_ref() {
-                let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
-                    yaw,
-                    pitch,
-                    hand: 0,
-                });
-            }
-            return true;
-        }
-        // THE EGG'S OWN THROW (javap `EggItem.use` the 26.2 walk — the
-        // sound the press arms FIRST: `playSound(EGG_THROW, 0.5F,
-        // 0.4F / (nextFloat() * 0.4F + 0.8F))` the level's own stream
-        // draws, the ThrownEgg ctor the `shootFromRotation(player,
-        // xRot, yRot, 0.0F, 1.5F, 1.0F)` walk serves (the power 1.5
-        // the inaccuracy 1.0 keeps), the `consume(1, player)` the
-        // survival stack wears, the awardStat the client's ledger
-        // never banks). The LIVE session the server's own egg the
-        // wire's Add Entity word serves — the client predicts none.
-        if self.held_word_of(id) == Some("egg") {
-            // THE VOICE (the press's own spot the ear answers — the
-            // pitch draw the level's stream rides BEFORE the ctor's
-            // own gaussians, the vanilla's own draw order the walk
-            // keeps)
-            let pitch = 0.4 / (self.mob_rng.next_f32() * 0.4 + 0.8);
-            self.sounds
-                .play_voice(self.frame, "entity.egg.throw", 0.5, pitch);
-            // THE OFFLINE PREDICTION (the live lane the wire serves —
-            // the owner's own eye minus 0.1 the ctor's spawn law keeps,
-            // the flight camera the headless fallback answers)
-            if let (Some(_), false) = (self.offline_world.as_mut(), self.world_is_network) {
-                let (ox, oy, oz, dir) = match self.body.as_ref() {
-                    Some(b) => {
-                        let cam = b.camera();
-                        (
-                            b.x,
-                            b.y + b.eye_height() - 0.1,
-                            b.z,
-                            (cam.forward().x as f64, cam.forward().y as f64, cam.forward().z as f64),
-                        )
+            // THE LOADED CROSSBOW: the instant shot — the use
+            // consumes the charge (vanilla's CONSUME branch), the
+            // resting render returns to the plain crossbow, and
+            // the wire echo rides (the shot is a use-item click)
+            if self.held_charge.is_some() && mc_registry::item_charge_def(id).is_some() {
+                // THE KIND THE SHOT READS BEFORE THE CLEAR (the ROCKET
+                // kind the firework's own spawn the performShooting walk
+                // answers, the ARROW kind the arrow's own shot keeps —
+                // the ChargedProjectiles component the contains walk
+                // reads)
+                let rocket_charge = self.held_charge == Some(mc_registry::ChargeKind::Rocket);
+                self.held_charge = None;
+                self.load_held_payload(id, None);
+                // THE OFFLINE SHOT (javap `performShooting` the walk the
+                // helpers carry): the kind the routing answers, the LIVE
+                // session the server's own projectile the wire's Add
+                // Entity serves (the client predicts none)
+                if self.live_clicks.is_none() && !self.world_is_network {
+                    if rocket_charge {
+                        self.firework_shot_offline();
+                    } else {
+                        self.crossbow_shot_offline();
                     }
-                    None => (0.0, 0.0, 0.0, (0.0, 0.0, 0.0)),
-                };
-                let ent = self.next_drop_id;
-                self.next_drop_id += 1;
-                let egg = crate::mob::EggProjectile::throw_from(
-                    ent,
-                    ox,
-                    oy,
-                    oz,
-                    dir,
-                    &mut self.mob_rng,
-                );
-                self.eggs.push(egg);
+                }
+                let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
+                if let Some(sink) = self.live_clicks.as_ref() {
+                    let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
+                        yaw,
+                        pitch,
+                        hand: 0,
+                    });
+                }
+                return true;
             }
-            // THE CONSUME (javap ItemStack.consume(1, player) — the
-            // hasInfiniteMaterials gate the creative arm keeps, the
-            // shrink(1) the survival stack wears; the `--held-item`
-            // stand-in the conjured stack the shrink never owns)
-            if self.game_mode != GameMode::Creative {
-                let slot = self.selected_hotbar;
-                if self.inventory.items[slot].0 == id && self.inventory.items[slot].1 > 0 {
-                    self.inventory.items[slot].1 -= 1;
-                    self.use_consume_kills_pop(slot);
+            // THE BOW'S OWN USE GATE (javap `BowItem.use` the 26.2
+            // bytecode speaks: `canShoot = !getProjectile(stack).
+            // isEmpty(); if (hasInfiniteMaterials() || canShoot)
+            // startUsingItem → CONSUME; else FAIL` — the empty
+            // quiver the draw never starts, the survival conjunct
+            // the offline arc keeps). The OFFLINE lane's own
+            // inventory the scan answers — the LIVE session's
+            // store the worker owns (the server's own verdict the
+            // echo answers, no local belief the gate refuses).
+            if self.live_clicks.is_none()
+                && !self.world_is_network
+                && self.held_word_of(id) == Some("bow")
+                && self.inventory_arrow_slot().is_none()
+            {
+                return false; // the FAIL the empty quiver speaks
+            }
+            // THE KINETIC WEAPON'S OWN USE (javap `Item.use` pcs 90-122 —
+            // the KINETIC_WEAPON component the seven spears alone carry:
+            // `startUsingItem(hand)` the hold opens, the component's own
+            // sound the `makeSound` call speaks — the playSound at the
+            // player's own spot the lambda banks, 1.0/1.0 verbatim — the
+            // CONSUME the press returns. The use ticks the damage walk the
+            // KineticWeapon lane serves (the offline world's own server
+            // stand-in — the wire the server's own walk keeps), the
+            // release the honest silence keeps (no releaseUsing the spear
+            // ever speaks)).
+            if let Some(name) = mc_registry::item_name(id) {
+                if name.ends_with("_spear") {
+                    self.using_item = None; // one use at a time
+                    self.using_item = Some(UseActive {
+                        item: id,
+                        ticks: 0,
+                        state: 0,
+                        hand: UseHand::Main,
+                        start_sound_played: false,
+                        mid_sound_played: false,
+                    });
+                    let event = if name == "wooden_spear" {
+                        "item.spear_wood.use"
+                    } else {
+                        "item.spear.use"
+                    };
+                    self.sounds.play_voice(self.frame, event, 1.0, 1.0);
+                    // the wire echo (the networked lane's own use-item
+                    // click — the camera's angles in the vanilla degrees)
+                    let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
+                    if let Some(sink) = self.live_clicks.as_ref() {
+                        let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
+                            yaw,
+                            pitch,
+                            hand: 0,
+                        });
+                    }
+                    return true;
                 }
             }
-            // THE WIRE ECHO (the use-item click the networked lane
-            // rides — the camera's angles in the vanilla degrees)
-            let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
-            if let Some(sink) = self.live_clicks.as_ref() {
-                let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
-                    yaw,
-                    pitch,
-                    hand: 0,
-                });
-            }
-            return true;
-        }
-        // THE LOADED CROSSBOW: the instant shot — the use
-        // consumes the charge (vanilla's CONSUME branch), the
-        // resting render returns to the plain crossbow, and
-        // the wire echo rides (the shot is a use-item click)
-        if self.held_charge.is_some() && mc_registry::item_charge_def(id).is_some() {
-            // THE KIND THE SHOT READS BEFORE THE CLEAR (the ROCKET
-            // kind the firework's own spawn the performShooting walk
-            // answers, the ARROW kind the arrow's own shot keeps —
-            // the ChargedProjectiles component the contains walk
-            // reads)
-            let rocket_charge = self.held_charge == Some(mc_registry::ChargeKind::Rocket);
-            self.held_charge = None;
-            self.load_held_payload(id, None);
-            // THE OFFLINE SHOT (javap `performShooting` the walk the
-            // helpers carry): the kind the routing answers, the LIVE
-            // session the server's own projectile the wire's Add
-            // Entity serves (the client predicts none)
-            if self.live_clicks.is_none() && !self.world_is_network {
-                if rocket_charge {
-                    self.firework_shot_offline();
-                } else {
-                    self.crossbow_shot_offline();
-                }
-            }
-            let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
-            if let Some(sink) = self.live_clicks.as_ref() {
-                let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
-                    yaw,
-                    pitch,
-                    hand: 0,
-                });
-            }
-            return true;
-        }
-        // THE BOW'S OWN USE GATE (javap `BowItem.use` the 26.2
-        // bytecode speaks: `canShoot = !getProjectile(stack).
-        // isEmpty(); if (hasInfiniteMaterials() || canShoot)
-        // startUsingItem → CONSUME; else FAIL` — the empty
-        // quiver the draw never starts, the survival conjunct
-        // the offline arc keeps). The OFFLINE lane's own
-        // inventory the scan answers — the LIVE session's
-        // store the worker owns (the server's own verdict the
-        // echo answers, no local belief the gate refuses).
-        if self.live_clicks.is_none()
-            && !self.world_is_network
-            && self.held_word_of(id) == Some("bow")
-            && self.inventory_arrow_slot().is_none()
-        {
-            return false; // the FAIL the empty quiver speaks
-        }
-        // THE KINETIC WEAPON'S OWN USE (javap `Item.use` pcs 90-122 —
-        // the KINETIC_WEAPON component the seven spears alone carry:
-        // `startUsingItem(hand)` the hold opens, the component's own
-        // sound the `makeSound` call speaks — the playSound at the
-        // player's own spot the lambda banks, 1.0/1.0 verbatim — the
-        // CONSUME the press returns. The use ticks the damage walk the
-        // KineticWeapon lane serves (the offline world's own server
-        // stand-in — the wire the server's own walk keeps), the
-        // release the honest silence keeps (no releaseUsing the spear
-        // ever speaks)).
-        if let Some(name) = mc_registry::item_name(id) {
-            if name.ends_with("_spear") {
-                self.using_item = None; // one use at a time
+            if let Some(def) = mc_registry::item_using_def(id) {
+                let state = mc_registry::using_state_index(def, 0.0);
                 self.using_item = Some(UseActive {
                     item: id,
                     ticks: 0,
-                    state: 0,
+                    state,
                     hand: UseHand::Main,
                     start_sound_played: false,
                     mid_sound_played: false,
                 });
-                let event = if name == "wooden_spear" {
-                    "item.spear_wood.use"
-                } else {
-                    "item.spear.use"
-                };
-                self.sounds.play_voice(self.frame, event, 1.0, 1.0);
-                // the wire echo (the networked lane's own use-item
-                // click — the camera's angles in the vanilla degrees)
-                let (yaw, pitch) =
-                    crate::world_view::wire_angles(&self.world_camera());
+                self.load_held_payload(id, Some(state));
+                // the wire echo: the camera's angles in the vanilla
+                // degrees (the snapshot conversion's own inverse)
+                let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
                 if let Some(sink) = self.live_clicks.as_ref() {
                     let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
                         yaw,
@@ -31715,33 +31696,8 @@ impl App {
                 return true;
             }
         }
-        if let Some(def) = mc_registry::item_using_def(id) {
-            let state = mc_registry::using_state_index(def, 0.0);
-            self.using_item = Some(UseActive {
-                    item: id,
-                    ticks: 0,
-                    state,
-                    hand: UseHand::Main,
-                    start_sound_played: false,
-                    mid_sound_played: false,
-                });
-            self.load_held_payload(id, Some(state));
-            // the wire echo: the camera's angles in the vanilla
-            // degrees (the snapshot conversion's own inverse)
-            let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
-            if let Some(sink) = self.live_clicks.as_ref() {
-                let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
-                    yaw,
-                    pitch,
-                    hand: 0,
-                });
-            }
-            return true;
-        }
-    }
         false
     }
-
 
     /// The RIGHT press's falling edge (the vanilla rightClickStop's own
     /// shape): the active use ends, the held item returns to the
@@ -31844,12 +31800,7 @@ impl App {
                     let (ox, oy, oz, dir) = match self.body.as_ref() {
                         Some(b) => {
                             let cam = b.camera();
-                            (
-                                b.x,
-                                b.y + b.eye_height() - 0.1,
-                                b.z,
-                                cam.forward(),
-                            )
+                            (b.x, b.y + b.eye_height() - 0.1, b.z, cam.forward())
                         }
                         None => {
                             let cam = self.world_camera();
@@ -31877,8 +31828,7 @@ impl App {
                     // THE VOICE (the level's own random the pitch draw
                     // rides — the playSound's own stream the mob_rng
                     // stands for)
-                    let pitch =
-                        1.0 / (self.mob_rng.next_f32() * 0.4 + 1.2) + power * 0.5;
+                    let pitch = 1.0 / (self.mob_rng.next_f32() * 0.4 + 1.2) + power * 0.5;
                     self.sounds
                         .play_voice(self.frame, "entity.arrow.shoot", 1.0, pitch);
                 }
@@ -32029,10 +31979,7 @@ impl App {
                 }
             }
             let yaw = self.listener_yaw();
-            let ear = self
-                .body
-                .as_ref()
-                .map(|b| (b.x, b.y + b.eye_height(), b.z));
+            let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
             let sx = f64::from(hit.pos.0) + 0.5;
             let sy = f64::from(hit.pos.1) + 0.5;
             let sz = f64::from(hit.pos.2) + 0.5;
@@ -32277,12 +32224,10 @@ impl App {
                 // wire speaks)
                 for (j, item) in page.iter().enumerate() {
                     if let Some(sink) = self.live_clicks.as_ref() {
-                        let _ = sink.send(
-                            crate::world_view::ContainerCommand::CreativeSetSlot {
-                                slot: 36 + j as i32,
-                                item: *item,
-                            },
-                        );
+                        let _ = sink.send(crate::world_view::ContainerCommand::CreativeSetSlot {
+                            slot: 36 + j as i32,
+                            item: *item,
+                        });
                     }
                     self.live_inv_slots[36 + j] = *item;
                 }
@@ -32337,9 +32282,7 @@ impl App {
             return;
         };
         if let Ok(bytes) = std::fs::read(&path) {
-            if let Ok((_, root)) =
-                mc_protocol::nbt::read_file_nbt(&mut bytes.as_slice())
-            {
+            if let Ok((_, root)) = mc_protocol::nbt::read_file_nbt(&mut bytes.as_slice()) {
                 self.hotbar_manager = hotbar_pages_from_nbt(&root);
             }
         }
@@ -32433,9 +32376,7 @@ impl App {
             return;
         };
         if let Ok(bytes) = std::fs::read(&path) {
-            if let Ok((_, root)) =
-                mc_protocol::nbt::read_file_nbt(&mut bytes.as_slice())
-            {
+            if let Ok((_, root)) = mc_protocol::nbt::read_file_nbt(&mut bytes.as_slice()) {
                 let parsed = container_stores_from_nbt(&root);
                 let keys: Vec<(i32, i32, i32)> = parsed.keys().copied().collect();
                 self.container_stores.extend(parsed);
@@ -32463,7 +32404,8 @@ impl App {
                 // THE PROGRESS WORDS' OWN PARSE (the dev-70 round —
                 // the third list the burn/cook bank answers, the same
                 // extend law the in-memory entry keeps)
-                self.furnace_word_stores.extend(furnace_words_from_nbt(&root));
+                self.furnace_word_stores
+                    .extend(furnace_words_from_nbt(&root));
                 // THE FRAME BANK'S OWN PARSE (the autopush-136 round —
                 // the fourth list the wall frames' boot bank answers:
                 // the offline world alone the restore serves [the wire
@@ -32477,8 +32419,7 @@ impl App {
                             continue;
                         }
                         let cell = f.cell;
-                        let analog =
-                            crate::world::item_frame_analog(f.item.1 == 0, f.rotation);
+                        let analog = crate::world::item_frame_analog(f.item.1 == 0, f.rotation);
                         let fid = self.next_frame_id;
                         self.next_frame_id += 1;
                         self.item_frames.push(ItemFrameEnt { id: fid, ..f });
@@ -32584,7 +32525,10 @@ impl App {
                 "DataVersion".to_string(),
                 mc_protocol::nbt::Nbt::Int(WORLD_EDITS_DATA_VERSION),
             ),
-            ("seed".to_string(), mc_protocol::nbt::Nbt::Long(w.seed as i64)),
+            (
+                "seed".to_string(),
+                mc_protocol::nbt::Nbt::Long(w.seed as i64),
+            ),
             ("edits".to_string(), edits),
             ("variants".to_string(), variants),
         ];
@@ -32913,7 +32857,10 @@ impl App {
                 let (id, count) = if s < self.chest_slots.len() {
                     *self.chest_slots.get(s).unwrap_or(&(0, 0))
                 } else {
-                    *self.chest_mirror.get(s - self.chest_slots.len()).unwrap_or(&(0, 0))
+                    *self
+                        .chest_mirror
+                        .get(s - self.chest_slots.len())
+                        .unwrap_or(&(0, 0))
                 };
                 Some((id, count, slot as i32))
             }
@@ -33274,7 +33221,10 @@ impl App {
             });
         }
         let (shown, rows, _slots) = Self::bundle_tooltip_shape(contents.items.len() as i32);
-        let hidden: i32 = contents.items[shown as usize..].iter().map(|&(_, c)| c).sum();
+        let hidden: i32 = contents.items[shown as usize..]
+            .iter()
+            .map(|&(_, c)| c)
+            .sum();
         let total: i32 = contents.items.iter().map(|&(_, c)| c).sum();
         Some(BundleTooltipView {
             items: contents.items.clone(),
@@ -33334,7 +33284,11 @@ impl App {
         g.fill(tx - 1, ty - 1, w + 2, 1, start);
         g.fill(tx - 1, ty + h, w + 2, 1, end);
         for i in 0..h {
-            let t = if h <= 1 { 0.0 } else { i as f32 / (h - 1) as f32 };
+            let t = if h <= 1 {
+                0.0
+            } else {
+                i as f32 / (h - 1) as f32
+            };
             let c = [
                 start[0] + (end[0] - start[0]) * t,
                 start[1] + (end[1] - start[1]) * t,
@@ -33634,8 +33588,7 @@ impl App {
             snapshot.extend_from_slice(&self.chest_slots);
             snapshot.extend_from_slice(&self.inventory.items[9..36]);
             snapshot.extend_from_slice(&self.inventory.items[0..9]);
-            let changed =
-                crate::world_view::predict_quick_move_grid(&snapshot, slot as usize, n);
+            let changed = crate::world_view::predict_quick_move_grid(&snapshot, slot as usize, n);
             for (i, pair) in &changed {
                 if *i < n {
                     self.chest_slots[*i] = *pair;
@@ -33925,8 +33878,7 @@ impl App {
                 .chain(self.chest_mirror.iter())
                 .copied()
                 .collect();
-            let changed =
-                crate::world_view::predict_quick_move_grid(&snapshot, slot as usize, n);
+            let changed = crate::world_view::predict_quick_move_grid(&snapshot, slot as usize, n);
             for (i, pair) in &changed {
                 if *i < n {
                     self.chest_slots[*i] = *pair;
@@ -34040,11 +33992,7 @@ impl App {
                         // THE WRITE-THROUGH (the projection the
                         // inventory IS — the menu slot the inventory
                         // cell answers)
-                        let idx = if *i < 30 {
-                            9 + *i - 3
-                        } else {
-                            *i - 30
-                        };
+                        let idx = if *i < 30 { 9 + *i - 3 } else { *i - 30 };
                         self.inventory.items[idx] = *pair;
                     }
                 }
@@ -34469,7 +34417,11 @@ impl App {
                 "realms" => {}
                 "multiplayer" => self.open(ScreenKind::Servers),
                 "options" => {
-                    self.options_return = if self.paused { ScreenKind::World } else { ScreenKind::Title };
+                    self.options_return = if self.paused {
+                        ScreenKind::World
+                    } else {
+                        ScreenKind::Title
+                    };
                     self.open(ScreenKind::Options);
                 }
                 // THE WORLD OPTIONS' OWN WALK (the 26.2 OptionsScreen's
@@ -34477,6 +34429,20 @@ impl App {
                 // WorldOptionsScreen opens, the lastScreen chain the
                 // Done footer wears)
                 "worldoptions" => self.open(ScreenKind::WorldOptions),
+                // THE ACCESSIBILITY SCREEN'S OWN WALK (the 26.2
+                // OptionsScreen.init's openScreenButton walk — the
+                // lambda$init$8 supplier the `new
+                // AccessibilityOptionsScreen(this, options)` speaks: the
+                // open() the old==Options head the removed() moment the
+                // save keeps — the vanilla law the parent's exit wears)
+                "accessibility" => self.open(ScreenKind::Accessibility),
+                // THE DONE FOOTER'S OWN RETURN (the
+                // AccessibilityOptionsScreen.onClose walk — the
+                // lastScreen the Options screen wears; the open() law
+                // the old==Accessibility check the save never speaks —
+                // the sub-screen the `removed()` method never wears,
+                // the save seat stays the parent's own exit)
+                "accdone" => self.open(ScreenKind::Options),
                 // THE DONE FOOTER'S OWN RETURN (the
                 // WorldOptionsScreen.onClose walk — the lastScreen the
                 // Options screen wears, the chain the vanilla's own
@@ -34626,7 +34592,8 @@ impl App {
             // plays the UI click (disabled buttons can't be hit — hovered()
             // rejects them), even when the action itself is a no-op here
             // (quit/realms still click exactly like the original menus).
-            self.ui_sounds.push(format!("ui.button.click @{}", self.frame));
+            self.ui_sounds
+                .push(format!("ui.button.click @{}", self.frame));
             self.buttons.clear();
             return;
         }
@@ -34671,7 +34638,9 @@ impl App {
         let Some(req) = self.net_requests.iter().find(|r| r.id == id).cloned() else {
             return;
         };
-        let Some(entry) = self.servers.get_mut(req.entry) else { return };
+        let Some(entry) = self.servers.get_mut(req.entry) else {
+            return;
+        };
         match result {
             Ok(info) => {
                 entry.online = true;
@@ -34729,7 +34698,18 @@ impl App {
             return;
         }
         match outcome {
-            Ok(LoginResult::Loaded { world, camera, spawn_biome, slim_arm, skybox, fog, cloud_fog_end, entity_types, entity_type_tags, .. }) => {
+            Ok(LoginResult::Loaded {
+                world,
+                camera,
+                spawn_biome,
+                slim_arm,
+                skybox,
+                fog,
+                cloud_fog_end,
+                entity_types,
+                entity_type_tags,
+                ..
+            }) => {
                 if self.screen == ScreenKind::Connect {
                     // the profile's skin model rides the join: the first
                     // world frame's lazy arm load reads THIS flag (set
@@ -34757,14 +34737,16 @@ impl App {
                 }
             }
             Ok(LoginResult::Disconnected { reason }) => {
-                self.disconnect_title =
-                    tr("disconnect.lost").unwrap_or("Connection lost").to_string();
+                self.disconnect_title = tr("disconnect.lost")
+                    .unwrap_or("Connection lost")
+                    .to_string();
                 self.disconnect_reason = reason;
                 self.open(ScreenKind::Disconnect);
             }
             Err(e) => {
-                self.disconnect_title =
-                    tr("disconnect.lost").unwrap_or("Connection lost").to_string();
+                self.disconnect_title = tr("disconnect.lost")
+                    .unwrap_or("Connection lost")
+                    .to_string();
                 self.disconnect_reason = e;
                 self.open(ScreenKind::Disconnect);
             }
@@ -34851,10 +34833,7 @@ impl App {
     /// per-tick determinism the wire's stand-in keeps). The dry tick
     /// resets the clock and keeps the silence.
     fn tick_weather_splash(&mut self, day_time: i64) {
-        let rain = self
-            .active_world()
-            .map(|w| w.rain_level)
-            .unwrap_or(0.0);
+        let rain = self.active_world().map(|w| w.rain_level).unwrap_or(0.0);
         if rain <= 0.0 {
             // the dry world: the early return the getRainLevel gate
             // keeps, the clock the reset holds
@@ -34901,10 +34880,7 @@ impl App {
         } else {
             ("weather.rain", 0.2, 1.0)
         };
-        let ear = self
-            .body
-            .as_ref()
-            .map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
         let dist = ear_distance(ear, cx as f64, surface_y as f64, cz as f64);
         let pan = ear_pan(ear, yaw, cx as f64, surface_y as f64, cz as f64);
         self.sounds
@@ -34934,19 +34910,14 @@ impl App {
         if rain_level <= 0.0 {
             return;
         }
-        let jar_root =
-            crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
+        let jar_root = crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
         if self.weather_rain.is_none() {
-            self.weather_rain = crate::weather::WeatherSprite::load(
-                &jar_root,
-                "environment/rain.png",
-            );
+            self.weather_rain =
+                crate::weather::WeatherSprite::load(&jar_root, "environment/rain.png");
         }
         if self.weather_snow.is_none() {
-            self.weather_snow = crate::weather::WeatherSprite::load(
-                &jar_root,
-                "environment/snow.png",
-            );
+            self.weather_snow =
+                crate::weather::WeatherSprite::load(&jar_root, "environment/snow.png");
         }
         // the extraction reads the world alone — the borrow ends before
         // the draw (the columns land owned)
@@ -35079,22 +35050,24 @@ impl App {
         // backwards jump to the raw), the fresh id's pose IS the word
         // (the first landing verbatim, no walk), the gone id's lerp
         // the prune takes with the hull.
-        let old: std::collections::HashMap<i32, crate::world_view::WireBoat> = std::mem::take(
-            &mut self.net_boats,
-        )
-        .into_iter()
-        .map(|b| (b.id, b))
-        .collect();
+        let old: std::collections::HashMap<i32, crate::world_view::WireBoat> =
+            std::mem::take(&mut self.net_boats)
+                .into_iter()
+                .map(|b| (b.id, b))
+                .collect();
         self.net_boat_lerp.retain(|k, _| ids.contains(k));
         let mut eased: Vec<crate::world_view::WireBoat> = Vec::with_capacity(boats.len());
         for w in boats {
             match old.get(&w.id) {
                 Some(prev) => {
-                    let e = self.net_boat_lerp.entry(w.id).or_insert(crate::hull::HullLerp {
-                        prev: (w.x, w.y, w.z),
-                        target: (w.x, w.y, w.z),
-                        steps: 0,
-                    });
+                    let e = self
+                        .net_boat_lerp
+                        .entry(w.id)
+                        .or_insert(crate::hull::HullLerp {
+                            prev: (w.x, w.y, w.z),
+                            target: (w.x, w.y, w.z),
+                            steps: 0,
+                        });
                     e.prev = (prev.x, prev.y, prev.z);
                     e.target = (w.x, w.y, w.z);
                     e.steps = 3;
@@ -35139,8 +35112,7 @@ impl App {
             };
             l.prev = (b.x, b.y, b.z);
             if l.steps > 0 {
-                let (cur, steps) =
-                    crate::hull::hull_lerp_axes((b.x, b.y, b.z), l.target, l.steps);
+                let (cur, steps) = crate::hull::hull_lerp_axes((b.x, b.y, b.z), l.target, l.steps);
                 (b.x, b.y, b.z) = cur;
                 l.steps = steps;
             }
@@ -35158,12 +35130,11 @@ impl App {
         if !self.world_is_network {
             return;
         }
-        let mut old: std::collections::HashMap<i32, crate::mob::Zombie> = std::mem::take(
-            &mut self.net_mobs,
-        )
-        .into_iter()
-        .map(|m| (m.id, m))
-        .collect();
+        let mut old: std::collections::HashMap<i32, crate::mob::Zombie> =
+            std::mem::take(&mut self.net_mobs)
+                .into_iter()
+                .map(|m| (m.id, m))
+                .collect();
         for w in mobs {
             let Some(m) = old.remove(&w.id) else {
                 // THE FRESH SPAWN: the pose IS the server's word, the
@@ -35172,8 +35143,13 @@ impl App {
                 // own seed rides the mob's OWN id (the vanilla
                 // independent per-entity random the seed law stands in
                 // for — different mobs never groan in unison)
-                let mut m =
-                    crate::mob::Zombie::new(w.id, w.x, w.y, w.z, crate::mob::entity_voice_seed(w.id));
+                let mut m = crate::mob::Zombie::new(
+                    w.id,
+                    w.x,
+                    w.y,
+                    w.z,
+                    crate::mob::entity_voice_seed(w.id),
+                );
                 // THE BODY'S OWN KIND (the registry's name the Add
                 // Entity spoke): the model the render lane draws —
                 // the zombie's humanoid, the pig's quadruped
@@ -35441,12 +35417,11 @@ impl App {
         if !self.world_is_network {
             return;
         }
-        let mut old: std::collections::HashMap<i32, crate::mob::Arrow> = std::mem::take(
-            &mut self.net_arrows,
-        )
-        .into_iter()
-        .map(|a| (a.id, a))
-        .collect();
+        let mut old: std::collections::HashMap<i32, crate::mob::Arrow> =
+            std::mem::take(&mut self.net_arrows)
+                .into_iter()
+                .map(|a| (a.id, a))
+                .collect();
         for w in arrows {
             if let Some(a) = old.remove(&w.id) {
                 // THE STILL-NAMED SHOT: the client's own flight IS the
@@ -35486,12 +35461,11 @@ impl App {
         if !self.world_is_network {
             return;
         }
-        let mut old: std::collections::HashMap<i32, crate::mob::EggProjectile> = std::mem::take(
-            &mut self.net_thrown,
-        )
-        .into_iter()
-        .map(|t| (t.id, t))
-        .collect();
+        let mut old: std::collections::HashMap<i32, crate::mob::EggProjectile> =
+            std::mem::take(&mut self.net_thrown)
+                .into_iter()
+                .map(|t| (t.id, t))
+                .collect();
         for w in thrown {
             if let Some(t) = old.remove(&w.id) {
                 // THE STILL-NAMED SHOT: the client's own flight IS the
@@ -35600,8 +35574,15 @@ impl App {
                 let wvx = self.mob_rng.next_gaussian() * 0.02;
                 let wvy = self.mob_rng.next_gaussian() * 0.02;
                 let wvz = self.mob_rng.next_gaussian() * 0.02;
-                let shard =
-                    crate::particles::breaking_egg_shard(jx, jy, jz, wvx, wvy, wvz, &mut self.mob_rng);
+                let shard = crate::particles::breaking_egg_shard(
+                    jx,
+                    jy,
+                    jz,
+                    wvx,
+                    wvy,
+                    wvz,
+                    &mut self.mob_rng,
+                );
                 self.particles.push(shard);
             }
         }
@@ -35674,19 +35655,25 @@ impl App {
         if !self.world_is_network {
             return;
         }
-        let mut old: std::collections::HashMap<i32, crate::mob::Firework> = std::mem::take(
-            &mut self.net_fireworks,
-        )
-        .into_iter()
-        .map(|f| (f.id, f))
-        .collect();
+        let mut old: std::collections::HashMap<i32, crate::mob::Firework> =
+            std::mem::take(&mut self.net_fireworks)
+                .into_iter()
+                .map(|f| (f.id, f))
+                .collect();
         for w in rockets {
             if let Some(f) = old.remove(&w.id) {
                 self.net_fireworks.push(f);
                 continue;
             }
             self.net_fireworks.push(crate::mob::Firework::from_wire(
-                w.id, w.x, w.y, w.z, w.vx, w.vy, w.vz, w.shot_at_angle,
+                w.id,
+                w.x,
+                w.y,
+                w.z,
+                w.vx,
+                w.vy,
+                w.vz,
+                w.shot_at_angle,
             ));
         }
     }
@@ -35765,10 +35752,7 @@ impl App {
             // the audio lane's clip table speaks the names WITHOUT the
             // namespace prefix — the registry name strips its own
             let clip = v.name.strip_prefix("minecraft:").unwrap_or(&v.name);
-            let ear = self
-                .body
-                .as_ref()
-                .map(|b| (b.x, b.y + b.eye_height(), b.z));
+            let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
             let dist = ear_distance(ear, mx, my, mz);
             let pan = ear_pan(ear, yaw, mx, my, mz);
             self.sounds
@@ -35783,10 +35767,7 @@ impl App {
     /// lookup the mob lane needs — the ear's own distance law folds
     /// the gain from it), the name the audio edge's namespace strip
     /// reads, the volume/pitch verbatim.
-    pub fn live_world_voices_updated(
-        &mut self,
-        voices: Vec<crate::world_view::WireWorldVoice>,
-    ) {
+    pub fn live_world_voices_updated(&mut self, voices: Vec<crate::world_view::WireWorldVoice>) {
         // the listener's own yaw the stereo split rides (the world spot
         // the packet carried the pan law's fold answers)
         let yaw = self.listener_yaw();
@@ -35794,10 +35775,7 @@ impl App {
             // the audio lane's clip table speaks the names WITHOUT the
             // namespace prefix — the registry name strips its own
             let clip = v.name.strip_prefix("minecraft:").unwrap_or(&v.name);
-            let ear = self
-                .body
-                .as_ref()
-                .map(|b| (b.x, b.y + b.eye_height(), b.z));
+            let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
             let dist = ear_distance(ear, v.x, v.y, v.z);
             let pan = ear_pan(ear, yaw, v.x, v.y, v.z);
             self.sounds
@@ -36244,10 +36222,12 @@ impl App {
         }
         self.chat_suggestion_pending = Some(self.chat_suggestion_tx);
         if let Some(tx) = &self.live_clicks {
-            let _ = tx.send(crate::world_view::ContainerCommand::RequestCommandSuggestions {
-                id: self.chat_suggestion_tx,
-                command: self.chat_input.clone(),
-            });
+            let _ = tx.send(
+                crate::world_view::ContainerCommand::RequestCommandSuggestions {
+                    id: self.chat_suggestion_tx,
+                    command: self.chat_input.clone(),
+                },
+            );
         }
     }
 
@@ -36454,10 +36434,7 @@ impl App {
     /// the rows, the replace range, the originalContents capture, the
     /// selection and scroll the new SuggestionsList's own defaults
     /// speak (row 0, window 0, tabCycles false)).
-    pub fn on_command_suggestions(
-        &mut self,
-        reply: mc_protocol::play::CommandSuggestionsReply,
-    ) {
+    pub fn on_command_suggestions(&mut self, reply: mc_protocol::play::CommandSuggestionsReply) {
         if !self.chat_open || self.chat_suggestion_pending != Some(reply.id) {
             return;
         }
@@ -36597,8 +36574,7 @@ impl App {
                     // name_key the lang table renders)
                     let display = tr(mode.name_key()).unwrap_or(mode.name_key());
                     self.push_chat_message(format_positional(
-                        tr("commands.gamemode.success.self")
-                            .unwrap_or("Set own game mode to %s"),
+                        tr("commands.gamemode.success.self").unwrap_or("Set own game mode to %s"),
                         &[display],
                     ));
                 }
@@ -36762,8 +36738,7 @@ impl App {
                 // registered name + the ticks the two-arg order wears)
                 let total = self.clock_total;
                 let msg = format_positional(
-                    tr("commands.time.set.absolute")
-                        .unwrap_or("Set %s to %s tick(s)"),
+                    tr("commands.time.set.absolute").unwrap_or("Set %s to %s tick(s)"),
                     &["minecraft:overworld", &total.to_string()],
                 );
                 self.push_chat_message(msg);
@@ -36785,8 +36760,7 @@ impl App {
                 // set.absolute key the NEW total the arg carries)
                 let total = self.clock_total;
                 let msg = format_positional(
-                    tr("commands.time.set.absolute")
-                        .unwrap_or("Set %s to %s tick(s)"),
+                    tr("commands.time.set.absolute").unwrap_or("Set %s to %s tick(s)"),
                     &["minecraft:overworld", &total.to_string()],
                 );
                 self.push_chat_message(msg);
@@ -36797,8 +36771,7 @@ impl App {
                 // ticks the two args wear)
                 let total = self.clock_total;
                 let msg = format_positional(
-                    tr("commands.time.query.absolute")
-                        .unwrap_or("Clock %s is at %s tick(s)"),
+                    tr("commands.time.query.absolute").unwrap_or("Clock %s is at %s tick(s)"),
                     &["minecraft:overworld", &total.to_string()],
                 );
                 self.push_chat_message(msg);
@@ -36811,8 +36784,7 @@ impl App {
                 // keeps)
                 let total = self.clock_total;
                 let msg = format_positional(
-                    tr("commands.time.query.gametime")
-                        .unwrap_or("The game time is %s tick(s)"),
+                    tr("commands.time.query.gametime").unwrap_or("The game time is %s tick(s)"),
                     &[&total.to_string()],
                 );
                 self.push_chat_message(msg);
@@ -36990,8 +36962,7 @@ impl App {
                     _ => self.mob_griefing.to_string(),
                 };
                 let msg = format_positional(
-                    tr("commands.gamerule.query")
-                        .unwrap_or("Gamerule %s is currently set to: %s"),
+                    tr("commands.gamerule.query").unwrap_or("Gamerule %s is currently set to: %s"),
                     &[*rule, &val],
                 );
                 self.push_chat_message(msg);
@@ -37070,14 +37041,12 @@ impl App {
                 // collection the count still speaks)
                 for target in &targets {
                     match target {
-                        KillTarget::Player => {
-                            self.actually_hurt(
-                                f32::MAX,
-                                HurtVoice::GenericKill,
-                                Some("death.attack.genericKill"),
-                                None,
-                            )
-                        }
+                        KillTarget::Player => self.actually_hurt(
+                            f32::MAX,
+                            HurtVoice::GenericKill,
+                            Some("death.attack.genericKill"),
+                            None,
+                        ),
                         KillTarget::Mob(i) => {
                             if let Some(mob) = self.mobs.get_mut(*i) {
                                 mob.hurt(f64::MAX, false);
@@ -37310,8 +37279,8 @@ impl App {
     /// `effect.minecraft.speed` key the "Speed" row wears; the missing
     /// key the getOrDefault law the KEY ITSELF renders).
     fn effect_display_name(effect_id: i32) -> String {
-        let Some(name) = mc_registry::generated::mob_effects::MOB_EFFECT_ORDER
-            .get(effect_id as usize)
+        let Some(name) =
+            mc_registry::generated::mob_effects::MOB_EFFECT_ORDER.get(effect_id as usize)
         else {
             return effect_id.to_string();
         };
@@ -37336,10 +37305,9 @@ impl App {
         let mut count = 0;
         for target in targets {
             let applied = match target {
-                KillTarget::Player => {
-                    self.effects
-                        .add_effect(effect_id, amplifier, duration, flags)
-                }
+                KillTarget::Player => self
+                    .effects
+                    .add_effect(effect_id, amplifier, duration, flags),
                 KillTarget::Mob(i) => match self.mobs.get_mut(*i) {
                     None => false,
                     Some(mob) => {
@@ -37616,10 +37584,7 @@ impl App {
         // THE SOURCE POSITION (the command source's own feet — the
         // distanceToSqr arg the distance predicate and the
         // nearest/furthest orders read)
-        let source = self
-            .body
-            .as_ref()
-            .map(|b| (b.x, b.y, b.z));
+        let source = self.body.as_ref().map(|b| (b.x, b.y, b.z));
         let squared = |x: f64, y: f64, z: f64| -> f64 {
             match source {
                 Some((sx, sy, sz)) => {
@@ -37732,7 +37697,11 @@ impl App {
     /// verdict the NaN/Inf rejection keeps, the `~` relative form the
     /// honest absence documents).
     fn parse_triple(xs: &str, ys: &str, zs: &str) -> Option<(f64, f64, f64)> {
-        let (x, y, z) = (xs.parse::<f64>().ok()?, ys.parse::<f64>().ok()?, zs.parse::<f64>().ok()?);
+        let (x, y, z) = (
+            xs.parse::<f64>().ok()?,
+            ys.parse::<f64>().ok()?,
+            zs.parse::<f64>().ok()?,
+        );
         if x.is_finite() && y.is_finite() && z.is_finite() {
             Some((x, y, z))
         } else {
@@ -38054,8 +38023,9 @@ impl App {
         // the request's send keeps, the set-changes word the
         // subscription's law speaks)
         if let Some(sink) = self.live_clicks.as_ref() {
-            let _ = sink
-                .send(crate::world_view::ContainerCommand::FpsCharts(self.fps_charts));
+            let _ = sink.send(crate::world_view::ContainerCommand::FpsCharts(
+                self.fps_charts,
+            ));
         }
     }
 
@@ -38125,8 +38095,12 @@ impl App {
             if self.profiler_tree_path.is_empty() {
                 self.profiler_tree_path = name;
             } else {
-                self.profiler_tree_path =
-                    format!("{}{}{}", self.profiler_tree_path, crate::profiler::PATH_SEP, name);
+                self.profiler_tree_path = format!(
+                    "{}{}{}",
+                    self.profiler_tree_path,
+                    crate::profiler::PATH_SEP,
+                    name
+                );
             }
         }
         true
@@ -38310,10 +38284,7 @@ impl App {
         // unconditional send; the headless scenes' sink silence keeps)
         if let Some((_, left, right)) = ours {
             if let Some(sink) = self.live_clicks.as_ref() {
-                let _ = sink.send(crate::world_view::ContainerCommand::PaddleBoat {
-                    left,
-                    right,
-                });
+                let _ = sink.send(crate::world_view::ContainerCommand::PaddleBoat { left, right });
             }
         }
         // THE CLOCKS (every boat, both sides — the vanilla loop's own
@@ -38325,10 +38296,7 @@ impl App {
         // random.nextFloat()` the engine's LCG stands in for; the
         // isSilent bit the wire never carried the non-silent arm
         // keeps)
-        let ear = self
-            .body
-            .as_ref()
-            .map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
         // the listener's own yaw the stereo split rides (the paddle
         // strokes' and the splash's flanks the pan law's fold answers)
         let yaw = self.listener_yaw();
@@ -38417,14 +38385,12 @@ impl App {
                 // the +1 each, the end pose the walk's own layers keep
                 let cells: Vec<[i32; 3]> = if !swept {
                     let mut v = Vec::new();
-                    for wz in ((to.2 - hw + e).floor() as i32)
-                        ..=((to.2 + hw - e).floor() as i32)
-                    {
+                    for wz in ((to.2 - hw + e).floor() as i32)..=((to.2 + hw - e).floor() as i32) {
                         for wy in ((to.1 + e).floor() as i32)
                             ..=((to.1 + crate::hull::HULL_HEIGHT - e).floor() as i32)
                         {
-                            for wx in ((to.0 - hw + e).floor() as i32)
-                                ..=((to.0 + hw - e).floor() as i32)
+                            for wx in
+                                ((to.0 - hw + e).floor() as i32)..=((to.0 + hw - e).floor() as i32)
                             {
                                 v.push([wx, wy, wz]);
                             }
@@ -38445,9 +38411,8 @@ impl App {
                     for _ in 0..2 {
                         for [wx, wy, wz] in &cells {
                             let c = net_world.get(*wx, *wy, *wz);
-                            let variant = crate::world_view::column_variant_at(
-                                net_world, *wx, *wy, *wz, c,
-                            );
+                            let variant =
+                                crate::world_view::column_variant_at(net_world, *wx, *wy, *wz, c);
                             if variant == 0 {
                                 continue;
                             }
@@ -38550,10 +38515,7 @@ impl App {
         // no body known the staging's ear sits at the source (the
         // distance-zero arm the no-fold reads — the stereo the
         // honest center keeps)
-        let ear = self
-            .body
-            .as_ref()
-            .map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
         // the listener's own yaw the stereo split rides (the same read
         // the offline lane's mob loop wears)
         let yaw = self.listener_yaw();
@@ -38573,8 +38535,11 @@ impl App {
                 m.lerp_steps -= 1;
                 dist = ((m.x - ox) * (m.x - ox) + (m.z - oz) * (m.z - oz)).sqrt();
             }
-            m.walk
-                .update((dist as f32 * crate::body::WALK_DISTANCE_SCALE).min(1.0), crate::body::WALK_BLEND, 1.0);
+            m.walk.update(
+                (dist as f32 * crate::body::WALK_DISTANCE_SCALE).min(1.0),
+                crate::body::WALK_BLEND,
+                1.0,
+            );
             // THE DEATH CLOCK (LivingEntity.tickDeath's own law the AI
             // lane speaks): the server's health word <= 0 — deathTime++
             // per tick, the flip the render's deathTime+partial read
@@ -38727,7 +38692,12 @@ impl App {
         // answers)
         for (tx, ty, tz, mx, my, mz) in firework_trails {
             let spark = crate::particles::firework_spark(
-                tx, ty, tz, mx, my, mz,
+                tx,
+                ty,
+                tz,
+                mx,
+                my,
+                mz,
                 &mut self.level_ambient_rng,
             );
             self.particles.push(spark);
@@ -38999,7 +38969,13 @@ impl App {
         self.chat_suggestion_rect = Some((x - 1, top, list_w + 1, visible as i32 * ROW_H + 1));
         // THE BACKGROUND (the two fills the bytecode speaks — the whole
         // list the 0xD0000000 black the fill color keeps)
-        g.fill(x, top, list_w + 1, visible as i32 * ROW_H, [0.0, 0.0, 0.0, 0.8157]);
+        g.fill(
+            x,
+            top,
+            list_w + 1,
+            visible as i32 * ROW_H,
+            [0.0, 0.0, 0.0, 0.8157],
+        );
         for i in 0..visible {
             let idx = offset + i;
             let Some(m) = self.chat_suggestions.get(idx) else {
@@ -39011,7 +38987,13 @@ impl App {
                 // THE WHITE RING (the -1 fills the bytecode's own
                 // border walk — the 1px outline the row's bounds
                 // circle, the inner fill the inset speaks)
-                g.fill(x - 1, row_y - 1, list_w + 3, ROW_H + 2, [1.0, 1.0, 1.0, 1.0]);
+                g.fill(
+                    x - 1,
+                    row_y - 1,
+                    list_w + 3,
+                    ROW_H + 2,
+                    [1.0, 1.0, 1.0, 1.0],
+                );
                 g.fill(x, row_y, list_w + 1, ROW_H, [0.0, 0.0, 0.0, 0.8157]);
             }
             let color: [f32; 3] = if selected {
@@ -39035,11 +39017,8 @@ impl App {
                 return;
             };
             let rel = my - ry;
-            let hovered = mx > rx
-                && mx < rx + rw
-                && rel > 0
-                && rel % 12 != 0
-                && rel < visible as i32 * ROW_H;
+            let hovered =
+                mx > rx && mx < rx + rw && rel > 0 && rel % 12 != 0 && rel < visible as i32 * ROW_H;
             if hovered {
                 if let Some(m) = self.chat_suggestions.get(self.chat_suggestion_sel) {
                     if let Some(tt) = &m.tooltip {
@@ -39082,8 +39061,7 @@ impl App {
             Some(t) => {
                 let ms = t.elapsed().as_millis();
                 if ms >= 1000 {
-                    self.fps_value =
-                        Some(((self.fps_frames as u64 * 1000) / ms as u64) as u32);
+                    self.fps_value = Some(((self.fps_frames as u64 * 1000) / ms as u64) as u32);
                     self.fps_frames = 0;
                     self.fps_window_start = Some(std::time::Instant::now());
                 }
@@ -39114,12 +39092,12 @@ impl App {
     /// the extractRenderState's isOverlayVisible lane banks).
     fn draw_debug_overlay(&self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
         let _ = h; // the rows' own 9px stride the top origin owns
-        // THE LEFT COLUMN (the extractLines' left branch — the
-        // MARGIN_LEFT x=2 the same walk dev-16 banked; the BOTTOM
-        // BLOCK the same list's tail the 26.2 extractRenderState
-        // keeps — the entries' lines, then the empty spacer and the
-        // three chart-words rows the ONE extractLines(..., true)
-        // call draws, the 9px stride the shared index walk owns)
+                   // THE LEFT COLUMN (the extractLines' left branch — the
+                   // MARGIN_LEFT x=2 the same walk dev-16 banked; the BOTTOM
+                   // BLOCK the same list's tail the 26.2 extractRenderState
+                   // keeps — the entries' lines, then the empty spacer and the
+                   // three chart-words rows the ONE extractLines(..., true)
+                   // call draws, the 9px stride the shared index walk owns)
         let mut lines = self.debug_lines();
         lines.extend(debug_bottom_lines(
             false,
@@ -39259,12 +39237,26 @@ impl App {
             // samples speak — the avg the `sum (l2d) / count (i2d)`
             // f64 fold keeps, the positions the x+2 / x+width/2
             // centered / x+width-tw-2 trio the offsets 256-348 bank)
-            g.text(a, x + 2, h - 69, &fps_display_word(mn as f64), DEBUG_TEXT, false);
+            g.text(
+                a,
+                x + 2,
+                h - 69,
+                &fps_display_word(mn as f64),
+                DEBUG_TEXT,
+                false,
+            );
             let avg = fps_display_word(sum as f64 / count as f64);
             g.text_centered(a, x + width / 2, h - 69, &avg, DEBUG_TEXT, false);
             let mx_word = fps_display_word(mx as f64);
             let mx_tw = g.text_width(&mx_word);
-            g.text(a, x + width - mx_tw - 2, h - 69, &mx_word, DEBUG_TEXT, false);
+            g.text(
+                a,
+                x + width - mx_tw - 2,
+                h - 69,
+                &mx_word,
+                DEBUG_TEXT,
+                false,
+            );
         }
         // THE WHITE FRAME (the four line calls the offsets 144-202
         // keep — horizontalLine(x, x+width-1, y) the 1px row paints,
@@ -39340,12 +39332,26 @@ impl App {
             // THE THREE LABELS (the min/avg/max ms words — the
             // positions the x+2 / x+width/2 centered / x+width-tw-2
             // trio the abstract's own walk banks, all at h-69)
-            g.text(a, x + 2, h - 69, &ping_display_word(mn as f64), DEBUG_TEXT, false);
+            g.text(
+                a,
+                x + 2,
+                h - 69,
+                &ping_display_word(mn as f64),
+                DEBUG_TEXT,
+                false,
+            );
             let avg = ping_display_word(sum as f64 / count as f64);
             g.text_centered(a, x + width / 2, h - 69, &avg, DEBUG_TEXT, false);
             let mx_word = ping_display_word(mx as f64);
             let mx_tw = g.text_width(&mx_word);
-            g.text(a, x + width - mx_tw - 2, h - 69, &mx_word, DEBUG_TEXT, false);
+            g.text(
+                a,
+                x + width - mx_tw - 2,
+                h - 69,
+                &mx_word,
+                DEBUG_TEXT,
+                false,
+            );
         }
         // THE WHITE FRAME (the four line calls the abstract keeps)
         g.fill(x, top, width, 1, FPS_CHART_LINE);
@@ -39429,7 +39435,14 @@ impl App {
             g.text_centered(a, x + width / 2, h - 69, &avg, DEBUG_TEXT, false);
             let mx_word = bw_display_word(mx as f64 * 20.0);
             let mx_tw = g.text_width(&mx_word);
-            g.text(a, x + width - mx_tw - 2, h - 69, &mx_word, DEBUG_TEXT, false);
+            g.text(
+                a,
+                x + width - mx_tw - 2,
+                h - 69,
+                &mx_word,
+                DEBUG_TEXT,
+                false,
+            );
         }
         // THE WHITE FRAME (the four line calls the abstract keeps)
         g.fill(x, top, width, 1, FPS_CHART_LINE);
@@ -39563,7 +39576,14 @@ impl App {
             g.text_centered(a, x + width / 2, h - 69, &avg, DEBUG_TEXT, false);
             let mx_word = fps_display_word(mx as f64);
             let mx_tw = g.text_width(&mx_word);
-            g.text(a, x + width - mx_tw - 2, h - 69, &mx_word, DEBUG_TEXT, false);
+            g.text(
+                a,
+                x + width - mx_tw - 2,
+                h - 69,
+                &mx_word,
+                DEBUG_TEXT,
+                false,
+            );
         }
         // THE WHITE FRAME (the four line calls the abstract keeps)
         g.fill(x, top, width, 1, FPS_CHART_LINE);
@@ -39639,8 +39659,12 @@ impl App {
         let pct_w = g.text_width(&pct_word);
         let prefix_w = g.text_width("[0] ");
         let split_w = x_r2 - pct_w - 5 - x_left - prefix_w;
-        let lines =
-            crate::profiler::split_node_name(|s| g.text_width(s), &demangled, split_w, split_w - 10);
+        let lines = crate::profiler::split_node_name(
+            |s| g.text_width(s),
+            &demangled,
+            split_w,
+            split_w - 10,
+        );
         // THE TITLE (the root/unspecified the bare first line keeps,
         // the rest the `"[0] "` prefix the concat recipe adds)
         let mut title = String::new();
@@ -39725,7 +39749,14 @@ impl App {
                 false,
             );
             let glob_word = percentage_word(f.global_percentage);
-            g.text(a, x_r2 - g.text_width(&glob_word), row_y, &glob_word, color, false);
+            g.text(
+                a,
+                x_r2 - g.text_width(&glob_word),
+                row_y,
+                &glob_word,
+                color,
+                false,
+            );
         }
     }
 
@@ -40202,10 +40233,7 @@ impl App {
     /// speaks — the gate the mode echo's installer keeps), the
     /// absent word the join snapshot's silence keeps, the idempotent
     /// re-bank the unchanged word's same-value putfields keep.
-    pub fn live_abilities_updated(
-        &mut self,
-        word: Option<mc_protocol::play::PlayerAbilitiesWord>,
-    ) {
+    pub fn live_abilities_updated(&mut self, word: Option<mc_protocol::play::PlayerAbilitiesWord>) {
         if !self.world_is_network {
             return;
         }
@@ -40278,10 +40306,7 @@ impl App {
         if self.net_ride.is_some() || self.offline_ride.is_some() {
             return false;
         }
-        let present = self
-            .mobs
-            .iter()
-            .any(|m| m.id == id && m.saddled);
+        let present = self.mobs.iter().any(|m| m.id == id && m.saddled);
         if !present {
             return false;
         }
@@ -40402,13 +40427,7 @@ impl App {
         } else {
             (n / 2.0, feet_y as f64, n / 2.0, yaw, pitch)
         };
-        self.body = Some(crate::body::PlayerBody::new(
-            bx,
-            by,
-            bz,
-            byaw,
-            bpitch,
-        ));
+        self.body = Some(crate::body::PlayerBody::new(bx, by, bz, byaw, bpitch));
         // THE SPAWN POSE (the respawn's own re-anchor: the vanilla
         // respawn teleports the player to the spawn point — the pose
         // the body materialized at is the pose the respawn restores)
@@ -40487,6 +40506,20 @@ impl App {
         if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_music") {
             let (bx, bw) = (b.x, b.w);
             self.volume = slider_value_from_x(mx, bx, bw);
+        }
+    }
+
+    /// THE FOV EFFECTS SLIDER'S OWN DRAG (the same armed lane the
+    /// Options screen's own seats wear — the sub-screen's gate the
+    /// Accessibility kind keeps, the held frames the UnitDouble 0..1
+    /// the cursor's x answers, the release the disarm speaks).
+    pub fn on_fov_effect_slider_drag(&mut self, mx: i32) {
+        if !self.fov_effect_drag || self.screen != ScreenKind::Accessibility {
+            return;
+        }
+        if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_fov_effect") {
+            let (bx, bw) = (b.x, b.w);
+            self.fov_effect_scale = slider_value_from_x(mx, bx, bw);
         }
     }
 
@@ -41287,12 +41320,8 @@ impl App {
         {
             return;
         }
-        self.falling_checks.push((
-            x,
-            y,
-            z,
-            self.frame + crate::world::button_pulse_ticks(kind),
-        ));
+        self.falling_checks
+            .push((x, y, z, self.frame + crate::world::button_pulse_ticks(kind)));
     }
 
     /// THE PLATE'S OWN RELEASE SCHEDULE (javap checkPressed pc 146-165 —
@@ -41315,8 +41344,12 @@ impl App {
         {
             return;
         }
-        self.falling_checks
-            .push((x, y, z, self.frame + crate::world::plate_release_ticks(kind)));
+        self.falling_checks.push((
+            x,
+            y,
+            z,
+            self.frame + crate::world::plate_release_ticks(kind),
+        ));
     }
 
     /// THE PLATES' OWN PRESS WALK (javap `BasePressurePlateBlock.entity
@@ -41457,10 +41490,7 @@ impl App {
                 let _ = world.rail_neighbor_updates((x, y - 1, z));
             }
             let (cx, cy, cz) = (x as f64 + 0.5, y as f64 + 0.5, z as f64 + 0.5);
-            let ear = self
-                .body
-                .as_ref()
-                .map(|b| (b.x, b.y + b.eye_height(), b.z));
+            let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
             let yaw = self.listener_yaw();
             self.attach_wire_voice(x, y, z);
             let (volume, pitch) = crate::world::plate_voice_params(kind, true);
@@ -41500,10 +41530,7 @@ impl App {
         // ear/pan walk keeps — the reads ride BEFORE the mutable
         // borrow, the immutable-reads law the flint arm's own
         // discipline keeps)
-        let ear = self
-            .body
-            .as_ref()
-            .map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
         let yaw = self.listener_yaw();
         let mut door_flips: Vec<((i32, i32, i32), u16)> = Vec::new();
         // THE TRAPDOOR'S OWN FLIPS (the autopush-668 round — the
@@ -41681,12 +41708,7 @@ impl App {
                 }
             }
             for (cx, cy, cz) in &comparator_due {
-                world.schedule_comparator_tick(
-                    now + crate::world::COMPARATOR_DELAY,
-                    *cx,
-                    *cy,
-                    *cz,
-                );
+                world.schedule_comparator_tick(now + crate::world::COMPARATOR_DELAY, *cx, *cy, *cz);
             }
             // THE REPEATER'S OWN CONSULT (the autopush-126 round —
             // javap RepeaterBlock.neighborChanged pc 16-26 +
@@ -41807,12 +41829,7 @@ impl App {
                 }
             }
             for (ox, oy, oz) in &observer_due {
-                world.schedule_observer_tick(
-                    now + crate::world::OBSERVER_DELAY,
-                    *ox,
-                    *oy,
-                    *oz,
-                );
+                world.schedule_observer_tick(now + crate::world::OBSERVER_DELAY, *ox, *oy, *oz);
             }
             // THE PISTON HEAD'S OWN SUPPORT WALK (the autopush-128
             // round — javap PistonHeadBlock.updateShape the 26.2 jar
@@ -41848,10 +41865,9 @@ impl App {
                         continue;
                     }
                     let variant = read.variant(cx, cy, cz);
-                    let (fdx, fdy, fdz) =
-                        crate::world::piston_facing_delta6(crate::world::piston_head_facing_of(
-                            variant,
-                        ));
+                    let (fdx, fdy, fdz) = crate::world::piston_facing_delta6(
+                        crate::world::piston_head_facing_of(variant),
+                    );
                     // THE BACK CELL'S OWN LAW: the base the -facing
                     // step the head's byte answers — the piston kind
                     // the support wears, the anything-else the pop
@@ -41986,12 +42002,7 @@ impl App {
                         true,
                     ),
                 );
-                world.schedule_dispenser_tick(
-                    now + crate::world::DISPENSER_COOLDOWN,
-                    cx,
-                    cy,
-                    cz,
-                );
+                world.schedule_dispenser_tick(now + crate::world::DISPENSER_COOLDOWN, cx, cy, cz);
             }
             for (cx, cy, cz, variant) in fall {
                 world.set_variant(
@@ -42096,8 +42107,7 @@ impl App {
             // dedup the inline closure kept)
             let lane = {
                 let read = &*world;
-                let mut door_seeds: Vec<(i32, i32, i32)> =
-                    vec![(lx, ly, lz), (lx, ly - 1, lz)];
+                let mut door_seeds: Vec<(i32, i32, i32)> = vec![(lx, ly, lz), (lx, ly - 1, lz)];
                 door_seeds.extend(wire_cells.iter().copied());
                 crate::world::redstone_door_lane_flips(read, &door_seeds)
             };
@@ -42278,9 +42288,7 @@ impl App {
                 mate_cell = Some((mx, my, mz));
             }
         }
-        if let (Some(world), Some((mx, my, mz))) =
-            (self.offline_world.as_mut(), mate_cell)
-        {
+        if let (Some(world), Some((mx, my, mz))) = (self.offline_world.as_mut(), mate_cell) {
             world.set(mx, my, mz, crate::world::AIR);
             // THE MATE'S OWN CHAIN (javap the autopush-413 walk — the
             // flag-35 setBlock the UPDATE_NEIGHBORS bit keeps): the fire
@@ -42309,17 +42317,14 @@ impl App {
         } else {
             None
         };
-        if let (Some(world), Some((mx, my, mz))) =
-            (self.offline_world.as_mut(), door_mate_cell)
-        {
+        if let (Some(world), Some((mx, my, mz))) = (self.offline_world.as_mut(), door_mate_cell) {
             let mk = world.get(mx, my, mz);
             // THE OTHER HALF'S OWN GATE (the updateShape Y-arm's own
             // law: the neighbor must BE the door's other half — the
             // orphan half the lone removal never hears)
             let mate_matches = (crate::world::is_door_lower(kind)
                 && crate::world::is_door_upper(mk))
-                || (crate::world::is_door_upper(kind)
-                    && crate::world::is_door_lower(mk));
+                || (crate::world::is_door_upper(kind) && crate::world::is_door_lower(mk));
             if mate_matches {
                 world.set(mx, my, mz, crate::world::AIR);
                 let _ = world.fire_shape_updates((mx, my, mz));
@@ -42412,7 +42417,8 @@ impl App {
         }
         self.remesh_offline();
         let name = crate::world::NAME_OF[kind as usize];
-        self.sounds.play(self.frame, name, crate::sound::Lane::Break);
+        self.sounds
+            .play(self.frame, name, crate::sound::Lane::Break);
         // THE UPPER'S OWN 2001 AT THE MATE (the preventDropFromBottomPart
         // walk's levelEvent — the break voice the below cell wears when
         // the UPPER half was the dug one; the LOWER's dig the silent
@@ -42510,23 +42516,22 @@ impl App {
                 .play(self.frame, pop_name, crate::sound::Lane::Break);
             let pop_tile = particle_tile(*pk);
             if pop_tile != mc_registry::generated::atlas::TILE_NONE {
-                let burst = crate::particles::terrain_burst(
-                    pop_tile,
-                    *px,
-                    *py,
-                    *pz,
-                    &mut self.mob_rng,
-                );
+                let burst =
+                    crate::particles::terrain_burst(pop_tile, *px, *py, *pz, &mut self.mob_rng);
                 self.particles.extend(burst);
             }
             let held = self.held_id();
-            for (item, count) in
-                crate::drops::roll_drops(*pk, held, &mut self.drop_rng)
-            {
+            for (item, count) in crate::drops::roll_drops(*pk, held, &mut self.drop_rng) {
                 let id = self.next_drop_id;
                 self.next_drop_id += 1;
                 self.drops.push(crate::drops::ItemDrop::spawn(
-                    id, item, count, *px, *py, *pz, &mut self.drop_rng,
+                    id,
+                    item,
+                    count,
+                    *px,
+                    *py,
+                    *pz,
+                    &mut self.drop_rng,
                 ));
             }
             self.dispatch_vibration_event(
@@ -42588,7 +42593,13 @@ impl App {
                 let id = self.next_drop_id;
                 self.next_drop_id += 1;
                 self.drops.push(crate::drops::ItemDrop::spawn(
-                    id, item, 1, pos.0, pos.1, pos.2, &mut self.drop_rng,
+                    id,
+                    item,
+                    1,
+                    pos.0,
+                    pos.1,
+                    pos.2,
+                    &mut self.drop_rng,
                 ));
             }
         }
@@ -42596,7 +42607,13 @@ impl App {
             let id = self.next_drop_id;
             self.next_drop_id += 1;
             self.drops.push(crate::drops::ItemDrop::spawn(
-                id, item, count, pos.0, pos.1, pos.2, &mut self.drop_rng,
+                id,
+                item,
+                count,
+                pos.0,
+                pos.1,
+                pos.2,
+                &mut self.drop_rng,
             ));
         }
         // THE ORE'S OWN XP (javap DropExperienceBlock.spawnAfterBreak →
@@ -42696,13 +42713,9 @@ impl App {
             // shape_slabs decode answers — the fence-in-your-own-cell
             // placement the thin post the player's box misses the
             // vanilla's own thin-shape law allows)
-            let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) = crate::world::shape_slabs(
-                shape,
-                cell.0,
-                cell.1,
-                cell.2,
-            )
-            .expect("the fence post shape the slabs never refuse");
+            let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) =
+                crate::world::shape_slabs(shape, cell.0, cell.1, cell.2)
+                    .expect("the fence post shape the slabs never refuse");
             (x_lo, y_lo, z_lo, x_hi, y_hi, z_hi)
         } else if crate::world::is_wall(block) {
             // THE WALL'S OWN THIN POST (the dev-56 round — the
@@ -42715,13 +42728,9 @@ impl App {
             // placement the thin post the player's box misses the
             // vanilla's own thin-shape law allows, the fence arm's
             // own walk the wider rampart post the same law serves)
-            let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) = crate::world::shape_slabs(
-                shape,
-                cell.0,
-                cell.1,
-                cell.2,
-            )
-            .expect("the wall post shape the slabs never refuse");
+            let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) =
+                crate::world::shape_slabs(shape, cell.0, cell.1, cell.2)
+                    .expect("the wall post shape the slabs never refuse");
             (x_lo, y_lo, z_lo, x_hi, y_hi, z_hi)
         } else if crate::world::is_iron_bars_class(block) {
             // THE PANE FAMILY'S OWN THIN POST (the dev-58 round — the
@@ -42734,13 +42743,9 @@ impl App {
             // placement the thin post the player's box misses the
             // vanilla's own thin-shape law allows, the fence arm's
             // own walk the thinner window post the same law serves)
-            let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) = crate::world::shape_slabs(
-                shape,
-                cell.0,
-                cell.1,
-                cell.2,
-            )
-            .expect("the pane post shape the slabs never refuse");
+            let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) =
+                crate::world::shape_slabs(shape, cell.0, cell.1, cell.2)
+                    .expect("the pane post shape the slabs never refuse");
             (x_lo, y_lo, z_lo, x_hi, y_hi, z_hi)
         } else if crate::world::is_chain(block) {
             // THE CHAIN'S OWN THIN BAND (the dev-60 round — the
@@ -42753,13 +42758,9 @@ impl App {
             // wears], the chain-in-your-own-cell placement the thin
             // band the player's box misses the vanilla's own
             // thin-shape law allows)
-            let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) = crate::world::shape_slabs(
-                shape,
-                cell.0,
-                cell.1,
-                cell.2,
-            )
-            .expect("the chain band shape the slabs never refuse");
+            let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) =
+                crate::world::shape_slabs(shape, cell.0, cell.1, cell.2)
+                    .expect("the chain band shape the slabs never refuse");
             (x_lo, y_lo, z_lo, x_hi, y_hi, z_hi)
         } else if crate::world::is_lantern(block) {
             // THE LANTERN'S OWN COMPOUND BODY (the dev-61 round — the
@@ -42776,13 +42777,9 @@ impl App {
             // footprint the inset keeps], the lantern-in-your-own-cell
             // placement the small body the player's box misses the
             // vanilla's own small-shape law allows)
-            let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) = crate::world::shape_slabs(
-                shape,
-                cell.0,
-                cell.1,
-                cell.2,
-            )
-            .expect("the lantern body shape the slabs never refuse");
+            let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) =
+                crate::world::shape_slabs(shape, cell.0, cell.1, cell.2)
+                    .expect("the lantern body shape the slabs never refuse");
             (x_lo, y_lo, z_lo, x_hi, y_hi, z_hi)
         } else if crate::world::is_stairs(block) {
             // THE STAIRS' OWN SLAB BAND (the dev-62 round — the vanilla
@@ -42797,13 +42794,9 @@ impl App {
             // half-cube band the player's box misses the vanilla's own
             // half-height law allows, the lantern arm's own kind-only
             // law the family wears])
-            let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) = crate::world::shape_slabs(
-                shape,
-                cell.0,
-                cell.1,
-                cell.2,
-            )
-            .expect("the stairs slab shape the slabs never refuse");
+            let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) =
+                crate::world::shape_slabs(shape, cell.0, cell.1, cell.2)
+                    .expect("the stairs slab shape the slabs never refuse");
             (x_lo, y_lo, z_lo, x_hi, y_hi, z_hi)
         } else if crate::world::is_slab(block) {
             // THE SLAB'S OWN HALF BAND (the dev-63 round — the vanilla
@@ -42816,13 +42809,9 @@ impl App {
             // the half-cube band the player's box misses the vanilla's
             // own half-height law allows, the stairs arm's own
             // kind-only law the family wears])
-            let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) = crate::world::shape_slabs(
-                shape,
-                cell.0,
-                cell.1,
-                cell.2,
-            )
-            .expect("the slab band shape the slabs never refuse");
+            let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) =
+                crate::world::shape_slabs(shape, cell.0, cell.1, cell.2)
+                    .expect("the slab band shape the slabs never refuse");
             (x_lo, y_lo, z_lo, x_hi, y_hi, z_hi)
         } else if crate::world::is_fence_gate(block) {
             // THE CLOSED GATE'S OWN THIN PANEL (the dev-55 round — the
@@ -42874,13 +42863,9 @@ impl App {
             } else {
                 crate::world::CollisionShape::Head
             };
-            let (x_lo, y_lo, z_lo, x_hi, y_hi, z_hi) = crate::world::shape_slabs(
-                head_shape,
-                cell.0,
-                cell.1,
-                cell.2,
-            )
-            .expect("the head band shape the slabs never refuse");
+            let (x_lo, y_lo, z_lo, x_hi, y_hi, z_hi) =
+                crate::world::shape_slabs(head_shape, cell.0, cell.1, cell.2)
+                    .expect("the head band shape the slabs never refuse");
             (x_lo, y_lo, z_lo, x_hi, y_hi, z_hi)
         } else {
             (
@@ -42966,9 +42951,9 @@ impl App {
         // the press stays unconsumed there, the item lanes follow.
         if !self.shift_down
             && !self.world_is_network
-            && self
-                .active_world()
-                .is_some_and(|w| w.get(hit.pos.0, hit.pos.1, hit.pos.2) == crate::world::CRAFTING_TABLE)
+            && self.active_world().is_some_and(|w| {
+                w.get(hit.pos.0, hit.pos.1, hit.pos.2) == crate::world::CRAFTING_TABLE
+            })
         {
             self.open_crafting_table();
             return true;
@@ -42987,9 +42972,9 @@ impl App {
         // menu type 14/10/22 lane the projection feeds).
         if !self.shift_down
             && !self.world_is_network
-            && self
-                .active_world()
-                .is_some_and(|w| crate::world::is_orientable_furnace(w.get(hit.pos.0, hit.pos.1, hit.pos.2)))
+            && self.active_world().is_some_and(|w| {
+                crate::world::is_orientable_furnace(w.get(hit.pos.0, hit.pos.1, hit.pos.2))
+            })
         {
             self.open_furnace(hit.pos);
             return true;
@@ -43059,11 +43044,9 @@ impl App {
         // — the GENERIC_3x3 menu type lane the projection feeds).
         if !self.shift_down
             && !self.world_is_network
-            && self
-                .active_world()
-                .is_some_and(|w| {
-                    crate::world::is_dispenser_kind(w.get(hit.pos.0, hit.pos.1, hit.pos.2))
-                })
+            && self.active_world().is_some_and(|w| {
+                crate::world::is_dispenser_kind(w.get(hit.pos.0, hit.pos.1, hit.pos.2))
+            })
         {
             self.open_dispenser_for(hit.pos);
             return true;
@@ -43160,8 +43143,8 @@ impl App {
         // BLOCK_DESTROY gameEvent pc 100-106 wears — the verdict the
         // posts' own tail consults, the fresh-cake fall-through the
         // ladder's first stage the verdict never answers)
-        let cake_final_bite = eat_bite
-            && cell_kind.is_some_and(|k| crate::world::cake_bite_next(k).is_none());
+        let cake_final_bite =
+            eat_bite && cell_kind.is_some_and(|k| crate::world::cake_bite_next(k).is_none());
         if !self.world_is_network && douse {
             // THE SET BEFORE THE VOICE (the extinguish walk's own
             // sequence — the cake-add arm's voice-first beat the
@@ -43204,10 +43187,7 @@ impl App {
             // BLOCKS source at the block pos, 1.0F, 1.0F the plain
             // row the positional walk keeps; the sounds.json's own
             // extinguish1 rows the runtime table the pick answers)
-            let ear = self
-                .body
-                .as_ref()
-                .map(|b| (b.x, b.y + b.eye_height(), b.z));
+            let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
             let yaw = self.listener_yaw();
             let (tx, ty, tz) = (
                 hit.pos.0 as f64 + 0.5,
@@ -43240,10 +43220,7 @@ impl App {
             // 1.0F, 1.0F) pc 68-80 the swap's first fruit speaks, the
             // positional walk the flint arm's own fold wears)
             if candle_swap {
-                let ear = self
-                    .body
-                    .as_ref()
-                    .map(|b| (b.x, b.y + b.eye_height(), b.z));
+                let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
                 let yaw = self.listener_yaw();
                 let (tx, ty, tz) = (
                     hit.pos.0 as f64 + 0.5,
@@ -43326,13 +43303,21 @@ impl App {
                     // the item entity the popResource law spawns — the
                     // arm's hungry gate the verdict's own precondition
                     // keeps, the full bar the tail never sees)
-                    for (item, count) in
-                        crate::drops::roll_drops(cell_kind.unwrap(), self.held_id(), &mut self.drop_rng)
-                    {
+                    for (item, count) in crate::drops::roll_drops(
+                        cell_kind.unwrap(),
+                        self.held_id(),
+                        &mut self.drop_rng,
+                    ) {
                         let id = self.next_drop_id;
                         self.next_drop_id += 1;
                         self.drops.push(crate::drops::ItemDrop::spawn(
-                            id, item, count, pos.0, pos.1, pos.2, &mut self.drop_rng,
+                            id,
+                            item,
+                            count,
+                            pos.0,
+                            pos.1,
+                            pos.2,
+                            &mut self.drop_rng,
                         ));
                     }
                 }
@@ -43494,10 +43479,7 @@ impl App {
             // single-arg ctor's WOODEN pair speaks, the cherry/
             // bamboo/nether woods the full-ctor pairs bank)
             let pitch = 0.9 + self.drop_rng.next_f32() * 0.1;
-            let ear = self
-                .body
-                .as_ref()
-                .map(|b| (b.x, b.y + b.eye_height(), b.z));
+            let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
             let yaw = self.listener_yaw();
             let (tx, ty, tz) = (
                 hit.pos.0 as f64 + 0.5,
@@ -43579,10 +43561,7 @@ impl App {
             // Source BLOCKS the positioned walk the door arm's own
             // fold wears)
             let pitch = 0.9 + self.drop_rng.next_f32() * 0.1;
-            let ear = self
-                .body
-                .as_ref()
-                .map(|b| (b.x, b.y + b.eye_height(), b.z));
+            let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
             let yaw = self.listener_yaw();
             let (tx, ty, tz) = (
                 hit.pos.0 as f64 + 0.5,
@@ -43688,8 +43667,7 @@ impl App {
                 Some(crate::world::AboveImitate::Stem(s)) => Some(s),
                 _ => None,
             };
-            let stem = stem_word
-                .unwrap_or_else(|| crate::world::below_instrument(below_kind));
+            let stem = stem_word.unwrap_or_else(|| crate::world::below_instrument(below_kind));
             // THE AIR-ABOVE LAW'S OWN VERDICT (javap playNote
             // pc 13-28 — the worksAboveNoteBlock instruments the
             // imitate family alone wears, every base-block stem the
@@ -43699,10 +43677,7 @@ impl App {
             // bytecode pc 4-16 keeps: the CUSTOM type the MOB_HEAD
             // family the above seat shares)
             if above_kind == crate::world::AIR || imitate.is_some() {
-                let ear = self
-                    .body
-                    .as_ref()
-                    .map(|b| (b.x, b.y + b.eye_height(), b.z));
+                let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
                 let yaw = self.listener_yaw();
                 let (tx, ty, tz) = (
                     hit.pos.0 as f64 + 0.5,
@@ -43738,10 +43713,7 @@ impl App {
                 // wears — the server walk the post the sound's own
                 // custom-silence never skips)
                 if self.offline_world.is_some() {
-                    self.dispatch_vibration_event(
-                        "note_block_play",
-                        (tx, ty, tz),
-                    );
+                    self.dispatch_vibration_event("note_block_play", (tx, ty, tz));
                 }
             }
             return true;
@@ -43795,8 +43767,7 @@ impl App {
             if let Some(world) = self.offline_world.as_mut() {
                 if opening {
                     let current = world.variant(hit.pos.0, hit.pos.1, hit.pos.2);
-                    let re_faced =
-                        crate::world::fence_gate_open_facing(current, look);
+                    let re_faced = crate::world::fence_gate_open_facing(current, look);
                     world.set_variant(hit.pos.0, hit.pos.1, hit.pos.2, re_faced);
                 }
                 world.set(hit.pos.0, hit.pos.1, hit.pos.2, flip);
@@ -43809,10 +43780,7 @@ impl App {
             // BLOCKS the positioned walk the cake arm's own fold
             // wears)
             let pitch = 0.9 + self.drop_rng.next_f32() * 0.1;
-            let ear = self
-                .body
-                .as_ref()
-                .map(|b| (b.x, b.y + b.eye_height(), b.z));
+            let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
             let yaw = self.listener_yaw();
             let (tx, ty, tz) = (
                 hit.pos.0 as f64 + 0.5,
@@ -43873,11 +43841,7 @@ impl App {
                 .unwrap_or(crate::world::AIR);
             if crate::world::is_button(hit_kind) {
                 let (bx, by, bz) = hit.pos;
-                let (cx, cy, cz) = (
-                    bx as f64 + 0.5,
-                    by as f64 + 0.5,
-                    bz as f64 + 0.5,
-                );
+                let (cx, cy, cz) = (bx as f64 + 0.5, by as f64 + 0.5, bz as f64 + 0.5);
                 // THE CONSUME VERDICT (javap useWithoutItem pc 0-19 —
                 // the POWERED read the already-pressed beat wears: the
                 // re-press the press never flips, the interaction the
@@ -43889,18 +43853,15 @@ impl App {
                     // THE CLICK'S OWN VOICE INPUTS (the reads ride
                     // BEFORE the mutable borrow — the flint arm's own
                     // discipline keeps)
-                    let ear = self
-                        .body
-                        .as_ref()
-                        .map(|b| (b.x, b.y + b.eye_height(), b.z));
+                    let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
                     let yaw = self.listener_yaw();
                     // THE PAIR'S OWN ON KIND (the button_toggled law —
                     // the stone pair the BUTTON_ON mate keeps, the oak
                     // pair the OAK_BUTTON_ON rung serves: the
                     // setValue(POWERED, true) setBlock flag-3 walk the
                     // OFF kind's own ON mate the offline swap speaks)
-                    let on_kind = crate::world::button_toggled(hit_kind)
-                        .unwrap_or(crate::world::BUTTON_ON);
+                    let on_kind =
+                        crate::world::button_toggled(hit_kind).unwrap_or(crate::world::BUTTON_ON);
                     if let Some(world) = self.offline_world.as_mut() {
                         // THE PRESS'S OWN SET (javap press pc 0-20 —
                         // the setValue(POWERED, true) setBlock flag-3
@@ -43921,9 +43882,8 @@ impl App {
                         // cell names [the button the same
                         // FaceAttachedHorizontalDirectionalBlock base
                         // the lever's own offset law wears]
-                        let (dx, dy, dz) = crate::world::lever_support_offset(
-                            world.variant(bx, by, bz),
-                        );
+                        let (dx, dy, dz) =
+                            crate::world::lever_support_offset(world.variant(bx, by, bz));
                         let _ = world.rail_neighbor_updates((bx, by, bz));
                         let _ = world.rail_neighbor_updates((bx + dx, by + dy, bz + dz));
                     }
@@ -44025,16 +43985,9 @@ impl App {
             )
         {
             let (cx0, cy0, cz0) = hit.pos;
-            let ear = self
-                .body
-                .as_ref()
-                .map(|b| (b.x, b.y + b.eye_height(), b.z));
+            let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
             let yaw = self.listener_yaw();
-            let (cx, cy, cz) = (
-                cx0 as f64 + 0.5,
-                cy0 as f64 + 0.5,
-                cz0 as f64 + 0.5,
-            );
+            let (cx, cy, cz) = (cx0 as f64 + 0.5, cy0 as f64 + 0.5, cz0 as f64 + 0.5);
             if let Some(world) = self.offline_world.as_mut() {
                 let variant = world.variant(cx0, cy0, cz0);
                 let flipped = crate::world::comparator_variant(
@@ -44059,9 +44012,7 @@ impl App {
             // mode's own arm the 0.55 subtract / 0.5 compare speaks)
             let now_subtract = self
                 .active_world()
-                .map(|w| {
-                    crate::world::comparator_subtract_of(w.variant(cx0, cy0, cz0))
-                })
+                .map(|w| crate::world::comparator_subtract_of(w.variant(cx0, cy0, cz0)))
                 .unwrap_or(false);
             self.sounds.play_voice_at_pan(
                 self.frame,
@@ -44084,16 +44035,9 @@ impl App {
                 // shape the ear/pan walk keeps — the reads ride
                 // BEFORE the mutable borrow, the immutable-reads law
                 // the flint arm's own discipline keeps)
-                let ear = self
-                    .body
-                    .as_ref()
-                    .map(|b| (b.x, b.y + b.eye_height(), b.z));
+                let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
                 let yaw = self.listener_yaw();
-                let (cx, cy, cz) = (
-                    lx as f64 + 0.5,
-                    ly as f64 + 0.5,
-                    lz as f64 + 0.5,
-                );
+                let (cx, cy, cz) = (lx as f64 + 0.5, ly as f64 + 0.5, lz as f64 + 0.5);
                 if let Some(world) = self.offline_world.as_mut() {
                     world.set(lx, ly, lz, flipped);
                     // THE LEVER'S OWN RAIL VERDICT (the dev-99 round —
@@ -44155,9 +44099,7 @@ impl App {
             if let Some(held) = mc_registry::item_name(id) {
                 if held.ends_with("_hoe") {
                     let till = |cell: u16| match cell {
-                        crate::world::GRASS | crate::world::DIRT => {
-                            Some(crate::world::FARMLAND)
-                        }
+                        crate::world::GRASS | crate::world::DIRT => Some(crate::world::FARMLAND),
                         _ => None,
                     };
                     if let Some(tilled) =
@@ -44167,9 +44109,7 @@ impl App {
                     }
                 } else if held.ends_with("_shovel") {
                     let flatten = |cell: u16| match cell {
-                        crate::world::GRASS | crate::world::DIRT => {
-                            Some(crate::world::DIRT_PATH)
-                        }
+                        crate::world::GRASS | crate::world::DIRT => Some(crate::world::DIRT_PATH),
                         _ => None,
                     };
                     if let Some(flattened) =
@@ -44308,8 +44248,7 @@ impl App {
         let Some(id) = self.held_id() else {
             return false;
         };
-        let Some(block) = mc_registry::item_name(id)
-            .and_then(crate::world::World::placeable_block)
+        let Some(block) = mc_registry::item_name(id).and_then(crate::world::World::placeable_block)
         else {
             return false; // the PASS result — the item's use lane follows
         };
@@ -44350,9 +44289,7 @@ impl App {
         });
         let clicked_replaceable = self
             .active_world()
-            .is_some_and(|w| {
-                crate::world::is_replaceable(w.get(hit.pos.0, hit.pos.1, hit.pos.2))
-            })
+            .is_some_and(|w| crate::world::is_replaceable(w.get(hit.pos.0, hit.pos.1, hit.pos.2)))
             || slab_double_cell;
         let cell = if clicked_replaceable {
             hit.pos
@@ -44379,12 +44316,10 @@ impl App {
         // color's own concrete the placement speaks)). The placed kind
         // the downstream gates, the set and the place voice all read.
         let block = if let Some(target) = crate::world::concrete_powder_target(block) {
-            let solidifies = self
-                .active_world()
-                .is_some_and(|w| {
-                    let state = w.get(cell.0, cell.1, cell.2);
-                    crate::world::concrete_should_solidify(w, cell.0, cell.1, cell.2, state)
-                });
+            let solidifies = self.active_world().is_some_and(|w| {
+                let state = w.get(cell.0, cell.1, cell.2);
+                crate::world::concrete_should_solidify(w, cell.0, cell.1, cell.2, state)
+            });
             if solidifies {
                 target
             } else {
@@ -44413,14 +44348,12 @@ impl App {
         // placed kind the downstream gates, the set and the place
         // voice all read.
         let block = if block == crate::world::BAMBOO {
-            let target_fluid = self
-                .active_world()
-                .is_some_and(|w| {
-                    matches!(
-                        w.get(cell.0, cell.1, cell.2),
-                        crate::world::WATER | crate::world::LAVA
-                    )
-                });
+            let target_fluid = self.active_world().is_some_and(|w| {
+                matches!(
+                    w.get(cell.0, cell.1, cell.2),
+                    crate::world::WATER | crate::world::LAVA
+                )
+            });
             if target_fluid {
                 return false; // pc 0-20: the fluid the placement never arms
             }
@@ -44478,9 +44411,7 @@ impl App {
             Some(crate::world::AIR) | Some(crate::world::WATER)
         ) || self
             .active_world()
-            .is_some_and(|w| {
-                crate::world::is_replaceable(w.get(cell.0, cell.1, cell.2))
-            });
+            .is_some_and(|w| crate::world::is_replaceable(w.get(cell.0, cell.1, cell.2)));
         if !replaceable {
             return false;
         }
@@ -44513,9 +44444,7 @@ impl App {
                 .map(|w| w.get(cell.0, cell.1 - 1, cell.2));
             if !matches!(
                 below,
-                Some(crate::world::GRASS)
-                    | Some(crate::world::DIRT)
-                    | Some(crate::world::FARMLAND)
+                Some(crate::world::GRASS) | Some(crate::world::DIRT) | Some(crate::world::FARMLAND)
             ) {
                 return false;
             }
@@ -44530,14 +44459,12 @@ impl App {
         // replaceable plants the family's own rows speak). The refusal
         // the PASS carries — the item lane follows, nothing consumed.
         if crate::world::is_double_plant(block) {
-            let above_free = self
-                .active_world()
-                .is_some_and(|w| {
-                    let above = w.get(cell.0, cell.1 + 1, cell.2);
-                    above == crate::world::AIR
-                        || above == crate::world::WATER
-                        || crate::world::is_replaceable(above)
-                });
+            let above_free = self.active_world().is_some_and(|w| {
+                let above = w.get(cell.0, cell.1 + 1, cell.2);
+                above == crate::world::AIR
+                    || above == crate::world::WATER
+                    || crate::world::is_replaceable(above)
+            });
             if !above_free {
                 return false;
             }
@@ -44548,9 +44475,9 @@ impl App {
         // fluid/plant rows the Empty verdict the refusal keeps — the
         // press the PASS carries, the item lane follows)
         if crate::world::is_comparator(block) {
-            let below_ok = self.active_world().is_some_and(|w| {
-                crate::world::comparator_can_survive(w, cell.0, cell.1, cell.2)
-            });
+            let below_ok = self
+                .active_world()
+                .is_some_and(|w| crate::world::comparator_can_survive(w, cell.0, cell.1, cell.2));
             if !below_ok {
                 return false;
             }
@@ -44559,9 +44486,9 @@ impl App {
         // the same DiodeBlock.canSurvive walk the sibling wears: the
         // air/fluid/plant rows the Empty verdict the refusal keeps)
         if crate::world::is_repeater(block) {
-            let below_ok = self.active_world().is_some_and(|w| {
-                crate::world::repeater_can_survive(w, cell.0, cell.1, cell.2)
-            });
+            let below_ok = self
+                .active_world()
+                .is_some_and(|w| crate::world::repeater_can_survive(w, cell.0, cell.1, cell.2));
             if !below_ok {
                 return false;
             }
@@ -44588,27 +44515,26 @@ impl App {
         // looking-order the DOWN-first floor arm keeps — the floor
         // click the standing lane wears, the level-look floor corner
         // the documented follow-up notes keep).
-        let wall_torch_facing: Option<u8> = if block == crate::world::REDSTONE_TORCH
-            && (2..=5).contains(&hit.face)
-        {
-            self.active_world().and_then(|w| {
-                crate::world::wall_torch_facing_candidates(cam_yaw)
-                    .into_iter()
-                    .find(|f| {
-                        let (dx, dy, dz) = crate::world::wall_torch_attached_offset(*f);
-                        !matches!(
-                            crate::world::collision_shape(w.get(
-                                cell.0 + dx,
-                                cell.1 + dy,
-                                cell.2 + dz
-                            )),
-                            crate::world::CollisionShape::Empty
-                        )
-                    })
-            })
-        } else {
-            None
-        };
+        let wall_torch_facing: Option<u8> =
+            if block == crate::world::REDSTONE_TORCH && (2..=5).contains(&hit.face) {
+                self.active_world().and_then(|w| {
+                    crate::world::wall_torch_facing_candidates(cam_yaw)
+                        .into_iter()
+                        .find(|f| {
+                            let (dx, dy, dz) = crate::world::wall_torch_attached_offset(*f);
+                            !matches!(
+                                crate::world::collision_shape(w.get(
+                                    cell.0 + dx,
+                                    cell.1 + dy,
+                                    cell.2 + dz
+                                )),
+                                crate::world::CollisionShape::Empty
+                            )
+                        })
+                })
+            } else {
+                None
+            };
         // THE WALL HEADS' OWN PLACEMENT CANDIDATE (the dev-83 round —
         // javap StandingAndWallBlockItem.getPlacementState + WallSkull-
         // Block.getStateForPlacement the 26.2 jar the probe
@@ -44668,8 +44594,7 @@ impl App {
                     .find(|f| {
                         let (dx, dy, dz) = crate::world::wall_torch_attached_offset(*f);
                         let support = w.get(cell.0 + dx, cell.1 + dy, cell.2 + dz);
-                        support != crate::world::AIR
-                            && !crate::world::is_replaceable(support)
+                        support != crate::world::AIR && !crate::world::is_replaceable(support)
                     })
             })
         } else {
@@ -45055,22 +44980,19 @@ impl App {
                 // the placement cell's own cw/ccw seats the powered
                 // side diode the freeze banks)
                 let facing = crate::world::repeater_facing_of(fresh);
-                let locked = crate::world::repeater_alternate_signal(
-                    world,
-                    cell.0,
-                    cell.1,
-                    cell.2,
-                    facing,
-                ) > 0;
+                let locked =
+                    crate::world::repeater_alternate_signal(world, cell.0, cell.1, cell.2, facing)
+                        > 0;
                 world.set_variant(
                     cell.0,
                     cell.1,
                     cell.2,
-                    fresh | if locked {
-                        crate::world::REPEATER_LOCKED_BIT
-                    } else {
-                        0
-                    },
+                    fresh
+                        | if locked {
+                            crate::world::REPEATER_LOCKED_BIT
+                        } else {
+                            0
+                        },
                 );
             }
             // THE OBSERVER'S OWN EYE STAMP (the autopush-127 round —
@@ -45138,16 +45060,10 @@ impl App {
             // byte the blockstate key reads, the collision the SHAPE
             // pair the same byte serves)
             if crate::world::is_lantern(placed) {
-                let below_supports = crate::world::can_support_lantern(world.get(
-                    cell.0,
-                    cell.1 - 1,
-                    cell.2,
-                ));
-                let above_supports = crate::world::can_support_lantern(world.get(
-                    cell.0,
-                    cell.1 + 1,
-                    cell.2,
-                ));
+                let below_supports =
+                    crate::world::can_support_lantern(world.get(cell.0, cell.1 - 1, cell.2));
+                let above_supports =
+                    crate::world::can_support_lantern(world.get(cell.0, cell.1 + 1, cell.2));
                 if let Some(hanging) = crate::world::lantern_placement_variant(
                     hit.face,
                     below_supports,
@@ -45205,10 +45121,7 @@ impl App {
             // the closed default the registerDefaultState pin keeps).
             if crate::world::is_barrel(placed) {
                 let look_opposite = crate::world::furnace_facing_byte(cam_yaw);
-                let facing = crate::world::barrel_placement_facing(
-                    cam_pitch as f64,
-                    look_opposite,
-                );
+                let facing = crate::world::barrel_placement_facing(cam_pitch as f64, look_opposite);
                 world.set_variant(
                     cell.0,
                     cell.1,
@@ -45377,10 +45290,7 @@ impl App {
                     // the BOTTOM half the pc 61-72 fold keeps, the
                     // bottom face the TOP half answers (the clicked
                     // face the HALF the vanilla's own law speaks)
-                    0 | 1 => (
-                        crate::world::furnace_facing_byte(cam_yaw),
-                        hit.face == 0,
-                    ),
+                    0 | 1 => (crate::world::furnace_facing_byte(cam_yaw), hit.face == 0),
                     // THE SIDE HITS (NORTH=2 / SOUTH=3 / WEST=4 /
                     // EAST=5 the Direction ordinal the DIRECTION_
                     // NORMAL table banks): the FACING the clicked
@@ -45494,11 +45404,14 @@ impl App {
                         crate::world::slab_variant(crate::world::SLAB_TYPE_DOUBLE),
                     );
                 } else {
-                    let slab_type = crate::world::slab_placement_type(
-                        hit.face,
-                        hit.location.1 - cell.1 as f64,
+                    let slab_type =
+                        crate::world::slab_placement_type(hit.face, hit.location.1 - cell.1 as f64);
+                    world.set_variant(
+                        cell.0,
+                        cell.1,
+                        cell.2,
+                        crate::world::slab_variant(slab_type),
                     );
-                    world.set_variant(cell.0, cell.1, cell.2, crate::world::slab_variant(slab_type));
                 }
             }
             world.ensure_light_current(); // the placed torch's own flood the set walk already spoke — the guard the never-lit world's compute keeps
@@ -45534,7 +45447,8 @@ impl App {
         // speaks too (the client hears its own placement, the server's
         // echo never doubles it — the vanilla's own singleplayer shape).
         let name = crate::world::NAME_OF[block as usize];
-        self.sounds.play(self.frame, name, crate::sound::Lane::Place);
+        self.sounds
+            .play(self.frame, name, crate::sound::Lane::Place);
         // THE WIRE'S OWN PLACE BROADCAST (javap RedStoneWireBlock.onPlace
         // pc 0-80 + updateNeighborsOfNeighboringWires pc 0-118 the 26.2
         // jar — the placed wire's own setBlock the updatePowerStrength
@@ -45566,7 +45480,11 @@ impl App {
         if !self.world_is_network && self.offline_world.is_some() {
             self.dispatch_vibration_event(
                 "block_place",
-                (cell.0 as f64 + 0.5, cell.1 as f64 + 0.5, cell.2 as f64 + 0.5),
+                (
+                    cell.0 as f64 + 0.5,
+                    cell.1 as f64 + 0.5,
+                    cell.2 as f64 + 0.5,
+                ),
             );
         }
         true
@@ -45659,10 +45577,7 @@ impl App {
                 hit.pos.1 as f64 + 0.5,
                 hit.pos.2 as f64 + 0.5,
             );
-            let ear = self
-                .body
-                .as_ref()
-                .map(|b| (b.x, b.y + b.eye_height(), b.z));
+            let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
             let yaw = self.listener_yaw();
             self.sounds.play_voice_at_pan(
                 self.frame,
@@ -45792,12 +45707,9 @@ impl App {
         // speak). The FAIL the press never consumes.
         let hw = crate::cart::MINECART_DIMENSIONS_WIDTH as f64;
         let bh = crate::cart::MINECART_DIMENSIONS_HEIGHT as f64;
-        let boxes_overlap =
-            |a: crate::cart::V3, b: crate::cart::V3| -> bool {
-                (a[0] - b[0]).abs() < hw
-                    && (a[2] - b[2]).abs() < hw
-                    && (a[1] - b[1]).abs() < bh
-            };
+        let boxes_overlap = |a: crate::cart::V3, b: crate::cart::V3| -> bool {
+            (a[0] - b[0]).abs() < hw && (a[2] - b[2]).abs() < hw && (a[1] - b[1]).abs() < bh
+        };
         if self
             .offline_carts
             .iter()
@@ -46052,12 +45964,7 @@ impl App {
             }
         }
         for (cx, cy, cz) in &due {
-            world.schedule_comparator_tick(
-                now + crate::world::COMPARATOR_DELAY,
-                *cx,
-                *cy,
-                *cz,
-            );
+            world.schedule_comparator_tick(now + crate::world::COMPARATOR_DELAY, *cx, *cy, *cz);
         }
     }
 
@@ -46198,7 +46105,11 @@ impl App {
             (f.item.1 > 0, f.glow, f.cell, f.item)
         };
         let creative = self.game_mode == GameMode::Creative;
-        let (fx, fy, fz) = (cell.0 as f64 + 0.5, cell.1 as f64 + 0.5, cell.2 as f64 + 0.5);
+        let (fx, fy, fz) = (
+            cell.0 as f64 + 0.5,
+            cell.1 as f64 + 0.5,
+            cell.2 as f64 + 0.5,
+        );
         let frame_id = mc_registry::item_id_by_name(if glow {
             "glow_item_frame"
         } else {
@@ -46335,7 +46246,11 @@ impl App {
             (f.item, f.glow)
         };
         let creative = self.game_mode == GameMode::Creative;
-        let (fx, fy, fz) = (cell.0 as f64 + 0.5, cell.1 as f64 + 0.5, cell.2 as f64 + 0.5);
+        let (fx, fy, fz) = (
+            cell.0 as f64 + 0.5,
+            cell.1 as f64 + 0.5,
+            cell.2 as f64 + 0.5,
+        );
         self.sounds
             .play_voice(self.frame, "entity.item_frame.break", 1.0, 1.0);
         if !creative {
@@ -46485,7 +46400,8 @@ impl App {
         // order — the playSound the placeBlock's verdict fruit speaks):
         // the wheat row the generated block_sounds table carries —
         // `item.crop.plant` at the (v+1)/2, p*0.8 fold
-        self.sounds.play(self.frame, "wheat", crate::sound::Lane::Place);
+        self.sounds
+            .play(self.frame, "wheat", crate::sound::Lane::Place);
         // THE BLOCK PLACE EVENT'S OWN POST (javap BlockItem.place
         // pc 243-257 over the 26.2 jar — the playSound pc 208-240 the
         // `level.gameEvent(GameEvent.BLOCK_PLACE, pos, Context.of(
@@ -46592,9 +46508,7 @@ impl App {
                     && world.get(hit.pos.0, above, hit.pos.2) == crate::world::AIR
             };
             if valid {
-                if let (Some(world), false) =
-                    (self.offline_world.as_mut(), self.world_is_network)
-                {
+                if let (Some(world), false) = (self.offline_world.as_mut(), self.world_is_network) {
                     crate::world::bonemeal_grass_walk(
                         world,
                         hit.pos.0,
@@ -46708,10 +46622,7 @@ impl App {
         // THE SOUND (the playLocalSound the case speaks
         // unconditionally — volume 1.0, pitch 1.0, the positioned lane)
         let yaw = self.listener_yaw();
-        let ear = self
-            .body
-            .as_ref()
-            .map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
         let dist = ear_distance(ear, x as f64, y as f64, z as f64);
         let pan = ear_pan(ear, yaw, x as f64, y as f64, z as f64);
         self.sounds
@@ -46802,9 +46713,7 @@ impl App {
             // null keeps, the moving-piston family the same verdict
             // rides, the unbanked kinds the atlas never finds)
             let cell = world.get(ev.x, ev.y, ev.z);
-            let tile = if cell == crate::world::AIR
-                || (2309..2321).contains(&cell)
-            {
+            let tile = if cell == crate::world::AIR || (2309..2321).contains(&cell) {
                 None
             } else {
                 let t = particle_tile(cell);
@@ -46970,8 +46879,13 @@ impl App {
             if let Some(name) = ev.sound_name {
                 let dist = ear_distance(ear, ev.x as f64, ev.y as f64, ev.z as f64);
                 let pan = ear_pan(ear, yaw, ev.x as f64, ev.y as f64, ev.z as f64);
-                self.sounds
-                    .play_lane_at_pan(self.frame, name, crate::sound::Lane::Break, dist, pan);
+                self.sounds.play_lane_at_pan(
+                    self.frame,
+                    name,
+                    crate::sound::Lane::Break,
+                    dist,
+                    pan,
+                );
             }
             // THE BURST (addDestroyBlockEffect's own walk — the tile
             // the palette kind banks, the TILE_NONE verdict the
@@ -46979,13 +46893,8 @@ impl App {
             if let Some(kind) = ev.burst_kind {
                 let tile = particle_tile(kind);
                 if tile != mc_registry::generated::atlas::TILE_NONE {
-                    let burst = crate::particles::terrain_burst(
-                        tile,
-                        ev.x,
-                        ev.y,
-                        ev.z,
-                        &mut self.mob_rng,
-                    );
+                    let burst =
+                        crate::particles::terrain_burst(tile, ev.x, ev.y, ev.z, &mut self.mob_rng);
                     self.particles.extend(burst);
                 }
             }
@@ -47043,11 +46952,20 @@ impl App {
             // THE POSITION FOLDS (the bytecode's own operand order —
             // getX() + dx*0.6 FIRST, then the +0.5 center, then the
             // +dx*0.01 step, the crosswise jitter the tail adds)
-            let px = f64::from(x) + dx * 0.6 + 0.5 + dx * 0.01
+            let px = f64::from(x)
+                + dx * 0.6
+                + 0.5
+                + dx * 0.01
                 + (self.level_ambient_rng.next_f64() - 0.5) * dz * 0.5;
-            let py = f64::from(y) + dy * 0.6 + 0.5 + dy * 0.01
+            let py = f64::from(y)
+                + dy * 0.6
+                + 0.5
+                + dy * 0.01
                 + (self.level_ambient_rng.next_f64() - 0.5) * dy * 0.5;
-            let pz = f64::from(z) + dz * 0.6 + 0.5 + dz * 0.01
+            let pz = f64::from(z)
+                + dz * 0.6
+                + 0.5
+                + dz * 0.01
                 + (self.level_ambient_rng.next_f64() - 0.5) * dx * 0.5;
             let vx = dx * d10 + self.level_ambient_rng.next_gaussian() * 0.01;
             let vy = dy * d10 + self.level_ambient_rng.next_gaussian() * 0.01;
@@ -47207,9 +47125,7 @@ impl App {
                 // `nextFloat() * 2.0f + 0.2f`, the lifetime
                 // `16.0 / (nextFloat() * 0.8 + 0.2)` — the lava_drip
                 // helper's documented order the same stream replays.
-                if cell == crate::world::CAMPFIRE_LIT
-                    && self.level_ambient_rng.next_int(5) == 0
-                {
+                if cell == crate::world::CAMPFIRE_LIT && self.level_ambient_rng.next_int(5) == 0 {
                     let mut i: i32 = 0;
                     while i < self.level_ambient_rng.next_int(1) + 1 {
                         i += 1;
@@ -47326,36 +47242,29 @@ impl App {
             // (the rocket the refresh no longer names — the Remove
             // Entities raced the event — the last sync the server's
             // own crossing pose banks).
-            let (ax, ay, az) = match self
-                .net_fireworks
-                .iter()
-                .find(|f| f.id == ev.entity_id)
-            {
+            let (ax, ay, az) = match self.net_fireworks.iter().find(|f| f.id == ev.entity_id) {
                 Some(f) => (f.x, f.y, f.z),
                 None => (ev.x, ev.y, ev.z),
             };
             if ev.explosions.is_empty() {
-                let burst = crate::particles::firework_poof_burst(
-                    ax,
-                    ay,
-                    az,
-                    &mut self.level_ambient_rng,
-                );
+                let burst =
+                    crate::particles::firework_poof_burst(ax, ay, az, &mut self.level_ambient_rng);
                 self.particles.extend(burst);
             } else {
                 // THE NON-EMPTY BRANCH'S OWN ARM (the ctor the anchor +
                 // the motion args + the list keep — the caller's own
                 // non-empty gate the IllegalArgumentException never
                 // arms)
-                self.firework_starters.push(crate::mob::FireworkStarter::new(
-                    ax,
-                    ay,
-                    az,
-                    ev.mx,
-                    ev.my,
-                    ev.mz,
-                    ev.explosions,
-                ));
+                self.firework_starters
+                    .push(crate::mob::FireworkStarter::new(
+                        ax,
+                        ay,
+                        az,
+                        ev.mx,
+                        ev.my,
+                        ev.mz,
+                        ev.explosions,
+                    ));
             }
         }
     }
@@ -47392,16 +47301,15 @@ impl App {
             // unknown id the store's pose the fallback keeps (the
             // vanilla `level.getEntity` the model's store already
             // answered — the arm only banks the entity's own body).
-            let (ax, ay, az) =
-                match self.net_thrown.iter_mut().find(|t| t.id == ev.entity_id) {
-                    Some(t) if !t.dead => {
-                        let (px, py, pz) = (t.x, t.y, t.z);
-                        t.dead = true;
-                        (px, py, pz)
-                    }
-                    Some(_) => continue,
-                    None => (ev.x, ev.y, ev.z),
-                };
+            let (ax, ay, az) = match self.net_thrown.iter_mut().find(|t| t.id == ev.entity_id) {
+                Some(t) if !t.dead => {
+                    let (px, py, pz) = (t.x, t.y, t.z);
+                    t.dead = true;
+                    (px, py, pz)
+                }
+                Some(_) => continue,
+                None => (ev.x, ev.y, ev.z),
+            };
             // THE SHATTER'S OWN BURSTS (the same case-3 walk the net
             // sim's break lane rides — the snowball the 8 plain
             // shards, the egg the 10-jitter loop the gaussian trio's
@@ -47422,7 +47330,13 @@ impl App {
                 let wvy = self.mob_rng.next_gaussian() * 0.02;
                 let wvz = self.mob_rng.next_gaussian() * 0.02;
                 let shard = crate::particles::breaking_egg_shard(
-                    jx, jy, jz, wvx, wvy, wvz, &mut self.mob_rng,
+                    jx,
+                    jy,
+                    jz,
+                    wvx,
+                    wvy,
+                    wvz,
+                    &mut self.mob_rng,
                 );
                 self.particles.push(shard);
             }
@@ -47461,11 +47375,20 @@ impl App {
             // THE POSITION FOLDS (the bytecode's own operand order —
             // getX() + dx*0.6 FIRST, then the +0.5 center, then the
             // +dx*0.01 step, the crosswise jitter the tail adds)
-            let px = f64::from(x) + dx * 0.6 + 0.5 + dx * 0.01
+            let px = f64::from(x)
+                + dx * 0.6
+                + 0.5
+                + dx * 0.01
                 + (self.level_ambient_rng.next_f64() - 0.5) * dz * 0.5;
-            let py = f64::from(y) + dy * 0.6 + 0.5 + dy * 0.01
+            let py = f64::from(y)
+                + dy * 0.6
+                + 0.5
+                + dy * 0.01
                 + (self.level_ambient_rng.next_f64() - 0.5) * dy * 0.5;
-            let pz = f64::from(z) + dz * 0.6 + 0.5 + dz * 0.01
+            let pz = f64::from(z)
+                + dz * 0.6
+                + 0.5
+                + dz * 0.01
                 + (self.level_ambient_rng.next_f64() - 0.5) * dx * 0.5;
             let vx = dx * d10 + self.level_ambient_rng.next_gaussian() * 0.01;
             let vy = dy * d10 + self.level_ambient_rng.next_gaussian() * 0.01;
@@ -47923,8 +47846,7 @@ impl App {
         // THE HANG DROP (the addParticle walk's own spawn — the
         // sprite pick the ambient stream's first draw carries)
         let r_sprite = self.level_ambient_rng.next_f32();
-        let drop =
-            crate::particles::dripstone_drip_hang(px, py, pz, lava, r_sprite);
+        let drop = crate::particles::dripstone_drip_hang(px, py, pz, lava, r_sprite);
         self.particles.push(drop);
     }
 
@@ -47993,12 +47915,26 @@ impl App {
             let py = ay - 0.4;
             let pz = az + d.sin() * 5.0;
             let (vx, vz) = (d.cos() * -5.0, d.sin() * -5.0);
-            let puff_a =
-                crate::particles::portal_ring_puff(px, py, pz, vx, 0.0, vz, &mut self.level_ambient_rng);
+            let puff_a = crate::particles::portal_ring_puff(
+                px,
+                py,
+                pz,
+                vx,
+                0.0,
+                vz,
+                &mut self.level_ambient_rng,
+            );
             self.particles.push(puff_a);
             let (vx7, vz7) = (d.cos() * -7.0, d.sin() * -7.0);
-            let puff_b =
-                crate::particles::portal_ring_puff(px, py, pz, vx7, 0.0, vz7, &mut self.level_ambient_rng);
+            let puff_b = crate::particles::portal_ring_puff(
+                px,
+                py,
+                pz,
+                vx7,
+                0.0,
+                vz7,
+                &mut self.level_ambient_rng,
+            );
             self.particles.push(puff_b);
             d += 0.15707963267948966f64;
         }
@@ -48386,10 +48322,7 @@ impl App {
                 // gate passes)
                 if self.level_ambient_rng.next_f32() < 0.3 + count as f32 * 0.1 {
                     let volume = 0.15
-                        + count as f32
-                            * count as f32
-                            * self.level_ambient_rng.next_f32()
-                            * 0.02;
+                        + count as f32 * count as f32 * self.level_ambient_rng.next_f32() * 0.02;
                     let pitch = 0.4 + count as f32 * self.level_ambient_rng.next_f32() * 0.3;
                     self.play_sculk_charge(ev.x, ev.y, ev.z, volume, pitch);
                 }
@@ -48463,8 +48396,10 @@ impl App {
             // THE RING (the ten delayed shrieks the same stream the
             // case's own walk order keeps — BEFORE the voice the
             // bytecodes pin)
-            let ring =
-                crate::particles::sculk_shriek_ring((ev.x, ev.y, ev.z), &mut self.level_ambient_rng);
+            let ring = crate::particles::sculk_shriek_ring(
+                (ev.x, ev.y, ev.z),
+                &mut self.level_ambient_rng,
+            );
             self.particles.extend(ring);
             // THE WATERLOGGED-GATED VOICE (the model's verdict the
             // muted arm keeps — the pitch draw the pass arm alone
@@ -48532,14 +48467,7 @@ impl App {
     /// two-draw law carries, the feet-center spot the entity's own
     /// position wears — no block's +0.5 the entity lane never adds).
     fn play_warden_voice(&mut self, word: &'static str, x: f64, y: f64, z: f64, pitch: f32) {
-        self.play_warden_voice_v(
-            word,
-            x,
-            y,
-            z,
-            pitch,
-            crate::sculk::WARDEN_MOB_SOUND_VOLUME,
-        );
+        self.play_warden_voice_v(word, x, y, z, pitch, crate::sculk::WARDEN_MOB_SOUND_VOLUME);
     }
 
     /// THE VOLUME-CARRYING TWIN (javap `LivingEntity.makeSound` — the
@@ -48581,132 +48509,52 @@ impl App {
     /// alive pair the living source's canTargetEntity fold wears — the
     /// creative player the FALSE the warden deaf keeps).
     fn dispatch_vibration_event(&mut self, event: &str, pos: (f64, f64, f64)) {
-
-            self.game_events.push(format!(
-                "{} @{} x{:.6} y{:.6} z{:.6} r16 f{}",
-                event,
-                self.frame,
-                pos.0,
-                pos.1,
-                pos.2,
-                crate::sculk::vibration_frequency(event)
-            ));
-            // THE SCULK LANE'S OWN HEARING (javap the dispatch walk —
-            // the registry visit the getPostableListenerPosition gate
-            // keeps, the Listener.handleGameEvent's own gates the
-            // hearing walk answers, the phase window the free-at fold
-            // keeps): each registered sensor cell the gates answer —
-            // the hearing record the world's own reaction banks, the
-            // re-arm the arrival + the ACTIVE 30 + the COOLDOWN 10
-            // the fold serves
-            for sensor in &mut self.sculk_sensors {
-                if self.frame < sensor.free_at {
-                    continue;
-                }
-                if let Some(hearing) = crate::sculk::sensor_hearing(
-                    event,
-                    pos,
-                    sensor.pos,
-                ) {
-                    // THE OCCLUSION GATE (javap
-                    // VibrationSystem$Listener.handleGameEvent — the
-                    // isOccluded call the canReceiveVibration's own
-                    // phase the walk follows, the scheduleVibration
-                    // the clean ray serves): the six-ray clip the
-                    // event's block center to the listener's keeps —
-                    // the wool the tag the clip refuses, the
-                    // ANY-clean-ray rule the boolean answers; the
-                    // ACTIVE world's own cells the predicate reads
-                    // (the registry fold the state id wears), the
-                    // world-less scene the vacuum the clean answer
-                    // keeps
-                    let hearing_world = if self.world_is_network {
-                        self.net_world.as_ref()
-                    } else {
-                        self.offline_world.as_ref()
-                    };
-                    let occluded = match hearing_world {
-                        Some(w) => crate::sculk::vibration_occluded(
-                            pos,
-                            (
-                                sensor.pos.0 as f64 + 0.5,
-                                sensor.pos.1 as f64 + 0.5,
-                                sensor.pos.2 as f64 + 0.5,
-                            ),
-                            |x, y, z| {
-                                crate::sculk::block_occludes(w.get(x, y, z) as u32)
-                            },
-                        ),
-                        None => false,
-                    };
-                    if occluded {
-                        continue;
-                    }
-                    self.game_events.push(format!(
-                        "sculk_hearing @{} x{} y{} z{} d{:.6} t{} f{} p{}",
-                        self.frame,
-                        sensor.pos.0,
-                        sensor.pos.1,
-                        sensor.pos.2,
-                        hearing.distance,
-                        hearing.arrival_ticks,
-                        hearing.frequency,
-                        hearing.redstone_strength
-                    ));
-                    sensor.free_at = self.frame
-                        + hearing.arrival_ticks as u64
-                        + crate::sculk::SCULK_SENSOR_REARM_TICKS;
-                    // THE ACTIVATION'S OWN WINDOW (javap activate —
-                    // the schedule the arrival tick speaks, the
-                    // re-arm tail the stop voice answers): the
-                    // CLICKING the vibration's own travel rides,
-                    // the CLICKING_STOP the free-at's own twin
-                    // banks — the free-at the same fold the
-                    // window's tail keeps
-                    sensor.clicking_at =
-                        Some(self.frame + hearing.arrival_ticks as u64);
-                    sensor.stop_at = Some(sensor.free_at);
-                    // THE FREQUENCY the cell keeps (the activate
-                    // walk's arg6 the resonate walk rides — the
-                    // hearing's own answer the field banks)
-                    sensor.resonate_frequency = hearing.frequency;
-                }
+        self.game_events.push(format!(
+            "{} @{} x{:.6} y{:.6} z{:.6} r16 f{}",
+            event,
+            self.frame,
+            pos.0,
+            pos.1,
+            pos.2,
+            crate::sculk::vibration_frequency(event)
+        ));
+        // THE SCULK LANE'S OWN HEARING (javap the dispatch walk —
+        // the registry visit the getPostableListenerPosition gate
+        // keeps, the Listener.handleGameEvent's own gates the
+        // hearing walk answers, the phase window the free-at fold
+        // keeps): each registered sensor cell the gates answer —
+        // the hearing record the world's own reaction banks, the
+        // re-arm the arrival + the ACTIVE 30 + the COOLDOWN 10
+        // the fold serves
+        for sensor in &mut self.sculk_sensors {
+            if self.frame < sensor.free_at {
+                continue;
             }
-            // THE WARDEN'S OWN EARS (javap `Warden$VibrationUser
-            // .onReceiveVibration` pc 0-229 + the
-            // `VibrationSystem$Listener.handleGameEvent` gates the
-            // dispatch serves): the same elytra_glide event the
-            // sensors hear the warden's own listener answers — the
-            // tag + the radius-16 gates the warden_hearing walk
-            // wears, the occlusion the six-ray clip keeps (the
-            // handleGameEvent pc 101-113 isOccluded call — the
-            // listener the EYE point the EntityPositionSource
-            // carries), the canReceiveVibration gates the
-            // cooldown/digging/source pair closes — THE DISPATCH
-            // the pending hear banks (the arrival tick the
-            // vibration's own travel wears — the
-            // onReceiveVibration walk the arrival speaks)
-            let warden_world = if self.world_is_network {
-                self.net_world.as_ref()
-            } else {
-                self.offline_world.as_ref()
-            };
-            let source_targetable = self.game_mode.is_survival() && !self.dead;
-            for (warden_index, warden) in self.wardens.iter_mut().enumerate() {
-                let Some(hear_distance) = crate::sculk::warden_hearing(
-                    event,
-                    pos,
-                    (warden.x, warden.y, warden.z),
-                ) else {
-                    continue;
+            if let Some(hearing) = crate::sculk::sensor_hearing(event, pos, sensor.pos) {
+                // THE OCCLUSION GATE (javap
+                // VibrationSystem$Listener.handleGameEvent — the
+                // isOccluded call the canReceiveVibration's own
+                // phase the walk follows, the scheduleVibration
+                // the clean ray serves): the six-ray clip the
+                // event's block center to the listener's keeps —
+                // the wool the tag the clip refuses, the
+                // ANY-clean-ray rule the boolean answers; the
+                // ACTIVE world's own cells the predicate reads
+                // (the registry fold the state id wears), the
+                // world-less scene the vacuum the clean answer
+                // keeps
+                let hearing_world = if self.world_is_network {
+                    self.net_world.as_ref()
+                } else {
+                    self.offline_world.as_ref()
                 };
-                let occluded = match warden_world {
+                let occluded = match hearing_world {
                     Some(w) => crate::sculk::vibration_occluded(
                         pos,
                         (
-                            warden.x,
-                            warden.y + f64::from(crate::sculk::WARDEN_EYE_HEIGHT),
-                            warden.z,
+                            sensor.pos.0 as f64 + 0.5,
+                            sensor.pos.1 as f64 + 0.5,
+                            sensor.pos.2 as f64 + 0.5,
                         ),
                         |x, y, z| crate::sculk::block_occludes(w.get(x, y, z) as u32),
                     ),
@@ -48715,22 +48563,91 @@ impl App {
                 if occluded {
                     continue;
                 }
-                if !warden.can_receive_vibration(Some(source_targetable)) {
-                    continue;
-                }
-                self.warden_hears.push(crate::sculk::WardenPendingHear {
-                    at_frame: self.frame + hear_distance.arrival_ticks as u64,
-                    warden_index,
-                    vibration_entity: Some(crate::sculk::WARDEN_PLAYER_SUSPECT),
-                    projectile_owner: None,
-                    owner_pos: None,
-                    entity_is_player: true,
-                    owner_is_player: true,
-                    owner_targetable: source_targetable,
-                    vibration_pos: pos,
-                });
+                self.game_events.push(format!(
+                    "sculk_hearing @{} x{} y{} z{} d{:.6} t{} f{} p{}",
+                    self.frame,
+                    sensor.pos.0,
+                    sensor.pos.1,
+                    sensor.pos.2,
+                    hearing.distance,
+                    hearing.arrival_ticks,
+                    hearing.frequency,
+                    hearing.redstone_strength
+                ));
+                sensor.free_at = self.frame
+                    + hearing.arrival_ticks as u64
+                    + crate::sculk::SCULK_SENSOR_REARM_TICKS;
+                // THE ACTIVATION'S OWN WINDOW (javap activate —
+                // the schedule the arrival tick speaks, the
+                // re-arm tail the stop voice answers): the
+                // CLICKING the vibration's own travel rides,
+                // the CLICKING_STOP the free-at's own twin
+                // banks — the free-at the same fold the
+                // window's tail keeps
+                sensor.clicking_at = Some(self.frame + hearing.arrival_ticks as u64);
+                sensor.stop_at = Some(sensor.free_at);
+                // THE FREQUENCY the cell keeps (the activate
+                // walk's arg6 the resonate walk rides — the
+                // hearing's own answer the field banks)
+                sensor.resonate_frequency = hearing.frequency;
             }
-            
+        }
+        // THE WARDEN'S OWN EARS (javap `Warden$VibrationUser
+        // .onReceiveVibration` pc 0-229 + the
+        // `VibrationSystem$Listener.handleGameEvent` gates the
+        // dispatch serves): the same elytra_glide event the
+        // sensors hear the warden's own listener answers — the
+        // tag + the radius-16 gates the warden_hearing walk
+        // wears, the occlusion the six-ray clip keeps (the
+        // handleGameEvent pc 101-113 isOccluded call — the
+        // listener the EYE point the EntityPositionSource
+        // carries), the canReceiveVibration gates the
+        // cooldown/digging/source pair closes — THE DISPATCH
+        // the pending hear banks (the arrival tick the
+        // vibration's own travel wears — the
+        // onReceiveVibration walk the arrival speaks)
+        let warden_world = if self.world_is_network {
+            self.net_world.as_ref()
+        } else {
+            self.offline_world.as_ref()
+        };
+        let source_targetable = self.game_mode.is_survival() && !self.dead;
+        for (warden_index, warden) in self.wardens.iter_mut().enumerate() {
+            let Some(hear_distance) =
+                crate::sculk::warden_hearing(event, pos, (warden.x, warden.y, warden.z))
+            else {
+                continue;
+            };
+            let occluded = match warden_world {
+                Some(w) => crate::sculk::vibration_occluded(
+                    pos,
+                    (
+                        warden.x,
+                        warden.y + f64::from(crate::sculk::WARDEN_EYE_HEIGHT),
+                        warden.z,
+                    ),
+                    |x, y, z| crate::sculk::block_occludes(w.get(x, y, z) as u32),
+                ),
+                None => false,
+            };
+            if occluded {
+                continue;
+            }
+            if !warden.can_receive_vibration(Some(source_targetable)) {
+                continue;
+            }
+            self.warden_hears.push(crate::sculk::WardenPendingHear {
+                at_frame: self.frame + hear_distance.arrival_ticks as u64,
+                warden_index,
+                vibration_entity: Some(crate::sculk::WARDEN_PLAYER_SUSPECT),
+                projectile_owner: None,
+                owner_pos: None,
+                entity_is_player: true,
+                owner_is_player: true,
+                owner_targetable: source_targetable,
+                vibration_pos: pos,
+            });
+        }
     }
 
     /// THE SCULK-CATALYST-BLOOM VOICE WALK (javap `bloom` pc 76-101 —
@@ -48850,13 +48767,8 @@ impl App {
             if let Some(kind) = ev.burst_kind {
                 let tile = particle_tile(kind);
                 if tile != mc_registry::generated::atlas::TILE_NONE {
-                    let burst = crate::particles::terrain_burst(
-                        tile,
-                        ev.x,
-                        ev.y,
-                        ev.z,
-                        &mut self.mob_rng,
-                    );
+                    let burst =
+                        crate::particles::terrain_burst(tile, ev.x, ev.y, ev.z, &mut self.mob_rng);
                     self.particles.extend(burst);
                 }
             }
@@ -48886,10 +48798,8 @@ impl App {
             // `3 + nextInt(4)` band arms, the supplier trio + the
             // position pair + the provider chain the per-particle
             // order keeps — the level ambient stream the draws ride)
-            let burst = crate::particles::egg_crack_faces(
-                (ev.x, ev.y, ev.z),
-                &mut self.level_ambient_rng,
-            );
+            let burst =
+                crate::particles::egg_crack_faces((ev.x, ev.y, ev.z), &mut self.level_ambient_rng);
             self.particles.extend(burst);
         }
     }
@@ -48930,21 +48840,19 @@ impl App {
                 || ev.word == mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_SPAWN_ITEM_EFFECT
             {
                 let pitch = 1.0f32
-                    + (self.level_ambient_rng.next_f32()
-                        - self.level_ambient_rng.next_f32())
+                    + (self.level_ambient_rng.next_f32() - self.level_ambient_rng.next_f32())
                         * 0.2f32;
                 let sx = f64::from(ev.x) + 0.5;
                 let sy = f64::from(ev.y) + 0.5;
                 let sz = f64::from(ev.z) + 0.5;
                 let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
                 let yaw = self.listener_yaw();
-                let key = if ev.word
-                    == mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_SPAWN_MOB_EFFECT
-                {
-                    "block.trial_spawner.spawn_mob"
-                } else {
-                    "block.trial_spawner.spawn_item"
-                };
+                let key =
+                    if ev.word == mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_SPAWN_MOB_EFFECT {
+                        "block.trial_spawner.spawn_mob"
+                    } else {
+                        "block.trial_spawner.spawn_item"
+                    };
                 self.sounds.play_voice_at_pan(
                     self.frame,
                     key,
@@ -49060,8 +48968,7 @@ impl App {
             // spends)
             if ev.word == mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_EJECT_ITEM_EFFECT {
                 let pitch = 1.0f32
-                    + (self.level_ambient_rng.next_f32()
-                        - self.level_ambient_rng.next_f32())
+                    + (self.level_ambient_rng.next_f32() - self.level_ambient_rng.next_f32())
                         * 0.2f32;
                 let sx = f64::from(ev.x) + 0.5;
                 let sy = f64::from(ev.y) + 0.5;
@@ -49083,8 +48990,12 @@ impl App {
             // nextGaussian velocity draws per iteration the
             // SMALL_FLAME (the zd * 0.25 fold) + SMOKE pairs share,
             // the level ambient stream the draws ride)
-            let burst =
-                crate::particles::trial_eject_item_burst(ev.x, ev.y, ev.z, &mut self.level_ambient_rng);
+            let burst = crate::particles::trial_eject_item_burst(
+                ev.x,
+                ev.y,
+                ev.z,
+                &mut self.level_ambient_rng,
+            );
             self.particles.extend(burst);
         }
     }
@@ -49266,10 +49177,7 @@ impl App {
     /// (the `block.cobweb.place` key the sounds.json row banks — the
     /// break1..6 files the place word speaks, NO new assets the lane
     /// demands).
-    pub fn live_cobweb_events_updated(
-        &mut self,
-        events: Vec<crate::world_view::WireCobwebEvent>,
-    ) {
+    pub fn live_cobweb_events_updated(&mut self, events: Vec<crate::world_view::WireCobwebEvent>) {
         for ev in events {
             // THE BURST THE CASE BODY SPEAKS FIRST (the `bipush 10`
             // loop the ten-member answer wears — the THREE
@@ -49277,8 +49185,10 @@ impl App {
             // THREE nextDouble position draws the corner band arms,
             // the POOF provider chain's own eight draws the ctor bank
             // rides)
-            let burst =
-                crate::particles::cobweb_spawn_burst((ev.x, ev.y, ev.z), &mut self.level_ambient_rng);
+            let burst = crate::particles::cobweb_spawn_burst(
+                (ev.x, ev.y, ev.z),
+                &mut self.level_ambient_rng,
+            );
             self.particles.extend(burst);
             // THE VOICE THE CASE TAIL SPEAKS (the BLOCK CENTER the
             // `playLocalSound(BlockPos, ...)` resolve places, the
@@ -49336,8 +49246,7 @@ impl App {
         // first minus the second the fsub order speaks, the scale
         // and base the branch's own ldc pair keeps)
         let pitch = pitch_base
-            + (self.level_ambient_rng.next_f32() - self.level_ambient_rng.next_f32())
-                * pitch_scale;
+            + (self.level_ambient_rng.next_f32() - self.level_ambient_rng.next_f32()) * pitch_scale;
         let sx = f64::from(x) + 0.5;
         let sy = f64::from(y) + 0.5;
         let sz = f64::from(z) + 0.5;
@@ -49359,7 +49268,10 @@ impl App {
     /// word's registry resolve the model's synced table answered (the
     /// song's NAME the arm carries), the tracked record's start/stop
     /// + the now-playing line the render lane's own law folds.
-    pub fn live_jukebox_events_updated(&mut self, events: Vec<crate::world_view::WireJukeboxEvent>) {
+    pub fn live_jukebox_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireJukeboxEvent>,
+    ) {
         for ev in events {
             self.play_jukebox(ev.voice, ev.x, ev.y, ev.z, ev.song);
         }
@@ -49542,16 +49454,22 @@ impl App {
             mc_protocol::SOUND_GHAST_FIREBALL_EFFECT => ("entity.ghast.shoot", 10.0),
             mc_protocol::SOUND_DRAGON_FIREBALL_EFFECT => ("entity.ender_dragon.shoot", 10.0),
             mc_protocol::SOUND_BLAZE_FIREBALL_EFFECT => ("entity.blaze.shoot", 2.0),
-            mc_protocol::SOUND_ZOMBIE_WOODEN_DOOR_EFFECT => ("entity.zombie.attack_wooden_door", 2.0),
+            mc_protocol::SOUND_ZOMBIE_WOODEN_DOOR_EFFECT => {
+                ("entity.zombie.attack_wooden_door", 2.0)
+            }
             mc_protocol::SOUND_ZOMBIE_IRON_DOOR_EFFECT => ("entity.zombie.attack_iron_door", 2.0),
             mc_protocol::SOUND_ZOMBIE_DOOR_CRASH_EFFECT => ("entity.zombie.break_wooden_door", 2.0),
             mc_protocol::SOUND_WITHER_BLOCK_BREAK_EFFECT => ("entity.wither.break_block", 2.0),
             mc_protocol::SOUND_WITHER_BOSS_SHOOT_EFFECT => ("entity.wither.shoot", 2.0),
             mc_protocol::SOUND_ZOMBIE_INFECTED_EFFECT => ("entity.zombie.infect", 2.0),
             mc_protocol::SOUND_ZOMBIE_CONVERTED_EFFECT => ("entity.zombie_villager.converted", 2.0),
-            mc_protocol::SOUND_ZOMBIE_TO_DROWNED_EFFECT => ("entity.zombie.converted_to_drowned", 2.0),
+            mc_protocol::SOUND_ZOMBIE_TO_DROWNED_EFFECT => {
+                ("entity.zombie.converted_to_drowned", 2.0)
+            }
             mc_protocol::SOUND_HUSK_TO_ZOMBIE_EFFECT => ("entity.husk.converted_to_zombie", 2.0),
-            mc_protocol::SOUND_SKELETON_TO_STRAY_EFFECT => ("entity.skeleton.converted_to_stray", 2.0),
+            mc_protocol::SOUND_SKELETON_TO_STRAY_EFFECT => {
+                ("entity.skeleton.converted_to_stray", 2.0)
+            }
             _ => return, // the model's own arm the fourteen words alone enqueues
         };
         // the pitch pair the case body's own draws keep (the
@@ -49822,7 +49740,8 @@ impl App {
         // plays): no anchor, no attenuation (the dist-0 ear the gain
         // the 0.25 volume itself keeps), no pan (the plain positioned
         // lane the pan-0 identity answers)
-        self.sounds.play_voice_at_pan(self.frame, "block.portal.travel", 0.25, pitch, 0.0, 0.0);
+        self.sounds
+            .play_voice_at_pan(self.frame, "block.portal.travel", 0.25, pitch, 0.0, 0.0);
     }
 
     /// THE PORTAL-TRIGGER WALK (javap
@@ -49963,7 +49882,10 @@ impl App {
     /// spawner the event broadcast, the twenty SMOKE + FLAME pairs the
     /// `bipush 20` loop fires — each pair AT THE SAME full-block jitter
     /// spot, the zero velocity args the `dconst_0` trio speaks.
-    pub fn live_mob_spawn_events_updated(&mut self, events: Vec<crate::world_view::WireMobSpawnEvent>) {
+    pub fn live_mob_spawn_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireMobSpawnEvent>,
+    ) {
         for ev in events {
             self.play_mob_spawn(ev.x, ev.y, ev.z);
         }
@@ -49990,19 +49912,9 @@ impl App {
             // THE PAIR (the SMOKE addParticle first, the FLAME second —
             // the case's own call order the stream's own draws keep,
             // both AT the same spot the zero velocity args ride)
-            let smoke = crate::particles::torch_smoke(
-                px,
-                py,
-                pz,
-                &mut self.level_ambient_rng,
-            );
+            let smoke = crate::particles::torch_smoke(px, py, pz, &mut self.level_ambient_rng);
             self.particles.push(smoke);
-            let flame = crate::particles::torch_flame(
-                px,
-                py,
-                pz,
-                &mut self.level_ambient_rng,
-            );
+            let flame = crate::particles::torch_flame(px, py, pz, &mut self.level_ambient_rng);
             self.particles.push(flame);
         }
     }
@@ -50078,9 +49990,7 @@ impl App {
         // THE SPELL RING (the `bipush 100` loop)
         for _ in 0..100 {
             let d0 = self.level_ambient_rng.next_f64() * 4.0;
-            let d1 = self.level_ambient_rng.next_f64()
-                * std::f64::consts::PI
-                * 2.0;
+            let d1 = self.level_ambient_rng.next_f64() * std::f64::consts::PI * 2.0;
             let d3 = 0.01 + self.level_ambient_rng.next_f64() * 0.5;
             let f = 0.75 + self.level_ambient_rng.next_f32() * 0.25;
             let d2 = d1.cos() * d0;
@@ -50210,10 +50120,7 @@ impl App {
         // THE PRIME'S OWN VOICE (the playSound law — the BLOCKS source
         // the 1.0F/1.0F pair keeps, the stereo tail the distance law
         // speaks)
-        let ear = self
-            .body
-            .as_ref()
-            .map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
         let yaw = self.listener_yaw();
         let (tx, ty, tz) = (
             hit.pos.0 as f64 + 0.5,
@@ -50331,10 +50238,7 @@ impl App {
                 hit.pos.2 as f64 + 0.5,
             );
             let pitch = 0.8 + 0.4 * self.mob_rng.next_f32();
-            let ear = self
-                .body
-                .as_ref()
-                .map(|b| (b.x, b.y + b.eye_height(), b.z));
+            let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
             let yaw = self.listener_yaw();
             self.sounds.play_voice_at_pan(
                 self.frame,
@@ -50414,10 +50318,7 @@ impl App {
         // pos the sound's own cell keeps, the pitch the rng fold
         // banks)
         let pitch = 0.8 + 0.4 * self.mob_rng.next_f32();
-        let ear = self
-            .body
-            .as_ref()
-            .map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
         let yaw = self.listener_yaw();
         let (tx, ty, tz) = (
             cell.0 as f64 + 0.5,
@@ -50558,10 +50459,7 @@ impl App {
                 hit.pos.1 as f64 + 0.5,
                 hit.pos.2 as f64 + 0.5,
             );
-            let ear = self
-                .body
-                .as_ref()
-                .map(|b| (b.x, b.y + b.eye_height(), b.z));
+            let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
             let yaw = self.listener_yaw();
             self.sounds.play_voice_at_pan(
                 self.frame,
@@ -50636,10 +50534,7 @@ impl App {
         // the (r - r) * 0.2F + 1.0F fold the rng-less replay keeps —
         // the constant 1.0 the subtraction never splits, the mob_rng
         // the fold never advances)
-        let ear = self
-            .body
-            .as_ref()
-            .map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
         let yaw = self.listener_yaw();
         let (tx, ty, tz) = (
             cell.0 as f64 + 0.5,
@@ -50855,11 +50750,7 @@ impl App {
                 && entry.fuse < 0
             {
                 crate::cart::prime_tnt_cart(entry);
-                primes.push((
-                    entry.cart.pos[0],
-                    entry.cart.pos[1],
-                    entry.cart.pos[2],
-                ));
+                primes.push((entry.cart.pos[0], entry.cart.pos[1], entry.cart.pos[2]));
             }
             // THE FUSE'S OWN ARMS (javap `MinecartTNT.tick` the
             // super.tick tail speaks — the burn arm the SMOKE puff
@@ -50868,8 +50759,7 @@ impl App {
             // `horizontalCollision` the move-with-collision walk
             // stores — the wall the fast cart's own detonation speaks)
             let hsqr = crate::cart::v_horizontal_distance_sqr(entry.cart.delta);
-            let out =
-                crate::cart::tnt_fuse_tick(entry.fuse, hsqr, entry.cart.horizontal_collision);
+            let out = crate::cart::tnt_fuse_tick(entry.fuse, hsqr, entry.cart.horizontal_collision);
             entry.fuse = out.new_fuse;
             if out.smoke {
                 // THE SMOKE'S OWN LIFT (the addParticle walk the y +
@@ -50885,11 +50775,13 @@ impl App {
                 // the nextDouble draw serves — the fold the operand
                 // stack's multiply order wears, the hsqr the tick's own
                 // beat carries)
-                let power = crate::cart::tnt_explode_power(
-                    hsqr,
-                    self.mob_rng.next_f64(),
-                );
-                booms.push((entry.cart.pos[0], entry.cart.pos[1], entry.cart.pos[2], power));
+                let power = crate::cart::tnt_explode_power(hsqr, self.mob_rng.next_f64());
+                booms.push((
+                    entry.cart.pos[0],
+                    entry.cart.pos[1],
+                    entry.cart.pos[2],
+                    power,
+                ));
                 exploded.push(entry.id);
             }
         }
@@ -50900,8 +50792,15 @@ impl App {
         // THE BORROW'S OWN END (the world the drop releases — the
         // deferred actions the lanes serve)
         for (x, y, z) in smokes {
-            let smoke =
-                crate::particles::shoot_smoke_puff(x, y, z, 0.0, 0.0, 0.0, &mut self.level_ambient_rng);
+            let smoke = crate::particles::shoot_smoke_puff(
+                x,
+                y,
+                z,
+                0.0,
+                0.0,
+                0.0,
+                &mut self.level_ambient_rng,
+            );
             self.particles.push(smoke);
         }
         for (x, y, z) in primes {
@@ -51339,8 +51238,7 @@ impl App {
                 .clone();
             // THE RANDOM SLOT'S OWN PICK (the getRandomSlot walk — the
             // None the fail voice keeps)
-            let Some(slot_i) =
-                crate::world::dispenser_random_slot(&slots, &mut self.dispenser_rng)
+            let Some(slot_i) = crate::world::dispenser_random_slot(&slots, &mut self.dispenser_rng)
             else {
                 self.play_dispenser_voice(1001, x, y, z);
                 continue;
@@ -51434,7 +51332,11 @@ impl App {
             // intact count keeps, the emptied slot the honest (0,0) row
             // the random-slot pick's own filter reads)
             let new_count = if dispensed { count - 1 } else { count };
-            let row = if new_count > 0 { (item, new_count) } else { (0, 0) };
+            let row = if new_count > 0 {
+                (item, new_count)
+            } else {
+                (0, 0)
+            };
             if let Some(store) = self.container_stores.get_mut(&(x, y, z)) {
                 store[slot_i] = row;
             }
@@ -51447,8 +51349,15 @@ impl App {
                     crate::world::dispense_item_velocity(&mut self.dispenser_rng, step);
                 let id = self.next_drop_id;
                 self.next_drop_id += 1;
-                let mut drop =
-                    crate::drops::ItemDrop::spawn_entity_loot(id, item, 1, px, py, pz, &mut self.dispenser_rng);
+                let mut drop = crate::drops::ItemDrop::spawn_entity_loot(
+                    id,
+                    item,
+                    1,
+                    px,
+                    py,
+                    pz,
+                    &mut self.dispenser_rng,
+                );
                 drop.vx = vx;
                 drop.vy = vy;
                 drop.vz = vz;
@@ -51460,14 +51369,9 @@ impl App {
             // THROWN FAMILY the snowball/egg ids the kind byte picks —
             // the `asProjectile` factory the item's own answer serves)
             if dispensed && voice == 1002 {
-                let (px, py, pz) =
-                    crate::world::dispense_projectile_position(center, step);
-                let ((vx, vy, vz), y_rot, x_rot) = crate::world::projectile_shoot_law(
-                    &mut self.dispenser_rng,
-                    step,
-                    1.1,
-                    6.0,
-                );
+                let (px, py, pz) = crate::world::dispense_projectile_position(center, step);
+                let ((vx, vy, vz), y_rot, x_rot) =
+                    crate::world::projectile_shoot_law(&mut self.dispenser_rng, step, 1.1, 6.0);
                 let id = self.next_drop_id;
                 self.next_drop_id += 1;
                 if item == arrow_id {
@@ -51567,10 +51471,7 @@ impl App {
         // THE LISTENER'S OWN EAR (the splash voice's distance fold —
         // the paddle voices' own law: no body the distance-zero arm
         // the no-fold reads)
-        let ear = self
-            .body
-            .as_ref()
-            .map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
         // the listener's own yaw the stereo split rides (the splash's
         // flanks the pan law's fold answers)
         let yaw = self.listener_yaw();
@@ -51590,8 +51491,8 @@ impl App {
                 for wy in ((boat.y + e).floor() as i32)
                     ..=((boat.y + crate::hull::HULL_HEIGHT - e).floor() as i32)
                 {
-                    for wx in ((boat.x - hw + e).floor() as i32)
-                        ..=((boat.x + hw - e).floor() as i32)
+                    for wx in
+                        ((boat.x - hw + e).floor() as i32)..=((boat.x + hw - e).floor() as i32)
                     {
                         let c = world.get(wx, wy, wz);
                         let variant = crate::world_view::column_variant_at(world, wx, wy, wz, c);
@@ -51660,8 +51561,7 @@ impl App {
                     down: input.backward,
                 });
             if let Some(i) = control {
-                let (yaw, paddle_left, paddle_right) =
-                    crate::hull::hull_control(phys, i, boat.yaw);
+                let (yaw, paddle_left, paddle_right) = crate::hull::hull_control(phys, i, boat.yaw);
                 boat.yaw = yaw;
                 boat.paddle_left = paddle_left;
                 boat.paddle_right = paddle_right;
@@ -51692,8 +51592,7 @@ impl App {
                     .iter()
                     .filter_map(|&[wx, wy, wz]| {
                         let c = world.get(wx, wy, wz);
-                        let variant =
-                            crate::world_view::column_variant_at(world, wx, wy, wz, c);
+                        let variant = crate::world_view::column_variant_at(world, wx, wy, wz, c);
                         if variant == 0 {
                             return None;
                         }
@@ -51707,7 +51606,8 @@ impl App {
                 crate::hull::hull_bubble_inside(phys, bubble, &swept_cells);
                 let swept_under = matches!(
                     phys.status,
-                    crate::hull::HullStatus::UnderWater | crate::hull::HullStatus::UnderFlowingWater
+                    crate::hull::HullStatus::UnderWater
+                        | crate::hull::HullStatus::UnderFlowingWater
                 );
                 // THE SWEPT PASS'S OWN PER-VISIT SHAPE (the same law the
                 // static pass speaks — each swept mouth cell the visit's
@@ -51793,10 +51693,7 @@ impl App {
         // THE LISTENER'S OWN EAR (the mob lane's own walk — the body's
         // standing/crouching eye; no body the staging's ear sits at
         // the source, the distance-zero arm the no-fold reads)
-        let ear = self
-            .body
-            .as_ref()
-            .map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
         // the listener's own yaw the stereo split rides (the strokes'
         // flanks the pan law's fold answers)
         let yaw = self.listener_yaw();
@@ -51895,11 +51792,7 @@ impl App {
             if content == 0 {
                 // THE SOURCE-ONLY MODE (the empty bucket — the sources
                 // AND the collision the shared clip stops)
-                w.clip_fluid_source_only(
-                    from,
-                    dir,
-                    crate::world::BLOCK_INTERACTION_RANGE,
-                )
+                w.clip_fluid_source_only(from, dir, crate::world::BLOCK_INTERACTION_RANGE)
             } else {
                 // THE NONE MODE (the filled bucket — the fluids the ray
                 // never sees, the solids the one lane keeps)
@@ -52059,7 +51952,12 @@ impl App {
         // and the offline spawner's own)
         let eye = (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64);
         let in_box = |b: (f64, f64, f64, f64, f64, f64)| {
-            eye.0 >= b.0 && eye.0 < b.3 && eye.1 >= b.1 && eye.1 < b.4 && eye.2 >= b.2 && eye.2 < b.5
+            eye.0 >= b.0
+                && eye.0 < b.3
+                && eye.1 >= b.1
+                && eye.1 < b.4
+                && eye.2 >= b.2
+                && eye.2 < b.5
         };
         for m in self.mobs.iter().chain(self.net_mobs.iter()) {
             if in_box(m.box_at()) {
@@ -52077,8 +51975,7 @@ impl App {
         // spawned box the fluids never block, the solids the FAIL
         // speaks: the press consumes, the water stays hull-less)
         let (hx, hy, hz) = hit.location;
-        let box_cells =
-            |lo: f64, hi: f64| (lo.floor() as i32)..=(hi.floor() as i32);
+        let box_cells = |lo: f64, hi: f64| (lo.floor() as i32)..=(hi.floor() as i32);
         for cx in box_cells(hx - hw, hx + hw) {
             for cy in box_cells(hy, hy + bh) {
                 for cz in box_cells(hz - hw, hz + hw) {
@@ -52107,7 +52004,11 @@ impl App {
         let (yaw, pitch) = crate::world_view::wire_angles(&cam);
         if self.world_is_network {
             if let Some(sink) = self.live_clicks.as_ref() {
-                let _ = sink.send(crate::world_view::ContainerCommand::UseItem { yaw, pitch, hand: 0 });
+                let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
+                    yaw,
+                    pitch,
+                    hand: 0,
+                });
             }
             self.swing.start();
             return Some(true);
@@ -52248,13 +52149,12 @@ impl App {
                     mc_registry::display::FIRSTPERSON_LEFTHAND,
                 );
             }
-            mc_registry::item_model_layers(id)
-                .and_then(|layers| {
-                    crate::hand::load_item_layers_ctx(
-                        &layers,
-                        mc_registry::display::FIRSTPERSON_LEFTHAND,
-                    )
-                })
+            mc_registry::item_model_layers(id).and_then(|layers| {
+                crate::hand::load_item_layers_ctx(
+                    &layers,
+                    mc_registry::display::FIRSTPERSON_LEFTHAND,
+                )
+            })
         });
     }
 
@@ -52278,10 +52178,7 @@ impl App {
         // releaseUsingItem on the item switch — the hold cannot
         // outlive its own stack — the main lane's own live_held law
         // the second reload key wears)
-        if matches!(
-            self.using_item.as_ref().map(|u| u.hand),
-            Some(UseHand::Off)
-        ) {
+        if matches!(self.using_item.as_ref().map(|u| u.hand), Some(UseHand::Off)) {
             self.using_item = None;
         }
         self.load_offhand_payload_from_id(id);
@@ -52336,12 +52233,22 @@ impl App {
         // the wire's Update/Remove Mob Effect packets' filtered truth;
         // the store's add/update laws ride the same code the offline
         // lane speaks, the absorption's lift rides the application)
-        self.effects
-            .sync_from_wire(&health.effects.iter().map(|e| (e.effect_id, crate::world_model::MobEffectState {
-                amplifier: e.amplifier,
-                duration: e.duration,
-                flags: e.flags,
-            })).collect::<Vec<_>>());
+        self.effects.sync_from_wire(
+            &health
+                .effects
+                .iter()
+                .map(|e| {
+                    (
+                        e.effect_id,
+                        crate::world_model::MobEffectState {
+                            amplifier: e.amplifier,
+                            duration: e.duration,
+                            flags: e.flags,
+                        },
+                    )
+                })
+                .collect::<Vec<_>>(),
+        );
         // THE ATTRIBUTE ROW'S MIRROR (the same vitals view's own lift —
         // the computed mining_efficiency the model's fold banked, the
         // dig walk's addend the value feeds)
@@ -52419,7 +52326,12 @@ impl App {
                 r1,
                 r2,
             );
-            let final_v = crate::eat::breaking_item_velocity(parent, speed[0] as f32, speed[1] as f32, speed[2] as f32);
+            let final_v = crate::eat::breaking_item_velocity(
+                parent,
+                speed[0] as f32,
+                speed[1] as f32,
+                speed[2] as f32,
+            );
             // the lifetime's draw, the texture slice's two
             let life = crate::eat::particle_lifetime(self.drop_rng.next_f32());
             let uo = self.drop_rng.next_f32() * 3.0;
@@ -52463,7 +52375,12 @@ impl App {
             let g1 = self.drop_rng.next_f32();
             let g2 = self.drop_rng.next_f32();
             let gulp_pitch = crate::eat::triangle(g1, g2, 1.0, crate::eat::FINISH_GULP_DEVIATION);
-            self.sounds.play_voice(self.frame, event, crate::eat::FINISH_GULP_VOLUME, gulp_pitch);
+            self.sounds.play_voice(
+                self.frame,
+                event,
+                crate::eat::FINISH_GULP_VOLUME,
+                gulp_pitch,
+            );
             // 3. THE OFFLINE FOLD: FoodData.eat(props) — the ABSOLUTE
             // saturation straight into the add (the 26.2 record's own
             // verdict). The networked lane folds nothing (the
@@ -52506,8 +52423,7 @@ impl App {
                             let roll = self.drop_rng.next_f32();
                             if roll < ce.probability {
                                 for row in ce.rows {
-                                    if let Some(eid) =
-                                        crate::effects::effect_id_by_name(row.effect)
+                                    if let Some(eid) = crate::effects::effect_id_by_name(row.effect)
                                     {
                                         self.effects.add_effect(
                                             eid,
@@ -52559,10 +52475,9 @@ impl App {
                 };
                 match eat.use_remainder {
                     Some(rem_name) => {
-                        let rem_id = mc_registry::item_id_by_name(
-                            rem_name.trim_start_matches("minecraft:"),
-                        )
-                        .unwrap_or(0);
+                        let rem_id =
+                            mc_registry::item_id_by_name(rem_name.trim_start_matches("minecraft:"))
+                                .unwrap_or(0);
                         if stack.1 == 1 {
                             *slot = (rem_id, 1);
                         } else {
@@ -52765,12 +52680,7 @@ impl App {
     /// the creeper's own row wears). The voice the plain HURT law
     /// keeps (the mob sources' DamageEffects.HURT row), the killer
     /// word the death tail's own args pair carries.
-    pub fn hurt_by_named(
-        &mut self,
-        amount: f32,
-        death_key: &'static str,
-        killer: &str,
-    ) -> bool {
+    pub fn hurt_by_named(&mut self, amount: f32, death_key: &'static str, killer: &str) -> bool {
         self.hurt_inner(amount, HurtVoice::Plain, Some(death_key), Some(killer))
     }
 
@@ -53058,9 +52968,7 @@ impl App {
         }
         let i = ((self.xp.total as f32 * 0.5).floor() as i32).min(7 * self.xp.level);
         if i < 1 {
-            ((self.xp.progress
-                * crate::xp::xp_needed_for_next_level(self.xp.level) as f32
-                * 0.5)
+            ((self.xp.progress * crate::xp::xp_needed_for_next_level(self.xp.level) as f32 * 0.5)
                 .ceil()) as i32
         } else {
             i
@@ -53091,7 +52999,13 @@ impl App {
             let id = self.next_drop_id;
             self.next_drop_id += 1;
             self.drops.push(crate::drops::ItemDrop::spawn_death_drop(
-                id, item, count, px, py, pz, &mut self.drop_rng,
+                id,
+                item,
+                count,
+                px,
+                py,
+                pz,
+                &mut self.drop_rng,
             ));
         }
         // THE CONTAINER'S OWN EMPTY (dropAll's slot clears the walk
@@ -53177,10 +53091,7 @@ impl App {
     /// menu types are honest drops for now — their screens are their
     /// own rounds' lines; the store itself keeps them (the model lane
     /// is menu-agnostic).
-    fn live_container_updated(
-        &mut self,
-        container: Option<crate::world_view::LiveContainer>,
-    ) {
+    fn live_container_updated(&mut self, container: Option<crate::world_view::LiveContainer>) {
         match container {
             Some(c) => {
                 if c.menu_type_id == crate::world_model::MENU_TYPE_CRAFTING {
@@ -53428,9 +53339,9 @@ impl App {
                 self.table_live_window = None;
                 self.live_table_carried = (0, 0); // no window, no held stack
                 self.live_table_title = None; // the title dies with the window
-                // the store dropped: a LIVE chest closes back to the
-                // world (the vanilla closeContainer's return); the
-                // offline stand-in is not the live lane's to close
+                                              // the store dropped: a LIVE chest closes back to the
+                                              // world (the vanilla closeContainer's return); the
+                                              // offline stand-in is not the live lane's to close
                 if self.screen == ScreenKind::Chest && self.chest_is_live {
                     self.chest_is_live = false;
                     self.open(ScreenKind::World);
@@ -53438,10 +53349,10 @@ impl App {
                 self.chest_live_window = None;
                 self.chest_carried = (0, 0); // no window, no held stack
                 self.live_chest_title = None; // the title dies with the window
-                // the store dropped: a LIVE furnace closes back to the
-                // world (the same vanilla closeContainer return — the
-                // chest's own lane the menu-type-14 window mirrors);
-                // the fresh stand-in is not the live lane's to close
+                                              // the store dropped: a LIVE furnace closes back to the
+                                              // world (the same vanilla closeContainer return — the
+                                              // chest's own lane the menu-type-14 window mirrors);
+                                              // the fresh stand-in is not the live lane's to close
                 if self.screen == ScreenKind::Furnace && self.furnace_is_live {
                     self.furnace_is_live = false;
                     self.open(ScreenKind::World);
@@ -53449,10 +53360,10 @@ impl App {
                 self.furnace_live_window = None;
                 self.live_furnace_carried = (0, 0); // no window, no held stack
                 self.live_furnace_title = None; // the title dies with the window
-                // the store dropped: a LIVE dispenser closes back to the
-                // world (the same vanilla closeContainer return — the
-                // chest's own lane the menu-type-6 window mirrors);
-                // the fresh stand-in is not the live lane's to close
+                                                // the store dropped: a LIVE dispenser closes back to the
+                                                // world (the same vanilla closeContainer return — the
+                                                // chest's own lane the menu-type-6 window mirrors);
+                                                // the fresh stand-in is not the live lane's to close
                 if self.screen == ScreenKind::Dispenser && self.dispenser_is_live {
                     self.dispenser_is_live = false;
                     self.open(ScreenKind::World);
@@ -53460,9 +53371,9 @@ impl App {
                 self.dispenser_live_window = None;
                 self.live_dispenser_title = None; // the title dies with the window
                 self.dispenser_carried = (0, 0); // no window, no held stack
-                // the window's OWN rows die with it (the lifecycle the
-                // open() switch keeps — no stale bundle rides a later
-                // screen, the next window re-learns from its own sync)
+                                                 // the window's OWN rows die with it (the lifecycle the
+                                                 // open() switch keeps — no stale bundle rides a later
+                                                 // screen, the next window re-learns from its own sync)
                 self.bundle_contents.clear();
                 self.bundle_scroll_acc_x = 0.0;
                 self.bundle_scroll_acc_y = 0.0;
@@ -53569,8 +53480,9 @@ impl App {
         if !self.world_is_network {
             return;
         }
-        self.disconnect_title =
-            tr("disconnect.lost").unwrap_or("Connection lost").to_string();
+        self.disconnect_title = tr("disconnect.lost")
+            .unwrap_or("Connection lost")
+            .to_string();
         self.disconnect_reason = reason;
         self.world_quads = None;
         self.world_is_network = false;
@@ -53595,6 +53507,7 @@ impl App {
             ScreenKind::Title => self.render_title(&mut g, a, w, h),
             ScreenKind::Servers => self.render_servers(&mut g, a, w, h),
             ScreenKind::Options => self.render_options(&mut g, a, w, h),
+            ScreenKind::Accessibility => self.render_accessibility(&mut g, a, w, h),
             ScreenKind::WorldOptions => self.render_world_options(&mut g, a, w, h),
             ScreenKind::DifficultyLockConfirm => {
                 self.render_difficulty_lock_confirm(&mut g, a, w, h)
@@ -53798,7 +53711,11 @@ impl App {
         // Creative-flight camera: 12 blocks above the spawn surface clears
         // the canopy so the official sky (sun/moon/stars) stays in frame.
         crate::camera::Camera {
-            pos: Vec3::new(n / 2.0, self.spawn_y as f32 + 12.0 + crate::world_view::PLAYER_EYE_HEIGHT, n / 2.0),
+            pos: Vec3::new(
+                n / 2.0,
+                self.spawn_y as f32 + 12.0 + crate::world_view::PLAYER_EYE_HEIGHT,
+                n / 2.0,
+            ),
             yaw: std::f32::consts::FRAC_PI_2, // face +X (east): sun visible at dawn
             pitch: -0.08,
         }
@@ -53868,9 +53785,7 @@ impl App {
             .as_ref()
             .map(|b| b.tick_count as f32)
             .unwrap_or(0.0);
-        let darkness_scale = ((darkness_tick - self.partial_tick)
-            * std::f32::consts::PI
-            * 0.025)
+        let darkness_scale = ((darkness_tick - self.partial_tick) * std::f32::consts::PI * 0.025)
             .cos()
             .max(0.0)
             * 0.45
@@ -54000,10 +53915,7 @@ impl App {
             // rainLevel`): the active world's synced rain level the
             // snapshot carries, the dry worlds the 1.0 identity (every
             // procedural/golden scene, no weather word ever arrived)
-            let rain = self
-                .active_world()
-                .map(|w| w.rain_level)
-                .unwrap_or(0.0);
+            let rain = self.active_world().map(|w| w.rain_level).unwrap_or(0.0);
             let rain_brightness = 1.0 - rain;
             crate::sky::render_celestials(
                 fb,
@@ -54117,12 +54029,12 @@ impl App {
                 .body
                 .as_ref()
                 .map(|b| (b.x.floor() as i32, b.y.floor() as i32, b.z.floor() as i32))
-                .unwrap_or((cam.pos.x.floor() as i32, cam.pos.y.floor() as i32, cam.pos.z.floor() as i32));
-            let lines = chunk_border_lines(
-                cam_block,
-                0,
-                crate::world::CHUNK_Y as i32,
-            );
+                .unwrap_or((
+                    cam.pos.x.floor() as i32,
+                    cam.pos.y.floor() as i32,
+                    cam.pos.z.floor() as i32,
+                ));
+            let lines = chunk_border_lines(cam_block, 0, crate::world::CHUNK_Y as i32);
             fb.draw_chunk_borders(&ctx, &lines);
         }
         // THE F3+B ENTITY HITBOXES (javap 26.2 the DebugRenderer list's
@@ -54179,8 +54091,8 @@ impl App {
             } else {
                 crate::hand::ArmKind::Wide
             };
-        let jar_root =
-            crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
+            let jar_root =
+                crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
             self.arm = crate::hand::load_kind(&jar_root, kind);
         }
         // vanilla submitArmWithItem: a non-empty main hand draws the ITEM
@@ -54191,26 +54103,22 @@ impl App {
         // side*-1 fold the LEFT lane carries — the applyEatTransform
         // the remaining the frame's own partial_tick reads)
         let eating = self.eating.as_ref();
-        let eat_pose = eating
-            .filter(|eat| eat.hand == UseHand::Main)
-            .map(|eat| {
-                crate::eat::apply_eat_transform(
-                    eat.remaining(),
-                    self.partial_tick,
-                    eat.total,
-                    1.0, // the main hand's side (the right-handed view)
-                )
-            });
-        let eat_pose_off = eating
-            .filter(|eat| eat.hand == UseHand::Off)
-            .map(|eat| {
-                crate::eat::apply_eat_transform(
-                    eat.remaining(),
-                    self.partial_tick,
-                    eat.total,
-                    -1.0, // the OFF hand's own side*-1 fold
-                )
-            });
+        let eat_pose = eating.filter(|eat| eat.hand == UseHand::Main).map(|eat| {
+            crate::eat::apply_eat_transform(
+                eat.remaining(),
+                self.partial_tick,
+                eat.total,
+                1.0, // the main hand's side (the right-handed view)
+            )
+        });
+        let eat_pose_off = eating.filter(|eat| eat.hand == UseHand::Off).map(|eat| {
+            crate::eat::apply_eat_transform(
+                eat.remaining(),
+                self.partial_tick,
+                eat.total,
+                -1.0, // the OFF hand's own side*-1 fold
+            )
+        });
         // THE HAND PASSES' OWN SCREEN GATE (the vanilla renderItemInHand
         // walk the screen==null verdict guards — the container screens
         // the world beneath the dimmed panel renders, the HANDS the
@@ -54277,7 +54185,12 @@ impl App {
                     off_use_pose.as_ref(),
                 );
             } else if let Some(arm) = &self.arm {
-                arm.draw_side(fb, ctx.proj, self.swing.get_attack_anim(self.partial_tick), true);
+                arm.draw_side(
+                    fb,
+                    ctx.proj,
+                    self.swing.get_attack_anim(self.partial_tick),
+                    true,
+                );
             }
         }
         // THE SCREEN EFFECT OVERLAYS (the vanilla ScreenEffectRenderer
@@ -54343,10 +54256,9 @@ impl App {
             return;
         }
         if self.underwater_screen.is_none() {
-        let jar_root =
-            crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
-            self.underwater_screen =
-                crate::avatar::UnderwaterScreen::load(&jar_root);
+            let jar_root =
+                crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
+            self.underwater_screen = crate::avatar::UnderwaterScreen::load(&jar_root);
         }
         let Some(screen) = &self.underwater_screen else {
             return; // the texture failed its sha1 — the overlay stays honest
@@ -54401,12 +54313,9 @@ impl App {
         // THE DRAW (the translucent blend at the vertex alpha the
         // colorFromFloat(0.1, ...) speaks — as8BitChannel(0.1) = 25/255;
         // the texel's own alpha 135/146 scales it further)
-        fb.draw_translucent_sampled_quads(
-            ctx.proj,
-            &[quad],
-            25.0 / 255.0,
-            &mut |_tex, u, v| Some(screen.pixel(u, v)),
-        );
+        fb.draw_translucent_sampled_quads(ctx.proj, &[quad], 25.0 / 255.0, &mut |_tex, u, v| {
+            Some(screen.pixel(u, v))
+        });
     }
 
     /// THE FIRE SCREEN OVERLAY (javap `ScreenEffectRenderer.submit`'s
@@ -54448,10 +54357,9 @@ impl App {
             return;
         }
         if self.fire_strips.is_none() {
-        let jar_root =
-            crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
-            self.fire_strips =
-                crate::avatar::FireStrips::load(&jar_root);
+            let jar_root =
+                crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
+            self.fire_strips = crate::avatar::FireStrips::load(&jar_root);
         }
         let Some(strips) = &self.fire_strips else {
             return; // the strip asset failed its sha1 — the overlay stays honest
@@ -54490,12 +54398,7 @@ impl App {
         .into_iter()
         .map(|(tx, ry)| crate::raster::SampledQuad {
             pts: build(tx, ry),
-            uv: [
-                [16.0, v1],
-                [0.0, v1],
-                [0.0, v0],
-                [16.0, v0],
-            ],
+            uv: [[16.0, v1], [0.0, v1], [0.0, v0], [16.0, v0]],
             tex: "fire_screen",
             tint: [1.0, 1.0, 1.0], // the vertex color's white multiply
         })
@@ -54503,15 +54406,10 @@ impl App {
         // THE DRAW (the translucent blend at the vertex alpha the
         // 0xE5FFFFFF color speaks — 229/255; the depth TEST survives,
         // nothing writes — the two sheets both blend their overlap)
-        fb.draw_translucent_sampled_quads(
-            ctx.proj,
-            &quads,
-            229.0 / 255.0,
-            &mut |_tex, u, v| {
-                let [r, g, b, a] = strips.pixel(1, u, v);
-                Some([r, g, b, a])
-            },
-        );
+        fb.draw_translucent_sampled_quads(ctx.proj, &quads, 229.0 / 255.0, &mut |_tex, u, v| {
+            let [r, g, b, a] = strips.pixel(1, u, v);
+            Some([r, g, b, a])
+        });
     }
 
     /// THE BLOCK SCREEN OVERLAY (javap `ScreenEffectRenderer.submit`'s
@@ -54576,12 +54474,7 @@ impl App {
                 [1.0, 1.0, -0.5],
                 [-1.0, 1.0, -0.5],
             ],
-            uv: [
-                [16.0, 16.0],
-                [0.0, 16.0],
-                [0.0, 0.0],
-                [16.0, 0.0],
-            ],
+            uv: [[16.0, 16.0], [0.0, 16.0], [0.0, 0.0], [16.0, 0.0]],
             tex: "block_screen",
             tint: [BLOCK_SCREEN_TINT; 3], // the 0xFF191919 rgb multiply
         };
@@ -54589,18 +54482,13 @@ impl App {
         // own alpha 255 rides it, the quad fully covers the world; the
         // depth TEST survives, nothing writes — the water/fire arms'
         // own convention)
-        fb.draw_translucent_sampled_quads(
-            ctx.proj,
-            &[quad],
-            1.0,
-            &mut |_tex, u, v| {
-                let x = (u.floor() as i32).rem_euclid(16) as usize;
-                let y = (v.floor() as i32).rem_euclid(16) as usize;
-                let o = (y * 16 + x) * 4;
-                let t = tile_rgba;
-                Some([t[o], t[o + 1], t[o + 2], t[o + 3]])
-            },
-        );
+        fb.draw_translucent_sampled_quads(ctx.proj, &[quad], 1.0, &mut |_tex, u, v| {
+            let x = (u.floor() as i32).rem_euclid(16) as usize;
+            let y = (v.floor() as i32).rem_euclid(16) as usize;
+            let o = (y * 16 + x) * 4;
+            let t = tile_rgba;
+            Some([t[o], t[o + 1], t[o + 2], t[o + 3]])
+        });
     }
 
     /// THE HEAD-IN-BLOCK WALK (javap `getViewBlockingState`, the 26.2
@@ -54674,9 +54562,7 @@ impl App {
     /// the empty slot the None keeps, the non-armor word (the
     /// pumpkin, the skulls, the elytra's wings-only json) the bare
     /// body never paints.
-    pub(crate) fn player_armor_lane_rows(
-        &self,
-    ) -> Vec<(usize, &'static str, &'static str, bool)> {
+    pub(crate) fn player_armor_lane_rows(&self) -> Vec<(usize, &'static str, &'static str, bool)> {
         let raw = if self.world_is_network {
             [
                 (crate::avatar::ARMOR_SLOT_CHEST, self.live_inv_slots[6]),
@@ -54716,8 +54602,7 @@ impl App {
         // the IDENTICAL path returns — the goldens' bytes the same root
         // speaks; the package-dir processes the loaded world see — the
         // tests' degenerate no-asset lane the walk retires.
-        let jar_root =
-            crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
+        let jar_root = crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
         if self.perspective.is_first_person() {
             return; // the vanilla first-person law: no own-body render
         }
@@ -54911,9 +54796,8 @@ impl App {
         let main_hold = !self.swing.swinging
             && mc_registry::item_name(self.held_id().unwrap_or(0)) == Some("crossbow")
             && self.held_charge.is_some();
-        let off_hold = !self.swing.swinging
-            && off_name == Some("crossbow")
-            && self.off_charge.is_some();
+        let off_hold =
+            !self.swing.swinging && off_name == Some("crossbow") && self.off_charge.is_some();
         // THE RENDER STATE (LivingEntityRenderer.extractRenderState's own
         // sampling — every clock rides the frame's own partial_tick now:
         // the walk cosines, the swing, the age — no canonical mid-tick
@@ -54938,8 +54822,7 @@ impl App {
             // dispatch reads (the same law the duration read speaks — the
             // spear the STAB the thirdPersonAttackHand rides, everything
             // else the DEFAULT (WHACK, 6))
-            swing_kind: held_swing_anim(mc_registry::item_name(self.held_id().unwrap_or(0)))
-                .kind,
+            swing_kind: held_swing_anim(mc_registry::item_name(self.held_id().unwrap_or(0))).kind,
             age_scale: 1.0,
             // THE USE STATE (the render state's own fields the RMB hold
             // fills — `isUsingItem` the using walk's Some/None answers,
@@ -55054,8 +54937,7 @@ impl App {
             ticks_since_kinetic_hit: if self.last_kinetic_hit_feedback_time < 0 {
                 0.0
             } else {
-                (self.day_time_now()
-                    - self.last_kinetic_hit_feedback_time) as f32
+                (self.day_time_now() - self.last_kinetic_hit_feedback_time) as f32
                     + self.partial_tick
             },
             // THE MAIN HAND'S OWN KINETIC VERDICT (the STAB attack-item
@@ -55117,21 +54999,19 @@ impl App {
             };
             let base_key = format!("{dir}/{name}");
             if !self.armor_textures.contains_key(&base_key) {
-                let loaded =
-                    crate::avatar::ArmorTex::load(&jar_root, dir, entry);
+                let loaded = crate::avatar::ArmorTex::load(&jar_root, dir, entry);
                 self.armor_textures.insert(base_key.clone(), loaded);
             }
             if !matches!(self.armor_textures.get(&base_key), Some(Some(_))) {
                 continue; // the layer failed its verify — the piece stays bare
             }
-            if leather && !self
-                .armor_textures
-                .contains_key(&format!("{base_key}_overlay"))
+            if leather
+                && !self
+                    .armor_textures
+                    .contains_key(&format!("{base_key}_overlay"))
             {
                 let loaded = mc_registry::generated::equipment::find("leather_overlay")
-                    .and_then(|e| {
-                        crate::avatar::ArmorTex::load(&jar_root, dir, e)
-                    });
+                    .and_then(|e| crate::avatar::ArmorTex::load(&jar_root, dir, e));
                 self.armor_textures
                     .insert(format!("{base_key}_overlay"), loaded);
             }
@@ -55157,8 +55037,10 @@ impl App {
                     // undyed-tinted base fills the holes
                     let base = self.armor_textures.get(base_key).and_then(|o| o.as_ref());
                     let overlay_key = format!("{base_key}_overlay");
-                    let overlay =
-                        self.armor_textures.get(&overlay_key).and_then(|o| o.as_ref());
+                    let overlay = self
+                        .armor_textures
+                        .get(&overlay_key)
+                        .and_then(|o| o.as_ref());
                     if let (Some(base), Some(overlay)) = (base, overlay) {
                         let [r, g, b, al] = overlay.pixel(u, v);
                         if al >= 128 {
@@ -55255,15 +55137,13 @@ impl App {
                     .collect();
                 // the skull's entity textures the same atlas fetch
                 // serves (the special bake's dump the ids speak)
-                fb.draw_sampled_quads(
-                    ctx.proj.mul(&ctx.view),
-                    &skull_sampled,
-                    &mut |tex, u, v| match mc_registry::sprite_uv::sample_uv(tex, u, v) {
+                fb.draw_sampled_quads(ctx.proj.mul(&ctx.view), &skull_sampled, &mut |tex, u, v| {
+                    match mc_registry::sprite_uv::sample_uv(tex, u, v) {
                         mc_registry::sprite_uv::Sample::Pixel(c) => Some(c),
                         mc_registry::sprite_uv::Sample::Missing(c) => Some(c),
                         mc_registry::sprite_uv::Sample::Unknown => None,
-                    },
-                );
+                    }
+                });
             }
         }
         // THE WINGS LAYER (javap `WingsLayer.submit` the 26.2 jar — the
@@ -55280,8 +55160,7 @@ impl App {
         } else {
             self.inventory.armor[1]
         };
-        let wearing_elytra =
-            chest.1 > 0 && Some(chest.0) == mc_registry::item_id_by_name("elytra");
+        let wearing_elytra = chest.1 > 0 && Some(chest.0) == mc_registry::item_id_by_name("elytra");
         if wearing_elytra {
             if self.wings_tex.is_none() {
                 self.wings_tex = crate::avatar::WingsTex::load(&jar_root);
@@ -55290,9 +55169,8 @@ impl App {
                 // THE POSE'S OWN LERP (the extraction's
                 // `getRotX(partialTick)` walk the anim state speaks)
                 let (rx, ry, rz) = body.elytra_wing_rot_at(self.partial_tick);
-                let wings = crate::avatar::wings_quads(
-                    &state, feet, cam.yaw, cam.pitch, rx, ry, rz,
-                );
+                let wings =
+                    crate::avatar::wings_quads(&state, feet, cam.yaw, cam.pitch, rx, ry, rz);
                 let wing_quads: Vec<crate::raster::SampledQuad> = wings
                     .iter()
                     .map(|q| crate::raster::SampledQuad {
@@ -55347,15 +55225,11 @@ impl App {
                         tint: [1.0, 1.0, 1.0],
                     })
                     .collect();
-                fb.draw_sampled_quads(
-                    ctx.proj.mul(&ctx.view),
-                    &flame_quads,
-                    &mut |tex, u, v| {
-                        let strip = if tex == "fire1" { 1 } else { 0 };
-                        let [r, g, b, a] = strips.pixel(strip, u, v);
-                        Some([r, g, b, a])
-                    },
-                );
+                fb.draw_sampled_quads(ctx.proj.mul(&ctx.view), &flame_quads, &mut |tex, u, v| {
+                    let strip = if tex == "fire1" { 1 } else { 0 };
+                    let [r, g, b, a] = strips.pixel(strip, u, v);
+                    Some([r, g, b, a])
+                });
             }
         }
     }
@@ -55378,20 +55252,15 @@ impl App {
         // repo-root cwd answers, the walk-up the package-dir processes
         // answer). The repo-root hint the IDENTICAL path returns —
         // the goldens' bytes the same root speaks.
-        let jar_root =
-            crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
+        let jar_root = crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
         // THE LAZY LOAD PASS (the same honesty the mob skins speak):
         // each (raft, chest, wood) shape its own texture — a failed
         // load's None stays cached, that hull unseen, the others draw
         for boat in self.net_boats.iter().chain(self.offline_boats.iter()) {
             let key = (boat.raft, boat.chest, boat.wood.clone());
             if !self.boat_models.contains_key(&key) {
-                let model = crate::avatar::BoatModel::load(
-                    &jar_root,
-                    boat.raft,
-                    boat.chest,
-                    &boat.wood,
-                );
+                let model =
+                    crate::avatar::BoatModel::load(&jar_root, boat.raft, boat.chest, &boat.wood);
                 self.boat_models.insert(key, model);
             }
         }
@@ -55430,7 +55299,11 @@ impl App {
             } else {
                 Vec3::new(boat.x as f32, boat.y as f32, boat.z as f32)
             };
-            let clock = self.paddle_positions.get(&boat.id).copied().unwrap_or([0.0; 2]);
+            let clock = self
+                .paddle_positions
+                .get(&boat.id)
+                .copied()
+                .unwrap_or([0.0; 2]);
             let rowing_l = rowing_time(self.partial_tick, boat.paddle_left, clock[0]);
             let rowing_r = rowing_time(self.partial_tick, boat.paddle_right, clock[1]);
             // THE ROCK'S OWN GATE (submit's `!isUnderWater &&
@@ -55456,15 +55329,7 @@ impl App {
                 None => 0.0,
             };
             let quads = model.quads(
-                boat.yaw,
-                boat.chest,
-                feet,
-                cam.yaw,
-                cam.pitch,
-                rowing_l,
-                rowing_r,
-                rock,
-                wobble,
+                boat.yaw, boat.chest, feet, cam.yaw, cam.pitch, rowing_l, rowing_r, rock, wobble,
             );
             let sampled: Vec<crate::raster::SampledQuad> = quads
                 .iter()
@@ -55502,8 +55367,7 @@ impl App {
         // hoisted hint the repo-root cwd answers, the walk-up the
         // package-dir processes answer — the per-attempt inline the
         // hoisted let replaces)
-        let jar_root =
-            crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
+        let jar_root = crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
         // THE LAZY LOAD (the fire-strips lane's own re-try the model
         // slot keeps — a failed sha1 stays None, the carts unseen)
         if self.cart_model.is_none() {
@@ -55654,8 +55518,10 @@ impl App {
         let ground_shade = |d: mc_registry::element_quads::Direction| match d {
             mc_registry::element_quads::Direction::Up => 1.0f32,
             mc_registry::element_quads::Direction::Down => 0.5,
-            mc_registry::element_quads::Direction::North | mc_registry::element_quads::Direction::South => 0.8,
-            mc_registry::element_quads::Direction::West | mc_registry::element_quads::Direction::East => 0.6,
+            mc_registry::element_quads::Direction::North
+            | mc_registry::element_quads::Direction::South => 0.8,
+            mc_registry::element_quads::Direction::West
+            | mc_registry::element_quads::Direction::East => 0.6,
         };
         let mut sampled: Vec<crate::raster::SampledQuad> = Vec::new();
         // THE FLASH'S OWN LANE (the lit decades the WHITE-SOLID pass the
@@ -55719,9 +55585,7 @@ impl App {
         // the lit quads: the WHITE-SOLID pass (the whole block's white
         // render the flash decade speaks)
         if !flashed.is_empty() {
-            fb.draw_sampled_quads(vp, &flashed, &mut |_tex, _u, _v| {
-                Some([255, 255, 255, 255])
-            });
+            fb.draw_sampled_quads(vp, &flashed, &mut |_tex, _u, _v| Some([255, 255, 255, 255]));
         }
     }
 
@@ -55821,13 +55685,15 @@ impl App {
             return;
         }
         let vp = ctx.proj.mul(&ctx.view);
-        fb.draw_sampled_quads(vp, &sampled, &mut |tex, u, v| {
-            match mc_registry::sprite_uv::sample_uv(tex, u, v) {
+        fb.draw_sampled_quads(
+            vp,
+            &sampled,
+            &mut |tex, u, v| match mc_registry::sprite_uv::sample_uv(tex, u, v) {
                 mc_registry::sprite_uv::Sample::Pixel(c) => Some(c),
                 mc_registry::sprite_uv::Sample::Missing(c) => Some(c),
                 mc_registry::sprite_uv::Sample::Unknown => None,
-            }
-        });
+            },
+        );
     }
 
     /// THE FALLING BLOCKS' OWN PASS (javap `FallingBlockRenderer.render`
@@ -55850,8 +55716,10 @@ impl App {
         let ground_shade = |d: mc_registry::element_quads::Direction| match d {
             mc_registry::element_quads::Direction::Up => 1.0f32,
             mc_registry::element_quads::Direction::Down => 0.5,
-            mc_registry::element_quads::Direction::North | mc_registry::element_quads::Direction::South => 0.8,
-            mc_registry::element_quads::Direction::West | mc_registry::element_quads::Direction::East => 0.6,
+            mc_registry::element_quads::Direction::North
+            | mc_registry::element_quads::Direction::South => 0.8,
+            mc_registry::element_quads::Direction::West
+            | mc_registry::element_quads::Direction::East => 0.6,
         };
         let mut sampled: Vec<crate::raster::SampledQuad> = Vec::new();
         for f in &self.falling_blocks {
@@ -55873,9 +55741,7 @@ impl App {
                 sampled.push(crate::raster::SampledQuad {
                     pts: q
                         .vertices
-                        .map(|v| {
-                            [lx + v[0] - 0.5, ly + 0.5 + (v[1] - 0.5), lz + v[2] - 0.5]
-                        }),
+                        .map(|v| [lx + v[0] - 0.5, ly + 0.5 + (v[1] - 0.5), lz + v[2] - 0.5]),
                     uv: q.uvs,
                     tex: q.texture,
                     tint: [sh, sh, sh],
@@ -55904,18 +55770,14 @@ impl App {
         ctx: &RenderCtx,
         cam: &crate::camera::Camera,
     ) {
-        let shots: Vec<&crate::mob::Arrow> = self
-            .arrows
-            .iter()
-            .chain(self.net_arrows.iter())
-            .collect();
+        let shots: Vec<&crate::mob::Arrow> =
+            self.arrows.iter().chain(self.net_arrows.iter()).collect();
         if shots.is_empty() {
             return; // the deterministic scenes carry no projectiles — the goldens stay
         }
         if self.arrow_model.is_none() {
-            self.arrow_model = crate::avatar::ArrowModel::load(std::path::Path::new(
-                "assets-cache/jar",
-            ));
+            self.arrow_model =
+                crate::avatar::ArrowModel::load(std::path::Path::new("assets-cache/jar"));
         }
         let Some(model) = &self.arrow_model else {
             return; // the arrow texture failed its sha1 — the shots stay unseen
@@ -55935,15 +55797,14 @@ impl App {
             } else {
                 0.0
             };
-            let quads =
-                model.quads(
-                    crate::math::Vec3::new(px as f32, py as f32, pz as f32),
-                    yr,
-                    xr,
-                    shake,
-                    cam.yaw,
-                    cam.pitch,
-                );
+            let quads = model.quads(
+                crate::math::Vec3::new(px as f32, py as f32, pz as f32),
+                yr,
+                xr,
+                shake,
+                cam.yaw,
+                cam.pitch,
+            );
             for q in quads {
                 sampled.push(crate::raster::SampledQuad {
                     pts: q.pts,
@@ -56033,7 +55894,11 @@ impl App {
             let center = [px as f32, py as f32, pz as f32];
             for (q, tints) in &parts {
                 let base = icon_tint(tints);
-                let sh = if q.shade { ground_shade(q.direction) } else { 1.0 };
+                let sh = if q.shade {
+                    ground_shade(q.direction)
+                } else {
+                    1.0
+                };
                 sampled.push(crate::raster::SampledQuad {
                     pts: q.vertices.map(|v| {
                         firework_rocket_point(center, cam.yaw, cam.pitch, f.shot_at_angle, v)
@@ -56045,13 +55910,15 @@ impl App {
             }
         }
         let vp = ctx.proj.mul(&ctx.view);
-        fb.draw_sampled_quads(vp, &sampled, &mut |tex, u, v| {
-            match mc_registry::sprite_uv::sample_uv(tex, u, v) {
+        fb.draw_sampled_quads(
+            vp,
+            &sampled,
+            &mut |tex, u, v| match mc_registry::sprite_uv::sample_uv(tex, u, v) {
                 mc_registry::sprite_uv::Sample::Pixel(c) => Some(c),
                 mc_registry::sprite_uv::Sample::Missing(c) => Some(c),
                 mc_registry::sprite_uv::Sample::Unknown => None,
-            }
-        });
+            },
+        );
     }
 
     /// THE ENTITY HITBOXES' OWN WALK (javap 26.2
@@ -56228,8 +56095,7 @@ impl App {
         // answers — the pig/cow/sheep lazy loads the cargo lane the
         // degenerate None never wore. The repo-root hint the IDENTICAL
         // path returns — the goldens' bytes the same root speaks.
-        let jar_root =
-            crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
+        let jar_root = crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
         if self.zombie_avatar.is_none() {
             self.zombie_avatar = crate::avatar::AvatarModel::load_zombie(&jar_root);
         }
@@ -56243,12 +56109,10 @@ impl App {
             self.cow_model = crate::avatar::CowModel::load(&jar_root);
         }
         if self.sheep_model.is_none() {
-            self.sheep_model =
-                crate::avatar::SheepModel::load(&jar_root);
+            self.sheep_model = crate::avatar::SheepModel::load(&jar_root);
         }
         if self.sheep_wool_model.is_none() {
-            self.sheep_wool_model =
-                crate::avatar::SheepWoolModel::load(&jar_root);
+            self.sheep_wool_model = crate::avatar::SheepWoolModel::load(&jar_root);
         }
         // THE UNDERCOAT's own lazy load (the SheepWoolUndercoatLayer's
         // own texture — the same honesty: a failed undercoat keeps only
@@ -56262,110 +56126,83 @@ impl App {
         // its own lane, a failed baby skin keeps only the BABIES of
         // that kind unseen)
         if self.baby_sheep_model.is_none() {
-            self.baby_sheep_model =
-                crate::avatar::BabySheepModel::load(&jar_root);
+            self.baby_sheep_model = crate::avatar::BabySheepModel::load(&jar_root);
         }
         if self.baby_sheep_wool_model.is_none() {
-            self.baby_sheep_wool_model =
-                crate::avatar::BabySheepWoolModel::load(&jar_root);
+            self.baby_sheep_wool_model = crate::avatar::BabySheepWoolModel::load(&jar_root);
         }
         if self.baby_cow_model.is_none() {
-            self.baby_cow_model =
-                crate::avatar::BabyCowModel::load(&jar_root);
+            self.baby_cow_model = crate::avatar::BabyCowModel::load(&jar_root);
         }
         if self.baby_pig_model.is_none() {
-            self.baby_pig_model =
-                crate::avatar::BabyPigModel::load(&jar_root);
+            self.baby_pig_model = crate::avatar::BabyPigModel::load(&jar_root);
         }
         // THE CHICKEN LANE's own lazy loads (the adult + the baby —
         // the same honesty: a failed chicken skin keeps only the
         // chickens unseen)
         if self.chicken_model.is_none() {
-            self.chicken_model =
-                crate::avatar::ChickenModel::load(&jar_root);
+            self.chicken_model = crate::avatar::ChickenModel::load(&jar_root);
         }
         if self.baby_chicken_model.is_none() {
-            self.baby_chicken_model =
-                crate::avatar::BabyChickenModel::load(&jar_root);
+            self.baby_chicken_model = crate::avatar::BabyChickenModel::load(&jar_root);
         }
         // THE VARIANT SKINS' OWN LAZY WALK (the cold/warm pairs the
         // same cache keeps — each load's sha1 verdict its own lane,
         // the failed variant the honest unseen keeps while the others
         // draw)
         if self.chicken_cold_model.is_none() {
-            self.chicken_cold_model =
-                crate::avatar::ChickenColdModel::load(&jar_root);
+            self.chicken_cold_model = crate::avatar::ChickenColdModel::load(&jar_root);
         }
         if self.chicken_warm_model.is_none() {
-            self.chicken_warm_model =
-                crate::avatar::ChickenModel::load_warm(&jar_root);
+            self.chicken_warm_model = crate::avatar::ChickenModel::load_warm(&jar_root);
         }
         if self.baby_chicken_cold_model.is_none() {
-            self.baby_chicken_cold_model = crate::avatar::BabyChickenModel::load_cold(
-                &jar_root,
-            );
+            self.baby_chicken_cold_model = crate::avatar::BabyChickenModel::load_cold(&jar_root);
         }
         if self.baby_chicken_warm_model.is_none() {
-            self.baby_chicken_warm_model = crate::avatar::BabyChickenModel::load_warm(
-                &jar_root,
-            );
+            self.baby_chicken_warm_model = crate::avatar::BabyChickenModel::load_warm(&jar_root);
         }
         // THE PIG/COW VARIANTS' OWN LAZY WALK (the same honesty the
         // chicken's lane keeps — each load's sha1 verdict its own
         // lane)
         if self.pig_cold_model.is_none() {
-            self.pig_cold_model =
-                crate::avatar::ColdPigModel::load(&jar_root);
+            self.pig_cold_model = crate::avatar::ColdPigModel::load(&jar_root);
         }
         if self.pig_warm_model.is_none() {
-            self.pig_warm_model =
-                crate::avatar::PigModel::load_warm(&jar_root);
+            self.pig_warm_model = crate::avatar::PigModel::load_warm(&jar_root);
         }
         if self.cow_cold_model.is_none() {
-            self.cow_cold_model =
-                crate::avatar::ColdCowModel::load(&jar_root);
+            self.cow_cold_model = crate::avatar::ColdCowModel::load(&jar_root);
         }
         if self.cow_warm_model.is_none() {
-            self.cow_warm_model =
-                crate::avatar::WarmCowModel::load(&jar_root);
+            self.cow_warm_model = crate::avatar::WarmCowModel::load(&jar_root);
         }
         if self.baby_pig_cold_model.is_none() {
-            self.baby_pig_cold_model = crate::avatar::BabyPigModel::load_cold(
-                &jar_root,
-            );
+            self.baby_pig_cold_model = crate::avatar::BabyPigModel::load_cold(&jar_root);
         }
         if self.baby_pig_warm_model.is_none() {
-            self.baby_pig_warm_model = crate::avatar::BabyPigModel::load_warm(
-                &jar_root,
-            );
+            self.baby_pig_warm_model = crate::avatar::BabyPigModel::load_warm(&jar_root);
         }
         if self.baby_cow_cold_model.is_none() {
-            self.baby_cow_cold_model = crate::avatar::BabyCowModel::load_cold(
-                &jar_root,
-            );
+            self.baby_cow_cold_model = crate::avatar::BabyCowModel::load_cold(&jar_root);
         }
         if self.baby_cow_warm_model.is_none() {
-            self.baby_cow_warm_model = crate::avatar::BabyCowModel::load_warm(
-                &jar_root,
-            );
+            self.baby_cow_warm_model = crate::avatar::BabyCowModel::load_warm(&jar_root);
         }
         // THE SPIDER LANE's own lazy load (the same honesty: a failed
         // spider skin keeps only the spiders unseen)
         if self.spider_model.is_none() {
-            self.spider_model =
-                crate::avatar::SpiderModel::load(&jar_root);
+            self.spider_model = crate::avatar::SpiderModel::load(&jar_root);
         }
         // THE CREEPER LANE's own lazy load (the same honesty: a failed
         // creeper skin keeps only the creepers unseen)
         if self.creeper_model.is_none() {
-            self.creeper_model =
-                crate::avatar::CreeperModel::load(&jar_root);
+            self.creeper_model = crate::avatar::CreeperModel::load(&jar_root);
         }
         // THE WARDEN LANE's own lazy load (the same honesty: a failed
         // warden skin keeps only the wardens unseen)
         if self.warden_model.is_none() {
-            self.warden_model =
-                crate::avatar::WardenModel::load(&jar_root);
+            self.warden_model = crate::avatar::WardenModel::load(&jar_root);
         }
         // THE EMISSIVE LAYERS' own lazy walks (the ctor's addLayer
         // set — each texture its OWN sha1 lane, a failed layer keeps
@@ -56399,12 +56236,10 @@ impl App {
         // wolf skin keeps only the canines unseen — the adult and the
         // baby the two OWN shas the loads verify)
         if self.wolf_model.is_none() {
-            self.wolf_model =
-                crate::avatar::WolfModel::load(&jar_root);
+            self.wolf_model = crate::avatar::WolfModel::load(&jar_root);
         }
         if self.baby_wolf_model.is_none() {
-            self.baby_wolf_model =
-                crate::avatar::BabyWolfModel::load(&jar_root);
+            self.baby_wolf_model = crate::avatar::BabyWolfModel::load(&jar_root);
         }
         // the pig's honesty is its OWN lane: a failed pig skin keeps
         // only the pigs unseen, the zombies keep drawing
@@ -56537,13 +56372,8 @@ impl App {
                 if self.armor_textures.contains_key(&key) {
                     continue;
                 }
-                let loaded = mc_registry::generated::equipment::find(name).and_then(|e| {
-                    crate::avatar::ArmorTex::load(
-                        &jar_root,
-                        dir,
-                        e,
-                    )
-                });
+                let loaded = mc_registry::generated::equipment::find(name)
+                    .and_then(|e| crate::avatar::ArmorTex::load(&jar_root, dir, e));
                 self.armor_textures.insert(key, loaded);
             }
         }
@@ -56598,9 +56428,7 @@ impl App {
                     // 0xE6E6E6 the raw word never was) — ONE color
                     // law, both age lanes the tint rides
                     let dye = if mob.custom_name.as_deref() == Some("jeb_") {
-                        crate::mob::jeb_rainbow_rgb(
-                            mob.age_ticks as f32 + self.partial_tick,
-                        )
+                        crate::mob::jeb_rainbow_rgb(mob.age_ticks as f32 + self.partial_tick)
                     } else {
                         crate::mob::sheep_wool_tint(mob.wool_color & 0x0F)
                     };
@@ -57042,10 +56870,7 @@ impl App {
                         // THE MOB'S MAIN HAND the same component verdict
                         // wears (the held_weapon stack the row table
                         // answers — the STAB attack-item lane's forward)
-                        main_hand_kinetic: mob
-                            .held_weapon
-                            .and_then(spear_kinetic_row)
-                            .is_some(),
+                        main_hand_kinetic: mob.held_weapon.and_then(spear_kinetic_row).is_some(),
                     };
                     let quads = model.quads(&state, feet, cam.yaw, cam.pitch);
                     // THE MOB-HELD ITEM LANE (ItemInHandLayer.
@@ -57070,11 +56895,7 @@ impl App {
                             .and_then(|layers| layers.first().map(|l| l.model))
                             .and_then(|model_id| {
                                 crate::avatar::held_item_quads(
-                                    &state,
-                                    feet,
-                                    cam.yaw,
-                                    cam.pitch,
-                                    model_id,
+                                    &state, feet, cam.yaw, cam.pitch, model_id,
                                 )
                             });
                     }
@@ -57090,11 +56911,7 @@ impl App {
                             .and_then(|layers| layers.first().map(|l| l.model))
                             .and_then(|model_id| {
                                 crate::avatar::offhand_item_quads(
-                                    &state,
-                                    feet,
-                                    cam.yaw,
-                                    cam.pitch,
-                                    model_id,
+                                    &state, feet, cam.yaw, cam.pitch, model_id,
                                 )
                             });
                     }
@@ -57143,9 +56960,7 @@ impl App {
                     // only the skeletons unseen, the honesty the other
                     // kinds' lanes speak)
                     if self.skeleton_avatar.is_none() {
-                        self.skeleton_avatar = crate::avatar::AvatarModel::load_skeleton(
-                            &jar_root,
-                        );
+                        self.skeleton_avatar = crate::avatar::AvatarModel::load_skeleton(&jar_root);
                     }
                     let Some(skeleton) = &self.skeleton_avatar else {
                         continue; // the skeleton skin failed its sha1 — this body stays unseen
@@ -57239,10 +57054,7 @@ impl App {
                         // THE MOB'S MAIN HAND the same component verdict
                         // wears (the held_weapon stack the row table
                         // answers — the STAB attack-item lane's forward)
-                        main_hand_kinetic: mob
-                            .held_weapon
-                            .and_then(spear_kinetic_row)
-                            .is_some(),
+                        main_hand_kinetic: mob.held_weapon.and_then(spear_kinetic_row).is_some(),
                     };
                     // THE THIN MESH (SkeletonModel's own
                     // createDefaultSkeletonMesh — the 2x12x2 limbs the
@@ -57267,11 +57079,7 @@ impl App {
                             .and_then(|layers| layers.first().map(|l| l.model))
                             .and_then(|model_id| {
                                 crate::avatar::held_item_quads(
-                                    &state,
-                                    feet,
-                                    cam.yaw,
-                                    cam.pitch,
-                                    model_id,
+                                    &state, feet, cam.yaw, cam.pitch, model_id,
                                 )
                             });
                     }
@@ -57367,13 +57175,16 @@ impl App {
                     // overlay texture's own white row the skin the
                     // closure replaces)
                     let flash = crate::avatar::creeper_white_overlay(swelling) > 0.0;
-                    (quads, Box::new(move |u, v| {
-                        if flash {
-                            [255, 255, 255, 255]
-                        } else {
-                            creeper.pixel(u, v)
-                        }
-                    }))
+                    (
+                        quads,
+                        Box::new(move |u, v| {
+                            if flash {
+                                [255, 255, 255, 255]
+                            } else {
+                                creeper.pixel(u, v)
+                            }
+                        }),
+                    )
                 }
                 crate::mob::MobKind::Wolf => {
                     // THE CANINE'S OWN PAIR (the WolfRenderer ctor's
@@ -57435,14 +57246,12 @@ impl App {
                     crate::mob::SHEEP_WIDTH as f32,
                     crate::mob::SHEEP_HEIGHT as f32,
                 ),
-                crate::mob::MobKind::Cow => (
-                    crate::mob::COW_WIDTH as f32,
-                    crate::mob::COW_HEIGHT as f32,
-                ),
-                crate::mob::MobKind::Pig => (
-                    crate::mob::PIG_WIDTH as f32,
-                    crate::mob::PIG_HEIGHT as f32,
-                ),
+                crate::mob::MobKind::Cow => {
+                    (crate::mob::COW_WIDTH as f32, crate::mob::COW_HEIGHT as f32)
+                }
+                crate::mob::MobKind::Pig => {
+                    (crate::mob::PIG_WIDTH as f32, crate::mob::PIG_HEIGHT as f32)
+                }
                 crate::mob::MobKind::Chicken => (
                     crate::mob::CHICKEN_WIDTH as f32,
                     crate::mob::CHICKEN_HEIGHT as f32,
@@ -57477,7 +57286,10 @@ impl App {
                 ),
             };
             let (bbox_w, bbox_h) = if mob.is_baby() {
-                (bbox_w * crate::mob::BABY_RENDER_SCALE, bbox_h * crate::mob::BABY_RENDER_SCALE)
+                (
+                    bbox_w * crate::mob::BABY_RENDER_SCALE,
+                    bbox_h * crate::mob::BABY_RENDER_SCALE,
+                )
             } else {
                 (bbox_w, bbox_h)
             };
@@ -57523,8 +57335,10 @@ impl App {
                         // undyed-tinted base fills the holes
                         let base = self.armor_textures.get(base_key).and_then(|o| o.as_ref());
                         let overlay_key = format!("{base_key}_overlay");
-                        let overlay =
-                            self.armor_textures.get(&overlay_key).and_then(|o| o.as_ref());
+                        let overlay = self
+                            .armor_textures
+                            .get(&overlay_key)
+                            .and_then(|o| o.as_ref());
                         if let (Some(base), Some(overlay)) = (base, overlay) {
                             let [r, g, b, al] = overlay.pixel(u, v);
                             if al >= 128 {
@@ -57618,10 +57432,14 @@ impl App {
                         ],
                     })
                     .collect();
-                fb.draw_sampled_quads_lequal(ctx.proj.mul(&ctx.view), &uc_sampled, &mut |_tex, u, v| {
-                    let [r, g, b, a] = sheep_wool_undercoat_model.unwrap().pixel(u, v);
-                    Some([r, g, b, a])
-                });
+                fb.draw_sampled_quads_lequal(
+                    ctx.proj.mul(&ctx.view),
+                    &uc_sampled,
+                    &mut |_tex, u, v| {
+                        let [r, g, b, a] = sheep_wool_undercoat_model.unwrap().pixel(u, v);
+                        Some([r, g, b, a])
+                    },
+                );
             }
             // THE WOOL LAYER's own draw (the vanilla layer order — the
             // fur renders AFTER the body, the flame feature after it):
@@ -57661,11 +57479,11 @@ impl App {
             // loaded the same sha1-verified stream the skins speak.
             if mob.fire_ticks > 0 {
                 if self.fire_strips.is_none() {
-                    self.fire_strips =
-                        crate::avatar::FireStrips::load(&jar_root);
+                    self.fire_strips = crate::avatar::FireStrips::load(&jar_root);
                 }
                 if let Some(strips) = &self.fire_strips {
-                    let flames = crate::avatar::flame_quads(feet, bbox_w, bbox_h, cam.yaw, day_time);
+                    let flames =
+                        crate::avatar::flame_quads(feet, bbox_w, bbox_h, cam.yaw, day_time);
                     // the white tint (no entity diffuse, no hurt mix —
                     // the fire's own light speaks), the strip tag rides
                     // the ring parity (fire_0 even / fire_1 odd), the
@@ -57729,7 +57547,15 @@ impl App {
             let vp = ctx.proj.mul(&ctx.view);
             if let Some(score) = score_line {
                 Self::draw_name_tag(
-                    fb, a, vp, feet, attach_y, score, cam.yaw, cam.pitch, mob.crouching,
+                    fb,
+                    a,
+                    vp,
+                    feet,
+                    attach_y,
+                    score,
+                    cam.yaw,
+                    cam.pitch,
+                    mob.crouching,
                 );
             }
             if mob.name_visible || crosshair_pick == Some(ci) {
@@ -57737,10 +57563,22 @@ impl App {
                     // the name's own anchor: the score's presence lifts
                     // it the 0.25875 the walk's translate keeps (the
                     // name draws ABOVE the score line)
-                    let top_y =
-                        attach_y + if score_line.is_some() { NAME_TAG_SCORE_OFFSET } else { 0.0 };
+                    let top_y = attach_y
+                        + if score_line.is_some() {
+                            NAME_TAG_SCORE_OFFSET
+                        } else {
+                            0.0
+                        };
                     Self::draw_name_tag(
-                        fb, a, vp, feet, top_y, name, cam.yaw, cam.pitch, mob.crouching,
+                        fb,
+                        a,
+                        vp,
+                        feet,
+                        top_y,
+                        name,
+                        cam.yaw,
+                        cam.pitch,
+                        mob.crouching,
                     );
                 }
             }
@@ -57783,8 +57621,7 @@ impl App {
             // ANIMATION the getTendrilAnimation(partialTick) lerp
             // getter banks
             let age_ticks = warden.tick_count as f32 + self.partial_tick;
-            let tendril_word =
-                crate::sculk::warden_tendril_animation_at(warden, self.partial_tick);
+            let tendril_word = crate::sculk::warden_tendril_animation_at(warden, self.partial_tick);
             let heart_word = crate::sculk::warden_heart_animation_at(warden, self.partial_tick);
             let head_yaw_word = warden.head_yaw_word_at(self.partial_tick);
             let state = crate::avatar::WardenState {
@@ -57822,8 +57659,7 @@ impl App {
                 // no-op keeps
                 sniff_time: if warden.sniffing {
                     Some(
-                        (crate::sculk::WARDEN_SNIFFING_DURATION_TICKS - warden.sniff_ticks)
-                            as f32
+                        (crate::sculk::WARDEN_SNIFFING_DURATION_TICKS - warden.sniff_ticks) as f32
                             + self.partial_tick,
                     )
                 } else {
@@ -57840,8 +57676,7 @@ impl App {
                 // no-op keeps
                 emerge_time: if warden.emerging {
                     Some(
-                        (crate::sculk::WARDEN_EMERGE_DURATION_TICKS - warden.emerge_ticks)
-                            as f32
+                        (crate::sculk::WARDEN_EMERGE_DURATION_TICKS - warden.emerge_ticks) as f32
                             + self.partial_tick,
                     )
                 } else {
@@ -57953,20 +57788,12 @@ impl App {
                 (
                     crate::avatar::WardenLayer::Tendrils,
                     Some(warden_model),
-                    crate::avatar::WardenLayer::Tendrils.alpha_at(
-                        &state,
-                        tendril_word,
-                        heart_word,
-                    ),
+                    crate::avatar::WardenLayer::Tendrils.alpha_at(&state, tendril_word, heart_word),
                 ),
                 (
                     crate::avatar::WardenLayer::Heart,
                     warden_heart_model,
-                    crate::avatar::WardenLayer::Heart.alpha_at(
-                        &state,
-                        tendril_word,
-                        heart_word,
-                    ),
+                    crate::avatar::WardenLayer::Heart.alpha_at(&state, tendril_word, heart_word),
                 ),
             ];
             for (layer, tex, alpha) in layers {
@@ -58034,12 +57861,9 @@ impl App {
                 tex: "",
                 tint: [0.0, 0.0, 0.0],
             }];
-            fb.draw_translucent_sampled_quads(
-                vp,
-                &bg_quad,
-                64.0 / 255.0,
-                &mut |_t, _u, _v| Some([255, 255, 255, 255]),
-            );
+            fb.draw_translucent_sampled_quads(vp, &bg_quad, 64.0 / 255.0, &mut |_t, _u, _v| {
+                Some([255, 255, 255, 255])
+            });
         }
         // THE TEXT (the two passes the raw walk speaks —
         // the dim 0x80FFFFFF copy WITH the box, the bright
@@ -58074,21 +57898,15 @@ impl App {
             };
             // the see-through pass (0x80FFFFFF — the white
             // at alpha 128, the box rides this lane)
-            fb.draw_translucent_sampled_quads(
-                vp,
-                &sampled,
-                128.0 / 255.0,
-                &mut |_t, u, v| Some(sample_page(&tex, u, v)),
-            );
+            fb.draw_translucent_sampled_quads(vp, &sampled, 128.0 / 255.0, &mut |_t, u, v| {
+                Some(sample_page(&tex, u, v))
+            });
             // the bright core (-1 — ONLY the standing body,
             // the isDiscrete gate the crouch word speaks)
             if !crouching {
-                fb.draw_translucent_sampled_quads(
-                    vp,
-                    &sampled,
-                    1.0,
-                    &mut |_t, u, v| Some(sample_page(&tex, u, v)),
-                );
+                fb.draw_translucent_sampled_quads(vp, &sampled, 1.0, &mut |_t, u, v| {
+                    Some(sample_page(&tex, u, v))
+                });
             }
         }
     }
@@ -58123,18 +57941,20 @@ impl App {
         // never wore, the package-dir cwd the loads the law serves)
         let jar = crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
         if self.end_portal_sky.is_none() {
-            let path = jar.join("environment/end_sky.png").to_string_lossy().into_owned();
-            self.end_portal_sky = Self::load_end_portal_texture(
-                &path,
-                "b9da532dd98befc1a7cbd6420c17532239485788",
-            );
+            let path = jar
+                .join("environment/end_sky.png")
+                .to_string_lossy()
+                .into_owned();
+            self.end_portal_sky =
+                Self::load_end_portal_texture(&path, "b9da532dd98befc1a7cbd6420c17532239485788");
         }
         if self.end_portal_noise.is_none() {
-            let path = jar.join("entity/end_portal/end_portal.png").to_string_lossy().into_owned();
-            self.end_portal_noise = Self::load_end_portal_texture(
-                &path,
-                "04099306b075ead427f5c95d8a8d896715c5bde6",
-            );
+            let path = jar
+                .join("entity/end_portal/end_portal.png")
+                .to_string_lossy()
+                .into_owned();
+            self.end_portal_noise =
+                Self::load_end_portal_texture(&path, "04099306b075ead427f5c95d8a8d896715c5bde6");
         }
         let (Some((sw, sh, sky)), Some((nw, nh, noise))) =
             (self.end_portal_sky.clone(), self.end_portal_noise.clone())
@@ -58144,8 +57964,7 @@ impl App {
         // THE GAMETIME UNIFORM (the globals.glsl law the layer scroll
         // reads — the day fraction the clock's own 24000 cycle keeps,
         // the partial the frame's own lerp ride)
-        let game_time =
-            ((self.day_time_now() % 24000) as f64 + self.partial_tick as f64) / 24000.0;
+        let game_time = ((self.day_time_now() % 24000) as f64 + self.partial_tick as f64) / 24000.0;
         // THE FSH'S OWN COLORS (the sixteen vec3s the constant table
         // speaks verbatim — the base weight the [0] row carries, the
         // layer weights the 0..16 rows keep)
@@ -58196,49 +58015,43 @@ impl App {
         // THE TEXEL'S OWN PICK (the NEAREST walk the wrap the REPEAT
         // law keeps — the layer transforms the uv past the edge the
         // modulo folds, the noise the seamless tiling speaks)
-        let pick =
-            |px: &[u8], w: u32, h: u32, u: f32, v: f32| -> [f32; 3] {
-                let (uw, uh) = (w as usize, h as usize);
-                let uu = (u.rem_euclid(1.0) * w as f32) as usize % uw;
-                let vv = (v.rem_euclid(1.0) * h as f32) as usize % uh;
-                let o = (vv * uw + uu) * 4;
-                [px[o] as f32, px[o + 1] as f32, px[o + 2] as f32]
-            };
-        fb.draw_sampled_quads(
-            ctx.proj.mul(&ctx.view),
-            &sampled,
-            &mut |_tex, u, v| {
-                // THE BASE (Sampler0 the END_SKY texture — the
-                // COLORS[0] weight the shader's own head wears)
-                let s = pick(&sky, sw, sh, u, v);
-                let mut r = (s[0] / 255.0) * COLORS[0][0];
-                let mut g = (s[1] / 255.0) * COLORS[0][1];
-                let mut b = (s[2] / 255.0) * COLORS[0][2];
-                // THE SIXTEEN LAYERS (Sampler1 the noise texture — the
-                // end_portal_layer matrix the fsh's own walk serves)
-                for i in 0..16usize {
-                    let l = (i + 1) as f32;
-                    let th =
-                        ((l * l * 4321.0 + l * 9.0) * 2.0).to_radians();
-                    let (c, s) = th.sin_cos();
-                    let sc = (4.5 - l / 4.0) * 2.0;
-                    let u1 = 0.5 * u + 0.25 + 17.0 / l;
-                    let v1 = 0.5 * v + 0.25 + (2.0 + l / 1.5) * (game_time as f32 * 1.5);
-                    let u2 = sc * (c * u1 + s * v1);
-                    let v2 = sc * (-s * u1 + c * v1);
-                    let p = pick(&noise, nw, nh, u2, v2);
-                    r += (p[0] / 255.0) * COLORS[i][0];
-                    g += (p[1] / 255.0) * COLORS[i][1];
-                    b += (p[2] / 255.0) * COLORS[i][2];
-                }
-                Some([
-                    (r * 255.0).clamp(0.0, 255.0) as u8,
-                    (g * 255.0).clamp(0.0, 255.0) as u8,
-                    (b * 255.0).clamp(0.0, 255.0) as u8,
-                    255,
-                ])
-            },
-        );
+        let pick = |px: &[u8], w: u32, h: u32, u: f32, v: f32| -> [f32; 3] {
+            let (uw, uh) = (w as usize, h as usize);
+            let uu = (u.rem_euclid(1.0) * w as f32) as usize % uw;
+            let vv = (v.rem_euclid(1.0) * h as f32) as usize % uh;
+            let o = (vv * uw + uu) * 4;
+            [px[o] as f32, px[o + 1] as f32, px[o + 2] as f32]
+        };
+        fb.draw_sampled_quads(ctx.proj.mul(&ctx.view), &sampled, &mut |_tex, u, v| {
+            // THE BASE (Sampler0 the END_SKY texture — the
+            // COLORS[0] weight the shader's own head wears)
+            let s = pick(&sky, sw, sh, u, v);
+            let mut r = (s[0] / 255.0) * COLORS[0][0];
+            let mut g = (s[1] / 255.0) * COLORS[0][1];
+            let mut b = (s[2] / 255.0) * COLORS[0][2];
+            // THE SIXTEEN LAYERS (Sampler1 the noise texture — the
+            // end_portal_layer matrix the fsh's own walk serves)
+            for i in 0..16usize {
+                let l = (i + 1) as f32;
+                let th = ((l * l * 4321.0 + l * 9.0) * 2.0).to_radians();
+                let (c, s) = th.sin_cos();
+                let sc = (4.5 - l / 4.0) * 2.0;
+                let u1 = 0.5 * u + 0.25 + 17.0 / l;
+                let v1 = 0.5 * v + 0.25 + (2.0 + l / 1.5) * (game_time as f32 * 1.5);
+                let u2 = sc * (c * u1 + s * v1);
+                let v2 = sc * (-s * u1 + c * v1);
+                let p = pick(&noise, nw, nh, u2, v2);
+                r += (p[0] / 255.0) * COLORS[i][0];
+                g += (p[1] / 255.0) * COLORS[i][1];
+                b += (p[2] / 255.0) * COLORS[i][2];
+            }
+            Some([
+                (r * 255.0).clamp(0.0, 255.0) as u8,
+                (g * 255.0).clamp(0.0, 255.0) as u8,
+                (b * 255.0).clamp(0.0, 255.0) as u8,
+                255,
+            ])
+        });
     }
 
     /// THE PAIR'S OWN LOADER (the sha1 gate the cache's bytes verify —
@@ -58342,7 +58155,11 @@ impl App {
                 ));
             for (q, tints) in &parts {
                 let base = icon_tint(tints);
-                let sh = if q.shade { ground_shade(q.direction) } else { 1.0 };
+                let sh = if q.shade {
+                    ground_shade(q.direction)
+                } else {
+                    1.0
+                };
                 sampled.push(crate::raster::SampledQuad {
                     pts: q.vertices.map(|v| {
                         let p = m.transform_point(Vec3::new(v[0], v[1], v[2]));
@@ -58358,13 +58175,15 @@ impl App {
             return;
         }
         let vp = ctx.proj.mul(&ctx.view);
-        fb.draw_sampled_quads(vp, &sampled, &mut |tex, u, v| {
-            match mc_registry::sprite_uv::sample_uv(tex, u, v) {
+        fb.draw_sampled_quads(
+            vp,
+            &sampled,
+            &mut |tex, u, v| match mc_registry::sprite_uv::sample_uv(tex, u, v) {
                 mc_registry::sprite_uv::Sample::Pixel(c) => Some(c),
                 mc_registry::sprite_uv::Sample::Missing(c) => Some(c),
                 mc_registry::sprite_uv::Sample::Unknown => None,
-            }
-        });
+            },
+        );
     }
 
     /// THE ITEM FRAME's render (javap ItemFrameRenderer.submit the 26.2
@@ -58397,10 +58216,10 @@ impl App {
         // at the +Z edge the NORTH facing wears)
         let yaw_radians = |facing: u8| -> f32 {
             let deg = match facing {
-                4 => 90.0f32,  // WEST
-                3 => 180.0,    // SOUTH
-                5 => 270.0,    // EAST
-                _ => 0.0,      // NORTH (and the vertical band the gate refuses)
+                4 => 90.0f32, // WEST
+                3 => 180.0,   // SOUTH
+                5 => 270.0,   // EAST
+                _ => 0.0,     // NORTH (and the vertical band the gate refuses)
             };
             deg * std::f32::consts::PI / 180.0
         };
@@ -58439,8 +58258,7 @@ impl App {
             } else {
                 "block/item_frame"
             };
-            let Some(quads) = mc_registry::element_quads::derive_model_inherited(model_id)
-            else {
+            let Some(quads) = mc_registry::element_quads::derive_model_inherited(model_id) else {
                 continue;
             };
             let yaw = yaw_radians(fr.facing);
@@ -58478,8 +58296,10 @@ impl App {
             // 0.5 scale the half-block item the vanilla law speaks)
             if fr.item.1 > 0 {
                 if let Some(layers) = mc_registry::item_model_layers(fr.item.0) {
-                    let mut parts: Vec<(mc_registry::element_quads::Quad, &'static [&'static str])> =
-                        Vec::new();
+                    let mut parts: Vec<(
+                        mc_registry::element_quads::Quad,
+                        &'static [&'static str],
+                    )> = Vec::new();
                     let mut ok = true;
                     for layer in &layers {
                         match mc_registry::display::posed_item_layer_quads(
@@ -58499,9 +58319,7 @@ impl App {
                         }
                     }
                     if ok && !parts.is_empty() {
-                        let rad_slot = -(fr.rotation as f32) * 45.0
-                            * std::f32::consts::PI
-                            / 180.0;
+                        let rad_slot = -(fr.rotation as f32) * 45.0 * std::f32::consts::PI / 180.0;
                         let m_item = Mat4::translation(cx, cy, cz)
                             .mul(&Mat4::rot_y(yaw))
                             .mul(&Mat4::translation(0.0, 0.0, 0.4375 - 0.0078125))
@@ -58512,8 +58330,7 @@ impl App {
                             let base = icon_tint(tints);
                             sampled.push(crate::raster::SampledQuad {
                                 pts: q.vertices.map(|v| {
-                                    let p =
-                                        m_item.transform_point(Vec3::new(v[0], v[1], v[2]));
+                                    let p = m_item.transform_point(Vec3::new(v[0], v[1], v[2]));
                                     [p[0], p[1], p[2]]
                                 }),
                                 uv: q.uvs,
@@ -58529,13 +58346,15 @@ impl App {
             return;
         }
         let vp = ctx.proj.mul(&ctx.view);
-        fb.draw_sampled_quads(vp, &sampled, &mut |tex, u, v| {
-            match mc_registry::sprite_uv::sample_uv(tex, u, v) {
+        fb.draw_sampled_quads(
+            vp,
+            &sampled,
+            &mut |tex, u, v| match mc_registry::sprite_uv::sample_uv(tex, u, v) {
                 mc_registry::sprite_uv::Sample::Pixel(c) => Some(c),
                 mc_registry::sprite_uv::Sample::Missing(c) => Some(c),
                 mc_registry::sprite_uv::Sample::Unknown => None,
-            }
-        });
+            },
+        );
     }
 
     /// THE XP ORB's render (javap `ExperienceOrbRenderer.submit` — the
@@ -58559,11 +58378,9 @@ impl App {
         ctx: &RenderCtx,
         cam: &crate::camera::Camera,
     ) {
-        let jar_root =
-            crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
+        let jar_root = crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
         if self.orb_sheet.is_none() {
-            self.orb_sheet =
-                crate::avatar::OrbSheet::load(&jar_root);
+            self.orb_sheet = crate::avatar::OrbSheet::load(&jar_root);
         }
         let Some(sheet) = &self.orb_sheet else {
             return;
@@ -58674,7 +58491,12 @@ impl App {
             // edge test (the vanishing-particle lesson the bubbles
             // round dug up)
             sampled.push(crate::raster::SampledQuad {
-                pts: [corner(-1.0, -1.0), corner(1.0, -1.0), corner(1.0, 1.0), corner(-1.0, 1.0)],
+                pts: [
+                    corner(-1.0, -1.0),
+                    corner(1.0, -1.0),
+                    corner(1.0, 1.0),
+                    corner(-1.0, 1.0),
+                ],
                 uv: [[u0, v1], [u1, v1], [u1, v0], [u0, v0]],
                 tex,
                 tint: [1.0, 1.0, 1.0],
@@ -58684,13 +58506,15 @@ impl App {
             return;
         }
         let vp = ctx.proj.mul(&ctx.view);
-        fb.draw_sampled_quads(vp, &sampled, &mut |tex, u, v| {
-            match mc_registry::sprite_uv::sample_uv(tex, u, v) {
+        fb.draw_sampled_quads(
+            vp,
+            &sampled,
+            &mut |tex, u, v| match mc_registry::sprite_uv::sample_uv(tex, u, v) {
                 mc_registry::sprite_uv::Sample::Pixel(c) => Some(c),
                 mc_registry::sprite_uv::Sample::Missing(c) => Some(c),
                 mc_registry::sprite_uv::Sample::Unknown => None,
-            }
-        });
+            },
+        );
     }
 
     /// THE PARTICLE LANE's render — the vanilla particle pass's own
@@ -58710,125 +58534,92 @@ impl App {
         ctx: &RenderCtx,
         cam: &crate::camera::Camera,
     ) {
-        let jar_root =
-            crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
+        let jar_root = crate::avatar::jar_runtime_root(std::path::Path::new("assets-cache/jar"));
         // the lazy runtime loads (the orb sheet's own pattern — the
         // missing file keeps its kind invisible)
         if self.crit_sprite.is_none() {
-            self.crit_sprite =
-                crate::avatar::CritSprite::load(&jar_root);
+            self.crit_sprite = crate::avatar::CritSprite::load(&jar_root);
         }
         if self.poof_frames.is_none() {
-            self.poof_frames =
-                crate::avatar::PoofFrames::load(&jar_root);
+            self.poof_frames = crate::avatar::PoofFrames::load(&jar_root);
         }
         if self.spark_frames.is_none() {
-            self.spark_frames =
-                crate::avatar::SparkFrames::load(&jar_root);
+            self.spark_frames = crate::avatar::SparkFrames::load(&jar_root);
         }
         if self.bubble_sprite.is_none() {
-            self.bubble_sprite =
-                crate::avatar::BubbleSprite::load(&jar_root);
+            self.bubble_sprite = crate::avatar::BubbleSprite::load(&jar_root);
         }
         if self.splash_frames.is_none() {
-            self.splash_frames =
-                crate::avatar::SplashFrames::load(&jar_root);
+            self.splash_frames = crate::avatar::SplashFrames::load(&jar_root);
         }
         if self.lava_sprite.is_none() {
-            self.lava_sprite =
-                crate::avatar::LavaSprite::load(&jar_root);
+            self.lava_sprite = crate::avatar::LavaSprite::load(&jar_root);
         }
         if self.drip_hang_sprite.is_none() {
-            self.drip_hang_sprite =
-                crate::avatar::DripHangSprite::load(&jar_root);
+            self.drip_hang_sprite = crate::avatar::DripHangSprite::load(&jar_root);
         }
         if self.drip_fall_sprite.is_none() {
-            self.drip_fall_sprite =
-                crate::avatar::DripFallSprite::load(&jar_root);
+            self.drip_fall_sprite = crate::avatar::DripFallSprite::load(&jar_root);
         }
         if self.drip_land_sprite.is_none() {
-            self.drip_land_sprite =
-                crate::avatar::DripLandSprite::load(&jar_root);
+            self.drip_land_sprite = crate::avatar::DripLandSprite::load(&jar_root);
         }
         if self.flame_sprite.is_none() {
-            self.flame_sprite =
-                crate::avatar::FlameSprite::load(&jar_root);
+            self.flame_sprite = crate::avatar::FlameSprite::load(&jar_root);
         }
         if self.soul_flame_sprite.is_none() {
-            self.soul_flame_sprite =
-                crate::avatar::SoulFlameSprite::load(&jar_root);
+            self.soul_flame_sprite = crate::avatar::SoulFlameSprite::load(&jar_root);
         }
         if self.damage_sprite.is_none() {
-            self.damage_sprite =
-                crate::avatar::DamageSprite::load(&jar_root);
+            self.damage_sprite = crate::avatar::DamageSprite::load(&jar_root);
         }
         if self.sweep_frames.is_none() {
-            self.sweep_frames =
-                crate::avatar::SweepFrames::load(&jar_root);
+            self.sweep_frames = crate::avatar::SweepFrames::load(&jar_root);
         }
         if self.explosion_frames.is_none() {
-            self.explosion_frames =
-                crate::avatar::ExplosionFrames::load(&jar_root);
+            self.explosion_frames = crate::avatar::ExplosionFrames::load(&jar_root);
         }
         if self.heart_sprite.is_none() {
-            self.heart_sprite =
-                crate::avatar::HeartSprite::load(&jar_root);
+            self.heart_sprite = crate::avatar::HeartSprite::load(&jar_root);
         }
         if self.glow_sprite.is_none() {
-            self.glow_sprite =
-                crate::avatar::GlowSprite::load(&jar_root);
+            self.glow_sprite = crate::avatar::GlowSprite::load(&jar_root);
         }
         if self.sculk_charge_frames.is_none() {
-            self.sculk_charge_frames =
-                crate::avatar::SculkChargeFrames::load(&jar_root);
+            self.sculk_charge_frames = crate::avatar::SculkChargeFrames::load(&jar_root);
         }
         if self.sonic_boom_frames.is_none() {
-            self.sonic_boom_frames =
-                crate::avatar::SonicBoomFrames::load(&jar_root);
+            self.sonic_boom_frames = crate::avatar::SonicBoomFrames::load(&jar_root);
         }
         if self.sculk_pop_frames.is_none() {
-            self.sculk_pop_frames =
-                crate::avatar::SculkPopFrames::load(&jar_root);
+            self.sculk_pop_frames = crate::avatar::SculkPopFrames::load(&jar_root);
         }
         if self.big_smoke_frames.is_none() {
-            self.big_smoke_frames =
-                crate::avatar::BigSmokeFrames::load(&jar_root);
+            self.big_smoke_frames = crate::avatar::BigSmokeFrames::load(&jar_root);
         }
         if self.shriek_sprite.is_none() {
-            self.shriek_sprite =
-                crate::avatar::ShriekSprite::load(&jar_root);
+            self.shriek_sprite = crate::avatar::ShriekSprite::load(&jar_root);
         }
         if self.sculk_soul_frames.is_none() {
-            self.sculk_soul_frames =
-                crate::avatar::SculkSoulFrames::load(&jar_root);
+            self.sculk_soul_frames = crate::avatar::SculkSoulFrames::load(&jar_root);
         }
         if self.flash_sprite.is_none() {
-            self.flash_sprite =
-                crate::avatar::FlashSprite::load(&jar_root);
+            self.flash_sprite = crate::avatar::FlashSprite::load(&jar_root);
         }
         if self.glint_sprite.is_none() {
-            self.glint_sprite =
-                crate::avatar::GlintSprite::load(&jar_root);
+            self.glint_sprite = crate::avatar::GlintSprite::load(&jar_root);
         }
         if self.effect_frames.is_none() {
-            self.effect_frames = crate::avatar::SpellFrames::load(
-                &jar_root,
-                false,
-            );
+            self.effect_frames = crate::avatar::SpellFrames::load(&jar_root, false);
         }
         if self.spell_frames.is_none() {
-            self.spell_frames = crate::avatar::SpellFrames::load(
-                &jar_root,
-                true,
-            );
+            self.spell_frames = crate::avatar::SpellFrames::load(&jar_root, true);
         }
         if self.potion_sprites.is_none() {
-            self.potion_sprites =
-                crate::avatar::PotionSprites::load(&jar_root);
+            self.potion_sprites = crate::avatar::PotionSprites::load(&jar_root);
         }
         if self.eye_sprites.is_none() {
-            self.eye_sprites =
-                crate::avatar::EyeSprites::load(&jar_root);
+            self.eye_sprites = crate::avatar::EyeSprites::load(&jar_root);
         }
         let sy = cam.yaw.sin();
         let cy = cam.yaw.cos();
@@ -58973,12 +58764,7 @@ impl App {
                         uv: if flipped {
                             // the π roll's own half-turn (the corners'
                             // diagonal swap the rotation speaks)
-                            [
-                                [16.0, 0.0],
-                                [0.0, 0.0],
-                                [0.0, 16.0],
-                                [16.0, 16.0],
-                            ]
+                            [[16.0, 0.0], [0.0, 0.0], [0.0, 16.0], [16.0, 16.0]]
                         } else {
                             [[0.0, 16.0], [16.0, 16.0], [16.0, 0.0], [0.0, 0.0]]
                         },
@@ -59020,12 +58806,7 @@ impl App {
                     let frame = crate::particles::sonic_boom_frame(p.age, p.lifetime);
                     let quad = crate::raster::SampledQuad {
                         pts,
-                        uv: [
-                            [0.0, 32.0],
-                            [32.0, 32.0],
-                            [32.0, 0.0],
-                            [0.0, 0.0],
-                        ],
+                        uv: [[0.0, 32.0], [32.0, 32.0], [32.0, 0.0], [0.0, 0.0]],
                         tex: "particle_sonic_boom",
                         tint: p.col,
                     };
@@ -59058,11 +58839,7 @@ impl App {
                     // TRANSLUCENT layer, the single 13x13 sprite the
                     // one-texture json banks
                     let half = p.half();
-                    let dim = crate::particles::shriek_fade(
-                        p.age,
-                        p.lifetime,
-                        self.partial_tick,
-                    );
+                    let dim = crate::particles::shriek_fade(p.age, p.lifetime, self.partial_tick);
                     let tint = [dim, dim, dim];
                     // the away axis (right × up — the orthonormal third
                     // the basis keeps)
@@ -59074,12 +58851,12 @@ impl App {
                     let tilted = |sx: f32, syp: f32, mirror: bool, sign: f32| {
                         let x = if mirror { -sx } else { sx };
                         [
-                            lx as f32 + (right[0] * x + up[0] * syp * 0.5 + away[0] * syp * sign)
-                                * half,
-                            ly as f32 + (right[1] * x + up[1] * syp * 0.5 + away[1] * syp * sign)
-                                * half,
-                            lz as f32 + (right[2] * x + up[2] * syp * 0.5 + away[2] * syp * sign)
-                                * half,
+                            lx as f32
+                                + (right[0] * x + up[0] * syp * 0.5 + away[0] * syp * sign) * half,
+                            ly as f32
+                                + (right[1] * x + up[1] * syp * 0.5 + away[1] * syp * sign) * half,
+                            lz as f32
+                                + (right[2] * x + up[2] * syp * 0.5 + away[2] * syp * sign) * half,
                         ]
                     };
                     let uv = [[0.0, 13.0], [13.0, 13.0], [13.0, 0.0], [0.0, 0.0]];
@@ -59145,9 +58922,9 @@ impl App {
                     // getLightCoords 0xF000F0 override banks (the
                     // particle lane's own no-lightmap fold), the
                     // TRANSLUCENT layer the getLayer override returns
-                    let frame = crate::particles::spark_file_index(
-                        crate::particles::spark_frame(p.age, p.lifetime),
-                    );
+                    let frame = crate::particles::spark_file_index(crate::particles::spark_frame(
+                        p.age, p.lifetime,
+                    ));
                     let a = crate::particles::spark_alpha(p.age, p.lifetime);
                     let quad = crate::raster::SampledQuad {
                         pts,
@@ -59160,7 +58937,8 @@ impl App {
                         None => spark_groups.push((frame, vec![quad])),
                     }
                 }
-                crate::particles::ParticleKind::Poof | crate::particles::ParticleKind::Snowflake => {
+                crate::particles::ParticleKind::Poof
+                | crate::particles::ParticleKind::Snowflake => {
                     let frame = crate::particles::poof_frame(p.age, p.lifetime);
                     let quad = crate::raster::SampledQuad {
                         pts,
@@ -59436,12 +59214,7 @@ impl App {
                     let frame = crate::particles::explosion_frame(p.age, p.lifetime);
                     let quad = crate::raster::SampledQuad {
                         pts,
-                        uv: [
-                            [0.0, 32.0],
-                            [32.0, 32.0],
-                            [32.0, 0.0],
-                            [0.0, 0.0],
-                        ],
+                        uv: [[0.0, 32.0], [32.0, 32.0], [32.0, 0.0], [0.0, 0.0]],
                         tex: "particle_explosion",
                         tint: p.col,
                     };
@@ -59464,12 +59237,7 @@ impl App {
                     let frame = crate::particles::sweep_frame(p.age, p.lifetime);
                     let quad = crate::raster::SampledQuad {
                         pts,
-                        uv: [
-                            [0.0, 32.0],
-                            [32.0, 32.0],
-                            [32.0, 0.0],
-                            [0.0, 0.0],
-                        ],
+                        uv: [[0.0, 32.0], [32.0, 32.0], [32.0, 0.0], [0.0, 0.0]],
                         tex: "particle_sweep",
                         tint: p.col,
                     };
@@ -59710,15 +59478,11 @@ impl App {
         // alpha-0 quads the render arm never banks, the visible ones
         // the custom-ARGB colors arm)
         if let Some(s) = &self.flash_sprite {
-            fb.draw_sampled_quads(vp, &flash_quads, &mut |_tex, u, v| {
-                Some(s.pixel(u, v))
-            });
+            fb.draw_sampled_quads(vp, &flash_quads, &mut |_tex, u, v| Some(s.pixel(u, v)));
         }
         // the crit group (the star's own pixels)
         if let Some(crit) = &self.crit_sprite {
-            fb.draw_sampled_quads(vp, &crit_quads, &mut |_tex, u, v| {
-                Some(crit.pixel(u, v))
-            });
+            fb.draw_sampled_quads(vp, &crit_quads, &mut |_tex, u, v| Some(crit.pixel(u, v)));
         }
         // the bubble group (the drown sprite's own pixels)
         if let Some(bubble) = &self.bubble_sprite {
@@ -59737,33 +59501,23 @@ impl App {
         // the lava group (the drip's own bright pixels — the full
         // sprite the single-texture json speaks)
         if let Some(lava) = &self.lava_sprite {
-            fb.draw_sampled_quads(vp, &lava_quads, &mut |_tex, u, v| {
-                Some(lava.pixel(u, v))
-            });
+            fb.draw_sampled_quads(vp, &lava_quads, &mut |_tex, u, v| Some(lava.pixel(u, v)));
         }
         // the dripstone family's groups (the 1504 lane's own sprites —
         // the hang / fall / land pixels the wire lane draws)
         if let Some(s) = &self.drip_hang_sprite {
-            fb.draw_sampled_quads(vp, &drip_hang_quads, &mut |_tex, u, v| {
-                Some(s.pixel(u, v))
-            });
+            fb.draw_sampled_quads(vp, &drip_hang_quads, &mut |_tex, u, v| Some(s.pixel(u, v)));
         }
         if let Some(s) = &self.drip_fall_sprite {
-            fb.draw_sampled_quads(vp, &drip_fall_quads, &mut |_tex, u, v| {
-                Some(s.pixel(u, v))
-            });
+            fb.draw_sampled_quads(vp, &drip_fall_quads, &mut |_tex, u, v| Some(s.pixel(u, v)));
         }
         if let Some(s) = &self.drip_land_sprite {
-            fb.draw_sampled_quads(vp, &drip_land_quads, &mut |_tex, u, v| {
-                Some(s.pixel(u, v))
-            });
+            fb.draw_sampled_quads(vp, &drip_land_quads, &mut |_tex, u, v| Some(s.pixel(u, v)));
         }
         // the flame group (the torch's own bright pixels — the full
         // sprite the single-texture json speaks)
         if let Some(flame) = &self.flame_sprite {
-            fb.draw_sampled_quads(vp, &flame_quads, &mut |_tex, u, v| {
-                Some(flame.pixel(u, v))
-            });
+            fb.draw_sampled_quads(vp, &flame_quads, &mut |_tex, u, v| Some(flame.pixel(u, v)));
         }
         // the soul flame group (the trial spawner's OMINOUS pixels —
         // the full sprite the single-texture json speaks, the SAME
@@ -59785,9 +59539,7 @@ impl App {
         // order folds)
         if let Some(frames) = &self.poof_frames {
             for (file, quads) in &smoke_groups {
-                fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| {
-                    Some(frames.pixel(*file, u, v))
-                });
+                fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| Some(frames.pixel(*file, u, v)));
             }
         }
         // the dragon groups (the splash pool's own frame walk — the
@@ -59795,9 +59547,7 @@ impl App {
         // ASCENDING order the +5 file offset keeps)
         if let Some(frames) = &self.poof_frames {
             for (file, quads) in &dragon_groups {
-                fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| {
-                    Some(frames.pixel(*file, u, v))
-                });
+                fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| Some(frames.pixel(*file, u, v)));
             }
         }
         // the cloud groups (the steam's own frame walk — the same
@@ -59805,9 +59555,7 @@ impl App {
         // DESCENDING order the file fold keeps)
         if let Some(frames) = &self.poof_frames {
             for (file, quads) in &cloud_groups {
-                fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| {
-                    Some(frames.pixel(*file, u, v))
-                });
+                fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| Some(frames.pixel(*file, u, v)));
             }
         }
         // the campfire smoke groups (the cosy column's own 16x16
@@ -59844,24 +59592,18 @@ impl App {
         // the heart group (the love burst's own red pixels — the full
         // sprite the single-texture json speaks)
         if let Some(heart) = &self.heart_sprite {
-            fb.draw_sampled_quads(vp, &heart_quads, &mut |_tex, u, v| {
-                Some(heart.pixel(u, v))
-            });
+            fb.draw_sampled_quads(vp, &heart_quads, &mut |_tex, u, v| Some(heart.pixel(u, v)));
         }
         // the glint group (the feed sparkle's own green pixels — the
         // full sprite the single-texture json speaks)
         if let Some(glint) = &self.glint_sprite {
-            fb.draw_sampled_quads(vp, &glint_quads, &mut |_tex, u, v| {
-                Some(glint.pixel(u, v))
-            });
+            fb.draw_sampled_quads(vp, &glint_quads, &mut |_tex, u, v| Some(glint.pixel(u, v)));
         }
         // the wax trio's group (the glow sprite's own pixels — the
         // full sprite the three one-texture jsons speak, the OPAQUE
         // lane the flame draw's own shape keeps)
         if let Some(glow) = &self.glow_sprite {
-            fb.draw_sampled_quads(vp, &glow_quads, &mut |_tex, u, v| {
-                Some(glow.pixel(u, v))
-            });
+            fb.draw_sampled_quads(vp, &glow_quads, &mut |_tex, u, v| Some(glow.pixel(u, v)));
         }
         // the sculk charge groups (the pulse's own 16x16 pixels — the
         // frames the json's ascending order holds, the age walk the
@@ -59918,9 +59660,7 @@ impl App {
                 if *instant {
                     continue;
                 }
-                fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| {
-                    Some(frames.pixel(*file, u, v))
-                });
+                fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| Some(frames.pixel(*file, u, v)));
             }
         }
         if let Some(frames) = &self.spell_frames {
@@ -59928,9 +59668,7 @@ impl App {
                 if !*instant {
                     continue;
                 }
-                fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| {
-                    Some(frames.pixel(*file, u, v))
-                });
+                fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| Some(frames.pixel(*file, u, v)));
             }
         }
         // the shard groups (the two item layers' own pixels — the
@@ -60051,8 +59789,7 @@ impl App {
         // Random law verbatim: the 0x5DEECE66D scramble, the 48-bit
         // mask, the 31-bit draw, the power-of-two bound's own
         // arithmetic)
-        let mut rng = ((self.frame as i64).wrapping_mul(312871) ^ 0x5DEECE66D)
-            & ((1i64 << 48) - 1);
+        let mut rng = ((self.frame as i64).wrapping_mul(312871) ^ 0x5DEECE66D) & ((1i64 << 48) - 1);
         let next_jitter = |rng: &mut i64| -> i32 {
             *rng = rng.wrapping_mul(0x5DEECE66D).wrapping_add(0xB) & ((1i64 << 48) - 1);
             let next31 = (*rng >> 17) as u32;
@@ -60068,7 +59805,10 @@ impl App {
         // `tickCount % ceil(maxScale + 5.0)` bounces -2y while the
         // REGENERATION effect rides — the store's truth, the
         // maxScale's own sum)
-        let regen_lift = if self.effects.has_effect(crate::effects::MOB_EFFECT_REGENERATION) {
+        let regen_lift = if self
+            .effects
+            .has_effect(crate::effects::MOB_EFFECT_REGENERATION)
+        {
             (self.frame as i64 % (max_display as i64 + 5)) as i32
         } else {
             -1
@@ -60162,8 +59902,8 @@ impl App {
         // client's own Lcg, the deterministic draw the goldens speak)
         let (fx, fy) = food_origin(w, h);
         let food = self.food_data.food_level();
-        let shake = self.food_data.saturation() <= 0.0
-            && (self.frame as i64) % (food as i64 * 3 + 1) == 0;
+        let shake =
+            self.food_data.saturation() <= 0.0 && (self.frame as i64) % (food as i64 * 3 + 1) == 0;
         for i in 0..10 {
             let mut y = fy;
             if shake {
@@ -60212,10 +59952,7 @@ impl App {
                 for (slot, i) in row.iter().zip(1..=10) {
                     let Some(sprite) = *slot else { continue };
                     let mut x = w / 2 + 91 - (i - 1) * 8 - 9;
-                    if *slot == Some("hud/air_empty")
-                        && popping == 10
-                        && self.frame % 2 == 0
-                    {
+                    if *slot == Some("hud/air_empty") && popping == 10 && self.frame % 2 == 0 {
                         // THE EMPTY'S OWN JITTER (the nextInt(2) the
                         // Hud's random speaks — the heart lane's seeded
                         // stream, the continuation the frame's one
@@ -60223,9 +59960,7 @@ impl App {
                         x += next_jitter(&mut rng);
                     }
                     g.sprite(a, sprite, x, y);
-                    if *slot == Some("hud/air_bursting")
-                        && self.last_bubble_pop_sound_played != i
-                    {
+                    if *slot == Some("hud/air_bursting") && self.last_bubble_pop_sound_played != i {
                         // THE POP VOICE (playAirBubblePoppedSound's own
                         // fixed fold — volume 0.5 + 0.1*max(0, empty-2),
                         // pitch 1.0 + 0.1*max(0, empty-4), no randoms)
@@ -60531,7 +60266,13 @@ impl App {
     /// menu-null lane the pc 0-7 silence keeps, the faded lane the
     /// pc 13-26 exit answers, the chrome the extractPage/extractSlot
     /// walks below paint.
-    pub(crate) fn spectator_extract_hotbar(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+    pub(crate) fn spectator_extract_hotbar(
+        &mut self,
+        g: &mut Gui,
+        a: &mut GuiAssets,
+        w: i32,
+        h: i32,
+    ) {
         if self.spectator_menu.is_none() {
             return; // the menu-null silence (extractHotbar pcs 0-7)
         }
@@ -60560,7 +60301,15 @@ impl App {
         // THE EXTRACT PAGE (javap SpectatorGui.extractPage pcs 0-26 —
         // the hotbar sprite 182x22 at `guiWidth/2 - 91`, the
         // white(alpha) tint the fade's own brightness carries)
-        g.sprite_at_tinted(a, "hud/hotbar", cx - 91, cy, 182, 22, [1.0, 1.0, 1.0, alpha]);
+        g.sprite_at_tinted(
+            a,
+            "hud/hotbar",
+            cx - 91,
+            cy,
+            182,
+            22,
+            [1.0, 1.0, 1.0, alpha],
+        );
         if sel >= 0 {
             // THE HIGHLIGHT (javap extractPage pcs 37-69 — the
             // selection sprite 24x23 at `x - 91 + sel * 20, y - 1`, the
@@ -60613,7 +60362,15 @@ impl App {
         if alpha > 0.0 && item.is_enabled() {
             let label = (slot + 1).to_string();
             let tw = g.text_width(&label);
-            g.text_faded(a, sx + 17 - tw, sy + 9, &label, [1.0, 1.0, 1.0], alpha, false);
+            g.text_faded(
+                a,
+                sx + 17 - tw,
+                sy + 9,
+                &label,
+                [1.0, 1.0, 1.0],
+                alpha,
+                false,
+            );
         }
     }
 
@@ -60634,7 +60391,13 @@ impl App {
     /// (0.0F)` the zero the fill's own gate answers) — the text the
     /// white(alpha) color + the shadow the 6-arg call carries (the pc
     /// 65 `iconst_1`).
-    pub(crate) fn spectator_extract_action(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+    pub(crate) fn spectator_extract_action(
+        &mut self,
+        g: &mut Gui,
+        a: &mut GuiAssets,
+        w: i32,
+        h: i32,
+    ) {
         let alpha = self.spectator_hotbar_alpha();
         if alpha <= 0.0 || self.spectator_menu.is_none() {
             return;
@@ -60812,21 +60575,12 @@ impl App {
         // intensity the goldens' own frames the draw never speaks.
         if let Some(b) = self.body.as_ref() {
             let alpha = b.o_portal_effect_intensity
-                + (b.portal_effect_intensity - b.o_portal_effect_intensity)
-                    * self.partial_tick;
+                + (b.portal_effect_intensity - b.o_portal_effect_intensity) * self.partial_tick;
             if alpha > 0.0 {
                 // pc 0-23 — the fourth-power + 0.8/0.2 curve the under-1.0 body wears
                 let t = crate::body::portal_overlay_alpha(alpha);
                 // the ARGB.white(t) tint — every channel the multiply rides
-                g.sprite_file_at_tinted(
-                    a,
-                    "block/nether_portal.png",
-                    0,
-                    0,
-                    w,
-                    h,
-                    [t, t, t, t],
-                );
+                g.sprite_file_at_tinted(a, "block/nether_portal.png", 0, 0, w, h, [t, t, t, t]);
             }
         }
         // THE EXPERIENCE BAR (javap `Hud`'s contextual-bar extract: the
@@ -60889,38 +60643,38 @@ impl App {
             g.sprite(a, "hud/hotbar", hx, hy);
             let sel_x = hx - 1 + self.selected_hotbar as i32 * (HEART_SPACING + 12);
             g.sprite(a, "hud/hotbar_selection", sel_x, hy - 1);
-        // the LIVE store's row over the sprite (the vanilla
-        // renderHotbarAndDecorations): each slot's icon at the vanilla
-        // origin — 3px inset, the 20px pitch — and the count white and
-        // shadowed at the slot's bottom-right, hidden while a single
-        // item rides (the chest screen's own treatment). The offline
-        // world's row is empty — the chrome-only shape the goldens pin.
-        for (i, &(id, count)) in self.hotbar_slots.iter().enumerate() {
-            if count <= 0 {
-                continue; // the wire's own emptiness sentinel
+            // the LIVE store's row over the sprite (the vanilla
+            // renderHotbarAndDecorations): each slot's icon at the vanilla
+            // origin — 3px inset, the 20px pitch — and the count white and
+            // shadowed at the slot's bottom-right, hidden while a single
+            // item rides (the chest screen's own treatment). The offline
+            // world's row is empty — the chrome-only shape the goldens pin.
+            for (i, &(id, count)) in self.hotbar_slots.iter().enumerate() {
+                if count <= 0 {
+                    continue; // the wire's own emptiness sentinel
+                }
+                let (ix, iy) = (hx + 3 + i as i32 * 20, hy + 3);
+                // THE POP'S OWN CURVE (javap 26.2 Hud.extractSlot pcs 9-133 —
+                // the f = pop - partialTick the fstore 8 walk keeps, the
+                // fcmpl ifle the >0 verdict speaks, the g = 1 + f/5 the
+                // fstore 9 wears): the fresh stack's icon the pop pose
+                // draws (the squash-wide-spring-tall the projection fold
+                // serves), the settled stack the plain draw keeps; the
+                // count's own text the pose NEVER rides (pc 134-146 the
+                // outside draw the block below keeps).
+                let f = self.hotbar_pop[i] as f32 - self.partial_tick;
+                if f > 0.0 {
+                    let pop_g = 1.0 + f / 5.0;
+                    draw_item_icon_pop(g, id, ix, iy, pop_g);
+                } else {
+                    draw_item_icon(g, id, ix, iy);
+                }
+                if count > 1 {
+                    let s = count.to_string();
+                    let tw = g.text_width(&s);
+                    g.text(a, ix + 17 - tw, iy + 9, &s, WHITE, true);
+                }
             }
-            let (ix, iy) = (hx + 3 + i as i32 * 20, hy + 3);
-            // THE POP'S OWN CURVE (javap 26.2 Hud.extractSlot pcs 9-133 —
-            // the f = pop - partialTick the fstore 8 walk keeps, the
-            // fcmpl ifle the >0 verdict speaks, the g = 1 + f/5 the
-            // fstore 9 wears): the fresh stack's icon the pop pose
-            // draws (the squash-wide-spring-tall the projection fold
-            // serves), the settled stack the plain draw keeps; the
-            // count's own text the pose NEVER rides (pc 134-146 the
-            // outside draw the block below keeps).
-            let f = self.hotbar_pop[i] as f32 - self.partial_tick;
-            if f > 0.0 {
-                let pop_g = 1.0 + f / 5.0;
-                draw_item_icon_pop(g, id, ix, iy, pop_g);
-            } else {
-                draw_item_icon(g, id, ix, iy);
-            }
-            if count > 1 {
-                let s = count.to_string();
-                let tw = g.text_width(&s);
-                g.text(a, ix + 17 - tw, iy + 9, &s, WHITE, true);
-            }
-        }
         }
         // THE SPECTATOR'S ACTION NAME (javap Hud.extractHotbarAndDecorations
         // pcs 182-226 — the selected-item/spectator-action split the tail
@@ -61046,7 +60800,13 @@ impl App {
                 sidebar_layout(w, h, g.text_width(&sb.title), sep_w, &row_widths);
             // the vanilla fill's x1/y1/x2/y2 shape → the house's x/y/w/h
             g.fill(left - 2, top - 10, right - (left - 2), 9, SIDEBAR_HEADER_BG);
-            g.fill(left - 2, top - 1, right - (left - 2), bottom - (top - 1), SIDEBAR_BODY_BG);
+            g.fill(
+                left - 2,
+                top - 1,
+                right - (left - 2),
+                bottom - (top - 1),
+                SIDEBAR_BODY_BG,
+            );
             let title_x = left + width / 2 - g.text_width(&sb.title) / 2;
             g.text(a, title_x, top - 9, &sb.title, WHITE, false);
             let n = rows.len() as i32;
@@ -61239,15 +60999,7 @@ impl App {
         // y 60 unscaled, the glyphs doubled
         let title = tr("deathScreen.title").unwrap_or("You Died!");
         let tw = g.text_width(title) * 2;
-        g.text_scaled(
-            a,
-            w / 2 - tw / 2,
-            60,
-            title,
-            WHITE,
-            true,
-            2,
-        );
+        g.text_scaled(a, w / 2 - tw / 2, 60, title, WHITE, true, 2);
         // the cause of death (the Combat Kill wire's message — the
         // local fall's own lane rides the client's title only)
         if let Some(msg) = self.death_message.as_deref() {
@@ -61282,13 +61034,22 @@ impl App {
     /// Options..., Save and Quit to Title over a dimmed frozen world.
     fn render_pause(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
         g.fill(0, 0, w, h, [0.0, 0.0, 0.0, 0.35]);
-        g.text_centered(a, w / 2, h / 4 - 20, tr("menu.paused").unwrap_or("Game Paused"), WHITE, true);
+        g.text_centered(
+            a,
+            w / 2,
+            h / 4 - 20,
+            tr("menu.paused").unwrap_or("Game Paused"),
+            WHITE,
+            true,
+        );
         let cx = w / 2;
         let y0 = h / 4 + 8;
         let half = 200 / 2 - 2;
         self.buttons.push(Button::new(
             "backtogame",
-            tr("menu.returnToGame").unwrap_or("Back to Game").to_string(),
+            tr("menu.returnToGame")
+                .unwrap_or("Back to Game")
+                .to_string(),
             cx,
             y0,
             200,
@@ -61302,7 +61063,9 @@ impl App {
         ));
         self.buttons.push(Button::new(
             "saveandquit",
-            tr("menu.returnToMenu").unwrap_or("Save and Quit to Title").to_string(),
+            tr("menu.returnToMenu")
+                .unwrap_or("Save and Quit to Title")
+                .to_string(),
             cx + half / 2 + 2,
             y0 + 24,
             half,
@@ -61314,11 +61077,20 @@ impl App {
 
     fn render_loading(&mut self, g: &mut Gui, a: &mut GuiAssets) {
         let (w, h) = (g.w(), g.h());
-        g.fill(0, 0, w, h, [MOJANG_RED[0], MOJANG_RED[1], MOJANG_RED[2], 1.0]);
+        g.fill(
+            0,
+            0,
+            w,
+            h,
+            [MOJANG_RED[0], MOJANG_RED[1], MOJANG_RED[2], 1.0],
+        );
         // studio wordmark: the REAL Mojang Studios texture (title/mojangstudios,
         // 512x512 drawn at quarter scale = 128x128 like the vanilla loading
         // overlay); text fallback keeps the layout while assets are absent.
-        let has_mark = a.sprite("title/mojangstudios").map(|s| s.w >= 16).unwrap_or(false);
+        let has_mark = a
+            .sprite("title/mojangstudios")
+            .map(|s| s.w >= 16)
+            .unwrap_or(false);
         if has_mark {
             g.sprite_at(a, "title/mojangstudios", w / 2 - 64, h / 2 - 74, 128, 128);
         } else {
@@ -61338,8 +61110,15 @@ impl App {
         let green = [0.06, 0.8, 0.15, 1.0];
         g.fill(w / 2 - bar_w - 2, bar_y, fill1, 5, [1.0, 1.0, 1.0, 1.0]);
         g.fill(w / 2 + 2, bar_y, fill2, 5, green);
-        let stage = BOOT_STAGES.get(self.boot_stage).copied().unwrap_or(BOOT_STAGES[0]);
-        let label = format!("{} ({})", tr("mc2rs.boot.loading").unwrap_or("Loading..."), stage);
+        let stage = BOOT_STAGES
+            .get(self.boot_stage)
+            .copied()
+            .unwrap_or(BOOT_STAGES[0]);
+        let label = format!(
+            "{} ({})",
+            tr("mc2rs.boot.loading").unwrap_or("Loading..."),
+            stage
+        );
         g.text_centered(a, w / 2, bar_y + 10, &label, WHITE, false);
     }
 
@@ -61399,7 +61178,9 @@ impl App {
         let half = bw / 2 - 2;
         self.buttons.push(Button::new(
             "singleplayer",
-            tr("menu.singleplayer").unwrap_or("Singleplayer").to_string(),
+            tr("menu.singleplayer")
+                .unwrap_or("Singleplayer")
+                .to_string(),
             cx - half / 2,
             y0,
             half,
@@ -61437,7 +61218,14 @@ impl App {
         }
 
         // version bottom-left, copyright bottom-right (vanilla overlay text)
-        g.text(a, 2, h - 10, &format!("Minecraft {}", crate::build_info::MINECRAFT_VERSION), WHITE, true);
+        g.text(
+            a,
+            2,
+            h - 10,
+            &format!("Minecraft {}", crate::build_info::MINECRAFT_VERSION),
+            WHITE,
+            true,
+        );
         let cp = "Copyright Mojang AB. Do not distribute!";
         let cw = g.text_width(cp);
         g.text(a, w - cw - 2, h - 10, cp, WHITE, true);
@@ -61466,7 +61254,14 @@ impl App {
         let mut x = -off;
         let mut i = 0usize;
         while x < w as f32 {
-            g.sprite_at(a, FACES[i % 6], x.round() as i32, 0, face_w.round() as i32, h);
+            g.sprite_at(
+                a,
+                FACES[i % 6],
+                x.round() as i32,
+                0,
+                face_w.round() as i32,
+                h,
+            );
             x += face_w;
             i += 1;
         }
@@ -61476,7 +61271,14 @@ impl App {
     fn render_servers(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
         // dark list backdrop
         g.fill(0, 0, w, h, [0.06, 0.06, 0.06, 1.0]);
-        g.text_centered(a, w / 2, 12, tr("multiplayer.title").unwrap_or("Play Multiplayer"), WHITE, true);
+        g.text_centered(
+            a,
+            w / 2,
+            12,
+            tr("multiplayer.title").unwrap_or("Play Multiplayer"),
+            WHITE,
+            true,
+        );
         let cx = w / 2;
         // server rows
         for (i, s) in self.servers.iter().enumerate() {
@@ -61504,7 +61306,9 @@ impl App {
         let half = bw / 2 - 2;
         self.buttons.push(Button::new(
             "join",
-            tr("selectServer.select").unwrap_or("Join Server").to_string(),
+            tr("selectServer.select")
+                .unwrap_or("Join Server")
+                .to_string(),
             cx - bw - half / 2,
             h - 28,
             bw,
@@ -61534,7 +61338,14 @@ impl App {
             let c = [0.10 + 0.04 * t, 0.10 + 0.04 * t, 0.13 + 0.05 * t];
             g.fill(0, y, w, 1, [c[0], c[1], c[2], 1.0]);
         }
-        g.text_centered(a, w / 2, 12, tr("options.title").unwrap_or("Options"), WHITE, true);
+        g.text_centered(
+            a,
+            w / 2,
+            12,
+            tr("options.title").unwrap_or("Options"),
+            WHITE,
+            true,
+        );
         let cx = w / 2;
         let bw = 140;
         // THE SENSITIVITY SLIDER'S OWN ROW (the OptionInstance.SENSITIVITY
@@ -61557,13 +61368,7 @@ impl App {
         // percent (the 0.0 the options.off 'OFF' end wears), the
         // output's gain the store's own lane scales): the row the
         // music seat's own place keeps.
-        let mut music = Button::new(
-            "opt_music",
-            volume_caption(self.volume),
-            cx,
-            h / 2 - 16,
-            bw,
-        );
+        let mut music = Button::new("opt_music", volume_caption(self.volume), cx, h / 2 - 16, bw);
         music.value = Some(self.volume);
         self.buttons.push(music);
         // THE FOV SLIDER'S OWN ROW (the `options.fov` OptionInstance the
@@ -61580,7 +61385,11 @@ impl App {
         // the WorldOptionsScreen the walk opens, the title screen the
         // flag refuses): the client's own pause-options return the
         // gate mirrors — the paused world the button wears, the title
-        // lane the same flag keeps silent.
+        // lane the same flag keeps silent. THE HEADER SEAT the
+        // vanilla's own addToHeader walk keeps (the opener the header
+        // linear's own row wears, ABOVE the grid's fixed stack — the
+        // flat port the top seat the row wears, the Done footer the
+        // rect the overlap never speaks).
         if self.options_return == ScreenKind::World {
             self.buttons.push(Button::new(
                 "worldoptions",
@@ -61588,12 +61397,93 @@ impl App {
                     .unwrap_or("World Options...")
                     .to_string(),
                 cx,
-                h / 2 + 32,
+                h / 2 - 64,
                 bw,
             ));
         }
+        // THE ACCESSIBILITY SCREEN'S OWN ROW (javap the 26.2
+        // OptionsScreen.init — the `options.accessibility` button the
+        // openScreenButton walk builds, the lambda$init$8 supplier the
+        // `new AccessibilityOptionsScreen(this, options)` opens, the
+        // GridLayout's own seat the BOTH lanes wear — the title
+        // screen's grid the in-world pause the same row keeps, the
+        // inWorld flag the row never reads): the sub-screen the row
+        // opens, the fovEffectScale seat the list hosts.
+        self.buttons.push(Button::new(
+            "accessibility",
+            tr("options.accessibility")
+                .unwrap_or("Accessibility Settings...")
+                .to_string(),
+            cx,
+            h / 2 + 32,
+            bw,
+        ));
         self.buttons.push(Button::new(
             "back",
+            tr("gui.done").unwrap_or("Done").to_string(),
+            cx,
+            h - 28,
+            bw,
+        ));
+        for b in &self.buttons.clone() {
+            b.render(g, a, -1, -1);
+        }
+    }
+
+    /// THE ACCESSIBILITY SCREEN'S OWN LIST (javap 26.2
+    /// AccessibilityOptionsScreen — the title the
+    /// `options.accessibility.title` word wears, the addOptions walk
+    /// the row list builds): the sub-screen's stores the client's own
+    /// Options the ONE seat wears — the fovEffectScale row ALONE the
+    /// list hosts (the static `options(Options)` array's index 12 the
+    /// 26.2 probe banks — scripts/jar_work/access_screen_262.out the
+    /// 24-instance walk keeps, the other 23 rows the stores the
+    /// client's Options never carried the follow-up candidates: the
+    /// narrator/subtitles/chat lanes each their own round wear).
+    /// THE SLIDER'S OWN LAW (the Options.<init> pcs 4325-4375 walk —
+    /// the label the `options.fovEffectScale` key wears, the tooltip
+    /// the ACCESSIBILITY_TOOLTIP_FOV_EFFECT constant speaks, the
+    /// UnitDouble.xmap slider the `Codec.doubleRange(0.0, 1.0)` the
+    /// STRICT double keeps, the default 1.0 the dconst_1 banks, the
+    /// NO_ACTION listener the write lane keeps): the press/drag the
+    /// store's own lane serves, the 0.0 the OFF the caption speaks.
+    /// THE EXIT'S OWN ROWS (the Done footer the onClose walk wears —
+    /// the lastScreen the parent ride returns, the open() law the
+    /// old==Accessibility check the save never speaks: the sub-screen
+    /// the `removed()` method never wears, the vanilla class file the
+    /// probe answers).
+    fn render_accessibility(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        // the same gradient backdrop the Options screen's own lane
+        // wears (the client's options screens the one house keeps)
+        for y in 0..h {
+            let t = y as f32 / h.max(1) as f32;
+            let c = [0.10 + 0.04 * t, 0.10 + 0.04 * t, 0.13 + 0.05 * t];
+            g.fill(0, y, w, 1, [c[0], c[1], c[2], 1.0]);
+        }
+        g.text_centered(
+            a,
+            w / 2,
+            12,
+            tr("options.accessibility.title").unwrap_or("Accessibility Settings"),
+            WHITE,
+            true,
+        );
+        let cx = w / 2;
+        let bw = 140;
+        // THE FOV EFFECTS' OWN ROW (the array's index 12 the store the
+        // camera's read wears — the caption the percent the OFF end
+        // speaks)
+        let mut fes = Button::new(
+            "opt_fov_effect",
+            fov_effect_caption(self.fov_effect_scale),
+            cx,
+            h / 2 - 16,
+            bw,
+        );
+        fes.value = Some(self.fov_effect_scale);
+        self.buttons.push(fes);
+        self.buttons.push(Button::new(
+            "accdone",
             tr("gui.done").unwrap_or("Done").to_string(),
             cx,
             h - 28,
@@ -61655,18 +61545,12 @@ impl App {
             self.net_world
                 .as_ref()
                 .map(|world| (world.difficulty, world.difficulty_locked))
-                .unwrap_or((
-                    crate::difficulty::Difficulty::Normal,
-                    false,
-                ))
+                .unwrap_or((crate::difficulty::Difficulty::Normal, false))
         } else {
             self.offline_world
                 .as_ref()
                 .map(|world| (world.difficulty, world.difficulty_locked))
-                .unwrap_or((
-                    crate::difficulty::Difficulty::Normal,
-                    false,
-                ))
+                .unwrap_or((crate::difficulty::Difficulty::Normal, false))
         };
         // THE SHARED ACTIVE ARM (the create + refresh walks' own writes
         // — `!lock.isLocked() && playerHasPermissionToChangeDifficulty()`
@@ -61982,7 +61866,13 @@ fn item_display_name(name: &str) -> String {
 /// it, the right edge is `guiWidth - 3 + 2`, the left
 /// `guiWidth - width - 3`. Returns `(left, top, bottom, right,
 /// width)` — the five numbers every draw call walks.
-fn sidebar_layout(w: i32, h: i32, title_w: i32, sep_w: i32, rows: &[(i32, i32)]) -> (i32, i32, i32, i32, i32) {
+fn sidebar_layout(
+    w: i32,
+    h: i32,
+    title_w: i32,
+    sep_w: i32,
+    rows: &[(i32, i32)],
+) -> (i32, i32, i32, i32, i32) {
     let mut width = title_w;
     for &(name_w, score_w) in rows {
         let row = name_w + if score_w > 0 { sep_w + score_w } else { 0 };
@@ -62005,7 +61895,12 @@ fn sidebar_layout(w: i32, h: i32, title_w: i32, sep_w: i32, rows: &[(i32, i32)])
 /// `colWidth * k + (k - 1) * 5` the gutters ride). Returns `(columns,
 /// rows, col_width, grid_x, grid_w)` — the five numbers every draw
 /// call walks.
-fn tab_layout(w: i32, max_name_w: i32, score_col_w: i32, entry_count: usize) -> (i32, i32, i32, i32, i32) {
+fn tab_layout(
+    w: i32,
+    max_name_w: i32,
+    score_col_w: i32,
+    entry_count: usize,
+) -> (i32, i32, i32, i32, i32) {
     let i = entry_count as i32;
     let mut rows = i;
     let mut columns = 1;
@@ -62257,7 +62152,11 @@ fn wire_throw_outside(
     if carried.1 <= 0 {
         return; // the drop arm's own isEmpty guard — silence
     }
-    let new_carried = if button == 0 { (0, 0) } else { (carried.0, carried.1 - 1) };
+    let new_carried = if button == 0 {
+        (0, 0)
+    } else {
+        (carried.0, carried.1 - 1)
+    };
     *carried = new_carried;
     let _ = sink.send(crate::world_view::ContainerCommand::Click(
         crate::world_view::ContainerClick {
@@ -62299,9 +62198,9 @@ fn wire_quickcraft_distribute(
     let start_button = ((qc_type & 3) << 2) as i8; // getQuickcraftMask(0, type)
     let add_button = start_button | 1; // getQuickcraftMask(1, type)
     let end_button = start_button | 2; // getQuickcraftMask(2, type)
-    // THE START (quickCraftToSlots pc 0-16 — slotClicked(null, -999,
-    // mask(0, type), QUICK_CRAFT)): the state machine's own transition
-    // the changed map never names
+                                       // THE START (quickCraftToSlots pc 0-16 — slotClicked(null, -999,
+                                       // mask(0, type), QUICK_CRAFT)): the state machine's own transition
+                                       // the changed map never names
     let _ = sink.send(crate::world_view::ContainerCommand::Click(
         crate::world_view::ContainerClick {
             window_id: 0,
@@ -62352,7 +62251,11 @@ fn wire_quickcraft_distribute(
             let cap = crate::world_view::item_max_stack(carried.0);
             // getQuickCraftPlaceCount — the type-0 floor(count/painted),
             // the type-1's own ONE per seat (the right drag's answer)
-            let place_count = if qc_type == 1 { 1 } else { carried.1 / painted as i32 };
+            let place_count = if qc_type == 1 {
+                1
+            } else {
+                carried.1 / painted as i32
+            };
             let place = std::cmp::min(place_count + seat_count, cap);
             k -= place - seat_count; // pc 495-503 — the net the carried loses
             live_slots[menu] = (carried.0, place); // pc 505-514
@@ -62417,9 +62320,9 @@ fn wire_chest_quickcraft_distribute(
     let start_button = ((qc_type & 3) << 2) as i8; // getQuickcraftMask(0, type)
     let add_button = start_button | 1; // getQuickcraftMask(1, type)
     let end_button = start_button | 2; // getQuickcraftMask(2, type)
-    // THE START (quickCraftToSlots pc 0-16 — slotClicked(null, -999,
-    // mask(0, type), QUICK_CRAFT)): the state machine's own transition
-    // the changed map never names
+                                       // THE START (quickCraftToSlots pc 0-16 — slotClicked(null, -999,
+                                       // mask(0, type), QUICK_CRAFT)): the state machine's own transition
+                                       // the changed map never names
     let _ = sink.send(crate::world_view::ContainerCommand::Click(
         crate::world_view::ContainerClick {
             window_id,
@@ -62469,7 +62372,11 @@ fn wire_chest_quickcraft_distribute(
             let cap = crate::world_view::item_max_stack(carried.0);
             // getQuickCraftPlaceCount — the type-0 floor(count/painted),
             // the type-1's own ONE per seat (the right drag's answer)
-            let place_count = if qc_type == 1 { 1 } else { carried.1 / painted as i32 };
+            let place_count = if qc_type == 1 {
+                1
+            } else {
+                carried.1 / painted as i32
+            };
             let place = std::cmp::min(place_count + seat_count, cap);
             k -= place - seat_count; // pc 495-503 — the net the carried loses
             let new = (carried.0, place); // pc 505-514
@@ -62530,9 +62437,9 @@ fn wire_dispenser_quickcraft_distribute(
     let start_button = ((qc_type & 3) << 2) as i8; // getQuickcraftMask(0, type)
     let add_button = start_button | 1; // getQuickcraftMask(1, type)
     let end_button = start_button | 2; // getQuickcraftMask(2, type)
-    // THE START (quickCraftToSlots pc 0-16 — slotClicked(null, -999,
-    // mask(0, type), QUICK_CRAFT)): the state machine's own transition
-    // the changed map never names
+                                       // THE START (quickCraftToSlots pc 0-16 — slotClicked(null, -999,
+                                       // mask(0, type), QUICK_CRAFT)): the state machine's own transition
+                                       // the changed map never names
     let _ = sink.send(crate::world_view::ContainerCommand::Click(
         crate::world_view::ContainerClick {
             window_id,
@@ -62582,7 +62489,11 @@ fn wire_dispenser_quickcraft_distribute(
             let cap = crate::world_view::item_max_stack(carried.0);
             // getQuickCraftPlaceCount — the type-0 floor(count/painted),
             // the type-1's own ONE per seat (the right drag's answer)
-            let place_count = if qc_type == 1 { 1 } else { carried.1 / painted as i32 };
+            let place_count = if qc_type == 1 {
+                1
+            } else {
+                carried.1 / painted as i32
+            };
             let place = std::cmp::min(place_count + seat_count, cap);
             k -= place - seat_count; // pc 495-503 — the net the carried loses
             let new = (carried.0, place); // pc 505-514
@@ -62664,9 +62575,9 @@ fn wire_table_quickcraft_distribute(
     let start_button = ((qc_type & 3) << 2) as i8; // getQuickcraftMask(0, type)
     let add_button = start_button | 1; // getQuickcraftMask(1, type)
     let end_button = start_button | 2; // getQuickcraftMask(2, type)
-    // THE START (quickCraftToSlots pc 0-16 — slotClicked(null, -999,
-    // mask(0, type), QUICK_CRAFT)): the state machine's own transition
-    // the changed map never names
+                                       // THE START (quickCraftToSlots pc 0-16 — slotClicked(null, -999,
+                                       // mask(0, type), QUICK_CRAFT)): the state machine's own transition
+                                       // the changed map never names
     let _ = sink.send(crate::world_view::ContainerCommand::Click(
         crate::world_view::ContainerClick {
             window_id,
@@ -62717,7 +62628,11 @@ fn wire_table_quickcraft_distribute(
             let cap = crate::world_view::item_max_stack(carried.0);
             // getQuickCraftPlaceCount — the type-0 floor(count/painted),
             // the type-1's own ONE per seat (the right drag's answer)
-            let place_count = if qc_type == 1 { 1 } else { carried.1 / painted as i32 };
+            let place_count = if qc_type == 1 {
+                1
+            } else {
+                carried.1 / painted as i32
+            };
             let place = std::cmp::min(place_count + seat_count, cap);
             k -= place - seat_count; // pc 495-503 — the net the carried loses
             live_slots[menu] = (carried.0, place); // pc 505-514
@@ -62813,9 +62728,9 @@ fn wire_furnace_quickcraft_distribute(
     let start_button = ((qc_type & 3) << 2) as i8; // getQuickcraftMask(0, type)
     let add_button = start_button | 1; // getQuickcraftMask(1, type)
     let end_button = start_button | 2; // getQuickcraftMask(2, type)
-    // THE START (quickCraftToSlots pc 0-16 — slotClicked(null, -999,
-    // mask(0, type), QUICK_CRAFT)): the state machine's own transition
-    // the changed map never names
+                                       // THE START (quickCraftToSlots pc 0-16 — slotClicked(null, -999,
+                                       // mask(0, type), QUICK_CRAFT)): the state machine's own transition
+                                       // the changed map never names
     let _ = sink.send(crate::world_view::ContainerCommand::Click(
         crate::world_view::ContainerClick {
             window_id,
@@ -62863,7 +62778,11 @@ fn wire_furnace_quickcraft_distribute(
             let cap = crate::world_view::item_max_stack(carried.0);
             // getQuickCraftPlaceCount — the type-0 floor(count/painted),
             // the type-1's own ONE per seat (the right drag's answer)
-            let place_count = if qc_type == 1 { 1 } else { carried.1 / painted as i32 };
+            let place_count = if qc_type == 1 {
+                1
+            } else {
+                carried.1 / painted as i32
+            };
             let place = std::cmp::min(place_count + seat_count, cap);
             k -= place - seat_count; // pc 495-503 — the net the carried loses
             let new = (carried.0, place); // pc 505-514
@@ -63148,13 +63067,8 @@ fn wire_inventory_swap(
                 note_batch_change(&mut changed, hover_menu as i16, (row_id, max));
                 live_slots[row_menu] = (row_id, rest);
                 note_batch_change(&mut changed, row_menu as i16, (row_id, rest));
-                let _leftover = belief_inventory_add(
-                    live_slots,
-                    selected,
-                    hover_id,
-                    hover_count,
-                    &mut changed,
-                );
+                let _leftover =
+                    belief_inventory_add(live_slots, selected, hover_id, hover_count, &mut changed);
             } else {
                 // the straight trade — the row the hovered stack
                 // takes, the cell the row's stack wears
@@ -63241,7 +63155,11 @@ fn wire_inventory_drop(
         let (id, count) = live_slots[menu];
         debug_assert!(count > 0, "the hasItem gate the caller keeps");
         let take = if button == 0 { 1 } else { count };
-        let new = if take >= count { (0, 0) } else { (id, count - take) };
+        let new = if take >= count {
+            (0, 0)
+        } else {
+            (id, count - take)
+        };
         live_slots[menu] = new;
         note_batch_change(&mut changed, menu as i16, new);
         // THE HUD ROW'S BELIEF (the every-mutation law — the hotbar
@@ -63387,7 +63305,11 @@ fn wire_chest_swap(
     // bytecode keys) — the outside-menu seat the changed map can't name
     // (the delta the F round banks), the belief the
     // [`App::live_inv_slots`]'s own slot 45 wears
-    let row_idx = if button == 40 { None } else { Some(27 + button) };
+    let row_idx = if button == 40 {
+        None
+    } else {
+        Some(27 + button)
+    };
     let (hover_id, hover_count) = if menu < 27 {
         grid[menu]
     } else {
@@ -63496,8 +63418,13 @@ fn wire_chest_swap(
                         *offhand = (row_id, row_count - max);
                     }
                 }
-                let _leftover =
-                    belief_chest_inventory_add(mirror, selected, hover_id, hover_count, &mut changed);
+                let _leftover = belief_chest_inventory_add(
+                    mirror,
+                    selected,
+                    hover_id,
+                    hover_count,
+                    &mut changed,
+                );
             } else {
                 // the straight trade — the row the hovered stack
                 // takes, the cell the row's stack wears
@@ -63564,14 +63491,16 @@ fn wire_craft_on_take(
     selected: usize,
 ) -> Vec<(i16, (i32, i32))> {
     let mut changed = Vec::new();
-    let cells: [(i32, i32); 4] = [
-        live_slots[1], live_slots[2], live_slots[3], live_slots[4],
-    ];
+    let cells: [(i32, i32); 4] = [live_slots[1], live_slots[2], live_slots[3], live_slots[4]];
     let remainders = craft_remainders(&cells);
     for (cell, rem) in (1..5).zip(remainders.iter()) {
         let (cid, ccount) = live_slots[cell];
         if ccount > 0 {
-            live_slots[cell] = if ccount > 1 { (cid, ccount - 1) } else { (0, 0) };
+            live_slots[cell] = if ccount > 1 {
+                (cid, ccount - 1)
+            } else {
+                (0, 0)
+            };
             note_batch_change(&mut changed, cell as i16, live_slots[cell]);
             if let Some(rem_item) = apply_remainder_cell(&mut live_slots[cell], *rem) {
                 // THE THIRD ARM (pcs 230-255): the belief's own store
@@ -63586,8 +63515,7 @@ fn wire_craft_on_take(
             }
         }
     }
-    let result =
-        craft_result_for(&[live_slots[1], live_slots[2], live_slots[3], live_slots[4]]);
+    let result = craft_result_for(&[live_slots[1], live_slots[2], live_slots[3], live_slots[4]]);
     if result != live_slots[0] {
         live_slots[0] = result;
         changed.push((0, result));
@@ -63800,8 +63728,7 @@ fn wire_craft_cell_pickup(
     live_slots[menu as usize] = new_slot;
     *carried = new_carried;
     let mut changed = vec![(menu as i16, new_slot)];
-    let result =
-        craft_result_for(&[live_slots[1], live_slots[2], live_slots[3], live_slots[4]]);
+    let result = craft_result_for(&[live_slots[1], live_slots[2], live_slots[3], live_slots[4]]);
     if result != live_slots[0] {
         live_slots[0] = result;
         changed.push((0, result));
@@ -63841,15 +63768,25 @@ fn wire_table_on_take(
 ) -> Vec<(i16, (i32, i32))> {
     let mut changed = Vec::new();
     let cells: [(i32, i32); 9] = [
-        live_slots[1], live_slots[2], live_slots[3],
-        live_slots[4], live_slots[5], live_slots[6],
-        live_slots[7], live_slots[8], live_slots[9],
+        live_slots[1],
+        live_slots[2],
+        live_slots[3],
+        live_slots[4],
+        live_slots[5],
+        live_slots[6],
+        live_slots[7],
+        live_slots[8],
+        live_slots[9],
     ];
     let remainders = craft_remainders(&cells);
     for (cell, rem) in (1..10).zip(remainders.iter()) {
         let (cid, ccount) = live_slots[cell];
         if ccount > 0 {
-            live_slots[cell] = if ccount > 1 { (cid, ccount - 1) } else { (0, 0) };
+            live_slots[cell] = if ccount > 1 {
+                (cid, ccount - 1)
+            } else {
+                (0, 0)
+            };
             note_batch_change(&mut changed, cell as i16, live_slots[cell]);
             if let Some(rem_item) = apply_remainder_cell(&mut live_slots[cell], *rem) {
                 // THE THIRD ARM (pcs 230-255): the belief's own store
@@ -63865,9 +63802,15 @@ fn wire_table_on_take(
         }
     }
     let cells: [(i32, i32); 9] = [
-        live_slots[1], live_slots[2], live_slots[3],
-        live_slots[4], live_slots[5], live_slots[6],
-        live_slots[7], live_slots[8], live_slots[9],
+        live_slots[1],
+        live_slots[2],
+        live_slots[3],
+        live_slots[4],
+        live_slots[5],
+        live_slots[6],
+        live_slots[7],
+        live_slots[8],
+        live_slots[9],
     ];
     let result = craft_result_for_table(&cells);
     if result != live_slots[0] {
@@ -63940,7 +63883,11 @@ fn wire_table_swap(
     // (the index 40 the bytecode keys) — the outside-menu seat the
     // changed map can't name, the belief the [`App::live_inv_slots`]'s
     // own slot 45 wears
-    let row_menu = if button == 40 { None } else { Some(37 + button) };
+    let row_menu = if button == 40 {
+        None
+    } else {
+        Some(37 + button)
+    };
     let (hover_id, hover_count) = live_slots[menu];
     let (row_id, row_count) = match row_menu {
         Some(rm) => live_slots[rm],
@@ -64219,7 +64166,11 @@ fn wire_furnace_swap(
     // (the index 40 the bytecode keys) — the outside-menu seat the
     // changed map can't name, the belief the [`App::live_inv_slots`]'s
     // own slot 45 wears
-    let row_menu = if button == 40 { None } else { Some(30 + button) };
+    let row_menu = if button == 40 {
+        None
+    } else {
+        Some(30 + button)
+    };
     let (hover_id, hover_count) = live_slots[menu];
     let (row_id, row_count) = match row_menu {
         Some(rm) => live_slots[rm],
@@ -64513,9 +64464,15 @@ fn wire_table_cell_pickup(
     *carried = new_carried;
     let mut changed = vec![(menu as i16, new_slot)];
     let cells: [(i32, i32); 9] = [
-        live_slots[1], live_slots[2], live_slots[3],
-        live_slots[4], live_slots[5], live_slots[6],
-        live_slots[7], live_slots[8], live_slots[9],
+        live_slots[1],
+        live_slots[2],
+        live_slots[3],
+        live_slots[4],
+        live_slots[5],
+        live_slots[6],
+        live_slots[7],
+        live_slots[8],
+        live_slots[9],
     ];
     let result = craft_result_for_table(&cells);
     if result != live_slots[0] {
@@ -64676,14 +64633,10 @@ fn craft_result_packed(packed: &[i32], w: i32, h: i32) -> (i32, i32) {
     // THE SHAPELESS SINGLES (the fast path the one-cell input rides —
     // ShapelessRecipe.matches's input.size() == 1 arm)
     if w == 1 && h == 1 {
-        let out = [
-            (log, oak),
-            (spruce_log, spruce),
-            (birch_log, birch),
-        ]
-        .iter()
-        .find(|(log, _)| *log != 0 && packed[0] == *log)
-        .map(|(_, out)| (*out, 4));
+        let out = [(log, oak), (spruce_log, spruce), (birch_log, birch)]
+            .iter()
+            .find(|(log, _)| *log != 0 && packed[0] == *log)
+            .map(|(_, out)| (*out, 4));
         if let Some(out) = out {
             return out;
         }
@@ -64703,28 +64656,20 @@ fn craft_result_packed(packed: &[i32], w: i32, h: i32) -> (i32, i32) {
     let string_l: &[i32] = &[string];
     // the pattern rows, quoted from the jar's recipe JSONs verbatim
     let bow_rows = vec![
-        empty_l, stick_l, string_l,
-        stick_l, empty_l, string_l,
-        empty_l, stick_l, string_l,
+        empty_l, stick_l, string_l, stick_l, empty_l, string_l, empty_l, stick_l, string_l,
     ]; // [" #X", "# X", " #X"]
     let pick_rows = vec![
-        planks, planks, planks,
-        empty_l, stick_l, empty_l,
-        empty_l, stick_l, empty_l,
+        planks, planks, planks, empty_l, stick_l, empty_l, empty_l, stick_l, empty_l,
     ]; // ["XXX", " # ", " # "]
-    let axe_rows = vec![
-        planks, planks,
-        planks, stick_l,
-        empty_l, stick_l,
-    ]; // ["XX", "X#", " #"]
+    let axe_rows = vec![planks, planks, planks, stick_l, empty_l, stick_l]; // ["XX", "X#", " #"]
     let shovel_rows = vec![planks, stick_l, stick_l]; // ["X", "#", "#"]
     let sword_rows = vec![planks, planks, stick_l]; // ["X", "X", "#"]
-    // THE CAKE'S OWN INGREDIENTS (the jar's recipe keys — the A/B/C
-    // plain items, the E key the #minecraft:eggs TAG the registry's
-    // own egg/blue_egg/brown_egg trio answers). The zero ids the tag
-    // trio's own filter drops (a 0 the empty-cell test would wrongly
-    // marry — the E seat the honest tag keeps). The list the
-    // patterns' own scope outlives — the borrow the walk keeps.
+                                                    // THE CAKE'S OWN INGREDIENTS (the jar's recipe keys — the A/B/C
+                                                    // plain items, the E key the #minecraft:eggs TAG the registry's
+                                                    // own egg/blue_egg/brown_egg trio answers). The zero ids the tag
+                                                    // trio's own filter drops (a 0 the empty-cell test would wrongly
+                                                    // marry — the E seat the honest tag keeps). The list the
+                                                    // patterns' own scope outlives — the borrow the walk keeps.
     let milk = id("milk_bucket");
     let sugar = id("sugar");
     let wheat = id("wheat");
@@ -64785,9 +64730,7 @@ fn craft_result_packed(packed: &[i32], w: i32, h: i32) -> (i32, i32) {
                 3,
                 3,
                 vec![
-                    milk_l, milk_l, milk_l,
-                    sugar_l, &eggs, sugar_l,
-                    wheat_l, wheat_l, wheat_l,
+                    milk_l, milk_l, milk_l, sugar_l, &eggs, sugar_l, wheat_l, wheat_l, wheat_l,
                 ],
                 cake,
                 1,
@@ -64848,13 +64791,15 @@ fn crafting_remainder(id: i32) -> i32 {
 fn craft_remainders(cells: &[(i32, i32)]) -> Vec<i32> {
     cells
         .iter()
-        .map(|&(id, count)| {
-            if count > 0 {
-                crafting_remainder(id)
-            } else {
-                0
-            }
-        })
+        .map(
+            |&(id, count)| {
+                if count > 0 {
+                    crafting_remainder(id)
+                } else {
+                    0
+                }
+            },
+        )
         .collect()
 }
 
@@ -64949,20 +64894,118 @@ pub struct CreativeTab {
 /// columns 0..6, the BOTTOM row the same pitch; the hotbar/search/
 /// inventory trio the aligned-right edge keeps).
 pub const CREATIVE_TABS: [CreativeTab; 14] = [
-    CreativeTab { label_key: "itemGroup.buildingBlocks", top: true, column: 0, aligned_right: false, icon: "bricks", kind: CreativeTabKind::Category },
-    CreativeTab { label_key: "itemGroup.coloredBlocks", top: true, column: 1, aligned_right: false, icon: "white_wool", kind: CreativeTabKind::Category },
-    CreativeTab { label_key: "itemGroup.natural", top: true, column: 2, aligned_right: false, icon: "grass_block", kind: CreativeTabKind::Category },
-    CreativeTab { label_key: "itemGroup.functional", top: true, column: 3, aligned_right: false, icon: "oak_sign", kind: CreativeTabKind::Category },
-    CreativeTab { label_key: "itemGroup.redstone", top: true, column: 4, aligned_right: false, icon: "redstone", kind: CreativeTabKind::Category },
-    CreativeTab { label_key: "itemGroup.hotbar", top: true, column: 5, aligned_right: true, icon: "bookshelf", kind: CreativeTabKind::SavedHotbar },
-    CreativeTab { label_key: "itemGroup.search", top: true, column: 6, aligned_right: true, icon: "compass", kind: CreativeTabKind::Search },
-    CreativeTab { label_key: "itemGroup.tools", top: false, column: 0, aligned_right: false, icon: "diamond_pickaxe", kind: CreativeTabKind::Category },
-    CreativeTab { label_key: "itemGroup.combat", top: false, column: 1, aligned_right: false, icon: "netherite_sword", kind: CreativeTabKind::Category },
-    CreativeTab { label_key: "itemGroup.foodAndDrink", top: false, column: 2, aligned_right: false, icon: "golden_apple", kind: CreativeTabKind::Category },
-    CreativeTab { label_key: "itemGroup.ingredients", top: false, column: 3, aligned_right: false, icon: "iron_ingot", kind: CreativeTabKind::Category },
-    CreativeTab { label_key: "itemGroup.spawnEggs", top: false, column: 4, aligned_right: false, icon: "creeper_spawn_egg", kind: CreativeTabKind::Category },
-    CreativeTab { label_key: "itemGroup.op", top: false, column: 5, aligned_right: true, icon: "command_block", kind: CreativeTabKind::Operator },
-    CreativeTab { label_key: "itemGroup.inventory", top: false, column: 6, aligned_right: true, icon: "chest", kind: CreativeTabKind::Inventory },
+    CreativeTab {
+        label_key: "itemGroup.buildingBlocks",
+        top: true,
+        column: 0,
+        aligned_right: false,
+        icon: "bricks",
+        kind: CreativeTabKind::Category,
+    },
+    CreativeTab {
+        label_key: "itemGroup.coloredBlocks",
+        top: true,
+        column: 1,
+        aligned_right: false,
+        icon: "white_wool",
+        kind: CreativeTabKind::Category,
+    },
+    CreativeTab {
+        label_key: "itemGroup.natural",
+        top: true,
+        column: 2,
+        aligned_right: false,
+        icon: "grass_block",
+        kind: CreativeTabKind::Category,
+    },
+    CreativeTab {
+        label_key: "itemGroup.functional",
+        top: true,
+        column: 3,
+        aligned_right: false,
+        icon: "oak_sign",
+        kind: CreativeTabKind::Category,
+    },
+    CreativeTab {
+        label_key: "itemGroup.redstone",
+        top: true,
+        column: 4,
+        aligned_right: false,
+        icon: "redstone",
+        kind: CreativeTabKind::Category,
+    },
+    CreativeTab {
+        label_key: "itemGroup.hotbar",
+        top: true,
+        column: 5,
+        aligned_right: true,
+        icon: "bookshelf",
+        kind: CreativeTabKind::SavedHotbar,
+    },
+    CreativeTab {
+        label_key: "itemGroup.search",
+        top: true,
+        column: 6,
+        aligned_right: true,
+        icon: "compass",
+        kind: CreativeTabKind::Search,
+    },
+    CreativeTab {
+        label_key: "itemGroup.tools",
+        top: false,
+        column: 0,
+        aligned_right: false,
+        icon: "diamond_pickaxe",
+        kind: CreativeTabKind::Category,
+    },
+    CreativeTab {
+        label_key: "itemGroup.combat",
+        top: false,
+        column: 1,
+        aligned_right: false,
+        icon: "netherite_sword",
+        kind: CreativeTabKind::Category,
+    },
+    CreativeTab {
+        label_key: "itemGroup.foodAndDrink",
+        top: false,
+        column: 2,
+        aligned_right: false,
+        icon: "golden_apple",
+        kind: CreativeTabKind::Category,
+    },
+    CreativeTab {
+        label_key: "itemGroup.ingredients",
+        top: false,
+        column: 3,
+        aligned_right: false,
+        icon: "iron_ingot",
+        kind: CreativeTabKind::Category,
+    },
+    CreativeTab {
+        label_key: "itemGroup.spawnEggs",
+        top: false,
+        column: 4,
+        aligned_right: false,
+        icon: "creeper_spawn_egg",
+        kind: CreativeTabKind::Category,
+    },
+    CreativeTab {
+        label_key: "itemGroup.op",
+        top: false,
+        column: 5,
+        aligned_right: true,
+        icon: "command_block",
+        kind: CreativeTabKind::Operator,
+    },
+    CreativeTab {
+        label_key: "itemGroup.inventory",
+        top: false,
+        column: 6,
+        aligned_right: true,
+        icon: "chest",
+        kind: CreativeTabKind::Inventory,
+    },
 ];
 
 /// THE TAB'S PANEL-RELATIVE DRAW ORIGIN (the getTabX/getTabY +
@@ -64975,11 +65018,7 @@ fn creative_tab_origin(tab: &CreativeTab, image_width: i32, image_height: i32) -
     if tab.aligned_right {
         x = image_width - 27 * (7 - tab.column as i32) + 1;
     }
-    let y = if tab.top {
-        -28
-    } else {
-        image_height - 4
-    };
+    let y = if tab.top { -28 } else { image_height - 4 };
     (x, y)
 }
 
@@ -65033,8 +65072,7 @@ pub const CREATIVE_TAB_SPRITES: [[&str; 7]; 4] = [
 /// THE SCROLLER PAIR (the extractBackground walk's SCROLLER_SPRITE /
 /// SCROLLER_DISABLED_SPRITE constants — the 12x15 handle the
 /// (175, 18 + 77*scroll) position rides).
-pub const CREATIVE_SCROLLER: &str =
-    "gui/sprites/container/creative_inventory/scroller.png";
+pub const CREATIVE_SCROLLER: &str = "gui/sprites/container/creative_inventory/scroller.png";
 pub const CREATIVE_SCROLLER_DISABLED: &str =
     "gui/sprites/container/creative_inventory/scroller_disabled.png";
 
@@ -65071,10 +65109,7 @@ fn mannequin_turn(mouse: Option<(i32, i32)>, left: i32, top: i32) -> (f32, f32) 
 /// skin pass speaks (the winding the mannequin chain preserves), the
 /// piece's texture key riding, the tint field the light's own shade
 /// (the dye multiply the leather composite's sampler speaks).
-fn armor_sample<'a>(
-    q: &crate::avatar::AvatarQuad,
-    tex: &'a str,
-) -> crate::raster::SampledQuad<'a> {
+fn armor_sample<'a>(q: &crate::avatar::AvatarQuad, tex: &'a str) -> crate::raster::SampledQuad<'a> {
     // THE RAW PERIMETER ORDER (the skin pass's own law): the chain
     // preserves the winding, the corner-bound texels ride verbatim.
     crate::raster::SampledQuad {
@@ -65124,7 +65159,22 @@ fn mannequin_vp(
     let tx = 2.0 * cx / fb_w - 1.0;
     let ty = 1.0 - 2.0 * cy / fb_h;
     let ortho = crate::math::Mat4([
-        sx, 0.0, 0.0, 0.0, 0.0, sy, 0.0, 0.0, 0.0, 0.0, 2.0 / 2000.0, 0.0, tx, ty, 0.0, 1.0,
+        sx,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        sy,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        2.0 / 2000.0,
+        0.0,
+        tx,
+        ty,
+        0.0,
+        1.0,
     ]);
     let mirror = crate::math::Mat4([
         s, 0.0, 0.0, 0.0, 0.0, s, 0.0, 0.0, 0.0, 0.0, -s, 0.0, 0.0, 0.0, 0.0, 1.0,
@@ -65141,11 +65191,7 @@ fn mannequin_vp(
     // pip draw (the clip z row the matrix already carries), never the
     // w row — a w term would perspective-divide the positions and
     // shift the silhouette off the vanilla ortho's own.
-    ortho
-        .mul(&mirror)
-        .mul(&lift)
-        .mul(&flip)
-        .mul(&pitch_rot)
+    ortho.mul(&mirror).mul(&lift).mul(&flip).mul(&pitch_rot)
 }
 
 /// The 9x3 container grid's slot origin (the sprite's top-left): the
@@ -65217,8 +65263,12 @@ fn piece_sprite(item: i32) -> Option<(&'static str, [f32; 4])> {
     )?
     .ok()?;
     let q = quads.first()?;
-    let (mut u_lo, mut u_hi, mut v_lo, mut v_hi) =
-        (f32::INFINITY, f32::NEG_INFINITY, f32::INFINITY, f32::NEG_INFINITY);
+    let (mut u_lo, mut u_hi, mut v_lo, mut v_hi) = (
+        f32::INFINITY,
+        f32::NEG_INFINITY,
+        f32::INFINITY,
+        f32::NEG_INFINITY,
+    );
     for uv in q.uvs {
         u_lo = u_lo.min(uv[0]);
         u_hi = u_hi.max(uv[0]);
@@ -65290,9 +65340,7 @@ fn icon_tint(tints: &[&str]) -> [f32; 3] {
                 let rgb = match v.get("value") {
                     Some(serde_json::Value::Number(n)) => n.as_u64().unwrap_or(0xFFFFFF) as u32,
                     Some(serde_json::Value::Array(a)) => {
-                        let f = |i: usize| {
-                            a.get(i).and_then(|x| x.as_f64()).unwrap_or(1.0) as f32
-                        };
+                        let f = |i: usize| a.get(i).and_then(|x| x.as_f64()).unwrap_or(1.0) as f32;
                         let (r, g, b) = (f(0), f(1), f(2));
                         ((r * 255.0).round() as u32) << 16
                             | ((g * 255.0).round() as u32) << 8
@@ -65413,13 +65461,15 @@ fn draw_item_icon_3d_broken(
             }
         })
         .collect();
-    g.fb.draw_sampled_quads(proj, &sampled, &mut |tex, u, v| {
-        match mc_registry::sprite_uv::sample_uv(tex, u, v) {
+    g.fb.draw_sampled_quads(
+        proj,
+        &sampled,
+        &mut |tex, u, v| match mc_registry::sprite_uv::sample_uv(tex, u, v) {
             mc_registry::sprite_uv::Sample::Pixel(c) => Some(c),
             mc_registry::sprite_uv::Sample::Missing(c) => Some(c),
             mc_registry::sprite_uv::Sample::Unknown => None,
-        }
-    });
+        },
+    );
     true
 }
 

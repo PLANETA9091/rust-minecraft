@@ -1,0 +1,627 @@
+=== AccessibilityOptionsScreen constant pool (fov/accessibility words)
+=== net.minecraft.client.gui.screens.options.AccessibilityOptionsScreen constant-pool utf8 words (needles: ['fov', 'FOV', 'accessibility', 'tooltip', 'Narrator', 'narrator', 'subtitle', 'darkness', 'Darkness', 'lineSpacing', 'panorama'])
+  cp#7: 'narrator'
+  cp#44: 'fovEffectScale'
+  cp#47: 'darknessEffectScale'
+  cp#65: 'panoramaSpeed'
+  cp#71: 'narratorHotkey'
+  cp#141: 'options.accessibility.high_contrast.error.tooltip'
+  cp#244: 'options.accessibility.link'
+  cp#307: 'options.accessibility.title'
+
+=== AccessibilityOptionsScreen.addOptions (the row list's own walk)
+--- net.minecraft.client.gui.screens.options.AccessibilityOptionsScreen.addOptions()V
+0: aload_0
+1: getfield net/minecraft/client/gui/screens/options/AccessibilityOptionsScreen.optionsLnet/minecraft/client/Options;
+4: invokestatic net/minecraft/client/gui/screens/options/AccessibilityOptionsScreen.options(Lnet/minecraft/client/Options;)[Lnet/minecraft/client/OptionInstance;
+7: astore_1
+8: getstatic net/minecraft/client/gui/screens/options/OptionsScreen.CONTROLSLnet/minecraft/network/chat/Component;
+11: aload_0
+12: invokedynamic indy
+17: invokestatic net/minecraft/client/gui/components/Button.builder(Lnet/minecraft/network/chat/Component;Lnet/minecraft/client/gui/components/Button$OnPress;)Lnet/minecraft/client/gui/components/Button$Builder;
+20: invokevirtual net/minecraft/client/gui/components/Button$Builder.build()Lnet/minecraft/client/gui/components/Button;
+23: astore_2
+24: aload_1
+25: iconst_0
+26: aaload
+27: astore_3
+28: aload_0
+29: getfield net/minecraft/client/gui/screens/options/AccessibilityOptionsScreen.listLnet/minecraft/client/gui/components/OptionsList;
+32: aload_3
+33: aload_0
+34: getfield net/minecraft/client/gui/screens/options/AccessibilityOptionsScreen.optionsLnet/minecraft/client/Options;
+37: invokevirtual net/minecraft/client/OptionInstance.createButton(Lnet/minecraft/client/Options;)Lnet/minecraft/client/gui/components/AbstractWidget;
+40: aload_0
+41: getfield net/minecraft/client/gui/screens/options/AccessibilityOptionsScreen.optionsLnet/minecraft/client/Options;
+44: invokevirtual net/minecraft/client/Options.narrator()Lnet/minecraft/client/OptionInstance;
+47: aload_2
+48: invokevirtual net/minecraft/client/gui/components/OptionsList.addSmall(Lnet/minecraft/client/gui/components/AbstractWidget;Lnet/minecraft/client/OptionInstance;Lnet/minecraft/client/gui/components/AbstractWidget;)V
+51: aload_0
+52: getfield net/minecraft/client/gui/screens/options/AccessibilityOptionsScreen.listLnet/minecraft/client/gui/components/OptionsList;
+55: aload_1
+56: invokestatic java/util/Arrays.stream([Ljava/lang/Object;)Ljava/util/stream/Stream;
+59: aload_3
+60: invokedynamic indy
+65: invokeinterface java/util/stream/Stream.filter(Ljava/util/function/Predicate;)Ljava/util/stream/Stream;
+68: iconst_m1
+69: nop
+70: invokedynamic indy
+75: invokeinterface java/util/stream/Stream.toArray(Ljava/util/function/IntFunction;)[Ljava/lang/Object;
+78: iconst_m1
+79: nop
+80: checkcast [Lnet/minecraft/client/OptionInstance;
+83: invokevirtual net/minecraft/client/gui/components/OptionsList.addSmall([Lnet/minecraft/client/OptionInstance;)V
+86: return
+--- net.minecraft.client.gui.screens.options.AccessibilityOptionsScreen.lambda$addOptions$2(I)[Lnet/minecraft/client/OptionInstance;
+0: iload_0
+1: anewarray net/minecraft/client/OptionInstance
+4: areturn
+--- net.minecraft.client.gui.screens.options.AccessibilityOptionsScreen.lambda$addOptions$1(Lnet/minecraft/client/OptionInstance;Lnet/minecraft/client/OptionInstance;)Z
+0: aload_1
+1: aload_0
+2: if_acmpeq -> 9
+5: iconst_1
+6: goto -> 10
+9: iconst_0
+10: ireturn
+--- net.minecraft.client.gui.screens.options.AccessibilityOptionsScreen.lambda$addOptions$0(Lnet/minecraft/client/gui/components/Button;)V
+0: aload_0
+1: getfield net/minecraft/client/gui/screens/options/AccessibilityOptionsScreen.minecraftLnet/minecraft/client/Minecraft;
+4: getfield net/minecraft/client/Minecraft.guiLnet/minecraft/client/gui/Gui;
+7: new net/minecraft/client/gui/screens/options/controls/ControlsScreen
+10: dup
+11: aload_0
+12: aload_0
+13: getfield net/minecraft/client/gui/screens/options/AccessibilityOptionsScreen.optionsLnet/minecraft/client/Options;
+16: invokespecial net/minecraft/client/gui/screens/options/controls/ControlsScreen.<init>(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Options;)V
+19: invokevirtual net/minecraft/client/gui/Gui.setScreen(Lnet/minecraft/client/gui/screens/Screen;)V
+22: return
+
+=== AccessibilityOptionsScreen.removed (the save seat question)
+!! net.minecraft.client.gui.screens.options.AccessibilityOptionsScreen: no method matching removed
+
+=== OptionsScreen utf8 words (accessibility button row)
+=== net.minecraft.client.gui.screens.options.OptionsScreen constant-pool utf8 words (needles: ['accessibility', 'accessibilityLink', 'chat', 'sound', 'screen', 'TODO', 'empty'])
+  cp#4: 'net/minecraft/client/gui/screens/options/OptionsScreen'
+  cp#6: 'Lnet/minecraft/network/chat/Component;'
+  cp#10: 'net/minecraft/client/gui/screens/Screen'
+  cp#12: '(Lnet/minecraft/network/chat/Component;)V'
+  cp#19: '(Lnet/minecraft/client/gui/screens/Screen;II)V'
+  cp#27: 'Lnet/minecraft/client/gui/screens/Screen;'
+  cp#58: '(Lnet/minecraft/network/chat/Component;Lnet/minecraft/client/gui/Font;)V'
+  cp#96: 'net/minecraft/network/chat/Component'
+  cp#98: '(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;'
+  cp#102: '(Lnet/minecraft/client/gui/screens/options/OptionsScreen;)Lnet/minecraft/client/gui/components/Button$OnPress;'
+  cp#106: '(Lnet/minecraft/network/chat/Component;Lnet/minecraft/client/gui/components/Button$OnPress;)Lnet/minecraft/client/gui/components/Button$Builder;'
+  cp#148: '(Lnet/minecraft/client/gui/screens/options/OptionsScreen;)Ljava/util/function/Supplier;'
+  cp#152: '(Lnet/minecraft/network/chat/Component;Ljava/util/function/Supplier;)Lnet/minecraft/client/gui/components/Button;'
+  cp#213: 'net/minecraft/network/chat/CommonComponents'
+  cp#225: '(Lnet/minecraft/client/gui/screens/options/OptionsScreen;)Ljava/util/function/Consumer;'
+  cp#245: '(Lnet/minecraft/client/gui/screens/Screen;)V'
+  cp#268: '(Lnet/minecraft/client/gui/screens/options/OptionsScreen;Ljava/util/function/Supplier;)Lnet/minecraft/client/gui/components/Button$OnPress;'
+  cp#271: '(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Options;Z)V'
+  cp#278: 'net/minecraft/client/gui/screens/options/OnlineOptionsScreen'
+  cp#281: '(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Options;)V'
+  cp#290: 'net/minecraft/client/gui/screens/CreditsAndAttributionScreen'
+  cp#294: 'net/minecraft/client/gui/screens/telemetry/TelemetryInfoScreen'
+  cp#297: 'net/minecraft/client/gui/screens/options/AccessibilityOptionsScreen'
+  cp#300: 'net/minecraft/client/gui/screens/packs/PackSelectionScreen'
+  cp#314: '(Lnet/minecraft/server/packs/repository/PackRepository;Ljava/util/function/Consumer;Ljava/nio/file/Path;Lnet/minecraft/network/chat/Component;)V'
+  cp#316: 'net/minecraft/client/gui/screens/options/ChatOptionsScreen'
+  cp#319: 'net/minecraft/client/gui/screens/options/LanguageSelectScreen'
+  cp#326: '(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Options;Lnet/minecraft/client/resources/language/LanguageManager;)V'
+  cp#328: 'net/minecraft/client/gui/screens/options/controls/ControlsScreen'
+  cp#331: 'net/minecraft/client/gui/screens/options/VideoSettingsScreen'
+  cp#334: '(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/Options;)V'
+  cp#336: 'net/minecraft/client/gui/screens/options/SoundOptionsScreen'
+  cp#339: 'net/minecraft/client/gui/screens/options/SkinCustomizationScreen'
+  cp#342: 'net/minecraft/client/gui/screens/options/WorldOptionsScreen'
+  cp#357: '(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/world/level/Level;)V'
+  cp#363: 'options.sounds'
+  cp#371: 'options.chat'
+  cp#375: 'options.accessibility'
+  cp#385: '(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/gui/components/Tooltip;'
+  cp#389: 'net/minecraft/client/gui/screens/options/HasGamemasterPermissionReaction'
+  cp#397: 'Lnet/minecraft/client/gui/screens/options/OptionsScreen;'
+  cp#411: '()Lnet/minecraft/client/gui/screens/Screen;'
+  cp#417: 'screenToScreen'
+  cp#420: 'Ljava/util/function/Supplier<Lnet/minecraft/client/gui/screens/Screen;>;'
+  cp#422: '(Lnet/minecraft/network/chat/Component;Ljava/util/function/Supplier<Lnet/minecraft/client/gui/screens/Screen;>;)Lnet/minecraft/client/gui/components/Button;'
+  cp#431: '(Lnet/minecraft/client/gui/screens/options/OptionsScreen;Lnet/minecraft/client/gui/components/AbstractWidget;)V'
+
+=== OptionsScreen.init (the accessibility button's own creation)
+--- net.minecraft.client.gui.screens.options.OptionsScreen.<init>(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Options;Z)V
+0: aload_0
+1: getstatic net/minecraft/client/gui/screens/options/OptionsScreen.TITLELnet/minecraft/network/chat/Component;
+4: invokespecial net/minecraft/client/gui/screens/Screen.<init>(Lnet/minecraft/network/chat/Component;)V
+7: aload_0
+8: new net/minecraft/client/gui/layouts/HeaderAndFooterLayout
+11: dup
+12: aload_0
+13: bipush 61
+15: bipush 33
+17: invokespecial net/minecraft/client/gui/layouts/HeaderAndFooterLayout.<init>(Lnet/minecraft/client/gui/screens/Screen;II)V
+20: putfield net/minecraft/client/gui/screens/options/OptionsScreen.layoutLnet/minecraft/client/gui/layouts/HeaderAndFooterLayout;
+23: aload_0
+24: aload_1
+25: putfield net/minecraft/client/gui/screens/options/OptionsScreen.lastScreenLnet/minecraft/client/gui/screens/Screen;
+28: aload_0
+29: aload_2
+30: putfield net/minecraft/client/gui/screens/options/OptionsScreen.optionsLnet/minecraft/client/Options;
+33: aload_0
+34: iload_3
+35: putfield net/minecraft/client/gui/screens/options/OptionsScreen.inWorldZ
+38: return
+--- net.minecraft.client.gui.screens.options.OptionsScreen.init()V
+0: aload_0
+1: getfield net/minecraft/client/gui/screens/options/OptionsScreen.layoutLnet/minecraft/client/gui/layouts/HeaderAndFooterLayout;
+4: invokestatic net/minecraft/client/gui/layouts/LinearLayout.vertical()Lnet/minecraft/client/gui/layouts/LinearLayout;
+7: bipush 8
+9: invokevirtual net/minecraft/client/gui/layouts/LinearLayout.spacing(I)Lnet/minecraft/client/gui/layouts/LinearLayout;
+12: invokevirtual net/minecraft/client/gui/layouts/HeaderAndFooterLayout.addToHeader(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+15: checkcast net/minecraft/client/gui/layouts/LinearLayout
+18: astore_1
+19: aload_1
+20: new net/minecraft/client/gui/components/StringWidget
+23: dup
+24: getstatic net/minecraft/client/gui/screens/options/OptionsScreen.TITLELnet/minecraft/network/chat/Component;
+27: aload_0
+28: getfield net/minecraft/client/gui/screens/options/OptionsScreen.fontLnet/minecraft/client/gui/Font;
+31: invokespecial net/minecraft/client/gui/components/StringWidget.<init>(Lnet/minecraft/network/chat/Component;Lnet/minecraft/client/gui/Font;)V
+34: invokedynamic indy
+39: invokevirtual net/minecraft/client/gui/layouts/LinearLayout.addChild(Lnet/minecraft/client/gui/layouts/LayoutElement;Ljava/util/function/Consumer;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+42: pop
+43: aload_1
+44: invokestatic net/minecraft/client/gui/layouts/LinearLayout.horizontal()Lnet/minecraft/client/gui/layouts/LinearLayout;
+47: invokevirtual net/minecraft/client/gui/layouts/LinearLayout.addChild(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+50: checkcast net/minecraft/client/gui/layouts/LinearLayout
+53: bipush 8
+55: invokevirtual net/minecraft/client/gui/layouts/LinearLayout.spacing(I)Lnet/minecraft/client/gui/layouts/LinearLayout;
+58: astore_2
+59: aload_2
+60: aload_0
+61: getfield net/minecraft/client/gui/screens/options/OptionsScreen.optionsLnet/minecraft/client/Options;
+64: invokevirtual net/minecraft/client/Options.fov()Lnet/minecraft/client/OptionInstance;
+67: aload_0
+68: getfield net/minecraft/client/gui/screens/options/OptionsScreen.minecraftLnet/minecraft/client/Minecraft;
+71: getfield net/minecraft/client/Minecraft.optionsLnet/minecraft/client/Options;
+74: invokevirtual net/minecraft/client/OptionInstance.createButton(Lnet/minecraft/client/Options;)Lnet/minecraft/client/gui/components/AbstractWidget;
+77: invokevirtual net/minecraft/client/gui/layouts/LinearLayout.addChild(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+80: pop
+81: aload_0
+82: getfield net/minecraft/client/gui/screens/options/OptionsScreen.inWorldZ
+85: ifeq -> 113
+88: aload_2
+89: ldc options.worldOptions.button
+91: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+94: aload_0
+95: invokedynamic indy
+100: invokestatic net/minecraft/client/gui/components/Button.builder(Lnet/minecraft/network/chat/Component;Lnet/minecraft/client/gui/components/Button$OnPress;)Lnet/minecraft/client/gui/components/Button$Builder;
+103: invokevirtual net/minecraft/client/gui/components/Button$Builder.build()Lnet/minecraft/client/gui/components/Button;
+106: invokevirtual net/minecraft/client/gui/layouts/LinearLayout.addChild(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+109: pop
+110: goto -> 122
+113: aload_2
+114: aload_0
+115: invokevirtual net/minecraft/client/gui/screens/options/OptionsScreen.createOnlineButton()Lnet/minecraft/client/gui/layouts/LayoutElement;
+118: invokevirtual net/minecraft/client/gui/layouts/LinearLayout.addChild(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+121: pop
+122: new net/minecraft/client/gui/layouts/GridLayout
+125: dup
+126: invokespecial net/minecraft/client/gui/layouts/GridLayout.<init>()V
+129: astore_3
+130: aload_3
+131: invokevirtual net/minecraft/client/gui/layouts/GridLayout.defaultCellSetting()Lnet/minecraft/client/gui/layouts/LayoutSettings;
+134: iconst_4
+135: invokeinterface net/minecraft/client/gui/layouts/LayoutSettings.paddingHorizontal(I)Lnet/minecraft/client/gui/layouts/LayoutSettings;
+138: iconst_m1
+139: nop
+140: iconst_4
+141: invokeinterface net/minecraft/client/gui/layouts/LayoutSettings.paddingBottom(I)Lnet/minecraft/client/gui/layouts/LayoutSettings;
+144: iconst_m1
+145: nop
+146: invokeinterface net/minecraft/client/gui/layouts/LayoutSettings.alignHorizontallyCenter()Lnet/minecraft/client/gui/layouts/LayoutSettings;
+149: aconst_null
+150: nop
+151: pop
+152: aload_3
+153: iconst_2
+154: invokevirtual net/minecraft/client/gui/layouts/GridLayout.createRowHelper(I)Lnet/minecraft/client/gui/layouts/GridLayout$RowHelper;
+157: astore astore 4
+159: aload aload 4
+161: aload_0
+162: getstatic net/minecraft/client/gui/screens/options/OptionsScreen.SKIN_CUSTOMIZATIONLnet/minecraft/network/chat/Component;
+165: aload_0
+166: invokedynamic indy
+171: invokevirtual net/minecraft/client/gui/screens/options/OptionsScreen.openScreenButton(Lnet/minecraft/network/chat/Component;Ljava/util/function/Supplier;)Lnet/minecraft/client/gui/components/Button;
+174: invokevirtual net/minecraft/client/gui/layouts/GridLayout$RowHelper.addChild(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+177: pop
+178: aload aload 4
+180: aload_0
+181: getstatic net/minecraft/client/gui/screens/options/OptionsScreen.SOUNDSLnet/minecraft/network/chat/Component;
+184: aload_0
+185: invokedynamic indy
+190: invokevirtual net/minecraft/client/gui/screens/options/OptionsScreen.openScreenButton(Lnet/minecraft/network/chat/Component;Ljava/util/function/Supplier;)Lnet/minecraft/client/gui/components/Button;
+193: invokevirtual net/minecraft/client/gui/layouts/GridLayout$RowHelper.addChild(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+196: pop
+197: aload aload 4
+199: aload_0
+200: getstatic net/minecraft/client/gui/screens/options/OptionsScreen.VIDEOLnet/minecraft/network/chat/Component;
+203: aload_0
+204: invokedynamic indy
+209: invokevirtual net/minecraft/client/gui/screens/options/OptionsScreen.openScreenButton(Lnet/minecraft/network/chat/Component;Ljava/util/function/Supplier;)Lnet/minecraft/client/gui/components/Button;
+212: invokevirtual net/minecraft/client/gui/layouts/GridLayout$RowHelper.addChild(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+215: pop
+216: aload aload 4
+218: aload_0
+219: getstatic net/minecraft/client/gui/screens/options/OptionsScreen.CONTROLSLnet/minecraft/network/chat/Component;
+222: aload_0
+223: invokedynamic indy
+228: invokevirtual net/minecraft/client/gui/screens/options/OptionsScreen.openScreenButton(Lnet/minecraft/network/chat/Component;Ljava/util/function/Supplier;)Lnet/minecraft/client/gui/components/Button;
+231: invokevirtual net/minecraft/client/gui/layouts/GridLayout$RowHelper.addChild(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+234: pop
+235: aload aload 4
+237: aload_0
+238: getstatic net/minecraft/client/gui/screens/options/OptionsScreen.LANGUAGELnet/minecraft/network/chat/Component;
+241: aload_0
+242: invokedynamic indy
+247: invokevirtual net/minecraft/client/gui/screens/options/OptionsScreen.openScreenButton(Lnet/minecraft/network/chat/Component;Ljava/util/function/Supplier;)Lnet/minecraft/client/gui/components/Button;
+250: invokevirtual net/minecraft/client/gui/layouts/GridLayout$RowHelper.addChild(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+253: pop
+254: aload aload 4
+256: aload_0
+257: getstatic net/minecraft/client/gui/screens/options/OptionsScreen.CHATLnet/minecraft/network/chat/Component;
+260: aload_0
+261: invokedynamic indy
+266: invokevirtual net/minecraft/client/gui/screens/options/OptionsScreen.openScreenButton(Lnet/minecraft/network/chat/Component;Ljava/util/function/Supplier;)Lnet/minecraft/client/gui/components/Button;
+269: invokevirtual net/minecraft/client/gui/layouts/GridLayout$RowHelper.addChild(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+272: pop
+273: aload aload 4
+275: aload_0
+276: getstatic net/minecraft/client/gui/screens/options/OptionsScreen.RESOURCEPACKLnet/minecraft/network/chat/Component;
+279: aload_0
+280: invokedynamic indy
+285: invokevirtual net/minecraft/client/gui/screens/options/OptionsScreen.openScreenButton(Lnet/minecraft/network/chat/Component;Ljava/util/function/Supplier;)Lnet/minecraft/client/gui/components/Button;
+288: invokevirtual net/minecraft/client/gui/layouts/GridLayout$RowHelper.addChild(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+291: pop
+292: aload aload 4
+294: aload_0
+295: getstatic net/minecraft/client/gui/screens/options/OptionsScreen.ACCESSIBILITYLnet/minecraft/network/chat/Component;
+298: aload_0
+299: invokedynamic indy
+304: invokevirtual net/minecraft/client/gui/screens/options/OptionsScreen.openScreenButton(Lnet/minecraft/network/chat/Component;Ljava/util/function/Supplier;)Lnet/minecraft/client/gui/components/Button;
+307: invokevirtual net/minecraft/client/gui/layouts/GridLayout$RowHelper.addChild(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+310: pop
+311: aload aload 4
+313: aload_0
+314: getstatic net/minecraft/client/gui/screens/options/OptionsScreen.TELEMETRYLnet/minecraft/network/chat/Component;
+317: aload_0
+318: invokedynamic indy
+323: invokevirtual net/minecraft/client/gui/screens/options/OptionsScreen.openScreenButton(Lnet/minecraft/network/chat/Component;Ljava/util/function/Supplier;)Lnet/minecraft/client/gui/components/Button;
+326: invokevirtual net/minecraft/client/gui/layouts/GridLayout$RowHelper.addChild(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+329: checkcast net/minecraft/client/gui/components/Button
+332: astore astore 5
+334: aload_0
+335: getfield net/minecraft/client/gui/screens/options/OptionsScreen.minecraftLnet/minecraft/client/Minecraft;
+338: invokevirtual net/minecraft/client/Minecraft.allowsTelemetry()Z
+341: ifne -> 358
+344: aload aload 5
+346: iconst_0
+347: putfield net/minecraft/client/gui/components/Button.activeZ
+350: aload aload 5
+352: getstatic net/minecraft/client/gui/screens/options/OptionsScreen.TELEMETRY_DISABLED_TOOLTIPLnet/minecraft/client/gui/components/Tooltip;
+355: invokevirtual net/minecraft/client/gui/components/Button.setTooltip(Lnet/minecraft/client/gui/components/Tooltip;)V
+358: aload aload 4
+360: aload_0
+361: getstatic net/minecraft/client/gui/screens/options/OptionsScreen.CREDITS_AND_ATTRIBUTIONLnet/minecraft/network/chat/Component;
+364: aload_0
+365: invokedynamic indy
+370: invokevirtual net/minecraft/client/gui/screens/options/OptionsScreen.openScreenButton(Lnet/minecraft/network/chat/Component;Ljava/util/function/Supplier;)Lnet/minecraft/client/gui/components/Button;
+373: invokevirtual net/minecraft/client/gui/layouts/GridLayout$RowHelper.addChild(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+376: pop
+377: aload_0
+378: getfield net/minecraft/client/gui/screens/options/OptionsScreen.layoutLnet/minecraft/client/gui/layouts/HeaderAndFooterLayout;
+381: aload_3
+382: invokevirtual net/minecraft/client/gui/layouts/HeaderAndFooterLayout.addToContents(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+385: pop
+386: aload_0
+387: getfield net/minecraft/client/gui/screens/options/OptionsScreen.layoutLnet/minecraft/client/gui/layouts/HeaderAndFooterLayout;
+390: getstatic net/minecraft/network/chat/CommonComponents.GUI_DONELnet/minecraft/network/chat/Component;
+393: aload_0
+394: invokedynamic indy
+399: invokestatic net/minecraft/client/gui/components/Button.builder(Lnet/minecraft/network/chat/Component;Lnet/minecraft/client/gui/components/Button$OnPress;)Lnet/minecraft/client/gui/components/Button$Builder;
+402: sipush 200
+405: invokevirtual net/minecraft/client/gui/components/Button$Builder.width(I)Lnet/minecraft/client/gui/components/Button$Builder;
+408: invokevirtual net/minecraft/client/gui/components/Button$Builder.build()Lnet/minecraft/client/gui/components/Button;
+411: invokevirtual net/minecraft/client/gui/layouts/HeaderAndFooterLayout.addToFooter(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+414: pop
+415: aload_0
+416: getfield net/minecraft/client/gui/screens/options/OptionsScreen.layoutLnet/minecraft/client/gui/layouts/HeaderAndFooterLayout;
+419: aload_0
+420: astore astore 6
+422: aload aload 6
+424: invokedynamic indy
+429: invokevirtual net/minecraft/client/gui/layouts/HeaderAndFooterLayout.visitWidgets(Ljava/util/function/Consumer;)V
+432: aload_0
+433: invokevirtual net/minecraft/client/gui/screens/options/OptionsScreen.repositionElements()V
+436: return
+--- net.minecraft.client.gui.screens.options.OptionsScreen.lambda$init$12(Lnet/minecraft/client/gui/screens/options/OptionsScreen;Lnet/minecraft/client/gui/components/AbstractWidget;)V
+0: aload_0
+1: aload_1
+2: invokevirtual net/minecraft/client/gui/screens/options/OptionsScreen.addRenderableWidget(Lnet/minecraft/client/gui/components/events/GuiEventListener;)Lnet/minecraft/client/gui/components/events/GuiEventListener;
+5: pop
+6: return
+--- net.minecraft.client.gui.screens.options.OptionsScreen.lambda$init$11(Lnet/minecraft/client/gui/components/Button;)V
+0: aload_0
+1: invokevirtual net/minecraft/client/gui/screens/options/OptionsScreen.onClose()V
+4: return
+--- net.minecraft.client.gui.screens.options.OptionsScreen.lambda$init$10()Lnet/minecraft/client/gui/screens/Screen;
+0: new net/minecraft/client/gui/screens/CreditsAndAttributionScreen
+3: dup
+4: aload_0
+5: invokespecial net/minecraft/client/gui/screens/CreditsAndAttributionScreen.<init>(Lnet/minecraft/client/gui/screens/Screen;)V
+8: areturn
+--- net.minecraft.client.gui.screens.options.OptionsScreen.lambda$init$9()Lnet/minecraft/client/gui/screens/Screen;
+0: new net/minecraft/client/gui/screens/telemetry/TelemetryInfoScreen
+3: dup
+4: aload_0
+5: aload_0
+6: getfield net/minecraft/client/gui/screens/options/OptionsScreen.optionsLnet/minecraft/client/Options;
+9: invokespecial net/minecraft/client/gui/screens/telemetry/TelemetryInfoScreen.<init>(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Options;)V
+12: areturn
+--- net.minecraft.client.gui.screens.options.OptionsScreen.lambda$init$8()Lnet/minecraft/client/gui/screens/Screen;
+0: new net/minecraft/client/gui/screens/options/AccessibilityOptionsScreen
+3: dup
+4: aload_0
+5: aload_0
+6: getfield net/minecraft/client/gui/screens/options/OptionsScreen.optionsLnet/minecraft/client/Options;
+9: invokespecial net/minecraft/client/gui/screens/options/AccessibilityOptionsScreen.<init>(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Options;)V
+12: areturn
+--- net.minecraft.client.gui.screens.options.OptionsScreen.lambda$init$7()Lnet/minecraft/client/gui/screens/Screen;
+0: new net/minecraft/client/gui/screens/packs/PackSelectionScreen
+3: dup
+4: aload_0
+5: getfield net/minecraft/client/gui/screens/options/OptionsScreen.minecraftLnet/minecraft/client/Minecraft;
+8: invokevirtual net/minecraft/client/Minecraft.getResourcePackRepository()Lnet/minecraft/server/packs/repository/PackRepository;
+11: aload_0
+12: invokedynamic indy
+17: aload_0
+18: getfield net/minecraft/client/gui/screens/options/OptionsScreen.minecraftLnet/minecraft/client/Minecraft;
+21: invokevirtual net/minecraft/client/Minecraft.getResourcePackDirectory()Ljava/nio/file/Path;
+24: ldc_w ldcw@310
+27: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+30: invokespecial net/minecraft/client/gui/screens/packs/PackSelectionScreen.<init>(Lnet/minecraft/server/packs/repository/PackRepository;Ljava/util/function/Consumer;Ljava/nio/file/Path;Lnet/minecraft/network/chat/Component;)V
+33: areturn
+--- net.minecraft.client.gui.screens.options.OptionsScreen.lambda$init$6()Lnet/minecraft/client/gui/screens/Screen;
+0: new net/minecraft/client/gui/screens/options/ChatOptionsScreen
+3: dup
+4: aload_0
+5: aload_0
+6: getfield net/minecraft/client/gui/screens/options/OptionsScreen.optionsLnet/minecraft/client/Options;
+9: invokespecial net/minecraft/client/gui/screens/options/ChatOptionsScreen.<init>(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Options;)V
+12: areturn
+--- net.minecraft.client.gui.screens.options.OptionsScreen.lambda$init$5()Lnet/minecraft/client/gui/screens/Screen;
+0: new net/minecraft/client/gui/screens/options/LanguageSelectScreen
+3: dup
+4: aload_0
+5: aload_0
+6: getfield net/minecraft/client/gui/screens/options/OptionsScreen.optionsLnet/minecraft/client/Options;
+9: aload_0
+10: getfield net/minecraft/client/gui/screens/options/OptionsScreen.minecraftLnet/minecraft/client/Minecraft;
+13: invokevirtual net/minecraft/client/Minecraft.getLanguageManager()Lnet/minecraft/client/resources/language/LanguageManager;
+16: invokespecial net/minecraft/client/gui/screens/options/LanguageSelectScreen.<init>(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Options;Lnet/minecraft/client/resources/language/LanguageManager;)V
+19: areturn
+--- net.minecraft.client.gui.screens.options.OptionsScreen.lambda$init$4()Lnet/minecraft/client/gui/screens/Screen;
+0: new net/minecraft/client/gui/screens/options/controls/ControlsScreen
+3: dup
+4: aload_0
+5: aload_0
+6: getfield net/minecraft/client/gui/screens/options/OptionsScreen.optionsLnet/minecraft/client/Options;
+9: invokespecial net/minecraft/client/gui/screens/options/controls/ControlsScreen.<init>(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Options;)V
+12: areturn
+--- net.minecraft.client.gui.screens.options.OptionsScreen.lambda$init$3()Lnet/minecraft/client/gui/screens/Screen;
+0: new net/minecraft/client/gui/screens/options/VideoSettingsScreen
+3: dup
+4: aload_0
+5: aload_0
+6: getfield net/minecraft/client/gui/screens/options/OptionsScreen.minecraftLnet/minecraft/client/Minecraft;
+9: aload_0
+10: getfield net/minecraft/client/gui/screens/options/OptionsScreen.optionsLnet/minecraft/client/Options;
+13: invokespecial net/minecraft/client/gui/screens/options/VideoSettingsScreen.<init>(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/Options;)V
+16: areturn
+--- net.minecraft.client.gui.screens.options.OptionsScreen.lambda$init$2()Lnet/minecraft/client/gui/screens/Screen;
+0: new net/minecraft/client/gui/screens/options/SoundOptionsScreen
+3: dup
+4: aload_0
+5: aload_0
+6: getfield net/minecraft/client/gui/screens/options/OptionsScreen.optionsLnet/minecraft/client/Options;
+9: invokespecial net/minecraft/client/gui/screens/options/SoundOptionsScreen.<init>(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Options;)V
+12: areturn
+--- net.minecraft.client.gui.screens.options.OptionsScreen.lambda$init$1()Lnet/minecraft/client/gui/screens/Screen;
+0: new net/minecraft/client/gui/screens/options/SkinCustomizationScreen
+3: dup
+4: aload_0
+5: aload_0
+6: getfield net/minecraft/client/gui/screens/options/OptionsScreen.optionsLnet/minecraft/client/Options;
+9: invokespecial net/minecraft/client/gui/screens/options/SkinCustomizationScreen.<init>(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Options;)V
+12: areturn
+--- net.minecraft.client.gui.screens.options.OptionsScreen.lambda$init$0(Lnet/minecraft/client/gui/components/Button;)V
+0: aload_0
+1: getfield net/minecraft/client/gui/screens/options/OptionsScreen.minecraftLnet/minecraft/client/Minecraft;
+4: getfield net/minecraft/client/Minecraft.guiLnet/minecraft/client/gui/Gui;
+7: new net/minecraft/client/gui/screens/options/WorldOptionsScreen
+10: dup
+11: aload_0
+12: aload_0
+13: getfield net/minecraft/client/gui/screens/options/OptionsScreen.minecraftLnet/minecraft/client/Minecraft;
+16: getfield net/minecraft/client/Minecraft.levelLnet/minecraft/client/multiplayer/ClientLevel;
+19: invokestatic java/util/Objects.requireNonNull(Ljava/lang/Object;)Ljava/lang/Object;
+22: checkcast net/minecraft/world/level/Level
+25: invokespecial net/minecraft/client/gui/screens/options/WorldOptionsScreen.<init>(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/world/level/Level;)V
+28: invokevirtual net/minecraft/client/gui/Gui.setScreen(Lnet/minecraft/client/gui/screens/Screen;)V
+31: return
+--- net.minecraft.client.gui.screens.options.OptionsScreen.<clinit>()V
+0: ldc_w ldcw@358
+3: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+6: putstatic net/minecraft/client/gui/screens/options/OptionsScreen.TITLELnet/minecraft/network/chat/Component;
+9: ldc_w ldcw@360
+12: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+15: putstatic net/minecraft/client/gui/screens/options/OptionsScreen.SKIN_CUSTOMIZATIONLnet/minecraft/network/chat/Component;
+18: ldc_w ldcw@362
+21: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+24: putstatic net/minecraft/client/gui/screens/options/OptionsScreen.SOUNDSLnet/minecraft/network/chat/Component;
+27: ldc_w ldcw@364
+30: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+33: putstatic net/minecraft/client/gui/screens/options/OptionsScreen.VIDEOLnet/minecraft/network/chat/Component;
+36: ldc_w ldcw@366
+39: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+42: putstatic net/minecraft/client/gui/screens/options/OptionsScreen.CONTROLSLnet/minecraft/network/chat/Component;
+45: ldc_w ldcw@368
+48: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+51: putstatic net/minecraft/client/gui/screens/options/OptionsScreen.LANGUAGELnet/minecraft/network/chat/Component;
+54: ldc_w ldcw@370
+57: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+60: putstatic net/minecraft/client/gui/screens/options/OptionsScreen.CHATLnet/minecraft/network/chat/Component;
+63: ldc_w ldcw@372
+66: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+69: putstatic net/minecraft/client/gui/screens/options/OptionsScreen.RESOURCEPACKLnet/minecraft/network/chat/Component;
+72: ldc_w ldcw@374
+75: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+78: putstatic net/minecraft/client/gui/screens/options/OptionsScreen.ACCESSIBILITYLnet/minecraft/network/chat/Component;
+81: ldc_w ldcw@376
+84: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+87: putstatic net/minecraft/client/gui/screens/options/OptionsScreen.TELEMETRYLnet/minecraft/network/chat/Component;
+90: ldc_w ldcw@378
+93: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+96: invokestatic net/minecraft/client/gui/components/Tooltip.create(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/gui/components/Tooltip;
+99: putstatic net/minecraft/client/gui/screens/options/OptionsScreen.TELEMETRY_DISABLED_TOOLTIPLnet/minecraft/client/gui/components/Tooltip;
+102: ldc_w ldcw@386
+105: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+108: putstatic net/minecraft/client/gui/screens/options/OptionsScreen.CREDITS_AND_ATTRIBUTIONLnet/minecraft/network/chat/Component;
+111: return
+
+=== AccessibilityOptionsScreen.options(Options) static (the row array's own order)
+--- net.minecraft.client.gui.screens.options.AccessibilityOptionsScreen.options(Lnet/minecraft/client/Options;)[Lnet/minecraft/client/OptionInstance;
+0: bipush 24
+2: anewarray net/minecraft/client/OptionInstance
+5: dup
+6: iconst_0
+7: aload_0
+8: invokevirtual net/minecraft/client/Options.narrator()Lnet/minecraft/client/OptionInstance;
+11: aastore
+12: dup
+13: iconst_1
+14: aload_0
+15: invokevirtual net/minecraft/client/Options.showSubtitles()Lnet/minecraft/client/OptionInstance;
+18: aastore
+19: dup
+20: iconst_2
+21: aload_0
+22: invokevirtual net/minecraft/client/Options.highContrast()Lnet/minecraft/client/OptionInstance;
+25: aastore
+26: dup
+27: iconst_3
+28: aload_0
+29: invokevirtual net/minecraft/client/Options.menuBackgroundBlurriness()Lnet/minecraft/client/OptionInstance;
+32: aastore
+33: dup
+34: iconst_4
+35: aload_0
+36: invokevirtual net/minecraft/client/Options.textBackgroundOpacity()Lnet/minecraft/client/OptionInstance;
+39: aastore
+40: dup
+41: iconst_5
+42: aload_0
+43: invokevirtual net/minecraft/client/Options.backgroundForChatOnly()Lnet/minecraft/client/OptionInstance;
+46: aastore
+47: dup
+48: bipush 6
+50: aload_0
+51: invokevirtual net/minecraft/client/Options.chatOpacity()Lnet/minecraft/client/OptionInstance;
+54: aastore
+55: dup
+56: bipush 7
+58: aload_0
+59: invokevirtual net/minecraft/client/Options.chatLineSpacing()Lnet/minecraft/client/OptionInstance;
+62: aastore
+63: dup
+64: bipush 8
+66: aload_0
+67: invokevirtual net/minecraft/client/Options.chatDelay()Lnet/minecraft/client/OptionInstance;
+70: aastore
+71: dup
+72: bipush 9
+74: aload_0
+75: invokevirtual net/minecraft/client/Options.notificationDisplayTime()Lnet/minecraft/client/OptionInstance;
+78: aastore
+79: dup
+80: bipush 10
+82: aload_0
+83: invokevirtual net/minecraft/client/Options.bobView()Lnet/minecraft/client/OptionInstance;
+86: aastore
+87: dup
+88: bipush 11
+90: aload_0
+91: invokevirtual net/minecraft/client/Options.screenEffectScale()Lnet/minecraft/client/OptionInstance;
+94: aastore
+95: dup
+96: bipush 12
+98: aload_0
+99: invokevirtual net/minecraft/client/Options.fovEffectScale()Lnet/minecraft/client/OptionInstance;
+102: aastore
+103: dup
+104: bipush 13
+106: aload_0
+107: invokevirtual net/minecraft/client/Options.darknessEffectScale()Lnet/minecraft/client/OptionInstance;
+110: aastore
+111: dup
+112: bipush 14
+114: aload_0
+115: invokevirtual net/minecraft/client/Options.damageTiltStrength()Lnet/minecraft/client/OptionInstance;
+118: aastore
+119: dup
+120: bipush 15
+122: aload_0
+123: invokevirtual net/minecraft/client/Options.glintSpeed()Lnet/minecraft/client/OptionInstance;
+126: aastore
+127: dup
+128: bipush 16
+130: aload_0
+131: invokevirtual net/minecraft/client/Options.glintStrength()Lnet/minecraft/client/OptionInstance;
+134: aastore
+135: dup
+136: bipush 17
+138: aload_0
+139: invokevirtual net/minecraft/client/Options.hideLightningFlash()Lnet/minecraft/client/OptionInstance;
+142: aastore
+143: dup
+144: bipush 18
+146: aload_0
+147: invokevirtual net/minecraft/client/Options.darkMojangStudiosBackground()Lnet/minecraft/client/OptionInstance;
+150: aastore
+151: dup
+152: bipush 19
+154: aload_0
+155: invokevirtual net/minecraft/client/Options.panoramaSpeed()Lnet/minecraft/client/OptionInstance;
+158: aastore
+159: dup
+160: bipush 20
+162: aload_0
+163: invokevirtual net/minecraft/client/Options.hideSplashTexts()Lnet/minecraft/client/OptionInstance;
+166: aastore
+167: dup
+168: bipush 21
+170: aload_0
+171: invokevirtual net/minecraft/client/Options.narratorHotkey()Lnet/minecraft/client/OptionInstance;
+174: aastore
+175: dup
+176: bipush 22
+178: aload_0
+179: invokevirtual net/minecraft/client/Options.rotateWithMinecart()Lnet/minecraft/client/OptionInstance;
+182: aastore
+183: dup
+184: bipush 23
+186: aload_0
+187: invokevirtual net/minecraft/client/Options.highContrastBlockOutline()Lnet/minecraft/client/OptionInstance;
+190: aastore
+191: areturn

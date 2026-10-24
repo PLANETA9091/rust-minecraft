@@ -41,12 +41,23 @@ fn now_millis() -> i64 {
         .unwrap_or(0)
 }
 
-pub fn run_windowed(world: &World, lut: Option<&TextureLut>, width: usize, height: usize) -> anyhow::Result<()> {
+pub fn run_windowed(
+    world: &World,
+    lut: Option<&TextureLut>,
+    width: usize,
+    height: usize,
+) -> anyhow::Result<()> {
     let mut window = Window::new(
-        &format!("mc2rs — Minecraft {} in Rust", crate::build_info::MINECRAFT_VERSION),
+        &format!(
+            "mc2rs — Minecraft {} in Rust",
+            crate::build_info::MINECRAFT_VERSION
+        ),
         width,
         height,
-        WindowOptions { resize: true, ..WindowOptions::default() },
+        WindowOptions {
+            resize: true,
+            ..WindowOptions::default()
+        },
     )?;
 
     let n = world.size_blocks() as f32;
@@ -118,7 +129,9 @@ pub fn run_windowed(world: &World, lut: Option<&TextureLut>, width: usize, heigh
             last_title = Instant::now();
             window.set_title(&format!(
                 "mc2rs — Minecraft {} in Rust — {:.0} fps (render {:.1} ms)",
-                crate::build_info::MINECRAFT_VERSION, fps, render_ms
+                crate::build_info::MINECRAFT_VERSION,
+                fps,
+                render_ms
             ));
         }
     }
@@ -237,9 +250,15 @@ fn run_join(
         mc_protocol::generated::pack_claim::PROTOCOL_VERSION,
         crate::screens::PLAYER_NAME,
     ) {
-        Ok(mc_protocol::LiveJoin::Live { snapshot, mut session }) => {
-            let (entity_id, view_distance, chunks) =
-                (snapshot.info.entity_id, snapshot.info.view_distance, snapshot.chunks.len());
+        Ok(mc_protocol::LiveJoin::Live {
+            snapshot,
+            mut session,
+        }) => {
+            let (entity_id, view_distance, chunks) = (
+                snapshot.info.entity_id,
+                snapshot.info.view_distance,
+                snapshot.chunks.len(),
+            );
             // the synced registry's own roster: the entity-type id table
             // the snapshot carries (the chat's type= value walk the App
             // answers from now on) — captured before the snapshot moves
@@ -258,7 +277,9 @@ fn run_join(
                     (
                         name.clone(),
                         ids.iter()
-                            .filter_map(|i| snapshot.registry.entity_types.get(*i as usize).cloned())
+                            .filter_map(|i| {
+                                snapshot.registry.entity_types.get(*i as usize).cloned()
+                            })
                             .collect(),
                     )
                 })
@@ -504,10 +525,7 @@ fn run_join(
                             view.model.select_hotbar(selection as usize);
                             session.set_carried_item(selection)
                         }
-                        crate::world_view::ContainerCommand::CreativeSetSlot {
-                            slot,
-                            item,
-                        } => {
+                        crate::world_view::ContainerCommand::CreativeSetSlot { slot, item } => {
                             // THE CREATIVE SLOT'S OWN STORE HALF + THE
                             // WIRE (the vanilla handleCreativeModeItemAdd
                             // walk — the setItem the client-authoritative
@@ -519,9 +537,7 @@ fn run_join(
                             view.model.set_window_slot(slot, item);
                             session.set_creative_mode_slot(slot, item.1, item.0)
                         }
-                        crate::world_view::ContainerCommand::CreativeDrop {
-                            item,
-                        } => {
+                        crate::world_view::ContainerCommand::CreativeDrop { item } => {
                             // THE DROP'S OWN WIRE (the vanilla
                             // handleCreativeModeItemDrop walk — the -1
                             // slotNum the ServerboundSetCreativeModeSlotPacket
@@ -560,10 +576,7 @@ fn run_join(
                             // the two VarInts the record's write speaks.
                             session.select_bundle_item(slot_id, selected_item_index)
                         }
-                        crate::world_view::ContainerCommand::PickBlock {
-                            pos,
-                            include_data,
-                        } => {
+                        crate::world_view::ContainerCommand::PickBlock { pos, include_data } => {
                             // THE PICK's wire half (the vanilla
                             // gameMode.handlePickItemFromBlock walk): the
                             // packet send ALONE — NO local prediction the
@@ -576,11 +589,7 @@ fn run_join(
                             // to move.
                             session.pick_item_from_block(pos, include_data)
                         }
-                        crate::world_view::ContainerCommand::UseItem {
-                            yaw,
-                            pitch,
-                            hand,
-                        } => {
+                        crate::world_view::ContainerCommand::UseItem { yaw, pitch, hand } => {
                             // THE USE ARC's wire echo (the vanilla
                             // gameMode.useItem's own shape): the hand
                             // ordinal the use wore (the MAIN 0, the OFF
@@ -637,7 +646,13 @@ fn run_join(
                             // dispatch): the position AND the rotation
                             // this tick named
                             session.move_player_pos_rot(
-                                x, y, z, yaw, pitch, on_ground, horizontal_collision,
+                                x,
+                                y,
+                                z,
+                                yaw,
+                                pitch,
+                                on_ground,
+                                horizontal_collision,
                             )
                         }
                         crate::world_view::ContainerCommand::MovePos {
@@ -676,11 +691,7 @@ fn run_join(
                             // server's own sim the damage answers)
                             session.stab()
                         }
-                        crate::world_view::ContainerCommand::DigAction {
-                            action,
-                            pos,
-                            face,
-                        } => {
+                        crate::world_view::ContainerCommand::DigAction { action, pos, face } => {
                             // THE DIG ARC's wire echo (the vanilla gameMode's
                             // destroy half): the same monotonic prediction
                             // counter the use arc speaks
@@ -857,8 +868,7 @@ fn run_join(
                 // server's blocking read the request waits behind (the
                 // honest silence the wire keeps)
                 if network_charts
-                    && last_ping_request
-                        .map_or(true, |t| t.elapsed() >= PING_REQUEST_CADENCE)
+                    && last_ping_request.map_or(true, |t| t.elapsed() >= PING_REQUEST_CADENCE)
                 {
                     let sent = session.send_ping_request(now_millis());
                     if let Err(e) = sent {
@@ -884,8 +894,7 @@ fn run_join(
                         // cadence gates)
                         bw_bytes += session.take_received_bytes();
                         let bw_changed =
-                            if last_bw_tick.map_or(true, |t| t.elapsed() >= PING_REQUEST_CADENCE)
-                            {
+                            if last_bw_tick.map_or(true, |t| t.elapsed() >= PING_REQUEST_CADENCE) {
                                 let sample = bw_bytes.min(i64::MAX as u64) as i64;
                                 if bw_ring.len() >= crate::screens::FPS_CHART_CAPACITY {
                                     bw_ring.pop_front();
@@ -904,8 +913,7 @@ fn run_join(
                         // millis the chart's columns speak; the ring the
                         // LocalSampleLogger law keeps — 240 samples, the
                         // oldest the full-ring write drops)
-                        let ping_changed = if let mc_protocol::PlayEvent::PongResponse(t) = &event
-                        {
+                        let ping_changed = if let mc_protocol::PlayEvent::PongResponse(t) = &event {
                             let rtt = now_millis() - t;
                             if ping_ring.len() >= crate::screens::FPS_CHART_CAPACITY {
                                 ping_ring.pop_front();
@@ -925,9 +933,7 @@ fn run_join(
                         // row carries — the off-width sample the
                         // honest skip keeps, the 4-dim logger's own
                         // shape the wire's one type speaks)
-                        let tick_changed = if let
-                            mc_protocol::PlayEvent::DebugSample(ds) = &event
-                        {
+                        let tick_changed = if let mc_protocol::PlayEvent::DebugSample(ds) = &event {
                             if ds.sample.len() == 4 {
                                 if tick_ring.len() >= crate::screens::FPS_CHART_CAPACITY {
                                     tick_ring.pop_front();
@@ -959,8 +965,7 @@ fn run_join(
                                 let _ = chat_tx.send(m.content.clone());
                             }
                             mc_protocol::PlayEvent::PlayerChat(m) => {
-                                let _ = chat_tx
-                                    .send(crate::screens::format_player_chat_line(m));
+                                let _ = chat_tx.send(crate::screens::format_player_chat_line(m));
                             }
                             mc_protocol::PlayEvent::DisguisedChat(m) => {
                                 // THE DISGUISED WALK (the /say, /me and
@@ -1011,550 +1016,550 @@ fn run_join(
                                 let tick_snapshot: Vec<[i64; 4]> =
                                     tick_ring.iter().copied().collect();
                                 let upd = view.refresh(crate::world_view::runtime_mapper);
-                            // the mobs' hurt + voice mailboxes ship with
-                            // this view — the drains empty them (each
-                            // arm rides exactly one refresh, the mob
-                            // lane's own tick/audio edge owns the
-                            // countdown and the playback after the
-                            // landing; a fresh packet re-arms)
-                            view.model.drain_entity_hurts();
-                            view.model.drain_entity_sounds();
-                            view.model.drain_world_sounds();
-                            view.model.drain_arrow_syncs();
-                            view.model.drain_growth_events();
-                            view.model.drain_in_block_growth_events();
-                            view.model.drain_smash_attack_events();
-                            view.model.drain_kinetic_hit_events();
-                            view.model.drain_wax_events();
-                            view.model.drain_gateway_spawn_events();
-                            view.model.drain_dragon_growl_events();
-                            view.model.drain_electric_spark_events();
-                            view.model.drain_sculk_charge_events();
-                            view.model.drain_sculk_shriek_events();
-                            view.model.drain_brush_complete_events();
-                            view.model.drain_egg_crack_events();
-                            view.model.drain_trial_spawn_events();
-                            view.model.drain_trial_detect_events();
-                            view.model.drain_trial_eject_events();
-                            view.model.drain_vault_events();
-                            view.model.drain_trial_ominous_events();
-            view.model.drain_cobweb_events();
-                            view.model.drain_break_events();
-                            view.model.drain_shoot_smoke_events();
-                            view.model.drain_white_smoke_events();
-            view.model.drain_firework_explode_events();
-            view.model.drain_thrown_shatter_events();
-                            view.model.drain_dragon_fireball_splash_events();
-                            view.model.drain_water_evaporating_events();
-                            view.model.drain_composter_fill_events();
-                            view.model.drain_smoke_voice_events();
-                            view.model.drain_end_portal_frame_fill_events();
-                            view.model.drain_dripstone_drip_events();
-                            view.model.drain_eye_of_ender_shatter_events();
-                            view.model.drain_dragon_block_break_events();
-                            view.model.drain_dispenser_dispense_events();
-                            view.model.drain_dispenser_fail_launch_events();
-                            view.model.drain_firework_shoot_events();
-                            view.model.drain_fire_extinguish_events();
-                            view.model.drain_jukebox_events();
-                            view.model.drain_fixed_voice_events();
-            view.model.drain_hostile_voice_events();
-            view.model.drain_pitch_draw_voice_events();
-            view.model.drain_neutral_voice_events();
-            view.model.drain_wind_charge_shoot_events();
-            view.model.drain_portal_travel_events();
-                            view.model.drain_splash_events();
-                            view.model.drain_mob_spawn_events();
-                            if live_tx
-                                .send(Ok((
-                                    upd.world,
-                                    upd.camera,
-                                    upd.biome,
-                                    // the live window rides every shipped
-                                    // refresh — the chest's slots stream to
-                                    // the screen exactly like the terrain
-                                    upd.container,
-                                    // the held stack rides too — the
-                                    // first-person hand follows the store's
-                                    // selected hotbar slot exactly like the
-                                    // chest follows the container
-                                    upd.held,
-                                    // the HUD's whole row rides with it —
-                                    // the hotbar's icons and counts are the
-                                    // store's projection, not the screen's
-                                    upd.hotbar,
-                                    // the vitals ride with the row — the
-                                    // hearts follow the store exactly like
-                                    // the hotbar's icons do
-                                    upd.health,
-                                    // the wire's own population rides with
-                                    // the vitals — the mobs the server
-                                    // spawned stream to the mob lane
-                                    upd.mobs,
-                                    // the hulls ride with the population —
-                                    // the boats the server spawned stream to
-                                    // the boat lane
-                                    upd.boats,
-                                    // the shots ride with the population —
-                                    // the arrows the server spawned stream to
-                                    // the net-arrow lane (the spawns, the
-                                    // despawns — the sim the client's own
-                                    // tick owns between them)
-                                    upd.arrows,
-                                    // the thrown shots ride with the population —
-                                    // the snowballs and eggs the server spawned
-                                    // stream to the net-thrown lane (the spawns,
-                                    // the despawns — the arc the client's own
-                                    // tick owns between them)
-                                    upd.thrown,
-                                    // the rockets ride with the population —
-                                    // the firework entities the server spawned
-                                    // stream to the net-rocket lane (the sim
-                                    // the client's own tick owns between the
-                                    // server's corrections)
-                                    upd.fireworks,
-                                    // the mobs' voices ride with the
-                                    // population — the sounds the server
-                                    // played stream to the voice lane
-                                    upd.voices,
-                                    // the world's own voices ride with
-                                    // them — the GLOBAL sounds the server
-                                    // played at a world spot stream to
-                                    // the positioned lane
-                                    upd.world_voices,
-                                    // the arrows' sync words ride with the
-                                    // voices — the Entity Position Sync
-                                    // corrections stream to the net-arrow
-                                    // lane's re-pose law (each word rides
-                                    // exactly one shipped refresh)
-                                    upd.arrow_syncs,
-                                    // the rockets' sync words ride beside
-                                    // them — the same Entity Position Sync
-                                    // walk the sim rockets re-pose at (each
-                                    // word rides exactly one shipped
-                                    // refresh)
-                                    upd.firework_syncs,
-                                    // the scoreboard's belief rides with
-                                    // them — the sidebar the wire trio
-                                    // keeps streams to the HUD's lane
-                                    upd.sidebar,
-                                    // the tab's belief rides with them —
-                                    // the listed rows the player-info
-                                    // store keeps stream to the TAB
-                                    // overlay's lane
-                                    upd.player_list,
-                                    // the ride's anchor rides with them —
-                                    // the carried position the vehicle's
-                                    // own snapshot keeps streams to the
-                                    // body's ride lane
-                                    upd.ride,
-                                    // the player's OWN store rides with
-                                    // them — the inventory screen's live
-                                    // lane follows the window-0 store
-                                    // exactly like the chest's slots do
-                                    upd.inventory_slots,
-                                    // and the store's own bundle rows —
-                                    // the scroll lane's feeder the patches
-                                    // carry
-                                    upd.inventory_bundles,
-                                    // the store's revision + the GUI
-                                    // cursor — the click lane's own echo
-                                    // inputs the packets speak
-                                    upd.inventory_state_id,
-                                    upd.inventory_carried,
-                                    // the pop-time lane's own words ride
-                                    // with them — the packet-time
-                                    // verdicts the single-slot sync
-                                    // speaks (the HUD's fresh-pick cue
-                                    // the App's own timer decays)
-                                    upd.inventory_pop_flash,
-                                    // the ping chart's own snapshot rides
-                                    // with them — the RTT ring the net
-                                    // worker's pong lane logs (idx 0 the
-                                    // oldest, the chart's columns the
-                                    // newest belief re-draws)
-                                    ping_snapshot,
-                                    // and the bandwidth chart's own — the
-                                    // bytes-per-tick ring the monitor's
-                                    // drain logs (the log-scale bars the
-                                    // wire's own traffic speaks)
-                                    bw_snapshot,
-                                    // and the TPS chart's own — the
-                                    // four-dimension tick-sample ring the
-                                    // debug-sample lane logs (the stacked
-                                    // bars the wire's own tick speaks)
-                                    tick_snapshot,
-                                    // and the GAME-MODE ECHO'S OWN WORD —
-                                    // the banked CHANGE_GAME_MODEL id the
-                                    // game-event arm keeps (the server's
-                                    // own answer the frame thread's
-                                    // installer banks; None until the
-                                    // echo speaks)
-                                    upd.mode_word,
-                                    upd.abilities_word,
-                                    // the growth effect's arms ride with
-                                    // them — the bone-meal words the
-                                    // server's use broadcast stream to
-                                    // the particle lane (the burst the
-                                    // render's own law folds, each arm
-                                    // rides exactly one shipped refresh)
-                                    upd.growth_events,
-                                    // the in-block growth effect's arms
-                                    // ride with them — the 2011/2012
-                                    // words the server's own pollinator
-                                    // and egg-lay broadcast stream to the
-                                    // particle lane (the shape read + the
-                                    // in-block burst the render's own law
-                                    // folds, each arm rides exactly one
-                                    // shipped refresh)
-                                    upd.in_block_growth_events,
-                                    // the smash-attack effect's arms ride
-                                    // beside them — the 2013 words the
-                                    // server's own mace broadcasts stream
-                                    // to the smash lane (the state gate +
-                                    // the dust-pillar burst the render's
-                                    // own law folds, each arm rides
-                                    // exactly one shipped refresh)
-                                    upd.smash_attack_events,
-                                    // the kinetic-hit arms ride beside
-                                    // them — the byte-2 words the
-                                    // server's own stab contacts
-                                    // broadcast stream to the hit lane
-                                    // (the throttle + the held-weapon
-                                    // gate + the local hit voice the
-                                    // render's own law folds, each arm
-                                    // rides exactly one shipped refresh)
-                                    upd.kinetic_hit_events,
-                                    // the wax trio's arms ride beside
-                                    // them — the 3003/3004/3005 words
-                                    // the server's own honeycomb and
-                                    // axe broadcast stream to the wax
-                                    // lane (the faces burst + the
-                                    // 3003 voice the render's own law
-                                    // folds, each arm rides exactly
-                                    // one shipped refresh)
-                                    upd.wax_events,
-                                    // the gateway-spawn effect's arms
-                                    // ride beside them — the 3000
-                                    // words the server's own dragon
-                                    // fight broadcasts stream to the
-                                    // gateway lane (the emitter seed +
-                                    // the 10.0-volume voice the
-                                    // render's own law folds, each arm
-                                    // rides exactly one shipped
-                                    // refresh)
-                                    upd.gateway_spawn_events,
-                                    // the ender-dragon growl effect's
-                                    // arms ride beside them — the 3001
-                                    // words the plugins/older servers
-                                    // broadcast stream to the growl
-                                    // lane (the ONE 64.0-volume voice
-                                    // the render's own law folds, each
-                                    // arm rides exactly one shipped
-                                    // refresh)
-                                    upd.dragon_growl_events,
-                                    // the electric-spark effect's arms
-                                    // ride beside them — the 3002
-                                    // words the server's own lightning
-                                    // broadcasts stream to the spark
-                                    // lane (the axis/faces branch split
-                                    // the data word arms, the glow
-                                    // sprite the pair shares, each arm
-                                    // rides exactly one shipped
-                                    // refresh)
-                                    upd.electric_spark_events,
-                                    // the sculk-charge effect's arms ride
-                                    // with them — the 3006 words the
-                                    // server's own spreader broadcasts
-                                    // stream to the sculk lane (the pop
-                                    // arm the count <= 0 words ride, the
-                                    // full-block verdict the state read
-                                    // banks, each arm rides exactly one
-                                    // shipped refresh)
-                                    upd.sculk_charge_events,
-                                    // the sculk-shriek effect's arms ride
-                                    // with them — the 3007 words the
-                                    // server's own shrieker broadcasts
-                                    // stream to the shriek lane (the
-                                    // ten-delayed ring the case body
-                                    // speaks, the waterlogged verdict the
-                                    // voice gate banks, each arm rides
-                                    // exactly one shipped refresh)
-                                    upd.sculk_shriek_events,
-                                    // the brush-complete effect's arms
-                                    // ride with them — the 3008 words
-                                    // the server's own brush completion
-                                    // broadcasts stream to the brush
-                                    // lane (the completed voice the
-                                    // brushable verdict arms, the
-                                    // destroy burst the both-branches
-                                    // walk speaks, each arm rides
-                                    // exactly one shipped refresh)
-                                    upd.brush_complete_events,
-                                    // the egg-crack effect's arms ride
-                                    // with them — the 3009 words the
-                                    // server's own sniffer egg
-                                    // placement broadcasts stream to
-                                    // the crack lane (the six-face
-                                    // burst the faces walk speaks,
-                                    // each arm rides exactly one
-                                    // shipped refresh)
-                                    upd.egg_crack_events,
-                                    // the trial-spawner spawn's arms ride
-                                    // with them — the 3011 words the
-                                    // server's own trial spawners
-                                    // broadcast stream to the burst lane
-                                    // (the forty-particle walk the
-                                    // spawner's own mob spawn speaks,
-                                    // each arm rides exactly one
-                                    // shipped refresh)
-                                    upd.trial_spawn_events,
-                                    // the trial-spawner detect-player's
-                                    // arms ride with them — the 3013
-                                    // words the server's own detectors
-                                    // broadcast stream to the snowfall
-                                    // lane (the `30 + min(amount, 10) *
-                                    // 5` walk the detected player count
-                                    // arms, each arm rides exactly one
-                                    // shipped refresh)
-                                    upd.trial_detect_events,
-                                    // the trial-spawner eject family's
-                                    // arms ride with them — the 3014/3017
-                                    // words the server's own spawner
-                                    // ejects + vaults broadcast stream to
-                                    // the eject lane (the forty-particle
-                                    // walk the `addEjectItemParticles`
-                                    // tail speaks, each arm rides exactly
-                                    // one shipped refresh)
-                                    upd.trial_eject_events,
-                                    // the vault lane (the cage bursts the
-                                    // `emitActivation/DeactivationParticles`
-                                    // walks wear — the 3015/3016 words
-                                    // ride exactly one shipped refresh)
-                                    upd.vault_events,
-                                    // the ominous-activate lane (the
-                                    // volume-gated voice + the snowfall +
-                                    // the become-ominous burst the case
-                                    // body's own order wears — the 3020
-                                    // words ride exactly one shipped
-                                    // refresh)
-                                    upd.trial_ominous_events,
-                                    upd.cobweb_events,
-                                    // the block-break effect's arms ride
-                                    // with them — the 2001 words the
-                                    // server's own digs broadcast stream
-                                    // to the break lane (the voice + the
-                                    // debris burst the render's own law
-                                    // folds, each arm rides exactly one
-                                    // shipped refresh)
-                                    upd.break_events,
-                                    // the shoot-smoke effect's arms ride
-                                    // with them — the 2000 words the
-                                    // server's own dispenser broadcasts
-                                    // stream to the smoke lane (the
-                                    // ten-puff walk the render's own law
-                                    // folds, each arm rides exactly one
-                                    // shipped refresh)
-                                    upd.shoot_smoke_events,
-                                    // the white-smoke effect's arms ride
-                                    // beside the smoke's — the 2010 words
-                                    // the server's own crafter broadcast
-                                    // stream to the white lane (the
-                                    // ten-puff walk the render's own law
-                                    // folds, each arm rides exactly one
-                                    // shipped refresh)
-                                    upd.white_smoke_events,
-                                    // the firework-explosion's arms ride
-                                    // beside the white's — the byte-17
-                                    // words the server's own rocket
-                                    // broadcasts stream to the firework
-                                    // lane (the poof burst the render's
-                                    // own law folds, each arm rides
-                                    // exactly one shipped refresh)
-                                    upd.firework_explode_events,
-                                    // the thrown-shatter's arms ride
-                                    // beside the firework's — the
-                                    // byte-3 words the server's own
-                                    // thrown hits broadcast stream to
-                                    // the discard lane (the crack burst
-                                    // the render's own law folds, each
-                                    // arm rides exactly one shipped
-                                    // refresh)
-                                    upd.thrown_shatter_events,
-                                    // the dragon-fireball splash's arms ride
-                                    // beside the white's — the 2006 words
-                                    // the server's own fireball broadcast
-                                    // stream to the dragon lane (the
-                                    // 200-puff pool walk the render's own
-                                    // law folds, each arm rides exactly one
-                                    // shipped refresh)
-                                    upd.dragon_fireball_splash_events,
-                                    // the water-evaporating effect's arms
-                                    // ride beside the dragon's — the 2009
-                                    // words the server's own wet sponge
-                                    // broadcasts stream to the steam lane
-                                    // (the eight-puff cloud walk the
-                                    // render's own law folds, each arm
-                                    // rides exactly one shipped refresh)
-                                    upd.water_evaporating_events,
-                                    // the composter-fill arms ride beside
-                                    // the water's — the 1500 words the
-                                    // server's own composter broadcasts
-                                    // stream to the fill lane (the voice
-                                    // + ten-puff walk the render's own
-                                    // law folds, each arm rides exactly
-                                    // one shipped refresh)
-                                    upd.composter_fill_events,
-                                    // the pitched-smoke band's arms ride
-                                    // beside the water's — the 1501/1502
-                                    // words the server's own lava and
-                                    // torch broadcasts stream to the
-                                    // smoke lane (the voice + puffs walk
-                                    // the render's own law folds, each
-                                    // arm rides exactly one shipped
-                                    // refresh)
-                                    upd.smoke_voice_events,
-                                    // the end-portal-frame fill's arms
-                                    // ride beside the pitched smoke's —
-                                    // the 1503 words the server's own
-                                    // ender-eye placements stream to the
-                                    // fill lane (the fixed voice + the
-                                    // sixteen-puff walk the render's own
-                                    // law folds, each arm rides exactly
-                                    // one shipped refresh)
-                                    upd.end_portal_frame_fill_events,
-                                    // the dripstone-drip's arms ride beside
-                                    // the frame fill's — the 1504 words
-                                    // the server's own fluid-transfer walks
-                                    // stream to the drip lane (the hang
-                                    // drop's spawn walk the render's own
-                                    // law folds, each arm rides exactly
-                                    // one shipped refresh)
-                                    upd.dripstone_drip_events,
-                                    // the eye-of-ender shatter's arms ride
-                                    // beside the water's — the 2003 words
-                                    // the server's own ender signal
-                                    // broadcasts stream to the shatter lane
-                                    // (the shard loop + portal ring walk the
-                                    // render's own law folds, each arm
-                                    // rides exactly one shipped refresh)
-                                    upd.eye_of_ender_shatter_events,
-                                    upd.dragon_block_break_events,
-                                    // the dispenser-dispense voice's arms
-                                    // ride beside the dragon's — the 1000
-                                    // words the server's own dispenser
-                                    // broadcasts stream to the sound lane
-                                    // (the click voice the render lane's own
-                                    // law folds, each arm rides exactly one
-                                    // shipped refresh)
-                                    upd.dispenser_dispense_events,
-                                    // the dispenser band's pitched pair's
-                                    // arms ride beside the dispenser
-                                    // dispense's — the 1001/1002 words the
-                                    // server's own fail branches and
-                                    // projectile launches stream to the
-                                    // sound lane (the raised 1.2-pitch
-                                    // voices the render lane's own law
-                                    // folds, each arm rides exactly one
-                                    // shipped refresh)
-                                    upd.dispenser_fail_launch_events,
-                                    // the firework-shoot's arms ride
-                                    // beside the dispenser pair's — the
-                                    // 1004 words the server's own
-                                    // firework-rocket dispense streams to
-                                    // the sound lane (the raised 1.2-pitch
-                                    // voice the render lane's own law
-                                    // folds, each arm rides exactly one
-                                    // shipped refresh)
-                                    upd.firework_shoot_events,
-                                    // the fire-extinguish voice's arms
-                                    // ride beside them — the 1009 words
-                                    // the server's own fire broadcasts
-                                    // stream to the extinguish lane (the
-                                    // data-picked pitched voice the
-                                    // render's own law folds, each arm
-                                    // rides exactly one shipped refresh)
-                                    upd.fire_extinguish_events,
-                                    // the jukebox pair's arms ride beside
-                                    // them — the 1010/1011 words the
-                                    // server's own jukeboxes broadcast
-                                    // stream to the record lane (the
-                                    // tracked record's start/stop + the
-                                    // now-playing line the render's own
-                                    // law folds, each arm rides exactly
-                                    // one shipped refresh)
-                                    upd.jukebox_events,
-                                    // the fixed-voice shelf's arms ride
-                                    // beside the dispenser's — the
-                                    // 1033/1034/1035/1049/1050 words the
-                                    // server's own chorus flowers, brewing
-                                    // stand and crafter broadcast stream to
-                                    // the sound lane (the five fixed
-                                    // 1.0/1.0 voices the render lane's own
-                                    // law folds, each arm rides exactly one
-                                    // shipped refresh)
-                                    upd.fixed_voice_events,
-                                    upd.hostile_voice_events,
-                                    // the one-draw pitch shelf's arms ride
-                                    // beside the hostile's — the
-                                    // 1029/1030/1031/1039/1042/1043/1044/
-                                    // 1045/1046/1047/1052 words the
-                                    // server's own anvils, phantom,
-                                    // grindstone, lectern, smithing
-                                    // tables, cauldrons and falling
-                                    // blocks broadcast stream to the
-                                    // sound lane (the eleven gentle-pitch
-                                    // voices the render lane's own law
-                                    // folds, each arm rides exactly one
-                                    // shipped refresh)
-                                    upd.pitch_draw_voice_events,
-                                    // the neutral-voice shelf's arm rides
-                                    // beside the gentle band's — the 1025
-                                    // word the server's own bats broadcast
-                                    // streams to the sound lane (the
-                                    // wingbeat whisper the render lane's
-                                    // own law folds, each arm rides
-                                    // exactly one shipped refresh)
-                                    upd.neutral_voice_events,
-                                    // the wind-charge-shoot lane's arm
-                                    // rides beside the neutral shelf's —
-                                    // the 1051 word the server's own
-                                    // dispensers broadcast streams to the
-                                    // sound lane (the fdiv-pitched throw
-                                    // voice the render lane's own law
-                                    // folds, each arm rides exactly one
-                                    // shipped refresh)
-                                    upd.wind_charge_shoot_events,
-                                    // the portal-travel lane's arm rides
-                                    // beside the wind-charge's — the 1032
-                                    // word the server's own teleports
-                                    // broadcast streams to the sound lane
-                                    // (the local ambience the render
-                                    // lane's own law folds, each arm
-                                    // rides exactly one shipped refresh)
-                                    upd.portal_travel_events,
-                                    // the splash-potion effect's arms ride
-                                    // with them — the 2002/2007 words the
-                                    // server's own potion impacts broadcast
-                                    // stream to the splash lane (the shard
-                                    // burst + the spell ring + the glass
-                                    // voice the render's own law folds, each
-                                    // arm rides exactly one shipped refresh)
-                                    upd.splash_events,
-                                    // the spawn cloud's arms ride beside
-                                    // the splash's — the 2004 words the
-                                    // spawner's own broadcast streams to
-                                    // the spawn lane (the twenty SMOKE +
-                                    // FLAME pairs the render's own law
-                                    // folds, each arm rides exactly one
-                                    // shipped refresh)
-                                    upd.mob_spawn_events,
-                                )))
-                                .is_err()
-                            {
-                                break; // receiver gone at shutdown
-                            }
-                            last_ship = std::time::Instant::now();
+                                // the mobs' hurt + voice mailboxes ship with
+                                // this view — the drains empty them (each
+                                // arm rides exactly one refresh, the mob
+                                // lane's own tick/audio edge owns the
+                                // countdown and the playback after the
+                                // landing; a fresh packet re-arms)
+                                view.model.drain_entity_hurts();
+                                view.model.drain_entity_sounds();
+                                view.model.drain_world_sounds();
+                                view.model.drain_arrow_syncs();
+                                view.model.drain_growth_events();
+                                view.model.drain_in_block_growth_events();
+                                view.model.drain_smash_attack_events();
+                                view.model.drain_kinetic_hit_events();
+                                view.model.drain_wax_events();
+                                view.model.drain_gateway_spawn_events();
+                                view.model.drain_dragon_growl_events();
+                                view.model.drain_electric_spark_events();
+                                view.model.drain_sculk_charge_events();
+                                view.model.drain_sculk_shriek_events();
+                                view.model.drain_brush_complete_events();
+                                view.model.drain_egg_crack_events();
+                                view.model.drain_trial_spawn_events();
+                                view.model.drain_trial_detect_events();
+                                view.model.drain_trial_eject_events();
+                                view.model.drain_vault_events();
+                                view.model.drain_trial_ominous_events();
+                                view.model.drain_cobweb_events();
+                                view.model.drain_break_events();
+                                view.model.drain_shoot_smoke_events();
+                                view.model.drain_white_smoke_events();
+                                view.model.drain_firework_explode_events();
+                                view.model.drain_thrown_shatter_events();
+                                view.model.drain_dragon_fireball_splash_events();
+                                view.model.drain_water_evaporating_events();
+                                view.model.drain_composter_fill_events();
+                                view.model.drain_smoke_voice_events();
+                                view.model.drain_end_portal_frame_fill_events();
+                                view.model.drain_dripstone_drip_events();
+                                view.model.drain_eye_of_ender_shatter_events();
+                                view.model.drain_dragon_block_break_events();
+                                view.model.drain_dispenser_dispense_events();
+                                view.model.drain_dispenser_fail_launch_events();
+                                view.model.drain_firework_shoot_events();
+                                view.model.drain_fire_extinguish_events();
+                                view.model.drain_jukebox_events();
+                                view.model.drain_fixed_voice_events();
+                                view.model.drain_hostile_voice_events();
+                                view.model.drain_pitch_draw_voice_events();
+                                view.model.drain_neutral_voice_events();
+                                view.model.drain_wind_charge_shoot_events();
+                                view.model.drain_portal_travel_events();
+                                view.model.drain_splash_events();
+                                view.model.drain_mob_spawn_events();
+                                if live_tx
+                                    .send(Ok((
+                                        upd.world,
+                                        upd.camera,
+                                        upd.biome,
+                                        // the live window rides every shipped
+                                        // refresh — the chest's slots stream to
+                                        // the screen exactly like the terrain
+                                        upd.container,
+                                        // the held stack rides too — the
+                                        // first-person hand follows the store's
+                                        // selected hotbar slot exactly like the
+                                        // chest follows the container
+                                        upd.held,
+                                        // the HUD's whole row rides with it —
+                                        // the hotbar's icons and counts are the
+                                        // store's projection, not the screen's
+                                        upd.hotbar,
+                                        // the vitals ride with the row — the
+                                        // hearts follow the store exactly like
+                                        // the hotbar's icons do
+                                        upd.health,
+                                        // the wire's own population rides with
+                                        // the vitals — the mobs the server
+                                        // spawned stream to the mob lane
+                                        upd.mobs,
+                                        // the hulls ride with the population —
+                                        // the boats the server spawned stream to
+                                        // the boat lane
+                                        upd.boats,
+                                        // the shots ride with the population —
+                                        // the arrows the server spawned stream to
+                                        // the net-arrow lane (the spawns, the
+                                        // despawns — the sim the client's own
+                                        // tick owns between them)
+                                        upd.arrows,
+                                        // the thrown shots ride with the population —
+                                        // the snowballs and eggs the server spawned
+                                        // stream to the net-thrown lane (the spawns,
+                                        // the despawns — the arc the client's own
+                                        // tick owns between them)
+                                        upd.thrown,
+                                        // the rockets ride with the population —
+                                        // the firework entities the server spawned
+                                        // stream to the net-rocket lane (the sim
+                                        // the client's own tick owns between the
+                                        // server's corrections)
+                                        upd.fireworks,
+                                        // the mobs' voices ride with the
+                                        // population — the sounds the server
+                                        // played stream to the voice lane
+                                        upd.voices,
+                                        // the world's own voices ride with
+                                        // them — the GLOBAL sounds the server
+                                        // played at a world spot stream to
+                                        // the positioned lane
+                                        upd.world_voices,
+                                        // the arrows' sync words ride with the
+                                        // voices — the Entity Position Sync
+                                        // corrections stream to the net-arrow
+                                        // lane's re-pose law (each word rides
+                                        // exactly one shipped refresh)
+                                        upd.arrow_syncs,
+                                        // the rockets' sync words ride beside
+                                        // them — the same Entity Position Sync
+                                        // walk the sim rockets re-pose at (each
+                                        // word rides exactly one shipped
+                                        // refresh)
+                                        upd.firework_syncs,
+                                        // the scoreboard's belief rides with
+                                        // them — the sidebar the wire trio
+                                        // keeps streams to the HUD's lane
+                                        upd.sidebar,
+                                        // the tab's belief rides with them —
+                                        // the listed rows the player-info
+                                        // store keeps stream to the TAB
+                                        // overlay's lane
+                                        upd.player_list,
+                                        // the ride's anchor rides with them —
+                                        // the carried position the vehicle's
+                                        // own snapshot keeps streams to the
+                                        // body's ride lane
+                                        upd.ride,
+                                        // the player's OWN store rides with
+                                        // them — the inventory screen's live
+                                        // lane follows the window-0 store
+                                        // exactly like the chest's slots do
+                                        upd.inventory_slots,
+                                        // and the store's own bundle rows —
+                                        // the scroll lane's feeder the patches
+                                        // carry
+                                        upd.inventory_bundles,
+                                        // the store's revision + the GUI
+                                        // cursor — the click lane's own echo
+                                        // inputs the packets speak
+                                        upd.inventory_state_id,
+                                        upd.inventory_carried,
+                                        // the pop-time lane's own words ride
+                                        // with them — the packet-time
+                                        // verdicts the single-slot sync
+                                        // speaks (the HUD's fresh-pick cue
+                                        // the App's own timer decays)
+                                        upd.inventory_pop_flash,
+                                        // the ping chart's own snapshot rides
+                                        // with them — the RTT ring the net
+                                        // worker's pong lane logs (idx 0 the
+                                        // oldest, the chart's columns the
+                                        // newest belief re-draws)
+                                        ping_snapshot,
+                                        // and the bandwidth chart's own — the
+                                        // bytes-per-tick ring the monitor's
+                                        // drain logs (the log-scale bars the
+                                        // wire's own traffic speaks)
+                                        bw_snapshot,
+                                        // and the TPS chart's own — the
+                                        // four-dimension tick-sample ring the
+                                        // debug-sample lane logs (the stacked
+                                        // bars the wire's own tick speaks)
+                                        tick_snapshot,
+                                        // and the GAME-MODE ECHO'S OWN WORD —
+                                        // the banked CHANGE_GAME_MODEL id the
+                                        // game-event arm keeps (the server's
+                                        // own answer the frame thread's
+                                        // installer banks; None until the
+                                        // echo speaks)
+                                        upd.mode_word,
+                                        upd.abilities_word,
+                                        // the growth effect's arms ride with
+                                        // them — the bone-meal words the
+                                        // server's use broadcast stream to
+                                        // the particle lane (the burst the
+                                        // render's own law folds, each arm
+                                        // rides exactly one shipped refresh)
+                                        upd.growth_events,
+                                        // the in-block growth effect's arms
+                                        // ride with them — the 2011/2012
+                                        // words the server's own pollinator
+                                        // and egg-lay broadcast stream to the
+                                        // particle lane (the shape read + the
+                                        // in-block burst the render's own law
+                                        // folds, each arm rides exactly one
+                                        // shipped refresh)
+                                        upd.in_block_growth_events,
+                                        // the smash-attack effect's arms ride
+                                        // beside them — the 2013 words the
+                                        // server's own mace broadcasts stream
+                                        // to the smash lane (the state gate +
+                                        // the dust-pillar burst the render's
+                                        // own law folds, each arm rides
+                                        // exactly one shipped refresh)
+                                        upd.smash_attack_events,
+                                        // the kinetic-hit arms ride beside
+                                        // them — the byte-2 words the
+                                        // server's own stab contacts
+                                        // broadcast stream to the hit lane
+                                        // (the throttle + the held-weapon
+                                        // gate + the local hit voice the
+                                        // render's own law folds, each arm
+                                        // rides exactly one shipped refresh)
+                                        upd.kinetic_hit_events,
+                                        // the wax trio's arms ride beside
+                                        // them — the 3003/3004/3005 words
+                                        // the server's own honeycomb and
+                                        // axe broadcast stream to the wax
+                                        // lane (the faces burst + the
+                                        // 3003 voice the render's own law
+                                        // folds, each arm rides exactly
+                                        // one shipped refresh)
+                                        upd.wax_events,
+                                        // the gateway-spawn effect's arms
+                                        // ride beside them — the 3000
+                                        // words the server's own dragon
+                                        // fight broadcasts stream to the
+                                        // gateway lane (the emitter seed +
+                                        // the 10.0-volume voice the
+                                        // render's own law folds, each arm
+                                        // rides exactly one shipped
+                                        // refresh)
+                                        upd.gateway_spawn_events,
+                                        // the ender-dragon growl effect's
+                                        // arms ride beside them — the 3001
+                                        // words the plugins/older servers
+                                        // broadcast stream to the growl
+                                        // lane (the ONE 64.0-volume voice
+                                        // the render's own law folds, each
+                                        // arm rides exactly one shipped
+                                        // refresh)
+                                        upd.dragon_growl_events,
+                                        // the electric-spark effect's arms
+                                        // ride beside them — the 3002
+                                        // words the server's own lightning
+                                        // broadcasts stream to the spark
+                                        // lane (the axis/faces branch split
+                                        // the data word arms, the glow
+                                        // sprite the pair shares, each arm
+                                        // rides exactly one shipped
+                                        // refresh)
+                                        upd.electric_spark_events,
+                                        // the sculk-charge effect's arms ride
+                                        // with them — the 3006 words the
+                                        // server's own spreader broadcasts
+                                        // stream to the sculk lane (the pop
+                                        // arm the count <= 0 words ride, the
+                                        // full-block verdict the state read
+                                        // banks, each arm rides exactly one
+                                        // shipped refresh)
+                                        upd.sculk_charge_events,
+                                        // the sculk-shriek effect's arms ride
+                                        // with them — the 3007 words the
+                                        // server's own shrieker broadcasts
+                                        // stream to the shriek lane (the
+                                        // ten-delayed ring the case body
+                                        // speaks, the waterlogged verdict the
+                                        // voice gate banks, each arm rides
+                                        // exactly one shipped refresh)
+                                        upd.sculk_shriek_events,
+                                        // the brush-complete effect's arms
+                                        // ride with them — the 3008 words
+                                        // the server's own brush completion
+                                        // broadcasts stream to the brush
+                                        // lane (the completed voice the
+                                        // brushable verdict arms, the
+                                        // destroy burst the both-branches
+                                        // walk speaks, each arm rides
+                                        // exactly one shipped refresh)
+                                        upd.brush_complete_events,
+                                        // the egg-crack effect's arms ride
+                                        // with them — the 3009 words the
+                                        // server's own sniffer egg
+                                        // placement broadcasts stream to
+                                        // the crack lane (the six-face
+                                        // burst the faces walk speaks,
+                                        // each arm rides exactly one
+                                        // shipped refresh)
+                                        upd.egg_crack_events,
+                                        // the trial-spawner spawn's arms ride
+                                        // with them — the 3011 words the
+                                        // server's own trial spawners
+                                        // broadcast stream to the burst lane
+                                        // (the forty-particle walk the
+                                        // spawner's own mob spawn speaks,
+                                        // each arm rides exactly one
+                                        // shipped refresh)
+                                        upd.trial_spawn_events,
+                                        // the trial-spawner detect-player's
+                                        // arms ride with them — the 3013
+                                        // words the server's own detectors
+                                        // broadcast stream to the snowfall
+                                        // lane (the `30 + min(amount, 10) *
+                                        // 5` walk the detected player count
+                                        // arms, each arm rides exactly one
+                                        // shipped refresh)
+                                        upd.trial_detect_events,
+                                        // the trial-spawner eject family's
+                                        // arms ride with them — the 3014/3017
+                                        // words the server's own spawner
+                                        // ejects + vaults broadcast stream to
+                                        // the eject lane (the forty-particle
+                                        // walk the `addEjectItemParticles`
+                                        // tail speaks, each arm rides exactly
+                                        // one shipped refresh)
+                                        upd.trial_eject_events,
+                                        // the vault lane (the cage bursts the
+                                        // `emitActivation/DeactivationParticles`
+                                        // walks wear — the 3015/3016 words
+                                        // ride exactly one shipped refresh)
+                                        upd.vault_events,
+                                        // the ominous-activate lane (the
+                                        // volume-gated voice + the snowfall +
+                                        // the become-ominous burst the case
+                                        // body's own order wears — the 3020
+                                        // words ride exactly one shipped
+                                        // refresh)
+                                        upd.trial_ominous_events,
+                                        upd.cobweb_events,
+                                        // the block-break effect's arms ride
+                                        // with them — the 2001 words the
+                                        // server's own digs broadcast stream
+                                        // to the break lane (the voice + the
+                                        // debris burst the render's own law
+                                        // folds, each arm rides exactly one
+                                        // shipped refresh)
+                                        upd.break_events,
+                                        // the shoot-smoke effect's arms ride
+                                        // with them — the 2000 words the
+                                        // server's own dispenser broadcasts
+                                        // stream to the smoke lane (the
+                                        // ten-puff walk the render's own law
+                                        // folds, each arm rides exactly one
+                                        // shipped refresh)
+                                        upd.shoot_smoke_events,
+                                        // the white-smoke effect's arms ride
+                                        // beside the smoke's — the 2010 words
+                                        // the server's own crafter broadcast
+                                        // stream to the white lane (the
+                                        // ten-puff walk the render's own law
+                                        // folds, each arm rides exactly one
+                                        // shipped refresh)
+                                        upd.white_smoke_events,
+                                        // the firework-explosion's arms ride
+                                        // beside the white's — the byte-17
+                                        // words the server's own rocket
+                                        // broadcasts stream to the firework
+                                        // lane (the poof burst the render's
+                                        // own law folds, each arm rides
+                                        // exactly one shipped refresh)
+                                        upd.firework_explode_events,
+                                        // the thrown-shatter's arms ride
+                                        // beside the firework's — the
+                                        // byte-3 words the server's own
+                                        // thrown hits broadcast stream to
+                                        // the discard lane (the crack burst
+                                        // the render's own law folds, each
+                                        // arm rides exactly one shipped
+                                        // refresh)
+                                        upd.thrown_shatter_events,
+                                        // the dragon-fireball splash's arms ride
+                                        // beside the white's — the 2006 words
+                                        // the server's own fireball broadcast
+                                        // stream to the dragon lane (the
+                                        // 200-puff pool walk the render's own
+                                        // law folds, each arm rides exactly one
+                                        // shipped refresh)
+                                        upd.dragon_fireball_splash_events,
+                                        // the water-evaporating effect's arms
+                                        // ride beside the dragon's — the 2009
+                                        // words the server's own wet sponge
+                                        // broadcasts stream to the steam lane
+                                        // (the eight-puff cloud walk the
+                                        // render's own law folds, each arm
+                                        // rides exactly one shipped refresh)
+                                        upd.water_evaporating_events,
+                                        // the composter-fill arms ride beside
+                                        // the water's — the 1500 words the
+                                        // server's own composter broadcasts
+                                        // stream to the fill lane (the voice
+                                        // + ten-puff walk the render's own
+                                        // law folds, each arm rides exactly
+                                        // one shipped refresh)
+                                        upd.composter_fill_events,
+                                        // the pitched-smoke band's arms ride
+                                        // beside the water's — the 1501/1502
+                                        // words the server's own lava and
+                                        // torch broadcasts stream to the
+                                        // smoke lane (the voice + puffs walk
+                                        // the render's own law folds, each
+                                        // arm rides exactly one shipped
+                                        // refresh)
+                                        upd.smoke_voice_events,
+                                        // the end-portal-frame fill's arms
+                                        // ride beside the pitched smoke's —
+                                        // the 1503 words the server's own
+                                        // ender-eye placements stream to the
+                                        // fill lane (the fixed voice + the
+                                        // sixteen-puff walk the render's own
+                                        // law folds, each arm rides exactly
+                                        // one shipped refresh)
+                                        upd.end_portal_frame_fill_events,
+                                        // the dripstone-drip's arms ride beside
+                                        // the frame fill's — the 1504 words
+                                        // the server's own fluid-transfer walks
+                                        // stream to the drip lane (the hang
+                                        // drop's spawn walk the render's own
+                                        // law folds, each arm rides exactly
+                                        // one shipped refresh)
+                                        upd.dripstone_drip_events,
+                                        // the eye-of-ender shatter's arms ride
+                                        // beside the water's — the 2003 words
+                                        // the server's own ender signal
+                                        // broadcasts stream to the shatter lane
+                                        // (the shard loop + portal ring walk the
+                                        // render's own law folds, each arm
+                                        // rides exactly one shipped refresh)
+                                        upd.eye_of_ender_shatter_events,
+                                        upd.dragon_block_break_events,
+                                        // the dispenser-dispense voice's arms
+                                        // ride beside the dragon's — the 1000
+                                        // words the server's own dispenser
+                                        // broadcasts stream to the sound lane
+                                        // (the click voice the render lane's own
+                                        // law folds, each arm rides exactly one
+                                        // shipped refresh)
+                                        upd.dispenser_dispense_events,
+                                        // the dispenser band's pitched pair's
+                                        // arms ride beside the dispenser
+                                        // dispense's — the 1001/1002 words the
+                                        // server's own fail branches and
+                                        // projectile launches stream to the
+                                        // sound lane (the raised 1.2-pitch
+                                        // voices the render lane's own law
+                                        // folds, each arm rides exactly one
+                                        // shipped refresh)
+                                        upd.dispenser_fail_launch_events,
+                                        // the firework-shoot's arms ride
+                                        // beside the dispenser pair's — the
+                                        // 1004 words the server's own
+                                        // firework-rocket dispense streams to
+                                        // the sound lane (the raised 1.2-pitch
+                                        // voice the render lane's own law
+                                        // folds, each arm rides exactly one
+                                        // shipped refresh)
+                                        upd.firework_shoot_events,
+                                        // the fire-extinguish voice's arms
+                                        // ride beside them — the 1009 words
+                                        // the server's own fire broadcasts
+                                        // stream to the extinguish lane (the
+                                        // data-picked pitched voice the
+                                        // render's own law folds, each arm
+                                        // rides exactly one shipped refresh)
+                                        upd.fire_extinguish_events,
+                                        // the jukebox pair's arms ride beside
+                                        // them — the 1010/1011 words the
+                                        // server's own jukeboxes broadcast
+                                        // stream to the record lane (the
+                                        // tracked record's start/stop + the
+                                        // now-playing line the render's own
+                                        // law folds, each arm rides exactly
+                                        // one shipped refresh)
+                                        upd.jukebox_events,
+                                        // the fixed-voice shelf's arms ride
+                                        // beside the dispenser's — the
+                                        // 1033/1034/1035/1049/1050 words the
+                                        // server's own chorus flowers, brewing
+                                        // stand and crafter broadcast stream to
+                                        // the sound lane (the five fixed
+                                        // 1.0/1.0 voices the render lane's own
+                                        // law folds, each arm rides exactly one
+                                        // shipped refresh)
+                                        upd.fixed_voice_events,
+                                        upd.hostile_voice_events,
+                                        // the one-draw pitch shelf's arms ride
+                                        // beside the hostile's — the
+                                        // 1029/1030/1031/1039/1042/1043/1044/
+                                        // 1045/1046/1047/1052 words the
+                                        // server's own anvils, phantom,
+                                        // grindstone, lectern, smithing
+                                        // tables, cauldrons and falling
+                                        // blocks broadcast stream to the
+                                        // sound lane (the eleven gentle-pitch
+                                        // voices the render lane's own law
+                                        // folds, each arm rides exactly one
+                                        // shipped refresh)
+                                        upd.pitch_draw_voice_events,
+                                        // the neutral-voice shelf's arm rides
+                                        // beside the gentle band's — the 1025
+                                        // word the server's own bats broadcast
+                                        // streams to the sound lane (the
+                                        // wingbeat whisper the render lane's
+                                        // own law folds, each arm rides
+                                        // exactly one shipped refresh)
+                                        upd.neutral_voice_events,
+                                        // the wind-charge-shoot lane's arm
+                                        // rides beside the neutral shelf's —
+                                        // the 1051 word the server's own
+                                        // dispensers broadcast streams to the
+                                        // sound lane (the fdiv-pitched throw
+                                        // voice the render lane's own law
+                                        // folds, each arm rides exactly one
+                                        // shipped refresh)
+                                        upd.wind_charge_shoot_events,
+                                        // the portal-travel lane's arm rides
+                                        // beside the wind-charge's — the 1032
+                                        // word the server's own teleports
+                                        // broadcast streams to the sound lane
+                                        // (the local ambience the render
+                                        // lane's own law folds, each arm
+                                        // rides exactly one shipped refresh)
+                                        upd.portal_travel_events,
+                                        // the splash-potion effect's arms ride
+                                        // with them — the 2002/2007 words the
+                                        // server's own potion impacts broadcast
+                                        // stream to the splash lane (the shard
+                                        // burst + the spell ring + the glass
+                                        // voice the render's own law folds, each
+                                        // arm rides exactly one shipped refresh)
+                                        upd.splash_events,
+                                        // the spawn cloud's arms ride beside
+                                        // the splash's — the 2004 words the
+                                        // spawner's own broadcast streams to
+                                        // the spawn lane (the twenty SMOKE +
+                                        // FLAME pairs the render's own law
+                                        // folds, each arm rides exactly one
+                                        // shipped refresh)
+                                        upd.mob_spawn_events,
+                                    )))
+                                    .is_err()
+                                {
+                                    break; // receiver gone at shutdown
+                                }
+                                last_ship = std::time::Instant::now();
                             }
                         }
                     }
@@ -1593,10 +1598,16 @@ pub fn run_gui_app(
     use crate::screens::App;
 
     let mut window = Window::new(
-        &format!("mc2rs — Minecraft {} (generated GUI)", crate::build_info::MINECRAFT_VERSION),
+        &format!(
+            "mc2rs — Minecraft {} (generated GUI)",
+            crate::build_info::MINECRAFT_VERSION
+        ),
         width,
         height,
-        WindowOptions { resize: true, ..WindowOptions::default() },
+        WindowOptions {
+            resize: true,
+            ..WindowOptions::default()
+        },
     )?;
     let mut app = App::new(seed);
     // THE HOTBAR MANAGER'S OWN GAME DIR (javap the HotbarManager ctor pc
@@ -1605,28 +1616,40 @@ pub fn run_gui_app(
     // names, the options.txt row the same dir shares): the save chord's
     // `HotbarManager.save()` pc 199 walk writes it, the get(i) once-flag's
     // lazy `load()` walk reads it — the headless boot the None keeps.
-    app.hotbar_options_file =
-        Some(std::env::current_dir().unwrap_or_default().join("hotbar.nbt"));
+    app.hotbar_options_file = Some(
+        std::env::current_dir()
+            .unwrap_or_default()
+            .join("hotbar.nbt"),
+    );
     // THE STORES' OWN GAME DIR (the dev-68 round — the same vanilla
     // default-game-dir law the hotbar file wears: the cwd the
     // `containers.nbt` names, the chest's stocked grid the RESTART
     // OUTLIVES — the lazy load the first open rides, the flush/spill
     // banks the write serve; the headless boot the None keeps)
-    app.container_stores_file =
-        Some(std::env::current_dir().unwrap_or_default().join("containers.nbt"));
+    app.container_stores_file = Some(
+        std::env::current_dir()
+            .unwrap_or_default()
+            .join("containers.nbt"),
+    );
     // THE WORLD EDITS' OWN GAME DIR (the same vanilla default-game-dir
     // law the hotbar + containers files wear: the cwd the
     // `world_edits.nbt` names, the session's dig/place journal the
     // RESTART OUTLIVES)
-    app.offline_world_file =
-        Some(std::env::current_dir().unwrap_or_default().join("world_edits.nbt"));
+    app.offline_world_file = Some(
+        std::env::current_dir()
+            .unwrap_or_default()
+            .join("world_edits.nbt"),
+    );
     // THE OPTIONS FILE'S OWN GAME DIR (the same vanilla default-game-dir
     // law the hotbar + containers + world-edits files wear: the cwd the
     // `options.txt` names, the three stores the RESTART OUTLIVES — the
     // load the boot answers (the Minecraft.<init> moment the menus
     // precede), the Done chord the save rides)
-    app.options_file =
-        Some(std::env::current_dir().unwrap_or_default().join("options.txt"));
+    app.options_file = Some(
+        std::env::current_dir()
+            .unwrap_or_default()
+            .join("options.txt"),
+    );
     app.options_file_load();
     app.offline_held_updated(held_item);
     app.offline_offhand_updated(offhand_item);
@@ -1642,17 +1665,16 @@ pub fn run_gui_app(
     let mut music = crate::audio::MenuMusic::start(&mut app);
     // THE ROOT THE WALK ANSWERS (the jar_runtime_root law — the bare
     // literal the package-dir cwd the GUI app's sprites never wore)
-    let mut assets = GuiAssets::open(crate::avatar::jar_runtime_root(
-        std::path::Path::new("assets-cache/jar"),
-    ));
+    let mut assets = GuiAssets::open(crate::avatar::jar_runtime_root(std::path::Path::new(
+        "assets-cache/jar",
+    )));
     let mut fb = Framebuf::new(width, height);
     let mut buf: Vec<u32> = vec![0; width * height];
     // server-list pings run on detached worker threads (blocking status
     // requests, vanilla-style async pinger); finished results come back
     // through this channel and are applied at the top of each frame
-    let (net_tx, net_rx) = std::sync::mpsc::channel::<
-        (u64, Result<crate::screens::PingInfo, String>),
-    >();
+    let (net_tx, net_rx) =
+        std::sync::mpsc::channel::<(u64, Result<crate::screens::PingInfo, String>)>();
     // the live chat lines: ONE shared channel the per-join workers clone
     // the sender of (the system/player chat lines the pump intercept
     // carries — the frame thread's drain lands each line into the App's
@@ -1668,25 +1690,24 @@ pub fn run_gui_app(
     // the sender of (the pump's Commands arm — the login-time Brigadier
     // graph the frame thread's drain hands the App's local suggestion
     // lane, the re-send the replace walk answers)
-    let (commands_tx, commands_rx) =
-        std::sync::mpsc::channel::<mc_protocol::play::CommandTree>();
+    let (commands_tx, commands_rx) = std::sync::mpsc::channel::<mc_protocol::play::CommandTree>();
     let mut net_seen = 0usize; // cursor into the append-only request log
     let mut was_left_down = false; // the attack edge detector (vanilla left-click = swing)
-    // THE MOUSE HANDLER'S OWN LAST-CLICK (the `MouseHandler.onButton`
-    // walk's own memory — the consumed press the `LastClick(now, screen)`
-    // record stores, the `lastClickButton` the button byte keeps): the
-    // NEXT press's doubled verdict the 250ms window + the SAME screen +
-    // the SAME button the triple compare answers. Only the SCREENS'
-    // presses the record speaks (the in-world press the vanilla walk's
-    // own grabMouse branch answers — the Screen.mouseClicked lane never
-    // runs there).
+                                   // THE MOUSE HANDLER'S OWN LAST-CLICK (the `MouseHandler.onButton`
+                                   // walk's own memory — the consumed press the `LastClick(now, screen)`
+                                   // record stores, the `lastClickButton` the button byte keeps): the
+                                   // NEXT press's doubled verdict the 250ms window + the SAME screen +
+                                   // the SAME button the triple compare answers. Only the SCREENS'
+                                   // presses the record speaks (the in-world press the vanilla walk's
+                                   // own grabMouse branch answers — the Screen.mouseClicked lane never
+                                   // runs there).
     let mut last_press: Option<(std::time::Instant, crate::screens::ScreenKind, i32)> = None;
     let mut was_right_down = false; // the right press's edge detector (the split-stack lane)
     let mut was_middle_down = false; // the middle press's edge detector (the pick lane)
-    // THE FIRST-PERSON BODY's per-frame state: the previous raw mouse
-    // position (the delta look's own stream — None = re-arm without a
-    // turn) and the world-screen edge detector (the cursor hides
-    // in-world like the vanilla pointer-lock, shows on every menu)
+                                     // THE FIRST-PERSON BODY's per-frame state: the previous raw mouse
+                                     // position (the delta look's own stream — None = re-arm without a
+                                     // turn) and the world-screen edge detector (the cursor hides
+                                     // in-world like the vanilla pointer-lock, shows on every menu)
     let mut prev_mouse: Option<(f32, f32)> = None;
     let mut was_in_world = false;
     // THE FIXED CLOCK's own state (vanilla `Minecraft.runTick`): the
@@ -1716,9 +1737,8 @@ pub fn run_gui_app(
     // screen — a Loaded result carries REAL world facts from the network
     // and the LIVE VIEW channel keeps refreshing them while the session
     // lives (chunks stream in, teleports re-anchor the view)
-    let (login_tx, login_rx) = std::sync::mpsc::channel::<
-        (u64, Result<crate::screens::LoginResult, String>),
-    >();
+    let (login_tx, login_rx) =
+        std::sync::mpsc::channel::<(u64, Result<crate::screens::LoginResult, String>)>();
     let mut login_seen = 0usize; // cursor into the append-only request log
     let (live_tx, live_rx) = std::sync::mpsc::channel::<
         Result<
@@ -1835,7 +1855,10 @@ pub fn run_gui_app(
         // pauseIfInactive lane — the window's is_active the focus read
         // speaks, the millis the boot instant the elapsed wears, the
         // 500ms grace the App's own law answers)
-        app.on_window_focus(window.is_active(), (t_frame - boot_instant).as_millis() as u64);
+        app.on_window_focus(
+            window.is_active(),
+            (t_frame - boot_instant).as_millis() as u64,
+        );
         // THE CHAT CHAR DRAIN (the ChatScreen's own typing lane — the
         // chars the open screen's EditBox answers, the closed screen
         // the on_chat_char gate keeps silent)
@@ -1877,9 +1900,7 @@ pub fn run_gui_app(
         // THE PICKER'S SEARCH BACKSPACE (the EditBox's own keyPressed
         // arm — the search seat the pop answers, the other screens the
         // gate never passes)
-        if !app.chat_open
-            && window.is_key_pressed(Key::Backspace, minifb::KeyRepeat::No)
-        {
+        if !app.chat_open && window.is_key_pressed(Key::Backspace, minifb::KeyRepeat::No) {
             app.on_creative_backspace();
         }
         // THE INVENTORY'S OWN Q (the AbstractContainerScreen.keyPressed's
@@ -2030,7 +2051,9 @@ pub fn run_gui_app(
                 }
             }
         }
-        let (mx, my) = window.get_mouse_pos(minifb::MouseMode::Discard).unwrap_or((0.0, 0.0));
+        let (mx, my) = window
+            .get_mouse_pos(minifb::MouseMode::Discard)
+            .unwrap_or((0.0, 0.0));
         let gmx = (mx as usize / 2) as i32;
         let gmy = (my as usize / 2) as i32;
         // the live mouse stream: the carried stack's cursor-follow
@@ -2118,6 +2141,13 @@ pub fn run_gui_app(
         // cursor's x answers, the release the disarm speaks below)
         if left_down && app.volume_drag {
             app.on_volume_slider_drag(gmx);
+        }
+        // THE FOV EFFECTS SLIDER'S OWN DRAG (the same armed lane the
+        // Options screen's own seats wear — the sub-screen's gate the
+        // Accessibility kind keeps, the held frames the UnitDouble 0..1
+        // the cursor's x answers, the release the disarm speaks below)
+        if left_down && app.fov_effect_drag {
+            app.on_fov_effect_slider_drag(gmx);
         }
         // the LEFT press's falling edge (the vanilla's own release lane):
         // the dig's hold flag drops and the destroy state ABORTs (the
@@ -2279,15 +2309,14 @@ pub fn run_gui_app(
             // sign the mouse's own deltas mirror: Right/Down the
             // positive the on-screen drag wears.
             let turn_x = (window.is_key_down(Key::Right) as i32
-                - window.is_key_down(Key::Left) as i32)
-                as f32;
-            let turn_y = (window.is_key_down(Key::Down) as i32
-                - window.is_key_down(Key::Up) as i32)
-                as f32;
+                - window.is_key_down(Key::Left) as i32) as f32;
+            let turn_y =
+                (window.is_key_down(Key::Down) as i32 - window.is_key_down(Key::Up) as i32) as f32;
             if turn_x != 0.0 || turn_y != 0.0 {
                 app.on_turn_key(turn_x, turn_y, frame_dt_secs);
             }
-            let fwd = (window.is_key_down(Key::W) as i32 - window.is_key_down(Key::S) as i32) as f32;
+            let fwd =
+                (window.is_key_down(Key::W) as i32 - window.is_key_down(Key::S) as i32) as f32;
             let strafe =
                 (window.is_key_down(Key::A) as i32 - window.is_key_down(Key::D) as i32) as f32;
             app.on_movement_input(
@@ -2436,7 +2465,8 @@ pub fn run_gui_app(
         // overlay-toggle flag walk answers, and the OTHER screens the
         // vanilla Screen.keyReleased law keeps silent — the tracking the
         // stale flag the next in-world frame re-reads honestly)
-        if f3_was_down && !f3_down
+        if f3_was_down
+            && !f3_down
             && (in_world || app.screen == crate::screens::ScreenKind::GameModeSwitcher)
         {
             app.on_debug_modifier_released();
@@ -2543,9 +2573,8 @@ pub fn run_gui_app(
             // the container command lane: the frame thread's slot clicks
             // and the player's own close echo ride into the worker's
             // drain (the session's send path — see run_join)
-            let (click_tx, click_rx) = std::sync::mpsc::channel::<
-                crate::world_view::ContainerCommand,
-            >();
+            let (click_tx, click_rx) =
+                std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
             app.attach_live_clicks(click_tx);
             // the chat line lane: the worker's chat intercept (the
             // system/player chat lines the pump carries) ships each
@@ -2953,9 +2982,7 @@ pub fn run_gui_app(
                     // xz band the (5.0 + rnd × 6.0) / 16.0 folds keep at
                     // the +0.8125 lift — the vanilla client answers the
                     // same packet with)
-                    app.live_end_portal_frame_fill_events_updated(
-                        end_portal_frame_fill_events,
-                    );
+                    app.live_end_portal_frame_fill_events_updated(end_portal_frame_fill_events);
                     // the dripstone-drip's lane beside the frame fill's:
                     // the 1504 words the server's own fluid-transfer
                     // walks broadcast land at their own anchors (the
@@ -3096,12 +3123,7 @@ pub fn run_gui_app(
                     // gate the chest's live window keeps); the
                     // revision and the cursor ride beside them — the
                     // click lane's own echo inputs
-                    app.live_inventory_updated(
-                        inv_slots,
-                        inv_bundles,
-                        inv_state_id,
-                        inv_carried,
-                    );
+                    app.live_inventory_updated(inv_slots, inv_bundles, inv_state_id, inv_carried);
                     // the pop-time lane's own words beside the store's —
                     // the packet-time verdicts the single-slot sync spoke
                     // (the serial edge the HUD's pop re-arms on, the bulk
@@ -3180,17 +3202,10 @@ pub fn run_gui_app(
                 .unwrap_or(0);
             let dir = std::path::Path::new("screenshots");
             let _ = std::fs::create_dir_all(dir);
-            let name = crate::screens::screenshot_file_name(now, &|n| {
-                dir.join(n).exists()
-            });
-            let outcome = crate::png_io::write_rgb_png(
-                &dir.join(&name),
-                width,
-                height,
-                &fb.color,
-            )
-            .map(|_| name)
-            .map_err(|e| e.to_string());
+            let name = crate::screens::screenshot_file_name(now, &|n| dir.join(n).exists());
+            let outcome = crate::png_io::write_rgb_png(&dir.join(&name), width, height, &fb.color)
+                .map(|_| name)
+                .map_err(|e| e.to_string());
             app.take_screenshot(outcome);
         }
         buf.iter_mut().zip(fb.to_argb()).for_each(|(o, c)| *o = c);

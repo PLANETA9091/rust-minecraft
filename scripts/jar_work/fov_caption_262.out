@@ -1,0 +1,103 @@
+=== Options <init>: the fovEffectScale registration windows
+--- Options.<init>(Lnet/minecraft/client/Minecraft;Ljava/io/File;)V window around pc 4375
+4250: nop
+4251: bipush 70
+4253: invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;
+4256: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+4259: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Lcom/mojang/serialization/Codec;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+4262: putfield net/minecraft/client/Options.fovLnet/minecraft/client/OptionInstance;
+4265: aload_0
+4266: ldc_w ldcw@1574
+4269: getstatic net/minecraft/client/Options.TELEMETRY_TOOLTIPLnet/minecraft/network/chat/Component;
+4272: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+4275: invokedynamic indy
+4280: iconst_0
+4281: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+4284: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;ZLnet/minecraft/client/OptionInstance$ValueUpdateListener;)Lnet/minecraft/client/OptionInstance;
+4287: putfield net/minecraft/client/Options.telemetryOptInExtraLnet/minecraft/client/OptionInstance;
+4290: aload_0
+4291: new net/minecraft/client/OptionInstance
+4294: dup
+4295: ldc_w ldcw@1583
+4298: getstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_SCREEN_EFFECTLnet/minecraft/network/chat/Component;
+4301: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+4304: invokedynamic indy
+4309: getstatic net/minecraft/client/OptionInstance$UnitDouble.INSTANCELnet/minecraft/client/OptionInstance$UnitDouble;
+4312: dconst_1
+4313: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+4316: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+4319: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+4322: putfield net/minecraft/client/Options.screenEffectScaleLnet/minecraft/client/OptionInstance;
+4325: aload_0
+4326: new net/minecraft/client/OptionInstance
+4329: dup
+4330: ldc_w ldcw@1588
+4333: getstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_FOV_EFFECTLnet/minecraft/network/chat/Component;
+4336: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+4339: invokedynamic indy
+4344: getstatic net/minecraft/client/OptionInstance$UnitDouble.INSTANCELnet/minecraft/client/OptionInstance$UnitDouble;
+4347: invokedynamic indy
+4352: invokedynamic indy
+4357: invokevirtual net/minecraft/client/OptionInstance$UnitDouble.xmap(Ljava/util/function/DoubleFunction;Ljava/util/function/ToDoubleFunction;)Lnet/minecraft/client/OptionInstance$SliderableValueSet;
+4360: dconst_0
+4361: dconst_1
+4362: invokestatic com/mojang/serialization/Codec.doubleRange(DD)Lcom/mojang/serialization/Codec;
+4365: dconst_1
+4366: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+4369: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+4372: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Lcom/mojang/serialization/Codec;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+4375: putfield net/minecraft/client/Options.fovEffectScaleLnet/minecraft/client/OptionInstance;
+4378: aload_0
+4379: new net/minecraft/client/OptionInstance
+4382: dup
+4383: ldc_w ldcw@1603
+4386: getstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_DARKNESS_EFFECTLnet/minecraft/network/chat/Component;
+4389: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+4392: invokedynamic indy
+4397: getstatic net/minecraft/client/OptionInstance$UnitDouble.INSTANCELnet/minecraft/client/OptionInstance$UnitDouble;
+4400: invokedynamic indy
+4405: invokedynamic indy
+4410: invokevirtual net/minecraft/client/OptionInstance$UnitDouble.xmap(Ljava/util/function/DoubleFunction;Ljava/util/function/ToDoubleFunction;)Lnet/minecraft/client/OptionInstance$SliderableValueSet;
+4413: dconst_1
+4414: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+4417: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+4420: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+4423: putfield net/minecraft/client/Options.darknessEffectScaleLnet/minecraft/client/OptionInstance;
+4426: aload_0
+4427: new net/minecraft/client/OptionInstance
+4430: dup
+4431: ldc_w ldcw@1608
+4434: getstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_GLINT_SPEEDLnet/minecraft/network/chat/Component;
+4437: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+4440: invokedynamic indy
+4445: getstatic net/minecraft/client/OptionInstance$UnitDouble.INSTANCELnet/minecraft/client/OptionInstance$UnitDouble;
+4448: ldc2_w double 4602678819172646912
+4451: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+4454: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+4457: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+4460: putfield net/minecraft/client/Options.glintSpeedLnet/minecraft/client/OptionInstance;
+4463: aload_0
+4464: new net/minecraft/client/OptionInstance
+4467: dup
+4468: ldc_w ldcw@1613
+4471: getstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_GLINT_STRENGTHLnet/minecraft/network/chat/Component;
+4474: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+4477: invokedynamic indy
+4482: getstatic net/minecraft/client/OptionInstance$UnitDouble.INSTANCELnet/minecraft/client/OptionInstance$UnitDouble;
+4485: ldc2_w double 4604930618986332160
+4488: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+4491: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+4494: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+4497: putfield net/minecraft/client/Options.glintStrengthLnet/minecraft/client/OptionInstance;
+4500: aload_0
+4501: new net/minecraft/client/OptionInstance
+4504: dup
+4505: ldc_w ldcw@1618
+4508: getstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_DAMAGE_TILT_STRENGTHLnet/minecraft/network/chat/Component;
+4511: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+4514: invokedynamic indy
+4519: getstatic net/minecraft/client/OptionInstance$UnitDouble.INSTANCELnet/minecraft/client/OptionInstance$UnitDouble;
+4522: dconst_1
+
+=== UnitDouble$1 (the xmap'd set's toString walk)
+!! net.minecraft.client.OptionInstance$UnitDouble$1: no method matching toString
