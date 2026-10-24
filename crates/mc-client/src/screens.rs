@@ -35442,6 +35442,20 @@ impl App {
                             [crate::options_file::key_binds::DEBUG_MODIFIER];
                     self.kb_selected = None;
                 }
+                // THE DEBUG CRASH'S OWN ARMS (the row the debug trio
+                // walk the AFTER seat renders — the ctor's
+                // pc 3278-3297 the 4-arg ctor the `iconst_0` orderI
+                // default banks, the C the plain-shape default the
+                // capture honors)
+                "kb_change_debugcrash" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::DEBUG_CRASH);
+                }
+                "kb_rowreset_debugcrash" => {
+                    self.key_binds[crate::options_file::key_binds::DEBUG_CRASH] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::DEBUG_CRASH];
+                    self.kb_selected = None;
+                }
                 "kb_rowreset_forward" => {
                     self.key_binds[crate::options_file::key_binds::FORWARD] =
                         crate::options_file::key_binds::DEFAULTS
@@ -63371,17 +63385,19 @@ impl App {
             }
             self.kb_render_row(g, a, w, i, by);
         }
-        // THE DEBUG GROUP'S OWN HEADER + PAIR (the CategoryEntry the
+        // THE DEBUG GROUP'S OWN HEADER + TRIO (the CategoryEntry the
         // category boundary 714 wears — the keyDebugOverlay the
         // ctor's putfields the spectator pair's AFTER the slot keeps,
         // the keyDebugModifier the pc 3254-3275 the pair's own seat
         // banks (the `iconst_m1` the orderI field the 5-arg overload
-        // wears), the SORT_ORDER ordinal the spectator rows' AFTER
-        // the seat banks — movement, misc, multiplayer, gameplay,
-        // INVENTORY, CREATIVE, SPECTATOR, DEBUG — the SAME group
-        // shape the rows keep: the +12 gap the groups' own law
-        // answers, the modifier row the overlay's own +24 stride the
-        // pair's seat takes)
+        // wears), the keyDebugCrash the pc 3278-3297 the trio's own
+        // seat banks (the 4-arg ctor the call speaks — the `iconst_0`
+        // the orderI default the delegate banks), the SORT_ORDER
+        // ordinal the spectator rows' AFTER the seat banks —
+        // movement, misc, multiplayer, gameplay, INVENTORY, CREATIVE,
+        // SPECTATOR, DEBUG — the SAME group shape the rows keep: the
+        // +12 gap the groups' own law answers, the rows the +24
+        // stride the ROW_STRIDE law keeps)
         let hy = kb::DEBUG_HEADER_Y - off;
         if hy >= kb::LIST_TOP && hy + 20 <= band_bottom {
             g.text(
@@ -63484,6 +63500,10 @@ impl App {
             // the AFTER seat renders — the ctor's putfield order the
             // id answers)
             kb::DEBUG_MODIFIER => "kb_change_debugmodifier",
+            // THE DEBUG CRASH'S OWN ID (the row the debug trio walk
+            // the AFTER seat renders — the ctor's putfield order the
+            // id answers)
+            kb::DEBUG_CRASH => "kb_change_debugcrash",
             _ => "kb_change_hotbar9",
         };
         self.buttons
@@ -63526,6 +63546,9 @@ impl App {
             // THE DEBUG MODIFIER'S OWN ID (the same seat the row
             // keeps — the pair the file's own END rows wear)
             kb::DEBUG_MODIFIER => "kb_rowreset_debugmodifier",
+            // THE DEBUG CRASH'S OWN ID (the same seat the row
+            // keeps — the trio the file's own END rows wear)
+            kb::DEBUG_CRASH => "kb_rowreset_debugcrash",
             _ => "kb_rowreset_hotbar9",
         };
         let mut rb = Button::new(
