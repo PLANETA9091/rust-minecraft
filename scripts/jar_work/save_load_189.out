@@ -1,0 +1,62 @@
+########## A. lang rows (the pair + the creative category speak)
+  key.categories.creative = 'Creative Mode'
+
+########## B. the ctor's ldc strings (cp 1381 / 1389 resolve)
+  cp#1381 !! tuple index out of range
+  cp#1389 !! tuple index out of range
+
+########## C. the ctor walk verbatim (pc 3144-3190)
+  3144: putfield net/minecraft/client/Options.keyHotbarSlots[Lnet/minecraft/client/KeyMapping;
+  3147: aload_0
+  3148: new net/minecraft/client/KeyMapping
+  3151: dup
+  3152: ldc_w ldcw@1381
+  3155: bipush 67
+  3157: getstatic net/minecraft/client/KeyMapping$Category.CREATIVELnet/minecraft/client/KeyMapping$Category;
+  3160: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+  3163: putfield net/minecraft/client/Options.keySaveHotbarActivatorLnet/minecraft/client/KeyMapping;
+  3166: aload_0
+  3167: new net/minecraft/client/KeyMapping
+  3170: dup
+  3171: ldc_w ldcw@1389
+  3174: bipush 88
+  3176: getstatic net/minecraft/client/KeyMapping$Category.CREATIVELnet/minecraft/client/KeyMapping$Category;
+  3179: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+  3182: putfield net/minecraft/client/Options.keyLoadHotbarActivatorLnet/minecraft/client/KeyMapping;
+  3185: aload_0
+  3186: new net/minecraft/client/KeyMapping
+  3189: dup
+  3190: ldc_w ldcw@1394
+
+########## D. the Category clinit — the sort seat re-wears
+*** <clinit>()V
+  0: new java/util/ArrayList
+  3: dup
+  4: invokespecial java/util/ArrayList.<init>()V
+  7: putstatic net/minecraft/client/KeyMapping$Category.SORT_ORDERLjava/util/List;
+  10: ldc movement
+  12: invokestatic net/minecraft/client/KeyMapping$Category.register(Ljava/lang/String;)Lnet/minecraft/client/KeyMapping$Category;
+  15: putstatic net/minecraft/client/KeyMapping$Category.MOVEMENTLnet/minecraft/client/KeyMapping$Category;
+  18: ldc misc
+  20: invokestatic net/minecraft/client/KeyMapping$Category.register(Ljava/lang/String;)Lnet/minecraft/client/KeyMapping$Category;
+  23: putstatic net/minecraft/client/KeyMapping$Category.MISCLnet/minecraft/client/KeyMapping$Category;
+  26: ldc multiplayer
+  28: invokestatic net/minecraft/client/KeyMapping$Category.register(Ljava/lang/String;)Lnet/minecraft/client/KeyMapping$Category;
+  31: putstatic net/minecraft/client/KeyMapping$Category.MULTIPLAYERLnet/minecraft/client/KeyMapping$Category;
+  34: ldc gameplay
+  36: invokestatic net/minecraft/client/KeyMapping$Category.register(Ljava/lang/String;)Lnet/minecraft/client/KeyMapping$Category;
+  39: putstatic net/minecraft/client/KeyMapping$Category.GAMEPLAYLnet/minecraft/client/KeyMapping$Category;
+  42: ldc inventory
+  44: invokestatic net/minecraft/client/KeyMapping$Category.register(Ljava/lang/String;)Lnet/minecraft/client/KeyMapping$Category;
+  47: putstatic net/minecraft/client/KeyMapping$Category.INVENTORYLnet/minecraft/client/KeyMapping$Category;
+  50: ldc creative
+  52: invokestatic net/minecraft/client/KeyMapping$Category.register(Ljava/lang/String;)Lnet/minecraft/client/KeyMapping$Category;
+  55: putstatic net/minecraft/client/KeyMapping$Category.CREATIVELnet/minecraft/client/KeyMapping$Category;
+  58: ldc spectator
+  60: invokestatic net/minecraft/client/KeyMapping$Category.register(Ljava/lang/String;)Lnet/minecraft/client/KeyMapping$Category;
+  63: putstatic net/minecraft/client/KeyMapping$Category.SPECTATORLnet/minecraft/client/KeyMapping$Category;
+  66: ldc debug
+  68: invokestatic net/minecraft/client/KeyMapping$Category.register(Ljava/lang/String;)Lnet/minecraft/client/KeyMapping$Category;
+  71: putstatic net/minecraft/client/KeyMapping$Category.DEBUGLnet/minecraft/client/KeyMapping$Category;
+  74: return
+=== net.minecraft.client.KeyMapping$Category utf8 words (needles: ['key.categories'])

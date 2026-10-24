@@ -2093,9 +2093,35 @@ pub fn run_gui_app(
                         // keyHotbarSlots loop reads): the creative
                         // arm the chords consume, the plain select
                         // every other verdict keeps (the lane's own
-                        // false the existing number-key walk answers)
-                        let save_down = window.is_key_down(Key::C);
-                        let load_down = window.is_key_down(Key::X);
+                        // false the existing number-key walk answers).
+                        // THE STORE'S OWN BINDS the chords read (the
+                        // 189 walk the slots bank — the
+                        // `keyMappings[SAVE/LOAD_ACTIVATOR].isDown()`
+                        // the binding answers, the rebind the chords
+                        // honor, the Keyboard the held walk serves,
+                        // the Mouse arm the same isDown the mouse
+                        // rebind keeps, the None the never-down the
+                        // unbound law keeps)
+                        let save_down =
+                            match app.key_binds[crate::options_file::key_binds::SAVE_ACTIVATOR] {
+                                Some(crate::options_file::key_binds::Bind::Keyboard(k)) => {
+                                    window.is_key_down(k)
+                                }
+                                Some(crate::options_file::key_binds::Bind::Mouse(b)) => {
+                                    window.get_mouse_down(b)
+                                }
+                                None => false,
+                            };
+                        let load_down =
+                            match app.key_binds[crate::options_file::key_binds::LOAD_ACTIVATOR] {
+                                Some(crate::options_file::key_binds::Bind::Keyboard(k)) => {
+                                    window.is_key_down(k)
+                                }
+                                Some(crate::options_file::key_binds::Bind::Mouse(b)) => {
+                                    window.get_mouse_down(b)
+                                }
+                                None => false,
+                            };
                         if !app.on_hotbar_save_load_key(i, save_down, load_down) {
                             app.on_number_key(i);
                         }

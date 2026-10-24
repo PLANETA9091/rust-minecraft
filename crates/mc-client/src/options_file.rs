@@ -292,7 +292,17 @@ pub mod key_binds {
     pub const HOTBAR_7: usize = 19;
     pub const HOTBAR_8: usize = 20;
     pub const HOTBAR_9: usize = 21;
-    pub const COUNT: usize = 22;
+    /// THE ACTIVATOR PAIR'S OWN SLOTS (the ctor's putfields the hotbar
+    /// array's AFTER the walk banks — the save/load pair the pc 3147
+    /// / 3166 rows wear, the CREATIVE category the `bipush 67` (the
+    /// GLFW C) / `bipush 88` (the GLFW X) codes the DEFAULTS keep,
+    /// the ldcs the `key.saveToolbarActivator` / `key.loadToolbar
+    /// Activator` names resolve (the cp#1382/#1390 utf8s speak — the
+    /// FIELD name the HotbarActivator word keeps, the LANG key the
+    /// Toolbar word wears))
+    pub const SAVE_ACTIVATOR: usize = 22;
+    pub const LOAD_ACTIVATOR: usize = 23;
+    pub const COUNT: usize = 24;
 
     /// THE VANILLA BINDING NAMES (the `key_` + name the file row's
     /// prefix wears, the lang captions the `key.*` rows answer — the
@@ -320,6 +330,11 @@ pub mod key_binds {
         "key.hotbar.7",
         "key.hotbar.8",
         "key.hotbar.9",
+        // THE ACTIVATOR PAIR'S OWN NAMES (the ctor's ldc strings the
+        // cp#1382/#1390 utf8s resolve — the Toolbar word the lang key
+        // wears, the HotbarActivator word the FIELD name keeps)
+        "key.saveToolbarActivator",
+        "key.loadToolbarActivator",
     ];
 
     /// THE CAPTIONS' OWN FALLBACK (the en_us values the assets-absent
@@ -347,6 +362,10 @@ pub mod key_binds {
         "Hotbar Slot 7",
         "Hotbar Slot 8",
         "Hotbar Slot 9",
+        // THE PAIR'S OWN CAPTIONS (the en_us rows speak — the same
+        // Hotbar words the field name hides the lang rows answer)
+        "Save Hotbar Activator",
+        "Load Hotbar Activator",
     ];
 
     /// THE CATEGORY'S OWN ROW (the CategoryEntry the list groups the
@@ -368,6 +387,15 @@ pub mod key_binds {
     /// group walk the categories WITH rows the render answers)
     pub const CATEGORY_GAMEPLAY_NAME: &str = "key.categories.gameplay";
     pub const CATEGORY_GAMEPLAY_FALLBACK: &str = "Gameplay";
+    /// THE CREATIVE GROUP'S OWN HEADER ROW (the CategoryEntry the
+    /// category boundary adds — the `key.categories.creative` key the
+    /// lang "Creative Mode" row answers; the SORT_ORDER walk the
+    /// clinit banks: movement, misc, multiplayer, gameplay, INVENTORY,
+    /// CREATIVE — the creative the pair's group the inventory rows'
+    /// AFTER keeps, the misc/multiplayer/spectator/debug rows the
+    /// store never carries)
+    pub const CATEGORY_CREATIVE_NAME: &str = "key.categories.creative";
+    pub const CATEGORY_CREATIVE_FALLBACK: &str = "Creative Mode";
 
     /// THE DEFAULTS' OWN ROW (the ctor's codes the minifb Key enum's
     /// own discriminants answer).
@@ -399,6 +427,11 @@ pub mod key_binds {
         Some(Bind::Keyboard(Key::Key7)),
         Some(Bind::Keyboard(Key::Key8)),
         Some(Bind::Keyboard(Key::Key9)),
+        // THE ACTIVATOR PAIR'S OWN SEATS (the ctor's `bipush 67` the
+        // GLFW C answers, the `bipush 88` the GLFW X — the CREATIVE
+        // category the pair's rows wear)
+        Some(Bind::Keyboard(Key::C)),
+        Some(Bind::Keyboard(Key::X)),
     ];
 
     /// THE LIST'S OWN GEOMETRY (the entries the walk's y positions
@@ -423,6 +456,13 @@ pub mod key_binds {
     pub const GAMEPLAY_ROWS_START: i32 = 222;
     pub const INVENTORY_HEADER_Y: i32 = 294;
     pub const INVENTORY_ROWS_START: i32 = 306;
+    /// THE CREATIVE GROUP'S OWN SEATS (the sorted walk's own y — the
+    /// hotbar nine the inventory rows the 378..570 stride wear, the
+    /// CREATIVE header the 594 seat the nine's own bottom the next
+    /// stride slot answers (570 + 24), the pair rows the 606 start
+    /// the same +12 the groups' own gap keeps)
+    pub const CREATIVE_HEADER_Y: i32 = 594;
+    pub const CREATIVE_ROWS_START: i32 = 606;
 
     /// THE CONTENT'S OWN HEIGHT (the walk's own bottom — the LAST
     /// group's last row's bottom minus the list top; the maxScrollAmount
@@ -430,10 +470,12 @@ pub mod key_binds {
     /// the AbstractScrollArea walk banks; the array order the groups the
     /// DISPLAY walk re-orders — the inventory group the walk's own
     /// bottom keeps (the trio + the hotbar nine the 306-start stride
-    /// wear: 12 rows the 11 strides speak))
+    /// wear: 12 rows the 11 strides speak, the CREATIVE pair the
+    /// 594-header the 606-start rows the walk's own bottom keeps (the
+    /// save the 606 seat, the load the 630 — the pair's own bottom
+    /// the content answers))
     pub fn content_height() -> i32 {
-        INVENTORY_ROWS_START + ((USE - INVENTORY) + (COUNT - HOTBAR_1) - 1) as i32 * ROW_STRIDE + 20
-            - LIST_TOP
+        CREATIVE_ROWS_START + (COUNT - SAVE_ACTIVATOR - 1) as i32 * ROW_STRIDE + 20 - LIST_TOP
     }
 
     /// THE MOUSE'S OWN NAME TABLE (the InputConstants$Type clinit the
@@ -843,6 +885,15 @@ impl OptionsFile {
                 "key_key.hotbar.9" => {
                     out.key_binds[key_binds::HOTBAR_9] = key_binds::bind_from_save(value);
                 }
+                // THE ACTIVATOR PAIR'S OWN DECODE (the `key_key.` +
+                // name prefix the save rows wear — the Toolbar lang
+                // names the keys keep, the restart the pair decodes)
+                "key_key.saveToolbarActivator" => {
+                    out.key_binds[key_binds::SAVE_ACTIVATOR] = key_binds::bind_from_save(value);
+                }
+                "key_key.loadToolbarActivator" => {
+                    out.key_binds[key_binds::LOAD_ACTIVATOR] = key_binds::bind_from_save(value);
+                }
                 _ => {} // the jar's other rows the client's seats never carry
             }
         }
@@ -996,7 +1047,7 @@ mod tests {
         OptionsFile::default().save(&path);
         let text = std::fs::read_to_string(&path).expect("the save the file writes");
         assert_eq!(
-            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\n",
+            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\n",
             "the file the vanilla rows wear"
         );
         let loaded = OptionsFile::load(&path);

@@ -35402,6 +35402,12 @@ impl App {
                 "kb_change_hotbar9" => {
                     self.kb_selected = Some(crate::options_file::key_binds::HOTBAR_9);
                 }
+                "kb_change_saveactivator" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::SAVE_ACTIVATOR);
+                }
+                "kb_change_loadactivator" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::LOAD_ACTIVATOR);
+                }
                 "kb_rowreset_forward" => {
                     self.key_binds[crate::options_file::key_binds::FORWARD] =
                         crate::options_file::key_binds::DEFAULTS
@@ -35538,6 +35544,18 @@ impl App {
                     self.key_binds[crate::options_file::key_binds::HOTBAR_9] =
                         crate::options_file::key_binds::DEFAULTS
                             [crate::options_file::key_binds::HOTBAR_9];
+                    self.kb_selected = None;
+                }
+                "kb_rowreset_saveactivator" => {
+                    self.key_binds[crate::options_file::key_binds::SAVE_ACTIVATOR] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::SAVE_ACTIVATOR];
+                    self.kb_selected = None;
+                }
+                "kb_rowreset_loadactivator" => {
+                    self.key_binds[crate::options_file::key_binds::LOAD_ACTIVATOR] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::LOAD_ACTIVATOR];
                     self.kb_selected = None;
                 }
                 // THE FOOTERS' OWN RETURNS (the OptionsSubScreen
@@ -63203,7 +63221,7 @@ impl App {
                 false,
             );
         }
-        for i in kb::USE..kb::COUNT {
+        for i in kb::USE..kb::HOTBAR_1 {
             let by = kb::GAMEPLAY_ROWS_START + (i - kb::USE) as i32 * kb::ROW_STRIDE - off;
             if by < kb::LIST_TOP || by + 20 > band_bottom {
                 continue; // the clip the band the honest render keeps
@@ -63236,11 +63254,40 @@ impl App {
         // category header keeps — the ctor's keyHotbarSlots array the
         // trio's AFTER the rows wear, the stride the group's own law
         // continues: the rows 378..522 the +12 group gap never re-wears
-        // — the trio's own bottom the next stride slot the rows take)
-        for i in kb::HOTBAR_1..kb::COUNT {
+        // — the trio's own bottom the next stride slot the rows take;
+        // the range the HOTBAR_1..SAVE_ACTIVATOR the honest nine keeps
+        // — the COUNT tail the creative pair the group's own walk
+        // re-renders the 189 walk's dup the 159 fix answers)
+        for i in kb::HOTBAR_1..kb::SAVE_ACTIVATOR {
             let by = kb::INVENTORY_ROWS_START
                 + (kb::USE - kb::INVENTORY + i - kb::HOTBAR_1) as i32 * kb::ROW_STRIDE
                 - off;
+            if by < kb::LIST_TOP || by + 20 > band_bottom {
+                continue; // the clip the band the honest render keeps
+            }
+            self.kb_render_row(g, a, w, i, by);
+        }
+        // THE CREATIVE GROUP'S OWN HEADER + PAIR (the CategoryEntry
+        // the category boundary 594 wears — the activator pair the
+        // ctor's putfields the hotbar array's AFTER the slots keep,
+        // the SORT_ORDER ordinal the inventory rows' AFTER the seat
+        // banks — movement, misc, multiplayer, gameplay, INVENTORY,
+        // CREATIVE — the SAME group shape the rows keep: the +12 gap
+        // the groups' own law answers)
+        let hy = kb::CREATIVE_HEADER_Y - off;
+        if hy >= kb::LIST_TOP && hy + 20 <= band_bottom {
+            g.text(
+                a,
+                16,
+                hy,
+                tr(kb::CATEGORY_CREATIVE_NAME).unwrap_or(kb::CATEGORY_CREATIVE_FALLBACK),
+                [0.7, 0.7, 0.7],
+                false,
+            );
+        }
+        for i in kb::SAVE_ACTIVATOR..kb::COUNT {
+            let by =
+                kb::CREATIVE_ROWS_START + (i - kb::SAVE_ACTIVATOR) as i32 * kb::ROW_STRIDE - off;
             if by < kb::LIST_TOP || by + 20 > band_bottom {
                 continue; // the clip the band the honest render keeps
             }
@@ -63311,6 +63358,12 @@ impl App {
             kb::HOTBAR_6 => "kb_change_hotbar6",
             kb::HOTBAR_7 => "kb_change_hotbar7",
             kb::HOTBAR_8 => "kb_change_hotbar8",
+            kb::HOTBAR_9 => "kb_change_hotbar9",
+            // THE ACTIVATOR PAIR'S OWN IDS (the rows the creative
+            // group walk the AFTER seat renders — the ctor's putfield
+            // order the ids answer)
+            kb::SAVE_ACTIVATOR => "kb_change_saveactivator",
+            kb::LOAD_ACTIVATOR => "kb_change_loadactivator",
             _ => "kb_change_hotbar9",
         };
         self.buttons
@@ -63339,6 +63392,11 @@ impl App {
             kb::HOTBAR_6 => "kb_rowreset_hotbar6",
             kb::HOTBAR_7 => "kb_rowreset_hotbar7",
             kb::HOTBAR_8 => "kb_rowreset_hotbar8",
+            kb::HOTBAR_9 => "kb_rowreset_hotbar9",
+            // THE ACTIVATOR PAIR'S OWN IDS (the same seats the rows
+            // keep)
+            kb::SAVE_ACTIVATOR => "kb_rowreset_saveactivator",
+            kb::LOAD_ACTIVATOR => "kb_rowreset_loadactivator",
             _ => "kb_rowreset_hotbar9",
         };
         let mut rb = Button::new(
