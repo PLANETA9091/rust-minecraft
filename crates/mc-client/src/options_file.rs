@@ -546,7 +546,24 @@ pub mod key_binds {
     /// `key.debug.networkCharts` string the `bipush 51` the 3
     /// default the same FIVE-arg shape the walk banks)
     pub const DEBUG_FPS_CHARTS: usize = 45;
-    pub const COUNT: usize = 46;
+    /// THE DEBUG NETWORK CHARTS'S OWN SLOT (the ctor's pc
+    /// 3678-3698 walk the fpsCharts's putfield the AFTER
+    /// banks — the `ldc_w cp#1516` the
+    /// `key.debug.networkCharts` string answers, the
+    /// `KEYSYM, bipush 51` the GLFW '3' default wears, the
+    /// Category.DEBUG the same group's ordinal keeps, the FIVE-arg
+    /// ctor the call speaks — the `iconst_3` the orderI field the
+    /// sort walk banks (the compareTo the SAME int the
+    /// within-category order the primary key answers — the row the
+    /// orderI=3 seat the fpsCharts's orderI=2 the AFTER the
+    /// sorted walk banks, the END seat the slot walk the same
+    /// answer keeps), the putfield keyDebugNetworkCharts the honest
+    /// field the name speaks, the next registration the pc 3701
+    /// seat the later round banks — the cp#1521 the
+    /// `key.debug.lightmapTexture` string the `bipush 52` the 4
+    /// default the same FIVE-arg shape the walk banks)
+    pub const DEBUG_NETWORK_CHARTS: usize = 46;
+    pub const COUNT: usize = 47;
 
     /// THE VANILLA BINDING NAMES (the `key_` + name the file row's
     /// prefix wears, the lang captions the `key.*` rows answer — the
@@ -671,6 +688,11 @@ pub mod key_binds {
         // fpsCharts row the profilingChart's AFTER the
         // ladder wears)
         "key.debug.fpsCharts",
+        // THE DEBUG NETWORK CHARTS'S OWN NAME (the ctor's
+        // `ldc_w cp#1516` the pc 3683 string answers — the
+        // networkCharts row the fpsCharts's AFTER the
+        // ladder wears)
+        "key.debug.networkCharts",
     ];
 
     /// THE CAPTIONS' OWN FALLBACK (the en_us values the assets-absent
@@ -782,6 +804,10 @@ pub mod key_binds {
         // `key.debug.fpsCharts` the 'FPS Charts'
         // words wear)
         "FPS Charts",
+        // THE DEBUG NETWORK CHARTS'S OWN FALLBACK (the en_us
+        // `key.debug.networkCharts` the 'Network Charts'
+        // words wear)
+        "Network Charts",
     ];
 
     /// THE CATEGORY'S OWN ROW (the CategoryEntry the list groups the
@@ -980,6 +1006,13 @@ pub mod key_binds {
         // — the hotbar.2 row the same 50 code the minifb enum's own
         // Key2 the seat keeps)
         Some(Bind::Keyboard(Key::Key2)),
+        // THE DEBUG NETWORK CHARTS'S OWN SEAT (the ctor's pc
+        // 3689 the `bipush 51` the GLFW '3' answers — the KEYSYM
+        // type the keyboard bind wears, the FIVE-arg ctor the call
+        // speaks, the orderI the `iconst_3` arg the sort walk banks
+        // — the hotbar.3 row the same 51 code the minifb enum's own
+        // Key3 the seat keeps)
+        Some(Bind::Keyboard(Key::Key3)),
     ];
 
     /// THE LIST'S OWN GEOMETRY (the entries the walk's y positions
@@ -1047,7 +1080,8 @@ pub mod key_binds {
     /// the 1110 seat, the dumpVersion
     /// the 1134 seat, the profilingChart
     /// the 1158 seat, the fpsCharts
-    /// the 1182 seat — the row's
+    /// the 1182 seat, the networkCharts
+    /// the 1206 seat — the row's
     /// own bottom the content answers))
     pub fn content_height() -> i32 {
         DEBUG_ROWS_START + (COUNT - DEBUG_OVERLAY - 1) as i32 * ROW_STRIDE + 20 - LIST_TOP
@@ -1620,6 +1654,14 @@ impl OptionsFile {
                 "key_key.debug.fpsCharts" => {
                     out.key_binds[key_binds::DEBUG_FPS_CHARTS] = key_binds::bind_from_save(value);
                 }
+                // THE DEBUG NETWORK CHARTS'S OWN DECODE (the
+                // same prefix the row wears — the '3' row the restart
+                // the decode answers, the plain-shape row the
+                // saveString keeps)
+                "key_key.debug.networkCharts" => {
+                    out.key_binds[key_binds::DEBUG_NETWORK_CHARTS] =
+                        key_binds::bind_from_save(value);
+                }
                 _ => {} // the jar's other rows the client's seats never carry
             }
         }
@@ -1773,7 +1815,7 @@ mod tests {
         OptionsFile::default().save(&path);
         let text = std::fs::read_to_string(&path).expect("the save the file writes");
         assert_eq!(
-            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\nkey_key.debug.debugOptions:key.keyboard.f6\nkey_key.debug.focusPause:key.keyboard.p\nkey_key.debug.dumpDynamicTextures:key.keyboard.s\nkey_key.debug.reloadResourcePacks:key.keyboard.t\nkey_key.debug.profiling:key.keyboard.l\nkey_key.debug.copyLocation:key.keyboard.c\nkey_key.debug.dumpVersion:key.keyboard.v\nkey_key.debug.profilingChart:key.keyboard.1\nkey_key.debug.fpsCharts:key.keyboard.2\n",
+            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\nkey_key.debug.debugOptions:key.keyboard.f6\nkey_key.debug.focusPause:key.keyboard.p\nkey_key.debug.dumpDynamicTextures:key.keyboard.s\nkey_key.debug.reloadResourcePacks:key.keyboard.t\nkey_key.debug.profiling:key.keyboard.l\nkey_key.debug.copyLocation:key.keyboard.c\nkey_key.debug.dumpVersion:key.keyboard.v\nkey_key.debug.profilingChart:key.keyboard.1\nkey_key.debug.fpsCharts:key.keyboard.2\nkey_key.debug.networkCharts:key.keyboard.3\n",
             "the file the vanilla rows wear"
         );
         let loaded = OptionsFile::load(&path);

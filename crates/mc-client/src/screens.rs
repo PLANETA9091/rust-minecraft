@@ -35705,6 +35705,21 @@ impl App {
                             [crate::options_file::key_binds::DEBUG_FPS_CHARTS];
                     self.kb_selected = None;
                 }
+                // THE DEBUG NETWORK CHARTS'S OWN ARMS (the row
+                // the debug twenty-one-row walk the AFTER seat renders
+                // — the ctor's pc 3678-3698 the FIVE-arg ctor the
+                // `iconst_3` orderI banks, the '3' the
+                // fpsCharts row's own shape the
+                // capture honors)
+                "kb_change_debugnetworkcharts" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::DEBUG_NETWORK_CHARTS);
+                }
+                "kb_rowreset_debugnetworkcharts" => {
+                    self.key_binds[crate::options_file::key_binds::DEBUG_NETWORK_CHARTS] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::DEBUG_NETWORK_CHARTS];
+                    self.kb_selected = None;
+                }
                 "kb_rowreset_forward" => {
                     self.key_binds[crate::options_file::key_binds::FORWARD] =
                         crate::options_file::key_binds::DEFAULTS
@@ -63824,6 +63839,10 @@ impl App {
             // debug twenty-row walk the AFTER seat renders — the
             // ctor's putfield order the id answers)
             kb::DEBUG_FPS_CHARTS => "kb_change_debugfpscharts",
+            // THE DEBUG NETWORK CHARTS'S OWN ID (the row the
+            // debug twenty-one-row walk the AFTER seat renders — the
+            // ctor's putfield order the id answers)
+            kb::DEBUG_NETWORK_CHARTS => "kb_change_debugnetworkcharts",
             _ => "kb_change_hotbar9",
         };
         self.buttons
@@ -63925,6 +63944,10 @@ impl App {
             // the row keeps — the twenty-row walk the file's own END
             // rows wear)
             kb::DEBUG_FPS_CHARTS => "kb_rowreset_debugfpscharts",
+            // THE DEBUG NETWORK CHARTS'S OWN ID (the same seat
+            // the row keeps — the twenty-one-row walk the file's own END
+            // rows wear)
+            kb::DEBUG_NETWORK_CHARTS => "kb_rowreset_debugnetworkcharts",
             _ => "kb_rowreset_hotbar9",
         };
         let mut rb = Button::new(
