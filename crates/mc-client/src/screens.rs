@@ -35557,6 +35557,20 @@ impl App {
                             [crate::options_file::key_binds::DEBUG_SPECTATE];
                     self.kb_selected = None;
                 }
+                // THE DEBUG SWITCH GAME MODE'S OWN ARMS (the row the
+                // debug eleven-row walk the AFTER seat renders — the
+                // ctor's pc 3454-3474 the 4-arg ctor the `iconst_0`
+                // orderI default banks, the F4 the spectate row's own
+                // plain shape the capture honors)
+                "kb_change_debugswitchgamemode" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::DEBUG_SWITCH_GAME_MODE);
+                }
+                "kb_rowreset_debugswitchgamemode" => {
+                    self.key_binds[crate::options_file::key_binds::DEBUG_SWITCH_GAME_MODE] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::DEBUG_SWITCH_GAME_MODE];
+                    self.kb_selected = None;
+                }
                 "kb_rowreset_forward" => {
                     self.key_binds[crate::options_file::key_binds::FORWARD] =
                         crate::options_file::key_binds::DEFAULTS
@@ -63636,6 +63650,10 @@ impl App {
             // walk the AFTER seat renders — the ctor's putfield order
             // the id answers)
             kb::DEBUG_SPECTATE => "kb_change_debugspectate",
+            // THE DEBUG SWITCH GAME MODE'S OWN ID (the row the debug
+            // eleven-row walk the AFTER seat renders — the ctor's
+            // putfield order the id answers)
+            kb::DEBUG_SWITCH_GAME_MODE => "kb_change_debugswitchgamemode",
             _ => "kb_change_hotbar9",
         };
         self.buttons
@@ -63700,6 +63718,10 @@ impl App {
             // THE DEBUG SPECTATE'S OWN ID (the same seat the row
             // keeps — the ten-row walk the file's own END rows wear)
             kb::DEBUG_SPECTATE => "kb_rowreset_debugspectate",
+            // THE DEBUG SWITCH GAME MODE'S OWN ID (the same seat the
+            // row keeps — the eleven-row walk the file's own END rows
+            // wear)
+            kb::DEBUG_SWITCH_GAME_MODE => "kb_rowreset_debugswitchgamemode",
             _ => "kb_rowreset_hotbar9",
         };
         let mut rb = Button::new(

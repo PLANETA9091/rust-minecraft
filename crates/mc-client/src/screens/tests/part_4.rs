@@ -9758,7 +9758,7 @@ fn the_options_file_the_stores_restart_outlives() {
     assert_eq!(app.screen, ScreenKind::Title, "the Done the return wears");
     let text = std::fs::read_to_string(&path).expect("the chord the file writes");
     assert_eq!(
-        text, "version:4903\nshowSubtitles:false\nmouseSensitivity:1.0\nfov:110\nsoundCategory_master:0.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\n",
+        text, "version:4903\nshowSubtitles:false\nmouseSensitivity:1.0\nfov:110\nsoundCategory_master:0.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\n",
         "the file the vanilla rows wear"
     );
     // THE RESTART (the fresh boot the file's truth wears — the session's
@@ -9794,7 +9794,7 @@ fn the_options_escape_the_save_and_return_wears() {
     assert_eq!(app.screen, ScreenKind::Title, "the escape the return wears");
     let text = std::fs::read_to_string(&path).expect("the escape the file writes");
     assert_eq!(
-        text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.75\nfov:90\nsoundCategory_master:0.25\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\n",
+        text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.75\nfov:90\nsoundCategory_master:0.25\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\n",
         "the SAME save chord the Done wears the escape speaks"
     );
     // THE PAUSED LANE (the pause screen's own Options — the
@@ -9903,7 +9903,7 @@ fn the_quit_lane_the_stop_flag_and_the_files_absence_wears() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the removed() moment the file writes"),
-        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\n",
         "the takeover's own exit the rows bank"
     );
     app.render_title_buttons_for_test();
@@ -9917,7 +9917,7 @@ fn the_quit_lane_the_stop_flag_and_the_files_absence_wears() {
     assert!(app.stopping, "the second stop the same chord wears");
     assert_eq!(
         std::fs::read_to_string(&path).expect("the file the exit keeps"),
-        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\n",
         "the quit the file NEVER re-writes — the removed() moment ALONE the rows keep"
     );
     let _ = std::fs::remove_dir_all(&dir);
@@ -9968,7 +9968,7 @@ fn the_options_exit_the_removed_moment_itself_saves() {
     app.open(ScreenKind::Servers);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the takeover the file writes"),
-        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\n",
         "the replacement lane the removed() moment speaks"
     );
     // THE SAME-KIND RE-ENTRY (the open(Options) from Options the
@@ -9979,7 +9979,7 @@ fn the_options_exit_the_removed_moment_itself_saves() {
     app.open(ScreenKind::Options);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the re-entry the file writes"),
-        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:0.5\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:0.5\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\n",
         "the same-kind walk the old screen's discard keeps"
     );
     // THE NONE BOOT'S SILENT KEEP (the options_file None the save walk
@@ -10117,7 +10117,7 @@ fn the_focus_pause_chord_the_flip_and_the_rows_wear() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the exit the file writes"),
-        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:false\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:false\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\n",
         "the flipped row the exit banks"
     );
     // THE SECOND FLIP (the chord the option re-arms — the row the next
@@ -10128,7 +10128,7 @@ fn the_focus_pause_chord_the_flip_and_the_rows_wear() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the second exit the file writes"),
-        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\n",
         "the re-armed row the exit banks"
     );
     // THE THIRD FLIP (the option the false re-wears — the restart the
@@ -10139,7 +10139,7 @@ fn the_focus_pause_chord_the_flip_and_the_rows_wear() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the third exit the file writes"),
-        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:false\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:false\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\n",
         "the flipped row the exit banks"
     );
     // THE BOOT LOAD (the file's truth the boot walk wears — the false
@@ -11576,7 +11576,7 @@ fn the_notification_row_the_multiplier_wears() {
     assert!(
         pre_exit
             .trim_end()
-            .ends_with("key_key.debug.spectate:key.keyboard.n"),
+            .ends_with("key_key.debug.switchGameMode:key.keyboard.f4"),
         "the key block the file's own END row wears"
     );
     // THE ROW'S OWN SEAT (the array's index 9 the row BETWEEN the
@@ -12329,8 +12329,8 @@ fn the_inventory_trio_the_scroll_the_lanes_the_file_wear() {
     assert_eq!(app.kb_scroll, 24.0, "the one notch the one row wears");
     app.on_kb_scroll(-1000.0, 240);
     assert_eq!(
-        app.kb_scroll, 750.0,
-        "the clamp the maxScroll law keeps (content 932 - band 182)"
+        app.kb_scroll, 774.0,
+        "the clamp the maxScroll law keeps (content 956 - band 182)"
     );
     app.on_kb_scroll(1000.0, 240);
     assert_eq!(
@@ -12338,14 +12338,14 @@ fn the_inventory_trio_the_scroll_the_lanes_the_file_wear() {
         "the wheel up the top the clamp restores"
     );
     // THE TALL WINDOW'S OWN CLAMP (the maxScroll the max(0, ..) law
-    // keeps; the 932 content the 780-tall band the max 152 speaks
-    // — the spectate row the band the hundred-fifty-two the
+    // keeps; the 956 content the 780-tall band the max 176 speaks
+    // — the switchGameMode row the band the hundred-seventy-six the
     // walk answers; the THREE notches the 72 the walk wears — the
     // 56-under the max the clamp never speaks)
     app.on_kb_scroll(-1.0, 780);
     app.on_kb_scroll(-1.0, 780);
     app.on_kb_scroll(-1.0, 780);
-    assert_eq!(app.kb_scroll, 72.0, "the tall band the max 152 wears");
+    assert_eq!(app.kb_scroll, 72.0, "the tall band the max 176 wears");
     app.kb_scroll = 24.0;
     // THE OPENER'S OWN WALK (the fresh screen the list rebuilds — the
     // scrollAmount the zero the fresh seat wears)
@@ -12408,12 +12408,12 @@ fn the_inventory_trio_the_scroll_the_lanes_the_file_wear() {
     // the content's own bottom the band's own bottom aligns, the last
     // row the fully-visible seat wears)
     app.on_kb_scroll(-1000.0, 240);
-    assert_eq!(app.kb_scroll, 750.0, "the wheel down the clamp keeps");
+    assert_eq!(app.kb_scroll, 774.0, "the wheel down the clamp keeps");
     app.render(&mut fb, &mut assets);
     assert!(
         app.buttons
             .iter()
-            .any(|b| b.id == "kb_change_debugspectate" && b.y + b.h <= 240 - 28),
+            .any(|b| b.id == "kb_change_debugswitchgamemode" && b.y + b.h <= 240 - 28),
         "the last row the max scroll the fully-visible seat wears"
     );
     // THE SCROLL'S OWN RETURN (the five notches the inventory row the
@@ -12748,7 +12748,7 @@ fn the_hotbar_nine_the_rows_the_group_the_file_wear() {
     // own bottom keeps)
     assert_eq!(
         kb::content_height(),
-        932,
+        956,
         "the content the walk's own bottom keeps"
     );
     app.open(ScreenKind::Options);
@@ -12778,13 +12778,14 @@ fn the_hotbar_nine_the_rows_the_group_the_file_wear() {
         !app.buttons.iter().any(|b| b.id == "kb_change_hotbar1"),
         "the clipped hotbar rows the band render refuses"
     );
-    // THE SCROLL'S OWN REACH (the max the 750 clamp keeps — the
+    // THE SCROLL'S OWN REACH (the max the 774 clamp keeps — the
     // hotbar.1/2/9 rows the max scroll the clip refuses: the nine
-    // the 570 y the -180 seat the list-top 30 the band never seats,
-    // the debug ten-row's own reach the nine's rows the walk refuses
-    // — the spectate row the END the content 932 the walk banks)
+    // the 570 y the -204 seat the list-top 30 the band never seats,
+    // the debug eleven-row's own reach the nine's rows the walk
+    // refuses — the switchGameMode row the END the content 956 the
+    // walk banks)
     app.on_kb_scroll(-1000.0, 240);
-    assert_eq!(app.kb_scroll, 750.0, "the clamp the content 932 keeps");
+    assert_eq!(app.kb_scroll, 774.0, "the clamp the content 956 keeps");
     app.render(&mut fb, &mut assets);
     assert!(
         !app.buttons.iter().any(|b| b.id == "kb_change_hotbar1"),
@@ -12798,12 +12799,12 @@ fn the_hotbar_nine_the_rows_the_group_the_file_wear() {
         !app.buttons.iter().any(|b| b.id == "kb_change_hotbar9"),
         "the hotbar.9 row the max scroll the list-top clip refuses"
     );
-    // THE REBIND'S OWN REACH (the NINE notches up the 534 scroll the
+    // THE REBIND'S OWN REACH (the TEN notches up the 534 scroll the
     // nine's own seat restores — the 570 y the 36 seat the band
-    // 30..212 the walk seats, the max 750 the extra notch the walk
+    // 30..212 the walk seats, the max 774 the extra notch the walk
     // wears)
-    app.on_kb_scroll(9.0, 240);
-    assert_eq!(app.kb_scroll, 534.0, "the nine notches up the walk wears");
+    app.on_kb_scroll(10.0, 240);
+    assert_eq!(app.kb_scroll, 534.0, "the ten notches up the walk wears");
     app.render(&mut fb, &mut assets);
     let h9 = app
         .buttons
@@ -12849,8 +12850,8 @@ fn the_hotbar_nine_the_rows_the_group_the_file_wear() {
     );
     assert!(
         text.trim_end()
-            .ends_with("key_key.debug.spectate:key.keyboard.n"),
-        "the spectate row the file's own END wears"
+            .ends_with("key_key.debug.switchGameMode:key.keyboard.f4"),
+        "the switchGameMode row the file's own END wears"
     );
     // THE RESTART'S OWN DECODE (the fresh boot the nine's truth wears)
     let mut re = App::new(262);
@@ -12928,8 +12929,8 @@ fn the_activator_pair_the_creative_group_the_chords_the_store_wear() {
     assert_eq!(kb::CREATIVE_ROWS_START, 606, "the rows the +12 gap keeps");
     assert_eq!(
         kb::content_height(),
-        932,
-        "the content the spectate row's own bottom keeps"
+        956,
+        "the content the switchGameMode row's own bottom keeps"
     );
     // THE FRESH LIST'S OWN WALK (the opener the zero scroll keeps)
     app.open(ScreenKind::Options);
@@ -12963,13 +12964,13 @@ fn the_activator_pair_the_creative_group_the_chords_the_store_wear() {
             .any(|b| b.id == "kb_change_saveactivator"),
         "the clipped creative rows the band render refuses"
     );
-    // THE SCROLL'S OWN REACH (the max the 750 clamp keeps — the
-    // creative header the -156 seat the shift wears, the spectate
-    // row the content's END the save/load pair the -144/-120 seats
-    // the list-top the clip refuses; the SPECTATOR pair the -84/-60
-    // seats the list-top clip refuses)
+    // THE SCROLL'S OWN REACH (the max the 774 clamp keeps — the
+    // creative header the -180 seat the shift wears, the
+    // switchGameMode row the content's END the save/load pair the
+    // -168/-144 seats the list-top the clip refuses; the SPECTATOR
+    // pair the -108/-84 seats the list-top clip refuses)
     app.on_kb_scroll(-1000.0, 240);
-    assert_eq!(app.kb_scroll, 750.0, "the clamp the content 932 keeps");
+    assert_eq!(app.kb_scroll, 774.0, "the clamp the content 956 keeps");
     app.render(&mut fb, &mut assets);
     assert!(
         !app.buttons
@@ -12995,12 +12996,12 @@ fn the_activator_pair_the_creative_group_the_chords_the_store_wear() {
             .any(|b| b.id == "kb_change_spectatorhotbar"),
         "the hotbar row the max scroll the list-top clip refuses"
     );
-    // THE EIGHT NOTCHES' OWN RETURN (the wheel up the 558 scroll the
+    // THE NINE NOTCHES' OWN RETURN (the wheel up the 558 scroll the
     // save row the 48 seat the band restores — the rebind the row's
     // own walk needs, the load row the 72 seat the pair keeps, the
-    // max 750 the extra notch the walk wears)
-    app.on_kb_scroll(8.0, 240);
-    assert_eq!(app.kb_scroll, 558.0, "the eight notches the walk wears");
+    // max 774 the extra notch the walk wears)
+    app.on_kb_scroll(9.0, 240);
+    assert_eq!(app.kb_scroll, 558.0, "the nine notches the walk wears");
     app.render(&mut fb, &mut assets);
     let save_row = app
         .buttons
@@ -13069,8 +13070,8 @@ fn the_activator_pair_the_creative_group_the_chords_the_store_wear() {
     );
     assert!(
         text.trim_end()
-            .ends_with("key_key.debug.spectate:key.keyboard.n"),
-        "the spectate row the file's own END wears"
+            .ends_with("key_key.debug.switchGameMode:key.keyboard.f4"),
+        "the switchGameMode row the file's own END wears"
     );
     // THE RESTART'S OWN DECODE (the fresh boot the pair's truth wears)
     let mut re = App::new(262);
@@ -13145,8 +13146,8 @@ fn the_spectator_pair_the_group_the_unbound_the_file_wear() {
     assert_eq!(kb::SPECTATOR_ROWS_START, 666, "the rows the +12 gap keeps");
     assert_eq!(
         kb::content_height(),
-        932,
-        "the content the spectate row's own bottom keeps"
+        956,
+        "the content the switchGameMode row's own bottom keeps"
     );
     // THE FRESH LIST'S OWN WALK (the opener the zero scroll keeps)
     app.open(ScreenKind::Options);
@@ -13180,14 +13181,14 @@ fn the_spectator_pair_the_group_the_unbound_the_file_wear() {
             .any(|b| b.id == "kb_change_spectatoroutlines"),
         "the clipped spectator rows the band render refuses"
     );
-    // THE SCROLL'S OWN REACH (the max the 750 clamp keeps — the
-    // outlines row the 666 y the -84 seat the max scroll wears, the
-    // hotbar row the 690 y the -60 seat the list-top clip refuses, the
-    // spectate row the 942 y the 192 seat the fully-visible
+    // THE SCROLL'S OWN REACH (the max the 774 clamp keeps — the
+    // outlines row the 666 y the -108 seat the max scroll wears, the
+    // hotbar row the 690 y the -84 seat the list-top clip refuses,
+    // the switchGameMode row the 966 y the 192 seat the fully-visible
     // law keeps — the row's own bottom the band's own bottom the
     // walk aligns)
     app.on_kb_scroll(-1000.0, 240);
-    assert_eq!(app.kb_scroll, 750.0, "the clamp the content 932 keeps");
+    assert_eq!(app.kb_scroll, 774.0, "the clamp the content 956 keeps");
     app.render(&mut fb, &mut assets);
     assert!(
         !app.buttons
@@ -13201,12 +13202,12 @@ fn the_spectator_pair_the_group_the_unbound_the_file_wear() {
             .any(|b| b.id == "kb_change_spectatorhotbar"),
         "the hotbar row the max scroll the list-top clip refuses"
     );
-    // THE REBIND'S OWN WALK (the FIVE notches up the outlines row the
+    // THE REBIND'S OWN WALK (the SIX notches up the outlines row the
     // band restores — the 630 scroll the 36 seat the rebind's own
     // walk needs, the hotbar row the 60 seat the pair keeps, the
     // change the click the selectedKey arms, the capture the bind
     // wears — the unbound row the store honors)
-    app.on_kb_scroll(5.0, 240);
+    app.on_kb_scroll(6.0, 240);
     app.render(&mut fb, &mut assets);
     let out_row = app
         .buttons
@@ -13280,8 +13281,8 @@ fn the_spectator_pair_the_group_the_unbound_the_file_wear() {
     );
     assert!(
         text.trim_end()
-            .ends_with("key_key.debug.spectate:key.keyboard.n"),
-        "the spectate row the file's own END wears"
+            .ends_with("key_key.debug.switchGameMode:key.keyboard.f4"),
+        "the switchGameMode row the file's own END wears"
     );
     // THE RESTART'S OWN DECODE (the fresh boot the pair's truth wears
     // — the walk the UNKNOWN's own row the SAME file the overwrides
@@ -13359,8 +13360,8 @@ fn the_debug_overlay_the_group_the_file_the_restart_wear() {
     assert_eq!(kb::DEBUG_ROWS_START, 726, "the row the +12 gap keeps");
     assert_eq!(
         kb::content_height(),
-        932,
-        "the content the spectate row's own bottom keeps"
+        956,
+        "the content the switchGameMode row's own bottom keeps"
     );
     // THE FRESH LIST'S OWN WALK (the opener the zero scroll keeps)
     app.open(ScreenKind::Options);
@@ -13489,47 +13490,53 @@ fn the_debug_overlay_the_group_the_file_the_restart_wear() {
             .any(|b| b.id == "kb_change_debugspectate"),
         "the clipped spectate row the band render refuses"
     );
-    // THE SCROLL'S OWN REACH (the max the 750 clamp keeps — the
-    // spectate row the 942 y the 192 seat the LAST row the walk
+    assert!(
+        !app.buttons
+            .iter()
+            .any(|b| b.id == "kb_change_debugswitchgamemode"),
+        "the clipped switchGameMode row the band render refuses"
+    );
+    // THE SCROLL'S OWN REACH (the max the 774 clamp keeps — the
+    // switchGameMode row the 966 y the 192 seat the LAST row the walk
     // keeps, the row's own bottom the band's own bottom aligns — the
-    // fully-visible law the END seat wears; the overlay row the -24
-    // seat the list-top clip refuses, the THREE notches up the 678
+    // fully-visible law the END seat wears; the overlay row the -48
+    // seat the list-top clip refuses, the FOUR notches up the 678
     // scroll the overlay row the 48 seat the rebind's own walk the
     // band restores)
     app.on_kb_scroll(-1000.0, 240);
-    assert_eq!(app.kb_scroll, 750.0, "the clamp the content 932 keeps");
+    assert_eq!(app.kb_scroll, 774.0, "the clamp the content 956 keeps");
     app.render(&mut fb, &mut assets);
     let at_row = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_change_debugswitchgamemode")
+        .expect("the scrolled switchGameMode row the band restores")
+        .clone();
+    assert_eq!(
+        at_row.label, "F4",
+        "the switchGameMode's own default the display speaks"
+    );
+    assert_eq!(at_row.y, 192, "the switchGameMode row the END seat wears");
+    assert!(
+        at_row.y + at_row.h <= 240 - 28,
+        "the last row the max scroll the fully-visible seat wears"
+    );
+    let sp_row = app
         .buttons
         .iter()
         .find(|b| b.id == "kb_change_debugspectate")
         .expect("the scrolled spectate row the band restores")
         .clone();
     assert_eq!(
-        at_row.label, "N",
+        sp_row.label, "N",
         "the spectate's own default the display speaks"
     );
-    assert_eq!(at_row.y, 192, "the spectate row the END seat wears");
-    assert!(
-        at_row.y + at_row.h <= 240 - 28,
-        "the last row the max scroll the fully-visible seat wears"
-    );
-    let cr_row = app
-        .buttons
-        .iter()
-        .find(|b| b.id == "kb_change_debugcopyrecreate")
-        .expect("the scrolled copyRecreate row the band restores")
-        .clone();
-    assert_eq!(
-        cr_row.label, "I",
-        "the copyRecreate's own default the display speaks"
-    );
-    assert_eq!(cr_row.y, 168, "the copyRecreate row the END-1 seat wears");
+    assert_eq!(sp_row.y, 168, "the spectate row the END-1 seat wears");
     assert!(
         !app.buttons.iter().any(|b| b.id == "kb_change_debugoverlay"),
         "the overlay row the max scroll the list-top clip refuses"
     );
-    app.on_kb_scroll(3.0, 240);
+    app.on_kb_scroll(4.0, 240);
     app.render(&mut fb, &mut assets);
     let dbg_row = app
         .buttons
@@ -13997,8 +14004,8 @@ fn the_debug_overlay_the_group_the_file_the_restart_wear() {
     // SAME lanes the capture honors — the ctor's pc 3437 the `ldc_w
     // cp#1461` the `key.debug.spectate` answers, the pc 3443 the
     // `bipush 78` the N the plain-shape default wears, the notch
-    // down the max the row's own 192 seat the band restores, the
-    // change the click the seat arms, the capture the bind wears,
+    // down the 750 scroll the row's own 192 seat the band restores,
+    // the change the click the seat arms, the capture the bind wears,
     // the reset the N the plain-shape default restores)
     app.on_kb_scroll(-1.0, 240);
     app.render(&mut fb, &mut assets);
@@ -14037,24 +14044,68 @@ fn the_debug_overlay_the_group_the_file_the_restart_wear() {
         Some(kb::Bind::Keyboard(minifb::Key::N)),
         "the reset the N default restores"
     );
+    // THE SWITCH GAME MODE'S OWN REBIND WALK (the eleven-row walk's
+    // own row the SAME lanes the capture honors — the ctor's pc 3459
+    // the `ldc_w cp#1466` the `key.debug.switchGameMode` answers, the
+    // pc 3465 the `sipush 293` the F4 the plain-shape default wears,
+    // the notch down the max the row's own 192 seat the band
+    // restores, the change the click the seat arms, the capture the
+    // bind wears, the reset the F4 the plain-shape default restores)
+    app.on_kb_scroll(-1.0, 240);
+    app.render(&mut fb, &mut assets);
+    let sgrow = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_change_debugswitchgamemode")
+        .expect("the switchGameMode row the band keeps")
+        .clone();
+    assert_eq!(sgrow.y, 192, "the switchGameMode row the END seat wears");
+    app.on_click(sgrow.x + sgrow.w / 2, sgrow.y + sgrow.h / 2);
+    assert_eq!(
+        app.kb_selected,
+        Some(kb::DEBUG_SWITCH_GAME_MODE),
+        "the change the switchGameMode's seat arms"
+    );
+    assert!(
+        app.kb_capture(Some(minifb::Key::X)),
+        "the capture the bind consumes"
+    );
+    assert_eq!(
+        app.key_binds[kb::DEBUG_SWITCH_GAME_MODE],
+        Some(kb::Bind::Keyboard(minifb::Key::X)),
+        "the rebind the store writes"
+    );
+    app.render(&mut fb, &mut assets);
+    let sgreset = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_rowreset_debugswitchgamemode")
+        .expect("the reset the switchGameMode's pair keeps")
+        .clone();
+    app.on_click(sgreset.x + sgreset.w / 2, sgreset.y + sgreset.h / 2);
+    assert_eq!(
+        app.key_binds[kb::DEBUG_SWITCH_GAME_MODE],
+        Some(kb::Bind::Keyboard(minifb::Key::F4)),
+        "the reset the F4 default restores"
+    );
     app.on_kb_scroll(1.0, 240);
     // THE FILE'S OWN ROWS (the family save the exit banks — the
-    // ten-row walk the spectatorHotbar row's AFTER the ladder
-    // appends, the spectate row the file's own END the last row
-    // wears)
+    // eleven-row walk the spectatorHotbar row's AFTER the ladder
+    // appends, the switchGameMode row the file's own END the last
+    // row wears)
     app.key_binds[kb::DEBUG_OVERLAY] = Some(kb::Bind::Keyboard(minifb::Key::J));
     app.open(ScreenKind::Controls);
     let text = std::fs::read_to_string(&path).expect("the exit save wrote");
     assert!(
         text.contains(
-            "key_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.j\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\n"
+            "key_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.j\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\n"
         ),
-        "the debug ten-row walk the ladder's own tail the file wears"
+        "the debug eleven-row walk the ladder's own tail the file wears"
     );
     assert!(
         text.trim_end()
-            .ends_with("key_key.debug.spectate:key.keyboard.n"),
-        "the spectate row the file's own END wears"
+            .ends_with("key_key.debug.switchGameMode:key.keyboard.f4"),
+        "the switchGameMode row the file's own END wears"
     );
     // THE RESTART'S OWN DECODE (the fresh boot the pair's truth wears)
     let mut re = App::new(262);
@@ -14109,6 +14160,11 @@ fn the_debug_overlay_the_group_the_file_the_restart_wear() {
         re.key_binds[kb::DEBUG_SPECTATE],
         Some(kb::Bind::Keyboard(minifb::Key::N)),
         "the restart the spectate's default the decode keeps"
+    );
+    assert_eq!(
+        re.key_binds[kb::DEBUG_SWITCH_GAME_MODE],
+        Some(kb::Bind::Keyboard(minifb::Key::F4)),
+        "the restart the switchGameMode's default the decode keeps"
     );
     assert_eq!(
         re.key_binds[kb::SPECTATOR_HOTBAR],
