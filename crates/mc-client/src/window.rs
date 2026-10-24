@@ -2032,21 +2032,24 @@ pub fn run_gui_app(
             if window.is_key_pressed(Key::Key0, minifb::KeyRepeat::No) {
                 app.on_profiler_chart_digit(0);
             }
-            for (i, key) in [
-                Key::Key1,
-                Key::Key2,
-                Key::Key3,
-                Key::Key4,
-                Key::Key5,
-                Key::Key6,
-                Key::Key7,
-                Key::Key8,
-                Key::Key9,
-            ]
-            .iter()
-            .enumerate()
-            {
-                if window.is_key_pressed(*key, minifb::KeyRepeat::No) {
+            // THE HOTBAR NINE'S OWN LANE (the vanilla handleKeybinds's
+            // `keyHotbarSlots[i].consumeClick()` loop the ctor's array
+            // the Options banks — scripts/jar_work/hotbar_159.py the
+            // pc 2980-3144 walk the codes 49..57 speaks, the INVENTORY
+            // category the all nine wear): the HARDCODED [Key1..Key9]
+            // array the store re-wear retires, the store's own binds
+            // the loop reads (the Keyboard bind the pressed key
+            // answers, the Mouse bind the edge lane the follow-up the
+            // verdict banks — minifb has no mouse edge API the lane's
+            // own shape keeps, the None the never-pressed the unbound
+            // law keeps — the rebind the whole chain honors)
+            for i in 0..9 {
+                let Some(crate::options_file::key_binds::Bind::Keyboard(key)) =
+                    app.key_binds[crate::options_file::key_binds::HOTBAR_1 + i]
+                else {
+                    continue;
+                };
+                if window.is_key_pressed(key, minifb::KeyRepeat::No) {
                     // THE SURVIVAL SCREEN'S OWN SWAP (the container
                     // screen's keyPressed the screen consumes FIRST —
                     // the checkHotbarKeyPressed walk the survival seat

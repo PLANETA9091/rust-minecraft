@@ -35372,6 +35372,36 @@ impl App {
                 "kb_change_pickitem" => {
                     self.kb_selected = Some(crate::options_file::key_binds::PICK_ITEM);
                 }
+                // THE HOTBAR NINE'S OWN SEATS (the rows the ctor's array
+                // the order keeps — the change the click the selectedKey
+                // the same walk arms)
+                "kb_change_hotbar1" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::HOTBAR_1);
+                }
+                "kb_change_hotbar2" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::HOTBAR_2);
+                }
+                "kb_change_hotbar3" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::HOTBAR_3);
+                }
+                "kb_change_hotbar4" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::HOTBAR_4);
+                }
+                "kb_change_hotbar5" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::HOTBAR_5);
+                }
+                "kb_change_hotbar6" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::HOTBAR_6);
+                }
+                "kb_change_hotbar7" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::HOTBAR_7);
+                }
+                "kb_change_hotbar8" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::HOTBAR_8);
+                }
+                "kb_change_hotbar9" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::HOTBAR_9);
+                }
                 "kb_rowreset_forward" => {
                     self.key_binds[crate::options_file::key_binds::FORWARD] =
                         crate::options_file::key_binds::DEFAULTS
@@ -35451,6 +35481,63 @@ impl App {
                     self.key_binds[crate::options_file::key_binds::PICK_ITEM] =
                         crate::options_file::key_binds::DEFAULTS
                             [crate::options_file::key_binds::PICK_ITEM];
+                    self.kb_selected = None;
+                }
+                // THE HOTBAR NINE'S OWN RESETS (the row's own walk — the
+                // `setKey(getDefaultKey())` the lambda$new$2 law keeps,
+                // the GLFW 1..9 defaults the ctor's codes wear)
+                "kb_rowreset_hotbar1" => {
+                    self.key_binds[crate::options_file::key_binds::HOTBAR_1] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::HOTBAR_1];
+                    self.kb_selected = None;
+                }
+                "kb_rowreset_hotbar2" => {
+                    self.key_binds[crate::options_file::key_binds::HOTBAR_2] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::HOTBAR_2];
+                    self.kb_selected = None;
+                }
+                "kb_rowreset_hotbar3" => {
+                    self.key_binds[crate::options_file::key_binds::HOTBAR_3] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::HOTBAR_3];
+                    self.kb_selected = None;
+                }
+                "kb_rowreset_hotbar4" => {
+                    self.key_binds[crate::options_file::key_binds::HOTBAR_4] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::HOTBAR_4];
+                    self.kb_selected = None;
+                }
+                "kb_rowreset_hotbar5" => {
+                    self.key_binds[crate::options_file::key_binds::HOTBAR_5] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::HOTBAR_5];
+                    self.kb_selected = None;
+                }
+                "kb_rowreset_hotbar6" => {
+                    self.key_binds[crate::options_file::key_binds::HOTBAR_6] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::HOTBAR_6];
+                    self.kb_selected = None;
+                }
+                "kb_rowreset_hotbar7" => {
+                    self.key_binds[crate::options_file::key_binds::HOTBAR_7] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::HOTBAR_7];
+                    self.kb_selected = None;
+                }
+                "kb_rowreset_hotbar8" => {
+                    self.key_binds[crate::options_file::key_binds::HOTBAR_8] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::HOTBAR_8];
+                    self.kb_selected = None;
+                }
+                "kb_rowreset_hotbar9" => {
+                    self.key_binds[crate::options_file::key_binds::HOTBAR_9] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::HOTBAR_9];
                     self.kb_selected = None;
                 }
                 // THE FOOTERS' OWN RETURNS (the OptionsSubScreen
@@ -63138,8 +63225,22 @@ impl App {
                 false,
             );
         }
-        for i in kb::INVENTORY..kb::COUNT {
+        for i in kb::INVENTORY..kb::USE {
             let by = kb::INVENTORY_ROWS_START + (i - kb::INVENTORY) as i32 * kb::ROW_STRIDE - off;
+            if by < kb::LIST_TOP || by + 20 > band_bottom {
+                continue; // the clip the band the honest render keeps
+            }
+            self.kb_render_row(g, a, w, i, by);
+        }
+        // THE HOTBAR NINE'S OWN ROWS (the SAME inventory group the
+        // category header keeps — the ctor's keyHotbarSlots array the
+        // trio's AFTER the rows wear, the stride the group's own law
+        // continues: the rows 378..522 the +12 group gap never re-wears
+        // — the trio's own bottom the next stride slot the rows take)
+        for i in kb::HOTBAR_1..kb::COUNT {
+            let by = kb::INVENTORY_ROWS_START
+                + (kb::USE - kb::INVENTORY + i - kb::HOTBAR_1) as i32 * kb::ROW_STRIDE
+                - off;
             if by < kb::LIST_TOP || by + 20 > band_bottom {
                 continue; // the clip the band the honest render keeps
             }
@@ -63198,7 +63299,19 @@ impl App {
             // BETWEEN seat renders — the ctor order the ids keep)
             kb::USE => "kb_change_use",
             kb::ATTACK => "kb_change_attack",
-            _ => "kb_change_pickitem",
+            kb::PICK_ITEM => "kb_change_pickitem",
+            // THE HOTBAR NINE'S OWN IDS (the rows the inventory group
+            // the same stride keeps — the ctor's array order the ids
+            // answer)
+            kb::HOTBAR_1 => "kb_change_hotbar1",
+            kb::HOTBAR_2 => "kb_change_hotbar2",
+            kb::HOTBAR_3 => "kb_change_hotbar3",
+            kb::HOTBAR_4 => "kb_change_hotbar4",
+            kb::HOTBAR_5 => "kb_change_hotbar5",
+            kb::HOTBAR_6 => "kb_change_hotbar6",
+            kb::HOTBAR_7 => "kb_change_hotbar7",
+            kb::HOTBAR_8 => "kb_change_hotbar8",
+            _ => "kb_change_hotbar9",
         };
         self.buttons
             .push(Button::new(change_id, caption, w - 107, by, 75));
@@ -63216,7 +63329,17 @@ impl App {
             // THE GAMEPLAY TRIO'S OWN IDS (the same group walk's seats)
             kb::USE => "kb_rowreset_use",
             kb::ATTACK => "kb_rowreset_attack",
-            _ => "kb_rowreset_pickitem",
+            kb::PICK_ITEM => "kb_rowreset_pickitem",
+            // THE HOTBAR NINE'S OWN IDS (the same seats the rows keep)
+            kb::HOTBAR_1 => "kb_rowreset_hotbar1",
+            kb::HOTBAR_2 => "kb_rowreset_hotbar2",
+            kb::HOTBAR_3 => "kb_rowreset_hotbar3",
+            kb::HOTBAR_4 => "kb_rowreset_hotbar4",
+            kb::HOTBAR_5 => "kb_rowreset_hotbar5",
+            kb::HOTBAR_6 => "kb_rowreset_hotbar6",
+            kb::HOTBAR_7 => "kb_rowreset_hotbar7",
+            kb::HOTBAR_8 => "kb_rowreset_hotbar8",
+            _ => "kb_rowreset_hotbar9",
         };
         let mut rb = Button::new(
             reset_id,

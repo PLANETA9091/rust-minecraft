@@ -276,7 +276,23 @@ pub mod key_binds {
     pub const USE: usize = 10;
     pub const ATTACK: usize = 11;
     pub const PICK_ITEM: usize = 12;
-    pub const COUNT: usize = 13;
+    /// THE HOTBAR NINE'S OWN SLOTS (the ctor's `keyHotbarSlots` array
+    /// the literal walk banks — pc 2980-3144 the block registers: the
+    /// `new KeyMapping("key.hotbar.1", bipush 49, Category.INVENTORY)`
+    /// the GLFW 1..9 codes the bipush 49..57 pairs keep, the
+    /// INVENTORY category the all nine wear, the aastore indices the
+    /// iconst_0..bipush_8 rows answer — the gameplay trio's AFTER the
+    /// array order banks)
+    pub const HOTBAR_1: usize = 13;
+    pub const HOTBAR_2: usize = 14;
+    pub const HOTBAR_3: usize = 15;
+    pub const HOTBAR_4: usize = 16;
+    pub const HOTBAR_5: usize = 17;
+    pub const HOTBAR_6: usize = 18;
+    pub const HOTBAR_7: usize = 19;
+    pub const HOTBAR_8: usize = 20;
+    pub const HOTBAR_9: usize = 21;
+    pub const COUNT: usize = 22;
 
     /// THE VANILLA BINDING NAMES (the `key_` + name the file row's
     /// prefix wears, the lang captions the `key.*` rows answer — the
@@ -295,6 +311,15 @@ pub mod key_binds {
         "key.use",
         "key.attack",
         "key.pickItem",
+        "key.hotbar.1",
+        "key.hotbar.2",
+        "key.hotbar.3",
+        "key.hotbar.4",
+        "key.hotbar.5",
+        "key.hotbar.6",
+        "key.hotbar.7",
+        "key.hotbar.8",
+        "key.hotbar.9",
     ];
 
     /// THE CAPTIONS' OWN FALLBACK (the en_us values the assets-absent
@@ -313,6 +338,15 @@ pub mod key_binds {
         "Use Item/Place Block",
         "Attack/Destroy",
         "Pick Block",
+        "Hotbar Slot 1",
+        "Hotbar Slot 2",
+        "Hotbar Slot 3",
+        "Hotbar Slot 4",
+        "Hotbar Slot 5",
+        "Hotbar Slot 6",
+        "Hotbar Slot 7",
+        "Hotbar Slot 8",
+        "Hotbar Slot 9",
     ];
 
     /// THE CATEGORY'S OWN ROW (the CategoryEntry the list groups the
@@ -354,6 +388,17 @@ pub mod key_binds {
         Some(Bind::Mouse(MouseButton::Right)),
         Some(Bind::Mouse(MouseButton::Left)),
         Some(Bind::Mouse(MouseButton::Middle)),
+        // THE HOTBAR NINE'S OWN SEATS (the ctor's codes the GLFW 1..9
+        // the minifb enum's own discriminants keep)
+        Some(Bind::Keyboard(Key::Key1)),
+        Some(Bind::Keyboard(Key::Key2)),
+        Some(Bind::Keyboard(Key::Key3)),
+        Some(Bind::Keyboard(Key::Key4)),
+        Some(Bind::Keyboard(Key::Key5)),
+        Some(Bind::Keyboard(Key::Key6)),
+        Some(Bind::Keyboard(Key::Key7)),
+        Some(Bind::Keyboard(Key::Key8)),
+        Some(Bind::Keyboard(Key::Key9)),
     ];
 
     /// THE LIST'S OWN GEOMETRY (the entries the walk's y positions
@@ -383,10 +428,12 @@ pub mod key_binds {
     /// group's last row's bottom minus the list top; the maxScrollAmount
     /// law the band height subtracts: `max(0, contentHeight - height)`
     /// the AbstractScrollArea walk banks; the array order the groups the
-    /// DISPLAY walk re-orders — the inventory rows the walk's own
-    /// bottom keeps (the trio the 306-start stride wears))
+    /// DISPLAY walk re-orders — the inventory group the walk's own
+    /// bottom keeps (the trio + the hotbar nine the 306-start stride
+    /// wear: 12 rows the 11 strides speak))
     pub fn content_height() -> i32 {
-        INVENTORY_ROWS_START + (USE - INVENTORY - 1) as i32 * ROW_STRIDE + 20 - LIST_TOP
+        INVENTORY_ROWS_START + ((USE - INVENTORY) + (COUNT - HOTBAR_1) - 1) as i32 * ROW_STRIDE + 20
+            - LIST_TOP
     }
 
     /// THE MOUSE'S OWN NAME TABLE (the InputConstants$Type clinit the
@@ -769,6 +816,33 @@ impl OptionsFile {
                 "key_key.pickItem" => {
                     out.key_binds[key_binds::PICK_ITEM] = key_binds::bind_from_save(value);
                 }
+                "key_key.hotbar.1" => {
+                    out.key_binds[key_binds::HOTBAR_1] = key_binds::bind_from_save(value);
+                }
+                "key_key.hotbar.2" => {
+                    out.key_binds[key_binds::HOTBAR_2] = key_binds::bind_from_save(value);
+                }
+                "key_key.hotbar.3" => {
+                    out.key_binds[key_binds::HOTBAR_3] = key_binds::bind_from_save(value);
+                }
+                "key_key.hotbar.4" => {
+                    out.key_binds[key_binds::HOTBAR_4] = key_binds::bind_from_save(value);
+                }
+                "key_key.hotbar.5" => {
+                    out.key_binds[key_binds::HOTBAR_5] = key_binds::bind_from_save(value);
+                }
+                "key_key.hotbar.6" => {
+                    out.key_binds[key_binds::HOTBAR_6] = key_binds::bind_from_save(value);
+                }
+                "key_key.hotbar.7" => {
+                    out.key_binds[key_binds::HOTBAR_7] = key_binds::bind_from_save(value);
+                }
+                "key_key.hotbar.8" => {
+                    out.key_binds[key_binds::HOTBAR_8] = key_binds::bind_from_save(value);
+                }
+                "key_key.hotbar.9" => {
+                    out.key_binds[key_binds::HOTBAR_9] = key_binds::bind_from_save(value);
+                }
                 _ => {} // the jar's other rows the client's seats never carry
             }
         }
@@ -922,7 +996,7 @@ mod tests {
         OptionsFile::default().save(&path);
         let text = std::fs::read_to_string(&path).expect("the save the file writes");
         assert_eq!(
-            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\n",
+            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\n",
             "the file the vanilla rows wear"
         );
         let loaded = OptionsFile::load(&path);

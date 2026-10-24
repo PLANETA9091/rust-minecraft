@@ -1,0 +1,169 @@
+########## A. lang rows (the hotbar slots speak)
+  key.hotbar.1 = 'Hotbar Slot 1'
+  key.hotbar.2 = 'Hotbar Slot 2'
+  key.hotbar.3 = 'Hotbar Slot 3'
+  key.hotbar.4 = 'Hotbar Slot 4'
+  key.hotbar.5 = 'Hotbar Slot 5'
+  key.hotbar.6 = 'Hotbar Slot 6'
+  key.hotbar.7 = 'Hotbar Slot 7'
+  key.hotbar.8 = 'Hotbar Slot 8'
+  key.hotbar.9 = 'Hotbar Slot 9'
+
+########## B. the ctor's hotbar registrations (the ldc walk)
+String consts: {'key.hotbar.1': 1359, 'key.hotbar.2': 1361, 'key.hotbar.3': 1363, 'key.hotbar.4': 1365, 'key.hotbar.5': 1367, 'key.hotbar.6': 1369, 'key.hotbar.7': 1371, 'key.hotbar.8': 1373, 'key.hotbar.9': 1375}
+===== key.hotbar.1 @ walk-line 1161
+2980: iconst_0
+2981: new net/minecraft/client/KeyMapping
+2984: dup
+2985: ldc_w ldcw@1359
+2988: bipush 49
+2990: getstatic net/minecraft/client/KeyMapping$Category.INVENTORYLnet/minecraft/client/KeyMapping$Category;
+2993: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+2996: aastore
+2997: dup
+2998: iconst_1
+2999: new net/minecraft/client/KeyMapping
+3002: dup
+3003: ldc_w ldcw@1361
+     ----
+===== key.hotbar.2 @ walk-line 1170
+2998: iconst_1
+2999: new net/minecraft/client/KeyMapping
+3002: dup
+3003: ldc_w ldcw@1361
+3006: bipush 50
+3008: getstatic net/minecraft/client/KeyMapping$Category.INVENTORYLnet/minecraft/client/KeyMapping$Category;
+3011: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+3014: aastore
+3015: dup
+3016: iconst_2
+3017: new net/minecraft/client/KeyMapping
+3020: dup
+3021: ldc_w ldcw@1363
+     ----
+===== key.hotbar.3 @ walk-line 1179
+3016: iconst_2
+3017: new net/minecraft/client/KeyMapping
+3020: dup
+3021: ldc_w ldcw@1363
+3024: bipush 51
+3026: getstatic net/minecraft/client/KeyMapping$Category.INVENTORYLnet/minecraft/client/KeyMapping$Category;
+3029: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+3032: aastore
+3033: dup
+3034: iconst_3
+3035: new net/minecraft/client/KeyMapping
+3038: dup
+3039: ldc_w ldcw@1365
+     ----
+===== key.hotbar.4 @ walk-line 1188
+3034: iconst_3
+3035: new net/minecraft/client/KeyMapping
+3038: dup
+3039: ldc_w ldcw@1365
+3042: bipush 52
+3044: getstatic net/minecraft/client/KeyMapping$Category.INVENTORYLnet/minecraft/client/KeyMapping$Category;
+3047: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+3050: aastore
+3051: dup
+3052: iconst_4
+3053: new net/minecraft/client/KeyMapping
+3056: dup
+3057: ldc_w ldcw@1367
+     ----
+===== key.hotbar.5 @ walk-line 1197
+3052: iconst_4
+3053: new net/minecraft/client/KeyMapping
+3056: dup
+3057: ldc_w ldcw@1367
+3060: bipush 53
+3062: getstatic net/minecraft/client/KeyMapping$Category.INVENTORYLnet/minecraft/client/KeyMapping$Category;
+3065: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+3068: aastore
+3069: dup
+3070: iconst_5
+3071: new net/minecraft/client/KeyMapping
+3074: dup
+3075: ldc_w ldcw@1369
+     ----
+===== key.hotbar.6 @ walk-line 1206
+3070: iconst_5
+3071: new net/minecraft/client/KeyMapping
+3074: dup
+3075: ldc_w ldcw@1369
+3078: bipush 54
+3080: getstatic net/minecraft/client/KeyMapping$Category.INVENTORYLnet/minecraft/client/KeyMapping$Category;
+3083: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+3086: aastore
+3087: dup
+3088: bipush 6
+3090: new net/minecraft/client/KeyMapping
+3093: dup
+3094: ldc_w ldcw@1371
+     ----
+===== key.hotbar.7 @ walk-line 1215
+3088: bipush 6
+3090: new net/minecraft/client/KeyMapping
+3093: dup
+3094: ldc_w ldcw@1371
+3097: bipush 55
+3099: getstatic net/minecraft/client/KeyMapping$Category.INVENTORYLnet/minecraft/client/KeyMapping$Category;
+3102: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+3105: aastore
+3106: dup
+3107: bipush 7
+3109: new net/minecraft/client/KeyMapping
+3112: dup
+3113: ldc_w ldcw@1373
+     ----
+===== key.hotbar.8 @ walk-line 1224
+3107: bipush 7
+3109: new net/minecraft/client/KeyMapping
+3112: dup
+3113: ldc_w ldcw@1373
+3116: bipush 56
+3118: getstatic net/minecraft/client/KeyMapping$Category.INVENTORYLnet/minecraft/client/KeyMapping$Category;
+3121: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+3124: aastore
+3125: dup
+3126: bipush 8
+3128: new net/minecraft/client/KeyMapping
+3131: dup
+3132: ldc_w ldcw@1375
+     ----
+===== key.hotbar.9 @ walk-line 1233
+3126: bipush 8
+3128: new net/minecraft/client/KeyMapping
+3131: dup
+3132: ldc_w ldcw@1375
+3135: bipush 57
+3137: getstatic net/minecraft/client/KeyMapping$Category.INVENTORYLnet/minecraft/client/KeyMapping$Category;
+3140: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+3143: aastore
+3144: putfield net/minecraft/client/Options.keyHotbarSlots[Lnet/minecraft/client/KeyMapping;
+3147: aload_0
+3148: new net/minecraft/client/KeyMapping
+3151: dup
+3152: ldc_w ldcw@1381
+     ----
+
+########## C. handleKeybinds — the hotbar loop (the lane)
+*** handleKeybinds()V
+174: getfield net/minecraft/client/Minecraft.optionsLnet/minecraft/client/Options;
+177: getfield net/minecraft/client/Options.keyLoadHotbarActivatorLnet/minecraft/client/KeyMapping;
+180: invokevirtual net/minecraft/client/KeyMapping.isDown()Z
+183: istore_3
+184: aload_0
+185: getfield net/minecraft/client/Minecraft.optionsLnet/minecraft/client/Options;
+188: getfield net/minecraft/client/Options.keyHotbarSlots[Lnet/minecraft/client/KeyMapping;
+191: iload_1
+192: aaload
+193: invokevirtual net/minecraft/client/KeyMapping.consumeClick()Z
+196: ifeq -> 275
+199: aload_0
+200: getfield net/minecraft/client/Minecraft.playerLnet/minecraft/client/player/LocalPlayer;
+203: invokevirtual net/minecraft/client/player/LocalPlayer.isSpectator()Z
+206: ifeq -> 226
+209: aload_0
+     ----
+*** lambda$handleKeybinds$0(Lnet/minecraft/core/Holder;)V
