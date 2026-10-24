@@ -207,6 +207,228 @@ pub struct OptionsFile {
     /// the NowPlayingToast/ToastManager the `5000.0 * value` ms the
     /// toast lane wears).
     pub notification_display_time: f64,
+    /// THE KEYMAPPINGS' OWN ROWS (the movement category the 186 round
+    /// banks — the `processOptions` walk's key loop the pc 1064-1137
+    /// seats keep: the `keyMappings` array the row order wears, the
+    /// `"key_" + name` prefix the indy stringConcat composition speaks,
+    /// the `KeyMapping.saveString()` the value answers — the
+    /// `InputConstants.Key.getName()` row the `key.keyboard.*` format
+    /// keeps). The store the `Option<minifb::Key>` pairs wear — the
+    /// None the `InputConstants.UNKNOWN` seat answers (the
+    /// `key.keyboard.unknown` row the save/decode round-trip keeps),
+    /// the missing rows the DEFAULTS the load law keeps (the vanilla
+    /// `if (!optionsFile.exists()) return` head walk). The lane the
+    /// movement categories the rebind walk serves — the OTHER
+    /// categories (the UI/gameplay/creative/debug rows the 57-instance
+    /// ctor array carries) the follow-up rounds' own stores bank.
+    pub key_binds: [Option<minifb::Key>; key_binds::COUNT],
+}
+
+/// THE MOVEMENT CATEGORY'S OWN STORE (the Options ctor's registrations
+/// pc 2402-2545 the array order keeps — the `new KeyMapping(name, GLFW
+/// code, Category.MOVEMENT)` triples the walk speaks: key.forward/W,
+/// key.left/A, key.back/S, key.right/D, key.jump/Space, the
+/// ToggleKeyMapping pair the sneak/sprint rows wear (LEFT_SHIFT=340,
+/// LEFT_CONTROL=341); the client's `minifb::Key` enum the OWN
+/// discriminants the GLFW codes the store holds — W=32, A=10, S=28,
+/// D=13, Space, LeftShift, LeftCtrl the minifb values answer).
+pub mod key_binds {
+    use minifb::Key;
+
+    pub const FORWARD: usize = 0;
+    pub const LEFT: usize = 1;
+    pub const BACK: usize = 2;
+    pub const RIGHT: usize = 3;
+    pub const JUMP: usize = 4;
+    pub const SNEAK: usize = 5;
+    pub const SPRINT: usize = 6;
+    pub const COUNT: usize = 7;
+
+    /// THE VANILLA BINDING NAMES (the `key_` + name the file row's
+    /// prefix wears, the lang captions the `key.*` rows answer — the
+    /// en_us table the "Walk Forward"/"Strafe Left" pair speaks).
+    pub const NAMES: [&str; COUNT] = [
+        "key.forward",
+        "key.left",
+        "key.back",
+        "key.right",
+        "key.jump",
+        "key.sneak",
+        "key.sprint",
+    ];
+
+    /// THE CAPTIONS' OWN FALLBACK (the en_us values the assets-absent
+    /// boot keeps — the lang rows the same words speak).
+    pub const NAME_FALLBACKS: [&str; COUNT] = [
+        "Walk Forward",
+        "Strafe Left",
+        "Walk Backward",
+        "Strafe Right",
+        "Jump",
+        "Sneak",
+        "Sprint",
+    ];
+
+    /// THE CATEGORY'S OWN ROW (the CategoryEntry the list groups the
+    /// rows under — the `key.categories.movement` key the lang
+    /// "Movement" row answers).
+    pub const CATEGORY_NAME: &str = "key.categories.movement";
+    pub const CATEGORY_FALLBACK: &str = "Movement";
+
+    /// THE DEFAULTS' OWN ROW (the ctor's codes the minifb Key enum's
+    /// own discriminants answer).
+    pub const DEFAULTS: [Option<Key>; COUNT] = [
+        Some(Key::W),
+        Some(Key::A),
+        Some(Key::S),
+        Some(Key::D),
+        Some(Key::Space),
+        Some(Key::LeftShift),
+        Some(Key::LeftCtrl),
+    ];
+
+    /// THE KEYBOARD'S OWN NAME TABLE (the InputConstants names the
+    /// `key.keyboard.*` rows wear — the minifb Key the row's own pair
+    /// keeps; the rebind capture the table's keys the pressed walk
+    /// scans (the ESCAPE the clear the isEscape-first law keeps — the
+    /// table the decode round-trip serves only), the save/decode the
+    /// SAME table the round-trip answers).
+    pub const KEYBOARD_NAMES: &[(Key, &str)] = &[
+        (Key::Key0, "key.keyboard.0"),
+        (Key::Key1, "key.keyboard.1"),
+        (Key::Key2, "key.keyboard.2"),
+        (Key::Key3, "key.keyboard.3"),
+        (Key::Key4, "key.keyboard.4"),
+        (Key::Key5, "key.keyboard.5"),
+        (Key::Key6, "key.keyboard.6"),
+        (Key::Key7, "key.keyboard.7"),
+        (Key::Key8, "key.keyboard.8"),
+        (Key::Key9, "key.keyboard.9"),
+        (Key::A, "key.keyboard.a"),
+        (Key::B, "key.keyboard.b"),
+        (Key::C, "key.keyboard.c"),
+        (Key::D, "key.keyboard.d"),
+        (Key::E, "key.keyboard.e"),
+        (Key::F, "key.keyboard.f"),
+        (Key::G, "key.keyboard.g"),
+        (Key::H, "key.keyboard.h"),
+        (Key::I, "key.keyboard.i"),
+        (Key::J, "key.keyboard.j"),
+        (Key::K, "key.keyboard.k"),
+        (Key::L, "key.keyboard.l"),
+        (Key::M, "key.keyboard.m"),
+        (Key::N, "key.keyboard.n"),
+        (Key::O, "key.keyboard.o"),
+        (Key::P, "key.keyboard.p"),
+        (Key::Q, "key.keyboard.q"),
+        (Key::R, "key.keyboard.r"),
+        (Key::S, "key.keyboard.s"),
+        (Key::T, "key.keyboard.t"),
+        (Key::U, "key.keyboard.u"),
+        (Key::V, "key.keyboard.v"),
+        (Key::W, "key.keyboard.w"),
+        (Key::X, "key.keyboard.x"),
+        (Key::Y, "key.keyboard.y"),
+        (Key::Z, "key.keyboard.z"),
+        (Key::F1, "key.keyboard.f1"),
+        (Key::F2, "key.keyboard.f2"),
+        (Key::F3, "key.keyboard.f3"),
+        (Key::F4, "key.keyboard.f4"),
+        (Key::F5, "key.keyboard.f5"),
+        (Key::F6, "key.keyboard.f6"),
+        (Key::F7, "key.keyboard.f7"),
+        (Key::F8, "key.keyboard.f8"),
+        (Key::F9, "key.keyboard.f9"),
+        (Key::F10, "key.keyboard.f10"),
+        (Key::F11, "key.keyboard.f11"),
+        (Key::F12, "key.keyboard.f12"),
+        (Key::F13, "key.keyboard.f13"),
+        (Key::F14, "key.keyboard.f14"),
+        (Key::F15, "key.keyboard.f15"),
+        (Key::Down, "key.keyboard.down"),
+        (Key::Left, "key.keyboard.left"),
+        (Key::Right, "key.keyboard.right"),
+        (Key::Up, "key.keyboard.up"),
+        (Key::Apostrophe, "key.keyboard.apostrophe"),
+        (Key::Backquote, "key.keyboard.grave.accent"),
+        (Key::Backslash, "key.keyboard.backslash"),
+        (Key::Comma, "key.keyboard.comma"),
+        (Key::Equal, "key.keyboard.equal"),
+        (Key::LeftBracket, "key.keyboard.left.bracket"),
+        (Key::Minus, "key.keyboard.minus"),
+        (Key::Period, "key.keyboard.period"),
+        (Key::RightBracket, "key.keyboard.right.bracket"),
+        (Key::Semicolon, "key.keyboard.semicolon"),
+        (Key::Slash, "key.keyboard.slash"),
+        (Key::Backspace, "key.keyboard.backspace"),
+        (Key::Delete, "key.keyboard.delete"),
+        (Key::End, "key.keyboard.end"),
+        (Key::Enter, "key.keyboard.enter"),
+        (Key::Escape, "key.keyboard.escape"),
+        (Key::Home, "key.keyboard.home"),
+        (Key::Insert, "key.keyboard.insert"),
+        (Key::PageDown, "key.keyboard.page.down"),
+        (Key::PageUp, "key.keyboard.page.up"),
+        (Key::Pause, "key.keyboard.pause"),
+        (Key::Space, "key.keyboard.space"),
+        (Key::Tab, "key.keyboard.tab"),
+        (Key::NumLock, "key.keyboard.num.lock"),
+        (Key::CapsLock, "key.keyboard.caps.lock"),
+        (Key::ScrollLock, "key.keyboard.scroll.lock"),
+        (Key::LeftShift, "key.keyboard.left.shift"),
+        (Key::RightShift, "key.keyboard.right.shift"),
+        (Key::LeftCtrl, "key.keyboard.left.control"),
+        (Key::RightCtrl, "key.keyboard.right.control"),
+        (Key::NumPad0, "key.keyboard.keypad.0"),
+        (Key::NumPad1, "key.keyboard.keypad.1"),
+        (Key::NumPad2, "key.keyboard.keypad.2"),
+        (Key::NumPad3, "key.keyboard.keypad.3"),
+        (Key::NumPad4, "key.keyboard.keypad.4"),
+        (Key::NumPad5, "key.keyboard.keypad.5"),
+        (Key::NumPad6, "key.keyboard.keypad.6"),
+        (Key::NumPad7, "key.keyboard.keypad.7"),
+        (Key::NumPad8, "key.keyboard.keypad.8"),
+        (Key::NumPad9, "key.keyboard.keypad.9"),
+        (Key::NumPadDot, "key.keyboard.keypad.decimal"),
+        (Key::NumPadSlash, "key.keyboard.keypad.divide"),
+        (Key::NumPadAsterisk, "key.keyboard.keypad.multiply"),
+        (Key::NumPadMinus, "key.keyboard.keypad.subtract"),
+        (Key::NumPadPlus, "key.keyboard.keypad.add"),
+        (Key::NumPadEnter, "key.keyboard.keypad.enter"),
+        (Key::LeftAlt, "key.keyboard.left.alt"),
+        (Key::RightAlt, "key.keyboard.right.alt"),
+        (Key::Menu, "key.keyboard.menu"),
+        (Key::LeftSuper, "key.keyboard.left.win"),
+        (Key::RightSuper, "key.keyboard.right.win"),
+    ];
+
+    /// THE SAVE STRING'S OWN LAW (the `KeyMapping.saveString()` walk —
+    /// the `InputConstants.Key.getName()` the row's own format keeps;
+    /// the None the UNKNOWN seat the `key.keyboard.unknown` row
+    /// answers, the table-miss the same UNKNOWN the honest decode
+    /// wears).
+    pub fn key_bind_save(k: Option<Key>) -> &'static str {
+        match k {
+            None => "key.keyboard.unknown",
+            Some(k) => KEYBOARD_NAMES
+                .iter()
+                .find(|(key, _)| *key == k)
+                .map(|(_, n)| *n)
+                .unwrap_or("key.keyboard.unknown"),
+        }
+    }
+
+    /// THE DECODE'S OWN LAW (the `InputConstants.getKey(String)` walk —
+    /// the table hit the key answers, the unknown/`unknown` row the
+    /// None the unbound seat keeps — the malformed the blank bind the
+    /// vanilla law wears, the default-keeps clamp the numeric rows'
+    /// law never speaks here).
+    pub fn key_bind_from_save(s: &str) -> Option<Key> {
+        KEYBOARD_NAMES
+            .iter()
+            .find(|(_, n)| *n == s)
+            .map(|(k, _)| *k)
+    }
 }
 
 impl Default for OptionsFile {
@@ -223,6 +445,7 @@ impl Default for OptionsFile {
             text_background_opacity: 0.5,
             background_for_chat_only: true,
             notification_display_time: 1.0,
+            key_binds: key_binds::DEFAULTS,
         }
     }
 }
@@ -358,6 +581,33 @@ impl OptionsFile {
                         }
                     }
                 }
+                // THE KEYMAPPINGS' OWN DECODE (the processOptions walk's
+                // key loop the pc 1114-1131 the read side serves — the
+                // `InputConstants.getKey(value)` the decode wears, the
+                // changed string the setKey speaks; the unknown row the
+                // None the unbound seat answers, the malformed the same
+                // blank the getKey law keeps)
+                "key_key.forward" => {
+                    out.key_binds[key_binds::FORWARD] = key_binds::key_bind_from_save(value);
+                }
+                "key_key.left" => {
+                    out.key_binds[key_binds::LEFT] = key_binds::key_bind_from_save(value);
+                }
+                "key_key.back" => {
+                    out.key_binds[key_binds::BACK] = key_binds::key_bind_from_save(value);
+                }
+                "key_key.right" => {
+                    out.key_binds[key_binds::RIGHT] = key_binds::key_bind_from_save(value);
+                }
+                "key_key.jump" => {
+                    out.key_binds[key_binds::JUMP] = key_binds::key_bind_from_save(value);
+                }
+                "key_key.sneak" => {
+                    out.key_binds[key_binds::SNEAK] = key_binds::key_bind_from_save(value);
+                }
+                "key_key.sprint" => {
+                    out.key_binds[key_binds::SPRINT] = key_binds::key_bind_from_save(value);
+                }
                 _ => {} // the jar's other rows the client's seats never carry
             }
         }
@@ -438,6 +688,20 @@ impl OptionsFile {
             "notificationDisplayTime:{}\n",
             java_double(self.notification_display_time)
         ));
+        // THE KEYMAPPINGS' OWN BLOCK (the processOptions walk's key
+        // loop — the pc 1064-1137 the `keyMappings` array iterates, the
+        // row the `"key_" + name` prefix the indy composition + the
+        // saveString value wears, the block the option rows' AFTER the
+        // soundCategory rows' BEFORE the vanilla ladder seats — the
+        // client's own partial ladder the END the block wears, the
+        // soundCategory_master seat the earlier rounds' order keeps)
+        for i in 0..key_binds::COUNT {
+            text.push_str(&format!(
+                "key_{}:{}\n",
+                key_binds::NAMES[i],
+                key_binds::key_bind_save(self.key_binds[i])
+            ));
+        }
         let _ = std::fs::write(path, text);
     }
 }
@@ -497,7 +761,7 @@ mod tests {
         OptionsFile::default().save(&path);
         let text = std::fs::read_to_string(&path).expect("the save the file writes");
         assert_eq!(
-            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\n",
+            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\n",
             "the file the vanilla rows wear"
         );
         let loaded = OptionsFile::load(&path);
@@ -527,6 +791,14 @@ mod tests {
         assert_eq!(
             loaded.notification_display_time, 1.0,
             "the multiplier the default the round-trip wears"
+        );
+        // THE KEYMAPPINGS' OWN ROUND-TRIP (the save strings the defaults
+        // print, the decode the same keys the read answers — the ctor's
+        // codes the array order keeps)
+        assert_eq!(
+            loaded.key_binds,
+            crate::options_file::key_binds::DEFAULTS,
+            "the key rows the defaults the round-trip wears"
         );
         let _ = std::fs::remove_dir_all(&dir);
     }
@@ -584,7 +856,12 @@ mod tests {
              notificationDisplayTime:0.25\n\
              notificationDisplayTime:10.5\n\
              notificationDisplayTime:word\n\
-             notificationDisplayTime:0.5\n",
+             notificationDisplayTime:0.5\n\
+             key_key.forward:key.keyboard.l\n\
+             key_key.forward:garbage\n\
+             key_key.forward:key.keyboard.q\n\
+             key_key.sneak:key.keyboard.unknown\n\
+             key_key.sprint:garbage\n",
         )
         .expect("the probe file writes");
         let loaded = OptionsFile::load(&path);
@@ -664,6 +941,37 @@ mod tests {
             loaded.notification_display_time, 0.5,
             "the multiplier the last valid row wears — the out-of-range/malformed the skip keeps"
         );
+        // THE KEYMAPPINGS' OWN DECODE (the last valid row the parse
+        // wears — the rebind the file's own truth speaks: the forward
+        // the LAST valid `key.keyboard.q` the read banks, the UNKNOWN
+        // row the sneak the None seat answers, the `garbage` row the
+        // sprint the same blank the getKey law keeps, the missing
+        // rows the defaults the load law keeps)
+        assert_eq!(
+            loaded.key_binds[crate::options_file::key_binds::FORWARD],
+            Some(minifb::Key::Q),
+            "the forward the last valid row wears"
+        );
+        assert_eq!(
+            loaded.key_binds[crate::options_file::key_binds::SNEAK],
+            None,
+            "the UNKNOWN row the unbound seat keeps"
+        );
+        assert_eq!(
+            loaded.key_binds[crate::options_file::key_binds::SPRINT],
+            None,
+            "the garbage row the blank bind the getKey law keeps"
+        );
+        assert_eq!(
+            loaded.key_binds[crate::options_file::key_binds::JUMP],
+            Some(minifb::Key::Space),
+            "the missing row the default keeps"
+        );
+        assert_eq!(
+            loaded.key_binds[crate::options_file::key_binds::LEFT],
+            Some(minifb::Key::A),
+            "the missing row the default keeps"
+        );
         let _ = std::fs::remove_dir_all(&dir);
         // THE MISSING FILE the defaults keep (the exists() gate the head
         // walk speaks)
@@ -702,6 +1010,11 @@ mod tests {
         assert_eq!(
             missing.notification_display_time, 1.0,
             "the missing file the default multiplier keeps"
+        );
+        assert_eq!(
+            missing.key_binds,
+            crate::options_file::key_binds::DEFAULTS,
+            "the missing file the default key rows keeps"
         );
     }
 

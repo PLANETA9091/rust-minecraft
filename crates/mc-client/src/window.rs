@@ -1874,7 +1874,29 @@ pub fn run_gui_app(
                 app.on_chat_char(c);
             }
         }
-        if window.is_key_pressed(Key::Escape, minifb::KeyRepeat::No) {
+        // THE KEY BINDS' OWN REBIND WALK (the KeyBindsScreen.keyPressed
+        // law — the selectedKey the gate answers FIRST: the pressed
+        // key the table's own scan the bind wears, the ESCAPE the
+        // UNKNOWN clear the isEscape arm speaks — see
+        // [`App::kb_capture`], the consumed key the screen's own
+        // Escape dispatch never rides; the MOUSE bind the
+        // mouseClicked walk serves — the follow-up round's own lane
+        // the record names)
+        let mut rebind_consumed = false;
+        if app.screen == crate::screens::ScreenKind::KeyBinds && app.kb_selected.is_some() {
+            let mut pressed: Option<minifb::Key> = None;
+            for (k, _) in crate::options_file::key_binds::KEYBOARD_NAMES {
+                if *k != Key::Escape && window.is_key_pressed(*k, minifb::KeyRepeat::No) {
+                    pressed = Some(*k);
+                    break;
+                }
+            }
+            if pressed.is_none() && window.is_key_pressed(Key::Escape, minifb::KeyRepeat::No) {
+                pressed = Some(Key::Escape); // the UNKNOWN clear the isEscape arm speaks
+            }
+            rebind_consumed = app.kb_capture(pressed);
+        }
+        if window.is_key_pressed(Key::Escape, minifb::KeyRepeat::No) && !rebind_consumed {
             // THE ESCAPE'S OWN ROUTE (the ChatScreen.keyPressed law —
             // the open chat the on_chat_escape walk answers: the
             // untouched restored draft the FIRST ESC clears (the
@@ -2344,16 +2366,25 @@ pub fn run_gui_app(
             if turn_x != 0.0 || turn_y != 0.0 {
                 app.on_turn_key(turn_x, turn_y, frame_dt_secs);
             }
-            let fwd =
-                (window.is_key_down(Key::W) as i32 - window.is_key_down(Key::S) as i32) as f32;
-            let strafe =
-                (window.is_key_down(Key::A) as i32 - window.is_key_down(Key::D) as i32) as f32;
+            // THE KEYMAPPINGS' OWN LANES (the store's own keys the
+            // vanilla handleKeybinds's `keyForward.isDown()` reads
+            // answer — the binding the `KeyMapping.isDown()` the key's
+            // own state wears, the rebind the store writes): the
+            // movement the bindings the store's own keys serve, the
+            // None (the UNKNOWN seat) the never-down the unbound law
+            // keeps.
+            use crate::options_file::key_binds as kb;
+            let bind_down = |slot: usize| -> bool {
+                app.key_binds[slot].is_some_and(|k| window.is_key_down(k))
+            };
+            let fwd = (bind_down(kb::FORWARD) as i32 - bind_down(kb::BACK) as i32) as f32;
+            let strafe = (bind_down(kb::LEFT) as i32 - bind_down(kb::RIGHT) as i32) as f32;
             app.on_movement_input(
                 fwd,
                 strafe,
-                window.is_key_down(Key::Space),
-                window.is_key_down(Key::LeftShift),
-                window.is_key_down(Key::LeftCtrl),
+                bind_down(kb::JUMP),
+                bind_down(kb::SNEAK),
+                bind_down(kb::SPRINT),
             );
             // THE Q DROP KEY (vanilla handleKeybinds's keyDrop lane —
             // the keybinds the overlay==null && screen==null gate reads,

@@ -5642,6 +5642,38 @@ fn fov_from_value(v: f64) -> f64 {
     (30.0 + v * 80.0).round()
 }
 
+/// THE KEY BIND'S OWN DISPLAY (the `KeyMapping.getTranslatedKeyMessage`
+/// walk — the `InputConstants$Key.getDisplayName()` the lang row
+/// answers: the `key.keyboard.w` key the "W" row speaks, the None the
+/// UNKNOWN seat the `key.keyboard.unknown` "Not Bound" row wears; the
+/// derived fallback the assets-absent boot keeps — the save string's
+/// own tail the dots-to-spaces capitalization wears, the lang row the
+/// same words the assets' presence speaks).
+fn key_bind_display(k: Option<minifb::Key>) -> String {
+    let save = crate::options_file::key_binds::key_bind_save(k);
+    if save == "key.keyboard.unknown" {
+        return tr("key.keyboard.unknown")
+            .unwrap_or("Not Bound")
+            .to_string();
+    }
+    tr(save)
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| {
+            save.strip_prefix("key.keyboard.")
+                .unwrap_or(save)
+                .split('.')
+                .map(|w| {
+                    let mut c = w.chars();
+                    match c.next() {
+                        Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+                        None => String::new(),
+                    }
+                })
+                .collect::<Vec<_>>()
+                .join(" ")
+        })
+}
+
 /// THE FOV SLIDER'S OWN CAPTION (the 26.2 en_us table the ends law
 /// speaks — the 30 the options.fov.min 'Normal' row wears, the 110
 /// the options.fov.max 'Quake Pro' row wears, the between the raw
@@ -8571,6 +8603,21 @@ pub struct App {
     /// frames the value's own seat follows, the release the disarm
     /// speaks).
     pub sensitivity_drag: bool,
+    /// THE KEYMAPPINGS' OWN STORE (the movement category the 186 round
+    /// banks — the `Options.keyMappings` array the movement rows the
+    /// ctor's registrations pc 2402-2545 order keeps; the
+    /// `Option<minifb::Key>` the `InputConstants$Key` field's own
+    /// shape wears, the None the UNKNOWN seat answers, the DEFAULTS
+    /// the ctor's codes the boot arms). The movement lanes the
+    /// window walk reads — the rebind the store writes, the lanes
+    /// the same frames the store's own keys serve.
+    pub key_binds: [Option<minifb::Key>; crate::options_file::key_binds::COUNT],
+    /// THE REBIND'S OWN SELECTED KEY (the KeyBindsScreen's
+    /// `selectedKey` field the keyPressed/mouseClicked walks read —
+    /// the Some the row's change button the click arms, the captured
+    /// key the bind speaks, the Escape the UNKNOWN clear the modern
+    /// law keeps, the None the walk's own reset answers).
+    pub kb_selected: Option<usize>,
     /// THE FOV'S OWN STORE (the `options.fov` OptionInstance the 26.2
     /// clinit banks — the IntRange(30, 110) the default 70 wears, the
     /// CAMERA.calculateFov fold the degrees the body's modifier
@@ -10723,6 +10770,8 @@ impl App {
             last_active_ms: 0,
             look_sensitivity: crate::body::LOOK_SENSITIVITY_DEFAULT,
             sensitivity_drag: false,
+            key_binds: crate::options_file::key_binds::DEFAULTS,
+            kb_selected: None,
             fov: 70.0,
             fov_drag: false,
             volume: 1.0,
@@ -32946,6 +32995,7 @@ impl App {
         self.text_background_opacity = file.text_background_opacity;
         self.background_for_chat_only = file.background_for_chat_only;
         self.notification_display_time = file.notification_display_time;
+        self.key_binds = file.key_binds;
         // THE BODY'S OWN READ (the Camera.tickFov the option value the
         // tick passes — the body's own store the boot's truth wears,
         // the no-body boot the field the later spawn's ctor keeps)
@@ -32976,8 +33026,32 @@ impl App {
             text_background_opacity: self.text_background_opacity,
             background_for_chat_only: self.background_for_chat_only,
             notification_display_time: self.notification_display_time,
+            key_binds: self.key_binds,
         };
         file.save(path);
+    }
+
+    /// THE REBIND'S OWN CAPTURE (the KeyBindsScreen.keyPressed walk
+    /// pc 0-58 — the selectedKey the gate answers FIRST: the pressed
+    /// key the `setKey(InputConstants.getKey(event))` bind wears, the
+    /// ESCAPE the `setKey(InputConstants.UNKNOWN)` clear speaks — the
+    /// modern clear the isEscape arm keeps, NOT a cancel —, the
+    /// selected the null the walk clears, the TRUE the consumed key
+    /// returns (the caller's own Escape dispatch the walk's return
+    /// silences); the None press the no-capture frame the false
+    /// keeps. The MOUSE bind the mouseClicked walk serves — the
+    /// follow-up round's own lane the record names.)
+    pub fn kb_capture(&mut self, pressed: Option<minifb::Key>) -> bool {
+        let Some(slot) = self.kb_selected else {
+            return false;
+        };
+        match pressed {
+            None => return false,
+            Some(minifb::Key::Escape) => self.key_binds[slot] = None,
+            Some(k) => self.key_binds[slot] = Some(k),
+        }
+        self.kb_selected = None;
+        true
     }
 
     /// THE STORES' OWN LAZY LOAD (the dev-68 round — the hotbar lane's
@@ -35081,15 +35155,84 @@ impl App {
                 // KeyBindsScreen(this, options)` the cp#68 utf8's own
                 // target keeps)
                 "keybinds" => self.open(ScreenKind::KeyBinds),
-                // THE RESET BUTTON'S OWN WALK (the KeyBindsScreen
+                // THE RESET-ALL BUTTON'S OWN WALK (the KeyBindsScreen
                 // addFooter pc 0-15 the `controls.resetAll` button
                 // keeps — the `lambda$addFooter$0` walk the
                 // `keyMappings` array over: setKey(getDefaultKey())
-                // the each-row answer; the CLIENT'S OWN ARRAY THE
-                // EMPTY SEAT KEEPS — the keyMappings the store never
-                // carried, the loop the zero rows the honest no-op
-                // answers)
-                "kb_reset" => {}
+                // the each-row answer; the client's own store the
+                // movement rows the DEFAULTS the array walk arms)
+                "kb_reset" => {
+                    self.key_binds = crate::options_file::key_binds::DEFAULTS;
+                    self.kb_selected = None;
+                }
+                // THE ROWS' OWN SEATS (the KeyEntry's walks — the
+                // change button the click the selectedKey arm serves
+                // (the ctor's lambda the `selectedKey = keyMapping`
+                // speaks), the reset press the `setKey(getDefaultKey())`
+                // the lambda$new$2 walk answers)
+                "kb_change_forward" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::FORWARD);
+                }
+                "kb_change_left" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::LEFT);
+                }
+                "kb_change_back" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::BACK);
+                }
+                "kb_change_right" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::RIGHT);
+                }
+                "kb_change_jump" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::JUMP);
+                }
+                "kb_change_sneak" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::SNEAK);
+                }
+                "kb_change_sprint" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::SPRINT);
+                }
+                "kb_rowreset_forward" => {
+                    self.key_binds[crate::options_file::key_binds::FORWARD] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::FORWARD];
+                    self.kb_selected = None;
+                }
+                "kb_rowreset_left" => {
+                    self.key_binds[crate::options_file::key_binds::LEFT] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::LEFT];
+                    self.kb_selected = None;
+                }
+                "kb_rowreset_back" => {
+                    self.key_binds[crate::options_file::key_binds::BACK] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::BACK];
+                    self.kb_selected = None;
+                }
+                "kb_rowreset_right" => {
+                    self.key_binds[crate::options_file::key_binds::RIGHT] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::RIGHT];
+                    self.kb_selected = None;
+                }
+                "kb_rowreset_jump" => {
+                    self.key_binds[crate::options_file::key_binds::JUMP] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::JUMP];
+                    self.kb_selected = None;
+                }
+                "kb_rowreset_sneak" => {
+                    self.key_binds[crate::options_file::key_binds::SNEAK] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::SNEAK];
+                    self.kb_selected = None;
+                }
+                "kb_rowreset_sprint" => {
+                    self.key_binds[crate::options_file::key_binds::SPRINT] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::SPRINT];
+                    self.kb_selected = None;
+                }
                 // THE FOOTERS' OWN RETURNS (the OptionsSubScreen
                 // onClose walk — the lastScreen each opener's own
                 // parent wears: the Controls seat the Options ride,
@@ -62650,22 +62793,38 @@ impl App {
         }
     }
 
-    /// THE KEY BINDS' OWN EMPTY LIST (javap 26.2 KeyBindsScreen — the
+    /// THE KEY BINDS' OWN LIST (javap 26.2 KeyBindsScreen — the
     /// ControlsScreen pair's RIGHT button the `lambda$addOptions$1`
     /// walk opens): the title the `controls.keybinds.title`
     /// translatable wears ("Key Binds" the en_us row speaks), the
     /// addContents walk the KeyBindsList builds — the ctor the
     /// `options.keyMappings` array clones, sorts, and rows (the
-    /// CategoryEntry/KeyEntry pair the category changes wear) — and
-    /// the CLIENT'S OWN ARRAY THE EMPTY SEAT KEEPS (the keyMappings
-    /// the store never carried, the empty list the vanilla ctor's own
-    /// law the honest port renders — the list area the zero rows, the
-    /// rows the keyMappings store round the follow-up banks). THE
-    /// FOOTER the addFooter override wears: the horizontal
-    /// LinearLayout spacing(8) pair — the `controls.resetAll` button
-    /// the `lambda$addFooter$0` walk the array over (the EMPTY array
-    /// the loop's own no-op keeps) + the GUI_DONE the
-    /// `lambda$addFooter$1` onClose ride.
+    /// CategoryEntry the category changes wear, the KeyEntry the
+    /// binding rows answer). THE MOVEMENT CATEGORY THE STORE'S OWN
+    /// ROWS WEAR (the 186 round the movement seats bank — the UI/
+    /// gameplay/creative/debug rows the 57-instance ctor array
+    /// carries the follow-up rounds' own stores keep): the header the
+    /// `key.categories.movement` word speaks, the rows the
+    /// `KeyEntry` shape keeps — the NAME the left-aligned label the
+    /// `key.*` lang row wears, the CHANGE button the 75x20 the ctor's
+    /// `bounds(0, 0, 75, 20)` keeps (the caption the
+    /// `getTranslatedKeyMessage` display answers, the SELECTED row
+    /// the `"> " + display + " <"` wrap the cp#256/#264 utf8s bank,
+    /// the click the selectedKey arm the rebind walk serves), the
+    /// RESET button the 50x20 the ctor's own pair keeps (the
+    /// `controls.reset` word the lang row speaks, the ACTIVE seat the
+    /// `!keyMapping.isDefault()` law keeps — the refreshEntry walk
+    /// pc 14-33 the button the grey-out arms, the press the
+    /// `setKey(getDefaultKey())` the lambda$new$2 walk answers). THE
+    /// CLIP THE BAND WEARS (the vanilla list the scrollable area
+    /// keeps): the rows the footer band the full-row clip refuses —
+    /// the rows the visible band the render serves, the LIST SCROLL
+    /// (the mouseScrolled walk's own arm) the follow-up round's own
+    /// seat keeps. THE FOOTER the addFooter override wears: the
+    /// horizontal LinearLayout spacing(8) pair — the
+    /// `controls.resetAll` button the `lambda$addFooter$0` walk the
+    /// array over (setKey(getDefaultKey()) the each-row answer) + the
+    /// GUI_DONE the `lambda$addFooter$1` onClose ride.
     fn render_key_binds(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
         for y in 0..h {
             let t = y as f32 / h.max(1) as f32;
@@ -62680,28 +62839,85 @@ impl App {
             WHITE,
             true,
         );
-        let cx = w / 2;
-        let bw = 140;
-        // THE LIST'S OWN EMPTY SEAT (the keyMappings array the
-        // client's store never carried — the rows the honest absence
-        // keeps, the ctor's own walk the zero-entry list the same
-        // empty the vanilla law renders)
+        use crate::options_file::key_binds as kb;
+        // THE CATEGORY'S OWN HEADER (the CategoryEntry the list the
+        // rows group under — the lang row the grey label wears)
+        g.text(
+            a,
+            16,
+            30,
+            tr(kb::CATEGORY_NAME).unwrap_or(kb::CATEGORY_FALLBACK),
+            [0.7, 0.7, 0.7],
+            false,
+        );
+        // THE BINDING ROWS' OWN WALK (the KeyEntry shape — the name
+        // the left label, the change the 75x20 seat, the reset the
+        // 50x20 pair; the y the 42-start 24-stride the rows wear, the
+        // footer band the full-row clip refuses)
+        for i in 0..kb::COUNT {
+            let by = 42 + i as i32 * 24;
+            if by + 20 > h - 28 {
+                break; // the clip the band the honest render keeps
+            }
+            let name = tr(kb::NAMES[i]).unwrap_or(kb::NAME_FALLBACKS[i]);
+            g.text(a, 16, by + 6, name, WHITE, false);
+            let display = key_bind_display(self.key_binds[i]);
+            let caption = if self.kb_selected == Some(i) {
+                format!("> {display} <")
+            } else {
+                display
+            };
+            self.buttons.push(Button::new(
+                match i {
+                    kb::FORWARD => "kb_change_forward",
+                    kb::LEFT => "kb_change_left",
+                    kb::BACK => "kb_change_back",
+                    kb::RIGHT => "kb_change_right",
+                    kb::JUMP => "kb_change_jump",
+                    kb::SNEAK => "kb_change_sneak",
+                    _ => "kb_change_sprint",
+                },
+                caption,
+                w - 107,
+                by,
+                75,
+            ));
+            // THE RESET'S OWN SEAT (the refreshEntry law — the button
+            // ALWAYS renders, the active seat the !isDefault arms)
+            let mut rb = Button::new(
+                match i {
+                    kb::FORWARD => "kb_rowreset_forward",
+                    kb::LEFT => "kb_rowreset_left",
+                    kb::BACK => "kb_rowreset_back",
+                    kb::RIGHT => "kb_rowreset_right",
+                    kb::JUMP => "kb_rowreset_jump",
+                    kb::SNEAK => "kb_rowreset_sneak",
+                    _ => "kb_rowreset_sprint",
+                },
+                tr("controls.reset").unwrap_or("Reset").to_string(),
+                w - 41,
+                by,
+                50,
+            );
+            rb.active = self.key_binds[i] != kb::DEFAULTS[i];
+            self.buttons.push(rb);
+        }
         // THE FOOTER'S OWN PAIR (the addFooter override's spacing(8)
-        // walk — the LEFT the reset seat the `cx - 4 - bw/2` center
-        // wears, the RIGHT the done seat the same gap keeps)
+        // walk — the LEFT the reset-all seat the `cx - 4 - bw/2`
+        // center wears, the RIGHT the done seat the same gap keeps)
         self.buttons.push(Button::new(
             "kb_reset",
             tr("controls.resetAll").unwrap_or("Reset Keys").to_string(),
-            cx - 4 - bw / 2,
+            w / 2 - 4 - 140 / 2,
             h - 28,
-            bw,
+            140,
         ));
         self.buttons.push(Button::new(
             "kbdone",
             tr("gui.done").unwrap_or("Done").to_string(),
-            cx + 4 + bw / 2,
+            w / 2 + 4 + 140 / 2,
             h - 28,
-            bw,
+            140,
         ));
         for b in &self.buttons.clone() {
             b.render(g, a, -1, -1);
