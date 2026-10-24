@@ -1,0 +1,230 @@
+########## A. lang rows (the trio + the mouse buttons speak)
+  key.attack = 'Attack/Destroy'
+  key.categories.gameplay = 'Gameplay'
+  key.mouse.left = 'Left Button'
+  key.mouse.middle = 'Middle Button'
+  key.mouse.right = 'Right Button'
+  key.pickItem = 'Pick Block'
+  key.use = 'Use Item/Place Block'
+
+########## B. the Category enum's own <clinit> (the ordinals)
+*** <init>(Lnet/minecraft/resources/Identifier;)V
+--- <init>(Lnet/minecraft/resources/Identifier;)V
+0: aload_0
+1: invokespecial java/lang/Record.<init>()V
+4: aload_0
+5: aload_1
+6: putfield net/minecraft/client/KeyMapping$Category.idLnet/minecraft/resources/Identifier;
+9: return
+*** register(Lnet/minecraft/resources/Identifier;)Lnet/minecraft/client/KeyMapping$Category;
+--- register(Lnet/minecraft/resources/Identifier;)Lnet/minecraft/client/KeyMapping$Category;
+0: new net/minecraft/client/KeyMapping$Category
+3: dup
+4: aload_0
+5: invokespecial net/minecraft/client/KeyMapping$Category.<init>(Lnet/minecraft/resources/Identifier;)V
+8: astore_0
+9: getstatic net/minecraft/client/KeyMapping$Category.SORT_ORDERLjava/util/List;
+12: aload_1
+13: invokeinterface java/util/List.contains(Ljava/lang/Object;)Z
+16: iconst_m1
+17: nop
+18: ifeq -> 45
+21: new java/lang/IllegalArgumentException
+24: dup
+25: getstatic java/util/Locale.ROOTLjava/util/Locale;
+28: ldc Category '%s' is already registered.
+30: iconst_1
+31: anewarray java/lang/Object
+34: dup
+35: iconst_0
+36: aload_0
+37: aastore
+38: invokestatic java/lang/String.format(Ljava/util/Locale;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+41: invokespecial java/lang/IllegalArgumentException.<init>(Ljava/lang/String;)V
+44: athrow
+45: getstatic net/minecraft/client/KeyMapping$Category.SORT_ORDERLjava/util/List;
+48: aload_1
+49: invokeinterface java/util/List.add(Ljava/lang/Object;)Z
+52: iconst_m1
+53: nop
+54: pop
+55: aload_1
+56: areturn
+*** id()Lnet/minecraft/resources/Identifier;
+--- id()Lnet/minecraft/resources/Identifier;
+0: aload_0
+1: getfield net/minecraft/client/KeyMapping$Category.idLnet/minecraft/resources/Identifier;
+4: areturn
+*** <clinit>()V
+--- <clinit>()V
+0: new java/util/ArrayList
+3: dup
+4: invokespecial java/util/ArrayList.<init>()V
+7: putstatic net/minecraft/client/KeyMapping$Category.SORT_ORDERLjava/util/List;
+10: ldc movement
+12: invokestatic net/minecraft/client/KeyMapping$Category.register(Ljava/lang/String;)Lnet/minecraft/client/KeyMapping$Category;
+15: putstatic net/minecraft/client/KeyMapping$Category.MOVEMENTLnet/minecraft/client/KeyMapping$Category;
+18: ldc misc
+20: invokestatic net/minecraft/client/KeyMapping$Category.register(Ljava/lang/String;)Lnet/minecraft/client/KeyMapping$Category;
+23: putstatic net/minecraft/client/KeyMapping$Category.MISCLnet/minecraft/client/KeyMapping$Category;
+26: ldc multiplayer
+28: invokestatic net/minecraft/client/KeyMapping$Category.register(Ljava/lang/String;)Lnet/minecraft/client/KeyMapping$Category;
+31: putstatic net/minecraft/client/KeyMapping$Category.MULTIPLAYERLnet/minecraft/client/KeyMapping$Category;
+34: ldc gameplay
+36: invokestatic net/minecraft/client/KeyMapping$Category.register(Ljava/lang/String;)Lnet/minecraft/client/KeyMapping$Category;
+39: putstatic net/minecraft/client/KeyMapping$Category.GAMEPLAYLnet/minecraft/client/KeyMapping$Category;
+42: ldc inventory
+44: invokestatic net/minecraft/client/KeyMapping$Category.register(Ljava/lang/String;)Lnet/minecraft/client/KeyMapping$Category;
+47: putstatic net/minecraft/client/KeyMapping$Category.INVENTORYLnet/minecraft/client/KeyMapping$Category;
+50: ldc creative
+52: invokestatic net/minecraft/client/KeyMapping$Category.register(Ljava/lang/String;)Lnet/minecraft/client/KeyMapping$Category;
+55: putstatic net/minecraft/client/KeyMapping$Category.CREATIVELnet/minecraft/client/KeyMapping$Category;
+58: ldc spectator
+60: invokestatic net/minecraft/client/KeyMapping$Category.register(Ljava/lang/String;)Lnet/minecraft/client/KeyMapping$Category;
+63: putstatic net/minecraft/client/KeyMapping$Category.SPECTATORLnet/minecraft/client/KeyMapping$Category;
+66: ldc debug
+68: invokestatic net/minecraft/client/KeyMapping$Category.register(Ljava/lang/String;)Lnet/minecraft/client/KeyMapping$Category;
+71: putstatic net/minecraft/client/KeyMapping$Category.DEBUGLnet/minecraft/client/KeyMapping$Category;
+74: return
+=== net.minecraft.client.KeyMapping$Category utf8 words (needles: ['movement', 'gameplay', 'inventory', 'creative', 'multiplayer', 'interface', 'misc'])
+  cp#88: 'movement'
+  cp#97: 'misc'
+  cp#102: 'multiplayer'
+  cp#107: 'gameplay'
+  cp#112: 'inventory'
+  cp#117: 'creative'
+
+########## C. Options ctor — the trio's own registrations
+
+########## D. KeyMapping the saveString/getName law
+*** getCategory()Lnet/minecraft/client/KeyMapping$Category;
+--- getCategory()Lnet/minecraft/client/KeyMapping$Category;
+0: aload_0
+1: getfield net/minecraft/client/KeyMapping.categoryLnet/minecraft/client/KeyMapping$Category;
+4: areturn
+*** getName()Ljava/lang/String;
+--- getName()Ljava/lang/String;
+0: aload_0
+1: getfield net/minecraft/client/KeyMapping.nameLjava/lang/String;
+4: areturn
+*** getDefaultKey()Lcom/mojang/blaze3d/platform/InputConstants$Key;
+--- getDefaultKey()Lcom/mojang/blaze3d/platform/InputConstants$Key;
+0: aload_0
+1: getfield net/minecraft/client/KeyMapping.defaultKeyLcom/mojang/blaze3d/platform/InputConstants$Key;
+4: areturn
+*** setKey(Lcom/mojang/blaze3d/platform/InputConstants$Key;)V
+--- setKey(Lcom/mojang/blaze3d/platform/InputConstants$Key;)V
+0: aload_0
+1: aload_1
+2: putfield net/minecraft/client/KeyMapping.keyLcom/mojang/blaze3d/platform/InputConstants$Key;
+5: return
+*** getTranslatedKeyMessage()Lnet/minecraft/network/chat/Component;
+--- getTranslatedKeyMessage()Lnet/minecraft/network/chat/Component;
+0: aload_0
+1: getfield net/minecraft/client/KeyMapping.keyLcom/mojang/blaze3d/platform/InputConstants$Key;
+4: invokevirtual com/mojang/blaze3d/platform/InputConstants$Key.getDisplayName()Lnet/minecraft/network/chat/Component;
+7: areturn
+*** isDefault()Z
+--- isDefault()Z
+0: aload_0
+1: getfield net/minecraft/client/KeyMapping.keyLcom/mojang/blaze3d/platform/InputConstants$Key;
+4: aload_0
+5: getfield net/minecraft/client/KeyMapping.defaultKeyLcom/mojang/blaze3d/platform/InputConstants$Key;
+8: invokevirtual com/mojang/blaze3d/platform/InputConstants$Key.equals(Ljava/lang/Object;)Z
+11: ireturn
+*** saveString()Ljava/lang/String;
+--- saveString()Ljava/lang/String;
+0: aload_0
+1: getfield net/minecraft/client/KeyMapping.keyLcom/mojang/blaze3d/platform/InputConstants$Key;
+4: invokevirtual com/mojang/blaze3d/platform/InputConstants$Key.getName()Ljava/lang/String;
+7: areturn
+
+########## E. InputConstants$Type — the MOUSE arm (the prefix + the names)
+!! 'NoneType' object is not iterable
+!! "There is no item named 'net/minecraft/client/InputConstants.class' in the archive"
+
+########## F. KeyBindsScreen — the mouseClicked selectedKey gate
+=== net.minecraft.client.gui.screens.options.controls.KeyBindsScreen methods:
+  <init>(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/Options;)V
+  addContents()V
+  addOptions()V
+  addFooter()V
+  repositionElements()V
+  mouseClicked(Lnet/minecraft/client/input/MouseButtonEvent;Z)Z
+  keyPressed(Lnet/minecraft/client/input/KeyEvent;)Z
+  extractRenderState(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V
+  lambda$addFooter$1(Lnet/minecraft/client/gui/components/Button;)V
+  lambda$addFooter$0(Lnet/minecraft/client/gui/components/Button;)V
+  <clinit>()V
+*** mouseClicked(Lnet/minecraft/client/input/MouseButtonEvent;Z)Z
+--- mouseClicked(Lnet/minecraft/client/input/MouseButtonEvent;Z)Z
+0: aload_0
+1: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.selectedKeyLnet/minecraft/client/KeyMapping;
+4: ifnull -> 38
+7: aload_0
+8: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.selectedKeyLnet/minecraft/client/KeyMapping;
+11: getstatic com/mojang/blaze3d/platform/InputConstants$Type.MOUSELcom/mojang/blaze3d/platform/InputConstants$Type;
+14: aload_1
+15: invokevirtual net/minecraft/client/input/MouseButtonEvent.button()I
+18: invokevirtual com/mojang/blaze3d/platform/InputConstants$Type.getOrCreate(I)Lcom/mojang/blaze3d/platform/InputConstants$Key;
+21: invokevirtual net/minecraft/client/KeyMapping.setKey(Lcom/mojang/blaze3d/platform/InputConstants$Key;)V
+24: aload_0
+25: aconst_null
+26: putfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.selectedKeyLnet/minecraft/client/KeyMapping;
+29: aload_0
+30: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.keyBindsListLnet/minecraft/client/gui/screens/options/controls/KeyBindsList;
+33: invokevirtual net/minecraft/client/gui/screens/options/controls/KeyBindsList.resetMappingAndUpdateButtons()V
+36: iconst_1
+37: ireturn
+38: aload_0
+39: aload_1
+40: iload_2
+41: invokespecial net/minecraft/client/gui/screens/options/OptionsSubScreen.mouseClicked(Lnet/minecraft/client/input/MouseButtonEvent;Z)Z
+44: ireturn
+*** keyPressed(Lnet/minecraft/client/input/KeyEvent;)Z
+--- keyPressed(Lnet/minecraft/client/input/KeyEvent;)Z
+0: aload_0
+1: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.selectedKeyLnet/minecraft/client/KeyMapping;
+4: ifnull -> 59
+7: aload_1
+8: invokevirtual net/minecraft/client/input/KeyEvent.isEscape()Z
+11: ifeq -> 27
+14: aload_0
+15: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.selectedKeyLnet/minecraft/client/KeyMapping;
+18: getstatic com/mojang/blaze3d/platform/InputConstants.UNKNOWNLcom/mojang/blaze3d/platform/InputConstants$Key;
+21: invokevirtual net/minecraft/client/KeyMapping.setKey(Lcom/mojang/blaze3d/platform/InputConstants$Key;)V
+24: goto -> 38
+27: aload_0
+28: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.selectedKeyLnet/minecraft/client/KeyMapping;
+31: aload_1
+32: invokestatic com/mojang/blaze3d/platform/InputConstants.getKey(Lnet/minecraft/client/input/KeyEvent;)Lcom/mojang/blaze3d/platform/InputConstants$Key;
+35: invokevirtual net/minecraft/client/KeyMapping.setKey(Lcom/mojang/blaze3d/platform/InputConstants$Key;)V
+38: aload_0
+39: aconst_null
+40: putfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.selectedKeyLnet/minecraft/client/KeyMapping;
+43: aload_0
+44: invokestatic net/minecraft/util/Util.getMillis()J
+47: putfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.lastKeySelectionJ
+50: aload_0
+51: getfield net/minecraft/client/gui/screens/options/controls/KeyBindsScreen.keyBindsListLnet/minecraft/client/gui/screens/options/controls/KeyBindsList;
+54: invokevirtual net/minecraft/client/gui/screens/options/controls/KeyBindsList.resetMappingAndUpdateButtons()V
+57: iconst_1
+58: ireturn
+59: aload_0
+60: aload_1
+61: invokespecial net/minecraft/client/gui/screens/options/OptionsSubScreen.keyPressed(Lnet/minecraft/client/input/KeyEvent;)Z
+64: ireturn
+=== net.minecraft.client.gui.screens.options.controls.KeyBindsScreen utf8 words (needles: ['selectedKey', 'mouse', 'InputConstants'])
+  cp#100: 'selectedKey'
+  cp#105: 'com/mojang/blaze3d/platform/InputConstants$Type'
+  cp#107: 'Lcom/mojang/blaze3d/platform/InputConstants$Type;'
+  cp#117: '(I)Lcom/mojang/blaze3d/platform/InputConstants$Key;'
+  cp#123: '(Lcom/mojang/blaze3d/platform/InputConstants$Key;)V'
+  cp#129: 'mouseClicked'
+  cp#140: 'com/mojang/blaze3d/platform/InputConstants'
+  cp#142: 'Lcom/mojang/blaze3d/platform/InputConstants$Key;'
+  cp#146: '(Lnet/minecraft/client/input/KeyEvent;)Lcom/mojang/blaze3d/platform/InputConstants$Key;'
+  cp#188: '()Lcom/mojang/blaze3d/platform/InputConstants$Key;'
+  cp#216: 'mouseX'
+  cp#217: 'mouseY'
+  cp#255: 'com/mojang/blaze3d/platform/InputConstants$Key'

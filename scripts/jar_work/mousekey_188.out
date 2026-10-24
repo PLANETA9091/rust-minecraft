@@ -1,0 +1,2646 @@
+########## A. InputConstants$Type — the enum walk
+=== com.mojang.blaze3d.platform.InputConstants$Type methods:
+  values()[Lcom/mojang/blaze3d/platform/InputConstants$Type;
+  valueOf(Ljava/lang/String;)Lcom/mojang/blaze3d/platform/InputConstants$Type;
+  addKey(Lcom/mojang/blaze3d/platform/InputConstants$Type;Ljava/lang/String;I)V
+  <init>(Ljava/lang/String;ILjava/lang/String;Ljava/util/function/BiFunction;)V
+  getOrCreate(I)Lcom/mojang/blaze3d/platform/InputConstants$Key;
+  $values()[Lcom/mojang/blaze3d/platform/InputConstants$Type;
+  lambda$getOrCreate$0(I)Lcom/mojang/blaze3d/platform/InputConstants$Key;
+  lambda$static$2(Ljava/lang/Integer;Ljava/lang/String;)Lnet/minecraft/network/chat/Component;
+  lambda$static$1(Ljava/lang/Integer;Ljava/lang/String;)Lnet/minecraft/network/chat/Component;
+  lambda$static$0(Ljava/lang/Integer;Ljava/lang/String;)Lnet/minecraft/network/chat/Component;
+  <clinit>()V
+*** values()[Lcom/mojang/blaze3d/platform/InputConstants$Type;
+--- values()[Lcom/mojang/blaze3d/platform/InputConstants$Type;
+0: getstatic com/mojang/blaze3d/platform/InputConstants$Type.$VALUES[Lcom/mojang/blaze3d/platform/InputConstants$Type;
+3: invokevirtual [Lcom/mojang/blaze3d/platform/InputConstants$Type;.clone()Ljava/lang/Object;
+6: checkcast [Lcom/mojang/blaze3d/platform/InputConstants$Type;
+9: areturn
+*** valueOf(Ljava/lang/String;)Lcom/mojang/blaze3d/platform/InputConstants$Type;
+--- valueOf(Ljava/lang/String;)Lcom/mojang/blaze3d/platform/InputConstants$Type;
+!! list indices must be integers or slices, not bytes
+=== com.mojang.blaze3d.platform.InputConstants$Type utf8 words (needles: ['mouse', 'scancode', 'key.keyboard', 'key.mouse', 'prefix'])
+  cp#89: 'key.mouse'
+  cp#114: 'key.keyboard.unknown'
+  cp#133: 'key.keyboard'
+  cp#143: 'scancode'
+  cp#156: 'key.mouse.left'
+  cp#158: 'key.mouse.right'
+  cp#160: 'key.mouse.middle'
+  cp#162: 'key.mouse.4'
+  cp#164: 'key.mouse.5'
+  cp#166: 'key.mouse.6'
+  cp#168: 'key.mouse.7'
+  cp#170: 'key.mouse.8'
+  cp#172: 'key.keyboard.0'
+  cp#174: 'key.keyboard.1'
+  cp#176: 'key.keyboard.2'
+  cp#178: 'key.keyboard.3'
+  cp#180: 'key.keyboard.4'
+  cp#182: 'key.keyboard.5'
+  cp#184: 'key.keyboard.6'
+  cp#186: 'key.keyboard.7'
+  cp#188: 'key.keyboard.8'
+  cp#190: 'key.keyboard.9'
+  cp#192: 'key.keyboard.a'
+  cp#194: 'key.keyboard.b'
+  cp#196: 'key.keyboard.c'
+  cp#198: 'key.keyboard.d'
+  cp#200: 'key.keyboard.e'
+  cp#202: 'key.keyboard.f'
+  cp#204: 'key.keyboard.g'
+  cp#206: 'key.keyboard.h'
+  cp#208: 'key.keyboard.i'
+  cp#210: 'key.keyboard.j'
+  cp#212: 'key.keyboard.k'
+  cp#214: 'key.keyboard.l'
+  cp#216: 'key.keyboard.m'
+  cp#218: 'key.keyboard.n'
+  cp#220: 'key.keyboard.o'
+  cp#222: 'key.keyboard.p'
+  cp#224: 'key.keyboard.q'
+  cp#226: 'key.keyboard.r'
+  cp#228: 'key.keyboard.s'
+  cp#230: 'key.keyboard.t'
+  cp#232: 'key.keyboard.u'
+  cp#234: 'key.keyboard.v'
+  cp#236: 'key.keyboard.w'
+  cp#238: 'key.keyboard.x'
+  cp#240: 'key.keyboard.y'
+  cp#242: 'key.keyboard.z'
+  cp#244: 'key.keyboard.f1'
+  cp#246: 'key.keyboard.f2'
+  cp#248: 'key.keyboard.f3'
+  cp#250: 'key.keyboard.f4'
+  cp#252: 'key.keyboard.f5'
+  cp#254: 'key.keyboard.f6'
+  cp#256: 'key.keyboard.f7'
+  cp#258: 'key.keyboard.f8'
+  cp#260: 'key.keyboard.f9'
+  cp#262: 'key.keyboard.f10'
+  cp#264: 'key.keyboard.f11'
+  cp#266: 'key.keyboard.f12'
+  cp#268: 'key.keyboard.f13'
+  cp#270: 'key.keyboard.f14'
+  cp#272: 'key.keyboard.f15'
+  cp#274: 'key.keyboard.f16'
+  cp#276: 'key.keyboard.f17'
+  cp#278: 'key.keyboard.f18'
+  cp#280: 'key.keyboard.f19'
+  cp#282: 'key.keyboard.f20'
+  cp#284: 'key.keyboard.f21'
+  cp#286: 'key.keyboard.f22'
+  cp#288: 'key.keyboard.f23'
+  cp#290: 'key.keyboard.f24'
+  cp#292: 'key.keyboard.f25'
+  cp#294: 'key.keyboard.num.lock'
+  cp#296: 'key.keyboard.keypad.0'
+  cp#298: 'key.keyboard.keypad.1'
+  cp#300: 'key.keyboard.keypad.2'
+  cp#302: 'key.keyboard.keypad.3'
+  cp#304: 'key.keyboard.keypad.4'
+  cp#306: 'key.keyboard.keypad.5'
+  cp#308: 'key.keyboard.keypad.6'
+  cp#310: 'key.keyboard.keypad.7'
+  cp#312: 'key.keyboard.keypad.8'
+  cp#314: 'key.keyboard.keypad.9'
+  cp#316: 'key.keyboard.keypad.add'
+  cp#318: 'key.keyboard.keypad.decimal'
+  cp#320: 'key.keyboard.keypad.enter'
+  cp#322: 'key.keyboard.keypad.equal'
+  cp#324: 'key.keyboard.keypad.multiply'
+  cp#326: 'key.keyboard.keypad.divide'
+  cp#328: 'key.keyboard.keypad.subtract'
+  cp#330: 'key.keyboard.down'
+  cp#332: 'key.keyboard.left'
+  cp#334: 'key.keyboard.right'
+  cp#336: 'key.keyboard.up'
+  cp#338: 'key.keyboard.apostrophe'
+  cp#340: 'key.keyboard.backslash'
+  cp#342: 'key.keyboard.comma'
+  cp#344: 'key.keyboard.equal'
+  cp#346: 'key.keyboard.grave.accent'
+  cp#348: 'key.keyboard.left.bracket'
+  cp#350: 'key.keyboard.minus'
+  cp#352: 'key.keyboard.period'
+  cp#354: 'key.keyboard.right.bracket'
+  cp#356: 'key.keyboard.semicolon'
+  cp#358: 'key.keyboard.slash'
+  cp#360: 'key.keyboard.space'
+  cp#362: 'key.keyboard.tab'
+  cp#364: 'key.keyboard.left.alt'
+  cp#366: 'key.keyboard.left.control'
+  cp#368: 'key.keyboard.left.shift'
+  cp#370: 'key.keyboard.left.win'
+  cp#372: 'key.keyboard.right.alt'
+  cp#374: 'key.keyboard.right.control'
+  cp#376: 'key.keyboard.right.shift'
+  cp#378: 'key.keyboard.right.win'
+  cp#380: 'key.keyboard.enter'
+  cp#382: 'key.keyboard.escape'
+  cp#384: 'key.keyboard.backspace'
+  cp#386: 'key.keyboard.delete'
+  cp#388: 'key.keyboard.end'
+  cp#390: 'key.keyboard.home'
+  cp#392: 'key.keyboard.insert'
+  cp#394: 'key.keyboard.page.down'
+  cp#396: 'key.keyboard.page.up'
+  cp#398: 'key.keyboard.caps.lock'
+  cp#400: 'key.keyboard.pause'
+  cp#402: 'key.keyboard.scroll.lock'
+  cp#404: 'key.keyboard.menu'
+  cp#406: 'key.keyboard.print.screen'
+  cp#408: 'key.keyboard.world.1'
+  cp#410: 'key.keyboard.world.2'
+
+########## B. InputConstants$Key — the name/display law
+=== com.mojang.blaze3d.platform.InputConstants$Key methods:
+  <init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;I)V
+  getType()Lcom/mojang/blaze3d/platform/InputConstants$Type;
+  getValue()I
+  getName()Ljava/lang/String;
+  getDisplayName()Lnet/minecraft/network/chat/Component;
+  getNumericKeyValue()Ljava/util/OptionalInt;
+  equals(Ljava/lang/Object;)Z
+  hashCode()I
+  toString()Ljava/lang/String;
+  lambda$new$0(Lcom/mojang/blaze3d/platform/InputConstants$Type;ILjava/lang/String;)Lnet/minecraft/network/chat/Component;
+  <clinit>()V
+*** <init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;I)V
+--- <init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;I)V
+0: aload_0
+1: invokespecial java/lang/Object.<init>()V
+4: aload_0
+5: aload_1
+6: putfield com/mojang/blaze3d/platform/InputConstants$Key.nameLjava/lang/String;
+9: aload_0
+10: aload_2
+11: putfield com/mojang/blaze3d/platform/InputConstants$Key.typeLcom/mojang/blaze3d/platform/InputConstants$Type;
+14: aload_0
+15: iload_3
+16: putfield com/mojang/blaze3d/platform/InputConstants$Key.valueI
+19: aload_0
+20: aload_2
+21: iload_3
+22: aload_1
+23: invokedynamic indy
+28: invokestatic com/google/common/base/Suppliers.memoize(Lcom/google/common/base/Supplier;)Lcom/google/common/base/Supplier;
+31: putfield com/mojang/blaze3d/platform/InputConstants$Key.displayNameLjava/util/function/Supplier;
+34: getstatic com/mojang/blaze3d/platform/InputConstants$Key.NAME_MAPLjava/util/Map;
+37: aload_1
+38: aload_0
+39: invokeinterface java/util/Map.put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+42: iconst_0
+43: nop
+44: pop
+45: return
+*** getType()Lcom/mojang/blaze3d/platform/InputConstants$Type;
+--- getType()Lcom/mojang/blaze3d/platform/InputConstants$Type;
+0: aload_0
+1: getfield com/mojang/blaze3d/platform/InputConstants$Key.typeLcom/mojang/blaze3d/platform/InputConstants$Type;
+4: areturn
+*** getName()Ljava/lang/String;
+--- getName()Ljava/lang/String;
+0: aload_0
+1: getfield com/mojang/blaze3d/platform/InputConstants$Key.nameLjava/lang/String;
+4: areturn
+*** getDisplayName()Lnet/minecraft/network/chat/Component;
+--- getDisplayName()Lnet/minecraft/network/chat/Component;
+0: aload_0
+1: getfield com/mojang/blaze3d/platform/InputConstants$Key.displayNameLjava/util/function/Supplier;
+4: invokeinterface java/util/function/Supplier.get()Ljava/lang/Object;
+7: aconst_null
+8: nop
+9: checkcast net/minecraft/network/chat/Component
+12: areturn
+*** lambda$new$0(Lcom/mojang/blaze3d/platform/InputConstants$Type;ILjava/lang/String;)Lnet/minecraft/network/chat/Component;
+--- lambda$new$0(Lcom/mojang/blaze3d/platform/InputConstants$Type;ILjava/lang/String;)Lnet/minecraft/network/chat/Component;
+0: aload_0
+1: getfield com/mojang/blaze3d/platform/InputConstants$Type.displayTextSupplierLjava/util/function/BiFunction;
+4: iload_1
+5: invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;
+8: aload_2
+9: invokeinterface java/util/function/BiFunction.apply(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+12: iconst_0
+13: nop
+14: checkcast net/minecraft/network/chat/Component
+17: areturn
+
+########## C. InputConstants <clinit> — the keyboard map + UNKNOWN
+*** getKey(Lnet/minecraft/client/input/KeyEvent;)Lcom/mojang/blaze3d/platform/InputConstants$Key;
+--- getKey(Lnet/minecraft/client/input/KeyEvent;)Lcom/mojang/blaze3d/platform/InputConstants$Key;
+0: aload_0
+1: invokevirtual net/minecraft/client/input/KeyEvent.key()I
+4: iconst_m1
+5: if_icmpne -> 19
+8: getstatic com/mojang/blaze3d/platform/InputConstants$Type.SCANCODELcom/mojang/blaze3d/platform/InputConstants$Type;
+11: aload_0
+12: invokevirtual net/minecraft/client/input/KeyEvent.scancode()I
+15: invokevirtual com/mojang/blaze3d/platform/InputConstants$Type.getOrCreate(I)Lcom/mojang/blaze3d/platform/InputConstants$Key;
+18: areturn
+19: getstatic com/mojang/blaze3d/platform/InputConstants$Type.KEYSYMLcom/mojang/blaze3d/platform/InputConstants$Type;
+22: aload_0
+23: invokevirtual net/minecraft/client/input/KeyEvent.key()I
+26: invokevirtual com/mojang/blaze3d/platform/InputConstants$Type.getOrCreate(I)Lcom/mojang/blaze3d/platform/InputConstants$Key;
+29: areturn
+*** getKey(Ljava/lang/String;)Lcom/mojang/blaze3d/platform/InputConstants$Key;
+--- getKey(Ljava/lang/String;)Lcom/mojang/blaze3d/platform/InputConstants$Key;
+0: getstatic com/mojang/blaze3d/platform/InputConstants$Key.NAME_MAPLjava/util/Map;
+3: aload_0
+4: invokeinterface java/util/Map.containsKey(Ljava/lang/Object;)Z
+7: iconst_m1
+8: nop
+9: ifeq -> 25
+12: getstatic com/mojang/blaze3d/platform/InputConstants$Key.NAME_MAPLjava/util/Map;
+15: aload_0
+16: invokeinterface java/util/Map.get(Ljava/lang/Object;)Ljava/lang/Object;
+19: iconst_m1
+20: nop
+21: checkcast com/mojang/blaze3d/platform/InputConstants$Key
+24: areturn
+25: invokestatic com/mojang/blaze3d/platform/InputConstants$Type.values()[Lcom/mojang/blaze3d/platform/InputConstants$Type;
+28: astore_0
+29: aload_1
+30: arraylength
+31: istore_2
+32: iconst_0
+33: istore_3
+34: iload_3
+35: iload_2
+36: if_icmpge -> 104
+39: aload_1
+40: iload_3
+41: aaload
+42: astore astore 4
+44: aload_0
+45: aload aload 4
+47: getfield com/mojang/blaze3d/platform/InputConstants$Type.defaultPrefixLjava/lang/String;
+50: invokevirtual java/lang/String.startsWith(Ljava/lang/String;)Z
+53: ifeq -> 98
+56: aload_0
+57: aload aload 4
+59: getfield com/mojang/blaze3d/platform/InputConstants$Type.defaultPrefixLjava/lang/String;
+62: invokevirtual java/lang/String.length()I
+65: iconst_1
+66: iadd
+67: invokevirtual java/lang/String.substring(I)Ljava/lang/String;
+70: astore astore 5
+72: aload aload 5
+74: invokestatic java/lang/Integer.parseInt(Ljava/lang/String;)I
+77: istore istore 6
+79: aload aload 4
+81: getstatic com/mojang/blaze3d/platform/InputConstants$Type.MOUSELcom/mojang/blaze3d/platform/InputConstants$Type;
+84: if_acmpne -> 90
+87: iinc 6 -1
+90: aload aload 4
+92: iload iload 6
+94: invokevirtual com/mojang/blaze3d/platform/InputConstants$Type.getOrCreate(I)Lcom/mojang/blaze3d/platform/InputConstants$Key;
+97: areturn
+98: iinc 3 1
+101: goto -> 34
+104: new java/lang/IllegalArgumentException
+107: dup
+108: aload_0
+109: invokedynamic indy
+114: invokespecial java/lang/IllegalArgumentException.<init>(Ljava/lang/String;)V
+117: athrow
+*** <clinit>()V
+--- <clinit>()V
+0: getstatic com/mojang/blaze3d/platform/InputConstants$Type.KEYSYMLcom/mojang/blaze3d/platform/InputConstants$Type;
+3: iconst_m1
+4: invokevirtual com/mojang/blaze3d/platform/InputConstants$Type.getOrCreate(I)Lcom/mojang/blaze3d/platform/InputConstants$Key;
+7: putstatic com/mojang/blaze3d/platform/InputConstants.UNKNOWNLcom/mojang/blaze3d/platform/InputConstants$Key;
+10: return
+=== com.mojang.blaze3d.platform.InputConstants utf8 words (needles: ['mouse.', 'scancode.', 'key.keyboard.unknown', 'UNKNOWN'])
+  cp#155: 'UNKNOWN'
+
+########## D. the class 'key.attack' answers (the registration walk)
+HIT: net/minecraft/client/Options.class
+=== net.minecraft.client.Options
+=== net.minecraft.client.Options utf8 words (needles: ['key.attack', 'key.use', 'key.pickItem', 'MOUSE'])
+  cp#1154: 'key.attack'
+  cp#1157: 'key.use'
+  cp#1257: 'MOUSE'
+  cp#1272: 'key.pickItem'
+*** createSoundSliderOptionInstance(Ljava/lang/String;Lnet/minecraft/sounds/SoundSource;)Lnet/minecraft/client/OptionInstance;
+--- createSoundSliderOptionInstance(Ljava/lang/String;Lnet/minecraft/sounds/SoundSource;)Lnet/minecraft/client/OptionInstance;
+0: new net/minecraft/client/OptionInstance
+3: dup
+4: aload_1
+5: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+8: invokedynamic indy
+13: getstatic net/minecraft/client/OptionInstance$UnitDouble.INSTANCELnet/minecraft/client/OptionInstance$UnitDouble;
+16: dconst_1
+17: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+20: aload_0
+21: aload_2
+22: invokedynamic indy
+27: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+30: areturn
+*** <init>(Lnet/minecraft/client/Minecraft;Ljava/io/File;)V
+--- <init>(Lnet/minecraft/client/Minecraft;Ljava/io/File;)V
+0: aload_0
+1: invokespecial java/lang/Object.<init>()V
+4: aload_0
+5: ldc_w ldcw@583
+8: getstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_DARK_MOJANG_BACKGROUNDLnet/minecraft/network/chat/Component;
+11: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+14: iconst_0
+15: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Z)Lnet/minecraft/client/OptionInstance;
+18: putfield net/minecraft/client/Options.darkMojangStudiosBackgroundLnet/minecraft/client/OptionInstance;
+21: aload_0
+22: ldc_w ldcw@597
+25: getstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_HIDE_LIGHTNING_FLASHESLnet/minecraft/network/chat/Component;
+28: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+31: iconst_0
+32: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Z)Lnet/minecraft/client/OptionInstance;
+35: putfield net/minecraft/client/Options.hideLightningFlashLnet/minecraft/client/OptionInstance;
+38: aload_0
+39: ldc_w ldcw@602
+42: getstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_HIDE_SPLASH_TEXTSLnet/minecraft/network/chat/Component;
+45: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+48: iconst_0
+49: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Z)Lnet/minecraft/client/OptionInstance;
+52: putfield net/minecraft/client/Options.hideSplashTextsLnet/minecraft/client/OptionInstance;
+55: aload_0
+56: new net/minecraft/client/OptionInstance
+59: dup
+60: ldc_w ldcw@607
+63: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+66: invokedynamic indy
+71: getstatic net/minecraft/client/OptionInstance$UnitDouble.INSTANCELnet/minecraft/client/OptionInstance$UnitDouble;
+74: ldc2_w double 4602678819172646912
+77: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+80: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+83: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+86: putfield net/minecraft/client/Options.sensitivityLnet/minecraft/client/OptionInstance;
+89: aload_0
+90: iconst_0
+91: putfield net/minecraft/client/Options.serverRenderDistanceI
+94: aload_0
+95: new net/minecraft/client/OptionInstance
+98: dup
+99: ldc_w ldcw@620
+102: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+105: invokedynamic indy
+110: new net/minecraft/client/OptionInstance$IntRange
+113: dup
+114: iconst_2
+115: bipush 20
+117: invokespecial net/minecraft/client/OptionInstance$IntRange.<init>(II)V
+120: invokedynamic indy
+125: invokedynamic indy
+130: iconst_1
+131: invokevirtual net/minecraft/client/OptionInstance$IntRange.xmap(Ljava/util/function/IntFunction;Ljava/util/function/ToIntFunction;Z)Lnet/minecraft/client/OptionInstance$SliderableValueSet;
+134: ldc2_w double 4602678819172646912
+137: ldc2_w double 4617315517961601024
+140: invokestatic com/mojang/serialization/Codec.doubleRange(DD)Lcom/mojang/serialization/Codec;
+143: dconst_1
+144: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+147: aload_0
+148: invokedynamic indy
+153: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Lcom/mojang/serialization/Codec;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+156: putfield net/minecraft/client/Options.entityDistanceScalingLnet/minecraft/client/OptionInstance;
+159: aload_0
+160: new net/minecraft/client/OptionInstance
+163: dup
+164: ldc_w ldcw@653
+167: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+170: invokedynamic indy
+175: new net/minecraft/client/OptionInstance$IntRange
+178: dup
+179: iconst_1
+180: bipush 26
+182: invokespecial net/minecraft/client/OptionInstance$IntRange.<init>(II)V
+185: invokedynamic indy
+190: invokedynamic indy
+195: iconst_1
+196: invokevirtual net/minecraft/client/OptionInstance$IntRange.xmap(Ljava/util/function/IntFunction;Ljava/util/function/ToIntFunction;Z)Lnet/minecraft/client/OptionInstance$SliderableValueSet;
+199: bipush 10
+201: sipush 260
+204: invokestatic com/mojang/serialization/Codec.intRange(II)Lcom/mojang/serialization/Codec;
+207: bipush 120
+209: invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;
+212: invokedynamic indy
+217: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Lcom/mojang/serialization/Codec;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+220: putfield net/minecraft/client/Options.framerateLimitLnet/minecraft/client/OptionInstance;
+223: aload_0
+224: getstatic net/minecraft/client/PreferredGraphicsApi.DEFAULTLnet/minecraft/client/PreferredGraphicsApi;
+227: putfield net/minecraft/client/Options.preferredGraphicsBackendFromStartupLnet/minecraft/client/PreferredGraphicsApi;
+230: aload_0
+231: new net/minecraft/client/OptionInstance
+234: dup
+235: ldc_w ldcw@673
+238: aload_0
+239: invokedynamic indy
+244: invokedynamic indy
+249: new net/minecraft/client/OptionInstance$Enum
+252: dup
+253: invokestatic net/minecraft/client/PreferredGraphicsApi.values()[Lnet/minecraft/client/PreferredGraphicsApi;
+256: invokestatic java/util/List.of([Ljava/lang/Object;)Ljava/util/List;
+259: getstatic net/minecraft/client/PreferredGraphicsApi.CODECLcom/mojang/serialization/Codec;
+262: invokespecial net/minecraft/client/OptionInstance$Enum.<init>(Ljava/util/List;Lcom/mojang/serialization/Codec;)V
+265: getstatic net/minecraft/client/PreferredGraphicsApi.CODECLcom/mojang/serialization/Codec;
+268: getstatic net/minecraft/client/PreferredGraphicsApi.DEFAULTLnet/minecraft/client/PreferredGraphicsApi;
+271: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+274: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Lcom/mojang/serialization/Codec;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+277: putfield net/minecraft/client/Options.preferredGraphicsBackendLnet/minecraft/client/OptionInstance;
+280: aload_0
+281: new net/minecraft/client/OptionInstance
+284: dup
+285: ldc_w ldcw@696
+288: ldc_w ldcw@698
+291: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+294: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+297: invokedynamic indy
+302: new net/minecraft/client/OptionInstance$SliderableEnum
+305: dup
+306: invokestatic net/minecraft/client/GraphicsPreset.values()[Lnet/minecraft/client/GraphicsPreset;
+309: invokestatic java/util/List.of([Ljava/lang/Object;)Ljava/util/List;
+312: getstatic net/minecraft/client/GraphicsPreset.CODECLcom/mojang/serialization/Codec;
+315: invokespecial net/minecraft/client/OptionInstance$SliderableEnum.<init>(Ljava/util/List;Lcom/mojang/serialization/Codec;)V
+318: getstatic net/minecraft/client/GraphicsPreset.CODECLcom/mojang/serialization/Codec;
+321: getstatic net/minecraft/client/GraphicsPreset.FANCYLnet/minecraft/client/GraphicsPreset;
+324: aload_0
+325: invokedynamic indy
+330: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Lcom/mojang/serialization/Codec;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+333: putfield net/minecraft/client/Options.graphicsPresetLnet/minecraft/client/OptionInstance;
+336: aload_0
+337: new net/minecraft/client/OptionInstance
+340: dup
+341: ldc_w ldcw@718
+344: invokedynamic indy
+349: invokedynamic indy
+354: new net/minecraft/client/OptionInstance$Enum
+357: dup
+358: invokestatic net/minecraft/client/InactivityFpsLimit.values()[Lnet/minecraft/client/InactivityFpsLimit;
+361: invokestatic java/util/Arrays.asList([Ljava/lang/Object;)Ljava/util/List;
+364: getstatic net/minecraft/client/InactivityFpsLimit.CODECLcom/mojang/serialization/Codec;
+367: invokespecial net/minecraft/client/OptionInstance$Enum.<init>(Ljava/util/List;Lcom/mojang/serialization/Codec;)V
+370: getstatic net/minecraft/client/InactivityFpsLimit.AFKLnet/minecraft/client/InactivityFpsLimit;
+373: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+376: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+379: putfield net/minecraft/client/Options.inactivityFpsLimitLnet/minecraft/client/OptionInstance;
+382: aload_0
+383: new net/minecraft/client/OptionInstance
+386: dup
+387: ldc_w ldcw@738
+390: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+393: invokedynamic indy
+398: new net/minecraft/client/OptionInstance$Enum
+401: dup
+402: invokestatic net/minecraft/client/CloudStatus.values()[Lnet/minecraft/client/CloudStatus;
+405: invokestatic java/util/Arrays.asList([Ljava/lang/Object;)Ljava/util/List;
+408: getstatic net/minecraft/client/CloudStatus.CODECLcom/mojang/serialization/Codec;
+411: getstatic com/mojang/serialization/Codec.BOOLLcom/mojang/serialization/codecs/PrimitiveCodec;
+414: invokedynamic indy
+419: invokestatic com/mojang/serialization/Codec.withAlternative(Lcom/mojang/serialization/Codec;Lcom/mojang/serialization/Codec;Ljava/util/function/Function;)Lcom/mojang/serialization/Codec;
+422: invokespecial net/minecraft/client/OptionInstance$Enum.<init>(Ljava/util/List;Lcom/mojang/serialization/Codec;)V
+425: getstatic net/minecraft/client/CloudStatus.FANCYLnet/minecraft/client/CloudStatus;
+428: aload_0
+429: invokedynamic indy
+434: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+437: putfield net/minecraft/client/Options.cloudStatusLnet/minecraft/client/OptionInstance;
+440: aload_0
+441: new net/minecraft/client/OptionInstance
+444: dup
+445: ldc_w ldcw@762
+448: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+451: invokedynamic indy
+456: new net/minecraft/client/OptionInstance$IntRange
+459: dup
+460: iconst_2
+461: sipush 128
+464: iconst_1
+465: invokespecial net/minecraft/client/OptionInstance$IntRange.<init>(IIZ)V
+468: sipush 128
+471: invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;
+474: aload_0
+475: invokedynamic indy
+480: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+483: putfield net/minecraft/client/Options.cloudRangeLnet/minecraft/client/OptionInstance;
+486: aload_0
+487: new net/minecraft/client/OptionInstance
+490: dup
+491: ldc_w ldcw@769
+494: getstatic net/minecraft/client/Options.GRAPHICS_TOOLTIP_WEATHER_RADIUSLnet/minecraft/network/chat/Component;
+497: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+500: invokedynamic indy
+505: new net/minecraft/client/OptionInstance$IntRange
+508: dup
+509: iconst_3
+510: bipush 10
+512: iconst_1
+513: invokespecial net/minecraft/client/OptionInstance$IntRange.<init>(IIZ)V
+516: bipush 10
+518: invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;
+521: aload_0
+522: invokedynamic indy
+527: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+530: putfield net/minecraft/client/Options.weatherRadiusLnet/minecraft/client/OptionInstance;
+533: aload_0
+534: ldc_w ldcw@776
+537: getstatic net/minecraft/client/Options.GRAPHICS_TOOLTIP_CUTOUT_LEAVESLnet/minecraft/network/chat/Component;
+540: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+543: iconst_1
+544: aload_0
+545: invokedynamic indy
+550: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;ZLnet/minecraft/client/OptionInstance$ValueUpdateListener;)Lnet/minecraft/client/OptionInstance;
+553: putfield net/minecraft/client/Options.cutoutLeavesLnet/minecraft/client/OptionInstance;
+556: aload_0
+557: ldc_w ldcw@785
+560: getstatic net/minecraft/client/Options.GRAPHICS_TOOLTIP_VIGNETTELnet/minecraft/network/chat/Component;
+563: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+566: iconst_1
+567: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Z)Lnet/minecraft/client/OptionInstance;
+570: putfield net/minecraft/client/Options.vignetteLnet/minecraft/client/OptionInstance;
+573: aload_0
+574: ldc_w ldcw@790
+577: getstatic net/minecraft/client/Options.GRAPHICS_TOOLTIP_IMPROVED_TRANSPARENCYLnet/minecraft/network/chat/Component;
+580: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+583: iconst_0
+584: aload_0
+585: invokedynamic indy
+590: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;ZLnet/minecraft/client/OptionInstance$ValueUpdateListener;)Lnet/minecraft/client/OptionInstance;
+593: putfield net/minecraft/client/Options.improvedTransparencyLnet/minecraft/client/OptionInstance;
+596: aload_0
+597: ldc_w ldcw@796
+600: iconst_1
+601: aload_0
+602: invokedynamic indy
+607: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;ZLnet/minecraft/client/OptionInstance$ValueUpdateListener;)Lnet/minecraft/client/OptionInstance;
+610: putfield net/minecraft/client/Options.ambientOcclusionLnet/minecraft/client/OptionInstance;
+613: aload_0
+614: new net/minecraft/client/OptionInstance
+617: dup
+618: ldc_w ldcw@802
+621: getstatic net/minecraft/client/Options.GRAPHICS_TOOLTIP_CHUNK_FADELnet/minecraft/network/chat/Component;
+624: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+627: invokedynamic indy
+632: new net/minecraft/client/OptionInstance$IntRange
+635: dup
+636: iconst_0
+637: bipush 40
+639: invokespecial net/minecraft/client/OptionInstance$IntRange.<init>(II)V
+642: invokedynamic indy
+647: invokedynamic indy
+652: iconst_1
+653: invokevirtual net/minecraft/client/OptionInstance$IntRange.xmap(Ljava/util/function/IntFunction;Ljava/util/function/ToIntFunction;Z)Lnet/minecraft/client/OptionInstance$SliderableValueSet;
+656: dconst_0
+657: ldc2_w double 4611686018427387904
+660: invokestatic com/mojang/serialization/Codec.doubleRange(DD)Lcom/mojang/serialization/Codec;
+663: ldc2_w double 4604930618986332160
+666: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+669: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+672: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Lcom/mojang/serialization/Codec;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+675: putfield net/minecraft/client/Options.chunkSectionFadeInTimeLnet/minecraft/client/OptionInstance;
+678: aload_0
+679: new net/minecraft/client/OptionInstance
+682: dup
+683: ldc_w ldcw@814
+686: invokedynamic indy
+691: invokedynamic indy
+696: new net/minecraft/client/OptionInstance$Enum
+699: dup
+700: invokestatic net/minecraft/client/PrioritizeChunkUpdates.values()[Lnet/minecraft/client/PrioritizeChunkUpdates;
+703: invokestatic java/util/Arrays.asList([Ljava/lang/Object;)Ljava/util/List;
+706: getstatic net/minecraft/client/PrioritizeChunkUpdates.LEGACY_CODECLcom/mojang/serialization/Codec;
+709: invokespecial net/minecraft/client/OptionInstance$Enum.<init>(Ljava/util/List;Lcom/mojang/serialization/Codec;)V
+712: getstatic net/minecraft/client/PrioritizeChunkUpdates.NONELnet/minecraft/client/PrioritizeChunkUpdates;
+715: aload_0
+716: invokedynamic indy
+721: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+724: putfield net/minecraft/client/Options.prioritizeChunkUpdatesLnet/minecraft/client/OptionInstance;
+727: aload_0
+728: invokestatic com/google/common/collect/Lists.newArrayList()Ljava/util/ArrayList;
+731: putfield net/minecraft/client/Options.resourcePacksLjava/util/List;
+734: aload_0
+735: invokestatic com/google/common/collect/Lists.newArrayList()Ljava/util/ArrayList;
+738: putfield net/minecraft/client/Options.incompatibleResourcePacksLjava/util/List;
+741: aload_0
+742: new net/minecraft/client/OptionInstance
+745: dup
+746: ldc_w ldcw@837
+749: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+752: invokedynamic indy
+757: new net/minecraft/client/OptionInstance$Enum
+760: dup
+761: invokestatic net/minecraft/world/entity/player/ChatVisiblity.values()[Lnet/minecraft/world/entity/player/ChatVisiblity;
+764: invokestatic java/util/Arrays.asList([Ljava/lang/Object;)Ljava/util/List;
+767: getstatic net/minecraft/world/entity/player/ChatVisiblity.LEGACY_CODECLcom/mojang/serialization/Codec;
+770: invokespecial net/minecraft/client/OptionInstance$Enum.<init>(Ljava/util/List;Lcom/mojang/serialization/Codec;)V
+773: getstatic net/minecraft/world/entity/player/ChatVisiblity.FULLLnet/minecraft/world/entity/player/ChatVisiblity;
+776: invokedynamic indy
+781: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+784: putfield net/minecraft/client/Options.chatVisibilityLnet/minecraft/client/OptionInstance;
+787: aload_0
+788: new net/minecraft/client/OptionInstance
+791: dup
+792: ldc_w ldcw@851
+795: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+798: invokedynamic indy
+803: getstatic net/minecraft/client/OptionInstance$UnitDouble.INSTANCELnet/minecraft/client/OptionInstance$UnitDouble;
+806: dconst_1
+807: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+810: invokedynamic indy
+815: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+818: putfield net/minecraft/client/Options.chatOpacityLnet/minecraft/client/OptionInstance;
+821: aload_0
+822: new net/minecraft/client/OptionInstance
+825: dup
+826: ldc_w ldcw@855
+829: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+832: invokedynamic indy
+837: getstatic net/minecraft/client/OptionInstance$UnitDouble.INSTANCELnet/minecraft/client/OptionInstance$UnitDouble;
+840: dconst_0
+841: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+844: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+847: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+850: putfield net/minecraft/client/Options.chatLineSpacingLnet/minecraft/client/OptionInstance;
+853: aload_0
+854: new net/minecraft/client/OptionInstance
+857: dup
+858: ldc_w ldcw@857
+861: getstatic net/minecraft/client/Options.MENU_BACKGROUND_BLURRINESS_TOOLTIPLnet/minecraft/network/chat/Component;
+864: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+867: invokedynamic indy
+872: new net/minecraft/client/OptionInstance$IntRange
+875: dup
+876: iconst_0
+877: bipush 10
+879: invokespecial net/minecraft/client/OptionInstance$IntRange.<init>(II)V
+882: iconst_5
+883: invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;
+886: aload_0
+887: invokedynamic indy
+892: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+895: putfield net/minecraft/client/Options.menuBackgroundBlurrinessLnet/minecraft/client/OptionInstance;
+898: aload_0
+899: new net/minecraft/client/OptionInstance
+902: dup
+903: ldc_w ldcw@864
+906: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+909: invokedynamic indy
+914: getstatic net/minecraft/client/OptionInstance$UnitDouble.INSTANCELnet/minecraft/client/OptionInstance$UnitDouble;
+917: ldc2_w double 4602678819172646912
+920: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+923: invokedynamic indy
+928: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+931: putfield net/minecraft/client/Options.textBackgroundOpacityLnet/minecraft/client/OptionInstance;
+934: aload_0
+935: new net/minecraft/client/OptionInstance
+938: dup
+939: ldc_w ldcw@867
+942: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+945: invokedynamic indy
+950: getstatic net/minecraft/client/OptionInstance$UnitDouble.INSTANCELnet/minecraft/client/OptionInstance$UnitDouble;
+953: dconst_1
+954: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+957: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+960: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+963: putfield net/minecraft/client/Options.panoramaSpeedLnet/minecraft/client/OptionInstance;
+966: aload_0
+967: ldc_w ldcw@869
+970: getstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_CONTRAST_MODELnet/minecraft/network/chat/Component;
+973: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+976: iconst_0
+977: aload_0
+978: invokedynamic indy
+983: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;ZLnet/minecraft/client/OptionInstance$ValueUpdateListener;)Lnet/minecraft/client/OptionInstance;
+986: putfield net/minecraft/client/Options.highContrastLnet/minecraft/client/OptionInstance;
+989: aload_0
+990: ldc_w ldcw@875
+993: getstatic net/minecraft/client/Options.HIGH_CONTRAST_BLOCK_OUTLINE_TOOLTIPLnet/minecraft/network/chat/Component;
+996: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+999: iconst_0
+1000: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Z)Lnet/minecraft/client/OptionInstance;
+1003: putfield net/minecraft/client/Options.highContrastBlockOutlineLnet/minecraft/client/OptionInstance;
+1006: aload_0
+1007: ldc_w ldcw@880
+1010: getstatic net/minecraft/client/input/InputQuirks.REPLACE_CTRL_KEY_WITH_CMD_KEYZ
+1013: ifeq -> 1025
+1016: ldc_w ldcw@887
+1019: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+1022: goto -> 1031
+1025: ldc_w ldcw@889
+1028: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+1031: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+1034: iconst_1
+1035: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Z)Lnet/minecraft/client/OptionInstance;
+1038: putfield net/minecraft/client/Options.narratorHotkeyLnet/minecraft/client/OptionInstance;
+1041: aload_0
+1042: iconst_1
+1043: putfield net/minecraft/client/Options.pauseOnLostFocusZ
+1046: aload_0
+1047: ldc_w ldcw@894
+1050: invokestatic java/util/EnumSet.allOf(Ljava/lang/Class;)Ljava/util/EnumSet;
+1053: putfield net/minecraft/client/Options.modelPartsLjava/util/Set;
+1056: aload_0
+1057: new net/minecraft/client/OptionInstance
+1060: dup
+1061: ldc_w ldcw@906
+1064: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+1067: invokedynamic indy
+1072: new net/minecraft/client/OptionInstance$Enum
+1075: dup
+1076: invokestatic net/minecraft/world/entity/HumanoidArm.values()[Lnet/minecraft/world/entity/HumanoidArm;
+1079: invokestatic java/util/Arrays.asList([Ljava/lang/Object;)Ljava/util/List;
+1082: getstatic net/minecraft/world/entity/HumanoidArm.CODECLcom/mojang/serialization/Codec;
+1085: invokespecial net/minecraft/client/OptionInstance$Enum.<init>(Ljava/util/List;Lcom/mojang/serialization/Codec;)V
+1088: getstatic net/minecraft/world/entity/HumanoidArm.RIGHTLnet/minecraft/world/entity/HumanoidArm;
+1091: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+1094: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+1097: putfield net/minecraft/client/Options.mainHandLnet/minecraft/client/OptionInstance;
+1100: aload_0
+1101: new net/minecraft/client/OptionInstance
+1104: dup
+1105: ldc_w ldcw@919
+1108: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+1111: invokedynamic indy
+1116: getstatic net/minecraft/client/OptionInstance$UnitDouble.INSTANCELnet/minecraft/client/OptionInstance$UnitDouble;
+1119: dconst_1
+1120: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+1123: invokedynamic indy
+1128: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+1131: putfield net/minecraft/client/Options.chatScaleLnet/minecraft/client/OptionInstance;
+1134: aload_0
+1135: new net/minecraft/client/OptionInstance
+1138: dup
+1139: ldc_w ldcw@923
+1142: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+1145: invokedynamic indy
+1150: getstatic net/minecraft/client/OptionInstance$UnitDouble.INSTANCELnet/minecraft/client/OptionInstance$UnitDouble;
+1153: dconst_1
+1154: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+1157: invokedynamic indy
+1162: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+1165: putfield net/minecraft/client/Options.chatWidthLnet/minecraft/client/OptionInstance;
+1168: aload_0
+1169: new net/minecraft/client/OptionInstance
+1172: dup
+1173: ldc_w ldcw@927
+1176: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+1179: invokedynamic indy
+1184: getstatic net/minecraft/client/OptionInstance$UnitDouble.INSTANCELnet/minecraft/client/OptionInstance$UnitDouble;
+1187: invokestatic net/minecraft/client/gui/components/ChatComponent.defaultUnfocusedPct()D
+1190: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+1193: invokedynamic indy
+1198: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+1201: putfield net/minecraft/client/Options.chatHeightUnfocusedLnet/minecraft/client/OptionInstance;
+1204: aload_0
+1205: new net/minecraft/client/OptionInstance
+1208: dup
+1209: ldc_w ldcw@937
+1212: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+1215: invokedynamic indy
+1220: getstatic net/minecraft/client/OptionInstance$UnitDouble.INSTANCELnet/minecraft/client/OptionInstance$UnitDouble;
+1223: dconst_1
+1224: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+1227: invokedynamic indy
+1232: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+1235: putfield net/minecraft/client/Options.chatHeightFocusedLnet/minecraft/client/OptionInstance;
+1238: aload_0
+1239: new net/minecraft/client/OptionInstance
+1242: dup
+1243: ldc_w ldcw@941
+1246: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+1249: invokedynamic indy
+1254: new net/minecraft/client/OptionInstance$IntRange
+1257: dup
+1258: iconst_0
+1259: bipush 60
+1261: invokespecial net/minecraft/client/OptionInstance$IntRange.<init>(II)V
+1264: invokedynamic indy
+1269: invokedynamic indy
+1274: iconst_1
+1275: invokevirtual net/minecraft/client/OptionInstance$IntRange.xmap(Ljava/util/function/IntFunction;Ljava/util/function/ToIntFunction;Z)Lnet/minecraft/client/OptionInstance$SliderableValueSet;
+1278: dconst_0
+1279: ldc2_w double 4618441417868443648
+1282: invokestatic com/mojang/serialization/Codec.doubleRange(DD)Lcom/mojang/serialization/Codec;
+1285: dconst_0
+1286: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+1289: invokedynamic indy
+1294: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Lcom/mojang/serialization/Codec;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+1297: putfield net/minecraft/client/Options.chatDelayLnet/minecraft/client/OptionInstance;
+1300: aload_0
+1301: new net/minecraft/client/OptionInstance
+1304: dup
+1305: ldc_w ldcw@949
+1308: getstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_NOTIFICATION_DISPLAY_TIMELnet/minecraft/network/chat/Component;
+1311: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+1314: invokedynamic indy
+1319: new net/minecraft/client/OptionInstance$IntRange
+1322: dup
+1323: iconst_5
+1324: bipush 100
+1326: invokespecial net/minecraft/client/OptionInstance$IntRange.<init>(II)V
+1329: invokedynamic indy
+1334: invokedynamic indy
+1339: iconst_1
+1340: invokevirtual net/minecraft/client/OptionInstance$IntRange.xmap(Ljava/util/function/IntFunction;Ljava/util/function/ToIntFunction;Z)Lnet/minecraft/client/OptionInstance$SliderableValueSet;
+1343: ldc2_w double 4602678819172646912
+1346: ldc2_w double 4621819117588971520
+1349: invokestatic com/mojang/serialization/Codec.doubleRange(DD)Lcom/mojang/serialization/Codec;
+1352: dconst_1
+1353: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+1356: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+1359: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Lcom/mojang/serialization/Codec;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+1362: putfield net/minecraft/client/Options.notificationDisplayTimeLnet/minecraft/client/OptionInstance;
+1365: aload_0
+1366: new net/minecraft/client/OptionInstance
+1369: dup
+1370: ldc_w ldcw@957
+1373: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+1376: invokedynamic indy
+1381: new net/minecraft/client/OptionInstance$IntRange
+1384: dup
+1385: iconst_0
+1386: iconst_4
+1387: invokespecial net/minecraft/client/OptionInstance$IntRange.<init>(II)V
+1390: iconst_4
+1391: invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;
+1394: aload_0
+1395: invokedynamic indy
+1400: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+1403: putfield net/minecraft/client/Options.mipmapLevelsLnet/minecraft/client/OptionInstance;
+1406: aload_0
+1407: new net/minecraft/client/OptionInstance
+1410: dup
+1411: ldc_w ldcw@961
+1414: getstatic net/minecraft/client/Options.GRAPHICS_TOOLTIP_ANISOTROPIC_FILTERINGLnet/minecraft/network/chat/Component;
+1417: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+1420: invokedynamic indy
+1425: new net/minecraft/client/OptionInstance$IntRange
+1428: dup
+1429: iconst_1
+1430: iconst_3
+1431: invokespecial net/minecraft/client/OptionInstance$IntRange.<init>(II)V
+1434: iconst_2
+1435: invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;
+1438: aload_0
+1439: invokedynamic indy
+1444: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+1447: putfield net/minecraft/client/Options.maxAnisotropyBitLnet/minecraft/client/OptionInstance;
+1450: aload_0
+1451: new net/minecraft/client/OptionInstance
+1454: dup
+1455: ldc_w ldcw@968
+1458: invokedynamic indy
+1463: invokedynamic indy
+1468: new net/minecraft/client/OptionInstance$Enum
+1471: dup
+1472: invokestatic net/minecraft/client/TextureFilteringMethod.values()[Lnet/minecraft/client/TextureFilteringMethod;
+1475: invokestatic java/util/Arrays.asList([Ljava/lang/Object;)Ljava/util/List;
+1478: getstatic net/minecraft/client/TextureFilteringMethod.LEGACY_CODECLcom/mojang/serialization/Codec;
+1481: invokespecial net/minecraft/client/OptionInstance$Enum.<init>(Ljava/util/List;Lcom/mojang/serialization/Codec;)V
+1484: getstatic net/minecraft/client/TextureFilteringMethod.NONELnet/minecraft/client/TextureFilteringMethod;
+1487: aload_0
+1488: invokedynamic indy
+1493: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+1496: putfield net/minecraft/client/Options.textureFilteringLnet/minecraft/client/OptionInstance;
+1499: aload_0
+1500: iconst_1
+1501: putfield net/minecraft/client/Options.useNativeTransportZ
+1504: aload_0
+1505: new net/minecraft/client/OptionInstance
+1508: dup
+1509: ldc_w ldcw@985
+1512: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+1515: invokedynamic indy
+1520: new net/minecraft/client/OptionInstance$Enum
+1523: dup
+1524: invokestatic net/minecraft/client/AttackIndicatorStatus.values()[Lnet/minecraft/client/AttackIndicatorStatus;
+1527: invokestatic java/util/Arrays.asList([Ljava/lang/Object;)Ljava/util/List;
+1530: getstatic net/minecraft/client/AttackIndicatorStatus.LEGACY_CODECLcom/mojang/serialization/Codec;
+1533: invokespecial net/minecraft/client/OptionInstance$Enum.<init>(Ljava/util/List;Lcom/mojang/serialization/Codec;)V
+1536: getstatic net/minecraft/client/AttackIndicatorStatus.CROSSHAIRLnet/minecraft/client/AttackIndicatorStatus;
+1539: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+1542: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+1545: putfield net/minecraft/client/Options.attackIndicatorLnet/minecraft/client/OptionInstance;
+1548: aload_0
+1549: getstatic net/minecraft/client/tutorial/TutorialSteps.MOVEMENTLnet/minecraft/client/tutorial/TutorialSteps;
+1552: putfield net/minecraft/client/Options.tutorialStepLnet/minecraft/client/tutorial/TutorialSteps;
+1555: aload_0
+1556: iconst_0
+1557: putfield net/minecraft/client/Options.joinedFirstServerZ
+1560: aload_0
+1561: new net/minecraft/client/OptionInstance
+1564: dup
+1565: ldc_w ldcw@1010
+1568: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+1571: invokedynamic indy
+1576: new net/minecraft/client/OptionInstance$IntRange
+1579: dup
+1580: iconst_0
+1581: bipush 7
+1583: iconst_0
+1584: invokespecial net/minecraft/client/OptionInstance$IntRange.<init>(IIZ)V
+1587: iconst_2
+1588: invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;
+1591: aload_0
+1592: invokedynamic indy
+1597: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+1600: putfield net/minecraft/client/Options.biomeBlendRadiusLnet/minecraft/client/OptionInstance;
+1603: aload_0
+1604: new net/minecraft/client/OptionInstance
+1607: dup
+1608: ldc_w ldcw@1014
+1611: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+1614: invokedynamic indy
+1619: new net/minecraft/client/OptionInstance$IntRange
+1622: dup
+1623: sipush -200
+1626: bipush 100
+1628: invokespecial net/minecraft/client/OptionInstance$IntRange.<init>(II)V
+1631: invokedynamic indy
+1636: invokedynamic indy
+1641: iconst_0
+1642: invokevirtual net/minecraft/client/OptionInstance$IntRange.xmap(Ljava/util/function/IntFunction;Ljava/util/function/ToIntFunction;Z)Lnet/minecraft/client/OptionInstance$SliderableValueSet;
+1645: sipush -200
+1648: invokestatic net/minecraft/client/Options.logMouse(I)D
+1651: bipush 100
+1653: invokestatic net/minecraft/client/Options.logMouse(I)D
+1656: invokestatic com/mojang/serialization/Codec.doubleRange(DD)Lcom/mojang/serialization/Codec;
+1659: iconst_0
+1660: invokestatic net/minecraft/client/Options.logMouse(I)D
+1663: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+1666: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+1669: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Lcom/mojang/serialization/Codec;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+1672: putfield net/minecraft/client/Options.mouseWheelSensitivityLnet/minecraft/client/OptionInstance;
+1675: aload_0
+1676: ldc_w ldcw@1023
+1679: iconst_1
+1680: invokedynamic indy
+1685: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;ZLnet/minecraft/client/OptionInstance$ValueUpdateListener;)Lnet/minecraft/client/OptionInstance;
+1688: putfield net/minecraft/client/Options.rawMouseInputLnet/minecraft/client/OptionInstance;
+1691: aload_0
+1692: ldc_w ldcw@1026
+1695: getstatic net/minecraft/client/Options.ALLOW_CURSOR_CHANGES_TOOLTIPLnet/minecraft/network/chat/Component;
+1698: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+1701: iconst_1
+1702: invokedynamic indy
+1707: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;ZLnet/minecraft/client/OptionInstance$ValueUpdateListener;)Lnet/minecraft/client/OptionInstance;
+1710: putfield net/minecraft/client/Options.allowCursorChangesLnet/minecraft/client/OptionInstance;
+1713: aload_0
+1714: iconst_1
+1715: putfield net/minecraft/client/Options.glDebugVerbosityI
+1718: aload_0
+1719: ldc_w ldcw@1035
+1722: iconst_0
+1723: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Z)Lnet/minecraft/client/OptionInstance;
+1726: putfield net/minecraft/client/Options.autoJumpLnet/minecraft/client/OptionInstance;
+1729: aload_0
+1730: ldc_w ldcw@1040
+1733: getstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_ROTATE_WITH_MINECARTLnet/minecraft/network/chat/Component;
+1736: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+1739: iconst_0
+1740: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Z)Lnet/minecraft/client/OptionInstance;
+1743: putfield net/minecraft/client/Options.rotateWithMinecartLnet/minecraft/client/OptionInstance;
+1746: aload_0
+1747: ldc_w ldcw@1045
+1750: iconst_0
+1751: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Z)Lnet/minecraft/client/OptionInstance;
+1754: putfield net/minecraft/client/Options.operatorItemsTabLnet/minecraft/client/OptionInstance;
+1757: aload_0
+1758: ldc_w ldcw@1047
+1761: iconst_1
+1762: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Z)Lnet/minecraft/client/OptionInstance;
+1765: putfield net/minecraft/client/Options.autoSuggestionsLnet/minecraft/client/OptionInstance;
+1768: aload_0
+1769: ldc_w ldcw@1049
+1772: iconst_1
+1773: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Z)Lnet/minecraft/client/OptionInstance;
+1776: putfield net/minecraft/client/Options.chatColorsLnet/minecraft/client/OptionInstance;
+1779: aload_0
+1780: ldc_w ldcw@1051
+1783: iconst_1
+1784: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Z)Lnet/minecraft/client/OptionInstance;
+1787: putfield net/minecraft/client/Options.chatLinksLnet/minecraft/client/OptionInstance;
+1790: aload_0
+1791: ldc_w ldcw@1053
+1794: iconst_1
+1795: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Z)Lnet/minecraft/client/OptionInstance;
+1798: putfield net/minecraft/client/Options.chatLinksPromptLnet/minecraft/client/OptionInstance;
+1801: aload_0
+1802: ldc_w ldcw@1055
+1805: iconst_1
+1806: invokedynamic indy
+1811: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;ZLnet/minecraft/client/OptionInstance$ValueUpdateListener;)Lnet/minecraft/client/OptionInstance;
+1814: putfield net/minecraft/client/Options.enableVsyncLnet/minecraft/client/OptionInstance;
+1817: aload_0
+1818: ldc_w ldcw@1058
+1821: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+1824: iconst_1
+1825: aload_0
+1826: invokedynamic indy
+1831: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;ZLnet/minecraft/client/OptionInstance$ValueUpdateListener;)Lnet/minecraft/client/OptionInstance;
+1834: putfield net/minecraft/client/Options.entityShadowsLnet/minecraft/client/OptionInstance;
+1837: aload_0
+1838: ldc_w ldcw@1061
+1841: iconst_0
+1842: invokedynamic indy
+1847: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;ZLnet/minecraft/client/OptionInstance$ValueUpdateListener;)Lnet/minecraft/client/OptionInstance;
+1850: putfield net/minecraft/client/Options.forceUnicodeFontLnet/minecraft/client/OptionInstance;
+1853: aload_0
+1854: ldc_w ldcw@1064
+1857: ldc_w ldcw@1066
+1860: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+1863: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+1866: invokestatic net/minecraft/client/Options.japaneseGlyphVariantsDefault()Z
+1869: invokedynamic indy
+1874: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;ZLnet/minecraft/client/OptionInstance$ValueUpdateListener;)Lnet/minecraft/client/OptionInstance;
+1877: putfield net/minecraft/client/Options.japaneseGlyphVariantsLnet/minecraft/client/OptionInstance;
+1880: aload_0
+1881: ldc_w ldcw@1072
+1884: iconst_0
+1885: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Z)Lnet/minecraft/client/OptionInstance;
+1888: putfield net/minecraft/client/Options.invertXMouseLnet/minecraft/client/OptionInstance;
+1891: aload_0
+1892: ldc_w ldcw@1074
+1895: iconst_0
+1896: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Z)Lnet/minecraft/client/OptionInstance;
+1899: putfield net/minecraft/client/Options.invertYMouseLnet/minecraft/client/OptionInstance;
+1902: aload_0
+1903: ldc_w ldcw@1076
+1906: iconst_0
+1907: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Z)Lnet/minecraft/client/OptionInstance;
+1910: putfield net/minecraft/client/Options.discreteMouseScrollLnet/minecraft/client/OptionInstance;
+1913: aload_0
+1914: ldc_w ldcw@1078
+1917: getstatic net/minecraft/client/Options.REALMS_NOTIFICATIONS_TOOLTIPLnet/minecraft/network/chat/Component;
+1920: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+1923: iconst_1
+1924: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Z)Lnet/minecraft/client/OptionInstance;
+1927: putfield net/minecraft/client/Options.realmsNotificationsLnet/minecraft/client/OptionInstance;
+1930: aload_0
+1931: ldc_w ldcw@1083
+1934: getstatic net/minecraft/client/Options.ALLOW_SERVER_LISTING_TOOLTIPLnet/minecraft/network/chat/Component;
+1937: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+1940: iconst_1
+1941: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+1944: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;ZLnet/minecraft/client/OptionInstance$ValueUpdateListener;)Lnet/minecraft/client/OptionInstance;
+1947: putfield net/minecraft/client/Options.allowServerListingLnet/minecraft/client/OptionInstance;
+1950: aload_0
+1951: ldc_w ldcw@1088
+1954: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+1957: iconst_0
+1958: invokedynamic indy
+1963: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;ZLnet/minecraft/client/OptionInstance$ValueUpdateListener;)Lnet/minecraft/client/OptionInstance;
+1966: putfield net/minecraft/client/Options.reducedDebugInfoLnet/minecraft/client/OptionInstance;
+1969: aload_0
+1970: ldc_w ldcw@1091
+1973: getstatic net/minecraft/client/Options.IN_GAME_NOTIFICATION_TOOLTIPLnet/minecraft/network/chat/Component;
+1976: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+1979: iconst_0
+1980: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Z)Lnet/minecraft/client/OptionInstance;
+1983: putfield net/minecraft/client/Options.inGameNotificationLnet/minecraft/client/OptionInstance;
+1986: aload_0
+1987: new net/minecraft/client/OptionInstance
+1990: dup
+1991: ldc_w ldcw@1098
+1994: invokedynamic indy
+1999: invokedynamic indy
+2004: new net/minecraft/client/OptionInstance$Enum
+2007: dup
+2008: invokestatic net/minecraft/client/PresenceSharing.values()[Lnet/minecraft/client/PresenceSharing;
+2011: invokestatic java/util/List.of([Ljava/lang/Object;)Ljava/util/List;
+2014: getstatic net/minecraft/client/PresenceSharing.CODECLcom/mojang/serialization/Codec;
+2017: invokespecial net/minecraft/client/OptionInstance$Enum.<init>(Ljava/util/List;Lcom/mojang/serialization/Codec;)V
+2020: getstatic net/minecraft/client/PresenceSharing.CODECLcom/mojang/serialization/Codec;
+2023: getstatic net/minecraft/client/PresenceSharing.ALLLnet/minecraft/client/PresenceSharing;
+2026: invokedynamic indy
+2031: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Lcom/mojang/serialization/Codec;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+2034: putfield net/minecraft/client/Options.sharePresenceLnet/minecraft/client/OptionInstance;
+2037: aload_0
+2038: ldc_w ldcw@407
+2041: aload_0
+2042: invokedynamic indy
+2047: invokestatic net/minecraft/util/Util.makeEnumMap(Ljava/lang/Class;Ljava/util/function/Function;)Ljava/util/Map;
+2050: putfield net/minecraft/client/Options.soundSourceVolumesLjava/util/Map;
+2053: aload_0
+2054: ldc_w ldcw@1120
+2057: getstatic net/minecraft/client/Options.CLOSED_CAPTIONS_TOOLTIPLnet/minecraft/network/chat/Component;
+2060: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+2063: iconst_0
+2064: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Z)Lnet/minecraft/client/OptionInstance;
+2067: putfield net/minecraft/client/Options.showSubtitlesLnet/minecraft/client/OptionInstance;
+2070: aload_0
+2071: ldc_w ldcw@1125
+2074: invokedynamic indy
+2079: iconst_0
+2080: invokedynamic indy
+2085: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;ZLnet/minecraft/client/OptionInstance$ValueUpdateListener;)Lnet/minecraft/client/OptionInstance;
+2088: putfield net/minecraft/client/Options.directionalAudioLnet/minecraft/client/OptionInstance;
+2091: aload_0
+2092: new net/minecraft/client/OptionInstance
+2095: dup
+2096: ldc_w ldcw@1129
+2099: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+2102: invokedynamic indy
+2107: getstatic net/minecraft/client/OptionInstance.BOOLEAN_VALUESLnet/minecraft/client/OptionInstance$Enum;
+2110: iconst_1
+2111: invokestatic java/lang/Boolean.valueOf(Z)Ljava/lang/Boolean;
+2114: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+2117: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+2120: putfield net/minecraft/client/Options.backgroundForChatOnlyLnet/minecraft/client/OptionInstance;
+2123: aload_0
+2124: ldc_w ldcw@1139
+2127: iconst_0
+2128: aload_0
+2129: invokedynamic indy
+2134: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;ZLnet/minecraft/client/OptionInstance$ValueUpdateListener;)Lnet/minecraft/client/OptionInstance;
+2137: putfield net/minecraft/client/Options.fullscreenLnet/minecraft/client/OptionInstance;
+2140: aload_0
+2141: ldc_w ldcw@1142
+2144: aload_0
+2145: invokedynamic indy
+2150: iconst_0
+2151: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Z)Lnet/minecraft/client/OptionInstance;
+2154: putfield net/minecraft/client/Options.exclusiveFullscreenLnet/minecraft/client/OptionInstance;
+2157: aload_0
+2158: ldc_w ldcw@1145
+2161: iconst_1
+2162: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Z)Lnet/minecraft/client/OptionInstance;
+2165: putfield net/minecraft/client/Options.bobViewLnet/minecraft/client/OptionInstance;
+2168: aload_0
+2169: new net/minecraft/client/OptionInstance
+2172: dup
+2173: ldc_w ldcw@1147
+2176: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+2179: invokedynamic indy
+2184: getstatic net/minecraft/client/OptionInstance.BOOLEAN_VALUESLnet/minecraft/client/OptionInstance$Enum;
+2187: iconst_0
+2188: invokestatic java/lang/Boolean.valueOf(Z)Ljava/lang/Boolean;
+2191: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+2194: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+2197: putfield net/minecraft/client/Options.toggleCrouchLnet/minecraft/client/OptionInstance;
+2200: aload_0
+2201: new net/minecraft/client/OptionInstance
+2204: dup
+2205: ldc_w ldcw@1150
+2208: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+2211: invokedynamic indy
+2216: getstatic net/minecraft/client/OptionInstance.BOOLEAN_VALUESLnet/minecraft/client/OptionInstance$Enum;
+2219: iconst_0
+2220: invokestatic java/lang/Boolean.valueOf(Z)Ljava/lang/Boolean;
+2223: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+2226: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+2229: putfield net/minecraft/client/Options.toggleSprintLnet/minecraft/client/OptionInstance;
+2232: aload_0
+2233: new net/minecraft/client/OptionInstance
+2236: dup
+2237: ldc_w ldcw@1153
+2240: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+2243: invokedynamic indy
+2248: getstatic net/minecraft/client/OptionInstance.BOOLEAN_VALUESLnet/minecraft/client/OptionInstance$Enum;
+2251: iconst_0
+2252: invokestatic java/lang/Boolean.valueOf(Z)Ljava/lang/Boolean;
+2255: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+2258: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+2261: putfield net/minecraft/client/Options.toggleAttackLnet/minecraft/client/OptionInstance;
+2264: aload_0
+2265: new net/minecraft/client/OptionInstance
+2268: dup
+2269: ldc_w ldcw@1156
+2272: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+2275: invokedynamic indy
+2280: getstatic net/minecraft/client/OptionInstance.BOOLEAN_VALUESLnet/minecraft/client/OptionInstance$Enum;
+2283: iconst_0
+2284: invokestatic java/lang/Boolean.valueOf(Z)Ljava/lang/Boolean;
+2287: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+2290: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+2293: putfield net/minecraft/client/Options.toggleUseLnet/minecraft/client/OptionInstance;
+2296: aload_0
+2297: new net/minecraft/client/OptionInstance
+2300: dup
+2301: ldc_w ldcw@1159
+2304: getstatic net/minecraft/client/Options.SPRINT_WINDOW_TOOLTIPLnet/minecraft/network/chat/Component;
+2307: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+2310: invokedynamic indy
+2315: new net/minecraft/client/OptionInstance$IntRange
+2318: dup
+2319: iconst_0
+2320: bipush 10
+2322: invokespecial net/minecraft/client/OptionInstance$IntRange.<init>(II)V
+2325: bipush 7
+2327: invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;
+2330: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+2333: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+2336: putfield net/minecraft/client/Options.sprintWindowLnet/minecraft/client/OptionInstance;
+2339: aload_0
+2340: ldc_w ldcw@1165
+2343: getstatic net/minecraft/client/Options.CHAT_TOOLTIP_HIDE_MATCHED_NAMESLnet/minecraft/network/chat/Component;
+2346: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+2349: iconst_1
+2350: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Z)Lnet/minecraft/client/OptionInstance;
+2353: putfield net/minecraft/client/Options.hideMatchedNamesLnet/minecraft/client/OptionInstance;
+2356: aload_0
+2357: ldc_w ldcw@1170
+2360: iconst_1
+2361: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Z)Lnet/minecraft/client/OptionInstance;
+2364: putfield net/minecraft/client/Options.showAutosaveIndicatorLnet/minecraft/client/OptionInstance;
+2367: aload_0
+2368: ldc_w ldcw@1172
+2371: getstatic net/minecraft/client/Options.CHAT_TOOLTIP_ONLY_SHOW_SECURELnet/minecraft/network/chat/Component;
+2374: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+2377: iconst_0
+2378: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Z)Lnet/minecraft/client/OptionInstance;
+2381: putfield net/minecraft/client/Options.onlyShowSecureChatLnet/minecraft/client/OptionInstance;
+2384: aload_0
+2385: ldc_w ldcw@1177
+2388: getstatic net/minecraft/client/Options.CHAT_TOOLTIP_SAVE_DRAFTSLnet/minecraft/network/chat/Component;
+2391: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+2394: iconst_0
+2395: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Z)Lnet/minecraft/client/OptionInstance;
+2398: putfield net/minecraft/client/Options.saveChatDraftsLnet/minecraft/client/OptionInstance;
+2401: aload_0
+2402: new net/minecraft/client/KeyMapping
+2405: dup
+2406: ldc_w ldcw@1184
+2409: bipush 87
+2411: getstatic net/minecraft/client/KeyMapping$Category.MOVEMENTLnet/minecraft/client/KeyMapping$Category;
+2414: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+2417: putfield net/minecraft/client/Options.keyUpLnet/minecraft/client/KeyMapping;
+2420: aload_0
+2421: new net/minecraft/client/KeyMapping
+2424: dup
+2425: ldc_w ldcw@1200
+2428: bipush 65
+2430: getstatic net/minecraft/client/KeyMapping$Category.MOVEMENTLnet/minecraft/client/KeyMapping$Category;
+2433: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+2436: putfield net/minecraft/client/Options.keyLeftLnet/minecraft/client/KeyMapping;
+2439: aload_0
+2440: new net/minecraft/client/KeyMapping
+2443: dup
+2444: ldc_w ldcw@1205
+2447: bipush 83
+2449: getstatic net/minecraft/client/KeyMapping$Category.MOVEMENTLnet/minecraft/client/KeyMapping$Category;
+2452: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+2455: putfield net/minecraft/client/Options.keyDownLnet/minecraft/client/KeyMapping;
+2458: aload_0
+2459: new net/minecraft/client/KeyMapping
+2462: dup
+2463: ldc_w ldcw@1210
+2466: bipush 68
+2468: getstatic net/minecraft/client/KeyMapping$Category.MOVEMENTLnet/minecraft/client/KeyMapping$Category;
+2471: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+2474: putfield net/minecraft/client/Options.keyRightLnet/minecraft/client/KeyMapping;
+2477: aload_0
+2478: new net/minecraft/client/KeyMapping
+2481: dup
+2482: ldc_w ldcw@1215
+2485: bipush 32
+2487: getstatic net/minecraft/client/KeyMapping$Category.MOVEMENTLnet/minecraft/client/KeyMapping$Category;
+2490: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+2493: putfield net/minecraft/client/Options.keyJumpLnet/minecraft/client/KeyMapping;
+2496: aload_0
+2497: new net/minecraft/client/ToggleKeyMapping
+2500: dup
+2501: ldc_w ldcw@1147
+2504: sipush 340
+2507: getstatic net/minecraft/client/KeyMapping$Category.MOVEMENTLnet/minecraft/client/KeyMapping$Category;
+2510: aload_0
+2511: getfield net/minecraft/client/Options.toggleCrouchLnet/minecraft/client/OptionInstance;
+2514: dup
+2515: invokestatic java/util/Objects.requireNonNull(Ljava/lang/Object;)Ljava/lang/Object;
+2518: pop
+2519: invokedynamic indy
+2524: iconst_1
+2525: invokespecial net/minecraft/client/ToggleKeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;Ljava/util/function/BooleanSupplier;Z)V
+2528: putfield net/minecraft/client/Options.keyShiftLnet/minecraft/client/KeyMapping;
+2531: aload_0
+2532: new net/minecraft/client/ToggleKeyMapping
+2535: dup
+2536: ldc_w ldcw@1150
+2539: sipush 341
+2542: getstatic net/minecraft/client/KeyMapping$Category.MOVEMENTLnet/minecraft/client/KeyMapping$Category;
+2545: aload_0
+2546: getfield net/minecraft/client/Options.toggleSprintLnet/minecraft/client/OptionInstance;
+2549: dup
+2550: invokestatic java/util/Objects.requireNonNull(Ljava/lang/Object;)Ljava/lang/Object;
+2553: pop
+2554: invokedynamic indy
+2559: iconst_1
+2560: invokespecial net/minecraft/client/ToggleKeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;Ljava/util/function/BooleanSupplier;Z)V
+2563: putfield net/minecraft/client/Options.keySprintLnet/minecraft/client/KeyMapping;
+2566: aload_0
+2567: new net/minecraft/client/KeyMapping
+2570: dup
+2571: ldc_w ldcw@1235
+2574: bipush 69
+2576: getstatic net/minecraft/client/KeyMapping$Category.INVENTORYLnet/minecraft/client/KeyMapping$Category;
+2579: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+2582: putfield net/minecraft/client/Options.keyInventoryLnet/minecraft/client/KeyMapping;
+2585: aload_0
+2586: new net/minecraft/client/KeyMapping
+2589: dup
+2590: ldc_w ldcw@1243
+2593: bipush 70
+2595: getstatic net/minecraft/client/KeyMapping$Category.INVENTORYLnet/minecraft/client/KeyMapping$Category;
+2598: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+2601: putfield net/minecraft/client/Options.keySwapOffhandLnet/minecraft/client/KeyMapping;
+2604: aload_0
+2605: new net/minecraft/client/KeyMapping
+2608: dup
+2609: ldc_w ldcw@1248
+2612: bipush 81
+2614: getstatic net/minecraft/client/KeyMapping$Category.INVENTORYLnet/minecraft/client/KeyMapping$Category;
+2617: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+2620: putfield net/minecraft/client/Options.keyDropLnet/minecraft/client/KeyMapping;
+2623: aload_0
+2624: new net/minecraft/client/ToggleKeyMapping
+2627: dup
+2628: ldc_w ldcw@1156
+2631: getstatic com/mojang/blaze3d/platform/InputConstants$Type.MOUSELcom/mojang/blaze3d/platform/InputConstants$Type;
+2634: iconst_1
+2635: getstatic net/minecraft/client/KeyMapping$Category.GAMEPLAYLnet/minecraft/client/KeyMapping$Category;
+2638: aload_0
+2639: getfield net/minecraft/client/Options.toggleUseLnet/minecraft/client/OptionInstance;
+2642: dup
+2643: invokestatic java/util/Objects.requireNonNull(Ljava/lang/Object;)Ljava/lang/Object;
+2646: pop
+2647: invokedynamic indy
+2652: iconst_0
+2653: invokespecial net/minecraft/client/ToggleKeyMapping.<init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;Ljava/util/function/BooleanSupplier;Z)V
+2656: putfield net/minecraft/client/Options.keyUseLnet/minecraft/client/KeyMapping;
+2659: aload_0
+2660: new net/minecraft/client/ToggleKeyMapping
+2663: dup
+2664: ldc_w ldcw@1153
+2667: getstatic com/mojang/blaze3d/platform/InputConstants$Type.MOUSELcom/mojang/blaze3d/platform/InputConstants$Type;
+2670: iconst_0
+2671: getstatic net/minecraft/client/KeyMapping$Category.GAMEPLAYLnet/minecraft/client/KeyMapping$Category;
+2674: aload_0
+2675: getfield net/minecraft/client/Options.toggleAttackLnet/minecraft/client/OptionInstance;
+2678: dup
+2679: invokestatic java/util/Objects.requireNonNull(Ljava/lang/Object;)Ljava/lang/Object;
+2682: pop
+2683: invokedynamic indy
+2688: iconst_1
+2689: invokespecial net/minecraft/client/ToggleKeyMapping.<init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;Ljava/util/function/BooleanSupplier;Z)V
+2692: putfield net/minecraft/client/Options.keyAttackLnet/minecraft/client/KeyMapping;
+2695: aload_0
+2696: new net/minecraft/client/KeyMapping
+2699: dup
+2700: ldc_w ldcw@1271
+2703: getstatic com/mojang/blaze3d/platform/InputConstants$Type.MOUSELcom/mojang/blaze3d/platform/InputConstants$Type;
+2706: iconst_2
+2707: getstatic net/minecraft/client/KeyMapping$Category.GAMEPLAYLnet/minecraft/client/KeyMapping$Category;
+2710: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;)V
+2713: putfield net/minecraft/client/Options.keyPickItemLnet/minecraft/client/KeyMapping;
+2716: aload_0
+2717: new net/minecraft/client/KeyMapping
+2720: dup
+2721: ldc_w ldcw@1279
+2724: bipush 84
+2726: getstatic net/minecraft/client/KeyMapping$Category.MULTIPLAYERLnet/minecraft/client/KeyMapping$Category;
+2729: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+2732: putfield net/minecraft/client/Options.keyChatLnet/minecraft/client/KeyMapping;
+2735: aload_0
+2736: new net/minecraft/client/KeyMapping
+2739: dup
+2740: ldc_w ldcw@1287
+2743: sipush 258
+2746: getstatic net/minecraft/client/KeyMapping$Category.MULTIPLAYERLnet/minecraft/client/KeyMapping$Category;
+2749: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+2752: putfield net/minecraft/client/Options.keyPlayerListLnet/minecraft/client/KeyMapping;
+2755: aload_0
+2756: new net/minecraft/client/KeyMapping
+2759: dup
+2760: ldc_w ldcw@1292
+2763: bipush 47
+2765: getstatic net/minecraft/client/KeyMapping$Category.MULTIPLAYERLnet/minecraft/client/KeyMapping$Category;
+2768: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+2771: putfield net/minecraft/client/Options.keyCommandLnet/minecraft/client/KeyMapping;
+2774: aload_0
+2775: new net/minecraft/client/KeyMapping
+2778: dup
+2779: ldc_w ldcw@1297
+2782: bipush 79
+2784: getstatic net/minecraft/client/KeyMapping$Category.MULTIPLAYERLnet/minecraft/client/KeyMapping$Category;
+2787: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+2790: putfield net/minecraft/client/Options.keyFriendsLnet/minecraft/client/KeyMapping;
+2793: aload_0
+2794: new net/minecraft/client/KeyMapping
+2797: dup
+2798: ldc_w ldcw@1302
+2801: bipush 80
+2803: getstatic net/minecraft/client/KeyMapping$Category.MULTIPLAYERLnet/minecraft/client/KeyMapping$Category;
+2806: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+2809: putfield net/minecraft/client/Options.keySocialInteractionsLnet/minecraft/client/KeyMapping;
+2812: aload_0
+2813: new net/minecraft/client/KeyMapping
+2816: dup
+2817: ldc_w ldcw@1307
+2820: sipush 291
+2823: getstatic net/minecraft/client/KeyMapping$Category.MISCLnet/minecraft/client/KeyMapping$Category;
+2826: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+2829: putfield net/minecraft/client/Options.keyScreenshotLnet/minecraft/client/KeyMapping;
+2832: aload_0
+2833: new net/minecraft/client/KeyMapping
+2836: dup
+2837: ldc_w ldcw@1315
+2840: sipush 294
+2843: getstatic net/minecraft/client/KeyMapping$Category.MISCLnet/minecraft/client/KeyMapping$Category;
+2846: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+2849: putfield net/minecraft/client/Options.keyTogglePerspectiveLnet/minecraft/client/KeyMapping;
+2852: aload_0
+2853: new net/minecraft/client/KeyMapping
+2856: dup
+2857: ldc_w ldcw@1320
+2860: getstatic com/mojang/blaze3d/platform/InputConstants.UNKNOWNLcom/mojang/blaze3d/platform/InputConstants$Key;
+2863: invokevirtual com/mojang/blaze3d/platform/InputConstants$Key.getValue()I
+2866: getstatic net/minecraft/client/KeyMapping$Category.MISCLnet/minecraft/client/KeyMapping$Category;
+2869: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+2872: putfield net/minecraft/client/Options.keySmoothCameraLnet/minecraft/client/KeyMapping;
+2875: aload_0
+2876: new net/minecraft/client/KeyMapping
+2879: dup
+2880: ldc_w ldcw@1334
+2883: sipush 300
+2886: getstatic net/minecraft/client/KeyMapping$Category.MISCLnet/minecraft/client/KeyMapping$Category;
+2889: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+2892: putfield net/minecraft/client/Options.keyFullscreenLnet/minecraft/client/KeyMapping;
+2895: aload_0
+2896: new net/minecraft/client/KeyMapping
+2899: dup
+2900: ldc_w ldcw@1339
+2903: bipush 76
+2905: getstatic net/minecraft/client/KeyMapping$Category.MISCLnet/minecraft/client/KeyMapping$Category;
+2908: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+2911: putfield net/minecraft/client/Options.keyAdvancementsLnet/minecraft/client/KeyMapping;
+2914: aload_0
+2915: new net/minecraft/client/KeyMapping
+2918: dup
+2919: ldc_w ldcw@1344
+2922: bipush 71
+2924: getstatic net/minecraft/client/KeyMapping$Category.MISCLnet/minecraft/client/KeyMapping$Category;
+2927: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+2930: putfield net/minecraft/client/Options.keyQuickActionsLnet/minecraft/client/KeyMapping;
+2933: aload_0
+2934: new net/minecraft/client/KeyMapping
+2937: dup
+2938: ldc_w ldcw@1349
+2941: sipush 290
+2944: getstatic net/minecraft/client/KeyMapping$Category.MISCLnet/minecraft/client/KeyMapping$Category;
+2947: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+2950: putfield net/minecraft/client/Options.keyToggleGuiLnet/minecraft/client/KeyMapping;
+2953: aload_0
+2954: new net/minecraft/client/KeyMapping
+2957: dup
+2958: ldc_w ldcw@1354
+2961: sipush 293
+2964: getstatic net/minecraft/client/KeyMapping$Category.MISCLnet/minecraft/client/KeyMapping$Category;
+2967: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+2970: putfield net/minecraft/client/Options.keyToggleSpectatorShaderEffectsLnet/minecraft/client/KeyMapping;
+2973: aload_0
+2974: bipush 9
+2976: anewarray net/minecraft/client/KeyMapping
+2979: dup
+2980: iconst_0
+2981: new net/minecraft/client/KeyMapping
+2984: dup
+2985: ldc_w ldcw@1359
+2988: bipush 49
+2990: getstatic net/minecraft/client/KeyMapping$Category.INVENTORYLnet/minecraft/client/KeyMapping$Category;
+2993: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+2996: aastore
+2997: dup
+2998: iconst_1
+2999: new net/minecraft/client/KeyMapping
+3002: dup
+3003: ldc_w ldcw@1361
+3006: bipush 50
+3008: getstatic net/minecraft/client/KeyMapping$Category.INVENTORYLnet/minecraft/client/KeyMapping$Category;
+3011: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+3014: aastore
+3015: dup
+3016: iconst_2
+3017: new net/minecraft/client/KeyMapping
+3020: dup
+3021: ldc_w ldcw@1363
+3024: bipush 51
+3026: getstatic net/minecraft/client/KeyMapping$Category.INVENTORYLnet/minecraft/client/KeyMapping$Category;
+3029: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+3032: aastore
+3033: dup
+3034: iconst_3
+3035: new net/minecraft/client/KeyMapping
+3038: dup
+3039: ldc_w ldcw@1365
+3042: bipush 52
+3044: getstatic net/minecraft/client/KeyMapping$Category.INVENTORYLnet/minecraft/client/KeyMapping$Category;
+3047: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+3050: aastore
+3051: dup
+3052: iconst_4
+3053: new net/minecraft/client/KeyMapping
+3056: dup
+3057: ldc_w ldcw@1367
+3060: bipush 53
+3062: getstatic net/minecraft/client/KeyMapping$Category.INVENTORYLnet/minecraft/client/KeyMapping$Category;
+3065: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+3068: aastore
+3069: dup
+3070: iconst_5
+3071: new net/minecraft/client/KeyMapping
+3074: dup
+3075: ldc_w ldcw@1369
+3078: bipush 54
+3080: getstatic net/minecraft/client/KeyMapping$Category.INVENTORYLnet/minecraft/client/KeyMapping$Category;
+3083: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+3086: aastore
+3087: dup
+3088: bipush 6
+3090: new net/minecraft/client/KeyMapping
+3093: dup
+3094: ldc_w ldcw@1371
+3097: bipush 55
+3099: getstatic net/minecraft/client/KeyMapping$Category.INVENTORYLnet/minecraft/client/KeyMapping$Category;
+3102: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+3105: aastore
+3106: dup
+3107: bipush 7
+3109: new net/minecraft/client/KeyMapping
+3112: dup
+3113: ldc_w ldcw@1373
+3116: bipush 56
+3118: getstatic net/minecraft/client/KeyMapping$Category.INVENTORYLnet/minecraft/client/KeyMapping$Category;
+3121: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+3124: aastore
+3125: dup
+3126: bipush 8
+3128: new net/minecraft/client/KeyMapping
+3131: dup
+3132: ldc_w ldcw@1375
+3135: bipush 57
+3137: getstatic net/minecraft/client/KeyMapping$Category.INVENTORYLnet/minecraft/client/KeyMapping$Category;
+3140: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+3143: aastore
+3144: putfield net/minecraft/client/Options.keyHotbarSlots[Lnet/minecraft/client/KeyMapping;
+3147: aload_0
+3148: new net/minecraft/client/KeyMapping
+3151: dup
+3152: ldc_w ldcw@1381
+3155: bipush 67
+3157: getstatic net/minecraft/client/KeyMapping$Category.CREATIVELnet/minecraft/client/KeyMapping$Category;
+3160: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+3163: putfield net/minecraft/client/Options.keySaveHotbarActivatorLnet/minecraft/client/KeyMapping;
+3166: aload_0
+3167: new net/minecraft/client/KeyMapping
+3170: dup
+3171: ldc_w ldcw@1389
+3174: bipush 88
+3176: getstatic net/minecraft/client/KeyMapping$Category.CREATIVELnet/minecraft/client/KeyMapping$Category;
+3179: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+3182: putfield net/minecraft/client/Options.keyLoadHotbarActivatorLnet/minecraft/client/KeyMapping;
+3185: aload_0
+3186: new net/minecraft/client/KeyMapping
+3189: dup
+3190: ldc_w ldcw@1394
+3193: getstatic com/mojang/blaze3d/platform/InputConstants.UNKNOWNLcom/mojang/blaze3d/platform/InputConstants$Key;
+3196: invokevirtual com/mojang/blaze3d/platform/InputConstants$Key.getValue()I
+3199: getstatic net/minecraft/client/KeyMapping$Category.SPECTATORLnet/minecraft/client/KeyMapping$Category;
+3202: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+3205: putfield net/minecraft/client/Options.keySpectatorOutlinesLnet/minecraft/client/KeyMapping;
+3208: aload_0
+3209: new net/minecraft/client/KeyMapping
+3212: dup
+3213: ldc_w ldcw@1402
+3216: getstatic com/mojang/blaze3d/platform/InputConstants$Type.MOUSELcom/mojang/blaze3d/platform/InputConstants$Type;
+3219: iconst_2
+3220: getstatic net/minecraft/client/KeyMapping$Category.SPECTATORLnet/minecraft/client/KeyMapping$Category;
+3223: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;)V
+3226: putfield net/minecraft/client/Options.keySpectatorHotbarLnet/minecraft/client/KeyMapping;
+3229: aload_0
+3230: new net/minecraft/client/KeyMapping
+3233: dup
+3234: ldc_w ldcw@1407
+3237: getstatic com/mojang/blaze3d/platform/InputConstants$Type.KEYSYMLcom/mojang/blaze3d/platform/InputConstants$Type;
+3240: sipush 292
+3243: getstatic net/minecraft/client/KeyMapping$Category.DEBUGLnet/minecraft/client/KeyMapping$Category;
+3246: bipush -2
+3248: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;I)V
+3251: putfield net/minecraft/client/Options.keyDebugOverlayLnet/minecraft/client/KeyMapping;
+3254: aload_0
+3255: new net/minecraft/client/KeyMapping
+3258: dup
+3259: ldc_w ldcw@1421
+3262: getstatic com/mojang/blaze3d/platform/InputConstants$Type.KEYSYMLcom/mojang/blaze3d/platform/InputConstants$Type;
+3265: sipush 292
+3268: getstatic net/minecraft/client/KeyMapping$Category.DEBUGLnet/minecraft/client/KeyMapping$Category;
+3271: iconst_m1
+3272: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;I)V
+3275: putfield net/minecraft/client/Options.keyDebugModifierLnet/minecraft/client/KeyMapping;
+3278: aload_0
+3279: new net/minecraft/client/KeyMapping
+3282: dup
+3283: ldc_w ldcw@1426
+3286: getstatic com/mojang/blaze3d/platform/InputConstants$Type.KEYSYMLcom/mojang/blaze3d/platform/InputConstants$Type;
+3289: bipush 67
+3291: getstatic net/minecraft/client/KeyMapping$Category.DEBUGLnet/minecraft/client/KeyMapping$Category;
+3294: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;)V
+3297: putfield net/minecraft/client/Options.keyDebugCrashLnet/minecraft/client/KeyMapping;
+3300: aload_0
+3301: new net/minecraft/client/KeyMapping
+3304: dup
+3305: ldc_w ldcw@1431
+3308: getstatic com/mojang/blaze3d/platform/InputConstants$Type.KEYSYMLcom/mojang/blaze3d/platform/InputConstants$Type;
+3311: bipush 65
+3313: getstatic net/minecraft/client/KeyMapping$Category.DEBUGLnet/minecraft/client/KeyMapping$Category;
+3316: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;)V
+3319: putfield net/minecraft/client/Options.keyDebugReloadChunkLnet/minecraft/client/KeyMapping;
+3322: aload_0
+3323: new net/minecraft/client/KeyMapping
+3326: dup
+3327: ldc_w ldcw@1436
+3330: getstatic com/mojang/blaze3d/platform/InputConstants$Type.KEYSYMLcom/mojang/blaze3d/platform/InputConstants$Type;
+3333: bipush 66
+3335: getstatic net/minecraft/client/KeyMapping$Category.DEBUGLnet/minecraft/client/KeyMapping$Category;
+3338: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;)V
+3341: putfield net/minecraft/client/Options.keyDebugShowHitboxesLnet/minecraft/client/KeyMapping;
+3344: aload_0
+3345: new net/minecraft/client/KeyMapping
+3348: dup
+3349: ldc_w ldcw@1441
+3352: getstatic com/mojang/blaze3d/platform/InputConstants$Type.KEYSYMLcom/mojang/blaze3d/platform/InputConstants$Type;
+3355: bipush 68
+3357: getstatic net/minecraft/client/KeyMapping$Category.DEBUGLnet/minecraft/client/KeyMapping$Category;
+3360: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;)V
+3363: putfield net/minecraft/client/Options.keyDebugClearChatLnet/minecraft/client/KeyMapping;
+3366: aload_0
+3367: new net/minecraft/client/KeyMapping
+3370: dup
+3371: ldc_w ldcw@1446
+3374: getstatic com/mojang/blaze3d/platform/InputConstants$Type.KEYSYMLcom/mojang/blaze3d/platform/InputConstants$Type;
+3377: bipush 71
+3379: getstatic net/minecraft/client/KeyMapping$Category.DEBUGLnet/minecraft/client/KeyMapping$Category;
+3382: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;)V
+3385: putfield net/minecraft/client/Options.keyDebugShowChunkBordersLnet/minecraft/client/KeyMapping;
+3388: aload_0
+3389: new net/minecraft/client/KeyMapping
+3392: dup
+3393: ldc_w ldcw@1451
+3396: getstatic com/mojang/blaze3d/platform/InputConstants$Type.KEYSYMLcom/mojang/blaze3d/platform/InputConstants$Type;
+3399: bipush 72
+3401: getstatic net/minecraft/client/KeyMapping$Category.DEBUGLnet/minecraft/client/KeyMapping$Category;
+3404: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;)V
+3407: putfield net/minecraft/client/Options.keyDebugShowAdvancedTooltipsLnet/minecraft/client/KeyMapping;
+3410: aload_0
+3411: new net/minecraft/client/KeyMapping
+3414: dup
+3415: ldc_w ldcw@1456
+3418: getstatic com/mojang/blaze3d/platform/InputConstants$Type.KEYSYMLcom/mojang/blaze3d/platform/InputConstants$Type;
+3421: bipush 73
+3423: getstatic net/minecraft/client/KeyMapping$Category.DEBUGLnet/minecraft/client/KeyMapping$Category;
+3426: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;)V
+3429: putfield net/minecraft/client/Options.keyDebugCopyRecreateCommandLnet/minecraft/client/KeyMapping;
+3432: aload_0
+3433: new net/minecraft/client/KeyMapping
+3436: dup
+3437: ldc_w ldcw@1461
+3440: getstatic com/mojang/blaze3d/platform/InputConstants$Type.KEYSYMLcom/mojang/blaze3d/platform/InputConstants$Type;
+3443: bipush 78
+3445: getstatic net/minecraft/client/KeyMapping$Category.DEBUGLnet/minecraft/client/KeyMapping$Category;
+3448: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;)V
+3451: putfield net/minecraft/client/Options.keyDebugSpectateLnet/minecraft/client/KeyMapping;
+3454: aload_0
+3455: new net/minecraft/client/KeyMapping
+3458: dup
+3459: ldc_w ldcw@1466
+3462: getstatic com/mojang/blaze3d/platform/InputConstants$Type.KEYSYMLcom/mojang/blaze3d/platform/InputConstants$Type;
+3465: sipush 293
+3468: getstatic net/minecraft/client/KeyMapping$Category.DEBUGLnet/minecraft/client/KeyMapping$Category;
+3471: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;)V
+3474: putfield net/minecraft/client/Options.keyDebugSwitchGameModeLnet/minecraft/client/KeyMapping;
+3477: aload_0
+3478: new net/minecraft/client/KeyMapping
+3481: dup
+3482: ldc_w ldcw@1471
+3485: getstatic com/mojang/blaze3d/platform/InputConstants$Type.KEYSYMLcom/mojang/blaze3d/platform/InputConstants$Type;
+3488: sipush 295
+3491: getstatic net/minecraft/client/KeyMapping$Category.DEBUGLnet/minecraft/client/KeyMapping$Category;
+3494: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;)V
+3497: putfield net/minecraft/client/Options.keyDebugDebugOptionsLnet/minecraft/client/KeyMapping;
+3500: aload_0
+3501: new net/minecraft/client/KeyMapping
+3504: dup
+3505: ldc_w ldcw@1476
+3508: getstatic com/mojang/blaze3d/platform/InputConstants$Type.KEYSYMLcom/mojang/blaze3d/platform/InputConstants$Type;
+3511: bipush 80
+3513: getstatic net/minecraft/client/KeyMapping$Category.DEBUGLnet/minecraft/client/KeyMapping$Category;
+3516: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;)V
+3519: putfield net/minecraft/client/Options.keyDebugFocusPauseLnet/minecraft/client/KeyMapping;
+3522: aload_0
+3523: new net/minecraft/client/KeyMapping
+3526: dup
+3527: ldc_w ldcw@1481
+3530: getstatic com/mojang/blaze3d/platform/InputConstants$Type.KEYSYMLcom/mojang/blaze3d/platform/InputConstants$Type;
+3533: bipush 83
+3535: getstatic net/minecraft/client/KeyMapping$Category.DEBUGLnet/minecraft/client/KeyMapping$Category;
+3538: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;)V
+3541: putfield net/minecraft/client/Options.keyDebugDumpDynamicTexturesLnet/minecraft/client/KeyMapping;
+3544: aload_0
+3545: new net/minecraft/client/KeyMapping
+3548: dup
+3549: ldc_w ldcw@1486
+3552: getstatic com/mojang/blaze3d/platform/InputConstants$Type.KEYSYMLcom/mojang/blaze3d/platform/InputConstants$Type;
+3555: bipush 84
+3557: getstatic net/minecraft/client/KeyMapping$Category.DEBUGLnet/minecraft/client/KeyMapping$Category;
+3560: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;)V
+3563: putfield net/minecraft/client/Options.keyDebugReloadResourcePacksLnet/minecraft/client/KeyMapping;
+3566: aload_0
+3567: new net/minecraft/client/KeyMapping
+3570: dup
+3571: ldc_w ldcw@1491
+3574: getstatic com/mojang/blaze3d/platform/InputConstants$Type.KEYSYMLcom/mojang/blaze3d/platform/InputConstants$Type;
+3577: bipush 76
+3579: getstatic net/minecraft/client/KeyMapping$Category.DEBUGLnet/minecraft/client/KeyMapping$Category;
+3582: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;)V
+3585: putfield net/minecraft/client/Options.keyDebugProfilingLnet/minecraft/client/KeyMapping;
+3588: aload_0
+3589: new net/minecraft/client/KeyMapping
+3592: dup
+3593: ldc_w ldcw@1496
+3596: getstatic com/mojang/blaze3d/platform/InputConstants$Type.KEYSYMLcom/mojang/blaze3d/platform/InputConstants$Type;
+3599: bipush 67
+3601: getstatic net/minecraft/client/KeyMapping$Category.DEBUGLnet/minecraft/client/KeyMapping$Category;
+3604: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;)V
+3607: putfield net/minecraft/client/Options.keyDebugCopyLocationLnet/minecraft/client/KeyMapping;
+3610: aload_0
+3611: new net/minecraft/client/KeyMapping
+3614: dup
+3615: ldc_w ldcw@1501
+3618: getstatic com/mojang/blaze3d/platform/InputConstants$Type.KEYSYMLcom/mojang/blaze3d/platform/InputConstants$Type;
+3621: bipush 86
+3623: getstatic net/minecraft/client/KeyMapping$Category.DEBUGLnet/minecraft/client/KeyMapping$Category;
+3626: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;)V
+3629: putfield net/minecraft/client/Options.keyDebugDumpVersionLnet/minecraft/client/KeyMapping;
+3632: aload_0
+3633: new net/minecraft/client/KeyMapping
+3636: dup
+3637: ldc_w ldcw@1506
+3640: getstatic com/mojang/blaze3d/platform/InputConstants$Type.KEYSYMLcom/mojang/blaze3d/platform/InputConstants$Type;
+3643: bipush 49
+3645: getstatic net/minecraft/client/KeyMapping$Category.DEBUGLnet/minecraft/client/KeyMapping$Category;
+3648: iconst_1
+3649: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;I)V
+3652: putfield net/minecraft/client/Options.keyDebugPofilingChartLnet/minecraft/client/KeyMapping;
+3655: aload_0
+3656: new net/minecraft/client/KeyMapping
+3659: dup
+3660: ldc_w ldcw@1511
+3663: getstatic com/mojang/blaze3d/platform/InputConstants$Type.KEYSYMLcom/mojang/blaze3d/platform/InputConstants$Type;
+3666: bipush 50
+3668: getstatic net/minecraft/client/KeyMapping$Category.DEBUGLnet/minecraft/client/KeyMapping$Category;
+3671: iconst_2
+3672: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;I)V
+3675: putfield net/minecraft/client/Options.keyDebugFpsChartsLnet/minecraft/client/KeyMapping;
+3678: aload_0
+3679: new net/minecraft/client/KeyMapping
+3682: dup
+3683: ldc_w ldcw@1516
+3686: getstatic com/mojang/blaze3d/platform/InputConstants$Type.KEYSYMLcom/mojang/blaze3d/platform/InputConstants$Type;
+3689: bipush 51
+3691: getstatic net/minecraft/client/KeyMapping$Category.DEBUGLnet/minecraft/client/KeyMapping$Category;
+3694: iconst_3
+3695: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;I)V
+3698: putfield net/minecraft/client/Options.keyDebugNetworkChartsLnet/minecraft/client/KeyMapping;
+3701: aload_0
+3702: new net/minecraft/client/KeyMapping
+3705: dup
+3706: ldc_w ldcw@1521
+3709: getstatic com/mojang/blaze3d/platform/InputConstants$Type.KEYSYMLcom/mojang/blaze3d/platform/InputConstants$Type;
+3712: bipush 52
+3714: getstatic net/minecraft/client/KeyMapping$Category.DEBUGLnet/minecraft/client/KeyMapping$Category;
+3717: iconst_4
+3718: invokespecial net/minecraft/client/KeyMapping.<init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;I)V
+3721: putfield net/minecraft/client/Options.keyDebugLightmapTextureLnet/minecraft/client/KeyMapping;
+3724: aload_0
+3725: bipush 20
+3727: anewarray net/minecraft/client/KeyMapping
+3730: dup
+3731: iconst_0
+3732: aload_0
+3733: getfield net/minecraft/client/Options.keyDebugReloadChunkLnet/minecraft/client/KeyMapping;
+3736: aastore
+3737: dup
+3738: iconst_1
+3739: aload_0
+3740: getfield net/minecraft/client/Options.keyDebugShowHitboxesLnet/minecraft/client/KeyMapping;
+3743: aastore
+3744: dup
+3745: iconst_2
+3746: aload_0
+3747: getfield net/minecraft/client/Options.keyDebugClearChatLnet/minecraft/client/KeyMapping;
+3750: aastore
+3751: dup
+3752: iconst_3
+3753: aload_0
+3754: getfield net/minecraft/client/Options.keyDebugCrashLnet/minecraft/client/KeyMapping;
+3757: aastore
+3758: dup
+3759: iconst_4
+3760: aload_0
+3761: getfield net/minecraft/client/Options.keyDebugShowChunkBordersLnet/minecraft/client/KeyMapping;
+3764: aastore
+3765: dup
+3766: iconst_5
+3767: aload_0
+3768: getfield net/minecraft/client/Options.keyDebugShowAdvancedTooltipsLnet/minecraft/client/KeyMapping;
+3771: aastore
+3772: dup
+3773: bipush 6
+3775: aload_0
+3776: getfield net/minecraft/client/Options.keyDebugCopyRecreateCommandLnet/minecraft/client/KeyMapping;
+3779: aastore
+3780: dup
+3781: bipush 7
+3783: aload_0
+3784: getfield net/minecraft/client/Options.keyDebugSpectateLnet/minecraft/client/KeyMapping;
+3787: aastore
+3788: dup
+3789: bipush 8
+3791: aload_0
+3792: getfield net/minecraft/client/Options.keyDebugSwitchGameModeLnet/minecraft/client/KeyMapping;
+3795: aastore
+3796: dup
+3797: bipush 9
+3799: aload_0
+3800: getfield net/minecraft/client/Options.keyDebugDebugOptionsLnet/minecraft/client/KeyMapping;
+3803: aastore
+3804: dup
+3805: bipush 10
+3807: aload_0
+3808: getfield net/minecraft/client/Options.keyDebugFocusPauseLnet/minecraft/client/KeyMapping;
+3811: aastore
+3812: dup
+3813: bipush 11
+3815: aload_0
+3816: getfield net/minecraft/client/Options.keyDebugDumpDynamicTexturesLnet/minecraft/client/KeyMapping;
+3819: aastore
+3820: dup
+3821: bipush 12
+3823: aload_0
+3824: getfield net/minecraft/client/Options.keyDebugReloadResourcePacksLnet/minecraft/client/KeyMapping;
+3827: aastore
+3828: dup
+3829: bipush 13
+3831: aload_0
+3832: getfield net/minecraft/client/Options.keyDebugProfilingLnet/minecraft/client/KeyMapping;
+3835: aastore
+3836: dup
+3837: bipush 14
+3839: aload_0
+3840: getfield net/minecraft/client/Options.keyDebugCopyLocationLnet/minecraft/client/KeyMapping;
+3843: aastore
+3844: dup
+3845: bipush 15
+3847: aload_0
+3848: getfield net/minecraft/client/Options.keyDebugDumpVersionLnet/minecraft/client/KeyMapping;
+3851: aastore
+3852: dup
+3853: bipush 16
+3855: aload_0
+3856: getfield net/minecraft/client/Options.keyDebugPofilingChartLnet/minecraft/client/KeyMapping;
+3859: aastore
+3860: dup
+3861: bipush 17
+3863: aload_0
+3864: getfield net/minecraft/client/Options.keyDebugFpsChartsLnet/minecraft/client/KeyMapping;
+3867: aastore
+3868: dup
+3869: bipush 18
+3871: aload_0
+3872: getfield net/minecraft/client/Options.keyDebugNetworkChartsLnet/minecraft/client/KeyMapping;
+3875: aastore
+3876: dup
+3877: bipush 19
+3879: aload_0
+3880: getfield net/minecraft/client/Options.keyDebugLightmapTextureLnet/minecraft/client/KeyMapping;
+3883: aastore
+3884: putfield net/minecraft/client/Options.debugKeys[Lnet/minecraft/client/KeyMapping;
+3887: aload_0
+3888: iconst_3
+3889: anewarray [Lnet/minecraft/client/KeyMapping;
+3892: dup
+3893: iconst_0
+3894: bipush 32
+3896: anewarray net/minecraft/client/KeyMapping
+3899: dup
+3900: iconst_0
+3901: aload_0
+3902: getfield net/minecraft/client/Options.keyAttackLnet/minecraft/client/KeyMapping;
+3905: aastore
+3906: dup
+3907: iconst_1
+3908: aload_0
+3909: getfield net/minecraft/client/Options.keyUseLnet/minecraft/client/KeyMapping;
+3912: aastore
+3913: dup
+3914: iconst_2
+3915: aload_0
+3916: getfield net/minecraft/client/Options.keyUpLnet/minecraft/client/KeyMapping;
+3919: aastore
+3920: dup
+3921: iconst_3
+3922: aload_0
+3923: getfield net/minecraft/client/Options.keyLeftLnet/minecraft/client/KeyMapping;
+3926: aastore
+3927: dup
+3928: iconst_4
+3929: aload_0
+3930: getfield net/minecraft/client/Options.keyDownLnet/minecraft/client/KeyMapping;
+3933: aastore
+3934: dup
+3935: iconst_5
+3936: aload_0
+3937: getfield net/minecraft/client/Options.keyRightLnet/minecraft/client/KeyMapping;
+3940: aastore
+3941: dup
+3942: bipush 6
+3944: aload_0
+3945: getfield net/minecraft/client/Options.keyJumpLnet/minecraft/client/KeyMapping;
+3948: aastore
+3949: dup
+3950: bipush 7
+3952: aload_0
+3953: getfield net/minecraft/client/Options.keyShiftLnet/minecraft/client/KeyMapping;
+3956: aastore
+3957: dup
+3958: bipush 8
+3960: aload_0
+3961: getfield net/minecraft/client/Options.keySprintLnet/minecraft/client/KeyMapping;
+3964: aastore
+3965: dup
+3966: bipush 9
+3968: aload_0
+3969: getfield net/minecraft/client/Options.keyDropLnet/minecraft/client/KeyMapping;
+3972: aastore
+3973: dup
+3974: bipush 10
+3976: aload_0
+3977: getfield net/minecraft/client/Options.keyInventoryLnet/minecraft/client/KeyMapping;
+3980: aastore
+3981: dup
+3982: bipush 11
+3984: aload_0
+3985: getfield net/minecraft/client/Options.keyChatLnet/minecraft/client/KeyMapping;
+3988: aastore
+3989: dup
+3990: bipush 12
+3992: aload_0
+3993: getfield net/minecraft/client/Options.keyPlayerListLnet/minecraft/client/KeyMapping;
+3996: aastore
+3997: dup
+3998: bipush 13
+4000: aload_0
+4001: getfield net/minecraft/client/Options.keyPickItemLnet/minecraft/client/KeyMapping;
+4004: aastore
+4005: dup
+4006: bipush 14
+4008: aload_0
+4009: getfield net/minecraft/client/Options.keyCommandLnet/minecraft/client/KeyMapping;
+4012: aastore
+4013: dup
+4014: bipush 15
+4016: aload_0
+4017: getfield net/minecraft/client/Options.keyFriendsLnet/minecraft/client/KeyMapping;
+4020: aastore
+4021: dup
+4022: bipush 16
+4024: aload_0
+4025: getfield net/minecraft/client/Options.keySocialInteractionsLnet/minecraft/client/KeyMapping;
+4028: aastore
+4029: dup
+4030: bipush 17
+4032: aload_0
+4033: getfield net/minecraft/client/Options.keyToggleGuiLnet/minecraft/client/KeyMapping;
+4036: aastore
+4037: dup
+4038: bipush 18
+4040: aload_0
+4041: getfield net/minecraft/client/Options.keyToggleSpectatorShaderEffectsLnet/minecraft/client/KeyMapping;
+4044: aastore
+4045: dup
+4046: bipush 19
+4048: aload_0
+4049: getfield net/minecraft/client/Options.keyScreenshotLnet/minecraft/client/KeyMapping;
+4052: aastore
+4053: dup
+4054: bipush 20
+4056: aload_0
+4057: getfield net/minecraft/client/Options.keyTogglePerspectiveLnet/minecraft/client/KeyMapping;
+4060: aastore
+4061: dup
+4062: bipush 21
+4064: aload_0
+4065: getfield net/minecraft/client/Options.keySmoothCameraLnet/minecraft/client/KeyMapping;
+4068: aastore
+4069: dup
+4070: bipush 22
+4072: aload_0
+4073: getfield net/minecraft/client/Options.keyFullscreenLnet/minecraft/client/KeyMapping;
+4076: aastore
+4077: dup
+4078: bipush 23
+4080: aload_0
+4081: getfield net/minecraft/client/Options.keySpectatorOutlinesLnet/minecraft/client/KeyMapping;
+4084: aastore
+4085: dup
+4086: bipush 24
+4088: aload_0
+4089: getfield net/minecraft/client/Options.keySpectatorHotbarLnet/minecraft/client/KeyMapping;
+4092: aastore
+4093: dup
+4094: bipush 25
+4096: aload_0
+4097: getfield net/minecraft/client/Options.keySwapOffhandLnet/minecraft/client/KeyMapping;
+4100: aastore
+4101: dup
+4102: bipush 26
+4104: aload_0
+4105: getfield net/minecraft/client/Options.keySaveHotbarActivatorLnet/minecraft/client/KeyMapping;
+4108: aastore
+4109: dup
+4110: bipush 27
+4112: aload_0
+4113: getfield net/minecraft/client/Options.keyLoadHotbarActivatorLnet/minecraft/client/KeyMapping;
+4116: aastore
+4117: dup
+4118: bipush 28
+4120: aload_0
+4121: getfield net/minecraft/client/Options.keyAdvancementsLnet/minecraft/client/KeyMapping;
+4124: aastore
+4125: dup
+4126: bipush 29
+4128: aload_0
+4129: getfield net/minecraft/client/Options.keyQuickActionsLnet/minecraft/client/KeyMapping;
+4132: aastore
+4133: dup
+4134: bipush 30
+4136: aload_0
+4137: getfield net/minecraft/client/Options.keyDebugOverlayLnet/minecraft/client/KeyMapping;
+4140: aastore
+4141: dup
+4142: bipush 31
+4144: aload_0
+4145: getfield net/minecraft/client/Options.keyDebugModifierLnet/minecraft/client/KeyMapping;
+4148: aastore
+4149: aastore
+4150: dup
+4151: iconst_1
+4152: aload_0
+4153: getfield net/minecraft/client/Options.keyHotbarSlots[Lnet/minecraft/client/KeyMapping;
+4156: aastore
+4157: dup
+4158: iconst_2
+4159: aload_0
+4160: getfield net/minecraft/client/Options.debugKeys[Lnet/minecraft/client/KeyMapping;
+4163: aastore
+4164: invokestatic java/util/stream/Stream.of([Ljava/lang/Object;)Ljava/util/stream/Stream;
+4167: invokedynamic indy
+4172: invokeinterface java/util/stream/Stream.flatMap(Ljava/util/function/Function;)Ljava/util/stream/Stream;
+4175: iconst_m1
+4176: nop
+4177: invokedynamic indy
+4182: invokeinterface java/util/stream/Stream.toArray(Ljava/util/function/IntFunction;)[Ljava/lang/Object;
+4185: iconst_m1
+4186: nop
+4187: checkcast [Lnet/minecraft/client/KeyMapping;
+4190: putfield net/minecraft/client/Options.keyMappings[Lnet/minecraft/client/KeyMapping;
+4193: aload_0
+4194: getstatic net/minecraft/client/CameraType.FIRST_PERSONLnet/minecraft/client/CameraType;
+4197: putfield net/minecraft/client/Options.cameraTypeLnet/minecraft/client/CameraType;
+4200: aload_0
+4201: ldc
+4203: putfield net/minecraft/client/Options.lastMpIpLjava/lang/String;
+4206: aload_0
+4207: new net/minecraft/client/OptionInstance
+4210: dup
+4211: ldc_w ldcw@1561
+4214: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+4217: invokedynamic indy
+4222: new net/minecraft/client/OptionInstance$IntRange
+4225: dup
+4226: bipush 30
+4228: bipush 110
+4230: invokespecial net/minecraft/client/OptionInstance$IntRange.<init>(II)V
+4233: getstatic com/mojang/serialization/Codec.DOUBLELcom/mojang/serialization/codecs/PrimitiveCodec;
+4236: invokedynamic indy
+4241: invokedynamic indy
+4246: invokeinterface com/mojang/serialization/codecs/PrimitiveCodec.xmap(Ljava/util/function/Function;Ljava/util/function/Function;)Lcom/mojang/serialization/Codec;
+4249: iconst_0
+4250: nop
+4251: bipush 70
+4253: invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;
+4256: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+4259: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Lcom/mojang/serialization/Codec;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+4262: putfield net/minecraft/client/Options.fovLnet/minecraft/client/OptionInstance;
+4265: aload_0
+4266: ldc_w ldcw@1574
+4269: getstatic net/minecraft/client/Options.TELEMETRY_TOOLTIPLnet/minecraft/network/chat/Component;
+4272: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+4275: invokedynamic indy
+4280: iconst_0
+4281: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+4284: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;ZLnet/minecraft/client/OptionInstance$ValueUpdateListener;)Lnet/minecraft/client/OptionInstance;
+4287: putfield net/minecraft/client/Options.telemetryOptInExtraLnet/minecraft/client/OptionInstance;
+4290: aload_0
+4291: new net/minecraft/client/OptionInstance
+4294: dup
+4295: ldc_w ldcw@1583
+4298: getstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_SCREEN_EFFECTLnet/minecraft/network/chat/Component;
+4301: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+4304: invokedynamic indy
+4309: getstatic net/minecraft/client/OptionInstance$UnitDouble.INSTANCELnet/minecraft/client/OptionInstance$UnitDouble;
+4312: dconst_1
+4313: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+4316: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+4319: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+4322: putfield net/minecraft/client/Options.screenEffectScaleLnet/minecraft/client/OptionInstance;
+4325: aload_0
+4326: new net/minecraft/client/OptionInstance
+4329: dup
+4330: ldc_w ldcw@1588
+4333: getstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_FOV_EFFECTLnet/minecraft/network/chat/Component;
+4336: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+4339: invokedynamic indy
+4344: getstatic net/minecraft/client/OptionInstance$UnitDouble.INSTANCELnet/minecraft/client/OptionInstance$UnitDouble;
+4347: invokedynamic indy
+4352: invokedynamic indy
+4357: invokevirtual net/minecraft/client/OptionInstance$UnitDouble.xmap(Ljava/util/function/DoubleFunction;Ljava/util/function/ToDoubleFunction;)Lnet/minecraft/client/OptionInstance$SliderableValueSet;
+4360: dconst_0
+4361: dconst_1
+4362: invokestatic com/mojang/serialization/Codec.doubleRange(DD)Lcom/mojang/serialization/Codec;
+4365: dconst_1
+4366: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+4369: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+4372: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Lcom/mojang/serialization/Codec;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+4375: putfield net/minecraft/client/Options.fovEffectScaleLnet/minecraft/client/OptionInstance;
+4378: aload_0
+4379: new net/minecraft/client/OptionInstance
+4382: dup
+4383: ldc_w ldcw@1603
+4386: getstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_DARKNESS_EFFECTLnet/minecraft/network/chat/Component;
+4389: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+4392: invokedynamic indy
+4397: getstatic net/minecraft/client/OptionInstance$UnitDouble.INSTANCELnet/minecraft/client/OptionInstance$UnitDouble;
+4400: invokedynamic indy
+4405: invokedynamic indy
+4410: invokevirtual net/minecraft/client/OptionInstance$UnitDouble.xmap(Ljava/util/function/DoubleFunction;Ljava/util/function/ToDoubleFunction;)Lnet/minecraft/client/OptionInstance$SliderableValueSet;
+4413: dconst_1
+4414: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+4417: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+4420: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+4423: putfield net/minecraft/client/Options.darknessEffectScaleLnet/minecraft/client/OptionInstance;
+4426: aload_0
+4427: new net/minecraft/client/OptionInstance
+4430: dup
+4431: ldc_w ldcw@1608
+4434: getstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_GLINT_SPEEDLnet/minecraft/network/chat/Component;
+4437: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+4440: invokedynamic indy
+4445: getstatic net/minecraft/client/OptionInstance$UnitDouble.INSTANCELnet/minecraft/client/OptionInstance$UnitDouble;
+4448: ldc2_w double 4602678819172646912
+4451: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+4454: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+4457: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+4460: putfield net/minecraft/client/Options.glintSpeedLnet/minecraft/client/OptionInstance;
+4463: aload_0
+4464: new net/minecraft/client/OptionInstance
+4467: dup
+4468: ldc_w ldcw@1613
+4471: getstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_GLINT_STRENGTHLnet/minecraft/network/chat/Component;
+4474: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+4477: invokedynamic indy
+4482: getstatic net/minecraft/client/OptionInstance$UnitDouble.INSTANCELnet/minecraft/client/OptionInstance$UnitDouble;
+4485: ldc2_w double 4604930618986332160
+4488: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+4491: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+4494: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+4497: putfield net/minecraft/client/Options.glintStrengthLnet/minecraft/client/OptionInstance;
+4500: aload_0
+4501: new net/minecraft/client/OptionInstance
+4504: dup
+4505: ldc_w ldcw@1618
+4508: getstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_DAMAGE_TILT_STRENGTHLnet/minecraft/network/chat/Component;
+4511: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+4514: invokedynamic indy
+4519: getstatic net/minecraft/client/OptionInstance$UnitDouble.INSTANCELnet/minecraft/client/OptionInstance$UnitDouble;
+4522: dconst_1
+4523: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+4526: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+4529: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+4532: putfield net/minecraft/client/Options.damageTiltStrengthLnet/minecraft/client/OptionInstance;
+4535: aload_0
+4536: new net/minecraft/client/OptionInstance
+4539: dup
+4540: ldc_w ldcw@1623
+4543: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+4546: invokedynamic indy
+4551: getstatic net/minecraft/client/OptionInstance$UnitDouble.INSTANCELnet/minecraft/client/OptionInstance$UnitDouble;
+4554: ldc2_w double 4602678819172646912
+4557: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+4560: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+4563: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+4566: putfield net/minecraft/client/Options.gammaLnet/minecraft/client/OptionInstance;
+4569: aload_0
+4570: new net/minecraft/client/OptionInstance
+4573: dup
+4574: ldc_w ldcw@1626
+4577: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+4580: invokedynamic indy
+4585: new net/minecraft/client/OptionInstance$ClampingLazyMaxIntRange
+4588: dup
+4589: iconst_0
+4590: invokedynamic indy
+4595: ldc_w int 2147483646
+4598: invokespecial net/minecraft/client/OptionInstance$ClampingLazyMaxIntRange.<init>(ILjava/util/function/IntSupplier;I)V
+4601: iconst_0
+4602: invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;
+4605: aload_0
+4606: invokedynamic indy
+4611: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+4614: putfield net/minecraft/client/Options.guiScaleLnet/minecraft/client/OptionInstance;
+4617: aload_0
+4618: new net/minecraft/client/OptionInstance
+4621: dup
+4622: ldc_w ldcw@1640
+4625: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+4628: invokedynamic indy
+4633: new net/minecraft/client/OptionInstance$Enum
+4636: dup
+4637: invokestatic net/minecraft/server/level/ParticleStatus.values()[Lnet/minecraft/server/level/ParticleStatus;
+4640: invokestatic java/util/Arrays.asList([Ljava/lang/Object;)Ljava/util/List;
+4643: getstatic net/minecraft/server/level/ParticleStatus.LEGACY_CODECLcom/mojang/serialization/Codec;
+4646: invokespecial net/minecraft/client/OptionInstance$Enum.<init>(Ljava/util/List;Lcom/mojang/serialization/Codec;)V
+4649: getstatic net/minecraft/server/level/ParticleStatus.ALLLnet/minecraft/server/level/ParticleStatus;
+4652: aload_0
+4653: invokedynamic indy
+4658: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+4661: putfield net/minecraft/client/Options.particlesLnet/minecraft/client/OptionInstance;
+4664: aload_0
+4665: new net/minecraft/client/OptionInstance
+4668: dup
+4669: ldc_w ldcw@1653
+4672: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+4675: aload_0
+4676: invokedynamic indy
+4681: new net/minecraft/client/OptionInstance$Enum
+4684: dup
+4685: invokestatic net/minecraft/client/NarratorStatus.values()[Lnet/minecraft/client/NarratorStatus;
+4688: invokestatic java/util/Arrays.asList([Ljava/lang/Object;)Ljava/util/List;
+4691: getstatic net/minecraft/client/NarratorStatus.LEGACY_CODECLcom/mojang/serialization/Codec;
+4694: invokespecial net/minecraft/client/OptionInstance$Enum.<init>(Ljava/util/List;Lcom/mojang/serialization/Codec;)V
+4697: getstatic net/minecraft/client/NarratorStatus.OFFLnet/minecraft/client/NarratorStatus;
+4700: aload_0
+4701: invokedynamic indy
+4706: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+4709: putfield net/minecraft/client/Options.narratorLnet/minecraft/client/OptionInstance;
+4712: aload_0
+4713: ldc_w ldcw@1671
+4716: putfield net/minecraft/client/Options.languageCodeLjava/lang/String;
+4719: aload_0
+4720: new net/minecraft/client/OptionInstance
+4723: dup
+4724: ldc_w ldcw@1676
+4727: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+4730: invokedynamic indy
+4735: new net/minecraft/client/OptionInstance$LazyEnum
+4738: dup
+4739: invokedynamic indy
+4744: invokedynamic indy
+4749: getstatic com/mojang/serialization/Codec.STRINGLcom/mojang/serialization/codecs/PrimitiveCodec;
+4752: invokespecial net/minecraft/client/OptionInstance$LazyEnum.<init>(Ljava/util/function/Supplier;Ljava/util/function/Function;Lcom/mojang/serialization/Codec;)V
+4755: ldc
+4757: invokedynamic indy
+4762: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+4765: putfield net/minecraft/client/Options.soundDeviceLnet/minecraft/client/OptionInstance;
+4768: aload_0
+4769: iconst_1
+4770: putfield net/minecraft/client/Options.onboardAccessibilityZ
+4773: aload_0
+4774: new net/minecraft/client/OptionInstance
+4777: dup
+4778: ldc_w ldcw@1692
+4781: getstatic net/minecraft/client/Options.MUSIC_FREQUENCY_TOOLTIPLnet/minecraft/network/chat/Component;
+4784: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+4787: invokedynamic indy
+4792: new net/minecraft/client/OptionInstance$Enum
+4795: dup
+4796: invokestatic net/minecraft/client/sounds/MusicManager$MusicFrequency.values()[Lnet/minecraft/client/sounds/MusicManager$MusicFrequency;
+4799: invokestatic java/util/Arrays.asList([Ljava/lang/Object;)Ljava/util/List;
+4802: getstatic net/minecraft/client/sounds/MusicManager$MusicFrequency.CODECLcom/mojang/serialization/Codec;
+4805: invokespecial net/minecraft/client/OptionInstance$Enum.<init>(Ljava/util/List;Lcom/mojang/serialization/Codec;)V
+4808: getstatic net/minecraft/client/sounds/MusicManager$MusicFrequency.DEFAULTLnet/minecraft/client/sounds/MusicManager$MusicFrequency;
+4811: invokedynamic indy
+4816: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+4819: putfield net/minecraft/client/Options.musicFrequencyLnet/minecraft/client/OptionInstance;
+4822: aload_0
+4823: new net/minecraft/client/OptionInstance
+4826: dup
+4827: ldc_w ldcw@1708
+4830: invokedynamic indy
+4835: invokedynamic indy
+4840: new net/minecraft/client/OptionInstance$Enum
+4843: dup
+4844: invokestatic net/minecraft/client/MusicToastDisplayState.values()[Lnet/minecraft/client/MusicToastDisplayState;
+4847: invokestatic java/util/Arrays.asList([Ljava/lang/Object;)Ljava/util/List;
+4850: getstatic net/minecraft/client/MusicToastDisplayState.CODECLcom/mojang/serialization/Codec;
+4853: invokespecial net/minecraft/client/OptionInstance$Enum.<init>(Ljava/util/List;Lcom/mojang/serialization/Codec;)V
+4856: getstatic net/minecraft/client/MusicToastDisplayState.NEVERLnet/minecraft/client/MusicToastDisplayState;
+4859: aload_0
+4860: invokedynamic indy
+4865: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+4868: putfield net/minecraft/client/Options.musicToastLnet/minecraft/client/OptionInstance;
+4871: aload_0
+4872: iconst_1
+4873: putfield net/minecraft/client/Options.startedCleanlyZ
+4876: aload_0
+4877: aload_1
+4878: putfield net/minecraft/client/Options.minecraftLnet/minecraft/client/Minecraft;
+4881: aload_0
+4882: new java/io/File
+4885: dup
+4886: aload_2
+4887: ldc_w ldcw@1728
+4890: invokespecial java/io/File.<init>(Ljava/io/File;Ljava/lang/String;)V
+4893: putfield net/minecraft/client/Options.optionsFileLjava/io/File;
+4896: invokestatic java/lang/Runtime.getRuntime()Ljava/lang/Runtime;
+4899: invokevirtual java/lang/Runtime.maxMemory()J
+4902: ldc2_w long 1000000000
+4905: lcmp
+4906: iflt -> 4913
+4909: iconst_1
+4910: goto -> 4914
+4913: iconst_0
+4914: istore_3
+4915: aload_0
+4916: new net/minecraft/client/OptionInstance
+4919: dup
+4920: ldc_w ldcw@1749
+4923: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+4926: invokedynamic indy
+4931: new net/minecraft/client/OptionInstance$IntRange
+4934: dup
+4935: iconst_2
+4936: iload_3
+4937: ifeq -> 4945
+4940: bipush 32
+4942: goto -> 4947
+4945: bipush 16
+4947: iconst_0
+4948: invokespecial net/minecraft/client/OptionInstance$IntRange.<init>(IIZ)V
+4951: bipush 12
+4953: invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;
+4956: aload_0
+4957: invokedynamic indy
+4962: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+4965: putfield net/minecraft/client/Options.renderDistanceLnet/minecraft/client/OptionInstance;
+4968: aload_0
+4969: new net/minecraft/client/OptionInstance
+4972: dup
+4973: ldc_w ldcw@1753
+4976: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+4979: invokedynamic indy
+4984: new net/minecraft/client/OptionInstance$IntRange
+4987: dup
+4988: getstatic net/minecraft/SharedConstants.DEBUG_ALLOW_LOW_SIM_DISTANCEZ
+4991: ifeq -> 4998
+4994: iconst_2
+4995: goto -> 4999
+4998: iconst_5
+4999: iload_3
+5000: ifeq -> 5008
+5003: bipush 32
+5005: goto -> 5010
+5008: bipush 16
+5010: iconst_0
+5011: invokespecial net/minecraft/client/OptionInstance$IntRange.<init>(IIZ)V
+5014: bipush 12
+5016: invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;
+5019: aload_0
+5020: invokedynamic indy
+5025: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+5028: putfield net/minecraft/client/Options.simulationDistanceLnet/minecraft/client/OptionInstance;
+5031: aload_0
+5032: invokestatic net/minecraft/util/Util.getPlatform()Lnet/minecraft/util/Util$OS;
+5035: getstatic net/minecraft/util/Util$OS.WINDOWSLnet/minecraft/util/Util$OS;
+5038: if_acmpne -> 5045
+5041: iconst_1
+5042: goto -> 5046
+5045: iconst_0
+5046: putfield net/minecraft/client/Options.syncWritesZ
+5049: aload_0
+5050: invokevirtual net/minecraft/client/Options.load()V
+5053: return
+*** lambda$createSoundSliderOptionInstance$0(Lnet/minecraft/sounds/SoundSource;Ljava/lang/Double;)V
+--- lambda$createSoundSliderOptionInstance$0(Lnet/minecraft/sounds/SoundSource;Ljava/lang/Double;)V
+0: invokestatic net/minecraft/client/Minecraft.getInstance()Lnet/minecraft/client/Minecraft;
+3: astore_2
+4: aload_3
+5: invokevirtual net/minecraft/client/Minecraft.getSoundManager()Lnet/minecraft/client/sounds/SoundManager;
+8: astore astore 4
+10: aload_1
+11: getstatic net/minecraft/sounds/SoundSource.MASTERLnet/minecraft/sounds/SoundSource;
+14: if_acmpeq -> 24
+17: aload_1
+18: getstatic net/minecraft/sounds/SoundSource.MUSICLnet/minecraft/sounds/SoundSource;
+21: if_acmpne -> 43
+24: aload_0
+25: getstatic net/minecraft/sounds/SoundSource.MUSICLnet/minecraft/sounds/SoundSource;
+28: invokevirtual net/minecraft/client/Options.getFinalSoundSourceVolume(Lnet/minecraft/sounds/SoundSource;)F
+31: fconst_0
+32: fcmpl
+33: ifle -> 43
+36: aload_3
+37: invokevirtual net/minecraft/client/Minecraft.getMusicManager()Lnet/minecraft/client/sounds/MusicManager;
+40: invokevirtual net/minecraft/client/sounds/MusicManager.showNowPlayingToastIfNeeded()V
+43: aload aload 4
+45: aload_1
+46: invokevirtual net/minecraft/client/sounds/SoundManager.refreshCategoryVolume(Lnet/minecraft/sounds/SoundSource;)V
+49: aload_3
+50: getfield net/minecraft/client/Minecraft.levelLnet/minecraft/client/multiplayer/ClientLevel;
+53: ifnonnull -> 66
+56: aload aload 4
+58: aload_1
+59: aload_2
+60: invokevirtual java/lang/Double.floatValue()F
+63: invokestatic net/minecraft/client/sounds/SoundPreviewHandler.preview(Lnet/minecraft/client/sounds/SoundManager;Lnet/minecraft/sounds/SoundSource;F)V
+66: return
+*** <clinit>()V
+--- <clinit>()V
+0: invokestatic com/mojang/logging/LogUtils.getLogger()Lorg/slf4j/Logger;
+3: putstatic net/minecraft/client/Options.LOGGERLorg/slf4j/Logger;
+6: new com/google/gson/Gson
+9: dup
+10: invokespecial com/google/gson/Gson.<init>()V
+13: putstatic net/minecraft/client/Options.GSONLcom/google/gson/Gson;
+16: new net/minecraft/client/Options$1
+19: dup
+20: invokespecial net/minecraft/client/Options$1.<init>()V
+23: putstatic net/minecraft/client/Options.LIST_OF_STRINGS_TYPELcom/google/gson/reflect/TypeToken;
+26: bipush 58
+28: invokestatic com/google/common/base/Splitter.on(C)Lcom/google/common/base/Splitter;
+31: iconst_2
+32: invokevirtual com/google/common/base/Splitter.limit(I)Lcom/google/common/base/Splitter;
+35: putstatic net/minecraft/client/Options.OPTION_SPLITTERLcom/google/common/base/Splitter;
+38: ldc_w ldcw@2842
+41: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+44: putstatic net/minecraft/client/Options.TOOLTIP_NEEDS_RESTARTLnet/minecraft/network/chat/Component;
+47: ldc_w ldcw@2844
+50: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+53: putstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_DARK_MOJANG_BACKGROUNDLnet/minecraft/network/chat/Component;
+56: ldc_w ldcw@2846
+59: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+62: putstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_HIDE_LIGHTNING_FLASHESLnet/minecraft/network/chat/Component;
+65: ldc_w ldcw@2848
+68: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+71: putstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_HIDE_SPLASH_TEXTSLnet/minecraft/network/chat/Component;
+74: ldc_w ldcw@2850
+77: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+80: putstatic net/minecraft/client/Options.GRAPHICS_API_TOOLTIPLnet/minecraft/network/chat/Component;
+83: ldc_w ldcw@2852
+86: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+89: putstatic net/minecraft/client/Options.GRAPHICS_API_TOOLTIP_VULKANLnet/minecraft/network/chat/Component;
+92: ldc_w ldcw@2854
+95: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+98: putstatic net/minecraft/client/Options.INACTIVITY_FPS_LIMIT_TOOLTIP_MINIMIZEDLnet/minecraft/network/chat/Component;
+101: ldc_w ldcw@2856
+104: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+107: putstatic net/minecraft/client/Options.INACTIVITY_FPS_LIMIT_TOOLTIP_AFKLnet/minecraft/network/chat/Component;
+110: ldc_w ldcw@2858
+113: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+116: putstatic net/minecraft/client/Options.GRAPHICS_TOOLTIP_WEATHER_RADIUSLnet/minecraft/network/chat/Component;
+119: ldc_w ldcw@2860
+122: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+125: putstatic net/minecraft/client/Options.GRAPHICS_TOOLTIP_CUTOUT_LEAVESLnet/minecraft/network/chat/Component;
+128: ldc_w ldcw@2862
+131: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+134: putstatic net/minecraft/client/Options.GRAPHICS_TOOLTIP_VIGNETTELnet/minecraft/network/chat/Component;
+137: ldc_w ldcw@2864
+140: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+143: putstatic net/minecraft/client/Options.GRAPHICS_TOOLTIP_IMPROVED_TRANSPARENCYLnet/minecraft/network/chat/Component;
+146: ldc_w ldcw@2866
+149: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+152: putstatic net/minecraft/client/Options.GRAPHICS_TOOLTIP_CHUNK_FADELnet/minecraft/network/chat/Component;
+155: ldc_w ldcw@2868
+158: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+161: putstatic net/minecraft/client/Options.PRIORITIZE_CHUNK_TOOLTIP_NONELnet/minecraft/network/chat/Component;
+164: ldc_w ldcw@2870
+167: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+170: putstatic net/minecraft/client/Options.PRIORITIZE_CHUNK_TOOLTIP_PLAYER_AFFECTEDLnet/minecraft/network/chat/Component;
+173: ldc_w ldcw@2872
+176: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+179: putstatic net/minecraft/client/Options.PRIORITIZE_CHUNK_TOOLTIP_NEARBYLnet/minecraft/network/chat/Component;
+182: ldc_w ldcw@2874
+185: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+188: putstatic net/minecraft/client/Options.MENU_BACKGROUND_BLURRINESS_TOOLTIPLnet/minecraft/network/chat/Component;
+191: ldc_w ldcw@2876
+194: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+197: putstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_CONTRAST_MODELnet/minecraft/network/chat/Component;
+200: ldc_w ldcw@2878
+203: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+206: putstatic net/minecraft/client/Options.HIGH_CONTRAST_BLOCK_OUTLINE_TOOLTIPLnet/minecraft/network/chat/Component;
+209: ldc_w ldcw@2880
+212: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+215: putstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_NOTIFICATION_DISPLAY_TIMELnet/minecraft/network/chat/Component;
+218: ldc_w ldcw@2882
+221: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+224: putstatic net/minecraft/client/Options.GRAPHICS_TOOLTIP_ANISOTROPIC_FILTERINGLnet/minecraft/network/chat/Component;
+227: ldc_w ldcw@2884
+230: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+233: putstatic net/minecraft/client/Options.FILTERING_NONE_TOOLTIPLnet/minecraft/network/chat/Component;
+236: ldc_w ldcw@2886
+239: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+242: putstatic net/minecraft/client/Options.FILTERING_RGSS_TOOLTIPLnet/minecraft/network/chat/Component;
+245: ldc_w ldcw@2888
+248: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+251: putstatic net/minecraft/client/Options.FILTERING_ANISOTROPIC_TOOLTIPLnet/minecraft/network/chat/Component;
+254: ldc_w ldcw@2890
+257: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+260: putstatic net/minecraft/client/Options.ALLOW_CURSOR_CHANGES_TOOLTIPLnet/minecraft/network/chat/Component;
+263: ldc_w ldcw@2892
+266: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+269: putstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_ROTATE_WITH_MINECARTLnet/minecraft/network/chat/Component;
+272: ldc_w ldcw@2894
+275: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+278: putstatic net/minecraft/client/Options.REALMS_NOTIFICATIONS_TOOLTIPLnet/minecraft/network/chat/Component;
+281: ldc_w ldcw@2896
+284: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+287: putstatic net/minecraft/client/Options.ALLOW_SERVER_LISTING_TOOLTIPLnet/minecraft/network/chat/Component;
+290: ldc_w ldcw@2898
+293: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+296: putstatic net/minecraft/client/Options.IN_GAME_NOTIFICATION_TOOLTIPLnet/minecraft/network/chat/Component;
+299: ldc_w ldcw@2900
+302: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+305: putstatic net/minecraft/client/Options.CLOSED_CAPTIONS_TOOLTIPLnet/minecraft/network/chat/Component;
+308: ldc_w ldcw@2902
+311: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+314: putstatic net/minecraft/client/Options.DIRECTIONAL_AUDIO_TOOLTIP_ONLnet/minecraft/network/chat/Component;
+317: ldc_w ldcw@2904
+320: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+323: putstatic net/minecraft/client/Options.DIRECTIONAL_AUDIO_TOOLTIP_OFFLnet/minecraft/network/chat/Component;
+326: ldc_w ldcw@2906
+329: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+332: putstatic net/minecraft/client/Options.TOOLTIP_EXCLUSIVE_FULLSCREEN_ONLnet/minecraft/network/chat/Component;
+335: ldc_w ldcw@2908
+338: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+341: putstatic net/minecraft/client/Options.TOOLTIP_EXCLUSIVE_FULLSCREEN_OFFLnet/minecraft/network/chat/Component;
+344: ldc_w ldcw@2910
+347: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+350: putstatic net/minecraft/client/Options.KEY_TOGGLELnet/minecraft/network/chat/Component;
+353: ldc_w ldcw@2912
+356: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+359: putstatic net/minecraft/client/Options.KEY_HOLDLnet/minecraft/network/chat/Component;
+362: ldc_w ldcw@2914
+365: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+368: putstatic net/minecraft/client/Options.SPRINT_WINDOW_TOOLTIPLnet/minecraft/network/chat/Component;
+371: ldc_w ldcw@2916
+374: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+377: putstatic net/minecraft/client/Options.CHAT_TOOLTIP_HIDE_MATCHED_NAMESLnet/minecraft/network/chat/Component;
+380: ldc_w ldcw@2918
+383: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+386: putstatic net/minecraft/client/Options.CHAT_TOOLTIP_ONLY_SHOW_SECURELnet/minecraft/network/chat/Component;
+389: ldc_w ldcw@2920
+392: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+395: putstatic net/minecraft/client/Options.CHAT_TOOLTIP_SAVE_DRAFTSLnet/minecraft/network/chat/Component;
+398: ldc_w ldcw@2922
+401: iconst_2
+402: anewarray java/lang/Object
+405: dup
+406: iconst_0
+407: ldc_w ldcw@2517
+410: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+413: aastore
+414: dup
+415: iconst_1
+416: ldc_w ldcw@2515
+419: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+422: aastore
+423: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+426: putstatic net/minecraft/client/Options.TELEMETRY_TOOLTIPLnet/minecraft/network/chat/Component;
+429: ldc_w ldcw@2924
+432: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+435: putstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_SCREEN_EFFECTLnet/minecraft/network/chat/Component;
+438: ldc_w ldcw@2926
+441: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+444: putstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_FOV_EFFECTLnet/minecraft/network/chat/Component;
+447: ldc_w ldcw@2928
+450: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+453: putstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_DARKNESS_EFFECTLnet/minecraft/network/chat/Component;
+456: ldc_w ldcw@2930
+459: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+462: putstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_GLINT_SPEEDLnet/minecraft/network/chat/Component;
+465: ldc_w ldcw@2932
+468: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+471: putstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_GLINT_STRENGTHLnet/minecraft/network/chat/Component;
+474: ldc_w ldcw@2934
+477: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+480: putstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_DAMAGE_TILT_STRENGTHLnet/minecraft/network/chat/Component;
+483: ldc_w ldcw@2936
+486: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+489: putstatic net/minecraft/client/Options.MUSIC_FREQUENCY_TOOLTIPLnet/minecraft/network/chat/Component;
+492: return

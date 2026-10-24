@@ -5644,34 +5644,34 @@ fn fov_from_value(v: f64) -> f64 {
 
 /// THE KEY BIND'S OWN DISPLAY (the `KeyMapping.getTranslatedKeyMessage`
 /// walk — the `InputConstants$Key.getDisplayName()` the lang row
-/// answers: the `key.keyboard.w` key the "W" row speaks, the None the
-/// UNKNOWN seat the `key.keyboard.unknown` "Not Bound" row wears; the
-/// derived fallback the assets-absent boot keeps — the save string's
-/// own tail the dots-to-spaces capitalization wears, the lang row the
-/// same words the assets' presence speaks).
-fn key_bind_display(k: Option<minifb::Key>) -> String {
-    let save = crate::options_file::key_binds::key_bind_save(k);
+/// answers: the `key.keyboard.w` key the "W" row speaks, the mouse
+/// bind the seeded `key.mouse.left` row the "Left Button" word wears,
+/// the None the UNKNOWN seat the `key.keyboard.unknown` "Not Bound"
+/// row wears; the derived fallback the assets-absent boot keeps — the
+/// save string's own tail the dots-to-spaces capitalization wears,
+/// the lang row the same words the assets' presence speaks).
+fn key_bind_display(k: Option<crate::options_file::key_binds::Bind>) -> String {
+    let save = crate::options_file::key_binds::bind_save(k);
     if save == "key.keyboard.unknown" {
         return tr("key.keyboard.unknown")
             .unwrap_or("Not Bound")
             .to_string();
     }
-    tr(save)
-        .map(|s| s.to_string())
-        .unwrap_or_else(|| {
-            save.strip_prefix("key.keyboard.")
-                .unwrap_or(save)
-                .split('.')
-                .map(|w| {
-                    let mut c = w.chars();
-                    match c.next() {
-                        Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
-                        None => String::new(),
-                    }
-                })
-                .collect::<Vec<_>>()
-                .join(" ")
-        })
+    tr(save).map(|s| s.to_string()).unwrap_or_else(|| {
+        save.strip_prefix("key.keyboard.")
+            .or_else(|| save.strip_prefix("key.mouse."))
+            .unwrap_or(save)
+            .split('.')
+            .map(|w| {
+                let mut c = w.chars();
+                match c.next() {
+                    Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+                    None => String::new(),
+                }
+            })
+            .collect::<Vec<_>>()
+            .join(" ")
+    })
 }
 
 /// THE FOV SLIDER'S OWN CAPTION (the 26.2 en_us table the ends law
@@ -8603,15 +8603,18 @@ pub struct App {
     /// frames the value's own seat follows, the release the disarm
     /// speaks).
     pub sensitivity_drag: bool,
-    /// THE KEYMAPPINGS' OWN STORE (the movement category the 186 round
-    /// banks — the `Options.keyMappings` array the movement rows the
-    /// ctor's registrations pc 2402-2545 order keeps; the
-    /// `Option<minifb::Key>` the `InputConstants$Key` field's own
-    /// shape wears, the None the UNKNOWN seat answers, the DEFAULTS
-    /// the ctor's codes the boot arms). The movement lanes the
-    /// window walk reads — the rebind the store writes, the lanes
-    /// the same frames the store's own keys serve.
-    pub key_binds: [Option<minifb::Key>; crate::options_file::key_binds::COUNT],
+    /// THE KEYMAPPINGS' OWN STORE (the movement + inventory + gameplay
+    /// categories the 186/187/188 rounds bank — the `Options.keyMappings`
+    /// array the rows the ctor's registrations order keeps; the
+    /// `Option<key_binds::Bind>` the `InputConstants$Key` field's own
+    /// shape wears — the Keyboard the KEYSYM arm, the Mouse the MOUSE
+    /// arm the seeded `key.mouse.*` names speak — the None the UNKNOWN
+    /// seat answers, the DEFAULTS the ctor's codes the boot arms). The
+    /// movement AND gameplay lanes the window walk reads — the rebind
+    /// the store writes, the lanes the same frames the store's own
+    /// binds serve.
+    pub key_binds:
+        [Option<crate::options_file::key_binds::Bind>; crate::options_file::key_binds::COUNT],
     /// THE REBIND'S OWN SELECTED KEY (the KeyBindsScreen's
     /// `selectedKey` field the keyPressed/mouseClicked walks read —
     /// the Some the row's change button the click arms, the captured
@@ -20959,7 +20962,18 @@ impl App {
     /// using-item gate returns BEFORE the abort (the vanilla's own
     /// order — a bow release does not speak a dig abort).
     pub fn on_left_release(&mut self) {
-        self.dig_held = false;
+        // THE ATTACK BIND'S OWN GATE (the `dig_held` the
+        // `keyAttack.isDown()` false law clears — the DEFAULT wiring
+        // the physical left release keeps, the keyboard-rebound attack
+        // the key's own release walk serves, the slider disarms the
+        // raw mouse release ALWAYS wears)
+        let attack_serves_left = self.key_binds[crate::options_file::key_binds::ATTACK]
+            == Some(crate::options_file::key_binds::Bind::Mouse(
+                minifb::MouseButton::Left,
+            ));
+        if attack_serves_left {
+            self.dig_held = false;
+        }
         // THE SLIDER'S OWN DISARM (the mouseReleased walk's own lane —
         // the release the dragging flag the unconditional false
         // speaks, the same law the creative scrollbar's disarm wears)
@@ -21036,6 +21050,13 @@ impl App {
             }
         }
         if self.screen != ScreenKind::World || self.paused {
+            return;
+        }
+        // THE ATTACK TAIL'S OWN GATE (the same bind law the hold's
+        // clear wears — the rebound attack the physical release the
+        // dig abort never speaks, the key's own release walk the tail
+        // serves)
+        if !attack_serves_left {
             return;
         }
         self.miss_time = 0;
@@ -30751,7 +30772,11 @@ impl App {
             // INSIDE the track the value's own seat answers, the armed
             // flag the held drag rides, the UnitDouble 0..1 the
             // store's own unit keeps)
-            if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_chat_line_spacing") {
+            if let Some(b) = self
+                .buttons
+                .iter()
+                .find(|b| b.id == "opt_chat_line_spacing")
+            {
                 let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
                 if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
                     self.chat_line_spacing = slider_value_from_x(mx, bx, bw);
@@ -30899,7 +30924,36 @@ impl App {
             self.click_creative(mx, my, 0);
             return;
         }
-        self.on_attack();
+        // THE ATTACK BIND'S OWN LANE (the handleKeybinds walk the
+        // `keyAttack` binding wears — the physical left press the
+        // DEFAULT wiring serves (the MOUSE 0 code the ctor banks), the
+        // keyboard-rebound attack the key lane serves, the OTHER-mouse
+        // rebind the lane's own verdict banks; the GUI screens' raw
+        // dispatch the lanes above already spoke)
+        if self.key_binds[crate::options_file::key_binds::ATTACK]
+            == Some(crate::options_file::key_binds::Bind::Mouse(
+                minifb::MouseButton::Left,
+            ))
+        {
+            self.on_attack();
+        }
+    }
+
+    /// The keyboard-attack release's own walk — the SAME `continueAttack`
+    /// (false) tail the physical left release's World arm wears (the
+    /// keyboard-rebound attack the key's own release serves — the dig
+    /// abort the hold's end speaks).
+    pub fn on_attack_release(&mut self) {
+        self.dig_held = false;
+        if self.screen != ScreenKind::World || self.paused {
+            return;
+        }
+        self.miss_time = 0;
+        if self.using_item.is_some() {
+            return;
+        }
+        let sends = self.dig.stop_destroy_block();
+        self.enqueue_dig(&sends);
     }
 
     /// The RIGHT press's rising edge (the vanilla MouseHandler's own
@@ -30921,6 +30975,14 @@ impl App {
     /// trident), the hold renders the using branch. Returns whether a
     /// use started (the tests' honest probe).
     pub fn on_right_press(&mut self, mx: i32, my: i32) -> bool {
+        // THE SELECTED-KEY GATE'S OWN RIGHT SEAT (the KeyBindsScreen
+        // .mouseClicked walk pc 0-37 — the armed rebind the ANY click
+        // the MOUSE bind answers FIRST, the consumed press the screen
+        // dispatch never reaches)
+        if self.screen == ScreenKind::KeyBinds && self.kb_capture_mouse(minifb::MouseButton::Right)
+        {
+            return false;
+        }
         if self.screen == ScreenKind::Dispenser {
             // THE IN-FLIGHT DRAG'S OWN GATE (mouseClicked pc 168-172 —
             // the armed drag's frames the other button's press keep
@@ -31045,6 +31107,18 @@ impl App {
             return false;
         }
         if self.screen == ScreenKind::World && !self.paused {
+            // THE USE BIND'S OWN GATE (the handleKeybinds walk the
+            // `keyUse` binding wears — the physical right press the
+            // DEFAULT wiring serves (the MOUSE 1 code the ctor banks),
+            // the keyboard-rebound use the key lane serves, the
+            // OTHER-mouse rebind the lane's own verdict banks)
+            if self.key_binds[crate::options_file::key_binds::USE]
+                != Some(crate::options_file::key_binds::Bind::Mouse(
+                    minifb::MouseButton::Right,
+                ))
+            {
+                return false;
+            }
             // THE DESTROY GATE (the vanilla startUseItem's own first
             // check: `if gameMode.isDestroying() return` — the right
             // press refuses while the left hand mines)
@@ -32420,6 +32494,29 @@ impl App {
         // consumable: the hold ends silently — no completion, no
         // sound, no penalty; the pieces already spawned keep their
         // flight). The eat checked first — the one-use-at-a-time law
+        // keeps the lanes exclusive. THE USE BIND'S OWN GATE (the
+        // `keyUse.isDown()` false law the release speaks — the DEFAULT
+        // wiring the physical right release keeps, the keyboard-rebound
+        // use the key's own release walk serves; the container arms
+        // above the raw dispatch keep)
+        if self.key_binds[crate::options_file::key_binds::USE]
+            == Some(crate::options_file::key_binds::Bind::Mouse(
+                minifb::MouseButton::Right,
+            ))
+        {
+            self.on_use_release();
+        }
+    }
+
+    /// The use release's own walk — the `releaseUsing` tail the physical
+    /// right release's World arm wears (the keyboard-rebound use the
+    /// key's own release serves — the eat's silent cancel, the bow's
+    /// power shot, the hold's own end).
+    pub fn on_use_release(&mut self) {
+        // THE EAT'S CANCEL (javap releaseUsing's own shape for the
+        // consumable: the hold ends silently — no completion, no
+        // sound, no penalty; the pieces already spawned keep their
+        // flight). The eat checked first — the one-use-at-a-time law
         // keeps the lanes exclusive.
         if let Some(eat) = self.eating.take() {
             self.load_held_payload(eat.item, None);
@@ -33056,8 +33153,31 @@ impl App {
         match pressed {
             None => return false,
             Some(minifb::Key::Escape) => self.key_binds[slot] = None,
-            Some(k) => self.key_binds[slot] = Some(k),
+            Some(k) => {
+                self.key_binds[slot] = Some(crate::options_file::key_binds::Bind::Keyboard(k))
+            }
         }
+        self.kb_selected = None;
+        true
+    }
+
+    /// THE MOUSE CAPTURE'S OWN LANE (the KeyBindsScreen.mouseClicked
+    /// walk pc 0-37 VERBATIM — the selectedKey the gate answers FIRST:
+    /// the armed rebind the ANY click the MOUSE bind wears — the
+    /// `setKey(InputConstants$Type.MOUSE.getOrCreate(event.button()))`
+    /// the ldc walk speaks, the getOrCreate the seeded map the
+    /// `key.mouse.left/right/middle` names answer —, the selected the
+    /// null the walk clears, the TRUE the consumed click returns (the
+    /// button hit-test the walk's return NEVER reaches — the click
+    /// under the rebind the row's own capture alone serves), the
+    /// resetMappingAndUpdateButtons the list's own refresh the
+    /// next-frame render keeps. The disarm'd screen the false the
+    /// super chain answers.)
+    pub fn kb_capture_mouse(&mut self, button: minifb::MouseButton) -> bool {
+        let Some(slot) = self.kb_selected else {
+            return false;
+        };
+        self.key_binds[slot] = Some(crate::options_file::key_binds::Bind::Mouse(button));
         self.kb_selected = None;
         true
     }
@@ -35134,6 +35254,14 @@ impl App {
     }
 
     pub fn on_click(&mut self, mx: i32, my: i32) {
+        // THE SELECTED-KEY GATE (the KeyBindsScreen.mouseClicked walk
+        // pc 0-37 — the armed rebind the ANY click the MOUSE bind
+        // answers FIRST: the capture the TRUE the consumed click
+        // returns, the button hit-test the walk's return never
+        // reaches; the disarm'd screen the gate the hit-test wears)
+        if self.screen == ScreenKind::KeyBinds && self.kb_capture_mouse(minifb::MouseButton::Left) {
+            return;
+        }
         let hit: Vec<&Button> = self.buttons.iter().filter(|b| b.hovered(mx, my)).collect();
         for b in hit {
             match b.id {
@@ -35232,6 +35360,18 @@ impl App {
                 "kb_change_drop" => {
                     self.kb_selected = Some(crate::options_file::key_binds::DROP);
                 }
+                // THE GAMEPLAY TRIO'S OWN SEATS (the rows the ctor's
+                // registrations the array order keeps — the change the
+                // click the selectedKey the same walk arms)
+                "kb_change_use" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::USE);
+                }
+                "kb_change_attack" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::ATTACK);
+                }
+                "kb_change_pickitem" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::PICK_ITEM);
+                }
                 "kb_rowreset_forward" => {
                     self.key_binds[crate::options_file::key_binds::FORWARD] =
                         crate::options_file::key_binds::DEFAULTS
@@ -35290,6 +35430,27 @@ impl App {
                     self.key_binds[crate::options_file::key_binds::DROP] =
                         crate::options_file::key_binds::DEFAULTS
                             [crate::options_file::key_binds::DROP];
+                    self.kb_selected = None;
+                }
+                // THE GAMEPLAY TRIO'S OWN RESETS (the row's own walk —
+                // the `setKey(getDefaultKey())` the lambda$new$2 law
+                // keeps, the MOUSE defaults the seeded names wear)
+                "kb_rowreset_use" => {
+                    self.key_binds[crate::options_file::key_binds::USE] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::USE];
+                    self.kb_selected = None;
+                }
+                "kb_rowreset_attack" => {
+                    self.key_binds[crate::options_file::key_binds::ATTACK] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::ATTACK];
+                    self.kb_selected = None;
+                }
+                "kb_rowreset_pickitem" => {
+                    self.key_binds[crate::options_file::key_binds::PICK_ITEM] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::PICK_ITEM];
                     self.kb_selected = None;
                 }
                 // THE FOOTERS' OWN RETURNS (the OptionsSubScreen
@@ -39842,7 +40003,12 @@ impl App {
                 y - 1,
                 tw + 4,
                 10,
-                [0.0, 0.0, 0.0, chat_row_bg_alpha(self.text_background_opacity, alpha)],
+                [
+                    0.0,
+                    0.0,
+                    0.0,
+                    chat_row_bg_alpha(self.text_background_opacity, alpha),
+                ],
             );
             // THE GLYPH'S OWN ALPHA (the ChatComponent$1.accept law the
             // chatopacity_178.py probe banks — the `fload_3 *
@@ -39885,7 +40051,8 @@ impl App {
         // wears, the Everywhere lane the textbg-scaled alpha the
         // chat_band_alpha fold answers — the 0.5 default the
         // byte-identical fold the band's own pixels keep)
-        let band_alpha = chat_band_alpha(self.background_for_chat_only, self.text_background_opacity);
+        let band_alpha =
+            chat_band_alpha(self.background_for_chat_only, self.text_background_opacity);
         g.fill(2, h - 14, w - 4, 12, [0.0, 0.0, 0.0, band_alpha]);
         // THE INPUT TEXT (the EditBox's borderless draw — the text at
         // x + 0 the borderless law keeps, the y + 2 the 12-tall band
@@ -41469,10 +41636,7 @@ impl App {
     /// the rebuild never inherits).
     pub fn on_sensitivity_slider_drag(&mut self, mx: i32) {
         if !self.sensitivity_drag
-            || !matches!(
-                self.screen,
-                ScreenKind::Options | ScreenKind::MouseSettings
-            )
+            || !matches!(self.screen, ScreenKind::Options | ScreenKind::MouseSettings)
         {
             return;
         }
@@ -41581,7 +41745,11 @@ impl App {
         if !self.chat_line_spacing_drag || self.screen != ScreenKind::Accessibility {
             return;
         }
-        if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_chat_line_spacing") {
+        if let Some(b) = self
+            .buttons
+            .iter()
+            .find(|b| b.id == "opt_chat_line_spacing")
+        {
             let (bx, bw) = (b.x, b.w);
             self.chat_line_spacing = slider_value_from_x(mx, bx, bw);
         }
@@ -62782,7 +62950,9 @@ impl App {
         ));
         self.buttons.push(Button::new(
             "keybinds",
-            tr("controls.keybinds").unwrap_or("Key Binds...").to_string(),
+            tr("controls.keybinds")
+                .unwrap_or("Key Binds...")
+                .to_string(),
             cx + 4 + bw / 2,
             h / 2 - 40,
             bw,
@@ -62927,8 +63097,34 @@ impl App {
             }
             self.kb_render_row(g, a, w, i, by);
         }
+        // THE GAMEPLAY GROUP'S OWN HEADER (the CategoryEntry the
+        // category boundary 210 wears — the trio the ctor's OWN array
+        // order the rows keep (keyUse/keyAttack/keyPickItem), the SAME
+        // group shape the movement/inventory pairs wear; the SORT_ORDER
+        // ordinal the BETWEEN seat the enum clinit banks — movement,
+        // misc, multiplayer, GAMEPLAY, INVENTORY — the misc/multiplayer
+        // rows the store never carries, the group walk the categories
+        // WITH rows answers)
+        let hy = kb::GAMEPLAY_HEADER_Y - off;
+        if hy >= kb::LIST_TOP && hy + 20 <= band_bottom {
+            g.text(
+                a,
+                16,
+                hy,
+                tr(kb::CATEGORY_GAMEPLAY_NAME).unwrap_or(kb::CATEGORY_GAMEPLAY_FALLBACK),
+                [0.7, 0.7, 0.7],
+                false,
+            );
+        }
+        for i in kb::USE..kb::COUNT {
+            let by = kb::GAMEPLAY_ROWS_START + (i - kb::USE) as i32 * kb::ROW_STRIDE - off;
+            if by < kb::LIST_TOP || by + 20 > band_bottom {
+                continue; // the clip the band the honest render keeps
+            }
+            self.kb_render_row(g, a, w, i, by);
+        }
         // THE INVENTORY GROUP'S OWN HEADER (the CategoryEntry the
-        // category boundary 210 wears — the trio the array order the
+        // category boundary 294 wears — the trio the array order the
         // movement pair's AFTER banks, the SAME group shape the rows
         // keep: the +12 gap the movement group's own law answers)
         let hy = kb::INVENTORY_HEADER_Y - off;
@@ -62997,7 +63193,12 @@ impl App {
             kb::SPRINT => "kb_change_sprint",
             kb::INVENTORY => "kb_change_inventory",
             kb::SWAP_OFFHAND => "kb_change_swapoffhand",
-            _ => "kb_change_drop",
+            kb::DROP => "kb_change_drop",
+            // THE GAMEPLAY TRIO'S OWN IDS (the rows the group walk the
+            // BETWEEN seat renders — the ctor order the ids keep)
+            kb::USE => "kb_change_use",
+            kb::ATTACK => "kb_change_attack",
+            _ => "kb_change_pickitem",
         };
         self.buttons
             .push(Button::new(change_id, caption, w - 107, by, 75));
@@ -63011,7 +63212,11 @@ impl App {
             kb::SPRINT => "kb_rowreset_sprint",
             kb::INVENTORY => "kb_rowreset_inventory",
             kb::SWAP_OFFHAND => "kb_rowreset_swapoffhand",
-            _ => "kb_rowreset_drop",
+            kb::DROP => "kb_rowreset_drop",
+            // THE GAMEPLAY TRIO'S OWN IDS (the same group walk's seats)
+            kb::USE => "kb_rowreset_use",
+            kb::ATTACK => "kb_rowreset_attack",
+            _ => "kb_rowreset_pickitem",
         };
         let mut rb = Button::new(
             reset_id,

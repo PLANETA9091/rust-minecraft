@@ -1704,10 +1704,15 @@ pub fn run_gui_app(
     let mut last_press: Option<(std::time::Instant, crate::screens::ScreenKind, i32)> = None;
     let mut was_right_down = false; // the right press's edge detector (the split-stack lane)
     let mut was_middle_down = false; // the middle press's edge detector (the pick lane)
-                                     // THE FIRST-PERSON BODY's per-frame state: the previous raw mouse
-                                     // position (the delta look's own stream — None = re-arm without a
-                                     // turn) and the world-screen edge detector (the cursor hides
-                                     // in-world like the vanilla pointer-lock, shows on every menu)
+                                     // THE GAMEPLAY LANES' OWN KEYBOARD EDGES (the keyboard-rebound
+                                     // attack/use the keys' own rising/falling edges track — the
+                                     // minifb no-edge-API law the mouse trackers keep)
+    let mut attack_key_was_down = false;
+    let mut use_key_was_down = false;
+    // THE FIRST-PERSON BODY's per-frame state: the previous raw mouse
+    // position (the delta look's own stream — None = re-arm without a
+    // turn) and the world-screen edge detector (the cursor hides
+    // in-world like the vanilla pointer-lock, shows on every menu)
     let mut prev_mouse: Option<(f32, f32)> = None;
     let mut was_in_world = false;
     // THE FIXED CLOCK's own state (vanilla `Minecraft.runTick`): the
@@ -1910,6 +1915,18 @@ pub fn run_gui_app(
                 app.on_escape();
             }
         }
+        // THE GUI LANES' OWN KEYBOARD READ (the bind law the lanes
+        // wear — the Keyboard bind the key's rising edge answers, the
+        // Mouse bind the GUI cursor lane the press never is: the
+        // follow-up round's own lane the verdict banks)
+        let bind_key_pressed = |bind: Option<crate::options_file::key_binds::Bind>| -> bool {
+            match bind {
+                Some(crate::options_file::key_binds::Bind::Keyboard(k)) => {
+                    window.is_key_pressed(k, minifb::KeyRepeat::No)
+                }
+                _ => false,
+            }
+        };
         // THE E KEY'S OWN LANE (the vanilla keyPress's key.inventory
         // toggle): the world screen opens the survival inventory, the
         // inventory screen closes it back — the App's own death gate
@@ -1921,8 +1938,7 @@ pub fn run_gui_app(
         // rebind the store writes, the None the never-pressed the
         // unbound law keeps)
         if !app.chat_open
-            && app.key_binds[crate::options_file::key_binds::INVENTORY]
-                .is_some_and(|k| window.is_key_pressed(k, minifb::KeyRepeat::No))
+            && bind_key_pressed(app.key_binds[crate::options_file::key_binds::INVENTORY])
         {
             app.on_inventory_key();
         }
@@ -1941,10 +1957,7 @@ pub fn run_gui_app(
         // screen gates keep the two chains honest (the world Q the
         // inventory walk never passes, the container Q the handleKeybinds
         // gate never did)
-        if !app.chat_open
-            && app.key_binds[crate::options_file::key_binds::DROP]
-                .is_some_and(|k| window.is_key_pressed(k, minifb::KeyRepeat::No))
-        {
+        if !app.chat_open && bind_key_pressed(app.key_binds[crate::options_file::key_binds::DROP]) {
             // THE PICKER'S OWN Q (the creative keyPressed's super chain
             // — the keyDrop arm the container screens share, the
             // creative THROW arms the seats' own walks answer, the
@@ -1984,8 +1997,7 @@ pub fn run_gui_app(
         // reads (the binding the store's own slot answers, the None
         // the never-pressed the unbound law keeps)
         if !app.chat_open
-            && app.key_binds[crate::options_file::key_binds::SWAP_OFFHAND]
-                .is_some_and(|k| window.is_key_pressed(k, minifb::KeyRepeat::No))
+            && bind_key_pressed(app.key_binds[crate::options_file::key_binds::SWAP_OFFHAND])
         {
             // THE CONTAINER SCREEN'S OWN OFFHAND SWAP (checkHotbarKeyPressed's
             // own FIRST arm — the keySwapOffhand match the
@@ -2254,7 +2266,13 @@ pub fn run_gui_app(
         // container screens' own input order keeps)
         let middle_down = window.get_mouse_down(minifb::MouseButton::Middle);
         if middle_down && !was_middle_down && !app.chat_open {
-            if app.screen == crate::screens::ScreenKind::Creative {
+            // THE SELECTED-KEY GATE'S OWN MIDDLE SEAT (the
+            // KeyBindsScreen.mouseClicked walk pc 0-37 — the armed
+            // rebind the ANY click the MOUSE bind answers FIRST, the
+            // consumed press the clone dispatch never reaches)
+            if app.screen == crate::screens::ScreenKind::KeyBinds {
+                app.kb_capture_mouse(minifb::MouseButton::Middle);
+            } else if app.screen == crate::screens::ScreenKind::Creative {
                 app.on_creative_clone_click(gmx, gmy);
             } else {
                 // THE CONTAINER SCREENS' OWN CLONE (the AbstractContainer-
@@ -2381,16 +2399,22 @@ pub fn run_gui_app(
             if turn_x != 0.0 || turn_y != 0.0 {
                 app.on_turn_key(turn_x, turn_y, frame_dt_secs);
             }
-            // THE KEYMAPPINGS' OWN LANES (the store's own keys the
+            // THE KEYMAPPINGS' OWN LANES (the store's own binds the
             // vanilla handleKeybinds's `keyForward.isDown()` reads
             // answer — the binding the `KeyMapping.isDown()` the key's
             // own state wears, the rebind the store writes): the
-            // movement the bindings the store's own keys serve, the
+            // movement the bindings the store's own binds serve, the
             // None (the UNKNOWN seat) the never-down the unbound law
-            // keeps.
+            // keeps, the Mouse bind the physical button's own state
+            // answers (the `KeyMapping.isDown()` the mouse code the
+            // same state wears)
             use crate::options_file::key_binds as kb;
             let bind_down = |slot: usize| -> bool {
-                app.key_binds[slot].is_some_and(|k| window.is_key_down(k))
+                match app.key_binds[slot] {
+                    Some(kb::Bind::Keyboard(k)) => window.is_key_down(k),
+                    Some(kb::Bind::Mouse(b)) => window.get_mouse_down(b),
+                    None => false,
+                }
             };
             let fwd = (bind_down(kb::FORWARD) as i32 - bind_down(kb::BACK) as i32) as f32;
             let strafe = (bind_down(kb::LEFT) as i32 - bind_down(kb::RIGHT) as i32) as f32;
@@ -2407,13 +2431,49 @@ pub fn run_gui_app(
             // the selected hotbar slot, the Ctrl modifier the whole
             // stack (hasControlDown the LocalPlayer.drop boolean speaks
             // — the same key the sprint gate reads, the vanilla's own
-            // dual use). THE STORE'S OWN KEY the lane reads (the
-            // binding the store's own slot answers, the None the
-            // never-pressed the unbound law keeps)
-            if app.key_binds[crate::options_file::key_binds::DROP]
-                .is_some_and(|k| window.is_key_pressed(k, minifb::KeyRepeat::No))
-            {
-                app.on_drop_key(window.is_key_down(Key::LeftCtrl));
+            // dual use). THE STORE'S OWN BIND the lane reads (the
+            // Keyboard bind the store's own slot answers, the None the
+            // never-pressed the unbound law keeps, the Mouse bind the
+            // rising-edge lane the follow-up the verdict banks — minifb
+            // has no mouse edge API the lane's own shape keeps)
+            if let Some(kb::Bind::Keyboard(k)) = app.key_binds[kb::DROP] {
+                if window.is_key_pressed(k, minifb::KeyRepeat::No) {
+                    app.on_drop_key(window.is_key_down(Key::LeftCtrl));
+                }
+            }
+            // THE GAMEPLAY TRIO'S OWN KEYBOARD LANES (the rebind the
+            // store honors — the Keyboard-bound attack/use/pickItem the
+            // keys' own edges serve: the attack the startAttack walk
+            // the press speaks and the continueAttack(false) tail the
+            // release wears, the use the startUseItem walk the press
+            // speaks and the releaseUsing tail the release wears, the
+            // pick the pickBlockOrEntity walk the press speaks — the
+            // DEFAULT Mouse wiring the physical lanes below serve, the
+            // cross-mouse rebind the lane's own verdict banks)
+            if let Some(kb::Bind::Keyboard(k)) = app.key_binds[kb::ATTACK] {
+                let down = window.is_key_down(k);
+                if down && !attack_key_was_down && !app.paused {
+                    app.on_attack();
+                }
+                if attack_key_was_down && !down {
+                    app.on_attack_release();
+                }
+                attack_key_was_down = down;
+            }
+            if let Some(kb::Bind::Keyboard(k)) = app.key_binds[kb::USE] {
+                let down = window.is_key_down(k);
+                if down && !use_key_was_down && !app.paused {
+                    app.on_right_press(gmx, gmy);
+                }
+                if use_key_was_down && !down {
+                    app.on_use_release();
+                }
+                use_key_was_down = down;
+            }
+            if let Some(kb::Bind::Keyboard(k)) = app.key_binds[kb::PICK_ITEM] {
+                if window.is_key_pressed(k, minifb::KeyRepeat::No) {
+                    app.on_pick_block(window.is_key_down(Key::LeftCtrl));
+                }
             }
             // THE F1 HIDE-HUD TOGGLE (vanilla Gui.handleKeybinds's
             // keyToggleGui lane — the `Options.keyToggleGui
@@ -2508,8 +2568,12 @@ pub fn run_gui_app(
             // (the Ctrl modifier rides the packet's includeData slot —
             // the same key the sprint/Q gates read, the vanilla's own
             // dual use). minifb has no edge API, the press is tracked
-            // like the left/right pair above
-            let middle_down = window.get_mouse_down(minifb::MouseButton::Middle);
+            // like the left/right pair above. THE STORE'S OWN BIND the
+            // lane reads (the DEFAULT wiring the MOUSE 2 code keeps, the
+            // keyboard rebind the key lane above serves)
+            let middle_down = window.get_mouse_down(minifb::MouseButton::Middle)
+                && app.key_binds[kb::PICK_ITEM]
+                    == Some(kb::Bind::Mouse(minifb::MouseButton::Middle));
             if middle_down && !was_middle_down {
                 // THE SPECTATOR'S ACTION KEY (javap Minecraft
                 // .handleKeybinds pcs 617-653 — the keySpectatorHotbar

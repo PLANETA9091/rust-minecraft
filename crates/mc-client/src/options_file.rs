@@ -221,7 +221,7 @@ pub struct OptionsFile {
     /// movement categories the rebind walk serves — the OTHER
     /// categories (the UI/gameplay/creative/debug rows the 57-instance
     /// ctor array carries) the follow-up rounds' own stores bank.
-    pub key_binds: [Option<minifb::Key>; key_binds::COUNT],
+    pub key_binds: [Option<key_binds::Bind>; key_binds::COUNT],
 }
 
 /// THE MOVEMENT CATEGORY'S OWN STORE (the Options ctor's registrations
@@ -233,7 +233,22 @@ pub struct OptionsFile {
 /// discriminants the GLFW codes the store holds — W=32, A=10, S=28,
 /// D=13, Space, LeftShift, LeftCtrl the minifb values answer).
 pub mod key_binds {
-    use minifb::Key;
+    use minifb::{Key, MouseButton};
+
+    /// THE BIND'S OWN TYPE (the `InputConstants$Key` walk the store
+    /// wears — the keyboard AND the mouse buttons the ONE type keeps:
+    /// the type the enum's own arms answer, the Keyboard the KEYSYM
+    /// arm the `key.keyboard.*` names speak, the Mouse the MOUSE arm
+    /// the seeded `key.mouse.*` names wear). The vanilla
+    /// `KeyMapping.key` the one field holds — the trio's own defaults
+    /// the MOUSE values the ctor walk banks (`new ToggleKeyMapping(
+    /// "key.use", Type.MOUSE, 1, Category.GAMEPLAY, ...)` the Options
+    /// ctor pc 2628/2664/2700 speak).
+    #[derive(Clone, Copy, PartialEq, Debug)]
+    pub enum Bind {
+        Keyboard(Key),
+        Mouse(MouseButton),
+    }
 
     pub const FORWARD: usize = 0;
     pub const LEFT: usize = 1;
@@ -250,7 +265,18 @@ pub mod key_binds {
     pub const INVENTORY: usize = 7;
     pub const SWAP_OFFHAND: usize = 8;
     pub const DROP: usize = 9;
-    pub const COUNT: usize = 10;
+    /// THE GAMEPLAY TRIO'S OWN SLOTS (the ctor's registrations the
+    /// inventory trio's AFTER wear — the ldc walk's own order: keyUse
+    /// pc 2628, keyAttack pc 2664, keyPickItem pc 2700, the GAMEPLAY
+    /// category the all three wear). THE MOUSE DEFAULTS THE CTOR
+    /// BANKS: the use the MOUSE 1 (Right), the attack the MOUSE 0
+    /// (Left — the `ToggleKeyMapping` the `toggleAttack` supplier
+    /// carries), the pickItem the MOUSE 2 (Middle — the plain
+    /// `KeyMapping` the toggle-less walk speaks).
+    pub const USE: usize = 10;
+    pub const ATTACK: usize = 11;
+    pub const PICK_ITEM: usize = 12;
+    pub const COUNT: usize = 13;
 
     /// THE VANILLA BINDING NAMES (the `key_` + name the file row's
     /// prefix wears, the lang captions the `key.*` rows answer — the
@@ -266,6 +292,9 @@ pub mod key_binds {
         "key.inventory",
         "key.swapOffhand",
         "key.drop",
+        "key.use",
+        "key.attack",
+        "key.pickItem",
     ];
 
     /// THE CAPTIONS' OWN FALLBACK (the en_us values the assets-absent
@@ -281,6 +310,9 @@ pub mod key_binds {
         "Open/Close Inventory",
         "Swap Item With Off Hand",
         "Drop Selected Item",
+        "Use Item/Place Block",
+        "Attack/Destroy",
+        "Pick Block",
     ];
 
     /// THE CATEGORY'S OWN ROW (the CategoryEntry the list groups the
@@ -293,20 +325,35 @@ pub mod key_binds {
     /// lang "Inventory" row answers)
     pub const CATEGORY_INV_NAME: &str = "key.categories.inventory";
     pub const CATEGORY_INV_FALLBACK: &str = "Inventory";
+    /// THE GAMEPLAY GROUP'S OWN HEADER ROW (the CategoryEntry the
+    /// category boundary adds — the `key.categories.gameplay` key the
+    /// lang "Gameplay" row answers; the enum's own SORT_ORDER walk the
+    /// clinit banks: movement, misc, multiplayer, GAMEPLAY, INVENTORY
+    /// — the gameplay the movement/inventory the ordinals BETWEEN
+    /// keep, the misc/multiplayer rows the store never carries, the
+    /// group walk the categories WITH rows the render answers)
+    pub const CATEGORY_GAMEPLAY_NAME: &str = "key.categories.gameplay";
+    pub const CATEGORY_GAMEPLAY_FALLBACK: &str = "Gameplay";
 
     /// THE DEFAULTS' OWN ROW (the ctor's codes the minifb Key enum's
     /// own discriminants answer).
-    pub const DEFAULTS: [Option<Key>; COUNT] = [
-        Some(Key::W),
-        Some(Key::A),
-        Some(Key::S),
-        Some(Key::D),
-        Some(Key::Space),
-        Some(Key::LeftShift),
-        Some(Key::LeftCtrl),
-        Some(Key::E),
-        Some(Key::F),
-        Some(Key::Q),
+    pub const DEFAULTS: [Option<Bind>; COUNT] = [
+        Some(Bind::Keyboard(Key::W)),
+        Some(Bind::Keyboard(Key::A)),
+        Some(Bind::Keyboard(Key::S)),
+        Some(Bind::Keyboard(Key::D)),
+        Some(Bind::Keyboard(Key::Space)),
+        Some(Bind::Keyboard(Key::LeftShift)),
+        Some(Bind::Keyboard(Key::LeftCtrl)),
+        Some(Bind::Keyboard(Key::E)),
+        Some(Bind::Keyboard(Key::F)),
+        Some(Bind::Keyboard(Key::Q)),
+        // THE MOUSE TRIO'S OWN SEATS (the ctor's codes the MOUSE arm
+        // the seeded names answer — getOrCreate(0/1/2) the pre-seeded
+        // map the key.mouse.left/right/middle Keys wear)
+        Some(Bind::Mouse(MouseButton::Right)),
+        Some(Bind::Mouse(MouseButton::Left)),
+        Some(Bind::Mouse(MouseButton::Middle)),
     ];
 
     /// THE LIST'S OWN GEOMETRY (the entries the walk's y positions
@@ -319,15 +366,96 @@ pub mod key_binds {
     pub const LIST_TOP: i32 = 30;
     pub const ROW_STRIDE: i32 = 24;
     pub const MOVEMENT_ROWS_START: i32 = 42;
-    pub const INVENTORY_HEADER_Y: i32 = 210;
-    pub const INVENTORY_ROWS_START: i32 = 222;
+    /// THE GROUPS' OWN GEOMETRY (the sorted walk's own y positions —
+    /// the CategoryEntry the group boundaries the SORT_ORDER ordinals
+    /// answer: the movement rows the 42-start stride keeps, the
+    /// GAMEPLAY header the 210 seat the movement rows' end the next
+    /// stride slot wears (42 + 7*24), the gameplay rows the 222 start
+    /// +12 the group's own gap answers, the INVENTORY header the 294
+    /// seat the gameplay rows' end the next stride slot wears (222 +
+    /// 3*24), the inventory rows the 306 start the same +12 keeps)
+    pub const GAMEPLAY_HEADER_Y: i32 = 210;
+    pub const GAMEPLAY_ROWS_START: i32 = 222;
+    pub const INVENTORY_HEADER_Y: i32 = 294;
+    pub const INVENTORY_ROWS_START: i32 = 306;
 
-    /// THE CONTENT'S OWN HEIGHT (the walk's own bottom — the last
-    /// trio row's bottom minus the list top; the maxScrollAmount law
-    /// the band height subtracts: `max(0, contentHeight - height)`
-    /// the AbstractScrollArea walk banks)
+    /// THE CONTENT'S OWN HEIGHT (the walk's own bottom — the LAST
+    /// group's last row's bottom minus the list top; the maxScrollAmount
+    /// law the band height subtracts: `max(0, contentHeight - height)`
+    /// the AbstractScrollArea walk banks; the array order the groups the
+    /// DISPLAY walk re-orders — the inventory rows the walk's own
+    /// bottom keeps (the trio the 306-start stride wears))
     pub fn content_height() -> i32 {
-        INVENTORY_ROWS_START + (COUNT - INVENTORY - 1) as i32 * ROW_STRIDE + 20 - LIST_TOP
+        INVENTORY_ROWS_START + (USE - INVENTORY - 1) as i32 * ROW_STRIDE + 20 - LIST_TOP
+    }
+
+    /// THE MOUSE'S OWN NAME TABLE (the InputConstants$Type clinit the
+    /// seeded map banks — the `addKey(MOUSE, "key.mouse.left", 0)`
+    /// walk the pc 75-99 pairs keep: the left the 0, the right the 1,
+    /// the middle the 2; the seeded NAME the saveString's own row
+    /// wears — the `key.mouse.4..8` rows the buttons 3..7 the seed
+    /// keeps, the minifb enum the three the client's own boundary
+    /// banks)
+    pub const MOUSE_NAMES: &[(MouseButton, &str)] = &[
+        (MouseButton::Left, "key.mouse.left"),
+        (MouseButton::Right, "key.mouse.right"),
+        (MouseButton::Middle, "key.mouse.middle"),
+    ];
+
+    /// THE SAVE STRING'S OWN LAW (the `KeyMapping.saveString()` walk —
+    /// the `InputConstants$Key.getName()` the row's own format keeps;
+    /// the None the UNKNOWN seat the `key.keyboard.unknown` row
+    /// answers, the Keyboard the table's own pair speaks, the Mouse
+    /// the seeded name wears).
+    pub fn bind_save(k: Option<Bind>) -> &'static str {
+        match k {
+            None => "key.keyboard.unknown",
+            Some(Bind::Mouse(b)) => match b {
+                MouseButton::Left => "key.mouse.left",
+                MouseButton::Right => "key.mouse.right",
+                MouseButton::Middle => "key.mouse.middle",
+            },
+            Some(Bind::Keyboard(k)) => KEYBOARD_NAMES
+                .iter()
+                .find(|(key, _)| *key == k)
+                .map(|(_, n)| *n)
+                .unwrap_or("key.keyboard.unknown"),
+        }
+    }
+
+    /// THE DECODE'S OWN LAW (the `InputConstants.getKey(String)` walk —
+    /// the NAME_MAP the FIRST hit answers: the seeded `key.mouse.*`
+    /// rows the Mouse speaks, the `key.keyboard.*` rows the Keyboard
+    /// keeps; the MISS the prefix walk wears — the `mouse.` prefix the
+    /// parseInt MINUS ONE the computed buttons answer (`lambda$
+    /// getOrCreate$0` the `mouse. + (value + 1)` names build, the
+    /// decode the same offset unwears — the button 8+ the computed
+    /// rows the client's own 3-button minifb boundary never carries,
+    /// the unknown the None keeps); the table-miss the None the
+    /// honest decode wears).
+    pub fn bind_from_save(s: &str) -> Option<Bind> {
+        if let Some((_, n)) = MOUSE_NAMES.iter().find(|(_, n)| *n == s) {
+            return Some(Bind::Mouse(match *n {
+                "key.mouse.left" => MouseButton::Left,
+                "key.mouse.right" => MouseButton::Right,
+                _ => MouseButton::Middle,
+            }));
+        }
+        if let Some(rest) = s.strip_prefix("mouse.") {
+            // the prefix walk the computed rows wear — the minus-one
+            // the getKey law keeps, the 0/1/2 the minifb enum speaks
+            let v: i32 = rest.parse().ok()?;
+            return match v - 1 {
+                0 => Some(Bind::Mouse(MouseButton::Left)),
+                1 => Some(Bind::Mouse(MouseButton::Right)),
+                2 => Some(Bind::Mouse(MouseButton::Middle)),
+                _ => None,
+            };
+        }
+        KEYBOARD_NAMES
+            .iter()
+            .find(|(_, n)| *n == s)
+            .map(|(k, _)| Bind::Keyboard(*k))
     }
 
     /// THE KEYBOARD'S OWN NAME TABLE (the InputConstants names the
@@ -444,34 +572,6 @@ pub mod key_binds {
         (Key::LeftSuper, "key.keyboard.left.win"),
         (Key::RightSuper, "key.keyboard.right.win"),
     ];
-
-    /// THE SAVE STRING'S OWN LAW (the `KeyMapping.saveString()` walk —
-    /// the `InputConstants.Key.getName()` the row's own format keeps;
-    /// the None the UNKNOWN seat the `key.keyboard.unknown` row
-    /// answers, the table-miss the same UNKNOWN the honest decode
-    /// wears).
-    pub fn key_bind_save(k: Option<Key>) -> &'static str {
-        match k {
-            None => "key.keyboard.unknown",
-            Some(k) => KEYBOARD_NAMES
-                .iter()
-                .find(|(key, _)| *key == k)
-                .map(|(_, n)| *n)
-                .unwrap_or("key.keyboard.unknown"),
-        }
-    }
-
-    /// THE DECODE'S OWN LAW (the `InputConstants.getKey(String)` walk —
-    /// the table hit the key answers, the unknown/`unknown` row the
-    /// None the unbound seat keeps — the malformed the blank bind the
-    /// vanilla law wears, the default-keeps clamp the numeric rows'
-    /// law never speaks here).
-    pub fn key_bind_from_save(s: &str) -> Option<Key> {
-        KEYBOARD_NAMES
-            .iter()
-            .find(|(_, n)| *n == s)
-            .map(|(k, _)| *k)
-    }
 }
 
 impl Default for OptionsFile {
@@ -631,34 +731,43 @@ impl OptionsFile {
                 // None the unbound seat answers, the malformed the same
                 // blank the getKey law keeps)
                 "key_key.forward" => {
-                    out.key_binds[key_binds::FORWARD] = key_binds::key_bind_from_save(value);
+                    out.key_binds[key_binds::FORWARD] = key_binds::bind_from_save(value);
                 }
                 "key_key.left" => {
-                    out.key_binds[key_binds::LEFT] = key_binds::key_bind_from_save(value);
+                    out.key_binds[key_binds::LEFT] = key_binds::bind_from_save(value);
                 }
                 "key_key.back" => {
-                    out.key_binds[key_binds::BACK] = key_binds::key_bind_from_save(value);
+                    out.key_binds[key_binds::BACK] = key_binds::bind_from_save(value);
                 }
                 "key_key.right" => {
-                    out.key_binds[key_binds::RIGHT] = key_binds::key_bind_from_save(value);
+                    out.key_binds[key_binds::RIGHT] = key_binds::bind_from_save(value);
                 }
                 "key_key.jump" => {
-                    out.key_binds[key_binds::JUMP] = key_binds::key_bind_from_save(value);
+                    out.key_binds[key_binds::JUMP] = key_binds::bind_from_save(value);
                 }
                 "key_key.sneak" => {
-                    out.key_binds[key_binds::SNEAK] = key_binds::key_bind_from_save(value);
+                    out.key_binds[key_binds::SNEAK] = key_binds::bind_from_save(value);
                 }
                 "key_key.sprint" => {
-                    out.key_binds[key_binds::SPRINT] = key_binds::key_bind_from_save(value);
+                    out.key_binds[key_binds::SPRINT] = key_binds::bind_from_save(value);
                 }
                 "key_key.inventory" => {
-                    out.key_binds[key_binds::INVENTORY] = key_binds::key_bind_from_save(value);
+                    out.key_binds[key_binds::INVENTORY] = key_binds::bind_from_save(value);
                 }
                 "key_key.swapOffhand" => {
-                    out.key_binds[key_binds::SWAP_OFFHAND] = key_binds::key_bind_from_save(value);
+                    out.key_binds[key_binds::SWAP_OFFHAND] = key_binds::bind_from_save(value);
                 }
                 "key_key.drop" => {
-                    out.key_binds[key_binds::DROP] = key_binds::key_bind_from_save(value);
+                    out.key_binds[key_binds::DROP] = key_binds::bind_from_save(value);
+                }
+                "key_key.use" => {
+                    out.key_binds[key_binds::USE] = key_binds::bind_from_save(value);
+                }
+                "key_key.attack" => {
+                    out.key_binds[key_binds::ATTACK] = key_binds::bind_from_save(value);
+                }
+                "key_key.pickItem" => {
+                    out.key_binds[key_binds::PICK_ITEM] = key_binds::bind_from_save(value);
                 }
                 _ => {} // the jar's other rows the client's seats never carry
             }
@@ -751,7 +860,7 @@ impl OptionsFile {
             text.push_str(&format!(
                 "key_{}:{}\n",
                 key_binds::NAMES[i],
-                key_binds::key_bind_save(self.key_binds[i])
+                key_binds::bind_save(self.key_binds[i])
             ));
         }
         let _ = std::fs::write(path, text);
@@ -813,7 +922,7 @@ mod tests {
         OptionsFile::default().save(&path);
         let text = std::fs::read_to_string(&path).expect("the save the file writes");
         assert_eq!(
-            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\n",
+            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\n",
             "the file the vanilla rows wear"
         );
         let loaded = OptionsFile::load(&path);
@@ -1001,7 +1110,9 @@ mod tests {
         // rows the defaults the load law keeps)
         assert_eq!(
             loaded.key_binds[crate::options_file::key_binds::FORWARD],
-            Some(minifb::Key::Q),
+            Some(crate::options_file::key_binds::Bind::Keyboard(
+                minifb::Key::Q
+            )),
             "the forward the last valid row wears"
         );
         assert_eq!(
@@ -1016,12 +1127,16 @@ mod tests {
         );
         assert_eq!(
             loaded.key_binds[crate::options_file::key_binds::JUMP],
-            Some(minifb::Key::Space),
+            Some(crate::options_file::key_binds::Bind::Keyboard(
+                minifb::Key::Space
+            )),
             "the missing row the default keeps"
         );
         assert_eq!(
             loaded.key_binds[crate::options_file::key_binds::LEFT],
-            Some(minifb::Key::A),
+            Some(crate::options_file::key_binds::Bind::Keyboard(
+                minifb::Key::A
+            )),
             "the missing row the default keeps"
         );
         let _ = std::fs::remove_dir_all(&dir);
