@@ -9758,7 +9758,7 @@ fn the_options_file_the_stores_restart_outlives() {
     assert_eq!(app.screen, ScreenKind::Title, "the Done the return wears");
     let text = std::fs::read_to_string(&path).expect("the chord the file writes");
     assert_eq!(
-        text, "version:4903\nmouseSensitivity:1.0\nfov:110\nsoundCategory_master:0.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\n",
+        text, "version:4903\nmouseSensitivity:1.0\nfov:110\nsoundCategory_master:0.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
         "the file the vanilla rows wear"
     );
     // THE RESTART (the fresh boot the file's truth wears — the session's
@@ -9794,7 +9794,7 @@ fn the_options_escape_the_save_and_return_wears() {
     assert_eq!(app.screen, ScreenKind::Title, "the escape the return wears");
     let text = std::fs::read_to_string(&path).expect("the escape the file writes");
     assert_eq!(
-        text, "version:4903\nmouseSensitivity:0.75\nfov:90\nsoundCategory_master:0.25\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\n",
+        text, "version:4903\nmouseSensitivity:0.75\nfov:90\nsoundCategory_master:0.25\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
         "the SAME save chord the Done wears the escape speaks"
     );
     // THE PAUSED LANE (the pause screen's own Options — the
@@ -9903,7 +9903,7 @@ fn the_quit_lane_the_stop_flag_and_the_files_absence_wears() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the removed() moment the file writes"),
-        "version:4903\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\n",
+        "version:4903\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
         "the takeover's own exit the rows bank"
     );
     app.render_title_buttons_for_test();
@@ -9917,7 +9917,7 @@ fn the_quit_lane_the_stop_flag_and_the_files_absence_wears() {
     assert!(app.stopping, "the second stop the same chord wears");
     assert_eq!(
         std::fs::read_to_string(&path).expect("the file the exit keeps"),
-        "version:4903\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\n",
+        "version:4903\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
         "the quit the file NEVER re-writes — the removed() moment ALONE the rows keep"
     );
     let _ = std::fs::remove_dir_all(&dir);
@@ -9968,7 +9968,7 @@ fn the_options_exit_the_removed_moment_itself_saves() {
     app.open(ScreenKind::Servers);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the takeover the file writes"),
-        "version:4903\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\n",
+        "version:4903\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
         "the replacement lane the removed() moment speaks"
     );
     // THE SAME-KIND RE-ENTRY (the open(Options) from Options the
@@ -9979,7 +9979,7 @@ fn the_options_exit_the_removed_moment_itself_saves() {
     app.open(ScreenKind::Options);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the re-entry the file writes"),
-        "version:4903\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:0.5\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\n",
+        "version:4903\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:0.5\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
         "the same-kind walk the old screen's discard keeps"
     );
     // THE NONE BOOT'S SILENT KEEP (the options_file None the save walk
@@ -10117,7 +10117,7 @@ fn the_focus_pause_chord_the_flip_and_the_rows_wear() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the exit the file writes"),
-        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:false\nfovEffectScale:1.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\n",
+        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:false\nfovEffectScale:1.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
         "the flipped row the exit banks"
     );
     // THE SECOND FLIP (the chord the option re-arms — the row the next
@@ -10128,7 +10128,7 @@ fn the_focus_pause_chord_the_flip_and_the_rows_wear() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the second exit the file writes"),
-        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\n",
+        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
         "the re-armed row the exit banks"
     );
     // THE THIRD FLIP (the option the false re-wears — the restart the
@@ -10139,7 +10139,7 @@ fn the_focus_pause_chord_the_flip_and_the_rows_wear() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the third exit the file writes"),
-        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:false\nfovEffectScale:1.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\n",
+        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:false\nfovEffectScale:1.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
         "the flipped row the exit banks"
     );
     // THE BOOT LOAD (the file's truth the boot walk wears — the false
@@ -10187,7 +10187,7 @@ fn the_fov_effect_scale_row_the_boot_the_body_wears() {
     // own store the tick's read passes)
     std::fs::write(
         &path,
-        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:0.5\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\n",
+        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:0.5\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
     )
     .expect("the scale file writes");
     app.enter_world();
@@ -10203,7 +10203,7 @@ fn the_fov_effect_scale_row_the_boot_the_body_wears() {
     // the effects the OFF caption keeps, the zoom the 1.0 answers)
     std::fs::write(
         &path,
-        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:0.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\n",
+        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:0.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
     )
     .expect("the off file writes");
     let mut app2 = App::new(262);
@@ -10220,7 +10220,7 @@ fn the_fov_effect_scale_row_the_boot_the_body_wears() {
     // clamp never wears, the doubleRange codec the skip answers)
     std::fs::write(
         &path,
-        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.5\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\n",
+        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.5\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
     )
     .expect("the oor file writes");
     let mut app4 = App::new(262);
@@ -10693,6 +10693,164 @@ fn the_chat_opacity_row_the_chat_text_wears() {
     assert!(
         (chat_text_alpha_base(0.25) - 0.325).abs() < 1e-6,
         "the quarter scale the 0.325 base the same rows answer"
+    );
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// THE BAND SCOPE'S OWN ROW (the 26.2 chatbgonly_179 probes the walk
+/// banks — the `backgroundForChatOnly` option the Options ctor's
+/// `iconst_1` pcs 2092-2120 speaks, the accessibility array the
+/// index-5 seat the row BETWEEN the textbg and the chat-text seats
+/// wears, the CycleButton's DisplayState.VALUE the label law the
+/// lambda$new$76 pair keeps — the caption the walk ignores, the
+/// `getBackgroundColor(I)I` the input band's raw/Everywhere pair the
+/// ChatScreen.extractRenderState call answers, the file row the
+/// visit-order adjacency the textbg@506 < bgOnly@523 walk banks).
+#[test]
+fn the_chat_bg_only_row_the_band_scope_wears() {
+    let dir = std::env::temp_dir().join(format!("mc2rs_chatbgonly_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&dir);
+    let path = dir.join("options.txt");
+    let mut app = App::new(262);
+    app.options_file = Some(path.clone());
+    // THE SUB-SCREEN'S OWN SEAT (the accessibility row the opener
+    // wears — the entry save the removed() moment the file's rows
+    // keep, the DEFAULT TRUE the band scope's row speaks)
+    app.open(ScreenKind::Options);
+    app.open(ScreenKind::Accessibility);
+    let pre_exit = std::fs::read_to_string(&path).expect("the entry save wrote");
+    assert!(
+        pre_exit.contains("backgroundForChatOnly:true\n"),
+        "the removed() moment the entry save keeps ({pre_exit})"
+    );
+    // THE FILE ROW'S OWN ADJACENCY (the visit-order seat the
+    // processOptions walk banks — the bgOnly row the
+    // textBackgroundOpacity row's AFTER wears)
+    let bo_pos = pre_exit
+        .find("backgroundForChatOnly:")
+        .expect("the row");
+    let tb_pos = pre_exit.find("textBackgroundOpacity:").expect("the row");
+    assert!(
+        tb_pos < bo_pos,
+        "the visit-order adjacency the file rows keep"
+    );
+    // THE ROW'S OWN SEAT (the array's index 5 the row BETWEEN the
+    // textbg and the chat-text seats wears — index 4 < index 5 <
+    // index 6 < index 12 the order keeps)
+    app.render_title_buttons_for_test();
+    let tb = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_textbg")
+        .expect("the chat background row")
+        .clone();
+    let bo = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_chat_bg_only")
+        .expect("the band scope row")
+        .clone();
+    let co = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_chat_opacity")
+        .expect("the chat text row")
+        .clone();
+    let fes = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_fov_effect")
+        .expect("the fov row")
+        .clone();
+    assert!(
+        tb.y < bo.y && bo.y < co.y && co.y < fes.y,
+        "the index-5 row the seat between wears"
+    );
+    assert_eq!(bo.label, "Chat", "the TRUE's own VALUE word");
+    // THE TOGGLE'S OWN LAW (the CycleButton's own press walk the bool
+    // row wears — the press the TRUE/FALSE pair flips, the caption
+    // the Everywhere word the FALSE row speaks, the second press the
+    // TRUE seat restores)
+    app.on_press(bo.x + bo.w / 2, bo.y + bo.h / 2);
+    assert!(
+        !app.background_for_chat_only,
+        "the press the FALSE seat flips"
+    );
+    app.render_title_buttons_for_test();
+    let bo = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_chat_bg_only")
+        .expect("the row")
+        .clone();
+    assert_eq!(
+        bo.label, "Everywhere",
+        "the FALSE's own VALUE word the caption speaks"
+    );
+    app.on_press(bo.x + bo.w / 2, bo.y + bo.h / 2);
+    assert!(
+        app.background_for_chat_only,
+        "the second press the TRUE seat restores"
+    );
+    // THE BAND'S OWN FOLD (the getBackgroundColor(I)I law the pure fn
+    // speaks — the TRUE lane the raw 0.5 the textbg never moves, the
+    // Everywhere lane the textbg-scaled alpha the pair answers, the
+    // 0.5 default the byte-identical fold the two lanes share)
+    assert_eq!(
+        chat_band_alpha(true, 0.25),
+        0.5,
+        "the TRUE lane the raw alpha keeps — the textbg the lane never wears"
+    );
+    assert_eq!(
+        chat_band_alpha(false, 0.5),
+        0.5,
+        "the 0.5 default the byte-identical fold the two lanes share"
+    );
+    assert_eq!(
+        chat_band_alpha(false, 0.25),
+        0.25,
+        "the Everywhere lane the textbg-scaled alpha wears"
+    );
+    assert_eq!(
+        chat_band_alpha(false, 1.0),
+        1.0,
+        "the Everywhere lane the full-opacity end answers"
+    );
+    // THE PARENT'S OWN EXIT (the removed() moment the save the
+    // sub-screen's change banks — the Escape ride the sub-screen's
+    // own walk never wears, the Options exit the file's rows speaks —
+    // the Everywhere row the restart outlives)
+    app.on_press(bo.x + bo.w / 2, bo.y + bo.h / 2);
+    assert!(
+        !app.background_for_chat_only,
+        "the third press the FALSE seat the exit banks"
+    );
+    app.on_escape();
+    assert_eq!(
+        app.screen, ScreenKind::Options,
+        "the parent the Escape ride returns"
+    );
+    let mid = std::fs::read_to_string(&path).expect("the entry save's rows");
+    assert!(
+        mid.contains("backgroundForChatOnly:true\n"),
+        "the sub-screen's own walks the save never speaks"
+    );
+    app.open(ScreenKind::Title);
+    let post = std::fs::read_to_string(&path).expect("the parent exit wrote");
+    let bo_pos = post.find("backgroundForChatOnly:").expect("the row");
+    let tb_pos = post.find("textBackgroundOpacity:").expect("the row");
+    assert!(
+        post.contains("backgroundForChatOnly:false\n") && tb_pos < bo_pos,
+        "the Everywhere row the parent exit banks ({post})"
+    );
+    // THE RESTART'S OWN DECODE (the fresh boot the file's truth wears
+    // — the FALSE row the store the reload keeps)
+    let mut re = App::new(262);
+    re.options_file = Some(path.clone());
+    re.options_file_load();
+    assert_eq!(
+        re.background_for_chat_only, false,
+        "the restart the Everywhere row the decode keeps"
     );
     let _ = std::fs::remove_dir_all(&dir);
 }

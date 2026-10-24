@@ -1,0 +1,341 @@
+CP#924: ('u', 'options.chat.width')
+CP#474: ('u', 'backgroundForChatOnly')
+
+== Options :: lambda$new$14 (Ljava/lang/Boolean;)Lnet/minecraft/client/CloudStatus;
+    0: aload_0
+    1: invokevirtual java.lang.Boolean.booleanValue
+    4: ifeq -> 13
+    7: getstatic net.minecraft.client.CloudStatus.FANCY
+    10: goto -> 16
+    13: getstatic net.minecraft.client.CloudStatus.OFF
+    16: areturn
+
+== Options :: lambda$new$21 (Ljava/lang/Boolean;)V
+    0: invokestatic net.minecraft.client.Minecraft.getInstance
+    3: astore_2
+    4: aload_2
+    5: invokevirtual net.minecraft.client.Minecraft.getGpuWarnlistManager
+    8: astore_3
+    9: aload_0
+    10: getfield net.minecraft.client.Options.isApplyingGraphicsPreset
+    13: ifne -> 35
+    16: aload_1
+    17: invokevirtual java.lang.Boolean.booleanValue
+    20: ifeq -> 35
+    23: aload_3
+    24: invokevirtual net.minecraft.client.renderer.GpuWarnlistManager.willShowWarning
+    27: ifeq -> 35
+    30: aload_3
+    31: invokevirtual net.minecraft.client.renderer.GpuWarnlistManager.showWarning
+    34: return
+    35: invokedynamic indy@2635
+    40: invokestatic net.minecraft.client.Options.operateOnLevelExtractor
+    43: aload_0
+    44: invokevirtual net.minecraft.client.Options.setGraphicsPresetToCustom
+    47: return
+
+== Options :: lambda$new$29 (Lnet/minecraft/network/chat/Component;Lnet/minecraft/world/entity/player/ChatVisiblity;)Lnet/minecraft/network/chat/Component;
+    0: aload_1
+    1: invokevirtual net.minecraft.world.entity.player.ChatVisiblity.caption
+    4: areturn
+
+== Options :: lambda$new$30 (Lnet/minecraft/world/entity/player/ChatVisiblity;)V
+    0: invokestatic net.minecraft.client.Minecraft.getInstance
+    3: getfield net.minecraft.client.Minecraft.player
+    6: astore_1
+    7: aload_1
+    8: ifnull -> 15
+    11: aload_1
+    12: invokevirtual net.minecraft.client.player.LocalPlayer.refreshChatAbilities
+    15: return
+
+== Options :: lambda$new$32 (Ljava/lang/Double;)V
+    0: invokestatic net.minecraft.client.Minecraft.getInstance
+    3: getfield net.minecraft.client.Minecraft.gui
+    6: getfield net.minecraft.client.gui.Gui.hud
+    9: invokevirtual net.minecraft.client.gui.Hud.getChat
+    12: invokevirtual net.minecraft.client.gui.components.ChatComponent.rescaleChat
+    15: return
+
+== Options :: lambda$new$34 (Ljava/lang/Double;)V
+    0: invokestatic net.minecraft.client.Minecraft.getInstance
+    3: getfield net.minecraft.client.Minecraft.gui
+    6: getfield net.minecraft.client.gui.Gui.hud
+    9: invokevirtual net.minecraft.client.gui.Hud.getChat
+    12: invokevirtual net.minecraft.client.gui.components.ChatComponent.rescaleChat
+    15: return
+
+== Options :: lambda$new$35 (Ljava/lang/Boolean;)V
+    0: invokestatic net.minecraft.client.Minecraft.getInstance
+    3: invokevirtual net.minecraft.client.Minecraft.getResourcePackRepository
+    6: astore_2
+    7: aload_2
+    8: invokevirtual net.minecraft.server.packs.repository.PackRepository.getSelectedIds
+    11: ldc_w cp(8, 2722)
+    14: invokeinterface java.util.Collection.contains
+    19: istore_3
+    20: iload_3
+    21: ifne -> 49
+    24: aload_1
+    25: invokevirtual java.lang.Boolean.booleanValue
+    28: ifeq -> 49
+    31: aload_2
+    32: ldc_w cp(8, 2722)
+    35: invokevirtual net.minecraft.server.packs.repository.PackRepository.addPack
+    38: ifeq -> 75
+    41: aload_0
+    42: aload_2
+    43: invokevirtual net.minecraft.client.Options.updateResourcePacks
+    46: goto -> 75
+    49: iload_3
+    50: ifeq -> 75
+    53: aload_1
+    54: invokevirtual java.lang.Boolean.booleanValue
+    57: ifne -> 75
+    60: aload_2
+    61: ldc_w cp(8, 2722)
+    64: invokevirtual net.minecraft.server.packs.repository.PackRepository.removePack
+    67: ifeq -> 75
+    70: aload_0
+    71: aload_2
+    72: invokevirtual net.minecraft.client.Options.updateResourcePacks
+    75: return
+
+== Options :: lambda$new$38 (Ljava/lang/Double;)V
+    0: invokestatic net.minecraft.client.Minecraft.getInstance
+    3: getfield net.minecraft.client.Minecraft.gui
+    6: getfield net.minecraft.client.gui.Gui.hud
+    9: invokevirtual net.minecraft.client.gui.Hud.getChat
+    12: invokevirtual net.minecraft.client.gui.components.ChatComponent.rescaleChat
+    15: return
+
+== Options :: lambda$new$39 (Lnet/minecraft/network/chat/Component;Ljava/lang/Double;)Lnet/minecraft/network/chat/Component;
+    0: aload_0
+    1: aload_1
+    2: invokevirtual java.lang.Double.doubleValue
+    5: invokestatic net.minecraft.client.gui.components.ChatComponent.getWidth
+    8: invokestatic net.minecraft.client.Options.pixelValueLabel
+    11: areturn
+
+== Options :: lambda$new$40 (Ljava/lang/Double;)V
+    0: invokestatic net.minecraft.client.Minecraft.getInstance
+    3: getfield net.minecraft.client.Minecraft.gui
+    6: getfield net.minecraft.client.gui.Gui.hud
+    9: invokevirtual net.minecraft.client.gui.Hud.getChat
+    12: invokevirtual net.minecraft.client.gui.components.ChatComponent.rescaleChat
+    15: return
+
+== Options :: lambda$new$41 (Lnet/minecraft/network/chat/Component;Ljava/lang/Double;)Lnet/minecraft/network/chat/Component;
+    0: aload_0
+    1: aload_1
+    2: invokevirtual java.lang.Double.doubleValue
+    5: invokestatic net.minecraft.client.gui.components.ChatComponent.getHeight
+    8: invokestatic net.minecraft.client.Options.pixelValueLabel
+    11: areturn
+
+== Options :: lambda$new$42 (Ljava/lang/Double;)V
+    0: invokestatic net.minecraft.client.Minecraft.getInstance
+    3: getfield net.minecraft.client.Minecraft.gui
+    6: getfield net.minecraft.client.gui.Gui.hud
+    9: invokevirtual net.minecraft.client.gui.Hud.getChat
+    12: invokevirtual net.minecraft.client.gui.components.ChatComponent.rescaleChat
+    15: return
+
+== Options :: lambda$new$43 (Lnet/minecraft/network/chat/Component;Ljava/lang/Double;)Lnet/minecraft/network/chat/Component;
+    0: aload_0
+    1: aload_1
+    2: invokevirtual java.lang.Double.doubleValue
+    5: invokestatic net.minecraft.client.gui.components.ChatComponent.getHeight
+    8: invokestatic net.minecraft.client.Options.pixelValueLabel
+    11: areturn
+
+== Options :: lambda$new$44 (Ljava/lang/Double;)V
+    0: invokestatic net.minecraft.client.Minecraft.getInstance
+    3: getfield net.minecraft.client.Minecraft.gui
+    6: getfield net.minecraft.client.gui.Gui.hud
+    9: invokevirtual net.minecraft.client.gui.Hud.getChat
+    12: invokevirtual net.minecraft.client.gui.components.ChatComponent.rescaleChat
+    15: return
+
+== Options :: lambda$new$48 (Ljava/lang/Double;)V
+    0: invokestatic net.minecraft.client.Minecraft.getInstance
+    3: getfield net.minecraft.client.Minecraft.gui
+    6: invokevirtual net.minecraft.client.gui.Gui.chatListener
+    9: aload_0
+    10: invokevirtual java.lang.Double.doubleValue
+    13: invokevirtual net.minecraft.client.multiplayer.chat.ChatListener.setMessageDelay
+    16: return
+
+== Options :: lambda$new$63 (Ljava/lang/Boolean;)V
+    0: invokestatic net.minecraft.client.Minecraft.getInstance
+    3: invokevirtual net.minecraft.client.Minecraft.getWindow
+    6: astore_1
+    7: aload_1
+    8: ifnull -> 19
+    11: aload_1
+    12: aload_0
+    13: invokevirtual java.lang.Boolean.booleanValue
+    16: invokevirtual com.mojang.blaze3d.platform.Window.updateRawMouseInput
+    19: return
+
+== Options :: lambda$new$64 (Ljava/lang/Boolean;)V
+    0: invokestatic net.minecraft.client.Minecraft.getInstance
+    3: invokevirtual net.minecraft.client.Minecraft.getWindow
+    6: astore_1
+    7: aload_1
+    8: ifnull -> 19
+    11: aload_1
+    12: aload_0
+    13: invokevirtual java.lang.Boolean.booleanValue
+    16: invokevirtual com.mojang.blaze3d.platform.Window.setAllowCursorChanges
+    19: return
+
+== Options :: lambda$new$74 (Ljava/lang/Boolean;)Lnet/minecraft/client/gui/components/Tooltip;
+    0: aload_0
+    1: invokevirtual java.lang.Boolean.booleanValue
+    4: ifeq -> 16
+    7: getstatic net.minecraft.client.Options.DIRECTIONAL_AUDIO_TOOLTIP_ON
+    10: invokestatic net.minecraft.client.gui.components.Tooltip.create
+    13: goto -> 22
+    16: getstatic net.minecraft.client.Options.DIRECTIONAL_AUDIO_TOOLTIP_OFF
+    19: invokestatic net.minecraft.client.gui.components.Tooltip.create
+    22: areturn
+
+== Options :: lambda$new$76 (Lnet/minecraft/network/chat/Component;Ljava/lang/Boolean;)Lnet/minecraft/network/chat/Component;
+    0: aload_1
+    1: invokevirtual java.lang.Boolean.booleanValue
+    4: ifeq -> 16
+    7: ldc_w cp(8, 2562)
+    10: invokestatic net.minecraft.network.chat.Component.translatable
+    13: goto -> 22
+    16: ldc_w cp(8, 2564)
+    19: invokestatic net.minecraft.network.chat.Component.translatable
+    22: areturn
+
+== Options :: lambda$new$77 (Ljava/lang/Boolean;)V
+    0: invokestatic net.minecraft.client.Minecraft.getInstance
+    3: astore_2
+    4: aload_2
+    5: invokevirtual net.minecraft.client.Minecraft.getWindow
+    8: ifnull -> 49
+    11: aload_2
+    12: invokevirtual net.minecraft.client.Minecraft.getWindow
+    15: invokevirtual com.mojang.blaze3d.platform.Window.isFullscreen
+    18: aload_1
+    19: invokevirtual java.lang.Boolean.booleanValue
+    22: if_icmpeq -> 49
+    25: aload_2
+    26: invokevirtual net.minecraft.client.Minecraft.getWindow
+    29: invokevirtual com.mojang.blaze3d.platform.Window.toggleFullScreen
+    32: aload_0
+    33: invokevirtual net.minecraft.client.Options.fullscreen
+    36: aload_2
+    37: invokevirtual net.minecraft.client.Minecraft.getWindow
+    40: invokevirtual com.mojang.blaze3d.platform.Window.isFullscreen
+    43: invokestatic java.lang.Boolean.valueOf
+    46: invokevirtual net.minecraft.client.OptionInstance.set
+    49: return
+
+== Options :: lambda$new$78 (Ljava/lang/Boolean;)Lnet/minecraft/client/gui/components/Tooltip;
+    0: new java.util.ArrayList
+    3: dup
+    4: invokespecial java.util.ArrayList.<init>
+    7: astore_2
+    8: aload_1
+    9: invokevirtual java.lang.Boolean.booleanValue
+    12: aload_0
+    13: getfield net.minecraft.client.Options.exclusiveFullscreenFromStartup
+    16: if_icmpeq -> 39
+    19: aload_2
+    20: getstatic net.minecraft.client.Options.TOOLTIP_NEEDS_RESTART
+    23: invokeinterface java.util.List.add
+    28: pop
+    29: aload_2
+    30: getstatic net.minecraft.network.chat.CommonComponents.EMPTY
+    33: invokeinterface java.util.List.add
+    38: pop
+    39: aload_2
+    40: aload_1
+    41: invokevirtual java.lang.Boolean.booleanValue
+    44: ifeq -> 53
+    47: getstatic net.minecraft.client.Options.TOOLTIP_EXCLUSIVE_FULLSCREEN_ON
+    50: goto -> 56
+    53: getstatic net.minecraft.client.Options.TOOLTIP_EXCLUSIVE_FULLSCREEN_OFF
+    56: invokeinterface java.util.List.add
+    61: pop
+    62: aload_2
+    63: invokestatic net.minecraft.network.chat.CommonComponents.joinLines
+    66: invokestatic net.minecraft.client.gui.components.Tooltip.create
+    69: areturn
+
+== Options :: lambda$new$79 (Lnet/minecraft/network/chat/Component;Ljava/lang/Boolean;)Lnet/minecraft/network/chat/Component;
+    0: aload_1
+    1: invokevirtual java.lang.Boolean.booleanValue
+    4: ifeq -> 13
+    7: getstatic net.minecraft.client.Options.KEY_TOGGLE
+    10: goto -> 16
+    13: getstatic net.minecraft.client.Options.KEY_HOLD
+    16: areturn
+
+== Options :: lambda$new$80 (Lnet/minecraft/network/chat/Component;Ljava/lang/Boolean;)Lnet/minecraft/network/chat/Component;
+    0: aload_1
+    1: invokevirtual java.lang.Boolean.booleanValue
+    4: ifeq -> 13
+    7: getstatic net.minecraft.client.Options.KEY_TOGGLE
+    10: goto -> 16
+    13: getstatic net.minecraft.client.Options.KEY_HOLD
+    16: areturn
+
+== Options :: lambda$new$81 (Lnet/minecraft/network/chat/Component;Ljava/lang/Boolean;)Lnet/minecraft/network/chat/Component;
+    0: aload_1
+    1: invokevirtual java.lang.Boolean.booleanValue
+    4: ifeq -> 13
+    7: getstatic net.minecraft.client.Options.KEY_TOGGLE
+    10: goto -> 16
+    13: getstatic net.minecraft.client.Options.KEY_HOLD
+    16: areturn
+
+== Options :: lambda$new$82 (Lnet/minecraft/network/chat/Component;Ljava/lang/Boolean;)Lnet/minecraft/network/chat/Component;
+    0: aload_1
+    1: invokevirtual java.lang.Boolean.booleanValue
+    4: ifeq -> 13
+    7: getstatic net.minecraft.client.Options.KEY_TOGGLE
+    10: goto -> 16
+    13: getstatic net.minecraft.client.Options.KEY_HOLD
+    16: areturn
+
+== Options :: lambda$new$87 (Lnet/minecraft/network/chat/Component;Ljava/lang/Boolean;)Lnet/minecraft/network/chat/Component;
+    0: invokestatic net.minecraft.client.Minecraft.getInstance
+    3: astore_2
+    4: aload_2
+    5: invokevirtual net.minecraft.client.Minecraft.allowsTelemetry
+    8: ifne -> 18
+    11: ldc_w cp(8, 2511)
+    14: invokestatic net.minecraft.network.chat.Component.translatable
+    17: areturn
+    18: aload_1
+    19: invokevirtual java.lang.Boolean.booleanValue
+    22: ifeq -> 39
+    25: aload_2
+    26: invokevirtual net.minecraft.client.Minecraft.extraTelemetryAvailable
+    29: ifeq -> 39
+    32: ldc_w cp(8, 2516)
+    35: invokestatic net.minecraft.network.chat.Component.translatable
+    38: areturn
+    39: ldc_w cp(8, 2518)
+    42: invokestatic net.minecraft.network.chat.Component.translatable
+    45: areturn
+
+
+SCAN HITS: [('net.minecraft.client.Options', 'ok', []), ('net.minecraft.client.gui.screens.options.AccessibilityOptionsScreen', 'ok', []), ('net.minecraft.client.renderer.GameRenderer', 'ok', []), ('net.minecraft.client.renderer.state.OptionsRenderState', 'ok', [])]
+
+LANG: options.accessibility.menu_background_blurriness = 'Menu Background Blur'
+LANG: options.accessibility.menu_background_blurriness.tooltip = 'Changes the blurriness of menu backgrounds.'
+LANG: options.accessibility.text_background = 'Text Background'
+LANG: options.accessibility.text_background_opacity = 'Text Background Opacity'
+LANG: options.accessibility.text_background.chat = 'Chat'
+LANG: options.accessibility.text_background.everywhere = 'Everywhere'
+LANG: options.darkMojangStudiosBackgroundColor = 'Monochrome Logo'
+LANG: options.darkMojangStudiosBackgroundColor.tooltip = 'Changes the Mojang Studios loading screen background color to black.'
+LANG options.chat.visibility.full = 'Shown'
+LANG options.chat.visibility = 'Chat'

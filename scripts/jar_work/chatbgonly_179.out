@@ -1,0 +1,75 @@
+INIT: 1131: ldc_w cp(8, 924)
+INIT: 2094: invokedynamic indy@1131
+INIT: 2099: getstatic net.minecraft.client.OptionInstance.BOOLEAN_VALUES
+INIT: 2112: putfield net.minecraft.client.Options.backgroundForChatOnly
+INIT: 2176: getstatic net.minecraft.client.OptionInstance.BOOLEAN_VALUES
+INIT: 2208: getstatic net.minecraft.client.OptionInstance.BOOLEAN_VALUES
+INIT: 2240: getstatic net.minecraft.client.OptionInstance.BOOLEAN_VALUES
+INIT: 2272: getstatic net.minecraft.client.OptionInstance.BOOLEAN_VALUES
+
+cp_get 1129 fail: TypeError("'int' object is not subscriptable")
+indy fail: TypeError("'int' object is not subscriptable")
+
+== Options$2 lambda$process$0 (Ljava/lang/String;Lnet/minecraft/client/OptionInstance;Lcom/mojang/serialization/DataResult$Error;)V
+    0: getstatic net.minecraft.client.Options.LOGGER
+    3: ldc cp(8, 153)
+    5: iconst_3
+    6: anewarray java.lang.Object
+    9: dup
+    10: iconst_0
+    11: aload_0
+    12: aastore
+    13: dup
+    14: iconst_1
+    15: aload_1
+    16: aastore
+    17: dup
+    18: iconst_2
+    19: aload_2
+    20: invokevirtual com.mojang.serialization.DataResult$Error.message
+    23: aastore
+    24: invokeinterface org.slf4j.Logger.error
+    29: return
+
+== Options$3 lambda$process$0 (Lnet/minecraft/client/OptionInstance;Lcom/mojang/serialization/DataResult$Error;)V
+    0: getstatic net.minecraft.client.Options.LOGGER
+    3: ldc cp(8, 105)
+    5: aload_0
+    6: aload_1
+    7: invokevirtual com.mojang.serialization.DataResult$Error.message
+    10: invokeinterface org.slf4j.Logger.error
+    15: return
+
+PROC: 513 513: invokeinterface net.minecraft.client.Options$FieldAccess.process
+PROC: 518 518: aload_1
+PROC: 519 519: ldc_w cp(8, 474)
+PROC: 522 522: aload_0
+PROC: 523 523: getfield net.minecraft.client.Options.backgroundForChatOnly
+PROC: 526 526: invokeinterface net.minecraft.client.Options$FieldAccess.process
+PROC: 531 531: aload_0
+
+key 1895 fail TypeError("'int' object is not subscriptable")
+key 1896 fail TypeError("'int' object is not subscriptable")
+key 1897 fail TypeError("'int' object is not subscriptable")
+
+LANG FILE: assets/minecraft/lang/en_us.json
+    "options.chat": "Chat Settings...",
+    "options.chat.color": "Colors",
+    "options.chat.delay": "Chat Delay: %s second(s)",
+    "options.chat.delay_none": "Chat Delay: None",
+    "options.chat.drafts": "Save Unsent Chats",
+    "options.chat.drafts.tooltip": "Unsent messages will be saved and can be sent the next time chat is opened.",
+    "options.chat.height.focused": "Focused Height",
+    "options.chat.height.unfocused": "Unfocused Height",
+    "options.chat.line_spacing": "Line Spacing",
+    "options.chat.links": "Web Links",
+    "options.chat.links.prompt": "Prompt on Links",
+    "options.chat.opacity": "Chat Text Opacity",
+    "options.chat.scale": "Chat Text Size",
+    "options.chat.title": "Chat Settings",
+    "options.chat.visibility": "Chat",
+    "options.chat.visibility.full": "Shown",
+    "options.chat.visibility.hidden": "Hidden",
+    "options.chat.visibility.system": "Commands Only",
+    "options.chat.width": "Width",
+

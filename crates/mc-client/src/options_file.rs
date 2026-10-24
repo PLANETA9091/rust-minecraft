@@ -45,7 +45,25 @@
 //!   decode answers, the ChatComponent's per-line fill the consumer
 //!   walk keeps; the file row the visit-order adjacency the
 //!   processOptions walk keeps — chatOpacity the ldc@480 the
-//!   textBackgroundOpacity the ldc@506 the seat before answers).
+//!   textBackgroundOpacity the ldc@506 the
+//!   seat before answers), `backgroundForChatOnly` the chat band's
+//!   own scope row the array's index-5 seat wears (chatbgonly_179.py
+//!   + 179b-e the registration + the consumer pair bank — the raw
+//!   ctor the BOOLEAN_VALUES value set the default TRUE the iconst_1
+//!   pcs 2092-2120 speaks, the noTooltip lane the registration's own
+//!   arm keeps, the bool decode the "true"/"false" vocabulary the
+//!   pauseOnLostFocus row the same law wears; the file row the
+//!   visit-order adjacency the processOptions walk keeps — the
+//!   textBackgroundOpacity the ldc@506 the backgroundForChatOnly the
+//!   ldc@523 the seat AFTER answers, the hideServerAddress@537 the
+//!   next row the walk banks; the consumer the ChatScreen's own
+//!   input band the `getBackgroundColor(0x80000000)` call speaks —
+//!   the (I)I law the `backgroundForChatOnly ? raw :
+//!   ARGB.colorFromFloat(textbg,0,0,0)` pair keeps, the caption the
+//!   lambda$new$76 law the VALUE display answers — the
+//!   `options.accessibility.text_background.chat`/`.everywhere` keys
+//!   the lang table keeps, the CycleButton's DisplayState.VALUE the
+//!   label law the name field the narration only wears).
 //! - THE LOAD THE MISSING FILE THE DEFAULTS KEEP (the
 //!   `if (!optionsFile.exists()) return` the head walk speaks), the lines
 //!   the `Splitter.on(':').limit(2)` law splits, the malformed line the
@@ -118,6 +136,23 @@ pub struct OptionsFile {
     /// pair the (I)I variant keeps — the default TRUE lane the raw
     /// 0x80000000 the client's own fill wears).
     pub text_background_opacity: f64,
+    /// `backgroundForChatOnly` — the chat band's own scope boolean (the
+    /// default TRUE the Options ctor's `iconst_1` pcs 2092-2120 banks,
+    /// the raw OptionInstance ctor the BOOLEAN_VALUES value set the
+    /// NO_ACTION listener wears — the noTooltip lane the same
+    /// registration keeps; the processOptions pc 523-526 the
+    /// `process("backgroundForChatOnly", Z)Z` round-trip wears, the
+    /// visit-order adjacency the textBackgroundOpacity@506 the row
+    /// AFTER keeps, the hideServerAddress@537 the next row banks; the
+    /// consumer the ChatScreen.extractRenderState walk speaks — the
+    /// input band the `getBackgroundColor(0x80000000)` call the raw
+    /// TRUE lane wears, the Everywhere lane the
+    /// `ARGB.colorFromFloat(textbg,0,0,0)` pair the (I)I variant
+    /// answers, the 0.5 default the byte-identical fold the band's
+    /// own alpha keeps; the caption the lambda$new$76 law the VALUE
+    /// display answers — the "Chat"/"Everywhere" keys the lang table
+    /// keeps, the CycleButton's name field the narration only wears).
+    pub background_for_chat_only: bool,
 }
 
 impl Default for OptionsFile {
@@ -130,6 +165,7 @@ impl Default for OptionsFile {
             fov_effect_scale: 1.0,
             chat_opacity: 1.0,
             text_background_opacity: 0.5,
+            background_for_chat_only: true,
         }
     }
 }
@@ -215,6 +251,19 @@ impl OptionsFile {
                         }
                     }
                 }
+                "backgroundForChatOnly" => {
+                    // THE BAND SCOPE'S OWN DECODE (the "true"/"false"
+                    // the codec's own vocabulary wears — the same bool
+                    // law the pauseOnLostFocus row keeps, the malformed
+                    // the default keeps, the skip law the row answers;
+                    // the default TRUE the Options ctor's iconst_1 the
+                    // missing row keeps)
+                    if value == "true" {
+                        out.background_for_chat_only = true;
+                    } else if value == "false" {
+                        out.background_for_chat_only = false;
+                    }
+                }
                 _ => {} // the jar's other rows the client's seats never carry
             }
         }
@@ -258,6 +307,16 @@ impl OptionsFile {
         text.push_str(&format!(
             "textBackgroundOpacity:{}\n",
             java_double(self.text_background_opacity)
+        ));
+        // THE BAND SCOPE'S OWN ROW (the "true"/"false" the Rust Display
+        // the vanilla BooleanValue's codec vocabulary wears — the row
+        // the visit-order adjacency the textBackgroundOpacity row's
+        // AFTER keeps, the processOptions the bgOnly@523 the walk
+        // banks, the hideServerAddress@537 the next row the same
+        // ladder speaks)
+        text.push_str(&format!(
+            "backgroundForChatOnly:{}\n",
+            self.background_for_chat_only
         ));
         let _ = std::fs::write(path, text);
     }
@@ -318,7 +377,7 @@ mod tests {
         OptionsFile::default().save(&path);
         let text = std::fs::read_to_string(&path).expect("the save the file writes");
         assert_eq!(
-            text, "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\n",
+            text, "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
             "the file the vanilla rows wear"
         );
         let loaded = OptionsFile::load(&path);
@@ -377,7 +436,10 @@ mod tests {
              textBackgroundOpacity:1.5\n\
              textBackgroundOpacity:-0.25\n\
              textBackgroundOpacity:word\n\
-             textBackgroundOpacity:0.25\n",
+             textBackgroundOpacity:0.25\n\
+             backgroundForChatOnly:false\n\
+             backgroundForChatOnly:maybe\n\
+             backgroundForChatOnly:true\n",
         )
         .expect("the probe file writes");
         let loaded = OptionsFile::load(&path);
@@ -424,6 +486,14 @@ mod tests {
             loaded.text_background_opacity, 0.25,
             "the chat background the last valid row wears — the out-of-range/malformed the skip keeps"
         );
+        // THE BAND SCOPE'S OWN DECODE (the last valid row the parse
+        // wears — the `true` the decode speaks, the malformed `maybe`
+        // the skip keeps, the `false` the first row the same law the
+        // bool rows answer)
+        assert_eq!(
+            loaded.background_for_chat_only, true,
+            "the band scope the last valid row wears — the malformed row the skip keeps"
+        );
         let _ = std::fs::remove_dir_all(&dir);
         // THE MISSING FILE the defaults keep (the exists() gate the head
         // walk speaks)
@@ -446,6 +516,10 @@ mod tests {
         assert_eq!(
             missing.text_background_opacity, 0.5,
             "the missing file the default chat background keeps"
+        );
+        assert_eq!(
+            missing.background_for_chat_only, true,
+            "the missing file the default band scope keeps"
         );
     }
 

@@ -1,0 +1,145 @@
+Options CP#1129: 1130
+Options CP#2562: ('u', 'options.accessibility.text_background.chat')
+Options CP#2564: ('u', 'options.accessibility.text_background.everywhere')
+
+== GameRenderer :: extractOptions ()V
+      0: 0: aload_0
+      1: 1: getfield net.minecraft.client.renderer.GameRenderer.gameRenderState
+      4: 4: getfield net.minecraft.client.renderer.state.GameRenderState.optionsRenderState
+      7: 7: astore_1
+      8: 8: aload_0
+      9: 9: getfield net.minecraft.client.renderer.GameRenderer.minecraft
+     12: 12: getfield net.minecraft.client.Minecraft.options
+     15: 15: astore_2
+     16: 16: aload_1
+     17: 17: aload_2
+     18: 18: invokevirtual net.minecraft.client.Options.cloudRange
+     21: 21: invokevirtual net.minecraft.client.OptionInstance.get
+     24: 24: checkcast java.lang.Integer
+     27: 27: invokevirtual java.lang.Integer.intValue
+     30: 30: putfield net.minecraft.client.renderer.state.OptionsRenderState.cloudRange
+     33: 33: aload_1
+     34: 34: aload_2
+     35: 35: invokevirtual net.minecraft.client.Options.cutoutLeaves
+     38: 38: invokevirtual net.minecraft.client.OptionInstance.get
+     41: 41: checkcast java.lang.Boolean
+     44: 44: invokevirtual java.lang.Boolean.booleanValue
+     47: 47: putfield net.minecraft.client.renderer.state.OptionsRenderState.cutoutLeaves
+     50: 50: aload_1
+     51: 51: aload_2
+     52: 52: invokevirtual net.minecraft.client.Options.improvedTransparency
+     55: 55: invokevirtual net.minecraft.client.OptionInstance.get
+     58: 58: checkcast java.lang.Boolean
+     61: 61: invokevirtual java.lang.Boolean.booleanValue
+     64: 64: putfield net.minecraft.client.renderer.state.OptionsRenderState.improvedTransparency
+     67: 67: aload_1
+     68: 68: aload_2
+     69: 69: invokevirtual net.minecraft.client.Options.ambientOcclusion
+     72: 72: invokevirtual net.minecraft.client.OptionInstance.get
+     75: 75: checkcast java.lang.Boolean
+     78: 78: invokevirtual java.lang.Boolean.booleanValue
+     81: 81: putfield net.minecraft.client.renderer.state.OptionsRenderState.ambientOcclusion
+     84: 84: aload_1
+     85: 85: aload_2
+     86: 86: invokevirtual net.minecraft.client.Options.getMenuBackgroundBlurriness
+     89: 89: putfield net.minecraft.client.renderer.state.OptionsRenderState.menuBackgroundBlurriness
+     92: 92: aload_1
+     93: 93: aload_2
+     94: 94: invokevirtual net.minecraft.client.Options.panoramaSpeed
+     97: 97: invokevirtual net.minecraft.client.OptionInstance.get
+    100: 100: checkcast java.lang.Double
+    103: 103: invokevirtual java.lang.Double.doubleValue
+    106: 106: putfield net.minecraft.client.renderer.state.OptionsRenderState.panoramaSpeed
+    109: 109: aload_1
+    110: 110: aload_2
+    111: 111: invokevirtual net.minecraft.client.Options.maxAnisotropyValue
+    114: 114: putfield net.minecraft.client.renderer.state.OptionsRenderState.maxAnisotropyValue
+    117: 117: aload_1
+    118: 118: aload_2
+    119: 119: invokevirtual net.minecraft.client.Options.textureFiltering
+    122: 122: invokevirtual net.minecraft.client.OptionInstance.get
+    125: 125: checkcast net.minecraft.client.TextureFilteringMethod
+    128: 128: putfield net.minecraft.client.renderer.state.OptionsRenderState.textureFiltering
+    131: 131: aload_1
+    132: 132: aload_2
+    133: 133: invokevirtual net.minecraft.client.Options.bobView
+    136: 136: invokevirtual net.minecraft.client.OptionInstance.get
+    139: 139: checkcast java.lang.Boolean
+    142: 142: invokevirtual java.lang.Boolean.booleanValue
+    145: 145: putfield net.minecraft.client.renderer.state.OptionsRenderState.bobView
+    148: 148: aload_1
+    149: 149: aload_2
+    150: 150: invokevirtual net.minecraft.client.Options.screenEffectScale
+    153: 153: invokevirtual net.minecraft.client.OptionInstance.get
+    156: 156: checkcast java.lang.Double
+    159: 159: invokevirtual java.lang.Double.floatValue
+    162: 162: putfield net.minecraft.client.renderer.state.OptionsRenderState.screenEffectScale
+    165: 165: aload_1
+    166: 166: aload_2
+    167: 167: invokevirtual net.minecraft.client.Options.glintSpeed
+    170: 170: invokevirtual net.minecraft.client.OptionInstance.get
+    173: 173: checkcast java.lang.Double
+    176: 176: invokevirtual java.lang.Double.doubleValue
+    179: 179: putfield net.minecraft.client.renderer.state.OptionsRenderState.glintSpeed
+    182: 182: aload_1
+    183: 183: aload_2
+    184: 184: invokevirtual net.minecraft.client.Options.glintStrength
+    187: 187: invokevirtual net.minecraft.client.OptionInstance.get
+    190: 190: checkcast java.lang.Double
+    193: 193: invokevirtual java.lang.Double.doubleValue
+    196: 196: putfield net.minecraft.client.renderer.state.OptionsRenderState.glintStrength
+    199: 199: aload_1
+    200: 200: aload_2
+    201: 201: invokevirtual net.minecraft.client.Options.damageTiltStrength
+    204: 204: invokevirtual net.minecraft.client.OptionInstance.get
+    207: 207: checkcast java.lang.Double
+    210: 210: invokevirtual java.lang.Double.doubleValue
+    213: 213: putfield net.minecraft.client.renderer.state.OptionsRenderState.damageTiltStrength
+    216: 216: aload_1
+    217: 217: aload_2
+    218: 218: invokevirtual net.minecraft.client.Options.backgroundForChatOnly
+    221: 221: invokevirtual net.minecraft.client.OptionInstance.get
+    224: 224: checkcast java.lang.Boolean
+    227: 227: invokevirtual java.lang.Boolean.booleanValue
+    230: 230: putfield net.minecraft.client.renderer.state.OptionsRenderState.backgroundForChatOnly
+    233: 233: aload_1
+    234: 234: aload_2
+    235: 235: invokevirtual net.minecraft.client.Options.textBackgroundOpacity
+    238: 238: invokevirtual net.minecraft.client.OptionInstance.get
+    241: 241: checkcast java.lang.Double
+    244: 244: invokevirtual java.lang.Double.floatValue
+    247: 247: putfield net.minecraft.client.renderer.state.OptionsRenderState.textBackgroundOpacity
+    250: 250: aload_1
+    251: 251: aload_2
+    252: 252: invokevirtual net.minecraft.client.Options.getCloudStatus
+    255: 255: putfield net.minecraft.client.renderer.state.OptionsRenderState.cloudStatus
+    258: 258: aload_1
+    259: 259: aload_2
+    260: 260: invokevirtual net.minecraft.client.Options.getCameraType
+    263: 263: putfield net.minecraft.client.renderer.state.OptionsRenderState.cameraType
+    266: 266: aload_1
+    267: 267: aload_2
+    268: 268: invokevirtual net.minecraft.client.Options.getEffectiveRenderDistance
+    271: 271: putfield net.minecraft.client.renderer.state.OptionsRenderState.renderDistance
+    274: 274: aload_1
+    275: 275: aload_2
+    276: 276: invokevirtual net.minecraft.client.Options.chunkSectionFadeInTime
+    279: 279: invokevirtual net.minecraft.client.OptionInstance.get
+    282: 282: checkcast java.lang.Double
+    285: 285: invokevirtual java.lang.Double.doubleValue
+    288: 288: putfield net.minecraft.client.renderer.state.OptionsRenderState.chunkSectionFadeInTime
+    291: 291: aload_1
+    292: 292: aload_2
+    293: 293: invokevirtual net.minecraft.client.Options.prioritizeChunkUpdates
+    296: 296: invokevirtual net.minecraft.client.OptionInstance.get
+    299: 299: checkcast net.minecraft.client.PrioritizeChunkUpdates
+    302: 302: putfield net.minecraft.client.renderer.state.OptionsRenderState.prioritizeChunkUpdates
+    305: 305: aload_1
+    306: 306: aload_2
+    307: 307: invokevirtual net.minecraft.client.Options.fov
+    310: 310: invokevirtual net.minecraft.client.OptionInstance.get
+    313: 313: checkcast java.lang.Integer
+    316: 316: invokevirtual java.lang.Integer.intValue
+    319: 319: putfield net.minecraft.client.renderer.state.OptionsRenderState.fov
+    322: 322: return
+

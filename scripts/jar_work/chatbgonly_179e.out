@@ -1,0 +1,1785 @@
+##### getBackgroundColor
+== net.minecraft.client.gui.GuiGraphicsExtractor :: textWithBackdrop (Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Component;IIII)V
+      0: 0: aload_0
+      1: 1: getfield net.minecraft.client.gui.GuiGraphicsExtractor.minecraft
+      4: 4: getfield net.minecraft.client.Minecraft.options
+      7: 7: fconst_0
+      8: 8: invokevirtual net.minecraft.client.Options.getBackgroundColor
+     11: 11: istore 7
+     13: 13: iload 7
+     15: 15: ifeq -> 57
+     18: 18: iconst_2
+     19: 19: istore 8
+     21: 21: aload_0
+     22: 22: iload_3
+     23: 23: iconst_2
+     24: 24: isub
+     25: 25: iload 4
+     27: 27: iconst_2
+     28: 28: isub
+     29: 29: iload_3
+     30: 30: iload 5
+     32: 32: iadd
+     33: 33: iconst_2
+     34: 34: iadd
+     35: 35: iload 4
+     37: 37: aload_1
+     38: 38: invokestatic java.util.Objects.requireNonNull
+     41: 41: pop
+     42: 42: bipush 9
+     44: 44: iadd
+     45: 45: iconst_2
+     46: 46: iadd
+     47: 47: iload 7
+     49: 49: iload 6
+     51: 51: invokestatic net.minecraft.util.ARGB.multiply
+     54: 54: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.fill
+     57: 57: aload_0
+     58: 58: aload_1
+     59: 59: aload_2
+     60: 60: iload_3
+     61: 61: iload 4
+     63: 63: iload 6
+     65: 65: iconst_1
+     66: 66: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.text
+     69: 69: return
+
+== net.minecraft.client.gui.Hud :: displayScoreboardSidebar (Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/world/scores/Objective;)V
+      0: 0: aload_2
+      1: 1: invokevirtual net.minecraft.world.scores.Objective.getScoreboard
+      4: 4: astore_3
+      5: 5: aload_2
+      6: 6: getstatic net.minecraft.network.chat.numbers.StyledFormat.SIDEBAR_DEFAULT
+      9: 9: invokevirtual net.minecraft.world.scores.Objective.numberFormatOrDefault
+     12: 12: astore 4
+     14: 14: aload_3
+     15: 15: aload_2
+     16: 16: invokevirtual net.minecraft.world.scores.Scoreboard.listPlayerScores
+     19: 19: invokeinterface java.util.Collection.stream
+     24: 24: invokedynamic indy@1144
+     29: 29: invokeinterface java.util.stream.Stream.filter
+     34: 34: getstatic net.minecraft.client.gui.Hud.SCORE_DISPLAY_ORDER
+     37: 37: invokeinterface java.util.stream.Stream.sorted
+     42: 42: ldc2_w long 15
+     45: 45: invokeinterface java.util.stream.Stream.limit
+     50: 50: aload_0
+     51: 51: aload_3
+     52: 52: aload 4
+     54: 54: invokedynamic indy@1168
+     59: 59: invokeinterface java.util.stream.Stream.map
+     64: 64: invokedynamic indy@1174
+     69: 69: invokeinterface java.util.stream.Stream.toArray
+     74: 74: checkcast [Lnet.minecraft.client.gui.Hud$1DisplayEntry;
+     77: 77: astore 5
+     79: 79: aload_2
+     80: 80: invokevirtual net.minecraft.world.scores.Objective.getDisplayName
+     83: 83: astore 6
+     85: 85: aload_0
+     86: 86: invokevirtual net.minecraft.client.gui.Hud.getFont
+     89: 89: aload 6
+     91: 91: invokevirtual net.minecraft.client.gui.Font.width
+     94: 94: istore 7
+     96: 96: iload 7
+     98: 98: istore 8
+    100: 100: aload_0
+    101: 101: invokevirtual net.minecraft.client.gui.Hud.getFont
+    104: 104: ldc_w cp(8, 1187)
+    107: 107: invokevirtual net.minecraft.client.gui.Font.width
+    110: 110: istore 9
+    112: 112: aload 5
+    114: 114: astore 10
+    116: 116: aload 10
+    118: 118: arraylength
+    119: 119: istore 11
+    121: 121: iconst_0
+    122: 122: istore 12
+    124: 124: iload 12
+    126: 126: iload 11
+    128: 128: if_icmpge -> 184
+    131: 131: aload 10
+    133: 133: iload 12
+    135: 135: aaload
+    136: 136: astore 13
+    138: 138: iload 8
+    140: 140: aload_0
+    141: 141: invokevirtual net.minecraft.client.gui.Hud.getFont
+    144: 144: aload 13
+    146: 146: getfield net.minecraft.client.gui.Hud$1DisplayEntry.name
+    149: 149: invokevirtual net.minecraft.client.gui.Font.width
+    152: 152: aload 13
+    154: 154: getfield net.minecraft.client.gui.Hud$1DisplayEntry.scoreWidth
+    157: 157: ifle -> 171
+    160: 160: iload 9
+    162: 162: aload 13
+    164: 164: getfield net.minecraft.client.gui.Hud$1DisplayEntry.scoreWidth
+    167: 167: iadd
+    168: 168: goto -> 172
+    171: 171: iconst_0
+    172: 172: iadd
+    173: 173: invokestatic java.lang.Math.max
+    176: 176: istore 8
+    178: 178: iinc 12 1
+    181: 181: goto -> 124
+    184: 184: iload 8
+    186: 186: istore 10
+    188: 188: aload 5
+    190: 190: arraylength
+    191: 191: istore 11
+    193: 193: iload 11
+    195: 195: aload_0
+    196: 196: invokevirtual net.minecraft.client.gui.Hud.getFont
+    199: 199: invokestatic java.util.Objects.requireNonNull
+    202: 202: pop
+    203: 203: bipush 9
+    205: 205: imul
+    206: 206: istore 12
+    208: 208: aload_1
+    209: 209: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.guiHeight
+    212: 212: iconst_2
+    213: 213: idiv
+    214: 214: iload 12
+    216: 216: iconst_3
+    217: 217: idiv
+    218: 218: iadd
+    219: 219: istore 13
+    221: 221: iconst_3
+    222: 222: istore 14
+    224: 224: aload_1
+    225: 225: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.guiWidth
+    228: 228: iload 10
+    230: 230: isub
+    231: 231: iconst_3
+    232: 232: isub
+    233: 233: istore 15
+    235: 235: aload_1
+    236: 236: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.guiWidth
+    239: 239: iconst_3
+    240: 240: isub
+    241: 241: iconst_2
+    242: 242: iadd
+    243: 243: istore 16
+    245: 245: aload_0
+    246: 246: getfield net.minecraft.client.gui.Hud.minecraft
+    249: 249: getfield net.minecraft.client.Minecraft.options
+    252: 252: ldc_w float 0.30000001192092896
+    255: 255: invokevirtual net.minecraft.client.Options.getBackgroundColor
+    258: 258: istore 17
+    260: 260: aload_0
+    261: 261: getfield net.minecraft.client.gui.Hud.minecraft
+    264: 264: getfield net.minecraft.client.Minecraft.options
+    267: 267: ldc_w float 0.4000000059604645
+    270: 270: invokevirtual net.minecraft.client.Options.getBackgroundColor
+    273: 273: istore 18
+    275: 275: iload 13
+    277: 277: iload 11
+    279: 279: aload_0
+    280: 280: invokevirtual net.minecraft.client.gui.Hud.getFont
+    283: 283: invokestatic java.util.Objects.requireNonNull
+    286: 286: pop
+    287: 287: bipush 9
+    289: 289: imul
+    290: 290: isub
+    291: 291: istore 19
+    293: 293: aload_1
+    294: 294: iload 15
+    296: 296: iconst_2
+    297: 297: isub
+    298: 298: iload 19
+    300: 300: aload_0
+    301: 301: invokevirtual net.minecraft.client.gui.Hud.getFont
+    304: 304: invokestatic java.util.Objects.requireNonNull
+    307: 307: pop
+    308: 308: bipush 9
+    310: 310: isub
+    311: 311: iconst_1
+    312: 312: isub
+    313: 313: iload 16
+    315: 315: iload 19
+    317: 317: iconst_1
+    318: 318: isub
+    319: 319: iload 18
+    321: 321: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.fill
+    324: 324: aload_1
+    325: 325: iload 15
+    327: 327: iconst_2
+    328: 328: isub
+    329: 329: iload 19
+    331: 331: iconst_1
+    332: 332: isub
+    333: 333: iload 16
+    335: 335: iload 13
+    337: 337: iload 17
+    339: 339: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.fill
+    342: 342: aload_1
+    343: 343: aload_0
+    344: 344: invokevirtual net.minecraft.client.gui.Hud.getFont
+    347: 347: aload 6
+    349: 349: iload 15
+    351: 351: iload 10
+    353: 353: iconst_2
+    354: 354: idiv
+    355: 355: iadd
+    356: 356: iload 7
+    358: 358: iconst_2
+    359: 359: idiv
+    360: 360: isub
+    361: 361: iload 19
+    363: 363: aload_0
+    364: 364: invokevirtual net.minecraft.client.gui.Hud.getFont
+    367: 367: invokestatic java.util.Objects.requireNonNull
+    370: 370: pop
+    371: 371: bipush 9
+    373: 373: isub
+    374: 374: iconst_m1
+    375: 375: iconst_0
+    376: 376: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.text
+    379: 379: iconst_0
+    380: 380: istore 20
+    382: 382: iload 20
+    384: 384: iload 11
+    386: 386: if_icmpge -> 467
+    389: 389: aload 5
+    391: 391: iload 20
+    393: 393: aaload
+    394: 394: astore 21
+    396: 396: iload 13
+    398: 398: iload 11
+    400: 400: iload 20
+    402: 402: isub
+    403: 403: aload_0
+    404: 404: invokevirtual net.minecraft.client.gui.Hud.getFont
+    407: 407: invokestatic java.util.Objects.requireNonNull
+    410: 410: pop
+    411: 411: bipush 9
+    413: 413: imul
+    414: 414: isub
+    415: 415: istore 22
+    417: 417: aload_1
+    418: 418: aload_0
+    419: 419: invokevirtual net.minecraft.client.gui.Hud.getFont
+    422: 422: aload 21
+    424: 424: getfield net.minecraft.client.gui.Hud$1DisplayEntry.name
+    427: 427: iload 15
+    429: 429: iload 22
+    431: 431: iconst_m1
+    432: 432: iconst_0
+    433: 433: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.text
+    436: 436: aload_1
+    437: 437: aload_0
+    438: 438: invokevirtual net.minecraft.client.gui.Hud.getFont
+    441: 441: aload 21
+    443: 443: getfield net.minecraft.client.gui.Hud$1DisplayEntry.score
+    446: 446: iload 16
+    448: 448: aload 21
+    450: 450: getfield net.minecraft.client.gui.Hud$1DisplayEntry.scoreWidth
+    453: 453: isub
+    454: 454: iload 22
+    456: 456: iconst_m1
+    457: 457: iconst_0
+    458: 458: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.text
+    461: 461: iinc 20 1
+    464: 464: goto -> 382
+    467: 467: return
+
+== net.minecraft.client.gui.components.PlayerTabOverlay :: extractRenderState (Lnet/minecraft/client/gui/GuiGraphicsExtractor;ILnet/minecraft/world/scores/Scoreboard;Lnet/minecraft/world/scores/Objective;)V
+      0: 0: aload_0
+      1: 1: invokevirtual net.minecraft.client.gui.components.PlayerTabOverlay.getPlayerInfos
+      4: 4: astore 5
+      6: 6: new java.util.ArrayList
+      9: 9: dup
+     10: 10: aload 5
+     12: 12: invokeinterface java.util.List.size
+     17: 17: invokespecial java.util.ArrayList.<init>
+     20: 20: astore 6
+     22: 22: aload_0
+     23: 23: getfield net.minecraft.client.gui.components.PlayerTabOverlay.minecraft
+     26: 26: getfield net.minecraft.client.Minecraft.font
+     29: 29: ldc cp(8, 186)
+     31: 31: invokevirtual net.minecraft.client.gui.Font.width
+     34: 34: istore 7
+     36: 36: iconst_0
+     37: 37: istore 8
+     39: 39: iconst_0
+     40: 40: istore 9
+     42: 42: aload 5
+     44: 44: invokeinterface java.util.List.iterator
+     49: 49: astore 10
+     51: 51: aload 10
+     53: 53: invokeinterface java.util.Iterator.hasNext
+     58: 58: ifeq -> 246
+     61: 61: aload 10
+     63: 63: invokeinterface java.util.Iterator.next
+     68: 68: checkcast net.minecraft.client.multiplayer.PlayerInfo
+     71: 71: astore 11
+     73: 73: aload_0
+     74: 74: aload 11
+     76: 76: invokevirtual net.minecraft.client.gui.components.PlayerTabOverlay.getNameForDisplay
+     79: 79: astore 12
+     81: 81: iload 8
+     83: 83: aload_0
+     84: 84: getfield net.minecraft.client.gui.components.PlayerTabOverlay.minecraft
+     87: 87: getfield net.minecraft.client.Minecraft.font
+     90: 90: aload 12
+     92: 92: invokevirtual net.minecraft.client.gui.Font.width
+     95: 95: invokestatic java.lang.Math.max
+     98: 98: istore 8
+    100: 100: iconst_0
+    101: 101: istore 13
+    103: 103: aconst_null
+    104: 104: astore 14
+    106: 106: iconst_0
+    107: 107: istore 15
+    109: 109: aload 4
+    111: 111: ifnull -> 220
+    114: 114: aload 11
+    116: 116: invokevirtual net.minecraft.client.multiplayer.PlayerInfo.getProfile
+    119: 119: invokestatic net.minecraft.world.scores.ScoreHolder.fromGameProfile
+    122: 122: astore 16
+    124: 124: aload_3
+    125: 125: aload 16
+    127: 127: aload 4
+    129: 129: invokevirtual net.minecraft.world.scores.Scoreboard.getPlayerScoreInfo
+    132: 132: astore 17
+    134: 134: aload 17
+    136: 136: ifnull -> 148
+    139: 139: aload 17
+    141: 141: invokeinterface net.minecraft.world.scores.ReadOnlyScoreInfo.value
+    146: 146: istore 13
+    148: 148: aload 4
+    150: 150: invokevirtual net.minecraft.world.scores.Objective.getRenderType
+    153: 153: getstatic net.minecraft.world.scores.criteria.ObjectiveCriteria$RenderType.HEARTS
+    156: 156: if_acmpeq -> 220
+    159: 159: aload 17
+    161: 161: ifnull -> 199
+    164: 164: aload 4
+    166: 166: getstatic net.minecraft.network.chat.numbers.StyledFormat.PLAYER_LIST_DEFAULT
+    169: 169: invokevirtual net.minecraft.world.scores.Objective.numberFormatOrDefault
+    172: 172: astore 18
+    174: 174: aload 17
+    176: 176: aload 18
+    178: 178: invokeinterface net.minecraft.world.scores.ReadOnlyScoreInfo.formatValue
+    183: 183: astore 14
+    185: 185: aload_0
+    186: 186: getfield net.minecraft.client.gui.components.PlayerTabOverlay.minecraft
+    189: 189: getfield net.minecraft.client.Minecraft.font
+    192: 192: aload 14
+    194: 194: invokevirtual net.minecraft.client.gui.Font.width
+    197: 197: istore 15
+    199: 199: iload 9
+    201: 201: iload 15
+    203: 203: ifle -> 214
+    206: 206: iload 7
+    208: 208: iload 15
+    210: 210: iadd
+    211: 211: goto -> 215
+    214: 214: iconst_0
+    215: 215: invokestatic java.lang.Math.max
+    218: 218: istore 9
+    220: 220: aload 6
+    222: 222: new net.minecraft.client.gui.components.PlayerTabOverlay$ScoreDisplayEntry
+    225: 225: dup
+    226: 226: aload 12
+    228: 228: iload 13
+    230: 230: aload 14
+    232: 232: iload 15
+    234: 234: invokespecial net.minecraft.client.gui.components.PlayerTabOverlay$ScoreDisplayEntry.<init>
+    237: 237: invokeinterface java.util.List.add
+    242: 242: pop
+    243: 243: goto -> 51
+    246: 246: aload_0
+    247: 247: getfield net.minecraft.client.gui.components.PlayerTabOverlay.healthStates
+    250: 250: invokeinterface java.util.Map.isEmpty
+    255: 255: ifne -> 310
+    258: 258: aload 5
+    260: 260: invokeinterface java.util.List.stream
+    265: 265: invokedynamic indy@276
+    270: 270: invokeinterface java.util.stream.Stream.map
+    275: 275: invokestatic java.util.stream.Collectors.toSet
+    278: 278: invokeinterface java.util.stream.Stream.collect
+    283: 283: checkcast java.util.Set
+    286: 286: astore 10
+    288: 288: aload_0
+    289: 289: getfield net.minecraft.client.gui.components.PlayerTabOverlay.healthStates
+    292: 292: invokeinterface java.util.Map.keySet
+    297: 297: aload 10
+    299: 299: invokedynamic indy@299
+    304: 304: invokeinterface java.util.Set.removeIf
+    309: 309: pop
+    310: 310: aload 5
+    312: 312: invokeinterface java.util.List.size
+    317: 317: istore 10
+    319: 319: iload 10
+    321: 321: istore 11
+    323: 323: iconst_1
+    324: 324: istore 12
+    326: 326: iload 11
+    328: 328: bipush 20
+    330: 330: if_icmple -> 351
+    333: 333: iinc 12 1
+    336: 336: iload 10
+    338: 338: iload 12
+    340: 340: iadd
+    341: 341: iconst_1
+    342: 342: isub
+    343: 343: iload 12
+    345: 345: idiv
+    346: 346: istore 11
+    348: 348: goto -> 326
+    351: 351: aload_0
+    352: 352: getfield net.minecraft.client.gui.components.PlayerTabOverlay.minecraft
+    355: 355: invokevirtual net.minecraft.client.Minecraft.getConnection
+    358: 358: invokevirtual net.minecraft.client.multiplayer.ClientPacketListener.onlineMode
+    361: 361: istore 13
+    363: 363: aload 4
+    365: 365: ifnull -> 393
+    368: 368: aload 4
+    370: 370: invokevirtual net.minecraft.world.scores.Objective.getRenderType
+    373: 373: getstatic net.minecraft.world.scores.criteria.ObjectiveCriteria$RenderType.HEARTS
+    376: 376: if_acmpne -> 386
+    379: 379: bipush 90
+    381: 381: istore 14
+    383: 383: goto -> 396
+    386: 386: iload 9
+    388: 388: istore 14
+    390: 390: goto -> 396
+    393: 393: iconst_0
+    394: 394: istore 14
+    396: 396: iload 12
+    398: 398: iload 13
+    400: 400: ifeq -> 408
+    403: 403: bipush 9
+    405: 405: goto -> 409
+    408: 408: iconst_0
+    409: 409: iload 8
+    411: 411: iadd
+    412: 412: iload 14
+    414: 414: iadd
+    415: 415: bipush 13
+    417: 417: iadd
+    418: 418: imul
+    419: 419: iload_2
+    420: 420: bipush 50
+    422: 422: isub
+    423: 423: invokestatic java.lang.Math.min
+    426: 426: iload 12
+    428: 428: idiv
+    429: 429: istore 15
+    431: 431: iload_2
+    432: 432: iconst_2
+    433: 433: idiv
+    434: 434: iload 15
+    436: 436: iload 12
+    438: 438: imul
+    439: 439: iload 12
+    441: 441: iconst_1
+    442: 442: isub
+    443: 443: iconst_5
+    444: 444: imul
+    445: 445: iadd
+    446: 446: iconst_2
+    447: 447: idiv
+    448: 448: isub
+    449: 449: istore 16
+    451: 451: bipush 10
+    453: 453: istore 17
+    455: 455: iload 15
+    457: 457: iload 12
+    459: 459: imul
+    460: 460: iload 12
+    462: 462: iconst_1
+    463: 463: isub
+    464: 464: iconst_5
+    465: 465: imul
+    466: 466: iadd
+    467: 467: istore 18
+    469: 469: aconst_null
+    470: 470: astore 19
+    472: 472: aload_0
+    473: 473: getfield net.minecraft.client.gui.components.PlayerTabOverlay.header
+    476: 476: ifnull -> 552
+    479: 479: aload_0
+    480: 480: getfield net.minecraft.client.gui.components.PlayerTabOverlay.minecraft
+    483: 483: getfield net.minecraft.client.Minecraft.font
+    486: 486: aload_0
+    487: 487: getfield net.minecraft.client.gui.components.PlayerTabOverlay.header
+    490: 490: iload_2
+    491: 491: bipush 50
+    493: 493: isub
+    494: 494: invokevirtual net.minecraft.client.gui.Font.split
+    497: 497: astore 19
+    499: 499: aload 19
+    501: 501: invokeinterface java.util.List.iterator
+    506: 506: astore 20
+    508: 508: aload 20
+    510: 510: invokeinterface java.util.Iterator.hasNext
+    515: 515: ifeq -> 552
+    518: 518: aload 20
+    520: 520: invokeinterface java.util.Iterator.next
+    525: 525: checkcast net.minecraft.util.FormattedCharSequence
+    528: 528: astore 21
+    530: 530: iload 18
+    532: 532: aload_0
+    533: 533: getfield net.minecraft.client.gui.components.PlayerTabOverlay.minecraft
+    536: 536: getfield net.minecraft.client.Minecraft.font
+    539: 539: aload 21
+    541: 541: invokevirtual net.minecraft.client.gui.Font.width
+    544: 544: invokestatic java.lang.Math.max
+    547: 547: istore 18
+    549: 549: goto -> 508
+    552: 552: aconst_null
+    553: 553: astore 20
+    555: 555: aload_0
+    556: 556: getfield net.minecraft.client.gui.components.PlayerTabOverlay.footer
+    559: 559: ifnull -> 635
+    562: 562: aload_0
+    563: 563: getfield net.minecraft.client.gui.components.PlayerTabOverlay.minecraft
+    566: 566: getfield net.minecraft.client.Minecraft.font
+    569: 569: aload_0
+    570: 570: getfield net.minecraft.client.gui.components.PlayerTabOverlay.footer
+    573: 573: iload_2
+    574: 574: bipush 50
+    576: 576: isub
+    577: 577: invokevirtual net.minecraft.client.gui.Font.split
+    580: 580: astore 20
+    582: 582: aload 20
+    584: 584: invokeinterface java.util.List.iterator
+    589: 589: astore 21
+    591: 591: aload 21
+    593: 593: invokeinterface java.util.Iterator.hasNext
+    598: 598: ifeq -> 635
+    601: 601: aload 21
+    603: 603: invokeinterface java.util.Iterator.next
+    608: 608: checkcast net.minecraft.util.FormattedCharSequence
+    611: 611: astore 22
+    613: 613: iload 18
+    615: 615: aload_0
+    616: 616: getfield net.minecraft.client.gui.components.PlayerTabOverlay.minecraft
+    619: 619: getfield net.minecraft.client.Minecraft.font
+    622: 622: aload 22
+    624: 624: invokevirtual net.minecraft.client.gui.Font.width
+    627: 627: invokestatic java.lang.Math.max
+    630: 630: istore 18
+    632: 632: goto -> 591
+    635: 635: aload 19
+    637: 637: ifnull -> 788
+    640: 640: aload_1
+    641: 641: iload_2
+    642: 642: iconst_2
+    643: 643: idiv
+    644: 644: iload 18
+    646: 646: iconst_2
+    647: 647: idiv
+    648: 648: isub
+    649: 649: iconst_1
+    650: 650: isub
+    651: 651: iload 17
+    653: 653: iconst_1
+    654: 654: isub
+    655: 655: iload_2
+    656: 656: iconst_2
+    657: 657: idiv
+    658: 658: iload 18
+    660: 660: iconst_2
+    661: 661: idiv
+    662: 662: iadd
+    663: 663: iconst_1
+    664: 664: iadd
+    665: 665: iload 17
+    667: 667: aload 19
+    669: 669: invokeinterface java.util.List.size
+    674: 674: aload_0
+    675: 675: getfield net.minecraft.client.gui.components.PlayerTabOverlay.minecraft
+    678: 678: getfield net.minecraft.client.Minecraft.font
+    681: 681: invokestatic java.util.Objects.requireNonNull
+    684: 684: pop
+    685: 685: bipush 9
+    687: 687: imul
+    688: 688: iadd
+    689: 689: ldc_w int -2147483648
+    692: 692: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.fill
+    695: 695: aload 19
+    697: 697: invokeinterface java.util.List.iterator
+    702: 702: astore 21
+    704: 704: aload 21
+    706: 706: invokeinterface java.util.Iterator.hasNext
+    711: 711: ifeq -> 785
+    714: 714: aload 21
+    716: 716: invokeinterface java.util.Iterator.next
+    721: 721: checkcast net.minecraft.util.FormattedCharSequence
+    724: 724: astore 22
+    726: 726: aload_0
+    727: 727: getfield net.minecraft.client.gui.components.PlayerTabOverlay.minecraft
+    730: 730: getfield net.minecraft.client.Minecraft.font
+    733: 733: aload 22
+    735: 735: invokevirtual net.minecraft.client.gui.Font.width
+    738: 738: istore 23
+    740: 740: aload_1
+    741: 741: aload_0
+    742: 742: getfield net.minecraft.client.gui.components.PlayerTabOverlay.minecraft
+    745: 745: getfield net.minecraft.client.Minecraft.font
+    748: 748: aload 22
+    750: 750: iload_2
+    751: 751: iconst_2
+    752: 752: idiv
+    753: 753: iload 23
+    755: 755: iconst_2
+    756: 756: idiv
+    757: 757: isub
+    758: 758: iload 17
+    760: 760: iconst_m1
+    761: 761: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.text
+    764: 764: iload 17
+    766: 766: aload_0
+    767: 767: getfield net.minecraft.client.gui.components.PlayerTabOverlay.minecraft
+    770: 770: getfield net.minecraft.client.Minecraft.font
+    773: 773: invokestatic java.util.Objects.requireNonNull
+    776: 776: pop
+    777: 777: bipush 9
+    779: 779: iadd
+    780: 780: istore 17
+    782: 782: goto -> 704
+    785: 785: iinc 17 1
+    788: 788: aload_1
+    789: 789: iload_2
+    790: 790: iconst_2
+    791: 791: idiv
+    792: 792: iload 18
+    794: 794: iconst_2
+    795: 795: idiv
+    796: 796: isub
+    797: 797: iconst_1
+    798: 798: isub
+    799: 799: iload 17
+    801: 801: iconst_1
+    802: 802: isub
+    803: 803: iload_2
+    804: 804: iconst_2
+    805: 805: idiv
+    806: 806: iload 18
+    808: 808: iconst_2
+    809: 809: idiv
+    810: 810: iadd
+    811: 811: iconst_1
+    812: 812: iadd
+    813: 813: iload 17
+    815: 815: iload 11
+    817: 817: bipush 9
+    819: 819: imul
+    820: 820: iadd
+    821: 821: ldc_w int -2147483648
+    824: 824: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.fill
+    827: 827: aload_0
+    828: 828: getfield net.minecraft.client.gui.components.PlayerTabOverlay.minecraft
+    831: 831: getfield net.minecraft.client.Minecraft.options
+    834: 834: ldc_w int 553648127
+    837: 837: invokevirtual net.minecraft.client.Options.getBackgroundColor
+    840: 840: istore 21
+    842: 842: iconst_0
+    843: 843: istore 22
+    845: 845: iload 22
+    847: 847: iload 10
+    849: 849: if_icmpge -> 1164
+    852: 852: iload 22
+    854: 854: iload 11
+    856: 856: idiv
+    857: 857: istore 23
+    859: 859: iload 22
+    861: 861: iload 11
+    863: 863: irem
+    864: 864: istore 24
+    866: 866: iload 16
+    868: 868: iload 23
+    870: 870: iload 15
+    872: 872: imul
+    873: 873: iadd
+    874: 874: iload 23
+    876: 876: iconst_5
+    877: 877: imul
+    878: 878: iadd
+    879: 879: istore 25
+    881: 881: iload 17
+    883: 883: iload 24
+    885: 885: bipush 9
+    887: 887: imul
+    888: 888: iadd
+    889: 889: istore 26
+    891: 891: aload_1
+    892: 892: iload 25
+    894: 894: iload 26
+    896: 896: iload 25
+    898: 898: iload 15
+    900: 900: iadd
+    901: 901: iload 26
+    903: 903: bipush 8
+    905: 905: iadd
+    906: 906: iload 21
+    908: 908: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.fill
+    911: 911: iload 22
+    913: 913: aload 5
+    915: 915: invokeinterface java.util.List.size
+    920: 920: if_icmpge -> 1158
+    923: 923: aload 5
+    925: 925: iload 22
+    927: 927: invokeinterface java.util.List.get
+    932: 932: checkcast net.minecraft.client.multiplayer.PlayerInfo
+    935: 935: astore 27
+    937: 937: aload 6
+    939: 939: iload 22
+    941: 941: invokeinterface java.util.List.get
+    946: 946: checkcast net.minecraft.client.gui.components.PlayerTabOverlay$ScoreDisplayEntry
+    949: 949: astore 28
+    951: 951: aload 27
+    953: 953: invokevirtual net.minecraft.client.multiplayer.PlayerInfo.getProfile
+    956: 956: astore 29
+    958: 958: iload 13
+    960: 960: ifeq -> 1034
+    963: 963: aload_0
+    964: 964: getfield net.minecraft.client.gui.components.PlayerTabOverlay.minecraft
+    967: 967: getfield net.minecraft.client.Minecraft.level
+    970: 970: aload 29
+    972: 972: invokevirtual com.mojang.authlib.GameProfile.id
+    975: 975: invokevirtual net.minecraft.client.multiplayer.ClientLevel.getPlayerByUUID
+    978: 978: astore 30
+    980: 980: aload 30
+    982: 982: ifnull -> 997
+    985: 985: aload 30
+    987: 987: invokestatic net.minecraft.client.renderer.entity.player.AvatarRenderer.isPlayerUpsideDown
+    990: 990: ifeq -> 997
+    993: 993: iconst_1
+    994: 994: goto -> 998
+    997: 997: iconst_0
+    998: 998: istore 31
+   1000: 1000: aload_1
+   1001: 1001: aload 27
+   1003: 1003: invokevirtual net.minecraft.client.multiplayer.PlayerInfo.getSkin
+   1006: 1006: invokevirtual net.minecraft.world.entity.player.PlayerSkin.body
+   1009: 1009: invokeinterface net.minecraft.core.ClientAsset$Texture.texturePath
+   1014: 1014: iload 25
+   1016: 1016: iload 26
+   1018: 1018: bipush 8
+   1020: 1020: aload 27
+   1022: 1022: invokevirtual net.minecraft.client.multiplayer.PlayerInfo.showHat
+   1025: 1025: iload 31
+   1027: 1027: iconst_m1
+   1028: 1028: invokestatic net.minecraft.client.gui.components.PlayerFaceExtractor.extractRenderState
+   1031: 1031: iinc 25 9
+   1034: 1034: aload_1
+   1035: 1035: aload_0
+   1036: 1036: getfield net.minecraft.client.gui.components.PlayerTabOverlay.minecraft
+   1039: 1039: getfield net.minecraft.client.Minecraft.font
+   1042: 1042: aload 28
+   1044: 1044: getfield net.minecraft.client.gui.components.PlayerTabOverlay$ScoreDisplayEntry.name
+   1047: 1047: iload 25
+   1049: 1049: iload 26
+   1051: 1051: aload 27
+   1053: 1053: invokevirtual net.minecraft.client.multiplayer.PlayerInfo.getGameMode
+   1056: 1056: getstatic net.minecraft.world.level.GameType.SPECTATOR
+   1059: 1059: if_acmpne -> 1068
+   1062: 1062: ldc_w int -1862270977
+   1065: 1065: goto -> 1069
+   1068: 1068: iconst_m1
+   1069: 1069: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.text
+   1072: 1072: aload 4
+   1074: 1074: ifnull -> 1133
+   1077: 1077: aload 27
+   1079: 1079: invokevirtual net.minecraft.client.multiplayer.PlayerInfo.getGameMode
+   1082: 1082: getstatic net.minecraft.world.level.GameType.SPECTATOR
+   1085: 1085: if_acmpeq -> 1133
+   1088: 1088: iload 25
+   1090: 1090: iload 8
+   1092: 1092: iadd
+   1093: 1093: iconst_1
+   1094: 1094: iadd
+   1095: 1095: istore 30
+   1097: 1097: iload 30
+   1099: 1099: iload 14
+   1101: 1101: iadd
+   1102: 1102: istore 31
+   1104: 1104: iload 31
+   1106: 1106: iload 30
+   1108: 1108: isub
+   1109: 1109: iconst_5
+   1110: 1110: if_icmple -> 1133
+   1113: 1113: aload_0
+   1114: 1114: aload 4
+   1116: 1116: iload 26
+   1118: 1118: aload 28
+   1120: 1120: iload 30
+   1122: 1122: iload 31
+   1124: 1124: aload 29
+   1126: 1126: invokevirtual com.mojang.authlib.GameProfile.id
+   1129: 1129: aload_1
+   1130: 1130: invokevirtual net.minecraft.client.gui.components.PlayerTabOverlay.extractTablistScore
+   1133: 1133: aload_0
+   1134: 1134: aload_1
+   1135: 1135: iload 15
+   1137: 1137: iload 25
+   1139: 1139: iload 13
+   1141: 1141: ifeq -> 1149
+   1144: 1144: bipush 9
+   1146: 1146: goto -> 1150
+   1149: 1149: iconst_0
+   1150: 1150: isub
+   1151: 1151: iload 26
+   1153: 1153: aload 27
+   1155: 1155: invokevirtual net.minecraft.client.gui.components.PlayerTabOverlay.extractPingIcon
+   1158: 1158: iinc 22 1
+   1161: 1161: goto -> 845
+   1164: 1164: aload 20
+   1166: 1166: ifnull -> 1326
+   1169: 1169: iload 17
+   1171: 1171: iload 11
+   1173: 1173: bipush 9
+   1175: 1175: imul
+   1176: 1176: iconst_1
+   1177: 1177: iadd
+   1178: 1178: iadd
+   1179: 1179: istore 17
+   1181: 1181: aload_1
+   1182: 1182: iload_2
+   1183: 1183: iconst_2
+   1184: 1184: idiv
+   1185: 1185: iload 18
+   1187: 1187: iconst_2
+   1188: 1188: idiv
+   1189: 1189: isub
+   1190: 1190: iconst_1
+   1191: 1191: isub
+   1192: 1192: iload 17
+   1194: 1194: iconst_1
+   1195: 1195: isub
+   1196: 1196: iload_2
+   1197: 1197: iconst_2
+   1198: 1198: idiv
+   1199: 1199: iload 18
+   1201: 1201: iconst_2
+   1202: 1202: idiv
+   1203: 1203: iadd
+   1204: 1204: iconst_1
+   1205: 1205: iadd
+   1206: 1206: iload 17
+   1208: 1208: aload 20
+   1210: 1210: invokeinterface java.util.List.size
+   1215: 1215: aload_0
+   1216: 1216: getfield net.minecraft.client.gui.components.PlayerTabOverlay.minecraft
+   1219: 1219: getfield net.minecraft.client.Minecraft.font
+   1222: 1222: invokestatic java.util.Objects.requireNonNull
+   1225: 1225: pop
+   1226: 1226: bipush 9
+   1228: 1228: imul
+   1229: 1229: iadd
+   1230: 1230: ldc_w int -2147483648
+   1233: 1233: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.fill
+   1236: 1236: aload 20
+   1238: 1238: invokeinterface java.util.List.iterator
+   1243: 1243: astore 22
+   1245: 1245: aload 22
+   1247: 1247: invokeinterface java.util.Iterator.hasNext
+   1252: 1252: ifeq -> 1326
+   1255: 1255: aload 22
+   1257: 1257: invokeinterface java.util.Iterator.next
+   1262: 1262: checkcast net.minecraft.util.FormattedCharSequence
+   1265: 1265: astore 23
+   1267: 1267: aload_0
+   1268: 1268: getfield net.minecraft.client.gui.components.PlayerTabOverlay.minecraft
+   1271: 1271: getfield net.minecraft.client.Minecraft.font
+   1274: 1274: aload 23
+   1276: 1276: invokevirtual net.minecraft.client.gui.Font.width
+   1279: 1279: istore 24
+   1281: 1281: aload_1
+   1282: 1282: aload_0
+   1283: 1283: getfield net.minecraft.client.gui.components.PlayerTabOverlay.minecraft
+   1286: 1286: getfield net.minecraft.client.Minecraft.font
+   1289: 1289: aload 23
+   1291: 1291: iload_2
+   1292: 1292: iconst_2
+   1293: 1293: idiv
+   1294: 1294: iload 24
+   1296: 1296: iconst_2
+   1297: 1297: idiv
+   1298: 1298: isub
+   1299: 1299: iload 17
+   1301: 1301: iconst_m1
+   1302: 1302: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.text
+   1305: 1305: iload 17
+   1307: 1307: aload_0
+   1308: 1308: getfield net.minecraft.client.gui.components.PlayerTabOverlay.minecraft
+   1311: 1311: getfield net.minecraft.client.Minecraft.font
+   1314: 1314: invokestatic java.util.Objects.requireNonNull
+   1317: 1317: pop
+   1318: 1318: bipush 9
+   1320: 1320: iadd
+   1321: 1321: istore 17
+   1323: 1323: goto -> 1245
+   1326: 1326: return
+
+== net.minecraft.client.gui.components.SubtitleOverlay :: extractRenderState (Lnet/minecraft/client/gui/GuiGraphicsExtractor;)V
+      0: 0: aload_0
+      1: 1: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+      4: 4: invokevirtual net.minecraft.client.Minecraft.getSoundManager
+      7: 7: astore_2
+      8: 8: aload_0
+      9: 9: getfield net.minecraft.client.gui.components.SubtitleOverlay.isListening
+     12: 12: ifne -> 50
+     15: 15: aload_0
+     16: 16: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+     19: 19: getfield net.minecraft.client.Minecraft.options
+     22: 22: invokevirtual net.minecraft.client.Options.showSubtitles
+     25: 25: invokevirtual net.minecraft.client.OptionInstance.get
+     28: 28: checkcast java.lang.Boolean
+     31: 31: invokevirtual java.lang.Boolean.booleanValue
+     34: 34: ifeq -> 50
+     37: 37: aload_2
+     38: 38: aload_0
+     39: 39: invokevirtual net.minecraft.client.sounds.SoundManager.addListener
+     42: 42: aload_0
+     43: 43: iconst_1
+     44: 44: putfield net.minecraft.client.gui.components.SubtitleOverlay.isListening
+     47: 47: goto -> 89
+     50: 50: aload_0
+     51: 51: getfield net.minecraft.client.gui.components.SubtitleOverlay.isListening
+     54: 54: ifeq -> 89
+     57: 57: aload_0
+     58: 58: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+     61: 61: getfield net.minecraft.client.Minecraft.options
+     64: 64: invokevirtual net.minecraft.client.Options.showSubtitles
+     67: 67: invokevirtual net.minecraft.client.OptionInstance.get
+     70: 70: checkcast java.lang.Boolean
+     73: 73: invokevirtual java.lang.Boolean.booleanValue
+     76: 76: ifne -> 89
+     79: 79: aload_2
+     80: 80: aload_0
+     81: 81: invokevirtual net.minecraft.client.sounds.SoundManager.removeListener
+     84: 84: aload_0
+     85: 85: iconst_0
+     86: 86: putfield net.minecraft.client.gui.components.SubtitleOverlay.isListening
+     89: 89: aload_0
+     90: 90: getfield net.minecraft.client.gui.components.SubtitleOverlay.isListening
+     93: 93: ifne -> 97
+     96: 96: return
+     97: 97: aload_2
+     98: 98: invokevirtual net.minecraft.client.sounds.SoundManager.getListenerTransform
+    101: 101: astore_3
+    102: 102: aload_3
+    103: 103: invokevirtual com.mojang.blaze3d.audio.ListenerTransform.position
+    106: 106: astore 4
+    108: 108: aload_3
+    109: 109: invokevirtual com.mojang.blaze3d.audio.ListenerTransform.forward
+    112: 112: astore 5
+    114: 114: aload_3
+    115: 115: invokevirtual com.mojang.blaze3d.audio.ListenerTransform.right
+    118: 118: astore 6
+    120: 120: aload_0
+    121: 121: getfield net.minecraft.client.gui.components.SubtitleOverlay.audibleSubtitles
+    124: 124: invokeinterface java.util.List.clear
+    129: 129: aload_0
+    130: 130: getfield net.minecraft.client.gui.components.SubtitleOverlay.subtitles
+    133: 133: invokeinterface java.util.List.iterator
+    138: 138: astore 7
+    140: 140: aload 7
+    142: 142: invokeinterface java.util.Iterator.hasNext
+    147: 147: ifeq -> 187
+    150: 150: aload 7
+    152: 152: invokeinterface java.util.Iterator.next
+    157: 157: checkcast net.minecraft.client.gui.components.SubtitleOverlay$Subtitle
+    160: 160: astore 8
+    162: 162: aload 8
+    164: 164: aload 4
+    166: 166: invokevirtual net.minecraft.client.gui.components.SubtitleOverlay$Subtitle.isAudibleFrom
+    169: 169: ifeq -> 184
+    172: 172: aload_0
+    173: 173: getfield net.minecraft.client.gui.components.SubtitleOverlay.audibleSubtitles
+    176: 176: aload 8
+    178: 178: invokeinterface java.util.List.add
+    183: 183: pop
+    184: 184: goto -> 140
+    187: 187: aload_0
+    188: 188: getfield net.minecraft.client.gui.components.SubtitleOverlay.audibleSubtitles
+    191: 191: invokeinterface java.util.List.isEmpty
+    196: 196: ifeq -> 200
+    199: 199: return
+    200: 200: iconst_0
+    201: 201: istore 7
+    203: 203: iconst_0
+    204: 204: istore 8
+    206: 206: aload_0
+    207: 207: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+    210: 210: getfield net.minecraft.client.Minecraft.options
+    213: 213: invokevirtual net.minecraft.client.Options.notificationDisplayTime
+    216: 216: invokevirtual net.minecraft.client.OptionInstance.get
+    219: 219: checkcast java.lang.Double
+    222: 222: invokevirtual java.lang.Double.doubleValue
+    225: 225: dstore 9
+    227: 227: aload_0
+    228: 228: getfield net.minecraft.client.gui.components.SubtitleOverlay.audibleSubtitles
+    231: 231: invokeinterface java.util.List.iterator
+    236: 236: astore 11
+    238: 238: aload 11
+    240: 240: invokeinterface java.util.Iterator.hasNext
+    245: 245: ifeq -> 314
+    248: 248: aload 11
+    250: 250: invokeinterface java.util.Iterator.next
+    255: 255: checkcast net.minecraft.client.gui.components.SubtitleOverlay$Subtitle
+    258: 258: astore 12
+    260: 260: aload 12
+    262: 262: ldc2_w double 3000.0
+    265: 265: dload 9
+    267: 267: dmul
+    268: 268: invokevirtual net.minecraft.client.gui.components.SubtitleOverlay$Subtitle.purgeOldInstances
+    271: 271: aload 12
+    273: 273: invokevirtual net.minecraft.client.gui.components.SubtitleOverlay$Subtitle.isStillActive
+    276: 276: ifne -> 289
+    279: 279: aload 11
+    281: 281: invokeinterface java.util.Iterator.remove
+    286: 286: goto -> 311
+    289: 289: iload 8
+    291: 291: aload_0
+    292: 292: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+    295: 295: getfield net.minecraft.client.Minecraft.font
+    298: 298: aload 12
+    300: 300: invokevirtual net.minecraft.client.gui.components.SubtitleOverlay$Subtitle.getText
+    303: 303: invokevirtual net.minecraft.client.gui.Font.width
+    306: 306: invokestatic java.lang.Math.max
+    309: 309: istore 8
+    311: 311: goto -> 238
+    314: 314: iload 8
+    316: 316: aload_0
+    317: 317: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+    320: 320: getfield net.minecraft.client.Minecraft.font
+    323: 323: ldc cp(8, 158)
+    325: 325: invokevirtual net.minecraft.client.gui.Font.width
+    328: 328: aload_0
+    329: 329: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+    332: 332: getfield net.minecraft.client.Minecraft.font
+    335: 335: ldc cp(8, 163)
+    337: 337: invokevirtual net.minecraft.client.gui.Font.width
+    340: 340: iadd
+    341: 341: aload_0
+    342: 342: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+    345: 345: getfield net.minecraft.client.Minecraft.font
+    348: 348: ldc cp(8, 165)
+    350: 350: invokevirtual net.minecraft.client.gui.Font.width
+    353: 353: iadd
+    354: 354: aload_0
+    355: 355: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+    358: 358: getfield net.minecraft.client.Minecraft.font
+    361: 361: ldc cp(8, 163)
+    363: 363: invokevirtual net.minecraft.client.gui.Font.width
+    366: 366: iadd
+    367: 367: iadd
+    368: 368: istore 8
+    370: 370: aload_0
+    371: 371: getfield net.minecraft.client.gui.components.SubtitleOverlay.audibleSubtitles
+    374: 374: invokeinterface java.util.List.isEmpty
+    379: 379: ifne -> 386
+    382: 382: aload_1
+    383: 383: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.nextStratum
+    386: 386: aload_0
+    387: 387: getfield net.minecraft.client.gui.components.SubtitleOverlay.audibleSubtitles
+    390: 390: invokeinterface java.util.List.iterator
+    395: 395: astore 11
+    397: 397: aload 11
+    399: 399: invokeinterface java.util.Iterator.hasNext
+    404: 404: ifeq -> 790
+    407: 407: aload 11
+    409: 409: invokeinterface java.util.Iterator.next
+    414: 414: checkcast net.minecraft.client.gui.components.SubtitleOverlay$Subtitle
+    417: 417: astore 12
+    419: 419: sipush 0 255
+    422: 422: istore 13
+    424: 424: aload 12
+    426: 426: invokevirtual net.minecraft.client.gui.components.SubtitleOverlay$Subtitle.getText
+    429: 429: astore 14
+    431: 431: aload 12
+    433: 433: aload 4
+    435: 435: invokevirtual net.minecraft.client.gui.components.SubtitleOverlay$Subtitle.getClosest
+    438: 438: astore 15
+    440: 440: aload 15
+    442: 442: ifnonnull -> 448
+    445: 445: goto -> 397
+    448: 448: aload 15
+    450: 450: getfield net.minecraft.client.gui.components.SubtitleOverlay$SoundPlayedAt.location
+    453: 453: aload 4
+    455: 455: invokevirtual net.minecraft.world.phys.Vec3.subtract
+    458: 458: invokevirtual net.minecraft.world.phys.Vec3.normalize
+    461: 461: astore 16
+    463: 463: aload 6
+    465: 465: aload 16
+    467: 467: invokevirtual net.minecraft.world.phys.Vec3.dot
+    470: 470: dstore 17
+    472: 472: aload 5
+    474: 474: aload 16
+    476: 476: invokevirtual net.minecraft.world.phys.Vec3.dot
+    479: 479: dstore 19
+    481: 481: dload 19
+    483: 483: ldc2_w double 0.5
+    486: 486: dcmpl
+    487: 487: ifle -> 494
+    490: 490: iconst_1
+    491: 491: goto -> 495
+    494: 494: iconst_0
+    495: 495: istore 21
+    497: 497: iload 8
+    499: 499: iconst_2
+    500: 500: idiv
+    501: 501: istore 22
+    503: 503: aload_0
+    504: 504: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+    507: 507: getfield net.minecraft.client.Minecraft.font
+    510: 510: invokestatic java.util.Objects.requireNonNull
+    513: 513: pop
+    514: 514: bipush 9
+    516: 516: istore 23
+    518: 518: iload 23
+    520: 520: iconst_2
+    521: 521: idiv
+    522: 522: istore 24
+    524: 524: fconst_1
+    525: 525: fstore 25
+    527: 527: aload_0
+    528: 528: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+    531: 531: getfield net.minecraft.client.Minecraft.font
+    534: 534: aload 14
+    536: 536: invokevirtual net.minecraft.client.gui.Font.width
+    539: 539: istore 26
+    541: 541: invokestatic net.minecraft.util.Util.getMillis
+    544: 544: aload 15
+    546: 546: getfield net.minecraft.client.gui.components.SubtitleOverlay$SoundPlayedAt.time
+    549: 549: lsub
+    550: 550: l2f
+    551: 551: ldc2_w double 3000.0
+    554: 554: dload 9
+    556: 556: dmul
+    557: 557: d2f
+    558: 558: fdiv
+    559: 559: ldc float 255.0
+    561: 561: ldc float 75.0
+    563: 563: invokestatic net.minecraft.util.Mth.clampedLerp
+    566: 566: invokestatic net.minecraft.util.Mth.floor
+    569: 569: istore 27
+    571: 571: aload_1
+    572: 572: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.pose
+    575: 575: invokevirtual org.joml.Matrix3x2fStack.pushMatrix
+    578: 578: pop
+    579: 579: aload_1
+    580: 580: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.pose
+    583: 583: aload_1
+    584: 584: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.guiWidth
+    587: 587: i2f
+    588: 588: iload 22
+    590: 590: i2f
+    591: 591: fconst_1
+    592: 592: fmul
+    593: 593: fsub
+    594: 594: fconst_2
+    595: 595: fsub
+    596: 596: aload_1
+    597: 597: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.guiHeight
+    600: 600: bipush 35
+    602: 602: isub
+    603: 603: i2f
+    604: 604: iload 7
+    606: 606: iload 23
+    608: 608: iconst_1
+    609: 609: iadd
+    610: 610: imul
+    611: 611: i2f
+    612: 612: fconst_1
+    613: 613: fmul
+    614: 614: fsub
+    615: 615: invokevirtual org.joml.Matrix3x2fStack.translate
+    618: 618: pop
+    619: 619: aload_1
+    620: 620: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.pose
+    623: 623: fconst_1
+    624: 624: fconst_1
+    625: 625: invokevirtual org.joml.Matrix3x2fStack.scale
+    628: 628: pop
+    629: 629: aload_1
+    630: 630: iload 22
+    632: 632: ineg
+    633: 633: iconst_1
+    634: 634: isub
+    635: 635: iload 24
+    637: 637: ineg
+    638: 638: iconst_1
+    639: 639: isub
+    640: 640: iload 22
+    642: 642: iconst_1
+    643: 643: iadd
+    644: 644: iload 24
+    646: 646: iconst_1
+    647: 647: iadd
+    648: 648: aload_0
+    649: 649: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+    652: 652: getfield net.minecraft.client.Minecraft.options
+    655: 655: ldc float 0.800000011920929
+    657: 657: invokevirtual net.minecraft.client.Options.getBackgroundColor
+    660: 660: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.fill
+    663: 663: sipush 0 255
+    666: 666: iload 27
+    668: 668: iload 27
+    670: 670: iload 27
+    672: 672: invokestatic net.minecraft.util.ARGB.color
+    675: 675: istore 28
+    677: 677: iload 21
+    679: 679: ifne -> 753
+    682: 682: dload 17
+    684: 684: dconst_0
+    685: 685: dcmpl
+    686: 686: ifle -> 725
+    689: 689: aload_1
+    690: 690: aload_0
+    691: 691: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+    694: 694: getfield net.minecraft.client.Minecraft.font
+    697: 697: ldc cp(8, 165)
+    699: 699: iload 22
+    701: 701: aload_0
+    702: 702: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+    705: 705: getfield net.minecraft.client.Minecraft.font
+    708: 708: ldc cp(8, 165)
+    710: 710: invokevirtual net.minecraft.client.gui.Font.width
+    713: 713: isub
+    714: 714: iload 24
+    716: 716: ineg
+    717: 717: iload 28
+    719: 719: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.text
+    722: 722: goto -> 753
+    725: 725: dload 17
+    727: 727: dconst_0
+    728: 728: dcmpg
+    729: 729: ifge -> 753
+    732: 732: aload_1
+    733: 733: aload_0
+    734: 734: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+    737: 737: getfield net.minecraft.client.Minecraft.font
+    740: 740: ldc cp(8, 158)
+    742: 742: iload 22
+    744: 744: ineg
+    745: 745: iload 24
+    747: 747: ineg
+    748: 748: iload 28
+    750: 750: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.text
+    753: 753: aload_1
+    754: 754: aload_0
+    755: 755: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+    758: 758: getfield net.minecraft.client.Minecraft.font
+    761: 761: aload 14
+    763: 763: iload 26
+    765: 765: ineg
+    766: 766: iconst_2
+    767: 767: idiv
+    768: 768: iload 24
+    770: 770: ineg
+    771: 771: iload 28
+    773: 773: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.text
+    776: 776: aload_1
+    777: 777: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.pose
+    780: 780: invokevirtual org.joml.Matrix3x2fStack.popMatrix
+    783: 783: pop
+    784: 784: iinc 7 1
+    787: 787: goto -> 397
+    790: 790: return
+
+== net.minecraft.client.gui.screens.ChatScreen :: extractRenderState (Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V
+      0: 0: aload_1
+      1: 1: iconst_2
+      2: 2: aload_0
+      3: 3: getfield net.minecraft.client.gui.screens.ChatScreen.height
+      6: 6: bipush 14
+      8: 8: isub
+      9: 9: aload_0
+     10: 10: getfield net.minecraft.client.gui.screens.ChatScreen.width
+     13: 13: iconst_2
+     14: 14: isub
+     15: 15: aload_0
+     16: 16: getfield net.minecraft.client.gui.screens.ChatScreen.height
+     19: 19: iconst_2
+     20: 20: isub
+     21: 21: aload_0
+     22: 22: getfield net.minecraft.client.gui.screens.ChatScreen.minecraft
+     25: 25: getfield net.minecraft.client.Minecraft.options
+     28: 28: ldc_w int -2147483648
+     31: 31: invokevirtual net.minecraft.client.Options.getBackgroundColor
+     34: 34: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.fill
+     37: 37: aload_0
+     38: 38: getfield net.minecraft.client.gui.screens.ChatScreen.minecraft
+     41: 41: getfield net.minecraft.client.Minecraft.gui
+     44: 44: getfield net.minecraft.client.gui.Gui.hud
+     47: 47: invokevirtual net.minecraft.client.gui.Hud.getChat
+     50: 50: aload_1
+     51: 51: aload_0
+     52: 52: getfield net.minecraft.client.gui.screens.ChatScreen.font
+     55: 55: aload_0
+     56: 56: getfield net.minecraft.client.gui.screens.ChatScreen.minecraft
+     59: 59: getfield net.minecraft.client.Minecraft.gui
+     62: 62: getfield net.minecraft.client.gui.Gui.hud
+     65: 65: invokevirtual net.minecraft.client.gui.Hud.getGuiTicks
+     68: 68: iload_2
+     69: 69: iload_3
+     70: 70: aload_0
+     71: 71: getfield net.minecraft.client.gui.screens.ChatScreen.displayMode
+     74: 74: aload_0
+     75: 75: invokevirtual net.minecraft.client.gui.screens.ChatScreen.insertionClickMode
+     78: 78: invokevirtual net.minecraft.client.gui.components.ChatComponent.extractRenderState
+     81: 81: aload_0
+     82: 82: aload_1
+     83: 83: iload_2
+     84: 84: iload_3
+     85: 85: fload 4
+     87: 87: invokespecial net.minecraft.client.gui.screens.Screen.extractRenderState
+     90: 90: aload_0
+     91: 91: getfield net.minecraft.client.gui.screens.ChatScreen.commandSuggestions
+     94: 94: aload_1
+     95: 95: iload_2
+     96: 96: iload_3
+     97: 97: invokevirtual net.minecraft.client.gui.components.CommandSuggestions.extractRenderState
+    100: 100: return
+
+== net.minecraft.world.entity.Display$TextDisplay :: addAdditionalSaveData (Lnet/minecraft/world/level/storage/ValueOutput;)V
+      0: 0: aload_0
+      1: 1: aload_1
+      2: 2: invokespecial net.minecraft.world.entity.Display.addAdditionalSaveData
+      5: 5: aload_1
+      6: 6: ldc cp(8, 176)
+      8: 8: getstatic net.minecraft.network.chat.ComponentSerialization.CODEC
+     11: 11: aload_0
+     12: 12: invokevirtual net.minecraft.world.entity.Display$TextDisplay.getText
+     15: 15: invokeinterface net.minecraft.world.level.storage.ValueOutput.store
+     20: 20: aload_1
+     21: 21: ldc cp(8, 109)
+     23: 23: aload_0
+     24: 24: invokevirtual net.minecraft.world.entity.Display$TextDisplay.getLineWidth
+     27: 27: invokeinterface net.minecraft.world.level.storage.ValueOutput.putInt
+     32: 32: aload_1
+     33: 33: ldc cp(8, 129)
+     35: 35: aload_0
+     36: 36: invokevirtual net.minecraft.world.entity.Display$TextDisplay.getBackgroundColor
+     39: 39: invokeinterface net.minecraft.world.level.storage.ValueOutput.putInt
+     44: 44: aload_1
+     45: 45: ldc cp(8, 119)
+     47: 47: aload_0
+     48: 48: invokevirtual net.minecraft.world.entity.Display$TextDisplay.getTextOpacity
+     51: 51: invokeinterface net.minecraft.world.level.storage.ValueOutput.putByte
+     56: 56: aload_0
+     57: 57: invokevirtual net.minecraft.world.entity.Display$TextDisplay.getFlags
+     60: 60: istore_2
+     61: 61: iload_2
+     62: 62: aload_1
+     63: 63: ldc cp(8, 134)
+     65: 65: iconst_1
+     66: 66: invokestatic net.minecraft.world.entity.Display$TextDisplay.storeFlag
+     69: 69: iload_2
+     70: 70: aload_1
+     71: 71: ldc cp(8, 140)
+     73: 73: iconst_2
+     74: 74: invokestatic net.minecraft.world.entity.Display$TextDisplay.storeFlag
+     77: 77: iload_2
+     78: 78: aload_1
+     79: 79: ldc cp(8, 142)
+     81: 81: iconst_4
+     82: 82: invokestatic net.minecraft.world.entity.Display$TextDisplay.storeFlag
+     85: 85: aload_1
+     86: 86: ldc cp(8, 144)
+     88: 88: getstatic net.minecraft.world.entity.Display$TextDisplay$Align.CODEC
+     91: 91: iload_2
+     92: 92: invokestatic net.minecraft.world.entity.Display$TextDisplay.getAlign
+     95: 95: invokeinterface net.minecraft.world.level.storage.ValueOutput.store
+    100: 100: return
+
+== net.minecraft.world.entity.Display$TextDisplay :: createFreshTextRenderState ()Lnet/minecraft/world/entity/Display$TextDisplay$TextRenderState;
+      0: 0: new net.minecraft.world.entity.Display$TextDisplay$TextRenderState
+      3: 3: dup
+      4: 4: aload_0
+      5: 5: invokevirtual net.minecraft.world.entity.Display$TextDisplay.getText
+      8: 8: aload_0
+      9: 9: invokevirtual net.minecraft.world.entity.Display$TextDisplay.getLineWidth
+     12: 12: aload_0
+     13: 13: invokevirtual net.minecraft.world.entity.Display$TextDisplay.getTextOpacity
+     16: 16: invokestatic net.minecraft.world.entity.Display$IntInterpolator.constant
+     19: 19: aload_0
+     20: 20: invokevirtual net.minecraft.world.entity.Display$TextDisplay.getBackgroundColor
+     23: 23: invokestatic net.minecraft.world.entity.Display$IntInterpolator.constant
+     26: 26: aload_0
+     27: 27: invokevirtual net.minecraft.world.entity.Display$TextDisplay.getFlags
+     30: 30: invokespecial net.minecraft.world.entity.Display$TextDisplay$TextRenderState.<init>
+     33: 33: areturn
+
+== net.minecraft.world.entity.Display$TextDisplay :: createInterpolatedTextRenderState (Lnet/minecraft/world/entity/Display$TextDisplay$TextRenderState;F)Lnet/minecraft/world/entity/Display$TextDisplay$TextRenderState;
+      0: 0: aload_1
+      1: 1: getfield net.minecraft.world.entity.Display$TextDisplay$TextRenderState.backgroundColor
+      4: 4: fload_2
+      5: 5: invokeinterface net.minecraft.world.entity.Display$IntInterpolator.get
+     10: 10: istore_3
+     11: 11: aload_1
+     12: 12: getfield net.minecraft.world.entity.Display$TextDisplay$TextRenderState.textOpacity
+     15: 15: fload_2
+     16: 16: invokeinterface net.minecraft.world.entity.Display$IntInterpolator.get
+     21: 21: istore 4
+     23: 23: new net.minecraft.world.entity.Display$TextDisplay$TextRenderState
+     26: 26: dup
+     27: 27: aload_0
+     28: 28: invokevirtual net.minecraft.world.entity.Display$TextDisplay.getText
+     31: 31: aload_0
+     32: 32: invokevirtual net.minecraft.world.entity.Display$TextDisplay.getLineWidth
+     35: 35: new net.minecraft.world.entity.Display$LinearIntInterpolator
+     38: 38: dup
+     39: 39: iload 4
+     41: 41: aload_0
+     42: 42: invokevirtual net.minecraft.world.entity.Display$TextDisplay.getTextOpacity
+     45: 45: invokespecial net.minecraft.world.entity.Display$LinearIntInterpolator.<init>
+     48: 48: new net.minecraft.world.entity.Display$ColorInterpolator
+     51: 51: dup
+     52: 52: iload_3
+     53: 53: aload_0
+     54: 54: invokevirtual net.minecraft.world.entity.Display$TextDisplay.getBackgroundColor
+     57: 57: invokespecial net.minecraft.world.entity.Display$ColorInterpolator.<init>
+     60: 60: aload_0
+     61: 61: invokevirtual net.minecraft.world.entity.Display$TextDisplay.getFlags
+     64: 64: invokespecial net.minecraft.world.entity.Display$TextDisplay$TextRenderState.<init>
+     67: 67: areturn
+
+##### getBackgroundOpacity
+== net.minecraft.client.renderer.SubmitNodeCollection :: submitNameTag (Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/phys/Vec3;ILnet/minecraft/network/chat/Component;ZILnet/minecraft/client/renderer/state/level/CameraRenderState;)V
+      0: 0: aload_2
+      1: 1: ifnonnull -> 5
+      4: 4: return
+      5: 5: invokestatic net.minecraft.client.Minecraft.getInstance
+      8: 8: astore 8
+     10: 10: aload_1
+     11: 11: invokevirtual com.mojang.blaze3d.vertex.PoseStack.pushPose
+     14: 14: aload_1
+     15: 15: aload_2
+     16: 16: getfield net.minecraft.world.phys.Vec3.x
+     19: 19: aload_2
+     20: 20: getfield net.minecraft.world.phys.Vec3.y
+     23: 23: ldc2_w double 0.5
+     26: 26: dadd
+     27: 27: aload_2
+     28: 28: getfield net.minecraft.world.phys.Vec3.z
+     31: 31: invokevirtual com.mojang.blaze3d.vertex.PoseStack.translate
+     34: 34: aload_1
+     35: 35: aload 7
+     37: 37: getfield net.minecraft.client.renderer.state.level.CameraRenderState.orientation
+     40: 40: invokevirtual com.mojang.blaze3d.vertex.PoseStack.mulPose
+     43: 43: aload_1
+     44: 44: ldc float 0.02500000037252903
+     46: 46: ldc float -0.02500000037252903
+     48: 48: ldc float 0.02500000037252903
+     50: 50: invokevirtual com.mojang.blaze3d.vertex.PoseStack.scale
+     53: 53: new org.joml.Matrix4f
+     56: 56: dup
+     57: 57: aload_1
+     58: 58: invokevirtual com.mojang.blaze3d.vertex.PoseStack.last
+     61: 61: invokevirtual com.mojang.blaze3d.vertex.PoseStack$Pose.pose
+     64: 64: invokespecial org.joml.Matrix4f.<init>
+     67: 67: astore 9
+     69: 69: aload 8
+     71: 71: getfield net.minecraft.client.Minecraft.font
+     74: 74: aload 4
+     76: 76: invokevirtual net.minecraft.client.gui.Font.width
+     79: 79: ineg
+     80: 80: i2f
+     81: 81: fconst_2
+     82: 82: fdiv
+     83: 83: fstore 10
+     85: 85: aload 8
+     87: 87: getfield net.minecraft.client.Minecraft.gameRenderer
+     90: 90: invokevirtual net.minecraft.client.renderer.GameRenderer.gameRenderState
+     93: 93: getfield net.minecraft.client.renderer.state.GameRenderState.optionsRenderState
+     96: 96: ldc float 0.25
+     98: 98: invokevirtual net.minecraft.client.renderer.state.OptionsRenderState.getBackgroundOpacity
+    101: 101: ldc int -16777216
+    103: 103: invokestatic net.minecraft.util.ARGB.color
+    106: 106: istore 11
+    108: 108: iload 5
+    110: 110: ifeq -> 180
+    113: 113: aload_0
+    114: 114: getfield net.minecraft.client.renderer.SubmitNodeCollection.nameTags
+    117: 117: new net.minecraft.client.renderer.feature.NameTagFeatureRenderer$Submit
+    120: 120: dup
+    121: 121: aload 9
+    123: 123: fload 10
+    125: 125: iload_3
+    126: 126: i2f
+    127: 127: aload 4
+    129: 129: iload 6
+    131: 131: iconst_2
+    132: 132: invokestatic net.minecraft.util.LightCoordsUtil.lightCoordsWithEmission
+    135: 135: iconst_m1
+    136: 136: iconst_0
+    137: 137: getstatic net.minecraft.client.gui.Font$DisplayMode.NORMAL
+    140: 140: invokespecial net.minecraft.client.renderer.feature.NameTagFeatureRenderer$Submit.<init>
+    143: 143: invokevirtual net.minecraft.client.renderer.feature.phase.SimpleFeatureRenderPhase.submit
+    146: 146: aload_0
+    147: 147: getfield net.minecraft.client.renderer.SubmitNodeCollection.seeThroughNameTags
+    150: 150: new net.minecraft.client.renderer.feature.NameTagFeatureRenderer$Submit
+    153: 153: dup
+    154: 154: aload 9
+    156: 156: fload 10
+    158: 158: iload_3
+    159: 159: i2f
+    160: 160: aload 4
+    162: 162: iload 6
+    164: 164: ldc int -2130706433
+    166: 166: iload 11
+    168: 168: getstatic net.minecraft.client.gui.Font$DisplayMode.SEE_THROUGH
+    171: 171: invokespecial net.minecraft.client.renderer.feature.NameTagFeatureRenderer$Submit.<init>
+    174: 174: invokevirtual net.minecraft.client.renderer.feature.phase.TranslucentFeatureRenderPhase.submit
+    177: 177: goto -> 211
+    180: 180: aload_0
+    181: 181: getfield net.minecraft.client.renderer.SubmitNodeCollection.nameTags
+    184: 184: new net.minecraft.client.renderer.feature.NameTagFeatureRenderer$Submit
+    187: 187: dup
+    188: 188: aload 9
+    190: 190: fload 10
+    192: 192: iload_3
+    193: 193: i2f
+    194: 194: aload 4
+    196: 196: iload 6
+    198: 198: ldc int -2130706433
+    200: 200: iload 11
+    202: 202: getstatic net.minecraft.client.gui.Font$DisplayMode.NORMAL
+    205: 205: invokespecial net.minecraft.client.renderer.feature.NameTagFeatureRenderer$Submit.<init>
+    208: 208: invokevirtual net.minecraft.client.renderer.feature.phase.SimpleFeatureRenderPhase.submit
+    211: 211: aload_1
+    212: 212: invokevirtual com.mojang.blaze3d.vertex.PoseStack.popPose
+    215: 215: return
+
+== net.minecraft.client.renderer.entity.DisplayRenderer$TextDisplayRenderer :: submitInner (Lnet/minecraft/client/renderer/entity/state/TextDisplayEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;IF)V
+      0: 0: aload_1
+      1: 1: getfield net.minecraft.client.renderer.entity.state.TextDisplayEntityRenderState.textRenderState
+      4: 4: astore 6
+      6: 6: aload 6
+      8: 8: invokevirtual net.minecraft.world.entity.Display$TextDisplay$TextRenderState.flags
+     11: 11: istore 7
+     13: 13: iload 7
+     15: 15: iconst_2
+     16: 16: iand
+     17: 17: ifeq -> 24
+     20: 20: iconst_1
+     21: 21: goto -> 25
+     24: 24: iconst_0
+     25: 25: istore 8
+     27: 27: iload 7
+     29: 29: iconst_4
+     30: 30: iand
+     31: 31: ifeq -> 38
+     34: 34: iconst_1
+     35: 35: goto -> 39
+     38: 38: iconst_0
+     39: 39: istore 9
+     41: 41: iload 7
+     43: 43: iconst_1
+     44: 44: iand
+     45: 45: ifeq -> 52
+     48: 48: iconst_1
+     49: 49: goto -> 53
+     52: 52: iconst_0
+     53: 53: istore 10
+     55: 55: iload 7
+     57: 57: invokestatic net.minecraft.world.entity.Display$TextDisplay.getAlign
+     60: 60: astore 11
+     62: 62: aload 6
+     64: 64: invokevirtual net.minecraft.world.entity.Display$TextDisplay$TextRenderState.textOpacity
+     67: 67: fload 5
+     69: 69: invokeinterface net.minecraft.world.entity.Display$IntInterpolator.get
+     74: 74: i2b
+     75: 75: istore 12
+     77: 77: iload 9
+     79: 79: ifeq -> 115
+     82: 82: invokestatic net.minecraft.client.Minecraft.getInstance
+     85: 85: getfield net.minecraft.client.Minecraft.gameRenderer
+     88: 88: invokevirtual net.minecraft.client.renderer.GameRenderer.gameRenderState
+     91: 91: getfield net.minecraft.client.renderer.state.GameRenderState.optionsRenderState
+     94: 94: ldc float 0.25
+     96: 96: invokevirtual net.minecraft.client.renderer.state.OptionsRenderState.getBackgroundOpacity
+     99: 99: fstore 14
+    101: 101: fload 14
+    103: 103: ldc float 255.0
+    105: 105: fmul
+    106: 106: f2i
+    107: 107: bipush 24
+    109: 109: ishl
+    110: 110: istore 13
+    112: 112: goto -> 129
+    115: 115: aload 6
+    117: 117: invokevirtual net.minecraft.world.entity.Display$TextDisplay$TextRenderState.backgroundColor
+    120: 120: fload 5
+    122: 122: invokeinterface net.minecraft.world.entity.Display$IntInterpolator.get
+    127: 127: istore 13
+    129: 129: fconst_0
+    130: 130: fstore 14
+    132: 132: aload_2
+    133: 133: invokevirtual com.mojang.blaze3d.vertex.PoseStack.last
+    136: 136: invokevirtual com.mojang.blaze3d.vertex.PoseStack$Pose.pose
+    139: 139: astore 15
+    141: 141: aload 15
+    143: 143: ldc float 3.1415927410125732
+    145: 145: fconst_0
+    146: 146: fconst_1
+    147: 147: fconst_0
+    148: 148: invokevirtual org.joml.Matrix4f.rotate
+    151: 151: pop
+    152: 152: aload 15
+    154: 154: ldc float -0.02500000037252903
+    156: 156: ldc float -0.02500000037252903
+    158: 158: ldc float -0.02500000037252903
+    160: 160: invokevirtual org.joml.Matrix4f.scale
+    163: 163: pop
+    164: 164: aload_1
+    165: 165: getfield net.minecraft.client.renderer.entity.state.TextDisplayEntityRenderState.cachedInfo
+    168: 168: astore 16
+    170: 170: iconst_1
+    171: 171: istore 17
+    173: 173: aload_0
+    174: 174: getfield net.minecraft.client.renderer.entity.DisplayRenderer$TextDisplayRenderer.font
+    177: 177: invokestatic java.util.Objects.requireNonNull
+    180: 180: pop
+    181: 181: bipush 9
+    183: 183: iconst_1
+    184: 184: iadd
+    185: 185: istore 18
+    187: 187: aload 16
+    189: 189: invokevirtual net.minecraft.world.entity.Display$TextDisplay$CachedInfo.width
+    192: 192: istore 19
+    194: 194: aload 16
+    196: 196: invokevirtual net.minecraft.world.entity.Display$TextDisplay$CachedInfo.lines
+    199: 199: invokeinterface java.util.List.size
+    204: 204: iload 18
+    206: 206: imul
+    207: 207: iconst_1
+    208: 208: isub
+    209: 209: istore 20
+    211: 211: aload 15
+    213: 213: fconst_1
+    214: 214: iload 19
+    216: 216: i2f
+    217: 217: fconst_2
+    218: 218: fdiv
+    219: 219: fsub
+    220: 220: iload 20
+    222: 222: ineg
+    223: 223: i2f
+    224: 224: fconst_0
+    225: 225: invokevirtual org.joml.Matrix4f.translate
+    228: 228: pop
+    229: 229: iload 13
+    231: 231: ifeq -> 268
+    234: 234: aload_3
+    235: 235: aload_2
+    236: 236: iload 8
+    238: 238: ifeq -> 247
+    241: 241: invokestatic net.minecraft.client.renderer.rendertype.RenderTypes.textBackgroundSeeThrough
+    244: 244: goto -> 250
+    247: 247: invokestatic net.minecraft.client.renderer.rendertype.RenderTypes.textBackground
+    250: 250: iload 13
+    252: 252: iload 4
+    254: 254: iload 20
+    256: 256: iload 19
+    258: 258: invokedynamic indy@210
+    263: 263: invokeinterface net.minecraft.client.renderer.SubmitNodeCollector.submitCustomGeometry
+    268: 268: aload_3
+    269: 269: iload 13
+    271: 271: ifeq -> 278
+    274: 274: iconst_1
+    275: 275: goto -> 279
+    278: 278: iconst_0
+    279: 279: invokeinterface net.minecraft.client.renderer.SubmitNodeCollector.order
+    284: 284: astore 21
+    286: 286: aload 16
+    288: 288: invokevirtual net.minecraft.world.entity.Display$TextDisplay$CachedInfo.lines
+    291: 291: invokeinterface java.util.List.iterator
+    296: 296: astore 22
+    298: 298: aload 22
+    300: 300: invokeinterface java.util.Iterator.hasNext
+    305: 305: ifeq -> 454
+    308: 308: aload 22
+    310: 310: invokeinterface java.util.Iterator.next
+    315: 315: checkcast net.minecraft.world.entity.Display$TextDisplay$CachedLine
+    318: 318: astore 23
+    320: 320: getstatic net.minecraft.client.renderer.entity.DisplayRenderer$1.$SwitchMap$net$minecraft$world$entity$Display$TextDisplay$Align
+    323: 323: aload 11
+    325: 325: invokevirtual net.minecraft.world.entity.Display$TextDisplay$Align.ordinal
+    328: 328: iaload
+    329: 329: tableswitch
+    330: 330: nop
+    331: 331: nop
+    332: 332: nop
+    333: 333: nop
+    334: 334: nop
+    335: 335: iload_1
+    336: 336: nop
+    337: 337: nop
+    338: 338: nop
+    339: 339: aconst_null
+    340: 340: nop
+    341: 341: nop
+    342: 342: nop
+    343: 343: iconst_0
+    344: 344: nop
+    345: 345: nop
+    346: 346: nop
+    347: 347: fload_3
+    348: 348: nop
+    349: 349: nop
+    350: 350: nop
+    351: 351: dload_3
+    352: 352: nop
+    353: 353: nop
+    354: 354: nop
+    355: 355: saload
+    356: 356: new java.lang.MatchException
+    359: 359: dup
+    360: 360: aconst_null
+    361: 361: aconst_null
+    362: 362: invokespecial java.lang.MatchException.<init>
+    365: 365: athrow
+    366: 366: fconst_0
+    367: 367: goto -> 396
+    370: 370: iload 19
+    372: 372: aload 23
+    374: 374: invokevirtual net.minecraft.world.entity.Display$TextDisplay$CachedLine.width
+    377: 377: isub
+    378: 378: i2f
+    379: 379: goto -> 396
+    382: 382: iload 19
+    384: 384: i2f
+    385: 385: fconst_2
+    386: 386: fdiv
+    387: 387: aload 23
+    389: 389: invokevirtual net.minecraft.world.entity.Display$TextDisplay$CachedLine.width
+    392: 392: i2f
+    393: 393: fconst_2
+    394: 394: fdiv
+    395: 395: fsub
+    396: 396: fstore 24
+    398: 398: aload 21
+    400: 400: aload_2
+    401: 401: fload 24
+    403: 403: fload 14
+    405: 405: aload 23
+    407: 407: invokevirtual net.minecraft.world.entity.Display$TextDisplay$CachedLine.contents
+    410: 410: iload 10
+    412: 412: iload 8
+    414: 414: ifeq -> 423
+    417: 417: getstatic net.minecraft.client.gui.Font$DisplayMode.SEE_THROUGH
+    420: 420: goto -> 426
+    423: 423: getstatic net.minecraft.client.gui.Font$DisplayMode.POLYGON_OFFSET
+    426: 426: iload 4
+    428: 428: iload 12
+    430: 430: bipush 24
+    432: 432: ishl
+    433: 433: ldc int 16777215
+    435: 435: ior
+    436: 436: iconst_0
+    437: 437: iconst_0
+    438: 438: invokeinterface net.minecraft.client.renderer.OrderedSubmitNodeCollector.submitText
+    443: 443: fload 14
+    445: 445: iload 18
+    447: 447: i2f
+    448: 448: fadd
+    449: 449: fstore 14
+    451: 451: goto -> 298
+    454: 454: return
+

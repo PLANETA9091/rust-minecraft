@@ -2317,6 +2317,24 @@ pub fn chat_text_alpha_base(chat_opacity: f64) -> f32 {
     chat_opacity as f32 * 0.9 + 0.1
 }
 
+/// THE CHAT BAND'S OWN ALPHA (the 26.2 `Options.getBackgroundColor(I)I`
+/// walk the chatbgonly_179 probes bank — the (I)I law the bytecode's
+/// own `ifeq -> raw` / `colorFromFloat(textbg,0,0,0)` pair speaks: the
+/// TRUE lane the raw `-2147483648` = 0x80000000 the
+/// ChatScreen.extractRenderState call wears (the alpha 0x80 the
+/// client's own 0.5 fold keeps), the Everywhere lane the
+/// textbg-scaled black the `ARGB.colorFromFloat` rows answer — the
+/// default textbg 0.5 the `f * 255 + 0.5` round the same 0x80 byte
+/// the two lanes share (the byte-identical fold the band's own
+/// fill keeps)).
+pub fn chat_band_alpha(background_for_chat_only: bool, textbg: f64) -> f32 {
+    if background_for_chat_only {
+        0.5
+    } else {
+        textbg as f32
+    }
+}
+
 /// THE CHAT'S OWN PAGE (javap ChatComponent.getHeight(D) +
 /// getLineHeight + getLinesPerPage — the `floor(160.0 * h + 20.0)`
 /// fold the focused 1.0 / unfocused 0.5 defaults keep: 180/9 = 20
@@ -5636,6 +5654,26 @@ fn chat_opacity_caption(v: f64) -> String {
     )
 }
 
+/// THE BAND SCOPE'S OWN CAPTION (the 26.2 CycleButton walk the
+/// chatbgonly_179b/c probes bank — the label law the
+/// `CycleButton.createLabelForValue` speak: the DisplayState.VALUE
+/// the `valueStringifier(value)` ALONE the button text keeps, the
+/// lambda$new$76 the caption arg the walk ignores — the
+/// `options.accessibility.text_background.chat` key the TRUE word
+/// speaks, the `.everywhere` the FALSE row the same table answers,
+/// the CycleButton's name field the narration only wears).
+fn chat_bg_only_caption(on: bool) -> String {
+    if on {
+        tr("options.accessibility.text_background.chat")
+            .unwrap_or("Chat")
+            .to_string()
+    } else {
+        tr("options.accessibility.text_background.everywhere")
+            .unwrap_or("Everywhere")
+            .to_string()
+    }
+}
+
 /// THE LOCK ICON'S OWN STATE ARMS (javap 26.2 LockIconButton$Icon +
 /// `extractContents`' raw bytecode — the six `Icon` states the clinit
 /// banks, the selection the three arms speak): the DISABLED pair the
@@ -6982,6 +7020,16 @@ pub struct App {
     /// the per-line fade the glyph alpha multiplies wears — the
     /// default the 1.0 fold the byte-identical answer keeps).
     pub chat_opacity: f64,
+    /// THE BAND SCOPE'S OWN BOOLEAN (the `backgroundForChatOnly` option
+    /// the 26.2 Options ctor's `iconst_1` pcs 2092-2120 banks — the
+    /// default TRUE the raw ctor the BOOLEAN_VALUES value set keeps,
+    /// the accessibility array the index-5 seat wears; the consumer
+    /// the ChatScreen's input band the `getBackgroundColor(0x80000000)`
+    /// call speaks — the TRUE lane the raw alpha 0x80 keeps, the
+    /// Everywhere lane the textbg-scaled black the (I)I variant
+    /// answers, the 0.5 default the byte-identical fold the band's
+    /// own alpha shares).
+    pub background_for_chat_only: bool,
     /// THE LAST ACTIVE'S OWN TIMESTAMP (the vanilla
     /// `Minecraft.lastActiveTime` field — the millis the active walk
     /// alone refreshes, the unfocused walk the 500ms grace the elapsed
@@ -10382,6 +10430,7 @@ impl App {
             fov_effect_scale: 1.0,
             text_background_opacity: 0.5,
             chat_opacity: 1.0,
+            background_for_chat_only: true,
             last_active_ms: 0,
             look_sensitivity: crate::body::LOOK_SENSITIVITY_DEFAULT,
             sensitivity_drag: false,
@@ -30240,6 +30289,17 @@ impl App {
                     return;
                 }
             }
+            // THE BAND SCOPE'S OWN ARM (the CycleButton's own press walk
+            // the bool row wears — the press INSIDE the row the value's
+            // own toggle answers, the TRUE/FALSE pair the store's own
+            // seat flips, no drag lane the bool row never carries)
+            if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_chat_bg_only") {
+                let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
+                if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
+                    self.background_for_chat_only = !self.background_for_chat_only;
+                    return;
+                }
+            }
             if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_fov_effect") {
                 let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
                 if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
@@ -32453,6 +32513,7 @@ impl App {
         self.fov_effect_scale = file.fov_effect_scale;
         self.chat_opacity = file.chat_opacity;
         self.text_background_opacity = file.text_background_opacity;
+        self.background_for_chat_only = file.background_for_chat_only;
         // THE BODY'S OWN READ (the Camera.tickFov the option value the
         // tick passes — the body's own store the boot's truth wears,
         // the no-body boot the field the later spawn's ctor keeps)
@@ -32479,6 +32540,7 @@ impl App {
             fov_effect_scale: self.fov_effect_scale,
             chat_opacity: self.chat_opacity,
             text_background_opacity: self.text_background_opacity,
+            background_for_chat_only: self.background_for_chat_only,
         };
         file.save(path);
     }
@@ -39038,15 +39100,16 @@ impl App {
     /// [`Self::draw_chat_suggestions`]).
     fn render_chat_screen(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
         self.draw_chat_history(g, a, w, h, true);
-        // THE INPUT BAND (the ChatScreen.extractBackground's own fill —
-        // the `getBackgroundColor(0x80000000)` arg the 26.2
-        // extractRenderState walk banks: the (I)I variant the
-        // `backgroundForChatOnly ? raw : ARGB.colorFromFloat(textbg,
-        // 0,0,0)` pair keeps, the DEFAULT TRUE lane the raw 0x80000000
-        // = the 0.5 alpha black the fill wears — the bool row the
-        // follow-up's own seat records, the textbg the band's
-        // alternate lane the follow-up banks)
-        g.fill(2, h - 14, w - 4, 12, [0.0, 0.0, 0.0, 0.5]);
+        // THE INPUT BAND (the ChatScreen.extractRenderState's own fill —
+        // the `getBackgroundColor(0x80000000)` arg the 26.2 walk banks:
+        // the (I)I variant the `backgroundForChatOnly ? raw :
+        // ARGB.colorFromFloat(textbg,0,0,0)` pair keeps, the DEFAULT
+        // TRUE lane the raw 0x80000000 = the 0.5 alpha black the fill
+        // wears, the Everywhere lane the textbg-scaled alpha the
+        // chat_band_alpha fold answers — the 0.5 default the
+        // byte-identical fold the band's own pixels keep)
+        let band_alpha = chat_band_alpha(self.background_for_chat_only, self.text_background_opacity);
+        g.fill(2, h - 14, w - 4, 12, [0.0, 0.0, 0.0, band_alpha]);
         // THE INPUT TEXT (the EditBox's borderless draw — the text at
         // x + 0 the borderless law keeps, the y + 2 the 12-tall band
         // centers, the blink the millis/500 fold answers)
@@ -61654,21 +61717,34 @@ impl App {
         let bw = 140;
         // THE CHAT BACKGROUNDS' OWN ROW (the array's index-4 seat the
         // store the chat history's fills wear — the caption the
-        // percent/OFF words keep, the row ABOVE the chat-opacity seat
-        // the array's own order keeps: index 4 before index 6)
+        // percent/OFF words keep, the row ABOVE the band-scope seat
+        // the array's own order keeps: index 4 before index 5)
         let mut tb = Button::new(
             "opt_textbg",
             textbg_caption(self.text_background_opacity),
             cx,
-            h / 2 - 72,
+            h / 2 - 100,
             bw,
         );
         tb.value = Some(self.text_background_opacity);
         self.buttons.push(tb);
+        // THE BAND SCOPE'S OWN ROW (the array's index-5 seat the store
+        // the input band's fill wears — the caption the VALUE display
+        // keeps — the "Chat"/"Everywhere" words the CycleButton law
+        // speaks, the row BETWEEN the textbg and the chat-text seats
+        // the array's own order keeps: index 4 < index 5 < index 6)
+        self.buttons.push(Button::new(
+            "opt_chat_bg_only",
+            chat_bg_only_caption(self.background_for_chat_only),
+            cx,
+            h / 2 - 72,
+            bw,
+        ));
         // THE CHAT TEXT'S OWN ROW (the array's index-6 seat the store
         // the chat history's glyphs wear — the caption the percent/OFF
-        // words keep, the row BETWEEN the textbg and the fov seats the
-        // array's own order keeps: index 4 < index 6 < index 12)
+        // words keep, the row BETWEEN the band-scope and the fov seats
+        // the array's own order keeps: index 4 < index 5 < index 6 <
+        // index 12)
         let mut co = Button::new(
             "opt_chat_opacity",
             chat_opacity_caption(self.chat_opacity),
