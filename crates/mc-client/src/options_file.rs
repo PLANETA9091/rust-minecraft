@@ -25,7 +25,15 @@
 //!   alternative the codec NEVER carries, the strict double the decode
 //!   answers, the default 1.0 the dconst_1 banks; the row the
 //!   fov_scale_tail_262.py probe the Camera.tickFov read passes into
-//!   getFieldOfViewModifier's ZF pair the tail's Mth.lerp speaks).
+//!   getFieldOfViewModifier's ZF pair the tail's Mth.lerp speaks),
+//!   `textBackgroundOpacity` the chat backgrounds' own row the
+//!   array's index-4 seat wears (textbg_262.py + textbg_262v2.py the
+//!   registration + the consumer pair bank — the UnitDouble slider
+//!   the default 0.5 the `ldc2_w double 4602678819172646912` bits
+//!   speak, 0x3FE0000000000000 the IEEE-754 answer; the noTooltip
+//!   lane the registration's own arm keeps, the strict double the
+//!   decode answers, the ChatComponent's per-line fill the consumer
+//!   walk keeps).
 //! - THE LOAD THE MISSING FILE THE DEFAULTS KEEP (the
 //!   `if (!optionsFile.exists()) return` the head walk speaks), the lines
 //!   the `Splitter.on(':').limit(2)` law splits, the malformed line the
@@ -70,6 +78,19 @@ pub struct OptionsFile {
     /// seat keeps, the client's flat options screen the row never
     /// hosts — the file + the camera's read the round-trip answers).
     pub fov_effect_scale: f64,
+    /// `textBackgroundOpacity` — the chat backgrounds' own 0..1 scale
+    /// (the default 0.5 the Options ctor's `ldc2_w double
+    /// 4602678819172646912` banks, the doubleRange(0.0, 1.0) codec the
+    /// strict double keeps — the out-of-range the default answers; the
+    /// noTooltip lane the registration wears, the accessibility array
+    /// the index-4 seat keeps; the ChatComponent's per-line fill the
+    /// lambda$extractRenderState$1 walk the consumer speaks — the
+    /// `ARGB.black(fade * textbg)` composition the
+    /// textbg_lambda_262.py probe banks, the ChatScreen input band's
+    /// own band the `backgroundForChatOnly ? raw : black(textbg)`
+    /// pair the (I)I variant keeps — the default TRUE lane the raw
+    /// 0x80000000 the client's own fill wears).
+    pub text_background_opacity: f64,
 }
 
 impl Default for OptionsFile {
@@ -80,6 +101,7 @@ impl Default for OptionsFile {
             sound_category_master: 1.0,
             pause_on_lost_focus: true,
             fov_effect_scale: 1.0,
+            text_background_opacity: 0.5,
         }
     }
 }
@@ -140,6 +162,18 @@ impl OptionsFile {
                         }
                     }
                 }
+                "textBackgroundOpacity" => {
+                    // THE SAME STRICT DOUBLE'S OWN DECODE (the
+                    // doubleRange(0.0, 1.0) codec the in-range double
+                    // answers — the out-of-range/malformed the default
+                    // keeps, the clamp never wears; the default 0.5 the
+                    // Options ctor's ldc2_w bits the missing row keeps)
+                    if let Ok(v) = value.parse::<f64>() {
+                        if (0.0..=1.0).contains(&v) {
+                            out.text_background_opacity = v;
+                        }
+                    }
+                }
                 _ => {} // the jar's other rows the client's seats never carry
             }
         }
@@ -171,6 +205,12 @@ impl OptionsFile {
         text.push_str(&format!(
             "fovEffectScale:{}\n",
             java_double(self.fov_effect_scale)
+        ));
+        // THE CHAT BACKGROUNDS' OWN ROW (the double the java_double
+        // print keeps — the 0.5 the default the decimal speaks)
+        text.push_str(&format!(
+            "textBackgroundOpacity:{}\n",
+            java_double(self.text_background_opacity)
         ));
         let _ = std::fs::write(path, text);
     }
@@ -231,7 +271,7 @@ mod tests {
         OptionsFile::default().save(&path);
         let text = std::fs::read_to_string(&path).expect("the save the file writes");
         assert_eq!(
-            text, "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\n",
+            text, "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\ntextBackgroundOpacity:0.5\n",
             "the file the vanilla rows wear"
         );
         let loaded = OptionsFile::load(&path);
@@ -245,6 +285,10 @@ mod tests {
         assert_eq!(
             loaded.fov_effect_scale, 1.0,
             "the scale the default the round-trip wears"
+        );
+        assert_eq!(
+            loaded.text_background_opacity, 0.5,
+            "the chat background the default the round-trip wears"
         );
         let _ = std::fs::remove_dir_all(&dir);
     }
@@ -276,7 +320,12 @@ mod tests {
              fovEffectScale:0.5\n\
              fovEffectScale:1.5\n\
              fovEffectScale:true\n\
-             fovEffectScale:0.25\n",
+             fovEffectScale:0.25\n\
+             textBackgroundOpacity:0.75\n\
+             textBackgroundOpacity:1.5\n\
+             textBackgroundOpacity:-0.25\n\
+             textBackgroundOpacity:word\n\
+             textBackgroundOpacity:0.25\n",
         )
         .expect("the probe file writes");
         let loaded = OptionsFile::load(&path);
@@ -307,6 +356,14 @@ mod tests {
             loaded.fov_effect_scale, 0.25,
             "the scale the last valid row wears — the out-of-range/bool the skip keeps"
         );
+        // THE CHAT BACKGROUND'S OWN DECODE (the same strict double the
+        // in-range 0.75 the first read wears — the out-of-range 1.5/
+        // -0.25 pair + the malformed word the skip keeps, the LAST
+        // valid the 0.25 the read banks)
+        assert_eq!(
+            loaded.text_background_opacity, 0.25,
+            "the chat background the last valid row wears — the out-of-range/malformed the skip keeps"
+        );
         let _ = std::fs::remove_dir_all(&dir);
         // THE MISSING FILE the defaults keep (the exists() gate the head
         // walk speaks)
@@ -321,6 +378,10 @@ mod tests {
         assert_eq!(
             missing.fov_effect_scale, 1.0,
             "the missing file the default scale keeps"
+        );
+        assert_eq!(
+            missing.text_background_opacity, 0.5,
+            "the missing file the default chat background keeps"
         );
     }
 

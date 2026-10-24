@@ -2292,6 +2292,19 @@ pub fn chat_line_alpha(age: u32) -> f32 {
     (d * d) as f32
 }
 
+/// THE CHAT ROW'S OWN BG COMPOSITION (the 26.2
+/// `lambda$extractRenderState$1` walk the textbg_lambda_262.py probe
+/// banks — the per-line fill the `ARGB.black(fade * textbg)` pair the
+/// bytecode's own `fload 7 * fload 4 -> ARGB.black` rows speak: the
+/// fade the AlphaCalculator's own alpha wears, the textbg the
+/// `textBackgroundOpacity` option the accessibility array's index-4
+/// seat keeps; the default 0.5 the client's own 0.5 fold
+/// byte-identical answers, the FULLY_VISIBLE foreground the 1.0 fade
+/// the focused history keeps).
+pub fn chat_row_bg_alpha(textbg: f64, fade: f32) -> f32 {
+    textbg as f32 * fade
+}
+
 /// THE CHAT'S OWN PAGE (javap ChatComponent.getHeight(D) +
 /// getLineHeight + getLinesPerPage — the `floor(160.0 * h + 20.0)`
 /// fold the focused 1.0 / unfocused 0.5 defaults keep: 180/9 = 20
@@ -5569,6 +5582,27 @@ fn fov_effect_caption(v: f64) -> String {
     )
 }
 
+/// THE CHAT BACKGROUNDS' OWN CAPTION (the same UnitDouble law the
+/// `options.generic_value` composition speaks — the textbg
+/// registration's own indy caption the noTooltip walk wears, the
+/// percent/OFF words the same pair the fov lane keeps: the default
+/// 0.5 the 'Text Background Opacity: 50%' word speaks, the 0.0 the
+/// OFF row the same end wears).
+fn textbg_caption(v: f64) -> String {
+    if v <= 0.0 {
+        return format!(
+            "{}: {}",
+            tr("options.textBackgroundOpacity").unwrap_or("Text Background Opacity"),
+            tr("options.off").unwrap_or("OFF")
+        );
+    }
+    format!(
+        "{}: {}%",
+        tr("options.textBackgroundOpacity").unwrap_or("Text Background Opacity"),
+        (v * 100.0) as i32
+    )
+}
+
 /// THE LOCK ICON'S OWN STATE ARMS (javap 26.2 LockIconButton$Icon +
 /// `extractContents`' raw bytecode — the six `Icon` states the clinit
 /// banks, the selection the three arms speak): the DISABLED pair the
@@ -6896,6 +6930,15 @@ pub struct App {
     /// options screen the row never hosts — the file + the boot load
     /// the round-trip answers).
     pub fov_effect_scale: f64,
+    /// THE CHAT BACKGROUNDS' OWN OPACITY (the `textBackgroundOpacity`
+    /// option the accessibility array's index-4 seat wears — the 0..1
+    /// the slider's own unit keeps, the default 0.5 the Options
+    /// ctor's `ldc2_w double 4602678819172646912` bits speak, the
+    /// chat history's per-line fill the
+    /// lambda$extractRenderState$1 walk the `ARGB.black(fade *
+    /// textbg)` composition keeps — the default the client's own
+    /// 0.5 fold byte-identical answers).
+    pub text_background_opacity: f64,
     /// THE LAST ACTIVE'S OWN TIMESTAMP (the vanilla
     /// `Minecraft.lastActiveTime` field — the millis the active walk
     /// alone refreshes, the unfocused walk the 500ms grace the elapsed
@@ -8179,6 +8222,10 @@ pub struct App {
     /// dragging shape the Options screen's own seats wear — the
     /// Accessibility sub-screen's fovEffectScale row's own flag).
     pub fov_effect_drag: bool,
+    /// THE CHAT BACKGROUNDS' OWN ARM (the same AbstractWidget dragging
+    /// shape the fov row's flag wears — the Accessibility sub-screen's
+    /// textBackgroundOpacity row's own flag).
+    pub textbg_drag: bool,
     /// THE OPTIONS FILE'S OWN PATH (the `optionsFile` field the 26.2
     /// ctor's `File` param banks — the cwd the vanilla default game dir
     /// names, the run_gui_app boot sets; the headless boot the None the
@@ -10286,6 +10333,7 @@ impl App {
             stopping: false,
             pause_on_lost_focus: true,
             fov_effect_scale: 1.0,
+            text_background_opacity: 0.5,
             last_active_ms: 0,
             look_sensitivity: crate::body::LOOK_SENSITIVITY_DEFAULT,
             sensitivity_drag: false,
@@ -10294,6 +10342,7 @@ impl App {
             volume: 1.0,
             volume_drag: false,
             fov_effect_drag: false,
+            textbg_drag: false,
             options_file: None,
             options_file_loaded: false,
             creative_palette: [(0, 0); 45],
@@ -20448,6 +20497,10 @@ impl App {
         // lane the Options screen's own seats' flags wear — the
         // sub-screen's row the same law keeps)
         self.fov_effect_drag = false;
+        // THE CHAT BACKGROUNDS' OWN DISARM (the same mouseReleased lane
+        // the fov row's flag wears — the sub-screen's second row the
+        // same law keeps)
+        self.textbg_drag = false;
         // THE SCROLLBAR'S OWN DISARM (the mouseReleased walk's own first
         // lane — the button-0 release the `scrolling` flag the
         // unconditional false speaks BEFORE the tab walk; the sim's
@@ -20565,6 +20618,7 @@ impl App {
         self.fov_drag = false;
         self.volume_drag = false;
         self.fov_effect_drag = false;
+        self.textbg_drag = false;
     }
 
     /// THE AMBIENT WALK (javap `ClientLevel.animateTick` +
@@ -30111,11 +30165,19 @@ impl App {
             return;
         }
         if self.screen == ScreenKind::Accessibility {
-            // THE FOV EFFECTS SLIDER'S OWN ARM (the AbstractSliderButton's
-            // mouseDown walk the sub-screen's row wears — the press
+            // THE SLIDERS' OWN ARMS (the AbstractSliderButton's
+            // mouseDown walk the sub-screen's rows wear — the press
             // INSIDE the track the value's own seat answers, the armed
             // flag the held drag rides, the UnitDouble 0..1 the store's
             // own unit keeps)
+            if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_textbg") {
+                let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
+                if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
+                    self.text_background_opacity = slider_value_from_x(mx, bx, bw);
+                    self.textbg_drag = true;
+                    return;
+                }
+            }
             if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_fov_effect") {
                 let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
                 if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
@@ -32327,6 +32389,7 @@ impl App {
         self.volume = file.sound_category_master;
         self.pause_on_lost_focus = file.pause_on_lost_focus;
         self.fov_effect_scale = file.fov_effect_scale;
+        self.text_background_opacity = file.text_background_opacity;
         // THE BODY'S OWN READ (the Camera.tickFov the option value the
         // tick passes — the body's own store the boot's truth wears,
         // the no-body boot the field the later spawn's ctor keeps)
@@ -32351,6 +32414,7 @@ impl App {
             sound_category_master: self.volume,
             pause_on_lost_focus: self.pause_on_lost_focus,
             fov_effect_scale: self.fov_effect_scale,
+            text_background_opacity: self.text_background_opacity,
         };
         file.save(path);
     }
@@ -38870,7 +38934,13 @@ impl App {
                 continue;
             }
             let tw = g.text_width(text);
-            g.fill(2, y - 1, tw + 4, 10, [0.0, 0.0, 0.0, 0.5 * alpha]);
+            g.fill(
+                2,
+                y - 1,
+                tw + 4,
+                10,
+                [0.0, 0.0, 0.0, chat_row_bg_alpha(self.text_background_opacity, alpha)],
+            );
             g.text_faded(a, 4, y, text, WHITE, alpha, false);
         }
     }
@@ -38891,7 +38961,14 @@ impl App {
     /// [`Self::draw_chat_suggestions`]).
     fn render_chat_screen(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
         self.draw_chat_history(g, a, w, h, true);
-        // THE INPUT BAND (the ChatScreen.extractBackground's own fill)
+        // THE INPUT BAND (the ChatScreen.extractBackground's own fill —
+        // the `getBackgroundColor(0x80000000)` arg the 26.2
+        // extractRenderState walk banks: the (I)I variant the
+        // `backgroundForChatOnly ? raw : ARGB.colorFromFloat(textbg,
+        // 0,0,0)` pair keeps, the DEFAULT TRUE lane the raw 0x80000000
+        // = the 0.5 alpha black the fill wears — the bool row the
+        // follow-up's own seat records, the textbg the band's
+        // alternate lane the follow-up banks)
         g.fill(2, h - 14, w - 4, 12, [0.0, 0.0, 0.0, 0.5]);
         // THE INPUT TEXT (the EditBox's borderless draw — the text at
         // x + 0 the borderless law keeps, the y + 2 the 12-tall band
@@ -40520,6 +40597,20 @@ impl App {
         if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_fov_effect") {
             let (bx, bw) = (b.x, b.w);
             self.fov_effect_scale = slider_value_from_x(mx, bx, bw);
+        }
+    }
+
+    /// THE CHAT BACKGROUNDS' OWN DRAG (the same armed lane the fov
+    /// row wears — the flag the press inside the track arms, the
+    /// held frames the UnitDouble 0..1 the cursor's x answers, the
+    /// release the disarm the on_left_release walk speaks)
+    pub fn on_textbg_slider_drag(&mut self, mx: i32) {
+        if !self.textbg_drag || self.screen != ScreenKind::Accessibility {
+            return;
+        }
+        if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_textbg") {
+            let (bx, bw) = (b.x, b.w);
+            self.text_background_opacity = slider_value_from_x(mx, bx, bw);
         }
     }
 
@@ -61470,6 +61561,19 @@ impl App {
         );
         let cx = w / 2;
         let bw = 140;
+        // THE CHAT BACKGROUNDS' OWN ROW (the array's index-4 seat the
+        // store the chat history's fills wear — the caption the
+        // percent/OFF words keep, the row ABOVE the fov seat the
+        // array's own order keeps: index 4 before index 12)
+        let mut tb = Button::new(
+            "opt_textbg",
+            textbg_caption(self.text_background_opacity),
+            cx,
+            h / 2 - 44,
+            bw,
+        );
+        tb.value = Some(self.text_background_opacity);
+        self.buttons.push(tb);
         // THE FOV EFFECTS' OWN ROW (the array's index 12 the store the
         // camera's read wears — the caption the percent the OFF end
         // speaks)

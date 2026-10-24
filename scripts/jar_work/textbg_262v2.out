@@ -1,0 +1,3037 @@
+==== 1) classes the textBackgroundOpacity utf8 carries
+-- net.minecraft.client.Options [ok]
+-- net.minecraft.client.gui.components.ChatComponent [ok]
+-- net.minecraft.client.gui.screens.options.AccessibilityOptionsScreen [ok]
+-- net.minecraft.client.gui.screens.options.ChatOptionsScreen [ok]
+-- net.minecraft.client.renderer.GameRenderer [ok]
+-- net.minecraft.client.renderer.state.OptionsRenderState [ok]
+-- net.minecraft.util.datafix.fixes.OptionsAddTextBackgroundFix [ok]
+==== 2) ChatComponent consumer walk: net.minecraft.client.gui.components.ChatComponent
+   == extractRenderState(Lnet/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess;IILnet/minecraft/client/gui/components/ChatComponent$DisplayMode;)V
+    0: aload 4
+    2: getfield net.minecraft.client.gui.components.ChatComponent$DisplayMode.foreground
+    5: istore 5
+    7: aload 4
+    9: getfield net.minecraft.client.gui.components.ChatComponent$DisplayMode.showRestrictedPrompt
+    12: istore 6
+    14: aload_0
+    15: getfield net.minecraft.client.gui.components.ChatComponent.trimmedMessages
+    18: invokeinterface java.util.List.size
+    23: istore 7
+    25: iload 7
+    27: ifgt -> 36
+    30: iload 6
+    32: ifne -> 36
+    35: return
+    36: invokestatic net.minecraft.util.profiling.Profiler.get
+    39: astore 8
+    41: aload 8
+    43: ldc cp(8, 183)
+    45: invokeinterface net.minecraft.util.profiling.ProfilerFiller.push
+    50: aload_0
+    51: invokevirtual net.minecraft.client.gui.components.ChatComponent.getScale
+    54: d2f
+    55: fstore 9
+    57: aload_0
+    58: invokevirtual net.minecraft.client.gui.components.ChatComponent.getWidth
+    61: i2f
+    62: fload 9
+    64: fdiv
+    65: invokestatic net.minecraft.util.Mth.ceil
+    68: istore 10
+    70: iload_2
+    71: bipush 40
+    73: isub
+    74: i2f
+    75: fload 9
+    77: fdiv
+    78: invokestatic net.minecraft.util.Mth.floor
+    81: istore 11
+    83: aload_0
+    84: getfield net.minecraft.client.gui.components.ChatComponent.minecraft
+    87: getfield net.minecraft.client.Minecraft.options
+    90: invokevirtual net.minecraft.client.Options.chatOpacity
+    93: invokevirtual net.minecraft.client.OptionInstance.get
+    96: checkcast java.lang.Double
+    99: invokevirtual java.lang.Double.floatValue
+    102: ldc float 0.8999999761581421
+    104: fmul
+    105: ldc float 0.10000000149011612
+    107: fadd
+    108: fstore 12
+    110: aload_0
+    111: getfield net.minecraft.client.gui.components.ChatComponent.minecraft
+    114: getfield net.minecraft.client.Minecraft.options
+    117: invokevirtual net.minecraft.client.Options.textBackgroundOpacity
+    120: invokevirtual net.minecraft.client.OptionInstance.get
+    123: checkcast java.lang.Double
+    126: invokevirtual java.lang.Double.floatValue
+    129: fstore 13
+    131: aload_0
+    132: getfield net.minecraft.client.gui.components.ChatComponent.minecraft
+    135: getfield net.minecraft.client.Minecraft.font
+    138: invokestatic java.util.Objects.requireNonNull
+    141: pop
+    142: bipush 9
+    144: istore 14
+    146: bipush 8
+    148: istore 15
+    150: aload_0
+    151: getfield net.minecraft.client.gui.components.ChatComponent.minecraft
+    154: getfield net.minecraft.client.Minecraft.options
+    157: invokevirtual net.minecraft.client.Options.chatLineSpacing
+    160: invokevirtual net.minecraft.client.OptionInstance.get
+    163: checkcast java.lang.Double
+    166: invokevirtual java.lang.Double.doubleValue
+    169: dstore 16
+    171: iload 14
+    173: i2d
+    174: dload 16
+    176: dconst_1
+    177: dadd
+    178: dmul
+    179: d2i
+    180: istore 18
+    182: ldc2_w double 8.0
+    185: dload 16
+    187: dconst_1
+    188: dadd
+    189: dmul
+    190: ldc2_w double 4.0
+    193: dload 16
+    195: dmul
+    196: dsub
+    197: invokestatic java.lang.Math.round
+    200: l2i
+    201: istore 19
+    203: aload_0
+    204: getfield net.minecraft.client.gui.components.ChatComponent.minecraft
+    207: getfield net.minecraft.client.Minecraft.gui
+    210: invokevirtual net.minecraft.client.gui.Gui.chatListener
+    213: invokevirtual net.minecraft.client.multiplayer.chat.ChatListener.queueSize
+    216: lstore 20
+    218: iload 5
+    220: ifeq -> 229
+    223: getstatic net.minecraft.client.gui.components.ChatComponent$AlphaCalculator.FULLY_VISIBLE
+    226: goto -> 233
+    229: iload_3
+    230: invokestatic net.minecraft.client.gui.components.ChatComponent$AlphaCalculator.timeBased
+    233: astore 22
+    235: aload_1
+    236: fload 9
+    238: invokedynamic indy@278
+    243: invokeinterface net.minecraft.client.gui.components.ChatComponent$ChatGraphicsAccess.updatePose
+    248: aload_0
+    249: aload 22
+    251: iload 11
+    253: iload 18
+    255: aload_1
+    256: iload 10
+    258: fload 13
+    260: invokedynamic indy@287
+    265: invokevirtual net.minecraft.client.gui.components.ChatComponent.forEachLine
+    268: istore 23
+    270: iload 11
+    272: iload 23
+    274: iconst_1
+    275: iadd
+    276: iload 18
+    278: imul
+    279: isub
+    280: istore 24
+    282: lload 20
+    284: lconst_0
+    285: lcmp
+    286: ifle -> 313
+    289: aload_1
+    290: bipush 254
+    292: iload 11
+    294: iload 10
+    296: iconst_4
+    297: iadd
+    298: iload 11
+    300: iload 14
+    302: iadd
+    303: fload 13
+    305: invokestatic net.minecraft.util.ARGB.black
+    308: invokeinterface net.minecraft.client.gui.components.ChatComponent$ChatGraphicsAccess.fill
+    313: iload 6
+    315: ifeq -> 344
+    318: aload_1
+    319: bipush 254
+    321: iload 24
+    323: iload 10
+    325: iconst_4
+    326: iadd
+    327: iconst_4
+    328: iadd
+    329: iload 24
+    331: iload 18
+    333: iadd
+    334: fload 13
+    336: invokestatic net.minecraft.util.ARGB.black
+    339: invokeinterface net.minecraft.client.gui.components.ChatComponent$ChatGraphicsAccess.fill
+    344: aload_0
+    345: aload 22
+    347: new net.minecraft.client.gui.components.ChatComponent$1
+    350: dup
+    351: aload_0
+    352: iload 11
+    354: iload 18
+    356: iload 19
+    358: aload_1
+    359: fload 12
+    361: iload 14
+    363: invokespecial net.minecraft.client.gui.components.ChatComponent$1.<init>
+    366: invokevirtual net.minecraft.client.gui.components.ChatComponent.forEachLine
+    369: pop
+    370: lload 20
+    372: lconst_0
+    373: lcmp
+    374: ifle -> 435
+    377: iload 11
+    379: iload 14
+    381: iadd
+    382: istore 25
+    384: ldc_w cp(8, 309)
+    387: iconst_1
+    388: anewarray java.lang.Object
+    391: dup
+    392: iconst_0
+    393: lload 20
+    395: invokestatic java.lang.Long.valueOf
+    398: aastore
+    399: invokestatic net.minecraft.network.chat.Component.translatable
+    402: getstatic net.minecraft.client.gui.components.ChatComponent.QUEUE_EXPAND_TEXT_STYLE
+    405: invokevirtual net.minecraft.network.chat.MutableComponent.setStyle
+    408: astore 26
+    410: aload_1
+    411: iload 25
+    413: bipush 8
+    415: isub
+    416: ldc_w float 0.5
+    419: fload 12
+    421: fmul
+    422: aload 26
+    424: invokeinterface net.minecraft.network.chat.Component.getVisualOrderText
+    429: invokeinterface net.minecraft.client.gui.components.ChatComponent$ChatGraphicsAccess.handleMessage
+    434: pop
+    435: iload 6
+    437: ifeq -> 511
+    440: aload_0
+    441: getfield net.minecraft.client.gui.components.ChatComponent.minecraft
+    444: getfield net.minecraft.client.Minecraft.font
+    447: getstatic net.minecraft.client.gui.components.ChatComponent.RESTRICTED_CHAT_MESSAGE
+    450: invokevirtual net.minecraft.client.gui.Font.width
+    453: istore 25
+    455: iload 25
+    457: iload 10
+    459: if_icmple -> 480
+    462: getstatic net.minecraft.client.gui.components.ChatComponent.RESTRICTED_CHAT_MESSAGE_WITH_HOVER
+    465: aload_0
+    466: getfield net.minecraft.client.gui.components.ChatComponent.minecraft
+    469: getfield net.minecraft.client.Minecraft.font
+    472: iload 10
+    474: invokestatic net.minecraft.client.gui.components.ComponentRenderUtils.clipText
+    477: goto -> 488
+    480: getstatic net.minecraft.client.gui.components.ChatComponent.RESTRICTED_CHAT_MESSAGE
+    483: invokeinterface net.minecraft.network.chat.Component.getVisualOrderText
+    488: astore 26
+    490: aload_1
+    491: iload 24
+    493: iload 18
+    495: iadd
+    496: iload 19
+    498: isub
+    499: iconst_1
+    500: isub
+    501: fload 12
+    503: aload 26
+    505: invokeinterface net.minecraft.client.gui.components.ChatComponent$ChatGraphicsAccess.handleMessage
+    510: pop
+    511: iload 7
+    513: ifle -> 665
+    516: iload 5
+    518: ifeq -> 665
+    521: iload 23
+    523: iload 18
+    525: imul
+    526: istore 25
+    528: iload 7
+    530: iload 18
+    532: imul
+    533: istore 26
+    535: aload_0
+    536: getfield net.minecraft.client.gui.components.ChatComponent.chatScrollbarPos
+    539: iload 25
+    541: imul
+    542: iload 7
+    544: idiv
+    545: iload 11
+    547: isub
+    548: istore 27
+    550: iload 25
+    552: iload 25
+    554: imul
+    555: iload 26
+    557: idiv
+    558: istore 28
+    560: iload 26
+    562: iload 25
+    564: if_icmpeq -> 665
+    567: iload 27
+    569: ifle -> 578
+    572: sipush 0 170
+    575: goto -> 580
+    578: bipush 96
+    580: istore 29
+    582: aload_0
+    583: getfield net.minecraft.client.gui.components.ChatComponent.newMessageSinceScroll
+    586: ifeq -> 595
+    589: ldc_w int 13382451
+    592: goto -> 598
+    595: ldc_w int 3355562
+    598: istore 30
+    600: iload 10
+    602: iconst_4
+    603: iadd
+    604: istore 31
+    606: aload_1
+    607: iload 31
+    609: iload 27
+    611: ineg
+    612: iload 31
+    614: iconst_2
+    615: iadd
+    616: iload 27
+    618: ineg
+    619: iload 28
+    621: isub
+    622: iload 29
+    624: iload 30
+    626: invokestatic net.minecraft.util.ARGB.color
+    629: invokeinterface net.minecraft.client.gui.components.ChatComponent$ChatGraphicsAccess.fill
+    634: aload_1
+    635: iload 31
+    637: iconst_2
+    638: iadd
+    639: iload 27
+    641: ineg
+    642: iload 31
+    644: iconst_1
+    645: iadd
+    646: iload 27
+    648: ineg
+    649: iload 28
+    651: isub
+    652: iload 29
+    654: ldc_w int 13421772
+    657: invokestatic net.minecraft.util.ARGB.color
+    660: invokeinterface net.minecraft.client.gui.components.ChatComponent$ChatGraphicsAccess.fill
+    665: aload 8
+    667: invokeinterface net.minecraft.util.profiling.ProfilerFiller.pop
+    672: return
+
+==== 3) Options.getBackgroundColor pair: net.minecraft.client.Options
+   == <init>(Lnet/minecraft/client/Minecraft;Ljava/io/File;)V
+    0: aload_0
+    1: invokespecial java.lang.Object.<init>
+    4: aload_0
+    5: ldc_w cp(8, 584)
+    8: getstatic net.minecraft.client.Options.ACCESSIBILITY_TOOLTIP_DARK_MOJANG_BACKGROUND
+    11: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    14: iconst_0
+    15: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    18: putfield net.minecraft.client.Options.darkMojangStudiosBackground
+    21: aload_0
+    22: ldc_w cp(8, 598)
+    25: getstatic net.minecraft.client.Options.ACCESSIBILITY_TOOLTIP_HIDE_LIGHTNING_FLASHES
+    28: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    31: iconst_0
+    32: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    35: putfield net.minecraft.client.Options.hideLightningFlash
+    38: aload_0
+    39: ldc_w cp(8, 603)
+    42: getstatic net.minecraft.client.Options.ACCESSIBILITY_TOOLTIP_HIDE_SPLASH_TEXTS
+    45: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    48: iconst_0
+    49: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    52: putfield net.minecraft.client.Options.hideSplashTexts
+    55: aload_0
+    56: new net.minecraft.client.OptionInstance
+    59: dup
+    60: ldc_w cp(8, 608)
+    63: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    66: invokedynamic indy@609
+    71: getstatic net.minecraft.client.OptionInstance$UnitDouble.INSTANCE
+    74: ldc2_w double 0.5
+    77: invokestatic java.lang.Double.valueOf
+    80: getstatic net.minecraft.client.OptionInstance.NO_ACTION
+    83: invokespecial net.minecraft.client.OptionInstance.<init>
+    86: putfield net.minecraft.client.Options.sensitivity
+    89: aload_0
+    90: iconst_0
+    91: putfield net.minecraft.client.Options.serverRenderDistance
+    94: aload_0
+    95: new net.minecraft.client.OptionInstance
+    98: dup
+    99: ldc_w cp(8, 621)
+    102: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    105: invokedynamic indy@622
+    110: new net.minecraft.client.OptionInstance$IntRange
+    113: dup
+    114: iconst_2
+    115: bipush 20
+    117: invokespecial net.minecraft.client.OptionInstance$IntRange.<init>
+    120: invokedynamic indy@628
+    125: invokedynamic indy@631
+    130: iconst_1
+    131: invokevirtual net.minecraft.client.OptionInstance$IntRange.xmap
+    134: ldc2_w double 0.5
+    137: ldc2_w double 5.0
+    140: invokestatic com.mojang.serialization.Codec.doubleRange
+    143: dconst_1
+    144: invokestatic java.lang.Double.valueOf
+    147: aload_0
+    148: invokedynamic indy@647
+    153: invokespecial net.minecraft.client.OptionInstance.<init>
+    156: putfield net.minecraft.client.Options.entityDistanceScaling
+    159: aload_0
+    160: new net.minecraft.client.OptionInstance
+    163: dup
+    164: ldc_w cp(8, 654)
+    167: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    170: invokedynamic indy@655
+    175: new net.minecraft.client.OptionInstance$IntRange
+    178: dup
+    179: iconst_1
+    180: bipush 26
+    182: invokespecial net.minecraft.client.OptionInstance$IntRange.<init>
+    185: invokedynamic indy@656
+    190: invokedynamic indy@657
+    195: iconst_1
+    196: invokevirtual net.minecraft.client.OptionInstance$IntRange.xmap
+    199: bipush 10
+    201: sipush 1 4
+    204: invokestatic com.mojang.serialization.Codec.intRange
+    207: bipush 120
+    209: invokestatic java.lang.Integer.valueOf
+    212: invokedynamic indy@665
+    217: invokespecial net.minecraft.client.OptionInstance.<init>
+    220: putfield net.minecraft.client.Options.framerateLimit
+    223: aload_0
+    224: getstatic net.minecraft.client.PreferredGraphicsApi.DEFAULT
+    227: putfield net.minecraft.client.Options.preferredGraphicsBackendFromStartup
+    230: aload_0
+    231: new net.minecraft.client.OptionInstance
+    234: dup
+    235: ldc_w cp(8, 674)
+    238: aload_0
+    239: invokedynamic indy@675
+    244: invokedynamic indy@678
+    249: new net.minecraft.client.OptionInstance$Enum
+    252: dup
+    253: invokestatic net.minecraft.client.PreferredGraphicsApi.values
+    256: invokestatic java.util.List.of
+    259: getstatic net.minecraft.client.PreferredGraphicsApi.CODEC
+    262: invokespecial net.minecraft.client.OptionInstance$Enum.<init>
+    265: getstatic net.minecraft.client.PreferredGraphicsApi.CODEC
+    268: getstatic net.minecraft.client.PreferredGraphicsApi.DEFAULT
+    271: getstatic net.minecraft.client.OptionInstance.NO_ACTION
+    274: invokespecial net.minecraft.client.OptionInstance.<init>
+    277: putfield net.minecraft.client.Options.preferredGraphicsBackend
+    280: aload_0
+    281: new net.minecraft.client.OptionInstance
+    284: dup
+    285: ldc_w cp(8, 697)
+    288: ldc_w cp(8, 699)
+    291: invokestatic net.minecraft.network.chat.Component.translatable
+    294: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    297: invokedynamic indy@706
+    302: new net.minecraft.client.OptionInstance$SliderableEnum
+    305: dup
+    306: invokestatic net.minecraft.client.GraphicsPreset.values
+    309: invokestatic java.util.List.of
+    312: getstatic net.minecraft.client.GraphicsPreset.CODEC
+    315: invokespecial net.minecraft.client.OptionInstance$SliderableEnum.<init>
+    318: getstatic net.minecraft.client.GraphicsPreset.CODEC
+    321: getstatic net.minecraft.client.GraphicsPreset.FANCY
+    324: aload_0
+    325: invokedynamic indy@717
+    330: invokespecial net.minecraft.client.OptionInstance.<init>
+    333: putfield net.minecraft.client.Options.graphicsPreset
+    336: aload_0
+    337: new net.minecraft.client.OptionInstance
+    340: dup
+    341: ldc_w cp(8, 719)
+    344: invokedynamic indy@720
+    349: invokedynamic indy@722
+    354: new net.minecraft.client.OptionInstance$Enum
+    357: dup
+    358: invokestatic net.minecraft.client.InactivityFpsLimit.values
+    361: invokestatic java.util.Arrays.asList
+    364: getstatic net.minecraft.client.InactivityFpsLimit.CODEC
+    367: invokespecial net.minecraft.client.OptionInstance$Enum.<init>
+    370: getstatic net.minecraft.client.InactivityFpsLimit.AFK
+    373: getstatic net.minecraft.client.OptionInstance.NO_ACTION
+    376: invokespecial net.minecraft.client.OptionInstance.<init>
+    379: putfield net.minecraft.client.Options.inactivityFpsLimit
+    382: aload_0
+    383: new net.minecraft.client.OptionInstance
+    386: dup
+    387: ldc_w cp(8, 739)
+    390: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    393: invokedynamic indy@740
+    398: new net.minecraft.client.OptionInstance$Enum
+    401: dup
+    402: invokestatic net.minecraft.client.CloudStatus.values
+    405: invokestatic java.util.Arrays.asList
+    408: getstatic net.minecraft.client.CloudStatus.CODEC
+    411: getstatic com.mojang.serialization.Codec.BOOL
+    414: invokedynamic indy@751
+    419: invokestatic com.mojang.serialization.Codec.withAlternative
+    422: invokespecial net.minecraft.client.OptionInstance$Enum.<init>
+    425: getstatic net.minecraft.client.CloudStatus.FANCY
+    428: aload_0
+    429: invokedynamic indy@761
+    434: invokespecial net.minecraft.client.OptionInstance.<init>
+    437: putfield net.minecraft.client.Options.cloudStatus
+    440: aload_0
+    441: new net.minecraft.client.OptionInstance
+    444: dup
+    445: ldc_w cp(8, 763)
+    448: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    451: invokedynamic indy@764
+    456: new net.minecraft.client.OptionInstance$IntRange
+    459: dup
+    460: iconst_2
+    461: sipush 0 128
+    464: iconst_1
+    465: invokespecial net.minecraft.client.OptionInstance$IntRange.<init>
+    468: sipush 0 128
+    471: invokestatic java.lang.Integer.valueOf
+    474: aload_0
+    475: invokedynamic indy@768
+    480: invokespecial net.minecraft.client.OptionInstance.<init>
+    483: putfield net.minecraft.client.Options.cloudRange
+    486: aload_0
+    487: new net.minecraft.client.OptionInstance
+    490: dup
+    491: ldc_w cp(8, 770)
+    494: getstatic net.minecraft.client.Options.GRAPHICS_TOOLTIP_WEATHER_RADIUS
+    497: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    500: invokedynamic indy@774
+    505: new net.minecraft.client.OptionInstance$IntRange
+    508: dup
+    509: iconst_3
+    510: bipush 10
+    512: iconst_1
+    513: invokespecial net.minecraft.client.OptionInstance$IntRange.<init>
+    516: bipush 10
+    518: invokestatic java.lang.Integer.valueOf
+    521: aload_0
+    522: invokedynamic indy@775
+    527: invokespecial net.minecraft.client.OptionInstance.<init>
+    530: putfield net.minecraft.client.Options.weatherRadius
+    533: aload_0
+    534: ldc_w cp(8, 777)
+    537: getstatic net.minecraft.client.Options.GRAPHICS_TOOLTIP_CUTOUT_LEAVES
+    540: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    543: iconst_1
+    544: aload_0
+    545: invokedynamic indy@781
+    550: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    553: putfield net.minecraft.client.Options.cutoutLeaves
+    556: aload_0
+    557: ldc_w cp(8, 786)
+    560: getstatic net.minecraft.client.Options.GRAPHICS_TOOLTIP_VIGNETTE
+    563: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    566: iconst_1
+    567: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    570: putfield net.minecraft.client.Options.vignette
+    573: aload_0
+    574: ldc_w cp(8, 791)
+    577: getstatic net.minecraft.client.Options.GRAPHICS_TOOLTIP_IMPROVED_TRANSPARENCY
+    580: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    583: iconst_0
+    584: aload_0
+    585: invokedynamic indy@795
+    590: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    593: putfield net.minecraft.client.Options.improvedTransparency
+    596: aload_0
+    597: ldc_w cp(8, 797)
+    600: iconst_1
+    601: aload_0
+    602: invokedynamic indy@798
+    607: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    610: putfield net.minecraft.client.Options.ambientOcclusion
+    613: aload_0
+    614: new net.minecraft.client.OptionInstance
+    617: dup
+    618: ldc_w cp(8, 803)
+    621: getstatic net.minecraft.client.Options.GRAPHICS_TOOLTIP_CHUNK_FADE
+    624: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    627: invokedynamic indy@807
+    632: new net.minecraft.client.OptionInstance$IntRange
+    635: dup
+    636: iconst_0
+    637: bipush 40
+    639: invokespecial net.minecraft.client.OptionInstance$IntRange.<init>
+    642: invokedynamic indy@808
+    647: invokedynamic indy@809
+    652: iconst_1
+    653: invokevirtual net.minecraft.client.OptionInstance$IntRange.xmap
+    656: dconst_0
+    657: ldc2_w double 2.0
+    660: invokestatic com.mojang.serialization.Codec.doubleRange
+    663: ldc2_w double 0.75
+    666: invokestatic java.lang.Double.valueOf
+    669: getstatic net.minecraft.client.OptionInstance.NO_ACTION
+    672: invokespecial net.minecraft.client.OptionInstance.<init>
+    675: putfield net.minecraft.client.Options.chunkSectionFadeInTime
+    678: aload_0
+    679: new net.minecraft.client.OptionInstance
+    682: dup
+    683: ldc_w cp(8, 815)
+    686: invokedynamic indy@816
+    691: invokedynamic indy@817
+    696: new net.minecraft.client.OptionInstance$Enum
+    699: dup
+    700: invokestatic net.minecraft.client.PrioritizeChunkUpdates.values
+    703: invokestatic java.util.Arrays.asList
+    706: getstatic net.minecraft.client.PrioritizeChunkUpdates.LEGACY_CODEC
+    709: invokespecial net.minecraft.client.OptionInstance$Enum.<init>
+    712: getstatic net.minecraft.client.PrioritizeChunkUpdates.NONE
+    715: aload_0
+    716: invokedynamic indy@830
+    721: invokespecial net.minecraft.client.OptionInstance.<init>
+    724: putfield net.minecraft.client.Options.prioritizeChunkUpdates
+    727: aload_0
+    728: invokestatic com.google.common.collect.Lists.newArrayList
+    731: putfield net.minecraft.client.Options.resourcePacks
+    734: aload_0
+    735: invokestatic com.google.common.collect.Lists.newArrayList
+    738: putfield net.minecraft.client.Options.incompatibleResourcePacks
+    741: aload_0
+    742: new net.minecraft.client.OptionInstance
+    745: dup
+    746: ldc_w cp(8, 838)
+    749: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    752: invokedynamic indy@839
+    757: new net.minecraft.client.OptionInstance$Enum
+    760: dup
+    761: invokestatic net.minecraft.world.entity.player.ChatVisiblity.values
+    764: invokestatic java.util.Arrays.asList
+    767: getstatic net.minecraft.world.entity.player.ChatVisiblity.LEGACY_CODEC
+    770: invokespecial net.minecraft.client.OptionInstance$Enum.<init>
+    773: getstatic net.minecraft.world.entity.player.ChatVisiblity.FULL
+    776: invokedynamic indy@850
+    781: invokespecial net.minecraft.client.OptionInstance.<init>
+    784: putfield net.minecraft.client.Options.chatVisibility
+    787: aload_0
+    788: new net.minecraft.client.OptionInstance
+    791: dup
+    792: ldc_w cp(8, 852)
+    795: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    798: invokedynamic indy@853
+    803: getstatic net.minecraft.client.OptionInstance$UnitDouble.INSTANCE
+    806: dconst_1
+    807: invokestatic java.lang.Double.valueOf
+    810: invokedynamic indy@854
+    815: invokespecial net.minecraft.client.OptionInstance.<init>
+    818: putfield net.minecraft.client.Options.chatOpacity
+    821: aload_0
+    822: new net.minecraft.client.OptionInstance
+    825: dup
+    826: ldc_w cp(8, 856)
+    829: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    832: invokedynamic indy@622
+    837: getstatic net.minecraft.client.OptionInstance$UnitDouble.INSTANCE
+    840: dconst_0
+    841: invokestatic java.lang.Double.valueOf
+    844: getstatic net.minecraft.client.OptionInstance.NO_ACTION
+    847: invokespecial net.minecraft.client.OptionInstance.<init>
+    850: putfield net.minecraft.client.Options.chatLineSpacing
+    853: aload_0
+    854: new net.minecraft.client.OptionInstance
+    857: dup
+    858: ldc_w cp(8, 858)
+    861: getstatic net.minecraft.client.Options.MENU_BACKGROUND_BLURRINESS_TOOLTIP
+    864: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    867: invokedynamic indy@862
+    872: new net.minecraft.client.OptionInstance$IntRange
+    875: dup
+    876: iconst_0
+    877: bipush 10
+    879: invokespecial net.minecraft.client.OptionInstance$IntRange.<init>
+    882: iconst_5
+    883: invokestatic java.lang.Integer.valueOf
+    886: aload_0
+    887: invokedynamic indy@863
+    892: invokespecial net.minecraft.client.OptionInstance.<init>
+    895: putfield net.minecraft.client.Options.menuBackgroundBlurriness
+    898: aload_0
+    899: new net.minecraft.client.OptionInstance
+    902: dup
+    903: ldc_w cp(8, 865)
+    906: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    909: invokedynamic indy@622
+    914: getstatic net.minecraft.client.OptionInstance$UnitDouble.INSTANCE
+    917: ldc2_w double 0.5
+    920: invokestatic java.lang.Double.valueOf
+    923: invokedynamic indy@866
+    928: invokespecial net.minecraft.client.OptionInstance.<init>
+    931: putfield net.minecraft.client.Options.textBackgroundOpacity
+    934: aload_0
+    935: new net.minecraft.client.OptionInstance
+    938: dup
+    939: ldc_w cp(8, 868)
+    942: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    945: invokedynamic indy@622
+    950: getstatic net.minecraft.client.OptionInstance$UnitDouble.INSTANCE
+    953: dconst_1
+    954: invokestatic java.lang.Double.valueOf
+    957: getstatic net.minecraft.client.OptionInstance.NO_ACTION
+    960: invokespecial net.minecraft.client.OptionInstance.<init>
+    963: putfield net.minecraft.client.Options.panoramaSpeed
+    966: aload_0
+    967: ldc_w cp(8, 870)
+    970: getstatic net.minecraft.client.Options.ACCESSIBILITY_TOOLTIP_CONTRAST_MODE
+    973: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    976: iconst_0
+    977: aload_0
+    978: invokedynamic indy@874
+    983: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    986: putfield net.minecraft.client.Options.highContrast
+    989: aload_0
+    990: ldc_w cp(8, 876)
+    993: getstatic net.minecraft.client.Options.HIGH_CONTRAST_BLOCK_OUTLINE_TOOLTIP
+    996: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    999: iconst_0
+    1000: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    1003: putfield net.minecraft.client.Options.highContrastBlockOutline
+    1006: aload_0
+    1007: ldc_w cp(8, 881)
+    1010: getstatic net.minecraft.client.input.InputQuirks.REPLACE_CTRL_KEY_WITH_CMD_KEY
+    1013: ifeq -> 1025
+    1016: ldc_w cp(8, 888)
+    1019: invokestatic net.minecraft.network.chat.Component.translatable
+    1022: goto -> 1031
+    1025: ldc_w cp(8, 890)
+    1028: invokestatic net.minecraft.network.chat.Component.translatable
+    1031: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    1034: iconst_1
+    1035: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    1038: putfield net.minecraft.client.Options.narratorHotkey
+    1041: aload_0
+    1042: iconst_1
+    1043: putfield net.minecraft.client.Options.pauseOnLostFocus
+    1046: aload_0
+    1047: ldc_w net.minecraft.world.entity.player.PlayerModelPart
+    1050: invokestatic java.util.EnumSet.allOf
+    1053: putfield net.minecraft.client.Options.modelParts
+    1056: aload_0
+    1057: new net.minecraft.client.OptionInstance
+    1060: dup
+    1061: ldc_w cp(8, 907)
+    1064: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    1067: invokedynamic indy@908
+    1072: new net.minecraft.client.OptionInstance$Enum
+    1075: dup
+    1076: invokestatic net.minecraft.world.entity.HumanoidArm.values
+    1079: invokestatic java.util.Arrays.asList
+    1082: getstatic net.minecraft.world.entity.HumanoidArm.CODEC
+    1085: invokespecial net.minecraft.client.OptionInstance$Enum.<init>
+    1088: getstatic net.minecraft.world.entity.HumanoidArm.RIGHT
+    1091: getstatic net.minecraft.client.OptionInstance.NO_ACTION
+    1094: invokespecial net.minecraft.client.OptionInstance.<init>
+    1097: putfield net.minecraft.client.Options.mainHand
+    1100: aload_0
+    1101: new net.minecraft.client.OptionInstance
+    1104: dup
+    1105: ldc_w cp(8, 920)
+    1108: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    1111: invokedynamic indy@921
+    1116: getstatic net.minecraft.client.OptionInstance$UnitDouble.INSTANCE
+    1119: dconst_1
+    1120: invokestatic java.lang.Double.valueOf
+    1123: invokedynamic indy@922
+    1128: invokespecial net.minecraft.client.OptionInstance.<init>
+    1131: putfield net.minecraft.client.Options.chatScale
+    1134: aload_0
+    1135: new net.minecraft.client.OptionInstance
+    1138: dup
+    1139: ldc_w cp(8, 924)
+    1142: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    1145: invokedynamic indy@925
+    1150: getstatic net.minecraft.client.OptionInstance$UnitDouble.INSTANCE
+    1153: dconst_1
+    1154: invokestatic java.lang.Double.valueOf
+    1157: invokedynamic indy@926
+    1162: invokespecial net.minecraft.client.OptionInstance.<init>
+    1165: putfield net.minecraft.client.Options.chatWidth
+    1168: aload_0
+    1169: new net.minecraft.client.OptionInstance
+    1172: dup
+    1173: ldc_w cp(8, 928)
+    1176: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    1179: invokedynamic indy@929
+    1184: getstatic net.minecraft.client.OptionInstance$UnitDouble.INSTANCE
+    1187: invokestatic net.minecraft.client.gui.components.ChatComponent.defaultUnfocusedPct
+    1190: invokestatic java.lang.Double.valueOf
+    1193: invokedynamic indy@936
+    1198: invokespecial net.minecraft.client.OptionInstance.<init>
+    1201: putfield net.minecraft.client.Options.chatHeightUnfocused
+    1204: aload_0
+    1205: new net.minecraft.client.OptionInstance
+    1208: dup
+    1209: ldc_w cp(8, 938)
+    1212: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    1215: invokedynamic indy@939
+    1220: getstatic net.minecraft.client.OptionInstance$UnitDouble.INSTANCE
+    1223: dconst_1
+    1224: invokestatic java.lang.Double.valueOf
+    1227: invokedynamic indy@940
+    1232: invokespecial net.minecraft.client.OptionInstance.<init>
+    1235: putfield net.minecraft.client.Options.chatHeightFocused
+    1238: aload_0
+    1239: new net.minecraft.client.OptionInstance
+    1242: dup
+    1243: ldc_w cp(8, 942)
+    1246: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    1249: invokedynamic indy@943
+    1254: new net.minecraft.client.OptionInstance$IntRange
+    1257: dup
+    1258: iconst_0
+    1259: bipush 60
+    1261: invokespecial net.minecraft.client.OptionInstance$IntRange.<init>
+    1264: invokedynamic indy@944
+    1269: invokedynamic indy@945
+    1274: iconst_1
+    1275: invokevirtual net.minecraft.client.OptionInstance$IntRange.xmap
+    1278: dconst_0
+    1279: ldc2_w double 6.0
+    1282: invokestatic com.mojang.serialization.Codec.doubleRange
+    1285: dconst_0
+    1286: invokestatic java.lang.Double.valueOf
+    1289: invokedynamic indy@948
+    1294: invokespecial net.minecraft.client.OptionInstance.<init>
+    1297: putfield net.minecraft.client.Options.chatDelay
+    1300: aload_0
+    1301: new net.minecraft.client.OptionInstance
+    1304: dup
+    1305: ldc_w cp(8, 950)
+    1308: getstatic net.minecraft.client.Options.ACCESSIBILITY_TOOLTIP_NOTIFICATION_DISPLAY_TIME
+    1311: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    1314: invokedynamic indy@954
+    1319: new net.minecraft.client.OptionInstance$IntRange
+    1322: dup
+    1323: iconst_5
+    1324: bipush 100
+    1326: invokespecial net.minecraft.client.OptionInstance$IntRange.<init>
+    1329: invokedynamic indy@955
+    1334: invokedynamic indy@956
+    1339: iconst_1
+    1340: invokevirtual net.minecraft.client.OptionInstance$IntRange.xmap
+    1343: ldc2_w double 0.5
+    1346: ldc2_w double 10.0
+    1349: invokestatic com.mojang.serialization.Codec.doubleRange
+    1352: dconst_1
+    1353: invokestatic java.lang.Double.valueOf
+    1356: getstatic net.minecraft.client.OptionInstance.NO_ACTION
+    1359: invokespecial net.minecraft.client.OptionInstance.<init>
+    1362: putfield net.minecraft.client.Options.notificationDisplayTime
+    1365: aload_0
+    1366: new net.minecraft.client.OptionInstance
+    1369: dup
+    1370: ldc_w cp(8, 958)
+    1373: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    1376: invokedynamic indy@959
+    1381: new net.minecraft.client.OptionInstance$IntRange
+    1384: dup
+    1385: iconst_0
+    1386: iconst_4
+    1387: invokespecial net.minecraft.client.OptionInstance$IntRange.<init>
+    1390: iconst_4
+    1391: invokestatic java.lang.Integer.valueOf
+    1394: aload_0
+    1395: invokedynamic indy@960
+    1400: invokespecial net.minecraft.client.OptionInstance.<init>
+    1403: putfield net.minecraft.client.Options.mipmapLevels
+    1406: aload_0
+    1407: new net.minecraft.client.OptionInstance
+    1410: dup
+    1411: ldc_w cp(8, 962)
+    1414: getstatic net.minecraft.client.Options.GRAPHICS_TOOLTIP_ANISOTROPIC_FILTERING
+    1417: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    1420: invokedynamic indy@966
+    1425: new net.minecraft.client.OptionInstance$IntRange
+    1428: dup
+    1429: iconst_1
+    1430: iconst_3
+    1431: invokespecial net.minecraft.client.OptionInstance$IntRange.<init>
+    1434: iconst_2
+    1435: invokestatic java.lang.Integer.valueOf
+    1438: aload_0
+    1439: invokedynamic indy@967
+    1444: invokespecial net.minecraft.client.OptionInstance.<init>
+    1447: putfield net.minecraft.client.Options.maxAnisotropyBit
+    1450: aload_0
+    1451: new net.minecraft.client.OptionInstance
+    1454: dup
+    1455: ldc_w cp(8, 969)
+    1458: invokedynamic indy@970
+    1463: invokedynamic indy@971
+    1468: new net.minecraft.client.OptionInstance$Enum
+    1471: dup
+    1472: invokestatic net.minecraft.client.TextureFilteringMethod.values
+    1475: invokestatic java.util.Arrays.asList
+    1478: getstatic net.minecraft.client.TextureFilteringMethod.LEGACY_CODEC
+    1481: invokespecial net.minecraft.client.OptionInstance$Enum.<init>
+    1484: getstatic net.minecraft.client.TextureFilteringMethod.NONE
+    1487: aload_0
+    1488: invokedynamic indy@981
+    1493: invokespecial net.minecraft.client.OptionInstance.<init>
+    1496: putfield net.minecraft.client.Options.textureFiltering
+    1499: aload_0
+    1500: iconst_1
+    1501: putfield net.minecraft.client.Options.useNativeTransport
+    1504: aload_0
+    1505: new net.minecraft.client.OptionInstance
+    1508: dup
+    1509: ldc_w cp(8, 986)
+    1512: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    1515: invokedynamic indy@987
+    1520: new net.minecraft.client.OptionInstance$Enum
+    1523: dup
+    1524: invokestatic net.minecraft.client.AttackIndicatorStatus.values
+    1527: invokestatic java.util.Arrays.asList
+    1530: getstatic net.minecraft.client.AttackIndicatorStatus.LEGACY_CODEC
+    1533: invokespecial net.minecraft.client.OptionInstance$Enum.<init>
+    1536: getstatic net.minecraft.client.AttackIndicatorStatus.CROSSHAIR
+    1539: getstatic net.minecraft.client.OptionInstance.NO_ACTION
+    1542: invokespecial net.minecraft.client.OptionInstance.<init>
+    1545: putfield net.minecraft.client.Options.attackIndicator
+    1548: aload_0
+    1549: getstatic net.minecraft.client.tutorial.TutorialSteps.MOVEMENT
+    1552: putfield net.minecraft.client.Options.tutorialStep
+    1555: aload_0
+    1556: iconst_0
+    1557: putfield net.minecraft.client.Options.joinedFirstServer
+    1560: aload_0
+    1561: new net.minecraft.client.OptionInstance
+    1564: dup
+    1565: ldc_w cp(8, 1011)
+    1568: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    1571: invokedynamic indy@1012
+    1576: new net.minecraft.client.OptionInstance$IntRange
+    1579: dup
+    1580: iconst_0
+    1581: bipush 7
+    1583: iconst_0
+    1584: invokespecial net.minecraft.client.OptionInstance$IntRange.<init>
+    1587: iconst_2
+    1588: invokestatic java.lang.Integer.valueOf
+    1591: aload_0
+    1592: invokedynamic indy@1013
+    1597: invokespecial net.minecraft.client.OptionInstance.<init>
+    1600: putfield net.minecraft.client.Options.biomeBlendRadius
+    1603: aload_0
+    1604: new net.minecraft.client.OptionInstance
+    1607: dup
+    1608: ldc_w cp(8, 1015)
+    1611: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    1614: invokedynamic indy@1016
+    1619: new net.minecraft.client.OptionInstance$IntRange
+    1622: dup
+    1623: sipush 255 56
+    1626: bipush 100
+    1628: invokespecial net.minecraft.client.OptionInstance$IntRange.<init>
+    1631: invokedynamic indy@1017
+    1636: invokedynamic indy@1018
+    1641: iconst_0
+    1642: invokevirtual net.minecraft.client.OptionInstance$IntRange.xmap
+    1645: sipush 255 56
+    1648: invokestatic net.minecraft.client.Options.logMouse
+    1651: bipush 100
+    1653: invokestatic net.minecraft.client.Options.logMouse
+    1656: invokestatic com.mojang.serialization.Codec.doubleRange
+    1659: iconst_0
+    1660: invokestatic net.minecraft.client.Options.logMouse
+    1663: invokestatic java.lang.Double.valueOf
+    1666: getstatic net.minecraft.client.OptionInstance.NO_ACTION
+    1669: invokespecial net.minecraft.client.OptionInstance.<init>
+    1672: putfield net.minecraft.client.Options.mouseWheelSensitivity
+    1675: aload_0
+    1676: ldc_w cp(8, 1024)
+    1679: iconst_1
+    1680: invokedynamic indy@1025
+    1685: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    1688: putfield net.minecraft.client.Options.rawMouseInput
+    1691: aload_0
+    1692: ldc_w cp(8, 1027)
+    1695: getstatic net.minecraft.client.Options.ALLOW_CURSOR_CHANGES_TOOLTIP
+    1698: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    1701: iconst_1
+    1702: invokedynamic indy@1031
+    1707: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    1710: putfield net.minecraft.client.Options.allowCursorChanges
+    1713: aload_0
+    1714: iconst_1
+    1715: putfield net.minecraft.client.Options.glDebugVerbosity
+    1718: aload_0
+    1719: ldc_w cp(8, 1036)
+    1722: iconst_0
+    1723: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    1726: putfield net.minecraft.client.Options.autoJump
+    1729: aload_0
+    1730: ldc_w cp(8, 1041)
+    1733: getstatic net.minecraft.client.Options.ACCESSIBILITY_TOOLTIP_ROTATE_WITH_MINECART
+    1736: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    1739: iconst_0
+    1740: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    1743: putfield net.minecraft.client.Options.rotateWithMinecart
+    1746: aload_0
+    1747: ldc_w cp(8, 1046)
+    1750: iconst_0
+    1751: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    1754: putfield net.minecraft.client.Options.operatorItemsTab
+    1757: aload_0
+    1758: ldc_w cp(8, 1048)
+    1761: iconst_1
+    1762: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    1765: putfield net.minecraft.client.Options.autoSuggestions
+    1768: aload_0
+    1769: ldc_w cp(8, 1050)
+    1772: iconst_1
+    1773: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    1776: putfield net.minecraft.client.Options.chatColors
+    1779: aload_0
+    1780: ldc_w cp(8, 1052)
+    1783: iconst_1
+    1784: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    1787: putfield net.minecraft.client.Options.chatLinks
+    1790: aload_0
+    1791: ldc_w cp(8, 1054)
+    1794: iconst_1
+    1795: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    1798: putfield net.minecraft.client.Options.chatLinksPrompt
+    1801: aload_0
+    1802: ldc_w cp(8, 1056)
+    1805: iconst_1
+    1806: invokedynamic indy@1057
+    1811: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    1814: putfield net.minecraft.client.Options.enableVsync
+    1817: aload_0
+    1818: ldc_w cp(8, 1059)
+    1821: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    1824: iconst_1
+    1825: aload_0
+    1826: invokedynamic indy@1060
+    1831: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    1834: putfield net.minecraft.client.Options.entityShadows
+    1837: aload_0
+    1838: ldc_w cp(8, 1062)
+    1841: iconst_0
+    1842: invokedynamic indy@1063
+    1847: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    1850: putfield net.minecraft.client.Options.forceUnicodeFont
+    1853: aload_0
+    1854: ldc_w cp(8, 1065)
+    1857: ldc_w cp(8, 1067)
+    1860: invokestatic net.minecraft.network.chat.Component.translatable
+    1863: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    1866: invokestatic net.minecraft.client.Options.japaneseGlyphVariantsDefault
+    1869: invokedynamic indy@1071
+    1874: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    1877: putfield net.minecraft.client.Options.japaneseGlyphVariants
+    1880: aload_0
+    1881: ldc_w cp(8, 1073)
+    1884: iconst_0
+    1885: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    1888: putfield net.minecraft.client.Options.invertXMouse
+    1891: aload_0
+    1892: ldc_w cp(8, 1075)
+    1895: iconst_0
+    1896: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    1899: putfield net.minecraft.client.Options.invertYMouse
+    1902: aload_0
+    1903: ldc_w cp(8, 1077)
+    1906: iconst_0
+    1907: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    1910: putfield net.minecraft.client.Options.discreteMouseScroll
+    1913: aload_0
+    1914: ldc_w cp(8, 1079)
+    1917: getstatic net.minecraft.client.Options.REALMS_NOTIFICATIONS_TOOLTIP
+    1920: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    1923: iconst_1
+    1924: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    1927: putfield net.minecraft.client.Options.realmsNotifications
+    1930: aload_0
+    1931: ldc_w cp(8, 1084)
+    1934: getstatic net.minecraft.client.Options.ALLOW_SERVER_LISTING_TOOLTIP
+    1937: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    1940: iconst_1
+    1941: getstatic net.minecraft.client.OptionInstance.NO_ACTION
+    1944: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    1947: putfield net.minecraft.client.Options.allowServerListing
+    1950: aload_0
+    1951: ldc_w cp(8, 1089)
+    1954: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    1957: iconst_0
+    1958: invokedynamic indy@1090
+    1963: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    1966: putfield net.minecraft.client.Options.reducedDebugInfo
+    1969: aload_0
+    1970: ldc_w cp(8, 1092)
+    1973: getstatic net.minecraft.client.Options.IN_GAME_NOTIFICATION_TOOLTIP
+    1976: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    1979: iconst_0
+    1980: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    1983: putfield net.minecraft.client.Options.inGameNotification
+    1986: aload_0
+    1987: new net.minecraft.client.OptionInstance
+    1990: dup
+    1991: ldc_w cp(8, 1099)
+    1994: invokedynamic indy@1100
+    1999: invokedynamic indy@1101
+    2004: new net.minecraft.client.OptionInstance$Enum
+    2007: dup
+    2008: invokestatic net.minecraft.client.PresenceSharing.values
+    2011: invokestatic java.util.List.of
+    2014: getstatic net.minecraft.client.PresenceSharing.CODEC
+    2017: invokespecial net.minecraft.client.OptionInstance$Enum.<init>
+    2020: getstatic net.minecraft.client.PresenceSharing.CODEC
+    2023: getstatic net.minecraft.client.PresenceSharing.ALL
+    2026: invokedynamic indy@1110
+    2031: invokespecial net.minecraft.client.OptionInstance.<init>
+    2034: putfield net.minecraft.client.Options.sharePresence
+    2037: aload_0
+    2038: ldc_w net.minecraft.sounds.SoundSource
+    2041: aload_0
+    2042: invokedynamic indy@1111
+    2047: invokestatic net.minecraft.util.Util.makeEnumMap
+    2050: putfield net.minecraft.client.Options.soundSourceVolumes
+    2053: aload_0
+    2054: ldc_w cp(8, 1121)
+    2057: getstatic net.minecraft.client.Options.CLOSED_CAPTIONS_TOOLTIP
+    2060: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    2063: iconst_0
+    2064: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    2067: putfield net.minecraft.client.Options.showSubtitles
+    2070: aload_0
+    2071: ldc_w cp(8, 1126)
+    2074: invokedynamic indy@1127
+    2079: iconst_0
+    2080: invokedynamic indy@1128
+    2085: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    2088: putfield net.minecraft.client.Options.directionalAudio
+    2091: aload_0
+    2092: new net.minecraft.client.OptionInstance
+    2095: dup
+    2096: ldc_w cp(8, 1130)
+    2099: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    2102: invokedynamic indy@1131
+    2107: getstatic net.minecraft.client.OptionInstance.BOOLEAN_VALUES
+    2110: iconst_1
+    2111: invokestatic java.lang.Boolean.valueOf
+    2114: getstatic net.minecraft.client.OptionInstance.NO_ACTION
+    2117: invokespecial net.minecraft.client.OptionInstance.<init>
+    2120: putfield net.minecraft.client.Options.backgroundForChatOnly
+    2123: aload_0
+    2124: ldc_w cp(8, 1140)
+    2127: iconst_0
+    2128: aload_0
+    2129: invokedynamic indy@1141
+    2134: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    2137: putfield net.minecraft.client.Options.fullscreen
+    2140: aload_0
+    2141: ldc_w cp(8, 1143)
+    2144: aload_0
+    2145: invokedynamic indy@1144
+    2150: iconst_0
+    2151: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    2154: putfield net.minecraft.client.Options.exclusiveFullscreen
+    2157: aload_0
+    2158: ldc_w cp(8, 1146)
+    2161: iconst_1
+    2162: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    2165: putfield net.minecraft.client.Options.bobView
+    2168: aload_0
+    2169: new net.minecraft.client.OptionInstance
+    2172: dup
+    2173: ldc_w cp(8, 1148)
+    2176: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    2179: invokedynamic indy@1149
+    2184: getstatic net.minecraft.client.OptionInstance.BOOLEAN_VALUES
+    2187: iconst_0
+    2188: invokestatic java.lang.Boolean.valueOf
+    2191: getstatic net.minecraft.client.OptionInstance.NO_ACTION
+    2194: invokespecial net.minecraft.client.OptionInstance.<init>
+    2197: putfield net.minecraft.client.Options.toggleCrouch
+    2200: aload_0
+    2201: new net.minecraft.client.OptionInstance
+    2204: dup
+    2205: ldc_w cp(8, 1151)
+    2208: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    2211: invokedynamic indy@1152
+    2216: getstatic net.minecraft.client.OptionInstance.BOOLEAN_VALUES
+    2219: iconst_0
+    2220: invokestatic java.lang.Boolean.valueOf
+    2223: getstatic net.minecraft.client.OptionInstance.NO_ACTION
+    2226: invokespecial net.minecraft.client.OptionInstance.<init>
+    2229: putfield net.minecraft.client.Options.toggleSprint
+    2232: aload_0
+    2233: new net.minecraft.client.OptionInstance
+    2236: dup
+    2237: ldc_w cp(8, 1154)
+    2240: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    2243: invokedynamic indy@1155
+    2248: getstatic net.minecraft.client.OptionInstance.BOOLEAN_VALUES
+    2251: iconst_0
+    2252: invokestatic java.lang.Boolean.valueOf
+    2255: getstatic net.minecraft.client.OptionInstance.NO_ACTION
+    2258: invokespecial net.minecraft.client.OptionInstance.<init>
+    2261: putfield net.minecraft.client.Options.toggleAttack
+    2264: aload_0
+    2265: new net.minecraft.client.OptionInstance
+    2268: dup
+    2269: ldc_w cp(8, 1157)
+    2272: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    2275: invokedynamic indy@1158
+    2280: getstatic net.minecraft.client.OptionInstance.BOOLEAN_VALUES
+    2283: iconst_0
+    2284: invokestatic java.lang.Boolean.valueOf
+    2287: getstatic net.minecraft.client.OptionInstance.NO_ACTION
+    2290: invokespecial net.minecraft.client.OptionInstance.<init>
+    2293: putfield net.minecraft.client.Options.toggleUse
+    2296: aload_0
+    2297: new net.minecraft.client.OptionInstance
+    2300: dup
+    2301: ldc_w cp(8, 1160)
+    2304: getstatic net.minecraft.client.Options.SPRINT_WINDOW_TOOLTIP
+    2307: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    2310: invokedynamic indy@1164
+    2315: new net.minecraft.client.OptionInstance$IntRange
+    2318: dup
+    2319: iconst_0
+    2320: bipush 10
+    2322: invokespecial net.minecraft.client.OptionInstance$IntRange.<init>
+    2325: bipush 7
+    2327: invokestatic java.lang.Integer.valueOf
+    2330: getstatic net.minecraft.client.OptionInstance.NO_ACTION
+    2333: invokespecial net.minecraft.client.OptionInstance.<init>
+    2336: putfield net.minecraft.client.Options.sprintWindow
+    2339: aload_0
+    2340: ldc_w cp(8, 1166)
+    2343: getstatic net.minecraft.client.Options.CHAT_TOOLTIP_HIDE_MATCHED_NAMES
+    2346: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    2349: iconst_1
+    2350: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    2353: putfield net.minecraft.client.Options.hideMatchedNames
+    2356: aload_0
+    2357: ldc_w cp(8, 1171)
+    2360: iconst_1
+    2361: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    2364: putfield net.minecraft.client.Options.showAutosaveIndicator
+    2367: aload_0
+    2368: ldc_w cp(8, 1173)
+    2371: getstatic net.minecraft.client.Options.CHAT_TOOLTIP_ONLY_SHOW_SECURE
+    2374: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    2377: iconst_0
+    2378: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    2381: putfield net.minecraft.client.Options.onlyShowSecureChat
+    2384: aload_0
+    2385: ldc_w cp(8, 1178)
+    2388: getstatic net.minecraft.client.Options.CHAT_TOOLTIP_SAVE_DRAFTS
+    2391: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    2394: iconst_0
+    2395: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    2398: putfield net.minecraft.client.Options.saveChatDrafts
+    2401: aload_0
+    2402: new net.minecraft.client.KeyMapping
+    2405: dup
+    2406: ldc_w cp(8, 1185)
+    2409: bipush 87
+    2411: getstatic net.minecraft.client.KeyMapping$Category.MOVEMENT
+    2414: invokespecial net.minecraft.client.KeyMapping.<init>
+    2417: putfield net.minecraft.client.Options.keyUp
+    2420: aload_0
+    2421: new net.minecraft.client.KeyMapping
+    2424: dup
+    2425: ldc_w cp(8, 1201)
+    2428: bipush 65
+    2430: getstatic net.minecraft.client.KeyMapping$Category.MOVEMENT
+    2433: invokespecial net.minecraft.client.KeyMapping.<init>
+    2436: putfield net.minecraft.client.Options.keyLeft
+    2439: aload_0
+    2440: new net.minecraft.client.KeyMapping
+    2443: dup
+    2444: ldc_w cp(8, 1206)
+    2447: bipush 83
+    2449: getstatic net.minecraft.client.KeyMapping$Category.MOVEMENT
+    2452: invokespecial net.minecraft.client.KeyMapping.<init>
+    2455: putfield net.minecraft.client.Options.keyDown
+    2458: aload_0
+    2459: new net.minecraft.client.KeyMapping
+    2462: dup
+    2463: ldc_w cp(8, 1211)
+    2466: bipush 68
+    2468: getstatic net.minecraft.client.KeyMapping$Category.MOVEMENT
+    2471: invokespecial net.minecraft.client.KeyMapping.<init>
+    2474: putfield net.minecraft.client.Options.keyRight
+    2477: aload_0
+    2478: new net.minecraft.client.KeyMapping
+    2481: dup
+    2482: ldc_w cp(8, 1216)
+    2485: bipush 32
+    2487: getstatic net.minecraft.client.KeyMapping$Category.MOVEMENT
+    2490: invokespecial net.minecraft.client.KeyMapping.<init>
+    2493: putfield net.minecraft.client.Options.keyJump
+    2496: aload_0
+    2497: new net.minecraft.client.ToggleKeyMapping
+    2500: dup
+    2501: ldc_w cp(8, 1148)
+    2504: sipush 1 84
+    2507: getstatic net.minecraft.client.KeyMapping$Category.MOVEMENT
+    2510: aload_0
+    2511: getfield net.minecraft.client.Options.toggleCrouch
+    2514: dup
+    2515: invokestatic java.util.Objects.requireNonNull
+    2518: pop
+    2519: invokedynamic indy@1222
+    2524: iconst_1
+    2525: invokespecial net.minecraft.client.ToggleKeyMapping.<init>
+    2528: putfield net.minecraft.client.Options.keyShift
+    2531: aload_0
+    2532: new net.minecraft.client.ToggleKeyMapping
+    2535: dup
+    2536: ldc_w cp(8, 1151)
+    2539: sipush 1 85
+    2542: getstatic net.minecraft.client.KeyMapping$Category.MOVEMENT
+    2545: aload_0
+    2546: getfield net.minecraft.client.Options.toggleSprint
+    2549: dup
+    2550: invokestatic java.util.Objects.requireNonNull
+    2553: pop
+    2554: invokedynamic indy@1222
+    2559: iconst_1
+    2560: invokespecial net.minecraft.client.ToggleKeyMapping.<init>
+    2563: putfield net.minecraft.client.Options.keySprint
+    2566: aload_0
+    2567: new net.minecraft.client.KeyMapping
+    2570: dup
+    2571: ldc_w cp(8, 1236)
+    2574: bipush 69
+    2576: getstatic net.minecraft.client.KeyMapping$Category.INVENTORY
+    2579: invokespecial net.minecraft.client.KeyMapping.<init>
+    2582: putfield net.minecraft.client.Options.keyInventory
+    2585: aload_0
+    2586: new net.minecraft.client.KeyMapping
+    2589: dup
+    2590: ldc_w cp(8, 1244)
+    2593: bipush 70
+    2595: getstatic net.minecraft.client.KeyMapping$Category.INVENTORY
+    2598: invokespecial net.minecraft.client.KeyMapping.<init>
+    2601: putfield net.minecraft.client.Options.keySwapOffhand
+    2604: aload_0
+    2605: new net.minecraft.client.KeyMapping
+    2608: dup
+    2609: ldc_w cp(8, 1249)
+    2612: bipush 81
+    2614: getstatic net.minecraft.client.KeyMapping$Category.INVENTORY
+    2617: invokespecial net.minecraft.client.KeyMapping.<init>
+    2620: putfield net.minecraft.client.Options.keyDrop
+    2623: aload_0
+    2624: new net.minecraft.client.ToggleKeyMapping
+    2627: dup
+    2628: ldc_w cp(8, 1157)
+    2631: getstatic com.mojang.blaze3d.platform.InputConstants$Type.MOUSE
+    2634: iconst_1
+    2635: getstatic net.minecraft.client.KeyMapping$Category.GAMEPLAY
+    2638: aload_0
+    2639: getfield net.minecraft.client.Options.toggleUse
+    2642: dup
+    2643: invokestatic java.util.Objects.requireNonNull
+    2646: pop
+    2647: invokedynamic indy@1222
+    2652: iconst_0
+    2653: invokespecial net.minecraft.client.ToggleKeyMapping.<init>
+    2656: putfield net.minecraft.client.Options.keyUse
+    2659: aload_0
+    2660: new net.minecraft.client.ToggleKeyMapping
+    2663: dup
+    2664: ldc_w cp(8, 1154)
+    2667: getstatic com.mojang.blaze3d.platform.InputConstants$Type.MOUSE
+    2670: iconst_0
+    2671: getstatic net.minecraft.client.KeyMapping$Category.GAMEPLAY
+    2674: aload_0
+    2675: getfield net.minecraft.client.Options.toggleAttack
+    2678: dup
+    2679: invokestatic java.util.Objects.requireNonNull
+    2682: pop
+    2683: invokedynamic indy@1222
+    2688: iconst_1
+    2689: invokespecial net.minecraft.client.ToggleKeyMapping.<init>
+    2692: putfield net.minecraft.client.Options.keyAttack
+    2695: aload_0
+    2696: new net.minecraft.client.KeyMapping
+    2699: dup
+    2700: ldc_w cp(8, 1272)
+    2703: getstatic com.mojang.blaze3d.platform.InputConstants$Type.MOUSE
+    2706: iconst_2
+    2707: getstatic net.minecraft.client.KeyMapping$Category.GAMEPLAY
+    2710: invokespecial net.minecraft.client.KeyMapping.<init>
+    2713: putfield net.minecraft.client.Options.keyPickItem
+    2716: aload_0
+    2717: new net.minecraft.client.KeyMapping
+    2720: dup
+    2721: ldc_w cp(8, 1280)
+    2724: bipush 84
+    2726: getstatic net.minecraft.client.KeyMapping$Category.MULTIPLAYER
+    2729: invokespecial net.minecraft.client.KeyMapping.<init>
+    2732: putfield net.minecraft.client.Options.keyChat
+    2735: aload_0
+    2736: new net.minecraft.client.KeyMapping
+    2739: dup
+    2740: ldc_w cp(8, 1288)
+    2743: sipush 1 2
+    2746: getstatic net.minecraft.client.KeyMapping$Category.MULTIPLAYER
+    2749: invokespecial net.minecraft.client.KeyMapping.<init>
+    2752: putfield net.minecraft.client.Options.keyPlayerList
+    2755: aload_0
+    2756: new net.minecraft.client.KeyMapping
+    2759: dup
+    2760: ldc_w cp(8, 1293)
+    2763: bipush 47
+    2765: getstatic net.minecraft.client.KeyMapping$Category.MULTIPLAYER
+    2768: invokespecial net.minecraft.client.KeyMapping.<init>
+    2771: putfield net.minecraft.client.Options.keyCommand
+    2774: aload_0
+    2775: new net.minecraft.client.KeyMapping
+    2778: dup
+    2779: ldc_w cp(8, 1298)
+    2782: bipush 79
+    2784: getstatic net.minecraft.client.KeyMapping$Category.MULTIPLAYER
+    2787: invokespecial net.minecraft.client.KeyMapping.<init>
+    2790: putfield net.minecraft.client.Options.keyFriends
+    2793: aload_0
+    2794: new net.minecraft.client.KeyMapping
+    2797: dup
+    2798: ldc_w cp(8, 1303)
+    2801: bipush 80
+    2803: getstatic net.minecraft.client.KeyMapping$Category.MULTIPLAYER
+    2806: invokespecial net.minecraft.client.KeyMapping.<init>
+    2809: putfield net.minecraft.client.Options.keySocialInteractions
+    2812: aload_0
+    2813: new net.minecraft.client.KeyMapping
+    2816: dup
+    2817: ldc_w cp(8, 1308)
+    2820: sipush 1 35
+    2823: getstatic net.minecraft.client.KeyMapping$Category.MISC
+    2826: invokespecial net.minecraft.client.KeyMapping.<init>
+    2829: putfield net.minecraft.client.Options.keyScreenshot
+    2832: aload_0
+    2833: new net.minecraft.client.KeyMapping
+    2836: dup
+    2837: ldc_w cp(8, 1316)
+    2840: sipush 1 38
+    2843: getstatic net.minecraft.client.KeyMapping$Category.MISC
+    2846: invokespecial net.minecraft.client.KeyMapping.<init>
+    2849: putfield net.minecraft.client.Options.keyTogglePerspective
+    2852: aload_0
+    2853: new net.minecraft.client.KeyMapping
+    2856: dup
+    2857: ldc_w cp(8, 1321)
+    2860: getstatic com.mojang.blaze3d.platform.InputConstants.UNKNOWN
+    2863: invokevirtual com.mojang.blaze3d.platform.InputConstants$Key.getValue
+    2866: getstatic net.minecraft.client.KeyMapping$Category.MISC
+    2869: invokespecial net.minecraft.client.KeyMapping.<init>
+    2872: putfield net.minecraft.client.Options.keySmoothCamera
+    2875: aload_0
+    2876: new net.minecraft.client.KeyMapping
+    2879: dup
+    2880: ldc_w cp(8, 1335)
+    2883: sipush 1 44
+    2886: getstatic net.minecraft.client.KeyMapping$Category.MISC
+    2889: invokespecial net.minecraft.client.KeyMapping.<init>
+    2892: putfield net.minecraft.client.Options.keyFullscreen
+    2895: aload_0
+    2896: new net.minecraft.client.KeyMapping
+    2899: dup
+    2900: ldc_w cp(8, 1340)
+    2903: bipush 76
+    2905: getstatic net.minecraft.client.KeyMapping$Category.MISC
+    2908: invokespecial net.minecraft.client.KeyMapping.<init>
+    2911: putfield net.minecraft.client.Options.keyAdvancements
+    2914: aload_0
+    2915: new net.minecraft.client.KeyMapping
+    2918: dup
+    2919: ldc_w cp(8, 1345)
+    2922: bipush 71
+    2924: getstatic net.minecraft.client.KeyMapping$Category.MISC
+    2927: invokespecial net.minecraft.client.KeyMapping.<init>
+    2930: putfield net.minecraft.client.Options.keyQuickActions
+    2933: aload_0
+    2934: new net.minecraft.client.KeyMapping
+    2937: dup
+    2938: ldc_w cp(8, 1350)
+    2941: sipush 1 34
+    2944: getstatic net.minecraft.client.KeyMapping$Category.MISC
+    2947: invokespecial net.minecraft.client.KeyMapping.<init>
+    2950: putfield net.minecraft.client.Options.keyToggleGui
+    2953: aload_0
+    2954: new net.minecraft.client.KeyMapping
+    2957: dup
+    2958: ldc_w cp(8, 1355)
+    2961: sipush 1 37
+    2964: getstatic net.minecraft.client.KeyMapping$Category.MISC
+    2967: invokespecial net.minecraft.client.KeyMapping.<init>
+    2970: putfield net.minecraft.client.Options.keyToggleSpectatorShaderEffects
+    2973: aload_0
+    2974: bipush 9
+    2976: anewarray net.minecraft.client.KeyMapping
+    2979: dup
+    2980: iconst_0
+    2981: new net.minecraft.client.KeyMapping
+    2984: dup
+    2985: ldc_w cp(8, 1360)
+    2988: bipush 49
+    2990: getstatic net.minecraft.client.KeyMapping$Category.INVENTORY
+    2993: invokespecial net.minecraft.client.KeyMapping.<init>
+    2996: aastore
+    2997: dup
+    2998: iconst_1
+    2999: new net.minecraft.client.KeyMapping
+    3002: dup
+    3003: ldc_w cp(8, 1362)
+    3006: bipush 50
+    3008: getstatic net.minecraft.client.KeyMapping$Category.INVENTORY
+    3011: invokespecial net.minecraft.client.KeyMapping.<init>
+    3014: aastore
+    3015: dup
+    3016: iconst_2
+    3017: new net.minecraft.client.KeyMapping
+    3020: dup
+    3021: ldc_w cp(8, 1364)
+    3024: bipush 51
+    3026: getstatic net.minecraft.client.KeyMapping$Category.INVENTORY
+    3029: invokespecial net.minecraft.client.KeyMapping.<init>
+    3032: aastore
+    3033: dup
+    3034: iconst_3
+    3035: new net.minecraft.client.KeyMapping
+    3038: dup
+    3039: ldc_w cp(8, 1366)
+    3042: bipush 52
+    3044: getstatic net.minecraft.client.KeyMapping$Category.INVENTORY
+    3047: invokespecial net.minecraft.client.KeyMapping.<init>
+    3050: aastore
+    3051: dup
+    3052: iconst_4
+    3053: new net.minecraft.client.KeyMapping
+    3056: dup
+    3057: ldc_w cp(8, 1368)
+    3060: bipush 53
+    3062: getstatic net.minecraft.client.KeyMapping$Category.INVENTORY
+    3065: invokespecial net.minecraft.client.KeyMapping.<init>
+    3068: aastore
+    3069: dup
+    3070: iconst_5
+    3071: new net.minecraft.client.KeyMapping
+    3074: dup
+    3075: ldc_w cp(8, 1370)
+    3078: bipush 54
+    3080: getstatic net.minecraft.client.KeyMapping$Category.INVENTORY
+    3083: invokespecial net.minecraft.client.KeyMapping.<init>
+    3086: aastore
+    3087: dup
+    3088: bipush 6
+    3090: new net.minecraft.client.KeyMapping
+    3093: dup
+    3094: ldc_w cp(8, 1372)
+    3097: bipush 55
+    3099: getstatic net.minecraft.client.KeyMapping$Category.INVENTORY
+    3102: invokespecial net.minecraft.client.KeyMapping.<init>
+    3105: aastore
+    3106: dup
+    3107: bipush 7
+    3109: new net.minecraft.client.KeyMapping
+    3112: dup
+    3113: ldc_w cp(8, 1374)
+    3116: bipush 56
+    3118: getstatic net.minecraft.client.KeyMapping$Category.INVENTORY
+    3121: invokespecial net.minecraft.client.KeyMapping.<init>
+    3124: aastore
+    3125: dup
+    3126: bipush 8
+    3128: new net.minecraft.client.KeyMapping
+    3131: dup
+    3132: ldc_w cp(8, 1376)
+    3135: bipush 57
+    3137: getstatic net.minecraft.client.KeyMapping$Category.INVENTORY
+    3140: invokespecial net.minecraft.client.KeyMapping.<init>
+    3143: aastore
+    3144: putfield net.minecraft.client.Options.keyHotbarSlots
+    3147: aload_0
+    3148: new net.minecraft.client.KeyMapping
+    3151: dup
+    3152: ldc_w cp(8, 1382)
+    3155: bipush 67
+    3157: getstatic net.minecraft.client.KeyMapping$Category.CREATIVE
+    3160: invokespecial net.minecraft.client.KeyMapping.<init>
+    3163: putfield net.minecraft.client.Options.keySaveHotbarActivator
+    3166: aload_0
+    3167: new net.minecraft.client.KeyMapping
+    3170: dup
+    3171: ldc_w cp(8, 1390)
+    3174: bipush 88
+    3176: getstatic net.minecraft.client.KeyMapping$Category.CREATIVE
+    3179: invokespecial net.minecraft.client.KeyMapping.<init>
+    3182: putfield net.minecraft.client.Options.keyLoadHotbarActivator
+    3185: aload_0
+    3186: new net.minecraft.client.KeyMapping
+    3189: dup
+    3190: ldc_w cp(8, 1395)
+    3193: getstatic com.mojang.blaze3d.platform.InputConstants.UNKNOWN
+    3196: invokevirtual com.mojang.blaze3d.platform.InputConstants$Key.getValue
+    3199: getstatic net.minecraft.client.KeyMapping$Category.SPECTATOR
+    3202: invokespecial net.minecraft.client.KeyMapping.<init>
+    3205: putfield net.minecraft.client.Options.keySpectatorOutlines
+    3208: aload_0
+    3209: new net.minecraft.client.KeyMapping
+    3212: dup
+    3213: ldc_w cp(8, 1403)
+    3216: getstatic com.mojang.blaze3d.platform.InputConstants$Type.MOUSE
+    3219: iconst_2
+    3220: getstatic net.minecraft.client.KeyMapping$Category.SPECTATOR
+    3223: invokespecial net.minecraft.client.KeyMapping.<init>
+    3226: putfield net.minecraft.client.Options.keySpectatorHotbar
+    3229: aload_0
+    3230: new net.minecraft.client.KeyMapping
+    3233: dup
+    3234: ldc_w cp(8, 1408)
+    3237: getstatic com.mojang.blaze3d.platform.InputConstants$Type.KEYSYM
+    3240: sipush 1 36
+    3243: getstatic net.minecraft.client.KeyMapping$Category.DEBUG
+    3246: bipush 254
+    3248: invokespecial net.minecraft.client.KeyMapping.<init>
+    3251: putfield net.minecraft.client.Options.keyDebugOverlay
+    3254: aload_0
+    3255: new net.minecraft.client.KeyMapping
+    3258: dup
+    3259: ldc_w cp(8, 1422)
+    3262: getstatic com.mojang.blaze3d.platform.InputConstants$Type.KEYSYM
+    3265: sipush 1 36
+    3268: getstatic net.minecraft.client.KeyMapping$Category.DEBUG
+    3271: iconst_m1
+    3272: invokespecial net.minecraft.client.KeyMapping.<init>
+    3275: putfield net.minecraft.client.Options.keyDebugModifier
+    3278: aload_0
+    3279: new net.minecraft.client.KeyMapping
+    3282: dup
+    3283: ldc_w cp(8, 1427)
+    3286: getstatic com.mojang.blaze3d.platform.InputConstants$Type.KEYSYM
+    3289: bipush 67
+    3291: getstatic net.minecraft.client.KeyMapping$Category.DEBUG
+    3294: invokespecial net.minecraft.client.KeyMapping.<init>
+    3297: putfield net.minecraft.client.Options.keyDebugCrash
+    3300: aload_0
+    3301: new net.minecraft.client.KeyMapping
+    3304: dup
+    3305: ldc_w cp(8, 1432)
+    3308: getstatic com.mojang.blaze3d.platform.InputConstants$Type.KEYSYM
+    3311: bipush 65
+    3313: getstatic net.minecraft.client.KeyMapping$Category.DEBUG
+    3316: invokespecial net.minecraft.client.KeyMapping.<init>
+    3319: putfield net.minecraft.client.Options.keyDebugReloadChunk
+    3322: aload_0
+    3323: new net.minecraft.client.KeyMapping
+    3326: dup
+    3327: ldc_w cp(8, 1437)
+    3330: getstatic com.mojang.blaze3d.platform.InputConstants$Type.KEYSYM
+    3333: bipush 66
+    3335: getstatic net.minecraft.client.KeyMapping$Category.DEBUG
+    3338: invokespecial net.minecraft.client.KeyMapping.<init>
+    3341: putfield net.minecraft.client.Options.keyDebugShowHitboxes
+    3344: aload_0
+    3345: new net.minecraft.client.KeyMapping
+    3348: dup
+    3349: ldc_w cp(8, 1442)
+    3352: getstatic com.mojang.blaze3d.platform.InputConstants$Type.KEYSYM
+    3355: bipush 68
+    3357: getstatic net.minecraft.client.KeyMapping$Category.DEBUG
+    3360: invokespecial net.minecraft.client.KeyMapping.<init>
+    3363: putfield net.minecraft.client.Options.keyDebugClearChat
+    3366: aload_0
+    3367: new net.minecraft.client.KeyMapping
+    3370: dup
+    3371: ldc_w cp(8, 1447)
+    3374: getstatic com.mojang.blaze3d.platform.InputConstants$Type.KEYSYM
+    3377: bipush 71
+    3379: getstatic net.minecraft.client.KeyMapping$Category.DEBUG
+    3382: invokespecial net.minecraft.client.KeyMapping.<init>
+    3385: putfield net.minecraft.client.Options.keyDebugShowChunkBorders
+    3388: aload_0
+    3389: new net.minecraft.client.KeyMapping
+    3392: dup
+    3393: ldc_w cp(8, 1452)
+    3396: getstatic com.mojang.blaze3d.platform.InputConstants$Type.KEYSYM
+    3399: bipush 72
+    3401: getstatic net.minecraft.client.KeyMapping$Category.DEBUG
+    3404: invokespecial net.minecraft.client.KeyMapping.<init>
+    3407: putfield net.minecraft.client.Options.keyDebugShowAdvancedTooltips
+    3410: aload_0
+    3411: new net.minecraft.client.KeyMapping
+    3414: dup
+    3415: ldc_w cp(8, 1457)
+    3418: getstatic com.mojang.blaze3d.platform.InputConstants$Type.KEYSYM
+    3421: bipush 73
+    3423: getstatic net.minecraft.client.KeyMapping$Category.DEBUG
+    3426: invokespecial net.minecraft.client.KeyMapping.<init>
+    3429: putfield net.minecraft.client.Options.keyDebugCopyRecreateCommand
+    3432: aload_0
+    3433: new net.minecraft.client.KeyMapping
+    3436: dup
+    3437: ldc_w cp(8, 1462)
+    3440: getstatic com.mojang.blaze3d.platform.InputConstants$Type.KEYSYM
+    3443: bipush 78
+    3445: getstatic net.minecraft.client.KeyMapping$Category.DEBUG
+    3448: invokespecial net.minecraft.client.KeyMapping.<init>
+    3451: putfield net.minecraft.client.Options.keyDebugSpectate
+    3454: aload_0
+    3455: new net.minecraft.client.KeyMapping
+    3458: dup
+    3459: ldc_w cp(8, 1467)
+    3462: getstatic com.mojang.blaze3d.platform.InputConstants$Type.KEYSYM
+    3465: sipush 1 37
+    3468: getstatic net.minecraft.client.KeyMapping$Category.DEBUG
+    3471: invokespecial net.minecraft.client.KeyMapping.<init>
+    3474: putfield net.minecraft.client.Options.keyDebugSwitchGameMode
+    3477: aload_0
+    3478: new net.minecraft.client.KeyMapping
+    3481: dup
+    3482: ldc_w cp(8, 1472)
+    3485: getstatic com.mojang.blaze3d.platform.InputConstants$Type.KEYSYM
+    3488: sipush 1 39
+    3491: getstatic net.minecraft.client.KeyMapping$Category.DEBUG
+    3494: invokespecial net.minecraft.client.KeyMapping.<init>
+    3497: putfield net.minecraft.client.Options.keyDebugDebugOptions
+    3500: aload_0
+    3501: new net.minecraft.client.KeyMapping
+    3504: dup
+    3505: ldc_w cp(8, 1477)
+    3508: getstatic com.mojang.blaze3d.platform.InputConstants$Type.KEYSYM
+    3511: bipush 80
+    3513: getstatic net.minecraft.client.KeyMapping$Category.DEBUG
+    3516: invokespecial net.minecraft.client.KeyMapping.<init>
+    3519: putfield net.minecraft.client.Options.keyDebugFocusPause
+    3522: aload_0
+    3523: new net.minecraft.client.KeyMapping
+    3526: dup
+    3527: ldc_w cp(8, 1482)
+    3530: getstatic com.mojang.blaze3d.platform.InputConstants$Type.KEYSYM
+    3533: bipush 83
+    3535: getstatic net.minecraft.client.KeyMapping$Category.DEBUG
+    3538: invokespecial net.minecraft.client.KeyMapping.<init>
+    3541: putfield net.minecraft.client.Options.keyDebugDumpDynamicTextures
+    3544: aload_0
+    3545: new net.minecraft.client.KeyMapping
+    3548: dup
+    3549: ldc_w cp(8, 1487)
+    3552: getstatic com.mojang.blaze3d.platform.InputConstants$Type.KEYSYM
+    3555: bipush 84
+    3557: getstatic net.minecraft.client.KeyMapping$Category.DEBUG
+    3560: invokespecial net.minecraft.client.KeyMapping.<init>
+    3563: putfield net.minecraft.client.Options.keyDebugReloadResourcePacks
+    3566: aload_0
+    3567: new net.minecraft.client.KeyMapping
+    3570: dup
+    3571: ldc_w cp(8, 1492)
+    3574: getstatic com.mojang.blaze3d.platform.InputConstants$Type.KEYSYM
+    3577: bipush 76
+    3579: getstatic net.minecraft.client.KeyMapping$Category.DEBUG
+    3582: invokespecial net.minecraft.client.KeyMapping.<init>
+    3585: putfield net.minecraft.client.Options.keyDebugProfiling
+    3588: aload_0
+    3589: new net.minecraft.client.KeyMapping
+    3592: dup
+    3593: ldc_w cp(8, 1497)
+    3596: getstatic com.mojang.blaze3d.platform.InputConstants$Type.KEYSYM
+    3599: bipush 67
+    3601: getstatic net.minecraft.client.KeyMapping$Category.DEBUG
+    3604: invokespecial net.minecraft.client.KeyMapping.<init>
+    3607: putfield net.minecraft.client.Options.keyDebugCopyLocation
+    3610: aload_0
+    3611: new net.minecraft.client.KeyMapping
+    3614: dup
+    3615: ldc_w cp(8, 1502)
+    3618: getstatic com.mojang.blaze3d.platform.InputConstants$Type.KEYSYM
+    3621: bipush 86
+    3623: getstatic net.minecraft.client.KeyMapping$Category.DEBUG
+    3626: invokespecial net.minecraft.client.KeyMapping.<init>
+    3629: putfield net.minecraft.client.Options.keyDebugDumpVersion
+    3632: aload_0
+    3633: new net.minecraft.client.KeyMapping
+    3636: dup
+    3637: ldc_w cp(8, 1507)
+    3640: getstatic com.mojang.blaze3d.platform.InputConstants$Type.KEYSYM
+    3643: bipush 49
+    3645: getstatic net.minecraft.client.KeyMapping$Category.DEBUG
+    3648: iconst_1
+    3649: invokespecial net.minecraft.client.KeyMapping.<init>
+    3652: putfield net.minecraft.client.Options.keyDebugPofilingChart
+    3655: aload_0
+    3656: new net.minecraft.client.KeyMapping
+    3659: dup
+    3660: ldc_w cp(8, 1512)
+    3663: getstatic com.mojang.blaze3d.platform.InputConstants$Type.KEYSYM
+    3666: bipush 50
+    3668: getstatic net.minecraft.client.KeyMapping$Category.DEBUG
+    3671: iconst_2
+    3672: invokespecial net.minecraft.client.KeyMapping.<init>
+    3675: putfield net.minecraft.client.Options.keyDebugFpsCharts
+    3678: aload_0
+    3679: new net.minecraft.client.KeyMapping
+    3682: dup
+    3683: ldc_w cp(8, 1517)
+    3686: getstatic com.mojang.blaze3d.platform.InputConstants$Type.KEYSYM
+    3689: bipush 51
+    3691: getstatic net.minecraft.client.KeyMapping$Category.DEBUG
+    3694: iconst_3
+    3695: invokespecial net.minecraft.client.KeyMapping.<init>
+    3698: putfield net.minecraft.client.Options.keyDebugNetworkCharts
+    3701: aload_0
+    3702: new net.minecraft.client.KeyMapping
+    3705: dup
+    3706: ldc_w cp(8, 1522)
+    3709: getstatic com.mojang.blaze3d.platform.InputConstants$Type.KEYSYM
+    3712: bipush 52
+    3714: getstatic net.minecraft.client.KeyMapping$Category.DEBUG
+    3717: iconst_4
+    3718: invokespecial net.minecraft.client.KeyMapping.<init>
+    3721: putfield net.minecraft.client.Options.keyDebugLightmapTexture
+    3724: aload_0
+    3725: bipush 20
+    3727: anewarray net.minecraft.client.KeyMapping
+    3730: dup
+    3731: iconst_0
+    3732: aload_0
+    3733: getfield net.minecraft.client.Options.keyDebugReloadChunk
+    3736: aastore
+    3737: dup
+    3738: iconst_1
+    3739: aload_0
+    3740: getfield net.minecraft.client.Options.keyDebugShowHitboxes
+    3743: aastore
+    3744: dup
+    3745: iconst_2
+    3746: aload_0
+    3747: getfield net.minecraft.client.Options.keyDebugClearChat
+    3750: aastore
+    3751: dup
+    3752: iconst_3
+    3753: aload_0
+    3754: getfield net.minecraft.client.Options.keyDebugCrash
+    3757: aastore
+    3758: dup
+    3759: iconst_4
+    3760: aload_0
+    3761: getfield net.minecraft.client.Options.keyDebugShowChunkBorders
+    3764: aastore
+    3765: dup
+    3766: iconst_5
+    3767: aload_0
+    3768: getfield net.minecraft.client.Options.keyDebugShowAdvancedTooltips
+    3771: aastore
+    3772: dup
+    3773: bipush 6
+    3775: aload_0
+    3776: getfield net.minecraft.client.Options.keyDebugCopyRecreateCommand
+    3779: aastore
+    3780: dup
+    3781: bipush 7
+    3783: aload_0
+    3784: getfield net.minecraft.client.Options.keyDebugSpectate
+    3787: aastore
+    3788: dup
+    3789: bipush 8
+    3791: aload_0
+    3792: getfield net.minecraft.client.Options.keyDebugSwitchGameMode
+    3795: aastore
+    3796: dup
+    3797: bipush 9
+    3799: aload_0
+    3800: getfield net.minecraft.client.Options.keyDebugDebugOptions
+    3803: aastore
+    3804: dup
+    3805: bipush 10
+    3807: aload_0
+    3808: getfield net.minecraft.client.Options.keyDebugFocusPause
+    3811: aastore
+    3812: dup
+    3813: bipush 11
+    3815: aload_0
+    3816: getfield net.minecraft.client.Options.keyDebugDumpDynamicTextures
+    3819: aastore
+    3820: dup
+    3821: bipush 12
+    3823: aload_0
+    3824: getfield net.minecraft.client.Options.keyDebugReloadResourcePacks
+    3827: aastore
+    3828: dup
+    3829: bipush 13
+    3831: aload_0
+    3832: getfield net.minecraft.client.Options.keyDebugProfiling
+    3835: aastore
+    3836: dup
+    3837: bipush 14
+    3839: aload_0
+    3840: getfield net.minecraft.client.Options.keyDebugCopyLocation
+    3843: aastore
+    3844: dup
+    3845: bipush 15
+    3847: aload_0
+    3848: getfield net.minecraft.client.Options.keyDebugDumpVersion
+    3851: aastore
+    3852: dup
+    3853: bipush 16
+    3855: aload_0
+    3856: getfield net.minecraft.client.Options.keyDebugPofilingChart
+    3859: aastore
+    3860: dup
+    3861: bipush 17
+    3863: aload_0
+    3864: getfield net.minecraft.client.Options.keyDebugFpsCharts
+    3867: aastore
+    3868: dup
+    3869: bipush 18
+    3871: aload_0
+    3872: getfield net.minecraft.client.Options.keyDebugNetworkCharts
+    3875: aastore
+    3876: dup
+    3877: bipush 19
+    3879: aload_0
+    3880: getfield net.minecraft.client.Options.keyDebugLightmapTexture
+    3883: aastore
+    3884: putfield net.minecraft.client.Options.debugKeys
+    3887: aload_0
+    3888: iconst_3
+    3889: anewarray [Lnet.minecraft.client.KeyMapping;
+    3892: dup
+    3893: iconst_0
+    3894: bipush 32
+    3896: anewarray net.minecraft.client.KeyMapping
+    3899: dup
+    3900: iconst_0
+    3901: aload_0
+    3902: getfield net.minecraft.client.Options.keyAttack
+    3905: aastore
+    3906: dup
+    3907: iconst_1
+    3908: aload_0
+    3909: getfield net.minecraft.client.Options.keyUse
+    3912: aastore
+    3913: dup
+    3914: iconst_2
+    3915: aload_0
+    3916: getfield net.minecraft.client.Options.keyUp
+    3919: aastore
+    3920: dup
+    3921: iconst_3
+    3922: aload_0
+    3923: getfield net.minecraft.client.Options.keyLeft
+    3926: aastore
+    3927: dup
+    3928: iconst_4
+    3929: aload_0
+    3930: getfield net.minecraft.client.Options.keyDown
+    3933: aastore
+    3934: dup
+    3935: iconst_5
+    3936: aload_0
+    3937: getfield net.minecraft.client.Options.keyRight
+    3940: aastore
+    3941: dup
+    3942: bipush 6
+    3944: aload_0
+    3945: getfield net.minecraft.client.Options.keyJump
+    3948: aastore
+    3949: dup
+    3950: bipush 7
+    3952: aload_0
+    3953: getfield net.minecraft.client.Options.keyShift
+    3956: aastore
+    3957: dup
+    3958: bipush 8
+    3960: aload_0
+    3961: getfield net.minecraft.client.Options.keySprint
+    3964: aastore
+    3965: dup
+    3966: bipush 9
+    3968: aload_0
+    3969: getfield net.minecraft.client.Options.keyDrop
+    3972: aastore
+    3973: dup
+    3974: bipush 10
+    3976: aload_0
+    3977: getfield net.minecraft.client.Options.keyInventory
+    3980: aastore
+    3981: dup
+    3982: bipush 11
+    3984: aload_0
+    3985: getfield net.minecraft.client.Options.keyChat
+    3988: aastore
+    3989: dup
+    3990: bipush 12
+    3992: aload_0
+    3993: getfield net.minecraft.client.Options.keyPlayerList
+    3996: aastore
+    3997: dup
+    3998: bipush 13
+    4000: aload_0
+    4001: getfield net.minecraft.client.Options.keyPickItem
+    4004: aastore
+    4005: dup
+    4006: bipush 14
+    4008: aload_0
+    4009: getfield net.minecraft.client.Options.keyCommand
+    4012: aastore
+    4013: dup
+    4014: bipush 15
+    4016: aload_0
+    4017: getfield net.minecraft.client.Options.keyFriends
+    4020: aastore
+    4021: dup
+    4022: bipush 16
+    4024: aload_0
+    4025: getfield net.minecraft.client.Options.keySocialInteractions
+    4028: aastore
+    4029: dup
+    4030: bipush 17
+    4032: aload_0
+    4033: getfield net.minecraft.client.Options.keyToggleGui
+    4036: aastore
+    4037: dup
+    4038: bipush 18
+    4040: aload_0
+    4041: getfield net.minecraft.client.Options.keyToggleSpectatorShaderEffects
+    4044: aastore
+    4045: dup
+    4046: bipush 19
+    4048: aload_0
+    4049: getfield net.minecraft.client.Options.keyScreenshot
+    4052: aastore
+    4053: dup
+    4054: bipush 20
+    4056: aload_0
+    4057: getfield net.minecraft.client.Options.keyTogglePerspective
+    4060: aastore
+    4061: dup
+    4062: bipush 21
+    4064: aload_0
+    4065: getfield net.minecraft.client.Options.keySmoothCamera
+    4068: aastore
+    4069: dup
+    4070: bipush 22
+    4072: aload_0
+    4073: getfield net.minecraft.client.Options.keyFullscreen
+    4076: aastore
+    4077: dup
+    4078: bipush 23
+    4080: aload_0
+    4081: getfield net.minecraft.client.Options.keySpectatorOutlines
+    4084: aastore
+    4085: dup
+    4086: bipush 24
+    4088: aload_0
+    4089: getfield net.minecraft.client.Options.keySpectatorHotbar
+    4092: aastore
+    4093: dup
+    4094: bipush 25
+    4096: aload_0
+    4097: getfield net.minecraft.client.Options.keySwapOffhand
+    4100: aastore
+    4101: dup
+    4102: bipush 26
+    4104: aload_0
+    4105: getfield net.minecraft.client.Options.keySaveHotbarActivator
+    4108: aastore
+    4109: dup
+    4110: bipush 27
+    4112: aload_0
+    4113: getfield net.minecraft.client.Options.keyLoadHotbarActivator
+    4116: aastore
+    4117: dup
+    4118: bipush 28
+    4120: aload_0
+    4121: getfield net.minecraft.client.Options.keyAdvancements
+    4124: aastore
+    4125: dup
+    4126: bipush 29
+    4128: aload_0
+    4129: getfield net.minecraft.client.Options.keyQuickActions
+    4132: aastore
+    4133: dup
+    4134: bipush 30
+    4136: aload_0
+    4137: getfield net.minecraft.client.Options.keyDebugOverlay
+    4140: aastore
+    4141: dup
+    4142: bipush 31
+    4144: aload_0
+    4145: getfield net.minecraft.client.Options.keyDebugModifier
+    4148: aastore
+    4149: aastore
+    4150: dup
+    4151: iconst_1
+    4152: aload_0
+    4153: getfield net.minecraft.client.Options.keyHotbarSlots
+    4156: aastore
+    4157: dup
+    4158: iconst_2
+    4159: aload_0
+    4160: getfield net.minecraft.client.Options.debugKeys
+    4163: aastore
+    4164: invokestatic java.util.stream.Stream.of
+    4167: invokedynamic indy@1535
+    4172: invokeinterface java.util.stream.Stream.flatMap
+    4177: invokedynamic indy@1540
+    4182: invokeinterface java.util.stream.Stream.toArray
+    4187: checkcast [Lnet.minecraft.client.KeyMapping;
+    4190: putfield net.minecraft.client.Options.keyMappings
+    4193: aload_0
+    4194: getstatic net.minecraft.client.CameraType.FIRST_PERSON
+    4197: putfield net.minecraft.client.Options.cameraType
+    4200: aload_0
+    4201: ldc cp(8, 10)
+    4203: putfield net.minecraft.client.Options.lastMpIp
+    4206: aload_0
+    4207: new net.minecraft.client.OptionInstance
+    4210: dup
+    4211: ldc_w cp(8, 1562)
+    4214: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    4217: invokedynamic indy@1563
+    4222: new net.minecraft.client.OptionInstance$IntRange
+    4225: dup
+    4226: bipush 30
+    4228: bipush 110
+    4230: invokespecial net.minecraft.client.OptionInstance$IntRange.<init>
+    4233: getstatic com.mojang.serialization.Codec.DOUBLE
+    4236: invokedynamic indy@1567
+    4241: invokedynamic indy@1568
+    4246: invokeinterface com.mojang.serialization.codecs.PrimitiveCodec.xmap
+    4251: bipush 70
+    4253: invokestatic java.lang.Integer.valueOf
+    4256: getstatic net.minecraft.client.OptionInstance.NO_ACTION
+    4259: invokespecial net.minecraft.client.OptionInstance.<init>
+    4262: putfield net.minecraft.client.Options.fov
+    4265: aload_0
+    4266: ldc_w cp(8, 1575)
+    4269: getstatic net.minecraft.client.Options.TELEMETRY_TOOLTIP
+    4272: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    4275: invokedynamic indy@1579
+    4280: iconst_0
+    4281: getstatic net.minecraft.client.OptionInstance.NO_ACTION
+    4284: invokestatic net.minecraft.client.OptionInstance.createBoolean
+    4287: putfield net.minecraft.client.Options.telemetryOptInExtra
+    4290: aload_0
+    4291: new net.minecraft.client.OptionInstance
+    4294: dup
+    4295: ldc_w cp(8, 1584)
+    4298: getstatic net.minecraft.client.Options.ACCESSIBILITY_TOOLTIP_SCREEN_EFFECT
+    4301: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    4304: invokedynamic indy@444
+    4309: getstatic net.minecraft.client.OptionInstance$UnitDouble.INSTANCE
+    4312: dconst_1
+    4313: invokestatic java.lang.Double.valueOf
+    4316: getstatic net.minecraft.client.OptionInstance.NO_ACTION
+    4319: invokespecial net.minecraft.client.OptionInstance.<init>
+    4322: putfield net.minecraft.client.Options.screenEffectScale
+    4325: aload_0
+    4326: new net.minecraft.client.OptionInstance
+    4329: dup
+    4330: ldc_w cp(8, 1589)
+    4333: getstatic net.minecraft.client.Options.ACCESSIBILITY_TOOLTIP_FOV_EFFECT
+    4336: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    4339: invokedynamic indy@444
+    4344: getstatic net.minecraft.client.OptionInstance$UnitDouble.INSTANCE
+    4347: invokedynamic indy@1593
+    4352: invokedynamic indy@1596
+    4357: invokevirtual net.minecraft.client.OptionInstance$UnitDouble.xmap
+    4360: dconst_0
+    4361: dconst_1
+    4362: invokestatic com.mojang.serialization.Codec.doubleRange
+    4365: dconst_1
+    4366: invokestatic java.lang.Double.valueOf
+    4369: getstatic net.minecraft.client.OptionInstance.NO_ACTION
+    4372: invokespecial net.minecraft.client.OptionInstance.<init>
+    4375: putfield net.minecraft.client.Options.fovEffectScale
+    4378: aload_0
+    4379: new net.minecraft.client.OptionInstance
+    4382: dup
+    4383: ldc_w cp(8, 1604)
+    4386: getstatic net.minecraft.client.Options.ACCESSIBILITY_TOOLTIP_DARKNESS_EFFECT
+    4389: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    4392: invokedynamic indy@444
+    4397: getstatic net.minecraft.client.OptionInstance$UnitDouble.INSTANCE
+    4400: invokedynamic indy@1593
+    4405: invokedynamic indy@1596
+    4410: invokevirtual net.minecraft.client.OptionInstance$UnitDouble.xmap
+    4413: dconst_1
+    4414: invokestatic java.lang.Double.valueOf
+    4417: getstatic net.minecraft.client.OptionInstance.NO_ACTION
+    4420: invokespecial net.minecraft.client.OptionInstance.<init>
+    4423: putfield net.minecraft.client.Options.darknessEffectScale
+    4426: aload_0
+    4427: new net.minecraft.client.OptionInstance
+    4430: dup
+    4431: ldc_w cp(8, 1609)
+    4434: getstatic net.minecraft.client.Options.ACCESSIBILITY_TOOLTIP_GLINT_SPEED
+    4437: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    4440: invokedynamic indy@444
+    4445: getstatic net.minecraft.client.OptionInstance$UnitDouble.INSTANCE
+    4448: ldc2_w double 0.5
+    4451: invokestatic java.lang.Double.valueOf
+    4454: getstatic net.minecraft.client.OptionInstance.NO_ACTION
+    4457: invokespecial net.minecraft.client.OptionInstance.<init>
+    4460: putfield net.minecraft.client.Options.glintSpeed
+    4463: aload_0
+    4464: new net.minecraft.client.OptionInstance
+    4467: dup
+    4468: ldc_w cp(8, 1614)
+    4471: getstatic net.minecraft.client.Options.ACCESSIBILITY_TOOLTIP_GLINT_STRENGTH
+    4474: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    4477: invokedynamic indy@444
+    4482: getstatic net.minecraft.client.OptionInstance$UnitDouble.INSTANCE
+    4485: ldc2_w double 0.75
+    4488: invokestatic java.lang.Double.valueOf
+    4491: getstatic net.minecraft.client.OptionInstance.NO_ACTION
+    4494: invokespecial net.minecraft.client.OptionInstance.<init>
+    4497: putfield net.minecraft.client.Options.glintStrength
+    4500: aload_0
+    4501: new net.minecraft.client.OptionInstance
+    4504: dup
+    4505: ldc_w cp(8, 1619)
+    4508: getstatic net.minecraft.client.Options.ACCESSIBILITY_TOOLTIP_DAMAGE_TILT_STRENGTH
+    4511: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    4514: invokedynamic indy@444
+    4519: getstatic net.minecraft.client.OptionInstance$UnitDouble.INSTANCE
+    4522: dconst_1
+    4523: invokestatic java.lang.Double.valueOf
+    4526: getstatic net.minecraft.client.OptionInstance.NO_ACTION
+    4529: invokespecial net.minecraft.client.OptionInstance.<init>
+    4532: putfield net.minecraft.client.Options.damageTiltStrength
+    4535: aload_0
+    4536: new net.minecraft.client.OptionInstance
+    4539: dup
+    4540: ldc_w cp(8, 1624)
+    4543: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    4546: invokedynamic indy@1625
+    4551: getstatic net.minecraft.client.OptionInstance$UnitDouble.INSTANCE
+    4554: ldc2_w double 0.5
+    4557: invokestatic java.lang.Double.valueOf
+    4560: getstatic net.minecraft.client.OptionInstance.NO_ACTION
+    4563: invokespecial net.minecraft.client.OptionInstance.<init>
+    4566: putfield net.minecraft.client.Options.gamma
+    4569: aload_0
+    4570: new net.minecraft.client.OptionInstance
+    4573: dup
+    4574: ldc_w cp(8, 1627)
+    4577: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    4580: invokedynamic indy@1628
+    4585: new net.minecraft.client.OptionInstance$ClampingLazyMaxIntRange
+    4588: dup
+    4589: iconst_0
+    4590: invokedynamic indy@1631
+    4595: ldc_w int 2147483646
+    4598: invokespecial net.minecraft.client.OptionInstance$ClampingLazyMaxIntRange.<init>
+    4601: iconst_0
+    4602: invokestatic java.lang.Integer.valueOf
+    4605: aload_0
+    4606: invokedynamic indy@1639
+    4611: invokespecial net.minecraft.client.OptionInstance.<init>
+    4614: putfield net.minecraft.client.Options.guiScale
+    4617: aload_0
+    4618: new net.minecraft.client.OptionInstance
+    4621: dup
+    4622: ldc_w cp(8, 1641)
+    4625: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    4628: invokedynamic indy@1642
+    4633: new net.minecraft.client.OptionInstance$Enum
+    4636: dup
+    4637: invokestatic net.minecraft.server.level.ParticleStatus.values
+    4640: invokestatic java.util.Arrays.asList
+    4643: getstatic net.minecraft.server.level.ParticleStatus.LEGACY_CODEC
+    4646: invokespecial net.minecraft.client.OptionInstance$Enum.<init>
+    4649: getstatic net.minecraft.server.level.ParticleStatus.ALL
+    4652: aload_0
+    4653: invokedynamic indy@1652
+    4658: invokespecial net.minecraft.client.OptionInstance.<init>
+    4661: putfield net.minecraft.client.Options.particles
+    4664: aload_0
+    4665: new net.minecraft.client.OptionInstance
+    4668: dup
+    4669: ldc_w cp(8, 1654)
+    4672: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    4675: aload_0
+    4676: invokedynamic indy@1655
+    4681: new net.minecraft.client.OptionInstance$Enum
+    4684: dup
+    4685: invokestatic net.minecraft.client.NarratorStatus.values
+    4688: invokestatic java.util.Arrays.asList
+    4691: getstatic net.minecraft.client.NarratorStatus.LEGACY_CODEC
+    4694: invokespecial net.minecraft.client.OptionInstance$Enum.<init>
+    4697: getstatic net.minecraft.client.NarratorStatus.OFF
+    4700: aload_0
+    4701: invokedynamic indy@1668
+    4706: invokespecial net.minecraft.client.OptionInstance.<init>
+    4709: putfield net.minecraft.client.Options.narrator
+    4712: aload_0
+    4713: ldc_w cp(8, 1672)
+    4716: putfield net.minecraft.client.Options.languageCode
+    4719: aload_0
+    4720: new net.minecraft.client.OptionInstance
+    4723: dup
+    4724: ldc_w cp(8, 1677)
+    4727: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    4730: invokedynamic indy@1678
+    4735: new net.minecraft.client.OptionInstance$LazyEnum
+    4738: dup
+    4739: invokedynamic indy@1681
+    4744: invokedynamic indy@1684
+    4749: getstatic com.mojang.serialization.Codec.STRING
+    4752: invokespecial net.minecraft.client.OptionInstance$LazyEnum.<init>
+    4755: ldc cp(8, 10)
+    4757: invokedynamic indy@1691
+    4762: invokespecial net.minecraft.client.OptionInstance.<init>
+    4765: putfield net.minecraft.client.Options.soundDevice
+    4768: aload_0
+    4769: iconst_1
+    4770: putfield net.minecraft.client.Options.onboardAccessibility
+    4773: aload_0
+    4774: new net.minecraft.client.OptionInstance
+    4777: dup
+    4778: ldc_w cp(8, 1693)
+    4781: getstatic net.minecraft.client.Options.MUSIC_FREQUENCY_TOOLTIP
+    4784: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+    4787: invokedynamic indy@1697
+    4792: new net.minecraft.client.OptionInstance$Enum
+    4795: dup
+    4796: invokestatic net.minecraft.client.sounds.MusicManager$MusicFrequency.values
+    4799: invokestatic java.util.Arrays.asList
+    4802: getstatic net.minecraft.client.sounds.MusicManager$MusicFrequency.CODEC
+    4805: invokespecial net.minecraft.client.OptionInstance$Enum.<init>
+    4808: getstatic net.minecraft.client.sounds.MusicManager$MusicFrequency.DEFAULT
+    4811: invokedynamic indy@1707
+    4816: invokespecial net.minecraft.client.OptionInstance.<init>
+    4819: putfield net.minecraft.client.Options.musicFrequency
+    4822: aload_0
+    4823: new net.minecraft.client.OptionInstance
+    4826: dup
+    4827: ldc_w cp(8, 1709)
+    4830: invokedynamic indy@1710
+    4835: invokedynamic indy@1711
+    4840: new net.minecraft.client.OptionInstance$Enum
+    4843: dup
+    4844: invokestatic net.minecraft.client.MusicToastDisplayState.values
+    4847: invokestatic java.util.Arrays.asList
+    4850: getstatic net.minecraft.client.MusicToastDisplayState.CODEC
+    4853: invokespecial net.minecraft.client.OptionInstance$Enum.<init>
+    4856: getstatic net.minecraft.client.MusicToastDisplayState.NEVER
+    4859: aload_0
+    4860: invokedynamic indy@1722
+    4865: invokespecial net.minecraft.client.OptionInstance.<init>
+    4868: putfield net.minecraft.client.Options.musicToast
+    4871: aload_0
+    4872: iconst_1
+    4873: putfield net.minecraft.client.Options.startedCleanly
+    4876: aload_0
+    4877: aload_1
+    4878: putfield net.minecraft.client.Options.minecraft
+    4881: aload_0
+    4882: new java.io.File
+    4885: dup
+    4886: aload_2
+    4887: ldc_w cp(8, 1729)
+    4890: invokespecial java.io.File.<init>
+    4893: putfield net.minecraft.client.Options.optionsFile
+    4896: invokestatic java.lang.Runtime.getRuntime
+    4899: invokevirtual java.lang.Runtime.maxMemory
+    4902: ldc2_w long 1000000000
+    4905: lcmp
+    4906: iflt -> 4913
+    4909: iconst_1
+    4910: goto -> 4914
+    4913: iconst_0
+    4914: istore_3
+    4915: aload_0
+    4916: new net.minecraft.client.OptionInstance
+    4919: dup
+    4920: ldc_w cp(8, 1750)
+    4923: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    4926: invokedynamic indy@1751
+    4931: new net.minecraft.client.OptionInstance$IntRange
+    4934: dup
+    4935: iconst_2
+    4936: iload_3
+    4937: ifeq -> 4945
+    4940: bipush 32
+    4942: goto -> 4947
+    4945: bipush 16
+    4947: iconst_0
+    4948: invokespecial net.minecraft.client.OptionInstance$IntRange.<init>
+    4951: bipush 12
+    4953: invokestatic java.lang.Integer.valueOf
+    4956: aload_0
+    4957: invokedynamic indy@1752
+    4962: invokespecial net.minecraft.client.OptionInstance.<init>
+    4965: putfield net.minecraft.client.Options.renderDistance
+    4968: aload_0
+    4969: new net.minecraft.client.OptionInstance
+    4972: dup
+    4973: ldc_w cp(8, 1754)
+    4976: invokestatic net.minecraft.client.OptionInstance.noTooltip
+    4979: invokedynamic indy@1755
+    4984: new net.minecraft.client.OptionInstance$IntRange
+    4987: dup
+    4988: getstatic net.minecraft.SharedConstants.DEBUG_ALLOW_LOW_SIM_DISTANCE
+    4991: ifeq -> 4998
+    4994: iconst_2
+    4995: goto -> 4999
+    4998: iconst_5
+    4999: iload_3
+    5000: ifeq -> 5008
+    5003: bipush 32
+    5005: goto -> 5010
+    5008: bipush 16
+    5010: iconst_0
+    5011: invokespecial net.minecraft.client.OptionInstance$IntRange.<init>
+    5014: bipush 12
+    5016: invokestatic java.lang.Integer.valueOf
+    5019: aload_0
+    5020: invokedynamic indy@1759
+    5025: invokespecial net.minecraft.client.OptionInstance.<init>
+    5028: putfield net.minecraft.client.Options.simulationDistance
+    5031: aload_0
+    5032: invokestatic net.minecraft.util.Util.getPlatform
+    5035: getstatic net.minecraft.util.Util$OS.WINDOWS
+    5038: if_acmpne -> 5045
+    5041: iconst_1
+    5042: goto -> 5046
+    5045: iconst_0
+    5046: putfield net.minecraft.client.Options.syncWrites
+    5049: aload_0
+    5050: invokevirtual net.minecraft.client.Options.load
+    5053: return
+
+   == backgroundForChatOnly()Lnet/minecraft/client/OptionInstance;
+    0: aload_0
+    1: getfield net.minecraft.client.Options.backgroundForChatOnly
+    4: areturn
+
+   == getBackgroundColor(I)I
+    0: aload_0
+    1: getfield net.minecraft.client.Options.backgroundForChatOnly
+    4: invokevirtual net.minecraft.client.OptionInstance.get
+    7: checkcast java.lang.Boolean
+    10: invokevirtual java.lang.Boolean.booleanValue
+    13: ifeq -> 20
+    16: iload_1
+    17: goto -> 39
+    20: aload_0
+    21: getfield net.minecraft.client.Options.textBackgroundOpacity
+    24: invokevirtual net.minecraft.client.OptionInstance.get
+    27: checkcast java.lang.Double
+    30: invokevirtual java.lang.Double.floatValue
+    33: fconst_0
+    34: fconst_0
+    35: fconst_0
+    36: invokestatic net.minecraft.util.ARGB.colorFromFloat
+    39: ireturn
+
+   == getBackgroundOpacity(F)F
+    0: aload_0
+    1: getfield net.minecraft.client.Options.backgroundForChatOnly
+    4: invokevirtual net.minecraft.client.OptionInstance.get
+    7: checkcast java.lang.Boolean
+    10: invokevirtual java.lang.Boolean.booleanValue
+    13: ifeq -> 20
+    16: fload_1
+    17: goto -> 33
+    20: aload_0
+    21: invokevirtual net.minecraft.client.Options.textBackgroundOpacity
+    24: invokevirtual net.minecraft.client.OptionInstance.get
+    27: checkcast java.lang.Double
+    30: invokevirtual java.lang.Double.floatValue
+    33: freturn
+
+   == processOptions(Lnet/minecraft/client/Options$FieldAccess;)V
+    0: aload_0
+    1: aload_1
+    2: invokevirtual net.minecraft.client.Options.processDumpedOptions
+    5: aload_1
+    6: ldc_w cp(8, 326)
+    9: aload_0
+    10: getfield net.minecraft.client.Options.autoJump
+    13: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    18: aload_1
+    19: ldc_w cp(8, 329)
+    22: aload_0
+    23: getfield net.minecraft.client.Options.rotateWithMinecart
+    26: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    31: aload_1
+    32: ldc_w cp(8, 332)
+    35: aload_0
+    36: getfield net.minecraft.client.Options.operatorItemsTab
+    39: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    44: aload_1
+    45: ldc_w cp(8, 335)
+    48: aload_0
+    49: getfield net.minecraft.client.Options.autoSuggestions
+    52: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    57: aload_1
+    58: ldc_w cp(8, 338)
+    61: aload_0
+    62: getfield net.minecraft.client.Options.chatColors
+    65: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    70: aload_1
+    71: ldc_w cp(8, 341)
+    74: aload_0
+    75: getfield net.minecraft.client.Options.chatLinks
+    78: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    83: aload_1
+    84: ldc_w cp(8, 344)
+    87: aload_0
+    88: getfield net.minecraft.client.Options.chatLinksPrompt
+    91: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    96: aload_1
+    97: ldc_w cp(8, 1850)
+    100: aload_0
+    101: getfield net.minecraft.client.Options.discreteMouseScroll
+    104: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    109: aload_1
+    110: ldc_w cp(8, 384)
+    113: aload_0
+    114: getfield net.minecraft.client.Options.invertXMouse
+    117: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    122: aload_1
+    123: ldc_w cp(8, 387)
+    126: aload_0
+    127: getfield net.minecraft.client.Options.invertYMouse
+    130: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    135: aload_1
+    136: ldc_w cp(8, 393)
+    139: aload_0
+    140: getfield net.minecraft.client.Options.realmsNotifications
+    143: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    148: aload_1
+    149: ldc_w cp(8, 468)
+    152: aload_0
+    153: getfield net.minecraft.client.Options.showSubtitles
+    156: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    161: aload_1
+    162: ldc_w cp(8, 471)
+    165: aload_0
+    166: getfield net.minecraft.client.Options.directionalAudio
+    169: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    174: aload_1
+    175: ldc_w cp(8, 480)
+    178: aload_0
+    179: getfield net.minecraft.client.Options.bobView
+    182: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    187: aload_1
+    188: ldc_w cp(8, 483)
+    191: aload_0
+    192: getfield net.minecraft.client.Options.toggleCrouch
+    195: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    200: aload_1
+    201: ldc_w cp(8, 486)
+    204: aload_0
+    205: getfield net.minecraft.client.Options.toggleSprint
+    208: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    213: aload_1
+    214: ldc_w cp(8, 489)
+    217: aload_0
+    218: getfield net.minecraft.client.Options.toggleAttack
+    221: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    226: aload_1
+    227: ldc_w cp(8, 492)
+    230: aload_0
+    231: getfield net.minecraft.client.Options.toggleUse
+    234: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    239: aload_1
+    240: ldc_w cp(8, 495)
+    243: aload_0
+    244: getfield net.minecraft.client.Options.sprintWindow
+    247: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    252: aload_1
+    253: ldc_w cp(8, 35)
+    256: aload_0
+    257: getfield net.minecraft.client.Options.darkMojangStudiosBackground
+    260: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    265: aload_1
+    266: ldc_w cp(8, 1864)
+    269: aload_0
+    270: getfield net.minecraft.client.Options.hideLightningFlash
+    273: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    278: aload_1
+    279: ldc_w cp(8, 42)
+    282: aload_0
+    283: getfield net.minecraft.client.Options.hideSplashTexts
+    286: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    291: aload_1
+    292: ldc_w cp(8, 1867)
+    295: aload_0
+    296: getfield net.minecraft.client.Options.sensitivity
+    299: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    304: aload_1
+    305: ldc_w cp(8, 554)
+    308: aload_0
+    309: getfield net.minecraft.client.Options.damageTiltStrength
+    312: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    317: aload_1
+    318: ldc_w cp(8, 225)
+    321: aload_0
+    322: getfield net.minecraft.client.Options.highContrast
+    325: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    330: aload_1
+    331: ldc_w cp(8, 228)
+    334: aload_0
+    335: getfield net.minecraft.client.Options.highContrastBlockOutline
+    338: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    343: aload_1
+    344: ldc_w cp(8, 231)
+    347: aload_0
+    348: getfield net.minecraft.client.Options.narratorHotkey
+    351: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    356: aload_0
+    357: aload_1
+    358: ldc_w cp(8, 132)
+    361: aload_0
+    362: getfield net.minecraft.client.Options.resourcePacks
+    365: invokedynamic indy@1873
+    370: getstatic net.minecraft.client.Options.GSON
+    373: dup
+    374: invokestatic java.util.Objects.requireNonNull
+    377: pop
+    378: invokedynamic indy@1878
+    383: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    388: checkcast java.util.List
+    391: putfield net.minecraft.client.Options.resourcePacks
+    394: aload_0
+    395: aload_1
+    396: ldc_w cp(8, 148)
+    399: aload_0
+    400: getfield net.minecraft.client.Options.incompatibleResourcePacks
+    403: invokedynamic indy@1873
+    408: getstatic net.minecraft.client.Options.GSON
+    411: dup
+    412: invokestatic java.util.Objects.requireNonNull
+    415: pop
+    416: invokedynamic indy@1878
+    421: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    426: checkcast java.util.List
+    429: putfield net.minecraft.client.Options.incompatibleResourcePacks
+    432: aload_0
+    433: aload_1
+    434: ldc_w cp(8, 1886)
+    437: aload_0
+    438: getfield net.minecraft.client.Options.lastMpIp
+    441: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    446: putfield net.minecraft.client.Options.lastMpIp
+    449: aload_0
+    450: aload_1
+    451: ldc_w cp(8, 1891)
+    454: aload_0
+    455: getfield net.minecraft.client.Options.languageCode
+    458: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    463: putfield net.minecraft.client.Options.languageCode
+    466: aload_1
+    467: ldc_w cp(8, 200)
+    470: aload_0
+    471: getfield net.minecraft.client.Options.chatVisibility
+    474: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    479: aload_1
+    480: ldc_w cp(8, 203)
+    483: aload_0
+    484: getfield net.minecraft.client.Options.chatOpacity
+    487: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    492: aload_1
+    493: ldc_w cp(8, 206)
+    496: aload_0
+    497: getfield net.minecraft.client.Options.chatLineSpacing
+    500: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    505: aload_1
+    506: ldc_w cp(8, 219)
+    509: aload_0
+    510: getfield net.minecraft.client.Options.textBackgroundOpacity
+    513: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    518: aload_1
+    519: ldc_w cp(8, 474)
+    522: aload_0
+    523: getfield net.minecraft.client.Options.backgroundForChatOnly
+    526: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    531: aload_0
+    532: aload_1
+    533: ldc_w cp(8, 1898)
+    536: aload_0
+    537: getfield net.minecraft.client.Options.hideServerAddress
+    540: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    545: putfield net.minecraft.client.Options.hideServerAddress
+    548: aload_0
+    549: aload_1
+    550: ldc_w cp(8, 1905)
+    553: aload_0
+    554: getfield net.minecraft.client.Options.advancedItemTooltips
+    557: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    562: putfield net.minecraft.client.Options.advancedItemTooltips
+    565: aload_0
+    566: aload_1
+    567: ldc_w cp(8, 893)
+    570: aload_0
+    571: getfield net.minecraft.client.Options.pauseOnLostFocus
+    574: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    579: putfield net.minecraft.client.Options.pauseOnLostFocus
+    582: aload_0
+    583: aload_1
+    584: ldc_w cp(8, 1910)
+    587: aload_0
+    588: getfield net.minecraft.client.Options.overrideWidth
+    591: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    596: putfield net.minecraft.client.Options.overrideWidth
+    599: aload_0
+    600: aload_1
+    601: ldc_w cp(8, 1917)
+    604: aload_0
+    605: getfield net.minecraft.client.Options.overrideHeight
+    608: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    613: putfield net.minecraft.client.Options.overrideHeight
+    616: aload_1
+    617: ldc_w cp(8, 246)
+    620: aload_0
+    621: getfield net.minecraft.client.Options.chatHeightFocused
+    624: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    629: aload_1
+    630: ldc_w cp(8, 249)
+    633: aload_0
+    634: getfield net.minecraft.client.Options.chatDelay
+    637: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    642: aload_1
+    643: ldc_w cp(8, 243)
+    646: aload_0
+    647: getfield net.minecraft.client.Options.chatHeightUnfocused
+    650: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    655: aload_1
+    656: ldc_w cp(8, 237)
+    659: aload_0
+    660: getfield net.minecraft.client.Options.chatScale
+    663: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    668: aload_1
+    669: ldc_w cp(8, 240)
+    672: aload_0
+    673: getfield net.minecraft.client.Options.chatWidth
+    676: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    681: aload_1
+    682: ldc_w cp(8, 252)
+    685: aload_0
+    686: getfield net.minecraft.client.Options.notificationDisplayTime
+    689: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    694: aload_0
+    695: aload_1
+    696: ldc_w cp(8, 984)
+    699: aload_0
+    700: getfield net.minecraft.client.Options.useNativeTransport
+    703: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    708: putfield net.minecraft.client.Options.useNativeTransport
+    711: aload_1
+    712: ldc_w cp(8, 234)
+    715: aload_0
+    716: getfield net.minecraft.client.Options.mainHand
+    719: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    724: aload_1
+    725: ldc_w cp(8, 293)
+    728: aload_0
+    729: getfield net.minecraft.client.Options.attackIndicator
+    732: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    737: aload_0
+    738: aload_1
+    739: ldc_w cp(8, 1006)
+    742: aload_0
+    743: getfield net.minecraft.client.Options.tutorialStep
+    746: invokedynamic indy@1930
+    751: invokedynamic indy@1931
+    756: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    761: checkcast net.minecraft.client.tutorial.TutorialSteps
+    764: putfield net.minecraft.client.Options.tutorialStep
+    767: aload_1
+    768: ldc_w cp(8, 317)
+    771: aload_0
+    772: getfield net.minecraft.client.Options.mouseWheelSensitivity
+    775: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    780: aload_1
+    781: ldc_w cp(8, 320)
+    784: aload_0
+    785: getfield net.minecraft.client.Options.rawMouseInput
+    788: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    793: aload_1
+    794: ldc_w cp(8, 323)
+    797: aload_0
+    798: getfield net.minecraft.client.Options.allowCursorChanges
+    801: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    806: aload_0
+    807: aload_1
+    808: ldc_w cp(8, 1034)
+    811: aload_0
+    812: getfield net.minecraft.client.Options.glDebugVerbosity
+    815: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    820: putfield net.minecraft.client.Options.glDebugVerbosity
+    823: aload_0
+    824: aload_1
+    825: ldc_w cp(8, 1937)
+    828: aload_0
+    829: getfield net.minecraft.client.Options.skipMultiplayerWarning
+    832: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    837: putfield net.minecraft.client.Options.skipMultiplayerWarning
+    840: aload_1
+    841: ldc_w cp(8, 498)
+    844: aload_0
+    845: getfield net.minecraft.client.Options.hideMatchedNames
+    848: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    853: aload_0
+    854: aload_1
+    855: ldc_w cp(8, 1009)
+    858: aload_0
+    859: getfield net.minecraft.client.Options.joinedFirstServer
+    862: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    867: putfield net.minecraft.client.Options.joinedFirstServer
+    870: aload_0
+    871: aload_1
+    872: ldc_w cp(8, 1943)
+    875: aload_0
+    876: getfield net.minecraft.client.Options.syncWrites
+    879: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    884: putfield net.minecraft.client.Options.syncWrites
+    887: aload_1
+    888: ldc_w cp(8, 501)
+    891: aload_0
+    892: getfield net.minecraft.client.Options.showAutosaveIndicator
+    895: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    900: aload_1
+    901: ldc_w cp(8, 396)
+    904: aload_0
+    905: getfield net.minecraft.client.Options.allowServerListing
+    908: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    913: aload_1
+    914: ldc_w cp(8, 402)
+    917: aload_0
+    918: getfield net.minecraft.client.Options.inGameNotification
+    921: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    926: aload_1
+    927: ldc_w cp(8, 405)
+    930: aload_0
+    931: getfield net.minecraft.client.Options.sharePresence
+    934: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    939: aload_1
+    940: ldc_w cp(8, 504)
+    943: aload_0
+    944: getfield net.minecraft.client.Options.onlyShowSecureChat
+    947: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    952: aload_1
+    953: ldc_w cp(8, 507)
+    956: aload_0
+    957: getfield net.minecraft.client.Options.saveChatDrafts
+    960: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    965: aload_1
+    966: ldc_w cp(8, 1951)
+    969: aload_0
+    970: getfield net.minecraft.client.Options.panoramaSpeed
+    973: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    978: aload_1
+    979: ldc_w cp(8, 536)
+    982: aload_0
+    983: getfield net.minecraft.client.Options.telemetryOptInExtra
+    986: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    991: aload_0
+    992: aload_1
+    993: ldc_w cp(8, 572)
+    996: aload_0
+    997: getfield net.minecraft.client.Options.onboardAccessibility
+    1000: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    1005: putfield net.minecraft.client.Options.onboardAccessibility
+    1008: aload_1
+    1009: ldc_w cp(8, 209)
+    1012: aload_0
+    1013: getfield net.minecraft.client.Options.menuBackgroundBlurriness
+    1016: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    1021: aload_0
+    1022: aload_1
+    1023: ldc_w cp(8, 1725)
+    1026: aload_0
+    1027: getfield net.minecraft.client.Options.startedCleanly
+    1030: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    1035: putfield net.minecraft.client.Options.startedCleanly
+    1038: aload_1
+    1039: ldc_w cp(8, 578)
+    1042: aload_0
+    1043: getfield net.minecraft.client.Options.musicToast
+    1046: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    1051: aload_1
+    1052: ldc_w cp(8, 575)
+    1055: aload_0
+    1056: getfield net.minecraft.client.Options.musicFrequency
+    1059: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    1064: aload_0
+    1065: getfield net.minecraft.client.Options.keyMappings
+    1068: astore_2
+    1069: aload_2
+    1070: arraylength
+    1071: istore_3
+    1072: iconst_0
+    1073: istore 4
+    1075: iload 4
+    1077: iload_3
+    1078: if_icmpge -> 1140
+    1081: aload_2
+    1082: iload 4
+    1084: aaload
+    1085: astore 5
+    1087: aload 5
+    1089: invokevirtual net.minecraft.client.KeyMapping.saveString
+    1092: astore 6
+    1094: aload_1
+    1095: aload 5
+    1097: invokevirtual net.minecraft.client.KeyMapping.getName
+    1100: invokedynamic indy@1964
+    1105: aload 6
+    1107: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    1112: astore 7
+    1114: aload 6
+    1116: aload 7
+    1118: invokevirtual java.lang.String.equals
+    1121: ifne -> 1134
+    1124: aload 5
+    1126: aload 7
+    1128: invokestatic com.mojang.blaze3d.platform.InputConstants.getKey
+    1131: invokevirtual net.minecraft.client.KeyMapping.setKey
+    1134: iinc 4 1
+    1137: goto -> 1075
+    1140: invokestatic net.minecraft.sounds.SoundSource.values
+    1143: astore_2
+    1144: aload_2
+    1145: arraylength
+    1146: istore_3
+    1147: iconst_0
+    1148: istore 4
+    1150: iload 4
+    1152: iload_3
+    1153: if_icmpge -> 1198
+    1156: aload_2
+    1157: iload 4
+    1159: aaload
+    1160: astore 5
+    1162: aload_1
+    1163: aload 5
+    1165: invokevirtual net.minecraft.sounds.SoundSource.getName
+    1168: invokedynamic indy@1980
+    1173: aload_0
+    1174: getfield net.minecraft.client.Options.soundSourceVolumes
+    1177: aload 5
+    1179: invokeinterface java.util.Map.get
+    1184: checkcast net.minecraft.client.OptionInstance
+    1187: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    1192: iinc 4 1
+    1195: goto -> 1150
+    1198: invokestatic net.minecraft.world.entity.player.PlayerModelPart.values
+    1201: astore_2
+    1202: aload_2
+    1203: arraylength
+    1204: istore_3
+    1205: iconst_0
+    1206: istore 4
+    1208: iload 4
+    1210: iload_3
+    1211: if_icmpge -> 1274
+    1214: aload_2
+    1215: iload 4
+    1217: aaload
+    1218: astore 5
+    1220: aload_0
+    1221: getfield net.minecraft.client.Options.modelParts
+    1224: aload 5
+    1226: invokeinterface java.util.Set.contains
+    1231: istore 6
+    1233: aload_1
+    1234: aload 5
+    1236: invokevirtual net.minecraft.world.entity.player.PlayerModelPart.getId
+    1239: invokedynamic indy@1990
+    1244: iload 6
+    1246: invokeinterface net.minecraft.client.Options$FieldAccess.process
+    1251: istore 7
+    1253: iload 7
+    1255: iload 6
+    1257: if_icmpeq -> 1268
+    1260: aload_0
+    1261: aload 5
+    1263: iload 7
+    1265: invokevirtual net.minecraft.client.Options.setModelPart
+    1268: iinc 4 1
+    1271: goto -> 1208
+    1274: return
+
+==== 4) ChatScreen band: net.minecraft.client.gui.screens.ChatScreen
+   == extractRenderState(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V
+    0: aload_1
+    1: iconst_2
+    2: aload_0
+    3: getfield net.minecraft.client.gui.screens.ChatScreen.height
+    6: bipush 14
+    8: isub
+    9: aload_0
+    10: getfield net.minecraft.client.gui.screens.ChatScreen.width
+    13: iconst_2
+    14: isub
+    15: aload_0
+    16: getfield net.minecraft.client.gui.screens.ChatScreen.height
+    19: iconst_2
+    20: isub
+    21: aload_0
+    22: getfield net.minecraft.client.gui.screens.ChatScreen.minecraft
+    25: getfield net.minecraft.client.Minecraft.options
+    28: ldc_w int -2147483648
+    31: invokevirtual net.minecraft.client.Options.getBackgroundColor
+    34: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.fill
+    37: aload_0
+    38: getfield net.minecraft.client.gui.screens.ChatScreen.minecraft
+    41: getfield net.minecraft.client.Minecraft.gui
+    44: getfield net.minecraft.client.gui.Gui.hud
+    47: invokevirtual net.minecraft.client.gui.Hud.getChat
+    50: aload_1
+    51: aload_0
+    52: getfield net.minecraft.client.gui.screens.ChatScreen.font
+    55: aload_0
+    56: getfield net.minecraft.client.gui.screens.ChatScreen.minecraft
+    59: getfield net.minecraft.client.Minecraft.gui
+    62: getfield net.minecraft.client.gui.Gui.hud
+    65: invokevirtual net.minecraft.client.gui.Hud.getGuiTicks
+    68: iload_2
+    69: iload_3
+    70: aload_0
+    71: getfield net.minecraft.client.gui.screens.ChatScreen.displayMode
+    74: aload_0
+    75: invokevirtual net.minecraft.client.gui.screens.ChatScreen.insertionClickMode
+    78: invokevirtual net.minecraft.client.gui.components.ChatComponent.extractRenderState
+    81: aload_0
+    82: aload_1
+    83: iload_2
+    84: iload_3
+    85: fload 4
+    87: invokespecial net.minecraft.client.gui.screens.Screen.extractRenderState
+    90: aload_0
+    91: getfield net.minecraft.client.gui.screens.ChatScreen.commandSuggestions
+    94: aload_1
+    95: iload_2
+    96: iload_3
+    97: invokevirtual net.minecraft.client.gui.components.CommandSuggestions.extractRenderState
+    100: return
+

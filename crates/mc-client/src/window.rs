@@ -2149,6 +2149,13 @@ pub fn run_gui_app(
         if left_down && app.fov_effect_drag {
             app.on_fov_effect_slider_drag(gmx);
         }
+        // THE CHAT BACKGROUNDS' OWN DRAG (the same armed lane the fov
+        // row wears — the sub-screen's gate the Accessibility kind
+        // keeps, the held frames the UnitDouble 0..1 the cursor's x
+        // answers, the release the disarm speaks below)
+        if left_down && app.textbg_drag {
+            app.on_textbg_slider_drag(gmx);
+        }
         // the LEFT press's falling edge (the vanilla's own release lane):
         // the dig's hold flag drops and the destroy state ABORTs (the
         // continueAttack(false) tail — the crack overlay clears)

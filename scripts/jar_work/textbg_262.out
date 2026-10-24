@@ -1,0 +1,213 @@
+=== 1. Options.<init>: the TEXT_BACKGROUND_OPACITY registration
+--- net.minecraft.client.Options.<init>(Lnet/minecraft/client/Minecraft;Ljava/io/File;)V window pcs 837..1056
+837: getstatic net/minecraft/client/OptionInstance$UnitDouble.INSTANCELnet/minecraft/client/OptionInstance$UnitDouble;
+840: dconst_0
+841: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+844: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+847: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+850: putfield net/minecraft/client/Options.chatLineSpacingLnet/minecraft/client/OptionInstance;
+853: aload_0
+854: new net/minecraft/client/OptionInstance
+857: dup
+858: ldc_w ldcw@857
+861: getstatic net/minecraft/client/Options.MENU_BACKGROUND_BLURRINESS_TOOLTIPLnet/minecraft/network/chat/Component;
+864: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+867: invokedynamic indy
+872: new net/minecraft/client/OptionInstance$IntRange
+875: dup
+876: iconst_0
+877: bipush 10
+879: invokespecial net/minecraft/client/OptionInstance$IntRange.<init>(II)V
+882: iconst_5
+883: invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;
+886: aload_0
+887: invokedynamic indy
+892: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+895: putfield net/minecraft/client/Options.menuBackgroundBlurrinessLnet/minecraft/client/OptionInstance;
+898: aload_0
+899: new net/minecraft/client/OptionInstance
+902: dup
+903: ldc_w ldcw@864
+906: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+909: invokedynamic indy
+914: getstatic net/minecraft/client/OptionInstance$UnitDouble.INSTANCELnet/minecraft/client/OptionInstance$UnitDouble;
+917: ldc2_w double 4602678819172646912
+920: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+923: invokedynamic indy
+928: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+931: putfield net/minecraft/client/Options.textBackgroundOpacityLnet/minecraft/client/OptionInstance;
+934: aload_0
+935: new net/minecraft/client/OptionInstance
+938: dup
+939: ldc_w ldcw@867
+942: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+945: invokedynamic indy
+950: getstatic net/minecraft/client/OptionInstance$UnitDouble.INSTANCELnet/minecraft/client/OptionInstance$UnitDouble;
+953: dconst_1
+954: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+957: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+960: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+963: putfield net/minecraft/client/Options.panoramaSpeedLnet/minecraft/client/OptionInstance;
+966: aload_0
+967: ldc_w ldcw@869
+970: getstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_CONTRAST_MODELnet/minecraft/network/chat/Component;
+973: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+976: iconst_0
+977: aload_0
+978: invokedynamic indy
+983: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;ZLnet/minecraft/client/OptionInstance$ValueUpdateListener;)Lnet/minecraft/client/OptionInstance;
+986: putfield net/minecraft/client/Options.highContrastLnet/minecraft/client/OptionInstance;
+989: aload_0
+990: ldc_w ldcw@875
+993: getstatic net/minecraft/client/Options.HIGH_CONTRAST_BLOCK_OUTLINE_TOOLTIPLnet/minecraft/network/chat/Component;
+996: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+999: iconst_0
+1000: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Z)Lnet/minecraft/client/OptionInstance;
+1003: putfield net/minecraft/client/Options.highContrastBlockOutlineLnet/minecraft/client/OptionInstance;
+1006: aload_0
+1007: ldc_w ldcw@880
+1010: getstatic net/minecraft/client/input/InputQuirks.REPLACE_CTRL_KEY_WITH_CMD_KEYZ
+1013: ifeq -> 1025
+1016: ldc_w ldcw@887
+1019: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+1022: goto -> 1031
+1025: ldc_w ldcw@889
+1028: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+1031: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+1034: iconst_1
+1035: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Z)Lnet/minecraft/client/OptionInstance;
+1038: putfield net/minecraft/client/Options.narratorHotkeyLnet/minecraft/client/OptionInstance;
+1041: aload_0
+1042: iconst_1
+1043: putfield net/minecraft/client/Options.pauseOnLostFocusZ
+1046: aload_0
+1047: ldc_w ldcw@894
+1050: invokestatic java/util/EnumSet.allOf(Ljava/lang/Class;)Ljava/util/EnumSet;
+1053: putfield net/minecraft/client/Options.modelPartsLjava/util/Set;
+1056: aload_0
+
+=== 2. Options.<init>: the chatOpacity registration (the text-alpha lane's own option)
+--- net.minecraft.client.Options.<init>(Lnet/minecraft/client/Minecraft;Ljava/io/File;)V window pcs 788..920
+788: new net/minecraft/client/OptionInstance
+791: dup
+792: ldc_w ldcw@851
+795: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+798: invokedynamic indy
+803: getstatic net/minecraft/client/OptionInstance$UnitDouble.INSTANCELnet/minecraft/client/OptionInstance$UnitDouble;
+806: dconst_1
+807: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+810: invokedynamic indy
+815: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+818: putfield net/minecraft/client/Options.chatOpacityLnet/minecraft/client/OptionInstance;
+821: aload_0
+822: new net/minecraft/client/OptionInstance
+825: dup
+826: ldc_w ldcw@855
+829: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+832: invokedynamic indy
+837: getstatic net/minecraft/client/OptionInstance$UnitDouble.INSTANCELnet/minecraft/client/OptionInstance$UnitDouble;
+840: dconst_0
+841: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+844: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+847: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+850: putfield net/minecraft/client/Options.chatLineSpacingLnet/minecraft/client/OptionInstance;
+853: aload_0
+854: new net/minecraft/client/OptionInstance
+857: dup
+858: ldc_w ldcw@857
+861: getstatic net/minecraft/client/Options.MENU_BACKGROUND_BLURRINESS_TOOLTIPLnet/minecraft/network/chat/Component;
+864: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+867: invokedynamic indy
+872: new net/minecraft/client/OptionInstance$IntRange
+875: dup
+876: iconst_0
+877: bipush 10
+879: invokespecial net/minecraft/client/OptionInstance$IntRange.<init>(II)V
+882: iconst_5
+883: invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;
+886: aload_0
+887: invokedynamic indy
+892: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+895: putfield net/minecraft/client/Options.menuBackgroundBlurrinessLnet/minecraft/client/OptionInstance;
+898: aload_0
+899: new net/minecraft/client/OptionInstance
+902: dup
+903: ldc_w ldcw@864
+906: invokestatic net/minecraft/client/OptionInstance.noTooltip()Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+909: invokedynamic indy
+914: getstatic net/minecraft/client/OptionInstance$UnitDouble.INSTANCELnet/minecraft/client/OptionInstance$UnitDouble;
+917: ldc2_w double 4602678819172646912
+920: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+
+=== 3. Options.getBackgroundColor — the composition law
+--- net.minecraft.client.Options.getBackgroundColor(F)I
+0: aload_0
+1: fload_1 fload_1 182
+3: iconst_3
+4: 0xf2
+5: fconst_0
+6: fconst_0
+7: fconst_0
+8: invokestatic net/minecraft/util/ARGB.colorFromFloat(FFFF)I
+11: ireturn
+--- net.minecraft.client.Options.getBackgroundColor(I)I
+0: aload_0
+1: getfield net/minecraft/client/Options.backgroundForChatOnlyLnet/minecraft/client/OptionInstance;
+4: invokevirtual net/minecraft/client/OptionInstance.get()Ljava/lang/Object;
+7: checkcast java/lang/Boolean
+10: invokevirtual java/lang/Boolean.booleanValue()Z
+13: ifeq -> 20
+16: iload_1
+17: goto -> 39
+20: aload_0
+21: getfield net/minecraft/client/Options.textBackgroundOpacityLnet/minecraft/client/OptionInstance;
+24: invokevirtual net/minecraft/client/OptionInstance.get()Ljava/lang/Object;
+27: checkcast java/lang/Double
+30: invokevirtual java/lang/Double.floatValue()F
+33: fconst_0
+34: fconst_0
+35: fconst_0
+36: invokestatic net/minecraft/util/ARGB.colorFromFloat(FFFF)I
+39: ireturn
+=== 4. ChatScreen — the input band's own arg
+--- net.minecraft.client.gui.screens.ChatScreen.extractRenderState(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V window pcs 15..50
+15: aload_0
+16: getfield net/minecraft/client/gui/screens/ChatScreen.heightI
+19: iconst_2
+20: isub
+21: aload_0
+22: getfield net/minecraft/client/gui/screens/ChatScreen.minecraftLnet/minecraft/client/Minecraft;
+25: getfield net/minecraft/client/Minecraft.optionsLnet/minecraft/client/Options;
+28: ldc_w int -2147483648
+31: invokevirtual net/minecraft/client/Options.getBackgroundColor(I)I
+34: invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.fill(IIIII)V
+37: aload_0
+38: getfield net/minecraft/client/gui/screens/ChatScreen.minecraftLnet/minecraft/client/Minecraft;
+41: getfield net/minecraft/client/Minecraft.guiLnet/minecraft/client/gui/Gui;
+44: getfield net/minecraft/client/gui/Gui.hudLnet/minecraft/client/gui/Hud;
+47: invokevirtual net/minecraft/client/gui/Hud.getChat()Lnet/minecraft/client/gui/components/ChatComponent;
+50: aload_1
+
+=== 5. ChatComponent — the consumer walk (which lanes the options ride)
+--- net.minecraft.client.gui.components.ChatComponent.extractRenderState(Lnet/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess;IILnet/minecraft/client/gui/components/ChatComponent$DisplayMode;)V: walk failed (IndexError('list index out of range')) — raw scan instead
+--- net.minecraft.client.gui.components.ChatComponent.getLineHeight()I: 1 hit(s)
+0: aload_0
+1: getfield net/minecraft/client/gui/components/ChatComponent.minecraftLnet/minecraft/client/Minecraft;
+4: getfield net/minecraft/client/Minecraft.fontLnet/minecraft/client/gui/Font;
+7: invokestatic java/util/Objects.requireNonNull(Ljava/lang/Object;)Ljava/lang/Object;
+10: pop
+11: ldc2_w double 4621256167635550208
+14: aload_0
+15: getfield net/minecraft/client/gui/components/ChatComponent.minecraftLnet/minecraft/client/Minecraft;
+18: getfield net/minecraft/client/Minecraft.optionsLnet/minecraft/client/Options;
+21: invokevirtual net/minecraft/client/Options.chatLineSpacing()Lnet/minecraft/client/OptionInstance;
+24: invokevirtual net/minecraft/client/OptionInstance.get()Ljava/lang/Object;
+27: checkcast java/lang/Double
+30: invokevirtual java/lang/Double.doubleValue()D
+33: dconst_1
+34: dadd
+35: dmul
+36: d2i
+37: ireturn
+   ...
+

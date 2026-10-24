@@ -1,0 +1,73 @@
+== lambda$extractRenderState$1 (IILnet/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess;IFLnet/minecraft/client/multiplayer/chat/GuiMessage$Line;IF)V
+    0: iload_0
+    1: iload 6
+    3: iload_1
+    4: imul
+    5: isub
+    6: istore 8
+    8: iload 8
+    10: iload_1
+    11: isub
+    12: istore 9
+    14: aload_2
+    15: bipush 252
+    17: iload 9
+    19: iload_3
+    20: iconst_4
+    21: iadd
+    22: iconst_4
+    23: iadd
+    24: iload 8
+    26: fload 7
+    28: fload 4
+    30: fmul
+    31: invokestatic net.minecraft.util.ARGB.black
+    34: invokeinterface net.minecraft.client.gui.components.ChatComponent$ChatGraphicsAccess.fill
+    39: return
+
+== net.minecraft.client.gui.components.ChatComponent$AlphaCalculator :: <clinit> ()V
+    0: invokedynamic indy@23
+    5: putstatic net.minecraft.client.gui.components.ChatComponent$AlphaCalculator.FULLY_VISIBLE
+    8: return
+
+== net.minecraft.client.gui.components.ChatComponent$AlphaCalculator :: lambda$static$0 (Lnet/minecraft/client/multiplayer/chat/GuiMessage$Line;)F
+    0: fconst_1
+    1: freturn
+
+== net.minecraft.client.gui.components.ChatComponent$AlphaCalculator :: lambda$timeBased$0 (ILnet/minecraft/client/multiplayer/chat/GuiMessage$Line;)F
+    0: iload_0
+    1: aload_1
+    2: invokevirtual net.minecraft.client.multiplayer.chat.GuiMessage$Line.addedTime
+    5: isub
+    6: istore_2
+    7: iload_2
+    8: i2d
+    9: ldc2_w double 200.0
+    12: ddiv
+    13: dstore_3
+    14: dconst_1
+    15: dload_3
+    16: dsub
+    17: dstore_3
+    18: dload_3
+    19: ldc2_w double 10.0
+    22: dmul
+    23: dstore_3
+    24: dload_3
+    25: dconst_0
+    26: dconst_1
+    27: invokestatic net.minecraft.util.Mth.clamp
+    30: dstore_3
+    31: dload_3
+    32: dload_3
+    33: dmul
+    34: dstore_3
+    35: dload_3
+    36: d2f
+    37: freturn
+
+== net.minecraft.client.gui.components.ChatComponent$AlphaCalculator :: timeBased (I)Lnet/minecraft/client/gui/components/ChatComponent$AlphaCalculator;
+    0: iload_0
+    1: invokedynamic indy@1
+    6: areturn
+
