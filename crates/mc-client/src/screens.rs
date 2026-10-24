@@ -35571,6 +35571,20 @@ impl App {
                             [crate::options_file::key_binds::DEBUG_SWITCH_GAME_MODE];
                     self.kb_selected = None;
                 }
+                // THE DEBUG DEBUG OPTIONS' OWN ARMS (the row the debug
+                // twelve-row walk the AFTER seat renders — the ctor's
+                // pc 3477-3497 the 4-arg ctor the `iconst_0` orderI
+                // default banks, the F6 the switchGameMode row's own
+                // plain shape the capture honors)
+                "kb_change_debugoptions" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::DEBUG_DEBUG_OPTIONS);
+                }
+                "kb_rowreset_debugoptions" => {
+                    self.key_binds[crate::options_file::key_binds::DEBUG_DEBUG_OPTIONS] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::DEBUG_DEBUG_OPTIONS];
+                    self.kb_selected = None;
+                }
                 "kb_rowreset_forward" => {
                     self.key_binds[crate::options_file::key_binds::FORWARD] =
                         crate::options_file::key_binds::DEFAULTS
@@ -63654,6 +63668,10 @@ impl App {
             // eleven-row walk the AFTER seat renders — the ctor's
             // putfield order the id answers)
             kb::DEBUG_SWITCH_GAME_MODE => "kb_change_debugswitchgamemode",
+            // THE DEBUG DEBUG OPTIONS' OWN ID (the row the debug
+            // twelve-row walk the AFTER seat renders — the ctor's
+            // putfield order the id answers)
+            kb::DEBUG_DEBUG_OPTIONS => "kb_change_debugoptions",
             _ => "kb_change_hotbar9",
         };
         self.buttons
@@ -63722,6 +63740,7 @@ impl App {
             // row keeps — the eleven-row walk the file's own END rows
             // wear)
             kb::DEBUG_SWITCH_GAME_MODE => "kb_rowreset_debugswitchgamemode",
+            kb::DEBUG_DEBUG_OPTIONS => "kb_rowreset_debugoptions",
             _ => "kb_rowreset_hotbar9",
         };
         let mut rb = Button::new(
