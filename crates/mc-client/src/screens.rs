@@ -35630,6 +35630,22 @@ impl App {
                             [crate::options_file::key_binds::DEBUG_RELOAD_RESOURCE_PACKS];
                     self.kb_selected = None;
                 }
+                // THE DEBUG PROFILING'S OWN ARMS (the row
+                // the debug sixteen-row walk the AFTER seat renders
+                // — the ctor's pc 3566-3585 the 4-arg ctor the
+                // `iconst_0` orderI default banks, the L the
+                // reloadResourcePacks row's own plain shape the
+                // capture honors)
+                "kb_change_debugprofiling" => {
+                    self.kb_selected =
+                        Some(crate::options_file::key_binds::DEBUG_PROFILING);
+                }
+                "kb_rowreset_debugprofiling" => {
+                    self.key_binds[crate::options_file::key_binds::DEBUG_PROFILING] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::DEBUG_PROFILING];
+                    self.kb_selected = None;
+                }
                 "kb_rowreset_forward" => {
                     self.key_binds[crate::options_file::key_binds::FORWARD] =
                         crate::options_file::key_binds::DEFAULTS
@@ -63729,6 +63745,10 @@ impl App {
             // debug fifteen-row walk the AFTER seat renders — the
             // ctor's putfield order the id answers)
             kb::DEBUG_RELOAD_RESOURCE_PACKS => "kb_change_debugreloadpacks",
+            // THE DEBUG PROFILING'S OWN ID (the row the
+            // debug sixteen-row walk the AFTER seat renders — the
+            // ctor's putfield order the id answers)
+            kb::DEBUG_PROFILING => "kb_change_debugprofiling",
             _ => "kb_change_hotbar9",
         };
         self.buttons
@@ -63810,6 +63830,10 @@ impl App {
             // the row keeps — the fifteen-row walk the file's own END
             // rows wear)
             kb::DEBUG_RELOAD_RESOURCE_PACKS => "kb_rowreset_debugreloadpacks",
+            // THE DEBUG PROFILING'S OWN ID (the same seat
+            // the row keeps — the sixteen-row walk the file's own END
+            // rows wear)
+            kb::DEBUG_PROFILING => "kb_rowreset_debugprofiling",
             _ => "kb_rowreset_hotbar9",
         };
         let mut rb = Button::new(
