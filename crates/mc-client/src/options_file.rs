@@ -442,10 +442,23 @@ pub mod key_binds {
     /// ctor the call speaks — the `iconst_0` the orderI default the
     /// 4-arg delegate banks, the debugOptions row's own plain shape
     /// the row shares, the next registration the pc 3522 seat the
-    /// later round banks — the cp#1481 the `key.debug.dumpDynamicTextures`
-    /// string the `bipush 83` the S default the walk banks)
+    /// dumpDynamicTextures walk banks — the cp#1481 the
+    /// `key.debug.dumpDynamicTextures` string the `bipush 83` the S
+    /// default the walk speaks)
     pub const DEBUG_FOCUS_PAUSE: usize = 38;
-    pub const COUNT: usize = 39;
+    /// THE DEBUG DUMP DYNAMIC TEXTURES' OWN SLOT (the ctor's pc
+    /// 3522-3541 walk the focusPause's putfield the AFTER banks —
+    /// the `ldc_w cp#1481` the `key.debug.dumpDynamicTextures`
+    /// string answers, the `KEYSYM, bipush 83` the GLFW S default
+    /// wears, the Category.DEBUG the same group's ordinal keeps, the
+    /// FOUR-arg ctor the call speaks — the `iconst_0` the orderI
+    /// default the 4-arg delegate banks, the focusPause row's own
+    /// plain shape the row shares, the next registration the pc 3544
+    /// seat the later round banks — the cp#1486 the
+    /// `key.debug.reloadResourcePacks` string the `bipush 84` the T
+    /// default the walk banks)
+    pub const DEBUG_DUMP_DYNAMIC_TEXTURES: usize = 39;
+    pub const COUNT: usize = 40;
 
     /// THE VANILLA BINDING NAMES (the `key_` + name the file row's
     /// prefix wears, the lang captions the `key.*` rows answer — the
@@ -535,6 +548,11 @@ pub mod key_binds {
         // cp#1476` the pc 3505 string answers — the focusPause row
         // the debugOptions's AFTER the ladder wears)
         "key.debug.focusPause",
+        // THE DEBUG DUMP DYNAMIC TEXTURES' OWN NAME (the ctor's
+        // `ldc_w cp#1481` the pc 3527 string answers — the
+        // dumpDynamicTextures row the focusPause's AFTER the ladder
+        // wears)
+        "key.debug.dumpDynamicTextures",
     ];
 
     /// THE CAPTIONS' OWN FALLBACK (the en_us values the assets-absent
@@ -617,6 +635,10 @@ pub mod key_binds {
         // wear — the field's own FocusPause word the lang row hides
         // the Toggle caption answers)
         "Toggle Lost Focus Pause",
+        // THE DEBUG DUMP DYNAMIC TEXTURES' OWN CAPTION (the en_us
+        // row speaks — key.debug.dumpDynamicTextures the 'Dump
+        // Dynamic Textures' words wear)
+        "Dump Dynamic Textures",
     ];
 
     /// THE CATEGORY'S OWN ROW (the CategoryEntry the list groups the
@@ -776,6 +798,11 @@ pub mod key_binds {
         // keyboard bind wears, the 4-arg ctor the call speaks, the
         // orderI the `iconst_0` default the delegate banks)
         Some(Bind::Keyboard(Key::P)),
+        // THE DEBUG DUMP DYNAMIC TEXTURES' OWN SEAT (the ctor's pc
+        // 3533 the `bipush 83` the GLFW S answers — the KEYSYM type
+        // the keyboard bind wears, the 4-arg ctor the call speaks,
+        // the orderI the `iconst_0` default the delegate banks)
+        Some(Bind::Keyboard(Key::S)),
     ];
 
     /// THE LIST'S OWN GEOMETRY (the entries the walk's y positions
@@ -836,8 +863,9 @@ pub mod key_binds {
     /// showChunkBorders the 870 seat, the showAdvancedTooltips the
     /// 894 seat, the copyRecreateCommand the 918 seat, the spectate
     /// the 942 seat, the switchGameMode the 966 seat, the
-    /// debugOptions the 990 seat, the focusPause the 1014 seat —
-    /// the row's own bottom the content answers))
+    /// debugOptions the 990 seat, the focusPause the 1014 seat, the
+    /// dumpDynamicTextures the 1038 seat — the row's
+    /// own bottom the content answers))
     pub fn content_height() -> i32 {
         DEBUG_ROWS_START + (COUNT - DEBUG_OVERLAY - 1) as i32 * ROW_STRIDE + 20 - LIST_TOP
     }
@@ -1357,6 +1385,14 @@ impl OptionsFile {
                     out.key_binds[key_binds::DEBUG_FOCUS_PAUSE] =
                         key_binds::bind_from_save(value);
                 }
+                // THE DEBUG DUMP DYNAMIC TEXTURES' OWN DECODE (the
+                // same prefix the row wears — the S row the restart
+                // the decode answers, the plain-shape row the
+                // saveString keeps)
+                "key_key.debug.dumpDynamicTextures" => {
+                    out.key_binds[key_binds::DEBUG_DUMP_DYNAMIC_TEXTURES] =
+                        key_binds::bind_from_save(value);
+                }
                 _ => {} // the jar's other rows the client's seats never carry
             }
         }
@@ -1510,7 +1546,7 @@ mod tests {
         OptionsFile::default().save(&path);
         let text = std::fs::read_to_string(&path).expect("the save the file writes");
         assert_eq!(
-            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\nkey_key.debug.debugOptions:key.keyboard.f6\nkey_key.debug.focusPause:key.keyboard.p\n",
+            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\nkey_key.debug.debugOptions:key.keyboard.f6\nkey_key.debug.focusPause:key.keyboard.p\nkey_key.debug.dumpDynamicTextures:key.keyboard.s\n",
             "the file the vanilla rows wear"
         );
         let loaded = OptionsFile::load(&path);

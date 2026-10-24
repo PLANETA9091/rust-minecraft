@@ -35599,6 +35599,21 @@ impl App {
                             [crate::options_file::key_binds::DEBUG_FOCUS_PAUSE];
                     self.kb_selected = None;
                 }
+                // THE DEBUG DUMP DYNAMIC TEXTURES' OWN ARMS (the row
+                // the debug fourteen-row walk the AFTER seat renders
+                // — the ctor's pc 3522-3541 the 4-arg ctor the
+                // `iconst_0` orderI default banks, the S the
+                // focusPause row's own plain shape the capture honors)
+                "kb_change_debugdumptextures" => {
+                    self.kb_selected =
+                        Some(crate::options_file::key_binds::DEBUG_DUMP_DYNAMIC_TEXTURES);
+                }
+                "kb_rowreset_debugdumptextures" => {
+                    self.key_binds[crate::options_file::key_binds::DEBUG_DUMP_DYNAMIC_TEXTURES] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::DEBUG_DUMP_DYNAMIC_TEXTURES];
+                    self.kb_selected = None;
+                }
                 "kb_rowreset_forward" => {
                     self.key_binds[crate::options_file::key_binds::FORWARD] =
                         crate::options_file::key_binds::DEFAULTS
@@ -63690,6 +63705,10 @@ impl App {
             // thirteen-row walk the AFTER seat renders — the ctor's
             // putfield order the id answers)
             kb::DEBUG_FOCUS_PAUSE => "kb_change_debugfocuspause",
+            // THE DEBUG DUMP DYNAMIC TEXTURES' OWN ID (the row the
+            // debug fourteen-row walk the AFTER seat renders — the
+            // ctor's putfield order the id answers)
+            kb::DEBUG_DUMP_DYNAMIC_TEXTURES => "kb_change_debugdumptextures",
             _ => "kb_change_hotbar9",
         };
         self.buttons
@@ -63763,6 +63782,10 @@ impl App {
             // keeps — the thirteen-row walk the file's own END rows
             // wear)
             kb::DEBUG_FOCUS_PAUSE => "kb_rowreset_debugfocuspause",
+            // THE DEBUG DUMP DYNAMIC TEXTURES' OWN ID (the same seat
+            // the row keeps — the fourteen-row walk the file's own END
+            // rows wear)
+            kb::DEBUG_DUMP_DYNAMIC_TEXTURES => "kb_rowreset_debugdumptextures",
             _ => "kb_rowreset_hotbar9",
         };
         let mut rb = Button::new(
