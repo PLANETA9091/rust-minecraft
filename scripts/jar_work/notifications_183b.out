@@ -1,0 +1,389 @@
+cp#240: ? = <no cp_get helper: raw=('u', 'chatWidth')>
+cp#950: ? = <no cp_get helper: raw=('u', 'options.notifications.display_time')>
+cp#954: ? = <no cp_get helper: raw=(18, 54, 445)>
+cp#955: ? = <no cp_get helper: raw=(18, 55, 629)>
+cp#984: ? = <no cp_get helper: raw=('u', 'useNativeTransport')>
+cp#959: ? = <no cp_get helper: raw=(18, 57, 445)>
+
+
+== Options::lambda$new$0 (Lnet/minecraft/network/chat/Component;Ljava/lang/Double;)Lnet/minecraft/network/chat/Component; ==
+   0: 0: aload_1
+   1: 1: invokevirtual java.lang.Double.doubleValue
+   4: 4: dconst_0
+   5: 5: dcmpl
+   6: 6: ifne -> 20
+   9: 9: aload_0
+   10: 10: ldc_w cp(8, 2819)
+   13: 13: invokestatic net.minecraft.network.chat.Component.translatable
+   16: 16: invokestatic net.minecraft.client.Options.genericValueLabel
+   19: 19: areturn
+   20: 20: aload_1
+   21: 21: invokevirtual java.lang.Double.doubleValue
+   24: 24: dconst_1
+   25: 25: dcmpl
+   26: 26: ifne -> 40
+   29: 29: aload_0
+   30: 30: ldc_w cp(8, 2821)
+   33: 33: invokestatic net.minecraft.network.chat.Component.translatable
+   36: 36: invokestatic net.minecraft.client.Options.genericValueLabel
+   39: 39: areturn
+   40: 40: aload_0
+   41: 41: ldc2_w double 2.0
+   44: 44: aload_1
+   45: 45: invokevirtual java.lang.Double.doubleValue
+   48: 48: dmul
+   49: 49: invokestatic net.minecraft.client.Options.percentValueLabel
+   52: 52: areturn
+
+== Options::lambda$new$1 (I)Ljava/lang/Double; ==
+   0: 0: iload_0
+   1: 1: i2d
+   2: 2: ldc2_w double 4.0
+   5: 5: ddiv
+   6: 6: invokestatic java.lang.Double.valueOf
+   9: 9: areturn
+
+== Options::lambda$new$10 (Lnet/minecraft/network/chat/Component;Lnet/minecraft/client/GraphicsPreset;)Lnet/minecraft/network/chat/Component; ==
+   0: 0: aload_0
+   1: 1: aload_1
+   2: 2: invokevirtual net.minecraft.client.GraphicsPreset.getKey
+   5: 5: invokestatic net.minecraft.network.chat.Component.translatable
+   8: 8: invokestatic net.minecraft.client.Options.genericValueLabel
+   11: 11: areturn
+
+== Options::lambda$new$105 (Lnet/minecraft/network/chat/Component;Ljava/lang/Integer;)Lnet/minecraft/network/chat/Component; ==
+   0: 0: aload_0
+   1: 1: ldc_w cp(8, 2371)
+   4: 4: iconst_1
+   5: 5: anewarray java.lang.Object
+   8: 8: dup
+   9: 9: iconst_0
+   10: 10: aload_1
+   11: 11: aastore
+   12: 12: invokestatic net.minecraft.network.chat.Component.translatable
+   15: 15: invokestatic net.minecraft.client.Options.genericValueLabel
+   18: 18: areturn
+
+== Options::lambda$new$107 (Lnet/minecraft/network/chat/Component;Ljava/lang/Integer;)Lnet/minecraft/network/chat/Component; ==
+   0: 0: aload_0
+   1: 1: ldc_w cp(8, 2371)
+   4: 4: iconst_1
+   5: 5: anewarray java.lang.Object
+   8: 8: dup
+   9: 9: iconst_0
+   10: 10: aload_1
+   11: 11: aastore
+   12: 12: invokestatic net.minecraft.network.chat.Component.translatable
+   15: 15: invokestatic net.minecraft.client.Options.genericValueLabel
+   18: 18: areturn
+
+== Options::lambda$new$16 (Lnet/minecraft/network/chat/Component;Ljava/lang/Integer;)Lnet/minecraft/network/chat/Component; ==
+   0: 0: aload_0
+   1: 1: ldc_w cp(8, 2371)
+   4: 4: iconst_1
+   5: 5: anewarray java.lang.Object
+   8: 8: dup
+   9: 9: iconst_0
+   10: 10: aload_1
+   11: 11: aastore
+   12: 12: invokestatic net.minecraft.network.chat.Component.translatable
+   15: 15: invokestatic net.minecraft.client.Options.genericValueLabel
+   18: 18: areturn
+
+== Options::lambda$new$18 (Lnet/minecraft/network/chat/Component;Ljava/lang/Integer;)Lnet/minecraft/network/chat/Component; ==
+   0: 0: aload_0
+   1: 1: ldc_w cp(8, 2775)
+   4: 4: iconst_1
+   5: 5: anewarray java.lang.Object
+   8: 8: dup
+   9: 9: iconst_0
+   10: 10: aload_1
+   11: 11: aastore
+   12: 12: invokestatic net.minecraft.network.chat.Component.translatable
+   15: 15: invokestatic net.minecraft.client.Options.genericValueLabel
+   18: 18: areturn
+
+== Options::lambda$new$24 (I)Ljava/lang/Double; ==
+   0: 0: iload_0
+   1: 1: i2d
+   2: 2: ldc2_w double 20.0
+   5: 5: ddiv
+   6: 6: invokestatic java.lang.Double.valueOf
+   9: 9: areturn
+
+== Options::lambda$new$31 (Lnet/minecraft/network/chat/Component;Ljava/lang/Double;)Lnet/minecraft/network/chat/Component; ==
+   0: 0: aload_0
+   1: 1: aload_1
+   2: 2: invokevirtual java.lang.Double.doubleValue
+   5: 5: ldc2_w double 0.9
+   8: 8: dmul
+   9: 9: ldc2_w double 0.1
+   12: 12: dadd
+   13: 13: invokestatic net.minecraft.client.Options.percentValueLabel
+   16: 16: areturn
+
+== Options::lambda$new$37 (Lnet/minecraft/network/chat/Component;Ljava/lang/Double;)Lnet/minecraft/network/chat/Component; ==
+   0: 0: aload_1
+   1: 1: invokevirtual java.lang.Double.doubleValue
+   4: 4: dconst_0
+   5: 5: dcmpl
+   6: 6: ifne -> 15
+   9: 9: aload_0
+   10: 10: iconst_0
+   11: 11: invokestatic net.minecraft.network.chat.CommonComponents.optionStatus
+   14: 14: areturn
+   15: 15: aload_0
+   16: 16: aload_1
+   17: 17: invokevirtual java.lang.Double.doubleValue
+   20: 20: invokestatic net.minecraft.client.Options.percentValueLabel
+   23: 23: areturn
+
+== Options::lambda$new$4 (Lnet/minecraft/network/chat/Component;Ljava/lang/Integer;)Lnet/minecraft/network/chat/Component; ==
+   0: 0: aload_1
+   1: 1: invokevirtual java.lang.Integer.intValue
+   4: 4: sipush 1 4
+   7: 7: if_icmpne -> 21
+   10: 10: aload_0
+   11: 11: ldc_w cp(8, 2813)
+   14: 14: invokestatic net.minecraft.network.chat.Component.translatable
+   17: 17: invokestatic net.minecraft.client.Options.genericValueLabel
+   20: 20: areturn
+   21: 21: aload_0
+   22: 22: ldc_w cp(8, 2815)
+   25: 25: iconst_1
+   26: 26: anewarray java.lang.Object
+   29: 29: dup
+   30: 30: iconst_0
+   31: 31: aload_1
+   32: 32: aastore
+   33: 33: invokestatic net.minecraft.network.chat.Component.translatable
+   36: 36: invokestatic net.minecraft.client.Options.genericValueLabel
+   39: 39: areturn
+
+== Options::lambda$new$46 (I)Ljava/lang/Double; ==
+   0: 0: iload_0
+   1: 1: i2d
+   2: 2: ldc2_w double 10.0
+   5: 5: ddiv
+   6: 6: invokestatic java.lang.Double.valueOf
+   9: 9: areturn
+
+== Options::lambda$new$47 (Ljava/lang/Double;)I ==
+   0: 0: aload_0
+   1: 1: invokevirtual java.lang.Double.doubleValue
+   4: 4: ldc2_w double 10.0
+   7: 7: dmul
+   8: 8: d2i
+   9: 9: ireturn
+
+== Options::lambda$new$49 (Lnet/minecraft/network/chat/Component;Ljava/lang/Double;)Lnet/minecraft/network/chat/Component; ==
+   0: 0: aload_0
+   1: 1: ldc_w cp(8, 2672)
+   4: 4: iconst_1
+   5: 5: anewarray java.lang.Object
+   8: 8: dup
+   9: 9: iconst_0
+   10: 10: aload_1
+   11: 11: aastore
+   12: 12: invokestatic net.minecraft.network.chat.Component.translatable
+   15: 15: invokestatic net.minecraft.client.Options.genericValueLabel
+   18: 18: areturn
+
+== Options::lambda$new$50 (I)Ljava/lang/Double; ==
+   0: 0: iload_0
+   1: 1: i2d
+   2: 2: ldc2_w double 10.0
+   5: 5: ddiv
+   6: 6: invokestatic java.lang.Double.valueOf
+   9: 9: areturn
+
+== Options::lambda$new$51 (Ljava/lang/Double;)I ==
+   0: 0: aload_0
+   1: 1: invokevirtual java.lang.Double.doubleValue
+   4: 4: ldc2_w double 10.0
+   7: 7: dmul
+   8: 8: d2i
+   9: 9: ireturn
+
+== Options::lambda$new$52 (Lnet/minecraft/network/chat/Component;Ljava/lang/Integer;)Lnet/minecraft/network/chat/Component; ==
+   0: 0: aload_1
+   1: 1: invokevirtual java.lang.Integer.intValue
+   4: 4: ifne -> 13
+   7: 7: aload_0
+   8: 8: iconst_0
+   9: 9: invokestatic net.minecraft.network.chat.CommonComponents.optionStatus
+   12: 12: areturn
+   13: 13: aload_0
+   14: 14: aload_1
+   15: 15: invokevirtual java.lang.Integer.intValue
+   18: 18: invokestatic net.minecraft.client.Options.genericValueLabel
+   21: 21: areturn
+
+== Options::lambda$new$54 (Lnet/minecraft/network/chat/Component;Ljava/lang/Integer;)Lnet/minecraft/network/chat/Component; ==
+   0: 0: aload_1
+   1: 1: invokevirtual java.lang.Integer.intValue
+   4: 4: ifne -> 13
+   7: 7: aload_0
+   8: 8: iconst_0
+   9: 9: invokestatic net.minecraft.network.chat.CommonComponents.optionStatus
+   12: 12: areturn
+   13: 13: aload_0
+   14: 14: ldc_w cp(8, 2672)
+   17: 17: iconst_1
+   18: 18: anewarray java.lang.Object
+   21: 21: dup
+   22: 22: iconst_0
+   23: 23: iconst_1
+   24: 24: aload_1
+   25: 25: invokevirtual java.lang.Integer.intValue
+   28: 28: ishl
+   29: 29: invokestatic java.lang.Integer.toString
+   32: 32: aastore
+   33: 33: invokestatic net.minecraft.network.chat.Component.translatable
+   36: 36: invokestatic net.minecraft.client.Options.genericValueLabel
+   39: 39: areturn
+
+== Options::lambda$new$60 (Lnet/minecraft/network/chat/Component;Ljava/lang/Integer;)Lnet/minecraft/network/chat/Component; ==
+   0: 0: aload_1
+   1: 1: invokevirtual java.lang.Integer.intValue
+   4: 4: iconst_2
+   5: 5: imul
+   6: 6: iconst_1
+   7: 7: iadd
+   8: 8: istore_2
+   9: 9: aload_0
+   10: 10: iload_2
+   11: 11: invokedynamic indy@2641
+   16: 16: invokestatic net.minecraft.network.chat.Component.translatable
+   19: 19: invokestatic net.minecraft.client.Options.genericValueLabel
+   22: 22: areturn
+
+== Options::lambda$new$62 (Lnet/minecraft/network/chat/Component;Ljava/lang/Double;)Lnet/minecraft/network/chat/Component; ==
+   0: 0: aload_0
+   1: 1: getstatic java.util.Locale.ROOT
+   4: 4: ldc_w cp(8, 2630)
+   7: 7: iconst_1
+   8: 8: anewarray java.lang.Object
+   11: 11: dup
+   12: 12: iconst_0
+   13: 13: aload_1
+   14: 14: aastore
+   15: 15: invokestatic java.lang.String.format
+   18: 18: invokestatic net.minecraft.network.chat.Component.literal
+   21: 21: invokestatic net.minecraft.client.Options.genericValueLabel
+   24: 24: areturn
+
+== Options::lambda$new$83 (Lnet/minecraft/network/chat/Component;Ljava/lang/Integer;)Lnet/minecraft/network/chat/Component; ==
+   0: 0: aload_1
+   1: 1: invokevirtual java.lang.Integer.intValue
+   4: 4: ifne -> 18
+   7: 7: aload_0
+   8: 8: ldc_w cp(8, 2528)
+   11: 11: invokestatic net.minecraft.network.chat.Component.translatable
+   14: 14: invokestatic net.minecraft.client.Options.genericValueLabel
+   17: 17: areturn
+   18: 18: aload_0
+   19: 19: ldc_w cp(8, 2530)
+   22: 22: iconst_1
+   23: 23: anewarray java.lang.Object
+   26: 26: dup
+   27: 27: iconst_0
+   28: 28: aload_1
+   29: 29: aastore
+   30: 30: invokestatic net.minecraft.network.chat.Component.translatable
+   33: 33: invokestatic net.minecraft.client.Options.genericValueLabel
+   36: 36: areturn
+
+== Options::lambda$new$84 (Lnet/minecraft/network/chat/Component;Ljava/lang/Integer;)Lnet/minecraft/network/chat/Component; ==
+   0: 0: aload_1
+   1: 1: invokevirtual java.lang.Integer.intValue
+   4: 4: lookupswitch
+   5: 5: nop
+   6: 6: nop
+   7: 7: nop
+   8: 8: nop
+   9: 9: nop
+   10: 10: nop
+   11: 11: istore 0
+   13: 13: nop
+   14: 14: nop
+   15: 15: iconst_m1
+   16: 16: nop
+   17: 17: nop
+   18: 18: nop
+   19: 19: fstore_3
+   20: 20: nop
+   21: 21: nop
+   22: 22: nop
+   23: 23: iload_2
+   24: 24: nop
+   25: 25: nop
+   26: 26: nop
+   27: 27: fdiv
+   28: 28: nop
+   29: 29: nop
+   30: 30: nop
+   31: 31: dload_3
+   32: 32: aload_0
+   33: 33: ldc_w cp(8, 2524)
+   36: 36: invokestatic net.minecraft.network.chat.Component.translatable
+   39: 39: invokestatic net.minecraft.client.Options.genericValueLabel
+   42: 42: goto -> 66
+   45: 45: aload_0
+   46: 46: ldc_w cp(8, 2526)
+   49: 49: invokestatic net.minecraft.network.chat.Component.translatable
+   52: 52: invokestatic net.minecraft.client.Options.genericValueLabel
+   55: 55: goto -> 66
+   58: 58: aload_0
+   59: 59: aload_1
+   60: 60: invokevirtual java.lang.Integer.intValue
+   63: 63: invokestatic net.minecraft.client.Options.genericValueLabel
+   66: 66: areturn
+
+== Options::lambda$new$86 (Ljava/lang/Integer;)Ljava/lang/Double; ==
+   0: 0: aload_0
+   1: 1: invokevirtual java.lang.Integer.intValue
+   4: 4: i2d
+   5: 5: ldc2_w double 70.0
+   8: 8: dsub
+   9: 9: ldc2_w double 40.0
+   12: 12: ddiv
+   13: 13: invokestatic java.lang.Double.valueOf
+   16: 16: areturn
+
+== Options::lambda$new$88 (Lnet/minecraft/network/chat/Component;Ljava/lang/Double;)Lnet/minecraft/network/chat/Component; ==
+   0: 0: aload_1
+   1: 1: invokevirtual java.lang.Double.doubleValue
+   4: 4: ldc2_w double 100.0
+   7: 7: dmul
+   8: 8: d2i
+   9: 9: istore_2
+   10: 10: iload_2
+   11: 11: ifne -> 25
+   14: 14: aload_0
+   15: 15: ldc_w cp(8, 2502)
+   18: 18: invokestatic net.minecraft.network.chat.Component.translatable
+   21: 21: invokestatic net.minecraft.client.Options.genericValueLabel
+   24: 24: areturn
+   25: 25: iload_2
+   26: 26: bipush 50
+   28: 28: if_icmpne -> 42
+   31: 31: aload_0
+   32: 32: ldc_w cp(8, 2504)
+   35: 35: invokestatic net.minecraft.network.chat.Component.translatable
+   38: 38: invokestatic net.minecraft.client.Options.genericValueLabel
+   41: 41: areturn
+   42: 42: iload_2
+   43: 43: bipush 100
+   45: 45: if_icmpne -> 59
+   48: 48: aload_0
+   49: 49: ldc_w cp(8, 2506)
+   52: 52: invokestatic net.minecraft.network.chat.Component.translatable
+   55: 55: invokestatic net.minecraft.client.Options.genericValueLabel
+   58: 58: areturn
+   59: 59: aload_0
+   60: 60: iload_2
+   61: 61: invokestatic net.minecraft.client.Options.genericValueLabel
+   64: 64: areturn
+
+== lang caches == []

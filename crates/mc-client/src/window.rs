@@ -2170,6 +2170,14 @@ pub fn run_gui_app(
         if left_down && app.chat_line_spacing_drag {
             app.on_chat_line_spacing_slider_drag(gmx);
         }
+        // THE NOTIFICATIONS' OWN DRAG (the same armed lane the
+        // chatLineSpacing row wears — the sub-screen's gate the
+        // Accessibility kind keeps, the held frames the 0.5..10.0
+        // seconds the cursor's x answers, the release the disarm
+        // speaks below)
+        if left_down && app.notification_drag {
+            app.on_notification_slider_drag(gmx);
+        }
         // the LEFT press's falling edge (the vanilla's own release lane):
         // the dig's hold flag drops and the destroy state ABORTs (the
         // continueAttack(false) tail — the crack overlay clears)

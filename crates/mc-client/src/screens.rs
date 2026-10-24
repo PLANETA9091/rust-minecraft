@@ -5789,6 +5789,40 @@ fn show_subtitles_caption(on: bool) -> String {
     )
 }
 
+/// THE NOTIFICATIONS' OWN CAPTION (the 26.2 lambda$new$49 law the 183
+/// probe banks — the `genericValueLabel(label,
+/// Component.translatable("options.multiplier", value))` composition
+/// the caption lambda's translatable+genericValueLabel pair wears: the
+/// label the `options.notifications.display_time` key the jar's
+/// en_us "Notification Time" row speaks, the value word the
+/// `options.multiplier` "%sx" row keeps — the Java Double.toString
+/// the "1.0" the decimal shape answers, the "1.0x" the default
+/// caption wears, the "0.5x"/"10.0x" the range's own ends speak; the
+/// java_double print the same shape the file row keeps — the one law
+/// the caption and the line share).
+fn notification_time_caption(v: f64) -> String {
+    format!(
+        "{}: {}x",
+        tr("options.notifications.display_time").unwrap_or("Notification Time"),
+        crate::options_file::java_double(v)
+    )
+}
+
+/// THE NOTIFICATIONS' OWN SLIDER FOLD (the 26.2
+/// `OptionInstance$IntRange(5, 100).xmap(i -> i / 10.0, v -> (int)(v *
+/// 10.0), true)` walk the 183 probes bank — the track's 0..1 unit the
+/// slider's own seat speaks, the 96 integer seats the min/max pair
+/// keeps: the `round(unit * 95) + 5` seat the lerp's own walk answers,
+/// the `/ 10.0` the lambda$new$50 fold wears — the 0.1 grid the seats
+/// speak, the unit 0.0 the 0.5 the range's own floor answers, the unit
+/// 1.0 the 10.0 the ceiling speaks; the xmap's own SliderableValueSet
+/// lambda the exact fromSlider fold wears — the seat grid the same
+/// 96-answer the track's law keeps)
+fn notification_from_unit(unit: f64) -> f64 {
+    let seat = (unit.clamp(0.0, 1.0) * 95.0).round() as i64 + 5;
+    seat as f64 / 10.0
+}
+
 /// THE BAND SCOPE'S OWN CAPTION (the 26.2 CycleButton walk the
 /// chatbgonly_179b/c probes bank — the label law the
 /// `CycleButton.createLabelForValue` speak: the DisplayState.VALUE
@@ -7185,6 +7219,21 @@ pub struct App {
     /// answers, the 0.5 default the byte-identical fold the band's
     /// own alpha shares).
     pub background_for_chat_only: bool,
+    /// THE NOTIFICATIONS' OWN MULTIPLIER (the `notificationDisplayTime`
+    /// option the 26.2 Options ctor's dconst_1 pc 1352 banks — the
+    /// default 1.0 the dconst_1 keeps, the `Codec.doubleRange(0.5,
+    /// 10.0)` codec the strict double wears, the value set the
+    /// `IntRange(5, 100).xmap(i -> i / 10.0, v -> (int)(v * 10.0),
+    /// true)` slider walk the 183 probes bank; the accessibility array
+    /// the index-9 seat keeps (chatDelay 8 the row BEFORE, bobView 10
+    /// the row AFTER); the consumer the SubtitleOverlay's
+    /// extractRenderState dstore-9 walk speaks — the `3000.0 *
+    /// displayTime` window multiplier the subtitle rows' own age fold
+    /// wears, the Hud's `40.0 * value` tick row the same option's
+    /// second seat banks); the default 1.0 the 60-tick window the
+    /// 182 tests' own fold keeps — the goldens' silence the default
+    /// answers.
+    pub notification_display_time: f64,
     /// THE LAST ACTIVE'S OWN TIMESTAMP (the vanilla
     /// `Minecraft.lastActiveTime` field — the millis the active walk
     /// alone refreshes, the unfocused walk the 500ms grace the elapsed
@@ -8480,6 +8529,10 @@ pub struct App {
     /// the chatOpacity row's flag wears — the Accessibility
     /// sub-screen's lineSpacing row's own flag).
     pub chat_line_spacing_drag: bool,
+    /// THE NOTIFICATIONS' OWN ARM (the same AbstractWidget dragging
+    /// shape the lineSpacing row's flag wears — the Accessibility
+    /// sub-screen's notificationDisplayTime row's own flag).
+    pub notification_drag: bool,
     /// THE OPTIONS FILE'S OWN PATH (the `optionsFile` field the 26.2
     /// ctor's `File` param banks — the cwd the vanilla default game dir
     /// names, the run_gui_app boot sets; the headless boot the None the
@@ -10603,6 +10656,8 @@ impl App {
             textbg_drag: false,
             chat_opacity_drag: false,
             chat_line_spacing_drag: false,
+            notification_drag: false,
+            notification_display_time: 1.0,
             options_file: None,
             options_file_loaded: false,
             creative_palette: [(0, 0); 45],
@@ -20799,6 +20854,10 @@ impl App {
         // chatOpacity row's flag wears — the sub-screen's fourth row
         // the same law keeps)
         self.chat_line_spacing_drag = false;
+        // THE NOTIFICATIONS' OWN DISARM (the same mouseReleased lane
+        // the chatOpacity row's flag wears — the sub-screen's fifth row
+        // the same law keeps)
+        self.notification_drag = false;
         // THE SCROLLBAR'S OWN DISARM (the mouseReleased walk's own first
         // lane — the button-0 release the `scrolling` flag the
         // unconditional false speaks BEFORE the tab walk; the sim's
@@ -20919,6 +20978,7 @@ impl App {
         self.textbg_drag = false;
         self.chat_opacity_drag = false;
         self.chat_line_spacing_drag = false;
+        self.notification_drag = false;
     }
 
     /// THE AMBIENT WALK (javap `ClientLevel.animateTick` +
@@ -30522,6 +30582,22 @@ impl App {
                     return;
                 }
             }
+            // THE NOTIFICATIONS' OWN ARM (the same AbstractSliderButton's
+            // mouseDown walk the sub-screen's slider rows wear — the
+            // press INSIDE the track the value's own seat answers, the
+            // armed flag the held drag rides, the 0.5..10.0 seconds the
+            // IntRange(5, 100).xmap walk keeps: the unit the track's
+            // 0..1 the 96-seat grid the `round(unit * 95) + 5, / 10.0`
+            // fold answers)
+            if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_notification") {
+                let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
+                if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
+                    self.notification_display_time =
+                        notification_from_unit(slider_value_from_x(mx, bx, bw));
+                    self.notification_drag = true;
+                    return;
+                }
+            }
             if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_fov_effect") {
                 let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
                 if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
@@ -32738,6 +32814,7 @@ impl App {
         self.show_subtitles = file.show_subtitles;
         self.text_background_opacity = file.text_background_opacity;
         self.background_for_chat_only = file.background_for_chat_only;
+        self.notification_display_time = file.notification_display_time;
         // THE BODY'S OWN READ (the Camera.tickFov the option value the
         // tick passes — the body's own store the boot's truth wears,
         // the no-body boot the field the later spawn's ctor keeps)
@@ -32767,6 +32844,7 @@ impl App {
             show_subtitles: self.show_subtitles,
             text_background_opacity: self.text_background_opacity,
             background_for_chat_only: self.background_for_chat_only,
+            notification_display_time: self.notification_display_time,
         };
         file.save(path);
     }
@@ -39275,7 +39353,7 @@ impl App {
             &self.sounds.subtitle_plays,
             self.frame as u64,
             listener,
-            1.0,
+            self.notification_display_time,
         );
         if rows.is_empty() {
             return;
@@ -39299,7 +39377,7 @@ impl App {
         let ox = w - half - 2;
         let band = [0.0, 0.0, 0.0, subtitle_band_alpha()];
         for (i, (row, text)) in rows.iter().zip(texts.iter()).enumerate() {
-            let fade = crate::sound::subtitle_fade(row.age, 1.0);
+            let fade = crate::sound::subtitle_fade(row.age, self.notification_display_time);
             let color = [
                 fade as f32 / 255.0,
                 fade as f32 / 255.0,
@@ -41066,6 +41144,21 @@ impl App {
         if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_fov_effect") {
             let (bx, bw) = (b.x, b.w);
             self.fov_effect_scale = slider_value_from_x(mx, bx, bw);
+        }
+    }
+
+    /// THE NOTIFICATIONS' OWN DRAG (the same armed lane the fov-effect
+    /// row wears — the flag the press inside the track arms, the held
+    /// frames the 0.5..10.0 seconds the IntRange(5, 100).xmap walk
+    /// keeps, the release the disarm the on_left_release walk speaks)
+    pub fn on_notification_slider_drag(&mut self, mx: i32) {
+        if !self.notification_drag || self.screen != ScreenKind::Accessibility {
+            return;
+        }
+        if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_notification") {
+            let (bx, bw) = (b.x, b.w);
+            self.notification_display_time =
+                notification_from_unit(slider_value_from_x(mx, bx, bw));
         }
     }
 
@@ -62197,14 +62290,31 @@ impl App {
         );
         ls.value = Some(self.chat_line_spacing);
         self.buttons.push(ls);
+        // THE NOTIFICATIONS' OWN ROW (the array's index-9 seat the
+        // store the overlay's own window multiplier wears — the slider
+        // row the IntRange(5, 100).xmap walk keeps, the 0.5..10.0
+        // seconds the /10 fold speaks, the unit the row's own inverse
+        // `(v - 0.5) / 9.5` the track position answers; the row BETWEEN
+        // the chat-lines and the fov seats the array's own order keeps:
+        // index 7 < index 9 < index 12)
+        let mut nd = Button::new(
+            "opt_notification",
+            notification_time_caption(self.notification_display_time),
+            cx,
+            h / 2 - 16,
+            bw,
+        );
+        nd.value = Some((self.notification_display_time - 0.5) / 9.5);
+        self.buttons.push(nd);
         // THE FOV EFFECTS' OWN ROW (the array's index 12 the store the
         // camera's read wears — the caption the percent the OFF end
-        // speaks)
+        // speaks, the row the notification seat's AFTER the same
+        // stride chain keeps)
         let mut fes = Button::new(
             "opt_fov_effect",
             fov_effect_caption(self.fov_effect_scale),
             cx,
-            h / 2 - 16,
+            h / 2 + 12,
             bw,
         );
         fes.value = Some(self.fov_effect_scale);

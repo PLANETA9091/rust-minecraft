@@ -1,0 +1,233 @@
+== Options.<init> the notificationDisplayTime window ==
+   1278: 1278: dconst_0
+   1279: 1279: ldc2_w double 6.0
+   1282: 1282: invokestatic com.mojang.serialization.Codec.doubleRange
+   1285: 1285: dconst_0
+   1286: 1286: invokestatic java.lang.Double.valueOf
+   1289: 1289: invokedynamic indy@948
+   1294: 1294: invokespecial net.minecraft.client.OptionInstance.<init>
+   1297: 1297: putfield net.minecraft.client.Options.chatDelay
+   1300: 1300: aload_0
+   1301: 1301: new net.minecraft.client.OptionInstance
+   1304: 1304: dup
+   1305: 1305: ldc_w cp(8, 950)
+   1308: 1308: getstatic net.minecraft.client.Options.ACCESSIBILITY_TOOLTIP_NOTIFICATION_DISPLAY_TIME
+   1311: 1311: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+   1314: 1314: invokedynamic indy@954
+   1319: 1319: new net.minecraft.client.OptionInstance$IntRange
+   1322: 1322: dup
+   1323: 1323: iconst_5
+   1324: 1324: bipush 100
+   1326: 1326: invokespecial net.minecraft.client.OptionInstance$IntRange.<init>
+   1329: 1329: invokedynamic indy@955
+== the notificationDisplayTime utf8's own classes ==
+   net/minecraft/client/Options.class
+   net/minecraft/client/gui/Hud.class
+   net/minecraft/client/gui/components/SubtitleOverlay.class
+   net/minecraft/client/gui/components/toasts/NowPlayingToast.class
+   net/minecraft/client/gui/components/toasts/ToastManager.class
+   net/minecraft/client/gui/screens/options/AccessibilityOptionsScreen.class
+== net.minecraft.client.Options::<init> (Lnet/minecraft/client/Minecraft;Ljava/io/File;)V ==
+   1339: 1339: iconst_1
+   1340: 1340: invokevirtual net.minecraft.client.OptionInstance$IntRange.xmap
+   1343: 1343: ldc2_w double 0.5
+   1346: 1346: ldc2_w double 10.0
+   1349: 1349: invokestatic com.mojang.serialization.Codec.doubleRange
+   1352: 1352: dconst_1
+   1353: 1353: invokestatic java.lang.Double.valueOf
+   1356: 1356: getstatic net.minecraft.client.OptionInstance.NO_ACTION
+   1359: 1359: invokespecial net.minecraft.client.OptionInstance.<init>
+   1362: 1362: putfield net.minecraft.client.Options.notificationDisplayTime
+   1365: 1365: aload_0
+   1366: 1366: new net.minecraft.client.OptionInstance
+   1369: 1369: dup
+   1370: 1370: ldc_w cp(8, 958)
+   1373: 1373: invokestatic net.minecraft.client.OptionInstance.noTooltip
+   1376: 1376: invokedynamic indy@959
+   1381: 1381: new net.minecraft.client.OptionInstance$IntRange
+   1384: 1384: dup
+   1385: 1385: iconst_0
+   1386: 1386: iconst_4
+   1387: 1387: invokespecial net.minecraft.client.OptionInstance$IntRange.<init>
+   1390: 1390: iconst_4
+   1391: 1391: invokestatic java.lang.Integer.valueOf
+   ...
+== net.minecraft.client.Options::notificationDisplayTime ()Lnet/minecraft/client/OptionInstance; ==
+   0: 0: aload_0
+   1: 1: getfield net.minecraft.client.Options.notificationDisplayTime
+   4: 4: areturn
+   ...
+== net.minecraft.client.Options::processOptions (Lnet/minecraft/client/Options$FieldAccess;)V ==
+   660: 660: getfield net.minecraft.client.Options.chatScale
+   663: 663: invokeinterface net.minecraft.client.Options$FieldAccess.process
+   668: 668: aload_1
+   669: 669: ldc_w cp(8, 240)
+   672: 672: aload_0
+   673: 673: getfield net.minecraft.client.Options.chatWidth
+   676: 676: invokeinterface net.minecraft.client.Options$FieldAccess.process
+   681: 681: aload_1
+   682: 682: ldc_w cp(8, 252)
+   685: 685: aload_0
+   686: 686: getfield net.minecraft.client.Options.notificationDisplayTime
+   689: 689: invokeinterface net.minecraft.client.Options$FieldAccess.process
+   694: 694: aload_0
+   695: 695: aload_1
+   696: 696: ldc_w cp(8, 984)
+   699: 699: aload_0
+   700: 700: getfield net.minecraft.client.Options.useNativeTransport
+   703: 703: invokeinterface net.minecraft.client.Options$FieldAccess.process
+   708: 708: putfield net.minecraft.client.Options.useNativeTransport
+   711: 711: aload_1
+   712: 712: ldc_w cp(8, 234)
+   715: 715: aload_0
+   716: 716: getfield net.minecraft.client.Options.mainHand
+   ...
+== net.minecraft.client.gui.Hud::tick ()V ==
+   145: 145: aload_0
+   146: 146: getfield net.minecraft.client.gui.Hud.lastToolHighlight
+   149: 149: invokevirtual net.minecraft.world.item.ItemStack.getHoverName
+   152: 152: invokeinterface net.minecraft.network.chat.Component.equals
+   157: 157: ifne -> 191
+   160: 160: aload_0
+   161: 161: ldc2_w double 40.0
+   164: 164: aload_0
+   165: 165: getfield net.minecraft.client.gui.Hud.minecraft
+   168: 168: getfield net.minecraft.client.Minecraft.options
+   171: 171: invokevirtual net.minecraft.client.Options.notificationDisplayTime
+   174: 174: invokevirtual net.minecraft.client.OptionInstance.get
+   177: 177: checkcast java.lang.Double
+   180: 180: invokevirtual java.lang.Double.doubleValue
+   183: 183: dmul
+   184: 184: d2i
+   185: 185: putfield net.minecraft.client.gui.Hud.toolHighlightTimer
+   188: 188: goto -> 208
+   191: 191: aload_0
+   192: 192: getfield net.minecraft.client.gui.Hud.toolHighlightTimer
+   195: 195: ifle -> 208
+   198: 198: aload_0
+   199: 199: dup
+   200: 200: getfield net.minecraft.client.gui.Hud.toolHighlightTimer
+   ...
+== net.minecraft.client.gui.components.SubtitleOverlay::extractRenderState (Lnet/minecraft/client/gui/GuiGraphicsExtractor;)V ==
+   187: 187: aload_0
+   188: 188: getfield net.minecraft.client.gui.components.SubtitleOverlay.audibleSubtitles
+   191: 191: invokeinterface java.util.List.isEmpty
+   196: 196: ifeq -> 200
+   199: 199: return
+   200: 200: iconst_0
+   201: 201: istore 7
+   203: 203: iconst_0
+   204: 204: istore 8
+   206: 206: aload_0
+   207: 207: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+   210: 210: getfield net.minecraft.client.Minecraft.options
+   213: 213: invokevirtual net.minecraft.client.Options.notificationDisplayTime
+   216: 216: invokevirtual net.minecraft.client.OptionInstance.get
+   219: 219: checkcast java.lang.Double
+   222: 222: invokevirtual java.lang.Double.doubleValue
+   225: 225: dstore 9
+   227: 227: aload_0
+   228: 228: getfield net.minecraft.client.gui.components.SubtitleOverlay.audibleSubtitles
+   231: 231: invokeinterface java.util.List.iterator
+   236: 236: astore 11
+   238: 238: aload 11
+   240: 240: invokeinterface java.util.Iterator.hasNext
+   ...
+== net.minecraft.client.gui.components.toasts.NowPlayingToast::showToast (Lnet/minecraft/client/Options;)V ==
+   0: 0: aload_0
+   1: 1: iconst_1
+   2: 2: putfield net.minecraft.client.gui.components.toasts.NowPlayingToast.updateToast
+   5: 5: aload_0
+   6: 6: aload_1
+   7: 7: invokevirtual net.minecraft.client.Options.notificationDisplayTime
+   10: 10: invokevirtual net.minecraft.client.OptionInstance.get
+   13: 13: checkcast java.lang.Double
+   16: 16: invokevirtual java.lang.Double.doubleValue
+   19: 19: putfield net.minecraft.client.gui.components.toasts.NowPlayingToast.notificationDisplayTimeMultiplier
+   22: 22: aload_0
+   23: 23: getstatic net.minecraft.client.gui.components.toasts.Toast$Visibility.SHOW
+   26: 26: invokevirtual net.minecraft.client.gui.components.toasts.NowPlayingToast.setWantedVisibility
+   29: 29: return
+   ...
+   0: 0: aload_0
+   1: 1: iconst_1
+   2: 2: putfield net.minecraft.client.gui.components.toasts.NowPlayingToast.updateToast
+   5: 5: aload_0
+   6: 6: aload_1
+   7: 7: invokevirtual net.minecraft.client.Options.notificationDisplayTime
+   10: 10: invokevirtual net.minecraft.client.OptionInstance.get
+   13: 13: checkcast java.lang.Double
+   16: 16: invokevirtual java.lang.Double.doubleValue
+   19: 19: putfield net.minecraft.client.gui.components.toasts.NowPlayingToast.notificationDisplayTimeMultiplier
+   22: 22: aload_0
+   23: 23: getstatic net.minecraft.client.gui.components.toasts.Toast$Visibility.SHOW
+   26: 26: invokevirtual net.minecraft.client.gui.components.toasts.NowPlayingToast.setWantedVisibility
+   29: 29: return
+   ...
+== net.minecraft.client.gui.components.toasts.NowPlayingToast::update (Lnet/minecraft/client/gui/components/toasts/ToastManager;J)V ==
+   0: 0: aload_0
+   1: 1: getfield net.minecraft.client.gui.components.toasts.NowPlayingToast.updateToast
+   4: 4: ifeq -> 37
+   7: 7: aload_0
+   8: 8: lload_2
+   9: 9: l2d
+   10: 10: ldc2_w double 5000.0
+   13: 13: aload_0
+   14: 14: getfield net.minecraft.client.gui.components.toasts.NowPlayingToast.notificationDisplayTimeMultiplier
+   17: 17: dmul
+   18: 18: dcmpg
+   19: 19: ifge -> 28
+   22: 22: getstatic net.minecraft.client.gui.components.toasts.Toast$Visibility.SHOW
+   25: 25: goto -> 31
+   28: 28: getstatic net.minecraft.client.gui.components.toasts.Toast$Visibility.HIDE
+   31: 31: putfield net.minecraft.client.gui.components.toasts.NowPlayingToast.wantedVisibility
+   34: 34: invokestatic net.minecraft.client.gui.components.toasts.NowPlayingToast.tickMusicNotes
+   37: 37: return
+   ...
+== net.minecraft.client.gui.components.toasts.ToastManager::getNotificationDisplayTimeMultiplier ()D ==
+   0: 0: aload_0
+   1: 1: getfield net.minecraft.client.gui.components.toasts.ToastManager.minecraft
+   4: 4: getfield net.minecraft.client.Minecraft.options
+   7: 7: invokevirtual net.minecraft.client.Options.notificationDisplayTime
+   10: 10: invokevirtual net.minecraft.client.OptionInstance.get
+   13: 13: checkcast java.lang.Double
+   16: 16: invokevirtual java.lang.Double.doubleValue
+   19: 19: dreturn
+   ...
+== net.minecraft.client.gui.screens.options.AccessibilityOptionsScreen::options (Lnet/minecraft/client/Options;)[Lnet/minecraft/client/OptionInstance; ==
+   50: 50: aload_0
+   51: 51: invokevirtual net.minecraft.client.Options.chatOpacity
+   54: 54: aastore
+   55: 55: dup
+   56: 56: bipush 7
+   58: 58: aload_0
+   59: 59: invokevirtual net.minecraft.client.Options.chatLineSpacing
+   62: 62: aastore
+   63: 63: dup
+   64: 64: bipush 8
+   66: 66: aload_0
+   67: 67: invokevirtual net.minecraft.client.Options.chatDelay
+   70: 70: aastore
+   71: 71: dup
+   72: 72: bipush 9
+   74: 74: aload_0
+   75: 75: invokevirtual net.minecraft.client.Options.notificationDisplayTime
+   78: 78: aastore
+   79: 79: dup
+   80: 80: bipush 10
+   82: 82: aload_0
+   83: 83: invokevirtual net.minecraft.client.Options.bobView
+   86: 86: aastore
+   87: 87: dup
+   88: 88: bipush 11
+   90: 90: aload_0
+   91: 91: invokevirtual net.minecraft.client.Options.screenEffectScale
+   94: 94: aastore
+   95: 95: dup
+   96: 96: bipush 12
+   98: 98: aload_0
+   99: 99: invokevirtual net.minecraft.client.Options.fovEffectScale
+   102: 102: aastore
+   103: 103: dup
+   104: 104: bipush 13
+   ...

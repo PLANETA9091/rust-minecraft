@@ -9758,7 +9758,7 @@ fn the_options_file_the_stores_restart_outlives() {
     assert_eq!(app.screen, ScreenKind::Title, "the Done the return wears");
     let text = std::fs::read_to_string(&path).expect("the chord the file writes");
     assert_eq!(
-        text, "version:4903\nshowSubtitles:false\nmouseSensitivity:1.0\nfov:110\nsoundCategory_master:0.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
+        text, "version:4903\nshowSubtitles:false\nmouseSensitivity:1.0\nfov:110\nsoundCategory_master:0.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\n",
         "the file the vanilla rows wear"
     );
     // THE RESTART (the fresh boot the file's truth wears — the session's
@@ -9794,7 +9794,7 @@ fn the_options_escape_the_save_and_return_wears() {
     assert_eq!(app.screen, ScreenKind::Title, "the escape the return wears");
     let text = std::fs::read_to_string(&path).expect("the escape the file writes");
     assert_eq!(
-        text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.75\nfov:90\nsoundCategory_master:0.25\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
+        text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.75\nfov:90\nsoundCategory_master:0.25\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\n",
         "the SAME save chord the Done wears the escape speaks"
     );
     // THE PAUSED LANE (the pause screen's own Options — the
@@ -9903,7 +9903,7 @@ fn the_quit_lane_the_stop_flag_and_the_files_absence_wears() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the removed() moment the file writes"),
-        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\n",
         "the takeover's own exit the rows bank"
     );
     app.render_title_buttons_for_test();
@@ -9917,7 +9917,7 @@ fn the_quit_lane_the_stop_flag_and_the_files_absence_wears() {
     assert!(app.stopping, "the second stop the same chord wears");
     assert_eq!(
         std::fs::read_to_string(&path).expect("the file the exit keeps"),
-        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\n",
         "the quit the file NEVER re-writes — the removed() moment ALONE the rows keep"
     );
     let _ = std::fs::remove_dir_all(&dir);
@@ -9968,7 +9968,7 @@ fn the_options_exit_the_removed_moment_itself_saves() {
     app.open(ScreenKind::Servers);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the takeover the file writes"),
-        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\n",
         "the replacement lane the removed() moment speaks"
     );
     // THE SAME-KIND RE-ENTRY (the open(Options) from Options the
@@ -9979,7 +9979,7 @@ fn the_options_exit_the_removed_moment_itself_saves() {
     app.open(ScreenKind::Options);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the re-entry the file writes"),
-        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:0.5\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:0.5\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\n",
         "the same-kind walk the old screen's discard keeps"
     );
     // THE NONE BOOT'S SILENT KEEP (the options_file None the save walk
@@ -10117,7 +10117,7 @@ fn the_focus_pause_chord_the_flip_and_the_rows_wear() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the exit the file writes"),
-        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:false\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:false\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\n",
         "the flipped row the exit banks"
     );
     // THE SECOND FLIP (the chord the option re-arms — the row the next
@@ -10128,7 +10128,7 @@ fn the_focus_pause_chord_the_flip_and_the_rows_wear() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the second exit the file writes"),
-        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\n",
         "the re-armed row the exit banks"
     );
     // THE THIRD FLIP (the option the false re-wears — the restart the
@@ -10139,7 +10139,7 @@ fn the_focus_pause_chord_the_flip_and_the_rows_wear() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the third exit the file writes"),
-        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:false\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:false\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\n",
         "the flipped row the exit banks"
     );
     // THE BOOT LOAD (the file's truth the boot walk wears — the false
@@ -11515,4 +11515,220 @@ fn the_bg_opacity_gate_the_lanes_fold_wears() {
         SIDEBAR_BODY_BG[3],
         "the default fold the body's own byte wears"
     );
+}
+
+/// THE NOTIFICATIONS' OWN ROW (the 26.2 notifications_183 probes the
+/// walk banks — the `notificationDisplayTime` option the Options
+/// ctor's dconst_1 pc 1352 speaks, the default 1.0 the dconst_1 keeps,
+/// the `Codec.doubleRange(0.5, 10.0)` codec the strict double wears,
+/// the value set the `IntRange(5, 100).xmap(i -> i / 10.0, v ->
+/// (int)(v * 10.0), true)` slider walk the 96 seats keeps, the caption
+/// the lambda$new$49 law the `genericValueLabel(label,
+/// translatable("options.multiplier", value))` composition speaks —
+/// the lang rows the "Notification Time" + "%sx" pair the jar's en_us
+/// table keeps, the accessibility array the index-9 seat the row
+/// BETWEEN the chat-lines and the fov seats hosts (7 < 9 < 12 the
+/// order speaks); the processOptions the ldc@682 the visit seat keeps
+/// — the walk's LAST carried seat the file's own END row answers; the
+/// consumer the SubtitleOverlay's extractRenderState dstore-9 walk
+/// speaks — the `3000.0 * displayTime` window multiplier the
+/// subtitle rows' own age fold wears, the doubled value the doubled
+/// window keeps).
+#[test]
+fn the_notification_row_the_multiplier_wears() {
+    fn diff_count(a: &[u8], b: &[u8], x0: i32, y0: i32, w: i32, h: i32) -> usize {
+        let mut n = 0usize;
+        for y in y0..y0 + h {
+            for x in x0..x0 + w {
+                let o = ((y as usize) * 640 + x as usize) * 3;
+                if a[o..o + 3] != b[o..o + 3] {
+                    n += 1;
+                }
+            }
+        }
+        n
+    }
+    let dir = std::env::temp_dir().join(format!("mc2rs_notif_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&dir);
+    let path = dir.join("options.txt");
+    let mut app = App::new(262);
+    app.options_file = Some(path.clone());
+    // THE SUB-SCREEN'S OWN SEAT (the accessibility row the opener
+    // wears — the entry save the removed() moment the file's rows
+    // keep, the DEFAULT 1.0 the multiplier's row speaks)
+    app.open(ScreenKind::Options);
+    app.open(ScreenKind::Accessibility);
+    let pre_exit = std::fs::read_to_string(&path).expect("the entry save wrote");
+    assert!(
+        pre_exit.contains("notificationDisplayTime:1.0\n"),
+        "the removed() moment the entry save keeps ({pre_exit})"
+    );
+    // THE FILE ROW'S OWN ADJACENCY (the visit-order seat the
+    // processOptions walk banks — the notificationDisplayTime the
+    // ldc@682 the walk's LAST carried seat wears, the file's own END
+    // the backgroundForChatOnly row's AFTER answers)
+    let nd_pos = pre_exit.find("notificationDisplayTime:").expect("the row");
+    let bg_pos = pre_exit.find("backgroundForChatOnly:").expect("the row");
+    assert!(
+        bg_pos < nd_pos,
+        "the visit-order adjacency the file rows keep"
+    );
+    assert!(
+        pre_exit.trim_end().ends_with("notificationDisplayTime:1.0"),
+        "the walk's last seat the file's own END row wears"
+    );
+    // THE ROW'S OWN SEAT (the array's index 9 the row BETWEEN the
+    // chat-lines and the fov seats wears — index 7 < index 9 < index
+    // 12 the order keeps) + THE DEFAULT CAPTION (the lambda$new$49
+    // composition the "1.0x" multiplier word wears)
+    app.render_title_buttons_for_test();
+    let ls = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_chat_line_spacing")
+        .expect("the line spacing row")
+        .clone();
+    let nd = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_notification")
+        .expect("the notification row")
+        .clone();
+    let fes = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_fov_effect")
+        .expect("the fov row")
+        .clone();
+    assert!(
+        ls.y < nd.y && nd.y < fes.y,
+        "the index-9 row the between-seat wears"
+    );
+    assert_eq!(
+        nd.label, "Notification Time: 1.0x",
+        "the lang rows' own words the multiplier caption keeps"
+    );
+    // THE SLIDER'S OWN SEATS (the IntRange(5, 100).xmap walk the 96
+    // seats keep — the track's left handle seat the 0.5 the range's own
+    // floor answers, the right the 10.0 the ceiling speaks, the middle
+    // the 5.3 the seat grid's own 0.1 step wears, the caption the
+    // java_double decimal shape wears; the 4px handle inset the
+    // AbstractSliderButton's own 8px margin keeps)
+    app.on_press(nd.x + 4, nd.y + nd.h / 2);
+    assert_eq!(
+        app.notification_display_time, 0.5,
+        "the track's left handle the floor seat wears"
+    );
+    app.render_title_buttons_for_test();
+    let nd = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_notification")
+        .expect("the row")
+        .clone();
+    assert_eq!(
+        nd.label, "Notification Time: 0.5x",
+        "the floor seat the caption speaks"
+    );
+    app.on_press(nd.x + 70, nd.y + nd.h / 2);
+    assert_eq!(
+        app.notification_display_time, 5.3,
+        "the track's middle the seat grid wears"
+    );
+    app.render_title_buttons_for_test();
+    let nd = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_notification")
+        .expect("the row")
+        .clone();
+    assert_eq!(
+        nd.label, "Notification Time: 5.3x",
+        "the middle seat the caption speaks"
+    );
+    app.on_press(nd.x + 136, nd.y + nd.h / 2);
+    assert_eq!(
+        app.notification_display_time, 10.0,
+        "the track's right handle the ceiling seat wears"
+    );
+    app.render_title_buttons_for_test();
+    let nd = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_notification")
+        .expect("the row")
+        .clone();
+    assert_eq!(
+        nd.label, "Notification Time: 10.0x",
+        "the ceiling seat the caption speaks"
+    );
+    // THE ESCAPE'S OWN LANE (the sub-screen the save never speaks —
+    // the in-screen walk the file's pre-exit row keeps) + THE PARENT'S
+    // OWN EXIT (the removed() moment the save the slider's seats bank
+    // — the restart the row outlives)
+    app.on_escape();
+    assert_eq!(
+        app.screen,
+        ScreenKind::Options,
+        "the parent the Escape ride returns"
+    );
+    app.open(ScreenKind::Title);
+    let post = std::fs::read_to_string(&path).expect("the parent exit wrote");
+    assert!(
+        post.contains("notificationDisplayTime:10.0\n"),
+        "the slider's own ceiling the parent exit banks"
+    );
+    let mut re = App::new(262);
+    re.options_file = Some(path.clone());
+    re.options_file_load();
+    assert_eq!(
+        re.notification_display_time, 10.0,
+        "the restart the ceiling row the decode keeps"
+    );
+    let _ = std::fs::remove_dir_all(&dir);
+    // THE WINDOW'S OWN FEED (the extractRenderState dstore-9 walk the
+    // store's own value wears — the doubled multiplier the doubled
+    // window keeps: the age-90 play the 2.0x window's INSIDE the row
+    // paints, the default 1.0x window the same play the purge
+    // removes — the feed the goldens' default silence keeps)
+    let root = crate::screens::tests::assets_root();
+    let mut app3 = App::new(262);
+    app3.enter_world();
+    app3.spawn_offline_body();
+    let (bx, by, bz) = {
+        let b = app3.body.as_ref().expect("the offline body");
+        (b.x, b.y, b.z)
+    };
+    let mut assets = GuiAssets::open(&root);
+    let mut fb = crate::raster::Framebuf::new(640, 360);
+    app3.show_subtitles = true;
+    app3.sounds.record_subtitle(
+        0,
+        "stone",
+        crate::sound::Lane::Break,
+        bx + 0.5,
+        by + 0.5,
+        bz + 0.5,
+    );
+    app3.frame = 90;
+    app3.render(&mut fb, &mut assets);
+    let bare = fb.color.clone();
+    // THE DEFAULT'S OWN WINDOW (the 1.0x the 60-tick window the age-90
+    // play the purge answers — the store's own default the row's
+    // silence keeps; the second render the same silence the fold's
+    // idempotence speaks)
+    app3.notification_display_time = 1.0;
+    app3.render(&mut fb, &mut assets);
+    assert_eq!(
+        diff_count(&bare, &fb.color, 0, 300, 640, 60),
+        0,
+        "the default window the stale play the purge keeps"
+    );
+    // THE DOUBLED'S OWN WINDOW (the 2.0x the 120-tick window the
+    // age-90 play the INSIDE answers — the store's own value the
+    // overlay's rows paint)
+    app3.notification_display_time = 2.0;
+    app3.render(&mut fb, &mut assets);
+    let diff = diff_count(&bare, &fb.color, 0, 300, 640, 60);
+    assert!(diff > 20, "the doubled window the row paints: {diff}");
 }

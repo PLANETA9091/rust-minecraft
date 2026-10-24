@@ -1,0 +1,6 @@
+BootstrapMethods utf8 idx: None
+Traceback (most recent call last):
+  File "/home/z/my-project/rust-minecraft/scripts/jar_work/notifications_183d.py", line 29, in <module>
+    pat = struct.pack(">H", bm_idx)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+struct.error: required argument is not an integer

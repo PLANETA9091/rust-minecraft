@@ -1,0 +1,8 @@
+== the cp rows ==
+cp#240: ('u', 'chatWidth')
+cp#252: ('u', 'notificationDisplayTime')
+cp#2819: ('u', 'options.sensitivity.min')
+cp#2821: ('u', 'options.sensitivity.max')
+cp#445: (12, 446, 447)
+cp#629: (12, 95, 630)
+cp tag 0 @ 57618

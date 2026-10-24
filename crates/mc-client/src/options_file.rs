@@ -182,6 +182,31 @@ pub struct OptionsFile {
     /// display answers — the "Chat"/"Everywhere" keys the lang table
     /// keeps, the CycleButton's name field the narration only wears).
     pub background_for_chat_only: bool,
+    /// `notificationDisplayTime` — the notifications' own time multiplier
+    /// (the default 1.0 the Options ctor's dconst_1 pc 1352 banks, the
+    /// `Codec.doubleRange(0.5, 10.0)` codec the strict double keeps —
+    /// the out-of-range the default answers, the clamp never wears; the
+    /// value set the `OptionInstance$IntRange(5, 100).xmap(i -> i /
+    /// 10.0, v -> (int)(v * 10.0), true)` slider walk the 183 probes
+    /// bank — the 96 seats the 0.1 step the lambda$new$50/51 pair
+    /// speaks, the iconst_1 the sliderable flag the xmap's third arg
+    /// wears); the caption the lambda$new$49 law answers — the
+    /// `genericValueLabel(label, translatable("options.multiplier",
+    /// value))` composition the "%sx" row keeps (the lang rows the
+    /// `options.notifications.display_time` = "Notification Time" + the
+    /// `options.multiplier` = "%sx" pair the jar's en_us table speaks,
+    /// the '1.0x' the default caption answers); the accessibility array
+    /// the index-9 seat keeps (chatDelay 8 the row BEFORE, bobView 10
+    /// the row AFTER the banked walk speaks); the processOptions the
+    /// ldc@682 the visit seat keeps — the walk's LAST seat the client's
+    /// carried rows wear (pauseOnLostFocus@567 the row BEFORE, the
+    /// file's own END the save row answers); the readers the value's
+    /// own consumers speak — the SubtitleOverlay's extractRenderState
+    /// dstore-9 the `3000.0 * displayTime` window multiplier keeps, the
+    /// Hud's toolHighlightTimer the `40.0 * value` ticks the row banks,
+    /// the NowPlayingToast/ToastManager the `5000.0 * value` ms the
+    /// toast lane wears).
+    pub notification_display_time: f64,
 }
 
 impl Default for OptionsFile {
@@ -197,6 +222,7 @@ impl Default for OptionsFile {
             chat_line_spacing: 0.0,
             text_background_opacity: 0.5,
             background_for_chat_only: true,
+            notification_display_time: 1.0,
         }
     }
 }
@@ -320,6 +346,18 @@ impl OptionsFile {
                         out.background_for_chat_only = false;
                     }
                 }
+                "notificationDisplayTime" => {
+                    // THE MULTIPLIER'S OWN DECODE (the doubleRange(0.5,
+                    // 10.0) codec the in-range double answers — the
+                    // out-of-range/malformed the default keeps, the
+                    // clamp never wears; the default 1.0 the Options
+                    // ctor's dconst_1 pc 1352 the missing row keeps)
+                    if let Ok(v) = value.parse::<f64>() {
+                        if (0.5..=10.0).contains(&v) {
+                            out.notification_display_time = v;
+                        }
+                    }
+                }
                 _ => {} // the jar's other rows the client's seats never carry
             }
         }
@@ -390,6 +428,16 @@ impl OptionsFile {
             "backgroundForChatOnly:{}\n",
             self.background_for_chat_only
         ));
+        // THE MULTIPLIER'S OWN ROW (the double the java_double print
+        // keeps — the 1.0 the default the decimal speaks; the row the
+        // visit-order seat the processOptions walk keeps — the
+        // notificationDisplayTime the ldc@682 the walk's LAST carried
+        // seat wears, the pauseOnLostFocus@567 the row BEFORE the same
+        // ladder speaks, the file's own END the row answers)
+        text.push_str(&format!(
+            "notificationDisplayTime:{}\n",
+            java_double(self.notification_display_time)
+        ));
         let _ = std::fs::write(path, text);
     }
 }
@@ -425,7 +473,7 @@ fn parse_fov_int(value: &str) -> Option<f64> {
 /// `Double.toString` shape wears — the integral value the ".0" the
 /// decimal keeps: 1.0 the "1.0" the line stores, Rust's bare "1" the
 /// `{}` never wears).
-fn java_double(v: f64) -> String {
+pub(crate) fn java_double(v: f64) -> String {
     let s = format!("{}", v);
     if s.contains('.') || s.contains('e') || s.contains("inf") || s.contains("NaN") {
         s
@@ -449,7 +497,7 @@ mod tests {
         OptionsFile::default().save(&path);
         let text = std::fs::read_to_string(&path).expect("the save the file writes");
         assert_eq!(
-            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
+            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\n",
             "the file the vanilla rows wear"
         );
         let loaded = OptionsFile::load(&path);
@@ -475,6 +523,10 @@ mod tests {
         assert_eq!(
             loaded.text_background_opacity, 0.5,
             "the chat background the default the round-trip wears"
+        );
+        assert_eq!(
+            loaded.notification_display_time, 1.0,
+            "the multiplier the default the round-trip wears"
         );
         let _ = std::fs::remove_dir_all(&dir);
     }
@@ -527,7 +579,12 @@ mod tests {
              textBackgroundOpacity:0.25\n\
              backgroundForChatOnly:false\n\
              backgroundForChatOnly:maybe\n\
-             backgroundForChatOnly:true\n",
+             backgroundForChatOnly:true\n\
+             notificationDisplayTime:2.5\n\
+             notificationDisplayTime:0.25\n\
+             notificationDisplayTime:10.5\n\
+             notificationDisplayTime:word\n\
+             notificationDisplayTime:0.5\n",
         )
         .expect("the probe file writes");
         let loaded = OptionsFile::load(&path);
@@ -598,6 +655,15 @@ mod tests {
             loaded.background_for_chat_only, true,
             "the band scope the last valid row wears — the malformed row the skip keeps"
         );
+        // THE MULTIPLIER'S OWN DECODE (the same strict double the
+        // in-range 2.5 the first read wears — the out-of-range 0.25/
+        // 10.5 pair + the malformed word the skip keeps, the LAST
+        // valid the 0.5 the read banks; the codec the 0.5..=10.0
+        // range the strict law keeps, the clamp never wears)
+        assert_eq!(
+            loaded.notification_display_time, 0.5,
+            "the multiplier the last valid row wears — the out-of-range/malformed the skip keeps"
+        );
         let _ = std::fs::remove_dir_all(&dir);
         // THE MISSING FILE the defaults keep (the exists() gate the head
         // walk speaks)
@@ -632,6 +698,10 @@ mod tests {
         assert_eq!(
             missing.background_for_chat_only, true,
             "the missing file the default band scope keeps"
+        );
+        assert_eq!(
+            missing.notification_display_time, 1.0,
+            "the missing file the default multiplier keeps"
         );
     }
 
