@@ -35417,6 +35417,18 @@ impl App {
                 "kb_change_spectatorhotbar" => {
                     self.kb_selected = Some(crate::options_file::key_binds::SPECTATOR_HOTBAR);
                 }
+                // THE DEBUG ROW'S OWN ARM (the row the debug group walk
+                // the AFTER seat renders — the ctor's putfield order
+                // the id answers)
+                "kb_change_debugoverlay" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::DEBUG_OVERLAY);
+                }
+                "kb_rowreset_debugoverlay" => {
+                    self.key_binds[crate::options_file::key_binds::DEBUG_OVERLAY] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::DEBUG_OVERLAY];
+                    self.kb_selected = None;
+                }
                 "kb_rowreset_forward" => {
                     self.key_binds[crate::options_file::key_binds::FORWARD] =
                         crate::options_file::key_binds::DEFAULTS
@@ -63337,10 +63349,35 @@ impl App {
                 false,
             );
         }
-        for i in kb::SPECTATOR_OUTLINES..kb::COUNT {
+        for i in kb::SPECTATOR_OUTLINES..kb::DEBUG_OVERLAY {
             let by = kb::SPECTATOR_ROWS_START
                 + (i - kb::SPECTATOR_OUTLINES) as i32 * kb::ROW_STRIDE
                 - off;
+            if by < kb::LIST_TOP || by + 20 > band_bottom {
+                continue; // the clip the band the honest render keeps
+            }
+            self.kb_render_row(g, a, w, i, by);
+        }
+        // THE DEBUG GROUP'S OWN HEADER + ROW (the CategoryEntry the
+        // category boundary 714 wears — the keyDebugOverlay row the
+        // ctor's putfields the spectator pair's AFTER the slot keeps,
+        // the SORT_ORDER ordinal the spectator rows' AFTER the seat
+        // banks — movement, misc, multiplayer, gameplay, INVENTORY,
+        // CREATIVE, SPECTATOR, DEBUG — the SAME group shape the row
+        // keeps: the +12 gap the groups' own law answers)
+        let hy = kb::DEBUG_HEADER_Y - off;
+        if hy >= kb::LIST_TOP && hy + 20 <= band_bottom {
+            g.text(
+                a,
+                16,
+                hy,
+                tr(kb::CATEGORY_DEBUG_NAME).unwrap_or(kb::CATEGORY_DEBUG_FALLBACK),
+                [0.7, 0.7, 0.7],
+                false,
+            );
+        }
+        for i in kb::DEBUG_OVERLAY..kb::COUNT {
+            let by = kb::DEBUG_ROWS_START + (i - kb::DEBUG_OVERLAY) as i32 * kb::ROW_STRIDE - off;
             if by < kb::LIST_TOP || by + 20 > band_bottom {
                 continue; // the clip the band the honest render keeps
             }
@@ -63422,6 +63459,10 @@ impl App {
             // order the ids answer)
             kb::SPECTATOR_OUTLINES => "kb_change_spectatoroutlines",
             kb::SPECTATOR_HOTBAR => "kb_change_spectatorhotbar",
+            // THE DEBUG ROW'S OWN ID (the row the debug group walk the
+            // AFTER seat renders — the ctor's putfield order the id
+            // answers)
+            kb::DEBUG_OVERLAY => "kb_change_debugoverlay",
             _ => "kb_change_hotbar9",
         };
         self.buttons
@@ -63459,6 +63500,8 @@ impl App {
             // keep)
             kb::SPECTATOR_OUTLINES => "kb_rowreset_spectatoroutlines",
             kb::SPECTATOR_HOTBAR => "kb_rowreset_spectatorhotbar",
+            // THE DEBUG ROW'S OWN ID (the same seat the row keeps)
+            kb::DEBUG_OVERLAY => "kb_rowreset_debugoverlay",
             _ => "kb_rowreset_hotbar9",
         };
         let mut rb = Button::new(

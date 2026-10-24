@@ -310,7 +310,16 @@ pub mod key_binds {
     /// category the pair's rows the clinit's ordinal 6 keeps)
     pub const SPECTATOR_OUTLINES: usize = 24;
     pub const SPECTATOR_HOTBAR: usize = 25;
-    pub const COUNT: usize = 26;
+    /// THE DEBUG OVERLAY'S OWN SLOT (the ctor's pc 3229-3251 walk the
+    /// spectator pair's AFTER the walk banks — the `ldc_w cp#1407`
+    /// the `key.debug.overlay` string answers, the `KEYSYM, sipush
+    /// 292` the F3 default wears, the Category.DEBUG the group's own
+    /// ordinal 7 keeps, the FIFTH ctor arg the `bipush -2` the
+    /// `orderI` field the sort walk banks — the modifier-aware
+    /// KeyMapping ctor overload the 5-arg shape the walk answers, the
+    /// modifier row the -1 arg the next walk's own seat wears)
+    pub const DEBUG_OVERLAY: usize = 26;
+    pub const COUNT: usize = 27;
 
     /// THE VANILLA BINDING NAMES (the `key_` + name the file row's
     /// prefix wears, the lang captions the `key.*` rows answer — the
@@ -348,6 +357,10 @@ pub mod key_binds {
         // activator pair's AFTER wear)
         "key.spectatorOutlines",
         "key.spectatorHotbar",
+        // THE DEBUG OVERLAY'S OWN NAME (the ctor's `ldc_w cp#1407` the
+        // pc 3234 string answers — the overlay row the pair's AFTER
+        // the ladder wears)
+        "key.debug.overlay",
     ];
 
     /// THE CAPTIONS' OWN FALLBACK (the en_us values the assets-absent
@@ -384,6 +397,9 @@ pub mod key_binds {
         // key.spectatorHotbar the 'Select On Hotbar' row answers)
         "Highlight Players",
         "Select On Hotbar",
+        // THE DEBUG ROW'S OWN CAPTION (the en_us row speaks —
+        // key.debug.overlay the 'Toggle Overlay' words wear)
+        "Toggle Overlay",
     ];
 
     /// THE CATEGORY'S OWN ROW (the CategoryEntry the list groups the
@@ -423,6 +439,18 @@ pub mod key_binds {
     /// store never carries)
     pub const CATEGORY_SPECTATOR_NAME: &str = "key.categories.spectator";
     pub const CATEGORY_SPECTATOR_FALLBACK: &str = "Spectator";
+    /// THE DEBUG GROUP'S OWN HEADER ROW (the CategoryEntry the
+    /// category boundary adds — the `KeyMapping$Category.label()`
+    /// walk the NEW format speaks: the `id.toLanguageKey("key.category")`
+    /// the `key.category.minecraft.debug` key answers (the lang row
+    /// the 'Debug' word wears — the OLD `key.categories.*` rows the
+    /// legacy format keeps, the debug row the table never carried);
+    /// the SORT_ORDER walk the clinit banks: movement, misc,
+    /// multiplayer, gameplay, INVENTORY, CREATIVE, SPECTATOR, DEBUG —
+    /// the debug the spectator rows' AFTER the ordinal 7 keeps, the
+    /// misc/multiplayer rows the store never carries)
+    pub const CATEGORY_DEBUG_NAME: &str = "key.category.minecraft.debug";
+    pub const CATEGORY_DEBUG_FALLBACK: &str = "Debug";
 
     /// THE DEFAULTS' OWN ROW (the ctor's codes the minifb Key enum's
     /// own discriminants answer).
@@ -467,6 +495,10 @@ pub mod key_binds {
         // pair's rows wear)
         None,
         Some(Bind::Mouse(MouseButton::Middle)),
+        // THE DEBUG ROW'S OWN SEAT (the ctor's pc 3240 the `sipush
+        // 292` the GLFW F3 answers — the KEYSYM type the keyboard
+        // bind wears, the orderI the -2 arg the sort walk banks)
+        Some(Bind::Keyboard(Key::F3)),
     ];
 
     /// THE LIST'S OWN GEOMETRY (the entries the walk's y positions
@@ -504,6 +536,12 @@ pub mod key_binds {
     /// the rows the +12 the groups' own gap keeps)
     pub const SPECTATOR_HEADER_Y: i32 = 654;
     pub const SPECTATOR_ROWS_START: i32 = 666;
+    /// THE DEBUG GROUP'S OWN SEATS (the sorted walk's own y — the
+    /// spectator pair the 666-start stride wears, the DEBUG header
+    /// the pair's own bottom the next stride slot answers (690 +
+    /// 24), the row the +12 the groups' own gap keeps)
+    pub const DEBUG_HEADER_Y: i32 = 714;
+    pub const DEBUG_ROWS_START: i32 = 726;
 
     /// THE CONTENT'S OWN HEIGHT (the walk's own bottom — the LAST
     /// group's last row's bottom minus the list top; the maxScrollAmount
@@ -513,11 +551,12 @@ pub mod key_binds {
     /// bottom keeps (the trio + the hotbar nine the 306-start stride
     /// wear: 12 rows the 11 strides speak, the CREATIVE pair the
     /// 594-header the 606-start rows wear, the SPECTATOR pair the
-    /// 654-header the 666-start rows the walk's own bottom keeps (the
-    /// outlines the 666 seat, the hotbar the 690 — the pair's own
-    /// bottom the content answers))
+    /// 654-header the 666-start rows wear, the DEBUG row the 714-
+    /// header the 726-start row the walk's own bottom keeps (the
+    /// overlay the 726 seat — the row's own bottom the content
+    /// answers))
     pub fn content_height() -> i32 {
-        SPECTATOR_ROWS_START + (COUNT - SPECTATOR_OUTLINES - 1) as i32 * ROW_STRIDE + 20 - LIST_TOP
+        DEBUG_ROWS_START + (COUNT - DEBUG_OVERLAY - 1) as i32 * ROW_STRIDE + 20 - LIST_TOP
     }
 
     /// THE MOUSE'S OWN NAME TABLE (the InputConstants$Type clinit the
@@ -946,6 +985,12 @@ impl OptionsFile {
                 "key_key.spectatorHotbar" => {
                     out.key_binds[key_binds::SPECTATOR_HOTBAR] = key_binds::bind_from_save(value);
                 }
+                // THE DEBUG ROW'S OWN DECODE (the `key_key.` + name
+                // prefix the save rows wear — the F3 row the restart
+                // the decode answers)
+                "key_key.debug.overlay" => {
+                    out.key_binds[key_binds::DEBUG_OVERLAY] = key_binds::bind_from_save(value);
+                }
                 _ => {} // the jar's other rows the client's seats never carry
             }
         }
@@ -1099,7 +1144,7 @@ mod tests {
         OptionsFile::default().save(&path);
         let text = std::fs::read_to_string(&path).expect("the save the file writes");
         assert_eq!(
-            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\n",
+            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\n",
             "the file the vanilla rows wear"
         );
         let loaded = OptionsFile::load(&path);
