@@ -35498,6 +35498,21 @@ impl App {
                             [crate::options_file::key_binds::DEBUG_CLEAR_CHAT];
                     self.kb_selected = None;
                 }
+                // THE DEBUG SHOW CHUNK BORDERS' OWN ARMS (the row the
+                // debug septet walk the AFTER seat renders — the
+                // ctor's pc 3366-3385 the 4-arg ctor the `iconst_0`
+                // orderI default banks, the G the clearChat row's own
+                // plain shape the capture honors)
+                "kb_change_debugchunkborders" => {
+                    self.kb_selected =
+                        Some(crate::options_file::key_binds::DEBUG_SHOW_CHUNK_BORDERS);
+                }
+                "kb_rowreset_debugchunkborders" => {
+                    self.key_binds[crate::options_file::key_binds::DEBUG_SHOW_CHUNK_BORDERS] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::DEBUG_SHOW_CHUNK_BORDERS];
+                    self.kb_selected = None;
+                }
                 "kb_rowreset_forward" => {
                     self.key_binds[crate::options_file::key_binds::FORWARD] =
                         crate::options_file::key_binds::DEFAULTS
@@ -63561,6 +63576,10 @@ impl App {
             // sextet walk the AFTER seat renders — the ctor's
             // putfield order the id answers)
             kb::DEBUG_CLEAR_CHAT => "kb_change_debugclearchat",
+            // THE DEBUG SHOW CHUNK BORDERS' OWN ID (the row the debug
+            // septet walk the AFTER seat renders — the ctor's
+            // putfield order the id answers)
+            kb::DEBUG_SHOW_CHUNK_BORDERS => "kb_change_debugchunkborders",
             _ => "kb_change_hotbar9",
         };
         self.buttons
@@ -63615,6 +63634,9 @@ impl App {
             // THE DEBUG CLEAR CHAT'S OWN ID (the same seat the
             // row keeps — the sextet the file's own END rows wear)
             kb::DEBUG_CLEAR_CHAT => "kb_rowreset_debugclearchat",
+            // THE DEBUG SHOW CHUNK BORDERS' OWN ID (the same seat the
+            // row keeps — the septet the file's own END rows wear)
+            kb::DEBUG_SHOW_CHUNK_BORDERS => "kb_rowreset_debugchunkborders",
             _ => "kb_rowreset_hotbar9",
         };
         let mut rb = Button::new(
