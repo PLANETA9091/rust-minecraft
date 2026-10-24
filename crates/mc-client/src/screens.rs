@@ -35513,6 +35513,21 @@ impl App {
                             [crate::options_file::key_binds::DEBUG_SHOW_CHUNK_BORDERS];
                     self.kb_selected = None;
                 }
+                // THE DEBUG SHOW ADVANCED TOOLTIPS' OWN ARMS (the row
+                // the debug octet walk the AFTER seat renders — the
+                // ctor's pc 3388-3407 the 4-arg ctor the `iconst_0`
+                // orderI default banks, the H the chunkBorders row's
+                // own plain shape the capture honors)
+                "kb_change_debugadvtooltips" => {
+                    self.kb_selected =
+                        Some(crate::options_file::key_binds::DEBUG_SHOW_ADV_TOOLTIPS);
+                }
+                "kb_rowreset_debugadvtooltips" => {
+                    self.key_binds[crate::options_file::key_binds::DEBUG_SHOW_ADV_TOOLTIPS] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::DEBUG_SHOW_ADV_TOOLTIPS];
+                    self.kb_selected = None;
+                }
                 "kb_rowreset_forward" => {
                     self.key_binds[crate::options_file::key_binds::FORWARD] =
                         crate::options_file::key_binds::DEFAULTS
@@ -63580,6 +63595,10 @@ impl App {
             // septet walk the AFTER seat renders — the ctor's
             // putfield order the id answers)
             kb::DEBUG_SHOW_CHUNK_BORDERS => "kb_change_debugchunkborders",
+            // THE DEBUG SHOW ADVANCED TOOLTIPS' OWN ID (the row the
+            // debug octet walk the AFTER seat renders — the ctor's
+            // putfield order the id answers)
+            kb::DEBUG_SHOW_ADV_TOOLTIPS => "kb_change_debugadvtooltips",
             _ => "kb_change_hotbar9",
         };
         self.buttons
@@ -63637,6 +63656,9 @@ impl App {
             // THE DEBUG SHOW CHUNK BORDERS' OWN ID (the same seat the
             // row keeps — the septet the file's own END rows wear)
             kb::DEBUG_SHOW_CHUNK_BORDERS => "kb_rowreset_debugchunkborders",
+            // THE DEBUG SHOW ADVANCED TOOLTIPS' OWN ID (the same seat
+            // the row keeps — the octet the file's own END rows wear)
+            kb::DEBUG_SHOW_ADV_TOOLTIPS => "kb_rowreset_debugadvtooltips",
             _ => "kb_rowreset_hotbar9",
         };
         let mut rb = Button::new(
