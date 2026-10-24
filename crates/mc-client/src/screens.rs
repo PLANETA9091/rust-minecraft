@@ -35637,8 +35637,7 @@ impl App {
                 // reloadResourcePacks row's own plain shape the
                 // capture honors)
                 "kb_change_debugprofiling" => {
-                    self.kb_selected =
-                        Some(crate::options_file::key_binds::DEBUG_PROFILING);
+                    self.kb_selected = Some(crate::options_file::key_binds::DEBUG_PROFILING);
                 }
                 "kb_rowreset_debugprofiling" => {
                     self.key_binds[crate::options_file::key_binds::DEBUG_PROFILING] =
@@ -35653,8 +35652,7 @@ impl App {
                 // profiling row's own plain shape the
                 // capture honors)
                 "kb_change_debugcopylocation" => {
-                    self.kb_selected =
-                        Some(crate::options_file::key_binds::DEBUG_COPY_LOCATION);
+                    self.kb_selected = Some(crate::options_file::key_binds::DEBUG_COPY_LOCATION);
                 }
                 "kb_rowreset_debugcopylocation" => {
                     self.key_binds[crate::options_file::key_binds::DEBUG_COPY_LOCATION] =
@@ -35669,13 +35667,27 @@ impl App {
                 // copyLocation row's own plain shape the
                 // capture honors)
                 "kb_change_debugdumpversion" => {
-                    self.kb_selected =
-                        Some(crate::options_file::key_binds::DEBUG_DUMP_VERSION);
+                    self.kb_selected = Some(crate::options_file::key_binds::DEBUG_DUMP_VERSION);
                 }
                 "kb_rowreset_debugdumpversion" => {
                     self.key_binds[crate::options_file::key_binds::DEBUG_DUMP_VERSION] =
                         crate::options_file::key_binds::DEFAULTS
                             [crate::options_file::key_binds::DEBUG_DUMP_VERSION];
+                    self.kb_selected = None;
+                }
+                // THE DEBUG PROFILING CHART'S OWN ARMS (the row
+                // the debug nineteen-row walk the AFTER seat renders
+                // — the ctor's pc 3632-3652 the FIVE-arg ctor the
+                // `iconst_1` orderI banks, the '1' the
+                // dumpVersion row's own shape the
+                // capture honors)
+                "kb_change_debugprofilingchart" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::DEBUG_PROFILING_CHART);
+                }
+                "kb_rowreset_debugprofilingchart" => {
+                    self.key_binds[crate::options_file::key_binds::DEBUG_PROFILING_CHART] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::DEBUG_PROFILING_CHART];
                     self.kb_selected = None;
                 }
                 "kb_rowreset_forward" => {
@@ -63789,6 +63801,10 @@ impl App {
             // debug eighteen-row walk the AFTER seat renders — the
             // ctor's putfield order the id answers)
             kb::DEBUG_DUMP_VERSION => "kb_change_debugdumpversion",
+            // THE DEBUG PROFILING CHART'S OWN ID (the row the
+            // debug nineteen-row walk the AFTER seat renders — the
+            // ctor's putfield order the id answers)
+            kb::DEBUG_PROFILING_CHART => "kb_change_debugprofilingchart",
             _ => "kb_change_hotbar9",
         };
         self.buttons
@@ -63882,6 +63898,10 @@ impl App {
             // the row keeps — the eighteen-row walk the file's own END
             // rows wear)
             kb::DEBUG_DUMP_VERSION => "kb_rowreset_debugdumpversion",
+            // THE DEBUG PROFILING CHART'S OWN ID (the same seat
+            // the row keeps — the nineteen-row walk the file's own END
+            // rows wear)
+            kb::DEBUG_PROFILING_CHART => "kb_rowreset_debugprofilingchart",
             _ => "kb_rowreset_hotbar9",
         };
         let mut rb = Button::new(
