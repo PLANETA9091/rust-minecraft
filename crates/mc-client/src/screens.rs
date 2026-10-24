@@ -35690,6 +35690,21 @@ impl App {
                             [crate::options_file::key_binds::DEBUG_PROFILING_CHART];
                     self.kb_selected = None;
                 }
+                // THE DEBUG FPS CHARTS'S OWN ARMS (the row
+                // the debug twenty-row walk the AFTER seat renders
+                // — the ctor's pc 3655-3675 the FIVE-arg ctor the
+                // `iconst_2` orderI banks, the '2' the
+                // profilingChart row's own shape the
+                // capture honors)
+                "kb_change_debugfpscharts" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::DEBUG_FPS_CHARTS);
+                }
+                "kb_rowreset_debugfpscharts" => {
+                    self.key_binds[crate::options_file::key_binds::DEBUG_FPS_CHARTS] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::DEBUG_FPS_CHARTS];
+                    self.kb_selected = None;
+                }
                 "kb_rowreset_forward" => {
                     self.key_binds[crate::options_file::key_binds::FORWARD] =
                         crate::options_file::key_binds::DEFAULTS
@@ -63805,6 +63820,10 @@ impl App {
             // debug nineteen-row walk the AFTER seat renders — the
             // ctor's putfield order the id answers)
             kb::DEBUG_PROFILING_CHART => "kb_change_debugprofilingchart",
+            // THE DEBUG FPS CHARTS'S OWN ID (the row the
+            // debug twenty-row walk the AFTER seat renders — the
+            // ctor's putfield order the id answers)
+            kb::DEBUG_FPS_CHARTS => "kb_change_debugfpscharts",
             _ => "kb_change_hotbar9",
         };
         self.buttons
@@ -63902,6 +63921,10 @@ impl App {
             // the row keeps — the nineteen-row walk the file's own END
             // rows wear)
             kb::DEBUG_PROFILING_CHART => "kb_rowreset_debugprofilingchart",
+            // THE DEBUG FPS CHARTS'S OWN ID (the same seat
+            // the row keeps — the twenty-row walk the file's own END
+            // rows wear)
+            kb::DEBUG_FPS_CHARTS => "kb_rowreset_debugfpscharts",
             _ => "kb_rowreset_hotbar9",
         };
         let mut rb = Button::new(
