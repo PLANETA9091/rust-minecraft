@@ -85,6 +85,18 @@ pub const OPTIONS_DATA_VERSION: i64 = 4903;
 /// mirror; the rest of the jar's option table the client's seats never
 /// carry — the unknown keys the load's skip law answers).
 pub struct OptionsFile {
+    /// `showSubtitles` — the closed captions' own boolean (the default
+    /// FALSE the Options ctor's `iconst_0` pcs 2053-2067 banks, the
+    /// `createBoolean` law the CLOSED_CAPTIONS_TOOLTIP tooltip wears,
+    /// the caption the `options.showSubtitles` key the jar's en_us
+    /// "Closed Captions" row speaks; the processOptions the ldc@149 the
+    /// visit seat keeps — the row the version line's AFTER the
+    /// mouseSensitivity@292 row's BEFORE wears (the visit ladder the
+    /// 182 probe banks); the consumer the SubtitleOverlay's own
+    /// extractRenderState the isListening gate speaks — the TRUE the
+    /// listener the addListener arm wears, the render the 0.8F band +
+    /// the fade the rows the walk serves).
+    pub show_subtitles: bool,
     /// `mouseSensitivity` — the 0..1 unit double (the default 0.5 the
     /// clinit banks).
     pub mouse_sensitivity: f64,
@@ -175,6 +187,7 @@ pub struct OptionsFile {
 impl Default for OptionsFile {
     fn default() -> Self {
         OptionsFile {
+            show_subtitles: false,
             mouse_sensitivity: 0.5,
             fov: 70.0,
             sound_category_master: 1.0,
@@ -207,6 +220,18 @@ impl OptionsFile {
                 continue; // the malformed line the warn-and-skip law answers
             };
             match key {
+                "showSubtitles" => {
+                    // THE BOOLEAN'S OWN DECODE (the "true"/"false" the
+                    // codec's own vocabulary wears — the malformed the
+                    // default keeps, the skip law the row answers; the
+                    // default FALSE the Options ctor's iconst_0 the
+                    // missing row keeps)
+                    if value == "true" {
+                        out.show_subtitles = true;
+                    } else if value == "false" {
+                        out.show_subtitles = false;
+                    }
+                }
                 "mouseSensitivity" => {
                     if let Some(v) = parse_unit_double(value) {
                         out.mouse_sensitivity = v;
@@ -309,6 +334,12 @@ impl OptionsFile {
     pub fn save(&self, path: &std::path::Path) {
         let mut text = String::new();
         text.push_str(&format!("version:{}\n", OPTIONS_DATA_VERSION));
+        // THE CLOSED CAPTIONS' OWN ROW (the "true"/"false" the Rust
+        // Display the vanilla BooleanValue's codec vocabulary wears —
+        // the row the visit-order seat keeps: the showSubtitles the
+        // ldc@149 the version line the row AFTER answers, the
+        // mouseSensitivity@292 the row BEFORE the same ladder speaks)
+        text.push_str(&format!("showSubtitles:{}\n", self.show_subtitles));
         text.push_str(&format!(
             "mouseSensitivity:{}\n",
             java_double(self.mouse_sensitivity)
@@ -418,13 +449,17 @@ mod tests {
         OptionsFile::default().save(&path);
         let text = std::fs::read_to_string(&path).expect("the save the file writes");
         assert_eq!(
-            text, "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
+            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
             "the file the vanilla rows wear"
         );
         let loaded = OptionsFile::load(&path);
         assert_eq!(loaded.mouse_sensitivity, 0.5);
         assert_eq!(loaded.fov, 70.0);
         assert_eq!(loaded.sound_category_master, 1.0);
+        assert_eq!(
+            loaded.show_subtitles, false,
+            "the captions the default the round-trip wears"
+        );
         assert_eq!(
             loaded.pause_on_lost_focus, true,
             "the default the round-trip wears"
@@ -468,6 +503,9 @@ mod tests {
              soundCategory_master:true\n\
              pauseOnLostFocus:maybe\n\
              pauseOnLostFocus:false\n\
+             showSubtitles:false\n\
+             showSubtitles:maybe\n\
+             showSubtitles:true\n\
              fovEffectScale:0.5\n\
              fovEffectScale:1.5\n\
              fovEffectScale:true\n\
@@ -513,6 +551,14 @@ mod tests {
             loaded.pause_on_lost_focus, false,
             "the boolean the decode wears — the malformed row the skip keeps"
         );
+        // THE CLOSED CAPTIONS' OWN DECODE (the same bool law the
+        // pauseOnLostFocus row keeps — the last valid row the parse
+        // wears, the malformed the skip answers, the first `false` the
+        // decode speaks then the `true` the LAST valid banks)
+        assert_eq!(
+            loaded.show_subtitles, true,
+            "the captions the last valid row wears — the malformed row the skip keeps"
+        );
         // THE SCALE'S OWN DECODE (the in-range double the read wears —
         // the out-of-range 1.5 the skip keeps, the BOOL row the strict
         // codec never answers, the LAST valid the 0.25 the read banks)
@@ -556,6 +602,10 @@ mod tests {
         // THE MISSING FILE the defaults keep (the exists() gate the head
         // walk speaks)
         let missing = OptionsFile::load(&dir.join("absent.txt"));
+        assert_eq!(
+            missing.show_subtitles, false,
+            "the missing file the default captions keeps"
+        );
         assert_eq!(missing.mouse_sensitivity, 0.5);
         assert_eq!(missing.fov, 70.0);
         assert_eq!(missing.sound_category_master, 1.0);

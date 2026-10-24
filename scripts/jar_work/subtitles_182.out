@@ -1,0 +1,429 @@
+== classes == ['net/minecraft/client/gui/components/SubtitleOverlay$SoundPlayedAt.class', 'net/minecraft/client/gui/components/SubtitleOverlay$Subtitle.class', 'net/minecraft/client/gui/components/SubtitleOverlay.class', 'net/minecraft/network/protocol/game/ClientboundSetSubtitleTextPacket.class']
+== net.minecraft.client.gui.components.SubtitleOverlay$SoundPlayedAt::<init> (Lnet/minecraft/world/phys/Vec3;J)V ==
+   0: 0: aload_0
+   1: 1: invokespecial java.lang.Record.<init>
+   4: 4: aload_0
+   5: 5: aload_1
+   6: 6: putfield net.minecraft.client.gui.components.SubtitleOverlay$SoundPlayedAt.location
+   9: 9: aload_0
+   10: 10: lload_2
+   11: 11: putfield net.minecraft.client.gui.components.SubtitleOverlay$SoundPlayedAt.time
+   14: 14: return
+
+== net.minecraft.client.gui.components.SubtitleOverlay$Subtitle::<init> (Lnet/minecraft/network/chat/Component;FLnet/minecraft/world/phys/Vec3;)V ==
+   0: 0: aload_0
+   1: 1: invokespecial java.lang.Object.<init>
+   4: 4: aload_0
+   5: 5: new java.util.ArrayList
+   8: 8: dup
+   9: 9: invokespecial java.util.ArrayList.<init>
+   12: 12: putfield net.minecraft.client.gui.components.SubtitleOverlay$Subtitle.playedAt
+   15: 15: aload_0
+   16: 16: aload_1
+   17: 17: putfield net.minecraft.client.gui.components.SubtitleOverlay$Subtitle.text
+   20: 20: aload_0
+   21: 21: fload_2
+   22: 22: putfield net.minecraft.client.gui.components.SubtitleOverlay$Subtitle.range
+   25: 25: aload_0
+   26: 26: getfield net.minecraft.client.gui.components.SubtitleOverlay$Subtitle.playedAt
+   29: 29: new net.minecraft.client.gui.components.SubtitleOverlay$SoundPlayedAt
+   32: 32: dup
+   33: 33: aload_3
+   34: 34: invokestatic net.minecraft.util.Util.getMillis
+   37: 37: invokespecial net.minecraft.client.gui.components.SubtitleOverlay$SoundPlayedAt.<init>
+   40: 40: invokeinterface java.util.List.add
+   45: 45: pop
+   46: 46: return
+
+== net.minecraft.client.gui.components.SubtitleOverlay::<init> (Lnet/minecraft/client/Minecraft;)V ==
+   0: 0: aload_0
+   1: 1: invokespecial java.lang.Object.<init>
+   4: 4: aload_0
+   5: 5: invokestatic com.google.common.collect.Lists.newArrayList
+   8: 8: putfield net.minecraft.client.gui.components.SubtitleOverlay.subtitles
+   11: 11: aload_0
+   12: 12: new java.util.ArrayList
+   15: 15: dup
+   16: 16: invokespecial java.util.ArrayList.<init>
+   19: 19: putfield net.minecraft.client.gui.components.SubtitleOverlay.audibleSubtitles
+   22: 22: aload_0
+   23: 23: aload_1
+   24: 24: putfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+   27: 27: return
+
+== net.minecraft.client.gui.components.SubtitleOverlay::extractRenderState (Lnet/minecraft/client/gui/GuiGraphicsExtractor;)V ==
+   0: 0: aload_0
+   1: 1: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+   4: 4: invokevirtual net.minecraft.client.Minecraft.getSoundManager
+   7: 7: astore_2
+   8: 8: aload_0
+   9: 9: getfield net.minecraft.client.gui.components.SubtitleOverlay.isListening
+   12: 12: ifne -> 50
+   15: 15: aload_0
+   16: 16: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+   19: 19: getfield net.minecraft.client.Minecraft.options
+   22: 22: invokevirtual net.minecraft.client.Options.showSubtitles
+   25: 25: invokevirtual net.minecraft.client.OptionInstance.get
+   28: 28: checkcast java.lang.Boolean
+   31: 31: invokevirtual java.lang.Boolean.booleanValue
+   34: 34: ifeq -> 50
+   37: 37: aload_2
+   38: 38: aload_0
+   39: 39: invokevirtual net.minecraft.client.sounds.SoundManager.addListener
+   42: 42: aload_0
+   43: 43: iconst_1
+   44: 44: putfield net.minecraft.client.gui.components.SubtitleOverlay.isListening
+   47: 47: goto -> 89
+   50: 50: aload_0
+   51: 51: getfield net.minecraft.client.gui.components.SubtitleOverlay.isListening
+   54: 54: ifeq -> 89
+   57: 57: aload_0
+   58: 58: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+   61: 61: getfield net.minecraft.client.Minecraft.options
+   64: 64: invokevirtual net.minecraft.client.Options.showSubtitles
+   67: 67: invokevirtual net.minecraft.client.OptionInstance.get
+   70: 70: checkcast java.lang.Boolean
+   73: 73: invokevirtual java.lang.Boolean.booleanValue
+   76: 76: ifne -> 89
+   79: 79: aload_2
+   80: 80: aload_0
+   81: 81: invokevirtual net.minecraft.client.sounds.SoundManager.removeListener
+   84: 84: aload_0
+   85: 85: iconst_0
+   86: 86: putfield net.minecraft.client.gui.components.SubtitleOverlay.isListening
+   89: 89: aload_0
+   90: 90: getfield net.minecraft.client.gui.components.SubtitleOverlay.isListening
+   93: 93: ifne -> 97
+   96: 96: return
+   97: 97: aload_2
+   98: 98: invokevirtual net.minecraft.client.sounds.SoundManager.getListenerTransform
+   101: 101: astore_3
+   102: 102: aload_3
+   103: 103: invokevirtual com.mojang.blaze3d.audio.ListenerTransform.position
+   106: 106: astore 4
+   108: 108: aload_3
+   109: 109: invokevirtual com.mojang.blaze3d.audio.ListenerTransform.forward
+   112: 112: astore 5
+   114: 114: aload_3
+   115: 115: invokevirtual com.mojang.blaze3d.audio.ListenerTransform.right
+   118: 118: astore 6
+   120: 120: aload_0
+   121: 121: getfield net.minecraft.client.gui.components.SubtitleOverlay.audibleSubtitles
+   124: 124: invokeinterface java.util.List.clear
+   129: 129: aload_0
+   130: 130: getfield net.minecraft.client.gui.components.SubtitleOverlay.subtitles
+   133: 133: invokeinterface java.util.List.iterator
+   138: 138: astore 7
+   140: 140: aload 7
+   142: 142: invokeinterface java.util.Iterator.hasNext
+   147: 147: ifeq -> 187
+   150: 150: aload 7
+   152: 152: invokeinterface java.util.Iterator.next
+   157: 157: checkcast net.minecraft.client.gui.components.SubtitleOverlay$Subtitle
+   160: 160: astore 8
+   162: 162: aload 8
+   164: 164: aload 4
+   166: 166: invokevirtual net.minecraft.client.gui.components.SubtitleOverlay$Subtitle.isAudibleFrom
+   169: 169: ifeq -> 184
+   172: 172: aload_0
+   173: 173: getfield net.minecraft.client.gui.components.SubtitleOverlay.audibleSubtitles
+   176: 176: aload 8
+   178: 178: invokeinterface java.util.List.add
+   183: 183: pop
+   184: 184: goto -> 140
+   187: 187: aload_0
+   188: 188: getfield net.minecraft.client.gui.components.SubtitleOverlay.audibleSubtitles
+   191: 191: invokeinterface java.util.List.isEmpty
+   196: 196: ifeq -> 200
+   199: 199: return
+   200: 200: iconst_0
+   201: 201: istore 7
+   203: 203: iconst_0
+   204: 204: istore 8
+   206: 206: aload_0
+   207: 207: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+   210: 210: getfield net.minecraft.client.Minecraft.options
+   213: 213: invokevirtual net.minecraft.client.Options.notificationDisplayTime
+   216: 216: invokevirtual net.minecraft.client.OptionInstance.get
+   219: 219: checkcast java.lang.Double
+   222: 222: invokevirtual java.lang.Double.doubleValue
+   225: 225: dstore 9
+   227: 227: aload_0
+   228: 228: getfield net.minecraft.client.gui.components.SubtitleOverlay.audibleSubtitles
+   231: 231: invokeinterface java.util.List.iterator
+   236: 236: astore 11
+   238: 238: aload 11
+   240: 240: invokeinterface java.util.Iterator.hasNext
+   245: 245: ifeq -> 314
+   248: 248: aload 11
+   250: 250: invokeinterface java.util.Iterator.next
+   255: 255: checkcast net.minecraft.client.gui.components.SubtitleOverlay$Subtitle
+   258: 258: astore 12
+   260: 260: aload 12
+   262: 262: ldc2_w double 3000.0
+   265: 265: dload 9
+   267: 267: dmul
+   268: 268: invokevirtual net.minecraft.client.gui.components.SubtitleOverlay$Subtitle.purgeOldInstances
+   271: 271: aload 12
+   273: 273: invokevirtual net.minecraft.client.gui.components.SubtitleOverlay$Subtitle.isStillActive
+   276: 276: ifne -> 289
+   279: 279: aload 11
+   281: 281: invokeinterface java.util.Iterator.remove
+   286: 286: goto -> 311
+   289: 289: iload 8
+   291: 291: aload_0
+   292: 292: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+   295: 295: getfield net.minecraft.client.Minecraft.font
+   298: 298: aload 12
+   300: 300: invokevirtual net.minecraft.client.gui.components.SubtitleOverlay$Subtitle.getText
+   303: 303: invokevirtual net.minecraft.client.gui.Font.width
+   306: 306: invokestatic java.lang.Math.max
+   309: 309: istore 8
+   311: 311: goto -> 238
+   314: 314: iload 8
+   316: 316: aload_0
+   317: 317: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+   320: 320: getfield net.minecraft.client.Minecraft.font
+   323: 323: ldc cp(8, 158)
+   325: 325: invokevirtual net.minecraft.client.gui.Font.width
+   328: 328: aload_0
+   329: 329: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+   332: 332: getfield net.minecraft.client.Minecraft.font
+   335: 335: ldc cp(8, 163)
+   337: 337: invokevirtual net.minecraft.client.gui.Font.width
+   340: 340: iadd
+   341: 341: aload_0
+   342: 342: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+   345: 345: getfield net.minecraft.client.Minecraft.font
+   348: 348: ldc cp(8, 165)
+   350: 350: invokevirtual net.minecraft.client.gui.Font.width
+   353: 353: iadd
+   354: 354: aload_0
+   355: 355: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+   358: 358: getfield net.minecraft.client.Minecraft.font
+   361: 361: ldc cp(8, 163)
+   363: 363: invokevirtual net.minecraft.client.gui.Font.width
+   366: 366: iadd
+   367: 367: iadd
+   368: 368: istore 8
+   370: 370: aload_0
+   371: 371: getfield net.minecraft.client.gui.components.SubtitleOverlay.audibleSubtitles
+   374: 374: invokeinterface java.util.List.isEmpty
+   379: 379: ifne -> 386
+   382: 382: aload_1
+   383: 383: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.nextStratum
+   386: 386: aload_0
+   387: 387: getfield net.minecraft.client.gui.components.SubtitleOverlay.audibleSubtitles
+   390: 390: invokeinterface java.util.List.iterator
+   395: 395: astore 11
+   397: 397: aload 11
+   399: 399: invokeinterface java.util.Iterator.hasNext
+   404: 404: ifeq -> 790
+   407: 407: aload 11
+   409: 409: invokeinterface java.util.Iterator.next
+   414: 414: checkcast net.minecraft.client.gui.components.SubtitleOverlay$Subtitle
+   417: 417: astore 12
+   419: 419: sipush 0 255
+   422: 422: istore 13
+   424: 424: aload 12
+   426: 426: invokevirtual net.minecraft.client.gui.components.SubtitleOverlay$Subtitle.getText
+   429: 429: astore 14
+   431: 431: aload 12
+   433: 433: aload 4
+   435: 435: invokevirtual net.minecraft.client.gui.components.SubtitleOverlay$Subtitle.getClosest
+   438: 438: astore 15
+   440: 440: aload 15
+   442: 442: ifnonnull -> 448
+   445: 445: goto -> 397
+   448: 448: aload 15
+   450: 450: getfield net.minecraft.client.gui.components.SubtitleOverlay$SoundPlayedAt.location
+   453: 453: aload 4
+   455: 455: invokevirtual net.minecraft.world.phys.Vec3.subtract
+   458: 458: invokevirtual net.minecraft.world.phys.Vec3.normalize
+   461: 461: astore 16
+   463: 463: aload 6
+   465: 465: aload 16
+   467: 467: invokevirtual net.minecraft.world.phys.Vec3.dot
+   470: 470: dstore 17
+   472: 472: aload 5
+   474: 474: aload 16
+   476: 476: invokevirtual net.minecraft.world.phys.Vec3.dot
+   479: 479: dstore 19
+   481: 481: dload 19
+   483: 483: ldc2_w double 0.5
+   486: 486: dcmpl
+   487: 487: ifle -> 494
+   490: 490: iconst_1
+   491: 491: goto -> 495
+   494: 494: iconst_0
+   495: 495: istore 21
+   497: 497: iload 8
+   499: 499: iconst_2
+   500: 500: idiv
+   501: 501: istore 22
+   503: 503: aload_0
+   504: 504: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+   507: 507: getfield net.minecraft.client.Minecraft.font
+   510: 510: invokestatic java.util.Objects.requireNonNull
+   513: 513: pop
+   514: 514: bipush 9
+   516: 516: istore 23
+   518: 518: iload 23
+   520: 520: iconst_2
+   521: 521: idiv
+   522: 522: istore 24
+   524: 524: fconst_1
+   525: 525: fstore 25
+   527: 527: aload_0
+   528: 528: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+   531: 531: getfield net.minecraft.client.Minecraft.font
+   534: 534: aload 14
+   536: 536: invokevirtual net.minecraft.client.gui.Font.width
+   539: 539: istore 26
+   541: 541: invokestatic net.minecraft.util.Util.getMillis
+   544: 544: aload 15
+   546: 546: getfield net.minecraft.client.gui.components.SubtitleOverlay$SoundPlayedAt.time
+   549: 549: lsub
+   550: 550: l2f
+   551: 551: ldc2_w double 3000.0
+   554: 554: dload 9
+   556: 556: dmul
+   557: 557: d2f
+   558: 558: fdiv
+   559: 559: ldc float 255.0
+   561: 561: ldc float 75.0
+   563: 563: invokestatic net.minecraft.util.Mth.clampedLerp
+   566: 566: invokestatic net.minecraft.util.Mth.floor
+   569: 569: istore 27
+   571: 571: aload_1
+   572: 572: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.pose
+   575: 575: invokevirtual org.joml.Matrix3x2fStack.pushMatrix
+   578: 578: pop
+   579: 579: aload_1
+   580: 580: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.pose
+   583: 583: aload_1
+   584: 584: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.guiWidth
+   587: 587: i2f
+   588: 588: iload 22
+   590: 590: i2f
+   591: 591: fconst_1
+   592: 592: fmul
+   593: 593: fsub
+   594: 594: fconst_2
+   595: 595: fsub
+   596: 596: aload_1
+   597: 597: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.guiHeight
+   600: 600: bipush 35
+   602: 602: isub
+   603: 603: i2f
+   604: 604: iload 7
+   606: 606: iload 23
+   608: 608: iconst_1
+   609: 609: iadd
+   610: 610: imul
+   611: 611: i2f
+   612: 612: fconst_1
+   613: 613: fmul
+   614: 614: fsub
+   615: 615: invokevirtual org.joml.Matrix3x2fStack.translate
+   618: 618: pop
+   619: 619: aload_1
+   620: 620: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.pose
+   623: 623: fconst_1
+   624: 624: fconst_1
+   625: 625: invokevirtual org.joml.Matrix3x2fStack.scale
+   628: 628: pop
+   629: 629: aload_1
+   630: 630: iload 22
+   632: 632: ineg
+   633: 633: iconst_1
+   634: 634: isub
+   635: 635: iload 24
+   637: 637: ineg
+   638: 638: iconst_1
+   639: 639: isub
+   640: 640: iload 22
+   642: 642: iconst_1
+   643: 643: iadd
+   644: 644: iload 24
+   646: 646: iconst_1
+   647: 647: iadd
+   648: 648: aload_0
+   649: 649: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+   652: 652: getfield net.minecraft.client.Minecraft.options
+   655: 655: ldc float 0.800000011920929
+   657: 657: invokevirtual net.minecraft.client.Options.getBackgroundColor
+   660: 660: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.fill
+   663: 663: sipush 0 255
+   666: 666: iload 27
+   668: 668: iload 27
+   670: 670: iload 27
+   672: 672: invokestatic net.minecraft.util.ARGB.color
+   675: 675: istore 28
+   677: 677: iload 21
+   679: 679: ifne -> 753
+   682: 682: dload 17
+   684: 684: dconst_0
+   685: 685: dcmpl
+   686: 686: ifle -> 725
+   689: 689: aload_1
+   690: 690: aload_0
+   691: 691: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+   694: 694: getfield net.minecraft.client.Minecraft.font
+   697: 697: ldc cp(8, 165)
+   699: 699: iload 22
+   701: 701: aload_0
+   702: 702: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+   705: 705: getfield net.minecraft.client.Minecraft.font
+   708: 708: ldc cp(8, 165)
+   710: 710: invokevirtual net.minecraft.client.gui.Font.width
+   713: 713: isub
+   714: 714: iload 24
+   716: 716: ineg
+   717: 717: iload 28
+   719: 719: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.text
+   722: 722: goto -> 753
+   725: 725: dload 17
+   727: 727: dconst_0
+   728: 728: dcmpg
+   729: 729: ifge -> 753
+   732: 732: aload_1
+   733: 733: aload_0
+   734: 734: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+   737: 737: getfield net.minecraft.client.Minecraft.font
+   740: 740: ldc cp(8, 158)
+   742: 742: iload 22
+   744: 744: ineg
+   745: 745: iload 24
+   747: 747: ineg
+   748: 748: iload 28
+   750: 750: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.text
+   753: 753: aload_1
+   754: 754: aload_0
+   755: 755: getfield net.minecraft.client.gui.components.SubtitleOverlay.minecraft
+   758: 758: getfield net.minecraft.client.Minecraft.font
+   761: 761: aload 14
+   763: 763: iload 26
+   765: 765: ineg
+   766: 766: iconst_2
+   767: 767: idiv
+   768: 768: iload 24
+   770: 770: ineg
+   771: 771: iload 28
+   773: 773: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.text
+   776: 776: aload_1
+   777: 777: invokevirtual net.minecraft.client.gui.GuiGraphicsExtractor.pose
+   780: 780: invokevirtual org.joml.Matrix3x2fStack.popMatrix
+   783: 783: pop
+   784: 784: iinc 7 1
+   787: 787: goto -> 397
+   790: 790: return
+
+== net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket::<init> (Lnet/minecraft/network/chat/Component;)V ==
+   0: 0: aload_0
+   1: 1: invokespecial java.lang.Record.<init>
+   4: 4: aload_0
+   5: 5: aload_1
+   6: 6: putfield net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket.text
+   9: 9: return
+

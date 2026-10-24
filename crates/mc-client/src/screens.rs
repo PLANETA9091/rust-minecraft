@@ -2372,6 +2372,17 @@ pub fn bg_band_alpha(background_for_chat_only: bool, textbg: f64, raw: f32) -> f
     (a * 255.0).floor() / 255.0
 }
 
+/// THE SUBTITLE BAND'S OWN ALPHA (the `getBackgroundColor(0.8F)` walk
+/// the (F)I overload serves — the `ARGB.colorFromFloat(gate, 0, 0, 0)`
+/// the raw arg VERBATIM the bgopacity_lanes_180 record keeps (no
+/// backgroundForChatOnly/textBackgroundOpacity read the (I)I lane
+/// wears), the `ARGB.as8BitChannel` floor the 204/255 byte the band
+/// paints keeps — the 0.8 the SubtitleOverlay's own call the
+/// subtitles_182 probe banks).
+pub fn subtitle_band_alpha() -> f32 {
+    (0.8_f32 * 255.0).floor() / 255.0
+}
+
 /// THE ROW GATE (the `Options.getBackgroundColor(I)I` law the same
 /// walk banks — the TRUE lane the raw ARGB VERBATIM (the
 /// 0x20FFFFFF the tab row's band keeps), the Everywhere lane the
@@ -5760,6 +5771,24 @@ fn chat_line_spacing_caption(v: f64) -> String {
     )
 }
 
+/// THE CLOSED CAPTIONS' OWN CAPTION (the CycleButton bool display the
+/// createBoolean registration wears — the caption the
+/// `options.showSubtitles` key the jar's en_us "Closed Captions" row
+/// speaks, the ON/OFF words the `options.on`/`options.off` rows the
+/// CommonComponents pair keeps, the default FALSE the OFF end answers).
+fn show_subtitles_caption(on: bool) -> String {
+    let word = if on {
+        tr("options.on").unwrap_or("ON")
+    } else {
+        tr("options.off").unwrap_or("OFF")
+    };
+    format!(
+        "{}: {}",
+        tr("options.showSubtitles").unwrap_or("Closed Captions"),
+        word
+    )
+}
+
 /// THE BAND SCOPE'S OWN CAPTION (the 26.2 CycleButton walk the
 /// chatbgonly_179b/c probes bank — the label law the
 /// `CycleButton.createLabelForValue` speak: the DisplayState.VALUE
@@ -7138,6 +7167,14 @@ pub struct App {
     /// the zero spacing the 9/8 pair the byte-identical answer
     /// keeps).
     pub chat_line_spacing: f64,
+    /// THE CLOSED CAPTIONS' OWN BOOLEAN (the `showSubtitles` option the
+    /// 26.2 Options ctor's `iconst_0` pcs 2053-2067 banks — the default
+    /// FALSE the createBoolean law keeps, the accessibility array the
+    /// index-1 seat wears (narrator 0, showSubtitles 1 the banked walk
+    /// speaks); the consumer the SubtitleOverlay's own render the
+    /// isListening gate speaks — the TRUE the overlay the in-world HUD
+    /// renders, the FALSE the rows the queue never draws).
+    pub show_subtitles: bool,
     /// THE BAND SCOPE'S OWN BOOLEAN (the `backgroundForChatOnly` option
     /// the 26.2 Options ctor's `iconst_1` pcs 2092-2120 banks — the
     /// default TRUE the raw ctor the BOOLEAN_VALUES value set keeps,
@@ -10553,6 +10590,7 @@ impl App {
             text_background_opacity: 0.5,
             chat_opacity: 1.0,
             chat_line_spacing: 0.0,
+            show_subtitles: false,
             background_for_chat_only: true,
             last_active_ms: 0,
             look_sensitivity: crate::body::LOOK_SENSITIVITY_DEFAULT,
@@ -12606,10 +12644,23 @@ impl App {
                             // the block's step at the *0.05/*0.8 muffle. The
                             // plain block step never speaks in water.
                             self.sounds.play_swim(self.frame, b.swim_volume);
-                            self.sounds
-                                .play(self.frame, name, crate::sound::Lane::StepMuffled);
+                            self.sounds.play_at(
+                                self.frame,
+                                name,
+                                crate::sound::Lane::StepMuffled,
+                                b.x,
+                                b.y,
+                                b.z,
+                            );
                         } else {
-                            self.sounds.play(self.frame, name, crate::sound::Lane::Step);
+                            self.sounds.play_at(
+                                self.frame,
+                                name,
+                                crate::sound::Lane::Step,
+                                b.x,
+                                b.y,
+                                b.z,
+                            );
                         }
                         // THE STEP'S OWN POSITION (the vanilla `this
                         // .position()` the gameEvent arg wears — the
@@ -15273,7 +15324,18 @@ impl App {
                     if hit_beat && self.dig.pos == target_before {
                         if let Some(kind) = hit_kind {
                             let name = crate::world::NAME_OF[kind as usize];
-                            self.sounds.play(self.frame, name, crate::sound::Lane::Hit);
+                            // THE BLOCK VOICE'S OWN CENTER (the Level
+                            // .playSound(Entity, BlockPos, ...) walk the
+                            // +0.5 triple the playSound(Entity, double,
+                            // double, double) overload wears)
+                            self.sounds.play_at(
+                                self.frame,
+                                name,
+                                crate::sound::Lane::Hit,
+                                f64::from(self.dig.pos.0) + 0.5,
+                                f64::from(self.dig.pos.1) + 0.5,
+                                f64::from(self.dig.pos.2) + 0.5,
+                            );
                         }
                     }
                 }
@@ -16373,8 +16435,14 @@ impl App {
                     // pc 24-47 — the levelEvent the non-fire break the
                     // EVERY walk speaks: the break voice + the debris
                     // burst)
-                    self.sounds
-                        .play(self.frame, "bamboo", crate::sound::Lane::Break);
+                    self.sounds.play_at(
+                        self.frame,
+                        "bamboo",
+                        crate::sound::Lane::Break,
+                        f64::from(x) + 0.5,
+                        f64::from(y) + 0.5,
+                        f64::from(z) + 0.5,
+                    );
                     let tile = particle_tile(crate::world::BAMBOO);
                     if tile != mc_registry::generated::atlas::TILE_NONE {
                         let burst =
@@ -30397,6 +30465,18 @@ impl App {
             return;
         }
         if self.screen == ScreenKind::Accessibility {
+            // THE CLOSED CAPTIONS' OWN ARM (the CycleButton's own press
+            // walk the bool row wears — the press INSIDE the row the
+            // value's own toggle answers, the TRUE/FALSE pair the
+            // store's own seat flips, no drag lane the bool row never
+            // carries)
+            if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_show_subtitles") {
+                let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
+                if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
+                    self.show_subtitles = !self.show_subtitles;
+                    return;
+                }
+            }
             // THE SLIDERS' OWN ARMS (the AbstractSliderButton's
             // mouseDown walk the sub-screen's rows wear — the press
             // INSIDE the track the value's own seat answers, the armed
@@ -32655,6 +32735,7 @@ impl App {
         self.fov_effect_scale = file.fov_effect_scale;
         self.chat_opacity = file.chat_opacity;
         self.chat_line_spacing = file.chat_line_spacing;
+        self.show_subtitles = file.show_subtitles;
         self.text_background_opacity = file.text_background_opacity;
         self.background_for_chat_only = file.background_for_chat_only;
         // THE BODY'S OWN READ (the Camera.tickFov the option value the
@@ -32683,6 +32764,7 @@ impl App {
             fov_effect_scale: self.fov_effect_scale,
             chat_opacity: self.chat_opacity,
             chat_line_spacing: self.chat_line_spacing,
+            show_subtitles: self.show_subtitles,
             text_background_opacity: self.text_background_opacity,
             background_for_chat_only: self.background_for_chat_only,
         };
@@ -39159,6 +39241,109 @@ impl App {
         g.text_faded(a, tx, ty, s, color, fade, true);
     }
 
+    /// THE SUBTITLE OVERLAY'S OWN LAYER (javap `SubtitleOverlay
+    /// .extractRenderState` verbatim — the subtitles_182.py probe banks
+    /// the walk: the isListening gate the showSubtitles option speaks,
+    /// the audible rows the purge/audible/closest laws the
+    /// `subtitle_rows` fold serves, the WIDTH the max-text walk the
+    /// arrow+space pair the row's reserve keeps (`max +
+    /// width("<") + width(" ") + width(">") + width(" ")`), the ROW
+    /// the pose translate `(guiWidth - half - 2, guiHeight - 35 -
+    /// i * 10)` walk serves (the bottom-right anchor the band's right
+    /// edge 1px inside wears, the 10px pitch the 9+1 pair speaks), the
+    /// BAND the `fill(-half-1, -5, half+1, 5)` walk the
+    /// `getBackgroundColor(0.8F)` call keeps (the (F)I overload the
+    /// raw 0.8 VERBATIM the colorFromFloat law wears — the 204/255
+    /// byte the `subtitle_band_alpha` fold speaks), the TEXT the
+    /// centered draw the fade-gray the `clampedLerp(ratio, 255, 75)`
+    /// floor keeps, the ARROWS the lateral/forward dot pair the
+    /// listener's right axis wears (the depth > 0.5 the no-arrow gate
+    /// speaks, the lateral > 0 the '>' at the band's right edge
+    /// answers, the lateral < 0 the '<' at the left edge, the
+    /// `lateral_pan`'s own right-axis fold the same convention keeps).
+    /// The default FALSE the goldens' own silence keeps — the rows the
+    /// headless boot never renders).
+    fn draw_subtitle_overlay(&self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        if !self.show_subtitles {
+            return;
+        }
+        let Some(b) = self.body.as_ref() else {
+            return;
+        };
+        let listener = (b.x, b.y + b.eye_height(), b.z);
+        let rows = crate::sound::subtitle_rows(
+            &self.sounds.subtitle_plays,
+            self.frame as u64,
+            listener,
+            1.0,
+        );
+        if rows.is_empty() {
+            return;
+        }
+        // THE WIDTH'S OWN WALK (the max-text the arrows' reserve the
+        // bytecode's four width calls keep)
+        let mut max_text = 0;
+        let texts: Vec<String> = rows
+            .iter()
+            .map(|r| tr(&r.text_key).unwrap_or(&r.text_key).to_string())
+            .collect();
+        for t in &texts {
+            max_text = max_text.max(g.text_width(t));
+        }
+        let row_w = max_text
+            + g.text_width("<")
+            + g.text_width(" ")
+            + g.text_width(">")
+            + g.text_width(" ");
+        let half = row_w / 2;
+        let ox = w - half - 2;
+        let band = [0.0, 0.0, 0.0, subtitle_band_alpha()];
+        for (i, (row, text)) in rows.iter().zip(texts.iter()).enumerate() {
+            let fade = crate::sound::subtitle_fade(row.age, 1.0);
+            let color = [
+                fade as f32 / 255.0,
+                fade as f32 / 255.0,
+                fade as f32 / 255.0,
+            ];
+            let oy = h - 35 - (i as i32) * 10;
+            // THE BAND'S OWN FILL (the 10-tall the ±5 pair wears)
+            g.fill(ox - half - 1, oy - 5, half * 2 + 2, 10, band);
+            // THE DIRECTION'S OWN ARROWS (the depth > 0.5 the no-arrow
+            // gate speaks — the frontal sound the marker never wears)
+            let (dx, dy, dz) = (row.x - listener.0, row.y - listener.1, row.z - listener.2);
+            let len2 = dx * dx + dy * dy + dz * dz;
+            if len2 > 0.0 {
+                let inv = 1.0 / len2.sqrt();
+                let yaw = f64::from(b.yaw).to_radians();
+                let (rx, rz) = (-yaw.cos(), -yaw.sin());
+                let lateral = dx * inv * rx + dz * inv * rz;
+                // THE FORWARD'S OWN DOT (the listener's forward the
+                // `(-sin, cos)` pair the look law wears — the depth the
+                // 0.5 gate the arrow's own silence answers)
+                let depth = dx * inv * -yaw.sin() + dz * inv * yaw.cos();
+                if depth <= 0.5 {
+                    if lateral > 0.0 {
+                        g.text_faded(
+                            a,
+                            ox + half - g.text_width(">"),
+                            oy - 4,
+                            ">",
+                            color,
+                            1.0,
+                            false,
+                        );
+                    } else if lateral < 0.0 {
+                        g.text_faded(a, ox - half, oy - 4, "<", color, 1.0, false);
+                    }
+                }
+            }
+            // THE TEXT'S OWN DRAW (the centered `-tw / 2` the glyph top
+            // -4 wears)
+            let tw = g.text_width(text);
+            g.text_faded(a, ox - tw / 2, oy - 4, text, color, 1.0, false);
+        }
+    }
+
     /// THE CHAT HISTORY'S OWN DRAW (javap ChatComponent.extractRenderState
     /// — the per-line walk the ChatComponent$1.accept fold keeps: the
     /// lines the 320px width re-wrapped (the refreshTrimmedMessages
@@ -42820,8 +43005,14 @@ impl App {
         }
         self.remesh_offline();
         let name = crate::world::NAME_OF[kind as usize];
-        self.sounds
-            .play(self.frame, name, crate::sound::Lane::Break);
+        self.sounds.play_at(
+            self.frame,
+            name,
+            crate::sound::Lane::Break,
+            f64::from(pos.0) + 0.5,
+            f64::from(pos.1) + 0.5,
+            f64::from(pos.2) + 0.5,
+        );
         // THE UPPER'S OWN 2001 AT THE MATE (the preventDropFromBottomPart
         // walk's levelEvent — the break voice the below cell wears when
         // the UPPER half was the dug one; the LOWER's dig the silent
@@ -42832,8 +43023,16 @@ impl App {
         if mate_cell.is_some() && crate::world::is_double_plant_upper(kind) {
             if let Some(m) = crate::world::double_plant_mate(kind) {
                 let mate_name = crate::world::NAME_OF[m as usize];
-                self.sounds
-                    .play(self.frame, mate_name, crate::sound::Lane::Break);
+                if let Some((mx, my, mz)) = mate_cell {
+                    self.sounds.play_at(
+                        self.frame,
+                        mate_name,
+                        crate::sound::Lane::Break,
+                        f64::from(mx) + 0.5,
+                        f64::from(my) + 0.5,
+                        f64::from(mz) + 0.5,
+                    );
+                }
             }
         }
         // THE POP'S OWN WALK (javap Level.destroyBlock pc 17-45 — the
@@ -42915,8 +43114,14 @@ impl App {
         }
         for ((px, py, pz), pk) in popped {
             let pop_name = crate::world::NAME_OF[*pk as usize];
-            self.sounds
-                .play(self.frame, pop_name, crate::sound::Lane::Break);
+            self.sounds.play_at(
+                self.frame,
+                pop_name,
+                crate::sound::Lane::Break,
+                f64::from(*px) + 0.5,
+                f64::from(*py) + 0.5,
+                f64::from(*pz) + 0.5,
+            );
             let pop_tile = particle_tile(*pk);
             if pop_tile != mc_registry::generated::atlas::TILE_NONE {
                 let burst =
@@ -45850,8 +46055,14 @@ impl App {
         // speaks too (the client hears its own placement, the server's
         // echo never doubles it — the vanilla's own singleplayer shape).
         let name = crate::world::NAME_OF[block as usize];
-        self.sounds
-            .play(self.frame, name, crate::sound::Lane::Place);
+        self.sounds.play_at(
+            self.frame,
+            name,
+            crate::sound::Lane::Place,
+            f64::from(cell.0) + 0.5,
+            f64::from(cell.1) + 0.5,
+            f64::from(cell.2) + 0.5,
+        );
         // THE WIRE'S OWN PLACE BROADCAST (javap RedStoneWireBlock.onPlace
         // pc 0-80 + updateNeighborsOfNeighboringWires pc 0-118 the 26.2
         // jar — the placed wire's own setBlock the updatePowerStrength
@@ -46803,8 +47014,14 @@ impl App {
         // order — the playSound the placeBlock's verdict fruit speaks):
         // the wheat row the generated block_sounds table carries —
         // `item.crop.plant` at the (v+1)/2, p*0.8 fold
-        self.sounds
-            .play(self.frame, "wheat", crate::sound::Lane::Place);
+        self.sounds.play_at(
+            self.frame,
+            "wheat",
+            crate::sound::Lane::Place,
+            f64::from(cell.0) + 0.5,
+            f64::from(cell.1) + 0.5,
+            f64::from(cell.2) + 0.5,
+        );
         // THE BLOCK PLACE EVENT'S OWN POST (javap BlockItem.place
         // pc 243-257 over the 26.2 jar — the playSound pc 208-240 the
         // `level.gameEvent(GameEvent.BLOCK_PLACE, pos, Context.of(
@@ -61384,6 +61601,11 @@ impl App {
         if !self.chat_open {
             self.draw_chat_history(g, a, w, h, false);
         }
+        // THE SUBTITLE OVERLAY (the SubtitleOverlay's own layer — the
+        // closed captions the showSubtitles option gates: the rows the
+        // bottom-right anchor the band the 0.8F fold keeps, the
+        // default FALSE the silence the goldens' own law speaks)
+        self.draw_subtitle_overlay(g, a, w, h);
         // THE DEBUG PANEL (the DebugScreenOverlay's own layer — the
         // vanilla renders it OVER the HUD's whole stack, the last
         // stratum the Hud's own render closes with): the F3 gate the
@@ -61910,6 +62132,18 @@ impl App {
         );
         let cx = w / 2;
         let bw = 140;
+        // THE CLOSED CAPTIONS' OWN ROW (the array's index-1 seat the
+        // store the overlay's own gate wears — the CycleButton toggle
+        // the bool row keeps, the row the ARRAY'S FIRST the order
+        // speaks: index 1 before index 4 — the narrator row 0 the
+        // store the client's Options screen never carries)
+        self.buttons.push(Button::new(
+            "opt_show_subtitles",
+            show_subtitles_caption(self.show_subtitles),
+            cx,
+            h / 2 - 156,
+            bw,
+        ));
         // THE CHAT BACKGROUNDS' OWN ROW (the array's index-4 seat the
         // store the chat history's fills wear — the caption the
         // percent/OFF words keep, the row ABOVE the band-scope seat

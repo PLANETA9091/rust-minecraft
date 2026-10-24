@@ -9758,7 +9758,7 @@ fn the_options_file_the_stores_restart_outlives() {
     assert_eq!(app.screen, ScreenKind::Title, "the Done the return wears");
     let text = std::fs::read_to_string(&path).expect("the chord the file writes");
     assert_eq!(
-        text, "version:4903\nmouseSensitivity:1.0\nfov:110\nsoundCategory_master:0.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
+        text, "version:4903\nshowSubtitles:false\nmouseSensitivity:1.0\nfov:110\nsoundCategory_master:0.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
         "the file the vanilla rows wear"
     );
     // THE RESTART (the fresh boot the file's truth wears — the session's
@@ -9794,7 +9794,7 @@ fn the_options_escape_the_save_and_return_wears() {
     assert_eq!(app.screen, ScreenKind::Title, "the escape the return wears");
     let text = std::fs::read_to_string(&path).expect("the escape the file writes");
     assert_eq!(
-        text, "version:4903\nmouseSensitivity:0.75\nfov:90\nsoundCategory_master:0.25\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
+        text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.75\nfov:90\nsoundCategory_master:0.25\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
         "the SAME save chord the Done wears the escape speaks"
     );
     // THE PAUSED LANE (the pause screen's own Options — the
@@ -9903,7 +9903,7 @@ fn the_quit_lane_the_stop_flag_and_the_files_absence_wears() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the removed() moment the file writes"),
-        "version:4903\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
         "the takeover's own exit the rows bank"
     );
     app.render_title_buttons_for_test();
@@ -9917,7 +9917,7 @@ fn the_quit_lane_the_stop_flag_and_the_files_absence_wears() {
     assert!(app.stopping, "the second stop the same chord wears");
     assert_eq!(
         std::fs::read_to_string(&path).expect("the file the exit keeps"),
-        "version:4903\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
         "the quit the file NEVER re-writes — the removed() moment ALONE the rows keep"
     );
     let _ = std::fs::remove_dir_all(&dir);
@@ -9968,7 +9968,7 @@ fn the_options_exit_the_removed_moment_itself_saves() {
     app.open(ScreenKind::Servers);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the takeover the file writes"),
-        "version:4903\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
         "the replacement lane the removed() moment speaks"
     );
     // THE SAME-KIND RE-ENTRY (the open(Options) from Options the
@@ -9979,7 +9979,7 @@ fn the_options_exit_the_removed_moment_itself_saves() {
     app.open(ScreenKind::Options);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the re-entry the file writes"),
-        "version:4903\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:0.5\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:0.5\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
         "the same-kind walk the old screen's discard keeps"
     );
     // THE NONE BOOT'S SILENT KEEP (the options_file None the save walk
@@ -10117,7 +10117,7 @@ fn the_focus_pause_chord_the_flip_and_the_rows_wear() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the exit the file writes"),
-        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:false\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:false\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
         "the flipped row the exit banks"
     );
     // THE SECOND FLIP (the chord the option re-arms — the row the next
@@ -10128,7 +10128,7 @@ fn the_focus_pause_chord_the_flip_and_the_rows_wear() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the second exit the file writes"),
-        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
         "the re-armed row the exit banks"
     );
     // THE THIRD FLIP (the option the false re-wears — the restart the
@@ -10139,7 +10139,7 @@ fn the_focus_pause_chord_the_flip_and_the_rows_wear() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the third exit the file writes"),
-        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:false\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:false\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
         "the flipped row the exit banks"
     );
     // THE BOOT LOAD (the file's truth the boot walk wears — the false
@@ -11096,6 +11096,333 @@ fn the_chat_line_spacing_row_the_chat_pitch_wears() {
         re2.chat_line_spacing, 0.25,
         "the last valid row the decode banks — the out-of-range the skip keeps"
     );
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// THE CLOSED CAPTIONS' OWN ROW (the 26.2 subtitles_182 probe the walk
+/// banks — the `showSubtitles` option the Options ctor's `iconst_0`
+/// pcs 2053-2067 speaks, the createBoolean law the CLOSED_CAPTIONS
+/// tooltip wears, the accessibility array the index-1 seat the row
+/// ABOVE the textbg seat hosts, the caption the `options.showSubtitles`
+/// lang row the "Closed Captions" word speaks, the ON/OFF words the
+/// CommonComponents pair keeps, the processOptions the ldc@149 the
+/// visit seat keeps — the row the version line's AFTER the
+/// mouseSensitivity@292 row's BEFORE wears; the SubtitleOverlay's own
+/// walk the render law serves — the fade the `clampedLerp(ratio, 255,
+/// 75)` floor keeps, the rows the purge/audible/closest laws the
+/// Subtitle methods speak, the band the 0.8F fold the 204/255 byte
+/// wears, the arrows the lateral/forward dot pair the listener's
+/// right axis answers).
+#[test]
+fn the_show_subtitles_row_the_overlay_wears() {
+    fn diff_count(a: &[u8], b: &[u8], x0: i32, y0: i32, w: i32, h: i32) -> usize {
+        let mut n = 0usize;
+        for y in y0..y0 + h {
+            for x in x0..x0 + w {
+                let o = ((y as usize) * 640 + x as usize) * 3;
+                if a[o..o + 3] != b[o..o + 3] {
+                    n += 1;
+                }
+            }
+        }
+        n
+    }
+    let dir = std::env::temp_dir().join(format!("mc2rs_showsubs_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&dir);
+    let path = dir.join("options.txt");
+    let mut app = App::new(262);
+    app.options_file = Some(path.clone());
+    // THE SUB-SCREEN'S OWN SEAT (the accessibility row the opener
+    // wears — the entry save the removed() moment the file's rows
+    // keep, the DEFAULT FALSE the captions' row speaks)
+    app.open(ScreenKind::Options);
+    app.open(ScreenKind::Accessibility);
+    let pre_exit = std::fs::read_to_string(&path).expect("the entry save wrote");
+    assert!(
+        pre_exit.contains("showSubtitles:false\n"),
+        "the removed() moment the entry save keeps ({pre_exit})"
+    );
+    // THE FILE ROW'S OWN ADJACENCY (the visit-order seat the
+    // processOptions walk banks — the showSubtitles row the version
+    // line's AFTER the mouseSensitivity row's BEFORE wears)
+    let ss_pos = pre_exit.find("showSubtitles:").expect("the row");
+    let v_pos = pre_exit.find("version:").expect("the row");
+    let ms_pos = pre_exit.find("mouseSensitivity:").expect("the row");
+    assert!(
+        v_pos < ss_pos && ss_pos < ms_pos,
+        "the visit-order adjacency the file rows keep"
+    );
+    // THE ROW'S OWN SEAT (the array's index 1 the row ABOVE the textbg
+    // seat wears — index 1 < index 4 < index 5 < index 6 < index 7 <
+    // index 12 the order keeps)
+    app.render_title_buttons_for_test();
+    let ss = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_show_subtitles")
+        .expect("the captions row")
+        .clone();
+    let tb = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_textbg")
+        .expect("the chat background row")
+        .clone();
+    let ls = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_chat_line_spacing")
+        .expect("the line spacing row")
+        .clone();
+    let fes = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_fov_effect")
+        .expect("the fov row")
+        .clone();
+    assert!(
+        ss.y < tb.y && tb.y < ls.y && ls.y < fes.y,
+        "the index-1 row the first seat wears"
+    );
+    assert_eq!(
+        ss.label, "Closed Captions: OFF",
+        "the lang row's own word the OFF end wears"
+    );
+    // THE TOGGLE'S OWN LANE (the CycleButton press walk the bool row
+    // wears — the press INSIDE the row the TRUE/FALSE pair the
+    // store's own seat flips, the caption the ON word speaks)
+    app.on_press(ss.x + 4, ss.y + ss.h / 2);
+    assert!(app.show_subtitles, "the press the toggle flips");
+    app.render_title_buttons_for_test();
+    let ss = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_show_subtitles")
+        .expect("the row")
+        .clone();
+    assert_eq!(
+        ss.label, "Closed Captions: ON",
+        "the TRUE the ON word wears"
+    );
+    // THE ESCAPE'S OWN LANE (the shouldCloseOnEsc default the
+    // keyPressed walk answers — the parent the lastScreen ride
+    // returns; the sub-screen the `removed()` method never wears, the
+    // in-screen TRUE the file's pre-exit row keeps)
+    app.on_escape();
+    assert_eq!(
+        app.screen,
+        ScreenKind::Options,
+        "the parent the Escape ride returns"
+    );
+    let mid = std::fs::read_to_string(&path).expect("the entry save's rows");
+    assert!(
+        mid.contains("showSubtitles:false\n"),
+        "the sub-screen's own walks the save never speaks"
+    );
+    // THE PARENT'S OWN EXIT (the removed() moment the save the
+    // sub-screen's change banks — the restart the row outlives)
+    app.open(ScreenKind::Title);
+    let post = std::fs::read_to_string(&path).expect("the parent exit wrote");
+    assert!(
+        post.contains("showSubtitles:true\n"),
+        "the toggle's own TRUE the parent exit banks"
+    );
+    let mut re = App::new(262);
+    re.options_file = Some(path.clone());
+    re.options_file_load();
+    assert!(
+        re.show_subtitles,
+        "the restart the TRUE row the decode keeps"
+    );
+    let _ = std::fs::remove_dir_all(&dir);
+    // THE FADE'S OWN FOLD (the clampedLerp(ratio, 255, 75) floor the
+    // istore-27 law keeps — the fresh play the 255 speaks, the
+    // window's half the 165 wears, the end the 75 the floor answers,
+    // the beyond-window the 75 clamp keeps, the longer display time
+    // the window's own scale speaks)
+    assert_eq!(
+        crate::sound::subtitle_fade(0, 1.0),
+        255,
+        "the fresh play the 255 wears"
+    );
+    assert_eq!(
+        crate::sound::subtitle_fade(30, 1.0),
+        165,
+        "the half-window the 165 keeps"
+    );
+    assert_eq!(
+        crate::sound::subtitle_fade(60, 1.0),
+        75,
+        "the window's end the 75 wears"
+    );
+    assert_eq!(
+        crate::sound::subtitle_fade(61, 1.0),
+        75,
+        "the beyond-window the 75 clamp keeps"
+    );
+    assert_eq!(
+        crate::sound::subtitle_fade(120, 2.0),
+        75,
+        "the doubled display time the doubled window wears"
+    );
+    // THE BAND'S OWN ALPHA (the (F)I overload the raw 0.8 verbatim the
+    // colorFromFloat law keeps — the floor fold the 204/255 byte
+    // answers)
+    assert!(
+        (crate::screens::subtitle_band_alpha() - 204.0 / 255.0).abs() < 1e-6,
+        "the 0.8 gate the floor fold wears"
+    );
+    // THE ROWS' OWN FOLD (the Subtitle methods the 182 probe banks —
+    // the fresh play the row the closest speaks, the same-location
+    // replay the refresh the newest stamp answers, the new location
+    // the play the list adds, the closest the min-distance walk
+    // answers, the stale the purge removes, the beyond-range the
+    // inaudible the row never wears)
+    let entry = crate::sound::SubtitleEntry {
+        text_key: "subtitles.block.generic.break".to_string(),
+        range: 16.0,
+        plays: vec![
+            crate::sound::SubtitleLocation {
+                x: 10.5,
+                y: 2.5,
+                z: 10.5,
+                tick: 100,
+            },
+            crate::sound::SubtitleLocation {
+                x: 12.5,
+                y: 2.5,
+                z: 10.5,
+                tick: 110,
+            },
+        ],
+    };
+    let rows = crate::sound::subtitle_rows(&[entry.clone()], 110, (10.0, 2.0, 10.0), 1.0);
+    assert_eq!(rows.len(), 1, "the entry the row the merge keeps");
+    assert_eq!(
+        (rows[0].x, rows[0].z),
+        (10.5, 10.5),
+        "the closest play the min-distance walk wears"
+    );
+    assert_eq!(
+        rows[0].age, 10,
+        "the closest's own tick the age keeps — the 100-stamp the 110-now reads"
+    );
+    // THE SAME LOCATION'S OWN REFRESH (the removeIf+add pair the
+    // newest stamp the seat keeps — the render fold the max speaks)
+    let refreshed = crate::sound::SubtitleEntry {
+        plays: vec![
+            crate::sound::SubtitleLocation {
+                x: 10.5,
+                y: 2.5,
+                z: 10.5,
+                tick: 100,
+            },
+            crate::sound::SubtitleLocation {
+                x: 10.5,
+                y: 2.5,
+                z: 10.5,
+                tick: 105,
+            },
+        ],
+        ..entry.clone()
+    };
+    let rows = crate::sound::subtitle_rows(&[refreshed], 110, (10.0, 2.0, 10.0), 1.0);
+    assert_eq!(rows[0].age, 5, "the refresh the newest stamp keeps");
+    // THE PURGE'S OWN WALK (the strictly-greater lambda the window's
+    // own edge keeps — the 60-tick window the 20tps the 3000ms pair
+    // answers: the age-60 play the edge keeps, the age-61 the purge
+    // removes)
+    let rows = crate::sound::subtitle_rows(&[entry.clone()], 171, (10.0, 2.0, 10.0), 1.0);
+    assert_eq!(rows.len(), 0, "the stale plays the purge removes");
+    let rows = crate::sound::subtitle_rows(&[entry.clone()], 170, (10.0, 2.0, 10.0), 1.0);
+    assert_eq!(rows.len(), 1, "the window's edge the strict law keeps");
+    // THE AUDIBLE'S OWN RADIUS (the isAudibleFrom law the closerThan
+    // pair wears — the beyond-range the inaudible the row never wears)
+    let far = crate::sound::SubtitleEntry {
+        plays: vec![crate::sound::SubtitleLocation {
+            x: 100.5,
+            y: 2.5,
+            z: 10.5,
+            tick: 110,
+        }],
+        ..entry.clone()
+    };
+    let rows = crate::sound::subtitle_rows(&[far], 110, (10.0, 2.0, 10.0), 1.0);
+    assert_eq!(rows.len(), 0, "the beyond-range the inaudible keeps");
+    // THE RECORD'S OWN SEAT (the onPlaySound walk the merge lanes
+    // serve — the fresh text the entry the sound table's subtitle key
+    // banks, the same-location replay the refresh answers, the new
+    // location the second play adds)
+    let mut app2 = App::new(262);
+    app2.sounds
+        .record_subtitle(5, "stone", crate::sound::Lane::Break, 1.5, 2.5, 3.5);
+    let ev = crate::sound_table::event("block.stone.break").expect("the stone row");
+    let key = ev.subtitle.as_ref().expect("the subtitle row").clone();
+    assert_eq!(
+        app2.sounds.subtitle_plays.len(),
+        1,
+        "the fresh text the entry adds"
+    );
+    assert_eq!(
+        app2.sounds.subtitle_plays[0].text_key, key,
+        "the sound table's own subtitle key the row wears"
+    );
+    app2.sounds
+        .record_subtitle(9, "stone", crate::sound::Lane::Break, 1.5, 2.5, 3.5);
+    assert_eq!(
+        app2.sounds.subtitle_plays.len(),
+        1,
+        "the same text the merge keeps"
+    );
+    assert_eq!(
+        app2.sounds.subtitle_plays[0].plays.len(),
+        1,
+        "the same location the refresh keeps"
+    );
+    assert_eq!(
+        app2.sounds.subtitle_plays[0].plays[0].tick, 9,
+        "the refresh the newest stamp wears"
+    );
+    app2.sounds
+        .record_subtitle(11, "stone", crate::sound::Lane::Break, 5.5, 2.5, 3.5);
+    assert_eq!(
+        app2.sounds.subtitle_plays[0].plays.len(),
+        2,
+        "the new location the play adds"
+    );
+    // THE RENDER'S OWN LAYER (the default FALSE the silence the
+    // goldens' own law keeps — the TRUE the band + the text the
+    // bottom-right anchor draws, the first row's band the h-40 top
+    // wears)
+    let root = crate::screens::tests::assets_root();
+    let mut app3 = App::new(262);
+    app3.enter_world();
+    app3.spawn_offline_body();
+    let (bx, by, bz) = {
+        let b = app3.body.as_ref().expect("the offline body");
+        (b.x, b.y, b.z)
+    };
+    let mut assets = GuiAssets::open(&root);
+    let mut fb = crate::raster::Framebuf::new(640, 360);
+    app3.show_subtitles = false;
+    // THE SAME-CELL PLAY (the body's own feet the closest lane wears —
+    // the within-range the audible filter keeps; the tick 0 the boot's
+    // own clock wears — the frame the update's walk advances, the
+    // render's read the same tick keeps)
+    app3.sounds.record_subtitle(
+        0,
+        "stone",
+        crate::sound::Lane::Break,
+        bx + 0.5,
+        by + 0.5,
+        bz + 0.5,
+    );
+    app3.render(&mut fb, &mut assets);
+    let bare = fb.color.clone();
+    app3.show_subtitles = true;
+    app3.render(&mut fb, &mut assets);
+    let diff = diff_count(&bare, &fb.color, 500, 314, 140, 24);
+    assert!(diff > 20, "the captions the band + text paint: {diff}");
     let _ = std::fs::remove_dir_all(&dir);
 }
 

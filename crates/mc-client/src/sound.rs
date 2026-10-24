@@ -180,6 +180,122 @@ pub fn lateral_pan(dx: f64, dy: f64, dz: f64, yaw_deg: f32) -> f32 {
     pan.clamp(-1.0, 1.0)
 }
 
+/// THE SUBTITLE'S OWN FADE (javap `SubtitleOverlay.extractRenderState`
+/// pcs 541-569 the istore-27 law the 182 probe banks — the
+/// `clampedLerp((millis - time) / (3000.0 * displayTime), 255.0, 75.0)`
+/// rows the Mth.clampedLerp(delta, start, end) signature serves (the
+/// (FFF) overload's own `fcmpg/ifge/fcmpl/ifle/lerp` body the 182 walk
+/// disassembles), the `Mth.floor` the int keeps: the fresh play the
+/// 255 the white speaks, the window's end the 75 the gray answers, the
+/// beyond-window the 75 floor the clamp keeps. The tick the client's
+/// own clock keeps — the 20tps the 3000ms the 60-tick window answers).
+pub fn subtitle_fade(age_ticks: u64, display_time: f64) -> i32 {
+    let window = 60.0_f64 * display_time;
+    let ratio = (age_ticks as f64 / window) as f32;
+    let d = if ratio < 0.0 {
+        255.0
+    } else if ratio > 1.0 {
+        75.0
+    } else {
+        255.0 + (75.0 - 255.0) * ratio
+    };
+    d.floor() as i32
+}
+
+/// THE SUBTITLE'S OWN ROWS (javap `SubtitleOverlay.extractRenderState`
+/// pcs 97-199 the audible walk serves + the `Subtitle` methods the
+/// 182 probe banks — the purge the `purgeOldInstances(3000.0 *
+/// displayTime)` lambda speaks (the `now - time > window` STRICTLY
+/// the removeIf predicate keeps), the still-active the
+/// `!playedAt.isEmpty()` the removal answers, the audible the
+/// `isAudibleFrom` law the `closerThan(range)` pair wears (the
+/// infinite range the TRUE lane keeps), the closest the
+/// `getClosest` `comparingDouble(distanceTo)` min walk answers, the
+/// merge the onPlaySound's own walk banks — the same-TEXT entry the
+/// refresh/new-location lanes serve, the first-seen order the List
+/// keeps).
+pub fn subtitle_rows(
+    entries: &[SubtitleEntry],
+    now_tick: u64,
+    listener: (f64, f64, f64),
+    display_time: f64,
+) -> Vec<SubtitleRow> {
+    let window = 60.0_f64 * display_time;
+    let mut rows = Vec::new();
+    for e in entries {
+        // THE SAME LOCATION'S OWN DEDUPE (the refresh law — ONE play
+        // per location, the newest stamp the seat keeps)
+        let mut plays: Vec<SubtitleLocation> = Vec::new();
+        for p in &e.plays {
+            if let Some(q) = plays
+                .iter_mut()
+                .find(|q| q.x == p.x && q.y == p.y && q.z == p.z)
+            {
+                q.tick = q.tick.max(p.tick);
+            } else {
+                plays.push(*p);
+            }
+        }
+        // THE PURGE'S OWN WALK (the `now - time > window` strictly the
+        // lambda keeps)
+        plays.retain(|p| {
+            now_tick
+                .checked_sub(p.tick)
+                .map(|age| (age as f64) <= window)
+                .unwrap_or(false)
+        });
+        // THE STILL-ACTIVE'S OWN GATE (the empty list the entry's
+        // removal answers)
+        if plays.is_empty() {
+            continue;
+        }
+        // THE CLOSEST'S OWN MIN (the getClosest comparingDouble walk —
+        // the empty the null the render skips, the one the first
+        // returns, the many the min distance answers)
+        let (dx0, dy0, dz0) = listener;
+        let closest = *plays
+            .iter()
+            .min_by(|a, b| {
+                let da = (a.x - dx0).powi(2) + (a.y - dy0).powi(2) + (a.z - dz0).powi(2);
+                let db = (b.x - dx0).powi(2) + (b.y - dy0).powi(2) + (b.z - dz0).powi(2);
+                da.partial_cmp(&db).unwrap_or(std::cmp::Ordering::Equal)
+            })
+            .expect("the plays the non-empty gate keeps");
+        // THE AUDIBLE'S OWN RADIUS (the isAudibleFrom law — the
+        // infinite range the TRUE lane keeps, the finite the
+        // `closerThan(range)` pair answers: the distanceSqr the
+        // range-sqr the strict < keeps)
+        let dist_sq =
+            (closest.x - dx0).powi(2) + (closest.y - dy0).powi(2) + (closest.z - dz0).powi(2);
+        if !(e.range.is_infinite() || dist_sq < e.range * e.range) {
+            continue;
+        }
+        let age = now_tick
+            .checked_sub(closest.tick)
+            .expect("the purge the stale play never keeps");
+        rows.push(SubtitleRow {
+            text_key: e.text_key.clone(),
+            x: closest.x,
+            y: closest.y,
+            z: closest.z,
+            age,
+        });
+    }
+    rows
+}
+
+/// THE ROW'S OWN SHAPE (the render walk's istore-8/12/14/16/19 tuple —
+/// the text the lang resolves, the closest play the direction the
+/// lateral/forward dots speak, the age the fade wears).
+#[derive(Debug, Clone, PartialEq)]
+pub struct SubtitleRow {
+    pub text_key: String,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    pub age: u64,
+}
+
 /// The deterministic block-sound engine: the log the tests pin and the
 /// audio backend mirrors. The RNG is the music scheduler's own LCG (the
 /// same seed scramble, the same step constants) — the whole audio lane
@@ -204,6 +320,46 @@ pub struct BlockSounds {
     /// manager banks). The None the silent ground keeps — the Some the
     /// per-tick walk the manager's own law speaks.
     pub elytra_voice: Option<ElytraVoiceState>,
+    /// THE SUBTITLE'S OWN QUEUE (javap `SubtitleOverlay.subtitles` — the
+    /// `List<Subtitle>` the onPlaySound walk feeds: the same-TEXT entry
+    /// the refresh/new-location lanes serve, the fresh text the new row
+    /// adds; the play's own record the SoundPlayedAt record keeps — the
+    /// location + the millis the Util.getMillis stamp wears). The
+    /// render-time fold the `subtitle_rows` walk serves — the purge/
+    /// audible/closest laws the Subtitle methods speak.
+    pub subtitle_plays: Vec<SubtitleEntry>,
+}
+
+/// THE SUBTITLE'S OWN ENTRY (javap `SubtitleOverlay$Subtitle` — the
+/// text the merge key keeps, the range the ctor's fload-2 banks (the
+/// FIRST play's range the refresh lane never re-wears), the plays the
+/// playedAt list keeps — ONE per location the refresh law speaks).
+#[derive(Debug, Clone, PartialEq)]
+pub struct SubtitleEntry {
+    /// the subtitle KEY (the `WeighedSoundEvents.getSubtitle` lang row —
+    /// e.g. `subtitles.block.generic.break`; the lang table the text
+    /// the render resolves)
+    pub text_key: String,
+    /// the audible radius (the SoundEngine.play walk the listener's
+    /// fload-6 arg keeps — the `max(volume, 1.0) * attenuationDistance`
+    /// law the `voice_max_distance` fold serves)
+    pub range: f64,
+    /// the play records (ONE per location — the same-location replay
+    /// the refresh law the removeIf+add pair speaks: the newest stamp
+    /// the seat keeps)
+    pub plays: Vec<SubtitleLocation>,
+}
+
+/// THE PLAY'S OWN RECORD (javap `SubtitleOverlay$SoundPlayedAt` — the
+/// location + the millis the play stamps; the tick the client's own
+/// clock keeps — the 20tps the 3000ms the 60 ticks the fade window
+/// answers).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SubtitleLocation {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    pub tick: u64,
 }
 
 /// THE ELYTRA VOICE'S OWN STATE (javap `ElytraOnPlayerSoundInstance`
@@ -227,6 +383,7 @@ impl BlockSounds {
             events: Vec::new(),
             records: Vec::new(),
             elytra_voice: None,
+            subtitle_plays: Vec::new(),
         }
     }
 
@@ -280,6 +437,56 @@ impl BlockSounds {
             "{event} @{tick} #{file} v{:.6} p{:.6}",
             volume, pitch
         ));
+    }
+
+    /// THE SUBTITLED PLAY (the SoundEngine.play walk the listener's
+    /// onPlaySound call follows — the same block voice the `play` walk
+    /// serves, the subtitle record the location + the tick the play
+    /// stamps: the WeighedSoundEvents.getSubtitle null gate the key
+    /// the sound table's own `subtitle` field answers, the voice_max_
+    /// distance law the range keeps).
+    pub fn play_at(&mut self, tick: u64, block: &str, lane: Lane, x: f64, y: f64, z: f64) {
+        self.play(tick, block, lane);
+        self.record_subtitle(tick, block, lane, x, y, z);
+    }
+
+    /// THE SUBTITLE'S OWN RECORD (javap `SubtitleOverlay.onPlaySound`
+    /// verbatim — the WeighedSoundEvents.getSubtitle null gate the
+    /// return speaks, the same-TEXT entry the refresh/new-location
+    /// lanes serve (the same location the removeIf+add pair the
+    /// newest stamp answers, a new location the play the list adds),
+    /// the fresh text the new row the ctor's range banks — the FIRST
+    /// play's radius the refresh lane never re-wears).
+    pub fn record_subtitle(&mut self, tick: u64, block: &str, lane: Lane, x: f64, y: f64, z: f64) {
+        let Some(idx) = bs::sound_index(block) else {
+            return;
+        };
+        let event = lane.event_of(idx);
+        let Some(ev) = snd::event(event) else {
+            return;
+        };
+        let Some(sub) = &ev.subtitle else {
+            return; // the no-subtitle sound the listener walk never queues
+        };
+        let (volume, _) = lane.fold(bs::SOUND_VOLUME[idx], bs::SOUND_PITCH[idx]);
+        let range = voice_max_distance(volume);
+        if let Some(e) = self.subtitle_plays.iter_mut().find(|e| e.text_key == *sub) {
+            if let Some(p) = e
+                .plays
+                .iter_mut()
+                .find(|p| p.x == x && p.y == y && p.z == z)
+            {
+                p.tick = tick; // the same location's own refresh
+            } else {
+                e.plays.push(SubtitleLocation { x, y, z, tick });
+            }
+        } else {
+            self.subtitle_plays.push(SubtitleEntry {
+                text_key: sub.clone(),
+                range,
+                plays: vec![SubtitleLocation { x, y, z, tick }],
+            });
+        }
     }
 
     /// The pickup voice (javap ClientPacketListener.handleTakeItemEntity's

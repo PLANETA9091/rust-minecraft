@@ -1,0 +1,75 @@
+== Options.<init> pcs 2050-2070 (the showSubtitles window) ==
+   2050: 2050: putfield net.minecraft.client.Options.soundSourceVolumes
+   2053: 2053: aload_0
+   2054: 2054: ldc_w cp(8, 1121)
+   2057: 2057: getstatic net.minecraft.client.Options.CLOSED_CAPTIONS_TOOLTIP
+   2060: 2060: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+   2063: 2063: iconst_0
+   2064: 2064: invokestatic net.minecraft.client.OptionInstance.createBoolean
+   2067: 2067: putfield net.minecraft.client.Options.showSubtitles
+   2070: 2070: aload_0
+caption #1121: 'options.showSubtitles'
+
+== Options.processOptions — our carried keys' visit pcs ==
+   149: showSubtitles
+   292: mouseSensitivity
+   480: chatOpacity
+   493: chatLineSpacing
+   506: textBackgroundOpacity
+   519: backgroundForChatOnly
+   567: pauseOnLostFocus
+
+== Mth.clampedLerp (FFF)F ==
+   0: 0: fload_0
+   1: 1: fconst_0
+   2: 2: fcmpg
+   3: 3: ifge -> 8
+   6: 6: fload_1
+   7: 7: freturn
+   8: 8: fload_0
+   9: 9: fconst_1
+   10: 10: fcmpl
+   11: 11: ifle -> 16
+   14: 14: fload_2
+   15: 15: freturn
+   16: 16: fload_0
+   17: 17: fload_1
+   18: 18: fload_2
+   19: 19: invokestatic net.minecraft.util.Mth.lerp
+   22: 22: freturn
+
+== SoundEngine.play pcs 154-176 (the range calc) + 230-252 (the listener arg) ==
+   154: 154: aload_1
+   155: 155: invokeinterface net.minecraft.client.resources.sounds.SoundInstance.getVolume
+   160: 160: fstore 5
+   162: 162: fload 5
+   164: 164: fconst_1
+   165: 165: invokestatic java.lang.Math.max
+   168: 168: aload 4
+   170: 170: invokevirtual net.minecraft.client.resources.sounds.Sound.getAttenuationDistance
+   173: 173: i2f
+   174: 174: fmul
+   175: 175: fstore 6
+   230: 230: iload 11
+   232: 232: ifne -> 243
+   235: 235: aload 10
+   237: 237: getstatic net.minecraft.client.resources.sounds.SoundInstance$Attenuation.NONE
+   240: 240: if_acmpne -> 249
+   243: 243: ldc_w float inf
+   246: 246: goto -> 251
+   249: 249: fload 6
+   251: 251: fstore 12
+
+SubtitleOverlay utf8#158: 'java/util/Collection'
+SubtitleOverlay utf8#163: '?'
+SubtitleOverlay utf8#165: 'hasNext'
+
+lang options.showSubtitles = 'Closed Captions'
+lang options.on = 'ON'
+lang options.off = 'OFF'
+lang subtitles.block.generic.break = 'Block broken'
+lang subtitles.entity.item.pickup = 'Item plops'
+sounds.json block.stone.break: subtitle='subtitles.block.generic.break'
+sounds.json block.stone.step: subtitle='subtitles.block.generic.footsteps'
+sounds.json block.stone.place: subtitle='subtitles.block.generic.place'
+sounds.json block.stone.hit: subtitle='subtitles.block.generic.hit'
