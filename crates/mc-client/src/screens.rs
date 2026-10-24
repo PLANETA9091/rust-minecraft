@@ -35470,6 +35470,20 @@ impl App {
                             [crate::options_file::key_binds::DEBUG_RELOAD_CHUNK];
                     self.kb_selected = None;
                 }
+                // THE DEBUG SHOW HITBOXES' OWN ARMS (the row the debug
+                // quintet walk the AFTER seat renders — the ctor's
+                // pc 3322-3341 the 4-arg ctor the `iconst_0` orderI
+                // default banks, the B the reload row's own plain shape
+                // the capture honors)
+                "kb_change_debugshowhitboxes" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::DEBUG_SHOW_HITBOXES);
+                }
+                "kb_rowreset_debugshowhitboxes" => {
+                    self.key_binds[crate::options_file::key_binds::DEBUG_SHOW_HITBOXES] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::DEBUG_SHOW_HITBOXES];
+                    self.kb_selected = None;
+                }
                 "kb_rowreset_forward" => {
                     self.key_binds[crate::options_file::key_binds::FORWARD] =
                         crate::options_file::key_binds::DEFAULTS
@@ -63525,6 +63539,10 @@ impl App {
             // quartet walk the AFTER seat renders — the ctor's
             // putfield order the id answers)
             kb::DEBUG_RELOAD_CHUNK => "kb_change_debugreloadchunk",
+            // THE DEBUG SHOW HITBOXES' OWN ID (the row the debug
+            // quintet walk the AFTER seat renders — the ctor's
+            // putfield order the id answers)
+            kb::DEBUG_SHOW_HITBOXES => "kb_change_debugshowhitboxes",
             _ => "kb_change_hotbar9",
         };
         self.buttons
@@ -63573,6 +63591,9 @@ impl App {
             // THE DEBUG RELOAD CHUNK'S OWN ID (the same seat the
             // row keeps — the quartet the file's own END rows wear)
             kb::DEBUG_RELOAD_CHUNK => "kb_rowreset_debugreloadchunk",
+            // THE DEBUG SHOW HITBOXES' OWN ID (the same seat the
+            // row keeps — the quintet the file's own END rows wear)
+            kb::DEBUG_SHOW_HITBOXES => "kb_rowreset_debugshowhitboxes",
             _ => "kb_rowreset_hotbar9",
         };
         let mut rb = Button::new(
