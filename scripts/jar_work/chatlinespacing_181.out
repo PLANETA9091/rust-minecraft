@@ -1,0 +1,102 @@
+== Options.<init> — the pcs 800-1000 window (the chatOpacity row's AFTER the lineSpacing registration wears) ==
+   802: 802: invokedynamic indy@854
+   807: 807: invokespecial net.minecraft.client.OptionInstance.<init>
+   810: 810: putfield net.minecraft.client.Options.chatOpacity
+   813: 813: aload_0
+   814: 814: new net.minecraft.client.OptionInstance
+   817: 817: dup
+   818: 818: ldc_w cp(8, 856)
+   821: 821: invokestatic net.minecraft.client.OptionInstance.noTooltip
+   824: 824: invokedynamic indy@622
+   829: 829: getstatic net.minecraft.client.OptionInstance$UnitDouble.INSTANCE
+   832: 832: dconst_0
+   833: 833: invokestatic java.lang.Double.valueOf
+   836: 836: getstatic net.minecraft.client.OptionInstance.NO_ACTION
+   839: 839: invokespecial net.minecraft.client.OptionInstance.<init>
+   842: 842: putfield net.minecraft.client.Options.chatLineSpacing
+   845: 845: aload_0
+   846: 846: new net.minecraft.client.OptionInstance
+   849: 849: dup
+   850: 850: ldc_w cp(8, 858)
+   853: 853: getstatic net.minecraft.client.Options.MENU_BACKGROUND_BLURRINESS_TOOLTIP
+   856: 856: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+   859: 859: invokedynamic indy@862
+   864: 864: new net.minecraft.client.OptionInstance$IntRange
+   867: 867: dup
+   868: 868: iconst_0
+   869: 869: bipush 10
+   871: 871: invokespecial net.minecraft.client.OptionInstance$IntRange.<init>
+   874: 874: iconst_5
+   875: 875: invokestatic java.lang.Integer.valueOf
+   878: 878: aload_0
+   879: 879: invokedynamic indy@863
+   884: 884: invokespecial net.minecraft.client.OptionInstance.<init>
+   887: 887: putfield net.minecraft.client.Options.menuBackgroundBlurriness
+   890: 890: aload_0
+   891: 891: new net.minecraft.client.OptionInstance
+   894: 894: dup
+   895: 895: ldc_w cp(8, 865)
+   898: 898: invokestatic net.minecraft.client.OptionInstance.noTooltip
+   901: 901: invokedynamic indy@622
+   906: 906: getstatic net.minecraft.client.OptionInstance$UnitDouble.INSTANCE
+   909: 909: ldc2_w double 0.5
+   912: 912: invokestatic java.lang.Double.valueOf
+   915: 915: invokedynamic indy@866
+   920: 920: invokespecial net.minecraft.client.OptionInstance.<init>
+   923: 923: putfield net.minecraft.client.Options.textBackgroundOpacity
+   926: 926: aload_0
+   927: 927: new net.minecraft.client.OptionInstance
+   930: 930: dup
+   931: 931: ldc_w cp(8, 868)
+   934: 934: invokestatic net.minecraft.client.OptionInstance.noTooltip
+   937: 937: invokedynamic indy@622
+   942: 942: getstatic net.minecraft.client.OptionInstance$UnitDouble.INSTANCE
+   945: 945: dconst_1
+   946: 946: invokestatic java.lang.Double.valueOf
+   949: 949: getstatic net.minecraft.client.OptionInstance.NO_ACTION
+   952: 952: invokespecial net.minecraft.client.OptionInstance.<init>
+   955: 955: putfield net.minecraft.client.Options.panoramaSpeed
+   958: 958: aload_0
+   959: 959: ldc_w cp(8, 870)
+   962: 962: getstatic net.minecraft.client.Options.ACCESSIBILITY_TOOLTIP_CONTRAST_MODE
+   965: 965: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+   968: 968: iconst_0
+   969: 969: aload_0
+   970: 970: invokedynamic indy@874
+   975: 975: invokestatic net.minecraft.client.OptionInstance.createBoolean
+   978: 978: putfield net.minecraft.client.Options.highContrast
+   981: 981: aload_0
+   982: 982: ldc_w cp(8, 876)
+   985: 985: getstatic net.minecraft.client.Options.HIGH_CONTRAST_BLOCK_OUTLINE_TOOLTIP
+   988: 988: invokestatic net.minecraft.client.OptionInstance.cachedConstantTooltip
+   991: 991: iconst_0
+   992: 992: invokestatic net.minecraft.client.OptionInstance.createBoolean
+   995: 995: putfield net.minecraft.client.Options.highContrastBlockOutline
+   998: 998: aload_0
+   999: 999: ldc_w cp(8, 881)
+
+== the utf8 constants the ctor speaks (the chat.* lang keys) ==
+   #838: 'options.chat.visibility'
+   #852: 'options.chat.opacity'
+   #856: 'options.chat.line_spacing'
+   #920: 'options.chat.scale'
+   #924: 'options.chat.width'
+   #928: 'options.chat.height.unfocused'
+   #938: 'options.chat.height.focused'
+   #942: 'options.chat.delay_instant'
+   #1050: 'options.chat.color'
+   #1052: 'options.chat.links'
+   #1054: 'options.chat.links.prompt'
+   #1178: 'options.chat.drafts'
+   #2684: 'options.chat.delay_none'
+   #2686: 'options.chat.delay'
+   #2921: 'options.chat.drafts.tooltip'
+
+Traceback (most recent call last):
+  File "/home/z/my-project/rust-minecraft/scripts/jar_work/chatlinespacing_181.py", line 76, in <module>
+    ls = dis(cpc, code2)
+         ^^^^^^^^^^^^^^^
+  File "/home/z/my-project/rust-minecraft/scripts/jar_work/chatlinespacing_181.py", line 29, in dis
+    clen = struct.unpack_from(">I", body, 4)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+struct.error: unpack_from requires a buffer of at least 8 bytes for unpacking 4 bytes at offset 4 (actual buffer size is 6)

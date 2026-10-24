@@ -123,6 +123,23 @@ pub struct OptionsFile {
     /// alpha multiplies wears — the default 1.0 the 1.0 fold the
     /// byte-identical answer keeps).
     pub chat_opacity: f64,
+    /// `chatLineSpacing` — the chat rows' own 0..1 pitch scale (the
+    /// default 0.0 the Options ctor's dconst_0 pcs 813-842 banks, the
+    /// OptionInstance$UnitDouble.INSTANCE value set the strict double
+    /// keeps — the out-of-range the default answers; the noTooltip
+    /// lane the registration wears, the SAME indy@622
+    /// CaptionBasedToString the chatOpacity/textbg rows the percent/
+    /// OFF words keep, the accessibility array the index-7 seat hosts
+    /// (chatOpacity 6 the row BEFORE, fovEffectScale 12 the row AFTER
+    /// the banked walk speaks)); the ChatComponent's row pitch the
+    /// consumer speaks — the extractRenderState istore-18 law the
+    /// `trunc(9.0 * (spacing + 1.0))` stride keeps (the same law the
+    /// getLineHeight()I body wears), the istore-19 the glyph offset
+    /// the `round(8.0 * (spacing + 1.0) - 4.0 * spacing)` rows answer
+    /// — the zero spacing the 9/8 pair the byte-identical answer
+    /// keeps; the `9 + round(4.0 * spacing)` and `round(8 - 4 *
+    /// spacing)` guesses the old notes wore the bytecode refuses).
+    pub chat_line_spacing: f64,
     /// `textBackgroundOpacity` — the chat backgrounds' own 0..1 scale
     /// (the default 0.5 the Options ctor's `ldc2_w double
     /// 4602678819172646912` banks, the doubleRange(0.0, 1.0) codec the
@@ -164,6 +181,7 @@ impl Default for OptionsFile {
             pause_on_lost_focus: true,
             fov_effect_scale: 1.0,
             chat_opacity: 1.0,
+            chat_line_spacing: 0.0,
             text_background_opacity: 0.5,
             background_for_chat_only: true,
         }
@@ -239,6 +257,19 @@ impl OptionsFile {
                         }
                     }
                 }
+                "chatLineSpacing" => {
+                    // THE SAME STRICT DOUBLE'S OWN DECODE (the
+                    // doubleRange(0.0, 1.0) codec the in-range double
+                    // answers — the out-of-range/malformed the default
+                    // keeps, the clamp never wears; the default 0.0
+                    // the Options ctor's dconst_0 the missing row
+                    // keeps)
+                    if let Ok(v) = value.parse::<f64>() {
+                        if (0.0..=1.0).contains(&v) {
+                            out.chat_line_spacing = v;
+                        }
+                    }
+                }
                 "textBackgroundOpacity" => {
                     // THE SAME STRICT DOUBLE'S OWN DECODE (the
                     // doubleRange(0.0, 1.0) codec the in-range double
@@ -302,6 +333,16 @@ impl OptionsFile {
         // chatOpacity the ldc@480 the textBackgroundOpacity the
         // ldc@506 the seat before answers)
         text.push_str(&format!("chatOpacity:{}\n", java_double(self.chat_opacity)));
+        // THE CHAT LINES' OWN ROW (the double the java_double print
+        // keeps — the 0.0 the default the decimal speaks; the row the
+        // visit-order adjacency the processOptions walk keeps — the
+        // chatLineSpacing the ldc@493 the chatOpacity@480 the row
+        // AFTER answers, the textBackgroundOpacity@506 the row BEFORE
+        // the same ladder speaks)
+        text.push_str(&format!(
+            "chatLineSpacing:{}\n",
+            java_double(self.chat_line_spacing)
+        ));
         // THE CHAT BACKGROUNDS' OWN ROW (the double the java_double
         // print keeps — the 0.5 the default the decimal speaks)
         text.push_str(&format!(
@@ -377,7 +418,7 @@ mod tests {
         OptionsFile::default().save(&path);
         let text = std::fs::read_to_string(&path).expect("the save the file writes");
         assert_eq!(
-            text, "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
+            text, "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
             "the file the vanilla rows wear"
         );
         let loaded = OptionsFile::load(&path);
@@ -391,6 +432,10 @@ mod tests {
         assert_eq!(
             loaded.fov_effect_scale, 1.0,
             "the scale the default the round-trip wears"
+        );
+        assert_eq!(
+            loaded.chat_line_spacing, 0.0,
+            "the chat lines the default the round-trip wears"
         );
         assert_eq!(
             loaded.text_background_opacity, 0.5,
@@ -432,6 +477,11 @@ mod tests {
              chatOpacity:-0.25\n\
              chatOpacity:word\n\
              chatOpacity:0.4\n\
+             chatLineSpacing:0.5\n\
+             chatLineSpacing:1.5\n\
+             chatLineSpacing:-0.25\n\
+             chatLineSpacing:word\n\
+             chatLineSpacing:0.25\n\
              textBackgroundOpacity:0.75\n\
              textBackgroundOpacity:1.5\n\
              textBackgroundOpacity:-0.25\n\
@@ -478,6 +528,14 @@ mod tests {
             loaded.chat_opacity, 0.4,
             "the chat text the last valid row wears — the out-of-range/malformed the skip keeps"
         );
+        // THE CHAT LINES' OWN DECODE (the same strict double the
+        // in-range 0.5 the first read wears — the out-of-range 1.5/
+        // -0.25 pair + the malformed word the skip keeps, the LAST
+        // valid the 0.25 the read banks)
+        assert_eq!(
+            loaded.chat_line_spacing, 0.25,
+            "the chat lines the last valid row wears — the out-of-range/malformed the skip keeps"
+        );
         // THE CHAT BACKGROUND'S OWN DECODE (the same strict double the
         // in-range 0.75 the first read wears — the out-of-range 1.5/
         // -0.25 pair + the malformed word the skip keeps, the LAST
@@ -512,6 +570,10 @@ mod tests {
         assert_eq!(
             missing.chat_opacity, 1.0,
             "the missing file the default chat text keeps"
+        );
+        assert_eq!(
+            missing.chat_line_spacing, 0.0,
+            "the missing file the default chat lines keeps"
         );
         assert_eq!(
             missing.text_background_opacity, 0.5,

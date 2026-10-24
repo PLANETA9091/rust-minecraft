@@ -1,0 +1,98 @@
+== Options.processOptions — pcs 460-545 (the chat ladder) ==
+   463: 463: putfield net.minecraft.client.Options.languageCode
+   466: 466: aload_1
+   467: 467: ldc_w cp(8, 200)
+   470: 470: aload_0
+   471: 471: getfield net.minecraft.client.Options.chatVisibility
+   474: 474: invokeinterface net.minecraft.client.Options$FieldAccess.process
+   479: 479: aload_1
+   480: 480: ldc_w cp(8, 203)
+   483: 483: aload_0
+   484: 484: getfield net.minecraft.client.Options.chatOpacity
+   487: 487: invokeinterface net.minecraft.client.Options$FieldAccess.process
+   492: 492: aload_1
+   493: 493: ldc_w cp(8, 206)
+   496: 496: aload_0
+   497: 497: getfield net.minecraft.client.Options.chatLineSpacing
+   500: 500: invokeinterface net.minecraft.client.Options$FieldAccess.process
+   505: 505: aload_1
+   506: 506: ldc_w cp(8, 219)
+   509: 509: aload_0
+   510: 510: getfield net.minecraft.client.Options.textBackgroundOpacity
+   513: 513: invokeinterface net.minecraft.client.Options$FieldAccess.process
+   518: 518: aload_1
+   519: 519: ldc_w cp(8, 474)
+   522: 522: aload_0
+   523: 523: getfield net.minecraft.client.Options.backgroundForChatOnly
+   526: 526: invokeinterface net.minecraft.client.Options$FieldAccess.process
+   531: 531: aload_0
+   532: 532: aload_1
+   533: 533: ldc_w cp(8, 1898)
+   536: 536: aload_0
+   537: 537: getfield net.minecraft.client.Options.hideServerAddress
+   540: 540: invokeinterface net.minecraft.client.Options$FieldAccess.process
+   545: 545: putfield net.minecraft.client.Options.hideServerAddress
+
+indy@622 tag=18 bsm=3 nat=445
+  name='toString' desc='()Lnet/minecraft/client/OptionInstance$CaptionBasedToString;'
+== lambda$new$2 (Ljava/lang/Double;)I ==
+    0: aload_0
+    1: invokevirtual java.lang.Double.doubleValue
+    4: ldc2_w double 4.0
+    7: dmul
+    8: d2i
+    9: ireturn
+
+== lambda$new$25 (Ljava/lang/Double;)I ==
+    0: aload_0
+    1: invokevirtual java.lang.Double.doubleValue
+    4: ldc2_w double 20.0
+    7: dmul
+    8: d2i
+    9: ireturn
+
+== lambda$new$47 (Ljava/lang/Double;)I ==
+    0: aload_0
+    1: invokevirtual java.lang.Double.doubleValue
+    4: ldc2_w double 10.0
+    7: dmul
+    8: d2i
+    9: ireturn
+
+== lambda$new$51 (Ljava/lang/Double;)I ==
+    0: aload_0
+    1: invokevirtual java.lang.Double.doubleValue
+    4: ldc2_w double 10.0
+    7: dmul
+    8: d2i
+    9: ireturn
+
+== lambda$new$6 (Ljava/lang/Integer;)I ==
+    0: aload_0
+    1: invokevirtual java.lang.Integer.intValue
+    4: bipush 10
+    6: idiv
+    7: ireturn
+
+== lambda$new$90 ()I ==
+    0: invokestatic net.minecraft.client.Minecraft.getInstance
+    3: astore_0
+    4: aload_0
+    5: invokevirtual net.minecraft.client.Minecraft.isRunning
+    8: ifne -> 15
+    11: ldc_w int 2147483646
+    14: ireturn
+    15: aload_0
+    16: invokevirtual net.minecraft.client.Minecraft.getWindow
+    19: iconst_0
+    20: aload_0
+    21: invokevirtual net.minecraft.client.Minecraft.isEnforceUnicode
+    24: invokevirtual com.mojang.blaze3d.platform.Window.calculateScale
+    27: ireturn
+
+
+   options.chat.line_spacing = 'Line Spacing'
+   options.chat.opacity = 'Chat Text Opacity'
+   options.chat.visibility = 'Chat'
+   options.chat.height = None
+   options.chat.width = 'Width'

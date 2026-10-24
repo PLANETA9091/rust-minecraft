@@ -7725,8 +7725,8 @@ use super::*;
         assert_eq!(chat_line_alpha(300), 0.0);
         assert_eq!(chat_lines_per_page(true), 20);
         assert_eq!(chat_lines_per_page(false), 11);
-        assert_eq!(chat_line_y(360, 0), 360 - 41);
-        assert_eq!(chat_line_y(360, 1), 360 - 50);
+        assert_eq!(chat_line_y(360, 0, 0.0), 360 - 41);
+        assert_eq!(chat_line_y(360, 1, 0.0), 360 - 50);
 
         // THE STATE WALK (the handleKeybinds keyChat lane the T edge
         // opens, the EditBox the chars the 256 cap feeds, the
@@ -7840,7 +7840,7 @@ use super::*;
         // chat_line_y law keeps)
         app.push_chat_message("chat hello".to_string());
         app.render(&mut fb, &mut assets);
-        let y = chat_line_y(360, 0);
+        let y = chat_line_y(360, 0, 0.0);
         let hist_diff = diff_count(&bare, &fb.color, 2, y - 1, 200, 10);
         assert!(hist_diff > 40, "the chat line the band + text paints: {hist_diff}");
         // THE AGE THE LIVING WORLD'S LANES COINCIDE (the fade's zero
@@ -7980,7 +7980,7 @@ use super::*;
         app.chat_messages[0].0 = "AAAAAA".to_string();
         app.render(&mut fb, &mut assets);
         let white_frame = fb.color.clone();
-        let y = chat_line_y(360, 0);
+        let y = chat_line_y(360, 0, 0.0);
         let color_diff = diff_count(&red_frame, &white_frame, 2, y - 1, 210, 10);
         assert!(color_diff > 40, "the code the color paints: {color_diff}");
         // THE RESET'S OWN TAIL (the §r the base returns — the tail

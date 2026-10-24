@@ -2390,24 +2390,56 @@ pub fn bg_row_gate(background_for_chat_only: bool, textbg: f64, raw: [f32; 4]) -
 /// THE CHAT'S OWN PAGE (javap ChatComponent.getHeight(D) +
 /// getLineHeight + getLinesPerPage — the `floor(160.0 * h + 20.0)`
 /// fold the focused 1.0 / unfocused 0.5 defaults keep: 180/9 = 20
-/// lines focused, 100/9 = 11 unfocused; the line height the
-/// `9 + round(4.0 * spacing)` fold the zero-spacing default keeps).
+/// lines focused, 100/9 = 11 unfocused; the divisor the LINE
+/// HEIGHT the stride below serves — the zero-spacing 9 the page
+/// law's own constant wears).
 pub fn chat_lines_per_page(focused: bool) -> usize {
     let h: f64 = 160.0 * (if focused { 1.0 } else { 0.5 }) + 20.0;
     (h.floor() as usize) / 9
+}
+
+/// THE CHAT'S OWN STRIDE (the 26.2 ChatComponent.extractRenderState
+/// walk the chatlinespacing_181.py probe banks — the istore-18 law
+/// the bytecode's own `bipush 9; istore 14` base + `chatLineSpacing
+/// .get().doubleValue(); dconst_1; dadd; dmul; d2i` rows speak: the
+/// pitch `trunc(9.0 * (spacing + 1.0))` the d2i truncation keeps —
+/// the `9 + round(4.0 * spacing)` guess the old note wore the
+/// bytecode refuses (0.5 the guess's 11 the walk's 13 answers).
+/// THE SAME LAW the `getLineHeight()I` method's own
+/// `ldc2_w 9.0; ... dmul; d2i` body speaks — the 26.2 rows the
+/// getLinesPerPage `getHeight / getLineHeight` idiv keeps. The zero
+/// spacing the 9 the page law and the client's own stride wear —
+/// the default the byte-identical answer keeps).
+pub fn chat_line_stride(spacing: f64) -> i32 {
+    (9.0_f64 * (spacing + 1.0)) as i32
+}
+
+/// THE CHAT'S OWN GLYPH OFFSET (the same extractRenderState walk the
+/// stride's probe banks — the istore-19 law the bytecode's own
+/// `ldc2_w 8.0; (spacing + 1.0); dmul; ldc2_w 4.0; spacing; dmul;
+/// dsub; Math.round` rows speak: `round(8.0 * (spacing + 1.0) -
+/// 4.0 * spacing)` = `round(8 + 4*spacing)` the algebra folds — the
+/// `round(8 - 4*spacing)` guess the old note wore the bytecode
+/// refuses (the dsub the walk's own subtract keeps). The zero
+/// spacing the 8 the client's own `+ 8` tail wears — the default
+/// the byte-identical answer keeps; 0.5 the 10 speaks, 1.0 the 12).
+pub fn chat_line_glyph_offset(spacing: f64) -> i32 {
+    (8.0_f64 * (spacing + 1.0) - 4.0_f64 * spacing).round() as i32
 }
 
 /// THE CHAT'S OWN BOTTOM ANCHOR (javap ChatComponent.extractRenderState
 /// bc 70-81 — `chatBottom = Mth.floor((guiHeight - 40) / scale)` the
 /// scale-1 default keeps) and the per-line Y fold (the
 /// ChatComponent$1.accept walk: `chatBottom - entryHeight * (i + 1)
-/// + entryBottomToMessageY`, the entryHeight `9 * (spacing + 1)` = 9
-/// and the entryBottomToMessageY `round(8 - 4*spacing)` = 8 the
-/// zero-spacing defaults speak → the newest line's text top at
-/// `guiHeight - 41`).
-pub fn chat_line_y(gui_h: i32, index: i32) -> i32 {
+/// + entryBottomToMessageY`, the entryHeight the stride above (the
+/// istore-18 law) and the entryBottomToMessageY the glyph offset
+/// above (the istore-19 law) serve — the zero-spacing defaults the
+/// 9/8 pair speak → the newest line's text top at
+/// `guiHeight - 41`; the spacing the row's own pitch the slider
+/// lane wears).
+pub fn chat_line_y(gui_h: i32, index: i32, spacing: f64) -> i32 {
     let chat_bottom = ((gui_h - 40) as f64).floor() as i32;
-    chat_bottom - 9 * (index + 1) + 8
+    chat_bottom - chat_line_stride(spacing) * (index + 1) + chat_line_glyph_offset(spacing)
 }
 
 /// THE WRAP'S OWN STYLE CARRIER (the §-code state the consumed text
@@ -5706,6 +5738,28 @@ fn chat_opacity_caption(v: f64) -> String {
     )
 }
 
+/// THE CHAT LINES' OWN CAPTION (the SAME UnitDouble law the
+/// chatOpacity row's own words wear — the lineSpacing registration's
+/// indy@622 the chatOpacity/textbg rows the SAME CaptionBasedToString
+/// call site keeps, the percent/OFF words the same pair the row
+/// speaks: the lang row the 'Line Spacing' word the jar's en_us
+/// table keeps — the `options.chat.line_spacing` key the 181b probe
+/// answers, the default 0.0 the OFF end the dconst_0 speaks).
+fn chat_line_spacing_caption(v: f64) -> String {
+    if v <= 0.0 {
+        return format!(
+            "{}: {}",
+            tr("options.chat.line_spacing").unwrap_or("Line Spacing"),
+            tr("options.off").unwrap_or("OFF")
+        );
+    }
+    format!(
+        "{}: {}%",
+        tr("options.chat.line_spacing").unwrap_or("Line Spacing"),
+        (v * 100.0) as i32
+    )
+}
+
 /// THE BAND SCOPE'S OWN CAPTION (the 26.2 CycleButton walk the
 /// chatbgonly_179b/c probes bank — the label law the
 /// `CycleButton.createLabelForValue` speak: the DisplayState.VALUE
@@ -7072,6 +7126,18 @@ pub struct App {
     /// the per-line fade the glyph alpha multiplies wears — the
     /// default the 1.0 fold the byte-identical answer keeps).
     pub chat_opacity: f64,
+    /// THE CHAT LINES' OWN SPACING (the `chatLineSpacing` option the
+    /// 26.2 Options ctor's dconst_0 pcs 813-842 banks — the default
+    /// 0.0 the strict double keeps, the accessibility array the
+    /// index-7 seat wears, the chatOpacity/textbg rows the SAME
+    /// indy@622 CaptionBasedToString the percent/OFF words keep; the
+    /// ChatComponent's row pitch the consumer speaks — the
+    /// extractRenderState istore-18 law the `trunc(9.0 * (spacing +
+    /// 1.0))` stride keeps, the istore-19 the glyph offset the
+    /// `round(8.0 * (spacing + 1.0) - 4.0 * spacing)` rows answer —
+    /// the zero spacing the 9/8 pair the byte-identical answer
+    /// keeps).
+    pub chat_line_spacing: f64,
     /// THE BAND SCOPE'S OWN BOOLEAN (the `backgroundForChatOnly` option
     /// the 26.2 Options ctor's `iconst_1` pcs 2092-2120 banks — the
     /// default TRUE the raw ctor the BOOLEAN_VALUES value set keeps,
@@ -8373,6 +8439,10 @@ pub struct App {
     /// the textbg row's flag wears — the Accessibility sub-screen's
     /// chatOpacity row's own flag).
     pub chat_opacity_drag: bool,
+    /// THE CHAT LINES' OWN ARM (the same AbstractWidget dragging shape
+    /// the chatOpacity row's flag wears — the Accessibility
+    /// sub-screen's lineSpacing row's own flag).
+    pub chat_line_spacing_drag: bool,
     /// THE OPTIONS FILE'S OWN PATH (the `optionsFile` field the 26.2
     /// ctor's `File` param banks — the cwd the vanilla default game dir
     /// names, the run_gui_app boot sets; the headless boot the None the
@@ -10482,6 +10552,7 @@ impl App {
             fov_effect_scale: 1.0,
             text_background_opacity: 0.5,
             chat_opacity: 1.0,
+            chat_line_spacing: 0.0,
             background_for_chat_only: true,
             last_active_ms: 0,
             look_sensitivity: crate::body::LOOK_SENSITIVITY_DEFAULT,
@@ -10493,6 +10564,7 @@ impl App {
             fov_effect_drag: false,
             textbg_drag: false,
             chat_opacity_drag: false,
+            chat_line_spacing_drag: false,
             options_file: None,
             options_file_loaded: false,
             creative_palette: [(0, 0); 45],
@@ -20655,6 +20727,10 @@ impl App {
         // textbg row's flag wears — the sub-screen's third row the
         // same law keeps)
         self.chat_opacity_drag = false;
+        // THE CHAT LINES' OWN DISARM (the same mouseReleased lane the
+        // chatOpacity row's flag wears — the sub-screen's fourth row
+        // the same law keeps)
+        self.chat_line_spacing_drag = false;
         // THE SCROLLBAR'S OWN DISARM (the mouseReleased walk's own first
         // lane — the button-0 release the `scrolling` flag the
         // unconditional false speaks BEFORE the tab walk; the sim's
@@ -20774,6 +20850,7 @@ impl App {
         self.fov_effect_drag = false;
         self.textbg_drag = false;
         self.chat_opacity_drag = false;
+        self.chat_line_spacing_drag = false;
     }
 
     /// THE AMBIENT WALK (javap `ClientLevel.animateTick` +
@@ -30341,6 +30418,19 @@ impl App {
                     return;
                 }
             }
+            // THE CHAT LINES' OWN ARM (the same AbstractSliderButton's
+            // mouseDown walk the chatOpacity row wears — the press
+            // INSIDE the track the value's own seat answers, the armed
+            // flag the held drag rides, the UnitDouble 0..1 the
+            // store's own unit keeps)
+            if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_chat_line_spacing") {
+                let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
+                if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
+                    self.chat_line_spacing = slider_value_from_x(mx, bx, bw);
+                    self.chat_line_spacing_drag = true;
+                    return;
+                }
+            }
             // THE BAND SCOPE'S OWN ARM (the CycleButton's own press walk
             // the bool row wears — the press INSIDE the row the value's
             // own toggle answers, the TRUE/FALSE pair the store's own
@@ -32564,6 +32654,7 @@ impl App {
         self.pause_on_lost_focus = file.pause_on_lost_focus;
         self.fov_effect_scale = file.fov_effect_scale;
         self.chat_opacity = file.chat_opacity;
+        self.chat_line_spacing = file.chat_line_spacing;
         self.text_background_opacity = file.text_background_opacity;
         self.background_for_chat_only = file.background_for_chat_only;
         // THE BODY'S OWN READ (the Camera.tickFov the option value the
@@ -32591,6 +32682,7 @@ impl App {
             pause_on_lost_focus: self.pause_on_lost_focus,
             fov_effect_scale: self.fov_effect_scale,
             chat_opacity: self.chat_opacity,
+            chat_line_spacing: self.chat_line_spacing,
             text_background_opacity: self.text_background_opacity,
             background_for_chat_only: self.background_for_chat_only,
         };
@@ -39107,7 +39199,7 @@ impl App {
             if alpha <= 0.0 {
                 continue;
             }
-            let y = chat_line_y(h, i as i32);
+            let y = chat_line_y(h, i as i32, self.chat_line_spacing);
             if y < 0 {
                 continue;
             }
@@ -40817,6 +40909,20 @@ impl App {
         if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_chat_opacity") {
             let (bx, bw) = (b.x, b.w);
             self.chat_opacity = slider_value_from_x(mx, bx, bw);
+        }
+    }
+
+    /// THE CHAT LINES' OWN DRAG (the same armed lane the chatOpacity
+    /// row wears — the flag the press inside the track arms, the held
+    /// frames the UnitDouble 0..1 the cursor's x answers, the release
+    /// the disarm the on_left_release walk speaks)
+    pub fn on_chat_line_spacing_slider_drag(&mut self, mx: i32) {
+        if !self.chat_line_spacing_drag || self.screen != ScreenKind::Accessibility {
+            return;
+        }
+        if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_chat_line_spacing") {
+            let (bx, bw) = (b.x, b.w);
+            self.chat_line_spacing = slider_value_from_x(mx, bx, bw);
         }
     }
 
@@ -61812,7 +61918,7 @@ impl App {
             "opt_textbg",
             textbg_caption(self.text_background_opacity),
             cx,
-            h / 2 - 100,
+            h / 2 - 128,
             bw,
         );
         tb.value = Some(self.text_background_opacity);
@@ -61826,23 +61932,37 @@ impl App {
             "opt_chat_bg_only",
             chat_bg_only_caption(self.background_for_chat_only),
             cx,
-            h / 2 - 72,
+            h / 2 - 100,
             bw,
         ));
         // THE CHAT TEXT'S OWN ROW (the array's index-6 seat the store
         // the chat history's glyphs wear — the caption the percent/OFF
-        // words keep, the row BETWEEN the band-scope and the fov seats
-        // the array's own order keeps: index 4 < index 5 < index 6 <
-        // index 12)
+        // words keep, the row BETWEEN the band-scope and the line-
+        // spacing seats the array's own order keeps: index 4 < index 5
+        // < index 6 < index 7)
         let mut co = Button::new(
             "opt_chat_opacity",
             chat_opacity_caption(self.chat_opacity),
             cx,
-            h / 2 - 44,
+            h / 2 - 72,
             bw,
         );
         co.value = Some(self.chat_opacity);
         self.buttons.push(co);
+        // THE CHAT LINES' OWN ROW (the array's index-7 seat the store
+        // the chat history's pitch wears — the caption the percent/OFF
+        // words the SAME indy@622 call site keeps, the row BETWEEN the
+        // chat-text and the fov seats the array's own order keeps:
+        // index 6 < index 7 < index 12)
+        let mut ls = Button::new(
+            "opt_chat_line_spacing",
+            chat_line_spacing_caption(self.chat_line_spacing),
+            cx,
+            h / 2 - 44,
+            bw,
+        );
+        ls.value = Some(self.chat_line_spacing);
+        self.buttons.push(ls);
         // THE FOV EFFECTS' OWN ROW (the array's index 12 the store the
         // camera's read wears — the caption the percent the OFF end
         // speaks)
