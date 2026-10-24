@@ -35484,6 +35484,20 @@ impl App {
                             [crate::options_file::key_binds::DEBUG_SHOW_HITBOXES];
                     self.kb_selected = None;
                 }
+                // THE DEBUG CLEAR CHAT'S OWN ARMS (the row the debug
+                // sextet walk the AFTER seat renders — the ctor's
+                // pc 3344-3363 the 4-arg ctor the `iconst_0` orderI
+                // default banks, the D the hitboxes row's own plain
+                // shape the capture honors)
+                "kb_change_debugclearchat" => {
+                    self.kb_selected = Some(crate::options_file::key_binds::DEBUG_CLEAR_CHAT);
+                }
+                "kb_rowreset_debugclearchat" => {
+                    self.key_binds[crate::options_file::key_binds::DEBUG_CLEAR_CHAT] =
+                        crate::options_file::key_binds::DEFAULTS
+                            [crate::options_file::key_binds::DEBUG_CLEAR_CHAT];
+                    self.kb_selected = None;
+                }
                 "kb_rowreset_forward" => {
                     self.key_binds[crate::options_file::key_binds::FORWARD] =
                         crate::options_file::key_binds::DEFAULTS
@@ -63543,6 +63557,10 @@ impl App {
             // quintet walk the AFTER seat renders — the ctor's
             // putfield order the id answers)
             kb::DEBUG_SHOW_HITBOXES => "kb_change_debugshowhitboxes",
+            // THE DEBUG CLEAR CHAT'S OWN ID (the row the debug
+            // sextet walk the AFTER seat renders — the ctor's
+            // putfield order the id answers)
+            kb::DEBUG_CLEAR_CHAT => "kb_change_debugclearchat",
             _ => "kb_change_hotbar9",
         };
         self.buttons
@@ -63594,6 +63612,9 @@ impl App {
             // THE DEBUG SHOW HITBOXES' OWN ID (the same seat the
             // row keeps — the quintet the file's own END rows wear)
             kb::DEBUG_SHOW_HITBOXES => "kb_rowreset_debugshowhitboxes",
+            // THE DEBUG CLEAR CHAT'S OWN ID (the same seat the
+            // row keeps — the sextet the file's own END rows wear)
+            kb::DEBUG_CLEAR_CHAT => "kb_rowreset_debugclearchat",
             _ => "kb_rowreset_hotbar9",
         };
         let mut rb = Button::new(

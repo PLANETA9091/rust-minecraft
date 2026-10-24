@@ -355,7 +355,18 @@ pub mod key_binds {
     /// the cp#1441 the `key.debug.clearChat` string the bipush 68
     /// the D default the walk banks)
     pub const DEBUG_SHOW_HITBOXES: usize = 30;
-    pub const COUNT: usize = 31;
+    /// THE DEBUG CLEAR CHAT'S OWN SLOT (the ctor's pc 3344-3363
+    /// walk the hitboxes' putfield the AFTER banks — the `ldc_w
+    /// cp#1441` the `key.debug.clearChat` string answers, the
+    /// `KEYSYM, bipush 68` the GLFW D default wears, the Category.DEBUG
+    /// the same group's ordinal keeps, the FOUR-arg ctor the call
+    /// speaks — the `iconst_0` the orderI default the 4-arg delegate
+    /// banks, the hitboxes row's own plain shape the row shares, the
+    /// next registration the pc 3366 seat the later round banks —
+    /// the cp#1446 the `key.debug.showChunkBorders` string the bipush
+    /// 71 the G default the walk banks)
+    pub const DEBUG_CLEAR_CHAT: usize = 31;
+    pub const COUNT: usize = 32;
 
     /// THE VANILLA BINDING NAMES (the `key_` + name the file row's
     /// prefix wears, the lang captions the `key.*` rows answer — the
@@ -413,6 +424,10 @@ pub mod key_binds {
         // cp#1436` the pc 3327 string answers — the hitboxes row the
         // reload's AFTER the ladder wears)
         "key.debug.showHitboxes",
+        // THE DEBUG CLEAR CHAT'S OWN NAME (the ctor's `ldc_w
+        // cp#1441` the pc 3349 string answers — the clearChat row the
+        // hitboxes' AFTER the ladder wears)
+        "key.debug.clearChat",
     ];
 
     /// THE CAPTIONS' OWN FALLBACK (the en_us values the assets-absent
@@ -464,6 +479,9 @@ pub mod key_binds {
         // THE DEBUG SHOW HITBOXES' OWN CAPTION (the en_us row speaks
         // — key.debug.showHitboxes the 'Show Hitboxes' words wear)
         "Show Hitboxes",
+        // THE DEBUG CLEAR CHAT'S OWN CAPTION (the en_us row speaks
+        // — key.debug.clearChat the 'Clear Chat' words wear)
+        "Clear Chat",
     ];
 
     /// THE CATEGORY'S OWN ROW (the CategoryEntry the list groups the
@@ -583,6 +601,11 @@ pub mod key_binds {
         // keyboard bind wears, the 4-arg ctor the call speaks, the
         // orderI the `iconst_0` default the delegate banks)
         Some(Bind::Keyboard(Key::B)),
+        // THE DEBUG CLEAR CHAT'S OWN SEAT (the ctor's pc 3355 the
+        // `bipush 68` the GLFW D answers — the KEYSYM type the
+        // keyboard bind wears, the 4-arg ctor the call speaks, the
+        // orderI the `iconst_0` default the delegate banks)
+        Some(Bind::Keyboard(Key::D)),
     ];
 
     /// THE LIST'S OWN GEOMETRY (the entries the walk's y positions
@@ -635,12 +658,12 @@ pub mod key_binds {
     /// bottom keeps (the trio + the hotbar nine the 306-start stride
     /// wear: 12 rows the 11 strides speak, the CREATIVE pair the
     /// 594-header the 606-start rows wear, the SPECTATOR pair the
-    /// 654-header the 666-start rows wear, the DEBUG quintet the
+    /// 654-header the 666-start rows wear, the DEBUG sextet the
     /// 714-header the 726-start rows the walk's own bottom keeps
     /// (the overlay the 726 seat, the modifier the 750 seat, the
     /// crash the 774 seat, the reloadChunk the 798 seat, the
-    /// showHitboxes the 822 seat — the row's own bottom the content
-    /// answers))
+    /// showHitboxes the 822 seat, the clearChat the 846 seat — the
+    /// row's own bottom the content answers))
     pub fn content_height() -> i32 {
         DEBUG_ROWS_START + (COUNT - DEBUG_OVERLAY - 1) as i32 * ROW_STRIDE + 20 - LIST_TOP
     }
@@ -1102,6 +1125,12 @@ impl OptionsFile {
                     out.key_binds[key_binds::DEBUG_SHOW_HITBOXES] =
                         key_binds::bind_from_save(value);
                 }
+                // THE DEBUG CLEAR CHAT'S OWN DECODE (the same prefix
+                // the row wears — the D row the restart the decode
+                // answers, the plain-shape row the saveString keeps)
+                "key_key.debug.clearChat" => {
+                    out.key_binds[key_binds::DEBUG_CLEAR_CHAT] = key_binds::bind_from_save(value);
+                }
                 _ => {} // the jar's other rows the client's seats never carry
             }
         }
@@ -1255,7 +1284,7 @@ mod tests {
         OptionsFile::default().save(&path);
         let text = std::fs::read_to_string(&path).expect("the save the file writes");
         assert_eq!(
-            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\n",
+            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\n",
             "the file the vanilla rows wear"
         );
         let loaded = OptionsFile::load(&path);
