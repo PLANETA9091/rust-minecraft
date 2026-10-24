@@ -9758,7 +9758,7 @@ fn the_options_file_the_stores_restart_outlives() {
     assert_eq!(app.screen, ScreenKind::Title, "the Done the return wears");
     let text = std::fs::read_to_string(&path).expect("the chord the file writes");
     assert_eq!(
-        text, "version:4903\nmouseSensitivity:1.0\nfov:110\nsoundCategory_master:0.0\npauseOnLostFocus:true\nfovEffectScale:1.0\ntextBackgroundOpacity:0.5\n",
+        text, "version:4903\nmouseSensitivity:1.0\nfov:110\nsoundCategory_master:0.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\n",
         "the file the vanilla rows wear"
     );
     // THE RESTART (the fresh boot the file's truth wears — the session's
@@ -9794,7 +9794,7 @@ fn the_options_escape_the_save_and_return_wears() {
     assert_eq!(app.screen, ScreenKind::Title, "the escape the return wears");
     let text = std::fs::read_to_string(&path).expect("the escape the file writes");
     assert_eq!(
-        text, "version:4903\nmouseSensitivity:0.75\nfov:90\nsoundCategory_master:0.25\npauseOnLostFocus:true\nfovEffectScale:1.0\ntextBackgroundOpacity:0.5\n",
+        text, "version:4903\nmouseSensitivity:0.75\nfov:90\nsoundCategory_master:0.25\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\n",
         "the SAME save chord the Done wears the escape speaks"
     );
     // THE PAUSED LANE (the pause screen's own Options — the
@@ -9903,7 +9903,7 @@ fn the_quit_lane_the_stop_flag_and_the_files_absence_wears() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the removed() moment the file writes"),
-        "version:4903\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\ntextBackgroundOpacity:0.5\n",
+        "version:4903\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\n",
         "the takeover's own exit the rows bank"
     );
     app.render_title_buttons_for_test();
@@ -9917,7 +9917,7 @@ fn the_quit_lane_the_stop_flag_and_the_files_absence_wears() {
     assert!(app.stopping, "the second stop the same chord wears");
     assert_eq!(
         std::fs::read_to_string(&path).expect("the file the exit keeps"),
-        "version:4903\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\ntextBackgroundOpacity:0.5\n",
+        "version:4903\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\n",
         "the quit the file NEVER re-writes — the removed() moment ALONE the rows keep"
     );
     let _ = std::fs::remove_dir_all(&dir);
@@ -9968,7 +9968,7 @@ fn the_options_exit_the_removed_moment_itself_saves() {
     app.open(ScreenKind::Servers);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the takeover the file writes"),
-        "version:4903\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\ntextBackgroundOpacity:0.5\n",
+        "version:4903\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\n",
         "the replacement lane the removed() moment speaks"
     );
     // THE SAME-KIND RE-ENTRY (the open(Options) from Options the
@@ -9979,7 +9979,7 @@ fn the_options_exit_the_removed_moment_itself_saves() {
     app.open(ScreenKind::Options);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the re-entry the file writes"),
-        "version:4903\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:0.5\npauseOnLostFocus:true\nfovEffectScale:1.0\ntextBackgroundOpacity:0.5\n",
+        "version:4903\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:0.5\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\n",
         "the same-kind walk the old screen's discard keeps"
     );
     // THE NONE BOOT'S SILENT KEEP (the options_file None the save walk
@@ -10117,7 +10117,7 @@ fn the_focus_pause_chord_the_flip_and_the_rows_wear() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the exit the file writes"),
-        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:false\nfovEffectScale:1.0\ntextBackgroundOpacity:0.5\n",
+        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:false\nfovEffectScale:1.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\n",
         "the flipped row the exit banks"
     );
     // THE SECOND FLIP (the chord the option re-arms — the row the next
@@ -10128,7 +10128,7 @@ fn the_focus_pause_chord_the_flip_and_the_rows_wear() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the second exit the file writes"),
-        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\ntextBackgroundOpacity:0.5\n",
+        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\n",
         "the re-armed row the exit banks"
     );
     // THE THIRD FLIP (the option the false re-wears — the restart the
@@ -10139,7 +10139,7 @@ fn the_focus_pause_chord_the_flip_and_the_rows_wear() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the third exit the file writes"),
-        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:false\nfovEffectScale:1.0\ntextBackgroundOpacity:0.5\n",
+        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:false\nfovEffectScale:1.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\n",
         "the flipped row the exit banks"
     );
     // THE BOOT LOAD (the file's truth the boot walk wears — the false
@@ -10187,7 +10187,7 @@ fn the_fov_effect_scale_row_the_boot_the_body_wears() {
     // own store the tick's read passes)
     std::fs::write(
         &path,
-        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:0.5\ntextBackgroundOpacity:0.5\n",
+        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:0.5\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\n",
     )
     .expect("the scale file writes");
     app.enter_world();
@@ -10203,7 +10203,7 @@ fn the_fov_effect_scale_row_the_boot_the_body_wears() {
     // the effects the OFF caption keeps, the zoom the 1.0 answers)
     std::fs::write(
         &path,
-        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:0.0\ntextBackgroundOpacity:0.5\n",
+        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:0.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\n",
     )
     .expect("the off file writes");
     let mut app2 = App::new(262);
@@ -10220,7 +10220,7 @@ fn the_fov_effect_scale_row_the_boot_the_body_wears() {
     // clamp never wears, the doubleRange codec the skip answers)
     std::fs::write(
         &path,
-        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.5\ntextBackgroundOpacity:0.5\n",
+        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.5\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\n",
     )
     .expect("the oor file writes");
     let mut app4 = App::new(262);
@@ -10537,5 +10537,162 @@ fn the_textbg_row_the_chat_background_wears() {
     );
     assert!((chat_row_bg_alpha(0.75, 0.25) - 0.1875).abs() < 1e-6,
         "the fade the scale's own multiplier wears");
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// THE CHAT TEXT'S OWN ROW (the 26.2 chatopacity_178.py probe the
+/// walk banks — the `chatOpacity` option the Options ctor's dconst_1
+/// pcs 741-818 speaks, the accessibility array the index-6 seat the
+/// row BETWEEN the textbg and the fov seats wears, the
+/// ChatComponent$1.accept the `fload_3 * val$textOpacity` pair the
+/// per-line fade the glyph alpha multiplies keeps, the file row the
+/// visit-order adjacency the chatOpacity@480 < textbg@506 walk banks).
+#[test]
+fn the_chat_opacity_row_the_chat_text_wears() {
+    let dir = std::env::temp_dir().join(format!("mc2rs_chatop_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&dir);
+    let path = dir.join("options.txt");
+    let mut app = App::new(262);
+    app.options_file = Some(path.clone());
+    // THE SUB-SCREEN'S OWN SEAT (the accessibility row the opener
+    // wears — the entry save the removed() moment the file's rows
+    // keep, the DEFAULT 1.0 the chat text's row speaks)
+    app.open(ScreenKind::Options);
+    app.open(ScreenKind::Accessibility);
+    let pre_exit = std::fs::read_to_string(&path).expect("the entry save wrote");
+    assert!(
+        pre_exit.contains("chatOpacity:1.0\n"),
+        "the removed() moment the entry save keeps ({pre_exit})"
+    );
+    // THE FILE ROW'S OWN ADJACENCY (the visit-order seat the
+    // processOptions walk banks — the chatOpacity row the
+    // textBackgroundOpacity row's BEFORE wears)
+    let co_pos = pre_exit.find("chatOpacity:").expect("the row");
+    let tb_pos = pre_exit.find("textBackgroundOpacity:").expect("the row");
+    assert!(
+        co_pos < tb_pos,
+        "the visit-order adjacency the file rows keep"
+    );
+    // THE ROW'S OWN SEAT (the array's index 6 the row BETWEEN the
+    // textbg and the fov seats wears — index 4 < index 6 < index 12
+    // the order keeps)
+    app.render_title_buttons_for_test();
+    let tb = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_textbg")
+        .expect("the chat background row")
+        .clone();
+    let co = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_chat_opacity")
+        .expect("the chat text row")
+        .clone();
+    let fes = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_fov_effect")
+        .expect("the fov row")
+        .clone();
+    assert!(
+        tb.y < co.y && co.y < fes.y,
+        "the index-6 row the seat between wears"
+    );
+    assert_eq!(
+        co.label, "Chat Text Opacity: 100%",
+        "the default's own percent word"
+    );
+    assert_eq!(co.value, Some(1.0), "the slider the store wears");
+    // THE SLIDER'S OWN LAW (the setValueFromMouseX walk the textbg
+    // row's own shape wears — the left edge the OFF caption speaks,
+    // the armed drag the store's own seat follows, the beyond-right
+    // the clamp answers, the release the disarm speaks)
+    app.on_press(co.x + 4, co.y + co.h / 2);
+    assert_eq!(app.chat_opacity, 0.0, "the left edge clamps");
+    assert!(app.chat_opacity_drag, "the press inside the track arms");
+    app.render_title_buttons_for_test();
+    let co = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_chat_opacity")
+        .expect("the row")
+        .clone();
+    assert_eq!(
+        co.label, "Chat Text Opacity: OFF",
+        "the 0.0 the OFF end wears"
+    );
+    app.on_chat_opacity_slider_drag(co.x + co.w / 2);
+    assert_eq!(
+        app.chat_opacity, 0.5,
+        "the mid-track drag the half wears"
+    );
+    app.on_chat_opacity_slider_drag(co.x + co.w + 60);
+    assert_eq!(
+        app.chat_opacity, 1.0,
+        "the beyond-right drag clamps"
+    );
+    app.on_left_release();
+    assert!(!app.chat_opacity_drag, "the release disarms");
+    app.on_chat_opacity_slider_drag(co.x + 4);
+    assert_eq!(
+        app.chat_opacity, 1.0,
+        "the disarmed drag never moves"
+    );
+    // THE RE-ARM'S OWN LANE (the left edge the press arms again — the
+    // 0.0 the off-end store keeps, the Escape the armed flag the
+    // open()'s own drag death clears, the file's rows the sub-screen
+    // never wears)
+    app.on_press(co.x + 4, co.y + co.h / 2);
+    assert_eq!(app.chat_opacity, 0.0, "the re-arm the edge keeps");
+    // THE ESCAPE'S OWN LANE (the shouldCloseOnEsc default the
+    // keyPressed walk answers — the parent the lastScreen ride
+    // returns; the sub-screen the `removed()` method never wears, the
+    // in-screen 0.0 the file's pre-exit row keeps)
+    app.on_escape();
+    assert_eq!(
+        app.screen, ScreenKind::Options,
+        "the parent the Escape ride returns"
+    );
+    let mid = std::fs::read_to_string(&path).expect("the entry save's rows");
+    assert!(
+        mid.contains("chatOpacity:1.0\n"),
+        "the sub-screen's own walks the save never speaks"
+    );
+    // THE PARENT'S OWN EXIT (the removed() moment the save the
+    // sub-screen's change banks — the restart the row outlives)
+    app.open(ScreenKind::Title);
+    let post = std::fs::read_to_string(&path).expect("the parent exit wrote");
+    assert!(
+        post.contains("chatOpacity:0.0\n"),
+        "the drag's own 0.0 the parent exit banks"
+    );
+    // THE TEXT'S OWN COMPOSITION (the ChatComponent$1.accept law the
+    // `fload_3 * val$textOpacity` pair speaks — the default 1.0 the
+    // 1.0 fold the byte-identical keeps, the 0.5 the 0.55 base the
+    // `* 0.9f + 0.1f` rows answer, the OFF the 0.1 the floor the
+    // +0.1 keeps, the per-line fade the glyph alpha multiplies)
+    assert_eq!(
+        chat_text_alpha_base(1.0),
+        1.0,
+        "the default the focused fold byte-identical keeps"
+    );
+    assert!(
+        (chat_text_alpha_base(0.5) - 0.55).abs() < 1e-6,
+        "the half scale the 0.55 base wears"
+    );
+    assert_eq!(
+        chat_text_alpha_base(0.0),
+        0.1,
+        "the OFF row the 0.1 floor the +0.1 keeps"
+    );
+    assert!(
+        (chat_text_alpha_base(0.5) * chat_line_alpha(0) - 0.55).abs() < 1e-6,
+        "the fresh row's full fade the base multiplies"
+    );
+    assert!(
+        (chat_text_alpha_base(0.25) - 0.325).abs() < 1e-6,
+        "the quarter scale the 0.325 base the same rows answer"
+    );
     let _ = std::fs::remove_dir_all(&dir);
 }

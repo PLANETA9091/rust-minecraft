@@ -2305,6 +2305,18 @@ pub fn chat_row_bg_alpha(textbg: f64, fade: f32) -> f32 {
     textbg as f32 * fade
 }
 
+/// THE CHAT TEXT'S OWN BASE (the 26.2 extractRenderState walk the
+/// chatopacity_178.py probe banks — the fstore-12 law the bytecode's
+/// own `chatOpacity.get().floatValue() * ldc 0.9f + ldc 0.1f` rows
+/// speak: the base the ChatComponent$1.accept the `fload_3 *
+/// val$textOpacity` pair the per-line fade the glyph alpha
+/// multiplies wears — the default 1.0 the 1.0 fold the
+/// byte-identical answer keeps, the 0.5 the 0.55 the base speaks,
+/// the OFF the 0.1 the floor the +0.1 keeps).
+pub fn chat_text_alpha_base(chat_opacity: f64) -> f32 {
+    chat_opacity as f32 * 0.9 + 0.1
+}
+
 /// THE CHAT'S OWN PAGE (javap ChatComponent.getHeight(D) +
 /// getLineHeight + getLinesPerPage — the `floor(160.0 * h + 20.0)`
 /// fold the focused 1.0 / unfocused 0.5 defaults keep: 180/9 = 20
@@ -5603,6 +5615,27 @@ fn textbg_caption(v: f64) -> String {
     )
 }
 
+/// THE CHAT TEXT'S OWN CAPTION (the same UnitDouble law the textbg
+/// row's own words wear — the chatOpacity registration's indy caption
+/// the noTooltip walk speaks, the percent/OFF words the same pair the
+/// row keeps: the lang row the 'Chat Text Opacity' word the jar's
+/// en_us table keeps, the default 1.0 the ': 100%' tail speaks, the
+/// 0.0 the OFF row the same end wears).
+fn chat_opacity_caption(v: f64) -> String {
+    if v <= 0.0 {
+        return format!(
+            "{}: {}",
+            tr("options.chat.opacity").unwrap_or("Chat Opacity"),
+            tr("options.off").unwrap_or("OFF")
+        );
+    }
+    format!(
+        "{}: {}%",
+        tr("options.chat.opacity").unwrap_or("Chat Opacity"),
+        (v * 100.0) as i32
+    )
+}
+
 /// THE LOCK ICON'S OWN STATE ARMS (javap 26.2 LockIconButton$Icon +
 /// `extractContents`' raw bytecode — the six `Icon` states the clinit
 /// banks, the selection the three arms speak): the DISABLED pair the
@@ -6939,6 +6972,16 @@ pub struct App {
     /// textbg)` composition keeps — the default the client's own
     /// 0.5 fold byte-identical answers).
     pub text_background_opacity: f64,
+    /// THE CHAT TEXT'S OWN OPACITY (the `chatOpacity` option the 26.2
+    /// Options ctor's dconst_1 pcs 741-818 banks — the default 1.0
+    /// the strict double keeps, the accessibility array the index-6
+    /// seat wears; the ChatComponent's text-alpha base the consumer
+    /// speaks — the extractRenderState fstore-12 law the
+    /// `chatOpacity * 0.9f + 0.1f` composition keeps, the
+    /// ChatComponent$1.accept the `fload_3 * val$textOpacity` pair
+    /// the per-line fade the glyph alpha multiplies wears — the
+    /// default the 1.0 fold the byte-identical answer keeps).
+    pub chat_opacity: f64,
     /// THE LAST ACTIVE'S OWN TIMESTAMP (the vanilla
     /// `Minecraft.lastActiveTime` field — the millis the active walk
     /// alone refreshes, the unfocused walk the 500ms grace the elapsed
@@ -8226,6 +8269,10 @@ pub struct App {
     /// shape the fov row's flag wears — the Accessibility sub-screen's
     /// textBackgroundOpacity row's own flag).
     pub textbg_drag: bool,
+    /// THE CHAT TEXT'S OWN ARM (the same AbstractWidget dragging shape
+    /// the textbg row's flag wears — the Accessibility sub-screen's
+    /// chatOpacity row's own flag).
+    pub chat_opacity_drag: bool,
     /// THE OPTIONS FILE'S OWN PATH (the `optionsFile` field the 26.2
     /// ctor's `File` param banks — the cwd the vanilla default game dir
     /// names, the run_gui_app boot sets; the headless boot the None the
@@ -10334,6 +10381,7 @@ impl App {
             pause_on_lost_focus: true,
             fov_effect_scale: 1.0,
             text_background_opacity: 0.5,
+            chat_opacity: 1.0,
             last_active_ms: 0,
             look_sensitivity: crate::body::LOOK_SENSITIVITY_DEFAULT,
             sensitivity_drag: false,
@@ -10343,6 +10391,7 @@ impl App {
             volume_drag: false,
             fov_effect_drag: false,
             textbg_drag: false,
+            chat_opacity_drag: false,
             options_file: None,
             options_file_loaded: false,
             creative_palette: [(0, 0); 45],
@@ -20501,6 +20550,10 @@ impl App {
         // the fov row's flag wears — the sub-screen's second row the
         // same law keeps)
         self.textbg_drag = false;
+        // THE CHAT TEXT'S OWN DISARM (the same mouseReleased lane the
+        // textbg row's flag wears — the sub-screen's third row the
+        // same law keeps)
+        self.chat_opacity_drag = false;
         // THE SCROLLBAR'S OWN DISARM (the mouseReleased walk's own first
         // lane — the button-0 release the `scrolling` flag the
         // unconditional false speaks BEFORE the tab walk; the sim's
@@ -20619,6 +20672,7 @@ impl App {
         self.volume_drag = false;
         self.fov_effect_drag = false;
         self.textbg_drag = false;
+        self.chat_opacity_drag = false;
     }
 
     /// THE AMBIENT WALK (javap `ClientLevel.animateTick` +
@@ -30178,6 +30232,14 @@ impl App {
                     return;
                 }
             }
+            if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_chat_opacity") {
+                let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
+                if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
+                    self.chat_opacity = slider_value_from_x(mx, bx, bw);
+                    self.chat_opacity_drag = true;
+                    return;
+                }
+            }
             if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_fov_effect") {
                 let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
                 if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
@@ -32389,6 +32451,7 @@ impl App {
         self.volume = file.sound_category_master;
         self.pause_on_lost_focus = file.pause_on_lost_focus;
         self.fov_effect_scale = file.fov_effect_scale;
+        self.chat_opacity = file.chat_opacity;
         self.text_background_opacity = file.text_background_opacity;
         // THE BODY'S OWN READ (the Camera.tickFov the option value the
         // tick passes — the body's own store the boot's truth wears,
@@ -32414,6 +32477,7 @@ impl App {
             sound_category_master: self.volume,
             pause_on_lost_focus: self.pause_on_lost_focus,
             fov_effect_scale: self.fov_effect_scale,
+            chat_opacity: self.chat_opacity,
             text_background_opacity: self.text_background_opacity,
         };
         file.save(path);
@@ -38941,7 +39005,20 @@ impl App {
                 10,
                 [0.0, 0.0, 0.0, chat_row_bg_alpha(self.text_background_opacity, alpha)],
             );
-            g.text_faded(a, 4, y, text, WHITE, alpha, false);
+            // THE GLYPH'S OWN ALPHA (the ChatComponent$1.accept law the
+            // chatopacity_178.py probe banks — the `fload_3 *
+            // val$textOpacity` pair the per-line fade the captured
+            // fstore-12 base multiplies wears: the default 1.0 the
+            // 1.0 fold the byte-identical answer keeps)
+            g.text_faded(
+                a,
+                4,
+                y,
+                text,
+                WHITE,
+                alpha * chat_text_alpha_base(self.chat_opacity),
+                false,
+            );
         }
     }
 
@@ -40611,6 +40688,20 @@ impl App {
         if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_textbg") {
             let (bx, bw) = (b.x, b.w);
             self.text_background_opacity = slider_value_from_x(mx, bx, bw);
+        }
+    }
+
+    /// THE CHAT TEXT'S OWN DRAG (the same armed lane the textbg row
+    /// wears — the flag the press inside the track arms, the held
+    /// frames the UnitDouble 0..1 the cursor's x answers, the release
+    /// the disarm the on_left_release walk speaks)
+    pub fn on_chat_opacity_slider_drag(&mut self, mx: i32) {
+        if !self.chat_opacity_drag || self.screen != ScreenKind::Accessibility {
+            return;
+        }
+        if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_chat_opacity") {
+            let (bx, bw) = (b.x, b.w);
+            self.chat_opacity = slider_value_from_x(mx, bx, bw);
         }
     }
 
@@ -61563,17 +61654,30 @@ impl App {
         let bw = 140;
         // THE CHAT BACKGROUNDS' OWN ROW (the array's index-4 seat the
         // store the chat history's fills wear — the caption the
-        // percent/OFF words keep, the row ABOVE the fov seat the
-        // array's own order keeps: index 4 before index 12)
+        // percent/OFF words keep, the row ABOVE the chat-opacity seat
+        // the array's own order keeps: index 4 before index 6)
         let mut tb = Button::new(
             "opt_textbg",
             textbg_caption(self.text_background_opacity),
             cx,
-            h / 2 - 44,
+            h / 2 - 72,
             bw,
         );
         tb.value = Some(self.text_background_opacity);
         self.buttons.push(tb);
+        // THE CHAT TEXT'S OWN ROW (the array's index-6 seat the store
+        // the chat history's glyphs wear — the caption the percent/OFF
+        // words keep, the row BETWEEN the textbg and the fov seats the
+        // array's own order keeps: index 4 < index 6 < index 12)
+        let mut co = Button::new(
+            "opt_chat_opacity",
+            chat_opacity_caption(self.chat_opacity),
+            cx,
+            h / 2 - 44,
+            bw,
+        );
+        co.value = Some(self.chat_opacity);
+        self.buttons.push(co);
         // THE FOV EFFECTS' OWN ROW (the array's index 12 the store the
         // camera's read wears — the caption the percent the OFF end
         // speaks)

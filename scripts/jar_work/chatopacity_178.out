@@ -1,0 +1,280 @@
+== net.minecraft.client.gui.components.ChatComponent$1 :: <init> (Lnet/minecraft/client/gui/components/ChatComponent;IIILnet/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess;FI)V
+    0: aload_0
+    1: iload_2
+    2: putfield net.minecraft.client.gui.components.ChatComponent$1.val$chatBottom
+    5: aload_0
+    6: iload_3
+    7: putfield net.minecraft.client.gui.components.ChatComponent$1.val$entryHeight
+    10: aload_0
+    11: iload 4
+    13: putfield net.minecraft.client.gui.components.ChatComponent$1.val$entryBottomToMessageY
+    16: aload_0
+    17: aload 5
+    19: putfield net.minecraft.client.gui.components.ChatComponent$1.val$graphics
+    22: aload_0
+    23: fload 6
+    25: putfield net.minecraft.client.gui.components.ChatComponent$1.val$textOpacity
+    28: aload_0
+    29: iload 7
+    31: putfield net.minecraft.client.gui.components.ChatComponent$1.val$messageHeight
+    34: aload_0
+    35: aload_1
+    36: dup
+    37: invokestatic java.util.Objects.requireNonNull
+    40: pop
+    41: putfield net.minecraft.client.gui.components.ChatComponent$1.this$0
+    44: aload_0
+    45: invokespecial java.lang.Object.<init>
+    48: return
+
+== net.minecraft.client.gui.components.ChatComponent$1 :: accept (Lnet/minecraft/client/multiplayer/chat/GuiMessage$Line;IF)V
+    0: aload_0
+    1: getfield net.minecraft.client.gui.components.ChatComponent$1.val$chatBottom
+    4: iload_2
+    5: aload_0
+    6: getfield net.minecraft.client.gui.components.ChatComponent$1.val$entryHeight
+    9: imul
+    10: isub
+    11: istore 4
+    13: iload 4
+    15: aload_0
+    16: getfield net.minecraft.client.gui.components.ChatComponent$1.val$entryHeight
+    19: isub
+    20: istore 5
+    22: iload 4
+    24: aload_0
+    25: getfield net.minecraft.client.gui.components.ChatComponent$1.val$entryBottomToMessageY
+    28: isub
+    29: istore 6
+    31: aload_0
+    32: getfield net.minecraft.client.gui.components.ChatComponent$1.val$graphics
+    35: iload 6
+    37: fload_3
+    38: aload_0
+    39: getfield net.minecraft.client.gui.components.ChatComponent$1.val$textOpacity
+    42: fmul
+    43: aload_1
+    44: invokevirtual net.minecraft.client.multiplayer.chat.GuiMessage$Line.content
+    47: invokeinterface net.minecraft.client.gui.components.ChatComponent$ChatGraphicsAccess.handleMessage
+    52: istore 7
+    54: aload_0
+    55: dup
+    56: getfield net.minecraft.client.gui.components.ChatComponent$1.hoveredOverCurrentMessage
+    59: iload 7
+    61: ior
+    62: putfield net.minecraft.client.gui.components.ChatComponent$1.hoveredOverCurrentMessage
+    65: aload_1
+    66: invokevirtual net.minecraft.client.multiplayer.chat.GuiMessage$Line.endOfEntry
+    69: ifeq -> 86
+    72: aload_0
+    73: getfield net.minecraft.client.gui.components.ChatComponent$1.hoveredOverCurrentMessage
+    76: istore 8
+    78: aload_0
+    79: iconst_0
+    80: putfield net.minecraft.client.gui.components.ChatComponent$1.hoveredOverCurrentMessage
+    83: goto -> 89
+    86: iconst_0
+    87: istore 8
+    89: aload_1
+    90: invokevirtual net.minecraft.client.multiplayer.chat.GuiMessage$Line.tag
+    93: astore 9
+    95: aload 9
+    97: ifnull -> 180
+    100: aload_0
+    101: getfield net.minecraft.client.gui.components.ChatComponent$1.val$graphics
+    104: bipush 252
+    106: iload 5
+    108: bipush 254
+    110: iload 4
+    112: fload_3
+    113: aload_0
+    114: getfield net.minecraft.client.gui.components.ChatComponent$1.val$textOpacity
+    117: fmul
+    118: aload 9
+    120: invokeinterface net.minecraft.client.gui.components.ChatComponent$ChatGraphicsAccess.handleTag
+    125: aload 9
+    127: invokevirtual net.minecraft.client.multiplayer.chat.GuiMessageTag.icon
+    130: ifnull -> 180
+    133: aload_1
+    134: aload_0
+    135: getfield net.minecraft.client.gui.components.ChatComponent$1.this$0
+    138: getfield net.minecraft.client.gui.components.ChatComponent.minecraft
+    141: getfield net.minecraft.client.Minecraft.font
+    144: invokevirtual net.minecraft.client.multiplayer.chat.GuiMessage$Line.getTagIconLeft
+    147: istore 10
+    149: iload 6
+    151: aload_0
+    152: getfield net.minecraft.client.gui.components.ChatComponent$1.val$messageHeight
+    155: iadd
+    156: istore 11
+    158: aload_0
+    159: getfield net.minecraft.client.gui.components.ChatComponent$1.val$graphics
+    162: iload 10
+    164: iload 11
+    166: iload 8
+    168: aload 9
+    170: aload 9
+    172: invokevirtual net.minecraft.client.multiplayer.chat.GuiMessageTag.icon
+    175: invokeinterface net.minecraft.client.gui.components.ChatComponent$ChatGraphicsAccess.handleTagIcon
+    180: return
+
+!! no net.minecraft.client.gui.components.ChatComponent$1$1
+== Options.save ()V — the FULL walk (the getters + the indy recipes the row order wears) ==
+     30: invokestatic net.minecraft.SharedConstants.getCurrentVersion
+     33: invokeinterface net.minecraft.WorldVersion.dataVersion
+     38: invokevirtual net.minecraft.world.level.storage.DataVersion.version
+     41: invokedynamic indy@2138
+     46: invokevirtual java.io.PrintWriter.println
+     59: invokevirtual net.minecraft.client.Options.processOptions
+     63: invokevirtual net.minecraft.client.Options.getFullscreenVideoModeString
+     73: invokedynamic indy@2153
+     78: invokevirtual java.io.PrintWriter.println
+     121: invokevirtual net.minecraft.client.Options.broadcastOptions
+== Options.processOptions — the visit order (the ldc keys + the getters) ==
+    2: invokevirtual net.minecraft.client.Options.processDumpedOptions
+    6: ldc_w cp(8, 326)
+    19: ldc_w cp(8, 329)
+    32: ldc_w cp(8, 332)
+    45: ldc_w cp(8, 335)
+    58: ldc_w cp(8, 338)
+    71: ldc_w cp(8, 341)
+    84: ldc_w cp(8, 344)
+    97: ldc_w cp(8, 1850)
+    110: ldc_w cp(8, 384)
+    123: ldc_w cp(8, 387)
+    136: ldc_w cp(8, 393)
+    149: ldc_w cp(8, 468)
+    162: ldc_w cp(8, 471)
+    175: ldc_w cp(8, 480)
+    188: ldc_w cp(8, 483)
+    201: ldc_w cp(8, 486)
+    214: ldc_w cp(8, 489)
+    227: ldc_w cp(8, 492)
+    240: ldc_w cp(8, 495)
+    253: ldc_w cp(8, 35)
+    266: ldc_w cp(8, 1864)
+    279: ldc_w cp(8, 42)
+    292: ldc_w cp(8, 1867)
+    305: ldc_w cp(8, 554)
+    318: ldc_w cp(8, 225)
+    331: ldc_w cp(8, 228)
+    344: ldc_w cp(8, 231)
+    358: ldc_w cp(8, 132)
+    396: ldc_w cp(8, 148)
+    434: ldc_w cp(8, 1886)
+    451: ldc_w cp(8, 1891)
+    467: ldc_w cp(8, 200)
+    480: ldc_w cp(8, 203)
+    493: ldc_w cp(8, 206)
+    506: ldc_w cp(8, 219)
+    519: ldc_w cp(8, 474)
+    533: ldc_w cp(8, 1898)
+    550: ldc_w cp(8, 1905)
+    567: ldc_w cp(8, 893)
+    584: ldc_w cp(8, 1910)
+    601: ldc_w cp(8, 1917)
+    617: ldc_w cp(8, 246)
+    630: ldc_w cp(8, 249)
+    643: ldc_w cp(8, 243)
+    656: ldc_w cp(8, 237)
+    669: ldc_w cp(8, 240)
+    682: ldc_w cp(8, 252)
+    696: ldc_w cp(8, 984)
+    712: ldc_w cp(8, 234)
+    725: ldc_w cp(8, 293)
+    739: ldc_w cp(8, 1006)
+    768: ldc_w cp(8, 317)
+    781: ldc_w cp(8, 320)
+    794: ldc_w cp(8, 323)
+    808: ldc_w cp(8, 1034)
+    825: ldc_w cp(8, 1937)
+    841: ldc_w cp(8, 498)
+    855: ldc_w cp(8, 1009)
+    872: ldc_w cp(8, 1943)
+    888: ldc_w cp(8, 501)
+    901: ldc_w cp(8, 396)
+    914: ldc_w cp(8, 402)
+    927: ldc_w cp(8, 405)
+    940: ldc_w cp(8, 504)
+    953: ldc_w cp(8, 507)
+    966: ldc_w cp(8, 1951)
+    979: ldc_w cp(8, 536)
+    993: ldc_w cp(8, 572)
+    1009: ldc_w cp(8, 209)
+    1023: ldc_w cp(8, 1725)
+    1039: ldc_w cp(8, 578)
+    1052: ldc_w cp(8, 575)
+    1265: invokevirtual net.minecraft.client.Options.setModelPart
+== the utf8 constants the ldc rows wear (the key strings) ==
+     6 ldc -> 'autoJump'
+     19 ldc -> 'rotateWithMinecart'
+     32 ldc -> 'operatorItemsTab'
+     45 ldc -> 'autoSuggestions'
+     58 ldc -> 'chatColors'
+     71 ldc -> 'chatLinks'
+     84 ldc -> 'chatLinksPrompt'
+     97 ldc -> 'discrete_mouse_scroll'
+     110 ldc -> 'invertXMouse'
+     123 ldc -> 'invertYMouse'
+     136 ldc -> 'realmsNotifications'
+     149 ldc -> 'showSubtitles'
+     162 ldc -> 'directionalAudio'
+     175 ldc -> 'bobView'
+     188 ldc -> 'toggleCrouch'
+     201 ldc -> 'toggleSprint'
+     214 ldc -> 'toggleAttack'
+     227 ldc -> 'toggleUse'
+     240 ldc -> 'sprintWindow'
+     253 ldc -> 'darkMojangStudiosBackground'
+     266 ldc -> 'hideLightningFlashes'
+     279 ldc -> 'hideSplashTexts'
+     292 ldc -> 'mouseSensitivity'
+     305 ldc -> 'damageTiltStrength'
+     318 ldc -> 'highContrast'
+     331 ldc -> 'highContrastBlockOutline'
+     344 ldc -> 'narratorHotkey'
+     358 ldc -> 'resourcePacks'
+     396 ldc -> 'incompatibleResourcePacks'
+     434 ldc -> 'lastServer'
+     451 ldc -> 'lang'
+     467 ldc -> 'chatVisibility'
+     480 ldc -> 'chatOpacity'
+     493 ldc -> 'chatLineSpacing'
+     506 ldc -> 'textBackgroundOpacity'
+     519 ldc -> 'backgroundForChatOnly'
+     533 ldc -> 'hideServerAddress'
+     550 ldc -> 'advancedItemTooltips'
+     567 ldc -> 'pauseOnLostFocus'
+     584 ldc -> 'overrideWidth'
+     601 ldc -> 'overrideHeight'
+     617 ldc -> 'chatHeightFocused'
+     630 ldc -> 'chatDelay'
+     643 ldc -> 'chatHeightUnfocused'
+     656 ldc -> 'chatScale'
+     669 ldc -> 'chatWidth'
+     682 ldc -> 'notificationDisplayTime'
+     696 ldc -> 'useNativeTransport'
+     712 ldc -> 'mainHand'
+     725 ldc -> 'attackIndicator'
+     739 ldc -> 'tutorialStep'
+     768 ldc -> 'mouseWheelSensitivity'
+     781 ldc -> 'rawMouseInput'
+     794 ldc -> 'allowCursorChanges'
+     808 ldc -> 'glDebugVerbosity'
+     825 ldc -> 'skipMultiplayerWarning'
+     841 ldc -> 'hideMatchedNames'
+     855 ldc -> 'joinedFirstServer'
+     872 ldc -> 'syncChunkWrites'
+     888 ldc -> 'showAutosaveIndicator'
+     901 ldc -> 'allowServerListing'
+     914 ldc -> 'inGameNotification'
+     927 ldc -> 'sharePresence'
+     940 ldc -> 'onlyShowSecureChat'
+     953 ldc -> 'saveChatDrafts'
+     966 ldc -> 'panoramaScrollSpeed'
+     979 ldc -> 'telemetryOptInExtra'
+     993 ldc -> 'onboardAccessibility'
+     1009 ldc -> 'menuBackgroundBlurriness'
+     1023 ldc -> 'startedCleanly'
+     1039 ldc -> 'musicToast'
+     1052 ldc -> 'musicFrequency'
