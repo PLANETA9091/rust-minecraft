@@ -2013,6 +2013,31 @@ pub fn run_gui_app(
         {
             app.on_debug_options_activate();
         }
+        // THE ARROW KEYS' OWN FOCUS RIDE (javap 26.2 the Screen
+        // keyPressed walk's 262-265 cases the ArrowNavigation events
+        // serve — the LEFT/RIGHT/UP/DOWN keys the geometric walk the
+        // focused seat's rect answers: the orthogonal-overlap gate the
+        // row band keeps, the trailing-edge isAfter law the beyond
+        // candidates banks, the vague walk the no-overlap fallback the
+        // nearest synthetic position arms; the focused BOX the arrows
+        // the cursor law eats — the EditBox's own tableswitch the four
+        // keys the box's walk consumes, the focus the move never
+        // wears. The screen gate the world's camera lanes the arrows
+        // never share)
+        if app.screen == crate::screens::ScreenKind::DebugOptions {
+            if window.is_key_pressed(Key::Left, minifb::KeyRepeat::No) {
+                app.on_debug_options_arrow(-1, 0);
+            }
+            if window.is_key_pressed(Key::Right, minifb::KeyRepeat::No) {
+                app.on_debug_options_arrow(1, 0);
+            }
+            if window.is_key_pressed(Key::Up, minifb::KeyRepeat::No) {
+                app.on_debug_options_arrow(0, -1);
+            }
+            if window.is_key_pressed(Key::Down, minifb::KeyRepeat::No) {
+                app.on_debug_options_arrow(0, 1);
+            }
+        }
         // THE INVENTORY'S OWN Q (the AbstractContainerScreen.keyPressed's
         // keyDrop arm — the container screen's own chain beside the
         // world's handleKeybinds lane below): the hovered slot's stack

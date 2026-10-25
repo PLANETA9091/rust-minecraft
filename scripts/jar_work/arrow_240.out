@@ -1,0 +1,427 @@
+========================================================================
+[A] net/minecraft/client/gui/components/events/ContainerEventHandler
+------------------------------------------------------------------------
+--- handleArrowNavigation(Lnet/minecraft/client/gui/navigation/FocusNavigationEvent$ArrowNavigation;)Lnet/minecraft/client/gui/ComponentPath;
+   0: aload_0
+   1: invokeinterface net/minecraft/client/gui/components/events/ContainerEventHandler.getFocused()Lnet/minecraft/client/gui/components/events/GuiEventListener;
+   4: aconst_null
+   5: nop
+   6: astore_1
+   7: aload_1
+   8: invokevirtual net/minecraft/client/gui/navigation/FocusNavigationEvent$ArrowNavigation.direction()Lnet/minecraft/client/gui/navigation/ScreenDirection;
+   11: astore_2
+   12: aload_2
+   13: ifnonnull -> 72
+   16: aload_1
+   17: invokevirtual net/minecraft/client/gui/navigation/FocusNavigationEvent$ArrowNavigation.previousFocus()Lnet/minecraft/client/gui/navigation/ScreenRectangle;
+   20: ifnull -> 44
+   23: aload_0
+   24: aload_0
+   25: aload_1
+   26: invokevirtual net/minecraft/client/gui/navigation/FocusNavigationEvent$ArrowNavigation.previousFocus()Lnet/minecraft/client/gui/navigation/ScreenRectangle;
+   29: aload_1
+   30: invokevirtual net/minecraft/client/gui/navigation/FocusNavigationEvent$ArrowNavigation.direction()Lnet/minecraft/client/gui/navigation/ScreenDirection;
+   33: aconst_null
+   34: aload_1
+   35: invokeinterface net/minecraft/client/gui/components/events/ContainerEventHandler.nextFocusPathInDirection(Lnet/minecraft/client/gui/navigation/ScreenRectangle;Lnet/minecraft/client/gui/navigation/ScreenDirection;Lnet/minecraft/client/gui/components/events/GuiEventListener;Lnet/minecraft/client/gui/navigation/FocusNavigationEvent$ArrowNavigation;)Lnet/minecraft/client/gui/ComponentPath;
+   38: iconst_2
+   39: nop
+   40: invokestatic net/minecraft/client/gui/ComponentPath.path(Lnet/minecraft/client/gui/components/events/ContainerEventHandler;Lnet/minecraft/client/gui/ComponentPath;)Lnet/minecraft/client/gui/ComponentPath;
+   43: areturn
+   44: aload_0
+   45: aload_3
+   46: invokevirtual net/minecraft/client/gui/navigation/ScreenDirection.getOpposite()Lnet/minecraft/client/gui/navigation/ScreenDirection;
+   49: invokeinterface net/minecraft/client/gui/components/events/ContainerEventHandler.getBorderForArrowNavigation(Lnet/minecraft/client/gui/navigation/ScreenDirection;)Lnet/minecraft/client/gui/navigation/ScreenRectangle;
+   52: iconst_m1
+   53: nop
+   54: astore astore 4
+   56: aload_0
+   57: aload_0
+   58: aload aload 4
+   60: aload_3
+   61: aconst_null
+   62: aload_1
+   63: invokeinterface net/minecraft/client/gui/components/events/ContainerEventHandler.nextFocusPathInDirection(Lnet/minecraft/client/gui/navigation/ScreenRectangle;Lnet/minecraft/client/gui/navigation/ScreenDirection;Lnet/minecraft/client/gui/components/events/GuiEventListener;Lnet/minecraft/client/gui/navigation/FocusNavigationEvent$ArrowNavigation;)Lnet/minecraft/client/gui/ComponentPath;
+   66: iconst_2
+   67: nop
+   68: invokestatic net/minecraft/client/gui/ComponentPath.path(Lnet/minecraft/client/gui/components/events/ContainerEventHandler;Lnet/minecraft/client/gui/ComponentPath;)Lnet/minecraft/client/gui/ComponentPath;
+   71: areturn
+   72: aload_2
+   73: aload_3
+   74: invokeinterface net/minecraft/client/gui/components/events/GuiEventListener.getBorderForArrowNavigation(Lnet/minecraft/client/gui/navigation/ScreenDirection;)Lnet/minecraft/client/gui/navigation/ScreenRectangle;
+   77: iconst_m1
+   78: nop
+   79: astore astore 4
+   81: aload_0
+   82: aload_0
+   83: aload aload 4
+   85: aload_1
+   86: invokevirtual net/minecraft/client/gui/navigation/FocusNavigationEvent$ArrowNavigation.direction()Lnet/minecraft/client/gui/navigation/ScreenDirection;
+   89: aload_2
+   90: aload_1
+   91: aload aload 4
+   93: invokevirtual net/minecraft/client/gui/navigation/FocusNavigationEvent$ArrowNavigation.with(Lnet/minecraft/client/gui/navigation/ScreenRectangle;)Lnet/minecraft/client/gui/navigation/FocusNavigationEvent$ArrowNavigation;
+   96: invokeinterface net/minecraft/client/gui/components/events/ContainerEventHandler.nextFocusPathInDirection(Lnet/minecraft/client/gui/navigation/ScreenRectangle;Lnet/minecraft/client/gui/navigation/ScreenDirection;Lnet/minecraft/client/gui/components/events/GuiEventListener;Lnet/minecraft/client/gui/navigation/FocusNavigationEvent$ArrowNavigation;)Lnet/minecraft/client/gui/ComponentPath;
+   99: iconst_2
+   100: nop
+   101: invokestatic net/minecraft/client/gui/ComponentPath.path(Lnet/minecraft/client/gui/components/events/ContainerEventHandler;Lnet/minecraft/client/gui/ComponentPath;)Lnet/minecraft/client/gui/ComponentPath;
+   104: areturn
+------------------------------------------------------------------------
+--- nextFocusPathInDirection(Lnet/minecraft/client/gui/navigation/ScreenRectangle;Lnet/minecraft/client/gui/navigation/ScreenDirection;Lnet/minecraft/client/gui/components/events/GuiEventListener;Lnet/minecraft/client/gui/navigation/FocusNavigationEvent$ArrowNavigation;)Lnet/minecraft/client/gui/ComponentPath;
+   0: aload_2
+   1: invokevirtual net/minecraft/client/gui/navigation/ScreenDirection.getAxis()Lnet/minecraft/client/gui/navigation/ScreenAxis;
+   4: astore astore 5
+   6: aload aload 5
+   8: invokevirtual net/minecraft/client/gui/navigation/ScreenAxis.orthogonal()Lnet/minecraft/client/gui/navigation/ScreenAxis;
+   11: astore astore 6
+   13: aload aload 6
+   15: invokevirtual net/minecraft/client/gui/navigation/ScreenAxis.getPositive()Lnet/minecraft/client/gui/navigation/ScreenDirection;
+   18: astore astore 7
+   20: aload_1
+   21: aload_2
+   22: invokevirtual net/minecraft/client/gui/navigation/ScreenDirection.getOpposite()Lnet/minecraft/client/gui/navigation/ScreenDirection;
+   25: invokevirtual net/minecraft/client/gui/navigation/ScreenRectangle.getBoundInDirection(Lnet/minecraft/client/gui/navigation/ScreenDirection;)I
+   28: istore istore 8
+   30: new java/util/ArrayList
+   33: dup
+   34: invokespecial java/util/ArrayList.<init>()V
+   37: astore astore 9
+   39: aload_0
+   40: invokeinterface net/minecraft/client/gui/components/events/ContainerEventHandler.children()Ljava/util/List;
+   43: aconst_null
+   44: nop
+   45: invokeinterface java/util/List.iterator()Ljava/util/Iterator;
+   48: aconst_null
+   49: nop
+   50: astore astore 10
+   52: aload aload 10
+   54: invokeinterface java/util/Iterator.hasNext()Z
+   57: aconst_null
+   58: nop
+   59: ifeq -> 176
+   62: aload aload 10
+   64: invokeinterface java/util/Iterator.next()Ljava/lang/Object;
+   67: aconst_null
+   68: nop
+   69: checkcast net/minecraft/client/gui/components/events/GuiEventListener
+   72: astore astore 11
+   74: aload aload 11
+   76: aload_3
+   77: if_acmpne -> 83
+   80: goto -> 52
+   83: aload aload 11
+   85: invokeinterface net/minecraft/client/gui/components/events/GuiEventListener.getRectangle()Lnet/minecraft/client/gui/navigation/ScreenRectangle;
+   88: aconst_null
+   89: nop
+   90: astore astore 12
+   92: aload aload 12
+   94: aload_1
+   95: aload aload 6
+   97: invokevirtual net/minecraft/client/gui/navigation/ScreenRectangle.overlapsInAxis(Lnet/minecraft/client/gui/navigation/ScreenRectangle;Lnet/minecraft/client/gui/navigation/ScreenAxis;)Z
+   100: ifeq -> 173
+   103: aload aload 12
+   105: aload_2
+   106: invokevirtual net/minecraft/client/gui/navigation/ScreenDirection.getOpposite()Lnet/minecraft/client/gui/navigation/ScreenDirection;
+   109: invokevirtual net/minecraft/client/gui/navigation/ScreenRectangle.getBoundInDirection(Lnet/minecraft/client/gui/navigation/ScreenDirection;)I
+   112: istore istore 13
+   114: aload_2
+   115: iload iload 13
+   117: iload iload 8
+   119: invokevirtual net/minecraft/client/gui/navigation/ScreenDirection.isAfter(II)Z
+   122: ifeq -> 138
+   125: aload aload 9
+   127: aload aload 11
+   129: invokeinterface java/util/List.add(Ljava/lang/Object;)Z
+   132: iconst_m1
+   133: nop
+   134: pop
+   135: goto -> 173
+   138: iload iload 13
+   140: iload iload 8
+   142: if_icmpne -> 173
+   145: aload_2
+   146: aload aload 12
+   148: aload_2
+   149: invokevirtual net/minecraft/client/gui/navigation/ScreenRectangle.getBoundInDirection(Lnet/minecraft/client/gui/navigation/ScreenDirection;)I
+   152: aload_1
+   153: aload_2
+   154: invokevirtual net/minecraft/client/gui/navigation/ScreenRectangle.getBoundInDirection(Lnet/minecraft/client/gui/navigation/ScreenDirection;)I
+   157: invokevirtual net/minecraft/client/gui/navigation/ScreenDirection.isAfter(II)Z
+   160: ifeq -> 173
+   163: aload aload 9
+   165: aload aload 11
+   167: invokeinterface java/util/List.add(Ljava/lang/Object;)Z
+   170: iconst_m1
+   171: nop
+   172: pop
+   173: goto -> 52
+   176: aload_2
+   177: invokedynamic indy
+   182: aload_2
+   183: invokevirtual net/minecraft/client/gui/navigation/ScreenDirection.coordinateValueComparator()Lit/unimi/dsi/fastutil/ints/IntComparator;
+   186: invokestatic java/util/Comparator.comparing(Ljava/util/function/Function;Ljava/util/Comparator;)Ljava/util/Comparator;
+   189: astore astore 10
+   191: aload aload 7
+   193: invokedynamic indy
+   198: aload aload 7
+   200: invokevirtual net/minecraft/client/gui/navigation/ScreenDirection.coordinateValueComparator()Lit/unimi/dsi/fastutil/ints/IntComparator;
+   203: invokestatic java/util/Comparator.comparing(Ljava/util/function/Function;Ljava/util/Comparator;)Ljava/util/Comparator;
+   206: astore astore 11
+   208: aload aload 9
+   210: aload aload 10
+   212: aload aload 11
+   214: invokeinterface java/util/Comparator.thenComparing(Ljava/util/Comparator;)Ljava/util/Comparator;
+   217: iconst_m1
+   218: nop
+   219: invokeinterface java/util/List.sort(Ljava/util/Comparator;)V
+   222: iconst_m1
+   223: nop
+   224: aload aload 9
+   226: invokeinterface java/util/List.iterator()Ljava/util/Iterator;
+   229: aconst_null
+   230: nop
+   231: astore astore 12
+   233: aload aload 12
+   235: invokeinterface java/util/Iterator.hasNext()Z
+   238: aconst_null
+   239: nop
+   240: ifeq -> 277
+   243: aload aload 12
+   245: invokeinterface java/util/Iterator.next()Ljava/lang/Object;
+   248: aconst_null
+   249: nop
+   250: checkcast net/minecraft/client/gui/components/events/GuiEventListener
+   253: astore astore 13
+   255: aload aload 13
+   257: aload aload 4
+   259: invokeinterface net/minecraft/client/gui/components/events/GuiEventListener.nextFocusPath(Lnet/minecraft/client/gui/navigation/FocusNavigationEvent;)Lnet/minecraft/client/gui/ComponentPath;
+   262: iconst_m1
+   263: nop
+   264: astore astore 14
+   266: aload aload 14
+   268: ifnull -> 274
+   271: aload aload 14
+   273: areturn
+   274: goto -> 233
+   277: aload_0
+   278: aload_1
+   279: aload_2
+   280: aload_3
+   281: aload aload 4
+   283: invokeinterface net/minecraft/client/gui/components/events/ContainerEventHandler.nextFocusPathVaguelyInDirection(Lnet/minecraft/client/gui/navigation/ScreenRectangle;Lnet/minecraft/client/gui/navigation/ScreenDirection;Lnet/minecraft/client/gui/components/events/GuiEventListener;Lnet/minecraft/client/gui/navigation/FocusNavigationEvent;)Lnet/minecraft/client/gui/ComponentPath;
+   286: iconst_2
+   287: nop
+   288: areturn
+------------------------------------------------------------------------
+--- nextFocusPathVaguelyInDirection(Lnet/minecraft/client/gui/navigation/ScreenRectangle;Lnet/minecraft/client/gui/navigation/ScreenDirection;Lnet/minecraft/client/gui/components/events/GuiEventListener;Lnet/minecraft/client/gui/navigation/FocusNavigationEvent;)Lnet/minecraft/client/gui/ComponentPath;
+   0: aload_2
+   1: invokevirtual net/minecraft/client/gui/navigation/ScreenDirection.getAxis()Lnet/minecraft/client/gui/navigation/ScreenAxis;
+   4: astore astore 5
+   6: aload aload 5
+   8: invokevirtual net/minecraft/client/gui/navigation/ScreenAxis.orthogonal()Lnet/minecraft/client/gui/navigation/ScreenAxis;
+   11: astore astore 6
+   13: new java/util/ArrayList
+   16: dup
+   17: invokespecial java/util/ArrayList.<init>()V
+   20: astore astore 7
+   22: aload aload 5
+   24: aload_1
+   25: aload_2
+   26: invokevirtual net/minecraft/client/gui/navigation/ScreenRectangle.getBoundInDirection(Lnet/minecraft/client/gui/navigation/ScreenDirection;)I
+   29: aload_1
+   30: aload aload 6
+   32: invokevirtual net/minecraft/client/gui/navigation/ScreenRectangle.getCenterInAxis(Lnet/minecraft/client/gui/navigation/ScreenAxis;)I
+   35: invokestatic net/minecraft/client/gui/navigation/ScreenPosition.of(Lnet/minecraft/client/gui/navigation/ScreenAxis;II)Lnet/minecraft/client/gui/navigation/ScreenPosition;
+   38: astore astore 8
+   40: aload_0
+   41: invokeinterface net/minecraft/client/gui/components/events/ContainerEventHandler.children()Ljava/util/List;
+   44: aconst_null
+   45: nop
+   46: invokeinterface java/util/List.iterator()Ljava/util/Iterator;
+   49: aconst_null
+   50: nop
+   51: astore astore 9
+   53: aload aload 9
+   55: invokeinterface java/util/Iterator.hasNext()Z
+   58: aconst_null
+   59: nop
+   60: ifeq -> 183
+   63: aload aload 9
+   65: invokeinterface java/util/Iterator.next()Ljava/lang/Object;
+   68: aconst_null
+   69: nop
+   70: checkcast net/minecraft/client/gui/components/events/GuiEventListener
+   73: astore astore 10
+   75: aload aload 10
+   77: aload_3
+   78: if_acmpne -> 84
+   81: goto -> 53
+   84: aload aload 10
+   86: invokeinterface net/minecraft/client/gui/components/events/GuiEventListener.getRectangle()Lnet/minecraft/client/gui/navigation/ScreenRectangle;
+   89: aconst_null
+   90: nop
+   91: astore astore 11
+   93: aload aload 5
+   95: aload aload 11
+   97: aload_2
+   98: invokevirtual net/minecraft/client/gui/navigation/ScreenDirection.getOpposite()Lnet/minecraft/client/gui/navigation/ScreenDirection;
+   101: invokevirtual net/minecraft/client/gui/navigation/ScreenRectangle.getBoundInDirection(Lnet/minecraft/client/gui/navigation/ScreenDirection;)I
+   104: aload aload 11
+   106: aload aload 6
+   108: invokevirtual net/minecraft/client/gui/navigation/ScreenRectangle.getCenterInAxis(Lnet/minecraft/client/gui/navigation/ScreenAxis;)I
+   111: invokestatic net/minecraft/client/gui/navigation/ScreenPosition.of(Lnet/minecraft/client/gui/navigation/ScreenAxis;II)Lnet/minecraft/client/gui/navigation/ScreenPosition;
+   114: astore astore 12
+   116: aload_2
+   117: aload aload 12
+   119: aload aload 5
+   121: invokevirtual net/minecraft/client/gui/navigation/ScreenPosition.getCoordinate(Lnet/minecraft/client/gui/navigation/ScreenAxis;)I
+   124: aload aload 8
+   126: aload aload 5
+   128: invokevirtual net/minecraft/client/gui/navigation/ScreenPosition.getCoordinate(Lnet/minecraft/client/gui/navigation/ScreenAxis;)I
+   131: invokevirtual net/minecraft/client/gui/navigation/ScreenDirection.isAfter(II)Z
+   134: ifeq -> 180
+   137: aload aload 8
+   139: invokevirtual net/minecraft/client/gui/navigation/ScreenPosition.x()I
+   142: aload aload 8
+   144: invokevirtual net/minecraft/client/gui/navigation/ScreenPosition.y()I
+   147: aload aload 12
+   149: invokevirtual net/minecraft/client/gui/navigation/ScreenPosition.x()I
+   152: aload aload 12
+   154: invokevirtual net/minecraft/client/gui/navigation/ScreenPosition.y()I
+   157: invokestatic org/joml/Vector2i.distanceSquared(IIII)J
+   160: lstore
+   161: fconst_2
+   162: aload aload 7
+   164: aload aload 10
+   166: lload
+   167: fconst_2
+   168: invokestatic java/lang/Long.valueOf(J)Ljava/lang/Long;
+   171: invokestatic com/mojang/datafixers/util/Pair.of(Ljava/lang/Object;Ljava/lang/Object;)Lcom/mojang/datafixers/util/Pair;
+   174: invokeinterface java/util/List.add(Ljava/lang/Object;)Z
+   177: iconst_m1
+   178: nop
+   179: pop
+   180: goto -> 53
+   183: aload aload 7
+   185: invokedynamic indy
+   190: invokestatic java/util/Comparator.comparingDouble(Ljava/util/function/ToDoubleFunction;)Ljava/util/Comparator;
+   193: invokeinterface java/util/List.sort(Ljava/util/Comparator;)V
+   196: iconst_m1
+   197: nop
+   198: aload aload 7
+   200: invokeinterface java/util/List.iterator()Ljava/util/Iterator;
+   203: aconst_null
+   204: nop
+   205: astore astore 9
+   207: aload aload 9
+   209: invokeinterface java/util/Iterator.hasNext()Z
+   212: aconst_null
+   213: nop
+   214: ifeq -> 257
+   217: aload aload 9
+   219: invokeinterface java/util/Iterator.next()Ljava/lang/Object;
+   222: aconst_null
+   223: nop
+   224: checkcast com/mojang/datafixers/util/Pair
+   227: astore astore 10
+   229: aload aload 10
+   231: invokevirtual com/mojang/datafixers/util/Pair.getFirst()Ljava/lang/Object;
+   234: checkcast net/minecraft/client/gui/components/events/GuiEventListener
+   237: aload aload 4
+   239: invokeinterface net/minecraft/client/gui/components/events/GuiEventListener.nextFocusPath(Lnet/minecraft/client/gui/navigation/FocusNavigationEvent;)Lnet/minecraft/client/gui/ComponentPath;
+   242: iconst_m1
+   243: nop
+   244: astore astore 11
+   246: aload aload 11
+   248: ifnull -> 254
+   251: aload aload 11
+   253: areturn
+   254: goto -> 207
+   257: aconst_null
+   258: areturn
+------------------------------------------------------------------------
+--- lambda$nextFocusPathInDirection$1(Lnet/minecraft/client/gui/navigation/ScreenDirection;Lnet/minecraft/client/gui/components/events/GuiEventListener;)Ljava/lang/Integer;
+   0: aload_1
+   1: invokeinterface net/minecraft/client/gui/components/events/GuiEventListener.getRectangle()Lnet/minecraft/client/gui/navigation/ScreenRectangle;
+   4: aconst_null
+   5: nop
+   6: aload_0
+   7: invokevirtual net/minecraft/client/gui/navigation/ScreenDirection.getOpposite()Lnet/minecraft/client/gui/navigation/ScreenDirection;
+   10: invokevirtual net/minecraft/client/gui/navigation/ScreenRectangle.getBoundInDirection(Lnet/minecraft/client/gui/navigation/ScreenDirection;)I
+   13: invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;
+   16: areturn
+------------------------------------------------------------------------
+--- lambda$nextFocusPathInDirection$0(Lnet/minecraft/client/gui/navigation/ScreenDirection;Lnet/minecraft/client/gui/components/events/GuiEventListener;)Ljava/lang/Integer;
+   0: aload_1
+   1: invokeinterface net/minecraft/client/gui/components/events/GuiEventListener.getRectangle()Lnet/minecraft/client/gui/navigation/ScreenRectangle;
+   4: aconst_null
+   5: nop
+   6: aload_0
+   7: invokevirtual net/minecraft/client/gui/navigation/ScreenDirection.getOpposite()Lnet/minecraft/client/gui/navigation/ScreenDirection;
+   10: invokevirtual net/minecraft/client/gui/navigation/ScreenRectangle.getBoundInDirection(Lnet/minecraft/client/gui/navigation/ScreenDirection;)I
+   13: invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;
+   16: areturn
+========================================================================
+[B] net/minecraft/client/gui/navigation/ScreenRectangle
+------------------------------------------------------------------------
+--- getBoundInDirection(Lnet/minecraft/client/gui/navigation/ScreenDirection;)I
+   0: aload_1
+   1: invokevirtual net/minecraft/client/gui/navigation/ScreenDirection.getAxis()Lnet/minecraft/client/gui/navigation/ScreenAxis;
+   4: astore_1
+   5: aload_1
+   6: invokevirtual net/minecraft/client/gui/navigation/ScreenDirection.isPositive()Z
+   9: ifeq -> 29
+   12: aload_0
+   13: getfield net/minecraft/client/gui/navigation/ScreenRectangle.positionLnet/minecraft/client/gui/navigation/ScreenPosition;
+   16: aload_2
+   17: invokevirtual net/minecraft/client/gui/navigation/ScreenPosition.getCoordinate(Lnet/minecraft/client/gui/navigation/ScreenAxis;)I
+   20: aload_0
+   21: aload_2
+   22: invokevirtual net/minecraft/client/gui/navigation/ScreenRectangle.getLength(Lnet/minecraft/client/gui/navigation/ScreenAxis;)I
+   25: iadd
+   26: iconst_1
+   27: isub
+   28: ireturn
+   29: aload_0
+   30: getfield net/minecraft/client/gui/navigation/ScreenRectangle.positionLnet/minecraft/client/gui/navigation/ScreenPosition;
+   33: aload_2
+   34: invokevirtual net/minecraft/client/gui/navigation/ScreenPosition.getCoordinate(Lnet/minecraft/client/gui/navigation/ScreenAxis;)I
+   37: ireturn
+========================================================================
+[C] net/minecraft/client/gui/navigation/ScreenAxis
+========================================================================
+[D] net/minecraft/client/gui/navigation/ScreenDirection
+------------------------------------------------------------------------
+--- getAxis()Lnet/minecraft/client/gui/navigation/ScreenAxis;
+   0: aload_0
+   1: invokevirtual net/minecraft/client/gui/navigation/ScreenDirection.ordinal()I
+   4: tableswitch tableswitch lo=0 hi=3
+   36: new java/lang/MatchException
+   39: dup
+   40: aconst_null
+   41: aconst_null
+   42: invokespecial java/lang/MatchException.<init>(Ljava/lang/String;Ljava/lang/Throwable;)V
+   45: athrow
+   46: getstatic net/minecraft/client/gui/navigation/ScreenAxis.VERTICALLnet/minecraft/client/gui/navigation/ScreenAxis;
+   49: goto -> 55
+   52: getstatic net/minecraft/client/gui/navigation/ScreenAxis.HORIZONTALLnet/minecraft/client/gui/navigation/ScreenAxis;
+   55: areturn
+------------------------------------------------------------------------
+--- getOpposite()Lnet/minecraft/client/gui/navigation/ScreenDirection;
+   0: aload_0
+   1: invokevirtual net/minecraft/client/gui/navigation/ScreenDirection.ordinal()I
+   4: tableswitch tableswitch lo=0 hi=3
+   36: new java/lang/MatchException
+   39: dup
+   40: aconst_null
+   41: aconst_null
+   42: invokespecial java/lang/MatchException.<init>(Ljava/lang/String;Ljava/lang/Throwable;)V
+   45: athrow
+   46: getstatic net/minecraft/client/gui/navigation/ScreenDirection.DOWNLnet/minecraft/client/gui/navigation/ScreenDirection;
+   49: goto -> 67
+   52: getstatic net/minecraft/client/gui/navigation/ScreenDirection.UPLnet/minecraft/client/gui/navigation/ScreenDirection;
+   55: goto -> 67
+   58: getstatic net/minecraft/client/gui/navigation/ScreenDirection.RIGHTLnet/minecraft/client/gui/navigation/ScreenDirection;
+   61: goto -> 67
+   64: getstatic net/minecraft/client/gui/navigation/ScreenDirection.LEFTLnet/minecraft/client/gui/navigation/ScreenDirection;
+   67: areturn

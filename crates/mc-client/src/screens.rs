@@ -9786,6 +9786,11 @@ pub struct App {
     /// draws, the [`Self::on_debug_options_activate`] walk the seat's
     /// own press serves.
     pub debug_focus: Option<DebugFocusSeat>,
+    /// THE SEARCH BOX'S OWN RECT (the render's own geometry the arrow
+    /// walk reads — the box the (x, y, w, h) seat the render banks, the
+    /// zero rect the fresh ctor keeps [the arrow walk the geometric
+    /// silence the empty inventory never wears])
+    pub debug_box_rect: (i32, i32, i32, i32),
     /// THE DEBUG OPTIONS' OWN PROFILE BANK (javap 26.2
     /// DebugScreenEntryList's `profile` field — the
     /// `isUsingProfile(profile)` identity the `addProfileButton`
@@ -11399,6 +11404,7 @@ impl App {
             debug_search: String::new(),
             debug_search_focus: true,
             debug_focus: None,
+            debug_box_rect: (0, 0, 0, 0),
             debug_profile: Some(false),
             game_mode: GameMode::Survival,
             previous_game_mode: None,
@@ -27370,6 +27376,9 @@ impl App {
         // bipush banks, the hint the SEARCH_HINT_STYLE gray wears)
         let box_w = (w / 3).max(80);
         let bx = cx - box_w / 2;
+        // THE BOX'S OWN RECT BANK (the arrow walk's geometry the render
+        // serves — the same store freshness the buttons' own rects wear)
+        self.debug_box_rect = (bx, 20, box_w, 20);
         g.sprite_9slice(a, "widget/text_field", bx, 20, box_w, 20);
         // THE BOX'S OWN WORD (the EditBox the typed text the white
         // word wears, the caret the blink law keeps — the picker's
@@ -34581,13 +34590,9 @@ impl App {
             steps += 1;
         }
         // THE APPLY (the changeFocus law — the clearFocus the old
-        // flag dies, the applyFocus the new seat arms; the box the
-        // flag alone keeps, the button seats the field wears)
-        self.debug_search_focus = matches!(order[next], DebugFocusSeat::Box);
-        self.debug_focus = match order[next] {
-            DebugFocusSeat::Box => None,
-            seat => Some(seat),
-        };
+        // flag dies, the applyFocus the new seat arms; the shared
+        // walk the arrow lane the same fold serves)
+        self.debug_focus_apply(order[next]);
     }
 
     /// THE FOCUSED BUTTON'S OWN ACTIVATION (javap 26.2
@@ -34630,6 +34635,235 @@ impl App {
             }
             _ => {}
         }
+    }
+
+    /// THE APPLY'S OWN LAW (the vanilla changeFocus walk — the
+    /// clearFocus the old flag dies, the applyFocus the new seat arms;
+    /// the box the flag alone keeps, the button seats the field wears)
+    fn debug_focus_apply(&mut self, seat: DebugFocusSeat) {
+        self.debug_search_focus = matches!(seat, DebugFocusSeat::Box);
+        self.debug_focus = match seat {
+            DebugFocusSeat::Box => None,
+            seat => Some(seat),
+        };
+    }
+
+    /// THE SEAT'S OWN ACTIVE LAW (the AbstractWidget.isActive refusal
+    /// the traversal's own skip serves — the active profile's own
+    /// preset button the walk never arms, the box + the pills the
+    /// always-active seats keep)
+    fn debug_seat_active(&self, seat: DebugFocusSeat) -> bool {
+        match seat {
+            DebugFocusSeat::PresetDflt => self.debug_profile != Some(false),
+            DebugFocusSeat::PresetPerf => self.debug_profile != Some(true),
+            _ => true,
+        }
+    }
+
+    /// THE FOCUSABLES' OWN RECT INVENTORY (the children() tree's own
+    /// geometry the flat inventory mirrors — the box the field the
+    /// render banks, the presets + the pills the buttons store's own
+    /// rects wear, the add order the stable ties keep)
+    fn debug_focus_rects(&self) -> Vec<(DebugFocusSeat, i32, i32, i32, i32)> {
+        let mut rects = vec![(
+            DebugFocusSeat::Box,
+            self.debug_box_rect.0,
+            self.debug_box_rect.1,
+            self.debug_box_rect.2,
+            self.debug_box_rect.3,
+        )];
+        for b in &self.buttons {
+            let seat = match b.id {
+                "dbgprofdflt" => Some(DebugFocusSeat::PresetDflt),
+                "dbgprofperf" => Some(DebugFocusSeat::PresetPerf),
+                "dbgoff" => b
+                    .label
+                    .parse::<usize>()
+                    .ok()
+                    .map(|e| DebugFocusSeat::Pill { entry: e, pill: 0 }),
+                "dbgoverlay" => b
+                    .label
+                    .parse::<usize>()
+                    .ok()
+                    .map(|e| DebugFocusSeat::Pill { entry: e, pill: 1 }),
+                "dbgalways" => b
+                    .label
+                    .parse::<usize>()
+                    .ok()
+                    .map(|e| DebugFocusSeat::Pill { entry: e, pill: 2 }),
+                _ => None,
+            };
+            if let Some(seat) = seat {
+                rects.push((seat, b.x, b.y, b.w, b.h));
+            }
+        }
+        rects
+    }
+
+    /// THE ARROW KEYS' OWN FOCUS RIDE (javap 26.2 the Screen
+    /// keyPressed walk's 262-265 cases the ArrowNavigation events
+    /// serve — the `handleArrowNavigation` walk the FOCUSED widget's
+    /// `getBorderForArrowNavigation` rect the bounds banks [the
+    /// default the widget's own rectangle keeps], the
+    /// `nextFocusPathInDirection` walk the candidates answers). THE
+    /// STRICT WALK (the container's own law): the candidate the
+    /// ORTHOGONAL-OVERLAP gate answers (the `overlapsInAxis` ask —
+    /// the row band the same-interval share keeps), the direction's
+    /// trailing edge the `isAfter` strict law beyond wears (the
+    /// OPPOSITE-direction bound the lambda keys extract — BOTH keys
+    /// the `getBoundInDirection(getOpposite())` fold serve), the
+    /// SAME-trailing edge + the leading-beyond arm the side-by-side
+    /// widget answers; the sort the trailing edge the primary key +
+    /// the orthogonal-positive trailing the secondary keeps (the
+    /// `coordinateValueComparator` the natural order serves), the
+    /// FIRST ACTIVE candidate the iterator's own walk arms (the
+    /// inactive the `nextFocusPath` null the move-on law wears). THE
+    /// VAGUE WALK (the no-overlap fallback — the
+    /// `nextFocusPathVaguelyInDirection` walk): the synthetic
+    /// positions the (direction-bound, orthogonal-CENTER) pairs the
+    /// `ScreenPosition.of` folds keep, the `isAfter` gate the beyond
+    /// candidates alone banks, the `Vector2i.distanceSquared` the
+    /// nearest answer sorts, the first active wins, the NONE the
+    /// silence keeps (the focus the same seat wears). THE BOX SEAT'S
+    /// OWN SILENCE (the EditBox the arrow keys the cursor law eats —
+    /// the tableswitch 259..269 the four arrows the box's own walk
+    /// consumes, the focus the move never wears).
+    pub fn on_debug_options_arrow(&mut self, dx: i32, dy: i32) {
+        if self.screen != ScreenKind::DebugOptions {
+            return;
+        }
+        // THE BOX SEAT'S OWN SILENCE (the vanilla's own consumption —
+        // the focused box the arrow the cursor lane eats)
+        if self.debug_search_focus {
+            return;
+        }
+        let seat = match self.debug_focus {
+            Some(seat) => seat,
+            None => return,
+        };
+        let rects = self.debug_focus_rects();
+        let focus_rect = match rects.iter().find(|(s, ..)| *s == seat) {
+            Some((_, x, y, w, h)) => (*x, *y, *w, *h),
+            None => return,
+        };
+        // THE DIRECTION'S OWN VOCABULARY (the ScreenDirection law — the
+        // axis the non-zero component answers, the positive the sign
+        // keeps, the trailing edge the OPPOSITE-direction bound wears)
+        let horizontal = dx != 0;
+        let positive = if horizontal { dx > 0 } else { dy > 0 };
+        let bound_in = |r: (i32, i32, i32, i32), pos: bool| -> i32 {
+            if pos {
+                if horizontal {
+                    r.0 + r.2
+                } else {
+                    r.1 + r.3
+                }
+            } else if horizontal {
+                r.0
+            } else {
+                r.1
+            }
+        };
+        let is_after = |a: i32, b: i32| -> bool {
+            if positive {
+                a > b
+            } else {
+                a < b
+            }
+        };
+        // THE ORTHOGONAL-OVERLAP GATE (the overlapsInAxis law — the
+        // interval share the same-band pair answers)
+        let orth_overlap = |a: (i32, i32, i32, i32), b: (i32, i32, i32, i32)| -> bool {
+            if horizontal {
+                a.1 < b.1 + b.3 && b.1 < a.1 + a.3
+            } else {
+                a.0 < b.0 + b.2 && b.0 < a.0 + a.2
+            }
+        };
+        // THE STRICT WALK'S OWN CANDIDATES (the trailing edge the
+        // primary key, the orthogonal-positive trailing the secondary
+        // — the top edge the horizontal move keeps, the left edge the
+        // vertical wears)
+        let focus_trail = bound_in(focus_rect, !positive);
+        let trail_orth = |r: (i32, i32, i32, i32)| -> i32 {
+            if horizontal {
+                r.1
+            } else {
+                r.0
+            }
+        };
+        let mut cands: Vec<(i32, i32, DebugFocusSeat)> = Vec::new();
+        for (s, rx, ry, rw, rh) in &rects {
+            let r = (*rx, *ry, *rw, *rh);
+            if *s == seat {
+                continue;
+            }
+            if !orth_overlap(focus_rect, r) {
+                continue;
+            }
+            let wb = bound_in(r, !positive);
+            if is_after(wb, focus_trail) {
+                cands.push((wb, trail_orth(r), *s));
+            } else if wb == focus_trail
+                && is_after(bound_in(r, positive), bound_in(focus_rect, positive))
+            {
+                cands.push((wb, trail_orth(r), *s));
+            }
+        }
+        // THE SORT'S OWN SIGN (the coordinateValueComparator law — the
+        // POSITIVE directions the natural order keeps, the NEGATIVE
+        // directions the REVERSE order wears: the nearest trailing
+        // edge first BOTH ways — the Left walk the largest right edge
+        // below serves)
+        cands.sort_by(|a, b| {
+            let primary = if positive {
+                a.0.cmp(&b.0)
+            } else {
+                b.0.cmp(&a.0)
+            };
+            primary.then_with(|| a.1.cmp(&b.1))
+        });
+        for (_, _, s) in &cands {
+            if self.debug_seat_active(*s) {
+                self.debug_focus_apply(*s);
+                return;
+            }
+        }
+        // THE VAGUE WALK (the synthetic positions the distance law
+        // sorts — the direction-bound + the orthogonal-center pair the
+        // squared distance answers, the nearest active the walk arms)
+        let focus_dir = bound_in(focus_rect, positive);
+        let center_orth = |r: (i32, i32, i32, i32)| -> i32 {
+            if horizontal {
+                r.1 + r.3 / 2
+            } else {
+                r.0 + r.2 / 2
+            }
+        };
+        let focus_center = center_orth(focus_rect);
+        let mut vague: Vec<(i64, usize, DebugFocusSeat)> = Vec::new();
+        for (i, (s, rx, ry, rw, rh)) in rects.iter().enumerate() {
+            let r = (*rx, *ry, *rw, *rh);
+            if *s == seat {
+                continue;
+            }
+            let wb = bound_in(r, positive);
+            if !is_after(wb, focus_dir) {
+                continue;
+            }
+            let ddx = (wb - focus_dir) as i64;
+            let ddy = (center_orth(r) - focus_center) as i64;
+            vague.push((ddx * ddx + ddy * ddy, i, *s));
+        }
+        vague.sort_by(|a, b| a.0.cmp(&b.0).then_with(|| a.1.cmp(&b.1)));
+        for (_, _, s) in &vague {
+            if self.debug_seat_active(*s) {
+                self.debug_focus_apply(*s);
+                return;
+            }
+        }
+        // THE NONE'S OWN SILENCE (the no-candidate walk the focus the
+        // same seat keeps — the vanilla null the apply never wears)
     }
 
     /// THE SEARCH BOX'S OWN CHARS (the EditBox the init's responder

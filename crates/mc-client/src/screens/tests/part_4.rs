@@ -19714,6 +19714,183 @@ fn the_debug_options_tab_cycle_the_box_the_pills_wears() {
         "the closed screen the click the same refusal keeps"
     );
 }
+
+/// THE ARROW KEYS' OWN FOCUS RIDE (the autopush-240 walk — the Screen
+/// keyPressed's 262-265 cases the ArrowNavigation events serve, the
+/// nextFocusPathInDirection walk the geometric law answers: the
+/// orthogonal-overlap gate the row band keeps, the trailing-edge
+/// isAfter law the beyond candidates banks, the sort the nearest
+/// trailing edge wears, the vague walk the no-overlap fallback the
+/// nearest synthetic position arms, the box seat the cursor law the
+/// silence keeps).
+#[test]
+fn the_debug_options_arrow_ride_the_geometric_walk_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.on_debug_options_key(); // the open arm the fresh screen wears
+    let root = crate::screens::tests::assets_root();
+    let mut assets = GuiAssets::open(&root);
+    let mut fb = crate::raster::Framebuf::new(640, 360);
+    app.render(&mut fb, &mut assets);
+    // THE BOX SEAT'S OWN SILENCE (the EditBox the arrow keys the
+    // cursor law eats — the tableswitch 259..269 the four arrows the
+    // box's own walk consumes, the focus the move never wears)
+    assert!(
+        app.debug_search_focus,
+        "the fresh open the box the focus wears"
+    );
+    app.on_debug_options_arrow(1, 0);
+    assert!(
+        app.debug_search_focus,
+        "the box seat the arrow the silence keeps"
+    );
+    // THE TAB'S OWN SEAT (the cycle walk the perf preset arms — the
+    // ctor's own DEFAULT profile the inactive skip serves)
+    app.on_debug_options_tab(true);
+    assert_eq!(
+        app.debug_focus,
+        Some(DebugFocusSeat::PresetPerf),
+        "the tab walk the perf preset arms"
+    );
+    // THE VAGUE WALK'S OWN RIDE (the RIGHT arrow the strict walk the
+    // y-band refuses — the presets row the pills row the overlap
+    // never shares — the no-overlap fallback the nearest synthetic
+    // position arms: the first row's Off pill the (direction-bound,
+    // orthogonal-center) distance law answers)
+    app.on_debug_options_arrow(1, 0);
+    assert_eq!(
+        app.debug_focus,
+        Some(DebugFocusSeat::Pill { entry: 0, pill: 0 }),
+        "the RIGHT arrow the vague walk the nearest pill arms"
+    );
+    // THE STRICT WALK'S OWN ROW BAND (the RIGHT arrow the same-row
+    // band the y-overlap answers — the trailing-edge law the overlay
+    // pill's left edge beyond wears, the nearest trailing the sort
+    // arms)
+    app.on_debug_options_arrow(1, 0);
+    assert_eq!(
+        app.debug_focus,
+        Some(DebugFocusSeat::Pill { entry: 0, pill: 1 }),
+        "the RIGHT arrow the strict walk the overlay pill arms"
+    );
+    app.on_debug_options_arrow(1, 0);
+    assert_eq!(
+        app.debug_focus,
+        Some(DebugFocusSeat::Pill { entry: 0, pill: 2 }),
+        "the RIGHT arrow the Always pill the nearest trailing arms"
+    );
+    // THE RIGHTMOST'S OWN WALL (the RIGHT arrow the no-candidate walk
+    // the silence keeps — the always pill the rightmost widget the
+    // beyond set never wears)
+    app.on_debug_options_arrow(1, 0);
+    assert_eq!(
+        app.debug_focus,
+        Some(DebugFocusSeat::Pill { entry: 0, pill: 2 }),
+        "the rightmost seat the arrow the silence keeps"
+    );
+    // THE LEFT'S OWN WALK (the trailing edge the right edges answer —
+    // the overlay pill the nearest beyond wears, the walk the seats
+    // the reverse order serves)
+    app.on_debug_options_arrow(-1, 0);
+    assert_eq!(
+        app.debug_focus,
+        Some(DebugFocusSeat::Pill { entry: 0, pill: 1 }),
+        "the LEFT arrow the overlay pill the nearest right edge arms"
+    );
+    app.on_debug_options_arrow(-1, 0);
+    assert_eq!(
+        app.debug_focus,
+        Some(DebugFocusSeat::Pill { entry: 0, pill: 0 }),
+        "the LEFT arrow the Off pill the walk retires"
+    );
+    // THE LEFT'S OWN VAGUE RIDE (the strict walk the row band refuses
+    // — the no-overlap fallback the nearest synthetic position arms:
+    // the PERFORMANCE preset the (right-edge, center) distance law
+    // answers [the dflt/box the farther centers the same law never
+    // wears])
+    app.on_debug_options_arrow(-1, 0);
+    assert_eq!(
+        app.debug_focus,
+        Some(DebugFocusSeat::PresetPerf),
+        "the LEFT arrow the vague walk the nearest preset arms"
+    );
+    // THE UP'S OWN STRICT RIDE (the vertical direction the x-band —
+    // the perf seat the box's own x-span the overlap answers: the
+    // trailing-edge law the box's top beyond wears, the dflt preset
+    // the x-gap the same band never shares; the BOX seat the flag +
+    // the None field the apply law wears)
+    app.on_debug_options_arrow(0, -1);
+    assert!(
+        app.debug_search_focus,
+        "the UP arrow the strict walk the box's x-span arms"
+    );
+    assert_eq!(
+        app.debug_focus, None,
+        "the box seat the field the None law keeps"
+    );
+    // THE BOX SEAT'S OWN ARROW SILENCE (the EditBox the arrow keys the
+    // cursor law eats — the tableswitch 259..269 the four arrows the
+    // box's own walk consumes, the focus the move never wears: the
+    // DOWN arrow the box the same silence keeps)
+    app.on_debug_options_arrow(0, 1);
+    assert!(
+        app.debug_search_focus,
+        "the box seat the DOWN arrow the same silence keeps"
+    );
+    // THE TAB'S OWN RE-ARM (the cycle walk the perf preset the seat
+    // re-banks — the inactive dflt the skip law serves)
+    app.on_debug_options_tab(true);
+    assert_eq!(
+        app.debug_focus,
+        Some(DebugFocusSeat::PresetPerf),
+        "the tab walk the perf preset the seat re-banks"
+    );
+    // THE DOWN'S OWN VAGUE RIDE (the perf seat the pills' column
+    // the x-overlap refuses — the fallback the nearest pair arms: the
+    // first row's Off pill the (bottom-edge, center) distance law
+    // answers)
+    app.on_debug_options_arrow(0, 1);
+    assert_eq!(
+        app.debug_focus,
+        Some(DebugFocusSeat::Pill { entry: 0, pill: 0 }),
+        "the DOWN arrow the vague walk the nearest pill arms"
+    );
+    // THE UP'S OWN VAGUE RIDE (the pill seat the x-band the strict
+    // walk refuses — the presets/box the x-gap the same band never
+    // shares — the fallback the nearest (top-edge, center-x) pair:
+    // the perf preset the nearest center keeps [the box the farther
+    // center the same law never wears])
+    app.on_debug_options_arrow(0, -1);
+    assert_eq!(
+        app.debug_focus,
+        Some(DebugFocusSeat::PresetPerf),
+        "the UP arrow the vague walk the nearest preset arms"
+    );
+    // THE DOWN'S OWN STRICT RIDE (the pill column the x-overlap band
+    // the whole column shares — the nearest top edge the next row's
+    // own pill wears)
+    app.on_debug_options_arrow(0, 1);
+    assert_eq!(
+        app.debug_focus,
+        Some(DebugFocusSeat::Pill { entry: 0, pill: 0 }),
+        "the DOWN arrow the pill the same seat re-arms"
+    );
+    app.on_debug_options_arrow(0, 1);
+    assert_eq!(
+        app.debug_focus,
+        Some(DebugFocusSeat::Pill { entry: 1, pill: 0 }),
+        "the DOWN arrow the next row's Off pill the nearest top wears"
+    );
+    // THE CLOSED SCREEN'S OWN GATE (the non-debug screen the arrow
+    // walk the silence keeps — the seat the close never re-arms)
+    app.on_debug_options_key(); // the close
+    let seat_before = app.debug_focus;
+    app.on_debug_options_arrow(0, 1);
+    assert_eq!(
+        app.debug_focus, seat_before,
+        "the closed screen the arrow the silence keeps"
+    );
+}
 // THE DEBUG PROFILE FILE'S OWN ROUND TRIP (javap 26.2 the
 // DebugScreenEntryList load/save walks the persistence law — the
 // debug-profile.json sibling the options.txt game dir wears: the
