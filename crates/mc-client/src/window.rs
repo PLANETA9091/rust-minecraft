@@ -2388,6 +2388,15 @@ pub fn run_gui_app(
         // keyReleased law serves must run while the SWITCHER is up, the
         // same law the F3+F4 open's screen-eats-input shape keeps)
         let f3_down = window.is_key_down(Key::F3);
+        // THE DEBUG CRASH'S OWN HOLD (the keyPress debugCrashKeyTime
+        // arm + the tick() expiry the merged walk serves — the RAW
+        // isKeyDown poll the held C the InputConstants walk answers,
+        // the f3_down the keyDebugModifier.isDown gate keeps, the
+        // no-gate law the menus the same clock keeps — the arm rides
+        // OUTSIDE the in-world block the screen-agnostic lane speaks;
+        // the hold's warnings the chat queues, the remaining < 2s the
+        // stopping flag the game's own end banks)
+        app.tick_debug_crash_hold(window.is_key_down(Key::C), f3_down, now_millis());
         if in_world {
             // THE LOOK'S OWN LEAVE-GUARD (the vanilla grab's own law —
             // the cursor the grab holds the off-window roam NEVER

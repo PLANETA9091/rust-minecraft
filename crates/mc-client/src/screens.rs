@@ -9501,6 +9501,22 @@ pub struct App {
     /// off, the F3+2 press sets, the F3 release clears without the
     /// overlay toggle the bare release answers).
     pub debug_modifier_used: bool,
+    /// THE DEBUG CRASH'S OWN CLOCK (javap KeyboardHandler's
+    /// debugCrashKeyTime — the F3+C hold the keyPress arm starts, the
+    /// release the `-1` clear banks, the `> 0` gate the idle arms
+    /// read; the tick walk the remaining serves — the 10000ms window
+    /// the ldc2_w constant keeps, the <2000 the ReportedException
+    /// "Manually triggered debug crash" the game's own end answers).
+    pub debug_crash_key_time: i64,
+    /// THE DEBUG CRASH'S OWN REPORTED CLOCK (javap
+    /// debugCrashKeyReportedTime — the 1-second warning cadence the
+    /// tick walk keeps, the reset the clock-start arm banks).
+    pub debug_crash_reported_time: i64,
+    /// THE DEBUG CRASH'S OWN WARNING COUNT (javap
+    /// debugCrashKeyReportedCount — the zero the start banks, the
+    /// count the first HELD row the held-down message speaks, the
+    /// rest the countdown rows the ceil serves).
+    pub debug_crash_reported_count: i64,
     /// THE FRAME-TIME RING (javap LocalSampleLogger(1)'s own grid —
     /// the 240 one-column rows the `sipush 240` ctor keeps, the
     /// append at (start+size)%240 the useSample walk banks, the
@@ -10954,6 +10970,9 @@ impl App {
             bw_samples: Vec::new(),
             tick_samples: Vec::new(),
             debug_modifier_used: false,
+            debug_crash_key_time: 0,
+            debug_crash_reported_time: 0,
+            debug_crash_reported_count: 0,
             frame_samples: [0; FPS_CHART_CAPACITY],
             frame_sample_start: 0,
             frame_sample_size: 0,
@@ -39682,6 +39701,87 @@ impl App {
         // THE USED FLAG (pc 930-931 — the no-gate walk the bank wears
         // regardless)
         self.debug_modifier_used = true;
+    }
+
+    /// THE DEBUG CRASH'S OWN HOLD (javap 26.2 KeyboardHandler's
+    /// keyPress pc 81-186 + tick() pc 0-214 the two walks the merged
+    /// frame arm serves — the window frame calls both every beat the
+    /// vanilla clock runs). THE START ARM (keyPress pc 81-186): the
+    /// `!keyDebugCrash.isUnbound() &&
+    /// InputConstants.isKeyDown(window, key.getValue())` the RAW
+    /// poll serves (the rising-edge `is_key_pressed` the family's
+    /// chords wear — this arm the HELD state reads), the
+    /// `keyDebugModifier.isDown()` the F3 gate keeps; the clock the
+    /// `> 0` state arms (pc 123-129), the `!(crash && modifier)`
+    /// release the `-1` clear banks (pc 129-149 — the C release OR
+    /// the F3 release the same walk clears); the fresh start (pc
+    /// 152-186) the `usedDebugKeyAsModifier` the family's spend banks
+    /// (the bl7 the modifier==overlay the TRUE normally answers — the
+    /// debug_modifier_used flag the F3+X chords' own law), the
+    /// `debugCrashKeyTime = now` the clock arms, the reported clock
+    /// the same now banks, the count the zero keeps. THE TICK WALK
+    /// (tick() pc 0-214): the idle clock the walk never serves, the
+    /// remaining `10000 - (now - debugCrashKeyTime)` the ldc2_w
+    /// constant banks (pc 13-23); the `< 2000` the ReportedException
+    /// "Manually triggered debug crash" serves (pc 31-102 — the
+    /// CrashReport "Manual crash details" category the report
+    /// carries, the athrow the game's own end answers; the Rust the
+    /// stopping flag the run loop's own exit speaks, the clock the
+    /// crash walk never clears the vanilla field the same state
+    /// keeps); the `>= 1000` cadence the warnings serve (pc 103-211):
+    /// the count-0 the `debugFeedbackComponent` the YELLOW row speaks
+    /// (the `debug.crash.message` key the two args the translatable
+    /// passes — the en_us row `F3 + C is held down. This will crash
+    /// the game unless released.` the baked text the args never
+    /// bend), the rest the `debugWarningComponent` the RED countdown
+    /// speaks (the `debug.crash.warning` row `Crashing in %s...` the
+    /// `Mth.ceil(remaining / 1000.0)` arg answers), the reported
+    /// clock the now re-banks, the count the +1 grows. THE NO-GATE
+    /// ARM: the walks no screen/world check wear — the hold the menus
+    /// the same clock keeps (the keyPress the screen-agnostic lane
+    /// the bytecode speaks).
+    pub fn tick_debug_crash_hold(&mut self, crash_down: bool, f3_down: bool, now: i64) {
+        // THE KEY PRESS ARM (pc 123-186 — the state the raw poll
+        // serves, the release the clear banks)
+        if self.debug_crash_key_time > 0 {
+            if !(crash_down && f3_down) {
+                self.debug_crash_key_time = -1;
+            }
+        } else if crash_down && f3_down {
+            self.debug_modifier_used = true;
+            self.debug_crash_key_time = now;
+            self.debug_crash_reported_time = now;
+            self.debug_crash_reported_count = 0;
+        }
+        // THE TICK WALK (pc 0-214 — the expiry the remaining serves)
+        if self.debug_crash_key_time > 0 {
+            let remaining = 10_000i64 - (now - self.debug_crash_key_time);
+            // THE CRASH (pc 31-102 — the remaining < 2s the
+            // ReportedException the game's own end answers; the
+            // client's stopping flag the run loop's exit speaks)
+            if remaining < 2_000 {
+                self.stopping = true;
+                return;
+            }
+            // THE WARNINGS (pc 103-211 — the 1-second cadence the
+            // reported clock keeps, the first the held row, the rest
+            // the countdown)
+            if now - self.debug_crash_reported_time >= 1_000 {
+                if self.debug_crash_reported_count == 0 {
+                    self.push_chat_message(
+                        "\u{a7}eF3 + C is held down. This will crash the game unless released."
+                            .to_string(),
+                    );
+                } else {
+                    self.push_chat_message(format!(
+                        "\u{a7}cCrashing in {}...",
+                        (remaining as f64 / 1000.0).ceil() as i64
+                    ));
+                }
+                self.debug_crash_reported_time = now;
+                self.debug_crash_reported_count += 1;
+            }
+        }
     }
 
     /// THE F3+F4 CHORD'S OWN OPEN LANE (javap 26.2

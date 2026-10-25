@@ -10736,6 +10736,77 @@ fn the_reload_resource_packs_chord_the_word_the_splash_reload_wear() {
     let _ = app;
 }
 
+// THE DEBUG CRASH'S OWN HOLD (the keyPress debugCrashKeyTime arm +
+// the tick() expiry the merged walk serves — the start the clock
+// arms, the first second the held row the yellow speaks, the rest
+// the countdown the red ceil speaks, the release the clock clears,
+// the remaining < 2s the stopping flag the game's own end banks)
+#[test]
+fn the_debug_crash_hold_the_clock_the_warnings_the_crash_wear() {
+    let mut app = App::new(262);
+    app.enter_world();
+    let t0 = 1_000_000i64;
+    // THE START (the F3+C down the clock arms — the reported clock +
+    // the count the same breath banks, the modifier the hold spends)
+    app.tick_debug_crash_hold(true, true, t0);
+    assert_eq!(app.debug_crash_key_time, t0, "the clock the start banks");
+    assert_eq!(
+        app.debug_crash_reported_count, 0,
+        "the count the start zeroes"
+    );
+    assert!(app.debug_modifier_used, "the modifier the hold spends");
+    // THE IDLE CLOCKS (the no-hold walk the clocks never arms — the
+    // lone F3 the gate refuses, the lone C the same walk keeps)
+    let mut idle = App::new(262);
+    idle.tick_debug_crash_hold(true, false, t0);
+    idle.tick_debug_crash_hold(false, true, t0 + 500);
+    assert_eq!(idle.debug_crash_key_time, 0, "the gates the start refuse");
+    assert!(!idle.stopping, "the idle walk the game keeps");
+    let _ = idle;
+    // THE FIRST WARNING (the 1-second cadence the HELD row speaks —
+    // the §e the feedback channel wears, the count the +1 grows)
+    app.tick_debug_crash_hold(true, true, t0 + 1100);
+    assert_eq!(
+        app.chat_messages.last().map(|(t, _)| t.as_str()),
+        Some("\u{a7}eF3 + C is held down. This will crash the game unless released."),
+        "the held row the feedback walk wears"
+    );
+    assert_eq!(
+        app.debug_crash_reported_count, 1,
+        "the count the warning grows"
+    );
+    assert!(!app.stopping, "the game the hold never ends early");
+    // THE COUNTDOWN (the second warning the ceil serves — the §c the
+    // warning channel wears; remaining 7500 the ceil-8 row speaks)
+    app.tick_debug_crash_hold(true, true, t0 + 2500);
+    assert_eq!(
+        app.chat_messages.last().map(|(t, _)| t.as_str()),
+        Some("\u{a7}cCrashing in 8..."),
+        "the countdown row the warning walk wears"
+    );
+    // THE RELEASE (the clock clears — the game lives, the walk stops)
+    app.tick_debug_crash_hold(false, true, t0 + 3000);
+    assert_eq!(app.debug_crash_key_time, -1, "the release the clock clears");
+    assert!(!app.stopping, "the release the game keeps");
+    // THE RESTART + THE CRASH (the remaining < 2s the
+    // ReportedException serves — the stopping flag the run loop's own
+    // exit speaks, the clock the crash walk never clears)
+    app.tick_debug_crash_hold(true, true, t0 + 4000);
+    assert_eq!(
+        app.debug_crash_key_time,
+        t0 + 4000,
+        "the restart the clock arms"
+    );
+    app.tick_debug_crash_hold(true, true, t0 + 12500);
+    assert!(app.stopping, "the crash the stopping flag speaks");
+    assert_eq!(
+        app.debug_crash_key_time,
+        t0 + 4000,
+        "the clock the crash walk never clears"
+    );
+    let _ = app;
+}
+
 // THE FOV EFFECT SCALE'S OWN ROW (the 26.2 AccessibilityOptionsScreen
 // row the file's law wears — the fov_scale_tail_262.py probe the
 // Camera.tickFov read the body's tick passes: the boot load the body's
