@@ -2881,6 +2881,17 @@ pub fn run_gui_app(
         // the law honest (the screen-open wheel never leaks a stale
         // hotbar step).
         if let Some((sdx, sdy)) = window.get_scroll_wheel() {
+            // THE FOLD (javap MouseHandler.onScroll pcs 67-103 — the
+            // 262 dump banks): the discrete the signum the raw delta
+            // answers, the sensitivity the `dmul` the BOTH axes
+            // multiplies — the folded pair the WHOLE dispatch rides
+            // (the screen arm's mouseScrolled the folded doubles take,
+            // the screen-null arm the scrollWheelHandler the same pair
+            // feeds; [`App::fold_scroll`] the stores the 227 round
+            // wore reads). The fold the poll answers ONCE — the lanes
+            // the folded doubles answer, the raw deltas the dispatch
+            // never re-serves.
+            let (fdx, fdy) = app.fold_scroll(sdx as f64, sdy as f64);
             if app.chat_open {
                 // THE CHAT SUGGESTIONS' OWN SCROLL (the
                 // SuggestionsList.mouseScrolled walk — the contained
@@ -2888,25 +2899,25 @@ pub fn run_gui_app(
                 // keeps; the open chat the hotbar/container arms never
                 // reach — the in_world gate the chat-open exclude
                 // already keeps)
-                app.on_chat_scroll(sdx as f64, sdy as f64, gmx, gmy);
+                app.on_chat_scroll(fdx, fdy, gmx, gmy);
             } else if in_world {
-                app.on_hotbar_scroll(sdx as f64, sdy as f64);
+                app.on_hotbar_scroll(fdx, fdy);
             } else if matches!(
                 app.screen,
                 crate::screens::ScreenKind::Chest | crate::screens::ScreenKind::Inventory
             ) {
-                app.on_container_scroll(sdx as f64, sdy as f64, gmx, gmy);
+                app.on_container_scroll(fdx, fdy, gmx, gmy);
             } else if app.screen == crate::screens::ScreenKind::Creative {
                 // THE PICKER'S OWN SCROLL (the mouseScrolled walk's
                 // creative arm — the delta / scrollableRows subtraction
                 // the scrollTo refill rides)
-                app.on_creative_scroll(sdy as f64);
+                app.on_creative_scroll(fdy);
             } else if app.screen == crate::screens::ScreenKind::KeyBinds {
                 // THE KEY BINDS LIST'S OWN SCROLL (the mouseScrolled
                 // walk the AbstractScrollArea serves — the amount the
                 // [`App::on_kb_scroll`] the wheel's own step wears, the
                 // band the render's own 30-top/28-footer law keeps)
-                app.on_kb_scroll(sdy as f64, height as i32 / 2);
+                app.on_kb_scroll(fdy, height as i32 / 2);
             }
         }
         // THE FIXED CLOCK SPENDS (vanilla `Minecraft.runTick`'s own

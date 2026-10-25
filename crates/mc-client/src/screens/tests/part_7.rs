@@ -10,27 +10,27 @@ fn the_scroll_accumulator_keeps_the_remainder_and_resets() {
     let mut app = App::new(3);
     app.enter_world();
     app.spawn_offline_body();
-    // the sub-step trackpad frame: 0.3 folded -> 0.6 < 1 — no step
-    app.on_hotbar_scroll(0.0, 0.3);
+    // the sub-step trackpad frame: 0.6 folded < 1 — no step
+    app.on_hotbar_scroll(0.0, 0.6);
     assert_eq!(app.selected_hotbar, 0, "the sub-step stays silent");
     assert!(
         (app.scroll_acc_y - 0.6).abs() < 1e-9,
         "the accumulator holds"
     );
     // the crossing: +0.6 more -> 1.2 -> ONE step, the 0.2 remainder
-    app.on_hotbar_scroll(0.0, 0.3);
+    app.on_hotbar_scroll(0.0, 0.6);
     assert_eq!(app.selected_hotbar, 8, "the crossing fires (up-scroll)");
     assert!((app.scroll_acc_y - 0.2).abs() < 1e-9, "the remainder kept");
     // the DIRECTION FLIP resets the stale positive remainder — the
     // first negative frame stays sub-step
-    app.on_hotbar_scroll(0.0, -0.4);
+    app.on_hotbar_scroll(0.0, -0.6);
     assert_eq!(app.selected_hotbar, 8, "the flipped frame stays silent");
     assert!(
-        (app.scroll_acc_y + 0.8).abs() < 1e-9,
+        (app.scroll_acc_y + 0.6).abs() < 1e-9,
         "the reset + the fold"
     );
     // the crossing the other way
-    app.on_hotbar_scroll(0.0, -0.4);
+    app.on_hotbar_scroll(0.0, -0.6);
     assert_eq!(app.selected_hotbar, 0, "the down-scroll crossing fires");
     // the X TILT (the call site's inverted arm): the right tilt
     // moves toward the higher numbers

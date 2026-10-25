@@ -34152,11 +34152,46 @@ impl App {
     /// `setSelectedSlot` walk the number keys answer (the held model's
     /// refresh, the live session's SelectHotbar echo, the repeat and
     /// the out-of-domain the gates hold).
+    /// THE WHEEL'S OWN FOLD (javap `MouseHandler.onScroll` pcs 67-103
+    /// — the 262 dump banks: the discrete flag the signum the raw
+    /// delta answers, the sensitivity the `dmul` the BOTH branches
+    /// multiplies — the ternary the operand selects, the multiply the
+    /// selection follows). The stores the 227 round wore the fold's
+    /// own operands become: the wheel slider's `10^(i/100)` double the
+    /// scale serves, the discrete boolean the sub-notch trackpad
+    /// deltas the whole sign speaks. The folded pair the WHOLE
+    /// dispatch rides (the screen arm's mouseScrolled the folded
+    /// doubles take at pcs 174-177, the screen-null arm the
+    /// scrollWheelHandler the same pair feeds) — the window's poll
+    /// folds ONCE, the lanes the folded deltas answer.
+    pub fn fold_scroll(&self, delta_x: f64, delta_y: f64) -> (f64, f64) {
+        let sens = self.mouse_wheel_sensitivity;
+        let fold = |raw: f64| {
+            if self.discrete_mouse_scroll {
+                raw.signum() * sens
+            } else {
+                raw * sens
+            }
+        };
+        (fold(delta_x), fold(delta_y))
+    }
+
+    /// THE HOTBAR'S OWN WHEEL CYCLE (javap `MouseHandler.onScroll`
+    /// screen-null arm pcs 198-398 + `ScrollWheelHandler.onMouseScroll`
+    /// code 148 — the accumulator the fold the whole d2i steps emit,
+    /// the direction flip the stale remainder discards). The deltas
+    /// arrive FOLDED (the window's own poll — [`Self::fold_scroll`]
+    /// the sensitivity the discrete the raw doubles answered BEFORE
+    /// the lanes ride); the move lands through
+    /// [`Self::on_number_key`] — the same
+    /// `setSelectedSlot` walk the number keys answer (the held model's
+    /// refresh, the live session's SelectHotbar echo, the repeat and
+    /// the out-of-domain the gates hold).
     pub fn on_hotbar_scroll(&mut self, delta_x: f64, delta_y: f64) {
-        // THE FOLD (the defaults the options model keeps: discrete
-        // false, the sensitivity 1.0 — the Y axis the 2.0 fold carries)
+        // THE FOLDED DOUBLES (the raw delta the `* sensitivity` the
+        // dispatch served — the accumulator the folded pair adds)
         let folded_x = delta_x;
-        let folded_y = delta_y * 2.0;
+        let folded_y = delta_y;
         // THE ACCUMULATOR'S SIGN-FLIP RESET (the direction change
         // discards the stale remainder)
         if self.scroll_acc_x != 0.0 && folded_x.signum() != self.scroll_acc_x.signum() {

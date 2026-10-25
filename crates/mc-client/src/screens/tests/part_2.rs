@@ -6248,8 +6248,9 @@ fn the_spectator_inputs_the_menu_walks_speak() {
     // THE WHEEL'S SKIP WALK (javap onMouseScrolled pcs 0-82 — the
     // route the -direction the spectator arm feeds, the EMPTY and
     // disabled slots the `j += i` loop skips, the CLOSE the slot-8
-    // landing selects): the up-scroll the +2 direction the negated
-    // fold feeds — the walk from slot 0 the close lands on
+    // landing selects): the up-scroll the +1 direction the negated
+    // fold feeds — the walk from slot 0 the disabled/empty run the
+    // skip loop answers, the close lands on
     app.on_hotbar_scroll(0.0, -1.0);
     assert_eq!(
         app.spectator_menu.as_ref().unwrap().selected_slot,
@@ -6279,14 +6280,14 @@ fn the_spectator_fade_the_speed_spins_the_survival_wears() {
     // THE MENU-CLOSED WHEEL THE FLYING SPEED FOLDS (javap
     // MouseHandler.onScroll pcs 316-364 — the spectator arm's own
     // flying-speed lane: `flyingSpeed + y * 0.005` the step, the
-    // clamp(0.0, 0.2) the pair speaks — the y the folded steps'
-    // own 2x the sensitivity carries)
+    // clamp(0.0, 0.2) the pair speaks — the y the folded NOTCH the
+    // sensitivity 1.0 the one whole step answers)
     app.game_mode = GameMode::Spectator;
     app.on_hotbar_scroll(0.0, 1.0);
     let b = app.body.as_ref().unwrap();
     assert!(
-        (b.flying_speed - 0.06).abs() < 1e-6,
-        "the two-step fold the +0.01 rides: {}",
+        (b.flying_speed - 0.055).abs() < 1e-6,
+        "the one-notch step the +0.005 rides: {}",
         b.flying_speed
     );
     // THE CLAMP the lower arm answers

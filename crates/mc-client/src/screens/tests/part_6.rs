@@ -8446,7 +8446,7 @@ fn the_scroll_wheel_cycles_the_hotbar() {
     app.spawn_offline_body();
     app.inventory.items[1] = (62, 5);
     app.hotbar_slots = app.inventory.hotbar(); // the staging's own sync
-                                               // the DOWN notch: the folded -2.0 emits the step, the selection
+                                               // the DOWN notch: the folded -1.0 emits the step, the selection
                                                // moves toward the higher numbers
     app.on_hotbar_scroll(0.0, -1.0);
     assert_eq!(app.selected_hotbar, 1, "the down-scroll's next slot");

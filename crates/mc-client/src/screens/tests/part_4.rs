@@ -13559,6 +13559,65 @@ fn the_mouse_settings_the_rows_the_wheel_the_invert_the_file_wear() {
     let _ = std::fs::remove_dir_all(&dir);
 }
 
+/// THE WHEEL'S OWN FOLD (javap `MouseHandler.onScroll` pcs 67-103 —
+/// the 262 dump banks: the discrete flag the signum the raw delta
+/// answers, the sensitivity the `dmul` the BOTH branches multiplies —
+/// the ternary the operand selects, the multiply the selection
+/// follows): the stores the 227 round wore the fold's own operands
+/// become, the folded pair the whole dispatch rides, the hotbar's
+/// own accumulator the folded doubles the whole steps emit (the
+/// notch the ONE slot the signum law speaks, the sub-notch the
+/// remainder the crossing's next notch answers).
+#[test]
+fn the_wheel_fold_the_sensitivity_the_discrete_the_lanes_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    // THE DEFAULT the identity keeps (the sensitivity 1.0 the raw
+    // double the fold never bends, the discrete false the signum
+    // never rides)
+    let (fx, fy) = app.fold_scroll(0.3, -1.0);
+    assert!((fx - 0.3).abs() < 1e-9, "the X the identity keeps: {fx}");
+    assert!((fy + 1.0).abs() < 1e-9, "the Y the identity keeps: {fy}");
+    // THE SENSITIVITY the dmul serves (the wheel slider's own
+    // `10^(i/100)` double the 227 round stores — the 2.0 the raw
+    // BOTH axes doubles)
+    app.mouse_wheel_sensitivity = 2.0;
+    let (fx, fy) = app.fold_scroll(0.3, -1.0);
+    assert!((fx - 0.6).abs() < 1e-9, "the X the scale wears: {fx}");
+    assert!((fy + 2.0).abs() < 1e-9, "the Y the scale wears: {fy}");
+    // THE DISCRETE the signum answers (the sub-notch trackpad delta
+    // the whole sign the fold speaks — the signum the sensitivity's
+    // own dmul carries)
+    app.discrete_mouse_scroll = true;
+    let (fx, fy) = app.fold_scroll(0.3, -1.0);
+    assert!((fx - 2.0).abs() < 1e-9, "the X the signum wears: {fx}");
+    assert!((fy + 2.0).abs() < 1e-9, "the Y the signum wears: {fy}");
+    // THE NOTCH the ONE slot the hotbar cycle speaks (the fold the
+    // defaults restored — the folded -1.0 the whole step the d2i
+    // emits, the selection the signum moves, the store untouched)
+    app.discrete_mouse_scroll = false;
+    app.mouse_wheel_sensitivity = 1.0;
+    app.inventory.items[1] = (62, 5);
+    app.hotbar_slots = app.inventory.hotbar(); // the staging's own sync
+    app.on_hotbar_scroll(0.0, -1.0);
+    assert_eq!(app.selected_hotbar, 1, "the notch the next slot");
+    assert_eq!(app.held_id(), Some(62), "the held model follows");
+    // THE SUB-NOTCH the remainder the accumulator keeps (the 0.6 the
+    // crossing's next notch the 1.2 the ONE step wears — the
+    // direction flip the stale remainder discards, the up-scroll the
+    // back slot answers)
+    app.on_hotbar_scroll(0.0, 0.6);
+    assert_eq!(app.selected_hotbar, 1, "the sub-notch stays silent");
+    assert!(
+        (app.scroll_acc_y - 0.6).abs() < 1e-9,
+        "the remainder held: {}",
+        app.scroll_acc_y
+    );
+    app.on_hotbar_scroll(0.0, 0.6);
+    assert_eq!(app.selected_hotbar, 0, "the crossing the back slot");
+}
+
 /// THE GAMEPLAY TRIO'S OWN LAWS (the autopush-188 walk — the
 /// use/attack/pickItem MOUSE binds the ctor's registrations the store
 /// keeps, the mouse capture the mouseClicked gate the armed rebind
