@@ -7542,6 +7542,15 @@ pub struct App {
     /// row's own word wears, the Controls row the index-6 seat the
     /// array tail hosts).
     pub operator_items_tab: bool,
+    /// THE PLAYER'S OWN PERMISSION LEVEL (the LocalPlayer
+    /// `permissionsLevel` field the client mirrors — the entity-event
+    /// 24..28 packet the handleEntityEvent walk rides [the follow-up
+    /// round owns the wire lane], the world's own opens arm the sim's
+    /// truth: the OFFLINE world the integrated server's owner law the
+    /// level 4 wears, the networked join the fresh server's un-opped 0
+    /// the ctor keeps — the vanilla LocalPlayer's own pre-connection
+    /// default).
+    pub permission_level: u8,
     /// THE TOGGLE LATCHES' OWN BANK (the ToggleKeyMapping's own `isDown`
     /// state the flip law writes — the four seats the
     /// TOGGLE_CROUCH/SPRINT/ATTACK/USE indices answer, the press the
@@ -11171,6 +11180,7 @@ impl App {
             toggle_use: false,
             auto_jump: false,
             operator_items_tab: false,
+            permission_level: 0,
             sprint_window: crate::options_file::DEFAULT_SPRINT_WINDOW,
             toggle_latch: [false; 4],
             toggle_released_by_screen: [false; 4],
@@ -22128,6 +22138,11 @@ impl App {
             // the first render's step check the honest pair answers)
             self.day_bake = Some(day_bake_inputs(&world));
             self.world_is_network = false;
+            // THE OWNER'S OWN LEVEL (the integrated server's op law — the
+            // offline world the owner the level 4 wears, the
+            // canUseGameMasterBlocks ask the 2 the owner answers; the
+            // next session's join the fresh word rides)
+            self.permission_level = 4;
             // the App OWNS the procedural voxels now (the block-use
             // lane's placement prediction edits them in place). THE
             // JOURNAL'S OWN ARM (the gen-time sets the terrain shape
@@ -22559,6 +22574,55 @@ impl App {
             .collect()
     }
 
+    /// THE OP TAB'S OWN PALETTE (the lambda$bootstrap$33 displayItems
+    /// generator's own walk — the hasPermissions gate the twelve rows
+    /// accepts: command_block, chain_command_block,
+    /// repeating_command_block, command_block_minecart, jigsaw,
+    /// structure_block, structure_void, barrier, debug_stick,
+    /// test_instance_block, test_block, light — the registry's own
+    /// wire order the twelve names the whole walk banks [the light
+    /// row the level-15 component the vanilla stack wears, the plain
+    /// item the sim's (id, count) palette keeps — the component the
+    /// follow-up round owes]).
+    fn creative_operator_items() -> Vec<(i32, i32)> {
+        const OP_ROWS: [&str; 12] = [
+            "command_block",
+            "chain_command_block",
+            "repeating_command_block",
+            "command_block_minecart",
+            "jigsaw",
+            "structure_block",
+            "structure_void",
+            "barrier",
+            "debug_stick",
+            "test_instance_block",
+            "test_block",
+            "light",
+        ];
+        OP_ROWS
+            .iter()
+            .filter_map(|name| {
+                mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                    .iter()
+                    .position(|n| n == name)
+                    .map(|i| (i as i32, 1))
+            })
+            .collect()
+    }
+
+    /// THE OPERATOR TAB'S OWN GATE (the CreativeModeInventoryScreen
+    /// hasPermissions walk's own conjunction — the
+    /// canUseGameMasterBlocks ask the permission level 2 answers, the
+    /// displayOperatorCreativeTab ctor arg the operatorItemsTab
+    /// option's word carries; the strip's tabs() list the
+    /// shouldDisplay hasAnyItems law the EMPTY palette the hidden seat
+    /// speaks — the closed gate the op tab the strip never banks, the
+    /// getTabX the tab's own static column the seat the GAP keeps [the
+    /// inventory tab the corner seat the re-flow never wears]).
+    pub fn creative_operator_gate(&self) -> bool {
+        self.permission_level >= 2 && self.operator_items_tab
+    }
+
     /// THE SEARCH TAB'S OWN FILTER (the refreshSearchResults walk's
     /// honest stand-in — the identifier substring the case-insensitive
     /// ask answers; the vanilla's tooltip search tree the full-name
@@ -22663,7 +22727,10 @@ impl App {
         // re-open keeps, EVERY seat — the INVENTORY wrapped seat the
         // same walk's own rebuild answers now. The out-of-range index
         // the bounds reset alone refuses.)
-        if self.creative_tab >= CREATIVE_TABS.len() {
+        if self.creative_tab >= CREATIVE_TABS.len()
+            || (CREATIVE_TABS[self.creative_tab].kind == CreativeTabKind::Operator
+                && !self.creative_operator_gate())
+        {
             self.creative_tab = 0;
         }
         self.creative_search.clear();
@@ -22746,13 +22813,24 @@ impl App {
                 // fresh-scroll tail the walk's own order keeps)
                 self.creative_search.clear();
             }
-            CreativeTabKind::SavedHotbar | CreativeTabKind::Operator => {
+            CreativeTabKind::SavedHotbar => {
                 // THE HONEST SILENCE (the hotbar pages the
                 // HotbarManager file lane rides — the follow-up round
-                // owes; the operator tab the hasPermissions gate keeps
-                // — the sim's permission lane never armed). The click
-                // the selection never banks.
+                // owes). The click the selection never banks.
                 return;
+            }
+            CreativeTabKind::Operator => {
+                // THE GATE'S OWN ANSWER (the hasPermissions walk the
+                // closed gate the selection never banks — the tabs()
+                // list the hidden seat the strip never banks either;
+                // the OPEN gate the selectTab the op rows the palette
+                // refills — the displayItems generator's own twelve
+                // rows the registry-known pair the honest skip keeps)
+                if !self.creative_operator_gate() {
+                    return;
+                }
+                self.creative_search.clear();
+                self.creative_items = Self::creative_operator_items();
             }
             CreativeTabKind::Search => {
                 // the both-way clear (the selectTab's setValue("") walk:
@@ -22931,6 +23009,9 @@ impl App {
         let (px, py) = self.creative_panel;
         let (lx, ly) = (mx - px, my - py);
         for (i, tab) in CREATIVE_TABS.iter().enumerate() {
+            if tab.kind == CreativeTabKind::Operator && !self.creative_operator_gate() {
+                continue; // the hidden seat the tabs() list excludes
+            }
             let (tx, ty) = creative_tab_origin(tab, 195, 136);
             if lx >= tx && lx < tx + 26 && ly >= ty && ly < ty + 32 {
                 return Some(i);
@@ -27619,7 +27700,10 @@ impl App {
         // unselected tabs first, the selected last)
         let selected = self.creative_tab;
         for i in 0..CREATIVE_TABS.len() {
-            if i == selected {
+            if i == selected
+                || (CREATIVE_TABS[i].kind == CreativeTabKind::Operator
+                    && !self.creative_operator_gate())
+            {
                 continue;
             }
             self.render_creative_tab(g, a, panel, i, false);
@@ -28446,6 +28530,10 @@ impl App {
         self.spawn_y = spawn_y;
         self.world_quads = Some(quads);
         self.world_is_network = true;
+        // THE FRESH SERVER'S OWN WORD (the un-opped join the level 0
+        // keeps — the entity-event 24..28 packet the follow-up round
+        // rides, the op'd seat the server's own word answers)
+        self.permission_level = 0;
         // the networked world owns the terrain from here — the offline
         // voxels drop (the placement prediction is the server's own
         // chunk refresh on this lane)

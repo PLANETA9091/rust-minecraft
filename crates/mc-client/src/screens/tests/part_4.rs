@@ -19695,3 +19695,176 @@ fn the_debug_profiles_the_presets_the_vanilla_maps_wear() {
         "the default preset the fps row the IN_OVERLAY wears"
     );
 }
+
+// THE OPERATOR ITEMS TAB'S OWN PERMISSION GATE (javap 26.2 the
+// CreativeModeInventoryScreen hasPermissions walk the conjunction law
+// — the canUseGameMasterBlocks ask the permission level 2 answers,
+// the displayOperatorCreativeTab ctor arg the operatorItemsTab
+// option's word carries; the strip's tabs() list the shouldDisplay
+// hasAnyItems law the EMPTY palette the hidden seat speaks, the
+// getTabX the tab's own static column the inventory corner the
+// re-flow never wears, the lambda$bootstrap$33 displayItems the
+// twelve rows the hasPermissions gate accepts)
+#[test]
+fn the_operator_items_tab_the_permission_gate_wears() {
+    fn rect_sig(fb: &crate::raster::Framebuf, x0: i32, y0: i32, w: i32, h: i32) -> u64 {
+        let mut hash: u64 = 1469598103934665603;
+        for y in (y0.max(0) as usize)..((y0 + h).min(fb.h as i32) as usize) {
+            for x in (x0.max(0) as usize)..((x0 + w).min(fb.w as i32) as usize) {
+                let i = (y * fb.w + x) * 3;
+                hash = (hash ^ fb.color[i] as u64).wrapping_mul(1099511628211);
+                hash = (hash ^ fb.color[i + 1] as u64).wrapping_mul(1099511628211);
+                hash = (hash ^ fb.color[i + 2] as u64).wrapping_mul(1099511628211);
+            }
+        }
+        hash
+    }
+    let mut app = App::new(3);
+    app.enter_world();
+    // THE OWNER'S OWN LEVEL (the offline world the integrated server's
+    // owner law the level 4 wears) + THE OPTION'S FRESH SEAT (the
+    // createBoolean default the FALSE keeps) — the gate the OPTION's
+    // half the closed verdict wears
+    assert_eq!(
+        app.permission_level, 4,
+        "the offline world the owner's level wears"
+    );
+    assert!(
+        !app.operator_items_tab,
+        "the fresh boot the option keeps off"
+    );
+    assert!(
+        !app.creative_operator_gate(),
+        "the closed gate the option's half keeps"
+    );
+    // THE CLOSED GATE'S OWN WALKS (the tabs() list the hidden seat
+    // never banks): the strip the op tab never paints, the hit-test
+    // the seat never answers, the select the silence keeps
+    let mut fb = crate::raster::Framebuf::new(640, 360);
+    let mut assets = GuiAssets::open(assets_root());
+    app.open_creative_picker();
+    app.render(&mut fb, &mut assets);
+    let (px, py) = app.creative_panel;
+    let op_seat = creative_tab_origin(&CREATIVE_TABS[12], 195, 136);
+    let inv_seat = creative_tab_origin(&CREATIVE_TABS[13], 195, 136);
+    assert_eq!(
+        op_seat,
+        (142, 132),
+        "the op tab the bottom column-5 seat wears"
+    );
+    assert_eq!(
+        inv_seat,
+        (169, 132),
+        "the inventory tab the corner column-6 seat wears"
+    );
+    let sig_op_closed = rect_sig(&fb, px + op_seat.0, py + op_seat.1, 26, 32);
+    let sig_inv_closed = rect_sig(&fb, px + inv_seat.0, py + inv_seat.1, 26, 32);
+    assert!(
+        app.creative_tab_at(px + op_seat.0 + 13, py + op_seat.1 + 16)
+            .is_none(),
+        "the closed gate the seat the hit-test never answers"
+    );
+    app.select_creative_tab(12);
+    assert_eq!(
+        app.creative_tab, 0,
+        "the closed gate the selection never banks"
+    );
+    // THE OPTION'S OWN HALF (the TRUE word the gate the option's half
+    // opens — the strip the op tab the unselected sprite paints, the
+    // INVENTORY tab the corner seat the SAME pixels keep [the getTabX
+    // the static column the re-flow never wears])
+    app.operator_items_tab = true;
+    assert!(
+        app.creative_operator_gate(),
+        "the owner level 4 + the true option the gate wears"
+    );
+    app.render(&mut fb, &mut assets);
+    let sig_op_open = rect_sig(&fb, px + op_seat.0, py + op_seat.1, 26, 32);
+    let sig_inv_open = rect_sig(&fb, px + inv_seat.0, py + inv_seat.1, 26, 32);
+    assert_ne!(
+        sig_op_closed, sig_op_open,
+        "the open gate the op sprite paints"
+    );
+    assert_eq!(
+        sig_inv_closed, sig_inv_open,
+        "the inventory tab the corner seat the re-flow never wears"
+    );
+    assert_eq!(
+        app.creative_tab_at(px + op_seat.0 + 13, py + op_seat.1 + 16),
+        Some(12),
+        "the open gate the seat the hit-test answers"
+    );
+    // THE SELECT'S OWN PALETTE (the selectTab walk the op rows the
+    // TWELVE-row walk refills — the lambda$bootstrap$33's own order
+    // the registry's whole walk the palette wears)
+    app.select_creative_tab(12);
+    assert_eq!(app.creative_tab, 12, "the open gate the selection banks");
+    let painted: Vec<&str> = app
+        .creative_items
+        .iter()
+        .filter(|&&(id, count)| count > 0 && id != 0)
+        .map(|&(id, _)| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .get(id as usize)
+                .copied()
+                .unwrap_or("")
+        })
+        .collect();
+    assert_eq!(
+        painted,
+        vec![
+            "command_block",
+            "chain_command_block",
+            "repeating_command_block",
+            "command_block_minecart",
+            "jigsaw",
+            "structure_block",
+            "structure_void",
+            "barrier",
+            "debug_stick",
+            "test_instance_block",
+            "test_block",
+            "light",
+        ],
+        "the op palette the twelve rows the generator's own order wears"
+    );
+    // THE RE-OPEN'S OWN RECONCILE (the stale hidden seat the reset
+    // retires — the bounds law the gated seat the same answer wears,
+    // the open gate the persisted seat the re-open keeps)
+    app.operator_items_tab = false;
+    app.open_creative_picker();
+    assert_eq!(
+        app.creative_tab, 0,
+        "the stale hidden seat the re-open retires"
+    );
+    app.operator_items_tab = true;
+    app.select_creative_tab(12);
+    app.open_creative_picker();
+    assert_eq!(
+        app.creative_tab, 12,
+        "the open gate the persisted seat the re-open keeps"
+    );
+    // THE PERMISSION'S OWN HALF (the canUseGameMasterBlocks ask the
+    // level 2 the boundary answers — the level 1 the closed verdict
+    // wears, the level 0 the fresh join's un-opped word keeps)
+    app.permission_level = 1;
+    assert!(
+        !app.creative_operator_gate(),
+        "the level 1 the canUseGameMasterBlocks ask refuses"
+    );
+    assert!(
+        app.creative_tab_at(px + op_seat.0 + 13, py + op_seat.1 + 16)
+            .is_none(),
+        "the level 1 the seat the hit-test never answers"
+    );
+    app.permission_level = 2;
+    assert!(
+        app.creative_operator_gate(),
+        "the level 2 the boundary the ask answers"
+    );
+    app.permission_level = 0;
+    assert!(
+        !app.creative_operator_gate(),
+        "the un-opped level the gate keeps closed"
+    );
+}
