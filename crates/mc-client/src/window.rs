@@ -2013,6 +2013,27 @@ pub fn run_gui_app(
         {
             app.on_debug_options_activate();
         }
+        // THE SLIDER'S OWN KEYBOARD GRAB (javap 26.2 the
+        // AbstractSliderButton.keyPressed walk the Options house
+        // serves — the Enter/Space the isSelection toggle the grab
+        // arms/releases, the armed Left/Right the ±1.0/(width-8) step
+        // the store's own lane adjusts, the un-armed/unfocused seat
+        // the FALSE the silence keeps; the click the MOUSE focus the
+        // setFocused law banks, the outside press the clearFocus
+        // wears)
+        if app.screen == crate::screens::ScreenKind::Options {
+            if window.is_key_pressed(Key::Enter, minifb::KeyRepeat::No)
+                || window.is_key_pressed(Key::Space, minifb::KeyRepeat::No)
+            {
+                app.on_options_key_selection();
+            }
+            if window.is_key_pressed(Key::Left, minifb::KeyRepeat::No) {
+                app.on_options_key_arrow(false);
+            }
+            if window.is_key_pressed(Key::Right, minifb::KeyRepeat::No) {
+                app.on_options_key_arrow(true);
+            }
+        }
         // THE ARROW KEYS' OWN FOCUS RIDE (javap 26.2 the Screen
         // keyPressed walk's 262-265 cases the ArrowNavigation events
         // serve — the LEFT/RIGHT/UP/DOWN keys the geometric walk the

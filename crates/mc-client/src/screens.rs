@@ -9055,6 +9055,21 @@ pub struct App {
     /// arms, the held drag the track's x the IntRange's own seat
     /// re-writes, the release the disarm speaks).
     pub sprint_window_drag: bool,
+    /// THE SLIDER'S OWN KEYBOARD FOCUS (the Screen's `focusedWidget`
+    /// belief the App-side seat keeps — the Options family's OWN house
+    /// lane the id string wears: the Some the focused widget's button
+    /// id answers [this round the THREE slider rows the claim set
+    /// keeps — the plain button seats' own claim the Tab-walk round
+    /// banks], the None the nothing-focused fresh ctor keeps, the
+    /// outside press the clearFocus walk wears).
+    pub options_focus: Option<&'static str>,
+    /// THE SLIDER'S OWN KEYBOARD GRAB (the AbstractSliderButton's
+    /// `canChangeValue` field the App-side mirror keeps — the
+    /// setFocused(true) the MOUSE input arms [the KEYBOARD_TAB arm the
+    /// follow-up Tab walk banks], the Enter/Space the toggle wears,
+    /// the Left/Right the armed lane serves, the focus loss the
+    /// setFocused(false) clear speaks).
+    pub options_grab: bool,
     /// THE OPTIONS FILE'S OWN PATH (the `optionsFile` field the 26.2
     /// ctor's `File` param banks — the cwd the vanilla default game dir
     /// names, the run_gui_app boot sets; the headless boot the None the
@@ -11284,6 +11299,10 @@ impl App {
             chat_line_spacing_drag: false,
             notification_drag: false,
             sprint_window_drag: false,
+            // THE SLIDER'S OWN FOCUS SEAT (the fresh ctor the
+            // nothing-focused belief keeps — the grab the False wears)
+            options_focus: None,
+            options_grab: false,
             notification_display_time: 1.0,
             options_file: None,
             debug_profile_file: None,
@@ -21738,6 +21757,13 @@ impl App {
         self.chat_line_spacing_drag = false;
         self.notification_drag = false;
         self.sprint_window_drag = false;
+        // THE SLIDER'S OWN FOCUS DEATH (the same removed() walk — the
+        // focusedWidget belief the screen instance carried dies with
+        // it, the canChangeValue grab the setFocused(false) clear
+        // speaks, the fresh ctor's None/False the rebuild arms: the
+        // mid-grab Escape the stale seat the re-open never inherits)
+        self.options_focus = None;
+        self.options_grab = false;
     }
 
     /// THE AMBIENT WALK (javap `ClientLevel.animateTick` +
@@ -31721,11 +31747,21 @@ impl App {
         // render's own build wears, the same seat the on_click
         // dispatch reads)
         if self.screen == ScreenKind::Options {
+            // THE FOCUS CLAIM'S OWN WALK (the vanilla Screen
+            // mouseClicked law the slider seats answer — the press
+            // INSIDE a slider the setFocused(true) MOUSE input arms
+            // [the canChangeValue grab the same input banks], the
+            // press on NO slider the clearFocus walk wears [the plain
+            // button seats' own claim the Tab-walk round banks — the
+            // done/controls rows the cleared belief the same outcome
+            // keeps: the old slider seat dies BOTH walks wear])
+            let mut claimed: Option<&'static str> = None;
             if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_sensitivity") {
                 let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
                 if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
                     self.look_sensitivity = slider_value_from_x(mx, bx, bw);
                     self.sensitivity_drag = true;
+                    claimed = Some("opt_sensitivity");
                 }
             }
             // THE FOV SLIDER'S OWN ARM (the same press walk the FOV row
@@ -31736,6 +31772,7 @@ impl App {
                 if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
                     self.fov = fov_from_value(slider_value_from_x(mx, bx, bw));
                     self.fov_drag = true;
+                    claimed = Some("opt_fov");
                 }
             }
             // THE VOLUME SLIDER'S OWN ARM (the same press walk the
@@ -31746,6 +31783,21 @@ impl App {
                 if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
                     self.volume = slider_value_from_x(mx, bx, bw);
                     self.volume_drag = true;
+                    claimed = Some("opt_music");
+                }
+            }
+            // THE APPLY'S OWN LAW (the setFocused fold — the SAME seat
+            // the grab re-banks [the vanilla's own re-arm the second
+            // click speaks], the MOVE the old seat dies + the new
+            // arms, the no-claim the clearFocus the belief clears)
+            match claimed {
+                Some(id) => {
+                    self.options_focus = Some(id);
+                    self.options_grab = true;
+                }
+                None => {
+                    self.options_focus = None;
+                    self.options_grab = false;
                 }
             }
             return;
@@ -34879,6 +34931,78 @@ impl App {
         }
         // THE NONE'S OWN SILENCE (the no-candidate walk the focus the
         // same seat keeps — the vanilla null the apply never wears)
+    }
+
+    /// THE SLIDER'S OWN SELECTION TOGGLE (javap 26.2
+    /// AbstractSliderButton.keyPressed walk's FIRST arm — the
+    /// `KeyEvent.isSelection()` ask the Enter/Space answers: the
+    /// `canChangeValue` TOGGLE the grab arms/releases, the TRUE the
+    /// consumed verdict keeps [the screen's own lanes the key never
+    /// reaches]). THE FOCUSED SEAT'S OWN GATE (the Screen's
+    /// focusedWidget belief the walk rides — the None the silence
+    /// keeps, the NON-slider seat [the plain button rows the
+    /// Tab-walk round banks] the same silence wears: the
+    /// AbstractButton's own isSelection walk the follow-up round
+    /// serves).
+    pub fn on_options_key_selection(&mut self) {
+        if self.screen != ScreenKind::Options {
+            return;
+        }
+        match self.options_focus {
+            Some("opt_sensitivity") | Some("opt_music") | Some("opt_fov") => {
+                self.options_grab = !self.options_grab;
+            }
+            _ => {}
+        }
+    }
+
+    /// THE SLIDER'S OWN ARROW ADJUST (javap 26.2 the same keyPressed
+    /// walk's armed lane — the `canChangeValue` arm the isLeft/isRight
+    /// asks answer, the step the `value + dir / (width - 8)` fold
+    /// wears [the FLOAT division the `f2d` widens — the f32 precision
+    /// the honest port keeps], the `Mth.clamp(0.0, 1.0)` the ends
+    /// keep, the `applyValue` the store speaks [the caption the
+    /// render's own rebuild the updateMessage wears], the TRUE the
+    /// consumed verdict keeps; the UN-ARMED seat the FALSE returns —
+    /// the screen's own lanes the keys never consumed serve).
+    pub fn on_options_key_arrow(&mut self, right: bool) {
+        if self.screen != ScreenKind::Options || !self.options_grab {
+            return;
+        }
+        // THE WIDGET'S OWN VALUE (the `value` field the store's
+        // current seat mirrors — the sensitivity/volume the 0..1
+        // units ARE, the FOV the IntRange xmap's unit the degrees'
+        // own fold wears)
+        let focused = match self.options_focus {
+            Some(id) => id,
+            None => return,
+        };
+        let unit = match focused {
+            "opt_sensitivity" => self.look_sensitivity,
+            "opt_music" => self.volume,
+            "opt_fov" => fov_value(self.fov),
+            _ => return,
+        };
+        // THE WIDTH'S OWN SEAT (the render build's own geometry the
+        // last pass banks — the missing build the silence keeps)
+        let bw = match self.buttons.iter().find(|b| b.id == focused) {
+            Some(b) => b.w,
+            None => return,
+        };
+        // THE STEP'S OWN SHAPE (the bytecode's `fload -1.0`/`fconst_1`
+        // the f32 divisor divides, the `f2d` the double widens — the
+        // FLOAT precision the honest port keeps)
+        let dir = if right { 1.0f32 } else { -1.0f32 };
+        let step = (dir / (bw - 8) as f32) as f64;
+        let next = (unit + step).clamp(0.0, 1.0);
+        // THE APPLY VALUE'S OWN LANE (the store the id answers — the
+        // FOV the xmap's degrees the IntRange's own step lands)
+        match focused {
+            "opt_sensitivity" => self.look_sensitivity = next,
+            "opt_music" => self.volume = next,
+            "opt_fov" => self.fov = fov_from_value(next),
+            _ => {}
+        }
     }
 
     /// THE SEARCH BOX'S OWN CHARS (the EditBox the init's responder
@@ -66485,6 +66609,11 @@ impl App {
             bw,
         );
         sens.value = Some(self.look_sensitivity);
+        // THE FOCUS FLAGS' OWN RE-WEAR (the 26.2 render laws the App
+        // seat reads — the track frame the focused-not-grabbed wears,
+        // the handle the grabbed seat lights)
+        sens.focused = self.options_focus == Some("opt_sensitivity");
+        sens.can_change_value = self.options_grab && sens.focused;
         self.buttons.push(sens);
         // THE VOLUME SLIDER'S OWN ROW (the "Music & Sounds" master the
         // Options row speaks — the 0..1 the value IS, the caption the
@@ -66493,6 +66622,8 @@ impl App {
         // music seat's own place keeps.
         let mut music = Button::new("opt_music", volume_caption(self.volume), cx, h / 2 - 16, bw);
         music.value = Some(self.volume);
+        music.focused = self.options_focus == Some("opt_music");
+        music.can_change_value = self.options_grab && music.focused;
         self.buttons.push(music);
         // THE FOV SLIDER'S OWN ROW (the `options.fov` OptionInstance the
         // 26.2 clinit banks — the IntRange(30, 110) the slider's own
@@ -66501,6 +66632,8 @@ impl App {
         // Pro' rows answer): the store the camera's own fold reads.
         let mut fov = Button::new("opt_fov", fov_caption(self.fov), cx, h / 2 + 8, bw);
         fov.value = Some(fov_value(self.fov));
+        fov.focused = self.options_focus == Some("opt_fov");
+        fov.can_change_value = self.options_grab && fov.focused;
         self.buttons.push(fov);
         // THE IN-WORLD OPENER (javap the 26.2 OptionsScreen.init — the
         // header row the `inWorld` flag gates: the FOV slider the

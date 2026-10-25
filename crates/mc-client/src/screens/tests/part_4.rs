@@ -9642,6 +9642,203 @@ fn the_slider_s_own_focus_render_the_track_frame_the_grabbed_handle_wear() {
     );
 }
 
+/// THE SLIDER'S OWN KEYBOARD GRAB WALK (the autopush-242 round — the
+/// AbstractSliderButton's 26.2 keyPressed laws the slider_241 probe
+/// banks: the setFocused(true) the MOUSE input the canChangeValue
+/// arm wears [the click the focus AND the grab banks], the
+/// Enter/Space the isSelection TOGGLE the grab arms/releases, the
+/// armed Left/Right the `value + dir / (width - 8)` step the f32
+/// division then f2d the honest shape wears, the Mth.clamp the
+/// 0..1 ends keep, the applyValue the store speaks, the outside
+/// press the clearFocus the belief clears, the un-armed/unfocused
+/// seat the FALSE the silence keeps).
+#[test]
+fn the_slider_s_own_keyboard_grab_walk_the_toggle_the_arrow_step_wears() {
+    let mut app = App::new(3);
+    // THE SCREEN GATE'S OWN SILENCE (the title's keys the walk never
+    // wears — the store the defaults keep)
+    let dflt = app.look_sensitivity;
+    app.on_options_key_selection();
+    app.on_options_key_arrow(true);
+    assert_eq!(
+        app.look_sensitivity, dflt,
+        "the wrong screen the walk never speaks"
+    );
+    assert!(
+        app.options_focus.is_none() && !app.options_grab,
+        "the unfocused seat the silence keeps"
+    );
+
+    app.open(ScreenKind::Options);
+    app.render_title_buttons_for_test();
+    let b = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_sensitivity")
+        .expect("the slider row")
+        .clone();
+    assert!(
+        !b.focused && !b.can_change_value,
+        "the fresh screen the nothing-focused ctor keeps"
+    );
+
+    // THE CLICK'S OWN FOCUS (the MOUSE law — the press inside the
+    // track the focus AND the grab banks, the value the click's own
+    // x lands)
+    app.on_press(b.x + b.w / 2, b.y + b.h / 2);
+    assert_eq!(
+        app.options_focus,
+        Some("opt_sensitivity"),
+        "the click the slider seat claims"
+    );
+    assert!(
+        app.options_grab,
+        "the MOUSE input the setFocused(true) grab banks"
+    );
+    // THE RENDER BUILD'S OWN RE-WEAR (the 241 laws the live seat
+    // answers — the grabbed handle the highlighted sprite wears)
+    app.render_title_buttons_for_test();
+    let b2 = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_sensitivity")
+        .expect("the slider row")
+        .clone();
+    assert!(b2.focused, "the build the focused flag wears");
+    assert!(b2.can_change_value, "the build the grab flag wears");
+
+    // THE TOGGLE'S OWN RELEASE (the Enter the isSelection arm — the
+    // grab dies, the focus KEEPS: the track frame the render wears)
+    app.on_options_key_selection();
+    assert!(
+        !app.options_grab && app.options_focus == Some("opt_sensitivity"),
+        "the Enter the grab toggles off, the focus the same seat keeps"
+    );
+    app.render_title_buttons_for_test();
+    let b3 = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_sensitivity")
+        .expect("the slider row")
+        .clone();
+    assert!(
+        b3.focused && !b3.can_change_value,
+        "the focused-not-grabbed seat the build wears"
+    );
+
+    // THE UN-ARMED ARROW'S OWN SILENCE (the FALSE the keyPressed
+    // returns — the store the value keeps)
+    let v0 = app.look_sensitivity;
+    app.on_options_key_arrow(true);
+    app.on_options_key_arrow(false);
+    assert_eq!(
+        app.look_sensitivity, v0,
+        "the un-armed seat the arrows never speak"
+    );
+
+    // THE RE-TOGGLE'S OWN ARM (the Space the same isSelection fold —
+    // the grab re-banks)
+    app.on_options_key_selection();
+    assert!(app.options_grab, "the Space the grab re-arms");
+
+    // THE RIGHT'S OWN STEP (the f32 division the f2d widens — the
+    // 1.0f32/(w-8) the honest shape wears, NOT the f64 fold)
+    let v0 = app.look_sensitivity;
+    app.on_options_key_arrow(true);
+    let step = (1.0f32 / (b.w - 8) as f32) as f64;
+    assert_ne!(
+        step,
+        1.0f64 / (b.w - 8) as f64,
+        "the f32 division the float precision keeps"
+    );
+    assert_eq!(
+        app.look_sensitivity,
+        v0 + step,
+        "the Right the +1/(width-8) step lands"
+    );
+    app.render_title_buttons_for_test();
+    let b4 = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_sensitivity")
+        .expect("the slider row")
+        .clone();
+    assert_eq!(
+        b4.label,
+        sensitivity_caption(app.look_sensitivity),
+        "the applyValue the caption rebuild wears"
+    );
+
+    // THE LEFT'S OWN STEP + THE 0 CLAMP (the ends the Mth.clamp
+    // keeps — the floor the spam never breaks)
+    for _ in 0..500 {
+        app.on_options_key_arrow(false);
+    }
+    assert_eq!(
+        app.look_sensitivity, 0.0,
+        "the Left spam the 0.0 floor keeps"
+    );
+    app.render_title_buttons_for_test();
+    assert_eq!(
+        app.buttons
+            .iter()
+            .find(|b| b.id == "opt_sensitivity")
+            .unwrap()
+            .label,
+        "Sensitivity: *yawn*",
+        "the min end the options.sensitivity.min word wears"
+    );
+
+    // THE FOV LANE'S OWN STORE (the IntRange xmap — the unit step the
+    // degrees' own fold lands, the focus MOVE the old seat clears)
+    let f = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_fov")
+        .expect("the fov row")
+        .clone();
+    app.on_press(f.x + f.w / 2, f.y + f.h / 2);
+    assert_eq!(
+        app.options_focus,
+        Some("opt_fov"),
+        "the second click the focus moves"
+    );
+    assert_eq!(app.fov, 70.0, "the center press the 70 keeps");
+    let step_f = (1.0f32 / (f.w - 8) as f32) as f64;
+    app.on_options_key_arrow(true);
+    let want = fov_from_value((fov_value(70.0) + step_f).clamp(0.0, 1.0));
+    assert_eq!(
+        app.fov, want,
+        "the Right the FOV unit's own step the degrees lands"
+    );
+
+    // THE OUTSIDE CLICK'S OWN CLEAR (the clearFocus walk — the
+    // belief clears, the stale seat's keys the silence keeps)
+    app.on_press(2, 2);
+    assert!(
+        app.options_focus.is_none() && !app.options_grab,
+        "the outside press the clearFocus wears"
+    );
+    app.on_options_key_selection();
+    assert!(!app.options_grab, "the cleared seat the toggle never arms");
+    let fov_after = app.fov;
+    app.on_options_key_arrow(true);
+    assert_eq!(
+        app.fov, fov_after,
+        "the cleared seat the arrows never speak"
+    );
+
+    // THE RE-OPEN'S OWN FRESH CTOR (the stale seat the mid-grab
+    // Escape never inherits — the None/False the rebuild arms)
+    app.on_press(b.x + 4, b.y + b.h / 2);
+    assert!(app.options_grab, "the re-click the grab banks");
+    app.open(ScreenKind::Options);
+    assert!(
+        app.options_focus.is_none() && !app.options_grab,
+        "the re-open the fresh ctor's cleared belief keeps"
+    );
+}
+
 /// THE FOV SLIDER'S OWN LAW (the `options.fov` OptionInstance the
 /// 26.2 clinit banks — the IntRange(30, 110) the default 70 wears,
 /// the caption the ends law speaks (the 30 the options.fov.min
