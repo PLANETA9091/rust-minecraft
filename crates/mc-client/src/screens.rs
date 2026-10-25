@@ -38049,7 +38049,12 @@ impl App {
         // walk — the chat screen the setScreen(non-null) arm the
         // releaseAll speaks: the held movement keys the menu the
         // walk never feeds, the body's banked word the all-false
-        // record clears)
+        // record clears. THE TOGGLE DANCE the same ALL-map walk
+        // serves — the ToggleKeyMapping instances the release()
+        // override wears: the latched seats the reset() unlatches,
+        // the releasedByScreenWhenDown flag the release-while-down
+        // banks — the close the restore re-latch reads)
+        self.toggle_keys_release_for_screen();
         self.key_mappings_release_all();
         self.chat_history_pos = self.recent_chat.len();
         // THE DRAFT'S OWN RESTORE (the createScreen restorable arm —
@@ -38095,7 +38100,10 @@ impl App {
         self.chat_open = true;
         // THE CHATSCREEN'S OWN RELEASE (the same Gui.setScreen arm the
         // T-open wears — the COMMAND method's open the setScreen
-        // non-null walk answers, the releaseAll the held keys clears)
+        // non-null walk answers, the releaseAll the held keys clears;
+        // the toggle dance the same ALL-map walk serves — the latched
+        // seats the flag the release banks)
+        self.toggle_keys_release_for_screen();
         self.key_mappings_release_all();
         self.chat_history_pos = self.recent_chat.len();
         // THE DRAFT'S OWN COMMAND RESTORE (the createScreen fold the
@@ -38256,6 +38264,11 @@ impl App {
         // the close the INTENTIONAL verdict speaks (the option's gate
         // the save/discard fork answers)
         self.close_chat_intentional();
+        // THE NULL ARM'S OWN RESTORE (the ESC close the setScreen(null)
+        // walk the onClose chain rides — the same restoreToggleStates
+        // OnScreenClosed lane the submit's close wears: the flagged
+        // seats the re-latch, the flags the always-clear consumes)
+        self.toggle_keys_restore_after_screen();
         true
     }
 
@@ -38702,6 +38715,13 @@ impl App {
         // shouldDiscardDraft lane — the close_chat save the same walk
         // discards, the bank the fresh-open law clears)
         self.chat_latest_draft = None;
+        // THE NULL ARM'S OWN RESTORE (the submit the setScreen(null)
+        // walk the ChatScreen's DONE verdict rides — the pc 245-285
+        // lane the restoreToggleStatesOnScreenClosed speaks: the
+        // flagged toggles the keyboard-bound shouldRestore trio the
+        // re-latch wears, the flags the always-clear law consumes —
+        // the empty-submit early-return the restore never skips)
+        self.toggle_keys_restore_after_screen();
         if normalized.is_empty() {
             return;
         }

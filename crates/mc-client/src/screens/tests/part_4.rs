@@ -17097,3 +17097,133 @@ fn the_release_arms_the_chat_and_pause_the_world_entry_keeps() {
         "the world entry the banked word keeps"
     );
 }
+
+/// THE CHAT LANES' OWN TOGGLE DANCE (the vanilla Gui.setScreen walk
+/// the chat open the releaseAll's ALL-map iteration wears — the
+/// ToggleKeyMapping instances the release() override serves: the
+/// latched seats the reset() unlatches, the releasedByScreenWhenDown
+/// flag the release-while-down banks; the SUBMIT's close the
+/// setScreen(null) null arm the restoreToggleStatesOnScreenClosed
+/// rides — the keyboard-bound sprint the re-latch wears, the keyUse's
+/// shouldRestore FALSE the restore refuses, the flags the always-clear
+/// law consumes; the empty-submit early-return the restore never
+/// skips).
+#[test]
+fn the_chat_open_the_latched_toggles_the_release_wears() {
+    use crate::screens::{TOGGLE_SPRINT, TOGGLE_USE};
+    let mut app = App::new(3);
+    app.toggle_sprint = true;
+    app.toggle_use = true;
+    // THE LATCHES (the world presses the flips wear — the release the
+    // latched words keep)
+    assert!(app.toggle_key_state(TOGGLE_SPRINT, true, true));
+    assert!(app.toggle_key_state(TOGGLE_SPRINT, false, true));
+    assert!(app.toggle_key_state(TOGGLE_USE, true, true));
+    assert!(app.toggle_key_state(TOGGLE_USE, false, true));
+    // THE CHAT'S OWN OPEN (the T lane the releaseAll speaks — the
+    // toggle override the latch clears, the flag the release banks)
+    app.on_chat_key();
+    assert!(app.chat_open, "the chat the open keeps");
+    assert!(
+        !app.toggle_latched(TOGGLE_SPRINT),
+        "the chat open the sprint latch clears"
+    );
+    assert!(
+        !app.toggle_latched(TOGGLE_USE),
+        "the chat open the use latch clears"
+    );
+    assert!(
+        app.toggle_released_by_screen[TOGGLE_SPRINT],
+        "the chat open the flag the release banks"
+    );
+    // THE SCREEN FRAMES (the world_reads false the flip never speaks —
+    // the bank the physical stream keeps)
+    assert!(
+        !app.toggle_key_state(TOGGLE_SPRINT, false, false),
+        "the chat frames the unlatched word keeps"
+    );
+    // THE SUBMIT'S OWN CLOSE (the DONE verdict the setScreen(null) the
+    // restore rides — the empty input the early-return the restore
+    // never skips; the keyboard-bound sprint the re-latch wears, the
+    // keyUse's shouldRestore FALSE the restore refuses)
+    app.on_chat_submit();
+    assert!(!app.chat_open, "the submit the close speaks");
+    assert!(
+        app.toggle_latched(TOGGLE_SPRINT),
+        "the submit close the sprint re-latches"
+    );
+    assert!(
+        !app.toggle_released_by_screen[TOGGLE_SPRINT],
+        "the restore the flag the always-clear consumes"
+    );
+    assert!(
+        !app.toggle_latched(TOGGLE_USE),
+        "the keyUse the shouldRestore FALSE the restore refuses"
+    );
+    assert!(
+        !app.toggle_released_by_screen[TOGGLE_USE],
+        "the refused verdict the flag the same clear wears"
+    );
+}
+
+/// THE CHAT CLOSE LANES' OWN RESTORE MAP (the ESC close the
+/// close_chat_intentional verdict the same null arm rides — the
+/// re-latch the flagged seats wear; the FIRST-ESC draft arm the screen
+/// the open keeps, the restore never rides; the TAKEOVER chain the
+/// interrupted close the release arms the flag keeps — the world's
+/// return the restore re-latch the chain completes).
+#[test]
+fn the_chat_close_lanes_the_restore_map_the_takeover_keeps() {
+    use crate::screens::TOGGLE_SPRINT;
+    let mut app = App::new(3);
+    app.toggle_sprint = true;
+    // THE ESC CLOSE LANE (the INTENTIONAL verdict the restore rides)
+    assert!(app.toggle_key_state(TOGGLE_SPRINT, true, true));
+    assert!(app.toggle_key_state(TOGGLE_SPRINT, false, true));
+    app.on_chat_key();
+    assert!(!app.toggle_latched(TOGGLE_SPRINT));
+    app.on_chat_escape();
+    assert!(!app.chat_open, "the esc close the chat folds");
+    assert!(
+        app.toggle_latched(TOGGLE_SPRINT),
+        "the esc close the sprint re-latches"
+    );
+    // THE FIRST-ESC DRAFT ARM (the untouched draft the clear wears —
+    // the screen the open keeps, the restore the close rides alone)
+    app.on_chat_key();
+    app.chat_input_is_draft = true;
+    assert!(app.on_chat_escape(), "the draft esc the consumption keeps");
+    assert!(app.chat_open, "the draft arm the screen the open keeps");
+    assert!(
+        !app.toggle_latched(TOGGLE_SPRINT),
+        "the draft arm the restore never rides"
+    );
+    app.chat_input_is_draft = false;
+    app.on_chat_escape();
+    assert!(
+        app.toggle_latched(TOGGLE_SPRINT),
+        "the second esc the close the re-latch wears"
+    );
+    // THE TAKEOVER CHAIN (the chest the interrupted close speaks — the
+    // release arms the banked flag the open keeps, the world's return
+    // the restore the chain completes)
+    let mut app2 = App::new(3);
+    app2.toggle_sprint = true;
+    assert!(app2.toggle_key_state(TOGGLE_SPRINT, true, true));
+    app2.on_chat_key();
+    assert!(!app2.toggle_latched(TOGGLE_SPRINT));
+    app2.open(ScreenKind::Chest);
+    assert!(
+        app2.toggle_released_by_screen[TOGGLE_SPRINT],
+        "the takeover's release the banked flag keeps"
+    );
+    assert!(
+        !app2.toggle_latched(TOGGLE_SPRINT),
+        "the takeover the unlatched word keeps"
+    );
+    app2.open(ScreenKind::World);
+    assert!(
+        app2.toggle_latched(TOGGLE_SPRINT),
+        "the world's return the restore the chain completes"
+    );
+}
