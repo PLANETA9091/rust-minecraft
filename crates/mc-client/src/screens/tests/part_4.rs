@@ -16525,3 +16525,162 @@ fn the_controls_screen_the_four_rows_the_toggle_captions_wear() {
     app.on_click(sx + 2, sy + 2);
     assert!(!app.toggle_sprint, "the second click the cycle returns");
 }
+
+/// THE SCREEN DANCE'S OWN RELEASE WALK (the vanilla Gui.setScreen's
+/// pc 215 `KeyMapping.releaseAll()` ride — the ToggleKeyMapping's own
+/// release override the flag dance banks: the toggle ON the
+/// `(isDown() || releasedByScreenWhenDown) -> flag = true` arm the
+/// release-while-down records, the `reset()` the unlatch speaks — the
+/// latched sprint the inventory's open the release + flag wears).
+#[test]
+fn the_screen_open_the_latched_toggles_the_release_wears() {
+    use crate::screens::{TOGGLE_SPRINT, TOGGLE_USE};
+    let mut app = App::new(3);
+    app.toggle_sprint = true;
+    app.toggle_use = true;
+    // THE LATCH'S OWN PRE-STATE (the world press the flip wears)
+    assert!(
+        app.toggle_key_state(TOGGLE_SPRINT, true, true),
+        "the press the latch wears"
+    );
+    assert!(
+        app.toggle_key_state(TOGGLE_SPRINT, false, true),
+        "the release the latch keeps"
+    );
+    // THE SCREEN'S OWN OPEN (the releaseAll ride — the latch the
+    // reset() clears, the flag the release-while-down banks)
+    app.open(ScreenKind::Inventory);
+    assert!(
+        !app.toggle_latched(TOGGLE_SPRINT),
+        "the screen open the latch clears"
+    );
+    // THE RELEASE'S OWN VERDICT (the unlatched state the world reads —
+    // the physical law the screen-eaten frames the bank tracks)
+    assert!(
+        !app.toggle_key_state(TOGGLE_SPRINT, false, false),
+        "the screen frames the unlatched word keeps"
+    );
+    // THE USE'S OWN RELEASE (the same open the use latch clears — the
+    // flag the same release law banks)
+    assert!(
+        app.toggle_key_state(TOGGLE_USE, true, true),
+        "the use press the latch wears"
+    );
+    app.open(ScreenKind::Options);
+    assert!(
+        !app.toggle_latched(TOGGLE_USE),
+        "the second open the use latch clears"
+    );
+}
+
+/// THE SCREEN DANCE'S OWN RESTORE WALK (the vanilla Gui.setScreen's
+/// pc 265 `restoreToggleStatesOnScreenClosed()` ride — the verdict's
+/// four gates the AND keeps: the shouldRestore flag the ctor's final
+/// boolean banks (the keyUse iconst_0 FALSE), the toggle option's ON,
+/// the key TYPE the KEYSYM compare keeps (the mouse-bind the restore
+/// refuses), the releasedByScreenWhenDown flag — THE FLAG THE
+/// ALWAYS-CLEAR the putfield-0 walk wears, the re-latch the
+/// setDown(true) flip law serves).
+#[test]
+fn the_screen_close_the_restore_trio_the_type_gate_wears() {
+    use crate::screens::{TOGGLE_ATTACK, TOGGLE_SPRINT, TOGGLE_USE};
+    let mut app = App::new(3);
+    app.toggle_sprint = true;
+    app.toggle_attack = true;
+    app.toggle_use = true;
+    // THE KEYBOARD REBINDS (the type gate's own seats — the attack
+    // and the use the keys the rebind arms, the sprint's keyboard
+    // default the LeftCtrl row wears)
+    app.key_binds[crate::options_file::key_binds::ATTACK] = Some(
+        crate::options_file::key_binds::Bind::Keyboard(minifb::Key::R),
+    );
+    app.key_binds[crate::options_file::key_binds::USE] = Some(
+        crate::options_file::key_binds::Bind::Keyboard(minifb::Key::T),
+    );
+    // THE THREE LATCHES (the world presses the flips wear)
+    assert!(app.toggle_key_state(TOGGLE_SPRINT, true, true));
+    assert!(app.toggle_key_state(TOGGLE_ATTACK, true, true));
+    assert!(app.toggle_key_state(TOGGLE_USE, true, true));
+    // THE SCREEN'S OPEN + CLOSE (the release + the restore walk — the
+    // shouldRestore trio the keyboard binds the re-latch wears, the
+    // use's own FALSE the restore refuses)
+    app.open(ScreenKind::Inventory);
+    assert!(!app.toggle_latched(TOGGLE_SPRINT));
+    assert!(!app.toggle_latched(TOGGLE_ATTACK));
+    assert!(!app.toggle_latched(TOGGLE_USE));
+    app.open(ScreenKind::World);
+    assert!(
+        app.toggle_latched(TOGGLE_SPRINT),
+        "the keyboard sprint the restore re-latches"
+    );
+    assert!(
+        app.toggle_latched(TOGGLE_ATTACK),
+        "the keyboard-rebound attack the restore re-latches"
+    );
+    assert!(
+        !app.toggle_latched(TOGGLE_USE),
+        "the keyUse's shouldRestore FALSE the restore refuses"
+    );
+    // THE MOUSE-TYPE'S OWN GATE (the attack's default mouse bind the
+    // restore refuses — the flagged release the world the latch keeps)
+    let mut mouse_app = App::new(3);
+    mouse_app.toggle_attack = true;
+    assert!(mouse_app.toggle_key_state(TOGGLE_ATTACK, true, true));
+    mouse_app.open(ScreenKind::Inventory);
+    assert!(!mouse_app.toggle_latched(TOGGLE_ATTACK));
+    mouse_app.open(ScreenKind::World);
+    assert!(
+        !mouse_app.toggle_latched(TOGGLE_ATTACK),
+        "the mouse-type bind the restore refuses"
+    );
+    // THE FLAG'S OWN ALWAYS-CLEAR (the unlatched release the fresh
+    // flag never arms — the open-close the restore never re-speaks;
+    // the LATCHED cycle the opposite walks: the restore the re-latch
+    // wears, the next open the flag re-arms the same law the round-trip
+    // speaks)
+    app.toggle_key_state(TOGGLE_SPRINT, false, true); // the held press the bank lifts
+    app.toggle_key_state(TOGGLE_SPRINT, true, true); // the unlatch press
+    app.toggle_key_state(TOGGLE_SPRINT, false, true);
+    app.open(ScreenKind::Inventory);
+    app.open(ScreenKind::World);
+    assert!(
+        !app.toggle_latched(TOGGLE_SPRINT),
+        "the unlatched release the restore never re-speaks"
+    );
+    // THE LATCHED ROUND-TRIP (the re-latched state the second cycle
+    // the same dance wears)
+    assert!(app.toggle_key_state(TOGGLE_SPRINT, true, true));
+    app.open(ScreenKind::Inventory);
+    app.open(ScreenKind::World);
+    assert!(
+        app.toggle_latched(TOGGLE_SPRINT),
+        "the latched round-trip the restore re-speaks"
+    );
+}
+
+/// THE DEATH'S OWN RESET WALK (the vanilla LocalPlayer.respawn's pc 17
+/// `KeyMapping.resetToggleKeys()` ride — the ALL map iterates, the
+/// ToggleKeyMapping instances the `reset()` the setDown(false)
+/// unlatch speaks: the death the latches AND the screen-release flags
+/// both clear, the respawn the fresh keys the no-restore law keeps).
+#[test]
+fn the_respawn_the_toggle_keys_the_reset_wears() {
+    use crate::screens::TOGGLE_SPRINT;
+    let mut app = App::new(3);
+    app.toggle_sprint = true;
+    assert!(app.toggle_key_state(TOGGLE_SPRINT, true, true));
+    // THE SCREEN'S OWN FLAG (the release ride the bank arms)
+    app.open(ScreenKind::Inventory);
+    // THE DEATH'S OWN RESET (the respawn the banks clear — the
+    // no-restore law the close the fresh banks never re-latches)
+    app.respawn();
+    assert!(
+        !app.toggle_latched(TOGGLE_SPRINT),
+        "the death the latch clears"
+    );
+    app.open(ScreenKind::World);
+    assert!(
+        !app.toggle_latched(TOGGLE_SPRINT),
+        "the respawn's cleared flag the restore never re-latches"
+    );
+}

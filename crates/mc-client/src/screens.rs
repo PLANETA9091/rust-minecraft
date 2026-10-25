@@ -7344,6 +7344,13 @@ pub struct App {
     /// world reads the `super.setDown(!isDown())` the flip speaks, the
     /// latch the physical release NEVER clears).
     toggle_latch: [bool; 4],
+    /// THE SCREEN RELEASES' OWN BANK (the ToggleKeyMapping's own
+    /// `releasedByScreenWhenDown` field the release walk banks — the
+    /// latched toggle the screen-open releaseAll flags, the close ride
+    /// the shouldRestoreStateOnScreenClosed verdict the flag reads AND
+    /// clears [the putfield-0 pc 45-47 walk the always-clear law
+    /// serves]).
+    toggle_released_by_screen: [bool; 4],
     /// THE TOGGLE KEYS' OWN EDGE BANKS (the last frame's physical
     /// state the rising-edge law reads — the vanilla KeyboardHandler's
     /// own press the setDown walk answers, the bank the poll-every-
@@ -10899,6 +10906,7 @@ impl App {
             toggle_use: false,
             sprint_window: crate::options_file::DEFAULT_SPRINT_WINDOW,
             toggle_latch: [false; 4],
+            toggle_released_by_screen: [false; 4],
             toggle_last: [false; 4],
             clipboard: String::new(),
             fov_effect_scale: 1.0,
@@ -21272,6 +21280,18 @@ impl App {
             || (kind == ScreenKind::Inventory && self.chest_live_window.is_some())
         {
             self.bundle_contents.clear();
+        }
+        // THE TOGGLE KEYMAPPINGS' OWN SCREEN DANCE (the vanilla
+        // Gui.setScreen walk — the pc 215 `KeyMapping.releaseAll()` the
+        // screen-OPEN arm rides, the pc 265
+        // `restoreToggleStatesOnScreenClosed()` the close arm wears:
+        // the latched toggles the screen open releases + flags, the
+        // shouldRestore trio the keyboard-bound binds the world's
+        // return re-latches, the flags the always-clear law consumes)
+        if kind == ScreenKind::World {
+            self.toggle_keys_restore_after_screen();
+        } else {
+            self.toggle_keys_release_for_screen();
         }
         self.screen = kind;
         self.buttons.clear();
@@ -43793,6 +43813,91 @@ impl App {
         self.toggle_latch[which]
     }
 
+    /// THE TOGGLE KEYMAPPINGS' OWN SCREEN RELEASE (the vanilla
+    /// Gui.setScreen's pc 215 `KeyMapping.releaseAll()` ride — the
+    /// screen-open arm the mouse release's AFTER wears: the ALL map
+    /// iterates, the base `KeyMapping.release()` the clickCount zero +
+    /// the setDown(false) reset speaks, the ToggleKeyMapping's own
+    /// OVERRIDE the flag dance banks: the toggle ON the
+    /// `(isDown() || releasedByScreenWhenDown) -> flag = true` arm the
+    /// release-while-down records, the `reset()` the unlatch speaks —
+    /// the latch the screen the close ride restores). THE CLIENT'S OWN
+    /// SEATS (the four toggle latches the banks keep — the plain keys'
+    /// setDown the physical poll the frame loop already governs, the
+    /// clickCount the edge model never carries).
+    fn toggle_keys_release_for_screen(&mut self) {
+        for which in 0..4 {
+            let on = match which {
+                TOGGLE_CROUCH => self.toggle_crouch,
+                TOGGLE_SPRINT => self.toggle_sprint,
+                TOGGLE_ATTACK => self.toggle_attack,
+                _ => self.toggle_use,
+            };
+            if on && (self.toggle_latch[which] || self.toggle_released_by_screen[which]) {
+                self.toggle_released_by_screen[which] = true;
+            }
+            self.toggle_latch[which] = false;
+        }
+    }
+
+    /// THE TOGGLE KEYMAPPINGS' OWN SCREEN RESTORE (the vanilla
+    /// Gui.setScreen's pc 265 `KeyMapping.restoreToggleStatesOnScreenClosed()`
+    /// ride — the close arm the world's return wears: the ALL map
+    /// iterates, the ToggleKeyMapping instances the instanceof gate
+    /// keeps, the `shouldRestoreStateOnScreenClosed()` verdict the
+    /// setDown(true) re-latch serves. THE VERDICT'S OWN WALK (the
+    /// ToggleKeyMapping's own method — the four gates the AND keeps):
+    /// the `shouldRestore` flag the ctor's final boolean banks (the
+    /// keyShift/keySprint/keyAttack `iconst_1` TRUE trio, the keyUse
+    /// `iconst_0` FALSE the mouse-default row wears), the toggle
+    /// option's ON the supplier reads, the key TYPE the KEYSYM
+    /// compare keeps (the keyboard-bound rows the restore serves, the
+    /// MOUSE-type defaults the verdict refuses), the
+    /// `releasedByScreenWhenDown` flag the release walk banked — THE
+    /// FLAG THE ALWAYS-CLEAR (the putfield-0 pc 45-47 walk the verdict
+    /// AFTER wears: the flag the read consumed, the restore the one
+    /// close ride alone earns). THE RE-LATCH (the setDown(true) walk —
+    /// the toggle's own setDown the flip law wears: the unlatched
+    /// isDown the `!isDown()` = true the super.setDown speaks — the
+    /// latch the world's return re-arms).
+    fn toggle_keys_restore_after_screen(&mut self) {
+        for which in 0..4 {
+            let on = match which {
+                TOGGLE_CROUCH => self.toggle_crouch,
+                TOGGLE_SPRINT => self.toggle_sprint,
+                TOGGLE_ATTACK => self.toggle_attack,
+                _ => self.toggle_use,
+            };
+            // THE SHOULDRESTORE SEATS (the ctor's final booleans — the
+            // keyUse the FALSE the mouse-default row keeps)
+            let should_restore = which != TOGGLE_USE;
+            // THE TYPE GATE (the KEYSYM compare — the keyboard-bound
+            // bind the verdict serves, the mouse-bind the restore
+            // refuses)
+            let keyboard = matches!(
+                self.key_binds[Self::toggle_bind_slot(which)],
+                Some(crate::options_file::key_binds::Bind::Keyboard(_))
+            );
+            let verdict = should_restore && on && keyboard && self.toggle_released_by_screen[which];
+            self.toggle_released_by_screen[which] = false;
+            if verdict {
+                self.toggle_latch[which] = true;
+            }
+        }
+    }
+
+    /// The toggle seat's own bind slot (the store's own indices — the
+    /// SNEAK/SPRINT/ATTACK/USE rows the movement + gameplay categories
+    /// keep, the restore's type gate the binds read).
+    fn toggle_bind_slot(which: usize) -> usize {
+        match which {
+            TOGGLE_CROUCH => crate::options_file::key_binds::SNEAK,
+            TOGGLE_SPRINT => crate::options_file::key_binds::SPRINT,
+            TOGGLE_ATTACK => crate::options_file::key_binds::ATTACK,
+            _ => crate::options_file::key_binds::USE,
+        }
+    }
+
     /// The movement keys (the windowed loop's per-frame feed): the
     /// impulses (the KeyboardInput's own ±1 shape) and the state keys
     /// the body's tick consumes. The SPRINT STATE the per-tick law
@@ -56157,6 +56262,15 @@ impl App {
         self.dead = false;
         self.death_message = None;
         self.health = MAX_HEALTH;
+        // THE TOGGLE KEYS' OWN DEATH RESET (the vanilla
+        // LocalPlayer.respawn's pc 17 `KeyMapping.resetToggleKeys()`
+        // ride — the ALL map iterates, the ToggleKeyMapping instances
+        // the instanceof gate keeps, the `reset()` the setDown(false)
+        // unlatch speaks: the death the latches AND the screen-release
+        // flags both clear, the respawn the fresh keys the no-restore
+        // law keeps)
+        self.toggle_latch = [false; 4];
+        self.toggle_released_by_screen = [false; 4];
         // THE FOOD LANE'S OWN RESET (the server's respawn re-creates
         // the player's stats — the fresh FoodData the constructor
         // speaks: the full bar, the 5.0 saturation, the zero bank)
