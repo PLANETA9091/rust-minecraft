@@ -17604,3 +17604,98 @@ fn the_debug_chord_open_the_arms_map_the_refusals_keep() {
         "the close the re-latch completes"
     );
 }
+
+/// THE DEBUG-CHORD INTERRUPT'S OWN REMOVED WALK (the vanilla
+/// setScreen walk the OLD screen's removed() the interrupt FIRST
+/// answers — the chat-open seat the ChatScreen's interrupted close
+/// the draft bank serves: the chat folds, the typed text the
+/// INTERRUPTED verdict never burns, the T-reopen the createScreen
+/// restorable arm the draft restores; the chord's close the folded
+/// chat the world's return keeps).
+#[test]
+fn the_debug_chord_interrupt_the_chat_draft_the_removed_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    // THE CHAT'S OWN OPEN (the T lane — the typed text the edit wears)
+    app.on_chat_key();
+    assert!(app.chat_open, "the chat the open keeps");
+    app.on_chat_char('h');
+    app.on_chat_char('i');
+    assert_eq!(app.chat_input, "hi", "the typed text the input wears");
+    // THE INTERRUPT'S OWN REMOVED WALK (the F3+F6 the old
+    // ChatScreen's removed() the interrupted close serves — the chat
+    // folds, the draft the bank keeps)
+    app.on_debug_options_key();
+    assert_eq!(
+        app.screen,
+        ScreenKind::DebugOptions,
+        "the chord the debug options opens"
+    );
+    assert!(!app.chat_open, "the interrupt the chat folds");
+    assert_eq!(
+        app.chat_latest_draft,
+        Some(("hi".to_string(), false)),
+        "the interrupted close the draft banks"
+    );
+    // THE CHORD'S OWN CLOSE (the world's return the folded chat the
+    // takeover law keeps — the removed walk the fold already spoke)
+    app.on_debug_options_key();
+    assert_eq!(app.screen, ScreenKind::World, "the chord closes");
+    assert!(!app.chat_open, "the close the folded chat keeps");
+    // THE T-REOPEN'S OWN RESTORE (the createScreen restorable arm —
+    // the banked draft the input wears, the purity flag the true arg
+    // banks)
+    app.on_chat_key();
+    assert!(app.chat_open, "the reopen serves");
+    assert_eq!(app.chat_input, "hi", "the reopen the draft restores");
+    assert!(
+        app.chat_input_is_draft,
+        "the restored draft the purity flag wears"
+    );
+}
+
+/// THE DEBUG-CHORD INTERRUPT'S OWN REMOVED MAP (the options-family
+/// seat the removed() save ride keeps — the flipped row the file
+/// banks; the widget state the drag deaths the removed() walk
+/// discards — the armed slider drag the screen swap never inherits).
+#[test]
+fn the_debug_chord_interrupt_the_options_save_and_drag_death_wear() {
+    let dir = std::env::temp_dir().join(format!("mc2rs_chordrem_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&dir);
+    let path = dir.join("options.txt");
+    let mut app = App::new(3);
+    app.options_file = Some(path.clone());
+    app.enter_world();
+    // THE OPTIONS SEAT (the Options screen the chord interrupts — the
+    // removed() moment the save ride the file's rows keep)
+    app.open(ScreenKind::Options);
+    app.pause_on_lost_focus = false;
+    app.on_debug_options_key();
+    assert_eq!(
+        app.screen,
+        ScreenKind::DebugOptions,
+        "the chord the options screen interrupts"
+    );
+    let rows = std::fs::read_to_string(&path).expect("the interrupt the save writes");
+    assert!(
+        rows.contains("pauseOnLostFocus:false"),
+        "the removed() save the flipped row keeps"
+    );
+    // THE DRAG-DEATH SEAT (the MouseSettings slider the armed drag —
+    // the removed() walk the widget state discards, the fresh screen
+    // the swap never inherits)
+    app.open(ScreenKind::MouseSettings);
+    app.sensitivity_drag = true;
+    app.on_debug_options_key();
+    assert_eq!(
+        app.screen,
+        ScreenKind::DebugOptions,
+        "the chord the mouse settings interrupts"
+    );
+    assert!(
+        !app.sensitivity_drag,
+        "the removed() walk the armed drag discards"
+    );
+    let _ = std::fs::remove_dir_all(&dir);
+}

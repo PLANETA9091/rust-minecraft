@@ -40864,21 +40864,23 @@ impl App {
             // THE ELSE ARM (pc 693-743): the interrupt gate the
             // open serves — the current screen the close ride
             // answers, the debug options the setScreen opens.
-            // THE OPEN ARM THE SETSCREEN WALK WEARS (the
-            // autopush-222 walk — the interrupt lane the pc 205-215
-            // `mouseHandler.releaseMouse(); KeyMapping.releaseAll()`
-            // the setScreen(non-null) law answers: the latched seats
-            // the flag banks + the latch clears, the plain banks the
-            // held walk zeroes — the wire the release packet the
-            // server sees; the pause seat the 221 dance the banked
-            // word the `latch || flag` arm keeps, the chat seat the
-            // chat's own open the same walk the no-op re-wears)
+            // THE SETSCREEN WALK THE OPEN() RIDE WEARS (the
+            // autopush-223 walk — the screen-direct swap the
+            // open()'s own walk retires: the OLD screen's removed()
+            // moment the vanilla setScreen walk FIRST answers — the
+            // chat-open seat the close_chat_interrupted() the draft
+            // bank serves (the INTERRUPTED verdict the typed text
+            // never burns), the options-family seat the removed()
+            // save ride keeps (the 185 recon the sub-screen family
+            // banks), the widget state the drag deaths the removed()
+            // walk discards; the 222 release pair the open() dance's
+            // own shape the kind != World arm wears — the pc 205-215
+            // order the dance keeps, the pause seat the banked word
+            // the `latch || flag` arm holds)
             if self.paused {
                 self.paused = false;
             }
-            self.toggle_keys_release_for_screen();
-            self.key_mappings_release_all();
-            self.screen = ScreenKind::DebugOptions;
+            self.open(ScreenKind::DebugOptions);
         }
         // THE USED FLAG (pc 746-747): the matched gate the flag
         // banks — ALL arms wear (the canInterrupt refusal the
