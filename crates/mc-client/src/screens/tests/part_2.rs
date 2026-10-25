@@ -5414,13 +5414,13 @@ fn the_f3_b_chord_the_entity_set_speaks() {
     // toggleStatus cycle the NEVER arm the ALWAYS_ON raise serves,
     // the modifier-spent flag the bare F3 release gate reads)
     assert_eq!(
-        app.hitboxes_status,
+        app.debug_entry_states[crate::screens::ENTITY_HITBOXES_ENTRY],
         crate::screens::DebugEntryStatus::Never,
         "the fresh client the entry keeps silent"
     );
     app.on_hitboxes_key();
     assert_eq!(
-        app.hitboxes_status,
+        app.debug_entry_states[crate::screens::ENTITY_HITBOXES_ENTRY],
         crate::screens::DebugEntryStatus::Always,
         "the chord the entry raises"
     );

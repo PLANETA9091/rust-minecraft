@@ -10352,7 +10352,7 @@ fn the_debug_feedback_words_the_family_wears() {
         "the off word the overlay-open flip answers"
     );
     assert_eq!(
-        app.chunk_borders_status,
+        app.debug_entry_states[crate::screens::CHUNK_BORDERS_ENTRY],
         crate::screens::DebugEntryStatus::Never,
         "the pair the flip restores"
     );
@@ -10370,7 +10370,7 @@ fn the_debug_feedback_words_the_family_wears() {
         "the off word the overlay-open flip answers"
     );
     assert_eq!(
-        app.hitboxes_status,
+        app.debug_entry_states[crate::screens::ENTITY_HITBOXES_ENTRY],
         crate::screens::DebugEntryStatus::Never,
         "the pair the flip restores"
     );
@@ -16631,7 +16631,7 @@ fn the_debug_options_screen_the_rows_the_profiles_the_chrome_wear() {
         "the fresh client the DEFAULT profile keeps"
     );
     assert_eq!(
-        app.chunk_borders_status,
+        app.debug_entry_states[crate::screens::CHUNK_BORDERS_ENTRY],
         crate::screens::DebugEntryStatus::Never,
         "the fresh entries the NEVER arm keeps"
     );
@@ -16643,16 +16643,20 @@ fn the_debug_options_screen_the_rows_the_profiles_the_chrome_wear() {
     // re-arms)
     let mut fb = crate::raster::Framebuf::new(640, 360);
     let mut assets = GuiAssets::open(assets_root());
+    // THE RENDERER BLOCK'S OWN SEAT (the rows the visible window the
+    // scroll carries — the chunk_borders/entity_hitboxes seats the
+    // 700px offset brings into the band)
+    app.debug_scroll = 700.0;
     app.render(&mut fb, &mut assets);
     let always_border = app
         .buttons
         .iter()
-        .find(|b| b.id == "dbgalways_border")
+        .find(|b| b.id == "dbgalways" && b.label == "31")
         .expect("the always pill the row wears")
         .clone();
     app.on_click(always_border.x + always_border.w / 2, always_border.y + 10);
     assert_eq!(
-        app.chunk_borders_status,
+        app.debug_entry_states[crate::screens::CHUNK_BORDERS_ENTRY],
         crate::screens::DebugEntryStatus::Always,
         "the coral pill the ALWAYS_ON banks"
     );
@@ -16672,7 +16676,7 @@ fn the_debug_options_screen_the_rows_the_profiles_the_chrome_wear() {
     let overlay_hitboxes = app
         .buttons
         .iter()
-        .find(|b| b.id == "dbgoverlay_hitboxes")
+        .find(|b| b.id == "dbgoverlay" && b.label == "35")
         .expect("the overlay pill the rebuild wears")
         .clone();
     app.on_click(
@@ -16680,7 +16684,7 @@ fn the_debug_options_screen_the_rows_the_profiles_the_chrome_wear() {
         overlay_hitboxes.y + 10,
     );
     assert_eq!(
-        app.hitboxes_status,
+        app.debug_entry_states[crate::screens::ENTITY_HITBOXES_ENTRY],
         crate::screens::DebugEntryStatus::Overlay,
         "the yellow pill the IN_OVERLAY arm speaks"
     );
@@ -16689,12 +16693,12 @@ fn the_debug_options_screen_the_rows_the_profiles_the_chrome_wear() {
     let off_hitboxes = app
         .buttons
         .iter()
-        .find(|b| b.id == "dbgoff_hitboxes")
+        .find(|b| b.id == "dbgoff" && b.label == "35")
         .expect("the off pill the rebuild wears")
         .clone();
     app.on_click(off_hitboxes.x + off_hitboxes.w / 2, off_hitboxes.y + 10);
     assert_eq!(
-        app.hitboxes_status,
+        app.debug_entry_states[crate::screens::ENTITY_HITBOXES_ENTRY],
         crate::screens::DebugEntryStatus::Never,
         "the white pill the NEVER keeps"
     );
@@ -16702,7 +16706,8 @@ fn the_debug_options_screen_the_rows_the_profiles_the_chrome_wear() {
     // — the loadProfile + save + refreshEntries the click serves, the
     // FPS ALWAYS_ON word the fps_charts flag wears, the renderer flags
     // the reset keeps OFF, the identity the putfield restores)
-    app.chunk_borders_status = crate::screens::DebugEntryStatus::Always;
+    app.debug_entry_states[crate::screens::CHUNK_BORDERS_ENTRY] =
+        crate::screens::DebugEntryStatus::Always;
     app.render(&mut fb, &mut assets);
     let perf = app
         .buttons
@@ -16720,10 +16725,11 @@ fn the_debug_options_screen_the_rows_the_profiles_the_chrome_wear() {
         app.fps_charts,
         "the FPS ALWAYS_ON word the flag's raise wears"
     );
-    assert_eq!(
-        app.chunk_borders_status,
-        crate::screens::DebugEntryStatus::Never,
-        "the renderer flags the reset keeps OFF"
+    assert!(
+        app.debug_entry_states
+            .iter()
+            .all(|&s| s == crate::screens::DebugEntryStatus::Never),
+        "the whole bank the reset keeps NEVER"
     );
     // THE DEFAULT PROFILE'S OWN RETURN (the same walk the fresh
     // preset answers — the fps flag the reset keeps OFF, the field
@@ -18884,24 +18890,26 @@ fn the_debug_entries_the_pill_colors_the_tri_state_wears() {
     let mut assets = GuiAssets::open(assets_root());
     // THE FRESH ROW (the NEVER statuses the Off pill's ON arm wears —
     // the white word the band speaks, the overlay + always pills the
-    // tan unselected arms keep)
+    // tan unselected arms keep; the chunk_borders row the 700px
+    // offset the visible window brings)
+    app.debug_scroll = 700.0;
     app.render(&mut fb, &mut assets);
     let off = app
         .buttons
         .iter()
-        .find(|b| b.id == "dbgoff_border")
+        .find(|b| b.id == "dbgoff" && b.label == "31")
         .expect("the off pill the row wears")
         .clone();
     let overlay = app
         .buttons
         .iter()
-        .find(|b| b.id == "dbgoverlay_border")
+        .find(|b| b.id == "dbgoverlay" && b.label == "31")
         .expect("the overlay pill the row wears")
         .clone();
     let always = app
         .buttons
         .iter()
-        .find(|b| b.id == "dbgalways_border")
+        .find(|b| b.id == "dbgalways" && b.label == "31")
         .expect("the always pill the row wears")
         .clone();
     assert!(
@@ -18932,7 +18940,7 @@ fn the_debug_entries_the_pill_colors_the_tri_state_wears() {
     // the ON arm the -171 fold speaks, the siblings the tan keep)
     app.on_click(overlay.x + overlay.w / 2, overlay.y + 10);
     assert_eq!(
-        app.chunk_borders_status,
+        app.debug_entry_states[crate::screens::CHUNK_BORDERS_ENTRY],
         DebugEntryStatus::Overlay,
         "the click the IN_OVERLAY banks"
     );
@@ -18940,7 +18948,7 @@ fn the_debug_entries_the_pill_colors_the_tri_state_wears() {
     let overlay2 = app
         .buttons
         .iter()
-        .find(|b| b.id == "dbgoverlay_border")
+        .find(|b| b.id == "dbgoverlay" && b.label == "31")
         .expect("the rebuild wears")
         .clone();
     assert!(
@@ -18957,12 +18965,12 @@ fn the_debug_entries_the_pill_colors_the_tri_state_wears() {
     let always2 = app
         .buttons
         .iter()
-        .find(|b| b.id == "dbgalways_border")
+        .find(|b| b.id == "dbgalways" && b.label == "31")
         .expect("the rebuild wears")
         .clone();
     app.on_click(always2.x + always2.w / 2, always2.y + 10);
     assert_eq!(
-        app.chunk_borders_status,
+        app.debug_entry_states[crate::screens::CHUNK_BORDERS_ENTRY],
         DebugEntryStatus::Always,
         "the click the ALWAYS_ON banks"
     );
@@ -18970,7 +18978,7 @@ fn the_debug_entries_the_pill_colors_the_tri_state_wears() {
     let always3 = app
         .buttons
         .iter()
-        .find(|b| b.id == "dbgalways_border")
+        .find(|b| b.id == "dbgalways" && b.label == "31")
         .expect("the rebuild wears")
         .clone();
     assert!(
@@ -18980,5 +18988,116 @@ fn the_debug_entries_the_pill_colors_the_tri_state_wears() {
     assert!(
         !rect_has(&fb, always3.x, always3.y + 6, always3.w, 7, TAN),
         "the ON pill the tan never wears"
+    );
+}
+
+/// THE ENTRIES LIST'S OWN WALK (javap 26.2 the updateSearch law —
+/// the 45-row bank the clinit's register calls speak, the sorted
+/// order the comparator serves (the TEXT sortKey the head keeps,
+/// the Identifier the alphabetical path speaks within), the
+/// OptionList's own scroll the wheel step answers, the visible
+/// window the rows the clip carries).
+#[test]
+fn the_debug_entries_list_the_bank_the_scroll_the_rows_wear() {
+    use crate::screens::DebugEntryStatus;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.on_debug_options_key();
+    // THE BANK'S OWN LAW (the sorted order the comparator serves: the
+    // TEXT head the biome row keeps, the RENDERER head the
+    // 3d_crosshair seat wears, the two chord consts the registry ids
+    // speak)
+    assert_eq!(
+        crate::screens::DEBUG_ENTRY_ROWS.len(),
+        45,
+        "the clinit's own count"
+    );
+    assert_eq!(
+        crate::screens::DEBUG_ENTRY_ROWS[0].0,
+        "biome",
+        "the TEXT block the head keeps"
+    );
+    assert_eq!(
+        crate::screens::DEBUG_ENTRY_ROWS[30].0,
+        "3d_crosshair",
+        "the RENDERER block the head wears"
+    );
+    assert_eq!(
+        crate::screens::DEBUG_ENTRY_ROWS[crate::screens::CHUNK_BORDERS_ENTRY].0,
+        "chunk_borders",
+        "the F3+G chord's own seat"
+    );
+    assert_eq!(
+        crate::screens::DEBUG_ENTRY_ROWS[crate::screens::ENTITY_HITBOXES_ENTRY].0,
+        "entity_hitboxes",
+        "the F3+B chord's own seat"
+    );
+    assert_eq!(
+        crate::screens::DEBUG_ENTRY_ROWS[8].0,
+        "fps",
+        "the perf profile's own row the TEXT block carries"
+    );
+    // THE FRESH SCROLL'S OWN ROWS (the top band the fps row carries —
+    // the TEXT row the same tri-state store wears)
+    let mut fb = crate::raster::Framebuf::new(640, 360);
+    let mut assets = GuiAssets::open(assets_root());
+    app.render(&mut fb, &mut assets);
+    let fps_off = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "dbgoff" && b.label == "8")
+        .expect("the fps row's off pill the visible band carries")
+        .clone();
+    app.on_click(fps_off.x + fps_off.w / 2, fps_off.y + 10);
+    assert_eq!(
+        app.debug_entry_states[8],
+        DebugEntryStatus::Never,
+        "the off pill the NEVER banks — the TEXT row the same store wears"
+    );
+    assert_eq!(
+        app.debug_profile, None,
+        "the manual touch the identity breaks"
+    );
+    // THE OVERLAY PILL THE SAME ROW WEARS (the click the IN_OVERLAY
+    // banks — the store the row bank's own seat keeps)
+    app.render(&mut fb, &mut assets);
+    let fps_overlay = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "dbgoverlay" && b.label == "8")
+        .expect("the rebuild wears")
+        .clone();
+    app.on_click(fps_overlay.x + fps_overlay.w / 2, fps_overlay.y + 10);
+    assert_eq!(
+        app.debug_entry_states[8],
+        DebugEntryStatus::Overlay,
+        "the overlay pill the IN_OVERLAY banks"
+    );
+    // THE WHEEL'S OWN WALK (the clamp law — the top the 0 floor
+    // keeps, the bottom the content band's ceiling wears, the notch
+    // the 24px step speaks)
+    app.on_debug_options_scroll(1.0, 180);
+    assert_eq!(app.debug_scroll, 0.0, "the top the floor keeps");
+    app.on_debug_options_scroll(-1.0, 180);
+    assert_eq!(app.debug_scroll, 24.0, "the notch the 24px step wears");
+    app.on_debug_options_scroll(-1000.0, 180);
+    assert_eq!(
+        app.debug_scroll, 1032.0,
+        "the ceiling the content band speaks"
+    );
+    // THE SCROLLED RENDER (the water_levels row the bottom band
+    // carries — the RENDERER row the same store wears)
+    app.render(&mut fb, &mut assets);
+    let wl_always = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "dbgalways" && b.label == "44")
+        .expect("the scrolled row's always pill the band carries")
+        .clone();
+    app.on_click(wl_always.x + wl_always.w / 2, wl_always.y + 10);
+    assert_eq!(
+        app.debug_entry_states[44],
+        DebugEntryStatus::Always,
+        "the RENDERER row the ALWAYS_ON banks"
     );
 }

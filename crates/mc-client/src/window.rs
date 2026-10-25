@@ -2918,6 +2918,13 @@ pub fn run_gui_app(
                 // [`App::on_kb_scroll`] the wheel's own step wears, the
                 // band the render's own 30-top/28-footer law keeps)
                 app.on_kb_scroll(fdy, height as i32 / 2);
+            } else if app.screen == crate::screens::ScreenKind::DebugOptions {
+                // THE DEBUG OPTIONS LIST'S OWN SCROLL (the mouseScrolled
+                // walk the OptionList serves — the amount the
+                // [`App::on_debug_options_scroll`] the wheel's own step
+                // wears, the 45-row bank the visible window the clip
+                // answers)
+                app.on_debug_options_scroll(fdy, height as i32 / 2);
             }
         }
         // THE FIXED CLOCK SPENDS (vanilla `Minecraft.runTick`'s own

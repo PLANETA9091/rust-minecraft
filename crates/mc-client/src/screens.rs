@@ -7067,6 +7067,88 @@ pub enum DebugEntryStatus {
     Never,
 }
 
+/// THE ENTRIES' OWN ROW BANK (javap 26.2 DebugScreenEntries clinit —
+/// the 45 `register` calls the debugentries_231.py dump banks, the
+/// updateSearch walk the SCREEN's own order serves: the
+/// `category().sortKey()` float-compare FIRST (the DebugEntryCategory
+/// clinit law — SCREEN_TEXT `fconst_1` 1.0 the TEXT rows carry,
+/// RENDERER `fconst_2` 2.0 the renderer rows wear — the TEXT block
+/// the list's HEAD keeps), then the `Identifier.compareTo` the
+/// alphabetical path speaks within). The bool = the category row
+/// wears (true = the RENDERER category, the `DebugEntryNoop` rows
+/// whose `category()` override the dump answers — chunk_borders,
+/// entity_hitboxes, 3d_crosshair, the chunk-section and the
+/// visualize_* debug renderers; false = the SCREEN_TEXT category,
+/// the overlay's own text rows the real DebugEntry* classes serve).
+/// The fps/gpu_utilization/simple_performance_impactors trio the
+/// REAL classes keep — the TEXT rows the perf profile's own words
+/// wear. The registration order the clinit's own walk keeps (the
+/// player_position the 18th seat, the renderers the tail's 15) —
+/// the client's bank the sorted ORDER the screen renders wears, the
+/// entry indexes the two chord consts speak.
+pub(crate) const DEBUG_ENTRY_ROWS: [(&str, bool); 45] = [
+    // THE TEXT BLOCK (sortKey 1.0 — the alphabetical Identifier walk)
+    ("biome", false),
+    ("chunk_generation_stats", false),
+    ("chunk_render_stats", false),
+    ("chunk_source_stats", false),
+    ("day_count", false),
+    ("detailed_memory", false),
+    ("entity_render_stats", false),
+    ("entity_spawn_counts", false),
+    ("fps", false),
+    ("game_version", false),
+    ("gpu_utilization", false),
+    ("heightmap", false),
+    ("light_levels", false),
+    ("local_difficulty", false),
+    ("looking_at_block_state", false),
+    ("looking_at_block_tags", false),
+    ("looking_at_entity", false),
+    ("looking_at_entity_tags", false),
+    ("looking_at_fluid_state", false),
+    ("looking_at_fluid_tags", false),
+    ("memory", false),
+    ("particle_render_stats", false),
+    ("player_position", false),
+    ("player_section_position", false),
+    ("post_effect", false),
+    ("simple_performance_impactors", false),
+    ("sound_cache", false),
+    ("sound_mood", false),
+    ("system_specs", false),
+    ("tps", false),
+    // THE RENDERER BLOCK (sortKey 2.0 — the same alphabetical walk)
+    ("3d_crosshair", true),
+    ("chunk_borders", true),
+    ("chunk_section_octree", true),
+    ("chunk_section_paths", true),
+    ("chunk_section_visibility", true),
+    ("entity_hitboxes", true),
+    ("visualize_block_light_levels", true),
+    ("visualize_chunks_on_server", true),
+    ("visualize_collision_boxes", true),
+    ("visualize_entity_supporting_blocks", true),
+    ("visualize_heightmap", true),
+    ("visualize_sky_light_levels", true),
+    ("visualize_sky_light_sections", true),
+    ("visualize_solid_faces", true),
+    ("visualize_water_levels", true),
+];
+/// THE CHUNK BORDERS' OWN SEAT (the row bank's index — the F3+G
+/// chord the `toggleStatus(CHUNK_BORDERS)` id walk answers, the
+/// rebuildCurrentList gate the render lane reads)
+pub(crate) const CHUNK_BORDERS_ENTRY: usize = 31;
+/// THE ENTITY HITBOXES' OWN SEAT (the row bank's index — the F3+B
+/// chord the `toggleStatus(ENTITY_HITBOXES)` id walk answers)
+pub(crate) const ENTITY_HITBOXES_ENTRY: usize = 35;
+/// THE CATEGORY HEADERS' OWN KEYS (the DebugEntryCategory.label()
+/// rows the refreshEntries walk emits at the group boundaries)
+const DEBUG_CATEGORY_LABELS: [&str; 2] = [
+    "debug.options.category.text",
+    "debug.options.category.renderer",
+];
+
 /// THE SLOT ROW'S OWN STEP (the init walk's `imul 31` — the 26x26
 /// widget's own size PLUS the 5px gap the row's rhythm keeps, the same
 /// constant the clinit's ALL_SLOTS_WIDTH fold speaks).
@@ -9577,26 +9659,26 @@ pub struct App {
     /// pair), the raised state the bottom row's `visible` word and
     /// the ping chart draw's own gate both speak).
     pub network_charts: bool,
-    /// THE CHUNK BORDERS' OWN ENTRY (26.2's debug-entry system — the
-    /// `DebugScreenEntryList.isCurrentlyEnabled(chunk_border)` gate
-    /// the audited DebugRenderer.refreshRendererList keeps: the F3+G
-    /// chord walks the toggleStatus cycle, the ACTIVE state the
-    /// rebuildCurrentList law speaks — the ALWAYS_ON entry the
-    /// overlay's own visibility never gates, the IN_OVERLAY entry the
-    /// `isOverlayVisible` arm alone joins, the NEVER arm the silent
-    /// world keeps). Fresh = [`DebugEntryStatus::Never`].
-    pub chunk_borders_status: DebugEntryStatus,
-    /// THE ENTITY HITBOXES' OWN ENTRY (26.2's debug-entry system —
-    /// the `DebugScreenEntryList.isCurrentlyEnabled(entity_hitboxes)`
-    /// gate the audited `refreshRendererList` tail keeps (pcs 671-701
-    /// — the EntityHitboxDebugRenderer the enabled entry alone
-    /// joins), the F3+B chord's own toggle the
-    /// `keyDebugShowHitboxes` lane walks
-    /// (`toggleStatus(ENTITY_HITBOXES)`): the ACTIVE state the same
-    /// rebuild law speaks — the ALWAYS_ON entry the overlay's
-    /// visibility never gates, the IN_OVERLAY arm the overlay-open
-    /// frame alone serves). Fresh = [`DebugEntryStatus::Never`].
-    pub hitboxes_status: DebugEntryStatus,
+    /// THE ENTRIES' OWN STATUS STORE (javap 26.2
+    /// DebugScreenEntryList's `allStatuses` map — the
+    /// `getStatus(id)` `getOrDefault(id, NEVER)` walk the array bank
+    /// serves, the row bank's own order the [`DEBUG_ENTRY_ROWS`]
+    /// consts keep): the `isCurrentlyEnabled` gate the ACTIVE law
+    /// speaks (the ALWAYS_ON entry the rebuildCurrentList walk
+    /// unconditionally joins, the IN_OVERLAY entry the
+    /// `isOverlayVisible` frame ALONE serves, the NEVER arm the
+    /// silent world keeps). The F3+G chord the
+    /// [`CHUNK_BORDERS_ENTRY`] seat walks, the F3+B chord the
+    /// [`ENTITY_HITBOXES_ENTRY`] seat wears — the toggleStatus cycle
+    /// the ordinal switch answers. Fresh = the ALL-NEVER map the
+    /// fresh client keeps (the vanilla absent-key law the
+    /// getOrDefault default speaks).
+    pub debug_entry_states: [DebugEntryStatus; 45],
+    /// THE ENTRIES LIST'S OWN SCROLL (the OptionList's own
+    /// `scrollAmount` — the mouseScrolled walk the wheel step
+    /// answers, the refreshScrollAmount clamp the [0, max] band
+    /// keeps). Fresh = 0.0.
+    pub debug_scroll: f64,
     /// THE DEBUG OPTIONS' OWN PROFILE BANK (javap 26.2
     /// DebugScreenEntryList's `profile` field — the
     /// `isUsingProfile(profile)` identity the `addProfileButton`
@@ -11203,8 +11285,8 @@ impl App {
             profiler_tree_path: "root".to_string(),
             profiler_results: None,
             network_charts: false,
-            chunk_borders_status: DebugEntryStatus::Never,
-            hitboxes_status: DebugEntryStatus::Never,
+            debug_entry_states: [DebugEntryStatus::Never; 45],
+            debug_scroll: 0.0,
             debug_profile: Some(false),
             game_mode: GameMode::Survival,
             previous_game_mode: None,
@@ -27146,35 +27228,47 @@ impl App {
         );
         perf.active = self.debug_profile != Some(true);
         self.buttons.push(perf);
-        // THE ENTRIES' OWN ROWS (the refreshEntries walk — the
-        // category header the label() word keeps, the rows the
-        // literal-path labels the extractContent serves, the state
-        // pills the CycleButton builder's colored words wear: the
-        // selected arm the coral keeps, the unselected pair the tan
-        // wears; the pills the buttons store keeps the hit-test's own
-        // seat — the draw the custom pass answers, the shared render
-        // the white-label law never wears)
-        let ry = py + 20 + 8;
-        let cat = tr("debug.options.category.renderer").unwrap_or("Debug Renderers");
-        g.text_centered(a, cx, ry, cat, [0.6, 0.6, 0.6], false);
-        let rows: [(&str, DebugEntryStatus, &str, &str, &str); 2] = [
-            (
-                "chunk_borders",
-                self.chunk_borders_status,
-                "dbgoff_border",
-                "dbgoverlay_border",
-                "dbgalways_border",
-            ),
-            (
-                "entity_hitboxes",
-                self.hitboxes_status,
-                "dbgoff_hitboxes",
-                "dbgoverlay_hitboxes",
-                "dbgalways_hitboxes",
-            ),
-        ];
-        for (i, (path, status, off_id, overlay_id, always_id)) in rows.iter().enumerate() {
-            let row_y = ry + 11 + i as i32 * 24;
+        // THE ENTRIES' OWN ROWS (the updateSearch walk — the SORTED
+        // bank the comparator law serves (the category sortKey the
+        // TEXT block the head keeps, the Identifier the alphabetical
+        // path speaks within), the category header the label() word
+        // keeps at the group boundaries, the rows the literal-path
+        // labels the extractContent serves, the state pills the
+        // CycleButton trio's colored words wear; the pills the
+        // buttons store keeps the hit-test's own seat — the draw the
+        // custom pass answers. THE LIST'S OWN SCROLL (the
+        // AbstractSelectionList walk): the scrollAmount the offset px
+        // speaks, the visible window the rows the clip answers — the
+        // outside rows the pills the buttons store never pushes)
+        let list_top = py + 20 + 8;
+        let list_bottom = h - 8;
+        let scroll = self.debug_scroll.round() as i32;
+        let mut cursor = list_top - scroll;
+        let mut last_cat: Option<usize> = None;
+        for (idx, (path, renderer)) in DEBUG_ENTRY_ROWS.iter().enumerate() {
+            // THE CATEGORY HEADER'S OWN BOUNDARY (the refreshEntries
+            // walk — the category CHANGE the label row emits, the
+            // equals law the last-category bank keeps)
+            let cat = if *renderer { 1 } else { 0 };
+            if last_cat != Some(cat) {
+                let label_y = cursor;
+                cursor += 14;
+                last_cat = Some(cat);
+                if label_y + 9 >= list_top && label_y <= list_bottom {
+                    let cat_word = tr(DEBUG_CATEGORY_LABELS[cat]).unwrap_or(if cat == 0 {
+                        "Debug Screen Text"
+                    } else {
+                        "Debug Renderers"
+                    });
+                    g.text_centered(a, cx, label_y, cat_word, [0.6, 0.6, 0.6], false);
+                }
+            }
+            let row_y = cursor;
+            cursor += 24;
+            if row_y + 20 < list_top || row_y > list_bottom {
+                continue; // the scrolled-out row the clip answers
+            }
+            let status = self.debug_entry_states[idx];
             // THE LITERAL-PATH LABEL (the extractContent walk — the
             // `font.text(name, x, y+5, allowed ? -1 : gray)` the white
             // word wears, the allowed rows the client's
@@ -27185,7 +27279,10 @@ impl App {
             // the unselected the tan keeps; the vanilla order the
             // extractContent x walk banks: the never pill LEFTMOST)
             let off_x = w - 24 - 168;
-            let mut off = Button::new(off_id, String::new(), off_x + 28, row_y, 56);
+            // THE ROW'S OWN CARRIER (the label the index carries — the
+            // custom pass the label never draws, the dispatch the
+            // parse wears; the &'static id the Button bank keeps)
+            let mut off = Button::new("dbgoff", idx.to_string(), off_x + 28, row_y, 56);
             off.active = true;
             self.buttons.push(off);
             g.sprite_9slice(a, "widget/button", off_x, row_y, 56, 20);
@@ -27194,7 +27291,7 @@ impl App {
                 off_x + 28,
                 row_y + 6,
                 tr("options.off").unwrap_or("Off"),
-                if *status == DebugEntryStatus::Never {
+                if status == DebugEntryStatus::Never {
                     WHITE
                 } else {
                     tan
@@ -27207,7 +27304,7 @@ impl App {
             // two's-complement fold answers, the unselected the tan
             // keeps)
             let overlay_x = w - 24 - 112;
-            let mut overlay = Button::new(overlay_id, String::new(), overlay_x + 28, row_y, 56);
+            let mut overlay = Button::new("dbgoverlay", idx.to_string(), overlay_x + 28, row_y, 56);
             overlay.active = true;
             self.buttons.push(overlay);
             g.sprite_9slice(a, "widget/button", overlay_x, row_y, 56, 20);
@@ -27216,7 +27313,7 @@ impl App {
                 overlay_x + 28,
                 row_y + 6,
                 tr("debug.entry.overlay").unwrap_or("In Overlay"),
-                if *status == DebugEntryStatus::Overlay {
+                if status == DebugEntryStatus::Overlay {
                     yellow
                 } else {
                     tan
@@ -27228,7 +27325,7 @@ impl App {
             // -2142128 color speaks, the unselected the tan keeps; the
             // vanilla order the ALWAYS pill RIGHTMOST wears)
             let always_x = w - 24 - 56;
-            let mut always = Button::new(always_id, String::new(), always_x + 28, row_y, 56);
+            let mut always = Button::new("dbgalways", idx.to_string(), always_x + 28, row_y, 56);
             always.active = true;
             self.buttons.push(always);
             g.sprite_9slice(a, "widget/button", always_x, row_y, 56, 20);
@@ -27237,7 +27334,7 @@ impl App {
                 always_x + 28,
                 row_y + 6,
                 tr("debug.entry.always").unwrap_or("Always"),
-                if *status == DebugEntryStatus::Always {
+                if status == DebugEntryStatus::Always {
                     coral
                 } else {
                     tan
@@ -33890,6 +33987,27 @@ impl App {
     /// band's own bottom the walk aligns. The `visible` gate the
     /// dispatch's own screen arm serves — the open KeyBinds the arm's
     /// own verdict keeps).
+    /// THE DEBUG OPTIONS LIST'S OWN SCROLL (the OptionList's
+    /// mouseScrolled walk — the `scrollAmount` the wheel step answers,
+    /// the `refreshScrollAmount` clamp the [0, max] band keeps: the
+    /// 45 rows + the 2 category headers the content height speaks,
+    /// the visible window the band's own height the [list_top,
+    /// list_bottom] frame answers — the same step the key-binds list
+    /// the 24px row pitch wears).
+    pub fn on_debug_options_scroll(&mut self, sdy: f64, gui_h: i32) {
+        // THE CONTENT'S OWN HEIGHT (the rows 24px + the headers 14px
+        // — the bank the DEBUG_ENTRY_ROWS const keeps, the two
+        // category boundaries the header rows emit)
+        let content = (DEBUG_ENTRY_ROWS.len() * 24 + 2 * 14) as f64;
+        // THE VISIBLE BAND (the gui frame the header chrome's own
+        // height subtracts — the title + the warning + the profile
+        // rows the 104px band speaks, the bottom margin the 8px keeps)
+        let visible = (gui_h as f64 - 104.0).max(0.0);
+        let max = (content - visible).max(0.0);
+        let next = self.debug_scroll - sdy * 24.0;
+        self.debug_scroll = next.clamp(0.0, max);
+    }
+
     pub fn on_kb_scroll(&mut self, sdy: f64, gui_h: i32) {
         let band = gui_h - 28 - crate::options_file::key_binds::LIST_TOP;
         let max = (crate::options_file::key_binds::content_height() - band).max(0) as f64;
@@ -37032,14 +37150,12 @@ impl App {
                 "dbgprofdflt" => {
                     self.debug_profile = Some(false);
                     self.fps_charts = false;
-                    self.chunk_borders_status = DebugEntryStatus::Never;
-                    self.hitboxes_status = DebugEntryStatus::Never;
+                    self.debug_entry_states = [DebugEntryStatus::Never; 45];
                 }
                 "dbgprofperf" => {
                     self.debug_profile = Some(true);
                     self.fps_charts = true;
-                    self.chunk_borders_status = DebugEntryStatus::Never;
-                    self.hitboxes_status = DebugEntryStatus::Never;
+                    self.debug_entry_states = [DebugEntryStatus::Never; 45];
                 }
                 // THE ENTRY ROWS' OWN PILLS (javap 26.2 the
                 // OptionEntry CycleButton trio — the click the
@@ -37048,32 +37164,33 @@ impl App {
                 // the `setStatus` walk the profile field the NULL
                 // putfield answers (the manual touch the identity
                 // BREAKS — the both profile buttons the active law
-                // re-arms), the tri-state store the THREE arms wear).
+                // re-arms), the tri-state store the THREE arms wear —
+                // the row bank's own index the id suffix carries).
                 // The same statuses the F3+G/F3+B chords' toggleStatus
                 // cycle walks
-                "dbgalways_border" => {
-                    self.chunk_borders_status = DebugEntryStatus::Always;
-                    self.debug_profile = None;
+                id if id == "dbgalways" => {
+                    if let Ok(idx) = b.label.parse::<usize>() {
+                        if idx < self.debug_entry_states.len() {
+                            self.debug_entry_states[idx] = DebugEntryStatus::Always;
+                            self.debug_profile = None;
+                        }
+                    }
                 }
-                "dbgoverlay_border" => {
-                    self.chunk_borders_status = DebugEntryStatus::Overlay;
-                    self.debug_profile = None;
+                id if id == "dbgoverlay" => {
+                    if let Ok(idx) = b.label.parse::<usize>() {
+                        if idx < self.debug_entry_states.len() {
+                            self.debug_entry_states[idx] = DebugEntryStatus::Overlay;
+                            self.debug_profile = None;
+                        }
+                    }
                 }
-                "dbgoff_border" => {
-                    self.chunk_borders_status = DebugEntryStatus::Never;
-                    self.debug_profile = None;
-                }
-                "dbgalways_hitboxes" => {
-                    self.hitboxes_status = DebugEntryStatus::Always;
-                    self.debug_profile = None;
-                }
-                "dbgoverlay_hitboxes" => {
-                    self.hitboxes_status = DebugEntryStatus::Overlay;
-                    self.debug_profile = None;
-                }
-                "dbgoff_hitboxes" => {
-                    self.hitboxes_status = DebugEntryStatus::Never;
-                    self.debug_profile = None;
+                id if id == "dbgoff" => {
+                    if let Ok(idx) = b.label.parse::<usize>() {
+                        if idx < self.debug_entry_states.len() {
+                            self.debug_entry_states[idx] = DebugEntryStatus::Never;
+                            self.debug_profile = None;
+                        }
+                    }
                 }
                 _ => {}
             }
@@ -40469,7 +40586,8 @@ impl App {
         // overlay-closed frame the SAME seat re-asserts, the
         // IN_OVERLAY arm the overlay-open frame the same seat keeps,
         // the overlay-closed frame the ALWAYS_ON PROMOTE serves)
-        self.chunk_borders_status = match self.chunk_borders_status {
+        let seat = &mut self.debug_entry_states[CHUNK_BORDERS_ENTRY];
+        *seat = match *seat {
             DebugEntryStatus::Always => {
                 if self.debug_held {
                     DebugEntryStatus::Never
@@ -40486,7 +40604,7 @@ impl App {
             }
             DebugEntryStatus::Never => DebugEntryStatus::Always,
         };
-        let shown = self.chunk_borders_status == DebugEntryStatus::Always;
+        let shown = self.debug_entry_states[CHUNK_BORDERS_ENTRY] == DebugEntryStatus::Always;
         let word = if shown {
             "\u{a7}eChunk borders: shown"
         } else {
@@ -40517,7 +40635,8 @@ impl App {
         // chunk-border chord wears — the ENTITY_HITBOXES id the
         // `toggleStatus` call carries, the cycle the store's own law
         // answers)
-        self.hitboxes_status = match self.hitboxes_status {
+        let seat = &mut self.debug_entry_states[ENTITY_HITBOXES_ENTRY];
+        *seat = match *seat {
             DebugEntryStatus::Always => {
                 if self.debug_held {
                     DebugEntryStatus::Never
@@ -40534,7 +40653,7 @@ impl App {
             }
             DebugEntryStatus::Never => DebugEntryStatus::Always,
         };
-        let shown = self.hitboxes_status == DebugEntryStatus::Always;
+        let shown = self.debug_entry_states[ENTITY_HITBOXES_ENTRY] == DebugEntryStatus::Always;
         let word = if shown {
             "\u{a7}eHitboxes: shown"
         } else {
@@ -57933,7 +58052,7 @@ impl App {
         // wears — the ALWAYS_ON entry the list ALWAYS joins, the
         // IN_OVERLAY entry the `isOverlayVisible` frame ALONE serves,
         // the NEVER arm the silent world keeps)
-        let borders_active = match self.chunk_borders_status {
+        let borders_active = match self.debug_entry_states[CHUNK_BORDERS_ENTRY] {
             DebugEntryStatus::Always => true,
             DebugEntryStatus::Overlay => self.debug_held,
             DebugEntryStatus::Never => false,
@@ -57968,7 +58087,7 @@ impl App {
         // THE ACTIVE LAW (the same rebuild walk the hitbox arm wears —
         // the ALWAYS_ON entry always joins, the IN_OVERLAY arm the
         // overlay-open frame alone serves)
-        let hitboxes_active = match self.hitboxes_status {
+        let hitboxes_active = match self.debug_entry_states[ENTITY_HITBOXES_ENTRY] {
             DebugEntryStatus::Always => true,
             DebugEntryStatus::Overlay => self.debug_held,
             DebugEntryStatus::Never => false,
