@@ -5531,6 +5531,12 @@ pub struct Button {
     /// field — 0..1 the track's own unit wears, the Some the slider
     /// render path speaks, the None the plain button sprite keeps).
     pub value: Option<f64>,
+    /// THE WIDGET'S OWN FOCUSED FLAG (the AbstractWidget's `focused`
+    /// field — the Tab walk's seat the render arm answers, the
+    /// `isHoveredOrFocused` law the highlighted sprite the focused
+    /// frame wears, the plain button path alone [the slider's own
+    /// focus render the follow-up keeps]).
+    pub focused: bool,
 }
 
 impl Button {
@@ -5544,6 +5550,7 @@ impl Button {
             active: true,
             id,
             value: None,
+            focused: false,
         }
     }
 
@@ -5586,7 +5593,11 @@ impl Button {
         }
         let sprite = if !self.active {
             "widget/button_disabled"
-        } else if self.hovered(mx, my) {
+        } else if self.hovered(mx, my) || self.focused {
+            // THE ISHOVEREDORFOCUSED LAW (the AbstractWidget render's
+            // own sprite ask — the hovered OR the focused frame the
+            // highlighted sprite wears, the Tab walk's seat the same
+            // arm answers)
             "widget/button_highlighted"
         } else {
             "widget/button"
@@ -7065,6 +7076,30 @@ pub enum DebugEntryStatus {
     /// The DebugScreenEntryStatus NEVER ordinal 2 — the entry the
     /// renderer list never joins ("never").
     Never,
+}
+
+/// THE DEBUG OPTIONS' OWN FOCUS SEAT (javap 26.2 the Screen focus law
+/// the client's own store wears — the `getFocused` the widget identity
+/// speaks, the `ComponentPath.leaf` the walk's own answer serves). The
+/// BOX the head seat the `setInitialFocus(searchBox)` walk banks (the
+/// DebugOptionsScreen's own override the ctor answers), the preset
+/// pair + the entry pills the children() add-order walk the traversal
+/// serves — the box the `debug_search_focus` flag alone keeps, the
+/// button seats the field the Some arm wears.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DebugFocusSeat {
+    /// The search EditBox — the typing gate's own seat.
+    Box,
+    /// The DEFAULT profile preset button (the `!isUsingProfile` active
+    /// law the inactive seat the traversal's own skip serves).
+    PresetDflt,
+    /// The PERFORMANCE profile preset button (the same active law).
+    PresetPerf,
+    /// An entry row's status pill — the entry the row bank's own index
+    /// wears, the pill the x-order law the add order keeps (0 = the
+    /// Off pill LEFTMOST, 1 = the In Overlay middle, 2 = the Always
+    /// RIGHTMOST — the extractContent x walk the 230 probe banks).
+    Pill { entry: usize, pill: u8 },
 }
 
 /// THE ENTRIES' OWN ROW BANK (javap 26.2 DebugScreenEntries clinit —
@@ -9741,6 +9776,16 @@ pub struct App {
     /// keeps, the box click the focus the re-arm serves, the outside
     /// click the focus the widget-transfer law retires).
     pub debug_search_focus: bool,
+    /// THE DEBUG OPTIONS' OWN FOCUS SEAT (the vanilla `getFocused` law
+    /// the button widgets wear — the preset pair + the entry pills the
+    /// Tab walk's own store banks, the BOX the `debug_search_focus`
+    /// flag alone keeps [the box the field never re-answers], the None
+    /// the button-less focus the fresh ctor's box-only law wears). The
+    /// [`Self::on_debug_options_tab`] walk the seat re-banks, the
+    /// render the seat's own highlight the isHoveredOrFocused law
+    /// draws, the [`Self::on_debug_options_activate`] walk the seat's
+    /// own press serves.
+    pub debug_focus: Option<DebugFocusSeat>,
     /// THE DEBUG OPTIONS' OWN PROFILE BANK (javap 26.2
     /// DebugScreenEntryList's `profile` field — the
     /// `isUsingProfile(profile)` identity the `addProfileButton`
@@ -11353,6 +11398,7 @@ impl App {
             debug_scroll: 0.0,
             debug_search: String::new(),
             debug_search_focus: true,
+            debug_focus: None,
             debug_profile: Some(false),
             game_mode: GameMode::Survival,
             previous_game_mode: None,
@@ -21623,8 +21669,10 @@ impl App {
             self.debug_scroll = 0.0;
             // THE INITIAL FOCUS'S OWN RE-ARM (the vanilla init's
             // setInitialFocus the fresh screen answers — the re-open
-            // the box the typed-word seat keeps)
+            // the box the typed-word seat keeps, the button seats the
+            // fresh screen's own getFocused-null law the None wears)
             self.debug_search_focus = true;
+            self.debug_focus = None;
         }
         // THE TOGGLE KEYMAPPINGS' OWN SCREEN DANCE (the vanilla
         // Gui.setScreen walk — the pc 215 `KeyMapping.releaseAll()` the
@@ -27377,6 +27425,10 @@ impl App {
             120,
         );
         dflt.active = self.debug_profile != Some(false);
+        // THE FOCUSED SEAT'S OWN FLAG (the isHoveredOrFocused law the
+        // render arm answers — the Tab walk's seat the highlighted
+        // sprite wears)
+        dflt.focused = self.debug_focus == Some(DebugFocusSeat::PresetDflt);
         self.buttons.push(dflt);
         let mut perf = Button::new(
             "dbgprofperf",
@@ -27388,6 +27440,7 @@ impl App {
             120,
         );
         perf.active = self.debug_profile != Some(true);
+        perf.focused = self.debug_focus == Some(DebugFocusSeat::PresetPerf);
         self.buttons.push(perf);
         // THE ENTRIES' OWN ROWS (the updateSearch walk — the SORTED
         // bank the comparator law serves (the category sortKey the
@@ -27453,7 +27506,26 @@ impl App {
             let mut off = Button::new("dbgoff", idx.to_string(), off_x + 28, row_y, 56);
             off.active = true;
             self.buttons.push(off);
-            g.sprite_9slice(a, "widget/button", off_x, row_y, 56, 20);
+            // THE FOCUSED PILL'S OWN SPRITE (the isHoveredOrFocused
+            // law the custom pass wears — the Tab walk's seat the
+            // highlighted frame answers)
+            let off_focused = self.debug_focus
+                == Some(DebugFocusSeat::Pill {
+                    entry: idx,
+                    pill: 0,
+                });
+            g.sprite_9slice(
+                a,
+                if off_focused {
+                    "widget/button_highlighted"
+                } else {
+                    "widget/button"
+                },
+                off_x,
+                row_y,
+                56,
+                20,
+            );
             g.text_centered(
                 a,
                 off_x + 28,
@@ -27475,7 +27547,23 @@ impl App {
             let mut overlay = Button::new("dbgoverlay", idx.to_string(), overlay_x + 28, row_y, 56);
             overlay.active = true;
             self.buttons.push(overlay);
-            g.sprite_9slice(a, "widget/button", overlay_x, row_y, 56, 20);
+            let overlay_focused = self.debug_focus
+                == Some(DebugFocusSeat::Pill {
+                    entry: idx,
+                    pill: 1,
+                });
+            g.sprite_9slice(
+                a,
+                if overlay_focused {
+                    "widget/button_highlighted"
+                } else {
+                    "widget/button"
+                },
+                overlay_x,
+                row_y,
+                56,
+                20,
+            );
             g.text_centered(
                 a,
                 overlay_x + 28,
@@ -27496,7 +27584,23 @@ impl App {
             let mut always = Button::new("dbgalways", idx.to_string(), always_x + 28, row_y, 56);
             always.active = true;
             self.buttons.push(always);
-            g.sprite_9slice(a, "widget/button", always_x, row_y, 56, 20);
+            let always_focused = self.debug_focus
+                == Some(DebugFocusSeat::Pill {
+                    entry: idx,
+                    pill: 2,
+                });
+            g.sprite_9slice(
+                a,
+                if always_focused {
+                    "widget/button_highlighted"
+                } else {
+                    "widget/button"
+                },
+                always_x,
+                row_y,
+                56,
+                20,
+            );
             g.text_centered(
                 a,
                 always_x + 28,
@@ -34323,6 +34427,211 @@ impl App {
         self.debug_scroll = next.clamp(0.0, max);
     }
 
+    /// THE PRESET BUTTON'S OWN PRESS (the addProfileButton lambda's
+    /// resetToProfile walk — the profile putfield + the fps word the
+    /// PERFORMANCE arm wears, the PROFILES map's own rows the
+    /// resetStatuses walk serves, the save the immediate lane keeps).
+    /// The SEAT the focus law banks — the click arms the CLICKED
+    /// button (the vanilla mouseClicked's changeFocus path the widget
+    /// arms), the Enter activation the CURRENT seat the same fold
+    /// re-banks; the box the flag the widget-transfer law retires.
+    fn debug_preset_press(&mut self, performance: bool, seat: DebugFocusSeat) {
+        if performance {
+            self.debug_profile = Some(true);
+            self.fps_charts = true;
+            // THE PRESET'S OWN MAP (vanilla resetToProfile — the
+            // PROFILES map's PERFORMANCE arm the fps ALWAYS_ON word
+            // the resetStatuses walk serves)
+            self.debug_profile_preset_apply(&DEBUG_PRESET_PERFORMANCE);
+        } else {
+            self.debug_profile = Some(false);
+            self.fps_charts = false;
+            // THE PRESET'S OWN MAP (the PROFILES map's DEFAULT arm the
+            // nine IN_OVERLAY rows the resetStatuses walk serves)
+            self.debug_profile_preset_apply(&DEBUG_PRESET_DEFAULT);
+        }
+        self.debug_profile_save();
+        self.debug_focus = Some(seat);
+        self.debug_search_focus = false;
+    }
+
+    /// THE STATUS PILL'S OWN PRESS (the OptionEntry CycleButton's
+    /// setValue walk — the `setStatus(id, status)` the store answers,
+    /// the profile field the NULL putfield the manual touch the
+    /// identity BREAKS, the save the immediate lane keeps). The SEAT
+    /// the focus law the press banks (the clicked pill the click
+    /// arms, the Enter the current seat the same fold keeps).
+    fn debug_pill_press(&mut self, entry: usize, status: DebugEntryStatus, seat: DebugFocusSeat) {
+        self.debug_entry_states[entry] = status;
+        self.debug_profile = None;
+        self.debug_profile_save();
+        self.debug_focus = Some(seat);
+        self.debug_search_focus = false;
+    }
+
+    /// THE TAB KEY'S OWN FOCUS CYCLE (javap 26.2 the Screen
+    /// keyPressed walk the Tab arm answers — the `KeyEvent.key()`
+    /// tableswitch the 258 case the `createTabEvent(!hasShiftDown())`
+    /// serves, the `nextFocusPath` the container's own law speaks,
+    /// the null+Tab the `clearFocus()` re-walk the WRAP answers: the
+    /// off-the-tail forward the HEAD seat re-arms, the off-the-head
+    /// backward the TAIL seat the same re-walk serves). THE
+    /// TRAVERSAL'S OWN ORDER (the `handleTabNavigation` walk): the
+    /// children() snapshot the `Comparator.comparingInt`
+    /// `getTabOrderGroup()` sort answers — the ALL-ZERO groups the
+    /// stable sort never re-seats, the ADD ORDER the traversal wears
+    /// (the box the head seat the setInitialFocus law keeps, the
+    /// preset pair the header's own add banks, the pills the rows'
+    /// add order the x-order law matches: the Off pill LEFTMOST the
+    /// 0 seat wears, the Always RIGHTMOST the 2 keeps). THE
+    /// INACTIVE SEAT'S OWN SKIP (the `AbstractWidget.nextFocusPath`
+    /// walk — the `isActive()` refusal the null returns, the
+    /// iterator MOVES ON): the active profile's own preset button
+    /// the traversal never arms (the `!isUsingProfile` law the
+    /// pair's exclusivity the bounded loop keeps). The seat the
+    /// apply law banks — the `changeFocus` walk the clearFocus +
+    /// applyFocus pair serves (the old flag dies, the new seat
+    /// arms), the box the flag alone keeps.
+    pub fn on_debug_options_tab(&mut self, forward: bool) {
+        if self.screen != ScreenKind::DebugOptions {
+            return;
+        }
+        // THE FOCUSABLES' OWN ORDER (the children() add-order law the
+        // tabOrderGroup=0 sort never re-seats — the buttons store the
+        // render's own walk banks, the box the head seat wears)
+        let mut order: Vec<DebugFocusSeat> = vec![
+            DebugFocusSeat::Box,
+            DebugFocusSeat::PresetDflt,
+            DebugFocusSeat::PresetPerf,
+        ];
+        for b in &self.buttons {
+            match b.id {
+                "dbgoff" => {
+                    if let Ok(e) = b.label.parse::<usize>() {
+                        order.push(DebugFocusSeat::Pill { entry: e, pill: 0 });
+                    }
+                }
+                "dbgoverlay" => {
+                    if let Ok(e) = b.label.parse::<usize>() {
+                        order.push(DebugFocusSeat::Pill { entry: e, pill: 1 });
+                    }
+                }
+                "dbgalways" => {
+                    if let Ok(e) = b.label.parse::<usize>() {
+                        order.push(DebugFocusSeat::Pill { entry: e, pill: 2 });
+                    }
+                }
+                _ => {}
+            }
+        }
+        let len = order.len();
+        if len == 0 {
+            return;
+        }
+        // THE CURRENT SEAT (the getFocused walk — the box the flag
+        // wears, the button seats the store keeps, the STALE seat the
+        // scrolled-out or filtered-out row the position-refusal the
+        // nothing-focused arm wears)
+        let cur: Option<usize> = if self.debug_search_focus {
+            Some(0)
+        } else {
+            self.debug_focus
+                .and_then(|seat| order.iter().position(|s| *s == seat))
+        };
+        // THE STEP (the handleTabNavigation law — the indexOf the ±1
+        // answer, the nothing-focused arm the direction's end seat,
+        // the off-the-end the Screen's clearFocus re-walk the wrap
+        // speaks: forward off the tail the HEAD re-arms, backward off
+        // the head the TAIL serves)
+        let mut next = match cur {
+            Some(i) => {
+                if forward {
+                    (i + 1) % len
+                } else {
+                    (i + len - 1) % len
+                }
+            }
+            None => {
+                if forward {
+                    0
+                } else {
+                    len - 1
+                }
+            }
+        };
+        // THE INACTIVE SEAT'S OWN SKIP (the AbstractWidget
+        // nextFocusPath's isActive refusal — the iterator the move-on
+        // law serves, the pair's exclusivity the bounded loop the
+        // honest shape keeps)
+        let mut steps = 0;
+        while steps < len {
+            let active = match order[next] {
+                DebugFocusSeat::PresetDflt => self.debug_profile != Some(false),
+                DebugFocusSeat::PresetPerf => self.debug_profile != Some(true),
+                _ => true,
+            };
+            if active {
+                break;
+            }
+            next = if forward {
+                (next + 1) % len
+            } else {
+                (next + len - 1) % len
+            };
+            steps += 1;
+        }
+        // THE APPLY (the changeFocus law — the clearFocus the old
+        // flag dies, the applyFocus the new seat arms; the box the
+        // flag alone keeps, the button seats the field wears)
+        self.debug_search_focus = matches!(order[next], DebugFocusSeat::Box);
+        self.debug_focus = match order[next] {
+            DebugFocusSeat::Box => None,
+            seat => Some(seat),
+        };
+    }
+
+    /// THE FOCUSED BUTTON'S OWN ACTIVATION (javap 26.2
+    /// AbstractButton.keyPressed walk — the `isActive()` gate the
+    /// `KeyEvent.isSelection()` ask answers: the Enter/Space press
+    /// the `playDownSound` + the `onPress` fold serves — the focused
+    /// button the keyboard the SAME press the click walks). The BOX
+    /// seat the silence keeps (the EditBox the isSelection key the
+    /// own walk never arms — the 259..269 tableswitch the Tab AND
+    /// the selection keys the box never consumes as actions). The
+    /// INACTIVE preset the `isActive` refusal keeps (the active
+    /// profile's own button the press never serves).
+    pub fn on_debug_options_activate(&mut self) {
+        if self.screen != ScreenKind::DebugOptions {
+            return;
+        }
+        // THE BOX SEAT'S OWN SILENCE (the EditBox the Enter the
+        // typing never serves — the box's own walk the cursor keys
+        // the edit lanes alone wears)
+        let seat = match (self.debug_search_focus, self.debug_focus) {
+            (false, Some(seat)) => seat,
+            _ => return,
+        };
+        match seat {
+            DebugFocusSeat::PresetDflt if self.debug_profile != Some(false) => {
+                self.debug_preset_press(false, seat);
+            }
+            DebugFocusSeat::PresetPerf if self.debug_profile != Some(true) => {
+                self.debug_preset_press(true, seat);
+            }
+            DebugFocusSeat::Pill { entry, pill } => {
+                let status = match pill {
+                    0 => DebugEntryStatus::Never,
+                    1 => DebugEntryStatus::Overlay,
+                    _ => DebugEntryStatus::Always,
+                };
+                if entry < self.debug_entry_states.len() {
+                    self.debug_pill_press(entry, status, seat);
+                }
+            }
+            _ => {}
+        }
+    }
+
     /// THE SEARCH BOX'S OWN CHARS (the EditBox the init's responder
     /// lambda serves — the charTyped lane the focused box answers,
     /// the `updateSearch` rebuild the typed word wears, the max
@@ -37540,28 +37849,12 @@ impl App {
                 // speaks (the isUsingProfile identity the buttons'
                 // active law reads)
                 "dbgprofdflt" => {
-                    self.debug_profile = Some(false);
-                    self.fps_charts = false;
-                    // THE PRESET'S OWN MAP (vanilla resetToProfile —
-                    // the PROFILES map's DEFAULT arm the nine
-                    // IN_OVERLAY rows the resetStatuses walk serves)
-                    self.debug_profile_preset_apply(&DEBUG_PRESET_DEFAULT);
-                    self.debug_profile_save();
-                    // THE FOCUS TRANSFER'S OWN LAW (the preset button the
-                    // next focusable the vanilla walk arms)
-                    self.debug_search_focus = false;
+                    // THE PRESS WALK (the extracted seat the click + the
+                    // Enter activation the same fold serves)
+                    self.debug_preset_press(false, DebugFocusSeat::PresetDflt);
                 }
                 "dbgprofperf" => {
-                    self.debug_profile = Some(true);
-                    self.fps_charts = true;
-                    // THE PRESET'S OWN MAP (vanilla resetToProfile —
-                    // the PROFILES map's PERFORMANCE arm the fps
-                    // ALWAYS_ON word the resetStatuses walk serves)
-                    self.debug_profile_preset_apply(&DEBUG_PRESET_PERFORMANCE);
-                    self.debug_profile_save();
-                    // THE FOCUS TRANSFER'S OWN LAW (the preset button the
-                    // next focusable the vanilla walk arms)
-                    self.debug_search_focus = false;
+                    self.debug_preset_press(true, DebugFocusSeat::PresetPerf);
                 }
                 // THE ENTRY ROWS' OWN PILLS (javap 26.2 the
                 // OptionEntry CycleButton trio — the click the
@@ -37577,39 +37870,42 @@ impl App {
                 id if id == "dbgalways" => {
                     if let Ok(idx) = b.label.parse::<usize>() {
                         if idx < self.debug_entry_states.len() {
-                            self.debug_entry_states[idx] = DebugEntryStatus::Always;
-                            self.debug_profile = None;
-                            self.debug_profile_save();
-                            // THE FOCUS TRANSFER'S OWN LAW (the pill the
-                            // next focusable the vanilla walk arms — the
-                            // box the focus loses)
-                            self.debug_search_focus = false;
+                            self.debug_pill_press(
+                                idx,
+                                DebugEntryStatus::Always,
+                                DebugFocusSeat::Pill {
+                                    entry: idx,
+                                    pill: 2,
+                                },
+                            );
                         }
                     }
                 }
                 id if id == "dbgoverlay" => {
                     if let Ok(idx) = b.label.parse::<usize>() {
                         if idx < self.debug_entry_states.len() {
-                            self.debug_entry_states[idx] = DebugEntryStatus::Overlay;
-                            self.debug_profile = None;
-                            self.debug_profile_save();
-                            // THE FOCUS TRANSFER'S OWN LAW (the pill the
-                            // next focusable the vanilla walk arms — the
-                            // box the focus loses)
-                            self.debug_search_focus = false;
+                            self.debug_pill_press(
+                                idx,
+                                DebugEntryStatus::Overlay,
+                                DebugFocusSeat::Pill {
+                                    entry: idx,
+                                    pill: 1,
+                                },
+                            );
                         }
                     }
                 }
                 id if id == "dbgoff" => {
                     if let Ok(idx) = b.label.parse::<usize>() {
                         if idx < self.debug_entry_states.len() {
-                            self.debug_entry_states[idx] = DebugEntryStatus::Never;
-                            self.debug_profile = None;
-                            self.debug_profile_save();
-                            // THE FOCUS TRANSFER'S OWN LAW (the pill the
-                            // next focusable the vanilla walk arms — the
-                            // box the focus loses)
-                            self.debug_search_focus = false;
+                            self.debug_pill_press(
+                                idx,
+                                DebugEntryStatus::Never,
+                                DebugFocusSeat::Pill {
+                                    entry: idx,
+                                    pill: 0,
+                                },
+                            );
                         }
                     }
                 }

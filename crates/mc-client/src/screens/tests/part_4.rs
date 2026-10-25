@@ -10433,9 +10433,7 @@ fn the_copy_recreate_chord_the_block_command_the_word_wear() {
     app.on_copy_recreate_command_key();
     // THE COMMAND (the world's own hit the expected string builds —
     // the solid cell the serialize's own state reads)
-    let hit = app
-        .clip_crosshair()
-        .expect("the ground the down look hits");
+    let hit = app.clip_crosshair().expect("the ground the down look hits");
     assert_eq!(
         hit.pos,
         (c, top - 1, c),
@@ -19496,6 +19494,224 @@ fn the_debug_search_box_the_click_focus_wears() {
     assert!(
         !app.on_debug_options_box_click(300, 25, 640),
         "the closed screen the walk refuses"
+    );
+}
+
+/// THE DEBUG OPTIONS' OWN TAB CYCLE (the autopush/dev-173 walk — the
+/// Screen keyPressed's 258 case the focus navigation serves, the
+/// handleTabTraversal law the add-order seats wear, the wrap the
+/// clearFocus re-walk the end arms answer, the inactive preset the
+/// isActive refusal skips, the Enter the focused button's own press
+/// serves, the focused render the isHoveredOrFocused sprite wears).
+#[test]
+fn the_debug_options_tab_cycle_the_box_the_pills_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.on_debug_options_key(); // the open arm the fresh screen wears
+    let root = crate::screens::tests::assets_root();
+    let mut assets = GuiAssets::open(&root);
+    let mut fb = crate::raster::Framebuf::new(640, 360);
+    app.render(&mut fb, &mut assets);
+    // THE FRESH OPEN'S OWN SEAT (the setInitialFocus(searchBox) law —
+    // the box the flag wears, the button seats the None keeps)
+    assert!(
+        app.debug_search_focus,
+        "the fresh open the box the focus wears"
+    );
+    assert_eq!(
+        app.debug_focus, None,
+        "the fresh open the button seats the None keeps"
+    );
+    // THE FORWARD CYCLE (the handleTabNavigation law — the add order
+    // the traversal wears: the box the head, the DEFAULT preset the
+    // ctor's own profile the INACTIVE seat the skip law answers, the
+    // PERFORMANCE preset the next, the first row's pills the
+    // off/overlay/always x-order the add banks)
+    app.on_debug_options_tab(true);
+    assert_eq!(
+        app.debug_focus,
+        Some(DebugFocusSeat::PresetPerf),
+        "the inactive DEFAULT preset the skip law answers"
+    );
+    assert!(
+        !app.debug_search_focus,
+        "the box the flag the widget-transfer retires"
+    );
+    app.on_debug_options_tab(true);
+    assert_eq!(
+        app.debug_focus,
+        Some(DebugFocusSeat::Pill { entry: 0, pill: 0 }),
+        "the first row's Off pill the LEFTMOST seat wears"
+    );
+    app.on_debug_options_tab(true);
+    assert_eq!(
+        app.debug_focus,
+        Some(DebugFocusSeat::Pill { entry: 0, pill: 1 }),
+        "the In Overlay pill the middle seat keeps"
+    );
+    app.on_debug_options_tab(true);
+    assert_eq!(
+        app.debug_focus,
+        Some(DebugFocusSeat::Pill { entry: 0, pill: 2 }),
+        "the Always pill the RIGHTMOST seat keeps"
+    );
+    app.on_debug_options_tab(true);
+    assert_eq!(
+        app.debug_focus,
+        Some(DebugFocusSeat::Pill { entry: 1, pill: 0 }),
+        "the second row's Off pill the next seat wears"
+    );
+    // THE BACKWARD WALK (the Shift+Tab law — the seats the reverse
+    // order answer, the off-the-head backward the TAIL seat the
+    // Screen's clearFocus re-walk serves)
+    app.on_debug_options_tab(false);
+    assert_eq!(
+        app.debug_focus,
+        Some(DebugFocusSeat::Pill { entry: 0, pill: 2 }),
+        "the backward walk the previous seat wears"
+    );
+    for _ in 0..4 {
+        app.on_debug_options_tab(false);
+    }
+    assert!(
+        app.debug_search_focus,
+        "the backward walk the box the head seat re-arms"
+    );
+    assert_eq!(
+        app.debug_focus, None,
+        "the box seat the button field never re-answers"
+    );
+    // THE BACKWARD WRAP (the box's backward walk the TAIL seat serves
+    // — the last visible row's Always pill the re-walk arms)
+    app.on_debug_options_tab(false);
+    let last_always = app
+        .buttons
+        .iter()
+        .filter(|b| b.id == "dbgalways")
+        .last()
+        .expect("the visible rows the render bank keeps")
+        .label
+        .parse::<usize>()
+        .expect("the carrier label the index wears");
+    assert_eq!(
+        app.debug_focus,
+        Some(DebugFocusSeat::Pill {
+            entry: last_always,
+            pill: 2
+        }),
+        "the backward wrap the LAST visible pill arms"
+    );
+    // THE FORWARD WRAP (the off-the-tail forward the HEAD seat — the
+    // clearFocus re-walk the box re-arms)
+    app.on_debug_options_tab(true);
+    assert!(
+        app.debug_search_focus,
+        "the forward wrap the box the head seat wears"
+    );
+    // THE OTHER PRESET'S OWN SKIP (the PERFORMANCE preset in use the
+    // perf button the traversal never arms — the DEFAULT the skip's
+    // own next seat answers)
+    app.debug_preset_press(true, DebugFocusSeat::PresetPerf);
+    app.render(&mut fb, &mut assets);
+    assert!(
+        !app.debug_search_focus && app.debug_focus == Some(DebugFocusSeat::PresetPerf),
+        "the preset press the clicked seat arms"
+    );
+    app.debug_search_focus = true;
+    app.debug_focus = None;
+    app.on_debug_options_tab(true);
+    assert_eq!(
+        app.debug_focus,
+        Some(DebugFocusSeat::PresetDflt),
+        "the inactive PERFORMANCE preset the skip law answers"
+    );
+    // THE ENTER'S OWN ACTIVATION (the AbstractButton isSelection law —
+    // the focused preset the keyboard press the same fold serves)
+    app.on_debug_options_activate();
+    assert_eq!(
+        app.debug_profile,
+        Some(false),
+        "the focused DEFAULT preset the Enter press banks"
+    );
+    assert!(
+        app.debug_focus == Some(DebugFocusSeat::PresetDflt),
+        "the Enter press the current seat keeps"
+    );
+    // THE PILL'S OWN ENTER RIDE (the pill seat the activation the
+    // setValue walk serves — the status the store banks, the profile
+    // identity the manual touch breaks)
+    app.debug_focus = Some(DebugFocusSeat::Pill { entry: 8, pill: 2 });
+    app.debug_search_focus = false;
+    app.on_debug_options_activate();
+    assert_eq!(
+        app.debug_entry_states[8],
+        DebugEntryStatus::Always,
+        "the focused pill the Enter press banks"
+    );
+    assert_eq!(
+        app.debug_profile, None,
+        "the manual touch the profile identity breaks"
+    );
+    assert!(
+        !app.debug_search_focus,
+        "the pill seat the box the flag keeps off"
+    );
+    // THE BOX SEAT'S OWN SILENCE (the EditBox the selection keys the
+    // typing never serves — the Enter the box seat the nothing
+    // answer keeps)
+    app.debug_search_focus = true;
+    app.debug_focus = None;
+    app.on_debug_options_activate();
+    assert!(
+        app.debug_search_focus,
+        "the box seat the Enter the silence keeps"
+    );
+    // THE FOCUSED RENDER'S OWN SPRITE (the isHoveredOrFocused law —
+    // the focused pill the highlighted frame the pixel bank wears,
+    // the unfocused the plain sprite the same rect keeps)
+    app.debug_focus = Some(DebugFocusSeat::Pill { entry: 0, pill: 0 });
+    app.debug_search_focus = false;
+    app.render(&mut fb, &mut assets);
+    let pill = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "dbgoff" && b.label == "0")
+        .expect("the first row the render bank keeps")
+        .clone();
+    let mut snap = |app: &mut App, focused: bool| -> Vec<[u8; 3]> {
+        app.debug_focus = if focused {
+            Some(DebugFocusSeat::Pill { entry: 0, pill: 0 })
+        } else {
+            None
+        };
+        app.render(&mut fb, &mut assets);
+        let mut out = Vec::new();
+        for y in pill.y..(pill.y + pill.h) {
+            for x in pill.x..(pill.x + pill.w) {
+                let i = (y as usize * fb.w + x as usize) * 3;
+                out.push([fb.color[i], fb.color[i + 1], fb.color[i + 2]]);
+            }
+        }
+        out
+    };
+    let focused_px = snap(&mut app, true);
+    let plain_px = snap(&mut app, false);
+    assert_ne!(
+        focused_px, plain_px,
+        "the focused pill the highlighted sprite wears"
+    );
+    // THE CLOSED SCREEN'S OWN GATE (the non-debug screen the Tab walk
+    // never arms — the seat the close keeps)
+    app.on_debug_options_key(); // the close
+    let seat_before = app.debug_focus;
+    app.on_debug_options_tab(true);
+    assert_eq!(
+        app.debug_focus, seat_before,
+        "the closed screen the Tab the silence keeps"
+    );
+    assert!(
+        !app.on_debug_options_box_click(300, 25, 640),
+        "the closed screen the click the same refusal keeps"
     );
 }
 // THE DEBUG PROFILE FILE'S OWN ROUND TRIP (javap 26.2 the

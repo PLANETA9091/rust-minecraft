@@ -1985,6 +1985,34 @@ pub fn run_gui_app(
             app.on_creative_backspace();
             app.on_debug_options_backspace();
         }
+        // THE DEBUG OPTIONS' OWN TAB CYCLE (javap 26.2 the Screen
+        // keyPressed walk the 258 case answers — the
+        // `createTabEvent(!hasShiftDown())` the focus navigation
+        // serves, the EditBox's own tableswitch 259..269 the Tab key
+        // BELOW the lo the box never consumes: the focused box the
+        // Tab still cycles — the container's handleTabNavigation walk
+        // the seat steps, the wrap the Screen's clearFocus re-walk
+        // the end seats speaks). The SHIFT the hasShiftDown query
+        // wears — the backward walk the Shift+Tab answer keeps.
+        if app.screen == crate::screens::ScreenKind::DebugOptions
+            && window.is_key_pressed(Key::Tab, minifb::KeyRepeat::No)
+        {
+            let shift = window.is_key_down(Key::LeftShift);
+            app.on_debug_options_tab(!shift);
+        }
+        // THE FOCUSED BUTTON'S OWN ACTIVATION (javap 26.2
+        // AbstractButton.keyPressed walk — the `isSelection()` ask
+        // the Enter/Space press answers: the playDownSound + the
+        // onPress fold the focused button's keyboard press serves).
+        // The screen gate the world's jump lane the Space never
+        // shares (the DebugOptions open the in_world walk refuses —
+        // the two lanes the same key never double-fire)
+        if app.screen == crate::screens::ScreenKind::DebugOptions
+            && (window.is_key_pressed(Key::Enter, minifb::KeyRepeat::No)
+                || window.is_key_pressed(Key::Space, minifb::KeyRepeat::No))
+        {
+            app.on_debug_options_activate();
+        }
         // THE INVENTORY'S OWN Q (the AbstractContainerScreen.keyPressed's
         // keyDrop arm — the container screen's own chain beside the
         // world's handleKeybinds lane below): the hovered slot's stack

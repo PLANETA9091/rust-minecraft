@@ -1,0 +1,346 @@
+========================================================================
+[A] net/minecraft/client/gui/components/events/AbstractContainerEventHandler
+========================================================================
+[B] net/minecraft/client/gui/screens/Screen
+------------------------------------------------------------------------
+--- setInitialFocus()V
+   0: aload_0
+   1: getfield net/minecraft/client/gui/screens/Screen.minecraftLnet/minecraft/client/Minecraft;
+   4: invokevirtual net/minecraft/client/Minecraft.getLastInputType()Lnet/minecraft/client/InputType;
+   7: invokevirtual net/minecraft/client/InputType.isKeyboard()Z
+   10: ifeq -> 37
+   13: new net/minecraft/client/gui/navigation/FocusNavigationEvent$TabNavigation
+   16: dup
+   17: iconst_1
+   18: invokespecial net/minecraft/client/gui/navigation/FocusNavigationEvent$TabNavigation.<init>(Z)V
+   21: astore_0
+   22: aload_0
+   23: aload_1
+   24: invokespecial net/minecraft/client/gui/components/events/AbstractContainerEventHandler.nextFocusPath(Lnet/minecraft/client/gui/navigation/FocusNavigationEvent;)Lnet/minecraft/client/gui/ComponentPath;
+   27: astore_1
+   28: aload_2
+   29: ifnull -> 37
+   32: aload_0
+   33: aload_2
+   34: invokevirtual net/minecraft/client/gui/screens/Screen.changeFocus(Lnet/minecraft/client/gui/ComponentPath;)V
+   37: return
+------------------------------------------------------------------------
+--- setInitialFocus(Lnet/minecraft/client/gui/components/events/GuiEventListener;)V
+   0: aload_0
+   1: aload_1
+   2: new net/minecraft/client/gui/navigation/FocusNavigationEvent$InitialFocus
+   5: dup
+   6: invokespecial net/minecraft/client/gui/navigation/FocusNavigationEvent$InitialFocus.<init>()V
+   9: invokeinterface net/minecraft/client/gui/components/events/GuiEventListener.nextFocusPath(Lnet/minecraft/client/gui/navigation/FocusNavigationEvent;)Lnet/minecraft/client/gui/ComponentPath;
+   12: iconst_m1
+   13: nop
+   14: invokestatic net/minecraft/client/gui/ComponentPath.path(Lnet/minecraft/client/gui/components/events/ContainerEventHandler;Lnet/minecraft/client/gui/ComponentPath;)Lnet/minecraft/client/gui/ComponentPath;
+   17: astore_1
+   18: aload_2
+   19: ifnull -> 27
+   22: aload_0
+   23: aload_2
+   24: invokevirtual net/minecraft/client/gui/screens/Screen.changeFocus(Lnet/minecraft/client/gui/ComponentPath;)V
+   27: return
+------------------------------------------------------------------------
+--- changeFocus(Lnet/minecraft/client/gui/ComponentPath;)V
+   0: aload_0
+   1: invokevirtual net/minecraft/client/gui/screens/Screen.clearFocus()V
+   4: aload_1
+   5: iconst_1
+   6: invokeinterface net/minecraft/client/gui/ComponentPath.applyFocus(Z)V
+   9: iconst_m1
+   10: nop
+   11: return
+========================================================================
+[C] net/minecraft/client/gui/screens/debug/DebugOptionsScreen
+------------------------------------------------------------------------
+--- init()V
+   0: aload_0
+   1: getfield net/minecraft/client/gui/screens/debug/DebugOptionsScreen.layoutLnet/minecraft/client/gui/layouts/HeaderAndFooterLayout;
+   4: invokestatic net/minecraft/client/gui/layouts/LinearLayout.vertical()Lnet/minecraft/client/gui/layouts/LinearLayout;
+   7: bipush 8
+   9: invokevirtual net/minecraft/client/gui/layouts/LinearLayout.spacing(I)Lnet/minecraft/client/gui/layouts/LinearLayout;
+   12: invokevirtual net/minecraft/client/gui/layouts/HeaderAndFooterLayout.addToHeader(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+   15: checkcast net/minecraft/client/gui/layouts/LinearLayout
+   18: astore_0
+   19: aload_0
+   20: new net/minecraft/client/gui/screens/debug/DebugOptionsScreen$OptionList
+   23: dup
+   24: aload_0
+   25: invokespecial net/minecraft/client/gui/screens/debug/DebugOptionsScreen$OptionList.<init>(Lnet/minecraft/client/gui/screens/debug/DebugOptionsScreen;)V
+   28: putfield net/minecraft/client/gui/screens/debug/DebugOptionsScreen.optionListLnet/minecraft/client/gui/screens/debug/DebugOptionsScreen$OptionList;
+   31: aload_0
+   32: getfield net/minecraft/client/gui/screens/debug/DebugOptionsScreen.optionListLnet/minecraft/client/gui/screens/debug/DebugOptionsScreen$OptionList;
+   35: invokevirtual net/minecraft/client/gui/screens/debug/DebugOptionsScreen$OptionList.getRowWidth()I
+   38: istore_2
+   39: invokestatic net/minecraft/client/gui/layouts/LinearLayout.horizontal()Lnet/minecraft/client/gui/layouts/LinearLayout;
+   42: bipush 8
+   44: invokevirtual net/minecraft/client/gui/layouts/LinearLayout.spacing(I)Lnet/minecraft/client/gui/layouts/LinearLayout;
+   47: astore_2
+   48: aload_3
+   49: new net/minecraft/client/gui/layouts/SpacerElement
+   52: dup
+   53: iload_2
+   54: iconst_3
+   55: idiv
+   56: iconst_1
+   57: invokespecial net/minecraft/client/gui/layouts/SpacerElement.<init>(II)V
+   60: invokevirtual net/minecraft/client/gui/layouts/LinearLayout.addChild(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+   63: pop
+   64: aload_3
+   65: new net/minecraft/client/gui/components/StringWidget
+   68: dup
+   69: getstatic net/minecraft/client/gui/screens/debug/DebugOptionsScreen.TITLELnet/minecraft/network/chat/Component;
+   72: aload_0
+   73: getfield net/minecraft/client/gui/screens/debug/DebugOptionsScreen.fontLnet/minecraft/client/gui/Font;
+   76: invokespecial net/minecraft/client/gui/components/StringWidget.<init>(Lnet/minecraft/network/chat/Component;Lnet/minecraft/client/gui/Font;)V
+   79: aload_3
+   80: invokevirtual net/minecraft/client/gui/layouts/LinearLayout.newCellSettings()Lnet/minecraft/client/gui/layouts/LayoutSettings;
+   83: invokeinterface net/minecraft/client/gui/layouts/LayoutSettings.alignVerticallyMiddle()Lnet/minecraft/client/gui/layouts/LayoutSettings;
+   86: aconst_null
+   87: nop
+   88: invokevirtual net/minecraft/client/gui/layouts/LinearLayout.addChild(Lnet/minecraft/client/gui/layouts/LayoutElement;Lnet/minecraft/client/gui/layouts/LayoutSettings;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+   91: pop
+   92: aload_0
+   93: new net/minecraft/client/gui/components/EditBox
+   96: dup
+   97: aload_0
+   98: getfield net/minecraft/client/gui/screens/debug/DebugOptionsScreen.fontLnet/minecraft/client/gui/Font;
+   101: iconst_0
+   102: iconst_0
+   103: iload_2
+   104: iconst_3
+   105: idiv
+   106: bipush 20
+   108: aload_0
+   109: getfield net/minecraft/client/gui/screens/debug/DebugOptionsScreen.searchBoxLnet/minecraft/client/gui/components/EditBox;
+   112: getstatic net/minecraft/client/gui/screens/debug/DebugOptionsScreen.SEARCHLnet/minecraft/network/chat/Component;
+   115: invokespecial net/minecraft/client/gui/components/EditBox.<init>(Lnet/minecraft/client/gui/Font;IIIILnet/minecraft/client/gui/components/EditBox;Lnet/minecraft/network/chat/Component;)V
+   118: putfield net/minecraft/client/gui/screens/debug/DebugOptionsScreen.searchBoxLnet/minecraft/client/gui/components/EditBox;
+   121: aload_0
+   122: getfield net/minecraft/client/gui/screens/debug/DebugOptionsScreen.searchBoxLnet/minecraft/client/gui/components/EditBox;
+   125: aload_0
+   126: invokedynamic indy
+   131: invokevirtual net/minecraft/client/gui/components/EditBox.setResponder(Ljava/util/function/Consumer;)V
+   134: aload_0
+   135: getfield net/minecraft/client/gui/screens/debug/DebugOptionsScreen.searchBoxLnet/minecraft/client/gui/components/EditBox;
+   138: getstatic net/minecraft/client/gui/screens/debug/DebugOptionsScreen.SEARCHLnet/minecraft/network/chat/Component;
+   141: invokevirtual net/minecraft/client/gui/components/EditBox.setHint(Lnet/minecraft/network/chat/Component;)V
+   144: aload_3
+   145: aload_0
+   146: getfield net/minecraft/client/gui/screens/debug/DebugOptionsScreen.searchBoxLnet/minecraft/client/gui/components/EditBox;
+   149: invokevirtual net/minecraft/client/gui/layouts/LinearLayout.addChild(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+   152: pop
+   153: aload_1
+   154: aload_3
+   155: invokedynamic indy
+   160: invokevirtual net/minecraft/client/gui/layouts/LinearLayout.addChild(Lnet/minecraft/client/gui/layouts/LayoutElement;Ljava/util/function/Consumer;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+   163: pop
+   164: aload_1
+   165: new net/minecraft/client/gui/components/MultiLineTextWidget
+   168: dup
+   169: getstatic net/minecraft/client/gui/screens/debug/DebugOptionsScreen.SUBTITLELnet/minecraft/network/chat/Component;
+   172: aload_0
+   173: getfield net/minecraft/client/gui/screens/debug/DebugOptionsScreen.fontLnet/minecraft/client/gui/Font;
+   176: invokespecial net/minecraft/client/gui/components/MultiLineTextWidget.<init>(Lnet/minecraft/network/chat/Component;Lnet/minecraft/client/gui/Font;)V
+   179: iload_2
+   180: invokevirtual net/minecraft/client/gui/components/MultiLineTextWidget.setMaxWidth(I)Lnet/minecraft/client/gui/components/MultiLineTextWidget;
+   183: iconst_1
+   184: invokevirtual net/minecraft/client/gui/components/MultiLineTextWidget.setCentered(Z)Lnet/minecraft/client/gui/components/MultiLineTextWidget;
+   187: invokedynamic indy
+   192: invokevirtual net/minecraft/client/gui/layouts/LinearLayout.addChild(Lnet/minecraft/client/gui/layouts/LayoutElement;Ljava/util/function/Consumer;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+   195: pop
+   196: aload_0
+   197: getfield net/minecraft/client/gui/screens/debug/DebugOptionsScreen.layoutLnet/minecraft/client/gui/layouts/HeaderAndFooterLayout;
+   200: aload_0
+   201: getfield net/minecraft/client/gui/screens/debug/DebugOptionsScreen.optionListLnet/minecraft/client/gui/screens/debug/DebugOptionsScreen$OptionList;
+   204: invokevirtual net/minecraft/client/gui/layouts/HeaderAndFooterLayout.addToContents(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+   207: pop
+   208: aload_0
+   209: getfield net/minecraft/client/gui/screens/debug/DebugOptionsScreen.layoutLnet/minecraft/client/gui/layouts/HeaderAndFooterLayout;
+   212: invokestatic net/minecraft/client/gui/layouts/LinearLayout.horizontal()Lnet/minecraft/client/gui/layouts/LinearLayout;
+   215: bipush 8
+   217: invokevirtual net/minecraft/client/gui/layouts/LinearLayout.spacing(I)Lnet/minecraft/client/gui/layouts/LinearLayout;
+   220: invokevirtual net/minecraft/client/gui/layouts/HeaderAndFooterLayout.addToFooter(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+   223: checkcast net/minecraft/client/gui/layouts/LinearLayout
+   226: astore astore 4
+   228: aload_0
+   229: getstatic net/minecraft/client/gui/components/debug/DebugScreenProfile.DEFAULTLnet/minecraft/client/gui/components/debug/DebugScreenProfile;
+   232: aload aload 4
+   234: invokevirtual net/minecraft/client/gui/screens/debug/DebugOptionsScreen.addProfileButton(Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;Lnet/minecraft/client/gui/layouts/LinearLayout;)V
+   237: aload_0
+   238: getstatic net/minecraft/client/gui/components/debug/DebugScreenProfile.PERFORMANCELnet/minecraft/client/gui/components/debug/DebugScreenProfile;
+   241: aload aload 4
+   243: invokevirtual net/minecraft/client/gui/screens/debug/DebugOptionsScreen.addProfileButton(Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;Lnet/minecraft/client/gui/layouts/LinearLayout;)V
+   246: aload aload 4
+   248: getstatic net/minecraft/network/chat/CommonComponents.GUI_DONELnet/minecraft/network/chat/Component;
+   251: aload_0
+   252: invokedynamic indy
+   257: invokestatic net/minecraft/client/gui/components/Button.builder(Lnet/minecraft/network/chat/Component;Lnet/minecraft/client/gui/components/Button$OnPress;)Lnet/minecraft/client/gui/components/Button$Builder;
+   260: bipush 60
+   262: invokevirtual net/minecraft/client/gui/components/Button$Builder.width(I)Lnet/minecraft/client/gui/components/Button$Builder;
+   265: invokevirtual net/minecraft/client/gui/components/Button$Builder.build()Lnet/minecraft/client/gui/components/Button;
+   268: invokevirtual net/minecraft/client/gui/layouts/LinearLayout.addChild(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+   271: pop
+   272: aload_0
+   273: getfield net/minecraft/client/gui/screens/debug/DebugOptionsScreen.layoutLnet/minecraft/client/gui/layouts/HeaderAndFooterLayout;
+   276: aload_0
+   277: astore astore 5
+   279: aload aload 5
+   281: invokedynamic indy
+   286: invokevirtual net/minecraft/client/gui/layouts/HeaderAndFooterLayout.visitWidgets(Ljava/util/function/Consumer;)V
+   289: aload_0
+   290: invokevirtual net/minecraft/client/gui/screens/debug/DebugOptionsScreen.repositionElements()V
+   293: return
+------------------------------------------------------------------------
+--- setInitialFocus()V
+   0: aload_0
+   1: aload_0
+   2: getfield net/minecraft/client/gui/screens/debug/DebugOptionsScreen.searchBoxLnet/minecraft/client/gui/components/EditBox;
+   5: invokevirtual net/minecraft/client/gui/screens/debug/DebugOptionsScreen.setInitialFocus(Lnet/minecraft/client/gui/components/events/GuiEventListener;)V
+   8: return
+------------------------------------------------------------------------
+--- addProfileButton(Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;Lnet/minecraft/client/gui/layouts/LinearLayout;)V
+   0: aload_1
+   1: invokevirtual net/minecraft/client/gui/components/debug/DebugScreenProfile.translationKey()Ljava/lang/String;
+   4: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+   7: aload_0
+   8: aload_1
+   9: invokedynamic indy
+   14: invokestatic net/minecraft/client/gui/components/Button.builder(Lnet/minecraft/network/chat/Component;Lnet/minecraft/client/gui/components/Button$OnPress;)Lnet/minecraft/client/gui/components/Button$Builder;
+   17: bipush 120
+   19: invokevirtual net/minecraft/client/gui/components/Button$Builder.width(I)Lnet/minecraft/client/gui/components/Button$Builder;
+   22: invokevirtual net/minecraft/client/gui/components/Button$Builder.build()Lnet/minecraft/client/gui/components/Button;
+   25: astore_2
+   26: aload_3
+   27: aload_0
+   28: getfield net/minecraft/client/gui/screens/debug/DebugOptionsScreen.minecraftLnet/minecraft/client/Minecraft;
+   31: getfield net/minecraft/client/Minecraft.debugEntriesLnet/minecraft/client/gui/components/debug/DebugScreenEntryList;
+   34: aload_1
+   35: invokevirtual net/minecraft/client/gui/components/debug/DebugScreenEntryList.isUsingProfile(Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;)Z
+   38: ifne -> 45
+   41: iconst_1
+   42: goto -> 46
+   45: iconst_0
+   46: putfield net/minecraft/client/gui/components/Button.activeZ
+   49: aload_0
+   50: getfield net/minecraft/client/gui/screens/debug/DebugOptionsScreen.profileButtonsLjava/util/List;
+   53: aload_3
+   54: invokeinterface java/util/List.add(Ljava/lang/Object;)Z
+   57: iconst_m1
+   58: nop
+   59: pop
+   60: aload_2
+   61: aload_3
+   62: invokevirtual net/minecraft/client/gui/layouts/LinearLayout.addChild(Lnet/minecraft/client/gui/layouts/LayoutElement;)Lnet/minecraft/client/gui/layouts/LayoutElement;
+   65: pop
+   66: return
+------------------------------------------------------------------------
+--- lambda$addProfileButton$0(Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;Lnet/minecraft/client/gui/components/Button;)V
+   0: aload_0
+   1: getfield net/minecraft/client/gui/screens/debug/DebugOptionsScreen.minecraftLnet/minecraft/client/Minecraft;
+   4: getfield net/minecraft/client/Minecraft.debugEntriesLnet/minecraft/client/gui/components/debug/DebugScreenEntryList;
+   7: aload_1
+   8: invokevirtual net/minecraft/client/gui/components/debug/DebugScreenEntryList.loadProfile(Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;)V
+   11: aload_0
+   12: getfield net/minecraft/client/gui/screens/debug/DebugOptionsScreen.minecraftLnet/minecraft/client/Minecraft;
+   15: getfield net/minecraft/client/Minecraft.debugEntriesLnet/minecraft/client/gui/components/debug/DebugScreenEntryList;
+   18: invokevirtual net/minecraft/client/gui/components/debug/DebugScreenEntryList.save()V
+   21: aload_0
+   22: getfield net/minecraft/client/gui/screens/debug/DebugOptionsScreen.optionListLnet/minecraft/client/gui/screens/debug/DebugOptionsScreen$OptionList;
+   25: invokevirtual net/minecraft/client/gui/screens/debug/DebugOptionsScreen$OptionList.refreshEntries()V
+   28: aload_0
+   29: getfield net/minecraft/client/gui/screens/debug/DebugOptionsScreen.profileButtonsLjava/util/List;
+   32: invokeinterface java/util/List.iterator()Ljava/util/Iterator;
+   35: aconst_null
+   36: nop
+   37: astore_2
+   38: aload_3
+   39: invokeinterface java/util/Iterator.hasNext()Z
+   42: aconst_null
+   43: nop
+   44: ifeq -> 67
+   47: aload_3
+   48: invokeinterface java/util/Iterator.next()Ljava/lang/Object;
+   51: aconst_null
+   52: nop
+   53: checkcast net/minecraft/client/gui/components/Button
+   56: astore astore 4
+   58: aload aload 4
+   60: iconst_1
+   61: putfield net/minecraft/client/gui/components/Button.activeZ
+   64: goto -> 38
+   67: aload_2
+   68: iconst_0
+   69: putfield net/minecraft/client/gui/components/Button.activeZ
+   72: return
+========================================================================
+[D] net/minecraft/client/gui/components/AbstractSelectionList
+========================================================================
+[E] net/minecraft/client/gui/components/ObjectSelectionList
+------------------------------------------------------------------------
+--- nextFocusPath(Lnet/minecraft/client/gui/navigation/FocusNavigationEvent;)Lnet/minecraft/client/gui/ComponentPath;
+   0: aload_0
+   1: invokevirtual net/minecraft/client/gui/components/ObjectSelectionList.getItemCount()I
+   4: ifne -> 9
+   7: aconst_null
+   8: areturn
+   9: aload_0
+   10: invokevirtual net/minecraft/client/gui/components/ObjectSelectionList.isFocused()Z
+   13: ifeq -> 65
+   16: aload_1
+   17: instanceof net/minecraft/client/gui/navigation/FocusNavigationEvent$ArrowNavigation
+   20: ifeq -> 65
+   23: aload_1
+   24: checkcast net/minecraft/client/gui/navigation/FocusNavigationEvent$ArrowNavigation
+   27: astore_1
+   28: aload_0
+   29: aload_2
+   30: invokevirtual net/minecraft/client/gui/navigation/FocusNavigationEvent$ArrowNavigation.direction()Lnet/minecraft/client/gui/navigation/ScreenDirection;
+   33: invokevirtual net/minecraft/client/gui/components/ObjectSelectionList.nextEntry(Lnet/minecraft/client/gui/navigation/ScreenDirection;)Lnet/minecraft/client/gui/components/AbstractSelectionList$Entry;
+   36: checkcast net/minecraft/client/gui/components/ObjectSelectionList$Entry
+   39: astore_2
+   40: aload_3
+   41: ifnull -> 53
+   44: aload_0
+   45: aload_3
+   46: invokestatic net/minecraft/client/gui/ComponentPath.leaf(Lnet/minecraft/client/gui/components/events/GuiEventListener;)Lnet/minecraft/client/gui/ComponentPath;
+   49: invokestatic net/minecraft/client/gui/ComponentPath.path(Lnet/minecraft/client/gui/components/events/ContainerEventHandler;Lnet/minecraft/client/gui/ComponentPath;)Lnet/minecraft/client/gui/ComponentPath;
+   52: areturn
+   53: aload_0
+   54: aconst_null
+   55: invokevirtual net/minecraft/client/gui/components/ObjectSelectionList.setFocused(Lnet/minecraft/client/gui/components/events/GuiEventListener;)V
+   58: aload_0
+   59: aconst_null
+   60: invokevirtual net/minecraft/client/gui/components/ObjectSelectionList.setSelected(Lnet/minecraft/client/gui/components/AbstractSelectionList$Entry;)V
+   63: aconst_null
+   64: areturn
+   65: aload_0
+   66: invokevirtual net/minecraft/client/gui/components/ObjectSelectionList.isFocused()Z
+   69: ifne -> 113
+   72: aload_0
+   73: invokevirtual net/minecraft/client/gui/components/ObjectSelectionList.getSelected()Lnet/minecraft/client/gui/components/AbstractSelectionList$Entry;
+   76: checkcast net/minecraft/client/gui/components/ObjectSelectionList$Entry
+   79: astore_1
+   80: aload_2
+   81: ifnonnull -> 98
+   84: aload_0
+   85: aload_1
+   86: invokeinterface net/minecraft/client/gui/navigation/FocusNavigationEvent.getVerticalDirectionForInitialFocus()Lnet/minecraft/client/gui/navigation/ScreenDirection;
+   89: aconst_null
+   90: nop
+   91: invokevirtual net/minecraft/client/gui/components/ObjectSelectionList.nextEntry(Lnet/minecraft/client/gui/navigation/ScreenDirection;)Lnet/minecraft/client/gui/components/AbstractSelectionList$Entry;
+   94: checkcast net/minecraft/client/gui/components/ObjectSelectionList$Entry
+   97: astore_1
+   98: aload_2
+   99: ifnonnull -> 104
+   102: aconst_null
+   103: areturn
+   104: aload_0
+   105: aload_2
+   106: invokestatic net/minecraft/client/gui/ComponentPath.leaf(Lnet/minecraft/client/gui/components/events/GuiEventListener;)Lnet/minecraft/client/gui/ComponentPath;
+   109: invokestatic net/minecraft/client/gui/ComponentPath.path(Lnet/minecraft/client/gui/components/events/ContainerEventHandler;Lnet/minecraft/client/gui/ComponentPath;)Lnet/minecraft/client/gui/ComponentPath;
+   112: areturn
+   113: aconst_null
+   114: areturn

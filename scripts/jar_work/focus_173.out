@@ -1,0 +1,363 @@
+========================================================================
+[A] net/minecraft/client/gui/screens/Screen
+------------------------------------------------------------------------
+--- keyPressed(Lnet/minecraft/client/input/KeyEvent;)Z
+   0: aload_1
+   1: invokevirtual net/minecraft/client/input/KeyEvent.isEscape()Z
+   4: ifeq -> 20
+   7: aload_0
+   8: invokevirtual net/minecraft/client/gui/screens/Screen.shouldCloseOnEsc()Z
+   11: ifeq -> 20
+   14: aload_0
+   15: invokevirtual net/minecraft/client/gui/screens/Screen.onClose()V
+   18: iconst_1
+   19: ireturn
+   20: aload_0
+   21: aload_1
+   22: invokespecial net/minecraft/client/gui/components/events/AbstractContainerEventHandler.keyPressed(Lnet/minecraft/client/input/KeyEvent;)Z
+   25: ifeq -> 30
+   28: iconst_1
+   29: ireturn
+   30: aload_1
+   31: invokevirtual net/minecraft/client/input/KeyEvent.key()I
+   34: tableswitch tableswitch lo=258 hi=265
+   80: aload_0
+   81: getstatic net/minecraft/client/gui/navigation/ScreenDirection.LEFTLnet/minecraft/client/gui/navigation/ScreenDirection;
+   84: invokevirtual net/minecraft/client/gui/screens/Screen.createArrowEvent(Lnet/minecraft/client/gui/navigation/ScreenDirection;)Lnet/minecraft/client/gui/navigation/FocusNavigationEvent$ArrowNavigation;
+   87: goto -> 140
+   90: aload_0
+   91: getstatic net/minecraft/client/gui/navigation/ScreenDirection.RIGHTLnet/minecraft/client/gui/navigation/ScreenDirection;
+   94: invokevirtual net/minecraft/client/gui/screens/Screen.createArrowEvent(Lnet/minecraft/client/gui/navigation/ScreenDirection;)Lnet/minecraft/client/gui/navigation/FocusNavigationEvent$ArrowNavigation;
+   97: goto -> 140
+   100: aload_0
+   101: getstatic net/minecraft/client/gui/navigation/ScreenDirection.UPLnet/minecraft/client/gui/navigation/ScreenDirection;
+   104: invokevirtual net/minecraft/client/gui/screens/Screen.createArrowEvent(Lnet/minecraft/client/gui/navigation/ScreenDirection;)Lnet/minecraft/client/gui/navigation/FocusNavigationEvent$ArrowNavigation;
+   107: goto -> 140
+   110: aload_0
+   111: getstatic net/minecraft/client/gui/navigation/ScreenDirection.DOWNLnet/minecraft/client/gui/navigation/ScreenDirection;
+   114: invokevirtual net/minecraft/client/gui/screens/Screen.createArrowEvent(Lnet/minecraft/client/gui/navigation/ScreenDirection;)Lnet/minecraft/client/gui/navigation/FocusNavigationEvent$ArrowNavigation;
+   117: goto -> 140
+   120: aload_0
+   121: aload_1
+   122: invokevirtual net/minecraft/client/input/KeyEvent.hasShiftDown()Z
+   125: ifne -> 132
+   128: iconst_1
+   129: goto -> 133
+   132: iconst_0
+   133: invokevirtual net/minecraft/client/gui/screens/Screen.createTabEvent(Z)Lnet/minecraft/client/gui/navigation/FocusNavigationEvent$TabNavigation;
+   136: goto -> 140
+   139: aconst_null
+   140: astore_1
+   141: aload_2
+   142: ifnull -> 181
+   145: aload_0
+   146: aload_2
+   147: invokespecial net/minecraft/client/gui/components/events/AbstractContainerEventHandler.nextFocusPath(Lnet/minecraft/client/gui/navigation/FocusNavigationEvent;)Lnet/minecraft/client/gui/ComponentPath;
+   150: astore_2
+   151: aload_3
+   152: ifnonnull -> 172
+   155: aload_2
+   156: instanceof net/minecraft/client/gui/navigation/FocusNavigationEvent$TabNavigation
+   159: ifeq -> 172
+   162: aload_0
+   163: invokevirtual net/minecraft/client/gui/screens/Screen.clearFocus()V
+   166: aload_0
+   167: aload_2
+   168: invokespecial net/minecraft/client/gui/components/events/AbstractContainerEventHandler.nextFocusPath(Lnet/minecraft/client/gui/navigation/FocusNavigationEvent;)Lnet/minecraft/client/gui/ComponentPath;
+   171: astore_2
+   172: aload_3
+   173: ifnull -> 181
+   176: aload_0
+   177: aload_3
+   178: invokevirtual net/minecraft/client/gui/screens/Screen.changeFocus(Lnet/minecraft/client/gui/ComponentPath;)V
+   181: iconst_0
+   182: ireturn
+------------------------------------------------------------------------
+--- createTabEvent(Z)Lnet/minecraft/client/gui/navigation/FocusNavigationEvent$TabNavigation;
+   0: new net/minecraft/client/gui/navigation/FocusNavigationEvent$TabNavigation
+   3: dup
+   4: iload_1
+   5: invokespecial net/minecraft/client/gui/navigation/FocusNavigationEvent$TabNavigation.<init>(Z)V
+   8: areturn
+------------------------------------------------------------------------
+--- clearFocus()V
+   0: aload_0
+   1: invokevirtual net/minecraft/client/gui/screens/Screen.getCurrentFocusPath()Lnet/minecraft/client/gui/ComponentPath;
+   4: astore_0
+   5: aload_1
+   6: ifnull -> 16
+   9: aload_1
+   10: iconst_0
+   11: invokeinterface net/minecraft/client/gui/ComponentPath.applyFocus(Z)V
+   14: iconst_m1
+   15: nop
+   16: return
+------------------------------------------------------------------------
+--- changeFocus(Lnet/minecraft/client/gui/ComponentPath;)V
+   0: aload_0
+   1: invokevirtual net/minecraft/client/gui/screens/Screen.clearFocus()V
+   4: aload_1
+   5: iconst_1
+   6: invokeinterface net/minecraft/client/gui/ComponentPath.applyFocus(Z)V
+   9: iconst_m1
+   10: nop
+   11: return
+========================================================================
+[B] net/minecraft/client/gui/components/events/AbstractContainerEventHandler
+------------------------------------------------------------------------
+--- getFocused()Lnet/minecraft/client/gui/components/events/GuiEventListener;
+   0: aload_0
+   1: getfield net/minecraft/client/gui/components/events/AbstractContainerEventHandler.focusedLnet/minecraft/client/gui/components/events/GuiEventListener;
+   4: areturn
+------------------------------------------------------------------------
+--- setFocused(Lnet/minecraft/client/gui/components/events/GuiEventListener;)V
+   0: aload_0
+   1: getfield net/minecraft/client/gui/components/events/AbstractContainerEventHandler.focusedLnet/minecraft/client/gui/components/events/GuiEventListener;
+   4: aload_1
+   5: if_acmpne -> 9
+   8: return
+   9: aload_0
+   10: getfield net/minecraft/client/gui/components/events/AbstractContainerEventHandler.focusedLnet/minecraft/client/gui/components/events/GuiEventListener;
+   13: ifnull -> 26
+   16: aload_0
+   17: getfield net/minecraft/client/gui/components/events/AbstractContainerEventHandler.focusedLnet/minecraft/client/gui/components/events/GuiEventListener;
+   20: iconst_0
+   21: invokeinterface net/minecraft/client/gui/components/events/GuiEventListener.setFocused(Z)V
+   24: iconst_m1
+   25: nop
+   26: aload_1
+   27: ifnull -> 37
+   30: aload_1
+   31: iconst_1
+   32: invokeinterface net/minecraft/client/gui/components/events/GuiEventListener.setFocused(Z)V
+   35: iconst_m1
+   36: nop
+   37: aload_0
+   38: aload_1
+   39: putfield net/minecraft/client/gui/components/events/AbstractContainerEventHandler.focusedLnet/minecraft/client/gui/components/events/GuiEventListener;
+   42: return
+========================================================================
+[C-list] net/minecraft/client/gui/navigation/FocusNavigationEvent$TabNavigation methods:
+   <init>(Z)V
+   equals(Ljava/lang/Object;)Z
+   forward()Z
+   getVerticalDirectionForInitialFocus()Lnet/minecraft/client/gui/navigation/ScreenDirection;
+   hashCode()I
+   toString()Ljava/lang/String;
+========================================================================
+[C-body] net/minecraft/client/gui/navigation/FocusNavigationEvent$TabNavigation
+------------------------------------------------------------------------
+--- <init>(Z)V
+   0: aload_0
+   1: invokespecial java/lang/Record.<init>()V
+   4: aload_0
+   5: iload_1
+   6: putfield net/minecraft/client/gui/navigation/FocusNavigationEvent$TabNavigation.forwardZ
+   9: return
+========================================================================
+[D] net/minecraft/client/gui/screens/debug/DebugOptionsScreen methods:
+   <clinit>()V
+   <init>()V
+   access$000(Lnet/minecraft/client/gui/screens/debug/DebugOptionsScreen;)Lnet/minecraft/client/Minecraft;
+   access$100(Lnet/minecraft/client/gui/screens/debug/DebugOptionsScreen;)Lnet/minecraft/client/Minecraft;
+   access$200(Lnet/minecraft/client/gui/screens/debug/DebugOptionsScreen;)Lnet/minecraft/client/Minecraft;
+   access$300(Lnet/minecraft/client/gui/screens/debug/DebugOptionsScreen;)Lnet/minecraft/client/Minecraft;
+   access$400(Lnet/minecraft/client/gui/screens/debug/DebugOptionsScreen;)Lnet/minecraft/client/Minecraft;
+   access$500(Lnet/minecraft/client/gui/screens/debug/DebugOptionsScreen;)Lnet/minecraft/client/Minecraft;
+   addProfileButton(Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;Lnet/minecraft/client/gui/layouts/LinearLayout;)V
+   extractBlurredBackground(Lnet/minecraft/client/gui/GuiGraphicsExtractor;)V
+   getOptionList()Lnet/minecraft/client/gui/screens/debug/DebugOptionsScreen$OptionList;
+   init()V
+   lambda$addProfileButton$0(Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;Lnet/minecraft/client/gui/components/Button;)V
+   lambda$init$0(Ljava/lang/String;)V
+   lambda$init$1(Lnet/minecraft/client/gui/components/Button;)V
+   lambda$init$2(Lnet/minecraft/client/gui/screens/debug/DebugOptionsScreen;Lnet/minecraft/client/gui/components/AbstractWidget;)V
+   repositionElements()V
+   setInitialFocus()V
+========================================================================
+[E] net/minecraft/client/gui/components/AbstractWidget
+------------------------------------------------------------------------
+--- nextFocusPath(Lnet/minecraft/client/gui/navigation/FocusNavigationEvent;)Lnet/minecraft/client/gui/ComponentPath;
+   0: aload_0
+   1: invokevirtual net/minecraft/client/gui/components/AbstractWidget.isActive()Z
+   4: ifne -> 9
+   7: aconst_null
+   8: areturn
+   9: aload_0
+   10: invokevirtual net/minecraft/client/gui/components/AbstractWidget.isFocused()Z
+   13: ifne -> 21
+   16: aload_0
+   17: invokestatic net/minecraft/client/gui/ComponentPath.leaf(Lnet/minecraft/client/gui/components/events/GuiEventListener;)Lnet/minecraft/client/gui/ComponentPath;
+   20: areturn
+   21: aconst_null
+   22: areturn
+------------------------------------------------------------------------
+--- isFocused()Z
+   0: aload_0
+   1: getfield net/minecraft/client/gui/components/AbstractWidget.focusedZ
+   4: ireturn
+------------------------------------------------------------------------
+--- setFocused(Z)V
+   0: aload_0
+   1: iload_1
+   2: putfield net/minecraft/client/gui/components/AbstractWidget.focusedZ
+   5: return
+========================================================================
+[F] net/minecraft/client/gui/components/EditBox
+------------------------------------------------------------------------
+--- keyPressed(Lnet/minecraft/client/input/KeyEvent;)Z
+   0: aload_0
+   1: invokevirtual net/minecraft/client/gui/components/EditBox.isActive()Z
+   4: ifeq -> 14
+   7: aload_0
+   8: invokevirtual net/minecraft/client/gui/components/EditBox.isFocused()Z
+   11: ifne -> 16
+   14: iconst_0
+   15: ireturn
+   16: aload_1
+   17: invokevirtual net/minecraft/client/input/KeyEvent.key()I
+   20: tableswitch tableswitch lo=259 hi=269
+   80: aload_1
+   81: invokevirtual net/minecraft/client/input/KeyEvent.hasControlDownWithQuirk()Z
+   84: ifeq -> 103
+   87: aload_0
+   88: aload_0
+   89: iconst_m1
+   90: invokevirtual net/minecraft/client/gui/components/EditBox.getWordPosition(I)I
+   93: aload_1
+   94: invokevirtual net/minecraft/client/input/KeyEvent.hasShiftDown()Z
+   97: invokevirtual net/minecraft/client/gui/components/EditBox.moveCursorTo(IZ)V
+   100: goto -> 112
+   103: aload_0
+   104: iconst_m1
+   105: aload_1
+   106: invokevirtual net/minecraft/client/input/KeyEvent.hasShiftDown()Z
+   109: invokevirtual net/minecraft/client/gui/components/EditBox.moveCursor(IZ)V
+   112: iconst_1
+   113: ireturn
+   114: aload_1
+   115: invokevirtual net/minecraft/client/input/KeyEvent.hasControlDownWithQuirk()Z
+   118: ifeq -> 137
+   121: aload_0
+   122: aload_0
+   123: iconst_1
+   124: invokevirtual net/minecraft/client/gui/components/EditBox.getWordPosition(I)I
+   127: aload_1
+   128: invokevirtual net/minecraft/client/input/KeyEvent.hasShiftDown()Z
+   131: invokevirtual net/minecraft/client/gui/components/EditBox.moveCursorTo(IZ)V
+   134: goto -> 146
+   137: aload_0
+   138: iconst_1
+   139: aload_1
+   140: invokevirtual net/minecraft/client/input/KeyEvent.hasShiftDown()Z
+   143: invokevirtual net/minecraft/client/gui/components/EditBox.moveCursor(IZ)V
+   146: iconst_1
+   147: ireturn
+   148: aload_0
+   149: getfield net/minecraft/client/gui/components/EditBox.isEditableZ
+   152: ifeq -> 164
+   155: aload_0
+   156: iconst_m1
+   157: aload_1
+   158: invokevirtual net/minecraft/client/input/KeyEvent.hasControlDownWithQuirk()Z
+   161: invokevirtual net/minecraft/client/gui/components/EditBox.deleteText(IZ)V
+   164: iconst_1
+   165: ireturn
+   166: aload_0
+   167: getfield net/minecraft/client/gui/components/EditBox.isEditableZ
+   170: ifeq -> 182
+   173: aload_0
+   174: iconst_1
+   175: aload_1
+   176: invokevirtual net/minecraft/client/input/KeyEvent.hasControlDownWithQuirk()Z
+   179: invokevirtual net/minecraft/client/gui/components/EditBox.deleteText(IZ)V
+   182: iconst_1
+   183: ireturn
+   184: aload_0
+   185: aload_1
+   186: invokevirtual net/minecraft/client/input/KeyEvent.hasShiftDown()Z
+   189: invokevirtual net/minecraft/client/gui/components/EditBox.moveCursorToStart(Z)V
+   192: iconst_1
+   193: ireturn
+   194: aload_0
+   195: aload_1
+   196: invokevirtual net/minecraft/client/input/KeyEvent.hasShiftDown()Z
+   199: invokevirtual net/minecraft/client/gui/components/EditBox.moveCursorToEnd(Z)V
+   202: iconst_1
+   203: ireturn
+   204: aload_1
+   205: invokevirtual net/minecraft/client/input/KeyEvent.isSelectAll()Z
+   208: ifeq -> 223
+   211: aload_0
+   212: iconst_0
+   213: invokevirtual net/minecraft/client/gui/components/EditBox.moveCursorToEnd(Z)V
+   216: aload_0
+   217: iconst_0
+   218: invokevirtual net/minecraft/client/gui/components/EditBox.setHighlightPos(I)V
+   221: iconst_1
+   222: ireturn
+   223: aload_1
+   224: invokevirtual net/minecraft/client/input/KeyEvent.isCopy()Z
+   227: ifeq -> 245
+   230: invokestatic net/minecraft/client/Minecraft.getInstance()Lnet/minecraft/client/Minecraft;
+   233: getfield net/minecraft/client/Minecraft.keyboardHandlerLnet/minecraft/client/KeyboardHandler;
+   236: aload_0
+   237: invokevirtual net/minecraft/client/gui/components/EditBox.getHighlighted()Ljava/lang/String;
+   240: invokevirtual net/minecraft/client/KeyboardHandler.setClipboard(Ljava/lang/String;)V
+   243: iconst_1
+   244: ireturn
+   245: aload_1
+   246: invokevirtual net/minecraft/client/input/KeyEvent.isPaste()Z
+   249: ifeq -> 274
+   252: aload_0
+   253: invokevirtual net/minecraft/client/gui/components/EditBox.isEditable()Z
+   256: ifeq -> 272
+   259: aload_0
+   260: invokestatic net/minecraft/client/Minecraft.getInstance()Lnet/minecraft/client/Minecraft;
+   263: getfield net/minecraft/client/Minecraft.keyboardHandlerLnet/minecraft/client/KeyboardHandler;
+   266: invokevirtual net/minecraft/client/KeyboardHandler.getClipboard()Ljava/lang/String;
+   269: invokevirtual net/minecraft/client/gui/components/EditBox.insertText(Ljava/lang/String;)V
+   272: iconst_1
+   273: ireturn
+   274: aload_1
+   275: invokevirtual net/minecraft/client/input/KeyEvent.isCut()Z
+   278: ifeq -> 309
+   281: invokestatic net/minecraft/client/Minecraft.getInstance()Lnet/minecraft/client/Minecraft;
+   284: getfield net/minecraft/client/Minecraft.keyboardHandlerLnet/minecraft/client/KeyboardHandler;
+   287: aload_0
+   288: invokevirtual net/minecraft/client/gui/components/EditBox.getHighlighted()Ljava/lang/String;
+   291: invokevirtual net/minecraft/client/KeyboardHandler.setClipboard(Ljava/lang/String;)V
+   294: aload_0
+   295: invokevirtual net/minecraft/client/gui/components/EditBox.isEditable()Z
+   298: ifeq -> 307
+   301: aload_0
+   302: ldc
+   304: invokevirtual net/minecraft/client/gui/components/EditBox.insertText(Ljava/lang/String;)V
+   307: iconst_1
+   308: ireturn
+   309: iconst_0
+   310: ireturn
+------------------------------------------------------------------------
+--- setFocused(Z)V
+   0: aload_0
+   1: getfield net/minecraft/client/gui/components/EditBox.canLoseFocusZ
+   4: ifne -> 12
+   7: iload_1
+   8: ifne -> 12
+   11: return
+   12: aload_0
+   13: iload_1
+   14: invokespecial net/minecraft/client/gui/components/AbstractWidget.setFocused(Z)V
+   17: iload_1
+   18: ifeq -> 28
+   21: aload_0
+   22: invokestatic net/minecraft/util/Util.getMillis()J
+   25: putfield net/minecraft/client/gui/components/EditBox.focusedTimeJ
+   28: aload_0
+   29: invokevirtual net/minecraft/client/gui/components/EditBox.isEditable()Z
+   32: ifeq -> 43
+   35: invokestatic net/minecraft/client/Minecraft.getInstance()Lnet/minecraft/client/Minecraft;
+   38: aload_0
+   39: iload_1
+   40: invokevirtual net/minecraft/client/Minecraft.onTextInputFocusChange(Lnet/minecraft/client/gui/components/events/GuiEventListener;Z)V
+   43: return
