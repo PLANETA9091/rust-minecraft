@@ -41151,8 +41151,18 @@ impl App {
                     // world the walk never passes
         }
         self.gm_hovered = self.default_gm_icon();
-        self.gm_first_mouse = None; // the setFirstMousePos reset the
-                                    // open's own law keeps
+        // the setFirstMousePos reset the open's own law keeps
+        self.gm_first_mouse = None;
+        // THE SETSCREEN'S OWN RELEASE DANCE (the vanilla Gui.setScreen
+        // pc 205-215 walk EVERY non-null open wears — the
+        // `KeyMapping.releaseAll()` the plain banks the zeroes speak,
+        // the toggle release the latched seats the flag banks + the
+        // latch clears: the autopush-222 law the F3+F6 lane the same
+        // shape wears, the direct swap the dance never rode — the held
+        // walk the banks the switcher carried, the world's return the
+        // apply close the restore completes)
+        self.toggle_keys_release_for_screen();
+        self.key_mappings_release_all();
         self.screen = ScreenKind::GameModeSwitcher;
         self.debug_modifier_used = true;
     }
@@ -41236,6 +41246,13 @@ impl App {
                 self.abilities_regrant(mode);
             }
         }
+        // THE SETSCREEN(NULL)'S OWN RESTORE (the vanilla close walk —
+        // the shouldRestore trio the keyboard-bound binds the world's
+        // return re-latches, the keyUse the FALSE verdict refuses, the
+        // flags the always-clear law consumes: the open arm's own bank
+        // the close completes — the same law the F3+F6 instanceof arm
+        // the 221 round wears)
+        self.toggle_keys_restore_after_screen();
         self.screen = ScreenKind::World;
     }
 

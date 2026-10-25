@@ -18593,3 +18593,197 @@ fn the_close_lane_tail_the_single_ride_the_reentry_wears() {
     );
     assert!(!app.container_removed_rode, "the flag the ride consumes");
 }
+
+/// THE SWITCHER'S OWN TOGGLE-DANCE (the F3+F4 chord the two arms the
+/// direct swap never rode — the open arm the release pair the pc 205-215
+/// walk wears: the held banks the zeroes speak, the latched seats the
+/// flag banks + the latch clears; the apply close the restore the
+/// shouldRestore trio the re-latch wears, the keyUse the FALSE verdict
+/// refuses, the flags the always-clear consume; the gates' refusals
+/// the release never rides — the pause and the death the held word
+/// keeps).
+#[test]
+fn the_switcher_open_the_release_dance_the_apply_close_the_restore_wears() {
+    use crate::screens::{TOGGLE_SPRINT, TOGGLE_USE};
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.toggle_sprint = true;
+    app.toggle_use = true;
+    // THE LATCHES (the world's own press+release pairs wear)
+    assert!(app.toggle_key_state(TOGGLE_SPRINT, true, true));
+    assert!(app.toggle_key_state(TOGGLE_SPRINT, false, true));
+    assert!(app.toggle_key_state(TOGGLE_USE, true, true));
+    assert!(app.toggle_key_state(TOGGLE_USE, false, true));
+    // THE HELD WALK (the plain banks the open arm clears)
+    if let Some(b) = app.body.as_mut() {
+        b.forward = 1.0;
+    }
+    app.dig_held = true;
+    // THE F3+F4 OPEN ARM (the release pair the screen install's BEFORE
+    // seat wears — the pc 205-215 order the open() dance's own shape
+    // keeps: the latch clears, the flag banks, the plain banks zero,
+    // the dig hold clears, the switcher's own state arms the same
+    // walk keeps)
+    app.on_open_game_mode_switcher();
+    assert_eq!(
+        app.screen,
+        ScreenKind::GameModeSwitcher,
+        "the chord the switcher opens"
+    );
+    assert_eq!(
+        app.gm_hovered, 1,
+        "the default hover the current mode speaks"
+    );
+    assert!(
+        app.gm_first_mouse.is_none(),
+        "the first-mouse bank the open resets"
+    );
+    assert!(app.debug_modifier_used, "the chord consumes the modifier");
+    assert!(
+        !app.toggle_latched(TOGGLE_SPRINT),
+        "the open the sprint latch clears"
+    );
+    assert!(
+        !app.toggle_latched(TOGGLE_USE),
+        "the open the use latch the same walk clears"
+    );
+    assert!(
+        app.toggle_released_by_screen[TOGGLE_SPRINT],
+        "the open the flag the release banks"
+    );
+    assert!(
+        app.toggle_released_by_screen[TOGGLE_USE],
+        "the open the use the same flag banks"
+    );
+    assert_eq!(
+        app.body.as_ref().unwrap().forward,
+        0.0,
+        "the open the plain release wears"
+    );
+    assert!(!app.dig_held, "the open the dig hold clears");
+    // THE CYCLE WALK (the open screen's own F4 arm — the banks the
+    // cycle never re-arms, the hover the getNext law cycles)
+    app.on_game_mode_switcher_cycle();
+    assert_eq!(app.gm_hovered, 2, "the cycle the adventure hover speaks");
+    assert!(
+        !app.toggle_latched(TOGGLE_SPRINT),
+        "the cycle the cleared latch keeps"
+    );
+    assert!(
+        app.toggle_released_by_screen[TOGGLE_SPRINT],
+        "the cycle the banked flag keeps"
+    );
+    // THE F3 RELEASE'S OWN APPLY (the same-mode arm the silent close
+    // keeps — hover 2 = adventure, mode survival... the cycle the
+    // hover moved: the apply LANDS the adventure, the close the
+    // restore rides)
+    app.on_debug_modifier_released();
+    assert_eq!(app.screen, ScreenKind::World, "the release closes");
+    assert_eq!(
+        app.game_mode,
+        GameMode::Adventure,
+        "the cycle the apply lands"
+    );
+    assert_eq!(
+        app.previous_game_mode,
+        Some(GameMode::Survival),
+        "the bank the old mode fills"
+    );
+    // THE APPLY CLOSE'S OWN RESTORE (the setScreen(null) walk — the
+    // keyboard-bound sprint the re-latch wears, the keyUse the
+    // shouldRestore FALSE refuses, the flags the always-clear consume,
+    // the plain banks the poll's own re-read the re-clear never wears)
+    assert!(
+        app.toggle_latched(TOGGLE_SPRINT),
+        "the close the sprint re-latches"
+    );
+    assert!(
+        !app.toggle_released_by_screen[TOGGLE_SPRINT],
+        "the restore the flag the always-clear consumes"
+    );
+    assert!(
+        !app.toggle_latched(TOGGLE_USE),
+        "the keyUse the shouldRestore FALSE the restore refuses"
+    );
+    assert!(
+        !app.toggle_released_by_screen[TOGGLE_USE],
+        "the refused verdict the flag the same clear wears"
+    );
+    assert_eq!(
+        app.body.as_ref().unwrap().forward,
+        0.0,
+        "the close the re-clear never rides"
+    );
+    // THE DANCE RE-ARMS (the re-open the re-latched seat the flag
+    // re-banks — the flick apply the Survival returns, the close the
+    // re-latch the SECOND round-trip completes)
+    app.on_open_game_mode_switcher();
+    assert_eq!(app.screen, ScreenKind::GameModeSwitcher, "the re-open arms");
+    assert_eq!(app.gm_hovered, 1, "the previous bank the reopen hovers");
+    assert!(
+        !app.toggle_latched(TOGGLE_SPRINT),
+        "the re-open the latch re-clears"
+    );
+    assert!(
+        app.toggle_released_by_screen[TOGGLE_SPRINT],
+        "the re-open the flag re-banks"
+    );
+    app.on_debug_modifier_released();
+    assert_eq!(app.screen, ScreenKind::World, "the second close speaks");
+    assert_eq!(
+        app.game_mode,
+        GameMode::Survival,
+        "the flick the survival returns"
+    );
+    assert_eq!(
+        app.previous_game_mode,
+        Some(GameMode::Adventure),
+        "the bank the adventure fills"
+    );
+    assert!(
+        app.toggle_latched(TOGGLE_SPRINT),
+        "the second close the re-latch wears"
+    );
+    assert!(
+        !app.toggle_released_by_screen[TOGGLE_SPRINT],
+        "the second restore the flag consumes"
+    );
+    // THE PAUSE GATE'S OWN REFUSAL (the open the gate refuses — the
+    // release never rides: the held word keeps, the latch keeps, the
+    // flag never banks)
+    if let Some(b) = app.body.as_mut() {
+        b.forward = 1.0;
+    }
+    app.paused = true;
+    app.on_open_game_mode_switcher();
+    assert_eq!(app.screen, ScreenKind::World, "the pause refuses the open");
+    assert!(
+        app.toggle_latched(TOGGLE_SPRINT),
+        "the refusal the latch keeps"
+    );
+    assert!(
+        !app.toggle_released_by_screen[TOGGLE_SPRINT],
+        "the refusal the flag never banks"
+    );
+    assert_eq!(
+        app.body.as_ref().unwrap().forward,
+        1.0,
+        "the refusal the held word keeps"
+    );
+    app.paused = false;
+    // THE DEATH GATE'S OWN REFUSAL (the same verdict the dead world
+    // wears — the release never rides)
+    app.dead = true;
+    app.on_open_game_mode_switcher();
+    assert_eq!(app.screen, ScreenKind::World, "the death refuses the open");
+    assert!(
+        app.toggle_latched(TOGGLE_SPRINT),
+        "the dead refusal the latch keeps"
+    );
+    assert!(
+        !app.toggle_released_by_screen[TOGGLE_SPRINT],
+        "the dead refusal the flag never banks"
+    );
+    app.dead = false;
+}
