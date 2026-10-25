@@ -39898,6 +39898,106 @@ impl App {
         self.debug_modifier_used = true;
     }
 
+    /// THE DUMP DYNAMIC TEXTURES' OWN CHORD (javap 26.2
+    /// KeyboardHandler.handleDebugKeys's keyDebugDumpDynamicTextures
+    /// lane — the `matches` arm pc 802 the silentlanes_212.py walk
+    /// banks, the window the pc order keeps: 749 focusPause < 802
+    /// dumpDynamicTextures < 905 reloadResourcePacks). THE NO-GATE
+    /// LANE (pc 802-903 — no screen/world check the body wears, the
+    /// crash-hold's own no-gate law the family's tail keeps). THE
+    /// DEBUG PATH (pc 812-834): the gameDirectory the
+    /// TextureUtil.getDebugTexturePath walk keeps —
+    /// `<gameDir>.resolve("screenshots").resolve("debug")` the two
+    /// resolves bank — the `createDirectories` the dumpAllSheets
+    /// opener speaks (the IOException arm the LOGGER.error word
+    /// keeps — the log-less client the let-_ swallow wears). THE
+    /// DUMP WALK (the lambda$dumpAllSheets$0 the Dumpable instance
+    /// arm keeps): the atlas the generated registry's own texture
+    /// bank carries — the SHEET the writeAsPNG law writes (the
+    /// `minecraft_blocks` name the `Identifier.toDebugFileName`
+    /// walk keeps — the `minecraft:blocks` id the
+    /// replace('/','_').replace(':','_') law serves, the
+    /// `<name>_<mip>.png` file the `\x01_\x01.png` concat answers,
+    /// the mip-0 the model's own single texture banks, the 32-col
+    /// grid the generated tile order keeps), the SPRITE LIST the
+    /// dumpSpriteNames law writes (the `minecraft_blocks.txt` file
+    /// the `\x01.txt` concat keeps, the rows the Locale.ROOT
+    /// `%s\tx=%d\ty=%d\tw=%d\th=%d%n` format banks, the key sort
+    /// the comparingByKey stream wears). The RGBA the RGB the
+    /// png_io writer's own channel keeps — the transparent texels
+    /// the straight-channel walk carries (the alpha the sheet's
+    /// own bytes never keeps, the honest adaptation the
+    /// write_rgb_png law wears). THE YELLOW WORD (pc 883-899): the
+    /// relative path the literal UNDERLINE the arg keeps (the `§n`
+    /// code the chat render's own law wears — the format code the
+    /// color never resets), the translatable the
+    /// debugFeedbackComponent the ChatFormatting.YELLOW decorate
+    /// answers — `Saved dynamic textures to screenshots/debug` the
+    /// en_us row banks (the `gameDirectory.relativize(debugPath)`
+    /// walk the literal word keeps, the click event the indy
+    /// UnaryOperator carries the chat's plain rows never keep — the
+    /// honest wall the durability row's own law wears). THE USED
+    /// FLAG (pc 902-903 istore_3): the walk the flag banks
+    /// regardless.
+    pub fn on_dump_dynamic_textures_key(&mut self) {
+        // THE DEBUG PATH (pc 812-834 — the two resolves the walk
+        // keeps, the createDirectories the opener speaks)
+        let dir = std::path::Path::new("screenshots/debug");
+        let _ = std::fs::create_dir_all(dir);
+        // THE SHEET (pc 843-845 — the Dumpable arm the atlas's own
+        // tiles the writeAsPNG law writes: the 32-col grid the
+        // generated tile order keeps, the mip-0 name the concat
+        // answers)
+        use mc_registry::generated::atlas;
+        let ts = atlas::TILE_SIZE;
+        let n = atlas::TILES.len();
+        const COLS: usize = 32;
+        let rows = (n + COLS - 1) / COLS;
+        let w = COLS * ts;
+        let mut sheet = vec![0u8; w * rows * ts * 3];
+        for (i, rgba) in atlas::TILES.iter().enumerate() {
+            let col = i % COLS;
+            let row = i / COLS;
+            for ty in 0..ts {
+                for tx in 0..ts {
+                    let src = (ty * ts + tx) * 4;
+                    let dst = (((row * ts) + ty) * w + (col * ts) + tx) * 3;
+                    sheet[dst] = rgba[src];
+                    sheet[dst + 1] = rgba[src + 1];
+                    sheet[dst + 2] = rgba[src + 2];
+                }
+            }
+        }
+        let _ =
+            crate::png_io::write_rgb_png(&dir.join("minecraft_blocks_0.png"), w, rows * ts, &sheet);
+        // THE SPRITE LIST (the dumpSpriteNames law — the key sort
+        // the comparingByKey stream wears, the Locale.ROOT format
+        // the tab rows keep)
+        let mut order: Vec<usize> = (0..n).collect();
+        order.sort_by_key(|&i| atlas::TILE_NAMES[i]);
+        let mut list = String::new();
+        for i in order {
+            list.push_str(&format!(
+                "{}\tx={}\ty={}\tw={}\th={}\n",
+                atlas::TILE_NAMES[i],
+                (i % COLS) * ts,
+                (i / COLS) * ts,
+                ts,
+                ts
+            ));
+        }
+        let _ = std::fs::write(dir.join("minecraft_blocks.txt"), list);
+        // THE YELLOW WORD (pc 883-899 — the relative path the
+        // literal UNDERLINE the arg keeps, the yellow the feedback
+        // channel wears)
+        self.push_chat_message(
+            "\u{a7}eSaved dynamic textures to \u{a7}nscreenshots/debug".to_string(),
+        );
+        // THE USED FLAG (pc 902-903 — the walk the bank wears
+        // regardless)
+        self.debug_modifier_used = true;
+    }
+
     /// THE CYCLE SPECTATOR'S OWN CHORD (javap 26.2
     /// KeyboardHandler.handleDebugKeys's keyDebugSpectate lane —
     /// the `matches` arm pc 420 the spectate_209.py walk banks, the

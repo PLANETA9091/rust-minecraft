@@ -15857,3 +15857,83 @@ fn the_creative_item_tooltip_the_palette_the_wrap_the_walls_wear() {
     );
     let _ = app;
 }
+
+/// THE DUMP DYNAMIC TEXTURES' OWN LANE (the 26.2 debug entry the
+/// F3+S chord wears — the pc 802 lane the silentlanes_212.py walk
+/// banks: the debug path the two resolves keep, the sheet the
+/// writeAsPNG law writes, the sprite list the dumpSpriteNames law
+/// keeps, the yellow word the feedback channel speaks, the flag
+/// the no-gate walk banks).
+#[test]
+fn the_dump_dynamic_textures_key_the_sheets_the_word_the_flag_wear() {
+    // THE PRE-CLEAN (the createDirectories the overwrite keeps —
+    // the stale dumps a crashed prior walk never leaves)
+    let _ = std::fs::remove_dir_all("screenshots/debug");
+    let mut app = App::new(262);
+    // THE WORD + THE FLAG (pc 883-903 — the no-gate walk the
+    // bank wears regardless)
+    app.on_dump_dynamic_textures_key();
+    assert_eq!(
+        app.chat_messages.last().map(|(t, _)| t.as_str()),
+        Some("\u{a7}eSaved dynamic textures to \u{a7}nscreenshots/debug"),
+        "the saved-word row the yellow + the UNDERLINE arg wears"
+    );
+    assert!(
+        app.debug_modifier_used,
+        "the used flag the no-gate walk banks"
+    );
+    app.on_debug_modifier_released();
+    assert!(!app.debug_modifier_used, "the release the flag consumes");
+    // THE SHEET (the writeAsPNG law — the mip-0 file the
+    // `\x01_\x01.png` concat keeps, the dims the 32-col grid the
+    // 929 tiles wear)
+    let sheet = std::path::Path::new("screenshots/debug/minecraft_blocks_0.png");
+    let bytes = std::fs::read(sheet).expect("the sheet the dump writes");
+    assert_eq!(
+        &bytes[12..16],
+        b"IHDR",
+        "the PNG the sheet's own signature keeps"
+    );
+    let dw = u32::from_be_bytes([bytes[16], bytes[17], bytes[18], bytes[19]]);
+    let dh = u32::from_be_bytes([bytes[20], bytes[21], bytes[22], bytes[23]]);
+    assert_eq!(dw, 512, "the 32-col grid the sheet width wears");
+    assert_eq!(dh, 480, "the 30-row grid the sheet height wears");
+    // THE SPRITE LIST (the dumpSpriteNames law — the key sort the
+    // comparingByKey stream wears, the Locale.ROOT format the tab
+    // rows keep, the position the tile's OWN index speaks)
+    let list = std::fs::read_to_string("screenshots/debug/minecraft_blocks.txt")
+        .expect("the list the dump writes");
+    let rows: Vec<&str> = list.lines().collect();
+    let names = mc_registry::generated::atlas::TILE_NAMES;
+    assert_eq!(
+        rows.len(),
+        names.len(),
+        "the atlas's own members the list banks"
+    );
+    let mut sorted: Vec<&str> = names.to_vec();
+    sorted.sort();
+    let first = names.iter().position(|&n| n == sorted[0]).unwrap();
+    assert_eq!(
+        rows[0],
+        format!(
+            "{}\tx={}\ty={}\tw=16\th=16",
+            sorted[0],
+            (first % 32) * 16,
+            (first / 32) * 16
+        ),
+        "the first row the key sort + the tile's own seat wear"
+    );
+    let last = names.iter().position(|&n| n == sorted[928]).unwrap();
+    assert_eq!(
+        rows[928],
+        format!(
+            "{}\tx={}\ty={}\tw=16\th=16",
+            sorted[928],
+            (last % 32) * 16,
+            (last / 32) * 16
+        ),
+        "the tail row the key sort + the tile's own seat wear"
+    );
+    // THE CLEANUP (the test's own dir the walk removes)
+    let _ = std::fs::remove_dir_all("screenshots/debug");
+}

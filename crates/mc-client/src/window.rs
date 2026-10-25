@@ -2638,6 +2638,18 @@ pub fn run_gui_app(
             if f3_down && window.is_key_pressed(Key::P, minifb::KeyRepeat::No) {
                 app.on_focus_pause_key();
             }
+            // THE F3+S DUMP DYNAMIC TEXTURES (the handleDebugKeys'
+            // keyDebugDumpDynamicTextures lane — the `matches` arm pc
+            // 802 the silentlanes_212.py walk banks, the seat the pc
+            // order keeps: 749 focusPause < 802 dumpDynamicTextures <
+            // 905 reloadResourcePacks. The no-gate lane the body
+            // serves — the screenshots/debug sheets the writeAsPNG
+            // law writes, the yellow saved-word row the chat the
+            // UNDERLINE arg speaks, the flag the walk banks
+            // regardless)
+            if f3_down && window.is_key_pressed(Key::S, minifb::KeyRepeat::No) {
+                app.on_dump_dynamic_textures_key();
+            }
             // THE F3+F4 CHORD (the handleDebugKeys' keyDebugSwitchGameMode
             // lane — the `matches` arm the level/screen/canSwitchGameMode
             // chain guards opens the GameModeSwitcherScreen, the default
