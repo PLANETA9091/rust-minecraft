@@ -1,0 +1,214 @@
+===== net/minecraft/client/KeyboardHandler =====
+  --- copyRecreateCommand(ZZ)V (max_locals=9)
+    0: aload_0
+    1: getfield net/minecraft/client/KeyboardHandler.minecraftLnet/minecraft/client/Minecraft;
+    4: getfield net/minecraft/client/Minecraft.hitResultLnet/minecraft/world/phys/HitResult;
+    7: astore_2
+    8: aload_3
+    9: ifnonnull -> 13
+    12: return
+    13: getstatic net/minecraft/client/KeyboardHandler$1.$SwitchMap$net$minecraft$world$phys$HitResult$Type[I
+    16: aload_3
+    17: invokevirtual net/minecraft/world/phys/HitResult.getType()Lnet/minecraft/world/phys/HitResult$Type;
+    20: invokevirtual net/minecraft/world/phys/HitResult$Type.ordinal()I
+    23: iaload
+    24: lookupswitch lookupswitch npairs=2
+    52: aload_3
+    53: checkcast net/minecraft/world/phys/BlockHitResult
+    56: invokevirtual net/minecraft/world/phys/BlockHitResult.getBlockPos()Lnet/minecraft/core/BlockPos;
+    59: astore astore 4
+    61: aload_0
+    62: getfield net/minecraft/client/KeyboardHandler.minecraftLnet/minecraft/client/Minecraft;
+    65: getfield net/minecraft/client/Minecraft.playerLnet/minecraft/client/player/LocalPlayer;
+    68: invokevirtual net/minecraft/client/player/LocalPlayer.level()Lnet/minecraft/world/level/Level;
+    71: astore astore 5
+    73: aload aload 5
+    75: aload aload 4
+    77: invokevirtual net/minecraft/world/level/Level.getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+    80: astore astore 6
+    82: iload_1
+    83: ifeq -> 171
+    86: iload_2
+    87: ifeq -> 121
+    90: aload_0
+    91: getfield net/minecraft/client/KeyboardHandler.minecraftLnet/minecraft/client/Minecraft;
+    94: getfield net/minecraft/client/Minecraft.playerLnet/minecraft/client/player/LocalPlayer;
+    97: getfield net/minecraft/client/player/LocalPlayer.connectionLnet/minecraft/client/multiplayer/ClientPacketListener;
+    100: invokevirtual net/minecraft/client/multiplayer/ClientPacketListener.getDebugQueryHandler()Lnet/minecraft/client/DebugQueryHandler;
+    103: aload aload 4
+    105: aload_0
+    106: aload aload 6
+    108: aload aload 4
+    110: invokedynamic indy
+    115: invokevirtual net/minecraft/client/DebugQueryHandler.queryBlockEntityTag(Lnet/minecraft/core/BlockPos;Ljava/util/function/Consumer;)V
+    118: goto -> 187
+    121: aload aload 5
+    123: aload aload 4
+    125: invokevirtual net/minecraft/world/level/Level.getBlockEntity(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/entity/BlockEntity;
+    128: astore astore 7
+    130: aload aload 7
+    132: ifnull -> 148
+    135: aload aload 7
+    137: aload aload 5
+    139: invokevirtual net/minecraft/world/level/Level.registryAccess()Lnet/minecraft/core/RegistryAccess;
+    142: invokevirtual net/minecraft/world/level/block/entity/BlockEntity.saveWithoutMetadata(Lnet/minecraft/core/HolderLookup$Provider;)Lnet/minecraft/nbt/CompoundTag;
+    145: goto -> 149
+    148: aconst_null
+    149: astore astore 8
+    151: aload_0
+    152: aload aload 6
+    154: aload aload 4
+    156: aload aload 8
+    158: invokevirtual net/minecraft/client/KeyboardHandler.copyCreateBlockCommand(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/nbt/CompoundTag;)V
+    161: aload_0
+    162: ldc_w ldcw@715
+    165: invokevirtual net/minecraft/client/KeyboardHandler.debugFeedbackTranslated(Ljava/lang/String;)V
+    168: goto -> 187
+    171: aload_0
+    172: aload aload 6
+    174: aload aload 4
+    176: aconst_null
+    177: invokevirtual net/minecraft/client/KeyboardHandler.copyCreateBlockCommand(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/nbt/CompoundTag;)V
+    180: aload_0
+    181: ldc_w ldcw@715
+    184: invokevirtual net/minecraft/client/KeyboardHandler.debugFeedbackTranslated(Ljava/lang/String;)V
+    187: goto -> 370
+    190: aload_3
+    191: checkcast net/minecraft/world/phys/EntityHitResult
+    194: invokevirtual net/minecraft/world/phys/EntityHitResult.getEntity()Lnet/minecraft/world/entity/Entity;
+    197: astore astore 4
+    199: getstatic net/minecraft/core/registries/BuiltInRegistries.ENTITY_TYPELnet/minecraft/core/DefaultedRegistry;
+    202: aload aload 4
+    204: invokevirtual net/minecraft/world/entity/Entity.getType()Lnet/minecraft/world/entity/EntityType;
+    207: invokeinterface net/minecraft/core/DefaultedRegistry.getKey(Ljava/lang/Object;)Lnet/minecraft/resources/Identifier;
+    210: iconst_m1
+    211: nop
+    212: astore astore 5
+    214: iload_1
+    215: ifeq -> 348
+    218: iload_2
+    219: ifeq -> 256
+    222: aload_0
+    223: getfield net/minecraft/client/KeyboardHandler.minecraftLnet/minecraft/client/Minecraft;
+    226: getfield net/minecraft/client/Minecraft.playerLnet/minecraft/client/player/LocalPlayer;
+    229: getfield net/minecraft/client/player/LocalPlayer.connectionLnet/minecraft/client/multiplayer/ClientPacketListener;
+    232: invokevirtual net/minecraft/client/multiplayer/ClientPacketListener.getDebugQueryHandler()Lnet/minecraft/client/DebugQueryHandler;
+    235: aload aload 4
+    237: invokevirtual net/minecraft/world/entity/Entity.getId()I
+    240: aload_0
+    241: aload aload 5
+    243: aload aload 4
+    245: invokedynamic indy
+    250: invokevirtual net/minecraft/client/DebugQueryHandler.queryEntityTag(ILjava/util/function/Consumer;)V
+    253: goto -> 367
+    256: new net/minecraft/util/ProblemReporter$ScopedCollector
+    259: dup
+    260: aload aload 4
+    262: invokevirtual net/minecraft/world/entity/Entity.problemPath()Lnet/minecraft/util/ProblemReporter$PathElement;
+    265: getstatic net/minecraft/client/KeyboardHandler.LOGGERLorg/slf4j/Logger;
+    268: invokespecial net/minecraft/util/ProblemReporter$ScopedCollector.<init>(Lnet/minecraft/util/ProblemReporter$PathElement;Lorg/slf4j/Logger;)V
+    271: astore astore 6
+    273: aload aload 6
+    275: aload aload 4
+    277: invokevirtual net/minecraft/world/entity/Entity.registryAccess()Lnet/minecraft/core/RegistryAccess;
+    280: invokestatic net/minecraft/world/level/storage/TagValueOutput.createWithContext(Lnet/minecraft/util/ProblemReporter;Lnet/minecraft/core/HolderLookup$Provider;)Lnet/minecraft/world/level/storage/TagValueOutput;
+    283: astore astore 7
+    285: aload aload 4
+    287: aload aload 7
+    289: invokevirtual net/minecraft/world/entity/Entity.saveWithoutId(Lnet/minecraft/world/level/storage/ValueOutput;)V
+    292: aload_0
+    293: aload aload 5
+    295: aload aload 4
+    297: invokevirtual net/minecraft/world/entity/Entity.position()Lnet/minecraft/world/phys/Vec3;
+    300: aload aload 7
+    302: invokevirtual net/minecraft/world/level/storage/TagValueOutput.buildResult()Lnet/minecraft/nbt/CompoundTag;
+    305: invokevirtual net/minecraft/client/KeyboardHandler.copyCreateEntityCommand(Lnet/minecraft/resources/Identifier;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/nbt/CompoundTag;)V
+    308: aload aload 6
+    310: invokevirtual net/minecraft/util/ProblemReporter$ScopedCollector.close()V
+    313: goto -> 338
+    316: astore astore 7
+    318: aload aload 6
+    320: invokevirtual net/minecraft/util/ProblemReporter$ScopedCollector.close()V
+    323: goto -> 335
+    326: astore astore 8
+    328: aload aload 7
+    330: aload aload 8
+    332: invokevirtual java/lang/Throwable.addSuppressed(Ljava/lang/Throwable;)V
+    335: aload aload 7
+    337: athrow
+    338: aload_0
+    339: ldc_w ldcw@795
+    342: invokevirtual net/minecraft/client/KeyboardHandler.debugFeedbackTranslated(Ljava/lang/String;)V
+    345: goto -> 367
+    348: aload_0
+    349: aload aload 5
+    351: aload aload 4
+    353: invokevirtual net/minecraft/world/entity/Entity.position()Lnet/minecraft/world/phys/Vec3;
+    356: aconst_null
+    357: invokevirtual net/minecraft/client/KeyboardHandler.copyCreateEntityCommand(Lnet/minecraft/resources/Identifier;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/nbt/CompoundTag;)V
+    360: aload_0
+    361: ldc_w ldcw@795
+    364: invokevirtual net/minecraft/client/KeyboardHandler.debugFeedbackTranslated(Ljava/lang/String;)V
+    367: goto -> 370
+    370: return
+  --- lambda$copyRecreateCommand$0(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/nbt/CompoundTag;)V (max_locals=4)
+    0: aload_0
+    1: aload_1
+    2: aload_2
+    3: aload_3
+    4: invokevirtual net/minecraft/client/KeyboardHandler.copyCreateBlockCommand(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/nbt/CompoundTag;)V
+    7: aload_0
+    8: ldc_w ldcw@1263
+    11: invokevirtual net/minecraft/client/KeyboardHandler.debugFeedbackTranslated(Ljava/lang/String;)V
+    14: return
+  --- lambda$copyRecreateCommand$1(Lnet/minecraft/resources/Identifier;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/nbt/CompoundTag;)V (max_locals=4)
+    0: aload_0
+    1: aload_1
+    2: aload_2
+    3: invokevirtual net/minecraft/world/entity/Entity.position()Lnet/minecraft/world/phys/Vec3;
+    6: aload_3
+    7: invokevirtual net/minecraft/client/KeyboardHandler.copyCreateEntityCommand(Lnet/minecraft/resources/Identifier;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/nbt/CompoundTag;)V
+    10: aload_0
+    11: ldc_w ldcw@1261
+    14: invokevirtual net/minecraft/client/KeyboardHandler.debugFeedbackTranslated(Ljava/lang/String;)V
+    17: return
+
+===== net/minecraft/client/KeyboardHandler =====
+  --- lambda$copyRecreateCommand$0(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/nbt/CompoundTag;)V (max_locals=4)
+    0: aload_0
+    1: aload_1
+    2: aload_2
+    3: aload_3
+    4: invokevirtual net/minecraft/client/KeyboardHandler.copyCreateBlockCommand(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/nbt/CompoundTag;)V
+    7: aload_0
+    8: ldc_w ldcw@1263
+    11: invokevirtual net/minecraft/client/KeyboardHandler.debugFeedbackTranslated(Ljava/lang/String;)V
+    14: return
+  --- lambda$copyRecreateCommand$1(Lnet/minecraft/resources/Identifier;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/nbt/CompoundTag;)V (max_locals=4)
+    0: aload_0
+    1: aload_1
+    2: aload_2
+    3: invokevirtual net/minecraft/world/entity/Entity.position()Lnet/minecraft/world/phys/Vec3;
+    6: aload_3
+    7: invokevirtual net/minecraft/client/KeyboardHandler.copyCreateEntityCommand(Lnet/minecraft/resources/Identifier;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/nbt/CompoundTag;)V
+    10: aload_0
+    11: ldc_w ldcw@1261
+    14: invokevirtual net/minecraft/client/KeyboardHandler.debugFeedbackTranslated(Ljava/lang/String;)V
+    17: return
+
+===== net/minecraft/client/gui/font/TextFieldHelper =====
+  --- createClipboardSetter(Lnet/minecraft/client/Minecraft;)Ljava/util/function/Consumer; (max_locals=1)
+    0: aload_0
+    1: invokedynamic indy
+    6: areturn
+  --- lambda$createClipboardSetter$0(Lnet/minecraft/client/Minecraft;Ljava/lang/String;)V (max_locals=2)
+    0: aload_0
+    1: aload_1
+    2: invokestatic net/minecraft/client/gui/font/TextFieldHelper.setClipboardContents(Lnet/minecraft/client/Minecraft;Ljava/lang/String;)V
+    5: return
+===== net/minecraft/client/gui/font/TextFieldHelper =====
+  --- lambda$createClipboardSetter$0(Lnet/minecraft/client/Minecraft;Ljava/lang/String;)V (max_locals=2)
+    0: aload_0
+    1: aload_1
+    2: invokestatic net/minecraft/client/gui/font/TextFieldHelper.setClipboardContents(Lnet/minecraft/client/Minecraft;Ljava/lang/String;)V
+    5: return

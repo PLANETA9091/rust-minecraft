@@ -1310,6 +1310,29 @@ impl MobKind {
         }
     }
 
+    /// THE REGISTRY NAME'S OWN INVERSE (the from_wire_name arms the
+    /// reverse the copyRecreate lane reads — javap 26.2
+    /// KeyboardHandler.copyCreateEntityCommand the
+    /// `BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType())`
+    /// walk the `Identifier` arg banks, the `/summon %s %.2f %.2f
+    /// %.2f` format the khbuilders_169.txt walk keeps: the same ten
+    /// names the wire walk's own table wears, the summon command the
+    /// clipboard store banks).
+    pub fn wire_name(self) -> &'static str {
+        match self {
+            MobKind::Zombie => "minecraft:zombie",
+            MobKind::Pig => "minecraft:pig",
+            MobKind::Cow => "minecraft:cow",
+            MobKind::Sheep => "minecraft:sheep",
+            MobKind::Chicken => "minecraft:chicken",
+            MobKind::Skeleton => "minecraft:skeleton",
+            MobKind::Spider => "minecraft:spider",
+            MobKind::Wolf => "minecraft:wolf",
+            MobKind::Creeper => "minecraft:creeper",
+            MobKind::Warden => "minecraft:warden",
+        }
+    }
+
     /// THE MONSTER CHAIN'S OWN WORD (the class hierarchy the javap
     /// dumps keep: Zombie → Monster → PathfinderMob; the animals'
     /// own chain Sheep/Cow/Pig → Animal → AgeableMob → PathfinderMob

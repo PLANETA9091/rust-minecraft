@@ -1,0 +1,2 @@
+===== net/minecraft/client/Minecraft: 238 methods =====
+===== net/minecraft/client/Minecraft$1: 2 methods =====

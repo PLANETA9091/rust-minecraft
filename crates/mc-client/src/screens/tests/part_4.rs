@@ -10385,6 +10385,146 @@ fn the_debug_feedback_words_the_family_wears() {
     );
 }
 
+// THE COPY RECREATE COMMAND'S OWN CHORD (the 26.2 handleDebugKeys
+// keyDebugCopyRecreateCommand lane the khcopy_169.py walk banks — the
+// BLOCK arm the copyCreateBlockCommand builder serves: the
+// `/setblock %d %d %d %s` format the Locale.ROOT walk speaks, the
+// state the BlockStateParser.serialize the registry name the
+// minecraft: prefix wears, the client word the debug.inspect.client
+// .block key the en_us row `Copied client-side block data to
+// clipboard` keeps)
+#[test]
+fn the_copy_recreate_chord_the_block_command_the_word_wear() {
+    let mut app = App::new(262);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let top = app.spawn_y;
+    // THE COLUMN'S OWN PLANTING (the deterministic hit the surface's
+    // own carve never promises — the stone the top-1 cell wears, the
+    // air the walk-down the ray reads, the part_8 law the same
+    // planting keeps)
+    {
+        let world = app.offline_world.as_mut().unwrap();
+        world.set(c, top - 1, c, crate::world::STONE);
+        world.set(c, top, c, crate::world::AIR);
+    }
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+        yaw: 0.0,
+        pitch: -std::f32::consts::FRAC_PI_2,
+    });
+    // THE CHORD (the block hit the lane's own walk serves — the
+    // clipboard the command stores, the yellow word the chat speaks)
+    app.on_copy_recreate_command_key();
+    // THE COMMAND (the world's own hit the expected string builds —
+    // the solid cell the serialize's own state reads)
+    let hit = app
+        .clip_crosshair()
+        .expect("the ground the down look hits");
+    assert_eq!(
+        hit.pos,
+        (c, top - 1, c),
+        "the planted stone the ray's own cell keeps"
+    );
+    assert_eq!(
+        app.clipboard,
+        format!(
+            "/setblock {} {} {} minecraft:stone",
+            hit.pos.0, hit.pos.1, hit.pos.2
+        ),
+        "the block command the format speaks"
+    );
+    assert!(
+        app.chat_messages.last().map(|(t, _)| t.as_str())
+            == Some("\u{a7}eCopied client-side block data to clipboard"),
+        "the client word the no-shift walk wears"
+    );
+    assert!(app.debug_modifier_used, "the modifier the chord spends");
+    let _ = app;
+}
+
+// THE COPY RECREATE'S OWN ENTITY ARM + SHIFT WORD (the ENTITY case
+// the copyCreateEntityCommand builder serves — the `/summon %s %.2f
+// %.2f %.2f` format the wire_name walk speaks, the shift the
+// hasShiftDown arg the SERVER word the debug.inspect.server key
+// answers, the UUID/Pos strips the null tag never runs)
+#[test]
+fn the_copy_recreate_chord_the_entity_summon_the_shift_word_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let top = app.spawn_y;
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+        yaw: 0.0,
+        pitch: -std::f32::consts::FRAC_PI_2,
+    });
+    let mut mob = crate::mob::Zombie::new(7, c as f64 + 0.5, top as f64, c as f64 + 0.5, 3);
+    mob.kind = crate::mob::MobKind::Skeleton;
+    app.mobs.push(mob);
+    // THE SHIFT (the hasShiftDown the server arg wears — the word the
+    // server-query arm speaks)
+    app.on_shift_down(true);
+    app.on_copy_recreate_command_key();
+    assert_eq!(
+        app.clipboard,
+        format!(
+            "/summon minecraft:skeleton {:.2} {:.2} {:.2}",
+            c as f64 + 0.5,
+            top as f64,
+            c as f64 + 0.5
+        ),
+        "the summon command the entity builder speaks"
+    );
+    assert!(
+        app.chat_messages.last().map(|(t, _)| t.as_str())
+            == Some("\u{a7}eCopied server-side entity data to clipboard"),
+        "the server word the shift walk wears"
+    );
+    // THE UN-SHIFT (the second chord the client word answers — the
+    // same entity the two words the arms split)
+    app.on_shift_down(false);
+    app.on_copy_recreate_command_key();
+    assert!(
+        app.chat_messages.last().map(|(t, _)| t.as_str())
+            == Some("\u{a7}eCopied client-side entity data to clipboard"),
+        "the client word the un-shift walk answers"
+    );
+    assert!(app.debug_modifier_used, "the modifier the chord spends");
+    let _ = app;
+}
+
+// THE COPY RECREATE'S OWN MISS (the hitResult the null return the
+// body's first walk keeps — the silence the copy never serves, the
+// istore_3 the used flag the call site banks REGARDLESS [the pc
+// 418-419 the gated-out walk wears too])
+#[test]
+fn the_copy_recreate_chord_the_miss_silence_keeps() {
+    let mut app = App::new(262);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let top = app.spawn_y;
+    app.offline_camera_updated(crate::camera::Camera {
+        pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+        yaw: 0.0,
+        pitch: std::f32::consts::FRAC_PI_2,
+    });
+    app.on_copy_recreate_command_key();
+    assert!(app.clipboard.is_empty(), "the miss the store never wears");
+    assert!(
+        app.chat_messages.is_empty(),
+        "the miss the feedback row never speaks"
+    );
+    assert!(
+        app.debug_modifier_used,
+        "the used flag the chord matched banks"
+    );
+    let _ = app;
+}
+
 // THE FOV EFFECT SCALE'S OWN ROW (the 26.2 AccessibilityOptionsScreen
 // row the file's law wears — the fov_scale_tail_262.py probe the
 // Camera.tickFov read the body's tick passes: the boot load the body's

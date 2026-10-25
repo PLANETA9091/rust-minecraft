@@ -1,0 +1,24 @@
+===== CP derefs via copyCreateBlockCommand's cp =====
+  ldcw@810 -> '/setblock %d %d %d %s'
+  ldcw@820 -> 'UUID'
+  ldcw@828 -> 'Pos'
+  ldcw@839 -> '/summon %s %.2f %.2f %.2f %s'
+  ldcw@853 -> '/summon %s %.2f %.2f %.2f'
+  ldcw@1263 -> 'debug.inspect.server.block'
+  ldcw@1261 -> 'debug.inspect.server.entity'
+  ldcw@715 -> 'debug.inspect.client.block'
+  ldcw@795 -> 'debug.inspect.client.entity'
+
+===== setClipboard walk =====
+  --- setClipboard(Ljava/lang/String;)V (max_locals=2)
+    0: aload_1
+    1: invokevirtual java/lang/String.isEmpty()Z
+    4: ifne -> 22
+    7: aload_0
+    8: getfield net/minecraft/client/KeyboardHandler.clipboardManagerLcom/mojang/blaze3d/platform/ClipboardManager;
+    11: aload_0
+    12: getfield net/minecraft/client/KeyboardHandler.minecraftLnet/minecraft/client/Minecraft;
+    15: invokevirtual net/minecraft/client/Minecraft.getWindow()Lcom/mojang/blaze3d/platform/Window;
+    18: aload_1
+    19: invokevirtual com/mojang/blaze3d/platform/ClipboardManager.setClipboard(Lcom/mojang/blaze3d/platform/Window;Ljava/lang/String;)V
+    22: return

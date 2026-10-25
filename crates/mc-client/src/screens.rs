@@ -7276,6 +7276,15 @@ pub struct App {
     /// the law's own gate reads, the false the pause the refresh alone
     /// speaks).
     pub pause_on_lost_focus: bool,
+    /// THE CLIPBOARD'S OWN STORE (the vanilla
+    /// `KeyboardHandler.setClipboard` walk's sink — the
+    /// `ClipboardManager.setClipboard(window, string)` call the
+    /// copyRecreate lane's builders serve, the isEmpty gate the
+    /// empty write refuses [khsetclip_169.txt]). The minifb 0.27
+    /// window the OS transfer the API never speaks — the honest
+    /// store the lane's own readback banks, the last-copied string
+    /// the F3+I walk wears.
+    pub clipboard: String,
     /// THE FOV EFFECTS' OWN SCALE (the `fovEffectScale` option the
     /// AccessibilityOptionsScreen row wears — the 0..1 the slider's own
     /// unit keeps, the default 1.0 the dconst_1 banks, the camera's
@@ -10779,6 +10788,7 @@ impl App {
             stopping: false,
             advanced_item_tooltips: false,
             pause_on_lost_focus: true,
+            clipboard: String::new(),
             fov_effect_scale: 1.0,
             text_background_opacity: 0.5,
             chat_opacity: 1.0,
@@ -39433,6 +39443,112 @@ impl App {
         self.push_chat_message(word.to_string());
         self.options_file_save();
         self.debug_modifier_used = true;
+    }
+
+    /// THE COPY RECREATE COMMAND'S OWN CHORD (javap 26.2
+    /// KeyboardHandler.handleDebugKeys's keyDebugCopyRecreateCommand
+    /// lane — the `matches` arm pc 351 the hdk_262.txt walk banks, the
+    /// gate chain pc 368-419 serves: the player-null arm the in-world
+    /// block keeps, the isReducedDebugInfo the client's belief never
+    /// arms, the `permissions().hasPermission(COMMANDS_GAMEMASTER)` the
+    /// client's PERMISSION_CHECK constant-pass verdict speaks [the
+    /// apply_gamemode_hovered law] — the `copyRecreateCommand
+    /// (hasPermission, !hasShiftDown)` call the two booleans the
+    /// body's own arms read). THE BODY (khcopy_169.py the walk banks):
+    /// the hitResult the null return the MISS silence keeps — the
+    /// istore_3 the used flag the call site banks REGARDLESS (pc
+    /// 418-419 the gated-out walk wears too), the BLOCK/ENTITY switch
+    /// the type arms wear, the hasServerPermissions arm the NBT the
+    /// shift sides split — the isClientSide arm the CLIENT word serves
+    /// (`debug.inspect.client.block` / `.client.entity`, the en_us
+    /// rows `Copied client-side block data to clipboard` /
+    /// `Copied client-side entity data to clipboard` keep), the
+    /// server-query arm the SERVER word (`.server.block` /
+    /// `.server.entity` — the DebugQueryHandler query the async lambda
+    /// lanes wear): the client's world store the ONE belief both arms
+    /// read, the command the same string the two words split [the
+    /// offline world the integrated server IS local — the
+    /// apply_gamemode_hovered law; the tag the world's u16 cells the
+    /// NBT-less model never carries, the null-tag arms the builders'
+    /// no-append walk keeps]. THE BUILDERS (khbuilders_169.txt): the
+    /// block arm `String.format(Locale.ROOT, "/setblock %d %d %d %s",
+    /// x, y, z, BlockStateParser.serialize(state))` the registry name
+    /// the minecraft: prefix wears, the entity arm `/summon %s %.2f
+    /// %.2f %.2f` the UUID/Pos strips the null tag never runs, the
+    /// setClipboard the isEmpty gate the empty write refuses. The
+    /// feedback row the debugFeedbackTranslated walk the YELLOW
+    /// decoration wears (the dev-168 shape the same chat row speaks).
+    pub fn on_copy_recreate_command_key(&mut self) {
+        // THE USED FLAG (the call site's istore_3 — the chord the
+        // modifier-spent bank wears regardless of the hit's verdict)
+        self.debug_modifier_used = true;
+        // THE ENTITY ARM (the switch's own verdict — the pick the
+        // raycastHitResult law ranks, the entity winning ONLY closer
+        // than the block's own clip: the strict `<` the
+        // filterHitResult wears)
+        let entity_pick = self.pick_mob_pair(&self.net_mobs);
+        if let Some((i, _)) = entity_pick {
+            // THE ONE-CHAIN INDEX (the offline lane first, the wire
+            // lane after — the pick's own chain law the attack site
+            // reads)
+            let (kind, x, y, z) = {
+                let mob = if i < self.mobs.len() {
+                    &self.mobs[i]
+                } else {
+                    &self.net_mobs[i - self.mobs.len()]
+                };
+                (mob.kind, mob.x, mob.y, mob.z)
+            };
+            // THE ENTITY BUILDER (copyCreateEntityCommand — the null
+            // tag the client's NBT-less bodies keep, the UUID/Pos
+            // strips the null tag never runs, the `/summon %s %.2f
+            // %.2f %.2f` format the Locale.ROOT walk speaks)
+            let cmd = format!("/summon {} {:.2} {:.2} {:.2}", kind.wire_name(), x, y, z);
+            if !cmd.is_empty() {
+                self.clipboard = cmd;
+            }
+            let word = if !self.shift_down {
+                "Copied client-side entity data to clipboard"
+            } else {
+                "Copied server-side entity data to clipboard"
+            };
+            self.push_chat_message(format!("\u{a7}e{word}"));
+            return;
+        }
+        // THE BLOCK ARM (the clip's own hit the entity loser keeps —
+        // the AIR cell the MISS shape the pick lane's own law wears)
+        let Some(hit) = self.clip_crosshair() else {
+            return; // the hitResult null return — the silence keeps
+        };
+        let state_name = {
+            let Some(world) = self.active_world() else {
+                return;
+            };
+            let kind_id = world.get(hit.pos.0, hit.pos.1, hit.pos.2);
+            if kind_id == crate::world::AIR {
+                return; // the MISS shape the clip's air cell keeps
+            }
+            // THE STATE SERIALIZE (BlockStateParser.serialize — the
+            // registry name the minecraft: prefix wears, the
+            // properties the world's u16 model never carries)
+            format!("minecraft:{}", crate::world::NAME_OF[kind_id as usize])
+        };
+        // THE BLOCK BUILDER (copyCreateBlockCommand — the
+        // `/setblock %d %d %d %s` format the Locale.ROOT walk speaks,
+        // the tag the null arm never appends)
+        let cmd = format!(
+            "/setblock {} {} {} {}",
+            hit.pos.0, hit.pos.1, hit.pos.2, state_name
+        );
+        if !cmd.is_empty() {
+            self.clipboard = cmd;
+        }
+        let word = if !self.shift_down {
+            "Copied client-side block data to clipboard"
+        } else {
+            "Copied server-side block data to clipboard"
+        };
+        self.push_chat_message(format!("\u{a7}e{word}"));
     }
 
     /// THE F3+F4 CHORD'S OWN OPEN LANE (javap 26.2

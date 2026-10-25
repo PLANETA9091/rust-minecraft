@@ -1,0 +1,136 @@
+===== net/minecraft/client/KeyboardHandler =====
+  --- copyCreateBlockCommand(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/nbt/CompoundTag;)V (max_locals=6)
+    0: new java/lang/StringBuilder
+    3: dup
+    4: aload_1
+    5: invokestatic net/minecraft/commands/arguments/blocks/BlockStateParser.serialize(Lnet/minecraft/world/level/block/state/BlockState;)Ljava/lang/String;
+    8: invokespecial java/lang/StringBuilder.<init>(Ljava/lang/String;)V
+    11: astore astore 4
+    13: aload_3
+    14: ifnull -> 24
+    17: aload aload 4
+    19: aload_3
+    20: invokevirtual java/lang/StringBuilder.append(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+    23: pop
+    24: getstatic java/util/Locale.ROOTLjava/util/Locale;
+    27: ldc_w ldcw@810
+    30: iconst_4
+    31: anewarray java/lang/Object
+    34: dup
+    35: iconst_0
+    36: aload_2
+    37: invokevirtual net/minecraft/core/BlockPos.getX()I
+    40: invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;
+    43: aastore
+    44: dup
+    45: iconst_1
+    46: aload_2
+    47: invokevirtual net/minecraft/core/BlockPos.getY()I
+    50: invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;
+    53: aastore
+    54: dup
+    55: iconst_2
+    56: aload_2
+    57: invokevirtual net/minecraft/core/BlockPos.getZ()I
+    60: invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;
+    63: aastore
+    64: dup
+    65: iconst_3
+    66: aload aload 4
+    68: aastore
+    69: invokestatic java/lang/String.format(Ljava/util/Locale;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+    72: astore astore 5
+    74: aload_0
+    75: aload aload 5
+    77: invokevirtual net/minecraft/client/KeyboardHandler.setClipboard(Ljava/lang/String;)V
+    80: return
+
+===== net/minecraft/client/KeyboardHandler =====
+  --- copyCreateEntityCommand(Lnet/minecraft/resources/Identifier;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/nbt/CompoundTag;)V (max_locals=6)
+    0: aload_3
+    1: ifnull -> 88
+    4: aload_3
+    5: ldc_w ldcw@820
+    8: invokevirtual net/minecraft/nbt/CompoundTag.remove(Ljava/lang/String;)Lnet/minecraft/nbt/Tag;
+    11: pop
+    12: aload_3
+    13: ldc_w ldcw@828
+    16: invokevirtual net/minecraft/nbt/CompoundTag.remove(Ljava/lang/String;)Lnet/minecraft/nbt/Tag;
+    19: pop
+    20: aload_3
+    21: invokestatic net/minecraft/nbt/NbtUtils.toPrettyComponent(Lnet/minecraft/nbt/Tag;)Lnet/minecraft/network/chat/Component;
+    24: invokeinterface net/minecraft/network/chat/Component.getString()Ljava/lang/String;
+    27: aconst_null
+    28: nop
+    29: astore astore 5
+    31: getstatic java/util/Locale.ROOTLjava/util/Locale;
+    34: ldc_w ldcw@839
+    37: iconst_5
+    38: anewarray java/lang/Object
+    41: dup
+    42: iconst_0
+    43: aload_1
+    44: aastore
+    45: dup
+    46: iconst_1
+    47: aload_2
+    48: getfield net/minecraft/world/phys/Vec3.xD
+    51: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+    54: aastore
+    55: dup
+    56: iconst_2
+    57: aload_2
+    58: getfield net/minecraft/world/phys/Vec3.yD
+    61: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+    64: aastore
+    65: dup
+    66: iconst_3
+    67: aload_2
+    68: getfield net/minecraft/world/phys/Vec3.zD
+    71: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+    74: aastore
+    75: dup
+    76: iconst_4
+    77: aload aload 5
+    79: aastore
+    80: invokestatic java/lang/String.format(Ljava/util/Locale;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+    83: astore astore 4
+    85: goto -> 137
+    88: getstatic java/util/Locale.ROOTLjava/util/Locale;
+    91: ldc_w ldcw@853
+    94: iconst_4
+    95: anewarray java/lang/Object
+    98: dup
+    99: iconst_0
+    100: aload_1
+    101: aastore
+    102: dup
+    103: iconst_1
+    104: aload_2
+    105: getfield net/minecraft/world/phys/Vec3.xD
+    108: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+    111: aastore
+    112: dup
+    113: iconst_2
+    114: aload_2
+    115: getfield net/minecraft/world/phys/Vec3.yD
+    118: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+    121: aastore
+    122: dup
+    123: iconst_3
+    124: aload_2
+    125: getfield net/minecraft/world/phys/Vec3.zD
+    128: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+    131: aastore
+    132: invokestatic java/lang/String.format(Ljava/util/Locale;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+    135: astore astore 4
+    137: aload_0
+    138: aload aload 4
+    140: invokevirtual net/minecraft/client/KeyboardHandler.setClipboard(Ljava/lang/String;)V
+    143: return
+
+===== CP derefs (KeyboardHandler) =====
+  ldcw@715 -> 'debug.inspect.client.block'
+  ldcw@715 -> 'debug.inspect.client.block'
+  ldcw@795 -> 'debug.inspect.client.entity'
+  ldcw@795 -> 'debug.inspect.client.entity'

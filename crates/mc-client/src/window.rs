@@ -2590,6 +2590,15 @@ pub fn run_gui_app(
             if f3_down && window.is_key_pressed(Key::H, minifb::KeyRepeat::No) {
                 app.on_advanced_tooltips_key();
             }
+            // THE F3+I COPY RECREATE COMMAND (the handleDebugKeys'
+            // keyDebugCopyRecreateCommand lane — the
+            // `copyRecreateCommand(hasPermission, !shift)` call the
+            // gate chain serves, the /setblock or /summon string the
+            // clipboard store keeps, the yellow copied-word row the
+            // chat the lang keys speak)
+            if f3_down && window.is_key_pressed(Key::I, minifb::KeyRepeat::No) {
+                app.on_copy_recreate_command_key();
+            }
             // THE F3+P FOCUS-PAUSE TOGGLE (the 26.2 debug entry the
             // key.debug.focusPause binding wears — the
             // options.pauseOnLostFocus the flip serves, the focus
