@@ -38540,6 +38540,76 @@ impl App {
                     ));
                 }
             }
+            // THE VERSION LITERAL (javap VersionCommand.register — the
+            // `literal("version")` node the Commands.<init> call-site
+            // walk serves: the vercmd_215.py window the INTEGRATED
+            // selection answers — the `selection != INTEGRATED` fold
+            // the iconst_0 arm wears, the `false` flag the LEVEL_ALL
+            // permission keeps, the offline walk the no-gate law
+            // serves; the dedicated/ALL selection the LEVEL_GAMEMASTERS
+            // flag alone re-arms). THE EXECUTES (lambda$register$0):
+            // the HEADER FIRST the sendSystemMessage walk sends — the
+            // clinit's own `commands.version.header`
+            // Component.translatable bank — then the
+            // `dumpVersion(source::sendSystemMessage)` walk the indy
+            // binds, the `return 1` verdict the extra feedback never
+            // adds. THE PLAIN CHANNEL: the server's system-chat law
+            // the rows the §e-yellow client debug channel NEVER wears
+            // — the F3+V chord the yellow decorate speaks, the
+            // command's own rows the plain words keep (the same nine
+            // translatables the shared jar's WorldVersion values
+            // answer).
+            ["version"] => {
+                // THE SERVER HEADER (lambda$register$0 — the
+                // sendSystemMessage walk the HEADER constant sends
+                // first, the plain channel the client's debug law
+                // never decorates)
+                let header = tr("commands.version.header").unwrap_or("Server version info:");
+                self.push_chat_message(header.to_string());
+                // THE NINE ROWS (the dumpVersion pc 0-264 walk — the
+                // translatables the en_us table answers, the values
+                // the version.json's own bank keeps: the id/name the
+                // build bank speaks, the data/series the WorldVersion
+                // keeps, the protocol the toHexString fold answers,
+                // the build_time the Date.toString literal wears, the
+                // pack pair the '%d.%d' law banks, the stable the
+                // STABLE constant closes)
+                let ver = crate::build_info::MINECRAFT_VERSION;
+                let proto = mc_protocol::generated::pack_claim::PROTOCOL_VERSION;
+                for msg in [
+                    format_positional(tr("commands.version.id").unwrap_or("id = %s"), &[ver]),
+                    format_positional(tr("commands.version.name").unwrap_or("name = %s"), &[ver]),
+                    format_positional(
+                        tr("commands.version.data").unwrap_or("data = %s"),
+                        &["4903"],
+                    ),
+                    format_positional(
+                        tr("commands.version.series").unwrap_or("series = %s"),
+                        &["main"],
+                    ),
+                    format_positional(
+                        tr("commands.version.protocol").unwrap_or("protocol = %s (%s)"),
+                        &[&proto.to_string(), &format!("{proto:x}")],
+                    ),
+                    format_positional(
+                        tr("commands.version.build_time").unwrap_or("build_time = %s"),
+                        &["Tue Jun 16 12:01:27 UTC 2026"],
+                    ),
+                    format_positional(
+                        tr("commands.version.pack.resource").unwrap_or("pack_resource = %s"),
+                        &["88.0"],
+                    ),
+                    format_positional(
+                        tr("commands.version.pack.data").unwrap_or("pack_data = %s"),
+                        &["107.1"],
+                    ),
+                    tr("commands.version.stable.yes")
+                        .unwrap_or("stable = yes")
+                        .to_string(),
+                ] {
+                    self.push_chat_message(msg);
+                }
+            }
             // THE TP LITERAL (javap TeleportCommand — the
             // `literal("tp")` the `literal("teleport")` alias shares,
             // the Vec3Argument the three doubles parse, the

@@ -1,0 +1,392 @@
+========================================================================
+[A] the VersionCommand class file(s):
+   net/minecraft/server/commands/VersionCommand.class
+========================================================================
+[B] any client command dispatcher candidates:
+   net/minecraft/client/multiplayer/ClientSuggestionProvider$1.class
+   net/minecraft/client/multiplayer/ClientSuggestionProvider.class
+   net/minecraft/network/protocol/game/ServerboundClientCommandPacket$Action.class
+   net/minecraft/network/protocol/game/ServerboundClientCommandPacket.class
+========================================================================
+[C] VersionCommand's own methods:
+   <clinit>()V
+   <init>()V
+   dumpVersion(Ljava/util/function/Consumer;)V
+   lambda$register$0(Lcom/mojang/brigadier/context/CommandContext;)I
+   register(Lcom/mojang/brigadier/CommandDispatcher;Z)V
+------------------------------------------------------------------------
+[C.<clinit>()V] body:
+   0: ldc commands.version.header
+   2: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+   5: putstatic net/minecraft/server/commands/VersionCommand.HEADERLnet/minecraft/network/chat/Component;
+   8: ldc commands.version.stable.yes
+   10: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+   13: putstatic net/minecraft/server/commands/VersionCommand.STABLELnet/minecraft/network/chat/Component;
+   16: ldc commands.version.stable.no
+   18: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+   21: putstatic net/minecraft/server/commands/VersionCommand.UNSTABLELnet/minecraft/network/chat/Component;
+   24: return
+------------------------------------------------------------------------
+[C.<init>()V] body:
+   0: aload_0
+   1: invokespecial java/lang/Object.<init>()V
+   4: return
+------------------------------------------------------------------------
+[C.dumpVersion(Ljava/util/function/Consumer;)V] body:
+   0: invokestatic net/minecraft/SharedConstants.getCurrentVersion()Lnet/minecraft/WorldVersion;
+   3: astore_0
+   4: aload_0
+   5: ldc commands.version.id
+   7: iconst_1
+   8: anewarray java/lang/Object
+   11: dup
+   12: iconst_0
+   13: aload_1
+   14: invokeinterface net/minecraft/WorldVersion.id()Ljava/lang/String;
+   17: aconst_null
+   18: nop
+   19: aastore
+   20: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+   23: invokeinterface java/util/function/Consumer.accept(Ljava/lang/Object;)V
+   26: iconst_m1
+   27: nop
+   28: aload_0
+   29: ldc commands.version.name
+   31: iconst_1
+   32: anewarray java/lang/Object
+   35: dup
+   36: iconst_0
+   37: aload_1
+   38: invokeinterface net/minecraft/WorldVersion.name()Ljava/lang/String;
+   41: aconst_null
+   42: nop
+   43: aastore
+   44: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+   47: invokeinterface java/util/function/Consumer.accept(Ljava/lang/Object;)V
+   50: iconst_m1
+   51: nop
+   52: aload_0
+   53: ldc commands.version.data
+   55: iconst_1
+   56: anewarray java/lang/Object
+   59: dup
+   60: iconst_0
+   61: aload_1
+   62: invokeinterface net/minecraft/WorldVersion.dataVersion()Lnet/minecraft/world/level/storage/DataVersion;
+   65: aconst_null
+   66: nop
+   67: invokevirtual net/minecraft/world/level/storage/DataVersion.version()I
+   70: invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;
+   73: aastore
+   74: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+   77: invokeinterface java/util/function/Consumer.accept(Ljava/lang/Object;)V
+   80: iconst_m1
+   81: nop
+   82: aload_0
+   83: ldc commands.version.series
+   85: iconst_1
+   86: anewarray java/lang/Object
+   89: dup
+   90: iconst_0
+   91: aload_1
+   92: invokeinterface net/minecraft/WorldVersion.dataVersion()Lnet/minecraft/world/level/storage/DataVersion;
+   95: aconst_null
+   96: nop
+   97: invokevirtual net/minecraft/world/level/storage/DataVersion.series()Ljava/lang/String;
+   100: aastore
+   101: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+   104: invokeinterface java/util/function/Consumer.accept(Ljava/lang/Object;)V
+   107: iconst_m1
+   108: nop
+   109: aload_0
+   110: ldc commands.version.protocol
+   112: iconst_2
+   113: anewarray java/lang/Object
+   116: dup
+   117: iconst_0
+   118: aload_1
+   119: invokeinterface net/minecraft/WorldVersion.protocolVersion()I
+   122: aconst_null
+   123: nop
+   124: invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;
+   127: aastore
+   128: dup
+   129: iconst_1
+   130: aload_1
+   131: invokeinterface net/minecraft/WorldVersion.protocolVersion()I
+   134: aconst_null
+   135: nop
+   136: invokestatic java/lang/Integer.toHexString(I)Ljava/lang/String;
+   139: invokedynamic indy
+   144: aastore
+   145: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+   148: invokeinterface java/util/function/Consumer.accept(Ljava/lang/Object;)V
+   151: iconst_m1
+   152: nop
+   153: aload_0
+   154: ldc commands.version.build_time
+   156: iconst_1
+   157: anewarray java/lang/Object
+   160: dup
+   161: iconst_0
+   162: aload_1
+   163: invokeinterface net/minecraft/WorldVersion.buildTime()Ljava/util/Date;
+   166: aconst_null
+   167: nop
+   168: invokestatic net/minecraft/network/chat/Component.translationArg(Ljava/util/Date;)Lnet/minecraft/network/chat/Component;
+   171: aastore
+   172: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+   175: invokeinterface java/util/function/Consumer.accept(Ljava/lang/Object;)V
+   178: iconst_m1
+   179: nop
+   180: aload_0
+   181: ldc commands.version.pack.resource
+   183: iconst_1
+   184: anewarray java/lang/Object
+   187: dup
+   188: iconst_0
+   189: aload_1
+   190: getstatic net/minecraft/server/packs/PackType.CLIENT_RESOURCESLnet/minecraft/server/packs/PackType;
+   193: invokeinterface net/minecraft/WorldVersion.packVersion(Lnet/minecraft/server/packs/PackType;)Lnet/minecraft/server/packs/metadata/pack/PackFormat;
+   196: iconst_m1
+   197: nop
+   198: invokevirtual net/minecraft/server/packs/metadata/pack/PackFormat.toString()Ljava/lang/String;
+   201: aastore
+   202: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+   205: invokeinterface java/util/function/Consumer.accept(Ljava/lang/Object;)V
+   208: iconst_m1
+   209: nop
+   210: aload_0
+   211: ldc commands.version.pack.data
+   213: iconst_1
+   214: anewarray java/lang/Object
+   217: dup
+   218: iconst_0
+   219: aload_1
+   220: getstatic net/minecraft/server/packs/PackType.SERVER_DATALnet/minecraft/server/packs/PackType;
+   223: invokeinterface net/minecraft/WorldVersion.packVersion(Lnet/minecraft/server/packs/PackType;)Lnet/minecraft/server/packs/metadata/pack/PackFormat;
+   226: iconst_m1
+   227: nop
+   228: invokevirtual net/minecraft/server/packs/metadata/pack/PackFormat.toString()Ljava/lang/String;
+   231: aastore
+   232: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+   235: invokeinterface java/util/function/Consumer.accept(Ljava/lang/Object;)V
+   238: iconst_m1
+   239: nop
+   240: aload_0
+   241: aload_1
+   242: invokeinterface net/minecraft/WorldVersion.stable()Z
+   245: aconst_null
+   246: nop
+   247: ifeq -> 256
+   250: getstatic net/minecraft/server/commands/VersionCommand.STABLELnet/minecraft/network/chat/Component;
+   253: goto -> 259
+   256: getstatic net/minecraft/server/commands/VersionCommand.UNSTABLELnet/minecraft/network/chat/Component;
+   259: invokeinterface java/util/function/Consumer.accept(Ljava/lang/Object;)V
+   262: iconst_m1
+   263: nop
+   264: return
+------------------------------------------------------------------------
+[C.lambda$register$0(Lcom/mojang/brigadier/context/CommandContext;)I] body:
+   0: aload_0
+   1: invokevirtual com/mojang/brigadier/context/CommandContext.getSource()Ljava/lang/Object;
+   4: checkcast net/minecraft/commands/CommandSourceStack
+   7: astore_0
+   8: aload_1
+   9: getstatic net/minecraft/server/commands/VersionCommand.HEADERLnet/minecraft/network/chat/Component;
+   12: invokevirtual net/minecraft/commands/CommandSourceStack.sendSystemMessage(Lnet/minecraft/network/chat/Component;)V
+   15: aload_1
+   16: dup
+   17: invokestatic java/util/Objects.requireNonNull(Ljava/lang/Object;)Ljava/lang/Object;
+   20: pop
+   21: invokedynamic indy
+   26: invokestatic net/minecraft/server/commands/VersionCommand.dumpVersion(Ljava/util/function/Consumer;)V
+   29: iconst_1
+   30: ireturn
+------------------------------------------------------------------------
+[C.register(Lcom/mojang/brigadier/CommandDispatcher;Z)V] body:
+   0: aload_0
+   1: ldc version
+   3: invokestatic net/minecraft/commands/Commands.literal(Ljava/lang/String;)Lcom/mojang/brigadier/builder/LiteralArgumentBuilder;
+   6: iload_1
+   7: ifeq -> 16
+   10: getstatic net/minecraft/commands/Commands.LEVEL_GAMEMASTERSLnet/minecraft/server/permissions/PermissionCheck;
+   13: goto -> 19
+   16: getstatic net/minecraft/commands/Commands.LEVEL_ALLLnet/minecraft/server/permissions/PermissionCheck;
+   19: invokestatic net/minecraft/commands/Commands.hasPermission(Lnet/minecraft/server/permissions/PermissionCheck;)Lnet/minecraft/server/permissions/PermissionProviderCheck;
+   22: invokevirtual com/mojang/brigadier/builder/LiteralArgumentBuilder.requires(Ljava/util/function/Predicate;)Lcom/mojang/brigadier/builder/ArgumentBuilder;
+   25: checkcast com/mojang/brigadier/builder/LiteralArgumentBuilder
+   28: invokedynamic indy
+   33: invokevirtual com/mojang/brigadier/builder/LiteralArgumentBuilder.executes(Lcom/mojang/brigadier/Command;)Lcom/mojang/brigadier/builder/ArgumentBuilder;
+   36: checkcast com/mojang/brigadier/builder/LiteralArgumentBuilder
+   39: invokevirtual com/mojang/brigadier/CommandDispatcher.register(Lcom/mojang/brigadier/builder/LiteralArgumentBuilder;)Lcom/mojang/brigadier/tree/LiteralCommandNode;
+   42: pop
+   43: return
+========================================================================
+[D] who cites VersionCommand — the register walk's own class:
+  net/minecraft/client/Minecraft: 0 cite(s)
+  net/minecraft/client/gui/screens/ChatScreen: 0 cite(s)
+  net/minecraft/client/multiplayer/ClientPacketListener: 0 cite(s)
+  !! net/minecraft/client/CommandSuggestions: no methods (class absent)
+  net/minecraft/commands/Commands: 29 cite(s)
+     <init>(Lnet/minecraft/commands/Commands$CommandSelection;Lnet/minecraft/commands/CommandBuildContext;)V -> net/minecraft/server/commands/VersionCommand
+     mapSource(Lcom/mojang/brigadier/ParseResults;Ljava/util/function/UnaryOperator;)Lcom/mojang/brigadier/ParseResults; -> net/minecraft/server/commands/VersionCommand
+     performPrefixedCommand(Lnet/minecraft/commands/CommandSourceStack;Ljava/lang/String;)V -> net/minecraft/server/commands/VersionCommand
+     trimOptionalPrefix(Ljava/lang/String;)Ljava/lang/String; -> net/minecraft/server/commands/VersionCommand
+     performCommand(Lcom/mojang/brigadier/ParseResults;Ljava/lang/String;)V -> net/minecraft/server/commands/VersionCommand
+     finishParsing(Lcom/mojang/brigadier/ParseResults;Ljava/lang/String;Lnet/minecraft/commands/CommandSourceStack;)Lcom/mojang/brigadier/context/ContextChain; -> net/minecraft/server/commands/VersionCommand
+     executeCommandInContext(Lnet/minecraft/commands/CommandSourceStack;Ljava/util/function/Consumer;)V -> net/minecraft/server/commands/VersionCommand
+     sendCommands(Lnet/minecraft/server/level/ServerPlayer;)V -> net/minecraft/server/commands/VersionCommand
+     fillUsableCommands(Lcom/mojang/brigadier/tree/CommandNode;Lcom/mojang/brigadier/tree/CommandNode;Ljava/lang/Object;Ljava/util/Map;)V -> net/minecraft/server/commands/VersionCommand
+     literal(Ljava/lang/String;)Lcom/mojang/brigadier/builder/LiteralArgumentBuilder; -> net/minecraft/server/commands/VersionCommand
+     argument(Ljava/lang/String;Lcom/mojang/brigadier/arguments/ArgumentType;)Lcom/mojang/brigadier/builder/RequiredArgumentBuilder; -> net/minecraft/server/commands/VersionCommand
+     createValidator(Lnet/minecraft/commands/Commands$ParseFunction;)Ljava/util/function/Predicate; -> net/minecraft/server/commands/VersionCommand
+     getDispatcher()Lcom/mojang/brigadier/CommandDispatcher; -> net/minecraft/server/commands/VersionCommand
+     validateParseResults(Lcom/mojang/brigadier/ParseResults;)V -> net/minecraft/server/commands/VersionCommand
+     getParseException(Lcom/mojang/brigadier/ParseResults;)Lcom/mojang/brigadier/exceptions/CommandSyntaxException; -> net/minecraft/server/commands/VersionCommand
+     createValidationContext(Lnet/minecraft/core/HolderLookup$Provider;)Lnet/minecraft/commands/CommandBuildContext; -> net/minecraft/server/commands/VersionCommand
+     validate()V -> net/minecraft/server/commands/VersionCommand
+     hasPermission(Lnet/minecraft/server/permissions/PermissionCheck;)Lnet/minecraft/server/permissions/PermissionProviderCheck; -> net/minecraft/server/commands/VersionCommand
+     createCompilationContext(Lnet/minecraft/server/permissions/PermissionSet;)Lnet/minecraft/commands/CommandSourceStack; -> net/minecraft/server/commands/VersionCommand
+     lambda$validate$2(Lcom/mojang/brigadier/arguments/ArgumentType;)Ljava/lang/String; -> net/minecraft/server/commands/VersionCommand
+     lambda$validate$1(Lcom/mojang/brigadier/arguments/ArgumentType;)Z -> net/minecraft/server/commands/VersionCommand
+     lambda$validate$0(Lcom/mojang/brigadier/CommandDispatcher;Lcom/mojang/brigadier/tree/CommandNode;Lcom/mojang/brigadier/tree/CommandNode;Lcom/mojang/brigadier/tree/CommandNode;Ljava/util/Collection;)V -> net/minecraft/server/commands/VersionCommand
+     lambda$createValidator$0(Lnet/minecraft/commands/Commands$ParseFunction;Ljava/lang/String;)Z -> net/minecraft/server/commands/VersionCommand
+     lambda$finishParsing$1(Ljava/lang/String;Lnet/minecraft/network/chat/Style;)Lnet/minecraft/network/chat/Style; -> net/minecraft/server/commands/VersionCommand
+     lambda$finishParsing$0(Lcom/mojang/brigadier/ParseResults;)Lcom/mojang/brigadier/exceptions/CommandSyntaxException; -> net/minecraft/server/commands/VersionCommand
+     lambda$performCommand$2(Lnet/minecraft/network/chat/MutableComponent;Lnet/minecraft/network/chat/Style;)Lnet/minecraft/network/chat/Style; -> net/minecraft/server/commands/VersionCommand
+     lambda$performCommand$1(Ljava/lang/String;Lcom/mojang/brigadier/context/ContextChain;Lnet/minecraft/commands/CommandSourceStack;Lnet/minecraft/commands/execution/ExecutionContext;)V -> net/minecraft/server/commands/VersionCommand
+     lambda$performCommand$0(Ljava/lang/String;)Ljava/lang/String; -> net/minecraft/server/commands/VersionCommand
+     <clinit>()V -> net/minecraft/server/commands/VersionCommand
+  --- call-site window <init>(Lnet/minecraft/commands/Commands$CommandSelection;Lnet/minecraft/commands/CommandBuildContext;)V:
+     361: getstatic net/minecraft/commands/Commands$CommandSelection.INTEGRATEDLnet/minecraft/commands/Commands$CommandSelection;
+     364: if_acmpeq -> 371
+     367: iconst_1
+     368: goto -> 372
+     371: iconst_0
+     372: invokestatic net/minecraft/server/commands/SeedCommand.register(Lcom/mojang/brigadier/CommandDispatcher;Z)V
+     375: aload_0
+     376: getfield net/minecraft/commands/Commands.dispatcherLcom/mojang/brigadier/CommandDispatcher;
+     379: aload_1
+     380: getstatic net/minecraft/commands/Commands$CommandSelection.INTEGRATEDLnet/minecraft/commands/Commands$CommandSelection;
+     383: if_acmpeq -> 390
+     386: iconst_1
+     387: goto -> 391
+     390: iconst_0
+     391: invokestatic net/minecraft/server/commands/VersionCommand.register(Lcom/mojang/brigadier/CommandDispatcher;Z)V
+     394: aload_0
+     395: getfield net/minecraft/commands/Commands.dispatcherLcom/mojang/brigadier/CommandDispatcher;
+========================================================================
+[E] ChatScreen.handleChatInput / submit walk:
+--- handleChatInput(Ljava/lang/String;Z)V:
+   0: aload_0
+   1: aload_1
+   2: invokevirtual net/minecraft/client/gui/screens/ChatScreen.normalizeChatMessage(Ljava/lang/String;)Ljava/lang/String;
+   5: astore_0
+   6: aload_1
+   7: invokevirtual java/lang/String.isEmpty()Z
+   10: ifeq -> 14
+   13: return
+   14: iload_2
+   15: ifeq -> 35
+   18: aload_0
+   19: getfield net/minecraft/client/gui/screens/ChatScreen.minecraftLnet/minecraft/client/Minecraft;
+   22: getfield net/minecraft/client/Minecraft.guiLnet/minecraft/client/gui/Gui;
+   25: getfield net/minecraft/client/gui/Gui.hudLnet/minecraft/client/gui/Hud;
+   28: invokevirtual net/minecraft/client/gui/Hud.getChat()Lnet/minecraft/client/gui/components/ChatComponent;
+   31: aload_1
+   32: invokevirtual net/minecraft/client/gui/components/ChatComponent.addRecentChat(Ljava/lang/String;)V
+   35: aload_1
+   36: ldc_w ldcw@555
+   39: invokevirtual java/lang/String.startsWith(Ljava/lang/String;)Z
+   42: ifeq -> 66
+   45: aload_0
+   46: getfield net/minecraft/client/gui/screens/ChatScreen.minecraftLnet/minecraft/client/Minecraft;
+   49: getfield net/minecraft/client/Minecraft.playerLnet/minecraft/client/player/LocalPlayer;
+   52: getfield net/minecraft/client/player/LocalPlayer.connectionLnet/minecraft/client/multiplayer/ClientPacketListener;
+   55: aload_1
+   56: iconst_1
+   57: invokevirtual java/lang/String.substring(I)Ljava/lang/String;
+   60: invokevirtual net/minecraft/client/multiplayer/ClientPacketListener.sendCommand(Ljava/lang/String;)V
+   63: goto -> 80
+   66: aload_0
+   67: getfield net/minecraft/client/gui/screens/ChatScreen.minecraftLnet/minecraft/client/Minecraft;
+   70: getfield net/minecraft/client/Minecraft.playerLnet/minecraft/client/player/LocalPlayer;
+   73: getfield net/minecraft/client/player/LocalPlayer.connectionLnet/minecraft/client/multiplayer/ClientPacketListener;
+   76: aload_1
+   77: invokevirtual net/minecraft/client/multiplayer/ClientPacketListener.sendChat(Ljava/lang/String;)V
+   80: return
+--- normalizeChatMessage(Ljava/lang/String;)Ljava/lang/String;:
+   0: aload_1
+   1: invokevirtual java/lang/String.trim()Ljava/lang/String;
+   4: invokestatic org/apache/commons/lang3/StringUtils.normalizeSpace(Ljava/lang/String;)Ljava/lang/String;
+   7: invokestatic net/minecraft/util/StringUtil.trimChatMessage(Ljava/lang/String;)Ljava/lang/String;
+   10: areturn
+========================================================================
+[F] ClientPacketListener.sendCommand walk (the dispatch arm):
+--- sendCommand(Ljava/lang/String;)V:
+   0: aload_0
+   1: getfield net/minecraft/client/multiplayer/ClientPacketListener.commandsLcom/mojang/brigadier/CommandDispatcher;
+   4: aload_1
+   5: aload_0
+   6: getfield net/minecraft/client/multiplayer/ClientPacketListener.suggestionsProviderLnet/minecraft/client/multiplayer/ClientSuggestionProvider;
+   9: invokevirtual com/mojang/brigadier/CommandDispatcher.parse(Ljava/lang/String;Ljava/lang/Object;)Lcom/mojang/brigadier/ParseResults;
+   12: invokestatic net/minecraft/network/chat/SignableCommand.of(Lcom/mojang/brigadier/ParseResults;)Lnet/minecraft/network/chat/SignableCommand;
+   15: astore_1
+   16: aload_2
+   17: invokevirtual net/minecraft/network/chat/SignableCommand.arguments()Ljava/util/List;
+   20: invokeinterface java/util/List.isEmpty()Z
+   23: aconst_null
+   24: nop
+   25: ifeq -> 41
+   28: aload_0
+   29: new net/minecraft/network/protocol/game/ServerboundChatCommandPacket
+   32: dup
+   33: aload_1
+   34: invokespecial net/minecraft/network/protocol/game/ServerboundChatCommandPacket.<init>(Ljava/lang/String;)V
+   37: invokevirtual net/minecraft/client/multiplayer/ClientPacketListener.send(Lnet/minecraft/network/protocol/Packet;)V
+   40: return
+   41: invokestatic java/time/Instant.now()Ljava/time/Instant;
+   44: astore_2
+   45: invokestatic net/minecraft/util/Crypt$SaltSupplier.getLong()J
+   48: lstore
+   49: iconst_1
+   50: aload_0
+   51: getfield net/minecraft/client/multiplayer/ClientPacketListener.lastSeenMessagesLnet/minecraft/network/chat/LastSeenMessagesTracker;
+   54: invokevirtual net/minecraft/network/chat/LastSeenMessagesTracker.generateAndApplyUpdate()Lnet/minecraft/network/chat/LastSeenMessagesTracker$Update;
+   57: astore astore 6
+   59: aload_2
+   60: aload_0
+   61: aload_3
+   62: lload
+   63: iconst_1
+   64: aload aload 6
+   66: invokedynamic indy
+   71: invokestatic net/minecraft/commands/arguments/ArgumentSignatures.signCommand(Lnet/minecraft/network/chat/SignableCommand;Lnet/minecraft/commands/arguments/ArgumentSignatures$Signer;)Lnet/minecraft/commands/arguments/ArgumentSignatures;
+   74: astore astore 7
+   76: aload_0
+   77: new net/minecraft/network/protocol/game/ServerboundChatCommandSignedPacket
+   80: dup
+   81: aload_1
+   82: aload_3
+   83: lload
+   84: iconst_1
+   85: aload aload 7
+   87: aload aload 6
+   89: invokevirtual net/minecraft/network/chat/LastSeenMessagesTracker$Update.update()Lnet/minecraft/network/chat/LastSeenMessages$Update;
+   92: invokespecial net/minecraft/network/protocol/game/ServerboundChatCommandSignedPacket.<init>(Ljava/lang/String;Ljava/time/Instant;JLnet/minecraft/commands/arguments/ArgumentSignatures;Lnet/minecraft/network/chat/LastSeenMessages$Update;)V
+   95: invokevirtual net/minecraft/client/multiplayer/ClientPacketListener.send(Lnet/minecraft/network/protocol/Packet;)V
+   98: return
+========================================================================
+[G] en_us rows the command answers:
+  commands.version.build_time = 'build_time = %s'
+  commands.version.data = 'data = %s'
+  commands.version.header = 'Server version info:'
+  commands.version.id = 'id = %s'
+  commands.version.name = 'name = %s'
+  commands.version.pack.data = 'pack_data = %s'
+  commands.version.pack.resource = 'pack_resource = %s'
+  commands.version.protocol = 'protocol = %s (%s)'
+  commands.version.series = 'series = %s'
+  commands.version.stable.no = 'stable = no'
+  commands.version.stable.yes = 'stable = yes'

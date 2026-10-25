@@ -16191,3 +16191,78 @@ fn the_dump_version_key_the_header_the_nine_rows_the_flag_wear() {
         "the wire bank the build bank's own id keeps"
     );
 }
+
+/// THE /VERSION COMMAND'S OWN SERVER ARM (javap VersionCommand.register
+/// — the `literal("version")` node the Commands.<init> call-site walk
+/// serves, the INTEGRATED selection the `false` flag wears, the
+/// LEVEL_ALL permission the offline walk the no-gate law keeps; the
+/// executes lambda the HEADER FIRST the plain sendSystemMessage channel
+/// sends, the dumpVersion walk the nine translatables the shared jar's
+/// WorldVersion values answer).
+#[test]
+fn the_version_command_the_server_header_the_plain_rows_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let before = app.chat_messages.len();
+    app.run_local_command("version");
+    assert_eq!(
+        app.chat_messages.len(),
+        before + 10,
+        "the header the first row keeps, the nine rows the dumpVersion walk adds"
+    );
+    // THE FULL QUEUE (the lambda$register$0 walk — the server header
+    // the plain channel speaks, the §e the system-chat law never
+    // wears, the nine rows the SAME values the F3+V's client walk
+    // banks: the id/name the build bank speaks, the data/series the
+    // WorldVersion keeps, the protocol the toHexString fold answers,
+    // the build_time the Date.toString literal wears, the pack pair
+    // the '%d.%d' law banks, the stable the STABLE constant closes)
+    let rows: Vec<&str> = app.chat_messages.iter().map(|(t, _)| t.as_str()).collect();
+    let expected = [
+        "Server version info:",
+        "id = 26.2",
+        "name = 26.2",
+        "data = 4903",
+        "series = main",
+        "protocol = 776 (308)",
+        "build_time = Tue Jun 16 12:01:27 UTC 2026",
+        "pack_resource = 88.0",
+        "pack_data = 107.1",
+        "stable = yes",
+    ];
+    let tail = &rows[rows.len() - expected.len()..];
+    assert_eq!(
+        tail,
+        &expected[..],
+        "the server header the first row wears, the plain rows the law keeps"
+    );
+    // THE FLAG THE CHORD NEVER BANKS (the command the debug
+    // modifier's own store never touches — the F3 release gate the
+    // lane never reads)
+    assert!(
+        !app.debug_modifier_used,
+        "the command the debug flag never banks"
+    );
+}
+
+/// THE ARG WORD'S OWN PARSE FAILURE (the brigadier literal walk —
+/// the `version` node NO children the parser keeps, the trailing word
+/// the unknown-command verdict answers, the RED the error channel
+/// wears).
+#[test]
+fn the_version_command_the_arg_word_the_parse_failure_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    let before = app.chat_messages.len();
+    app.run_local_command("version extra");
+    assert_eq!(
+        app.chat_messages.len(),
+        before + 1,
+        "the parse failure the single error row keeps"
+    );
+    assert_eq!(
+        app.chat_messages.last().map(|(t, _)| t.as_str()),
+        Some("\u{a7}cUnknown or incomplete command. See below for error"),
+        "the unknown-command verdict the red channel wears"
+    );
+}
