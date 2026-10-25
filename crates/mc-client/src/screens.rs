@@ -9679,6 +9679,12 @@ pub struct App {
     /// answers, the refreshScrollAmount clamp the [0, max] band
     /// keeps). Fresh = 0.0.
     pub debug_scroll: f64,
+    /// THE SEARCH BOX'S OWN WORD (the EditBox the init walk builds —
+    /// the typed chars the responder's `updateSearch` lambda answers,
+    /// the fresh screen the EMPTY value the setScreen re-creation
+    /// keeps). The filter the [`Self::debug_search_hit`] walk reads —
+    /// the case-insensitive ask the picker's own refresh law speaks).
+    pub debug_search: String,
     /// THE DEBUG OPTIONS' OWN PROFILE BANK (javap 26.2
     /// DebugScreenEntryList's `profile` field — the
     /// `isUsingProfile(profile)` identity the `addProfileButton`
@@ -11287,6 +11293,7 @@ impl App {
             network_charts: false,
             debug_entry_states: [DebugEntryStatus::Never; 45],
             debug_scroll: 0.0,
+            debug_search: String::new(),
             debug_profile: Some(false),
             game_mode: GameMode::Survival,
             previous_game_mode: None,
@@ -21547,6 +21554,15 @@ impl App {
         {
             self.bundle_contents.clear();
         }
+        // THE DEBUG OPTIONS' OWN FRESH CTOR (the vanilla screen the
+        // setScreen re-creation arms — the search box the EMPTY value
+        // the re-init keeps, the scroll the fresh list's top speaks:
+        // the reopened screen the stale word the scrolled band never
+        // inherits)
+        if kind == ScreenKind::DebugOptions {
+            self.debug_search.clear();
+            self.debug_scroll = 0.0;
+        }
         // THE TOGGLE KEYMAPPINGS' OWN SCREEN DANCE (the vanilla
         // Gui.setScreen walk — the pc 215 `KeyMapping.releaseAll()` the
         // screen-OPEN arm rides, the pc 265
@@ -27173,8 +27189,19 @@ impl App {
         let box_w = (w / 3).max(80);
         let bx = cx - box_w / 2;
         g.sprite_9slice(a, "widget/text_field", bx, 20, box_w, 20);
-        let hint = tr("debug.options.search").unwrap_or("Search...");
-        g.text(a, bx + 4, 26, &hint, [0.55, 0.55, 0.55], false);
+        // THE BOX'S OWN WORD (the EditBox the typed text the white
+        // word wears, the caret the blink law keeps — the picker's
+        // own search convention; the hint the EMPTY box keeps)
+        if self.debug_search.is_empty() {
+            let hint = tr("debug.options.search").unwrap_or("Search...");
+            g.text(a, bx + 4, 26, &hint, [0.55, 0.55, 0.55], false);
+        } else {
+            g.text(a, bx + 4, 26, &self.debug_search, WHITE, false);
+            let tw = g.text_width(&self.debug_search);
+            if (self.frame / 6) % 2 == 0 {
+                g.fill(bx + 4 + tw + 1, 26, 1, 8, [1.0, 1.0, 1.0, 1.0]);
+            }
+        }
         // THE WARNING'S OWN WRAP (the MultiLineTextWidget the SUBTITLE
         // field keeps — the `withColor(-2142128)` the coral answers:
         // 0xFFDF6550 the two's-complement fold speaks — the rows the
@@ -27246,6 +27273,13 @@ impl App {
         let mut cursor = list_top - scroll;
         let mut last_cat: Option<usize> = None;
         for (idx, (path, renderer)) in DEBUG_ENTRY_ROWS.iter().enumerate() {
+            // THE SEARCH'S OWN FILTER (the updateSearch contains walk
+            // — the non-matching row the rebuild never banks, the
+            // category header the matching rows' boundaries alone
+            // emits)
+            if !self.debug_search_hit(path) {
+                continue;
+            }
             // THE CATEGORY HEADER'S OWN BOUNDARY (the refreshEntries
             // walk — the category CHANGE the label row emits, the
             // equals law the last-category bank keeps)
@@ -33990,15 +34024,17 @@ impl App {
     /// THE DEBUG OPTIONS LIST'S OWN SCROLL (the OptionList's
     /// mouseScrolled walk — the `scrollAmount` the wheel step answers,
     /// the `refreshScrollAmount` clamp the [0, max] band keeps: the
-    /// 45 rows + the 2 category headers the content height speaks,
-    /// the visible window the band's own height the [list_top,
-    /// list_bottom] frame answers — the same step the key-binds list
-    /// the 24px row pitch wears).
+    /// FILTERED rows + the surviving category headers the content
+    /// height speaks, the visible window the band's own height the
+    /// [list_top, list_bottom] frame answers — the same step the
+    /// key-binds list the 24px row pitch wears).
     pub fn on_debug_options_scroll(&mut self, sdy: f64, gui_h: i32) {
         // THE CONTENT'S OWN HEIGHT (the rows 24px + the headers 14px
-        // — the bank the DEBUG_ENTRY_ROWS const keeps, the two
-        // category boundaries the header rows emit)
-        let content = (DEBUG_ENTRY_ROWS.len() * 24 + 2 * 14) as f64;
+        // — the bank the DEBUG_ENTRY_ROWS const keeps, the category
+        // boundaries the header rows emit — the SEARCHED list the
+        // filtered walk speaks: the matching rows the height banks,
+        // the categories the matching rows' boundaries wear)
+        let content = self.debug_filtered_content();
         // THE VISIBLE BAND (the gui frame the header chrome's own
         // height subtracts — the title + the warning + the profile
         // rows the 104px band speaks, the bottom margin the 8px keeps)
@@ -34006,6 +34042,57 @@ impl App {
         let max = (content - visible).max(0.0);
         let next = self.debug_scroll - sdy * 24.0;
         self.debug_scroll = next.clamp(0.0, max);
+    }
+
+    /// THE SEARCH BOX'S OWN CHARS (the EditBox the init's responder
+    /// lambda serves — the charTyped lane the focused box answers,
+    /// the `updateSearch` rebuild the typed word wears, the max
+    /// length 50 the picker's own law keeps, the scroll the rebuild's
+    /// TOP reset speaks).
+    pub fn on_debug_options_char(&mut self, c: char) {
+        if self.screen != ScreenKind::DebugOptions || self.debug_search.chars().count() >= 50 {
+            return;
+        }
+        self.debug_search.push(c);
+        self.debug_scroll = 0.0; // the updateSearch rebuild the top wears
+    }
+
+    /// THE SEARCH BOX'S OWN BACKSPACE (the keyPressed Backspace arm —
+    /// the popped char the rebuild answers, the scroll the same top
+    /// reset wears).
+    pub fn on_debug_options_backspace(&mut self) {
+        if self.screen != ScreenKind::DebugOptions {
+            return;
+        }
+        if self.debug_search.pop().is_some() {
+            self.debug_scroll = 0.0;
+        }
+    }
+
+    /// THE FILTER'S OWN LAW (the updateSearch `path.contains(query)`
+    /// walk — the case-insensitive ask the picker's own refresh law
+    /// keeps: the lowercase pair the substring verdict answers, the
+    /// empty query the WHOLE list keeps).
+    fn debug_search_hit(&self, path: &str) -> bool {
+        let q = self.debug_search.to_lowercase();
+        q.is_empty() || path.to_lowercase().contains(&q)
+    }
+
+    /// THE FILTERED CONTENT'S OWN HEIGHT (the scroll clamp's max the
+    /// filtered list speaks — the matching rows the 24px pitch keeps,
+    /// the categories the matching rows' BOUNDARIES the 14px headers
+    /// wear: the category the whole-miss block the header never
+    /// emits).
+    fn debug_filtered_content(&self) -> f64 {
+        let mut rows = 0usize;
+        let mut cats = [false; 2];
+        for (path, renderer) in DEBUG_ENTRY_ROWS.iter() {
+            if self.debug_search_hit(path) {
+                rows += 1;
+                cats[if *renderer { 1 } else { 0 }] = true;
+            }
+        }
+        (rows * 24 + cats.iter().filter(|c| **c).count() * 14) as f64
     }
 
     pub fn on_kb_scroll(&mut self, sdy: f64, gui_h: i32) {

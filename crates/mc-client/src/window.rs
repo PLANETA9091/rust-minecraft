@@ -1876,12 +1876,18 @@ pub fn run_gui_app(
         // chars the open screen's EditBox answers, the closed screen
         // the on_chat_char gate keeps silent)
         for c in chat_chars.borrow_mut().drain(..) {
+            // THE DEBUG OPTIONS' OWN SEARCH CHARS (the charTyped lane
+            // the focused search box answers — the open screen the
+            // responder's updateSearch rebuild serves)
+            if app.screen == crate::screens::ScreenKind::DebugOptions {
+                app.on_debug_options_char(c);
+            }
             // THE CREATIVE SEARCH'S OWN CHARS (the charTyped lane the
             // focused search box answers — the open chat the drain's
-            // first arm keeps, the closed chat + the picker's search
+            // arm keeps, the closed chat + the picker's search
             // seat the EditBox arm serves, the other screens the gate
             // never passes)
-            if !app.chat_open {
+            else if !app.chat_open {
                 app.on_creative_char(c);
             } else {
                 app.on_chat_char(c);
@@ -1952,9 +1958,12 @@ pub fn run_gui_app(
         }
         // THE PICKER'S SEARCH BACKSPACE (the EditBox's own keyPressed
         // arm — the search seat the pop answers, the other screens the
-        // gate never passes)
+        // gate never passes; the debug options' own box the same lane
+        // serves — the internal gates the two seats the screen state
+        // alone keeps)
         if !app.chat_open && window.is_key_pressed(Key::Backspace, minifb::KeyRepeat::No) {
             app.on_creative_backspace();
+            app.on_debug_options_backspace();
         }
         // THE INVENTORY'S OWN Q (the AbstractContainerScreen.keyPressed's
         // keyDrop arm — the container screen's own chain beside the

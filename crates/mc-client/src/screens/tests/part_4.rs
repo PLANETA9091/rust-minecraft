@@ -19101,3 +19101,133 @@ fn the_debug_entries_list_the_bank_the_scroll_the_rows_wear() {
         "the RENDERER row the ALWAYS_ON banks"
     );
 }
+
+#[test]
+fn the_debug_search_the_responder_the_filter_wears() {
+    use crate::screens::DebugEntryStatus;
+    fn rect_has(
+        fb: &crate::raster::Framebuf,
+        x0: i32,
+        y0: i32,
+        w: i32,
+        h: i32,
+        rgb: [u8; 3],
+    ) -> bool {
+        for y in (y0.max(0) as usize)..((y0 + h).min(fb.h as i32) as usize) {
+            for x in (x0.max(0) as usize)..((x0 + w).min(fb.w as i32) as usize) {
+                let i = (y * fb.w + x) * 3;
+                if fb.color[i] == rgb[0] && fb.color[i + 1] == rgb[1] && fb.color[i + 2] == rgb[2] {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+    const WHITE: [u8; 3] = [255, 255, 255];
+    let mut app = App::new(3);
+    app.enter_world();
+    app.on_debug_options_key();
+    // THE OPEN'S OWN FRESH CTOR (the setScreen re-creation the empty
+    // box keeps — the stale word the scrolled band the re-open never
+    // inherits)
+    app.debug_search.push_str("stale");
+    app.debug_scroll = 500.0;
+    app.on_debug_options_key(); // the close arm the World serves
+    app.on_debug_options_key(); // the re-open the fresh ctor arms
+    assert_eq!(app.debug_search, "", "the fresh box the empty keeps");
+    assert_eq!(app.debug_scroll, 0.0, "the fresh list the top keeps");
+    // THE CHARS' OWN BANK (the responder the typed word wears — the
+    // scroll the rebuild's top reset speaks: the pre-typed wheel the
+    // 48px the zero the rebuild retires)
+    app.on_debug_options_scroll(-2.0, 180);
+    assert_eq!(app.debug_scroll, 48.0, "the pre-typed wheel the step wears");
+    for c in "FPS".chars() {
+        app.on_debug_options_char(c);
+    }
+    assert_eq!(app.debug_search, "FPS", "the box the typed word keeps");
+    assert_eq!(app.debug_scroll, 0.0, "the rebuild the top wears");
+    // THE FILTER'S OWN WALK (the contains law the render answers —
+    // the fps TEXT row the hit keeps, the biome head the miss the
+    // rebuild never banks, the renderer block the whole-miss the
+    // header never emits)
+    let mut fb = crate::raster::Framebuf::new(640, 360);
+    let mut assets = GuiAssets::open(assets_root());
+    app.render(&mut fb, &mut assets);
+    assert!(
+        rect_has(&fb, 218, 26, 200, 9, WHITE),
+        "the typed word the box's white glyphs wear"
+    );
+    assert!(
+        app.buttons
+            .iter()
+            .any(|b| b.id == "dbgoff" && b.label == "8"),
+        "the fps row the hit list keeps"
+    );
+    assert!(
+        !app.buttons
+            .iter()
+            .any(|b| b.id == "dbgoff" && b.label == "0"),
+        "the biome row the filter retires"
+    );
+    assert!(
+        !app.buttons
+            .iter()
+            .any(|b| b.id.starts_with("dbg") && b.label == "31"),
+        "the renderer block the whole-miss retires"
+    );
+    // THE FILTERED SCROLL'S OWN CEILING (the one-row list the short
+    // band the no-scroll keeps — the 24px row + the 14px header the
+    // 38px content the visible band never out-grows)
+    app.on_debug_options_scroll(-1000.0, 180);
+    assert_eq!(
+        app.debug_scroll, 0.0,
+        "the filtered band the short list the floor keeps"
+    );
+    // THE PILL THE FILTERED ROW WEARS (the click the same tri-state
+    // store — the searched list the chord consts' store keeps)
+    let off = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "dbgoff" && b.label == "8")
+        .expect("the fps row's off pill the hit list wears")
+        .clone();
+    app.on_click(off.x + off.w / 2, off.y + 10);
+    assert_eq!(
+        app.debug_entry_states[8],
+        DebugEntryStatus::Never,
+        "the filtered row's pill the same store wears"
+    );
+    // THE BACKSPACE'S OWN WALK (the pops the word retires, the empty
+    // query the WHOLE list keeps — the rebuild the biome row banks)
+    for _ in 0..3 {
+        app.on_debug_options_backspace();
+    }
+    assert_eq!(app.debug_search, "", "the pops the word retires");
+    app.render(&mut fb, &mut assets);
+    assert!(
+        app.buttons
+            .iter()
+            .any(|b| b.id == "dbgoff" && b.label == "0"),
+        "the empty query the whole list keeps"
+    );
+    app.on_debug_options_scroll(-1000.0, 180);
+    assert_eq!(app.debug_scroll, 1032.0, "the whole band the ceiling wears");
+    // THE CAP'S OWN LAW (the 50 chars the picker's own law keeps —
+    // the 51st the responder never banks) + THE GATE'S OWN VERDICT
+    // (the closed screen the chars never ride)
+    for _ in 0..51 {
+        app.on_debug_options_char('a');
+    }
+    assert_eq!(
+        app.debug_search.chars().count(),
+        50,
+        "the cap the box keeps"
+    );
+    app.on_debug_options_key(); // the close arm the World serves
+    app.on_debug_options_char('x');
+    assert_eq!(
+        app.debug_search.chars().count(),
+        50,
+        "the closed screen the gate keeps"
+    );
+}
