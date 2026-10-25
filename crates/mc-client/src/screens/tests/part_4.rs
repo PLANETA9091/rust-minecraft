@@ -10615,6 +10615,85 @@ fn the_reload_chunks_chord_the_net_window_repair_wears() {
     let _ = app;
 }
 
+// THE COPY LOCATION'S OWN CHORD (the keyDebugCopyLocation lane the
+// copyloc_207.py walk banks — the `/execute in %s run tp @s %.2f
+// %.2f %.2f %.2f %.2f` format the Locale.ROOT walk speaks, the word
+// row the format walk PRECEDES the debugFeedbackTranslated yellow
+// wears, the used flag the gate-passed bank keeps, the release the
+// bare F3 consumes)
+#[test]
+fn the_copy_location_chord_the_tp_format_the_word_wear() {
+    let mut app = App::new(262);
+    app.enter_world();
+    // THE BODY'S OWN FEET (the dyadic values the %.2f format never
+    // rounds — the exact two-decimal strings the walk wears)
+    app.body = Some(crate::body::PlayerBody::new(
+        12.25, 70.0, -8.25, 180.5, 45.25,
+    ));
+    // THE CHORD (the gate-passed walk the word + the clipboard + the
+    // flag the same breath serves)
+    app.on_copy_location_key();
+    // THE COMMAND (the overworld identifier the default dimension
+    // keeps, the five %.2f the feet + angles speak)
+    assert_eq!(
+        app.clipboard, "/execute in minecraft:overworld run tp @s 12.25 70.00 -8.25 180.50 45.25",
+        "the /tp command the Locale.ROOT format speaks"
+    );
+    // THE WORD (the debug.copy_location.message row the lang table
+    // keeps, the §e the family's yellow channel wears)
+    assert_eq!(
+        app.chat_messages.last().map(|(t, _)| t.as_str()),
+        Some("\u{a7}eCopied location to clipboard"),
+        "the word the lang row keeps"
+    );
+    assert!(app.debug_modifier_used, "the modifier the chord spends");
+    app.on_debug_modifier_released();
+    assert!(!app.debug_modifier_used, "the release the flag consumes");
+    let _ = app;
+}
+
+// THE COPY LOCATION'S OWN GATE + NETHER IDENTIFIER (the player-null
+// arm pc 1014-1021 the `ifnull -> 1163` walk keeps — the word the
+// clipboard the flag the gated walk never serves —, the swap's arm
+// the the_nether identifier the ResourceKey speaks)
+#[test]
+fn the_copy_location_chord_the_null_body_silence_the_nether_wears() {
+    let mut app = App::new(262);
+    app.enter_world();
+    // THE NULL-BODY ARM (the body the Option never carries — the
+    // gate the walk never passes)
+    app.clipboard = "the previous copy keeps".to_string();
+    let rows_before = app.chat_messages.len();
+    app.on_copy_location_key();
+    assert_eq!(
+        app.clipboard, "the previous copy keeps",
+        "the gate the write refuses"
+    );
+    assert_eq!(
+        app.chat_messages.len(),
+        rows_before,
+        "the silence the gate keeps"
+    );
+    assert!(
+        !app.debug_modifier_used,
+        "the flag the gated walk never banks"
+    );
+    // THE NETHER'S OWN IDENTIFIER (the swap the dimension wears — the
+    // ResourceKey's the_nether word the /execute arg speaks)
+    app.world_dimension = Dimension::Nether;
+    app.body = Some(crate::body::PlayerBody::new(0.5, 64.0, 0.5, -90.0, 0.0));
+    app.on_copy_location_key();
+    assert_eq!(
+        app.clipboard, "/execute in minecraft:the_nether run tp @s 0.50 64.00 0.50 -90.00 0.00",
+        "the nether identifier the swap's own world wears"
+    );
+    assert!(
+        app.debug_modifier_used,
+        "the gate-passed walk the bank wears"
+    );
+    let _ = app;
+}
+
 // THE FOV EFFECT SCALE'S OWN ROW (the 26.2 AccessibilityOptionsScreen
 // row the file's law wears — the fov_scale_tail_262.py probe the
 // Camera.tickFov read the body's tick passes: the boot load the body's

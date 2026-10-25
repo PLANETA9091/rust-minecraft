@@ -39587,6 +39587,69 @@ impl App {
         self.push_chat_message(format!("\u{a7}e{word}"));
     }
 
+    /// THE COPY LOCATION'S OWN CHORD (javap 26.2
+    /// KeyboardHandler.handleDebugKeys's keyDebugCopyLocation lane —
+    /// the `matches` arm pc 1004 the copyloc_207.py walk banks, the
+    /// window the pc order keeps: 749 focusPause < 1004 copyLocation
+    /// < 1164 dumpVersion, the lane the copyRecreate's 351 the AFTER
+    /// seat wears). THE GATE CHAIN (pc 1014-1034): the player-null
+    /// arm the in-world block keeps — the `ifnull -> 1163` the used
+    /// flag the gated walk never banks —, the isReducedDebugInfo the
+    /// client's belief never arms (the honest constant-pass the
+    /// copyRecreate verdict keeps [dev-169], no reduced lane the
+    /// client speaks). THE WORD FIRST (pc 1037-1041): the
+    /// `debugFeedbackTranslated("debug.copy_location.message")` row
+    /// the format walk PRECEDES — the en_us row `Copied location to
+    /// clipboard` the lang table keeps, the ChatFormatting.YELLOW the
+    /// `§e` prefix the family's lanes wear. THE FORMAT WALK (pc
+    /// 1044-1155): the `String.format(Locale.ROOT,
+    /// "/execute in %s run tp @s %.2f %.2f %.2f %.2f %.2f", ...)` the
+    /// SIX args the array build banks — the dimension identifier the
+    /// `level().dimension().identifier()` walk speaks (the
+    /// ResourceKey's own word: `minecraft:overworld` the default the
+    /// Level.OVERWORLD key keeps, `minecraft:the_nether` / `minecraft:the_end`
+    /// the swap's other arms), then the feet X/Y/Z + the yRot/xRot
+    /// the `%.2f` five the LocalPlayer getters serve (the getX/getY/
+    /// getZ the body's own feet wear, the getYRot/getXRot the vanilla
+    /// angles the wire's convention keeps). THE CLIPBOARD (pc 1158):
+    /// the `setClipboard(formatted)` the isEmpty gate the empty write
+    /// refuses [khsetclip_169.txt] — the non-empty command the gate
+    /// never speaks. THE USED FLAG (pc 1161-1162 istore_3): the
+    /// gate-passed walk the flag banks REGARDLESS — the
+    /// modifier-spent flag the bare F3 release gate reads rides.
+    pub fn on_copy_location_key(&mut self) {
+        // THE PLAYER-NULL ARM (pc 1014-1021 — the `ifnull -> 1163`
+        // the word the clipboard the flag the gated walk never serves)
+        let Some(b) = self.body.as_ref() else {
+            return;
+        };
+        let (x, y, z, yaw, pitch) = (b.x, b.y, b.z, b.yaw, b.pitch);
+        // THE WORD FIRST (pc 1037-1041 — the feedback row the format
+        // walk precedes, the yellow the family's channel wears)
+        self.push_chat_message("\u{a7}eCopied location to clipboard".to_string());
+        // THE DIMENSION'S OWN IDENTIFIER (the ResourceKey's word the
+        // three-way enum speaks — the swap's arms the same keys wear)
+        let dim = match self.world_dimension {
+            Dimension::Overworld => "minecraft:overworld",
+            Dimension::Nether => "minecraft:the_nether",
+            Dimension::End => "minecraft:the_end",
+        };
+        // THE FORMAT WALK (pc 1044-1155 — the `/execute in %s run tp
+        // @s %.2f %.2f %.2f %.2f %.2f` the Locale.ROOT banks, the
+        // five `%.2f` the Rust {:.2} the same two decimals wears)
+        let cmd = format!(
+            "/execute in {dim} run tp @s {x:.2} {y:.2} {z:.2} {yaw:.2} {pitch:.2}"
+        );
+        // THE CLIPBOARD (pc 1158 — the isEmpty gate the empty write
+        // refuses, the non-empty command the gate never speaks)
+        if !cmd.is_empty() {
+            self.clipboard = cmd;
+        }
+        // THE USED FLAG (pc 1161-1162 — the gate-passed walk the bank
+        // wears regardless)
+        self.debug_modifier_used = true;
+    }
+
     /// THE F3+F4 CHORD'S OWN OPEN LANE (javap 26.2
     /// KeyboardHandler.handleDebugKeys's keyDebugSwitchGameMode walk —
     /// the `matches` arm the level/screen/canSwitchGameMode chain

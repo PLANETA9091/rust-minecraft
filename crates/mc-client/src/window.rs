@@ -2626,6 +2626,17 @@ pub fn run_gui_app(
             if f3_down && window.is_key_pressed(Key::F4, minifb::KeyRepeat::No) {
                 app.on_open_game_mode_switcher();
             }
+            // THE F3+C COPY LOCATION (the handleDebugKeys'
+            // keyDebugCopyLocation lane — the `matches` arm pc 1004 the
+            // copyloc_207.py walk banks, the ladder's tail the pc order
+            // keeps: 749 focusPause < 1004 copyLocation < 1164
+            // dumpVersion. The `/execute in %s run tp @s %.2f %.2f
+            // %.2f %.2f %.2f` string the clipboard store keeps, the
+            // yellow copied-word row the chat the lang key speaks, the
+            // player-null gate the body's Option the flag never banks)
+            if f3_down && window.is_key_pressed(Key::C, minifb::KeyRepeat::No) {
+                app.on_copy_location_key();
+            }
             // THE MIDDLE-CLICK PICK (vanilla handleKeybinds's keyPickItem
             // lane — the middle button the keybind maps, the
             // `Minecraft.pickBlockOrEntity` walk the loop answers): the
