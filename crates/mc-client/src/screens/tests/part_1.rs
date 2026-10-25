@@ -6634,21 +6634,70 @@ fn the_chunk_border_lines_the_seven_layers_speak() {
     );
 }
 
-/// THE F3+G TOGGLE'S OWN LAW (the debug-entry flip the audited
-/// refreshRendererList gate serves — the persistence the entry
-/// system keeps: no overlay raise, the modifier-spent flag the
-/// bare F3 release gate reads).
+/// THE F3+G TOGGLE'S OWN LAW (the debug-entry toggleStatus cycle the
+/// audited store law serves — the ordinal switch the tri-state walks:
+/// NEVER the ALWAYS_ON raise speaks, the ALWAYS_ON arm the
+/// overlay-open frame the NEVER answer wears, the overlay-closed
+/// frame the SAME seat re-asserts, the IN_OVERLAY arm the
+/// overlay-closed frame the ALWAYS_ON PROMOTE serves; no overlay
+/// raise, the modifier-spent flag the bare F3 release gate reads).
 #[test]
 fn the_f3_g_chord_toggles_the_chunk_border_entry() {
+    use crate::screens::DebugEntryStatus;
     let mut app = App::new(3);
     app.enter_world();
-    assert!(!app.chunk_borders, "the fresh entry sleeps");
+    assert_eq!(
+        app.chunk_borders_status,
+        DebugEntryStatus::Never,
+        "the fresh entry sleeps"
+    );
     app.on_chunk_borders_key();
-    assert!(app.chunk_borders, "the chord raises");
+    assert_eq!(
+        app.chunk_borders_status,
+        DebugEntryStatus::Always,
+        "the chord raises the ALWAYS_ON"
+    );
     assert!(app.debug_modifier_used, "the F3 modifier spent");
     assert!(!app.debug_held, "the overlay the entry never raises");
+    // THE OVERLAY-CLOSED RE-ASSERT (the ALWAYS_ON arm the toggle law
+    // keeps — the same seat the second chord re-asserts)
     app.on_chunk_borders_key();
-    assert!(!app.chunk_borders, "the chord lowers");
+    assert_eq!(
+        app.chunk_borders_status,
+        DebugEntryStatus::Always,
+        "the overlay-closed frame the seat re-asserts"
+    );
+    // THE OVERLAY-OPEN FLIP (the ALWAYS_ON arm the isOverlayVisible
+    // frame the NEVER answer wears — the chord the flip completes)
+    app.on_debug_key();
+    assert!(app.debug_held, "the overlay the F3 tap raises");
+    app.on_chunk_borders_key();
+    assert_eq!(
+        app.chunk_borders_status,
+        DebugEntryStatus::Never,
+        "the overlay-open frame the chord the NEVER answers"
+    );
+    // THE PROMOTE WALK (the IN_OVERLAY arm the overlay-closed frame
+    // the ALWAYS_ON promote serves)
+    app.chunk_borders_status = DebugEntryStatus::Overlay;
+    app.on_debug_key();
+    assert!(!app.debug_held, "the overlay the second tap closes");
+    app.on_chunk_borders_key();
+    assert_eq!(
+        app.chunk_borders_status,
+        DebugEntryStatus::Always,
+        "the overlay-closed frame the IN_OVERLAY promotes"
+    );
+    // THE OVERLAY-OPEN KEEP (the IN_OVERLAY arm the overlay-open
+    // frame the same seat wears)
+    app.chunk_borders_status = DebugEntryStatus::Overlay;
+    app.on_debug_key();
+    app.on_chunk_borders_key();
+    assert_eq!(
+        app.chunk_borders_status,
+        DebugEntryStatus::Overlay,
+        "the overlay-open frame the seat keeps"
+    );
 }
 
 #[test]

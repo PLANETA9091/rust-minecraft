@@ -10336,31 +10336,45 @@ fn the_debug_feedback_words_the_family_wears() {
     let mut app = App::new(262);
     app.enter_world();
     app.spawn_offline_body();
-    // THE BORDERS' PAIR (the F3+G flip the on word speaks, the second
-    // flip the off word answers)
+    // THE BORDERS' PAIR (the F3+G flip the on word speaks, the
+    // overlay-open second flip the off word answers — the
+    // toggleStatus cycle the isOverlayVisible frame the NEVER arm
+    // wears)
     app.on_chunk_borders_key();
     assert!(
         app.chat_messages.last().map(|(t, _)| t.as_str()) == Some("\u{a7}eChunk borders: shown"),
         "the on word the borders flip speaks"
     );
+    app.on_debug_key();
     app.on_chunk_borders_key();
     assert!(
         app.chat_messages.last().map(|(t, _)| t.as_str()) == Some("\u{a7}eChunk borders: hidden"),
-        "the off word the second flip answers"
+        "the off word the overlay-open flip answers"
     );
-    assert!(!app.chunk_borders, "the pair the flip restores");
+    assert_eq!(
+        app.chunk_borders_status,
+        crate::screens::DebugEntryStatus::Never,
+        "the pair the flip restores"
+    );
+    app.on_debug_key();
     // THE HITBOXES' PAIR (the F3+B flip the same walk wears)
     app.on_hitboxes_key();
     assert!(
         app.chat_messages.last().map(|(t, _)| t.as_str()) == Some("\u{a7}eHitboxes: shown"),
         "the on word the hitboxes flip speaks"
     );
+    app.on_debug_key();
     app.on_hitboxes_key();
     assert!(
         app.chat_messages.last().map(|(t, _)| t.as_str()) == Some("\u{a7}eHitboxes: hidden"),
-        "the off word the second flip answers"
+        "the off word the overlay-open flip answers"
     );
-    assert!(!app.hitboxes, "the pair the flip restores");
+    assert_eq!(
+        app.hitboxes_status,
+        crate::screens::DebugEntryStatus::Never,
+        "the pair the flip restores"
+    );
+    app.on_debug_key();
     // THE FOCUS-PAUSE'S PAIR (the F3+P flip the enabled word speaks —
     // the default true the flip the disabled word answers)
     app.on_focus_pause_key();
@@ -16611,13 +16625,22 @@ fn the_debug_options_screen_the_rows_the_profiles_the_chrome_wear() {
     // THE FRESH PROFILE'S OWN DEFAULT (the profile field the
     // isUsingProfile identity banks, the renderer flags the fresh
     // client keeps)
-    assert!(
-        !app.debug_profile_performance,
+    assert_eq!(
+        app.debug_profile,
+        Some(false),
         "the fresh client the DEFAULT profile keeps"
     );
+    assert_eq!(
+        app.chunk_borders_status,
+        crate::screens::DebugEntryStatus::Never,
+        "the fresh entries the NEVER arm keeps"
+    );
     // THE ENTRY PILLS' OWN WALKS (the CycleButton setValue law —
-    // the coral Always pill the true banks, the tan Off pill the
-    // false keeps, the same flags the F3+G/F3+B chords flip)
+    // the coral Always pill the ALWAYS_ON banks, the yellow In
+    // Overlay pill the IN_OVERLAY arm speaks, the white Off pill the
+    // NEVER keeps, the manual touch the profile identity BREAKS —
+    // the setStatus putfield null the both buttons' active law
+    // re-arms)
     let mut fb = crate::raster::Framebuf::new(640, 360);
     let mut assets = GuiAssets::open(assets_root());
     app.render(&mut fb, &mut assets);
@@ -16628,7 +16651,15 @@ fn the_debug_options_screen_the_rows_the_profiles_the_chrome_wear() {
         .expect("the always pill the row wears")
         .clone();
     app.on_click(always_border.x + always_border.w / 2, always_border.y + 10);
-    assert!(app.chunk_borders, "the coral pill the flag's true banks");
+    assert_eq!(
+        app.chunk_borders_status,
+        crate::screens::DebugEntryStatus::Always,
+        "the coral pill the ALWAYS_ON banks"
+    );
+    assert_eq!(
+        app.debug_profile, None,
+        "the manual touch the profile identity breaks"
+    );
     assert_eq!(
         app.screen,
         ScreenKind::DebugOptions,
@@ -16638,6 +16669,23 @@ fn the_debug_options_screen_the_rows_the_profiles_the_chrome_wear() {
     // rebuilds — the buttons the dispatch's clear keeps, the
     // hovered() the row's rect the second render arms)
     app.render(&mut fb, &mut assets);
+    let overlay_hitboxes = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "dbgoverlay_hitboxes")
+        .expect("the overlay pill the rebuild wears")
+        .clone();
+    app.on_click(
+        overlay_hitboxes.x + overlay_hitboxes.w / 2,
+        overlay_hitboxes.y + 10,
+    );
+    assert_eq!(
+        app.hitboxes_status,
+        crate::screens::DebugEntryStatus::Overlay,
+        "the yellow pill the IN_OVERLAY arm speaks"
+    );
+    // THE THIRD RENDER'S OWN SEAT (the Off pill the NEVER arm wears)
+    app.render(&mut fb, &mut assets);
     let off_hitboxes = app
         .buttons
         .iter()
@@ -16645,12 +16693,16 @@ fn the_debug_options_screen_the_rows_the_profiles_the_chrome_wear() {
         .expect("the off pill the rebuild wears")
         .clone();
     app.on_click(off_hitboxes.x + off_hitboxes.w / 2, off_hitboxes.y + 10);
-    assert!(!app.hitboxes, "the tan pill the flag's false keeps");
+    assert_eq!(
+        app.hitboxes_status,
+        crate::screens::DebugEntryStatus::Never,
+        "the white pill the NEVER keeps"
+    );
     // THE PERFORMANCE PROFILE'S OWN WALK (the lambda$addProfileButton$0
     // — the loadProfile + save + refreshEntries the click serves, the
     // FPS ALWAYS_ON word the fps_charts flag wears, the renderer flags
-    // the reset keeps OFF)
-    app.chunk_borders = true;
+    // the reset keeps OFF, the identity the putfield restores)
+    app.chunk_borders_status = crate::screens::DebugEntryStatus::Always;
     app.render(&mut fb, &mut assets);
     let perf = app
         .buttons
@@ -16659,15 +16711,20 @@ fn the_debug_options_screen_the_rows_the_profiles_the_chrome_wear() {
         .expect("the performance button the row wears")
         .clone();
     app.on_click(perf.x + perf.w / 2, perf.y + 10);
-    assert!(
-        app.debug_profile_performance,
+    assert_eq!(
+        app.debug_profile,
+        Some(true),
         "the profile field the resetToProfile putfield speaks"
     );
     assert!(
         app.fps_charts,
         "the FPS ALWAYS_ON word the flag's raise wears"
     );
-    assert!(!app.chunk_borders, "the renderer flags the reset keeps OFF");
+    assert_eq!(
+        app.chunk_borders_status,
+        crate::screens::DebugEntryStatus::Never,
+        "the renderer flags the reset keeps OFF"
+    );
     // THE DEFAULT PROFILE'S OWN RETURN (the same walk the fresh
     // preset answers — the fps flag the reset keeps OFF, the field
     // the identity flips)
@@ -16679,8 +16736,9 @@ fn the_debug_options_screen_the_rows_the_profiles_the_chrome_wear() {
         .expect("the default button the row wears")
         .clone();
     app.on_click(dflt.x + dflt.w / 2, dflt.y + 10);
-    assert!(
-        !app.debug_profile_performance,
+    assert_eq!(
+        app.debug_profile,
+        Some(false),
         "the DEFAULT profile the identity flips"
     );
     assert!(!app.fps_charts, "the DEFAULT map none of the toggles wear");
@@ -18786,4 +18844,141 @@ fn the_switcher_open_the_release_dance_the_apply_close_the_restore_wears() {
         "the dead refusal the flag never banks"
     );
     app.dead = false;
+}
+
+/// THE TRI-STATE'S OWN PILL COLORS (javap 26.2 the clinit's copies
+/// the three pills wear — the never pill's ON the `-1` WHITE speaks,
+/// the in-overlay pill's ON the `-171` YELLOW (0xFFFFFF55), the
+/// always pill's ON the `-2142128` CORAL (0xFFDF6550), the
+/// unselected arms the tan `-4539718` (0xFFBAA13A) wear — the glyph
+/// band the render's own pixels probe).
+#[test]
+fn the_debug_entries_the_pill_colors_the_tri_state_wears() {
+    use crate::screens::DebugEntryStatus;
+    fn rect_has(
+        fb: &crate::raster::Framebuf,
+        x0: i32,
+        y0: i32,
+        w: i32,
+        h: i32,
+        rgb: [u8; 3],
+    ) -> bool {
+        for y in (y0.max(0) as usize)..((y0 + h).min(fb.h as i32) as usize) {
+            for x in (x0.max(0) as usize)..((x0 + w).min(fb.w as i32) as usize) {
+                let i = (y * fb.w + x) * 3;
+                if fb.color[i] == rgb[0] && fb.color[i + 1] == rgb[1] && fb.color[i + 2] == rgb[2] {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+    const WHITE: [u8; 3] = [255, 255, 255];
+    const YELLOW: [u8; 3] = [255, 255, 85];
+    const CORAL: [u8; 3] = [223, 101, 80];
+    const TAN: [u8; 3] = [186, 161, 58];
+    let mut app = App::new(3);
+    app.enter_world();
+    app.on_debug_options_key();
+    let mut fb = crate::raster::Framebuf::new(640, 360);
+    let mut assets = GuiAssets::open(assets_root());
+    // THE FRESH ROW (the NEVER statuses the Off pill's ON arm wears —
+    // the white word the band speaks, the overlay + always pills the
+    // tan unselected arms keep)
+    app.render(&mut fb, &mut assets);
+    let off = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "dbgoff_border")
+        .expect("the off pill the row wears")
+        .clone();
+    let overlay = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "dbgoverlay_border")
+        .expect("the overlay pill the row wears")
+        .clone();
+    let always = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "dbgalways_border")
+        .expect("the always pill the row wears")
+        .clone();
+    assert!(
+        rect_has(&fb, off.x, off.y + 6, off.w, 7, WHITE),
+        "the fresh NEVER the off pill's white ON arm wears"
+    );
+    assert!(
+        !rect_has(&fb, off.x, off.y + 6, off.w, 7, TAN),
+        "the ON pill the tan unselected arm never wears"
+    );
+    assert!(
+        rect_has(&fb, overlay.x, overlay.y + 6, overlay.w, 7, TAN),
+        "the unselected overlay pill the tan wears"
+    );
+    assert!(
+        !rect_has(&fb, overlay.x, overlay.y + 6, overlay.w, 7, YELLOW),
+        "the unselected overlay pill the yellow never wears"
+    );
+    assert!(
+        rect_has(&fb, always.x, always.y + 6, always.w, 7, TAN),
+        "the unselected always pill the tan wears"
+    );
+    assert!(
+        !rect_has(&fb, always.x, always.y + 6, always.w, 7, CORAL),
+        "the unselected always pill the coral never wears"
+    );
+    // THE OVERLAY ARM (the yellow pill the IN_OVERLAY status wears —
+    // the ON arm the -171 fold speaks, the siblings the tan keep)
+    app.on_click(overlay.x + overlay.w / 2, overlay.y + 10);
+    assert_eq!(
+        app.chunk_borders_status,
+        DebugEntryStatus::Overlay,
+        "the click the IN_OVERLAY banks"
+    );
+    app.render(&mut fb, &mut assets);
+    let overlay2 = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "dbgoverlay_border")
+        .expect("the rebuild wears")
+        .clone();
+    assert!(
+        rect_has(&fb, overlay2.x, overlay2.y + 6, overlay2.w, 7, YELLOW),
+        "the IN_OVERLAY status the yellow ON arm wears"
+    );
+    assert!(
+        !rect_has(&fb, overlay2.x, overlay2.y + 6, overlay2.w, 7, TAN),
+        "the ON pill the tan never wears"
+    );
+    // THE ALWAYS ARM (the coral pill the ALWAYS_ON status wears — the
+    // ON arm the -2142128 fold speaks)
+    app.render(&mut fb, &mut assets);
+    let always2 = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "dbgalways_border")
+        .expect("the rebuild wears")
+        .clone();
+    app.on_click(always2.x + always2.w / 2, always2.y + 10);
+    assert_eq!(
+        app.chunk_borders_status,
+        DebugEntryStatus::Always,
+        "the click the ALWAYS_ON banks"
+    );
+    app.render(&mut fb, &mut assets);
+    let always3 = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "dbgalways_border")
+        .expect("the rebuild wears")
+        .clone();
+    assert!(
+        rect_has(&fb, always3.x, always3.y + 6, always3.w, 7, CORAL),
+        "the ALWAYS_ON status the coral ON arm wears"
+    );
+    assert!(
+        !rect_has(&fb, always3.x, always3.y + 6, always3.w, 7, TAN),
+        "the ON pill the tan never wears"
+    );
 }

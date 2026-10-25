@@ -5411,10 +5411,19 @@ fn the_f3_b_chord_the_entity_set_speaks() {
     app.enter_world();
     app.spawn_offline_body();
     // THE TOGGLE (the entry flip the F3+B lane speaks — the
-    // modifier-spent flag the bare F3 release gate reads)
-    assert!(!app.hitboxes, "the fresh client the entry keeps silent");
+    // toggleStatus cycle the NEVER arm the ALWAYS_ON raise serves,
+    // the modifier-spent flag the bare F3 release gate reads)
+    assert_eq!(
+        app.hitboxes_status,
+        crate::screens::DebugEntryStatus::Never,
+        "the fresh client the entry keeps silent"
+    );
     app.on_hitboxes_key();
-    assert!(app.hitboxes, "the chord the entry enables");
+    assert_eq!(
+        app.hitboxes_status,
+        crate::screens::DebugEntryStatus::Always,
+        "the chord the entry raises"
+    );
     assert!(app.debug_modifier_used, "the modifier the chord spends");
     // the body's own pose (the camera entity the first-person
     // verdict skips)

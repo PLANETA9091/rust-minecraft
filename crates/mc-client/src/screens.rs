@@ -6831,15 +6831,17 @@ pub enum ScreenKind {
     /// `MultiLineTextWidget` the `withColor(-2142128)` coral answers),
     /// the profile button pair the `addProfileButton` walk keeps (the
     /// 120px buttons the bipush banks, the ACTIVE profile the
-    /// `!isUsingProfile` putfield the INACTIVE button speaks), the
-    /// rows the client's own entry flags keep (the `chunk_borders` +
-    /// `entity_hitboxes` paths the registry's own ids bank — the
-    /// `Component.literal(getPath())` labels the extractContent walk
-    /// serves, the state pills the CycleButton builder's colored words
-    /// wear — the coral `-2142128` the selected arm keeps, the tan
-    /// `-4539718` the unselected pair wears; the IN OVERLAY arm the
-    /// client's two-state store never keeps, the honest absence the
-    /// tri-state law's own third value speaks).
+    /// `!isUsingProfile` putfield the INACTIVE button speaks, the
+    /// rows the client's own tri-state store keeps (the
+    /// `chunk_borders` + `entity_hitboxes` paths the registry's own
+    /// ids bank — the `Component.literal(getPath())` labels the
+    /// extractContent walk serves, the THREE state pills the
+    /// CycleButton builder's colored words wear — the never pill's
+    /// `-1` WHITE the ON arm speaks, the in-overlay pill's `-171`
+    /// YELLOW, the always pill's `-2142128` CORAL, the tan
+    /// `-4539718` the unselected arms wear; the vanilla order the
+    /// extractContent x walk banks: never LEFTMOST, always
+    /// RIGHTMOST).
     DebugOptions,
     /// THE CREATIVE PICKER'S OWN SCREEN (javap 26.2 CreativeModeInventoryScreen
     /// — the E key's own lane in the creative mode, the init's own
@@ -7036,6 +7038,33 @@ impl GameMode {
     pub(crate) fn is_survival(self) -> bool {
         matches!(self, GameMode::Survival | GameMode::Adventure)
     }
+}
+
+/// THE DEBUG ENTRY'S OWN TRI-STATE (javap 26.2
+/// DebugScreenEntryStatus — the `$values` law the three constants
+/// bank: `ALWAYS_ON` ordinal 0, `IN_OVERLAY` ordinal 1, `NEVER`
+/// ordinal 2, the serial names the StringRepresentable CODEC keeps
+/// "alwaysOn"/"inOverlay"/"never" — the debugentries_230.py dump the
+/// whole walk banks). The store law the entry's own status speaks:
+/// the ALWAYS_ON entry the renderer list ALWAYS joins, the
+/// IN_OVERLAY entry the `isOverlayVisible` frame ALONE serves, the
+/// NEVER arm the silent world keeps — the F3+G/F3+B chords the
+/// `toggleStatus` cycle walk (the ordinal switch law: NEVER ->
+/// ALWAYS_ON; ALWAYS_ON the overlay-open frame -> NEVER, the
+/// overlay-closed frame the SAME seat re-asserts; IN_OVERLAY the
+/// overlay-open frame the SAME seat keeps, the overlay-closed frame
+/// the ALWAYS_ON PROMOTE serves).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DebugEntryStatus {
+    /// The DebugScreenEntryStatus ALWAYS_ON ordinal 0 — the entry the
+    /// rebuildCurrentList walk unconditionally joins ("alwaysOn").
+    Always,
+    /// The DebugScreenEntryStatus IN_OVERLAY ordinal 1 — the entry the
+    /// overlay-open frame alone joins ("inOverlay").
+    Overlay,
+    /// The DebugScreenEntryStatus NEVER ordinal 2 — the entry the
+    /// renderer list never joins ("never").
+    Never,
 }
 
 /// THE SLOT ROW'S OWN STEP (the init walk's `imul 31` — the 26x26
@@ -9551,37 +9580,41 @@ pub struct App {
     /// THE CHUNK BORDERS' OWN ENTRY (26.2's debug-entry system — the
     /// `DebugScreenEntryList.isCurrentlyEnabled(chunk_border)` gate
     /// the audited DebugRenderer.refreshRendererList keeps: the F3+G
-    /// chord flips the entry, the ENABLED state the renderer list
-    /// keeps INDEPENDENT of the F3 overlay's own visibility — the
-    /// borders stay while the overlay closes, the vanilla entry
-    /// toggle's own persistence). False = the silent world the
-    /// fresh client keeps.
-    pub chunk_borders: bool,
+    /// chord walks the toggleStatus cycle, the ACTIVE state the
+    /// rebuildCurrentList law speaks — the ALWAYS_ON entry the
+    /// overlay's own visibility never gates, the IN_OVERLAY entry the
+    /// `isOverlayVisible` arm alone joins, the NEVER arm the silent
+    /// world keeps). Fresh = [`DebugEntryStatus::Never`].
+    pub chunk_borders_status: DebugEntryStatus,
     /// THE ENTITY HITBOXES' OWN ENTRY (26.2's debug-entry system —
     /// the `DebugScreenEntryList.isCurrentlyEnabled(entity_hitboxes)`
     /// gate the audited `refreshRendererList` tail keeps (pcs 671-701
     /// — the EntityHitboxDebugRenderer the enabled entry alone
     /// joins), the F3+B chord's own toggle the
-    /// `keyDebugShowHitboxes` lane flips
-    /// (`toggleStatus(ENTITY_HITBOXES)`): the boxes the world draw
-    /// keeps INDEPENDENT of the F3 overlay's own visibility — the
-    /// vanilla entry toggle's own persistence). False = the silent
-    /// world the fresh client keeps.
-    pub hitboxes: bool,
+    /// `keyDebugShowHitboxes` lane walks
+    /// (`toggleStatus(ENTITY_HITBOXES)`): the ACTIVE state the same
+    /// rebuild law speaks — the ALWAYS_ON entry the overlay's
+    /// visibility never gates, the IN_OVERLAY arm the overlay-open
+    /// frame alone serves). Fresh = [`DebugEntryStatus::Never`].
+    pub hitboxes_status: DebugEntryStatus,
     /// THE DEBUG OPTIONS' OWN PROFILE BANK (javap 26.2
     /// DebugScreenEntryList's `profile` field — the
     /// `isUsingProfile(profile)` identity the `addProfileButton`
     /// walk reads, the `resetToProfile` putfield the load walk
-    /// serves): false = the DEFAULT profile the fresh client keeps
-    /// (the `DebugScreenProfile.DEFAULT` arm), true = the
-    /// PERFORMANCE profile the button click loads. The profile's
-    /// OWN PRESET the flags reset speaks — the vanilla DEFAULT map
-    /// none of the client's renderer entries wear (the nine
-    /// IN_OVERLAY text rows the clinit tail banks), the PERFORMANCE
-    /// map the FPS `ALWAYS_ON` word alone the client's own store
-    /// keeps (the fps_charts flag the raise serves — the vanilla
-    /// preset's own perf entry the honest approximation wears).
-    pub debug_profile_performance: bool,
+    /// serves): `Some(false)` = the DEFAULT profile the fresh client
+    /// keeps (the `DebugScreenProfile.DEFAULT` arm), `Some(true)` =
+    /// the PERFORMANCE profile the button click loads, `None` = the
+    /// profile the pill's OWN `setStatus` walk BROKE (the putfield
+    /// null the manual touch speaks — the `OptionEntry.setValue` arm
+    /// the identity retires, the BOTH profile buttons the active law
+    /// re-arms). The profile's OWN PRESET the flags reset speaks —
+    /// the vanilla DEFAULT map none of the client's renderer entries
+    /// wear (the nine IN_OVERLAY text rows the clinit tail banks),
+    /// the PERFORMANCE map the FPS `ALWAYS_ON` word alone the
+    /// client's own store keeps (the fps_charts flag the raise
+    /// serves — the vanilla preset's own perf entry the honest
+    /// approximation wears).
+    pub debug_profile: Option<bool>,
     /// THE CLIENT'S OWN BELIEVED GAME MODE (the 26.2
     /// MultiPlayerGameMode.getPlayerMode's client-side belief — the
     /// survival default the vanilla world creation keeps, the F4
@@ -11170,9 +11203,9 @@ impl App {
             profiler_tree_path: "root".to_string(),
             profiler_results: None,
             network_charts: false,
-            chunk_borders: false,
-            hitboxes: false,
-            debug_profile_performance: false,
+            chunk_borders_status: DebugEntryStatus::Never,
+            hitboxes_status: DebugEntryStatus::Never,
+            debug_profile: Some(false),
             game_mode: GameMode::Survival,
             previous_game_mode: None,
             keep_inventory: false,
@@ -27070,7 +27103,14 @@ impl App {
                         computer, crash the game, or eat your pet rock.",
         );
         let coral: [f32; 3] = [223.0 / 255.0, 101.0 / 255.0, 80.0 / 255.0];
-        let tan: [f32; 3] = [186.0 / 255.0, 158.0 / 255.0, 58.0 / 255.0];
+        // THE TAN'S OWN CORRECTION (the -4539718 the clinit's copy speaks
+        // — 0xFFBAA13A the two's-complement fold: (186, 161, 58), the
+        // 158 the old fold's drift the honest byte retires)
+        let tan: [f32; 3] = [186.0 / 255.0, 161.0 / 255.0, 58.0 / 255.0];
+        // THE OVERLAY PILL'S OWN YELLOW (the -171 the ctor's copy speaks
+        // — 0xFFFFFF55 the fold: (255, 255, 85), the IN_OVERLAY pill's
+        // ON arm the ENABLED coral and the DISABLED white never wear)
+        let yellow: [f32; 3] = [1.0, 1.0, 85.0 / 255.0];
         let wlines = wrap_lines(g, warning, w - 50);
         for (i, line) in wlines.iter().enumerate() {
             g.text_centered(a, cx, 44 + i as i32 * 9, line, coral, false);
@@ -27093,7 +27133,7 @@ impl App {
             py,
             120,
         );
-        dflt.active = self.debug_profile_performance;
+        dflt.active = self.debug_profile != Some(false);
         self.buttons.push(dflt);
         let mut perf = Button::new(
             "dbgprofperf",
@@ -27104,7 +27144,7 @@ impl App {
             py,
             120,
         );
-        perf.active = !self.debug_profile_performance;
+        perf.active = self.debug_profile != Some(true);
         self.buttons.push(perf);
         // THE ENTRIES' OWN ROWS (the refreshEntries walk — the
         // category header the label() word keeps, the rows the
@@ -27117,49 +27157,34 @@ impl App {
         let ry = py + 20 + 8;
         let cat = tr("debug.options.category.renderer").unwrap_or("Debug Renderers");
         g.text_centered(a, cx, ry, cat, [0.6, 0.6, 0.6], false);
-        let rows: [(&str, bool, &str, &str); 2] = [
+        let rows: [(&str, DebugEntryStatus, &str, &str, &str); 2] = [
             (
                 "chunk_borders",
-                self.chunk_borders,
+                self.chunk_borders_status,
                 "dbgoff_border",
+                "dbgoverlay_border",
                 "dbgalways_border",
             ),
             (
                 "entity_hitboxes",
-                self.hitboxes,
+                self.hitboxes_status,
                 "dbgoff_hitboxes",
+                "dbgoverlay_hitboxes",
                 "dbgalways_hitboxes",
             ),
         ];
-        for (i, (path, on, off_id, always_id)) in rows.iter().enumerate() {
+        for (i, (path, status, off_id, overlay_id, always_id)) in rows.iter().enumerate() {
             let row_y = ry + 11 + i as i32 * 24;
             // THE LITERAL-PATH LABEL (the extractContent walk — the
             // `font.text(name, x, y+5, allowed ? -1 : gray)` the white
             // word wears, the allowed rows the client's
             // reduced-info-never constant keeps)
             g.text(a, 24, row_y + 6, path, WHITE, false);
-            // THE ALWAYS PILL (the CycleButton the `ENABLED_TEXT` words
-            // keep — the selected arm the coral label wears, the
-            // unselected the tan keeps, the sprite the widget chrome
-            // banks)
-            let always_x = w - 24 - 116;
-            let always_sel = *on;
-            let mut always = Button::new(always_id, String::new(), always_x + 56, row_y, 56);
-            always.active = true;
-            self.buttons.push(always);
-            g.sprite_9slice(a, "widget/button", always_x, row_y, 56, 20);
-            g.text_centered(
-                a,
-                always_x + 28,
-                row_y + 6,
-                tr("debug.entry.always").unwrap_or("Always"),
-                if always_sel { coral } else { tan },
-                true,
-            );
-            // THE OFF PILL (the DISABLED_TEXT the OPTION_OFF words
-            // keep — the same color law the builder's pairs wear)
-            let off_x = w - 24 - 56;
-            let off_sel = !*on;
+            // THE OFF PILL (the DISABLED_TEXT the OPTION_OFF word keeps
+            // — the ON arm the WHITE -1 color the clinit's copy speaks,
+            // the unselected the tan keeps; the vanilla order the
+            // extractContent x walk banks: the never pill LEFTMOST)
+            let off_x = w - 24 - 168;
             let mut off = Button::new(off_id, String::new(), off_x + 28, row_y, 56);
             off.active = true;
             self.buttons.push(off);
@@ -27169,7 +27194,54 @@ impl App {
                 off_x + 28,
                 row_y + 6,
                 tr("options.off").unwrap_or("Off"),
-                if off_sel { coral } else { tan },
+                if *status == DebugEntryStatus::Never {
+                    WHITE
+                } else {
+                    tan
+                },
+                true,
+            );
+            // THE IN OVERLAY PILL (the IN_OVERLAY_TEXT the
+            // `debug.entry.overlay` word keeps — the ON arm the YELLOW
+            // -171 color the clinit's copy speaks: 0xFFFFFF55 the
+            // two's-complement fold answers, the unselected the tan
+            // keeps)
+            let overlay_x = w - 24 - 112;
+            let mut overlay = Button::new(overlay_id, String::new(), overlay_x + 28, row_y, 56);
+            overlay.active = true;
+            self.buttons.push(overlay);
+            g.sprite_9slice(a, "widget/button", overlay_x, row_y, 56, 20);
+            g.text_centered(
+                a,
+                overlay_x + 28,
+                row_y + 6,
+                tr("debug.entry.overlay").unwrap_or("In Overlay"),
+                if *status == DebugEntryStatus::Overlay {
+                    yellow
+                } else {
+                    tan
+                },
+                true,
+            );
+            // THE ALWAYS PILL (the ENABLED_TEXT the
+            // `debug.entry.always` word keeps — the ON arm the coral
+            // -2142128 color speaks, the unselected the tan keeps; the
+            // vanilla order the ALWAYS pill RIGHTMOST wears)
+            let always_x = w - 24 - 56;
+            let mut always = Button::new(always_id, String::new(), always_x + 28, row_y, 56);
+            always.active = true;
+            self.buttons.push(always);
+            g.sprite_9slice(a, "widget/button", always_x, row_y, 56, 20);
+            g.text_centered(
+                a,
+                always_x + 28,
+                row_y + 6,
+                tr("debug.entry.always").unwrap_or("Always"),
+                if *status == DebugEntryStatus::Always {
+                    coral
+                } else {
+                    tan
+                },
                 true,
             );
         }
@@ -36958,32 +37030,51 @@ impl App {
                 // speaks (the isUsingProfile identity the buttons'
                 // active law reads)
                 "dbgprofdflt" => {
-                    self.debug_profile_performance = false;
+                    self.debug_profile = Some(false);
                     self.fps_charts = false;
-                    self.chunk_borders = false;
-                    self.hitboxes = false;
+                    self.chunk_borders_status = DebugEntryStatus::Never;
+                    self.hitboxes_status = DebugEntryStatus::Never;
                 }
                 "dbgprofperf" => {
-                    self.debug_profile_performance = true;
+                    self.debug_profile = Some(true);
                     self.fps_charts = true;
-                    self.chunk_borders = false;
-                    self.hitboxes = false;
+                    self.chunk_borders_status = DebugEntryStatus::Never;
+                    self.hitboxes_status = DebugEntryStatus::Never;
                 }
                 // THE ENTRY ROWS' OWN PILLS (javap 26.2 the
                 // OptionEntry CycleButton trio — the click the
-                // `setValue(id, status)` walk serves, the client's
-                // two-state store the ALWAYS/NEVER arms wear: the
-                // coral `Always` pill the flag's true banks, the tan
-                // `Off` pill the false keeps, the IN OVERLAY arm the
-                // client's store never keeps the tri-state law's own
-                // third value speaks). The same flags the F3+G/F3+B
-                // chords flip — the toggleStatus walk's own law the
-                // renderer list keeps INDEPENDENT of the overlay's
-                // own visibility
-                "dbgalways_border" => self.chunk_borders = true,
-                "dbgoff_border" => self.chunk_borders = false,
-                "dbgalways_hitboxes" => self.hitboxes = true,
-                "dbgoff_hitboxes" => self.hitboxes = false,
+                // `setValue(id, status)` walk serves: the lambda trio
+                // the ALWAYS_ON / IN_OVERLAY / NEVER statuses speak,
+                // the `setStatus` walk the profile field the NULL
+                // putfield answers (the manual touch the identity
+                // BREAKS — the both profile buttons the active law
+                // re-arms), the tri-state store the THREE arms wear).
+                // The same statuses the F3+G/F3+B chords' toggleStatus
+                // cycle walks
+                "dbgalways_border" => {
+                    self.chunk_borders_status = DebugEntryStatus::Always;
+                    self.debug_profile = None;
+                }
+                "dbgoverlay_border" => {
+                    self.chunk_borders_status = DebugEntryStatus::Overlay;
+                    self.debug_profile = None;
+                }
+                "dbgoff_border" => {
+                    self.chunk_borders_status = DebugEntryStatus::Never;
+                    self.debug_profile = None;
+                }
+                "dbgalways_hitboxes" => {
+                    self.hitboxes_status = DebugEntryStatus::Always;
+                    self.debug_profile = None;
+                }
+                "dbgoverlay_hitboxes" => {
+                    self.hitboxes_status = DebugEntryStatus::Overlay;
+                    self.debug_profile = None;
+                }
+                "dbgoff_hitboxes" => {
+                    self.hitboxes_status = DebugEntryStatus::Never;
+                    self.debug_profile = None;
+                }
                 _ => {}
             }
             // vanilla AbstractButton.playDownSound: EVERY activated button
@@ -40371,8 +40462,32 @@ impl App {
     /// modifier-spent flag the bare F3 release gate reads rides —
     /// the chord the F3 modifier's own family joins.
     pub fn on_chunk_borders_key(&mut self) {
-        self.chunk_borders = !self.chunk_borders;
-        let word = if self.chunk_borders {
+        // THE TOGGLESTATUS WALK (javap 26.2 DebugScreenEntryList
+        // .toggleStatus — the ordinal switch the store's own law wears:
+        // the NEVER arm the ALWAYS_ON raise serves, the ALWAYS_ON arm
+        // the overlay-open frame the NEVER answer wears, the
+        // overlay-closed frame the SAME seat re-asserts, the
+        // IN_OVERLAY arm the overlay-open frame the same seat keeps,
+        // the overlay-closed frame the ALWAYS_ON PROMOTE serves)
+        self.chunk_borders_status = match self.chunk_borders_status {
+            DebugEntryStatus::Always => {
+                if self.debug_held {
+                    DebugEntryStatus::Never
+                } else {
+                    DebugEntryStatus::Always
+                }
+            }
+            DebugEntryStatus::Overlay => {
+                if self.debug_held {
+                    DebugEntryStatus::Overlay
+                } else {
+                    DebugEntryStatus::Always
+                }
+            }
+            DebugEntryStatus::Never => DebugEntryStatus::Always,
+        };
+        let shown = self.chunk_borders_status == DebugEntryStatus::Always;
+        let word = if shown {
             "\u{a7}eChunk borders: shown"
         } else {
             "\u{a7}eChunk borders: hidden"
@@ -40398,8 +40513,29 @@ impl App {
     /// release gate reads rides — the chord the F3 modifier's own
     /// family joins.
     pub fn on_hitboxes_key(&mut self) {
-        self.hitboxes = !self.hitboxes;
-        let word = if self.hitboxes {
+        // THE TOGGLESTATUS WALK (the same ordinal switch the
+        // chunk-border chord wears — the ENTITY_HITBOXES id the
+        // `toggleStatus` call carries, the cycle the store's own law
+        // answers)
+        self.hitboxes_status = match self.hitboxes_status {
+            DebugEntryStatus::Always => {
+                if self.debug_held {
+                    DebugEntryStatus::Never
+                } else {
+                    DebugEntryStatus::Always
+                }
+            }
+            DebugEntryStatus::Overlay => {
+                if self.debug_held {
+                    DebugEntryStatus::Overlay
+                } else {
+                    DebugEntryStatus::Always
+                }
+            }
+            DebugEntryStatus::Never => DebugEntryStatus::Always,
+        };
+        let shown = self.hitboxes_status == DebugEntryStatus::Always;
+        let word = if shown {
             "\u{a7}eHitboxes: shown"
         } else {
             "\u{a7}eHitboxes: hidden"
@@ -57793,7 +57929,16 @@ impl App {
         // 0..CHUNK_Y span answers). The draw rides BEFORE the dig
         // lane's wireframe (the debug gizmos the level render's own
         // tail keeps).
-        if self.chunk_borders {
+        // THE ACTIVE LAW (the rebuildCurrentList walk the render gate
+        // wears — the ALWAYS_ON entry the list ALWAYS joins, the
+        // IN_OVERLAY entry the `isOverlayVisible` frame ALONE serves,
+        // the NEVER arm the silent world keeps)
+        let borders_active = match self.chunk_borders_status {
+            DebugEntryStatus::Always => true,
+            DebugEntryStatus::Overlay => self.debug_held,
+            DebugEntryStatus::Never => false,
+        };
+        if borders_active {
             let cam_block = self
                 .body
                 .as_ref()
@@ -57820,7 +57965,15 @@ impl App {
         // banks — the hitbox arm the list's tail keeps) and BEFORE the
         // dig lane's wireframe (the debug gizmos the level render's own
         // tail keeps).
-        if self.hitboxes {
+        // THE ACTIVE LAW (the same rebuild walk the hitbox arm wears —
+        // the ALWAYS_ON entry always joins, the IN_OVERLAY arm the
+        // overlay-open frame alone serves)
+        let hitboxes_active = match self.hitboxes_status {
+            DebugEntryStatus::Always => true,
+            DebugEntryStatus::Overlay => self.debug_held,
+            DebugEntryStatus::Never => false,
+        };
+        if hitboxes_active {
             let (hb_lines, hb_points) = self.entity_hitbox_gizmos();
             fb.draw_debug_lines(&ctx, &hb_lines);
             fb.draw_debug_points(&ctx, &hb_points);
