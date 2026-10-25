@@ -2184,7 +2184,22 @@ pub fn run_gui_app(
         // clicks never pass — the open chat the attack/use lanes keep
         // silent, the edge-state tracking the close's honesty keeps)
         if left_down && !app.chat_open {
-            app.on_click(gmx, gmy);
+            // THE DEBUG SEARCH BOX'S OWN FOCUS WALK (the EditBox
+            // mouseClicked lane the vanilla Screen's widget walk keeps:
+            // the inside click the `setFocused(true)` re-arm the TRUE
+            // consumed answer wears — the caller's buttons walk the
+            // return skips —, the outside click the focus-transfer law
+            // the widget loses, the pills the next focusable arms)
+            if app.screen == crate::screens::ScreenKind::DebugOptions
+                && app.on_debug_options_box_click(gmx, gmy, width as i32 / 2)
+            {
+                // the box the click consumes — the buttons walk skips
+            } else {
+                if app.screen == crate::screens::ScreenKind::DebugOptions {
+                    app.debug_search_focus = false;
+                }
+                app.on_click(gmx, gmy);
+            }
         }
         // the LEFT press's rising edge routes the press WITH its
         // position (the vanilla MouseHandler's own dispatch): the chest

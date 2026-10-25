@@ -19230,6 +19230,27 @@ fn the_debug_search_the_responder_the_filter_wears() {
         DebugEntryStatus::Never,
         "the filtered row's pill the same store wears"
     );
+    // THE FOCUS TRANSFER'S OWN LAW (the outside click the widget the
+    // focus loses — the pill the next focusable the vanilla walk
+    // arms, the caret the unfocused frame never draws)
+    assert_eq!(
+        app.debug_search_focus, false,
+        "the pill click the box the focus retires"
+    );
+    // THE FOCUSED GATE'S OWN VERDICT (the unfocused box the chars
+    // never banks — the canConsumeInput law the lanes keep)
+    app.on_debug_options_char('z');
+    assert_eq!(
+        app.debug_search, "FPS",
+        "the unfocused box the char refuses"
+    );
+    // THE BOX CLICK'S OWN RE-ARM (the inside click the setFocused(true)
+    // serves — the rowWidth/3 width the gui lane passes, the typing
+    // the re-focused box wears)
+    assert!(
+        app.on_debug_options_box_click(300, 25, 640),
+        "the inside click the box the focus re-arms"
+    );
     // THE BACKSPACE'S OWN WALK (the pops the word retires, the empty
     // query the WHOLE list keeps — the rebuild the biome row banks)
     for _ in 0..3 {
@@ -19262,6 +19283,86 @@ fn the_debug_search_the_responder_the_filter_wears() {
         app.debug_search.chars().count(),
         50,
         "the closed screen the gate keeps"
+    );
+}
+
+#[test]
+fn the_debug_search_box_the_click_focus_wears() {
+    fn count_white(fb: &crate::raster::Framebuf, x0: i32, y0: i32, w: i32, h: i32) -> usize {
+        let mut n = 0usize;
+        for y in (y0.max(0) as usize)..((y0 + h).min(fb.h as i32) as usize) {
+            for x in (x0.max(0) as usize)..((x0 + w).min(fb.w as i32) as usize) {
+                let i = (y * fb.w + x) * 3;
+                if fb.color[i] == 255 && fb.color[i + 1] == 255 && fb.color[i + 2] == 255 {
+                    n += 1;
+                }
+            }
+        }
+        n
+    }
+    let mut app = App::new(3);
+    app.enter_world();
+    // the open arm the DebugOptions serves
+    app.on_debug_options_key();
+    // THE INITIAL FOCUS'S OWN SEAT (the vanilla init's setInitialFocus
+    // the fresh screen arms — the typed word the caret the blink law
+    // draws)
+    assert_eq!(
+        app.debug_search_focus, true,
+        "the fresh screen the box the focus wears"
+    );
+    let mut fb = crate::raster::Framebuf::new(640, 360);
+    let mut assets = GuiAssets::open(assets_root());
+    for c in "fps".chars() {
+        app.on_debug_options_char(c);
+    }
+    assert_eq!(app.debug_search, "fps", "the focused box the word banks");
+    // THE CARET'S OWN FOCUS GATE (the blink law ONLY the focused
+    // frame draws — the SAME frame the two renders keep (the
+    // scramble + the blink phase the identical render wears), the
+    // focused band the caret's white wears, the unfocused the glyphs
+    // alone)
+    app.frame = 0; // the (frame/6)%2 phase the caret frame wears
+    app.render(&mut fb, &mut assets);
+    let focused = count_white(&fb, 214, 20, 213, 20);
+    app.debug_search_focus = false;
+    app.render(&mut fb, &mut assets);
+    let unfocused = count_white(&fb, 214, 20, 213, 20);
+    assert!(
+        focused > unfocused,
+        "the focused frame the caret's white wears"
+    );
+    // THE OUTSIDE CLICK'S OWN VERDICT (the FALSE the caller the
+    // focus-transfer answers — the box the focus keeps OFF)
+    assert!(
+        !app.on_debug_options_box_click(30, 100, 640),
+        "the outside click the FALSE the caller wears"
+    );
+    assert_eq!(
+        app.debug_search_focus, false,
+        "the outside click the focus keeps off"
+    );
+    // THE INSIDE CLICK'S OWN RE-ARM (the TRUE the consumed answer
+    // wears — the typing the re-focused box wears)
+    assert!(
+        app.on_debug_options_box_click(300, 25, 640),
+        "the inside click the TRUE wears"
+    );
+    assert_eq!(
+        app.debug_search_focus, true,
+        "the inside click the focus re-arms"
+    );
+    app.on_debug_options_char('x');
+    assert_eq!(
+        app.debug_search, "fpsx",
+        "the re-focused box the char banks"
+    );
+    // THE CLOSED SCREEN'S OWN GATE (the non-debug screen the lane
+    // never arms — the FALSE the focus walk keeps)
+    app.on_debug_options_key(); // the close arm
+    assert!(
+        !app.on_debug_options_box_click(300, 25, 640),
+        "the closed screen the walk refuses"
     );
 }
 // THE DEBUG PROFILE FILE'S OWN ROUND TRIP (javap 26.2 the

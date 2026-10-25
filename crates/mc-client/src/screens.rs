@@ -9725,6 +9725,13 @@ pub struct App {
     /// keeps). The filter the [`Self::debug_search_hit`] walk reads —
     /// the case-insensitive ask the picker's own refresh law speaks).
     pub debug_search: String,
+    /// THE SEARCH BOX'S OWN FOCUS (the EditBox `isFocused` state the
+    /// vanilla init's `setInitialFocus(searchBox)` arms — the ctor the
+    /// FOCUSED seat keeps, the caret the blink law ONLY the focused
+    /// frame draws, the char/backspace lanes the canConsumeInput gate
+    /// keeps, the box click the focus the re-arm serves, the outside
+    /// click the focus the widget-transfer law retires).
+    pub debug_search_focus: bool,
     /// THE DEBUG OPTIONS' OWN PROFILE BANK (javap 26.2
     /// DebugScreenEntryList's `profile` field — the
     /// `isUsingProfile(profile)` identity the `addProfileButton`
@@ -11335,6 +11342,7 @@ impl App {
             debug_entry_states: [DebugEntryStatus::Never; 45],
             debug_scroll: 0.0,
             debug_search: String::new(),
+            debug_search_focus: true,
             debug_profile: Some(false),
             game_mode: GameMode::Survival,
             previous_game_mode: None,
@@ -21603,6 +21611,10 @@ impl App {
         if kind == ScreenKind::DebugOptions {
             self.debug_search.clear();
             self.debug_scroll = 0.0;
+            // THE INITIAL FOCUS'S OWN RE-ARM (the vanilla init's
+            // setInitialFocus the fresh screen answers — the re-open
+            // the box the typed-word seat keeps)
+            self.debug_search_focus = true;
         }
         // THE TOGGLE KEYMAPPINGS' OWN SCREEN DANCE (the vanilla
         // Gui.setScreen walk — the pc 215 `KeyMapping.releaseAll()` the
@@ -27239,7 +27251,7 @@ impl App {
         } else {
             g.text(a, bx + 4, 26, &self.debug_search, WHITE, false);
             let tw = g.text_width(&self.debug_search);
-            if (self.frame / 6) % 2 == 0 {
+            if (self.frame / 6) % 2 == 0 && self.debug_search_focus {
                 g.fill(bx + 4 + tw + 1, 26, 1, 8, [1.0, 1.0, 1.0, 1.0]);
             }
         }
@@ -34229,7 +34241,10 @@ impl App {
     /// length 50 the picker's own law keeps, the scroll the rebuild's
     /// TOP reset speaks).
     pub fn on_debug_options_char(&mut self, c: char) {
-        if self.screen != ScreenKind::DebugOptions || self.debug_search.chars().count() >= 50 {
+        if self.screen != ScreenKind::DebugOptions
+            || !self.debug_search_focus
+            || self.debug_search.chars().count() >= 50
+        {
             return;
         }
         self.debug_search.push(c);
@@ -34240,12 +34255,35 @@ impl App {
     /// the popped char the rebuild answers, the scroll the same top
     /// reset wears).
     pub fn on_debug_options_backspace(&mut self) {
-        if self.screen != ScreenKind::DebugOptions {
+        if self.screen != ScreenKind::DebugOptions || !self.debug_search_focus {
             return;
         }
         if self.debug_search.pop().is_some() {
             self.debug_scroll = 0.0;
         }
+    }
+
+    /// THE SEARCH BOX'S OWN CLICK FOCUS (the EditBox.mouseClicked walk
+    /// — the inside click the `setFocused(true)` re-arm serves, the
+    /// TRUE the consumed click returns (the caller's buttons walk the
+    /// return skips — the box the pill rows never overlap), the
+    /// outside click the FALSE the caller the focus-transfer answers
+    /// (the widget the focus loses — the pills the next focusable
+    /// the vanilla walk arms)). The rect the render's own box law
+    /// keeps — the `rowWidth/3` width + the 20px band the ctor
+    /// speaks, the caller the gui width passes (the window lane the
+    /// framebuffer's own scale answers).
+    pub fn on_debug_options_box_click(&mut self, mx: i32, my: i32, gui_w: i32) -> bool {
+        if self.screen != ScreenKind::DebugOptions {
+            return false;
+        }
+        let box_w = (gui_w / 3).max(80);
+        let bx = gui_w / 2 - box_w / 2;
+        let inside = my >= 20 && my < 40 && mx >= bx && mx < bx + box_w;
+        if inside {
+            self.debug_search_focus = true;
+        }
+        inside
     }
 
     /// THE FILTER'S OWN LAW (the updateSearch `path.contains(query)`
@@ -37421,6 +37459,9 @@ impl App {
                     // IN_OVERLAY rows the resetStatuses walk serves)
                     self.debug_profile_preset_apply(&DEBUG_PRESET_DEFAULT);
                     self.debug_profile_save();
+                    // THE FOCUS TRANSFER'S OWN LAW (the preset button the
+                    // next focusable the vanilla walk arms)
+                    self.debug_search_focus = false;
                 }
                 "dbgprofperf" => {
                     self.debug_profile = Some(true);
@@ -37430,6 +37471,9 @@ impl App {
                     // ALWAYS_ON word the resetStatuses walk serves)
                     self.debug_profile_preset_apply(&DEBUG_PRESET_PERFORMANCE);
                     self.debug_profile_save();
+                    // THE FOCUS TRANSFER'S OWN LAW (the preset button the
+                    // next focusable the vanilla walk arms)
+                    self.debug_search_focus = false;
                 }
                 // THE ENTRY ROWS' OWN PILLS (javap 26.2 the
                 // OptionEntry CycleButton trio — the click the
@@ -37448,6 +37492,10 @@ impl App {
                             self.debug_entry_states[idx] = DebugEntryStatus::Always;
                             self.debug_profile = None;
                             self.debug_profile_save();
+                            // THE FOCUS TRANSFER'S OWN LAW (the pill the
+                            // next focusable the vanilla walk arms — the
+                            // box the focus loses)
+                            self.debug_search_focus = false;
                         }
                     }
                 }
@@ -37457,6 +37505,10 @@ impl App {
                             self.debug_entry_states[idx] = DebugEntryStatus::Overlay;
                             self.debug_profile = None;
                             self.debug_profile_save();
+                            // THE FOCUS TRANSFER'S OWN LAW (the pill the
+                            // next focusable the vanilla walk arms — the
+                            // box the focus loses)
+                            self.debug_search_focus = false;
                         }
                     }
                 }
@@ -37466,6 +37518,10 @@ impl App {
                             self.debug_entry_states[idx] = DebugEntryStatus::Never;
                             self.debug_profile = None;
                             self.debug_profile_save();
+                            // THE FOCUS TRANSFER'S OWN LAW (the pill the
+                            // next focusable the vanilla walk arms — the
+                            // box the focus loses)
+                            self.debug_search_focus = false;
                         }
                     }
                 }
