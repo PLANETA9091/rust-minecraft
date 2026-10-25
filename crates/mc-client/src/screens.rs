@@ -8854,6 +8854,12 @@ pub struct App {
     /// clears). The inventory press walk arms it, the release walk
     /// spends it.
     pub inv_doubleclick: bool,
+    /// THE CONTAINER REMOVED RIDE'S OWN FLAG (the autopush-225 walk —
+    /// the close walks' install tail the open() re-entry answers: the
+    /// removed() law the transition answers ONCE, the takeover's own
+    /// open the flag-false seat the walk first serves — the double-open
+    /// churn the second ride never speaks)
+    pub container_removed_rode: bool,
     /// THE SCREEN'S OWN LAST-CLICK SEAT (the `lastClickSlot` field —
     /// the mouseClicked walk pcs 386-389 the hovered slot the press
     /// remembers, the null the None keeps): the next press's flag
@@ -10921,6 +10927,7 @@ impl App {
             shift_down: false,
             press_doubled: false,
             inv_doubleclick: false,
+            container_removed_rode: false,
             inv_last_click_slot: None,
             qc_armed: false,
             qc_type: 0,
@@ -21315,6 +21322,34 @@ impl App {
         // speaks, the typed text the draft bank survives scripts/
         // jar_work/chatscreen_49.txt the shouldDiscardDraft fold)
         self.close_chat_interrupted();
+        // THE CONTAINER SEATS' OWN REMOVED MOMENT (the vanilla
+        // Minecraft.setScreen walk the OLD screen's removed() FIRST
+        // answers — the autopush-224 law the F3+F6 interrupt lane
+        // alone wore, the open() ride the WHOLE client's setScreen
+        // walk now serves: the server-driven open, the disconnect,
+        // the title return the container seat overtake the carried
+        // stack home returns, the store flush + the lid the
+        // container's own death speaks, the window belief dies with
+        // the screen — the SAME walk the back seat installs). THE
+        // TAIL'S OWN FLAG (the close walks' `open(back)` install the
+        // re-entrant call answers — the flag the tail set this
+        // consumed: the removed law the transition answers ONCE, the
+        // double-open churn the second ride never speaks)
+        if !self.container_removed_rode
+            && matches!(
+                self.screen,
+                ScreenKind::Inventory
+                    | ScreenKind::Chest
+                    | ScreenKind::Dispenser
+                    | ScreenKind::Furnace
+                    | ScreenKind::Crafting
+                    | ScreenKind::Creative
+            )
+        {
+            self.container_seats_removed(kind);
+            return; // the tail's open(kind) the whole dance wore
+        }
+        self.container_removed_rode = false;
         // THE BUNDLE CONTENTS' OWN LIFECYCLE (the map's window-scoped
         // rows): any container switch resets the fold's stale
         // remainder, and the ROWS follow the window's ownership — a
@@ -22024,6 +22059,7 @@ impl App {
         // trio the reopen wears; the None the live-lane opens keep,
         // the networked furnace the server's own authority owns).
         self.furnace_store_flush();
+        self.container_removed_rode = true; // the removed law rode
         self.open(back);
     }
 
@@ -22137,6 +22173,7 @@ impl App {
         // seat the NEW screen instance the reopen builds never inherits)
         self.inv_doubleclick = false;
         self.inv_last_click_slot = None;
+        self.container_removed_rode = true; // the removed law rode
         self.open(back);
     }
 
@@ -23840,6 +23877,7 @@ impl App {
             // precedent the follow-up banks)
             self.creative_swap_live_words(&words);
         }
+        self.container_removed_rode = true; // the removed law rode
         self.open(back);
     }
 
@@ -24247,6 +24285,7 @@ impl App {
             self.dispenser_live_window = None;
             self.live_dispenser_title = None; // the title dies with the window
             self.dispenser_carried = (0, 0);
+            self.container_removed_rode = true; // the removed law rode
             self.open(back);
             return;
         }
@@ -24297,6 +24336,7 @@ impl App {
             self.attach_wire_voice(pos.0, pos.1, pos.2);
         }
         self.dispenser_open_kind = 0;
+        self.container_removed_rode = true; // the removed law rode
         self.open(back);
     }
 
@@ -24761,6 +24801,7 @@ impl App {
             self.table_live_window = None;
             self.live_table_title = None; // the title dies with the window
             self.live_table_carried = (0, 0);
+            self.container_removed_rode = true; // the removed law rode
             self.open(back);
             return;
         }
@@ -24829,6 +24870,7 @@ impl App {
         }
         self.hotbar_slots = self.inventory.hotbar();
         self.table_result = (0, 0);
+        self.container_removed_rode = true; // the removed law rode
         self.open(back);
     }
 
@@ -28148,12 +28190,21 @@ impl App {
     /// walk the whole close rides).
     pub fn close_chest_container(&mut self, back: ScreenKind) {
         let was_live = self.chest_is_live;
+        let was_live_window = self.chest_live_window.is_some();
         if was_live {
             if let (Some((window_id, _)), Some(sink)) =
                 (self.chest_live_window, self.live_clicks.as_ref())
             {
                 let _ = sink.send(crate::world_view::ContainerCommand::Close { window_id });
             }
+        }
+        // THE WINDOW-SCOPED ROWS' OWN DEATH (the bundle lifecycle the
+        // open() switch keeps — the live window's ids the numeric-domain
+        // share keeps honest: the rows the window carried die WITH it,
+        // the next container re-learns — the belief the walk captures
+        // BEFORE the window's own null speaks)
+        if was_live_window {
+            self.bundle_contents.clear();
         }
         self.chest_is_live = false;
         self.chest_live_window = None;
@@ -28162,6 +28213,7 @@ impl App {
         self.chest_carried = (0, 0);
         self.container_store_flush();
         self.barrel_lid_released();
+        self.container_removed_rode = true; // the removed law rode
         self.open(back);
     }
 

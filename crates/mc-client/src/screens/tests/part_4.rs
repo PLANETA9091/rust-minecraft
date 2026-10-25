@@ -17888,3 +17888,129 @@ fn the_debug_chord_interrupt_the_container_map_the_removed_wears() {
         "the chat seat the draft bank keeps"
     );
 }
+
+/// THE OPEN()'S OWN CONTAINER RIDE (javap 26.2 the Minecraft.setScreen
+/// walk the OLD screen's removed() FIRST answers — the autopush-224
+/// law the F3+F6 interrupt lane alone wore, the open() ride the WHOLE
+/// client's setScreen walk serves): the chest seat the disconnect
+/// takeover overtakes — the carried home returns, the store flush the
+/// GUI's own edit banks, the window belief dies, the SAME walk the
+/// back seat installs; the tail's flag the re-entry consumes (the
+/// removed law the transition answers ONCE).
+#[test]
+fn the_open_ride_the_chest_takeover_the_removed_wears() {
+    let dir = std::env::temp_dir().join(format!("mc2rs_openride_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&dir);
+    let stores = dir.join("stores.nbt");
+    let mut app = App::new(3);
+    app.container_stores_file = Some(stores);
+    let cell = (9, 41, 9);
+    // THE CHEST SEAT (the right-click lane's own open — the flush key
+    // the cell banks, the grid the fresh 27 the store inserts)
+    app.open_chest_for(cell);
+    assert_eq!(app.screen, ScreenKind::Chest, "the chest seat arms");
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.chest_slots[2] = (dirt, 4); // the GUI's own edit the flush banks
+    app.chest_carried = (dirt, 8);
+    // THE TAKEOVER (the open() ride — the disconnect the chest seat
+    // overtakes, the removed() law the walk FIRST answers)
+    app.open(ScreenKind::Disconnect);
+    assert_eq!(
+        app.screen,
+        ScreenKind::Disconnect,
+        "the takeover the SAME walk installs"
+    );
+    assert_eq!(
+        app.chest_carried,
+        (0, 0),
+        "the removed() walk the carried home returns"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (dirt, 8),
+        "the add-back walk the first empty slot takes"
+    );
+    assert_eq!(
+        app.hotbar_slots[0],
+        (dirt, 8),
+        "the HUD row the add-back syncs"
+    );
+    assert!(
+        !app.chest_is_live,
+        "the window belief the removed() discards"
+    );
+    assert!(
+        !app.container_removed_rode,
+        "the tail's flag the re-entry consumes"
+    );
+    // THE STORE'S OWN FLUSH (the removed walk's flush the GUI's own
+    // edit the map bank rides — the reopen the banked slot reads)
+    assert_eq!(
+        app.container_stores.get(&cell).map(|slots| slots[2]),
+        Some((dirt, 4)),
+        "the flush the GUI's own edit banks"
+    );
+    app.open_chest_for(cell);
+    assert_eq!(
+        app.chest_slots[2],
+        (dirt, 4),
+        "the reopen the banked slot reads"
+    );
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// THE CLOSE LANE'S OWN TAIL THE FLAG CONSUMES (the Escape walk the
+/// close_*(World) direct serves — the tail's `open(back)` the open()
+/// re-enters, the flag the tail set the re-entry consumes: the removed
+/// law the transition answers ONCE, the double-open churn the second
+/// ride never speaks); THE LAW RE-ARMS (the next takeover the
+/// flag-false seat the ride re-serves — the merge the add-back speaks).
+#[test]
+fn the_close_lane_tail_the_single_ride_the_reentry_wears() {
+    let mut app = App::new(3);
+    let cell = (11, 42, 11);
+    app.open_chest_for(cell);
+    assert_eq!(app.screen, ScreenKind::Chest, "the chest seat arms");
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.chest_carried = (dirt, 3);
+    // THE DIRECT CLOSE LANE (the Escape walk the close_*(World) serves)
+    app.close_chest_container(ScreenKind::World);
+    assert_eq!(app.screen, ScreenKind::World, "the close lane installs");
+    assert_eq!(
+        app.chest_carried,
+        (0, 0),
+        "the removed() walk the carried home returns"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (dirt, 3),
+        "the add-back walk the store takes"
+    );
+    assert!(
+        !app.container_removed_rode,
+        "the tail's flag the re-entry consumes — the ride ONCE"
+    );
+    // THE LAW RE-ARMS (the next takeover the flag-false seat rides —
+    // the merge the add-back speaks)
+    app.open_chest_for(cell);
+    app.chest_carried = (dirt, 2);
+    app.open(ScreenKind::World);
+    assert_eq!(app.screen, ScreenKind::World, "the takeover installs");
+    assert_eq!(
+        app.chest_carried,
+        (0, 0),
+        "the re-armed ride the carried homes"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (dirt, 5),
+        "the merge the add-back speaks"
+    );
+    assert!(!app.container_removed_rode, "the flag the ride consumes");
+}
