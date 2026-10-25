@@ -26635,6 +26635,10 @@ impl App {
                 }
             }
         }
+        // THE ITEM TOOLTIP (the extractTooltip pass — the hovered
+        // slot's own rows the flag wears, the topmost layer the
+        // panel and the carried stack keep under)
+        self.render_item_tooltip(g, a);
         // THE BUNDLE TOOLTIP (the renderTooltip pass — the hovered
         // bundle's contents grid the window-0 rows speak, the topmost
         // layer the panel and the carried stack keep under)
@@ -34409,6 +34413,129 @@ impl App {
         // the bar's own center the x+48/y+3 walk keeps)
         if let Some(s) = Self::bundle_progressbar_fill_text(view.total) {
             g.text_centered(a, bx + 48, by + 3, s, WHITE, true);
+        }
+    }
+
+    /// THE ITEM TOOLTIP'S OWN ROWS (the 26.2 Screen.getTooltipFromItem
+    /// -> ItemStack.getTooltipLines -> addDetailsToTooltip walk — the
+    /// honest rows the (id, count) model serves): the name row the
+    /// getStyledHoverName stand-in keeps (item_display_name the
+    /// house's registry-name law wears), the ADVANCED rows the flag
+    /// gates — the flag the `options.advancedItemTooltips
+    /// ? TooltipFlag.Default.ADVANCED : NORMAL` pc 13-31 arm the
+    /// Screen.getTooltipFromItem walk serves (the F3+H chord's own
+    /// field the flag IS). THE ID ROW (the addDetailsToTooltip pc
+    /// 602-632 arm — the `literal(BuiltInRegistries.ITEM.getKey(item)
+    /// .toString()).withStyle(DARK_GRAY)` law): the Item.toString pc
+    /// walk the getRegisteredName answers (`wrapAsHolder()
+    /// .getRegisteredName()` the pc 0-14 body keeps — the
+    /// `minecraft:<name>` word the registry id wears), the 0x555555
+    /// the DARK_GRAY §8 color keeps. THE MODEL'S OWN WALLS: the
+    /// durability row the pc 543-601 arm banks (`isDamaged() &&
+    /// display.shows(DAMAGE)` gate — the wire's stacks the damage
+    /// component never carry, the row the gate never lets speak; the
+    /// `item.durability` row the en_us table keeps, the WHITE the
+    /// withStyle-less arm wears) and the components row the pc
+    /// 633-673 arm banks (`components.size() > 0` gate — the
+    /// component map the (id, count) model never sees, the
+    /// `item.components` row the same silence keeps) — BOTH the
+    /// honest walls the model's own data keeps silent.
+    fn item_tooltip_rows(id: i32, advanced: bool) -> Vec<(String, [f32; 3])> {
+        let Some(reg) = mc_registry::item_name(id) else {
+            return Vec::new();
+        };
+        let mut rows = vec![(item_display_name(reg), WHITE)];
+        if advanced {
+            // THE ID ROW (the addDetailsToTooltip pc 602-632 arm — the
+            // registry name the DARK_GRAY wears)
+            rows.push((
+                format!("minecraft:{reg}"),
+                [0.3333, 0.3333, 0.3333], // 0x555555 — the DARK_GRAY §8
+            ));
+        }
+        rows
+    }
+
+    /// THE ITEM TOOLTIP'S OWN ORIGIN (the 26.2
+    /// DefaultTooltipPositioner.positionTooltip walk — the bytecode's
+    /// own law): the base the `new Vector2i(mouseX, mouseY).add(12,
+    /// -12)` pc 4-14 walk keeps, the right overflow the
+    /// `max(x - 24 - tooltipWidth, 4)` flip the pc 11-26 arm speaks,
+    /// the bottom the `tooltipHeight + 3` gap the pc 29-51 arm holds
+    /// (`y = screenHeight - (tooltipHeight + 3)`).
+    fn item_tooltip_origin(mx: i32, my: i32, tw: i32, th: i32, sw: i32, sh: i32) -> (i32, i32) {
+        let mut px = mx + 12;
+        let mut py = my - 12;
+        if px + tw > sw {
+            px = (px - 24 - tw).max(4);
+        }
+        if py + th + 3 > sh {
+            py = sh - th - 3;
+        }
+        (px, py)
+    }
+
+    /// THE ITEM TOOLTIP'S OWN GATE (the 26.2 AbstractContainerScreen
+    /// extractTooltip walk — pc 0-17 the `hoveredSlot == null ||
+    /// !hoveredSlot.hasItem()` return keeps, pc 27-46 the carried wall
+    /// the `showTooltipWithItemInHand` false answer serves — the
+    /// image-less stacks the Optional.empty().orElse(false) walk the
+    /// FALSE answer keeps, the carried non-empty the tooltip the wall
+    /// refuses): the (id, rows) the tooltip paints. The seat's stack
+    /// the round's own belief reads (the hotbar row the HUD belief,
+    /// the main rows the window-0 projection the live lane speaks,
+    /// the offline store the local truth).
+    fn item_tooltip_hover(&self, mx: i32, my: i32) -> Option<(i32, Vec<(String, [f32; 3])>)> {
+        let hover = self.inventory_hover(mx, my)?;
+        let (id, count) = match hover {
+            InventoryHover::Result => self.craft_result,
+            InventoryHover::Craft(cell) => self.craft_grid[cell],
+            InventoryHover::Armor(k) => self.inventory.armor[k],
+            InventoryHover::Offhand => self.inventory.offhand[0],
+            InventoryHover::Store(i) => {
+                if self.world_is_network {
+                    if i < 9 {
+                        self.hotbar_slots[i]
+                    } else {
+                        self.live_inv_slots[i]
+                    }
+                } else {
+                    self.inventory.items[i]
+                }
+            }
+        };
+        if count <= 0 {
+            return None; // the hasItem() gate
+        }
+        if self.inv_carried.1 > 0 {
+            return None; // the carried wall (the image-less false answer)
+        }
+        Some((id, Self::item_tooltip_rows(id, self.advanced_item_tooltips)))
+    }
+
+    /// THE ITEM TOOLTIP'S OWN RENDER (the extractTooltip pass — the
+    /// hovered slot's rows the flag wears, the panel the
+    /// renderTooltipBackground law paints, the positioner the
+    /// DefaultTooltipPositioner law serves): the topmost layer the
+    /// panel and the carried stack keep under. The headless scenes
+    /// track no mouse — the pixel goldens never see this pass.
+    fn render_item_tooltip(&mut self, g: &mut Gui, a: &mut GuiAssets) {
+        let Some((mx, my)) = self.mouse_pos else {
+            return; // the headless scenes track no mouse — no tooltip
+        };
+        let Some((_, rows)) = self.item_tooltip_hover(mx, my) else {
+            return; // the gates the tooltip refuses
+        };
+        if rows.is_empty() {
+            return; // the registry's own miss the name-less walk keeps
+        }
+        let tw = rows.iter().map(|(s, _)| g.text_width(s)).max().unwrap_or(0);
+        let w = tw + 6; // the 3px margins the tooltip box keeps
+        let h = rows.len() as i32 * 9 + 6;
+        let (tx, ty) = Self::item_tooltip_origin(mx, my, w, h, g.w(), g.h());
+        Self::paint_tooltip_background(g, tx, ty, w, h);
+        for (i, (s, color)) in rows.iter().enumerate() {
+            g.text(a, tx + 3, ty + 3 + 9 * i as i32, s, *color, true);
         }
     }
 

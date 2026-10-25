@@ -15632,3 +15632,137 @@ fn the_cycle_spectator_chord_the_wire_packet_the_no_prediction() {
     assert!(app.debug_modifier_used, "the modifier the chord spends");
     let _ = app;
 }
+
+// === autopush-210: THE ITEM TOOLTIP'S OWN RENDER ===
+
+/// THE ITEM TOOLTIP'S OWN ROWS (the 26.2 Screen.getTooltipFromItem ->
+/// addDetailsToTooltip walk — the name row the honest stand-in keeps,
+/// the ADVANCED ID row the pc 602-632 arm serves, the durability +
+/// components rows the model's own walls keep silent).
+#[test]
+fn the_item_tooltip_rows_the_name_row_the_advanced_id_row_wear() {
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    // THE NORMAL FLAG (the options.advancedItemTooltips false the
+    // pc 16-19 ifeq arm serves — the name row ALONE the list keeps)
+    assert_eq!(
+        App::item_tooltip_rows(dirt, false),
+        vec![("Dirt".to_string(), [1.0, 1.0, 1.0])],
+        "the name row the white the stand-in wears"
+    );
+    // THE ADVANCED FLAG (the TooltipFlag.Default.ADVANCED the pc 22
+    // arm serves — the ID row the pc 602-632 arm banks, the
+    // `minecraft:<name>` word the Item.toString's getRegisteredName
+    // answers, the 0x555555 the DARK_GRAY keeps)
+    let rows = App::item_tooltip_rows(dirt, true);
+    assert_eq!(
+        rows,
+        vec![
+            ("Dirt".to_string(), [1.0, 1.0, 1.0]),
+            ("minecraft:dirt".to_string(), [0.3333, 0.3333, 0.3333]),
+        ],
+        "the advanced walk the ID row the dark gray wears"
+    );
+    // THE MODEL'S OWN WALLS (the isDamaged gate the pc 543-547 arm
+    // keeps + the components.size() gate the pc 633-644 arm keeps —
+    // the wire's stacks the damage/component data never carry, the
+    // rows the walls never let speak)
+    assert_eq!(rows.len(), 2, "the walls the advanced list's tail holds");
+    let _ = rows;
+}
+
+/// THE ITEM TOOLTIP'S OWN ORIGIN (the DefaultTooltipPositioner walk —
+/// the base the +12/-12 add keeps, the right overflow the -24 flip
+/// the max-4 clamp holds, the bottom the +3 gap the screen edge
+/// answers).
+#[test]
+fn the_item_tooltip_origin_the_flip_the_bottom_the_max4_wear() {
+    // THE BASE (the `new Vector2i(mx, my).add(12, -12)` pc 4-14 walk)
+    assert_eq!(
+        App::item_tooltip_origin(100, 200, 50, 33, 640, 360),
+        (112, 188),
+        "the base the +12/-12 offsets keep"
+    );
+    // THE RIGHT OVERFLOW (the `max(x - 24 - tooltipWidth, 4)` flip the
+    // pc 11-26 arm serves: 112 + 50 = 162 > 140 -> max(112 - 24 - 50, 4) = 38)
+    assert_eq!(
+        App::item_tooltip_origin(100, 200, 50, 33, 140, 360),
+        (38, 188),
+        "the flip the room the left seat keeps"
+    );
+    // THE MAX-4 WALL (the flip's own floor the pc 22-26 arm keeps:
+    // 32 + 50 = 82 > 80 -> max(32 - 24 - 50, 4) = 4)
+    assert_eq!(
+        App::item_tooltip_origin(20, 200, 50, 33, 80, 360),
+        (4, 188),
+        "the deep flip the max-4 clamp answers"
+    );
+    // THE FLIP'S OWN ROOM (the mx+12-24-tw the positive lane wears:
+    // 600+12 = 612, 612 + 50 = 662 > 640 -> max(612 - 24 - 50, 4) = 538)
+    assert_eq!(
+        App::item_tooltip_origin(600, 200, 50, 33, 640, 360),
+        (538, 188),
+        "the mid-screen flip the room the cursor keeps"
+    );
+    // THE BOTTOM CLAMP (the `y = screenHeight - (tooltipHeight + 3)`
+    // pc 29-51 arm: 348 + 33 + 3 = 384 > 360 -> 360 - 36)
+    assert_eq!(
+        App::item_tooltip_origin(100, 360, 50, 33, 640, 360),
+        (112, 324),
+        "the bottom the +3 gap the clamp answers"
+    );
+    let _ = App::item_tooltip_origin(0, 0, 0, 0, 0, 0);
+}
+
+/// THE ITEM TOOLTIP'S OWN GATE (the extractTooltip walk — the
+/// hoveredSlot.hasItem gate the seat walk keeps, the carried wall the
+/// showTooltipWithItemInHand false answer serves, the advanced flag
+/// the F3+H chord's own field wears).
+#[test]
+fn the_item_tooltip_gate_the_hasItem_and_carried_walls_speak() {
+    let mut app = App::new(262);
+    app.enter_world();
+    app.open_inventory();
+    app.inv_panel = inventory_panel_origin(640, 360);
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    // THE SEAT'S OWN STACK (the offline store the local truth keeps —
+    // slot 11 the dirt stack wears)
+    app.inventory.items[11] = (dirt, 7);
+    let (sx, sy) = inventory_slot_origin(app.inv_panel, 11);
+    let (id, rows) = app
+        .item_tooltip_hover(sx + 8, sy + 8)
+        .expect("the filled seat the gate answers");
+    assert_eq!(id, dirt, "the hovered seat's own id the gate banks");
+    assert_eq!(
+        rows,
+        vec![("Dirt".to_string(), [1.0, 1.0, 1.0])],
+        "the normal flag the name row alone wears"
+    );
+    // THE EMPTY SEAT (the hasItem() false the pc 11-14 return keeps)
+    let (ex, ey) = inventory_slot_origin(app.inv_panel, 12);
+    assert!(
+        app.item_tooltip_hover(ex + 8, ey + 8).is_none(),
+        "the empty seat the hasItem wall refuses"
+    );
+    // THE CARRIED WALL (the getCarried().isEmpty() false the
+    // showTooltipWithItemInHand false answer keeps — the image-less
+    // stacks the Optional.empty().orElse(false) walk the FALSE serves)
+    app.inv_carried = (dirt, 1);
+    assert!(
+        app.item_tooltip_hover(sx + 8, sy + 8).is_none(),
+        "the carried stack the wall refuses"
+    );
+    app.inv_carried = (0, 0);
+    // THE ADVANCED FLAG (the F3+H chord's own field the flag IS — the
+    // ID row the advanced walk banks)
+    app.on_advanced_tooltips_key();
+    assert!(app.advanced_item_tooltips, "the chord the flip speaks");
+    let (_, rows) = app
+        .item_tooltip_hover(sx + 8, sy + 8)
+        .expect("the advanced flag the gate keeps the seat");
+    assert_eq!(
+        rows[1],
+        ("minecraft:dirt".to_string(), [0.3333, 0.3333, 0.3333]),
+        "the ID row the advanced flag wears"
+    );
+    let _ = app;
+}
