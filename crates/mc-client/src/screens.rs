@@ -66519,17 +66519,53 @@ impl App {
     /// rows the re-seat wear, the registration order the sort never
     /// speaks, the tr() row the I18n.get law the same string the
     /// row renders the compare keeps)
+    ///
+    /// THE SORT-KEY CACHE (the vanilla ctor's own once-ness — the
+    /// Arrays.sort the KeyBindsList <init> speaks ONCE, the list the
+    /// rows the sorted array carries, the rebind the bound key alone
+    /// re-wears the sort position never re-answers): the per-frame
+    /// render walk's seven group sorts the ONE process-lifetime
+    /// static table answers — [`Self::kb_seated_full`] the full
+    /// 0..COUNT order the same comparator banks once, the group
+    /// seats the static's own filter the rows wear. THE STABLE-SORT
+    /// THEOREM the equivalence carries: the Rust `sort_by` the
+    /// stable law keeps, the full walk's input 0..COUNT ascending
+    /// AND the group walk's input lo..hi ascending the SAME relative
+    /// input order the equal keys preserve — the within-group
+    /// relative order the comparator outcome alone answers, the
+    /// filter the order carries verbatim, the seven call sites the
+    /// same Vec the exact sort's own result wear. The comparator's
+    /// own inputs the process-lifetime constants keep (ORDER_I the
+    /// const array, NAMES/NAME_FALLBACKS the consts, tr() the
+    /// OnceLock en_us table the same determinism the whole client
+    /// wears) — the static the vanilla ctor's once-ness the honest
+    /// shape serves.
     fn kb_seated(lo: usize, hi: usize) -> Vec<usize> {
+        Self::kb_seated_full()
+            .iter()
+            .copied()
+            .filter(|i| *i >= lo && *i < hi)
+            .collect()
+    }
+
+    /// THE STATIC TABLE'S OWN SEAT (the sort-key cache's once walk —
+    /// the full 0..COUNT order the [`Self::kb_seated`] comparator the
+    /// exact same fold computes, the get_or_init the second read the
+    /// sort never re-answers)
+    fn kb_seated_full() -> &'static Vec<usize> {
         use crate::options_file::key_binds as kb;
-        let mut rows: Vec<usize> = (lo..hi).collect();
-        rows.sort_by(|&a, &b| {
-            kb::ORDER_I[a].cmp(&kb::ORDER_I[b]).then_with(|| {
-                let na = tr(kb::NAMES[a]).unwrap_or(kb::NAME_FALLBACKS[a]);
-                let nb = tr(kb::NAMES[b]).unwrap_or(kb::NAME_FALLBACKS[b]);
-                na.cmp(nb)
-            })
-        });
-        rows
+        static SEATED: std::sync::OnceLock<Vec<usize>> = std::sync::OnceLock::new();
+        SEATED.get_or_init(|| {
+            let mut rows: Vec<usize> = (0..kb::COUNT).collect();
+            rows.sort_by(|&a, &b| {
+                kb::ORDER_I[a].cmp(&kb::ORDER_I[b]).then_with(|| {
+                    let na = tr(kb::NAMES[a]).unwrap_or(kb::NAME_FALLBACKS[a]);
+                    let nb = tr(kb::NAMES[b]).unwrap_or(kb::NAME_FALLBACKS[b]);
+                    na.cmp(nb)
+                })
+            });
+            rows
+        })
     }
 
     /// THE KEY BINDS' OWN LIST (javap 26.2 KeyBindsScreen — the

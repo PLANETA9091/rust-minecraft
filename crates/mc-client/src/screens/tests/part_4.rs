@@ -13136,6 +13136,139 @@ fn the_key_binds_the_compareto_the_orderI_the_name_reseat_wears() {
     );
 }
 
+/// THE KEY BINDS' OWN SORT-KEY CACHE (the autopush-239 walk): the
+/// `kb_seated` the per-frame sort the OnceLock static table answers —
+/// the vanilla KeyBindsList ctor's own once-ness the shape serves
+/// (the Arrays.sort the <init> speaks once, the list the rows the
+/// sorted array carries, the rebind the bound key alone re-wears),
+/// the seven group renders the static's own filter the seats wear.
+#[test]
+fn the_key_binds_the_seated_static_table_the_per_frame_sort_answers() {
+    use crate::options_file::key_binds as kb;
+    // THE STATIC'S OWN ONCE (two reads the SAME order wear — the
+    // get_or_init the second read the sort never re-answers)
+    let full = App::kb_seated_full();
+    let again = App::kb_seated_full();
+    assert_eq!(full, again, "the static table the same order serves");
+    // THE PERMUTATION'S OWN LAW (the table 0..COUNT the each slot the
+    // exact once wears — the sort the slot never loses, never twins)
+    let mut sorted = full.clone();
+    sorted.sort_unstable();
+    let identity: Vec<usize> = (0..kb::COUNT).collect();
+    assert_eq!(sorted, identity, "the table the full permutation keeps");
+    // THE MONOTONE LAW (the adjacent pairs the comparator's own
+    // verdict never flips — the ORDER_I the primary, the tr-name the
+    // ties the secondary answers, the equal pair the stable law
+    // never wears)
+    for pair in full.windows(2) {
+        let (a, b) = (pair[0], pair[1]);
+        let ka = (
+            kb::ORDER_I[a],
+            tr(kb::NAMES[a]).unwrap_or(kb::NAME_FALLBACKS[a]),
+        );
+        let kb_ = (
+            kb::ORDER_I[b],
+            tr(kb::NAMES[b]).unwrap_or(kb::NAME_FALLBACKS[b]),
+        );
+        assert!(
+            ka <= kb_,
+            "the {}..{} adjacency the comparator's own order keeps",
+            a,
+            b
+        );
+    }
+    // THE STABLE-SORT THEOREM'S OWN VERDICT (the seven render groups
+    // the static's own filter the DIRECT per-group sort's own order
+    // wears — the same comparator + the same ascending-index input
+    // the within-group relative order both walks keep, the filter
+    // the order carries verbatim; the direct walk the test's own
+    // independent recomputation wears, the cache the theorem the
+    // honest answer serves)
+    let direct = |lo: usize, hi: usize| -> Vec<usize> {
+        let mut rows: Vec<usize> = (lo..hi).collect();
+        rows.sort_by(|&a, &b| {
+            kb::ORDER_I[a].cmp(&kb::ORDER_I[b]).then_with(|| {
+                let na = tr(kb::NAMES[a]).unwrap_or(kb::NAME_FALLBACKS[a]);
+                let nb = tr(kb::NAMES[b]).unwrap_or(kb::NAME_FALLBACKS[b]);
+                na.cmp(nb)
+            })
+        });
+        rows
+    };
+    const GROUPS: [(usize, usize); 7] = [
+        (0, kb::INVENTORY),
+        (kb::INVENTORY, kb::USE),
+        (kb::USE, kb::HOTBAR_1),
+        (kb::HOTBAR_1, kb::SAVE_ACTIVATOR),
+        (kb::SAVE_ACTIVATOR, kb::SPECTATOR_OUTLINES),
+        (kb::SPECTATOR_OUTLINES, kb::DEBUG_OVERLAY),
+        (kb::DEBUG_OVERLAY, kb::COUNT),
+    ];
+    for (lo, hi) in GROUPS {
+        assert_eq!(
+            App::kb_seated(lo, hi),
+            direct(lo, hi),
+            "the group [{lo},{hi}) the static's own filter the exact order wears"
+        );
+    }
+    // THE MOVEMENT GROUP'S OWN HEAD/TAIL (the cached path the
+    // alphabetical law keeps — the Jump the head, the Walk Forward
+    // the registration head the LAST slot wears)
+    let movement = App::kb_seated(0, kb::INVENTORY);
+    assert_eq!(
+        movement[0],
+        kb::JUMP,
+        "the Jump the head the cached path wears"
+    );
+    assert_eq!(
+        movement[movement.len() - 1],
+        kb::FORWARD,
+        "the Walk Forward the tail keeps"
+    );
+    // THE DEBUG GROUP'S OWN LADDER (the orderI seats the static
+    // keeps — the -2 overlay the head, the -1 modifier the second,
+    // the orderI=0 rows the alphabetical middle, the 1..4 charts the
+    // AFTER tail wears)
+    let debug = App::kb_seated(kb::DEBUG_OVERLAY, kb::COUNT);
+    assert_eq!(
+        debug[0],
+        kb::DEBUG_OVERLAY,
+        "the overlay the orderI -2 the head wears"
+    );
+    assert_eq!(
+        debug[1],
+        kb::DEBUG_MODIFIER,
+        "the modifier the orderI -1 the second seat keeps"
+    );
+    let tail = debug.len() - 4;
+    assert_eq!(
+        debug[tail],
+        kb::DEBUG_PROFILING_CHART,
+        "the orderI 1 the charts' head wears"
+    );
+    assert_eq!(
+        debug[tail + 1],
+        kb::DEBUG_FPS_CHARTS,
+        "the orderI 2 the second chart keeps"
+    );
+    assert_eq!(
+        debug[tail + 2],
+        kb::DEBUG_NETWORK_CHARTS,
+        "the orderI 3 the third chart keeps"
+    );
+    assert_eq!(
+        debug[tail + 3],
+        kb::DEBUG_LIGHTMAP_TEXTURE,
+        "the orderI 4 the LAST slot wears"
+    );
+    // THE EMPTY BAND'S OWN SILENCE (the zero-width range the empty
+    // order wears — the filter the nothing carries)
+    assert!(
+        App::kb_seated(5, 5).is_empty(),
+        "the empty band the empty order wears"
+    );
+}
+
 /// THE INVENTORY TRIO'S OWN ROUND (the autopush-187 walk): the trio
 /// the Options ctor's registrations the movement pair's AFTER wear
 /// (the keyInventory/keySwapOffhand/keyDrop rows the INVENTORY
