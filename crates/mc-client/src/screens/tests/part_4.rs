@@ -17227,3 +17227,220 @@ fn the_chat_close_lanes_the_restore_map_the_takeover_keeps() {
         "the world's return the restore the chain completes"
     );
 }
+
+/// THE PAUSE LANES' OWN TOGGLE DANCE (the vanilla PauseScreen the
+/// setScreen arms the pause lanes wear — the ESC pause the OPEN arm
+/// the releaseAll's ALL-map iteration speaks: the latched seats the
+/// flag the release banks + the latch clears, the plain walk the held
+/// banks zeroes; the ESC unpause the setScreen(null) null arm the
+/// restoreToggleStatesOnScreenClosed rides — the keyboard-bound
+/// sprint the re-latch wears, the keyUse's shouldRestore FALSE the
+/// restore refuses, the flags the always-clear law consumes, the
+/// plain keys the poll's own setAll re-read the re-clear never wears).
+#[test]
+fn the_pause_arms_the_latched_toggles_the_release_banks() {
+    use crate::screens::{TOGGLE_SPRINT, TOGGLE_USE};
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.toggle_sprint = true;
+    app.toggle_use = true;
+    // THE LATCHES (the world's own press+release pairs wear)
+    assert!(app.toggle_key_state(TOGGLE_SPRINT, true, true));
+    assert!(app.toggle_key_state(TOGGLE_SPRINT, false, true));
+    assert!(app.toggle_key_state(TOGGLE_USE, true, true));
+    assert!(app.toggle_key_state(TOGGLE_USE, false, true));
+    // THE HELD WALK (the plain banks the pause arm clears)
+    if let Some(b) = app.body.as_mut() {
+        b.forward = 1.0;
+    }
+    app.dig_held = true;
+    // THE ESC PAUSE ARM (the toggle release the plain walk's BEFORE
+    // seat wears — the pc 215 order the open() dance's own shape keeps)
+    app.on_escape();
+    assert!(app.paused, "the escape the pause arms");
+    assert!(
+        !app.toggle_latched(TOGGLE_SPRINT),
+        "the pause the sprint latch clears"
+    );
+    assert!(
+        !app.toggle_latched(TOGGLE_USE),
+        "the pause the use latch the same walk clears"
+    );
+    assert!(
+        app.toggle_released_by_screen[TOGGLE_SPRINT],
+        "the pause the flag the release banks"
+    );
+    assert!(
+        app.toggle_released_by_screen[TOGGLE_USE],
+        "the pause the use the same flag banks"
+    );
+    assert_eq!(
+        app.body.as_ref().unwrap().forward,
+        0.0,
+        "the pause the plain release wears"
+    );
+    assert!(!app.dig_held, "the pause the dig hold clears");
+    // THE PAUSED FRAMES (the world_reads false the flip never speaks)
+    assert!(
+        !app.toggle_key_state(TOGGLE_SPRINT, false, false),
+        "the pause frames the unlatched word keeps"
+    );
+    // THE ESC UNPAUSE ARM (the setScreen(null) close arm the restore
+    // rides — the keyboard-bound sprint the re-latch wears, the keyUse
+    // the shouldRestore FALSE refuses, the flags the always-clear
+    // consume, the plain keys the poll's own re-read the re-clear
+    // never wears)
+    app.on_escape();
+    assert!(!app.paused, "the second escape the unpause arms");
+    assert!(
+        app.toggle_latched(TOGGLE_SPRINT),
+        "the unpause the sprint re-latches"
+    );
+    assert!(
+        !app.toggle_released_by_screen[TOGGLE_SPRINT],
+        "the restore the flag the always-clear consumes"
+    );
+    assert!(
+        !app.toggle_latched(TOGGLE_USE),
+        "the keyUse the shouldRestore FALSE the restore refuses"
+    );
+    assert!(
+        !app.toggle_released_by_screen[TOGGLE_USE],
+        "the refused verdict the flag the same clear wears"
+    );
+    assert_eq!(
+        app.body.as_ref().unwrap().forward,
+        0.0,
+        "the unpause the re-clear never rides"
+    );
+}
+
+/// THE PAUSE LANES' OWN RESTORE MAP (the focus pause the same release
+/// pair the ESC arm wears; the backtogame button the setScreen(null)
+/// close arm the restore rides; the DEBUG-CHORD chain the
+/// interrupt-over-pause the banked word keeps — the chord's close the
+/// restore the chain completes; the OPTIONS takeover the pause road
+/// the open's release arm the banked word keeps, the world's return
+/// the open(World) arm the re-latch completes).
+#[test]
+fn the_focus_pause_the_backtogame_the_chord_close_the_map_wears() {
+    use crate::screens::TOGGLE_SPRINT;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.toggle_sprint = true;
+    assert!(app.toggle_key_state(TOGGLE_SPRINT, true, true));
+    assert!(app.toggle_key_state(TOGGLE_SPRINT, false, true));
+    // THE FOCUS PAUSE ARM (the same pair the ESC pause wears — the
+    // latch clears, the flag banks, the plain banks the held walk
+    // zeroes)
+    if let Some(b) = app.body.as_mut() {
+        b.forward = 1.0;
+    }
+    app.on_window_focus(true, 0);
+    app.on_window_focus(false, 501);
+    assert!(app.paused, "the focus loss the pause arms");
+    assert!(
+        !app.toggle_latched(TOGGLE_SPRINT),
+        "the focus pause the latch clears"
+    );
+    assert!(
+        app.toggle_released_by_screen[TOGGLE_SPRINT],
+        "the focus pause the flag banks"
+    );
+    assert_eq!(
+        app.body.as_ref().unwrap().forward,
+        0.0,
+        "the focus pause the plain release wears"
+    );
+    // THE BACKTOGAME BUTTON (the setScreen(null) close arm the
+    // restore rides — the re-latch the world's return speaks)
+    app.render_title_buttons_for_test();
+    let back = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "backtogame")
+        .expect("backtogame")
+        .clone();
+    app.on_click(back.x + back.w / 2, back.y + back.h / 2);
+    assert!(!app.paused, "the backtogame the unpause speaks");
+    assert!(
+        app.toggle_latched(TOGGLE_SPRINT),
+        "the backtogame the re-latch wears"
+    );
+    assert!(
+        !app.toggle_released_by_screen[TOGGLE_SPRINT],
+        "the restore the flag the always-clear consumes"
+    );
+    // THE DEBUG-CHORD CHAIN (the interrupt the paused world serves —
+    // the banked word the open keeps — the chord's close the restore
+    // the chain completes)
+    app.on_escape();
+    assert!(app.paused, "the second pause arms");
+    assert!(
+        app.toggle_released_by_screen[TOGGLE_SPRINT],
+        "the pause the flag re-banks"
+    );
+    app.on_debug_options_key();
+    assert_eq!(
+        app.screen,
+        ScreenKind::DebugOptions,
+        "the interrupt the debug options opens"
+    );
+    assert!(!app.paused, "the interrupt the unpause speaks");
+    assert!(
+        app.toggle_released_by_screen[TOGGLE_SPRINT],
+        "the open the banked word keeps"
+    );
+    assert!(
+        !app.toggle_latched(TOGGLE_SPRINT),
+        "the open the unlatched word keeps"
+    );
+    app.on_debug_options_key();
+    assert_eq!(
+        app.screen,
+        ScreenKind::World,
+        "the chord close the world returns"
+    );
+    assert!(
+        app.toggle_latched(TOGGLE_SPRINT),
+        "the close the restore the chain completes"
+    );
+    assert!(
+        !app.toggle_released_by_screen[TOGGLE_SPRINT],
+        "the close the flag consumes"
+    );
+    // THE OPTIONS TAKEOVER (the pause road the open's release arm the
+    // banked word keeps — the back the open(World) the re-latch
+    // completes, the paused seat the return keeps)
+    app.on_escape();
+    assert!(app.paused, "the third pause arms");
+    app.render_title_buttons_for_test();
+    let opt = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "options")
+        .expect("pauseoptions")
+        .clone();
+    app.on_click(opt.x + opt.w / 2, opt.y + opt.h / 2);
+    assert_eq!(app.screen, ScreenKind::Options, "the options opens");
+    assert!(
+        app.toggle_released_by_screen[TOGGLE_SPRINT],
+        "the takeover's release the banked word keeps"
+    );
+    app.render_title_buttons_for_test();
+    let back = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "back")
+        .expect("back")
+        .clone();
+    app.on_click(back.x + back.w / 2, back.y + back.h / 2);
+    assert_eq!(app.screen, ScreenKind::World, "the world returns");
+    assert!(
+        app.toggle_latched(TOGGLE_SPRINT),
+        "the world's return the re-latch completes"
+    );
+    assert!(app.paused, "returning from options stays paused");
+}

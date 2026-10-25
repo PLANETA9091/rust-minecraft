@@ -28185,7 +28185,12 @@ impl App {
                 // THE PAUSESCREEN'S OWN RELEASE (the vanilla setScreen
                 // walk the pause menu the same releaseAll arm wears —
                 // the held keys the pause the walk never feeds, the
-                // wire the release packet the server sees)
+                // wire the release packet the server sees). THE
+                // TOGGLE ARMS THE FOCUS PAUSE THE SAME PAIR WEARS
+                // (the ESC pause the dance shares — the latched seats
+                // the flag banks, the plain walk the held banks
+                // zeroes)
+                self.toggle_keys_release_for_screen();
                 self.key_mappings_release_all();
                 self.buttons.clear();
             }
@@ -28208,10 +28213,21 @@ impl App {
             // setScreen(non-null) walk wears — the pause side the
             // releaseAll speaks, the unpause the world's return the
             // poll's own setAll lane re-reads, the re-clear never
-            // rides)
+            // rides). THE TOGGLE ARMS THE PAUSE LANES WEAR (the
+            // autopush-221 walk the chat's own dance the same two
+            // lanes shares): the latched seats the flag the release
+            // banks + the latch clears — the toggle release the plain
+            // walk's BEFORE seat the pc 215 order keeps — and the
+            // setScreen(null) close arm the unpause side the restore
+            // re-latch serves (the shouldRestore trio the
+            // keyboard-bound binds the world's return re-latches, the
+            // flags the always-clear law consumes)
             let now_paused = !self.paused;
             if now_paused {
+                self.toggle_keys_release_for_screen();
                 self.key_mappings_release_all();
+            } else {
+                self.toggle_keys_restore_after_screen();
             }
             self.paused = now_paused;
             self.buttons.clear();
@@ -28294,7 +28310,12 @@ impl App {
             // never overrides — the probe's own-methods table the
             // absence banks: no shouldCloseOnEsc the class wears — the
             // keyPressed walk's close the onClose ride speaks, the
-            // world the `setScreen(null)` the base law keeps)
+            // world the `setScreen(null)` the base law keeps). THE
+            // RESTORE THE CLOSE ARM WEARS (the autopush-221 walk —
+            // the interrupt-over-pause chain the banked flags the
+            // close consumes, the shouldRestore trio the world's
+            // return re-latches; the flags-clear open the no-op keeps)
+            self.toggle_keys_restore_after_screen();
             self.screen = ScreenKind::World;
         } else if matches!(self.screen, ScreenKind::Connect | ScreenKind::Disconnect) {
             self.open(ScreenKind::Servers);
@@ -36672,6 +36693,12 @@ impl App {
                 }
                 "backtogame" => {
                     self.paused = false;
+                    // THE BACKTOGAME'S OWN RESTORE (the PauseScreen's
+                    // onClose the setScreen(null) walk the close arm
+                    // wears — the ESC unpause the same re-latch speaks,
+                    // the shouldRestore trio the keyboard-bound binds
+                    // re-latches, the flags the always-clear consumes)
+                    self.toggle_keys_restore_after_screen();
                     self.buttons.clear();
                 }
                 // the DeathScreen's own pair: Respawn resets the vitals,
@@ -40825,8 +40852,13 @@ impl App {
     pub fn on_debug_options_key(&mut self) {
         // THE INSTANCEOF ARM (pc 674-690): the open debug-options
         // screen the onClose ride closes — the second tap the
-        // toggle the chord's own law wears
+        // toggle the chord's own law wears. THE RESTORE THE CLOSE
+        // ARM WEARS (the autopush-221 walk — the interrupt-over-pause
+        // chain the pause arm's banked flags the close consumes, the
+        // shouldRestore trio the world's return re-latches; the
+        // flags-clear open the no-op keeps)
         if self.screen == ScreenKind::DebugOptions {
+            self.toggle_keys_restore_after_screen();
             self.screen = ScreenKind::World;
         } else if self.debug_options_can_interrupt() {
             // THE ELSE ARM (pc 693-743): the interrupt gate the
