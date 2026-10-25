@@ -105,6 +105,37 @@ pub struct OptionsFile {
     /// `mouseSensitivity` — the 0..1 unit double (the default 0.5 the
     /// clinit banks).
     pub mouse_sensitivity: f64,
+    /// `mouseWheelSensitivity` — the wheel's OWN LOG-SCALE STORE (the
+    /// Options ctor's pc 1619-1672 walk the walk banks — the IntRange
+    /// (-200, 100) the xmap(logMouse, unlogMouse, false) the slider's
+    /// own int scale wears, the value the `10^(i/100)` double the
+    /// logMouse law speaks, the codec doubleRange(logMouse(-200),
+    /// logMouse(100)) = 0.01..=10.0 the decode's own bounds keep, the
+    /// default the logMouse(0) = 1.0 the pc 1659-1663 row banks).
+    pub mouse_wheel_sensitivity: f64,
+    /// `discrete_mouse_scroll` — the discrete scrolling's own boolean
+    /// (the default FALSE the Options ctor's `iconst_0` pc 1903-1910
+    /// banks — the createBoolean the `options.discrete_mouse_scroll`
+    /// label wears, the processOptions pc 97 the visit row the ladder
+    /// keeps).
+    pub discrete_mouse_scroll: bool,
+    /// `invertXMouse` — the X axis invert's own boolean (the default
+    /// FALSE the Options ctor's `iconst_0` pc 1881-1888 banks — the
+    /// processOptions pc 110 the visit row keeps).
+    pub invert_mouse_x: bool,
+    /// `invertYMouse` — the Y axis invert's own boolean (the default
+    /// FALSE the Options ctor's `iconst_0` pc 1892-1899 banks — the
+    /// processOptions pc 123 the visit row keeps).
+    pub invert_mouse_y: bool,
+    /// `allowCursorChanges` — the cursor changes' own boolean (the
+    /// default TRUE the Options ctor's `iconst_1` pc 1692-1710 banks —
+    /// the processOptions pc 794 the visit row keeps).
+    pub allow_cursor_changes: bool,
+    /// `rawMouseInput` — the raw input's own boolean (the default TRUE
+    /// the Options ctor's `iconst_1` pc 1676-1688 banks — the
+    /// processOptions pc 781 the visit row keeps; the addOptions walk
+    /// the isRawMouseInputSupported gate the array's OWN tail appends).
+    pub raw_mouse_input: bool,
     /// `fov` — the raw int degrees 30..=110 (the default 70 the bipush
     /// banks; the IntRange codec the integer the line stores).
     pub fov: f64,
@@ -1427,6 +1458,18 @@ impl Default for OptionsFile {
         OptionsFile {
             show_subtitles: false,
             mouse_sensitivity: 0.5,
+            // THE MOUSE ROWS' OWN DEFAULTS (the Options ctor's own ints
+            // the six registrations bank — the wheel the logMouse(0)
+            // = 1.0 the pc 1659-1663 row speaks, the discrete/invert
+            // trio the `iconst_0` rows the FALSE keeps, the
+            // allowCursor/rawInput pair the `iconst_1` rows the TRUE
+            // wears)
+            mouse_wheel_sensitivity: 1.0,
+            discrete_mouse_scroll: false,
+            invert_mouse_x: false,
+            invert_mouse_y: false,
+            allow_cursor_changes: true,
+            raw_mouse_input: true,
             fov: 70.0,
             sound_category_master: 1.0,
             advanced_item_tooltips: false,
@@ -1483,6 +1526,57 @@ impl OptionsFile {
                 "mouseSensitivity" => {
                     if let Some(v) = parse_unit_double(value) {
                         out.mouse_sensitivity = v;
+                    }
+                }
+                // THE WHEEL'S OWN ROW (the codec doubleRange(0.01, 10.0)
+                // the decode's own bounds keep — the out-of-range the
+                // default keeps, the clamp never wears; the value the
+                // `10^(i/100)` log-scale double the save row stores)
+                "mouseWheelSensitivity" => {
+                    if let Ok(v) = value.parse::<f64>() {
+                        if (0.01..=10.0).contains(&v) {
+                            out.mouse_wheel_sensitivity = v;
+                        }
+                    }
+                }
+                // THE MOUSE BOOLEANS' OWN ROWS (the "true"/"false" the
+                // same vocabulary the toggleCrouch row wears — the
+                // defaults the ctor's own ints the missing rows keep:
+                // the discrete/invert trio the FALSE, the
+                // allowCursor/rawInput pair the TRUE)
+                "discrete_mouse_scroll" => {
+                    if value == "true" {
+                        out.discrete_mouse_scroll = true;
+                    } else if value == "false" {
+                        out.discrete_mouse_scroll = false;
+                    }
+                }
+                "invertXMouse" => {
+                    if value == "true" {
+                        out.invert_mouse_x = true;
+                    } else if value == "false" {
+                        out.invert_mouse_x = false;
+                    }
+                }
+                "invertYMouse" => {
+                    if value == "true" {
+                        out.invert_mouse_y = true;
+                    } else if value == "false" {
+                        out.invert_mouse_y = false;
+                    }
+                }
+                "allowCursorChanges" => {
+                    if value == "true" {
+                        out.allow_cursor_changes = true;
+                    } else if value == "false" {
+                        out.allow_cursor_changes = false;
+                    }
+                }
+                "rawMouseInput" => {
+                    if value == "true" {
+                        out.raw_mouse_input = true;
+                    } else if value == "false" {
+                        out.raw_mouse_input = false;
                     }
                 }
                 "fov" => {
@@ -1934,6 +2028,25 @@ impl OptionsFile {
             "mouseSensitivity:{}\n",
             java_double(self.mouse_sensitivity)
         ));
+        // THE WHEEL'S OWN ROW (the log-scale double the java_double
+        // print keeps — the 1.0 the default the decimal speaks; the
+        // visit seat the processOptions pc 768 row keeps — the
+        // tutorialStep@739 row's AFTER, the rawMouseInput@781 the
+        // BEFORE the same ladder speaks)
+        text.push_str(&format!(
+            "mouseWheelSensitivity:{}\n",
+            java_double(self.mouse_wheel_sensitivity)
+        ));
+        // THE RAW INPUT'S OWN ROW (the "true"/"false" the same
+        // vocabulary wears — the visit seat the pc 781 row keeps, the
+        // allowCursorChanges@794 the AFTER)
+        text.push_str(&format!("rawMouseInput:{}\n", self.raw_mouse_input));
+        // THE ALLOW CURSOR CHANGES' OWN ROW (the visit seat the pc 794
+        // row keeps — the glDebugVerbosity@808 the AFTER)
+        text.push_str(&format!(
+            "allowCursorChanges:{}\n",
+            self.allow_cursor_changes
+        ));
         text.push_str(&format!("fov:{}\n", self.fov as i64));
         text.push_str(&format!(
             "soundCategory_master:{}\n",
@@ -1966,6 +2079,18 @@ impl OptionsFile {
         // autoSuggestions@52-65 row's BEFORE the autoJump@5-13 row's
         // own tail answers)
         text.push_str(&format!("operatorItemsTab:{}\n", self.operator_items_tab));
+        // THE MOUSE BOOLEANS' OWN TRIO (the "true"/"false" the same
+        // vocabulary wears — the visit seats the processOptions walk
+        // keeps: the discrete_mouse_scroll@97 the chatLinksPrompt@84
+        // row's AFTER, the invertXMouse@110 the invertYMouse@123 the
+        // rows the trio's own ladder speaks — the toggleCrouch@188 row
+        // the trio's AFTER seat answers)
+        text.push_str(&format!(
+            "discrete_mouse_scroll:{}\n",
+            self.discrete_mouse_scroll
+        ));
+        text.push_str(&format!("invertXMouse:{}\n", self.invert_mouse_x));
+        text.push_str(&format!("invertYMouse:{}\n", self.invert_mouse_y));
         // THE TOGGLE QUARTET'S OWN ROWS (the "true"/"false" the same
         // vocabulary wears — the visit-order seats the processOptions
         // walk keeps: toggleCrouch@192 the toggleSprint@205 the
@@ -2099,7 +2224,7 @@ mod tests {
         OptionsFile::default().save(&path);
         let text = std::fs::read_to_string(&path).expect("the save the file writes");
         assert_eq!(
-            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\nadvancedItemTooltips:false\npauseOnLostFocus:true\nautoJump:false\noperatorItemsTab:false\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\nkey_key.debug.debugOptions:key.keyboard.f6\nkey_key.debug.focusPause:key.keyboard.p\nkey_key.debug.dumpDynamicTextures:key.keyboard.s\nkey_key.debug.reloadResourcePacks:key.keyboard.t\nkey_key.debug.profiling:key.keyboard.l\nkey_key.debug.copyLocation:key.keyboard.c\nkey_key.debug.dumpVersion:key.keyboard.v\nkey_key.debug.profilingChart:key.keyboard.1\nkey_key.debug.fpsCharts:key.keyboard.2\nkey_key.debug.networkCharts:key.keyboard.3\nkey_key.debug.lightmapTexture:key.keyboard.4\n",
+            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nmouseWheelSensitivity:1.0\nrawMouseInput:true\nallowCursorChanges:true\nfov:70\nsoundCategory_master:1.0\nadvancedItemTooltips:false\npauseOnLostFocus:true\nautoJump:false\noperatorItemsTab:false\ndiscrete_mouse_scroll:false\ninvertXMouse:false\ninvertYMouse:false\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\nkey_key.debug.debugOptions:key.keyboard.f6\nkey_key.debug.focusPause:key.keyboard.p\nkey_key.debug.dumpDynamicTextures:key.keyboard.s\nkey_key.debug.reloadResourcePacks:key.keyboard.t\nkey_key.debug.profiling:key.keyboard.l\nkey_key.debug.copyLocation:key.keyboard.c\nkey_key.debug.dumpVersion:key.keyboard.v\nkey_key.debug.profilingChart:key.keyboard.1\nkey_key.debug.fpsCharts:key.keyboard.2\nkey_key.debug.networkCharts:key.keyboard.3\nkey_key.debug.lightmapTexture:key.keyboard.4\n",
             "the file the vanilla rows wear"
         );
         let loaded = OptionsFile::load(&path);

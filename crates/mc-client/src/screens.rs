@@ -5874,6 +5874,27 @@ fn sprint_window_from_unit(unit: f64) -> i32 {
     (unit.clamp(0.0, 1.0) * 10.0).round() as i32
 }
 
+/// THE WHEEL SLIDER'S OWN FOLD (the IntRange(-200, 100) the
+/// fromSlider law speaks — the `min + round(unit * (max - min))` int
+/// the xmap's logMouse law maps, the `10^(i/100)` value the store
+/// keeps: the left edge the logMouse(-200) = 0.01, the right the
+/// logMouse(100) = 10.0, the center the round(-50) = 10^-0.5 the
+/// log-scale's own midpoint wears).
+fn wheel_from_unit(unit: f64) -> f64 {
+    let i = -200.0 + (unit.clamp(0.0, 1.0) * 300.0).round();
+    10f64.powf(i / 100.0)
+}
+
+/// THE WHEEL SLIDER'S OWN UNIT (the xmap's unlogMouse law the inverse
+/// fold answers — the `floor(log10(v) * 100)` int the `min + round`'s
+/// own seat wears, the unit the track's own fraction keeps: the
+/// default 1.0 the center seat wears, the clamp the out-of-range
+/// store the codec bounds keep).
+fn wheel_unit(v: f64) -> f64 {
+    let i = v.clamp(0.01, 10.0).log10() * 100.0;
+    ((i + 200.0) / 300.0).clamp(0.0, 1.0)
+}
+
 /// THE BAND SCOPE'S OWN CAPTION (the 26.2 CycleButton walk the
 /// chatbgonly_179b/c probes bank — the label law the
 /// `CycleButton.createLabelForValue` speak: the DisplayState.VALUE
@@ -8736,6 +8757,29 @@ pub struct App {
     /// sensitivity the turnPlayer gain reads, the slider's click/drag
     /// the store writes).
     pub look_sensitivity: f64,
+    /// THE WHEEL'S OWN STORE (the `options.mouseWheelSensitivity`
+    /// OptionInstance the ctor's pc 1619-1672 walk banks — the
+    /// IntRange(-200, 100) the xmap(logMouse, unlogMouse) the slider's
+    /// own log-scale wears, the value the `10^(i/100)` double the
+    /// 1.0 default speaks, the scroll lanes' own multiplier the
+    /// follow-up rounds read).
+    pub mouse_wheel_sensitivity: f64,
+    /// THE WHEEL SLIDER'S OWN ARM (the AbstractWidget dragging field's
+    /// own shape the sensitivity seat's flag wears — the press inside
+    /// the track the flag arms, the held frames the value's own seat
+    /// follows, the release the disarm speaks).
+    pub wheel_drag: bool,
+    /// THE MOUSE BOOLEANS' OWN STORES (the five createBoolean rows the
+    /// MouseSettingsScreen.options array banks — the discrete
+    /// mouse_scroll the `options.discrete_mouse_scroll` label wears,
+    /// the invertX/invertY pair the axis flips the look lane serves,
+    /// the allowCursorChanges the `iconst_1` TRUE default keeps, the
+    /// rawMouseInput the addOptions walk's own tail appends).
+    pub discrete_mouse_scroll: bool,
+    pub invert_mouse_x: bool,
+    pub invert_mouse_y: bool,
+    pub allow_cursor_changes: bool,
+    pub raw_mouse_input: bool,
     /// THE SLIDER'S OWN ARM (the AbstractWidget dragging field's own
     /// shape — the press inside the track the flag arms, the held
     /// frames the value's own seat follows, the release the disarm
@@ -10973,6 +11017,17 @@ impl App {
             last_active_ms: 0,
             look_sensitivity: crate::body::LOOK_SENSITIVITY_DEFAULT,
             sensitivity_drag: false,
+            // THE MOUSE ROWS' OWN DEFAULTS (the ctor's own ints the six
+            // registrations bank — the wheel the 1.0, the booleans the
+            // discrete/invert trio FALSE + the allowCursor/rawInput
+            // pair TRUE)
+            mouse_wheel_sensitivity: 1.0,
+            wheel_drag: false,
+            discrete_mouse_scroll: false,
+            invert_mouse_x: false,
+            invert_mouse_y: false,
+            allow_cursor_changes: true,
+            raw_mouse_input: true,
             key_binds: crate::options_file::key_binds::DEFAULTS,
             kb_selected: None,
             kb_scroll: 0.0,
@@ -21187,6 +21242,9 @@ impl App {
         // the release the dragging flag the unconditional false
         // speaks, the same law the creative scrollbar's disarm wears)
         self.sensitivity_drag = false;
+        // THE WHEEL SLIDER'S OWN DISARM (the same mouseReleased lane
+        // the sensitivity seat's flag wears)
+        self.wheel_drag = false;
         // THE FOV SLIDER'S OWN DISARM (the same mouseReleased lane the
         // sensitivity seat's flag wears)
         self.fov_drag = false;
@@ -21408,6 +21466,7 @@ impl App {
         // rebuild arms; the mid-drag Escape the stale arm the re-open
         // never inherits)
         self.sensitivity_drag = false;
+        self.wheel_drag = false;
         self.fov_drag = false;
         self.volume_drag = false;
         self.fov_effect_drag = false;
@@ -31233,6 +31292,18 @@ impl App {
                     self.sensitivity_drag = true;
                 }
             }
+            // THE WHEEL'S OWN ARM (the index-1 seat the IntRange(-200,
+            // 100) fromSlider law keeps — the press INSIDE the track
+            // the `min + round(unit * (max - min))` int the xmap's
+            // logMouse fold answers, the armed flag the held drag
+            // rides, the outside press the slider never claims)
+            if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_ms_wheel") {
+                let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
+                if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
+                    self.mouse_wheel_sensitivity = wheel_from_unit(slider_value_from_x(mx, bx, bw));
+                    self.wheel_drag = true;
+                }
+            }
             return;
         }
         if self.screen == ScreenKind::Controls {
@@ -33614,6 +33685,15 @@ impl App {
         };
         let file = crate::options_file::OptionsFile::load(&path);
         self.look_sensitivity = file.mouse_sensitivity;
+        // THE MOUSE ROWS' OWN READ (the six stores the file's truth
+        // wears — the wheel the log-scale double, the booleans the
+        // ctor's own defaults the missing rows keep)
+        self.mouse_wheel_sensitivity = file.mouse_wheel_sensitivity;
+        self.discrete_mouse_scroll = file.discrete_mouse_scroll;
+        self.invert_mouse_x = file.invert_mouse_x;
+        self.invert_mouse_y = file.invert_mouse_y;
+        self.allow_cursor_changes = file.allow_cursor_changes;
+        self.raw_mouse_input = file.raw_mouse_input;
         self.fov = file.fov;
         self.volume = file.sound_category_master;
         self.advanced_item_tooltips = file.advanced_item_tooltips;
@@ -33653,6 +33733,12 @@ impl App {
         };
         let file = crate::options_file::OptionsFile {
             mouse_sensitivity: self.look_sensitivity,
+            mouse_wheel_sensitivity: self.mouse_wheel_sensitivity,
+            discrete_mouse_scroll: self.discrete_mouse_scroll,
+            invert_mouse_x: self.invert_mouse_x,
+            invert_mouse_y: self.invert_mouse_y,
+            allow_cursor_changes: self.allow_cursor_changes,
+            raw_mouse_input: self.raw_mouse_input,
             fov: self.fov,
             sound_category_master: self.volume,
             advanced_item_tooltips: self.advanced_item_tooltips,
@@ -36650,6 +36736,19 @@ impl App {
                 // the Mouse/KeyBinds seats the CONTROLS return; the
                 // removed() moment the open() gate's family arm banks)
                 "controlsdone" => self.open(ScreenKind::Options),
+                // THE MOUSE BOOLEANS' OWN FLIPS (the createBoolean rows'
+                // own click walk — the press the value's own toggle
+                // answers, the CycleButton's TRUE/FALSE pair the store's
+                // own seat flips: the discrete/invert/allowCursor/
+                // rawInput rows the same lane wears, the row's caption
+                // the render's own re-read speaks)
+                "opt_ms_discrete" => self.discrete_mouse_scroll = !self.discrete_mouse_scroll,
+                "opt_ms_invertx" => self.invert_mouse_x = !self.invert_mouse_x,
+                "opt_ms_inverty" => self.invert_mouse_y = !self.invert_mouse_y,
+                "opt_ms_allowcursor" => {
+                    self.allow_cursor_changes = !self.allow_cursor_changes;
+                }
+                "opt_ms_rawinput" => self.raw_mouse_input = !self.raw_mouse_input,
                 "msdone" => self.open(ScreenKind::Controls),
                 "kbdone" => self.open(ScreenKind::Controls),
                 // THE DONE FOOTER'S OWN RETURN (the
@@ -43714,6 +43813,13 @@ impl App {
     pub fn on_look_delta(&mut self, dx: f64, dy: f64) {
         if self.screen == ScreenKind::World && !self.paused {
             if let Some(b) = self.body.as_mut() {
+                // THE INVERT'S OWN LANES (the MouseHandler's own walk —
+                // the invertXMouse/invertYMouse the store's flags the
+                // deltas' signs answer, the vanilla's own axis flip
+                // the turnPlayer feed wears: the TRUE the axis the
+                // negation speaks, the FALSE the raw delta keeps)
+                let dx = if self.invert_mouse_x { -dx } else { dx };
+                let dy = if self.invert_mouse_y { -dy } else { dy };
                 b.turn(dx, dy, self.look_sensitivity);
             }
         }
@@ -43759,6 +43865,21 @@ impl App {
         {
             let (bx, bw) = (b.x, b.w);
             self.look_sensitivity = slider_value_from_x(mx, bx, bw);
+        }
+    }
+
+    /// THE WHEEL SLIDER'S OWN DRAG (the same armed lane the
+    /// sensitivity seat wears — the held frames the IntRange(-200,
+    /// 100)'s own log-scale the cursor's x answers, the fromSlider
+    /// round the xmap's logMouse fold speaks, the release the disarm
+    /// speaks).
+    pub fn on_wheel_slider_drag(&mut self, mx: i32) {
+        if !self.wheel_drag || self.screen != ScreenKind::MouseSettings {
+            return;
+        }
+        if let Some(b) = self.buttons.iter().find(|b| b.id == "opt_ms_wheel") {
+            let (bx, bw) = (b.x, b.w);
+            self.mouse_wheel_sensitivity = wheel_from_unit(slider_value_from_x(mx, bx, bw));
         }
     }
 
@@ -65440,12 +65561,24 @@ impl App {
     /// `options.mouse_settings.title` translatable wears ("Mouse
     /// Settings" the en_us row speaks), the static `options(Options)`
     /// the 6-instance array the probe banks — the
-    /// `Options.sensitivity()` row the index-0 seat the client's own
-    /// store carries (the UnitDouble 0..1 the slider's own track
-    /// wears, the caption the `*2.0` percent law the Options screen's
-    /// own row shares), the other 5 rows the stores the client never
-    /// carried (the follow-up candidates), the Done footer the base
-    /// class's own walk keeps.
+    /// `Options.sensitivity()` row the index-0 seat, the
+    /// `Options.mouseWheelSensitivity()` the index-1 seat the
+    /// log-scale slider wears, the `discreteMouseScroll()` /
+    /// `invertMouseX()` / `invertMouseY()` / `allowCursorChanges()`
+    /// rows the createBoolean seats speak — and the `addOptions`
+    /// walk's OWN TAIL the rawInput row appends (the
+    /// `isRawMouseInputSupported` gate the array the concat serves —
+    /// the client's desktop boot the SUPPORTED arm the 7-row walk
+    /// wears, the unsupported the 6-row base keeps). THE GRID THE
+    /// `addSmall` LAW WEARS: the two-per-row pair the array order
+    /// keeps (the (0,1) the sensitivity/wheel pair, the (2,3) the
+    /// discrete/invertX pair, the (4,5) the invertY/allowCursor
+    /// pair, the (6, —) the odd-one LEFT seat the rawInput row the
+    /// operator-tab row's own law wears), the boolean rows the
+    /// `options.on`/`options.off` captions the GENERIC law speaks,
+    /// the wheel row the `options.multiplier` caption the
+    /// lambda$new$49 walk wears ("Scroll Sensitivity: 1.0x" the %sx
+    /// fold), the Done footer the base class's own walk keeps.
     fn render_mouse_settings(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
         for y in 0..h {
             let t = y as f32 / h.max(1) as f32;
@@ -65462,19 +65595,89 @@ impl App {
         );
         let cx = w / 2;
         let bw = 140;
-        // THE SENSITIVITY ROW'S OWN SEAT (the array's index-0 the
-        // `Options.sensitivity()` OptionInstance keeps — the slider's
-        // own value the Some render path answers, the SAME caption
-        // the Options screen's row wears)
+        let bool_caption = |label: &str, on: bool| -> String {
+            format!(
+                "{}: {}",
+                tr(label).unwrap_or(label),
+                if on {
+                    tr("options.on").unwrap_or("ON")
+                } else {
+                    tr("options.off").unwrap_or("OFF")
+                }
+            )
+        };
+        // THE (0,1) PAIR'S OWN SEATS (the addSmall's two-per-row law —
+        // the LEFT the `cx - 4 - bw/2` center wears, the RIGHT the
+        // `cx + 4 + bw/2` the same gap keeps, the row pitch the
+        // 24-step grid the Controls pairs wear)
         let mut sens = Button::new(
             "opt_ms_sensitivity",
             sensitivity_caption(self.look_sensitivity),
-            cx,
-            h / 2 - 40,
+            cx - 4 - bw / 2,
+            h / 2 - 64,
             bw,
         );
         sens.value = Some(self.look_sensitivity);
         self.buttons.push(sens);
+        // THE WHEEL'S OWN SLIDER (the array's index-1 seat the
+        // IntRange(-200, 100) the xmap's log-scale wears — the slider's
+        // own unit the unlogMouse fold answers, the caption the
+        // `options.multiplier` "%sx" law the java double speaks)
+        let mut wheel = Button::new(
+            "opt_ms_wheel",
+            format!(
+                "{}: {}x",
+                tr("options.mouseWheelSensitivity").unwrap_or("Scroll Sensitivity"),
+                crate::options_file::java_double(self.mouse_wheel_sensitivity)
+            ),
+            cx + 4 + bw / 2,
+            h / 2 - 64,
+            bw,
+        );
+        wheel.value = Some(wheel_unit(self.mouse_wheel_sensitivity));
+        self.buttons.push(wheel);
+        // THE (2,3) PAIR'S OWN SEATS (the discrete/invertX rows the
+        // createBoolean captions wear)
+        self.buttons.push(Button::new(
+            "opt_ms_discrete",
+            bool_caption("options.discrete_mouse_scroll", self.discrete_mouse_scroll),
+            cx - 4 - bw / 2,
+            h / 2 - 40,
+            bw,
+        ));
+        self.buttons.push(Button::new(
+            "opt_ms_invertx",
+            bool_caption("options.invertMouseX", self.invert_mouse_x),
+            cx + 4 + bw / 2,
+            h / 2 - 40,
+            bw,
+        ));
+        // THE (4,5) PAIR'S OWN SEATS (the invertY/allowCursor rows the
+        // same boolean law wears)
+        self.buttons.push(Button::new(
+            "opt_ms_inverty",
+            bool_caption("options.invertMouseY", self.invert_mouse_y),
+            cx - 4 - bw / 2,
+            h / 2 - 16,
+            bw,
+        ));
+        self.buttons.push(Button::new(
+            "opt_ms_allowcursor",
+            bool_caption("options.allowCursorChanges", self.allow_cursor_changes),
+            cx + 4 + bw / 2,
+            h / 2 - 16,
+            bw,
+        ));
+        // THE RAW INPUT'S OWN ROW (the addOptions walk's appended tail
+        // the odd-one LEFT seat wears — the (6, —) pair the single row
+        // the operator-tab row's own law keeps)
+        self.buttons.push(Button::new(
+            "opt_ms_rawinput",
+            bool_caption("options.rawMouseInput", self.raw_mouse_input),
+            cx - 4 - bw / 2,
+            h / 2 + 8,
+            bw,
+        ));
         self.buttons.push(Button::new(
             "msdone",
             tr("gui.done").unwrap_or("Done").to_string(),

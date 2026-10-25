@@ -9758,7 +9758,7 @@ fn the_options_file_the_stores_restart_outlives() {
     assert_eq!(app.screen, ScreenKind::Title, "the Done the return wears");
     let text = std::fs::read_to_string(&path).expect("the chord the file writes");
     assert_eq!(
-        text, "version:4903\nshowSubtitles:false\nmouseSensitivity:1.0\nfov:110\nsoundCategory_master:0.0\nadvancedItemTooltips:false\npauseOnLostFocus:true\nautoJump:false\noperatorItemsTab:false\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\nkey_key.debug.debugOptions:key.keyboard.f6\nkey_key.debug.focusPause:key.keyboard.p\nkey_key.debug.dumpDynamicTextures:key.keyboard.s\nkey_key.debug.reloadResourcePacks:key.keyboard.t\nkey_key.debug.profiling:key.keyboard.l\nkey_key.debug.copyLocation:key.keyboard.c\nkey_key.debug.dumpVersion:key.keyboard.v\nkey_key.debug.profilingChart:key.keyboard.1\nkey_key.debug.fpsCharts:key.keyboard.2\nkey_key.debug.networkCharts:key.keyboard.3\nkey_key.debug.lightmapTexture:key.keyboard.4\n",
+        text, "version:4903\nshowSubtitles:false\nmouseSensitivity:1.0\nmouseWheelSensitivity:1.0\nrawMouseInput:true\nallowCursorChanges:true\nfov:110\nsoundCategory_master:0.0\nadvancedItemTooltips:false\npauseOnLostFocus:true\nautoJump:false\noperatorItemsTab:false\ndiscrete_mouse_scroll:false\ninvertXMouse:false\ninvertYMouse:false\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\nkey_key.debug.debugOptions:key.keyboard.f6\nkey_key.debug.focusPause:key.keyboard.p\nkey_key.debug.dumpDynamicTextures:key.keyboard.s\nkey_key.debug.reloadResourcePacks:key.keyboard.t\nkey_key.debug.profiling:key.keyboard.l\nkey_key.debug.copyLocation:key.keyboard.c\nkey_key.debug.dumpVersion:key.keyboard.v\nkey_key.debug.profilingChart:key.keyboard.1\nkey_key.debug.fpsCharts:key.keyboard.2\nkey_key.debug.networkCharts:key.keyboard.3\nkey_key.debug.lightmapTexture:key.keyboard.4\n",
         "the file the vanilla rows wear"
     );
     // THE RESTART (the fresh boot the file's truth wears — the session's
@@ -9794,7 +9794,7 @@ fn the_options_escape_the_save_and_return_wears() {
     assert_eq!(app.screen, ScreenKind::Title, "the escape the return wears");
     let text = std::fs::read_to_string(&path).expect("the escape the file writes");
     assert_eq!(
-        text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.75\nfov:90\nsoundCategory_master:0.25\nadvancedItemTooltips:false\npauseOnLostFocus:true\nautoJump:false\noperatorItemsTab:false\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\nkey_key.debug.debugOptions:key.keyboard.f6\nkey_key.debug.focusPause:key.keyboard.p\nkey_key.debug.dumpDynamicTextures:key.keyboard.s\nkey_key.debug.reloadResourcePacks:key.keyboard.t\nkey_key.debug.profiling:key.keyboard.l\nkey_key.debug.copyLocation:key.keyboard.c\nkey_key.debug.dumpVersion:key.keyboard.v\nkey_key.debug.profilingChart:key.keyboard.1\nkey_key.debug.fpsCharts:key.keyboard.2\nkey_key.debug.networkCharts:key.keyboard.3\nkey_key.debug.lightmapTexture:key.keyboard.4\n",
+        text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.75\nmouseWheelSensitivity:1.0\nrawMouseInput:true\nallowCursorChanges:true\nfov:90\nsoundCategory_master:0.25\nadvancedItemTooltips:false\npauseOnLostFocus:true\nautoJump:false\noperatorItemsTab:false\ndiscrete_mouse_scroll:false\ninvertXMouse:false\ninvertYMouse:false\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\nkey_key.debug.debugOptions:key.keyboard.f6\nkey_key.debug.focusPause:key.keyboard.p\nkey_key.debug.dumpDynamicTextures:key.keyboard.s\nkey_key.debug.reloadResourcePacks:key.keyboard.t\nkey_key.debug.profiling:key.keyboard.l\nkey_key.debug.copyLocation:key.keyboard.c\nkey_key.debug.dumpVersion:key.keyboard.v\nkey_key.debug.profilingChart:key.keyboard.1\nkey_key.debug.fpsCharts:key.keyboard.2\nkey_key.debug.networkCharts:key.keyboard.3\nkey_key.debug.lightmapTexture:key.keyboard.4\n",
         "the SAME save chord the Done wears the escape speaks"
     );
     // THE PAUSED LANE (the pause screen's own Options — the
@@ -9903,7 +9903,7 @@ fn the_quit_lane_the_stop_flag_and_the_files_absence_wears() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the removed() moment the file writes"),
-        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\nadvancedItemTooltips:false\npauseOnLostFocus:true\nautoJump:false\noperatorItemsTab:false\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\nkey_key.debug.debugOptions:key.keyboard.f6\nkey_key.debug.focusPause:key.keyboard.p\nkey_key.debug.dumpDynamicTextures:key.keyboard.s\nkey_key.debug.reloadResourcePacks:key.keyboard.t\nkey_key.debug.profiling:key.keyboard.l\nkey_key.debug.copyLocation:key.keyboard.c\nkey_key.debug.dumpVersion:key.keyboard.v\nkey_key.debug.profilingChart:key.keyboard.1\nkey_key.debug.fpsCharts:key.keyboard.2\nkey_key.debug.networkCharts:key.keyboard.3\nkey_key.debug.lightmapTexture:key.keyboard.4\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.8\nmouseWheelSensitivity:1.0\nrawMouseInput:true\nallowCursorChanges:true\nfov:70\nsoundCategory_master:1.0\nadvancedItemTooltips:false\npauseOnLostFocus:true\nautoJump:false\noperatorItemsTab:false\ndiscrete_mouse_scroll:false\ninvertXMouse:false\ninvertYMouse:false\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\nkey_key.debug.debugOptions:key.keyboard.f6\nkey_key.debug.focusPause:key.keyboard.p\nkey_key.debug.dumpDynamicTextures:key.keyboard.s\nkey_key.debug.reloadResourcePacks:key.keyboard.t\nkey_key.debug.profiling:key.keyboard.l\nkey_key.debug.copyLocation:key.keyboard.c\nkey_key.debug.dumpVersion:key.keyboard.v\nkey_key.debug.profilingChart:key.keyboard.1\nkey_key.debug.fpsCharts:key.keyboard.2\nkey_key.debug.networkCharts:key.keyboard.3\nkey_key.debug.lightmapTexture:key.keyboard.4\n",
         "the takeover's own exit the rows bank"
     );
     app.render_title_buttons_for_test();
@@ -9917,7 +9917,7 @@ fn the_quit_lane_the_stop_flag_and_the_files_absence_wears() {
     assert!(app.stopping, "the second stop the same chord wears");
     assert_eq!(
         std::fs::read_to_string(&path).expect("the file the exit keeps"),
-        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.8\nfov:70\nsoundCategory_master:1.0\nadvancedItemTooltips:false\npauseOnLostFocus:true\nautoJump:false\noperatorItemsTab:false\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\nkey_key.debug.debugOptions:key.keyboard.f6\nkey_key.debug.focusPause:key.keyboard.p\nkey_key.debug.dumpDynamicTextures:key.keyboard.s\nkey_key.debug.reloadResourcePacks:key.keyboard.t\nkey_key.debug.profiling:key.keyboard.l\nkey_key.debug.copyLocation:key.keyboard.c\nkey_key.debug.dumpVersion:key.keyboard.v\nkey_key.debug.profilingChart:key.keyboard.1\nkey_key.debug.fpsCharts:key.keyboard.2\nkey_key.debug.networkCharts:key.keyboard.3\nkey_key.debug.lightmapTexture:key.keyboard.4\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.8\nmouseWheelSensitivity:1.0\nrawMouseInput:true\nallowCursorChanges:true\nfov:70\nsoundCategory_master:1.0\nadvancedItemTooltips:false\npauseOnLostFocus:true\nautoJump:false\noperatorItemsTab:false\ndiscrete_mouse_scroll:false\ninvertXMouse:false\ninvertYMouse:false\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\nkey_key.debug.debugOptions:key.keyboard.f6\nkey_key.debug.focusPause:key.keyboard.p\nkey_key.debug.dumpDynamicTextures:key.keyboard.s\nkey_key.debug.reloadResourcePacks:key.keyboard.t\nkey_key.debug.profiling:key.keyboard.l\nkey_key.debug.copyLocation:key.keyboard.c\nkey_key.debug.dumpVersion:key.keyboard.v\nkey_key.debug.profilingChart:key.keyboard.1\nkey_key.debug.fpsCharts:key.keyboard.2\nkey_key.debug.networkCharts:key.keyboard.3\nkey_key.debug.lightmapTexture:key.keyboard.4\n",
         "the quit the file NEVER re-writes — the removed() moment ALONE the rows keep"
     );
     let _ = std::fs::remove_dir_all(&dir);
@@ -9968,7 +9968,7 @@ fn the_options_exit_the_removed_moment_itself_saves() {
     app.open(ScreenKind::Servers);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the takeover the file writes"),
-        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:1.0\nadvancedItemTooltips:false\npauseOnLostFocus:true\nautoJump:false\noperatorItemsTab:false\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\nkey_key.debug.debugOptions:key.keyboard.f6\nkey_key.debug.focusPause:key.keyboard.p\nkey_key.debug.dumpDynamicTextures:key.keyboard.s\nkey_key.debug.reloadResourcePacks:key.keyboard.t\nkey_key.debug.profiling:key.keyboard.l\nkey_key.debug.copyLocation:key.keyboard.c\nkey_key.debug.dumpVersion:key.keyboard.v\nkey_key.debug.profilingChart:key.keyboard.1\nkey_key.debug.fpsCharts:key.keyboard.2\nkey_key.debug.networkCharts:key.keyboard.3\nkey_key.debug.lightmapTexture:key.keyboard.4\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.65\nmouseWheelSensitivity:1.0\nrawMouseInput:true\nallowCursorChanges:true\nfov:85\nsoundCategory_master:1.0\nadvancedItemTooltips:false\npauseOnLostFocus:true\nautoJump:false\noperatorItemsTab:false\ndiscrete_mouse_scroll:false\ninvertXMouse:false\ninvertYMouse:false\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\nkey_key.debug.debugOptions:key.keyboard.f6\nkey_key.debug.focusPause:key.keyboard.p\nkey_key.debug.dumpDynamicTextures:key.keyboard.s\nkey_key.debug.reloadResourcePacks:key.keyboard.t\nkey_key.debug.profiling:key.keyboard.l\nkey_key.debug.copyLocation:key.keyboard.c\nkey_key.debug.dumpVersion:key.keyboard.v\nkey_key.debug.profilingChart:key.keyboard.1\nkey_key.debug.fpsCharts:key.keyboard.2\nkey_key.debug.networkCharts:key.keyboard.3\nkey_key.debug.lightmapTexture:key.keyboard.4\n",
         "the replacement lane the removed() moment speaks"
     );
     // THE SAME-KIND RE-ENTRY (the open(Options) from Options the
@@ -9979,7 +9979,7 @@ fn the_options_exit_the_removed_moment_itself_saves() {
     app.open(ScreenKind::Options);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the re-entry the file writes"),
-        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.65\nfov:85\nsoundCategory_master:0.5\nadvancedItemTooltips:false\npauseOnLostFocus:true\nautoJump:false\noperatorItemsTab:false\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\nkey_key.debug.debugOptions:key.keyboard.f6\nkey_key.debug.focusPause:key.keyboard.p\nkey_key.debug.dumpDynamicTextures:key.keyboard.s\nkey_key.debug.reloadResourcePacks:key.keyboard.t\nkey_key.debug.profiling:key.keyboard.l\nkey_key.debug.copyLocation:key.keyboard.c\nkey_key.debug.dumpVersion:key.keyboard.v\nkey_key.debug.profilingChart:key.keyboard.1\nkey_key.debug.fpsCharts:key.keyboard.2\nkey_key.debug.networkCharts:key.keyboard.3\nkey_key.debug.lightmapTexture:key.keyboard.4\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.65\nmouseWheelSensitivity:1.0\nrawMouseInput:true\nallowCursorChanges:true\nfov:85\nsoundCategory_master:0.5\nadvancedItemTooltips:false\npauseOnLostFocus:true\nautoJump:false\noperatorItemsTab:false\ndiscrete_mouse_scroll:false\ninvertXMouse:false\ninvertYMouse:false\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\nkey_key.debug.debugOptions:key.keyboard.f6\nkey_key.debug.focusPause:key.keyboard.p\nkey_key.debug.dumpDynamicTextures:key.keyboard.s\nkey_key.debug.reloadResourcePacks:key.keyboard.t\nkey_key.debug.profiling:key.keyboard.l\nkey_key.debug.copyLocation:key.keyboard.c\nkey_key.debug.dumpVersion:key.keyboard.v\nkey_key.debug.profilingChart:key.keyboard.1\nkey_key.debug.fpsCharts:key.keyboard.2\nkey_key.debug.networkCharts:key.keyboard.3\nkey_key.debug.lightmapTexture:key.keyboard.4\n",
         "the same-kind walk the old screen's discard keeps"
     );
     // THE NONE BOOT'S SILENT KEEP (the options_file None the save walk
@@ -10117,7 +10117,7 @@ fn the_focus_pause_chord_the_flip_and_the_rows_wear() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the exit the file writes"),
-        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\nadvancedItemTooltips:false\npauseOnLostFocus:false\nautoJump:false\noperatorItemsTab:false\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\nkey_key.debug.debugOptions:key.keyboard.f6\nkey_key.debug.focusPause:key.keyboard.p\nkey_key.debug.dumpDynamicTextures:key.keyboard.s\nkey_key.debug.reloadResourcePacks:key.keyboard.t\nkey_key.debug.profiling:key.keyboard.l\nkey_key.debug.copyLocation:key.keyboard.c\nkey_key.debug.dumpVersion:key.keyboard.v\nkey_key.debug.profilingChart:key.keyboard.1\nkey_key.debug.fpsCharts:key.keyboard.2\nkey_key.debug.networkCharts:key.keyboard.3\nkey_key.debug.lightmapTexture:key.keyboard.4\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nmouseWheelSensitivity:1.0\nrawMouseInput:true\nallowCursorChanges:true\nfov:70\nsoundCategory_master:1.0\nadvancedItemTooltips:false\npauseOnLostFocus:false\nautoJump:false\noperatorItemsTab:false\ndiscrete_mouse_scroll:false\ninvertXMouse:false\ninvertYMouse:false\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\nkey_key.debug.debugOptions:key.keyboard.f6\nkey_key.debug.focusPause:key.keyboard.p\nkey_key.debug.dumpDynamicTextures:key.keyboard.s\nkey_key.debug.reloadResourcePacks:key.keyboard.t\nkey_key.debug.profiling:key.keyboard.l\nkey_key.debug.copyLocation:key.keyboard.c\nkey_key.debug.dumpVersion:key.keyboard.v\nkey_key.debug.profilingChart:key.keyboard.1\nkey_key.debug.fpsCharts:key.keyboard.2\nkey_key.debug.networkCharts:key.keyboard.3\nkey_key.debug.lightmapTexture:key.keyboard.4\n",
         "the flipped row the exit banks"
     );
     // THE SECOND FLIP (the chord the option re-arms — the row the next
@@ -10128,7 +10128,7 @@ fn the_focus_pause_chord_the_flip_and_the_rows_wear() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the second exit the file writes"),
-        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\nadvancedItemTooltips:false\npauseOnLostFocus:true\nautoJump:false\noperatorItemsTab:false\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\nkey_key.debug.debugOptions:key.keyboard.f6\nkey_key.debug.focusPause:key.keyboard.p\nkey_key.debug.dumpDynamicTextures:key.keyboard.s\nkey_key.debug.reloadResourcePacks:key.keyboard.t\nkey_key.debug.profiling:key.keyboard.l\nkey_key.debug.copyLocation:key.keyboard.c\nkey_key.debug.dumpVersion:key.keyboard.v\nkey_key.debug.profilingChart:key.keyboard.1\nkey_key.debug.fpsCharts:key.keyboard.2\nkey_key.debug.networkCharts:key.keyboard.3\nkey_key.debug.lightmapTexture:key.keyboard.4\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nmouseWheelSensitivity:1.0\nrawMouseInput:true\nallowCursorChanges:true\nfov:70\nsoundCategory_master:1.0\nadvancedItemTooltips:false\npauseOnLostFocus:true\nautoJump:false\noperatorItemsTab:false\ndiscrete_mouse_scroll:false\ninvertXMouse:false\ninvertYMouse:false\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\nkey_key.debug.debugOptions:key.keyboard.f6\nkey_key.debug.focusPause:key.keyboard.p\nkey_key.debug.dumpDynamicTextures:key.keyboard.s\nkey_key.debug.reloadResourcePacks:key.keyboard.t\nkey_key.debug.profiling:key.keyboard.l\nkey_key.debug.copyLocation:key.keyboard.c\nkey_key.debug.dumpVersion:key.keyboard.v\nkey_key.debug.profilingChart:key.keyboard.1\nkey_key.debug.fpsCharts:key.keyboard.2\nkey_key.debug.networkCharts:key.keyboard.3\nkey_key.debug.lightmapTexture:key.keyboard.4\n",
         "the re-armed row the exit banks"
     );
     // THE THIRD FLIP (the option the false re-wears — the restart the
@@ -10139,7 +10139,7 @@ fn the_focus_pause_chord_the_flip_and_the_rows_wear() {
     app.open(ScreenKind::Title);
     assert_eq!(
         std::fs::read_to_string(&path).expect("the third exit the file writes"),
-        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\nadvancedItemTooltips:false\npauseOnLostFocus:false\nautoJump:false\noperatorItemsTab:false\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\nkey_key.debug.debugOptions:key.keyboard.f6\nkey_key.debug.focusPause:key.keyboard.p\nkey_key.debug.dumpDynamicTextures:key.keyboard.s\nkey_key.debug.reloadResourcePacks:key.keyboard.t\nkey_key.debug.profiling:key.keyboard.l\nkey_key.debug.copyLocation:key.keyboard.c\nkey_key.debug.dumpVersion:key.keyboard.v\nkey_key.debug.profilingChart:key.keyboard.1\nkey_key.debug.fpsCharts:key.keyboard.2\nkey_key.debug.networkCharts:key.keyboard.3\nkey_key.debug.lightmapTexture:key.keyboard.4\n",
+        "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nmouseWheelSensitivity:1.0\nrawMouseInput:true\nallowCursorChanges:true\nfov:70\nsoundCategory_master:1.0\nadvancedItemTooltips:false\npauseOnLostFocus:false\nautoJump:false\noperatorItemsTab:false\ndiscrete_mouse_scroll:false\ninvertXMouse:false\ninvertYMouse:false\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\nkey_key.debug.debugOptions:key.keyboard.f6\nkey_key.debug.focusPause:key.keyboard.p\nkey_key.debug.dumpDynamicTextures:key.keyboard.s\nkey_key.debug.reloadResourcePacks:key.keyboard.t\nkey_key.debug.profiling:key.keyboard.l\nkey_key.debug.copyLocation:key.keyboard.c\nkey_key.debug.dumpVersion:key.keyboard.v\nkey_key.debug.profilingChart:key.keyboard.1\nkey_key.debug.fpsCharts:key.keyboard.2\nkey_key.debug.networkCharts:key.keyboard.3\nkey_key.debug.lightmapTexture:key.keyboard.4\n",
         "the flipped row the exit banks"
     );
     // THE BOOT LOAD (the file's truth the boot walk wears — the false
@@ -10156,7 +10156,7 @@ fn the_focus_pause_chord_the_flip_and_the_rows_wear() {
     // three-row file the vanilla's own default true answers)
     std::fs::write(
         &path,
-        "version:4903\nmouseSensitivity:0.9\nfov:100\nsoundCategory_master:0.1\n",
+        "version:4903\nmouseSensitivity:0.9\nmouseWheelSensitivity:1.0\nrawMouseInput:true\nallowCursorChanges:true\nfov:100\nsoundCategory_master:0.1\n",
     )
     .expect("the legacy file writes");
     let mut app3 = App::new(262);
@@ -10311,7 +10311,7 @@ fn the_advanced_tooltips_chord_the_flip_the_row_and_the_word_wear() {
     // THE MISSING KEY (the older file's shape the default keeps)
     std::fs::write(
         &path,
-        "version:4903\nmouseSensitivity:0.9\nfov:100\nsoundCategory_master:0.1\n",
+        "version:4903\nmouseSensitivity:0.9\nmouseWheelSensitivity:1.0\nrawMouseInput:true\nallowCursorChanges:true\nfov:100\nsoundCategory_master:0.1\n",
     )
     .expect("the legacy file writes");
     let mut app4 = App::new(262);
@@ -10825,7 +10825,7 @@ fn the_fov_effect_scale_row_the_boot_the_body_wears() {
     // own store the tick's read passes)
     std::fs::write(
         &path,
-        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\nadvancedItemTooltips:false\npauseOnLostFocus:true\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:0.5\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
+        "version:4903\nmouseSensitivity:0.5\nmouseWheelSensitivity:1.0\nrawMouseInput:true\nallowCursorChanges:true\nfov:70\nsoundCategory_master:1.0\nadvancedItemTooltips:false\npauseOnLostFocus:true\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:0.5\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
     )
     .expect("the scale file writes");
     app.enter_world();
@@ -10841,7 +10841,7 @@ fn the_fov_effect_scale_row_the_boot_the_body_wears() {
     // the effects the OFF caption keeps, the zoom the 1.0 answers)
     std::fs::write(
         &path,
-        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\nadvancedItemTooltips:false\npauseOnLostFocus:true\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:0.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
+        "version:4903\nmouseSensitivity:0.5\nmouseWheelSensitivity:1.0\nrawMouseInput:true\nallowCursorChanges:true\nfov:70\nsoundCategory_master:1.0\nadvancedItemTooltips:false\npauseOnLostFocus:true\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:0.0\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
     )
     .expect("the off file writes");
     let mut app2 = App::new(262);
@@ -10858,7 +10858,7 @@ fn the_fov_effect_scale_row_the_boot_the_body_wears() {
     // clamp never wears, the doubleRange codec the skip answers)
     std::fs::write(
         &path,
-        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\nadvancedItemTooltips:false\npauseOnLostFocus:true\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:1.5\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
+        "version:4903\nmouseSensitivity:0.5\nmouseWheelSensitivity:1.0\nrawMouseInput:true\nallowCursorChanges:true\nfov:70\nsoundCategory_master:1.0\nadvancedItemTooltips:false\npauseOnLostFocus:true\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:1.5\nchatOpacity:1.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
     )
     .expect("the oor file writes");
     let mut app4 = App::new(262);
@@ -11707,7 +11707,7 @@ fn the_chat_line_spacing_row_the_chat_pitch_wears() {
     // the missing row the 0.0 keeps)
     std::fs::write(
         &path,
-        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\nadvancedItemTooltips:false\npauseOnLostFocus:true\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.5\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
+        "version:4903\nmouseSensitivity:0.5\nmouseWheelSensitivity:1.0\nrawMouseInput:true\nallowCursorChanges:true\nfov:70\nsoundCategory_master:1.0\nadvancedItemTooltips:false\npauseOnLostFocus:true\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.5\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
     )
     .expect("the spacing file writes");
     let mut re = App::new(262);
@@ -11719,7 +11719,7 @@ fn the_chat_line_spacing_row_the_chat_pitch_wears() {
     );
     std::fs::write(
         &path,
-        "version:4903\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\nadvancedItemTooltips:false\npauseOnLostFocus:true\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:1.5\nchatLineSpacing:0.25\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
+        "version:4903\nmouseSensitivity:0.5\nmouseWheelSensitivity:1.0\nrawMouseInput:true\nallowCursorChanges:true\nfov:70\nsoundCategory_master:1.0\nadvancedItemTooltips:false\npauseOnLostFocus:true\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:1.5\nchatLineSpacing:0.25\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\n",
     )
     .expect("the ladder file writes");
     let mut re2 = App::new(262);
@@ -13350,6 +13350,211 @@ fn the_inventory_trio_the_scroll_the_lanes_the_file_wear() {
             minifb::MouseButton::Right
         )),
         "the restart the mouse default the decode keeps"
+    );
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// THE MOUSE SETTINGS' OWN ROUND (the autopush-227 walk): the
+/// MouseSettingsScreen.options the 6-instance array the bytecode
+/// banks (the sensitivity the index-0 seat, the
+/// mouseWheelSensitivity the index-1 seat the IntRange(-200, 100)
+/// xmap(logMouse, unlogMouse) the log-scale slider wears, the
+/// discrete/invertX/invertY/allowCursor the createBoolean rows) —
+/// the addOptions walk's OWN TAIL the rawInput row the supported arm
+/// appends, the addSmall grid the two-per-row pairs the array order
+/// keeps, the wheel caption the `options.multiplier` "%sx" law the
+/// lambda$new$49 speaks, the invert rows the look lane's own axis
+/// flips the MouseHandler law serves, the wheel the log-scale edges
+/// the fromSlider round answers (the left edge the 0.01x, the right
+/// the 10.0x), the file the six rows the visit-order keys wear.
+#[test]
+fn the_mouse_settings_the_rows_the_wheel_the_invert_the_file_wear() {
+    let dir = std::env::temp_dir().join(format!("mc2rs_mouse_rows_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&dir);
+    let path = dir.join("options.txt");
+    let mut app = App::new(262);
+    app.options_file = Some(path.clone());
+    // THE DEFAULTS' OWN SEATS (the ctor's own ints the six
+    // registrations bank — the wheel the 1.0, the booleans the
+    // discrete/invert trio the FALSE, the allowCursor/rawInput pair
+    // the TRUE)
+    assert_eq!(app.mouse_wheel_sensitivity, 1.0, "the wheel the 1.0 wears");
+    assert!(!app.discrete_mouse_scroll, "the discrete the FALSE keeps");
+    assert!(!app.invert_mouse_x, "the invertX the FALSE keeps");
+    assert!(!app.invert_mouse_y, "the invertY the FALSE keeps");
+    assert!(app.allow_cursor_changes, "the allowCursor the TRUE keeps");
+    assert!(app.raw_mouse_input, "the rawInput the TRUE keeps");
+    // THE SCREEN'S OWN RENDER (the direct open the 7-row grid wears —
+    // the 6-instance array + the rawInput tail the supported arm
+    // appends)
+    app.open(ScreenKind::MouseSettings);
+    let root = crate::screens::tests::assets_root();
+    let mut assets = GuiAssets::open(&root);
+    let mut fb = crate::raster::Framebuf::new(320, 260);
+    app.render(&mut fb, &mut assets);
+    for id in [
+        "opt_ms_sensitivity",
+        "opt_ms_wheel",
+        "opt_ms_discrete",
+        "opt_ms_invertx",
+        "opt_ms_inverty",
+        "opt_ms_allowcursor",
+        "opt_ms_rawinput",
+        "msdone",
+    ] {
+        assert!(
+            app.buttons.iter().any(|b| b.id == id),
+            "the {id} row the grid wears"
+        );
+    }
+    // THE WHEEL'S OWN CAPTION + UNIT (the `options.multiplier` "%sx"
+    // law the default's 1.0 word speaks — the slider's own unit the
+    // unlogMouse fold answers: the 1.0 the (0 + 200)/300 = 2/3 seat)
+    let wheel = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_ms_wheel")
+        .expect("the wheel row")
+        .clone();
+    assert_eq!(
+        wheel.label, "Scroll Sensitivity: 1.0x",
+        "the default's own multiplier word"
+    );
+    let unit = wheel.value.expect("the wheel the slider wears");
+    assert!(
+        (unit - 2.0 / 3.0).abs() < 1e-9,
+        "the default the center-log seat wears ({unit})"
+    );
+    // THE LOG-SCALE'S OWN EDGES (the fromSlider round the xmap's
+    // logMouse fold answers — the left edge the -200 int the 0.01
+    // wears, the right the +100 int the 10.0 speaks)
+    app.on_press(wheel.x + 4, wheel.y + wheel.h / 2);
+    assert_eq!(
+        app.mouse_wheel_sensitivity, 0.01,
+        "the left edge the logMouse(-200) wears"
+    );
+    assert!(app.wheel_drag, "the press inside the track arms");
+    app.on_press(wheel.x + wheel.w - 4, wheel.y + wheel.h / 2);
+    assert_eq!(
+        app.mouse_wheel_sensitivity, 10.0,
+        "the right edge the logMouse(100) wears"
+    );
+    // THE DRAG'S OWN LAW (the same armed lane the sensitivity seat
+    // wears — the held frames the value's own seat follows, the
+    // release the disarm speaks, the disarmed drag never moves)
+    app.on_wheel_slider_drag(wheel.x + 4);
+    assert_eq!(
+        app.mouse_wheel_sensitivity, 0.01,
+        "the left-edge drag the 0.01 wears"
+    );
+    app.on_left_release();
+    assert!(!app.wheel_drag, "the release disarms");
+    app.on_wheel_slider_drag(wheel.x + wheel.w - 4);
+    assert_eq!(
+        app.mouse_wheel_sensitivity, 0.01,
+        "the disarmed drag never moves"
+    );
+    // THE INVERT'S OWN FLIP (the boolean row's own click walk — the
+    // press the store's own seat flips, the row's caption the
+    // re-render's own read speaks)
+    let inv = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_ms_invertx")
+        .expect("the invertX row")
+        .clone();
+    assert_eq!(
+        inv.label, "Invert Mouse X: OFF",
+        "the default's own OFF word"
+    );
+    app.on_click(inv.x + inv.w / 2, inv.y + inv.h / 2);
+    assert!(app.invert_mouse_x, "the click the store flips");
+    app.render(&mut fb, &mut assets);
+    let inv = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_ms_invertx")
+        .expect("the row")
+        .clone();
+    assert_eq!(
+        inv.label, "Invert Mouse X: ON",
+        "the ON word the flip wears"
+    );
+    // THE LOOK LANE'S OWN FLIP (the MouseHandler's own walk — the
+    // raw delta the positive yaw wears, the TRUE the axis the
+    // negation speaks: the SAME drag the negative answers. The row's
+    // flip the walk RESETS — the raw lane the store's own FALSE seat
+    // probes, the re-arm the negation answers)
+    app.open(ScreenKind::World);
+    app.body = Some(crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0));
+    app.invert_mouse_x = false;
+    app.on_look_delta(10.0, 0.0);
+    let yaw_right = app.body.as_ref().expect("the body").yaw;
+    assert!(yaw_right > 0.0, "the raw delta the positive yaw wears");
+    app.invert_mouse_x = true;
+    app.on_look_delta(10.0, 0.0);
+    let yaw_flipped = app.body.as_ref().expect("the body").yaw;
+    assert!(
+        yaw_flipped < yaw_right,
+        "the invert the axis the negation speaks"
+    );
+    // THE FILE'S OWN ROWS (the save walk the six rows the visit-order
+    // keys wear — the wheel the log-scale double, the booleans the
+    // "true"/"false" vocabulary speaks, the restart the decode keeps)
+    app.mouse_wheel_sensitivity = 0.5;
+    app.discrete_mouse_scroll = true;
+    app.invert_mouse_y = true;
+    app.options_file_save();
+    let text = std::fs::read_to_string(&path).expect("the save wrote");
+    assert!(
+        text.contains("mouseWheelSensitivity:0.5\n"),
+        "the wheel the log-scale double wears ({text})"
+    );
+    assert!(
+        text.contains("discrete_mouse_scroll:true\n"),
+        "the discrete the TRUE row wears"
+    );
+    assert!(
+        text.contains("invertXMouse:true\n"),
+        "the invertX the TRUE row wears"
+    );
+    assert!(
+        text.contains("invertYMouse:true\n"),
+        "the invertY the TRUE row wears"
+    );
+    assert!(
+        text.contains("allowCursorChanges:true\n"),
+        "the allowCursor the default row wears"
+    );
+    assert!(
+        text.contains("rawMouseInput:true\n"),
+        "the rawInput the default row wears"
+    );
+    // THE RESTART'S OWN DECODE (the fresh boot the rows' truth wears —
+    // the out-of-range the default keeps, the clamp never wears)
+    let mut re = App::new(262);
+    re.options_file = Some(path.clone());
+    re.options_file_load();
+    assert_eq!(
+        re.mouse_wheel_sensitivity, 0.5,
+        "the restart the wheel decodes"
+    );
+    assert!(re.discrete_mouse_scroll, "the restart the discrete keeps");
+    assert!(re.invert_mouse_x, "the restart the invertX keeps");
+    assert!(re.invert_mouse_y, "the restart the invertY keeps");
+    assert!(re.allow_cursor_changes, "the restart the allowCursor keeps");
+    assert!(re.raw_mouse_input, "the restart the rawInput keeps");
+    // THE OUT-OF-RANGE'S OWN ROW (the codec doubleRange(0.01, 10.0)
+    // the decode's own bounds keep — the bogus row the default wears)
+    let mut text2 = std::fs::read_to_string(&path).expect("the read");
+    text2 = text2.replace("mouseWheelSensitivity:0.5", "mouseWheelSensitivity:99.0");
+    std::fs::write(&path, &text2).expect("the bogus write");
+    let mut re2 = App::new(262);
+    re2.options_file = Some(path.clone());
+    re2.options_file_load();
+    assert_eq!(
+        re2.mouse_wheel_sensitivity, 1.0,
+        "the out-of-range the default keeps"
     );
     let _ = std::fs::remove_dir_all(&dir);
 }
@@ -16914,7 +17119,7 @@ fn the_autojump_row_the_file_round_trip_wears() {
     // the store the walk answers, the malformed the default keeps)
     std::fs::write(
         &path,
-        "version:4903\nautoJump:true\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\n",
+        "version:4903\nautoJump:true\nmouseSensitivity:0.5\nmouseWheelSensitivity:1.0\nrawMouseInput:true\nallowCursorChanges:true\nfov:70\nsoundCategory_master:1.0\n",
     )
     .expect("the autojump file writes");
     app.options_file = Some(path.clone());
@@ -16926,7 +17131,7 @@ fn the_autojump_row_the_file_round_trip_wears() {
     let text = std::fs::read_to_string(&path).expect("the save the file writes");
     assert!(
         text.contains(
-            "pauseOnLostFocus:true\nautoJump:true\noperatorItemsTab:false\ntoggleCrouch:"
+            "pauseOnLostFocus:true\nautoJump:true\noperatorItemsTab:false\ndiscrete_mouse_scroll:false\ninvertXMouse:false\ninvertYMouse:false\ntoggleCrouch:"
         ),
         "the save the visit-order seat wears: {}",
         text
@@ -17072,7 +17277,7 @@ fn the_operator_tab_row_the_file_round_trip_wears() {
     // wears — the store the walk answers)
     std::fs::write(
         &path,
-        "version:4903\noperatorItemsTab:true\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\n",
+        "version:4903\noperatorItemsTab:true\nmouseSensitivity:0.5\nmouseWheelSensitivity:1.0\nrawMouseInput:true\nallowCursorChanges:true\nfov:70\nsoundCategory_master:1.0\n",
     )
     .expect("the operator tab file writes");
     app.options_file = Some(path.clone());
@@ -17083,7 +17288,7 @@ fn the_operator_tab_row_the_file_round_trip_wears() {
     app.options_file_save();
     let text = std::fs::read_to_string(&path).expect("the save the file writes");
     assert!(
-        text.contains("autoJump:false\noperatorItemsTab:true\ntoggleCrouch:"),
+        text.contains("autoJump:false\noperatorItemsTab:true\ndiscrete_mouse_scroll:false\ninvertXMouse:false\ninvertYMouse:false\ntoggleCrouch:"),
         "the save the visit-order seat wears: {}",
         text
     );

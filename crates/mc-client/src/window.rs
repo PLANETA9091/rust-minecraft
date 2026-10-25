@@ -2215,6 +2215,13 @@ pub fn run_gui_app(
         if left_down && app.sensitivity_drag {
             app.on_sensitivity_slider_drag(gmx);
         }
+        // THE WHEEL SLIDER'S OWN DRAG (the same armed lane the
+        // sensitivity seat wears — the held frames the IntRange(-200,
+        // 100)'s own log-scale the cursor's x answers, the release the
+        // disarm speaks below)
+        if left_down && app.wheel_drag {
+            app.on_wheel_slider_drag(gmx);
+        }
         // THE FOV SLIDER'S OWN DRAG (the same armed lane the
         // sensitivity seat wears — the held frames the IntRange's own
         // step the cursor's x answers, the release the disarm speaks
