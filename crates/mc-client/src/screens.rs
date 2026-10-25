@@ -27093,6 +27093,15 @@ impl App {
                 }
             }
         }
+        // THE ITEM TOOLTIP (the extractTooltip pass — the picker's
+        // hovered seat the same walk the survival screen serves, the
+        // rows the F3+H flag wears, the tab label and the carried the
+        // layer order keeps under)
+        if let Some((mx, my)) = self.mouse_pos {
+            if let Some((_, rows)) = self.creative_item_tooltip_hover(mx, my) {
+                self.paint_item_tooltip(g, a, mx, my, rows);
+            }
+        }
         self.render_bundle_tooltip(g, a);
     }
 
@@ -34526,6 +34535,23 @@ impl App {
         let Some((_, rows)) = self.item_tooltip_hover(mx, my) else {
             return; // the gates the tooltip refuses
         };
+        self.paint_item_tooltip(g, a, mx, my, rows);
+    }
+
+    /// THE ITEM TOOLTIP'S OWN PAINT (the panel the
+    /// renderTooltipBackground law paints — the 3px margins the box
+    /// keeps, the 9px row pitch, the positioner the
+    /// DefaultTooltipPositioner law serves): the pass BOTH the
+    /// survival and the creative seats share — the gate's (rows) the
+    /// callers' own walks serve.
+    fn paint_item_tooltip(
+        &self,
+        g: &mut Gui,
+        a: &mut GuiAssets,
+        mx: i32,
+        my: i32,
+        rows: Vec<(String, [f32; 3])>,
+    ) {
         if rows.is_empty() {
             return; // the registry's own miss the name-less walk keeps
         }
@@ -34537,6 +34563,48 @@ impl App {
         for (i, (s, color)) in rows.iter().enumerate() {
             g.text(a, tx + 3, ty + 3 + 9 * i as i32, s, *color, true);
         }
+    }
+
+    /// THE CREATIVE PICKER'S OWN SEAT (the CreativeModeInventoryScreen's
+    /// extractTooltip ride — the superclass walk the SAME gates the
+    /// wrapped and palette seats serve): the (id, rows) the picker's
+    /// tooltip paints — None the walls speak. THE SEAT ORDER (the
+    /// INVENTORY tab's own wrapped panel the palette grid's region
+    /// OVERLAPS — the wrap walk the FIRST answer keeps, the palette
+    /// cells the wrapped tab never serves): the palette 45 the picker
+    /// tabs' own rows wear, the store row the believed hotbar speaks,
+    /// the wrapped tab the armor/offhand/main/hotbar the sim store
+    /// answers (the BIN the destroyed-slot's hasItem false keeps).
+    /// The carried wall the same field the picker's own carried render
+    /// reads (`self.inv_carried` — the setCarried walk the client-local
+    /// belief keeps).
+    fn creative_item_tooltip_hover(
+        &self,
+        mx: i32,
+        my: i32,
+    ) -> Option<(i32, Vec<(String, [f32; 3])>)> {
+        let (id, count) = if CREATIVE_TABS[self.creative_tab].kind == CreativeTabKind::Inventory {
+            // THE WRAPPED SEAT (the INVENTORY tab the palette hides)
+            match self.creative_wrap_cell(mx, my)? {
+                CreativeWrapSlot::Armor(k) => self.inventory.armor[k],
+                CreativeWrapSlot::Offhand => self.inventory.offhand[0],
+                CreativeWrapSlot::Main(i) | CreativeWrapSlot::Hotbar(i) => self.inventory.items[i],
+                CreativeWrapSlot::Bin => return None, // the hasItem false
+            }
+        } else if let Some(cell) = self.creative_palette_cell(mx, my) {
+            self.creative_palette[cell]
+        } else if let Some(slot) = self.creative_store_cell(mx, my) {
+            self.inventory.items[slot]
+        } else {
+            return None; // the seats' outside the walk refuses
+        };
+        if count <= 0 {
+            return None; // the hasItem() gate
+        }
+        if self.inv_carried.1 > 0 {
+            return None; // the carried wall (the image-less false answer)
+        }
+        Some((id, Self::item_tooltip_rows(id, self.advanced_item_tooltips)))
     }
 
     /// THE MIRROR'S OWN OFFLINE SYNC (the projection law — the menu's

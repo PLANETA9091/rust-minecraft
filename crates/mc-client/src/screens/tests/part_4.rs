@@ -15766,3 +15766,94 @@ fn the_item_tooltip_gate_the_hasItem_and_carried_walls_speak() {
     );
     let _ = app;
 }
+
+/// THE CREATIVE PICKER'S OWN SEAT (the CreativeModeInventoryScreen's
+/// extractTooltip ride — the palette/store/wrapped seats the same
+/// gates serve, the INVENTORY tab's wrapped-first order the palette
+/// grid's overlap answers, the BIN the hasItem false keeps, the
+/// carried wall the same field the picker's own render reads).
+#[test]
+fn the_creative_item_tooltip_the_palette_the_wrap_the_walls_wear() {
+    let mut app = App::new(262);
+    app.enter_world();
+    app.game_mode = GameMode::Creative;
+    app.open_inventory();
+    assert_eq!(app.screen, ScreenKind::Creative, "the creative arm opens");
+    app.creative_panel = (100, 50);
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    let stone = mc_registry::item_id_by_name("stone").unwrap();
+    // THE PALETTE SEAT (the picker tab's own 45 — cell 0 at (9, 18))
+    app.creative_palette[0] = (dirt, 1);
+    let (id, rows) = app
+        .creative_item_tooltip_hover(100 + 9 + 8, 50 + 18 + 8)
+        .expect("the palette seat the gate answers");
+    assert_eq!(id, dirt, "the hovered palette cell's own id the gate banks");
+    assert_eq!(
+        rows,
+        vec![("Dirt".to_string(), [1.0, 1.0, 1.0])],
+        "the normal flag the name row alone wears"
+    );
+    // THE STORE SEAT (the believed hotbar row at y 112 — the
+    // click_creative_store walk's own reads)
+    app.inventory.items[3] = (dirt, 5);
+    let (id, _) = app
+        .creative_item_tooltip_hover(100 + 9 + 3 * 18 + 8, 50 + 112 + 8)
+        .expect("the store seat the gate answers");
+    assert_eq!(id, dirt, "the store row's own stack the gate banks");
+    // THE WRAPPED TAB (the INVENTORY tab the palette hides — the
+    // wrapped-first order the overlapping region answers)
+    let inv_tab = (0..CREATIVE_TABS.len())
+        .find(|&i| CREATIVE_TABS[i].kind == CreativeTabKind::Inventory)
+        .expect("the inventory tab the strip keeps");
+    app.select_creative_tab(inv_tab);
+    // THE OVERLAP DISCRIMINATOR (the palette cell 9's region the
+    // wrapped main-9 seat covers — the STORE's stack the gate speaks,
+    // the palette's own item the wrapped tab never serves)
+    app.creative_palette[9] = (stone, 1);
+    app.inventory.items[9] = (dirt, 2);
+    let (id, _) = app
+        .creative_item_tooltip_hover(100 + 9 + 8, 50 + 54 + 8)
+        .expect("the wrapped main seat the gate answers");
+    assert_eq!(
+        id, dirt,
+        "the wrapped-first order the store's stack speaks — the palette's own item the overlap never serves"
+    );
+    // THE ARMOR + OFFHAND SEATS (the wrap walk's own rows)
+    app.inventory.armor[0] = (dirt, 1);
+    app.inventory.offhand[0] = (dirt, 1);
+    let (id, _) = app
+        .creative_item_tooltip_hover(100 + 54 + 8, 50 + 6 + 8)
+        .expect("the armor seat the gate answers");
+    assert_eq!(id, dirt, "the armor row's own stack the gate banks");
+    let (id, _) = app
+        .creative_item_tooltip_hover(100 + 35 + 8, 50 + 20 + 8)
+        .expect("the offhand seat the gate answers");
+    assert_eq!(id, dirt, "the offhand's own stack the gate banks");
+    // THE BIN (the destroyed-slot's hasItem false the walk keeps)
+    assert!(
+        app.creative_item_tooltip_hover(100 + 173 + 8, 50 + 112 + 8)
+            .is_none(),
+        "the bin the hasItem wall refuses"
+    );
+    // THE CARRIED WALL (the picker's own carried field the walk reads)
+    app.select_creative_tab(0);
+    app.creative_palette[0] = (dirt, 1); // the tab select's own refill the set re-wears
+    app.inv_carried = (dirt, 1);
+    assert!(
+        app.creative_item_tooltip_hover(100 + 9 + 8, 50 + 18 + 8)
+            .is_none(),
+        "the carried stack the wall refuses"
+    );
+    app.inv_carried = (0, 0);
+    // THE ADVANCED FLAG (the F3+H chord's own field the rows wear)
+    app.on_advanced_tooltips_key();
+    let (_, rows) = app
+        .creative_item_tooltip_hover(100 + 9 + 8, 50 + 18 + 8)
+        .expect("the advanced flag the gate keeps the seat");
+    assert_eq!(
+        rows[1],
+        ("minecraft:dirt".to_string(), [0.3333, 0.3333, 0.3333]),
+        "the ID row the advanced flag wears"
+    );
+    let _ = app;
+}
