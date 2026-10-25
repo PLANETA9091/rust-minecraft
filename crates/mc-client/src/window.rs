@@ -1709,6 +1709,14 @@ pub fn run_gui_app(
                                      // minifb no-edge-API law the mouse trackers keep)
     let mut attack_key_was_down = false;
     let mut use_key_was_down = false;
+    // THE TOGGLE KEYMAPPINGS' OWN EFFECTIVE STATES (the per-frame
+    // law's word the lanes wear — the press-to-latch the
+    // ToggleKeyMapping's own isDown keeps, the pass-through the
+    // option's off keeps)
+    let mut toggle_attack_eff = false;
+    let mut toggle_use_eff = false;
+    let mut toggle_sneak_eff = false;
+    let mut toggle_sprint_eff = false;
     // THE FIRST-PERSON BODY's per-frame state: the previous raw mouse
     // position (the delta look's own stream — None = re-arm without a
     // turn) and the world-screen edge detector (the cursor hides
@@ -2315,6 +2323,61 @@ pub fn run_gui_app(
         }
         let in_world =
             app.screen == crate::screens::ScreenKind::World && !app.paused && !app.chat_open;
+        // THE TOGGLE KEYMAPPINGS' OWN EFFECTIVE STATES (the 26.2
+        // ToggleKeyMapping law the four keyShift/keySprint/keyUse/
+        // keyAttack instances wear — the poll-every-frame lane the
+        // edge banks fresh keeps, the world-reads gate the flip
+        // speaks: the press the world consumes the latch flips, the
+        // screen-open press the bank alone tracks, the close the held
+        // key the fresh edge never re-wears. The OPTION'S OFF the
+        // plain KeyMapping the pass-through answers — the effective
+        // word the physical state verbatim keeps)
+        {
+            use crate::options_file::key_binds as kbt;
+            // THE PHYSICAL POLLS' OWN FIRST PASS (the store's own binds
+            // the raw states read — the borrow the reads end, the law's
+            // mutable walk the fresh words wear)
+            let phys_attack = match app.key_binds[kbt::ATTACK] {
+                Some(kbt::Bind::Keyboard(k)) => window.is_key_down(k),
+                Some(kbt::Bind::Mouse(b)) => window.get_mouse_down(b),
+                None => false,
+            };
+            let phys_use = match app.key_binds[kbt::USE] {
+                Some(kbt::Bind::Keyboard(k)) => window.is_key_down(k),
+                Some(kbt::Bind::Mouse(b)) => window.get_mouse_down(b),
+                None => false,
+            };
+            let phys_sneak = match app.key_binds[kbt::SNEAK] {
+                Some(kbt::Bind::Keyboard(k)) => window.is_key_down(k),
+                Some(kbt::Bind::Mouse(b)) => window.get_mouse_down(b),
+                None => false,
+            };
+            let phys_sprint = match app.key_binds[kbt::SPRINT] {
+                Some(kbt::Bind::Keyboard(k)) => window.is_key_down(k),
+                Some(kbt::Bind::Mouse(b)) => window.get_mouse_down(b),
+                None => false,
+            };
+            let attack_eff =
+                app.toggle_key_state(crate::screens::TOGGLE_ATTACK, phys_attack, in_world);
+            let use_eff = app.toggle_key_state(crate::screens::TOGGLE_USE, phys_use, in_world);
+            let sneak_eff =
+                app.toggle_key_state(crate::screens::TOGGLE_CROUCH, phys_sneak, in_world);
+            let sprint_eff =
+                app.toggle_key_state(crate::screens::TOGGLE_SPRINT, phys_sprint, in_world);
+            // THE DIG'S OWN HOLD-FOLLOW (the vanilla `keyAttack.isDown()`
+            // law the dig's per-frame gate reads — the EFFECTIVE word
+            // the latch serves: the toggled attack the physical release
+            // the dig keeps, the unlatch press the fall the stop wears;
+            // the plain wiring the false the same clear the release
+            // lane already spoke)
+            if in_world && !attack_eff && app.dig_held {
+                app.dig_held = false;
+            }
+            toggle_attack_eff = attack_eff;
+            toggle_use_eff = use_eff;
+            toggle_sneak_eff = sneak_eff;
+            toggle_sprint_eff = sprint_eff;
+        }
         if in_world != was_in_world {
             window.set_cursor_visibility(!in_world);
             prev_mouse = None; // re-arm the delta stream (no jump on entry)
@@ -2456,12 +2519,16 @@ pub fn run_gui_app(
             };
             let fwd = (bind_down(kb::FORWARD) as i32 - bind_down(kb::BACK) as i32) as f32;
             let strafe = (bind_down(kb::LEFT) as i32 - bind_down(kb::RIGHT) as i32) as f32;
+            // THE TOGGLE KEYS' OWN EFFECTIVE SEATS (the state keys the
+            // ToggleKeyMapping's own isDown serves — the latched sneak
+            // the hold law the same lane keeps, the option's off the
+            // physical word verbatim answers)
             app.on_movement_input(
                 fwd,
                 strafe,
                 bind_down(kb::JUMP),
-                bind_down(kb::SNEAK),
-                bind_down(kb::SPRINT),
+                toggle_sneak_eff,
+                toggle_sprint_eff,
             );
             // THE Q DROP KEY (vanilla handleKeybinds's keyDrop lane —
             // the keybinds the overlay==null && screen==null gate reads,
@@ -2488,8 +2555,11 @@ pub fn run_gui_app(
             // pick the pickBlockOrEntity walk the press speaks — the
             // DEFAULT Mouse wiring the physical lanes below serve, the
             // cross-mouse rebind the lane's own verdict banks)
-            if let Some(kb::Bind::Keyboard(k)) = app.key_binds[kb::ATTACK] {
-                let down = window.is_key_down(k);
+            if let Some(kb::Bind::Keyboard(_)) = app.key_binds[kb::ATTACK] {
+                // THE TOGGLE'S OWN EFFECTIVE WORD (the latched isDown the
+                // edges read — the keyboard-rebound attack the same law
+                // the mouse lane keeps)
+                let down = toggle_attack_eff;
                 if down && !attack_key_was_down && !app.paused {
                     app.on_attack();
                 }
@@ -2498,8 +2568,11 @@ pub fn run_gui_app(
                 }
                 attack_key_was_down = down;
             }
-            if let Some(kb::Bind::Keyboard(k)) = app.key_binds[kb::USE] {
-                let down = window.is_key_down(k);
+            if let Some(kb::Bind::Keyboard(_)) = app.key_binds[kb::USE] {
+                // THE TOGGLE'S OWN EFFECTIVE WORD (the latched isDown the
+                // edges read — the keyboard-rebound use the same law the
+                // mouse lane keeps)
+                let down = toggle_use_eff;
                 if down && !use_key_was_down && !app.paused {
                     app.on_right_press(gmx, gmy);
                 }

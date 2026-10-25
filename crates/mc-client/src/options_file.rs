@@ -84,6 +84,11 @@ pub const OPTIONS_DATA_VERSION: i64 = 4903;
 /// shape the load/save lanes keep (the vanilla keys the store fields
 /// mirror; the rest of the jar's option table the client's seats never
 /// carry — the unknown keys the load's skip law answers).
+/// THE SPRINT WINDOW'S OWN DEFAULT (the Options ctor's `bipush 7` pc
+/// 2325 banks — the IntRange(0, 10) the value set keeps, the option's
+/// missing row the default keeps).
+pub const DEFAULT_SPRINT_WINDOW: i32 = 7;
+
 pub struct OptionsFile {
     /// `showSubtitles` — the closed captions' own boolean (the default
     /// FALSE the Options ctor's `iconst_0` pcs 2053-2067 banks, the
@@ -122,6 +127,55 @@ pub struct OptionsFile {
     /// round-trip wears — the 26.2's own seat the debug chord toggles,
     /// the screen row the accessibility lane retired).
     pub pause_on_lost_focus: bool,
+    /// `toggleCrouch` — the sneak key's own toggle option (the default
+    /// FALSE the Options ctor's `iconst_0` pc 2187 banks — the
+    /// `new OptionInstance("key.sneak", noTooltip, caption, BOOLEAN_VALUES,
+    /// valueOf(false), NO_ACTION)` walk the toggleCrouch putfield pc 2197
+    /// serves; the processOptions pc 192 the `process` row the visit
+    /// ladder keeps). THE TOGGLE KEYMAPPING'S OWN OPTION (the
+    /// ToggleKeyMapping law the keyShift pc 2497 wears — the
+    /// BooleanSupplier the `OptionInstance.get()` lambda binds, the
+    /// supplier's TRUE the setDown walk the FLIP law serves: the press
+    /// the `super.setDown(!isDown())` the latch speaks, the release the
+    /// silence keeps). THE CONTROLS ROW'S OWN WORDS (the
+    /// CaptionBasedToString lambda$new$79 walk — the value TRUE the
+    /// `options.key.toggle` "Toggle" word the KEY_TOGGLE constant wears,
+    /// the FALSE the `options.key.hold` "Hold" the KEY_HOLD pair keeps;
+    /// the row label the option name's own translatable speaks — the
+    /// `key.sneak` "Sneak" the cp#1147 string the keyShift's name shares).
+    pub toggle_crouch: bool,
+    /// `toggleSprint` — the sprint key's own toggle option (the default
+    /// FALSE the pc 2219 `iconst_0` banks, the option name the `key.sprint`
+    /// cp#1150 string wears — the row label the "Sprint" translatable
+    /// speaks; the processOptions pc 205 the visit seat keeps, the
+    /// ToggleKeyMapping the keySprint pc 2532 the supplier reads).
+    pub toggle_sprint: bool,
+    /// `toggleAttack` — the attack key's own toggle option (the default
+    /// FALSE the pc 2251 banks, the option name the `key.attack` cp#1153
+    /// string wears — the "Attack/Destroy" row the en_us table keeps;
+    /// the ToggleKeyMapping the keyAttack pc 2660 the MOUSE 0 default
+    /// the `shouldRestore` TRUE the ctor's iconst_1 banks — the
+    /// keyboard-type restore law the screen-close walk serves).
+    pub toggle_attack: bool,
+    /// `toggleUse` — the use key's own toggle option (the default FALSE
+    /// the pc 2283 banks, the option name the `key.use` cp#1156 string
+    /// wears — the "Use Item/Place Block" row the en_us table keeps; the
+    /// ToggleKeyMapping the keyUse pc 2624 the MOUSE 1 default the
+    /// `shouldRestore` FALSE the ctor's iconst_0 banks — the mouse-type
+    /// row the restore law the screen-close walk never wears).
+    pub toggle_use: bool,
+    /// `sprintWindow` — the double-tap-W sprint window's own tick span
+    /// (the default 7 the Options ctor's `bipush 7` pc 2325 banks, the
+    /// IntRange(0, 10) the pc 2315-2322 value set keeps — the
+    /// processOptions pc 244 the visit row the toggleUse's AFTER wears;
+    /// the `options.sprintWindow` "Sprint Window" row the en_us table
+    /// speaks, the tooltip the cachedConstantTooltip pair keeps —
+    /// "Time window in ticks where double-tapping the forward key
+    /// activates sprint."). THE AI STEP'S OWN CONSUMER (the
+    /// LocalPlayer.aiStep pcs 405-425 walk — the W-press edge the
+    /// expired window the option's own value the re-arm writes, the
+    /// client's `sprint_trigger_time` bank the same law wears).
+    pub sprint_window: i32,
     /// `fovEffectScale` — the FOV effects' own 0..1 scale (the default
     /// 1.0 the dconst_1 banks, the doubleRange(0.0, 1.0) codec the
     /// range keeps — the strict double the decode answers, the BOOL
@@ -1325,6 +1379,11 @@ impl Default for OptionsFile {
             sound_category_master: 1.0,
             advanced_item_tooltips: false,
             pause_on_lost_focus: true,
+            toggle_crouch: false,
+            toggle_sprint: false,
+            toggle_attack: false,
+            toggle_use: false,
+            sprint_window: 7,
             fov_effect_scale: 1.0,
             chat_opacity: 1.0,
             chat_line_spacing: 0.0,
@@ -1400,6 +1459,57 @@ impl OptionsFile {
                         out.pause_on_lost_focus = true;
                     } else if value == "false" {
                         out.pause_on_lost_focus = false;
+                    }
+                }
+                "toggleCrouch" => {
+                    // THE BOOLEAN'S OWN DECODE (the "true"/"false" the
+                    // codec's own vocabulary wears — the malformed the
+                    // default keeps, the skip law the row answers; the
+                    // default FALSE the Options ctor's iconst_0 the
+                    // missing row keeps)
+                    if value == "true" {
+                        out.toggle_crouch = true;
+                    } else if value == "false" {
+                        out.toggle_crouch = false;
+                    }
+                }
+                "toggleSprint" => {
+                    // THE BOOLEAN'S OWN DECODE (the same law the
+                    // toggleCrouch row keeps)
+                    if value == "true" {
+                        out.toggle_sprint = true;
+                    } else if value == "false" {
+                        out.toggle_sprint = false;
+                    }
+                }
+                "toggleAttack" => {
+                    // THE BOOLEAN'S OWN DECODE (the same law the
+                    // toggleCrouch row keeps)
+                    if value == "true" {
+                        out.toggle_attack = true;
+                    } else if value == "false" {
+                        out.toggle_attack = false;
+                    }
+                }
+                "toggleUse" => {
+                    // THE BOOLEAN'S OWN DECODE (the same law the
+                    // toggleCrouch row keeps)
+                    if value == "true" {
+                        out.toggle_use = true;
+                    } else if value == "false" {
+                        out.toggle_use = false;
+                    }
+                }
+                "sprintWindow" => {
+                    // THE INT RANGE'S OWN DECODE (the IntRange(0, 10)
+                    // codec the in-range int answers — the
+                    // out-of-range/malformed the default keeps, the
+                    // clamp never wears; the default 7 the ctor's
+                    // bipush the missing row keeps)
+                    if let Ok(v) = value.parse::<i32>() {
+                        if (0..=10).contains(&v) {
+                            out.sprint_window = v;
+                        }
                     }
                 }
                 "fovEffectScale" => {
@@ -1768,6 +1878,18 @@ impl OptionsFile {
         // THE BOOLEAN'S OWN ROW (the "true"/"false" the Rust Display the
         // vanilla BooleanValue's codec vocabulary wears)
         text.push_str(&format!("pauseOnLostFocus:{}\n", self.pause_on_lost_focus));
+        // THE TOGGLE QUARTET'S OWN ROWS (the "true"/"false" the same
+        // vocabulary wears — the visit-order seats the processOptions
+        // walk keeps: toggleCrouch@192 the toggleSprint@205 the
+        // toggleAttack@218 the toggleUse@231 the row AFTER answers, the
+        // sprintWindow@244 the quartet's AFTER seat the ladder speaks)
+        text.push_str(&format!("toggleCrouch:{}\n", self.toggle_crouch));
+        text.push_str(&format!("toggleSprint:{}\n", self.toggle_sprint));
+        text.push_str(&format!("toggleAttack:{}\n", self.toggle_attack));
+        text.push_str(&format!("toggleUse:{}\n", self.toggle_use));
+        // THE SPRINT WINDOW'S OWN ROW (the int the plain print keeps —
+        // the 7 the default the ctor's bipush speaks)
+        text.push_str(&format!("sprintWindow:{}\n", self.sprint_window));
         // THE SCALE'S OWN ROW (the double the java_double print keeps —
         // the 1.0 the default the decimal speaks)
         text.push_str(&format!(
@@ -1889,7 +2011,7 @@ mod tests {
         OptionsFile::default().save(&path);
         let text = std::fs::read_to_string(&path).expect("the save the file writes");
         assert_eq!(
-            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\nadvancedItemTooltips:false\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\nkey_key.debug.debugOptions:key.keyboard.f6\nkey_key.debug.focusPause:key.keyboard.p\nkey_key.debug.dumpDynamicTextures:key.keyboard.s\nkey_key.debug.reloadResourcePacks:key.keyboard.t\nkey_key.debug.profiling:key.keyboard.l\nkey_key.debug.copyLocation:key.keyboard.c\nkey_key.debug.dumpVersion:key.keyboard.v\nkey_key.debug.profilingChart:key.keyboard.1\nkey_key.debug.fpsCharts:key.keyboard.2\nkey_key.debug.networkCharts:key.keyboard.3\nkey_key.debug.lightmapTexture:key.keyboard.4\n",
+            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\nadvancedItemTooltips:false\npauseOnLostFocus:true\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\nkey_key.debug.debugOptions:key.keyboard.f6\nkey_key.debug.focusPause:key.keyboard.p\nkey_key.debug.dumpDynamicTextures:key.keyboard.s\nkey_key.debug.reloadResourcePacks:key.keyboard.t\nkey_key.debug.profiling:key.keyboard.l\nkey_key.debug.copyLocation:key.keyboard.c\nkey_key.debug.dumpVersion:key.keyboard.v\nkey_key.debug.profilingChart:key.keyboard.1\nkey_key.debug.fpsCharts:key.keyboard.2\nkey_key.debug.networkCharts:key.keyboard.3\nkey_key.debug.lightmapTexture:key.keyboard.4\n",
             "the file the vanilla rows wear"
         );
         let loaded = OptionsFile::load(&path);

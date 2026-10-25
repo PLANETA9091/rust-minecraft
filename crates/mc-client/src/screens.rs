@@ -354,6 +354,15 @@ pub const WHITE: [f32; 3] = [1.0, 1.0, 1.0];
 /// arrive within; the option's slider the client's no-settings-UI
 /// world keeps at its own 7 default).
 pub const SPRINT_WINDOW_TICKS: i32 = 7;
+/// THE TOGGLE QUARTET'S OWN SEATS (the [`App::toggle_latch`] /
+/// [`App::toggle_last`] banks' own indices — the
+/// toggleCrouch/toggleSprint/toggleAttack/toggleUse options the four
+/// ToggleKeyMapping instances wear, the ctor's pc 2497/2532/2624/2660
+/// order the seats keep).
+pub const TOGGLE_CROUCH: usize = 0;
+pub const TOGGLE_SPRINT: usize = 1;
+pub const TOGGLE_ATTACK: usize = 2;
+pub const TOGGLE_USE: usize = 3;
 /// THE FLY WINDOW'S OWN SPAN (javap LocalPlayer.aiStep the 26.2 jar
 /// — pc 567: `jumpTriggerTime = 7` the bipush the double-tap-space
 /// arm carries — the same 7-tick shape the sprint window wears, the
@@ -7299,6 +7308,49 @@ pub struct App {
     /// the law's own gate reads, the false the pause the refresh alone
     /// speaks).
     pub pause_on_lost_focus: bool,
+    /// THE TOGGLE QUARTET'S OWN OPTIONS (the vanilla
+    /// `toggleCrouch`/`toggleSprint`/`toggleAttack`/`toggleUse` — the
+    /// four `new OptionInstance(name, noTooltip, caption, BOOLEAN_VALUES,
+    /// valueOf(false), NO_ACTION)` walks the ctor pcs 2168-2293 bank,
+    /// the defaults FALSE the `iconst_0` arms speak, the names the
+    /// `key.sneak`/`key.sprint`/`key.attack`/`key.use` cp#1147/1150/1153/1156
+    /// strings the KeyMapping names SHARE, the processOptions pcs 192-234
+    /// the file rows the visit ladder keeps). THE TOGGLE KEYMAPPINGS' OWN
+    /// READS (the ToggleKeyMapping law the keyShift/keySprint/keyUse/
+    /// keyAttack pc 2497/2532/2624/2660 instances wear — the
+    /// BooleanSupplier the `OptionInstance.get()` lambda binds, the
+    /// supplier's TRUE the setDown walk the flip law serves: the press
+    /// the `super.setDown(!isDown())` the latch speaks, the release the
+    /// silence keeps, the FALSE the plain KeyMapping the pass-through
+    /// answers).
+    pub toggle_crouch: bool,
+    pub toggle_sprint: bool,
+    pub toggle_attack: bool,
+    pub toggle_use: bool,
+    /// THE SPRINT WINDOW'S OWN OPTION (the vanilla `sprintWindow` — the
+    /// default 7 the ctor's `bipush 7` pc 2325 banks, the
+    /// `IntRange(0, 10)` the value set keeps, the processOptions pc 244
+    /// the file row the quartet's AFTER seat wears; the
+    /// `options.sprintWindow` "Sprint Window" row the en_us table
+    /// speaks). THE AI STEP'S OWN CONSUMER (the LocalPlayer.aiStep pcs
+    /// 405-425 walk — the W-press edge the expired window the option's
+    /// own value the re-arm writes — the [`Self::sprint_law_tick`]'s
+    /// window arm the store's own seat reads, the
+    /// [`SPRINT_WINDOW_TICKS`] constant the DEFAULT the row keeps).
+    pub sprint_window: i32,
+    /// THE TOGGLE LATCHES' OWN BANK (the ToggleKeyMapping's own `isDown`
+    /// state the flip law writes — the four seats the
+    /// TOGGLE_CROUCH/SPRINT/ATTACK/USE indices answer, the press the
+    /// world reads the `super.setDown(!isDown())` the flip speaks, the
+    /// latch the physical release NEVER clears).
+    toggle_latch: [bool; 4],
+    /// THE TOGGLE KEYS' OWN EDGE BANKS (the last frame's physical
+    /// state the rising-edge law reads — the vanilla KeyboardHandler's
+    /// own press the setDown walk answers, the bank the poll-every-
+    /// frame freshness the screen-open presses keep honest: the screen
+    /// the press eats the bank still tracks, the close the held key
+    /// the fresh edge never re-speaks).
+    toggle_last: [bool; 4],
     /// THE CLIPBOARD'S OWN STORE (the vanilla
     /// `KeyboardHandler.setClipboard` walk's sink — the
     /// `ClipboardManager.setClipboard(window, string)` call the
@@ -10841,6 +10893,13 @@ impl App {
             stopping: false,
             advanced_item_tooltips: false,
             pause_on_lost_focus: true,
+            toggle_crouch: false,
+            toggle_sprint: false,
+            toggle_attack: false,
+            toggle_use: false,
+            sprint_window: crate::options_file::DEFAULT_SPRINT_WINDOW,
+            toggle_latch: [false; 4],
+            toggle_last: [false; 4],
             clipboard: String::new(),
             fov_effect_scale: 1.0,
             text_background_opacity: 0.5,
@@ -12754,6 +12813,7 @@ impl App {
                         self.sprint_key_down,
                         self.food_data.has_enough_food(),
                         using,
+                        self.sprint_window,
                     );
                     // THE NOPHYSICS FEED (javap Player.tick pcs 0-5 — the
                     // head write the tick speaks every frame:
@@ -21047,7 +21107,12 @@ impl App {
                 minifb::MouseButton::Left,
             ));
         if attack_serves_left {
-            self.dig_held = false;
+            // THE TOGGLE'S OWN HOLD (the latched isDown the physical
+            // release never clears — the dig the latch keeps, the
+            // unlatch press the effective fall the stop speaks)
+            if !self.toggle_latched(crate::screens::TOGGLE_ATTACK) {
+                self.dig_held = false;
+            }
         }
         // THE SLIDER'S OWN DISARM (the mouseReleased walk's own lane —
         // the release the dragging flag the unconditional false
@@ -32764,6 +32829,7 @@ impl App {
             == Some(crate::options_file::key_binds::Bind::Mouse(
                 minifb::MouseButton::Right,
             ))
+            && !self.toggle_latched(crate::screens::TOGGLE_USE)
         {
             self.on_use_release();
         }
@@ -33355,6 +33421,11 @@ impl App {
         self.volume = file.sound_category_master;
         self.advanced_item_tooltips = file.advanced_item_tooltips;
         self.pause_on_lost_focus = file.pause_on_lost_focus;
+        self.toggle_crouch = file.toggle_crouch;
+        self.toggle_sprint = file.toggle_sprint;
+        self.toggle_attack = file.toggle_attack;
+        self.toggle_use = file.toggle_use;
+        self.sprint_window = file.sprint_window;
         self.fov_effect_scale = file.fov_effect_scale;
         self.chat_opacity = file.chat_opacity;
         self.chat_line_spacing = file.chat_line_spacing;
@@ -33387,6 +33458,11 @@ impl App {
             sound_category_master: self.volume,
             advanced_item_tooltips: self.advanced_item_tooltips,
             pause_on_lost_focus: self.pause_on_lost_focus,
+            toggle_crouch: self.toggle_crouch,
+            toggle_sprint: self.toggle_sprint,
+            toggle_attack: self.toggle_attack,
+            toggle_use: self.toggle_use,
+            sprint_window: self.sprint_window,
             fov_effect_scale: self.fov_effect_scale,
             chat_opacity: self.chat_opacity,
             chat_line_spacing: self.chat_line_spacing,
@@ -35741,6 +35817,15 @@ impl App {
                 // old==Options head the removed() moment the save
                 // keeps)
                 "controls" => self.open(ScreenKind::Controls),
+                // THE TOGGLE ROWS' OWN CYCLES (the CycleButton's own
+                // press walk the boolean option rows wear — the click
+                // the value's own flip answers, the caption the next
+                // render's rebuild speaks: the Toggle/Hold pair the
+                // lambda$new$79..82 words wear)
+                "opt_ctl_crouch" => self.toggle_crouch = !self.toggle_crouch,
+                "opt_ctl_sprint" => self.toggle_sprint = !self.toggle_sprint,
+                "opt_ctl_attack" => self.toggle_attack = !self.toggle_attack,
+                "opt_ctl_use" => self.toggle_use = !self.toggle_use,
                 // THE PAIR'S OWN LEFT SEAT (the ControlsScreen
                 // addOptions pc 4-15 walk — the `options.mouse_settings`
                 // button the `lambda$addOptions$0` supplier opens: the
@@ -43529,6 +43614,7 @@ impl App {
         sprint_key_down: bool,
         enough_food: bool,
         using_item: bool,
+        window_ticks: i32,
     ) {
         // THE HEAD DECREMENT (pcs 0-14)
         if *trigger > 0 {
@@ -43554,11 +43640,14 @@ impl App {
         if can_start {
             if !*last_forward {
                 // THE W-PRESS EDGE (pcs 386-425): armed -> SPRINT,
-                // expired -> arm the window.
+                // expired -> arm the window. THE OPTION'S OWN VALUE
+                // (the `options.sprintWindow().get()` walk the re-arm
+                // reads — the store's own seat the 7 default keeps,
+                // the slider's own value the option wears)
                 if *trigger > 0 {
                     b.sprinting = true;
                 } else {
-                    *trigger = SPRINT_WINDOW_TICKS;
+                    *trigger = window_ticks;
                 }
             }
             if sprint_key_down {
@@ -43651,6 +43740,59 @@ impl App {
         changed
     }
 
+    /// THE TOGGLE KEYMAPPING'S OWN LAW (javap 26.2 ToggleKeyMapping —
+    /// the four `new ToggleKeyMapping(name, key, category, supplier,
+    /// shouldRestore)` instances the Options ctor pcs 2497/2532/2624/2660
+    /// bank: keyShift/keySprint the MOVEMENT pair the keyboard defaults
+    /// wear, keyUse/keyAttack the GAMEPLAY pair the MOUSE defaults the
+    /// `Type.MOUSE, 1/0` rows speak). THE SET DOWN WALK (the class's own
+    /// `setDown(Z)` bytecode): the `needsToggle.getAsBoolean()` FALSE
+    /// the plain `KeyMapping.setDown(down)` the pass-through answers —
+    /// the physical state verbatim; the TRUE + `down` the
+    /// `super.setDown(!this.isDown())` the FLIP serves — the press the
+    /// latch flips, the release the silence keeps (the `down=false` arm
+    /// the jump never wears — pc 13 the `ifeq -> 40` the latch holds);
+    /// the `isDown()` the latched word the lanes read.
+    /// THE SCREEN'S OWN GATE (the vanilla KeyboardHandler/MouseHandler
+    /// walks — the open screen the key/button events the screen
+    /// dispatch answers, the `KeyMapping.setDown` the world walk never
+    /// reaches): the `world_reads` FALSE the press the bank alone
+    /// tracks, the flip the law never speaks — the screen-open press
+    /// the close the fresh edge never re-wears.
+    pub fn toggle_key_state(&mut self, which: usize, physical: bool, world_reads: bool) -> bool {
+        // THE EDGE BANK'S OWN UPDATE (the poll-every-frame freshness —
+        // the last frame's physical the rising-edge law reads, the
+        // screen-open frames the bank the same stream keeps)
+        let was = self.toggle_last[which];
+        self.toggle_last[which] = physical;
+        // THE OPTION'S OWN GATE (the BooleanSupplier the
+        // `OptionInstance.get()` walk answers — the FALSE the plain
+        // KeyMapping the pass-through keeps)
+        let enabled = match which {
+            TOGGLE_CROUCH => self.toggle_crouch,
+            TOGGLE_SPRINT => self.toggle_sprint,
+            TOGGLE_ATTACK => self.toggle_attack,
+            _ => self.toggle_use,
+        };
+        if !enabled {
+            return physical;
+        }
+        // THE WORLD-CONSUMED PRESS'S OWN FLIP (the setDown(true) arm —
+        // the rising edge the `super.setDown(!isDown())` speaks, the
+        // latch the release never clears)
+        if world_reads && physical && !was {
+            self.toggle_latch[which] = !self.toggle_latch[which];
+        }
+        self.toggle_latch[which]
+    }
+
+    /// The toggle latch's own read (the release gates' law — the
+    /// latched isDown the physical release never clears, the dig/use
+    /// holds the latch the stop lanes keep).
+    pub fn toggle_latched(&self, which: usize) -> bool {
+        self.toggle_latch[which]
+    }
+
     /// The movement keys (the windowed loop's per-frame feed): the
     /// impulses (the KeyboardInput's own ±1 shape) and the state keys
     /// the body's tick consumes. The SPRINT STATE the per-tick law
@@ -43659,7 +43801,10 @@ impl App {
     /// stop lanes) — this feed only BANKS the raw keys (the sprint
     /// key's snapshot rides [`Self::sprint_key_down`], the impulses
     /// the body fields keep); the per-frame collapse the pre-26.2
-    /// rounds wore retires.
+    /// rounds wore retires. THE TOGGLE'S OWN READ (the windowed
+    /// loop's effective state the lane wears — the latched sprint the
+    /// same raw-key seat keeps, the `sprint_key_down` bank the
+    /// toggle's word rides).
     pub fn on_movement_input(
         &mut self,
         forward: f32,
@@ -64658,6 +64803,24 @@ impl App {
     /// class's own addFooter keeps (the onClose ride the parent
     /// returns, the removed() moment the open() gate's family arm
     /// banks).
+    /// THE CONTROLS SCREEN'S OWN ROWS (javap 26.2 ControlsScreen — the
+    /// title the `controls.title` translatable wears, the static
+    /// `options(Options)` the SEVEN-instance array the probe banks:
+    /// toggleCrouch/toggleSprint/toggleAttack/toggleUse the four
+    /// toggle rows the indices 0-3 keep, autoJump/sprintWindow/
+    /// operatorItemsTab the rows the client's own laws never wore —
+    /// the auto-jump movement + the operator tab + the int slider the
+    /// honest walls keep, the follow-up candidates the array's own
+    /// tail speaks; the Mouse Settings + Key Binds pair the
+    /// addOptions pc 4-38 walk hosts, the Done footer the base
+    /// class's own walk keeps). THE FOUR ROWS' OWN CAPTIONS (the
+    /// CaptionBasedToString lambda$new$79..82 walk — the value TRUE
+    /// the `options.key.toggle` "Toggle" word wears, the FALSE the
+    /// `options.key.hold` "Hold" keeps; the row label the option
+    /// name's own translatable speaks — the `key.sneak`/`key.sprint`/
+    /// `key.attack`/`key.use` strings the KeyMapping names share, the
+    /// `label + ": " + word` composition the boolean button's own
+    /// law keeps).
     fn render_controls(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
         for y in 0..h {
             let t = y as f32 / h.max(1) as f32;
@@ -64674,6 +64837,56 @@ impl App {
         );
         let cx = w / 2;
         let bw = 140;
+        // THE TOGGLE ROWS' OWN PAIRS (the `addSmall([OptionInstance])`
+        // walk — the two-per-row pair the array order keeps: the
+        // sneak/sprint row the indices 0-1 answer, the attack/use row
+        // the 2-3 pair wears; the caption the value's own word the
+        // lambda returns)
+        let toggle_caption = |label: &str, on: bool| -> String {
+            format!(
+                "{}: {}",
+                label,
+                if on {
+                    tr("options.key.toggle").unwrap_or("Toggle")
+                } else {
+                    tr("options.key.hold").unwrap_or("Hold")
+                }
+            )
+        };
+        self.buttons.push(Button::new(
+            "opt_ctl_crouch",
+            toggle_caption(tr("key.sneak").unwrap_or("Sneak"), self.toggle_crouch),
+            cx - 4 - bw / 2,
+            h / 2 - 96,
+            bw,
+        ));
+        self.buttons.push(Button::new(
+            "opt_ctl_sprint",
+            toggle_caption(tr("key.sprint").unwrap_or("Sprint"), self.toggle_sprint),
+            cx + 4 + bw / 2,
+            h / 2 - 96,
+            bw,
+        ));
+        self.buttons.push(Button::new(
+            "opt_ctl_attack",
+            toggle_caption(
+                tr("key.attack").unwrap_or("Attack/Destroy"),
+                self.toggle_attack,
+            ),
+            cx - 4 - bw / 2,
+            h / 2 - 72,
+            bw,
+        ));
+        self.buttons.push(Button::new(
+            "opt_ctl_use",
+            toggle_caption(
+                tr("key.use").unwrap_or("Use Item/Place Block"),
+                self.toggle_use,
+            ),
+            cx + 4 + bw / 2,
+            h / 2 - 72,
+            bw,
+        ));
         // THE PAIR'S OWN SEATS (the addSmall walk's left/right pair —
         // the LEFT the center `cx - 4 - bw/2` the vanilla geometry
         // wears, the RIGHT the center `cx + 4 + bw/2` the same gap

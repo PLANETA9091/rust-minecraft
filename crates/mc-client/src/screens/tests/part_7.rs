@@ -2116,7 +2116,7 @@ fn the_double_tap_w_sprint_window_speaks() {
                last: &mut bool,
                sprint_key: bool,
                using: bool| {
-        App::sprint_law_tick(b, trigger, last, sprint_key, true, using);
+        App::sprint_law_tick(b, trigger, last, sprint_key, true, using, 7);
     };
     let mut b = crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0);
     let mut trigger = 0;
