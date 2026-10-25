@@ -39318,6 +39318,42 @@ impl App {
         }
     }
 
+    /// THE RELOAD CHUNKS' OWN CHORD (javap 26.2
+    /// KeyboardHandler.handleDebugKeys's keyDebugReloadChunk lane —
+    /// the `matches` arm pc 101 the hdk_262.txt walk banks, the
+    /// handleDebugKeys' FIRST lane the ladder's own head wears (101
+    /// < 130 hitboxes < 199 clearChat < 229 borders < 298 tooltips
+    /// < 351 copy the pc order speaks), the NO-GUARD body the
+    /// copy-recreate's player-null arm the neighbor never keeps).
+    /// THE BODY (reloadchunks_170.py the walk banks): the
+    /// `levelExtractor.allChanged()` walk pc 111-118 the FULL
+    /// re-extract banks — every section the walk re-speaks, the mesh
+    /// store the rebuild repairs (the stale mesh the chat-open
+    /// refresh's screen gate ships — live_view_updated's
+    /// `screen == World` check the shipped world the mesh walk never
+    /// re-speaks until the World screen returns — the chord the
+    /// repair NOW wears; the offline session the same all-changed
+    /// the remesh_offline walk serves, the light guard the lane's
+    /// own ensure-light step wears). THE WORD (pc 121-124): the
+    /// debugFeedbackTranslated walk the YELLOW row speaks —
+    /// `debug.reload_chunks.message` the lang's own words keep
+    /// (`Reloading all chunks`, the probe the table reads), the
+    /// `§e` prefix the debug feedback channel's own color the
+    /// family's lanes wear. The istore_3 the used flag the arm
+    /// banks REGARDLESS — the modifier-spent flag the bare F3
+    /// release gate reads rides.
+    pub fn on_reload_chunks_key(&mut self) {
+        if self.world_is_network {
+            if let Some(w) = self.net_world.as_ref() {
+                self.world_quads = Some(crate::mesher::mesh_world(w, None));
+            }
+        } else {
+            self.remesh_offline();
+        }
+        self.push_chat_message("\u{a7}eReloading all chunks".to_string());
+        self.debug_modifier_used = true;
+    }
+
     /// THE CHUNK BORDERS' OWN TOGGLE (the F3+G chord's own lane —
     /// the debug-entry flip the audited refreshRendererList gate
     /// serves, the persistence the entry system's own law keeps: no

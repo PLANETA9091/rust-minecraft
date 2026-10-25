@@ -2560,6 +2560,18 @@ pub fn run_gui_app(
             if f3_down && window.is_key_pressed(Key::Key4, minifb::KeyRepeat::No) {
                 app.on_lightmap_view_key();
             }
+            // THE F3+A RELOAD CHUNKS (the handleDebugKeys' FIRST lane —
+            // the keyDebugReloadChunk arm pc 101 the hdk_262.txt walk
+            // banks, the ladder's own head the pc order speaks: 101 <
+            // 130 hitboxes < 199 clearChat < 229 borders < 298
+            // tooltips < 351 copy. The `levelExtractor.allChanged()`
+            // walk the mesh store rebuilds — the stale mesh the
+            // chat-open refresh's screen gate ships the repair NOW
+            // wears — the yellow `debug.reload_chunks.message` row the
+            // debugFeedbackTranslated walk serves)
+            if f3_down && window.is_key_pressed(Key::A, minifb::KeyRepeat::No) {
+                app.on_reload_chunks_key();
+            }
             // THE F3+G CHUNK BORDERS (the debug-entry toggle the audited
             // refreshRendererList gate serves — the enabled entry the
             // renderer list keeps independent of the overlay's own

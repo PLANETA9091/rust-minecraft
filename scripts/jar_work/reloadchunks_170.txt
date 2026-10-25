@@ -1,0 +1,49 @@
+########## I. the keyDebugReloadChunk field seat (KeyboardHandler clinit)
+
+########## II. handleDebugKeys — the reloadChunk arm's byte window
+  [40]: 101: getfield net/minecraft/client/Options.keyDebugReloadChunkLnet/minecraft/client/KeyMapping;
+  arm window: pc-index 40..53 of 579
+  [38]: 99: istore_3
+  [39]: 100: aload_2
+  [40]: 101: getfield net/minecraft/client/Options.keyDebugReloadChunkLnet/minecraft/client/KeyMapping;
+  [41]: 104: aload_1
+  [42]: 105: invokevirtual net/minecraft/client/KeyMapping.matches(Lnet/minecraft/client/input/KeyEvent;)Z
+  [43]: 108: ifeq -> 129
+  [44]: 111: aload_0
+  [45]: 112: getfield net/minecraft/client/KeyboardHandler.minecraftLnet/minecraft/client/Minecraft;
+  [46]: 115: getfield net/minecraft/client/Minecraft.levelExtractorLnet/minecraft/client/renderer/extract/LevelExtractor;
+  [47]: 118: invokevirtual net/minecraft/client/renderer/extract/LevelExtractor.allChanged()V
+  [48]: 121: aload_0
+  [49]: 122: ldc debug.reload_chunks.message
+  [50]: 124: invokevirtual net/minecraft/client/KeyboardHandler.debugFeedbackTranslated(Ljava/lang/String;)V
+  [51]: 127: iconst_1
+  [52]: 128: istore_3
+  [53]: 129: aload_2
+  [54]: 130: getfield net/minecraft/client/Options.keyDebugShowHitboxesLnet/minecraft/client/KeyMapping;
+  [55]: 133: aload_1
+  [56]: 134: invokevirtual net/minecraft/client/KeyMapping.matches(Lnet/minecraft/client/input/KeyEvent;)Z
+  [57]: 137: ifeq -> 198
+  [58]: 140: aload_0
+  [59]: 141: getfield net/minecraft/client/KeyboardHandler.minecraftLnet/minecraft/client/Minecraft;
+  [60]: 144: getfield net/minecraft/client/Minecraft.playerLnet/minecraft/client/player/LocalPlayer;
+  [61]: 147: ifnull -> 198
+  [62]: 150: aload_0
+  [63]: 151: getfield net/minecraft/client/KeyboardHandler.minecraftLnet/minecraft/client/Minecraft;
+  [64]: 154: getfield net/minecraft/client/Minecraft.playerLnet/minecraft/client/player/LocalPlayer;
+
+########## III. the callees the arm banks — reloadChunks / allChanged
+
+########## IV. Minecraft.reloadChunks body (if the lane delegates)
+
+########## V. LevelRenderer.allChanged body
+
+########## VI. the lang rows (debug.reload_chunks.*)
+  debug.reload_chunks.help = F3 + A = Reload chunks
+  debug.reload_chunks.message = Reloading all chunks
+  debug.reload_resourcepacks.help = F3 + T = Reload resource packs
+  debug.reload_resourcepacks.message = Reloaded resource packs
+  key.debug.reloadChunk = Reload Chunks
+  key.debug.reloadResourcePacks = Reload Resource Packs
+
+########## VII. every addMessage/progress lane in the arm window's callee
+  Minecraft.lambda$reloadResourcePacks$2(Ljava/util/concurrent/CompletableFuture;Lnet/minecraft/client/GameLoadCookie;)V: 1 allChanged refs

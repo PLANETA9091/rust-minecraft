@@ -10525,6 +10525,96 @@ fn the_copy_recreate_chord_the_miss_silence_keeps() {
     let _ = app;
 }
 
+// THE RELOAD CHUNKS' OWN CHORD (the 26.2 handleDebugKeys walk the
+// keyDebugReloadChunk lane wears — the reloadchunks_170.py probe the
+// pc 101-128 window banks: the `levelExtractor.allChanged()` walk
+// pc 111-118 the FULL re-extract speaks, the debugFeedbackTranslated
+// pc 121-124 the yellow `debug.reload_chunks.message` row serves,
+// the istore_3 the used flag the arm banks REGARDLESS — the
+// handleDebugKeys' FIRST lane the ladder's own head wears)
+#[test]
+fn the_reload_chunks_chord_the_mesh_repair_the_word_wear() {
+    let mut app = App::new(262);
+    app.enter_world();
+    let size = app.offline_world.as_ref().unwrap().size_blocks();
+    let c = size / 2;
+    let top = app.spawn_y;
+    // THE STALE MESH (the chat-open refresh's screen gate the repair
+    // exists to serve — live_view_updated's `screen == World` check
+    // the shipped world the mesh walk never re-speaks: the world the
+    // set walk edits, the store the skip keeps)
+    let stale = app.world_quads.as_ref().map(|q| q.len()).unwrap_or(0);
+    app.offline_world
+        .as_mut()
+        .unwrap()
+        .set(c, top + 1, c, crate::world::STONE);
+    assert_eq!(
+        app.world_quads.as_ref().map(|q| q.len()).unwrap_or(0),
+        stale,
+        "the edit the stale mesh never re-speaks (no remesh lane ran)"
+    );
+    // THE CHORD (the all-changed walk the mesh store rebuilds — the
+    // planted stone the reload re-speaks, the yellow word the
+    // feedback channel serves)
+    app.on_reload_chunks_key();
+    let fresh = {
+        let world = app.offline_world.as_ref().unwrap();
+        crate::mesher::mesh_world(world, None).len()
+    };
+    let reloaded = app.world_quads.as_ref().map(|q| q.len()).unwrap_or(0);
+    assert_eq!(reloaded, fresh, "the reload the mesh store rebuilds");
+    assert_ne!(
+        reloaded, stale,
+        "the planted stone the mesh count the reload re-speaks"
+    );
+    assert_eq!(
+        app.chat_messages.last().map(|(t, _)| t.as_str()),
+        Some("\u{a7}eReloading all chunks"),
+        "the word the lang row keeps"
+    );
+    assert!(app.debug_modifier_used, "the modifier the chord spends");
+    app.on_debug_modifier_released();
+    assert!(!app.debug_modifier_used, "the release the flag consumes");
+    let _ = app;
+}
+
+// THE RELOAD CHUNKS' OWN NET ARM (the wire world the same lane
+// serves — the live refresh's screen gate the chat-open walk skips,
+// the shipped window the mesh walk never re-speaks until the World
+// screen returns — the chord the repair NOW wears: the net store
+// the re-mesh re-speaks, the word the same yellow row keeps, the
+// used flag the same unconditional bank wears)
+#[test]
+fn the_reload_chunks_chord_the_net_window_repair_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.world_is_network = true;
+    // THE WIRE WINDOW'S OWN PLANTING (the all-air net world the stone
+    // block wears — the mesh the store's own content speaks)
+    let mut net = air_net_world(2, 0);
+    net.set(16, 20, 16, crate::world::STONE);
+    app.net_world = Some(net);
+    // THE STALE MESH (the chat-open refresh the empty store ships —
+    // the gate's skip the chord exists to repair)
+    app.world_quads = Some(Vec::new());
+    // THE CHORD (the net arm the same all-changed walk serves)
+    app.on_reload_chunks_key();
+    let fresh = {
+        let net = app.net_world.as_ref().unwrap();
+        crate::mesher::mesh_world(net, None).len()
+    };
+    let reloaded = app.world_quads.as_ref().map(|q| q.len()).unwrap_or(0);
+    assert_eq!(reloaded, fresh, "the net store the reload re-speaks");
+    assert!(reloaded > 0, "the planted stone the net mesh wears");
+    assert_eq!(
+        app.chat_messages.last().map(|(t, _)| t.as_str()),
+        Some("\u{a7}eReloading all chunks"),
+        "the word the same lane wears"
+    );
+    assert!(app.debug_modifier_used, "the modifier the chord spends");
+    let _ = app;
+}
+
 // THE FOV EFFECT SCALE'S OWN ROW (the 26.2 AccessibilityOptionsScreen
 // row the file's law wears — the fov_scale_tail_262.py probe the
 // Camera.tickFov read the body's tick passes: the boot load the body's
