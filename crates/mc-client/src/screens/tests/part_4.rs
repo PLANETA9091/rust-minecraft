@@ -10694,6 +10694,48 @@ fn the_copy_location_chord_the_null_body_silence_the_nether_wears() {
     let _ = app;
 }
 
+// THE RELOAD RESOURCE PACKS' OWN CHORD (the keyDebugReloadResourcePacks
+// lane the copyloc_207.py lane-map scan banks — the no-gate walk the
+// unconditional body keeps, the word row the reload walk PRECEDES the
+// debugFeedbackTranslated yellow wears, the splash store the file
+// re-read re-serves, the flag the no-gate bank keeps)
+#[test]
+fn the_reload_resource_packs_chord_the_word_the_splash_reload_wear() {
+    let mut app = App::new(262);
+    app.enter_world();
+    // THE SENTINEL (the stale list the reload replaces — the file's
+    // own parse the fresh list keeps)
+    app.splashes = vec!["the stale splash!".to_string()];
+    // THE CHORD (the no-gate walk the word + the reload + the flag
+    // the same breath serves)
+    app.on_reload_resource_packs_key();
+    // THE RELOAD (the load walk re-ran — the sentinel the fresh list
+    // replaced, the list the loader's own parse answers)
+    assert_ne!(
+        app.splashes,
+        vec!["the stale splash!".to_string()],
+        "the reload the stale list replaces"
+    );
+    assert_eq!(
+        app.splashes,
+        load_splashes(),
+        "the reload the file's own parse re-serves"
+    );
+    // THE WORD (the debug.reload_resourcepacks.message row the lang
+    // table keeps, the §e the family's yellow channel wears)
+    assert_eq!(
+        app.chat_messages.last().map(|(t, _)| t.as_str()),
+        Some("\u{a7}eReloaded resource packs"),
+        "the word the lang row keeps"
+    );
+    // THE FLAG (the no-gate walk the bank wears regardless — the
+    // release the bare F3 consumes)
+    assert!(app.debug_modifier_used, "the no-gate walk the bank wears");
+    app.on_debug_modifier_released();
+    assert!(!app.debug_modifier_used, "the release the flag consumes");
+    let _ = app;
+}
+
 // THE FOV EFFECT SCALE'S OWN ROW (the 26.2 AccessibilityOptionsScreen
 // row the file's law wears — the fov_scale_tail_262.py probe the
 // Camera.tickFov read the body's tick passes: the boot load the body's

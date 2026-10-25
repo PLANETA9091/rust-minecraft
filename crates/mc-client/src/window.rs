@@ -2626,6 +2626,17 @@ pub fn run_gui_app(
             if f3_down && window.is_key_pressed(Key::F4, minifb::KeyRepeat::No) {
                 app.on_open_game_mode_switcher();
             }
+            // THE F3+T RELOAD RESOURCE PACKS (the handleDebugKeys'
+            // keyDebugReloadResourcePacks lane — the `matches` arm pc
+            // 905 the copyloc_207.py lane-map scan banks, the seat the
+            // pc order keeps: 749 focusPause < 905 reloadResourcePacks
+            // < 1004 copyLocation. The no-gate lane the unconditional
+            // body serves — the yellow `Reloaded resource packs` word
+            // row the chat speaks, the splash store the file re-read
+            // re-serves, the flag the no-gate walk banks regardless)
+            if f3_down && window.is_key_pressed(Key::T, minifb::KeyRepeat::No) {
+                app.on_reload_resource_packs_key();
+            }
             // THE F3+C COPY LOCATION (the handleDebugKeys'
             // keyDebugCopyLocation lane — the `matches` arm pc 1004 the
             // copyloc_207.py walk banks, the ladder's tail the pc order

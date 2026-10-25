@@ -39637,9 +39637,7 @@ impl App {
         // THE FORMAT WALK (pc 1044-1155 — the `/execute in %s run tp
         // @s %.2f %.2f %.2f %.2f %.2f` the Locale.ROOT banks, the
         // five `%.2f` the Rust {:.2} the same two decimals wears)
-        let cmd = format!(
-            "/execute in {dim} run tp @s {x:.2} {y:.2} {z:.2} {yaw:.2} {pitch:.2}"
-        );
+        let cmd = format!("/execute in {dim} run tp @s {x:.2} {y:.2} {z:.2} {yaw:.2} {pitch:.2}");
         // THE CLIPBOARD (pc 1158 — the isEmpty gate the empty write
         // refuses, the non-empty command the gate never speaks)
         if !cmd.is_empty() {
@@ -39647,6 +39645,42 @@ impl App {
         }
         // THE USED FLAG (pc 1161-1162 — the gate-passed walk the bank
         // wears regardless)
+        self.debug_modifier_used = true;
+    }
+
+    /// THE RELOAD RESOURCE PACKS' OWN CHORD (javap 26.2
+    /// KeyboardHandler.handleDebugKeys's keyDebugReloadResourcePacks
+    /// lane — the `matches` arm pc 905 the copyloc_207.py lane-map
+    /// scan banks, the window the pc order keeps: 802
+    /// dumpDynamicTextures < 905 reloadResourcePacks < 933 profiling).
+    /// THE NO-GATE LANE (pc 905-931): the matches arm the ONLY gate
+    /// keeps — no player-null, no reduced-debug (the copyLocation's
+    /// pc 1014-1034 chain the neighbor wears, this lane the
+    /// unconditional body serves). THE WORD FIRST (pc 915-919): the
+    /// `debugFeedbackTranslated("debug.reload_resourcepacks.message")`
+    /// row the reload walk PRECEDES — the en_us row `Reloaded
+    /// resource packs` the lang table reads, the ChatFormatting.YELLOW
+    /// the `§e` prefix the family's lanes wear. THE RELOAD WALK (pc
+    /// 922-926): the `minecraft.reloadResourcePacks()` call the
+    /// `(false, null)` delegate the 5-pc body speaks, the
+    /// CompletableFuture the pop discards — the client's own stores
+    /// the re-read serves: the SPLASHES the file re-reads (the
+    /// vanilla reload's own SplashManager arm — the texts/splashes.txt
+    /// the parse law re-serves), the font/textures the OnceLock's
+    /// load-once law the static stores keep (the reload the later
+    /// restructure serves, the honest store the lane's doc banks).
+    /// THE USED FLAG (pc 930-931 istore_3): the no-gate walk the flag
+    /// banks REGARDLESS — the modifier-spent flag the bare F3 release
+    /// gate reads rides.
+    pub fn on_reload_resource_packs_key(&mut self) {
+        // THE WORD FIRST (pc 915-919 — the feedback row the reload
+        // walk precedes, the yellow the family's channel wears)
+        self.push_chat_message("\u{a7}eReloaded resource packs".to_string());
+        // THE RELOAD WALK (pc 922-926 — the future the pop discards,
+        // the client's splash store the file re-read re-serves)
+        self.splashes = load_splashes();
+        // THE USED FLAG (pc 930-931 — the no-gate walk the bank wears
+        // regardless)
         self.debug_modifier_used = true;
     }
 
