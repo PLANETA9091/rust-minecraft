@@ -44280,27 +44280,70 @@ impl App {
         self.abilities_regrant(mode);
     }
 
-    /// THE PERMISSION ECHO'S OWN BANK (javap 26.2
-    /// `LocalPlayer.setPermissions` — the audited walk the entity-event
-    /// 24..28 word serves): the server's own op/deop turn the client's
-    /// permission level re-banks — the `LevelBasedPermissionSet`
-    /// ordinal the byte-24 fold speaks (NO_PERMISSIONS the byte-24
-    /// answers, MODERATOR the 25, GAMEMASTER the 26, ADMIN the 27,
-    /// OWNER the 28 — the PermissionLevel.id ladder the All/Moderators
+    /// THE PERMISSION ECHO'S OWN BANK + THE SCREEN-REACTION'S OWN LANE
+    /// (javap 26.2 `LocalPlayer.setPermissions` — the audited walk the
+    /// entity-event 24..28 word serves, the TWO lanes the 237 probe
+    /// banks): the server's own op/deop turn the client's permission
+    /// level re-banks — the `LevelBasedPermissionSet` ordinal the
+    /// byte-24 fold speaks (NO_PERMISSIONS the byte-24 answers,
+    /// MODERATOR the 25, GAMEMASTER the 26, ADMIN the 27, OWNER the
+    /// 28 — the PermissionLevel.id ladder the All/Moderators
     /// /Gamemasters/Admins/Owners rows wear), the gamemaster ask the
     /// COMMANDS_GAMEMASTER read re-answers (the creative strip's
     /// `creative_operator_gate` the level-2 word re-reads the next
-    /// open). The wire world alone wears the lane (the offline world's
-    /// owner-4 word the enter arm banks, the networked join's fresh
-    /// 0 the ctor keeps until the packet speaks); the `None` refresh
-    /// the pre-echo window keeps (the idempotent re-bank the
-    /// unchanged level's acmp holds silent).
+    /// open). The SECOND lane the same walk's own tail wears — the
+    /// current screen the `HasGamemasterPermissionReaction` ask
+    /// answers, the `onGamemasterPermissionChanged` fold the LIVE
+    /// re-arm speaks: the OPTIONS family (the OptionsScreen +
+    /// WorldOptionsScreen the trio's own pair the client's same-named
+    /// seats keep) the fresh-ctor self-recreate the setScreen walk
+    /// re-opens — the old screen's removed-moment the `Options.save`
+    /// the open() head speaks, the fresh ctor the drag/button state
+    /// re-arms; the InWorldGameRulesScreen the client's own absence
+    /// the untouched arm keeps. The CREATIVE picker the reaction's own
+    /// spirit wears — the containerTick's tryRefreshInvalidatedTabs
+    /// law the 236 probe banks (the pc 26-36 the same walk rides):
+    /// the gate-closed op seat the invalid verdict answers, the
+    /// building-blocks re-select the stale seat retires — the strip's
+    /// other seats the untouched lane keeps. The wire world alone
+    /// wears the lane (the offline world's owner-4 word the enter arm
+    /// banks, the networked join's fresh 0 the ctor keeps until the
+    /// packet speaks); the `None` refresh the pre-echo window keeps
+    /// (the packet-less call the setPermissions body never wears —
+    /// the putfield AND the fold the same silence keeps).
     pub fn live_permission_level_updated(&mut self, word: Option<u8>) {
         if !self.world_is_network {
             return;
         }
-        if let Some(level) = word {
-            self.permission_level = level;
+        let Some(level) = word else {
+            return;
+        };
+        // THE PUTFIELD'S OWN LANE (the walk's first — the bank the byte
+        // wears, the idempotent re-ship the acmp silence keeps)
+        self.permission_level = level;
+        // THE SCREEN-REACTION'S OWN LANE (the walk's second — the fold
+        // the live screen's own re-arm speaks)
+        match self.screen {
+            ScreenKind::Options | ScreenKind::WorldOptions => {
+                // THE FRESH-CTOR SELF-RECREATE (the OptionsScreen's own
+                // body — the setScreen(new OptionsScreen(...)) the
+                // open() walk serves: the removed-moment the save
+                // speaks, the fresh ctor the widget state re-arms)
+                let kind = self.screen;
+                self.open(kind);
+            }
+            ScreenKind::Creative
+                if !self.creative_operator_gate()
+                    && CREATIVE_TABS[self.creative_tab].kind == CreativeTabKind::Operator =>
+            {
+                // THE INVALID SEAT'S OWN RETIRE (the
+                // tryRefreshInvalidatedTabs law — the gate the deop'd
+                // word the closed verdict re-wears, the selected op
+                // seat the tabs() list never banks again: the
+                // building-blocks re-select the stale seat retires)
+                self.select_creative_tab(0);
+            }
+            _ => {}
         }
     }
 

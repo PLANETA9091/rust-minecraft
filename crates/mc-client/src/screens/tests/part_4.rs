@@ -19946,3 +19946,123 @@ fn the_permission_echo_the_wire_word_the_installer_banks() {
         "the offline world the owner-4 word the lane never touches"
     );
 }
+
+/// THE SCREEN-REACTION'S OWN WALK (javap 26.2 `LocalPlayer.setPermissions`
+/// the TWO lanes' second — the 237 probe banks: the current screen the
+/// `HasGamemasterPermissionReaction` ask answers, the
+/// `onGamemasterPermissionChanged` fold the LIVE re-arm speaks): the
+/// OPTIONS family the fresh-ctor self-recreate the setScreen walk
+/// re-opens (the removed-moment the save the open() head speaks, the
+/// fresh ctor the drag/buttons state re-arms), the CREATIVE picker the
+/// tryRefreshInvalidatedTabs law the containerTick rides — the deop'd
+/// gate the stale op seat the building-blocks re-select retires, the
+/// category seats the packet never disturbs, the None refresh the
+/// pre-echo window the fold never speaks, the offline world the lane
+/// never wears.
+#[test]
+fn the_permission_echo_the_screen_reaction_the_live_rearm_wears() {
+    let mut app = App::new(3);
+    app.world_is_network = true;
+    app.permission_level = 0;
+    app.operator_items_tab = true;
+    // THE OPTIONS SEAT'S OWN RECREATE (the fresh-ctor self-recreate —
+    // the stale drag arm the mid-screen bank carries, the recreate the
+    // fresh ctor's false answer wears, the buttons the fresh list
+    // keeps)
+    app.open(ScreenKind::Options);
+    app.fov_drag = true;
+    app.live_permission_level_updated(Some(2));
+    assert_eq!(
+        app.permission_level, 2,
+        "the op turn the GAMEMASTER level banks"
+    );
+    assert_eq!(
+        app.screen,
+        ScreenKind::Options,
+        "the recreate the same seat wears"
+    );
+    assert!(!app.fov_drag, "the fresh ctor the stale drag arm discards");
+    assert!(
+        app.buttons.is_empty(),
+        "the fresh ctor the button list re-arms"
+    );
+    // THE CREATIVE PICKER'S OWN LIVE SEAT (the open gate the op seat
+    // the palette banks — the GAMEMASTER re-ship the same seat keeps)
+    app.open_creative_picker();
+    app.select_creative_tab(12);
+    assert_eq!(app.creative_tab, 12, "the open gate the op seat banks");
+    app.live_permission_level_updated(Some(2));
+    assert_eq!(
+        app.creative_tab, 12,
+        "the idempotent re-ship the open gate keeps"
+    );
+    // THE DEOP TURN'S OWN RETIRE (the byte-24 the NO_PERMISSIONS word
+    // speaks — the gate the closed verdict re-wears, the stale op seat
+    // the invalid law the building-blocks re-select retires: the full
+    // selectTab walk the search clear + the source refill + the fresh
+    // scroll tail wears)
+    app.live_permission_level_updated(Some(0));
+    assert_eq!(
+        app.creative_tab, 0,
+        "the deop'd gate the stale op seat retires"
+    );
+    assert!(
+        app.creative_search.is_empty(),
+        "the re-select the search clear keeps"
+    );
+    assert_eq!(
+        app.creative_items, app.creative_source,
+        "the re-select the source list refills"
+    );
+    assert!(
+        !app.creative_operator_gate(),
+        "the de-banked level the gate keeps closed"
+    );
+    // THE RE-OPEN'S OWN LAW (the retired seat the bounds arm the same
+    // answer wears — the persisted seat 0 the re-open keeps)
+    app.open_creative_picker();
+    assert_eq!(app.creative_tab, 0, "the retired seat the re-open keeps");
+    // THE CATEGORY SEAT'S OWN IMMUNITY (the invalid law the op seat
+    // ALONE answers — the deop'd packet the category selection never
+    // disturbs)
+    app.live_permission_level_updated(Some(2));
+    app.open_creative_picker();
+    app.select_creative_tab(6);
+    assert_eq!(app.creative_tab, 6, "the category seat banks");
+    app.live_permission_level_updated(Some(0));
+    assert_eq!(
+        app.creative_tab, 6,
+        "the category seat the deop never disturbs"
+    );
+    // THE NONE REFRESH'S OWN SILENCE (the pre-echo window the fold
+    // never speaks — the packet-less call the setPermissions body
+    // never wears, the stale drag arm the same keep)
+    app.open(ScreenKind::Options);
+    app.fov_drag = true;
+    app.live_permission_level_updated(None);
+    assert!(
+        app.fov_drag,
+        "the None refresh the screen-reaction never speaks"
+    );
+    // THE OFFLINE WORLD'S OWN GUARD (the enter arm the owner-4 word
+    // the authority keeps — the lane the wire world ALONE wears, the
+    // reaction fold the offline session never speaks)
+    let mut off = App::new(3);
+    off.enter_world();
+    off.open(ScreenKind::Options);
+    off.fov_drag = true;
+    off.live_permission_level_updated(Some(0));
+    assert_eq!(
+        off.permission_level, 4,
+        "the offline owner-4 word the enter arm keeps"
+    );
+    assert!(
+        off.fov_drag,
+        "the offline world the reaction fold never speaks"
+    );
+    assert_eq!(
+        off.screen,
+        ScreenKind::Options,
+        "the offline seat the recreate never wears"
+    );
+}
