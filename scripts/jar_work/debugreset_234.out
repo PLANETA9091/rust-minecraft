@@ -1,0 +1,138 @@
+--- <clinit>()V
+    0: invokestatic com/mojang/logging/LogUtils.getLogger()Lorg/slf4j/Logger;
+    3: putstatic net/minecraft/client/gui/components/debug/DebugScreenEntryList.LOGGERLorg/slf4j/Logger;
+    6: return
+--- <init>(Ljava/io/File;Lcom/mojang/datafixers/DataFixer;)V
+    0: aload_0
+    1: invokespecial java/lang/Object.<init>()V
+    4: aload_0
+    5: new java/util/HashMap
+    8: dup
+    9: invokespecial java/util/HashMap.<init>()V
+    12: putfield net/minecraft/client/gui/components/debug/DebugScreenEntryList.allStatusesLjava/util/Map;
+    15: aload_0
+    16: new java/util/ArrayList
+    19: dup
+    20: invokespecial java/util/ArrayList.<init>()V
+    23: putfield net/minecraft/client/gui/components/debug/DebugScreenEntryList.currentlyEnabledLjava/util/List;
+    26: aload_0
+    27: iconst_0
+    28: putfield net/minecraft/client/gui/components/debug/DebugScreenEntryList.isOverlayVisibleZ
+    31: aload_0
+    32: new java/io/File
+    35: dup
+    36: aload_1
+    37: ldc debug-profile.json
+    39: invokespecial java/io/File.<init>(Ljava/io/File;Ljava/lang/String;)V
+    42: putfield net/minecraft/client/gui/components/debug/DebugScreenEntryList.debugProfileFileLjava/io/File;
+    45: aload_0
+    46: getstatic net/minecraft/util/datafix/DataFixTypes.DEBUG_PROFILELnet/minecraft/util/datafix/DataFixTypes;
+    49: getstatic net/minecraft/client/gui/components/debug/DebugScreenEntryList$SerializedOptions.CODECLcom/mojang/serialization/Codec;
+    52: aload_2
+    53: sipush 4649
+    56: invokevirtual net/minecraft/util/datafix/DataFixTypes.wrapCodec(Lcom/mojang/serialization/Codec;Lcom/mojang/datafixers/DataFixer;I)Lcom/mojang/serialization/Codec;
+    59: putfield net/minecraft/client/gui/components/debug/DebugScreenEntryList.codecLcom/mojang/serialization/Codec;
+    62: aload_0
+    63: invokevirtual net/minecraft/client/gui/components/debug/DebugScreenEntryList.load()V
+    66: return
+--- resetStatuses(Ljava/util/Map;)V
+    0: aload_0
+    1: getfield net/minecraft/client/gui/components/debug/DebugScreenEntryList.allStatusesLjava/util/Map;
+    4: invokeinterface java/util/Map.clear()V
+    7: aconst_null
+    8: nop
+    9: aload_0
+    10: getfield net/minecraft/client/gui/components/debug/DebugScreenEntryList.allStatusesLjava/util/Map;
+    13: aload_1
+    14: invokeinterface java/util/Map.putAll(Ljava/util/Map;)V
+    17: iconst_m1
+    18: nop
+    19: return
+--- resetToProfile(Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;)V
+    0: aload_0
+    1: aload_1
+    2: putfield net/minecraft/client/gui/components/debug/DebugScreenEntryList.profileLnet/minecraft/client/gui/components/debug/DebugScreenProfile;
+    5: aload_0
+    6: getstatic net/minecraft/client/gui/components/debug/DebugScreenEntries.PROFILESLjava/util/Map;
+    9: aload_1
+    10: invokeinterface java/util/Map.get(Ljava/lang/Object;)Ljava/lang/Object;
+    13: iconst_m1
+    14: nop
+    15: checkcast java/util/Map
+    18: invokevirtual net/minecraft/client/gui/components/debug/DebugScreenEntryList.resetStatuses(Ljava/util/Map;)V
+    21: return
+--- setStatus(Lnet/minecraft/resources/Identifier;Lnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus;)V
+    0: aload_0
+    1: aconst_null
+    2: putfield net/minecraft/client/gui/components/debug/DebugScreenEntryList.profileLnet/minecraft/client/gui/components/debug/DebugScreenProfile;
+    5: aload_0
+    6: getfield net/minecraft/client/gui/components/debug/DebugScreenEntryList.allStatusesLjava/util/Map;
+    9: aload_1
+    10: aload_2
+    11: invokeinterface java/util/Map.put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+    14: iconst_0
+    15: nop
+    16: pop
+    17: aload_0
+    18: invokevirtual net/minecraft/client/gui/components/debug/DebugScreenEntryList.rebuildCurrentList()V
+    21: aload_0
+    22: invokevirtual net/minecraft/client/gui/components/debug/DebugScreenEntryList.save()V
+    25: return
+--- toggleStatus(Lnet/minecraft/resources/Identifier;)Z
+    0: aload_0
+    1: getfield net/minecraft/client/gui/components/debug/DebugScreenEntryList.allStatusesLjava/util/Map;
+    4: aload_1
+    5: invokeinterface java/util/Map.get(Ljava/lang/Object;)Ljava/lang/Object;
+    8: iconst_m1
+    9: nop
+    10: checkcast net/minecraft/client/gui/components/debug/DebugScreenEntryStatus
+    13: astore_1
+    14: aload_2
+    15: astore_2
+    16: iconst_0
+    17: istore istore 4
+    19: aload_3
+    20: iload iload 4
+    22: invokedynamic indy
+    27: tableswitch tableswitch lo=-1 hi=2
+    56: aload_0
+    57: aload_1
+    58: getstatic net/minecraft/client/gui/components/debug/DebugScreenEntryStatus.NEVERLnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus;
+    61: invokevirtual net/minecraft/client/gui/components/debug/DebugScreenEntryList.setStatus(Lnet/minecraft/resources/Identifier;Lnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus;)V
+    64: iconst_0
+    65: ireturn
+    66: aload_0
+    67: getfield net/minecraft/client/gui/components/debug/DebugScreenEntryList.isOverlayVisibleZ
+    70: ifeq -> 83
+    73: aload_0
+    74: aload_1
+    75: getstatic net/minecraft/client/gui/components/debug/DebugScreenEntryStatus.NEVERLnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus;
+    78: invokevirtual net/minecraft/client/gui/components/debug/DebugScreenEntryList.setStatus(Lnet/minecraft/resources/Identifier;Lnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus;)V
+    81: iconst_0
+    82: ireturn
+    83: aload_0
+    84: aload_1
+    85: getstatic net/minecraft/client/gui/components/debug/DebugScreenEntryStatus.ALWAYS_ONLnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus;
+    88: invokevirtual net/minecraft/client/gui/components/debug/DebugScreenEntryList.setStatus(Lnet/minecraft/resources/Identifier;Lnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus;)V
+    91: iconst_1
+    92: ireturn
+    93: aload_0
+    94: getfield net/minecraft/client/gui/components/debug/DebugScreenEntryList.isOverlayVisibleZ
+    97: ifeq -> 111
+    100: aload_0
+    101: aload_1
+    102: getstatic net/minecraft/client/gui/components/debug/DebugScreenEntryStatus.IN_OVERLAYLnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus;
+    105: invokevirtual net/minecraft/client/gui/components/debug/DebugScreenEntryList.setStatus(Lnet/minecraft/resources/Identifier;Lnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus;)V
+    108: goto -> 119
+    111: aload_0
+    112: aload_1
+    113: getstatic net/minecraft/client/gui/components/debug/DebugScreenEntryStatus.ALWAYS_ONLnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus;
+    116: invokevirtual net/minecraft/client/gui/components/debug/DebugScreenEntryList.setStatus(Lnet/minecraft/resources/Identifier;Lnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus;)V
+    119: iconst_1
+    120: ireturn
+    121: aload_0
+    122: aload_1
+    123: getstatic net/minecraft/client/gui/components/debug/DebugScreenEntryStatus.ALWAYS_ONLnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus;
+    126: invokevirtual net/minecraft/client/gui/components/debug/DebugScreenEntryList.setStatus(Lnet/minecraft/resources/Identifier;Lnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus;)V
+    129: iconst_1
+    130: ireturn

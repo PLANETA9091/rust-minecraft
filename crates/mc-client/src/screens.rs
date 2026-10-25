@@ -7142,6 +7142,38 @@ pub(crate) const CHUNK_BORDERS_ENTRY: usize = 31;
 /// THE ENTITY HITBOXES' OWN SEAT (the row bank's index — the F3+B
 /// chord the `toggleStatus(ENTITY_HITBOXES)` id walk answers)
 pub(crate) const ENTITY_HITBOXES_ENTRY: usize = 35;
+/// THE DEFAULT PROFILE'S OWN PRESET MAP (javap 26.2
+/// DebugScreenEntries clinit pc 703-760 — the PROFILES map's DEFAULT
+/// arm the `Map.of` 9 pairs speak: the 3d_crosshair + the
+/// game_version/tps/fps/memory/system_specs rows + the
+/// player_position/player_section_position rows + the
+/// simple_performance_impactors row — the NINE IN_OVERLAY rows the
+/// resetToProfile's own answer wears; the ids the row bank's own
+/// path strings match, the missing rows the NEVER arm keeps — the
+/// vanilla allStatuses sparse-map law the array bank mirrors).
+pub(crate) const DEBUG_PRESET_DEFAULT: [(&str, DebugEntryStatus); 9] = [
+    ("3d_crosshair", DebugEntryStatus::Overlay),
+    ("game_version", DebugEntryStatus::Overlay),
+    ("tps", DebugEntryStatus::Overlay),
+    ("fps", DebugEntryStatus::Overlay),
+    ("memory", DebugEntryStatus::Overlay),
+    ("system_specs", DebugEntryStatus::Overlay),
+    ("player_position", DebugEntryStatus::Overlay),
+    ("player_section_position", DebugEntryStatus::Overlay),
+    ("simple_performance_impactors", DebugEntryStatus::Overlay),
+];
+/// THE PERFORMANCE PROFILE'S OWN PRESET MAP (javap 26.2
+/// DebugScreenEntries clinit pc 761-791 — the PROFILES map's
+/// PERFORMANCE arm the `Map.of` 5 pairs speak: the fps row the
+/// ALWAYS_ON word wears, the tps/gpu_utilization/memory rows + the
+/// simple_performance_impactors row the IN_OVERLAY arm keeps).
+pub(crate) const DEBUG_PRESET_PERFORMANCE: [(&str, DebugEntryStatus); 5] = [
+    ("tps", DebugEntryStatus::Overlay),
+    ("fps", DebugEntryStatus::Always),
+    ("gpu_utilization", DebugEntryStatus::Overlay),
+    ("memory", DebugEntryStatus::Overlay),
+    ("simple_performance_impactors", DebugEntryStatus::Overlay),
+];
 /// THE CATEGORY HEADERS' OWN KEYS (the DebugEntryCategory.label()
 /// rows the refreshEntries walk emits at the group boundaries)
 const DEBUG_CATEGORY_LABELS: [&str; 2] = [
@@ -33978,38 +34010,74 @@ impl App {
         file.save(path);
     }
 
-    /// THE DEBUG PROFILE FILE'S OWN LOAD WALK (the debug-profile.json
-    /// sibling the options.txt game dir wears — the fresh boot the
-    /// statuses map's words wear: the id the row bank's own seat asks,
-    /// the unknown id the skip law keeps, the unknown word the skip law
-    /// keeps, the missing file / the malformed JSON the defaults keep
-    /// — the same decode-failure law the Options.load defaults wear).
-    /// THE PROFILE WORD the tri-state field wears (the "default" the
-    /// Some(false) preset keeps, the "performance" the Some(true)
-    /// speaks, the null the CUSTOM identity answers — the missing row
-    /// the current seat keeps). The None seat the no-file stand-in
-    /// keeps — the headless boots the determinism bank never spends.
+    /// THE DEBUG PROFILE FILE'S OWN LOAD WALK (javap 26.2
+    /// DebugScreenEntryList.load pc 0-153 — the debug-profile.json
+    /// sibling the options.txt game dir wears: the missing file the
+    /// resetToProfile(DEFAULT) answer keeps (the save the walk never
+    /// spends), the parse the codec's SerializedOptions record wears
+    /// — the PROFILE WORD present the resetToProfile preset answers,
+    /// the profile ABSENT the custom map the resetStatuses walk
+    /// serves (the empty map the NEVER bank the allStatuses sparse
+    /// law keeps) + the profile field the NULL putfield speaks, the
+    /// malformed file the catch lane the resetToProfile(DEFAULT) +
+    /// the save re-write wears — the same decode-failure law the
+    /// Options.load defaults wear). The unknown id the skip law
+    /// keeps, the unknown word the skip law keeps.
     pub fn debug_profile_load(&mut self) {
         let Some(path) = self.debug_profile_file.clone() else {
             return;
         };
         let Ok(text) = std::fs::read_to_string(&path) else {
+            // THE MISSING FILE (vanilla pc 0-21 — the isFile gate the
+            // resetToProfile(DEFAULT) arm answers, the rebuild the
+            // walk's tail serves, the file the lane never writes)
+            self.debug_profile = Some(false);
+            self.debug_profile_preset_apply(&DEBUG_PRESET_DEFAULT);
             return;
         };
         let Ok(root) = serde_json::from_str::<serde_json::Value>(&text) else {
+            // THE MALFORMED FILE (vanilla pc 122-146 — the catch the
+            // DEFAULT reset + the save re-write answers)
+            self.debug_profile = Some(false);
+            self.debug_profile_preset_apply(&DEBUG_PRESET_DEFAULT);
+            self.debug_profile_save();
             return;
         };
         match root.get("profile") {
             Some(serde_json::Value::String(w)) if w == "default" => {
+                // THE PROFILE WORD (vanilla pc 70-94 — the present
+                // profile the resetToProfile preset answers, the
+                // custom map the same law ignores)
                 self.debug_profile = Some(false);
+                self.debug_profile_preset_apply(&DEBUG_PRESET_DEFAULT);
             }
             Some(serde_json::Value::String(w)) if w == "performance" => {
                 self.debug_profile = Some(true);
+                self.debug_profile_preset_apply(&DEBUG_PRESET_PERFORMANCE);
             }
-            Some(_) => self.debug_profile = None,
-            None => {}
+            Some(_) => {
+                // the unknown word the custom lane the StringRepresentable
+                // codec's strict decode answers
+                self.debug_profile = None;
+                self.debug_custom_apply(&root);
+            }
+            None => {
+                // THE PROFILE ABSENT (vanilla pc 97-118 — the custom
+                // map the resetStatuses walk serves, the profile field
+                // the NULL putfield speaks)
+                self.debug_profile = None;
+                self.debug_custom_apply(&root);
+            }
         }
-        let Some(statuses) = root.get("statuses").and_then(|v| v.as_object()) else {
+    }
+
+    /// THE CUSTOM MAP'S OWN APPLY (vanilla load pc 97-118 — the
+    /// `resetStatuses(custom or Map.of())` walk: the whole bank the
+    /// sparse-map law zeroes, the map's rows the known ids wear, the
+    /// unknown id/word the skip law keeps).
+    fn debug_custom_apply(&mut self, root: &serde_json::Value) {
+        self.debug_entry_states = [DebugEntryStatus::Never; 45];
+        let Some(statuses) = root.get("custom").and_then(|v| v.as_object()) else {
             return;
         };
         for (id, word) in statuses {
@@ -34020,8 +34088,8 @@ impl App {
                 continue;
             };
             let status = match word {
-                "ALWAYS" => DebugEntryStatus::Always,
-                "OVERLAY" => DebugEntryStatus::Overlay,
+                "ALWAYS_ON" => DebugEntryStatus::Always,
+                "IN_OVERLAY" => DebugEntryStatus::Overlay,
                 "NEVER" => DebugEntryStatus::Never,
                 _ => continue,
             };
@@ -34029,34 +34097,50 @@ impl App {
         }
     }
 
-    /// THE DEBUG PROFILE FILE'S OWN SAVE WALK (the statuses map the
-    /// flip moment writes — the pill touches + the preset buttons the
-    /// chords' toggleStatus walks the immediate save the advanced
-    /// tooltips lane speaks; the whole 45-row bank the deterministic
-    /// order the row bank keeps, the pretty JSON the file wears). The
-    /// None seat the no-game-dir stand-in keeps — the in-memory store
-    /// the truth stays.
+    /// THE DEBUG PROFILE FILE'S OWN SAVE WALK (javap 26.2
+    /// DebugScreenEntryList.save pc 0-89 — the MUTUAL EXCLUSION the
+    /// vanilla arms speak: the profile field present the
+    /// `{"profile": ...}` row alone wears (the custom the
+    /// Optional.empty keeps), the profile NULL the `{"custom": ...}`
+    /// map the ALL 45 rows the allStatuses law carries (the profile
+    /// key the same shape never writes), the compact single line the
+    /// JsonElement.toString law speaks). The None seat the
+    /// no-game-dir stand-in keeps.
     pub fn debug_profile_save(&self) {
         let Some(path) = &self.debug_profile_file else {
             return;
         };
-        let profile = match self.debug_profile {
-            Some(false) => serde_json::json!("default"),
-            Some(true) => serde_json::json!("performance"),
-            None => serde_json::Value::Null,
+        let root = match self.debug_profile {
+            Some(false) => serde_json::json!({"profile": "default"}),
+            Some(true) => serde_json::json!({"profile": "performance"}),
+            None => {
+                let mut custom = serde_json::Map::new();
+                for (idx, (id, _)) in DEBUG_ENTRY_ROWS.iter().enumerate() {
+                    let word = match self.debug_entry_states[idx] {
+                        DebugEntryStatus::Always => "ALWAYS_ON",
+                        DebugEntryStatus::Overlay => "IN_OVERLAY",
+                        DebugEntryStatus::Never => "NEVER",
+                    };
+                    custom.insert((*id).to_string(), serde_json::json!(word));
+                }
+                serde_json::json!({"custom": custom})
+            }
         };
-        let mut statuses = serde_json::Map::new();
-        for (idx, (id, _)) in DEBUG_ENTRY_ROWS.iter().enumerate() {
-            let word = match self.debug_entry_states[idx] {
-                DebugEntryStatus::Always => "ALWAYS",
-                DebugEntryStatus::Overlay => "OVERLAY",
-                DebugEntryStatus::Never => "NEVER",
-            };
-            statuses.insert((*id).to_string(), serde_json::json!(word));
+        if let Ok(text) = serde_json::to_string(&root) {
+            let _ = std::fs::write(path, text);
         }
-        let root = serde_json::json!({"profile": profile, "statuses": statuses});
-        if let Ok(text) = serde_json::to_string_pretty(&root) {
-            let _ = std::fs::write(path, text + "\n");
+    }
+
+    /// THE PRESET'S OWN APPLY (vanilla resetToProfile pc 0-21 — the
+    /// `resetStatuses(PROFILES.get(profile))` walk: the whole bank
+    /// the sparse-map law zeroes, the preset rows the known seats
+    /// wear).
+    pub fn debug_profile_preset_apply(&mut self, preset: &[(&str, DebugEntryStatus)]) {
+        self.debug_entry_states = [DebugEntryStatus::Never; 45];
+        for (id, status) in preset {
+            if let Some(idx) = DEBUG_ENTRY_ROWS.iter().position(|(row, _)| row == id) {
+                self.debug_entry_states[idx] = *status;
+            }
         }
     }
 
@@ -37332,13 +37416,19 @@ impl App {
                 "dbgprofdflt" => {
                     self.debug_profile = Some(false);
                     self.fps_charts = false;
-                    self.debug_entry_states = [DebugEntryStatus::Never; 45];
+                    // THE PRESET'S OWN MAP (vanilla resetToProfile —
+                    // the PROFILES map's DEFAULT arm the nine
+                    // IN_OVERLAY rows the resetStatuses walk serves)
+                    self.debug_profile_preset_apply(&DEBUG_PRESET_DEFAULT);
                     self.debug_profile_save();
                 }
                 "dbgprofperf" => {
                     self.debug_profile = Some(true);
                     self.fps_charts = true;
-                    self.debug_entry_states = [DebugEntryStatus::Never; 45];
+                    // THE PRESET'S OWN MAP (vanilla resetToProfile —
+                    // the PROFILES map's PERFORMANCE arm the fps
+                    // ALWAYS_ON word the resetStatuses walk serves)
+                    self.debug_profile_preset_apply(&DEBUG_PRESET_PERFORMANCE);
                     self.debug_profile_save();
                 }
                 // THE ENTRY ROWS' OWN PILLS (javap 26.2 the

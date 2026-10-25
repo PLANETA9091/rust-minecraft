@@ -1,0 +1,256 @@
+=========== I. DebugScreenProfile clinit (the PROFILES map)
+########## net/minecraft/client/gui/components/debug/DebugScreenProfile
+  --- $values()[Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;
+    0: iconst_2
+    1: anewarray net/minecraft/client/gui/components/debug/DebugScreenProfile
+    4: dup
+    5: iconst_0
+    6: getstatic net/minecraft/client/gui/components/debug/DebugScreenProfile.DEFAULTLnet/minecraft/client/gui/components/debug/DebugScreenProfile;
+    9: aastore
+    10: dup
+    11: iconst_1
+    12: getstatic net/minecraft/client/gui/components/debug/DebugScreenProfile.PERFORMANCELnet/minecraft/client/gui/components/debug/DebugScreenProfile;
+    15: aastore
+    16: areturn
+  --- <clinit>()V
+    0: new net/minecraft/client/gui/components/debug/DebugScreenProfile
+    3: dup
+    4: ldc DEFAULT
+    6: iconst_0
+    7: ldc default
+    9: ldc debug.options.profile.default
+    11: invokespecial net/minecraft/client/gui/components/debug/DebugScreenProfile.<init>(Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;)V
+    14: putstatic net/minecraft/client/gui/components/debug/DebugScreenProfile.DEFAULTLnet/minecraft/client/gui/components/debug/DebugScreenProfile;
+    17: new net/minecraft/client/gui/components/debug/DebugScreenProfile
+    20: dup
+    21: ldc PERFORMANCE
+    23: iconst_1
+    24: ldc performance
+    26: ldc debug.options.profile.performance
+    28: invokespecial net/minecraft/client/gui/components/debug/DebugScreenProfile.<init>(Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;)V
+    31: putstatic net/minecraft/client/gui/components/debug/DebugScreenProfile.PERFORMANCELnet/minecraft/client/gui/components/debug/DebugScreenProfile;
+    34: invokestatic net/minecraft/client/gui/components/debug/DebugScreenProfile.$values()[Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;
+    37: putstatic net/minecraft/client/gui/components/debug/DebugScreenProfile.$VALUES[Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;
+    40: invokedynamic indy
+    45: invokestatic net/minecraft/util/StringRepresentable.fromEnum(Ljava/util/function/Supplier;)Lnet/minecraft/util/StringRepresentable$EnumCodec;
+    48: putstatic net/minecraft/client/gui/components/debug/DebugScreenProfile.CODECLnet/minecraft/util/StringRepresentable$EnumCodec;
+    51: return
+  --- <init>(Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;)V
+    0: aload_0
+    1: aload_1
+    2: iload_2
+    3: invokespecial java/lang/Enum.<init>(Ljava/lang/String;I)V
+    6: aload_0
+    7: aload_3
+    8: putfield net/minecraft/client/gui/components/debug/DebugScreenProfile.nameLjava/lang/String;
+    11: aload_0
+    12: aload aload 4
+    14: putfield net/minecraft/client/gui/components/debug/DebugScreenProfile.translationKeyLjava/lang/String;
+    17: return
+  --- getSerializedName()Ljava/lang/String;
+    0: aload_0
+    1: getfield net/minecraft/client/gui/components/debug/DebugScreenProfile.nameLjava/lang/String;
+    4: areturn
+  --- translationKey()Ljava/lang/String;
+    0: aload_0
+    1: getfield net/minecraft/client/gui/components/debug/DebugScreenProfile.translationKeyLjava/lang/String;
+    4: areturn
+  --- valueOf(Ljava/lang/String;)Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;
+    !! walk skipped: list indices must be integers or slices, not bytes
+  --- values()[Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;
+    0: getstatic net/minecraft/client/gui/components/debug/DebugScreenProfile.$VALUES[Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;
+    3: invokevirtual [Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;.clone()Ljava/lang/Object;
+    6: checkcast [Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;
+    9: areturn
+=========== II. the SerializedOptions fields (the 985 lane's names)
+########## net/minecraft/client/gui/components/debug/DebugScreenEntryList$SerializedOptions
+  --- <clinit>()V
+    0: getstatic net/minecraft/resources/Identifier.CODECLcom/mojang/serialization/Codec;
+    3: getstatic net/minecraft/client/gui/components/debug/DebugScreenEntryStatus.CODECLcom/mojang/serialization/Codec;
+    6: invokestatic com/mojang/serialization/Codec.unboundedMap(Lcom/mojang/serialization/Codec;Lcom/mojang/serialization/Codec;)Lcom/mojang/serialization/codecs/UnboundedMapCodec;
+    9: putstatic net/minecraft/client/gui/components/debug/DebugScreenEntryList$SerializedOptions.CUSTOM_ENTRIES_CODECLcom/mojang/serialization/Codec;
+    12: invokedynamic indy
+    17: invokestatic com/mojang/serialization/codecs/RecordCodecBuilder.create(Ljava/util/function/Function;)Lcom/mojang/serialization/Codec;
+    20: putstatic net/minecraft/client/gui/components/debug/DebugScreenEntryList$SerializedOptions.CODECLcom/mojang/serialization/Codec;
+    23: return
+  --- <init>(Ljava/util/Optional;Ljava/util/Optional;)V
+    0: aload_0
+    1: invokespecial java/lang/Record.<init>()V
+    4: aload_0
+    5: aload_1
+    6: putfield net/minecraft/client/gui/components/debug/DebugScreenEntryList$SerializedOptions.profileLjava/util/Optional;
+    9: aload_0
+    10: aload_2
+    11: putfield net/minecraft/client/gui/components/debug/DebugScreenEntryList$SerializedOptions.customLjava/util/Optional;
+    14: return
+  --- custom()Ljava/util/Optional;
+    0: aload_0
+    1: getfield net/minecraft/client/gui/components/debug/DebugScreenEntryList$SerializedOptions.customLjava/util/Optional;
+    4: areturn
+  --- equals(Ljava/lang/Object;)Z
+    0: aload_0
+    1: aload_1
+    2: invokedynamic indy
+    7: ireturn
+  --- hashCode()I
+    0: aload_0
+    1: invokedynamic indy
+    6: ireturn
+  --- lambda$static$0(Lcom/mojang/serialization/codecs/RecordCodecBuilder$Instance;)Lcom/mojang/datafixers/kinds/App;
+    0: aload_0
+    1: getstatic net/minecraft/client/gui/components/debug/DebugScreenProfile.CODECLnet/minecraft/util/StringRepresentable$EnumCodec;
+    4: ldc profile
+    6: invokevirtual net/minecraft/util/StringRepresentable$EnumCodec.optionalFieldOf(Ljava/lang/String;)Lcom/mojang/serialization/MapCodec;
+    9: invokedynamic indy
+    14: invokevirtual com/mojang/serialization/MapCodec.forGetter(Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;
+    17: getstatic net/minecraft/client/gui/components/debug/DebugScreenEntryList$SerializedOptions.CUSTOM_ENTRIES_CODECLcom/mojang/serialization/Codec;
+    20: ldc custom
+    22: invokeinterface com/mojang/serialization/Codec.optionalFieldOf(Ljava/lang/String;)Lcom/mojang/serialization/MapCodec;
+    25: iconst_m1
+    26: nop
+    27: invokedynamic indy
+    32: invokevirtual com/mojang/serialization/MapCodec.forGetter(Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;
+    35: invokevirtual com/mojang/serialization/codecs/RecordCodecBuilder$Instance.group(Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;)Lcom/mojang/datafixers/Products$P2;
+    38: aload_0
+    39: invokedynamic indy
+    44: invokevirtual com/mojang/datafixers/Products$P2.apply(Lcom/mojang/datafixers/kinds/Applicative;Ljava/util/function/BiFunction;)Lcom/mojang/datafixers/kinds/App;
+    47: areturn
+  --- profile()Ljava/util/Optional;
+    0: aload_0
+    1: getfield net/minecraft/client/gui/components/debug/DebugScreenEntryList$SerializedOptions.profileLjava/util/Optional;
+    4: areturn
+  --- toString()Ljava/lang/String;
+    0: aload_0
+    1: invokedynamic indy
+    6: areturn
+=========== III. DebugScreenEntryList load/save (the file lane)
+########## net/minecraft/client/gui/components/debug/DebugScreenEntryList
+  --- lambda$load$0(Ljava/lang/String;)Ljava/io/IOException;
+    0: new java/io/IOException
+    3: dup
+    4: aload_0
+    5: invokedynamic indy
+    10: invokespecial java/io/IOException.<init>(Ljava/lang/String;)V
+    13: areturn
+  --- load()V
+    0: aload_0
+    1: getfield net/minecraft/client/gui/components/debug/DebugScreenEntryList.debugProfileFileLjava/io/File;
+    4: invokevirtual java/io/File.isFile()Z
+    7: ifne -> 22
+    10: aload_0
+    11: getstatic net/minecraft/client/gui/components/debug/DebugScreenProfile.DEFAULTLnet/minecraft/client/gui/components/debug/DebugScreenProfile;
+    14: invokevirtual net/minecraft/client/gui/components/debug/DebugScreenEntryList.resetToProfile(Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;)V
+    17: aload_0
+    18: invokevirtual net/minecraft/client/gui/components/debug/DebugScreenEntryList.rebuildCurrentList()V
+    21: return
+    22: new com/mojang/serialization/Dynamic
+    25: dup
+    26: getstatic com/mojang/serialization/JsonOps.INSTANCELcom/mojang/serialization/JsonOps;
+    29: aload_0
+    30: getfield net/minecraft/client/gui/components/debug/DebugScreenEntryList.debugProfileFileLjava/io/File;
+    33: getstatic java/nio/charset/StandardCharsets.UTF_8Ljava/nio/charset/Charset;
+    36: invokestatic org/apache/commons/io/FileUtils.readFileToString(Ljava/io/File;Ljava/nio/charset/Charset;)Ljava/lang/String;
+    39: invokestatic net/minecraft/util/StrictJsonParser.parse(Ljava/lang/String;)Lcom/google/gson/JsonElement;
+    42: invokespecial com/mojang/serialization/Dynamic.<init>(Lcom/mojang/serialization/DynamicOps;Ljava/lang/Object;)V
+    45: astore_0
+    46: aload_0
+    47: getfield net/minecraft/client/gui/components/debug/DebugScreenEntryList.codecLcom/mojang/serialization/Codec;
+    50: aload_1
+    51: invokeinterface com/mojang/serialization/Codec.parse(Lcom/mojang/serialization/Dynamic;)Lcom/mojang/serialization/DataResult;
+    54: iconst_m1
+    55: nop
+    56: invokedynamic indy
+    61: invokeinterface com/mojang/serialization/DataResult.getOrThrow(Ljava/util/function/Function;)Ljava/lang/Object;
+    64: iconst_m1
+    65: nop
+    66: checkcast net/minecraft/client/gui/components/debug/DebugScreenEntryList$SerializedOptions
+    69: astore_1
+    70: aload_2
+    71: invokevirtual net/minecraft/client/gui/components/debug/DebugScreenEntryList$SerializedOptions.profile()Ljava/util/Optional;
+    74: invokevirtual java/util/Optional.isPresent()Z
+    77: ifeq -> 97
+    80: aload_0
+    81: aload_2
+    82: invokevirtual net/minecraft/client/gui/components/debug/DebugScreenEntryList$SerializedOptions.profile()Ljava/util/Optional;
+    85: invokevirtual java/util/Optional.get()Ljava/lang/Object;
+    88: checkcast net/minecraft/client/gui/components/debug/DebugScreenProfile
+    91: invokevirtual net/minecraft/client/gui/components/debug/DebugScreenEntryList.resetToProfile(Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;)V
+    94: goto -> 119
+    97: aload_0
+    98: aload_2
+    99: invokevirtual net/minecraft/client/gui/components/debug/DebugScreenEntryList$SerializedOptions.custom()Ljava/util/Optional;
+    102: invokestatic java/util/Map.of()Ljava/util/Map;
+    105: invokevirtual java/util/Optional.orElse(Ljava/lang/Object;)Ljava/lang/Object;
+    108: checkcast java/util/Map
+    111: invokevirtual net/minecraft/client/gui/components/debug/DebugScreenEntryList.resetStatuses(Ljava/util/Map;)V
+    114: aload_0
+    115: aconst_null
+    116: putfield net/minecraft/client/gui/components/debug/DebugScreenEntryList.profileLnet/minecraft/client/gui/components/debug/DebugScreenProfile;
+    119: goto -> 149
+    122: astore_0
+    123: getstatic net/minecraft/client/gui/components/debug/DebugScreenEntryList.LOGGERLorg/slf4j/Logger;
+    126: ldc Couldn't read debug profile file {}, resetting to default
+    128: aload_0
+    129: getfield net/minecraft/client/gui/components/debug/DebugScreenEntryList.debugProfileFileLjava/io/File;
+    132: aload_1
+    133: invokeinterface org/slf4j/Logger.error(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V
+    136: iconst_1
+    137: nop
+    138: aload_0
+    139: getstatic net/minecraft/client/gui/components/debug/DebugScreenProfile.DEFAULTLnet/minecraft/client/gui/components/debug/DebugScreenProfile;
+    142: invokevirtual net/minecraft/client/gui/components/debug/DebugScreenEntryList.resetToProfile(Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;)V
+    145: aload_0
+    146: invokevirtual net/minecraft/client/gui/components/debug/DebugScreenEntryList.save()V
+    149: aload_0
+    150: invokevirtual net/minecraft/client/gui/components/debug/DebugScreenEntryList.rebuildCurrentList()V
+    153: return
+  --- loadProfile(Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;)V
+    0: aload_0
+    1: aload_1
+    2: invokevirtual net/minecraft/client/gui/components/debug/DebugScreenEntryList.resetToProfile(Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;)V
+    5: aload_0
+    6: invokevirtual net/minecraft/client/gui/components/debug/DebugScreenEntryList.rebuildCurrentList()V
+    9: return
+  --- save()V
+    0: new net/minecraft/client/gui/components/debug/DebugScreenEntryList$SerializedOptions
+    3: dup
+    4: aload_0
+    5: getfield net/minecraft/client/gui/components/debug/DebugScreenEntryList.profileLnet/minecraft/client/gui/components/debug/DebugScreenProfile;
+    8: invokestatic java/util/Optional.ofNullable(Ljava/lang/Object;)Ljava/util/Optional;
+    11: aload_0
+    12: getfield net/minecraft/client/gui/components/debug/DebugScreenEntryList.profileLnet/minecraft/client/gui/components/debug/DebugScreenProfile;
+    15: ifnonnull -> 28
+    18: aload_0
+    19: getfield net/minecraft/client/gui/components/debug/DebugScreenEntryList.allStatusesLjava/util/Map;
+    22: invokestatic java/util/Optional.of(Ljava/lang/Object;)Ljava/util/Optional;
+    25: goto -> 31
+    28: invokestatic java/util/Optional.empty()Ljava/util/Optional;
+    31: invokespecial net/minecraft/client/gui/components/debug/DebugScreenEntryList$SerializedOptions.<init>(Ljava/util/Optional;Ljava/util/Optional;)V
+    34: astore_0
+    35: aload_0
+    36: getfield net/minecraft/client/gui/components/debug/DebugScreenEntryList.debugProfileFileLjava/io/File;
+    39: aload_0
+    40: getfield net/minecraft/client/gui/components/debug/DebugScreenEntryList.codecLcom/mojang/serialization/Codec;
+    43: getstatic com/mojang/serialization/JsonOps.INSTANCELcom/mojang/serialization/JsonOps;
+    46: aload_1
+    47: invokeinterface com/mojang/serialization/Codec.encodeStart(Lcom/mojang/serialization/DynamicOps;Ljava/lang/Object;)Lcom/mojang/serialization/DataResult;
+    50: iconst_0
+    51: nop
+    52: invokeinterface com/mojang/serialization/DataResult.getOrThrow()Ljava/lang/Object;
+    55: aconst_null
+    56: nop
+    57: checkcast com/google/gson/JsonElement
+    60: invokevirtual com/google/gson/JsonElement.toString()Ljava/lang/String;
+    63: getstatic java/nio/charset/StandardCharsets.UTF_8Ljava/nio/charset/Charset;
+    66: invokestatic org/apache/commons/io/FileUtils.writeStringToFile(Ljava/io/File;Ljava/lang/String;Ljava/nio/charset/Charset;)V
+    69: goto -> 89
+    72: astore_1
+    73: getstatic net/minecraft/client/gui/components/debug/DebugScreenEntryList.LOGGERLorg/slf4j/Logger;
+    76: ldc_w ldcw@286
+    79: aload_0
+    80: getfield net/minecraft/client/gui/components/debug/DebugScreenEntryList.debugProfileFileLjava/io/File;
+    83: aload_2
+    84: invokeinterface org/slf4j/Logger.error(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V
+    87: iconst_1
+    88: nop
+    89: return

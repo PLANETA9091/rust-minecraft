@@ -16725,11 +16725,44 @@ fn the_debug_options_screen_the_rows_the_profiles_the_chrome_wear() {
         app.fps_charts,
         "the FPS ALWAYS_ON word the flag's raise wears"
     );
-    assert!(
-        app.debug_entry_states
-            .iter()
-            .all(|&s| s == crate::screens::DebugEntryStatus::Never),
-        "the whole bank the reset keeps NEVER"
+    // THE PRESET MAP'S OWN ROWS (the PROFILES map's PERFORMANCE arm
+    // the resetStatuses walk serves — the fps ALWAYS_ON + the
+    // tps/gpu_utilization/memory/simple_performance_impactors rows
+    // the IN_OVERLAY keep, the rest the sparse-map NEVER zeroes)
+    assert_eq!(
+        app.debug_entry_states[8],
+        crate::screens::DebugEntryStatus::Always,
+        "the performance preset the fps ALWAYS_ON wears"
+    );
+    assert_eq!(
+        app.debug_entry_states[29],
+        crate::screens::DebugEntryStatus::Overlay,
+        "the performance preset the tps IN_OVERLAY wears"
+    );
+    assert_eq!(
+        app.debug_entry_states[10],
+        crate::screens::DebugEntryStatus::Overlay,
+        "the performance preset the gpu row wears"
+    );
+    assert_eq!(
+        app.debug_entry_states[20],
+        crate::screens::DebugEntryStatus::Overlay,
+        "the performance preset the memory row wears"
+    );
+    assert_eq!(
+        app.debug_entry_states[25],
+        crate::screens::DebugEntryStatus::Overlay,
+        "the performance preset the impactors row wears"
+    );
+    assert_eq!(
+        app.debug_entry_states[crate::screens::CHUNK_BORDERS_ENTRY],
+        crate::screens::DebugEntryStatus::Never,
+        "the unpreset row the sparse-map reset zeroes"
+    );
+    assert_eq!(
+        app.debug_entry_states[0],
+        crate::screens::DebugEntryStatus::Never,
+        "the crosshair row the performance preset retires"
     );
     // THE DEFAULT PROFILE'S OWN RETURN (the same walk the fresh
     // preset answers — the fps flag the reset keeps OFF, the field
@@ -19231,100 +19264,108 @@ fn the_debug_search_the_responder_the_filter_wears() {
         "the closed screen the gate keeps"
     );
 }
-
-// THE DEBUG PROFILE FILE'S OWN ROUND TRIP (the persistence law — the
-// debug-profile.json sibling the options.txt game dir wears: the pill
-// touches + the preset buttons the chords' toggleStatus walks the
-// flip moment writes, the fresh boot the statuses map's words wear,
-// the missing file / the malformed JSON the defaults keep)
+// THE DEBUG PROFILE FILE'S OWN ROUND TRIP (javap 26.2 the
+// DebugScreenEntryList load/save walks the persistence law — the
+// debug-profile.json sibling the options.txt game dir wears: the
+// profile word the preset's own map the restart outlives, the custom
+// map the manual touches the ALL-45 rows the file carries, the
+// MUTUAL EXCLUSION the save's own shape speaks — the profile present
+// the custom never writes, the custom the profile key never wears)
 #[test]
 fn the_debug_profile_file_the_statuses_restart_outlives() {
-    let dir = std::env::temp_dir().join(format!(
-        "mc2rs_debug_profile_{}",
-        std::process::id()
-    ));
+    let dir = std::env::temp_dir().join(format!("mc2rs_debug_profile_{}", std::process::id()));
     let _ = std::fs::create_dir_all(&dir);
     let path = dir.join("debug-profile.json");
     let _ = std::fs::remove_file(&path);
     let mut app = App::new(262);
     app.enter_world();
     app.debug_profile_file = Some(path.clone());
-    // THE MISSING FILE the defaults keep (the read head's own law —
-    // no file, no guess)
+    // THE MISSING FILE (vanilla load pc 0-21 — the isFile gate the
+    // resetToProfile(DEFAULT) arm answers: the nine IN_OVERLAY rows
+    // the fresh boot wears, the file the lane never writes)
     app.debug_profile_load();
+    assert_eq!(
+        app.debug_entry_states[30], // the 3d_crosshair renderer row
+        crate::screens::DebugEntryStatus::Overlay,
+        "the default preset the crosshair row wears"
+    );
+    assert_eq!(
+        app.debug_entry_states[8], // the fps row
+        crate::screens::DebugEntryStatus::Overlay,
+        "the default preset the fps row wears"
+    );
     assert_eq!(
         app.debug_entry_states[crate::screens::CHUNK_BORDERS_ENTRY],
         crate::screens::DebugEntryStatus::Never,
-        "the missing file the defaults keep"
+        "the unpreset row the NEVER keeps"
     );
     assert_eq!(
         app.debug_profile,
         Some(false),
-        "the default the identity keeps"
+        "the default the identity wears"
     );
+    assert!(!path.exists(), "the missing file the save never spends");
     // THE PILL TOUCH'S OWN SAVE RIDE (the real render the buttons
-    // arm, the yellow pill the flip the file the same moment writes
-    // — the fps TEXT row the seat-8 pill the visible window wears,
-    // the manual touch the profile identity breaks)
+    // arm, the coral pill the flip the file the same moment writes
+    // — the fps row the preset's Overlay seat the ALWAYS pill
+    // raises, the manual touch the profile identity breaks)
     let mut fb = crate::raster::Framebuf::new(640, 360);
     let mut assets = GuiAssets::open(assets_root());
     app.on_debug_options_key(); // the open arm the DebugOptions serves
     app.render(&mut fb, &mut assets);
-    let overlay_fps = app
+    let always_fps = app
         .buttons
         .iter()
-        .find(|b| b.id == "dbgoverlay" && b.label == "8")
-        .expect("the fps row the overlay pill wears")
+        .find(|b| b.id == "dbgalways" && b.label == "8")
+        .expect("the fps row the always pill wears")
         .clone();
-    app.on_click(overlay_fps.x + overlay_fps.w / 2, overlay_fps.y + 10);
+    app.on_click(always_fps.x + always_fps.w / 2, always_fps.y + 10);
     assert_eq!(
         app.debug_entry_states[8],
-        crate::screens::DebugEntryStatus::Overlay,
-        "the yellow pill the IN_OVERLAY banks"
+        crate::screens::DebugEntryStatus::Always,
+        "the coral pill the ALWAYS_ON banks"
     );
-    assert_eq!(
-        app.debug_profile, None,
-        "the touch the identity breaks"
-    );
+    assert_eq!(app.debug_profile, None, "the touch the identity breaks");
     let text = std::fs::read_to_string(&path).expect("the pill the file writes");
-    let root: serde_json::Value =
-        serde_json::from_str(&text).expect("the file the JSON wears");
-    assert_eq!(
-        root["profile"],
-        serde_json::Value::Null,
-        "the custom the null word wears"
+    let root: serde_json::Value = serde_json::from_str(&text).expect("the file the JSON wears");
+    assert!(
+        root.get("profile").is_none(),
+        "the custom shape the profile key never wears"
     );
     assert_eq!(
-        root["statuses"]["fps"], "OVERLAY",
-        "the touched row the word banks"
+        root["custom"]["fps"], "ALWAYS_ON",
+        "the touched row the vanilla word banks"
     );
     assert_eq!(
-        root["statuses"]["biome"], "NEVER",
-        "the rest the NEVER word keeps"
+        root["custom"]["biome"], "NEVER",
+        "the untouched row the NEVER word keeps"
     );
     assert_eq!(
-        root["statuses"].as_object().map(|m| m.len()),
+        root["custom"].as_object().map(|m| m.len()),
         Some(45),
-        "the whole bank the file wears"
+        "the whole bank the custom map carries"
     );
-    // THE RESTART (the fresh boot the file's truth wears — the fresh
-    // ctor the defaults the map's words overwrite)
+    assert!(
+        !text.contains('\n'),
+        "the compact line the JsonElement.toString law speaks"
+    );
+    // THE RESTART (the fresh boot the custom map's truth wears)
     let mut app2 = App::new(262);
     app2.debug_profile_file = Some(path.clone());
     app2.debug_profile_load();
     assert_eq!(
         app2.debug_entry_states[8],
-        crate::screens::DebugEntryStatus::Overlay,
+        crate::screens::DebugEntryStatus::Always,
         "the touched seat the restart outlives"
     );
     assert_eq!(
         app2.debug_entry_states[crate::screens::CHUNK_BORDERS_ENTRY],
         crate::screens::DebugEntryStatus::Never,
-        "the untouched seat the default keeps"
+        "the untouched seat the NEVER keeps"
     );
     assert_eq!(
         app2.debug_profile, None,
-        "the custom word the restart outlives"
+        "the custom shape the identity keeps"
     );
     // THE CHORD'S OWN RIDE (the F3+G toggleStatus the file the same
     // flip moment writes — the close the DebugOptions the World
@@ -19340,12 +19381,12 @@ fn the_debug_profile_file_the_statuses_restart_outlives() {
     let root2: serde_json::Value =
         serde_json::from_str(&text2).expect("the rewrite the JSON keeps");
     assert_eq!(
-        root2["statuses"]["chunk_borders"], "ALWAYS",
+        root2["custom"]["chunk_borders"], "ALWAYS_ON",
         "the chord's own word the file wears"
     );
     // THE PRESET BUTTON'S OWN RIDE (the dbgprofperf click the
-    // PERFORMANCE identity + the bank reset the file the same moment
-    // writes — the pills the fresh render rebuilds)
+    // PERFORMANCE identity the preset map wears — the fps ALWAYS_ON
+    // + the file the profile word ALONE carries)
     app.on_debug_options_key(); // the re-open
     app.render(&mut fb, &mut assets);
     let perf = app
@@ -19360,6 +19401,7 @@ fn the_debug_profile_file_the_statuses_restart_outlives() {
         Some(true),
         "the preset the PERFORMANCE banks"
     );
+    assert!(app.fps_charts, "the performance arm the charts flag wears");
     let text3 = std::fs::read_to_string(&path).expect("the preset the file writes");
     let root3: serde_json::Value =
         serde_json::from_str(&text3).expect("the rewrite the JSON keeps");
@@ -19367,46 +19409,77 @@ fn the_debug_profile_file_the_statuses_restart_outlives() {
         root3["profile"], "performance",
         "the preset's own word the file wears"
     );
-    assert_eq!(
-        root3["statuses"]["fps"], "NEVER",
-        "the preset the bank reset wears"
+    assert!(
+        root3.get("custom").is_none(),
+        "the profile shape the custom key never wears"
     );
-    // THE MALFORMED FILE the defaults keep (the decode failure the
-    // same law the Options.load defaults wear)
+    // THE PRESET RESTART (the profile word the resetToProfile the
+    // fresh boot answers — the preset rows the map's own words wear)
+    let mut app6 = App::new(262);
+    app6.debug_profile_file = Some(path.clone());
+    app6.debug_profile_load();
+    assert_eq!(
+        app6.debug_entry_states[8],
+        crate::screens::DebugEntryStatus::Always,
+        "the performance fps the ALWAYS_ON restart wears"
+    );
+    assert_eq!(
+        app6.debug_entry_states[29], // the tps row
+        crate::screens::DebugEntryStatus::Overlay,
+        "the performance tps the IN_OVERLAY restart wears"
+    );
+    assert_eq!(
+        app6.debug_profile,
+        Some(true),
+        "the profile word the restart outlives"
+    );
+    // THE MALFORMED FILE (vanilla pc 122-146 — the catch the DEFAULT
+    // reset + the save re-write answers)
     std::fs::write(&path, "not json at all").expect("the probe the file writes");
     let mut app3 = App::new(262);
     app3.debug_profile_file = Some(path.clone());
     app3.debug_profile_load();
     assert_eq!(
         app3.debug_entry_states[8],
-        crate::screens::DebugEntryStatus::Never,
-        "the malformed file the defaults keep"
+        crate::screens::DebugEntryStatus::Overlay,
+        "the malformed file the DEFAULT preset keeps"
     );
     assert_eq!(
         app3.debug_profile,
         Some(false),
         "the malformed file the identity keeps"
     );
-    // THE UNKNOWN ROWS the skip law keeps (the unknown id + the
-    // unknown word the known seats never touch, the profile word the
-    // PERFORMANCE field wears)
+    let text4 = std::fs::read_to_string(&path).expect("the catch the save re-writes");
+    let root4: serde_json::Value =
+        serde_json::from_str(&text4).expect("the re-write the JSON keeps");
+    assert_eq!(
+        root4["profile"], "default",
+        "the re-write the default word wears"
+    );
+    // THE CUSTOM MAP'S OWN READ (the profile-absent shape the
+    // resetStatuses walk serves — the unknown id the skip law keeps,
+    // the unknown word the seat never touches)
     std::fs::write(
         &path,
-        r#"{"profile":"performance","statuses":{"nonsense":"ALWAYS","fps":"SOMETIMES"}}"#,
+        r#"{"custom":{"nonsense":"ALWAYS_ON","fps":"SOMETIMES","tps":"ALWAYS_ON"}}"#,
     )
     .expect("the probe the file writes");
     let mut app4 = App::new(262);
     app4.debug_profile_file = Some(path.clone());
     app4.debug_profile_load();
     assert_eq!(
+        app4.debug_entry_states[29], // the tps row
+        crate::screens::DebugEntryStatus::Always,
+        "the known row the ALWAYS_ON word wears"
+    );
+    assert_eq!(
         app4.debug_entry_states[8],
         crate::screens::DebugEntryStatus::Never,
         "the unknown word the seat keeps"
     );
     assert_eq!(
-        app4.debug_profile,
-        Some(true),
-        "the known word the field wears"
+        app4.debug_profile, None,
+        "the profile-absent shape the identity keeps"
     );
     // THE NONE SEAT the silent keep answers (the headless boot the
     // determinism bank never spends)
@@ -19417,5 +19490,107 @@ fn the_debug_profile_file_the_statuses_restart_outlives() {
         app5.debug_entry_states[8],
         crate::screens::DebugEntryStatus::Never,
         "the none seat the defaults keep"
+    );
+}
+
+// THE PROFILES' OWN PRESET WALK (javap 26.2 the DebugScreenEntries
+// clinit the PROFILES map banks — the DEFAULT arm the nine
+// IN_OVERLAY rows speak, the PERFORMANCE arm the fps ALWAYS_ON word
+// the perf rows wear; the resetToProfile walk the whole bank the
+// sparse-map law zeroes, the preset rows the known seats wear)
+#[test]
+fn the_debug_profiles_the_presets_the_vanilla_maps_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.on_debug_options_key(); // the open arm
+    let mut fb = crate::raster::Framebuf::new(640, 360);
+    let mut assets = GuiAssets::open(assets_root());
+    // THE PERFORMANCE BUTTON'S OWN WALK FIRST (the fresh ctor the
+    // DEFAULT identity wears — the DEFAULT button the isUsingProfile
+    // law DISABLES, the dbgprofperf click the OTHER arm the preset
+    // map serves)
+    app.render(&mut fb, &mut assets);
+    let perf0 = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "dbgprofperf")
+        .expect("the performance row wears")
+        .clone();
+    app.on_click(perf0.x + perf0.w / 2, perf0.y + 10);
+    assert_eq!(
+        app.debug_profile,
+        Some(true),
+        "the button the PERFORMANCE identity banks"
+    );
+    assert!(app.fps_charts, "the performance arm the charts flag wears");
+    assert_eq!(
+        app.debug_entry_states[8], // the fps row
+        crate::screens::DebugEntryStatus::Always,
+        "the performance preset the fps ALWAYS_ON wears"
+    );
+    assert_eq!(
+        app.debug_entry_states[29], // the tps row
+        crate::screens::DebugEntryStatus::Overlay,
+        "the performance preset the tps IN_OVERLAY wears"
+    );
+    assert_eq!(
+        app.debug_entry_states[10], // the gpu_utilization row
+        crate::screens::DebugEntryStatus::Overlay,
+        "the performance preset the gpu row wears"
+    );
+    assert_eq!(
+        app.debug_entry_states[30], // the 3d_crosshair row
+        crate::screens::DebugEntryStatus::Never,
+        "the crosshair row the performance preset retires"
+    );
+    // THE DEFAULT BUTTON'S OWN WALK (the dbgprofdflt click the
+    // PROFILES map's DEFAULT arm the nine IN_OVERLAY rows serves —
+    // the identity flip the button's active law re-arms)
+    app.render(&mut fb, &mut assets);
+    let dflt = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "dbgprofdflt")
+        .expect("the default row wears")
+        .clone();
+    app.on_click(dflt.x + dflt.w / 2, dflt.y + 10);
+    assert_eq!(
+        app.debug_profile,
+        Some(false),
+        "the button the DEFAULT identity banks"
+    );
+    assert!(!app.fps_charts, "the default arm the charts flag keeps off");
+    for (idx, id) in [
+        (30, "3d_crosshair"),
+        (9, "game_version"),
+        (29, "tps"),
+        (8, "fps"),
+        (20, "memory"),
+        (28, "system_specs"),
+        (22, "player_position"),
+        (23, "player_section_position"),
+        (25, "simple_performance_impactors"),
+    ] {
+        assert_eq!(
+            app.debug_entry_states[idx],
+            crate::screens::DebugEntryStatus::Overlay,
+            "the default preset the {} row the IN_OVERLAY wears",
+            id
+        );
+    }
+    assert_eq!(
+        app.debug_entry_states[crate::screens::CHUNK_BORDERS_ENTRY],
+        crate::screens::DebugEntryStatus::Never,
+        "the unpreset row the NEVER keeps"
+    );
+    assert_eq!(
+        app.debug_entry_states[1], // the biome row
+        crate::screens::DebugEntryStatus::Never,
+        "the biome row the default preset keeps off"
+    );
+    assert_eq!(
+        app.debug_entry_states[8], // the fps row
+        crate::screens::DebugEntryStatus::Overlay,
+        "the default preset the fps row the IN_OVERLAY wears"
     );
 }
