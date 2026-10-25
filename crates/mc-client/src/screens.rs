@@ -40115,6 +40115,59 @@ impl App {
         self.debug_modifier_used = true;
     }
 
+    /// THE F3+V DUMP VERSION'S OWN LANE (javap 26.2
+    /// KeyboardHandler.handleDebugKeys's keyDebugDumpVersion arm — the
+    /// `matches` gate pc 1163 the window's rising edge serves, the
+    /// field the keyDebugDumpVersion Options bank keeps, the F3+V
+    /// chord the en_us `debug.version.help` row speaks: `F3 + V =
+    /// Client version info`). THE HEADER FIRST (pc 1174-1178 — the
+    /// `debugFeedbackTranslated` walk the cp[606]
+    /// `debug.version.header` row sends, the `Client version info:`
+    /// word the yellow channel wears). THE ROWS (pc 1181-1195 — the
+    /// `VersionCommand.dumpVersion(consumer)` static walk the indy's
+    /// `debugFeedbackComponent` law binds, the YELLOW decorate the
+    /// showDebugChat channel wears, the dumpver_214.py probe the nine
+    /// translatables banks): the id/name the WorldVersion's own json
+    /// answers (the client's `MINECRAFT_VERSION` build bank the same
+    /// 26.2 speaks), the `data = %s` the world_version 4903 keeps,
+    /// the `series = %s` the DataVersion.series 'main' answers, the
+    /// `protocol = %s (%s)` the toHexString fold speaks (776 -> 308
+    /// the wire bank's own id wears), the `build_time = %s` the
+    /// `translationArg(Date)` the `Date.toString()` literal keeps
+    /// (`Tue Jun 16 12:01:27 UTC 2026` the version.json's own instant
+    /// wears), the pack pair the PackFormat '%d.%d' law answers (the
+    /// minor==MAX_VALUE '%d.*' arm the 88.0/107.1 pair never wears),
+    /// the stable row the STABLE constant keeps (the
+    /// `commands.version.stable.yes` word). THE USED FLAG (pc
+    /// 1198-1199): the gate-passed walk the istore banks.
+    pub fn on_dump_version_key(&mut self) {
+        // THE HEADER (pc 1174-1178 — the debugFeedbackTranslated walk)
+        self.push_chat_message("\u{a7}eClient version info:".to_string());
+        // THE NINE ROWS (the dumpVersion pc 0-264 walk — the
+        // translatables the consumer's yellow channel speaks, the
+        // version.json values the jar's own WorldVersion bank keeps)
+        for row in [
+            format!("id = {}", crate::build_info::MINECRAFT_VERSION),
+            format!("name = {}", crate::build_info::MINECRAFT_VERSION),
+            "data = 4903".to_string(),
+            "series = main".to_string(),
+            format!(
+                "protocol = {} ({:x})",
+                mc_protocol::generated::pack_claim::PROTOCOL_VERSION,
+                mc_protocol::generated::pack_claim::PROTOCOL_VERSION
+            ),
+            "build_time = Tue Jun 16 12:01:27 UTC 2026".to_string(),
+            "pack_resource = 88.0".to_string(),
+            "pack_data = 107.1".to_string(),
+            "stable = yes".to_string(),
+        ] {
+            self.push_chat_message(format!("\u{a7}e{row}"));
+        }
+        // THE USED FLAG (pc 1198-1199 — the gate-passed walk the bank
+        // wears regardless)
+        self.debug_modifier_used = true;
+    }
+
     /// THE RELOAD RESOURCE PACKS' OWN CHORD (javap 26.2
     /// KeyboardHandler.handleDebugKeys's keyDebugReloadResourcePacks
     /// lane — the `matches` arm pc 905 the copyloc_207.py lane-map

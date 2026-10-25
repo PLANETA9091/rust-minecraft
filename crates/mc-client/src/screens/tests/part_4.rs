@@ -16130,3 +16130,64 @@ fn the_debug_options_screen_the_rows_the_profiles_the_chrome_wear() {
         "the OTHER profile's button the clickable law wears"
     );
 }
+
+/// THE F3+V DUMP VERSION'S OWN WALK (javap 26.2
+/// KeyboardHandler.handleDebugKeys's keyDebugDumpVersion lane — the
+/// `matches` gate pc 1163, the header word pc 1174-1178, the nine
+/// rows the VersionCommand.dumpVersion consumer speaks, the used flag
+/// pc 1198-1199).
+#[test]
+fn the_dump_version_key_the_header_the_nine_rows_the_flag_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    // THE HEADER FIRST (pc 1174-1178 — the debugFeedbackTranslated
+    // walk the cp[606] `debug.version.header` row sends, the yellow
+    // channel the family's own law wears)
+    app.on_dump_version_key();
+    assert_eq!(
+        app.chat_messages.last().map(|(t, _)| t.as_str()),
+        Some("\u{a7}estable = yes"),
+        "the tail row the stable constant keeps"
+    );
+    assert!(
+        app.debug_modifier_used,
+        "the used flag the gate-passed walk banks"
+    );
+    app.on_debug_modifier_released();
+    assert!(!app.debug_modifier_used, "the release the flag consumes");
+    // THE FULL QUEUE (the dumpVersion pc 0-264 walk — the header the
+    // first row keeps, the nine translatables the version.json's own
+    // values wear: the id/name the client's build bank speaks, the
+    // data/series the WorldVersion keeps, the protocol the
+    // toHexString fold answers, the build_time the Date.toString
+    // literal wears, the pack pair the '%d.%d' law banks, the stable
+    // the STABLE word closes)
+    let rows: Vec<&str> = app.chat_messages.iter().map(|(t, _)| t.as_str()).collect();
+    let expected = [
+        "\u{a7}eClient version info:",
+        "\u{a7}eid = 26.2",
+        "\u{a7}ename = 26.2",
+        "\u{a7}edata = 4903",
+        "\u{a7}eseries = main",
+        "\u{a7}eprotocol = 776 (308)",
+        "\u{a7}ebuild_time = Tue Jun 16 12:01:27 UTC 2026",
+        "\u{a7}epack_resource = 88.0",
+        "\u{a7}epack_data = 107.1",
+        "\u{a7}estable = yes",
+    ];
+    let tail = &rows[rows.len() - expected.len()..];
+    assert_eq!(
+        tail,
+        &expected[..],
+        "the nine rows the dumpVersion walk keeps, the header the first wears"
+    );
+    // THE WIRE BANK'S OWN IDENTITY (the pack_claim's
+    // PROTOCOL_VERSION the row's own arg speaks — the build_info
+    // bank the same 776 keeps, the test's own equality the
+    // part_4.rs:2048 walk already banks)
+    assert_eq!(
+        mc_protocol::generated::pack_claim::PROTOCOL_VERSION,
+        crate::build_info::PROTOCOL_VERSION,
+        "the wire bank the build bank's own id keeps"
+    );
+}

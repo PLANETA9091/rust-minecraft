@@ -2690,6 +2690,17 @@ pub fn run_gui_app(
             if f3_down && window.is_key_pressed(Key::C, minifb::KeyRepeat::No) {
                 app.on_copy_location_key();
             }
+            // THE F3+V DUMP VERSION (the handleDebugKeys'
+            // keyDebugDumpVersion lane — the `matches` arm pc 1163 the
+            // dumpver_214.py walk banks, the ladder's tail the pc order
+            // keeps: 1004 copyLocation < 1164 dumpVersion < 1201+ the
+            // charts the silence keeps. The header word the
+            // debugFeedbackTranslated walk sends, the nine rows the
+            // VersionCommand.dumpVersion consumer's yellow channel
+            // speaks, the flag the walk banks)
+            if f3_down && window.is_key_pressed(Key::V, minifb::KeyRepeat::No) {
+                app.on_dump_version_key();
+            }
             // THE MIDDLE-CLICK PICK (vanilla handleKeybinds's keyPickItem
             // lane — the middle button the keybind maps, the
             // `Minecraft.pickBlockOrEntity` walk the loop answers): the
