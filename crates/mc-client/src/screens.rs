@@ -6778,6 +6778,29 @@ pub enum ScreenKind {
     /// over the live world — the body freeze the container convention
     /// keeps (the frame==tick model).
     GameModeSwitcher,
+    /// THE F3+F6 DEBUG OPTIONS' OWN SCREEN (javap 26.2
+    /// DebugOptionsScreen — the handleDebugKeys' keyDebugDebugOptions
+    /// lane the `setScreen(new DebugOptionsScreen())` walk opens, the
+    /// zero-arg ctor the walk speaks, the SECOND tap the instanceof
+    /// arm's onClose closes): the isPauseScreen-false screen over the
+    /// live world (the base Screen's default the class never overrides
+    /// — the switcher's own shape the body freeze wears), the
+    /// `HeaderAndFooterLayout(61, 33)` chrome the ctor banks (the
+    /// title the `debug.options.title` word keeps, the search box the
+    /// `EditBox.SEARCH_HINT_STYLE` gray hint wears, the warning the
+    /// `MultiLineTextWidget` the `withColor(-2142128)` coral answers),
+    /// the profile button pair the `addProfileButton` walk keeps (the
+    /// 120px buttons the bipush banks, the ACTIVE profile the
+    /// `!isUsingProfile` putfield the INACTIVE button speaks), the
+    /// rows the client's own entry flags keep (the `chunk_borders` +
+    /// `entity_hitboxes` paths the registry's own ids bank — the
+    /// `Component.literal(getPath())` labels the extractContent walk
+    /// serves, the state pills the CycleButton builder's colored words
+    /// wear — the coral `-2142128` the selected arm keeps, the tan
+    /// `-4539718` the unselected pair wears; the IN OVERLAY arm the
+    /// client's two-state store never keeps, the honest absence the
+    /// tri-state law's own third value speaks).
+    DebugOptions,
     /// THE CREATIVE PICKER'S OWN SCREEN (javap 26.2 CreativeModeInventoryScreen
     /// — the E key's own lane in the creative mode, the init's own
     /// `hasInfiniteMaterials` gate the survival fallback speaks: the
@@ -9390,6 +9413,20 @@ pub struct App {
     /// vanilla entry toggle's own persistence). False = the silent
     /// world the fresh client keeps.
     pub hitboxes: bool,
+    /// THE DEBUG OPTIONS' OWN PROFILE BANK (javap 26.2
+    /// DebugScreenEntryList's `profile` field — the
+    /// `isUsingProfile(profile)` identity the `addProfileButton`
+    /// walk reads, the `resetToProfile` putfield the load walk
+    /// serves): false = the DEFAULT profile the fresh client keeps
+    /// (the `DebugScreenProfile.DEFAULT` arm), true = the
+    /// PERFORMANCE profile the button click loads. The profile's
+    /// OWN PRESET the flags reset speaks — the vanilla DEFAULT map
+    /// none of the client's renderer entries wear (the nine
+    /// IN_OVERLAY text rows the clinit tail banks), the PERFORMANCE
+    /// map the FPS `ALWAYS_ON` word alone the client's own store
+    /// keeps (the fps_charts flag the raise serves — the vanilla
+    /// preset's own perf entry the honest approximation wears).
+    pub debug_profile_performance: bool,
     /// THE CLIENT'S OWN BELIEVED GAME MODE (the 26.2
     /// MultiPlayerGameMode.getPlayerMode's client-side belief — the
     /// survival default the vanilla world creation keeps, the F4
@@ -10957,6 +10994,7 @@ impl App {
             network_charts: false,
             chunk_borders: false,
             hitboxes: false,
+            debug_profile_performance: false,
             game_mode: GameMode::Survival,
             previous_game_mode: None,
             keep_inventory: false,
@@ -26728,6 +26766,171 @@ impl App {
         }
     }
 
+    /// THE F3+F6 SCREEN'S OWN RENDER (javap 26.2 DebugOptionsScreen —
+    /// the isPauseScreen-false screen over the LIVE world the base
+    /// Screen's default keeps, the body freeze the switcher's own
+    /// shape wears): the dim the renderBackground law paints, the
+    /// header chrome the `HeaderAndFooterLayout(61, 33)` ctor banks —
+    /// the title the `debug.options.title` word keeps, the search box
+    /// the `rowWidth/3` width the init walk keeps (the
+    /// `SEARCH_HINT_STYLE` gray hint the EditBox wears), the warning
+    /// the MultiLineTextWidget wrap answers (the `withColor(-2142128)`
+    /// coral the ARGB law speaks — the 0xFFDF6550 the two's-complement
+    /// fold keeps), the profile pair the `addProfileButton` walk
+    /// serves (the 120px buttons the bipush banks, the ACTIVE profile
+    /// the `!isUsingProfile` putfield the INACTIVE button speaks — the
+    /// disabled sprite + the gray label the Button render answers),
+    /// the entries rows the client's own flags keep (the
+    /// `chunk_borders` + `entity_hitboxes` paths the registry ids
+    /// bank, the `Component.literal(getPath())` labels the
+    /// extractContent walk serves, the state pills the CycleButton
+    /// builder's colored words wear — the coral `-2142128` the
+    /// selected arm keeps, the tan `-4539718` the unselected pair
+    /// wears). The category header the refreshEntries walk serves (the
+    /// `DebugEntryCategory.label()` word the CategoryEntry row keeps —
+    /// the RENDERER category the client's own entries wear, the TEXT
+    /// category the store's absence the header never draws).
+    fn render_debug_options(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        // THE LIVE WORLD'S OWN DIM (the isPauseScreen-false screen the
+        // switcher's shape keeps — the flat dim the container
+        // convention wears)
+        g.fill(0, 0, w, h, [0.0, 0.0, 0.0, 0.5]);
+        let cx = w / 2;
+        // THE TITLE'S OWN WORD (the StringWidget the header LinearLayout
+        // keeps, the translatable the clinit's TITLE field speaks)
+        let title = tr("debug.options.title").unwrap_or("Debug Options");
+        g.text_centered(a, cx, 8, title, WHITE, true);
+        // THE SEARCH BOX ROW (the EditBox the init walk keeps — the
+        // `rowWidth/3` width the ctor speaks, the 20px band the
+        // bipush banks, the hint the SEARCH_HINT_STYLE gray wears)
+        let box_w = (w / 3).max(80);
+        let bx = cx - box_w / 2;
+        g.sprite_9slice(a, "widget/text_field", bx, 20, box_w, 20);
+        let hint = tr("debug.options.search").unwrap_or("Search...");
+        g.text(a, bx + 4, 26, &hint, [0.55, 0.55, 0.55], false);
+        // THE WARNING'S OWN WRAP (the MultiLineTextWidget the SUBTITLE
+        // field keeps — the `withColor(-2142128)` the coral answers:
+        // 0xFFDF6550 the two's-complement fold speaks — the rows the
+        // wrap_lines walk splits, the width-50 margin the confirm
+        // screen's own law wears)
+        let warning = tr("debug.options.warning").unwrap_or(
+            "These options are for testing purposes only. They may slow down your \
+                        computer, crash the game, or eat your pet rock.",
+        );
+        let coral: [f32; 3] = [223.0 / 255.0, 101.0 / 255.0, 80.0 / 255.0];
+        let tan: [f32; 3] = [186.0 / 255.0, 158.0 / 255.0, 58.0 / 255.0];
+        let wlines = wrap_lines(g, warning, w - 50);
+        for (i, line) in wlines.iter().enumerate() {
+            g.text_centered(a, cx, 44 + i as i32 * 9, line, coral, false);
+        }
+        // THE PROFILE PAIR'S OWN ROW (the addProfileButton walk — the
+        // 120px buttons the bipush banks, the ACTIVE profile the
+        // `!isUsingProfile` putfield the INACTIVE button speaks: the
+        // disabled sprite + the gray label the Button render answers,
+        // the click the other button alone earns)
+        let py = 44 + wlines.len() as i32 * 9 + 6;
+        // the isUsingProfile refusal the active law wears — the button
+        // the profile NOT in use alone earns (the active profile's own
+        // button the disabled sprite keeps)
+        let mut dflt = Button::new(
+            "dbgprofdflt",
+            tr("debug.options.profile.default")
+                .unwrap_or("Default profile")
+                .to_string(),
+            cx - 64,
+            py,
+            120,
+        );
+        dflt.active = self.debug_profile_performance;
+        self.buttons.push(dflt);
+        let mut perf = Button::new(
+            "dbgprofperf",
+            tr("debug.options.profile.performance")
+                .unwrap_or("Performance profile")
+                .to_string(),
+            cx + 64,
+            py,
+            120,
+        );
+        perf.active = !self.debug_profile_performance;
+        self.buttons.push(perf);
+        // THE ENTRIES' OWN ROWS (the refreshEntries walk — the
+        // category header the label() word keeps, the rows the
+        // literal-path labels the extractContent serves, the state
+        // pills the CycleButton builder's colored words wear: the
+        // selected arm the coral keeps, the unselected pair the tan
+        // wears; the pills the buttons store keeps the hit-test's own
+        // seat — the draw the custom pass answers, the shared render
+        // the white-label law never wears)
+        let ry = py + 20 + 8;
+        let cat = tr("debug.options.category.renderer").unwrap_or("Debug Renderers");
+        g.text_centered(a, cx, ry, cat, [0.6, 0.6, 0.6], false);
+        let rows: [(&str, bool, &str, &str); 2] = [
+            (
+                "chunk_borders",
+                self.chunk_borders,
+                "dbgoff_border",
+                "dbgalways_border",
+            ),
+            (
+                "entity_hitboxes",
+                self.hitboxes,
+                "dbgoff_hitboxes",
+                "dbgalways_hitboxes",
+            ),
+        ];
+        for (i, (path, on, off_id, always_id)) in rows.iter().enumerate() {
+            let row_y = ry + 11 + i as i32 * 24;
+            // THE LITERAL-PATH LABEL (the extractContent walk — the
+            // `font.text(name, x, y+5, allowed ? -1 : gray)` the white
+            // word wears, the allowed rows the client's
+            // reduced-info-never constant keeps)
+            g.text(a, 24, row_y + 6, path, WHITE, false);
+            // THE ALWAYS PILL (the CycleButton the `ENABLED_TEXT` words
+            // keep — the selected arm the coral label wears, the
+            // unselected the tan keeps, the sprite the widget chrome
+            // banks)
+            let always_x = w - 24 - 116;
+            let always_sel = *on;
+            let mut always = Button::new(always_id, String::new(), always_x + 56, row_y, 56);
+            always.active = true;
+            self.buttons.push(always);
+            g.sprite_9slice(a, "widget/button", always_x, row_y, 56, 20);
+            g.text_centered(
+                a,
+                always_x + 28,
+                row_y + 6,
+                tr("debug.entry.always").unwrap_or("Always"),
+                if always_sel { coral } else { tan },
+                true,
+            );
+            // THE OFF PILL (the DISABLED_TEXT the OPTION_OFF words
+            // keep — the same color law the builder's pairs wear)
+            let off_x = w - 24 - 56;
+            let off_sel = !*on;
+            let mut off = Button::new(off_id, String::new(), off_x + 28, row_y, 56);
+            off.active = true;
+            self.buttons.push(off);
+            g.sprite_9slice(a, "widget/button", off_x, row_y, 56, 20);
+            g.text_centered(
+                a,
+                off_x + 28,
+                row_y + 6,
+                tr("options.off").unwrap_or("Off"),
+                if off_sel { coral } else { tan },
+                true,
+            );
+        }
+        // THE OTHER BUTTONS' OWN PASS (the profile pair the shared
+        // render answers — the entry pills the custom pass above
+        // drew, the clone the shared law keeps)
+        for b in &self.buttons.clone() {
+            if b.id == "dbgprofdflt" || b.id == "dbgprofperf" {
+                b.render(g, a, -1, -1);
+            }
+        }
+    }
+
     /// THE CRAFTING TABLE'S OWN RENDER (javap 26.2 CraftingScreen —
     /// the frozen world dimmed, then the REAL background texture the
     /// CRAFTING_TABLE_LOCATION blit speaks: the 176x166 region of the
@@ -27920,6 +28123,14 @@ impl App {
             // the walk retires)
             let ret = self.options_return;
             self.open(ret);
+        } else if self.screen == ScreenKind::DebugOptions {
+            // THE DEBUG OPTIONS' OWN ESCAPE LANE (the base Screen's
+            // shouldCloseOnEsc default the DebugOptionsScreen class
+            // never overrides — the probe's own-methods table the
+            // absence banks: no shouldCloseOnEsc the class wears — the
+            // keyPressed walk's close the onClose ride speaks, the
+            // world the `setScreen(null)` the base law keeps)
+            self.screen = ScreenKind::World;
         } else if matches!(self.screen, ScreenKind::Connect | ScreenKind::Disconnect) {
             self.open(ScreenKind::Servers);
         }
@@ -36294,6 +36505,48 @@ impl App {
                 // vanilla DisconnectedScreen back button: parent is the
                 // server list the join came from
                 "backtoservers" => self.open(ScreenKind::Servers),
+                // THE DEBUG OPTIONS' OWN PROFILE WALK (javap 26.2
+                // lambda$addProfileButton$0 — the
+                // `loadProfile(profile)` + `save()` + the
+                // `refreshEntries()` + the buttons re-walk the click
+                // serves): the DEFAULT arm the fresh-client preset
+                // keeps (the vanilla DEFAULT map none of the client's
+                // renderer entries wear — the nine IN_OVERLAY text
+                // rows the clinit tail banks, the renderer flags the
+                // reset keeps OFF), the PERFORMANCE arm the FPS
+                // `ALWAYS_ON` word the fps_charts flag wears (the
+                // vanilla preset's own perf entry the client's own
+                // store banks, the renderer flags the reset keeps
+                // OFF), the profile field the resetToProfile putfield
+                // speaks (the isUsingProfile identity the buttons'
+                // active law reads)
+                "dbgprofdflt" => {
+                    self.debug_profile_performance = false;
+                    self.fps_charts = false;
+                    self.chunk_borders = false;
+                    self.hitboxes = false;
+                }
+                "dbgprofperf" => {
+                    self.debug_profile_performance = true;
+                    self.fps_charts = true;
+                    self.chunk_borders = false;
+                    self.hitboxes = false;
+                }
+                // THE ENTRY ROWS' OWN PILLS (javap 26.2 the
+                // OptionEntry CycleButton trio — the click the
+                // `setValue(id, status)` walk serves, the client's
+                // two-state store the ALWAYS/NEVER arms wear: the
+                // coral `Always` pill the flag's true banks, the tan
+                // `Off` pill the false keeps, the IN OVERLAY arm the
+                // client's store never keeps the tri-state law's own
+                // third value speaks). The same flags the F3+G/F3+B
+                // chords flip — the toggleStatus walk's own law the
+                // renderer list keeps INDEPENDENT of the overlay's
+                // own visibility
+                "dbgalways_border" => self.chunk_borders = true,
+                "dbgoff_border" => self.chunk_borders = false,
+                "dbgalways_hitboxes" => self.hitboxes = true,
+                "dbgoff_hitboxes" => self.hitboxes = false,
                 _ => {}
             }
             // vanilla AbstractButton.playDownSound: EVERY activated button
@@ -40036,9 +40289,7 @@ impl App {
         let Some(_) = self.body.as_ref() else {
             // THE ERROR WORD (pc 462-466 — the debug
             // .creative_spectator.error row the yellow wears)
-            self.push_chat_message(
-                "\u{a7}eUnable to switch game mode; no permission".to_string(),
-            );
+            self.push_chat_message("\u{a7}eUnable to switch game mode; no permission".to_string());
             // THE USED FLAG (pc 554-555 — the error arm's own goto
             // `-> 554` the flag the gated walk TOO banks)
             self.debug_modifier_used = true;
@@ -40169,6 +40420,76 @@ impl App {
                 self.debug_crash_reported_count += 1;
             }
         }
+    }
+
+    /// THE F3+F6 DEBUG OPTIONS' OWN LANE (javap 26.2
+    /// KeyboardHandler.handleDebugKeys's keyDebugDebugOptions arm —
+    /// the `matches` gate pc 650 the window's rising edge serves,
+    /// the field the `keyDebugDebugOptions` Options bank keeps, the
+    /// F3+F6 chord the en_us `debug.options.help` row speaks): the
+    /// open screen the `instanceof DebugOptionsScreen` arm closes
+    /// (pc 671-690 — the base `Screen.onClose`'s `setScreen(null)`
+    /// walk the world keeps, the class the shouldCloseOnEsc default
+    /// never overrides), the ELSE arm the interrupt gate serves
+    /// (pc 693-743 — the `Minecraft.canInterruptScreen()` law the
+    /// [`Self::debug_options_can_interrupt`] helper walks, the
+    /// current screen the close ride answers, the
+    /// `setScreen(new DebugOptionsScreen())` the zero-arg ctor
+    /// opens), the USED FLAG the matched gate ALWAYS banks (pc
+    /// 746-747 — the canInterrupt refusal the `ifeq -> 746` jump
+    /// the istore still keeps, the F3 release the overlay toggle
+    /// never speaks). THE NO-WORD LANE: the chat the chord never
+    /// serves (the cp[415] `debug.gamemodes.error` word the
+    /// switchGameMode tail owns, the probe's pc 640-658 window walk
+    /// banks — the word rides BEFORE the keyDebugDebugOptions
+    /// `matches` check the previous lane's own istore speaks).
+    /// The PAUSE arm the else-branch law keeps honest: the paused
+    /// world the interrupt allows (the vanilla PauseScreen the
+    /// shouldCloseOnEsc default the TRUE verdict wears), the close
+    /// ride the pause flag releases (the PauseScreen replacement
+    /// the unpause the isPauseScreen-false law speaks).
+    pub fn on_debug_options_key(&mut self) {
+        // THE INSTANCEOF ARM (pc 674-690): the open debug-options
+        // screen the onClose ride closes — the second tap the
+        // toggle the chord's own law wears
+        if self.screen == ScreenKind::DebugOptions {
+            self.screen = ScreenKind::World;
+        } else if self.debug_options_can_interrupt() {
+            // THE ELSE ARM (pc 693-743): the interrupt gate the
+            // open serves — the current screen the close ride
+            // answers, the debug options the setScreen opens
+            if self.paused {
+                self.paused = false;
+            }
+            self.screen = ScreenKind::DebugOptions;
+        }
+        // THE USED FLAG (pc 746-747): the matched gate the flag
+        // banks — ALL arms wear (the canInterrupt refusal the
+        // vanilla walk the same istore keeps)
+        self.debug_modifier_used = true;
+    }
+
+    /// THE Gui.canInterruptScreen LAW (javap 26.2 the two-hop
+    /// delegation walk — `Minecraft.canInterruptScreen()` the
+    /// `Gui.canInterruptScreen()` ride serves, the body the
+    /// screen-null test + the teardown flag keeps): the
+    /// screen-null world the TRUE verdict keeps (the
+    /// `clientLevelTeardownInProgress` flag the client never
+    /// wears — no teardown lane the boot speaks), the DEAD world
+    /// the DeathScreen's own `shouldCloseOnEsc()` iconst_0
+    /// override the FALSE speaks (the probe's walk banks — the
+    /// death screen the Escape walk's own modal law the same
+    /// refusal wears), the open screens the
+    /// `canInterruptWithAnotherScreen()` walk reads — the base
+    /// Screen the shouldCloseOnEsc TRUE default keeps (the
+    /// Options/Controls/pause family the same verdict wears), the
+    /// lock-confirm the same false refusal the Escape walk
+    /// already banks.
+    fn debug_options_can_interrupt(&self) -> bool {
+        if self.screen == ScreenKind::World {
+            return !self.dead;
+        }
+        self.screen != ScreenKind::DifficultyLockConfirm
     }
 
     /// THE F3+F4 CHORD'S OWN OPEN LANE (javap 26.2
@@ -56179,6 +56500,20 @@ impl App {
                 let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h)).with_scramble(self.frame);
                 let (gw, gh) = (g.w(), g.h());
                 self.render_gamemode_switcher(&mut g, a, gw, gh);
+            }
+            ScreenKind::DebugOptions => {
+                // THE F3+F6 SCREEN'S OWN ROUND (the vanilla
+                // DebugOptionsScreen — the isPauseScreen-false screen
+                // over the LIVE world the base Screen's default keeps):
+                // world underneath, dimmed, the header chrome (the
+                // title + the search row + the warning wrap + the
+                // profile pair), the entries rows the client's own
+                // flags keep. The body freeze the container convention
+                // keeps (the switcher's own shape).
+                self.render_world_3d(fb, a);
+                let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h)).with_scramble(self.frame);
+                let (gw, gh) = (g.w(), g.h());
+                self.render_debug_options(&mut g, a, gw, gh);
             }
         }
     }

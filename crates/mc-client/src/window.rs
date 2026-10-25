@@ -2630,6 +2630,17 @@ pub fn run_gui_app(
             if f3_down && window.is_key_pressed(Key::N, minifb::KeyRepeat::No) {
                 app.on_cycle_spectator_key();
             }
+            // THE F3+F6 DEBUG OPTIONS (the handleDebugKeys'
+            // keyDebugDebugOptions lane — the `matches` arm pc 650 the
+            // debugopt_213.py walk banks, the seat the pc order keeps:
+            // 557 switchGameMode < 651 debugOptions < 749 focusPause.
+            // The no-word lane the instanceof/interrupt arms serve —
+            // the open screen the second tap closes, the interrupt gate
+            // the DebugOptionsScreen opens, the used flag ALL arms
+            // bank)
+            if f3_down && window.is_key_pressed(Key::F6, minifb::KeyRepeat::No) {
+                app.on_debug_options_key();
+            }
             // THE F3+P FOCUS-PAUSE TOGGLE (the 26.2 debug entry the
             // key.debug.focusPause binding wears — the
             // options.pauseOnLostFocus the flip serves, the focus
@@ -2740,6 +2751,19 @@ pub fn run_gui_app(
             && window.is_key_pressed(Key::F4, minifb::KeyRepeat::No)
         {
             app.on_game_mode_switcher_cycle();
+        }
+        // THE DEBUG OPTIONS' OWN SECOND TAP (the open screen's
+        // keyPress walk — the handleDebugKeys lane runs while ANY
+        // screen is open the keyDebugModifier.isDown gate keeps, the
+        // `instanceof DebugOptionsScreen` arm the onClose ride
+        // serves: the rising edge the in-world arm's exclusive
+        // screen state the double-fire never wears — the
+        // debugopt_213.py walk the pc 921-958 follow-up banks)
+        if app.screen == crate::screens::ScreenKind::DebugOptions
+            && f3_down
+            && window.is_key_pressed(Key::F6, minifb::KeyRepeat::No)
+        {
+            app.on_debug_options_key();
         }
         f3_was_down = f3_down;
         // THE SCROLL WHEEL (vanilla `MouseHandler.onScroll`'s own law —

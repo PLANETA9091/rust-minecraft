@@ -15937,3 +15937,196 @@ fn the_dump_dynamic_textures_key_the_sheets_the_word_the_flag_wear() {
     // THE CLEANUP (the test's own dir the walk removes)
     let _ = std::fs::remove_dir_all("screenshots/debug");
 }
+
+/// THE F3+F6 DEBUG OPTIONS' OWN WALK (javap 26.2
+/// KeyboardHandler.handleDebugKeys's keyDebugDebugOptions lane — the
+/// `matches` gate pc 650, the instanceof/interrupt arms pc 671-743,
+/// the used flag pc 746-747 the ALL-arms law banks).
+#[test]
+fn the_debug_options_chord_the_open_the_second_tap_the_flag_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    // THE OPEN WALK (the else arm — the screen-null world the
+    // canInterrupt TRUE verdict keeps, the DebugOptionsScreen the
+    // setScreen opens, the flag the matched gate banks)
+    app.on_debug_options_key();
+    assert_eq!(
+        app.screen,
+        ScreenKind::DebugOptions,
+        "the interrupt gate the debug options opens"
+    );
+    assert!(
+        app.debug_modifier_used,
+        "the used flag the matched gate banks"
+    );
+    app.on_debug_modifier_released();
+    assert!(!app.debug_modifier_used, "the release the flag consumes");
+    // THE SECOND TAP'S OWN CLOSE (the instanceof arm pc 674-690 —
+    // the open screen the onClose ride answers, the world the
+    // setScreen(null) law keeps)
+    app.on_debug_options_key();
+    assert_eq!(app.screen, ScreenKind::World, "the instanceof arm closes");
+    assert!(
+        app.debug_modifier_used,
+        "the close walk the same istore banks"
+    );
+    app.on_debug_modifier_released();
+    // THE ESCAPE'S OWN LANE (the base Screen's shouldCloseOnEsc
+    // default the class never overrides — the reopen the Escape
+    // the same close wears)
+    app.on_debug_options_key();
+    assert_eq!(app.screen, ScreenKind::DebugOptions, "the reopen serves");
+    app.on_escape();
+    assert_eq!(app.screen, ScreenKind::World, "the Escape lane closes");
+    // THE PAUSE ARM (the else-branch law — the paused world the
+    // interrupt allows, the close ride the pause flag releases)
+    app.paused = true;
+    app.on_debug_options_key();
+    assert_eq!(
+        app.screen,
+        ScreenKind::DebugOptions,
+        "the paused world the interrupt allows"
+    );
+    assert!(!app.paused, "the close ride the pause releases");
+}
+
+#[test]
+fn the_debug_options_chord_the_dead_world_refuses_the_flag_banks() {
+    let mut app = App::new(3);
+    app.enter_world();
+    // THE DEATH SCREEN'S OWN REFUSAL (the DeathScreen
+    // shouldCloseOnEsc iconst_0 override the canInterrupt FALSE
+    // verdict speaks — the dead world the open walk never serves,
+    // the used flag the ifeq->746 jump STILL banks)
+    app.dead = true;
+    app.on_debug_options_key();
+    assert_eq!(
+        app.screen,
+        ScreenKind::World,
+        "the death screen the interrupt refuses"
+    );
+    assert!(
+        app.debug_modifier_used,
+        "the refusal the same istore banks (the ifeq->746 jump)"
+    );
+    app.on_debug_modifier_released();
+    // THE LOCK CONFIRM'S OWN REFUSAL (the shouldCloseOnEsc=false
+    // walk the Escape lane already banks — the modal question the
+    // interrupt never steals)
+    app.dead = false;
+    app.screen = ScreenKind::DifficultyLockConfirm;
+    app.on_debug_options_key();
+    assert_eq!(
+        app.screen,
+        ScreenKind::DifficultyLockConfirm,
+        "the lock confirm the interrupt refuses"
+    );
+    assert!(app.debug_modifier_used, "the refusal the same istore banks");
+}
+
+#[test]
+fn the_debug_options_screen_the_rows_the_profiles_the_chrome_wear() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.on_debug_options_key();
+    // THE FRESH PROFILE'S OWN DEFAULT (the profile field the
+    // isUsingProfile identity banks, the renderer flags the fresh
+    // client keeps)
+    assert!(
+        !app.debug_profile_performance,
+        "the fresh client the DEFAULT profile keeps"
+    );
+    // THE ENTRY PILLS' OWN WALKS (the CycleButton setValue law —
+    // the coral Always pill the true banks, the tan Off pill the
+    // false keeps, the same flags the F3+G/F3+B chords flip)
+    let mut fb = crate::raster::Framebuf::new(640, 360);
+    let mut assets = GuiAssets::open(assets_root());
+    app.render(&mut fb, &mut assets);
+    let always_border = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "dbgalways_border")
+        .expect("the always pill the row wears")
+        .clone();
+    app.on_click(always_border.x + always_border.w / 2, always_border.y + 10);
+    assert!(app.chunk_borders, "the coral pill the flag's true banks");
+    assert_eq!(
+        app.screen,
+        ScreenKind::DebugOptions,
+        "the pill click the screen never leaves"
+    );
+    // THE SECOND RENDER'S OWN SEAT (the pills the fresh render
+    // rebuilds — the buttons the dispatch's clear keeps, the
+    // hovered() the row's rect the second render arms)
+    app.render(&mut fb, &mut assets);
+    let off_hitboxes = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "dbgoff_hitboxes")
+        .expect("the off pill the rebuild wears")
+        .clone();
+    app.on_click(off_hitboxes.x + off_hitboxes.w / 2, off_hitboxes.y + 10);
+    assert!(!app.hitboxes, "the tan pill the flag's false keeps");
+    // THE PERFORMANCE PROFILE'S OWN WALK (the lambda$addProfileButton$0
+    // — the loadProfile + save + refreshEntries the click serves, the
+    // FPS ALWAYS_ON word the fps_charts flag wears, the renderer flags
+    // the reset keeps OFF)
+    app.chunk_borders = true;
+    app.render(&mut fb, &mut assets);
+    let perf = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "dbgprofperf")
+        .expect("the performance button the row wears")
+        .clone();
+    app.on_click(perf.x + perf.w / 2, perf.y + 10);
+    assert!(
+        app.debug_profile_performance,
+        "the profile field the resetToProfile putfield speaks"
+    );
+    assert!(
+        app.fps_charts,
+        "the FPS ALWAYS_ON word the flag's raise wears"
+    );
+    assert!(!app.chunk_borders, "the renderer flags the reset keeps OFF");
+    // THE DEFAULT PROFILE'S OWN RETURN (the same walk the fresh
+    // preset answers — the fps flag the reset keeps OFF, the field
+    // the identity flips)
+    app.render(&mut fb, &mut assets);
+    let dflt = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "dbgprofdflt")
+        .expect("the default button the row wears")
+        .clone();
+    app.on_click(dflt.x + dflt.w / 2, dflt.y + 10);
+    assert!(
+        !app.debug_profile_performance,
+        "the DEFAULT profile the identity flips"
+    );
+    assert!(!app.fps_charts, "the DEFAULT map none of the toggles wear");
+    // THE INACTIVE BUTTON'S OWN WALL (the `!isUsingProfile` putfield —
+    // the ACTIVE profile's button the disabled sprite keeps, the
+    // hovered() the click never earns)
+    app.render(&mut fb, &mut assets);
+    let dflt = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "dbgprofdflt")
+        .expect("the default button the row wears")
+        .clone();
+    assert!(
+        !dflt.active,
+        "the active profile's button the inactive law wears"
+    );
+    let perf = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "dbgprofperf")
+        .expect("the performance button the row wears")
+        .clone();
+    assert!(
+        perf.active,
+        "the OTHER profile's button the clickable law wears"
+    );
+}
