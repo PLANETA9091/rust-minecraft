@@ -2264,6 +2264,14 @@ pub fn run_gui_app(
         if left_down && app.notification_drag {
             app.on_notification_slider_drag(gmx);
         }
+        // THE SPRINT WINDOW SLIDER'S OWN DRAG (the same armed lane the
+        // notification row wears — the Controls sub-screen's gate the
+        // stale arm a mid-drag close refuses, the held frames the
+        // IntRange(0, 10)'s own 1-tick seat the cursor's x answers,
+        // the release the disarm speaks below)
+        if left_down && app.sprint_window_drag {
+            app.on_sprint_window_slider_drag(gmx);
+        }
         // the LEFT press's falling edge (the vanilla's own release lane):
         // the dig's hold flag drops and the destroy state ABORTs (the
         // continueAttack(false) tail — the crack overlay clears)

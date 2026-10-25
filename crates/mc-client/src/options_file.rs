@@ -191,6 +191,21 @@ pub struct OptionsFile {
     /// expired window the option's own value the re-arm writes, the
     /// client's `sprint_trigger_time` bank the same law wears).
     pub sprint_window: i32,
+    /// `operatorItemsTab` — the creative inventory's own operator tab
+    /// option (the default FALSE the Options ctor's `iconst_0` pc 1750
+    /// banks, the `OptionInstance.createBoolean(
+    /// "options.operatorItemsTab", false)` walk the putfield pc 1754
+    /// serves — the NO-tooltip lane the two-arg createBoolean keeps;
+    /// the processOptions pc 31-39 the THIRD visit row the ladder
+    /// keeps — the autoJump@5-13 row's AFTER the rotateWithMinecart@18
+    /// row the client's store skips, the autoSuggestions@52-65 the
+    /// row's BEFORE wears; the Controls row the index-6 seat the array
+    /// tail keeps, the generic ON/OFF caption the `options.on`/
+    /// `options.off` pair wears). THE TAB LIST'S OWN CONSUMER (the
+    /// CreativeModeTabs the operator row the permission gate re-orders
+    /// — the store the row's own word wears, the screen row the
+    /// click-cycle law the array tail serves).
+    pub operator_items_tab: bool,
     /// `fovEffectScale` — the FOV effects' own 0..1 scale (the default
     /// 1.0 the dconst_1 banks, the doubleRange(0.0, 1.0) codec the
     /// range keeps — the strict double the decode answers, the BOOL
@@ -1399,6 +1414,7 @@ impl Default for OptionsFile {
             toggle_attack: false,
             toggle_use: false,
             auto_jump: false,
+            operator_items_tab: false,
             sprint_window: 7,
             fov_effect_scale: 1.0,
             chat_opacity: 1.0,
@@ -1524,6 +1540,17 @@ impl OptionsFile {
                         out.auto_jump = true;
                     } else if value == "false" {
                         out.auto_jump = false;
+                    }
+                }
+                "operatorItemsTab" => {
+                    // THE BOOLEAN'S OWN DECODE (the same law the
+                    // toggleCrouch row keeps — the default FALSE the
+                    // Options ctor's iconst_0 the missing row keeps,
+                    // the malformed the default answers)
+                    if value == "true" {
+                        out.operator_items_tab = true;
+                    } else if value == "false" {
+                        out.operator_items_tab = false;
                     }
                 }
                 "sprintWindow" => {
@@ -1910,6 +1937,13 @@ impl OptionsFile {
         // the rotateWithMinecart@26 row's BEFORE seat answers, the
         // toggle ladder the toggleCrouch@192 seat the AFTER wears)
         text.push_str(&format!("autoJump:{}\n", self.auto_jump));
+        // THE OPERATOR TAB'S OWN ROW (the "true"/"false" the same
+        // vocabulary wears — the visit-order seat the processOptions
+        // walk keeps: the operatorItemsTab@31-39 the rotateWithMinecart
+        // @18-26 row's AFTER the client's store skips, the
+        // autoSuggestions@52-65 row's BEFORE the autoJump@5-13 row's
+        // own tail answers)
+        text.push_str(&format!("operatorItemsTab:{}\n", self.operator_items_tab));
         // THE TOGGLE QUARTET'S OWN ROWS (the "true"/"false" the same
         // vocabulary wears — the visit-order seats the processOptions
         // walk keeps: toggleCrouch@192 the toggleSprint@205 the
@@ -2043,7 +2077,7 @@ mod tests {
         OptionsFile::default().save(&path);
         let text = std::fs::read_to_string(&path).expect("the save the file writes");
         assert_eq!(
-            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\nadvancedItemTooltips:false\npauseOnLostFocus:true\nautoJump:false\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\nkey_key.debug.debugOptions:key.keyboard.f6\nkey_key.debug.focusPause:key.keyboard.p\nkey_key.debug.dumpDynamicTextures:key.keyboard.s\nkey_key.debug.reloadResourcePacks:key.keyboard.t\nkey_key.debug.profiling:key.keyboard.l\nkey_key.debug.copyLocation:key.keyboard.c\nkey_key.debug.dumpVersion:key.keyboard.v\nkey_key.debug.profilingChart:key.keyboard.1\nkey_key.debug.fpsCharts:key.keyboard.2\nkey_key.debug.networkCharts:key.keyboard.3\nkey_key.debug.lightmapTexture:key.keyboard.4\n",
+            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\nadvancedItemTooltips:false\npauseOnLostFocus:true\nautoJump:false\noperatorItemsTab:false\ntoggleCrouch:false\ntoggleSprint:false\ntoggleAttack:false\ntoggleUse:false\nsprintWindow:7\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\nkey_key.debug.debugOptions:key.keyboard.f6\nkey_key.debug.focusPause:key.keyboard.p\nkey_key.debug.dumpDynamicTextures:key.keyboard.s\nkey_key.debug.reloadResourcePacks:key.keyboard.t\nkey_key.debug.profiling:key.keyboard.l\nkey_key.debug.copyLocation:key.keyboard.c\nkey_key.debug.dumpVersion:key.keyboard.v\nkey_key.debug.profilingChart:key.keyboard.1\nkey_key.debug.fpsCharts:key.keyboard.2\nkey_key.debug.networkCharts:key.keyboard.3\nkey_key.debug.lightmapTexture:key.keyboard.4\n",
             "the file the vanilla rows wear"
         );
         let loaded = OptionsFile::load(&path);

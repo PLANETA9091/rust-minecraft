@@ -5864,6 +5864,16 @@ fn notification_from_unit(unit: f64) -> f64 {
     seat as f64 / 10.0
 }
 
+/// THE SPRINT WINDOW'S OWN STEP (the IntRange(0, 10)'s own from-slider
+/// walk — the `min + round(unit * (max - min))` fold the
+/// OptionInstance$IntRange.fromSliderValue law keeps, the round the
+/// 1-tick seat answers, the clamp the 0..=10 the range's own bounds
+/// wear; the unit 0.0 the 0 the floor speaks, the unit 1.0 the 10 the
+/// ceiling answers, the 0.7 the 7 the default's own seat keeps).
+fn sprint_window_from_unit(unit: f64) -> i32 {
+    (unit.clamp(0.0, 1.0) * 10.0).round() as i32
+}
+
 /// THE BAND SCOPE'S OWN CAPTION (the 26.2 CycleButton walk the
 /// chatbgonly_179b/c probes bank — the label law the
 /// `CycleButton.createLabelForValue` speak: the DisplayState.VALUE
@@ -7354,6 +7364,20 @@ pub struct App {
     /// window arm the store's own seat reads, the
     /// [`SPRINT_WINDOW_TICKS`] constant the DEFAULT the row keeps).
     pub sprint_window: i32,
+    /// THE OPERATOR TAB'S OWN OPTION (the vanilla `operatorItemsTab` —
+    /// the default FALSE the Options ctor's `iconst_0` pc 1750 banks,
+    /// the `OptionInstance.createBoolean("options.operatorItemsTab",
+    /// false)` walk the putfield pc 1754 serves — the NO-tooltip lane
+    /// the two-arg createBoolean keeps, the generic boolean caption
+    /// the `options.on`/`options.off` pair the row wears; the
+    /// processOptions pc 31-39 the THIRD visit row the ladder keeps —
+    /// the autoJump@5-13 row's AFTER the rotateWithMinecart@18-26 the
+    /// client's store skips, the autoSuggestions@52-65 row's BEFORE
+    /// wears). THE TAB LIST'S OWN CONSUMER (the CreativeModeTabs the
+    /// operator row the permission gate re-orders — the store the
+    /// row's own word wears, the Controls row the index-6 seat the
+    /// array tail hosts).
+    pub operator_items_tab: bool,
     /// THE TOGGLE LATCHES' OWN BANK (the ToggleKeyMapping's own `isDown`
     /// state the flip law writes — the four seats the
     /// TOGGLE_CROUCH/SPRINT/ATTACK/USE indices answer, the press the
@@ -8779,6 +8803,12 @@ pub struct App {
     /// shape the lineSpacing row's flag wears — the Accessibility
     /// sub-screen's notificationDisplayTime row's own flag).
     pub notification_drag: bool,
+    /// THE SPRINT WINDOW SLIDER'S OWN ARM (the same AbstractWidget
+    /// dragging shape the sensitivity seat wears — the Controls
+    /// sub-screen's sprintWindow row's own flag: the press the flag
+    /// arms, the held drag the track's x the IntRange's own seat
+    /// re-writes, the release the disarm speaks).
+    pub sprint_window_drag: bool,
     /// THE OPTIONS FILE'S OWN PATH (the `optionsFile` field the 26.2
     /// ctor's `File` param banks — the cwd the vanilla default game dir
     /// names, the run_gui_app boot sets; the headless boot the None the
@@ -10921,6 +10951,7 @@ impl App {
             toggle_attack: false,
             toggle_use: false,
             auto_jump: false,
+            operator_items_tab: false,
             sprint_window: crate::options_file::DEFAULT_SPRINT_WINDOW,
             toggle_latch: [false; 4],
             toggle_released_by_screen: [false; 4],
@@ -10947,6 +10978,7 @@ impl App {
             chat_opacity_drag: false,
             chat_line_spacing_drag: false,
             notification_drag: false,
+            sprint_window_drag: false,
             notification_display_time: 1.0,
             options_file: None,
             options_file_loaded: false,
@@ -21174,6 +21206,10 @@ impl App {
         // the chatOpacity row's flag wears — the sub-screen's fifth row
         // the same law keeps)
         self.notification_drag = false;
+        // THE SPRINT WINDOW SLIDER'S OWN DISARM (the same mouseReleased
+        // lane the notification row's flag wears — the Controls
+        // sub-screen's sprintWindow row the same law keeps)
+        self.sprint_window_drag = false;
         // THE SCROLLBAR'S OWN DISARM (the mouseReleased walk's own first
         // lane — the button-0 release the `scrolling` flag the
         // unconditional false speaks BEFORE the tab walk; the sim's
@@ -21337,6 +21373,7 @@ impl App {
         self.chat_opacity_drag = false;
         self.chat_line_spacing_drag = false;
         self.notification_drag = false;
+        self.sprint_window_drag = false;
     }
 
     /// THE AMBIENT WALK (javap `ClientLevel.animateTick` +
@@ -31101,6 +31138,27 @@ impl App {
             }
             return;
         }
+        if self.screen == ScreenKind::Controls {
+            // THE SPRINT WINDOW SLIDER'S OWN ARM (the AbstractSliderButton's
+            // mouseDown walk the MouseSettings row wears — the press
+            // INSIDE the track the IntRange's own seat answers, the
+            // round the 1-tick step keeps [the `min + round(unit *
+            // (max - min))` fold the IntRange's fromSlider law speaks],
+            // the armed flag the held drag rides, the outside press the
+            // slider never claims)
+            if let Some(b) = self
+                .buttons
+                .iter()
+                .find(|b| b.id == "opt_ctl_sprint_window")
+            {
+                let (bx, by, bw, bh) = (b.x, b.y, b.w, b.h);
+                if mx >= bx && mx < bx + bw && my >= by && my < by + bh {
+                    self.sprint_window = sprint_window_from_unit(slider_value_from_x(mx, bx, bw));
+                    self.sprint_window_drag = true;
+                }
+            }
+            return;
+        }
         if self.screen == ScreenKind::Accessibility {
             // THE CLOSED CAPTIONS' OWN ARM (the CycleButton's own press
             // walk the bool row wears — the press INSIDE the row the
@@ -33468,6 +33526,7 @@ impl App {
         self.toggle_attack = file.toggle_attack;
         self.toggle_use = file.toggle_use;
         self.auto_jump = file.auto_jump;
+        self.operator_items_tab = file.operator_items_tab;
         self.sprint_window = file.sprint_window;
         self.fov_effect_scale = file.fov_effect_scale;
         self.chat_opacity = file.chat_opacity;
@@ -33506,6 +33565,7 @@ impl App {
             toggle_attack: self.toggle_attack,
             toggle_use: self.toggle_use,
             auto_jump: self.auto_jump,
+            operator_items_tab: self.operator_items_tab,
             sprint_window: self.sprint_window,
             fov_effect_scale: self.fov_effect_scale,
             chat_opacity: self.chat_opacity,
@@ -35875,6 +35935,12 @@ impl App {
                 // the caption the next render's rebuild speaks, the
                 // OptionInstance.set walk the ON/OFF pair the row wears)
                 "opt_ctl_autojump" => self.auto_jump = !self.auto_jump,
+                // THE OPERATOR TAB'S OWN FLIP (the generic boolean row's
+                // own press walk — the click the value's own flip
+                // answers, the caption the next render's rebuild
+                // speaks, the OptionInstance.set walk the ON/OFF pair
+                // the row wears)
+                "opt_ctl_operator_tab" => self.operator_items_tab = !self.operator_items_tab,
                 // THE PAIR'S OWN LEFT SEAT (the ControlsScreen
                 // addOptions pc 4-15 walk — the `options.mouse_settings`
                 // button the `lambda$addOptions$0` supplier opens: the
@@ -43565,6 +43631,25 @@ impl App {
             let (bx, bw) = (b.x, b.w);
             self.notification_display_time =
                 notification_from_unit(slider_value_from_x(mx, bx, bw));
+        }
+    }
+
+    /// THE SPRINT WINDOW SLIDER'S OWN DRAG (the same armed lane the
+    /// notification row wears — the Controls sub-screen's gate the
+    /// stale arm a mid-drag close refuses, the held frames the
+    /// IntRange(0, 10)'s own 1-tick seat the cursor's x re-writes,
+    /// the release the disarm the on_left_release walk speaks)
+    pub fn on_sprint_window_slider_drag(&mut self, mx: i32) {
+        if !self.sprint_window_drag || self.screen != ScreenKind::Controls {
+            return;
+        }
+        if let Some(b) = self
+            .buttons
+            .iter()
+            .find(|b| b.id == "opt_ctl_sprint_window")
+        {
+            let (bx, bw) = (b.x, b.w);
+            self.sprint_window = sprint_window_from_unit(slider_value_from_x(mx, bx, bw));
         }
     }
 
@@ -64950,12 +65035,14 @@ impl App {
     /// title the `controls.title` translatable wears, the static
     /// `options(Options)` the SEVEN-instance array the probe banks:
     /// toggleCrouch/toggleSprint/toggleAttack/toggleUse the four
-    /// toggle rows the indices 0-3 keep, autoJump/sprintWindow/
-    /// operatorItemsTab the rows the client's own laws never wore —
-    /// the auto-jump movement + the operator tab + the int slider the
-    /// honest walls keep, the follow-up candidates the array's own
-    /// tail speaks; the Mouse Settings + Key Binds pair the
-    /// addOptions pc 4-38 walk hosts, the Done footer the base
+    /// toggle rows the indices 0-3 keep, autoJump/sprintWindow the
+    /// (4,5) pair the row wears — the LEFT the auto-jump's generic
+    /// OFF/ON the row answers, the RIGHT the sprintWindow slider the
+    /// IntRange(0, 10) track serves —, the operatorItemsTab the
+    /// index-6 the tail's own LEFT seat hosts (the array the full
+    /// seven rows the flat port wears now), the Mouse Settings + Key
+    /// Binds pair the
+    /// addOptions pc 0-38 walk hosts, the Done footer the base
     /// class's own walk keeps). THE FOUR ROWS' OWN CAPTIONS (the
     /// CaptionBasedToString lambda$new$79..82 walk — the value TRUE
     /// the `options.key.toggle` "Toggle" word wears, the FALSE the
@@ -65053,18 +65140,60 @@ impl App {
             h / 2 - 48,
             bw,
         ));
-        // THE PAIR'S OWN SEATS (the addSmall walk's left/right pair —
+        // THE SPRINT WINDOW'S OWN SLIDER (the array's index-5 seat the
+        // (4,5) pair's RIGHT the addSmall two-at-a-time law keeps — the
+        // IntRange(0, 10) the Options ctor's pc 2315-2322 value set
+        // banks, the bipush 7 default the pc 2325 row speaks, the
+        // caption the `options.generic_value` "%s: %s" fold the
+        // `options.sprintWindow` label wears, the Some the slider
+        // render path answers, the press/drag the store's own lane
+        // serves)
+        let mut sw = Button::new(
+            "opt_ctl_sprint_window",
+            format!(
+                "{}: {}",
+                tr("options.sprintWindow").unwrap_or("Sprint Window"),
+                self.sprint_window
+            ),
+            cx + 4 + bw / 2,
+            h / 2 - 48,
+            bw,
+        );
+        sw.value = Some(self.sprint_window as f64 / 10.0);
+        self.buttons.push(sw);
+        // THE OPERATOR TAB'S OWN ROW (the array's index-6 the tail's
+        // own LEFT seat the addSmall odd-one law keeps — the ms/keybinds
+        // pair the array's AFTER seat the pitch the next row wears; the
+        // caption the GENERIC boolean's own pair the `options.on`/
+        // `options.off` rows the `options.operatorItemsTab` label
+        // wears, the click the flip the store's own seat serves)
+        self.buttons.push(Button::new(
+            "opt_ctl_operator_tab",
+            format!(
+                "{}: {}",
+                tr("options.operatorItemsTab").unwrap_or("Operator Items Tab"),
+                if self.operator_items_tab {
+                    tr("options.on").unwrap_or("ON")
+                } else {
+                    tr("options.off").unwrap_or("OFF")
+                }
+            ),
+            cx - 4 - bw / 2,
+            h / 2 - 24,
+            bw,
+        ));
+        // THE PAIR'S OWN SEATS (the addOptions pc 0-38 walk's own row —
         // the LEFT the center `cx - 4 - bw/2` the vanilla geometry
         // wears, the RIGHT the center `cx + 4 + bw/2` the same gap
-        // keeps; the row the autojump pair's AFTER seat the pitch the
-        // 24-step grid wears)
+        // keeps; the row the operator-tab row's AFTER seat the pitch
+        // the 24-step grid wears)
         self.buttons.push(Button::new(
             "mousesettings",
             tr("options.mouse_settings")
                 .unwrap_or("Mouse Settings...")
                 .to_string(),
             cx - 4 - bw / 2,
-            h / 2 - 24,
+            h / 2,
             bw,
         ));
         self.buttons.push(Button::new(
@@ -65073,7 +65202,7 @@ impl App {
                 .unwrap_or("Key Binds...")
                 .to_string(),
             cx + 4 + bw / 2,
-            h / 2 - 24,
+            h / 2,
             bw,
         ));
         self.buttons.push(Button::new(
