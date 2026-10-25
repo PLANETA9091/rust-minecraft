@@ -1,0 +1,33 @@
+--- net.minecraft.client.player.LocalPlayer.isMovingSlowly()Z
+0: aload_0
+1: invokevirtual net/minecraft/client/player/LocalPlayer.isCrouching()Z
+4: ifne -> 14
+7: aload_0
+8: invokevirtual net/minecraft/client/player/LocalPlayer.isVisuallyCrawling()Z
+11: ifeq -> 18
+14: iconst_1
+15: goto -> 19
+18: iconst_0
+19: ireturn
+
+--- net.minecraft.client.player.LocalPlayer.isMoving()Z
+0: aload_0
+1: getfield net/minecraft/client/player/LocalPlayer.inputLnet/minecraft/client/player/ClientInput;
+4: invokevirtual net/minecraft/client/player/ClientInput.getMoveVector()Lnet/minecraft/world/phys/Vec2;
+7: invokevirtual net/minecraft/world/phys/Vec2.lengthSquared()F
+10: fconst_0
+11: fcmpl
+12: ifle -> 19
+15: iconst_1
+16: goto -> 20
+19: iconst_0
+20: ireturn
+
+!! net.minecraft.client.player.LocalPlayer: isStayingOnGroundSurface not found
+!! net.minecraft.client.player.LocalPlayer: makeJump not found
+!! net.minecraft.world.entity.player.Input: makeJump not found
+--- net.minecraft.world.entity.player.Input.jump()Z
+0: aload_0
+1: getfield net/minecraft/world/entity/player/Input.jumpZ
+4: ireturn
+

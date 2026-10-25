@@ -1,0 +1,156 @@
+[1] Options.<init> ctx around autoJump putfield pc 1726
+--- net.minecraft.client.Options.<init>(Lnet/minecraft/client/Minecraft;Ljava/io/File;)V
+1651: bipush 100
+1653: invokestatic net/minecraft/client/Options.logMouse(I)D
+1656: invokestatic com/mojang/serialization/Codec.doubleRange(DD)Lcom/mojang/serialization/Codec;
+1659: iconst_0
+1660: invokestatic net/minecraft/client/Options.logMouse(I)D
+1663: invokestatic java/lang/Double.valueOf(D)Ljava/lang/Double;
+1666: getstatic net/minecraft/client/OptionInstance.NO_ACTIONLnet/minecraft/client/OptionInstance$ValueUpdateListener;
+1669: invokespecial net/minecraft/client/OptionInstance.<init>(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Lnet/minecraft/client/OptionInstance$CaptionBasedToString;Lnet/minecraft/client/OptionInstance$ValueSet;Lcom/mojang/serialization/Codec;Ljava/lang/Object;Lnet/minecraft/client/OptionInstance$ValueUpdateListener;)V
+1672: putfield net/minecraft/client/Options.mouseWheelSensitivityLnet/minecraft/client/OptionInstance;
+1675: aload_0
+1676: ldc_w ldcw@1023
+1679: iconst_1
+1680: invokedynamic indy
+1685: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;ZLnet/minecraft/client/OptionInstance$ValueUpdateListener;)Lnet/minecraft/client/OptionInstance;
+1688: putfield net/minecraft/client/Options.rawMouseInputLnet/minecraft/client/OptionInstance;
+1691: aload_0
+1692: ldc_w ldcw@1026
+1695: getstatic net/minecraft/client/Options.ALLOW_CURSOR_CHANGES_TOOLTIPLnet/minecraft/network/chat/Component;
+1698: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+1701: iconst_1
+1702: invokedynamic indy
+1707: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;ZLnet/minecraft/client/OptionInstance$ValueUpdateListener;)Lnet/minecraft/client/OptionInstance;
+1710: putfield net/minecraft/client/Options.allowCursorChangesLnet/minecraft/client/OptionInstance;
+1713: aload_0
+1714: iconst_1
+1715: putfield net/minecraft/client/Options.glDebugVerbosityI
+1718: aload_0
+1719: ldc_w ldcw@1035
+1722: iconst_0
+1723: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Z)Lnet/minecraft/client/OptionInstance;
+1726: putfield net/minecraft/client/Options.autoJumpLnet/minecraft/client/OptionInstance;
+1729: aload_0
+1730: ldc_w ldcw@1040
+1733: getstatic net/minecraft/client/Options.ACCESSIBILITY_TOOLTIP_ROTATE_WITH_MINECARTLnet/minecraft/network/chat/Component;
+1736: invokestatic net/minecraft/client/OptionInstance.cachedConstantTooltip(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/client/OptionInstance$TooltipSupplier;
+1739: iconst_0
+1740: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Lnet/minecraft/client/OptionInstance$TooltipSupplier;Z)Lnet/minecraft/client/OptionInstance;
+1743: putfield net/minecraft/client/Options.rotateWithMinecartLnet/minecraft/client/OptionInstance;
+1746: aload_0
+1747: ldc_w ldcw@1045
+1750: iconst_0
+1751: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Z)Lnet/minecraft/client/OptionInstance;
+1754: putfield net/minecraft/client/Options.operatorItemsTabLnet/minecraft/client/OptionInstance;
+1757: aload_0
+1758: ldc_w ldcw@1047
+1761: iconst_1
+1762: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Z)Lnet/minecraft/client/OptionInstance;
+1765: putfield net/minecraft/client/Options.autoSuggestionsLnet/minecraft/client/OptionInstance;
+1768: aload_0
+1769: ldc_w ldcw@1049
+1772: iconst_1
+1773: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Z)Lnet/minecraft/client/OptionInstance;
+1776: putfield net/minecraft/client/Options.chatColorsLnet/minecraft/client/OptionInstance;
+1779: aload_0
+1780: ldc_w ldcw@1051
+1783: iconst_1
+1784: invokestatic net/minecraft/client/OptionInstance.createBoolean(Ljava/lang/String;Z)Lnet/minecraft/client/OptionInstance;
+1787: putfield net/minecraft/client/Options.chatLinksLnet/minecraft/client/OptionInstance;
+1790: aload_0
+1791: ldc_w ldcw@1053
+
+[2] LocalPlayer.<init> ctx around autoJumpEnabled pc 58
+--- net.minecraft.client.player.LocalPlayer.<init>(Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/multiplayer/ClientLevel;Lnet/minecraft/client/multiplayer/ClientPacketListener;Lnet/minecraft/stats/StatsCounter;Lnet/minecraft/client/ClientRecipeBook;Lnet/minecraft/world/entity/player/Input;ZLnet/minecraft/client/multiplayer/chat/ChatAbilities;)V
+0: aload_0
+1: aload_2
+2: aload_3
+3: invokevirtual net/minecraft/client/multiplayer/ClientPacketListener.getLocalGameProfile()Lcom/mojang/authlib/GameProfile;
+6: invokespecial net/minecraft/client/player/AbstractClientPlayer.<init>(Lnet/minecraft/client/multiplayer/ClientLevel;Lcom/mojang/authlib/GameProfile;)V
+9: aload_0
+10: new net/minecraft/util/TickThrottler
+13: dup
+14: bipush 20
+16: sipush 1280
+19: invokespecial net/minecraft/util/TickThrottler.<init>(II)V
+22: putfield net/minecraft/client/player/LocalPlayer.dropSpamThrottlerLnet/minecraft/util/TickThrottler;
+25: aload_0
+26: invokestatic com/google/common/collect/Lists.newArrayList()Ljava/util/ArrayList;
+29: putfield net/minecraft/client/player/LocalPlayer.ambientSoundHandlersLjava/util/List;
+32: aload_0
+33: getstatic net/minecraft/server/permissions/PermissionSet.NO_PERMISSIONSLnet/minecraft/server/permissions/PermissionSet;
+36: putfield net/minecraft/client/player/LocalPlayer.permissionsLnet/minecraft/server/permissions/PermissionSet;
+39: aload_0
+40: new net/minecraft/client/player/ClientInput
+43: dup
+44: invokespecial net/minecraft/client/player/ClientInput.<init>()V
+47: putfield net/minecraft/client/player/LocalPlayer.inputLnet/minecraft/client/player/ClientInput;
+50: aload_0
+51: ldc int -2147483648
+53: putfield net/minecraft/client/player/LocalPlayer.experienceDisplayStartTickI
+56: aload_0
+57: iconst_1
+58: putfield net/minecraft/client/player/LocalPlayer.autoJumpEnabledZ
+61: aload_0
+62: iconst_1
+63: putfield net/minecraft/client/player/LocalPlayer.showDeathScreenZ
+66: aload_0
+67: iconst_0
+68: putfield net/minecraft/client/player/LocalPlayer.doLimitedCraftingZ
+71: aload_0
+72: aload_1
+73: putfield net/minecraft/client/player/LocalPlayer.minecraftLnet/minecraft/client/Minecraft;
+76: aload_0
+77: aload_3
+78: putfield net/minecraft/client/player/LocalPlayer.connectionLnet/minecraft/client/multiplayer/ClientPacketListener;
+81: aload_0
+82: aload aload 4
+84: putfield net/minecraft/client/player/LocalPlayer.statsLnet/minecraft/stats/StatsCounter;
+87: aload_0
+88: aload aload 5
+90: putfield net/minecraft/client/player/LocalPlayer.recipeBookLnet/minecraft/client/ClientRecipeBook;
+93: aload_0
+94: aload aload 6
+96: putfield net/minecraft/client/player/LocalPlayer.lastSentInputLnet/minecraft/world/entity/player/Input;
+99: aload_0
+100: iload iload 7
+102: putfield net/minecraft/client/player/LocalPlayer.wasSprintingZ
+105: aload_0
+106: getfield net/minecraft/client/player/LocalPlayer.ambientSoundHandlersLjava/util/List;
+109: new net/minecraft/client/resources/sounds/UnderwaterAmbientSoundHandler
+112: dup
+113: aload_0
+114: aload_1
+115: invokevirtual net/minecraft/client/Minecraft.getSoundManager()Lnet/minecraft/client/sounds/SoundManager;
+118: invokespecial net/minecraft/client/resources/sounds/UnderwaterAmbientSoundHandler.<init>(Lnet/minecraft/client/player/LocalPlayer;Lnet/minecraft/client/sounds/SoundManager;)V
+121: invokeinterface java/util/List.add(Ljava/lang/Object;)Z
+124: iconst_m1
+125: nop
+126: pop
+127: aload_0
+128: getfield net/minecraft/client/player/LocalPlayer.ambientSoundHandlersLjava/util/List;
+131: new net/minecraft/client/resources/sounds/BubbleColumnAmbientSoundHandler
+
+[3] LocalPlayer: every method body referencing 'autoJump'
+--- net.minecraft.client.player.LocalPlayer.<init>(Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/multiplayer/ClientLevel;Lnet/minecraft/client/multiplayer/ClientPacketListener;Lnet/minecraft/stats/StatsCounter;Lnet/minecraft/client/ClientRecipeBook;Lnet/minecraft/world/entity/player/Input;ZLnet/minecraft/client/multiplayer/chat/ChatAbilities;)V
+   58: putfield net/minecraft/client/player/LocalPlayer.autoJumpEnabledZ
+--- net.minecraft.client.player.LocalPlayer.sendPosition()V
+   372: invokevirtual net/minecraft/client/Options.autoJump()Lnet/minecraft/client/OptionInstance;
+   384: putfield net/minecraft/client/player/LocalPlayer.autoJumpEnabledZ
+--- net.minecraft.client.player.LocalPlayer.aiStep()V
+   182: getfield net/minecraft/client/player/LocalPlayer.autoJumpTimeI
+   190: getfield net/minecraft/client/player/LocalPlayer.autoJumpTimeI
+   195: putfield net/minecraft/client/player/LocalPlayer.autoJumpTimeI
+--- net.minecraft.client.player.LocalPlayer.isAutoJumpEnabled()Z
+   1: getfield net/minecraft/client/player/LocalPlayer.autoJumpEnabledZ
+--- net.minecraft.client.player.LocalPlayer.updateAutoJump(FF)V
+   834: putfield net/minecraft/client/player/LocalPlayer.autoJumpTimeI
+--- net.minecraft.client.player.LocalPlayer.canAutoJump()Z
+   8: getfield net/minecraft/client/player/LocalPlayer.autoJumpTimeI
+
+[4] en_us options.on/off words (generic boolean captions)
+=== net.minecraft.client.Options utf8 words (needles: ['options.on', 'options.off'])
+  cp#1173: 'options.onlyShowSecureChat'
+  cp#2528: 'options.off'
+  cp#2919: 'options.onlyShowSecureChat.tooltip'

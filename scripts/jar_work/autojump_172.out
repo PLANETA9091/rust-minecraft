@@ -1,0 +1,62 @@
+[1] Options.<init>: the autoJump instance (all lines w/ autoJump)
+--- net.minecraft.client.Options.<init>(Lnet/minecraft/client/Minecraft;Ljava/io/File;)V (2096 insns)
+1726: putfield net/minecraft/client/Options.autoJumpLnet/minecraft/client/OptionInstance;
+
+[2] Options.processOptions: the autoJump file row
+--- net.minecraft.client.Options.processOptions(Lnet/minecraft/client/Options$FieldAccess;)V (665 insns)
+10: getfield net/minecraft/client/Options.autoJumpLnet/minecraft/client/OptionInstance;
+
+[3] LocalPlayer.aiStep: every autoJump reference (the law's readsites)
+--- net.minecraft.client.player.LocalPlayer.aiStep()V (535 insns)
+182: getfield net/minecraft/client/player/LocalPlayer.autoJumpTimeI
+190: getfield net/minecraft/client/player/LocalPlayer.autoJumpTimeI
+195: putfield net/minecraft/client/player/LocalPlayer.autoJumpTimeI
+
+[4] LocalPlayer.aiStep: horizontalCollision readsites
+--- net.minecraft.client.player.LocalPlayer.aiStep()V (535 insns)
+
+[5] ControlsScreen static: the array row 4 (re-verify)
+--- net.minecraft.client.gui.screens.options.controls.ControlsScreen.options(Lnet/minecraft/client/Options;)[Lnet/minecraft/client/OptionInstance; (38 insns)
+0: bipush 7
+2: anewarray net/minecraft/client/OptionInstance
+5: dup
+6: iconst_0
+7: aload_0
+8: invokevirtual net/minecraft/client/Options.toggleCrouch()Lnet/minecraft/client/OptionInstance;
+11: aastore
+12: dup
+13: iconst_1
+14: aload_0
+15: invokevirtual net/minecraft/client/Options.toggleSprint()Lnet/minecraft/client/OptionInstance;
+18: aastore
+19: dup
+20: iconst_2
+21: aload_0
+22: invokevirtual net/minecraft/client/Options.toggleAttack()Lnet/minecraft/client/OptionInstance;
+25: aastore
+26: dup
+27: iconst_3
+28: aload_0
+29: invokevirtual net/minecraft/client/Options.toggleUse()Lnet/minecraft/client/OptionInstance;
+32: aastore
+33: dup
+34: iconst_4
+35: aload_0
+36: invokevirtual net/minecraft/client/Options.autoJump()Lnet/minecraft/client/OptionInstance;
+39: aastore
+40: dup
+41: iconst_5
+42: aload_0
+43: invokevirtual net/minecraft/client/Options.sprintWindow()Lnet/minecraft/client/OptionInstance;
+46: aastore
+47: dup
+48: bipush 6
+50: aload_0
+51: invokevirtual net/minecraft/client/Options.operatorItemsTab()Lnet/minecraft/client/OptionInstance;
+54: aastore
+55: areturn
+
+[6] en_us utf8 words (autoJump / on / off)
+=== net.minecraft.client.Options utf8 words (needles: ['autoJump'])
+  cp#326: 'autoJump'
+  cp#1036: 'options.autoJump'

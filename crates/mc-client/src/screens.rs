@@ -7327,6 +7327,22 @@ pub struct App {
     pub toggle_sprint: bool,
     pub toggle_attack: bool,
     pub toggle_use: bool,
+    /// THE AUTOJUMP'S OWN OPTION (the vanilla `autoJump` — the default
+    /// FALSE the Options ctor's `iconst_0` pc 1722 banks, the
+    /// `OptionInstance.createBoolean("options.autoJump", false)` walk
+    /// the putfield pc 1726 serves — the NO-tooltip lane the two-arg
+    /// createBoolean keeps, the generic boolean caption the
+    /// `options.on`/`options.off` pair the row wears; the processOptions
+    /// pc 5-13 the FIRST file row the visit ladder keeps — the
+    /// `FieldAccess.process("autoJump", ...)` call the rotateWithMinecart
+    /// row's BEFORE seat wears). THE MOVEMENT'S OWN CONSUMER (the
+    /// LocalPlayer the 26.2 jar — the sendPosition pc 372-384 walk the
+    /// `autoJumpEnabled` field re-syncs each position-send, the
+    /// canAutoJump/updateAutoJump law the move tail the trigger serves,
+    /// the aiStep pcs 178-205 the makeJump ride the countdown speaks —
+    /// the [`crate::body::PlayerBody`] walks the option's own law
+    /// wears).
+    pub auto_jump: bool,
     /// THE SPRINT WINDOW'S OWN OPTION (the vanilla `sprintWindow` — the
     /// default 7 the ctor's `bipush 7` pc 2325 banks, the
     /// `IntRange(0, 10)` the value set keeps, the processOptions pc 244
@@ -10904,6 +10920,7 @@ impl App {
             toggle_sprint: false,
             toggle_attack: false,
             toggle_use: false,
+            auto_jump: false,
             sprint_window: crate::options_file::DEFAULT_SPRINT_WINDOW,
             toggle_latch: [false; 4],
             toggle_released_by_screen: [false; 4],
@@ -12830,6 +12847,11 @@ impl App {
                     // bank feeds instantly; the spectator-or-passenger
                     // setOnGround arm the body's own lane answers)
                     b.no_physics = self.game_mode == GameMode::Spectator;
+                    // THE AUTOJUMP'S OWN FEED (the sendPosition pc 372-384
+                    // walk the `autoJumpEnabled` field re-syncs — the
+                    // option store's own value the field banks, the move
+                    // tail's canAutoJump gate the flag reads)
+                    b.autojump_enabled = self.auto_jump;
                     // THE INVULNERABLE FEED (javap
                     // GameType.updatePlayerAbilities's grant — the
                     // creative/spectator flag the body's own walks
@@ -33445,6 +33467,7 @@ impl App {
         self.toggle_sprint = file.toggle_sprint;
         self.toggle_attack = file.toggle_attack;
         self.toggle_use = file.toggle_use;
+        self.auto_jump = file.auto_jump;
         self.sprint_window = file.sprint_window;
         self.fov_effect_scale = file.fov_effect_scale;
         self.chat_opacity = file.chat_opacity;
@@ -33482,6 +33505,7 @@ impl App {
             toggle_sprint: self.toggle_sprint,
             toggle_attack: self.toggle_attack,
             toggle_use: self.toggle_use,
+            auto_jump: self.auto_jump,
             sprint_window: self.sprint_window,
             fov_effect_scale: self.fov_effect_scale,
             chat_opacity: self.chat_opacity,
@@ -35846,6 +35870,11 @@ impl App {
                 "opt_ctl_sprint" => self.toggle_sprint = !self.toggle_sprint,
                 "opt_ctl_attack" => self.toggle_attack = !self.toggle_attack,
                 "opt_ctl_use" => self.toggle_use = !self.toggle_use,
+                // THE AUTOJUMP'S OWN FLIP (the generic boolean row's own
+                // press walk — the click the value's own flip answers,
+                // the caption the next render's rebuild speaks, the
+                // OptionInstance.set walk the ON/OFF pair the row wears)
+                "opt_ctl_autojump" => self.auto_jump = !self.auto_jump,
                 // THE PAIR'S OWN LEFT SEAT (the ControlsScreen
                 // addOptions pc 4-15 walk — the `options.mouse_settings`
                 // button the `lambda$addOptions$0` supplier opens: the
@@ -65001,17 +65030,41 @@ impl App {
             h / 2 - 72,
             bw,
         ));
+        // THE AUTOJUMP'S OWN ROW (the array's index-4 seat the
+        // ControlsScreen.options walk banks — the (4,5) pair's LEFT the
+        // addSmall two-at-a-time law keeps, the RIGHT the sprintWindow
+        // slider row the follow-up wears; the caption the GENERIC
+        // boolean's own pair the OptionInstance.BOOLEAN_VALUES
+        // CaptionBasedToString law speaks — the `options.on`/`options.off`
+        // rows the value's word wears, the `options.autoJump` "Auto-Jump"
+        // label the en_us table keeps)
+        self.buttons.push(Button::new(
+            "opt_ctl_autojump",
+            format!(
+                "{}: {}",
+                tr("options.autoJump").unwrap_or("Auto-Jump"),
+                if self.auto_jump {
+                    tr("options.on").unwrap_or("ON")
+                } else {
+                    tr("options.off").unwrap_or("OFF")
+                }
+            ),
+            cx - 4 - bw / 2,
+            h / 2 - 48,
+            bw,
+        ));
         // THE PAIR'S OWN SEATS (the addSmall walk's left/right pair —
         // the LEFT the center `cx - 4 - bw/2` the vanilla geometry
         // wears, the RIGHT the center `cx + 4 + bw/2` the same gap
-        // keeps)
+        // keeps; the row the autojump pair's AFTER seat the pitch the
+        // 24-step grid wears)
         self.buttons.push(Button::new(
             "mousesettings",
             tr("options.mouse_settings")
                 .unwrap_or("Mouse Settings...")
                 .to_string(),
             cx - 4 - bw / 2,
-            h / 2 - 40,
+            h / 2 - 24,
             bw,
         ));
         self.buttons.push(Button::new(
@@ -65020,7 +65073,7 @@ impl App {
                 .unwrap_or("Key Binds...")
                 .to_string(),
             cx + 4 + bw / 2,
-            h / 2 - 40,
+            h / 2 - 24,
             bw,
         ));
         self.buttons.push(Button::new(

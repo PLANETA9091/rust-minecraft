@@ -1,0 +1,5 @@
+--- net.minecraft.world.entity.player.Player.isStayingOnGroundSurface()Z
+0: aload_0
+1: invokevirtual net/minecraft/world/entity/player/Player.isShiftKeyDown()Z
+4: ireturn
+

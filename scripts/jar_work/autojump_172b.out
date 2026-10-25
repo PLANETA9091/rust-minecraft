@@ -1,0 +1,127 @@
+[1] Options.<init> ctx around pc 1726 (the autoJump instance)
+--- net.minecraft.client.Options.<init>(Lnet/minecraft/client/Minecraft;Ljava/io/File;)V ctx pc 1672..1752
+4028: aastore
+4029: dup
+4030: bipush 17
+4032: aload_0
+4033: getfield net/minecraft/client/Options.keyToggleGuiLnet/minecraft/client/KeyMapping;
+4036: aastore
+4037: dup
+4038: bipush 18
+4040: aload_0
+4041: getfield net/minecraft/client/Options.keyToggleSpectatorShaderEffectsLnet/minecraft/client/KeyMapping;
+4044: aastore
+4045: dup
+4046: bipush 19
+4048: aload_0
+4049: getfield net/minecraft/client/Options.keyScreenshotLnet/minecraft/client/KeyMapping;
+4052: aastore
+4053: dup
+4054: bipush 20
+4056: aload_0
+4057: getfield net/minecraft/client/Options.keyTogglePerspectiveLnet/minecraft/client/KeyMapping;
+4060: aastore
+4061: dup
+4062: bipush 21
+4064: aload_0
+4065: getfield net/minecraft/client/Options.keySmoothCameraLnet/minecraft/client/KeyMapping;
+4068: aastore
+4069: dup
+4070: bipush 22
+4072: aload_0
+4073: getfield net/minecraft/client/Options.keyFullscreenLnet/minecraft/client/KeyMapping;
+4076: aastore
+4077: dup
+4078: bipush 23
+4080: aload_0
+4081: getfield net/minecraft/client/Options.keySpectatorOutlinesLnet/minecraft/client/KeyMapping;
+4084: aastore
+4085: dup
+4086: bipush 24
+4088: aload_0
+4089: getfield net/minecraft/client/Options.keySpectatorHotbarLnet/minecraft/client/KeyMapping;
+4092: aastore
+4093: dup
+4094: bipush 25
+4096: aload_0
+4097: getfield net/minecraft/client/Options.keySwapOffhandLnet/minecraft/client/KeyMapping;
+4100: aastore
+4101: dup
+4102: bipush 26
+4104: aload_0
+4105: getfield net/minecraft/client/Options.keySaveHotbarActivatorLnet/minecraft/client/KeyMapping;
+4108: aastore
+4109: dup
+4110: bipush 27
+4112: aload_0
+4113: getfield net/minecraft/client/Options.keyLoadHotbarActivatorLnet/minecraft/client/KeyMapping;
+4116: aastore
+4117: dup
+4118: bipush 28
+4120: aload_0
+4121: getfield net/minecraft/client/Options.keyAdvancementsLnet/minecraft/client/KeyMapping;
+4124: aastore
+4125: dup
+4126: bipush 29
+4128: aload_0
+4129: getfield net/minecraft/client/Options.keyQuickActionsLnet/minecraft/client/KeyMapping;
+4132: aastore
+4133: dup
+4134: bipush 30
+4136: aload_0
+4137: getfield net/minecraft/client/Options.keyDebugOverlayLnet/minecraft/client/KeyMapping;
+4140: aastore
+4141: dup
+4142: bipush 31
+4144: aload_0
+4145: getfield net/minecraft/client/Options.keyDebugModifierLnet/minecraft/client/KeyMapping;
+4148: aastore
+4149: aastore
+4150: dup
+4151: iconst_1
+4152: aload_0
+
+[2] Options.processOptions ctx around pc 10
+--- net.minecraft.client.Options.processOptions(Lnet/minecraft/client/Options$FieldAccess;)V ctx pc 0..30
+0: aload_0
+1: aload_1
+2: invokevirtual net/minecraft/client/Options.processDumpedOptions(Lnet/minecraft/client/Options$OptionAccess;)V
+5: aload_1
+6: ldc_w ldcw@1839
+9: aload_0
+10: getfield net/minecraft/client/Options.autoJumpLnet/minecraft/client/OptionInstance;
+13: invokeinterface net/minecraft/client/Options$FieldAccess.process(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+16: iconst_0
+17: nop
+18: aload_1
+19: ldc_w ldcw@1843
+22: aload_0
+23: getfield net/minecraft/client/Options.rotateWithMinecartLnet/minecraft/client/OptionInstance;
+26: invokeinterface net/minecraft/client/Options$FieldAccess.process(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+29: iconst_0
+30: nop
+31: aload_1
+32: ldc_w ldcw@1844
+35: aload_0
+36: getfield net/minecraft/client/Options.operatorItemsTabLnet/minecraft/client/OptionInstance;
+39: invokeinterface net/minecraft/client/Options$FieldAccess.process(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+42: iconst_0
+43: nop
+44: aload_1
+45: ldc_w ldcw@1845
+48: aload_0
+49: getfield net/minecraft/client/Options.autoSuggestionsLnet/minecraft/client/OptionInstance;
+52: invokeinterface net/minecraft/client/Options$FieldAccess.process(Ljava/lang/String;Lnet/minecraft/client/OptionInstance;)V
+55: iconst_0
+
+[3] LocalPlayer: every method body referencing 'autoJump'
+--- net.minecraft.client.player.LocalPlayer.<init>(Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/multiplayer/ClientLevel;Lnet/minecraft/client/multiplayer/ClientPacketListener;Lnet/minecraft/stats/StatsCounter;Lnet/minecraft/client/ClientRecipeBook;Lnet/minecraft/world/entity/player/Input;ZLnet/minecraft/client/multiplayer/chat/ChatAbilities;)V
+   58: putfield net/minecraft/client/player/LocalPlayer.autoJumpEnabledZ
+Traceback (most recent call last):
+  File "/home/z/my-project/rust-minecraft/scripts/jar_work/autojump_172b.py", line 70, in <module>
+    all_method_scan(z, LP, "autoJump")
+  File "/home/z/my-project/rust-minecraft/scripts/jar_work/autojump_172b.py", line 61, in all_method_scan
+    hits = [ln for ln in walk_code(cp, code) if word in ln]
+                         ^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 169, in walk_code
+IndexError: list index out of range

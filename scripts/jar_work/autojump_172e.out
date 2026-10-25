@@ -1,0 +1,75 @@
+[1] aiStep around autoJumpTime (both readsites, span 12)
+aiStep()V
+   153: iconst_0
+   154: putfield net/minecraft/client/player/LocalPlayer.crouchingZ
+   157: aload_0
+   158: getfield net/minecraft/client/player/LocalPlayer.inputLnet/minecraft/client/player/ClientInput;
+   161: invokevirtual net/minecraft/client/player/ClientInput.tick()V
+   164: aload_0
+   165: getfield net/minecraft/client/player/LocalPlayer.minecraftLnet/minecraft/client/Minecraft;
+   168: invokevirtual net/minecraft/client/Minecraft.getTutorial()Lnet/minecraft/client/tutorial/Tutorial;
+   171: aload_0
+   172: getfield net/minecraft/client/player/LocalPlayer.inputLnet/minecraft/client/player/ClientInput;
+   175: invokevirtual net/minecraft/client/tutorial/Tutorial.onInput(Lnet/minecraft/client/player/ClientInput;)V
+   178: iconst_0
+   179: istore istore 5
+   181: aload_0
+>> 182: getfield net/minecraft/client/player/LocalPlayer.autoJumpTimeI
+   185: ifle -> 208
+   188: aload_0
+   189: dup
+   190: getfield net/minecraft/client/player/LocalPlayer.autoJumpTimeI
+   193: iconst_1
+   194: isub
+   195: putfield net/minecraft/client/player/LocalPlayer.autoJumpTimeI
+   198: iconst_1
+   199: istore istore 5
+   201: aload_0
+   202: getfield net/minecraft/client/player/LocalPlayer.inputLnet/minecraft/client/player/ClientInput;
+   205: invokevirtual net/minecraft/client/player/ClientInput.makeJump()V
+   208: aload_0
+   ...
+
+[2] LocalPlayer.move full body
+move(Lnet/minecraft/world/entity/MoverType;Lnet/minecraft/world/phys/Vec3;)V
+0: aload_0
+1: invokevirtual net/minecraft/client/player/LocalPlayer.getX()D
+4: dstore_3
+5: aload_0
+6: invokevirtual net/minecraft/client/player/LocalPlayer.getZ()D
+9: dstore
+10: iconst_2
+11: aload_0
+12: aload_1
+13: aload_2
+14: invokespecial net/minecraft/client/player/AbstractClientPlayer.move(Lnet/minecraft/world/entity/MoverType;Lnet/minecraft/world/phys/Vec3;)V
+17: aload_0
+18: invokevirtual net/minecraft/client/player/LocalPlayer.getX()D
+21: dload_3
+22: dsub
+23: d2f
+24: fstore fstore 7
+26: aload_0
+27: invokevirtual net/minecraft/client/player/LocalPlayer.getZ()D
+30: dload
+31: iconst_2
+32: dsub
+33: d2f
+34: fstore fstore 8
+36: aload_0
+37: fload fload 7
+39: fload fload 8
+41: invokevirtual net/minecraft/client/player/LocalPlayer.updateAutoJump(FF)V
+44: aload_0
+45: fload fload 7
+47: fload fload 8
+49: invokestatic net/minecraft/util/Mth.length(FF)F
+52: ldc_w float 0.6000000238418579
+55: fmul
+56: invokevirtual net/minecraft/client/player/LocalPlayer.addWalkedDistance(F)V
+59: return
+
+[3] Entity.isStayingOnGroundSurface
+(not in Entity)
+
+[4] Entity.isMoving

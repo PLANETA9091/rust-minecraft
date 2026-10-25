@@ -1284,6 +1284,21 @@ pub struct PlayerBody {
     pub left: f32,
     pub jumping: bool,
     no_jump_delay: i32,
+    /// THE AUTOJUMP'S OWN ENABLED FLAG (javap LocalPlayer the 26.2 jar —
+    /// the `autoJumpEnabled` boolean the ctor's iconst_1 pc 56-58 banks,
+    /// the sendPosition pc 372-384 walk re-syncs from the option each
+    /// position-send: `this.autoJumpEnabled =
+    /// this.minecraft.options.autoJump().get()` — the option store the
+    /// `autoJump` file row answers). The App feeds it the same
+    /// per-frame head the noPhysics/invulnerable writes ride.
+    pub autojump_enabled: bool,
+    /// THE AUTOJUMP'S OWN COOLDOWN BANK (javap the `autoJumpTime` int —
+    /// the updateAutoJump pc 832-834 trigger the ONE banks, the aiStep
+    /// pcs 178-205 arm the countdown + the `input.makeJump()` the same
+    /// ride speaks, the canAutoJump pc 7-11 gate the `> 0` verdict
+    /// refuses). The tick's own head the ride consumes, the move tail
+    /// the trigger re-arms.
+    auto_jump_time: i32,
     /// THE EFFECT ATTRIBUTES' OWN MOVEMENT FOLD (javap
     /// `MobEffect.addAttributeModifiers` + `AttributeTemplate.create`
     /// pc 8-16 + `AttributeInstance.calculateValue` pcs 101-145 — the
@@ -1770,6 +1785,8 @@ impl PlayerBody {
             left: 0.0,
             jumping: false,
             no_jump_delay: 0,
+            autojump_enabled: false,
+            auto_jump_time: 0,
             effect_speed_mult: 1.0,
             water_breathing: false,
             dolphins_grace: false,
@@ -1909,6 +1926,338 @@ impl PlayerBody {
             crate::food::EXHAUSTION_JUMP
         };
         self.no_jump_delay = JUMP_REPEAT_TICKS;
+    }
+
+    /// THE AUTOJUMP'S OWN MOVE TAIL LAW (javap LocalPlayer.updateAutoJump
+    /// (FF)V + canAutoJump()Z the 26.2 jar — the move() override's own
+    /// AFTER seat the trigger serves, the RESOLVED delta the args speak:
+    /// `(float)(getX() - d0), (float)(getZ() - d1)` the pre-move pair
+    /// the subtraction keeps).
+    ///
+    /// THE GATE (canAutoJump's own AND — pc 1-49): the option's flag,
+    /// the cooldown clear (the `autoJumpTime > 0` verdict refuses), the
+    /// ground, the NOT-sneak (Player.isStayingOnGroundSurface =
+    /// isShiftKeyDown the one-line override speaks — the sneak walk
+    /// never auto-jumps), the passenger arm the ride branches
+    /// structurally never reach (the body tick the ride forks skip),
+    /// the MOVING input (isMoving = the move vector's lengthSquared
+    /// > 0 — the Input record's forward/left pair the client's ±1
+    /// impulses answer), and the block jump factor the `>= 1.0`
+    /// verdict keeps (the banked fold the tick's own head speaks).
+    ///
+    /// THE INTENT WALK (updateAutoJump pcs 8-173): the resolved delta
+    /// the vector; the ≤0.001 length the BLOCKED wall answers — the
+    /// intent the INPUT re-speaks (the speed × moveVec × yaw rotation
+    /// the getInputVector shape keeps — sin/cos the 0.0174532924
+    /// degree fold wears, the >1 normalize the walk never runs), the
+    /// still-≤0.001 the silent return wears.
+    ///
+    /// THE DIRECTION (pcs 174-232): the invSqrt normalize (the
+    /// 1/sqrt stand-in the Mth.invSqrt fold answers), the getForward
+    /// dot the <-0.15 verdict refuses (the backwards walk never
+    /// jumps — the look vector's horizontal pair the yaw+pitch folds
+    /// speak).
+    ///
+    /// THE CORRIDOR (pcs 233-802): the head pair the 2-air clearance
+    /// keeps (the containing(x, bb.maxY, z) cell + the above — the
+    /// non-empty shape the return wears), the jump ceiling f17 the
+    /// 1.2 base + the jump boost's 0.75·level lift the effect arms
+    /// (the levels the jump_boost_power the 0.1-per-level fold
+    /// divides), the reach f18 the max(speed·7, dist) fold (the
+    /// speed attribute the client's own [`PlayerBody::speed`] walk
+    /// answers), the walk the position→destination+dir·f18 pair the
+    /// +0.75 raise wears (the ldc2_w 0.75 double the endpoints add),
+    /// the ±width/2 perpendicular pair the cross product speaks
+    /// (dir × UP = (−dz, 0, dx)), the segment bboxes the collision
+    /// boxes the inflated column region holds (the AABB(min,max)
+    /// strict-overlap law the intersects walk answers — the slab
+    /// collection the clip_axis's own walk shares: the main slab +
+    /// the arm families + the below over-tall consult), the FIRST
+    /// intersecting box the stream order keeps (the hit arm the
+    /// box-iteration break serves — the climb the above-center
+    /// cells the walk runs: the shape's own top the +cy fold, the
+    /// >f17 the too-tall return, the i>1 head chain the non-empty
+    /// return).
+    ///
+    /// THE VERDICT (pcs 793-837): the never-hit arm the ε bank the
+    /// same refusal wears, the delta the (0.5, f17] window the
+    /// trigger answers — the autoJumpTime = 1 the NEXT tick's
+    /// makeJump ride the aiStep head serves (the one-tick delay the
+    /// vanilla move→aiStep order keeps).
+    fn update_auto_jump(&mut self, world: &World, dx: f32, dz: f32, using_item: bool) {
+        // THE GATE (canAutoJump's own AND)
+        if !self.autojump_enabled
+            || self.auto_jump_time > 0
+            || !self.on_ground
+            || self.want_crouch
+            || (self.forward == 0.0 && self.left == 0.0)
+            || self.block_jump_factor < 1.0
+        {
+            return;
+        }
+        let (px, py, pz) = (self.x, self.y, self.z);
+        // THE INTENT (pcs 13-173): the resolved delta the vector, the
+        // blocked wall the input re-speaks (the speed × moveVec × yaw
+        // rotation the getInputVector shape keeps)
+        let mut vx = dx as f64;
+        let mut vz = dz as f64;
+        let mut dist_sq = (vx * vx + vz * vz) as f32 as f64;
+        if dist_sq <= 0.001 {
+            let spd = self.speed(using_item);
+            let mx = self.left * spd;
+            let my = self.forward * spd;
+            let rad = self.yaw as f64 * std::f64::consts::PI / 180.0;
+            let (s, c) = (rad.sin() as f32, rad.cos() as f32);
+            vx = (mx * c - my * s) as f64;
+            vz = (my * c + mx * s) as f64;
+            dist_sq = (vx * vx + vz * vz) as f32 as f64;
+            if dist_sq <= 0.001 {
+                return;
+            }
+        }
+        // THE DIRECTION (pcs 174-232): the invSqrt normalize + the
+        // forward dot's <-0.15 refusal (the look vector's horizontal
+        // pair the yaw+pitch folds speak)
+        let inv = 1.0 / (dist_sq as f32).sqrt();
+        let dir_x = vx * inv as f64;
+        let dir_z = vz * inv as f64;
+        let look_rad = self.yaw as f64 * std::f64::consts::PI / 180.0;
+        let pitch_rad = self.pitch as f64 * std::f64::consts::PI / 180.0;
+        let fwd_x = -look_rad.sin() * pitch_rad.cos();
+        let fwd_z = look_rad.cos() * pitch_rad.cos();
+        let dot = (fwd_x * dir_x + fwd_z * dir_z) as f32;
+        if dot < -0.15 {
+            return;
+        }
+        // THE HEAD PAIR (pcs 233-327): the 2-air clearance the walk
+        // keeps — the containing(x, bb.maxY, z) cell + the above
+        let bb_top = py + self.height();
+        let head = (px.floor() as i32, bb_top.floor() as i32, pz.floor() as i32);
+        for cell in [head, (head.0, head.1 + 1, head.2)] {
+            if !matches!(
+                crate::world::collision_shape_at(world, cell.0, cell.1, cell.2),
+                crate::world::CollisionShape::Empty
+            ) {
+                return;
+            }
+        }
+        // THE CEILING + THE REACH (pcs 328-379): f17 the 1.2 base the
+        // jump boost's 0.75·level lift wears (the levels the power the
+        // 0.1-per-level fold divides), f18 the max(speed·7, dist) fold
+        let f17 = 1.2f32 + (self.jump_boost_power / JUMP_BOOST_POWER_PER_LEVEL) * 0.75;
+        let spd = self.speed(using_item);
+        let f18 = (spd * 7.0).max(1.0 / inv);
+        // THE CORRIDOR (pcs 384-624): the walk the pair the +0.75 raise
+        // wears, the ±width/2 perpendicular pair the cross product
+        // speaks, the segment bboxes the strict-overlap test reads
+        let reach = f18 as f64;
+        let ay = py + 0.75;
+        let bx = px + vx + dir_x * reach;
+        let bz = pz + vz + dir_z * reach;
+        let (off_x, off_z) = (-dir_z * (WIDTH / 2.0), dir_x * (WIDTH / 2.0));
+        let segs = [
+            (
+                (px - off_x).min(bx - off_x),
+                ay,
+                (pz - off_z).min(bz - off_z),
+                (px - off_x).max(bx - off_x),
+                ay,
+                (pz - off_z).max(bz - off_z),
+            ),
+            (
+                (px + off_x).min(bx + off_x),
+                ay,
+                (pz + off_z).min(bz + off_z),
+                (px + off_x).max(bx + off_x),
+                ay,
+                (pz + off_z).max(bz + off_z),
+            ),
+        ];
+        // THE REGION (pc 536-546): the player column inflated
+        // (width, 0, width) — the getCollisions bb the vanilla walk
+        // keeps, the cells the slab collection the clip walk shares
+        let (bx0, by0, bz0, bx1, by1, bz1) = box_at(px, py, pz, self.height());
+        let (rx0, rx1) = (bx0 - WIDTH, bx1 + WIDTH);
+        let (rz0, rz1) = (bz0 - WIDTH, bz1 + WIDTH);
+        let mut f33 = 1.4e-45f32; // the ε the never-hit arm keeps (pc 576)
+        let mut obstacle = false;
+        'region: for cx in rx0.floor() as i32..=(rx1 - 1e-9).floor() as i32 {
+            for cy in by0.floor() as i32..=(by1 - 1e-9).floor() as i32 {
+                for cz in rz0.floor() as i32..=(rz1 - 1e-9).floor() as i32 {
+                    let shape = crate::world::collision_shape_at(world, cx, cy, cz);
+                    // the box collection the clip_axis walk shares (the
+                    // main slab + the arm families + the below over-tall
+                    // consult — the (box, cell) pairs the center the
+                    // climb's own blockpos reads)
+                    let mut boxes: [Option<((f64, f64, f64, f64, f64, f64), (i32, i32, i32))>; 14] =
+                        [None; 14];
+                    let mut nb = 0usize;
+                    if let Some(b) = crate::world::shape_slabs(shape, cx, cy, cz) {
+                        boxes[nb] = Some((b, (cx, cy, cz)));
+                        nb += 1;
+                    }
+                    for arm in crate::world::fence_arm_slabs(shape, cx, cy, cz) {
+                        if let Some(b) = arm {
+                            if nb < 14 {
+                                boxes[nb] = Some((b, (cx, cy, cz)));
+                                nb += 1;
+                            }
+                        }
+                    }
+                    for arm in crate::world::wall_arm_slabs(shape, cx, cy, cz) {
+                        if let Some(b) = arm {
+                            if nb < 14 {
+                                boxes[nb] = Some((b, (cx, cy, cz)));
+                                nb += 1;
+                            }
+                        }
+                    }
+                    for arm in crate::world::pane_arm_slabs(shape, cx, cy, cz) {
+                        if let Some(b) = arm {
+                            if nb < 14 {
+                                boxes[nb] = Some((b, (cx, cy, cz)));
+                                nb += 1;
+                            }
+                        }
+                    }
+                    for arm in crate::world::lantern_cap_slabs(shape, cx, cy, cz) {
+                        if let Some(b) = arm {
+                            if nb < 14 {
+                                boxes[nb] = Some((b, (cx, cy, cz)));
+                                nb += 1;
+                            }
+                        }
+                    }
+                    for arm in crate::world::stairs_step_slabs(shape, cx, cy, cz) {
+                        if let Some(b) = arm {
+                            if nb < 14 {
+                                boxes[nb] = Some((b, (cx, cy, cz)));
+                                nb += 1;
+                            }
+                        }
+                    }
+                    if cy > 0 {
+                        let below_shape = crate::world::collision_shape_at(world, cx, cy - 1, cz);
+                        if crate::world::is_over_tall(below_shape) {
+                            if let Some(b) = crate::world::shape_slabs(below_shape, cx, cy - 1, cz)
+                            {
+                                if nb < 14 {
+                                    boxes[nb] = Some((b, (cx, cy - 1, cz)));
+                                    nb += 1;
+                                }
+                            }
+                            for arm in crate::world::fence_arm_slabs(below_shape, cx, cy - 1, cz) {
+                                if let Some(b) = arm {
+                                    if nb < 14 {
+                                        boxes[nb] = Some((b, (cx, cy - 1, cz)));
+                                        nb += 1;
+                                    }
+                                }
+                            }
+                            for arm in crate::world::wall_arm_slabs(below_shape, cx, cy - 1, cz) {
+                                if let Some(b) = arm {
+                                    if nb < 14 {
+                                        boxes[nb] = Some((b, (cx, cy - 1, cz)));
+                                        nb += 1;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    // THE HIT ARM (pcs 603-790): the FIRST intersecting
+                    // box the stream order keeps — the strict-overlap
+                    // test either segment bbox answers, the top + the
+                    // containing center the climb serves, the break the
+                    // box-iteration exit wears (pc 790's goto the 793
+                    // verdict speaks)
+                    for entry in boxes.iter().take(nb) {
+                        let Some((sb, cell)) = entry else {
+                            continue;
+                        };
+                        // THE SLAB TUPLE'S OWN ORDER (the shape_slabs
+                        // walk's own shape — the (x_lo, x_hi, y_lo,
+                        // y_hi, z_lo, z_hi) pair the clip walk's own
+                        // destructure wears)
+                        let (x_lo, x_hi, y_lo, y_hi, z_lo, z_hi) = *sb;
+                        let mut hits_seg = false;
+                        for sg in &segs {
+                            if x_hi > sg.0
+                                && x_lo < sg.3
+                                && y_hi > sg.1
+                                && y_lo < sg.4
+                                && z_hi > sg.2
+                                && z_lo < sg.5
+                            {
+                                hits_seg = true;
+                                break;
+                            }
+                        }
+                        if !hits_seg {
+                            continue;
+                        }
+                        // pc 630-650: the top the box's own maxY keeps,
+                        // the center the containing walk banks
+                        f33 = y_hi as f32;
+                        obstacle = true;
+                        // THE CLIMB WALK (pcs 652-790): the
+                        // above-center cells the shape's own top wears,
+                        // the >f17 the too-tall return, the i>1 head
+                        // chain the non-empty return
+                        let mut i = 1i32;
+                        while (i as f32) < f17 {
+                            let above = (cell.0, cell.1 + i, cell.2);
+                            let above_shape =
+                                crate::world::collision_shape_at(world, above.0, above.1, above.2);
+                            if !matches!(above_shape, crate::world::CollisionShape::Empty) {
+                                // pc 706-722: the shape's own top the
+                                // +cy fold — the OVERWRITE law the
+                                // store wears
+                                let cell_top = crate::world::shape_slabs(
+                                    above_shape,
+                                    above.0,
+                                    above.1,
+                                    above.2,
+                                )
+                                .map(|b| b.3)
+                                .unwrap_or(above.1 as f64 + 1.0);
+                                f33 = cell_top as f32;
+                                if f33 as f64 - py > f17 as f64 {
+                                    return; // the too-tall arm
+                                }
+                            }
+                            if i > 1 {
+                                // pc 746-783: the head chain the walk
+                                // above keeps
+                                let hc = (head.0, head.1 + i - 1, head.2);
+                                if !matches!(
+                                    crate::world::collision_shape_at(world, hc.0, hc.1, hc.2),
+                                    crate::world::CollisionShape::Empty
+                                ) {
+                                    return;
+                                }
+                            }
+                            i += 1;
+                        }
+                        break 'region; // the first hit the stream order keeps
+                    }
+                }
+            }
+        }
+        // THE VERDICT (pcs 793-837): the never-hit arm the ε bank the
+        // same refusal wears, the delta the (0.5, f17] window the
+        // trigger answers — the autoJumpTime = 1 the NEXT tick's
+        // makeJump ride serves
+        if !obstacle {
+            return;
+        }
+        let delta = (f33 as f64 - py) as f32;
+        if delta <= 0.5 {
+            return;
+        }
+        if delta > f17 {
+            return;
+        }
+        self.auto_jump_time = 1;
     }
 
     /// The pose's height (the POSES table's own numbers).
@@ -2502,6 +2851,23 @@ impl PlayerBody {
         // the App's world-free fold answers — the frame the world
         // never splits).
         self.block_jump_factor = self.block_jump_factor(world);
+        // THE AUTOJUMP'S OWN MAKEJUMP RIDE (javap LocalPlayer.aiStep pcs
+        // 178-205 the 26.2 jar — the `autoJumpTime > 0` arm the countdown
+        // decrement + the `input.makeJump()` the SAME ride speaks: the
+        // ClientInput.makeJump walk the Input record rebuilds with the
+        // jump bit TRUE the rest verbatim keeps, the record the aiStep's
+        // own jump gate the same tick serves). The vanilla bl5 local the
+        // arm banks the flight double-tap lane the pcs 552-554 gate
+        // reads — the client's lane order the same verdict speaks
+        // structurally: the fly law the App's head runs BEFORE this
+        // body tick, the synthetic press the physical edge bank never
+        // reaches, the flight toggle the autojump's own hop never arms
+        // (the no-autojump world the constant zero the fly law's doc
+        // keeps — the structural answer the lane order speaks).
+        if self.auto_jump_time > 0 {
+            self.auto_jump_time -= 1;
+            self.jumping = true; // input.makeJump()
+        }
         // THE JUMP GATE (the aiStep's own): held jump + ground + the
         // delay elapsed -> jumpFromGround
         if self.jumping && self.on_ground && self.no_jump_delay == 0 {
@@ -2725,6 +3091,10 @@ impl PlayerBody {
                 }
             }
         }
+        // THE PRE-MOVE PAIR (the vanilla move()'s own d0/d1 the
+        // updateAutoJump delta reads — the resolved walk the collide
+        // folds, the tail's x−d0/z−d1 subtraction the args speak)
+        let (pre_move_x, pre_move_z) = (self.x, self.z);
         let b = box_at(self.x, self.y, self.z, self.height());
         let col = if self.no_physics {
             // THE NOPHYSICS MOVE (javap Entity.move pcs 0-58 — the
@@ -2785,8 +3155,7 @@ impl PlayerBody {
             if self.on_ground {
                 self.supporting_pos = self.find_supporting_block(world, 0.0, 0.0);
                 if self.supporting_pos.is_none() {
-                    self.supporting_pos =
-                        self.find_supporting_block(world, col.dx, col.dz);
+                    self.supporting_pos = self.find_supporting_block(world, col.dx, col.dz);
                 }
             } else {
                 self.supporting_pos = None;
@@ -2797,6 +3166,18 @@ impl PlayerBody {
             self.check_fall_damage(world, col.dy);
             col
         };
+        // THE AUTOJUMP'S OWN MOVE TAIL (javap LocalPlayer.move pcs 36-41
+        // the 26.2 jar — the super.move's AFTER seat the updateAutoJump
+        // call keeps, the addWalkedDistance walk the FOOTSTEP fold below
+        // serves: `(float)(getX() - d0), (float)(getZ() - d1)` the
+        // RESOLVED delta the args speak — the trigger the NEXT tick's
+        // makeJump ride the head consumes)
+        self.update_auto_jump(
+            world,
+            (self.x - pre_move_x) as f32,
+            (self.z - pre_move_z) as f32,
+            using_item,
+        );
         // THE FOOTSTEP ACCUMULATION (Entity.move's own law over the
         // ACTUAL moved delta): moveDist += horizontalDistance × 0.6 (the
         // climbable branch's full-length lane aside — our vocabulary
@@ -4134,6 +4515,179 @@ mod tests {
         }
     }
 
+    /// A one-block wall at x=5 (y=1 only) the auto-jump's own verdict
+    /// walks — the [`walled_world`] pair's HALF the hop the law serves.
+    fn stepped_world() -> World {
+        let mut w = flat_world();
+        w.set(5, 1, 5, crate::world::STONE);
+        w
+    }
+
+    /// THE AUTOJUMP'S OWN HOP (javap LocalPlayer.updateAutoJump(FF)V +
+    /// canAutoJump()Z + the aiStep pcs 178-205 makeJump ride the 26.2
+    /// jar — the option ON the walk into the one-block wall the trigger
+    /// serves: the corridor the obstacle's own cell the verdict speaks,
+    /// the delta 1.0 the (0.5, 1.2] window the autoJumpTime=1 bank
+    /// answers, the NEXT tick's makeJump ride the jump gate the same
+    /// hop wears, the arc the wall's own top the landing keeps).
+    #[test]
+    fn autojump_hops_the_one_block_wall() {
+        let mut w = stepped_world();
+        let mut b = PlayerBody::new(3.5, 1.0, 5.5, 270.0, 0.0); // facing +x
+        settle(&mut b, &w);
+        b.autojump_enabled = true;
+        b.forward = 1.0;
+        // THE WALK-IN: the corridor's reach the wall's own face the
+        // trigger earns before the touch (the vanilla pre-touch hop the
+        // f18 reach speaks); the arc the wall's own top the landing
+        // wears, the walk beyond the far edge the loop's own stop keeps
+        let mut landed_on_top = false;
+        let mut triggered = false;
+        for _ in 0..80 {
+            b.tick(&w, false);
+            if b.auto_jump_time > 0 {
+                triggered = true;
+            }
+            if b.x > 5.0 && (b.y - 2.0).abs() < 1e-6 && b.on_ground {
+                landed_on_top = true;
+                break;
+            }
+        }
+        assert!(triggered, "the wall the trigger banks");
+        assert!(
+            landed_on_top,
+            "the arc the wall's top the landing keeps: x={} y={}",
+            b.x, b.y
+        );
+    }
+
+    /// THE TWO-HIGH WALL'S OWN REFUSAL (the climb walk's own too-tall
+    /// arm — the above-center cell the solid read the f17 ceiling
+    /// exceeds, the 2.0 delta the 1.2 verdict refuses, the trigger the
+    /// bank never earns).
+    #[test]
+    fn autojump_refuses_the_two_high_wall() {
+        let mut w = walled_world();
+        let mut b = PlayerBody::new(3.5, 1.0, 5.5, 270.0, 0.0);
+        settle(&mut b, &w);
+        b.autojump_enabled = true;
+        b.forward = 1.0;
+        for _ in 0..60 {
+            b.tick(&w, false);
+        }
+        assert_eq!(b.auto_jump_time, 0, "the too-tall walk the bank never arms");
+        assert!(b.x < 5.0, "the wall the body never passes: x={}", b.x);
+    }
+
+    /// THE GATES' OWN REFUSALS (canAutoJump's own AND — the option OFF
+    /// the default the law never arms, the sneak the
+    /// isStayingOnGroundSurface verdict refuses, the backwards walk the
+    /// getForward dot the <-0.15 answer wears, the grounded-missing the
+    /// airborne walk refuses).
+    #[test]
+    fn autojump_gates_the_refusals_wear() {
+        let mut w = stepped_world();
+        // THE OPTION OFF (the default FALSE the ctor's iconst_0 keeps —
+        // the walk into the wall the plain bump speaks)
+        let mut b = PlayerBody::new(3.5, 1.0, 5.5, 270.0, 0.0);
+        settle(&mut b, &w);
+        b.forward = 1.0;
+        for _ in 0..30 {
+            b.tick(&w, false);
+        }
+        assert_eq!(b.auto_jump_time, 0, "the option off the trigger never arms");
+        assert!(b.x < 5.0, "the wall the plain bump keeps: x={}", b.x);
+        // THE SNEAK (Player.isStayingOnGroundSurface = isShiftKeyDown —
+        // the sneak walk the verdict refuses)
+        let mut b2 = PlayerBody::new(3.5, 1.0, 5.5, 270.0, 0.0);
+        settle(&mut b2, &w);
+        b2.autojump_enabled = true;
+        b2.want_crouch = true;
+        b2.forward = 1.0;
+        for _ in 0..30 {
+            b2.tick(&w, false);
+        }
+        assert_eq!(b2.auto_jump_time, 0, "the sneak the verdict refuses");
+        // THE BACKWARDS WALK (the getForward dot the <-0.15 refusal —
+        // the S key the wall the body backs into)
+        let mut b3 = PlayerBody::new(4.5, 1.0, 5.5, 270.0, 0.0); // facing +x
+        settle(&mut b3, &w);
+        b3.autojump_enabled = true;
+        b3.forward = -1.0; // the backwards intent the wall's own face walks
+        for _ in 0..20 {
+            b3.tick(&w, false);
+        }
+        assert_eq!(
+            b3.auto_jump_time, 0,
+            "the backwards dot the verdict refuses"
+        );
+        // THE AIRBORNE (the on-ground gate — the mid-air body the
+        // wall's own face never arms: the y the floor's reach the
+        // collide never lands this tick)
+        let mut b4 = PlayerBody::new(4.5, 5.0, 5.5, 270.0, 0.0);
+        b4.autojump_enabled = true;
+        b4.forward = 1.0;
+        b4.on_ground = false;
+        b4.tick(&w, false);
+        assert!(!b4.on_ground, "the mid-air body the collide never lands");
+        assert_eq!(b4.auto_jump_time, 0, "the airborne walk the gate refuses");
+    }
+
+    /// THE FARMLAND'S OWN BAND VERDICT (the 15/16 top the corridor's
+    /// own fold wears — the delta 0.9375 the (0.5, 1.2] window the
+    /// trigger answers, the band the plain step's 0.6 the climb never
+    /// speaks).
+    #[test]
+    fn autojump_hops_the_farmland_band() {
+        let mut w = flat_world();
+        w.set(5, 1, 5, crate::world::FARMLAND);
+        let mut b = PlayerBody::new(3.5, 1.0, 5.5, 270.0, 0.0);
+        settle(&mut b, &w);
+        b.autojump_enabled = true;
+        b.forward = 1.0;
+        let mut triggered = false;
+        for _ in 0..40 {
+            b.tick(&w, false);
+            if b.auto_jump_time > 0 {
+                triggered = true;
+                break;
+            }
+        }
+        assert!(triggered, "the 15/16 band the trigger banks");
+    }
+
+    /// THE MAKEJUMP RIDE'S OWN ONE-TICK SHAPE (the aiStep pcs 178-205
+    /// walk — the banked trigger the NEXT tick's ride consumes: the
+    /// countdown the decrement, the synthetic press the jump gate the
+    /// same tick serves, the delay the repeat the re-press refuses, the
+    /// spent bank the zero the second tick keeps).
+    #[test]
+    fn autojump_makejump_ride_the_one_tick_serves() {
+        let w = flat_world();
+        let mut b = PlayerBody::new(5.5, 1.0, 5.5, 270.0, 0.0);
+        settle(&mut b, &w);
+        b.auto_jump_time = 1; // the move tail's own trigger bank
+        let vy0 = b.vy;
+        b.tick(&w, false);
+        assert_eq!(b.auto_jump_time, 0, "the ride the countdown spends");
+        assert!(
+            b.vy > vy0 && b.no_jump_delay == JUMP_REPEAT_TICKS,
+            "the jump gate the synthetic press serves: vy={}",
+            b.vy
+        );
+        assert_eq!(
+            b.no_jump_delay, JUMP_REPEAT_TICKS,
+            "the repeat delay the hop sets"
+        );
+        // THE SECOND TICK (the spent bank the zero keeps — the physical
+        // press the feed overwrites, the delay the re-press refuses)
+        b.jumping = false;
+        let vy1 = b.vy;
+        b.tick(&w, false);
+        assert_eq!(b.auto_jump_time, 0, "the spent bank the zero keeps");
+        assert!(b.vy < vy1, "the gravity the arc wears");
+    }
+
     /// THE SEGMENT'S OWN HONESTY (the t parameter the walk serves —
     /// the hit's own comment speaks t=1 IS the full from->to span):
     /// a wall BEYOND the segment's end never clips (the walk stops
@@ -4151,8 +4705,9 @@ mod tests {
         let h = reaching.expect("the wall within the segment clips");
         assert!(
             (h.x - 5.0).abs() < 1e-6,
-            "the hit rides the wall's own face, got x={}"
-        , h.x);
+            "the hit rides the wall's own face, got x={}",
+            h.x
+        );
     }
 
     /// THE FOOTSTEP CADENCE (Entity.move's own law): the walk distance

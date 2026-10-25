@@ -1,0 +1,24 @@
+[1] updateAutoJump tail pc 810..end
+810: dsub
+811: d2f
+812: fstore fstore 35
+814: fload fload 35
+816: ldc_w float 0.5
+819: fcmpg
+820: ifle -> 831
+823: fload fload 35
+825: fload fload 17
+827: fcmpl
+828: ifle -> 832
+831: return
+832: aload_0
+833: iconst_1
+834: putfield net/minecraft/client/player/LocalPlayer.autoJumpTimeI
+837: return
+
+[2] aiStep window pc 170..205 (autoJumpTime countdown)
+Traceback (most recent call last):
+  File "/home/z/my-project/rust-minecraft/scripts/jar_work/autojump_172d.py", line 44, in <module>
+    start = next(i for i, ln in enumerate(lines) if ln.startswith("170:"))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+StopIteration

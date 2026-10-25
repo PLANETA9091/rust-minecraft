@@ -1,0 +1,34 @@
+=== net.minecraft.world.entity.player.Player
+  cp#1362: 'isStayingOnGroundSurface'
+=== net.minecraft.client.player.LocalPlayer
+  cp#1163: 'makeJump'
+  cp#1562: 'isStayingOnGroundSurface'
+=== net.minecraft.client.player.ClientInput
+  cp#66: 'makeJump'
+--- net.minecraft.client.player.ClientInput.makeJump()V
+0: aload_0
+1: new net/minecraft/world/entity/player/Input
+4: dup
+5: aload_0
+6: getfield net/minecraft/client/player/ClientInput.keyPressesLnet/minecraft/world/entity/player/Input;
+9: invokevirtual net/minecraft/world/entity/player/Input.forward()Z
+12: aload_0
+13: getfield net/minecraft/client/player/ClientInput.keyPressesLnet/minecraft/world/entity/player/Input;
+16: invokevirtual net/minecraft/world/entity/player/Input.backward()Z
+19: aload_0
+20: getfield net/minecraft/client/player/ClientInput.keyPressesLnet/minecraft/world/entity/player/Input;
+23: invokevirtual net/minecraft/world/entity/player/Input.left()Z
+26: aload_0
+27: getfield net/minecraft/client/player/ClientInput.keyPressesLnet/minecraft/world/entity/player/Input;
+30: invokevirtual net/minecraft/world/entity/player/Input.right()Z
+33: iconst_1
+34: aload_0
+35: getfield net/minecraft/client/player/ClientInput.keyPressesLnet/minecraft/world/entity/player/Input;
+38: invokevirtual net/minecraft/world/entity/player/Input.shift()Z
+41: aload_0
+42: getfield net/minecraft/client/player/ClientInput.keyPressesLnet/minecraft/world/entity/player/Input;
+45: invokevirtual net/minecraft/world/entity/player/Input.sprint()Z
+48: invokespecial net/minecraft/world/entity/player/Input.<init>(ZZZZZZZ)V
+51: putfield net/minecraft/client/player/ClientInput.keyPressesLnet/minecraft/world/entity/player/Input;
+54: return
+

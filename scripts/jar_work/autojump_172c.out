@@ -1,0 +1,518 @@
+[1] updateAutoJump(FF) FULL body
+--- net.minecraft.client.player.LocalPlayer.updateAutoJump(FF)V
+0: aload_0
+1: invokevirtual net/minecraft/client/player/LocalPlayer.canAutoJump()Z
+4: ifne -> 8
+7: return
+8: aload_0
+9: invokevirtual net/minecraft/client/player/LocalPlayer.position()Lnet/minecraft/world/phys/Vec3;
+12: astore_2
+13: aload_3
+14: fload_1 fload_1 141
+16: dconst_0
+17: fload_2
+18: f2d
+19: invokevirtual net/minecraft/world/phys/Vec3.add(DDD)Lnet/minecraft/world/phys/Vec3;
+22: astore astore 4
+24: new net/minecraft/world/phys/Vec3
+27: dup
+28: fload_1 fload_1 141
+30: dconst_0
+31: fload_2
+32: f2d
+33: invokespecial net/minecraft/world/phys/Vec3.<init>(DDD)V
+36: astore astore 5
+38: aload_0
+39: invokevirtual net/minecraft/client/player/LocalPlayer.getSpeed()F
+42: fstore fstore 6
+44: aload aload 5
+46: invokevirtual net/minecraft/world/phys/Vec3.lengthSqr()D
+49: d2f
+50: fstore fstore 7
+52: fload fload 7
+54: ldc_w float 0.0010000000474974513
+57: fcmpg
+58: ifgt -> 174
+61: aload_0
+62: getfield net/minecraft/client/player/LocalPlayer.inputLnet/minecraft/client/player/ClientInput;
+65: invokevirtual net/minecraft/client/player/ClientInput.getMoveVector()Lnet/minecraft/world/phys/Vec2;
+68: astore astore 8
+70: fload fload 6
+72: aload aload 8
+74: getfield net/minecraft/world/phys/Vec2.xF
+77: fmul
+78: fstore fstore 9
+80: fload fload 6
+82: aload aload 8
+84: getfield net/minecraft/world/phys/Vec2.yF
+87: fmul
+88: fstore fstore 10
+90: aload_0
+91: invokevirtual net/minecraft/client/player/LocalPlayer.getYRot()F
+94: ldc_w float 0.01745329238474369
+97: fmul
+98: f2d
+99: invokestatic net/minecraft/util/Mth.sin(D)F
+102: fstore fstore 11
+104: aload_0
+105: invokevirtual net/minecraft/client/player/LocalPlayer.getYRot()F
+108: ldc_w float 0.01745329238474369
+111: fmul
+112: f2d
+113: invokestatic net/minecraft/util/Mth.cos(D)F
+116: fstore fstore 12
+118: new net/minecraft/world/phys/Vec3
+121: dup
+122: fload fload 9
+124: fload fload 12
+126: fmul
+127: fload fload 10
+129: fload fload 11
+131: fmul
+132: fsub
+133: f2d
+134: aload aload 5
+136: getfield net/minecraft/world/phys/Vec3.yD
+139: fload fload 10
+141: fload fload 12
+143: fmul
+144: fload fload 9
+146: fload fload 11
+148: fmul
+149: fadd
+150: f2d
+151: invokespecial net/minecraft/world/phys/Vec3.<init>(DDD)V
+154: astore astore 5
+156: aload aload 5
+158: invokevirtual net/minecraft/world/phys/Vec3.lengthSqr()D
+161: d2f
+162: fstore fstore 7
+164: fload fload 7
+166: ldc_w float 0.0010000000474974513
+169: fcmpg
+170: ifgt -> 174
+173: return
+174: fload fload 7
+176: invokestatic net/minecraft/util/Mth.invSqrt(F)F
+179: fstore fstore 8
+181: aload aload 5
+183: fload fload 8
+185: f2d
+186: invokevirtual net/minecraft/world/phys/Vec3.scale(D)Lnet/minecraft/world/phys/Vec3;
+189: astore astore 9
+191: aload_0
+192: invokevirtual net/minecraft/client/player/LocalPlayer.getForward()Lnet/minecraft/world/phys/Vec3;
+195: astore astore 10
+197: aload aload 10
+199: getfield net/minecraft/world/phys/Vec3.xD
+202: aload aload 9
+204: getfield net/minecraft/world/phys/Vec3.xD
+207: dmul
+208: aload aload 10
+210: getfield net/minecraft/world/phys/Vec3.zD
+213: aload aload 9
+215: getfield net/minecraft/world/phys/Vec3.zD
+218: dmul
+219: dadd
+220: d2f
+221: fstore fstore 11
+223: fload fload 11
+225: ldc_w float -0.15000000596046448
+228: fcmpg
+229: ifge -> 233
+232: return
+233: aload_0
+234: invokestatic net/minecraft/world/phys/shapes/CollisionContext.of(Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/world/phys/shapes/CollisionContext;
+237: astore astore 12
+239: aload_0
+240: invokevirtual net/minecraft/client/player/LocalPlayer.getX()D
+243: aload_0
+244: invokevirtual net/minecraft/client/player/LocalPlayer.getBoundingBox()Lnet/minecraft/world/phys/AABB;
+247: getfield net/minecraft/world/phys/AABB.maxYD
+250: aload_0
+251: invokevirtual net/minecraft/client/player/LocalPlayer.getZ()D
+254: invokestatic net/minecraft/core/BlockPos.containing(DDD)Lnet/minecraft/core/BlockPos;
+257: astore astore 13
+259: aload_0
+260: invokevirtual net/minecraft/client/player/LocalPlayer.level()Lnet/minecraft/world/level/Level;
+263: aload aload 13
+265: invokevirtual net/minecraft/world/level/Level.getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+268: astore astore 14
+270: aload aload 14
+272: aload_0
+273: invokevirtual net/minecraft/client/player/LocalPlayer.level()Lnet/minecraft/world/level/Level;
+276: aload aload 13
+278: aload aload 12
+280: invokevirtual net/minecraft/world/level/block/state/BlockState.getCollisionShape(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/shapes/CollisionContext;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+283: invokevirtual net/minecraft/world/phys/shapes/VoxelShape.isEmpty()Z
+286: ifne -> 290
+289: return
+290: aload aload 13
+292: invokevirtual net/minecraft/core/BlockPos.above()Lnet/minecraft/core/BlockPos;
+295: astore astore 13
+297: aload_0
+298: invokevirtual net/minecraft/client/player/LocalPlayer.level()Lnet/minecraft/world/level/Level;
+301: aload aload 13
+303: invokevirtual net/minecraft/world/level/Level.getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+306: astore astore 15
+308: aload aload 15
+310: aload_0
+311: invokevirtual net/minecraft/client/player/LocalPlayer.level()Lnet/minecraft/world/level/Level;
+314: aload aload 13
+316: aload aload 12
+318: invokevirtual net/minecraft/world/level/block/state/BlockState.getCollisionShape(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/shapes/CollisionContext;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+321: invokevirtual net/minecraft/world/phys/shapes/VoxelShape.isEmpty()Z
+324: ifne -> 328
+327: return
+328: ldc_w float 7.0
+331: fstore fstore 16
+333: ldc_w float 1.2000000476837158
+336: fstore fstore 17
+338: aload_0
+339: getstatic net/minecraft/world/effect/MobEffects.JUMP_BOOSTLnet/minecraft/core/Holder;
+342: invokevirtual net/minecraft/client/player/LocalPlayer.hasEffect(Lnet/minecraft/core/Holder;)Z
+345: ifeq -> 369
+348: fload fload 17
+350: aload_0
+351: getstatic net/minecraft/world/effect/MobEffects.JUMP_BOOSTLnet/minecraft/core/Holder;
+354: invokevirtual net/minecraft/client/player/LocalPlayer.getEffect(Lnet/minecraft/core/Holder;)Lnet/minecraft/world/effect/MobEffectInstance;
+357: invokevirtual net/minecraft/world/effect/MobEffectInstance.getAmplifier()I
+360: iconst_1
+361: iadd
+362: i2f
+363: ldc float 0.75
+365: fmul
+366: fadd
+367: fstore fstore 17
+369: fload fload 6
+371: ldc_w float 7.0
+374: fmul
+375: fconst_1
+376: fload fload 8
+378: fdiv
+379: invokestatic java/lang/Math.max(FF)F
+382: fstore fstore 18
+384: aload_3
+385: astore astore 19
+387: aload aload 4
+389: aload aload 9
+391: fload fload 18
+393: f2d
+394: invokevirtual net/minecraft/world/phys/Vec3.scale(D)Lnet/minecraft/world/phys/Vec3;
+397: invokevirtual net/minecraft/world/phys/Vec3.add(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+400: astore astore 20
+402: aload_0
+403: invokevirtual net/minecraft/client/player/LocalPlayer.getBbWidth()F
+406: fstore fstore 21
+408: aload_0
+409: invokevirtual net/minecraft/client/player/LocalPlayer.getBbHeight()F
+412: fstore fstore 22
+414: new net/minecraft/world/phys/AABB
+417: dup
+418: aload aload 19
+420: aload aload 20
+422: dconst_0
+423: fload fload 22
+425: f2d
+426: dconst_0
+427: invokevirtual net/minecraft/world/phys/Vec3.add(DDD)Lnet/minecraft/world/phys/Vec3;
+430: invokespecial net/minecraft/world/phys/AABB.<init>(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;)V
+433: fload fload 21
+435: f2d
+436: dconst_0
+437: fload fload 21
+439: f2d
+440: invokevirtual net/minecraft/world/phys/AABB.inflate(DDD)Lnet/minecraft/world/phys/AABB;
+443: astore astore 23
+445: aload aload 19
+447: dconst_0
+448: ldc2_w double 4602768891079294976
+451: dconst_0
+452: invokevirtual net/minecraft/world/phys/Vec3.add(DDD)Lnet/minecraft/world/phys/Vec3;
+455: astore astore 19
+457: aload aload 20
+459: dconst_0
+460: ldc2_w double 4602768891079294976
+463: dconst_0
+464: invokevirtual net/minecraft/world/phys/Vec3.add(DDD)Lnet/minecraft/world/phys/Vec3;
+467: astore astore 20
+469: aload aload 9
+471: new net/minecraft/world/phys/Vec3
+474: dup
+475: dconst_0
+476: dconst_1
+477: dconst_0
+478: invokespecial net/minecraft/world/phys/Vec3.<init>(DDD)V
+481: invokevirtual net/minecraft/world/phys/Vec3.cross(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+484: astore astore 24
+486: aload aload 24
+488: fload fload 21
+490: ldc_w float 0.5
+493: fmul
+494: f2d
+495: invokevirtual net/minecraft/world/phys/Vec3.scale(D)Lnet/minecraft/world/phys/Vec3;
+498: astore astore 25
+500: aload aload 19
+502: aload aload 25
+504: invokevirtual net/minecraft/world/phys/Vec3.subtract(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+507: astore astore 26
+509: aload aload 20
+511: aload aload 25
+513: invokevirtual net/minecraft/world/phys/Vec3.subtract(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+516: astore astore 27
+518: aload aload 19
+520: aload aload 25
+522: invokevirtual net/minecraft/world/phys/Vec3.add(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+525: astore astore 28
+527: aload aload 20
+529: aload aload 25
+531: invokevirtual net/minecraft/world/phys/Vec3.add(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+534: astore astore 29
+536: aload_0
+537: invokevirtual net/minecraft/client/player/LocalPlayer.level()Lnet/minecraft/world/level/Level;
+540: aload_0
+541: aload aload 23
+543: invokevirtual net/minecraft/world/level/Level.getCollisions(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/AABB;)Ljava/lang/Iterable;
+546: astore astore 30
+548: aload aload 30
+550: invokeinterface java/lang/Iterable.spliterator()Ljava/util/Spliterator;
+553: aconst_null
+554: nop
+555: iconst_0
+556: invokestatic java/util/stream/StreamSupport.stream(Ljava/util/Spliterator;Z)Ljava/util/stream/Stream;
+559: invokedynamic indy
+564: invokeinterface java/util/stream/Stream.flatMap(Ljava/util/function/Function;)Ljava/util/stream/Stream;
+567: iconst_m1
+568: nop
+569: invokeinterface java/util/stream/Stream.iterator()Ljava/util/Iterator;
+572: aconst_null
+573: nop
+574: astore astore 31
+576: ldc_w float 1.401298464324817e-45
+579: fstore fstore 33
+581: aload aload 31
+583: invokeinterface java/util/Iterator.hasNext()Z
+586: aconst_null
+587: nop
+588: ifeq -> 793
+591: aload aload 31
+593: invokeinterface java/util/Iterator.next()Ljava/lang/Object;
+596: aconst_null
+597: nop
+598: checkcast net/minecraft/world/phys/AABB
+601: astore astore 35
+603: aload aload 35
+605: aload aload 26
+607: aload aload 27
+609: invokevirtual net/minecraft/world/phys/AABB.intersects(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;)Z
+612: ifne -> 630
+615: aload aload 35
+617: aload aload 28
+619: aload aload 29
+621: invokevirtual net/minecraft/world/phys/AABB.intersects(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;)Z
+624: ifne -> 630
+627: goto -> 581
+630: aload aload 35
+632: getfield net/minecraft/world/phys/AABB.maxYD
+635: d2f
+636: fstore fstore 33
+638: aload aload 35
+640: invokevirtual net/minecraft/world/phys/AABB.getCenter()Lnet/minecraft/world/phys/Vec3;
+643: astore astore 32
+645: aload aload 32
+647: invokestatic net/minecraft/core/BlockPos.containing(Lnet/minecraft/core/Position;)Lnet/minecraft/core/BlockPos;
+650: astore astore 36
+652: iconst_1
+653: istore istore 37
+655: iload iload 37
+657: i2f
+658: fload fload 17
+660: fcmpg
+661: ifge -> 790
+664: aload aload 36
+666: iload iload 37
+668: invokevirtual net/minecraft/core/BlockPos.above(I)Lnet/minecraft/core/BlockPos;
+671: astore astore 38
+673: aload_0
+674: invokevirtual net/minecraft/client/player/LocalPlayer.level()Lnet/minecraft/world/level/Level;
+677: aload aload 38
+679: invokevirtual net/minecraft/world/level/Level.getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+682: astore astore 39
+684: aload aload 39
+686: aload_0
+687: invokevirtual net/minecraft/client/player/LocalPlayer.level()Lnet/minecraft/world/level/Level;
+690: aload aload 38
+692: aload aload 12
+694: invokevirtual net/minecraft/world/level/block/state/BlockState.getCollisionShape(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/shapes/CollisionContext;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+697: dup
+698: astore astore 34
+700: invokevirtual net/minecraft/world/phys/shapes/VoxelShape.isEmpty()Z
+703: ifne -> 740
+706: aload aload 34
+708: getstatic net/minecraft/core/Direction$Axis.YLnet/minecraft/core/Direction$Axis;
+711: invokevirtual net/minecraft/world/phys/shapes/VoxelShape.max(Lnet/minecraft/core/Direction$Axis;)D
+714: d2f
+715: aload aload 38
+717: invokevirtual net/minecraft/core/BlockPos.getY()I
+720: i2f
+721: fadd
+722: fstore fstore 33
+724: fload fload 33
+726: f2d
+727: aload_0
+728: invokevirtual net/minecraft/client/player/LocalPlayer.getY()D
+731: dsub
+732: fload fload 17
+734: f2d
+735: dcmpl
+736: ifle -> 740
+739: return
+740: iload iload 37
+742: iconst_1
+743: if_icmple -> 784
+746: aload aload 13
+748: invokevirtual net/minecraft/core/BlockPos.above()Lnet/minecraft/core/BlockPos;
+751: astore astore 13
+753: aload_0
+754: invokevirtual net/minecraft/client/player/LocalPlayer.level()Lnet/minecraft/world/level/Level;
+757: aload aload 13
+759: invokevirtual net/minecraft/world/level/Level.getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+762: astore astore 40
+764: aload aload 40
+766: aload_0
+767: invokevirtual net/minecraft/client/player/LocalPlayer.level()Lnet/minecraft/world/level/Level;
+770: aload aload 13
+772: aload aload 12
+774: invokevirtual net/minecraft/world/level/block/state/BlockState.getCollisionShape(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/shapes/CollisionContext;)Lnet/minecraft/world/phys/shapes/VoxelShape;
+777: invokevirtual net/minecraft/world/phys/shapes/VoxelShape.isEmpty()Z
+780: ifne -> 784
+783: return
+784: iinc 37 1
+787: goto -> 655
+790: goto -> 793
+793: fload fload 33
+795: ldc_w float 1.401298464324817e-45
+798: fcmpl
+799: ifne -> 803
+802: return
+803: fload fload 33
+805: f2d
+806: aload_0
+807: invokevirtual net/minecraft/client/player/LocalPlayer.getY()D
+810: dsub
+--- net.minecraft.client.player.LocalPlayer.lambda$updateAutoJump$0(Lnet/minecraft/world/phys/shapes/VoxelShape;)Ljava/util/stream/Stream;
+0: aload_0
+1: invokevirtual net/minecraft/world/phys/shapes/VoxelShape.toAabbs()Ljava/util/List;
+4: invokeinterface java/util/List.stream()Ljava/util/stream/Stream;
+7: aconst_null
+8: nop
+9: areturn
+
+[2] canAutoJump() FULL body
+--- net.minecraft.client.player.LocalPlayer.canAutoJump()Z
+0: aload_0
+1: invokevirtual net/minecraft/client/player/LocalPlayer.isAutoJumpEnabled()Z
+4: ifeq -> 56
+7: aload_0
+8: getfield net/minecraft/client/player/LocalPlayer.autoJumpTimeI
+11: ifgt -> 56
+14: aload_0
+15: invokevirtual net/minecraft/client/player/LocalPlayer.onGround()Z
+18: ifeq -> 56
+21: aload_0
+22: invokevirtual net/minecraft/client/player/LocalPlayer.isStayingOnGroundSurface()Z
+25: ifne -> 56
+28: aload_0
+29: invokevirtual net/minecraft/client/player/LocalPlayer.isPassenger()Z
+32: ifne -> 56
+35: aload_0
+36: invokevirtual net/minecraft/client/player/LocalPlayer.isMoving()Z
+39: ifeq -> 56
+42: aload_0
+43: invokevirtual net/minecraft/client/player/LocalPlayer.getBlockJumpFactor()F
+46: f2d
+47: dconst_1
+48: dcmpl
+49: iflt -> 56
+52: iconst_1
+53: goto -> 57
+56: iconst_0
+57: ireturn
+
+[3] aiStep pc window 160-230 (the autoJumpTime countdown ride)
+324: dmul
+325: dadd
+326: aload_0
+327: invokevirtual net/minecraft/client/player/LocalPlayer.getZ()D
+330: aload_0
+331: invokevirtual net/minecraft/client/player/LocalPlayer.getBbWidth()F
+334: f2d
+335: ldc2_w double 4599976659396224614
+338: dmul
+339: dadd
+340: invokevirtual net/minecraft/client/player/LocalPlayer.moveTowardsClosestSpace(DD)V
+343: iload_2
+344: ifne -> 374
+347: aload_0
+348: invokevirtual net/minecraft/client/player/LocalPlayer.isSlowDueToUsingItem()Z
+351: ifeq -> 361
+354: aload_0
+355: invokevirtual net/minecraft/client/player/LocalPlayer.isPassenger()Z
+358: ifeq -> 374
+361: aload_0
+362: getfield net/minecraft/client/player/LocalPlayer.inputLnet/minecraft/client/player/ClientInput;
+365: getfield net/minecraft/client/player/ClientInput.keyPressesLnet/minecraft/world/entity/player/Input;
+368: invokevirtual net/minecraft/world/entity/player/Input.backward()Z
+371: ifeq -> 379
+374: aload_0
+375: iconst_0
+376: putfield net/minecraft/client/player/LocalPlayer.sprintTriggerTimeI
+379: aload_0
+380: invokevirtual net/minecraft/client/player/LocalPlayer.canStartSprinting()Z
+383: ifeq -> 446
+386: iload_3
+387: ifne -> 428
+390: aload_0
+391: getfield net/minecraft/client/player/LocalPlayer.sprintTriggerTimeI
+394: ifle -> 405
+397: aload_0
+398: iconst_1
+399: invokevirtual net/minecraft/client/player/LocalPlayer.setSprinting(Z)V
+402: goto -> 428
+405: aload_0
+406: aload_0
+407: getfield net/minecraft/client/player/LocalPlayer.minecraftLnet/minecraft/client/Minecraft;
+410: getfield net/minecraft/client/Minecraft.optionsLnet/minecraft/client/Options;
+413: invokevirtual net/minecraft/client/Options.sprintWindow()Lnet/minecraft/client/OptionInstance;
+416: invokevirtual net/minecraft/client/OptionInstance.get()Ljava/lang/Object;
+419: checkcast java/lang/Integer
+422: invokevirtual java/lang/Integer.intValue()I
+425: putfield net/minecraft/client/player/LocalPlayer.sprintTriggerTimeI
+428: aload_0
+429: getfield net/minecraft/client/player/LocalPlayer.inputLnet/minecraft/client/player/ClientInput;
+432: getfield net/minecraft/client/player/ClientInput.keyPressesLnet/minecraft/world/entity/player/Input;
+435: invokevirtual net/minecraft/world/entity/player/Input.sprint()Z
+438: ifeq -> 446
+441: aload_0
+442: iconst_1
+443: invokevirtual net/minecraft/client/player/LocalPlayer.setSprinting(Z)V
+446: aload_0
+447: invokevirtual net/minecraft/client/player/LocalPlayer.isSprinting()Z
+450: ifeq -> 487
+453: aload_0
+454: invokevirtual net/minecraft/client/player/LocalPlayer.isSwimming()Z
+457: ifeq -> 475
+460: aload_0
+461: invokevirtual net/minecraft/client/player/LocalPlayer.shouldStopSwimSprinting()Z
+464: ifeq -> 487
+467: aload_0
+468: iconst_0
+469: invokevirtual net/minecraft/client/player/LocalPlayer.setSprinting(Z)V
+472: goto -> 487
+475: aload_0
+
+[4] call-sites of updateAutoJump + isAutoJumpEnabled across LocalPlayer
+--- move(Lnet/minecraft/world/entity/MoverType;Lnet/minecraft/world/phys/Vec3;)V
+   41: invokevirtual net/minecraft/client/player/LocalPlayer.updateAutoJump(FF)V
+--- canAutoJump()Z
+   1: invokevirtual net/minecraft/client/player/LocalPlayer.isAutoJumpEnabled()Z
