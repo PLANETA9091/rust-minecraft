@@ -39311,11 +39311,23 @@ impl App {
     /// THE CHUNK BORDERS' OWN TOGGLE (the F3+G chord's own lane —
     /// the debug-entry flip the audited refreshRendererList gate
     /// serves, the persistence the entry system's own law keeps: no
-    /// overlay raise, the borders the world draw alone speaks). The
+    /// overlay raise, the borders the world draw alone speaks). THE
+    /// YELLOW WORD (the hdk_262.txt pc 275-296 walk the
+    /// debugFeedbackTranslated pair answers — the feedback_words_206.py
+    /// probe the cp#294/#296 strings the `debug.chunk_boundaries.on` /
+    /// `.off` keys read, the lang rows the words keep: `Chunk borders:
+    /// shown` / `Chunk borders: hidden`, the ChatFormatting.YELLOW the
+    /// `§e` prefix the dev-168's own showDebugChat walk wears). The
     /// modifier-spent flag the bare F3 release gate reads rides —
     /// the chord the F3 modifier's own family joins.
     pub fn on_chunk_borders_key(&mut self) {
         self.chunk_borders = !self.chunk_borders;
+        let word = if self.chunk_borders {
+            "\u{a7}eChunk borders: shown"
+        } else {
+            "\u{a7}eChunk borders: hidden"
+        };
+        self.push_chat_message(word.to_string());
         self.debug_modifier_used = true;
     }
 
@@ -39326,11 +39338,23 @@ impl App {
     /// the entry, the reduced-debug-info gate the client's own
     /// vocabulary never arms (the honest constant-pass the
     /// `isReducedDebugInfo` walk keeps — no reduced-info lane the
-    /// client speaks)). The modifier-spent flag the bare F3 release
-    /// gate reads rides — the chord the F3 modifier's own family
-    /// joins.
+    /// client speaks)). THE YELLOW WORD (the hdk_262.txt pc 176-197
+    /// walk the debugFeedbackTranslated pair answers — the
+    /// feedback_words_206.py probe the cp#259/#261 strings the
+    /// `debug.show_hitboxes.on` / `.off` keys read, the lang rows the
+    /// words keep: `Hitboxes: shown` / `Hitboxes: hidden`, the
+    /// ChatFormatting.YELLOW the `§e` prefix the dev-168's own
+    /// showDebugChat walk wears). The modifier-spent flag the bare F3
+    /// release gate reads rides — the chord the F3 modifier's own
+    /// family joins.
     pub fn on_hitboxes_key(&mut self) {
         self.hitboxes = !self.hitboxes;
+        let word = if self.hitboxes {
+            "\u{a7}eHitboxes: shown"
+        } else {
+            "\u{a7}eHitboxes: hidden"
+        };
+        self.push_chat_message(word.to_string());
         self.debug_modifier_used = true;
     }
 
@@ -39338,14 +39362,24 @@ impl App {
     /// `key.debug.focusPause` binding wears — the F3+P chord the
     /// handleDebugKeys lane answers, the `options.pauseOnLostFocus`
     /// the flip serves: the default TRUE the ctor's iconst_1 banks,
-    /// the focus law's own gate the option reads. The
-    /// `debug.pause_focus.on/off` strings the vanilla lang banks —
-    /// the display the debug-entry feedback system wears, the flip
-    /// the family's own shape keeps the borders/hitboxes toggles the
-    /// same silent verdict speak). The file's row the removed()
-    /// moment's own save rides.
+    /// the focus law's own gate the option reads. THE YELLOW WORD (the
+    /// hdk_262.txt pc 787-800 walk the debugFeedbackTranslated pair
+    /// answers — the feedback_words_206.py probe the cp#437/#439
+    /// strings the `debug.pause_focus.on` / `.off` keys read, the lang
+    /// rows the words keep: `Pause on lost focus: enabled` /
+    /// `Pause on lost focus: disabled`, the ChatFormatting.YELLOW the
+    /// `§e` prefix the dev-168's own showDebugChat walk wears). The
+    /// save the removed()-moment law keeps — the handleDebugKeys the
+    /// options.save() call the advancedTooltips arm ALONE wears). The
+    /// file's row the removed() moment's own save rides.
     pub fn on_focus_pause_key(&mut self) {
         self.pause_on_lost_focus = !self.pause_on_lost_focus;
+        let word = if self.pause_on_lost_focus {
+            "\u{a7}ePause on lost focus: enabled"
+        } else {
+            "\u{a7}ePause on lost focus: disabled"
+        };
+        self.push_chat_message(word.to_string());
         self.debug_modifier_used = true;
     }
 

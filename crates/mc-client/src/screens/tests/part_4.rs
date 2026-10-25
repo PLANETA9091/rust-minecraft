@@ -10324,6 +10324,67 @@ fn the_advanced_tooltips_chord_the_flip_the_row_and_the_word_wear() {
     let _ = std::fs::remove_dir_all(&dir);
 }
 
+// THE DEBUG FEEDBACK'S OWN WORDS (the 26.2 handleDebugKeys walk the
+// debugFeedbackTranslated pairs wear — the feedback_words_206.py probe
+// the cp strings + the lang rows banks: the hitboxes@193 the
+// show_hitboxes.on/off pair, the chunkBorders@292 the
+// chunk_boundaries.on/off pair, the focusPause@796 the
+// pause_focus.on/off pair — the ChatFormatting.YELLOW the §e prefix
+// the showDebugChat walk the dev-168 lane established wears)
+#[test]
+fn the_debug_feedback_words_the_family_wears() {
+    let mut app = App::new(262);
+    app.enter_world();
+    app.spawn_offline_body();
+    // THE BORDERS' PAIR (the F3+G flip the on word speaks, the second
+    // flip the off word answers)
+    app.on_chunk_borders_key();
+    assert!(
+        app.chat_messages.last().map(|(t, _)| t.as_str()) == Some("\u{a7}eChunk borders: shown"),
+        "the on word the borders flip speaks"
+    );
+    app.on_chunk_borders_key();
+    assert!(
+        app.chat_messages.last().map(|(t, _)| t.as_str()) == Some("\u{a7}eChunk borders: hidden"),
+        "the off word the second flip answers"
+    );
+    assert!(!app.chunk_borders, "the pair the flip restores");
+    // THE HITBOXES' PAIR (the F3+B flip the same walk wears)
+    app.on_hitboxes_key();
+    assert!(
+        app.chat_messages.last().map(|(t, _)| t.as_str()) == Some("\u{a7}eHitboxes: shown"),
+        "the on word the hitboxes flip speaks"
+    );
+    app.on_hitboxes_key();
+    assert!(
+        app.chat_messages.last().map(|(t, _)| t.as_str()) == Some("\u{a7}eHitboxes: hidden"),
+        "the off word the second flip answers"
+    );
+    assert!(!app.hitboxes, "the pair the flip restores");
+    // THE FOCUS-PAUSE'S PAIR (the F3+P flip the enabled word speaks —
+    // the default true the flip the disabled word answers)
+    app.on_focus_pause_key();
+    assert!(
+        app.chat_messages.last().map(|(t, _)| t.as_str())
+            == Some("\u{a7}ePause on lost focus: disabled"),
+        "the disabled word the flip speaks"
+    );
+    app.on_focus_pause_key();
+    assert!(
+        app.chat_messages.last().map(|(t, _)| t.as_str())
+            == Some("\u{a7}ePause on lost focus: enabled"),
+        "the enabled word the second flip answers"
+    );
+    assert!(app.pause_on_lost_focus, "the pair the flip restores");
+    // THE QUEUE (the six words the chat rows wear — the count the
+    // family's own feedback bank keeps)
+    assert_eq!(app.chat_messages.len(), 6, "the six words the queue wears");
+    assert!(
+        app.debug_modifier_used,
+        "the flag the last lane's spend wears"
+    );
+}
+
 // THE FOV EFFECT SCALE'S OWN ROW (the 26.2 AccessibilityOptionsScreen
 // row the file's law wears — the fov_scale_tail_262.py probe the
 // Camera.tickFov read the body's tick passes: the boot load the body's

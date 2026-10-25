@@ -1,0 +1,60 @@
+=== reloadChunk (pc 101..130)
+    122: ldc debug.reload_chunks.message
+    124: invokevirtual net/minecraft/client/KeyboardHandler.debugFeedbackTranslated(Ljava/lang/String;)V
+    128: istore_3
+=== showHitboxes (pc 156..198)
+    176: istore istore 4
+    184: ldc_w ldcw@259
+        -> utf8: 'debug.show_hitboxes.on'
+    190: ldc_w ldcw@261
+        -> utf8: 'debug.show_hitboxes.off'
+    193: invokevirtual net/minecraft/client/KeyboardHandler.debugFeedbackTranslated(Ljava/lang/String;)V
+    197: istore_3
+=== showChunkBorders (pc 228..298)
+    275: istore istore 4
+    283: ldc_w ldcw@294
+        -> utf8: 'debug.chunk_boundaries.on'
+    289: ldc_w ldcw@296
+        -> utf8: 'debug.chunk_boundaries.off'
+    292: invokevirtual net/minecraft/client/KeyboardHandler.debugFeedbackTranslated(Ljava/lang/String;)V
+    296: istore_3
+=== spectate (pc 421..469)
+    463: ldc_w ldcw@349
+        -> utf8: 'debug.creative_spectator.error'
+    466: invokevirtual net/minecraft/client/KeyboardHandler.debugFeedbackTranslated(Ljava/lang/String;)V
+=== switchGameMode (pc 557..651)
+    642: ldc_w ldcw@415
+        -> utf8: 'debug.gamemodes.error'
+    645: invokevirtual net/minecraft/client/KeyboardHandler.debugFeedbackTranslated(Ljava/lang/String;)V
+    649: istore_3
+=== focusPause (pc 749..802)
+    787: ldc_w ldcw@437
+        -> utf8: 'debug.pause_focus.on'
+    793: ldc_w ldcw@439
+        -> utf8: 'debug.pause_focus.off'
+    796: invokevirtual net/minecraft/client/KeyboardHandler.debugFeedbackTranslated(Ljava/lang/String;)V
+    800: istore_3
+=== reloadResourcePacks (pc 905..933)
+    916: ldc_w ldcw@503
+        -> utf8: 'debug.reload_resourcepacks.message'
+    919: invokevirtual net/minecraft/client/KeyboardHandler.debugFeedbackTranslated(Ljava/lang/String;)V
+    931: istore_3
+=== copyLocation (pc 1004..1044)
+    1038: ldc_w ldcw@540
+        -> utf8: 'debug.copy_location.message'
+    1041: invokevirtual net/minecraft/client/KeyboardHandler.debugFeedbackTranslated(Ljava/lang/String;)V
+=== dumpVersion (pc 1164..1201)
+    1175: ldc_w ldcw@606
+        -> utf8: 'debug.version.header'
+    1178: invokevirtual net/minecraft/client/KeyboardHandler.debugFeedbackTranslated(Ljava/lang/String;)V
+    1199: istore_3
+
+=== the lang rows (debug.*)
+  debug.pause_focus.help = F3 + P = Pause on lost focus
+  debug.pause_focus.off = Pause on lost focus: disabled
+  debug.pause_focus.on = Pause on lost focus: enabled
+  debug.reload_chunks.help = F3 + A = Reload chunks
+  debug.reload_chunks.message = Reloading all chunks
+  debug.show_hitboxes.help = F3 + B = Show hitboxes
+  debug.show_hitboxes.off = Hitboxes: hidden
+  debug.show_hitboxes.on = Hitboxes: shown
