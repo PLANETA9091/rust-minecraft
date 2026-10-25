@@ -1650,6 +1650,17 @@ pub fn run_gui_app(
             .unwrap_or_default()
             .join("options.txt"),
     );
+    // THE DEBUG PROFILE FILE'S OWN GAME DIR (the same vanilla
+    // default-game-dir law the options.txt row wears — the sibling
+    // `debug-profile.json` the cwd names, the debug entries' tri-state
+    // statuses the RESTART OUTLIVES: the pill touches + the chords'
+    // toggleStatus walks the flip moment writes, the fresh boot the
+    // statuses map wears; the headless boot the None keeps)
+    app.debug_profile_file = Some(
+        std::env::current_dir()
+            .unwrap_or_default()
+            .join("debug-profile.json"),
+    );
     app.options_file_load();
     app.offline_held_updated(held_item);
     app.offline_offhand_updated(offhand_item);

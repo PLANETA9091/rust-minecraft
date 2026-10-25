@@ -8970,6 +8970,14 @@ pub struct App {
     /// determinism keeps — the hotbar/containers/world-edits lanes the
     /// same game-dir law wear).
     pub options_file: Option<std::path::PathBuf>,
+    /// THE DEBUG PROFILE FILE'S OWN PATH (the same default-game-dir law
+    /// the options.txt row wears — the sibling `debug-profile.json` the
+    /// cwd names, the debug entries' tri-state statuses the RESTART
+    /// OUTLIVES: the pill touches the chords' toggleStatus walks the
+    /// file's statuses map the flip moment writes, the fresh boot the
+    /// map's words wear; the headless boot the None the determinism
+    /// keeps — the goldens' own boots the lane never spends).
+    pub debug_profile_file: Option<std::path::PathBuf>,
     /// THE LOAD'S OWN ONCE-FLAG (the same lazy bank the hotbar/container
     /// lanes wear — the boot call the file's truth speaks, the later
     /// chords the in-memory stores keep).
@@ -11164,6 +11172,7 @@ impl App {
             sprint_window_drag: false,
             notification_display_time: 1.0,
             options_file: None,
+            debug_profile_file: None,
             options_file_loaded: false,
             creative_palette: [(0, 0); 45],
             creative_tab: 0,
@@ -33883,6 +33892,10 @@ impl App {
             return;
         }
         self.options_file_loaded = true;
+        // THE DEBUG PROFILE'S OWN READ (the sibling file the same boot
+        // answers — the statuses map the fresh boot's bank wears, the
+        // missing file the defaults keep)
+        self.debug_profile_load();
         let Some(path) = self.options_file.clone() else {
             return;
         };
@@ -33963,6 +33976,88 @@ impl App {
             key_binds: self.key_binds,
         };
         file.save(path);
+    }
+
+    /// THE DEBUG PROFILE FILE'S OWN LOAD WALK (the debug-profile.json
+    /// sibling the options.txt game dir wears — the fresh boot the
+    /// statuses map's words wear: the id the row bank's own seat asks,
+    /// the unknown id the skip law keeps, the unknown word the skip law
+    /// keeps, the missing file / the malformed JSON the defaults keep
+    /// — the same decode-failure law the Options.load defaults wear).
+    /// THE PROFILE WORD the tri-state field wears (the "default" the
+    /// Some(false) preset keeps, the "performance" the Some(true)
+    /// speaks, the null the CUSTOM identity answers — the missing row
+    /// the current seat keeps). The None seat the no-file stand-in
+    /// keeps — the headless boots the determinism bank never spends.
+    pub fn debug_profile_load(&mut self) {
+        let Some(path) = self.debug_profile_file.clone() else {
+            return;
+        };
+        let Ok(text) = std::fs::read_to_string(&path) else {
+            return;
+        };
+        let Ok(root) = serde_json::from_str::<serde_json::Value>(&text) else {
+            return;
+        };
+        match root.get("profile") {
+            Some(serde_json::Value::String(w)) if w == "default" => {
+                self.debug_profile = Some(false);
+            }
+            Some(serde_json::Value::String(w)) if w == "performance" => {
+                self.debug_profile = Some(true);
+            }
+            Some(_) => self.debug_profile = None,
+            None => {}
+        }
+        let Some(statuses) = root.get("statuses").and_then(|v| v.as_object()) else {
+            return;
+        };
+        for (id, word) in statuses {
+            let Some(word) = word.as_str() else {
+                continue;
+            };
+            let Some(idx) = DEBUG_ENTRY_ROWS.iter().position(|(row, _)| row == id) else {
+                continue;
+            };
+            let status = match word {
+                "ALWAYS" => DebugEntryStatus::Always,
+                "OVERLAY" => DebugEntryStatus::Overlay,
+                "NEVER" => DebugEntryStatus::Never,
+                _ => continue,
+            };
+            self.debug_entry_states[idx] = status;
+        }
+    }
+
+    /// THE DEBUG PROFILE FILE'S OWN SAVE WALK (the statuses map the
+    /// flip moment writes — the pill touches + the preset buttons the
+    /// chords' toggleStatus walks the immediate save the advanced
+    /// tooltips lane speaks; the whole 45-row bank the deterministic
+    /// order the row bank keeps, the pretty JSON the file wears). The
+    /// None seat the no-game-dir stand-in keeps — the in-memory store
+    /// the truth stays.
+    pub fn debug_profile_save(&self) {
+        let Some(path) = &self.debug_profile_file else {
+            return;
+        };
+        let profile = match self.debug_profile {
+            Some(false) => serde_json::json!("default"),
+            Some(true) => serde_json::json!("performance"),
+            None => serde_json::Value::Null,
+        };
+        let mut statuses = serde_json::Map::new();
+        for (idx, (id, _)) in DEBUG_ENTRY_ROWS.iter().enumerate() {
+            let word = match self.debug_entry_states[idx] {
+                DebugEntryStatus::Always => "ALWAYS",
+                DebugEntryStatus::Overlay => "OVERLAY",
+                DebugEntryStatus::Never => "NEVER",
+            };
+            statuses.insert((*id).to_string(), serde_json::json!(word));
+        }
+        let root = serde_json::json!({"profile": profile, "statuses": statuses});
+        if let Ok(text) = serde_json::to_string_pretty(&root) {
+            let _ = std::fs::write(path, text + "\n");
+        }
     }
 
     /// THE REBIND'S OWN CAPTURE (the KeyBindsScreen.keyPressed walk
@@ -37238,11 +37333,13 @@ impl App {
                     self.debug_profile = Some(false);
                     self.fps_charts = false;
                     self.debug_entry_states = [DebugEntryStatus::Never; 45];
+                    self.debug_profile_save();
                 }
                 "dbgprofperf" => {
                     self.debug_profile = Some(true);
                     self.fps_charts = true;
                     self.debug_entry_states = [DebugEntryStatus::Never; 45];
+                    self.debug_profile_save();
                 }
                 // THE ENTRY ROWS' OWN PILLS (javap 26.2 the
                 // OptionEntry CycleButton trio — the click the
@@ -37260,6 +37357,7 @@ impl App {
                         if idx < self.debug_entry_states.len() {
                             self.debug_entry_states[idx] = DebugEntryStatus::Always;
                             self.debug_profile = None;
+                            self.debug_profile_save();
                         }
                     }
                 }
@@ -37268,6 +37366,7 @@ impl App {
                         if idx < self.debug_entry_states.len() {
                             self.debug_entry_states[idx] = DebugEntryStatus::Overlay;
                             self.debug_profile = None;
+                            self.debug_profile_save();
                         }
                     }
                 }
@@ -37276,6 +37375,7 @@ impl App {
                         if idx < self.debug_entry_states.len() {
                             self.debug_entry_states[idx] = DebugEntryStatus::Never;
                             self.debug_profile = None;
+                            self.debug_profile_save();
                         }
                     }
                 }
@@ -40691,6 +40791,10 @@ impl App {
             }
             DebugEntryStatus::Never => DebugEntryStatus::Always,
         };
+        // THE FILE'S OWN RIDE (the toggleStatus's word the profile file
+        // the same flip moment writes — the restart the chord's own
+        // answer outlives)
+        self.debug_profile_save();
         let shown = self.debug_entry_states[CHUNK_BORDERS_ENTRY] == DebugEntryStatus::Always;
         let word = if shown {
             "\u{a7}eChunk borders: shown"
@@ -40740,6 +40844,9 @@ impl App {
             }
             DebugEntryStatus::Never => DebugEntryStatus::Always,
         };
+        // THE FILE'S OWN RIDE (the F3+B's own word the profile file the
+        // same flip moment wears)
+        self.debug_profile_save();
         let shown = self.debug_entry_states[ENTITY_HITBOXES_ENTRY] == DebugEntryStatus::Always;
         let word = if shown {
             "\u{a7}eHitboxes: shown"

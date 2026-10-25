@@ -19231,3 +19231,191 @@ fn the_debug_search_the_responder_the_filter_wears() {
         "the closed screen the gate keeps"
     );
 }
+
+// THE DEBUG PROFILE FILE'S OWN ROUND TRIP (the persistence law — the
+// debug-profile.json sibling the options.txt game dir wears: the pill
+// touches + the preset buttons the chords' toggleStatus walks the
+// flip moment writes, the fresh boot the statuses map's words wear,
+// the missing file / the malformed JSON the defaults keep)
+#[test]
+fn the_debug_profile_file_the_statuses_restart_outlives() {
+    let dir = std::env::temp_dir().join(format!(
+        "mc2rs_debug_profile_{}",
+        std::process::id()
+    ));
+    let _ = std::fs::create_dir_all(&dir);
+    let path = dir.join("debug-profile.json");
+    let _ = std::fs::remove_file(&path);
+    let mut app = App::new(262);
+    app.enter_world();
+    app.debug_profile_file = Some(path.clone());
+    // THE MISSING FILE the defaults keep (the read head's own law —
+    // no file, no guess)
+    app.debug_profile_load();
+    assert_eq!(
+        app.debug_entry_states[crate::screens::CHUNK_BORDERS_ENTRY],
+        crate::screens::DebugEntryStatus::Never,
+        "the missing file the defaults keep"
+    );
+    assert_eq!(
+        app.debug_profile,
+        Some(false),
+        "the default the identity keeps"
+    );
+    // THE PILL TOUCH'S OWN SAVE RIDE (the real render the buttons
+    // arm, the yellow pill the flip the file the same moment writes
+    // — the fps TEXT row the seat-8 pill the visible window wears,
+    // the manual touch the profile identity breaks)
+    let mut fb = crate::raster::Framebuf::new(640, 360);
+    let mut assets = GuiAssets::open(assets_root());
+    app.on_debug_options_key(); // the open arm the DebugOptions serves
+    app.render(&mut fb, &mut assets);
+    let overlay_fps = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "dbgoverlay" && b.label == "8")
+        .expect("the fps row the overlay pill wears")
+        .clone();
+    app.on_click(overlay_fps.x + overlay_fps.w / 2, overlay_fps.y + 10);
+    assert_eq!(
+        app.debug_entry_states[8],
+        crate::screens::DebugEntryStatus::Overlay,
+        "the yellow pill the IN_OVERLAY banks"
+    );
+    assert_eq!(
+        app.debug_profile, None,
+        "the touch the identity breaks"
+    );
+    let text = std::fs::read_to_string(&path).expect("the pill the file writes");
+    let root: serde_json::Value =
+        serde_json::from_str(&text).expect("the file the JSON wears");
+    assert_eq!(
+        root["profile"],
+        serde_json::Value::Null,
+        "the custom the null word wears"
+    );
+    assert_eq!(
+        root["statuses"]["fps"], "OVERLAY",
+        "the touched row the word banks"
+    );
+    assert_eq!(
+        root["statuses"]["biome"], "NEVER",
+        "the rest the NEVER word keeps"
+    );
+    assert_eq!(
+        root["statuses"].as_object().map(|m| m.len()),
+        Some(45),
+        "the whole bank the file wears"
+    );
+    // THE RESTART (the fresh boot the file's truth wears — the fresh
+    // ctor the defaults the map's words overwrite)
+    let mut app2 = App::new(262);
+    app2.debug_profile_file = Some(path.clone());
+    app2.debug_profile_load();
+    assert_eq!(
+        app2.debug_entry_states[8],
+        crate::screens::DebugEntryStatus::Overlay,
+        "the touched seat the restart outlives"
+    );
+    assert_eq!(
+        app2.debug_entry_states[crate::screens::CHUNK_BORDERS_ENTRY],
+        crate::screens::DebugEntryStatus::Never,
+        "the untouched seat the default keeps"
+    );
+    assert_eq!(
+        app2.debug_profile, None,
+        "the custom word the restart outlives"
+    );
+    // THE CHORD'S OWN RIDE (the F3+G toggleStatus the file the same
+    // flip moment writes — the close the DebugOptions the World
+    // serves first, the chord the world's own lane wears)
+    app.on_debug_options_key(); // the close arm
+    app.on_chunk_borders_key();
+    assert_eq!(
+        app.debug_entry_states[crate::screens::CHUNK_BORDERS_ENTRY],
+        crate::screens::DebugEntryStatus::Always,
+        "the chord the ALWAYS_ON raises"
+    );
+    let text2 = std::fs::read_to_string(&path).expect("the chord the file writes");
+    let root2: serde_json::Value =
+        serde_json::from_str(&text2).expect("the rewrite the JSON keeps");
+    assert_eq!(
+        root2["statuses"]["chunk_borders"], "ALWAYS",
+        "the chord's own word the file wears"
+    );
+    // THE PRESET BUTTON'S OWN RIDE (the dbgprofperf click the
+    // PERFORMANCE identity + the bank reset the file the same moment
+    // writes — the pills the fresh render rebuilds)
+    app.on_debug_options_key(); // the re-open
+    app.render(&mut fb, &mut assets);
+    let perf = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "dbgprofperf")
+        .expect("the performance row wears")
+        .clone();
+    app.on_click(perf.x + perf.w / 2, perf.y + 10);
+    assert_eq!(
+        app.debug_profile,
+        Some(true),
+        "the preset the PERFORMANCE banks"
+    );
+    let text3 = std::fs::read_to_string(&path).expect("the preset the file writes");
+    let root3: serde_json::Value =
+        serde_json::from_str(&text3).expect("the rewrite the JSON keeps");
+    assert_eq!(
+        root3["profile"], "performance",
+        "the preset's own word the file wears"
+    );
+    assert_eq!(
+        root3["statuses"]["fps"], "NEVER",
+        "the preset the bank reset wears"
+    );
+    // THE MALFORMED FILE the defaults keep (the decode failure the
+    // same law the Options.load defaults wear)
+    std::fs::write(&path, "not json at all").expect("the probe the file writes");
+    let mut app3 = App::new(262);
+    app3.debug_profile_file = Some(path.clone());
+    app3.debug_profile_load();
+    assert_eq!(
+        app3.debug_entry_states[8],
+        crate::screens::DebugEntryStatus::Never,
+        "the malformed file the defaults keep"
+    );
+    assert_eq!(
+        app3.debug_profile,
+        Some(false),
+        "the malformed file the identity keeps"
+    );
+    // THE UNKNOWN ROWS the skip law keeps (the unknown id + the
+    // unknown word the known seats never touch, the profile word the
+    // PERFORMANCE field wears)
+    std::fs::write(
+        &path,
+        r#"{"profile":"performance","statuses":{"nonsense":"ALWAYS","fps":"SOMETIMES"}}"#,
+    )
+    .expect("the probe the file writes");
+    let mut app4 = App::new(262);
+    app4.debug_profile_file = Some(path.clone());
+    app4.debug_profile_load();
+    assert_eq!(
+        app4.debug_entry_states[8],
+        crate::screens::DebugEntryStatus::Never,
+        "the unknown word the seat keeps"
+    );
+    assert_eq!(
+        app4.debug_profile,
+        Some(true),
+        "the known word the field wears"
+    );
+    // THE NONE SEAT the silent keep answers (the headless boot the
+    // determinism bank never spends)
+    let mut app5 = App::new(262);
+    app5.debug_profile_save();
+    app5.debug_profile_load();
+    assert_eq!(
+        app5.debug_entry_states[8],
+        crate::screens::DebugEntryStatus::Never,
+        "the none seat the defaults keep"
+    );
+}
