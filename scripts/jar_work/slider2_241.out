@@ -1,0 +1,176 @@
+[FIELDS] AbstractSliderButton:
+  field SLIDER_SPRITE Lnet/minecraft/resources/Identifier;
+  field HIGHLIGHTED_SPRITE Lnet/minecraft/resources/Identifier;
+  field SLIDER_HANDLE_SPRITE Lnet/minecraft/resources/Identifier;
+  field SLIDER_HANDLE_HIGHLIGHTED_SPRITE Lnet/minecraft/resources/Identifier;
+  field TEXT_MARGIN I
+  field DEFAULT_HEIGHT I
+  field HANDLE_WIDTH I
+  field HANDLE_HALF_WIDTH I
+  field value D
+  field canChangeValue Z
+  field dragging Z
+========================================================================
+[C] net/minecraft/client/gui/components/AbstractSliderButton
+------------------------------------------------------------------------
+--- getSprite()Lnet/minecraft/resources/Identifier;
+   0: aload_0
+   1: invokevirtual net/minecraft/client/gui/components/AbstractSliderButton.isActive()Z
+   4: ifeq -> 25
+   7: aload_0
+   8: invokevirtual net/minecraft/client/gui/components/AbstractSliderButton.isFocused()Z
+   11: ifeq -> 25
+   14: aload_0
+   15: getfield net/minecraft/client/gui/components/AbstractSliderButton.canChangeValueZ
+   18: ifne -> 25
+   21: getstatic net/minecraft/client/gui/components/AbstractSliderButton.HIGHLIGHTED_SPRITELnet/minecraft/resources/Identifier;
+   24: areturn
+   25: getstatic net/minecraft/client/gui/components/AbstractSliderButton.SLIDER_SPRITELnet/minecraft/resources/Identifier;
+   28: areturn
+------------------------------------------------------------------------
+--- setFocused(Z)V
+   0: aload_0
+   1: iload_1
+   2: invokespecial net/minecraft/client/gui/components/AbstractWidget$WithInactiveMessage.setFocused(Z)V
+   5: iload_1
+   6: ifne -> 15
+   9: aload_0
+   10: iconst_0
+   11: putfield net/minecraft/client/gui/components/AbstractSliderButton.canChangeValueZ
+   14: return
+   15: invokestatic net/minecraft/client/Minecraft.getInstance()Lnet/minecraft/client/Minecraft;
+   18: invokevirtual net/minecraft/client/Minecraft.getLastInputType()Lnet/minecraft/client/InputType;
+   21: astore_1
+   22: aload_2
+   23: getstatic net/minecraft/client/InputType.MOUSELnet/minecraft/client/InputType;
+   26: if_acmpeq -> 36
+   29: aload_2
+   30: getstatic net/minecraft/client/InputType.KEYBOARD_TABLnet/minecraft/client/InputType;
+   33: if_acmpne -> 41
+   36: aload_0
+   37: iconst_1
+   38: putfield net/minecraft/client/gui/components/AbstractSliderButton.canChangeValueZ
+   41: return
+------------------------------------------------------------------------
+--- keyPressed(Lnet/minecraft/client/input/KeyEvent;)Z
+   0: aload_1
+   1: invokevirtual net/minecraft/client/input/KeyEvent.isSelection()Z
+   4: ifeq -> 25
+   7: aload_0
+   8: aload_0
+   9: getfield net/minecraft/client/gui/components/AbstractSliderButton.canChangeValueZ
+   12: ifne -> 19
+   15: iconst_1
+   16: goto -> 20
+   19: iconst_0
+   20: putfield net/minecraft/client/gui/components/AbstractSliderButton.canChangeValueZ
+   23: iconst_1
+   24: ireturn
+   25: aload_0
+   26: getfield net/minecraft/client/gui/components/AbstractSliderButton.canChangeValueZ
+   29: ifeq -> 85
+   32: aload_1
+   33: invokevirtual net/minecraft/client/input/KeyEvent.isLeft()Z
+   36: istore_2
+   37: aload_1
+   38: invokevirtual net/minecraft/client/input/KeyEvent.isRight()Z
+   41: istore_3
+   42: iload_2
+   43: ifne -> 50
+   46: iload_3
+   47: ifeq -> 85
+   50: iload_2
+   51: ifeq -> 59
+   54: ldc float -1.0
+   56: goto -> 60
+   59: fconst_1
+   60: fstore fstore 4
+   62: aload_0
+   63: aload_0
+   64: getfield net/minecraft/client/gui/components/AbstractSliderButton.valueD
+   67: fload fload 4
+   69: aload_0
+   70: getfield net/minecraft/client/gui/components/AbstractSliderButton.widthI
+   73: bipush 8
+   75: isub
+   76: i2f
+   77: fdiv
+   78: f2d
+   79: dadd
+   80: invokevirtual net/minecraft/client/gui/components/AbstractSliderButton.setValue(D)V
+   83: iconst_1
+   84: ireturn
+   85: iconst_0
+   86: ireturn
+------------------------------------------------------------------------
+--- setValueFromMouse(Lnet/minecraft/client/input/MouseButtonEvent;)V
+   0: aload_0
+   1: aload_1
+   2: invokevirtual net/minecraft/client/input/MouseButtonEvent.x()D
+   5: aload_0
+   6: invokevirtual net/minecraft/client/gui/components/AbstractSliderButton.getX()I
+   9: iconst_4
+   10: iadd
+   11: i2d
+   12: dsub
+   13: aload_0
+   14: getfield net/minecraft/client/gui/components/AbstractSliderButton.widthI
+   17: bipush 8
+   19: isub
+   20: i2d
+   21: ddiv
+   22: invokevirtual net/minecraft/client/gui/components/AbstractSliderButton.setValue(D)V
+   25: return
+------------------------------------------------------------------------
+--- setValue(D)V
+   0: aload_0
+   1: getfield net/minecraft/client/gui/components/AbstractSliderButton.valueD
+   4: dstore_3
+   5: aload_0
+   6: dload_1
+   7: dconst_0
+   8: dconst_1
+   9: invokestatic net/minecraft/util/Mth.clamp(DDD)D
+   12: putfield net/minecraft/client/gui/components/AbstractSliderButton.valueD
+   15: dload_3
+   16: aload_0
+   17: getfield net/minecraft/client/gui/components/AbstractSliderButton.valueD
+   20: dcmpl
+   21: ifeq -> 28
+   24: aload_0
+   25: invokevirtual net/minecraft/client/gui/components/AbstractSliderButton.applyValue()V
+   28: aload_0
+   29: invokevirtual net/minecraft/client/gui/components/AbstractSliderButton.updateMessage()V
+   32: return
+------------------------------------------------------------------------
+--- onDrag(Lnet/minecraft/client/input/MouseButtonEvent;DD)V
+   0: aload_0
+   1: aload_1
+   2: invokevirtual net/minecraft/client/gui/components/AbstractSliderButton.setValueFromMouse(Lnet/minecraft/client/input/MouseButtonEvent;)V
+   5: aload_0
+   6: aload_1
+   7: dload_2
+   8: dload
+   9: iconst_1
+   10: invokespecial net/minecraft/client/gui/components/AbstractWidget$WithInactiveMessage.onDrag(Lnet/minecraft/client/input/MouseButtonEvent;DD)V
+   13: return
+========================================================================
+[D] net/minecraft/client/gui/components/AbstractWidget
+------------------------------------------------------------------------
+--- isHoveredOrFocused()Z
+   0: aload_0
+   1: invokevirtual net/minecraft/client/gui/components/AbstractWidget.isHovered()Z
+   4: ifne -> 14
+   7: aload_0
+   8: invokevirtual net/minecraft/client/gui/components/AbstractWidget.isFocused()Z
+   11: ifeq -> 18
+   14: iconst_1
+   15: goto -> 19
+   18: iconst_0
+   19: ireturn
+------------------------------------------------------------------------
+--- setFocused(Z)V
+   0: aload_0
+   1: iload_1
+   2: putfield net/minecraft/client/gui/components/AbstractWidget.focusedZ
+   5: return

@@ -1,0 +1,22 @@
+========================================================================
+[A] net/minecraft/client/gui/components/AbstractSliderButton
+------------------------------------------------------------------------
+--- getHandleSprite()Lnet/minecraft/resources/Identifier;
+   0: aload_0
+   1: invokevirtual net/minecraft/client/gui/components/AbstractSliderButton.isActive()Z
+   4: ifeq -> 25
+   7: aload_0
+   8: getfield net/minecraft/client/gui/components/AbstractSliderButton.isHoveredZ
+   11: ifne -> 21
+   14: aload_0
+   15: getfield net/minecraft/client/gui/components/AbstractSliderButton.canChangeValueZ
+   18: ifeq -> 25
+   21: getstatic net/minecraft/client/gui/components/AbstractSliderButton.SLIDER_HANDLE_HIGHLIGHTED_SPRITELnet/minecraft/resources/Identifier;
+   24: areturn
+   25: getstatic net/minecraft/client/gui/components/AbstractSliderButton.SLIDER_HANDLE_SPRITELnet/minecraft/resources/Identifier;
+   28: areturn
+========================================================================
+[B] the class's own method inventory (render-adjacent names):
+   getHandleSprite()Lnet/minecraft/resources/Identifier;
+   getSprite()Lnet/minecraft/resources/Identifier;
+   setFocused(Z)V

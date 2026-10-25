@@ -5534,9 +5534,17 @@ pub struct Button {
     /// THE WIDGET'S OWN FOCUSED FLAG (the AbstractWidget's `focused`
     /// field — the Tab walk's seat the render arm answers, the
     /// `isHoveredOrFocused` law the highlighted sprite the focused
-    /// frame wears, the plain button path alone [the slider's own
-    /// focus render the follow-up keeps]).
+    /// frame wears, the plain button path alone [the slider the
+    /// track-frame arm the own 26.2 law keeps]).
     pub focused: bool,
+    /// THE SLIDER'S OWN KEYBOARD GRAB (the AbstractSliderButton's
+    /// `canChangeValue` field — the setFocused(true) the MOUSE or
+    /// KEYBOARD_TAB input arms, the Enter/Space the toggle wears,
+    /// the Left/Right the ±1/(width-8) adjust serves [the walk the
+    /// focus plumbing the follow-up round banks], the handle's
+    /// highlighted sprite the grabbed seat lights, the track's own
+    /// frame the not-grabbed focus wears).
+    pub can_change_value: bool,
 }
 
 impl Button {
@@ -5551,6 +5559,7 @@ impl Button {
             id,
             value: None,
             focused: false,
+            can_change_value: false,
         }
     }
 
@@ -5563,18 +5572,24 @@ impl Button {
             // THE SLIDER'S OWN RENDER (the AbstractSliderButton
             // renderWidget walk — the track sprite the full rect
             // blits, the handle the 8x20 seat at `x + value*(w-8)`
-            // wears, the hovered variants the isHoveredOrFocused arm
-            // answers, the label the caption the caption lambda
-            // composed over both speaks)
+            // wears, the label the caption the caption lambda
+            // composed over both speaks). THE 26.2 TWO-SPRITE LAWS
+            // (the slider_241 probe the javap bodies bank — the
+            // getSprite the track asks, the getHandleSprite the
+            // handle): the track the focused-not-grabbed frame wears
+            // [the hover the track NEVER arms — the old hovered-only
+            // the stale 1.20 shape the honest law retires], the
+            // handle the hovered-or-grabbed seat lights, the isActive
+            // gate the inactive the plain keeps).
             let hovered = self.hovered(mx, my);
-            let track = if hovered {
+            let track = if self.active && self.focused && !self.can_change_value {
                 "widget/slider_highlighted"
             } else {
                 "widget/slider"
             };
             g.sprite_9slice(a, track, self.x, self.y, self.w, self.h);
             let hx = self.x + (v * (self.w - 8) as f64) as i32;
-            let handle = if hovered {
+            let handle = if self.active && (hovered || self.can_change_value) {
                 "widget/slider_handle_highlighted"
             } else {
                 "widget/slider_handle"

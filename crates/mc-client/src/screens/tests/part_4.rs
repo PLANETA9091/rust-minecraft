@@ -9538,6 +9538,110 @@ fn the_look_lane_wears_the_stored_sensitivity() {
     );
 }
 
+/// THE SLIDER'S OWN FOCUS RENDER (the autopush-241 walk — the
+/// AbstractSliderButton's 26.2 getSprite/getHandleSprite laws the two
+/// sprite arms serve, the slider_241 probe the javap bodies bank: the
+/// track the focused-not-grabbed frame wears [the hover the track
+/// NEVER arms — the old hovered-only track the stale shape the honest
+/// law retires], the handle the hovered-or-grabbed seat lights, the
+/// isActive gate the inactive the plain keeps, the Enter/Space the
+/// canChangeValue toggle the grab arms [the field the probe banks]).
+#[test]
+fn the_slider_s_own_focus_render_the_track_frame_the_grabbed_handle_wear() {
+    fn sample(fb: &crate::raster::Framebuf, x0: i32, x1: i32, y0: i32, y1: i32) -> Vec<[u8; 3]> {
+        let mut out = Vec::new();
+        for y in y0..y1 {
+            for x in x0..x1 {
+                let i = (y as usize * fb.w + x as usize) * 3;
+                out.push([fb.color[i], fb.color[i + 1], fb.color[i + 2]]);
+            }
+        }
+        out
+    }
+    let root = crate::screens::tests::assets_root();
+    let mut assets = GuiAssets::open(&root);
+    let mut fb = crate::raster::Framebuf::new(240, 40);
+    let mut draw =
+        |b: &Button, assets: &mut GuiAssets, fb: &mut crate::raster::Framebuf, mx: i32, my: i32| {
+            let mut g = Gui::new(fb, 1);
+            b.render(&mut g, assets, mx, my);
+        };
+    let mut b = Button::new("probe", "Sensitivity: 100%".to_string(), 120, 10, 200);
+    b.value = Some(0.5);
+    let hx = b.x + (0.5 * (b.w - 8) as f64) as i32;
+    // THE PLAIN SEAT (no hover, no focus, no grab): both sprites the
+    // plain arms wear — the track probe the TOP BORDER ROW the
+    // full-row diff the sprite pair wears (the slider_241 bank: the
+    // row 0 the black-to-white border swap answers, the inner rows
+    // the side columns alone speak — the probe the row the handle
+    // never covers [the left columns the hx seat left of] keeps),
+    // the handle probe the handle's own center column the top rows
+    // the every-row diff wears
+    draw(&b, &mut assets, &mut fb, -1, -1);
+    let track_plain = sample(&fb, b.x + 2, b.x + 8, b.y, b.y + 1);
+    let handle_plain = sample(&fb, hx + 3, hx + 5, b.y + 1, b.y + 5);
+    // THE HOVERED SEAT (the mouse the track rides): the track the
+    // PLAIN keeps (the 26.2 law the hover the track never arms — the
+    // round's own divergence fix the honest answer wears), the handle
+    // the highlighted sprite wears
+    draw(&b, &mut assets, &mut fb, b.x + b.w / 2, b.y + b.h / 2);
+    let track_hovered = sample(&fb, b.x + 2, b.x + 8, b.y, b.y + 1);
+    let handle_hovered = sample(&fb, hx + 3, hx + 5, b.y + 1, b.y + 5);
+    assert_eq!(
+        track_hovered, track_plain,
+        "the hovered track the plain sprite the 26.2 law keeps"
+    );
+    assert_ne!(
+        handle_hovered, handle_plain,
+        "the hovered handle the highlighted sprite wears"
+    );
+    // THE FOCUSED SEAT (the Tab walk the focus arms, the grab the
+    // Enter never toggled): the track the highlighted frame wears,
+    // the handle the plain sprite the not-grabbed law keeps
+    b.focused = true;
+    draw(&b, &mut assets, &mut fb, -1, -1);
+    let track_focused = sample(&fb, b.x + 2, b.x + 8, b.y, b.y + 1);
+    let handle_focused = sample(&fb, hx + 3, hx + 5, b.y + 1, b.y + 5);
+    assert_ne!(
+        track_focused, track_plain,
+        "the focused track the highlighted frame wears"
+    );
+    assert_eq!(
+        handle_focused, handle_plain,
+        "the not-grabbed handle the plain sprite keeps"
+    );
+    // THE GRABBED SEAT (the canChangeValue the setFocused's TAB arm
+    // or the Enter toggle banks): the track the plain returns [the
+    // !canChangeValue conjunct refuses], the handle the highlighted
+    // wears
+    b.can_change_value = true;
+    draw(&b, &mut assets, &mut fb, -1, -1);
+    let track_grabbed = sample(&fb, b.x + 2, b.x + 8, b.y, b.y + 1);
+    let handle_grabbed = sample(&fb, hx + 3, hx + 5, b.y + 1, b.y + 5);
+    assert_eq!(
+        track_grabbed, track_plain,
+        "the grabbed seat the track the plain returns"
+    );
+    assert_ne!(
+        handle_grabbed, handle_plain,
+        "the grabbed handle the highlighted sprite wears"
+    );
+    // THE INACTIVE SEAT (the isActive gate): the focused+grabbed+hovered
+    // arms the inactive the plain keeps — both sprites the plain wear
+    b.active = false;
+    draw(&b, &mut assets, &mut fb, b.x + b.w / 2, b.y + b.h / 2);
+    let track_inactive = sample(&fb, b.x + 2, b.x + 8, b.y, b.y + 1);
+    let handle_inactive = sample(&fb, hx + 3, hx + 5, b.y + 1, b.y + 5);
+    assert_eq!(
+        track_inactive, track_plain,
+        "the inactive track the plain sprite the isActive gate keeps"
+    );
+    assert_eq!(
+        handle_inactive, handle_plain,
+        "the inactive handle the plain sprite the isActive gate keeps"
+    );
+}
+
 /// THE FOV SLIDER'S OWN LAW (the `options.fov` OptionInstance the
 /// 26.2 clinit banks — the IntRange(30, 110) the default 70 wears,
 /// the caption the ends law speaks (the 30 the options.fov.min
