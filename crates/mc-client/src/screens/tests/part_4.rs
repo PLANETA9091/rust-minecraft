@@ -19868,3 +19868,81 @@ fn the_operator_items_tab_the_permission_gate_wears() {
         "the un-opped level the gate keeps closed"
     );
 }
+
+/// THE PERMISSION ECHO'S OWN INSTALLER (javap 26.2
+/// `LocalPlayer.setPermissions` — the entity-event 24..28 word the
+/// wire lane serves): the networked world the level re-banks (the
+/// byte-24 fold the GAMEMASTER/OWNER words speak), the pre-echo
+/// window the fresh join's 0 keeps, the OFFLINE world's owner-4 word
+/// the lane NEVER touches (the enter arm the authority keeps), the
+/// gate the re-banked level the next read re-answers.
+#[test]
+fn the_permission_echo_the_wire_word_the_installer_banks() {
+    let mut app = App::new(3);
+    // THE NETWORKED JOIN'S OWN FRESH SEAT (the ctor's 0 the
+    // un-opped word keeps) — the flag the wire world's own law wears
+    app.world_is_network = true;
+    app.permission_level = 0;
+    app.operator_items_tab = true;
+    assert!(
+        !app.creative_operator_gate(),
+        "the fresh join the un-opped word keeps the gate closed"
+    );
+    // THE PRE-ECHO WINDOW: the None refresh the bank never wears
+    // (the idempotent silence the pre-packet session keeps)
+    app.live_permission_level_updated(None);
+    assert_eq!(
+        app.permission_level, 0,
+        "the None refresh the pre-echo window keeps"
+    );
+    // THE OP TURN'S OWN BYTE (the /op the byte-26 the GAMEMASTER
+    // word speaks): the bank the level-2 word wears — the
+    // canUseGameMasterBlocks ask the conjunction's own half
+    // re-answers, the gate the option's TRUE word the OPEN verdict
+    // wears
+    app.live_permission_level_updated(Some(2));
+    assert_eq!(
+        app.permission_level, 2,
+        "the op turn the GAMEMASTER level banks"
+    );
+    assert!(
+        app.creative_operator_gate(),
+        "the re-banked level the gate's own half re-answers"
+    );
+    // THE OWNER'S RUNG (the byte-28 the level-4 word speaks): the
+    // newest packet the bank replaces
+    app.live_permission_level_updated(Some(4));
+    assert_eq!(
+        app.permission_level, 4,
+        "the owner rung the level-4 word banks"
+    );
+    // THE IDEMPOTENT RE-SHIP: the unchanged word the same bank keeps
+    // (the acmp silence the vanilla putfield wears)
+    app.live_permission_level_updated(Some(4));
+    assert_eq!(
+        app.permission_level, 4,
+        "the idempotent re-ship the same bank keeps"
+    );
+    // THE DEOP TURN'S OWN BYTE (the /deop the byte-24 the
+    // NO_PERMISSIONS word speaks): the gate the level-0 word the
+    // closed verdict re-wears
+    app.live_permission_level_updated(Some(0));
+    assert_eq!(
+        app.permission_level, 0,
+        "the deop turn the NO_PERMISSIONS level banks"
+    );
+    assert!(
+        !app.creative_operator_gate(),
+        "the de-banked level the gate keeps closed"
+    );
+    // THE OFFLINE WORLD'S OWN GUARD (the enter arm the owner-4 word
+    // the authority keeps): the lane the wire world ALONE wears —
+    // the offline session the echo never touches
+    app.world_is_network = false;
+    app.permission_level = 4;
+    app.live_permission_level_updated(Some(0));
+    assert_eq!(
+        app.permission_level, 4,
+        "the offline world the owner-4 word the lane never touches"
+    );
+}

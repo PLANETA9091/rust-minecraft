@@ -489,6 +489,15 @@ pub struct SnapshotView {
     /// the idempotent re-bank the unchanged mode's acmp keeps
     /// silent).
     pub mode_word: Option<u8>,
+    /// THE PERMISSION ECHO'S OWN WORD (the model's banked entity-event
+    /// 24..28 level — the server's own op/deop turn the byte-24 fold
+    /// keeps): `None` until the wire speaks (the fresh join's
+    /// un-opped 0 the App ctor banks), `Some(level)` every refresh
+    /// ships while the echo holds (the frame thread's installer the
+    /// setPermissions walk wears — the gamemaster ask the creative
+    /// gate's own level-2 word re-answers, the idempotent re-bank the
+    /// unchanged level keeps silent).
+    pub permission_word: Option<u8>,
     /// THE ABILITIES ECHO'S OWN WORD (the model's banked
     /// ClientboundPlayerAbilitiesPacket — the server's own word the
     /// abilities wire rides): `None` until the word lands (the join
@@ -4016,6 +4025,7 @@ pub fn materialize_snapshot_view(
         // MODEL packets are the only source (the login word the login
         // phase's own lane banks)
         mode_word: None,
+        permission_word: None,
         // the join snapshot carries no abilities echo — the
         // ClientboundPlayerAbilitiesPacket the play stream's own lane
         // banks (the login word the same stream speaks)
@@ -5265,6 +5275,9 @@ impl LiveView {
                 // the mode echo rides the pose-less arm too — the
                 // server's answer the session's own truth
                 mode_word: self.model.local_game_mode(),
+                // the permission echo rides the pose-less arm beside
+                // the mode's — the op/deop turn the wire's own word
+                permission_word: self.model.own_permission_level(),
                 // the abilities echo rides the pose-less arm too — the
                 // server's word the session's own truth
                 abilities_word: self.model.abilities_word().cloned(),
@@ -5513,6 +5526,9 @@ impl LiveView {
             // the session's own truth (the idempotent re-bank the
             // installer's own acmp keeps silent)
             mode_word: self.model.local_game_mode(),
+            // the permission echo rides every refresh beside the mode's
+            // — the op/deop turn the wire's own word
+            permission_word: self.model.own_permission_level(),
             // the abilities echo rides every refresh — the server's
             // word the session's own truth (the idempotent re-bank the
             // newest word keeps)
@@ -6363,6 +6379,67 @@ mod tests {
             z.armor,
             [Some("diamond_boots"), None, None, None],
             "the drop the own row clears"
+        );
+    }
+
+    /// THE PERMISSION WORD THE PROJECTION CARRIES (the model's banked
+    /// entity-event 24..28 level the refresh ships): the pre-echo
+    /// window the honest None keeps, the packet the word rides, the
+    /// deop the newest word replaces, the idempotent hold the same
+    /// word re-ships.
+    #[test]
+    fn the_projection_carries_the_permission_word() {
+        let mut m = WorldModel::new();
+        m.apply(PlayEvent::WorldInfo(WorldInfo {
+            entity_id: 17,
+            hardcore: false,
+            dimensions: vec!["minecraft:overworld".to_string()],
+            view_distance: 8,
+            simulation_distance: 8,
+            portal_cooldown: 300,
+            current_dimension: "minecraft:overworld".to_string(),
+        }));
+        let mut view = LiveView { model: m, side: 1 };
+        // THE PRE-ECHO WINDOW: the wire never spoke — the None the
+        // fresh join's own word keeps
+        let upd = view.refresh(example_mapper);
+        assert_eq!(upd.permission_word, None, "the silence the None keeps");
+        // THE OP TURN: the byte-26 the GAMEMASTER word rides (the
+        // creative gate's own level-2 answer)
+        view.model.apply(PlayEvent::EntityEvent(
+            mc_protocol::play::EntityEventPacket {
+                entity_id: 17,
+                event: 26,
+            },
+        ));
+        let upd = view.refresh(example_mapper);
+        assert_eq!(
+            upd.permission_word,
+            Some(2),
+            "the op turn the level-2 word rides"
+        );
+        // THE DEOP TURN: the byte-24 the newest word replaces (the
+        // /deop the same lane answers)
+        view.model.apply(PlayEvent::EntityEvent(
+            mc_protocol::play::EntityEventPacket {
+                entity_id: 17,
+                event: 24,
+            },
+        ));
+        let upd = view.refresh(example_mapper);
+        assert_eq!(
+            upd.permission_word,
+            Some(0),
+            "the deop turn the level-0 word replaces"
+        );
+        // THE HOLD: the unchanged bank the same word re-ships (the
+        // state the refresh carries, the idempotent installer re-bank
+        // the App's own law folds)
+        let upd = view.refresh(example_mapper);
+        assert_eq!(
+            upd.permission_word,
+            Some(0),
+            "the hold the same word re-ships"
         );
     }
 

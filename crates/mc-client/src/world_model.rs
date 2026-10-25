@@ -137,6 +137,22 @@ pub struct WorldModel {
     /// previous bank, the mode bank, the abilities re-grant — the
     /// installer's own law).
     local_game_mode: Option<u8>,
+    /// THE PERMISSION'S OWN WIRE BANK (javap 26.2
+    /// `LocalPlayer.handleEntityEvent` — the Entity Event packet's
+    /// byte-24..28 words the server's own op/deop broadcasts: the
+    /// lookupswitch the five `setPermissions(PermissionSet)` calls
+    /// serves, pc 40 NO_PERMISSIONS the byte-24 speaks, pc 50
+    /// MODERATOR the 25, pc 60 GAMEMASTER the 26, pc 70 ADMIN the 27,
+    /// pc 80 OWNER the 28 — the `LevelBasedPermissionSet` ordinal the
+    /// byte-24 fold banks, the `PermissionLevel.id` the All/Moderators
+    /// /Gamemasters/Admins/Owners ladder wears). `None` until the
+    /// wire speaks (the fresh join's un-opped 0 the App ctor keeps),
+    /// `Some(level)` the latest packet replaces (the /op and /deop
+    /// turns the same lane rides). The frame thread's App bank reads
+    /// it through the shipped refresh (the setPermissions walk — the
+    /// gamemaster ask the COMMANDS_GAMEMASTER read re-answers, the
+    /// screen reaction the HasGamemasterPermissionReaction fold wears).
+    own_permission_level: Option<u8>,
     /// THE ABILITIES ECHO'S OWN BANK (javap 26.2
     /// `ClientPacketListener.handlePlayerAbilities` — the server's own
     /// abilities word the ClientboundPlayerAbilitiesPacket keeps: the
@@ -2590,6 +2606,7 @@ impl WorldModel {
             rain_level: 0.0,
             thunder_level: 0.0,
             local_game_mode: None,
+            own_permission_level: None,
             abilities_word: None,
             wire_difficulty: None,
             clocks: Vec::new(),
@@ -5569,15 +5586,25 @@ impl WorldModel {
                     });
                     return true;
                 }
-                // THE KINETIC HIT'S OWN WORD (javap
-                // `LivingEntity.handleEntityEvent`'s lookupswitch — the
-                // `2 -> start+562` arm the `onKineticHit()` call rides:
-                // the server's stab contact the event broadcast speaks,
-                // the ATTACKER's client copy the receiver keeps). The
-                // own-entity filter the local player's words bank — the
-                // OTHER bodies' events the honest silence keeps (the
-                // spatial future the other lanes serve).
-                if self.own_entity_id() == Some(e.entity_id) && e.event == 2 {
+                // THE PERMISSION'S OWN 24..28 (javap
+                // `LocalPlayer.handleEntityEvent` the 26.2 walk — the
+                // lookupswitch pc 40-80 the five `setPermissions
+                // (PermissionSet)` calls serves: NO_PERMISSIONS the
+                // byte-24 answers, MODERATOR the 25, GAMEMASTER the 26,
+                // ADMIN the 27, OWNER the 28 — the
+                // `LevelBasedPermissionSet` ordinal the byte-24 fold
+                // banks). The OWN-ENTITY gate the local player's words
+                // bank — the server's op/deop turn the target player's
+                // packet alone carries, the OTHER bodies' 24..28 the
+                // honest silence keeps (RemotePlayer's copy the arm
+                // never wears). The arm rides BEFORE the super
+                // fallthrough (the vanilla order the pc-88
+                // `AbstractClientPlayer.handleEntityEvent` tail keeps —
+                // the kinetic-2 the super chain later answers).
+                if self.own_entity_id() == Some(e.entity_id) && (24..=28).contains(&e.event) {
+                    self.own_permission_level = Some((e.event - 24) as u8);
+                    true
+                } else if self.own_entity_id() == Some(e.entity_id) && e.event == 2 {
                     self.kinetic_hit_events.push(KineticHitArm {
                         entity_id: e.entity_id,
                     });
@@ -6351,6 +6378,17 @@ impl WorldModel {
     /// silent).
     pub fn local_game_mode(&self) -> Option<u8> {
         self.local_game_mode
+    }
+
+    /// THE PERMISSION'S OWN WIRE WORD (the model's banked entity-event
+    /// 24..28 level — the server's own op/deop turn the byte-24 fold
+    /// banks): `None` until the wire speaks (the fresh join's un-opped
+    /// 0 the App ctor keeps), `Some(level)` the refresh ships to the
+    /// frame thread's installer (the setPermissions walk the App bank
+    /// wears — the gamemaster ask the creative gate's own level-2
+    /// word re-answers).
+    pub fn own_permission_level(&self) -> Option<u8> {
+        self.own_permission_level
     }
 
     /// THE ABILITIES ECHO'S OWN WORD (the model's banked
@@ -8687,6 +8725,131 @@ mod tests {
         assert_eq!((drained[0].x, drained[0].y, drained[0].z), (12.25, 68.5, -3.75));
         assert!(drained[0].explosions.is_empty(), "the plain rocket the empty list keeps");
         assert!(m.drain_firework_explode_events().is_empty(), "the drained silence ships nothing");
+    }
+
+    /// THE PERMISSION'S OWN 24..28 (javap `LocalPlayer.handleEntityEvent`
+    /// the 26.2 walk — the lookupswitch pc 40-80 the five
+    /// `setPermissions(PermissionSet)` calls serves): the byte-24 the
+    /// NO_PERMISSIONS bank wears, the 25 the MODERATOR, the 26 the
+    /// GAMEMASTER (the creative gate's own level-2 word), the 27 the
+    /// ADMIN, the 28 the OWNER — the ordinal the byte-24 fold speaks.
+    /// The OWN-ENTITY gate the local player's words bank (the OTHER
+    /// bodies' 24..28 the honest silence keeps), the OUT-OF-RANGE
+    /// bytes (23, 29) the super fallthrough keeps (the lane's band
+    /// alone), and the SUPER CHAIN the kinetic-2 walk the vanilla
+    /// pc-88 order keeps.
+    #[test]
+    fn the_permission_event_24_28_the_own_level_the_wire_banks() {
+        let mut m = WorldModel::new();
+        m.apply(PlayEvent::WorldInfo(WorldInfo {
+            entity_id: 17,
+            hardcore: false,
+            dimensions: vec!["minecraft:overworld".to_string()],
+            view_distance: 8,
+            simulation_distance: 8,
+            portal_cooldown: 300,
+            current_dimension: "minecraft:overworld".to_string(),
+        }));
+        // THE PRE-ECHO WINDOW: the wire never spoke — the None the
+        // fresh join's un-opped word keeps (the App ctor's 0 the
+        // installer banks)
+        assert_eq!(m.own_permission_level(), None);
+        // THE BYTE-24: NO_PERMISSIONS (level 0 — the /deop turn the
+        // same lane answers)
+        assert!(m.apply(PlayEvent::EntityEvent(
+            mc_protocol::play::EntityEventPacket {
+                entity_id: 17,
+                event: 24,
+            }
+        )));
+        assert_eq!(m.own_permission_level(), Some(0));
+        // THE BYTE-26: GAMEMASTER (level 2 — the canUseGameMasterBlocks
+        // ask the conjunction's own word re-answers)
+        assert!(m.apply(PlayEvent::EntityEvent(
+            mc_protocol::play::EntityEventPacket {
+                entity_id: 17,
+                event: 26,
+            }
+        )));
+        assert_eq!(m.own_permission_level(), Some(2));
+        // THE BYTE-28: OWNER (level 4 — the integrated owner's word)
+        assert!(m.apply(PlayEvent::EntityEvent(
+            mc_protocol::play::EntityEventPacket {
+                entity_id: 17,
+                event: 28,
+            }
+        )));
+        assert_eq!(m.own_permission_level(), Some(4));
+        // THE LADDER'S REMAINING RUNGS: the 25 and the 27 the same
+        // ordinal walk answers
+        assert!(m.apply(PlayEvent::EntityEvent(
+            mc_protocol::play::EntityEventPacket {
+                entity_id: 17,
+                event: 25,
+            }
+        )));
+        assert_eq!(m.own_permission_level(), Some(1));
+        assert!(m.apply(PlayEvent::EntityEvent(
+            mc_protocol::play::EntityEventPacket {
+                entity_id: 17,
+                event: 27,
+            }
+        )));
+        assert_eq!(m.own_permission_level(), Some(3));
+        // THE OUT-OF-RANGE BYTES: the 23 and the 29 the super
+        // fallthrough keeps — the band alone the bank serves
+        assert!(!m.apply(PlayEvent::EntityEvent(
+            mc_protocol::play::EntityEventPacket {
+                entity_id: 17,
+                event: 23,
+            }
+        )));
+        assert!(!m.apply(PlayEvent::EntityEvent(
+            mc_protocol::play::EntityEventPacket {
+                entity_id: 17,
+                event: 29,
+            }
+        )));
+        assert_eq!(
+            m.own_permission_level(),
+            Some(3),
+            "the fallthrough bytes the bank never wears"
+        );
+        // THE OTHER BODY'S 26: the own-entity gate the silence keeps
+        // (RemotePlayer's copy the arm never wears)
+        assert!(!m.apply(PlayEvent::EntityEvent(
+            mc_protocol::play::EntityEventPacket {
+                entity_id: 62,
+                event: 26,
+            }
+        )));
+        assert_eq!(
+            m.own_permission_level(),
+            Some(3),
+            "the neighbor's packet the bank never wears"
+        );
+        // THE SUPER CHAIN STILL SPEAKS: the byte-2 the kinetic walk
+        // answers AFTER the permission lane (the vanilla order the
+        // pc-88 super tail keeps)
+        assert!(m.apply(PlayEvent::EntityEvent(
+            mc_protocol::play::EntityEventPacket {
+                entity_id: 17,
+                event: 2,
+            }
+        )));
+        assert_eq!(
+            m.kinetic_hit_events.len(),
+            1,
+            "the super chain the kinetic arm answers"
+        );
+        assert_eq!(
+            m.own_permission_level(),
+            Some(3),
+            "the kinetic byte the bank never wears"
+        );
+        // THE FRESH MODEL: the pre-echo None the accessor's own law
+        // keeps (the no-packet world the honest silence wears)
+        assert_eq!(WorldModel::new().own_permission_level(), None);
     }
 
     /// THE THROWN SHOT'S OWN 3 (javap `ThrownEgg.onHit`/`Snowball.

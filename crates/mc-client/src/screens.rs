@@ -44280,6 +44280,30 @@ impl App {
         self.abilities_regrant(mode);
     }
 
+    /// THE PERMISSION ECHO'S OWN BANK (javap 26.2
+    /// `LocalPlayer.setPermissions` — the audited walk the entity-event
+    /// 24..28 word serves): the server's own op/deop turn the client's
+    /// permission level re-banks — the `LevelBasedPermissionSet`
+    /// ordinal the byte-24 fold speaks (NO_PERMISSIONS the byte-24
+    /// answers, MODERATOR the 25, GAMEMASTER the 26, ADMIN the 27,
+    /// OWNER the 28 — the PermissionLevel.id ladder the All/Moderators
+    /// /Gamemasters/Admins/Owners rows wear), the gamemaster ask the
+    /// COMMANDS_GAMEMASTER read re-answers (the creative strip's
+    /// `creative_operator_gate` the level-2 word re-reads the next
+    /// open). The wire world alone wears the lane (the offline world's
+    /// owner-4 word the enter arm banks, the networked join's fresh
+    /// 0 the ctor keeps until the packet speaks); the `None` refresh
+    /// the pre-echo window keeps (the idempotent re-bank the
+    /// unchanged level's acmp holds silent).
+    pub fn live_permission_level_updated(&mut self, word: Option<u8>) {
+        if !self.world_is_network {
+            return;
+        }
+        if let Some(level) = word {
+            self.permission_level = level;
+        }
+    }
+
     /// THE MAYFLY GATE'S OWN SOURCE (the vanilla
     /// `LocalPlayer.aiStep`'s audited read — `abilities.mayfly` the
     /// ONE `Abilities` object answers, the gamemode fold the BANKED

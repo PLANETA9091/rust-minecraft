@@ -181,6 +181,7 @@ fn run_join(
                 Vec<i64>,
                 Vec<[i64; 4]>,
                 Option<u8>,
+                Option<u8>,
                 Option<mc_protocol::play::PlayerAbilitiesWord>,
                 Vec<crate::world_view::WireGrowthEvent>,
                 Vec<crate::world_view::WireInBlockGrowthEvent>,
@@ -1196,6 +1197,13 @@ fn run_join(
                                         // installer banks; None until the
                                         // echo speaks)
                                         upd.mode_word,
+                                        // the PERMISSION ECHO'S OWN WORD —
+                                        // the banked entity-event 24..28
+                                        // level the model keeps (the
+                                        // server's op/deop turn the
+                                        // frame thread's installer banks;
+                                        // None until the wire speaks)
+                                        upd.permission_word,
                                         upd.abilities_word,
                                         // the growth effect's arms ride with
                                         // them — the bone-meal words the
@@ -1794,6 +1802,7 @@ pub fn run_gui_app(
                 Vec<i64>,
                 Vec<i64>,
                 Vec<[i64; 4]>,
+                Option<u8>,
                 Option<u8>,
                 Option<mc_protocol::play::PlayerAbilitiesWord>,
                 Vec<crate::world_view::WireGrowthEvent>,
@@ -3084,6 +3093,7 @@ pub fn run_gui_app(
                     bw_samples,
                     tick_samples,
                     mode_word,
+                    permission_word,
                     abilities_word,
                     growth_events,
                     in_block_growth_events,
@@ -3137,6 +3147,12 @@ pub fn run_gui_app(
                     // re-grant; the unchanged word the idempotent acmp
                     // keeps silent)
                     app.live_game_mode_updated(mode_word);
+                    // THE PERMISSION ECHO'S OWN BANK (the audited
+                    // setPermissions walk the installer wears — the
+                    // entity-event 24..28 word the level re-banks, the
+                    // gamemaster ask the creative gate re-answers; the
+                    // unchanged word the idempotent acmp keeps silent)
+                    app.live_permission_level_updated(permission_word);
                     // THE ABILITIES ECHO'S OWN BANK (the audited
                     // handlePlayerAbilities walk the installer wears —
                     // the server's word the flying state re-banks, the
