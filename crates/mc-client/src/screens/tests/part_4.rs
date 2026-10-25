@@ -6484,7 +6484,7 @@ fn the_player_s_own_close_kills_the_live_windows_title() {
         "the window shows over the world"
     );
     assert_eq!(app.live_chest_title.as_deref(), Some("Named Store"));
-    app.close_chest_container();
+    app.close_chest_container(ScreenKind::World);
     assert_eq!(
         app.screen,
         ScreenKind::World,
@@ -6515,7 +6515,7 @@ fn the_player_s_own_close_kills_the_live_windows_title() {
         "the window shows over the world"
     );
     assert_eq!(app.live_furnace_title.as_deref(), Some("Smeltery"));
-    app.close_furnace();
+    app.close_furnace(ScreenKind::World);
     assert_eq!(
         app.screen,
         ScreenKind::World,
@@ -6549,7 +6549,7 @@ fn the_player_s_own_close_kills_the_live_windows_title() {
         "the window shows over the world"
     );
     assert_eq!(app.live_table_title.as_deref(), Some("Workbench"));
-    app.close_crafting_table();
+    app.close_crafting_table(ScreenKind::World);
     assert_eq!(
         app.screen,
         ScreenKind::World,
@@ -17698,4 +17698,193 @@ fn the_debug_chord_interrupt_the_options_save_and_drag_death_wear() {
         "the removed() walk the armed drag discards"
     );
     let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// THE DEBUG-CHORD INTERRUPT'S OWN CONTAINER SEAT (javap 26.2 the
+/// setScreen walk the `AbstractContainerScreen.removed()` override
+/// answers — the menu's removed law the carried stack home returns,
+/// the container's own close the whole ride serves): the chest seat
+/// the cursor stack arms, the F3+F6 interrupt the removed() walk
+/// rides — the carried home returns, the store flush the edited
+/// slots' disk bank rides, the lid the release clears, the debug
+/// options the SAME walk installs; the chord's close the world
+/// returns (the restore ride the banked toggles keep — no banked
+/// word the plain seat carries).
+#[test]
+fn the_debug_chord_interrupt_the_chest_seat_the_carried_wears() {
+    let dir = std::env::temp_dir().join(format!("mc2rs_chordchest_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&dir);
+    let stores = dir.join("stores.nbt");
+    let mut app = App::new(3);
+    app.container_stores_file = Some(stores);
+    let cell = (7, 40, 7);
+    // THE CHEST SEAT (the right-click lane's own open — the flush key
+    // the cell banks, the grid the fresh 27 the store inserts)
+    app.open_chest_for(cell);
+    assert_eq!(app.screen, ScreenKind::Chest, "the chest seat arms");
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0); // the deterministic store the add-back reads
+    }
+    app.chest_carried = (dirt, 8);
+    // THE INTERRUPT'S OWN REMOVED WALK (the F3+F6 the chest's own
+    // close ride the removed() law serves — the carried home, the
+    // flush, the lid, the debug seat the SAME walk installs)
+    app.on_debug_options_key();
+    assert_eq!(
+        app.screen,
+        ScreenKind::DebugOptions,
+        "the chord the chest seat interrupts"
+    );
+    assert_eq!(
+        app.chest_carried,
+        (0, 0),
+        "the removed() walk the carried home returns"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (dirt, 8),
+        "the add-back walk the first empty slot takes"
+    );
+    assert_eq!(
+        app.hotbar_slots[0],
+        (dirt, 8),
+        "the HUD row the add-back syncs"
+    );
+    assert!(
+        !app.chest_is_live,
+        "the window belief the removed() discards"
+    );
+    // THE CHORD'S OWN CLOSE (the world's return the restore ride
+    // wears — the plain seat the banked word never carries)
+    app.on_debug_options_key();
+    assert_eq!(app.screen, ScreenKind::World, "the chord closes");
+    // THE STORE'S OWN FLUSH (the interrupt's close ride the bank
+    // serves — the GUI's own edit the removed() walk's flush banks,
+    // the reopen the disk bank's own slot reads)
+    app.open_chest_for(cell);
+    app.chest_slots[3] = (dirt, 2);
+    app.on_debug_options_key();
+    assert_eq!(
+        app.screen,
+        ScreenKind::DebugOptions,
+        "the chord the chest seat interrupts again"
+    );
+    app.on_debug_options_key();
+    assert_eq!(app.screen, ScreenKind::World, "the chord closes again");
+    app.open_chest_for(cell);
+    assert_eq!(
+        app.chest_slots[3],
+        (dirt, 2),
+        "the interrupted close's flush the edit banks"
+    );
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// THE DEBUG-CHORD INTERRUPT'S OWN CONTAINER MAP (the inventory seat
+/// the doubleclick state the removed() discards whole, the carried
+/// the add-back ride serves; the crafting seat the grid the
+/// clearContainer walk home returns — the CraftingMenu.removed's own
+/// law; the chat seat the draft bank keeps, the plain world the
+/// silence keeps — the container seats the removed law ALONE wears).
+#[test]
+fn the_debug_chord_interrupt_the_container_map_the_removed_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+    // THE INVENTORY SEAT (the E lane's own open — the cursor stack +
+    // the doubleclick state the interrupted screen instance carries)
+    app.open_inventory();
+    assert_eq!(app.screen, ScreenKind::Inventory, "the inventory arms");
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.inv_carried = (dirt, 5);
+    app.inv_doubleclick = true;
+    app.inv_last_click_slot = Some(3);
+    app.on_debug_options_key();
+    assert_eq!(
+        app.screen,
+        ScreenKind::DebugOptions,
+        "the chord the inventory seat interrupts"
+    );
+    assert_eq!(
+        app.inv_carried,
+        (0, 0),
+        "the removed() walk the carried home returns"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (dirt, 5),
+        "the add-back walk the store takes"
+    );
+    assert!(
+        !app.inv_doubleclick,
+        "the removed() walk the doubleclick discards"
+    );
+    assert!(
+        app.inv_last_click_slot.is_none(),
+        "the removed() walk the last-click seat discards"
+    );
+    // THE CRAFTING SEAT (the grid + the carried the clearContainer
+    // walk home returns — the removed() law the menu's own override
+    // speaks, the result cell the clear never re-banks)
+    app.open_crafting_table();
+    assert_eq!(app.screen, ScreenKind::Crafting, "the table arms");
+    for it in app.inventory.items.iter_mut() {
+        *it = (0, 0);
+    }
+    app.table_grid[0] = (dirt, 3);
+    app.table_grid[4] = (dirt, 2);
+    app.inv_carried = (dirt, 1);
+    app.on_debug_options_key();
+    assert_eq!(
+        app.screen,
+        ScreenKind::DebugOptions,
+        "the chord the table seat interrupts"
+    );
+    assert_eq!(
+        app.table_grid[0],
+        (0, 0),
+        "the clearContainer walk the grid cell drains"
+    );
+    assert_eq!(
+        app.table_grid[4],
+        (0, 0),
+        "the clearContainer walk the second cell drains"
+    );
+    assert_eq!(
+        app.inv_carried,
+        (0, 0),
+        "the removed() walk the carried home returns"
+    );
+    assert_eq!(
+        app.inventory.items[0],
+        (dirt, 6),
+        "the add-back walk the six the merges speak"
+    );
+    assert_eq!(
+        app.inventory.items[1],
+        (0, 0),
+        "the merges the single stack speaks"
+    );
+    // THE CHAT SEAT'S OWN LAW KEEPS (the draft bank the 223 walk
+    // banks — the container seats the removed law the chat's own
+    // close never displaces)
+    app.on_debug_options_key();
+    assert_eq!(app.screen, ScreenKind::World, "the chord closes");
+    app.on_chat_key();
+    app.on_chat_char('x');
+    app.on_debug_options_key();
+    assert_eq!(
+        app.screen,
+        ScreenKind::DebugOptions,
+        "the chord the chat seat interrupts"
+    );
+    assert_eq!(
+        app.chat_latest_draft,
+        Some(("x".to_string(), false)),
+        "the chat seat the draft bank keeps"
+    );
 }

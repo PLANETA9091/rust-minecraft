@@ -6146,7 +6146,7 @@ fn the_q_key_refuses_the_screens_and_the_wire() {
         "the store whole"
     );
     // the PAUSE — the vanilla's own freeze lane
-    app.close_inventory();
+    app.close_inventory(ScreenKind::World);
     app.paused = true;
     app.on_drop_key(false);
     assert_eq!(app.drops.len(), drops_before, "the pause freeze holds");
@@ -6286,7 +6286,7 @@ fn the_middle_click_misses_silently() {
     app.open_inventory();
     app.on_pick_block(false);
     assert_eq!(app.selected_hotbar, 0, "the screen gate holds");
-    app.close_inventory();
+    app.close_inventory(ScreenKind::World);
     // the PAUSE — the vanilla's own freeze lane
     app.paused = true;
     app.on_pick_block(false);
@@ -6376,7 +6376,7 @@ fn the_creative_e_opens_the_picker_and_the_palette_holds() {
     app.game_mode = GameMode::Survival;
     app.open_inventory();
     assert_eq!(app.screen, ScreenKind::Inventory, "the survival seat");
-    app.close_inventory();
+    app.close_inventory(ScreenKind::World);
     assert_eq!(app.screen, ScreenKind::World);
     // the creative E the picker wears
     app.game_mode = GameMode::Creative;
@@ -6553,7 +6553,7 @@ fn the_creative_scroll_the_search_and_the_close_return() {
     // THE CLOSE RETURN (the carried's add-back walk — the empty
     // store the whole stack takes)
     app.inv_carried = (stone, 30);
-    app.close_creative_picker();
+    app.close_creative_picker(ScreenKind::World);
     assert_eq!(app.screen, ScreenKind::World, "the close's return");
     assert_eq!(app.inv_carried, (0, 0), "the hand emptied");
     assert_eq!(app.inventory.items[0], (stone, 30), "the store took it");
@@ -9266,7 +9266,7 @@ fn the_cake_recipe_the_buckets_return() {
     );
     // THE CLOSE (the clearContainer walk): the buckets and the
     // carried cake ride home — the store keeps the whole craft
-    app.close_crafting_table();
+    app.close_crafting_table(ScreenKind::World);
     let buckets: i32 = app
         .inventory
         .items

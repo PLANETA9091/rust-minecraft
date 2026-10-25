@@ -7281,7 +7281,7 @@ fn the_f_key_the_gates_keep() {
         (sword, 1),
         "the container gate the trade keeps"
     );
-    app.close_inventory();
+    app.close_inventory(ScreenKind::World);
     // THE SPECTATOR GATE (the jar lane's own isSpectator verdict —
     // the swap the spectator mode never answers)
     app.game_mode = GameMode::Spectator;

@@ -300,7 +300,7 @@ fn the_table_screen_clicks_speak_the_grid_lanes() {
     assert_eq!(app.table_grid[0], (planks, 4), "the cells keep spending");
     // THE CLOSE (the clearContainer walk): the grid's 8 planks and
     // the carried's 8 sticks ride home, the store keeps them
-    app.close_crafting_table();
+    app.close_crafting_table(ScreenKind::World);
     assert_eq!(app.screen, ScreenKind::World, "the menu closes");
     assert_eq!(app.inv_carried, (0, 0), "the carried rode home");
     assert!(
@@ -1127,14 +1127,14 @@ fn the_close_returns_the_carried_to_the_store() {
     // the carried stack with a same-item home: merges into it
     app.inventory.items[5] = (921, 10); // apple
     app.inv_carried = (921, 7);
-    app.close_inventory();
+    app.close_inventory(ScreenKind::World);
     assert_eq!(app.inventory.items[5], (921, 17), "the merge back");
     assert_eq!(app.inv_carried, (0, 0));
     assert_eq!(app.screen, ScreenKind::World, "the screen back");
     // the carried with NO same-item home: the first empty slot
     app.open_inventory();
     app.inv_carried = (926, 4); // diamond
-    app.close_inventory();
+    app.close_inventory(ScreenKind::World);
     assert_eq!(app.inventory.items[0], (926, 4), "the first empty took it");
     // the FULL store: the remainder drops at the body's feet
     app.open_inventory();
@@ -1146,7 +1146,7 @@ fn the_close_returns_the_carried_to_the_store() {
         let b = app.body.as_ref().unwrap();
         (b.x, b.y, b.z)
     };
-    app.close_inventory();
+    app.close_inventory(ScreenKind::World);
     assert_eq!(app.inv_carried, (0, 0), "the cursor emptied");
     let dropped = app
         .drops

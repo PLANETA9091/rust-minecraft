@@ -21963,7 +21963,7 @@ impl App {
     /// (the offline fresh stand-in has no window and no session — its
     /// close stays a local act), the belief resets with the window,
     /// the screen back to the world.
-    pub fn close_furnace(&mut self) {
+    pub fn close_furnace(&mut self, back: ScreenKind) {
         if self.furnace_is_live {
             if let (Some((window_id, _)), Some(sink)) =
                 (self.furnace_live_window, self.live_clicks.as_ref())
@@ -22024,7 +22024,7 @@ impl App {
         // trio the reopen wears; the None the live-lane opens keep,
         // the networked furnace the server's own authority owns).
         self.furnace_store_flush();
-        self.open(ScreenKind::World);
+        self.open(back);
     }
 
     /// THE E KEY'S OWN LANE (the vanilla KeyMapping `key.inventory`
@@ -22036,12 +22036,12 @@ impl App {
     pub fn on_inventory_key(&mut self) {
         match self.screen {
             ScreenKind::World if !self.dead => self.open_inventory(),
-            ScreenKind::Inventory => self.close_inventory(),
-            ScreenKind::Creative => self.close_creative_picker(),
-            ScreenKind::Crafting => self.close_crafting_table(),
-            ScreenKind::Chest => self.close_chest_container(),
-            ScreenKind::Dispenser => self.close_dispenser(),
-            ScreenKind::Furnace => self.close_furnace(),
+            ScreenKind::Inventory => self.close_inventory(ScreenKind::World),
+            ScreenKind::Creative => self.close_creative_picker(ScreenKind::World),
+            ScreenKind::Crafting => self.close_crafting_table(ScreenKind::World),
+            ScreenKind::Chest => self.close_chest_container(ScreenKind::World),
+            ScreenKind::Dispenser => self.close_dispenser(ScreenKind::World),
+            ScreenKind::Furnace => self.close_furnace(ScreenKind::World),
             _ => {}
         }
     }
@@ -22085,7 +22085,7 @@ impl App {
     /// merges first, then the first empty slot takes it — the
     /// `Inventory.add` law the touch lane speaks), the screen back to
     /// the world. The offline store IS the truth — no echo rides.
-    pub fn close_inventory(&mut self) {
+    pub fn close_inventory(&mut self, back: ScreenKind) {
         if self.inv_carried.1 > 0 {
             let (id, count) = self.inv_carried;
             let mut rest = count;
@@ -22137,7 +22137,7 @@ impl App {
         // seat the NEW screen instance the reopen builds never inherits)
         self.inv_doubleclick = false;
         self.inv_last_click_slot = None;
-        self.open(ScreenKind::World);
+        self.open(back);
     }
 
     /// THE DOUBLE-CLICK'S OWN RELEASE WALK (the mouseReleased walk pcs
@@ -23781,7 +23781,7 @@ impl App {
     /// the first empty slot the remainder takes, the full store the
     /// floor drop keeps — the close_inventory's own add-back walk the
     /// helper shares).
-    pub fn close_creative_picker(&mut self) {
+    pub fn close_creative_picker(&mut self, back: ScreenKind) {
         if self.inv_carried.1 > 0 {
             let (id, count) = self.inv_carried;
             let mut rest = count;
@@ -23840,7 +23840,7 @@ impl App {
             // precedent the follow-up banks)
             self.creative_swap_live_words(&words);
         }
-        self.open(ScreenKind::World);
+        self.open(back);
     }
 
     /// THE CRAFTING TABLE'S OWN OPEN (the vanilla Minecraft.handleKeybinds
@@ -24231,7 +24231,7 @@ impl App {
     /// re-consult answers (the vanilla stopOpen tail the
     /// updateNeighbourForOutputSignal law the same walk serves), the
     /// screen back to the world.
-    pub fn close_dispenser(&mut self) {
+    pub fn close_dispenser(&mut self, back: ScreenKind) {
         // THE WIRE'S OWN CLOSE (the chest's own shape — the live
         // session's close echoes the serverbound Container Close
         // packet through the live session's send lane, the belief
@@ -24247,7 +24247,7 @@ impl App {
             self.dispenser_live_window = None;
             self.live_dispenser_title = None; // the title dies with the window
             self.dispenser_carried = (0, 0);
-            self.open(ScreenKind::World);
+            self.open(back);
             return;
         }
         // THE CARRIED'S OWN HOME RIDE (the vanilla removed()'s
@@ -24297,7 +24297,7 @@ impl App {
             self.attach_wire_voice(pos.0, pos.1, pos.2);
         }
         self.dispenser_open_kind = 0;
-        self.open(ScreenKind::World);
+        self.open(back);
     }
 
     /// THE STORE'S OWN FLUSH (the dev-66 round — the vanilla
@@ -24743,7 +24743,7 @@ impl App {
     ///    walk per cell), the removed/disconnected one the Player.drop
     ///    arm — the offline stand-in always alive, the add-back speaks;
     /// 3. the screen back to the world.
-    pub fn close_crafting_table(&mut self) {
+    pub fn close_crafting_table(&mut self, back: ScreenKind) {
         // THE WIRE LANE'S OWN ARM (the live window the server's
         // Container Close packet owns): the player's OWN close echoes
         // the serverbound Container Close packet through the live
@@ -24761,7 +24761,7 @@ impl App {
             self.table_live_window = None;
             self.live_table_title = None; // the title dies with the window
             self.live_table_carried = (0, 0);
-            self.open(ScreenKind::World);
+            self.open(back);
             return;
         }
         // the carried's own return (the super.removed walk)
@@ -24829,7 +24829,7 @@ impl App {
         }
         self.hotbar_slots = self.inventory.hotbar();
         self.table_result = (0, 0);
-        self.open(ScreenKind::World);
+        self.open(back);
     }
 
     /// The drop-at-the-player walk (the Player.drop(stack, false) the
@@ -28142,8 +28142,11 @@ impl App {
     /// home ride returns (container_carried_returned — the vanilla
     /// removed()'s placeItemBackInInventory law), the per-cell store
     /// the edited chest_slots the flush banks, the barrel lid the
-    /// OPEN bit the release clears, the screen the world returns.
-    pub fn close_chest_container(&mut self) {
+    /// OPEN bit the release clears, the screen the `back` seat
+    /// returns (the World seat the Escape/E/portal lanes wear, the
+    /// takeover's own seat the interrupt lane serves — the removed()
+    /// walk the whole close rides).
+    pub fn close_chest_container(&mut self, back: ScreenKind) {
         let was_live = self.chest_is_live;
         if was_live {
             if let (Some((window_id, _)), Some(sink)) =
@@ -28159,7 +28162,7 @@ impl App {
         self.chest_carried = (0, 0);
         self.container_store_flush();
         self.barrel_lid_released();
-        self.open(ScreenKind::World);
+        self.open(back);
     }
 
     /// THE FOCUS-LOSS'S OWN PAUSE (the vanilla `pauseIfInactive` law —
@@ -28235,12 +28238,12 @@ impl App {
             // the container's own close (vanilla Escape/E on a container
             // screen): back to the world — the shared walk the echo, the
             // carried return, the store flush and the lid release speak
-            self.close_chest_container();
+            self.close_chest_container(ScreenKind::World);
         } else if self.screen == ScreenKind::Dispenser {
             // THE 3x3 CANVAS'S OWN CLOSE (the vanilla Escape/E on the
             // dispenser's screen — the chest's own close walk the
             // carried return, the store flush and the fill ride speak)
-            self.close_dispenser();
+            self.close_dispenser(ScreenKind::World);
         } else if self.screen == ScreenKind::Furnace {
             // THE FURNACE'S OWN CLOSE (the vanilla Escape/E on the
             // furnace's screen — the chest's own close walk the menu
@@ -28248,23 +28251,23 @@ impl App {
             // rides (the offline fresh stand-in stays a local act),
             // the belief resets with the window, the carried stack the
             // server's own close returns.
-            self.close_furnace();
+            self.close_furnace(ScreenKind::World);
         } else if self.screen == ScreenKind::Inventory {
             // the survival inventory's own close (the vanilla Escape on
             // the E-key screen): the carried's add-back walk rides, the
             // screen back to the world
-            self.close_inventory();
+            self.close_inventory(ScreenKind::World);
         } else if self.screen == ScreenKind::Creative {
             // THE PICKER'S OWN CLOSE (the vanilla Escape on the
             // creative screen — the removed() walk's carried law the
             // E lane's close shares)
-            self.close_creative_picker();
+            self.close_creative_picker(ScreenKind::World);
         } else if self.screen == ScreenKind::Crafting {
             // THE TABLE'S OWN CLOSE (the vanilla Escape/E on the
             // table's screen): the clearContainer walk the
             // CraftingMenu.removed speaks — the grid contents + the
             // carried stack ride home, the screen back to the world
-            self.close_crafting_table();
+            self.close_crafting_table(ScreenKind::World);
         } else if self.screen == ScreenKind::Accessibility {
             // THE SUB-SCREEN'S OWN ESCAPE LANE (the vanilla
             // Screen.shouldCloseOnEsc default the Accessibility screen
@@ -40880,7 +40883,14 @@ impl App {
             if self.paused {
                 self.paused = false;
             }
-            self.open(ScreenKind::DebugOptions);
+            // THE CONTAINER SEATS' OWN REMOVED MOMENT (the autopush-224
+            // walk — the container seats the removed() law the interrupt
+            // FIRST answers: the carried stack home returns, the store
+            // flush + the lid the container's own death speaks, the
+            // window belief dies with the screen; the `back` seat the
+            // DebugOptions install the SAME walk serves — the plain
+            // seats the open() ride alone keeps)
+            self.container_seats_removed(ScreenKind::DebugOptions);
         }
         // THE USED FLAG (pc 746-747): the matched gate the flag
         // banks — ALL arms wear (the canInterrupt refusal the
@@ -40909,6 +40919,31 @@ impl App {
             return !self.dead;
         }
         self.screen != ScreenKind::DifficultyLockConfirm
+    }
+
+    /// THE CONTAINER SEATS' OWN INTERRUPT REMOVED (javap 26.2 the
+    /// setScreen walk the `AbstractContainerScreen.removed()` override
+    /// answers — `menu.removed(player)` the carried stack's
+    /// placeItemBackInInventory law speaks, the takeover the
+    /// closeContainer walk the whole close ride serves): the container
+    /// seats the F3+F6 interrupt FIRST rides the seat's own close walk
+    /// — the carried stack home returns (the offline add-back the
+    /// live echo's own law keeps), the per-cell store the flush banks,
+    /// the barrel lid the release clears, the window belief the death
+    /// discards — and the `back` seat the SAME walk installs (the
+    /// DebugOptions seat the interrupt lane serves, the World seat the
+    /// plain close lanes keep). The PLAIN seats the open() ride alone
+    /// keeps (no container the removed law never wears).
+    fn container_seats_removed(&mut self, back: ScreenKind) {
+        match self.screen {
+            ScreenKind::Inventory => self.close_inventory(back),
+            ScreenKind::Chest => self.close_chest_container(back),
+            ScreenKind::Dispenser => self.close_dispenser(back),
+            ScreenKind::Furnace => self.close_furnace(back),
+            ScreenKind::Crafting => self.close_crafting_table(back),
+            ScreenKind::Creative => self.close_creative_picker(back),
+            _ => self.open(back),
+        }
     }
 
     /// THE F3+F4 CHORD'S OWN OPEN LANE (javap 26.2
@@ -53318,13 +53353,13 @@ impl App {
                 // the container's own close (the Escape lane's walk the
                 // shared close speaks — the echo, the carried return,
                 // the store flush, the lid release)
-                self.close_chest_container();
+                self.close_chest_container(ScreenKind::World);
             }
-            ScreenKind::Dispenser => self.close_dispenser(),
-            ScreenKind::Furnace => self.close_furnace(),
-            ScreenKind::Inventory => self.close_inventory(),
-            ScreenKind::Creative => self.close_creative_picker(),
-            ScreenKind::Crafting => self.close_crafting_table(),
+            ScreenKind::Dispenser => self.close_dispenser(ScreenKind::World),
+            ScreenKind::Furnace => self.close_furnace(ScreenKind::World),
+            ScreenKind::Inventory => self.close_inventory(ScreenKind::World),
+            ScreenKind::Creative => self.close_creative_picker(ScreenKind::World),
+            ScreenKind::Crafting => self.close_crafting_table(ScreenKind::World),
             _ => {}
         }
     }
