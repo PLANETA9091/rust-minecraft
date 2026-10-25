@@ -15470,3 +15470,165 @@ fn the_debug_overlay_the_group_the_file_the_restart_wear() {
     );
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+// THE CYCLE SPECTATOR'S OWN CHORD (the keyDebugSpectate lane the
+// spectate_209.py walk banks — the survival default the spectator
+// arm wears, the offline seam the previous bank + the abilities
+// re-grant the apply_gamemode_hovered's own walk keeps, the restore
+// the firstNonNull previous the wire-less bank returns, the used
+// flag the walk banks)
+#[test]
+fn the_cycle_spectator_chord_the_spectator_arm_the_restore_wears() {
+    let mut app = App::new(262);
+    app.enter_world();
+    app.body = Some(crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0));
+    let rows_before = app.chat_messages.len();
+    // THE SPECTATOR ARM (the survival default the isSpectator false
+    // verdict wears — the offline apply the SPECTATOR mode banks)
+    app.on_cycle_spectator_key();
+    assert_eq!(
+        app.game_mode,
+        GameMode::Spectator,
+        "the spectator arm the mode banks"
+    );
+    assert_eq!(
+        app.previous_game_mode,
+        Some(GameMode::Survival),
+        "the previous bank the changed mode earns"
+    );
+    {
+        let b = app.body.as_ref().expect("the body rides");
+        assert!(b.flying, "the spectator regrant the flight banks");
+        assert!(b.invulnerable, "the invulnerable word the mode keeps");
+    }
+    assert_eq!(
+        app.chat_messages.len(),
+        rows_before,
+        "the permission pass the word never speaks"
+    );
+    assert!(app.debug_modifier_used, "the modifier the chord spends");
+    app.on_debug_modifier_released();
+    // THE RESTORE ARM (the spectator verdict the previous wears —
+    // the Survival the bank carries the wire-less apply returns)
+    app.on_cycle_spectator_key();
+    assert_eq!(
+        app.game_mode,
+        GameMode::Survival,
+        "the restore the previous returns"
+    );
+    assert_eq!(
+        app.previous_game_mode,
+        Some(GameMode::Spectator),
+        "the restore's own previous the bank keeps"
+    );
+    {
+        let b = app.body.as_ref().expect("the body rides");
+        assert!(!b.flying, "the survival regrant the flight revokes");
+        assert!(!b.invulnerable, "the survival the invulnerable revokes");
+    }
+    assert!(app.debug_modifier_used, "the second chord the flag banks");
+    let _ = app;
+}
+
+// THE CYCLE SPECTATOR'S OWN FALLBACK + ERROR WORD (the restore's
+// None-previous arm the CREATIVE default keeps, the player-null arm
+// the `ifnull -> 462` the error word wears — the copyLocation's
+// silent-null the neighbor differs, the mode the word never moves,
+// the flag the error arm's own goto banks)
+#[test]
+fn the_cycle_spectator_chord_the_creative_fallback_the_null_body_error() {
+    let mut app = App::new(262);
+    app.enter_world();
+    app.body = Some(crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0));
+    // THE SPECTATOR BANK (the direct mode the previous None keeps —
+    // the restore the CREATIVE fallback the null default wears)
+    app.game_mode = GameMode::Spectator;
+    app.on_cycle_spectator_key();
+    assert_eq!(
+        app.game_mode,
+        GameMode::Creative,
+        "the None previous the CREATIVE fallback restores"
+    );
+    assert_eq!(
+        app.previous_game_mode,
+        Some(GameMode::Spectator),
+        "the fallback's own previous the bank keeps"
+    );
+    app.on_debug_modifier_released();
+    // THE NULL-BODY ARM (the gate chain the error word speaks — the
+    // mode the word never moves, the bank the word never moves)
+    app.body = None;
+    let rows_before = app.chat_messages.len();
+    app.on_cycle_spectator_key();
+    assert_eq!(
+        app.chat_messages.last().map(|(t, _)| t.as_str()),
+        Some("\u{a7}eUnable to switch game mode; no permission"),
+        "the error word the lang row keeps"
+    );
+    assert_eq!(
+        app.chat_messages.len(),
+        rows_before + 1,
+        "the single word the arm speaks"
+    );
+    assert_eq!(
+        app.game_mode,
+        GameMode::Creative,
+        "the word the mode never moves"
+    );
+    assert_eq!(
+        app.previous_game_mode,
+        Some(GameMode::Spectator),
+        "the word the bank never moves"
+    );
+    assert!(app.debug_modifier_used, "the error arm the flag TOO banks");
+    let _ = app;
+}
+
+// THE CYCLE SPECTATOR'S OWN WIRE PACKET (the ServerboundChangeGameModePacket
+// the wire arm sends ALONE — the local prediction the echo lane
+// fills, the previous bank the wire never touches, the restore the
+// CREATIVE fallback the same packet lane speaks)
+#[test]
+fn the_cycle_spectator_chord_the_wire_packet_the_no_prediction() {
+    let mut app = App::new(262);
+    app.enter_world();
+    app.world_is_network = true;
+    app.body = Some(crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0));
+    let (tx, rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+    app.attach_live_clicks(tx);
+    // THE SPECTATOR ARM (the packet ALONE the wire sends — the
+    // SPECTATOR wire id 3 the GameType clinit banks)
+    app.on_cycle_spectator_key();
+    match rx.try_recv().expect("the spectator arm the packet carried") {
+        crate::world_view::ContainerCommand::ChangeGameMode { mode_id } => {
+            assert_eq!(mode_id, 3, "the SPECTATOR wire id the clinit banks");
+        }
+        _ => panic!("the game-mode packet's own shape"),
+    }
+    assert_eq!(
+        app.game_mode,
+        GameMode::Survival,
+        "the mode the server owns"
+    );
+    assert!(
+        app.previous_game_mode.is_none(),
+        "the bank the wire never fills"
+    );
+    // THE RESTORE ARM (the previous None the CREATIVE fallback keeps
+    // — the wire the CREATIVE id 1 the same packet lane speaks)
+    app.game_mode = GameMode::Spectator;
+    app.on_cycle_spectator_key();
+    match rx.try_recv().expect("the restore arm the packet carried") {
+        crate::world_view::ContainerCommand::ChangeGameMode { mode_id } => {
+            assert_eq!(mode_id, 1, "the CREATIVE fallback the wire speaks");
+        }
+        _ => panic!("the game-mode packet's own shape"),
+    }
+    assert_eq!(
+        app.game_mode,
+        GameMode::Spectator,
+        "the wire world the local bank never moves"
+    );
+    assert!(app.debug_modifier_used, "the modifier the chord spends");
+    let _ = app;
+}

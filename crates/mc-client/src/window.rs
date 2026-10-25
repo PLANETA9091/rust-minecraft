@@ -2620,6 +2620,16 @@ pub fn run_gui_app(
             if f3_down && window.is_key_pressed(Key::I, minifb::KeyRepeat::No) {
                 app.on_copy_recreate_command_key();
             }
+            // THE F3+N CYCLE SPECTATOR (the handleDebugKeys'
+            // keyDebugSpectate lane — the `matches` arm pc 420 the
+            // spectate_209.py walk banks, the window the pc order
+            // keeps: 351 copyRecreate < 420 spectate < 557
+            // switchGameMode. The no-permission arm the error word
+            // speaks, the cycle the SPECTATOR/previous packet sends,
+            // the used flag ALL arms bank)
+            if f3_down && window.is_key_pressed(Key::N, minifb::KeyRepeat::No) {
+                app.on_cycle_spectator_key();
+            }
             // THE F3+P FOCUS-PAUSE TOGGLE (the 26.2 debug entry the
             // key.debug.focusPause binding wears — the
             // options.pauseOnLostFocus the flip serves, the focus

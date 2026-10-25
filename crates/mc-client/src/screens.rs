@@ -39703,6 +39703,98 @@ impl App {
         self.debug_modifier_used = true;
     }
 
+    /// THE CYCLE SPECTATOR'S OWN CHORD (javap 26.2
+    /// KeyboardHandler.handleDebugKeys's keyDebugSpectate lane —
+    /// the `matches` arm pc 420 the spectate_209.py walk banks, the
+    /// window the pc order keeps: 351 copyRecreate < 420 spectate <
+    /// 557 switchGameMode, the kb::DEBUG_SPECTATE slot 35 the GLFW N
+    /// default the Options ctor walk banks). THE GATE CHAIN (pc
+    /// 431-459): the player-null arm the ERROR WORD speaks (the
+    /// copyLocation's silent-null `ifnull -> 1163` the neighbor
+    /// wears — this lane the `ifnull -> 462` the
+    /// debugFeedbackTranslated walks), the
+    /// `GameModeCommand.PERMISSION_CHECK.check(player.permissions())`
+    /// gate the client's no-permission vocabulary the constant-pass
+    /// keeps (the apply_gamemode_hovered's own law). THE ERROR WORD
+    /// (pc 462-466): the `debug.creative_spectator.error` row the
+    /// en_us table keeps — `Unable to switch game mode; no
+    /// permission` — the ChatFormatting.YELLOW the `§e` prefix the
+    /// family's lanes wear, the arm's own `goto -> 554` the used
+    /// flag the error arm TOO banks. THE CYCLE WALK (pc 472-551):
+    /// the `!player.isSpectator()` arm the SPECTATOR packet serves
+    /// (pc 485-505 — the ServerboundChangeGameModePacket the
+    /// connection send carries), the spectator arm the
+    /// `MoreObjects.firstNonNull(gameMode.getPreviousPlayerMode(),
+    /// GameType.CREATIVE)` restore serves (pc 511-551 — the previous
+    /// bank the None the CREATIVE fallback keeps). THE SEAM (the
+    /// apply_gamemode_hovered's own two worlds the lane shares): the
+    /// WIRE world the packet ALONE sends (the mode the SERVER's
+    /// belief owns, no local prediction the echo lane fills), the
+    /// OFFLINE world the integrated-server walk the local authority
+    /// keeps (the changed-only previous bank + the mode bank + the
+    /// abilities re-grant the updatePlayerAbilities walk owns). THE
+    /// USED FLAG (pc 554-555 istore_3): ALL arms reach 554 — the
+    /// flag the gated walk REGARDLESS banks.
+    pub fn on_cycle_spectator_key(&mut self) {
+        // THE GATE CHAIN (pc 431-459 — the player-null the error
+        // word wears, the permission the constant-pass keeps)
+        let Some(_) = self.body.as_ref() else {
+            // THE ERROR WORD (pc 462-466 — the debug
+            // .creative_spectator.error row the yellow wears)
+            self.push_chat_message(
+                "\u{a7}eUnable to switch game mode; no permission".to_string(),
+            );
+            // THE USED FLAG (pc 554-555 — the error arm's own goto
+            // `-> 554` the flag the gated walk TOO banks)
+            self.debug_modifier_used = true;
+            return;
+        };
+        // THE CYCLE WALK (pc 472-551 — the isSpectator verdict the
+        // two arms split)
+        if self.game_mode != GameMode::Spectator {
+            // THE SPECTATOR ARM (pc 485-505 — the SPECTATOR packet
+            // the GameType's own wire id carries)
+            self.send_game_mode_request(GameMode::Spectator);
+        } else {
+            // THE RESTORE ARM (pc 511-551 — the firstNonNull the
+            // previous bank the CREATIVE fallback keeps)
+            let prev = self.previous_game_mode.unwrap_or(GameMode::Creative);
+            self.send_game_mode_request(prev);
+        }
+        // THE USED FLAG (pc 554-555 — the walk-passed bank wears)
+        self.debug_modifier_used = true;
+    }
+
+    /// THE MODE REQUEST'S OWN SEAM (the apply_gamemode_hovered's own
+    /// two worlds the F3+N lane shares — the singleplayer's
+    /// integrated server the local authority runs, the wire world
+    /// the server's belief the packet asks): the WIRE world the
+    /// ServerboundChangeGameModePacket ALONE sends (pcs 49-60 — the
+    /// GameType id the VarInt codec carries, the local prediction
+    /// the switcher's walk never keeps, the clientbound echo the
+    /// live_game_mode_updated gate fills), the OFFLINE world the
+    /// changed-only previous bank + the mode bank + the abilities
+    /// re-grant the updatePlayerAbilities walk owns (the same-mode
+    /// arm the acmp keeps silent — the unchanged mode the walk never
+    /// re-speaks).
+    fn send_game_mode_request(&mut self, mode: GameMode) {
+        if self.world_is_network {
+            // THE WIRE SEND (pcs 49-60 — the sink-less App the
+            // send's own silence keeps)
+            if let Some(sink) = self.live_clicks.as_ref() {
+                let _ = sink.send(crate::world_view::ContainerCommand::ChangeGameMode {
+                    mode_id: mode.wire_id(),
+                });
+            }
+        } else if mode != self.game_mode {
+            // THE OFFLINE APPLY (the changed-only acmp the previous
+            // bank earns, the re-grant the abilities walk owns)
+            self.previous_game_mode = Some(self.game_mode);
+            self.game_mode = mode;
+            self.abilities_regrant(mode);
+        }
+    }
+
     /// THE DEBUG CRASH'S OWN HOLD (javap 26.2 KeyboardHandler's
     /// keyPress pc 81-186 + tick() pc 0-214 the two walks the merged
     /// frame arm serves — the window frame calls both every beat the
