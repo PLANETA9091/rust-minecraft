@@ -21350,6 +21350,13 @@ impl App {
             self.toggle_keys_restore_after_screen();
         } else {
             self.toggle_keys_release_for_screen();
+            // THE PLAIN KEYS' OWN RELEASE (the vanilla pc 215
+            // releaseAll walk the non-toggle instances wear — the
+            // toggle dance the latched seats alone banks, the body's
+            // raw banks the plain lane clears: the movement fields
+            // zero, the sprint bank false, the dig hold cleared, the
+            // wire the change-law the release packet speaks)
+            self.key_mappings_release_all();
         }
         self.screen = kind;
         self.buttons.clear();
@@ -28175,6 +28182,11 @@ impl App {
             // refuses, the paused the idempotence keeps)
             if self.screen == ScreenKind::World && !self.paused && !self.dead {
                 self.paused = true;
+                // THE PAUSESCREEN'S OWN RELEASE (the vanilla setScreen
+                // walk the pause menu the same releaseAll arm wears —
+                // the held keys the pause the walk never feeds, the
+                // wire the release packet the server sees)
+                self.key_mappings_release_all();
                 self.buttons.clear();
             }
         }
@@ -28192,7 +28204,16 @@ impl App {
             if self.dead {
                 return;
             }
-            self.paused = !self.paused;
+            // THE PAUSE ARM'S OWN RELEASE (the vanilla PauseScreen the
+            // setScreen(non-null) walk wears — the pause side the
+            // releaseAll speaks, the unpause the world's return the
+            // poll's own setAll lane re-reads, the re-clear never
+            // rides)
+            let now_paused = !self.paused;
+            if now_paused {
+                self.key_mappings_release_all();
+            }
+            self.paused = now_paused;
             self.buttons.clear();
         } else if self.screen == ScreenKind::Chest {
             // the container's own close (vanilla Escape/E on a container
@@ -38024,6 +38045,12 @@ impl App {
     /// untouched draft the ESC-clear arm reads).
     pub fn on_chat_key(&mut self) {
         self.chat_open = true;
+        // THE CHATSCREEN'S OWN RELEASE (the vanilla Gui.setScreen
+        // walk — the chat screen the setScreen(non-null) arm the
+        // releaseAll speaks: the held movement keys the menu the
+        // walk never feeds, the body's banked word the all-false
+        // record clears)
+        self.key_mappings_release_all();
         self.chat_history_pos = self.recent_chat.len();
         // THE DRAFT'S OWN RESTORE (the createScreen restorable arm —
         // the MESSAGE method any draft keeps, the text the input
@@ -38066,6 +38093,10 @@ impl App {
     /// alone carries (no doubling the fresh open wears).
     pub fn on_command_key(&mut self) {
         self.chat_open = true;
+        // THE CHATSCREEN'S OWN RELEASE (the same Gui.setScreen arm the
+        // T-open wears — the COMMAND method's open the setScreen
+        // non-null walk answers, the releaseAll the held keys clears)
+        self.key_mappings_release_all();
         self.chat_history_pos = self.recent_chat.len();
         // THE DRAFT'S OWN COMMAND RESTORE (the createScreen fold the
         // COMMAND method's $2 walk answers — the isDraftRestorable
@@ -44010,6 +44041,40 @@ impl App {
             TOGGLE_ATTACK => crate::options_file::key_binds::ATTACK,
             _ => crate::options_file::key_binds::USE,
         }
+    }
+
+    /// THE PLAIN KEYMAPPINGS' OWN SCREEN RELEASE (the vanilla
+    /// Gui.setScreen's pc 215 `KeyMapping.releaseAll()` walk the
+    /// non-toggle instances wear — the ALL-map iteration the base
+    /// `KeyMapping.release()` speaks: the clickCount zero + the
+    /// setDown(false) reset, the next KeyboardInput.tick the
+    /// all-false record reads, the LocalPlayer.tick's change-detector
+    /// the ServerboundPlayerInputPacket release wears). THE CLIENT'S
+    /// OWN SEAT: the polled binds the physical state the frame loop
+    /// re-reads (the world's return the setAll lane the poll itself
+    /// answers — the KeyMapping.setAll walk the MouseHandler.
+    /// grabMouse pc 25 the RESTORE_KEY_STATE_AFTER_MOUSE_GRAB quirk
+    /// arm speaks, the shouldSetOnIngameFocus gate the KEYSYM-type
+    /// keyboard binds alone serves, the ToggleKeyMapping's own
+    /// override the latched seats the re-read refuses), the BODY'S
+    /// BANKED WORD the screen alone freezes — the release the bank
+    /// clears: the movement fields the on_movement_input walk zeroes
+    /// (the all-false record the body's raw banks wear), the sprint
+    /// key bank false, the dig hold cleared — the wire the
+    /// change-law speaks (the packet the flags' own delta answers,
+    /// the server the menu's release sees, the standing-still open
+    /// the unchanged record never re-sends).
+    pub fn key_mappings_release_all(&mut self) {
+        // THE ATTACK BIND'S OWN RELEASE (the keyAttack.isDown false
+        // the dig's own gate reads — the held dig the release stops,
+        // the re-entry the physical edge the poll re-arms)
+        self.dig_held = false;
+        // THE ALL-FALSE RECORD (the releaseAll's setDown(false) walk
+        // the every mapping wears — the on_movement_input's own law
+        // the body fields + the sprint bank + the wire change-detector
+        // the one walk serves: the flags the all-false record wears,
+        // the shift-edge the false keeps [the dismount never arms])
+        self.on_movement_input(0.0, 0.0, false, false, false);
     }
 
     /// The movement keys (the windowed loop's per-frame feed): the

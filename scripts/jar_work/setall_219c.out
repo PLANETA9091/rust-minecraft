@@ -1,0 +1,138 @@
+=== ToggleKeyMapping methods:
+   <init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;Ljava/util/function/BooleanSupplier;Z)V
+   <init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;Ljava/util/function/BooleanSupplier;Z)V
+   release()V
+   reset()V
+   setDown(Z)V
+   shouldRestoreStateOnScreenClosed()Z
+   shouldSetOnIngameFocus()Z
+  Gui: setScreen(Lnet/minecraft/client/gui/screens/Screen;)V
+--- Gui.setScreen (296 bytes)
+   0: getstatic net/minecraft/SharedConstants.IS_RUNNING_IN_IDE:Z
+   3: ifeq -> 30
+   6: invokestatic java/lang/Thread.currentThread:()Ljava/lang/Thread;
+   9: aload_0
+   10: getfield net/minecraft/client/gui/Gui.minecraft:Lnet/minecraft/client/Minecraft;
+   13: invokevirtual net/minecraft/client/Minecraft.getRunningThread:()Ljava/lang/Thread;
+   16: if_acmpeq -> 30
+   19: getstatic net/minecraft/client/gui/Gui.LOGGER:Lorg/slf4j/Logger;
+   22: ldc_w ldcw@369
+   25: invokeinterface org/slf4j/Logger.error:(Ljava/lang/String;)V
+   28: iconst_m1
+   29: nop
+   30: aload_0
+   31: getfield net/minecraft/client/gui/Gui.screen:Lnet/minecraft/client/gui/screens/Screen;
+   34: ifnull -> 47
+   37: aload_0
+   38: getfield net/minecraft/client/gui/Gui.screen:Lnet/minecraft/client/gui/screens/Screen;
+   41: invokevirtual net/minecraft/client/gui/screens/Screen.removed:()V
+   44: goto -> 57
+   47: aload_0
+   48: getfield net/minecraft/client/gui/Gui.minecraft:Lnet/minecraft/client/Minecraft;
+   51: getstatic net/minecraft/client/InputType.NONE:Lnet/minecraft/client/InputType;
+   54: invokevirtual net/minecraft/client/Minecraft.setLastInputType:(Lnet/minecraft/client/InputType;)V
+   57: aload_1
+   58: ifnonnull -> 182
+   61: aload_0
+   62: getfield net/minecraft/client/gui/Gui.clientLevelTeardownInProgress:Z
+   65: ifeq -> 79
+   68: new java/lang/IllegalStateException
+   71: dup
+   72: ldc_w ldcw@394
+   75: invokespecial java/lang/IllegalStateException.<init>:(Ljava/lang/String;)V
+   78: athrow
+   79: aload_0
+   80: getfield net/minecraft/client/gui/Gui.minecraft:Lnet/minecraft/client/Minecraft;
+   83: getfield net/minecraft/client/Minecraft.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   86: ifnonnull -> 100
+   89: new net/minecraft/client/gui/screens/TitleScreen
+   92: dup
+   93: invokespecial net/minecraft/client/gui/screens/TitleScreen.<init>:()V
+   96: astore_1
+   97: goto -> 182
+   100: aload_0
+   101: getfield net/minecraft/client/gui/Gui.minecraft:Lnet/minecraft/client/Minecraft;
+   104: getfield net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+   107: invokevirtual net/minecraft/client/player/LocalPlayer.isDeadOrDying:()Z
+   110: ifeq -> 171
+   113: aload_0
+   114: getfield net/minecraft/client/gui/Gui.minecraft:Lnet/minecraft/client/Minecraft;
+   117: getfield net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+   120: invokevirtual net/minecraft/client/player/LocalPlayer.shouldShowDeathScreen:()Z
+   123: ifeq -> 158
+   126: new net/minecraft/client/gui/screens/DeathScreen
+   129: dup
+   130: aconst_null
+   131: aload_0
+   132: getfield net/minecraft/client/gui/Gui.minecraft:Lnet/minecraft/client/Minecraft;
+   135: getfield net/minecraft/client/Minecraft.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   138: invokevirtual net/minecraft/client/multiplayer/ClientLevel.getLevelData:()Lnet/minecraft/client/multiplayer/ClientLevel$ClientLevelData;
+   141: invokevirtual net/minecraft/client/multiplayer/ClientLevel$ClientLevelData.isHardcore:()Z
+   144: aload_0
+   145: getfield net/minecraft/client/gui/Gui.minecraft:Lnet/minecraft/client/Minecraft;
+   148: getfield net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+   151: invokespecial net/minecraft/client/gui/screens/DeathScreen.<init>:(Lnet/minecraft/network/chat/Component;ZLnet/minecraft/client/player/LocalPlayer;)V
+   154: astore_1
+   155: goto -> 182
+   158: aload_0
+   159: getfield net/minecraft/client/gui/Gui.minecraft:Lnet/minecraft/client/Minecraft;
+   162: getfield net/minecraft/client/Minecraft.player:Lnet/minecraft/client/player/LocalPlayer;
+   165: invokevirtual net/minecraft/client/player/LocalPlayer.respawn:()V
+   168: goto -> 182
+   171: aload_0
+   172: getfield net/minecraft/client/gui/Gui.hud:Lnet/minecraft/client/gui/Hud;
+   175: invokevirtual net/minecraft/client/gui/Hud.getChat:()Lnet/minecraft/client/gui/components/ChatComponent;
+   178: invokevirtual net/minecraft/client/gui/components/ChatComponent.restoreChatScreen:()Lnet/minecraft/client/gui/screens/ChatScreen;
+   181: astore_1
+   182: aload_0
+   183: aload_1
+   184: putfield net/minecraft/client/gui/Gui.screen:Lnet/minecraft/client/gui/screens/Screen;
+   187: aload_0
+   188: getfield net/minecraft/client/gui/Gui.screen:Lnet/minecraft/client/gui/screens/Screen;
+   191: ifnull -> 201
+   194: aload_0
+   195: getfield net/minecraft/client/gui/Gui.screen:Lnet/minecraft/client/gui/screens/Screen;
+   198: invokevirtual net/minecraft/client/gui/screens/Screen.added:()V
+   201: aload_1
+   202: ifnull -> 245
+   205: aload_0
+   206: getfield net/minecraft/client/gui/Gui.minecraft:Lnet/minecraft/client/Minecraft;
+   209: getfield net/minecraft/client/Minecraft.mouseHandler:Lnet/minecraft/client/MouseHandler;
+   212: invokevirtual net/minecraft/client/MouseHandler.releaseMouse:()V
+   215: invokestatic net/minecraft/client/KeyMapping.releaseAll:()V
+   218: aload_1
+   219: aload_0
+   220: getfield net/minecraft/client/gui/Gui.minecraft:Lnet/minecraft/client/Minecraft;
+   223: invokevirtual net/minecraft/client/Minecraft.getWindow:()Lcom/mojang/blaze3d/platform/Window;
+   226: invokevirtual com/mojang/blaze3d/platform/Window.getGuiScaledWidth:()I
+   229: aload_0
+   230: getfield net/minecraft/client/gui/Gui.minecraft:Lnet/minecraft/client/Minecraft;
+   233: invokevirtual net/minecraft/client/Minecraft.getWindow:()Lcom/mojang/blaze3d/platform/Window;
+   236: invokevirtual com/mojang/blaze3d/platform/Window.getGuiScaledHeight:()I
+   239: invokevirtual net/minecraft/client/gui/screens/Screen.init:(II)V
+   242: goto -> 288
+   245: aload_0
+   246: getfield net/minecraft/client/gui/Gui.minecraft:Lnet/minecraft/client/Minecraft;
+   249: invokevirtual net/minecraft/client/Minecraft.textInputManager:()Lcom/mojang/blaze3d/platform/TextInputManager;
+   252: invokevirtual com/mojang/blaze3d/platform/TextInputManager.stopTextInput:()V
+   255: aload_0
+   256: getfield net/minecraft/client/gui/Gui.minecraft:Lnet/minecraft/client/Minecraft;
+   259: getfield net/minecraft/client/Minecraft.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   262: ifnull -> 268
+   265: invokestatic net/minecraft/client/KeyMapping.restoreToggleStatesOnScreenClosed:()V
+   268: aload_0
+   269: getfield net/minecraft/client/gui/Gui.minecraft:Lnet/minecraft/client/Minecraft;
+   272: invokevirtual net/minecraft/client/Minecraft.getSoundManager:()Lnet/minecraft/client/sounds/SoundManager;
+   275: invokevirtual net/minecraft/client/sounds/SoundManager.resume:()V
+   278: aload_0
+   279: getfield net/minecraft/client/gui/Gui.minecraft:Lnet/minecraft/client/Minecraft;
+   282: getfield net/minecraft/client/Minecraft.mouseHandler:Lnet/minecraft/client/MouseHandler;
+   285: invokevirtual net/minecraft/client/MouseHandler.grabMouse:()V
+   288: aload_0
+   289: getfield net/minecraft/client/gui/Gui.minecraft:Lnet/minecraft/client/Minecraft;
+   292: invokevirtual net/minecraft/client/Minecraft.updateTitle:()V
+   295: return
+
+=== releaseAll callers:
+  net.minecraft.client.gui.Gui.setScreen(Lnet/minecraft/client/gui/screens/Screen;)V:
+    215: invokestatic net/minecraft/client/KeyMapping.releaseAll:()V

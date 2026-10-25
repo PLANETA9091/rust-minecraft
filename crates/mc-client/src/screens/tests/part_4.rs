@@ -16951,3 +16951,149 @@ fn the_respawn_the_toggle_keys_the_reset_wears() {
         "the respawn's cleared flag the restore never re-latches"
     );
 }
+
+/// THE PLAIN KEYS' OWN SCREEN RELEASE (the vanilla Gui.setScreen's
+/// pc 215 `KeyMapping.releaseAll()` walk the non-toggle instances
+/// wear — the inventory open the body's raw banks the all-false
+/// record clears: the movement fields zero, the sprint key bank
+/// false, the dig hold cleared, the wire the change-law the
+/// ServerboundPlayerInputPacket release speaks, the standing-still
+/// open the unchanged record never re-sends).
+#[test]
+fn the_screen_open_the_plain_keys_release_all_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    // THE HELD WORDS (the walk + the jump + the crouch + the sprint
+    // bank + the dig the poll's last feed banks — the inventory the
+    // release clears)
+    if let Some(b) = app.body.as_mut() {
+        b.forward = 1.0;
+        b.left = -1.0;
+        b.jumping = true;
+        b.want_crouch = true;
+    }
+    app.sprint_key_down = true;
+    app.dig_held = true;
+    app.last_sent_input = mc_protocol::InputFlags {
+        forward: true,
+        ..Default::default()
+    };
+    // THE WIRE SINK (the release packet the change-law speaks)
+    let (tx, rx) = std::sync::mpsc::channel();
+    app.attach_live_clicks(tx);
+    app.open(ScreenKind::Inventory);
+    // THE BODY'S OWN CLEAR (the all-false record the raw banks wear —
+    // the sprinting STATE the tick law alone owns [the frozen gate
+    // the stop lane the re-entry speaks], the release never touches)
+    let b = app.body.as_ref().unwrap();
+    assert_eq!(b.forward, 0.0, "the release the forward zeroes");
+    assert_eq!(b.left, 0.0, "the release the strafe zeroes");
+    assert!(!b.jumping, "the release the jump clears");
+    assert!(!b.want_crouch, "the release the crouch clears");
+    assert!(
+        !app.sprint_key_down,
+        "the release the sprint key bank clears"
+    );
+    assert!(!app.dig_held, "the release the dig hold clears");
+    // THE WIRE'S OWN RELEASE (the change-detector the all-false delta
+    // answers — one packet, the standing-still open never re-sends)
+    assert_eq!(
+        rx.try_recv().unwrap(),
+        crate::world_view::ContainerCommand::PlayerInput {
+            forward: false,
+            backward: false,
+            left: false,
+            right: false,
+            jump: false,
+            shift: false,
+            sprint: false,
+        },
+        "the release the all-false input packet speaks"
+    );
+    assert!(
+        rx.try_recv().is_err(),
+        "the release the one packet alone wears"
+    );
+    // THE STANDING-STILL OPEN'S OWN SILENCE (the record the release
+    // matched — the change-detector the packet never mints)
+    let (tx2, rx2) = std::sync::mpsc::channel();
+    app.attach_live_clicks(tx2);
+    app.open(ScreenKind::Chest);
+    assert!(
+        rx2.try_recv().is_err(),
+        "the unchanged record the release never re-sends"
+    );
+}
+
+/// THE RELEASE ARMS' OWN MAP + THE WORLD ENTRY'S OWN KEEP (the
+/// vanilla Gui.setScreen walk the screen-takeover arms the releaseAll
+/// wear — the CHATSCREEN's open the T// lanes speak, the PAUSESCREEN
+/// the ESC + the focus-loss arms wear, the unpause the release never
+/// re-rides, the world ENTRY [the close arm] the plain keys the
+/// poll's own setAll lane re-reads — the clear never speaks).
+#[test]
+fn the_release_arms_the_chat_and_pause_the_world_entry_keeps() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    // THE CHAT ARM (the T-open the releaseAll speaks — the held walk
+    // the bank clears, the close the world's return the poll lane
+    // owns, the double-clear never rides)
+    if let Some(b) = app.body.as_mut() {
+        b.forward = 1.0;
+    }
+    app.dig_held = true;
+    app.on_chat_key();
+    assert!(app.chat_open, "the chat the open keeps");
+    assert_eq!(
+        app.body.as_ref().unwrap().forward,
+        0.0,
+        "the chat open the held walk clears"
+    );
+    assert!(!app.dig_held, "the chat open the dig hold clears");
+    app.close_chat();
+    assert!(!app.chat_open, "the close the world's return speaks");
+    assert_eq!(
+        app.body.as_ref().unwrap().forward,
+        0.0,
+        "the close the banks the cleared word keeps [the poll re-feeds]"
+    );
+    // THE COMMAND ARM (the '/'-open the same releaseAll wears)
+    if let Some(b) = app.body.as_mut() {
+        b.forward = 1.0;
+    }
+    app.on_command_key();
+    assert_eq!(
+        app.body.as_ref().unwrap().forward,
+        0.0,
+        "the command open the held walk clears"
+    );
+    app.close_chat();
+    // THE ESC PAUSE ARM (the pause side the release speaks, the
+    // unpause the re-clear never rides)
+    if let Some(b) = app.body.as_mut() {
+        b.forward = 1.0;
+    }
+    app.on_escape();
+    assert!(app.paused, "the escape the pause arms");
+    assert_eq!(
+        app.body.as_ref().unwrap().forward,
+        0.0,
+        "the pause the held walk clears"
+    );
+    app.on_escape();
+    assert!(!app.paused, "the second escape the unpause arms");
+    // THE WORLD ENTRY'S OWN KEEP (the close arm the release never
+    // wears — the restore lane the toggles alone serves, the plain
+    // keys the poll's own setAll re-read)
+    if let Some(b) = app.body.as_mut() {
+        b.forward = 0.7;
+    }
+    app.open(ScreenKind::World);
+    assert_eq!(
+        app.body.as_ref().unwrap().forward,
+        0.7,
+        "the world entry the banked word keeps"
+    );
+}

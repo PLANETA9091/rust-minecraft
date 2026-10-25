@@ -1,0 +1,102 @@
+  KeyMapping: <init>(Ljava/lang/String;ILnet/minecraft/client/KeyMapping$Category;)V
+  KeyMapping: <init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;)V
+  KeyMapping: <init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;I)V
+  KeyMapping: getCategory()Lnet/minecraft/client/KeyMapping$Category;
+--- KeyMapping.shouldSetOnIngameFocus (35 bytes)
+   0: aload_0
+   1: getfield net/minecraft/client/KeyMapping.key:Lcom/mojang/blaze3d/platform/InputConstants$Key;
+   4: invokevirtual com/mojang/blaze3d/platform/InputConstants$Key.getType:()Lcom/mojang/blaze3d/platform/InputConstants$Type;
+   7: getstatic com/mojang/blaze3d/platform/InputConstants$Type.KEYSYM:Lcom/mojang/blaze3d/platform/InputConstants$Type;
+   10: if_acmpne -> 33
+   13: aload_0
+   14: getfield net/minecraft/client/KeyMapping.key:Lcom/mojang/blaze3d/platform/InputConstants$Key;
+   17: invokevirtual com/mojang/blaze3d/platform/InputConstants$Key.getValue:()I
+   20: getstatic com/mojang/blaze3d/platform/InputConstants.UNKNOWN:Lcom/mojang/blaze3d/platform/InputConstants$Key;
+   23: invokevirtual com/mojang/blaze3d/platform/InputConstants$Key.getValue:()I
+   26: if_icmpeq -> 33
+   29: iconst_1
+   30: goto -> 34
+   33: iconst_0
+   34: ireturn
+
+=== KeyMapping subclasses (jar name scan):
+   net/minecraft/client/KeyMapping$Category.class
+   net/minecraft/client/KeyMapping.class
+   net/minecraft/client/ToggleKeyMapping.class
+
+--- MouseHandler.grabMouse (115 bytes)
+   0: aload_0
+   1: getfield net/minecraft/client/MouseHandler.minecraft:Lnet/minecraft/client/Minecraft;
+   4: invokevirtual net/minecraft/client/Minecraft.isWindowActive:()Z
+   7: ifne -> 11
+   10: return
+   11: aload_0
+   12: getfield net/minecraft/client/MouseHandler.mouseGrabbed:Z
+   15: ifeq -> 19
+   18: return
+   19: getstatic net/minecraft/client/input/InputQuirks.RESTORE_KEY_STATE_AFTER_MOUSE_GRAB:Z
+   22: ifeq -> 28
+   25: invokestatic net/minecraft/client/KeyMapping.setAll:()V
+   28: aload_0
+   29: iconst_1
+   30: putfield net/minecraft/client/MouseHandler.mouseGrabbed:Z
+   33: aload_0
+   34: aload_0
+   35: getfield net/minecraft/client/MouseHandler.minecraft:Lnet/minecraft/client/Minecraft;
+   38: invokevirtual net/minecraft/client/Minecraft.getWindow:()Lcom/mojang/blaze3d/platform/Window;
+   41: invokevirtual com/mojang/blaze3d/platform/Window.getScreenWidth:()I
+   44: iconst_2
+   45: 0x6c
+   46: 0x87
+   47: putfield net/minecraft/client/MouseHandler.xpos:D
+   50: aload_0
+   51: aload_0
+   52: getfield net/minecraft/client/MouseHandler.minecraft:Lnet/minecraft/client/Minecraft;
+   55: invokevirtual net/minecraft/client/Minecraft.getWindow:()Lcom/mojang/blaze3d/platform/Window;
+   58: invokevirtual com/mojang/blaze3d/platform/Window.getScreenHeight:()I
+   61: iconst_2
+   62: 0x6c
+   63: 0x87
+   64: putfield net/minecraft/client/MouseHandler.ypos:D
+   67: aload_0
+   68: getfield net/minecraft/client/MouseHandler.minecraft:Lnet/minecraft/client/Minecraft;
+   71: invokevirtual net/minecraft/client/Minecraft.getWindow:()Lcom/mojang/blaze3d/platform/Window;
+   74: ldc_w int 212995
+   77: aload_0
+   78: getfield net/minecraft/client/MouseHandler.xpos:D
+   81: aload_0
+   82: getfield net/minecraft/client/MouseHandler.ypos:D
+   85: invokestatic com/mojang/blaze3d/platform/InputConstants.grabOrReleaseMouse:(Lcom/mojang/blaze3d/platform/Window;IDD)V
+   88: aload_0
+   89: getfield net/minecraft/client/MouseHandler.minecraft:Lnet/minecraft/client/Minecraft;
+   92: getfield net/minecraft/client/Minecraft.gui:Lnet/minecraft/client/gui/Gui;
+   95: aconst_null
+   96: invokevirtual net/minecraft/client/gui/Gui.setScreen:(Lnet/minecraft/client/gui/screens/Screen;)V
+   99: aload_0
+   100: getfield net/minecraft/client/MouseHandler.minecraft:Lnet/minecraft/client/Minecraft;
+   103: sipush 10000
+   106: putfield net/minecraft/client/Minecraft.missTime:I
+   109: aload_0
+   110: iconst_1
+   111: putfield net/minecraft/client/MouseHandler.ignoreFirstMove:Z
+   114: return
+
+=== Minecraft screen-named methods:
+   canInterruptScreen()Z
+   clearClientLevel(Lnet/minecraft/client/gui/screens/Screen;)V
+   createWorldOpenFlows()Lnet/minecraft/client/gui/screens/worldselection/WorldOpenFlows;
+   disconnect(Lnet/minecraft/client/gui/screens/Screen;Z)V
+   disconnect(Lnet/minecraft/client/gui/screens/Screen;ZZ)V
+   disconnectWithProgressScreen()V
+   disconnectWithProgressScreen(Z)V
+   disconnectWithSavingScreen()V
+   getDebugOverlay()Lnet/minecraft/client/gui/components/DebugScreenOverlay;
+   getPlayerSocialManager()Lnet/minecraft/client/gui/screens/social/PlayerSocialManager;
+   grabPanoramixScreenshot(Ljava/io/File;)Lnet/minecraft/network/chat/Component;
+   lambda$grabPanoramixScreenshot$0(Lnet/minecraft/network/chat/Component;)V
+   lambda$grabPanoramixScreenshot$1(Ljava/io/File;Lnet/minecraft/network/chat/Style;)Lnet/minecraft/network/chat/Style;
+   lambda$toggleFriendsScreen$0(Lnet/minecraft/client/gui/screens/Screen;)V
+   onFullscreenError(IJ)V
+   setScreenAndShow(Lnet/minecraft/client/gui/screens/Screen;)V
+   toggleFriendsScreen()Z
+   toggleFullscreen()V

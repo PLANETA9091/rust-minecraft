@@ -1,0 +1,81 @@
+=== KeyMapping methods (set*/isDown/release):
+   isDown()Z
+   release()V
+   releaseAll()V
+   set(Lcom/mojang/blaze3d/platform/InputConstants$Key;Z)V
+   setAll()V
+   setDown(Z)V
+   setKey(Lcom/mojang/blaze3d/platform/InputConstants$Key;)V
+--- KeyMapping.releaseAll()V (41 bytes)
+   0: getstatic net/minecraft/client/KeyMapping.ALL:Ljava/util/Map;
+   3: invokeinterface java/util/Map.values:()Ljava/util/Collection;
+   6: aconst_null
+   7: nop
+   8: invokeinterface java/util/Collection.iterator:()Ljava/util/Iterator;
+   11: aconst_null
+   12: nop
+   13: astore_0
+   14: aload_0
+   15: invokeinterface java/util/Iterator.hasNext:()Z
+   18: aconst_null
+   19: nop
+   20: ifeq -> 40
+   23: aload_0
+   24: invokeinterface java/util/Iterator.next:()Ljava/lang/Object;
+   27: aconst_null
+   28: nop
+   29: checkcast net/minecraft/client/KeyMapping
+   32: astore_1
+   33: aload_1
+   34: invokevirtual net/minecraft/client/KeyMapping.release:()V
+   37: goto -> 14
+   40: return
+
+--- KeyMapping.setAll()V (66 bytes)
+   0: invokestatic net/minecraft/client/Minecraft.getInstance:()Lnet/minecraft/client/Minecraft;
+   3: invokevirtual net/minecraft/client/Minecraft.getWindow:()Lcom/mojang/blaze3d/platform/Window;
+   6: astore_0
+   7: getstatic net/minecraft/client/KeyMapping.ALL:Ljava/util/Map;
+   10: invokeinterface java/util/Map.values:()Ljava/util/Collection;
+   13: aconst_null
+   14: nop
+   15: invokeinterface java/util/Collection.iterator:()Ljava/util/Iterator;
+   18: aconst_null
+   19: nop
+   20: astore_1
+   21: aload_1
+   22: invokeinterface java/util/Iterator.hasNext:()Z
+   25: aconst_null
+   26: nop
+   27: ifeq -> 65
+   30: aload_1
+   31: invokeinterface java/util/Iterator.next:()Ljava/lang/Object;
+   34: aconst_null
+   35: nop
+   36: checkcast net/minecraft/client/KeyMapping
+   39: astore_2
+   40: aload_2
+   41: invokevirtual net/minecraft/client/KeyMapping.shouldSetOnIngameFocus:()Z
+   44: ifeq -> 62
+   47: aload_2
+   48: aload_0
+   49: aload_2
+   50: getfield net/minecraft/client/KeyMapping.key:Lcom/mojang/blaze3d/platform/InputConstants$Key;
+   53: invokevirtual com/mojang/blaze3d/platform/InputConstants$Key.getValue:()I
+   56: invokestatic com/mojang/blaze3d/platform/InputConstants.isKeyDown:(Lcom/mojang/blaze3d/platform/Window;I)Z
+   59: invokevirtual net/minecraft/client/KeyMapping.setDown:(Z)V
+   62: goto -> 21
+   65: return
+
+=== setAll / releaseAll callers:
+  net.minecraft.client.Minecraft.<init>(Lnet/minecraft/client/main/GameConfig;)V:
+    2879: invokevirtual com/mojang/blaze3d/platform/Window.setAllowCursorChanges:(Z)V
+  net.minecraft.client.MouseHandler.grabMouse()V:
+    25: invokestatic net/minecraft/client/KeyMapping.setAll:()V
+
+=== shouldSetOnIngameFocus declarations:
+Traceback (most recent call last):
+  File "/home/z/my-project/rust-minecraft/scripts/jar_work/setall_219.py", line 77, in <module>
+    cp, body = ms4['setScreen(Lnet/minecraft/client/gui/screens/Screen;)V']
+               ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'setScreen(Lnet/minecraft/client/gui/screens/Screen;)V'

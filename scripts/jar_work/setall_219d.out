@@ -1,0 +1,145 @@
+--- ToggleKeyMapping.shouldSetOnIngameFocus()Z (25 bytes)
+   0: aload_0
+   1: invokespecial net/minecraft/client/KeyMapping.shouldSetOnIngameFocus:()Z
+   4: ifeq -> 23
+   7: aload_0
+   8: getfield net/minecraft/client/ToggleKeyMapping.needsToggle:Ljava/util/function/BooleanSupplier;
+   11: invokeinterface java/util/function/BooleanSupplier.getAsBoolean:()Z
+   14: aconst_null
+   15: nop
+   16: ifne -> 23
+   19: iconst_1
+   20: goto -> 24
+   23: iconst_0
+   24: ireturn
+
+--- ToggleKeyMapping.shouldRestoreStateOnScreenClosed()Z (52 bytes)
+   0: aload_0
+   1: getfield net/minecraft/client/ToggleKeyMapping.shouldRestore:Z
+   4: ifeq -> 43
+   7: aload_0
+   8: getfield net/minecraft/client/ToggleKeyMapping.needsToggle:Ljava/util/function/BooleanSupplier;
+   11: invokeinterface java/util/function/BooleanSupplier.getAsBoolean:()Z
+   14: aconst_null
+   15: nop
+   16: ifeq -> 43
+   19: aload_0
+   20: getfield net/minecraft/client/ToggleKeyMapping.key:Lcom/mojang/blaze3d/platform/InputConstants$Key;
+   23: invokevirtual com/mojang/blaze3d/platform/InputConstants$Key.getType:()Lcom/mojang/blaze3d/platform/InputConstants$Type;
+   26: getstatic com/mojang/blaze3d/platform/InputConstants$Type.KEYSYM:Lcom/mojang/blaze3d/platform/InputConstants$Type;
+   29: if_acmpne -> 43
+   32: aload_0
+   33: getfield net/minecraft/client/ToggleKeyMapping.releasedByScreenWhenDown:Z
+   36: ifeq -> 43
+   39: iconst_1
+   40: goto -> 44
+   43: iconst_0
+   44: istore_1
+   45: aload_0
+   46: iconst_0
+   47: putfield net/minecraft/client/ToggleKeyMapping.releasedByScreenWhenDown:Z
+   50: iload_1
+   51: ireturn
+
+--- ToggleKeyMapping.setDown(Z)V (41 bytes)
+   0: aload_0
+   1: getfield net/minecraft/client/ToggleKeyMapping.needsToggle:Ljava/util/function/BooleanSupplier;
+   4: invokeinterface java/util/function/BooleanSupplier.getAsBoolean:()Z
+   7: aconst_null
+   8: nop
+   9: ifeq -> 35
+   12: iload_1
+   13: ifeq -> 40
+   16: aload_0
+   17: aload_0
+   18: invokevirtual net/minecraft/client/ToggleKeyMapping.isDown:()Z
+   21: ifne -> 28
+   24: iconst_1
+   25: goto -> 29
+   28: iconst_0
+   29: invokespecial net/minecraft/client/KeyMapping.setDown:(Z)V
+   32: goto -> 40
+   35: aload_0
+   36: iload_1
+   37: invokespecial net/minecraft/client/KeyMapping.setDown:(Z)V
+   40: return
+
+--- ToggleKeyMapping.release()V (36 bytes)
+   0: aload_0
+   1: getfield net/minecraft/client/ToggleKeyMapping.needsToggle:Ljava/util/function/BooleanSupplier;
+   4: invokeinterface java/util/function/BooleanSupplier.getAsBoolean:()Z
+   7: aconst_null
+   8: nop
+   9: ifeq -> 19
+   12: aload_0
+   13: invokevirtual net/minecraft/client/ToggleKeyMapping.isDown:()Z
+   16: ifne -> 26
+   19: aload_0
+   20: getfield net/minecraft/client/ToggleKeyMapping.releasedByScreenWhenDown:Z
+   23: ifeq -> 31
+   26: aload_0
+   27: iconst_1
+   28: putfield net/minecraft/client/ToggleKeyMapping.releasedByScreenWhenDown:Z
+   31: aload_0
+   32: invokevirtual net/minecraft/client/ToggleKeyMapping.reset:()V
+   35: return
+
+--- KeyMapping.restoreToggleStatesOnScreenClosed()V (61 bytes)
+   0: getstatic net/minecraft/client/KeyMapping.ALL:Ljava/util/Map;
+   3: invokeinterface java/util/Map.values:()Ljava/util/Collection;
+   6: aconst_null
+   7: nop
+   8: invokeinterface java/util/Collection.iterator:()Ljava/util/Iterator;
+   11: aconst_null
+   12: nop
+   13: astore_0
+   14: aload_0
+   15: invokeinterface java/util/Iterator.hasNext:()Z
+   18: aconst_null
+   19: nop
+   20: ifeq -> 60
+   23: aload_0
+   24: invokeinterface java/util/Iterator.next:()Ljava/lang/Object;
+   27: aconst_null
+   28: nop
+   29: checkcast net/minecraft/client/KeyMapping
+   32: astore_1
+   33: aload_1
+   34: instanceof net/minecraft/client/ToggleKeyMapping
+   37: ifeq -> 57
+   40: aload_1
+   41: checkcast net/minecraft/client/ToggleKeyMapping
+   44: astore_2
+   45: aload_2
+   46: invokevirtual net/minecraft/client/ToggleKeyMapping.shouldRestoreStateOnScreenClosed:()Z
+   49: ifeq -> 57
+   52: aload_2
+   53: iconst_1
+   54: invokevirtual net/minecraft/client/ToggleKeyMapping.setDown:(Z)V
+   57: goto -> 14
+   60: return
+
+--- KeyMapping.release()V (11 bytes)
+   0: aload_0
+   1: iconst_0
+   2: putfield net/minecraft/client/KeyMapping.clickCount:I
+   5: aload_0
+   6: iconst_0
+   7: invokevirtual net/minecraft/client/KeyMapping.setDown:(Z)V
+   10: return
+
+--- KeyMapping.isDown()Z (5 bytes)
+   0: aload_0
+   1: getfield net/minecraft/client/KeyMapping.isDown:Z
+   4: ireturn
+
+--- KeyMapping.setDown(Z)V (6 bytes)
+   0: aload_0
+   1: iload_1
+   2: putfield net/minecraft/client/KeyMapping.isDown:Z
+   5: return
+
+=== InputQuirks fields:
+Traceback (most recent call last):
+  File "<stdin>", line 39, in <module>
+TypeError: 'NoneType' object is not subscriptable
