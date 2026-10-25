@@ -17444,3 +17444,163 @@ fn the_focus_pause_the_backtogame_the_chord_close_the_map_wears() {
     );
     assert!(app.paused, "returning from options stays paused");
 }
+
+/// THE DEBUG-CHORD'S OWN OPEN ARM (the vanilla setScreen(non-null)
+/// walk the interrupt lane wears — the pc 205-215 releaseMouse +
+/// releaseAll the F3+F6 open speaks: the latched seats the flag
+/// banks + the latch clears, the plain banks the held walk zeroes,
+/// the dig hold clears; the second tap's close the 221 restore law
+/// the banked flag the re-latch serves — the round-trip the latch
+/// survives; the ESC close lane the same restore wears).
+#[test]
+fn the_debug_chord_open_the_held_walk_the_release_wears() {
+    use crate::screens::TOGGLE_SPRINT;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.toggle_sprint = true;
+    assert!(app.toggle_key_state(TOGGLE_SPRINT, true, true));
+    assert!(app.toggle_key_state(TOGGLE_SPRINT, false, true));
+    if let Some(b) = app.body.as_mut() {
+        b.forward = 1.0;
+    }
+    app.dig_held = true;
+    // THE OPEN WALK (the interrupt arm the release pair wears — the
+    // toggle release the plain walk's BEFORE seat the pc 215 order
+    // keeps)
+    app.on_debug_options_key();
+    assert_eq!(
+        app.screen,
+        ScreenKind::DebugOptions,
+        "the chord the debug options opens"
+    );
+    assert!(
+        !app.toggle_latched(TOGGLE_SPRINT),
+        "the open the sprint latch clears"
+    );
+    assert!(
+        app.toggle_released_by_screen[TOGGLE_SPRINT],
+        "the open the flag the release banks"
+    );
+    assert_eq!(
+        app.body.as_ref().unwrap().forward,
+        0.0,
+        "the open the held walk zeroes"
+    );
+    assert!(!app.dig_held, "the open the dig hold clears");
+    // THE SECOND TAP'S OWN CLOSE (the instanceof arm the restore
+    // rides — the re-latch the banked flag the world's return serves)
+    app.on_debug_options_key();
+    assert_eq!(app.screen, ScreenKind::World, "the chord closes");
+    assert!(
+        app.toggle_latched(TOGGLE_SPRINT),
+        "the close the re-latch wears"
+    );
+    assert!(
+        !app.toggle_released_by_screen[TOGGLE_SPRINT],
+        "the close the flag the always-clear consumes"
+    );
+    // THE SECOND CYCLE (the re-latched seat the open re-banks, the
+    // ESC close lane the same restore the re-latch wears)
+    app.on_debug_options_key();
+    assert_eq!(app.screen, ScreenKind::DebugOptions, "the reopen serves");
+    assert!(
+        app.toggle_released_by_screen[TOGGLE_SPRINT],
+        "the second open the flag re-banks"
+    );
+    app.on_escape();
+    assert_eq!(app.screen, ScreenKind::World, "the ESC lane closes");
+    assert!(
+        app.toggle_latched(TOGGLE_SPRINT),
+        "the ESC close the re-latch wears"
+    );
+}
+
+/// THE DEBUG-CHORD OPEN'S OWN ARMS MAP (the dead world the interrupt
+/// refuses — the release never rides, the held banks the word keeps;
+/// the lock-confirm seat the same refusal wears; the pause seat the
+/// interrupt serves — the banked word the release the `latch || flag`
+/// arm keeps, the plain banks the pause arm's zero the no-op wears).
+#[test]
+fn the_debug_chord_open_the_arms_map_the_refusals_keep() {
+    use crate::screens::TOGGLE_SPRINT;
+    let mut app = App::new(3);
+    app.enter_world();
+    app.spawn_offline_body();
+    app.toggle_sprint = true;
+    assert!(app.toggle_key_state(TOGGLE_SPRINT, true, true));
+    assert!(app.toggle_key_state(TOGGLE_SPRINT, false, true));
+    if let Some(b) = app.body.as_mut() {
+        b.forward = 1.0;
+    }
+    // THE DEATH SCREEN'S OWN REFUSAL (the canInterrupt FALSE verdict
+    // the release never rides — the held banks the word keeps, the
+    // latch the unlatched word never wears)
+    app.dead = true;
+    app.on_debug_options_key();
+    assert_eq!(
+        app.screen,
+        ScreenKind::World,
+        "the dead the interrupt refuses"
+    );
+    assert_eq!(
+        app.body.as_ref().unwrap().forward,
+        1.0,
+        "the refusal the held word keeps"
+    );
+    assert!(
+        app.toggle_latched(TOGGLE_SPRINT),
+        "the refusal the latch keeps"
+    );
+    assert!(
+        !app.toggle_released_by_screen[TOGGLE_SPRINT],
+        "the refusal the flag never banks"
+    );
+    app.dead = false;
+    // THE LOCK CONFIRM'S OWN REFUSAL (the same FALSE verdict wears —
+    // the modal question the release never steals)
+    app.screen = ScreenKind::DifficultyLockConfirm;
+    app.on_debug_options_key();
+    assert_eq!(
+        app.screen,
+        ScreenKind::DifficultyLockConfirm,
+        "the lock confirm refuses"
+    );
+    assert_eq!(
+        app.body.as_ref().unwrap().forward,
+        1.0,
+        "the refusal the held word keeps"
+    );
+    app.screen = ScreenKind::World;
+    // THE PAUSE SEAT (the interrupt the paused world serves — the
+    // banked word the release the `latch || flag` arm keeps, the
+    // plain banks the pause arm's zero the no-op wears, the close
+    // the re-latch the chain completes)
+    app.on_escape();
+    assert!(app.paused, "the pause arms");
+    assert!(
+        app.toggle_released_by_screen[TOGGLE_SPRINT],
+        "the pause the flag banks"
+    );
+    app.on_debug_options_key();
+    assert_eq!(
+        app.screen,
+        ScreenKind::DebugOptions,
+        "the pause the interrupt serves"
+    );
+    assert!(!app.paused, "the interrupt the unpause speaks");
+    assert!(
+        app.toggle_released_by_screen[TOGGLE_SPRINT],
+        "the open the banked word keeps"
+    );
+    assert!(
+        !app.toggle_latched(TOGGLE_SPRINT),
+        "the open the unlatched word keeps"
+    );
+    app.on_debug_options_key();
+    assert_eq!(app.screen, ScreenKind::World, "the chord closes");
+    assert!(
+        app.toggle_latched(TOGGLE_SPRINT),
+        "the close the re-latch completes"
+    );
+}
