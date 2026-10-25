@@ -930,6 +930,28 @@ pub mod key_binds {
         "Lightmap Texture",
     ];
 
+    /// THE ORDERI'S OWN BANK (the 5-arg ctor's FIFTH arg the
+    /// `putfield orderI` rows the walk banks — the
+    /// `KeyMapping.compareTo` the WITHIN-CATEGORY order the
+    /// field's own int answers: the 4-arg rows the `iconst_0`
+    /// default the delegate banks, the overlay the `bipush -2` the
+    /// sort's own BEFORE seat wears, the modifier the `iconst_m1`
+    /// the pair's own arg keeps, the charts the `iconst_1..4` the
+    /// AFTER seats speak — the orderI=0 rows the TIES the sort
+    /// walk's own secondary answers, the `I18n.get(name)`
+    /// compareTo the alphabetical re-seat the KeyBindsList's
+    /// Arrays.sort wears).
+    pub const ORDER_I: [i32; COUNT] = {
+        let mut o = [0i32; COUNT];
+        o[DEBUG_OVERLAY] = -2;
+        o[DEBUG_MODIFIER] = -1;
+        o[DEBUG_PROFILING_CHART] = 1;
+        o[DEBUG_FPS_CHARTS] = 2;
+        o[DEBUG_NETWORK_CHARTS] = 3;
+        o[DEBUG_LIGHTMAP_TEXTURE] = 4;
+        o
+    };
+
     /// THE CATEGORY'S OWN ROW (the CategoryEntry the list groups the
     /// rows under — the `key.categories.movement` key the lang
     /// "Movement" row answers).
@@ -1192,20 +1214,20 @@ pub mod key_binds {
     /// bottom keeps (the trio + the hotbar nine the 306-start stride
     /// wear: 12 rows the 11 strides speak, the CREATIVE pair the
     /// 594-header the 606-start rows wear, the SPECTATOR pair the
-    /// 654-header the 666-start rows wear, the DEBUG twelve-row walk
-    /// the 714-header the 726-start rows the walk's own bottom keeps
-    /// (the overlay the 726 seat, the modifier the 750 seat, the
-    /// crash the 774 seat, the reloadChunk the 798 seat, the
-    /// showHitboxes the 822 seat, the clearChat the 846 seat, the
-    /// showChunkBorders the 870 seat, the showAdvancedTooltips the
-    /// 894 seat, the copyRecreateCommand the 918 seat, the spectate
-    /// the 942 seat, the switchGameMode the 966 seat, the
-    /// debugOptions the 990 seat, the focusPause the 1014 seat, the
-    /// dumpDynamicTextures the 1038 seat, the reloadResourcePacks
-    /// the 1062 seat, the profiling
-    /// the 1086 seat, the copyLocation
-    /// the 1110 seat, the dumpVersion
-    /// the 1134 seat, the profilingChart
+    /// 654-header the 666-start rows wear, the DEBUG group the
+    /// 714-header the 726-start rows the walk's own bottom keeps
+    /// (the compareTo re-seat the seats wear — the overlay the 726
+    /// seat, the modifier the 750 seat, the orderI=0 rows the
+    /// i18n-name alphabetical the 774..1134 strides speak (the
+    /// clearChat the 774, the copyRecreate the 798, the
+    /// copyLocation the 822, the spectate the 846, the crash the
+    /// 870, the debugOptions the 894, the dumpDynamicTextures the
+    /// 918, the dumpVersion the 942, the switchGameMode the 966,
+    /// the reloadChunk the 990, the reloadResourcePacks the 1014,
+    /// the showAdvancedTooltips the 1038, the showChunkBorders the
+    /// 1062, the showHitboxes the 1086, the profiling the 1110, the
+    /// focusPause the 1134), the charts the orderI 1..4 the
+    /// profilingChart
     /// the 1158 seat, the fpsCharts
     /// the 1182 seat, the networkCharts
     /// the 1206 seat, the lightmapTexture

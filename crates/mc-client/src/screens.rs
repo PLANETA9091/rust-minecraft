@@ -65487,6 +65487,29 @@ impl App {
         }
     }
 
+    /// THE COMPARETO'S OWN RE-SEAT (the KeyBindsList ctor's
+    /// `Arrays.sort` walk the vanilla law wears — the
+    /// `KeyMapping.compareTo` the three-key ladder answers: the
+    /// category the SORT_ORDER ordinal the group boundaries the
+    /// render's own seats keep, the orderI the WITHIN-group primary
+    /// the ORDER_I bank wears, the TIES the `I18n.get(name)`
+    /// compareTo the alphabetical secondary answers — the orderI=0
+    /// rows the re-seat wear, the registration order the sort never
+    /// speaks, the tr() row the I18n.get law the same string the
+    /// row renders the compare keeps)
+    fn kb_seated(lo: usize, hi: usize) -> Vec<usize> {
+        use crate::options_file::key_binds as kb;
+        let mut rows: Vec<usize> = (lo..hi).collect();
+        rows.sort_by(|&a, &b| {
+            kb::ORDER_I[a].cmp(&kb::ORDER_I[b]).then_with(|| {
+                let na = tr(kb::NAMES[a]).unwrap_or(kb::NAME_FALLBACKS[a]);
+                let nb = tr(kb::NAMES[b]).unwrap_or(kb::NAME_FALLBACKS[b]);
+                na.cmp(nb)
+            })
+        });
+        rows
+    }
+
     /// THE KEY BINDS' OWN LIST (javap 26.2 KeyBindsScreen — the
     /// ControlsScreen pair's RIGHT button the `lambda$addOptions$1`
     /// walk opens): the title the `controls.keybinds.title`
@@ -65555,16 +65578,17 @@ impl App {
                 false,
             );
         }
-        for i in 0..kb::INVENTORY {
-            let by = kb::MOVEMENT_ROWS_START + i as i32 * kb::ROW_STRIDE - off;
+        for (pos, i) in Self::kb_seated(0, kb::INVENTORY).into_iter().enumerate() {
+            let by = kb::MOVEMENT_ROWS_START + pos as i32 * kb::ROW_STRIDE - off;
             if by < kb::LIST_TOP || by + 20 > band_bottom {
                 continue; // the clip the band the honest render keeps
             }
             self.kb_render_row(g, a, w, i, by);
         }
         // THE GAMEPLAY GROUP'S OWN HEADER (the CategoryEntry the
-        // category boundary 210 wears — the trio the ctor's OWN array
-        // order the rows keep (keyUse/keyAttack/keyPickItem), the SAME
+        // category boundary 210 wears — the trio the compareTo law's
+        // own re-seat the seats wear (the orderI=0 ties the
+        // i18n-name alphabetical secondary answers), the SAME
         // group shape the movement/inventory pairs wear; the SORT_ORDER
         // ordinal the BETWEEN seat the enum clinit banks — movement,
         // misc, multiplayer, GAMEPLAY, INVENTORY — the misc/multiplayer
@@ -65581,8 +65605,11 @@ impl App {
                 false,
             );
         }
-        for i in kb::USE..kb::HOTBAR_1 {
-            let by = kb::GAMEPLAY_ROWS_START + (i - kb::USE) as i32 * kb::ROW_STRIDE - off;
+        for (pos, i) in Self::kb_seated(kb::USE, kb::HOTBAR_1)
+            .into_iter()
+            .enumerate()
+        {
+            let by = kb::GAMEPLAY_ROWS_START + pos as i32 * kb::ROW_STRIDE - off;
             if by < kb::LIST_TOP || by + 20 > band_bottom {
                 continue; // the clip the band the honest render keeps
             }
@@ -65603,8 +65630,11 @@ impl App {
                 false,
             );
         }
-        for i in kb::INVENTORY..kb::USE {
-            let by = kb::INVENTORY_ROWS_START + (i - kb::INVENTORY) as i32 * kb::ROW_STRIDE - off;
+        for (pos, i) in Self::kb_seated(kb::INVENTORY, kb::USE)
+            .into_iter()
+            .enumerate()
+        {
+            let by = kb::INVENTORY_ROWS_START + pos as i32 * kb::ROW_STRIDE - off;
             if by < kb::LIST_TOP || by + 20 > band_bottom {
                 continue; // the clip the band the honest render keeps
             }
@@ -65618,9 +65648,12 @@ impl App {
         // the range the HOTBAR_1..SAVE_ACTIVATOR the honest nine keeps
         // — the COUNT tail the creative pair the group's own walk
         // re-renders the 189 walk's dup the 159 fix answers)
-        for i in kb::HOTBAR_1..kb::SAVE_ACTIVATOR {
+        for (pos, i) in Self::kb_seated(kb::HOTBAR_1, kb::SAVE_ACTIVATOR)
+            .into_iter()
+            .enumerate()
+        {
             let by = kb::INVENTORY_ROWS_START
-                + (kb::USE - kb::INVENTORY + i - kb::HOTBAR_1) as i32 * kb::ROW_STRIDE
+                + (kb::USE - kb::INVENTORY + pos) as i32 * kb::ROW_STRIDE
                 - off;
             if by < kb::LIST_TOP || by + 20 > band_bottom {
                 continue; // the clip the band the honest render keeps
@@ -65645,9 +65678,11 @@ impl App {
                 false,
             );
         }
-        for i in kb::SAVE_ACTIVATOR..kb::SPECTATOR_OUTLINES {
-            let by =
-                kb::CREATIVE_ROWS_START + (i - kb::SAVE_ACTIVATOR) as i32 * kb::ROW_STRIDE - off;
+        for (pos, i) in Self::kb_seated(kb::SAVE_ACTIVATOR, kb::SPECTATOR_OUTLINES)
+            .into_iter()
+            .enumerate()
+        {
+            let by = kb::CREATIVE_ROWS_START + pos as i32 * kb::ROW_STRIDE - off;
             if by < kb::LIST_TOP || by + 20 > band_bottom {
                 continue; // the clip the band the honest render keeps
             }
@@ -65671,10 +65706,11 @@ impl App {
                 false,
             );
         }
-        for i in kb::SPECTATOR_OUTLINES..kb::DEBUG_OVERLAY {
-            let by = kb::SPECTATOR_ROWS_START
-                + (i - kb::SPECTATOR_OUTLINES) as i32 * kb::ROW_STRIDE
-                - off;
+        for (pos, i) in Self::kb_seated(kb::SPECTATOR_OUTLINES, kb::DEBUG_OVERLAY)
+            .into_iter()
+            .enumerate()
+        {
+            let by = kb::SPECTATOR_ROWS_START + pos as i32 * kb::ROW_STRIDE - off;
             if by < kb::LIST_TOP || by + 20 > band_bottom {
                 continue; // the clip the band the honest render keeps
             }
@@ -65707,8 +65743,11 @@ impl App {
                 false,
             );
         }
-        for i in kb::DEBUG_OVERLAY..kb::COUNT {
-            let by = kb::DEBUG_ROWS_START + (i - kb::DEBUG_OVERLAY) as i32 * kb::ROW_STRIDE - off;
+        for (pos, i) in Self::kb_seated(kb::DEBUG_OVERLAY, kb::COUNT)
+            .into_iter()
+            .enumerate()
+        {
+            let by = kb::DEBUG_ROWS_START + pos as i32 * kb::ROW_STRIDE - off;
             if by < kb::LIST_TOP || by + 20 > band_bottom {
                 continue; // the clip the band the honest render keeps
             }

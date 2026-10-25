@@ -12912,6 +12912,216 @@ fn the_key_binds_the_rows_the_rebind_the_file_wear() {
     let _ = std::fs::remove_dir_all(&dir);
 }
 
+/// THE COMPARETO'S OWN RE-SEAT (the autopush-226 walk): the
+/// KeyBindsList ctor's `Arrays.sort` the vanilla law wears — the
+/// `KeyMapping.compareTo` the three-key ladder the rows' seats
+/// answer (the category the SORT_ORDER ordinal the group boundaries
+/// the render's own seats keep, the orderI the WITHIN-group primary
+/// the ORDER_I bank wears, the orderI=0 ties the `I18n.get(name)`
+/// alphabetical secondary the re-seat answers): the movement group
+/// the Jump-first re-seat wears (the forward row the LAST slot), the
+/// gameplay trio the Attack/Pick/Use walk, the inventory trio the
+/// Drop-first seat, the creative pair the Load/Save swap the
+/// alphabetical law speaks, the debug group the overlay(-2)/
+/// modifier(-1) the BEFORE seats keep, the orderI=0 rows the
+/// Clear Chat..Toggle Lost Focus Pause the alphabetical walk wears,
+/// the charts the orderI 1..4 the AFTER slots bank — the re-seat
+/// the SEAT order alone re-arms (the ids the rows' own words keep,
+/// the rebind walk the same ids the capture serves, the scroll the
+/// content height the same answer keeps).
+#[test]
+fn the_key_binds_the_compareto_the_orderI_the_name_reseat_wears() {
+    use crate::options_file::key_binds as kb;
+    let mut app = App::new(262);
+    app.open(ScreenKind::KeyBinds);
+    // THE TALL BAND'S OWN WALK (the 1300 viewport the whole list the
+    // visible band keeps — the 48 rows the clip the full render
+    // wears, the seats the button y the honest answer speaks)
+    let root = crate::screens::tests::assets_root();
+    let mut assets = GuiAssets::open(&root);
+    let mut fb = crate::raster::Framebuf::new(320, 1300);
+    app.render(&mut fb, &mut assets);
+    let seat = |app: &App, id: &str| -> i32 {
+        app.buttons
+            .iter()
+            .find(|b| b.id == id)
+            .unwrap_or_else(|| panic!("the {id} row the list wears"))
+            .y
+    };
+    // THE MOVEMENT GROUP'S OWN RE-SEAT (the orderI=0 ties the
+    // alphabetical law answers — Jump < Sneak < Sprint < Strafe Left
+    // < Strafe Right < Walk Backward < Walk Forward; the forward row
+    // the registration head the LAST slot the re-seat wears)
+    assert_eq!(
+        seat(&app, "kb_change_jump"),
+        kb::MOVEMENT_ROWS_START,
+        "the Jump the first slot the alphabetical law wears"
+    );
+    assert_eq!(
+        seat(&app, "kb_change_sneak"),
+        kb::MOVEMENT_ROWS_START + kb::ROW_STRIDE,
+        "the Sneak the second slot keeps"
+    );
+    assert_eq!(
+        seat(&app, "kb_change_sprint"),
+        kb::MOVEMENT_ROWS_START + 2 * kb::ROW_STRIDE,
+        "the Sprint the third slot keeps"
+    );
+    assert_eq!(
+        seat(&app, "kb_change_left"),
+        kb::MOVEMENT_ROWS_START + 3 * kb::ROW_STRIDE,
+        "the Strafe Left the fourth slot keeps"
+    );
+    assert_eq!(
+        seat(&app, "kb_change_right"),
+        kb::MOVEMENT_ROWS_START + 4 * kb::ROW_STRIDE,
+        "the Strafe Right the fifth slot keeps"
+    );
+    assert_eq!(
+        seat(&app, "kb_change_back"),
+        kb::MOVEMENT_ROWS_START + 5 * kb::ROW_STRIDE,
+        "the Walk Backward the sixth slot keeps"
+    );
+    assert_eq!(
+        seat(&app, "kb_change_forward"),
+        kb::MOVEMENT_ROWS_START + 6 * kb::ROW_STRIDE,
+        "the Walk Forward the LAST slot the re-seat wears"
+    );
+    // THE GAMEPLAY TRIO'S OWN RE-SEAT (the Attack/Destroy the
+    // alphabetical head wears, the Pick Block the middle, the Use
+    // Item/Place Block the tail the registration head never keeps)
+    assert_eq!(
+        seat(&app, "kb_change_attack"),
+        kb::GAMEPLAY_ROWS_START,
+        "the Attack the group's head wears"
+    );
+    assert_eq!(
+        seat(&app, "kb_change_pickitem"),
+        kb::GAMEPLAY_ROWS_START + kb::ROW_STRIDE,
+        "the Pick Block the middle slot keeps"
+    );
+    assert_eq!(
+        seat(&app, "kb_change_use"),
+        kb::GAMEPLAY_ROWS_START + 2 * kb::ROW_STRIDE,
+        "the Use the group's tail wears"
+    );
+    // THE INVENTORY TRIO'S OWN RE-SEAT (the Drop Selected Item the
+    // alphabetical head wears, the Open/Close Inventory the middle,
+    // the Swap Item With Off Hand the tail)
+    assert_eq!(
+        seat(&app, "kb_change_drop"),
+        kb::INVENTORY_ROWS_START,
+        "the Drop the trio's head wears"
+    );
+    assert_eq!(
+        seat(&app, "kb_change_inventory"),
+        kb::INVENTORY_ROWS_START + kb::ROW_STRIDE,
+        "the Inventory the middle slot keeps"
+    );
+    assert_eq!(
+        seat(&app, "kb_change_swapoffhand"),
+        kb::INVENTORY_ROWS_START + 2 * kb::ROW_STRIDE,
+        "the Swap the trio's tail wears"
+    );
+    // THE CREATIVE PAIR'S OWN SWAP (the Load Hotbar Activator the
+    // alphabetical head wears — the registration order the pair the
+    // Save-first walk never keeps)
+    assert_eq!(
+        seat(&app, "kb_change_loadactivator"),
+        kb::CREATIVE_ROWS_START,
+        "the Load the pair's head the swap wears"
+    );
+    assert_eq!(
+        seat(&app, "kb_change_saveactivator"),
+        kb::CREATIVE_ROWS_START + kb::ROW_STRIDE,
+        "the Save the pair's tail keeps"
+    );
+    // THE SPECTATOR PAIR'S OWN SEAT (the Highlight Players the head
+    // the alphabetical law keeps — the registration order the same
+    // walk wears, the pair the honest answer keeps)
+    assert_eq!(
+        seat(&app, "kb_change_spectatoroutlines"),
+        kb::SPECTATOR_ROWS_START,
+        "the Highlight Players the head keeps"
+    );
+    assert_eq!(
+        seat(&app, "kb_change_spectatorhotbar"),
+        kb::SPECTATOR_ROWS_START + kb::ROW_STRIDE,
+        "the Select On Hotbar the tail keeps"
+    );
+    // THE DEBUG GROUP'S OWN LADDER (the orderI the -2/-1 the BEFORE
+    // seats keep — the overlay the 726, the modifier the 750; the
+    // orderI=0 ties the alphabetical walk the 774..1134 strides wear
+    // (the Clear Chat the head, the Copy Data the Copy Location the
+    // 'D'<'L' seat answers, the Show family the A/C/H the inner walk
+    // keeps), the charts the orderI 1..4 the AFTER slots bank)
+    assert_eq!(
+        seat(&app, "kb_change_debugoverlay"),
+        kb::DEBUG_ROWS_START,
+        "the overlay the orderI -2 the head wears"
+    );
+    assert_eq!(
+        seat(&app, "kb_change_debugmodifier"),
+        kb::DEBUG_ROWS_START + kb::ROW_STRIDE,
+        "the modifier the orderI -1 the second seat keeps"
+    );
+    assert_eq!(
+        seat(&app, "kb_change_debugclearchat"),
+        kb::DEBUG_ROWS_START + 2 * kb::ROW_STRIDE,
+        "the Clear Chat the orderI=0 head wears"
+    );
+    assert_eq!(
+        seat(&app, "kb_change_debugcopyrecreate"),
+        kb::DEBUG_ROWS_START + 3 * kb::ROW_STRIDE,
+        "the Copy Data the second slot keeps"
+    );
+    assert_eq!(
+        seat(&app, "kb_change_debugcopylocation"),
+        kb::DEBUG_ROWS_START + 4 * kb::ROW_STRIDE,
+        "the Copy Location the third slot keeps"
+    );
+    assert_eq!(
+        seat(&app, "kb_change_debugspectate"),
+        kb::DEBUG_ROWS_START + 5 * kb::ROW_STRIDE,
+        "the Cycle Spectator the fourth slot keeps"
+    );
+    assert_eq!(
+        seat(&app, "kb_change_debugcrash"),
+        kb::DEBUG_ROWS_START + 6 * kb::ROW_STRIDE,
+        "the Debug Crash the fifth slot keeps"
+    );
+    assert_eq!(
+        seat(&app, "kb_change_debugshowhitboxes"),
+        kb::DEBUG_ROWS_START + 15 * kb::ROW_STRIDE,
+        "the Show Hitboxes the Show-family tail wears"
+    );
+    assert_eq!(
+        seat(&app, "kb_change_debugfocuspause"),
+        kb::DEBUG_ROWS_START + 17 * kb::ROW_STRIDE,
+        "the Toggle Lost Focus Pause the orderI=0 tail wears"
+    );
+    assert_eq!(
+        seat(&app, "kb_change_debugprofilingchart"),
+        kb::DEBUG_ROWS_START + 18 * kb::ROW_STRIDE,
+        "the orderI 1 the charts' head wears"
+    );
+    assert_eq!(
+        seat(&app, "kb_change_debugfpscharts"),
+        kb::DEBUG_ROWS_START + 19 * kb::ROW_STRIDE,
+        "the orderI 2 the second chart keeps"
+    );
+    assert_eq!(
+        seat(&app, "kb_change_debugnetworkcharts"),
+        kb::DEBUG_ROWS_START + 20 * kb::ROW_STRIDE,
+        "the orderI 3 the third chart keeps"
+    );
+    assert_eq!(
+        seat(&app, "kb_change_debuglightmaptexture"),
+        kb::DEBUG_ROWS_START + 21 * kb::ROW_STRIDE,
+        "the orderI 4 the LAST slot wears"
+    );
+}
+
 /// THE INVENTORY TRIO'S OWN ROUND (the autopush-187 walk): the trio
 /// the Options ctor's registrations the movement pair's AFTER wear
 /// (the keyInventory/keySwapOffhand/keyDrop rows the INVENTORY
@@ -13022,7 +13232,9 @@ fn the_inventory_trio_the_scroll_the_lanes_the_file_wear() {
     );
     // THE SCROLL'S OWN REACH (the two notches the gameplay's first row
     // the band restores — the 222 y the 48 shift the 174 seat wears,
-    // the header the boundary the shift rides)
+    // the header the boundary the shift rides; the re-seat the
+    // Attack/Destroy row the group's own head the alphabetical law
+    // wears)
     app.on_kb_scroll(-1.0, 240);
     app.on_kb_scroll(-1.0, 240);
     assert_eq!(app.kb_scroll, 48.0, "the two notches the two rows wear");
@@ -13030,16 +13242,16 @@ fn the_inventory_trio_the_scroll_the_lanes_the_file_wear() {
     let use_row = app
         .buttons
         .iter()
-        .find(|b| b.id == "kb_change_use")
+        .find(|b| b.id == "kb_change_attack")
         .expect("the scrolled row the band restores")
         .clone();
     assert_eq!(
-        use_row.label, "Right Button",
+        use_row.label, "Left Button",
         "the default the display speaks"
     );
     assert_eq!(use_row.y, 174, "the shifted row the scroll seat wears");
     assert!(
-        app.buttons.iter().any(|b| b.id == "kb_rowreset_use"),
+        app.buttons.iter().any(|b| b.id == "kb_rowreset_attack"),
         "the reset the row's pair keeps"
     );
     // THE CLAMP'S OWN BOTTOM (the wheel down the max the walk keeps —
@@ -13054,13 +13266,15 @@ fn the_inventory_trio_the_scroll_the_lanes_the_file_wear() {
             .any(|b| b.id == "kb_change_debuglightmaptexture" && b.y + b.h <= 240 - 28),
         "the last row the max scroll the fully-visible seat wears"
     );
-    // THE SCROLL'S OWN RETURN (the five notches the inventory row the
-    // 186 seat the band restores — the rebind the row's own walk needs)
+    // THE SCROLL'S OWN RETURN (the six notches the inventory row the
+    // 186 seat the band restores — the re-seat the trio's own row the
+    // middle slot the +24 shift answers, the rebind the row's own
+    // walk needs)
     app.on_kb_scroll(1000.0, 240);
-    for _ in 0..5 {
+    for _ in 0..6 {
         app.on_kb_scroll(-1.0, 240);
     }
-    assert_eq!(app.kb_scroll, 120.0, "the five notches the seat wears");
+    assert_eq!(app.kb_scroll, 144.0, "the six notches the seat wears");
     app.render(&mut fb, &mut assets);
     // THE REBIND'S OWN WALK (the trio's change click the selectedKey
     // arms, the capture the bind wears — the lanes the store honor;
@@ -13247,8 +13461,11 @@ fn the_gameplay_trio_the_mouse_binds_the_capture_the_lanes_wear() {
     );
     assert_eq!(app.kb_selected, None, "the capture the seat clears");
     // THE RIGHT SEAT'S OWN CAPTURE (the use row the armed seat the
-    // right press the MOUSE 1 bind wears — the capture the FALSE
-    // verdict the use-start probe keeps, the press consumed)
+    // right press the MOUSE 1 bind wears — the re-seat the Use row
+    // the group's own tail the fourth notch the band restores, the
+    // capture the FALSE verdict the use-start probe keeps, the press
+    // consumed)
+    app.on_kb_scroll(-1.0, 240);
     app.render(&mut fb, &mut assets);
     let use_row = app
         .buttons
@@ -13638,9 +13855,9 @@ fn the_activator_pair_the_creative_group_the_chords_the_store_wear() {
         "the hotbar row the max scroll the list-top clip refuses"
     );
     // THE TWENTY NOTCHES' OWN RETURN (the wheel up the 558 scroll the
-    // save row the 48 seat the band restores — the rebind the row's
-    // own walk needs, the load row the 72 seat the pair keeps, the
-    // max 1038 the extra notch the walk wears)
+    // load row the 48 seat the band restores — the re-seat the pair's
+    // own head the alphabetical law wears, the save row the 72 seat
+    // the pair keeps, the max 1038 the extra notch the walk wears)
     app.on_kb_scroll(20.0, 240);
     assert_eq!(app.kb_scroll, 558.0, "the twenty notches the walk wears");
     app.render(&mut fb, &mut assets);
@@ -13651,7 +13868,7 @@ fn the_activator_pair_the_creative_group_the_chords_the_store_wear() {
         .expect("the notch-up save row the band restores")
         .clone();
     assert_eq!(save_row.label, "C", "the default the display speaks");
-    assert_eq!(save_row.y, 48, "the save row the notch seat wears");
+    assert_eq!(save_row.y, 72, "the save row the notch seat wears");
     let load_row = app
         .buttons
         .iter()
@@ -13659,7 +13876,7 @@ fn the_activator_pair_the_creative_group_the_chords_the_store_wear() {
         .expect("the notch-up load row the band restores")
         .clone();
     assert_eq!(load_row.label, "X", "the default the display speaks");
-    assert_eq!(load_row.y, 72, "the load row the notch seat wears");
+    assert_eq!(load_row.y, 48, "the load row the notch seat wears");
     assert!(
         load_row.y + load_row.h <= 240 - 28,
         "the load row the notch walk the fully-visible seat wears"
@@ -14215,8 +14432,8 @@ fn the_debug_overlay_the_group_the_file_the_restart_wear() {
     // the walk keeps, the row's own bottom the band's own bottom
     // aligns — the fully-visible law the END seat wears; the overlay
     // row the -312 seat the list-top clip refuses, the FIFTEEN
-    // notches up the 678 scroll the overlay row the 48 seat the
-    // rebind's own walk the band restores)
+    // notches up the 678 scroll the seated walk's own head the band
+    // restores)
     app.on_kb_scroll(-1000.0, 240);
     assert_eq!(app.kb_scroll, 1038.0, "the clamp the content 1220 keeps");
     app.render(&mut fb, &mut assets);
@@ -14243,8 +14460,8 @@ fn the_debug_overlay_the_group_the_file_the_restart_wear() {
     assert!(
         !app.buttons
             .iter()
-            .any(|b| b.id == "kb_change_debugfocuspause"),
-        "the focusPause row the max scroll the list-top clip refuses"
+            .any(|b| b.id == "kb_change_debugchunkborders"),
+        "the chunkBorders row the max scroll the list-top clip refuses"
     );
     assert!(
         !app.buttons
@@ -14258,6 +14475,26 @@ fn the_debug_overlay_the_group_the_file_the_restart_wear() {
             .any(|b| b.id == "kb_change_debugreloadpacks"),
         "the reloadResourcePacks row the max scroll the list-top clip refuses"
     );
+    // THE COMPARETO'S OWN MAX-SCROLL SEATS (the re-seat the band's
+    // own bottom the seated order wears — the Show Hitboxes the
+    // 1086 slot the 48 seat the alphabetical tail answers, the
+    // profiling the 72, the focusPause the 96, the charts the
+    // 120..192 the orderI seats speak)
+    let hb_row = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_change_debugshowhitboxes")
+        .expect("the scrolled hitboxes row the band restores")
+        .clone();
+    assert_eq!(
+        hb_row.label, "B",
+        "the hitboxes's own default the display speaks"
+    );
+    assert_eq!(hb_row.y, 48, "the hitboxes row the max-scroll seat wears");
+    assert!(
+        hb_row.y + hb_row.h <= 240 - 28,
+        "the row the max scroll the fully-visible seat wears"
+    );
     let pf_row = app
         .buttons
         .iter()
@@ -14268,40 +14505,25 @@ fn the_debug_overlay_the_group_the_file_the_restart_wear() {
         pf_row.label, "L",
         "the profiling's own default the display speaks"
     );
-    assert_eq!(pf_row.y, 48, "the profiling row the END-6 seat wears");
+    assert_eq!(pf_row.y, 72, "the profiling row the max-scroll seat wears");
     assert!(
         pf_row.y + pf_row.h <= 240 - 28,
-        "the last row the max scroll the fully-visible seat wears"
+        "the row the max scroll the fully-visible seat wears"
     );
-    let cl_row = app
+    let fp_row = app
         .buttons
         .iter()
-        .find(|b| b.id == "kb_change_debugcopylocation")
-        .expect("the scrolled copyLocation row the band restores")
+        .find(|b| b.id == "kb_change_debugfocuspause")
+        .expect("the scrolled focusPause row the band restores")
         .clone();
     assert_eq!(
-        cl_row.label, "C",
-        "the copyLocation's own default the display speaks"
+        fp_row.label, "P",
+        "the focusPause's own default the display speaks"
     );
-    assert_eq!(cl_row.y, 72, "the copyLocation row the END-5 seat wears");
+    assert_eq!(fp_row.y, 96, "the focusPause row the max-scroll seat wears");
     assert!(
-        cl_row.y + cl_row.h <= 240 - 28,
-        "the last row the max scroll the fully-visible seat wears"
-    );
-    let dv_row = app
-        .buttons
-        .iter()
-        .find(|b| b.id == "kb_change_debugdumpversion")
-        .expect("the scrolled dumpVersion row the band restores")
-        .clone();
-    assert_eq!(
-        dv_row.label, "V",
-        "the dumpVersion's own default the display speaks"
-    );
-    assert_eq!(dv_row.y, 96, "the dumpVersion row the END-4 seat wears");
-    assert!(
-        dv_row.y + dv_row.h <= 240 - 28,
-        "the last row the max scroll the fully-visible seat wears"
+        fp_row.y + fp_row.h <= 240 - 28,
+        "the row the max scroll the fully-visible seat wears"
     );
     let pc_row = app
         .buttons
@@ -14313,10 +14535,13 @@ fn the_debug_overlay_the_group_the_file_the_restart_wear() {
         pc_row.label, "1",
         "the profilingChart's own default the display speaks"
     );
-    assert_eq!(pc_row.y, 120, "the profilingChart row the END-3 seat wears");
+    assert_eq!(
+        pc_row.y, 120,
+        "the profilingChart row the max-scroll seat wears"
+    );
     assert!(
         pc_row.y + pc_row.h <= 240 - 28,
-        "the last row the max scroll the fully-visible seat wears"
+        "the row the max scroll the fully-visible seat wears"
     );
     let fc_row = app
         .buttons
@@ -14328,10 +14553,10 @@ fn the_debug_overlay_the_group_the_file_the_restart_wear() {
         fc_row.label, "2",
         "the fpsCharts's own default the display speaks"
     );
-    assert_eq!(fc_row.y, 144, "the fpsCharts row the END-2 seat wears");
+    assert_eq!(fc_row.y, 144, "the fpsCharts row the max-scroll seat wears");
     assert!(
         fc_row.y + fc_row.h <= 240 - 28,
-        "the last row the max scroll the fully-visible seat wears"
+        "the row the max scroll the fully-visible seat wears"
     );
     let nc_row = app
         .buttons
@@ -14343,10 +14568,13 @@ fn the_debug_overlay_the_group_the_file_the_restart_wear() {
         nc_row.label, "3",
         "the networkCharts's own default the display speaks"
     );
-    assert_eq!(nc_row.y, 168, "the networkCharts row the END-1 seat wears");
+    assert_eq!(
+        nc_row.y, 168,
+        "the networkCharts row the max-scroll seat wears"
+    );
     assert!(
         nc_row.y + nc_row.h <= 240 - 28,
-        "the last row the max scroll the fully-visible seat wears"
+        "the row the max scroll the fully-visible seat wears"
     );
     let lt_row = app
         .buttons
@@ -14358,21 +14586,37 @@ fn the_debug_overlay_the_group_the_file_the_restart_wear() {
         lt_row.label, "4",
         "the lightmapTexture's own default the display speaks"
     );
-    assert_eq!(lt_row.y, 192, "the lightmapTexture row the END seat wears");
+    assert_eq!(
+        lt_row.y, 192,
+        "the lightmapTexture row the max-scroll seat wears"
+    );
     assert!(
         lt_row.y + lt_row.h <= 240 - 28,
-        "the last row the max scroll the fully-visible seat wears"
+        "the row the max scroll the fully-visible seat wears"
     );
+    // THE FIFTEEN NOTCHES' OWN RETURN (the wheel up the 678 scroll
+    // the seated walk's own head the band restores — the overlay the
+    // 48, the modifier the 72, the orderI=0 ties the alphabetical
+    // seats the clearChat the 96 the copyRecreate the 120 the
+    // copyLocation the 144 the spectate the 168 the crash the 192
+    // wear)
     app.on_kb_scroll(15.0, 240);
     app.render(&mut fb, &mut assets);
     let dbg_row = app
         .buttons
         .iter()
         .find(|b| b.id == "kb_change_debugoverlay")
-        .expect("the scrolled debug row the band restores")
+        .expect("the scrolled overlay row the band restores")
         .clone();
-    assert_eq!(dbg_row.label, "F3", "the default the display speaks");
-    assert_eq!(dbg_row.y, 48, "the overlay row the scroll seat wears");
+    assert_eq!(
+        dbg_row.label, "F3",
+        "the overlay's own default the display speaks"
+    );
+    assert_eq!(dbg_row.y, 48, "the overlay row the max-scroll seat wears");
+    assert!(
+        dbg_row.y + dbg_row.h <= 240 - 28,
+        "the row the max scroll the fully-visible seat wears"
+    );
     let mod_row = app
         .buttons
         .iter()
@@ -14381,49 +14625,12 @@ fn the_debug_overlay_the_group_the_file_the_restart_wear() {
         .clone();
     assert_eq!(
         mod_row.label, "F3",
-        "the pair's shared default the display speaks"
+        "the modifier's own default the display speaks"
     );
-    assert_eq!(mod_row.y, 72, "the modifier row the scroll seat wears");
-    let crash_row = app
-        .buttons
-        .iter()
-        .find(|b| b.id == "kb_change_debugcrash")
-        .expect("the scrolled crash row the band restores")
-        .clone();
-    assert_eq!(
-        crash_row.label, "C",
-        "the crash's own default the display speaks"
-    );
-    assert_eq!(crash_row.y, 96, "the crash row the walk seat wears");
-    let rel_row = app
-        .buttons
-        .iter()
-        .find(|b| b.id == "kb_change_debugreloadchunk")
-        .expect("the scrolled reload row the band restores")
-        .clone();
-    assert_eq!(
-        rel_row.label, "A",
-        "the reload's own default the display speaks"
-    );
-    assert_eq!(rel_row.y, 120, "the reload row the walk seat wears");
-    let hit_row = app
-        .buttons
-        .iter()
-        .find(|b| b.id == "kb_change_debugshowhitboxes")
-        .expect("the scrolled hitboxes row the band restores")
-        .clone();
-    assert_eq!(
-        hit_row.label, "B",
-        "the hitboxes' own default the display speaks"
-    );
-    assert_eq!(hit_row.y, 144, "the hitboxes row the walk seat wears");
+    assert_eq!(mod_row.y, 72, "the modifier row the max-scroll seat wears");
     assert!(
-        hit_row.y + hit_row.h <= 240 - 28,
-        "the last row the max scroll the fully-visible seat wears"
-    );
-    assert!(
-        rel_row.y + rel_row.h <= 240 - 28,
-        "the last row the max scroll the fully-visible seat wears"
+        mod_row.y + mod_row.h <= 240 - 28,
+        "the row the max scroll the fully-visible seat wears"
     );
     let cc_row = app
         .buttons
@@ -14435,33 +14642,95 @@ fn the_debug_overlay_the_group_the_file_the_restart_wear() {
         cc_row.label, "D",
         "the clearChat's own default the display speaks"
     );
-    assert_eq!(cc_row.y, 168, "the clearChat row the walk seat wears");
+    assert_eq!(cc_row.y, 96, "the clearChat row the max-scroll seat wears");
     assert!(
         cc_row.y + cc_row.h <= 240 - 28,
-        "the last row the max scroll the fully-visible seat wears"
+        "the row the max scroll the fully-visible seat wears"
     );
-    let cb_row = app
+    let crr_row = app
         .buttons
         .iter()
-        .find(|b| b.id == "kb_change_debugchunkborders")
-        .expect("the scrolled chunkBorders row the band restores")
+        .find(|b| b.id == "kb_change_debugcopyrecreate")
+        .expect("the scrolled copyRecreate row the band restores")
         .clone();
     assert_eq!(
-        cb_row.label, "G",
-        "the chunkBorders' own default the display speaks"
+        crr_row.label, "I",
+        "the copyRecreate's own default the display speaks"
     );
-    assert_eq!(cb_row.y, 192, "the chunkBorders row the END seat wears");
+    assert_eq!(
+        crr_row.y, 120,
+        "the copyRecreate row the max-scroll seat wears"
+    );
     assert!(
-        cb_row.y + cb_row.h <= 240 - 28,
-        "the last row the max scroll the fully-visible seat wears"
+        crr_row.y + crr_row.h <= 240 - 28,
+        "the row the max scroll the fully-visible seat wears"
     );
-    // THE REBIND'S OWN WALK (the change the click the selectedKey
-    // arms, the capture the bind wears — the F3 row the store honors)
-    app.on_click(dbg_row.x + dbg_row.w / 2, dbg_row.y + dbg_row.h / 2);
+    let cl_row = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_change_debugcopylocation")
+        .expect("the scrolled copyLocation row the band restores")
+        .clone();
+    assert_eq!(
+        cl_row.label, "C",
+        "the copyLocation's own default the display speaks"
+    );
+    assert_eq!(
+        cl_row.y, 144,
+        "the copyLocation row the max-scroll seat wears"
+    );
+    assert!(
+        cl_row.y + cl_row.h <= 240 - 28,
+        "the row the max scroll the fully-visible seat wears"
+    );
+    let sp_row = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_change_debugspectate")
+        .expect("the scrolled spectate row the band restores")
+        .clone();
+    assert_eq!(
+        sp_row.label, "N",
+        "the spectate's own default the display speaks"
+    );
+    assert_eq!(sp_row.y, 168, "the spectate row the max-scroll seat wears");
+    assert!(
+        sp_row.y + sp_row.h <= 240 - 28,
+        "the row the max scroll the fully-visible seat wears"
+    );
+    let cr_row = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_change_debugcrash")
+        .expect("the scrolled crash row the band restores")
+        .clone();
+    assert_eq!(
+        cr_row.label, "C",
+        "the crash's own default the display speaks"
+    );
+    assert_eq!(cr_row.y, 192, "the crash row the max-scroll seat wears");
+    assert!(
+        cr_row.y + cr_row.h <= 240 - 28,
+        "the row the max scroll the fully-visible seat wears"
+    );
+    // THE SEATED WALK'S OWN REBINDS (the list the seated order the
+    // capture lanes serve — the row's own slot the scroll follows,
+    // the notch the 24px stride the next seated row the 192 END seat
+    // restores; the reset the pair's own default the walks wear)
+    // THE OVERLAY'S OWN WALK (the seated head the 48 seat the walk
+    // serves — the F3 the store honors)
+    app.render(&mut fb, &mut assets);
+    let orow = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_change_debugoverlay")
+        .expect("the overlay row the seated walk keeps")
+        .clone();
+    app.on_click(orow.x + orow.w / 2, orow.y + orow.h / 2);
     assert_eq!(
         app.kb_selected,
         Some(kb::DEBUG_OVERLAY),
-        "the change the seat arms"
+        "the change the overlay's seat arms"
     );
     assert!(
         app.kb_capture(Some(minifb::Key::J)),
@@ -14472,17 +14741,14 @@ fn the_debug_overlay_the_group_the_file_the_restart_wear() {
         Some(kb::Bind::Keyboard(minifb::Key::J)),
         "the rebind the store writes"
     );
-    // THE ROW-RESET'S OWN SEAT (the reset the press the default
-    // writes — the F3 the DEFAULTS arm answers, the reset row the
-    // INACTIVE seat the default wears)
     app.render(&mut fb, &mut assets);
-    let reset = app
+    let oreset = app
         .buttons
         .iter()
         .find(|b| b.id == "kb_rowreset_debugoverlay")
-        .expect("the reset the row's pair keeps")
+        .expect("the reset the overlay's pair keeps")
         .clone();
-    app.on_click(reset.x + reset.w / 2, reset.y + reset.h / 2);
+    app.on_click(oreset.x + oreset.w / 2, oreset.y + oreset.h / 2);
     assert_eq!(
         app.key_binds[kb::DEBUG_OVERLAY],
         Some(kb::Bind::Keyboard(minifb::Key::F3)),
@@ -14497,16 +14763,16 @@ fn the_debug_overlay_the_group_the_file_the_restart_wear() {
             .unwrap_or(false),
         "the default row the reset the INACTIVE seat wears"
     );
-    // THE MODIFIER'S OWN REBIND WALK (the pair's own row the SAME
-    // lanes the capture honors — the change the click the selected
-    // arm the seat arms, the capture the bind wears, the reset the
-    // F3 the pair's shared default restores)
+    // THE MODIFIER'S OWN WALK (the seated -1 the 72 seat the walk
+    // serves — the F3 the pair's shared default restores)
+    app.render(&mut fb, &mut assets);
     let mrow = app
         .buttons
         .iter()
         .find(|b| b.id == "kb_change_debugmodifier")
-        .expect("the modifier row the band keeps")
+        .expect("the debugmodifier row the seated walk keeps")
         .clone();
+    assert_eq!(mrow.y, 72, "the debugmodifier row the seated 72 seat wears");
     app.on_click(mrow.x + mrow.w / 2, mrow.y + mrow.h / 2);
     assert_eq!(
         app.kb_selected,
@@ -14535,141 +14801,21 @@ fn the_debug_overlay_the_group_the_file_the_restart_wear() {
         Some(kb::Bind::Keyboard(minifb::Key::F3)),
         "the reset the F3 default restores"
     );
-    // THE CRASH'S OWN REBIND WALK (the trio's own row the SAME
-    // lanes the capture honors — the change the click the selected
-    // arm the seat arms, the capture the bind wears, the reset the
-    // C the plain-shape default restores; the reset click the
-    // buttons' own clear the walk keeps — the fresh render the list
-    // rebuilds, the crash row the 168 seat the band keeps)
+    // THE CLEAR CHAT'S OWN WALK (the seated orderI=0 head the
+    // 96 seat the alphabetical law wears — the D the plain-shape
+    // default restores)
     app.render(&mut fb, &mut assets);
-    let crow = app
-        .buttons
-        .iter()
-        .find(|b| b.id == "kb_change_debugcrash")
-        .expect("the crash row the band keeps")
-        .clone();
-    app.on_click(crow.x + crow.w / 2, crow.y + crow.h / 2);
-    assert_eq!(
-        app.kb_selected,
-        Some(kb::DEBUG_CRASH),
-        "the change the crash's seat arms"
-    );
-    assert!(
-        app.kb_capture(Some(minifb::Key::M)),
-        "the capture the bind consumes"
-    );
-    assert_eq!(
-        app.key_binds[kb::DEBUG_CRASH],
-        Some(kb::Bind::Keyboard(minifb::Key::M)),
-        "the rebind the store writes"
-    );
-    app.render(&mut fb, &mut assets);
-    let creset = app
-        .buttons
-        .iter()
-        .find(|b| b.id == "kb_rowreset_debugcrash")
-        .expect("the reset the crash's pair keeps")
-        .clone();
-    app.on_click(creset.x + creset.w / 2, creset.y + creset.h / 2);
-    assert_eq!(
-        app.key_binds[kb::DEBUG_CRASH],
-        Some(kb::Bind::Keyboard(minifb::Key::C)),
-        "the reset the C default restores"
-    );
-    // THE RELOAD'S OWN REBIND WALK (the quintet's own row the SAME
-    // lanes the capture honors — the change the click the selected
-    // arm the seat arms, the capture the bind wears, the reset the
-    // A the plain-shape default restores)
-    app.render(&mut fb, &mut assets);
-    let rrow = app
-        .buttons
-        .iter()
-        .find(|b| b.id == "kb_change_debugreloadchunk")
-        .expect("the reload row the band keeps")
-        .clone();
-    app.on_click(rrow.x + rrow.w / 2, rrow.y + rrow.h / 2);
-    assert_eq!(
-        app.kb_selected,
-        Some(kb::DEBUG_RELOAD_CHUNK),
-        "the change the reload's seat arms"
-    );
-    assert!(
-        app.kb_capture(Some(minifb::Key::N)),
-        "the capture the bind consumes"
-    );
-    assert_eq!(
-        app.key_binds[kb::DEBUG_RELOAD_CHUNK],
-        Some(kb::Bind::Keyboard(minifb::Key::N)),
-        "the rebind the store writes"
-    );
-    app.render(&mut fb, &mut assets);
-    let rreset = app
-        .buttons
-        .iter()
-        .find(|b| b.id == "kb_rowreset_debugreloadchunk")
-        .expect("the reset the reload's pair keeps")
-        .clone();
-    app.on_click(rreset.x + rreset.w / 2, rreset.y + rreset.h / 2);
-    assert_eq!(
-        app.key_binds[kb::DEBUG_RELOAD_CHUNK],
-        Some(kb::Bind::Keyboard(minifb::Key::A)),
-        "the reset the A default restores"
-    );
-    // THE HITBOXES' OWN REBIND WALK (the quintet's own row the SAME
-    // lanes the capture honors — the ctor's pc 3327 the `ldc_w
-    // cp#1436` the `key.debug.showHitboxes` answers, the pc 3333
-    // the `bipush 66` the B the plain-shape default wears, the
-    // change the click the seat arms, the capture the bind wears,
-    // the reset the B the plain-shape default restores)
-    app.render(&mut fb, &mut assets);
-    let hrow = app
-        .buttons
-        .iter()
-        .find(|b| b.id == "kb_change_debugshowhitboxes")
-        .expect("the hitboxes row the band keeps")
-        .clone();
-    app.on_click(hrow.x + hrow.w / 2, hrow.y + hrow.h / 2);
-    assert_eq!(
-        app.kb_selected,
-        Some(kb::DEBUG_SHOW_HITBOXES),
-        "the change the hitboxes' seat arms"
-    );
-    assert!(
-        app.kb_capture(Some(minifb::Key::O)),
-        "the capture the bind consumes"
-    );
-    assert_eq!(
-        app.key_binds[kb::DEBUG_SHOW_HITBOXES],
-        Some(kb::Bind::Keyboard(minifb::Key::O)),
-        "the rebind the store writes"
-    );
-    app.render(&mut fb, &mut assets);
-    let hreset = app
-        .buttons
-        .iter()
-        .find(|b| b.id == "kb_rowreset_debugshowhitboxes")
-        .expect("the reset the hitboxes' pair keeps")
-        .clone();
-    app.on_click(hreset.x + hreset.w / 2, hreset.y + hreset.h / 2);
-    assert_eq!(
-        app.key_binds[kb::DEBUG_SHOW_HITBOXES],
-        Some(kb::Bind::Keyboard(minifb::Key::B)),
-        "the reset the B default restores"
-    );
-    // THE CLEAR CHAT'S OWN REBIND WALK (the sextet's own row the SAME
-    // lanes the capture honors — the ctor's pc 3349 the `ldc_w
-    // cp#1441` the `key.debug.clearChat` answers, the pc 3355
-    // the `bipush 68` the D the plain-shape default wears, the
-    // change the click the seat arms, the capture the bind wears,
-    // the reset the D the plain-shape default restores)
-    app.render(&mut fb, &mut assets);
-    let clrow = app
+    let ccrow = app
         .buttons
         .iter()
         .find(|b| b.id == "kb_change_debugclearchat")
-        .expect("the clearChat row the band keeps")
+        .expect("the debugclearchat row the seated walk keeps")
         .clone();
-    app.on_click(clrow.x + clrow.w / 2, clrow.y + clrow.h / 2);
+    assert_eq!(
+        ccrow.y, 96,
+        "the debugclearchat row the seated 96 seat wears"
+    );
+    app.on_click(ccrow.x + ccrow.w / 2, ccrow.y + ccrow.h / 2);
     assert_eq!(
         app.kb_selected,
         Some(kb::DEBUG_CLEAR_CHAT),
@@ -14685,121 +14831,33 @@ fn the_debug_overlay_the_group_the_file_the_restart_wear() {
         "the rebind the store writes"
     );
     app.render(&mut fb, &mut assets);
-    let clreset = app
+    let ccreset = app
         .buttons
         .iter()
         .find(|b| b.id == "kb_rowreset_debugclearchat")
         .expect("the reset the clearChat's pair keeps")
         .clone();
-    app.on_click(clreset.x + clreset.w / 2, clreset.y + clreset.h / 2);
+    app.on_click(ccreset.x + ccreset.w / 2, ccreset.y + ccreset.h / 2);
     assert_eq!(
         app.key_binds[kb::DEBUG_CLEAR_CHAT],
         Some(kb::Bind::Keyboard(minifb::Key::D)),
         "the reset the D default restores"
     );
-    // THE SHOW CHUNK BORDERS' OWN REBIND WALK (the septet's own row
-    // the SAME lanes the capture honors — the ctor's pc 3371 the
-    // `ldc_w cp#1446` the `key.debug.showChunkBorders` answers, the
-    // pc 3377 the `bipush 71` the G the plain-shape default wears,
-    // the change the click the seat arms, the capture the bind
-    // wears, the reset the G the plain-shape default restores)
+    // THE COPY RECREATE COMMAND'S OWN WALK (the Copy Data word the
+    // alphabetical law speaks — the I the plain-shape default
+    // restores)
     app.render(&mut fb, &mut assets);
-    let cbrow = app
-        .buttons
-        .iter()
-        .find(|b| b.id == "kb_change_debugchunkborders")
-        .expect("the chunkBorders row the band keeps")
-        .clone();
-    app.on_click(cbrow.x + cbrow.w / 2, cbrow.y + cbrow.h / 2);
-    assert_eq!(
-        app.kb_selected,
-        Some(kb::DEBUG_SHOW_CHUNK_BORDERS),
-        "the change the chunkBorders' seat arms"
-    );
-    assert!(
-        app.kb_capture(Some(minifb::Key::R)),
-        "the capture the bind consumes"
-    );
-    assert_eq!(
-        app.key_binds[kb::DEBUG_SHOW_CHUNK_BORDERS],
-        Some(kb::Bind::Keyboard(minifb::Key::R)),
-        "the rebind the store writes"
-    );
-    app.render(&mut fb, &mut assets);
-    let cbreset = app
-        .buttons
-        .iter()
-        .find(|b| b.id == "kb_rowreset_debugchunkborders")
-        .expect("the reset the chunkBorders' pair keeps")
-        .clone();
-    app.on_click(cbreset.x + cbreset.w / 2, cbreset.y + cbreset.h / 2);
-    assert_eq!(
-        app.key_binds[kb::DEBUG_SHOW_CHUNK_BORDERS],
-        Some(kb::Bind::Keyboard(minifb::Key::G)),
-        "the reset the G default restores"
-    );
-    // THE SHOW ADVANCED TOOLTIPS' OWN REBIND WALK (the octet's own
-    // row the SAME lanes the capture honors — the ctor's pc 3393
-    // the `ldc_w cp#1451` the `key.debug.showAdvancedTooltips`
-    // answers, the pc 3399 the `bipush 72` the H the plain-shape
-    // default wears, the notch down the 702 scroll the row's own
-    // 192 seat the band restores, the change the click the seat
-    // arms, the capture the bind wears, the reset the H the
-    // plain-shape default restores)
-    app.on_kb_scroll(-1.0, 240);
-    app.render(&mut fb, &mut assets);
-    let atrow = app
-        .buttons
-        .iter()
-        .find(|b| b.id == "kb_change_debugadvtooltips")
-        .expect("the advTooltips row the band keeps")
-        .clone();
-    app.on_click(atrow.x + atrow.w / 2, atrow.y + atrow.h / 2);
-    assert_eq!(
-        app.kb_selected,
-        Some(kb::DEBUG_SHOW_ADV_TOOLTIPS),
-        "the change the advTooltips' seat arms"
-    );
-    assert!(
-        app.kb_capture(Some(minifb::Key::U)),
-        "the capture the bind consumes"
-    );
-    assert_eq!(
-        app.key_binds[kb::DEBUG_SHOW_ADV_TOOLTIPS],
-        Some(kb::Bind::Keyboard(minifb::Key::U)),
-        "the rebind the store writes"
-    );
-    app.render(&mut fb, &mut assets);
-    let atreset = app
-        .buttons
-        .iter()
-        .find(|b| b.id == "kb_rowreset_debugadvtooltips")
-        .expect("the reset the advTooltips' pair keeps")
-        .clone();
-    app.on_click(atreset.x + atreset.w / 2, atreset.y + atreset.h / 2);
-    assert_eq!(
-        app.key_binds[kb::DEBUG_SHOW_ADV_TOOLTIPS],
-        Some(kb::Bind::Keyboard(minifb::Key::H)),
-        "the reset the H default restores"
-    );
-    // THE COPY RECREATE COMMAND'S OWN REBIND WALK (the nonet's own
-    // row the SAME lanes the capture honors — the ctor's pc 3415
-    // the `ldc_w cp#1456` the `key.debug.copyRecreateCommand`
-    // answers, the pc 3421 the `bipush 73` the I the plain-shape
-    // default wears, the notch down the 726 scroll the row's own
-    // 192 seat the band restores, the change the click the seat
-    // arms, the capture the bind wears, the reset the I the
-    // plain-shape default restores)
-    app.on_kb_scroll(-1.0, 240);
-    app.render(&mut fb, &mut assets);
-    let crrow = app
+    let crrrow = app
         .buttons
         .iter()
         .find(|b| b.id == "kb_change_debugcopyrecreate")
-        .expect("the copyRecreate row the band keeps")
+        .expect("the debugcopyrecreate row the seated walk keeps")
         .clone();
-    assert_eq!(crrow.y, 192, "the copyRecreate row the END seat wears");
-    app.on_click(crrow.x + crrow.w / 2, crrow.y + crrow.h / 2);
+    assert_eq!(
+        crrrow.y, 120,
+        "the debugcopyrecreate row the seated 120 seat wears"
+    );
+    app.on_click(crrrow.x + crrrow.w / 2, crrrow.y + crrrow.h / 2);
     assert_eq!(
         app.kb_selected,
         Some(kb::DEBUG_COPY_RECREATE_COMMAND),
@@ -14815,352 +14873,32 @@ fn the_debug_overlay_the_group_the_file_the_restart_wear() {
         "the rebind the store writes"
     );
     app.render(&mut fb, &mut assets);
-    let crreset = app
+    let crrreset = app
         .buttons
         .iter()
         .find(|b| b.id == "kb_rowreset_debugcopyrecreate")
         .expect("the reset the copyRecreate's pair keeps")
         .clone();
-    app.on_click(crreset.x + crreset.w / 2, crreset.y + crreset.h / 2);
+    app.on_click(crrreset.x + crrreset.w / 2, crrreset.y + crrreset.h / 2);
     assert_eq!(
         app.key_binds[kb::DEBUG_COPY_RECREATE_COMMAND],
         Some(kb::Bind::Keyboard(minifb::Key::I)),
         "the reset the I default restores"
     );
-    // THE SPECTATE'S OWN REBIND WALK (the ten-row walk's own row the
-    // SAME lanes the capture honors — the ctor's pc 3437 the `ldc_w
-    // cp#1461` the `key.debug.spectate` answers, the pc 3443 the
-    // `bipush 78` the N the plain-shape default wears, the notch
-    // down the 750 scroll the row's own 192 seat the band restores,
-    // the change the click the seat arms, the capture the bind wears,
-    // the reset the N the plain-shape default restores)
-    app.on_kb_scroll(-1.0, 240);
-    app.render(&mut fb, &mut assets);
-    let sprow = app
-        .buttons
-        .iter()
-        .find(|b| b.id == "kb_change_debugspectate")
-        .expect("the spectate row the band keeps")
-        .clone();
-    assert_eq!(sprow.y, 192, "the spectate row the END seat wears");
-    app.on_click(sprow.x + sprow.w / 2, sprow.y + sprow.h / 2);
-    assert_eq!(
-        app.kb_selected,
-        Some(kb::DEBUG_SPECTATE),
-        "the change the spectate's seat arms"
-    );
-    assert!(
-        app.kb_capture(Some(minifb::Key::W)),
-        "the capture the bind consumes"
-    );
-    assert_eq!(
-        app.key_binds[kb::DEBUG_SPECTATE],
-        Some(kb::Bind::Keyboard(minifb::Key::W)),
-        "the rebind the store writes"
-    );
-    app.render(&mut fb, &mut assets);
-    let spreset = app
-        .buttons
-        .iter()
-        .find(|b| b.id == "kb_rowreset_debugspectate")
-        .expect("the reset the spectate's pair keeps")
-        .clone();
-    app.on_click(spreset.x + spreset.w / 2, spreset.y + spreset.h / 2);
-    assert_eq!(
-        app.key_binds[kb::DEBUG_SPECTATE],
-        Some(kb::Bind::Keyboard(minifb::Key::N)),
-        "the reset the N default restores"
-    );
-    // THE SWITCH GAME MODE'S OWN REBIND WALK (the eleven-row walk's
-    // own row the SAME lanes the capture honors — the ctor's pc 3459
-    // the `ldc_w cp#1466` the `key.debug.switchGameMode` answers, the
-    // pc 3465 the `sipush 293` the F4 the plain-shape default wears,
-    // the notch down the 774 scroll the row's own 192 seat the band
-    // restores, the change the click the seat arms, the capture the
-    // bind wears, the reset the F4 the plain-shape default restores)
-    app.on_kb_scroll(-1.0, 240);
-    app.render(&mut fb, &mut assets);
-    let sgrow = app
-        .buttons
-        .iter()
-        .find(|b| b.id == "kb_change_debugswitchgamemode")
-        .expect("the switchGameMode row the band keeps")
-        .clone();
-    assert_eq!(sgrow.y, 192, "the switchGameMode row the notch seat wears");
-    app.on_click(sgrow.x + sgrow.w / 2, sgrow.y + sgrow.h / 2);
-    assert_eq!(
-        app.kb_selected,
-        Some(kb::DEBUG_SWITCH_GAME_MODE),
-        "the change the switchGameMode's seat arms"
-    );
-    assert!(
-        app.kb_capture(Some(minifb::Key::X)),
-        "the capture the bind consumes"
-    );
-    assert_eq!(
-        app.key_binds[kb::DEBUG_SWITCH_GAME_MODE],
-        Some(kb::Bind::Keyboard(minifb::Key::X)),
-        "the rebind the store writes"
-    );
-    app.render(&mut fb, &mut assets);
-    let sgreset = app
-        .buttons
-        .iter()
-        .find(|b| b.id == "kb_rowreset_debugswitchgamemode")
-        .expect("the reset the switchGameMode's pair keeps")
-        .clone();
-    app.on_click(sgreset.x + sgreset.w / 2, sgreset.y + sgreset.h / 2);
-    assert_eq!(
-        app.key_binds[kb::DEBUG_SWITCH_GAME_MODE],
-        Some(kb::Bind::Keyboard(minifb::Key::F4)),
-        "the reset the F4 default restores"
-    );
-    // THE DEBUG OPTIONS' OWN REBIND WALK (the twelve-row walk's own
-    // row the SAME lanes the capture honors — the ctor's pc 3482 the
-    // `ldc_w cp#1471` the `key.debug.debugOptions` answers, the
-    // pc 3488 the `sipush 295` the F6 the plain-shape default wears,
-    // the notch down the max the row's own 192 seat the band
-    // restores, the change the click the seat arms, the capture the
-    // bind wears, the reset the F6 the plain-shape default restores)
-    app.on_kb_scroll(-1.0, 240);
-    app.render(&mut fb, &mut assets);
-    let dorow = app
-        .buttons
-        .iter()
-        .find(|b| b.id == "kb_change_debugoptions")
-        .expect("the debugOptions row the band keeps")
-        .clone();
-    assert_eq!(dorow.y, 192, "the debugOptions row the END seat wears");
-    app.on_click(dorow.x + dorow.w / 2, dorow.y + dorow.h / 2);
-    assert_eq!(
-        app.kb_selected,
-        Some(kb::DEBUG_DEBUG_OPTIONS),
-        "the change the debugOptions' seat arms"
-    );
-    assert!(
-        app.kb_capture(Some(minifb::Key::Y)),
-        "the capture the bind consumes"
-    );
-    assert_eq!(
-        app.key_binds[kb::DEBUG_DEBUG_OPTIONS],
-        Some(kb::Bind::Keyboard(minifb::Key::Y)),
-        "the rebind the store writes"
-    );
-    app.render(&mut fb, &mut assets);
-    let doreset = app
-        .buttons
-        .iter()
-        .find(|b| b.id == "kb_rowreset_debugoptions")
-        .expect("the reset the debugOptions' pair keeps")
-        .clone();
-    app.on_click(doreset.x + doreset.w / 2, doreset.y + doreset.h / 2);
-    assert_eq!(
-        app.key_binds[kb::DEBUG_DEBUG_OPTIONS],
-        Some(kb::Bind::Keyboard(minifb::Key::F6)),
-        "the reset the F6 default restores"
-    );
-    // THE FOCUS PAUSE'S OWN REBIND WALK (the fourteen-row walk's own
-    // row the SAME lanes the capture honors — the ctor's pc 3505 the
-    // `ldc_w cp#1476` the `key.debug.focusPause` answers, the
-    // pc 3511 the `bipush 80` the P the plain-shape default wears,
-    // the notch down the 822 scroll the row's own 192 seat the band
-    // restores, the change the click the seat arms, the capture the
-    // bind wears, the reset the P the plain-shape default restores)
-    app.on_kb_scroll(-1.0, 240);
-    app.render(&mut fb, &mut assets);
-    let fprow = app
-        .buttons
-        .iter()
-        .find(|b| b.id == "kb_change_debugfocuspause")
-        .expect("the focusPause row the band keeps")
-        .clone();
-    assert_eq!(fprow.y, 192, "the focusPause row the END-1 seat wears");
-    app.on_click(fprow.x + fprow.w / 2, fprow.y + fprow.h / 2);
-    assert_eq!(
-        app.kb_selected,
-        Some(kb::DEBUG_FOCUS_PAUSE),
-        "the change the focusPause's seat arms"
-    );
-    assert!(
-        app.kb_capture(Some(minifb::Key::Z)),
-        "the capture the bind consumes"
-    );
-    assert_eq!(
-        app.key_binds[kb::DEBUG_FOCUS_PAUSE],
-        Some(kb::Bind::Keyboard(minifb::Key::Z)),
-        "the rebind the store writes"
-    );
-    app.render(&mut fb, &mut assets);
-    let fpreset = app
-        .buttons
-        .iter()
-        .find(|b| b.id == "kb_rowreset_debugfocuspause")
-        .expect("the reset the focusPause' pair keeps")
-        .clone();
-    app.on_click(fpreset.x + fpreset.w / 2, fpreset.y + fpreset.h / 2);
-    assert_eq!(
-        app.key_binds[kb::DEBUG_FOCUS_PAUSE],
-        Some(kb::Bind::Keyboard(minifb::Key::P)),
-        "the reset the P default restores"
-    );
-    // THE DUMP DYNAMIC TEXTURES' OWN REBIND WALK (the fourteen-row
-    // walk's own row the SAME lanes the capture honors — the ctor's
-    // pc 3527 the `ldc_w cp#1481` the `key.debug.dumpDynamicTextures`
-    // answers, the pc 3533 the `bipush 83` the S the plain-shape
-    // default wears, the notch down the 846 scroll the row's own 192
-    // seat the band restores, the change the click the seat arms, the
-    // capture the bind wears, the reset the S the plain-shape
-    // default restores)
-    app.on_kb_scroll(-1.0, 240);
-    app.render(&mut fb, &mut assets);
-    let dtrow = app
-        .buttons
-        .iter()
-        .find(|b| b.id == "kb_change_debugdumptextures")
-        .expect("the dumpDynamicTextures row the band keeps")
-        .clone();
-    assert_eq!(
-        dtrow.y, 192,
-        "the dumpDynamicTextures row the END seat wears"
-    );
-    app.on_click(dtrow.x + dtrow.w / 2, dtrow.y + dtrow.h / 2);
-    assert_eq!(
-        app.kb_selected,
-        Some(kb::DEBUG_DUMP_DYNAMIC_TEXTURES),
-        "the change the dumpDynamicTextures' seat arms"
-    );
-    assert!(
-        app.kb_capture(Some(minifb::Key::G)),
-        "the capture the bind consumes"
-    );
-    assert_eq!(
-        app.key_binds[kb::DEBUG_DUMP_DYNAMIC_TEXTURES],
-        Some(kb::Bind::Keyboard(minifb::Key::G)),
-        "the rebind the store writes"
-    );
-    app.render(&mut fb, &mut assets);
-    let dtreset = app
-        .buttons
-        .iter()
-        .find(|b| b.id == "kb_rowreset_debugdumptextures")
-        .expect("the reset the dumpDynamicTextures' pair keeps")
-        .clone();
-    app.on_click(dtreset.x + dtreset.w / 2, dtreset.y + dtreset.h / 2);
-    assert_eq!(
-        app.key_binds[kb::DEBUG_DUMP_DYNAMIC_TEXTURES],
-        Some(kb::Bind::Keyboard(minifb::Key::S)),
-        "the reset the S default restores"
-    );
-    // THE RELOAD RESOURCE PACKS' OWN REBIND WALK (the fifteen-row
-    // walk's own row the SAME lanes the capture honors — the ctor's
-    // pc 3549 the `ldc_w cp#1486` the `key.debug.reloadResourcePacks`
-    // answers, the pc 3555 the `bipush 84` the T the plain-shape
-    // default wears, the notch down the max the row's own 192 seat
-    // the band restores, the change the click the seat arms, the
-    // capture the bind wears, the reset the T the plain-shape
-    // default restores)
-    app.on_kb_scroll(-1.0, 240);
-    app.render(&mut fb, &mut assets);
-    let rprow = app
-        .buttons
-        .iter()
-        .find(|b| b.id == "kb_change_debugreloadpacks")
-        .expect("the reloadResourcePacks row the band keeps")
-        .clone();
-    assert_eq!(
-        rprow.y, 192,
-        "the reloadResourcePacks row the END seat wears"
-    );
-    app.on_click(rprow.x + rprow.w / 2, rprow.y + rprow.h / 2);
-    assert_eq!(
-        app.kb_selected,
-        Some(kb::DEBUG_RELOAD_RESOURCE_PACKS),
-        "the change the reloadResourcePacks' seat arms"
-    );
-    assert!(
-        app.kb_capture(Some(minifb::Key::E)),
-        "the capture the bind consumes"
-    );
-    assert_eq!(
-        app.key_binds[kb::DEBUG_RELOAD_RESOURCE_PACKS],
-        Some(kb::Bind::Keyboard(minifb::Key::E)),
-        "the rebind the store writes"
-    );
-    app.render(&mut fb, &mut assets);
-    let rpreset = app
-        .buttons
-        .iter()
-        .find(|b| b.id == "kb_rowreset_debugreloadpacks")
-        .expect("the reset the reloadResourcePacks' pair keeps")
-        .clone();
-    app.on_click(rpreset.x + rpreset.w / 2, rpreset.y + rpreset.h / 2);
-    assert_eq!(
-        app.key_binds[kb::DEBUG_RELOAD_RESOURCE_PACKS],
-        Some(kb::Bind::Keyboard(minifb::Key::T)),
-        "the reset the T default restores"
-    );
-    // THE PROFILING'S OWN REBIND WALK (the sixteen-row
-    // walk's own row the SAME lanes the capture honors — the ctor's
-    // pc 3571 the `ldc_w cp#1491` the `key.debug.profiling`
-    // answers, the pc 3577 the `bipush 76` the L the plain-shape
-    // default wears, the notch down the max the row's own 192 seat
-    // the band restores, the change the click the seat arms, the
-    // capture the bind wears, the reset the L the plain-shape
-    // default restores)
-    app.on_kb_scroll(-1.0, 240);
-    app.render(&mut fb, &mut assets);
-    let pfrow = app
-        .buttons
-        .iter()
-        .find(|b| b.id == "kb_change_debugprofiling")
-        .expect("the profiling row the band keeps")
-        .clone();
-    assert_eq!(pfrow.y, 192, "the profiling row the END seat wears");
-    app.on_click(pfrow.x + pfrow.w / 2, pfrow.y + pfrow.h / 2);
-    assert_eq!(
-        app.kb_selected,
-        Some(kb::DEBUG_PROFILING),
-        "the change the profiling' seat arms"
-    );
-    assert!(
-        app.kb_capture(Some(minifb::Key::R)),
-        "the capture the bind consumes"
-    );
-    assert_eq!(
-        app.key_binds[kb::DEBUG_PROFILING],
-        Some(kb::Bind::Keyboard(minifb::Key::R)),
-        "the rebind the store writes"
-    );
-    app.render(&mut fb, &mut assets);
-    let pfreset = app
-        .buttons
-        .iter()
-        .find(|b| b.id == "kb_rowreset_debugprofiling")
-        .expect("the reset the profiling' pair keeps")
-        .clone();
-    app.on_click(pfreset.x + pfreset.w / 2, pfreset.y + pfreset.h / 2);
-    assert_eq!(
-        app.key_binds[kb::DEBUG_PROFILING],
-        Some(kb::Bind::Keyboard(minifb::Key::L)),
-        "the reset the L default restores"
-    );
-    // THE COPY LOCATION'S OWN REBIND WALK (the seventeen-row
-    // walk's own row the SAME lanes the capture honors — the ctor's
-    // pc 3593 the `ldc_w cp#1496` the `key.debug.copyLocation`
-    // answers, the pc 3599 the `bipush 67` the C the plain-shape
-    // default wears, the notch down the max the row's own 192 seat
-    // the band restores, the change the click the seat arms, the
-    // capture the bind wears, the reset the C the plain-shape
-    // default restores)
-    app.on_kb_scroll(-1.0, 240);
+    // THE COPY LOCATION'S OWN WALK (the Copy Location the Copy
+    // Data's AFTER seat the 'D'<'L' compare answers — the C the
+    // plain-shape default restores)
     app.render(&mut fb, &mut assets);
     let clrow = app
         .buttons
         .iter()
         .find(|b| b.id == "kb_change_debugcopylocation")
-        .expect("the copyLocation row the band keeps")
+        .expect("the debugcopylocation row the seated walk keeps")
         .clone();
-    assert_eq!(clrow.y, 192, "the copyLocation row the END seat wears");
+    assert_eq!(
+        clrow.y, 144,
+        "the debugcopylocation row the seated 144 seat wears"
+    );
     app.on_click(clrow.x + clrow.w / 2, clrow.y + clrow.h / 2);
     assert_eq!(
         app.kb_selected,
@@ -15189,23 +14927,184 @@ fn the_debug_overlay_the_group_the_file_the_restart_wear() {
         Some(kb::Bind::Keyboard(minifb::Key::C)),
         "the reset the C default restores"
     );
-    // THE DUMP VERSION'S OWN REBIND WALK (the eighteen-row
-    // walk's own row the SAME lanes the capture honors — the ctor's
-    // pc 3615 the `ldc_w cp#1501` the `key.debug.dumpVersion`
-    // answers, the pc 3621 the `bipush 86` the V the plain-shape
-    // default wears, the notch down the max the row's own 192 seat
-    // the band restores, the change the click the seat arms, the
-    // capture the bind wears, the reset the V the plain-shape
-    // default restores)
+    // THE SPECTATE'S OWN WALK (the Cycle Spectator the C-family's
+    // AFTER seat wears — the N the plain-shape default restores)
+    app.render(&mut fb, &mut assets);
+    let sprow = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_change_debugspectate")
+        .expect("the debugspectate row the seated walk keeps")
+        .clone();
+    assert_eq!(
+        sprow.y, 168,
+        "the debugspectate row the seated 168 seat wears"
+    );
+    app.on_click(sprow.x + sprow.w / 2, sprow.y + sprow.h / 2);
+    assert_eq!(
+        app.kb_selected,
+        Some(kb::DEBUG_SPECTATE),
+        "the change the spectate's seat arms"
+    );
+    assert!(
+        app.kb_capture(Some(minifb::Key::W)),
+        "the capture the bind consumes"
+    );
+    assert_eq!(
+        app.key_binds[kb::DEBUG_SPECTATE],
+        Some(kb::Bind::Keyboard(minifb::Key::W)),
+        "the rebind the store writes"
+    );
+    app.render(&mut fb, &mut assets);
+    let spreset = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_rowreset_debugspectate")
+        .expect("the reset the spectate's pair keeps")
+        .clone();
+    app.on_click(spreset.x + spreset.w / 2, spreset.y + spreset.h / 2);
+    assert_eq!(
+        app.key_binds[kb::DEBUG_SPECTATE],
+        Some(kb::Bind::Keyboard(minifb::Key::N)),
+        "the reset the N default restores"
+    );
+    // THE CRASH'S OWN WALK (the Debug Crash the D-family's AFTER
+    // seat wears — the C the plain-shape default restores)
+    app.render(&mut fb, &mut assets);
+    let crrow = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_change_debugcrash")
+        .expect("the debugcrash row the seated walk keeps")
+        .clone();
+    assert_eq!(crrow.y, 192, "the debugcrash row the seated 192 seat wears");
+    app.on_click(crrow.x + crrow.w / 2, crrow.y + crrow.h / 2);
+    assert_eq!(
+        app.kb_selected,
+        Some(kb::DEBUG_CRASH),
+        "the change the crash's seat arms"
+    );
+    assert!(
+        app.kb_capture(Some(minifb::Key::M)),
+        "the capture the bind consumes"
+    );
+    assert_eq!(
+        app.key_binds[kb::DEBUG_CRASH],
+        Some(kb::Bind::Keyboard(minifb::Key::M)),
+        "the rebind the store writes"
+    );
+    app.render(&mut fb, &mut assets);
+    let crreset = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_rowreset_debugcrash")
+        .expect("the reset the crash's pair keeps")
+        .clone();
+    app.on_click(crreset.x + crreset.w / 2, crreset.y + crreset.h / 2);
+    assert_eq!(
+        app.key_binds[kb::DEBUG_CRASH],
+        Some(kb::Bind::Keyboard(minifb::Key::C)),
+        "the reset the C default restores"
+    );
+    // THE DEBUG OPTIONS' OWN WALK (the notch the next seated row
+    // the 192 END seat restores — the F6 the plain-shape default
+    // restores)
+    app.on_kb_scroll(-1.0, 240);
+    app.render(&mut fb, &mut assets);
+    let do_row = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_change_debugoptions")
+        .expect("the debugoptions row the seated walk keeps")
+        .clone();
+    assert_eq!(
+        do_row.y, 192,
+        "the debugoptions row the seated 192 seat wears"
+    );
+    app.on_click(do_row.x + do_row.w / 2, do_row.y + do_row.h / 2);
+    assert_eq!(
+        app.kb_selected,
+        Some(kb::DEBUG_DEBUG_OPTIONS),
+        "the change the debugOptions's seat arms"
+    );
+    assert!(
+        app.kb_capture(Some(minifb::Key::Y)),
+        "the capture the bind consumes"
+    );
+    assert_eq!(
+        app.key_binds[kb::DEBUG_DEBUG_OPTIONS],
+        Some(kb::Bind::Keyboard(minifb::Key::Y)),
+        "the rebind the store writes"
+    );
+    app.render(&mut fb, &mut assets);
+    let do_reset = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_rowreset_debugoptions")
+        .expect("the reset the debugOptions's pair keeps")
+        .clone();
+    app.on_click(do_reset.x + do_reset.w / 2, do_reset.y + do_reset.h / 2);
+    assert_eq!(
+        app.key_binds[kb::DEBUG_DEBUG_OPTIONS],
+        Some(kb::Bind::Keyboard(minifb::Key::F6)),
+        "the reset the F6 default restores"
+    );
+    // THE DUMP DYNAMIC TEXTURES' OWN WALK (the next notch the
+    // seated tail wears — the S the plain-shape default restores)
+    app.on_kb_scroll(-1.0, 240);
+    app.render(&mut fb, &mut assets);
+    let dtrow = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_change_debugdumptextures")
+        .expect("the debugdumptextures row the seated walk keeps")
+        .clone();
+    assert_eq!(
+        dtrow.y, 192,
+        "the debugdumptextures row the seated 192 seat wears"
+    );
+    app.on_click(dtrow.x + dtrow.w / 2, dtrow.y + dtrow.h / 2);
+    assert_eq!(
+        app.kb_selected,
+        Some(kb::DEBUG_DUMP_DYNAMIC_TEXTURES),
+        "the change the dumpDynamicTextures's seat arms"
+    );
+    assert!(
+        app.kb_capture(Some(minifb::Key::G)),
+        "the capture the bind consumes"
+    );
+    assert_eq!(
+        app.key_binds[kb::DEBUG_DUMP_DYNAMIC_TEXTURES],
+        Some(kb::Bind::Keyboard(minifb::Key::G)),
+        "the rebind the store writes"
+    );
+    app.render(&mut fb, &mut assets);
+    let dtreset = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_rowreset_debugdumptextures")
+        .expect("the reset the dumpDynamicTextures's pair keeps")
+        .clone();
+    app.on_click(dtreset.x + dtreset.w / 2, dtreset.y + dtreset.h / 2);
+    assert_eq!(
+        app.key_binds[kb::DEBUG_DUMP_DYNAMIC_TEXTURES],
+        Some(kb::Bind::Keyboard(minifb::Key::S)),
+        "the reset the S default restores"
+    );
+    // THE DUMP VERSION'S OWN WALK (the next notch the seated tail
+    // wears — the V the plain-shape default restores)
     app.on_kb_scroll(-1.0, 240);
     app.render(&mut fb, &mut assets);
     let dvrow = app
         .buttons
         .iter()
         .find(|b| b.id == "kb_change_debugdumpversion")
-        .expect("the dumpVersion row the band keeps")
+        .expect("the debugdumpversion row the seated walk keeps")
         .clone();
-    assert_eq!(dvrow.y, 192, "the dumpVersion row the END seat wears");
+    assert_eq!(
+        dvrow.y, 192,
+        "the debugdumpversion row the seated 192 seat wears"
+    );
     app.on_click(dvrow.x + dvrow.w / 2, dvrow.y + dvrow.h / 2);
     assert_eq!(
         app.kb_selected,
@@ -15234,14 +15133,344 @@ fn the_debug_overlay_the_group_the_file_the_restart_wear() {
         Some(kb::Bind::Keyboard(minifb::Key::V)),
         "the reset the V default restores"
     );
-    // THE PROFILING CHART'S OWN REBIND WALK (the nineteen-row
-    // walk's own row the SAME lanes the capture honors — the ctor's
-    // pc 3637 the `ldc_w cp#1506` the `key.debug.profilingChart`
-    // answers, the pc 3643 the `bipush 49` the '1' the FIVE-arg
-    // default wears, the `iconst_1` the orderI the sort walk banks,
-    // the notch down the max the row's own 192 seat the band
-    // restores, the change the click the seat arms, the capture the
-    // bind wears, the reset the '1' the plain-shape default
+    // THE SWITCH GAME MODE'S OWN WALK (the next notch the seated
+    // tail wears — the F4 the plain-shape default restores)
+    app.on_kb_scroll(-1.0, 240);
+    app.render(&mut fb, &mut assets);
+    let sgrow = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_change_debugswitchgamemode")
+        .expect("the debugswitchgamemode row the seated walk keeps")
+        .clone();
+    assert_eq!(
+        sgrow.y, 192,
+        "the debugswitchgamemode row the seated 192 seat wears"
+    );
+    app.on_click(sgrow.x + sgrow.w / 2, sgrow.y + sgrow.h / 2);
+    assert_eq!(
+        app.kb_selected,
+        Some(kb::DEBUG_SWITCH_GAME_MODE),
+        "the change the switchGameMode's seat arms"
+    );
+    assert!(
+        app.kb_capture(Some(minifb::Key::X)),
+        "the capture the bind consumes"
+    );
+    assert_eq!(
+        app.key_binds[kb::DEBUG_SWITCH_GAME_MODE],
+        Some(kb::Bind::Keyboard(minifb::Key::X)),
+        "the rebind the store writes"
+    );
+    app.render(&mut fb, &mut assets);
+    let sgreset = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_rowreset_debugswitchgamemode")
+        .expect("the reset the switchGameMode's pair keeps")
+        .clone();
+    app.on_click(sgreset.x + sgreset.w / 2, sgreset.y + sgreset.h / 2);
+    assert_eq!(
+        app.key_binds[kb::DEBUG_SWITCH_GAME_MODE],
+        Some(kb::Bind::Keyboard(minifb::Key::F4)),
+        "the reset the F4 default restores"
+    );
+    // THE RELOAD CHUNK'S OWN WALK (the next notch the seated tail
+    // wears — the A the plain-shape default restores)
+    app.on_kb_scroll(-1.0, 240);
+    app.render(&mut fb, &mut assets);
+    let rlrow = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_change_debugreloadchunk")
+        .expect("the debugreloadchunk row the seated walk keeps")
+        .clone();
+    assert_eq!(
+        rlrow.y, 192,
+        "the debugreloadchunk row the seated 192 seat wears"
+    );
+    app.on_click(rlrow.x + rlrow.w / 2, rlrow.y + rlrow.h / 2);
+    assert_eq!(
+        app.kb_selected,
+        Some(kb::DEBUG_RELOAD_CHUNK),
+        "the change the reloadChunk's seat arms"
+    );
+    assert!(
+        app.kb_capture(Some(minifb::Key::N)),
+        "the capture the bind consumes"
+    );
+    assert_eq!(
+        app.key_binds[kb::DEBUG_RELOAD_CHUNK],
+        Some(kb::Bind::Keyboard(minifb::Key::N)),
+        "the rebind the store writes"
+    );
+    app.render(&mut fb, &mut assets);
+    let rlreset = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_rowreset_debugreloadchunk")
+        .expect("the reset the reloadChunk's pair keeps")
+        .clone();
+    app.on_click(rlreset.x + rlreset.w / 2, rlreset.y + rlreset.h / 2);
+    assert_eq!(
+        app.key_binds[kb::DEBUG_RELOAD_CHUNK],
+        Some(kb::Bind::Keyboard(minifb::Key::A)),
+        "the reset the A default restores"
+    );
+    // THE RELOAD RESOURCE PACKS' OWN WALK (the next notch the
+    // seated tail wears — the T the plain-shape default restores)
+    app.on_kb_scroll(-1.0, 240);
+    app.render(&mut fb, &mut assets);
+    let rprow = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_change_debugreloadpacks")
+        .expect("the debugreloadpacks row the seated walk keeps")
+        .clone();
+    assert_eq!(
+        rprow.y, 192,
+        "the debugreloadpacks row the seated 192 seat wears"
+    );
+    app.on_click(rprow.x + rprow.w / 2, rprow.y + rprow.h / 2);
+    assert_eq!(
+        app.kb_selected,
+        Some(kb::DEBUG_RELOAD_RESOURCE_PACKS),
+        "the change the reloadResourcePacks's seat arms"
+    );
+    assert!(
+        app.kb_capture(Some(minifb::Key::E)),
+        "the capture the bind consumes"
+    );
+    assert_eq!(
+        app.key_binds[kb::DEBUG_RELOAD_RESOURCE_PACKS],
+        Some(kb::Bind::Keyboard(minifb::Key::E)),
+        "the rebind the store writes"
+    );
+    app.render(&mut fb, &mut assets);
+    let rpreset = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_rowreset_debugreloadpacks")
+        .expect("the reset the reloadResourcePacks's pair keeps")
+        .clone();
+    app.on_click(rpreset.x + rpreset.w / 2, rpreset.y + rpreset.h / 2);
+    assert_eq!(
+        app.key_binds[kb::DEBUG_RELOAD_RESOURCE_PACKS],
+        Some(kb::Bind::Keyboard(minifb::Key::T)),
+        "the reset the T default restores"
+    );
+    // THE SHOW ADVANCED TOOLTIPS' OWN WALK (the next notch the
+    // seated tail wears — the H the plain-shape default restores)
+    app.on_kb_scroll(-1.0, 240);
+    app.render(&mut fb, &mut assets);
+    let atrow = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_change_debugadvtooltips")
+        .expect("the debugadvtooltips row the seated walk keeps")
+        .clone();
+    assert_eq!(
+        atrow.y, 192,
+        "the debugadvtooltips row the seated 192 seat wears"
+    );
+    app.on_click(atrow.x + atrow.w / 2, atrow.y + atrow.h / 2);
+    assert_eq!(
+        app.kb_selected,
+        Some(kb::DEBUG_SHOW_ADV_TOOLTIPS),
+        "the change the advTooltips's seat arms"
+    );
+    assert!(
+        app.kb_capture(Some(minifb::Key::U)),
+        "the capture the bind consumes"
+    );
+    assert_eq!(
+        app.key_binds[kb::DEBUG_SHOW_ADV_TOOLTIPS],
+        Some(kb::Bind::Keyboard(minifb::Key::U)),
+        "the rebind the store writes"
+    );
+    app.render(&mut fb, &mut assets);
+    let atreset = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_rowreset_debugadvtooltips")
+        .expect("the reset the advTooltips's pair keeps")
+        .clone();
+    app.on_click(atreset.x + atreset.w / 2, atreset.y + atreset.h / 2);
+    assert_eq!(
+        app.key_binds[kb::DEBUG_SHOW_ADV_TOOLTIPS],
+        Some(kb::Bind::Keyboard(minifb::Key::H)),
+        "the reset the H default restores"
+    );
+    // THE SHOW CHUNK BORDERS' OWN WALK (the next notch the seated
+    // tail wears — the G the plain-shape default restores)
+    app.on_kb_scroll(-1.0, 240);
+    app.render(&mut fb, &mut assets);
+    let cbrow = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_change_debugchunkborders")
+        .expect("the debugchunkborders row the seated walk keeps")
+        .clone();
+    assert_eq!(
+        cbrow.y, 192,
+        "the debugchunkborders row the seated 192 seat wears"
+    );
+    app.on_click(cbrow.x + cbrow.w / 2, cbrow.y + cbrow.h / 2);
+    assert_eq!(
+        app.kb_selected,
+        Some(kb::DEBUG_SHOW_CHUNK_BORDERS),
+        "the change the chunkBorders's seat arms"
+    );
+    assert!(
+        app.kb_capture(Some(minifb::Key::R)),
+        "the capture the bind consumes"
+    );
+    assert_eq!(
+        app.key_binds[kb::DEBUG_SHOW_CHUNK_BORDERS],
+        Some(kb::Bind::Keyboard(minifb::Key::R)),
+        "the rebind the store writes"
+    );
+    app.render(&mut fb, &mut assets);
+    let cbreset = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_rowreset_debugchunkborders")
+        .expect("the reset the chunkBorders's pair keeps")
+        .clone();
+    app.on_click(cbreset.x + cbreset.w / 2, cbreset.y + cbreset.h / 2);
+    assert_eq!(
+        app.key_binds[kb::DEBUG_SHOW_CHUNK_BORDERS],
+        Some(kb::Bind::Keyboard(minifb::Key::G)),
+        "the reset the G default restores"
+    );
+    // THE SHOW HITBOXES' OWN WALK (the next notch the seated tail
+    // wears — the B the plain-shape default restores)
+    app.on_kb_scroll(-1.0, 240);
+    app.render(&mut fb, &mut assets);
+    let htrow = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_change_debugshowhitboxes")
+        .expect("the debugshowhitboxes row the seated walk keeps")
+        .clone();
+    assert_eq!(
+        htrow.y, 192,
+        "the debugshowhitboxes row the seated 192 seat wears"
+    );
+    app.on_click(htrow.x + htrow.w / 2, htrow.y + htrow.h / 2);
+    assert_eq!(
+        app.kb_selected,
+        Some(kb::DEBUG_SHOW_HITBOXES),
+        "the change the hitboxes's seat arms"
+    );
+    assert!(
+        app.kb_capture(Some(minifb::Key::O)),
+        "the capture the bind consumes"
+    );
+    assert_eq!(
+        app.key_binds[kb::DEBUG_SHOW_HITBOXES],
+        Some(kb::Bind::Keyboard(minifb::Key::O)),
+        "the rebind the store writes"
+    );
+    app.render(&mut fb, &mut assets);
+    let htreset = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_rowreset_debugshowhitboxes")
+        .expect("the reset the hitboxes's pair keeps")
+        .clone();
+    app.on_click(htreset.x + htreset.w / 2, htreset.y + htreset.h / 2);
+    assert_eq!(
+        app.key_binds[kb::DEBUG_SHOW_HITBOXES],
+        Some(kb::Bind::Keyboard(minifb::Key::B)),
+        "the reset the B default restores"
+    );
+    // THE PROFILING'S OWN WALK (the next notch the seated tail
+    // wears — the L the plain-shape default restores)
+    app.on_kb_scroll(-1.0, 240);
+    app.render(&mut fb, &mut assets);
+    let pfrow = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_change_debugprofiling")
+        .expect("the debugprofiling row the seated walk keeps")
+        .clone();
+    assert_eq!(
+        pfrow.y, 192,
+        "the debugprofiling row the seated 192 seat wears"
+    );
+    app.on_click(pfrow.x + pfrow.w / 2, pfrow.y + pfrow.h / 2);
+    assert_eq!(
+        app.kb_selected,
+        Some(kb::DEBUG_PROFILING),
+        "the change the profiling's seat arms"
+    );
+    assert!(
+        app.kb_capture(Some(minifb::Key::R)),
+        "the capture the bind consumes"
+    );
+    assert_eq!(
+        app.key_binds[kb::DEBUG_PROFILING],
+        Some(kb::Bind::Keyboard(minifb::Key::R)),
+        "the rebind the store writes"
+    );
+    app.render(&mut fb, &mut assets);
+    let pfreset = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_rowreset_debugprofiling")
+        .expect("the reset the profiling's pair keeps")
+        .clone();
+    app.on_click(pfreset.x + pfreset.w / 2, pfreset.y + pfreset.h / 2);
+    assert_eq!(
+        app.key_binds[kb::DEBUG_PROFILING],
+        Some(kb::Bind::Keyboard(minifb::Key::L)),
+        "the reset the L default restores"
+    );
+    // THE FOCUS PAUSE'S OWN WALK (the next notch the seated tail
+    // wears — the P the plain-shape default restores)
+    app.on_kb_scroll(-1.0, 240);
+    app.render(&mut fb, &mut assets);
+    let fprow = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_change_debugfocuspause")
+        .expect("the debugfocuspause row the seated walk keeps")
+        .clone();
+    assert_eq!(
+        fprow.y, 192,
+        "the debugfocuspause row the seated 192 seat wears"
+    );
+    app.on_click(fprow.x + fprow.w / 2, fprow.y + fprow.h / 2);
+    assert_eq!(
+        app.kb_selected,
+        Some(kb::DEBUG_FOCUS_PAUSE),
+        "the change the focusPause's seat arms"
+    );
+    assert!(
+        app.kb_capture(Some(minifb::Key::Z)),
+        "the capture the bind consumes"
+    );
+    assert_eq!(
+        app.key_binds[kb::DEBUG_FOCUS_PAUSE],
+        Some(kb::Bind::Keyboard(minifb::Key::Z)),
+        "the rebind the store writes"
+    );
+    app.render(&mut fb, &mut assets);
+    let fpreset = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_rowreset_debugfocuspause")
+        .expect("the reset the focusPause's pair keeps")
+        .clone();
+    app.on_click(fpreset.x + fpreset.w / 2, fpreset.y + fpreset.h / 2);
+    assert_eq!(
+        app.key_binds[kb::DEBUG_FOCUS_PAUSE],
+        Some(kb::Bind::Keyboard(minifb::Key::P)),
+        "the reset the P default restores"
+    );
+    // THE PROFILING CHART'S OWN WALK (the next notch the orderI=1
+    // row the 192 END seat restores — the '1' the FIVE-arg default
     // restores)
     app.on_kb_scroll(-1.0, 240);
     app.render(&mut fb, &mut assets);
@@ -15249,9 +15478,12 @@ fn the_debug_overlay_the_group_the_file_the_restart_wear() {
         .buttons
         .iter()
         .find(|b| b.id == "kb_change_debugprofilingchart")
-        .expect("the profilingChart row the band keeps")
+        .expect("the debugprofilingchart row the seated walk keeps")
         .clone();
-    assert_eq!(pcrow.y, 192, "the profilingChart row the END seat wears");
+    assert_eq!(
+        pcrow.y, 192,
+        "the debugprofilingchart row the seated 192 seat wears"
+    );
     app.on_click(pcrow.x + pcrow.w / 2, pcrow.y + pcrow.h / 2);
     assert_eq!(
         app.kb_selected,
@@ -15280,15 +15512,95 @@ fn the_debug_overlay_the_group_the_file_the_restart_wear() {
         Some(kb::Bind::Keyboard(minifb::Key::Key1)),
         "the reset the '1' default restores"
     );
-    // THE LIGHTMAP TEXTURE'S OWN REBIND WALK (the twenty-two-row
-    // walk's own row the SAME lanes the capture honors — the ctor's
-    // pc 3706 the `ldc_w cp#1521` the `key.debug.lightmapTexture`
-    // answers, the pc 3712 the `bipush 52` the '4' the FIVE-arg
-    // default wears, the `iconst_4` the orderI the sort walk banks,
-    // the THREE notches down the max the row's own 192 seat the band
-    // restores, the change the click the seat arms, the capture the
-    // bind wears, the reset the '4' the plain-shape default
+    // THE FPS CHARTS'S OWN WALK (the next notch the orderI=2 row
+    // the 192 END seat restores — the '2' the FIVE-arg default
     // restores)
+    app.on_kb_scroll(-1.0, 240);
+    app.render(&mut fb, &mut assets);
+    let fcrow = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_change_debugfpscharts")
+        .expect("the debugfpscharts row the seated walk keeps")
+        .clone();
+    assert_eq!(
+        fcrow.y, 192,
+        "the debugfpscharts row the seated 192 seat wears"
+    );
+    app.on_click(fcrow.x + fcrow.w / 2, fcrow.y + fcrow.h / 2);
+    assert_eq!(
+        app.kb_selected,
+        Some(kb::DEBUG_FPS_CHARTS),
+        "the change the fpsCharts's seat arms"
+    );
+    assert!(
+        app.kb_capture(Some(minifb::Key::A)),
+        "the capture the bind consumes"
+    );
+    assert_eq!(
+        app.key_binds[kb::DEBUG_FPS_CHARTS],
+        Some(kb::Bind::Keyboard(minifb::Key::A)),
+        "the rebind the store writes"
+    );
+    app.render(&mut fb, &mut assets);
+    let fcreset = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_rowreset_debugfpscharts")
+        .expect("the reset the fpsCharts's pair keeps")
+        .clone();
+    app.on_click(fcreset.x + fcreset.w / 2, fcreset.y + fcreset.h / 2);
+    assert_eq!(
+        app.key_binds[kb::DEBUG_FPS_CHARTS],
+        Some(kb::Bind::Keyboard(minifb::Key::Key2)),
+        "the reset the '2' default restores"
+    );
+    // THE NETWORK CHARTS'S OWN WALK (the next notch the orderI=3
+    // row the 192 END seat restores — the '3' the FIVE-arg default
+    // restores)
+    app.on_kb_scroll(-1.0, 240);
+    app.render(&mut fb, &mut assets);
+    let ncrow = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_change_debugnetworkcharts")
+        .expect("the debugnetworkcharts row the seated walk keeps")
+        .clone();
+    assert_eq!(
+        ncrow.y, 192,
+        "the debugnetworkcharts row the seated 192 seat wears"
+    );
+    app.on_click(ncrow.x + ncrow.w / 2, ncrow.y + ncrow.h / 2);
+    assert_eq!(
+        app.kb_selected,
+        Some(kb::DEBUG_NETWORK_CHARTS),
+        "the change the networkCharts's seat arms"
+    );
+    assert!(
+        app.kb_capture(Some(minifb::Key::S)),
+        "the capture the bind consumes"
+    );
+    assert_eq!(
+        app.key_binds[kb::DEBUG_NETWORK_CHARTS],
+        Some(kb::Bind::Keyboard(minifb::Key::S)),
+        "the rebind the store writes"
+    );
+    app.render(&mut fb, &mut assets);
+    let ncreset = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "kb_rowreset_debugnetworkcharts")
+        .expect("the reset the networkCharts's pair keeps")
+        .clone();
+    app.on_click(ncreset.x + ncreset.w / 2, ncreset.y + ncreset.h / 2);
+    assert_eq!(
+        app.key_binds[kb::DEBUG_NETWORK_CHARTS],
+        Some(kb::Bind::Keyboard(minifb::Key::Key3)),
+        "the reset the '3' default restores"
+    );
+    // THE LIGHTMAP TEXTURE'S OWN WALK (the THREE notches the max
+    // clamp the orderI=4 row the 192 END seat restores — the '4' the
+    // FIVE-arg default restores)
     app.on_kb_scroll(-1.0, 240);
     app.on_kb_scroll(-1.0, 240);
     app.on_kb_scroll(-1.0, 240);
@@ -15297,9 +15609,12 @@ fn the_debug_overlay_the_group_the_file_the_restart_wear() {
         .buttons
         .iter()
         .find(|b| b.id == "kb_change_debuglightmaptexture")
-        .expect("the lightmapTexture row the band keeps")
+        .expect("the debuglightmaptexture row the seated walk keeps")
         .clone();
-    assert_eq!(ltrow.y, 192, "the lightmapTexture row the END seat wears");
+    assert_eq!(
+        ltrow.y, 192,
+        "the debuglightmaptexture row the seated 192 seat wears"
+    );
     app.on_click(ltrow.x + ltrow.w / 2, ltrow.y + ltrow.h / 2);
     assert_eq!(
         app.kb_selected,
