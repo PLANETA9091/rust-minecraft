@@ -1,0 +1,21 @@
+########## I. the advancedItemTooltips field — ctor default + type
+
+########## II. the save() walk — does the row persist?
+  save()V: 61 insns, advancedItemTooltips hits=0
+  saveChatDrafts()Lnet/minecraft/client/OptionInstance;: 3 insns, advancedItemTooltips hits=0
+
+########## III. all advancedItemTooltips readers/writers in Options
+  processOptions(Lnet/minecraft/client/Options$FieldAccess;)V: 2 refs
+
+########## IV. the lang rows (debug.show_advanced_tooltips.*)
+  debug.advanced_tooltips.help = F3 + H = Advanced tooltips
+  debug.advanced_tooltips.off = Advanced tooltips: hidden
+  debug.advanced_tooltips.on = Advanced tooltips: shown
+
+########## V. debugFeedbackTranslated body — the display lane
+  --- debugFeedbackTranslated(Ljava/lang/String;)V
+    0: aload_0
+    1: aload_1
+    2: invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+    5: invokevirtual net/minecraft/client/KeyboardHandler.debugFeedbackComponent(Lnet/minecraft/network/chat/Component;)V
+    8: return

@@ -2583,6 +2583,13 @@ pub fn run_gui_app(
             if f3_down && window.is_key_pressed(Key::D, minifb::KeyRepeat::No) {
                 app.on_clear_chat_key();
             }
+            // THE F3+H ADVANCED TOOLTIPS (the handleDebugKeys'
+            // keyDebugShowAdvancedTooltips lane — the options flag the
+            // flip serves, the save() call the chord's own write wears,
+            // the yellow feedback row the chat the lang words speak)
+            if f3_down && window.is_key_pressed(Key::H, minifb::KeyRepeat::No) {
+                app.on_advanced_tooltips_key();
+            }
             // THE F3+P FOCUS-PAUSE TOGGLE (the 26.2 debug entry the
             // key.debug.focusPause binding wears — the
             // options.pauseOnLostFocus the flip serves, the focus

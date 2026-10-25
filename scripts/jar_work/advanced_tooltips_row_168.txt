@@ -1,0 +1,57 @@
+########## I. processOptions — the advancedItemTooltips window
+  total 665 insns, refs at [290, 294]
+    532: aload_1
+    533: ldc_w ldcw@1897
+    536: aload_0
+    537: getfield net/minecraft/client/Options.hideServerAddressZ
+    540: invokeinterface net/minecraft/client/Options$FieldAccess.process(Ljava/lang/String;Z)Z
+    543: iconst_0
+    544: nop
+    545: putfield net/minecraft/client/Options.hideServerAddressZ
+    548: aload_0
+    549: aload_1
+    550: ldc_w ldcw@1904
+    553: aload_0
+    554: getfield net/minecraft/client/Options.advancedItemTooltipsZ
+    557: invokeinterface net/minecraft/client/Options$FieldAccess.process(Ljava/lang/String;Z)Z
+    560: iconst_0
+    561: nop
+    562: putfield net/minecraft/client/Options.advancedItemTooltipsZ
+    565: aload_0
+    ...
+    540: invokeinterface net/minecraft/client/Options$FieldAccess.process(Ljava/lang/String;Z)Z
+    543: iconst_0
+    544: nop
+    545: putfield net/minecraft/client/Options.hideServerAddressZ
+    548: aload_0
+    549: aload_1
+    550: ldc_w ldcw@1904
+    553: aload_0
+    554: getfield net/minecraft/client/Options.advancedItemTooltipsZ
+    557: invokeinterface net/minecraft/client/Options$FieldAccess.process(Ljava/lang/String;Z)Z
+    560: iconst_0
+    561: nop
+    562: putfield net/minecraft/client/Options.advancedItemTooltipsZ
+    565: aload_0
+    566: aload_1
+    567: ldc_w ldcw@1908
+    570: aload_0
+    571: getfield net/minecraft/client/Options.pauseOnLostFocusZ
+    ...
+
+########## II. the FieldAccess interface shape
+  process(Ljava/lang/String;F)F
+  process(Ljava/lang/String;I)I
+  process(Ljava/lang/String;Ljava/lang/Object;Ljava/util/function/Function;Ljava/util/function/Function;)Ljava/lang/Object;
+  process(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+  process(Ljava/lang/String;Z)Z
+
+########## III. debugFeedbackComponent body
+  --- debugFeedbackComponent(Lnet/minecraft/network/chat/Component;)V
+    0: aload_0
+    1: getfield net/minecraft/client/KeyboardHandler.minecraftLnet/minecraft/client/Minecraft;
+    4: getstatic net/minecraft/ChatFormatting.YELLOWLnet/minecraft/ChatFormatting;
+    7: aload_1
+    8: invokestatic net/minecraft/client/KeyboardHandler.decorateDebugComponent(Lnet/minecraft/ChatFormatting;Lnet/minecraft/network/chat/Component;)Lnet/minecraft/network/chat/Component;
+    11: invokevirtual net/minecraft/client/Minecraft.showDebugChat(Lnet/minecraft/network/chat/Component;)V
+    14: return

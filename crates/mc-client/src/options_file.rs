@@ -106,6 +106,16 @@ pub struct OptionsFile {
     /// `soundCategory_master` — the 0..1 master volume (the default 1.0
     /// the createSoundSliderOptionInstance dconst_1 banks).
     pub sound_category_master: f64,
+    /// `advancedItemTooltips` — the F3+H advanced tooltips' own
+    /// boolean (the default FALSE the Java field's own zero the
+    /// processOptions decode's default arm keeps — the ctor the
+    /// putfield never wears, the `process("advancedItemTooltips", Z)Z`
+    /// pc 548-562 the round-trip answers — the hideServerAddress@537
+    /// row the AFTER seat, the pauseOnLostFocus@567 the BEFORE the
+    /// visit ladder keeps; the handleDebugKeys' keyDebugShowAdvancedTooltips
+    /// lane the flip + the `options.save()` the debug family's own
+    /// save-wearing chord speaks).
+    pub advanced_item_tooltips: bool,
     /// `pauseOnLostFocus` — the focus-loss pause's own boolean (the
     /// default TRUE the Options ctor's iconst_1 banks, the
     /// processOptions pc 567-574 the `process("pauseOnLostFocus", Z)Z`
@@ -1313,6 +1323,7 @@ impl Default for OptionsFile {
             mouse_sensitivity: 0.5,
             fov: 70.0,
             sound_category_master: 1.0,
+            advanced_item_tooltips: false,
             pause_on_lost_focus: true,
             fov_effect_scale: 1.0,
             chat_opacity: 1.0,
@@ -1369,6 +1380,16 @@ impl OptionsFile {
                 "soundCategory_master" => {
                     if let Some(v) = parse_unit_double(value) {
                         out.sound_category_master = v;
+                    }
+                }
+                "advancedItemTooltips" => {
+                    // THE BOOLEAN'S OWN DECODE (the "true"/"false" the
+                    // codec's own vocabulary wears — the malformed the
+                    // default keeps, the skip law the row answers)
+                    if value == "true" {
+                        out.advanced_item_tooltips = true;
+                    } else if value == "false" {
+                        out.advanced_item_tooltips = false;
                     }
                 }
                 "pauseOnLostFocus" => {
@@ -1733,6 +1754,17 @@ impl OptionsFile {
             "soundCategory_master:{}\n",
             java_double(self.sound_category_master)
         ));
+        // THE ADVANCED TOOLTIPS' OWN ROW (the "true"/"false" the Rust
+        // Display the vanilla BooleanValue's codec vocabulary wears —
+        // the row the visit-order seat keeps: the
+        // advancedItemTooltips@554 the hideServerAddress@537's AFTER,
+        // the pauseOnLostFocus@567 the row BEFORE the same ladder
+        // speaks — the F3+H flip the save() call the row's own writer
+        // serves)
+        text.push_str(&format!(
+            "advancedItemTooltips:{}\n",
+            self.advanced_item_tooltips
+        ));
         // THE BOOLEAN'S OWN ROW (the "true"/"false" the Rust Display the
         // vanilla BooleanValue's codec vocabulary wears)
         text.push_str(&format!("pauseOnLostFocus:{}\n", self.pause_on_lost_focus));
@@ -1857,7 +1889,7 @@ mod tests {
         OptionsFile::default().save(&path);
         let text = std::fs::read_to_string(&path).expect("the save the file writes");
         assert_eq!(
-            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\nkey_key.debug.debugOptions:key.keyboard.f6\nkey_key.debug.focusPause:key.keyboard.p\nkey_key.debug.dumpDynamicTextures:key.keyboard.s\nkey_key.debug.reloadResourcePacks:key.keyboard.t\nkey_key.debug.profiling:key.keyboard.l\nkey_key.debug.copyLocation:key.keyboard.c\nkey_key.debug.dumpVersion:key.keyboard.v\nkey_key.debug.profilingChart:key.keyboard.1\nkey_key.debug.fpsCharts:key.keyboard.2\nkey_key.debug.networkCharts:key.keyboard.3\nkey_key.debug.lightmapTexture:key.keyboard.4\n",
+            text, "version:4903\nshowSubtitles:false\nmouseSensitivity:0.5\nfov:70\nsoundCategory_master:1.0\nadvancedItemTooltips:false\npauseOnLostFocus:true\nfovEffectScale:1.0\nchatOpacity:1.0\nchatLineSpacing:0.0\ntextBackgroundOpacity:0.5\nbackgroundForChatOnly:true\nnotificationDisplayTime:1.0\nkey_key.forward:key.keyboard.w\nkey_key.left:key.keyboard.a\nkey_key.back:key.keyboard.s\nkey_key.right:key.keyboard.d\nkey_key.jump:key.keyboard.space\nkey_key.sneak:key.keyboard.left.shift\nkey_key.sprint:key.keyboard.left.control\nkey_key.inventory:key.keyboard.e\nkey_key.swapOffhand:key.keyboard.f\nkey_key.drop:key.keyboard.q\nkey_key.use:key.mouse.right\nkey_key.attack:key.mouse.left\nkey_key.pickItem:key.mouse.middle\nkey_key.hotbar.1:key.keyboard.1\nkey_key.hotbar.2:key.keyboard.2\nkey_key.hotbar.3:key.keyboard.3\nkey_key.hotbar.4:key.keyboard.4\nkey_key.hotbar.5:key.keyboard.5\nkey_key.hotbar.6:key.keyboard.6\nkey_key.hotbar.7:key.keyboard.7\nkey_key.hotbar.8:key.keyboard.8\nkey_key.hotbar.9:key.keyboard.9\nkey_key.saveToolbarActivator:key.keyboard.c\nkey_key.loadToolbarActivator:key.keyboard.x\nkey_key.spectatorOutlines:key.keyboard.unknown\nkey_key.spectatorHotbar:key.mouse.middle\nkey_key.debug.overlay:key.keyboard.f3\nkey_key.debug.modifier:key.keyboard.f3\nkey_key.debug.crash:key.keyboard.c\nkey_key.debug.reloadChunk:key.keyboard.a\nkey_key.debug.showHitboxes:key.keyboard.b\nkey_key.debug.clearChat:key.keyboard.d\nkey_key.debug.showChunkBorders:key.keyboard.g\nkey_key.debug.showAdvancedTooltips:key.keyboard.h\nkey_key.debug.copyRecreateCommand:key.keyboard.i\nkey_key.debug.spectate:key.keyboard.n\nkey_key.debug.switchGameMode:key.keyboard.f4\nkey_key.debug.debugOptions:key.keyboard.f6\nkey_key.debug.focusPause:key.keyboard.p\nkey_key.debug.dumpDynamicTextures:key.keyboard.s\nkey_key.debug.reloadResourcePacks:key.keyboard.t\nkey_key.debug.profiling:key.keyboard.l\nkey_key.debug.copyLocation:key.keyboard.c\nkey_key.debug.dumpVersion:key.keyboard.v\nkey_key.debug.profilingChart:key.keyboard.1\nkey_key.debug.fpsCharts:key.keyboard.2\nkey_key.debug.networkCharts:key.keyboard.3\nkey_key.debug.lightmapTexture:key.keyboard.4\n",
             "the file the vanilla rows wear"
         );
         let loaded = OptionsFile::load(&path);

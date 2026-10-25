@@ -7264,6 +7264,13 @@ pub struct App {
     /// own removed() moment already keeps, the quit lane the second
     /// write the law refuses).
     pub stopping: bool,
+    /// THE ADVANCED TOOLTIPS' OWN OPTION (the vanilla
+    /// `options.advancedItemTooltips` — the default FALSE the Java
+    /// field's own zero keeps, the F3+H chord the flip serves, the
+    /// `options.save()` the debug family's own save-wearing lane
+    /// calls — the file's row the chord's own write wears, the
+    /// tooltip walks the flag the later rounds' reads bank).
+    pub advanced_item_tooltips: bool,
     /// THE FOCUS-LOSS'S OWN OPTION (the vanilla `options.pauseOnLostFocus`
     /// — the default TRUE the Options ctor wears, the focus-loss pause
     /// the law's own gate reads, the false the pause the refresh alone
@@ -10770,6 +10777,7 @@ impl App {
             creative_scroll: 0.0,
             creative_scroll_drag: false,
             stopping: false,
+            advanced_item_tooltips: false,
             pause_on_lost_focus: true,
             fov_effect_scale: 1.0,
             text_background_opacity: 0.5,
@@ -33092,6 +33100,7 @@ impl App {
         self.look_sensitivity = file.mouse_sensitivity;
         self.fov = file.fov;
         self.volume = file.sound_category_master;
+        self.advanced_item_tooltips = file.advanced_item_tooltips;
         self.pause_on_lost_focus = file.pause_on_lost_focus;
         self.fov_effect_scale = file.fov_effect_scale;
         self.chat_opacity = file.chat_opacity;
@@ -33123,6 +33132,7 @@ impl App {
             mouse_sensitivity: self.look_sensitivity,
             fov: self.fov,
             sound_category_master: self.volume,
+            advanced_item_tooltips: self.advanced_item_tooltips,
             pause_on_lost_focus: self.pause_on_lost_focus,
             fov_effect_scale: self.fov_effect_scale,
             chat_opacity: self.chat_opacity,
@@ -39357,6 +39367,37 @@ impl App {
     /// modifier's own family joins.
     pub fn on_clear_chat_key(&mut self) {
         self.chat_messages.clear();
+        self.debug_modifier_used = true;
+    }
+
+    /// THE ADVANCED TOOLTIPS' OWN CHORD (javap 26.2
+    /// KeyboardHandler.handleDebugKeys's keyDebugShowAdvancedTooltips
+    /// lane — the `matches` arm the
+    /// `options.advancedItemTooltips = !options.advancedItemTooltips`
+    /// flip serves, the debugFeedbackTranslated the on/off strings the
+    /// ChatFormatting.YELLOW decoration wears, the `options.save()`
+    /// the debug family's own SAVE-WEARING lane calls — the hdk_262.txt
+    /// pc 297-349 walk the istore_3 the used flag banks). The lang's
+    /// own rows the display words keep (the advanced_tooltips_168.py
+    /// probe the table reads — `debug.advanced_tooltips.on = Advanced
+    /// tooltips: shown`, `.off = Advanced tooltips: hidden`, the
+    /// decorateDebugComponent the YELLOW the `showDebugChat` the chat
+    /// row the plain walk serves — the `§e` prefix the Rust format
+    /// code the same color the vanilla's ChatFormatting.YELLOW speaks).
+    /// The file's row the chord's own save rides — the immediate
+    /// write the flip's own moment wears (the F3+P lane the
+    /// removed()-moment save the OTHER shape keeps, the vanilla
+    /// handleDebugKeys the save call the advancedTooltips arm alone
+    /// wears).
+    pub fn on_advanced_tooltips_key(&mut self) {
+        self.advanced_item_tooltips = !self.advanced_item_tooltips;
+        let word = if self.advanced_item_tooltips {
+            "\u{a7}eAdvanced tooltips: shown"
+        } else {
+            "\u{a7}eAdvanced tooltips: hidden"
+        };
+        self.push_chat_message(word.to_string());
+        self.options_file_save();
         self.debug_modifier_used = true;
     }
 
