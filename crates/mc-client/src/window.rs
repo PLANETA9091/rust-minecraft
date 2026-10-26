@@ -2165,11 +2165,34 @@ pub fn run_gui_app(
         // internal gates keep, the stale screens the gate never
         // passes)
         if app.screen == crate::screens::ScreenKind::DebugOptions {
+            // THE SELECTION'S OWN ALL (the 65 arm the hasControlDown
+            // branch the selectAll walk serves — the focused box the
+            // whole value answers, the internal gate the seat keeps)
+            if ctrl_down && window.is_key_pressed(Key::A, minifb::KeyRepeat::No) {
+                app.on_debug_options_select_all();
+            }
+            // THE SELECTION'S OWN SHIFT SEAT (the hasShiftDown query
+            // the two-arg branches — the 266 chat law the box wears,
+            // the ride the anchor keeps)
+            let dbg_shift =
+                window.is_key_down(Key::LeftShift) || window.is_key_down(Key::RightShift);
             if window.is_key_pressed(Key::Home, minifb::KeyRepeat::No) {
-                app.on_debug_options_caret_home_end(false);
+                if dbg_shift {
+                    // the 268 arm the hasShiftDown branch the anchor
+                    // keeps (the zero park the range opens)
+                    app.on_debug_options_caret_shift_home_end(false);
+                } else {
+                    app.on_debug_options_caret_home_end(false);
+                }
             }
             if window.is_key_pressed(Key::End, minifb::KeyRepeat::No) {
-                app.on_debug_options_caret_home_end(true);
+                if dbg_shift {
+                    // the 269 arm the hasShiftDown branch the anchor
+                    // keeps (the len park the range opens)
+                    app.on_debug_options_caret_shift_home_end(true);
+                } else {
+                    app.on_debug_options_caret_home_end(true);
+                }
             }
             if window.is_key_pressed(Key::Delete, minifb::KeyRepeat::No) {
                 app.on_debug_options_delete();
@@ -2306,11 +2329,26 @@ pub fn run_gui_app(
         // wears. The screen gate the world's camera lanes the arrows
         // never share)
         if app.screen == crate::screens::ScreenKind::DebugOptions {
+            // THE BOX SEAT'S OWN SHIFT RIDE (the shift the arrow the
+            // two-arg moveCursorBy walk answers — the focused box the
+            // selection extends, the unfocused box the focus walk
+            // keeps, the single-line box the Up/Down the same ride
+            // never shares)
+            let dbg_shift =
+                window.is_key_down(Key::LeftShift) || window.is_key_down(Key::RightShift);
             if window.is_key_pressed(Key::Left, minifb::KeyRepeat::No) {
-                app.on_debug_options_arrow(-1, 0);
+                if dbg_shift && app.debug_search_focus {
+                    app.on_debug_options_caret_shift_arrow(true);
+                } else {
+                    app.on_debug_options_arrow(-1, 0);
+                }
             }
             if window.is_key_pressed(Key::Right, minifb::KeyRepeat::No) {
-                app.on_debug_options_arrow(1, 0);
+                if dbg_shift && app.debug_search_focus {
+                    app.on_debug_options_caret_shift_arrow(false);
+                } else {
+                    app.on_debug_options_arrow(1, 0);
+                }
             }
             if window.is_key_pressed(Key::Up, minifb::KeyRepeat::No) {
                 app.on_debug_options_arrow(0, -1);

@@ -10250,6 +10250,13 @@ pub struct App {
     /// EMPTY box the zero seat keeps, the re-open walk the same
     /// reset wears).
     pub debug_search_cursor: usize,
+    /// THE SEARCH BOX'S OWN SELECTION SEAT (the EditBox
+    /// `highlightPos` law the 266 chat anchor family wears — the
+    /// shift-ride/park the anchor banks, the plain motion/click the
+    /// collapse the None wears, the live range the edit weapons the
+    /// deleteSelection first step answers; the fresh ctor the None
+    /// keeps, the re-open walk the same reset wears).
+    pub debug_search_highlight: Option<usize>,
     /// THE DEBUG OPTIONS' OWN FOCUS SEAT (the vanilla `getFocused` law
     /// the button widgets wear — the preset pair + the entry pills the
     /// Tab walk's own store banks, the BOX the `debug_search_focus`
@@ -11916,6 +11923,7 @@ impl App {
             debug_search: String::new(),
             debug_search_focus: true,
             debug_search_cursor: 0,
+            debug_search_highlight: None,
             debug_focus: None,
             debug_box_rect: (0, 0, 0, 0),
             debug_profile: Some(false),
@@ -22186,6 +22194,7 @@ impl App {
         if kind == ScreenKind::DebugOptions {
             self.debug_search.clear();
             self.debug_search_cursor = 0;
+            self.debug_search_highlight = None;
             self.debug_scroll = 0.0;
             // THE INITIAL FOCUS'S OWN RE-ARM (the vanilla init's
             // setInitialFocus the fresh screen answers — the re-open
@@ -28018,6 +28027,22 @@ impl App {
             let hint = tr("debug.options.search").unwrap_or("Search...");
             g.text(a, bx + 4, 26, &hint, [0.55, 0.55, 0.55], false);
         } else {
+            // THE SELECTION'S OWN BAND (the EditBox.render's highlight
+            // walk the 266 law the box wears — the min/max(cursor,
+            // anchor) the prefix widths the 0xFF808080 gray fill the
+            // text's y-1..y+9 band draws, the collapsed/absent seat
+            // the band never wears)
+            if let Some(anchor) = self.debug_search_highlight {
+                if anchor != self.debug_search_cursor {
+                    let lo = anchor.min(self.debug_search_cursor);
+                    let hi = anchor.max(self.debug_search_cursor);
+                    let pre: String = self.debug_search.chars().take(lo).collect();
+                    let sel: String = self.debug_search.chars().take(hi).collect();
+                    let x1 = bx + 4 + g.text_width(&pre);
+                    let x2 = bx + 4 + g.text_width(&sel);
+                    g.fill(x1, 25, (x2 - x1).max(1), 10, [0.502, 0.502, 0.502, 1.0]);
+                }
+            }
             g.text(a, bx + 4, 26, &self.debug_search, WHITE, false);
             if (self.frame / 6) % 2 == 0 && self.debug_search_focus {
                 // THE CARET'S OWN PREFIX (the cursorPos the
@@ -36142,26 +36167,68 @@ impl App {
         self.options_grab = is_slider_seat_id(id);
     }
 
+    /// THE SELECTION'S OWN REMOVAL (the EditBox.deleteSelection law
+    /// the 266 chat family wears — the live anchor the [min, max)
+    /// range the replace removes, the cursor the lo seat re-parks,
+    /// the anchor the collapse the None wears, the live-selection
+    /// true the caller's edit weapons the first step answers, the
+    /// collapsed/absent pair the false the plain arms keep; the
+    /// unfocused box the gate never passes).
+    fn debug_delete_selection(&mut self) -> bool {
+        if self.screen != ScreenKind::DebugOptions || !self.debug_search_focus {
+            return false;
+        }
+        let Some(anchor) = self.debug_search_highlight else {
+            return false;
+        };
+        if anchor == self.debug_search_cursor {
+            // THE COLLAPSED PAIR'S OWN RE-PARK (the 270 entry round the
+            // same vanilla law the boxes wear — the banked-but-collapsed
+            // seat the insert the collapsed state keeps, the phantom
+            // range the never-opens law keeps)
+            self.debug_search_highlight = None;
+            return false;
+        }
+        let lo = anchor.min(self.debug_search_cursor);
+        let hi = anchor.max(self.debug_search_cursor);
+        let start = caret_byte_index(&self.debug_search, lo);
+        let end = caret_byte_index(&self.debug_search, hi);
+        self.debug_search.replace_range(start..end, "");
+        self.debug_search_cursor = lo;
+        self.debug_search_highlight = None;
+        self.debug_scroll = 0.0;
+        true
+    }
+
     /// THE SEARCH BOX'S OWN CHARS (the EditBox the init's responder
     /// lambda serves — the charTyped lane the focused box answers,
     /// the `updateSearch` rebuild the typed word wears, the max
     /// length 50 the picker's own law keeps, the scroll the rebuild's
     /// TOP reset speaks).
     pub fn on_debug_options_char(&mut self, c: char) {
-        if self.screen != ScreenKind::DebugOptions
-            || !self.debug_search_focus
-            || self.debug_search.chars().count() >= 50
-        {
+        if self.screen != ScreenKind::DebugOptions || !self.debug_search_focus {
             return;
         }
-        // THE SEAT'S OWN INSERT (the EditBox.charTyped the insertText
-        // walk the cursorPos serves — the byte index the seat speaks,
-        // the caret the +1 the after-insert seat wears; the end seat
-        // the tail push the same law keeps)
-        let byte = caret_byte_index(&self.debug_search, self.debug_search_cursor);
-        self.debug_search.insert(byte, c);
-        self.debug_search_cursor += 1;
-        self.debug_scroll = 0.0; // the updateSearch rebuild the top wears
+        // THE LIVE RANGE'S OWN FIRST STEP (the insertText the
+        // deleteSelection walk serves — the replaced word the typed
+        // char answers, the collapsed/absent pair the plain insert
+        // keeps)
+        let replaced = self.debug_delete_selection();
+        if self.debug_search.chars().count() < 50 {
+            // THE SEAT'S OWN INSERT (the EditBox.charTyped the insertText
+            // walk the cursorPos serves — the byte index the seat speaks,
+            // the caret the +1 the after-insert seat wears; the end seat
+            // the tail push the same law keeps)
+            let byte = caret_byte_index(&self.debug_search, self.debug_search_cursor);
+            self.debug_search.insert(byte, c);
+            self.debug_search_cursor += 1;
+            self.debug_scroll = 0.0; // the updateSearch rebuild the top wears
+        } else if replaced {
+            // the cap-blocked insert the removal alone wears (the
+            // vanilla insertText the deleteSelection first step the
+            // separate walk serves)
+            self.debug_scroll = 0.0;
+        }
     }
 
     /// THE SEARCH BOX'S OWN BACKSPACE (the keyPressed Backspace arm —
@@ -36170,6 +36237,10 @@ impl App {
     /// wears).
     pub fn on_debug_options_backspace(&mut self) {
         if self.screen != ScreenKind::DebugOptions || !self.debug_search_focus {
+            return;
+        }
+        // the live range the deleteText's own first step answers
+        if self.debug_delete_selection() {
             return;
         }
         if self.debug_search_cursor > 0 {
@@ -36188,6 +36259,10 @@ impl App {
     /// seat the walk wears).
     pub fn on_debug_options_delete(&mut self) {
         if self.screen != ScreenKind::DebugOptions || !self.debug_search_focus {
+            return;
+        }
+        // the live range the deleteText's own first step answers
+        if self.debug_delete_selection() {
             return;
         }
         let len = self.debug_search.chars().count();
@@ -36212,6 +36287,10 @@ impl App {
         if self.screen != ScreenKind::DebugOptions || !self.debug_search_focus {
             return;
         }
+        // the live range the deleteWords' own first step answers
+        if self.debug_delete_selection() {
+            return;
+        }
         let cursor = self.debug_search_cursor;
         let bound = word_boundary(&self.debug_search, cursor, forward);
         if bound != cursor {
@@ -36233,6 +36312,9 @@ impl App {
         if self.screen != ScreenKind::DebugOptions || !self.debug_search_focus {
             return;
         }
+        // the plain motion the anchor collapses (the one-arg
+        // moveCursorBy the setHighlightPos(cursorPos) tail wears)
+        self.debug_search_highlight = None;
         let len = self.debug_search.chars().count();
         if left {
             self.debug_search_cursor = self.debug_search_cursor.saturating_sub(1);
@@ -36249,11 +36331,68 @@ impl App {
         if self.screen != ScreenKind::DebugOptions || !self.debug_search_focus {
             return;
         }
+        // the plain park the anchor collapses (the same one-arg law
+        // the chat family wears)
+        self.debug_search_highlight = None;
         self.debug_search_cursor = if end {
             self.debug_search.chars().count()
         } else {
             0
         };
+    }
+
+    /// THE SELECTION'S OWN SHIFT RIDE (the 262/263 arms the no-ctrl
+    /// branch the two-arg `moveCursorBy(±1, hasShiftDown())` walk
+    /// serves — the anchor the old seat banks, the ride the range
+    /// extends, the unfocused box the gate never passes).
+    pub fn on_debug_options_caret_shift_arrow(&mut self, left: bool) {
+        if self.screen != ScreenKind::DebugOptions || !self.debug_search_focus {
+            return;
+        }
+        let len = self.debug_search.chars().count();
+        let prev = self.debug_search_cursor;
+        self.debug_search_cursor = if left {
+            prev.saturating_sub(1)
+        } else {
+            (prev + 1).min(len)
+        };
+        if self.debug_search_highlight.is_none() {
+            // the collapsed pair the old seat the anchor wears (the
+            // highlightPos == cursorPos pre-state the vanilla field
+            // keeps — the first shift step the range opens)
+            self.debug_search_highlight = Some(prev);
+        }
+    }
+
+    /// THE SELECTION'S OWN SHIFT PARK (the 268/269 arms the
+    /// hasShiftDown branch the two-arg moveCursorTo walk serves —
+    /// the shift the anchor the same law keeps, the no-anchor first
+    /// ride the old cursor the anchor banks).
+    pub fn on_debug_options_caret_shift_home_end(&mut self, end: bool) {
+        if self.screen != ScreenKind::DebugOptions || !self.debug_search_focus {
+            return;
+        }
+        let prev = self.debug_search_cursor;
+        self.debug_search_cursor = if end {
+            self.debug_search.chars().count()
+        } else {
+            0
+        };
+        if self.debug_search_highlight.is_none() {
+            self.debug_search_highlight = Some(prev);
+        }
+    }
+
+    /// THE SELECTION'S OWN ALL (the EditBox.keyPressed's 65 arm the
+    /// `Screen.hasControlDown()` branch the `selectAll()` walk serves
+    /// — the cursorPos the value's end wears, the highlightPos the
+    /// zero parks, the [0, len) range the whole value answers).
+    pub fn on_debug_options_select_all(&mut self) {
+        if self.screen != ScreenKind::DebugOptions || !self.debug_search_focus {
+            return;
+        }
+        self.debug_search_cursor = self.debug_search.chars().count();
+        self.debug_search_highlight = Some(0);
     }
 
     /// THE DIRECT CONNECTION'S OWN CHARS (the EditBox the
@@ -37474,6 +37613,9 @@ impl App {
         let inside = my >= 20 && my < 40 && mx >= bx && mx < bx + box_w;
         if inside {
             self.debug_search_focus = true;
+            // the plain click the anchor collapses (the mouseClick the
+            // moveCursorTo the setHighlightPos(cursorPos) tail wears)
+            self.debug_search_highlight = None;
             // THE SEAT'S OWN SEEK (the vanilla mouseClick the one-arg
             // moveCursorTo walk serves — the x-band the prefix widths
             // answers, the past-tail the clamp parks, the left edge

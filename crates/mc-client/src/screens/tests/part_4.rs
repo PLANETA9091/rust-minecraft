@@ -26345,3 +26345,193 @@ fn the_debug_search_box_own_caret_seat_wears() {
         "the fresh open the box the focus re-arms"
     );
 }
+
+#[test]
+fn the_debug_selection_own_seat_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.on_debug_options_key(); // the open arm the fresh screen wears
+                                // THE FRESH CTOR'S OWN ANCHOR (the highlightPos the None keeps —
+                                // the fresh screen the collapsed state wears)
+    assert!(
+        app.debug_search_highlight.is_none(),
+        "the fresh open the anchor the None keeps"
+    );
+    // THE TYPED TAIL (the plain lane the same verdict keeps — the
+    // insert the anchor never banks)
+    for c in "minecraft debug".chars() {
+        app.on_debug_options_char(c);
+    }
+    assert_eq!(app.debug_search, "minecraft debug", "the typed word banks");
+    assert_eq!(app.debug_search_cursor, 15, "the tail seat wears");
+    assert!(
+        app.debug_search_highlight.is_none(),
+        "the typed tail the anchor never banks"
+    );
+    // THE PLAIN RIDE'S OWN COLLAPSE (the one-arg moveCursorBy the
+    // setHighlightPos(cursorPos) tail wears — the anchor the None)
+    app.on_debug_options_caret_arrow(true);
+    assert_eq!(
+        app.debug_search_cursor, 14,
+        "the plain ride the seat re-parks"
+    );
+    assert!(
+        app.debug_search_highlight.is_none(),
+        "the plain ride the anchor collapses"
+    );
+    // THE SHIFT RIDE'S OWN ANCHOR (the two-arg moveCursorBy the old
+    // seat the anchor banks — the ride the range extends)
+    app.on_debug_options_caret_shift_arrow(true);
+    app.on_debug_options_caret_shift_arrow(true);
+    app.on_debug_options_caret_shift_arrow(true);
+    assert_eq!(app.debug_search_cursor, 11, "the shift ride the seat walks");
+    assert_eq!(
+        app.debug_search_highlight,
+        Some(14),
+        "the first step the old seat the anchor banks"
+    );
+    // THE CHAR'S OWN FIRST STEP (the insertText the deleteSelection
+    // walk serves — the [11, 14) "ebu" the X replaces, the cursor the
+    // lo seat re-parks, the anchor the collapse wears)
+    app.on_debug_options_char('X');
+    assert_eq!(
+        app.debug_search, "minecraft dXg",
+        "the live range the char replaces"
+    );
+    assert_eq!(app.debug_search_cursor, 12, "the lo seat the re-park wears");
+    assert!(
+        app.debug_search_highlight.is_none(),
+        "the insert the anchor collapses"
+    );
+    // THE SHIFT PARK'S OWN ANCHOR (the two-arg moveCursorTo the same
+    // law wears — the Home the zero park the range opens)
+    app.on_debug_options_caret_shift_home_end(false);
+    assert_eq!(app.debug_search_cursor, 0, "the shift park the head wears");
+    assert_eq!(
+        app.debug_search_highlight,
+        Some(12),
+        "the park the old seat the anchor banks"
+    );
+    // THE BACKSPACE'S OWN FIRST STEP (the deleteText the live range
+    // the whole [0, 12) word removes)
+    app.on_debug_options_backspace();
+    assert_eq!(
+        app.debug_search, "g",
+        "the live range the backspace removes"
+    );
+    assert_eq!(app.debug_search_cursor, 0, "the lo seat the re-park wears");
+    assert!(
+        app.debug_search_highlight.is_none(),
+        "the removal the anchor collapses"
+    );
+    // THE ALL'S OWN WHOLE VALUE (the 65 arm the selectAll walk serves
+    // — the cursor the end wears, the highlight the zero parks)
+    for c in "abc".chars() {
+        app.on_debug_options_char(c);
+    }
+    assert_eq!(app.debug_search, "abcg", "the head inserts wear");
+    app.on_debug_options_select_all();
+    assert_eq!(
+        app.debug_search_cursor, 4,
+        "the all the cursor the end wears"
+    );
+    assert_eq!(
+        app.debug_search_highlight,
+        Some(0),
+        "the all the highlight the zero parks"
+    );
+    // THE DELETE'S OWN FIRST STEP (the deleteText(1) the live range
+    // the whole value answers — the end-seat silence the live range
+    // never keeps)
+    app.on_debug_options_delete();
+    assert_eq!(app.debug_search, "", "the live range the delete removes");
+    assert_eq!(app.debug_search_cursor, 0, "the lo seat the re-park wears");
+    // THE COLLAPSED PAIR'S OWN RE-PARK (the all on the EMPTY box the
+    // banked-but-collapsed seat banks — the insert the collapsed
+    // state keeps, the phantom range the never-opens law wears)
+    app.on_debug_options_select_all();
+    assert_eq!(
+        app.debug_search_highlight,
+        Some(0),
+        "the empty all the collapsed seat banks"
+    );
+    app.on_debug_options_char('z');
+    assert_eq!(
+        app.debug_search, "z",
+        "the collapsed pair the plain insert wears"
+    );
+    assert_eq!(app.debug_search_cursor, 1, "the after-insert seat wears");
+    assert!(
+        app.debug_search_highlight.is_none(),
+        "the re-park the collapse the None wears"
+    );
+    // THE END SEAT'S OWN COLLAPSED RIDE (the shift ride at the tail
+    // the clamp keeps — the anchor the same seat banks, the pair the
+    // collapsed law keeps)
+    app.on_debug_options_caret_shift_arrow(false);
+    assert_eq!(app.debug_search_cursor, 1, "the end clamp the seat keeps");
+    assert_eq!(
+        app.debug_search_highlight,
+        Some(1),
+        "the clamp the collapsed seat banks"
+    );
+    // THE CLICK'S OWN COLLAPSE (the plain mouseClick the anchor the
+    // None wears — the x-band seek the same walk answers)
+    assert!(
+        app.on_debug_options_box_click(300, 25, 640),
+        "the inside click answers"
+    );
+    assert!(
+        app.debug_search_highlight.is_none(),
+        "the click the anchor collapses"
+    );
+    // THE CTRL-WORDS' OWN FIRST STEP (the deleteWords the live range
+    // answers — the selectAll the whole value the backward bound
+    // serves)
+    app.on_debug_options_select_all();
+    app.on_debug_options_ctrl_words(false);
+    assert_eq!(app.debug_search, "", "the live range the ctrl-word removes");
+    // THE UNFOCUSED GATE (the lanes the box the flag alone serves)
+    app.on_debug_options_tab(true);
+    assert!(!app.debug_search_focus, "the tab the widget-transfer wears");
+    app.on_debug_options_caret_shift_arrow(true);
+    app.on_debug_options_caret_shift_home_end(true);
+    app.on_debug_options_select_all();
+    app.on_debug_options_backspace();
+    assert!(
+        app.debug_search_highlight.is_none() && app.debug_search.is_empty(),
+        "the unfocused box the lanes never answer"
+    );
+    // THE FRESH REOPEN'S OWN RESET (the stale word + anchor the
+    // re-open never inherits — the second tap the close serves, the
+    // third the fresh ctor wears)
+    app.on_debug_options_key();
+    app.on_debug_options_key();
+    assert_eq!(
+        app.debug_search, "",
+        "the fresh open the word the reset retires"
+    );
+    assert!(
+        app.debug_search_highlight.is_none(),
+        "the fresh open the anchor the reset retires"
+    );
+    // THE REOPEN WALK'S OWN BANK (the fresh screen the shift park the
+    // anchor banks — the close/re-open the same reset the second
+    // walk wears)
+    for c in "ok".chars() {
+        app.on_debug_options_char(c);
+    }
+    app.on_debug_options_caret_shift_home_end(false);
+    assert_eq!(app.debug_search_cursor, 0, "the shift park the head wears");
+    assert_eq!(
+        app.debug_search_highlight,
+        Some(2),
+        "the park the old seat the anchor banks"
+    );
+    app.on_debug_options_key();
+    app.on_debug_options_key();
+    assert!(
+        app.debug_search_highlight.is_none(),
+        "the fresh open the anchor the reset retires"
+    );
+}
