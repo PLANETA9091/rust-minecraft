@@ -26187,3 +26187,161 @@ fn the_caret_own_ctrl_word_arrows_wears() {
         "the closed chat the gate keeps"
     );
 }
+
+#[test]
+fn the_debug_search_box_own_caret_seat_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.on_debug_options_key(); // the open arm the fresh screen wears
+                                // THE FRESH CTOR'S OWN SEAT (the EMPTY box the zero keeps — the
+                                // cursorPos the re-open walk the same reset wears)
+    assert_eq!(
+        app.debug_search_cursor, 0,
+        "the fresh open the empty box the zero seat wears"
+    );
+    // THE TYPED TAIL (the end seat the insert the after-tail seat
+    // wears — the old end-seat model the same verdict speaks)
+    for c in "fps overlay".chars() {
+        app.on_debug_options_char(c);
+    }
+    assert_eq!(app.debug_search, "fps overlay", "the typed word banks");
+    assert_eq!(
+        app.debug_search_cursor, 11,
+        "the typed tail the after-end seat wears"
+    );
+    // THE MID-STRING INSERT (the LEFT walk the ±1 re-parks, the char
+    // the before-tail seat inserts — the push-only model the walk
+    // never wore)
+    app.on_debug_options_caret_arrow(true);
+    app.on_debug_options_caret_arrow(true);
+    assert_eq!(
+        app.debug_search_cursor, 9,
+        "the LEFT pair the seat re-parks"
+    );
+    app.on_debug_options_char('X');
+    assert_eq!(
+        app.debug_search, "fps overlXay",
+        "the mid-string insert the seat wears"
+    );
+    assert_eq!(app.debug_search_cursor, 10, "the insert the +1 seat wears");
+    // THE BOUNDS' OWN CLAMPS (the END park the +1 the tail keeps, the
+    // HOME park the -1 the head keeps)
+    app.on_debug_options_caret_home_end(true);
+    app.on_debug_options_caret_arrow(false);
+    assert_eq!(
+        app.debug_search_cursor, 12,
+        "the tail seat the forward clamp keeps"
+    );
+    app.on_debug_options_caret_home_end(false);
+    app.on_debug_options_caret_arrow(true);
+    assert_eq!(
+        app.debug_search_cursor, 0,
+        "the head seat the backward clamp keeps"
+    );
+    // THE DELETE'S OWN AFTER-CHAR (the 261 arm the head seat the 'f'
+    // removes — the end seat the silence keeps)
+    app.on_debug_options_delete();
+    assert_eq!(
+        app.debug_search, "ps overlXay",
+        "the delete the after-seat char removes"
+    );
+    app.on_debug_options_caret_home_end(true);
+    app.on_debug_options_delete();
+    assert_eq!(
+        app.debug_search, "ps overlXay",
+        "the end seat the delete the silence keeps"
+    );
+    // THE BACKSPACE'S OWN BEFORE-CHAR (the mid-string seat the 's'
+    // removes — the before-tail pop the same law wears)
+    app.on_debug_options_caret_home_end(false);
+    app.on_debug_options_caret_arrow(false);
+    app.on_debug_options_caret_arrow(false);
+    assert_eq!(
+        app.debug_search_cursor, 2,
+        "the +1 pair the after-'p' seat wears"
+    );
+    app.on_debug_options_backspace();
+    assert_eq!(
+        app.debug_search, "p overlXay",
+        "the backspace the before-seat char removes"
+    );
+    assert_eq!(app.debug_search_cursor, 1, "the -1 seat wears");
+    // THE CTRL WORDS' OWN SEAT PAIR (the backward bound the before
+    // word removes, the forward bound the after word the NEW walk
+    // answers — the end-seat model the forward silence retires)
+    app.on_debug_options_ctrl_words(false);
+    assert_eq!(
+        app.debug_search, " overlXay",
+        "the backward walk the before word removes"
+    );
+    assert_eq!(app.debug_search_cursor, 0, "the bound seat wears");
+    app.on_debug_options_ctrl_words(true);
+    assert_eq!(
+        app.debug_search, "overlXay",
+        "the forward walk the leading space removes"
+    );
+    assert_eq!(app.debug_search_cursor, 0, "the bound seat wears");
+    app.on_debug_options_ctrl_words(false);
+    assert_eq!(
+        app.debug_search, "overlXay",
+        "the head seat the backward no-op keeps"
+    );
+    // THE CLICK'S OWN SEEK (the inside click the x-band the seat
+    // answers — the left edge the zero parks, the past-tail the len
+    // clamps; the box the gui_w/3 width the 640 lane keeps)
+    app.on_debug_options_caret_home_end(true);
+    for c in "ab".chars() {
+        app.on_debug_options_char(c);
+    }
+    assert_eq!(app.debug_search, "overlXayab", "the tail insert banks");
+    assert!(
+        app.on_debug_options_box_click(214, 25, 640),
+        "the left edge the inside verdict wears"
+    );
+    assert_eq!(
+        app.debug_search_cursor, 0,
+        "the left edge the zero seat parks"
+    );
+    assert!(
+        app.on_debug_options_box_click(422, 25, 640),
+        "the past-tail edge the inside verdict wears"
+    );
+    assert_eq!(
+        app.debug_search_cursor, 10,
+        "the past-tail the len seat clamps"
+    );
+    // THE UNFOCUSED GATE (the tab walk the preset seat arms — the
+    // caret lanes the box the flag alone serves)
+    app.on_debug_options_tab(true);
+    assert!(!app.debug_search_focus, "the tab the widget-transfer wears");
+    app.on_debug_options_caret_arrow(false);
+    app.on_debug_options_caret_home_end(false);
+    app.on_debug_options_backspace();
+    app.on_debug_options_char('q');
+    app.on_debug_options_delete();
+    assert_eq!(
+        app.debug_search, "overlXayab",
+        "the unfocused box the lanes never answer"
+    );
+    assert_eq!(
+        app.debug_search_cursor, 10,
+        "the unfocused seat the silence keeps"
+    );
+    // THE FRESH REOPEN'S OWN RESET (the second tap the close serves,
+    // the third the fresh ctor the EMPTY box the zero seat keeps —
+    // the stale word the cursor the re-open never inherits)
+    app.on_debug_options_key();
+    app.on_debug_options_key();
+    assert_eq!(
+        app.debug_search, "",
+        "the fresh open the word the reset retires"
+    );
+    assert_eq!(
+        app.debug_search_cursor, 0,
+        "the fresh open the cursor the zero seat keeps"
+    );
+    assert!(
+        app.debug_search_focus,
+        "the fresh open the box the focus re-arms"
+    );
+}

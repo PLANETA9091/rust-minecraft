@@ -10240,6 +10240,16 @@ pub struct App {
     /// keeps, the box click the focus the re-arm serves, the outside
     /// click the focus the widget-transfer law retires).
     pub debug_search_focus: bool,
+    /// THE SEARCH BOX'S OWN CARET SEAT (the EditBox `cursorPos` law
+    /// the END-SEAT model retires — the char lane the insert-at-seat
+    /// walk wears, the Backspace the before-seat char the 259 arm
+    /// removes, the Delete the after-seat char the 261 arm serves,
+    /// the LEFT/RIGHT the ±1 the bounds clamp, the Home/End the
+    /// head/tail parks, the ctrl-words the seat's own bounds remove,
+    /// the plain click the x-band seat seeks; the fresh ctor the
+    /// EMPTY box the zero seat keeps, the re-open walk the same
+    /// reset wears).
+    pub debug_search_cursor: usize,
     /// THE DEBUG OPTIONS' OWN FOCUS SEAT (the vanilla `getFocused` law
     /// the button widgets wear — the preset pair + the entry pills the
     /// Tab walk's own store banks, the BOX the `debug_search_focus`
@@ -11905,6 +11915,7 @@ impl App {
             debug_scroll: 0.0,
             debug_search: String::new(),
             debug_search_focus: true,
+            debug_search_cursor: 0,
             debug_focus: None,
             debug_box_rect: (0, 0, 0, 0),
             debug_profile: Some(false),
@@ -22174,6 +22185,7 @@ impl App {
         // inherits)
         if kind == ScreenKind::DebugOptions {
             self.debug_search.clear();
+            self.debug_search_cursor = 0;
             self.debug_scroll = 0.0;
             // THE INITIAL FOCUS'S OWN RE-ARM (the vanilla init's
             // setInitialFocus the fresh screen answers — the re-open
@@ -28007,8 +28019,17 @@ impl App {
             g.text(a, bx + 4, 26, &hint, [0.55, 0.55, 0.55], false);
         } else {
             g.text(a, bx + 4, 26, &self.debug_search, WHITE, false);
-            let tw = g.text_width(&self.debug_search);
             if (self.frame / 6) % 2 == 0 && self.debug_search_focus {
+                // THE CARET'S OWN PREFIX (the cursorPos the
+                // trimStringToWidth law the before-seat chars the band
+                // width wears — the mid-string caret the seat speaks,
+                // the end seat the whole word the same width keeps)
+                let prefix: String = self
+                    .debug_search
+                    .chars()
+                    .take(self.debug_search_cursor)
+                    .collect();
+                let tw = g.text_width(&prefix);
                 g.fill(bx + 4 + tw + 1, 26, 1, 8, [1.0, 1.0, 1.0, 1.0]);
             }
         }
@@ -35631,9 +35652,17 @@ impl App {
         if self.screen != ScreenKind::DebugOptions {
             return;
         }
-        // THE BOX SEAT'S OWN SILENCE (the vanilla's own consumption —
-        // the focused box the arrow the cursor lane eats)
+        // THE BOX SEAT'S OWN HORIZONTAL (the EditBox the arrow keys
+        // the cursor law eats — the tableswitch 262/263 the
+        // LEFT/RIGHT the caret ±1 re-parks [the caret seat the 178
+        // round wears], the UP/DOWN the single-line box the silence
+        // keeps, the focus the move never wears)
         if self.debug_search_focus {
+            if dx < 0 {
+                self.on_debug_options_caret_arrow(true);
+            } else if dx > 0 {
+                self.on_debug_options_caret_arrow(false);
+            }
             return;
         }
         let seat = match self.debug_focus {
@@ -36125,39 +36154,106 @@ impl App {
         {
             return;
         }
-        self.debug_search.push(c);
+        // THE SEAT'S OWN INSERT (the EditBox.charTyped the insertText
+        // walk the cursorPos serves — the byte index the seat speaks,
+        // the caret the +1 the after-insert seat wears; the end seat
+        // the tail push the same law keeps)
+        let byte = caret_byte_index(&self.debug_search, self.debug_search_cursor);
+        self.debug_search.insert(byte, c);
+        self.debug_search_cursor += 1;
         self.debug_scroll = 0.0; // the updateSearch rebuild the top wears
     }
 
     /// THE SEARCH BOX'S OWN BACKSPACE (the keyPressed Backspace arm —
-    /// the popped char the rebuild answers, the scroll the same top
-    /// reset wears).
+    /// the before-seat char the `deleteText(-1)` walk removes, the
+    /// zero seat the silence keeps, the scroll the same top reset
+    /// wears).
     pub fn on_debug_options_backspace(&mut self) {
         if self.screen != ScreenKind::DebugOptions || !self.debug_search_focus {
             return;
         }
-        if self.debug_search.pop().is_some() {
+        if self.debug_search_cursor > 0 {
+            let start = caret_byte_index(&self.debug_search, self.debug_search_cursor - 1);
+            let end = caret_byte_index(&self.debug_search, self.debug_search_cursor);
+            self.debug_search.replace_range(start..end, "");
+            self.debug_search_cursor -= 1;
+            self.debug_scroll = 0.0;
+        }
+    }
+
+    /// THE SEARCH BOX'S OWN DELETE (the EditBox keyPressed's 261 arm
+    /// the `deleteText(1)` walk serves — the char AT the seat the
+    /// mid-string caret removes, the end seat the forward silence
+    /// keeps; the end-seat model the lane never answered, the caret
+    /// seat the walk wears).
+    pub fn on_debug_options_delete(&mut self) {
+        if self.screen != ScreenKind::DebugOptions || !self.debug_search_focus {
+            return;
+        }
+        let len = self.debug_search.chars().count();
+        if self.debug_search_cursor < len {
+            let start = caret_byte_index(&self.debug_search, self.debug_search_cursor);
+            let end = caret_byte_index(&self.debug_search, self.debug_search_cursor + 1);
+            self.debug_search.replace_range(start..end, "");
             self.debug_scroll = 0.0;
         }
     }
 
     /// THE SEARCH BOX'S OWN CTRL WORD (the EditBox keyPressed's
-    /// `Screen.hasControlDown()` branch the `deleteWords(-1)` walk
-    /// serves — the END-SEAT model the tail word the backward walk
-    /// removes, the forward arm the end seat the zero delta the
-    /// no-op keeps; the unfocused box the internal gate never passes,
-    /// the scroll the rebuild's top reset the same tail wears)
+    /// `Screen.hasControlDown()` branch the `deleteWords(±1)` walk
+    /// serves — the seat's own bound the word pair the range removes,
+    /// the zero-delta the no-op keeps; the END seat the backward walk
+    /// the tail word answers [the old end-seat law the same verdict
+    /// wears], the forward arm the end seat the zero delta the no-op
+    /// keeps, the mid-string the live pair the NEW walk answers; the
+    /// unfocused box the internal gate never passes, the scroll the
+    /// rebuild's top reset the same tail wears)
     pub fn on_debug_options_ctrl_words(&mut self, forward: bool) {
         if self.screen != ScreenKind::DebugOptions || !self.debug_search_focus {
             return;
         }
-        let len = self.debug_search.chars().count();
-        let bound = word_boundary(&self.debug_search, len, forward);
-        if bound != len {
-            let start = caret_byte_index(&self.debug_search, bound);
-            self.debug_search.replace_range(start.., "");
+        let cursor = self.debug_search_cursor;
+        let bound = word_boundary(&self.debug_search, cursor, forward);
+        if bound != cursor {
+            let start = caret_byte_index(&self.debug_search, bound.min(cursor));
+            let end = caret_byte_index(&self.debug_search, bound.max(cursor));
+            self.debug_search.replace_range(start..end, "");
+            self.debug_search_cursor = bound.min(cursor);
             self.debug_scroll = 0.0;
         }
+    }
+
+    /// THE SEARCH BOX'S OWN ARROWS (the EditBox keyPressed's 262/263
+    /// arms the `moveCursorBy(±1)` walk serves — the seat the ±1
+    /// re-parks, the bounds the clamp keeps; the box-focused arm the
+    /// [`Self::on_debug_options_arrow`] walk's own silence the
+    /// horizontal law replaces, the stale screens the gate never
+    /// passes).
+    pub fn on_debug_options_caret_arrow(&mut self, left: bool) {
+        if self.screen != ScreenKind::DebugOptions || !self.debug_search_focus {
+            return;
+        }
+        let len = self.debug_search.chars().count();
+        if left {
+            self.debug_search_cursor = self.debug_search_cursor.saturating_sub(1);
+        } else {
+            self.debug_search_cursor = (self.debug_search_cursor + 1).min(len);
+        }
+    }
+
+    /// THE SEARCH BOX'S OWN PARKS (the tableswitch's 268/269 the
+    /// Home/End arms the `moveCursorTo(0/len)` walk serves — the head
+    /// the zero seat, the tail the len seat; the fresh screen the
+    /// gate keeps).
+    pub fn on_debug_options_caret_home_end(&mut self, end: bool) {
+        if self.screen != ScreenKind::DebugOptions || !self.debug_search_focus {
+            return;
+        }
+        self.debug_search_cursor = if end {
+            self.debug_search.chars().count()
+        } else {
+            0
+        };
     }
 
     /// THE DIRECT CONNECTION'S OWN CHARS (the EditBox the
@@ -37378,6 +37474,12 @@ impl App {
         let inside = my >= 20 && my < 40 && mx >= bx && mx < bx + box_w;
         if inside {
             self.debug_search_focus = true;
+            // THE SEAT'S OWN SEEK (the vanilla mouseClick the one-arg
+            // moveCursorTo walk serves — the x-band the prefix widths
+            // answers, the past-tail the clamp parks, the left edge
+            // the zero keeps; the entry_click_seat law the
+            // display-less box the same walk wears)
+            self.debug_search_cursor = entry_click_seat(&self.debug_search, 0, mx, bx);
         }
         inside
     }

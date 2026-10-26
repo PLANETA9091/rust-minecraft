@@ -2158,6 +2158,23 @@ pub fn run_gui_app(
                 }
             }
         }
+        // THE DEBUG SEARCH BOX'S OWN CARET RIDE (the EditBox
+        // tableswitch's 268/269 the Home/End the bounds park serves,
+        // the 261 the Delete the after-seat char removes — the caret
+        // seat the end-seat silence retires, the sibling methods the
+        // internal gates keep, the stale screens the gate never
+        // passes)
+        if app.screen == crate::screens::ScreenKind::DebugOptions {
+            if window.is_key_pressed(Key::Home, minifb::KeyRepeat::No) {
+                app.on_debug_options_caret_home_end(false);
+            }
+            if window.is_key_pressed(Key::End, minifb::KeyRepeat::No) {
+                app.on_debug_options_caret_home_end(true);
+            }
+            if window.is_key_pressed(Key::Delete, minifb::KeyRepeat::No) {
+                app.on_debug_options_delete();
+            }
+        }
         // THE DEBUG OPTIONS' OWN TAB CYCLE (javap 26.2 the Screen
         // keyPressed walk the 258 case answers — the
         // `createTabEvent(!hasShiftDown())` the focus navigation
