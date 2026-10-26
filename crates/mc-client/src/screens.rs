@@ -6638,6 +6638,14 @@ pub enum ScreenKind {
     /// Vanilla ConnectScreen shown while a join is in flight (the blocking
     /// login runs off the frame thread; Escape/Cancel returns to the list).
     Connect,
+    /// THE DIRECT CONNECTION'S OWN FORM (javap 26.2 DirectConnectionScreen
+    /// — the server list's `selectServer.selectDirect` button the
+    /// lambda opens): the address EditBox the typed word the join
+    /// wears, the Join Server (selectServer.join) + Cancel (gui.cancel)
+    /// pair the footer row keeps, the EMPTY address the join button's
+    /// INACTIVE the onAddressChange walk speaks, the Cancel/Escape the
+    /// lastScreen the server list returns.
+    DirectConnect,
     /// Vanilla DisconnectedScreen: the join outcome (server-side login
     /// disconnect reason, transport error, or the offline profile line).
     Disconnect,
@@ -7525,6 +7533,18 @@ pub struct App {
     pub boot_stage: usize,
     pub selected_server: usize,
     pub servers: Vec<ServerEntry>,
+    /// THE DIRECT CONNECTION'S OWN EDITBOX (javap 26.2
+    /// DirectConnectionScreen — the `address` field the ctor's EditBox
+    /// wraps: the typed word the join parses, the EMPTY value the join
+    /// button's INACTIVE the onAddressChange walk speaks, the hint the
+    /// empty box wears). The FOCUS the EditBox's own `isFocused` field
+    /// keeps (the init's setInitialFocus arms, the click walk the
+    /// widget's own transfer serves), the RECT the render's own bank
+    /// the click geometry wears (the buttons' own store law the box
+    /// shares).
+    pub direct_address: String,
+    pub direct_focus: bool,
+    pub direct_box_rect: (i32, i32, i32, i32),
     pub buttons: Vec<Button>,
     pub splash_index: usize,
     /// THE SPLASHES' OWN LIST (the runtime cache's parse — the loaded
@@ -11037,6 +11057,9 @@ impl App {
             boot_stage: 0,
             selected_server: 0,
             servers,
+            direct_address: String::new(),
+            direct_focus: false,
+            direct_box_rect: (0, 0, 0, 0),
             buttons: Vec::new(),
             splash_index,
             splashes,
@@ -21739,6 +21762,15 @@ impl App {
             self.debug_search_focus = true;
             self.debug_focus = None;
         }
+        // THE DIRECT CONNECTION'S OWN FRESH CTOR (the vanilla init the
+        // setScreen re-creation arms — the address box the EMPTY value
+        // the fresh form keeps [the DirectConnectionScreen the ctor's
+        // own EditBox builds, no session memory the field keeps], the
+        // initial focus the box the setInitialFocus walk arms)
+        if kind == ScreenKind::DirectConnect {
+            self.direct_address.clear();
+            self.direct_focus = true;
+        }
         // THE TOGGLE KEYMAPPINGS' OWN SCREEN DANCE (the vanilla
         // Gui.setScreen walk — the pc 215 `KeyMapping.releaseAll()` the
         // screen-OPEN arm rides, the pc 265
@@ -28954,6 +28986,13 @@ impl App {
             // return re-latches; the flags-clear open the no-op keeps)
             self.toggle_keys_restore_after_screen();
             self.screen = ScreenKind::World;
+        } else if self.screen == ScreenKind::DirectConnect {
+            // THE FORM'S OWN ESCAPE LANE (the vanilla Screen
+            // .shouldCloseOnEsc default the DirectConnectionScreen
+            // class never overrides — the keyPressed walk's close the
+            // onClose() ride speaks, the lastScreen the server list
+            // the join flow's own parent returns)
+            self.open(ScreenKind::Servers);
         } else if matches!(self.screen, ScreenKind::Connect | ScreenKind::Disconnect) {
             self.open(ScreenKind::Servers);
         }
@@ -35509,6 +35548,53 @@ impl App {
         }
     }
 
+    /// THE DIRECT CONNECTION'S OWN CHARS (the EditBox the
+    /// DirectConnectionScreen.init's setInitialFocus arm serves — the
+    /// charTyped lane the FOCUSED box answers, the typed word the
+    /// `address` field keeps, the other screens + the unfocused box
+    /// the gates keep silent). The CAP the EditBox's own maxLength
+    /// default the honest bound keeps (the address the game's own
+    /// parse never outgrows — the 128 the walk banks, the overflow
+    /// the silence wears).
+    pub fn on_direct_char(&mut self, c: char) {
+        if self.screen != ScreenKind::DirectConnect
+            || !self.direct_focus
+            || self.direct_address.chars().count() >= 128
+        {
+            return;
+        }
+        self.direct_address.push(c);
+    }
+
+    /// THE DIRECT CONNECTION'S OWN BACKSPACE (the EditBox's own
+    /// keyPressed Backspace arm — the popped char the field answers,
+    /// the other screens the gate keeps silent).
+    pub fn on_direct_backspace(&mut self) {
+        if self.screen != ScreenKind::DirectConnect || !self.direct_focus {
+            return;
+        }
+        self.direct_address.pop();
+    }
+
+    /// THE DIRECT CONNECTION'S OWN CLICK FOCUS (the EditBox
+    /// .mouseClicked walk the debug search box's law shares — the
+    /// inside click the `setFocused(true)` re-arm serves, the TRUE the
+    /// consumed click returns (the caller's buttons walk the return
+    /// skips — the box the footer pair never overlaps), the outside
+    /// click the FALSE the caller the focus-transfer answers (the
+    /// widget the focus loses, the buttons the click's own action
+    /// serves)). The rect the render's own bank the walk reads (the
+    /// same store freshness the buttons' own rects wear).
+    pub fn on_direct_box_click(&mut self, mx: i32, my: i32) -> bool {
+        if self.screen != ScreenKind::DirectConnect {
+            return false;
+        }
+        let (bx, by, bw, bh) = self.direct_box_rect;
+        let inside = mx >= bx && mx < bx + bw && my >= by && my < by + bh;
+        self.direct_focus = inside;
+        inside
+    }
+
     /// THE SEARCH BOX'S OWN CLICK FOCUS (the EditBox.mouseClicked walk
     /// — the inside click the `setFocused(true)` re-arm serves, the
     /// TRUE the consumed click returns (the caller's buttons walk the
@@ -38823,6 +38909,39 @@ impl App {
                 // login (ConnectScreen flow); placeholder rows keep the
                 // click a no-op — there is nothing reachable to join
                 "join" => self.join_selected_server(),
+                // THE DIRECT CONNECTION'S OWN OPENER (vanilla
+                // JoinMultiplayerScreen's `selectServer.selectDirect`
+                // lambda — the DirectConnectionScreen the
+                // `setScreen(new DirectConnectionScreen(this))` walk
+                // opens, the list the parent screen the form keeps)
+                "direct" => self.open(ScreenKind::DirectConnect),
+                // THE FORM'S OWN JOIN WALK (vanilla
+                // DirectConnectionScreen.onJoin — the parsed address the
+                // ConnectScreen flow joins, the SAME login request the
+                // selected row's join fires [the entry the sentinel the
+                // list-length keeps — a direct join the list row never
+                // touches, the vanilla flow the temp entry's absence
+                // keeps]; the EMPTY address the button's INACTIVE the
+                // hovered() refusal answers — the arm's own guard the
+                // same verdict keeps)
+                "directjoin" => {
+                    if self.direct_address.trim().is_empty() {
+                        return;
+                    }
+                    let (host, port) = parse_address(self.direct_address.trim());
+                    self.login_requests.push(LoginRequest {
+                        id: self.next_login_id,
+                        entry: self.servers.len(),
+                        host,
+                        port,
+                    });
+                    self.next_login_id += 1;
+                    self.open(ScreenKind::Connect);
+                }
+                // THE FORM'S OWN CANCEL (the vanilla Cancel lambda — the
+                // `setScreen(this.lastScreen)` walk the server list
+                // returns)
+                "directcancel" => self.open(ScreenKind::Servers),
                 // vanilla ConnectScreen Cancel: abandon the in-flight join
                 // (late results carry unknown ids and are ignored)
                 "cancel" => self.open(ScreenKind::Servers),
@@ -59353,6 +59472,7 @@ impl App {
                 self.render_difficulty_lock_confirm(&mut g, a, w, h)
             }
             ScreenKind::Connect => self.render_connect(&mut g, a, w, h),
+            ScreenKind::DirectConnect => self.render_direct_connect(&mut g, a, w, h),
             ScreenKind::Disconnect => self.render_disconnect(&mut g, a, w, h),
             ScreenKind::World => {
                 // 3D world first (full framebuffer resolution), then the
@@ -67214,31 +67334,110 @@ impl App {
                 g.sprite(a, s.ping_icon(), cx + 88, y + 10);
             }
         }
-        // action buttons
-        let bw = 100;
-        let half = bw / 2 - 2;
+        // THE ACTION ROWS' OWN VANILLA LAYOUT (javap 26.2
+        // JoinMultiplayerScreen.init the bounds walk keeps: the TOP row
+        // the `height - 52` band the Join Selection
+        // [`width / 2 - 154`] + Direct Connection [`width / 2 - 50`]
+        // pair wears — the ADD SERVER slot the entry-form rounds owe,
+        // the honest absence the row keeps —, the BOTTOM row the
+        // `height - 28` band the Edit/Delete/Refresh/Cancel quartet's
+        // Refresh [`width / 2 + 2`] + Cancel [`width / 2 + 80`] seats
+        // wear, the 74-wide the bounds walk speaks)
         self.buttons.push(Button::new(
             "join",
             tr("selectServer.select")
                 .unwrap_or("Join Server")
                 .to_string(),
-            cx - bw - half / 2,
-            h - 28,
-            bw,
+            cx - 104,
+            h - 52,
+            100,
+        ));
+        self.buttons.push(Button::new(
+            "direct",
+            tr("selectServer.selectDirect")
+                .unwrap_or("Direct Connection")
+                .to_string(),
+            cx,
+            h - 52,
+            100,
         ));
         self.buttons.push(Button::new(
             "refresh",
             tr("selectServer.refresh").unwrap_or("Refresh").to_string(),
-            cx,
+            cx + 39,
             h - 28,
-            bw,
+            74,
         ));
         self.buttons.push(Button::new(
             "back",
             tr("gui.cancel").unwrap_or("Cancel").to_string(),
-            cx + bw + half / 2,
+            cx + 117,
             h - 28,
-            bw,
+            74,
+        ));
+        for b in &self.buttons.clone() {
+            b.render(g, a, -1, -1);
+        }
+    }
+
+    /// THE DIRECT CONNECTION'S OWN FORM (vanilla DirectConnectionScreen):
+    /// the title (menu.directconnect) the `height / 4 - 15` band wears,
+    /// the address EditBox the `width / 2 - 100, height / 4 + 52`
+    /// 200x20 bounds keep (the `widget/text_field` 9-slice the debug
+    /// search box's own render wears, the hint the EMPTY box keeps —
+    /// `addServer.enterIp` the EditBox's message the empty value
+    /// answers, the caret the focused blink law keeps), the Join
+    /// Server (selectServer.join) + Cancel (gui.cancel) pair the
+    /// `height / 4 + 96 / + 120` footer row wears — the join button
+    /// the EMPTY address the INACTIVE keeps (the onAddressChange walk
+    /// the isEmpty gate speaks, the hovered() refusal the clicks
+    /// answer).
+    fn render_direct_connect(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        g.fill(0, 0, w, h, [0.06, 0.06, 0.06, 1.0]);
+        let cx = w / 2;
+        g.text_centered(
+            a,
+            cx,
+            h / 4 - 15,
+            tr("menu.directconnect").unwrap_or("Direct Connection"),
+            WHITE,
+            true,
+        );
+        // THE ADDRESS BOX'S OWN SEAT (the EditBox the init walk keeps —
+        // the rect the render banks, the click walk the same geometry
+        // the store wears)
+        let (bx, by) = (cx - 100, h / 4 + 52);
+        self.direct_box_rect = (bx, by, 200, 20);
+        g.sprite_9slice(a, "widget/text_field", bx, by, 200, 20);
+        if self.direct_address.is_empty() {
+            let hint = tr("addServer.enterIp").unwrap_or("Server Address");
+            g.text(a, bx + 4, by + 6, &hint, [0.55, 0.55, 0.55], false);
+        } else {
+            g.text(a, bx + 4, by + 6, &self.direct_address, WHITE, false);
+            let tw = g.text_width(&self.direct_address);
+            if (self.frame / 6) % 2 == 0 && self.direct_focus {
+                g.fill(bx + 4 + tw + 1, by + 6, 1, 8, [1.0, 1.0, 1.0, 1.0]);
+            }
+        }
+        // THE FOOTER PAIR'S OWN ROW (the vanilla bounds walk the two
+        // buttons keeps — the join the EMPTY address the INACTIVE
+        // field wears, the render's own rebuild the per-frame law the
+        // typed word answers)
+        let mut join = Button::new(
+            "directjoin",
+            tr("selectServer.join").unwrap_or("Join Server").to_string(),
+            cx,
+            h / 4 + 96,
+            200,
+        );
+        join.active = !self.direct_address.trim().is_empty();
+        self.buttons.push(join);
+        self.buttons.push(Button::new(
+            "directcancel",
+            tr("gui.cancel").unwrap_or("Cancel").to_string(),
+            cx,
+            h / 4 + 120,
+            200,
         ));
         for b in &self.buttons.clone() {
             b.render(g, a, -1, -1);

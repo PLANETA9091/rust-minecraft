@@ -1902,6 +1902,13 @@ pub fn run_gui_app(
             if app.screen == crate::screens::ScreenKind::DebugOptions {
                 app.on_debug_options_char(c);
             }
+            // THE DIRECT CONNECTION'S OWN CHARS (the charTyped lane the
+            // focused address box answers — the open form the
+            // EditBox's own field serves, the other screens the gate
+            // never passes)
+            else if app.screen == crate::screens::ScreenKind::DirectConnect {
+                app.on_direct_char(c);
+            }
             // THE CREATIVE SEARCH'S OWN CHARS (the charTyped lane the
             // focused search box answers — the open chat the drain's
             // arm keeps, the closed chat + the picker's search
@@ -1984,6 +1991,10 @@ pub fn run_gui_app(
         if !app.chat_open && window.is_key_pressed(Key::Backspace, minifb::KeyRepeat::No) {
             app.on_creative_backspace();
             app.on_debug_options_backspace();
+            // THE DIRECT CONNECTION'S OWN BACKSPACE (the EditBox's own
+            // keyPressed arm the same lane serves — the form's box the
+            // internal gates the screen state alone keeps)
+            app.on_direct_backspace();
         }
         // THE DEBUG OPTIONS' OWN TAB CYCLE (javap 26.2 the Screen
         // keyPressed walk the 258 case answers — the
@@ -2347,6 +2358,12 @@ pub fn run_gui_app(
                 && app.on_debug_options_box_click(gmx, gmy, width as i32 / 2)
             {
                 // the box the click consumes — the buttons walk skips
+            } else if app.screen == crate::screens::ScreenKind::DirectConnect
+                && app.on_direct_box_click(gmx, gmy)
+            {
+                // THE DIRECT CONNECTION'S OWN BOX CONSUME (the same
+                // EditBox mouseClicked law — the inside click the focus
+                // re-arms, the buttons walk the consume skips)
             } else {
                 if app.screen == crate::screens::ScreenKind::DebugOptions {
                     app.debug_search_focus = false;

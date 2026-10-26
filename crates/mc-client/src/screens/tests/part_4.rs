@@ -22816,3 +22816,168 @@ fn the_key_binds_rows_own_left_right_pair_ride_wears() {
         "the stale seat the silence keeps"
     );
 }
+
+/// THE DIRECT CONNECTION'S OWN SEAT (javap 26.2 DirectConnectionScreen
+/// — the server list's own selectDirect button the form opens, the
+/// address EditBox the typed word the join wears, the footer pair the
+/// join/cancel lanes answer: the EMPTY address the join button's
+/// INACTIVE the hovered() refusal keeps, the typed word the parse the
+/// login request banks [the entry the sentinel the list-length keeps —
+/// the direct join the list row never touches], the cancel + the
+/// Escape the server list the lastScreen returns, the box click the
+/// focus walk the debug search box's law shares, the stale screens
+/// the typing gates keep silent).
+#[test]
+fn the_direct_connection_form_own_seat_wears() {
+    let mut app = App::new(3);
+    app.open(ScreenKind::Servers);
+    // render once to build the servers-screen buttons (the helper
+    // renders whichever screen is active)
+    app.render_title_buttons_for_test();
+    // THE VANILLA SLOTS' OWN GEOMETRY (the JoinMultiplayerScreen.init
+    // bounds walk the 320-wide frame answers: the top row the
+    // height-52 band the Join/Direct pair wears [the x 6 / 110 the
+    // 100-wide the centers speak], the bottom row the height-28 band
+    // the Refresh/Cancel seats keep [the 74-wide the x 162 / 240
+    // wear])
+    let join = app.buttons.iter().find(|b| b.id == "join").expect("join");
+    assert_eq!((join.x, join.w, join.y), (6, 100, 180 - 52));
+    let direct = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "direct")
+        .expect("direct");
+    assert_eq!((direct.x, direct.w, direct.y), (110, 100, 180 - 52));
+    let refresh = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "refresh")
+        .expect("refresh");
+    assert_eq!((refresh.x, refresh.w, refresh.y), (162, 74, 180 - 28));
+    let back = app.buttons.iter().find(|b| b.id == "back").expect("back");
+    assert_eq!((back.x, back.w, back.y), (240, 74, 180 - 28));
+
+    // THE OPENER'S OWN HAND-OFF (the selectDirect lambda the form
+    // opens — the fresh ctor the EMPTY value the focus the box arms,
+    // the click the ui sound the every-button law keeps)
+    app.on_click(direct.x + direct.w / 2, direct.y + direct.h / 2);
+    assert_eq!(app.screen, ScreenKind::DirectConnect);
+    assert!(
+        app.direct_address.is_empty(),
+        "the fresh ctor the empty value keeps"
+    );
+    assert!(app.direct_focus, "the setInitialFocus the box arms");
+    assert_eq!(app.ui_sounds.len(), 1, "the click the down-sound wears");
+
+    // THE EMPTY JOIN'S OWN REFUSAL (the onAddressChange walk the
+    // INACTIVE field keeps — the hovered() gate the click refuses,
+    // the request the silence speaks, the down-sound the inactive
+    // never wears)
+    app.render_title_buttons_for_test();
+    let dj = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "directjoin")
+        .expect("directjoin")
+        .clone();
+    assert!(!dj.active, "the empty address the join button sleeps");
+    assert_eq!((dj.x, dj.w, dj.y), (60, 200, 45 + 96), "the vanilla bounds");
+    app.on_click(dj.x + dj.w / 2, dj.y + dj.h / 2);
+    assert!(app.login_requests.is_empty());
+    assert_eq!(app.screen, ScreenKind::DirectConnect);
+    assert_eq!(
+        app.ui_sounds.len(),
+        1,
+        "the inactive the down-sound never wears"
+    );
+
+    // THE BOX CLICK'S OWN FOCUS WALK (the EditBox.mouseClicked law —
+    // the inside click the re-arm the TRUE wears, the outside the
+    // transfer the FALSE the buttons walk answers; the rect the
+    // render's own bank the vanilla bounds keeps)
+    let (bx, by, bw, bh) = app.direct_box_rect;
+    assert_eq!((bx, by, bw, bh), (60, 45 + 52, 200, 20));
+    assert!(app.on_direct_box_click(bx + 5, by + 5));
+    assert!(app.direct_focus);
+    assert!(!app.on_direct_box_click(bx - 1, by + 5));
+    assert!(!app.direct_focus, "the outside the focus transfers");
+
+    // THE TYPING'S OWN LANES (the charTyped + the Backspace the
+    // FOCUSED box answers, the unfocused box the silence keeps)
+    app.on_direct_char('m');
+    assert!(
+        app.direct_address.is_empty(),
+        "the unfocused box the chars never land"
+    );
+    assert!(app.on_direct_box_click(bx + 5, by + 5));
+    for c in "mc.example.net".chars() {
+        app.on_direct_char(c);
+    }
+    assert_eq!(app.direct_address, "mc.example.net");
+    app.on_direct_backspace();
+    assert_eq!(app.direct_address, "mc.example.ne");
+    app.on_direct_char('t');
+    assert_eq!(app.direct_address, "mc.example.net");
+
+    // THE STALE SCREEN'S OWN SILENCE (the other screens the typing
+    // gates keep — the Title the chars + the pops never land)
+    let word = app.direct_address.clone();
+    app.open(ScreenKind::Title);
+    app.on_direct_char('x');
+    app.on_direct_backspace();
+    assert_eq!(app.direct_address, word);
+
+    // THE FRESH CTOR'S OWN CLEAR (the setScreen re-creation the typed
+    // word never inherits — the reopen the empty box the focus the
+    // setInitialFocus arms keeps)
+    app.open(ScreenKind::DirectConnect);
+    assert!(app.direct_address.is_empty());
+    assert!(app.direct_focus);
+
+    // THE JOIN'S OWN WALK (the typed word the parse the login request
+    // banks — the bare host the vanilla default port answers, the
+    // entry the sentinel the list-length keeps [the direct join the
+    // list row never touches], the flow the Connect screen the join
+    // in flight wears, the down-sound the active button plays)
+    for c in "mc.example.net".chars() {
+        app.on_direct_char(c);
+    }
+    app.render_title_buttons_for_test();
+    let dj = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "directjoin")
+        .expect("directjoin")
+        .clone();
+    assert!(dj.active, "the typed word the join button arms");
+    app.on_click(dj.x + dj.w / 2, dj.y + dj.h / 2);
+    assert_eq!(app.screen, ScreenKind::Connect);
+    assert_eq!(app.login_requests.len(), 1);
+    let req = &app.login_requests[0];
+    assert_eq!(req.host, "mc.example.net");
+    assert_eq!(req.port, 25565);
+    assert_eq!(req.entry, app.servers.len(), "the sentinel the list keeps");
+    assert_eq!(req.id, 0);
+    assert_eq!(app.ui_sounds.len(), 2);
+
+    // THE FORM'S OWN CANCEL (the vanilla Cancel lambda — the
+    // `setScreen(this.lastScreen)` walk the server list returns)
+    app.open(ScreenKind::DirectConnect);
+    app.render_title_buttons_for_test();
+    let dc = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "directcancel")
+        .expect("directcancel")
+        .clone();
+    assert_eq!((dc.x, dc.w, dc.y), (60, 200, 45 + 120));
+    app.on_click(dc.x + dc.w / 2, dc.y + dc.h / 2);
+    assert_eq!(app.screen, ScreenKind::Servers);
+    assert_eq!(app.ui_sounds.len(), 3);
+
+    // THE FORM'S OWN ESCAPE LANE (the shouldCloseOnEsc default — the
+    // lastScreen the server list the same parent returns)
+    app.open(ScreenKind::DirectConnect);
+    app.on_escape();
+    assert_eq!(app.screen, ScreenKind::Servers);
+}
