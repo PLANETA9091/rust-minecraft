@@ -9924,6 +9924,14 @@ pub struct App {
     /// tails the setValue law banks — the dev-174 round's entry-form
     /// law the chat input wears).
     pub chat_cursor: usize,
+    /// THE SELECTION'S OWN ANCHOR (the vanilla EditBox highlightPos
+    /// field the shift walk keeps — the anchor seat the [anchor,
+    /// cursor) range the render band answers, the None the collapsed
+    /// (highlight == cursorPos) pair the fresh-open/reset walks the
+    /// same law wears; the shift motion the anchor never re-seats,
+    /// the plain motion the `moveCursorTo(pos)` one-arg reset the
+    /// anchor collapses).
+    pub chat_highlight: Option<usize>,
     /// THE CHAT BOX'S OWN DISPLAY WINDOW (the same `displayPos` law
     /// the input band keeps — the long chat line the window the caret
     /// answers, the short line the zero the same bytes wears).
@@ -11709,6 +11717,7 @@ impl App {
             chat_open: false,
             chat_input: String::new(),
             chat_cursor: 0,
+            chat_highlight: None,
             chat_display: 0,
             chat_input_rect: None,
             chat_ghost_seat: None,
@@ -41443,6 +41452,7 @@ impl App {
         // restore walks — the cursorPos the fresh value's end wears,
         // the dev-174 round's entry-form law the chat input keeps)
         self.chat_cursor = self.chat_input.chars().count();
+        self.chat_highlight = None; // the setValue the anchor collapses
         self.chat_window_sync();
         self.chat_draft.clear();
         // the fresh open the clear walk answers — the old suggestions
@@ -41509,6 +41519,7 @@ impl App {
         // open wears — the restored draft the tail speaks, the '/'
         // fresh open the one-char end banks)
         self.chat_cursor = self.chat_input.chars().count();
+        self.chat_highlight = None; // the setValue the anchor collapses
         self.chat_window_sync();
         self.chat_draft.clear();
         // the fresh open the clear walk answers — the old suggestions
@@ -41549,6 +41560,7 @@ impl App {
         // (the next open the fresh walk re-parks)
         self.chat_cursor = 0;
         self.chat_display = 0;
+        self.chat_highlight = None; // the take's zero the anchor collapses
         let text = std::mem::take(&mut self.chat_input);
         if text.trim().is_empty() {
             // the blank close the discard arm keeps (the shouldDiscard
@@ -41645,6 +41657,7 @@ impl App {
             self.chat_input.clear();
             self.chat_cursor = 0;
             self.chat_display = 0;
+            self.chat_highlight = None; // the setValue("") the anchor collapses
             self.chat_input_is_draft = false;
             self.refresh_command_suggestions();
             return true;
@@ -41674,15 +41687,45 @@ impl App {
         );
     }
 
+    /// THE SELECTION'S OWN REMOVAL (the EditBox.deleteSelection law —
+    /// the [min(anchor,cursor), max) range the replace removes, the
+    /// cursor the lo seat re-parks, the anchor the collapse the None
+    /// wears, the live-selection true the caller's `deleteText` first
+    /// step answers, the collapsed/absent pair the false the plain
+    /// arms keep; the closed chat the gate never passes).
+    fn chat_delete_selection(&mut self) -> bool {
+        if !self.chat_open {
+            return false;
+        }
+        let Some(anchor) = self.chat_highlight else {
+            return false;
+        };
+        if anchor == self.chat_cursor {
+            return false; // the collapsed pair the deleteText char-branch keeps
+        }
+        let lo = anchor.min(self.chat_cursor);
+        let hi = anchor.max(self.chat_cursor);
+        let start = caret_byte_index(&self.chat_input, lo);
+        let end = caret_byte_index(&self.chat_input, hi);
+        self.chat_input.replace_range(start..end, "");
+        self.chat_cursor = lo;
+        self.chat_highlight = None;
+        self.chat_window_sync();
+        true
+    }
+
     /// THE EDITBOX'S OWN CHAR (the window's input callback the
     /// set_input_callback lane feeds — the char the 256 setMaxLength
     /// cap gates, the open screen the lane only answers; the INSERT
     /// at the caret seat the cursorPos law serves — the refused char
-    /// the seat never moves).
+    /// the seat never moves; the live selection the insertText's own
+    /// deleteSelection first step answers — the range the cap the
+    /// refusal alone keeps).
     pub fn on_chat_char(&mut self, c: char) {
         if !self.chat_open || c.is_control() {
             return;
         }
+        let replaced = self.chat_delete_selection();
         if self.chat_input.chars().count() < 256 {
             let idx = caret_byte_index(&self.chat_input, self.chat_cursor);
             self.chat_input.insert(idx, c);
@@ -41694,6 +41737,11 @@ impl App {
             // FIRST keystroke disclaims, the ESC close the save lane
             // re-answers)
             self.chat_input_is_draft = false;
+        } else if replaced {
+            // the cap-blocked insert the removal alone wears (the
+            // vanilla insertText the deleteSelection first step the
+            // separate walk serves — the isDraft the same edit fires)
+            self.chat_input_is_draft = false;
         }
         // '/'-typed text the ask-server request rides
         self.refresh_command_suggestions();
@@ -41701,9 +41749,17 @@ impl App {
 
     /// THE EDITBOX'S OWN BACKSPACE (the EditBox's deleteText walk —
     /// the char BEFORE the caret the mid-string seat removes, the
-    /// cursor the -1 step banks, the zero seat the no-op keeps).
+    /// cursor the -1 step banks, the zero seat the no-op keeps; the
+    /// live selection the deleteText's own first step the range
+    /// removal answers).
     pub fn on_chat_backspace(&mut self) {
         if !self.chat_open {
+            return;
+        }
+        if self.chat_delete_selection() {
+            // the deleteText's selection branch the responder fires
+            self.chat_input_is_draft = false;
+            self.refresh_command_suggestions();
             return;
         }
         if self.chat_cursor > 0 {
@@ -41722,9 +41778,15 @@ impl App {
     /// THE EDITBOX'S OWN DELETE (the EditBox keyPressed's 261 arm —
     /// the char AT the caret the mid-string seat removes, the cursor
     /// the seat keeps, the tail seat the no-op keeps, the closed chat
-    /// the gate never passes).
+    /// the gate never passes; the live selection the deleteText's own
+    /// first step the range removal answers).
     pub fn on_chat_delete(&mut self) {
         if !self.chat_open {
+            return;
+        }
+        if self.chat_delete_selection() {
+            self.chat_input_is_draft = false;
+            self.refresh_command_suggestions();
             return;
         }
         if self.chat_cursor < self.chat_input.chars().count() {
@@ -41752,6 +41814,13 @@ impl App {
         if !self.chat_open {
             return;
         }
+        if self.chat_delete_selection() {
+            // the deleteWords' own deleteText walk the selection first
+            // step answers (the range the word-walk never reaches)
+            self.chat_input_is_draft = false;
+            self.refresh_command_suggestions();
+            return;
+        }
         let bound = word_boundary(&self.chat_input, self.chat_cursor, forward);
         if bound != self.chat_cursor {
             let start = caret_byte_index(&self.chat_input, bound.min(self.chat_cursor));
@@ -41777,12 +41846,43 @@ impl App {
         if !self.chat_open {
             return;
         }
+        // THE PLAIN MOTION'S OWN RESET (the `moveCursorTo(pos)` one-arg
+        // walk the highlightPos the cursor re-seats — the selection
+        // the plain ride collapses)
+        self.chat_highlight = None;
         let len = self.chat_input.chars().count();
         self.chat_cursor = if left {
             self.chat_cursor.saturating_sub(1)
         } else {
             (self.chat_cursor + 1).min(len)
         };
+        self.chat_window_sync();
+    }
+
+    /// THE SELECTION'S OWN SHIFT RIDE (the EditBox keyPressed's 262/263
+    /// arms the `moveCursorTo(cursor ± 1, hasShiftDown())` walk serves
+    /// — the shift the anchor the PREVIOUS seat never re-seats (the
+    /// two-arg law the highlightPos the same value keeps), the no-
+    /// anchor first ride the old cursor the anchor banks, the cursor
+    /// the ±1 clamp the bounds keep, the closed chat the gate never
+    /// passes).
+    pub fn on_chat_caret_shift_arrow(&mut self, left: bool) {
+        if !self.chat_open {
+            return;
+        }
+        let len = self.chat_input.chars().count();
+        let prev = self.chat_cursor;
+        self.chat_cursor = if left {
+            prev.saturating_sub(1)
+        } else {
+            (prev + 1).min(len)
+        };
+        if self.chat_highlight.is_none() {
+            // the collapsed pair the old seat the anchor wears (the
+            // highlightPos == cursorPos pre-state the vanilla field
+            // keeps — the first shift step the range opens)
+            self.chat_highlight = Some(prev);
+        }
         self.chat_window_sync();
     }
 
@@ -41795,6 +41895,8 @@ impl App {
         if !self.chat_open {
             return;
         }
+        // the one-arg moveCursorTo the word-hop the anchor collapses
+        self.chat_highlight = None;
         self.chat_cursor = word_boundary(&self.chat_input, self.chat_cursor, !left);
         self.chat_window_sync();
     }
@@ -41806,11 +41908,46 @@ impl App {
         if !self.chat_open {
             return;
         }
+        // the plain park the anchor collapses (the same one-arg law)
+        self.chat_highlight = None;
         self.chat_cursor = if end {
             self.chat_input.chars().count()
         } else {
             0
         };
+        self.chat_window_sync();
+    }
+
+    /// THE SELECTION'S OWN SHIFT PARK (the 268/269 arms the
+    /// `moveCursorTo(0 / len, hasShiftDown())` walk serves — the
+    /// shift the anchor the same law keeps, the no-anchor first ride
+    /// the old cursor the anchor banks).
+    pub fn on_chat_caret_shift_home_end(&mut self, end: bool) {
+        if !self.chat_open {
+            return;
+        }
+        let prev = self.chat_cursor;
+        self.chat_cursor = if end {
+            self.chat_input.chars().count()
+        } else {
+            0
+        };
+        if self.chat_highlight.is_none() {
+            self.chat_highlight = Some(prev);
+        }
+        self.chat_window_sync();
+    }
+
+    /// THE SELECTION'S OWN ALL (the EditBox.keyPressed's 65 arm the
+    /// `Screen.hasControlDown()` branch the `selectAll()` walk serves
+    /// — the cursorPos the value's end wears, the highlightPos the
+    /// zero parks, the [0, len) range the whole value answers).
+    pub fn on_chat_select_all(&mut self) {
+        if !self.chat_open {
+            return;
+        }
+        self.chat_cursor = self.chat_input.chars().count();
+        self.chat_highlight = Some(0);
         self.chat_window_sync();
     }
 
@@ -41840,6 +41977,10 @@ impl App {
         let visible: String = self.chat_input.chars().skip(self.chat_display).collect();
         let vis_len = caret_char_index_at(&visible, inner);
         let window: String = visible.chars().take(vis_len).collect();
+        // the plain click the `moveCursorTo(pos)` one-arg law the
+        // anchor collapses (the shift-click the selectText lane the
+        // follow-up round owes)
+        self.chat_highlight = None;
         self.chat_cursor = caret_char_index_at(&window, mx - 4) + self.chat_display;
         self.chat_window_sync();
         true
@@ -41882,6 +42023,7 @@ impl App {
         // THE CARET'S OWN TAIL PARK (the recall the EditBox.setValue
         // walk answers — the cursorPos the fresh value's end wears)
         self.chat_cursor = self.chat_input.chars().count();
+        self.chat_highlight = None; // the recall the anchor collapses
         self.chat_window_sync();
         // the recall the EditBox.setValue walk answers — the responder
         // the onEdited isDraft drop fires (the restored draft the
@@ -42165,6 +42307,7 @@ impl App {
         // THE CARET'S OWN TAIL PARK (the apply the EditBox.setValue
         // walk answers — the cursorPos the fresh value's end wears)
         self.chat_cursor = self.chat_input.chars().count();
+        self.chat_highlight = None; // the apply the anchor collapses
         self.chat_window_sync();
         self.chat_suggestion_tab_cycles = true;
         self.refresh_command_suggestions();
@@ -45724,6 +45867,27 @@ impl App {
             .min(vis_len);
         let before: String = visible.chars().take(k).collect();
         let after: String = visible.chars().skip(k).collect();
+        // THE SELECTION'S OWN BAND (the EditBox.render's highlight walk
+        // — the min/max(cursorPos, highlightPos) the visible window's
+        // `font.width(substring)` widths the -8355712 = 0xFF808080 gray
+        // fill the text's y-1..y+9 band draws [the text the 4-pad x
+        // origin wears], the empty/collapsed seat the band never
+        // wears, the clipped tail the vis_len clamp keeps)
+        if let Some(anchor) = self.chat_highlight {
+            if anchor != self.chat_cursor {
+                let lo = anchor.min(self.chat_cursor);
+                let hi = anchor.max(self.chat_cursor);
+                let vlo = lo.saturating_sub(self.chat_display).min(vis_len);
+                let vhi = hi.saturating_sub(self.chat_display).min(vis_len);
+                if vhi > vlo {
+                    let pre: String = visible.chars().take(vlo).collect();
+                    let sel: String = visible.chars().take(vhi).collect();
+                    let x1 = 4 + g.text_width(&pre);
+                    let x2 = 4 + g.text_width(&sel);
+                    g.fill(x1, h - 11, (x2 - x1).max(1), 10, [0.502, 0.502, 0.502, 1.0]);
+                }
+            }
+        }
         let blink = (std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .map(|d| d.as_millis())

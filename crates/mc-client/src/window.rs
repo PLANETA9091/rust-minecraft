@@ -2778,6 +2778,17 @@ pub fn run_gui_app(
                     app.on_chat_delete();
                 }
             }
+            // THE SELECTION'S OWN ALL (the 65 arm the hasControlDown
+            // branch the `selectAll()` walk serves — the cursor the
+            // end wears, the highlight the zero parks)
+            if ctrl_down && window.is_key_pressed(Key::A, minifb::KeyRepeat::No) {
+                app.on_chat_select_all();
+            }
+            // THE SHIFT SEAT'S OWN READ (the hasShiftDown query the
+            // arrows/parks the two-arg walk branches — the shift the
+            // anchor keeps, the plain motion the highlight resets)
+            let shift_down =
+                window.is_key_down(Key::LeftShift) || window.is_key_down(Key::RightShift);
             // THE CARET'S OWN RIDE (the EditBox keyPressed tableswitch
             // the 262/263 cases the LEFT/RIGHT moveCursorBy ±1 serves,
             // the 268/269 the Home/End the bounds park — the entry
@@ -2789,6 +2800,11 @@ pub fn run_gui_app(
                     // hasControlDown branch the `moveCursorTo(
                     // getWordPosition(-1))` walk serves)
                     app.on_chat_ctrl_caret_arrow(true);
+                } else if shift_down {
+                    // the 263 arm the no-ctrl branch the
+                    // `moveCursorTo(cursor - 1, hasShiftDown())`
+                    // walk serves — the anchor the seat keeps
+                    app.on_chat_caret_shift_arrow(true);
                 } else {
                     app.on_chat_caret_arrow(true);
                 }
@@ -2798,15 +2814,32 @@ pub fn run_gui_app(
                     // the 262 arm the ctrl branch the `moveCursorTo(
                     // getWordPosition(1))` walk serves
                     app.on_chat_ctrl_caret_arrow(false);
+                } else if shift_down {
+                    // the 262 arm the no-ctrl branch the
+                    // `moveCursorTo(cursor + 1, hasShiftDown())`
+                    // walk serves
+                    app.on_chat_caret_shift_arrow(false);
                 } else {
                     app.on_chat_caret_arrow(false);
                 }
             }
             if window.is_key_pressed(Key::Home, minifb::KeyRepeat::No) {
-                app.on_chat_caret_home_end(false);
+                if shift_down {
+                    // the 268 arm the hasShiftDown branch the anchor
+                    // keeps (the zero park the range opens)
+                    app.on_chat_caret_shift_home_end(false);
+                } else {
+                    app.on_chat_caret_home_end(false);
+                }
             }
             if window.is_key_pressed(Key::End, minifb::KeyRepeat::No) {
-                app.on_chat_caret_home_end(true);
+                if shift_down {
+                    // the 269 arm the hasShiftDown branch the anchor
+                    // keeps (the len park the range opens)
+                    app.on_chat_caret_shift_home_end(true);
+                } else {
+                    app.on_chat_caret_home_end(true);
+                }
             }
             // THE ARROWS' OWN BRANCH (the vanilla keyPressed walk — the
             // shown suggestions the Up/Down cycle answers FIRST

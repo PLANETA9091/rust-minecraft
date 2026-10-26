@@ -24473,6 +24473,131 @@ fn the_chat_input_own_caret_ride_wears() {
     assert_eq!(app.chat_cursor, 0, "the closed the seat keeps");
 }
 
+/// THE SELECTION'S OWN SHIFT SEAT (the vanilla EditBox highlightPos
+/// law the chat input wears — the shift arrows/parks the two-arg
+/// `moveCursorTo(pos, hasShiftDown())` walk the anchor keeps, the
+/// plain motion the one-arg reset the anchor collapses, the selectAll
+/// the [0, len) range parks, the live selection the deleteText/
+/// insertText first step the range removal answers, the render band
+/// the gray fill the visible window draws).
+#[test]
+fn the_chat_selection_own_shift_seat_wears() {
+    let mut app = App::new(3);
+    app.enter_world();
+    app.on_chat_key();
+    for c in "hello world".chars() {
+        app.on_chat_char(c);
+    }
+    assert_eq!(app.chat_cursor, 11, "the typing the tail parks");
+    assert_eq!(app.chat_highlight, None, "the fresh open the anchor keeps");
+
+    // THE SHIFT RIDE'S OWN ANCHOR (the first shift step the old seat
+    // the anchor banks — the five lefts the [6, 11) "world" opens)
+    for _ in 0..5 {
+        app.on_chat_caret_shift_arrow(true);
+    }
+    assert_eq!(app.chat_cursor, 6, "the shift-LEFT the -1 steps");
+    assert_eq!(
+        app.chat_highlight,
+        Some(11),
+        "the first ride the anchor banks"
+    );
+
+    // THE CHAR'S OWN REPLACE (the insertText the deleteSelection
+    // first step answers — the range the char swaps, the cursor the
+    // lo+1 seat wears, the anchor the collapse keeps)
+    app.on_chat_char('X');
+    assert_eq!(app.chat_input, "hello X", "the range the char replaces");
+    assert_eq!(app.chat_cursor, 7, "the replace the lo+1 seat wears");
+    assert_eq!(app.chat_highlight, None, "the replace the anchor collapses");
+
+    // THE BACKSPACE'S OWN SELECTION (the deleteText(-1) the first
+    // step the range removes — the char-before walk never answers)
+    app.on_chat_caret_shift_arrow(true);
+    assert_eq!(app.chat_highlight, Some(7), "the re-ride the anchor banks");
+    app.on_chat_backspace();
+    assert_eq!(app.chat_input, "hello ", "the range the backspace removes");
+    assert_eq!(app.chat_cursor, 6, "the removal the lo seat re-parks");
+    assert_eq!(app.chat_highlight, None, "the removal the anchor collapses");
+
+    // THE SELECT ALL'S OWN PARK (the 65 arm the selectAll walk — the
+    // cursor the len wears, the highlight the zero parks)
+    app.on_chat_select_all();
+    assert_eq!(app.chat_cursor, 6, "the all the cursor the len wears");
+    assert_eq!(
+        app.chat_highlight,
+        Some(0),
+        "the all the highlight the zero parks"
+    );
+
+    // THE DELETE'S OWN SELECTION (the 261 arm the same first step —
+    // the whole value the range removes)
+    app.on_chat_delete();
+    assert_eq!(app.chat_input, "", "the all the delete wipes");
+    assert_eq!(app.chat_cursor, 0, "the wipe the zero re-parks");
+    assert_eq!(app.chat_highlight, None, "the wipe the anchor collapses");
+
+    // THE SHIFT PARK'S OWN OPEN (the 268 arm the zero park the range
+    // wears — the next shift-right the anchor the same seat keeps)
+    for c in "abc".chars() {
+        app.on_chat_char(c);
+    }
+    app.on_chat_caret_shift_home_end(false);
+    assert_eq!(app.chat_cursor, 0, "the shift-HOME the zero parks");
+    assert_eq!(app.chat_highlight, Some(3), "the park the old seat banks");
+    app.on_chat_caret_shift_arrow(false);
+    assert_eq!(app.chat_cursor, 1, "the shift-RIGHT the +1 step");
+    assert_eq!(app.chat_highlight, Some(3), "the anchor the park keeps");
+
+    // THE PLAIN MOTION'S OWN COLLAPSE (the one-arg moveCursorTo the
+    // highlight the cursor re-seats — the cursor the +1 wears)
+    app.on_chat_caret_arrow(false);
+    assert_eq!(app.chat_cursor, 2, "the plain ride the +1 step");
+    assert_eq!(
+        app.chat_highlight, None,
+        "the plain ride the collapse wears"
+    );
+
+    // THE CLICK'S OWN RESET (the mouseClick the one-arg walk the
+    // anchor collapses — the render the rect banks the same geometry,
+    // the live selection the render walk the band draws)
+    app.on_chat_caret_shift_home_end(false);
+    assert_eq!(
+        app.chat_highlight,
+        Some(2),
+        "the second park the seat banks"
+    );
+    let mut fb = crate::raster::Framebuf::new(320, 180);
+    let mut assets = GuiAssets::open(assets_root());
+    app.render(&mut fb, &mut assets);
+    let (rx, ry, _, _) = app.chat_input_rect.expect("the drawn band's rect");
+    app.on_chat_box_click(rx + 4, ry + 5);
+    assert_eq!(app.chat_highlight, None, "the click the anchor collapses");
+    assert_eq!(app.chat_cursor, 0, "the left-edge click the zero parks");
+
+    // THE CTRL WORD'S OWN SELECTION STEP (the deleteWords' own
+    // deleteText walk the live range the first step answers)
+    app.on_chat_caret_shift_home_end(true);
+    assert_eq!(app.chat_cursor, 3, "the shift-END the len parks");
+    assert_eq!(app.chat_highlight, Some(0), "the shift-END the zero anchor");
+    app.on_chat_ctrl_words(false);
+    assert_eq!(app.chat_input, "", "the ctrl word the range removes");
+    assert_eq!(
+        app.chat_highlight, None,
+        "the word-walk the anchor collapses"
+    );
+
+    // THE CLOSED CHAT'S OWN GATE (the shift/select lanes the open
+    // screen only answers)
+    app.on_chat_submit();
+    assert!(!app.chat_open);
+    app.on_chat_caret_shift_arrow(true);
+    app.on_chat_caret_shift_home_end(true);
+    app.on_chat_select_all();
+    assert_eq!(app.chat_highlight, None, "the closed the anchor keeps");
+    assert_eq!(app.chat_cursor, 0, "the closed the seat keeps");
+}
+
 #[test]
 fn the_entry_forms_own_delete_key_wears() {
     let mut app = App::new(3);
