@@ -10420,9 +10420,10 @@ fn the_sub_screen_sliders_own_grab_walk_the_rows_the_class_law_wears() {
         "the Right the 96-seat grid's own round lands"
     );
 
-    // THE BOOL ROW'S OWN NO-CLAIM (the CycleButton class the grab
-    // never carries — the toggle the press serves, the fold the
-    // belief clears [the plain claims the Tab-ride round banks])
+    // THE BOOL ROW'S OWN PLAIN CLAIM (the CycleButton class the grab
+    // never carries — the toggle the press serves, the PLAIN claim
+    // the Tab-ride round banks [the focus alone the grab never
+    // wears])
     let ss = app
         .buttons
         .iter()
@@ -10435,10 +10436,12 @@ fn the_sub_screen_sliders_own_grab_walk_the_rows_the_class_law_wears() {
         app.show_subtitles, !sub0,
         "the press the bool row's own toggle serves"
     );
-    assert!(
-        app.options_focus.is_none() && !app.options_grab,
-        "the bool row the claim never carries, the fold the belief clears"
+    assert_eq!(
+        app.options_focus,
+        Some("opt_show_subtitles"),
+        "the plain claim the Tab-ride round banks"
     );
+    assert!(!app.options_grab, "the plain class the grab never carries");
 
     // THE OUTSIDE PRESS'S OWN CLEAR (the clearFocus walk — the
     // stale seat's keys the silence keeps)
@@ -21691,4 +21694,248 @@ fn the_permission_echo_the_screen_reaction_the_live_rearm_wears() {
         ScreenKind::Options,
         "the offline seat the recreate never wears"
     );
+}
+
+/// THE SUB-SCREENS' OWN TAB RIDE (the autopush-247 round — the same
+/// handleTabNavigation walk the 243 Options house banks the
+/// MouseSettings/Controls/Accessibility houses serve: the rows the
+/// each render build's OWN add order the traversal wears, the
+/// nothing-focused + stale-id end-seat arms, the wrap the
+/// clearFocus re-walk the end seats speaks, the slider seat the
+/// KEYBOARD_TAB grab arms [the is_slider_seat_id class law], the
+/// plain rows the grab never carry, the PLAIN rows' own MOUSE
+/// claim the on_press fold banks [the bool/nav/footer rows the
+/// focus alone wear], the done footers the parent rides the
+/// open() death speaks, the build's own re-wear the focused frame
+/// the isHoveredOrFocused law lights).
+#[test]
+fn the_sub_screens_own_tab_ride_the_add_order_the_claims_wear() {
+    let mut app = App::new(3);
+
+    // THE WRONG SCREEN'S OWN SILENCE (the title's Tab the walk never
+    // wears — the stale seat the belief keeps)
+    app.open(ScreenKind::Title);
+    app.options_focus = Some("opt_ms_sensitivity");
+    app.on_options_tab(true);
+    assert_eq!(
+        app.options_focus,
+        Some("opt_ms_sensitivity"),
+        "the wrong screen the walk never speaks"
+    );
+
+    // THE MOUSE SETTINGS' OWN HEAD (the nothing-focused arm the
+    // add-order head wears — the sensitivity slider the grab arms,
+    // the build the two flags re-wears)
+    app.open(ScreenKind::MouseSettings);
+    app.render_title_buttons_for_test();
+    assert!(
+        app.options_focus.is_none(),
+        "the open() the fresh ctor keeps"
+    );
+    app.on_options_tab(true);
+    assert_eq!(
+        app.options_focus,
+        Some("opt_ms_sensitivity"),
+        "the nothing-focused arm the head wears"
+    );
+    assert!(app.options_grab, "the slider head the KEYBOARD_TAB arms");
+    app.render_title_buttons_for_test();
+    let s = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_ms_sensitivity")
+        .expect("the ms row")
+        .clone();
+    assert!(s.focused, "the head seat the focused frame wears");
+    assert!(s.can_change_value, "the armed grab the build re-wears");
+
+    // THE ADD-ORDER RUN (the wheel slider the second seat the grab
+    // keeps, the discrete bool the third the plain class wears)
+    app.on_options_tab(true);
+    assert_eq!(app.options_focus, Some("opt_ms_wheel"));
+    assert!(app.options_grab, "the wheel slider the grab arms");
+    app.on_options_tab(true);
+    assert_eq!(app.options_focus, Some("opt_ms_discrete"));
+    assert!(!app.options_grab, "the plain row the grab never carries");
+    app.render_title_buttons_for_test();
+    let d = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_ms_discrete")
+        .expect("the bool row")
+        .clone();
+    assert!(d.focused, "the plain seat the focused frame wears");
+    assert!(
+        !d.can_change_value,
+        "the plain class the grab never carries"
+    );
+
+    // THE BACKWARD-FROM-NOTHING ARM (the fresh open the tail serves
+    // — the done footer the plain class keeps)
+    app.open(ScreenKind::MouseSettings);
+    app.render_title_buttons_for_test();
+    app.on_options_tab(false);
+    assert_eq!(
+        app.options_focus,
+        Some("msdone"),
+        "the backward arm the tail wears"
+    );
+    assert!(!app.options_grab, "the done footer the plain class keeps");
+
+    // THE WRAP'S OWN RE-WALK (the tail's forward the head re-arms —
+    // the slider grab the re-apply re-banks)
+    app.on_options_tab(true);
+    assert_eq!(
+        app.options_focus,
+        Some("opt_ms_sensitivity"),
+        "the wrap the head re-arms"
+    );
+    assert!(app.options_grab, "the wrap the slider grab re-banks");
+
+    // THE STALE ID'S OWN ARM (the build's rows the id never carries
+    // — the nothing-focused arm the head answers)
+    app.options_focus = Some("opt_fov_effect");
+    app.on_options_tab(true);
+    assert_eq!(
+        app.options_focus,
+        Some("opt_ms_sensitivity"),
+        "the stale id the head arm answers"
+    );
+
+    // THE PLAIN CLICK'S OWN CLAIM (the MOUSE press the bool row's
+    // focus banks — the grab the plain class never carries, the
+    // value's own flip the on_click dispatch serves [the press the
+    // focus ALONE banks])
+    app.open(ScreenKind::MouseSettings);
+    app.render_title_buttons_for_test();
+    let d = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_ms_discrete")
+        .expect("the bool row")
+        .clone();
+    app.on_press(d.x + d.w / 2, d.y + d.h / 2);
+    assert_eq!(
+        app.options_focus,
+        Some("opt_ms_discrete"),
+        "the plain click the focus banks"
+    );
+    assert!(!app.options_grab, "the plain class the grab never carries");
+
+    // THE DONE FOOTER'S OWN LANE (the press the footer banks, the
+    // click the Controls parent ride opens — the open() the focus
+    // death wears)
+    let f = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "msdone")
+        .expect("the footer")
+        .clone();
+    app.on_press(f.x + f.w / 2, f.y + f.h / 2);
+    assert_eq!(app.options_focus, Some("msdone"));
+    app.on_click(f.x + f.w / 2, f.y + f.h / 2);
+    assert_eq!(
+        app.screen,
+        ScreenKind::Controls,
+        "the msdone the Controls parent opens"
+    );
+    assert!(
+        app.options_focus.is_none(),
+        "the open() the fresh seat keeps"
+    );
+
+    // THE CONTROLS' OWN RIDE (the ten seats the pair rows keep —
+    // the sprint window slider the sixth seat the grab arms, the
+    // nav pair + the footer the tails wear, the wrap the head
+    // re-arms)
+    app.open(ScreenKind::Controls);
+    app.render_title_buttons_for_test();
+    app.on_options_tab(true);
+    assert_eq!(
+        app.options_focus,
+        Some("opt_ctl_crouch"),
+        "the controls head the crouch row wears"
+    );
+    for _ in 0..5 {
+        app.on_options_tab(true);
+    }
+    assert_eq!(
+        app.options_focus,
+        Some("opt_ctl_sprint_window"),
+        "the sixth seat the sprint window slider wears"
+    );
+    assert!(app.options_grab, "the slider seat the grab arms");
+    app.on_options_tab(true);
+    assert_eq!(app.options_focus, Some("opt_ctl_operator_tab"));
+    assert!(!app.options_grab, "the bool row the grab never carries");
+    app.on_options_tab(true);
+    assert_eq!(
+        app.options_focus,
+        Some("mousesettings"),
+        "the nav pair the add order wears"
+    );
+    app.on_options_tab(true);
+    assert_eq!(app.options_focus, Some("keybinds"));
+    app.on_options_tab(true);
+    assert_eq!(
+        app.options_focus,
+        Some("controlsdone"),
+        "the footer the tail keeps"
+    );
+    app.on_options_tab(true);
+    assert_eq!(
+        app.options_focus,
+        Some("opt_ctl_crouch"),
+        "the wrap the head re-arms"
+    );
+
+    // THE ACCESSIBILITY'S OWN RIDE (the eight rows the bool head
+    // keeps — the textbg slider the grab arms, the backward walk
+    // the head's off-the-tail the tail serves)
+    app.open(ScreenKind::Accessibility);
+    app.render_title_buttons_for_test();
+    app.on_options_tab(true);
+    assert_eq!(
+        app.options_focus,
+        Some("opt_show_subtitles"),
+        "the access head the captions row wears"
+    );
+    assert!(!app.options_grab, "the bool head the plain class keeps");
+    app.on_options_tab(true);
+    assert_eq!(app.options_focus, Some("opt_textbg"));
+    assert!(app.options_grab, "the textbg slider the grab arms");
+    app.on_options_tab(false);
+    assert_eq!(
+        app.options_focus,
+        Some("opt_show_subtitles"),
+        "the backward step the head returns"
+    );
+    app.on_options_tab(false);
+    assert_eq!(
+        app.options_focus,
+        Some("accdone"),
+        "the off-the-head backward the tail serves"
+    );
+    assert!(!app.options_grab, "the accdone the plain class keeps");
+
+    // THE PLAIN CLICK'S OWN CLAIM (the captions row the press the
+    // focus banks AND the value's own flip the press arm wears)
+    let c = app
+        .buttons
+        .iter()
+        .find(|b| b.id == "opt_show_subtitles")
+        .expect("the captions row")
+        .clone();
+    let before = app.show_subtitles;
+    app.on_press(c.x + c.w / 2, c.y + c.h / 2);
+    assert_ne!(
+        app.show_subtitles, before,
+        "the captions press the value's own toggle wears"
+    );
+    assert_eq!(
+        app.options_focus,
+        Some("opt_show_subtitles"),
+        "the plain claim the focus banks"
+    );
+    assert!(!app.options_grab, "the plain class the grab never carries");
 }

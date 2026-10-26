@@ -2000,16 +2000,24 @@ pub fn run_gui_app(
             let shift = window.is_key_down(Key::LeftShift);
             app.on_debug_options_tab(!shift);
         }
-        // THE OPTIONS HOUSE'S OWN TAB RIDE (the same Screen walk the
+        // THE OPTIONS FAMILY'S OWN TAB RIDE (the same Screen walk the
         // Options family wears — the Tab the children's add-order law
         // the seats steps [the sliders the column's own build keeps,
         // the worldoptions the header's own add banks, the pair + the
         // done the footer serves], the slider seat the KEYBOARD_TAB
         // input the grab ARMS [the setFocused(true) law the probe
         // banks], the plain button seat the grab never wears, the
-        // wrap the clearFocus re-walk the end seats speaks)
-        if app.screen == crate::screens::ScreenKind::Options
-            && window.is_key_pressed(Key::Tab, minifb::KeyRepeat::No)
+        // wrap the clearFocus re-walk the end seats speaks). THE
+        // SUB-SCREENS' OWN RIDE (the same Screen base class the
+        // MouseSettings/Controls/Accessibility houses extend — the
+        // rows the each house's own add order the walk serves)
+        if matches!(
+            app.screen,
+            crate::screens::ScreenKind::Options
+                | crate::screens::ScreenKind::MouseSettings
+                | crate::screens::ScreenKind::Controls
+                | crate::screens::ScreenKind::Accessibility
+        ) && window.is_key_pressed(Key::Tab, minifb::KeyRepeat::No)
         {
             let shift = window.is_key_down(Key::LeftShift);
             app.on_options_tab(!shift);

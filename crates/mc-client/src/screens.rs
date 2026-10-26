@@ -31895,11 +31895,34 @@ impl App {
                     claimed = Some("opt_ms_wheel");
                 }
             }
+            // THE PLAIN ROWS' OWN CLAIM (the Tab-ride round banks —
+            // the MOUSE press the bool/footer row's own focus wears
+            // [the vanilla click the changeFocus walk answers], the
+            // grab the plain class never carries, the value's own
+            // flip the on_click dispatch serves)
+            if claimed.is_none() {
+                for b in &self.buttons {
+                    if b.hovered(mx, my)
+                        && matches!(
+                            b.id,
+                            "opt_ms_discrete"
+                                | "opt_ms_invertx"
+                                | "opt_ms_inverty"
+                                | "opt_ms_allowcursor"
+                                | "opt_ms_rawinput"
+                                | "msdone"
+                        )
+                    {
+                        claimed = Some(b.id);
+                        break;
+                    }
+                }
+            }
             // THE APPLY'S OWN LAW (the same setFocused fold the Options
             // house wears — the MOUSE press the slider seat's focus AND
-            // grab banks [the canChangeValue the class arms], the
-            // no-claim the clearFocus the belief clears; the bool rows'
-            // plain claim the Tab-ride round banks)
+            // grab banks [the canChangeValue the class arms], the PLAIN
+            // row the focus alone banks [the Tab-ride round banks], the
+            // no-claim the clearFocus the belief clears)
             self.options_focus = claimed;
             self.options_grab = claimed.map_or(false, |id| is_slider_seat_id(id));
             return;
@@ -31927,10 +31950,37 @@ impl App {
                     claimed = Some("opt_ctl_sprint_window");
                 }
             }
+            // THE PLAIN ROWS' OWN CLAIM (the Tab-ride round banks —
+            // the MOUSE press the toggle/nav/footer row's own focus
+            // wears [the vanilla click the changeFocus walk answers],
+            // the grab the plain class never carries, the value's own
+            // flip + the sub-screen opens the on_click dispatch
+            // serves)
+            if claimed.is_none() {
+                for b in &self.buttons {
+                    if b.hovered(mx, my)
+                        && matches!(
+                            b.id,
+                            "opt_ctl_crouch"
+                                | "opt_ctl_sprint"
+                                | "opt_ctl_attack"
+                                | "opt_ctl_use"
+                                | "opt_ctl_autojump"
+                                | "opt_ctl_operator_tab"
+                                | "mousesettings"
+                                | "keybinds"
+                                | "controlsdone"
+                        )
+                    {
+                        claimed = Some(b.id);
+                        break;
+                    }
+                }
+            }
             // THE APPLY'S OWN LAW (the same setFocused fold the Options
             // house wears — the slider seat the focus AND grab banks,
-            // the no-claim the clearFocus the belief clears; the
-            // toggle/nav rows' plain claim the Tab-ride round banks)
+            // the PLAIN row the focus alone banks [the Tab-ride round
+            // banks], the no-claim the clearFocus the belief clears)
             self.options_focus = claimed;
             self.options_grab = claimed.map_or(false, |id| is_slider_seat_id(id));
             return;
@@ -31939,10 +31989,9 @@ impl App {
             // THE CLAIM'S OWN WALK (the same Screen mouseClicked law the
             // Options house wears — the rows the build order's own
             // seats keep, the non-overlap rects the one-press one-claim
-            // law speaks, the bool rows the plain class the claim never
-            // carries [the Tab-ride round banks — the fold the
-            // no-claim clearFocus wears], the slider rows the focus
-            // AND the grab bank)
+            // law speaks, the bool rows the PLAIN claim the Tab-ride
+            // round banks [the focus alone the grab never carries],
+            // the slider rows the focus AND the grab bank)
             let mut claimed: Option<&'static str> = None;
             // THE CLOSED CAPTIONS' OWN ARM (the CycleButton's own press
             // walk the bool row wears — the press INSIDE the row the
@@ -32036,10 +32085,26 @@ impl App {
                     claimed = Some("opt_fov_effect");
                 }
             }
+            // THE PLAIN ROWS' OWN CLAIM (the Tab-ride round banks —
+            // the MOUSE press the bool/footer row's own focus wears
+            // [the vanilla click the changeFocus walk answers], the
+            // grab the plain class never carries, the captions row's
+            // own flip the press arm above wears, the done the
+            // on_click dispatch serves)
+            if claimed.is_none() {
+                for b in &self.buttons {
+                    if b.hovered(mx, my)
+                        && matches!(b.id, "opt_show_subtitles" | "opt_chat_bg_only" | "accdone")
+                    {
+                        claimed = Some(b.id);
+                        break;
+                    }
+                }
+            }
             // THE APPLY'S OWN LAW (the same setFocused fold the Options
             // house wears — the slider rows the focus AND grab banks,
-            // the bool rows + the no-claim the clearFocus the belief
-            // clears)
+            // the PLAIN row the focus alone banks [the Tab-ride round
+            // banks], the no-claim the clearFocus the belief clears)
             self.options_focus = claimed;
             self.options_grab = claimed.map_or(false, |id| is_slider_seat_id(id));
             return;
@@ -35183,13 +35248,16 @@ impl App {
         }
     }
 
-    /// THE OPTIONS HOUSE'S OWN TAB RIDE (javap 26.2 the Screen
+    /// THE OPTIONS FAMILY'S OWN TAB RIDE (javap 26.2 the Screen
     /// keyPressed walk the Tab arm answers — the `KeyEvent.key()`
     /// tableswitch the 258 case the `createTabEvent(!hasShiftDown())`
     /// serves, the `nextFocusPath` the container's own law speaks,
     /// the wrap the `clearFocus()` re-walk the END seats arms: the
     /// off-the-tail forward the HEAD seat re-arms, the off-the-head
-    /// backward the TAIL serves). THE TRAVERSAL'S OWN ORDER (the
+    /// backward the TAIL serves). THE FAMILY'S OWN HOUSES (the same
+    /// Screen base class the Options + the three sub-screens extend
+    /// — the MouseSettings/Controls/Accessibility rows the 243 walk
+    /// the same law serves). THE TRAVERSAL'S OWN ORDER (the
     /// `handleTabNavigation` walk): the children() snapshot the
     /// `Comparator.comparingInt` `getTabOrderGroup()` sort answers —
     /// the ALL-ZERO groups the stable sort never re-seats, the ADD
@@ -35210,14 +35278,13 @@ impl App {
     /// canChangeValue field the slider alone carries), the OLD
     /// seat's grab the re-apply the global mirror clears.
     pub fn on_options_tab(&mut self, forward: bool) {
-        if self.screen != ScreenKind::Options {
-            return;
-        }
-        // THE FOCUSABLES' OWN ORDER (the children() add-order law —
-        // the buttons store the build's own snapshot banks, the
-        // focusable ids the filter keeps, the inactive the
-        // nextFocusPath refusal wears)
-        const FOCUSABLE: [&str; 7] = [
+        // THE FAMILY'S OWN SEAT TABLES (the same Screen base class
+        // the four houses extend — the Options house the 243 walk
+        // banks, the MouseSettings/Controls/Accessibility rows the
+        // render build's OWN add order wears: the pairs the
+        // addSmall two-per-row law keeps, the odd-one the tail's
+        // LEFT seat answers, the DONE footers the tails keep)
+        const OPTIONS_SEATS: [&str; 7] = [
             "opt_sensitivity",
             "opt_music",
             "opt_fov",
@@ -35226,10 +35293,53 @@ impl App {
             "accessibility",
             "back",
         ];
+        const MOUSE_SEATS: [&str; 8] = [
+            "opt_ms_sensitivity",
+            "opt_ms_wheel",
+            "opt_ms_discrete",
+            "opt_ms_invertx",
+            "opt_ms_inverty",
+            "opt_ms_allowcursor",
+            "opt_ms_rawinput",
+            "msdone",
+        ];
+        const CONTROLS_SEATS: [&str; 10] = [
+            "opt_ctl_crouch",
+            "opt_ctl_sprint",
+            "opt_ctl_attack",
+            "opt_ctl_use",
+            "opt_ctl_autojump",
+            "opt_ctl_sprint_window",
+            "opt_ctl_operator_tab",
+            "mousesettings",
+            "keybinds",
+            "controlsdone",
+        ];
+        const ACCESS_SEATS: [&str; 8] = [
+            "opt_show_subtitles",
+            "opt_textbg",
+            "opt_chat_bg_only",
+            "opt_chat_opacity",
+            "opt_chat_line_spacing",
+            "opt_notification",
+            "opt_fov_effect",
+            "accdone",
+        ];
+        let focusable: &[&str] = match self.screen {
+            ScreenKind::Options => &OPTIONS_SEATS,
+            ScreenKind::MouseSettings => &MOUSE_SEATS,
+            ScreenKind::Controls => &CONTROLS_SEATS,
+            ScreenKind::Accessibility => &ACCESS_SEATS,
+            _ => return,
+        };
+        // THE FOCUSABLES' OWN ORDER (the children() add-order law —
+        // the buttons store the build's own snapshot banks, the
+        // focusable ids the filter keeps, the inactive the
+        // nextFocusPath refusal wears)
         let order: Vec<&'static str> = self
             .buttons
             .iter()
-            .filter(|b| b.active && FOCUSABLE.contains(&b.id))
+            .filter(|b| b.active && focusable.contains(&b.id))
             .map(|b| b.id)
             .collect();
         let len = order.len();
@@ -67179,6 +67289,16 @@ impl App {
             h - 28,
             bw,
         ));
+        // THE FOCUSED FLAGS' OWN RE-WEAR (the isHoveredOrFocused law
+        // the focused seat lights — the one sweep the ALL rows' flag
+        // wears: the Tab-ride/plain-claim seat the frame banks, the
+        // slider rows' build sites the same value the
+        // can_change_value keeps, the stale seat the flags clear)
+        if let Some(id) = self.options_focus {
+            for b in self.buttons.iter_mut() {
+                b.focused = b.id == id;
+            }
+        }
         for b in &self.buttons.clone() {
             b.render(g, a, -1, -1);
         }
@@ -67387,6 +67507,16 @@ impl App {
             h - 28,
             bw,
         ));
+        // THE FOCUSED FLAGS' OWN RE-WEAR (the isHoveredOrFocused law
+        // the focused seat lights — the one sweep the ALL rows' flag
+        // wears: the Tab-ride/plain-claim seat the frame banks, the
+        // slider row's build site the same value the
+        // can_change_value keeps, the stale seat the flags clear)
+        if let Some(id) = self.options_focus {
+            for b in self.buttons.iter_mut() {
+                b.focused = b.id == id;
+            }
+        }
         for b in &self.buttons.clone() {
             b.render(g, a, -1, -1);
         }
@@ -67530,6 +67660,16 @@ impl App {
             h - 28,
             bw,
         ));
+        // THE FOCUSED FLAGS' OWN RE-WEAR (the isHoveredOrFocused law
+        // the focused seat lights — the one sweep the ALL rows' flag
+        // wears: the Tab-ride/plain-claim seat the frame banks, the
+        // slider rows' build sites the same value the
+        // can_change_value keeps, the stale seat the flags clear)
+        if let Some(id) = self.options_focus {
+            for b in self.buttons.iter_mut() {
+                b.focused = b.id == id;
+            }
+        }
         for b in &self.buttons.clone() {
             b.render(g, a, -1, -1);
         }
