@@ -67,6 +67,28 @@ fn caret_char_index_at(text: &str, x_off: i32) -> usize {
     count
 }
 
+/// THE DISPLAY WINDOW'S OWN SYNC (the vanilla `setCursorPos` walk the
+/// `displayPos` branch answers — the visible prefix the inner width
+/// the `plainSubstrByWidth` trim keeps, the past-window caret the
+/// display the seat pins right [`display = cursor - visLen`], the
+/// before-window caret the display the cursor wears [`display =
+/// cursor`]; the in-window caret the same display keeps — the short
+/// text the zero the untouched arm answers).
+fn display_window_sync(text: &str, display: &mut usize, cursor: usize, inner_w: i32) {
+    let visible: String = text.chars().skip(*display).collect();
+    let vis_len = caret_char_index_at(&visible, inner_w);
+    if cursor > *display + vis_len {
+        *display = cursor - vis_len;
+    } else if cursor < *display {
+        *display = cursor;
+    }
+}
+
+/// THE ENTRY BOXES' OWN INNER WIDTH (the vanilla EditBox the
+/// `getInnerWidth()` walk — the 200x20 `widget/text_field` box the
+/// `-8` padding speaks, the drawn text the `x + 4` origin wears).
+const ENTRY_BOX_INNER: i32 = 192;
+
 fn load_splashes() -> Vec<String> {
     for prefix in [
         "assets-cache/jar",
@@ -7660,6 +7682,15 @@ pub struct App {
     pub es_name_cursor: usize,
     pub es_address_cursor: usize,
     pub direct_cursor: usize,
+    /// THE EDITBOXES' OWN DISPLAY WINDOWS (the vanilla EditBox the
+    /// `displayPos` field keeps — the FIRST visible char the long
+    /// text the window answers: the sync the past-window caret the
+    /// seat pins right, the before-window caret the display the
+    /// cursor wears — the short text the zero the same window keeps,
+    /// the goldens the byte the round never moves).
+    pub es_name_display: usize,
+    pub es_address_display: usize,
+    pub direct_display: usize,
     pub buttons: Vec<Button>,
     pub splash_index: usize,
     /// THE SPLASHES' OWN LIST (the runtime cache's parse — the loaded
@@ -9821,6 +9852,10 @@ pub struct App {
     /// tails the setValue law banks — the dev-174 round's entry-form
     /// law the chat input wears).
     pub chat_cursor: usize,
+    /// THE CHAT BOX'S OWN DISPLAY WINDOW (the same `displayPos` law
+    /// the input band keeps — the long chat line the window the caret
+    /// answers, the short line the zero the same bytes wears).
+    pub chat_display: usize,
     /// THE CHAT BAND'S OWN HIT-BOX (the render the rect banks — the
     /// click walk the same geometry the store wears, the entry-form
     /// rect trio the same law shares).
@@ -11197,6 +11232,9 @@ impl App {
             es_name_cursor: "Minecraft Server".chars().count(),
             es_address_cursor: 0,
             direct_cursor: 0,
+            es_name_display: 0,
+            es_address_display: 0,
+            direct_display: 0,
             buttons: Vec::new(),
             splash_index,
             splashes,
@@ -11593,6 +11631,7 @@ impl App {
             chat_open: false,
             chat_input: String::new(),
             chat_cursor: 0,
+            chat_display: 0,
             chat_input_rect: None,
             chat_messages: Vec::new(),
             recent_chat: Vec::new(),
@@ -21913,6 +21952,15 @@ impl App {
             // cursor the empty tail parks — the zero the end the same
             // seat the empty box speaks)
             self.direct_cursor = 0;
+            // THE WINDOW'S OWN FRESH SEAT (the fresh EditBox ctor the
+            // displayPos zero wears — the stale pin the re-created
+            // screen never inherits)
+            display_window_sync(
+                &self.direct_address,
+                &mut self.direct_display,
+                self.direct_cursor,
+                ENTRY_BOX_INNER,
+            );
         }
         // THE ADD SERVER'S OWN FRESH CTOR (the vanilla lambda the
         // `new ServerData(I18n.format("selectServer.defaultName"), "",
@@ -21933,6 +21981,18 @@ impl App {
             // speaks, the EMPTY address the zero the same end keeps)
             self.es_name_cursor = self.es_name.chars().count();
             self.es_address_cursor = 0;
+            display_window_sync(
+                &self.es_name,
+                &mut self.es_name_display,
+                self.es_name_cursor,
+                ENTRY_BOX_INNER,
+            );
+            display_window_sync(
+                &self.es_address,
+                &mut self.es_address_display,
+                self.es_address_cursor,
+                ENTRY_BOX_INNER,
+            );
             // THE MODE'S OWN RESET (the add-mode the fresh ctor speaks —
             // the edit opener the seat the open AFTER re-arms, the stale
             // row the next add the walk never overwrites)
@@ -35796,6 +35856,12 @@ impl App {
         let idx = caret_byte_index(&self.direct_address, self.direct_cursor);
         self.direct_address.insert(idx, c);
         self.direct_cursor += 1;
+        display_window_sync(
+            &self.direct_address,
+            &mut self.direct_display,
+            self.direct_cursor,
+            ENTRY_BOX_INNER,
+        );
     }
 
     /// THE DIRECT CONNECTION'S OWN BACKSPACE (the EditBox's own
@@ -35811,6 +35877,12 @@ impl App {
         let start = caret_byte_index(&self.direct_address, self.direct_cursor - 1);
         self.direct_address.replace_range(start..end, "");
         self.direct_cursor -= 1;
+        display_window_sync(
+            &self.direct_address,
+            &mut self.direct_display,
+            self.direct_cursor,
+            ENTRY_BOX_INNER,
+        );
     }
 
     /// THE DIRECT CONNECTION'S OWN DELETE (the EditBox.keyPressed's
@@ -35826,6 +35898,12 @@ impl App {
             let start = caret_byte_index(&self.direct_address, self.direct_cursor);
             let end = caret_byte_index(&self.direct_address, self.direct_cursor + 1);
             self.direct_address.replace_range(start..end, "");
+            display_window_sync(
+                &self.direct_address,
+                &mut self.direct_display,
+                self.direct_cursor,
+                ENTRY_BOX_INNER,
+            );
         }
     }
 
@@ -35845,12 +35923,27 @@ impl App {
         let (bx, by, bw, bh) = self.direct_box_rect;
         let inside = mx >= bx && mx < bx + bw && my >= by && my < by + bh;
         self.direct_focus = inside;
-        // THE CARET'S OWN X-BAND (the vanilla mouseClick walk the
-        // clicked char the cursor positions — the x offset the prefix
-        // length the trim walk answers, the box padding the +4 the
-        // render's own text origin wears)
         if inside {
-            self.direct_cursor = caret_char_index_at(&self.direct_address, mx - (bx + 4));
+            // THE CARET'S OWN X-BAND (the vanilla mouseClick walk the
+            // clicked char the cursor positions — the VISIBLE WINDOW
+            // the `trimStringToWidth(value.substring(displayPos))` law
+            // the two-step answers, the x the prefix length + the
+            // displayPos the seat wears, the box padding the +4 the
+            // render's own text origin speaks)
+            let visible: String = self
+                .direct_address
+                .chars()
+                .skip(self.direct_display)
+                .collect();
+            let vis_len = caret_char_index_at(&visible, ENTRY_BOX_INNER);
+            let window: String = visible.chars().take(vis_len).collect();
+            self.direct_cursor = caret_char_index_at(&window, mx - (bx + 4)) + self.direct_display;
+            display_window_sync(
+                &self.direct_address,
+                &mut self.direct_display,
+                self.direct_cursor,
+                ENTRY_BOX_INNER,
+            );
         }
         inside
     }
@@ -35872,11 +35965,23 @@ impl App {
                 let idx = caret_byte_index(&self.es_name, self.es_name_cursor);
                 self.es_name.insert(idx, c);
                 self.es_name_cursor += 1;
+                display_window_sync(
+                    &self.es_name,
+                    &mut self.es_name_display,
+                    self.es_name_cursor,
+                    ENTRY_BOX_INNER,
+                );
             }
         } else if self.es_address_focus && self.es_address.chars().count() < 128 {
             let idx = caret_byte_index(&self.es_address, self.es_address_cursor);
             self.es_address.insert(idx, c);
             self.es_address_cursor += 1;
+            display_window_sync(
+                &self.es_address,
+                &mut self.es_address_display,
+                self.es_address_cursor,
+                ENTRY_BOX_INNER,
+            );
         }
     }
 
@@ -35895,12 +36000,24 @@ impl App {
                 let start = caret_byte_index(&self.es_name, self.es_name_cursor - 1);
                 self.es_name.replace_range(start..end, "");
                 self.es_name_cursor -= 1;
+                display_window_sync(
+                    &self.es_name,
+                    &mut self.es_name_display,
+                    self.es_name_cursor,
+                    ENTRY_BOX_INNER,
+                );
             }
         } else if self.es_address_focus && self.es_address_cursor > 0 {
             let end = caret_byte_index(&self.es_address, self.es_address_cursor);
             let start = caret_byte_index(&self.es_address, self.es_address_cursor - 1);
             self.es_address.replace_range(start..end, "");
             self.es_address_cursor -= 1;
+            display_window_sync(
+                &self.es_address,
+                &mut self.es_address_display,
+                self.es_address_cursor,
+                ENTRY_BOX_INNER,
+            );
         }
     }
 
@@ -35917,11 +36034,23 @@ impl App {
             let start = caret_byte_index(&self.es_name, self.es_name_cursor);
             let end = caret_byte_index(&self.es_name, self.es_name_cursor + 1);
             self.es_name.replace_range(start..end, "");
+            display_window_sync(
+                &self.es_name,
+                &mut self.es_name_display,
+                self.es_name_cursor,
+                ENTRY_BOX_INNER,
+            );
         } else if self.es_address_focus && self.es_address_cursor < self.es_address.chars().count()
         {
             let start = caret_byte_index(&self.es_address, self.es_address_cursor);
             let end = caret_byte_index(&self.es_address, self.es_address_cursor + 1);
             self.es_address.replace_range(start..end, "");
+            display_window_sync(
+                &self.es_address,
+                &mut self.es_address_display,
+                self.es_address_cursor,
+                ENTRY_BOX_INNER,
+            );
         }
     }
 
@@ -35942,6 +36071,12 @@ impl App {
             } else {
                 (self.es_name_cursor + 1).min(len)
             };
+            display_window_sync(
+                &self.es_name,
+                &mut self.es_name_display,
+                self.es_name_cursor,
+                ENTRY_BOX_INNER,
+            );
         } else if self.es_address_focus {
             let len = self.es_address.chars().count();
             self.es_address_cursor = if left {
@@ -35949,6 +36084,12 @@ impl App {
             } else {
                 (self.es_address_cursor + 1).min(len)
             };
+            display_window_sync(
+                &self.es_address,
+                &mut self.es_address_display,
+                self.es_address_cursor,
+                ENTRY_BOX_INNER,
+            );
         }
     }
 
@@ -35962,12 +36103,24 @@ impl App {
         }
         if self.es_name_focus {
             self.es_name_cursor = if end { self.es_name.chars().count() } else { 0 };
+            display_window_sync(
+                &self.es_name,
+                &mut self.es_name_display,
+                self.es_name_cursor,
+                ENTRY_BOX_INNER,
+            );
         } else if self.es_address_focus {
             self.es_address_cursor = if end {
                 self.es_address.chars().count()
             } else {
                 0
             };
+            display_window_sync(
+                &self.es_address,
+                &mut self.es_address_display,
+                self.es_address_cursor,
+                ENTRY_BOX_INNER,
+            );
         }
     }
 
@@ -35984,6 +36137,12 @@ impl App {
         } else {
             (self.direct_cursor + 1).min(len)
         };
+        display_window_sync(
+            &self.direct_address,
+            &mut self.direct_display,
+            self.direct_cursor,
+            ENTRY_BOX_INNER,
+        );
     }
 
     /// THE DIRECT CONNECTION'S OWN CARET BOUNDS (the same tableswitch
@@ -35998,6 +36157,12 @@ impl App {
         } else {
             0
         };
+        display_window_sync(
+            &self.direct_address,
+            &mut self.direct_display,
+            self.direct_cursor,
+            ENTRY_BOX_INNER,
+        );
     }
 
     /// THE ENTRY FORM'S OWN BOX CLICK (the EditBox.mouseClicked walk
@@ -36020,16 +36185,42 @@ impl App {
             self.es_name_focus = true;
             self.es_address_focus = false;
             // THE CARET'S OWN X-BAND (the vanilla mouseClick walk the
-            // clicked char the cursor positions — the x offset the
-            // prefix length the trim walk answers, the box padding
-            // the +4 the render's own text origin wears)
-            self.es_name_cursor = caret_char_index_at(&self.es_name, mx - (nx + 4));
+            // clicked char the cursor positions — the VISIBLE WINDOW
+            // the `trimStringToWidth(value.substring(displayPos))` law
+            // the two-step answers, the x the prefix length + the
+            // displayPos the seat wears, the box padding the +4 the
+            // render's own text origin speaks)
+            let visible: String = self.es_name.chars().skip(self.es_name_display).collect();
+            let vis_len = caret_char_index_at(&visible, ENTRY_BOX_INNER);
+            let window: String = visible.chars().take(vis_len).collect();
+            self.es_name_cursor =
+                caret_char_index_at(&window, mx - (nx + 4)) + self.es_name_display;
+            display_window_sync(
+                &self.es_name,
+                &mut self.es_name_display,
+                self.es_name_cursor,
+                ENTRY_BOX_INNER,
+            );
             return true;
         }
         if in_addr {
             self.es_address_focus = true;
             self.es_name_focus = false;
-            self.es_address_cursor = caret_char_index_at(&self.es_address, mx - (ax + 4));
+            let visible: String = self
+                .es_address
+                .chars()
+                .skip(self.es_address_display)
+                .collect();
+            let vis_len = caret_char_index_at(&visible, ENTRY_BOX_INNER);
+            let window: String = visible.chars().take(vis_len).collect();
+            self.es_address_cursor =
+                caret_char_index_at(&window, mx - (ax + 4)) + self.es_address_display;
+            display_window_sync(
+                &self.es_address,
+                &mut self.es_address_display,
+                self.es_address_cursor,
+                ENTRY_BOX_INNER,
+            );
             return true;
         }
         self.es_name_focus = false;
@@ -39529,6 +39720,18 @@ impl App {
                         // the edits continue the end answers)
                         self.es_name_cursor = self.es_name.chars().count();
                         self.es_address_cursor = self.es_address.chars().count();
+                        display_window_sync(
+                            &self.es_name,
+                            &mut self.es_name_display,
+                            self.es_name_cursor,
+                            ENTRY_BOX_INNER,
+                        );
+                        display_window_sync(
+                            &self.es_address,
+                            &mut self.es_address_display,
+                            self.es_address_cursor,
+                            ENTRY_BOX_INNER,
+                        );
                         self.es_edit = Some(idx);
                     }
                 }
@@ -40957,6 +41160,7 @@ impl App {
         // restore walks — the cursorPos the fresh value's end wears,
         // the dev-174 round's entry-form law the chat input keeps)
         self.chat_cursor = self.chat_input.chars().count();
+        self.chat_window_sync();
         self.chat_draft.clear();
         // the fresh open the clear walk answers — the old suggestions
         // the screen never keeps (the vanilla init's fresh walk); the
@@ -41022,6 +41226,7 @@ impl App {
         // open wears — the restored draft the tail speaks, the '/'
         // fresh open the one-char end banks)
         self.chat_cursor = self.chat_input.chars().count();
+        self.chat_window_sync();
         self.chat_draft.clear();
         // the fresh open the clear walk answers — the old suggestions
         // the screen never keeps (the vanilla init's fresh walk); the
@@ -41060,6 +41265,7 @@ impl App {
         // answers); the caret the take's own clear the zero wears
         // (the next open the fresh walk re-parks)
         self.chat_cursor = 0;
+        self.chat_display = 0;
         let text = std::mem::take(&mut self.chat_input);
         if text.trim().is_empty() {
             // the blank close the discard arm keeps (the shouldDiscard
@@ -41155,6 +41361,7 @@ impl App {
             // cleared value's zero seat wears)
             self.chat_input.clear();
             self.chat_cursor = 0;
+            self.chat_display = 0;
             self.chat_input_is_draft = false;
             self.refresh_command_suggestions();
             return true;
@@ -41170,6 +41377,20 @@ impl App {
         true
     }
 
+    /// THE CHAT BOX'S OWN WINDOW SYNC (the same `setCursorPos` law the
+    /// entry boxes wear — the inner width the banked band's `-8` the
+    /// render answers, the unbanked fresh open the fixed 320x180 GUI
+    /// the `(320 - 4) - 8` fallback keeps).
+    fn chat_window_sync(&mut self) {
+        let inner = self.chat_input_rect.map(|r| r.2 - 8).unwrap_or(320 - 4 - 8);
+        display_window_sync(
+            &self.chat_input,
+            &mut self.chat_display,
+            self.chat_cursor,
+            inner,
+        );
+    }
+
     /// THE EDITBOX'S OWN CHAR (the window's input callback the
     /// set_input_callback lane feeds — the char the 256 setMaxLength
     /// cap gates, the open screen the lane only answers; the INSERT
@@ -41183,6 +41404,7 @@ impl App {
             let idx = caret_byte_index(&self.chat_input, self.chat_cursor);
             self.chat_input.insert(idx, c);
             self.chat_cursor += 1;
+            self.chat_window_sync();
             // THE RESPONDER'S OWN WALK (the EditBox.setResponder lane —
             // the edit the suggestions refresh answers, the isDraft
             // purity the onEdited walk drops — the restored draft the
@@ -41206,6 +41428,7 @@ impl App {
             let start = caret_byte_index(&self.chat_input, self.chat_cursor - 1);
             self.chat_input.replace_range(start..end, "");
             self.chat_cursor -= 1;
+            self.chat_window_sync();
         }
         // the edit the responder fires (the isDraft purity the same
         // onEdited walk drops)
@@ -41225,6 +41448,7 @@ impl App {
             let start = caret_byte_index(&self.chat_input, self.chat_cursor);
             let end = caret_byte_index(&self.chat_input, self.chat_cursor + 1);
             self.chat_input.replace_range(start..end, "");
+            self.chat_window_sync();
         }
         // the edit the responder fires (the isDraft purity the same
         // onEdited walk drops)
@@ -41247,6 +41471,7 @@ impl App {
         } else {
             (self.chat_cursor + 1).min(len)
         };
+        self.chat_window_sync();
     }
 
     /// THE CHAT CARET'S OWN BOUNDS (the tableswitch the 268/269 cases
@@ -41261,6 +41486,7 @@ impl App {
         } else {
             0
         };
+        self.chat_window_sync();
     }
 
     /// THE CHAT BAND'S OWN X-BAND CLICK (the EditBox.mouseClicked walk
@@ -41279,7 +41505,18 @@ impl App {
         if mx < rx || mx >= rx + rw || my < ry || my >= ry + rh {
             return false; // the outside click the band never owns
         }
-        self.chat_cursor = caret_char_index_at(&self.chat_input, mx - 4);
+        // THE CARET'S OWN X-BAND (the vanilla mouseClick walk the
+        // clicked char the cursor positions — the VISIBLE WINDOW the
+        // `trimStringToWidth(value.substring(displayPos))` law the
+        // two-step answers, the x the prefix length + the displayPos
+        // the seat wears, the box padding the +4 the text origin
+        // speaks)
+        let inner = rw - 8;
+        let visible: String = self.chat_input.chars().skip(self.chat_display).collect();
+        let vis_len = caret_char_index_at(&visible, inner);
+        let window: String = visible.chars().take(vis_len).collect();
+        self.chat_cursor = caret_char_index_at(&window, mx - 4) + self.chat_display;
+        self.chat_window_sync();
         true
     }
 
@@ -41320,6 +41557,7 @@ impl App {
         // THE CARET'S OWN TAIL PARK (the recall the EditBox.setValue
         // walk answers — the cursorPos the fresh value's end wears)
         self.chat_cursor = self.chat_input.chars().count();
+        self.chat_window_sync();
         // the recall the EditBox.setValue walk answers — the responder
         // the onEdited isDraft drop fires (the restored draft the
         // history nav disclaims, the jar's own setValue chain)
@@ -41602,6 +41840,7 @@ impl App {
         // THE CARET'S OWN TAIL PARK (the apply the EditBox.setValue
         // walk answers — the cursorPos the fresh value's end wears)
         self.chat_cursor = self.chat_input.chars().count();
+        self.chat_window_sync();
         self.chat_suggestion_tab_cycles = true;
         self.refresh_command_suggestions();
     }
@@ -45145,8 +45384,21 @@ impl App {
         // the cursorPos seat the BEFORE/AFTER split wears — the
         // underscore the mid-string seat the whole string the split
         // draws, the END-PARKED default the same typed bytes keeps)
-        let before: String = self.chat_input.chars().take(self.chat_cursor).collect();
-        let after: String = self.chat_input.chars().skip(self.chat_cursor).collect();
+        // THE DISPLAY WINDOW'S OWN SLICE (the 1.8-style walk the
+        // `trimStringToWidth(text.substring(lineScrollOffset))` split
+        // wears — the visible window the long line the caret keeps,
+        // the short line the whole value the same bytes draws; the
+        // underscore the on-screen seat the BEFORE/AFTER split inserts,
+        // the END-PARKED default the same typed bytes keeps)
+        let visible_full: String = self.chat_input.chars().skip(self.chat_display).collect();
+        let vis_len = caret_char_index_at(&visible_full, w - 4 - 8);
+        let visible: String = visible_full.chars().take(vis_len).collect();
+        let k = self
+            .chat_cursor
+            .saturating_sub(self.chat_display)
+            .min(vis_len);
+        let before: String = visible.chars().take(k).collect();
+        let after: String = visible.chars().skip(k).collect();
         let blink = (std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .map(|d| d.as_millis())
@@ -68181,15 +68433,28 @@ impl App {
             let hint = tr("addServer.enterIp").unwrap_or("Server Address");
             g.text(a, bx + 4, by + 6, &hint, [0.55, 0.55, 0.55], false);
         } else {
-            g.text(a, bx + 4, by + 6, &self.direct_address, WHITE, false);
-            // THE CARET'S OWN SEAT (the vanilla render the text-before-
-            // cursor width wears — the cursorPos the caret x answers,
-            // the END-PARKED default the tail the same pixels keeps)
-            let before: String = self
+            // THE DISPLAY WINDOW'S OWN DRAW (the vanilla render walk the
+            // `plainSubstrByWidth(value.substring(displayPos),
+            // innerWidth)` trim wears — the long text the window the
+            // first visible char draws, the short text the whole value
+            // the same bytes keeps)
+            let visible: String = self
                 .direct_address
                 .chars()
-                .take(self.direct_cursor)
+                .skip(self.direct_display)
                 .collect();
+            let vis_len = caret_char_index_at(&visible, ENTRY_BOX_INNER);
+            let drawn: String = visible.chars().take(vis_len).collect();
+            g.text(a, bx + 4, by + 6, &drawn, WHITE, false);
+            // THE CARET'S OWN SEAT (the vanilla render the text-before-
+            // cursor width wears — the on-screen caret the
+            // `cursorPos - displayPos` prefix answers, the END-PARKED
+            // default the tail the same pixels keeps)
+            let k = self
+                .direct_cursor
+                .saturating_sub(self.direct_display)
+                .min(vis_len);
+            let before: String = drawn.chars().take(k).collect();
             let tw = g.text_width(&before);
             if (self.frame / 6) % 2 == 0 && self.direct_focus {
                 g.fill(bx + 4 + tw + 1, by + 6, 1, 8, [1.0, 1.0, 1.0, 1.0]);
@@ -68255,11 +68520,24 @@ impl App {
             let hint = tr("addServer.enterName").unwrap_or("Server Name");
             g.text(a, nx + 4, ny + 6, &hint, [0.55, 0.55, 0.55], false);
         } else {
-            g.text(a, nx + 4, ny + 6, &self.es_name, WHITE, false);
+            // THE DISPLAY WINDOW'S OWN DRAW (the vanilla render walk the
+            // `plainSubstrByWidth(value.substring(displayPos),
+            // innerWidth)` trim wears — the long name the window the
+            // first visible char draws, the short text the whole value
+            // the same bytes keeps)
+            let visible: String = self.es_name.chars().skip(self.es_name_display).collect();
+            let vis_len = caret_char_index_at(&visible, ENTRY_BOX_INNER);
+            let drawn: String = visible.chars().take(vis_len).collect();
+            g.text(a, nx + 4, ny + 6, &drawn, WHITE, false);
             // THE CARET'S OWN SEAT (the vanilla render the text-before-
-            // cursor width wears — the cursorPos the caret x answers,
-            // the END-PARKED default the tail the same pixels keeps)
-            let before: String = self.es_name.chars().take(self.es_name_cursor).collect();
+            // cursor width wears — the on-screen caret the
+            // `cursorPos - displayPos` prefix answers, the END-PARKED
+            // default the tail the same pixels keeps)
+            let k = self
+                .es_name_cursor
+                .saturating_sub(self.es_name_display)
+                .min(vis_len);
+            let before: String = drawn.chars().take(k).collect();
             let tw = g.text_width(&before);
             if (self.frame / 6) % 2 == 0 && self.es_name_focus {
                 g.fill(nx + 4 + tw + 1, ny + 6, 1, 8, [1.0, 1.0, 1.0, 1.0]);
@@ -68275,15 +68553,28 @@ impl App {
             let hint = tr("addServer.enterIp").unwrap_or("Server Address");
             g.text(a, ax + 4, ay + 6, &hint, [0.55, 0.55, 0.55], false);
         } else {
-            g.text(a, ax + 4, ay + 6, &self.es_address, WHITE, false);
-            // THE CARET'S OWN SEAT (the same cursorPos law the pair
-            // wears — the END-PARKED default the tail the same pixels
-            // keeps)
-            let before: String = self
+            // THE DISPLAY WINDOW'S OWN DRAW (the vanilla render walk the
+            // `plainSubstrByWidth(value.substring(displayPos),
+            // innerWidth)` trim wears — the long address the window the
+            // first visible char draws, the short text the whole value
+            // the same bytes keeps)
+            let visible: String = self
                 .es_address
                 .chars()
-                .take(self.es_address_cursor)
+                .skip(self.es_address_display)
                 .collect();
+            let vis_len = caret_char_index_at(&visible, ENTRY_BOX_INNER);
+            let drawn: String = visible.chars().take(vis_len).collect();
+            g.text(a, ax + 4, ay + 6, &drawn, WHITE, false);
+            // THE CARET'S OWN SEAT (the same cursorPos law the pair
+            // wears — the on-screen caret the `cursorPos - displayPos`
+            // prefix answers, the END-PARKED default the tail the same
+            // pixels keeps)
+            let k = self
+                .es_address_cursor
+                .saturating_sub(self.es_address_display)
+                .min(vis_len);
+            let before: String = drawn.chars().take(k).collect();
             let tw = g.text_width(&before);
             if (self.frame / 6) % 2 == 0 && self.es_address_focus {
                 g.fill(ax + 4 + tw + 1, ay + 6, 1, 8, [1.0, 1.0, 1.0, 1.0]);

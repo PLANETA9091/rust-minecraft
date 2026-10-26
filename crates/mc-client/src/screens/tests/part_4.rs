@@ -24369,3 +24369,129 @@ fn the_entry_forms_own_delete_key_wears() {
     assert_eq!(app.chat_input, closed_input, "the closed the input keeps");
     assert_eq!(app.chat_cursor, closed_cursor, "the closed the seat keeps");
 }
+
+#[test]
+fn the_editbox_own_scroll_band_wears() {
+    let mut app = App::new(3);
+    // THE SHORT TEXT'S OWN ZERO WINDOW (the fresh ctor the
+    // END-PARKED seat wears — the whole value the inner width fits,
+    // the displayPos the zero the same window keeps)
+    app.open(ScreenKind::EditServer);
+    app.render_title_buttons_for_test();
+    assert_eq!(app.es_name_display, 0, "the short name the zero wears");
+    assert_eq!(
+        app.es_address_display, 0,
+        "the fresh address the zero wears"
+    );
+
+    // THE ADDRESS BOX'S OWN PIN (the tail typing the long word the
+    // window the caret pins right — the display the
+    // `cursor - visLen` arm wears, the caret the in-window seat keeps)
+    app.on_editserver_tab(true);
+    for c in "a".repeat(60).chars() {
+        app.on_editserver_char(c);
+    }
+    assert_eq!(app.es_address_cursor, 60, "the typing the tail parks");
+    assert!(app.es_address_display > 0, "the long word the window pins");
+    let visible: String = app
+        .es_address
+        .chars()
+        .skip(app.es_address_display)
+        .collect();
+    let vis_len = crate::screens::caret_char_index_at(&visible, 192);
+    assert!(vis_len < 60, "the window the whole value never wears");
+    assert!(
+        app.es_address_display + vis_len >= 60,
+        "the caret the in-window seat keeps"
+    );
+
+    // THE HOME'S OWN RETURN (the zero seat the display the cursor
+    // wears — the window the head the same walk answers)
+    app.on_editserver_caret_home_end(false);
+    assert_eq!(app.es_address_cursor, 0, "the Home the zero parks");
+    assert_eq!(app.es_address_display, 0, "the Home the window returns");
+
+    // THE END'S OWN PIN (the len seat the display the caret pins —
+    // the window the tail re-answers)
+    app.on_editserver_caret_home_end(true);
+    assert_eq!(app.es_address_cursor, 60, "the End the len parks");
+    assert!(app.es_address_display > 0, "the End the window pins");
+
+    // THE CLICK'S OWN WINDOW MAP (the vanilla two-step walk — the
+    // clicked x the visible prefix + the displayPos the seat wears)
+    let (ax, ay, _, _) = app.es_address_rect;
+    app.on_editserver_box_click(ax + 5, ay + 5);
+    assert!(
+        app.es_address_cursor >= app.es_address_display,
+        "the click the in-window seat wears"
+    );
+    app.on_editserver_caret_home_end(false);
+
+    // THE NAME BOX'S OWN UNTOUCHED WINDOW (the sibling the zero the
+    // same short law keeps — the boxes the windows never cross)
+    assert_eq!(app.es_name_display, 0, "the sibling the zero keeps");
+
+    // THE DIRECT BOX'S OWN BAND (the one-box form the same law wears
+    // — the fresh ctor the zero, the long word the pin, the stale
+    // reopen the reset the fresh walk answers)
+    app.open(ScreenKind::DirectConnect);
+    app.render_title_buttons_for_test();
+    assert_eq!(app.direct_display, 0, "the fresh direct the zero wears");
+    for c in "a".repeat(60).chars() {
+        app.on_direct_char(c);
+    }
+    assert_eq!(app.direct_cursor, 60, "the typing the tail parks");
+    assert!(app.direct_display > 0, "the long word the window pins");
+    let visible: String = app
+        .direct_address
+        .chars()
+        .skip(app.direct_display)
+        .collect();
+    let vis_len = crate::screens::caret_char_index_at(&visible, 192);
+    assert!(
+        app.direct_display + vis_len >= 60,
+        "the caret the in-window seat keeps"
+    );
+    let (bx, by, _, _) = app.direct_box_rect;
+    app.on_direct_box_click(bx + 5, by + 5);
+    assert!(
+        app.direct_cursor >= app.direct_display,
+        "the click the in-window seat wears"
+    );
+    // THE REOPEN'S OWN RESET (the fresh ctor the cleared value the
+    // zero window wears — the stale pin the walk never inherits)
+    app.open(ScreenKind::Servers);
+    app.open(ScreenKind::DirectConnect);
+    assert_eq!(app.direct_display, 0, "the reopen the reset wears");
+
+    // THE CHAT'S OWN BAND (the input band the same window wears —
+    // the long line the pin, the short line the zero)
+    app.enter_world();
+    app.on_chat_key();
+    assert_eq!(app.chat_display, 0, "the fresh open the zero wears");
+    for c in "hello".chars() {
+        app.on_chat_char(c);
+    }
+    assert_eq!(app.chat_display, 0, "the short line the zero keeps");
+    for c in "a".repeat(80).chars() {
+        app.on_chat_char(c);
+    }
+    assert_eq!(app.chat_cursor, 85, "the typing the tail parks");
+    assert!(app.chat_display > 0, "the long line the window pins");
+    let visible: String = app.chat_input.chars().skip(app.chat_display).collect();
+    let vis_len = crate::screens::caret_char_index_at(&visible, 320 - 4 - 8);
+    assert!(
+        app.chat_display + vis_len >= 85,
+        "the caret the in-window seat keeps"
+    );
+    app.on_chat_caret_home_end(false);
+    assert_eq!(app.chat_display, 0, "the Home the window returns");
+    app.on_chat_caret_home_end(true);
+    assert!(app.chat_display > 0, "the End the window pins");
+
+    // THE SUBMIT'S OWN RESET (the close the take the zero window
+    // wears — the next open the fresh walk the same answer keeps)
+    app.on_chat_submit();
+    assert!(!app.chat_open);
+    assert_eq!(app.chat_display, 0, "the close the reset wears");
+}
